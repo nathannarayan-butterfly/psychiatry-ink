@@ -1,0 +1,74 @@
+// Psychiatry.ink — local SQLite via Prisma
+// Server-side only (see server/db.ts).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// Metadata-only AI generation usage log (no clinical text).
+model GenerationLog {
+  id                   String    @id @default(cuid())
+  createdAt            DateTime  @default(now())
+  completedAt          DateTime?
+  documentType         String
+  aiMode               String
+  inputTextLength      Int
+  estimatedInputTokens Int
+  estimatedCredits     Int
+  provider             String?
+  model                String?
+  status               String
+  errorMessage         String?
+  tool                 String?
+  scope                String?
+  schemaId             String?
+  resultTextLength     Int?
+  creditsDeducted      Boolean   @default(false)
+}
+
+/// Single-user demo credit balance (local dev).
+model CreditBalance {
+  id        String   @id @default("default")
+  balance   Int      @default(500)
+  updatedAt DateTime @updatedAt
+}
+
+/// App-level preferences persisted locally (optional migration from localStorage later).
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+/// Browser-generated public key only — never stores patient name/age.
+model UserPublicKey {
+  id           String   @id @default(cuid())
+  deviceId     String   @unique
+  publicKeyJwk String
+  countryCode  String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+/// Zero-knowledge encrypted workspace snapshot (ciphertext only — server never decrypts).
+/// One row per patient case; name/age never included in ciphertext.
+model EncryptedWorkspaceSnapshot {
+  id         String   @id @default(cuid())
+  userId     String
+  caseId     String
+  deviceId   String
+  ciphertext String
+  iv         String
+  wrappedKey String
+  version    Int      @default(1)
+  titleHint  String?
+  updatedAt  DateTime @updatedAt
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, caseId])
+}

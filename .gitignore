@@ -1,0 +1,14 @@
+node_modules
+dist
+.DS_Store
+*.local
+*.swp
+.env
+.env.*
+!.env.example
+
+# Prisma SQLite
+prisma/*.db
+prisma/*.db-journal
+
+*.tsbuildinfo
