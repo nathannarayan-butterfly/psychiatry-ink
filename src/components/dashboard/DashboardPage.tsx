@@ -262,12 +262,12 @@ export function DashboardPage({
       />
 
       <section className="dashboard-hero" aria-labelledby="dashboard-hero-title">
+        <DashboardHinweise />
         <div className="dashboard-hero__copy">
           <p className="dashboard-hero__date">{todayLabel}</p>
           <h1 id="dashboard-hero-title" className="dashboard-hero__title">
             {greeting.trim()}
           </h1>
-          <DashboardHinweise />
           <p className="dashboard-hero__intro">{t('dashboardIntro')}</p>
         </div>
       </section>
