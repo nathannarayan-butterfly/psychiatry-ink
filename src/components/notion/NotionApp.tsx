@@ -89,6 +89,8 @@ interface NotionAppProps {
   onNavigateNewCase?: (caseId: string, page?: NotionPageId) => void
   plan: SubscriptionPlan
   workspaceTabs?: WorkspaceTabsInfo
+  workspaceStorageId?: string
+  showWorkspaceTabs?: boolean
   /**
    * Storage key used for the saved-docs sidebar list.
    * Defaults to `caseId` but should be set to a per-tab key for general workspace
@@ -128,6 +130,8 @@ export function NotionApp({
   onNavigateNewCase: _onNavigateNewCase,
   plan: _plan,
   workspaceTabs,
+  workspaceStorageId,
+  showWorkspaceTabs = false,
   savedDocsCaseId,
 }: NotionAppProps) {
   const { t } = useTranslation()
@@ -135,6 +139,11 @@ export function NotionApp({
   // Each workspace tab gets its own saved-docs list via a per-tab storage key.
   const savedDocsKey = savedDocsCaseId ?? caseId
   const [savedDocs, setSavedDocs] = useState<SavedDoc[]>(() => loadSavedDocs(savedDocsKey))
+  const storageCaseId = workspaceStorageId ?? caseId
+
+  useEffect(() => {
+    setSavedDocs(loadSavedDocs(savedDocsKey))
+  }, [savedDocsKey])
 
   const handleBreakStart = useCallback(() => {
     setBreakLottieActive(true)
@@ -182,7 +191,7 @@ export function NotionApp({
             (s) => s.id === workspace.activeSectionId,
           )
           const source = workspace.generationWasAccepted ? 'ai-accepted' : 'manual'
-          appendVerlaufEntry(caseId, {
+          appendVerlaufEntry(storageCaseId, {
             date: new Date().toISOString(),
             content: content.trim(),
             pageType: docTypeId,
@@ -194,7 +203,7 @@ export function NotionApp({
     }
     void workspaceVault.saveNow()
   }, [
-    caseId,
+    storageCaseId,
     workspace.activeSectionId,
     workspace.editorContent,
     workspace.generationPendingReview,
@@ -262,7 +271,7 @@ export function NotionApp({
       workspace.sections.length > 0 ? workspace.sectionContents : {}
 
     if (category && content.trim()) {
-      appendDokument(caseId, {
+      appendDokument(storageCaseId, {
         category,
         title: documentLabel,
         content: content.trim(),
@@ -285,7 +294,7 @@ export function NotionApp({
 
     workspace.acceptGeneration()
     workspace.resetToBlankPage()
-  }, [caseId, documentLabel, savedDocsKey, workspace])
+  }, [documentLabel, savedDocsKey, storageCaseId, workspace])
 
   const handleVaultSaveWithArchive = useCallback(() => {
     const docTypeId = workspace.selectedDocumentType
@@ -301,7 +310,7 @@ export function NotionApp({
     // or if AI was just accepted (to avoid duplicating the ai-accepted entry)
     if (category && !workspace.generationPendingReview && !workspace.generationWasAccepted) {
       if (content.trim()) {
-        appendDokument(caseId, {
+        appendDokument(storageCaseId, {
           category,
           title: documentLabel,
           content: content.trim(),
@@ -326,7 +335,7 @@ export function NotionApp({
     }
 
     handleVaultSaveWithFeedAppend()
-  }, [caseId, documentLabel, handleVaultSaveWithFeedAppend, savedDocsKey, workspace])
+  }, [documentLabel, handleVaultSaveWithFeedAppend, savedDocsKey, storageCaseId, workspace])
 
   const handleViewSavedDoc = useCallback(
     (doc: SavedDoc) => {
@@ -566,7 +575,7 @@ export function NotionApp({
         onNavigateDashboard={onNavigateDashboard}
       />
 
-      {!hasPatient && workspaceTabs && (
+      {showWorkspaceTabs && workspaceTabs && (
         <WorkspaceTabBar
           tabs={workspaceTabs.tabs}
           activeTabId={workspaceTabs.activeTabId}
@@ -624,7 +633,7 @@ export function NotionApp({
               <DiagnosenWidget caseId={caseId} />
             </aside>
             <div className="notion-tab-content-row__body">
-              <VerlaufFeedPage caseId={caseId} />
+              <VerlaufFeedPage caseId={storageCaseId} />
             </div>
           </div>
         ) : null}
@@ -632,7 +641,7 @@ export function NotionApp({
         {!showPatientDashboard && activeTopTab === 'dokumente' ? (
           <div className="notion-tab-content-row">
             <div className="notion-tab-content-row__body notion-tab-content-row__body--full">
-              <DokumentePage caseId={caseId} />
+              <DokumentePage caseId={storageCaseId} />
             </div>
           </div>
         ) : null}
@@ -640,7 +649,7 @@ export function NotionApp({
         {!showPatientDashboard && activeTopTab === 'labor' ? (
           <div className="notion-tab-content-row notion-tab-content-row--full">
             <div className="notion-tab-content-row__body notion-tab-content-row__body--full">
-              <LaborPage caseId={caseId} />
+              <LaborPage caseId={storageCaseId} />
             </div>
           </div>
         ) : null}
@@ -651,7 +660,7 @@ export function NotionApp({
               <PanelDateCard layout="sidebar" />
             </aside>
             <div className="notion-tab-content-row__body">
-              <TherapiePage caseId={caseId} />
+              <TherapiePage caseId={storageCaseId} />
             </div>
           </div>
         ) : null}
@@ -668,18 +677,19 @@ export function NotionApp({
           <div className="notion-preview-canvas">
             {activePage === 'timeline' ? (
               <NotionTimelineCanvas
-                caseId={caseId}
+                caseId={storageCaseId}
                 timeline={timeline}
                 onVaultSave={handleVaultSaveWithArchive}
               />
             ) : activePage === 'labor' || activePage === 'visualisation' ? (
               <LaborPage
-                caseId={caseId}
+                caseId={storageCaseId}
                 onCreatePatient={() => setShowCreatePatientDialog(true)}
               />
             ) : (
               <NotionPaper
                 caseId={caseId}
+                workspaceStorageId={storageCaseId}
                 documentTypeId={workspace.selectedDocumentType}
                 documentLabel={documentLabel}
                 sectionLabel={activeSection?.label}

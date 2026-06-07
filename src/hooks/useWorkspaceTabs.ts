@@ -1,8 +1,10 @@
 import { useCallback, useState } from 'react'
+import { DEFAULT_CASE_ID } from '../utils/caseContext'
 
 export interface WorkspaceTab {
   id: string
   name: string
+  storageId: string
   patientId?: string
   patientName?: string
 }
@@ -19,25 +21,48 @@ function generateId(): string {
   return `tab-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
 }
 
+function storageIdForTab(tabId: string, index: number): string {
+  return index === 0 ? DEFAULT_CASE_ID : `${DEFAULT_CASE_ID}::workspace-tab::${tabId}`
+}
+
+function normalizeTabs(tabs: Partial<WorkspaceTab>[]): WorkspaceTab[] {
+  return tabs
+    .filter((tab): tab is Partial<WorkspaceTab> & { id: string; name: string } => (
+      typeof tab.id === 'string' && typeof tab.name === 'string'
+    ))
+    .map((tab, index) => ({
+      ...tab,
+      id: tab.id,
+      name: tab.name,
+      storageId: typeof tab.storageId === 'string' && tab.storageId.trim()
+        ? tab.storageId
+        : storageIdForTab(tab.id, index),
+    }))
+}
+
 function loadState(): TabsState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     const activeRaw = localStorage.getItem(ACTIVE_KEY)
     if (raw) {
-      const parsed = JSON.parse(raw) as WorkspaceTab[]
+      const parsed = JSON.parse(raw) as Partial<WorkspaceTab>[]
       if (Array.isArray(parsed) && parsed.length > 0) {
+        const tabs = normalizeTabs(parsed)
+        if (tabs.length === 0) throw new Error('Invalid workspace tabs')
         const activeTabId =
-          activeRaw && parsed.some((t) => t.id === activeRaw)
+          activeRaw && tabs.some((t) => t.id === activeRaw)
             ? activeRaw
-            : parsed[0].id
-        return { tabs: parsed, activeTabId }
+            : tabs[0].id
+        const state = { tabs, activeTabId }
+        persist(state)
+        return state
       }
     }
   } catch {
     // ignore
   }
   const id = generateId()
-  return { tabs: [{ id, name: 'Workspace 1' }], activeTabId: id }
+  return { tabs: [{ id, name: 'Workspace 1', storageId: DEFAULT_CASE_ID }], activeTabId: id }
 }
 
 function persist(state: TabsState): void {
@@ -65,7 +90,11 @@ export function useWorkspaceTabs() {
     setState((current) => {
       const nextNumber = current.tabs.length + 1
       const id = generateId()
-      const newTab: WorkspaceTab = { id, name: `Workspace ${nextNumber}` }
+      const newTab: WorkspaceTab = {
+        id,
+        name: `Workspace ${nextNumber}`,
+        storageId: storageIdForTab(id, nextNumber - 1),
+      }
       const next: TabsState = {
         tabs: [...current.tabs, newTab],
         activeTabId: id,

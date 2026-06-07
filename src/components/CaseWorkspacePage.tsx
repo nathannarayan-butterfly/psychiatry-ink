@@ -15,7 +15,7 @@ import { loadNotionPageDate } from '../utils/notionPageDate'
 import { loadNotionPageTime } from '../utils/notionPageTime'
 import { loadNotionPageHeading } from '../utils/notionPageHeading'
 import type { ClinicalWorkspacePayload } from '../utils/workspaceVault'
-import { setActiveCaseId } from '../utils/caseContext'
+import { DEFAULT_CASE_ID, setActiveCaseId } from '../utils/caseContext'
 import {
   applyHintTranslationsToComponents,
   ensureHintsTranslated,
@@ -64,6 +64,7 @@ interface WorkspaceInnerProps {
   workspaceSettings: WorkspaceSettingsState
   plan: SubscriptionPlan
   workspaceTabs: WorkspaceTabsInfo
+  workspaceStorageId: string
 }
 
 // ——— CaseWorkspacePage public props ———
@@ -93,24 +94,19 @@ function WorkspaceInner({
   workspaceSettings,
   plan,
   workspaceTabs,
+  workspaceStorageId,
 }: WorkspaceInnerProps) {
   const { t } = useTranslation()
-
-  // Each tab gets an isolated vault key so that a freshly opened tab never
-  // restores another tab's selected document type or editor content.
-  // Tab 0 keeps using `caseId` directly for backward compatibility.
-  const activeTabIndex = workspaceTabs.tabs.findIndex((t) => t.id === workspaceTabs.activeTabId)
-  const tabStorageId =
-    activeTabIndex === 0 ? caseId : `${caseId}::tab::${workspaceTabs.activeTabId}`
+  const storesCaseMeta = workspaceStorageId === caseId
 
   useEffect(() => {
-    setActiveCaseId(caseId)
+    setActiveCaseId(workspaceStorageId)
     touchCaseOpened(caseId)
-  }, [caseId])
+  }, [caseId, workspaceStorageId])
 
-  const workspace = useWorkspaceState(documentTypes, language, caseId)
-  const timeline = useTimelineTool()
-  const lab = useLabTool()
+  const workspace = useWorkspaceState(documentTypes, language, workspaceStorageId)
+  const timeline = useTimelineTool(workspaceStorageId)
+  const lab = useLabTool(workspaceStorageId)
   const [clinicalAge, setClinicalAge] = useState('')
 
   const documentTypeLabel = useCallback(
@@ -125,9 +121,11 @@ function WorkspaceInner({
     (age: string) => {
       const numeric = age.replace(/[^\d]/g, '')
       setClinicalAge(numeric)
-      upsertCaseMeta(caseId, { localAge: numeric.trim() || undefined })
+      if (storesCaseMeta) {
+        upsertCaseMeta(caseId, { localAge: numeric.trim() || undefined })
+      }
     },
-    [caseId],
+    [caseId, storesCaseMeta],
   )
 
   const handleMigratedAge = useCallback(
@@ -136,11 +134,13 @@ function WorkspaceInner({
       if (!numeric) return
       setClinicalAge((current) => {
         if (current.trim()) return current
-        upsertCaseMeta(caseId, { localAge: numeric })
+        if (storesCaseMeta) {
+          upsertCaseMeta(caseId, { localAge: numeric })
+        }
         return numeric
       })
     },
-    [caseId],
+    [caseId, storesCaseMeta],
   )
 
   const getLivePatch = useCallback(() => {
@@ -168,9 +168,9 @@ function WorkspaceInner({
 
     return {
       documentTypeId: workspace.selectedDocumentType,
-      pageHeading: loadNotionPageHeading(workspace.selectedDocumentType, caseId),
-      pageDate: loadNotionPageDate(pageId, caseId),
-      pageTime: loadNotionPageTime(pageId, caseId),
+      pageHeading: loadNotionPageHeading(workspace.selectedDocumentType, workspaceStorageId),
+      pageDate: loadNotionPageDate(pageId, workspaceStorageId),
+      pageTime: loadNotionPageTime(pageId, workspaceStorageId),
       sectionContents: workspace.getLatestSectionContents(),
       age: clinicalAge,
       timelines,
@@ -192,6 +192,7 @@ function WorkspaceInner({
     timeline.layout,
     timeline.savedTimelines,
     workspace,
+    workspaceStorageId,
   ])
 
   const handleVaultRestored = useCallback(
@@ -217,21 +218,25 @@ function WorkspaceInner({
       const restoredAge = payload.age?.replace(/[^\d]/g, '') ?? ''
       setClinicalAge((current) => {
         const next = restoredAge || current
-        upsertCaseMeta(caseId, { localAge: next.trim() || undefined })
+        if (storesCaseMeta) {
+          upsertCaseMeta(caseId, { localAge: next.trim() || undefined })
+        }
         return next
       })
-      upsertCaseMeta(caseId, {
-        lastDocumentType: payload.selectedDocumentType ?? undefined,
-        pageHeading:
-          (payload.pageHeadings[docId] ?? payload.documents[docId]?.pageHeading ?? '').trim() ||
-          undefined,
-      })
+      if (storesCaseMeta) {
+        upsertCaseMeta(caseId, {
+          lastDocumentType: payload.selectedDocumentType ?? undefined,
+          pageHeading:
+            (payload.pageHeadings[docId] ?? payload.documents[docId]?.pageHeading ?? '').trim() ||
+            undefined,
+        })
+      }
     },
-    [caseId, lab, timeline, workspace],
+    [caseId, lab, storesCaseMeta, timeline, workspace],
   )
 
   const workspaceVault = useWorkspaceVault({
-    caseId: tabStorageId,
+    caseId: workspaceStorageId,
     tier: privacy.tier,
     countryCode: privacy.countryCode,
     getLivePatch,
@@ -261,12 +266,13 @@ function WorkspaceInner({
 
   useEffect(() => {
     if (!workspaceVault.ready) return
-    const heading = loadNotionPageHeading(workspace.selectedDocumentType, caseId)
+    if (!storesCaseMeta) return
+    const heading = loadNotionPageHeading(workspace.selectedDocumentType, workspaceStorageId)
     upsertCaseMeta(caseId, {
       lastDocumentType: workspace.selectedDocumentType,
       pageHeading: heading.trim() || undefined,
     })
-  }, [caseId, workspace.selectedDocumentType, workspaceVault.ready])
+  }, [caseId, storesCaseMeta, workspace.selectedDocumentType, workspaceStorageId, workspaceVault.ready])
 
   return (
     <NotionApp
@@ -292,7 +298,9 @@ function WorkspaceInner({
       onNavigateNewCase={onNavigateNewCase}
       plan={plan}
       workspaceTabs={workspaceTabs}
-      savedDocsCaseId={tabStorageId}
+      savedDocsCaseId={workspaceStorageId}
+      workspaceStorageId={workspaceStorageId}
+      showWorkspaceTabs={caseId === DEFAULT_CASE_ID}
     />
   )
 }
@@ -336,6 +344,11 @@ export function CaseWorkspacePage({
   // Newly added tabs always start blank so they don't copy the previous tab.
   const activeTabIndex = tabs.findIndex((t) => t.id === activeTabId)
   const activeTabInitialPage = activeTabIndex === 0 ? initialPage : undefined
+  const activeTab = tabs.find((t) => t.id === activeTabId) ?? tabs[0]
+  const workspaceStorageId =
+    caseId === DEFAULT_CASE_ID
+      ? (activeTab?.storageId ?? DEFAULT_CASE_ID)
+      : caseId
 
   const workspaceTabs: WorkspaceTabsInfo = useMemo(
     () => ({ tabs, activeTabId, onTabSelect: setActiveTabId, onAddTab: addTab, onCloseTab: closeTab }),
@@ -344,7 +357,7 @@ export function CaseWorkspacePage({
 
   return (
     <WorkspaceInner
-      key={activeTabId}
+      key={workspaceStorageId}
       caseId={caseId}
       initialPage={activeTabInitialPage}
       initialShowPatientDashboard={activeTabIndex === 0 ? initialShowPatientDashboard : false}
@@ -359,6 +372,7 @@ export function CaseWorkspacePage({
       workspaceSettings={workspaceSettings}
       plan={plan}
       workspaceTabs={workspaceTabs}
+      workspaceStorageId={workspaceStorageId}
     />
   )
 }

@@ -62,9 +62,9 @@ function defaultLabGraphTitle(count: number): string {
   return `Labor ${count}`
 }
 
-function loadInitialState(): { graphs: SavedLabGraph[]; activeId: string | null } {
-  const graphs = loadLabGraphsList()
-  const activeId = getActiveLabGraphId() ?? graphs[0]?.id ?? null
+function loadInitialState(caseId?: string): { graphs: SavedLabGraph[]; activeId: string | null } {
+  const graphs = loadLabGraphsList(caseId)
+  const activeId = getActiveLabGraphId(caseId) ?? graphs[0]?.id ?? null
   return { graphs, activeId }
 }
 
@@ -75,8 +75,8 @@ function parseOptionalNumber(value: string): number | null {
   return Number.isFinite(parsed) ? parsed : null
 }
 
-export function useLabTool() {
-  const initial = loadInitialState()
+export function useLabTool(caseId?: string) {
+  const initial = loadInitialState(caseId)
   const [savedLabGraphs, setSavedLabGraphs] = useState<SavedLabGraph[]>(initial.graphs)
   const [activeLabGraphId, setActiveLabGraphIdState] = useState<string | null>(initial.activeId)
   const activeGraph = useMemo(
@@ -117,10 +117,10 @@ export function useLabTool() {
             }
           : item,
       )
-      saveLabGraphsList(next)
+      saveLabGraphsList(next, caseId)
       return next
     })
-  }, [activeLabGraphId, dateRangePreset, entries, markers, selectedParameter])
+  }, [activeLabGraphId, caseId, dateRangePreset, entries, markers, selectedParameter])
 
   useEffect(() => {
     persistActiveGraph()
@@ -319,27 +319,27 @@ export function useLabTool() {
     }
     const next = [...savedLabGraphs, created]
     setSavedLabGraphs(next)
-    saveLabGraphsList(next)
-    setActiveLabGraphId(id)
+    saveLabGraphsList(next, caseId)
+    setActiveLabGraphId(id, caseId)
     setActiveLabGraphIdState(id)
     setEntries([])
     setMarkers([])
     setSelectedParameter(null)
     setDateRangePreset('all')
-  }, [savedLabGraphs])
+  }, [caseId, savedLabGraphs])
 
   const openLabGraph = useCallback(
     (id: string) => {
       const graph = savedLabGraphs.find((item) => item.id === id)
       if (!graph) return
-      setActiveLabGraphId(id)
+      setActiveLabGraphId(id, caseId)
       setActiveLabGraphIdState(id)
       setEntries(graph.entries)
       setMarkers(graph.markers)
       setSelectedParameter(graph.selectedParameter)
       setDateRangePreset(graph.dateRangePreset)
     },
-    [savedLabGraphs],
+    [caseId, savedLabGraphs],
   )
 
   const updateLabGraphTitle = useCallback(
@@ -352,17 +352,17 @@ export function useLabTool() {
             ? { ...item, title: trimmed || item.title, updatedAt: new Date().toISOString() }
             : item,
         )
-        saveLabGraphsList(next)
+        saveLabGraphsList(next, caseId)
         return next
       })
     },
-    [activeLabGraphId],
+    [activeLabGraphId, caseId],
   )
 
   const restoreFromVault = useCallback((graphs: SavedLabGraph[], activeId: string | null) => {
     setSavedLabGraphs(graphs)
-    saveLabGraphsList(graphs)
-    setActiveLabGraphId(activeId)
+    saveLabGraphsList(graphs, caseId)
+    setActiveLabGraphId(activeId, caseId)
     setActiveLabGraphIdState(activeId)
     const active = activeId ? graphs.find((item) => item.id === activeId) : graphs[0]
     if (active) {
@@ -376,7 +376,7 @@ export function useLabTool() {
       setSelectedParameter(null)
       setDateRangePreset('all')
     }
-  }, [])
+  }, [caseId])
 
   /** @deprecated Use restoreFromVault */
   const restoreFromSnapshot = useCallback(

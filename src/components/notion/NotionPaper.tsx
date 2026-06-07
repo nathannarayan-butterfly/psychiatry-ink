@@ -47,6 +47,7 @@ import type { SlashCommandId } from './SlashCommandMenu'
 
 interface NotionPaperProps {
   caseId: string
+  workspaceStorageId?: string
   documentTypeId: string
   documentLabel: string
   sectionLabel?: string
@@ -138,6 +139,7 @@ function loadSidebarCollapsed(): boolean {
 
 export function NotionPaper({
   caseId,
+  workspaceStorageId,
   documentTypeId,
   documentLabel,
   sections,
@@ -203,6 +205,8 @@ export function NotionPaper({
   onViewSavedDoc,
 }: NotionPaperProps) {
   const { t } = useTranslation()
+  const storageCaseId = workspaceStorageId ?? caseId
+  const storesCaseMeta = storageCaseId === caseId
   const patient = usePatientMetadata({
     caseId,
     tier: privacy.tier,
@@ -224,7 +228,7 @@ export function NotionPaper({
   const [pendingPaste, setPendingPaste] = useState<PendingPaste | null>(null)
   const hadDocumentContentRef = useRef(false)
   const [pageHeading, setPageHeading] = useState(() =>
-    loadNotionPageHeading(documentTypeId, caseId),
+    loadNotionPageHeading(documentTypeId, storageCaseId),
   )
   const lastSavedSectionRef = useRef<string | null>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(loadSidebarCollapsed)
@@ -242,8 +246,8 @@ export function NotionPaper({
   }, [])
 
   useEffect(() => {
-    setPageHeading(loadNotionPageHeading(documentTypeId, caseId))
-  }, [caseId, documentTypeId])
+    setPageHeading(loadNotionPageHeading(documentTypeId, storageCaseId))
+  }, [documentTypeId, storageCaseId])
 
   useEffect(() => {
     setAmdpKompiliert(false)
@@ -420,13 +424,15 @@ export function NotionPaper({
   const handlePageHeadingChange = useCallback(
     (value: string) => {
       setPageHeading(value)
-      saveNotionPageHeading(documentTypeId, value, caseId)
-      upsertCaseMeta(caseId, {
-        pageHeading: value.trim() || undefined,
-        lastDocumentType: documentTypeId,
-      })
+      saveNotionPageHeading(documentTypeId, value, storageCaseId)
+      if (storesCaseMeta) {
+        upsertCaseMeta(caseId, {
+          pageHeading: value.trim() || undefined,
+          lastDocumentType: documentTypeId,
+        })
+      }
     },
-    [caseId, documentTypeId],
+    [caseId, documentTypeId, storageCaseId, storesCaseMeta],
   )
 
   const autoSaveSection = useCallback(
@@ -492,10 +498,10 @@ export function NotionPaper({
       pageHeading,
       sectionContents: latestContents,
       savedAt: new Date().toISOString(),
-    })
+    }, storageCaseId)
     onSaveWorkspaceVault?.()
     showNotionToast(t('notionDocumentSaved'))
-  }, [documentTypeId, getLatestContents, onSaveWorkspaceVault, pageHeading, t])
+  }, [documentTypeId, getLatestContents, onSaveWorkspaceVault, pageHeading, storageCaseId, t])
 
   const handlePrintDocument = useCallback(() => {
     printNotionDocument(documentLabel, sections, getLatestContents(), pageHeading)
@@ -544,7 +550,7 @@ export function NotionPaper({
           onClosePanelGraphic={onClosePanelGraphic}
           collapsed={sidebarCollapsed}
           onBreakStart={onBreakStart}
-          caseId={caseId}
+          caseId={storageCaseId}
           onNavigateToLabor={onNavigateToLabor}
           savedDocs={savedDocs}
           onViewSavedDoc={onViewSavedDoc}
@@ -685,7 +691,7 @@ export function NotionPaper({
 
           <NotionPageDateTimeRow
             pageId={documentTypeId}
-            caseId={caseId}
+            caseId={storageCaseId}
             disabled={editorLocked}
             onChange={() => onSaveWorkspaceVault?.()}
           />

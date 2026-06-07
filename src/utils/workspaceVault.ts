@@ -152,11 +152,14 @@ function migrateV1GraphFields(payload: ClinicalWorkspacePayload): ClinicalWorksp
   }
 }
 
-export function collectClinicalPayload(live?: WorkspaceLivePatch): ClinicalWorkspacePayload {
+export function collectClinicalPayload(
+  live?: WorkspaceLivePatch,
+  caseId?: string,
+): ClinicalWorkspacePayload {
   const documents: Record<string, NotionDocumentSnapshot> = {}
 
   for (const documentTypeId of DOCUMENT_TYPE_IDS) {
-    const stored = loadNotionDocumentSnapshot(documentTypeId)
+    const stored = loadNotionDocumentSnapshot(documentTypeId, caseId)
     if (live?.documentTypeId === documentTypeId) {
       documents[documentTypeId] = {
         documentTypeId,
@@ -174,12 +177,12 @@ export function collectClinicalPayload(live?: WorkspaceLivePatch): ClinicalWorks
     const heading =
       live?.documentTypeId === documentTypeId
         ? live.pageHeading
-        : loadNotionPageHeading(documentTypeId)
+        : loadNotionPageHeading(documentTypeId, caseId)
     if (heading.trim()) pageHeadings[documentTypeId] = heading
   }
 
-  const pageDates = loadAllPageDates()
-  const pageTimes = loadAllPageTimes()
+  const pageDates = loadAllPageDates(caseId)
+  const pageTimes = loadAllPageTimes(caseId)
   if (live?.documentTypeId) {
     const pageId = NOTION_PAGES.find((p) => p.documentTypeId === live.documentTypeId)?.id
     if (pageId) {
@@ -194,10 +197,10 @@ export function collectClinicalPayload(live?: WorkspaceLivePatch): ClinicalWorks
     }
   }
 
-  const timelines = live?.timelines ?? loadTimelinesList()
-  const activeTimelineId = live?.activeTimelineId ?? getActiveTimelineId()
-  const labGraphs = live?.labGraphs ?? loadLabGraphsList()
-  const activeLabGraphId = live?.activeLabGraphId ?? getActiveLabGraphId()
+  const timelines = live?.timelines ?? loadTimelinesList(caseId)
+  const activeTimelineId = live?.activeTimelineId ?? getActiveTimelineId(caseId)
+  const labGraphs = live?.labGraphs ?? loadLabGraphsList(caseId)
+  const activeLabGraphId = live?.activeLabGraphId ?? getActiveLabGraphId(caseId)
 
   return {
     version: WORKSPACE_PAYLOAD_VERSION,
@@ -227,44 +230,50 @@ export async function collectWorkspacePayloadAsync(
   return collectClinicalPayload(live)
 }
 
-export function applyClinicalPayload(payload: ClinicalWorkspacePayload): void {
+export function applyClinicalPayload(
+  payload: ClinicalWorkspacePayload,
+  caseId?: string,
+): void {
   const normalized = migrateV1GraphFields(payload)
 
   for (const documentTypeId of DOCUMENT_TYPE_IDS) {
     const snapshot = normalized.documents[documentTypeId]
     if (snapshot) {
-      saveNotionDocumentSnapshot(snapshot)
+      saveNotionDocumentSnapshot(snapshot, caseId)
     } else {
       try {
-        localStorage.removeItem(notionDocumentSnapshotKey(documentTypeId))
+        localStorage.removeItem(notionDocumentSnapshotKey(documentTypeId, caseId))
       } catch {
         // ignore
       }
     }
 
     const heading = normalized.pageHeadings[documentTypeId] ?? snapshot?.pageHeading ?? ''
-    saveNotionPageHeading(documentTypeId, heading)
+    saveNotionPageHeading(documentTypeId, heading, caseId)
   }
 
-  applyPageDates(normalized.pageDates)
-  applyPageTimes(normalized.pageTimes)
+  applyPageDates(normalized.pageDates, caseId)
+  applyPageTimes(normalized.pageTimes, caseId)
 
-  const caseId = getActiveCaseId()
+  const storageCaseId = caseId ?? getActiveCaseId()
 
-  saveTimelinesList(normalized.timelines, caseId)
-  setActiveTimelineId(normalized.activeTimelineId, caseId)
+  saveTimelinesList(normalized.timelines, storageCaseId)
+  setActiveTimelineId(normalized.activeTimelineId, storageCaseId)
 
-  saveLabGraphsList(normalized.labGraphs, caseId)
-  setActiveLabGraphId(normalized.activeLabGraphId, caseId)
+  saveLabGraphsList(normalized.labGraphs, storageCaseId)
+  setActiveLabGraphId(normalized.activeLabGraphId, storageCaseId)
 }
 
-export function applyWorkspacePayload(payload: ClinicalWorkspacePayload): void {
-  applyClinicalPayload(payload)
+export function applyWorkspacePayload(payload: ClinicalWorkspacePayload, caseId?: string): void {
+  applyClinicalPayload(payload, caseId)
 }
 
 /** Strips legacy patient metadata from older vault files; never applies name/age from sync. */
-export async function applyWorkspacePayloadAsync(payload: ClinicalWorkspacePayload): Promise<void> {
-  applyClinicalPayload(payload)
+export async function applyWorkspacePayloadAsync(
+  payload: ClinicalWorkspacePayload,
+  caseId?: string,
+): Promise<void> {
+  applyClinicalPayload(payload, caseId)
 }
 
 function stripLegacyFields(raw: LegacyWorkspacePayload): ClinicalWorkspacePayload {
@@ -309,7 +318,7 @@ export async function saveEncryptedWorkspace(
   live?: WorkspaceLivePatch,
   caseId?: string,
 ): Promise<EncryptedVaultBlob> {
-  const payload = collectClinicalPayload(live)
+  const payload = collectClinicalPayload(live, caseId)
   const blob = await encryptWorkspacePayload(payload)
   await saveWorkspaceVaultBlob(blob, caseId)
   return blob

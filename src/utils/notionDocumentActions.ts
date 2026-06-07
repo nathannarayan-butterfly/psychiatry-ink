@@ -15,9 +15,15 @@ export function notionDocumentSnapshotKey(documentTypeId: string, caseId?: strin
   return caseStorageKey(`${SNAPSHOT_KEY_PREFIX}:${documentTypeId}`, caseId)
 }
 
-export function saveNotionDocumentSnapshot(snapshot: NotionDocumentSnapshot): void {
+export function saveNotionDocumentSnapshot(
+  snapshot: NotionDocumentSnapshot,
+  caseId?: string,
+): void {
   try {
-    localStorage.setItem(notionDocumentSnapshotKey(snapshot.documentTypeId), JSON.stringify(snapshot))
+    localStorage.setItem(
+      notionDocumentSnapshotKey(snapshot.documentTypeId, caseId),
+      JSON.stringify(snapshot),
+    )
   } catch {
     // ignore quota errors
   }

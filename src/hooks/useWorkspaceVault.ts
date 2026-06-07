@@ -116,11 +116,11 @@ export function useWorkspaceVault({
 
   const applyPayload = useCallback(
     async (payload: ClinicalWorkspacePayload) => {
-      await applyWorkspacePayloadAsync(payload)
+      await applyWorkspacePayloadAsync(payload, caseId)
       setLastSavedAt(payload.updatedAt)
       onRestored?.(payload)
     },
-    [onRestored],
+    [caseId, onRestored],
   )
 
   const persist = useCallback(
@@ -128,7 +128,7 @@ export function useWorkspaceVault({
       if (!enabled) return null
 
       const live = getLivePatch()
-      const payload = collectClinicalPayload(live)
+      const payload = collectClinicalPayload(live, caseId)
       const blob = await encryptWorkspacePayload(payload)
       await saveEncryptedWorkspace(live, caseId)
       setLastSavedAt(payload.updatedAt)
@@ -185,7 +185,7 @@ export function useWorkspaceVault({
       return
     }
     const live = getLivePatch()
-    const payload = collectClinicalPayload(live)
+    const payload = collectClinicalPayload(live, caseId)
     const encrypted = await encryptWorkspacePayload(payload)
     recordVaultExport(caseId)
     downloadWorkspaceVaultFile(encrypted, `workspace-${caseId.slice(0, 8)}.json`)

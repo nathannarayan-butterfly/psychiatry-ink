@@ -1311,10 +1311,10 @@ export function useWorkspaceState(documentTypes: DocumentType[], language: UiLan
 
   const hydrateDocumentFromStorage = useCallback(
     (documentTypeId: string) => {
-      const snapshot = loadNotionDocumentSnapshot(documentTypeId)
+      const snapshot = loadNotionDocumentSnapshot(documentTypeId, caseId)
       if (snapshot) restoreFromSnapshot(snapshot)
     },
-    [restoreFromSnapshot],
+    [caseId, restoreFromSnapshot],
   )
 
   useEffect(() => {

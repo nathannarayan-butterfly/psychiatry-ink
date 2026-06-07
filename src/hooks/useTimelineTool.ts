@@ -32,14 +32,14 @@ function defaultTimelineTitle(count: number): string {
   return `Timeline ${count}`
 }
 
-function loadInitialState(): { timelines: SavedTimeline[]; activeId: string | null } {
-  const timelines = loadTimelinesList()
-  const activeId = getActiveTimelineId() ?? timelines[0]?.id ?? null
+function loadInitialState(caseId?: string): { timelines: SavedTimeline[]; activeId: string | null } {
+  const timelines = loadTimelinesList(caseId)
+  const activeId = getActiveTimelineId(caseId) ?? timelines[0]?.id ?? null
   return { timelines, activeId }
 }
 
-export function useTimelineTool() {
-  const initial = loadInitialState()
+export function useTimelineTool(caseId?: string) {
+  const initial = loadInitialState(caseId)
   const [savedTimelines, setSavedTimelines] = useState<SavedTimeline[]>(initial.timelines)
   const [activeTimelineId, setActiveTimelineIdState] = useState<string | null>(initial.activeId)
   const activeTimeline = useMemo(
@@ -65,12 +65,12 @@ export function useTimelineTool() {
             ? { ...item, layout: nextLayout, entries: nextEntries, updatedAt }
             : item,
         )
-        saveTimelinesList(next)
+        saveTimelinesList(next, caseId)
         return next
       })
       if (markSaved) setSessionSaved(true)
     },
-    [activeTimelineId],
+    [activeTimelineId, caseId],
   )
 
   const getSnapshot = useCallback(
@@ -224,25 +224,25 @@ export function useTimelineTool() {
     }
     const next = [...savedTimelines, created]
     setSavedTimelines(next)
-    saveTimelinesList(next)
-    setActiveTimelineId(id)
+    saveTimelinesList(next, caseId)
+    setActiveTimelineId(id, caseId)
     setActiveTimelineIdState(id)
     setLayout('horizontal')
     setEntries([])
     setSessionSaved(true)
-  }, [savedTimelines])
+  }, [caseId, savedTimelines])
 
   const openTimeline = useCallback(
     (id: string) => {
       const timeline = savedTimelines.find((item) => item.id === id)
       if (!timeline) return
-      setActiveTimelineId(id)
+      setActiveTimelineId(id, caseId)
       setActiveTimelineIdState(id)
       setLayout(timeline.layout)
       setEntries(timeline.entries)
       setSessionSaved(true)
     },
-    [savedTimelines],
+    [caseId, savedTimelines],
   )
 
   const updateTimelineTitle = useCallback(
@@ -255,17 +255,17 @@ export function useTimelineTool() {
             ? { ...item, title: trimmed || item.title, updatedAt: new Date().toISOString() }
             : item,
         )
-        saveTimelinesList(next)
+        saveTimelinesList(next, caseId)
         return next
       })
     },
-    [activeTimelineId],
+    [activeTimelineId, caseId],
   )
 
   const restoreFromVault = useCallback((timelines: SavedTimeline[], activeId: string | null) => {
     setSavedTimelines(timelines)
-    saveTimelinesList(timelines)
-    setActiveTimelineId(activeId)
+    saveTimelinesList(timelines, caseId)
+    setActiveTimelineId(activeId, caseId)
     setActiveTimelineIdState(activeId)
     const active = activeId ? timelines.find((item) => item.id === activeId) : timelines[0]
     if (active) {
@@ -276,7 +276,7 @@ export function useTimelineTool() {
       setEntries([])
     }
     setSessionSaved(timelines.length > 0)
-  }, [])
+  }, [caseId])
 
   /** @deprecated Use restoreFromVault */
   const restoreFromSnapshot = useCallback(
