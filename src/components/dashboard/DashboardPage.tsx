@@ -454,6 +454,18 @@ export function DashboardPage({
           }}
         />
       ) : null}
+
+      <footer className="dashboard-footer">
+        <span className="dashboard-footer__name">Psychiatry Ink Ltd</span>
+        <span className="dashboard-footer__sep">·</span>
+        <span className="dashboard-footer__address">
+          71-75 Shelton Street, Covent Garden, London, WC2H 9JQ, United Kingdom
+        </span>
+        <span className="dashboard-footer__sep">·</span>
+        <span className="dashboard-footer__copy">
+          © {new Date().getFullYear()} Psychiatry Ink Ltd. All rights reserved.
+        </span>
+      </footer>
     </div>
   )
 }

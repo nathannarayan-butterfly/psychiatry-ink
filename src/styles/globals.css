@@ -3377,4 +3377,30 @@
   .dashboard-activity__backup-value--warn {
     color: color-mix(in srgb, #b45309 75%, var(--text-ink));
   }
+
+  .dashboard-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.6rem;
+    padding: 1.5rem 0 1rem;
+    border-top: 1px solid var(--border-soft);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: auto;
+  }
+
+  .dashboard-footer__name {
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .dashboard-footer__sep {
+    opacity: 0.4;
+  }
+
+  .dashboard-footer__address,
+  .dashboard-footer__copy {
+    color: var(--text-muted);
+  }
 }

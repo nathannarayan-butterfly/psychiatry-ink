@@ -57,7 +57,8 @@
   padding: 1.1rem 0.6rem 1rem 0.9rem;
   border-right: 1px solid color-mix(in srgb, var(--accent) 14%, var(--border-soft));
   background: color-mix(in srgb, var(--accent) 2%, var(--notion-paper-bg, #fff));
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   flex-shrink: 0;
 }
 
@@ -365,11 +366,13 @@
 /* —— Diagnosen widget (sidebar) —— */
 
 .diagnosen-widget {
-  margin-top: 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 0;
   width: 100%;
+  flex-shrink: 0;
+  padding-top: 0.65rem;
+  border-top: 1px solid color-mix(in srgb, var(--border-soft) 60%, transparent);
 }
 
 .diagnosen-widget__header {
@@ -437,6 +440,8 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+  max-height: 12rem;
+  overflow-y: auto;
 }
 
 .diagnosen-widget__empty {
@@ -861,6 +866,7 @@
 /* Diary sidebar (margin column) — no panel, text only */
 
 .notion-diary-sidebar {
+  position: relative;
   display: flex;
   width: 100%;
   height: 100%;
@@ -978,9 +984,14 @@
   flex-shrink: 0;
 }
 
-/* Size containers collapse without a stretched row parent; keep content-sized layout. */
+/* Size containers collapse without a stretched row parent; keep content-sized layout.
+   panel-date-card--sidebar-ink is the variant used in the verlauf/non-workspace tab
+   sidebars — it also needs container-type: normal so that container-type: size from
+   globals.css does not suppress the element's intrinsic height in a flex column,
+   which would collapse the calendar to 0 height and cause DiagnosenWidget to overlap it. */
 .notion-diary-sidebar__date .panel-date-card,
-.panel-date-card--sidebar {
+.panel-date-card--sidebar,
+.panel-date-card--sidebar-ink {
   container-type: normal;
   width: 100%;
   flex-shrink: 0;
@@ -1076,21 +1087,30 @@
 }
 
 .notion-diary-sidebar__graphic {
-  margin-top: auto;
-  min-height: 6.5rem;
-  flex-shrink: 0;
-  overflow: hidden;
+  position: absolute;
+  bottom: 0.5rem;
+  left: 0.4rem;
+  right: 0.4rem;
+  height: 25%;
+  min-height: 6rem;
+  max-height: 11rem;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.notion-diary-sidebar__graphic > * {
+  pointer-events: auto;
 }
 
 .notion-diary-sidebar__graphic .panel-graphic {
   border: none;
-  border-radius: 0;
+  border-radius: 0.5rem;
   background: transparent;
 }
 
 .notion-diary-sidebar__graphic .panel-graphic {
   height: 100%;
-  min-height: 6.5rem;
+  min-height: 6rem;
 }
 
 /* Paper body */
@@ -4653,5 +4673,829 @@
 
 .patient-dashboard__nav-link:hover {
   color: var(--ink, #1a1a18);
+}
+
+
+/* ============================================================
+   Labor (Lab Results) — full feature styles
+   ============================================================ */
+
+/* —— Labor page layout —— */
+
+.labor-page {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.labor-page__sidebar {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 clamp(10rem, 20vw, 13rem);
+  width: clamp(10rem, 20vw, 13rem);
+  border-right: 1px solid color-mix(in srgb, var(--accent) 14%, var(--border-soft));
+  background: color-mix(in srgb, var(--accent) 2%, var(--notion-paper-bg, #fff));
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0.75rem 0.5rem;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.labor-page__add-btn {
+  display: block;
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  margin-bottom: 0.5rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: opacity 0.12s ease;
+  font-family: inherit;
+}
+
+.labor-page__add-btn:hover {
+  opacity: 0.88;
+}
+
+.labor-page__sidebar-empty {
+  font-size: 0.78rem;
+  color: var(--text-muted, #8a8a80);
+  padding: 0.5rem 0.2rem;
+  margin: 0;
+}
+
+.labor-page__befund-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.labor-page__befund-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  padding: 0.38rem 0.55rem;
+  background: none;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.1s ease;
+}
+
+.labor-page__befund-item:hover {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.labor-page__befund-item--active {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.labor-page__befund-date {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--ink, #1a1a18);
+  font-variant-numeric: tabular-nums;
+}
+
+.labor-page__befund-label {
+  font-size: 0.73rem;
+  color: var(--text-muted, #8a8a80);
+  margin-top: 0.05rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* —— Labor page main area —— */
+
+.labor-page__main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  background: var(--notion-paper-bg, #fff);
+}
+
+.labor-page__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 3rem;
+}
+
+.labor-page__empty-text {
+  font-size: 0.95rem;
+  color: var(--text-muted, #8a8a80);
+  margin: 0;
+}
+
+.labor-page__content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 1.25rem 1.5rem;
+  gap: 1rem;
+}
+
+.labor-page__no-params {
+  font-size: 0.88rem;
+  color: var(--text-muted, #8a8a80);
+  margin: 0;
+}
+
+.labor-page__categories {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* —— Befund header —— */
+
+.labor-befund-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-soft, #e8e8e4);
+}
+
+.labor-befund-header__left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.labor-befund-header__date {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink, #1a1a18);
+  margin: 0;
+}
+
+.labor-befund-header__label {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.82rem;
+  color: var(--text-muted, #8a8a80);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-style: dashed;
+}
+
+.labor-befund-header__label:hover {
+  color: var(--accent);
+}
+
+.labor-befund-header__label-edit {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.labor-befund-header__label-input {
+  font-size: 0.82rem;
+  padding: 0.2rem 0.35rem;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 4px;
+  font-family: inherit;
+  outline: none;
+  background: var(--notion-paper-bg, #fff);
+  color: var(--ink, #1a1a18);
+}
+
+.labor-befund-header__label-input:focus {
+  border-color: var(--accent);
+}
+
+.labor-befund-header__label-save,
+.labor-befund-header__label-cancel {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text-muted, #8a8a80);
+  padding: 0 0.15rem;
+  font-family: inherit;
+}
+
+.labor-befund-header__label-save:hover {
+  color: var(--accent);
+}
+
+.labor-befund-header__delete-btn {
+  padding: 0.3rem 0.65rem;
+  background: none;
+  border: 1px solid color-mix(in srgb, var(--color-danger, #dc2626) 30%, transparent);
+  border-radius: 5px;
+  font-size: 0.78rem;
+  color: var(--color-danger, #dc2626);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.1s ease;
+  white-space: nowrap;
+  align-self: flex-start;
+}
+
+.labor-befund-header__delete-btn:hover {
+  background: color-mix(in srgb, var(--color-danger, #dc2626) 8%, transparent);
+}
+
+/* —— Category accordion —— */
+
+.labor-category {
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.labor-category__header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.55rem 0.8rem;
+  background: color-mix(in srgb, var(--accent) 4%, var(--notion-paper-bg, #fff));
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.1s ease;
+  position: relative;
+}
+
+.labor-category__header:hover {
+  background: color-mix(in srgb, var(--accent) 8%, var(--notion-paper-bg, #fff));
+}
+
+.labor-category__chevron {
+  font-size: 0.7rem;
+  color: var(--text-muted, #8a8a80);
+  width: 0.9rem;
+  flex-shrink: 0;
+}
+
+.labor-category__label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ink, #1a1a18);
+}
+
+.labor-category__count {
+  font-size: 0.78rem;
+  color: var(--text-muted, #8a8a80);
+}
+
+.labor-category__graph-btn {
+  margin-left: auto;
+  padding: 0.2rem 0.5rem;
+  background: none;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 5px;
+  font-size: 0.75rem;
+  color: var(--text-secondary, var(--text-muted));
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.1s ease, color 0.1s ease;
+}
+
+.labor-category__graph-btn:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.labor-category__body {
+  padding: 0 0 0.5rem 0;
+  overflow-x: auto;
+}
+
+/* —— Labor table —— */
+
+.labor-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.83rem;
+  color: var(--ink, #1a1a18);
+}
+
+.labor-table__head-row {
+  background: color-mix(in srgb, var(--accent) 2%, transparent);
+}
+
+.labor-table__th {
+  padding: 0.4rem 0.65rem;
+  text-align: left;
+  font-size: 0.73rem;
+  font-weight: 600;
+  color: var(--text-muted, #8a8a80);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid var(--border-soft, #e8e8e4);
+  white-space: nowrap;
+}
+
+.labor-table__th--num,
+.labor-table__th--trend {
+  text-align: right;
+}
+
+.labor-table__th--pin {
+  width: 2rem;
+}
+
+.labor-table__row {
+  transition: background 0.08s ease;
+}
+
+.labor-table__row:hover {
+  background: color-mix(in srgb, var(--accent) 4%, transparent);
+}
+
+.labor-table__row--abnormal {
+  background: color-mix(in srgb, var(--color-danger, #dc2626) 4%, transparent);
+}
+
+.labor-table__row--abnormal:hover {
+  background: color-mix(in srgb, var(--color-danger, #dc2626) 7%, transparent);
+}
+
+.labor-table__td {
+  padding: 0.38rem 0.65rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-soft, #e8e8e4) 60%, transparent);
+  vertical-align: middle;
+}
+
+.labor-table__td--name {
+  font-weight: 500;
+}
+
+.labor-table__td--num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.labor-table__td--abnormal-val {
+  color: var(--color-danger, #dc2626);
+}
+
+.labor-table__td--unit {
+  color: var(--text-muted, #8a8a80);
+  font-size: 0.78rem;
+}
+
+.labor-table__td--ref {
+  color: var(--text-muted, #8a8a80);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.labor-table__td--trend {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.labor-table__td--pin {
+  text-align: center;
+  padding: 0.25rem 0.4rem;
+}
+
+/* —— Trend indicators —— */
+
+.labor-trend {
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.labor-trend--up {
+  color: var(--color-danger, #dc2626);
+}
+
+.labor-trend--down {
+  color: #2563eb;
+}
+
+.labor-trend--stable {
+  color: var(--text-muted, #8a8a80);
+}
+
+.labor-trend--none {
+  color: var(--text-muted, #8a8a80);
+}
+
+.labor-trend__prev {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--text-muted, #8a8a80);
+}
+
+/* —— Pin button —— */
+
+.labor-pin-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  opacity: 0.35;
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  padding: 0.1rem;
+  line-height: 1;
+}
+
+.labor-pin-btn:hover {
+  opacity: 0.75;
+  transform: scale(1.1);
+}
+
+.labor-pin-btn--active {
+  opacity: 1;
+}
+
+/* —— Add-Befund Dialog —— */
+
+.labor-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 1rem;
+}
+
+.labor-dialog {
+  background: var(--notion-paper-bg, #fff);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  width: min(96vw, 560px);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.labor-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem 0.75rem;
+  border-bottom: 1px solid var(--border-soft, #e8e8e4);
+}
+
+.labor-dialog__title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--ink, #1a1a18);
+}
+
+.labor-dialog__close {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+  color: var(--text-muted, #8a8a80);
+  line-height: 1;
+  padding: 0 0.25rem;
+  font-family: inherit;
+}
+
+.labor-dialog__close:hover {
+  color: var(--ink, #1a1a18);
+}
+
+.labor-dialog__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.labor-dialog__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.labor-dialog__label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted, #8a8a80);
+}
+
+.labor-dialog__label--full {
+  grid-column: 1 / -1;
+}
+
+.labor-dialog__input {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 6px;
+  font-size: 0.88rem;
+  font-family: inherit;
+  color: var(--ink, #1a1a18);
+  background: var(--notion-paper-bg, #fff);
+  outline: none;
+  transition: border-color 0.12s ease;
+}
+
+.labor-dialog__input:focus {
+  border-color: var(--accent);
+}
+
+.labor-dialog__textarea {
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 6px;
+  font-size: 0.83rem;
+  font-family: inherit;
+  color: var(--ink, #1a1a18);
+  background: var(--notion-paper-bg, #fff);
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.12s ease;
+  line-height: 1.5;
+}
+
+.labor-dialog__textarea:focus {
+  border-color: var(--accent);
+}
+
+.labor-dialog__actions-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.labor-dialog__btn {
+  padding: 0.42rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  transition: opacity 0.12s ease;
+}
+
+.labor-dialog__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.labor-dialog__btn--primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.labor-dialog__btn--primary:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.labor-dialog__btn--ai {
+  background: none;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+}
+
+.labor-dialog__btn--ai:hover {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.labor-dialog__btn--cancel {
+  background: none;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  color: var(--text-secondary, var(--text-muted));
+}
+
+.labor-dialog__btn--cancel:hover {
+  background: color-mix(in srgb, var(--ink, #1a1a18) 5%, transparent);
+}
+
+.labor-dialog__btn--save {
+  background: var(--accent);
+  color: #fff;
+}
+
+.labor-dialog__btn--save:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.labor-dialog__preview {
+  background: color-mix(in srgb, var(--accent) 5%, var(--notion-paper-bg, #fff));
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, var(--border-soft, #e8e8e4));
+  border-radius: 7px;
+  padding: 0.65rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.labor-dialog__preview-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted, #8a8a80);
+  margin: 0 0 0.2rem;
+}
+
+.labor-dialog__preview-cat {
+  font-size: 0.8rem;
+  color: var(--ink, #1a1a18);
+}
+
+.labor-dialog__preview-cat-label {
+  font-weight: 700;
+}
+
+.labor-dialog__preview-cat-count {
+  color: var(--text-muted, #8a8a80);
+}
+
+.labor-dialog__preview-params {
+  color: var(--text-muted, #8a8a80);
+}
+
+.labor-dialog__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem 1rem;
+  border-top: 1px solid var(--border-soft, #e8e8e4);
+}
+
+/* —— Graph modal —— */
+
+.labor-graph-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 1rem;
+}
+
+.labor-graph-modal {
+  background: var(--notion-paper-bg, #fff);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  width: min(96vw, 600px);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.labor-graph-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem 0.75rem;
+  border-bottom: 1px solid var(--border-soft, #e8e8e4);
+}
+
+.labor-graph-modal__title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--ink, #1a1a18);
+}
+
+.labor-graph-modal__close {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+  color: var(--text-muted, #8a8a80);
+  line-height: 1;
+  padding: 0 0.25rem;
+  font-family: inherit;
+}
+
+.labor-graph-modal__close:hover {
+  color: var(--ink, #1a1a18);
+}
+
+.labor-graph-modal__body {
+  padding: 1rem 1.25rem 1.25rem;
+  overflow-y: auto;
+}
+
+.labor-graph-modal__hint {
+  font-size: 0.88rem;
+  color: var(--text-muted, #8a8a80);
+  margin: 0;
+  text-align: center;
+  padding: 2rem;
+}
+
+/* —— Dashboard widgets —— */
+
+.labor-dashboard-widgets {
+  margin-top: 1.5rem;
+}
+
+.labor-dashboard-widgets__title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-muted, #8a8a80);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 0.75rem;
+}
+
+.labor-dashboard-widgets__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.labor-dashboard-widget {
+  background: color-mix(in srgb, var(--accent) 3%, var(--notion-paper-bg, #fff));
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.labor-dashboard-widget__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem;
+}
+
+.labor-dashboard-widget__name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ink, #1a1a18);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.labor-dashboard-widget__unpin {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text-muted, #8a8a80);
+  line-height: 1;
+  padding: 0;
+  flex-shrink: 0;
+  font-family: inherit;
+}
+
+.labor-dashboard-widget__unpin:hover {
+  color: var(--color-danger, #dc2626);
+}
+
+.labor-dashboard-widget__cat {
+  font-size: 0.72rem;
+  color: var(--text-muted, #8a8a80);
+}
+
+.labor-dashboard-widget__no-data {
+  font-size: 0.75rem;
+  color: var(--text-muted, #8a8a80);
+  margin: 0;
+  padding: 0.5rem 0;
 }
 

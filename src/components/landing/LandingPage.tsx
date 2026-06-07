@@ -178,7 +178,15 @@ export function LandingPage({ onLogin, onSignup, onEnterApp, showDevEntry }: Lan
       </section>
 
       <footer className="landing-footer">
-        <span>© {new Date().getFullYear()} Psychiatry.ink</span>
+        <div className="landing-footer__company">
+          <span className="landing-footer__name">Psychiatry Ink Ltd</span>
+          <span className="landing-footer__address">
+            71-75 Shelton Street, Covent Garden, London, WC2H 9JQ, United Kingdom
+          </span>
+          <span className="landing-footer__copy">
+            © {new Date().getFullYear()} Psychiatry Ink Ltd. All rights reserved.
+          </span>
+        </div>
         <button type="button" className="landing-footer__link" onClick={onLogin}>
           Anmelden
         </button>

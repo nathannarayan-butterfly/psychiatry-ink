@@ -24,6 +24,7 @@ import { CaseTopNav, type TopNavTabId } from './CaseTopNav'
 import { DiagnosenWidget } from './DiagnosenWidget'
 import { PatientDashboardView } from './PatientDashboardView'
 import { VerlaufFeedPage } from './VerlaufFeedPage'
+import { LaborPage } from './LaborPage'
 import { DokumentePage } from './DokumentePage'
 import { appendVerlaufEntry } from '../../utils/verlaufFeed'
 import { appendDokument, inferDokumentCategory } from '../../utils/dokumenteArchive'
@@ -541,7 +542,15 @@ export function NotionApp({
           </div>
         ) : null}
 
-        {!showPatientDashboard && activeTopTab !== 'workspace' && activeTopTab !== 'verlauf' && activeTopTab !== 'dokumente' ? (
+        {!showPatientDashboard && activeTopTab === 'labor' ? (
+          <div className="notion-tab-content-row notion-tab-content-row--full">
+            <div className="notion-tab-content-row__body notion-tab-content-row__body--full">
+              <LaborPage caseId={caseId} />
+            </div>
+          </div>
+        ) : null}
+
+        {!showPatientDashboard && activeTopTab !== 'workspace' && activeTopTab !== 'verlauf' && activeTopTab !== 'dokumente' && activeTopTab !== 'labor' ? (
           <div className="notion-tab-content-row">
             <aside className="notion-tab-content-row__sidebar">
               <PanelDateCard layout="sidebar" />

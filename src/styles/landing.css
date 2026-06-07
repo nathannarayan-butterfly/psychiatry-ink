@@ -359,10 +359,30 @@
 .landing-footer {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 1.25rem clamp(1rem, 4vw, 2.5rem);
+  align-items: flex-end;
+  padding: 1.5rem clamp(1rem, 4vw, 2.5rem);
   border-top: 1px solid var(--border-soft);
   font-size: 0.8125rem;
+  color: var(--text-muted);
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.landing-footer__company {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.landing-footer__name {
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+
+.landing-footer__address,
+.landing-footer__copy {
+  font-size: 0.75rem;
   color: var(--text-muted);
 }
 
@@ -372,6 +392,8 @@
   color: var(--text-secondary);
   cursor: pointer;
   text-decoration: underline;
+  flex-shrink: 0;
+  align-self: flex-end;
 }
 
 .auth-page {
