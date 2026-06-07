@@ -7,6 +7,9 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  ReferenceArea,
+  ReferenceLine,
+  LabelList,
 } from 'recharts'
 import {
   addBefund,
@@ -172,6 +175,7 @@ function LaborPasteZone({ onSave, textareaRef }: LaborPasteZoneProps) {
   const [label, setLabel] = useState('')
   const [status, setStatus] = useState<ParseStatus>('idle')
   const [parsed, setParsed] = useState<LaborCategory[] | null>(null)
+  const [detectedTitle, setDetectedTitle] = useState<string | null>(null)
   const [isKiStructuring, setIsKiStructuring] = useState(false)
   const [isKiAnalysing, setIsKiAnalysing] = useState(false)
   const [kiAnalysisText, setKiAnalysisText] = useState<string | null>(null)
@@ -189,12 +193,23 @@ function LaborPasteZone({ onSave, textareaRef }: LaborPasteZoneProps) {
     setKiError(null)
     setKiAnalysisText(null)
     setTimeout(() => {
-      const cats = parseLabText(text)
+      const result = parseLabText(text)
+      const { title, date: detectedDate, categories: cats } = result
       const total = cats.reduce((sum, c) => sum + c.values.length, 0)
       setParsed(cats)
+      setDetectedTitle(title)
+      // Auto-fill date field if the text contained a recognisable date
+      if (detectedDate && !isNaN(detectedDate.getTime())) {
+        const iso = detectedDate.toISOString().slice(0, 10)
+        setDate(iso)
+      }
+      // Auto-fill label from detected heading
+      if (title && !label.trim()) {
+        setLabel(title)
+      }
       setStatus(total >= 3 ? 'success' : 'too-few')
     }, 0)
-  }, [])
+  }, [label])
 
   const handlePaste = useCallback(() => {
     isPasteRef.current = true
@@ -220,18 +235,20 @@ function LaborPasteZone({ onSave, textareaRef }: LaborPasteZoneProps) {
 
   const handleSave = useCallback(() => {
     if (!parsed || totalParams === 0) return
-    onSave(date, rawText, parsed, label.trim() || undefined)
+    onSave(date, rawText, parsed, label.trim() || detectedTitle || undefined)
     setRawText('')
     setLabel('')
     setParsed(null)
+    setDetectedTitle(null)
     setStatus('idle')
     setKiError(null)
     setKiAnalysisText(null)
-  }, [date, label, onSave, parsed, rawText, totalParams])
+  }, [date, detectedTitle, label, onSave, parsed, rawText, totalParams])
 
   const handleReject = useCallback(() => {
     setRawText('')
     setParsed(null)
+    setDetectedTitle(null)
     setStatus('idle')
     setKiError(null)
     setKiAnalysisText(null)
@@ -332,9 +349,12 @@ function LaborPasteZone({ onSave, textareaRef }: LaborPasteZoneProps) {
         onChange={handleChange}
         rows={6}
       />
-      <p className="labor-paste-zone__hint">
-        Einfach einfügen — die automatische Strukturierung beginnt sofort
-      </p>
+      <div className="labor-paste-zone__features">
+        <span>📊 KI-Strukturierung</span>
+        <span>🔬 KI-Analyse</span>
+        <span>📈 Grafiken & Verläufe</span>
+        <span>📋 Kopieren · Drucken · PDF</span>
+      </div>
 
       {status === 'idle' && rawText.trim() && (
         <div className="labor-paste-zone__actions">
@@ -363,6 +383,12 @@ function LaborPasteZone({ onSave, textareaRef }: LaborPasteZoneProps) {
       {status === 'success' && parsed && !isKiStructuring && (
         <>
           <div className="labor-paste-zone__preview">
+            {detectedTitle && (
+              <div className="labor-paste-zone__detected-heading">
+                <span className="labor-paste-zone__detected-heading-icon">📋</span>
+                {detectedTitle}
+              </div>
+            )}
             <p className="labor-paste-zone__preview-title">
               {totalParams} Parameter in {parsed.length} Kategorien erkannt
             </p>
@@ -563,15 +589,434 @@ function PatientsZuordnen({ onCreatePatient }: PatientsZuordnenProps) {
 interface GraphModalProps {
   category: LaborCategory
   befunde: LaborBefund[]
+  selectedParams: string[]
+  onClose: () => void
+  onCloseAndPin: () => void
+}
+
+function GraphModal({ category, befunde, selectedParams, onClose, onCloseAndPin }: GraphModalProps) {
+  const overlayRef = useRef<HTMLDivElement>(null)
+  const chartContainerRef = useRef<HTMLDivElement>(null)
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'busy' | 'done' | 'err'>('idle')
+  const [pdfStatus, setPdfStatus] = useState<'idle' | 'busy' | 'done' | 'err'>('idle')
+  const [isMaximized, setIsMaximized] = useState(false)
+
+  const sortedBefunde = useMemo(
+    () => [...befunde].sort((a, b) => a.date.localeCompare(b.date)),
+    [befunde],
+  )
+
+  // chartData includes abnormal flags as `${name}__abn` keys
+  const chartData = useMemo(
+    () =>
+      sortedBefunde.map((b) => {
+        const catMatch = b.categories.find(
+          (c) => c.id === category.id || c.label === category.label,
+        )
+        const row: Record<string, string | number | boolean> = { date: shortDate(b.date) }
+        for (const name of selectedParams) {
+          const v = catMatch?.values.find((val) => val.name === name)
+          if (v?.numericValue !== undefined) {
+            row[name] = v.numericValue
+            row[`${name}__abn`] = v.isAbnormal ?? false
+          }
+        }
+        return row
+      }),
+    [sortedBefunde, category, selectedParams],
+  )
+
+  // Collect reference ranges per param (first befund that has them)
+  const refRanges = useMemo<Record<string, { min?: number; max?: number }>>(() => {
+    const result: Record<string, { min?: number; max?: number }> = {}
+    for (const name of selectedParams) {
+      for (const b of sortedBefunde) {
+        const catMatch = b.categories.find(
+          (c) => c.id === category.id || c.label === category.label,
+        )
+        const v = catMatch?.values.find((val) => val.name === name)
+        if (v && (v.refMin !== undefined || v.refMax !== undefined)) {
+          result[name] = { min: v.refMin, max: v.refMax }
+          break
+        }
+      }
+    }
+    return result
+  }, [selectedParams, sortedBefunde, category])
+
+  const isSingleParam = selectedParams.length === 1
+  const hasChart = chartData.length >= 2
+
+  function handleOverlayClick(e: React.MouseEvent) {
+    if (e.target === overlayRef.current) onClose()
+  }
+
+  async function handleCopyImage() {
+    const el = chartContainerRef.current
+    if (!el || copyStatus === 'busy') return
+    setCopyStatus('busy')
+    try {
+      const html2canvas = (await import('html2canvas')).default
+      const canvas = await html2canvas(el, { backgroundColor: '#ffffff', scale: 2 })
+      await new Promise<void>((resolve, reject) => {
+        canvas.toBlob(async (blob) => {
+          if (!blob) { reject(new Error('toBlob failed')); return }
+          try {
+            await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+            resolve()
+          } catch (err) { reject(err) }
+        }, 'image/png')
+      })
+      setCopyStatus('done')
+      setTimeout(() => setCopyStatus('idle'), 2000)
+    } catch {
+      setCopyStatus('err')
+      setTimeout(() => setCopyStatus('idle'), 2000)
+    }
+  }
+
+  function handlePrint() {
+    const el = chartContainerRef.current
+    if (!el) return
+    el.setAttribute('data-labor-print', 'true')
+    const style = document.createElement('style')
+    style.id = '__labor_graph_print__'
+    style.textContent = `@media print {
+      body * { visibility: hidden !important; }
+      [data-labor-print="true"], [data-labor-print="true"] * { visibility: visible !important; }
+      [data-labor-print="true"] { position: fixed; top: 0; left: 0; right: 0; width: 100%; }
+    }`
+    document.head.appendChild(style)
+    window.print()
+    setTimeout(() => {
+      style.remove()
+      el.removeAttribute('data-labor-print')
+    }, 300)
+  }
+
+  async function handleExportPdf() {
+    const el = chartContainerRef.current
+    if (!el || pdfStatus === 'busy') return
+    setPdfStatus('busy')
+    try {
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf'),
+      ])
+      const canvas = await html2canvas(el, { backgroundColor: '#ffffff', scale: 2 })
+      const imgData = canvas.toDataURL('image/jpeg', 0.92)
+      const w = canvas.width / 2
+      const h = canvas.height / 2
+      const pdf = new jsPDF({
+        orientation: w > h ? 'landscape' : 'portrait',
+        unit: 'px',
+        format: [w, h],
+      })
+      pdf.addImage(imgData, 'JPEG', 0, 0, w, h)
+      const safeName = (selectedParams[0] ?? category.label).replace(/[^\w\-äöüÄÖÜß]/g, '_')
+      pdf.save(`${safeName}_${new Date().toISOString().slice(0, 10)}.pdf`)
+      setPdfStatus('done')
+      setTimeout(() => setPdfStatus('idle'), 2000)
+    } catch {
+      setPdfStatus('err')
+      setTimeout(() => setPdfStatus('idle'), 2000)
+    }
+  }
+
+  return (
+    <div className="labor-graph-modal-overlay" ref={overlayRef} onClick={handleOverlayClick}>
+      <div className={['labor-graph-modal', isMaximized ? 'labor-graph-modal--maximized' : ''].join(' ').trim()} role="dialog" aria-modal="true">
+        <div className="labor-graph-modal__header">
+          <h3 className="labor-graph-modal__title">
+            {category.label}
+            {isSingleParam ? ` — ${selectedParams[0]}` : ''} — Verlauf
+          </h3>
+          <button
+            type="button"
+            className="labor-graph-modal__maximize"
+            onClick={() => setIsMaximized((v) => !v)}
+            aria-label={isMaximized ? 'Verkleinern' : 'Maximieren'}
+            title={isMaximized ? 'Verkleinern' : 'Maximieren'}
+          >
+            {isMaximized ? '⊡' : '⊞'}
+          </button>
+          <button
+            type="button"
+            className="labor-graph-modal__close"
+            onClick={onClose}
+            aria-label="Schließen"
+          >
+            ×
+          </button>
+        </div>
+
+        {hasChart && (
+          <div className="labor-graph-modal__toolbar">
+            <button
+              type="button"
+              className={[
+                'labor-graph-modal__tool-btn',
+                copyStatus === 'done' ? 'labor-graph-modal__tool-btn--success' : '',
+                copyStatus === 'err' ? 'labor-graph-modal__tool-btn--error' : '',
+              ].join(' ').trim()}
+              onClick={handleCopyImage}
+              disabled={copyStatus === 'busy'}
+              title="Grafik als Bild in die Zwischenablage kopieren"
+            >
+              {copyStatus === 'done' ? 'Kopiert!' : copyStatus === 'err' ? 'Fehler' : 'Kopieren'}
+            </button>
+            <button
+              type="button"
+              className="labor-graph-modal__tool-btn"
+              onClick={handlePrint}
+              title="Grafik drucken"
+            >
+              Drucken
+            </button>
+            <button
+              type="button"
+              className={[
+                'labor-graph-modal__tool-btn',
+                pdfStatus === 'done' ? 'labor-graph-modal__tool-btn--success' : '',
+                pdfStatus === 'err' ? 'labor-graph-modal__tool-btn--error' : '',
+              ].join(' ').trim()}
+              onClick={handleExportPdf}
+              disabled={pdfStatus === 'busy'}
+              title="Grafik als PDF exportieren"
+            >
+              {pdfStatus === 'done' ? 'Gespeichert!' : pdfStatus === 'err' ? 'Fehler' : 'PDF'}
+            </button>
+            <button
+              type="button"
+              className="labor-graph-modal__tool-btn labor-graph-modal__tool-btn--close-pin"
+              onClick={onCloseAndPin}
+              title="Grafik schließen und im linken Panel speichern"
+            >
+              ✕ Schließen
+            </button>
+          </div>
+        )}
+
+        <div className="labor-graph-modal__body">
+          {!hasChart ? (
+            <p className="labor-graph-modal__hint">
+              Mindestens 2 Befunde für Verlaufsgrafik erforderlich.
+            </p>
+          ) : (
+            <div ref={chartContainerRef} className="labor-graph-modal__chart-wrap">
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={chartData} margin={{ top: 22, right: 24, bottom: 0, left: 0 }}>
+                  <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} width={45} />
+                  <Tooltip />
+                  <Legend />
+
+                  {/* Single-param: shaded reference band */}
+                  {isSingleParam &&
+                    (() => {
+                      const range = refRanges[selectedParams[0]]
+                      if (!range) return null
+                      const elements: React.ReactElement[] = []
+                      if (range.min !== undefined && range.max !== undefined) {
+                        elements.push(
+                          <ReferenceArea
+                            key="ref-area"
+                            y1={range.min}
+                            y2={range.max}
+                            fill="#22c55e"
+                            fillOpacity={0.09}
+                            ifOverflow="extendDomain"
+                          />,
+                        )
+                        elements.push(
+                          <ReferenceLine
+                            key="ref-min"
+                            y={range.min}
+                            stroke="#22c55e"
+                            strokeDasharray="4 2"
+                            label={{
+                              value: String(range.min),
+                              position: 'insideBottomLeft',
+                              fontSize: 10,
+                              fill: '#16a34a',
+                            }}
+                          />,
+                        )
+                        elements.push(
+                          <ReferenceLine
+                            key="ref-max"
+                            y={range.max}
+                            stroke="#22c55e"
+                            strokeDasharray="4 2"
+                            label={{
+                              value: String(range.max),
+                              position: 'insideTopLeft',
+                              fontSize: 10,
+                              fill: '#16a34a',
+                            }}
+                          />,
+                        )
+                      } else if (range.max !== undefined) {
+                        elements.push(
+                          <ReferenceLine
+                            key="ref-max"
+                            y={range.max}
+                            stroke="#22c55e"
+                            strokeDasharray="4 2"
+                            label={{
+                              value: `<${range.max}`,
+                              position: 'insideTopLeft',
+                              fontSize: 10,
+                              fill: '#16a34a',
+                            }}
+                          />,
+                        )
+                      } else if (range.min !== undefined) {
+                        elements.push(
+                          <ReferenceLine
+                            key="ref-min"
+                            y={range.min}
+                            stroke="#22c55e"
+                            strokeDasharray="4 2"
+                            label={{
+                              value: `>${range.min}`,
+                              position: 'insideBottomLeft',
+                              fontSize: 10,
+                              fill: '#16a34a',
+                            }}
+                          />,
+                        )
+                      }
+                      return elements
+                    })()}
+
+                  {/* Multi-param: dashed reference lines per series */}
+                  {!isSingleParam &&
+                    selectedParams.flatMap((name, i) => {
+                      const range = refRanges[name]
+                      if (!range) return []
+                      const color = LINE_COLORS[i % LINE_COLORS.length]
+                      const lines: React.ReactElement[] = []
+                      if (range.min !== undefined) {
+                        lines.push(
+                          <ReferenceLine
+                            key={`ref-min-${name}`}
+                            y={range.min}
+                            stroke={color}
+                            strokeDasharray="3 3"
+                            strokeOpacity={0.45}
+                          />,
+                        )
+                      }
+                      if (range.max !== undefined) {
+                        lines.push(
+                          <ReferenceLine
+                            key={`ref-max-${name}`}
+                            y={range.max}
+                            stroke={color}
+                            strokeDasharray="3 3"
+                            strokeOpacity={0.45}
+                          />,
+                        )
+                      }
+                      return lines
+                    })}
+
+                  {selectedParams.map((name, i) => {
+                    const baseColor = LINE_COLORS[i % LINE_COLORS.length]
+                    return (
+                      <Line
+                        key={name}
+                        type="monotone"
+                        dataKey={name}
+                        stroke={baseColor}
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        dot={(dotProps: any) => {
+                          const { cx, cy, payload } = dotProps as {
+                            cx: number
+                            cy: number
+                            payload: Record<string, unknown>
+                          }
+                          const isAbn = payload[`${name}__abn`] === true
+                          const fill = isAbn ? '#ef4444' : baseColor
+                          return (
+                            <circle
+                              cx={cx}
+                              cy={cy}
+                              r={4}
+                              fill={fill}
+                              stroke={fill}
+                              strokeWidth={1}
+                            />
+                          )
+                        }}
+                        connectNulls
+                      >
+                        <LabelList
+                          dataKey={name}
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          content={(labelProps: any) => {
+                            const { x, y, value, index } = labelProps as {
+                              x: number
+                              y: number
+                              value: number | string | undefined
+                              index: number
+                            }
+                            if (value === undefined || value === null || value === '') return null
+                            const isAbn = chartData[index]?.[`${name}__abn`] === true
+                            return (
+                              <text
+                                x={Number(x)}
+                                y={Number(y) - 9}
+                                fill={isAbn ? '#ef4444' : '#6b7280'}
+                                fontSize={10}
+                                textAnchor="middle"
+                                fontWeight={isAbn ? 700 : 400}
+                              >
+                                {value}
+                              </text>
+                            )
+                          }}
+                        />
+                      </Line>
+                    )
+                  })}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Parameter selection dialog
+// ---------------------------------------------------------------------------
+
+interface LaborGraphParamDialogProps {
+  category: LaborCategory
+  befunde: LaborBefund[]
+  onConfirm: (paramNames: string[]) => void
   onClose: () => void
 }
 
-function GraphModal({ category, befunde, onClose }: GraphModalProps) {
+function LaborGraphParamDialog({
+  category,
+  befunde,
+  onConfirm,
+  onClose,
+}: LaborGraphParamDialogProps) {
   const overlayRef = useRef<HTMLDivElement>(null)
 
-  const sortedBefunde = [...befunde].sort((a, b) => a.date.localeCompare(b.date))
+  const sortedBefunde = useMemo(
+    () => [...befunde].sort((a, b) => b.date.localeCompare(a.date)),
+    [befunde],
+  )
 
-  const paramNames = useMemo(() => {
+  // Collect all param names + their most recent value across befunde
+  const params = useMemo(() => {
     const names = new Set<string>()
     for (const b of sortedBefunde) {
       for (const c of b.categories) {
@@ -580,57 +1025,116 @@ function GraphModal({ category, befunde, onClose }: GraphModalProps) {
         }
       }
     }
-    return Array.from(names)
+    return Array.from(names).map((name) => {
+      let latestValue: LaborValue | undefined
+      for (const b of sortedBefunde) {
+        const catMatch = b.categories.find(
+          (c) => c.id === category.id || c.label === category.label,
+        )
+        const v = catMatch?.values.find((val) => val.name === name)
+        if (v) {
+          latestValue = v
+          break
+        }
+      }
+      return { name, latestValue }
+    })
   }, [sortedBefunde, category])
 
-  const chartData = sortedBefunde.map((b) => {
-    const catMatch = b.categories.find((c) => c.id === category.id || c.label === category.label)
-    const row: Record<string, string | number> = { date: shortDate(b.date) }
-    for (const name of paramNames) {
-      const v = catMatch?.values.find((val) => val.name === name)
-      if (v?.numericValue !== undefined) {
-        row[name] = v.numericValue
-      }
-    }
-    return row
-  })
+  const [checked, setChecked] = useState<Set<string>>(() => new Set(params.map((p) => p.name)))
+
+  // Keep all pre-checked if params list changes
+  useEffect(() => {
+    setChecked(new Set(params.map((p) => p.name)))
+  }, [params])
 
   function handleOverlayClick(e: React.MouseEvent) {
     if (e.target === overlayRef.current) onClose()
   }
 
+  function toggleParam(name: string) {
+    setChecked((prev) => {
+      const next = new Set(prev)
+      if (next.has(name)) next.delete(name)
+      else next.add(name)
+      return next
+    })
+  }
+
+  function handleConfirm() {
+    const selected = params.map((p) => p.name).filter((n) => checked.has(n))
+    if (selected.length === 0) return
+    onConfirm(selected)
+  }
+
   return (
     <div className="labor-graph-modal-overlay" ref={overlayRef} onClick={handleOverlayClick}>
-      <div className="labor-graph-modal" role="dialog" aria-modal="true">
+      <div className="labor-graph-modal labor-graph-param-dialog" role="dialog" aria-modal="true">
         <div className="labor-graph-modal__header">
-          <h3 className="labor-graph-modal__title">{category.label} — Verlauf</h3>
-          <button type="button" className="labor-graph-modal__close" onClick={onClose} aria-label="Schließen">
+          <h3 className="labor-graph-modal__title">{category.label} — Parameter auswählen</h3>
+          <button
+            type="button"
+            className="labor-graph-modal__close"
+            onClick={onClose}
+            aria-label="Schließen"
+          >
             ×
           </button>
         </div>
         <div className="labor-graph-modal__body">
-          {chartData.length < 2 ? (
-            <p className="labor-graph-modal__hint">Mindestens 2 Befunde für Verlaufsgrafik erforderlich.</p>
-          ) : (
-            <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={chartData} margin={{ top: 10, right: 20, bottom: 0, left: 0 }}>
-                <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} width={40} />
-                <Tooltip />
-                <Legend />
-                {paramNames.map((name, i) => (
-                  <Line
-                    key={name}
-                    type="monotone"
-                    dataKey={name}
-                    stroke={LINE_COLORS[i % LINE_COLORS.length]}
-                    dot={{ r: 3 }}
-                    connectNulls
+          <p className="labor-graph-param-dialog__hint">
+            Wähle die Parameter für die Verlaufsgrafik aus:
+          </p>
+          <ul className="labor-graph-param-dialog__list">
+            {params.map(({ name, latestValue }) => (
+              <li key={name} className="labor-graph-param-dialog__item">
+                <label className="labor-graph-param-dialog__label">
+                  <input
+                    type="checkbox"
+                    className="labor-graph-param-dialog__checkbox"
+                    checked={checked.has(name)}
+                    onChange={() => toggleParam(name)}
                   />
-                ))}
-              </LineChart>
-            </ResponsiveContainer>
-          )}
+                  <span className="labor-graph-param-dialog__name">{name}</span>
+                  {latestValue && (
+                    <span
+                      className={[
+                        'labor-graph-param-dialog__value',
+                        latestValue.isAbnormal ? 'labor-graph-param-dialog__value--abnormal' : '',
+                      ]
+                        .join(' ')
+                        .trim()}
+                    >
+                      {latestValue.value} {latestValue.unit}
+                      {latestValue.refText && (
+                        <span className="labor-graph-param-dialog__ref">
+                          {' '}
+                          (Ref: {latestValue.refText})
+                        </span>
+                      )}
+                    </span>
+                  )}
+                </label>
+              </li>
+            ))}
+          </ul>
+          <div className="labor-graph-param-dialog__actions">
+            <button
+              type="button"
+              className="labor-paste-zone__btn labor-paste-zone__btn--primary"
+              onClick={handleConfirm}
+              disabled={checked.size === 0}
+            >
+              Grafik erstellen
+            </button>
+            <button
+              type="button"
+              className="labor-paste-zone__btn labor-paste-zone__btn--reject"
+              onClick={onClose}
+            >
+              Abbrechen
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -778,7 +1282,11 @@ export function LaborPage({ caseId, onCreatePatient }: LaborPageProps) {
     const sorted = [...loadBefunde(caseId)].sort((a, b) => b.date.localeCompare(a.date))
     return sorted[0]?.id ?? null
   })
-  const [graphCategory, setGraphCategory] = useState<LaborCategory | null>(null)
+  const [pendingGraphCat, setPendingGraphCat] = useState<LaborCategory | null>(null)
+  const [graphConfig, setGraphConfig] = useState<{
+    category: LaborCategory
+    params: string[]
+  } | null>(null)
   const [editingLabel, setEditingLabel] = useState(false)
   const [labelDraft, setLabelDraft] = useState('')
   const labelInputRef = useRef<HTMLInputElement>(null)
@@ -964,6 +1472,7 @@ export function LaborPage({ caseId, onCreatePatient }: LaborPageProps) {
             ))}
           </ul>
         )}
+
       </aside>
 
       {/* Main area */}
@@ -1050,7 +1559,7 @@ export function LaborPage({ caseId, onCreatePatient }: LaborPageProps) {
                     caseId={caseId}
                     befundeCount={befunde.length}
                     onPinWidget={handlePinWidget}
-                    onShowGraph={setGraphCategory}
+                    onShowGraph={setPendingGraphCat}
                   />
                 ))}
               </div>
@@ -1068,11 +1577,49 @@ export function LaborPage({ caseId, onCreatePatient }: LaborPageProps) {
         )}
       </div>
 
-      {graphCategory && (
-        <GraphModal
-          category={graphCategory}
+      {pendingGraphCat && (
+        <LaborGraphParamDialog
+          category={pendingGraphCat}
           befunde={befunde}
-          onClose={() => setGraphCategory(null)}
+          onConfirm={(params) => {
+            setGraphConfig({ category: pendingGraphCat, params })
+            setPendingGraphCat(null)
+          }}
+          onClose={() => setPendingGraphCat(null)}
+        />
+      )}
+
+      {graphConfig && (
+        <GraphModal
+          category={graphConfig.category}
+          befunde={befunde}
+          selectedParams={graphConfig.params}
+          onClose={() => setGraphConfig(null)}
+          onCloseAndPin={() => {
+            const current = loadPinnedWidgets(caseId)
+            let anyNew = false
+            for (const paramName of graphConfig.params) {
+              const alreadyPinned = current.some(
+                (w) =>
+                  w.parameterName === paramName &&
+                  w.categoryLabel === graphConfig.category.label,
+              )
+              if (!alreadyPinned) {
+                current.push({
+                  id: crypto.randomUUID(),
+                  caseId,
+                  parameterName: paramName,
+                  categoryLabel: graphConfig.category.label,
+                  pinnedAt: new Date().toISOString(),
+                })
+                anyNew = true
+              }
+            }
+            if (anyNew) savePinnedWidgets(caseId, current)
+            setBefunde((prev) => [...prev])
+            showNotionToast('Grafik gespeichert')
+            setGraphConfig(null)
+          }}
         />
       )}
     </div>

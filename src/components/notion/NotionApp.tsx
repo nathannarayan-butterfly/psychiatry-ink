@@ -15,12 +15,14 @@ import type { SubscriptionPlan } from '../../data/subscriptionPlans'
 import type { useWorkspaceSettings } from '../../hooks/useWorkspaceSettings'
 import type { useWorkspaceVault } from '../../hooks/useWorkspaceVault'
 import type { AiToolKey } from '../../data/aiTools'
+import type { WorkspaceTabsInfo } from '../CaseWorkspacePage'
 import { LottieCharacterStage } from '../LottieCharacterStage'
 import { SettingsPage } from '../settings/SettingsPage'
 import { DocumentationTodayTotalSync } from '../DocumentationTodayTotalSync'
 import { WorkspaceActivitySync } from '../WorkspaceActivitySync'
 import { PanelDateCard } from '../PanelDateCard'
 import { CaseTopNav, type TopNavTabId } from './CaseTopNav'
+import { WorkspaceTabBar } from './WorkspaceTabBar'
 import { DiagnosenWidget } from './DiagnosenWidget'
 import { PatientDashboardView } from './PatientDashboardView'
 import { VerlaufFeedPage } from './VerlaufFeedPage'
@@ -30,6 +32,7 @@ import { TherapiePage } from './TherapiePage'
 import { NewPatientDialog } from '../dashboard/NewPatientDialog'
 import { appendVerlaufEntry } from '../../utils/verlaufFeed'
 import { appendDokument, inferDokumentCategory } from '../../utils/dokumenteArchive'
+import { appendSavedDoc, loadSavedDocs, type SavedDoc } from '../../utils/savedDocs'
 import { NotionTopBar } from './NotionTopBar'
 import { WorkspaceContextMenu } from './WorkspaceContextMenu'
 import { NotionPaper } from './NotionPaper'
@@ -85,6 +88,13 @@ interface NotionAppProps {
   onNavigateDashboard?: () => void
   onNavigateNewCase?: (caseId: string, page?: NotionPageId) => void
   plan: SubscriptionPlan
+  workspaceTabs?: WorkspaceTabsInfo
+  /**
+   * Storage key used for the saved-docs sidebar list.
+   * Defaults to `caseId` but should be set to a per-tab key for general workspace
+   * tabs so that each tab has its own isolated saved-docs list.
+   */
+  savedDocsCaseId?: string
 }
 
 function isAiToolKey(action: SelectionActionId | PasteActionId): action is AiToolKey {
@@ -117,9 +127,14 @@ export function NotionApp({
   onNavigateDashboard,
   onNavigateNewCase: _onNavigateNewCase,
   plan: _plan,
+  workspaceTabs,
+  savedDocsCaseId,
 }: NotionAppProps) {
   const { t } = useTranslation()
   const [breakLottieActive, setBreakLottieActive] = useState(false)
+  // Each workspace tab gets its own saved-docs list via a per-tab storage key.
+  const savedDocsKey = savedDocsCaseId ?? caseId
+  const [savedDocs, setSavedDocs] = useState<SavedDoc[]>(() => loadSavedDocs(savedDocsKey))
 
   const handleBreakStart = useCallback(() => {
     setBreakLottieActive(true)
@@ -236,36 +251,55 @@ export function NotionApp({
 
   const handleAcceptGenerationWithArchive = useCallback(() => {
     const docTypeId = workspace.selectedDocumentType
+    if (!docTypeId) return
+
     const category = inferDokumentCategory(docTypeId)
-    if (category) {
-      const content =
-        workspace.sections.length > 0
-          ? Object.values(workspace.sectionContents).join('\n\n') || workspace.editorContent
-          : workspace.editorContent
-      if (content.trim()) {
-        appendDokument(caseId, {
-          category,
-          title: documentLabel,
-          content: content.trim(),
-          date: new Date().toISOString(),
-          source: 'ai-accepted',
-          pageType: docTypeId,
-        })
-      }
+    const content =
+      workspace.sections.length > 0
+        ? Object.values(workspace.sectionContents).join('\n\n') || workspace.editorContent
+        : workspace.editorContent
+    const sectionContents =
+      workspace.sections.length > 0 ? workspace.sectionContents : {}
+
+    if (category && content.trim()) {
+      appendDokument(caseId, {
+        category,
+        title: documentLabel,
+        content: content.trim(),
+        date: new Date().toISOString(),
+        source: 'ai-accepted',
+        pageType: docTypeId,
+      })
     }
+
+    if (content.trim()) {
+      const updated = appendSavedDoc(savedDocsKey, {
+        typeId: docTypeId,
+        typeLabel: documentLabel,
+        date: new Date().toISOString(),
+        content: content.trim(),
+        sectionContents,
+      })
+      setSavedDocs(updated)
+    }
+
     workspace.acceptGeneration()
-  }, [caseId, documentLabel, workspace])
+    workspace.resetToBlankPage()
+  }, [caseId, documentLabel, savedDocsKey, workspace])
 
   const handleVaultSaveWithArchive = useCallback(() => {
     const docTypeId = workspace.selectedDocumentType
     const category = inferDokumentCategory(docTypeId)
+    const content =
+      workspace.sections.length > 0
+        ? Object.values(workspace.sectionContents).join('\n\n') || workspace.editorContent
+        : workspace.editorContent
+    const sectionContents =
+      workspace.sections.length > 0 ? workspace.sectionContents : {}
+
     // Archive manual saves for formal document types — skip if AI review pending
     // or if AI was just accepted (to avoid duplicating the ai-accepted entry)
     if (category && !workspace.generationPendingReview && !workspace.generationWasAccepted) {
-      const content =
-        workspace.sections.length > 0
-          ? Object.values(workspace.sectionContents).join('\n\n') || workspace.editorContent
-          : workspace.editorContent
       if (content.trim()) {
         appendDokument(caseId, {
           category,
@@ -277,8 +311,42 @@ export function NotionApp({
         })
       }
     }
+
+    // Add to sidebar list whenever there is content and a document type is selected
+    if (docTypeId && content.trim() && !workspace.generationPendingReview) {
+      const updated = appendSavedDoc(savedDocsKey, {
+        typeId: docTypeId,
+        typeLabel: documentLabel,
+        date: new Date().toISOString(),
+        content: content.trim(),
+        sectionContents,
+      })
+      setSavedDocs(updated)
+      workspace.resetToBlankPage()
+    }
+
     handleVaultSaveWithFeedAppend()
-  }, [caseId, documentLabel, handleVaultSaveWithFeedAppend, workspace])
+  }, [caseId, documentLabel, handleVaultSaveWithFeedAppend, savedDocsKey, workspace])
+
+  const handleViewSavedDoc = useCallback(
+    (doc: SavedDoc) => {
+      const hasSectionContents = Object.keys(doc.sectionContents).length > 0
+      workspace.selectDocumentType(doc.typeId)
+      if (hasSectionContents) {
+        workspace.restoreFromSnapshot({
+          documentTypeId: doc.typeId,
+          pageHeading: '',
+          sectionContents: doc.sectionContents,
+          savedAt: doc.date,
+        })
+      } else {
+        workspace.setEditorContent(doc.content)
+      }
+      // Navigate to workspace tab to show the document
+      setActiveTopTab('workspace')
+    },
+    [workspace],
+  )
 
   const showMultistageSections = Boolean(
     workspace.currentDocumentType?.multistage &&
@@ -498,6 +566,16 @@ export function NotionApp({
         onNavigateDashboard={onNavigateDashboard}
       />
 
+      {!hasPatient && workspaceTabs && (
+        <WorkspaceTabBar
+          tabs={workspaceTabs.tabs}
+          activeTabId={workspaceTabs.activeTabId}
+          onTabSelect={workspaceTabs.onTabSelect}
+          onAddTab={workspaceTabs.onAddTab}
+          onCloseTab={workspaceTabs.onCloseTab}
+        />
+      )}
+
       {settingsPanel.isOpen ? (
         <SettingsPage
           activeSection={settingsPanel.activeSection}
@@ -671,6 +749,8 @@ export function NotionApp({
                   setShowPatientDashboard(false)
                   setActiveTopTab('labor')
                 }}
+                savedDocs={savedDocs}
+                onViewSavedDoc={handleViewSavedDoc}
               />
             )}
           </div>

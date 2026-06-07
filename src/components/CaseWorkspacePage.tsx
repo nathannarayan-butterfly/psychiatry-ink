@@ -8,6 +8,7 @@ import { useTimelineTool } from '../hooks/useTimelineTool'
 import { useWorkspaceSettings } from '../hooks/useWorkspaceSettings'
 import { useWorkspaceState } from '../hooks/useWorkspaceState'
 import { useWorkspaceVault } from '../hooks/useWorkspaceVault'
+import { useWorkspaceTabs, type WorkspaceTab } from '../hooks/useWorkspaceTabs'
 import { touchCaseOpened, upsertCaseMeta } from '../hooks/useCaseRegistry'
 import { NOTION_PAGES, resolveNotionPageFromDocumentType, type NotionPageId } from './notion/notionPages'
 import { loadNotionPageDate } from '../utils/notionPageDate'
@@ -21,9 +22,51 @@ import {
 } from '../services/hintTranslationAgent'
 import { localizeWorkspaceComponents } from '../utils/localizeComponents'
 import { toDocumentTypes } from '../utils/workspaceComponents'
+import type { DocumentType } from '../types'
+import type { UiLanguage } from '../types/settings'
 import { NotionApp } from './notion/NotionApp'
 import { useTranslation } from '../context/TranslationContext'
 import { useAuth } from '../context/AuthContext'
+import type { SubscriptionPlan } from '../data/subscriptionPlans'
+
+// ——— Type aliases for prop shapes ———
+
+type AppearanceState = ReturnType<typeof useAppearanceSettings>
+type PrivacyState = ReturnType<typeof usePrivacySettings>
+type LanguageState = ReturnType<typeof useLanguageSettings>
+type SettingsPanelState = ReturnType<typeof useSettingsPanel>
+type WorkspaceSettingsState = ReturnType<typeof useWorkspaceSettings>
+
+// ——— Tab info passed down through the tree ———
+
+export interface WorkspaceTabsInfo {
+  tabs: WorkspaceTab[]
+  activeTabId: string
+  onTabSelect: (id: string) => void
+  onAddTab: () => void
+  onCloseTab: (id: string) => void
+}
+
+// ——— Props for the inner per-tab component ———
+
+interface WorkspaceInnerProps {
+  caseId: string
+  initialPage?: NotionPageId
+  initialShowPatientDashboard?: boolean
+  onNavigateDashboard?: () => void
+  onNavigateNewCase?: (caseId: string, page?: NotionPageId) => void
+  documentTypes: DocumentType[]
+  language: UiLanguage
+  appearance: AppearanceState
+  privacy: PrivacyState
+  languageSettings: LanguageState
+  settingsPanel: SettingsPanelState
+  workspaceSettings: WorkspaceSettingsState
+  plan: SubscriptionPlan
+  workspaceTabs: WorkspaceTabsInfo
+}
+
+// ——— CaseWorkspacePage public props ———
 
 interface CaseWorkspacePageProps {
   caseId: string
@@ -33,45 +76,41 @@ interface CaseWorkspacePageProps {
   onNavigateNewCase?: (caseId: string, page?: NotionPageId) => void
 }
 
-export function CaseWorkspacePage({
+// ——— Per-tab workspace content (keyed by activeTabId to isolate state) ———
+
+function WorkspaceInner({
   caseId,
   initialPage,
   initialShowPatientDashboard,
   onNavigateDashboard,
   onNavigateNewCase,
-}: CaseWorkspacePageProps) {
+  documentTypes,
+  language,
+  appearance,
+  privacy,
+  languageSettings,
+  settingsPanel,
+  workspaceSettings,
+  plan,
+  workspaceTabs,
+}: WorkspaceInnerProps) {
   const { t } = useTranslation()
-  const { plan } = useAuth()
-  const workspaceSettings = useWorkspaceSettings()
-  const languageSettings = useLanguageSettings()
-  const localizedComponents = useMemo(() => {
-    const withLabels = localizeWorkspaceComponents(
-      workspaceSettings.components,
-      languageSettings.language,
-    )
-    return applyHintTranslationsToComponents(withLabels, languageSettings.language)
-  }, [workspaceSettings.components, languageSettings.language])
 
-  useEffect(() => {
-    void ensureHintsTranslated(languageSettings.language)
-  }, [languageSettings.language])
-
-  const documentTypes = useMemo(
-    () => toDocumentTypes(localizedComponents),
-    [localizedComponents],
-  )
+  // Each tab gets an isolated vault key so that a freshly opened tab never
+  // restores another tab's selected document type or editor content.
+  // Tab 0 keeps using `caseId` directly for backward compatibility.
+  const activeTabIndex = workspaceTabs.tabs.findIndex((t) => t.id === workspaceTabs.activeTabId)
+  const tabStorageId =
+    activeTabIndex === 0 ? caseId : `${caseId}::tab::${workspaceTabs.activeTabId}`
 
   useEffect(() => {
     setActiveCaseId(caseId)
     touchCaseOpened(caseId)
   }, [caseId])
 
-  const workspace = useWorkspaceState(documentTypes, languageSettings.language, caseId)
+  const workspace = useWorkspaceState(documentTypes, language, caseId)
   const timeline = useTimelineTool()
   const lab = useLabTool()
-  const appearance = useAppearanceSettings()
-  const privacy = usePrivacySettings()
-  const settingsPanel = useSettingsPanel()
   const [clinicalAge, setClinicalAge] = useState('')
 
   const documentTypeLabel = useCallback(
@@ -192,7 +231,7 @@ export function CaseWorkspacePage({
   )
 
   const workspaceVault = useWorkspaceVault({
-    caseId,
+    caseId: tabStorageId,
     tier: privacy.tier,
     countryCode: privacy.countryCode,
     getLivePatch,
@@ -252,6 +291,74 @@ export function CaseWorkspacePage({
       onNavigateDashboard={onNavigateDashboard}
       onNavigateNewCase={onNavigateNewCase}
       plan={plan}
+      workspaceTabs={workspaceTabs}
+      savedDocsCaseId={tabStorageId}
+    />
+  )
+}
+
+// ——— Outer shell: global settings + tab manager ———
+
+export function CaseWorkspacePage({
+  caseId,
+  initialPage,
+  initialShowPatientDashboard,
+  onNavigateDashboard,
+  onNavigateNewCase,
+}: CaseWorkspacePageProps) {
+  const { plan } = useAuth()
+  const workspaceSettings = useWorkspaceSettings()
+  const languageSettings = useLanguageSettings()
+  const appearance = useAppearanceSettings()
+  const privacy = usePrivacySettings()
+  const settingsPanel = useSettingsPanel()
+
+  const localizedComponents = useMemo(() => {
+    const withLabels = localizeWorkspaceComponents(
+      workspaceSettings.components,
+      languageSettings.language,
+    )
+    return applyHintTranslationsToComponents(withLabels, languageSettings.language)
+  }, [workspaceSettings.components, languageSettings.language])
+
+  useEffect(() => {
+    void ensureHintsTranslated(languageSettings.language)
+  }, [languageSettings.language])
+
+  const documentTypes = useMemo(
+    () => toDocumentTypes(localizedComponents),
+    [localizedComponents],
+  )
+
+  const { tabs, activeTabId, setActiveTabId, addTab, closeTab } = useWorkspaceTabs()
+
+  // Only the very first tab (index 0) inherits the router's initialPage.
+  // Newly added tabs always start blank so they don't copy the previous tab.
+  const activeTabIndex = tabs.findIndex((t) => t.id === activeTabId)
+  const activeTabInitialPage = activeTabIndex === 0 ? initialPage : undefined
+
+  const workspaceTabs: WorkspaceTabsInfo = useMemo(
+    () => ({ tabs, activeTabId, onTabSelect: setActiveTabId, onAddTab: addTab, onCloseTab: closeTab }),
+    [tabs, activeTabId, setActiveTabId, addTab, closeTab],
+  )
+
+  return (
+    <WorkspaceInner
+      key={activeTabId}
+      caseId={caseId}
+      initialPage={activeTabInitialPage}
+      initialShowPatientDashboard={activeTabIndex === 0 ? initialShowPatientDashboard : false}
+      onNavigateDashboard={onNavigateDashboard}
+      onNavigateNewCase={onNavigateNewCase}
+      documentTypes={documentTypes}
+      language={languageSettings.language}
+      appearance={appearance}
+      privacy={privacy}
+      languageSettings={languageSettings}
+      settingsPanel={settingsPanel}
+      workspaceSettings={workspaceSettings}
+      plan={plan}
+      workspaceTabs={workspaceTabs}
     />
   )
 }

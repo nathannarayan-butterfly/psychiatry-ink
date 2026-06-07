@@ -1,6 +1,16 @@
 import type { LaborCategory, LaborValue } from './laborArchive'
 
 // ---------------------------------------------------------------------------
+// Parse result type
+// ---------------------------------------------------------------------------
+
+export interface ParsedLabResult {
+  title: string | null    // e.g. "Labor vom 05.06.2026"
+  date: Date | null       // parsed JS Date if a date was found
+  categories: LaborCategory[]
+}
+
+// ---------------------------------------------------------------------------
 // Category mapping
 // ---------------------------------------------------------------------------
 
@@ -28,7 +38,7 @@ const CATEGORY_DEFS: CategoryDef[] = [
   {
     id: 'leberwerte',
     label: 'Leberwerte',
-    keywords: ['got', 'ast', 'gpt', 'alt', 'alat', 'ggt', 'gamma-gt', 'ap', 'bilirubin', 'albumin', 'ldh', 'che', 'ck'],
+    keywords: ['got', 'ast', 'gpt', 'alat', 'ggt', 'gamma-gt', 'bilirubin', 'albumin', 'ldh', 'che', 'alkalische phosphatase'],
   },
   {
     id: 'elektrolyte',
@@ -39,9 +49,36 @@ const CATEGORY_DEFS: CategoryDef[] = [
     id: 'medikamentenspiegel',
     label: 'Medikamentenspiegel',
     keywords: [
-      'lithium', 'valproat', 'carbamazepin', 'clozapin', 'olanzapin', 'desmethylolanzapin',
-      'quetiapin', 'aripiprazol', 'haloperidol', 'risperidon', 'lamotrigin', 'sertralin',
-      'citalopram', 'escitalopram', 'benperidol', 'amisulprid', 'ziprasidon',
+      // Antipsychotics
+      'benperidol', 'haloperidol', 'flupentixol', 'fluphenazin', 'zuclopenthixol',
+      'perphenazin', 'promethazin', 'clozapin',
+      'olanzapin', 'desmethylolanzapin',
+      'quetiapin', 'norquetiapin',
+      'risperidon', '9-oh-risperidon', 'paliperidon',
+      'aripiprazol', 'dehydroaripiprazol',
+      'ziprasidon', 'amisulprid', 'sulpirid', 'sertindol',
+      // Mood stabilisers
+      'lithium', 'valproat', 'valproinsäure',
+      'carbamazepin', 'carbamazepinepoxid',
+      'lamotrigin', 'oxcarbazepin', 'eslicarbazep',
+      'topiramat', 'levetiracetam', 'pregabalin', 'gabapentin',
+      'phenobarbital', 'phenytoin',
+      // Antidepressants
+      'sertralin', 'desmethylsertralin',
+      'citalopram', 'escitalopram',
+      'fluoxetin', 'norfluoxetin',
+      'paroxetin', 'fluvoxamin',
+      'venlafaxin', 'o-desmethylvenlafaxin',
+      'duloxetin', 'mirtazapin',
+      'amitriptylin', 'nortriptylin',
+      'imipramin', 'desipramin',
+      'clomipramin', 'desmethylclomipramin',
+      'trimipramin', 'opipramol',
+      'bupropion', 'hydroxybupropion',
+      'tranylcypromin', 'moclobemid',
+      // Benzodiazepines / Z-drugs (level monitoring)
+      'diazepam', 'nordazepam', 'clonazepam', 'lorazepam', 'alprazolam',
+      'zolpidem', 'zopiclon',
     ],
   },
   {
@@ -64,6 +101,11 @@ const CATEGORY_DEFS: CategoryDef[] = [
     label: 'Entzündung',
     keywords: ['crp', 'bsg', 'pct', 'ferritin', 'il-6', 'il6'],
   },
+  {
+    id: 'muskelenzyme',
+    label: 'Muskelenzyme',
+    keywords: ['ck gesamt', 'ck-mb', 'ck-mm', 'troponin', 'myoglobin', 'ldh'],
+  },
 ]
 
 function normalizeNum(str: string): number {
@@ -74,9 +116,14 @@ function classifyParameter(name: string): CategoryDef | null {
   const lower = name.toLowerCase().trim()
   for (const cat of CATEGORY_DEFS) {
     for (const kw of cat.keywords) {
-      if (lower === kw || lower.startsWith(kw) || lower.includes(kw)) {
-        return cat
+      if (lower === kw) return cat
+      // Short keywords (≤ 3 chars): whole-word match only — avoids 'ap' matching 'olanzapin'
+      if (kw.length <= 3) {
+        const re = new RegExp(`(?:^|[\\s\\-\\/\\(])${kw}(?:[\\s\\-\\/\\(\\)]|$)`, 'i')
+        if (re.test(lower)) return cat
+        continue
       }
+      if (lower.startsWith(kw) || lower.includes(kw)) return cat
     }
   }
   return null
@@ -111,10 +158,11 @@ function buildValue(
   refMax?: number,
   refText?: string,
 ): LaborValue {
-  const numericValue = parseFloat(rawValue.replace(/^[<>]/, '').replace(',', '.'))
+  const numericValue = parseFloat(rawValue.replace(/^[<>≤≥]/, '').replace(',', '.'))
   const isAbnormal =
-    refMin !== undefined && refMax !== undefined && !Number.isNaN(numericValue)
-      ? numericValue < refMin || numericValue > refMax
+    !Number.isNaN(numericValue) && (refMin !== undefined || refMax !== undefined)
+      ? (refMin !== undefined && numericValue < refMin) ||
+        (refMax !== undefined && numericValue > refMax)
       : undefined
   return {
     name,
@@ -200,6 +248,12 @@ function parseInlineToken(raw: string): LaborValue | null {
       break
     }
     if (singleMatch) {
+      const op = c.match(/^([<>≤≥])/)?.[1]
+      const num = parseFloat(c.replace(/^[<>≤≥]/, '').replace(',', '.'))
+      if (!isNaN(num)) {
+        if (op === '<' || op === '≤') refMax = num
+        else if (op === '>' || op === '≥') refMin = num
+      }
       refText = c
       break
     }
@@ -230,14 +284,70 @@ function parseLine(line: string): LaborValue | null {
   const rawName = m[1].trim()
   if (!rawName || rawName.length < 2 || /^\d+$/.test(rawName)) return null
 
-  const refMin = m[4] !== undefined ? normalizeNum(m[4]) : undefined
-  const refMax = m[5] !== undefined ? normalizeNum(m[5]) : undefined
-  const refText =
-    refMin !== undefined && refMax !== undefined && !Number.isNaN(refMin) && !Number.isNaN(refMax)
-      ? `${m[4].replace(',', '.')}-${m[5].replace(',', '.')}`
-      : undefined
+  let refMin: number | undefined
+  let refMax: number | undefined
+  let refText: string | undefined
 
-  return buildValue(rawName, m[2], m[3].trim(), refText ? refMin : undefined, refText ? refMax : undefined, refText)
+  if (m[4] !== undefined && m[5] !== undefined) {
+    // min-max range
+    refMin = normalizeNum(m[4])
+    refMax = normalizeNum(m[5])
+    refText = `${m[4].replace(',', '.')}-${m[5].replace(',', '.')}`
+  }
+
+  // Also look for a one-sided limit after the unit  (e.g. "<190", ">60", "≤190")
+  if (refMin === undefined && refMax === undefined) {
+    const oneSided = clean.match(/\s([<>≤≥])(\d+[,.]?\d*)/)
+    if (oneSided) {
+      const op = oneSided[1]
+      const num = normalizeNum(oneSided[2])
+      if (!isNaN(num)) {
+        if (op === '<' || op === '≤') { refMax = num; refText = `${op}${oneSided[2]}` }
+        else                          { refMin = num; refText = `${op}${oneSided[2]}` }
+      }
+    }
+  }
+
+  return buildValue(rawName, m[2], m[3].trim(), refMin, refMax, refText)
+}
+
+// ---------------------------------------------------------------------------
+// Heading / date extraction
+// ---------------------------------------------------------------------------
+
+/**
+ * Finds a "Labor vom DD.MM.YYYY" style line (or similar headings) and returns
+ * the matched heading text + a JS Date.  Returns nulls when nothing found.
+ */
+function extractHeading(text: string): { title: string | null; date: Date | null } {
+  // Patterns like: "Labor vom 05.06.2026", "Befund vom 5.6.26", "Laborbefund 05.06.2026"
+  const headingRe = /^[ \t]*((?:labor(?:befund)?|befund|blutbefund|laborwerte|laborergebnis(?:se)?)(?:\s+vom)?\s*[:–\-]?\s*(\d{1,2})[.\-\/](\d{1,2})[.\-\/](\d{2,4}))/im
+  // Also catch bare date lines: "05.06.2026" or "5.6.2026" alone
+  const bareDateRe = /^[ \t]*(\d{1,2})[.\-\/](\d{1,2})[.\-\/](\d{2,4})[ \t]*$/m
+
+  let m = text.match(headingRe)
+  if (m) {
+    const title = m[1].trim()
+    const day = parseInt(m[2], 10)
+    const month = parseInt(m[3], 10) - 1
+    let year = parseInt(m[4], 10)
+    if (year < 100) year += 2000
+    const date = new Date(year, month, day)
+    return { title, date: isNaN(date.getTime()) ? null : date }
+  }
+
+  m = text.match(bareDateRe)
+  if (m) {
+    const day = parseInt(m[1], 10)
+    const month = parseInt(m[2], 10) - 1
+    let year = parseInt(m[3], 10)
+    if (year < 100) year += 2000
+    const date = new Date(year, month, day)
+    const title = `Labor vom ${String(day).padStart(2,'0')}.${String(month+1).padStart(2,'0')}.${year}`
+    return { title, date: isNaN(date.getTime()) ? null : date }
+  }
+
+  return { title: null, date: null }
 }
 
 // ---------------------------------------------------------------------------
@@ -252,17 +362,18 @@ function addToMap(map: Map<string, LaborCategory>, val: LaborValue) {
   map.get(catId)!.values.push(val)
 }
 
-export function parseLabText(rawText: string): LaborCategory[] {
+export function parseLabText(rawText: string): ParsedLabResult {
+  const { title, date } = extractHeading(rawText)
   const normalized = normalizeText(rawText)
   const categoryMap = new Map<string, LaborCategory>()
 
   // Strategy 1: try inline comma-separated format
-  // Split on ", " followed by an uppercase letter (start of next parameter name)
-  const inlineTokens = normalized.split(/,\s+(?=[A-ZÄÖÜ])/)
+  // Split on ", " followed by any letter (upper or lower — covers eGFR, pH, fT4 etc.)
+  const inlineTokens = normalized.split(/,\s+(?=[A-Za-zÄÖÜäöüß])/)
   if (inlineTokens.length > 2) {
     for (const token of inlineTokens) {
-      // Each token may start with "Labor vom DD.MM.YYYY" header — skip
-      if (/^Labor\s+vom/i.test(token.trim())) continue
+      // Skip heading lines
+      if (/^(?:labor|befund|laborwerte)/i.test(token.trim())) continue
       const val = parseInlineToken(token)
       if (val) addToMap(categoryMap, val)
     }
@@ -271,10 +382,16 @@ export function parseLabText(rawText: string): LaborCategory[] {
   // Strategy 2: line-by-line (tabular format)
   if (categoryMap.size === 0) {
     for (const line of normalized.split(/\r?\n/)) {
+      // Skip heading lines
+      if (/^(?:labor|befund|laborwerte)/i.test(line.trim())) continue
       const val = parseLine(line)
       if (val) addToMap(categoryMap, val)
     }
   }
 
-  return Array.from(categoryMap.values()).filter((c) => c.values.length > 0)
+  return {
+    title,
+    date,
+    categories: Array.from(categoryMap.values()).filter((c) => c.values.length > 0),
+  }
 }

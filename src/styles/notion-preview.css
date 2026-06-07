@@ -99,6 +99,130 @@
   background: var(--notion-paper-bg, #fff);
 }
 
+/* —— Workspace tab bar (anonymous multi-workspace mode) —— */
+
+.workspace-tab-bar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  height: 30px;
+  min-height: 30px;
+  background: color-mix(in srgb, var(--bg-primary, #f5f5f5) 80%, var(--border-light, #e0e0e0) 20%);
+  border-bottom: 1px solid var(--border-light, #e8e8e8);
+  padding: 0 0.5rem 0 0;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.workspace-tab-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.workspace-tab-bar__tabs {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  height: 100%;
+}
+
+.workspace-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  height: 100%;
+  padding: 0 0.55rem 0 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 440;
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  border-right: 1px solid var(--border-light, #e8e8e8);
+  background: transparent;
+  transition: background 0.1s ease, color 0.1s ease;
+  user-select: none;
+  max-width: 10rem;
+  position: relative;
+}
+
+.workspace-tab:hover {
+  background: color-mix(in srgb, var(--accent, #4a7c59) 6%, transparent);
+  color: var(--text-primary, var(--text-ink));
+}
+
+.workspace-tab--active {
+  background: var(--notion-paper-bg, #fff);
+  color: var(--text-primary, var(--text-ink));
+  font-weight: 510;
+  box-shadow: inset 0 2px 0 var(--accent, #4a7c59);
+}
+
+.workspace-tab--active:hover {
+  background: var(--notion-paper-bg, #fff);
+}
+
+.workspace-tab__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.workspace-tab__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.1rem;
+  height: 1.1rem;
+  border: none;
+  border-radius: 0.2rem;
+  background: transparent;
+  font-size: 0.85rem;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  opacity: 0;
+  transition: opacity 0.1s ease, background 0.1s ease;
+}
+
+.workspace-tab:hover .workspace-tab__close,
+.workspace-tab--active .workspace-tab__close {
+  opacity: 0.55;
+}
+
+.workspace-tab__close:hover {
+  background: color-mix(in srgb, var(--text-muted) 15%, transparent);
+  opacity: 1 !important;
+  color: var(--text-primary, var(--text-ink));
+}
+
+.workspace-tab__add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.6rem;
+  height: 1.6rem;
+  margin: 0 0.2rem 0 0.35rem;
+  border: none;
+  border-radius: 0.25rem;
+  background: transparent;
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.1s ease, color 0.1s ease;
+}
+
+.workspace-tab__add:hover {
+  background: color-mix(in srgb, var(--accent, #4a7c59) 10%, transparent);
+  color: var(--text-primary, var(--text-ink));
+}
+
 .notion-topbar {
   display: flex;
   flex-shrink: 0;
@@ -1047,6 +1171,69 @@
 
 .notion-diary-sidebar__timers {
   flex-shrink: 0;
+}
+
+/* —— Sidebar saved-docs list —— */
+
+.notion-diary-sidebar__saved-docs {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.notion-diary-sidebar__saved-docs-heading {
+  margin: 0 0 0.3rem 0;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-muted, #9ca3af);
+}
+
+.notion-diary-sidebar__saved-docs-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.notion-diary-sidebar__saved-doc-item {
+  display: flex;
+  width: 100%;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.35rem;
+  padding: 0.22rem 0.3rem;
+  border: none;
+  border-radius: 0.3rem;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s ease;
+  min-width: 0;
+}
+
+.notion-diary-sidebar__saved-doc-item:hover {
+  background: color-mix(in srgb, var(--accent, #6366f1) 10%, transparent);
+}
+
+.notion-diary-sidebar__saved-doc-label {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--ink, #1a1a2e);
+}
+
+.notion-diary-sidebar__saved-doc-date {
+  flex-shrink: 0;
+  font-size: 0.6rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted, #9ca3af);
 }
 
 .pomodoro-sidebar-lines {
@@ -4270,6 +4457,7 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 1.5rem 2rem 3rem;
   max-width: 42rem;
 }
@@ -4310,6 +4498,10 @@
   .settings-fullpage__nav-item {
     padding: 0.35rem 0.55rem;
     font-size: 0.75rem;
+  }
+
+  .settings-fullpage__content-header {
+    padding: 0.875rem 1.25rem 0.625rem;
   }
 
   .settings-fullpage__content-body {
@@ -4887,6 +5079,43 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+.labor-page__pinned-widgets {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.75rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid color-mix(in srgb, var(--border-soft, #e0e0d8) 60%, transparent);
+}
+
+.labor-page__pinned-header {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted, #8a8a80);
+  margin-bottom: 0.15rem;
+}
+
+.labor-page__pinned-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.labor-page__pinned-name {
+  font-size: 0.68rem;
+  color: var(--text-muted, #8a8a80);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.labor-page__pinned-chart {
+  width: 100%;
+  height: 34px;
 }
 
 /* —— Befund header —— */
@@ -5467,6 +5696,37 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: width 0.2s ease, max-height 0.2s ease, border-radius 0.2s ease;
+}
+
+.labor-graph-modal--maximized {
+  width: 99vw;
+  max-height: 99vh;
+  border-radius: 6px;
+}
+
+.labor-graph-modal--maximized .labor-graph-modal__body {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.labor-graph-modal--maximized .labor-graph-modal__chart-wrap {
+  height: calc(99vh - 140px);
+}
+
+.labor-graph-modal__maximize {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: var(--text-muted, #8a8a80);
+  line-height: 1;
+  padding: 0 0.3rem;
+  margin-left: auto;
+  transition: color 0.15s;
+}
+.labor-graph-modal__maximize:hover {
+  color: var(--accent, #4a6fa5);
 }
 
 .labor-graph-modal__header {
@@ -5504,12 +5764,159 @@
   overflow-y: auto;
 }
 
+.labor-graph-modal__chart-wrap {
+  /* Needed so html2canvas can capture a defined region */
+  background: var(--notion-paper-bg, #fff);
+  padding: 0.25rem 0;
+}
+
+/* —— Graph modal toolbar (copy / print / PDF / close) —— */
+
+.labor-graph-modal__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 1.25rem;
+  border-bottom: 1px solid var(--border-soft, #e8e8e4);
+  background: var(--surface-subtle, #fafaf8);
+  flex-wrap: wrap;
+}
+
+.labor-graph-modal__tool-btn {
+  background: none;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 5px;
+  font-size: 0.78rem;
+  font-family: inherit;
+  padding: 0.2rem 0.55rem;
+  cursor: pointer;
+  color: var(--text-secondary, #555);
+  line-height: 1.5;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  white-space: nowrap;
+}
+
+.labor-graph-modal__tool-btn:hover:not(:disabled) {
+  background: var(--surface-hover, #f0f0ec);
+  border-color: var(--border-medium, #ccc);
+  color: var(--ink, #1a1a18);
+}
+
+.labor-graph-modal__tool-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.labor-graph-modal__tool-btn--success {
+  border-color: #16a34a;
+  color: #16a34a;
+  background: #f0fdf4;
+}
+
+.labor-graph-modal__tool-btn--error {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.labor-graph-modal__tool-btn--close-pin {
+  margin-left: auto;
+  border-color: var(--accent, #3b82f6);
+  color: var(--accent, #3b82f6);
+}
+
+.labor-graph-modal__tool-btn--close-pin:hover:not(:disabled) {
+  background: #eff6ff;
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
 .labor-graph-modal__hint {
   font-size: 0.88rem;
   color: var(--text-muted, #8a8a80);
   margin: 0;
   text-align: center;
   padding: 2rem;
+}
+
+/* —— Parameter selection dialog —— */
+
+.labor-graph-param-dialog {
+  width: min(96vw, 480px);
+}
+
+.labor-graph-param-dialog__hint {
+  font-size: 0.85rem;
+  color: var(--text-muted, #8a8a80);
+  margin: 0 0 0.75rem;
+}
+
+.labor-graph-param-dialog__list {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.labor-graph-param-dialog__item {
+  border-radius: 6px;
+  padding: 0.35rem 0.5rem;
+  transition: background 0.1s;
+}
+
+.labor-graph-param-dialog__item:hover {
+  background: var(--surface-hover, #f4f4f2);
+}
+
+.labor-graph-param-dialog__label {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  cursor: pointer;
+  width: 100%;
+}
+
+.labor-graph-param-dialog__checkbox {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent, #3b82f6);
+  cursor: pointer;
+}
+
+.labor-graph-param-dialog__name {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--ink, #1a1a18);
+  flex: 1;
+  min-width: 0;
+}
+
+.labor-graph-param-dialog__value {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #6b7280);
+  white-space: nowrap;
+}
+
+.labor-graph-param-dialog__value--abnormal {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.labor-graph-param-dialog__ref {
+  font-size: 0.75rem;
+  color: var(--text-muted, #8a8a80);
+}
+
+.labor-graph-param-dialog__actions {
+  display: flex;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--border-soft, #e8e8e4);
+  margin-top: 0.5rem;
 }
 
 /* —— Dashboard widgets —— */
@@ -6020,6 +6427,22 @@
   margin: 0;
 }
 
+.labor-paste-zone__features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: 6px;
+  padding: 6px 10px;
+  background: var(--bg-secondary, #f7f7f5);
+  border-radius: 6px;
+  border: 1px solid var(--border-soft, #e8e8e4);
+}
+.labor-paste-zone__features span {
+  font-size: 0.72rem;
+  color: var(--text-secondary, #666);
+  white-space: nowrap;
+}
+
 .labor-paste-zone__status {
   font-size: 0.82rem;
   color: var(--text-muted, #8a8a80);
@@ -6060,6 +6483,23 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+.labor-paste-zone__detected-heading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent, #4a6fa5);
+  background: var(--accent-light, #eef3fb);
+  border-left: 3px solid var(--accent, #4a6fa5);
+  padding: 5px 10px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+.labor-paste-zone__detected-heading-icon {
+  font-size: 0.9rem;
 }
 
 .labor-paste-zone__preview-title {

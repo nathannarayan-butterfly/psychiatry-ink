@@ -262,8 +262,8 @@ export function AppearanceSection({ appearance }: AppearanceSectionProps) {
 
   return (
     <div>
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
           <h2 className="text-lg font-semibold text-ink">Darstellung</h2>
           <p className="mt-1 text-sm text-muted">
             Weiße Arbeitsflächen. Akzentfarbe nur in der Dokument-Kopfzeile und für Auswahlrahmen.
@@ -272,7 +272,7 @@ export function AppearanceSection({ appearance }: AppearanceSectionProps) {
         <button
           type="button"
           onClick={resetAppearance}
-          className="shrink-0 rounded-md border border-border/60 bg-surface px-3 py-1.5 text-xs text-ink transition-colors hover:bg-surface-hover"
+          className="shrink-0 self-start rounded-md border border-border/60 bg-surface px-3 py-1.5 text-xs text-ink transition-colors hover:bg-surface-hover"
         >
           Zurücksetzen
         </button>

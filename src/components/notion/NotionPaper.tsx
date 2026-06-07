@@ -19,6 +19,7 @@ import { NotionEditor } from './NotionEditor'
 import { NotionPatientFields } from './NotionPatientFields'
 import { NotionMultiSectionEditor } from './NotionMultiSectionEditor'
 import { NotionDiarySidebar } from './NotionDiarySidebar'
+import type { SavedDoc } from '../../utils/savedDocs'
 import { NotionSidebarCollapseHandle } from './NotionSidebarCollapseHandle'
 import { NotionDictationStrip } from './NotionDictationStrip'
 import { NotionAiModeDropdown } from './NotionAiModeDropdown'
@@ -116,6 +117,8 @@ interface NotionPaperProps {
   onSwitchToWrite?: () => void
   dictationDisabled?: boolean
   onNavigateToLabor?: () => void
+  savedDocs?: SavedDoc[]
+  onViewSavedDoc?: (doc: SavedDoc) => void
 }
 
 export interface PendingPaste {
@@ -196,6 +199,8 @@ export function NotionPaper({
   onSwitchToWrite,
   dictationDisabled = false,
   onNavigateToLabor,
+  savedDocs,
+  onViewSavedDoc,
 }: NotionPaperProps) {
   const { t } = useTranslation()
   const patient = usePatientMetadata({
@@ -541,6 +546,8 @@ export function NotionPaper({
           onBreakStart={onBreakStart}
           caseId={caseId}
           onNavigateToLabor={onNavigateToLabor}
+          savedDocs={savedDocs}
+          onViewSavedDoc={onViewSavedDoc}
         />
       </div>
 

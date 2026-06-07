@@ -207,8 +207,8 @@ export function WorkspaceSection({ workspace }: WorkspaceSectionProps) {
 
   return (
     <div>
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
           <h2 className="text-lg font-semibold text-ink">Arbeitsbereich</h2>
           <p className="mt-1 text-sm text-muted">
             Komponenten und Abschnitte der unteren Werkzeugleiste anpassen.
@@ -217,7 +217,7 @@ export function WorkspaceSection({ workspace }: WorkspaceSectionProps) {
         <button
           type="button"
           onClick={workspace.resetWorkspace}
-          className="shrink-0 rounded-sm border-2 border-border px-3 py-1.5 text-xs text-ink transition-colors hover:bg-surface-hover"
+          className="shrink-0 self-start rounded-sm border-2 border-border px-3 py-1.5 text-xs text-ink transition-colors hover:bg-surface-hover"
         >
           Zurücksetzen
         </button>

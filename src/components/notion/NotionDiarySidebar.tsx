@@ -5,6 +5,7 @@ import { PanelDateCard } from '../PanelDateCard'
 import { PanelGraphic } from '../PanelGraphic'
 import { PomodoroWidget } from './PomodoroWidget'
 import { LaborSidebarWidget } from './LaborSidebarWidget'
+import type { SavedDoc } from '../../utils/savedDocs'
 
 interface NotionDiarySidebarProps {
   panelGraphicEnabled: boolean
@@ -14,6 +15,20 @@ interface NotionDiarySidebarProps {
   onBreakStart?: () => void
   caseId?: string
   onNavigateToLabor?: () => void
+  savedDocs?: SavedDoc[]
+  onViewSavedDoc?: (doc: SavedDoc) => void
+}
+
+function formatShortDate(iso: string): string {
+  try {
+    const d = new Date(iso)
+    const day = String(d.getDate()).padStart(2, '0')
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const year = d.getFullYear()
+    return `${day}.${month}.${year}`
+  } catch {
+    return iso.slice(0, 10)
+  }
 }
 
 export function NotionDiarySidebar({
@@ -24,6 +39,8 @@ export function NotionDiarySidebar({
   onBreakStart,
   caseId,
   onNavigateToLabor,
+  savedDocs,
+  onViewSavedDoc,
 }: NotionDiarySidebarProps) {
   const { t } = useTranslation()
   const { visible: randomLottieVisible, dismiss: dismissRandomLottie } = useRandomLottie({
@@ -36,6 +53,8 @@ export function NotionDiarySidebar({
     dismissRandomLottie()
     onClosePanelGraphic()
   }, [dismissRandomLottie, onClosePanelGraphic])
+
+  const hasSavedDocs = savedDocs && savedDocs.length > 0
 
   return (
     <aside
@@ -58,6 +77,31 @@ export function NotionDiarySidebar({
 
           {caseId && (
             <LaborSidebarWidget caseId={caseId} onNavigateToLabor={onNavigateToLabor} />
+          )}
+
+          {hasSavedDocs && (
+            <div className="notion-diary-sidebar__saved-docs">
+              <p className="notion-diary-sidebar__saved-docs-heading">Dokumente</p>
+              <ul className="notion-diary-sidebar__saved-docs-list">
+                {savedDocs.map((doc) => (
+                  <li key={doc.id}>
+                    <button
+                      type="button"
+                      className="notion-diary-sidebar__saved-doc-item"
+                      onClick={() => onViewSavedDoc?.(doc)}
+                      title={doc.typeLabel}
+                    >
+                      <span className="notion-diary-sidebar__saved-doc-label">
+                        {doc.typeLabel}
+                      </span>
+                      <span className="notion-diary-sidebar__saved-doc-date">
+                        {formatShortDate(doc.date)}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
 
           {showPanelGraphic ? (

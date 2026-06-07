@@ -228,6 +228,27 @@ export function DashboardPage({
 
   const greeting = t('dashboardGreeting').replace('{name}', displayName)
 
+  if (settingsPanel.isOpen) {
+    return (
+      <div className="settings-fullpage-host text-ink">
+        <SettingsPage
+          activeSection={settingsPanel.activeSection}
+          onSectionChange={settingsPanel.setActiveSection}
+          onClose={settingsPanel.closeSettings}
+          appearance={appearance}
+          privacy={privacy}
+          workspace={workspaceSettings}
+          aiAutoMode={aiAutoMode}
+          onToggleAiAuto={toggleAiAutoMode}
+          kiInstructions={kiInstructions}
+          language={languageSettings.language}
+          onSelectLanguage={languageSettings.selectLanguage}
+          workspaceVault={workspaceVault}
+        />
+      </div>
+    )
+  }
+
   return (
     <div className="dashboard-page text-ink">
       <header className="dashboard-topbar">
@@ -425,23 +446,6 @@ export function DashboardPage({
           onSelect={handleWorkflowSelect}
           onStayOnDashboard={handleStayOnDashboard}
           onClose={handleCloseWorkflowDialog}
-        />
-      ) : null}
-
-      {settingsPanel.isOpen ? (
-        <SettingsPage
-          activeSection={settingsPanel.activeSection}
-          onSectionChange={settingsPanel.setActiveSection}
-          onClose={settingsPanel.closeSettings}
-          appearance={appearance}
-          privacy={privacy}
-          workspace={workspaceSettings}
-          aiAutoMode={aiAutoMode}
-          onToggleAiAuto={toggleAiAutoMode}
-          kiInstructions={kiInstructions}
-          language={languageSettings.language}
-          onSelectLanguage={languageSettings.selectLanguage}
-          workspaceVault={workspaceVault}
         />
       ) : null}
 

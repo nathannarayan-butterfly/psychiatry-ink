@@ -331,6 +331,15 @@ export function useWorkspaceState(documentTypes: DocumentType[], language: UiLan
     resetDictation()
   }, [resetDictation])
 
+  const resetToBlankPage = useCallback(() => {
+    setSelectedDocumentType('')
+    setEditorContent('')
+    setGeneratedContent('')
+    setSectionContents({})
+    setChecklistSelections({})
+    resetWorkspaceSession()
+  }, [resetWorkspaceSession])
+
   const applyWorkspaceForType = useCallback((nextType: DocumentType) => {
     const initial = buildInitialWorkspaceForType(nextType)
     setSections(initial.sections)
@@ -1394,6 +1403,7 @@ export function useWorkspaceState(documentTypes: DocumentType[], language: UiLan
     checklistSelections,
     showNormalBefundButton,
     activeVariantIds,
+    resetToBlankPage,
     selectDocumentType,
     selectDocumentTypeAndSection,
     selectComponentVariant,

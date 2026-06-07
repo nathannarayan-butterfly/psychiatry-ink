@@ -3426,4 +3426,11 @@
   .dashboard-footer__copy {
     color: var(--text-muted);
   }
+
+  .settings-fullpage-host {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    overflow: hidden;
+  }
 }
