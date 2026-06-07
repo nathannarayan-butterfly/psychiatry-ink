@@ -14,24 +14,28 @@ export function AppLogo({ onClick }: AppLogoProps) {
 
   const content =
     hasLogoInkMark && logoInkSrc ? (
-      <>
-        <span className="topbar-logo__stem truncate font-semibold tracking-tight text-ink">
-          {stem}
-        </span>
-        <img
-          src={logoInkSrc}
-          alt=""
-          aria-hidden
-          className="topbar-logo__mark shrink-0 object-contain"
-          decoding="async"
-        />
+      <div className="topbar-logo__lockup">
+        <div className="topbar-logo__row">
+          <span className="topbar-logo__stem truncate font-semibold tracking-tight text-ink">
+            {stem}
+          </span>
+          <img
+            src={logoInkSrc}
+            alt=""
+            aria-hidden
+            className="topbar-logo__mark shrink-0 object-contain"
+            decoding="async"
+          />
+        </div>
         <span className="topbar-logo__beta" aria-label="Beta">BETA</span>
-      </>
+      </div>
     ) : (
-      <span className="truncate text-lg font-semibold tracking-tight text-ink sm:text-xl">
-        {logoTextByLanguage[language]}
+      <div className="topbar-logo__lockup">
+        <span className="truncate text-lg font-semibold tracking-tight text-ink sm:text-xl">
+          {logoTextByLanguage[language]}
+        </span>
         <span className="topbar-logo__beta" aria-label="Beta">BETA</span>
-      </span>
+      </div>
     )
 
   if (!onClick) {

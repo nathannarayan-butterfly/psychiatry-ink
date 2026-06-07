@@ -115,6 +115,7 @@ interface NotionPaperProps {
   onStartDictation?: () => void
   onSwitchToWrite?: () => void
   dictationDisabled?: boolean
+  onNavigateToLabor?: () => void
 }
 
 export interface PendingPaste {
@@ -194,6 +195,7 @@ export function NotionPaper({
   onStartDictation,
   onSwitchToWrite,
   dictationDisabled = false,
+  onNavigateToLabor,
 }: NotionPaperProps) {
   const { t } = useTranslation()
   const patient = usePatientMetadata({
@@ -537,6 +539,8 @@ export function NotionPaper({
           onClosePanelGraphic={onClosePanelGraphic}
           collapsed={sidebarCollapsed}
           onBreakStart={onBreakStart}
+          caseId={caseId}
+          onNavigateToLabor={onNavigateToLabor}
         />
       </div>
 

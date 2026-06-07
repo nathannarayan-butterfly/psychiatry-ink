@@ -34,7 +34,6 @@ import { NotionTopBar } from './NotionTopBar'
 import { WorkspaceContextMenu } from './WorkspaceContextMenu'
 import { NotionPaper } from './NotionPaper'
 import { NotionInputBar } from './NotionInputBar'
-import { NotionLabCanvas } from './NotionLabCanvas'
 import { NotionTimelineCanvas } from './NotionTimelineCanvas'
 import { NotionGenerationReview } from './NotionGenerationReview'
 import { NotionToastHost } from './NotionToast'
@@ -526,6 +525,7 @@ export function NotionApp({
         onPatientClick={() => setShowPatientDashboard(true)}
         hasPatient={hasPatient}
         onCreatePatient={() => setShowCreatePatientDialog(true)}
+        activePageLabel={activeTopTab === 'workspace' && workspace.selectedDocumentType ? documentLabel : undefined}
       />
 
       <main className="notion-preview-main" data-lottie-exclusion>
@@ -595,12 +595,9 @@ export function NotionApp({
                 onVaultSave={handleVaultSaveWithArchive}
               />
             ) : activePage === 'labor' || activePage === 'visualisation' ? (
-              <NotionLabCanvas
+              <LaborPage
                 caseId={caseId}
-                pageId={activePage}
-                lab={lab}
-                pageLabel={documentLabel}
-                onVaultSave={handleVaultSaveWithArchive}
+                onCreatePatient={() => setShowCreatePatientDialog(true)}
               />
             ) : (
               <NotionPaper
@@ -670,6 +667,10 @@ export function NotionApp({
                 onStartDictation={workspace.startDictation}
                 onSwitchToWrite={() => workspace.setInputMode('write')}
                 dictationDisabled={!workspace.dictationCreditsAvailable}
+                onNavigateToLabor={() => {
+                  setShowPatientDashboard(false)
+                  setActiveTopTab('labor')
+                }}
               />
             )}
           </div>

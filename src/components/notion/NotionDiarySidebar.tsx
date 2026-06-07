@@ -4,6 +4,7 @@ import { useRandomLottie } from '../../hooks/useRandomLottie'
 import { PanelDateCard } from '../PanelDateCard'
 import { PanelGraphic } from '../PanelGraphic'
 import { PomodoroWidget } from './PomodoroWidget'
+import { LaborSidebarWidget } from './LaborSidebarWidget'
 
 interface NotionDiarySidebarProps {
   panelGraphicEnabled: boolean
@@ -11,6 +12,8 @@ interface NotionDiarySidebarProps {
   onClosePanelGraphic: () => void
   collapsed?: boolean
   onBreakStart?: () => void
+  caseId?: string
+  onNavigateToLabor?: () => void
 }
 
 export function NotionDiarySidebar({
@@ -19,6 +22,8 @@ export function NotionDiarySidebar({
   onClosePanelGraphic,
   collapsed = false,
   onBreakStart,
+  caseId,
+  onNavigateToLabor,
 }: NotionDiarySidebarProps) {
   const { t } = useTranslation()
   const { visible: randomLottieVisible, dismiss: dismissRandomLottie } = useRandomLottie({
@@ -50,6 +55,10 @@ export function NotionDiarySidebar({
           <div className="notion-diary-sidebar__timers">
             <PomodoroWidget onBreakStart={onBreakStart ?? (() => {})} variant="sidebar" />
           </div>
+
+          {caseId && (
+            <LaborSidebarWidget caseId={caseId} onNavigateToLabor={onNavigateToLabor} />
+          )}
 
           {showPanelGraphic ? (
             <div className="notion-diary-sidebar__graphic">

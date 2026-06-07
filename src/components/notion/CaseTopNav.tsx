@@ -13,8 +13,10 @@ interface CaseTopNavProps {
   onPatientClick?: () => void
   /** Whether a patient is linked to this case. Controls which tabs are visible. */
   hasPatient?: boolean
-  /** Called when the "Patient anlegen" pseudo-tab is clicked. */
+  /** Called when the "Zuordnen" pseudo-tab is clicked. */
   onCreatePatient?: () => void
+  /** Label of the currently open page inside Workspace (shown dim next to the tab). */
+  activePageLabel?: string
 }
 
 interface TabConfig {
@@ -37,6 +39,7 @@ export function CaseTopNav({
   onPatientClick,
   hasPatient = true,
   onCreatePatient,
+  activePageLabel,
 }: CaseTopNavProps) {
   const { t } = useTranslation()
   const [zuordnenOpen, setZuordnenOpen] = useState(false)
@@ -72,6 +75,9 @@ export function CaseTopNav({
           aria-current={activeTab === tab.id ? 'page' : undefined}
         >
           {t(tab.labelKey)}
+          {tab.id === 'workspace' && activeTab === 'workspace' && activePageLabel ? (
+            <span className="case-topnav__tab-sublabel">{activePageLabel}</span>
+          ) : null}
         </button>
       ))}
 

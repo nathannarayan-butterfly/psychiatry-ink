@@ -22,6 +22,7 @@ import {
 } from '../../utils/laborArchive'
 import { parseLabText } from '../../utils/laborParser'
 import { showNotionToast } from './NotionToast'
+import { API_BASE } from '../../services/apiClient'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -92,6 +93,78 @@ interface LaborPasteZoneProps {
   textareaRef?: React.RefObject<HTMLTextAreaElement | null>
 }
 
+const KI_STRUKTUR_SYSTEM_PROMPT = `Du bist ein medizinischer Datenassistent. Extrahiere ALLE Laborwerte mit ihren gemessenen Werten, Einheiten und Referenzbereichen aus dem folgenden Text.
+
+WICHTIG:
+- "value" = der tatsächlich gemessene Wert aus dem Text (z.B. "5.2", "12.5", "0.45")
+- "unit" = die Einheit aus dem Text (z.B. "g/dL", "10^9/L", "mmol/L")
+- "refText" = der Referenzbereich aus dem Text (z.B. "13.5-17.5", "< 5.0")
+- "isAbnormal" = true wenn der Wert außerhalb des Referenzbereichs liegt
+- Lasse KEINEN gemessenen Wert weg — auch wenn kein Referenzbereich vorhanden ist
+
+Kategorien: Blutbild, Nierenwerte, Leberwerte, Elektrolyte, Medikamentenspiegel, Schilddrüse, Stoffwechsel, Gerinnung, Entzündung, Sonstiges.
+
+Antworte NUR mit einem gültigen JSON-Array (kein Markdown, keine Erklärungen):
+[{"id":"blutbild","label":"Blutbild","values":[{"name":"Hämoglobin","value":"12.5","unit":"g/dL","refText":"13.5-17.5","isAbnormal":true},{"name":"Leukozyten","value":"7.8","unit":"10^9/L","refText":"4.0-10.0","isAbnormal":false}]},{"id":"medikamentenspiegel","label":"Medikamentenspiegel","values":[{"name":"Olanzapin","value":"32","unit":"ng/mL","refText":"20-80","isAbnormal":false}]}]`
+
+const KI_ANALYSE_SYSTEM_PROMPT = `Du bist ein Facharzt für Psychiatrie. Analysiere die folgenden Laborwerte klinisch. Hebe auffällige Werte hervor, interpretiere mögliche Zusammenhänge und gib eine kurze klinische Einschätzung. Antworte auf Deutsch in 3-5 Sätzen.`
+
+function extractJsonFromAiText(text: string): string {
+  // Strip markdown code fences
+  let cleaned = text
+    .replace(/^```(?:json)?\s*/im, '')
+    .replace(/\s*```\s*$/m, '')
+    .trim()
+
+  // If the AI wrapped the JSON in prose, extract just the array
+  const arrayStart = cleaned.indexOf('[')
+  const arrayEnd = cleaned.lastIndexOf(']')
+  if (arrayStart !== -1 && arrayEnd > arrayStart) {
+    cleaned = cleaned.slice(arrayStart, arrayEnd + 1)
+  }
+
+  return cleaned
+}
+
+function parseAiCategories(text: string): LaborCategory[] {
+  const cleaned = extractJsonFromAiText(text)
+  const raw = JSON.parse(cleaned) as unknown
+  if (!Array.isArray(raw)) throw new Error('Expected JSON array')
+  return (raw as Record<string, unknown>[]).map((cat) => ({
+    id: String(cat.id ?? 'sonstiges'),
+    label: String(cat.label ?? 'Sonstiges'),
+    values: Array.isArray(cat.values)
+      ? (cat.values as Record<string, unknown>[]).map((v) => {
+          const numericValue = parseFloat(String(v.value ?? '').replace(',', '.'))
+          return {
+            name: String(v.name ?? ''),
+            value: String(v.value ?? ''),
+            numericValue: Number.isNaN(numericValue) ? undefined : numericValue,
+            unit: String(v.unit ?? ''),
+            refMin: typeof v.refMin === 'number' ? (v.refMin as number) : undefined,
+            refMax: typeof v.refMax === 'number' ? (v.refMax as number) : undefined,
+            refText: typeof v.refText === 'string' ? (v.refText as string) : undefined,
+            isAbnormal: typeof v.isAbnormal === 'boolean' ? (v.isAbnormal as boolean) : undefined,
+          } satisfies LaborValue
+        })
+      : [],
+  }))
+}
+
+async function callAiGenerate(systemPrompt: string, userPrompt: string): Promise<string> {
+  const response = await fetch(`${API_BASE}/api/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tier: 'fast', systemPrompt, userPrompt }),
+  })
+  if (!response.ok) {
+    const detail = await response.json().catch(() => null) as { error?: string } | null
+    throw new Error(detail?.error ?? `AI-Anfrage fehlgeschlagen (${response.status})`)
+  }
+  const data = await response.json() as { text: string }
+  return data.text
+}
+
 function LaborPasteZone({ onSave, textareaRef }: LaborPasteZoneProps) {
   const today = new Date().toISOString().slice(0, 10)
   const [date, setDate] = useState(today)
@@ -99,7 +172,11 @@ function LaborPasteZone({ onSave, textareaRef }: LaborPasteZoneProps) {
   const [label, setLabel] = useState('')
   const [status, setStatus] = useState<ParseStatus>('idle')
   const [parsed, setParsed] = useState<LaborCategory[] | null>(null)
-  const [aiMessage, setAiMessage] = useState<string | null>(null)
+  const [isKiStructuring, setIsKiStructuring] = useState(false)
+  const [isKiAnalysing, setIsKiAnalysing] = useState(false)
+  const [kiAnalysisText, setKiAnalysisText] = useState<string | null>(null)
+  const [kiAnalysisOpen, setKiAnalysisOpen] = useState(true)
+  const [kiError, setKiError] = useState<string | null>(null)
   const internalRef = useRef<HTMLTextAreaElement>(null)
   const isPasteRef = useRef(false)
   const resolvedRef = (textareaRef ?? internalRef) as React.RefObject<HTMLTextAreaElement>
@@ -109,7 +186,8 @@ function LaborPasteZone({ onSave, textareaRef }: LaborPasteZoneProps) {
   const runParse = useCallback((text: string) => {
     if (!text.trim()) return
     setStatus('analyzing')
-    setAiMessage(null)
+    setKiError(null)
+    setKiAnalysisText(null)
     setTimeout(() => {
       const cats = parseLabText(text)
       const total = cats.reduce((sum, c) => sum + c.values.length, 0)
@@ -128,7 +206,8 @@ function LaborPasteZone({ onSave, textareaRef }: LaborPasteZoneProps) {
       setRawText(val)
       setParsed(null)
       setStatus('idle')
-      setAiMessage(null)
+      setKiError(null)
+      setKiAnalysisText(null)
       if (isPasteRef.current) {
         isPasteRef.current = false
         if (val.trim()) {
@@ -146,22 +225,78 @@ function LaborPasteZone({ onSave, textareaRef }: LaborPasteZoneProps) {
     setLabel('')
     setParsed(null)
     setStatus('idle')
-    setAiMessage(null)
+    setKiError(null)
+    setKiAnalysisText(null)
   }, [date, label, onSave, parsed, rawText, totalParams])
 
   const handleReject = useCallback(() => {
     setRawText('')
     setParsed(null)
     setStatus('idle')
-    setAiMessage(null)
+    setKiError(null)
+    setKiAnalysisText(null)
   }, [])
 
   const handleEdit = useCallback(() => {
     setParsed(null)
     setStatus('idle')
-    setAiMessage(null)
+    setKiError(null)
+    setKiAnalysisText(null)
     resolvedRef.current?.focus()
   }, [resolvedRef])
+
+  const handleKiStrukturieren = useCallback(async () => {
+    if (!rawText.trim() || isKiStructuring) return
+    setIsKiStructuring(true)
+    setKiError(null)
+    setKiAnalysisText(null)
+    try {
+      const aiText = await callAiGenerate(KI_STRUKTUR_SYSTEM_PROMPT, rawText)
+      const cats = parseAiCategories(aiText)
+      const total = cats.reduce((sum, c) => sum + c.values.length, 0)
+      if (total === 0) throw new Error('Keine Laborwerte erkannt')
+      setParsed(cats)
+      setStatus('success')
+    } catch {
+      setKiError('KI-Strukturierung fehlgeschlagen. Bitte versuche es erneut.')
+    } finally {
+      setIsKiStructuring(false)
+    }
+  }, [rawText, isKiStructuring])
+
+  const handleKiAnalysieren = useCallback(async () => {
+    if (isKiAnalysing) return
+    setIsKiAnalysing(true)
+    setKiError(null)
+    try {
+      let userPrompt: string
+      if (parsed && parsed.length > 0) {
+        userPrompt = parsed
+          .map((cat) => {
+            const values = cat.values
+              .map((v) => {
+                const ref = v.refText ? ` (Ref: ${v.refText})` : ''
+                const flag = v.isAbnormal ? ' ⚠' : ''
+                return `  ${v.name}: ${v.value} ${v.unit}${ref}${flag}`
+              })
+              .join('\n')
+            return `${cat.label}:\n${values}`
+          })
+          .join('\n\n')
+      } else {
+        userPrompt = rawText
+      }
+      const aiText = await callAiGenerate(KI_ANALYSE_SYSTEM_PROMPT, userPrompt)
+      setKiAnalysisText(aiText.trim())
+      setKiAnalysisOpen(true)
+    } catch {
+      setKiError('KI-Analyse fehlgeschlagen. Bitte versuche es erneut.')
+    } finally {
+      setIsKiAnalysing(false)
+    }
+  }, [parsed, rawText, isKiAnalysing])
+
+  const kiLoading = isKiStructuring || isKiAnalysing
 
   return (
     <div className="labor-paste-zone">
@@ -219,7 +354,13 @@ function LaborPasteZone({ onSave, textareaRef }: LaborPasteZoneProps) {
         </p>
       )}
 
-      {status === 'success' && parsed && (
+      {isKiStructuring && (
+        <p className="labor-paste-zone__status">
+          <span className="labor-paste-zone__dots">KI analysiert…</span>
+        </p>
+      )}
+
+      {status === 'success' && parsed && !isKiStructuring && (
         <>
           <div className="labor-paste-zone__preview">
             <p className="labor-paste-zone__preview-title">
@@ -227,11 +368,29 @@ function LaborPasteZone({ onSave, textareaRef }: LaborPasteZoneProps) {
             </p>
             {parsed.map((cat) => (
               <div key={cat.id} className="labor-paste-zone__preview-cat">
-                <strong>{cat.label}</strong>
-                <span className="labor-paste-zone__preview-count"> ({cat.values.length}): </span>
-                <span className="labor-paste-zone__preview-names">
-                  {cat.values.map((v) => v.name).join(', ')}
-                </span>
+                <div className="labor-paste-zone__preview-cat-label">
+                  {cat.label} <span className="labor-paste-zone__preview-count">({cat.values.length})</span>
+                </div>
+                <table className="labor-paste-zone__preview-table">
+                  <thead>
+                    <tr>
+                      <th>Parameter</th>
+                      <th>Wert</th>
+                      <th>Einheit</th>
+                      <th>Referenz</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cat.values.map((v) => (
+                      <tr key={v.name} className={v.isAbnormal ? 'labor-paste-zone__preview-row--abnormal' : ''}>
+                        <td>{v.name}</td>
+                        <td className={v.isAbnormal ? 'labor-paste-zone__preview-val--abnormal' : ''}>{v.value}</td>
+                        <td>{v.unit}</td>
+                        <td>{v.refText ?? '–'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             ))}
           </div>
@@ -263,16 +422,31 @@ function LaborPasteZone({ onSave, textareaRef }: LaborPasteZoneProps) {
             <button
               type="button"
               className="labor-paste-zone__btn labor-paste-zone__btn--ai"
-              onClick={() => setAiMessage('KI-Analyse kommt bald')}
+              onClick={handleKiAnalysieren}
+              disabled={kiLoading}
             >
-              Mit KI analysieren
+              {isKiAnalysing ? 'KI analysiert…' : 'Mit KI analysieren'}
             </button>
-            {aiMessage && <span className="labor-paste-zone__ai-msg">{aiMessage}</span>}
           </div>
+          {kiError && <p className="labor-paste-zone__ki-error">{kiError}</p>}
+          {kiAnalysisText && (
+            <div className="labor-paste-zone__ki-analysis">
+              <button
+                type="button"
+                className="labor-paste-zone__ki-analysis-header"
+                onClick={() => setKiAnalysisOpen((o) => !o)}
+              >
+                <span>{kiAnalysisOpen ? '▾' : '▶'}</span> KI-Analyse
+              </button>
+              {kiAnalysisOpen && (
+                <p className="labor-paste-zone__ki-analysis-text">{kiAnalysisText}</p>
+              )}
+            </div>
+          )}
         </>
       )}
 
-      {status === 'too-few' && (
+      {status === 'too-few' && !isKiStructuring && (
         <>
           <p className="labor-paste-zone__status labor-paste-zone__status--warn">
             Automatische Strukturierung nicht möglich
@@ -281,7 +455,8 @@ function LaborPasteZone({ onSave, textareaRef }: LaborPasteZoneProps) {
             <button
               type="button"
               className="labor-paste-zone__btn labor-paste-zone__btn--ai"
-              onClick={() => setAiMessage('KI-Strukturierung kommt bald')}
+              onClick={handleKiStrukturieren}
+              disabled={kiLoading}
             >
               Mit KI strukturieren
             </button>
@@ -289,6 +464,7 @@ function LaborPasteZone({ onSave, textareaRef }: LaborPasteZoneProps) {
               type="button"
               className="labor-paste-zone__btn labor-paste-zone__btn--edit"
               onClick={handleEdit}
+              disabled={kiLoading}
             >
               Bearbeiten
             </button>
@@ -297,12 +473,27 @@ function LaborPasteZone({ onSave, textareaRef }: LaborPasteZoneProps) {
             <button
               type="button"
               className="labor-paste-zone__btn labor-paste-zone__btn--ai"
-              onClick={() => setAiMessage('KI-Analyse kommt bald')}
+              onClick={handleKiAnalysieren}
+              disabled={kiLoading}
             >
-              Mit KI analysieren
+              {isKiAnalysing ? 'KI analysiert…' : 'Mit KI analysieren'}
             </button>
-            {aiMessage && <span className="labor-paste-zone__ai-msg">{aiMessage}</span>}
           </div>
+          {kiError && <p className="labor-paste-zone__ki-error">{kiError}</p>}
+          {kiAnalysisText && (
+            <div className="labor-paste-zone__ki-analysis">
+              <button
+                type="button"
+                className="labor-paste-zone__ki-analysis-header"
+                onClick={() => setKiAnalysisOpen((o) => !o)}
+              >
+                <span>{kiAnalysisOpen ? '▾' : '▶'}</span> KI-Analyse
+              </button>
+              {kiAnalysisOpen && (
+                <p className="labor-paste-zone__ki-analysis-text">{kiAnalysisText}</p>
+              )}
+            </div>
+          )}
         </>
       )}
     </div>
@@ -454,6 +645,7 @@ interface CategorySectionProps {
   category: LaborCategory
   previousBefund: LaborBefund | null
   caseId: string
+  befundeCount: number
   onPinWidget: (paramName: string, catLabel: string) => void
   onShowGraph: (cat: LaborCategory) => void
 }
@@ -462,6 +654,7 @@ function CategorySection({
   category,
   previousBefund,
   caseId,
+  befundeCount,
   onPinWidget,
   onShowGraph,
 }: CategorySectionProps) {
@@ -486,7 +679,8 @@ function CategorySection({
             type="button"
             className="labor-category__graph-btn"
             onClick={(e) => { e.stopPropagation(); onShowGraph(category) }}
-            title="Grafik anzeigen"
+            title={befundeCount < 2 ? 'Mindestens 2 Befunde erforderlich' : 'Grafik anzeigen'}
+            disabled={befundeCount < 2}
           >
             📈 Grafik
           </button>
@@ -549,8 +743,9 @@ function CategorySection({
                         type="button"
                         className={['labor-pin-btn', pinned ? 'labor-pin-btn--active' : ''].join(' ').trim()}
                         onClick={() => onPinWidget(val.name, category.label)}
-                        title={pinned ? 'Widget entfernen' : 'Als Dashboard-Widget anheften'}
+                        title={befundeCount < 2 ? 'Mindestens 2 Befunde erforderlich' : (pinned ? 'Widget entfernen' : 'Als Dashboard-Widget anheften')}
                         aria-pressed={pinned}
+                        disabled={befundeCount < 2}
                       >
                         📌
                       </button>
@@ -635,6 +830,57 @@ export function LaborPage({ caseId, onCreatePatient }: LaborPageProps) {
     setBefunde(next)
     setSelectedId(next[0]?.id ?? null)
   }, [caseId, selectedId])
+
+  const handleCopy = useCallback(() => {
+    if (!selectedBefund) return
+    const lines: string[] = [
+      `Laborbefund ${selectedBefund.date}${selectedBefund.label ? ' — ' + selectedBefund.label : ''}`,
+      '',
+    ]
+    for (const cat of selectedBefund.categories) {
+      lines.push(`${cat.label}:`)
+      for (const v of cat.values) {
+        const ref = v.refText ? `  Ref: ${v.refText}` : ''
+        const flag = v.isAbnormal ? ' !' : ''
+        lines.push(`  ${v.name}: ${v.value} ${v.unit}${ref}${flag}`)
+      }
+      lines.push('')
+    }
+    const text = lines.join('\n')
+    navigator.clipboard.writeText(text).then(() => {
+      showNotionToast('Befund kopiert')
+    }).catch(() => {
+      const ta = document.createElement('textarea')
+      ta.value = text
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+      showNotionToast('Befund kopiert')
+    })
+  }, [selectedBefund])
+
+  const handlePrint = useCallback(() => {
+    if (!selectedBefund) return
+    const lines: string[] = [
+      `<h2>Laborbefund ${selectedBefund.date}${selectedBefund.label ? ' — ' + selectedBefund.label : ''}</h2>`,
+    ]
+    for (const cat of selectedBefund.categories) {
+      lines.push(`<h3>${cat.label}</h3><table border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:13px">`)
+      lines.push('<tr><th>Parameter</th><th>Wert</th><th>Einheit</th><th>Referenz</th></tr>')
+      for (const v of cat.values) {
+        const color = v.isAbnormal ? ' style="color:#dc2626;font-weight:bold"' : ''
+        lines.push(`<tr><td>${v.name}</td><td${color}>${v.value}</td><td>${v.unit}</td><td>${v.refText ?? '–'}</td></tr>`)
+      }
+      lines.push('</table><br/>')
+    }
+    const w = window.open('', '_blank')
+    if (!w) return
+    w.document.write(`<html><head><title>Laborbefund</title><style>body{font-family:sans-serif;padding:1rem}h2{margin-bottom:0.5rem}h3{margin:1rem 0 0.25rem}@media print{button{display:none}}</style></head><body>${lines.join('')}<br/><button onclick="window.print()">Drucken</button></body></html>`)
+    w.document.close()
+    w.focus()
+    setTimeout(() => w.print(), 400)
+  }, [selectedBefund])
 
   const handleEditLabel = useCallback(() => {
     if (!selectedBefund) return
@@ -763,14 +1009,32 @@ export function LaborPage({ caseId, onCreatePatient }: LaborPageProps) {
                   </button>
                 )}
               </div>
-              <button
-                type="button"
-                className="labor-befund-header__delete-btn"
-                onClick={handleDelete}
-                title="Befund löschen"
-              >
-                Löschen
-              </button>
+              <div className="labor-befund-header__actions">
+                <button
+                  type="button"
+                  className="labor-befund-header__action-btn"
+                  onClick={handleCopy}
+                  title="Befund kopieren"
+                >
+                  Kopieren
+                </button>
+                <button
+                  type="button"
+                  className="labor-befund-header__action-btn"
+                  onClick={handlePrint}
+                  title="Befund drucken"
+                >
+                  Drucken
+                </button>
+                <button
+                  type="button"
+                  className="labor-befund-header__delete-btn"
+                  onClick={handleDelete}
+                  title="Befund löschen"
+                >
+                  Löschen
+                </button>
+              </div>
             </header>
 
             {/* Categories */}
@@ -784,6 +1048,7 @@ export function LaborPage({ caseId, onCreatePatient }: LaborPageProps) {
                     category={cat}
                     previousBefund={previousBefund}
                     caseId={caseId}
+                    befundeCount={befunde.length}
                     onPinWidget={handlePinWidget}
                     onShowGraph={setGraphCategory}
                   />
