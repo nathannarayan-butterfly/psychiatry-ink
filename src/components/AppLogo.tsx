@@ -25,10 +25,12 @@ export function AppLogo({ onClick }: AppLogoProps) {
           className="topbar-logo__mark shrink-0 object-contain"
           decoding="async"
         />
+        <span className="topbar-logo__beta" aria-label="Beta">BETA</span>
       </>
     ) : (
       <span className="truncate text-lg font-semibold tracking-tight text-ink sm:text-xl">
         {logoTextByLanguage[language]}
+        <span className="topbar-logo__beta" aria-label="Beta">BETA</span>
       </span>
     )
 

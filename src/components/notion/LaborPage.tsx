@@ -82,143 +82,285 @@ const LINE_COLORS = [
 ]
 
 // ---------------------------------------------------------------------------
-// Add-Befund Dialog
+// Inline Paste Zone
 // ---------------------------------------------------------------------------
 
-interface AddBefundDialogProps {
+type ParseStatus = 'idle' | 'analyzing' | 'success' | 'too-few'
+
+interface LaborPasteZoneProps {
   onSave: (date: string, rawText: string, categories: LaborCategory[], label?: string) => void
-  onClose: () => void
+  textareaRef?: React.RefObject<HTMLTextAreaElement | null>
 }
 
-function AddBefundDialog({ onSave, onClose }: AddBefundDialogProps) {
+function LaborPasteZone({ onSave, textareaRef }: LaborPasteZoneProps) {
   const today = new Date().toISOString().slice(0, 10)
   const [date, setDate] = useState(today)
   const [rawText, setRawText] = useState('')
   const [label, setLabel] = useState('')
+  const [status, setStatus] = useState<ParseStatus>('idle')
   const [parsed, setParsed] = useState<LaborCategory[] | null>(null)
-  const [showAiFallback, setShowAiFallback] = useState(false)
-  const overlayRef = useRef<HTMLDivElement>(null)
+  const [aiMessage, setAiMessage] = useState<string | null>(null)
+  const internalRef = useRef<HTMLTextAreaElement>(null)
+  const isPasteRef = useRef(false)
+  const resolvedRef = (textareaRef ?? internalRef) as React.RefObject<HTMLTextAreaElement>
 
   const totalParams = parsed?.reduce((sum, c) => sum + c.values.length, 0) ?? 0
 
-  const handleAnalyze = useCallback(() => {
-    if (!rawText.trim()) return
-    const cats = parseLabText(rawText)
-    setParsed(cats)
-    const total = cats.reduce((sum, c) => sum + c.values.length, 0)
-    setShowAiFallback(total < 3)
-  }, [rawText])
+  const runParse = useCallback((text: string) => {
+    if (!text.trim()) return
+    setStatus('analyzing')
+    setAiMessage(null)
+    setTimeout(() => {
+      const cats = parseLabText(text)
+      const total = cats.reduce((sum, c) => sum + c.values.length, 0)
+      setParsed(cats)
+      setStatus(total >= 3 ? 'success' : 'too-few')
+    }, 0)
+  }, [])
+
+  const handlePaste = useCallback(() => {
+    isPasteRef.current = true
+  }, [])
+
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const val = e.target.value
+      setRawText(val)
+      setParsed(null)
+      setStatus('idle')
+      setAiMessage(null)
+      if (isPasteRef.current) {
+        isPasteRef.current = false
+        if (val.trim()) {
+          runParse(val)
+        }
+      }
+    },
+    [runParse],
+  )
 
   const handleSave = useCallback(() => {
-    if (!parsed || parsed.length === 0) return
+    if (!parsed || totalParams === 0) return
     onSave(date, rawText, parsed, label.trim() || undefined)
-  }, [date, label, onSave, parsed, rawText])
+    setRawText('')
+    setLabel('')
+    setParsed(null)
+    setStatus('idle')
+    setAiMessage(null)
+  }, [date, label, onSave, parsed, rawText, totalParams])
 
-  function handleOverlayClick(e: React.MouseEvent) {
-    if (e.target === overlayRef.current) onClose()
-  }
+  const handleReject = useCallback(() => {
+    setRawText('')
+    setParsed(null)
+    setStatus('idle')
+    setAiMessage(null)
+  }, [])
+
+  const handleEdit = useCallback(() => {
+    setParsed(null)
+    setStatus('idle')
+    setAiMessage(null)
+    resolvedRef.current?.focus()
+  }, [resolvedRef])
 
   return (
-    <div className="labor-dialog-overlay" ref={overlayRef} onClick={handleOverlayClick}>
-      <div className="labor-dialog" role="dialog" aria-modal="true" aria-label="Laborbefund hinzufügen">
-        <div className="labor-dialog__header">
-          <h2 className="labor-dialog__title">Laborbefund hinzufügen</h2>
-          <button type="button" className="labor-dialog__close" onClick={onClose} aria-label="Schließen">
-            ×
+    <div className="labor-paste-zone">
+      <div className="labor-paste-zone__meta-row">
+        <label className="labor-paste-zone__meta-label">
+          <span>Datum</span>
+          <input
+            type="date"
+            className="labor-paste-zone__meta-input"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+          />
+        </label>
+        <label className="labor-paste-zone__meta-label">
+          <span>Bezeichnung (optional)</span>
+          <input
+            type="text"
+            className="labor-paste-zone__meta-input"
+            placeholder="z. B. Aufnahmelabor"
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            maxLength={80}
+          />
+        </label>
+      </div>
+
+      <textarea
+        ref={resolvedRef}
+        className="labor-paste-zone__textarea"
+        placeholder="Laborbefund hier einfügen (Strg+V) — wird automatisch strukturiert"
+        value={rawText}
+        onPaste={handlePaste}
+        onChange={handleChange}
+        rows={6}
+      />
+      <p className="labor-paste-zone__hint">
+        Einfach einfügen — die automatische Strukturierung beginnt sofort
+      </p>
+
+      {status === 'idle' && rawText.trim() && (
+        <div className="labor-paste-zone__actions">
+          <button
+            type="button"
+            className="labor-paste-zone__btn labor-paste-zone__btn--primary"
+            onClick={() => runParse(rawText)}
+          >
+            Analysieren
           </button>
         </div>
+      )}
 
-        <div className="labor-dialog__body">
-          <div className="labor-dialog__row">
-            <label className="labor-dialog__label">
-              Datum
-              <input
-                type="date"
-                className="labor-dialog__input"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-              />
-            </label>
-            <label className="labor-dialog__label">
-              Bezeichnung (optional)
-              <input
-                type="text"
-                className="labor-dialog__input"
-                placeholder="z. B. Aufnahmelabor"
-                value={label}
-                onChange={(e) => setLabel(e.target.value)}
-                maxLength={80}
-              />
-            </label>
+      {status === 'analyzing' && (
+        <p className="labor-paste-zone__status">
+          <span className="labor-paste-zone__dots">Wird strukturiert…</span>
+        </p>
+      )}
+
+      {status === 'success' && parsed && (
+        <>
+          <div className="labor-paste-zone__preview">
+            <p className="labor-paste-zone__preview-title">
+              {totalParams} Parameter in {parsed.length} Kategorien erkannt
+            </p>
+            {parsed.map((cat) => (
+              <div key={cat.id} className="labor-paste-zone__preview-cat">
+                <strong>{cat.label}</strong>
+                <span className="labor-paste-zone__preview-count"> ({cat.values.length}): </span>
+                <span className="labor-paste-zone__preview-names">
+                  {cat.values.map((v) => v.name).join(', ')}
+                </span>
+              </div>
+            ))}
           </div>
-
-          <label className="labor-dialog__label labor-dialog__label--full">
-            Laborbefund einfügen
-            <textarea
-              className="labor-dialog__textarea"
-              placeholder="Laborbefund hier einfügen..."
-              value={rawText}
-              onChange={(e) => { setRawText(e.target.value); setParsed(null); setShowAiFallback(false) }}
-              rows={10}
-            />
-          </label>
-
-          <div className="labor-dialog__actions-row">
+          <div className="labor-paste-zone__actions">
             <button
               type="button"
-              className="labor-dialog__btn labor-dialog__btn--primary"
-              onClick={handleAnalyze}
-              disabled={!rawText.trim()}
+              className="labor-paste-zone__btn labor-paste-zone__btn--save"
+              onClick={handleSave}
+              disabled={totalParams === 0}
             >
-              Analysieren
+              Übernehmen
             </button>
-            {showAiFallback && (
-              <button
-                type="button"
-                className="labor-dialog__btn labor-dialog__btn--ai"
-                onClick={() => showNotionToast('KI-Analyse kommt bald')}
-              >
-                Nicht erkannt? Mit KI analysieren
-              </button>
-            )}
+            <button
+              type="button"
+              className="labor-paste-zone__btn labor-paste-zone__btn--reject"
+              onClick={handleReject}
+            >
+              Ablehnen
+            </button>
+            <button
+              type="button"
+              className="labor-paste-zone__btn labor-paste-zone__btn--edit"
+              onClick={handleEdit}
+            >
+              Bearbeiten
+            </button>
           </div>
+          <div className="labor-paste-zone__ai-row">
+            <button
+              type="button"
+              className="labor-paste-zone__btn labor-paste-zone__btn--ai"
+              onClick={() => setAiMessage('KI-Analyse kommt bald')}
+            >
+              Mit KI analysieren
+            </button>
+            {aiMessage && <span className="labor-paste-zone__ai-msg">{aiMessage}</span>}
+          </div>
+        </>
+      )}
 
-          {parsed !== null && (
-            <div className="labor-dialog__preview">
-              <p className="labor-dialog__preview-title">
-                {totalParams > 0
-                  ? `${totalParams} Parameter erkannt in ${parsed.length} Kategorien`
-                  : 'Keine Parameter erkannt'}
-              </p>
-              {parsed.map((cat) => (
-                <div key={cat.id} className="labor-dialog__preview-cat">
-                  <strong className="labor-dialog__preview-cat-label">{cat.label}</strong>
-                  <span className="labor-dialog__preview-cat-count">
-                    {' '}({cat.values.length}):{' '}
-                  </span>
-                  <span className="labor-dialog__preview-params">
-                    {cat.values.map((v) => v.name).join(', ')}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+      {status === 'too-few' && (
+        <>
+          <p className="labor-paste-zone__status labor-paste-zone__status--warn">
+            Automatische Strukturierung nicht möglich
+          </p>
+          <div className="labor-paste-zone__actions">
+            <button
+              type="button"
+              className="labor-paste-zone__btn labor-paste-zone__btn--ai"
+              onClick={() => setAiMessage('KI-Strukturierung kommt bald')}
+            >
+              Mit KI strukturieren
+            </button>
+            <button
+              type="button"
+              className="labor-paste-zone__btn labor-paste-zone__btn--edit"
+              onClick={handleEdit}
+            >
+              Bearbeiten
+            </button>
+          </div>
+          <div className="labor-paste-zone__ai-row">
+            <button
+              type="button"
+              className="labor-paste-zone__btn labor-paste-zone__btn--ai"
+              onClick={() => setAiMessage('KI-Analyse kommt bald')}
+            >
+              Mit KI analysieren
+            </button>
+            {aiMessage && <span className="labor-paste-zone__ai-msg">{aiMessage}</span>}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
 
-        <div className="labor-dialog__footer">
-          <button type="button" className="labor-dialog__btn labor-dialog__btn--cancel" onClick={onClose}>
-            Abbrechen
+// ---------------------------------------------------------------------------
+// Patient assignment collapsible
+// ---------------------------------------------------------------------------
+
+interface PatientsZuordnenProps {
+  onCreatePatient?: () => void
+}
+
+function PatientsZuordnen({ onCreatePatient }: PatientsZuordnenProps) {
+  const [open, setOpen] = useState(false)
+  const [showVorhandener, setShowVorhandener] = useState(false)
+
+  return (
+    <div className="labor-section-collapse">
+      <button
+        type="button"
+        className="labor-section-collapse__header"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+      >
+        <span className="labor-section-collapse__chevron">{open ? '▾' : '▶'}</span>
+        Patienten zuordnen
+      </button>
+      {open && (
+        <div className="labor-section-collapse__body">
+          <button
+            type="button"
+            className="labor-section-collapse__option-btn"
+            onClick={() => {
+              if (onCreatePatient) {
+                onCreatePatient()
+              } else {
+                showNotionToast('Kommt bald')
+              }
+            }}
+          >
+            Neuer Patient
           </button>
           <button
             type="button"
-            className="labor-dialog__btn labor-dialog__btn--save"
-            onClick={handleSave}
-            disabled={!parsed || totalParams === 0}
+            className="labor-section-collapse__option-btn"
+            onClick={() => setShowVorhandener((v) => !v)}
           >
-            Speichern
+            Vorhandener Patient
           </button>
+          {showVorhandener && (
+            <p className="labor-section-collapse__placeholder">
+              Wählen Sie einen Patienten aus dem Dashboard
+            </p>
+          )}
         </div>
-      </div>
+      )}
     </div>
   )
 }
@@ -236,7 +378,6 @@ interface GraphModalProps {
 function GraphModal({ category, befunde, onClose }: GraphModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null)
 
-  // Build chart data: x=date, series per parameter
   const sortedBefunde = [...befunde].sort((a, b) => a.date.localeCompare(b.date))
 
   const paramNames = useMemo(() => {
@@ -431,9 +572,10 @@ function CategorySection({
 
 interface LaborPageProps {
   caseId: string
+  onCreatePatient?: () => void
 }
 
-export function LaborPage({ caseId }: LaborPageProps) {
+export function LaborPage({ caseId, onCreatePatient }: LaborPageProps) {
   const [befunde, setBefunde] = useState<LaborBefund[]>(() =>
     [...loadBefunde(caseId)].sort((a, b) => b.date.localeCompare(a.date)),
   )
@@ -441,13 +583,12 @@ export function LaborPage({ caseId }: LaborPageProps) {
     const sorted = [...loadBefunde(caseId)].sort((a, b) => b.date.localeCompare(a.date))
     return sorted[0]?.id ?? null
   })
-  const [showAddDialog, setShowAddDialog] = useState(false)
   const [graphCategory, setGraphCategory] = useState<LaborCategory | null>(null)
   const [editingLabel, setEditingLabel] = useState(false)
   const [labelDraft, setLabelDraft] = useState('')
   const labelInputRef = useRef<HTMLInputElement>(null)
+  const pasteTextareaRef = useRef<HTMLTextAreaElement>(null)
 
-  // Reload when caseId changes
   useEffect(() => {
     const loaded = [...loadBefunde(caseId)].sort((a, b) => b.date.localeCompare(a.date))
     setBefunde(loaded)
@@ -459,7 +600,6 @@ export function LaborPage({ caseId }: LaborPageProps) {
     [befunde, selectedId],
   )
 
-  // Find previous befund (chronologically before selected)
   const previousBefund = useMemo(() => {
     if (!selectedBefund) return null
     const sorted = [...befunde].sort((a, b) => a.date.localeCompare(b.date))
@@ -482,7 +622,6 @@ export function LaborPage({ caseId }: LaborPageProps) {
       const next = [...loadBefunde(caseId)].sort((a, b) => b.date.localeCompare(a.date))
       setBefunde(next)
       setSelectedId(befund.id)
-      setShowAddDialog(false)
       showNotionToast('Laborbefund gespeichert')
     },
     [caseId],
@@ -537,7 +676,6 @@ export function LaborPage({ caseId }: LaborPageProps) {
         savePinnedWidgets(caseId, [...current, widget])
         showNotionToast('Als Dashboard-Widget angeheftet')
       }
-      // Force re-render to reflect pin state
       setBefunde((prev) => [...prev])
     },
     [caseId],
@@ -550,7 +688,7 @@ export function LaborPage({ caseId }: LaborPageProps) {
         <button
           type="button"
           className="labor-page__add-btn"
-          onClick={() => setShowAddDialog(true)}
+          onClick={() => pasteTextareaRef.current?.focus()}
         >
           + Laborbefund
         </button>
@@ -584,13 +722,10 @@ export function LaborPage({ caseId }: LaborPageProps) {
 
       {/* Main area */}
       <div className="labor-page__main">
-        {!selectedBefund ? (
-          <div className="labor-page__empty">
-            <p className="labor-page__empty-text">
-              Laborbefund einfügen oder auswählen
-            </p>
-          </div>
-        ) : (
+        {/* Inline paste zone — always visible at top */}
+        <LaborPasteZone onSave={handleSaveBefund} textareaRef={pasteTextareaRef} />
+
+        {selectedBefund ? (
           <div className="labor-page__content">
             {/* Befund header */}
             <header className="labor-befund-header">
@@ -655,17 +790,18 @@ export function LaborPage({ caseId }: LaborPageProps) {
                 ))}
               </div>
             )}
+
+            {/* Patient assignment collapsible */}
+            <PatientsZuordnen onCreatePatient={onCreatePatient} />
+          </div>
+        ) : (
+          <div className="labor-page__empty">
+            <p className="labor-page__empty-text">
+              Laborbefund einfügen oder auswählen
+            </p>
           </div>
         )}
       </div>
-
-      {/* Dialogs */}
-      {showAddDialog && (
-        <AddBefundDialog
-          onSave={handleSaveBefund}
-          onClose={() => setShowAddDialog(false)}
-        />
-      )}
 
       {graphCategory && (
         <GraphModal

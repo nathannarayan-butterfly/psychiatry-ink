@@ -3128,10 +3128,10 @@ export const uiTranslations = {
     es: 'Seudonimización desactivada',
   },
   patientNavFallback: {
-    de: 'Patient',
-    en: 'Patient',
-    fr: 'Patient',
-    es: 'Paciente',
+    de: 'Meine Patienten',
+    en: 'My Patients',
+    fr: 'Mes Patients',
+    es: 'Mis Pacientes',
   },
   patientGeschlechtMaennlich: {
     de: 'Männlich',
@@ -3338,10 +3338,10 @@ export const uiTranslations = {
     es: 'Eliminar widget',
   },
   topNavCreatePatient: {
-    de: 'Patient anlegen',
-    en: 'Create patient',
-    fr: 'Créer un patient',
-    es: 'Crear paciente',
+    de: 'Zuordnen',
+    en: 'Assign',
+    fr: 'Attribuer',
+    es: 'Asignar',
   },
   verlaufNewEntry: {
     de: 'Neuer Eintrag',

@@ -340,7 +340,6 @@
 .case-topnav__patient-name {
   display: inline-flex;
   align-items: center;
-  margin-left: auto;
   align-self: center;
   padding: 0.2rem 0.5rem;
   border: none;
@@ -5501,26 +5500,32 @@
 
 /* ── Patient anlegen pseudo-tab ──────────────────────────────────────────── */
 
-.case-topnav__create-patient-btn {
+.case-topnav__right {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.3rem 0.75rem;
-  font-size: 0.8rem;
+  margin-left: auto;
+}
+
+.case-topnav__create-patient-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.82rem;
   font-family: inherit;
   font-weight: 500;
   color: var(--accent, #4a7c59);
   background: transparent;
-  border: 1.5px dashed var(--accent, #4a7c59);
-  border-radius: 6px;
+  border: none;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s, color 0.15s;
-  margin-left: 0.5rem;
+  transition: color 0.12s;
+  text-decoration: none;
 }
 
 .case-topnav__create-patient-btn:hover {
-  background: color-mix(in srgb, var(--accent, #4a7c59) 10%, transparent);
+  color: color-mix(in srgb, var(--accent, #4a7c59) 75%, var(--text-ink));
+  text-decoration: underline;
 }
 
 /* ── Verlauf inline composer ─────────────────────────────────────────────── */
@@ -5848,5 +5853,336 @@
 
 .therapie-composer__save-btn:not(:disabled):hover {
   filter: brightness(1.08);
+}
+
+/* ============================================================
+   Labor inline paste zone
+   ============================================================ */
+
+.labor-paste-zone {
+  background: var(--notion-paper-bg, #fff);
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.labor-paste-zone__meta-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.labor-paste-zone__meta-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  color: var(--text-muted, #8a8a80);
+}
+
+.labor-paste-zone__meta-input {
+  font-size: 0.82rem;
+  font-family: inherit;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 5px;
+  padding: 0.2rem 0.5rem;
+  background: transparent;
+  color: inherit;
+}
+
+.labor-paste-zone__meta-input:focus {
+  outline: none;
+  border-color: var(--accent, #4a7c59);
+}
+
+.labor-paste-zone__textarea {
+  width: 100%;
+  font-size: 0.9rem;
+  font-family: inherit;
+  line-height: 1.6;
+  border: none;
+  border-radius: 6px;
+  padding: 0.75rem;
+  background: var(--bg-subtle, #f7f7f5);
+  color: inherit;
+  resize: vertical;
+  min-height: 120px;
+  box-sizing: border-box;
+  transition: background 0.15s;
+}
+
+.labor-paste-zone__textarea:focus {
+  outline: none;
+  background: var(--bg-subtle-focus, #f0f0ec);
+}
+
+.labor-paste-zone__textarea::placeholder {
+  color: var(--text-muted, #aaa);
+  font-style: italic;
+}
+
+.labor-paste-zone__hint {
+  font-size: 0.75rem;
+  color: var(--text-muted, #aaa);
+  margin: 0;
+}
+
+.labor-paste-zone__status {
+  font-size: 0.82rem;
+  color: var(--text-muted, #8a8a80);
+  margin: 0;
+  font-style: italic;
+}
+
+.labor-paste-zone__status--warn {
+  color: var(--warning, #b45309);
+}
+
+.labor-paste-zone__dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15em;
+}
+
+.labor-paste-zone__dots::after {
+  content: '';
+  display: inline-block;
+  width: 1em;
+  text-align: left;
+  animation: labor-dots 1.2s steps(4, end) infinite;
+}
+
+@keyframes labor-dots {
+  0%   { content: ''; }
+  25%  { content: '.'; }
+  50%  { content: '..'; }
+  75%  { content: '...'; }
+  100% { content: ''; }
+}
+
+.labor-paste-zone__preview {
+  background: var(--bg-subtle, #f7f7f5);
+  border-radius: 6px;
+  padding: 0.6rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.labor-paste-zone__preview-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary, #555);
+  margin: 0 0 0.2rem;
+}
+
+.labor-paste-zone__preview-cat {
+  font-size: 0.78rem;
+  color: var(--text-secondary, #666);
+  line-height: 1.4;
+}
+
+.labor-paste-zone__preview-count {
+  color: var(--text-muted, #8a8a80);
+}
+
+.labor-paste-zone__preview-names {
+  color: var(--text-muted, #8a8a80);
+}
+
+.labor-paste-zone__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.labor-paste-zone__ai-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.labor-paste-zone__ai-msg {
+  font-size: 0.78rem;
+  color: var(--text-muted, #8a8a80);
+  font-style: italic;
+}
+
+.labor-paste-zone__btn {
+  font-size: 0.82rem;
+  font-family: inherit;
+  padding: 0.3rem 0.85rem;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.15s, color 0.15s, filter 0.15s;
+  white-space: nowrap;
+}
+
+.labor-paste-zone__btn--primary {
+  background: var(--accent, #4a7c59);
+  color: #fff;
+}
+
+.labor-paste-zone__btn--primary:hover {
+  filter: brightness(1.08);
+}
+
+.labor-paste-zone__btn--save {
+  background: var(--accent, #4a7c59);
+  color: #fff;
+}
+
+.labor-paste-zone__btn--save:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.labor-paste-zone__btn--save:not(:disabled):hover {
+  filter: brightness(1.08);
+}
+
+.labor-paste-zone__btn--reject {
+  background: transparent;
+  border-color: var(--border-soft, #e8e8e4);
+  color: var(--text-muted, #8a8a80);
+}
+
+.labor-paste-zone__btn--reject:hover {
+  background: var(--bg-subtle, #f7f7f5);
+}
+
+.labor-paste-zone__btn--edit {
+  background: transparent;
+  border-color: var(--border-soft, #e8e8e4);
+  color: var(--text-secondary, #555);
+}
+
+.labor-paste-zone__btn--edit:hover {
+  background: var(--bg-subtle, #f7f7f5);
+}
+
+.labor-paste-zone__btn--ai {
+  background: transparent;
+  border-color: var(--accent, #4a7c59);
+  color: var(--accent, #4a7c59);
+}
+
+.labor-paste-zone__btn--ai:hover {
+  background: color-mix(in srgb, var(--accent, #4a7c59) 8%, transparent);
+}
+
+/* ============================================================
+   Zuordnen dropdown (CaseTopNav)
+   ============================================================ */
+
+.labor-zuordnen-dropdown {
+  position: relative;
+  display: inline-flex;
+}
+
+.labor-zuordnen-dropdown__menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 200;
+  background: var(--notion-paper-bg, #fff);
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  min-width: 160px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.labor-zuordnen-dropdown__item {
+  font-size: 0.85rem;
+  font-family: inherit;
+  padding: 0.55rem 0.9rem;
+  text-align: left;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  transition: background 0.12s;
+}
+
+.labor-zuordnen-dropdown__item:hover {
+  background: var(--bg-subtle, #f7f7f5);
+}
+
+.labor-zuordnen-dropdown__item:not(:last-child) {
+  border-bottom: 1px solid var(--border-soft, #f0f0ec);
+}
+
+/* ============================================================
+   Patienten zuordnen collapsible section
+   ============================================================ */
+
+.labor-section-collapse {
+  margin-top: 2rem;
+  border-top: 1px solid var(--border-soft, #e8e8e4);
+  padding-top: 0.75rem;
+}
+
+.labor-section-collapse__header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: var(--text-muted, #8a8a80);
+  padding: 0.25rem 0;
+  transition: color 0.15s;
+}
+
+.labor-section-collapse__header:hover {
+  color: var(--text-secondary, #555);
+}
+
+.labor-section-collapse__chevron {
+  font-size: 0.7em;
+  transition: transform 0.15s;
+}
+
+.labor-section-collapse__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.6rem 0;
+}
+
+.labor-section-collapse__option-btn {
+  font-size: 0.85rem;
+  font-family: inherit;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--accent, #4a7c59);
+  padding: 0.2rem 0;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color 0.15s, color 0.15s;
+}
+
+.labor-section-collapse__option-btn:hover {
+  text-decoration-color: currentColor;
+}
+
+.labor-section-collapse__placeholder {
+  font-size: 0.82rem;
+  color: var(--text-muted, #8a8a80);
+  margin: 0.25rem 0 0;
+  font-style: italic;
 }
 

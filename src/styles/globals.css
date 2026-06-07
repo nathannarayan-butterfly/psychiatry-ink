@@ -227,6 +227,22 @@
     margin-left: -0.25rem;
   }
 
+  .topbar-logo__beta {
+    display: inline-block;
+    font-size: 0.52rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--accent, #4a7c59);
+    background: color-mix(in srgb, var(--accent, #4a7c59) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent, #4a7c59) 30%, transparent);
+    border-radius: 3px;
+    padding: 0.1em 0.35em;
+    vertical-align: super;
+    line-height: 1;
+    translate: 0 -2px;
+    flex-shrink: 0;
+  }
+
   .glass-overlay {
     background: var(--glass-overlay);
     backdrop-filter: blur(calc(var(--glass-blur) * 1.1)) saturate(1.2);

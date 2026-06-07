@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { UiTranslationKey } from '../../data/uiTranslations'
 
@@ -38,10 +39,22 @@ export function CaseTopNav({
   onCreatePatient,
 }: CaseTopNavProps) {
   const { t } = useTranslation()
+  const [zuordnenOpen, setZuordnenOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   const displayName = patientName?.trim() || t('patientNavFallback')
-
   const visibleTabs = hasPatient ? TABS : TABS.filter((tab) => tab.id === 'workspace')
+
+  useEffect(() => {
+    if (!zuordnenOpen) return
+    function handleOutsideClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setZuordnenOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
+  }, [zuordnenOpen])
 
   return (
     <nav className="case-topnav" aria-label="Case navigation">
@@ -62,26 +75,59 @@ export function CaseTopNav({
         </button>
       ))}
 
-      {!hasPatient && (
+      <div className="case-topnav__right">
+        {!hasPatient && (
+          <div className="labor-zuordnen-dropdown" ref={dropdownRef}>
+            <button
+              type="button"
+              className="case-topnav__create-patient-btn"
+              onClick={() => setZuordnenOpen((o) => !o)}
+              title="Zuordnen"
+              aria-expanded={zuordnenOpen}
+              aria-haspopup="listbox"
+            >
+              + Zuordnen
+            </button>
+            {zuordnenOpen && (
+              <div className="labor-zuordnen-dropdown__menu" role="listbox">
+                <button
+                  type="button"
+                  className="labor-zuordnen-dropdown__item"
+                  role="option"
+                  aria-selected={false}
+                  onClick={() => {
+                    setZuordnenOpen(false)
+                    onCreatePatient?.()
+                  }}
+                >
+                  Neuer Patient
+                </button>
+                <button
+                  type="button"
+                  className="labor-zuordnen-dropdown__item"
+                  role="option"
+                  aria-selected={false}
+                  onClick={() => {
+                    setZuordnenOpen(false)
+                    onPatientClick?.()
+                  }}
+                >
+                  Vorhandener Patient
+                </button>
+              </div>
+            )}
+          </div>
+        )}
         <button
           type="button"
-          className="case-topnav__create-patient-btn"
-          onClick={onCreatePatient}
-          title={t('topNavCreatePatient')}
+          className="case-topnav__patient-name"
+          onClick={onPatientClick}
+          title={displayName}
+          aria-label={displayName}
         >
-          ＋ {t('topNavCreatePatient')}
+          {displayName}
         </button>
-      )}
-
-      <button
-        type="button"
-        className="case-topnav__patient-name"
-        onClick={onPatientClick}
-        title={displayName}
-        aria-label={displayName}
-      >
-        {displayName}
-      </button>
+      </div>
     </nav>
   )
 }
