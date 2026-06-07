@@ -12,6 +12,8 @@ import { cryptoRouter } from './routes/crypto'
 import { workspaceVaultRouter } from './routes/workspaceVault'
 import { generateRouter } from './routes/generate'
 import { generationLogRouter } from './routes/generationLog'
+import { diagnosisCodesRouter } from './routes/diagnosisCodes'
+import { patientsRouter } from './routes/patients'
 import { transcribeRouter } from './routes/transcribe'
 
 const app = express()
@@ -31,6 +33,8 @@ app.use('/api/account', accountRouter)
 app.use('/api/credits', creditsRouter)
 app.use('/api/crypto', cryptoRouter)
 app.use('/api/workspace', workspaceVaultRouter)
+app.use('/api/patients', patientsRouter)
+app.use('/api/diagnosis-codes', diagnosisCodesRouter)
 app.use('/api/generation-logs', generationLogRouter)
 
 app.listen(port, () => {

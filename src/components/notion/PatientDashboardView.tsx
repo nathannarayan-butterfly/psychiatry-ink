@@ -12,6 +12,7 @@ import { useTranslation } from '../../context/TranslationContext'
 import { DiagnosenWidget } from './DiagnosenWidget'
 import type { TopNavTabId } from './CaseTopNav'
 import type { UiTranslationKey } from '../../data/uiTranslations'
+import { NOTION_PAGES, type NotionPageId } from './notionPages'
 import {
   loadBefunde,
   loadPinnedWidgets,
@@ -109,9 +110,11 @@ function LaborDashboardWidget({ caseId }: LaborDashboardWidgetProps) {
 interface PatientDashboardViewProps {
   caseId: string
   onTabSelect: (tab: TopNavTabId) => void
+  onOpenWorkspacePage?: (pageId: NotionPageId) => void
 }
 
-const NAV_TABS: { id: TopNavTabId; labelKey: UiTranslationKey }[] = [
+/** Primary clinical areas a psychiatrist needs at a glance. */
+const CLINICAL_AREAS: { id: TopNavTabId; labelKey: UiTranslationKey }[] = [
   { id: 'workspace', labelKey: 'topNavWorkspaceFall' },
   { id: 'verlauf', labelKey: 'topNavVerlauf' },
   { id: 'labor', labelKey: 'topNavLabor' },
@@ -119,11 +122,21 @@ const NAV_TABS: { id: TopNavTabId; labelKey: UiTranslationKey }[] = [
   { id: 'dokumente', labelKey: 'topNavDokumente' },
 ]
 
-export function PatientDashboardView({ caseId, onTabSelect }: PatientDashboardViewProps) {
+/** Common documentation entry points — top-level only, no subsections. */
+const DOCUMENT_START_PAGES = NOTION_PAGES.filter((page) => page.kind === 'document')
+
+export function PatientDashboardView({
+  caseId,
+  onTabSelect,
+  onOpenWorkspacePage,
+}: PatientDashboardViewProps) {
   const { t } = useTranslation()
   const meta = getCaseMeta(caseId)
 
-  const name = meta?.localName?.trim() || t('patientNavFallback')
+  const structuredName = [meta?.localVorname?.trim(), meta?.localNachname?.trim()]
+    .filter(Boolean)
+    .join(' ')
+  const name = structuredName || meta?.localName?.trim() || t('patientNavFallback')
   const geburtsdatum = meta?.localGeburtsdatum?.trim()
   const geschlecht = meta?.localGeschlecht
 
@@ -152,20 +165,35 @@ export function PatientDashboardView({ caseId, onTabSelect }: PatientDashboardVi
 
       <div className="patient-dashboard__body">
         <main className="patient-dashboard__main">
-          <DiagnosenWidget caseId={caseId} />
+          <DiagnosenWidget caseId={caseId} variant="panel" />
           <LaborDashboardWidget caseId={caseId} />
         </main>
 
         <aside className="patient-dashboard__sidebar">
-          <nav className="patient-dashboard__nav" aria-label="Patient navigation">
-            {NAV_TABS.map((tab) => (
+          <nav className="patient-dashboard__nav" aria-label={t('patientDashboardQuickAccess')}>
+            <p className="patient-dashboard__actions-heading">{t('patientDashboardQuickAccess')}</p>
+            {CLINICAL_AREAS.map((area) => (
               <button
-                key={tab.id}
+                key={area.id}
                 type="button"
                 className="patient-dashboard__nav-link"
-                onClick={() => onTabSelect(tab.id)}
+                onClick={() => onTabSelect(area.id)}
               >
-                {t(tab.labelKey)}
+                {t(area.labelKey)}
+              </button>
+            ))}
+          </nav>
+
+          <nav className="patient-dashboard__workspace-actions" aria-label={t('patientDashboardNewDocument')}>
+            <p className="patient-dashboard__actions-heading">{t('patientDashboardNewDocument')}</p>
+            {DOCUMENT_START_PAGES.map((page) => (
+              <button
+                key={page.id}
+                type="button"
+                className="patient-dashboard__nav-link"
+                onClick={() => onOpenWorkspacePage?.(page.id)}
+              >
+                {t(page.labelKey)}
               </button>
             ))}
           </nav>

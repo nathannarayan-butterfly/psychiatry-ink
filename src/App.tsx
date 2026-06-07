@@ -10,7 +10,7 @@ import { isAppRoute, useAppRouter } from './hooks/useAppRouter'
 import { DEFAULT_CASE_ID } from './utils/caseContext'
 import { CaseWorkspacePage } from './components/CaseWorkspacePage'
 import { DashboardPage } from './components/dashboard/DashboardPage'
-import { ensureDefaultCase } from './hooks/useCaseRegistry'
+import { ensureDefaultCase, hydrateCaseRegistry } from './hooks/useCaseRegistry'
 
 export default function App() {
   const languageSettings = useLanguageSettings()
@@ -20,6 +20,7 @@ export default function App() {
 
   useEffect(() => {
     ensureDefaultCase()
+    void hydrateCaseRegistry()
   }, [])
 
   useEffect(() => {
@@ -118,9 +119,13 @@ export default function App() {
             initialPage={route.view === 'case' ? route.page : undefined}
             initialShowPatientDashboard={route.view === 'case' ? route.initialView === 'patient-dashboard' : false}
             onNavigateDashboard={handleNavigateHome}
-            onNavigateNewCase={(id, page) => {
+            onNavigateNewCase={(id, page, showPatientDashboard) => {
               const base = `/case/${encodeURIComponent(id)}`
-              navigate(page ? `${base}?page=${encodeURIComponent(page)}` : base)
+              let url = page ? `${base}?page=${encodeURIComponent(page)}` : base
+              if (showPatientDashboard) {
+                url += (url.includes('?') ? '&' : '?') + 'view=patient-dashboard'
+              }
+              navigate(url)
             }}
           />
         )}

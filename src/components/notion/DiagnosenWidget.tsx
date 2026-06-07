@@ -1,144 +1,280 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Plus, X } from 'lucide-react'
+import { Pencil, Plus, X } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
+import {
+  searchDiagnosisCodes,
+  type DiagnosisSearchHit,
+} from '../../services/diagnosisReferenceApi'
+import {
+  createDiagnoseFreeText,
+  createDiagnoseFromHit,
+  getActiveCoding,
+  loadDiagnosenAsync,
+  saveDiagnosen,
+  syncDerivedCodingsAsync,
+  type CodingSystem,
+  type DiagnoseEntry,
+} from '../../utils/diagnosenArchive'
 
-interface DiagnoseEntry {
-  id: string
-  icdCode: string
-  description: string
-  createdAt: string
-}
+const CODING_SYSTEMS: CodingSystem[] = ['icd10', 'icd11', 'dsm']
 
-function storageKey(caseId: string): string {
-  return `diagnosen:${caseId}`
-}
-
-function loadEntries(caseId: string): DiagnoseEntry[] {
-  try {
-    const raw = localStorage.getItem(storageKey(caseId))
-    if (!raw) return []
-    const parsed = JSON.parse(raw) as DiagnoseEntry[]
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
-  }
-}
-
-function saveEntries(caseId: string, entries: DiagnoseEntry[]): void {
-  try {
-    localStorage.setItem(storageKey(caseId), JSON.stringify(entries))
-  } catch {
-    // ignore quota errors
-  }
-}
-
-function newEntry(): DiagnoseEntry {
-  return {
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    icdCode: '',
-    description: '',
-    createdAt: new Date().toISOString(),
-  }
-}
+const SYSTEM_LABEL_KEYS = {
+  icd10: 'diagnosenSystemIcd10',
+  icd11: 'diagnosenSystemIcd11',
+  dsm: 'diagnosenSystemDsm',
+} as const
 
 interface DiagnoseRowProps {
   index: number
   entry: DiagnoseEntry
-  onUpdate: (id: string, patch: Partial<DiagnoseEntry>) => void
-  onDelete: (id: string) => void
-  icdRef?: React.RefCallback<HTMLInputElement>
+  system: CodingSystem
+  editing: boolean
+  onStartEdit: () => void
+  onCancelEdit: () => void
+  onSaveEdit: (code: string, label: string) => void
+  onDelete: () => void
 }
 
-function DiagnoseRow({ index, entry, onUpdate, onDelete, icdRef }: DiagnoseRowProps) {
+function DiagnoseRow({
+  index,
+  entry,
+  system,
+  editing,
+  onStartEdit,
+  onCancelEdit,
+  onSaveEdit,
+  onDelete,
+}: DiagnoseRowProps) {
   const { t } = useTranslation()
+  const coding = getActiveCoding(entry, system)
+  const [editCode, setEditCode] = useState(coding.code)
+  const [editLabel, setEditLabel] = useState(coding.label)
+
+  useEffect(() => {
+    if (editing) {
+      setEditCode(coding.code)
+      setEditLabel(coding.label)
+    }
+  }, [editing, coding.code, coding.label])
+
+  if (editing) {
+    return (
+      <li className="diagnosen-widget__row diagnosen-widget__row--editing">
+        <span className="diagnosen-widget__index" aria-hidden>{index}.</span>
+        <div className="diagnosen-widget__edit-fields">
+          <input
+            type="text"
+            className="diagnosen-widget__icd-input"
+            value={editCode}
+            onChange={(e) => setEditCode(e.target.value)}
+            placeholder={t('diagnosenCodePlaceholder')}
+            spellCheck={false}
+          />
+          <input
+            type="text"
+            className="diagnosen-widget__desc-input"
+            value={editLabel}
+            onChange={(e) => setEditLabel(e.target.value)}
+            placeholder={t('diagnosenDescription')}
+          />
+          <div className="diagnosen-widget__edit-actions">
+            <button
+              type="button"
+              className="diagnosen-widget__save-btn"
+              onClick={() => onSaveEdit(editCode.trim(), editLabel.trim())}
+            >
+              {t('diagnosenSave')}
+            </button>
+            <button
+              type="button"
+              className="diagnosen-widget__cancel-btn"
+              onClick={onCancelEdit}
+            >
+              {t('diagnosenCancel')}
+            </button>
+          </div>
+        </div>
+      </li>
+    )
+  }
+
+  const displayCode = coding.code || '—'
+  const displayLabel = coding.label || t('diagnosenNoLabel')
 
   return (
     <li className="diagnosen-widget__row">
       <span className="diagnosen-widget__index" aria-hidden>{index}.</span>
-      <input
-        ref={icdRef}
-        type="text"
-        className="diagnosen-widget__icd-input"
-        value={entry.icdCode}
-        onChange={e => onUpdate(entry.id, { icdCode: e.target.value })}
-        placeholder={t('diagnosenIcdCode')}
-        aria-label={`${t('diagnosenIcdCode')} ${index}`}
-        spellCheck={false}
-      />
-      <input
-        type="text"
-        className="diagnosen-widget__desc-input"
-        value={entry.description}
-        onChange={e => onUpdate(entry.id, { description: e.target.value })}
-        placeholder={t('diagnosenDescription')}
-        aria-label={`${t('diagnosenDescription')} ${index}`}
-      />
-      <button
-        type="button"
-        className="diagnosen-widget__delete-btn"
-        onClick={() => onDelete(entry.id)}
-        aria-label={t('diagnosenDeleteEntry')}
-        title={t('diagnosenDeleteEntry')}
-      >
-        <X className="h-3 w-3" strokeWidth={2} aria-hidden />
-      </button>
+      <div className="diagnosen-widget__display">
+        <span className="diagnosen-widget__code">{displayCode}</span>
+        <span className="diagnosen-widget__label">{displayLabel}</span>
+        {coding.overridden ? (
+          <span className="diagnosen-widget__override-badge" title={t('diagnosenOverriddenHint')}>
+            ✎
+          </span>
+        ) : null}
+      </div>
+      <div className="diagnosen-widget__row-actions">
+        <button
+          type="button"
+          className="diagnosen-widget__edit-btn"
+          onClick={onStartEdit}
+          aria-label={t('diagnosenEditEntry')}
+          title={t('diagnosenEditEntry')}
+        >
+          <Pencil className="h-3 w-3" strokeWidth={2} aria-hidden />
+        </button>
+        <button
+          type="button"
+          className="diagnosen-widget__delete-btn"
+          onClick={onDelete}
+          aria-label={t('diagnosenDeleteEntry')}
+          title={t('diagnosenDeleteEntry')}
+        >
+          <X className="h-3 w-3" strokeWidth={2} aria-hidden />
+        </button>
+      </div>
     </li>
   )
 }
 
 interface DiagnosenWidgetProps {
   caseId: string
+  /** Sidebar uses compact height; panel (dashboard) expands. */
+  variant?: 'sidebar' | 'panel'
 }
 
-export function DiagnosenWidget({ caseId }: DiagnosenWidgetProps) {
+export function DiagnosenWidget({ caseId, variant = 'sidebar' }: DiagnosenWidgetProps) {
   const { t } = useTranslation()
-  const [entries, setEntries] = useState<DiagnoseEntry[]>(() => loadEntries(caseId))
+  const [entries, setEntries] = useState<DiagnoseEntry[]>([])
+  const [loadingDiagnoses, setLoadingDiagnoses] = useState(true)
   const [collapsed, setCollapsed] = useState(false)
-  const pendingNewRef = useRef<string | null>(null)
-  const newIcdRefs = useRef<Record<string, HTMLInputElement | null>>({})
+  const [activeSystem, setActiveSystem] = useState<CodingSystem>('icd10')
+  const [adding, setAdding] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<DiagnosisSearchHit[]>([])
+  const [searching, setSearching] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const searchRef = useRef<HTMLInputElement>(null)
 
-  // Reload when caseId changes
   useEffect(() => {
-    setEntries(loadEntries(caseId))
+    let active = true
+    setLoadingDiagnoses(true)
+    void loadDiagnosenAsync(caseId).then((loaded) => {
+      if (!active) return
+      setEntries(loaded)
+      setLoadingDiagnoses(false)
+    })
+    setEditingId(null)
+    setAdding(false)
+    setSearchQuery('')
+    return () => {
+      active = false
+    }
   }, [caseId])
 
-  // Persist on any change
   useEffect(() => {
-    saveEntries(caseId, entries)
+    saveDiagnosen(caseId, entries)
   }, [caseId, entries])
 
-  // Focus new row's ICD input after adding
   useEffect(() => {
-    if (pendingNewRef.current) {
-      const id = pendingNewRef.current
-      pendingNewRef.current = null
-      const el = newIcdRefs.current[id]
-      if (el) el.focus()
-    }
-  })
+    if (adding) searchRef.current?.focus()
+  }, [adding])
 
-  const handleUpdate = useCallback((id: string, patch: Partial<DiagnoseEntry>) => {
-    setEntries(prev => prev.map(e => e.id === id ? { ...e, ...patch } : e))
+  useEffect(() => {
+    const q = searchQuery.trim()
+    if (!q) {
+      setSearchResults([])
+      setSearching(false)
+      return
+    }
+
+    let cancelled = false
+    const timer = window.setTimeout(() => {
+      setSearching(true)
+      void searchDiagnosisCodes(q, activeSystem)
+        .then((results) => {
+          if (!cancelled) setSearchResults(results)
+        })
+        .catch(() => {
+          if (!cancelled) setSearchResults([])
+        })
+        .finally(() => {
+          if (!cancelled) setSearching(false)
+        })
+    }, 200)
+
+    return () => {
+      cancelled = true
+      window.clearTimeout(timer)
+    }
+  }, [searchQuery, activeSystem])
+
+  const handleAddFromHit = useCallback((hit: DiagnosisSearchHit) => {
+    setEntries((prev) => [...prev, createDiagnoseFromHit(hit)])
+    setAdding(false)
+    setSearchQuery('')
+    setCollapsed(false)
   }, [])
+
+  const handleAddFreeText = useCallback(() => {
+    const text = searchQuery.trim()
+    if (!text) return
+    void createDiagnoseFreeText(text).then((entry) => {
+      setEntries((prev) => [...prev, entry])
+      setAdding(false)
+      setSearchQuery('')
+      setCollapsed(false)
+    })
+  }, [searchQuery])
+
+  const handleSaveEdit = useCallback(
+    (id: string, system: CodingSystem, code: string, label: string) => {
+      setEntries((prev) => {
+        const target = prev.find((entry) => entry.id === id)
+        if (!target) return prev
+
+        const now = new Date().toISOString()
+        const updated: DiagnoseEntry = {
+          ...target,
+          updatedAt: now,
+          [system]: { code, label, overridden: true },
+        }
+
+        if (system === 'icd10') {
+          void syncDerivedCodingsAsync(updated).then((synced) => {
+            setEntries((current) => current.map((entry) => (entry.id === id ? synced : entry)))
+            setEditingId(null)
+          })
+        } else {
+          setEditingId(null)
+        }
+
+        return prev.map((entry) => (entry.id === id ? updated : entry))
+      })
+    },
+    [],
+  )
 
   const handleDelete = useCallback((id: string) => {
-    setEntries(prev => prev.filter(e => e.id !== id))
+    setEntries((prev) => prev.filter((e) => e.id !== id))
+    setEditingId(null)
   }, [])
 
-  const handleAdd = useCallback(() => {
-    const entry = newEntry()
-    pendingNewRef.current = entry.id
-    setEntries(prev => [...prev, entry])
-    if (collapsed) setCollapsed(false)
-  }, [collapsed])
+  const trimmedQuery = searchQuery.trim()
+  const showFreeTextOption = trimmedQuery.length > 0
 
   return (
-    <section className="diagnosen-widget">
+    <section
+      className={[
+        'diagnosen-widget',
+        variant === 'panel' ? 'diagnosen-widget--panel' : '',
+      ].join(' ').trim()}
+    >
       <div className="diagnosen-widget__header">
         <button
           type="button"
           className="diagnosen-widget__title-btn"
-          onClick={() => setCollapsed(c => !c)}
+          onClick={() => setCollapsed((c) => !c)}
           aria-expanded={!collapsed}
         >
           <span className="diagnosen-widget__title">{t('diagnosenTitle')}</span>
@@ -149,7 +285,10 @@ export function DiagnosenWidget({ caseId }: DiagnosenWidgetProps) {
         <button
           type="button"
           className="diagnosen-widget__add-btn"
-          onClick={handleAdd}
+          onClick={() => {
+            setAdding((a) => !a)
+            setCollapsed(false)
+          }}
           aria-label={t('diagnosenAddEntry')}
           title={t('diagnosenAddEntry')}
         >
@@ -159,7 +298,77 @@ export function DiagnosenWidget({ caseId }: DiagnosenWidgetProps) {
 
       {!collapsed ? (
         <div className="diagnosen-widget__body">
-          {entries.length === 0 ? (
+          <div className="diagnosen-widget__system-toggle" role="tablist" aria-label={t('diagnosenSystemToggle')}>
+            {CODING_SYSTEMS.map((system) => (
+              <button
+                key={system}
+                type="button"
+                role="tab"
+                aria-selected={activeSystem === system}
+                className={[
+                  'diagnosen-widget__system-btn',
+                  activeSystem === system ? 'diagnosen-widget__system-btn--active' : '',
+                ].join(' ').trim()}
+                onClick={() => {
+                  setActiveSystem(system)
+                  setEditingId(null)
+                }}
+              >
+                {t(SYSTEM_LABEL_KEYS[system])}
+              </button>
+            ))}
+          </div>
+
+          {adding ? (
+            <div className="diagnosen-widget__search">
+              <input
+                ref={searchRef}
+                type="search"
+                className="diagnosen-widget__search-input"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t('diagnosenSearchPlaceholder')}
+                aria-label={t('diagnosenSearchPlaceholder')}
+              />
+              <ul className="diagnosen-widget__search-results" role="listbox">
+                {searchResults.map((result) => (
+                  <li key={`${result.system}-${result.code}`}>
+                    <button
+                      type="button"
+                      className="diagnosen-widget__search-item"
+                      role="option"
+                      onClick={() => handleAddFromHit(result)}
+                    >
+                      <span className="diagnosen-widget__search-code">{result.code}</span>
+                      <span className="diagnosen-widget__search-label">{result.label}</span>
+                    </button>
+                  </li>
+                ))}
+                {showFreeTextOption ? (
+                  <li>
+                    <button
+                      type="button"
+                      className="diagnosen-widget__search-item diagnosen-widget__search-item--free"
+                      role="option"
+                      onClick={handleAddFreeText}
+                    >
+                      {t('diagnosenAddFreeText').replace('{text}', trimmedQuery)}
+                    </button>
+                  </li>
+                ) : null}
+                {searching ? (
+                  <li className="diagnosen-widget__search-hint">{t('dashboardLoading')}</li>
+                ) : null}
+                {!searching && !showFreeTextOption && searchResults.length === 0 ? (
+                  <li className="diagnosen-widget__search-hint">{t('diagnosenSearchHint')}</li>
+                ) : null}
+              </ul>
+            </div>
+          ) : null}
+
+          {loadingDiagnoses ? (
+            <p className="diagnosen-widget__empty">{t('dashboardLoading')}</p>
+          ) : entries.length === 0 ? (
             <p className="diagnosen-widget__empty">{t('diagnosenEmpty')}</p>
           ) : (
             <ol className="diagnosen-widget__list" aria-label={t('diagnosenTitle')}>
@@ -168,9 +377,12 @@ export function DiagnosenWidget({ caseId }: DiagnosenWidgetProps) {
                   key={entry.id}
                   index={index + 1}
                   entry={entry}
-                  onUpdate={handleUpdate}
-                  onDelete={handleDelete}
-                  icdRef={el => { newIcdRefs.current[entry.id] = el }}
+                  system={activeSystem}
+                  editing={editingId === entry.id}
+                  onStartEdit={() => setEditingId(entry.id)}
+                  onCancelEdit={() => setEditingId(null)}
+                  onSaveEdit={(code, label) => handleSaveEdit(entry.id, activeSystem, code, label)}
+                  onDelete={() => handleDelete(entry.id)}
                 />
               ))}
             </ol>

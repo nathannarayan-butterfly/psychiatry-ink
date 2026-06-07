@@ -25,6 +25,9 @@ Database file: `prisma/dev.db` (gitignored; path is relative to `prisma/schema.p
 | `npm run db:generate` | Regenerate client after schema changes |
 | `npm run db:studio` | Open Prisma Studio GUI |
 | `npm run db:check` | Connection smoke test |
+| `npm run db:build-diagnoses` | Build ICD crosswalk JSON from WHO (+ optional BfArM) sources |
+| `npm run db:seed-diagnoses` | Load crosswalk into `DiagnosisCode` table |
+| `npm run db:import-diagnoses` | Build + seed diagnosis reference data |
 
 ## Schema
 

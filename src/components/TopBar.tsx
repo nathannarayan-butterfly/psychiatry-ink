@@ -1,4 +1,4 @@
-import { LogOut, Settings, Sparkles, User } from 'lucide-react'
+import { LogOut, Settings, Sparkles } from 'lucide-react'
 
 import { useTranslation } from '../context/TranslationContext'
 
@@ -45,12 +45,6 @@ export function TopBar({ creditBalance, onOpenSettings }: TopBarProps) {
             icon={<Settings strokeWidth={1.5} />}
             label={t('settings')}
             onClick={() => onOpenSettings('appearance')}
-          />
-          <IconButton
-            bordered
-            icon={<User strokeWidth={1.5} />}
-            label={t('myAccount')}
-            onClick={() => onOpenSettings('account')}
           />
           <IconButton
             bordered

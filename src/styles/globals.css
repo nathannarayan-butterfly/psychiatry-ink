@@ -2858,21 +2858,517 @@
   .dashboard-page {
     min-height: 100vh;
     padding: 0 1.5rem 3rem;
-    max-width: 52rem;
+    max-width: 72rem;
     margin: 0 auto;
     background: #fff;
   }
 
   .dashboard-topbar {
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    margin: 0 -1.5rem 1.5rem;
+    margin: 0 -1.5rem 0;
     padding: 0.65rem 1.5rem;
     border-bottom: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border-soft));
     background: #fff;
     box-shadow: 0 1px 0 color-mix(in srgb, var(--accent) 8%, transparent);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+
+  .dashboard-topbar__brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+  }
+
+  .dashboard-topbar__user {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .dashboard-topbar__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    flex-shrink: 0;
+  }
+
+  .dashboard-topbar__credits {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border: none;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .dashboard-topbar__credits--loading {
+    color: var(--text-muted);
+  }
+
+  .dashboard-hero {
+    padding: 1.5rem 0 0.75rem;
+  }
+
+  .dashboard-hero__date {
+    margin: 0 0 0.25rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .dashboard-hero__title {
+    margin: 0 0 0.375rem;
+    font-size: 1.625rem;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  .dashboard-hero__intro {
+    margin: 0;
+    max-width: 42rem;
+    font-size: 0.875rem;
+    line-height: 1.55;
+    color: var(--text-muted);
+  }
+
+  .dashboard-hinweise {
+    margin: 0.875rem 0 0.75rem;
+    max-width: 42rem;
+    padding: 0.875rem 1rem;
+    border: 1px solid color-mix(in srgb, #b45309 22%, var(--border));
+    border-radius: 0.375rem;
+    background: color-mix(in srgb, #fef3c7 35%, #fff);
+  }
+
+  .dashboard-hinweise__title {
+    margin: 0 0 0.625rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, #b45309 75%, var(--text-muted));
+  }
+
+  .dashboard-hinweis-block {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid color-mix(in srgb, #b45309 15%, var(--border));
+  }
+
+  .dashboard-hinweis-block:first-of-type {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+  }
+
+  .dashboard-hinweis-block__title {
+    margin: 0 0 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .dashboard-hinweis-block__body {
+    margin: 0;
+    font-size: 0.75rem;
+    line-height: 1.55;
+    color: var(--text-muted);
+  }
+
+  .dashboard-hinweis-block__list {
+    margin: 0;
+    padding-left: 1.125rem;
+    font-size: 0.75rem;
+    line-height: 1.55;
+    color: var(--text-muted);
+  }
+
+  .dashboard-hinweis-block__list li + li {
+    margin-top: 0.375rem;
+  }
+
+  .dashboard-hinweise .encryption-disclaimer--dashboard {
+    margin-bottom: 0;
+    max-width: none;
+  }
+
+  .dashboard-quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 0.75rem;
+  }
+
+  .dashboard-quick-action {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 0.375rem;
+    background: #fff;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .dashboard-quick-action:hover {
+    border-color: color-mix(in srgb, var(--border) 40%, var(--text-ink));
+    box-shadow: 0 1px 0 color-mix(in srgb, var(--accent) 10%, transparent);
+  }
+
+  .dashboard-quick-action--primary {
+    border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+    background: color-mix(in srgb, var(--accent) 4%, #fff);
+  }
+
+  .dashboard-quick-action__icon-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.375rem;
+    background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+    color: var(--text-muted);
+  }
+
+  .dashboard-quick-action--primary .dashboard-quick-action__icon-wrap {
+    background: color-mix(in srgb, var(--accent) 14%, #fff);
+    color: var(--text-ink);
+  }
+
+  .dashboard-quick-action__text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .dashboard-quick-action__label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-ink);
+  }
+
+  .dashboard-quick-action__subtitle {
+    font-size: 0.6875rem;
+    line-height: 1.45;
+    color: var(--text-muted);
+  }
+
+  .dashboard-quick-action__arrow {
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+    color: var(--text-muted);
+  }
+
+  .dashboard-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+    padding: 0.5rem 0 1.25rem;
+  }
+
+  @media (max-width: 768px) {
+    .dashboard-kpi-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .dashboard-kpi {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.875rem;
+    border: 1px solid var(--border);
+    border-radius: 0.375rem;
+    background: #fff;
+  }
+
+  .dashboard-kpi__icon {
+    width: 1rem;
+    height: 1rem;
+    color: var(--text-muted);
+  }
+
+  .dashboard-kpi__value {
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--text-ink);
+  }
+
+  .dashboard-kpi__value--btn {
+    padding: 0;
+    border: none;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .dashboard-kpi__value--status {
+    font-size: 0.8125rem;
+    line-height: 1.35;
+  }
+
+  .dashboard-kpi__value--warn {
+    color: #b45309;
+  }
+
+  .dashboard-kpi__label {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+  }
+
+  .dashboard-kpi__hint {
+    font-size: 0.625rem;
+    color: color-mix(in srgb, var(--text-muted) 85%, transparent);
+  }
+
+  .dashboard-kpi__bar {
+    height: 3px;
+    margin-top: 0.25rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 10%, var(--border-soft));
+    overflow: hidden;
+  }
+
+  .dashboard-kpi__bar-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: color-mix(in srgb, var(--accent) 55%, var(--text-ink));
+  }
+
+  .dashboard-section__header-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .dashboard-section__header-row .dashboard-section__heading {
+    margin-bottom: 0;
+  }
+
+  .dashboard-patients-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .dashboard-patients-search {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.625rem;
+    border: 1px solid var(--border);
+    border-radius: 0.25rem;
+    background: #fff;
+    min-width: 12rem;
+  }
+
+  .dashboard-patients-search__icon {
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  .dashboard-patients-search__input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 0.8125rem;
+    color: var(--text-ink);
+    outline: none;
+  }
+
+  .dashboard-patients-view-toggle {
+    display: inline-flex;
+    border: 1px solid var(--border);
+    border-radius: 0.25rem;
+    overflow: hidden;
+  }
+
+  .dashboard-patients-view-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: none;
+    background: #fff;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+
+  .dashboard-patients-view-btn--active {
+    background: color-mix(in srgb, var(--accent) 8%, #fff);
+    color: var(--text-ink);
+  }
+
+  .dashboard-patients-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 0.375rem;
+    overflow: hidden;
+  }
+
+  .dashboard-patients-list__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 0.75rem;
+    align-items: center;
+    width: 100%;
+    padding: 0.75rem 0.875rem;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    background: #fff;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .dashboard-patients-list__row:last-child {
+    border-bottom: none;
+  }
+
+  .dashboard-patients-list__row:hover {
+    background: color-mix(in srgb, var(--accent) 4%, #fff);
+  }
+
+  .dashboard-patients-list__main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-width: 0;
+  }
+
+  .dashboard-patients-list__name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-ink);
+  }
+
+  .dashboard-patients-list__meta,
+  .dashboard-patients-list__doc {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+  }
+
+  .dashboard-patients-list__stats {
+    font-size: 0.625rem;
+    color: color-mix(in srgb, var(--accent) 45%, var(--text-muted));
+    white-space: nowrap;
+  }
+
+  .dashboard-patients-list__date {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .dashboard-activity-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 0.375rem;
+    overflow: hidden;
+  }
+
+  .dashboard-activity-list__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 0.75rem;
+    align-items: center;
+    width: 100%;
+    padding: 0.75rem 0.875rem;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    background: #fff;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .dashboard-activity-list__row:last-child {
+    border-bottom: none;
+  }
+
+  .dashboard-activity-list__row:hover {
+    background: color-mix(in srgb, var(--accent) 4%, #fff);
+  }
+
+  .dashboard-activity-list__main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-width: 0;
+  }
+
+  .dashboard-activity-list__title {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-ink);
+  }
+
+  .dashboard-activity-list__meta {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+  }
+
+  .dashboard-activity-list__date {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .dashboard-activity-list__action {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: color-mix(in srgb, var(--accent) 55%, var(--text-ink));
+    white-space: nowrap;
+  }
+
+  .dashboard-section--compact {
+    padding-bottom: 0.5rem;
+  }
+
+  .patient-case-card__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+  }
+
+  .patient-case-card__chip {
+    display: inline-flex;
+    padding: 0.125rem 0.4375rem;
+    border-radius: 999px;
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: color-mix(in srgb, var(--accent) 50%, var(--text-ink));
+    background: color-mix(in srgb, var(--accent) 8%, #fff);
+    border: 1px solid color-mix(in srgb, var(--accent) 16%, var(--border));
   }
 
   .dashboard-topbar__greeting {
@@ -2990,8 +3486,19 @@
 
   .dashboard-page__grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
     gap: 1rem;
+  }
+
+  .dashboard-page__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 0.25rem;
+    background: #fff;
   }
 
   .patient-case-card {
@@ -3036,6 +3543,12 @@
     margin: 0;
     font-size: 0.75rem;
     color: var(--text-muted);
+  }
+
+  .patient-case-card__details {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--text-ink);
   }
 
   .patient-case-card__counts {

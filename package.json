@@ -15,6 +15,9 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "db:check": "tsx scripts/db-check.ts",
+    "db:build-diagnoses": "tsx scripts/build-diagnosis-crosswalk.ts",
+    "db:seed-diagnoses": "tsx scripts/seed-diagnosis-codes.ts",
+    "db:import-diagnoses": "npm run db:build-diagnoses && npm run db:seed-diagnoses",
     "postinstall": "prisma generate",
     "dev:stop": "bash scripts/stop-dev.sh"
   },

@@ -1,0 +1,4874 @@
+[
+  {
+    "icd10": {
+      "code": "F00",
+      "label": "Dementia in Alzheimer disease"
+    },
+    "icd11": {
+      "code": "6D80",
+      "label": "Demenz bei Alzheimer-Krankheit"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F00.0",
+      "label": "Dementia in Alzheimer disease with early onset"
+    },
+    "icd11": {
+      "code": "6D80.0",
+      "label": "Dementia due to Alzheimer disease with early onset"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F00.1",
+      "label": "Dementia in Alzheimer disease with late onset"
+    },
+    "icd11": {
+      "code": "6D80.1",
+      "label": "Dementia due to Alzheimer disease with late onset"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F00.2",
+      "label": "Dementia in Alzheimer disease, atypical or mixed type"
+    },
+    "icd11": {
+      "code": "6D80",
+      "label": "Demenz bei Alzheimer-Krankheit"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F00.9",
+      "label": "Dementia in Alzheimer disease, unspecified"
+    },
+    "icd11": {
+      "code": "6D80",
+      "label": "Demenz bei Alzheimer-Krankheit"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F01",
+      "label": "Vascular dementia"
+    },
+    "icd11": {
+      "code": "6D81",
+      "label": "Vaskulaere Demenz"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F01.0",
+      "label": "Vascular dementia of acute onset"
+    },
+    "icd11": {
+      "code": "6D81",
+      "label": "Vaskulaere Demenz"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F01.1",
+      "label": "Multi-infarct dementia"
+    },
+    "icd11": {
+      "code": "6D81",
+      "label": "Vaskulaere Demenz"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F01.2",
+      "label": "Subcortical vascular dementia"
+    },
+    "icd11": {
+      "code": "6D81",
+      "label": "Vaskulaere Demenz"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F01.3",
+      "label": "Mixed cortical and subcortical vascular dementia"
+    },
+    "icd11": {
+      "code": "6D81",
+      "label": "Vaskulaere Demenz"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F01.8",
+      "label": "Other vascular dementia"
+    },
+    "icd11": {
+      "code": "6D81",
+      "label": "Vaskulaere Demenz"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F01.9",
+      "label": "Vascular dementia, unspecified"
+    },
+    "icd11": {
+      "code": "6D81",
+      "label": "Vaskulaere Demenz"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F02",
+      "label": "Dementia in other diseases classified elsewhere"
+    },
+    "icd11": {
+      "code": "6D8Z",
+      "label": "Dementia, unknown or unspecified cause"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F02.0",
+      "label": "Dementia in Pick disease"
+    },
+    "icd11": {
+      "code": "6D83",
+      "label": "Frontotemporale Demenz"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F02.1",
+      "label": "Dementia in Creutzfeldt-Jakob disease"
+    },
+    "icd11": {
+      "code": "6D85.5",
+      "label": "Dementia due to prion disease"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F02.2",
+      "label": "Dementia in Huntington disease"
+    },
+    "icd11": {
+      "code": "6D85.1",
+      "label": "Dementia due to Huntington disease"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F02.3",
+      "label": "Dementia in Parkinson disease"
+    },
+    "icd11": {
+      "code": "6D85.0",
+      "label": "Dementia due to Parkinson disease"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F02.4",
+      "label": "Dementia in human immunodeficiency virus [HIV] disease"
+    },
+    "icd11": {
+      "code": "6D85.3",
+      "label": "Dementia due to human immunodeficiency virus"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F02.8",
+      "label": "Dementia in other specified diseases classified elsewhere"
+    },
+    "icd11": {
+      "code": "6D8Z",
+      "label": "Dementia, unknown or unspecified cause"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F03",
+      "label": "Unspecified dementia"
+    },
+    "icd11": {
+      "code": "6D8Z",
+      "label": "Dementia, unknown or unspecified cause"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F04",
+      "label": "Organic amnesic syndrome, not induced by alcohol and other psychoactive substances"
+    },
+    "icd11": {
+      "code": "6D72.0",
+      "label": "Amnestic disorder due to diseases classified elsewhere"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F05",
+      "label": "Delir"
+    },
+    "icd11": {
+      "code": "6D70",
+      "label": "Delir"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Delir"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F05.0",
+      "label": "Delir ohne Demenz"
+    },
+    "icd11": {
+      "code": "6D70",
+      "label": "Delir"
+    },
+    "dsm5tr": {
+      "code": "293.0",
+      "label": "Delir"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F05.1",
+      "label": "Delirium superimposed on dementia"
+    },
+    "icd11": {
+      "code": "6D70",
+      "label": "Delir"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F05.8",
+      "label": "Other delirium"
+    },
+    "icd11": {
+      "code": "6D70",
+      "label": "Delir"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F05.9",
+      "label": "Delirium, unspecified"
+    },
+    "icd11": {
+      "code": "6D70",
+      "label": "Delir"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F06",
+      "label": "Other mental disorders due to brain damage and dysfunction and to physical disease"
+    },
+    "icd11": {
+      "code": "6E6Z",
+      "label": "Secondary mental or behavioural syndrome, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F06.0",
+      "label": "Organic hallucinosis"
+    },
+    "icd11": {
+      "code": "6E61.0",
+      "label": "Secondary psychotic syndrome, with hallucinations"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F06.1",
+      "label": "Organic catatonic disorder"
+    },
+    "icd11": {
+      "code": "6A4Z",
+      "label": "Catatonia, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F06.2",
+      "label": "Organische halluzinatorische Störung"
+    },
+    "icd11": {
+      "code": "6E60",
+      "label": "Psychotische Störung durch somatische Erkrankung"
+    },
+    "dsm5tr": {
+      "code": "293.82",
+      "label": "Psychotische Störung durch somatische Erkrankung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F06.3",
+      "label": "Organic mood [affective] disorders"
+    },
+    "icd11": {
+      "code": "6E62",
+      "label": "Sekundaeres Angstsyndrom"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F06.4",
+      "label": "Organic anxiety disorder"
+    },
+    "icd11": {
+      "code": "6E63",
+      "label": "Sekundaeres Zwangssyndrom"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F06.5",
+      "label": "Organic dissociative disorder"
+    },
+    "icd11": {
+      "code": "6E65",
+      "label": "Sekundaeres Impulskontrollsyndrom"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F06.6",
+      "label": "Organic emotionally labile [asthenic] disorder"
+    },
+    "icd11": {
+      "code": "6E68",
+      "label": "Sekundaeres neurokognitives Syndrom"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F06.7",
+      "label": "Mild cognitive disorder"
+    },
+    "icd11": {
+      "code": "6D71",
+      "label": "Leichte neurokognitive Stoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F06.8",
+      "label": "Other specified mental disorders due to brain damage and dysfunction and to physical disease"
+    },
+    "icd11": {
+      "code": "6E6Z",
+      "label": "Secondary mental or behavioural syndrome, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F06.9",
+      "label": "Unspecified mental disorder due to brain damage and dysfunction and to physical disease"
+    },
+    "icd11": {
+      "code": "6E6Z",
+      "label": "Secondary mental or behavioural syndrome, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F07",
+      "label": "Personality and behavioural disorders due to brain disease, damage and dysfunction"
+    },
+    "icd11": {
+      "code": "6E68",
+      "label": "Sekundaeres neurokognitives Syndrom"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F07.0",
+      "label": "Organic personality disorder"
+    },
+    "icd11": {
+      "code": "6E68",
+      "label": "Sekundaeres neurokognitives Syndrom"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F07.1",
+      "label": "Postencephalitic syndrome"
+    },
+    "icd11": {
+      "code": "6E6Z",
+      "label": "Secondary mental or behavioural syndrome, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F07.2",
+      "label": "Postconcussional syndrome"
+    },
+    "icd11": {
+      "code": "6D71",
+      "label": "Leichte neurokognitive Stoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F07.8",
+      "label": "Other organic personality and behavioural disorders due to brain disease, damage and dysfunction"
+    },
+    "icd11": {
+      "code": "6E6Z",
+      "label": "Secondary mental or behavioural syndrome, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F07.9",
+      "label": "Unspecified organic personality and behavioural disorder due to brain disease, damage and dysfunction"
+    },
+    "icd11": {
+      "code": "6E6Z",
+      "label": "Secondary mental or behavioural syndrome, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F09",
+      "label": "Unspecified organic or symptomatic mental disorder"
+    },
+    "icd11": {
+      "code": "6E0Z",
+      "label": "Neurocognitive disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F10",
+      "label": "Mental and behavioural disorders due to use of alcohol"
+    },
+    "icd11": {
+      "code": "6C40",
+      "label": "Stoerungen durch Alkoholgebrauch"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F10.2",
+      "label": "Abhängigkeitssyndrom bei Alkohol"
+    },
+    "icd11": {
+      "code": "6C40.2",
+      "label": "Alkoholabhängigkeit"
+    },
+    "dsm5tr": {
+      "code": "303.90",
+      "label": "Alkoholgebrauchsstörung, schwer"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F11",
+      "label": "Mental and behavioural disorders due to use of opioids"
+    },
+    "icd11": {
+      "code": "6C43",
+      "label": "Stoerungen durch Opioidgebrauch"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F11.2",
+      "label": "Abhängigkeitssyndrom bei Opioiden"
+    },
+    "icd11": {
+      "code": "6C43.2",
+      "label": "Opioidabhängigkeit"
+    },
+    "dsm5tr": {
+      "code": "304.00",
+      "label": "Opioidgebrauchsstörung, schwer"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F12",
+      "label": "Mental and behavioural disorders due to use of cannabinoids"
+    },
+    "icd11": {
+      "code": "6C41",
+      "label": "Stoerungen durch Cannabisgebrauch"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F12.2",
+      "label": "Abhängigkeitssyndrom bei Cannabinoiden"
+    },
+    "icd11": {
+      "code": "6C41.2",
+      "label": "Cannabisabhängigkeit"
+    },
+    "dsm5tr": {
+      "code": "304.30",
+      "label": "Cannabisgebrauchsstörung, schwer"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F13",
+      "label": "Mental and behavioural disorders due to use of sedatives or hypnotics"
+    },
+    "icd11": {
+      "code": "6C44",
+      "label": "Stoerungen durch Sedativa/Hypnotika"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F14",
+      "label": "Mental and behavioural disorders due to use of cocaine"
+    },
+    "icd11": {
+      "code": "6C45",
+      "label": "Stoerungen durch Kokaingebrauch"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F15",
+      "label": "Mental and behavioural disorders due to use of other stimulants, including caffeine"
+    },
+    "icd11": {
+      "code": "6C48",
+      "label": "Disorders due to use of caffeine, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F16",
+      "label": "Mental and behavioural disorders due to use of hallucinogens"
+    },
+    "icd11": {
+      "code": "6C49",
+      "label": "Stoerungen durch Halluzinogengebrauch"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F17",
+      "label": "Mental and behavioural disorders due to use of tobacco"
+    },
+    "icd11": {
+      "code": "6C4A",
+      "label": "Stoerungen durch Nikotingebrauch"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F17.2",
+      "label": "Abhängigkeitssyndrom bei Tabak"
+    },
+    "icd11": {
+      "code": "6C4A.2",
+      "label": "Tabakabhängigkeit"
+    },
+    "dsm5tr": {
+      "code": "305.1",
+      "label": "Tabakgebrauchsstörung, schwer"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F18",
+      "label": "Mental and behavioural disorders due to use of volatile solvents"
+    },
+    "icd11": {
+      "code": "6C4B",
+      "label": "Disorders due to use of volatile inhalants, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F19",
+      "label": "Mental and behavioural disorders due to multiple drug use and use of other psychoactive substances"
+    },
+    "icd11": {
+      "code": "6C4Z",
+      "label": "Disorders due to substance use, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F19.2",
+      "label": "Abhängigkeitssyndrom bei multipler Drogenreizung"
+    },
+    "icd11": {
+      "code": "6C4E.2",
+      "label": "Abhängigkeit von multiplen Substanzen"
+    },
+    "dsm5tr": {
+      "code": "304.90",
+      "label": "Substanzgebrauchsstörung, schwer"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F20",
+      "label": "Schizophrenia"
+    },
+    "icd11": {
+      "code": "6A20",
+      "label": "Schizophrenie"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F20.0",
+      "label": "Paranoide Schizophrenie"
+    },
+    "icd11": {
+      "code": "6A20.0",
+      "label": "Schizophrenie, paranoider Typ"
+    },
+    "dsm5tr": {
+      "code": "295.90",
+      "label": "Schizophrenie, paranoider Typ"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F20.1",
+      "label": "Hebephrene Schizophrenie"
+    },
+    "icd11": {
+      "code": "6A20.1",
+      "label": "Schizophrenie, desorganisierter Typ"
+    },
+    "dsm5tr": {
+      "code": "295.10",
+      "label": "Schizophrenie, desorganisierter Typ"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F20.2",
+      "label": "Katatone Schizophrenie"
+    },
+    "icd11": {
+      "code": "6A20.2",
+      "label": "Schizophrenie, katatoner Typ"
+    },
+    "dsm5tr": {
+      "code": "295.20",
+      "label": "Schizophrenie, katatoner Typ"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F20.3",
+      "label": "Undifferenzierte Schizophrenie"
+    },
+    "icd11": {
+      "code": "6A20.3",
+      "label": "Schizophrenie, undifferenzierter Typ"
+    },
+    "dsm5tr": {
+      "code": "295.90",
+      "label": "Schizophrenie, undifferenzierter Typ"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F20.4",
+      "label": "Post-schizophrenic depression"
+    },
+    "icd11": {
+      "code": "6A2Z",
+      "label": "Schizophrenia or other primary psychotic disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F20.5",
+      "label": "Schizophrenes Residuum"
+    },
+    "icd11": {
+      "code": "6A20.5",
+      "label": "Schizophrenie, Residualzustand"
+    },
+    "dsm5tr": {
+      "code": "295.60",
+      "label": "Schizophrenie, Residualzustand"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F20.6",
+      "label": "Simple schizophrenia"
+    },
+    "icd11": {
+      "code": "6A20",
+      "label": "Schizophrenie"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F20.8",
+      "label": "Other schizophrenia"
+    },
+    "icd11": {
+      "code": "6A20",
+      "label": "Schizophrenie"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F20.9",
+      "label": "Schizophrenie"
+    },
+    "icd11": {
+      "code": "6A20",
+      "label": "Schizophrenie"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Schizophrenie"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F21",
+      "label": "Schizotype Persoenlichkeitsstoerung"
+    },
+    "icd11": {
+      "code": "6A22",
+      "label": "Schizotype Stoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Schizotype Persoenlichkeitsstoerung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F22",
+      "label": "Wahnhafte Stoerung"
+    },
+    "icd11": {
+      "code": "6A24",
+      "label": "Wahnhafte Stoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Wahnhafte Stoerung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F22.0",
+      "label": "Delusional disorder"
+    },
+    "icd11": {
+      "code": "6A24",
+      "label": "Wahnhafte Stoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F22.8",
+      "label": "Other persistent delusional disorders"
+    },
+    "icd11": {
+      "code": "6A24",
+      "label": "Wahnhafte Stoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F22.9",
+      "label": "Persistent delusional disorder, unspecified"
+    },
+    "icd11": {
+      "code": "6A24",
+      "label": "Wahnhafte Stoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F23",
+      "label": "Kurze psychotische Stoerung"
+    },
+    "icd11": {
+      "code": "6A23",
+      "label": "Akute voruebergehende psychotische Stoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Kurze psychotische Stoerung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F23.0",
+      "label": "Acute polymorphic psychotic disorder without symptoms of schizophrenia"
+    },
+    "icd11": {
+      "code": "6A23",
+      "label": "Akute voruebergehende psychotische Stoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F23.1",
+      "label": "Acute polymorphic psychotic disorder with symptoms of schizophrenia"
+    },
+    "icd11": {
+      "code": "6A23",
+      "label": "Akute voruebergehende psychotische Stoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F23.2",
+      "label": "Acute schizophrenia-like psychotic disorder"
+    },
+    "icd11": {
+      "code": "6A23",
+      "label": "Akute voruebergehende psychotische Stoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F23.3",
+      "label": "Other acute predominantly delusional psychotic disorders"
+    },
+    "icd11": {
+      "code": "6A23",
+      "label": "Akute voruebergehende psychotische Stoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F23.8",
+      "label": "Other acute and transient psychotic disorders"
+    },
+    "icd11": {
+      "code": "6A23",
+      "label": "Akute voruebergehende psychotische Stoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F23.9",
+      "label": "Acute and transient psychotic disorder, unspecified"
+    },
+    "icd11": {
+      "code": "6A23",
+      "label": "Akute voruebergehende psychotische Stoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F24",
+      "label": "Induced delusional disorder"
+    },
+    "icd11": {
+      "code": "6A24",
+      "label": "Wahnhafte Stoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F25",
+      "label": "Schizoaffective disorders"
+    },
+    "icd11": {
+      "code": "6A21",
+      "label": "Schizoaffektive Stoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F25.0",
+      "label": "Schizoaffektive Störung, manische Form"
+    },
+    "icd11": {
+      "code": "6A21.0",
+      "label": "Schizoaffektive Störung, manischer Typ"
+    },
+    "dsm5tr": {
+      "code": "295.70",
+      "label": "Schizoaffektive Störung, bipolare Typ"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F25.1",
+      "label": "Schizoaffektive Störung, depressive Form"
+    },
+    "icd11": {
+      "code": "6A21.1",
+      "label": "Schizoaffektive Störung, depressiver Typ"
+    },
+    "dsm5tr": {
+      "code": "295.70",
+      "label": "Schizoaffektive Störung, depressive Typ"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F25.2",
+      "label": "Schizoaffective disorder, mixed type"
+    },
+    "icd11": {
+      "code": "6A21",
+      "label": "Schizoaffektive Stoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F25.8",
+      "label": "Other schizoaffective disorders"
+    },
+    "icd11": {
+      "code": "6A21",
+      "label": "Schizoaffektive Stoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F25.9",
+      "label": "Schizoaffective disorder, unspecified"
+    },
+    "icd11": {
+      "code": "6A21",
+      "label": "Schizoaffektive Stoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F28",
+      "label": "Other nonorganic psychotic disorders"
+    },
+    "icd11": {
+      "code": "6A2Z",
+      "label": "Schizophrenia or other primary psychotic disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F29",
+      "label": "Unspecified nonorganic psychosis"
+    },
+    "icd11": {
+      "code": "6A2Z",
+      "label": "Schizophrenia or other primary psychotic disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F30",
+      "label": "Manic episode"
+    },
+    "icd11": {
+      "code": "6A8Z",
+      "label": "Mood disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F30.0",
+      "label": "Hypomania"
+    },
+    "icd11": {
+      "code": "",
+      "label": ""
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F30.1",
+      "label": "Mania without psychotic symptoms"
+    },
+    "icd11": {
+      "code": "6A8Z",
+      "label": "Mood disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F30.2",
+      "label": "Mania with psychotic symptoms"
+    },
+    "icd11": {
+      "code": "6A8Z",
+      "label": "Mood disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F30.8",
+      "label": "Other manic episodes"
+    },
+    "icd11": {
+      "code": "6A8Z",
+      "label": "Mood disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F30.9",
+      "label": "Manic episode, unspecified"
+    },
+    "icd11": {
+      "code": "6A8Z",
+      "label": "Mood disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F31",
+      "label": "Bipolar affective disorder"
+    },
+    "icd11": {
+      "code": "6A6Z",
+      "label": "Bipolar or related disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F31.0",
+      "label": "Bipolare affektive Störung, gegenwärtig manisch"
+    },
+    "icd11": {
+      "code": "6A60.0",
+      "label": "Bipolare Störung I, manische Episode"
+    },
+    "dsm5tr": {
+      "code": "296.41",
+      "label": "Bipolare I-Störung, manische Episode"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F31.1",
+      "label": "Bipolare affektive Störung, gegenwärtig manisch mit psychotischen Symptomen"
+    },
+    "icd11": {
+      "code": "6A60.1",
+      "label": "Bipolare Störung I, manische Episode mit psychotischen Symptomen"
+    },
+    "dsm5tr": {
+      "code": "296.44",
+      "label": "Bipolare I-Störung, manische Episode, schwer"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F31.2",
+      "label": "Bipolar I, aktuelle Episode manisch mit Psychose"
+    },
+    "icd11": {
+      "code": "6A60.1",
+      "label": "Bipolar I, aktuelle Episode manisch, mit psychotischen Symptomen"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Bipolar I, aktuelle Episode manisch mit Psychose"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F31.3",
+      "label": "Bipolare affektive Störung, gegenwärtig leichte oder mittelgradige depressive Episode"
+    },
+    "icd11": {
+      "code": "6A60.3",
+      "label": "Bipolare Störung I, depressive Episode"
+    },
+    "dsm5tr": {
+      "code": "296.52",
+      "label": "Bipolare I-Störung, depressive Episode"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F31.4",
+      "label": "Bipolar I, aktuelle Episode depressiv, schwer"
+    },
+    "icd11": {
+      "code": "6A60.6",
+      "label": "Bipolar type I disorder, current episode depressive, severe without psychotic symptoms"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Bipolar I, aktuelle Episode depressiv, schwer"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F31.5",
+      "label": "Bipolare affektive Störung, gegenwärtig schwere depressive Episode"
+    },
+    "icd11": {
+      "code": "6A60.5",
+      "label": "Bipolare Störung I, schwere depressive Episode"
+    },
+    "dsm5tr": {
+      "code": "296.53",
+      "label": "Bipolare I-Störung, schwere depressive Episode"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F31.6",
+      "label": "Bipolar affective disorder, current episode mixed"
+    },
+    "icd11": {
+      "code": "6A60.9",
+      "label": "Bipolar type I disorder, current episode mixed, without psychotic symptoms"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F31.7",
+      "label": "Bipolar affective disorder, currently in remission"
+    },
+    "icd11": {
+      "code": "6A60.F",
+      "label": "Bipolar type I disorder, currently in full remission"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F31.8",
+      "label": "Other bipolar affective disorders"
+    },
+    "icd11": {
+      "code": "6A6Z",
+      "label": "Bipolar or related disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F31.9",
+      "label": "Bipolare affektive Störung, nicht näher bezeichnet"
+    },
+    "icd11": {
+      "code": "6A60",
+      "label": "Bipolare Störung I"
+    },
+    "dsm5tr": {
+      "code": "296.80",
+      "label": "Bipolare I-Störung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F32",
+      "label": "Depressive episode"
+    },
+    "icd11": {
+      "code": "6A70",
+      "label": "Depressive Episode"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F32.0",
+      "label": "Leichte depressive Episode"
+    },
+    "icd11": {
+      "code": "6A70.0",
+      "label": "Depressive Episode, leicht"
+    },
+    "dsm5tr": {
+      "code": "296.21",
+      "label": "Depressive Störung, einzelne Episode, leicht"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F32.1",
+      "label": "Mittelgradige depressive Episode"
+    },
+    "icd11": {
+      "code": "6A70.1",
+      "label": "Depressive Episode, mittelgradig"
+    },
+    "dsm5tr": {
+      "code": "296.22",
+      "label": "Depressive Störung, einzelne Episode, mittelgradig"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F32.2",
+      "label": "Schwere depressive Episode ohne psychotische Symptome"
+    },
+    "icd11": {
+      "code": "6A70.2",
+      "label": "Depressive Episode, schwer"
+    },
+    "dsm5tr": {
+      "code": "296.23",
+      "label": "Depressive Störung, einzelne Episode, schwer"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F32.3",
+      "label": "Schwere depressive Episode mit psychotischen Symptomen"
+    },
+    "icd11": {
+      "code": "6A70.3",
+      "label": "Depressive Episode mit psychotischen Symptomen"
+    },
+    "dsm5tr": {
+      "code": "296.24",
+      "label": "Depressive Störung mit psychotischen Merkmalen"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F32.8",
+      "label": "Other depressive episodes"
+    },
+    "icd11": {
+      "code": "6A7Z",
+      "label": "Depressive disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F32.9",
+      "label": "Depressive episode, unspecified"
+    },
+    "icd11": {
+      "code": "6A7Z",
+      "label": "Depressive disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F33",
+      "label": "Recurrent depressive disorder"
+    },
+    "icd11": {
+      "code": "6A71",
+      "label": "Rezidivierende depressive Stoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F33.0",
+      "label": "Rezidivierende depressive Störung, gegenwärtig leichte Episode"
+    },
+    "icd11": {
+      "code": "6A71.0",
+      "label": "Rezidivierende depressive Störung, leichte Episode"
+    },
+    "dsm5tr": {
+      "code": "296.31",
+      "label": "Rezidivierende depressive Störung, leicht"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F33.1",
+      "label": "Rezidivierende depressive Störung, gegenwärtig mittelgradige Episode"
+    },
+    "icd11": {
+      "code": "6A71.1",
+      "label": "Rezidivierende depressive Störung, mittelgradige Episode"
+    },
+    "dsm5tr": {
+      "code": "296.32",
+      "label": "Rezidivierende depressive Störung, mittelgradig"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F33.2",
+      "label": "Rezidivierende depressive Störung, gegenwärtig schwere Episode"
+    },
+    "icd11": {
+      "code": "6A71.2",
+      "label": "Rezidivierende depressive Störung, schwere Episode"
+    },
+    "dsm5tr": {
+      "code": "296.33",
+      "label": "Rezidivierende depressive Störung, schwer"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F33.3",
+      "label": "Rezidivierende depressive Stoerung, schwer mit Psychose"
+    },
+    "icd11": {
+      "code": "6A71.4",
+      "label": "Rezidivierende depressive Stoerung, gegenwaertige Episode schwer, mit Psychose"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Rezidivierende depressive Stoerung, schwer mit Psychose"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F33.4",
+      "label": "Recurrent depressive disorder, currently in remission"
+    },
+    "icd11": {
+      "code": "6A71.7",
+      "label": "Recurrent depressive disorder, currently in full remission"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F33.8",
+      "label": "Other recurrent depressive disorders"
+    },
+    "icd11": {
+      "code": "6A71",
+      "label": "Rezidivierende depressive Stoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F33.9",
+      "label": "Recurrent depressive disorder, unspecified"
+    },
+    "icd11": {
+      "code": "6A71",
+      "label": "Rezidivierende depressive Stoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F34",
+      "label": "Persistent mood [affective] disorders"
+    },
+    "icd11": {
+      "code": "6A8Z",
+      "label": "Mood disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F34.0",
+      "label": "Zyklothymie"
+    },
+    "icd11": {
+      "code": "6A62",
+      "label": "Zyklothymie"
+    },
+    "dsm5tr": {
+      "code": "301.13",
+      "label": "Zyklothymische Störung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F34.1",
+      "label": "Persistierende depressive Stoerung (Dysthymie)"
+    },
+    "icd11": {
+      "code": "6A72",
+      "label": "Dysthyme Stoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Persistierende depressive Stoerung (Dysthymie)"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F34.8",
+      "label": "Other persistent mood [affective] disorders"
+    },
+    "icd11": {
+      "code": "6A8Z",
+      "label": "Mood disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F34.9",
+      "label": "Persistent mood [affective] disorder, unspecified"
+    },
+    "icd11": {
+      "code": "6A8Z",
+      "label": "Mood disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F38",
+      "label": "Other mood [affective] disorders"
+    },
+    "icd11": {
+      "code": "6A8Z",
+      "label": "Mood disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F38.0",
+      "label": "Other single mood [affective] disorders"
+    },
+    "icd11": {
+      "code": "6A8Z",
+      "label": "Mood disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F38.1",
+      "label": "Other recurrent mood [affective] disorders"
+    },
+    "icd11": {
+      "code": "6A8Z",
+      "label": "Mood disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F38.8",
+      "label": "Other specified mood [affective] disorders"
+    },
+    "icd11": {
+      "code": "6A8Z",
+      "label": "Mood disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F39",
+      "label": "Unspecified mood [affective] disorder"
+    },
+    "icd11": {
+      "code": "6A8Z",
+      "label": "Mood disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F40",
+      "label": "Phobic anxiety disorders"
+    },
+    "icd11": {
+      "code": "6B0Z",
+      "label": "Anxiety or fear-related disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F40.0",
+      "label": "Agrophobie"
+    },
+    "icd11": {
+      "code": "6B02",
+      "label": "Agrophobie"
+    },
+    "dsm5tr": {
+      "code": "300.22",
+      "label": "Agrophobie"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F40.1",
+      "label": "Soziale Phobien"
+    },
+    "icd11": {
+      "code": "6B04",
+      "label": "Soziale Angststörung"
+    },
+    "dsm5tr": {
+      "code": "300.23",
+      "label": "Soziale Angststörung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F40.2",
+      "label": "Specific (isolated) phobias"
+    },
+    "icd11": {
+      "code": "6B03",
+      "label": "Spezifische Phobie"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F40.8",
+      "label": "Other phobic anxiety disorders"
+    },
+    "icd11": {
+      "code": "6B0Z",
+      "label": "Anxiety or fear-related disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F40.9",
+      "label": "Phobic anxiety disorder, unspecified"
+    },
+    "icd11": {
+      "code": "6B0Z",
+      "label": "Anxiety or fear-related disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F41",
+      "label": "Other anxiety disorders"
+    },
+    "icd11": {
+      "code": "6B0Z",
+      "label": "Anxiety or fear-related disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F41.0",
+      "label": "Panikstörung"
+    },
+    "icd11": {
+      "code": "6B01",
+      "label": "Panikstörung"
+    },
+    "dsm5tr": {
+      "code": "300.01",
+      "label": "Panikstörung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F41.1",
+      "label": "Generalisierte Angststörung"
+    },
+    "icd11": {
+      "code": "6B00",
+      "label": "Generalisierte Angststörung"
+    },
+    "dsm5tr": {
+      "code": "300.02",
+      "label": "Generalisierte Angststörung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F41.2",
+      "label": "Mixed anxiety and depressive disorder"
+    },
+    "icd11": {
+      "code": "6A73",
+      "label": "Gemischte depressive und Angststoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F41.3",
+      "label": "Other mixed anxiety disorders"
+    },
+    "icd11": {
+      "code": "6C9Z",
+      "label": "Disruptive behaviour or dissocial disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F41.8",
+      "label": "Other specified anxiety disorders"
+    },
+    "icd11": {
+      "code": "6C9Z",
+      "label": "Disruptive behaviour or dissocial disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F41.9",
+      "label": "Anxiety disorder, unspecified"
+    },
+    "icd11": {
+      "code": "6B0Z",
+      "label": "Anxiety or fear-related disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F42",
+      "label": "Obsessive-compulsive disorder"
+    },
+    "icd11": {
+      "code": "6B20",
+      "label": "Zwangsstoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F42.0",
+      "label": "Zwanghaftes Denken und Grübeln"
+    },
+    "icd11": {
+      "code": "6B20",
+      "label": "Zwangsstörung"
+    },
+    "dsm5tr": {
+      "code": "300.3",
+      "label": "Zwangsstörung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F42.1",
+      "label": "Predominantly compulsive acts [obsessional rituals]"
+    },
+    "icd11": {
+      "code": "6B20",
+      "label": "Zwangsstoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F42.2",
+      "label": "Zwangsstoerung"
+    },
+    "icd11": {
+      "code": "6B20",
+      "label": "Zwangsstoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Zwangsstoerung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F42.8",
+      "label": "Other obsessive-compulsive disorders"
+    },
+    "icd11": {
+      "code": "6B20",
+      "label": "Zwangsstoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F42.9",
+      "label": "Obsessive-compulsive disorder, unspecified"
+    },
+    "icd11": {
+      "code": "6B20",
+      "label": "Zwangsstoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F43",
+      "label": "Reaction to severe stress, and adjustment disorders"
+    },
+    "icd11": {
+      "code": "6B4Z",
+      "label": "Disorders specifically associated with stress, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F43.0",
+      "label": "Akute Belastungsreaktion"
+    },
+    "icd11": {
+      "code": "6B40",
+      "label": "Akute Belastungsreaktion"
+    },
+    "dsm5tr": {
+      "code": "308.3",
+      "label": "Akute Belastungsstörung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F43.1",
+      "label": "Posttraumatische Belastungsstörung"
+    },
+    "icd11": {
+      "code": "6B41",
+      "label": "Posttraumatische Belastungsstörung"
+    },
+    "dsm5tr": {
+      "code": "309.81",
+      "label": "Posttraumatische Belastungsstörung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F43.2",
+      "label": "Anpassungsstörungen"
+    },
+    "icd11": {
+      "code": "6B43",
+      "label": "Anpassungsstörung"
+    },
+    "dsm5tr": {
+      "code": "309.0",
+      "label": "Anpassungsstörung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F43.8",
+      "label": "Other reactions to severe stress"
+    },
+    "icd11": {
+      "code": "6B4Z",
+      "label": "Disorders specifically associated with stress, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F43.9",
+      "label": "Reaction to severe stress, unspecified"
+    },
+    "icd11": {
+      "code": "6B4Z",
+      "label": "Disorders specifically associated with stress, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F44",
+      "label": "Dissociative [conversion] disorders"
+    },
+    "icd11": {
+      "code": "6B6Z",
+      "label": "Dissociative disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F44.0",
+      "label": "Dissoziative Amnesie"
+    },
+    "icd11": {
+      "code": "6B64",
+      "label": "Dissoziative Amnesie"
+    },
+    "dsm5tr": {
+      "code": "300.12",
+      "label": "Dissoziative Amnesie"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F44.1",
+      "label": "Dissoziative Fugue"
+    },
+    "icd11": {
+      "code": "6B61.0",
+      "label": "Dissociative amnesia with dissociative fugue"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Dissoziative Fugue"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F44.2",
+      "label": "Dissociative stupor"
+    },
+    "icd11": {
+      "code": "6B60",
+      "label": "Dissoziative neurologische Symptomstoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F44.3",
+      "label": "Trance and possession disorders"
+    },
+    "icd11": {
+      "code": "6B63",
+      "label": "Possession trance disorder"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F44.4",
+      "label": "Konversionsstoerung (Funktionelle neurologische Symptomstoerung)"
+    },
+    "icd11": {
+      "code": "6B60.8Z",
+      "label": "Dissociative neurological symptom disorder, with unspecified movement disturbance"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Konversionsstoerung (Funktionelle neurologische Symptomstoerung)"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F44.5",
+      "label": "Dissociative convulsions"
+    },
+    "icd11": {
+      "code": "6B60.4",
+      "label": "Dissociative neurological symptom disorder, with non-epileptic seizures"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F44.6",
+      "label": "Dissociative anaesthesia and sensory loss"
+    },
+    "icd11": {
+      "code": "6B60.3",
+      "label": "Dissociative neurological symptom disorder, with other sensory disturbance"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F44.7",
+      "label": "Mixed dissociative [conversion] disorders"
+    },
+    "icd11": {
+      "code": "6B6Z",
+      "label": "Dissociative disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F44.8",
+      "label": "Other dissociative [conversion] disorders"
+    },
+    "icd11": {
+      "code": "6B6Z",
+      "label": "Dissociative disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F44.9",
+      "label": "Dissociative [conversion] disorder, unspecified"
+    },
+    "icd11": {
+      "code": "6B6Z",
+      "label": "Dissociative disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F45",
+      "label": "Somatoform disorders"
+    },
+    "icd11": {
+      "code": "6C20",
+      "label": "Bodily distress disorder, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F45.0",
+      "label": "Somatisierungsstörung"
+    },
+    "icd11": {
+      "code": "6C20",
+      "label": "Körperliche Belastungsstörung"
+    },
+    "dsm5tr": {
+      "code": "300.82",
+      "label": "Körperliche Belastungsstörung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F45.1",
+      "label": "Somatische Belastungsstoerung"
+    },
+    "icd11": {
+      "code": "6C20",
+      "label": "Bodily distress disorder, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Somatische Belastungsstoerung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F45.2",
+      "label": "Hypochondriacal disorder"
+    },
+    "icd11": {
+      "code": "6B23",
+      "label": "Hypochondrie (Krankheitsangst)"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F45.3",
+      "label": "Somatoform autonomic dysfunction"
+    },
+    "icd11": {
+      "code": "6C20",
+      "label": "Bodily distress disorder, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F45.4",
+      "label": "Persistent somatoform pain disorder"
+    },
+    "icd11": {
+      "code": "6C20",
+      "label": "Bodily distress disorder, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F45.8",
+      "label": "Other somatoform disorders"
+    },
+    "icd11": {
+      "code": "6C20",
+      "label": "Bodily distress disorder, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F45.9",
+      "label": "Somatoform disorder, unspecified"
+    },
+    "icd11": {
+      "code": "6C20",
+      "label": "Bodily distress disorder, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F48",
+      "label": "Other neurotic disorders"
+    },
+    "icd11": {
+      "code": "6B6Z",
+      "label": "Dissociative disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F48.0",
+      "label": "Neurasthenia"
+    },
+    "icd11": {
+      "code": "6A8Z",
+      "label": "Mood disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F48.1",
+      "label": "Depersonalisations-/Derealisationsstoerung"
+    },
+    "icd11": {
+      "code": "6B66",
+      "label": "Depersonalisations-/Derealisationsstoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Depersonalisations-/Derealisationsstoerung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F48.8",
+      "label": "Other specified neurotic disorders"
+    },
+    "icd11": {
+      "code": "6E8Z",
+      "label": "Mental, behavioural or neurodevelopmental disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F48.9",
+      "label": "Neurotic disorder, unspecified"
+    },
+    "icd11": {
+      "code": "6B6Z",
+      "label": "Dissociative disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F50",
+      "label": "Eating disorders"
+    },
+    "icd11": {
+      "code": "6B8Z",
+      "label": "Feeding or eating disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F50.0",
+      "label": "Anorexia nervosa"
+    },
+    "icd11": {
+      "code": "6B80",
+      "label": "Anorexia nervosa"
+    },
+    "dsm5tr": {
+      "code": "307.1",
+      "label": "Anorexia nervosa"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F50.1",
+      "label": "Atypical anorexia nervosa"
+    },
+    "icd11": {
+      "code": "6B80",
+      "label": "Anorexia nervosa"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F50.2",
+      "label": "Bulimia nervosa"
+    },
+    "icd11": {
+      "code": "6B81",
+      "label": "Bulimia nervosa"
+    },
+    "dsm5tr": {
+      "code": "307.51",
+      "label": "Bulimia nervosa"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F50.3",
+      "label": "Atypical bulimia nervosa"
+    },
+    "icd11": {
+      "code": "6B81",
+      "label": "Bulimia nervosa"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F50.4",
+      "label": "Overeating associated with other psychological disturbances"
+    },
+    "icd11": {
+      "code": "6B8Z",
+      "label": "Feeding or eating disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F50.5",
+      "label": "Vomiting associated with other psychological disturbances"
+    },
+    "icd11": {
+      "code": "6B8Z",
+      "label": "Feeding or eating disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F50.8",
+      "label": "Other eating disorders"
+    },
+    "icd11": {
+      "code": "6B8Z",
+      "label": "Feeding or eating disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F50.9",
+      "label": "Eating disorder, unspecified"
+    },
+    "icd11": {
+      "code": "6B8Z",
+      "label": "Feeding or eating disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F51",
+      "label": "Nonorganic sleep disorders"
+    },
+    "icd11": {
+      "code": "7B2Z",
+      "label": "Sleep-wake disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F51.0",
+      "label": "Nonorganic insomnia"
+    },
+    "icd11": {
+      "code": "7A0Z",
+      "label": "Insomnia disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F51.1",
+      "label": "Nonorganic hypersomnia"
+    },
+    "icd11": {
+      "code": "7A26",
+      "label": "Insufficient sleep syndrome"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F51.2",
+      "label": "Nonorganic disorder of the sleep-wake schedule"
+    },
+    "icd11": {
+      "code": "7B2Z",
+      "label": "Sleep-wake disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F51.3",
+      "label": "Sleepwalking [somnambulism]"
+    },
+    "icd11": {
+      "code": "7B00.1",
+      "label": "Sleepwalking disorder"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F51.4",
+      "label": "Sleep terrors [night terrors]"
+    },
+    "icd11": {
+      "code": "7B00.2",
+      "label": "Sleep terrors"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F51.5",
+      "label": "Nightmares"
+    },
+    "icd11": {
+      "code": "7B01.2",
+      "label": "Nightmare disorder"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F51.8",
+      "label": "Other nonorganic sleep disorders"
+    },
+    "icd11": {
+      "code": "7B2Z",
+      "label": "Sleep-wake disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F51.9",
+      "label": "Nonorganic sleep disorder, unspecified"
+    },
+    "icd11": {
+      "code": "7B2Z",
+      "label": "Sleep-wake disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F52",
+      "label": "Sexual dysfunction, not caused by organic disorder or disease"
+    },
+    "icd11": {
+      "code": "HA0Z",
+      "label": "Sexual dysfunctions, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F52.0",
+      "label": "Lack or loss of sexual desire"
+    },
+    "icd11": {
+      "code": "HA0Z",
+      "label": "Sexual dysfunctions, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F52.1",
+      "label": "Sexual aversion and lack of sexual enjoyment"
+    },
+    "icd11": {
+      "code": "HA00",
+      "label": "Hypoactive sexual desire dysfunction, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F52.2",
+      "label": "Failure of genital response"
+    },
+    "icd11": {
+      "code": "HA01",
+      "label": "Sexual arousal dysfunctions, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F52.3",
+      "label": "Orgasmic dysfunction"
+    },
+    "icd11": {
+      "code": "HA02",
+      "label": "Orgasmic dysfunctions, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F52.4",
+      "label": "Premature ejaculation"
+    },
+    "icd11": {
+      "code": "HA03.0Z",
+      "label": "Male early ejaculation, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F52.5",
+      "label": "Nonorganic vaginismus"
+    },
+    "icd11": {
+      "code": "HA20",
+      "label": "Sexual pain-penetration disorder, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F52.6",
+      "label": "Nonorganic dyspareunia"
+    },
+    "icd11": {
+      "code": "HA20",
+      "label": "Sexual pain-penetration disorder, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F52.7",
+      "label": "Excessive sexual drive"
+    },
+    "icd11": {
+      "code": "6C72",
+      "label": "Intermittierende explosible Stoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F52.8",
+      "label": "Other sexual dysfunction, not caused by organic disorder or disease"
+    },
+    "icd11": {
+      "code": "HA0Z",
+      "label": "Sexual dysfunctions, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F52.9",
+      "label": "Unspecified sexual dysfunction, not caused by organic disorder or disease"
+    },
+    "icd11": {
+      "code": "HA0Z",
+      "label": "Sexual dysfunctions, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F53",
+      "label": "Mental and behavioural disorders associated with the puerperium, not elsewhere classified"
+    },
+    "icd11": {
+      "code": "6E2Z",
+      "label": "Mental or behavioural disorders associated with pregnancy, childbirth or the puerperium, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F53.0",
+      "label": "Mild mental and behavioural disorders associated with the puerperium, not elsewhere classified"
+    },
+    "icd11": {
+      "code": "6E8Z",
+      "label": "Mental, behavioural or neurodevelopmental disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F53.1",
+      "label": "Severe mental and behavioural disorders associated with the puerperium, not elsewhere classified"
+    },
+    "icd11": {
+      "code": "6E8Z",
+      "label": "Mental, behavioural or neurodevelopmental disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F53.8",
+      "label": "Other mental and behavioural disorders associated with the puerperium, not elsewhere classified"
+    },
+    "icd11": {
+      "code": "6E8Z",
+      "label": "Mental, behavioural or neurodevelopmental disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F53.9",
+      "label": "Puerperal mental disorder, unspecified"
+    },
+    "icd11": {
+      "code": "6E8Z",
+      "label": "Mental, behavioural or neurodevelopmental disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F54",
+      "label": "Psychological and behavioural factors associated with disorders or diseases classified elsewhere"
+    },
+    "icd11": {
+      "code": "6E40",
+      "label": "Psychological or behavioural factors affecting disorders or diseases classified elsewhere, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F55",
+      "label": "Abuse of non-dependence-producing substances"
+    },
+    "icd11": {
+      "code": "6C4H.1Z",
+      "label": "Harmful pattern of use of non-psychoactive substances, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F59",
+      "label": "Unspecified behavioural syndromes associated with physiological disturbances and physical factors"
+    },
+    "icd11": {
+      "code": "6E8Z",
+      "label": "Mental, behavioural or neurodevelopmental disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F60",
+      "label": "Specific personality disorders"
+    },
+    "icd11": {
+      "code": "6D10",
+      "label": "Persoenlichkeitsstoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F60.0",
+      "label": "Emotional instabile Persönlichkeitsstörung"
+    },
+    "icd11": {
+      "code": "6D10.0",
+      "label": "Borderline-Persönlichkeitsstörung"
+    },
+    "dsm5tr": {
+      "code": "301.83",
+      "label": "Borderline-Persönlichkeitsstörung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F60.1",
+      "label": "Dissoziale Persönlichkeitsstörung"
+    },
+    "icd11": {
+      "code": "6D10.1",
+      "label": "Dissoziale Persönlichkeitsstörung"
+    },
+    "dsm5tr": {
+      "code": "301.7",
+      "label": "Antisoziale Persönlichkeitsstörung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F60.2",
+      "label": "Dissoziale Persoenlichkeitsstoerung (Antisozial)"
+    },
+    "icd11": {
+      "code": "6D10",
+      "label": "Persoenlichkeitsstoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Dissoziale Persoenlichkeitsstoerung (Antisozial)"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F60.3",
+      "label": "Emotional instabile Persönlichkeitsstörung, Borderline-Typ"
+    },
+    "icd11": {
+      "code": "6D10.3",
+      "label": "Borderline-Persönlichkeitsstörung"
+    },
+    "dsm5tr": {
+      "code": "301.83",
+      "label": "Borderline-Persönlichkeitsstörung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F60.4",
+      "label": "Histrionische Persoenlichkeitsstoerung"
+    },
+    "icd11": {
+      "code": "6D10",
+      "label": "Persoenlichkeitsstoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Histrionische Persoenlichkeitsstoerung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F60.5",
+      "label": "Anankastische (zwanghafte) Persoenlichkeitsstoerung"
+    },
+    "icd11": {
+      "code": "6D11.4",
+      "label": "Anankastia in personality disorder or personality difficulty"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Anankastische (zwanghafte) Persoenlichkeitsstoerung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F60.6",
+      "label": "Aengstliche (vermeidende) Persoenlichkeitsstoerung"
+    },
+    "icd11": {
+      "code": "6D10",
+      "label": "Persoenlichkeitsstoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Aengstliche (vermeidende) Persoenlichkeitsstoerung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F60.7",
+      "label": "Abhaengige Persoenlichkeitsstoerung"
+    },
+    "icd11": {
+      "code": "6D10",
+      "label": "Persoenlichkeitsstoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Abhaengige Persoenlichkeitsstoerung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F60.8",
+      "label": "Other specific personality disorders"
+    },
+    "icd11": {
+      "code": "6D10",
+      "label": "Persoenlichkeitsstoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F60.9",
+      "label": "Personality disorder, unspecified"
+    },
+    "icd11": {
+      "code": "6D10",
+      "label": "Persoenlichkeitsstoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F61",
+      "label": "Mixed and other personality disorders"
+    },
+    "icd11": {
+      "code": "6D10",
+      "label": "Persoenlichkeitsstoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F62",
+      "label": "Enduring personality changes, not attributable to brain damage and disease"
+    },
+    "icd11": {
+      "code": "6E8Z",
+      "label": "Mental, behavioural or neurodevelopmental disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F62.0",
+      "label": "Enduring personality change after catastrophic experience"
+    },
+    "icd11": {
+      "code": "6B4Z",
+      "label": "Disorders specifically associated with stress, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F62.1",
+      "label": "Enduring personality change after psychiatric illness"
+    },
+    "icd11": {
+      "code": "6D10",
+      "label": "Persoenlichkeitsstoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F62.8",
+      "label": "Other enduring personality changes"
+    },
+    "icd11": {
+      "code": "6D10",
+      "label": "Persoenlichkeitsstoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F62.9",
+      "label": "Enduring personality change, unspecified"
+    },
+    "icd11": {
+      "code": "6D10",
+      "label": "Persoenlichkeitsstoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F63",
+      "label": "Habit and impulse disorders"
+    },
+    "icd11": {
+      "code": "6C7Z",
+      "label": "Impulse control disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F63.0",
+      "label": "Pathologisches Gluecksspiel"
+    },
+    "icd11": {
+      "code": "6C50",
+      "label": "Stoerung durch Gluecksspiel"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Pathologisches Gluecksspiel"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F63.1",
+      "label": "Pyromanie"
+    },
+    "icd11": {
+      "code": "6C70",
+      "label": "Pyromanie"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Pyromanie"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F63.2",
+      "label": "Kleptomanie"
+    },
+    "icd11": {
+      "code": "6C71",
+      "label": "Kleptomanie"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Kleptomanie"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F63.3",
+      "label": "Trichotillomanie"
+    },
+    "icd11": {
+      "code": "6B25.0",
+      "label": "Trichotillomanie"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Trichotillomanie"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F63.8",
+      "label": "Other habit and impulse disorders"
+    },
+    "icd11": {
+      "code": "6C7Z",
+      "label": "Impulse control disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F63.9",
+      "label": "Habit and impulse disorder, unspecified"
+    },
+    "icd11": {
+      "code": "6C7Z",
+      "label": "Impulse control disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F64",
+      "label": "Gender identity disorders"
+    },
+    "icd11": {
+      "code": "HA6Z",
+      "label": "Gender incongruence, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F64.0",
+      "label": "Geschlechtsdysphorie bei Jugendlichen und Erwachsenen"
+    },
+    "icd11": {
+      "code": "HA60",
+      "label": "Geschlechtsinkongruenz des Jugend- oder Erwachsenenalters"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Geschlechtsdysphorie bei Jugendlichen und Erwachsenen"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F64.1",
+      "label": "Dual-role transvestism"
+    },
+    "icd11": {
+      "code": "6D3Z",
+      "label": "Paraphilic disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F64.2",
+      "label": "Geschlechtsdysphorie im Kindesalter"
+    },
+    "icd11": {
+      "code": "HA61",
+      "label": "Geschlechtsinkongruenz des Kindesalters"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Geschlechtsdysphorie im Kindesalter"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F64.8",
+      "label": "Other gender identity disorders"
+    },
+    "icd11": {
+      "code": "HA6Z",
+      "label": "Gender incongruence, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F64.9",
+      "label": "Gender identity disorder, unspecified"
+    },
+    "icd11": {
+      "code": "HA60",
+      "label": "Geschlechtsinkongruenz des Jugend- oder Erwachsenenalters"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F65",
+      "label": "Disorders of sexual preference"
+    },
+    "icd11": {
+      "code": "6D3Z",
+      "label": "Paraphilic disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F65.0",
+      "label": "Fetishism"
+    },
+    "icd11": {
+      "code": "6D36",
+      "label": "Paraphilic disorder involving solitary behaviour or consenting individuals"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F65.1",
+      "label": "Fetishistic transvestism"
+    },
+    "icd11": {
+      "code": "6D36",
+      "label": "Paraphilic disorder involving solitary behaviour or consenting individuals"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F65.2",
+      "label": "Exhibitionism"
+    },
+    "icd11": {
+      "code": "6D30",
+      "label": "Exhibitionistische Stoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F65.3",
+      "label": "Voyeurism"
+    },
+    "icd11": {
+      "code": "6D31",
+      "label": "Voyeuristische Stoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F65.4",
+      "label": "Paedophilia"
+    },
+    "icd11": {
+      "code": "6D32",
+      "label": "Pedophilic disorder"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F65.5",
+      "label": "Sadomasochism"
+    },
+    "icd11": {
+      "code": "6D36",
+      "label": "Paraphilic disorder involving solitary behaviour or consenting individuals"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F65.6",
+      "label": "Multiple disorders of sexual preference"
+    },
+    "icd11": {
+      "code": "6D3Z",
+      "label": "Paraphilic disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F65.8",
+      "label": "Other disorders of sexual preference"
+    },
+    "icd11": {
+      "code": "6D3Z",
+      "label": "Paraphilic disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F65.9",
+      "label": "Disorder of sexual preference, unspecified"
+    },
+    "icd11": {
+      "code": "6D3Z",
+      "label": "Paraphilic disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F66",
+      "label": "Psychological and behavioural disorders associated with sexual development and orientation"
+    },
+    "icd11": {
+      "code": "QA15.1",
+      "label": "Counselling related to sexual behaviour and orientation or sexual relationships of the person"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F66.0",
+      "label": "Sexual maturation disorder"
+    },
+    "icd11": {
+      "code": "QA15.1",
+      "label": "Counselling related to sexual behaviour and orientation or sexual relationships of the person"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F66.1",
+      "label": "Egodystonic sexual orientation"
+    },
+    "icd11": {
+      "code": "QA15.1",
+      "label": "Counselling related to sexual behaviour and orientation or sexual relationships of the person"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F66.2",
+      "label": "Sexual relationship disorder"
+    },
+    "icd11": {
+      "code": "QA15.1",
+      "label": "Counselling related to sexual behaviour and orientation or sexual relationships of the person"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F66.8",
+      "label": "Other psychosexual development disorders"
+    },
+    "icd11": {
+      "code": "QA15.1",
+      "label": "Counselling related to sexual behaviour and orientation or sexual relationships of the person"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F66.9",
+      "label": "Psychosexual development disorder, unspecified"
+    },
+    "icd11": {
+      "code": "QA15.1",
+      "label": "Counselling related to sexual behaviour and orientation or sexual relationships of the person"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F68",
+      "label": "Other disorders of adult personality and behaviour"
+    },
+    "icd11": {
+      "code": "6D5Z",
+      "label": "Factitious disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F68.0",
+      "label": "Elaboration of physical symptoms for psychological reasons"
+    },
+    "icd11": {
+      "code": "6E8Z",
+      "label": "Mental, behavioural or neurodevelopmental disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F68.1",
+      "label": "Intentional production or feigning of symptoms or disabilities, either physical or psychological [factitious disorder]"
+    },
+    "icd11": {
+      "code": "6D50",
+      "label": "Artifizielle Stoerung, selbstbezogen"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F68.8",
+      "label": "Other specified disorders of adult personality and behaviour"
+    },
+    "icd11": {
+      "code": "6E8Z",
+      "label": "Mental, behavioural or neurodevelopmental disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F69",
+      "label": "Unspecified disorder of adult personality and behaviour"
+    },
+    "icd11": {
+      "code": "6D10",
+      "label": "Persoenlichkeitsstoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F70",
+      "label": "Leichte Intelligenzminderung"
+    },
+    "icd11": {
+      "code": "6A00.0",
+      "label": "Intelligenzminderung, leicht"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Leichte Intelligenzminderung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F71",
+      "label": "Mittelgradige Intelligenzminderung"
+    },
+    "icd11": {
+      "code": "6A00.1",
+      "label": "Intelligenzminderung, mittelgradig"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Mittelgradige Intelligenzminderung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F72",
+      "label": "Schwere Intelligenzminderung"
+    },
+    "icd11": {
+      "code": "6A00.2",
+      "label": "Intelligenzminderung, schwer"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Schwere Intelligenzminderung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F73",
+      "label": "Profound mental retardation"
+    },
+    "icd11": {
+      "code": "6A00.3",
+      "label": "Intelligenzminderung, schwerst"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F78",
+      "label": "Other mental retardation"
+    },
+    "icd11": {
+      "code": "6A00",
+      "label": "Entwicklungsstoerungen der Intelligenz"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F79",
+      "label": "Unspecified mental retardation"
+    },
+    "icd11": {
+      "code": "6A00",
+      "label": "Entwicklungsstoerungen der Intelligenz"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F80",
+      "label": "Specific developmental disorders of speech and language"
+    },
+    "icd11": {
+      "code": "6A01",
+      "label": "Entwicklungsstoerungen des Sprechens oder der Sprache"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F80.0",
+      "label": "Artikulationsstoerung"
+    },
+    "icd11": {
+      "code": "6A01.0",
+      "label": "Developmental speech sound disorder"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Artikulationsstoerung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F80.1",
+      "label": "Expressive language disorder"
+    },
+    "icd11": {
+      "code": "6A01.21",
+      "label": "Developmental language disorder with impairment of mainly expressive language"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F80.2",
+      "label": "Receptive language disorder"
+    },
+    "icd11": {
+      "code": "6A01.20",
+      "label": "Developmental language disorder with impairment of receptive and expressive language"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F80.3",
+      "label": "Acquired aphasia with epilepsy [Landau-Kleffner]"
+    },
+    "icd11": {
+      "code": "8A62.2",
+      "label": "Acquired epileptic aphasia"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F80.8",
+      "label": "Other developmental disorders of speech and language"
+    },
+    "icd11": {
+      "code": "6A01",
+      "label": "Entwicklungsstoerungen des Sprechens oder der Sprache"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F80.9",
+      "label": "Sprachstoerung"
+    },
+    "icd11": {
+      "code": "6A01",
+      "label": "Entwicklungsstoerungen des Sprechens oder der Sprache"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Sprachstoerung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F81",
+      "label": "Specific developmental disorders of scholastic skills"
+    },
+    "icd11": {
+      "code": "6A03",
+      "label": "Entwicklungsstoerung des Lernens"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F81.0",
+      "label": "Lesestoerung (Dyslexie)"
+    },
+    "icd11": {
+      "code": "6A03.0",
+      "label": "Developmental learning disorder with impairment in reading"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Lesestoerung (Dyslexie)"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F81.1",
+      "label": "Specific spelling disorder"
+    },
+    "icd11": {
+      "code": "6A03.1",
+      "label": "Developmental learning disorder with impairment in written expression"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F81.2",
+      "label": "Schreibstoerung (Dysgraphie)"
+    },
+    "icd11": {
+      "code": "6A03.2",
+      "label": "Developmental learning disorder with impairment in mathematics"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Schreibstoerung (Dysgraphie)"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F81.3",
+      "label": "Mixed disorder of scholastic skills"
+    },
+    "icd11": {
+      "code": "6A03",
+      "label": "Entwicklungsstoerung des Lernens"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F81.8",
+      "label": "Other developmental disorders of scholastic skills"
+    },
+    "icd11": {
+      "code": "6A03",
+      "label": "Entwicklungsstoerung des Lernens"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F81.9",
+      "label": "Developmental disorder of scholastic skills, unspecified"
+    },
+    "icd11": {
+      "code": "6A03",
+      "label": "Entwicklungsstoerung des Lernens"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F82",
+      "label": "Entwicklungsbezogene Koordinationsstoerung"
+    },
+    "icd11": {
+      "code": "6A04",
+      "label": "Entwicklungsstoerung der motorischen Koordination"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Entwicklungsbezogene Koordinationsstoerung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F83",
+      "label": "Mixed specific developmental disorders"
+    },
+    "icd11": {
+      "code": "6A0Z",
+      "label": "Neurodevelopmental disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F84",
+      "label": "Pervasive developmental disorders"
+    },
+    "icd11": {
+      "code": "6A0Z",
+      "label": "Neurodevelopmental disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F84.0",
+      "label": "Frühkindlicher Autismus"
+    },
+    "icd11": {
+      "code": "6A02.0",
+      "label": "Autismus-Spektrum-Störung"
+    },
+    "dsm5tr": {
+      "code": "299.00",
+      "label": "Autismus-Spektrum-Störung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F84.1",
+      "label": "Atypical autism"
+    },
+    "icd11": {
+      "code": "6A02",
+      "label": "Autismus-Spektrum-Stoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F84.2",
+      "label": "Rett syndrome"
+    },
+    "icd11": {
+      "code": "LD90.4",
+      "label": "Rett syndrome"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F84.3",
+      "label": "Other childhood disintegrative disorder"
+    },
+    "icd11": {
+      "code": "6A0Z",
+      "label": "Neurodevelopmental disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F84.4",
+      "label": "Overactive disorder associated with mental retardation and stereotyped movements"
+    },
+    "icd11": {
+      "code": "6A0Z",
+      "label": "Neurodevelopmental disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F84.5",
+      "label": "Asperger syndrome"
+    },
+    "icd11": {
+      "code": "6A02.0",
+      "label": "Autism spectrum disorder without disorder of intellectual development and with mild or no impairment of functional language"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F84.8",
+      "label": "Other pervasive developmental disorders"
+    },
+    "icd11": {
+      "code": "6A0Z",
+      "label": "Neurodevelopmental disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F84.9",
+      "label": "Pervasive developmental disorder, unspecified"
+    },
+    "icd11": {
+      "code": "6A0Z",
+      "label": "Neurodevelopmental disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F88",
+      "label": "Other disorders of psychological development"
+    },
+    "icd11": {
+      "code": "6A0Z",
+      "label": "Neurodevelopmental disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F89",
+      "label": "Unspecified disorder of psychological development"
+    },
+    "icd11": {
+      "code": "6A0Z",
+      "label": "Neurodevelopmental disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F90",
+      "label": "Hyperkinetic disorders"
+    },
+    "icd11": {
+      "code": "6A05",
+      "label": "Aufmerksamkeitsdefizit-/Hyperaktivitaetsstoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F90.0",
+      "label": "Aufmerksamkeitsdefizit-/Hyperaktivitätsstörung"
+    },
+    "icd11": {
+      "code": "6A05",
+      "label": "ADHS"
+    },
+    "dsm5tr": {
+      "code": "314.01",
+      "label": "ADHS, kombinierte Präsentation"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F90.1",
+      "label": "ADHS, vorwiegend hyperaktiv-impulsiv"
+    },
+    "icd11": {
+      "code": "6C91",
+      "label": "Stoerung des Sozialverhaltens, dissozial"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "ADHS, vorwiegend hyperaktiv-impulsiv"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F90.8",
+      "label": "Other hyperkinetic disorders"
+    },
+    "icd11": {
+      "code": "6A05",
+      "label": "Aufmerksamkeitsdefizit-/Hyperaktivitaetsstoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F90.9",
+      "label": "Hyperkinetic disorder, unspecified"
+    },
+    "icd11": {
+      "code": "6A05",
+      "label": "Aufmerksamkeitsdefizit-/Hyperaktivitaetsstoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F91",
+      "label": "Conduct disorders"
+    },
+    "icd11": {
+      "code": "6C91",
+      "label": "Stoerung des Sozialverhaltens, dissozial"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F91.0",
+      "label": "Conduct disorder confined to the family context"
+    },
+    "icd11": {
+      "code": "6C91",
+      "label": "Stoerung des Sozialverhaltens, dissozial"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F91.1",
+      "label": "Stoerung des Sozialverhaltens"
+    },
+    "icd11": {
+      "code": "6C91",
+      "label": "Stoerung des Sozialverhaltens, dissozial"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Stoerung des Sozialverhaltens"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F91.2",
+      "label": "Stoerung des Sozialverhaltens, Adoleszenz-Typ"
+    },
+    "icd11": {
+      "code": "6C91",
+      "label": "Stoerung des Sozialverhaltens, dissozial"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Stoerung des Sozialverhaltens, Adoleszenz-Typ"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F91.3",
+      "label": "Stoerung des Sozialverhaltens mit oppositionellem Verhalten"
+    },
+    "icd11": {
+      "code": "6C90",
+      "label": "Stoerung des Sozialverhaltens mit oppositionellem Verhalten"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Stoerung des Sozialverhaltens mit oppositionellem Verhalten"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F91.8",
+      "label": "Other conduct disorders"
+    },
+    "icd11": {
+      "code": "6C91",
+      "label": "Stoerung des Sozialverhaltens, dissozial"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F91.9",
+      "label": "Conduct disorder, unspecified"
+    },
+    "icd11": {
+      "code": "6C91",
+      "label": "Stoerung des Sozialverhaltens, dissozial"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F92",
+      "label": "Mixed disorders of conduct and emotions"
+    },
+    "icd11": {
+      "code": "6C91",
+      "label": "Stoerung des Sozialverhaltens, dissozial"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F92.0",
+      "label": "Depressive conduct disorder"
+    },
+    "icd11": {
+      "code": "6C91",
+      "label": "Stoerung des Sozialverhaltens, dissozial"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F92.8",
+      "label": "Other mixed disorders of conduct and emotions"
+    },
+    "icd11": {
+      "code": "6C91",
+      "label": "Stoerung des Sozialverhaltens, dissozial"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F92.9",
+      "label": "Mixed disorder of conduct and emotions, unspecified"
+    },
+    "icd11": {
+      "code": "6C9Z",
+      "label": "Disruptive behaviour or dissocial disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F93",
+      "label": "Emotional disorders with onset specific to childhood"
+    },
+    "icd11": {
+      "code": "6B0Z",
+      "label": "Anxiety or fear-related disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F93.0",
+      "label": "Trennungsangststoerung"
+    },
+    "icd11": {
+      "code": "6B05",
+      "label": "Trennungsangststoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Trennungsangststoerung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F93.1",
+      "label": "Phobic anxiety disorder of childhood"
+    },
+    "icd11": {
+      "code": "6C9Z",
+      "label": "Disruptive behaviour or dissocial disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F93.2",
+      "label": "Social anxiety disorder of childhood"
+    },
+    "icd11": {
+      "code": "6C9Z",
+      "label": "Disruptive behaviour or dissocial disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F93.3",
+      "label": "Sibling rivalry disorder"
+    },
+    "icd11": {
+      "code": "6C9Z",
+      "label": "Disruptive behaviour or dissocial disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F93.8",
+      "label": "Other childhood emotional disorders"
+    },
+    "icd11": {
+      "code": "6C9Z",
+      "label": "Disruptive behaviour or dissocial disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F93.9",
+      "label": "Childhood emotional disorder, unspecified"
+    },
+    "icd11": {
+      "code": "6C9Z",
+      "label": "Disruptive behaviour or dissocial disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F94",
+      "label": "Disorders of social functioning with onset specific to childhood and adolescence"
+    },
+    "icd11": {
+      "code": "6B0Z",
+      "label": "Anxiety or fear-related disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F94.0",
+      "label": "Selektiver Mutismus"
+    },
+    "icd11": {
+      "code": "6B06",
+      "label": "Selektiver Mutismus"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Selektiver Mutismus"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F94.1",
+      "label": "Reaktive Bindungsstoerung"
+    },
+    "icd11": {
+      "code": "6B44",
+      "label": "Reaktive Bindungsstoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Reaktive Bindungsstoerung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F94.2",
+      "label": "Enthemmte Bindungsstoerung"
+    },
+    "icd11": {
+      "code": "6B45",
+      "label": "Enthemmte Bindungsstoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Enthemmte Bindungsstoerung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F94.8",
+      "label": "Other childhood disorders of social functioning"
+    },
+    "icd11": {
+      "code": "6C9Z",
+      "label": "Disruptive behaviour or dissocial disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F94.9",
+      "label": "Childhood disorder of social functioning, unspecified"
+    },
+    "icd11": {
+      "code": "6C9Z",
+      "label": "Disruptive behaviour or dissocial disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F95",
+      "label": "Tic disorders"
+    },
+    "icd11": {
+      "code": "8A05",
+      "label": "Tic disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F95.0",
+      "label": "Voruebergehende Ticstoerung"
+    },
+    "icd11": {
+      "code": "8A05.0Z",
+      "label": "Primary tics or tic disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Voruebergehende Ticstoerung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F95.1",
+      "label": "Chronische motorische oder vokale Ticstoerung"
+    },
+    "icd11": {
+      "code": "8A05",
+      "label": "Tic disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Chronische motorische oder vokale Ticstoerung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F95.2",
+      "label": "Tourette-Stoerung"
+    },
+    "icd11": {
+      "code": "8A05.00",
+      "label": "Tourette-Syndrom"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Tourette-Stoerung"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F95.8",
+      "label": "Other tic disorders"
+    },
+    "icd11": {
+      "code": "8A05",
+      "label": "Tic disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F95.9",
+      "label": "Tic disorder, unspecified"
+    },
+    "icd11": {
+      "code": "8A05",
+      "label": "Tic disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F98",
+      "label": "Other behavioural and emotional disorders with onset usually occurring in childhood and adolescence"
+    },
+    "icd11": {
+      "code": "6B0Z",
+      "label": "Anxiety or fear-related disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F98.0",
+      "label": "Nonorganic enuresis"
+    },
+    "icd11": {
+      "code": "6C00",
+      "label": "Enuresis, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F98.1",
+      "label": "Nonorganic encopresis"
+    },
+    "icd11": {
+      "code": "6C01",
+      "label": "Encopresis, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F98.2",
+      "label": "Feeding disorder of infancy and childhood"
+    },
+    "icd11": {
+      "code": "6B8Z",
+      "label": "Feeding or eating disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F98.3",
+      "label": "Pica im Kindesalter"
+    },
+    "icd11": {
+      "code": "6B84",
+      "label": "Pica"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": "Pica im Kindesalter"
+    }
+  },
+  {
+    "icd10": {
+      "code": "F98.4",
+      "label": "Stereotyped movement disorders"
+    },
+    "icd11": {
+      "code": "6A06",
+      "label": "Stereotype Bewegungsstoerung"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F98.5",
+      "label": "Stuttering [stammering]"
+    },
+    "icd11": {
+      "code": "6A01.1",
+      "label": "Developmental speech fluency disorder"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F98.6",
+      "label": "Cluttering"
+    },
+    "icd11": {
+      "code": "6A01.1",
+      "label": "Developmental speech fluency disorder"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F98.8",
+      "label": "Other specified behavioural and emotional disorders with onset usually occurring in childhood and adolescence"
+    },
+    "icd11": {
+      "code": "6E8Z",
+      "label": "Mental, behavioural or neurodevelopmental disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F98.9",
+      "label": "Unspecified behavioural and emotional disorders with onset usually occurring in childhood and adolescence"
+    },
+    "icd11": {
+      "code": "6E8Z",
+      "label": "Mental, behavioural or neurodevelopmental disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  },
+  {
+    "icd10": {
+      "code": "F99",
+      "label": "Mental disorder, not otherwise specified"
+    },
+    "icd11": {
+      "code": "6E8Z",
+      "label": "Mental, behavioural or neurodevelopmental disorders, unspecified"
+    },
+    "dsm5tr": {
+      "code": "",
+      "label": ""
+    }
+  }
+]

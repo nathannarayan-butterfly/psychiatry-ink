@@ -7,10 +7,14 @@ export type TopNavTabId = 'workspace' | 'verlauf' | 'labor' | 'therapie' | 'doku
 interface CaseTopNavProps {
   activeTab: TopNavTabId
   onTabSelect: (tab: TopNavTabId) => void
-  /** Patient's local name to display in place of the new-case button. */
+  /** Patient's local name to display in the assignment control. */
   patientName?: string
   /** Called when the patient name chip is clicked — typically navigates to dashboard. */
   onPatientClick?: () => void
+  /** Called when the patient registry chip is clicked. */
+  onRegistryClick?: () => void
+  /** Highlight the registry chip when the registry view is open. */
+  registryActive?: boolean
   /** Whether a patient is linked to this case. Controls which tabs are visible. */
   hasPatient?: boolean
   /** Called when the "Zuordnen" pseudo-tab is clicked. */
@@ -37,6 +41,8 @@ export function CaseTopNav({
   onTabSelect,
   patientName,
   onPatientClick,
+  onRegistryClick,
+  registryActive = false,
   hasPatient = true,
   onCreatePatient,
   activePageLabel,
@@ -45,7 +51,7 @@ export function CaseTopNav({
   const [zuordnenOpen, setZuordnenOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  const displayName = patientName?.trim() || t('patientNavFallback')
+  const displayName = patientName?.trim()
   const visibleTabs = hasPatient ? TABS : TABS.filter((tab) => tab.id === 'workspace')
 
   useEffect(() => {
@@ -82,6 +88,17 @@ export function CaseTopNav({
       ))}
 
       <div className="case-topnav__right">
+        <button
+          type="button"
+          className={[
+            'case-topnav__registry-link',
+            registryActive ? 'case-topnav__registry-link--active' : '',
+          ].join(' ').trim()}
+          onClick={onRegistryClick}
+          title={t('patientNavFallback')}
+        >
+          {t('patientNavFallback')}
+        </button>
         {!hasPatient && (
           <div className="labor-zuordnen-dropdown" ref={dropdownRef}>
             <button
@@ -115,7 +132,7 @@ export function CaseTopNav({
                   aria-selected={false}
                   onClick={() => {
                     setZuordnenOpen(false)
-                    onPatientClick?.()
+                    onRegistryClick?.()
                   }}
                 >
                   Vorhandener Patient
@@ -124,15 +141,17 @@ export function CaseTopNav({
             )}
           </div>
         )}
-        <button
-          type="button"
-          className="case-topnav__patient-name"
-          onClick={onPatientClick}
-          title={displayName}
-          aria-label={displayName}
-        >
-          {displayName}
-        </button>
+        {displayName ? (
+          <button
+            type="button"
+            className="case-topnav__patient-name"
+            onClick={onPatientClick}
+            title={displayName}
+            aria-label={displayName}
+          >
+            {displayName}
+          </button>
+        ) : null}
       </div>
     </nav>
   )

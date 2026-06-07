@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { allowsWorkspaceDbSnapshot, type PrivacyTier } from '../data/privacyRegions'
 import { API_BASE } from '../services/apiClient'
+import {
+  createPatientOnApi,
+  fetchPatientsFromApi,
+  upsertPatientOnApi,
+} from '../services/patientRegistryApi'
 import { createCaseId, DEFAULT_CASE_ID, shortCaseId } from '../utils/caseContext'
 import { countLabGraphs } from '../utils/labPersistence'
 import { countTimelines } from '../utils/timelinePersistence'
@@ -11,6 +16,8 @@ export type LocalGeschlecht = 'maennlich' | 'weiblich' | 'divers'
 export interface LocalCaseMeta {
   caseId: string
   localName?: string
+  localVorname?: string
+  localNachname?: string
   localGeburtsdatum?: string
   localGeschlecht?: LocalGeschlecht
   localAge?: string
@@ -33,6 +40,8 @@ export interface DashboardCase {
   lastEditedAt: string
   documentTypeSummary: string
   localName?: string
+  localVorname?: string
+  localNachname?: string
   localGeburtsdatum?: string
   localGeschlecht?: LocalGeschlecht
   localAge?: string
@@ -43,8 +52,14 @@ export interface DashboardCase {
 }
 
 const REGISTRY_KEY = 'psychiatry-ink:case-registry'
+const REGISTRY_MIGRATED_KEY = 'psychiatry-ink:case-registry-db-migrated'
 
-function loadRegistryMap(): Record<string, LocalCaseMeta> {
+/** In-memory cache — hydrated from SQLite via API. */
+let registryCache: Record<string, LocalCaseMeta> = {}
+let registryHydrated = false
+let hydratePromise: Promise<void> | null = null
+
+function loadRegistryMapFromLocalStorage(): Record<string, LocalCaseMeta> {
   try {
     const raw = localStorage.getItem(REGISTRY_KEY)
     if (!raw) return {}
@@ -55,17 +70,84 @@ function loadRegistryMap(): Record<string, LocalCaseMeta> {
   }
 }
 
-function saveRegistryMap(map: Record<string, LocalCaseMeta>): void {
+function saveRegistryMapToLocalStorage(map: Record<string, LocalCaseMeta>): void {
   try {
     localStorage.setItem(REGISTRY_KEY, JSON.stringify(map))
   } catch {
-    // ignore quota errors
+    // ignore quota errors — server DB is source of truth
   }
 }
 
+function setCacheMap(map: Record<string, LocalCaseMeta>): void {
+  registryCache = map
+  saveRegistryMapToLocalStorage(map)
+}
+
+function readCacheMap(): Record<string, LocalCaseMeta> {
+  if (registryHydrated) return registryCache
+  return loadRegistryMapFromLocalStorage()
+}
+
+/** Load patients from local SQLite (API) and one-time migrate browser localStorage. */
+export async function hydrateCaseRegistry(): Promise<void> {
+  if (registryHydrated) return
+  if (hydratePromise) {
+    await hydratePromise
+    return
+  }
+
+  hydratePromise = (async () => {
+    const localMap = loadRegistryMapFromLocalStorage()
+    let apiPatients: LocalCaseMeta[] = []
+
+    try {
+      apiPatients = await fetchPatientsFromApi()
+    } catch (error) {
+      console.warn('[case-registry] API unavailable, using localStorage cache', error)
+      setCacheMap(localMap)
+      ensureDefaultCase()
+      registryHydrated = true
+      return
+    }
+
+    const merged: Record<string, LocalCaseMeta> = Object.fromEntries(
+      apiPatients.map((patient) => [patient.caseId, patient]),
+    )
+
+    const migratedFlag = localStorage.getItem(REGISTRY_MIGRATED_KEY) === 'true'
+    const localOnly = Object.values(localMap).filter((item) => !merged[item.caseId])
+
+    if (!migratedFlag && localOnly.length > 0) {
+      for (const item of localOnly) {
+        try {
+          const saved = await createPatientOnApi(item)
+          merged[item.caseId] = saved
+        } catch (error) {
+          console.warn('[case-registry] migrate patient failed', item.caseId, error)
+          merged[item.caseId] = item
+        }
+      }
+      localStorage.setItem(REGISTRY_MIGRATED_KEY, 'true')
+    }
+
+    for (const item of Object.values(localMap)) {
+      if (!merged[item.caseId]) merged[item.caseId] = item
+    }
+
+    setCacheMap(merged)
+    ensureDefaultCase()
+    registryHydrated = true
+  })()
+
+  await hydratePromise
+}
+
 export function ensureDefaultCase(): LocalCaseMeta {
-  const map = loadRegistryMap()
-  if (map[DEFAULT_CASE_ID]) return map[DEFAULT_CASE_ID]
+  const map = readCacheMap()
+  if (map[DEFAULT_CASE_ID]) {
+    registryCache[DEFAULT_CASE_ID] = map[DEFAULT_CASE_ID]
+    return map[DEFAULT_CASE_ID]
+  }
 
   const meta: LocalCaseMeta = {
     caseId: DEFAULT_CASE_ID,
@@ -73,12 +155,15 @@ export function ensureDefaultCase(): LocalCaseMeta {
     lastOpened: new Date().toISOString(),
   }
   map[DEFAULT_CASE_ID] = meta
-  saveRegistryMap(map)
+  setCacheMap(map)
+  void upsertPatientOnApi(meta).catch(() => {
+    // offline — cache already updated
+  })
   return meta
 }
 
 export function upsertCaseMeta(caseId: string, patch: Partial<LocalCaseMeta>): LocalCaseMeta {
-  const map = loadRegistryMap()
+  const map = readCacheMap()
   const existing = map[caseId]
   const next: LocalCaseMeta = {
     ...existing,
@@ -88,27 +173,33 @@ export function upsertCaseMeta(caseId: string, patch: Partial<LocalCaseMeta>): L
     lastOpened: patch.lastOpened ?? existing?.lastOpened ?? new Date().toISOString(),
   }
   map[caseId] = next
-  saveRegistryMap(map)
+  setCacheMap(map)
+  void upsertPatientOnApi(next).catch((error) => {
+    console.warn('[case-registry] persist failed', caseId, error)
+  })
   return next
 }
 
 export function getCaseMeta(caseId: string): LocalCaseMeta | null {
-  return loadRegistryMap()[caseId] ?? null
+  return readCacheMap()[caseId] ?? null
 }
 
 export function listLocalCases(): LocalCaseMeta[] {
-  const map = loadRegistryMap()
-  return Object.values(map).sort(
+  return Object.values(readCacheMap()).sort(
     (a, b) => new Date(b.lastOpened).getTime() - new Date(a.lastOpened).getTime(),
   )
 }
 
 export function createNewCase(): LocalCaseMeta {
   const caseId = createCaseId()
-  return upsertCaseMeta(caseId, {
+  const meta = upsertCaseMeta(caseId, {
     createdAt: new Date().toISOString(),
     lastOpened: new Date().toISOString(),
   })
+  void createPatientOnApi(meta).catch((error) => {
+    console.warn('[case-registry] create on API failed', caseId, error)
+  })
+  return meta
 }
 
 export function touchCaseOpened(caseId: string): void {
@@ -136,11 +227,14 @@ export function buildDashboardCase(
   const lastEditedAt = remote?.updatedAt ?? local?.lastOpened ?? new Date().toISOString()
   const pageHeading = local?.pageHeading?.trim()
   const localName = local?.localName?.trim()
+  const localVorname = local?.localVorname?.trim()
+  const localNachname = local?.localNachname?.trim()
   const localGeburtsdatum = local?.localGeburtsdatum?.trim()
   const localGeschlecht = local?.localGeschlecht
   const localAge = local?.localAge?.trim()
+  const fullLocalName = [localVorname, localNachname].filter(Boolean).join(' ').trim()
   const displayTitle =
-    pageHeading || localName || remote?.titleHint?.trim() || fallbackTitle(shortCaseId(caseId))
+    fullLocalName || localName || pageHeading || remote?.titleHint?.trim() || fallbackTitle(shortCaseId(caseId))
 
   const docTypeId = local?.lastDocumentType
   const documentTypeSummary = docTypeId ? documentTypeLabel(docTypeId) : ''
@@ -154,6 +248,8 @@ export function buildDashboardCase(
     lastEditedAt,
     documentTypeSummary,
     localName: localName || undefined,
+    localVorname: localVorname || undefined,
+    localNachname: localNachname || undefined,
     localGeburtsdatum: localGeburtsdatum || undefined,
     localGeschlecht: localGeschlecht || undefined,
     localAge: localAge || undefined,
@@ -179,10 +275,18 @@ export function useCaseRegistry({
 }: UseCaseRegistryOptions) {
   const dbSyncEnabled = allowsWorkspaceDbSnapshot(tier)
   const [cases, setCases] = useState<DashboardCase[]>([])
-  const [loading, setLoading] = useState(dbSyncEnabled)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      await hydrateCaseRegistry()
+    } catch (hydrateError) {
+      setError(hydrateError instanceof Error ? hydrateError.message : 'Failed to load patients')
+    }
+
     ensureDefaultCase()
     const localCases = listLocalCases()
     const localMap = Object.fromEntries(localCases.map((item) => [item.caseId, item]))

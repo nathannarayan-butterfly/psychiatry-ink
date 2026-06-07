@@ -54,7 +54,7 @@ interface WorkspaceInnerProps {
   initialPage?: NotionPageId
   initialShowPatientDashboard?: boolean
   onNavigateDashboard?: () => void
-  onNavigateNewCase?: (caseId: string, page?: NotionPageId) => void
+  onNavigateNewCase?: (caseId: string, page?: NotionPageId, showPatientDashboard?: boolean) => void
   documentTypes: DocumentType[]
   language: UiLanguage
   appearance: AppearanceState
@@ -74,7 +74,7 @@ interface CaseWorkspacePageProps {
   initialPage?: NotionPageId
   initialShowPatientDashboard?: boolean
   onNavigateDashboard?: () => void
-  onNavigateNewCase?: (caseId: string, page?: NotionPageId) => void
+  onNavigateNewCase?: (caseId: string, page?: NotionPageId, showPatientDashboard?: boolean) => void
 }
 
 // ——— Per-tab workspace content (keyed by activeTabId to isolate state) ———

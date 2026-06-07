@@ -1282,16 +1282,25 @@ export function useWorkspaceState(documentTypes: DocumentType[], language: UiLan
 
   const restoreFromSnapshot = useCallback(
     (snapshot: NotionDocumentSnapshot) => {
+      const snapshotType = resolveType(snapshot.documentTypeId)
+      const snapshotSections =
+        snapshotType?.multistage && snapshotType.sections
+          ? cloneSections(snapshotType.sections)
+          : []
+
+      setSelectedDocumentType(snapshot.documentTypeId)
+      resetWorkspaceSession()
+      setChecklistSelections({})
       setSectionContents(snapshot.sectionContents)
-      const firstSection = sections[0]
+      const firstSection = snapshotSections[0]
       const firstId = firstSection?.id ?? null
       if (firstId) {
         const content = snapshot.sectionContents[firstId] ?? ''
         setActiveSectionId(firstId)
         setEditorContent(content)
         setGeneratedContent(content)
-        setSections((current) =>
-          current.map((section, index) => ({
+        setSections(
+          snapshotSections.map((section, index) => ({
             ...section,
             status: snapshot.sectionContents[section.id]?.trim()
               ? 'draft'
@@ -1302,11 +1311,13 @@ export function useWorkspaceState(documentTypes: DocumentType[], language: UiLan
         )
       } else {
         const content = Object.values(snapshot.sectionContents)[0] ?? ''
+        setSections([])
+        setActiveSectionId(null)
         setEditorContent(content)
         setGeneratedContent(content)
       }
     },
-    [sections],
+    [resetWorkspaceSession, resolveType],
   )
 
   const hydrateDocumentFromStorage = useCallback(

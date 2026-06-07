@@ -73,3 +73,65 @@ model EncryptedWorkspaceSnapshot {
 
   @@unique([userId, caseId])
 }
+
+/// Patient case metadata — stored locally in SQLite, shared across browsers for the same account.
+model PatientCase {
+  caseId            String   @id
+  accountId         String
+  localName         String?
+  localVorname      String?
+  localNachname     String?
+  localGeburtsdatum String?
+  localGeschlecht   String?
+  localAge          String?
+  pageHeading       String?
+  lastDocumentType  String?
+  lastOpened        DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  diagnoses PatientDiagnosis[]
+
+  @@index([accountId, lastOpened])
+}
+
+/// Diagnosis entries per patient case (ICD-10 / ICD-11 / DSM crosswalk).
+model PatientDiagnosis {
+  id              String   @id @default(cuid())
+  caseId          String
+  accountId       String
+  icd10Code       String   @default("")
+  icd10Label      String   @default("")
+  icd10Overridden Boolean  @default(false)
+  icd11Code       String   @default("")
+  icd11Label      String   @default("")
+  icd11Overridden Boolean  @default(false)
+  dsmCode         String   @default("")
+  dsmLabel        String   @default("")
+  dsmOverridden   Boolean  @default(false)
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  patient PatientCase @relation(fields: [caseId], references: [caseId], onDelete: Cascade)
+
+  @@index([accountId, caseId])
+}
+
+/// Reference diagnosis codes (ICD-10, ICD-11, DSM-5-TR) for autocomplete — not patient data.
+model DiagnosisCode {
+  system      String
+  code        String
+  labelDe     String
+  icd10Code   String
+  icd10Label  String
+  icd11Code   String   @default("")
+  icd11Label  String   @default("")
+  dsmCode     String   @default("")
+  dsmLabel    String   @default("")
+  searchText  String
+
+  @@id([system, code])
+  @@index([system, searchText])
+  @@index([icd10Code])
+}

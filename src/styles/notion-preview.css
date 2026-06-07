@@ -474,8 +474,9 @@
   border-color: var(--border);
 }
 
-/* —— Case top nav: patient name chip (replaces new-case button) —— */
+/* —— Case top nav: patient registry and assignment chips —— */
 
+.case-topnav__registry-link,
 .case-topnav__patient-name {
   display: inline-flex;
   align-items: center;
@@ -496,9 +497,21 @@
   transition: background 0.12s ease, color 0.12s ease;
 }
 
+.case-topnav__registry-link {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.case-topnav__registry-link:hover,
 .case-topnav__patient-name:hover {
   background: color-mix(in srgb, var(--accent) 10%, transparent);
   color: color-mix(in srgb, var(--accent) 85%, var(--text-ink));
+}
+
+.case-topnav__registry-link--active {
+  color: var(--accent, #4a6fa5);
+  background: color-mix(in srgb, var(--accent, #4a6fa5) 12%, transparent);
+  font-weight: 600;
 }
 
 /* —— Diagnosen widget (sidebar) —— */
@@ -577,9 +590,109 @@
 .diagnosen-widget__body {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 0.5rem;
   max-height: 12rem;
   overflow-y: auto;
+}
+
+.diagnosen-widget--panel .diagnosen-widget__body {
+  max-height: none;
+}
+
+.diagnosen-widget__system-toggle {
+  display: flex;
+  gap: 0.2rem;
+  padding: 0.15rem;
+  border-radius: 0.35rem;
+  background: color-mix(in srgb, var(--border-soft) 40%, transparent);
+}
+
+.diagnosen-widget__system-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 0.25rem 0.2rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+.diagnosen-widget__system-btn--active {
+  background: var(--surface, #fff);
+  color: var(--accent, #4a6fa5);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.diagnosen-widget__search {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.diagnosen-widget__search-input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 0.3rem;
+  padding: 0.35rem 0.45rem;
+  font-size: 0.72rem;
+  background: var(--surface);
+  color: var(--text-ink);
+}
+
+.diagnosen-widget__search-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.35rem;
+  max-height: 8rem;
+  overflow-y: auto;
+}
+
+.diagnosen-widget__search-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--surface);
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.72rem;
+}
+.diagnosen-widget__search-item:last-child {
+  border-bottom: none;
+}
+.diagnosen-widget__search-item:hover {
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+}
+
+.diagnosen-widget__search-item--free {
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+.diagnosen-widget__search-code {
+  font-weight: 600;
+  font-family: ui-monospace, monospace;
+  color: var(--accent);
+}
+
+.diagnosen-widget__search-label {
+  color: var(--text-ink);
+}
+
+.diagnosen-widget__search-hint {
+  padding: 0.45rem 0.5rem;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-style: italic;
 }
 
 .diagnosen-widget__empty {
@@ -601,8 +714,103 @@
 
 .diagnosen-widget__row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.25rem;
+  padding: 0.15rem 0;
+}
+
+.diagnosen-widget__row--editing {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.diagnosen-widget__display {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+}
+
+.diagnosen-widget__code {
+  font-size: 0.68rem;
+  font-weight: 600;
+  font-family: ui-monospace, monospace;
+  color: var(--accent);
+}
+
+.diagnosen-widget__label {
+  font-size: 0.72rem;
+  color: var(--text-ink);
+  line-height: 1.3;
+}
+
+.diagnosen-widget__override-badge {
+  font-size: 0.58rem;
+  color: var(--text-muted);
+}
+
+.diagnosen-widget__row-actions {
+  display: flex;
+  gap: 0.12rem;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.diagnosen-widget__row:hover .diagnosen-widget__row-actions {
+  opacity: 1;
+}
+
+.diagnosen-widget__edit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border: none;
+  border-radius: 0.15rem;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.diagnosen-widget__edit-btn:hover {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.diagnosen-widget__edit-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.diagnosen-widget__edit-actions {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.diagnosen-widget__save-btn,
+.diagnosen-widget__cancel-btn {
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  padding: 0.2rem 0.45rem;
+  font-size: 0.65rem;
+  cursor: pointer;
+  background: var(--surface);
+}
+
+.diagnosen-widget__save-btn {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.diagnosen-widget__cancel-btn {
+  color: var(--text-muted);
 }
 
 .diagnosen-widget__index {
@@ -666,11 +874,10 @@
   cursor: pointer;
   border-radius: 0.15rem;
   flex-shrink: 0;
-  opacity: 0.5;
-  transition: opacity 0.1s ease, color 0.1s ease;
+  transition: color 0.1s ease;
 }
 
-.diagnosen-widget__row:hover .diagnosen-widget__delete-btn {
+.diagnosen-widget__row-actions .diagnosen-widget__delete-btn {
   opacity: 1;
 }
 
@@ -4772,6 +4979,12 @@
   gap: 0.3rem;
 }
 
+.new-patient-dialog__name-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
 .new-patient-dialog__label {
   font-size: 0.78rem;
   font-weight: 500;
@@ -4851,6 +5064,169 @@
   background: color-mix(in srgb, var(--accent, #5a7a6e) 88%, #000);
 }
 
+@media (max-width: 520px) {
+  .new-patient-dialog__name-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* —— Meine Patienten registry —— */
+
+.meine-patienten {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem 2.5rem;
+  overflow-y: auto;
+  min-height: 0;
+  gap: 1.5rem;
+}
+
+.meine-patienten__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.meine-patienten__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--ink, #1a1a18);
+}
+
+.meine-patienten__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.meine-patienten__view-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.meine-patienten__view-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted, #8a8a80);
+  cursor: pointer;
+}
+.meine-patienten__view-btn:hover {
+  color: var(--ink, #1a1a18);
+  background: var(--bg-secondary, #f7f7f5);
+}
+.meine-patienten__view-btn--active {
+  color: var(--accent, #4a6fa5);
+  background: color-mix(in srgb, var(--accent, #4a6fa5) 10%, transparent);
+}
+
+.meine-patienten__add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 8px;
+  background: var(--notion-paper-bg, #fff);
+  color: var(--ink, #1a1a18);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.meine-patienten__add-btn:hover {
+  border-color: var(--accent, #4a6fa5);
+  color: var(--accent, #4a6fa5);
+}
+
+.meine-patienten__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.meine-patienten__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.meine-patienten__list-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: none;
+  border-bottom: 1px solid var(--border-soft, #e8e8e4);
+  background: var(--notion-paper-bg, #fff);
+  text-align: left;
+  cursor: pointer;
+}
+.meine-patienten__list-row:last-child {
+  border-bottom: none;
+}
+.meine-patienten__list-row:hover {
+  background: var(--bg-secondary, #f7f7f5);
+}
+
+.meine-patienten__list-name {
+  font-weight: 600;
+  color: var(--ink, #1a1a18);
+}
+
+.meine-patienten__list-meta {
+  font-size: 0.82rem;
+  color: var(--text-secondary, #666);
+}
+
+.meine-patienten__list-date {
+  font-size: 0.78rem;
+  color: var(--text-muted, #8a8a80);
+  white-space: nowrap;
+}
+
+.meine-patienten__empty,
+.meine-patienten__status {
+  color: var(--text-secondary, #666);
+  font-size: 0.9rem;
+}
+
+.meine-patienten__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 2rem 0;
+}
+
+.meine-patienten__error {
+  color: var(--color-danger, #dc2626);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .meine-patienten {
+    padding: 1.25rem 1rem;
+  }
+  .meine-patienten__list-row {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+}
+
 /* —— Patient Dashboard View —— */
 
 .patient-dashboard {
@@ -4911,6 +5287,27 @@
   padding-top: 0.15rem;
 }
 
+.patient-dashboard__workspace-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-top: 1.4rem;
+}
+
+.patient-dashboard__actions-heading {
+  margin: 0.65rem 0 0.05rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted, #8a8a80);
+}
+
+.patient-dashboard__action-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.32rem;
+}
+
 .patient-dashboard__nav-link {
   background: none;
   border: none;
@@ -4927,6 +5324,11 @@
 
 .patient-dashboard__nav-link:hover {
   color: var(--ink, #1a1a18);
+}
+
+.patient-dashboard__nav-link--sub {
+  padding-left: 0.85rem;
+  font-size: 0.8rem;
 }
 
 

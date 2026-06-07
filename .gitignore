@@ -11,4 +11,11 @@ dist
 prisma/*.db
 prisma/*.db-journal
 
+# Official terminology downloads (re-fetch via npm run db:build-diagnoses)
+prisma/data/sources/*.zip
+prisma/data/sources/bfarm-icd10gm/
+prisma/data/sources/*.tgz
+prisma/data/sources/CodeSystem-icd10gm-*.json
+prisma/data/sources/diagnostic_codes.db
+
 *.tsbuildinfo

@@ -11,6 +11,7 @@ import {
   getNotionDocumentCopyText,
   printNotionDocument,
   saveNotionDocumentSnapshot,
+  type NotionDocumentSnapshot,
 } from '../../utils/notionDocumentActions'
 import { upsertCaseMeta } from '../../hooks/useCaseRegistry'
 import { loadNotionPageHeading, saveNotionPageHeading } from '../../utils/notionPageHeading'
@@ -44,6 +45,10 @@ import { usePatientMetadata } from '../../hooks/usePatientMetadata'
 import type { SelectionActionId } from './FloatingSelectionToolbar'
 import type { PasteActionId } from './PasteAssistant'
 import type { SlashCommandId } from './SlashCommandMenu'
+
+export interface SavedWorkspaceDocumentPayload extends NotionDocumentSnapshot {
+  content: string
+}
 
 interface NotionPaperProps {
   caseId: string
@@ -113,7 +118,7 @@ interface NotionPaperProps {
   onTranscribe: () => void
   onClosePanelGraphic: () => void
   onBreakStart?: () => void
-  onSaveWorkspaceVault?: () => void
+  onSaveWorkspaceVault?: (payload?: SavedWorkspaceDocumentPayload) => void | Promise<void>
   onStartDictation?: () => void
   onSwitchToWrite?: () => void
   dictationDisabled?: boolean
@@ -491,17 +496,34 @@ export function NotionPaper({
     return { ...sectionContents, [activeSectionId]: editorContent }
   }, [activeSectionId, editorContent, sectionContents])
 
-  const handleSaveDocument = useCallback(() => {
+  const handleSaveDocument = useCallback(async () => {
     const latestContents = getLatestContents()
-    saveNotionDocumentSnapshot({
+    const savedAt = new Date().toISOString()
+    const snapshot = {
       documentTypeId,
       pageHeading,
       sectionContents: latestContents,
-      savedAt: new Date().toISOString(),
-    }, storageCaseId)
-    onSaveWorkspaceVault?.()
+      savedAt,
+    }
+    const content = getNotionDocumentCopyText(sections, latestContents, {
+      sectionConfigs,
+      fallbackContent: editorContent,
+    })
+
+    saveNotionDocumentSnapshot(snapshot, storageCaseId)
+    await onSaveWorkspaceVault?.({ ...snapshot, content })
     showNotionToast(t('notionDocumentSaved'))
-  }, [documentTypeId, getLatestContents, onSaveWorkspaceVault, pageHeading, storageCaseId, t])
+  }, [
+    documentTypeId,
+    editorContent,
+    getLatestContents,
+    onSaveWorkspaceVault,
+    pageHeading,
+    sectionConfigs,
+    sections,
+    storageCaseId,
+    t,
+  ])
 
   const handlePrintDocument = useCallback(() => {
     printNotionDocument(documentLabel, sections, getLatestContents(), pageHeading)

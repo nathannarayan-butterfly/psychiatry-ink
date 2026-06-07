@@ -2,21 +2,38 @@ import { useRef, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { LocalGeschlecht } from '../../hooks/useCaseRegistry'
 
+export interface NewPatientData {
+  vorname: string
+  nachname: string
+  name: string
+  geburtsdatum: string
+  geschlecht: LocalGeschlecht | ''
+}
+
 interface NewPatientDialogProps {
-  onCreated: (name: string, geburtsdatum: string, geschlecht: LocalGeschlecht | '') => void
+  onCreated: (patient: NewPatientData) => void
   onCancel: () => void
 }
 
 export function NewPatientDialog({ onCreated, onCancel }: NewPatientDialogProps) {
   const { t } = useTranslation()
-  const [name, setName] = useState('')
+  const [vorname, setVorname] = useState('')
+  const [nachname, setNachname] = useState('')
   const [geburtsdatum, setGeburtsdatum] = useState('')
   const [geschlecht, setGeschlecht] = useState<LocalGeschlecht | ''>('')
   const overlayRef = useRef<HTMLDivElement>(null)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onCreated(name.trim(), geburtsdatum, geschlecht)
+    const trimmedVorname = vorname.trim()
+    const trimmedNachname = nachname.trim()
+    onCreated({
+      vorname: trimmedVorname,
+      nachname: trimmedNachname,
+      name: [trimmedVorname, trimmedNachname].filter(Boolean).join(' '),
+      geburtsdatum,
+      geschlecht,
+    })
   }
 
   const handleOverlayClick = (e: React.MouseEvent) => {
@@ -36,19 +53,35 @@ export function NewPatientDialog({ onCreated, onCancel }: NewPatientDialogProps)
         <h2 className="new-patient-dialog__title">{t('dashboardNewPatient')}</h2>
 
         <form onSubmit={handleSubmit} className="new-patient-dialog__form">
-          <div className="new-patient-dialog__field">
-            <label htmlFor="npd-name" className="new-patient-dialog__label">
-              {t('patientNameLabel')}
-            </label>
-            <input
-              id="npd-name"
-              type="text"
-              className="new-patient-dialog__input"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t('patientNamePlaceholder')}
-              autoFocus
-            />
+          <div className="new-patient-dialog__name-row">
+            <div className="new-patient-dialog__field">
+              <label htmlFor="npd-vorname" className="new-patient-dialog__label">
+                {t('patientFirstNameLabel')}
+              </label>
+              <input
+                id="npd-vorname"
+                type="text"
+                className="new-patient-dialog__input"
+                value={vorname}
+                onChange={(e) => setVorname(e.target.value)}
+                placeholder={t('patientFirstNamePlaceholder')}
+                autoFocus
+              />
+            </div>
+
+            <div className="new-patient-dialog__field">
+              <label htmlFor="npd-nachname" className="new-patient-dialog__label">
+                {t('patientLastNameLabel')}
+              </label>
+              <input
+                id="npd-nachname"
+                type="text"
+                className="new-patient-dialog__input"
+                value={nachname}
+                onChange={(e) => setNachname(e.target.value)}
+                placeholder={t('patientLastNamePlaceholder')}
+              />
+            </div>
           </div>
 
           <div className="new-patient-dialog__field">
