@@ -6,10 +6,13 @@ import { countLabGraphs } from '../utils/labPersistence'
 import { countTimelines } from '../utils/timelinePersistence'
 import { getOrCreateDeviceId } from '../utils/cryptoVault'
 
+export type LocalGeschlecht = 'maennlich' | 'weiblich' | 'divers'
+
 export interface LocalCaseMeta {
   caseId: string
   localName?: string
   localGeburtsdatum?: string
+  localGeschlecht?: LocalGeschlecht
   localAge?: string
   pageHeading?: string
   lastDocumentType?: string
@@ -31,6 +34,7 @@ export interface DashboardCase {
   documentTypeSummary: string
   localName?: string
   localGeburtsdatum?: string
+  localGeschlecht?: LocalGeschlecht
   localAge?: string
   pageHeading?: string
   lastDocumentType?: string
@@ -133,6 +137,7 @@ export function buildDashboardCase(
   const pageHeading = local?.pageHeading?.trim()
   const localName = local?.localName?.trim()
   const localGeburtsdatum = local?.localGeburtsdatum?.trim()
+  const localGeschlecht = local?.localGeschlecht
   const localAge = local?.localAge?.trim()
   const displayTitle =
     pageHeading || localName || remote?.titleHint?.trim() || fallbackTitle(shortCaseId(caseId))
@@ -150,6 +155,7 @@ export function buildDashboardCase(
     documentTypeSummary,
     localName: localName || undefined,
     localGeburtsdatum: localGeburtsdatum || undefined,
+    localGeschlecht: localGeschlecht || undefined,
     localAge: localAge || undefined,
     pageHeading: pageHeading || undefined,
     lastDocumentType: docTypeId,

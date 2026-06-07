@@ -173,8 +173,9 @@ export function useWorkspaceState(documentTypes: DocumentType[], language: UiLan
     [activeVariantIds, getDocumentType],
   )
 
-  const initialType =
-    resolveType(documentTypes[0]?.id ?? '') ?? documentTypes[0]
+  // Default to no document type selected — workspace opens as a blank page.
+  // User picks a page type via right-click context menu.
+  const initialType = undefined
   const initialWorkspace = initialType
     ? buildInitialWorkspaceForType(initialType)
     : {
@@ -186,11 +187,9 @@ export function useWorkspaceState(documentTypes: DocumentType[], language: UiLan
       }
 
   const [selectedDocumentType, setSelectedDocumentType] = useState(
-    () => documentTypes[0]?.id ?? '',
+    () => '',
   )
-  const [activeSectionId, setActiveSectionId] = useState<string | null>(
-    initialType?.multistage ? (initialType.sections?.[0]?.id ?? null) : null,
-  )
+  const [activeSectionId, setActiveSectionId] = useState<string | null>(null)
   const [sections, setSections] = useState<DocumentSection[]>(initialWorkspace.sections)
   const [sectionContents, setSectionContents] = useState<Record<string, string>>(
     initialWorkspace.sectionContents,
@@ -202,7 +201,7 @@ export function useWorkspaceState(documentTypes: DocumentType[], language: UiLan
   const [aiModelTier, setAiModelTierState] = useState<AiModelTier>(readAiModelTier)
   const [selectedAiTool, setSelectedAiTool] = useState<AiToolKey | null>(null)
   const [kiExtraInstruction, setKiExtraInstruction] = useState(() =>
-    resolveKiExtraInstruction(kiInstructions.settings, initialType?.id ?? ''),
+    resolveKiExtraInstruction(kiInstructions.settings, ''),
   )
   const [userToolOverride, setUserToolOverride] = useState(false)
   const [contentInputOrigin, setContentInputOrigin] =
@@ -281,23 +280,9 @@ export function useWorkspaceState(documentTypes: DocumentType[], language: UiLan
     const currentType = resolveType(selectedDocumentType)
 
     if (!currentType) {
-      const fallback = resolveType(documentTypes[0]?.id ?? '')
-      if (!fallback) return
-
-      setSelectedDocumentType(fallback.id)
-      if (fallback.multistage && fallback.sections) {
-        const nextSections = cloneSections(fallback.sections)
-        setSections(
-          nextSections.map((section, index) => ({
-            ...section,
-            status: index === 0 ? 'active' : 'empty',
-          })),
-        )
-        setActiveSectionId(nextSections[0]?.id ?? null)
-      } else {
-        setSections([])
-        setActiveSectionId(null)
-      }
+      // Empty string = intentional blank page, don't fall back to Aufnahme.
+      setSections([])
+      setActiveSectionId(null)
       return
     }
 

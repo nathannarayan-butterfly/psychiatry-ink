@@ -10,12 +10,17 @@ function parsePageParam(search: string): NotionPageId | undefined {
   return VALID_PAGE_IDS.has(raw as NotionPageId) ? (raw as NotionPageId) : undefined
 }
 
+function parseViewParam(search: string): 'patient-dashboard' | undefined {
+  const raw = new URLSearchParams(search).get('view')
+  return raw === 'patient-dashboard' ? 'patient-dashboard' : undefined
+}
+
 export type AppRoute =
   | { view: 'landing' }
   | { view: 'login' }
   | { view: 'signup' }
   | { view: 'dashboard' }
-  | { view: 'case'; caseId: string; page?: NotionPageId }
+  | { view: 'case'; caseId: string; page?: NotionPageId; initialView?: 'patient-dashboard' }
 
 export function isPublicRoute(route: AppRoute): boolean {
   return route.view === 'landing' || route.view === 'login' || route.view === 'signup'
@@ -40,6 +45,7 @@ function parsePathname(pathname: string, search = ''): AppRoute {
       view: 'case',
       caseId: decodeURIComponent(caseMatch[1]),
       page: parsePageParam(search),
+      initialView: parseViewParam(search),
     }
   }
   return { view: 'landing' }

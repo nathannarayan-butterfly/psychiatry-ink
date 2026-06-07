@@ -3133,6 +3133,42 @@ export const uiTranslations = {
     fr: 'Patient',
     es: 'Paciente',
   },
+  patientGeschlechtMaennlich: {
+    de: 'Männlich',
+    en: 'Male',
+    fr: 'Masculin',
+    es: 'Masculino',
+  },
+  patientGeschlechtWeiblich: {
+    de: 'Weiblich',
+    en: 'Female',
+    fr: 'Féminin',
+    es: 'Femenino',
+  },
+  patientGeschlechtDivers: {
+    de: 'Divers',
+    en: 'Diverse',
+    fr: 'Divers',
+    es: 'Diverso',
+  },
+  newPatientFieldGeschlecht: {
+    de: 'Geschlecht',
+    en: 'Sex',
+    fr: 'Sexe',
+    es: 'Sexo',
+  },
+  newPatientErstellen: {
+    de: 'Erstellen',
+    en: 'Create',
+    fr: 'Créer',
+    es: 'Crear',
+  },
+  newPatientAbbrechen: {
+    de: 'Abbrechen',
+    en: 'Cancel',
+    fr: 'Annuler',
+    es: 'Cancelar',
+  },
   diagnosenTitle: {
     de: 'Diagnosen',
     en: 'Diagnoses',

@@ -15,6 +15,7 @@ import type { NotionPageId } from '../notion/notionPages'
 import { useAccountDisplayName } from '../../hooks/useAccountDisplayName'
 import { useAppearanceSettings } from '../../hooks/useAppearanceSettings'
 import { useCaseRegistry } from '../../hooks/useCaseRegistry'
+import type { LocalGeschlecht } from '../../hooks/useCaseRegistry'
 import { useCredits } from '../../hooks/useCredits'
 import { useDashboardSettings } from '../../hooks/useDashboardSettings'
 import { useKiInstructions } from '../../hooks/useKiInstructions'
@@ -32,6 +33,7 @@ import { EncryptionDisclaimer } from '../EncryptionDisclaimer'
 import { SettingsPage } from '../settings/SettingsPage'
 import { CreditsPurchaseDialog } from '../notion/CreditsPurchaseDialog'
 import { NewCaseWorkflowDialog } from './NewCaseWorkflowDialog'
+import { NewPatientDialog } from './NewPatientDialog'
 import { PatientCaseCard } from './PatientCaseCard'
 
 const CREDITS_DEFAULT_MAX = 500
@@ -53,7 +55,7 @@ interface DashboardPageProps {
   privacy: PrivacyState
   languageSettings: LanguageState
   plan: SubscriptionPlan
-  onOpenCase: (caseId: string, page?: NotionPageId) => void
+  onOpenCase: (caseId: string, page?: NotionPageId, showPatientDashboard?: boolean) => void
   onNavigateHome?: () => void
   onOpenSettings?: () => void
 }
@@ -127,6 +129,7 @@ export function DashboardPage({
   const { todayTotalLabel, todayTotalSeconds } = useWorkspaceSession()
   const [pendingCaseId, setPendingCaseId] = useState<string | null>(null)
   const [creditsDialogOpen, setCreditsDialogOpen] = useState(false)
+  const [showNewPatientDialog, setShowNewPatientDialog] = useState(false)
 
   const documentTypeLabel = useCallback(
     (typeId: string | undefined) => {
@@ -162,12 +165,28 @@ export function DashboardPage({
   })
 
   const handleNewCase = () => {
+    setShowNewPatientDialog(true)
+  }
+
+  const handleNewPatientCreated = (
+    name: string,
+    geburtsdatum: string,
+    geschlecht: LocalGeschlecht | '',
+  ) => {
     const caseId = registry.addCase()
+    if (name || geburtsdatum || geschlecht) {
+      registry.upsertCaseMeta(caseId, {
+        localName: name || undefined,
+        localGeburtsdatum: geburtsdatum || undefined,
+        localGeschlecht: geschlecht || undefined,
+      })
+    }
+    setShowNewPatientDialog(false)
     if (dashboardSettings.openCaseDirectToWorkflow) {
       setPendingCaseId(caseId)
       return
     }
-    onOpenCase(caseId)
+    onOpenCase(caseId, undefined, true)
   }
 
   const handleWorkflowSelect = (pageId: NotionPageId) => {
@@ -393,6 +412,13 @@ export function DashboardPage({
           </div>
         </div>
       </section>
+
+      {showNewPatientDialog ? (
+        <NewPatientDialog
+          onCreated={handleNewPatientCreated}
+          onCancel={() => setShowNewPatientDialog(false)}
+        />
+      ) : null}
 
       {pendingCaseId ? (
         <NewCaseWorkflowDialog

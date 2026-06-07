@@ -102,9 +102,13 @@ export default function App() {
             languageSettings={languageSettings}
             plan={plan}
             onNavigateHome={handleNavigateHome}
-            onOpenCase={(id, page) => {
+            onOpenCase={(id, page, showPatientDashboard) => {
               const base = `/case/${encodeURIComponent(id)}`
-              navigate(page ? `${base}?page=${encodeURIComponent(page)}` : base)
+              let url = page ? `${base}?page=${encodeURIComponent(page)}` : base
+              if (showPatientDashboard) {
+                url += (url.includes('?') ? '&' : '?') + 'view=patient-dashboard'
+              }
+              navigate(url)
             }}
           />
         ) : (
@@ -112,6 +116,7 @@ export default function App() {
             key={caseId}
             caseId={caseId}
             initialPage={route.view === 'case' ? route.page : undefined}
+            initialShowPatientDashboard={route.view === 'case' ? route.initialView === 'patient-dashboard' : false}
             onNavigateDashboard={handleNavigateHome}
             onNavigateNewCase={(id, page) => {
               const base = `/case/${encodeURIComponent(id)}`

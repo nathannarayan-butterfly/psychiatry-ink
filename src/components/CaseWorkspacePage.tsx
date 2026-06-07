@@ -28,6 +28,7 @@ import { useAuth } from '../context/AuthContext'
 interface CaseWorkspacePageProps {
   caseId: string
   initialPage?: NotionPageId
+  initialShowPatientDashboard?: boolean
   onNavigateDashboard?: () => void
   onNavigateNewCase?: (caseId: string, page?: NotionPageId) => void
 }
@@ -35,6 +36,7 @@ interface CaseWorkspacePageProps {
 export function CaseWorkspacePage({
   caseId,
   initialPage,
+  initialShowPatientDashboard,
   onNavigateDashboard,
   onNavigateNewCase,
 }: CaseWorkspacePageProps) {
@@ -231,6 +233,7 @@ export function CaseWorkspacePage({
     <NotionApp
       caseId={caseId}
       initialPage={initialPage}
+      initialShowPatientDashboard={initialShowPatientDashboard}
       workspace={workspace}
       lab={lab}
       timeline={timeline}

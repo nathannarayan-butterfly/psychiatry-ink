@@ -22,6 +22,7 @@ import { WorkspaceActivitySync } from '../WorkspaceActivitySync'
 import { PanelDateCard } from '../PanelDateCard'
 import { CaseTopNav, type TopNavTabId } from './CaseTopNav'
 import { DiagnosenWidget } from './DiagnosenWidget'
+import { PatientDashboardView } from './PatientDashboardView'
 import { VerlaufFeedPage } from './VerlaufFeedPage'
 import { DokumentePage } from './DokumentePage'
 import { appendVerlaufEntry } from '../../utils/verlaufFeed'
@@ -67,6 +68,7 @@ interface ClinicalAgeState {
 interface NotionAppProps {
   caseId: string
   initialPage?: NotionPageId
+  initialShowPatientDashboard?: boolean
   workspace: WorkspaceState
   lab: LabState
   timeline: TimelineState
@@ -98,6 +100,7 @@ function isAiToolKey(action: SelectionActionId | PasteActionId): action is AiToo
 export function NotionApp({
   caseId,
   initialPage,
+  initialShowPatientDashboard,
   workspace,
   lab,
   timeline,
@@ -185,6 +188,9 @@ export function NotionApp({
     workspaceVault,
   ])
   const [activeTopTab, setActiveTopTab] = useState<TopNavTabId>('workspace')
+  const [showPatientDashboard, setShowPatientDashboard] = useState(
+    () => initialShowPatientDashboard ?? false,
+  )
   const initialPageAppliedRef = useRef(false)
   const [activePage, setActivePage] = useState<NotionPageId>(
     () => initialPage ?? resolveNotionPageFromDocumentType(workspace.selectedDocumentType),
@@ -496,13 +502,26 @@ export function NotionApp({
         <>
       <CaseTopNav
         activeTab={activeTopTab}
-        onTabSelect={setActiveTopTab}
+        onTabSelect={(tab) => {
+          setShowPatientDashboard(false)
+          setActiveTopTab(tab)
+        }}
         patientName={currentPatientName}
-        onPatientClick={onNavigateDashboard}
+        onPatientClick={() => setShowPatientDashboard(true)}
       />
 
       <main className="notion-preview-main" data-lottie-exclusion>
-        {activeTopTab === 'verlauf' ? (
+        {showPatientDashboard ? (
+          <PatientDashboardView
+            caseId={caseId}
+            onTabSelect={(tab) => {
+              setShowPatientDashboard(false)
+              setActiveTopTab(tab)
+            }}
+          />
+        ) : null}
+
+        {!showPatientDashboard && activeTopTab === 'verlauf' ? (
           <div className="notion-tab-content-row">
             <aside className="notion-tab-content-row__sidebar">
               <PanelDateCard layout="sidebar" />
@@ -514,7 +533,7 @@ export function NotionApp({
           </div>
         ) : null}
 
-        {activeTopTab === 'dokumente' ? (
+        {!showPatientDashboard && activeTopTab === 'dokumente' ? (
           <div className="notion-tab-content-row">
             <div className="notion-tab-content-row__body notion-tab-content-row__body--full">
               <DokumentePage caseId={caseId} />
@@ -522,7 +541,7 @@ export function NotionApp({
           </div>
         ) : null}
 
-        {activeTopTab !== 'workspace' && activeTopTab !== 'verlauf' && activeTopTab !== 'dokumente' ? (
+        {!showPatientDashboard && activeTopTab !== 'workspace' && activeTopTab !== 'verlauf' && activeTopTab !== 'dokumente' ? (
           <div className="notion-tab-content-row">
             <aside className="notion-tab-content-row__sidebar">
               <PanelDateCard layout="sidebar" />
@@ -537,7 +556,7 @@ export function NotionApp({
           </div>
         ) : null}
 
-        {activeTopTab === 'workspace' ? (
+        {!showPatientDashboard && activeTopTab === 'workspace' ? (
           <>
         <WorkspaceContextMenu
           activePage={activePage}

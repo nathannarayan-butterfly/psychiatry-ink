@@ -4032,6 +4032,209 @@
   background: color-mix(in srgb, var(--accent) 6%, transparent);
 }
 
+/* =========================================================================
+   Full-page settings layout (Notion-style)
+   ========================================================================= */
+
+.settings-fullpage {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: row;
+  background: var(--notion-paper-bg, #fff);
+  overflow: hidden;
+}
+
+/* Left sidebar navigation */
+
+.settings-fullpage__sidebar {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: clamp(11rem, 18vw, 14rem);
+  border-right: 1px solid color-mix(in srgb, var(--accent) 14%, var(--border-soft));
+  background: color-mix(in srgb, var(--accent) 2%, var(--notion-paper-bg, #fff));
+  overflow-y: auto;
+  padding-bottom: 1.5rem;
+}
+
+.settings-fullpage__sidebar-top {
+  padding: 1rem 0.75rem 0.5rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 10%, var(--border-soft));
+  margin-bottom: 0.5rem;
+}
+
+.settings-fullpage__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: none;
+  background: transparent;
+  padding: 0.2rem 0;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.12s ease;
+  margin-bottom: 0.6rem;
+}
+
+.settings-fullpage__back:hover {
+  color: var(--ink);
+}
+
+.settings-fullpage__back-icon {
+  width: 0.85rem;
+  height: 0.85rem;
+  flex-shrink: 0;
+}
+
+.settings-fullpage__back-label {
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+.settings-fullpage__sidebar-title {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--text-muted) 80%, transparent);
+}
+
+.settings-fullpage__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0 0.5rem;
+}
+
+.settings-fullpage__nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-bottom: 0.25rem;
+}
+
+.settings-fullpage__nav-group-label {
+  display: block;
+  padding: 0.6rem 0.6rem 0.2rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--accent) 55%, var(--text-muted));
+  user-select: none;
+}
+
+.settings-fullpage__nav-sep {
+  height: 1px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--border-soft));
+  margin: 0.5rem 0.5rem 0.65rem;
+}
+
+.settings-fullpage__nav-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.42rem 0.65rem;
+  border: none;
+  border-radius: 0.35rem;
+  background: transparent;
+  font-size: 0.82rem;
+  font-weight: 400;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.1s ease, color 0.1s ease;
+  letter-spacing: 0.005em;
+}
+
+.settings-fullpage__nav-item:hover {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.settings-fullpage__nav-item--active {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  font-weight: 550;
+  color: color-mix(in srgb, var(--accent) 80%, var(--ink));
+}
+
+/* Right content area */
+
+.settings-fullpage__content {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.settings-fullpage__content-header {
+  flex-shrink: 0;
+  padding: 1.25rem 2rem 0.75rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 10%, var(--border-soft));
+}
+
+.settings-fullpage__content-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.settings-fullpage__content-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1.5rem 2rem 3rem;
+  max-width: 42rem;
+}
+
+@media (max-width: 600px) {
+  .settings-fullpage {
+    flex-direction: column;
+  }
+
+  .settings-fullpage__sidebar {
+    width: 100%;
+    max-height: 11rem;
+    border-right: none;
+    border-bottom: 1px solid color-mix(in srgb, var(--accent) 14%, var(--border-soft));
+  }
+
+  .settings-fullpage__nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 0 0.5rem 0.5rem;
+  }
+
+  .settings-fullpage__nav-group {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 2px;
+    margin-bottom: 0;
+  }
+
+  .settings-fullpage__nav-group-label {
+    display: none;
+  }
+
+  .settings-fullpage__nav-sep {
+    display: none;
+  }
+
+  .settings-fullpage__nav-item {
+    padding: 0.35rem 0.55rem;
+    font-size: 0.75rem;
+  }
+
+  .settings-fullpage__content-body {
+    padding: 1rem 1.25rem 2rem;
+  }
+}
+
 /* —— Top bar: euro credits icon —— */
 
 .notion-topbar__euro-btn {
@@ -4252,3 +4455,203 @@
   background: color-mix(in srgb, var(--accent) 8%, #f0f0ee);
   color: var(--ink);
 }
+
+/* —— New Patient Dialog —— */
+
+.new-patient-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.new-patient-dialog {
+  background: var(--surface, #fff);
+  border-radius: 10px;
+  padding: 1.75rem 2rem 1.5rem;
+  width: min(420px, 94vw);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.new-patient-dialog__title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ink, #1a1a18);
+  margin: 0;
+}
+
+.new-patient-dialog__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.new-patient-dialog__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.new-patient-dialog__label {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-secondary, var(--text-muted));
+  letter-spacing: 0.02em;
+}
+
+.new-patient-dialog__input {
+  padding: 0.45rem 0.65rem;
+  border: 1px solid var(--border, #d8d8d4);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: var(--ink, #1a1a18);
+  background: var(--input-bg, #f8f8f6);
+  outline: none;
+  transition: border-color 0.12s ease;
+}
+
+.new-patient-dialog__input:focus {
+  border-color: var(--accent, #5a7a6e);
+}
+
+.new-patient-dialog__gender-group {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.new-patient-dialog__gender-option {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.88rem;
+  color: var(--ink, #1a1a18);
+  cursor: pointer;
+}
+
+.new-patient-dialog__radio {
+  accent-color: var(--accent, #5a7a6e);
+  cursor: pointer;
+}
+
+.new-patient-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 0.25rem;
+}
+
+.new-patient-dialog__btn {
+  padding: 0.45rem 1rem;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+
+.new-patient-dialog__btn--cancel {
+  background: transparent;
+  border-color: var(--border, #d8d8d4);
+  color: var(--text-secondary, var(--text-muted));
+}
+
+.new-patient-dialog__btn--cancel:hover {
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+
+.new-patient-dialog__btn--create {
+  background: var(--accent, #5a7a6e);
+  color: #fff;
+  border-color: var(--accent, #5a7a6e);
+}
+
+.new-patient-dialog__btn--create:hover {
+  background: color-mix(in srgb, var(--accent, #5a7a6e) 88%, #000);
+}
+
+/* —— Patient Dashboard View —— */
+
+.patient-dashboard {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem 2.5rem 2rem;
+  overflow-y: auto;
+  min-height: 0;
+  gap: 1.75rem;
+}
+
+.patient-dashboard__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  border-bottom: 1px solid var(--border, #e0e0dc);
+  padding-bottom: 1.25rem;
+}
+
+.patient-dashboard__name {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink, #1a1a18);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.patient-dashboard__meta {
+  font-size: 0.82rem;
+  color: var(--text-muted, #8a8a80);
+  margin: 0;
+}
+
+.patient-dashboard__body {
+  display: flex;
+  gap: 2.5rem;
+  flex: 1;
+  min-height: 0;
+  align-items: flex-start;
+}
+
+.patient-dashboard__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.patient-dashboard__sidebar {
+  flex-shrink: 0;
+  width: 11rem;
+}
+
+.patient-dashboard__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.15rem;
+}
+
+.patient-dashboard__nav-link {
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  font-size: 0.88rem;
+  color: var(--text-secondary, var(--text-muted));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  transition: color 0.12s ease;
+  font-family: inherit;
+}
+
+.patient-dashboard__nav-link:hover {
+  color: var(--ink, #1a1a18);
+}
+
