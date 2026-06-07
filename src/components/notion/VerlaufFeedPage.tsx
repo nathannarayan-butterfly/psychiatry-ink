@@ -637,17 +637,91 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
     closeBubble()
   }, [bubble, closeBubble, entries])
 
+  const [composerOpen, setComposerOpen] = useState(false)
+  const [composerText, setComposerText] = useState('')
+  const [composerDate, setComposerDate] = useState(() => new Date().toISOString().slice(0, 10))
+
+  const handleComposerSave = useCallback(() => {
+    if (!composerText.trim()) return
+    const newEntry = appendVerlaufEntry(caseId, {
+      date: composerDate ? new Date(composerDate).toISOString() : new Date().toISOString(),
+      content: composerText.trim(),
+      pageType: 'verlauf',
+      source: 'manual',
+    })
+    setEntries((prev) => [newEntry, ...prev])
+    setComposerText('')
+    setComposerDate(new Date().toISOString().slice(0, 10))
+    setComposerOpen(false)
+  }, [caseId, composerDate, composerText])
+
+  const handleComposerCancel = useCallback(() => {
+    setComposerText('')
+    setComposerDate(new Date().toISOString().slice(0, 10))
+    setComposerOpen(false)
+  }, [])
+
   const isEmpty = entries.length === 0
 
   return (
     <div className="verlauf-feed-page" onClick={closeBubble}>
       <header className="verlauf-feed-page__header">
         <h2 className="verlauf-feed-page__title">{t('verlaufFeedTitle')}</h2>
+        {!composerOpen && (
+          <button
+            type="button"
+            className="verlauf-feed-page__new-btn"
+            onClick={(e) => { e.stopPropagation(); setComposerOpen(true) }}
+          >
+            ＋ {t('verlaufNewEntry')}
+          </button>
+        )}
       </header>
 
-      {isEmpty ? (
+      {composerOpen && (
+        <div className="verlauf-composer" onClick={(e) => e.stopPropagation()}>
+          <div className="verlauf-composer__date-row">
+            <label className="verlauf-composer__date-label">
+              Datum
+              <input
+                type="date"
+                className="verlauf-composer__date-input"
+                value={composerDate}
+                onChange={(e) => setComposerDate(e.target.value)}
+              />
+            </label>
+          </div>
+          <textarea
+            className="verlauf-composer__textarea"
+            value={composerText}
+            onChange={(e) => setComposerText(e.target.value)}
+            placeholder={t('verlaufNewEntry') + '…'}
+            rows={5}
+            autoFocus
+          />
+          <div className="verlauf-composer__actions">
+            <button
+              type="button"
+              className="verlauf-composer__cancel-btn"
+              onClick={handleComposerCancel}
+            >
+              {t('verlaufEntryCancel')}
+            </button>
+            <button
+              type="button"
+              className="verlauf-composer__save-btn"
+              onClick={handleComposerSave}
+              disabled={!composerText.trim()}
+            >
+              {t('verlaufEntrySave')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {isEmpty && !composerOpen ? (
         <p className="verlauf-feed-page__empty">{t('verlaufFeedEmpty')}</p>
-      ) : (
+      ) : isEmpty ? null : (
         <div className="verlauf-feed-page__list">
           {entries.map((entry, index) => (
             <div key={entry.id}>

@@ -10,6 +10,10 @@ interface CaseTopNavProps {
   patientName?: string
   /** Called when the patient name chip is clicked — typically navigates to dashboard. */
   onPatientClick?: () => void
+  /** Whether a patient is linked to this case. Controls which tabs are visible. */
+  hasPatient?: boolean
+  /** Called when the "Patient anlegen" pseudo-tab is clicked. */
+  onCreatePatient?: () => void
 }
 
 interface TabConfig {
@@ -30,14 +34,18 @@ export function CaseTopNav({
   onTabSelect,
   patientName,
   onPatientClick,
+  hasPatient = true,
+  onCreatePatient,
 }: CaseTopNavProps) {
   const { t } = useTranslation()
 
   const displayName = patientName?.trim() || t('patientNavFallback')
 
+  const visibleTabs = hasPatient ? TABS : TABS.filter((tab) => tab.id === 'workspace')
+
   return (
     <nav className="case-topnav" aria-label="Case navigation">
-      {TABS.map((tab) => (
+      {visibleTabs.map((tab) => (
         <button
           key={tab.id}
           type="button"
@@ -53,6 +61,18 @@ export function CaseTopNav({
           {t(tab.labelKey)}
         </button>
       ))}
+
+      {!hasPatient && (
+        <button
+          type="button"
+          className="case-topnav__create-patient-btn"
+          onClick={onCreatePatient}
+          title={t('topNavCreatePatient')}
+        >
+          ＋ {t('topNavCreatePatient')}
+        </button>
+      )}
+
       <button
         type="button"
         className="case-topnav__patient-name"

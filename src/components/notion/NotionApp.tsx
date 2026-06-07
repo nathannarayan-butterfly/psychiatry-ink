@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { getCaseMeta } from '../../hooks/useCaseRegistry'
+import { getCaseMeta, upsertCaseMeta } from '../../hooks/useCaseRegistry'
 import { flushSync } from 'react-dom'
 import { useTranslation } from '../../context/TranslationContext'
 import { useCaseRegistry } from '../../hooks/useCaseRegistry'
@@ -26,6 +26,8 @@ import { PatientDashboardView } from './PatientDashboardView'
 import { VerlaufFeedPage } from './VerlaufFeedPage'
 import { LaborPage } from './LaborPage'
 import { DokumentePage } from './DokumentePage'
+import { TherapiePage } from './TherapiePage'
+import { NewPatientDialog } from '../dashboard/NewPatientDialog'
 import { appendVerlaufEntry } from '../../utils/verlaufFeed'
 import { appendDokument, inferDokumentCategory } from '../../utils/dokumenteArchive'
 import { NotionTopBar } from './NotionTopBar'
@@ -462,15 +464,28 @@ export function NotionApp({
   const showToolCanvas = isToolPage(activePage)
   const showDocumentCanvas = !showToolCanvas
 
-  const PLACEHOLDER_KEYS: Partial<Record<TopNavTabId, 'topNavLaborPlaceholder' | 'topNavTherapiePlaceholder'>> = {
-    labor: 'topNavLaborPlaceholder',
-    therapie: 'topNavTherapiePlaceholder',
-  }
-
-  // Patient name — read from local case registry (client-side only)
+  // Patient name and linked state — read from local case registry (client-side only)
+  const [patientMetaVersion, setPatientMetaVersion] = useState(0)
   const currentPatientName = useMemo(
     () => getCaseMeta(caseId)?.localName?.trim() || undefined,
     // eslint-disable-next-line react-hooks/exhaustive-deps
+    [caseId, patientMetaVersion],
+  )
+  const hasPatient = Boolean(currentPatientName)
+
+  const [showCreatePatientDialog, setShowCreatePatientDialog] = useState(false)
+
+  const handlePatientCreated = useCallback(
+    (name: string, geburtsdatum: string, geschlecht: import('../../hooks/useCaseRegistry').LocalGeschlecht | '') => {
+      upsertCaseMeta(caseId, {
+        localName: name || undefined,
+        localGeburtsdatum: geburtsdatum || undefined,
+        localGeschlecht: geschlecht || undefined,
+        lastOpened: new Date().toISOString(),
+      })
+      setPatientMetaVersion((v) => v + 1)
+      setShowCreatePatientDialog(false)
+    },
     [caseId],
   )
 
@@ -509,6 +524,8 @@ export function NotionApp({
         }}
         patientName={currentPatientName}
         onPatientClick={() => setShowPatientDashboard(true)}
+        hasPatient={hasPatient}
+        onCreatePatient={() => setShowCreatePatientDialog(true)}
       />
 
       <main className="notion-preview-main" data-lottie-exclusion>
@@ -550,17 +567,13 @@ export function NotionApp({
           </div>
         ) : null}
 
-        {!showPatientDashboard && activeTopTab !== 'workspace' && activeTopTab !== 'verlauf' && activeTopTab !== 'dokumente' && activeTopTab !== 'labor' ? (
+        {!showPatientDashboard && activeTopTab === 'therapie' ? (
           <div className="notion-tab-content-row">
             <aside className="notion-tab-content-row__sidebar">
               <PanelDateCard layout="sidebar" />
             </aside>
             <div className="notion-tab-content-row__body">
-              <div className="case-placeholder">
-                <p className="case-placeholder__text">
-                  {t(PLACEHOLDER_KEYS[activeTopTab]!)}
-                </p>
-              </div>
+              <TherapiePage caseId={caseId} />
             </div>
           </div>
         ) : null}
@@ -684,6 +697,13 @@ export function NotionApp({
       </main>
 
         </>
+      )}
+
+      {showCreatePatientDialog && (
+        <NewPatientDialog
+          onCreated={handlePatientCreated}
+          onCancel={() => setShowCreatePatientDialog(false)}
+        />
       )}
 
       <NotionToastHost />

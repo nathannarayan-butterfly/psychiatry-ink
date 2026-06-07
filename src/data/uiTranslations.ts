@@ -3337,6 +3337,42 @@ export const uiTranslations = {
     fr: 'Supprimer le widget',
     es: 'Eliminar widget',
   },
+  topNavCreatePatient: {
+    de: 'Patient anlegen',
+    en: 'Create patient',
+    fr: 'Créer un patient',
+    es: 'Crear paciente',
+  },
+  verlaufNewEntry: {
+    de: 'Neuer Eintrag',
+    en: 'New entry',
+    fr: 'Nouvelle entrée',
+    es: 'Nueva entrada',
+  },
+  verlaufEntrySave: {
+    de: 'Speichern',
+    en: 'Save',
+    fr: 'Enregistrer',
+    es: 'Guardar',
+  },
+  verlaufEntryCancel: {
+    de: 'Abbrechen',
+    en: 'Cancel',
+    fr: 'Annuler',
+    es: 'Cancelar',
+  },
+  therapieNewEntry: {
+    de: 'Neuer Therapieeintrag',
+    en: 'New therapy entry',
+    fr: 'Nouvelle entrée thérapeutique',
+    es: 'Nueva entrada de terapia',
+  },
+  therapieEmpty: {
+    de: 'Keine Therapieeinträge vorhanden',
+    en: 'No therapy entries yet',
+    fr: 'Aucune entrée thérapeutique',
+    es: 'Sin entradas de terapia',
+  },
 } as const satisfies Record<string, Record<UiLanguage, string>>
 
 export type UiTranslationKey = keyof typeof uiTranslations

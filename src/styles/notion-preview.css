@@ -5499,3 +5499,354 @@
   padding: 0.5rem 0;
 }
 
+/* ── Patient anlegen pseudo-tab ──────────────────────────────────────────── */
+
+.case-topnav__create-patient-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.8rem;
+  font-family: inherit;
+  font-weight: 500;
+  color: var(--accent, #4a7c59);
+  background: transparent;
+  border: 1.5px dashed var(--accent, #4a7c59);
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+  margin-left: 0.5rem;
+}
+
+.case-topnav__create-patient-btn:hover {
+  background: color-mix(in srgb, var(--accent, #4a7c59) 10%, transparent);
+}
+
+/* ── Verlauf inline composer ─────────────────────────────────────────────── */
+
+.verlauf-feed-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.verlauf-feed-page__new-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.8rem;
+  font-family: inherit;
+  font-weight: 500;
+  color: var(--accent, #4a7c59);
+  background: transparent;
+  border: 1px solid var(--accent, #4a7c59);
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.verlauf-feed-page__new-btn:hover {
+  background: color-mix(in srgb, var(--accent, #4a7c59) 10%, transparent);
+}
+
+.verlauf-composer {
+  background: var(--notion-paper-bg, #fff);
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.verlauf-composer__date-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.verlauf-composer__date-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--text-muted, #8a8a80);
+}
+
+.verlauf-composer__date-input {
+  font-size: 0.82rem;
+  font-family: inherit;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 5px;
+  padding: 0.2rem 0.5rem;
+  background: transparent;
+  color: inherit;
+}
+
+.verlauf-composer__textarea {
+  width: 100%;
+  font-size: 0.9rem;
+  font-family: inherit;
+  line-height: 1.55;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 6px;
+  padding: 0.6rem 0.75rem;
+  background: transparent;
+  color: inherit;
+  resize: vertical;
+  min-height: 100px;
+}
+
+.verlauf-composer__textarea:focus {
+  outline: none;
+  border-color: var(--accent, #4a7c59);
+}
+
+.verlauf-composer__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.verlauf-composer__cancel-btn,
+.verlauf-composer__save-btn {
+  font-size: 0.82rem;
+  font-family: inherit;
+  padding: 0.3rem 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.15s, color 0.15s;
+}
+
+.verlauf-composer__cancel-btn {
+  background: transparent;
+  border-color: var(--border-soft, #e8e8e4);
+  color: var(--text-muted, #8a8a80);
+}
+
+.verlauf-composer__cancel-btn:hover {
+  background: var(--border-soft, #e8e8e4);
+}
+
+.verlauf-composer__save-btn {
+  background: var(--accent, #4a7c59);
+  color: #fff;
+}
+
+.verlauf-composer__save-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.verlauf-composer__save-btn:not(:disabled):hover {
+  filter: brightness(1.08);
+}
+
+/* ── Therapie page ───────────────────────────────────────────────────────── */
+
+.therapie-page {
+  padding: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.therapie-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.therapie-page__title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--ink, #1a1a18);
+  margin: 0;
+}
+
+.therapie-page__new-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.8rem;
+  font-family: inherit;
+  font-weight: 500;
+  color: var(--accent, #4a7c59);
+  background: transparent;
+  border: 1px solid var(--accent, #4a7c59);
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.therapie-page__new-btn:hover {
+  background: color-mix(in srgb, var(--accent, #4a7c59) 10%, transparent);
+}
+
+.therapie-page__empty {
+  font-size: 0.9rem;
+  color: var(--text-muted, #8a8a80);
+  padding: 2rem 0;
+  text-align: center;
+  margin: 0;
+}
+
+.therapie-page__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.therapie-entry {
+  background: var(--notion-paper-bg, #fff);
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 10px;
+  padding: 0.9rem 1.1rem;
+}
+
+.therapie-entry__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.therapie-entry__date {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted, #8a8a80);
+}
+
+.therapie-entry__delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  color: var(--text-muted, #8a8a80);
+  line-height: 1;
+  padding: 0;
+  font-family: inherit;
+  transition: color 0.15s;
+}
+
+.therapie-entry__delete-btn:hover {
+  color: var(--color-danger, #dc2626);
+}
+
+.therapie-entry__text {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--ink, #1a1a18);
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+/* Therapie composer (shares styles with verlauf-composer) */
+.therapie-composer {
+  background: var(--notion-paper-bg, #fff);
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.therapie-composer__date-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.therapie-composer__date-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--text-muted, #8a8a80);
+}
+
+.therapie-composer__date-input {
+  font-size: 0.82rem;
+  font-family: inherit;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 5px;
+  padding: 0.2rem 0.5rem;
+  background: transparent;
+  color: inherit;
+}
+
+.therapie-composer__textarea {
+  width: 100%;
+  font-size: 0.9rem;
+  font-family: inherit;
+  line-height: 1.55;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 6px;
+  padding: 0.6rem 0.75rem;
+  background: transparent;
+  color: inherit;
+  resize: vertical;
+  min-height: 100px;
+}
+
+.therapie-composer__textarea:focus {
+  outline: none;
+  border-color: var(--accent, #4a7c59);
+}
+
+.therapie-composer__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.therapie-composer__cancel-btn,
+.therapie-composer__save-btn {
+  font-size: 0.82rem;
+  font-family: inherit;
+  padding: 0.3rem 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.15s, color 0.15s;
+}
+
+.therapie-composer__cancel-btn {
+  background: transparent;
+  border-color: var(--border-soft, #e8e8e4);
+  color: var(--text-muted, #8a8a80);
+}
+
+.therapie-composer__cancel-btn:hover {
+  background: var(--border-soft, #e8e8e4);
+}
+
+.therapie-composer__save-btn {
+  background: var(--accent, #4a7c59);
+  color: #fff;
+}
+
+.therapie-composer__save-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.therapie-composer__save-btn:not(:disabled):hover {
+  filter: brightness(1.08);
+}
+
