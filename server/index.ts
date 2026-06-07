@@ -1,6 +1,12 @@
-import 'dotenv/config'
+import dotenv from 'dotenv'
+
+// Match Vite precedence: .env then .env.local (local overrides). Never load .env.example.
+dotenv.config()
+dotenv.config({ path: '.env.local', override: true })
 import cors from 'cors'
 import express from 'express'
+import { optionalAuth } from './middleware/auth'
+import { accountRouter } from './routes/account'
 import { creditsRouter } from './routes/credits'
 import { cryptoRouter } from './routes/crypto'
 import { workspaceVaultRouter } from './routes/workspaceVault'
@@ -12,6 +18,7 @@ const app = express()
 const port = Number(process.env.API_PORT ?? 3001)
 
 app.use(cors({ origin: true }))
+app.use(optionalAuth)
 app.use('/api/transcribe', express.json({ limit: '25mb' }), transcribeRouter)
 app.use(express.json({ limit: '2mb' }))
 
@@ -20,6 +27,7 @@ app.get('/api/health', (_req, res) => {
 })
 
 app.use('/api/generate', generateRouter)
+app.use('/api/account', accountRouter)
 app.use('/api/credits', creditsRouter)
 app.use('/api/crypto', cryptoRouter)
 app.use('/api/workspace', workspaceVaultRouter)

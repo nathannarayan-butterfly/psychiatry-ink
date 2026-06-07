@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { languageOptions } from '../../data/languages'
 import type { UiLanguage } from '../../types/settings'
+import { readPomodoroDuration, savePomodoroDuration } from '../../hooks/usePomodoroTimer'
 import { SettingsField } from './SettingsField'
 import { SettingsOptionGroup } from './SettingsOptionGroup'
 
@@ -58,10 +60,34 @@ export function LanguageSection({ language, onSelectLanguage }: LanguageSectionP
 }
 
 export function DocumentationSection() {
+  const [pomodoroDuration, setPomodoroDuration] = useState(readPomodoroDuration)
+
+  const handleDurationChange = (value: string) => {
+    const n = parseInt(value, 10)
+    if (!isNaN(n) && n >= 1 && n <= 120) {
+      savePomodoroDuration(n)
+      setPomodoroDuration(n)
+    }
+  }
+
   return (
     <div>
       <h2 className="text-lg font-semibold text-ink">Dokumentation</h2>
       <p className="mt-1 mb-6 text-sm text-muted">Standardwerte für neue Dokumente.</p>
+
+      <SettingsField
+        label="Pomodoro-Dauer (Minuten)"
+        description="Länge eines Pomodoro-Intervalls in Minuten. Standard: 25 Minuten. Wirkt ab dem nächsten Start."
+      >
+        <input
+          type="number"
+          min={1}
+          max={120}
+          value={pomodoroDuration}
+          onChange={(event) => handleDurationChange(event.target.value)}
+          className="w-full rounded-sm border-2 border-border bg-surface px-3 py-2 text-sm text-ink outline-none transition-colors focus:border-ink"
+        />
+      </SettingsField>
 
       <SettingsField label="Standard-Dokumenttyp">
         <PlaceholderSelect
@@ -145,6 +171,29 @@ export function AccountSection() {
         >
           Passwort ändern
         </button>
+      </SettingsField>
+    </div>
+  )
+}
+
+export function AboutSection() {
+  return (
+    <div>
+      <h2 className="text-lg font-semibold text-ink">Über Psychiatry.ink</h2>
+      <p className="mt-1 mb-6 text-sm text-muted">Versionsinformationen und rechtliche Hinweise.</p>
+
+      <SettingsField label="Version">
+        <p className="text-sm text-ink">Psychiatry.ink</p>
+      </SettingsField>
+
+      <SettingsField label="Datenschutz" description="Informationen zur Datenspeicherung und -verarbeitung.">
+        <p className="text-xs text-muted">
+          Klinische Inhalte werden ausschließlich auf Ihrem Gerät entschlüsselt. Psychiatry.ink hat keinen Zugriff auf Ihre Patientendaten.
+        </p>
+      </SettingsField>
+
+      <SettingsField label="Support">
+        <p className="text-xs text-muted">Kontakt und Hilfe über die Psychiatry.ink-Website.</p>
       </SettingsField>
     </div>
   )

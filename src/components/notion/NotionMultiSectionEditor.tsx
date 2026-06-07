@@ -321,17 +321,15 @@ export function NotionMultiSectionEditor({
           >
             <div className="notion-editor__section-header">
               <h3 className="notion-editor__section-heading">{section.label}</h3>
-              {isActive ? (
-                <button
-                  type="button"
-                  className="notion-editor__section-copy"
-                  onClick={() => handleCopySection(section)}
-                  title={t('notionCopySection')}
-                  aria-label={t('notionCopySection')}
-                >
-                  <Copy className="h-3 w-3" strokeWidth={1.75} aria-hidden />
-                </button>
-              ) : null}
+              <button
+                type="button"
+                className="notion-editor__section-copy"
+                onClick={() => handleCopySection(section)}
+                title={t('notionCopySection')}
+                aria-label={t('notionCopySection')}
+              >
+                <Copy className="h-3 w-3" strokeWidth={1.75} aria-hidden />
+              </button>
             </div>
             {showSectionChecklist && sectionConfig?.checklistItems ? (
               <div className="notion-editor__section-checklist">

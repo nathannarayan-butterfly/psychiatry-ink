@@ -4,6 +4,7 @@ import { prisma } from '../db'
 import type { AiModelTier } from '../modelTierMapping'
 import { resolveModelForTier } from '../modelTierMapping'
 import { canAfford, deductCredits } from '../services/credits'
+import { resolveAccountId } from '../middleware/auth'
 
 export type GenerationLogStatus = 'started' | 'completed' | 'failed'
 
@@ -34,6 +35,7 @@ export const generationLogRouter: Router = createRouter()
 generationLogRouter.post('/', async (req: Request, res: Response) => {
   try {
     const body = req.body as CreateGenerationLogBody
+    const userId = resolveAccountId(req)
 
     if (!body.documentType || !body.aiMode || body.inputTextLength == null) {
       res.status(400).json({ error: 'Missing required fields' })
@@ -41,7 +43,7 @@ generationLogRouter.post('/', async (req: Request, res: Response) => {
     }
 
     const estimatedCredits = body.estimatedCredits ?? 0
-    if (!(await canAfford(estimatedCredits))) {
+    if (!(await canAfford(estimatedCredits, userId))) {
       res.status(402).json({ error: 'Insufficient credits' })
       return
     }
@@ -75,6 +77,7 @@ generationLogRouter.patch('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params
     const body = req.body as UpdateGenerationLogBody
+    const userId = resolveAccountId(req)
 
     if (!body.status || (body.status !== 'completed' && body.status !== 'failed')) {
       res.status(400).json({ error: 'Invalid status' })
@@ -90,7 +93,7 @@ generationLogRouter.patch('/:id', async (req: Request, res: Response) => {
     let balance: number | undefined
 
     if (body.status === 'completed' && !existing.creditsDeducted) {
-      balance = await deductCredits(existing.estimatedCredits)
+      balance = await deductCredits(existing.estimatedCredits, userId)
     }
 
     const entry = await prisma.generationLog.update({

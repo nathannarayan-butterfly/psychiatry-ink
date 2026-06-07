@@ -138,14 +138,23 @@ function migrateComponents(
 
     if (component.id === 'verlauf' && component.variants?.length) {
       const broadVariant = component.variants.find((variant) => variant.id === 'broad')
-      if (broadVariant && isLegacyVerlaufBroadSections(broadVariant.sections)) {
+      const shortVariant = component.variants.find((variant) => variant.id === 'short')
+      const needsBroadMigration =
+        broadVariant && isLegacyVerlaufBroadSections(broadVariant.sections)
+      // Always clear any prefilledText/sections accidentally stored on the short variant
+      const shortHasStaleData = shortVariant && (shortVariant.prefilledText || shortVariant.sections.length > 0 || shortVariant.multistage)
+      if (needsBroadMigration || shortHasStaleData) {
         return {
           ...component,
-          variants: component.variants.map((variant) =>
-            variant.id === 'broad'
-              ? { ...variant, sections: cloneVerlaufBroadSections() }
-              : variant,
-          ),
+          variants: component.variants.map((variant) => {
+            if (variant.id === 'broad' && needsBroadMigration) {
+              return { ...variant, sections: cloneVerlaufBroadSections() }
+            }
+            if (variant.id === 'short') {
+              return { ...variant, prefilledText: undefined, multistage: false, sections: [] }
+            }
+            return variant
+          }),
         }
       }
     }

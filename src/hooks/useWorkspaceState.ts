@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   copyTextToClipboard,
   getNotionDocumentCopyText,
@@ -32,11 +32,14 @@ import {
   type ContentInputOrigin,
 } from '../utils/aiAutoDefaults'
 import { getLocalizedTherapieVerlaufSections } from '../services/hintTranslationAgent'
-import { executeAiGeneration } from '../services/aiGeneration'
+import { executeAiGeneration, isPseudonymizationEnabled } from '../services/aiGeneration'
+import { loadPatientMetadata } from '../utils/cryptoVault'
+import { translateUi } from '../data/uiTranslations'
 import { resolveGenerationCall } from '../utils/resolveGenerationCall'
 import { extractTherapieVerlaufSections } from '../utils/extractTherapieVerlauf'
 import { estimateGenerationCredits } from '../utils/estimateCredits'
 import { resolveKiExtraInstruction } from '../utils/resolveKiExtraInstruction'
+import { hasAiAndDictationCredits } from '../utils/planGating'
 import { useCredits } from './useCredits'
 import { useDictation } from './useDictation'
 import { useKiInstructions } from './useKiInstructions'
@@ -122,9 +125,32 @@ function buildInitialWorkspaceForType(nextType: DocumentType): {
   }
 }
 
-export function useWorkspaceState(documentTypes: DocumentType[], language: UiLanguage = 'de') {
+export function useWorkspaceState(documentTypes: DocumentType[], language: UiLanguage = 'de', caseId?: string) {
   const { balance: creditBalance, setBalanceFromServer, hasEnoughCredits } = useCredits()
   const kiInstructions = useKiInstructions()
+
+  // Patient hints for pseudonymization — loaded async from encrypted vault
+  const patientHintsRef = useRef<{ patientName?: string; patientDob?: string }>({})
+  useEffect(() => {
+    if (!caseId) {
+      patientHintsRef.current = {}
+      return
+    }
+    loadPatientMetadata(caseId)
+      .then((loaded) => {
+        if (loaded) {
+          patientHintsRef.current = {
+            patientName: loaded.metadata.name || undefined,
+            patientDob: loaded.metadata.geburtsdatum || undefined,
+          }
+        } else {
+          patientHintsRef.current = {}
+        }
+      })
+      .catch(() => {
+        patientHintsRef.current = {}
+      })
+  }, [caseId])
 
   const getDocumentType = useCallback(
     (id: string) => documentTypes.find((type) => type.id === id),
@@ -186,6 +212,7 @@ export function useWorkspaceState(documentTypes: DocumentType[], language: UiLan
   const [lastVersion, setLastVersion] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [generationPendingReview, setGenerationPendingReview] = useState(false)
+  const [generationWasAccepted, setGenerationWasAccepted] = useState(false)
   const [generationScope, setGenerationScope] = useState<AiGenerationScope>('segment')
   const [incompleteGenerationWarning, setIncompleteGenerationWarning] = useState<
     DocumentSection[] | null
@@ -311,6 +338,7 @@ export function useWorkspaceState(documentTypes: DocumentType[], language: UiLan
     setLastVersion(null)
     setIsGenerating(false)
     setGenerationPendingReview(false)
+    setGenerationWasAccepted(false)
     setGenerationScope('segment')
     setIncompleteGenerationWarning(null)
     setInputMode('write')
@@ -471,6 +499,64 @@ export function useWorkspaceState(documentTypes: DocumentType[], language: UiLan
     ],
   )
 
+  const selectDocumentTypeAndSection = useCallback(
+    (typeId: string, targetSectionId: string) => {
+      if (typeId === selectedDocumentType) {
+        selectSection(targetSectionId)
+        return
+      }
+
+      const nextType = resolveType(typeId)
+      if (!nextType) return
+
+      const baseType = getDocumentType(typeId)
+      const variantId = activeVariantIds[typeId] ?? baseType?.defaultVariantId
+      const variant = baseType?.variants?.find((item) => item.id === variantId)
+
+      const nextSections =
+        nextType.multistage && nextType.sections ? cloneSections(nextType.sections) : []
+
+      const targetExists = nextSections.some((s) => s.id === targetSectionId)
+      const effectiveId = targetExists ? targetSectionId : (nextSections[0]?.id ?? null)
+
+      const targetSectionTemplate = nextType.sections?.find((s) => s.id === effectiveId)
+      const targetContent = getInitialEditorContent(undefined, targetSectionTemplate?.prefilledText)
+
+      setSelectedDocumentType(typeId)
+      resetWorkspaceSession()
+      setSections(
+        nextSections.map((section) => ({
+          ...section,
+          status:
+            section.id === effectiveId
+              ? targetContent.trim()
+                ? 'draft'
+                : 'active'
+              : 'empty',
+        })),
+      )
+      setActiveSectionId(effectiveId)
+      setSectionContents(effectiveId && targetContent ? { [effectiveId]: targetContent } : {})
+      setEditorContent(targetContent)
+      setGeneratedContent(targetContent)
+      setChecklistSelections({})
+      setContentInputOrigin('typed')
+      setUserToolOverride(false)
+      setKiExtraInstruction(resolveKiExtraInstruction(kiInstructions.settings, typeId))
+      syncAiSettings(baseType?.ai, variant?.ai)
+    },
+    [
+      selectedDocumentType,
+      selectSection,
+      resolveType,
+      getDocumentType,
+      activeVariantIds,
+      resetWorkspaceSession,
+      kiInstructions.settings,
+      syncAiSettings,
+    ],
+  )
+
   const saveSection = useCallback(
     (sectionId?: string) => {
       const targetId = sectionId ?? activeSectionId
@@ -535,6 +621,7 @@ export function useWorkspaceState(documentTypes: DocumentType[], language: UiLan
   const handleEditorChange = useCallback(
     (value: string) => {
       setEditorContent(value)
+      setGenerationWasAccepted(false)
       if (activeSectionId) {
         setSectionContents((current) => ({
           ...current,
@@ -700,6 +787,7 @@ export function useWorkspaceState(documentTypes: DocumentType[], language: UiLan
   )
 
   const insufficientCredits = !hasEnoughCredits(estimatedGenerationCredits)
+  const dictationCreditsAvailable = hasAiAndDictationCredits(creditBalance)
 
   const activeVariantConfig = useMemo(
     () => currentDocumentType?.variants?.find((variant) => variant.id === activeVariantId),
@@ -839,10 +927,21 @@ export function useWorkspaceState(documentTypes: DocumentType[], language: UiLan
       setLastVersion(sourceContent || null)
       setIncompleteGenerationWarning(null)
 
+      // Attach patient hints for pseudonymization (already loaded in ref, non-blocking)
+      const hints = isPseudonymizationEnabled() ? patientHintsRef.current : {}
+      const requestWithHints = {
+        ...request,
+        patientHints:
+          hints.patientName || hints.patientDob
+            ? { patientName: hints.patientName, patientDob: hints.patientDob }
+            : undefined,
+      }
+
       try {
-        const generation = await executeAiGeneration(request, {
+        const generation = await executeAiGeneration(requestWithHints, {
           estimatedCredits: creditsToCharge,
           onCreditsDeducted: setBalanceFromServer,
+          pseudonymizationActiveLabel: translateUi(language, 'pseudonymizationActive'),
         })
         const result = generation.text
         const activeResult =
@@ -981,6 +1080,7 @@ export function useWorkspaceState(documentTypes: DocumentType[], language: UiLan
 
   const acceptGeneration = useCallback(() => {
     setGenerationPendingReview(false)
+    setGenerationWasAccepted(true)
     setLastVersion(null)
   }, [])
 
@@ -996,6 +1096,7 @@ export function useWorkspaceState(documentTypes: DocumentType[], language: UiLan
       }
     }
     setGenerationPendingReview(false)
+    setGenerationWasAccepted(false)
     setLastVersion(null)
   }, [activeSectionId, lastVersion])
 
@@ -1026,9 +1127,10 @@ export function useWorkspaceState(documentTypes: DocumentType[], language: UiLan
   ])
 
   const startDictation = useCallback(() => {
+    if (!dictationCreditsAvailable) return
     setInputMode('dictate')
     beginDictation()
-  }, [beginDictation])
+  }, [beginDictation, dictationCreditsAvailable])
 
   const expandAiTools = useCallback(() => {
     setAiToolsExpanded(true)
@@ -1282,6 +1384,7 @@ export function useWorkspaceState(documentTypes: DocumentType[], language: UiLan
     lastVersion,
     isGenerating,
     generationPendingReview,
+    generationWasAccepted,
     generationScope,
     documentEditorContent,
     documentScopeFilledSectionCount,
@@ -1289,6 +1392,7 @@ export function useWorkspaceState(documentTypes: DocumentType[], language: UiLan
     creditBalance,
     estimatedGenerationCredits,
     insufficientCredits,
+    dictationCreditsAvailable,
     aiContext,
     aiCanGenerate,
     dictationPhase,
@@ -1304,7 +1408,9 @@ export function useWorkspaceState(documentTypes: DocumentType[], language: UiLan
     activeChecklistSelections,
     checklistSelections,
     showNormalBefundButton,
+    activeVariantIds,
     selectDocumentType,
+    selectDocumentTypeAndSection,
     selectComponentVariant,
     selectSection,
     focusSection,

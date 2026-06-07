@@ -31,10 +31,11 @@ model GenerationLog {
   creditsDeducted      Boolean   @default(false)
 }
 
-/// Single-user demo credit balance (local dev).
+/// Per-user credit balance (Supabase user id or "default" for local dev).
 model CreditBalance {
-  id        String   @id @default("default")
-  balance   Int      @default(500)
+  id        String   @id
+  balance   Int      @default(200)
+  plan      String   @default("free")
   updatedAt DateTime @updatedAt
 }
 

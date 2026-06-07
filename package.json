@@ -15,10 +15,12 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "db:check": "tsx scripts/db-check.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "dev:stop": "bash scripts/stop-dev.sh"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
+    "@supabase/supabase-js": "^2.107.0",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
     "express": "^5.1.0",

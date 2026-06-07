@@ -1,11 +1,13 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
+import { AuthProvider } from './context/AuthContext'
 import { applyAppearanceSettings } from './data/appearancePresets'
 import { defaultLanguage, languageOptions } from './data/languages'
 import { defaultAppearanceSettings } from './types/settings'
 import './styles/globals.css'
 import './styles/notion-preview.css'
+import './styles/landing.css'
 
 const APPEARANCE_KEY = 'psychiatry-ink-appearance'
 const LANGUAGE_KEY = 'psychiatry-ink-language'
@@ -29,6 +31,8 @@ try {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <AuthProvider>
+      <App />
+    </AuthProvider>
   </StrictMode>,
 )

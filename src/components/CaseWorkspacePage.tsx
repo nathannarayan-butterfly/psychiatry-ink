@@ -23,6 +23,7 @@ import { localizeWorkspaceComponents } from '../utils/localizeComponents'
 import { toDocumentTypes } from '../utils/workspaceComponents'
 import { NotionApp } from './notion/NotionApp'
 import { useTranslation } from '../context/TranslationContext'
+import { useAuth } from '../context/AuthContext'
 
 interface CaseWorkspacePageProps {
   caseId: string
@@ -38,6 +39,7 @@ export function CaseWorkspacePage({
   onNavigateNewCase,
 }: CaseWorkspacePageProps) {
   const { t } = useTranslation()
+  const { plan } = useAuth()
   const workspaceSettings = useWorkspaceSettings()
   const languageSettings = useLanguageSettings()
   const localizedComponents = useMemo(() => {
@@ -62,7 +64,7 @@ export function CaseWorkspacePage({
     touchCaseOpened(caseId)
   }, [caseId])
 
-  const workspace = useWorkspaceState(documentTypes, languageSettings.language)
+  const workspace = useWorkspaceState(documentTypes, languageSettings.language, caseId)
   const timeline = useTimelineTool()
   const lab = useLabTool()
   const appearance = useAppearanceSettings()
@@ -246,6 +248,7 @@ export function CaseWorkspacePage({
       onMigratedAge={handleMigratedAge}
       onNavigateDashboard={onNavigateDashboard}
       onNavigateNewCase={onNavigateNewCase}
+      plan={plan}
     />
   )
 }

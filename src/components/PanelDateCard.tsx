@@ -1,18 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from '../context/TranslationContext'
 import type { UiLanguage } from '../types/settings'
+import { formatInSiteTimezone, getISOWeekInSiteTimezone, getSiteZonedParts, SITE_TIMEZONE } from '../utils/siteTimezone'
 
 function localeForLanguage(language: UiLanguage): string {
   return language === 'en' ? 'en-GB' : 'de-DE'
-}
-
-/** ISO 8601 calendar week (Kalenderwoche). */
-function getISOWeek(date: Date): number {
-  const utc = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
-  const day = utc.getUTCDay() || 7
-  utc.setUTCDate(utc.getUTCDate() + 4 - day)
-  const yearStart = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1))
-  return Math.ceil(((utc.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
 }
 
 interface PanelDateCardProps {
@@ -39,26 +31,49 @@ export function PanelDateCard({ date, layout = 'panel' }: PanelDateCardProps) {
 
   const parts = useMemo(() => {
     const locale = localeForLanguage(language)
-    const dayNumber = new Intl.DateTimeFormat(locale, { day: 'numeric' }).format(now)
-    const month = new Intl.DateTimeFormat(locale, { month: 'short' })
-      .format(now)
+    const { day, year } = getSiteZonedParts(now)
+    const dayNumber = new Intl.DateTimeFormat(locale, { day: 'numeric', timeZone: SITE_TIMEZONE }).format(now)
+    const dayNumberPadded = String(day).padStart(2, '0')
+    const month = formatInSiteTimezone(now, locale, { month: 'short' })
       .replace(/\.$/, '')
       .toUpperCase()
-    const time = new Intl.DateTimeFormat(locale, {
+    const monthAbbr = formatInSiteTimezone(now, locale, { month: 'short' })
+      .replace(/\.$/, '')
+      .replace(/^\w/, (c) => c.toUpperCase())
+    const monthFull = formatInSiteTimezone(now, locale, { month: 'long' })
+      .replace(/^\w/, (c) => c.toUpperCase())
+    const yearShort = String(year).slice(-2)
+    const time = formatInSiteTimezone(now, locale, {
       hour: '2-digit',
       minute: '2-digit',
-    }).format(now)
-    const weekday = new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(now)
-    const weekdayShort = new Intl.DateTimeFormat(locale, { weekday: 'short' })
-      .format(now)
+    })
+    const weekday = formatInSiteTimezone(now, locale, { weekday: 'long' })
+    const weekdayShort = formatInSiteTimezone(now, locale, { weekday: 'short' })
       .replace(/\.$/, '')
       .toUpperCase()
-    const week = getISOWeek(now)
+    const week = getISOWeekInSiteTimezone(now)
 
-    return { dayNumber, month, time, weekday, weekdayShort, week }
+    return { dayNumber, dayNumberPadded, month, monthAbbr, monthFull, yearShort, time, weekday, weekdayShort, week }
   }, [now, language])
 
   const isSidebar = layout === 'sidebar'
+
+  if (isSidebar) {
+    return (
+      <div
+        className="panel-date-card panel-date-card--sidebar-ink"
+        aria-label={`${parts.weekday}, ${parts.dayNumberPadded} ${parts.monthFull} ${parts.yearShort}, ${t('calendarWeek')} ${parts.week}`}
+      >
+        <span className="panel-date-card__ink-date">
+          {parts.dayNumberPadded} {parts.monthAbbr} {parts.yearShort}
+        </span>
+        <span className="panel-date-card__ink-weekday">{parts.weekday}</span>
+        <span className="panel-date-card__ink-kw">
+          {t('calendarWeek')} {parts.week}
+        </span>
+      </div>
+    )
+  }
 
   if (layout === 'vertical') {
     return (

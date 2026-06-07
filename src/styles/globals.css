@@ -214,7 +214,9 @@
   }
 
   .topbar-logo__stem {
-    line-height: 1.2;
+    line-height: 1.4;
+    padding-bottom: 0.05em;
+    translate: 0 3px;
   }
 
   .topbar-logo__mark {
@@ -222,6 +224,7 @@
     height: 3em;
     max-width: 4.25em;
     translate: 0 0.02em;
+    margin-left: -0.25rem;
   }
 
   .glass-overlay {

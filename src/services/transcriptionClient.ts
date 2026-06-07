@@ -1,4 +1,5 @@
-import { API_BASE } from './apiClient'
+import { API_BASE, InsufficientCreditsError } from './apiClient'
+import { getAuthHeaders } from './authHeaders'
 
 function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -20,20 +21,25 @@ function blobToBase64(blob: Blob): Promise<string> {
 export async function transcribeAudio(blob: Blob): Promise<string> {
   const audioBase64 = await blobToBase64(blob)
 
+  const authHeaders = await getAuthHeaders()
   const response = await fetch(`${API_BASE}/api/transcribe`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders },
     body: JSON.stringify({
       audioBase64,
       mimeType: blob.type || 'audio/webm',
     }),
   })
 
+  if (response.status === 402) {
+    throw new InsufficientCreditsError()
+  }
+
   if (!response.ok) {
     const detail = (await response.json().catch(() => null)) as { error?: string } | null
     throw new Error(detail?.error ?? `Transcription failed (${response.status})`)
   }
 
-  const data = (await response.json()) as { text: string }
+  const data = (await response.json()) as { text: string; balance?: number }
   return data.text
 }

@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
+import { FREE_SIGNUP_CREDITS } from '../data/subscriptionPlans'
 import { API_BASE } from '../services/apiClient'
+import { getAuthHeaders } from '../services/authHeaders'
 
-const DEFAULT_BALANCE = 500
+const DEFAULT_BALANCE = FREE_SIGNUP_CREDITS
 
 async function fetchBalance(): Promise<number | null> {
   try {
-    const response = await fetch(`${API_BASE}/api/credits`)
+    const headers = await getAuthHeaders()
+    const response = await fetch(`${API_BASE}/api/credits`, { headers })
     if (!response.ok) return null
     const data = (await response.json()) as { balance?: number }
     return typeof data.balance === 'number' ? data.balance : null

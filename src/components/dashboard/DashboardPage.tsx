@@ -24,6 +24,7 @@ import { useWorkspaceVault } from '../../hooks/useWorkspaceVault'
 import type { usePrivacySettings } from '../../hooks/usePrivacySettings'
 import type { useLanguageSettings } from '../../hooks/useLanguageSettings'
 import { allowsWorkspaceDbSnapshot } from '../../data/privacyRegions'
+import type { SubscriptionPlan } from '../../data/subscriptionPlans'
 import { DEFAULT_CASE_ID } from '../../utils/caseContext'
 import { shouldShowBackupReminder } from '../../utils/workspaceVault'
 import { AppLogo } from '../AppLogo'
@@ -51,6 +52,7 @@ type LanguageState = ReturnType<typeof useLanguageSettings>
 interface DashboardPageProps {
   privacy: PrivacyState
   languageSettings: LanguageState
+  plan: SubscriptionPlan
   onOpenCase: (caseId: string, page?: NotionPageId) => void
   onNavigateHome?: () => void
   onOpenSettings?: () => void
@@ -98,6 +100,7 @@ function UsageSparkline({ value, max }: { value: number; max: number }) {
 export function DashboardPage({
   privacy,
   languageSettings,
+  plan: _plan,
   onOpenCase,
   onNavigateHome,
 }: DashboardPageProps) {
@@ -204,12 +207,6 @@ export function DashboardPage({
     false,
   )
 
-  const isFullTier = privacy.tier === 'full'
-  const newPatientDisabledTooltip =
-    privacy.tier === 'disabled'
-      ? t('newPatientTierDisabledTooltip')
-      : t('newPatientTierLocalOnlyTooltip')
-
   const greeting = t('dashboardGreeting').replace('{name}', displayName)
 
   return (
@@ -243,40 +240,28 @@ export function DashboardPage({
 
           <button
             type="button"
-            className={
-              isFullTier
-                ? 'dashboard-page__new-btn'
-                : 'dashboard-page__new-btn dashboard-page__new-btn--disabled'
-            }
-            onClick={isFullTier ? handleNewCase : undefined}
-            disabled={!isFullTier}
-            title={!isFullTier ? newPatientDisabledTooltip : undefined}
+            className="dashboard-page__new-btn"
+            onClick={handleNewCase}
           >
             <Plus className="h-4 w-4" strokeWidth={2} aria-hidden />
             {t('dashboardNewPatient')}
           </button>
         </div>
 
-        {isFullTier ? (
-          registry.loading ? (
-            <p className="dashboard-page__status">{t('dashboardLoading')}</p>
-          ) : patientCases.length === 0 ? (
-            <p className="dashboard-page__status">{t('dashboardEmpty')}</p>
-          ) : (
-            <div className="dashboard-page__grid">
-              {patientCases.map((caseItem) => (
-                <PatientCaseCard
-                  key={caseItem.caseId}
-                  caseItem={caseItem}
-                  onOpen={(caseId) => onOpenCase(caseId)}
-                />
-              ))}
-            </div>
-          )
+        {registry.loading ? (
+          <p className="dashboard-page__status">{t('dashboardLoading')}</p>
+        ) : patientCases.length === 0 ? (
+          <p className="dashboard-page__status">{t('dashboardEmpty')}</p>
         ) : (
-          <p className="dashboard-page__status dashboard-page__status--muted">
-            {t('dashboardLocalOnlyPatientHint')}
-          </p>
+          <div className="dashboard-page__grid">
+            {patientCases.map((caseItem) => (
+              <PatientCaseCard
+                key={caseItem.caseId}
+                caseItem={caseItem}
+                onOpen={(caseId) => onOpenCase(caseId)}
+              />
+            ))}
+          </div>
         )}
 
         {registry.error ? (
@@ -434,7 +419,15 @@ export function DashboardPage({
         />
       ) : null}
 
-      {creditsDialogOpen ? <CreditsPurchaseDialog onClose={() => setCreditsDialogOpen(false)} /> : null}
+      {creditsDialogOpen ? (
+        <CreditsPurchaseDialog
+          onClose={() => setCreditsDialogOpen(false)}
+          creditsExhausted={creditBalance <= 0}
+          onUpgrade={() => {
+            window.location.href = '/#pricing'
+          }}
+        />
+      ) : null}
     </div>
   )
 }

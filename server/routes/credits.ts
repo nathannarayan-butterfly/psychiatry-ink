@@ -1,12 +1,14 @@
 import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
 import { canAfford, getCreditBalance } from '../services/credits'
+import { resolveAccountId } from '../middleware/auth'
 
 export const creditsRouter: Router = createRouter()
 
-creditsRouter.get('/', async (_req: Request, res: Response) => {
+creditsRouter.get('/', async (req: Request, res: Response) => {
   try {
-    const balance = await getCreditBalance()
+    const userId = resolveAccountId(req)
+    const balance = await getCreditBalance(userId)
     res.json({ balance })
   } catch (error) {
     console.error('[credits] read failed:', error)
@@ -22,8 +24,9 @@ creditsRouter.post('/check', async (req: Request, res: Response) => {
       return
     }
 
-    const balance = await getCreditBalance()
-    const ok = await canAfford(amount)
+    const userId = resolveAccountId(req)
+    const balance = await getCreditBalance(userId)
+    const ok = await canAfford(amount, userId)
 
     res.json({ ok, balance })
   } catch (error) {

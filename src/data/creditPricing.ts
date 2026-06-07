@@ -3,6 +3,9 @@ import type { AiModelTier } from '../types'
 /** 100 credits = 1 EUR */
 export const CREDITS_PER_EUR = 100
 
+/** Re-exported from subscriptionPlans — dictation charge per transcription. */
+export { TRANSCRIBE_CREDITS } from './subscriptionPlans'
+
 export const MODE_BASE_CREDITS: Record<AiModelTier, number> = {
   fast: 1,
   standard: 4,

@@ -1,12 +1,20 @@
 import { X } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
+import { PLAN_DEFINITIONS } from '../../data/subscriptionPlans'
 
 interface CreditsPurchaseDialogProps {
   onClose: () => void
+  onUpgrade?: () => void
+  creditsExhausted?: boolean
 }
 
-export function CreditsPurchaseDialog({ onClose }: CreditsPurchaseDialogProps) {
+export function CreditsPurchaseDialog({
+  onClose,
+  onUpgrade,
+  creditsExhausted = false,
+}: CreditsPurchaseDialogProps) {
   const { t } = useTranslation()
+  const pro = PLAN_DEFINITIONS.pro
 
   return (
     <div
@@ -22,7 +30,7 @@ export function CreditsPurchaseDialog({ onClose }: CreditsPurchaseDialogProps) {
       >
         <header className="credits-purchase-dialog__header">
           <h2 id="credits-purchase-title" className="credits-purchase-dialog__title">
-            {t('creditsPurchaseTitle')}
+            {creditsExhausted ? t('creditsExhaustedHint') : t('creditsPurchaseTitle')}
           </h2>
           <button
             type="button"
@@ -34,11 +42,21 @@ export function CreditsPurchaseDialog({ onClose }: CreditsPurchaseDialogProps) {
           </button>
         </header>
 
-        <p className="credits-purchase-dialog__body">{t('creditsPurchaseBody')}</p>
+        <p className="credits-purchase-dialog__body">
+          {creditsExhausted
+            ? `${t('creditsPurchaseBody')} Pro: ${pro.priceEurMonthly} €/Monat, ${pro.monthlyCredits} Credits.`
+            : t('creditsPurchaseBody')}
+        </p>
 
-        <button type="button" className="credits-purchase-dialog__action" onClick={onClose}>
-          {t('creditsPurchaseAdd')}
-        </button>
+        {onUpgrade ? (
+          <button type="button" className="credits-purchase-dialog__action" onClick={onUpgrade}>
+            {t('creditsUpgradeCta')}
+          </button>
+        ) : (
+          <button type="button" className="credits-purchase-dialog__action" onClick={onClose}>
+            {t('creditsPurchaseAdd')}
+          </button>
+        )}
       </div>
     </div>
   )

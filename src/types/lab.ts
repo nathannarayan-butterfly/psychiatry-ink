@@ -1,3 +1,5 @@
+import { formatInSiteTimezone } from '../utils/siteTimezone'
+
 export type MedicationChangeType =
   | 'started'
   | 'increased'
@@ -94,7 +96,7 @@ export function parseLabDate(date: string): number {
 export function formatLabDate(date: string): string {
   const parsed = new Date(date)
   if (Number.isNaN(parsed.getTime())) return date
-  return parsed.toLocaleDateString(undefined, {
+  return formatInSiteTimezone(parsed, 'de-DE', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',

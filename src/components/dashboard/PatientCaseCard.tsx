@@ -2,35 +2,19 @@ import { FileText } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { DashboardCase } from '../../hooks/useCaseRegistry'
 
+import { formatSiteLocaleDate } from '../../utils/siteTimezone'
+
 interface PatientCaseCardProps {
   caseItem: DashboardCase
   onOpen: (caseId: string) => void
 }
 
 function formatRelativeDate(iso: string, locale: string): string {
-  try {
-    const date = new Date(iso)
-    return date.toLocaleDateString(locale, {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    })
-  } catch {
-    return iso
-  }
+  return formatSiteLocaleDate(iso, locale)
 }
 
 function formatLocalDate(isoDate: string, locale: string): string {
-  try {
-    const date = new Date(isoDate)
-    return date.toLocaleDateString(locale, {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    })
-  } catch {
-    return isoDate
-  }
+  return formatSiteLocaleDate(isoDate, locale)
 }
 
 export function PatientCaseCard({ caseItem, onOpen }: PatientCaseCardProps) {

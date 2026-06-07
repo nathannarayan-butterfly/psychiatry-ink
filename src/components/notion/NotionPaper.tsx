@@ -1,4 +1,4 @@
-import { ChevronDown, Command, Hash } from 'lucide-react'
+import { Command, Mic, Pencil } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { DocumentChecklistItem, DocumentSection, DocumentVariantMode } from '../../types'
@@ -23,7 +23,7 @@ import { NotionSidebarCollapseHandle } from './NotionSidebarCollapseHandle'
 import { NotionDictationStrip } from './NotionDictationStrip'
 import { NotionAiModeDropdown } from './NotionAiModeDropdown'
 import { NotionDocumentActions } from './NotionDocumentActions'
-import { NotionStructuredPanel } from './NotionStructuredPanel'
+import { compileChecklistText } from '../../utils/checklist'
 import { NotionEditorHints } from './NotionEditorHints'
 import { NotionVariantLinks, type NotionVariantOption } from './NotionVariantLinks'
 import { NotionEmptyState } from './NotionEmptyState'
@@ -74,7 +74,8 @@ interface NotionPaperProps {
   selectedAiTool: AiToolKey | null
   kiExtraInstruction: string
   aiCanGenerate: boolean
-  showPanelGraphic: boolean
+  panelGraphicEnabled: boolean
+  breakLottieActive: boolean
   pageType: PageType
   privacy: ReturnType<typeof usePrivacySettings>
   clinicalAge: {
@@ -109,8 +110,11 @@ interface NotionPaperProps {
   onDiscardRecording: () => void
   onTranscribe: () => void
   onClosePanelGraphic: () => void
+  onBreakStart?: () => void
   onSaveWorkspaceVault?: () => void
   onStartDictation?: () => void
+  onSwitchToWrite?: () => void
+  dictationDisabled?: boolean
 }
 
 export interface PendingPaste {
@@ -132,7 +136,6 @@ export function NotionPaper({
   caseId,
   documentTypeId,
   documentLabel,
-  sectionLabel,
   sections,
   sectionConfigs,
   sectionContents,
@@ -140,9 +143,6 @@ export function NotionPaper({
   componentVariants,
   activeVariantId,
   documentMode,
-  activeChecklistItems = [],
-  activeChecklistSelections = {},
-  showNormalBefundButton = false,
   activeSectionId,
   showMultistageSections,
   editorContent,
@@ -158,7 +158,8 @@ export function NotionPaper({
   selectedAiTool,
   kiExtraInstruction,
   aiCanGenerate,
-  showPanelGraphic,
+  panelGraphicEnabled,
+  breakLottieActive,
   pageType,
   privacy,
   clinicalAge,
@@ -175,13 +176,12 @@ export function NotionPaper({
   onSelectionAction,
   onPasteAction,
   onSlashCommand,
-  onSectionSelect,
+  onSectionSelect: _onSectionSelect,
   onSectionFocus,
   onSectionAiTool,
   onEditorAiTool,
   onVariantSelect,
   onToggleChecklistItem,
-  onInsertNormalBefund,
   onPauseDictation,
   onResumeDictation,
   onStopRecording,
@@ -189,8 +189,11 @@ export function NotionPaper({
   onDiscardRecording,
   onTranscribe,
   onClosePanelGraphic,
+  onBreakStart,
   onSaveWorkspaceVault,
   onStartDictation,
+  onSwitchToWrite,
+  dictationDisabled = false,
 }: NotionPaperProps) {
   const { t } = useTranslation()
   const patient = usePatientMetadata({
@@ -203,13 +206,10 @@ export function NotionPaper({
   const showVariantPicker = Boolean(
     componentVariants && componentVariants.length > 1 && activeVariantId && onVariantSelect,
   )
-  const showSectionDropdown = showMultistageSections && sections.length > 1 && onSectionSelect
-  const showStructuredButton = Boolean(
-    documentMode === 'checklist' &&
-      activeChecklistItems.length > 0 &&
-      onToggleChecklistItem,
+  const showKompilierenButton = Boolean(
+    documentMode === 'checklist' && showMultistageSections,
   )
-  const [structuredPanelOpen, setStructuredPanelOpen] = useState(false)
+  const [amdpKompiliert, setAmdpKompiliert] = useState(false)
   const [aiDropdownOpen, setAiDropdownOpen] = useState(false)
   const [commandMenuRequest, setCommandMenuRequest] = useState(0)
   const [documentEditingStarted, setDocumentEditingStarted] = useState(false)
@@ -239,7 +239,7 @@ export function NotionPaper({
   }, [caseId, documentTypeId])
 
   useEffect(() => {
-    setStructuredPanelOpen(false)
+    setAmdpKompiliert(false)
     setAiDropdownOpen(false)
     setDocumentEditingStarted(false)
     setPendingPaste(null)
@@ -261,12 +261,15 @@ export function NotionPaper({
     hadDocumentContentRef.current = hasContent
   }, [documentEmpty])
 
+  // For multistage (AMDP) documents the sections themselves are the starting view —
+  // never show the "Type / Paste / Dictate" blank state for them, even when all
+  // section textareas are empty (checkboxes don't populate sectionContents until
+  // toggled, so documentEmpty stays true even on a fresh checklist).
   const showDocumentBlankState =
-    documentEmpty && !documentEditingStarted && !editorLocked
+    !showMultistageSections && documentEmpty && !documentEditingStarted && !editorLocked
 
   const requestCommandMenu = useCallback(() => {
     if (editorLocked) return
-    setStructuredPanelOpen(false)
     setAiDropdownOpen(false)
     setCommandMenuRequest((current) => current + 1)
   }, [editorLocked])
@@ -274,14 +277,8 @@ export function NotionPaper({
   const handleAiFeaturesShortcut = useCallback(() => {
     if (editorLocked) return
     setCommandMenuRequest(0)
-    if (showStructuredButton) {
-      setAiDropdownOpen(false)
-      setStructuredPanelOpen((current) => !current)
-      return
-    }
-    setStructuredPanelOpen(false)
     setAiDropdownOpen((current) => !current)
-  }, [editorLocked, showStructuredButton])
+  }, [editorLocked])
 
   const isEditableTarget = useCallback((target: EventTarget | null) => {
     return (
@@ -440,17 +437,6 @@ export function NotionPaper({
     [onSaveSection, sectionContents, sections, t],
   )
 
-  const handleSectionDropdownChange = useCallback(
-    (sectionId: string) => {
-      if (activeSectionId && activeSectionId !== sectionId) {
-        autoSaveSection(activeSectionId)
-      }
-      lastSavedSectionRef.current = null
-      onSectionSelect?.(sectionId)
-    },
-    [activeSectionId, autoSaveSection, onSectionSelect],
-  )
-
   const handleSectionBlur = useCallback(
     (sectionId: string) => {
       autoSaveSection(sectionId)
@@ -458,12 +444,27 @@ export function NotionPaper({
     [autoSaveSection],
   )
 
-  const handleToggleChecklistItem = useCallback(
-    (itemId: string, checked: boolean) => {
-      onToggleChecklistItem?.(itemId, checked, activeSectionId ?? undefined)
-    },
-    [activeSectionId, onToggleChecklistItem],
-  )
+  const handleKompilieren = useCallback(() => {
+    const parts: string[] = []
+    for (const section of sections) {
+      const config = sectionConfigs.find((c) => c.id === section.id)
+      const sectionSelections = checklistSelections[section.id] ?? {}
+      const checklistPart =
+        config?.checklistItems && config.checklistItems.length > 0
+          ? compileChecklistText(config.checklistItems, sectionSelections, section.label)
+          : ''
+      const freePart = sectionContents[section.id]?.trim() ?? ''
+      if (checklistPart || freePart) {
+        const combined = [checklistPart, freePart].filter(Boolean).join('\n')
+        parts.push(combined)
+      }
+    }
+    const compiled = parts.join('\n\n')
+    onEditorChange(compiled)
+    setAmdpKompiliert(true)
+    setDocumentEditingStarted(true)
+    setEditorFocusRequest((current) => current + 1)
+  }, [checklistSelections, onEditorChange, sectionConfigs, sectionContents, sections])
 
   const handleSectionChecklistToggle = useCallback(
     (sectionId: string, itemId: string, checked: boolean) => {
@@ -511,20 +512,31 @@ export function NotionPaper({
     sections.some((section) => Boolean(sectionContents[section.id]?.trim())) ||
     Boolean(editorContent.trim())
 
+  const sectionProgress =
+    showMultistageSections && sections.length > 0
+      ? (() => {
+          const filled = sections.filter((section) => {
+            const content =
+              section.id === activeSectionId ? editorContent : sectionContents[section.id]
+            return content?.trim()
+          }).length
+          const pct = filled / sections.length
+          const fillColor = pct < 0.33 ? '#e05050' : pct < 0.66 ? '#f08030' : '#2d8a50'
+          return { filled, pct, fillColor, total: sections.length }
+        })()
+      : null
+
   return (
     <article
       className={`notion-paper notion-paper--${pageType === 'wideRuled' ? 'wide-ruled' : pageType}${sidebarCollapsed ? ' notion-paper--sidebar-collapsed' : ''}`}
     >
       <div className="notion-paper__sidebar-anchor">
         <NotionDiarySidebar
-          documentLabel={documentLabel}
-          sectionLabel={sectionLabel}
-          sections={sections}
-          activeSectionId={activeSectionId}
-          hasContent={hasAnyContent}
-          showPanelGraphic={showPanelGraphic}
+          panelGraphicEnabled={panelGraphicEnabled}
+          breakLottieActive={breakLottieActive}
           onClosePanelGraphic={onClosePanelGraphic}
           collapsed={sidebarCollapsed}
+          onBreakStart={onBreakStart}
         />
       </div>
 
@@ -554,32 +566,40 @@ export function NotionPaper({
 
         <div className="notion-paper__header">
           <div className="notion-paper__header-left">
-            {showSectionDropdown ? (
-              <div className="notion-paper__section-select">
-                <div className="notion-paper__section-field">
-                  <select
-                    id="notion-section-select"
-                    className="notion-paper__section-dropdown"
-                    value={activeSectionId ?? ''}
-                    onChange={(event) => handleSectionDropdownChange(event.target.value)}
-                    disabled={editorLocked}
-                    aria-label={t('notionMetaSection')}
-                  >
-                    {sections.map((section) => (
-                      <option key={section.id} value={section.id}>
-                        {section.label}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="notion-paper__section-chevron h-3 w-3" strokeWidth={2} aria-hidden />
-                </div>
-              </div>
-            ) : (
-              <div className="notion-paper__header-spacer" />
-            )}
+            <div className="notion-paper__header-spacer" />
           </div>
 
           <div className="notion-paper__header-actions">
+            {(onSwitchToWrite || onStartDictation) && !isDictationActive ? (
+              <div className="notion-paper__input-modes">
+                <button
+                  type="button"
+                  className={`notion-paper__input-mode ${
+                    inputMode === 'write' ? 'notion-paper__input-mode--active' : ''
+                  }`}
+                  onClick={onSwitchToWrite}
+                  disabled={isGenerating}
+                  title={t('write')}
+                  aria-label={t('write')}
+                  aria-pressed={inputMode === 'write'}
+                >
+                  <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+                </button>
+                <button
+                  type="button"
+                  className={`notion-paper__input-mode ${
+                    inputMode === 'dictate' ? 'notion-paper__input-mode--active' : ''
+                  }`}
+                  onClick={dictationDisabled ? undefined : onStartDictation}
+                  disabled={isGenerating || dictationDisabled}
+                  title={dictationDisabled ? t('creditsExhaustedHint') : t('dictate')}
+                  aria-label={t('dictate')}
+                  aria-pressed={inputMode === 'dictate'}
+                >
+                  <Mic className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+                </button>
+              </div>
+            ) : null}
             <button
               type="button"
               className="notion-command-btn"
@@ -590,19 +610,6 @@ export function NotionPaper({
             >
               <Command className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
             </button>
-            {showStructuredButton ? (
-              <button
-                type="button"
-                className={`notion-structured-btn ${structuredPanelOpen ? 'notion-structured-btn--active' : ''}`}
-                disabled={editorLocked}
-                onClick={() => setStructuredPanelOpen((current) => !current)}
-                aria-label={t('notionStructuredInput')}
-                aria-pressed={structuredPanelOpen}
-                title={t('notionStructuredInput')}
-              >
-                <Hash className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
-              </button>
-            ) : null}
             <NotionDocumentActions
               disabled={editorLocked}
               copyDisabled={!hasAnyContent}
@@ -626,6 +633,23 @@ export function NotionPaper({
               onGenerate={onGenerate}
             />
           </div>
+          {sectionProgress ? (
+            <div
+              className="notion-document-progress"
+              role="progressbar"
+              aria-valuenow={sectionProgress.filled}
+              aria-valuemin={0}
+              aria-valuemax={sectionProgress.total}
+            >
+              <div
+                className="notion-document-progress__fill"
+                style={{
+                  width: `${sectionProgress.pct * 100}%`,
+                  backgroundColor: sectionProgress.fillColor,
+                }}
+              />
+            </div>
+          ) : null}
         </div>
 
         <div
@@ -638,13 +662,6 @@ export function NotionPaper({
             onOpenPrivacySettings={onOpenPrivacySettings}
           />
 
-          <NotionPageDateTimeRow
-            pageId={documentTypeId}
-            caseId={caseId}
-            disabled={editorLocked}
-            onChange={() => onSaveWorkspaceVault?.()}
-          />
-
           <input
             type="text"
             className="notion-page-heading"
@@ -653,6 +670,13 @@ export function NotionPaper({
             placeholder={t('notionPageHeadingPlaceholder')}
             readOnly={editorLocked}
             aria-label={t('notionPageHeadingPlaceholder')}
+          />
+
+          <NotionPageDateTimeRow
+            pageId={documentTypeId}
+            caseId={caseId}
+            disabled={editorLocked}
+            onChange={() => onSaveWorkspaceVault?.()}
           />
 
           {showVariantPicker && componentVariants && activeVariantId ? (
@@ -665,7 +689,7 @@ export function NotionPaper({
           ) : null}
 
           {showDocumentBlankState ? null : (
-            <NotionEditorHints showStructuredFeatures={showStructuredButton} />
+            <NotionEditorHints showStructuredFeatures={false} />
           )}
 
           {showDocumentBlankState ? (
@@ -675,34 +699,49 @@ export function NotionPaper({
               onPaste={handleBlankPaste}
               onDictate={handleBlankDictate}
             />
-          ) : showMultistageSections ? (
-            <NotionMultiSectionEditor
-              sections={sections}
-              sectionConfigs={sectionConfigs}
-              sectionContents={sectionContents}
-              checklistSelections={checklistSelections}
-              documentMode={documentMode}
-              activeSectionId={activeSectionId}
-              inputMode={inputMode}
-              readOnly={editorLocked}
-              dictationPhase={dictationPhase}
-              dictationDurationMs={dictationDurationMs}
-              dictationPlaybackMs={dictationPlaybackMs}
-              isPlayingBack={isPlayingBack}
-              isGenerating={isGenerating}
-              onSectionContentChange={onSectionContentChange}
-              onSectionFocus={(sectionId) => onSectionFocus?.(sectionId)}
-              onSectionBlur={handleSectionBlur}
-              onToggleChecklistItem={handleSectionChecklistToggle}
-              onSectionAiTool={onSectionAiTool}
-              onPasteOrigin={onEditorPaste}
-              onSelectionAction={onSelectionAction}
-              onPasteAction={onPasteAction}
-              onSlashCommand={onSlashCommand}
-              commandMenuRequest={commandMenuRequest}
-              focusRequest={editorFocusRequest}
-              pendingPaste={pendingPaste}
-            />
+          ) : showMultistageSections && !amdpKompiliert ? (
+            <>
+              <NotionMultiSectionEditor
+                sections={sections}
+                sectionConfigs={sectionConfigs}
+                sectionContents={sectionContents}
+                checklistSelections={checklistSelections}
+                documentMode={documentMode}
+                activeSectionId={activeSectionId}
+                inputMode={inputMode}
+                readOnly={editorLocked}
+                dictationPhase={dictationPhase}
+                dictationDurationMs={dictationDurationMs}
+                dictationPlaybackMs={dictationPlaybackMs}
+                isPlayingBack={isPlayingBack}
+                isGenerating={isGenerating}
+                onSectionContentChange={onSectionContentChange}
+                onSectionFocus={(sectionId) => onSectionFocus?.(sectionId)}
+                onSectionBlur={handleSectionBlur}
+                onToggleChecklistItem={handleSectionChecklistToggle}
+                onSectionAiTool={onSectionAiTool}
+                onPasteOrigin={onEditorPaste}
+                onSelectionAction={onSelectionAction}
+                onPasteAction={onPasteAction}
+                onSlashCommand={onSlashCommand}
+                commandMenuRequest={commandMenuRequest}
+                focusRequest={editorFocusRequest}
+                pendingPaste={pendingPaste}
+              />
+              {showKompilierenButton ? (
+                <div className="notion-paper__kompilieren-row">
+                  <button
+                    type="button"
+                    className="notion-paper__kompilieren-btn"
+                    disabled={editorLocked}
+                    onClick={handleKompilieren}
+                    title={t('amdpKompilierenHint')}
+                  >
+                    {t('amdpKompilieren')}
+                  </button>
+                </div>
+              ) : null}
+            </>
           ) : (
             <NotionEditor
               content={editorContent}
@@ -724,18 +763,6 @@ export function NotionPaper({
               pendingPaste={pendingPaste}
             />
           )}
-
-          <NotionStructuredPanel
-            open={structuredPanelOpen}
-            sectionLabel={sectionLabel}
-            items={activeChecklistItems}
-            selections={activeChecklistSelections}
-            disabled={editorLocked}
-            showNormalBefund={showNormalBefundButton}
-            onToggle={handleToggleChecklistItem}
-            onInsertNormalBefund={onInsertNormalBefund}
-            onClose={() => setStructuredPanelOpen(false)}
-          />
         </div>
       </div>
     </article>

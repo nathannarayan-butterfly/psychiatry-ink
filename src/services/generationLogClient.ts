@@ -3,6 +3,7 @@ import { estimateGenerationCredits, estimateTokensFromText } from '../utils/esti
 import type { AiGenerationRequest, AiGenerationResult } from '../types/aiGeneration'
 import type { AiModelSpec } from '../types/aiGeneration'
 import { API_BASE, InsufficientCreditsError } from './apiClient'
+import { getAuthHeaders } from './authHeaders'
 
 interface StartLogPayload {
   documentType: string
@@ -17,9 +18,10 @@ interface StartLogPayload {
 }
 
 async function postStart(payload: StartLogPayload): Promise<string | null> {
+  const authHeaders = await getAuthHeaders()
   const response = await fetch(`${API_BASE}/api/generation-logs`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders },
     body: JSON.stringify(payload),
   })
 
@@ -42,9 +44,10 @@ async function patchLog(
     model?: string
   },
 ): Promise<number | null> {
+  const authHeaders = await getAuthHeaders()
   const response = await fetch(`${API_BASE}/api/generation-logs/${id}`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders },
     body: JSON.stringify(body),
   })
 

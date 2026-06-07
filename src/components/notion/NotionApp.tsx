@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { getCaseMeta } from '../../hooks/useCaseRegistry'
 import { flushSync } from 'react-dom'
 import { useTranslation } from '../../context/TranslationContext'
 import { useCaseRegistry } from '../../hooks/useCaseRegistry'
-import { useDashboardSettings } from '../../hooks/useDashboardSettings'
-import { NewCaseWorkflowDialog } from '../dashboard/NewCaseWorkflowDialog'
+import { addNotification } from '../../hooks/useNotifications'
 import type { useLabTool } from '../../hooks/useLabTool'
 import type { useTimelineTool } from '../../hooks/useTimelineTool'
 import type { useWorkspaceState } from '../../hooks/useWorkspaceState'
@@ -11,6 +11,7 @@ import type { useAppearanceSettings } from '../../hooks/useAppearanceSettings'
 import type { useLanguageSettings } from '../../hooks/useLanguageSettings'
 import type { useSettingsPanel } from '../../hooks/useSettingsPanel'
 import type { usePrivacySettings } from '../../hooks/usePrivacySettings'
+import type { SubscriptionPlan } from '../../data/subscriptionPlans'
 import type { useWorkspaceSettings } from '../../hooks/useWorkspaceSettings'
 import type { useWorkspaceVault } from '../../hooks/useWorkspaceVault'
 import type { AiToolKey } from '../../data/aiTools'
@@ -18,9 +19,15 @@ import { LottieCharacterStage } from '../LottieCharacterStage'
 import { SettingsPage } from '../settings/SettingsPage'
 import { DocumentationTodayTotalSync } from '../DocumentationTodayTotalSync'
 import { WorkspaceActivitySync } from '../WorkspaceActivitySync'
+import { PanelDateCard } from '../PanelDateCard'
+import { CaseTopNav, type TopNavTabId } from './CaseTopNav'
+import { DiagnosenWidget } from './DiagnosenWidget'
+import { VerlaufFeedPage } from './VerlaufFeedPage'
+import { DokumentePage } from './DokumentePage'
+import { appendVerlaufEntry } from '../../utils/verlaufFeed'
+import { appendDokument, inferDokumentCategory } from '../../utils/dokumenteArchive'
 import { NotionTopBar } from './NotionTopBar'
-import { WorkspaceBackupBanner } from './WorkspaceBackupBanner'
-import { NotionPageSwitcher } from './NotionPageSwitcher'
+import { WorkspaceContextMenu } from './WorkspaceContextMenu'
 import { NotionPaper } from './NotionPaper'
 import { NotionInputBar } from './NotionInputBar'
 import { NotionLabCanvas } from './NotionLabCanvas'
@@ -38,6 +45,8 @@ import {
   resolveNotionPageFromDocumentType,
   type NotionPageId,
 } from './notionPages'
+import { documentTypes } from '../../data/documentTypes'
+import { resolveDocumentTypeWithVariant } from '../../utils/workspaceComponents'
 
 type WorkspaceState = ReturnType<typeof useWorkspaceState>
 type LabState = ReturnType<typeof useLabTool>
@@ -71,6 +80,7 @@ interface NotionAppProps {
   onMigratedAge?: (age: string) => void
   onNavigateDashboard?: () => void
   onNavigateNewCase?: (caseId: string, page?: NotionPageId) => void
+  plan: SubscriptionPlan
 }
 
 function isAiToolKey(action: SelectionActionId | PasteActionId): action is AiToolKey {
@@ -100,11 +110,20 @@ export function NotionApp({
   clinicalAge,
   onMigratedAge,
   onNavigateDashboard,
-  onNavigateNewCase,
+  onNavigateNewCase: _onNavigateNewCase,
+  plan: _plan,
 }: NotionAppProps) {
   const { t } = useTranslation()
-  const dashboardSettings = useDashboardSettings()
-  const [pendingCaseId, setPendingCaseId] = useState<string | null>(null)
+  const [breakLottieActive, setBreakLottieActive] = useState(false)
+
+  const handleBreakStart = useCallback(() => {
+    setBreakLottieActive(true)
+  }, [])
+
+  const handleClosePanelGraphic = useCallback(() => {
+    appearance.setShowPanelGraphic(false)
+    setBreakLottieActive(false)
+  }, [appearance])
 
   const documentTypeLabel = useCallback(
     (typeId: string | undefined) => {
@@ -120,41 +139,52 @@ export function NotionApp({
     [t],
   )
 
-  const caseRegistry = useCaseRegistry({
+  // Keep caseRegistry mounted so case metadata stays fresh (e.g. after patient name update)
+  useCaseRegistry({
     tier: privacy.tier,
     countryCode: privacy.countryCode,
     documentTypeLabel,
     fallbackTitle,
   })
 
-  const handleNewPatient = useCallback(() => {
-    const newCaseId = caseRegistry.addCase()
-    if (dashboardSettings.openCaseDirectToWorkflow) {
-      setPendingCaseId(newCaseId)
-      return
+  const VERLAUF_DOCUMENT_TYPES = ['verlauf', 'therapie-verlauf']
+
+  const handleVaultSaveWithFeedAppend = useCallback(() => {
+    const docTypeId = workspace.selectedDocumentType
+    if (VERLAUF_DOCUMENT_TYPES.includes(docTypeId)) {
+      // Do not append while an AI result is still awaiting physician review
+      if (!workspace.generationPendingReview) {
+        const content =
+          Object.values(workspace.sectionContents).join('\n\n') ||
+          workspace.editorContent
+        if (content.trim()) {
+          const activeSection = workspace.sections.find(
+            (s) => s.id === workspace.activeSectionId,
+          )
+          const source = workspace.generationWasAccepted ? 'ai-accepted' : 'manual'
+          appendVerlaufEntry(caseId, {
+            date: new Date().toISOString(),
+            content: content.trim(),
+            pageType: docTypeId,
+            sectionLabel: activeSection?.label,
+            source,
+          })
+        }
+      }
     }
-    onNavigateNewCase?.(newCaseId)
-  }, [caseRegistry, dashboardSettings.openCaseDirectToWorkflow, onNavigateNewCase])
-
-  const handleWorkflowSelect = useCallback(
-    (pageId: NotionPageId) => {
-      if (!pendingCaseId) return
-      onNavigateNewCase?.(pendingCaseId, pageId)
-      setPendingCaseId(null)
-    },
-    [onNavigateNewCase, pendingCaseId],
-  )
-
-  const handleStayOnDashboard = useCallback(() => {
-    if (!pendingCaseId) return
-    onNavigateNewCase?.(pendingCaseId)
-    setPendingCaseId(null)
-  }, [onNavigateNewCase, pendingCaseId])
-
-  const handleCloseWorkflowDialog = useCallback(() => {
-    setPendingCaseId(null)
-  }, [])
-  const [backupBannerDismissed, setBackupBannerDismissed] = useState(false)
+    void workspaceVault.saveNow()
+  }, [
+    caseId,
+    workspace.activeSectionId,
+    workspace.editorContent,
+    workspace.generationPendingReview,
+    workspace.generationWasAccepted,
+    workspace.sectionContents,
+    workspace.sections,
+    workspace.selectedDocumentType,
+    workspaceVault,
+  ])
+  const [activeTopTab, setActiveTopTab] = useState<TopNavTabId>('workspace')
   const initialPageAppliedRef = useRef(false)
   const [activePage, setActivePage] = useState<NotionPageId>(
     () => initialPage ?? resolveNotionPageFromDocumentType(workspace.selectedDocumentType),
@@ -169,6 +199,15 @@ export function NotionApp({
       workspace.selectDocumentType(page.documentTypeId)
     }
   }, [initialPage, workspace])
+
+  // Route backup reminder through notifications instead of a banner
+  const _backupNotifiedRef = useRef(false)
+  useEffect(() => {
+    if (workspaceVault.showBackupReminder && !_backupNotifiedRef.current) {
+      _backupNotifiedRef.current = true
+      addNotification('warning', t('notificationBackupReminder'))
+    }
+  }, [workspaceVault.showBackupReminder, t])
 
   useEffect(() => {
     if (!isToolPage(activePage)) {
@@ -186,6 +225,52 @@ export function NotionApp({
   )
 
   const documentLabel = t(activePageConfig.labelKey)
+
+  const handleAcceptGenerationWithArchive = useCallback(() => {
+    const docTypeId = workspace.selectedDocumentType
+    const category = inferDokumentCategory(docTypeId)
+    if (category) {
+      const content =
+        workspace.sections.length > 0
+          ? Object.values(workspace.sectionContents).join('\n\n') || workspace.editorContent
+          : workspace.editorContent
+      if (content.trim()) {
+        appendDokument(caseId, {
+          category,
+          title: documentLabel,
+          content: content.trim(),
+          date: new Date().toISOString(),
+          source: 'ai-accepted',
+          pageType: docTypeId,
+        })
+      }
+    }
+    workspace.acceptGeneration()
+  }, [caseId, documentLabel, workspace])
+
+  const handleVaultSaveWithArchive = useCallback(() => {
+    const docTypeId = workspace.selectedDocumentType
+    const category = inferDokumentCategory(docTypeId)
+    // Archive manual saves for formal document types — skip if AI review pending
+    // or if AI was just accepted (to avoid duplicating the ai-accepted entry)
+    if (category && !workspace.generationPendingReview && !workspace.generationWasAccepted) {
+      const content =
+        workspace.sections.length > 0
+          ? Object.values(workspace.sectionContents).join('\n\n') || workspace.editorContent
+          : workspace.editorContent
+      if (content.trim()) {
+        appendDokument(caseId, {
+          category,
+          title: documentLabel,
+          content: content.trim(),
+          date: new Date().toISOString(),
+          source: 'manual',
+          pageType: docTypeId,
+        })
+      }
+    }
+    handleVaultSaveWithFeedAppend()
+  }, [caseId, documentLabel, handleVaultSaveWithFeedAppend, workspace])
 
   const showMultistageSections = Boolean(
     workspace.currentDocumentType?.multistage &&
@@ -214,6 +299,32 @@ export function NotionApp({
     },
     [workspace],
   )
+
+  const handlePageSelectWithSection = useCallback(
+    (pageId: NotionPageId, sectionId: string) => {
+      setActivePage(pageId)
+      const page = NOTION_PAGES.find((item) => item.id === pageId)
+      if (page?.kind === 'document' && page.documentTypeId) {
+        workspace.selectDocumentTypeAndSection(page.documentTypeId, sectionId)
+      }
+    },
+    [workspace],
+  )
+
+  const pageSubsections = useMemo(() => {
+    const result: Partial<Record<NotionPageId, { id: string; label: string }[]>> = {}
+    for (const page of NOTION_PAGES) {
+      if (!page.documentTypeId) continue
+      const baseDocType = documentTypes.find((dt) => dt.id === page.documentTypeId)
+      if (!baseDocType) continue
+      const variantId = workspace.activeVariantIds[page.documentTypeId]
+      const resolvedType = resolveDocumentTypeWithVariant(baseDocType, variantId)
+      if (resolvedType.multistage && resolvedType.sections?.length) {
+        result[page.id] = resolvedType.sections.map((s) => ({ id: s.id, label: s.label }))
+      }
+    }
+    return result
+  }, [workspace.activeVariantIds])
 
   const runAiTool = useCallback(
     (tool: AiToolKey) => {
@@ -344,6 +455,18 @@ export function NotionApp({
   const showToolCanvas = isToolPage(activePage)
   const showDocumentCanvas = !showToolCanvas
 
+  const PLACEHOLDER_KEYS: Partial<Record<TopNavTabId, 'topNavLaborPlaceholder' | 'topNavTherapiePlaceholder'>> = {
+    labor: 'topNavLaborPlaceholder',
+    therapie: 'topNavTherapiePlaceholder',
+  }
+
+  // Patient name — read from local case registry (client-side only)
+  const currentPatientName = useMemo(
+    () => getCaseMeta(caseId)?.localName?.trim() || undefined,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [caseId],
+  )
+
   return (
     <div className="notion-preview-app text-ink">
       <WorkspaceActivitySync workspace={workspace} />
@@ -352,146 +475,7 @@ export function NotionApp({
         creditBalance={workspace.creditBalance}
         onOpenSettings={settingsPanel.openSettings}
         onNavigateDashboard={onNavigateDashboard}
-        onNewPatient={privacy.tier === 'full' && onNavigateNewCase ? handleNewPatient : undefined}
-        newPatientDisabled={privacy.tier !== 'full'}
-        newPatientDisabledTooltip={
-          privacy.tier === 'disabled'
-            ? t('newPatientTierDisabledTooltip')
-            : t('newPatientTierLocalOnlyTooltip')
-        }
       />
-
-      <WorkspaceBackupBanner
-        visible={workspaceVault.showBackupReminder && !backupBannerDismissed}
-        onExport={() => void workspaceVault.exportVault()}
-        onDismiss={() => setBackupBannerDismissed(true)}
-      />
-
-      <main className="notion-preview-main" data-lottie-exclusion>
-        <NotionPageSwitcher
-          activePage={activePage}
-          onSelect={handlePageSelect}
-          showInputModes={showDocumentCanvas}
-          inputMode={workspace.inputMode}
-          dictationPhase={workspace.dictationPhase}
-          isGenerating={workspace.isGenerating}
-          isDictationActive={workspace.isDictationActive}
-          onInputModeChange={workspace.setInputMode}
-          onDictate={workspace.startDictation}
-        />
-
-        <div className="notion-preview-canvas">
-          {activePage === 'timeline' ? (
-            <NotionTimelineCanvas
-              caseId={caseId}
-              timeline={timeline}
-              onVaultSave={() => void workspaceVault.saveNow()}
-            />
-          ) : activePage === 'labor' || activePage === 'visualisation' ? (
-            <NotionLabCanvas
-              caseId={caseId}
-              pageId={activePage}
-              lab={lab}
-              pageLabel={documentLabel}
-              onVaultSave={() => void workspaceVault.saveNow()}
-            />
-          ) : (
-            <NotionPaper
-              caseId={caseId}
-              documentTypeId={workspace.selectedDocumentType}
-              documentLabel={documentLabel}
-              sectionLabel={activeSection?.label}
-              sections={workspace.sections}
-              sectionConfigs={sectionConfigs}
-              sectionContents={workspace.sectionContents}
-              checklistSelections={workspace.checklistSelections}
-              componentVariants={componentVariants}
-              activeVariantId={workspace.activeVariantId}
-              documentMode={workspace.documentMode}
-              activeChecklistItems={workspace.activeChecklistItems}
-              activeChecklistSelections={workspace.activeChecklistSelections}
-              showNormalBefundButton={workspace.showNormalBefundButton}
-              activeSectionId={workspace.activeSectionId}
-              showMultistageSections={showMultistageSections}
-              editorContent={workspace.editorContent}
-              dictationPhase={workspace.dictationPhase}
-              dictationDurationMs={workspace.dictationDurationMs}
-              dictationPlaybackMs={workspace.dictationPlaybackMs}
-              isPlayingBack={workspace.isPlayingBack}
-              isDictationActive={workspace.isDictationActive}
-              inputMode={workspace.inputMode}
-              dictationError={workspace.dictationError}
-              isGenerating={workspace.isGenerating}
-              aiModelTier={workspace.aiModelTier}
-              selectedAiTool={workspace.selectedAiTool}
-              aiCanGenerate={workspace.aiCanGenerate}
-              showPanelGraphic={appearance.settings.showPanelGraphic}
-              pageType={appearance.settings.pageType}
-              onEditorChange={workspace.setEditorContent}
-              onSectionContentChange={workspace.setSectionContent}
-              onEditorPaste={workspace.onEditorPaste}
-              onSaveSection={workspace.saveSection}
-              onSelectAiModelTier={workspace.setAiModelTier}
-              onSelectAiTool={workspace.selectAiTool}
-              kiExtraInstruction={workspace.kiExtraInstruction}
-              onKiExtraInstructionChange={workspace.setKiExtraInstruction}
-              onGenerate={workspace.handleGenerate}
-              onSelectionAction={handleSelectionAction}
-              onPasteAction={handlePasteAction}
-              onSlashCommand={handleSlashCommand}
-              onSectionSelect={workspace.selectSection}
-              onSectionFocus={workspace.focusSection}
-              onSectionAiTool={handleSectionAiTool}
-              onEditorAiTool={handleEditorAiTool}
-              onVariantSelect={workspace.selectComponentVariant}
-              onToggleChecklistItem={workspace.toggleChecklistItem}
-              onInsertNormalBefund={workspace.insertNormalBefund}
-              onPauseDictation={workspace.pauseDictation}
-              onResumeDictation={workspace.resumeDictation}
-              onStopRecording={workspace.stopRecording}
-              onTogglePlayback={workspace.togglePlayback}
-              onDiscardRecording={workspace.discardRecording}
-              onTranscribe={workspace.transcribeRecording}
-              onClosePanelGraphic={() => appearance.setShowPanelGraphic(false)}
-              privacy={privacy}
-              clinicalAge={clinicalAge}
-              onMigratedAge={onMigratedAge}
-              onOpenPrivacySettings={() => settingsPanel.openSettings('privacy')}
-              onSaveWorkspaceVault={() => void workspaceVault.saveNow()}
-              onStartDictation={workspace.startDictation}
-            />
-          )}
-        </div>
-
-        {showDocumentCanvas ? (
-          <>
-            {workspace.generationPendingReview ? (
-              <NotionGenerationReview
-                isGenerating={workspace.isGenerating}
-                onRewrite={workspace.handleRewrite}
-                onRegenerate={workspace.handleGenerate}
-                onAccept={workspace.acceptGeneration}
-                onReject={workspace.rejectGeneration}
-              />
-            ) : null}
-            <NotionInputBar
-              dictationPhase={workspace.dictationPhase}
-              isDictationActive={workspace.isDictationActive}
-            />
-          </>
-        ) : null}
-      </main>
-
-      <NotionToastHost />
-      <LottieCharacterStage />
-
-      {pendingCaseId ? (
-        <NewCaseWorkflowDialog
-          onSelect={handleWorkflowSelect}
-          onStayOnDashboard={handleStayOnDashboard}
-          onClose={handleCloseWorkflowDialog}
-        />
-      ) : null}
 
       {settingsPanel.isOpen ? (
         <SettingsPage
@@ -508,7 +492,174 @@ export function NotionApp({
           onSelectLanguage={languageSettings.selectLanguage}
           workspaceVault={workspaceVault}
         />
-      ) : null}
+      ) : (
+        <>
+      <CaseTopNav
+        activeTab={activeTopTab}
+        onTabSelect={setActiveTopTab}
+        patientName={currentPatientName}
+        onPatientClick={onNavigateDashboard}
+      />
+
+      <main className="notion-preview-main" data-lottie-exclusion>
+        {activeTopTab === 'verlauf' ? (
+          <div className="notion-tab-content-row">
+            <aside className="notion-tab-content-row__sidebar">
+              <PanelDateCard layout="sidebar" />
+              <DiagnosenWidget caseId={caseId} />
+            </aside>
+            <div className="notion-tab-content-row__body">
+              <VerlaufFeedPage caseId={caseId} />
+            </div>
+          </div>
+        ) : null}
+
+        {activeTopTab === 'dokumente' ? (
+          <div className="notion-tab-content-row">
+            <div className="notion-tab-content-row__body notion-tab-content-row__body--full">
+              <DokumentePage caseId={caseId} />
+            </div>
+          </div>
+        ) : null}
+
+        {activeTopTab !== 'workspace' && activeTopTab !== 'verlauf' && activeTopTab !== 'dokumente' ? (
+          <div className="notion-tab-content-row">
+            <aside className="notion-tab-content-row__sidebar">
+              <PanelDateCard layout="sidebar" />
+            </aside>
+            <div className="notion-tab-content-row__body">
+              <div className="case-placeholder">
+                <p className="case-placeholder__text">
+                  {t(PLACEHOLDER_KEYS[activeTopTab]!)}
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {activeTopTab === 'workspace' ? (
+          <>
+        <WorkspaceContextMenu
+          activePage={activePage}
+          activeSectionId={workspace.activeSectionId}
+          pageSubsections={pageSubsections}
+          onSelect={handlePageSelect}
+          onSelectWithSection={handlePageSelectWithSection}
+        >
+          <div className="notion-preview-canvas">
+            {activePage === 'timeline' ? (
+              <NotionTimelineCanvas
+                caseId={caseId}
+                timeline={timeline}
+                onVaultSave={handleVaultSaveWithArchive}
+              />
+            ) : activePage === 'labor' || activePage === 'visualisation' ? (
+              <NotionLabCanvas
+                caseId={caseId}
+                pageId={activePage}
+                lab={lab}
+                pageLabel={documentLabel}
+                onVaultSave={handleVaultSaveWithArchive}
+              />
+            ) : (
+              <NotionPaper
+                caseId={caseId}
+                documentTypeId={workspace.selectedDocumentType}
+                documentLabel={documentLabel}
+                sectionLabel={activeSection?.label}
+                sections={workspace.sections}
+                sectionConfigs={sectionConfigs}
+                sectionContents={workspace.sectionContents}
+                checklistSelections={workspace.checklistSelections}
+                componentVariants={componentVariants}
+                activeVariantId={workspace.activeVariantId}
+                documentMode={workspace.documentMode}
+                activeChecklistItems={workspace.activeChecklistItems}
+                activeChecklistSelections={workspace.activeChecklistSelections}
+                showNormalBefundButton={workspace.showNormalBefundButton}
+                activeSectionId={workspace.activeSectionId}
+                showMultistageSections={showMultistageSections}
+                editorContent={workspace.editorContent}
+                dictationPhase={workspace.dictationPhase}
+                dictationDurationMs={workspace.dictationDurationMs}
+                dictationPlaybackMs={workspace.dictationPlaybackMs}
+                isPlayingBack={workspace.isPlayingBack}
+                isDictationActive={workspace.isDictationActive}
+                inputMode={workspace.inputMode}
+                dictationError={workspace.dictationError}
+                isGenerating={workspace.isGenerating}
+                aiModelTier={workspace.aiModelTier}
+                selectedAiTool={workspace.selectedAiTool}
+                aiCanGenerate={workspace.aiCanGenerate}
+                panelGraphicEnabled={appearance.settings.showPanelGraphic}
+                breakLottieActive={breakLottieActive}
+                pageType={appearance.settings.pageType}
+                onEditorChange={workspace.setEditorContent}
+                onSectionContentChange={workspace.setSectionContent}
+                onEditorPaste={workspace.onEditorPaste}
+                onSaveSection={workspace.saveSection}
+                onSelectAiModelTier={workspace.setAiModelTier}
+                onSelectAiTool={workspace.selectAiTool}
+                kiExtraInstruction={workspace.kiExtraInstruction}
+                onKiExtraInstructionChange={workspace.setKiExtraInstruction}
+                onGenerate={workspace.handleGenerate}
+                onSelectionAction={handleSelectionAction}
+                onPasteAction={handlePasteAction}
+                onSlashCommand={handleSlashCommand}
+                onSectionSelect={workspace.selectSection}
+                onSectionFocus={workspace.focusSection}
+                onSectionAiTool={handleSectionAiTool}
+                onEditorAiTool={handleEditorAiTool}
+                onVariantSelect={workspace.selectComponentVariant}
+                onToggleChecklistItem={workspace.toggleChecklistItem}
+                onInsertNormalBefund={workspace.insertNormalBefund}
+                onPauseDictation={workspace.pauseDictation}
+                onResumeDictation={workspace.resumeDictation}
+                onStopRecording={workspace.stopRecording}
+                onTogglePlayback={workspace.togglePlayback}
+                onDiscardRecording={workspace.discardRecording}
+                onTranscribe={workspace.transcribeRecording}
+                onClosePanelGraphic={handleClosePanelGraphic}
+                onBreakStart={handleBreakStart}
+                privacy={privacy}
+                clinicalAge={clinicalAge}
+                onMigratedAge={onMigratedAge}
+                onOpenPrivacySettings={() => settingsPanel.openSettings('privacy')}
+                onSaveWorkspaceVault={handleVaultSaveWithArchive}
+                onStartDictation={workspace.startDictation}
+                onSwitchToWrite={() => workspace.setInputMode('write')}
+                dictationDisabled={!workspace.dictationCreditsAvailable}
+              />
+            )}
+          </div>
+        </WorkspaceContextMenu>
+
+        {showDocumentCanvas ? (
+          <>
+            {workspace.generationPendingReview ? (
+              <NotionGenerationReview
+                isGenerating={workspace.isGenerating}
+                onRewrite={workspace.handleRewrite}
+                onRegenerate={workspace.handleGenerate}
+                onAccept={handleAcceptGenerationWithArchive}
+                onReject={workspace.rejectGeneration}
+              />
+            ) : null}
+            <NotionInputBar
+              dictationPhase={workspace.dictationPhase}
+              isDictationActive={workspace.isDictationActive}
+            />
+          </>
+        ) : null}
+          </>
+        ) : null}
+      </main>
+
+        </>
+      )}
+
+      <NotionToastHost />
+      <LottieCharacterStage />
     </div>
   )
 }

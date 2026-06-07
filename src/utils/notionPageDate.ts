@@ -1,5 +1,6 @@
 import type { NotionPageId } from '../components/notion/notionPages'
 import { caseStorageKey, DEFAULT_CASE_ID, getActiveCaseId } from './caseContext'
+import { todayIsoDateSite, yesterdayIsoDateSite } from './siteTimezone'
 
 const KEY_PREFIX = 'psychiatry-ink:notion-page-date'
 
@@ -79,20 +80,14 @@ function toIsoDate(year: number, month: number, day: number): string {
   return `${year}-${pad2(month)}-${pad2(day)}`
 }
 
-function isoDateFromLocalDate(date: Date): string {
-  return toIsoDate(date.getFullYear(), date.getMonth() + 1, date.getDate())
-}
-
-/** Today's calendar date in the user's local timezone (YYYY-MM-DD). */
+/** Today's calendar date in site timezone (YYYY-MM-DD). */
 export function todayIsoDateLocal(): string {
-  return isoDateFromLocalDate(new Date())
+  return todayIsoDateSite()
 }
 
-/** Yesterday's calendar date in the user's local timezone (YYYY-MM-DD). */
+/** Yesterday's calendar date in site timezone (YYYY-MM-DD). */
 export function yesterdayIsoDateLocal(): string {
-  const date = new Date()
-  date.setDate(date.getDate() - 1)
-  return isoDateFromLocalDate(date)
+  return yesterdayIsoDateSite()
 }
 
 /** Display format for collapsed row and manual text entry (DD.MM.YYYY). */

@@ -8,6 +8,7 @@ export type SettingsSectionId =
   | 'ai'
   | 'account'
   | 'privacy'
+  | 'about'
 
 export type PreferredAccentColor = 'brown' | 'blue' | 'green' | 'burgundy' | 'violet'
 

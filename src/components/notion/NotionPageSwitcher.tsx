@@ -15,6 +15,7 @@ interface NotionPageSwitcherProps {
   showInputModes?: boolean
   onInputModeChange?: (mode: InputMode) => void
   onDictate?: () => void
+  dictationDisabled?: boolean
 }
 
 const DOCUMENT_PAGES = NOTION_PAGES.filter((page) => page.kind === 'document')
@@ -36,6 +37,7 @@ export function NotionPageSwitcher({
   showInputModes = false,
   onInputModeChange,
   onDictate,
+  dictationDisabled = false,
 }: NotionPageSwitcherProps) {
   const { t } = useTranslation()
   const [toolsOpen, setToolsOpen] = useState(false)
@@ -101,11 +103,12 @@ export function NotionPageSwitcher({
                   : ''
               }`}
               onClick={() => {
+                if (dictationDisabled) return
                 onInputModeChange('dictate')
                 if (dictationPhase === 'idle') onDictate?.()
               }}
-              disabled={isGenerating}
-              title={t('dictate')}
+              disabled={isGenerating || dictationDisabled}
+              title={dictationDisabled ? t('creditsExhaustedHint') : t('dictate')}
               aria-label={t('dictate')}
             >
               <Mic className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />

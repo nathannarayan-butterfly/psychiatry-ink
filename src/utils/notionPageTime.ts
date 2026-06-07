@@ -1,5 +1,6 @@
 import type { NotionPageId } from '../components/notion/notionPages'
 import { caseStorageKey, DEFAULT_CASE_ID, getActiveCaseId } from './caseContext'
+import { nowSiteTime } from './siteTimezone'
 
 const KEY_PREFIX = 'psychiatry-ink:notion-page-time'
 
@@ -76,10 +77,9 @@ function toTimeString(hours: number, minutes: number): string {
   return `${pad2(hours)}:${pad2(minutes)}`
 }
 
-/** Current local time as HH:MM (24h). */
+/** Current site time as HH:MM (24h). */
 export function nowLocalTime(): string {
-  const date = new Date()
-  return toTimeString(date.getHours(), date.getMinutes())
+  return nowSiteTime()
 }
 
 /** Display format for collapsed row and manual text entry (HH:MM). */

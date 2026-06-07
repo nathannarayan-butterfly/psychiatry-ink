@@ -11,12 +11,26 @@ function parsePageParam(search: string): NotionPageId | undefined {
 }
 
 export type AppRoute =
+  | { view: 'landing' }
+  | { view: 'login' }
+  | { view: 'signup' }
   | { view: 'dashboard' }
   | { view: 'case'; caseId: string; page?: NotionPageId }
 
+export function isPublicRoute(route: AppRoute): boolean {
+  return route.view === 'landing' || route.view === 'login' || route.view === 'signup'
+}
+
+export function isAppRoute(route: AppRoute): boolean {
+  return route.view === 'dashboard' || route.view === 'case'
+}
+
 function parsePathname(pathname: string, search = ''): AppRoute {
   const path = pathname.replace(/\/+$/, '') || '/'
-  if (path === '/' || path === '/dashboard') return { view: 'dashboard' }
+  if (path === '/') return { view: 'landing' }
+  if (path === '/login') return { view: 'login' }
+  if (path === '/signup') return { view: 'signup' }
+  if (path === '/dashboard' || path === '/app') return { view: 'dashboard' }
   if (path === '/workspace') {
     return { view: 'case', caseId: DEFAULT_CASE_ID }
   }
@@ -28,10 +42,13 @@ function parsePathname(pathname: string, search = ''): AppRoute {
       page: parsePageParam(search),
     }
   }
-  return { view: 'case', caseId: DEFAULT_CASE_ID }
+  return { view: 'landing' }
 }
 
 export function routeToPath(route: AppRoute): string {
+  if (route.view === 'landing') return '/'
+  if (route.view === 'login') return '/login'
+  if (route.view === 'signup') return '/signup'
   if (route.view === 'dashboard') return '/dashboard'
   const base = `/case/${encodeURIComponent(route.caseId)}`
   if (route.page) return `${base}?page=${encodeURIComponent(route.page)}`

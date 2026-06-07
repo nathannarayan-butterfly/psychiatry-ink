@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import {
   allowsPatientMetadata,
@@ -8,6 +9,7 @@ import {
 import { useDashboardSettings } from '../../hooks/useDashboardSettings'
 import type { usePrivacySettings } from '../../hooks/usePrivacySettings'
 import type { useWorkspaceVault } from '../../hooks/useWorkspaceVault'
+import { isPseudonymizationEnabled, PSEUDONYMIZE_KEY } from '../../services/aiGeneration'
 import { SettingsField } from './SettingsField'
 import { WorkspaceVaultSection } from './WorkspaceVaultSection'
 
@@ -37,6 +39,18 @@ export function PatientPrivacySection({ privacy, workspaceVault }: PatientPrivac
   const { t } = useTranslation()
   const { countryCode, tier, setCountryCode } = privacy
   const dashboardSettings = useDashboardSettings()
+  const [pseudonymizationEnabled, setPseudonymizationEnabled] = useState(
+    isPseudonymizationEnabled,
+  )
+
+  function handlePseudonymizationToggle(checked: boolean) {
+    try {
+      localStorage.setItem(PSEUDONYMIZE_KEY, String(checked))
+    } catch {
+      // ignore
+    }
+    setPseudonymizationEnabled(checked)
+  }
 
   const knownCountries = Object.keys(COUNTRY_TIER_OVERRIDES).sort()
 
@@ -102,6 +116,21 @@ export function PatientPrivacySection({ privacy, workspaceVault }: PatientPrivac
             className="h-4 w-4 rounded-sm border-2 border-border"
           />
           {t('workflowDirectToDocToggle')}
+        </label>
+      </SettingsField>
+
+      <SettingsField
+        label={t('pseudonymizationToggle')}
+        description={t('pseudonymizationHint')}
+      >
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-ink">
+          <input
+            type="checkbox"
+            checked={pseudonymizationEnabled}
+            onChange={(event) => handlePseudonymizationToggle(event.target.checked)}
+            className="h-4 w-4 rounded-sm border-2 border-border"
+          />
+          {pseudonymizationEnabled ? t('pseudonymizationToggle') : t('pseudonymizationDisabled')}
         </label>
       </SettingsField>
 

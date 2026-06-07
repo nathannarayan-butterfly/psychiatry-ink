@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { nowSiteTime } from '../utils/siteTimezone'
 
 export const WORK_IDLE_MS = 10 * 60 * 1000
 export const WORK_BREAK_MS = 30 * 60 * 1000
@@ -19,11 +20,7 @@ export interface WorkspaceSessionTimerState {
 }
 
 function formatClock(date: Date): string {
-  return date.toLocaleTimeString(undefined, {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  })
+  return nowSiteTime(date)
 }
 
 function formatWorkDuration(ms: number): string {

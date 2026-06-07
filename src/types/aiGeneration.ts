@@ -40,6 +40,11 @@ export interface AiCallSchemaDefinition {
   constraints?: string[]
 }
 
+export interface AiPatientHints {
+  patientName?: string
+  patientDob?: string
+}
+
 export interface AiGenerationRequest {
   componentId: string
   variantId?: string
@@ -55,6 +60,8 @@ export interface AiGenerationRequest {
   documentSections?: AiDocumentSectionInput[]
   /** Per-request clinician instructions — not persisted in source text. */
   extraInstruction?: string
+  /** Patient hints for client-side pseudonymization. Present only when pseudonymization is enabled. */
+  patientHints?: AiPatientHints
 }
 
 export interface AiGenerationChunk {

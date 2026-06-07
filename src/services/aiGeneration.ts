@@ -12,8 +12,21 @@ import type {
   AiResolvedCall,
 } from '../types/aiGeneration'
 import { chunkDocumentSections, chunkTextByTokens } from '../utils/chunkText'
+import { dePseudonymizeText, pseudonymizeText, type PseudoMap } from '../utils/pseudonymize'
+import { showNotionToast } from '../components/notion/NotionToast'
 import { API_BASE } from './apiClient'
 import { logGenerationUsage } from './generationLogClient'
+
+export const PSEUDONYMIZE_KEY = 'psychiatry-ink-pseudonymize'
+
+export function isPseudonymizationEnabled(): boolean {
+  try {
+    const raw = localStorage.getItem(PSEUDONYMIZE_KEY)
+    return raw === null || raw === 'true'
+  } catch {
+    return true
+  }
+}
 
 function appendConstraints(task: string, constraints?: string[]): string {
   if (!constraints?.length) return task
@@ -172,21 +185,90 @@ async function runGenerationCore(
   }
 }
 
+/**
+ * Apply pseudonymization to all text surfaces of the request.
+ * Returns the modified request and the merged map for de-pseudonymization.
+ */
+function applyPseudonymization(
+  request: AiGenerationRequest,
+): { request: AiGenerationRequest; map: PseudoMap } {
+  const hints = request.patientHints ?? {}
+  const hasHints = Boolean(hints.patientName?.trim() || hints.patientDob?.trim())
+  if (!hasHints) return { request, map: {} }
+
+  const mergedMap: PseudoMap = {}
+
+  // Pseudonymize main sourceText
+  const { text: pseudoSource, map: sourceMap } = pseudonymizeText(request.sourceText, hints)
+  Object.assign(mergedMap, sourceMap)
+
+  // Pseudonymize document sections if present
+  const pseudoSections = request.documentSections?.map((section) => {
+    const { text: pseudoContent, map: sectionMap } = pseudonymizeText(section.content, hints)
+    Object.assign(mergedMap, sectionMap)
+    return { ...section, content: pseudoContent }
+  })
+
+  return {
+    request: {
+      ...request,
+      sourceText: pseudoSource,
+      documentSections: pseudoSections,
+    },
+    map: mergedMap,
+  }
+}
+
 export async function executeAiGeneration(
   request: AiGenerationRequest,
   options?: {
     estimatedCredits?: number
     onCreditsDeducted?: (balance: number) => void
+    /** Toast message shown when pseudonymization is active. */
+    pseudonymizationActiveLabel?: string
   },
 ): Promise<AiGenerationResult> {
-  const resolved = resolveAiCall(request)
+  const pseudoEnabled = isPseudonymizationEnabled()
+  const hasHints = Boolean(
+    request.patientHints?.patientName?.trim() || request.patientHints?.patientDob?.trim(),
+  )
 
-  return logGenerationUsage(
-    request,
+  let pseudoMap: PseudoMap = {}
+  let effectiveRequest = request
+
+  if (pseudoEnabled && hasHints) {
+    const pseudo = applyPseudonymization(request)
+    pseudoMap = pseudo.map
+    effectiveRequest = pseudo.request
+
+    if (Object.keys(pseudoMap).length > 0 && options?.pseudonymizationActiveLabel) {
+      showNotionToast(options.pseudonymizationActiveLabel)
+    }
+  }
+
+  const resolved = resolveAiCall(effectiveRequest)
+
+  const rawResult = await logGenerationUsage(
+    effectiveRequest,
     resolved.model,
     resolved.schema.id,
-    () => runGenerationCore(request, resolved),
+    () => runGenerationCore(effectiveRequest, resolved),
     options?.estimatedCredits,
     options?.onCreditsDeducted,
   )
+
+  if (Object.keys(pseudoMap).length === 0) return rawResult
+
+  return {
+    ...rawResult,
+    text: dePseudonymizeText(rawResult.text, pseudoMap),
+    sectionResults: rawResult.sectionResults
+      ? Object.fromEntries(
+          Object.entries(rawResult.sectionResults).map(([k, v]) => [
+            k,
+            dePseudonymizeText(v, pseudoMap),
+          ]),
+        )
+      : undefined,
+  }
 }
