@@ -13,6 +13,7 @@ import { workspaceVaultRouter } from './routes/workspaceVault'
 import { generateRouter } from './routes/generate'
 import { generationLogRouter } from './routes/generationLog'
 import { diagnosisCodesRouter } from './routes/diagnosisCodes'
+import { accountBackupRouter } from './routes/accountBackup'
 import { patientsRouter } from './routes/patients'
 import { transcribeRouter } from './routes/transcribe'
 
@@ -34,6 +35,7 @@ app.use('/api/credits', creditsRouter)
 app.use('/api/crypto', cryptoRouter)
 app.use('/api/workspace', workspaceVaultRouter)
 app.use('/api/patients', patientsRouter)
+app.use('/api/account-backup', accountBackupRouter)
 app.use('/api/diagnosis-codes', diagnosisCodesRouter)
 app.use('/api/generation-logs', generationLogRouter)
 

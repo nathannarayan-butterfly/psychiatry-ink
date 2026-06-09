@@ -141,9 +141,11 @@ interface DiagnosenWidgetProps {
   caseId: string
   /** Sidebar uses compact height; panel (dashboard) expands. */
   variant?: 'sidebar' | 'panel'
+  /** Persist diagnoses into encrypted clinical case file (workspace vault). */
+  onDiagnosesChanged?: () => void
 }
 
-export function DiagnosenWidget({ caseId, variant = 'sidebar' }: DiagnosenWidgetProps) {
+export function DiagnosenWidget({ caseId, variant = 'sidebar', onDiagnosesChanged }: DiagnosenWidgetProps) {
   const { t } = useTranslation()
   const [entries, setEntries] = useState<DiagnoseEntry[]>([])
   const [loadingDiagnoses, setLoadingDiagnoses] = useState(true)
@@ -174,7 +176,8 @@ export function DiagnosenWidget({ caseId, variant = 'sidebar' }: DiagnosenWidget
 
   useEffect(() => {
     saveDiagnosen(caseId, entries)
-  }, [caseId, entries])
+    onDiagnosesChanged?.()
+  }, [caseId, entries, onDiagnosesChanged])
 
   useEffect(() => {
     if (adding) searchRef.current?.focus()

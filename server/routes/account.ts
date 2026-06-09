@@ -19,6 +19,13 @@ accountRouter.get('/plan', async (req: Request, res: Response) => {
 /** Dev-only plan toggle — Stripe integration stub. */
 accountRouter.post('/plan', async (req: Request, res: Response) => {
   try {
+    // Guard the unbilled self-upgrade path: only allowed outside production,
+    // unless explicitly opted in. Real plan changes belong to a billing flow.
+    if (process.env.NODE_ENV === 'production' && process.env.ALLOW_DEV_PLAN_TOGGLE !== 'true') {
+      res.status(403).json({ error: 'Plan changes are handled via billing' })
+      return
+    }
+
     const userId = resolveAccountId(req)
     if (userId === 'default') {
       res.status(400).json({ error: 'Authentication required' })

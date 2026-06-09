@@ -1,8 +1,11 @@
 import type { DocumentSection } from '../types'
+import type { UiLanguage } from '../types/settings'
 import type { WorkspaceSectionTemplate } from '../types/workspaceSettings'
 import { compileChecklistText } from '../utils/checklist'
+import { getPsychopathNormalBefundHeading } from './psychopathChecklistTranslations'
 import { defaultPsychopathSections } from './psychopathSections'
 
+/** @deprecated Use getPsychopathNormalBefundHeading(language) */
 export const psychopathNormalBefundHeading =
   'Psychopathologischer Befund – AMDP-Checkliste'
 
@@ -78,10 +81,11 @@ export function compilePsychopathNormalSectionTexts(
 
 export function buildPsychopathNormalBefundText(
   sections?: Array<Pick<DocumentSection, 'id' | 'label' | 'checklistItems'>>,
+  language: UiLanguage = 'de',
 ): string {
   const blocks = Object.values(compilePsychopathNormalSectionTexts(sections))
 
-  return [psychopathNormalBefundHeading, '', ...blocks].join('\n').trim()
+  return [getPsychopathNormalBefundHeading(language), '', ...blocks].join('\n').trim()
 }
 
 export function buildPsychopathNormalSectionTexts(

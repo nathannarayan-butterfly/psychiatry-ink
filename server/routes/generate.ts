@@ -11,12 +11,25 @@ export interface GenerateRequestBody {
 
 export const generateRouter: Router = createRouter()
 
+/** Upper bound on prompt size to limit abuse / runaway cost. */
+const MAX_PROMPT_CHARS = 100_000
+
 generateRouter.post('/', async (req: Request, res: Response) => {
   try {
     const body = req.body as GenerateRequestBody
 
     if (!body.tier || !body.systemPrompt || !body.userPrompt) {
       res.status(400).json({ error: 'Missing tier, systemPrompt, or userPrompt' })
+      return
+    }
+
+    if (
+      typeof body.systemPrompt !== 'string' ||
+      typeof body.userPrompt !== 'string' ||
+      body.systemPrompt.length > MAX_PROMPT_CHARS ||
+      body.userPrompt.length > MAX_PROMPT_CHARS
+    ) {
+      res.status(413).json({ error: 'Prompt too large' })
       return
     }
 

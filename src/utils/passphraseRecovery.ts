@@ -9,6 +9,7 @@ import {
   type EncryptedVaultBlob,
   type StoredKeyMaterial,
 } from './cryptoVault'
+import { assertPassphraseValidForSetup } from './passphrasePolicy'
 
 const IDB_NAME = 'psychiatry-ink-crypto'
 const IDB_VERSION = 1
@@ -99,7 +100,7 @@ async function deriveAesKeyFromPassphrase(passphrase: string, salt: Uint8Array):
 }
 
 export async function createPassphraseBackup(passphrase: string): Promise<PassphraseKeyBackup> {
-  if (!passphrase.trim()) throw new Error('Passphrase required')
+  assertPassphraseValidForSetup(passphrase)
 
   const material = await ensureKeyMaterial()
   const salt = crypto.getRandomValues(new Uint8Array(16))

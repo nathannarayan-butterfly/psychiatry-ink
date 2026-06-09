@@ -5,6 +5,9 @@ import {
   type PrivacyTier,
 } from '../data/privacyRegions'
 import { API_BASE } from '../services/apiClient'
+import { getAuthHeaders } from '../services/authHeaders'
+import { isAccountBackupUnlocked } from '../utils/accountBackupSession'
+import { registerClinicalImprintPersistHook } from '../utils/clinicalImprint'
 import {
   ensureKeyMaterial,
   getOrCreateDeviceId,
@@ -47,7 +50,8 @@ async function fetchRemoteSnapshot(
   caseId: string,
 ): Promise<{ blob: EncryptedVaultBlob; updatedAt: string } | null> {
   const params = new URLSearchParams({ deviceId, countryCode, caseId })
-  const response = await fetch(`${API_BASE}/api/workspace/snapshot?${params}`)
+  const headers = await getAuthHeaders()
+  const response = await fetch(`${API_BASE}/api/workspace/snapshot?${params}`, { headers })
   if (response.status === 404) return null
   if (!response.ok) return null
 
@@ -77,9 +81,13 @@ async function pushRemoteSnapshot(
   caseId: string,
   titleHint?: string | null,
 ): Promise<RemoteSnapshotMeta | null> {
+  const headers = {
+    ...(await getAuthHeaders()),
+    'Content-Type': 'application/json',
+  }
   const response = await fetch(`${API_BASE}/api/workspace/snapshot`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({
       deviceId,
       countryCode,
@@ -106,7 +114,7 @@ export function useWorkspaceVault({
   documentTypeLabel,
 }: UseWorkspaceVaultOptions) {
   const enabled = allowsWorkspaceVault(tier)
-  const dbSyncEnabled = allowsWorkspaceDbSnapshot(tier)
+  const dbSyncEnabled = allowsWorkspaceDbSnapshot(tier) || isAccountBackupUnlocked()
   const [ready, setReady] = useState(!enabled)
   const [error, setError] = useState<string | null>(null)
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null)
@@ -167,6 +175,16 @@ export function useWorkspaceVault({
       })
     }, 800)
   }, [enabled, persist])
+
+  const scheduleSaveRef = useRef(scheduleSave)
+  scheduleSaveRef.current = scheduleSave
+
+  useEffect(() => {
+    registerClinicalImprintPersistHook((persistCaseId) => {
+      if (persistCaseId === caseId) scheduleSaveRef.current()
+    })
+    return () => registerClinicalImprintPersistHook(null)
+  }, [caseId])
 
   const saveNow = useCallback(async () => {
     try {

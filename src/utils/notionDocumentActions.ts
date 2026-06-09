@@ -1,5 +1,6 @@
 import type { DocumentSection } from '../types'
 import { caseStorageKey, DEFAULT_CASE_ID, getActiveCaseId } from './caseContext'
+import { scheduleDocumentSnapshotImprints } from './clinicalImprint'
 import { getInitialEditorContent } from './workspaceComponents'
 
 const SNAPSHOT_KEY_PREFIX = 'psychiatry-ink:notion-document'
@@ -19,6 +20,7 @@ export function saveNotionDocumentSnapshot(
   snapshot: NotionDocumentSnapshot,
   caseId?: string,
 ): void {
+  const storageCaseId = caseId ?? getActiveCaseId()
   try {
     localStorage.setItem(
       notionDocumentSnapshotKey(snapshot.documentTypeId, caseId),
@@ -27,6 +29,7 @@ export function saveNotionDocumentSnapshot(
   } catch {
     // ignore quota errors
   }
+  scheduleDocumentSnapshotImprints(storageCaseId, snapshot)
 }
 
 function legacyDocumentSnapshotKey(documentTypeId: string): string {

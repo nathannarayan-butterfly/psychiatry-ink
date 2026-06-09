@@ -13,12 +13,14 @@ export function accountIdFromUserId(userId: string | undefined): string {
 
 export async function ensureCreditAccount(userId?: string) {
   const id = accountIdFromUserId(userId)
-  const existing = await prisma.creditBalance.findUnique({ where: { id } })
-  if (existing) return existing
-
   const isLegacy = id === LEGACY_ACCOUNT_ID
-  return prisma.creditBalance.create({
-    data: {
+
+  // Atomic upsert avoids the find-then-create race where two concurrent
+  // requests both create the same id and hit a unique-constraint error.
+  return prisma.creditBalance.upsert({
+    where: { id },
+    update: {},
+    create: {
       id,
       balance: isLegacy ? LEGACY_DEFAULT_BALANCE : FREE_SIGNUP_CREDITS,
       plan: 'free',
@@ -46,15 +48,20 @@ export async function deductCredits(amount: number, userId?: string): Promise<nu
   if (amount <= 0) return getCreditBalance(userId)
 
   const id = accountIdFromUserId(userId)
-  const account = await ensureCreditAccount(userId)
-  const next = Math.max(0, account.balance - amount)
+  await ensureCreditAccount(userId)
 
-  const updated = await prisma.creditBalance.update({
-    where: { id },
-    data: { balance: next },
+  // Serialize read+write in a transaction so concurrent deductions cannot
+  // lose updates (prevents double-spend on overlapping requests).
+  return prisma.$transaction(async (tx) => {
+    const account = await tx.creditBalance.findUnique({ where: { id } })
+    const current = account?.balance ?? 0
+    const next = Math.max(0, current - amount)
+    const updated = await tx.creditBalance.update({
+      where: { id },
+      data: { balance: next },
+    })
+    return updated.balance
   })
-
-  return updated.balance
 }
 
 /** Stripe billing stub — manual upgrade for development. */

@@ -16,13 +16,25 @@ export interface WorkspaceSnapshotBody {
 
 export const workspaceVaultRouter: Router = createRouter()
 
-function resolveUserId(deviceId: string): string {
-  return deviceId
+/**
+ * Owner key for a snapshot. When the request is authenticated we bind to the
+ * verified Supabase user id so a client cannot read another user's snapshot by
+ * supplying an arbitrary deviceId. Falls back to deviceId for the local /
+ * unauthenticated flow (backwards compatible).
+ */
+function resolveUserId(req: Request, deviceId: string): string {
+  return req.authUserId ?? deviceId
+}
+
+/** Authenticated accounts may sync ciphertext regardless of regional tier (passphrase unlock). */
+function allowsSnapshotSync(req: Request, countryCode: string): boolean {
+  if (req.authUserId) return true
+  return allowsWorkspaceDbSnapshot(resolvePrivacyTier(countryCode || null))
 }
 
 /**
  * Store encrypted workspace snapshot — clinical ciphertext only, zero knowledge.
- * Rejected for local_only / disabled tiers. Name/age never included.
+ * Rejected for local_only / disabled tiers unless the user is authenticated.
  */
 workspaceVaultRouter.put('/snapshot', async (req: Request, res: Response) => {
   try {
@@ -42,9 +54,8 @@ workspaceVaultRouter.put('/snapshot', async (req: Request, res: Response) => {
     const countryCode = (body.countryCode ?? req.header('x-country-code') ?? '')
       .trim()
       .toUpperCase()
-    const tier = resolvePrivacyTier(countryCode || null)
-
-    if (!allowsWorkspaceDbSnapshot(tier)) {
+    if (!allowsSnapshotSync(req, countryCode)) {
+      const tier = resolvePrivacyTier(countryCode || null)
       res.status(403).json({
         error: 'Workspace snapshot storage not allowed for this region',
         tier,
@@ -54,7 +65,7 @@ workspaceVaultRouter.put('/snapshot', async (req: Request, res: Response) => {
 
     const deviceId = body.deviceId.trim()
     const caseId = body.caseId.trim()
-    const userId = resolveUserId(deviceId)
+    const userId = resolveUserId(req, deviceId)
 
     const record = await prisma.encryptedWorkspaceSnapshot.upsert({
       where: { userId_caseId: { userId, caseId } },
@@ -103,8 +114,8 @@ workspaceVaultRouter.get('/snapshot', async (req: Request, res: Response) => {
       return
     }
 
-    const tier = resolvePrivacyTier(countryCode || null)
-    if (!allowsWorkspaceDbSnapshot(tier)) {
+    if (!allowsSnapshotSync(req, countryCode)) {
+      const tier = resolvePrivacyTier(countryCode || null)
       res.status(403).json({
         error: 'Workspace snapshot read not allowed for this region',
         tier,
@@ -112,7 +123,7 @@ workspaceVaultRouter.get('/snapshot', async (req: Request, res: Response) => {
       return
     }
 
-    const userId = resolveUserId(deviceId)
+    const userId = resolveUserId(req, deviceId)
     const record = await prisma.encryptedWorkspaceSnapshot.findUnique({
       where: { userId_caseId: { userId, caseId } },
     })
@@ -154,8 +165,8 @@ workspaceVaultRouter.get('/cases', async (req: Request, res: Response) => {
       return
     }
 
-    const tier = resolvePrivacyTier(countryCode || null)
-    if (!allowsWorkspaceDbSnapshot(tier)) {
+    if (!allowsSnapshotSync(req, countryCode)) {
+      const tier = resolvePrivacyTier(countryCode || null)
       res.status(403).json({
         error: 'Workspace case listing not allowed for this region',
         tier,
@@ -163,7 +174,7 @@ workspaceVaultRouter.get('/cases', async (req: Request, res: Response) => {
       return
     }
 
-    const userId = resolveUserId(deviceId)
+    const userId = resolveUserId(req, deviceId)
     const records = await prisma.encryptedWorkspaceSnapshot.findMany({
       where: { userId },
       orderBy: { updatedAt: 'desc' },

@@ -1,39 +1,94 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useSyncExternalStore } from 'react'
 import {
   detectBrowserCountry,
   resolvePrivacyTier,
   type PrivacyTier,
 } from '../data/privacyRegions'
+import {
+  loadIdentifierStorageMode,
+  markIdentifierStorageAcknowledged,
+  resolveDefaultIdentifierStorage,
+  saveIdentifierStorageMode,
+  type IdentifierStorageMode,
+} from '../utils/identifierStorage'
+import { safeGetItem, safeSetItem } from '../utils/safeStorage'
 
 const STORAGE_KEY = 'psychiatry-ink-privacy'
 
 interface PrivacySettings {
   countryCode: string
+  identifierStorage: IdentifierStorageMode
 }
 
 function loadPrivacySettings(): PrivacySettings {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = safeGetItem(STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<PrivacySettings>
       if (parsed.countryCode?.trim()) {
-        return { countryCode: parsed.countryCode.trim().toUpperCase() }
+        const countryCode = parsed.countryCode.trim().toUpperCase()
+        return {
+          countryCode,
+          identifierStorage:
+            parsed.identifierStorage === 'account' || parsed.identifierStorage === 'device'
+              ? parsed.identifierStorage
+              : loadIdentifierStorageMode(),
+        }
       }
     }
   } catch {
     // ignore
   }
 
-  const detected = detectBrowserCountry()
-  return { countryCode: detected ?? 'DE' }
+  const countryCode = detectBrowserCountry() ?? 'DE'
+  return {
+    countryCode,
+    identifierStorage: resolveDefaultIdentifierStorage(countryCode),
+  }
+}
+
+function persistPrivacySettings(settings: PrivacySettings): void {
+  safeSetItem(STORAGE_KEY, JSON.stringify(settings))
+  saveIdentifierStorageMode(settings.identifierStorage)
+}
+
+let cachedSettings = loadPrivacySettings()
+const listeners = new Set<() => void>()
+
+function getSnapshot(): PrivacySettings {
+  return cachedSettings
+}
+
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener)
+  return () => listeners.delete(listener)
+}
+
+function emitChange(): void {
+  for (const listener of listeners) {
+    listener()
+  }
+}
+
+function setPrivacySettings(
+  updater: PrivacySettings | ((current: PrivacySettings) => PrivacySettings),
+): void {
+  const next = typeof updater === 'function' ? updater(cachedSettings) : updater
+  cachedSettings = next
+  persistPrivacySettings(next)
+  emitChange()
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (event.key !== STORAGE_KEY && event.key !== 'psychiatry-ink:identifier-storage-mode') return
+    cachedSettings = loadPrivacySettings()
+    emitChange()
+  })
 }
 
 export function usePrivacySettings() {
-  const [settings, setSettings] = useState<PrivacySettings>(loadPrivacySettings)
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
-  }, [settings])
+  const settings = useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
 
   const tier = useMemo(
     () => resolvePrivacyTier(settings.countryCode),
@@ -41,12 +96,22 @@ export function usePrivacySettings() {
   )
 
   const setCountryCode = useCallback((countryCode: string) => {
-    setSettings({ countryCode: countryCode.trim().toUpperCase() })
+    setPrivacySettings((current) => ({
+      ...current,
+      countryCode: countryCode.trim().toUpperCase(),
+    }))
+  }, [])
+
+  const setIdentifierStorage = useCallback((identifierStorage: IdentifierStorageMode) => {
+    setPrivacySettings((current) => ({ ...current, identifierStorage }))
+    markIdentifierStorageAcknowledged()
   }, [])
 
   return {
     countryCode: settings.countryCode,
+    identifierStorage: settings.identifierStorage,
     tier: tier as PrivacyTier,
     setCountryCode,
+    setIdentifierStorage,
   }
 }

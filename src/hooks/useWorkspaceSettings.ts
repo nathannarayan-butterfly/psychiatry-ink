@@ -6,6 +6,7 @@ import {
   createNewComponentAiConfig,
 } from '../data/aiManagerPresets'
 import { defaultWorkspaceComponents } from '../data/defaultWorkspaceComponents'
+import { safeSetItem } from '../utils/safeStorage'
 import {
   clonePsychopathSections,
   isLegacyPsychopathChecklistSections,
@@ -311,7 +312,7 @@ export function useWorkspaceSettings() {
   const [settings, setSettings] = useState<WorkspaceSettings>(loadSettings)
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
+    safeSetItem(STORAGE_KEY, JSON.stringify(settings))
   }, [settings])
 
   const updateComponents = useCallback(

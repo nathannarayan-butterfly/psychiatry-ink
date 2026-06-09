@@ -35,6 +35,8 @@ import { getCaseClinicalStats } from '../../utils/dashboardCaseStats'
 import { formatSiteLocaleDate } from '../../utils/siteTimezone'
 import { SettingsPage } from '../settings/SettingsPage'
 import { CreditsPurchaseDialog } from '../notion/CreditsPurchaseDialog'
+import { IdentifierStorageOnboarding } from '../privacy/IdentifierStorageOnboarding'
+import { needsIdentifierStorageOnboarding } from '../../utils/identifierStorage'
 import { DashboardHinweise } from './DashboardHinweise'
 import { DashboardTopBar } from './DashboardTopBar'
 import { NewPatientDialog } from './NewPatientDialog'
@@ -137,6 +139,9 @@ export function DashboardPage({
   const [workflowCaseId, setWorkflowCaseId] = useState<string | null>(null)
   const [patientSearch, setPatientSearch] = useState('')
   const [patientViewMode, setPatientViewMode] = useState<PatientViewMode>('cards')
+  const [showIdentifierOnboarding, setShowIdentifierOnboarding] = useState(
+    () => needsIdentifierStorageOnboarding(),
+  )
 
   const documentTypeLabel = useCallback(
     (typeId: string | undefined) => {
@@ -253,6 +258,13 @@ export function DashboardPage({
 
   return (
     <div className="dashboard-page text-ink">
+      {showIdentifierOnboarding ? (
+        <IdentifierStorageOnboarding
+          initialMode={privacy.identifierStorage}
+          onConfirm={privacy.setIdentifierStorage}
+          onDismiss={() => setShowIdentifierOnboarding(false)}
+        />
+      ) : null}
       <DashboardTopBar
         creditBalance={creditBalance}
         creditsLoading={creditsLoading}
@@ -262,13 +274,19 @@ export function DashboardPage({
       />
 
       <section className="dashboard-hero" aria-labelledby="dashboard-hero-title">
-        <DashboardHinweise />
+        <DashboardHinweise identifierStorage={privacy.identifierStorage} />
         <div className="dashboard-hero__copy">
           <p className="dashboard-hero__date">{todayLabel}</p>
           <h1 id="dashboard-hero-title" className="dashboard-hero__title">
             {greeting.trim()}
           </h1>
-          <p className="dashboard-hero__intro">{t('dashboardIntro')}</p>
+          <p className="dashboard-hero__intro">
+            {t(
+              privacy.identifierStorage === 'account'
+                ? 'dashboardIntroAccount'
+                : 'dashboardIntroDevice',
+            )}
+          </p>
         </div>
       </section>
 

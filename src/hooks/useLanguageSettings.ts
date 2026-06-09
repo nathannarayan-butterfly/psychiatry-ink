@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { defaultLanguage, languageOptions } from '../data/languages'
 import type { UiLanguage } from '../types/settings'
+import { safeSetItem } from '../utils/safeStorage'
 
 const STORAGE_KEY = 'psychiatry-ink-language'
 
@@ -20,7 +21,7 @@ export function useLanguageSettings() {
 
   useEffect(() => {
     document.documentElement.lang = language
-    localStorage.setItem(STORAGE_KEY, language)
+    safeSetItem(STORAGE_KEY, language)
   }, [language])
 
   const selectLanguage = useCallback((next: UiLanguage) => {

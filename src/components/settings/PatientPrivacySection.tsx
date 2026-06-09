@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import {
   allowsPatientMetadata,
@@ -9,7 +9,12 @@ import {
 import { useDashboardSettings } from '../../hooks/useDashboardSettings'
 import type { usePrivacySettings } from '../../hooks/usePrivacySettings'
 import type { useWorkspaceVault } from '../../hooks/useWorkspaceVault'
+import { deleteRegistryBackupFromServer } from '../../services/accountBackupApi'
+import { isAccountCloudSyncEnabled, scheduleAccountRegistryUpload } from '../../utils/accountBackup'
 import { isPseudonymizationEnabled, PSEUDONYMIZE_KEY } from '../../services/aiGeneration'
+import type { IdentifierStorageMode } from '../../utils/identifierStorage'
+import { markIdentifierStorageAcknowledged } from '../../utils/identifierStorage'
+import { IdentifierStorageChoice } from '../privacy/IdentifierStorageChoice'
 import { SettingsField } from './SettingsField'
 import { WorkspaceVaultSection } from './WorkspaceVaultSection'
 
@@ -37,10 +42,33 @@ const tierDescriptionKeys: Record<
 
 export function PatientPrivacySection({ privacy, workspaceVault }: PatientPrivacySectionProps) {
   const { t } = useTranslation()
-  const { countryCode, tier, setCountryCode } = privacy
+  const { countryCode, identifierStorage, tier, setCountryCode, setIdentifierStorage } = privacy
   const dashboardSettings = useDashboardSettings()
   const [pseudonymizationEnabled, setPseudonymizationEnabled] = useState(
     isPseudonymizationEnabled,
+  )
+  const [switchNote, setSwitchNote] = useState<string | null>(null)
+
+  const handleIdentifierStorageChange = useCallback(
+    (next: IdentifierStorageMode) => {
+      if (next === identifierStorage) return
+
+      setIdentifierStorage(next)
+      markIdentifierStorageAcknowledged()
+
+      if (next === 'device') {
+        setSwitchNote(t('identifierStorageSwitchToDevice'))
+        void deleteRegistryBackupFromServer().catch(() => {
+          setSwitchNote(t('identifierStorageSwitchToDeviceDeleteFailed'))
+        })
+      } else if (isAccountCloudSyncEnabled()) {
+        setSwitchNote(t('identifierStorageSwitchToAccountUploading'))
+        scheduleAccountRegistryUpload()
+      } else {
+        setSwitchNote(t('identifierStorageSwitchToAccount'))
+      }
+    },
+    [identifierStorage, setIdentifierStorage, t],
   )
 
   function handlePseudonymizationToggle(checked: boolean) {
@@ -58,6 +86,18 @@ export function PatientPrivacySection({ privacy, workspaceVault }: PatientPrivac
     <div>
       <h2 className="text-lg font-semibold text-ink">{t('settingsPrivacy')}</h2>
       <p className="mt-1 mb-6 text-sm text-muted">{t('privacySectionIntro')}</p>
+
+      <SettingsField
+        label={t('identifierStorageSettingsTitle')}
+        description={t('identifierStorageSettingsDescription')}
+      >
+        <IdentifierStorageChoice
+          value={identifierStorage}
+          onChange={handleIdentifierStorageChange}
+          variant="settings"
+          switchNote={switchNote}
+        />
+      </SettingsField>
 
       <SettingsField label={t('privacyCountryLabel')} description={t('privacyCountryDescription')}>
         <input
@@ -94,7 +134,15 @@ export function PatientPrivacySection({ privacy, workspaceVault }: PatientPrivac
               ? t('privacyPublicKeyAllowed')
               : t('privacyPublicKeyBlocked')}
           </li>
-          <li>{t('privacyNeverInDatabase')}</li>
+          <li
+            className={
+              identifierStorage === 'device' ? 'identifier-storage-choice__warning' : undefined
+            }
+          >
+            {identifierStorage === 'account'
+              ? t('privacyIdentifiersAccountMode')
+              : t('privacyIdentifiersDeviceMode')}
+          </li>
         </ul>
       </SettingsField>
 
@@ -134,7 +182,14 @@ export function PatientPrivacySection({ privacy, workspaceVault }: PatientPrivac
         </label>
       </SettingsField>
 
-      <WorkspaceVaultSection vault={workspaceVault} />
+      <WorkspaceVaultSection
+        vault={workspaceVault}
+        countryCode={countryCode}
+        identifierStorage={identifierStorage}
+        onCloudSyncComplete={() => {
+          window.location.reload()
+        }}
+      />
     </div>
   )
 }

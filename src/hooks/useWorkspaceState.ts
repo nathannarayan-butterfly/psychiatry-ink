@@ -33,6 +33,8 @@ import {
 } from '../utils/aiAutoDefaults'
 import { getLocalizedTherapieVerlaufSections } from '../services/hintTranslationAgent'
 import { executeAiGeneration, isPseudonymizationEnabled } from '../services/aiGeneration'
+import { scheduleAiGenerationImprint } from '../utils/clinicalImprint'
+import { showNotionToast } from '../components/notion/NotionToast'
 import { loadPatientMetadata } from '../utils/cryptoVault'
 import { translateUi } from '../data/uiTranslations'
 import { resolveGenerationCall } from '../utils/resolveGenerationCall'
@@ -958,6 +960,18 @@ export function useWorkspaceState(documentTypes: DocumentType[], language: UiLan
                 : section,
             ),
           )
+          if (caseId) {
+            for (const [sectionId, sectionText] of Object.entries(generation.sectionResults)) {
+              if (!sectionText?.trim()) continue
+              const section = currentDocumentType?.sections?.find((item) => item.id === sectionId)
+              scheduleAiGenerationImprint(caseId, {
+                documentTypeId: selectedDocumentType,
+                sectionId,
+                sectionLabel: section?.label,
+                text: sectionText,
+              })
+            }
+          }
         } else if (targetSectionId) {
           setSectionContents((current) => ({
             ...current,
@@ -968,7 +982,28 @@ export function useWorkspaceState(documentTypes: DocumentType[], language: UiLan
               section.id === targetSectionId ? { ...section, status: 'draft' } : section,
             ),
           )
+          if (caseId && activeResult.trim()) {
+            scheduleAiGenerationImprint(caseId, {
+              documentTypeId: selectedDocumentType,
+              sectionId: targetSectionId,
+              sectionLabel: targetSectionConfig?.label,
+              text: activeResult,
+            })
+          }
+        } else if (caseId && activeResult.trim()) {
+          scheduleAiGenerationImprint(caseId, {
+            documentTypeId: selectedDocumentType,
+            text: activeResult,
+          })
         }
+      } catch (error) {
+        // Surface the failure instead of leaving an unhandled rejection.
+        console.error('[generation] failed', error)
+        const message =
+          error instanceof Error && error.message
+            ? error.message
+            : 'KI-Generierung fehlgeschlagen. Bitte erneut versuchen.'
+        showNotionToast(message)
       } finally {
         setIsGenerating(false)
       }
@@ -993,6 +1028,7 @@ export function useWorkspaceState(documentTypes: DocumentType[], language: UiLan
       selectedAiTool,
       selectedDocumentType,
       userToolOverride,
+      caseId,
     ],
   )
 
@@ -1342,7 +1378,7 @@ export function useWorkspaceState(documentTypes: DocumentType[], language: UiLan
       docType.sections && docType.sections.length > 0 ? docType.sections : undefined
 
     if (docType.mode === 'free' || !docType.multistage) {
-      const text = buildPsychopathNormalBefundText(sectionInputs)
+      const text = buildPsychopathNormalBefundText(sectionInputs, language)
       setEditorContent(text)
       setGeneratedContent(text)
       setSectionContents({})
@@ -1369,7 +1405,7 @@ export function useWorkspaceState(documentTypes: DocumentType[], language: UiLan
       setEditorContent(texts[activeSectionId])
       setGeneratedContent(texts[activeSectionId])
     }
-  }, [activeSectionId, currentDocumentType])
+  }, [activeSectionId, currentDocumentType, language])
 
   return {
     selectedDocumentType,

@@ -42,8 +42,15 @@ import {
   saveTimelinesList,
   setActiveTimelineId,
 } from './timelinePersistence'
+import { loadDiagnosen, saveDiagnosen, type DiagnoseEntry } from './diagnosenArchive'
+import {
+  applyClinicalImprintIndex,
+  loadClinicalImprintIndex,
+  reindexClinicalPayload,
+} from './clinicalImprint'
+import type { ClinicalImprintIndex } from '../types/clinicalImprint'
 
-export const WORKSPACE_PAYLOAD_VERSION = 2
+export const WORKSPACE_PAYLOAD_VERSION = 4
 
 export const LAST_VAULT_EXPORT_KEY = 'psychiatry-ink:last-vault-export-at'
 
@@ -81,6 +88,10 @@ export interface ClinicalWorkspacePayload {
   activeTimelineId: string | null
   labGraphs: SavedLabGraph[]
   activeLabGraphId: string | null
+  /** Diagnoses are part of the clinical case file (synced with workspace ciphertext). */
+  diagnoses: DiagnoseEntry[]
+  /** Structured clinical memory index — pseudonymous, no patient name. */
+  clinicalImprints?: ClinicalImprintIndex
   /** @deprecated v1 — stripped on write */
   lab?: LabSnapshot | null
   /** @deprecated v1 — stripped on write */
@@ -147,6 +158,8 @@ function migrateV1GraphFields(payload: ClinicalWorkspacePayload): ClinicalWorksp
     activeTimelineId,
     labGraphs,
     activeLabGraphId,
+    diagnoses: payload.diagnoses ?? [],
+    clinicalImprints: payload.clinicalImprints,
     lab: undefined,
     timeline: undefined,
   }
@@ -201,6 +214,9 @@ export function collectClinicalPayload(
   const activeTimelineId = live?.activeTimelineId ?? getActiveTimelineId(caseId)
   const labGraphs = live?.labGraphs ?? loadLabGraphsList(caseId)
   const activeLabGraphId = live?.activeLabGraphId ?? getActiveLabGraphId(caseId)
+  const storageCaseId = caseId ?? getActiveCaseId()
+  const diagnoses = loadDiagnosen(storageCaseId)
+  const clinicalImprints = loadClinicalImprintIndex(storageCaseId)
 
   return {
     version: WORKSPACE_PAYLOAD_VERSION,
@@ -215,6 +231,8 @@ export function collectClinicalPayload(
     activeTimelineId,
     labGraphs,
     activeLabGraphId,
+    diagnoses,
+    clinicalImprints,
   }
 }
 
@@ -262,6 +280,17 @@ export function applyClinicalPayload(
 
   saveLabGraphsList(normalized.labGraphs, storageCaseId)
   setActiveLabGraphId(normalized.activeLabGraphId, storageCaseId)
+
+  if (Array.isArray(normalized.diagnoses)) {
+    saveDiagnosen(storageCaseId, normalized.diagnoses)
+  }
+
+  if (normalized.clinicalImprints?.imprints?.length) {
+    applyClinicalImprintIndex(normalized.clinicalImprints, storageCaseId)
+  } else {
+    const rebuilt = reindexClinicalPayload(storageCaseId, normalized)
+    normalized.clinicalImprints = rebuilt
+  }
 }
 
 export function applyWorkspacePayload(payload: ClinicalWorkspacePayload, caseId?: string): void {
@@ -291,6 +320,7 @@ function stripLegacyFields(raw: LegacyWorkspacePayload): ClinicalWorkspacePayloa
     activeTimelineId: clinical.activeTimelineId ?? null,
     labGraphs: clinical.labGraphs ?? [],
     activeLabGraphId: clinical.activeLabGraphId ?? null,
+    diagnoses: clinical.diagnoses ?? [],
     lab: lab ?? null,
     timeline: timeline ?? null,
   })
@@ -311,7 +341,12 @@ export async function decryptWorkspaceBlob(blob: EncryptedVaultBlob): Promise<Cl
   if (typeof payload.version !== 'number' || typeof payload.updatedAt !== 'string') {
     throw new Error('Invalid workspace vault format')
   }
-  return { ...payload, age: payload.age ?? '' }
+  return {
+    ...payload,
+    age: payload.age ?? '',
+    diagnoses: payload.diagnoses ?? [],
+    clinicalImprints: payload.clinicalImprints,
+  }
 }
 
 export async function saveEncryptedWorkspace(

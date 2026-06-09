@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { AuthProvider } from './context/AuthContext'
 import { applyAppearanceSettings } from './data/appearancePresets'
 import { defaultLanguage, languageOptions } from './data/languages'
@@ -31,8 +32,10 @@ try {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <AuthProvider>
-      <App />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </ErrorBoundary>
   </StrictMode>,
 )

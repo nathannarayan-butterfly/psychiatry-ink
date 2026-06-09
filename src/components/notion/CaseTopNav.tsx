@@ -1,3 +1,4 @@
+import { X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { UiTranslationKey } from '../../data/uiTranslations'
@@ -21,6 +22,8 @@ interface CaseTopNavProps {
   onCreatePatient?: () => void
   /** Label of the currently open page inside Workspace (shown dim next to the tab). */
   activePageLabel?: string
+  /** Close the open workspace page and return to the default case home. */
+  onCloseWorkspacePage?: () => void
 }
 
 interface TabConfig {
@@ -46,6 +49,7 @@ export function CaseTopNav({
   hasPatient = true,
   onCreatePatient,
   activePageLabel,
+  onCloseWorkspacePage,
 }: CaseTopNavProps) {
   const { t } = useTranslation()
   const [zuordnenOpen, setZuordnenOpen] = useState(false)
@@ -82,7 +86,23 @@ export function CaseTopNav({
         >
           {t(tab.labelKey)}
           {tab.id === 'workspace' && activeTab === 'workspace' && activePageLabel ? (
-            <span className="case-topnav__tab-sublabel">{activePageLabel}</span>
+            <span className="case-topnav__tab-sublabel-group">
+              <span className="case-topnav__tab-sublabel">{activePageLabel}</span>
+              {onCloseWorkspacePage ? (
+                <button
+                  type="button"
+                  className="case-topnav__tab-close"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    onCloseWorkspacePage()
+                  }}
+                  aria-label={t('workspaceCloseDocument')}
+                  title={t('workspaceCloseDocument')}
+                >
+                  <X className="h-3 w-3" strokeWidth={2} aria-hidden />
+                </button>
+              ) : null}
+            </span>
           ) : null}
         </button>
       ))}

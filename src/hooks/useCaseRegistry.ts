@@ -4,8 +4,14 @@ import { API_BASE } from '../services/apiClient'
 import {
   createPatientOnApi,
   fetchPatientsFromApi,
+  mergeServerCaseWithLocal,
   upsertPatientOnApi,
 } from '../services/patientRegistryApi'
+import { isAccountBackupUnlocked } from '../utils/accountBackupSession'
+import {
+  loadRegistryMapFromStorage,
+  saveRegistryMapToStorage,
+} from '../utils/caseRegistryStorage'
 import { createCaseId, DEFAULT_CASE_ID, shortCaseId } from '../utils/caseContext'
 import { countLabGraphs } from '../utils/labPersistence'
 import { countTimelines } from '../utils/timelinePersistence'
@@ -51,44 +57,35 @@ export interface DashboardCase {
   labGraphCount?: number
 }
 
-const REGISTRY_KEY = 'psychiatry-ink:case-registry'
 const REGISTRY_MIGRATED_KEY = 'psychiatry-ink:case-registry-db-migrated'
 
-/** In-memory cache — hydrated from SQLite via API. */
+/** In-memory cache — PII in localStorage; server sync is codes + timestamps only. */
 let registryCache: Record<string, LocalCaseMeta> = {}
 let registryHydrated = false
 let hydratePromise: Promise<void> | null = null
 
-function loadRegistryMapFromLocalStorage(): Record<string, LocalCaseMeta> {
-  try {
-    const raw = localStorage.getItem(REGISTRY_KEY)
-    if (!raw) return {}
-    const parsed = JSON.parse(raw) as Record<string, LocalCaseMeta>
-    return parsed && typeof parsed === 'object' ? parsed : {}
-  } catch {
-    return {}
-  }
-}
-
-function saveRegistryMapToLocalStorage(map: Record<string, LocalCaseMeta>): void {
-  try {
-    localStorage.setItem(REGISTRY_KEY, JSON.stringify(map))
-  } catch {
-    // ignore quota errors — server DB is source of truth
-  }
-}
-
 function setCacheMap(map: Record<string, LocalCaseMeta>): void {
   registryCache = map
-  saveRegistryMapToLocalStorage(map)
+  saveRegistryMapToStorage(map)
+}
+
+/** Snapshot of local registry PII for encrypted account backup. */
+export function getRegistryMapSnapshot(): Record<string, LocalCaseMeta> {
+  return { ...readCacheMap() }
+}
+
+/** Replace in-memory + localStorage registry after cloud restore. */
+export function replaceRegistryMap(map: Record<string, LocalCaseMeta>): void {
+  setCacheMap(map)
+  registryHydrated = true
 }
 
 function readCacheMap(): Record<string, LocalCaseMeta> {
   if (registryHydrated) return registryCache
-  return loadRegistryMapFromLocalStorage()
+  return loadRegistryMapFromStorage()
 }
 
-/** Load patients from local SQLite (API) and one-time migrate browser localStorage. */
+/** Merge server case codes with local PII; one-time register local-only codes on the server. */
 export async function hydrateCaseRegistry(): Promise<void> {
   if (registryHydrated) return
   if (hydratePromise) {
@@ -97,11 +94,11 @@ export async function hydrateCaseRegistry(): Promise<void> {
   }
 
   hydratePromise = (async () => {
-    const localMap = loadRegistryMapFromLocalStorage()
-    let apiPatients: LocalCaseMeta[] = []
+    const localMap = loadRegistryMapFromStorage()
+    let apiCases: Awaited<ReturnType<typeof fetchPatientsFromApi>> = []
 
     try {
-      apiPatients = await fetchPatientsFromApi()
+      apiCases = await fetchPatientsFromApi()
     } catch (error) {
       console.warn('[case-registry] API unavailable, using localStorage cache', error)
       setCacheMap(localMap)
@@ -110,24 +107,29 @@ export async function hydrateCaseRegistry(): Promise<void> {
       return
     }
 
-    const merged: Record<string, LocalCaseMeta> = Object.fromEntries(
-      apiPatients.map((patient) => [patient.caseId, patient]),
-    )
+    const merged: Record<string, LocalCaseMeta> = {}
+    for (const apiCase of apiCases) {
+      merged[apiCase.caseId] = mergeServerCaseWithLocal(apiCase, localMap[apiCase.caseId])
+    }
 
     const migratedFlag = localStorage.getItem(REGISTRY_MIGRATED_KEY) === 'true'
     const localOnly = Object.values(localMap).filter((item) => !merged[item.caseId])
 
     if (!migratedFlag && localOnly.length > 0) {
+      let allMigrated = true
       for (const item of localOnly) {
         try {
           const saved = await createPatientOnApi(item)
-          merged[item.caseId] = saved
+          merged[item.caseId] = mergeServerCaseWithLocal(saved, item)
         } catch (error) {
-          console.warn('[case-registry] migrate patient failed', item.caseId, error)
+          console.warn('[case-registry] migrate case code failed', item.caseId, error)
           merged[item.caseId] = item
+          allMigrated = false
         }
       }
-      localStorage.setItem(REGISTRY_MIGRATED_KEY, 'true')
+      if (allMigrated) {
+        localStorage.setItem(REGISTRY_MIGRATED_KEY, 'true')
+      }
     }
 
     for (const item of Object.values(localMap)) {
@@ -174,6 +176,9 @@ export function upsertCaseMeta(caseId: string, patch: Partial<LocalCaseMeta>): L
   }
   map[caseId] = next
   setCacheMap(map)
+  if (patch.localName !== undefined || patch.localVorname !== undefined || patch.localNachname !== undefined || patch.localGeburtsdatum !== undefined) {
+    void import('../utils/accountBackup').then((mod) => mod.scheduleAccountRegistryUpload())
+  }
   void upsertPatientOnApi(next).catch((error) => {
     console.warn('[case-registry] persist failed', caseId, error)
   })
@@ -211,7 +216,9 @@ async function fetchRemoteCases(
   countryCode: string,
 ): Promise<RemoteCaseMeta[]> {
   const params = new URLSearchParams({ deviceId, countryCode })
-  const response = await fetch(`${API_BASE}/api/workspace/cases?${params}`)
+  const { getAuthHeaders } = await import('../services/authHeaders')
+  const headers = await getAuthHeaders()
+  const response = await fetch(`${API_BASE}/api/workspace/cases?${params}`, { headers })
   if (!response.ok) return []
   const data = (await response.json()) as { cases?: RemoteCaseMeta[] }
   return data.cases ?? []
@@ -273,7 +280,7 @@ export function useCaseRegistry({
   documentTypeLabel,
   fallbackTitle,
 }: UseCaseRegistryOptions) {
-  const dbSyncEnabled = allowsWorkspaceDbSnapshot(tier)
+  const dbSyncEnabled = allowsWorkspaceDbSnapshot(tier) || isAccountBackupUnlocked()
   const [cases, setCases] = useState<DashboardCase[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

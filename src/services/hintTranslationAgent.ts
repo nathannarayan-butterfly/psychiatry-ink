@@ -1,4 +1,9 @@
 import { checklistHintTranslations, therapieVerlaufHintTranslations } from '../data/hintTranslations'
+import {
+  localizePsychopathChecklistItem,
+  psychopathChecklistHintTranslations,
+  translatePsychopathSectionDescription,
+} from '../data/psychopathChecklistTranslations'
 import { defaultPsychopathSections } from '../data/psychopathSections'
 import { defaultTherapieVerlaufSections } from '../data/therapieVerlaufSections'
 import type { UiLanguage } from '../types/settings'
@@ -49,6 +54,10 @@ function lookupStaticTranslation(germanText: string, language: UiLanguage): stri
 
   if (checklistHintTranslations[germanText]?.[language]) {
     return checklistHintTranslations[germanText][language]
+  }
+
+  if (psychopathChecklistHintTranslations[germanText]?.[language]) {
+    return psychopathChecklistHintTranslations[germanText][language]
   }
 
   for (const entry of Object.values(therapieVerlaufHintTranslations)) {
@@ -110,9 +119,14 @@ export function translateHintText(germanText: string | undefined, language: UiLa
 }
 
 function localizeChecklistItem(
+  componentId: string,
   item: WorkspaceChecklistItem,
   language: UiLanguage,
 ): WorkspaceChecklistItem {
+  if (componentId === 'psychopath') {
+    return localizePsychopathChecklistItem(item, language)
+  }
+
   return {
     ...item,
     hint: translateHintText(item.hint, language),
@@ -120,21 +134,29 @@ function localizeChecklistItem(
 }
 
 function localizeSectionHints(
+  componentId: string,
   section: WorkspaceSectionTemplate,
   language: UiLanguage,
 ): WorkspaceSectionTemplate {
+  const description =
+    componentId === 'psychopath'
+      ? translatePsychopathSectionDescription(section.id, section.description, language)
+      : translateHintText(section.description, language)
+
   return {
     ...section,
-    description: translateHintText(section.description, language),
+    description,
     exampleHint: translateHintText(section.exampleHint, language),
     checklistItems: section.checklistItems?.map((item) =>
-      localizeChecklistItem(item, language),
+      localizeChecklistItem(componentId, item, language),
     ),
   }
 }
 
 export function getLocalizedTherapieVerlaufSections(language: UiLanguage) {
-  return defaultTherapieVerlaufSections.map((section) => localizeSectionHints(section, language))
+  return defaultTherapieVerlaufSections.map((section) =>
+    localizeSectionHints('therapie-verlauf', section, language),
+  )
 }
 
 export function applyHintTranslationsToComponents(
@@ -145,10 +167,14 @@ export function applyHintTranslationsToComponents(
 
   return components.map((component) => ({
     ...component,
-    sections: component.sections.map((section) => localizeSectionHints(section, language)),
+    sections: component.sections.map((section) =>
+      localizeSectionHints(component.id, section, language),
+    ),
     variants: component.variants?.map((variant) => ({
       ...variant,
-      sections: variant.sections.map((section) => localizeSectionHints(section, language)),
+      sections: variant.sections.map((section) =>
+        localizeSectionHints(component.id, section, language),
+      ),
     })),
   }))
 }

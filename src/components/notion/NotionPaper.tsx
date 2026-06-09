@@ -1,4 +1,4 @@
-import { Command, Mic, Pencil } from 'lucide-react'
+import { Command, Mic, Pencil, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { DocumentChecklistItem, DocumentSection, DocumentVariantMode } from '../../types'
@@ -28,6 +28,7 @@ import { NotionDocumentActions } from './NotionDocumentActions'
 import { compileChecklistText } from '../../utils/checklist'
 import { NotionEditorHints } from './NotionEditorHints'
 import { NotionVariantLinks, type NotionVariantOption } from './NotionVariantLinks'
+import { NotionDocumentBreadcrumb } from './NotionDocumentBreadcrumb'
 import { NotionEmptyState } from './NotionEmptyState'
 import {
   isAiFeaturesShortcut,
@@ -125,6 +126,8 @@ interface NotionPaperProps {
   onNavigateToLabor?: () => void
   savedDocs?: SavedDoc[]
   onViewSavedDoc?: (doc: SavedDoc) => void
+  /** Close the open document and return to the default workspace home. */
+  onCloseDocument?: () => void
 }
 
 export interface PendingPaste {
@@ -147,6 +150,7 @@ export function NotionPaper({
   workspaceStorageId,
   documentTypeId,
   documentLabel,
+  sectionLabel,
   sections,
   sectionConfigs,
   sectionContents,
@@ -208,6 +212,7 @@ export function NotionPaper({
   onNavigateToLabor,
   savedDocs,
   onViewSavedDoc,
+  onCloseDocument,
 }: NotionPaperProps) {
   const { t } = useTranslation()
   const storageCaseId = workspaceStorageId ?? caseId
@@ -605,7 +610,22 @@ export function NotionPaper({
 
         <div className="notion-paper__header">
           <div className="notion-paper__header-left">
-            <div className="notion-paper__header-spacer" />
+            {documentTypeId && onCloseDocument ? (
+              <div className="notion-paper__header-doc">
+                <NotionDocumentBreadcrumb documentLabel={documentLabel} sectionLabel={sectionLabel} />
+                <button
+                  type="button"
+                  className="notion-paper__close-doc"
+                  onClick={onCloseDocument}
+                  aria-label={t('workspaceCloseDocument')}
+                  title={t('workspaceCloseDocument')}
+                >
+                  <X className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+                </button>
+              </div>
+            ) : (
+              <div className="notion-paper__header-spacer" />
+            )}
           </div>
 
           <div className="notion-paper__header-actions">

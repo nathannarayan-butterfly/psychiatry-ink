@@ -69,8 +69,17 @@ export function isLabPage(pageId: NotionPageId): boolean {
 }
 
 export function resolveNotionPageFromDocumentType(documentTypeId: string): NotionPageId {
+  if (!documentTypeId.trim()) return 'aufnahme'
   const match = NOTION_PAGES.find(
     (page) => page.kind === 'document' && page.documentTypeId === documentTypeId,
   )
   return match?.id ?? 'aufnahme'
+}
+
+/** True when the workspace tab shows an open document or tool view (not the default home). */
+export function isWorkspacePageOpen(
+  activePage: NotionPageId,
+  selectedDocumentType: string,
+): boolean {
+  return Boolean(selectedDocumentType.trim()) || isToolPage(activePage)
 }

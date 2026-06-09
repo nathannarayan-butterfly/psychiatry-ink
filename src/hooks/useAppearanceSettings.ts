@@ -18,6 +18,7 @@ import {
   type PreferredAccentColor,
   type WorkspaceScale,
 } from '../types/settings'
+import { safeSetItem } from '../utils/safeStorage'
 
 const STORAGE_KEY = 'psychiatry-ink-appearance'
 
@@ -46,7 +47,7 @@ export function useAppearanceSettings() {
 
   useEffect(() => {
     applyAppearanceSettings(settings)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
+    safeSetItem(STORAGE_KEY, JSON.stringify(settings))
   }, [settings])
 
   const update = useCallback((patch: Partial<AppearanceSettings>) => {

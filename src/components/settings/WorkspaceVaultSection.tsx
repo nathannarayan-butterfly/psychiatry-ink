@@ -3,7 +3,17 @@ import { useRef, useState, type ChangeEvent } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { useWorkspaceVault } from '../../hooks/useWorkspaceVault'
 import {
-  createPassphraseBackup,
+  restoreAccountCloudBackup,
+  setupAccountCloudBackup,
+} from '../../utils/accountBackup'
+import type { IdentifierStorageMode } from '../../utils/identifierStorage'
+import {
+  MAX_PASSPHRASE_LENGTH,
+  MIN_PASSPHRASE_LENGTH,
+  isPassphraseBlank,
+  isPassphraseTooShortForSetup,
+} from '../../utils/passphrasePolicy'
+import {
   downloadPassphraseBackupFile,
   getPassphraseBackup,
   parsePassphraseBackup,
@@ -16,9 +26,17 @@ type WorkspaceVaultState = ReturnType<typeof useWorkspaceVault>
 
 interface WorkspaceVaultSectionProps {
   vault: WorkspaceVaultState
+  countryCode: string
+  identifierStorage: IdentifierStorageMode
+  onCloudSyncComplete?: () => void
 }
 
-export function WorkspaceVaultSection({ vault }: WorkspaceVaultSectionProps) {
+export function WorkspaceVaultSection({
+  vault,
+  countryCode,
+  identifierStorage,
+  onCloudSyncComplete,
+}: WorkspaceVaultSectionProps) {
   const { t } = useTranslation()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const recoveryFileRef = useRef<HTMLInputElement>(null)
@@ -44,17 +62,25 @@ export function WorkspaceVaultSection({ vault }: WorkspaceVaultSectionProps) {
   }
 
   const handleCreatePassphraseBackup = async () => {
-    if (!passphrase.trim() || passphrase !== confirmPassphrase) {
+    if (isPassphraseBlank(passphrase)) return
+    if (isPassphraseTooShortForSetup(passphrase)) {
+      setPassphraseStatus(
+        t('workspacePassphraseTooShort').replace('{min}', String(MIN_PASSPHRASE_LENGTH)),
+      )
+      return
+    }
+    if (passphrase !== confirmPassphrase) {
       setPassphraseStatus(t('workspacePassphraseMismatch'))
       return
     }
     try {
-      const backup = await createPassphraseBackup(passphrase)
+      const backup = await setupAccountCloudBackup(passphrase)
       setHasBackup(true)
       setPassphrase('')
       setConfirmPassphrase('')
-      setPassphraseStatus(t('workspacePassphraseSaved'))
+      setPassphraseStatus(t('accountBackupCloudSaved'))
       downloadPassphraseBackupFile(backup)
+      onCloudSyncComplete?.()
     } catch {
       setPassphraseStatus(t('workspacePassphraseError'))
     }
@@ -63,11 +89,28 @@ export function WorkspaceVaultSection({ vault }: WorkspaceVaultSectionProps) {
   const handleRestoreFromPassphrase = async () => {
     if (!recoveryPassphrase.trim()) return
     try {
-      await restorePrivateKeyFromPassphrase(recoveryPassphrase)
+      const result = await restoreAccountCloudBackup(recoveryPassphrase, countryCode)
       setRecoveryPassphrase('')
-      setPassphraseStatus(t('workspacePassphraseRestored'))
+      const parts = [
+        `${t('accountBackupCloudRestored')} (${result.workspaceCases} ${t('accountBackupWorkspaceLabel')})`,
+      ]
+      if (result.identifiersFromAccount) {
+        parts.push(
+          `${result.identifierCases} ${t('accountBackupIdentifiersLabel')}`,
+        )
+      } else {
+        parts.push(t('identifierStorageRestoreDeviceHint'))
+      }
+      setPassphraseStatus(parts.join(' — '))
+      onCloudSyncComplete?.()
     } catch {
-      setPassphraseStatus(t('workspacePassphraseRestoreFailed'))
+      try {
+        await restorePrivateKeyFromPassphrase(recoveryPassphrase)
+        setRecoveryPassphrase('')
+        setPassphraseStatus(t('workspacePassphraseRestored'))
+      } catch {
+        setPassphraseStatus(t('workspacePassphraseRestoreFailed'))
+      }
     }
   }
 
@@ -118,12 +161,19 @@ export function WorkspaceVaultSection({ vault }: WorkspaceVaultSectionProps) {
             onChange={(event) => void handleImportFile(event)}
           />
         </div>
+        <p className="mt-2 text-xs text-muted">{t('workspaceVaultCaseFileNote')}</p>
+        {identifierStorage === 'device' ? (
+          <p className="identifier-storage-choice__warning mt-2">{t('identifierStorageDeviceExportNote')}</p>
+        ) : (
+          <p className="mt-1 text-xs text-muted">{t('identifierStorageAccountExportNote')}</p>
+        )}
         <EncryptionDisclaimer section="settings" bodyVariant="list" />
         {vault.dbSyncEnabled ? (
           <p className="mt-1 text-xs text-muted">{t('workspaceVaultDbSync')}</p>
         ) : (
           <p className="mt-1 text-xs text-muted">{t('workspaceVaultLocalOnly')}</p>
         )}
+        <p className="mt-1 text-xs text-muted">{t('identifierStoragePassphraseNote')}</p>
       </SettingsField>
 
       <SettingsField label={t('workspacePassphraseTitle')} description={t('workspacePassphraseDescription')}>
@@ -133,6 +183,7 @@ export function WorkspaceVaultSection({ vault }: WorkspaceVaultSectionProps) {
             value={passphrase}
             onChange={(event) => setPassphrase(event.target.value)}
             placeholder={t('workspacePassphrasePlaceholder')}
+            maxLength={MAX_PASSPHRASE_LENGTH}
             className="w-full max-w-sm rounded-sm border-2 border-border bg-surface px-3 py-2 text-sm text-ink"
             autoComplete="new-password"
           />
@@ -141,9 +192,13 @@ export function WorkspaceVaultSection({ vault }: WorkspaceVaultSectionProps) {
             value={confirmPassphrase}
             onChange={(event) => setConfirmPassphrase(event.target.value)}
             placeholder={t('workspacePassphraseConfirmPlaceholder')}
+            maxLength={MAX_PASSPHRASE_LENGTH}
             className="w-full max-w-sm rounded-sm border-2 border-border bg-surface px-3 py-2 text-sm text-ink"
             autoComplete="new-password"
           />
+          <p className="text-xs text-muted">
+            {t('workspacePassphraseMinLengthHint').replace('{min}', String(MIN_PASSPHRASE_LENGTH))}
+          </p>
           <button
             type="button"
             onClick={() => void handleCreatePassphraseBackup()}

@@ -112,6 +112,10 @@ diagnosisCodesRouter.get('/crosswalk', async (req: Request, res: Response) => {
 
 /** GET /api/diagnosis-codes/stats — row counts per system (for admin/debug). */
 diagnosisCodesRouter.get('/stats', async (_req: Request, res: Response) => {
+  if (process.env.NODE_ENV === 'production') {
+    res.status(404).json({ error: 'Not found' })
+    return
+  }
   try {
     const counts = await prisma.diagnosisCode.groupBy({
       by: ['system'],

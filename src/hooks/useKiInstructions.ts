@@ -6,6 +6,7 @@ import {
   type KiInstructionPresetId,
   type KiInstructionsSettings,
 } from '../types/kiInstructions'
+import { safeSetItem } from '../utils/safeStorage'
 
 const STORAGE_KEY = 'psychiatry-ink:ki-instructions'
 
@@ -31,7 +32,7 @@ export function useKiInstructions() {
   const [settings, setSettings] = useState<KiInstructionsSettings>(loadSettings)
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
+    safeSetItem(STORAGE_KEY, JSON.stringify(settings))
   }, [settings])
 
   const update = useCallback((patch: Partial<KiInstructionsSettings>) => {

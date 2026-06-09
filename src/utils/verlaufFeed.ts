@@ -7,6 +7,7 @@
  */
 
 import { caseStorageKey } from './caseContext'
+import { scheduleVerlaufFeedImprint } from './clinicalImprint'
 
 const VERLAUF_FEED_KEY = 'psychiatry-ink:verlaufFeed'
 const VERLAUF_ANNOTATIONS_KEY = 'psychiatry-ink:verlaufAnnotations'
@@ -75,6 +76,7 @@ export function appendVerlaufEntry(
   // Newest at start (index 0), oldest at end
   const next = [newEntry, ...existing]
   saveVerlaufFeed(next, caseId)
+  scheduleVerlaufFeedImprint(caseId, newEntry)
   return newEntry
 }
 

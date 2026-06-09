@@ -1,11 +1,12 @@
 import { useTranslation } from '../context/TranslationContext'
 import type { UiTranslationKey } from '../data/uiTranslations'
+import type { IdentifierStorageMode } from '../utils/identifierStorage'
 
 const encryptionDisclaimerListKeys = [
   'patientDisclaimerDeviceDecrypt',
   'patientDisclaimerZeroKnowledge',
-  'patientDisclaimerLocalNameAge',
-  'patientDisclaimerStorageByTier',
+  'patientDisclaimerNameDobChoice',
+  'patientDisclaimerCaseFileSync',
   'patientDisclaimerMultiDevice',
   'patientDisclaimerUserResponsibility',
 ] as const satisfies readonly UiTranslationKey[]
@@ -13,11 +14,13 @@ const encryptionDisclaimerListKeys = [
 interface EncryptionDisclaimerBodyProps {
   variant?: 'paragraph' | 'list'
   className?: string
+  identifierStorage?: IdentifierStorageMode
 }
 
 export function EncryptionDisclaimerBody({
   variant = 'paragraph',
   className,
+  identifierStorage,
 }: EncryptionDisclaimerBodyProps) {
   const { t } = useTranslation()
 
@@ -27,6 +30,15 @@ export function EncryptionDisclaimerBody({
         {encryptionDisclaimerListKeys.map((key) => (
           <li key={key}>{t(key)}</li>
         ))}
+        {identifierStorage ? (
+          <li>
+            {t(
+              identifierStorage === 'account'
+                ? 'patientDisclaimerCurrentModeAccount'
+                : 'patientDisclaimerCurrentModeDevice',
+            )}
+          </li>
+        ) : null}
       </ul>
     )
   }

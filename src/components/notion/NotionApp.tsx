@@ -32,6 +32,7 @@ import { DokumentePage } from './DokumentePage'
 import { TherapiePage } from './TherapiePage'
 import { NewPatientDialog } from '../dashboard/NewPatientDialog'
 import type { NewPatientData } from '../dashboard/NewPatientDialog'
+import { scheduleAiGenerationImprint } from '../../utils/clinicalImprint'
 import { appendVerlaufEntry } from '../../utils/verlaufFeed'
 import { appendDokument, inferDokumentCategory } from '../../utils/dokumenteArchive'
 import { appendSavedDoc, loadSavedDocs, type SavedDoc } from '../../utils/savedDocs'
@@ -49,6 +50,7 @@ import type { SlashCommandId } from './SlashCommandMenu'
 import { slashCommandToAiTool } from './SlashCommandMenu'
 import {
   isToolPage,
+  isWorkspacePageOpen,
   NOTION_PAGES,
   resolveNotionPageFromDocumentType,
   type NotionPageId,
@@ -244,6 +246,7 @@ export function NotionApp({
   }, [workspaceVault.showBackupReminder, t])
 
   useEffect(() => {
+    if (!workspace.selectedDocumentType) return
     if (!isToolPage(activePage)) {
       setActivePage(resolveNotionPageFromDocumentType(workspace.selectedDocumentType))
     }
@@ -259,6 +262,21 @@ export function NotionApp({
   )
 
   const documentLabel = t(activePageConfig.labelKey)
+
+  const workspacePageLabel = useMemo(() => {
+    if (activeTopTab !== 'workspace') return undefined
+    if (workspace.selectedDocumentType) return documentLabel
+    if (isToolPage(activePage)) {
+      const page = NOTION_PAGES.find((item) => item.id === activePage)
+      return page ? t(page.labelKey) : undefined
+    }
+    return undefined
+  }, [activePage, activeTopTab, documentLabel, t, workspace.selectedDocumentType])
+
+  const handleCloseWorkspacePage = useCallback(() => {
+    workspace.resetToBlankPage()
+    setShowPatientDashboard(true)
+  }, [workspace])
 
   const handleAcceptGenerationWithArchive = useCallback(async () => {
     const docTypeId = workspace.selectedDocumentType
@@ -292,6 +310,10 @@ export function NotionApp({
         sectionContents,
       })
       setSavedDocs(updated)
+      scheduleAiGenerationImprint(storageCaseId, {
+        documentTypeId: docTypeId,
+        text: content.trim(),
+      })
     }
 
     await workspaceVault.saveNow()
@@ -674,7 +696,15 @@ export function NotionApp({
         registryActive={showPatientRegistry}
         hasPatient={hasPatient}
         onCreatePatient={() => setShowCreatePatientDialog(true)}
-        activePageLabel={activeTopTab === 'workspace' && workspace.selectedDocumentType ? documentLabel : undefined}
+        activePageLabel={workspacePageLabel}
+        onCloseWorkspacePage={
+          activeTopTab === 'workspace' &&
+          !showPatientDashboard &&
+          !showPatientRegistry &&
+          isWorkspacePageOpen(activePage, workspace.selectedDocumentType)
+            ? handleCloseWorkspacePage
+            : undefined
+        }
       />
 
       <main className="notion-preview-main" data-lottie-exclusion>
@@ -707,7 +737,7 @@ export function NotionApp({
           <div className="notion-tab-content-row">
             <aside className="notion-tab-content-row__sidebar">
               <PanelDateCard layout="sidebar" />
-              <DiagnosenWidget caseId={caseId} />
+              <DiagnosenWidget caseId={caseId} onDiagnosesChanged={workspaceVault.scheduleSave} />
             </aside>
             <div className="notion-tab-content-row__body">
               <VerlaufFeedPage caseId={storageCaseId} />
@@ -838,6 +868,9 @@ export function NotionApp({
                 }}
                 savedDocs={savedDocs}
                 onViewSavedDoc={handleViewSavedDoc}
+                onCloseDocument={
+                  workspace.selectedDocumentType ? handleCloseWorkspacePage : undefined
+                }
               />
             )}
           </div>

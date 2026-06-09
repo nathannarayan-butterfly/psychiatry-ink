@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { FREE_SIGNUP_CREDITS } from '../data/subscriptionPlans'
 import { API_BASE } from '../services/apiClient'
 import { getAuthHeaders } from '../services/authHeaders'
@@ -20,9 +20,18 @@ async function fetchBalance(): Promise<number | null> {
 export function useCredits() {
   const [balance, setBalance] = useState(DEFAULT_BALANCE)
   const [loading, setLoading] = useState(true)
+  const mountedRef = useRef(true)
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
 
   const refreshBalance = useCallback(async () => {
     const next = await fetchBalance()
+    if (!mountedRef.current) return
     if (next != null) setBalance(next)
     setLoading(false)
   }, [])

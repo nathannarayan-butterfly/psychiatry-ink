@@ -1,7 +1,12 @@
 import { useState, type FormEvent } from 'react'
 import { ArrowLeft } from 'lucide-react'
+import { useTranslation } from '../../context/TranslationContext'
 import { useAuth } from '../../context/AuthContext'
+import { usePrivacySettings } from '../../hooks/usePrivacySettings'
+import { IdentifierStorageChoice } from '../privacy/IdentifierStorageChoice'
 import { AppLogo } from '../AppLogo'
+import { markIdentifierStorageAcknowledged } from '../../utils/identifierStorage'
+import type { IdentifierStorageMode } from '../../utils/identifierStorage'
 
 type AuthMode = 'login' | 'signup'
 
@@ -13,7 +18,10 @@ interface AuthPageProps {
 }
 
 export function AuthPage({ mode, onBack, onSuccess, onSwitchMode }: AuthPageProps) {
+  const { t } = useTranslation()
   const { signIn, signUp, isConfigured, configError, configDiagnostics } = useAuth()
+  const { identifierStorage, setIdentifierStorage } = usePrivacySettings()
+  const [signupIdentifierMode, setSignupIdentifierMode] = useState<IdentifierStorageMode>(identifierStorage)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -39,13 +47,16 @@ export function AuthPage({ mode, onBack, onSuccess, onSwitchMode }: AuthPageProp
         return
       }
 
+      setIdentifierStorage(signupIdentifierMode)
+      markIdentifierStorageAcknowledged()
+
       const result = await signUp(email.trim(), password)
       if (result.error) {
         setError(result.error)
         return
       }
       if (result.needsConfirmation) {
-        setInfo('Bitte bestätigen Sie Ihre E-Mail-Adresse. Danach können Sie sich anmelden.')
+        setInfo(t('authSignupConfirmEmail'))
         return
       }
       onSuccess()
@@ -57,19 +68,17 @@ export function AuthPage({ mode, onBack, onSuccess, onSwitchMode }: AuthPageProp
   return (
     <div className="auth-page">
       <header className="auth-page__header">
-        <button type="button" className="auth-page__back" onClick={onBack} aria-label="Zurück">
+        <button type="button" className="auth-page__back" onClick={onBack} aria-label={t('authBack')}>
           <ArrowLeft className="h-4 w-4" strokeWidth={1.75} />
         </button>
         <AppLogo />
       </header>
 
       <main className="auth-page__main">
-        <div className="auth-card">
-          <h1>{isLogin ? 'Anmelden' : 'Registrieren'}</h1>
+        <div className={`auth-card${isLogin ? '' : ' auth-card--wide'}`}>
+          <h1>{isLogin ? t('authLoginTitle') : t('authSignupTitle')}</h1>
           <p className="auth-card__lead">
-            {isLogin
-              ? 'Melden Sie sich mit E-Mail und Passwort an.'
-              : 'Erstellen Sie ein Konto — E-Mail und Passwort.'}
+            {isLogin ? t('authLoginLead') : t('authSignupLead')}
           </p>
 
           {configError ? (
@@ -83,9 +92,19 @@ export function AuthPage({ mode, onBack, onSuccess, onSwitchMode }: AuthPageProp
             </p>
           ) : null}
 
+          {!isLogin ? (
+            <div className="auth-card__privacy-block">
+              <IdentifierStorageChoice
+                value={signupIdentifierMode}
+                onChange={setSignupIdentifierMode}
+                variant="signup"
+              />
+            </div>
+          ) : null}
+
           <form className="auth-form" onSubmit={handleSubmit}>
             <label className="auth-form__field">
-              <span>E-Mail</span>
+              <span>{t('authEmailLabel')}</span>
               <input
                 type="email"
                 autoComplete="email"
@@ -96,7 +115,7 @@ export function AuthPage({ mode, onBack, onSuccess, onSwitchMode }: AuthPageProp
               />
             </label>
             <label className="auth-form__field">
-              <span>Passwort</span>
+              <span>{t('authPasswordLabel')}</span>
               <input
                 type="password"
                 autoComplete={isLogin ? 'current-password' : 'new-password'}
@@ -124,18 +143,18 @@ export function AuthPage({ mode, onBack, onSuccess, onSwitchMode }: AuthPageProp
               className="landing-btn landing-btn--primary auth-form__submit"
               disabled={!isConfigured || submitting}
             >
-              {submitting ? 'Bitte warten…' : isLogin ? 'Anmelden' : 'Konto erstellen'}
+              {submitting ? t('authPleaseWait') : isLogin ? t('authLoginSubmit') : t('authSignupSubmit')}
             </button>
           </form>
 
           <p className="auth-card__switch">
-            {isLogin ? 'Noch kein Konto?' : 'Bereits registriert?'}{' '}
+            {isLogin ? t('authNoAccountYet') : t('authAlreadyRegistered')}{' '}
             <button
               type="button"
               className="auth-card__switch-link"
               onClick={() => onSwitchMode(isLogin ? 'signup' : 'login')}
             >
-              {isLogin ? 'Registrieren' : 'Anmelden'}
+              {isLogin ? t('authSwitchToSignup') : t('authSwitchToLogin')}
             </button>
           </p>
         </div>

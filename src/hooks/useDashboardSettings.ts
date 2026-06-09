@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { safeSetItem } from '../utils/safeStorage'
 
 const STORAGE_KEY = 'psychiatry-ink-dashboard'
 
@@ -31,7 +32,7 @@ export function useDashboardSettings() {
   const [settings, setSettings] = useState<DashboardSettings>(loadDashboardSettings)
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
+    safeSetItem(STORAGE_KEY, JSON.stringify(settings))
   }, [settings])
 
   const setOpenCaseDirectToWorkflow = useCallback((openCaseDirectToWorkflow: boolean) => {

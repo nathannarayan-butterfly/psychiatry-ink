@@ -1,5 +1,4 @@
 import type { Request, Response, NextFunction } from 'express'
-import { createClient } from '@supabase/supabase-js'
 import {
   classifySupabaseKey,
   isPlaceholderKey,
@@ -12,7 +11,6 @@ export function resolveAccountId(req: Request): string {
   return req.authUserId ?? LEGACY_ACCOUNT_ID
 }
 
-let supabaseAdmin: ReturnType<typeof createClient> | null = null
 let configWarningLogged = false
 
 function resolveServerSupabaseEnv(): { url: string; key: string } | null {
@@ -71,24 +69,40 @@ function logConfigWarningOnce(): void {
   }
 }
 
-function getSupabaseAdmin() {
+declare module 'express-serve-static-core' {
+  interface Request {
+    authUserId?: string
+  }
+}
+
+/**
+ * Validate a Supabase access token via the GoTrue REST endpoint.
+ *
+ * We intentionally avoid the full `supabase-js` client here: its constructor
+ * eagerly initializes a Realtime WebSocket, which throws on Node versions
+ * without a global WebSocket (e.g. Node 20) and would crash every
+ * token-bearing request. A direct fetch is lighter and crash-free.
+ */
+async function fetchUserId(token: string): Promise<string | null> {
   const env = resolveServerSupabaseEnv()
   if (!env) {
     logConfigWarningOnce()
     return null
   }
 
-  if (!supabaseAdmin) {
-    supabaseAdmin = createClient(env.url, env.key, {
-      auth: { persistSession: false, autoRefreshToken: false },
+  try {
+    const response = await fetch(`${env.url.replace(/\/+$/, '')}/auth/v1/user`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        apikey: env.key,
+      },
     })
-  }
-  return supabaseAdmin
-}
-
-declare module 'express-serve-static-core' {
-  interface Request {
-    authUserId?: string
+    if (!response.ok) return null
+    const user = (await response.json()) as { id?: unknown }
+    return typeof user.id === 'string' ? user.id : null
+  } catch {
+    // Network/parse failure → fall back to legacy default account.
+    return null
   }
 }
 
@@ -105,20 +119,8 @@ export async function optionalAuth(req: Request, _res: Response, next: NextFunct
     return
   }
 
-  const supabase = getSupabaseAdmin()
-  if (!supabase) {
-    next()
-    return
-  }
-
-  try {
-    const { data, error } = await supabase.auth.getUser(token)
-    if (!error && data.user?.id) {
-      req.authUserId = data.user.id
-    }
-  } catch {
-    // Unauthenticated requests fall back to legacy default account.
-  }
+  const userId = await fetchUserId(token)
+  if (userId) req.authUserId = userId
 
   next()
 }

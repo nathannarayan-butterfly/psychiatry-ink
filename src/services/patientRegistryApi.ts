@@ -1,48 +1,53 @@
 import { API_BASE } from './apiClient'
 import { getAuthHeaders } from './authHeaders'
-import type { LocalCaseMeta, LocalGeschlecht } from '../hooks/useCaseRegistry'
+import type { LocalCaseMeta } from '../hooks/useCaseRegistry'
 
-export interface ApiPatientRecord {
+/** Opaque case record from the server — no patient-identifying fields. */
+export interface ApiCaseRecord {
   caseId: string
-  localName?: string
-  localVorname?: string
-  localNachname?: string
-  localGeburtsdatum?: string
-  localGeschlecht?: LocalGeschlecht
-  localAge?: string
-  pageHeading?: string
   lastDocumentType?: string
   lastOpened: string
   createdAt: string
 }
 
-function toLocalCaseMeta(row: ApiPatientRecord): LocalCaseMeta {
+export function toServerCasePayload(meta: LocalCaseMeta): ApiCaseRecord {
   return {
-    caseId: row.caseId,
-    localName: row.localName,
-    localVorname: row.localVorname,
-    localNachname: row.localNachname,
-    localGeburtsdatum: row.localGeburtsdatum,
-    localGeschlecht: row.localGeschlecht,
-    localAge: row.localAge,
-    pageHeading: row.pageHeading,
-    lastDocumentType: row.lastDocumentType,
-    lastOpened: row.lastOpened,
-    createdAt: row.createdAt,
+    caseId: meta.caseId,
+    lastDocumentType: meta.lastDocumentType,
+    lastOpened: meta.lastOpened,
+    createdAt: meta.createdAt,
   }
 }
 
-export async function fetchPatientsFromApi(): Promise<LocalCaseMeta[]> {
+/** Merge server sync fields with locally stored PII (names, DOB, etc.). */
+export function mergeServerCaseWithLocal(api: ApiCaseRecord, local?: LocalCaseMeta): LocalCaseMeta {
+  return {
+    caseId: api.caseId,
+    lastOpened: api.lastOpened,
+    createdAt: api.createdAt,
+    lastDocumentType: api.lastDocumentType ?? local?.lastDocumentType,
+    localName: local?.localName,
+    localVorname: local?.localVorname,
+    localNachname: local?.localNachname,
+    localGeburtsdatum: local?.localGeburtsdatum,
+    localGeschlecht: local?.localGeschlecht,
+    localAge: local?.localAge,
+    pageHeading: local?.pageHeading,
+  }
+}
+
+export async function fetchPatientsFromApi(): Promise<ApiCaseRecord[]> {
   const headers = await getAuthHeaders()
   const response = await fetch(`${API_BASE}/api/patients`, { headers })
   if (!response.ok) {
     throw new Error(`Failed to load patients (${response.status})`)
   }
-  const data = (await response.json()) as { patients?: ApiPatientRecord[] }
-  return (data.patients ?? []).map(toLocalCaseMeta)
+  const data = (await response.json()) as { patients?: ApiCaseRecord[] }
+  return data.patients ?? []
 }
 
-export async function upsertPatientOnApi(meta: LocalCaseMeta): Promise<LocalCaseMeta> {
+export async function upsertPatientOnApi(meta: LocalCaseMeta): Promise<ApiCaseRecord> {
+  const payload = toServerCasePayload(meta)
   const headers = {
     ...(await getAuthHeaders()),
     'Content-Type': 'application/json',
@@ -51,26 +56,20 @@ export async function upsertPatientOnApi(meta: LocalCaseMeta): Promise<LocalCase
     method: 'PATCH',
     headers,
     body: JSON.stringify({
-      localName: meta.localName ?? null,
-      localVorname: meta.localVorname ?? null,
-      localNachname: meta.localNachname ?? null,
-      localGeburtsdatum: meta.localGeburtsdatum ?? null,
-      localGeschlecht: meta.localGeschlecht ?? null,
-      localAge: meta.localAge ?? null,
-      pageHeading: meta.pageHeading ?? null,
-      lastDocumentType: meta.lastDocumentType ?? null,
-      lastOpened: meta.lastOpened,
-      createdAt: meta.createdAt,
+      lastDocumentType: payload.lastDocumentType ?? null,
+      lastOpened: payload.lastOpened,
+      createdAt: payload.createdAt,
     }),
   })
   if (!response.ok) {
     throw new Error(`Failed to save patient (${response.status})`)
   }
-  const data = (await response.json()) as { patient?: ApiPatientRecord }
-  return data.patient ? toLocalCaseMeta(data.patient) : meta
+  const data = (await response.json()) as { patient?: ApiCaseRecord }
+  return data.patient ?? payload
 }
 
-export async function createPatientOnApi(meta: LocalCaseMeta): Promise<LocalCaseMeta> {
+export async function createPatientOnApi(meta: LocalCaseMeta): Promise<ApiCaseRecord> {
+  const payload = toServerCasePayload(meta)
   const headers = {
     ...(await getAuthHeaders()),
     'Content-Type': 'application/json',
@@ -79,22 +78,15 @@ export async function createPatientOnApi(meta: LocalCaseMeta): Promise<LocalCase
     method: 'POST',
     headers,
     body: JSON.stringify({
-      caseId: meta.caseId,
-      localName: meta.localName ?? null,
-      localVorname: meta.localVorname ?? null,
-      localNachname: meta.localNachname ?? null,
-      localGeburtsdatum: meta.localGeburtsdatum ?? null,
-      localGeschlecht: meta.localGeschlecht ?? null,
-      localAge: meta.localAge ?? null,
-      pageHeading: meta.pageHeading ?? null,
-      lastDocumentType: meta.lastDocumentType ?? null,
-      lastOpened: meta.lastOpened,
-      createdAt: meta.createdAt,
+      caseId: payload.caseId,
+      lastDocumentType: payload.lastDocumentType ?? null,
+      lastOpened: payload.lastOpened,
+      createdAt: payload.createdAt,
     }),
   })
   if (!response.ok) {
     throw new Error(`Failed to create patient (${response.status})`)
   }
-  const data = (await response.json()) as { patient?: ApiPatientRecord }
-  return data.patient ? toLocalCaseMeta(data.patient) : meta
+  const data = (await response.json()) as { patient?: ApiCaseRecord }
+  return data.patient ?? payload
 }

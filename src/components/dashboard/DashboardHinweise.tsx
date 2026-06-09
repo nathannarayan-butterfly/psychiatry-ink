@@ -1,16 +1,16 @@
 import { AlertTriangle, X } from 'lucide-react'
-import { useCallback, useState, type ReactNode } from 'react'
+import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { UiTranslationKey } from '../../data/uiTranslations'
+import type { IdentifierStorageMode } from '../../utils/identifierStorage'
 import { EncryptionDisclaimerBody } from '../EncryptionDisclaimerBody'
 
 type HinweisPanelId = 'encryption' | 'pseudonym' | 'local'
 
-const localPatientDataHintKeys = [
+const sharedHintKeys = [
   'dashboardHintLocalIdentifiers',
   'dashboardHintLocalCrypto',
   'dashboardHintLocalZeroKnowledge',
-  'dashboardHintLocalPassphrase',
   'dashboardHintLocalNoRecovery',
 ] as const satisfies readonly UiTranslationKey[]
 
@@ -91,13 +91,37 @@ function DashboardHinweisPanel({ id, titleKey, children }: DashboardHinweisPanel
   )
 }
 
-export function DashboardHinweise() {
+interface DashboardHinweiseProps {
+  identifierStorage: IdentifierStorageMode
+}
+
+export function DashboardHinweise({ identifierStorage }: DashboardHinweiseProps) {
   const { t } = useTranslation()
+
+  const passphraseKey = useMemo(
+    (): UiTranslationKey =>
+      identifierStorage === 'account'
+        ? 'dashboardHintPassphraseAccount'
+        : 'dashboardHintPassphraseDevice',
+    [identifierStorage],
+  )
+
+  const currentModeKey = useMemo(
+    (): UiTranslationKey =>
+      identifierStorage === 'account'
+        ? 'dashboardCurrentModeAccount'
+        : 'dashboardCurrentModeDevice',
+    [identifierStorage],
+  )
 
   return (
     <div className="dashboard-hinweise-stack">
       <DashboardHinweisPanel id="encryption" titleKey="dashboardHintEncryptionTitle">
-        <EncryptionDisclaimerBody variant="list" className="dashboard-hinweis-panel__list" />
+        <EncryptionDisclaimerBody
+          variant="list"
+          className="dashboard-hinweis-panel__list"
+          identifierStorage={identifierStorage}
+        />
       </DashboardHinweisPanel>
 
       <DashboardHinweisPanel id="pseudonym" titleKey="dashboardHintPseudonymTitle">
@@ -107,12 +131,25 @@ export function DashboardHinweise() {
         </p>
       </DashboardHinweisPanel>
 
-      <DashboardHinweisPanel id="local" titleKey="dashboardHintLocalDataTitle">
+      <DashboardHinweisPanel id="local" titleKey="dashboardHintStorageTitle">
+        <p
+          className={
+            identifierStorage === 'device'
+              ? 'identifier-storage-choice__warning'
+              : 'dashboard-hinweis-panel__text dashboard-hinweis-panel__text--emphasis'
+          }
+        >
+          {t(currentModeKey)}
+        </p>
         <ul className="dashboard-hinweis-panel__list">
-          {localPatientDataHintKeys.map((key) => (
+          {sharedHintKeys.map((key) => (
             <li key={key}>{t(key)}</li>
           ))}
+          <li>{t(passphraseKey)}</li>
         </ul>
+        <p className="dashboard-hinweis-panel__text text-xs text-muted">
+          {t('dashboardHintChangeInSettings')}
+        </p>
       </DashboardHinweisPanel>
     </div>
   )

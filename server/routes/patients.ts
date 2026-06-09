@@ -5,50 +5,21 @@ import { resolveAccountId } from '../middleware/auth'
 
 export const patientsRouter: Router = createRouter()
 
-interface PatientPatchBody {
-  localName?: string | null
-  localVorname?: string | null
-  localNachname?: string | null
-  localGeburtsdatum?: string | null
-  localGeschlecht?: string | null
-  localAge?: string | null
-  pageHeading?: string | null
+/** Non-identifying sync payload — server never receives patient names, DOB, or diagnoses. */
+interface CaseRegistryPatchBody {
   lastDocumentType?: string | null
   lastOpened?: string | null
   createdAt?: string | null
 }
 
-interface DiagnosisPayload {
-  id: string
-  icd10: { code: string; label: string; overridden: boolean }
-  icd11: { code: string; label: string; overridden: boolean }
-  dsm: { code: string; label: string; overridden: boolean }
-  createdAt: string
-  updatedAt: string
-}
-
-function toPatientResponse(row: {
+function toCaseResponse(row: {
   caseId: string
-  localName: string | null
-  localVorname: string | null
-  localNachname: string | null
-  localGeburtsdatum: string | null
-  localGeschlecht: string | null
-  localAge: string | null
-  pageHeading: string | null
   lastDocumentType: string | null
   lastOpened: Date
   createdAt: Date
 }) {
   return {
     caseId: row.caseId,
-    localName: row.localName ?? undefined,
-    localVorname: row.localVorname ?? undefined,
-    localNachname: row.localNachname ?? undefined,
-    localGeburtsdatum: row.localGeburtsdatum ?? undefined,
-    localGeschlecht: row.localGeschlecht ?? undefined,
-    localAge: row.localAge ?? undefined,
-    pageHeading: row.pageHeading ?? undefined,
     lastDocumentType: row.lastDocumentType ?? undefined,
     lastOpened: row.lastOpened.toISOString(),
     createdAt: row.createdAt.toISOString(),
@@ -61,7 +32,19 @@ function normalizeOptionalString(value: string | null | undefined): string | nul
   return trimmed || null
 }
 
-/** GET /api/patients — list all cases for the current account. */
+/**
+ * Returns true if the case may be written by this account.
+ * A case with no existing row is claimable; an existing row must match.
+ */
+async function canWriteCase(caseId: string, accountId: string): Promise<boolean> {
+  const existing = await prisma.patientCase.findUnique({
+    where: { caseId },
+    select: { accountId: true },
+  })
+  return !existing || existing.accountId === accountId
+}
+
+/** GET /api/patients — list opaque case codes for the current account. */
 patientsRouter.get('/', async (req: Request, res: Response) => {
   try {
     const accountId = resolveAccountId(req)
@@ -69,21 +52,26 @@ patientsRouter.get('/', async (req: Request, res: Response) => {
       where: { accountId },
       orderBy: { lastOpened: 'desc' },
     })
-    res.json({ patients: rows.map(toPatientResponse) })
+    res.json({ patients: rows.map(toCaseResponse) })
   } catch (error) {
     console.error('[patients] list failed', error)
     res.status(500).json({ error: 'Failed to load patients' })
   }
 })
 
-/** POST /api/patients — create a new patient case. */
+/** POST /api/patients — register a new opaque case code. */
 patientsRouter.post('/', async (req: Request, res: Response) => {
   try {
     const accountId = resolveAccountId(req)
-    const body = req.body as { caseId?: string } & PatientPatchBody
+    const body = req.body as { caseId?: string } & CaseRegistryPatchBody
     const caseId = body.caseId?.trim()
     if (!caseId) {
       res.status(400).json({ error: 'caseId is required' })
+      return
+    }
+
+    if (!(await canWriteCase(caseId, accountId))) {
+      res.status(403).json({ error: 'Case belongs to another account' })
       return
     }
 
@@ -93,46 +81,36 @@ patientsRouter.post('/', async (req: Request, res: Response) => {
       create: {
         caseId,
         accountId,
-        localName: normalizeOptionalString(body.localName),
-        localVorname: normalizeOptionalString(body.localVorname),
-        localNachname: normalizeOptionalString(body.localNachname),
-        localGeburtsdatum: normalizeOptionalString(body.localGeburtsdatum),
-        localGeschlecht: normalizeOptionalString(body.localGeschlecht),
-        localAge: normalizeOptionalString(body.localAge),
-        pageHeading: normalizeOptionalString(body.pageHeading),
         lastDocumentType: normalizeOptionalString(body.lastDocumentType),
         lastOpened: body.lastOpened ? new Date(body.lastOpened) : now,
         createdAt: body.createdAt ? new Date(body.createdAt) : now,
       },
       update: {
         accountId,
-        localName: normalizeOptionalString(body.localName),
-        localVorname: normalizeOptionalString(body.localVorname),
-        localNachname: normalizeOptionalString(body.localNachname),
-        localGeburtsdatum: normalizeOptionalString(body.localGeburtsdatum),
-        localGeschlecht: normalizeOptionalString(body.localGeschlecht),
-        localAge: normalizeOptionalString(body.localAge),
-        pageHeading: normalizeOptionalString(body.pageHeading),
         lastDocumentType: normalizeOptionalString(body.lastDocumentType),
         lastOpened: body.lastOpened ? new Date(body.lastOpened) : now,
       },
     })
 
-    res.status(201).json({ patient: toPatientResponse(row) })
+    res.status(201).json({ patient: toCaseResponse(row) })
   } catch (error) {
     console.error('[patients] create failed', error)
     res.status(500).json({ error: 'Failed to create patient' })
   }
 })
 
-/** PATCH /api/patients/:caseId — upsert metadata for a case. */
+/** PATCH /api/patients/:caseId — upsert non-identifying sync metadata for a case code. */
 patientsRouter.patch('/:caseId', async (req: Request, res: Response) => {
   try {
     const accountId = resolveAccountId(req)
     const caseId = req.params.caseId.trim()
-    const body = req.body as PatientPatchBody
+    const body = req.body as CaseRegistryPatchBody
 
     const existing = await prisma.patientCase.findUnique({ where: { caseId } })
+    if (existing && existing.accountId !== accountId) {
+      res.status(403).json({ error: 'Case belongs to another account' })
+      return
+    }
     const now = new Date()
 
     const row = await prisma.patientCase.upsert({
@@ -140,30 +118,12 @@ patientsRouter.patch('/:caseId', async (req: Request, res: Response) => {
       create: {
         caseId,
         accountId,
-        localName: normalizeOptionalString(body.localName),
-        localVorname: normalizeOptionalString(body.localVorname),
-        localNachname: normalizeOptionalString(body.localNachname),
-        localGeburtsdatum: normalizeOptionalString(body.localGeburtsdatum),
-        localGeschlecht: normalizeOptionalString(body.localGeschlecht),
-        localAge: normalizeOptionalString(body.localAge),
-        pageHeading: normalizeOptionalString(body.pageHeading),
         lastDocumentType: normalizeOptionalString(body.lastDocumentType),
         lastOpened: body.lastOpened ? new Date(body.lastOpened) : now,
         createdAt: body.createdAt ? new Date(body.createdAt) : now,
       },
       update: {
         accountId: existing?.accountId ?? accountId,
-        ...(body.localName !== undefined ? { localName: normalizeOptionalString(body.localName) } : {}),
-        ...(body.localVorname !== undefined ? { localVorname: normalizeOptionalString(body.localVorname) } : {}),
-        ...(body.localNachname !== undefined ? { localNachname: normalizeOptionalString(body.localNachname) } : {}),
-        ...(body.localGeburtsdatum !== undefined
-          ? { localGeburtsdatum: normalizeOptionalString(body.localGeburtsdatum) }
-          : {}),
-        ...(body.localGeschlecht !== undefined
-          ? { localGeschlecht: normalizeOptionalString(body.localGeschlecht) }
-          : {}),
-        ...(body.localAge !== undefined ? { localAge: normalizeOptionalString(body.localAge) } : {}),
-        ...(body.pageHeading !== undefined ? { pageHeading: normalizeOptionalString(body.pageHeading) } : {}),
         ...(body.lastDocumentType !== undefined
           ? { lastDocumentType: normalizeOptionalString(body.lastDocumentType) }
           : {}),
@@ -171,82 +131,9 @@ patientsRouter.patch('/:caseId', async (req: Request, res: Response) => {
       },
     })
 
-    res.json({ patient: toPatientResponse(row) })
+    res.json({ patient: toCaseResponse(row) })
   } catch (error) {
     console.error('[patients] patch failed', error)
     res.status(500).json({ error: 'Failed to update patient' })
-  }
-})
-
-/** GET /api/patients/:caseId/diagnoses */
-patientsRouter.get('/:caseId/diagnoses', async (req: Request, res: Response) => {
-  try {
-    const accountId = resolveAccountId(req)
-    const caseId = req.params.caseId.trim()
-
-    const rows = await prisma.patientDiagnosis.findMany({
-      where: { accountId, caseId },
-      orderBy: { sortOrder: 'asc' },
-    })
-
-    const diagnoses: DiagnosisPayload[] = rows.map((row) => ({
-      id: row.id,
-      icd10: { code: row.icd10Code, label: row.icd10Label, overridden: row.icd10Overridden },
-      icd11: { code: row.icd11Code, label: row.icd11Label, overridden: row.icd11Overridden },
-      dsm: { code: row.dsmCode, label: row.dsmLabel, overridden: row.dsmOverridden },
-      createdAt: row.createdAt.toISOString(),
-      updatedAt: row.updatedAt.toISOString(),
-    }))
-
-    res.json({ diagnoses })
-  } catch (error) {
-    console.error('[patients] diagnoses list failed', error)
-    res.status(500).json({ error: 'Failed to load diagnoses' })
-  }
-})
-
-/** PUT /api/patients/:caseId/diagnoses — replace all diagnoses for a case. */
-patientsRouter.put('/:caseId/diagnoses', async (req: Request, res: Response) => {
-  try {
-    const accountId = resolveAccountId(req)
-    const caseId = req.params.caseId.trim()
-    const body = req.body as { diagnoses?: DiagnosisPayload[] }
-    const diagnoses = Array.isArray(body.diagnoses) ? body.diagnoses : []
-
-    await prisma.patientCase.upsert({
-      where: { caseId },
-      create: { caseId, accountId },
-      update: { accountId },
-    })
-
-    await prisma.$transaction([
-      prisma.patientDiagnosis.deleteMany({ where: { accountId, caseId } }),
-      ...diagnoses.map((entry, index) =>
-        prisma.patientDiagnosis.create({
-          data: {
-            id: entry.id,
-            caseId,
-            accountId,
-            icd10Code: entry.icd10.code,
-            icd10Label: entry.icd10.label,
-            icd10Overridden: entry.icd10.overridden,
-            icd11Code: entry.icd11.code,
-            icd11Label: entry.icd11.label,
-            icd11Overridden: entry.icd11.overridden,
-            dsmCode: entry.dsm.code,
-            dsmLabel: entry.dsm.label,
-            dsmOverridden: entry.dsm.overridden,
-            sortOrder: index,
-            createdAt: new Date(entry.createdAt),
-            updatedAt: new Date(entry.updatedAt),
-          },
-        }),
-      ),
-    ])
-
-    res.json({ ok: true, count: diagnoses.length })
-  } catch (error) {
-    console.error('[patients] diagnoses save failed', error)
-    res.status(500).json({ error: 'Failed to save diagnoses' })
   }
 })

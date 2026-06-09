@@ -1,6 +1,6 @@
 import type { DiagnosisSearchHit } from '../services/diagnosisReferenceApi'
 import { fetchCrosswalkByIcd10 } from '../services/diagnosisReferenceApi'
-import { fetchDiagnosesFromApi, saveDiagnosesToApi } from '../services/diagnosenApi'
+import { scheduleDiagnosisImprints } from './clinicalImprint'
 
 export type CodingSystem = 'icd10' | 'icd11' | 'dsm'
 
@@ -131,33 +131,10 @@ export function saveDiagnosen(caseId: string, entries: DiagnoseEntry[]): void {
   } catch {
     // ignore quota errors
   }
-  void saveDiagnosesToApi(caseId, entries).catch((error) => {
-    console.warn('[diagnosen] API persist failed', caseId, error)
-  })
+  scheduleDiagnosisImprints(caseId, entries)
 }
 
-const DIAGNOSES_MIGRATED_KEY = 'psychiatry-ink:diagnosen-db-migrated'
-
-/** Load diagnoses from SQLite (API), with one-time localStorage migration. */
+/** Load diagnoses from device-local storage only (never synced to server). */
 export async function loadDiagnosenAsync(caseId: string): Promise<DiagnoseEntry[]> {
-  const localEntries = loadDiagnosen(caseId)
-
-  try {
-    const apiEntries = await fetchDiagnosesFromApi(caseId)
-    if (apiEntries.length > 0) {
-      saveDiagnosen(caseId, apiEntries)
-      return apiEntries
-    }
-
-    const migratedFlag = localStorage.getItem(`${DIAGNOSES_MIGRATED_KEY}:${caseId}`) === 'true'
-    if (!migratedFlag && localEntries.length > 0) {
-      await saveDiagnosesToApi(caseId, localEntries)
-      localStorage.setItem(`${DIAGNOSES_MIGRATED_KEY}:${caseId}`, 'true')
-    }
-
-    return localEntries
-  } catch (error) {
-    console.warn('[diagnosen] API load failed, using localStorage', caseId, error)
-    return localEntries
-  }
+  return loadDiagnosen(caseId)
 }
