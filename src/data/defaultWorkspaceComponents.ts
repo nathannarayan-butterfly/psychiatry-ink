@@ -53,7 +53,7 @@ export const defaultWorkspaceComponents: WorkspaceComponentTemplate[] = [
   },
   {
     id: 'psychopath',
-    label: 'Psychopathologischer Befund',
+    label: 'Psychopathologischer Befund, AMDP-orientiert',
     toolLabelLines: ['Psycho-', 'pathologie'],
     icon: 'brain',
     multistage: false,

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAppearanceSettings } from '../hooks/useAppearanceSettings'
 import { useLabTool } from '../hooks/useLabTool'
+import { useAssessmentStandardSettings } from '../hooks/useAssessmentStandardSettings'
+import { useIsdmEngine } from '../hooks/useIsdmEngine'
 import { useLanguageSettings } from '../hooks/useLanguageSettings'
 import { usePrivacySettings } from '../hooks/usePrivacySettings'
 import { useSettingsPanel } from '../hooks/useSettingsPanel'
@@ -34,6 +36,7 @@ import type { SubscriptionPlan } from '../data/subscriptionPlans'
 type AppearanceState = ReturnType<typeof useAppearanceSettings>
 type PrivacyState = ReturnType<typeof usePrivacySettings>
 type LanguageState = ReturnType<typeof useLanguageSettings>
+type AssessmentStandardState = ReturnType<typeof useAssessmentStandardSettings>
 type SettingsPanelState = ReturnType<typeof useSettingsPanel>
 type WorkspaceSettingsState = ReturnType<typeof useWorkspaceSettings>
 
@@ -60,6 +63,7 @@ interface WorkspaceInnerProps {
   appearance: AppearanceState
   privacy: PrivacyState
   languageSettings: LanguageState
+  assessmentStandardSettings: AssessmentStandardState
   settingsPanel: SettingsPanelState
   workspaceSettings: WorkspaceSettingsState
   plan: SubscriptionPlan
@@ -90,6 +94,7 @@ function WorkspaceInner({
   appearance,
   privacy,
   languageSettings,
+  assessmentStandardSettings,
   settingsPanel,
   workspaceSettings,
   plan,
@@ -104,7 +109,12 @@ function WorkspaceInner({
     touchCaseOpened(caseId)
   }, [caseId, workspaceStorageId])
 
-  const workspace = useWorkspaceState(documentTypes, language, workspaceStorageId)
+  const workspace = useWorkspaceState(
+    documentTypes,
+    language,
+    workspaceStorageId,
+    languageSettings.englishVariant,
+  )
   const timeline = useTimelineTool(workspaceStorageId)
   const lab = useLabTool(workspaceStorageId)
   const [clinicalAge, setClinicalAge] = useState('')
@@ -244,6 +254,14 @@ function WorkspaceInner({
     documentTypeLabel,
   })
 
+  useIsdmEngine({
+    caseId: workspaceStorageId,
+    enabled: assessmentStandardSettings.isIsdmActive,
+    vaultReady: workspaceVault.ready,
+    checklistSelections: workspace.checklistSelections,
+    sectionContents: workspace.sectionContents,
+  })
+
   useEffect(() => {
     if (!workspaceVault.ready) return
     workspaceVault.scheduleSave()
@@ -301,6 +319,9 @@ function WorkspaceInner({
       savedDocsCaseId={workspaceStorageId}
       workspaceStorageId={workspaceStorageId}
       showWorkspaceTabs={caseId === DEFAULT_CASE_ID}
+      isIsdmActive={assessmentStandardSettings.isIsdmActive}
+      assessmentStandard={assessmentStandardSettings.assessmentStandard}
+      onSelectAssessmentStandard={assessmentStandardSettings.selectAssessmentStandard}
     />
   )
 }
@@ -317,6 +338,7 @@ export function CaseWorkspacePage({
   const { plan } = useAuth()
   const workspaceSettings = useWorkspaceSettings()
   const languageSettings = useLanguageSettings()
+  const assessmentStandardSettings = useAssessmentStandardSettings()
   const appearance = useAppearanceSettings()
   const privacy = usePrivacySettings()
   const settingsPanel = useSettingsPanel()
@@ -325,9 +347,10 @@ export function CaseWorkspacePage({
     const withLabels = localizeWorkspaceComponents(
       workspaceSettings.components,
       languageSettings.language,
+      languageSettings.englishVariant,
     )
     return applyHintTranslationsToComponents(withLabels, languageSettings.language)
-  }, [workspaceSettings.components, languageSettings.language])
+  }, [workspaceSettings.components, languageSettings.language, languageSettings.englishVariant])
 
   useEffect(() => {
     void ensureHintsTranslated(languageSettings.language)
@@ -368,6 +391,7 @@ export function CaseWorkspacePage({
       appearance={appearance}
       privacy={privacy}
       languageSettings={languageSettings}
+      assessmentStandardSettings={assessmentStandardSettings}
       settingsPanel={settingsPanel}
       workspaceSettings={workspaceSettings}
       plan={plan}

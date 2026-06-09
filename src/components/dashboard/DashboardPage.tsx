@@ -18,6 +18,7 @@ import { useTranslation } from '../../context/TranslationContext'
 import { useWorkspaceSession } from '../../context/WorkspaceSessionContext'
 import { NOTION_PAGES } from '../notion/notionPages'
 import type { NotionPageId } from '../notion/notionPages'
+import { useAssessmentStandardSettings } from '../../hooks/useAssessmentStandardSettings'
 import { useAppearanceSettings } from '../../hooks/useAppearanceSettings'
 import { useAccountDisplayName } from '../../hooks/useAccountDisplayName'
 import { useCaseRegistry } from '../../hooks/useCaseRegistry'
@@ -118,6 +119,7 @@ export function DashboardPage({
   const displayName = useAccountDisplayName()
   const settingsPanel = useSettingsPanel()
   const appearance = useAppearanceSettings()
+  const assessmentStandardSettings = useAssessmentStandardSettings()
   const kiInstructions = useKiInstructions()
   const workspaceSettings = useWorkspaceSettings()
   const [aiAutoMode, setAiAutoMode] = useState(readAiAutoMode)
@@ -249,7 +251,11 @@ export function DashboardPage({
           onToggleAiAuto={toggleAiAutoMode}
           kiInstructions={kiInstructions}
           language={languageSettings.language}
+          englishVariant={languageSettings.englishVariant}
           onSelectLanguage={languageSettings.selectLanguage}
+          onSelectEnglishVariant={languageSettings.selectEnglishVariant}
+          assessmentStandard={assessmentStandardSettings.assessmentStandard}
+          onSelectAssessmentStandard={assessmentStandardSettings.selectAssessmentStandard}
           workspaceVault={workspaceVault}
         />
       </div>

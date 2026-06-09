@@ -1,9 +1,27 @@
 import { useState } from 'react'
 import { languageOptions } from '../../data/languages'
-import type { UiLanguage } from '../../types/settings'
+import {
+  getIsdmProfileLabel,
+  getLocalClinicalStandardLabel,
+} from '../../data/isdmLabels'
+import { useTranslation } from '../../context/TranslationContext'
+import type { AssessmentStandard } from '../../types/isdm'
+import type { EnglishVariant, UiLanguage } from '../../types/settings'
 import { readPomodoroDuration, savePomodoroDuration } from '../../hooks/usePomodoroTimer'
 import { SettingsField } from './SettingsField'
 import { SettingsOptionGroup } from './SettingsOptionGroup'
+
+function PlaceholderOption({ label }: { label: string }) {
+  return (
+    <button
+      type="button"
+      disabled
+      className="rounded-sm border-2 border-border bg-surface-hover px-3 py-1.5 text-xs text-muted"
+    >
+      {label}
+    </button>
+  )
+}
 
 function PlaceholderInput({ value }: { value: string }) {
   return (
@@ -32,14 +50,31 @@ function PlaceholderSelect({ value, options }: { value: string; options: string[
 
 interface LanguageSectionProps {
   language: UiLanguage
+  englishVariant: EnglishVariant
   onSelectLanguage: (language: UiLanguage) => void
+  onSelectEnglishVariant: (variant: EnglishVariant) => void
+  assessmentStandard: AssessmentStandard
+  onSelectAssessmentStandard: (standard: AssessmentStandard) => void
 }
 
-export function LanguageSection({ language, onSelectLanguage }: LanguageSectionProps) {
+export function LanguageSection({
+  language,
+  englishVariant,
+  onSelectLanguage,
+  onSelectEnglishVariant,
+  assessmentStandard,
+  onSelectAssessmentStandard,
+}: LanguageSectionProps) {
+  const { t } = useTranslation()
+
   return (
     <div>
-      <h2 className="text-lg font-semibold text-ink">Sprache</h2>
-      <p className="mt-1 mb-6 text-sm text-muted">Sprache der Benutzeroberfläche und Dokumentation.</p>
+      <h2 className="text-lg font-semibold text-ink">{t('settingsLanguage')}</h2>
+      <p className="mt-1 mb-6 text-sm text-muted">
+        {language === 'de'
+          ? 'Sprache der Benutzeroberfläche und Dokumentation.'
+          : t('settingsAssessmentStandardDescription')}
+      </p>
 
       <SettingsField label="Oberflächensprache">
         <SettingsOptionGroup
@@ -47,6 +82,48 @@ export function LanguageSection({ language, onSelectLanguage }: LanguageSectionP
           options={languageOptions}
           onChange={onSelectLanguage}
         />
+      </SettingsField>
+
+      {language === 'en' ? (
+        <SettingsField
+          label="Englische Variante"
+          description="Unterschiedliche Bezeichnungen für psychopathologische Befunde (MSE)."
+        >
+          <SettingsOptionGroup
+            value={englishVariant}
+            options={[
+              { value: 'uk', label: 'UK — Mental State Examination' },
+              { value: 'us', label: 'US — Mental Status Examination' },
+            ]}
+            onChange={onSelectEnglishVariant}
+          />
+        </SettingsField>
+      ) : null}
+
+      <SettingsField
+        label={t('settingsAssessmentStandard')}
+        description={t('settingsAssessmentStandardDescription')}
+      >
+        <SettingsOptionGroup
+          value={assessmentStandard}
+          options={[
+            {
+              value: 'local_clinical' as const,
+              label: getLocalClinicalStandardLabel(language, englishVariant),
+            },
+            {
+              value: 'international_structured_diagnostic_mapping' as const,
+              label: getIsdmProfileLabel(language, englishVariant),
+            },
+          ]}
+          onChange={onSelectAssessmentStandard}
+        />
+        <div className="mt-2 flex flex-wrap gap-2">
+          <PlaceholderOption
+            label={`DSM-5-TR / US Diagnostic Support (${t('assessmentStandardComingSoon')})`}
+          />
+          <PlaceholderOption label={`Research-Grade (${t('assessmentStandardComingSoon')})`} />
+        </div>
       </SettingsField>
 
       <SettingsField label="Dokumentationssprache" description="Sprache für generierte Texte.">

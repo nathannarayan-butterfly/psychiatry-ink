@@ -1,4 +1,5 @@
-import type { UiLanguage } from '../types/settings'
+import { resolvePsychopathUiTranslation } from './psychopathTitles'
+import type { EnglishVariant, UiLanguage } from '../types/settings'
 
 export const uiTranslations = {
   write: {
@@ -525,9 +526,9 @@ export const uiTranslations = {
   },
   workspaceModeChecklist: {
     de: 'AMDP-Checkliste',
-    en: 'AMDP checklist',
-    fr: 'Liste AMDP',
-    es: 'Lista AMDP',
+    en: 'Structured examination',
+    fr: 'Sémiologie psychiatrique',
+    es: 'Exploración estructurada',
   },
   insertNormalBefund: {
     de: 'Normalbefund',
@@ -1303,6 +1304,30 @@ export const uiTranslations = {
     fr: 'Langue',
     es: 'Idioma',
   },
+  settingsAssessmentStandard: {
+    de: 'Befundstandard',
+    en: 'Assessment standard',
+    fr: 'Standard d\'examen',
+    es: 'Estándar de exploración',
+  },
+  settingsAssessmentStandardDescription: {
+    de: 'Steuert Bezeichnungen und strukturierte diagnostische Zuordnung im Arbeitsbereich.',
+    en: 'Controls labels and structured diagnostic mapping in the workspace.',
+    fr: 'Contrôle les libellés et la cartographie diagnostique structurée dans l\'espace de travail.',
+    es: 'Controla las etiquetas y el mapeo diagnóstico estructurado en el espacio de trabajo.',
+  },
+  isdmActiveBadge: {
+    de: 'ISDM aktiv',
+    en: 'ISDM active',
+    fr: 'ISDM actif',
+    es: 'ISDM activo',
+  },
+  assessmentStandardComingSoon: {
+    de: 'Demnächst',
+    en: 'Coming soon',
+    fr: 'Bientôt disponible',
+    es: 'Próximamente',
+  },
   settingsDocumentation: {
     de: 'Dokumentation',
     en: 'Documentation',
@@ -1376,10 +1401,10 @@ export const uiTranslations = {
     es: 'Notas de evolución',
   },
   notionPagePsychopath: {
-    de: 'Psychopathologischer Befund',
-    en: 'Psychopathological findings',
-    fr: 'Examen psychopathologique',
-    es: 'Hallazgos psicopatológicos',
+    de: 'Psychopathologischer Befund, AMDP-orientiert',
+    en: 'Mental State Examination',
+    fr: 'Examen psychiatrique',
+    es: 'Exploración psicopatológica',
   },
   notionPageTherapieVerlauf: {
     de: 'Arztbrief',
@@ -1557,9 +1582,9 @@ export const uiTranslations = {
   },
   notionConvertPpb: {
     de: 'In PPB umwandeln',
-    en: 'Convert to psychopathology',
-    fr: 'Convertir en examen psychopathologique',
-    es: 'Convertir en psicopatología',
+    en: 'Convert to mental state examination',
+    fr: 'Convertir en examen psychiatrique',
+    es: 'Convertir en exploración psicopatológica',
   },
   notionConvertArztbrief: {
     de: 'In Arztbriefstil umwandeln',
@@ -1599,9 +1624,9 @@ export const uiTranslations = {
   },
   notionPastePsychopath: {
     de: 'In Psychopathologischen Befund übernehmen',
-    en: 'Apply to psychopathological findings',
-    fr: 'Appliquer à l\'examen psychopathologique',
-    es: 'Aplicar a hallazgos psicopatológicos',
+    en: 'Apply to mental state examination',
+    fr: "Appliquer à l'examen psychiatrique",
+    es: 'Aplicar a exploración psicopatológica',
   },
   notionPasteClean: {
     de: 'Bereinigen',
@@ -1634,10 +1659,10 @@ export const uiTranslations = {
     es: 'Entrada de evolución',
   },
   notionSlashPsychopath: {
-    de: 'Psychopathologischer Befund',
-    en: 'Psychopathological findings',
-    fr: 'Examen psychopathologique',
-    es: 'Hallazgos psicopatológicos',
+    de: 'Psychopathologischer Befund, AMDP-orientiert',
+    en: 'Mental State Examination',
+    fr: 'Examen psychiatrique',
+    es: 'Exploración psicopatológica',
   },
   notionSlashLab: {
     de: 'Laborwert hinzufügen',
@@ -1689,15 +1714,15 @@ export const uiTranslations = {
   },
   notionSlashVerlaufTemplate: {
     de: 'Visite / Kurzkontakt:\n\nAnlass:\n\nPsychopathologischer Befund:\n\nVerlauf / Maßnahmen:\n\nPlan:',
-    en: 'Visit / brief contact:\n\nReason:\n\nPsychopathological findings:\n\nProgress / measures:\n\nPlan:',
-    fr: 'Visite / contact bref :\n\nMotif :\n\nExamen psychopathologique :\n\nÉvolution / mesures :\n\nPlan :',
-    es: 'Visita / contacto breve:\n\nMotivo:\n\nHallazgos psicopatológicos:\n\nEvolución / medidas:\n\nPlan:',
+    en: 'Visit / brief contact:\n\nReason:\n\nMental State Examination:\n\nProgress / measures:\n\nPlan:',
+    fr: 'Visite / contact bref :\n\nMotif :\n\nExamen psychiatrique :\n\nÉvolution / mesures :\n\nPlan :',
+    es: 'Visita / contacto breve:\n\nMotivo:\n\nExploración psicopatológica:\n\nEvolución / medidas:\n\nPlan:',
   },
   notionSlashPsychopathTemplate: {
-    de: 'Psychopathologischer Befund:\n\n',
-    en: 'Psychopathological findings:\n\n',
-    fr: 'Examen psychopathologique :\n\n',
-    es: 'Hallazgos psicopatológicos:\n\n',
+    de: 'Psychopathologischer Befund, AMDP-orientiert:\n\n',
+    en: 'Mental State Examination:\n\n',
+    fr: 'Examen psychiatrique :\n\n',
+    es: 'Exploración psicopatológica:\n\n',
   },
   amdpKompilieren: {
     de: 'Kompilieren',
@@ -2030,10 +2055,10 @@ export const uiTranslations = {
     es: 'Evolución',
   },
   kiDocPpb: {
-    de: 'Psychopathologischer Befund',
-    en: 'Mental state exam',
-    fr: 'Examen psychopathologique',
-    es: 'Examen psicopatológico',
+    de: 'Psychopathologischer Befund, AMDP-orientiert',
+    en: 'Mental State Examination',
+    fr: 'Examen psychiatrique',
+    es: 'Exploración psicopatológica',
   },
   kiDocTherapieVerlauf: {
     de: 'Arztbrief',
@@ -4115,6 +4140,12 @@ export const uiTranslations = {
 
 export type UiTranslationKey = keyof typeof uiTranslations
 
-export function translateUi(language: UiLanguage, key: UiTranslationKey): string {
+export function translateUi(
+  language: UiLanguage,
+  key: UiTranslationKey,
+  englishVariant: EnglishVariant = 'uk',
+): string {
+  const psychopathOverride = resolvePsychopathUiTranslation(key, language, englishVariant)
+  if (psychopathOverride !== undefined) return psychopathOverride
   return uiTranslations[key][language]
 }

@@ -67,8 +67,9 @@ function migrateComponents(
       const normalized = {
         ...component,
         label:
-          component.label === 'Psycho-pathologie'
-            ? 'Psychopathologischer Befund'
+          component.label === 'Psycho-pathologie' ||
+          component.label === 'Psychopathologischer Befund'
+            ? 'Psychopathologischer Befund, AMDP-orientiert'
             : component.label,
         toolLabelLines: component.toolLabelLines?.length
           ? component.toolLabelLines

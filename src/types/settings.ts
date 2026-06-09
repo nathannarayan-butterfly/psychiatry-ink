@@ -1,5 +1,9 @@
 export type UiLanguage = 'de' | 'en' | 'fr' | 'es'
 
+export type EnglishVariant = 'uk' | 'us'
+
+export type { AssessmentStandard } from './isdm'
+
 export type SettingsSectionId =
   | 'appearance'
   | 'workspace'

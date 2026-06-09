@@ -12,7 +12,7 @@ import type {
   DocumentType,
   InputMode,
 } from '../types'
-import type { UiLanguage } from '../types/settings'
+import type { EnglishVariant, UiLanguage } from '../types/settings'
 import {
   buildPsychopathNormalBefundText,
   buildPsychopathNormalChecklistSelections,
@@ -127,7 +127,12 @@ function buildInitialWorkspaceForType(nextType: DocumentType): {
   }
 }
 
-export function useWorkspaceState(documentTypes: DocumentType[], language: UiLanguage = 'de', caseId?: string) {
+export function useWorkspaceState(
+  documentTypes: DocumentType[],
+  language: UiLanguage = 'de',
+  caseId?: string,
+  englishVariant: EnglishVariant = 'uk',
+) {
   const { balance: creditBalance, setBalanceFromServer, hasEnoughCredits } = useCredits()
   const kiInstructions = useKiInstructions()
 
@@ -1378,7 +1383,7 @@ export function useWorkspaceState(documentTypes: DocumentType[], language: UiLan
       docType.sections && docType.sections.length > 0 ? docType.sections : undefined
 
     if (docType.mode === 'free' || !docType.multistage) {
-      const text = buildPsychopathNormalBefundText(sectionInputs, language)
+      const text = buildPsychopathNormalBefundText(sectionInputs, language, englishVariant)
       setEditorContent(text)
       setGeneratedContent(text)
       setSectionContents({})
@@ -1405,7 +1410,7 @@ export function useWorkspaceState(documentTypes: DocumentType[], language: UiLan
       setEditorContent(texts[activeSectionId])
       setGeneratedContent(texts[activeSectionId])
     }
-  }, [activeSectionId, currentDocumentType, language])
+  }, [activeSectionId, currentDocumentType, language, englishVariant])
 
   return {
     selectedDocumentType,

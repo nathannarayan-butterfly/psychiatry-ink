@@ -1,13 +1,15 @@
-import type { UiLanguage } from '../types/settings'
+import type { EnglishVariant, UiLanguage } from '../types/settings'
 import type { WorkspaceChecklistItem } from '../types/workspaceSettings'
+import { getPsychopathNormalBefundHeading as resolvePsychopathNormalBefundHeading } from './psychopathTitles'
 
 type Localized = Record<UiLanguage, string>
 
+/** @deprecated Use getPsychopathNormalBefundHeading(language, englishVariant) */
 export const psychopathNormalBefundHeading: Localized = {
-  de: 'Psychopathologischer Befund – AMDP-Checkliste',
-  en: 'Psychopathological findings – AMDP checklist',
-  fr: 'Examen psychopathologique – Liste AMDP',
-  es: 'Hallazgos psicopatológicos – Lista AMDP',
+  de: 'Psychopathologischer Befund, AMDP-orientiert',
+  en: 'Mental State Examination',
+  fr: 'Examen psychiatrique',
+  es: 'Exploración psicopatológica',
 }
 
 export const psychopathSectionDescriptions: Record<string, Localized> = {
@@ -443,6 +445,9 @@ export function localizePsychopathChecklistItem(
   }
 }
 
-export function getPsychopathNormalBefundHeading(language: UiLanguage): string {
-  return psychopathNormalBefundHeading[language]
+export function getPsychopathNormalBefundHeading(
+  language: UiLanguage,
+  englishVariant: EnglishVariant = 'uk',
+): string {
+  return resolvePsychopathNormalBefundHeading(language, englishVariant)
 }

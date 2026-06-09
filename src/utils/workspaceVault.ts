@@ -49,8 +49,10 @@ import {
   reindexClinicalPayload,
 } from './clinicalImprint'
 import type { ClinicalImprintIndex } from '../types/clinicalImprint'
+import type { IsdmClinicalAnalysis } from '../types/isdm'
+import { applyIsdmAnalysis, loadIsdmAnalysis } from './isdm'
 
-export const WORKSPACE_PAYLOAD_VERSION = 4
+export const WORKSPACE_PAYLOAD_VERSION = 5
 
 export const LAST_VAULT_EXPORT_KEY = 'psychiatry-ink:last-vault-export-at'
 
@@ -92,6 +94,8 @@ export interface ClinicalWorkspacePayload {
   diagnoses: DiagnoseEntry[]
   /** Structured clinical memory index — pseudonymous, no patient name. */
   clinicalImprints?: ClinicalImprintIndex
+  /** ISDM structured diagnostic mapping snapshot — clinician review required. */
+  isdmAnalysis?: IsdmClinicalAnalysis
   /** @deprecated v1 — stripped on write */
   lab?: LabSnapshot | null
   /** @deprecated v1 — stripped on write */
@@ -217,6 +221,7 @@ export function collectClinicalPayload(
   const storageCaseId = caseId ?? getActiveCaseId()
   const diagnoses = loadDiagnosen(storageCaseId)
   const clinicalImprints = loadClinicalImprintIndex(storageCaseId)
+  const isdmAnalysis = loadIsdmAnalysis(storageCaseId) ?? undefined
 
   return {
     version: WORKSPACE_PAYLOAD_VERSION,
@@ -233,6 +238,7 @@ export function collectClinicalPayload(
     activeLabGraphId,
     diagnoses,
     clinicalImprints,
+    isdmAnalysis,
   }
 }
 
@@ -291,6 +297,14 @@ export function applyClinicalPayload(
     const rebuilt = reindexClinicalPayload(storageCaseId, normalized)
     normalized.clinicalImprints = rebuilt
   }
+
+  if (normalized.isdmAnalysis) {
+    applyIsdmAnalysis(normalized.isdmAnalysis, storageCaseId)
+  } else {
+    void import('./isdm').then(({ scheduleIsdmRebuild }) => {
+      scheduleIsdmRebuild(storageCaseId, 'vault')
+    })
+  }
 }
 
 export function applyWorkspacePayload(payload: ClinicalWorkspacePayload, caseId?: string): void {
@@ -346,6 +360,7 @@ export async function decryptWorkspaceBlob(blob: EncryptedVaultBlob): Promise<Cl
     age: payload.age ?? '',
     diagnoses: payload.diagnoses ?? [],
     clinicalImprints: payload.clinicalImprints,
+    isdmAnalysis: payload.isdmAnalysis,
   }
 }
 

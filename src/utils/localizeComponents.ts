@@ -1,5 +1,11 @@
 import { componentTranslations } from '../data/componentTranslations'
-import type { UiLanguage } from '../types/settings'
+import {
+  getPsychopathChecklistVariantLabel,
+  getPsychopathDocumentTitle,
+  getPsychopathRailHeading,
+  getPsychopathToolLabelLines,
+} from '../data/psychopathTitles'
+import type { EnglishVariant, UiLanguage } from '../types/settings'
 import type {
   WorkspaceComponentTemplate,
   WorkspaceComponentVariant,
@@ -31,6 +37,7 @@ function localizeSection(
 export function localizeWorkspaceComponent(
   component: WorkspaceComponentTemplate,
   language: UiLanguage,
+  englishVariant: EnglishVariant = 'uk',
 ): WorkspaceComponentTemplate {
   const translation = componentTranslations[component.id]
   if (!translation) return component
@@ -58,13 +65,37 @@ export function localizeWorkspaceComponent(
     localizeVariant(component.id, variant, language),
   )
 
-  return {
+  const localized = {
     ...component,
     label,
     railHeading,
     toolLabelLines,
     sections,
     variants,
+  }
+
+  return applyPsychopathTitleOverrides(localized, language, englishVariant)
+}
+
+function applyPsychopathTitleOverrides(
+  component: WorkspaceComponentTemplate,
+  language: UiLanguage,
+  englishVariant: EnglishVariant,
+): WorkspaceComponentTemplate {
+  if (component.id !== 'psychopath') return component
+
+  return {
+    ...component,
+    label: getPsychopathDocumentTitle(language, englishVariant),
+    toolLabelLines: [...getPsychopathToolLabelLines(language, englishVariant)],
+    variants: component.variants?.map((variant) => {
+      if (variant.id !== 'checklist') return variant
+      return {
+        ...variant,
+        label: getPsychopathChecklistVariantLabel(language),
+        railHeading: getPsychopathRailHeading(language, englishVariant),
+      }
+    }),
   }
 }
 
@@ -105,6 +136,9 @@ function localizeVariant(
 export function localizeWorkspaceComponents(
   components: WorkspaceComponentTemplate[],
   language: UiLanguage,
+  englishVariant: EnglishVariant = 'uk',
 ): WorkspaceComponentTemplate[] {
-  return components.map((component) => localizeWorkspaceComponent(component, language))
+  return components.map((component) =>
+    localizeWorkspaceComponent(component, language, englishVariant),
+  )
 }

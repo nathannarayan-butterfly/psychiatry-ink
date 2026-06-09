@@ -157,10 +157,10 @@ export const componentTranslations: Record<string, ComponentTranslation> = {
       },
       'psychopathologischer-befund': {
         label: {
-          de: 'Psychopathologischer Befund',
-          en: 'Psychopathological findings',
-          fr: 'Examen psychopathologique',
-          es: 'Hallazgos psicopatológicos',
+          de: 'Psychopathologischer Befund, AMDP-orientiert',
+          en: 'Mental State Examination',
+          fr: 'Examen psychiatrique',
+          es: 'Exploración psicopatológica',
         },
       },
       'somatischer-befund': {
@@ -289,16 +289,16 @@ export const componentTranslations: Record<string, ComponentTranslation> = {
   },
   psychopath: {
     label: {
-      de: 'Psychopathologischer Befund',
-      en: 'Psychopathological Findings',
-      fr: 'Examen psychopathologique',
-      es: 'Hallazgos psicopatológicos',
+      de: 'Psychopathologischer Befund, AMDP-orientiert',
+      en: 'Mental State Examination',
+      fr: 'Examen psychiatrique',
+      es: 'Exploración psicopatológica',
     },
     toolLabelLines: {
       de: ['Psycho-', 'pathologie'],
-      en: ['Psycho-', 'pathology'],
-      fr: ['Psycho-', 'pathologie'],
-      es: ['Psico-', 'patología'],
+      en: ['Mental State', 'Examination'],
+      fr: ['Examen', 'psychiatrique'],
+      es: ['Exploración', 'psicopatológica'],
     },
     variants: {
       free: {
@@ -318,23 +318,23 @@ export const componentTranslations: Record<string, ComponentTranslation> = {
         },
         railHeading: {
           de: 'Psychopathologie',
-          en: 'Psychopathology',
-          fr: 'Psychopathologie',
-          es: 'Psicopatología',
+          en: 'Mental State Examination',
+          fr: 'Sémiologie psychiatrique',
+          es: 'Exploración psicopatológica',
         },
       },
       checklist: {
         label: {
           de: 'AMDP-Checkliste',
-          en: 'AMDP checklist',
-          fr: 'Liste AMDP',
-          es: 'Lista AMDP',
+          en: 'Structured examination',
+          fr: 'Sémiologie psychiatrique',
+          es: 'Exploración estructurada',
         },
         railHeading: {
           de: 'Psychopathologie',
-          en: 'Psychopathology',
-          fr: 'Psychopathologie',
-          es: 'Psicopatología',
+          en: 'Mental State Examination',
+          fr: 'Sémiologie psychiatrique',
+          es: 'Exploración psicopatológica',
         },
       },
     },

@@ -86,6 +86,16 @@ export async function flushClinicalImprintQueue(): Promise<void> {
       // Non-blocking — skip failed extraction
     }
   }
+
+  const caseIds = [...new Set(batch.map((job) => job.caseId))]
+  for (const id of caseIds) {
+    try {
+      const { scheduleIsdmRebuild } = await import('../isdm')
+      scheduleIsdmRebuild(id, 'imprint')
+    } catch {
+      // Non-blocking
+    }
+  }
 }
 
 export function collectDocumentSnapshotJobs(

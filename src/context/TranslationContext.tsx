@@ -1,9 +1,10 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react'
 import { translateUi, type UiTranslationKey } from '../data/uiTranslations'
-import type { UiLanguage } from '../types/settings'
+import type { EnglishVariant, UiLanguage } from '../types/settings'
 
 interface TranslationContextValue {
   language: UiLanguage
+  englishVariant: EnglishVariant
   t: (key: UiTranslationKey) => string
 }
 
@@ -11,16 +12,22 @@ const TranslationContext = createContext<TranslationContextValue | null>(null)
 
 interface TranslationProviderProps {
   language: UiLanguage
+  englishVariant?: EnglishVariant
   children: ReactNode
 }
 
-export function TranslationProvider({ language, children }: TranslationProviderProps) {
+export function TranslationProvider({
+  language,
+  englishVariant = 'uk',
+  children,
+}: TranslationProviderProps) {
   const value = useMemo(
     () => ({
       language,
-      t: (key: UiTranslationKey) => translateUi(language, key),
+      englishVariant,
+      t: (key: UiTranslationKey) => translateUi(language, key, englishVariant),
     }),
-    [language],
+    [language, englishVariant],
   )
 
   return <TranslationContext.Provider value={value}>{children}</TranslationContext.Provider>

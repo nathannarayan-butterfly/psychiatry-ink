@@ -5,7 +5,8 @@ import type { useAppearanceSettings } from '../../hooks/useAppearanceSettings'
 import type { usePrivacySettings } from '../../hooks/usePrivacySettings'
 import type { useWorkspaceSettings } from '../../hooks/useWorkspaceSettings'
 import type { useWorkspaceVault } from '../../hooks/useWorkspaceVault'
-import type { SettingsSectionId, UiLanguage } from '../../types/settings'
+import type { EnglishVariant, SettingsSectionId, UiLanguage } from '../../types/settings'
+import type { AssessmentStandard } from '../../types/isdm'
 import { AppearanceSection } from './AppearanceSection'
 import { WorkspaceSection } from './WorkspaceSection'
 import {
@@ -34,7 +35,11 @@ interface SettingsPageProps {
   onToggleAiAuto: () => void
   kiInstructions: ReturnType<typeof useKiInstructions>
   language: UiLanguage
+  englishVariant: EnglishVariant
   onSelectLanguage: (language: UiLanguage) => void
+  onSelectEnglishVariant: (variant: EnglishVariant) => void
+  assessmentStandard: AssessmentStandard
+  onSelectAssessmentStandard: (standard: AssessmentStandard) => void
   workspaceVault: ReturnType<typeof useWorkspaceVault>
 }
 
@@ -49,7 +54,11 @@ export function SettingsPage({
   onToggleAiAuto,
   kiInstructions,
   language,
+  englishVariant,
   onSelectLanguage,
+  onSelectEnglishVariant,
+  assessmentStandard,
+  onSelectAssessmentStandard,
   workspaceVault,
 }: SettingsPageProps) {
   const { t } = useTranslation()
@@ -143,7 +152,14 @@ export function SettingsPage({
           {activeSection === 'appearance' ? <AppearanceSection appearance={appearance} /> : null}
           {activeSection === 'workspace' ? <WorkspaceSection workspace={workspace} /> : null}
           {activeSection === 'language' ? (
-            <LanguageSection language={language} onSelectLanguage={onSelectLanguage} />
+            <LanguageSection
+              language={language}
+              englishVariant={englishVariant}
+              onSelectLanguage={onSelectLanguage}
+              onSelectEnglishVariant={onSelectEnglishVariant}
+              assessmentStandard={assessmentStandard}
+              onSelectAssessmentStandard={onSelectAssessmentStandard}
+            />
           ) : null}
           {activeSection === 'documentation' ? <DocumentationSection /> : null}
           {activeSection === 'ai' ? (

@@ -8,6 +8,7 @@ import { API_BASE } from '../services/apiClient'
 import { getAuthHeaders } from '../services/authHeaders'
 import { isAccountBackupUnlocked } from '../utils/accountBackupSession'
 import { registerClinicalImprintPersistHook } from '../utils/clinicalImprint'
+import { registerIsdmPersistHook } from '../utils/isdm/storage'
 import {
   ensureKeyMaterial,
   getOrCreateDeviceId,
@@ -183,7 +184,13 @@ export function useWorkspaceVault({
     registerClinicalImprintPersistHook((persistCaseId) => {
       if (persistCaseId === caseId) scheduleSaveRef.current()
     })
-    return () => registerClinicalImprintPersistHook(null)
+    registerIsdmPersistHook((persistCaseId) => {
+      if (persistCaseId === caseId) scheduleSaveRef.current()
+    })
+    return () => {
+      registerClinicalImprintPersistHook(null)
+      registerIsdmPersistHook(null)
+    }
   }, [caseId])
 
   const saveNow = useCallback(async () => {

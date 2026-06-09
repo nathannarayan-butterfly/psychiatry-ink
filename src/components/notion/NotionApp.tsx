@@ -57,6 +57,8 @@ import {
 } from './notionPages'
 import { documentTypes } from '../../data/documentTypes'
 import { resolveDocumentTypeWithVariant } from '../../utils/workspaceComponents'
+import { IsdmWorkspaceIndicator } from '../workspace/IsdmWorkspaceIndicator'
+import type { AssessmentStandard } from '../../types/isdm'
 
 type WorkspaceState = ReturnType<typeof useWorkspaceState>
 type LabState = ReturnType<typeof useLabTool>
@@ -101,6 +103,9 @@ interface NotionAppProps {
    * tabs so that each tab has its own isolated saved-docs list.
    */
   savedDocsCaseId?: string
+  isIsdmActive?: boolean
+  assessmentStandard: AssessmentStandard
+  onSelectAssessmentStandard: (standard: AssessmentStandard) => void
 }
 
 function isAiToolKey(action: SelectionActionId | PasteActionId): action is AiToolKey {
@@ -137,6 +142,9 @@ export function NotionApp({
   workspaceStorageId,
   showWorkspaceTabs = false,
   savedDocsCaseId,
+  isIsdmActive = false,
+  assessmentStandard,
+  onSelectAssessmentStandard,
 }: NotionAppProps) {
   const { t } = useTranslation()
   const [breakLottieActive, setBreakLottieActive] = useState(false)
@@ -672,11 +680,18 @@ export function NotionApp({
           onToggleAiAuto={workspace.toggleAiAutoMode}
           kiInstructions={workspace.kiInstructions}
           language={languageSettings.language}
+          englishVariant={languageSettings.englishVariant}
           onSelectLanguage={languageSettings.selectLanguage}
+          onSelectEnglishVariant={languageSettings.selectEnglishVariant}
+          assessmentStandard={assessmentStandard}
+          onSelectAssessmentStandard={onSelectAssessmentStandard}
           workspaceVault={workspaceVault}
         />
       ) : (
         <>
+      {isIsdmActive ? (
+        <IsdmWorkspaceIndicator englishVariant={languageSettings.englishVariant} />
+      ) : null}
       <CaseTopNav
         activeTab={activeTopTab}
         onTabSelect={(tab) => {

@@ -132,6 +132,9 @@ export function saveDiagnosen(caseId: string, entries: DiagnoseEntry[]): void {
     // ignore quota errors
   }
   scheduleDiagnosisImprints(caseId, entries)
+  void import('./isdm').then(({ scheduleIsdmRebuild }) => {
+    scheduleIsdmRebuild(caseId, 'diagnosis')
+  })
 }
 
 /** Load diagnoses from device-local storage only (never synced to server). */

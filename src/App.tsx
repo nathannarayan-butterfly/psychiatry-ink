@@ -58,7 +58,10 @@ export default function App() {
 
   if (route.view === 'landing') {
     return (
-      <TranslationProvider language={languageSettings.language}>
+      <TranslationProvider
+        language={languageSettings.language}
+        englishVariant={languageSettings.englishVariant}
+      >
         <LandingPage
           onLogin={() => navigate('/login')}
           onSignup={() => navigate('/signup')}
@@ -71,7 +74,10 @@ export default function App() {
 
   if (route.view === 'login' || route.view === 'signup') {
     return (
-      <TranslationProvider language={languageSettings.language}>
+      <TranslationProvider
+        language={languageSettings.language}
+        englishVariant={languageSettings.englishVariant}
+      >
         <AuthPage
           mode={route.view}
           onBack={() => navigate('/')}
@@ -95,7 +101,10 @@ export default function App() {
   }
 
   return (
-    <TranslationProvider language={languageSettings.language}>
+    <TranslationProvider
+      language={languageSettings.language}
+      englishVariant={languageSettings.englishVariant}
+    >
       <WorkspaceSessionProvider>
         {showDashboard ? (
           <DashboardPage
