@@ -57,8 +57,12 @@ import {
 } from './notionPages'
 import { documentTypes } from '../../data/documentTypes'
 import { resolveDocumentTypeWithVariant } from '../../utils/workspaceComponents'
-import { IsdmWorkspaceIndicator } from '../workspace/IsdmWorkspaceIndicator'
 import type { AssessmentStandard } from '../../types/isdm'
+import {
+  resolveAssessmentStandardForSubMode,
+  resolveDefaultPsychopathSubMode,
+  type PsychopathSubMode,
+} from '../../utils/psychopathMode'
 
 type WorkspaceState = ReturnType<typeof useWorkspaceState>
 type LabState = ReturnType<typeof useLabTool>
@@ -142,7 +146,7 @@ export function NotionApp({
   workspaceStorageId,
   showWorkspaceTabs = false,
   savedDocsCaseId,
-  isIsdmActive = false,
+  isIsdmActive: _isIsdmActive = false,
   assessmentStandard,
   onSelectAssessmentStandard,
 }: NotionAppProps) {
@@ -156,6 +160,27 @@ export function NotionApp({
   useEffect(() => {
     setSavedDocs(loadSavedDocs(savedDocsKey))
   }, [savedDocsKey])
+
+  const handleAssessmentStandardChange = useCallback(
+    (next: AssessmentStandard) => {
+      onSelectAssessmentStandard(next)
+      if (workspace.selectedDocumentType === 'psychopath') {
+        workspace.selectComponentVariant(resolveDefaultPsychopathSubMode(next))
+      }
+    },
+    [onSelectAssessmentStandard, workspace],
+  )
+
+  const handlePsychopathModeSelect = useCallback(
+    (mode: PsychopathSubMode) => {
+      workspace.selectComponentVariant(mode)
+      const nextStandard = resolveAssessmentStandardForSubMode(mode)
+      if (assessmentStandard !== nextStandard) {
+        onSelectAssessmentStandard(nextStandard)
+      }
+    },
+    [assessmentStandard, onSelectAssessmentStandard, workspace],
+  )
 
   const handleBreakStart = useCallback(() => {
     setBreakLottieActive(true)
@@ -684,14 +709,11 @@ export function NotionApp({
           onSelectLanguage={languageSettings.selectLanguage}
           onSelectEnglishVariant={languageSettings.selectEnglishVariant}
           assessmentStandard={assessmentStandard}
-          onSelectAssessmentStandard={onSelectAssessmentStandard}
+          onSelectAssessmentStandard={handleAssessmentStandardChange}
           workspaceVault={workspaceVault}
         />
       ) : (
         <>
-      {isIsdmActive ? (
-        <IsdmWorkspaceIndicator englishVariant={languageSettings.englishVariant} />
-      ) : null}
       <CaseTopNav
         activeTab={activeTopTab}
         onTabSelect={(tab) => {
@@ -886,6 +908,7 @@ export function NotionApp({
                 onCloseDocument={
                   workspace.selectedDocumentType ? handleCloseWorkspacePage : undefined
                 }
+                onPsychopathModeSelect={handlePsychopathModeSelect}
               />
             )}
           </div>

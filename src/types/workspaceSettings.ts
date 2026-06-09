@@ -19,7 +19,7 @@ export interface WorkspaceChecklistItem {
   hint?: string
 }
 
-export type WorkspaceVariantMode = 'free' | 'sections' | 'checklist'
+export type WorkspaceVariantMode = 'free' | 'sections' | 'checklist' | 'isdm'
 
 export interface WorkspaceSectionTemplate {
   id: string

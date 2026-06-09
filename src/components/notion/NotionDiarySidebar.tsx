@@ -3,9 +3,11 @@ import { useTranslation } from '../../context/TranslationContext'
 import { useRandomLottie } from '../../hooks/useRandomLottie'
 import { PanelDateCard } from '../PanelDateCard'
 import { PanelGraphic } from '../PanelGraphic'
+import { PsychopathModeRail } from '../workspace/PsychopathModeRail'
 import { PomodoroWidget } from './PomodoroWidget'
 import { LaborSidebarWidget } from './LaborSidebarWidget'
 import type { SavedDoc } from '../../utils/savedDocs'
+import type { PsychopathSubMode } from '../../utils/psychopathMode'
 
 interface NotionDiarySidebarProps {
   panelGraphicEnabled: boolean
@@ -17,6 +19,10 @@ interface NotionDiarySidebarProps {
   onNavigateToLabor?: () => void
   savedDocs?: SavedDoc[]
   onViewSavedDoc?: (doc: SavedDoc) => void
+  showPsychopathModeRail?: boolean
+  psychopathActiveMode?: PsychopathSubMode
+  psychopathModeDisabled?: boolean
+  onPsychopathModeSelect?: (mode: PsychopathSubMode) => void
 }
 
 function formatShortDate(iso: string): string {
@@ -41,6 +47,10 @@ export function NotionDiarySidebar({
   onNavigateToLabor,
   savedDocs,
   onViewSavedDoc,
+  showPsychopathModeRail = false,
+  psychopathActiveMode = 'free',
+  psychopathModeDisabled = false,
+  onPsychopathModeSelect,
 }: NotionDiarySidebarProps) {
   const { t } = useTranslation()
   const { visible: randomLottieVisible, dismiss: dismissRandomLottie } = useRandomLottie({
@@ -70,6 +80,15 @@ export function NotionDiarySidebar({
           <div className="notion-diary-sidebar__date">
             <PanelDateCard layout="sidebar" />
           </div>
+
+          {showPsychopathModeRail && onPsychopathModeSelect ? (
+            <PsychopathModeRail
+              activeMode={psychopathActiveMode}
+              disabled={psychopathModeDisabled}
+              collapsed={collapsed}
+              onSelect={onPsychopathModeSelect}
+            />
+          ) : null}
 
           <div className="notion-diary-sidebar__timers">
             <PomodoroWidget onBreakStart={onBreakStart ?? (() => {})} variant="sidebar" />

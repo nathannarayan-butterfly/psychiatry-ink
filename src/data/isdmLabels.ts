@@ -1,5 +1,5 @@
 import type { EnglishVariant, UiLanguage } from '../types/settings'
-import type { IsdmPhenomenologyDomain } from '../types/isdm'
+import type { IsdmPhenomenologyDomain, IsdmPresence } from '../types/isdm'
 
 type LocaleKey = UiLanguage | 'en_US'
 
@@ -8,11 +8,11 @@ export const localizedProfileLabels: Record<
   Record<LocaleKey, string>
 > = {
   international_structured_diagnostic_mapping: {
-    de: 'Internationale strukturierte diagnostische Zuordnung',
-    en: 'International Structured Diagnostic Mapping',
-    en_US: 'International Structured Diagnostic Mapping with DSM-5-TR support',
-    fr: 'Cartographie diagnostique structurée internationale',
-    es: 'Mapeo diagnóstico estructurado internacional',
+    de: 'Internationale strukturierte diagnostische Zuordnung V.1',
+    en: 'International Structured Diagnostic Mapping V.1',
+    en_US: 'International Structured Diagnostic Mapping V.1 with DSM-5-TR support',
+    fr: 'Cartographie diagnostique structurée internationale V.1',
+    es: 'Mapeo diagnóstico estructurado internacional V.1',
   },
 }
 
@@ -234,3 +234,186 @@ export function getIsdmSafetyDisclaimer(
   const key = resolveLocaleKey(language, englishVariant)
   return isdmSafetyDisclaimer[key]
 }
+
+export type IsdmDomainGroupId =
+  | 'presentation'
+  | 'cognition_attention'
+  | 'mood_drive'
+  | 'thought'
+  | 'perception_self'
+  | 'anxiety_trauma'
+  | 'somatic_vegetative'
+  | 'interpersonal_insight'
+  | 'risk_function'
+
+export const ISDM_DOMAIN_GROUPS: {
+  id: IsdmDomainGroupId
+  domains: IsdmPhenomenologyDomain[]
+}[] = [
+  {
+    id: 'presentation',
+    domains: ['appearance_behavior', 'speech_language', 'consciousness_orientation'],
+  },
+  {
+    id: 'cognition_attention',
+    domains: ['attention_concentration', 'memory_cognition'],
+  },
+  {
+    id: 'mood_drive',
+    domains: ['mood_affect', 'drive_psychomotor_activity'],
+  },
+  {
+    id: 'thought',
+    domains: ['formal_thought_disorder', 'thought_content', 'delusions_overvalued_ideas'],
+  },
+  {
+    id: 'perception_self',
+    domains: ['perception_hallucinations', 'self_experience_ego_disturbance'],
+  },
+  {
+    id: 'anxiety_trauma',
+    domains: [
+      'anxiety_panic_phobic_symptoms',
+      'obsessions_compulsions',
+      'trauma_intrusions_dissociation',
+    ],
+  },
+  {
+    id: 'somatic_vegetative',
+    domains: [
+      'somatic_preoccupation',
+      'sleep_appetite_vegetative',
+      'substance_related_features',
+    ],
+  },
+  {
+    id: 'interpersonal_insight',
+    domains: ['personality_interpersonal_style', 'insight_judgment'],
+  },
+  {
+    id: 'risk_function',
+    domains: ['risk_self', 'risk_others', 'functional_impairment'],
+  },
+]
+
+const domainGroupLabels: Record<IsdmDomainGroupId, Record<LocaleKey, string>> = {
+  presentation: {
+    de: 'Erscheinungsbild und Bewusstsein',
+    en: 'Presentation and consciousness',
+    en_US: 'Presentation and consciousness',
+    fr: 'Présentation et conscience',
+    es: 'Presentación y conciencia',
+  },
+  cognition_attention: {
+    de: 'Kognition und Aufmerksamkeit',
+    en: 'Cognition and attention',
+    en_US: 'Cognition and attention',
+    fr: 'Cognition et attention',
+    es: 'Cognición y atención',
+  },
+  mood_drive: {
+    de: 'Stimmung und Antrieb',
+    en: 'Mood and drive',
+    en_US: 'Mood and drive',
+    fr: 'Humeur et pulsion',
+    es: 'Estado de ánimo e impulso',
+  },
+  thought: {
+    de: 'Denken',
+    en: 'Thought processes',
+    en_US: 'Thought processes',
+    fr: 'Pensée',
+    es: 'Pensamiento',
+  },
+  perception_self: {
+    de: 'Wahrnehmung und Ich-Erleben',
+    en: 'Perception and self-experience',
+    en_US: 'Perception and self-experience',
+    fr: 'Perception et vécu de soi',
+    es: 'Percepción y experiencia del yo',
+  },
+  anxiety_trauma: {
+    de: 'Angst, Zwang und Trauma',
+    en: 'Anxiety, OCD and trauma',
+    en_US: 'Anxiety, OCD and trauma',
+    fr: 'Anxiété, TOC et trauma',
+    es: 'Ansiedad, TOC y trauma',
+  },
+  somatic_vegetative: {
+    de: 'Somatik, Vegetativum und Substanz',
+    en: 'Somatic, vegetative and substance',
+    en_US: 'Somatic, vegetative and substance',
+    fr: 'Somato, végétatif et substances',
+    es: 'Somático, vegetativo y sustancias',
+  },
+  interpersonal_insight: {
+    de: 'Interpersonell und Einsicht',
+    en: 'Interpersonal style and insight',
+    en_US: 'Interpersonal style and insight',
+    fr: 'Interpersonnel et insight',
+    es: 'Estilo interpersonal e insight',
+  },
+  risk_function: {
+    de: 'Risiko und Funktion',
+    en: 'Risk and functioning',
+    en_US: 'Risk and functioning',
+    fr: 'Risque et fonctionnement',
+    es: 'Riesgo y funcionamiento',
+  },
+}
+
+export function getIsdmDomainGroupLabel(
+  groupId: IsdmDomainGroupId,
+  language: UiLanguage,
+  englishVariant: EnglishVariant = 'uk',
+): string {
+  const key = resolveLocaleKey(language, englishVariant)
+  return domainGroupLabels[groupId][key]
+}
+
+const presenceLabels: Record<IsdmPresence, Record<LocaleKey, string>> = {
+  not_assessed: {
+    de: 'Nicht erhoben',
+    en: 'Not assessed',
+    en_US: 'Not assessed',
+    fr: 'Non évalué',
+    es: 'No evaluado',
+  },
+  absent: {
+    de: 'Nicht vorhanden',
+    en: 'Absent',
+    en_US: 'Absent',
+    fr: 'Absent',
+    es: 'Ausente',
+  },
+  present: {
+    de: 'Vorhanden',
+    en: 'Present',
+    en_US: 'Present',
+    fr: 'Présent',
+    es: 'Presente',
+  },
+  unclear: {
+    de: 'Unklar',
+    en: 'Unclear',
+    en_US: 'Unclear',
+    fr: 'Peu clair',
+    es: 'Poco claro',
+  },
+}
+
+export function getIsdmPresenceLabel(
+  presence: IsdmPresence,
+  language: UiLanguage,
+  englishVariant: EnglishVariant = 'uk',
+): string {
+  const key = resolveLocaleKey(language, englishVariant)
+  return presenceLabels[presence][key]
+}
+
+export const ISDM_PRESENCE_OPTIONS: IsdmPresence[] = [
+  'not_assessed',
+  'absent',
+  'present',
+  'unclear',
+]

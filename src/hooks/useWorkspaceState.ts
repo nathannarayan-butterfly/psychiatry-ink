@@ -401,13 +401,18 @@ export function useWorkspaceState(
   )
 
   const selectDocumentType = useCallback(
-    (typeId: string) => {
-      const nextType = resolveType(typeId)
-      if (!nextType) return
-
+    (typeId: string, variantOverride?: string) => {
       const baseType = getDocumentType(typeId)
-      const variantId = activeVariantIds[typeId] ?? baseType?.defaultVariantId
-      const variant = baseType?.variants?.find((item) => item.id === variantId)
+      if (!baseType) return
+
+      const variantId =
+        variantOverride ?? activeVariantIds[typeId] ?? baseType.defaultVariantId
+      const nextType = resolveDocumentTypeWithVariant(baseType, variantId)
+      const variant = baseType.variants?.find((item) => item.id === variantId)
+
+      if (variantOverride && variantId) {
+        setActiveVariantIds((current) => ({ ...current, [typeId]: variantId }))
+      }
 
       setSelectedDocumentType(typeId)
       resetWorkspaceSession()
@@ -452,6 +457,10 @@ export function useWorkspaceState(
       syncAiSettings,
     ],
   )
+
+  const restoreActiveVariantIds = useCallback((variantIds: Record<string, string>) => {
+    setActiveVariantIds((current) => ({ ...current, ...variantIds }))
+  }, [])
 
   const selectSection = useCallback(
     (sectionId: string) => {
@@ -1274,7 +1283,8 @@ export function useWorkspaceState(
     ? (checklistSelections[activeSectionId] ?? {})
     : {}
   const documentMode = currentDocumentType?.mode
-  const showNormalBefundButton = selectedDocumentType === 'psychopath'
+  const showNormalBefundButton =
+    selectedDocumentType === 'psychopath' && documentMode !== 'isdm'
 
   const toggleChecklistItem = useCallback(
     (itemId: string, checked: boolean, sectionId?: string) => {
@@ -1455,6 +1465,7 @@ export function useWorkspaceState(
     checklistSelections,
     showNormalBefundButton,
     activeVariantIds,
+    restoreActiveVariantIds,
     resetToBlankPage,
     selectDocumentType,
     selectDocumentTypeAndSection,

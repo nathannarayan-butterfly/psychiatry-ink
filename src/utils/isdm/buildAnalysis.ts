@@ -5,6 +5,7 @@ import type {
   DiagnosticMapping,
   InterviewGap,
   IsdmClinicalAnalysis,
+  IsdmInputState,
   IsdmOverallUncertainty,
   IsdmPhenomenologyDomain,
   SyndromeCluster,
@@ -24,6 +25,7 @@ export interface IsdmBuildInput {
   caseId: string
   imprints: ClinicalImprintIndex
   checklistSelections: Record<string, Record<string, boolean>>
+  isdmInput?: IsdmInputState
   diagnoses: DiagnoseEntry[]
   verlaufText?: string
 }
@@ -134,6 +136,44 @@ function mapChecklistToFindings(
         })
       }
     }
+  }
+}
+
+function mapIsdmInputToFindings(
+  isdmInput: IsdmInputState | undefined,
+  phenomenology: Record<IsdmPhenomenologyDomain, SymptomFinding[]>,
+): void {
+  if (!isdmInput?.domains) return
+
+  for (const domain of ISDM_PHENOMENOLOGY_DOMAINS) {
+    const entry = isdmInput.domains[domain]
+    if (!entry || entry.presence === 'not_assessed') continue
+
+    const polarity =
+      entry.presence === 'present'
+        ? ('present' as const)
+        : entry.presence === 'absent'
+          ? ('absent' as const)
+          : ('unclear' as const)
+
+    const label = entry.notes?.trim()
+      ? entry.notes.trim().slice(0, 120)
+      : `${domain.replace(/_/g, ' ')} (${entry.presence})`
+
+    addFinding(phenomenology, {
+      id: findingId(domain, 'isdm_input'),
+      domain,
+      label,
+      keywords: [domain],
+      evidenceStrength: 'direct_observation',
+      sourceImprintKeys: [`manual_note:isdm_input:${domain}`],
+      confidence:
+        entry.presence === 'present'
+          ? ((entry.severity ?? 2) as SymptomFinding['confidence'])
+          : 2,
+      polarity,
+      notes: entry.notes?.trim() || undefined,
+    })
   }
 }
 
@@ -563,6 +603,7 @@ export function buildIsdmAnalysis(input: IsdmBuildInput): IsdmClinicalAnalysis {
 
   mapImprintsToFindings(imprints, phenomenology)
   mapChecklistToFindings(input.checklistSelections, phenomenology)
+  mapIsdmInputToFindings(input.isdmInput, phenomenology)
 
   if (input.verlaufText?.trim()) {
     for (const domain of matchDomainsInText(input.verlaufText)) {

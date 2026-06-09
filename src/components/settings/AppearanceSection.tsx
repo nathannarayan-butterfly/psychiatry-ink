@@ -5,41 +5,14 @@ import {
   fontFamilyPresets,
   fontSizePresets,
   lineHeightPresets,
-  pageTypePresets,
-  paperColorPresets,
   workspaceScalePresets,
 } from '../../data/appearancePresets'
-import type { UiTranslationKey } from '../../data/uiTranslations'
-import { useTranslation } from '../../context/TranslationContext'
-import type { PageType, PaperColor, PreferredAccentColor } from '../../types/settings'
+import type { PreferredAccentColor } from '../../types/settings'
 import type { useAppearanceSettings } from '../../hooks/useAppearanceSettings'
 import { loadGoogleFont } from '../../utils/googleFonts'
 import { useEffect } from 'react'
 import { SettingsField } from './SettingsField'
 import { SettingsOptionGroup } from './SettingsOptionGroup'
-
-const pageTypeLabelKeys: Record<PageType, UiTranslationKey> = {
-  ruled: 'settingsPageTypeRuled',
-  blank: 'settingsPageTypeBlank',
-  grid: 'settingsPageTypeGrid',
-  wideRuled: 'settingsPageTypeWideRuled',
-}
-
-const pageTypeDescriptionKeys: Record<PageType, UiTranslationKey> = {
-  ruled: 'settingsPageTypeRuledDescription',
-  blank: 'settingsPageTypeBlankDescription',
-  grid: 'settingsPageTypeGridDescription',
-  wideRuled: 'settingsPageTypeWideRuledDescription',
-}
-
-const paperColorLabelKeys: Record<PaperColor, UiTranslationKey> = {
-  white: 'settingsPaperColorWhite',
-  cream: 'settingsPaperColorCream',
-  blueGrey: 'settingsPaperColorBlueGrey',
-  softGreen: 'settingsPaperColorSoftGreen',
-  warmGrey: 'settingsPaperColorWarmGrey',
-  paleBlue: 'settingsPaperColorPaleBlue',
-}
 
 interface AppearanceSectionProps {
   appearance: ReturnType<typeof useAppearanceSettings>
@@ -96,115 +69,6 @@ function AccentColorCard({
   )
 }
 
-function PageTypeCard({
-  pageKey,
-  active,
-  onSelect,
-}: {
-  pageKey: PageType
-  active: boolean
-  onSelect: () => void
-}) {
-  const { t } = useTranslation()
-  const preset = pageTypePresets[pageKey]
-
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={`group flex flex-col gap-2 rounded-md border p-3 text-left transition-all ${
-        active
-          ? 'border-accent bg-surface shadow-md'
-          : 'border-border/60 bg-surface hover:border-border-strong'
-      }`}
-    >
-      <div
-        className="relative h-11 w-full overflow-hidden rounded-md border border-border/40"
-        style={{ background: 'var(--notion-paper-bg, #fff)' }}
-        aria-hidden
-      >
-        {pageKey === 'ruled' || pageKey === 'wideRuled' ? (
-          <div
-            className="absolute inset-x-2 top-2 bottom-1.5"
-            style={{
-              backgroundImage: `repeating-linear-gradient(
-                to bottom,
-                transparent,
-                transparent calc(${preset.ruleSpacing} * 0.45 - 1px),
-                color-mix(in srgb, var(--accent) 18%, #e6e4df) calc(${preset.ruleSpacing} * 0.45 - 1px),
-                color-mix(in srgb, var(--accent) 18%, #e6e4df) calc(${preset.ruleSpacing} * 0.45)
-              )`,
-            }}
-          />
-        ) : null}
-        {pageKey === 'grid' ? (
-          <div
-            className="absolute inset-x-2 top-2 bottom-1.5"
-            style={{
-              backgroundImage: `
-                repeating-linear-gradient(
-                  to right,
-                  transparent,
-                  transparent 7px,
-                  color-mix(in srgb, var(--accent) 12%, #e8e6e0) 7px,
-                  color-mix(in srgb, var(--accent) 12%, #e8e6e0) 8px
-                ),
-                repeating-linear-gradient(
-                  to bottom,
-                  transparent,
-                  transparent 7px,
-                  color-mix(in srgb, var(--accent) 12%, #e8e6e0) 7px,
-                  color-mix(in srgb, var(--accent) 12%, #e8e6e0) 8px
-                )`,
-            }}
-          />
-        ) : null}
-      </div>
-      <div>
-        <span className="text-xs font-medium text-ink">{t(pageTypeLabelKeys[pageKey])}</span>
-        <span className="mt-0.5 block text-[11px] leading-snug text-muted">
-          {t(pageTypeDescriptionKeys[pageKey])}
-        </span>
-      </div>
-    </button>
-  )
-}
-
-function PaperColorSwatch({
-  colorKey,
-  active,
-  onSelect,
-}: {
-  colorKey: PaperColor
-  active: boolean
-  onSelect: () => void
-}) {
-  const { t } = useTranslation()
-  const preset = paperColorPresets[colorKey]
-
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      title={t(paperColorLabelKeys[colorKey])}
-      aria-label={t(paperColorLabelKeys[colorKey])}
-      aria-pressed={active}
-      className={`flex flex-col items-center gap-1.5 rounded-md border p-2 transition-all ${
-        active
-          ? 'border-accent bg-surface shadow-md'
-          : 'border-border/60 bg-surface hover:border-border-strong'
-      }`}
-    >
-      <span
-        className="h-9 w-full rounded-sm border border-black/8 shadow-inner"
-        style={{ background: preset.bg }}
-        aria-hidden
-      />
-      <span className="text-[10px] font-medium text-ink">{t(paperColorLabelKeys[colorKey])}</span>
-    </button>
-  )
-}
-
 function FontFamilyCard({
   fontKey,
   active,
@@ -239,7 +103,6 @@ function FontFamilyCard({
 }
 
 export function AppearanceSection({ appearance }: AppearanceSectionProps) {
-  const { t } = useTranslation()
   const {
     settings,
     setPreferredAccentColor,
@@ -249,8 +112,6 @@ export function AppearanceSection({ appearance }: AppearanceSectionProps) {
     setLineHeight,
     setBorderWeight,
     setShowPanelGraphic,
-    setPageType,
-    setPaperColor,
     resetAppearance,
   } = appearance
 
@@ -289,32 +150,6 @@ export function AppearanceSection({ appearance }: AppearanceSectionProps) {
               accentKey={key}
               active={settings.preferredAccentColor === key}
               onSelect={() => setPreferredAccentColor(key)}
-            />
-          ))}
-        </div>
-      </SettingsField>
-
-      <SettingsField label={t('settingsPageType')} description={t('settingsPageTypeDescription')}>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {(Object.keys(pageTypePresets) as PageType[]).map((key) => (
-            <PageTypeCard
-              key={key}
-              pageKey={key}
-              active={settings.pageType === key}
-              onSelect={() => setPageType(key)}
-            />
-          ))}
-        </div>
-      </SettingsField>
-
-      <SettingsField label={t('settingsPaperColor')} description={t('settingsPaperColorDescription')}>
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-          {(Object.keys(paperColorPresets) as PaperColor[]).map((key) => (
-            <PaperColorSwatch
-              key={key}
-              colorKey={key}
-              active={settings.paperColor === key}
-              onSelect={() => setPaperColor(key)}
             />
           ))}
         </div>

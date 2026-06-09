@@ -73,8 +73,8 @@ export function useAppearanceSettings() {
     (showPanelGraphic: boolean) => update({ showPanelGraphic }),
     [update],
   )
-  const setPageType = useCallback((pageType: PageType) => update({ pageType }), [update])
-  const setPaperColor = useCallback((paperColor: PaperColor) => update({ paperColor }), [update])
+  const setPageType = useCallback((_pageType: PageType) => {}, [])
+  const setPaperColor = useCallback((_paperColor: PaperColor) => {}, [])
 
   const resetAppearance = useCallback(() => {
     setSettings(defaultAppearanceSettings)

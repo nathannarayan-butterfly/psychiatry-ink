@@ -77,6 +77,14 @@ export const defaultWorkspaceComponents: WorkspaceComponentTemplate[] = [
         sections: clonePsychopathSections(),
         ai: psychopathChecklistVariantAi,
       },
+      {
+        id: 'isdm',
+        label: 'ISDM V.1',
+        mode: 'isdm',
+        multistage: false,
+        sections: [],
+        ai: psychopathFreeVariantAi,
+      },
     ],
   },
   {

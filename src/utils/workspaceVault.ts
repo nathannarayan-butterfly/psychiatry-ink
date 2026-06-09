@@ -49,10 +49,10 @@ import {
   reindexClinicalPayload,
 } from './clinicalImprint'
 import type { ClinicalImprintIndex } from '../types/clinicalImprint'
-import type { IsdmClinicalAnalysis } from '../types/isdm'
-import { applyIsdmAnalysis, loadIsdmAnalysis } from './isdm'
+import type { IsdmClinicalAnalysis, IsdmInputState } from '../types/isdm'
+import { applyIsdmAnalysis, applyIsdmInput, loadIsdmAnalysis, loadIsdmInput } from './isdm'
 
-export const WORKSPACE_PAYLOAD_VERSION = 5
+export const WORKSPACE_PAYLOAD_VERSION = 6
 
 export const LAST_VAULT_EXPORT_KEY = 'psychiatry-ink:last-vault-export-at'
 
@@ -64,6 +64,7 @@ export interface WorkspaceLivePatch {
   pageDate?: string
   pageTime?: string
   sectionContents: Record<string, string>
+  activeVariantIds?: Record<string, string>
   age?: string
   timelines?: SavedTimeline[]
   activeTimelineId?: string | null
@@ -96,6 +97,10 @@ export interface ClinicalWorkspacePayload {
   clinicalImprints?: ClinicalImprintIndex
   /** ISDM structured diagnostic mapping snapshot — clinician review required. */
   isdmAnalysis?: IsdmClinicalAnalysis
+  /** ISDM structured phenomenology input — clinician-entered domain ratings. */
+  isdmInput?: IsdmInputState
+  /** Per-document variant selection (e.g. psychopath sub-mode). */
+  activeVariantIds?: Record<string, string>
   /** @deprecated v1 — stripped on write */
   lab?: LabSnapshot | null
   /** @deprecated v1 — stripped on write */
@@ -222,6 +227,7 @@ export function collectClinicalPayload(
   const diagnoses = loadDiagnosen(storageCaseId)
   const clinicalImprints = loadClinicalImprintIndex(storageCaseId)
   const isdmAnalysis = loadIsdmAnalysis(storageCaseId) ?? undefined
+  const isdmInput = loadIsdmInput(storageCaseId) ?? undefined
 
   return {
     version: WORKSPACE_PAYLOAD_VERSION,
@@ -239,6 +245,8 @@ export function collectClinicalPayload(
     diagnoses,
     clinicalImprints,
     isdmAnalysis,
+    isdmInput,
+    activeVariantIds: live?.activeVariantIds,
   }
 }
 
@@ -305,6 +313,13 @@ export function applyClinicalPayload(
       scheduleIsdmRebuild(storageCaseId, 'vault')
     })
   }
+
+  if (normalized.isdmInput) {
+    applyIsdmInput(normalized.isdmInput, storageCaseId)
+    void import('./isdm').then(({ scheduleIsdmRebuild }) => {
+      scheduleIsdmRebuild(storageCaseId, 'input')
+    })
+  }
 }
 
 export function applyWorkspacePayload(payload: ClinicalWorkspacePayload, caseId?: string): void {
@@ -361,6 +376,7 @@ export async function decryptWorkspaceBlob(blob: EncryptedVaultBlob): Promise<Cl
     diagnoses: payload.diagnoses ?? [],
     clinicalImprints: payload.clinicalImprints,
     isdmAnalysis: payload.isdmAnalysis,
+    isdmInput: payload.isdmInput,
   }
 }
 

@@ -164,3 +164,36 @@ export interface IsdmClinicalAnalysis {
 }
 
 export const ISDM_ANALYSIS_VERSION = 1
+
+export type IsdmPresence = 'not_assessed' | 'absent' | 'present' | 'unclear'
+
+export interface IsdmDomainInput {
+  presence: IsdmPresence
+  /** 0–4 when presence is present */
+  severity?: IsdmConfidence
+  notes?: string
+}
+
+export interface IsdmInputState {
+  version: number
+  updatedAt: string
+  domains: Record<IsdmPhenomenologyDomain, IsdmDomainInput>
+}
+
+export const ISDM_INPUT_VERSION = 1
+
+export function createEmptyIsdmDomainInput(): IsdmDomainInput {
+  return { presence: 'not_assessed' }
+}
+
+export function createEmptyIsdmInputState(): IsdmInputState {
+  const domains = {} as Record<IsdmPhenomenologyDomain, IsdmDomainInput>
+  for (const domain of ISDM_PHENOMENOLOGY_DOMAINS) {
+    domains[domain] = createEmptyIsdmDomainInput()
+  }
+  return {
+    version: ISDM_INPUT_VERSION,
+    updatedAt: new Date().toISOString(),
+    domains,
+  }
+}

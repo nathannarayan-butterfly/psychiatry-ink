@@ -28,6 +28,11 @@ import { NotionDocumentActions } from './NotionDocumentActions'
 import { compileChecklistText } from '../../utils/checklist'
 import { NotionEditorHints } from './NotionEditorHints'
 import { NotionVariantLinks, type NotionVariantOption } from './NotionVariantLinks'
+import { IsdmPsychopathWorkspace } from '../workspace/IsdmInputPanel'
+import {
+  isPsychopathSubMode,
+  type PsychopathSubMode,
+} from '../../utils/psychopathMode'
 import { NotionDocumentBreadcrumb } from './NotionDocumentBreadcrumb'
 import { NotionEmptyState } from './NotionEmptyState'
 import {
@@ -128,6 +133,7 @@ interface NotionPaperProps {
   onViewSavedDoc?: (doc: SavedDoc) => void
   /** Close the open document and return to the default workspace home. */
   onCloseDocument?: () => void
+  onPsychopathModeSelect?: (mode: PsychopathSubMode) => void
 }
 
 export interface PendingPaste {
@@ -175,7 +181,7 @@ export function NotionPaper({
   aiCanGenerate,
   panelGraphicEnabled,
   breakLottieActive,
-  pageType,
+  pageType: _pageType,
   privacy,
   clinicalAge,
   onMigratedAge,
@@ -213,6 +219,7 @@ export function NotionPaper({
   savedDocs,
   onViewSavedDoc,
   onCloseDocument,
+  onPsychopathModeSelect,
 }: NotionPaperProps) {
   const { t } = useTranslation()
   const storageCaseId = workspaceStorageId ?? caseId
@@ -224,9 +231,19 @@ export function NotionPaper({
     onMigratedAge,
   })
   const editorLocked = isDictationActive || isGenerating
+  const isPsychopathDocument = documentTypeId === 'psychopath'
+  const psychopathActiveMode: PsychopathSubMode =
+    isPsychopathDocument && activeVariantId && isPsychopathSubMode(activeVariantId)
+      ? activeVariantId
+      : 'free'
   const showVariantPicker = Boolean(
-    componentVariants && componentVariants.length > 1 && activeVariantId && onVariantSelect,
+    !isPsychopathDocument &&
+      componentVariants &&
+      componentVariants.length > 1 &&
+      activeVariantId &&
+      onVariantSelect,
   )
+  const showIsdmPanel = isPsychopathDocument && documentMode === 'isdm'
   const showKompilierenButton = Boolean(
     documentMode === 'checklist' && showMultistageSections,
   )
@@ -568,7 +585,7 @@ export function NotionPaper({
 
   return (
     <article
-      className={`notion-paper notion-paper--${pageType === 'wideRuled' ? 'wide-ruled' : pageType}${sidebarCollapsed ? ' notion-paper--sidebar-collapsed' : ''}`}
+      className={`notion-paper notion-paper--blank${sidebarCollapsed ? ' notion-paper--sidebar-collapsed' : ''}`}
     >
       <div className="notion-paper__sidebar-anchor">
         <NotionDiarySidebar
@@ -581,6 +598,10 @@ export function NotionPaper({
           onNavigateToLabor={onNavigateToLabor}
           savedDocs={savedDocs}
           onViewSavedDoc={onViewSavedDoc}
+          showPsychopathModeRail={isPsychopathDocument}
+          psychopathActiveMode={psychopathActiveMode}
+          psychopathModeDisabled={editorLocked}
+          onPsychopathModeSelect={onPsychopathModeSelect}
         />
       </div>
 
@@ -751,13 +772,15 @@ export function NotionPaper({
             <NotionEditorHints showStructuredFeatures={false} />
           )}
 
-          {showDocumentBlankState ? (
+          {showDocumentBlankState && !showIsdmPanel ? (
             <NotionEmptyState
               disabled={editorLocked}
               onType={handleBlankType}
               onPaste={handleBlankPaste}
               onDictate={handleBlankDictate}
             />
+          ) : showIsdmPanel ? (
+            <IsdmPsychopathWorkspace caseId={storageCaseId} disabled={editorLocked} />
           ) : showMultistageSections && !amdpKompiliert ? (
             <>
               <NotionMultiSectionEditor

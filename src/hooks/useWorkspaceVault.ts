@@ -8,6 +8,7 @@ import { API_BASE } from '../services/apiClient'
 import { getAuthHeaders } from '../services/authHeaders'
 import { isAccountBackupUnlocked } from '../utils/accountBackupSession'
 import { registerClinicalImprintPersistHook } from '../utils/clinicalImprint'
+import { registerIsdmInputPersistHook } from '../utils/isdm/inputStorage'
 import { registerIsdmPersistHook } from '../utils/isdm/storage'
 import {
   ensureKeyMaterial,
@@ -187,9 +188,13 @@ export function useWorkspaceVault({
     registerIsdmPersistHook((persistCaseId) => {
       if (persistCaseId === caseId) scheduleSaveRef.current()
     })
+    registerIsdmInputPersistHook((persistCaseId) => {
+      if (persistCaseId === caseId) scheduleSaveRef.current()
+    })
     return () => {
       registerClinicalImprintPersistHook(null)
       registerIsdmPersistHook(null)
+      registerIsdmInputPersistHook(null)
     }
   }, [caseId])
 

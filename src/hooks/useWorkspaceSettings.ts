@@ -529,6 +529,7 @@ export function useWorkspaceSettings() {
             free: 'Freitext',
             sections: 'Abschnitte',
             checklist: 'AMDP-Checkliste',
+            isdm: 'ISDM V.1',
           }
           const label = labelByMode[mode]
           const id = createUniqueId(label, existingIds)
@@ -540,6 +541,14 @@ export function useWorkspaceSettings() {
               id,
               label,
               mode: 'free',
+              multistage: false,
+              sections: [],
+            }
+          } else if (mode === 'isdm') {
+            newVariant = {
+              id,
+              label,
+              mode: 'isdm',
               multistage: false,
               sections: [],
             }

@@ -17,7 +17,7 @@ export interface DocumentChecklistItem {
   hint?: string
 }
 
-export type DocumentVariantMode = 'free' | 'sections' | 'checklist'
+export type DocumentVariantMode = 'free' | 'sections' | 'checklist' | 'isdm'
 
 export interface DocumentSection {
   id: string

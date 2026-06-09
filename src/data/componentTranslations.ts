@@ -337,6 +337,14 @@ export const componentTranslations: Record<string, ComponentTranslation> = {
           es: 'Exploración psicopatológica',
         },
       },
+      isdm: {
+        label: {
+          de: 'ISDM V.1',
+          en: 'ISDM V.1',
+          fr: 'ISDM V.1',
+          es: 'ISDM V.1',
+        },
+      },
     },
     sections: {
       bewusstsein: {

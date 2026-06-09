@@ -229,6 +229,12 @@ export const paperColorPresets: Record<PaperColor, PaperColorPreset> = {
   paleBlue: { bg: '#F3F7FA', borderTone: '#D5DFE8' },
 }
 
+/** Page/paper background options are muted until re-enabled in settings UI. */
+export const fixedWorkspacePageBackground = {
+  pageType: 'blank' as PageType,
+  paperColor: 'white' as PaperColor,
+}
+
 export function migratePageType(value: unknown): PageType {
   if (typeof value === 'string' && pageTypeIds.includes(value as PageType)) {
     return value as PageType
@@ -315,8 +321,10 @@ export function applyAppearanceSettings(settings: AppearanceSettings) {
   root.style.setProperty('--editor-line-height', lineHeight.value)
   root.style.setProperty('--border-width', border.width)
 
-  const pageType = pageTypePresets[settings.pageType] ?? pageTypePresets.ruled
-  const paper = paperColorPresets[settings.paperColor] ?? paperColorPresets.white
+  const pageType =
+    pageTypePresets[fixedWorkspacePageBackground.pageType] ?? pageTypePresets.blank
+  const paper =
+    paperColorPresets[fixedWorkspacePageBackground.paperColor] ?? paperColorPresets.white
 
   root.style.setProperty('--notion-paper-bg', paper.bg)
   root.style.setProperty('--notion-paper-border-tone', paper.borderTone)
@@ -330,8 +338,8 @@ export function applyAppearanceSettings(settings: AppearanceSettings) {
   root.dataset.fontFamily = settings.fontFamily
   root.dataset.fontSize = settings.fontSize
   root.dataset.workspaceScale = settings.workspaceScale
-  root.dataset.pageType = settings.pageType
-  root.dataset.paperColor = settings.paperColor
+  root.dataset.pageType = fixedWorkspacePageBackground.pageType
+  root.dataset.paperColor = fixedWorkspacePageBackground.paperColor
   root.dataset.themeMode = 'light'
   delete root.dataset.colorScheme
 }

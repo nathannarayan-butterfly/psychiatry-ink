@@ -2,6 +2,7 @@ import { loadDiagnosen } from '../diagnosenArchive'
 import { loadNotionDocumentSnapshot } from '../notionDocumentActions'
 import { loadClinicalImprintIndex } from '../clinicalImprint'
 import { buildIsdmAnalysis, type IsdmBuildInput } from './buildAnalysis'
+import { loadIsdmInput } from './inputStorage'
 import { saveIsdmAnalysis } from './storage'
 
 export type IsdmRebuildReason =
@@ -11,6 +12,7 @@ export type IsdmRebuildReason =
   | 'verlauf'
   | 'profile'
   | 'vault'
+  | 'input'
 
 type ChecklistGetter = () => Record<string, Record<string, boolean>>
 
@@ -36,6 +38,7 @@ export function collectIsdmBuildInput(
     caseId,
     imprints: loadClinicalImprintIndex(caseId),
     checklistSelections,
+    isdmInput: loadIsdmInput(caseId) ?? undefined,
     diagnoses: loadDiagnosen(caseId),
     verlaufText: collectVerlaufText(caseId),
   }

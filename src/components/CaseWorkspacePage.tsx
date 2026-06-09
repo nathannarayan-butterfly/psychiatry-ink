@@ -182,6 +182,7 @@ function WorkspaceInner({
       pageDate: loadNotionPageDate(pageId, workspaceStorageId),
       pageTime: loadNotionPageTime(pageId, workspaceStorageId),
       sectionContents: workspace.getLatestSectionContents(),
+      activeVariantIds: workspace.activeVariantIds,
       age: clinicalAge,
       timelines,
       activeTimelineId: timeline.activeTimelineId,
@@ -207,8 +208,14 @@ function WorkspaceInner({
 
   const handleVaultRestored = useCallback(
     (payload: ClinicalWorkspacePayload) => {
+      if (payload.activeVariantIds) {
+        workspace.restoreActiveVariantIds(payload.activeVariantIds)
+      }
       if (payload.selectedDocumentType) {
-        workspace.selectDocumentType(payload.selectedDocumentType)
+        workspace.selectDocumentType(
+          payload.selectedDocumentType,
+          payload.activeVariantIds?.[payload.selectedDocumentType],
+        )
       }
       const docId = payload.selectedDocumentType ?? workspace.selectedDocumentType
       const snapshot = payload.documents[docId]
@@ -256,7 +263,7 @@ function WorkspaceInner({
 
   useIsdmEngine({
     caseId: workspaceStorageId,
-    enabled: assessmentStandardSettings.isIsdmActive,
+    enabled: true,
     vaultReady: workspaceVault.ready,
     checklistSelections: workspace.checklistSelections,
     sectionContents: workspace.sectionContents,
@@ -270,6 +277,7 @@ function WorkspaceInner({
     workspace.sectionContents,
     workspace.editorContent,
     workspace.selectedDocumentType,
+    workspace.activeVariantIds,
     lab.activeLabGraphId,
     lab.entries,
     lab.markers,
