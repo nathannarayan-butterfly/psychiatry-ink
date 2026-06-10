@@ -48,6 +48,7 @@ export interface WorkspaceTabsInfo {
   onTabSelect: (id: string) => void
   onAddTab: () => void
   onCloseTab: (id: string) => void
+  onUpdateTabPatient: (tabId: string, patientName: string) => void
 }
 
 // ——— Props for the inner per-tab component ———
@@ -270,6 +271,16 @@ function WorkspaceInner({
   })
 
   useEffect(() => {
+    if (!workspaceVault.isDirty) return
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [workspaceVault.isDirty])
+
+  useEffect(() => {
     if (!workspaceVault.ready) return
     workspaceVault.scheduleSave()
   }, [
@@ -369,7 +380,7 @@ export function CaseWorkspacePage({
     [localizedComponents],
   )
 
-  const { tabs, activeTabId, setActiveTabId, addTab, closeTab } = useWorkspaceTabs()
+  const { tabs, activeTabId, setActiveTabId, addTab, closeTab, updateTabPatient } = useWorkspaceTabs()
 
   // Only the very first tab (index 0) inherits the router's initialPage.
   // Newly added tabs always start blank so they don't copy the previous tab.
@@ -381,9 +392,22 @@ export function CaseWorkspacePage({
       ? (activeTab?.storageId ?? DEFAULT_CASE_ID)
       : caseId
 
+  // When the last remaining tab is closed, navigate to the dashboard rather than
+  // leaving the user in a broken single-tab state.
+  const handleCloseTab = useCallback(
+    (id: string) => {
+      if (tabs.length <= 1) {
+        onNavigateDashboard?.()
+      } else {
+        closeTab(id)
+      }
+    },
+    [tabs.length, closeTab, onNavigateDashboard],
+  )
+
   const workspaceTabs: WorkspaceTabsInfo = useMemo(
-    () => ({ tabs, activeTabId, onTabSelect: setActiveTabId, onAddTab: addTab, onCloseTab: closeTab }),
-    [tabs, activeTabId, setActiveTabId, addTab, closeTab],
+    () => ({ tabs, activeTabId, onTabSelect: setActiveTabId, onAddTab: addTab, onCloseTab: handleCloseTab, onUpdateTabPatient: updateTabPatient }),
+    [tabs, activeTabId, setActiveTabId, addTab, handleCloseTab, updateTabPatient],
   )
 
   return (

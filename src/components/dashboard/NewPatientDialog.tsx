@@ -11,23 +11,34 @@ export interface NewPatientData {
 }
 
 interface NewPatientDialogProps {
-  onCreated: (patient: NewPatientData) => void
+  mode?: 'create' | 'edit'
+  initialData?: NewPatientData
+  onSubmit: (patient: NewPatientData) => void
   onCancel: () => void
 }
 
-export function NewPatientDialog({ onCreated, onCancel }: NewPatientDialogProps) {
+export function NewPatientDialog({
+  mode = 'create',
+  initialData,
+  onSubmit,
+  onCancel,
+}: NewPatientDialogProps) {
   const { t } = useTranslation()
-  const [vorname, setVorname] = useState('')
-  const [nachname, setNachname] = useState('')
-  const [geburtsdatum, setGeburtsdatum] = useState('')
-  const [geschlecht, setGeschlecht] = useState<LocalGeschlecht | ''>('')
+  const [vorname, setVorname] = useState(initialData?.vorname ?? '')
+  const [nachname, setNachname] = useState(initialData?.nachname ?? '')
+  const [geburtsdatum, setGeburtsdatum] = useState(initialData?.geburtsdatum ?? '')
+  const [geschlecht, setGeschlecht] = useState<LocalGeschlecht | ''>(initialData?.geschlecht ?? '')
   const overlayRef = useRef<HTMLDivElement>(null)
+
+  const isEdit = mode === 'edit'
+  const dialogTitle = isEdit ? t('patientEditTitle') : t('dashboardNewPatient')
+  const submitLabel = isEdit ? t('patientEditSave') : t('newPatientErstellen')
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const trimmedVorname = vorname.trim()
     const trimmedNachname = nachname.trim()
-    onCreated({
+    onSubmit({
       vorname: trimmedVorname,
       nachname: trimmedNachname,
       name: [trimmedVorname, trimmedNachname].filter(Boolean).join(' '),
@@ -46,11 +57,11 @@ export function NewPatientDialog({ onCreated, onCancel }: NewPatientDialogProps)
       className="new-patient-dialog-overlay"
       role="dialog"
       aria-modal="true"
-      aria-label={t('dashboardNewPatient')}
+      aria-label={dialogTitle}
       onClick={handleOverlayClick}
     >
       <div className="new-patient-dialog">
-        <h2 className="new-patient-dialog__title">{t('dashboardNewPatient')}</h2>
+        <h2 className="new-patient-dialog__title">{dialogTitle}</h2>
 
         <form onSubmit={handleSubmit} className="new-patient-dialog__form">
           <div className="new-patient-dialog__name-row">
@@ -134,7 +145,7 @@ export function NewPatientDialog({ onCreated, onCancel }: NewPatientDialogProps)
               type="submit"
               className="new-patient-dialog__btn new-patient-dialog__btn--create"
             >
-              {t('newPatientErstellen')}
+              {submitLabel}
             </button>
           </div>
         </form>

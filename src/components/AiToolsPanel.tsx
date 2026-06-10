@@ -41,7 +41,7 @@ export function AiToolsPanel({
     >
       <div className="ai-panel-header flex shrink-0 items-center gap-1.5 border-b border-border/50 px-2 py-1.5 sm:px-2.5">
         <Wand2 className="h-3.5 w-3.5 shrink-0 text-muted" strokeWidth={1.5} aria-hidden />
-        <p className="ai-panel-heading truncate text-[11px] font-semibold tracking-wide text-ink">
+        <p className="ai-panel-heading truncate text-[12px] font-semibold tracking-wide text-ink">
           {t('aiTools')}
         </p>
       </div>
@@ -104,7 +104,7 @@ export function AiToolsPanel({
         </button>
 
         <div className="workspace-float-block flex flex-col gap-1.5 p-1.5">
-          <p className="ai-tools-section-label px-0.5 pb-0.5 text-[10px] font-medium uppercase tracking-wider text-muted">
+          <p className="ai-tools-section-label px-0.5 pb-0.5 text-[11px] font-medium uppercase tracking-wider text-muted">
             {t('aiToolsDocumentation')}
           </p>
 

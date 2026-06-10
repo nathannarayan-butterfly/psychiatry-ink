@@ -28,7 +28,7 @@ export function TopBar({ creditBalance, onOpenSettings }: TopBarProps) {
 
       <div className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
         <span
-          className="credit-badge shrink-0 font-mono text-[11px] text-ink sm:text-xs"
+          className="credit-badge shrink-0 font-mono text-[12px] text-ink sm:text-xs"
           title={t('creditBalance')}
         >
           <Sparkles className="h-3 w-3 shrink-0 text-muted" strokeWidth={2} aria-hidden />

@@ -116,7 +116,7 @@ export default function App() {
               const base = `/case/${encodeURIComponent(id)}`
               let url = page ? `${base}?page=${encodeURIComponent(page)}` : base
               if (showPatientDashboard) {
-                url += (url.includes('?') ? '&' : '?') + 'view=patient-dashboard'
+                url += (url.includes('?') ? '&' : '?') + 'view=overview'
               }
               navigate(url)
             }}
@@ -126,13 +126,13 @@ export default function App() {
             key={caseId}
             caseId={caseId}
             initialPage={route.view === 'case' ? route.page : undefined}
-            initialShowPatientDashboard={route.view === 'case' ? route.initialView === 'patient-dashboard' : false}
+            initialShowPatientDashboard={route.view === 'case' ? route.initialView === 'overview' : false}
             onNavigateDashboard={handleNavigateHome}
             onNavigateNewCase={(id, page, showPatientDashboard) => {
               const base = `/case/${encodeURIComponent(id)}`
               let url = page ? `${base}?page=${encodeURIComponent(page)}` : base
               if (showPatientDashboard) {
-                url += (url.includes('?') ? '&' : '?') + 'view=patient-dashboard'
+                url += (url.includes('?') ? '&' : '?') + 'view=overview'
               }
               navigate(url)
             }}

@@ -23,6 +23,25 @@ export const defaultWorkspaceComponents: WorkspaceComponentTemplate[] = [
     multistage: true,
     sections: cloneAufnahmeSections(),
     ai: aufnahmeComponentAi,
+    defaultVariantId: 'sections',
+    variants: [
+      {
+        id: 'sections',
+        label: 'Abschnitte',
+        mode: 'sections',
+        multistage: true,
+        sections: cloneAufnahmeSections(),
+        ai: aufnahmeComponentAi,
+      },
+      {
+        id: 'free',
+        label: 'Freitext',
+        mode: 'free',
+        multistage: false,
+        sections: [],
+        ai: aufnahmeComponentAi,
+      },
+    ],
   },
   {
     id: 'verlauf',
@@ -53,7 +72,7 @@ export const defaultWorkspaceComponents: WorkspaceComponentTemplate[] = [
   },
   {
     id: 'psychopath',
-    label: 'Psychopathologischer Befund, AMDP-orientiert',
+    label: 'Psychopathologischer Befund',
     toolLabelLines: ['Psycho-', 'pathologie'],
     icon: 'brain',
     multistage: false,

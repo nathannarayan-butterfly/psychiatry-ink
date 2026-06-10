@@ -43,7 +43,10 @@ export const DOMAIN_KEYWORD_PATTERNS: Record<IsdmPhenomenologyDomain, RegExp[]> 
   trauma_intrusions_dissociation: [/trauma|flashback|intrusion|dissoci|ptsd|nightmare/i],
   somatic_preoccupation: [/somato|hypochond|körper\s*besch|pain\s*focus/i],
   sleep_appetite_vegetative: [/schlaf|insomn|hypersomn|appetit|weight\s*change|libido/i],
-  substance_related_features: [/alkohol|alcohol|substanz|substance|cannabis|opioid|withdrawal|intox/i],
+  substance_related_features: [
+    /alkohol|alcohol|substanz|substance|cannabis|opioid|withdrawal|intox/i,
+    /medikation|medication|präparat|quetiapin|olanzapin|lithium|valproat/i,
+  ],
   personality_interpersonal_style: [/borderline|narziss|antisocial|interpersonal|attachment/i],
   insight_judgment: [/einsicht|insight|judgment|krankheitseinsicht|compliance\s*with\s*care/i],
   risk_self: [/suizid|self\s*harm|selbstgefährd|suicidal|self\s*injur/i],
@@ -70,6 +73,9 @@ export const IMPRINT_FIELD_DOMAIN_MAP: Record<string, IsdmPhenomenologyDomain> =
   functioning: 'functional_impairment',
   socialInteraction: 'personality_interpersonal_style',
   hygieneSelfCare: 'appearance_behavior',
+  sideEffects: 'somatic_preoccupation',
+  adherence: 'insight_judgment',
+  medicationResponse: 'mood_affect',
 }
 
 export function matchDomainsInText(text: string): IsdmPhenomenologyDomain[] {

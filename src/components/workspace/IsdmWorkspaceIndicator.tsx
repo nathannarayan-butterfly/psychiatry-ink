@@ -9,15 +9,11 @@ export function IsdmWorkspaceIndicator({ englishVariant }: IsdmWorkspaceIndicato
   const { t, language } = useTranslation()
 
   return (
-    <div
-      className="border-b border-border bg-surface px-4 py-2 text-xs text-muted"
-      role="note"
-      aria-label={t('isdmActiveBadge')}
-    >
-      <span className="mr-2 rounded-sm border border-border bg-surface-active px-1.5 py-0.5 font-medium text-ink">
-        {t('isdmActiveBadge')}
+    <div className="isdm-workspace-indicator" role="note" aria-label={t('isdmActiveBadge')}>
+      <span className="isdm-workspace-indicator__badge">{t('isdmActiveBadge')}</span>
+      <span className="isdm-workspace-indicator__text">
+        {getIsdmSafetyDisclaimer(language, englishVariant)}
       </span>
-      <span>{getIsdmSafetyDisclaimer(language, englishVariant)}</span>
     </div>
   )
 }

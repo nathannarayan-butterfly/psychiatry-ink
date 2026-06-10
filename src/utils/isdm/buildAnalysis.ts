@@ -1,5 +1,6 @@
 import type { DiagnoseEntry } from '../diagnosenArchive'
 import type { ClinicalImprintIndex, ClinicalImprintRecord } from '../../types/clinicalImprint'
+import type { MedicationPlanState } from '../../types/medicationPlan'
 import type {
   CoursePattern,
   DiagnosticMapping,
@@ -11,6 +12,11 @@ import type {
   SyndromeCluster,
   SymptomFinding,
 } from '../../types/isdm'
+import { getCurrentPlan } from '../medication/planOps'
+import {
+  buildMedicationEntryClinicalText,
+  buildSideEffectClinicalText,
+} from '../medication/doseLine'
 import {
   ISDM_PHENOMENOLOGY_DOMAINS,
 } from '../../types/isdm'
@@ -28,6 +34,7 @@ export interface IsdmBuildInput {
   isdmInput?: IsdmInputState
   diagnoses: DiagnoseEntry[]
   verlaufText?: string
+  medicationPlanState?: MedicationPlanState
 }
 
 function emptyPhenomenology(): Record<IsdmPhenomenologyDomain, SymptomFinding[]> {
@@ -136,6 +143,80 @@ function mapChecklistToFindings(
         })
       }
     }
+  }
+}
+
+function mapMedicationPlanToFindings(
+  state: MedicationPlanState | undefined,
+  phenomenology: Record<IsdmPhenomenologyDomain, SymptomFinding[]>,
+): void {
+  if (!state) return
+
+  const currentPlan = getCurrentPlan(state)
+  const medications = currentPlan?.medications ?? []
+  const activeMedications = medications.filter((med) => med.status !== 'discontinued')
+
+  for (const med of activeMedications) {
+    const text = buildMedicationEntryClinicalText(med)
+    if (!text.trim()) continue
+
+    for (const domain of matchDomainsInText(text)) {
+      addFinding(phenomenology, {
+        id: findingId(domain, `med-entry:${med.id}`),
+        domain,
+        label: med.doseLineGerman.trim() || med.substance.trim(),
+        keywords: [med.substance.trim(), ...med.sideEffects].filter(Boolean),
+        evidenceStrength: 'direct_observation',
+        sourceImprintKeys: [`medication:med-entry:${med.id}`],
+        confidence: 3,
+        polarity: 'present',
+      })
+    }
+
+    if (med.adherenceNote.trim()) {
+      addFinding(phenomenology, {
+        id: findingId('insight_judgment', `med-adherence:${med.id}`),
+        domain: 'insight_judgment',
+        label: med.adherenceNote.trim().slice(0, 120),
+        keywords: [med.adherenceNote.trim()],
+        evidenceStrength: 'patient_report',
+        sourceImprintKeys: [`medication:med-entry:${med.id}`],
+        confidence: 2,
+        polarity: /nicht|unregelm|vergess|miss|poor|irregular/i.test(med.adherenceNote)
+          ? 'present'
+          : 'unclear',
+      })
+    }
+  }
+
+  for (const report of state.sideEffectReports ?? []) {
+    const text = buildSideEffectClinicalText(report, medications)
+    if (!text.trim()) continue
+
+    for (const domain of matchDomainsInText(text)) {
+      addFinding(phenomenology, {
+        id: findingId(domain, `side-effect:${report.id}`),
+        domain,
+        label: report.symptom.trim().slice(0, 120),
+        keywords: [report.symptom.trim()],
+        evidenceStrength: 'patient_report',
+        sourceImprintKeys: [`medication:side-effect:${report.id}`],
+        confidence: 2,
+        polarity: 'present',
+        notes: report.note.trim() || undefined,
+      })
+    }
+
+    addFinding(phenomenology, {
+      id: findingId('somatic_preoccupation', `side-effect:${report.id}`),
+      domain: 'somatic_preoccupation',
+      label: `Nebenwirkung: ${report.symptom.trim()}`,
+      keywords: [report.symptom.trim(), 'Nebenwirkung'],
+      evidenceStrength: 'patient_report',
+      sourceImprintKeys: [`medication:side-effect:${report.id}`],
+      confidence: 2,
+      polarity: 'present',
+    })
   }
 }
 
@@ -364,6 +445,23 @@ function buildSyndromeClusters(
     })
   }
 
+  const medicationAdverseFindings = phenomenology.somatic_preoccupation.filter(
+    (item) =>
+      item.polarity === 'present' &&
+      /nebenwirk|side\s*effect|sedier|gewicht|tremor|extrapyram/i.test(item.label),
+  )
+  if (medicationAdverseFindings.length >= 1) {
+    clusters.push({
+      id: 'cluster:medication-adverse',
+      clusterType: 'mixed',
+      label: 'Medication adverse-effect pattern',
+      supportingFindings: medicationAdverseFindings.map((item) => item.id),
+      opposingFindings: [],
+      confidence: confidenceFromEvidence(medicationAdverseFindings.length, false),
+      rationale: 'Documented adverse effects potentially linked to psychiatric medication.',
+    })
+  }
+
   if (clusters.length >= 2) {
     clusters.push({
       id: 'cluster:mixed',
@@ -501,6 +599,7 @@ function presentRisk(phenomenology: Record<IsdmPhenomenologyDomain, SymptomFindi
 function buildInterviewGaps(
   phenomenology: Record<IsdmPhenomenologyDomain, SymptomFinding[]>,
   course: CoursePattern,
+  medicationPlanState?: MedicationPlanState,
 ): InterviewGap[] {
   const gaps: InterviewGap[] = []
 
@@ -547,6 +646,35 @@ function buildInterviewGaps(
       priority: 'medium',
       question: 'Is there current or recent use of alcohol, drugs or medications that could explain symptoms?',
       rationale: 'Substance-related contributors are not yet assessed.',
+    })
+  }
+
+  const currentPlan = medicationPlanState ? getCurrentPlan(medicationPlanState) : null
+  const activeMedications =
+    currentPlan?.medications.filter((med) => med.status !== 'discontinued') ?? []
+  const sideEffectReports = medicationPlanState?.sideEffectReports ?? []
+
+  if (activeMedications.length > 0 && sideEffectReports.length === 0) {
+    gaps.push({
+      id: 'gap:medication-side-effects',
+      domain: 'somatic_preoccupation',
+      priority: 'medium',
+      question:
+        'Are there any adverse effects from current psychiatric medications, including sedation, weight change, or extrapyramidal symptoms?',
+      rationale: 'Medications are documented but no side-effect reports have been captured.',
+    })
+  }
+
+  if (
+    activeMedications.length > 0 &&
+    activeMedications.every((med) => !med.adherenceNote.trim())
+  ) {
+    gaps.push({
+      id: 'gap:medication-adherence',
+      domain: 'insight_judgment',
+      priority: 'low',
+      question: 'How consistently is the current medication being taken, and are there barriers to adherence?',
+      rationale: 'Medication plan exists without documented adherence information.',
     })
   }
 
@@ -604,6 +732,7 @@ export function buildIsdmAnalysis(input: IsdmBuildInput): IsdmClinicalAnalysis {
   mapImprintsToFindings(imprints, phenomenology)
   mapChecklistToFindings(input.checklistSelections, phenomenology)
   mapIsdmInputToFindings(input.isdmInput, phenomenology)
+  mapMedicationPlanToFindings(input.medicationPlanState, phenomenology)
 
   if (input.verlaufText?.trim()) {
     for (const domain of matchDomainsInText(input.verlaufText)) {
@@ -623,7 +752,11 @@ export function buildIsdmAnalysis(input: IsdmBuildInput): IsdmClinicalAnalysis {
   const coursePattern = buildCoursePattern(imprints, input.verlaufText)
   const syndromeClusters = buildSyndromeClusters(phenomenology)
   const diagnosticMappings = buildDiagnosticMappings(syndromeClusters, input.diagnoses, phenomenology)
-  const interviewGaps = buildInterviewGaps(phenomenology, coursePattern)
+  const interviewGaps = buildInterviewGaps(
+    phenomenology,
+    coursePattern,
+    input.medicationPlanState,
+  )
   const overallUncertainty = computeOverallUncertainty(
     phenomenology,
     interviewGaps,

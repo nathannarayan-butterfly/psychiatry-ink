@@ -51,8 +51,13 @@ import {
 import type { ClinicalImprintIndex } from '../types/clinicalImprint'
 import type { IsdmClinicalAnalysis, IsdmInputState } from '../types/isdm'
 import { applyIsdmAnalysis, applyIsdmInput, loadIsdmAnalysis, loadIsdmInput } from './isdm'
+import {
+  applyMedicationPlanState,
+  loadMedicationPlanState,
+} from './medication/storage'
+import type { MedicationPlanState } from '../types/medicationPlan'
 
-export const WORKSPACE_PAYLOAD_VERSION = 6
+export const WORKSPACE_PAYLOAD_VERSION = 7
 
 export const LAST_VAULT_EXPORT_KEY = 'psychiatry-ink:last-vault-export-at'
 
@@ -76,7 +81,14 @@ export interface WorkspaceLivePatch {
   timeline?: TimelineSnapshot | null
 }
 
-/** Clinical workspace payload — safe for DB sync (no name/DOB; age inside ciphertext). */
+/**
+ * Clinical workspace payload — safe for DB sync (no name/DOB; age inside ciphertext).
+ *
+ * Analysis layers:
+ * - Layer 1 Ingestion: `clinicalImprints`
+ * - Layer 2 Profiles: `isdmAnalysis`, `isdmInput`, `medicationPlanState`
+ * - Layer 3 Future: Butterfly consumer (not stored here yet)
+ */
 export interface ClinicalWorkspacePayload {
   version: number
   updatedAt: string
@@ -93,12 +105,14 @@ export interface ClinicalWorkspacePayload {
   activeLabGraphId: string | null
   /** Diagnoses are part of the clinical case file (synced with workspace ciphertext). */
   diagnoses: DiagnoseEntry[]
-  /** Structured clinical memory index — pseudonymous, no patient name. */
+  /** Layer 1 — universal clinical imprint index (ingestion). */
   clinicalImprints?: ClinicalImprintIndex
-  /** ISDM structured diagnostic mapping snapshot — clinician review required. */
+  /** Layer 2a — ISDM V.1 diagnostic mapping profile (subset of analysis, not the whole system). */
   isdmAnalysis?: IsdmClinicalAnalysis
-  /** ISDM structured phenomenology input — clinician-entered domain ratings. */
+  /** Layer 2a — ISDM phenomenology domain input (clinician-entered). */
   isdmInput?: IsdmInputState
+  /** Layer 2b — medication intelligence profile (plan, side effects, lab correlation). */
+  medicationPlanState?: MedicationPlanState
   /** Per-document variant selection (e.g. psychopath sub-mode). */
   activeVariantIds?: Record<string, string>
   /** @deprecated v1 — stripped on write */
@@ -228,6 +242,7 @@ export function collectClinicalPayload(
   const clinicalImprints = loadClinicalImprintIndex(storageCaseId)
   const isdmAnalysis = loadIsdmAnalysis(storageCaseId) ?? undefined
   const isdmInput = loadIsdmInput(storageCaseId) ?? undefined
+  const medicationPlanState = loadMedicationPlanState(storageCaseId) ?? undefined
 
   return {
     version: WORKSPACE_PAYLOAD_VERSION,
@@ -246,20 +261,9 @@ export function collectClinicalPayload(
     clinicalImprints,
     isdmAnalysis,
     isdmInput,
+    medicationPlanState,
     activeVariantIds: live?.activeVariantIds,
   }
-}
-
-/** @deprecated Use collectClinicalPayload — patient metadata is never in workspace vault. */
-export function collectWorkspacePayload(live?: WorkspaceLivePatch): ClinicalWorkspacePayload {
-  return collectClinicalPayload(live)
-}
-
-/** @deprecated Use collectClinicalPayload. */
-export async function collectWorkspacePayloadAsync(
-  live?: WorkspaceLivePatch,
-): Promise<ClinicalWorkspacePayload> {
-  return collectClinicalPayload(live)
 }
 
 export function applyClinicalPayload(
@@ -320,10 +324,10 @@ export function applyClinicalPayload(
       scheduleIsdmRebuild(storageCaseId, 'input')
     })
   }
-}
 
-export function applyWorkspacePayload(payload: ClinicalWorkspacePayload, caseId?: string): void {
-  applyClinicalPayload(payload, caseId)
+  if (normalized.medicationPlanState) {
+    applyMedicationPlanState(normalized.medicationPlanState, storageCaseId)
+  }
 }
 
 /** Strips legacy patient metadata from older vault files; never applies name/age from sync. */
@@ -377,6 +381,7 @@ export async function decryptWorkspaceBlob(blob: EncryptedVaultBlob): Promise<Cl
     clinicalImprints: payload.clinicalImprints,
     isdmAnalysis: payload.isdmAnalysis,
     isdmInput: payload.isdmInput,
+    medicationPlanState: payload.medicationPlanState,
   }
 }
 

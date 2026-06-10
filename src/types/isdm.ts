@@ -1,5 +1,11 @@
 import type { CourseDirection, EvidenceStrength } from './clinicalImprint'
 
+/**
+ * ISDM V.1 — Layer 2a profile inside Clinical Analysis (diagnostic mapping subset).
+ * Consumes clinical imprints; not a replacement for the ingestion layer.
+ * See `clinicalAnalysis.ts` for the full three-layer model.
+ */
+
 export type AssessmentStandard =
   | 'local_clinical'
   | 'international_structured_diagnostic_mapping'

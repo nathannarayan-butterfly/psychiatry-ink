@@ -41,7 +41,6 @@ transcribeRouter.post('/', async (req: Request, res: Response) => {
     res.json({ ...result, balance, creditsCharged: TRANSCRIBE_CREDITS })
   } catch (error) {
     console.error('[transcribe] failed:', error)
-    const message = error instanceof Error ? error.message : 'Transcription failed'
-    res.status(500).json({ error: message })
+    res.status(500).json({ error: 'Transcription failed' })
   }
 })

@@ -260,7 +260,7 @@ export function DocumentationWorkspace({
                 type="button"
                 onClick={onInsertNormalBefund}
                 disabled={editorLocked}
-                className="workspace-header__action shrink-0 rounded-sm border border-border/70 bg-surface px-2 py-0.5 text-[10px] font-medium text-ink transition-colors hover:border-border hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50 sm:text-xs"
+                className="workspace-header__action shrink-0 rounded-sm border border-border/70 bg-surface px-2 py-0.5 text-[11px] font-medium text-ink transition-colors hover:border-border hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50 sm:text-xs"
               >
                 {t('insertNormalBefund')}
               </button>
@@ -319,7 +319,7 @@ export function DocumentationWorkspace({
                       </>
                     )}
                     <span
-                      className={`generation-scope-badge ml-1.5 inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-medium ${
+                      className={`generation-scope-badge ml-1.5 inline-flex items-center rounded-full border px-1.5 py-0.5 text-[11px] font-medium ${
                         generationScope === 'document'
                           ? 'border-border-strong bg-surface text-ink'
                           : 'border-border/60 bg-surface text-muted'
@@ -383,7 +383,7 @@ export function DocumentationWorkspace({
             ) : null}
 
             {isDocumentScope ? (
-              <p className="document-scope-hint workspace-float-block mx-3 mb-2 shrink-0 px-3 py-2 text-[11px] leading-snug text-ink sm:mx-5 sm:px-4 sm:text-xs">
+              <p className="document-scope-hint workspace-float-block mx-3 mb-2 shrink-0 px-3 py-2 text-[12px] leading-snug text-ink sm:mx-5 sm:px-4 sm:text-xs">
                 {t('documentScopeEditorHint')}
               </p>
             ) : null}

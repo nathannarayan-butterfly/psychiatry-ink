@@ -28,8 +28,64 @@ import { cloneWorkspaceComponents, createUniqueId } from '../utils/workspaceComp
 const STORAGE_KEY = 'psychiatry-ink-workspace'
 
 const PROTECTED_VARIANT_IDS: Record<string, string[]> = {
-  psychopath: ['free', 'checklist'],
+  psychopath: ['free', 'checklist', 'isdm'],
   verlauf: ['short', 'broad'],
+}
+
+function inferPsychopathVariantMode(variant: WorkspaceComponentVariant): WorkspaceVariantMode {
+  if (variant.id === 'isdm') return 'isdm'
+  if (variant.mode) return variant.mode
+  if (!variant.multistage) return 'free'
+  if (variant.sections.some((section) => section.checklistItems?.length)) return 'checklist'
+  return 'sections'
+}
+
+function normalizePsychopathVariantSections(
+  variant: WorkspaceComponentVariant,
+): WorkspaceComponentVariant {
+  const mode = inferPsychopathVariantMode(variant)
+
+  return {
+    ...variant,
+    mode,
+    sections:
+      (variant.id === 'checklist' || mode === 'checklist') &&
+      (isLegacyPsychopathChecklistSections(variant.sections) ||
+        !variant.sections.some((section) => section.checklistItems?.length))
+        ? clonePsychopathSections()
+        : (variant.id === 'sections' || mode === 'sections') &&
+            (isLegacyPsychopathChecklistSections(variant.sections) ||
+              variant.sections.length === 0)
+          ? clonePsychopathSections().map((section) => ({
+              ...section,
+              checklistItems: undefined,
+            }))
+          : variant.sections.map((section) => ({
+              ...section,
+              checklistItems: section.checklistItems?.map((item) => ({ ...item })),
+            })),
+  }
+}
+
+function mergeDefaultPsychopathVariants(
+  variants: WorkspaceComponentVariant[],
+  defaultPsychopath: WorkspaceComponentTemplate | null,
+): WorkspaceComponentVariant[] {
+  const existingIds = new Set(variants.map((variant) => variant.id))
+  const merged = [
+    ...variants,
+    ...(defaultPsychopath?.variants ?? [])
+      .filter((variant) => !existingIds.has(variant.id))
+      .map((variant) => ({
+        ...variant,
+        sections:
+          variant.id === 'free' || variant.id === 'isdm'
+            ? []
+            : clonePsychopathSections(),
+      })),
+  ]
+
+  return merged.map(normalizePsychopathVariantSections)
 }
 
 function stripDefaultPsychopathSectionsVariant(
@@ -68,8 +124,8 @@ function migrateComponents(
         ...component,
         label:
           component.label === 'Psycho-pathologie' ||
-          component.label === 'Psychopathologischer Befund'
-            ? 'Psychopathologischer Befund, AMDP-orientiert'
+          component.label === 'Psychopathologischer Befund, AMDP-orientiert'
+            ? 'Psychopathologischer Befund'
             : component.label,
         toolLabelLines: component.toolLabelLines?.length
           ? component.toolLabelLines
@@ -83,46 +139,14 @@ function migrateComponents(
         return stripDefaultPsychopathSectionsVariant({
           ...normalized,
           defaultVariantId: defaultPsychopath?.defaultVariantId ?? 'free',
-          variants: defaultPsychopath?.variants
-            ? defaultPsychopath.variants.map((variant) => ({
-                ...variant,
-                sections:
-                  variant.id === 'free'
-                    ? []
-                    : clonePsychopathSections(),
-              }))
-            : [],
+          variants: mergeDefaultPsychopathVariants([], defaultPsychopath),
         })
       }
 
       return stripDefaultPsychopathSectionsVariant({
         ...normalized,
         defaultVariantId: normalized.defaultVariantId ?? 'free',
-        variants: normalized.variants.map((variant) => ({
-          ...variant,
-          mode: (variant.mode ??
-            (!variant.multistage
-              ? 'free'
-              : variant.sections.some((section) => section.checklistItems?.length)
-                ? 'checklist'
-                : 'sections')) as WorkspaceVariantMode,
-          sections:
-            (variant.id === 'checklist' || variant.mode === 'checklist') &&
-            (isLegacyPsychopathChecklistSections(variant.sections) ||
-              !variant.sections.some((section) => section.checklistItems?.length))
-              ? clonePsychopathSections()
-              : (variant.id === 'sections' || variant.mode === 'sections') &&
-                  (isLegacyPsychopathChecklistSections(variant.sections) ||
-                    variant.sections.length === 0)
-                ? clonePsychopathSections().map((section) => ({
-                    ...section,
-                    checklistItems: undefined,
-                  }))
-                : variant.sections.map((section) => ({
-                    ...section,
-                    checklistItems: section.checklistItems?.map((item) => ({ ...item })),
-                  })),
-        })),
+        variants: mergeDefaultPsychopathVariants(normalized.variants, defaultPsychopath),
       })
     }
 

@@ -117,7 +117,7 @@ export function TimelineWorkspace({
           </div>
         </div>
         <div className="workspace-header__sub-row flex flex-wrap items-center gap-2">
-          <p className="text-[11px] text-muted">{t('timelineImportPdfHint')}</p>
+          <p className="text-[12px] text-muted">{t('timelineImportPdfHint')}</p>
           <div className="workspace-header__segment shrink-0">
             {layoutOptions.map((option) => (
               <button

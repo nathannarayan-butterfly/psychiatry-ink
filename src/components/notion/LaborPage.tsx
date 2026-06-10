@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   LineChart,
   Line,
@@ -23,9 +23,11 @@ import {
   type LaborValue,
   type PinnedLaborWidget,
 } from '../../utils/laborArchive'
+import { syncLaborDokumente } from '../../utils/laborDokumente'
 import { parseLabText } from '../../utils/laborParser'
 import { showNotionToast } from './NotionToast'
 import { API_BASE } from '../../services/apiClient'
+import { useTranslation } from '../../context/TranslationContext'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -806,8 +808,8 @@ function GraphModal({ category, befunde, selectedParams, onClose, onCloseAndPin 
             <div ref={chartContainerRef} className="labor-graph-modal__chart-wrap">
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={chartData} margin={{ top: 22, right: 24, bottom: 0, left: 0 }}>
-                  <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} width={45} />
+                  <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} width={45} />
                   <Tooltip />
                   <Legend />
 
@@ -837,7 +839,7 @@ function GraphModal({ category, befunde, selectedParams, onClose, onCloseAndPin 
                             label={{
                               value: String(range.min),
                               position: 'insideBottomLeft',
-                              fontSize: 10,
+                              fontSize: 11,
                               fill: '#16a34a',
                             }}
                           />,
@@ -851,7 +853,7 @@ function GraphModal({ category, befunde, selectedParams, onClose, onCloseAndPin 
                             label={{
                               value: String(range.max),
                               position: 'insideTopLeft',
-                              fontSize: 10,
+                              fontSize: 11,
                               fill: '#16a34a',
                             }}
                           />,
@@ -866,7 +868,7 @@ function GraphModal({ category, befunde, selectedParams, onClose, onCloseAndPin 
                             label={{
                               value: `<${range.max}`,
                               position: 'insideTopLeft',
-                              fontSize: 10,
+                              fontSize: 11,
                               fill: '#16a34a',
                             }}
                           />,
@@ -881,7 +883,7 @@ function GraphModal({ category, befunde, selectedParams, onClose, onCloseAndPin 
                             label={{
                               value: `>${range.min}`,
                               position: 'insideBottomLeft',
-                              fontSize: 10,
+                              fontSize: 11,
                               fill: '#16a34a',
                             }}
                           />,
@@ -969,7 +971,7 @@ function GraphModal({ category, befunde, selectedParams, onClose, onCloseAndPin 
                                 x={Number(x)}
                                 y={Number(y) - 9}
                                 fill={isAbn ? '#ef4444' : '#6b7280'}
-                                fontSize={10}
+                                fontSize={11}
                                 textAnchor="middle"
                                 fontWeight={isAbn ? 700 : 400}
                               >
@@ -1266,15 +1268,228 @@ function CategorySection({
 }
 
 // ---------------------------------------------------------------------------
+// Cumulative (Kumulativ) matrix view
+// ---------------------------------------------------------------------------
+
+interface KumulativViewProps {
+  befunde: LaborBefund[]
+  normalwerteLabel: string
+}
+
+function KumulativView({ befunde, normalwerteLabel }: KumulativViewProps) {
+  const { t } = useTranslation()
+
+  // Sort befunde by date ascending (oldest = first column, newest = last)
+  const sorted = useMemo(
+    () => [...befunde].sort((a, b) => a.date.localeCompare(b.date)),
+    [befunde],
+  )
+
+  // Collect categories and their params in stable insertion order (newest befund first)
+  const categoryGroups = useMemo(() => {
+    const catMap = new Map<string, { id: string; label: string; paramNames: string[] }>()
+    const catOrder: string[] = []
+    // Iterate newest → oldest so the most-recent ordering takes priority
+    for (const b of [...sorted].reverse()) {
+      for (const cat of b.categories) {
+        const key = cat.id || cat.label
+        if (!catMap.has(key)) {
+          catMap.set(key, { id: cat.id, label: cat.label, paramNames: [] })
+          catOrder.push(key)
+        }
+        const entry = catMap.get(key)!
+        const seenNames = new Set(entry.paramNames)
+        for (const v of cat.values) {
+          if (!seenNames.has(v.name)) {
+            seenNames.add(v.name)
+            entry.paramNames.push(v.name)
+          }
+        }
+      }
+    }
+    return catOrder.map((key) => catMap.get(key)!)
+  }, [sorted])
+
+  // All param names in flat order (for matrix / lookup computation)
+  const paramNames = useMemo(
+    () => categoryGroups.flatMap((g) => g.paramNames),
+    [categoryGroups],
+  )
+
+  // matrix[paramName][befundIndex] = LaborValue | undefined
+  const matrix = useMemo(() => {
+    const m: Record<string, (LaborValue | undefined)[]> = {}
+    for (const name of paramNames) {
+      m[name] = sorted.map((b) => {
+        for (const cat of b.categories) {
+          const found = cat.values.find((v) => v.name === name)
+          if (found) return found
+        }
+        return undefined
+      })
+    }
+    return m
+  }, [paramNames, sorted])
+
+  // Best reference text per param (from most-recent befund that has it)
+  const refTexts = useMemo(() => {
+    const r: Record<string, string> = {}
+    for (const name of paramNames) {
+      for (const b of [...sorted].reverse()) {
+        for (const cat of b.categories) {
+          const v = cat.values.find((vv) => vv.name === name)
+          if (v?.refText) {
+            r[name] = v.refText
+            break
+          }
+        }
+        if (r[name]) break
+      }
+    }
+    return r
+  }, [paramNames, sorted])
+
+  // Unit per param (from most-recent befund with a non-empty unit)
+  const unitTexts = useMemo(() => {
+    const u: Record<string, string> = {}
+    for (const name of paramNames) {
+      for (const b of [...sorted].reverse()) {
+        for (const cat of b.categories) {
+          const v = cat.values.find((vv) => vv.name === name)
+          if (v?.unit) {
+            u[name] = v.unit
+            break
+          }
+        }
+        if (u[name]) break
+      }
+    }
+    return u
+  }, [paramNames, sorted])
+
+  if (sorted.length === 0) {
+    return (
+      <p className="labor-page__empty-text" style={{ padding: '1.5rem' }}>
+        Kein Laborbefund vorhanden
+      </p>
+    )
+  }
+
+  // Total column count for category header colspan
+  const totalCols = sorted.length + 3 // param + N dates + einheit + ref
+
+  return (
+    <div className="labor-kumulativ">
+      <div className="labor-kumulativ__scroll-wrap">
+        <table className="labor-kumulativ__table">
+          <thead>
+            <tr className="labor-kumulativ__head-row">
+              {/* Sticky left: param name header */}
+              <th className="labor-kumulativ__th labor-kumulativ__th--param labor-kumulativ__sticky-left">
+                Parameter
+              </th>
+              {/* Date columns */}
+              {sorted.map((b, i) => (
+                <th key={b.id} className="labor-kumulativ__th labor-kumulativ__th--date">
+                  <span className="labor-kumulativ__date-label">{formatDate(b.date)}</span>
+                  {b.label && (
+                    <span className="labor-kumulativ__date-sublabel">{b.label}</span>
+                  )}
+                  {i === sorted.length - 1 && (
+                    <span className="labor-kumulativ__newest-badge">neu</span>
+                  )}
+                </th>
+              ))}
+              {/* Sticky second-from-right: Einheit */}
+              <th className="labor-kumulativ__th labor-kumulativ__th--unit labor-kumulativ__sticky-right-2">
+                {t('labUnit')}
+              </th>
+              {/* Sticky right: Normalwerte */}
+              <th className="labor-kumulativ__th labor-kumulativ__th--ref labor-kumulativ__sticky-right">
+                {normalwerteLabel}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {categoryGroups.map((group) => (
+              <Fragment key={group.id}>
+                {/* Category group header row */}
+                <tr className="labor-kumulativ__cat-header-row">
+                  <td
+                    className="labor-kumulativ__cat-header-cell"
+                    colSpan={totalCols}
+                  >
+                    {group.label}
+                  </td>
+                </tr>
+                {group.paramNames.map((name) => {
+                  const row = matrix[name]
+                  const hasAnyAbnormal = row?.some((v) => v?.isAbnormal)
+                  return (
+                    <tr
+                      key={name}
+                      className={[
+                        'labor-kumulativ__row',
+                        hasAnyAbnormal ? 'labor-kumulativ__row--has-abnormal' : '',
+                      ].join(' ').trim()}
+                    >
+                      {/* Param name — sticky left */}
+                      <td className="labor-kumulativ__td labor-kumulativ__td--param labor-kumulativ__sticky-left">
+                        {name}
+                      </td>
+                      {/* Values per befund */}
+                      {sorted.map((b, i) => {
+                        const val = row?.[i]
+                        return (
+                          <td
+                            key={b.id}
+                            className={[
+                              'labor-kumulativ__td labor-kumulativ__td--value',
+                              val?.isAbnormal ? 'labor-kumulativ__td--abnormal' : '',
+                            ].join(' ').trim()}
+                          >
+                            {val ? (
+                              <span className="labor-kumulativ__val">{val.value}</span>
+                            ) : (
+                              <span className="labor-kumulativ__missing">—</span>
+                            )}
+                          </td>
+                        )
+                      })}
+                      {/* Einheit — sticky second-from-right */}
+                      <td className="labor-kumulativ__td labor-kumulativ__td--unit labor-kumulativ__sticky-right-2">
+                        {unitTexts[name] ?? ''}
+                      </td>
+                      {/* Normalwerte — sticky right */}
+                      <td className="labor-kumulativ__td labor-kumulativ__td--ref labor-kumulativ__sticky-right">
+                        {refTexts[name] ?? '–'}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </Fragment>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Main LaborPage
 // ---------------------------------------------------------------------------
 
 interface LaborPageProps {
   caseId: string
   onCreatePatient?: () => void
+  /** Whether a patient is already linked to this case. Hides the assignment UI when true. */
+  hasPatient?: boolean
 }
 
-export function LaborPage({ caseId, onCreatePatient }: LaborPageProps) {
+export function LaborPage({ caseId, onCreatePatient, hasPatient = false }: LaborPageProps) {
+  const { t } = useTranslation()
+  const [viewMode, setViewMode] = useState<'einzeln' | 'kumulativ'>('einzeln')
   const [befunde, setBefunde] = useState<LaborBefund[]>(() =>
     [...loadBefunde(caseId)].sort((a, b) => b.date.localeCompare(a.date)),
   )
@@ -1289,6 +1504,7 @@ export function LaborPage({ caseId, onCreatePatient }: LaborPageProps) {
   } | null>(null)
   const [editingLabel, setEditingLabel] = useState(false)
   const [labelDraft, setLabelDraft] = useState('')
+  const [pasteZoneOpen, setPasteZoneOpen] = useState(false)
   const labelInputRef = useRef<HTMLInputElement>(null)
   const pasteTextareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -1297,6 +1513,12 @@ export function LaborPage({ caseId, onCreatePatient }: LaborPageProps) {
     setBefunde(loaded)
     setSelectedId(loaded[0]?.id ?? null)
   }, [caseId])
+
+  useEffect(() => {
+    if (!pasteZoneOpen) return
+    const id = window.setTimeout(() => pasteTextareaRef.current?.focus(), 60)
+    return () => window.clearTimeout(id)
+  }, [pasteZoneOpen])
 
   const selectedBefund = useMemo(
     () => befunde.find((b) => b.id === selectedId) ?? null,
@@ -1325,9 +1547,14 @@ export function LaborPage({ caseId, onCreatePatient }: LaborPageProps) {
       const next = [...loadBefunde(caseId)].sort((a, b) => b.date.localeCompare(a.date))
       setBefunde(next)
       setSelectedId(befund.id)
+
+      // Mirror the befund into the Dokumente archive (idempotent via befund id)
+      syncLaborDokumente(caseId, t('laborDocumentTitle'))
+
       showNotionToast('Laborbefund gespeichert')
+      setPasteZoneOpen(false)
     },
-    [caseId],
+    [caseId, t],
   )
 
   const handleDelete = useCallback(() => {
@@ -1374,7 +1601,7 @@ export function LaborPage({ caseId, onCreatePatient }: LaborPageProps) {
       `<h2>Laborbefund ${selectedBefund.date}${selectedBefund.label ? ' — ' + selectedBefund.label : ''}</h2>`,
     ]
     for (const cat of selectedBefund.categories) {
-      lines.push(`<h3>${cat.label}</h3><table border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:13px">`)
+      lines.push(`<h3>${cat.label}</h3><table border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:14px">`)
       lines.push('<tr><th>Parameter</th><th>Wert</th><th>Einheit</th><th>Referenz</th></tr>')
       for (const v of cat.values) {
         const color = v.isAbnormal ? ' style="color:#dc2626;font-weight:bold"' : ''
@@ -1441,11 +1668,39 @@ export function LaborPage({ caseId, onCreatePatient }: LaborPageProps) {
       <aside className="labor-page__sidebar">
         <button
           type="button"
-          className="labor-page__add-btn"
-          onClick={() => pasteTextareaRef.current?.focus()}
+          className={[
+            'labor-page__add-btn',
+            pasteZoneOpen ? 'labor-page__add-btn--active' : '',
+          ].join(' ').trim()}
+          onClick={() => setPasteZoneOpen((open) => !open)}
+          aria-expanded={pasteZoneOpen}
         >
-          + Laborbefund
+          {pasteZoneOpen ? '×' : '+'} {t('laborAddBefund')}
         </button>
+
+        {/* View toggle */}
+        <div className="labor-view-toggle" role="group" aria-label="Ansicht">
+          <button
+            type="button"
+            className={[
+              'labor-view-toggle__btn',
+              viewMode === 'einzeln' ? 'labor-view-toggle__btn--active' : '',
+            ].join(' ').trim()}
+            onClick={() => setViewMode('einzeln')}
+          >
+            {t('laborViewEinzeln')}
+          </button>
+          <button
+            type="button"
+            className={[
+              'labor-view-toggle__btn',
+              viewMode === 'kumulativ' ? 'labor-view-toggle__btn--active' : '',
+            ].join(' ').trim()}
+            onClick={() => setViewMode('kumulativ')}
+          >
+            {t('laborViewKumulativ')}
+          </button>
+        </div>
 
         {befunde.length === 0 ? (
           <p className="labor-page__sidebar-empty">Kein Laborbefund vorhanden</p>
@@ -1477,10 +1732,28 @@ export function LaborPage({ caseId, onCreatePatient }: LaborPageProps) {
 
       {/* Main area */}
       <div className="labor-page__main">
-        {/* Inline paste zone — always visible at top */}
-        <LaborPasteZone onSave={handleSaveBefund} textareaRef={pasteTextareaRef} />
+        {/* Inline paste zone — collapsed by default, toggled via "+ Labor hinzufügen" */}
+        {pasteZoneOpen && (
+          <div className="labor-paste-collapse">
+            <button
+              type="button"
+              className="labor-paste-collapse__close"
+              onClick={() => setPasteZoneOpen(false)}
+              aria-label={t('dokumenteClose')}
+              title={t('dokumenteClose')}
+            >
+              ×
+            </button>
+            <LaborPasteZone onSave={handleSaveBefund} textareaRef={pasteTextareaRef} />
+          </div>
+        )}
 
-        {selectedBefund ? (
+        {/* Kumulativ view */}
+        {viewMode === 'kumulativ' && (
+          <KumulativView befunde={befunde} normalwerteLabel={t('laborNormalwerte')} />
+        )}
+
+        {viewMode === 'einzeln' && selectedBefund ? (
           <div className="labor-page__content">
             {/* Befund header */}
             <header className="labor-befund-header">
@@ -1565,16 +1838,16 @@ export function LaborPage({ caseId, onCreatePatient }: LaborPageProps) {
               </div>
             )}
 
-            {/* Patient assignment collapsible */}
-            <PatientsZuordnen onCreatePatient={onCreatePatient} />
+            {/* Patient assignment collapsible — only when no patient is linked yet */}
+            {!hasPatient && <PatientsZuordnen onCreatePatient={onCreatePatient} />}
           </div>
-        ) : (
+        ) : viewMode === 'einzeln' ? (
           <div className="labor-page__empty">
             <p className="labor-page__empty-text">
               Laborbefund einfügen oder auswählen
             </p>
           </div>
-        )}
+        ) : null}
       </div>
 
       {pendingGraphCat && (

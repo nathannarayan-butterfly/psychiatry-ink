@@ -195,6 +195,18 @@ export function listLocalCases(): LocalCaseMeta[] {
   )
 }
 
+/** Default workspace case is hidden from patient lists unless patient data was entered. */
+export function isListedPatientCase(caseItem: DashboardCase): boolean {
+  if (caseItem.caseId !== DEFAULT_CASE_ID) return true
+  return Boolean(
+    caseItem.localName?.trim() ||
+      caseItem.localVorname?.trim() ||
+      caseItem.localNachname?.trim() ||
+      caseItem.localGeburtsdatum?.trim() ||
+      caseItem.localGeschlecht,
+  )
+}
+
 export function createNewCase(): LocalCaseMeta {
   const caseId = createCaseId()
   const meta = upsertCaseMeta(caseId, {

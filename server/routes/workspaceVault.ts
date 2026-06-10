@@ -92,8 +92,7 @@ workspaceVaultRouter.put('/snapshot', async (req: Request, res: Response) => {
     res.json({ ok: true, updatedAt: record.updatedAt.toISOString() })
   } catch (error) {
     console.error('[workspace] snapshot save failed:', error)
-    const message = error instanceof Error ? error.message : 'Save failed'
-    res.status(500).json({ error: message })
+    res.status(500).json({ error: 'Failed to save snapshot' })
   }
 })
 

@@ -28,6 +28,7 @@ import { NotionDocumentActions } from './NotionDocumentActions'
 import { compileChecklistText } from '../../utils/checklist'
 import { NotionEditorHints } from './NotionEditorHints'
 import { NotionVariantLinks, type NotionVariantOption } from './NotionVariantLinks'
+import { MedicationWorkspace } from '../medication/MedicationWorkspace'
 import { IsdmPsychopathWorkspace } from '../workspace/IsdmInputPanel'
 import {
   isPsychopathSubMode,
@@ -51,6 +52,7 @@ import { usePatientMetadata } from '../../hooks/usePatientMetadata'
 import type { SelectionActionId } from './FloatingSelectionToolbar'
 import type { PasteActionId } from './PasteAssistant'
 import type { SlashCommandId } from './SlashCommandMenu'
+import { detectContentType, type ContentCategory } from '../../utils/pasteContentDetector'
 
 export interface SavedWorkspaceDocumentPayload extends NotionDocumentSnapshot {
   content: string
@@ -101,6 +103,7 @@ interface NotionPaperProps {
   onEditorChange: (value: string) => void
   onSectionContentChange: (sectionId: string, value: string) => void
   onEditorPaste: () => void
+  onDetectedPaste?: (text: string, category: ContentCategory) => void
   onSaveSection: (sectionId?: string) => void
   onSelectAiModelTier: (tier: AiModelTier) => void
   onSelectAiTool: (tool: AiToolKey) => void
@@ -131,6 +134,7 @@ interface NotionPaperProps {
   onNavigateToLabor?: () => void
   savedDocs?: SavedDoc[]
   onViewSavedDoc?: (doc: SavedDoc) => void
+  onRemoveSavedDoc?: (id: string) => void
   /** Close the open document and return to the default workspace home. */
   onCloseDocument?: () => void
   onPsychopathModeSelect?: (mode: PsychopathSubMode) => void
@@ -189,13 +193,14 @@ export function NotionPaper({
   onEditorChange,
   onSectionContentChange,
   onEditorPaste,
+  onDetectedPaste,
   onSaveSection,
   onSelectAiModelTier,
   onSelectAiTool,
   onKiExtraInstructionChange,
   onGenerate,
   onSelectionAction,
-  onPasteAction,
+  onPasteAction: _onPasteAction,
   onSlashCommand,
   onSectionSelect: _onSectionSelect,
   onSectionFocus,
@@ -218,6 +223,7 @@ export function NotionPaper({
   onNavigateToLabor,
   savedDocs,
   onViewSavedDoc,
+  onRemoveSavedDoc,
   onCloseDocument,
   onPsychopathModeSelect,
 }: NotionPaperProps) {
@@ -232,18 +238,20 @@ export function NotionPaper({
   })
   const editorLocked = isDictationActive || isGenerating
   const isPsychopathDocument = documentTypeId === 'psychopath'
+  const isMedicationDocument = documentTypeId === 'medikation'
   const psychopathActiveMode: PsychopathSubMode =
     isPsychopathDocument && activeVariantId && isPsychopathSubMode(activeVariantId)
       ? activeVariantId
       : 'free'
   const showVariantPicker = Boolean(
-    !isPsychopathDocument &&
-      componentVariants &&
+    componentVariants &&
       componentVariants.length > 1 &&
       activeVariantId &&
-      onVariantSelect,
+      (onVariantSelect || (isPsychopathDocument && onPsychopathModeSelect)),
   )
-  const showIsdmPanel = isPsychopathDocument && documentMode === 'isdm'
+  const showIsdmPanel = isPsychopathDocument && psychopathActiveMode === 'isdm'
+  const showMedicationPanel = isMedicationDocument
+  const showStructuredToolPanel = showMedicationPanel || showIsdmPanel
   const showKompilierenButton = Boolean(
     documentMode === 'checklist' && showMultistageSections,
   )
@@ -304,7 +312,12 @@ export function NotionPaper({
   // section textareas are empty (checkboxes don't populate sectionContents until
   // toggled, so documentEmpty stays true even on a fresh checklist).
   const showDocumentBlankState =
-    !showMultistageSections && documentEmpty && !documentEditingStarted && !editorLocked
+    !showMultistageSections &&
+    !showIsdmPanel &&
+    !showMedicationPanel &&
+    documentEmpty &&
+    !documentEditingStarted &&
+    !editorLocked
 
   const requestCommandMenu = useCallback(() => {
     if (editorLocked) return
@@ -362,6 +375,14 @@ export function NotionPaper({
     try {
       const text = await navigator.clipboard.readText()
       if (text.trim()) {
+        // When there is no document type yet (home/blank page), auto-detect and
+        // let the parent navigate to the correct page before inserting content.
+        if (!documentTypeId && onDetectedPaste) {
+          const result = detectContentType(text, documentTypeId)
+          onDetectedPaste(text, result.category)
+          setDocumentEditingStarted(true)
+          return
+        }
         applyPastedText(text)
         return
       }
@@ -369,7 +390,7 @@ export function NotionPaper({
       // Clipboard API unavailable — fall through to focus editor for Ctrl+V
     }
     beginDocumentEditing()
-  }, [applyPastedText, beginDocumentEditing])
+  }, [applyPastedText, beginDocumentEditing, documentTypeId, onDetectedPaste])
 
   const handleBlankDictate = useCallback(() => {
     setDocumentEditingStarted(true)
@@ -403,6 +424,15 @@ export function NotionPaper({
       if (!pasted.trim()) return
 
       event.preventDefault()
+
+      // Auto-detect on blank page and let parent navigate
+      if (!documentTypeId && onDetectedPaste) {
+        const result = detectContentType(pasted, documentTypeId)
+        onDetectedPaste(pasted, result.category)
+        setDocumentEditingStarted(true)
+        return
+      }
+
       applyPastedText(pasted)
     }
 
@@ -414,9 +444,11 @@ export function NotionPaper({
     }
   }, [
     applyPastedText,
+    documentTypeId,
     handleBlankDictate,
     handleBlankType,
     isEditableTarget,
+    onDetectedPaste,
     showDocumentBlankState,
   ])
 
@@ -598,10 +630,7 @@ export function NotionPaper({
           onNavigateToLabor={onNavigateToLabor}
           savedDocs={savedDocs}
           onViewSavedDoc={onViewSavedDoc}
-          showPsychopathModeRail={isPsychopathDocument}
-          psychopathActiveMode={psychopathActiveMode}
-          psychopathModeDisabled={editorLocked}
-          onPsychopathModeSelect={onPsychopathModeSelect}
+          onRemoveSavedDoc={onRemoveSavedDoc}
         />
       </div>
 
@@ -733,7 +762,7 @@ export function NotionPaper({
         </div>
 
         <div
-          className={`notion-paper__editor-area${showDocumentBlankState ? ' notion-paper__editor-area--document-empty' : ''}`}
+          className={`notion-paper__editor-area${showDocumentBlankState ? ' notion-paper__editor-area--document-empty' : ''}${showStructuredToolPanel ? ' notion-paper__editor-area--structured-tool' : ''}`}
         >
           <NotionPatientFields
             patient={patient}
@@ -764,21 +793,33 @@ export function NotionPaper({
               variants={componentVariants}
               activeVariantId={activeVariantId}
               disabled={editorLocked}
-              onSelect={(variantId) => onVariantSelect?.(variantId)}
+              onSelect={(variantId) => {
+                if (
+                  isPsychopathDocument &&
+                  onPsychopathModeSelect &&
+                  isPsychopathSubMode(variantId)
+                ) {
+                  onPsychopathModeSelect(variantId)
+                  return
+                }
+                onVariantSelect?.(variantId)
+              }}
             />
           ) : null}
 
-          {showDocumentBlankState ? null : (
+          {showDocumentBlankState && !showMedicationPanel ? (
             <NotionEditorHints showStructuredFeatures={false} />
-          )}
+          ) : null}
 
-          {showDocumentBlankState && !showIsdmPanel ? (
+          {showDocumentBlankState && !showIsdmPanel && !showMedicationPanel ? (
             <NotionEmptyState
               disabled={editorLocked}
               onType={handleBlankType}
               onPaste={handleBlankPaste}
               onDictate={handleBlankDictate}
             />
+          ) : showMedicationPanel ? (
+            <MedicationWorkspace caseId={storageCaseId ?? caseId} disabled={editorLocked} />
           ) : showIsdmPanel ? (
             <IsdmPsychopathWorkspace caseId={storageCaseId} disabled={editorLocked} />
           ) : showMultistageSections && !amdpKompiliert ? (
@@ -804,7 +845,6 @@ export function NotionPaper({
                 onSectionAiTool={onSectionAiTool}
                 onPasteOrigin={onEditorPaste}
                 onSelectionAction={onSelectionAction}
-                onPasteAction={onPasteAction}
                 onSlashCommand={onSlashCommand}
                 commandMenuRequest={commandMenuRequest}
                 focusRequest={editorFocusRequest}
@@ -834,11 +874,11 @@ export function NotionPaper({
               dictationPlaybackMs={dictationPlaybackMs}
               isPlayingBack={isPlayingBack}
               isGenerating={isGenerating}
+              placeholder={documentTypeId === 'aufnahme' ? t('aufnahmeFreitextPlaceholder') : undefined}
               onChange={onEditorChange}
               onPasteOrigin={onEditorPaste}
               onEditorAiTool={onEditorAiTool}
               onSelectionAction={onSelectionAction}
-              onPasteAction={onPasteAction}
               onSlashCommand={onSlashCommand}
               commandMenuRequest={commandMenuRequest}
               focusRequest={editorFocusRequest}

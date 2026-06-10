@@ -1,0 +1,2279 @@
+[
+  {
+    "id": "diazepam",
+    "genericName": "Diazepam",
+    "brandNamesDACH": ["Valium", "Diazepam Ratiopharm", "Diazepam-neuraxpharm", "Stesolid"],
+    "atcCode": "N05BA01",
+    "substanceClass": "Benzodiazepine — anxiolytic/anticonvulsant/muscle relaxant",
+    "formulations": ["Tabletten", "Injektionslösung", "Rektaltuben", "Tropfen"],
+    "strengthsDACH": ["2 mg", "5 mg", "10 mg (Tabletten)", "5 mg/ml (Injektion)", "5 mg/2,5 ml (Rektal)", "10 mg/2,5 ml (Rektal)", "2 mg/ml (Tropfen)"],
+    "kurzinfoDe": "Langwirksames Benzodiazepin mit breitem Indikationsspektrum: Angststörungen, Alkoholentzug, Muskelkrämpfe, Status epilepticus und präoperative Sedierung. Wirkdauer durch aktiven Metaboliten Desmethyldiazepam verlängert (Halbwertszeit Gesamtkomplex 20–100 h). Hohes Abhängigkeitspotenzial; Einsatz auf wenige Wochen begrenzen.",
+    "kurzinfoEn": "Long-acting benzodiazepine with broad indications: anxiety disorders, alcohol withdrawal, muscle spasm, status epilepticus, and pre-operative sedation. The active metabolite desmethyldiazepam considerably extends duration of action (combined half-life 20–100 h). High dependence potential; use should be limited to a few weeks.",
+    "receptorProfile": {
+      "gaba": "Positive allosteric modulator at GABA-A receptor (BZ1/BZ2 sites), enhancing Cl⁻ influx",
+      "benzo": "Non-selective BZ1/BZ2 agonist",
+      "notes": "Active metabolite desmethyldiazepam (t½ 36–200 h) contributes substantially to overall effect; oxazepam is a further downstream metabolite"
+    },
+    "commonSideEffectsDe": [
+      "Sedierung, Schläfrigkeit",
+      "Muskelschwäche, Ataxie",
+      "Gedächtnisbeeinträchtigung (anterograde Amnesie)",
+      "Konzentrationsstörungen",
+      "Paradoxe Reaktionen (Agitiertheit, besonders bei Älteren)",
+      "Mundtrockenheit"
+    ],
+    "commonSideEffectsEn": [
+      "Sedation, drowsiness",
+      "Muscle weakness, ataxia",
+      "Memory impairment (anterograde amnesia)",
+      "Impaired concentration",
+      "Paradoxical reactions (agitation, especially in elderly)",
+      "Dry mouth"
+    ],
+    "seriousSideEffectsDe": [
+      "Atemdepression (insbesondere bei i.v.-Gabe oder Kombination mit Opioiden)",
+      "Koma bei Überdosierung",
+      "Physische und psychische Abhängigkeit (auch bei therapeutischen Dosen nach Wochen)",
+      "Toleranzentwicklung",
+      "Rebound-Angst und Entzugssyndrom bei abruptem Absetzen",
+      "Sturzgefahr mit Frakturen (besonders ältere Patienten)"
+    ],
+    "seriousSideEffectsEn": [
+      "Respiratory depression (especially i.v. or combined with opioids)",
+      "Coma in overdose",
+      "Physical and psychological dependence (even at therapeutic doses within weeks)",
+      "Tolerance development",
+      "Rebound anxiety and withdrawal syndrome on abrupt discontinuation",
+      "Fall risk with fractures (especially elderly)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Abhängigkeitsrisiko / Missbrauchsanamnese",
+        "frequency": "Vor Therapiebeginn und alle 2–4 Wochen",
+        "noteDe": "Suchtanamnese erheben; AUDIT-C, CAGE oder substanzspezifische Screening-Tools einsetzen. BZD-Einsatz auf max. 2–4 Wochen begrenzen.",
+        "noteEn": "Obtain addiction history; use AUDIT-C, CAGE or substance-specific screening tools. Limit BZD use to max. 2–4 weeks."
+      },
+      {
+        "parameter": "Therapiedauer / Ausschleichplan",
+        "frequency": "Bei Dauertherapie >4 Wochen",
+        "noteDe": "Regelmäßige Indikationsüberprüfung; beim Absetzen schrittweise Dosisreduktion (10–25 % alle 1–2 Wochen) um Entzugssymptome zu vermeiden.",
+        "noteEn": "Regular indication review; when discontinuing, taper gradually (10–25% every 1–2 weeks) to avoid withdrawal symptoms."
+      },
+      {
+        "parameter": "Sedierungsgrad / Sturz- und Fahrtauglichkeit",
+        "frequency": "Bei jeder Konsultation",
+        "noteDe": "Fahrtauglichkeit eingeschränkt; bei älteren Patienten Sturzrisiko formal erfassen (z. B. STRATIFY-Score).",
+        "noteEn": "Driving ability impaired; formally assess fall risk in elderly (e.g. STRATIFY score)."
+      },
+      {
+        "parameter": "Atemfunktion",
+        "frequency": "Bei parenteraler Gabe kontinuierlich",
+        "noteDe": "Bei i.v.-Gabe: Pulsoximetrie, Beatmungsbereitschaft. Flumazenil als Antidot verfügbar halten.",
+        "noteEn": "With i.v. administration: pulse oximetry, resuscitation readiness. Keep flumazenil (antagonist) available."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Opioide (Morphin, Oxycodon, Fentanyl, Tramadol u. a.)",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Potenzierung der Atemdepression mit erhöhtem Risiko für Sedierung, Hypoxie und Tod. Kombination nur in kontrollierten klinischen Settings mit kontinuierlichem Monitoring.",
+        "clinicalNoteEn": "Potentiation of respiratory depression with increased risk of sedation, hypoxia and death. Combine only in controlled clinical settings with continuous monitoring."
+      },
+      {
+        "interactsWith": "Alkohol",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Additive ZNS-Dämpfung; Atemdepression und Koma möglich. Kontraindiziert.",
+        "clinicalNoteEn": "Additive CNS depression; respiratory depression and coma possible. Contraindicated."
+      },
+      {
+        "interactsWith": "Andere Benzodiazepine / Z-Drugs",
+        "severity": "severe",
+        "clinicalNoteDe": "Potenzierung der Sedierung und Atemdepression. Kombination vermeiden.",
+        "clinicalNoteEn": "Potentiation of sedation and respiratory depression. Avoid combination."
+      },
+      {
+        "interactsWith": "CYP2C19-Inhibitoren (Omeprazol, Fluconazol, Fluvoxamin)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Hemmung des Metabolismus → erhöhte Diazepam-Plasmaspiegel. Dosis ggf. reduzieren, Sedierung engmaschig beobachten.",
+        "clinicalNoteEn": "Inhibition of metabolism → elevated diazepam plasma levels. Consider dose reduction; monitor sedation closely."
+      },
+      {
+        "interactsWith": "Antidepressiva (trizyklisch), Antipsychotika, Antihistaminika",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive sedierende Wirkung. Kombination mit Vorsicht; Fahrtauglichkeit beachten.",
+        "clinicalNoteEn": "Additive sedative effect. Combine with caution; advise on driving impairment."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Leberenzyme (ALT, AST, Bilirubin)",
+        "condition": "Schwere Leberinsuffizienz (Child-Pugh C)",
+        "warningDe": "Stark verlängerte Halbwertszeit durch reduzierte hepatische Clearance. Hohes Akkumulationsrisiko, insb. bei Dauermedikation.",
+        "warningEn": "Markedly prolonged half-life due to reduced hepatic clearance. High accumulation risk, especially with ongoing use.",
+        "severity": "reduce_dose"
+      },
+      {
+        "labParameter": "Serumkreatinin / GFR",
+        "condition": "Schwere Niereninsuffizienz (GFR <15 ml/min)",
+        "warningDe": "Akkumulation der Glucuronid-Metaboliten möglich; klinische Überwachung auf übermäßige Sedierung.",
+        "warningEn": "Accumulation of glucuronide metabolites possible; monitor clinically for excessive sedation.",
+        "severity": "caution"
+      }
+    ],
+    "renalDosing": "Leichte bis moderate Niereninsuffizienz: keine Dosisanpassung erforderlich. Schwere Niereninsuffizienz (GFR <15 ml/min): mit Vorsicht, engmaschige klinische Überwachung.",
+    "hepaticDosing": "Leichte Leberinsuffizienz: Dosis um 50 % reduzieren. Schwere Leberinsuffizienz: möglichst vermeiden; wenn unumgänglich, niedrigstmögliche Dosis.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": true,
+    "sources": [
+      "Möller HJ, Laux G, Deister A. Psychiatrie, Psychosomatik und Psychotherapie. Thieme, 2015.",
+      "Benkert O, Hippius H. Kompendium der Psychiatrischen Pharmakotherapie, 14. Aufl. Springer, 2023.",
+      "AWMF S3-Leitlinie Angststörungen (AWMF-Reg.-Nr. 051-028), 2021.",
+      "Fachinformation Valium® (Roche), aktueller Stand.",
+      "EMA: Benzodiazepines and Z-drugs: assessment of risk of dependence and addiction (EMA/641996/2020)."
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "lorazepam",
+    "genericName": "Lorazepam",
+    "brandNamesDACH": ["Tavor", "Lorazepam-neuraxpharm", "Lorazepam Ratiopharm", "Temesta"],
+    "atcCode": "N05BA06",
+    "substanceClass": "Benzodiazepine — anxiolytic/antiemetic/anticonvulsant",
+    "formulations": ["Tabletten", "Sublingualtabletten", "Injektionslösung"],
+    "strengthsDACH": ["0,5 mg", "1 mg", "2,5 mg (Tabletten/Expidet)", "2 mg/ml (Injektion i.v./i.m.)"],
+    "kurzinfoDe": "Mittellang wirksames Benzodiazepin (t½ 10–20 h) ohne aktive Metaboliten — besonders geeignet bei Leberinsuffizienz, im Alter und bei Komorbidität. Klinisch relevant für akute Angstzustände, Erregungszustände (psychiatrischer Notfall), therapierefraktäre Übelkeit und Status epilepticus. Sublingual-Formulierung ermöglicht rasche Anflutung. Ausgeprägte anterograde Amnesie.",
+    "kurzinfoEn": "Intermediate-acting benzodiazepine (t½ 10–20 h) without active metabolites — particularly suitable in hepatic insufficiency, elderly patients and those with comorbidities. Clinically important for acute anxiety, agitation (psychiatric emergency), refractory nausea and status epilepticus. Sublingual formulation allows rapid onset. Pronounced anterograde amnesia.",
+    "receptorProfile": {
+      "gaba": "Positive allosteric modulator at GABA-A receptor (BZ1/BZ2 sites)",
+      "benzo": "Non-selective BZ1/BZ2 agonist",
+      "notes": "No active metabolites; direct glucuronidation — pharmacokinetics not significantly affected by age or liver disease compared to diazepam"
+    },
+    "commonSideEffectsDe": [
+      "Sedierung, Schläfrigkeit",
+      "Ausgeprägte anterograde Amnesie",
+      "Muskelschwäche",
+      "Schwindel, Ataxie",
+      "Paradoxe Enthemmung (seltener als bei Diazepam)"
+    ],
+    "commonSideEffectsEn": [
+      "Sedation, drowsiness",
+      "Pronounced anterograde amnesia",
+      "Muscle weakness",
+      "Dizziness, ataxia",
+      "Paradoxical disinhibition (less common than diazepam)"
+    ],
+    "seriousSideEffectsDe": [
+      "Atemdepression (v. a. i.v., Hochdosis, Kombination mit Opioiden/Alkohol)",
+      "Physische Abhängigkeit und Toleranz",
+      "Entzugssyndrom bei abruptem Absetzen (Krampfanfälle möglich)",
+      "Sturzrisiko und Knochenbrüche (ältere Patienten)"
+    ],
+    "seriousSideEffectsEn": [
+      "Respiratory depression (especially i.v., high-dose, combined with opioids/alcohol)",
+      "Physical dependence and tolerance",
+      "Withdrawal syndrome on abrupt discontinuation (seizures possible)",
+      "Fall risk and fractures (elderly)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Abhängigkeitspotenzial / Therapiedauer",
+        "frequency": "Alle 2–4 Wochen",
+        "noteDe": "Strikt auf max. 4 Wochen begrenzen. Bei längerem Einsatz: Dokumentation der Indikation und Ausschleichplan.",
+        "noteEn": "Strictly limit to max. 4 weeks. With longer use: document indication and taper plan."
+      },
+      {
+        "parameter": "Atemdepression bei Notfalleinsatz",
+        "frequency": "Kontinuierlich bei parenteraler Gabe",
+        "noteDe": "Pulsoximetrie und Notfallausstattung (Flumazenil, Beatmungsmöglichkeit) bei jeder parenteralen Applikation vorhalten.",
+        "noteEn": "Pulse oximetry and emergency equipment (flumazenil, ventilation capability) must be available for every parenteral application."
+      },
+      {
+        "parameter": "Kognition / Amnesie-Aufklärung",
+        "frequency": "Vor Erstgabe",
+        "noteDe": "Patient über anterograde Amnesie aufklären; besonders relevant bei Sublingual-Gabe in der Notaufnahme.",
+        "noteEn": "Inform patient about anterograde amnesia; particularly relevant when sublingual dose given in emergency settings."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Opioide",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Erhöhtes Risiko für tiefe Sedierung, Atemdepression, Koma und Tod. FDA/EMA-Boxwarnung. Nur in kontrollierten Settings mit Monitoring.",
+        "clinicalNoteEn": "Increased risk of profound sedation, respiratory depression, coma and death. FDA/EMA box warning. Only in controlled settings with monitoring."
+      },
+      {
+        "interactsWith": "Alkohol",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Synergistische ZNS-Dämpfung; Atemdepression und Koma möglich.",
+        "clinicalNoteEn": "Synergistic CNS depression; respiratory depression and coma possible."
+      },
+      {
+        "interactsWith": "Valproat",
+        "severity": "moderate",
+        "clinicalNoteDe": "Valproat hemmt die Glucuronidierung von Lorazepam → Lorazepam-Spiegel können steigen. Auf erhöhte Sedierung achten.",
+        "clinicalNoteEn": "Valproate inhibits glucuronidation of lorazepam → lorazepam levels may rise. Monitor for increased sedation."
+      },
+      {
+        "interactsWith": "Clozapin",
+        "severity": "severe",
+        "clinicalNoteDe": "Fallberichte über Atemstillstand, Herzstillstand und Hypotension bei Kombination. Gleichzeitige i.m.-Gabe kontraindiziert; orale Kombination nur mit engmaschigem Monitoring.",
+        "clinicalNoteEn": "Case reports of respiratory arrest, cardiac arrest and hypotension. Simultaneous i.m. administration contraindicated; oral combination only with close monitoring."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Leberenzyme",
+        "condition": "Leberinsuffizienz",
+        "warningDe": "Im Gegensatz zu Diazepam wird Lorazepam direkt glucuronidiert — die Halbwertszeit ist bei Leberinsuffizienz weniger stark verlängert. Dennoch klinische Überwachung.",
+        "warningEn": "Unlike diazepam, lorazepam is directly glucuronidated — half-life is less markedly prolonged in hepatic insufficiency. Still requires clinical monitoring.",
+        "severity": "caution"
+      }
+    ],
+    "renalDosing": "Niereninsuffizienz: keine formale Dosisanpassung, aber bei schwerer Insuffizienz auf klinische Zeichen von Akkumulation achten.",
+    "hepaticDosing": "Lorazepam ist bei Leberinsuffizienz das Benzodiazepin der Wahl (keine aktiven Metaboliten, direktes Glucuronidierungsverfahren). Dennoch niedrige Einstiegsdosis und engmaschige Überwachung.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "sources": [
+      "Benkert O, Hippius H. Kompendium der Psychiatrischen Pharmakotherapie, 14. Aufl. Springer, 2023.",
+      "AWMF S3-Leitlinie Angststörungen (AWMF-Reg.-Nr. 051-028), 2021.",
+      "Fachinformation Tavor® (Pfizer), aktueller Stand.",
+      "Lader M. Benzodiazepines revisited — will we ever learn? Addiction 2011;106(12):2086–2109."
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "alprazolam",
+    "genericName": "Alprazolam",
+    "brandNamesDACH": ["Xanax", "Alprazolam-neuraxpharm", "Alprazolam Ratiopharm"],
+    "atcCode": "N05BA12",
+    "substanceClass": "Benzodiazepine — anxiolytic (Hochpotenz-BZD)",
+    "formulations": ["Tabletten"],
+    "strengthsDACH": ["0,25 mg", "0,5 mg", "1 mg"],
+    "kurzinfoDe": "Kurzwirksames Hochpotenz-Benzodiazepin (t½ 6–12 h) mit ausgeprägter anxiolytischer Wirkung. Zugelassen für Angststörungen und Panikstörung. Wegen des kurzen Wirkprofils und hohen Abhängigkeitspotenzials besonders missbrauchsgefährdet; interdosale Angst zwischen den Einnahmezeitpunkten ist charakteristisch.",
+    "kurzinfoEn": "Short-acting high-potency benzodiazepine (t½ 6–12 h) with pronounced anxiolytic effect. Approved for anxiety disorders and panic disorder. The short duration of action and high potency confer elevated misuse potential; inter-dose anxiety between administrations is a characteristic feature.",
+    "receptorProfile": {
+      "gaba": "Positive allosteric modulator at GABA-A receptor (BZ1/BZ2 sites)",
+      "benzo": "High-affinity, non-selective BZ1/BZ2 agonist — higher milligram potency than diazepam (equipotent dose ~0,5 mg = 10 mg diazepam)",
+      "notes": "Active metabolite alpha-hydroxyalprazolam with shorter half-life; does not contribute substantially to clinical effect"
+    },
+    "commonSideEffectsDe": [
+      "Sedierung",
+      "Gedächtnisstörungen, anterograde Amnesie",
+      "Schwindel, Koordinationsstörungen",
+      "Stimmungsveränderungen",
+      "Interdosale Angst (Rebound-Anxiolyse zwischen den Einnahmen)"
+    ],
+    "commonSideEffectsEn": [
+      "Sedation",
+      "Memory impairment, anterograde amnesia",
+      "Dizziness, coordination problems",
+      "Mood changes",
+      "Inter-dose anxiety (rebound anxiolysis between doses)"
+    ],
+    "seriousSideEffectsDe": [
+      "Hohes Abhängigkeitspotenzial — höher als bei langwirksamen BZD",
+      "Schweres Entzugssyndrom bei abruptem Absetzen (Krampfanfälle, Psychosen)",
+      "Atemdepression bei Überdosierung/Kombination",
+      "Manie-Induktion bei bipolaren Patienten"
+    ],
+    "seriousSideEffectsEn": [
+      "High dependence potential — greater than longer-acting BZDs",
+      "Severe withdrawal syndrome on abrupt discontinuation (seizures, psychosis)",
+      "Respiratory depression with overdose/combination",
+      "Mania induction in bipolar patients"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Abhängigkeitsrisiko und interdosale Symptome",
+        "frequency": "Wöchentlich in den ersten 4 Wochen",
+        "noteDe": "Auf interdosale Angst und Verhaltensmuster hinweisend auf Abhängigkeit achten. Einsatz streng auf max. 4 Wochen begrenzen.",
+        "noteEn": "Monitor for inter-dose anxiety and behavioral patterns suggestive of dependence. Strictly limit use to max. 4 weeks."
+      },
+      {
+        "parameter": "Ausschleichen",
+        "frequency": "Beim Absetzen",
+        "noteDe": "Sehr langsames Ausschleichen notwendig (10 % Reduktion pro Woche oder weniger). Umstellung auf langwirksames BZD (z. B. Diazepam) vor Ausschleichen erwägen.",
+        "noteEn": "Very slow taper required (10% reduction per week or less). Consider switching to long-acting BZD (e.g. diazepam) before tapering."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Opioide",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Potenzierung der Atemdepression; erhöhtes Sterberisiko.",
+        "clinicalNoteEn": "Potentiation of respiratory depression; increased mortality risk."
+      },
+      {
+        "interactsWith": "Alkohol",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Synergistische ZNS-Dämpfung; Koma-Risiko.",
+        "clinicalNoteEn": "Synergistic CNS depression; coma risk."
+      },
+      {
+        "interactsWith": "CYP3A4-Inhibitoren (Ketoconazol, Itraconazol, Ritonavir, Clarithromycin, Fluvoxamin, Nefazodon)",
+        "severity": "severe",
+        "clinicalNoteDe": "Alprazolam wird primär über CYP3A4 metabolisiert. Starke Inhibitoren erhöhen die AUC deutlich (bis >4-fach). Kombination mit Azol-Antimykotika kontraindiziert.",
+        "clinicalNoteEn": "Alprazolam is primarily metabolised by CYP3A4. Potent inhibitors markedly increase AUC (up to >4-fold). Combination with azole antifungals contraindicated."
+      },
+      {
+        "interactsWith": "CYP3A4-Induktoren (Carbamazepin, Rifampicin, Johanniskraut)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Reduzierte Alprazolam-Wirkung durch gesteigerten Metabolismus.",
+        "clinicalNoteEn": "Reduced alprazolam effect due to increased metabolism."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Leberenzyme",
+        "condition": "Leberinsuffizienz",
+        "warningDe": "CYP3A4-Metabolismus eingeschränkt; Halbwertszeit verlängert. Dosis reduzieren.",
+        "warningEn": "CYP3A4 metabolism impaired; half-life prolonged. Reduce dose.",
+        "severity": "reduce_dose"
+      }
+    ],
+    "renalDosing": "Keine spezifische Dosisanpassung erforderlich; klinische Überwachung bei schwerer Niereninsuffizienz.",
+    "hepaticDosing": "Dosis um 50 % reduzieren bei Leberinsuffizienz; wenn möglich alternatives BZD ohne aktive Metaboliten bevorzugen.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "sources": [
+      "Benkert O, Hippius H. Kompendium der Psychiatrischen Pharmakotherapie, 14. Aufl. Springer, 2023.",
+      "Fachinformation Xanax® (Pfizer), aktueller Stand.",
+      "Griffiths RR, Weerts EM. Benzodiazepine self-administration in humans and laboratory animals. Psychopharmacology 1997;134:1–37."
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "bromazepam",
+    "genericName": "Bromazepam",
+    "brandNamesDACH": ["Lexotanil", "Bromazepam-neuraxpharm"],
+    "atcCode": "N05BA08",
+    "substanceClass": "Benzodiazepine — anxiolytic",
+    "formulations": ["Tabletten"],
+    "strengthsDACH": ["1,5 mg", "3 mg", "6 mg"],
+    "kurzinfoDe": "Mittellang wirksames Benzodiazepin (t½ 10–20 h) mit überwiegend anxiolytischem Profil. In der DACH-Region weniger verbreitet als Lorazepam/Diazepam. Keine wesentlichen aktiven Metaboliten. Abhängigkeitspotenzial wie für die gesamte BZD-Klasse.",
+    "kurzinfoEn": "Intermediate-acting benzodiazepine (t½ 10–20 h) with predominantly anxiolytic profile. Less widely used in the DACH region than lorazepam/diazepam. No significant active metabolites. Dependence potential as for the entire BZD class.",
+    "receptorProfile": {
+      "gaba": "Positive allosteric modulator at GABA-A receptor",
+      "benzo": "Non-selective BZ1/BZ2 agonist"
+    },
+    "commonSideEffectsDe": [
+      "Sedierung, Müdigkeit",
+      "Muskelschwäche",
+      "Schwindel",
+      "Gedächtnisstörungen"
+    ],
+    "commonSideEffectsEn": [
+      "Sedation, fatigue",
+      "Muscle weakness",
+      "Dizziness",
+      "Memory impairment"
+    ],
+    "seriousSideEffectsDe": [
+      "Abhängigkeit und Toleranzentwicklung",
+      "Atemdepression bei Überdosierung oder Kombination mit Opioiden/Alkohol",
+      "Entzugssymptome bei abruptem Absetzen"
+    ],
+    "seriousSideEffectsEn": [
+      "Dependence and tolerance",
+      "Respiratory depression with overdose or combination with opioids/alcohol",
+      "Withdrawal symptoms on abrupt discontinuation"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Therapiedauer",
+        "frequency": "Alle 2–4 Wochen",
+        "noteDe": "Anwendung auf max. 4 Wochen begrenzen. Regelmäßige Indikationsüberprüfung.",
+        "noteEn": "Limit use to max. 4 weeks. Regular indication review."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Opioide",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Atemdepression, Koma, Tod. Nur unter engmaschigem Monitoring.",
+        "clinicalNoteEn": "Respiratory depression, coma, death. Only under close monitoring."
+      },
+      {
+        "interactsWith": "Alkohol, andere ZNS-Dämpfer",
+        "severity": "severe",
+        "clinicalNoteDe": "Additive Sedierung und Atemdepression.",
+        "clinicalNoteEn": "Additive sedation and respiratory depression."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Leberenzyme",
+        "condition": "Schwere Leberinsuffizienz",
+        "warningDe": "Verlängerte Halbwertszeit; Dosis reduzieren.",
+        "warningEn": "Prolonged half-life; reduce dose.",
+        "severity": "reduce_dose"
+      }
+    ],
+    "renalDosing": "Keine formale Dosisanpassung; Vorsicht bei schwerer Niereninsuffizienz.",
+    "hepaticDosing": "Dosisreduktion bei Leberinsuffizienz empfohlen.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "sources": [
+      "Benkert O, Hippius H. Kompendium der Psychiatrischen Pharmakotherapie, 14. Aufl. Springer, 2023.",
+      "Fachinformation Lexotanil® (Roche), aktueller Stand."
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "oxazepam",
+    "genericName": "Oxazepam",
+    "brandNamesDACH": ["Adumbran", "Praxiten", "Oxazepam-neuraxpharm"],
+    "atcCode": "N05BA04",
+    "substanceClass": "Benzodiazepine — anxiolytic",
+    "formulations": ["Tabletten", "Hartkapsel"],
+    "strengthsDACH": ["10 mg", "50 mg"],
+    "kurzinfoDe": "Kurzwirksames Benzodiazepin (t½ 5–15 h) ohne aktive Metaboliten, direkte Glucuronidierung. Bevorzugtes BZD bei Leberinsuffizienz und im Alter. Geringere Lipophilie führt zu langsamerem Wirkungseintritt als Diazepam. Einsatz bei Angststörungen, Alkoholentzugssyndrom. Niedrigeres Missbrauchspotenzial als kurzwirksame Hochpotenz-BZD.",
+    "kurzinfoEn": "Short-acting benzodiazepine (t½ 5–15 h) without active metabolites, undergoes direct glucuronidation. Preferred BZD in hepatic insufficiency and elderly. Lower lipophilicity leads to slower onset than diazepam. Used in anxiety disorders and alcohol withdrawal. Lower misuse potential compared to short-acting high-potency BZDs.",
+    "receptorProfile": {
+      "gaba": "Positive allosteric modulator at GABA-A receptor",
+      "benzo": "Non-selective BZ1/BZ2 agonist",
+      "notes": "No active metabolites; direct glucuronidation unaffected by liver CYP enzymes — pharmacokinetic advantage over other BZDs in hepatic disease"
+    },
+    "commonSideEffectsDe": [
+      "Sedierung (weniger ausgeprägt als Diazepam)",
+      "Schwindel",
+      "Muskelschwäche",
+      "Gedächtnisbeeinträchtigung"
+    ],
+    "commonSideEffectsEn": [
+      "Sedation (less pronounced than diazepam)",
+      "Dizziness",
+      "Muscle weakness",
+      "Memory impairment"
+    ],
+    "seriousSideEffectsDe": [
+      "Abhängigkeit (bei Langzeitanwendung)",
+      "Entzugssyndrom",
+      "Atemdepression bei Kombination mit Opioiden/Alkohol"
+    ],
+    "seriousSideEffectsEn": [
+      "Dependence (with long-term use)",
+      "Withdrawal syndrome",
+      "Respiratory depression in combination with opioids/alcohol"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Therapiedauer / Abhängigkeit",
+        "frequency": "Alle 2–4 Wochen",
+        "noteDe": "Auf max. 4 Wochen begrenzen. Bei Alkoholentzug: Strukturiertes Entzugsprotokoll (z. B. CIWA-Ar) verwenden.",
+        "noteEn": "Limit to max. 4 weeks. In alcohol withdrawal: use structured protocol (e.g. CIWA-Ar)."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Opioide",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Atemdepression und Tod möglich.",
+        "clinicalNoteEn": "Respiratory depression and death possible."
+      },
+      {
+        "interactsWith": "Alkohol",
+        "severity": "severe",
+        "clinicalNoteDe": "Additive ZNS-Dämpfung; bei Alkoholentzug therapeutisch sinnvoll (kontrolliert).",
+        "clinicalNoteEn": "Additive CNS depression; therapeutically used in controlled alcohol withdrawal."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Leberenzyme",
+        "condition": "Leberinsuffizienz",
+        "warningDe": "Bevorzugtes BZD bei Leberinsuffizienz. Direktes Glucuronidierungsverfahren — klinisch gut toleriert. Dennoch engmaschige Überwachung.",
+        "warningEn": "Preferred BZD in hepatic insufficiency. Direct glucuronidation — clinically well tolerated. Still requires close monitoring.",
+        "severity": "caution"
+      }
+    ],
+    "renalDosing": "Keine formale Dosisanpassung erforderlich.",
+    "hepaticDosing": "BZD der Wahl bei Leberinsuffizienz (keine CYP-abhängige Verstoffwechslung). Niedrige Einstiegsdosis verwenden.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "sources": [
+      "Benkert O, Hippius H. Kompendium der Psychiatrischen Pharmakotherapie, 14. Aufl. Springer, 2023.",
+      "Fachinformation Adumbran® (Pfizer), aktueller Stand.",
+      "Pols H, Hendriks V. Alcohol withdrawal syndrome. Lancet 2004;364(9449)."
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "clonazepam",
+    "genericName": "Clonazepam",
+    "brandNamesDACH": ["Rivotril", "Clonazepam-neuraxpharm"],
+    "atcCode": "N03AE01",
+    "substanceClass": "Benzodiazepine — Antikonvulsivum / adjuvante Anwendung bei Angststörungen",
+    "formulations": ["Tabletten", "Tropfen", "Injektionslösung"],
+    "strengthsDACH": ["0,5 mg", "2 mg (Tabletten)", "2,5 mg/ml (Tropfen)", "1 mg/ml (Injektion)"],
+    "kurzinfoDe": "Langwirksames Hochpotenz-Benzodiazepin (t½ 18–50 h), primär als Antikonvulsivum zugelassen. Off-label adjuvante Nutzung bei Panikstörung und sozialer Phobie. Ausgeprägte Sedierung, hohes Abhängigkeitspotenzial, schwieriges Ausschleichen. Toleranzentwicklung gegenüber antikonvulsiver Wirkung nach Monaten möglich. Cross-reference: Antikonvulsiva.",
+    "kurzinfoEn": "Long-acting high-potency benzodiazepine (t½ 18–50 h), primarily licensed as anticonvulsant. Off-label adjunctive use in panic disorder and social phobia. Pronounced sedation, high dependence potential, difficult tapering. Tolerance to anticonvulsant effect may develop within months. Cross-reference: anticonvulsants.",
+    "receptorProfile": {
+      "gaba": "Potent positive allosteric modulator at GABA-A receptor; high affinity for BZ1 and BZ2 sites",
+      "benzo": "Highest milligram potency among commonly used BZDs (equipotent dose ~0,25 mg = 10 mg diazepam)",
+      "notes": "Active metabolite 7-aminoclonazepam contributes to pharmacological effect"
+    },
+    "commonSideEffectsDe": [
+      "Ausgeprägte Sedierung",
+      "Kognitive Beeinträchtigung, Verlangsamung",
+      "Ataxie, Koordinationsstörungen",
+      "Stimmungsveränderungen, Depression",
+      "Hypersalivation (typisch für Clonazepam)"
+    ],
+    "commonSideEffectsEn": [
+      "Pronounced sedation",
+      "Cognitive impairment, psychomotor slowing",
+      "Ataxia, coordination problems",
+      "Mood changes, depression",
+      "Hypersalivation (characteristic of clonazepam)"
+    ],
+    "seriousSideEffectsDe": [
+      "Hohes Abhängigkeitspotenzial",
+      "Schweres Entzugssyndrom mit Krampfanfällen bei abruptem Absetzen",
+      "Toleranz gegenüber antikonvulsiver Wirkung (klinisch relevant)",
+      "Atemdepression bei parenteraler Hochdosis oder Kombination",
+      "Suizidalität (selten, als Nebenwirkung beschrieben)"
+    ],
+    "seriousSideEffectsEn": [
+      "High dependence potential",
+      "Severe withdrawal syndrome with seizures on abrupt discontinuation",
+      "Tolerance to anticonvulsant effect (clinically relevant)",
+      "Respiratory depression with parenteral high-dose or combination",
+      "Suicidality (rare, described as adverse effect)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Antikonvulsive Wirksamkeit / Toleranzentwicklung",
+        "frequency": "Alle 3 Monate",
+        "noteDe": "Bei Antikonvulsiva-Einsatz: Anfallsfrequenz dokumentieren; bei nachlassender Wirkung Dosissteigerung vs. Wechsel abwägen.",
+        "noteEn": "In anticonvulsant use: document seizure frequency; if efficacy declines, weigh dose increase vs. switch."
+      },
+      {
+        "parameter": "Abhängigkeit / Ausschleichplan",
+        "frequency": "Vor Absetzen und während Ausschleichen",
+        "noteDe": "Besonders langsames Ausschleichen (Monate) nötig. Umstellung auf Diazepam vor Entzug erwägen.",
+        "noteEn": "Particularly slow taper required (months). Consider switching to diazepam before withdrawal."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Opioide",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Atemdepression, Koma, Tod.",
+        "clinicalNoteEn": "Respiratory depression, coma, death."
+      },
+      {
+        "interactsWith": "Andere Antikonvulsiva (Valproat, Carbamazepin)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Pharmakokinetische und pharmakodynamische Interaktionen möglich. Therapeutisches Drug-Monitoring erwägen.",
+        "clinicalNoteEn": "Pharmacokinetic and pharmacodynamic interactions possible. Consider therapeutic drug monitoring."
+      },
+      {
+        "interactsWith": "Alkohol",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Additive ZNS-Dämpfung.",
+        "clinicalNoteEn": "Additive CNS depression."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Leberenzyme",
+        "condition": "Leberinsuffizienz",
+        "warningDe": "Verlängerte Halbwertszeit; Akkumulationsrisiko. Dosis reduzieren.",
+        "warningEn": "Prolonged half-life; accumulation risk. Reduce dose.",
+        "severity": "reduce_dose"
+      }
+    ],
+    "renalDosing": "Keine formale Dosisanpassung.",
+    "hepaticDosing": "Dosisreduktion bei Leberinsuffizienz erforderlich.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": true,
+    "sources": [
+      "Benkert O, Hippius H. Kompendium der Psychiatrischen Pharmakotherapie, 14. Aufl. Springer, 2023.",
+      "Fachinformation Rivotril® (Roche), aktueller Stand.",
+      "AWMF S1-Leitlinie Epilepsien im Erwachsenenalter (AWMF-Reg.-Nr. 030-041), 2023."
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "chlordiazepoxid",
+    "genericName": "Chlordiazepoxid",
+    "brandNamesDACH": ["Librium", "Radepur"],
+    "atcCode": "N05BA02",
+    "substanceClass": "Benzodiazepine — anxiolytic (historisch, Alkoholentzug)",
+    "formulations": ["Tabletten"],
+    "strengthsDACH": ["5 mg", "10 mg", "25 mg"],
+    "kurzinfoDe": "Erstes synthetisches Benzodiazepin (Sternbach, 1955). Langwirksam mit mehreren aktiven Metaboliten (t½ Gesamtkomplex bis 100 h). Primär bei schwerem Alkoholentzugssyndrom eingesetzt. Wegen langer Halbwertszeit selbstlimitierend (natürliches Ausschleichen). Im modernen Setting durch Diazepam oder Oxazepam weitgehend verdrängt.",
+    "kurzinfoEn": "First synthetic benzodiazepine (Sternbach, 1955). Long-acting with multiple active metabolites (combined t½ up to 100 h). Primarily used in severe alcohol withdrawal syndrome. Long half-life creates self-tapering effect (natural dose reduction). Largely replaced by diazepam or oxazepam in modern practice.",
+    "receptorProfile": {
+      "gaba": "Positive allosteric modulator at GABA-A receptor",
+      "benzo": "Non-selective BZ1/BZ2 agonist",
+      "notes": "Multiple active metabolites including desmethylchlordiazepoxide and demoxepam; significant accumulation possible"
+    },
+    "commonSideEffectsDe": [
+      "Sedierung",
+      "Ataxie",
+      "Konfusion (besonders bei Älteren durch Akkumulation)"
+    ],
+    "commonSideEffectsEn": [
+      "Sedation",
+      "Ataxia",
+      "Confusion (especially in elderly due to accumulation)"
+    ],
+    "seriousSideEffectsDe": [
+      "Abhängigkeit",
+      "Paradoxe Reaktionen",
+      "Atemdepression",
+      "Ausgeprägte Akkumulation bei Älteren und Leberinsuffizienz"
+    ],
+    "seriousSideEffectsEn": [
+      "Dependence",
+      "Paradoxical reactions",
+      "Respiratory depression",
+      "Marked accumulation in elderly and hepatic insufficiency"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "CIWA-Ar-Score (Alkoholentzug)",
+        "frequency": "Alle 1–4 Stunden während Alkoholentzug",
+        "noteDe": "Dosierung symptomgesteuert nach CIWA-Ar. Vitalzeichen und Vigilanz engmaschig überwachen.",
+        "noteEn": "Symptom-driven dosing according to CIWA-Ar. Monitor vital signs and level of consciousness closely."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Opioide, Alkohol",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Potenzierung der Atemdepression.",
+        "clinicalNoteEn": "Potentiation of respiratory depression."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Leberenzyme",
+        "condition": "Leberinsuffizienz",
+        "warningDe": "Schwere Akkumulation durch viele aktive Metaboliten. Bei Leberinsuffizienz Oxazepam bevorzugen.",
+        "warningEn": "Severe accumulation due to multiple active metabolites. Prefer oxazepam in hepatic insufficiency.",
+        "severity": "contraindicated"
+      }
+    ],
+    "renalDosing": "Vorsicht bei schwerer Niereninsuffizienz.",
+    "hepaticDosing": "Kontraindiziert bei schwerer Leberinsuffizienz (Oxazepam bevorzugen).",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "sources": [
+      "Benkert O, Hippius H. Kompendium der Psychiatrischen Pharmakotherapie, 14. Aufl. Springer, 2023.",
+      "Mayo-Smith MF. Pharmacological management of alcohol withdrawal. JAMA 1997;278(2):144–151."
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "temazepam",
+    "genericName": "Temazepam",
+    "brandNamesDACH": ["Planum", "Remestan", "Temazepam-neuraxpharm"],
+    "atcCode": "N05CD07",
+    "substanceClass": "Benzodiazepine — Hypnotikum",
+    "formulations": ["Hartkapseln", "Tabletten"],
+    "strengthsDACH": ["10 mg", "20 mg"],
+    "kurzinfoDe": "Kurzwirksames Benzodiazepin-Hypnotikum (t½ 5–15 h) ohne aktive Metaboliten. Direktes Glucuronidierungsverfahren — günstiger als Diazepam bei Leberinsuffizienz und im Alter. Einschlaf- und Durchschlafprobleme. Ausgeprägte Hangover-Vermeidung durch kurze Halbwertszeit. Abhängigkeits- und Toleranzentwicklung wie bei allen BZD-Hypnotika.",
+    "kurzinfoEn": "Short-acting benzodiazepine hypnotic (t½ 5–15 h) without active metabolites. Direct glucuronidation — preferable to diazepam in hepatic insufficiency and elderly. Used for sleep-onset and sleep-maintenance insomnia. Reduced hangover due to short half-life. Dependence and tolerance as with all BZD hypnotics.",
+    "receptorProfile": {
+      "gaba": "Positive allosteric modulator at GABA-A receptor",
+      "benzo": "Non-selective BZ1/BZ2 agonist",
+      "notes": "Direct glucuronidation; no active metabolites"
+    },
+    "commonSideEffectsDe": [
+      "Residualsedierung (bei hohen Dosen)",
+      "Schwindel",
+      "Gedächtnisbeeinträchtigung",
+      "Rebound-Insomnie nach Absetzen"
+    ],
+    "commonSideEffectsEn": [
+      "Residual sedation (at high doses)",
+      "Dizziness",
+      "Memory impairment",
+      "Rebound insomnia after discontinuation"
+    ],
+    "seriousSideEffectsDe": [
+      "Abhängigkeit und Toleranz",
+      "Atemdepression bei Kombination mit Opioiden/Alkohol",
+      "Schlafen und Handlungen im Schlaf (seltener als Z-Drugs, aber möglich)"
+    ],
+    "seriousSideEffectsEn": [
+      "Dependence and tolerance",
+      "Respiratory depression with opioids/alcohol",
+      "Sleep-related complex behaviors (less common than Z-drugs, but possible)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Schlafqualität und Abhängigkeit",
+        "frequency": "Alle 4 Wochen",
+        "noteDe": "Einsatz auf max. 4 Wochen begrenzen. Schlafhygienemaßnahmen und kognitive Verhaltenstherapie (KVT-I) als Erstlinienbehandlung empfehlen.",
+        "noteEn": "Limit to max. 4 weeks. Recommend sleep hygiene and CBT for insomnia (CBT-I) as first-line treatment."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Opioide",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Atemdepression.",
+        "clinicalNoteEn": "Respiratory depression."
+      },
+      {
+        "interactsWith": "Alkohol",
+        "severity": "severe",
+        "clinicalNoteDe": "Additive Sedierung.",
+        "clinicalNoteEn": "Additive sedation."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Leberenzyme",
+        "condition": "Leberinsuffizienz",
+        "warningDe": "Direktes Glucuronidierungsverfahren — weniger von Leberinsuffizienz betroffen als CYP-metabolisierte BZD. Dennoch Vorsicht.",
+        "warningEn": "Direct glucuronidation — less affected by hepatic insufficiency than CYP-metabolised BZDs. Still exercise caution.",
+        "severity": "caution"
+      }
+    ],
+    "renalDosing": "Keine formale Dosisanpassung.",
+    "hepaticDosing": "Bevorzugtes Hypnotikum bei Leberinsuffizienz (wie Oxazepam). Niedrige Dosis verwenden.",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "sources": [
+      "Benkert O, Hippius H. Kompendium der Psychiatrischen Pharmakotherapie, 14. Aufl. Springer, 2023.",
+      "AWMF S3-Leitlinie Nicht-erholsamer Schlaf/Schlafstörungen (AWMF-Reg.-Nr. 063-003), 2017."
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "nitrazepam",
+    "genericName": "Nitrazepam",
+    "brandNamesDACH": ["Mogadon", "Nitrazepam-neuraxpharm"],
+    "atcCode": "N05CD02",
+    "substanceClass": "Benzodiazepine — Hypnotikum",
+    "formulations": ["Tabletten"],
+    "strengthsDACH": ["5 mg"],
+    "kurzinfoDe": "Mittellang-langwirksames Benzodiazepin-Hypnotikum (t½ 15–38 h) mit aktiven Metaboliten. Ausgeprägte Residualsedierung am nächsten Morgen ('Hangover'). Wegen langer Halbwertszeit Akkumulationsrisiko bei wiederholter Anwendung, insbesondere im Alter. Einsatz in der modernen Schlafmedizin rückläufig.",
+    "kurzinfoEn": "Intermediate- to long-acting benzodiazepine hypnotic (t½ 15–38 h) with active metabolites. Pronounced residual sedation the following morning ('hangover'). Accumulation risk with repeated use due to long half-life, especially in elderly. Use declining in modern sleep medicine.",
+    "receptorProfile": {
+      "gaba": "Positive allosteric modulator at GABA-A receptor",
+      "benzo": "Non-selective BZ1/BZ2 agonist"
+    },
+    "commonSideEffectsDe": [
+      "Residualsedierung, Hangover-Effekt",
+      "Schwindel, Ataxie",
+      "Gedächtnisstörungen",
+      "Kognitive Beeinträchtigung am Folgetag"
+    ],
+    "commonSideEffectsEn": [
+      "Residual sedation, hangover effect",
+      "Dizziness, ataxia",
+      "Memory impairment",
+      "Cognitive impairment next day"
+    ],
+    "seriousSideEffectsDe": [
+      "Akkumulation und übermäßige Sedierung (ältere Patienten)",
+      "Abhängigkeit",
+      "Sturzrisiko",
+      "Atemdepression"
+    ],
+    "seriousSideEffectsEn": [
+      "Accumulation and excessive sedation (elderly)",
+      "Dependence",
+      "Fall risk",
+      "Respiratory depression"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Residualsedierung / Sturzrisiko",
+        "frequency": "Bei Therapiebeginn und regelmäßig",
+        "noteDe": "Bei älteren Patienten wegen langer Halbwertszeit nicht empfohlen (Priscus-Liste). Alternativpräparate bevorzugen.",
+        "noteEn": "Not recommended in elderly due to long half-life (Priscus list). Prefer alternative preparations."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Opioide, Alkohol",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Additive Atemdepression, Koma.",
+        "clinicalNoteEn": "Additive respiratory depression, coma."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Leberenzyme",
+        "condition": "Leberinsuffizienz",
+        "warningDe": "Verlängerter Metabolismus; Akkumulation. Dosis reduzieren.",
+        "warningEn": "Prolonged metabolism; accumulation. Reduce dose.",
+        "severity": "reduce_dose"
+      }
+    ],
+    "renalDosing": "Vorsicht bei schwerer Niereninsuffizienz.",
+    "hepaticDosing": "Dosisreduktion erforderlich.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "sources": [
+      "Benkert O, Hippius H. Kompendium der Psychiatrischen Pharmakotherapie, 14. Aufl. Springer, 2023.",
+      "Holt S et al. Potentially inappropriate medications in the elderly: the PRISCUS list. Dtsch Arztebl Int 2010;107(31–32):543–551."
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "flunitrazepam",
+    "genericName": "Flunitrazepam",
+    "brandNamesDACH": ["Rohypnol"],
+    "atcCode": "N05CD03",
+    "substanceClass": "Benzodiazepine — Hypnotikum (Betäubungsmittel)",
+    "formulations": ["Tabletten"],
+    "strengthsDACH": ["1 mg"],
+    "kurzinfoDe": "Hochpotentes Benzodiazepin-Hypnotikum (t½ 20–30 h, aktive Metaboliten bis 60 h) mit starker amnestischer Wirkung. In Deutschland unterliegt Flunitrazepam dem Betäubungsmittelgesetz (BtMG) und erfordert ein BTM-Rezept — Verschreibung auf max. 10 Tage begrenzt. Bekannt durch missbräuchliche Nutzung als 'K.O.-Tropfen'. Klinischer Einsatz auf schwere Schlafstörungen bei BZD-Toleranz beschränkt.",
+    "kurzinfoEn": "High-potency benzodiazepine hypnotic (t½ 20–30 h, active metabolites up to 60 h) with potent amnestic effect. In Germany, flunitrazepam is subject to the Narcotics Act (BtMG) and requires a controlled drug prescription — limited to max. 10 days. Known for misuse as a 'date-rape drug'. Clinical use restricted to severe insomnia in patients with BZD tolerance.",
+    "receptorProfile": {
+      "gaba": "Potent positive allosteric modulator at GABA-A receptor",
+      "benzo": "High-affinity non-selective BZ1/BZ2 agonist; ~10× potency of diazepam",
+      "notes": "Active metabolite 7-aminoflunitrazepam; pronounced anterograde amnesia is a pharmacodynamic hallmark"
+    },
+    "commonSideEffectsDe": [
+      "Ausgeprägte Sedierung",
+      "Starke anterograde Amnesie",
+      "Muskelrelaxation",
+      "Residualsedierung am Folgetag"
+    ],
+    "commonSideEffectsEn": [
+      "Pronounced sedation",
+      "Potent anterograde amnesia",
+      "Muscle relaxation",
+      "Residual sedation next day"
+    ],
+    "seriousSideEffectsDe": [
+      "Sehr hohes Abhängigkeits- und Missbrauchspotenzial (BTM-pflichtig)",
+      "Schwere Atemdepression (insb. Kombination mit Alkohol/Opioiden)",
+      "Koma",
+      "Missbrauchspotenzial als Vergewaltigungsdroge (K.O.-Tropfen)"
+    ],
+    "seriousSideEffectsEn": [
+      "Very high dependence and misuse potential (controlled substance)",
+      "Severe respiratory depression (especially combined with alcohol/opioids)",
+      "Coma",
+      "Misuse potential as date-rape drug"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "BTM-Rezeptpflicht / Verschreibungsregulierung (Deutschland)",
+        "frequency": "Bei jeder Verschreibung",
+        "noteDe": "Verschreibung nur auf BTM-Sonderrezept (rosa Rezept). Maximale Therapiedauer 10 Tage. Diagnose dokumentieren. In Österreich und der Schweiz ebenfalls strengen Regelungen unterworfen.",
+        "noteEn": "Prescription only on controlled drug prescription (BTM special form). Maximum treatment duration 10 days. Document diagnosis. Also subject to strict regulations in Austria and Switzerland."
+      },
+      {
+        "parameter": "Missbrauchsrisiko / Suchtanamnese",
+        "frequency": "Vor Verordnung",
+        "noteDe": "Absolut kontraindiziert bei bekannter Suchtanamnese oder Alkoholmissbrauch. Strikte Indikationsstellung.",
+        "noteEn": "Absolutely contraindicated with known addiction history or alcohol misuse. Strict indication required."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Alkohol",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Hochgradige Potenzierung der ZNS-Dämpfung; Koma- und Todesrisiko. Diese Kombination ist auch typisch für Missbrauchsszenario.",
+        "clinicalNoteEn": "High-grade potentiation of CNS depression; coma and death risk. This combination is also typical in misuse scenarios."
+      },
+      {
+        "interactsWith": "Opioide",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Atemdepression, Koma, Tod.",
+        "clinicalNoteEn": "Respiratory depression, coma, death."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Leberenzyme",
+        "condition": "Leberinsuffizienz",
+        "warningDe": "Verlängerte Halbwertszeit durch eingeschränkten Metabolismus. Bei Leberinsuffizienz kontraindiziert oder extrem niedrige Dosis.",
+        "warningEn": "Prolonged half-life due to impaired metabolism. Contraindicated or extremely low dose in hepatic insufficiency.",
+        "severity": "contraindicated"
+      }
+    ],
+    "renalDosing": "Vorsicht bei schwerer Niereninsuffizienz.",
+    "hepaticDosing": "Schwere Leberinsuffizienz: kontraindiziert.",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "sources": [
+      "BtMG (Betäubungsmittelgesetz) §§ 1, 13, Deutschland, Stand 2024.",
+      "BtMVV Anlage III (verkehrsfähige und verschreibungsfähige Betäubungsmittel).",
+      "Benkert O, Hippius H. Kompendium der Psychiatrischen Pharmakotherapie, 14. Aufl. Springer, 2023.",
+      "Fachinformation Rohypnol® (Roche), aktueller Stand."
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "triazolam",
+    "genericName": "Triazolam",
+    "brandNamesDACH": ["Halcion"],
+    "atcCode": "N05CD05",
+    "substanceClass": "Benzodiazepine — Hypnotikum (sehr kurzwirksam)",
+    "formulations": ["Tabletten"],
+    "strengthsDACH": ["0,125 mg", "0,25 mg"],
+    "kurzinfoDe": "Sehr kurzwirksames Hochpotenz-Benzodiazepin (t½ 1,5–5,5 h). Rasche Resorption mit schnellem Wirkeintritt. Wegen sehr kurzer Halbwertszeit kein Hangover, aber ausgeprägte Rebound-Insomnie und anterograde Amnesie. In Deutschland wegen Sicherheitsbedenken (psychiatrische Nebenwirkungen, Amnesie) in der Anwendung stark eingeschränkt; Indikation auf schwere kurzfristige Schlafstörungen begrenzt.",
+    "kurzinfoEn": "Very short-acting high-potency benzodiazepine (t½ 1.5–5.5 h). Rapid absorption with quick onset. Very short half-life means no hangover, but pronounced rebound insomnia and anterograde amnesia. Use in Germany severely restricted due to safety concerns (psychiatric adverse effects, amnesia); indication limited to severe short-term sleep disorders.",
+    "receptorProfile": {
+      "gaba": "Potent positive allosteric modulator at GABA-A receptor",
+      "benzo": "High-affinity BZ1/BZ2 agonist; very short-acting triazolobenzodiazepine",
+      "notes": "Triazolo ring structure; rapid elimination; CYP3A4 substrate"
+    },
+    "commonSideEffectsDe": [
+      "Anterograde Amnesie (häufig, ausgeprägt)",
+      "Rebound-Insomnie nach Absetzen",
+      "Schwindel",
+      "Paradoxe Agitiertheit, Angst (charakteristisch für Triazolam)"
+    ],
+    "commonSideEffectsEn": [
+      "Anterograde amnesia (common, pronounced)",
+      "Rebound insomnia after discontinuation",
+      "Dizziness",
+      "Paradoxical agitation, anxiety (characteristic of triazolam)"
+    ],
+    "seriousSideEffectsDe": [
+      "Ausgeprägte psychiatrische Nebenwirkungen (Konfusion, Erregung, bizarre Gedanken — häufiger als bei anderen BZD-Hypnotika)",
+      "Abhängigkeit",
+      "Atemdepression"
+    ],
+    "seriousSideEffectsEn": [
+      "Pronounced psychiatric adverse effects (confusion, agitation, bizarre thinking — more frequent than other BZD hypnotics)",
+      "Dependence",
+      "Respiratory depression"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Psychiatrische Nebenwirkungen",
+        "frequency": "Bei Therapiebeginn",
+        "noteDe": "Patient über mögliche paradoxe Reaktionen aufklären. Einsatz auf wenige Tage begrenzen.",
+        "noteEn": "Inform patient about possible paradoxical reactions. Limit use to few days."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "CYP3A4-Inhibitoren (Ketoconazol, Ritonavir, Erythromycin)",
+        "severity": "severe",
+        "clinicalNoteDe": "Stark erhöhte Triazolam-Exposition durch CYP3A4-Hemmung. Mit Azol-Antimykotika kontraindiziert.",
+        "clinicalNoteEn": "Greatly increased triazolam exposure due to CYP3A4 inhibition. Contraindicated with azole antifungals."
+      },
+      {
+        "interactsWith": "Alkohol, Opioide",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Atemdepression und Koma.",
+        "clinicalNoteEn": "Respiratory depression and coma."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Leberenzyme",
+        "condition": "Leberinsuffizienz",
+        "warningDe": "CYP3A4-Hemmung reduziert Clearance deutlich.",
+        "warningEn": "Hepatic CYP3A4 impairment markedly reduces clearance.",
+        "severity": "reduce_dose"
+      }
+    ],
+    "renalDosing": "Keine formale Dosisanpassung.",
+    "hepaticDosing": "Dosisreduktion bei Leberinsuffizienz.",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "sources": [
+      "Benkert O, Hippius H. Kompendium der Psychiatrischen Pharmakotherapie, 14. Aufl. Springer, 2023.",
+      "Fachinformation Halcion® (Pfizer), aktueller Stand."
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "zolpidem",
+    "genericName": "Zolpidem",
+    "brandNamesDACH": ["Stilnox", "Zolpidem Ratiopharm", "Zolpidem-neuraxpharm", "Bikalm"],
+    "atcCode": "N05CF02",
+    "substanceClass": "Z-Drug (Non-Benzodiazepin-Hypnotikum, Imidazopyridin)",
+    "formulations": ["Tabletten", "Retardtabletten", "Sublingualtabletten"],
+    "strengthsDACH": ["5 mg", "10 mg (sofortig)", "6,25 mg", "12,5 mg (retard)"],
+    "kurzinfoDe": "Kurz wirksames Z-Drug mit selektiver Affinität für BZ1-Rezeptoren (GABA-A α1-Untereinheit) — primär sedativ/hypnotisch, geringere anxiolytische/antikonvulsive Wirkung als BZD. T½ 2–3 h (Standard), 2,8 h (Retard). Zulassung für kurzfristige Schlafstörungen (max. 4 Wochen). Trotz BZ1-Selektivität substanzielles Missbrauchspotenzial, Parasomnie-Risiko (Schlafen/Fahren/Essen ohne Erinnerung) und Abhängigkeit.",
+    "kurzinfoEn": "Short-acting Z-drug with selective affinity for BZ1 receptors (GABA-A α1 subunit) — primarily sedative/hypnotic, less anxiolytic/anticonvulsant activity than BZDs. t½ 2–3 h (immediate-release), 2.8 h (modified-release). Licensed for short-term insomnia (max. 4 weeks). Despite BZ1 selectivity, substantial misuse potential, parasomnia risk (sleeping/driving/eating with no memory) and dependence.",
+    "receptorProfile": {
+      "gaba": "Positive allosteric modulator at GABA-A receptor, selective for α1 subunit (BZ1 site)",
+      "benzo": "BZ1-selective agonist (imidazopyridine); not chemically a benzodiazepine",
+      "notes": "α1-selectivity confers preferential sedative over anxiolytic/anticonvulsant/myorelaxant effects compared to non-selective BZDs"
+    },
+    "commonSideEffectsDe": [
+      "Residualsedierung, Schläfrigkeit",
+      "Schwindel, Gleichgewichtsstörungen",
+      "Gedächtnisbeeinträchtigung",
+      "Parasomnien: Schlafwandeln, Schlafen am Steuer, Schlafessen (ohne Erinnerung)",
+      "Halluzinationen (auch nach einmaliger Einnahme)"
+    ],
+    "commonSideEffectsEn": [
+      "Residual sedation, drowsiness",
+      "Dizziness, balance disturbance",
+      "Memory impairment",
+      "Parasomnias: sleepwalking, sleep-driving, sleep-eating (with no memory)",
+      "Hallucinations (even after single dose)"
+    ],
+    "seriousSideEffectsDe": [
+      "Abhängigkeit und Toleranzentwicklung (trotz BZ1-Selektivität)",
+      "Komplexe Schlafverhaltensweisen mit potenziell lebensbedrohlichen Folgen (Fahren im Schlaf)",
+      "Atemdepression bei Kombination mit Opioiden/Alkohol",
+      "Entzugssyndrom bei abruptem Absetzen nach Langzeitanwendung",
+      "Suizidalität (selten, Postmarketing-Daten)"
+    ],
+    "seriousSideEffectsEn": [
+      "Dependence and tolerance (despite BZ1 selectivity)",
+      "Complex sleep behaviors with potentially life-threatening consequences (sleep-driving)",
+      "Respiratory depression with opioids/alcohol",
+      "Withdrawal syndrome on abrupt discontinuation after long-term use",
+      "Suicidality (rare, post-marketing data)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Parasomnien / komplexe Schlafverhaltensweisen",
+        "frequency": "Bei Therapiebeginn und jeder Folgevisite",
+        "noteDe": "Patienten explizit nach Parasomnien befragen (Schlafwandeln, Handlungen ohne Erinnerung). Bei einem Ereignis: sofortiges Absetzen. Risiko erhöht durch höhere Dosen, Alkohol und Kombination mit anderen Hypnotika.",
+        "noteEn": "Explicitly ask patients about parasomnias (sleepwalking, actions without memory). If one event occurs: immediate discontinuation. Risk increased by higher doses, alcohol and combination with other hypnotics."
+      },
+      {
+        "parameter": "Therapiedauer / Abhängigkeit",
+        "frequency": "Alle 4 Wochen",
+        "noteDe": "Max. 4 Wochen Behandlungsdauer. Schlafhygiene und KVT-I als primäre Intervention empfehlen.",
+        "noteEn": "Max. 4 weeks treatment duration. Recommend sleep hygiene and CBT-I as primary intervention."
+      },
+      {
+        "parameter": "Dosisanpassung bei Frauen und Älteren",
+        "frequency": "Vor Therapiebeginn",
+        "noteDe": "Frauen haben niedrigere Clearance — EMA empfiehlt 5 mg als Startdosis. Ältere: max. 5 mg. Retardform morgens erhöhte Sedierung möglich.",
+        "noteEn": "Women have lower clearance — EMA recommends 5 mg as starting dose. Elderly: max. 5 mg. Modified-release: morning sedation possible."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Opioide",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Potenzierung der Atemdepression. Hohes Sterberisiko.",
+        "clinicalNoteEn": "Potentiation of respiratory depression. High mortality risk."
+      },
+      {
+        "interactsWith": "Alkohol",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Additive Sedierung; Parasomnie-Risiko erhöht.",
+        "clinicalNoteEn": "Additive sedation; parasomnia risk increased."
+      },
+      {
+        "interactsWith": "CYP3A4-Inhibitoren (Ketoconazol, Fluconazol, Ritonavir)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Erhöhte Zolpidem-Exposition. Dosisreduktion erwägen.",
+        "clinicalNoteEn": "Increased zolpidem exposure. Consider dose reduction."
+      },
+      {
+        "interactsWith": "Rifampicin, Johanniskraut (CYP3A4-Induktoren)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Deutlich reduzierte Zolpidem-Wirksamkeit.",
+        "clinicalNoteEn": "Markedly reduced zolpidem efficacy."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Leberenzyme",
+        "condition": "Leberinsuffizienz",
+        "warningDe": "CYP3A4-Metabolismus eingeschränkt; verlängerte Halbwertszeit. 5 mg als Maximaldosis.",
+        "warningEn": "CYP3A4 metabolism impaired; prolonged half-life. 5 mg as maximum dose.",
+        "severity": "reduce_dose"
+      }
+    ],
+    "renalDosing": "Keine formale Dosisanpassung; Vorsicht bei schwerer Niereninsuffizienz.",
+    "hepaticDosing": "Dosisreduktion: 5 mg bei Leberinsuffizienz.",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "sources": [
+      "Benkert O, Hippius H. Kompendium der Psychiatrischen Pharmakotherapie, 14. Aufl. Springer, 2023.",
+      "EMA/CHMP/CVMP/SWP/2014: Risk of complex sleep-related behaviours with zolpidem.",
+      "AWMF S3-Leitlinie Nicht-erholsamer Schlaf/Schlafstörungen (AWMF-Reg.-Nr. 063-003), 2017.",
+      "Fachinformation Stilnox® (Sanofi), aktueller Stand."
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "zopiclon",
+    "genericName": "Zopiclon",
+    "brandNamesDACH": ["Ximovan", "Zopiclon Ratiopharm", "Zopiclon-neuraxpharm", "Optidorm"],
+    "atcCode": "N05CF01",
+    "substanceClass": "Z-Drug (Non-Benzodiazepin-Hypnotikum, Cyclopyrrolon)",
+    "formulations": ["Tabletten"],
+    "strengthsDACH": ["3,75 mg", "7,5 mg"],
+    "kurzinfoDe": "Z-Drug der Cyclopyrrolon-Klasse (t½ 3,5–6 h) mit nicht-selektivem GABA-A-Profil (ähnlich Benzodiazepinen). Aktiver Metabolit N-Desmethylzopiclon (schwach aktiv). Zulassung für kurzfristige Schlafstörungen. Charakteristischer bitterer Geschmack im Mund am nächsten Morgen. Abhängigkeitspotenzial, Parasomnie-Risiko und klinisches Nebenwirkungsprofil vergleichbar mit BZD.",
+    "kurzinfoEn": "Z-drug of the cyclopyrrolone class (t½ 3.5–6 h) with non-selective GABA-A profile (similar to benzodiazepines). Active metabolite N-desmethylzopiclone (weakly active). Licensed for short-term insomnia. Characteristic bitter taste in the mouth the next morning. Dependence potential, parasomnia risk and clinical adverse effect profile comparable to BZDs.",
+    "receptorProfile": {
+      "gaba": "Positive allosteric modulator at GABA-A receptor, binds BZ binding site; non-selective across α subunits",
+      "benzo": "Functionally similar to non-selective BZDs at GABA-A receptor",
+      "notes": "Despite structural difference from benzodiazepines, pharmacological profile and dependence potential closely resemble them"
+    },
+    "commonSideEffectsDe": [
+      "Bitterer/metallischer Geschmack am Morgen (sehr charakteristisch)",
+      "Residualsedierung",
+      "Mundtrockenheit",
+      "Gedächtnisbeeinträchtigung",
+      "Parasomnien (seltener als Zolpidem)"
+    ],
+    "commonSideEffectsEn": [
+      "Bitter/metallic taste in the morning (very characteristic)",
+      "Residual sedation",
+      "Dry mouth",
+      "Memory impairment",
+      "Parasomnias (less frequent than zolpidem)"
+    ],
+    "seriousSideEffectsDe": [
+      "Abhängigkeit und Toleranz",
+      "Entzugssyndrom",
+      "Atemdepression bei Kombination mit Opioiden/Alkohol"
+    ],
+    "seriousSideEffectsEn": [
+      "Dependence and tolerance",
+      "Withdrawal syndrome",
+      "Respiratory depression with opioids/alcohol"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Therapiedauer",
+        "frequency": "Alle 4 Wochen",
+        "noteDe": "Max. 4 Wochen. Schlafhygiene und KVT-I priorisieren.",
+        "noteEn": "Max. 4 weeks. Prioritise sleep hygiene and CBT-I."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Opioide, Alkohol",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Atemdepression, additive Sedierung.",
+        "clinicalNoteEn": "Respiratory depression, additive sedation."
+      },
+      {
+        "interactsWith": "CYP3A4-Inhibitoren",
+        "severity": "moderate",
+        "clinicalNoteDe": "Erhöhte Zopiclon-Exposition.",
+        "clinicalNoteEn": "Increased zopiclone exposure."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Leberenzyme",
+        "condition": "Leberinsuffizienz",
+        "warningDe": "Reduzierte Clearance; 3,75 mg als Startdosis.",
+        "warningEn": "Reduced clearance; 3.75 mg as starting dose.",
+        "severity": "reduce_dose"
+      }
+    ],
+    "renalDosing": "Keine formale Dosisanpassung.",
+    "hepaticDosing": "Dosis reduzieren: 3,75 mg als Startdosis.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "sources": [
+      "Benkert O, Hippius H. Kompendium der Psychiatrischen Pharmakotherapie, 14. Aufl. Springer, 2023.",
+      "Fachinformation Ximovan® (Sanofi), aktueller Stand.",
+      "AWMF S3-Leitlinie Nicht-erholsamer Schlaf/Schlafstörungen, 2017."
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "zaleplon",
+    "genericName": "Zaleplon",
+    "brandNamesDACH": ["Sonata"],
+    "atcCode": "N05CF03",
+    "substanceClass": "Z-Drug (Non-Benzodiazepin-Hypnotikum, Pyrazolopyrimidin)",
+    "formulations": ["Kapseln"],
+    "strengthsDACH": ["5 mg", "10 mg"],
+    "kurzinfoDe": "Ultra-kurzwirksames Z-Drug (t½ ~1 h) mit selektiver GABA-A α1 (BZ1)-Affinität. Wegen minimaler Halbwertszeit keine Residualsedierung — kann bei Einschlafschwierigkeiten mitten in der Nacht eingenommen werden (mind. 4 h Schlafzeit verbleibend). In Deutschland verfügbar, aber wenig verbreitet. Geringere Wirksamkeit bei Durchschlafstörungen. Parasomnie-Risiko niedriger als Zolpidem.",
+    "kurzinfoEn": "Ultra-short-acting Z-drug (t½ ~1 h) with selective GABA-A α1 (BZ1) affinity. Minimal half-life means no residual sedation — can be taken for middle-of-the-night awakening (minimum 4 h sleep time remaining). Available in Germany but rarely used. Less effective for sleep-maintenance insomnia. Parasomnia risk lower than zolpidem.",
+    "receptorProfile": {
+      "gaba": "Positive allosteric modulator at GABA-A receptor, selective for α1 subunit (BZ1)",
+      "benzo": "BZ1-selective agonist; pyrazolopyrimidine structure",
+      "notes": "Fastest elimination of the Z-drugs; very short window of hypnotic action"
+    },
+    "commonSideEffectsDe": [
+      "Schwindel, Kopfschmerzen",
+      "Kurzdauernde Amnesie",
+      "Sehstörungen kurz nach Einnahme (reversibel)"
+    ],
+    "commonSideEffectsEn": [
+      "Dizziness, headache",
+      "Brief amnesia",
+      "Transient visual disturbances shortly after administration (reversible)"
+    ],
+    "seriousSideEffectsDe": [
+      "Abhängigkeit (weniger ausgeprägt als Zolpidem/Zopiclon, aber vorhanden)",
+      "Atemdepression bei Kombination",
+      "Parasomnien (seltener)"
+    ],
+    "seriousSideEffectsEn": [
+      "Dependence (less pronounced than zolpidem/zopiclone, but present)",
+      "Respiratory depression in combination",
+      "Parasomnias (less frequent)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Indikationsstellung und Therapiedauer",
+        "frequency": "Vor Therapiebeginn",
+        "noteDe": "Nur für Einschlafschwierigkeiten (nicht Durchschlafstörungen). Max. 2 Wochen. Kein Alkohol.",
+        "noteEn": "Only for sleep-onset insomnia (not sleep-maintenance). Max. 2 weeks. No alcohol."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Alkohol, Opioide",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Additive ZNS-Dämpfung.",
+        "clinicalNoteEn": "Additive CNS depression."
+      },
+      {
+        "interactsWith": "CYP3A4-Inhibitoren (moderater Metabolismus auch CYP3A4)",
+        "severity": "mild",
+        "clinicalNoteDe": "Mäßige Exposition durch CYP-Hemmung; primär aldehyd-oxidasevermittelter Metabolismus.",
+        "clinicalNoteEn": "Moderate exposure from CYP inhibition; primary metabolism via aldehyde oxidase."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Leberenzyme",
+        "condition": "Leberinsuffizienz",
+        "warningDe": "5 mg als Startdosis bei Leberinsuffizienz.",
+        "warningEn": "5 mg as starting dose in hepatic insufficiency.",
+        "severity": "reduce_dose"
+      }
+    ],
+    "renalDosing": "Keine Dosisanpassung erforderlich.",
+    "hepaticDosing": "5 mg bei leichter/moderater Leberinsuffizienz; schwere: vermeiden.",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "sources": [
+      "Benkert O, Hippius H. Kompendium der Psychiatrischen Pharmakotherapie, 14. Aufl. Springer, 2023.",
+      "Fachinformation Sonata® (Meda), aktueller Stand."
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "buspiron",
+    "genericName": "Buspiron",
+    "brandNamesDACH": ["Buspar", "Buspiron-neuraxpharm", "Buspiron Ratiopharm"],
+    "atcCode": "N05BE01",
+    "substanceClass": "Non-Benzodiazepin-Anxiolytikum (Azapiron, 5-HT1A-Partialagonist)",
+    "formulations": ["Tabletten"],
+    "strengthsDACH": ["5 mg", "10 mg"],
+    "kurzinfoDe": "Azapiron mit partialagonistischer Wirkung am 5-HT1A-Rezeptor und schwacher D2-Antagonismus. Kein GABAerges Wirkprinzip — daher kein Abhängigkeitspotenzial, keine Sedierung, keine Muskelrelaxation. Wirkeintritt verzögert (2–4 Wochen) — nicht geeignet für akute Anxiolyse. Zugelassen für generalisierte Angststörung (GAD). In DACH-Region wenig verbreitet, aber wertvolle Option bei Missbrauchsrisiko.",
+    "kurzinfoEn": "Azapirone with partial agonist activity at 5-HT1A receptors and weak D2 antagonism. No GABAergic mechanism — therefore no dependence potential, no sedation, no muscle relaxation. Delayed onset (2–4 weeks) — not suitable for acute anxiolysis. Licensed for generalised anxiety disorder (GAD). Rarely used in DACH region, but valuable option where misuse risk is present.",
+    "receptorProfile": {
+      "gaba": "No effect on GABA-A receptors",
+      "notes": "5-HT1A partial agonist (pre- and post-synaptic); weak D2 antagonist; no benzodiazepine receptor activity"
+    },
+    "commonSideEffectsDe": [
+      "Schwindel, Kopfschmerzen",
+      "Übelkeit",
+      "Nervosität, innere Unruhe (zu Beginn)",
+      "Schlafstörungen",
+      "Sehstörungen"
+    ],
+    "commonSideEffectsEn": [
+      "Dizziness, headache",
+      "Nausea",
+      "Nervousness, inner restlessness (initially)",
+      "Sleep disturbance",
+      "Visual disturbances"
+    ],
+    "seriousSideEffectsDe": [
+      "Kein Abhängigkeitspotenzial (klarer Vorteil)",
+      "Serotoninsyndrom bei Kombination mit anderen Serotonergika (selten)",
+      "Verlängertes QTc (sehr selten, klinisch nicht signifikant)"
+    ],
+    "seriousSideEffectsEn": [
+      "No dependence potential (clear advantage)",
+      "Serotonin syndrome in combination with other serotonergic drugs (rare)",
+      "Prolonged QTc (very rare, clinically not significant)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Wirklatenz / Erwartungsmanagement",
+        "frequency": "Bei Therapiebeginn",
+        "noteDe": "Patienten explizit auf Wirklatenz von 2–4 Wochen hinweisen. Fehlende sofortige anxiolytische Wirkung führt häufig zu vorzeitigem Therapieabbruch.",
+        "noteEn": "Explicitly inform patients of 2–4 week onset delay. Lack of immediate anxiolytic effect often leads to premature discontinuation."
+      },
+      {
+        "parameter": "Vorherige BZD-Therapie",
+        "frequency": "Vor Therapiebeginn",
+        "noteDe": "Bei BZD-Vorbehandlung: Buspiron wirkt nicht gegen BZD-Entzugssymptome. BZD langsam ausschleichen, bevor Buspiron-Wirkung einsetzt.",
+        "noteEn": "In patients previously on BZDs: buspirone does not counteract BZD withdrawal symptoms. Taper BZD slowly while buspirone onset takes effect."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Serotoninsyndrom möglich. Mindestens 14 Tage Abstand nach MAO-Hemmer-Absetzen.",
+        "clinicalNoteEn": "Serotonin syndrome possible. At least 14-day washout after MAOI discontinuation."
+      },
+      {
+        "interactsWith": "CYP3A4-Inhibitoren (Erythromycin, Itraconazol, Ritonavir)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Stark erhöhte Buspiron-Plasmaspiegel. Dosis auf 2,5 mg reduzieren.",
+        "clinicalNoteEn": "Greatly increased buspirone plasma levels. Reduce dose to 2.5 mg."
+      },
+      {
+        "interactsWith": "Rifampicin, Johanniskraut",
+        "severity": "moderate",
+        "clinicalNoteDe": "Stark reduzierte Buspiron-Wirksamkeit durch CYP3A4-Induktion.",
+        "clinicalNoteEn": "Greatly reduced buspirone efficacy due to CYP3A4 induction."
+      },
+      {
+        "interactsWith": "SSRI, SNRI, Triptane",
+        "severity": "mild",
+        "clinicalNoteDe": "Theoretisches Risiko eines Serotoninsyndroms; klinisch meist unproblematisch, aber Überwachung empfohlen.",
+        "clinicalNoteEn": "Theoretical serotonin syndrome risk; clinically usually benign, but monitoring recommended."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Leberenzyme",
+        "condition": "Schwere Leberinsuffizienz",
+        "warningDe": "CYP3A4-Metabolismus stark eingeschränkt. Kontraindiziert bei schwerer Leberinsuffizienz.",
+        "warningEn": "CYP3A4 metabolism greatly impaired. Contraindicated in severe hepatic insufficiency.",
+        "severity": "contraindicated"
+      },
+      {
+        "labParameter": "Serumkreatinin / GFR",
+        "condition": "Schwere Niereninsuffizienz",
+        "warningDe": "Kontraindiziert bei schwerer Niereninsuffizienz.",
+        "warningEn": "Contraindicated in severe renal insufficiency.",
+        "severity": "contraindicated"
+      }
+    ],
+    "renalDosing": "Leichte/moderate Niereninsuffizienz: Vorsicht. Schwere Niereninsuffizienz: kontraindiziert.",
+    "hepaticDosing": "Schwere Leberinsuffizienz: kontraindiziert. Leichte/moderate: Dosis reduzieren und engmaschig überwachen.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "sources": [
+      "Benkert O, Hippius H. Kompendium der Psychiatrischen Pharmakotherapie, 14. Aufl. Springer, 2023.",
+      "AWMF S3-Leitlinie Angststörungen, 2021.",
+      "Fachinformation Buspar® (Bristol-Myers Squibb), aktueller Stand.",
+      "Baldwin DS et al. Evidence-based guidelines for the pharmacological treatment of anxiety disorders. J Psychopharmacol 2005."
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "hydroxyzin",
+    "genericName": "Hydroxyzin",
+    "brandNamesDACH": ["Atarax", "Vistaril", "Hydroxyzin Ratiopharm"],
+    "atcCode": "N05BB01",
+    "substanceClass": "Anxiolytikum / Sedativum (Antihistaminikum H1, Piperazin-Derivat)",
+    "formulations": ["Tabletten", "Sirup", "Injektionslösung"],
+    "strengthsDACH": ["10 mg", "25 mg", "50 mg (Tabletten)", "2 mg/ml (Sirup)", "25 mg/ml (Injektion i.m.)"],
+    "kurzinfoDe": "H1-Antihistaminikum mit anxiolytischen, antiemetischen und sedierenden Eigenschaften. Kein Abhängigkeitspotenzial (kein BZD). Zugelassen für Angststörungen, präoperative Sedierung und Pruritus. QTc-Verlängerung ist ein relevantes Sicherheitsrisiko — EMA-Risikobewertung 2015 mit Dosislimitierung. Nicht für Langzeittherapie geeignet.",
+    "kurzinfoEn": "H1 antihistamine with anxiolytic, antiemetic and sedating properties. No dependence potential (not a BZD). Licensed for anxiety disorders, pre-operative sedation and pruritus. QTc prolongation is a relevant safety concern — EMA risk assessment 2015 with dose limitation. Not suitable for long-term therapy.",
+    "receptorProfile": {
+      "gaba": "No direct GABA-A receptor activity",
+      "notes": "Potent H1 receptor antagonist; also muscarinic anticholinergic activity; weak α-adrenergic blockade; some 5-HT2A antagonism at higher doses"
+    },
+    "commonSideEffectsDe": [
+      "Sedierung (therapeutisch erwünscht, aber bei Älteren problematisch)",
+      "Mundtrockenheit (anticholinerg)",
+      "Verstopfung",
+      "Akkommodationsstörungen",
+      "Schwindel"
+    ],
+    "commonSideEffectsEn": [
+      "Sedation (therapeutically desired, but problematic in elderly)",
+      "Dry mouth (anticholinergic)",
+      "Constipation",
+      "Accommodation disturbance",
+      "Dizziness"
+    ],
+    "seriousSideEffectsDe": [
+      "QTc-Verlängerung und Torsades de Pointes (arrhythmogenes Risiko)",
+      "Anticholinerges Syndrom bei hoher Dosis (Harnverhalt, Delir bei Älteren)",
+      "Krampfanfälle bei Überdosierung"
+    ],
+    "seriousSideEffectsEn": [
+      "QTc prolongation and torsades de pointes (arrhythmogenic risk)",
+      "Anticholinergic syndrome at high doses (urinary retention, delirium in elderly)",
+      "Seizures in overdose"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "EKG / QTc-Zeit",
+        "frequency": "Vor Therapiebeginn und nach Dosiserhöhung",
+        "noteDe": "QTc-Zeit vor Therapiebeginn messen. Bei QTc >450 ms (Männer) / >470 ms (Frauen): kontraindiziert. Risikofaktoren: Elektrolytstörungen (Hypokaliämie, Hypomagnesiämie), andere QTc-verlängernde Medikamente.",
+        "noteEn": "Measure QTc before treatment initiation. If QTc >450 ms (men) / >470 ms (women): contraindicated. Risk factors: electrolyte disturbances (hypokalaemia, hypomagnesaemia), other QTc-prolonging drugs."
+      },
+      {
+        "parameter": "Elektrolyte (Kalium, Magnesium)",
+        "frequency": "Vor Therapiebeginn",
+        "noteDe": "Elektrolytstörungen korrigieren vor Beginn.",
+        "noteEn": "Correct electrolyte disturbances before starting."
+      },
+      {
+        "parameter": "Anticholinerge Verträglichkeit bei Älteren",
+        "frequency": "Regelmäßig",
+        "noteDe": "Anticholinerge Belastung (anticholinergic burden score) bei älteren Patienten beachten. Risiko für Delir, Harnverhalt.",
+        "noteEn": "Consider anticholinergic burden score in elderly. Risk of delirium, urinary retention."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Andere QTc-verlängernde Substanzen (Antipsychotika, Antidepressiva, Antiarrhythmika, Antibiotika)",
+        "severity": "severe",
+        "clinicalNoteDe": "Additive QTc-Verlängerung; Torsades de Pointes-Risiko. Kombination vermeiden oder engmaschiges EKG-Monitoring.",
+        "clinicalNoteEn": "Additive QTc prolongation; torsades de pointes risk. Avoid combination or conduct close ECG monitoring."
+      },
+      {
+        "interactsWith": "Anticholinerge Substanzen",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive anticholinerge Wirkung (Mundtrockenheit, Obstipation, Harnverhalt, kognitive Beeinträchtigung).",
+        "clinicalNoteEn": "Additive anticholinergic effect (dry mouth, constipation, urinary retention, cognitive impairment)."
+      },
+      {
+        "interactsWith": "Alkohol, ZNS-Dämpfer",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive Sedierung.",
+        "clinicalNoteEn": "Additive sedation."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Serum-Kalium, Serum-Magnesium",
+        "condition": "Hypokaliämie oder Hypomagnesiämie",
+        "warningDe": "Erhöhtes Risiko für QTc-Verlängerung und Torsades de Pointes. Vor Therapiebeginn korrigieren.",
+        "warningEn": "Increased risk of QTc prolongation and torsades de pointes. Correct before starting therapy.",
+        "severity": "contraindicated"
+      },
+      {
+        "labParameter": "Leberenzyme",
+        "condition": "Leberinsuffizienz",
+        "warningDe": "Verlängerte Halbwertszeit; QTc-Risiko erhöht. Dosis reduzieren.",
+        "warningEn": "Prolonged half-life; QTc risk increased. Reduce dose.",
+        "severity": "reduce_dose"
+      }
+    ],
+    "renalDosing": "Dosisreduktion bei schwerer Niereninsuffizienz (verlängerte Halbwertszeit).",
+    "hepaticDosing": "Dosisreduktion bei Leberinsuffizienz. EMA: Dosishöchstgrenzen beachten (max. 100 mg/Tag oral).",
+    "tabletSplittable": true,
+    "liquidFormAvailable": true,
+    "sources": [
+      "EMA/CHMP/589511/2015: Atarax/hydroxyzine — assessment of cardiovascular risks.",
+      "Benkert O, Hippius H. Kompendium der Psychiatrischen Pharmakotherapie, 14. Aufl. Springer, 2023.",
+      "Fachinformation Atarax® (UCB), aktueller Stand.",
+      "AWMF S3-Leitlinie Angststörungen, 2021."
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "pregabalin",
+    "genericName": "Pregabalin",
+    "brandNamesDACH": ["Lyrica", "Pregabalin Ratiopharm", "Pregabalin-neuraxpharm"],
+    "atcCode": "N03AX16",
+    "substanceClass": "Antiepileptikum / Anxiolytikum (α2δ-Ligand, Calciumkanal-Modulator)",
+    "formulations": ["Hartkapseln", "Lösung zum Einnehmen"],
+    "strengthsDACH": ["25 mg", "50 mg", "75 mg", "100 mg", "150 mg", "200 mg", "225 mg", "300 mg"],
+    "kurzinfoDe": "α2δ-Untereinheitenligand an spannungsabhängigen Calciumkanälen — reduziert exzitatorische Neurotransmitterfreisetzung. Zugelassen für generalisierte Angststörung (GAD), neuropathischen Schmerz und Epilepsie (Zusatztherapie). Cross-reference: Stimmungsstabilisatoren/Antikonvulsiva. Schnellerer Wirkeintritt als Buspiron (wenige Tage). Abhängigkeitspotenzial und Missbrauch zunehmend anerkannt (in Deutschland seit 2019 BtM-pflichtig).",
+    "kurzinfoEn": "α2δ subunit ligand at voltage-gated calcium channels — reduces excitatory neurotransmitter release. Licensed for generalised anxiety disorder (GAD), neuropathic pain and epilepsy (adjunctive). Cross-reference: mood stabilisers/anticonvulsants. Faster onset than buspirone (days). Dependence potential and misuse increasingly recognised (controlled substance in Germany since 2019).",
+    "receptorProfile": {
+      "gaba": "No direct GABA-A receptor activity despite the 'pre-GABA-lin' name",
+      "notes": "Binds α2δ subunit of voltage-gated Ca²⁺ channels → reduces presynaptic release of glutamate, substance P and norepinephrine; structural analogue of GABA but does not act on GABA receptors"
+    },
+    "commonSideEffectsDe": [
+      "Schwindel (sehr häufig)",
+      "Sedierung, Müdigkeit",
+      "Gewichtszunahme",
+      "Periphere Ödeme",
+      "Ataxie, Koordinationsstörungen",
+      "Mundtrockenheit, Verschwommensehen"
+    ],
+    "commonSideEffectsEn": [
+      "Dizziness (very common)",
+      "Sedation, fatigue",
+      "Weight gain",
+      "Peripheral oedema",
+      "Ataxia, coordination problems",
+      "Dry mouth, blurred vision"
+    ],
+    "seriousSideEffectsDe": [
+      "Abhängigkeit und Missbrauch (BTM-pflichtig in Deutschland seit 2019)",
+      "Entzugssyndrom bei abruptem Absetzen (Krampfanfälle, Angst, Schlaflosigkeit, Übelkeit)",
+      "Suizidalität (Antikonvulsiva-Klasseneffekt, FDA/EMA-Warnung)",
+      "Angioödem (selten, aber schwerwiegend)",
+      "Atemdepression bei Kombination mit Opioiden"
+    ],
+    "seriousSideEffectsEn": [
+      "Dependence and misuse (controlled substance in Germany since 2019)",
+      "Withdrawal syndrome on abrupt discontinuation (seizures, anxiety, insomnia, nausea)",
+      "Suicidality (anticonvulsant class effect, FDA/EMA warning)",
+      "Angioedema (rare, but serious)",
+      "Respiratory depression in combination with opioids"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "BTM-Verschreibungspflicht (Deutschland)",
+        "frequency": "Bei jeder Verschreibung",
+        "noteDe": "Seit März 2019 BTM-pflichtig in Deutschland (Anlage III BtMVV). Maximale Packungsgröße und Wiederholungsverordnung beachten.",
+        "noteEn": "Controlled substance in Germany since March 2019 (BtMVV Annex III). Observe maximum pack size and repeat prescription rules."
+      },
+      {
+        "parameter": "Suizidalität (Antikonvulsiva-Klassenwarnung)",
+        "frequency": "Regelmäßig, insb. zu Therapiebeginn",
+        "noteDe": "EMA/FDA-Warnung: Antikonvulsiva assoziiert mit erhöhtem Suizidgedanken. Patienten zu Beginn engmaschig monitoren.",
+        "noteEn": "EMA/FDA warning: anticonvulsants associated with increased suicidal ideation. Monitor patients closely at treatment initiation."
+      },
+      {
+        "parameter": "Gewicht / Ödeme",
+        "frequency": "Alle 4–8 Wochen",
+        "noteDe": "Gewichtszunahme und periphere Ödeme häufig. Nierenfunktion und Herzinsuffizienz beachten.",
+        "noteEn": "Weight gain and peripheral oedema common. Consider renal function and cardiac failure."
+      },
+      {
+        "parameter": "Ausschleichen",
+        "frequency": "Beim Absetzen",
+        "noteDe": "Schrittweise Dosisreduktion über mind. 1 Woche. Bei Langzeittherapie länger ausschleichen.",
+        "noteEn": "Gradual dose reduction over at least 1 week. Longer taper for long-term therapy."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Opioide (insb. Oxycodon)",
+        "severity": "severe",
+        "clinicalNoteDe": "Erhöhte Sedierung und Atemdepression. FDA/EMA-Warnung. Mit Vorsicht kombinieren; niedrigste wirksame Dosis beider Substanzen verwenden.",
+        "clinicalNoteEn": "Increased sedation and respiratory depression. FDA/EMA warning. Combine with caution; use lowest effective dose of both substances."
+      },
+      {
+        "interactsWith": "Alkohol, andere ZNS-Dämpfer",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive Sedierung und kognitive Beeinträchtigung.",
+        "clinicalNoteEn": "Additive sedation and cognitive impairment."
+      },
+      {
+        "interactsWith": "Thiazolidindione (Rosiglitazon, Pioglitazon)",
+        "severity": "mild",
+        "clinicalNoteDe": "Verstärkung peripherer Ödeme und Gewichtszunahme möglich.",
+        "clinicalNoteEn": "Potentiation of peripheral oedema and weight gain possible."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Serumkreatinin / GFR",
+        "condition": "Niereninsuffizienz",
+        "warningDe": "Pregabalin wird renal eliminiert (unverändert). Dosisanpassung nach GFR zwingend erforderlich: GFR 30–60: max. 150 mg BID; GFR 15–30: max. 75 mg BID; GFR <15: max. 25–75 mg/Tag.",
+        "warningEn": "Pregabalin is renally eliminated (unchanged). Dose adjustment mandatory according to GFR: GFR 30–60: max. 150 mg BID; GFR 15–30: max. 75 mg BID; GFR <15: max. 25–75 mg/day.",
+        "severity": "reduce_dose"
+      }
+    ],
+    "renalDosing": "GFR 60–90: 150–600 mg/Tag (normal). GFR 30–60: 75–300 mg/Tag. GFR 15–30: 25–150 mg/Tag. GFR <15: 25–75 mg/Tag. Dialyse: Supplementdosis nach jeder Sitzung.",
+    "hepaticDosing": "Keine Dosisanpassung erforderlich (renale Elimination).",
+    "tabletSplittable": false,
+    "liquidFormAvailable": true,
+    "sources": [
+      "Benkert O, Hippius H. Kompendium der Psychiatrischen Pharmakotherapie, 14. Aufl. Springer, 2023.",
+      "BtMVV Anlage III — Pregabalin seit März 2019.",
+      "AWMF S3-Leitlinie Angststörungen, 2021.",
+      "Fachinformation Lyrica® (Pfizer), aktueller Stand.",
+      "EMA CHMP: Pregabalin — assessment of abuse and misuse risk, 2018."
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "meprobamat",
+    "genericName": "Meprobamat",
+    "brandNamesDACH": ["Miltaun (historisch)", "Meprobamat-Präparate (Sonderzulassung)"],
+    "atcCode": "N05BC01",
+    "substanceClass": "Carbamat — Anxiolytikum/Sedativum (historisch, kaum noch verwendet)",
+    "formulations": ["Tabletten"],
+    "strengthsDACH": ["200 mg", "400 mg"],
+    "kurzinfoDe": "Carbamat-Derivat aus den 1950er Jahren; vormals weit verbreitetes Anxiolytikum und Muskelrelaxans. Wirkung über GABA-A-Rezeptormodulation und Barbiturat-ähnliche Mechanismen. Heute praktisch ohne klinische Bedeutung wegen hohem Missbrauchs- und Suizidpotenzial, engen therapeutischen Index und enger Überlegenheit von Benzodiazepinen. In DACH kaum noch verfügbar.",
+    "kurzinfoEn": "Carbamate derivative from the 1950s; formerly widely used anxiolytic and muscle relaxant. Acts via GABA-A receptor modulation and barbiturate-like mechanisms. Virtually no clinical role today due to high misuse and suicide potential, narrow therapeutic index and benzodiazepine superiority. Barely available in DACH region.",
+    "receptorProfile": {
+      "gaba": "GABA-A receptor modulator (barbiturate-like binding site); non-specific CNS depressant",
+      "notes": "Narrow therapeutic index; lethal dose not far above therapeutic dose — distinct from BZDs"
+    },
+    "commonSideEffectsDe": [
+      "Sedierung",
+      "Ataxie",
+      "Übelkeit"
+    ],
+    "commonSideEffectsEn": [
+      "Sedation",
+      "Ataxia",
+      "Nausea"
+    ],
+    "seriousSideEffectsDe": [
+      "Hohes Abhängigkeits- und Missbrauchspotenzial",
+      "Enger therapeutischer Index — Überdosierungen lebensgefährlich",
+      "Schweres Entzugssyndrom (Krampfanfälle, Delirium)",
+      "Atemdepression"
+    ],
+    "seriousSideEffectsEn": [
+      "High dependence and misuse potential",
+      "Narrow therapeutic index — overdoses life-threatening",
+      "Severe withdrawal syndrome (seizures, delirium)",
+      "Respiratory depression"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Einsatzindikation",
+        "frequency": "Vor Verordnung",
+        "noteDe": "Neue Verschreibung historisch und praktisch nicht mehr indiziert. Wenn auf Meprobamat eingestellt: Umstellung auf modernes Anxiolytikum planen.",
+        "noteEn": "New prescription historically and practically no longer indicated. If patient is established on meprobamat: plan switch to modern anxiolytic."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Alkohol, andere ZNS-Dämpfer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Additive lebensbedrohliche ZNS-Dämpfung.",
+        "clinicalNoteEn": "Additive life-threatening CNS depression."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Leberenzyme",
+        "condition": "Leberinsuffizienz",
+        "warningDe": "Stark verlängerter Metabolismus; Akkumulation. Vermeiden.",
+        "warningEn": "Greatly prolonged metabolism; accumulation. Avoid.",
+        "severity": "contraindicated"
+      }
+    ],
+    "renalDosing": "Niereninsuffizienz: vermeiden.",
+    "hepaticDosing": "Leberinsuffizienz: vermeiden.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "sources": [
+      "Benkert O, Hippius H. Kompendium der Psychiatrischen Pharmakotherapie, 14. Aufl. Springer, 2023.",
+      "Lickey ME, Gordon B. Medicine and mental illness. Freeman, 1991."
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "diphenhydramin",
+    "genericName": "Diphenhydramin",
+    "brandNamesDACH": ["Sedadrops", "Betadorm", "Dreisafrol", "Vivinox Sleep"],
+    "atcCode": "R06AA02",
+    "substanceClass": "Sedierendes Antihistaminikum — Hypnotikum (OTC)",
+    "formulations": ["Tabletten", "Tropfen", "Kapseln"],
+    "strengthsDACH": ["25 mg", "50 mg (Tabletten/Kapseln)", "5 mg/ml (Tropfen)"],
+    "kurzinfoDe": "H1-Antihistaminikum der ersten Generation mit ausgeprägter sedierender Wirkung (anticholinerge Komponente). In Deutschland frei verkäuflich (OTC) als Einschlafhilfe bei gelegentlichen Schlafstörungen. Rasche Toleranzentwicklung (2–3 Tage) limitiert Effizienz bei Dauergebrauch. Wegen anticholinerger Nebenwirkungen bei Älteren und Patienten mit BPH/Glaukom problematisch. Kein Abhängigkeitspotenzial im klassischen Sinne, aber Missbrauch beschrieben.",
+    "kurzinfoEn": "First-generation H1 antihistamine with pronounced sedative effect (anticholinergic component). Available over-the-counter (OTC) in Germany as sleep aid for occasional insomnia. Rapid tolerance development (2–3 days) limits efficacy with continued use. Anticholinergic adverse effects are problematic in elderly and patients with BPH/glaucoma. No classical dependence potential, but misuse reported.",
+    "receptorProfile": {
+      "gaba": "No direct GABA-A activity",
+      "notes": "Potent H1 antagonist; significant muscarinic anticholinergic activity; some mild α-adrenergic blockade"
+    },
+    "commonSideEffectsDe": [
+      "Residualsedierung am Folgetag ('Hangover')",
+      "Mundtrockenheit, Obstipation (anticholinerg)",
+      "Harnverhalt (Männer mit BPH)",
+      "Akkommodationsstörungen",
+      "Kognitive Beeinträchtigung"
+    ],
+    "commonSideEffectsEn": [
+      "Residual sedation the next day ('hangover')",
+      "Dry mouth, constipation (anticholinergic)",
+      "Urinary retention (men with BPH)",
+      "Accommodation disturbance",
+      "Cognitive impairment"
+    ],
+    "seriousSideEffectsDe": [
+      "Anticholinerges Delir bei Älteren",
+      "Schnelle Toleranzentwicklung (2–3 Tage)",
+      "QTc-Verlängerung (bei hohen Dosen)",
+      "Paradoxe ZNS-Stimulation (Kinder, ältere Patienten)"
+    ],
+    "seriousSideEffectsEn": [
+      "Anticholinergic delirium in elderly",
+      "Rapid tolerance development (2–3 days)",
+      "QTc prolongation (at high doses)",
+      "Paradoxical CNS stimulation (children, elderly)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Anwendungsdauer / Toleranz",
+        "frequency": "Vor Empfehlung",
+        "noteDe": "Nur für gelegentliche Schlafstörungen geeignet (max. 2 Wochen, optimaler 2–3 Tage). Bei chronischer Insomnie KVT-I empfehlen.",
+        "noteEn": "Suitable only for occasional insomnia (max. 2 weeks, optimally 2–3 days). Recommend CBT-I for chronic insomnia."
+      },
+      {
+        "parameter": "Kontraindikationen bei Älteren",
+        "frequency": "Vor Empfehlung",
+        "noteDe": "Bei Älteren: Priscus-Liste (problematisch). Anticholinerge Belastung erhöht Delir- und Sturzrisiko. Vermeiden.",
+        "noteEn": "In elderly: Priscus list (problematic). Anticholinergic burden increases delirium and fall risk. Avoid."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Andere anticholinerge Substanzen",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive anticholinerge Wirkung (Harnverhalt, Obstipation, Delir).",
+        "clinicalNoteEn": "Additive anticholinergic effect (urinary retention, constipation, delirium)."
+      },
+      {
+        "interactsWith": "Alkohol, ZNS-Dämpfer",
+        "severity": "moderate",
+        "clinicalNoteDe": "Verstärkte Sedierung.",
+        "clinicalNoteEn": "Enhanced sedation."
+      },
+      {
+        "interactsWith": "MAO-Hemmer",
+        "severity": "severe",
+        "clinicalNoteDe": "Verlängerte und intensivierte anticholinerge und sedierende Wirkung.",
+        "clinicalNoteEn": "Prolonged and intensified anticholinergic and sedative effect."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Keine spezifischen Laborparameter",
+        "condition": "Benigne Prostatahyperplasie (BPH), Engwinkelglaukom",
+        "warningDe": "Kontraindiziert bei Harnverhalt, BPH mit Restharn, Engwinkelglaukom (anticholinerge Wirkung).",
+        "warningEn": "Contraindicated in urinary retention, BPH with residual urine, narrow-angle glaucoma (anticholinergic effect).",
+        "severity": "contraindicated"
+      }
+    ],
+    "renalDosing": "Vorsicht bei Niereninsuffizienz; verlängerte Wirkdauer.",
+    "hepaticDosing": "Vorsicht bei Leberinsuffizienz.",
+    "tabletSplittable": false,
+    "liquidFormAvailable": true,
+    "sources": [
+      "Holt S et al. PRISCUS list. Dtsch Arztebl Int 2010;107(31–32):543–551.",
+      "Benkert O, Hippius H. Kompendium der Psychiatrischen Pharmakotherapie, 14. Aufl. Springer, 2023.",
+      "AWMF S3-Leitlinie Nicht-erholsamer Schlaf/Schlafstörungen, 2017."
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "doxylamin",
+    "genericName": "Doxylamin",
+    "brandNamesDACH": ["Gittalun", "Hoggar Night", "Mereprine", "Sedaplus"],
+    "atcCode": "R06AA09",
+    "substanceClass": "Sedierendes Antihistaminikum — Hypnotikum (OTC)",
+    "formulations": ["Tabletten"],
+    "strengthsDACH": ["25 mg"],
+    "kurzinfoDe": "H1-Antihistaminikum der ersten Generation, strukturell mit Diphenhydramin verwandt. In Deutschland OTC für kurzzeitige Schlafstörungen erhältlich. Ausgeprägtere Sedierung und längere Halbwertszeit als Diphenhydramin (t½ 10–12 h) — stärkerer Hangover am Folgetag. Auch bekannt für Antiemetica-Einsatz (Schwangerschaftsübelkeit). Ähnliches anticholinerges Profil wie Diphenhydramin.",
+    "kurzinfoEn": "First-generation H1 antihistamine structurally related to diphenhydramine. Available OTC in Germany for short-term insomnia. More pronounced sedation and longer half-life than diphenhydramine (t½ 10–12 h) — greater next-day hangover. Also known for antiemetic use (pregnancy-related nausea). Similar anticholinergic profile to diphenhydramine.",
+    "receptorProfile": {
+      "gaba": "No direct GABA-A activity",
+      "notes": "Potent H1 antagonist; significant muscarinic anticholinergic activity; longer half-life than diphenhydramine"
+    },
+    "commonSideEffectsDe": [
+      "Ausgeprägte Residualsedierung (langer Hangover)",
+      "Mundtrockenheit (stark)",
+      "Obstipation",
+      "Schwindel",
+      "Akkommodationsstörungen"
+    ],
+    "commonSideEffectsEn": [
+      "Pronounced residual sedation (prolonged hangover)",
+      "Dry mouth (marked)",
+      "Constipation",
+      "Dizziness",
+      "Accommodation disturbance"
+    ],
+    "seriousSideEffectsDe": [
+      "Anticholinerges Delir bei Älteren",
+      "Harnverhalt",
+      "QTc-Verlängerung (bei Hochdosis)"
+    ],
+    "seriousSideEffectsEn": [
+      "Anticholinergic delirium in elderly",
+      "Urinary retention",
+      "QTc prolongation (high doses)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Anwendungsdauer",
+        "frequency": "Vor Empfehlung",
+        "noteDe": "Max. 2 Wochen OTC-Einsatz. Nicht bei Älteren wegen langer Halbwertszeit und Hangover.",
+        "noteEn": "Max. 2 weeks OTC use. Avoid in elderly due to long half-life and hangover."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Anticholinerge Substanzen, Alkohol, ZNS-Dämpfer",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive Wirkung; insbesondere anticholinerges Delir-Risiko bei Älteren.",
+        "clinicalNoteEn": "Additive effect; particularly anticholinergic delirium risk in elderly."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Keine spezifischen Laborparameter",
+        "condition": "BPH, Engwinkelglaukom, Leberfunktionsstörung",
+        "warningDe": "Anticholinerge Kontraindikationen beachten. Bei Leberinsuffizienz: verlängerter Metabolismus.",
+        "warningEn": "Observe anticholinergic contraindications. In hepatic insufficiency: prolonged metabolism.",
+        "severity": "caution"
+      }
+    ],
+    "renalDosing": "Vorsicht bei Niereninsuffizienz.",
+    "hepaticDosing": "Vorsicht; verlängerte Wirkdauer.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "sources": [
+      "Benkert O, Hippius H. Kompendium der Psychiatrischen Pharmakotherapie, 14. Aufl. Springer, 2023.",
+      "AWMF S3-Leitlinie Nicht-erholsamer Schlaf/Schlafstörungen, 2017."
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "promethazin",
+    "genericName": "Promethazin",
+    "brandNamesDACH": ["Atosil", "Promethazin-neuraxpharm", "Pronervon Phytopharma"],
+    "atcCode": "R06AD02",
+    "substanceClass": "Phenothiazin-Antihistaminikum — Sedativum/Antiemetikum (Überschneidung mit Antipsychotika)",
+    "formulations": ["Tropfen", "Tabletten", "Injektionslösung"],
+    "strengthsDACH": ["10 mg", "25 mg (Tabletten)", "20 mg/ml (Tropfen)", "25 mg/ml, 50 mg/ml (Injektion)"],
+    "kurzinfoDe": "Phenothiazin-Derivat mit H1-antihistaminergen, antidopaminergen (D2) und anticholinergen Eigenschaften. Cross-reference: Antipsychotika (schwaches Phenothiazin). Klinisch eingesetzt zur Sedierung, bei Übelkeit/Erbrechen, Juckreiz und präoperativer Medikation. Ausgeprägte QTc-Verlängerung und extrapyramidale Nebenwirkungen möglich. Intravenöse Injektion wegen Gewebsnekrose-Risiko kontraindiziert.",
+    "kurzinfoEn": "Phenothiazine derivative with H1 antihistaminergic, antidopaminergic (D2) and anticholinergic properties. Cross-reference: antipsychotics (weak phenothiazine). Clinically used for sedation, nausea/vomiting, pruritus and pre-operative medication. Pronounced QTc prolongation and extrapyramidal adverse effects possible. Intravenous injection contraindicated due to tissue necrosis risk.",
+    "receptorProfile": {
+      "gaba": "No direct GABA-A activity",
+      "notes": "H1 antagonist (potent); D2 antagonist (moderate); muscarinic anticholinergic (moderate); α1-adrenergic blockade (moderate)"
+    },
+    "commonSideEffectsDe": [
+      "Ausgeprägte Sedierung",
+      "Mundtrockenheit, Obstipation (anticholinerg)",
+      "Orthostatische Hypotonie",
+      "Lichtempfindlichkeit (Photosensibilisierung)",
+      "Extrapyramidale Symptome (Akathisie, Frühdyskinesie — bei längerer Anwendung)"
+    ],
+    "commonSideEffectsEn": [
+      "Pronounced sedation",
+      "Dry mouth, constipation (anticholinergic)",
+      "Orthostatic hypotension",
+      "Photosensitisation",
+      "Extrapyramidal symptoms (akathisia, early dyskinesia — with longer use)"
+    ],
+    "seriousSideEffectsDe": [
+      "QTc-Verlängerung und Torsades de Pointes",
+      "Extrapyramidale Störungen",
+      "Hämatologische Störungen (Agranulozytose, sehr selten)",
+      "Gewebsnekrose bei paravenöser oder i.a. Injektion",
+      "Atemdepression (bei Kleinkindern unter 2 Jahren kontraindiziert)"
+    ],
+    "seriousSideEffectsEn": [
+      "QTc prolongation and torsades de pointes",
+      "Extrapyramidal disorders",
+      "Haematological disorders (agranulocytosis, very rare)",
+      "Tissue necrosis with paravenous or intra-arterial injection",
+      "Respiratory depression (contraindicated in children under 2 years)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "EKG / QTc-Zeit",
+        "frequency": "Vor Therapiebeginn und bei Langzeitanwendung",
+        "noteDe": "QTc-Ausgangsmessung. Kombination mit anderen QTc-verlängernden Substanzen vermeiden.",
+        "noteEn": "Baseline QTc measurement. Avoid combination with other QTc-prolonging substances."
+      },
+      {
+        "parameter": "Injektion — Verabreichungsweg",
+        "frequency": "Bei jeder parenteralen Gabe",
+        "noteDe": "I.V.-Injektion kontraindiziert (Gewebsnekrose-Risiko). Nur i.m.-Gabe oder langsame i.v.-Infusion nach Verdünnung gemäß Fachinformation.",
+        "noteEn": "I.V. bolus injection contraindicated (tissue necrosis risk). Only i.m. or slow i.v. infusion after dilution per product information."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "QTc-verlängernde Substanzen",
+        "severity": "severe",
+        "clinicalNoteDe": "Additive QTc-Verlängerung; Torsades de Pointes-Risiko.",
+        "clinicalNoteEn": "Additive QTc prolongation; torsades de pointes risk."
+      },
+      {
+        "interactsWith": "Anticholinerge Substanzen",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive anticholinerge Wirkung.",
+        "clinicalNoteEn": "Additive anticholinergic effect."
+      },
+      {
+        "interactsWith": "ZNS-Dämpfer, Alkohol, Opioide",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive Sedierung und Atemdepression.",
+        "clinicalNoteEn": "Additive sedation and respiratory depression."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Serum-Kalium, Serum-Magnesium",
+        "condition": "Hypokaliämie oder Hypomagnesiämie",
+        "warningDe": "QTc-Risiko erhöht. Elektrolyte vor Therapiebeginn korrigieren.",
+        "warningEn": "QTc risk increased. Correct electrolytes before starting therapy.",
+        "severity": "contraindicated"
+      },
+      {
+        "labParameter": "Blutbild (Differenzialblutbild)",
+        "condition": "Langzeitanwendung",
+        "warningDe": "Agranulozytose möglich (sehr selten). Bei unklarem Fieber oder Infektzeichen Blutbild kontrollieren.",
+        "warningEn": "Agranulocytosis possible (very rare). Check full blood count if unexplained fever or signs of infection.",
+        "severity": "caution"
+      }
+    ],
+    "renalDosing": "Keine formale Dosisanpassung; Vorsicht bei schwerer Niereninsuffizienz.",
+    "hepaticDosing": "Leberinsuffizienz: Dosis reduzieren; extrapyramidale Nebenwirkungen häufiger.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": true,
+    "sources": [
+      "Benkert O, Hippius H. Kompendium der Psychiatrischen Pharmakotherapie, 14. Aufl. Springer, 2023.",
+      "Fachinformation Atosil® (Aventis/Sanofi), aktueller Stand.",
+      "EMA: Promethazine — product-specific guidance."
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "suvorexant",
+    "genericName": "Suvorexant",
+    "brandNamesDACH": ["Belsomra"],
+    "atcCode": "N05CH03",
+    "substanceClass": "Orexin-Rezeptor-Antagonist (DORA)",
+    "formulations": ["Tabletten"],
+    "strengthsDACH": ["5 mg", "10 mg", "15 mg", "20 mg"],
+    "kurzinfoDe": "Dualer Orexin-Rezeptor-Antagonist (OX1R/OX2R). Hemmt das Wachheitssignal der Orexin-Neurotransmission anstatt Sedierung zu erzeugen — 'Schlaf ermöglichen statt Sedierung erzwingen'. In den USA seit 2014 zugelassen; in Deutschland (Stand 2026) nicht zugelassen, aber über internationale Apotheken zugänglich. Kein Abhängigkeitspotenzial im klassischen Sinne. Narkolepsie-ähnliche Nebenwirkungen (Kataplexie, hypnagoge Halluzinationen, Schlaflähmung) möglich.",
+    "kurzinfoEn": "Dual orexin receptor antagonist (OX1R/OX2R). Blocks the wakefulness signal of orexin neurotransmission rather than forcing sedation — 'permitting sleep rather than inducing sedation'. Approved in the US since 2014; not approved in Germany (as of 2026) but accessible via international pharmacies. No classical dependence potential. Narcolepsy-like adverse effects (cataplexy, hypnagogic hallucinations, sleep paralysis) possible.",
+    "receptorProfile": {
+      "gaba": "No GABA-A receptor activity",
+      "notes": "Dual antagonist at orexin (hypocretin) receptors OX1R and OX2R; blocks orexin-mediated arousal promotion without broad CNS depression"
+    },
+    "commonSideEffectsDe": [
+      "Residualsedierung",
+      "Kopfschmerzen",
+      "Schwindel",
+      "Parasomnien (Schlaflähmung, hypnagoge Halluzinationen)"
+    ],
+    "commonSideEffectsEn": [
+      "Residual sedation",
+      "Headache",
+      "Dizziness",
+      "Parasomnias (sleep paralysis, hypnagogic hallucinations)"
+    ],
+    "seriousSideEffectsDe": [
+      "Komplexe Schlafverhaltensweisen (Schlafwandeln — seltener als Z-Drugs)",
+      "Vorübergehende Kataplexie (Muskeltonusverlust bei Emotionen)",
+      "Keine klinisch bedeutsame Atemdepression (Vorteil gegenüber BZD/Z-Drugs)"
+    ],
+    "seriousSideEffectsEn": [
+      "Complex sleep behaviors (sleepwalking — less frequent than Z-drugs)",
+      "Transient cataplexy (loss of muscle tone with emotion)",
+      "No clinically meaningful respiratory depression (advantage over BZD/Z-drugs)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Verfügbarkeit / Zulassungsstatus DACH",
+        "frequency": "Vor Verordnung",
+        "noteDe": "In Deutschland (Stand 2026) nicht zugelassen. Einsatz nur im individuellen Heilversuch oder nach Import. Aufklärung und Dokumentation erforderlich.",
+        "noteEn": "Not approved in Germany (as of 2026). Use only in individual compassionate use or after import. Informed consent and documentation required."
+      },
+      {
+        "parameter": "Narkolepsie-ähnliche Symptome",
+        "frequency": "Bei Therapiebeginn",
+        "noteDe": "Auf kataplektische Episoden, Schlaflähmung und hypnagoge Halluzinationen achten.",
+        "noteEn": "Monitor for cataplectic episodes, sleep paralysis and hypnagogic hallucinations."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Starke CYP3A4-Inhibitoren (Ketoconazol, Clarithromycin, Ritonavir)",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Stark erhöhte Suvorexant-Exposition. Kombination kontraindiziert.",
+        "clinicalNoteEn": "Greatly increased suvorexant exposure. Combination contraindicated."
+      },
+      {
+        "interactsWith": "Alkohol, ZNS-Dämpfer",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive Sedierung. Kein Alkohol gleichzeitig.",
+        "clinicalNoteEn": "Additive sedation. No alcohol concurrently."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Leberenzyme",
+        "condition": "Schwere Leberinsuffizienz",
+        "warningDe": "Schwere Leberinsuffizienz: Suvorexant nicht empfohlen.",
+        "warningEn": "Severe hepatic insufficiency: suvorexant not recommended.",
+        "severity": "contraindicated"
+      }
+    ],
+    "renalDosing": "Keine Dosisanpassung erforderlich.",
+    "hepaticDosing": "Schwere Leberinsuffizienz: nicht empfohlen.",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "sources": [
+      "FDA: Belsomra (suvorexant) prescribing information, 2014.",
+      "Michelson D et al. Safety and efficacy of suvorexant during 1-year treatment of insomnia with subsequent abrupt treatment discontinuation. J Clin Sleep Med 2014.",
+      "Benkert O, Hippius H. Kompendium der Psychiatrischen Pharmakotherapie, 14. Aufl. Springer, 2023."
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "lemborexant",
+    "genericName": "Lemborexant",
+    "brandNamesDACH": ["Dayvigo"],
+    "atcCode": "N05CH04",
+    "substanceClass": "Orexin-Rezeptor-Antagonist (DORA)",
+    "formulations": ["Tabletten"],
+    "strengthsDACH": ["5 mg", "10 mg"],
+    "kurzinfoDe": "Dualer Orexin-Rezeptor-Antagonist (OX1R/OX2R), zweite Generation nach Suvorexant. In Japan und den USA zugelassen; in der EU/Deutschland (Stand 2026) nicht zugelassen. Vergleichbares Wirkprinzip wie Suvorexant — fördert physiologischen Schlaf ohne GABAerge Breitbandsedierung. Verbessertes pharmakokinetisches Profil (t½ 17–19 h) mit Wirkung auf Einschlaf- und Durchschlafstörungen.",
+    "kurzinfoEn": "Dual orexin receptor antagonist (OX1R/OX2R), second generation after suvorexant. Approved in Japan and the US; not approved in the EU/Germany (as of 2026). Comparable mechanism to suvorexant — promotes physiological sleep without broad GABAergic sedation. Improved pharmacokinetic profile (t½ 17–19 h) with efficacy for both sleep-onset and sleep-maintenance insomnia.",
+    "receptorProfile": {
+      "gaba": "No GABA-A receptor activity",
+      "notes": "Dual OX1R/OX2R antagonist; slightly higher OX2R selectivity than suvorexant; t½ 17–19 h"
+    },
+    "commonSideEffectsDe": [
+      "Residualsedierung",
+      "Somnolenz",
+      "Kopfschmerzen",
+      "Schlafparalyse, hypnagoge Halluzinationen (selten)"
+    ],
+    "commonSideEffectsEn": [
+      "Residual sedation",
+      "Somnolence",
+      "Headache",
+      "Sleep paralysis, hypnagogic hallucinations (rare)"
+    ],
+    "seriousSideEffectsDe": [
+      "Keine klinisch bedeutsame Atemdepression",
+      "Komplexe Schlafverhaltensweisen (sehr selten)"
+    ],
+    "seriousSideEffectsEn": [
+      "No clinically meaningful respiratory depression",
+      "Complex sleep behaviors (very rare)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Zulassungsstatus DACH",
+        "frequency": "Vor Verordnung",
+        "noteDe": "In Deutschland nicht zugelassen (Stand 2026). Nur individueller Heilversuch nach Import mit entsprechender Aufklärung.",
+        "noteEn": "Not approved in Germany (as of 2026). Only individual compassionate use after import with appropriate informed consent."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "CYP3A4-Inhibitoren",
+        "severity": "moderate",
+        "clinicalNoteDe": "Erhöhte Lemborexant-Exposition; Dosis ggf. anpassen.",
+        "clinicalNoteEn": "Increased lemborexant exposure; adjust dose if needed."
+      },
+      {
+        "interactsWith": "Alkohol, ZNS-Dämpfer",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive Sedierung.",
+        "clinicalNoteEn": "Additive sedation."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Leberenzyme",
+        "condition": "Schwere Leberinsuffizienz",
+        "warningDe": "Nicht empfohlen bei schwerer Leberinsuffizienz.",
+        "warningEn": "Not recommended in severe hepatic insufficiency.",
+        "severity": "contraindicated"
+      }
+    ],
+    "renalDosing": "Keine Dosisanpassung.",
+    "hepaticDosing": "Schwere Leberinsuffizienz: nicht empfohlen.",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "sources": [
+      "FDA: Dayvigo (lemborexant) prescribing information, 2019.",
+      "Kuno T et al. Efficacy and safety of lemborexant for the treatment of insomnia. Sleep Med Rev 2020.",
+      "Benkert O, Hippius H. Kompendium der Psychiatrischen Pharmakotherapie, 14. Aufl. Springer, 2023."
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "melatonin-circadin",
+    "genericName": "Melatonin",
+    "brandNamesDACH": ["Circadin", "Slenyto (Kinder)", "Melatonin OTC (diverse, 0,5–3 mg)"],
+    "atcCode": "N05CH01",
+    "substanceClass": "Melatonin-Agonist — Chronobiotikum",
+    "formulations": ["Retardtabletten (Circadin 2 mg)", "Tabletten (OTC verschiedene Stärken)"],
+    "strengthsDACH": ["0,5 mg", "1 mg", "3 mg (OTC)", "2 mg (Circadin retard, verschreibungspflichtig)"],
+    "kurzinfoDe": "Körpereigenes Neurohormon des Corpus pineale. Circadin (retardiertes Melatonin 2 mg, Rx) ist in Deutschland zugelassen für Monotherapie der primären Insomnie bei Patienten ≥55 Jahre (Kurzzeitbehandlung bis 13 Wochen). OTC-Produkte sind in Deutschland nicht als Arzneimittel zugelassen (Nahrungsergänzungsmittel bis 1 mg). Kein Abhängigkeitspotenzial. Wirkstärke moderat; besonders wirksam bei zirkadianen Störungen.",
+    "kurzinfoEn": "Endogenous neurohormone from the pineal gland. Circadin (prolonged-release melatonin 2 mg, Rx) is approved in Germany for monotherapy of primary insomnia in patients ≥55 years (short-term up to 13 weeks). OTC products are not approved as medicines in Germany (food supplements up to 1 mg). No dependence potential. Moderate efficacy; particularly effective in circadian rhythm disorders.",
+    "receptorProfile": {
+      "gaba": "No GABA-A activity",
+      "notes": "MT1 and MT2 melatonin receptor agonist; modulates circadian rhythm and sleep phase; chronobiotic rather than hypnotic"
+    },
+    "commonSideEffectsDe": [
+      "Schläfrigkeit (tags erwünscht, morgends unerwünscht)",
+      "Kopfschmerzen",
+      "Schwindel",
+      "Übelkeit",
+      "Reizbarkeit"
+    ],
+    "commonSideEffectsEn": [
+      "Drowsiness (desired at night, unwanted in morning)",
+      "Headache",
+      "Dizziness",
+      "Nausea",
+      "Irritability"
+    ],
+    "seriousSideEffectsDe": [
+      "Kein Abhängigkeitspotenzial",
+      "Immunmodulatorische Wirkungen (klinisch noch nicht vollständig verstanden)",
+      "Verschlechterung depressiver Episoden möglich (selten)"
+    ],
+    "seriousSideEffectsEn": [
+      "No dependence potential",
+      "Immunomodulatory effects (not fully understood clinically)",
+      "Worsening of depressive episodes possible (rare)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Einnahmezeit (chronobiotische Wirkung)",
+        "frequency": "Bei Therapiebeginn",
+        "noteDe": "Circadin 1–2 h vor Schlafzeit einnehmen. Lichtexposition abends reduzieren (Blaulicht). Falsche Einnahmezeit kann Wirkung aufheben.",
+        "noteEn": "Take Circadin 1–2 h before bedtime. Reduce evening light exposure (blue light). Incorrect timing may abolish efficacy."
+      },
+      {
+        "parameter": "Zulassung / OTC-Status",
+        "frequency": "Bei Empfehlung",
+        "noteDe": "Verschreibungspflichtiges Circadin 2 mg nur für ≥55 Jahre. OTC-Melatonin (≤1 mg) ist Nahrungsergänzungsmittel ohne Arzneimittelzulassung in Deutschland.",
+        "noteEn": "Prescription Circadin 2 mg only for ≥55 years. OTC melatonin (≤1 mg) is a food supplement without medicinal product authorisation in Germany."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Fluvoxamin (CYP1A2-Inhibitor)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Fluvoxamin hemmt CYP1A2 stark → deutlich erhöhte Melatonin-Plasmaspiegel. Kombination vermeiden.",
+        "clinicalNoteEn": "Fluvoxamine is a potent CYP1A2 inhibitor → markedly elevated melatonin plasma levels. Avoid combination."
+      },
+      {
+        "interactsWith": "Zigarettenrauch (CYP1A2-Induktion)",
+        "severity": "mild",
+        "clinicalNoteDe": "Rauchen induziert CYP1A2 → reduzierte Melatonin-Wirksamkeit.",
+        "clinicalNoteEn": "Smoking induces CYP1A2 → reduced melatonin efficacy."
+      },
+      {
+        "interactsWith": "Antikoagulantien (Warfarin)",
+        "severity": "mild",
+        "clinicalNoteDe": "Vereinzelte Fallberichte über INR-Erhöhung. INR-Monitoring bei Kombination.",
+        "clinicalNoteEn": "Isolated case reports of INR elevation. Monitor INR in combination."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Leberenzyme",
+        "condition": "Leberinsuffizienz",
+        "warningDe": "Circadin bei Leberinsuffizienz nicht empfohlen (CYP1A2-Metabolismus).",
+        "warningEn": "Circadin not recommended in hepatic insufficiency (CYP1A2 metabolism).",
+        "severity": "caution"
+      }
+    ],
+    "renalDosing": "Keine formale Dosisanpassung (keine Studiendaten).",
+    "hepaticDosing": "Leberinsuffizienz: nicht empfohlen (Circadin).",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "sources": [
+      "Fachinformation Circadin® (Neurim Pharmaceuticals), aktueller Stand.",
+      "AWMF S3-Leitlinie Nicht-erholsamer Schlaf/Schlafstörungen, 2017.",
+      "Benkert O, Hippius H. Kompendium der Psychiatrischen Pharmakotherapie, 14. Aufl. Springer, 2023.",
+      "Brzezinski A et al. Effects of exogenous melatonin on sleep. Sleep Med Rev 2005."
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "ramelteon",
+    "genericName": "Ramelteon",
+    "brandNamesDACH": ["Rozerem"],
+    "atcCode": "N05CH02",
+    "substanceClass": "Melatonin-Rezeptor-Agonist (MT1/MT2-selektiv)",
+    "formulations": ["Tabletten"],
+    "strengthsDACH": ["8 mg"],
+    "kurzinfoDe": "Hochselektiver MT1/MT2-Rezeptor-Agonist mit deutlich höherer Rezeptoraffinität als endogenes Melatonin. In den USA und Japan zugelassen; in Deutschland (Stand 2026) nicht zugelassen. Keine GABAerge Wirkung, kein Abhängigkeitspotenzial, kein Effekt auf Atemdepression. Primär wirksam bei Einschlafstörungen und zirkadianen Rhythmusstörungen. T½ 1–2,6 h, aktiver Metabolit M-II t½ ~2–5 h.",
+    "kurzinfoEn": "Highly selective MT1/MT2 receptor agonist with considerably higher receptor affinity than endogenous melatonin. Approved in the US and Japan; not approved in Germany (as of 2026). No GABAergic activity, no dependence potential, no effect on respiratory depression. Primarily effective for sleep-onset insomnia and circadian rhythm disorders. t½ 1–2.6 h, active metabolite M-II t½ ~2–5 h.",
+    "receptorProfile": {
+      "gaba": "No GABA-A activity",
+      "notes": "MT1 and MT2 receptor agonist with ~6× higher affinity than melatonin for MT1 and ~3× for MT2; active metabolite M-II also pharmacologically active"
+    },
+    "commonSideEffectsDe": [
+      "Schläfrigkeit",
+      "Schwindel",
+      "Müdigkeit",
+      "Übelkeit"
+    ],
+    "commonSideEffectsEn": [
+      "Drowsiness",
+      "Dizziness",
+      "Fatigue",
+      "Nausea"
+    ],
+    "seriousSideEffectsDe": [
+      "Prolaktinerhöhung und Testosteronabfall (durch Hormonachsen-Interaktion — klinisch relevant bei Langzeittherapie)",
+      "Kein Abhängigkeitspotenzial"
+    ],
+    "seriousSideEffectsEn": [
+      "Prolactin elevation and testosterone reduction (via hormonal axis interaction — clinically relevant with long-term therapy)",
+      "No dependence potential"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Zulassungsstatus DACH",
+        "frequency": "Vor Verordnung",
+        "noteDe": "In Deutschland nicht zugelassen (Stand 2026). Individuelle Therapie nach Import möglich.",
+        "noteEn": "Not approved in Germany (as of 2026). Individual therapy after import possible."
+      },
+      {
+        "parameter": "Hormonstatus bei Langzeitanwendung",
+        "frequency": "Nach 6 Monaten",
+        "noteDe": "Bei Langzeitanwendung: Prolaktin und Gonadotropine/Testosteron überprüfen.",
+        "noteEn": "With long-term use: check prolactin and gonadotrophins/testosterone."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Fluvoxamin (CYP1A2-Inhibitor)",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Stark erhöhte Ramelteon-AUC (>190-fach in Studien). Kombination kontraindiziert.",
+        "clinicalNoteEn": "Greatly increased ramelteon AUC (>190-fold in studies). Combination contraindicated."
+      },
+      {
+        "interactsWith": "Rifampicin (CYP-Induktor)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Stark reduzierte Ramelteon-Wirksamkeit.",
+        "clinicalNoteEn": "Markedly reduced ramelteon efficacy."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Leberenzyme",
+        "condition": "Schwere Leberinsuffizienz",
+        "warningDe": "Stark erhöhte Exposition. Kontraindiziert bei schwerer Leberinsuffizienz.",
+        "warningEn": "Greatly increased exposure. Contraindicated in severe hepatic insufficiency.",
+        "severity": "contraindicated"
+      }
+    ],
+    "renalDosing": "Keine Dosisanpassung.",
+    "hepaticDosing": "Schwere Leberinsuffizienz: kontraindiziert.",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "sources": [
+      "FDA: Rozerem (ramelteon) prescribing information.",
+      "Benkert O, Hippius H. Kompendium der Psychiatrischen Pharmakotherapie, 14. Aufl. Springer, 2023.",
+      "Roth T et al. Efficacy of ramelteon for the treatment of chronic insomnia. Sleep 2006."
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  }
+]

@@ -1,6 +1,7 @@
 import { loadDiagnosen } from '../diagnosenArchive'
 import { loadNotionDocumentSnapshot } from '../notionDocumentActions'
 import { loadClinicalImprintIndex } from '../clinicalImprint'
+import { loadMedicationPlanState } from '../medication/storage'
 import { buildIsdmAnalysis, type IsdmBuildInput } from './buildAnalysis'
 import { loadIsdmInput } from './inputStorage'
 import { saveIsdmAnalysis } from './storage'
@@ -41,6 +42,7 @@ export function collectIsdmBuildInput(
     isdmInput: loadIsdmInput(caseId) ?? undefined,
     diagnoses: loadDiagnosen(caseId),
     verlaufText: collectVerlaufText(caseId),
+    medicationPlanState: loadMedicationPlanState(caseId) ?? undefined,
   }
 }
 
@@ -82,13 +84,4 @@ export function scheduleIsdmRebuild(caseId: string, reason: IsdmRebuildReason = 
       flushIsdmRebuild(id)
     }
   }, 1200)
-}
-
-export function rebuildIsdmNow(
-  caseId: string,
-  checklistSelections: Record<string, Record<string, boolean>> = {},
-): void {
-  const analysis = buildIsdmAnalysis(collectIsdmBuildInput(caseId, checklistSelections))
-  saveIsdmAnalysis(analysis, caseId)
-  attachDevDebug(caseId, analysis)
 }

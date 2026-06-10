@@ -1,0 +1,1557 @@
+[
+  {
+    "id": "lithium",
+    "genericName": "Lithium",
+    "brandNamesDACH": [
+      "Quilonum retard",
+      "Lithiofor",
+      "Lithium-Aspartat Oligoplex",
+      "Neurolithium"
+    ],
+    "atcCode": "N05AN01",
+    "substanceClass": "Mood Stabilizer – Lithiumsalze",
+    "formulations": [
+      "Tabletten (Lithiumcarbonat)",
+      "Retardtabletten (Lithiumcarbonat)",
+      "Lösung (Lithiumcitrat)"
+    ],
+    "strengthsDACH": [
+      "Lithiumcarbonat 300 mg",
+      "Lithiumcarbonat 400 mg retard (Quilonum)",
+      "Lithiumcitrat 8 mmol/5 ml Lösung"
+    ],
+    "kurzinfoDe": "Lithium ist der Goldstandard unter den Stimmungsstabilisatoren mit nachgewiesener antimanischer, antidepressiver und antisuizidaler Wirksamkeit bei bipolaren Störungen. Wirkmechanismus nicht vollständig geklärt; moduliert Inositol-Signalweg, hemmt GSK-3β und beeinflusst noradrenerge/serotonerge Neurotransmission. Schmal-therapeutischer Index — regelmäßiges Spiegelmonitoring obligat. Dosierung anhand des Serumspiegels titrieren (therapeutisch 0,6–1,0 mmol/L Erhaltungstherapie; 0,8–1,2 mmol/L Akutphase). Nierenfunktion, Schilddrüse und kardiale Funktion vor und regelmäßig unter Therapie kontrollieren.",
+    "kurzinfoEn": "Lithium is the gold standard mood stabilizer with proven antimanic, antidepressant, and antisuicidal efficacy in bipolar disorder. Mechanism incompletely understood; modulates inositol signalling, inhibits GSK-3β, and alters noradrenergic/serotonergic neurotransmission. Narrow therapeutic index — mandatory regular serum level monitoring. Dose titration guided by serum levels (maintenance target 0.6–1.0 mmol/L; acute phase 0.8–1.2 mmol/L). Renal function, thyroid, and cardiac status must be assessed before and during treatment.",
+    "receptorProfile": {
+      "notes": "Kein direkter Rezeptoragonismus/–antagonismus. Hemmung der Inositolmonophosphatase (IMPase) → verminderte Phosphoinositid-Signalgebung; Hemmung der Glykogensynthasekinase-3β (GSK-3β); Modulation von Adenylatzyklase und spannungsgesteuerten Natriumkanälen; neuroprotektive/neurotrophe Effekte (BDNF-Hochregulation)."
+    },
+    "commonSideEffectsDe": [
+      "Feinschlägiger Tremor der Hände (häufig, dosisabhängig)",
+      "Polydipsie und Polyurie (nephrogener Diabetes insipidus)",
+      "Gewichtszunahme",
+      "Hypothyreose / Struma",
+      "Kognitive Verlangsamung, Gedächtnisstörungen",
+      "Übelkeit, Diarrhoe (besonders initial)",
+      "Akne, Psoriasis-Exazerbation",
+      "Ödeme",
+      "Leukozytose (gutartig)"
+    ],
+    "commonSideEffectsEn": [
+      "Fine hand tremor (common, dose-dependent)",
+      "Polydipsia and polyuria (nephrogenic diabetes insipidus)",
+      "Weight gain",
+      "Hypothyroidism / goitre",
+      "Cognitive slowing, memory complaints",
+      "Nausea, diarrhoea (especially at initiation)",
+      "Acne, psoriasis exacerbation",
+      "Peripheral oedema",
+      "Benign leukocytosis"
+    ],
+    "seriousSideEffectsDe": [
+      "Lithiumintoxikation: grob-schlägiger Tremor, Ataxie, Dysarthrie, Konfusion, Erbrechen — bei Spiegel >1,5 mmol/L",
+      "Schwere Intoxikation: Krampfanfälle, Koma, Herzrhythmusstörungen (>2,0 mmol/L → medizinischer Notfall)",
+      "Chronische tubulointerstitielle Nephropathie / terminale Niereninsuffizienz bei Langzeittherapie",
+      "Teratogenität: Ebstein-Anomalie und andere Herzfehlbildungen bei Exposition im 1. Trimenon (relatives Risiko erhöht, absolutes Risiko klein)",
+      "Sinusknotenerkrankung / AV-Block (selten)",
+      "Serotoninsyndrom (in Kombination mit serotonergen Substanzen)"
+    ],
+    "seriousSideEffectsEn": [
+      "Lithium toxicity: coarse tremor, ataxia, dysarthria, confusion, vomiting — at levels >1.5 mmol/L",
+      "Severe toxicity: seizures, coma, cardiac arrhythmias (>2.0 mmol/L → medical emergency)",
+      "Chronic tubulointerstitial nephropathy / end-stage renal disease with long-term use",
+      "Teratogenicity: Ebstein anomaly and other cardiac malformations with 1st trimester exposure (relative risk elevated; absolute risk small)",
+      "Sinus node disease / AV block (rare)",
+      "Serotonin syndrome (in combination with serotonergic agents)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Lithiumserumspiegel",
+        "frequency": "Zu Beginn wöchentlich bis Steady-state; dann alle 3 Monate (stabil) oder bei klinischen Änderungen",
+        "warningThreshold": ">1.5 mmol/L Toxizitätsverdacht; >2.0 mmol/L Notfall",
+        "noteDe": "Blutabnahme 12 h nach letzter Einnahme (Talspiegel). Therapeutischer Bereich: 0,6–1,0 mmol/L (Erhaltung), 0,8–1,2 mmol/L (Akutmanie). Bei Spiegel >1,5 mmol/L sofort klinische Toxizitätszeichen prüfen.",
+        "noteEn": "Sample 12 h after last dose (trough level). Therapeutic range: 0.6–1.0 mmol/L (maintenance), 0.8–1.2 mmol/L (acute mania). Levels >1.5 mmol/L — assess for toxicity signs immediately."
+      },
+      {
+        "parameter": "eGFR / Kreatinin",
+        "frequency": "Vor Beginn, nach 3 und 6 Monaten, dann alle 6 Monate",
+        "warningThreshold": "eGFR <60 ml/min → Dosisreduktion; eGFR <30 → relative Kontraindikation",
+        "noteDe": "Lithium wird ausschließlich renal eliminiert. Verschlechterung der Nierenfunktion erhöht die Lithiumtoxizitätsgefahr. Bei eGFR <60 ml/min Dosis reduzieren und Spiegel engmaschiger überwachen.",
+        "noteEn": "Lithium is exclusively renally eliminated. Declining renal function dramatically increases toxicity risk. Reduce dose at eGFR <60 ml/min and increase monitoring frequency."
+      },
+      {
+        "parameter": "TSH",
+        "frequency": "Vor Beginn, nach 6 Monaten, dann jährlich",
+        "warningThreshold": "TSH >4 mU/L klinisch prüfen; TSH >10 mU/L → L-Thyroxin erwägen",
+        "noteDe": "Lithium hemmt die Thyreoidsynthese und den Jodtransport. Hypothyreose bei ~20–40% unter Langzeittherapie. Struma möglich.",
+        "noteEn": "Lithium inhibits thyroid synthesis and iodine uptake. Hypothyroidism occurs in ~20–40% of long-term users. Goitre possible."
+      },
+      {
+        "parameter": "Serumkalzium",
+        "frequency": "Vor Beginn, dann alle 6–12 Monate",
+        "warningThreshold": "Kalzium >2,65 mmol/L → Hyperparathyreoidismus ausschließen",
+        "noteDe": "Lithium kann zu Hyperkalzämie durch Hyperparathyreoidismus führen. Hypokalzämie erhöht umgekehrt die Lithiumtoxizitätsgefahr.",
+        "noteEn": "Lithium can cause hypercalcaemia via hyperparathyroidism. Hypocalcaemia conversely increases lithium toxicity risk."
+      },
+      {
+        "parameter": "Blutbild (CBC)",
+        "frequency": "Vor Beginn, nach 6 Monaten, dann jährlich",
+        "warningThreshold": "Leukozyten >12.000/µl häufig (benigne); Thrombozytopenie selten",
+        "noteDe": "Lithium induziert häufig eine benigne Leukozytose. Thrombozytopenie ist selten. Vor allem zu Beginn kontrollieren.",
+        "noteEn": "Lithium commonly induces benign leukocytosis. Thrombocytopenia is rare. Check especially at baseline."
+      },
+      {
+        "parameter": "EKG",
+        "frequency": "Vor Beginn, bei Herzerkrankung oder Alter >60 J. jährlich",
+        "warningThreshold": "AV-Blockierung, Sinusknotendysfunktion",
+        "noteDe": "Lithium kann T-Wellen-Veränderungen und Sinusknotendysfunktion verursachen. Kardiovaskuläre Vorerkrankungen erhöhen das Risiko.",
+        "noteEn": "Lithium can cause T-wave changes and sinus node dysfunction. Cardiovascular comorbidities increase risk."
+      },
+      {
+        "parameter": "Körpergewicht / BMI",
+        "frequency": "Alle 3–6 Monate",
+        "warningThreshold": "Gewichtszunahme >5 kg",
+        "noteDe": "Gewichtszunahme ist häufig und kann therapielimitierend sein. Ernährungsberatung und regelmäßige Kontrolle empfohlen.",
+        "noteEn": "Weight gain is common and may limit therapy adherence. Dietary counselling and regular monitoring recommended."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "NSAIDs (Ibuprofen, Diclofenac, Naproxen)",
+        "severity": "severe",
+        "clinicalNoteDe": "NSAIDs hemmen renale Prostaglandinsynthese → reduzierte renale Lithiumausscheidung → Spiegelanstieg bis zu 50%. Lithiumspiegel nach Beginn oder Dosis­erhöhung eines NSAID kurzfristig kontrollieren. Paracetamol als Alternative bevorzugen.",
+        "clinicalNoteEn": "NSAIDs inhibit renal prostaglandin synthesis → reduced renal lithium excretion → lithium levels may rise up to 50%. Check lithium level shortly after starting or increasing NSAID. Prefer paracetamol as alternative."
+      },
+      {
+        "interactsWith": "ACE-Hemmer / AT1-Antagonisten (Ramipril, Enalapril, Losartan)",
+        "severity": "severe",
+        "clinicalNoteDe": "RAAS-Blockade reduziert renale Perfusion und Natriuriumretention → Lithiumspiegel steigen erheblich an. Kombination möglich, aber engmaschiges Monitoring (Spiegel, Niere) erforderlich, besonders bei Therapiebeginn und Dosisanpassung.",
+        "clinicalNoteEn": "RAAS blockade reduces renal perfusion and promotes sodium/lithium retention → significantly elevated lithium levels. Combination possible but requires close monitoring (levels, renal function), especially at treatment initiation and dose changes."
+      },
+      {
+        "interactsWith": "Thiaziddiuretika (Hydrochlorothiazid, Chlortalidon)",
+        "severity": "severe",
+        "clinicalNoteDe": "Thiazide induzieren Natriumverlust → kompensatorisch erhöhte renale Lithiumreabsorption → Spiegelanstieg 30–60%. Bei Kombination Dosis reduzieren und Spiegel engmaschig kontrollieren. Alternativ Schleifendiuretika (weniger Spiegelerhöhung).",
+        "clinicalNoteEn": "Thiazides induce sodium depletion → compensatory increase in renal lithium reabsorption → lithium levels rise 30–60%. Reduce lithium dose and monitor closely if combined. Loop diuretics have less impact on lithium levels."
+      },
+      {
+        "interactsWith": "SSRIs / SNRIs (z.B. Fluoxetin, Venlafaxin)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Erhöhtes Risiko für Serotoninsyndrom. Klinisch häufig kombiniert (augmentativ bei bipolarer Depression); Wachheit gegenüber serotonergen Symptomen (Agitation, Hyperthermie, Myoklonus).",
+        "clinicalNoteEn": "Increased risk of serotonin syndrome. Clinically often combined (augmentation in bipolar depression); remain alert for serotonergic symptoms (agitation, hyperthermia, myoclonus)."
+      },
+      {
+        "interactsWith": "Haloperidol / Typische Antipsychotika",
+        "severity": "moderate",
+        "clinicalNoteDe": "Seltene Berichte über irreversible neurotoxische Schäden bei Kombination mit hohen Lithiumspiegeln. Klinisch i.d.R. sicher; bei hohen Spiegeln wachsam sein.",
+        "clinicalNoteEn": "Rare reports of irreversible neurotoxic damage at high lithium levels combined with haloperidol. Generally safe clinically; remain vigilant at high levels."
+      },
+      {
+        "interactsWith": "Metronidazol",
+        "severity": "moderate",
+        "clinicalNoteDe": "Metronidazol kann die renale Lithiumclearance reduzieren → Spiegelanstieg. Bei Kurzzeit-Antibiotikatherapie Spiegel kontrollieren.",
+        "clinicalNoteEn": "Metronidazole may reduce renal lithium clearance → elevated levels. Monitor lithium level during and after short-course antibiotic treatment."
+      },
+      {
+        "interactsWith": "Carbamazepin",
+        "severity": "moderate",
+        "clinicalNoteDe": "Erhöhtes Risiko für neurotoxische Nebenwirkungen (Ataxie, Verwirrtheit) auch bei therapeutischen Spiegeln beider Substanzen. Kombination klinisch möglich, aber Vorsicht und engmaschige Beobachtung.",
+        "clinicalNoteEn": "Increased risk of neurotoxic effects (ataxia, confusion) even at therapeutic levels of both agents. Combination clinically feasible but requires caution and close observation."
+      },
+      {
+        "interactsWith": "Theophyllin",
+        "severity": "moderate",
+        "clinicalNoteDe": "Theophyllin erhöht renale Lithiumclearance → niedrigere Lithiumspiegel. Bei Dosisänderung von Theophyllin Lithiumspiegel kontrollieren.",
+        "clinicalNoteEn": "Theophylline increases renal lithium clearance → lower lithium levels. Check lithium levels if theophylline dose changes."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "eGFR",
+        "condition": "eGFR 30–60 ml/min",
+        "warningDe": "Lithiumdosis reduzieren, Spiegelmonitoring auf 4–6 wöchentlich intensivieren. Nephrologen hinzuziehen.",
+        "warningEn": "Reduce lithium dose; intensify level monitoring to every 4–6 weeks. Involve nephrology.",
+        "severity": "reduce_dose"
+      },
+      {
+        "labParameter": "eGFR",
+        "condition": "eGFR <30 ml/min",
+        "warningDe": "Lithium ist bei schwerer Niereninsuffizienz (eGFR <30) in den meisten Leitlinien kontraindiziert. Nutzen-Risiko-Abwägung im Einzelfall mit nephrologischer Expertise.",
+        "warningEn": "Lithium is contraindicated with severe renal impairment (eGFR <30) per most guidelines. Individual benefit-risk assessment with nephrological expertise required.",
+        "severity": "contraindicated"
+      },
+      {
+        "labParameter": "Natriumserumspiegel",
+        "condition": "Natrium <135 mmol/L (Hyponatriämie)",
+        "warningDe": "Natriumdepletion durch Dehydratation, Diät, Diarrhoe oder Diuretika erhöht die tubuläre Lithiumreabsorption → Toxizitätsrisiko. Ursache klären, Lithiumspiegel sofort kontrollieren.",
+        "warningEn": "Sodium depletion via dehydration, diet, diarrhoea, or diuretics increases tubular lithium reabsorption → toxicity risk. Identify cause and check lithium level immediately.",
+        "severity": "caution"
+      },
+      {
+        "labParameter": "Serumkalzium",
+        "condition": "Kalzium >2,65 mmol/L",
+        "warningDe": "Hyperkalzämie kann auf lithiuminduzierten Hyperparathyreoidismus hinweisen. PTH bestimmen, ggf. endokrinologische Mitbeurteilung.",
+        "warningEn": "Hypercalcaemia may indicate lithium-induced hyperparathyroidism. Measure PTH; consider endocrine referral.",
+        "severity": "caution"
+      },
+      {
+        "labParameter": "TSH",
+        "condition": "TSH >10 mU/L",
+        "warningDe": "Manifeste Hypothyreose wahrscheinlich. L-Thyroxin-Substitution einleiten; Lithium muss nicht abgesetzt werden.",
+        "warningEn": "Overt hypothyroidism likely. Initiate L-thyroxine replacement; lithium discontinuation usually not required.",
+        "severity": "reduce_dose"
+      },
+      {
+        "labParameter": "Lithiumserumspiegel",
+        "condition": ">1.5 mmol/L mit klinischen Zeichen",
+        "warningDe": "Toxizitätsverdacht: grober Tremor, Ataxie, Dysarthrie, Konfusion, Erbrechen → Lithium pausieren, Hydration, sofortige Klinikvorstellung. Bei >2,0 mmol/L Hämodialyse erwägen.",
+        "warningEn": "Suspected toxicity: coarse tremor, ataxia, dysarthria, confusion, vomiting → withhold lithium, hydrate, urgent hospital admission. Haemodialysis at >2.0 mmol/L.",
+        "severity": "contraindicated"
+      }
+    ],
+    "renalDosing": "Leichte Einschränkung (eGFR 60–90): Standarddosierung mit engem Monitoring. Moderate Einschränkung (eGFR 30–60): Dosisreduktion 25–50%, Spiegelkontrolle alle 4 Wochen. Schwere Einschränkung (eGFR <30): Kontraindikation nach den meisten Leitlinien; Einzelfallentscheidung mit nephrologischer Expertise.",
+    "hepaticDosing": "Lithium wird nicht hepatisch metabolisiert. Keine Dosisanpassung bei Leberinsuffizienz erforderlich.",
+    "tabletSplittable": false,
+    "liquidFormAvailable": true,
+    "sources": [
+      "DGPPN S3-Leitlinie Bipolare Störungen 2019",
+      "Goodwin & Malhi, Lithium in Bipolar Disorder (NEJM 2007)",
+      "Fachinformation Quilonum retard (aktuelle Fassung)",
+      "Leucht S et al., World Psychiatry 2021",
+      "Amdisen A, Lithium levels in clinical practice, 1975",
+      "NICE Clinical Guideline CG185, Bipolar disorder (2014, updated 2020)",
+      "Bschor T, Lithium in der Psychiatrie, Nervenarzt 2014"
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "valproat",
+    "genericName": "Valproat (Valproinsäure / Valproat-Natrium)",
+    "brandNamesDACH": [
+      "Orfiril",
+      "Orfiril long",
+      "Depakine",
+      "Valproat-neuraxpharm",
+      "Ergenyl",
+      "Ergenyl chrono"
+    ],
+    "atcCode": "N03AG01",
+    "substanceClass": "Mood Stabilizer / Antikonvulsivum – Fettsäurederivat",
+    "formulations": [
+      "Tabletten (Valproinsäure)",
+      "Retardtabletten / Chrono-Tabletten",
+      "Magensaftresistente Tabletten",
+      "Lösung / Saft",
+      "i.v. Infusionslösung"
+    ],
+    "strengthsDACH": [
+      "Valproinsäure 150 mg, 300 mg, 500 mg",
+      "Valproat-Natrium 300 mg, 500 mg, 1000 mg retard",
+      "Lösung 300 mg/3 ml",
+      "Injektionslösung 400 mg/4 ml (i.v.)"
+    ],
+    "kurzinfoDe": "Valproat ist ein breit eingesetzter Stimmungsstabilisator und Antikonvulsivum mit Wirksamkeit bei akuter Manie, Epilepsie und Migräneprophylaxe. Wirkmechanismus: Hemmung spannungsgesteuerter Natriumkanäle, Erhöhung der GABA-Verfügbarkeit, Hemmung von Histondeacetylasen. Schwerwiegende Teratogenität (Neuralrohrdefekte, kognitive Beeinträchtigungen) — besonderes Risikomanagement für Frauen im gebärfähigen Alter (PREVENT-Programm / Valproat-Schwangerschaftsverhütungsprogramm). Hepatotoxizität und Gerinnungsstörungen möglich; regelmäßiges Labormonitoring erforderlich.",
+    "kurzinfoEn": "Valproate is a widely used mood stabiliser and anticonvulsant with efficacy in acute mania, epilepsy, and migraine prophylaxis. Mechanism: inhibition of voltage-gated sodium channels, increased GABA availability, histone deacetylase inhibition. Severe teratogenicity (neural tube defects, cognitive impairments) — mandatory risk management programme for women of childbearing potential (PREVENT programme). Hepatotoxicity and coagulation disorders possible; regular laboratory monitoring required.",
+    "receptorProfile": {
+      "sodiumChannel": "Hemmung spannungsgesteuerter Natriumkanäle (repetitive Entladungen reduziert)",
+      "gaba": "Erhöhung der synaptischen GABA-Konzentration durch Hemmung der GABA-Transaminase und -Decarboxylase",
+      "notes": "Hemmung von Histondeacetylasen (HDAC) → epigenetische Wirkungen; mögliche neuroprotektive Effekte."
+    },
+    "commonSideEffectsDe": [
+      "Übelkeit, Erbrechen, Dyspepsie (besonders initial; Retardform verträglicher)",
+      "Tremor (feinschlägig, dosisabhängig)",
+      "Gewichtszunahme",
+      "Haarausfall / Alopezie (reversibel)",
+      "Sedierung, Müdigkeit",
+      "Thrombozytopenie (dosisabhängig)",
+      "Transaminasenanstieg (meist passager)"
+    ],
+    "commonSideEffectsEn": [
+      "Nausea, vomiting, dyspepsia (especially at initiation; extended-release better tolerated)",
+      "Tremor (fine, dose-dependent)",
+      "Weight gain",
+      "Hair loss / alopecia (reversible)",
+      "Sedation, fatigue",
+      "Thrombocytopaenia (dose-dependent)",
+      "Transaminase elevation (usually transient)"
+    ],
+    "seriousSideEffectsDe": [
+      "Teratogenität: Neuralrohrdefekte (Spina bifida, ~1–2%), kraniofaziale Fehlbildungen, Extremitätendefekte, kongenitale Herzfehler, intellektuelle Behinderung und Autismus-Spektrum-Störung bei pränataler Exposition",
+      "Valproat-induzierte Enzephalopathie mit Hyperammonämie (auch bei normalen Leberwerten möglich)",
+      "Schwere Hepatotoxizität / Leberversagen (vorwiegend bei Kindern <2 Jahren und Polytherapie; sehr selten bei Erwachsenen)",
+      "Pankreatitis (akut, selten)",
+      "Schwere Thrombozytopenie / Koagulopathie",
+      "DRESS-Syndrom (selten)",
+      "Stevens-Johnson-Syndrom (sehr selten)"
+    ],
+    "seriousSideEffectsEn": [
+      "Teratogenicity: neural tube defects (spina bifida, ~1–2%), craniofacial malformations, limb defects, congenital heart defects, intellectual disability and autism spectrum disorder with prenatal exposure",
+      "Valproate-induced encephalopathy with hyperammonaemia (possible even with normal liver enzymes)",
+      "Severe hepatotoxicity / liver failure (predominantly in children <2 years and polytherapy; very rare in adults)",
+      "Pancreatitis (acute, rare)",
+      "Severe thrombocytopaenia / coagulopathy",
+      "DRESS syndrome (rare)",
+      "Stevens-Johnson syndrome (very rare)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Valproat-Serumspiegel",
+        "frequency": "Zu Beginn nach 5–7 Tagen, dann alle 3–6 Monate oder bei klinischer Indikation",
+        "warningThreshold": "Toxische Zeichen ab >100 µg/ml möglich",
+        "noteDe": "Therapeutischer Bereich: 50–100 µg/ml (psychiatrisch); 50–125 µg/ml (epileptologisch). Talspiegel (12 h nach letzter Einnahme). Klinische Wirksamkeit und Verträglichkeit sind letztlich entscheidend.",
+        "noteEn": "Therapeutic range: 50–100 µg/ml (psychiatry); 50–125 µg/ml (epilepsy). Trough level (12 h post-dose). Clinical efficacy and tolerability ultimately guide dosing."
+      },
+      {
+        "parameter": "Leberenzyme (AST, ALT, GGT, AP, Bilirubin)",
+        "frequency": "Vor Beginn, nach 4–6 Wochen, nach 3 Monaten, dann alle 6 Monate",
+        "warningThreshold": "ALT/AST >3× ULN → engmaschige Kontrolle; >5× ULN → Absetzen erwägen",
+        "noteDe": "Leichter Transaminasenanstieg zu Beginn ist häufig und meist passager. Bei persistierend erhöhten oder stark erhöhten Werten Valproat pausieren und Hepatologie einbeziehen.",
+        "noteEn": "Mild transaminase rise at initiation is common and usually transient. With persistently or markedly elevated values, withhold valproate and involve hepatology."
+      },
+      {
+        "parameter": "Blutbild mit Differenzialblutbild (CBC)",
+        "frequency": "Vor Beginn, nach 3 Monaten, dann alle 6 Monate",
+        "warningThreshold": "Thrombozyten <100.000/µl → Dosis reduzieren; <50.000/µl → Absetzen erwägen",
+        "noteDe": "Valproat hemmt die Megakaryozyten-Reifung. Thrombozytopenie ist häufig und dosisabhängig. Präoperativ immer kontrollieren.",
+        "noteEn": "Valproate inhibits megakaryocyte maturation. Thrombocytopaenia is common and dose-dependent. Always check prior to surgery."
+      },
+      {
+        "parameter": "Ammoniak (NH₃)",
+        "frequency": "Bei klinischem Verdacht auf Enzephalopathie (Verwirrtheit, Lethargie, Asterixis)",
+        "warningThreshold": "NH₃ >80 µmol/L bei Symptomen",
+        "noteDe": "Valproat-induzierte Hyperammonämie kann auch ohne erhöhte Leberenzyme auftreten. Bei akuter Verwirrtheit immer Ammoniak bestimmen. Therapie: Valproat reduzieren/absetzen, L-Carnitin i.v. erwägen.",
+        "noteEn": "Valproate-induced hyperammonaemia can occur without elevated liver enzymes. Always measure ammonia in acute confusion. Treatment: reduce/discontinue valproate, consider IV L-carnitine."
+      },
+      {
+        "parameter": "Gerinnungsparameter (Quick, PTT, Fibrinogen)",
+        "frequency": "Vor Beginn, präoperativ",
+        "warningThreshold": "Quick <60%, PTT verlängert",
+        "noteDe": "Valproat kann Gerinnungsfaktoren hemmen (Faktor-VIII-Hemmung, von-Willebrand-Faktor-Reduktion). Vor operativen Eingriffen immer überprüfen.",
+        "noteEn": "Valproate can inhibit coagulation factors (factor VIII inhibition, von Willebrand factor reduction). Always check before surgical procedures."
+      },
+      {
+        "parameter": "Körpergewicht",
+        "frequency": "Alle 3 Monate",
+        "warningThreshold": "Gewichtszunahme >5 kg",
+        "noteDe": "Gewichtszunahme ist häufig und metabolisch relevant. Ggf. Ernährungsberatung.",
+        "noteEn": "Weight gain is common and metabolically relevant. Consider dietary counselling."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Carbapeneme (Imipenem, Meropenem, Ertapenem)",
+        "severity": "severe",
+        "clinicalNoteDe": "Carbapeneme reduzieren Valproatspiegel drastisch (um 60–100%) innerhalb von 24–48 h. Kombination ist klinisch gefährlich. Alternative Antibiose oder zusätzliche Antikonvulsiva erwägen. Valproatspiegel engmaschig überwachen.",
+        "clinicalNoteEn": "Carbapenems dramatically reduce valproate levels (by 60–100%) within 24–48 h. Combination is clinically dangerous. Consider alternative antibiotics or additional anticonvulsants. Monitor valproate levels closely."
+      },
+      {
+        "interactsWith": "Lamotrigin",
+        "severity": "moderate",
+        "clinicalNoteDe": "Valproat hemmt die Glucuronidasidierung von Lamotrigin → Verdopplung der Lamotrigin-Spiegel. Lamotrigin-Dosis muss bei Co-Medikation mit Valproat um 50% reduziert werden. Rash-Risiko steigt bei zu schneller Lamotrigin-Titration.",
+        "clinicalNoteEn": "Valproate inhibits lamotrigine glucuronidation → lamotrigine levels doubled. Lamotrigine dose must be reduced by 50% when co-prescribed with valproate. Rash risk increases with too-rapid lamotrigine titration."
+      },
+      {
+        "interactsWith": "Phenytoin",
+        "severity": "moderate",
+        "clinicalNoteDe": "Valproat verdrängt Phenytoin aus der Proteinbindung → initial erhöhte freie Phenytoin-Fraktion, dann Metabolismusinduktion durch Phenytoin reduziert Valproatspiegel. Komplexe, bidirektionale Interaktion.",
+        "clinicalNoteEn": "Valproate displaces phenytoin from protein binding → initially elevated free phenytoin fraction, then phenytoin's metabolic induction reduces valproate levels. Complex, bidirectional interaction."
+      },
+      {
+        "interactsWith": "Aspirin (Acetylsalicylsäure, hochdosiert)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Hochdosiertes Aspirin verdrängt Valproat aus der Proteinbindung und hemmt seinen Metabolismus → Valproatspiegel steigen. Niedrigdosiertes Aspirin (<100 mg) klinisch in der Regel unkritisch.",
+        "clinicalNoteEn": "High-dose aspirin displaces valproate from protein binding and inhibits its metabolism → elevated valproate levels. Low-dose aspirin (<100 mg) is generally not clinically significant."
+      },
+      {
+        "interactsWith": "Topiramat",
+        "severity": "moderate",
+        "clinicalNoteDe": "Kombination erhöht das Risiko einer Hyperammonämie und Enzephalopathie stärker als jede Substanz allein. Bei Verwirrtheit Ammoniak bestimmen.",
+        "clinicalNoteEn": "Combination increases risk of hyperammonaemia and encephalopathy more than either agent alone. Measure ammonia if confusion occurs."
+      },
+      {
+        "interactsWith": "Clomipramin / trizyklische Antidepressiva",
+        "severity": "mild",
+        "clinicalNoteDe": "Valproat kann Spiegel einiger trizyklischer Antidepressiva erhöhen. Klinische Beobachtung auf anticholinerge oder sedative Nebenwirkungen.",
+        "clinicalNoteEn": "Valproate may increase levels of some tricyclic antidepressants. Monitor for anticholinergic or sedative adverse effects."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "ALT / AST",
+        "condition": ">3× ULN",
+        "warningDe": "Transaminasenerhöhung über das 3-Fache des Normwertes: Valproat-Dosis reduzieren, wöchentliche Kontrollen einleiten, Patient auf Symptome (Ikterus, Übelkeit, Fatigue) hinweisen.",
+        "warningEn": "Transaminase elevation >3× ULN: reduce valproate dose, initiate weekly monitoring, counsel patient on symptoms (jaundice, nausea, fatigue).",
+        "severity": "reduce_dose"
+      },
+      {
+        "labParameter": "Thrombozyten",
+        "condition": "<100.000/µl",
+        "warningDe": "Thrombozytopenie: Valproat-Dosis reduzieren. Blutungsrisiko beachten. Präoperativ immer kontrollieren.",
+        "warningEn": "Thrombocytopaenia: reduce valproate dose. Assess bleeding risk. Always check pre-operatively.",
+        "severity": "reduce_dose"
+      },
+      {
+        "labParameter": "Ammoniak (NH₃)",
+        "condition": "Erhöht bei neurologischen Symptomen",
+        "warningDe": "Valproat-induzierte Hyperammonämie: Valproat absetzen oder stark reduzieren. L-Carnitin i.v. erwägen (100 mg/kg/Tag). Intensivmedizinische Überwachung bei schwerem Verlauf.",
+        "warningEn": "Valproate-induced hyperammonaemia: discontinue or markedly reduce valproate. Consider IV L-carnitine (100 mg/kg/day). Intensive monitoring in severe cases.",
+        "severity": "contraindicated"
+      }
+    ],
+    "renalDosing": "Valproat wird kaum renal eliminiert (hauptsächlich hepatische Konjugation). Bei Niereninsuffizienz kann die freie Fraktion durch verminderte Proteinbindung erhöht sein → Gesamtspiegel unterschätzt Wirkung. Ggf. freies Valproat messen.",
+    "hepaticDosing": "Valproat ist bei bestehender Lebererkrankung kontraindiziert oder nur mit äußerster Vorsicht einzusetzen. Hepatische Enzephalopathie und schwere Leberinsuffizienz sind absolute Kontraindikationen.",
+    "tabletSplittable": false,
+    "liquidFormAvailable": true,
+    "sources": [
+      "DGPPN S3-Leitlinie Bipolare Störungen 2019",
+      "EMA Valproate signal assessment 2018 (EPITT Ref. 19704)",
+      "Fachinformation Orfiril long (aktuelle Fassung)",
+      "Perucca E, Pharmacological and therapeutic properties of valproate, CNS Drugs 2002",
+      "Deutsch SI et al., hyperammonemic encephalopathy, Ann Pharmacother 2006"
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "lamotrigin",
+    "genericName": "Lamotrigin",
+    "brandNamesDACH": [
+      "Lamictal",
+      "Lamotrigin-1A Pharma",
+      "Lamotrigin-neuraxpharm",
+      "Lamotrigin Aurobindo"
+    ],
+    "atcCode": "N03AX09",
+    "substanceClass": "Mood Stabilizer / Antikonvulsivum – Phenyltriazin",
+    "formulations": [
+      "Tabletten",
+      "Kautabletten / Dispersibletabletten"
+    ],
+    "strengthsDACH": [
+      "25 mg, 50 mg, 100 mg, 200 mg Tabletten",
+      "2 mg, 5 mg, 25 mg, 50 mg, 100 mg, 200 mg Dispersibletabletten"
+    ],
+    "kurzinfoDe": "Lamotrigin ist der bevorzugte Stimmungsstabilisator bei bipolarer Depression und zur Rezidivprophylaxe des depressiven Pols. Schwächere antimanische Wirkung. Wirkmechanismus: Hemmung spannungsgesteuerter Natrium- und Kalziumkanäle → verminderte Glutamat-Freisetzung. Kritisch: langsame Dosistitration obligat (Rash-Risiko und Stevens-Johnson-Syndrom bei zu schneller Steigerung). Kein routinemäßiges Labormonitoring erforderlich. Wichtige Wechselwirkung mit Valproat (Spiegelverdopplung) und Carbamazepin (Spiegelreduktion).",
+    "kurzinfoEn": "Lamotrigine is the preferred mood stabiliser for bipolar depression and prevention of depressive relapses. Weaker antimanic effect. Mechanism: inhibition of voltage-gated sodium and calcium channels → reduced glutamate release. Critical: slow dose titration mandatory (rash and Stevens-Johnson syndrome risk with too-rapid escalation). No routine laboratory monitoring required. Important interactions with valproate (level doubling) and carbamazepine (level reduction).",
+    "receptorProfile": {
+      "sodiumChannel": "Hemmung spannungsgesteuerter Natriumkanäle (zustandsabhängige Blockade)",
+      "notes": "Zusätzliche Hemmung spannungsgesteuerter N- und P/Q-Typ Kalziumkanäle → präsynaptische Glutamat-Freisetzung reduziert. Kein relevanter Effekt auf GABA."
+    },
+    "commonSideEffectsDe": [
+      "Rash / Hautausschlag (häufig; meist milde makulopapulöse Exantheme zu Beginn)",
+      "Kopfschmerzen",
+      "Schwindel, Ataxie",
+      "Diplopie (doppeltes Sehen), Nystagmus",
+      "Übelkeit",
+      "Insomnie oder Somnolenz",
+      "Reizbarkeit (selten, bipolare Patienten)"
+    ],
+    "commonSideEffectsEn": [
+      "Rash / skin eruption (common; mostly mild maculopapular exanthema at initiation)",
+      "Headache",
+      "Dizziness, ataxia",
+      "Diplopia, nystagmus",
+      "Nausea",
+      "Insomnia or somnolence",
+      "Irritability (rare, bipolar patients)"
+    ],
+    "seriousSideEffectsDe": [
+      "Stevens-Johnson-Syndrom (SJS) / Toxische epidermale Nekrolyse (TEN) — bei zu schneller Titration oder Kombination mit Valproat",
+      "DRESS-Syndrom (Drug Reaction with Eosinophilia and Systemic Symptoms)",
+      "Aseptische Meningitis (selten, Frauen überrepräsentiert)",
+      "Suizidgedanken (klassenweit für Antikonvulsiva)",
+      "Hämatologische Reaktionen (aplastische Anämie, sehr selten)"
+    ],
+    "seriousSideEffectsEn": [
+      "Stevens-Johnson syndrome (SJS) / Toxic epidermal necrolysis (TEN) — with too-rapid titration or valproate co-medication",
+      "DRESS syndrome (Drug Reaction with Eosinophilia and Systemic Symptoms)",
+      "Aseptic meningitis (rare; women overrepresented)",
+      "Suicidal ideation (class effect for anticonvulsants)",
+      "Haematological reactions (aplastic anaemia, very rare)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Klinische Hautinspektion / Rash-Screening",
+        "frequency": "Bei jeder Visite in den ersten 8 Wochen",
+        "warningThreshold": "Jedes Exanthem in ersten 8 Wochen als potenziell ernst behandeln",
+        "noteDe": "Rash, der innerhalb von 8 Wochen nach Beginn oder Dosiseskalation auftritt, muss ernst genommen werden. Begleitsymptome (Fieber, Schleimhautbeteiligung, Lymphknoten) erhöhen Verdacht auf SJS/TEN drastisch → sofortiges Absetzen.",
+        "noteEn": "Any rash occurring within 8 weeks of initiation or dose escalation must be taken seriously. Accompanying symptoms (fever, mucous membrane involvement, lymphadenopathy) greatly raise suspicion of SJS/TEN → immediate discontinuation."
+      },
+      {
+        "parameter": "Lamotrigin-Serumspiegel",
+        "frequency": "Optional; bei Dosisänderungen, Interaktionen oder Therapieversagen",
+        "warningThreshold": "Therapeutisch ~3–14 µg/ml (psychiatrisch); kein festes Fenster etabliert",
+        "noteDe": "Routinemäßiges TDM nicht erforderlich. Sinnvoll bei: Komedikation mit Induktoren/Inhibitoren, Schwangerschaft (Spiegel fallen ab 2. Trimenon signifikant), Rezidiven bei angemessener Dosis.",
+        "noteEn": "Routine TDM not required. Useful when: co-medication with inducers/inhibitors, pregnancy (levels drop significantly from 2nd trimester), relapse on adequate dose."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Valproat",
+        "severity": "moderate",
+        "clinicalNoteDe": "Valproat hemmt die Glucuronidierung von Lamotrigin (UGT1A4) → Lamotrigin-Halbwertszeit verdoppelt, Spiegel steigen. Lamotrigin-Initialdosis und Titration bei Co-Medikation mit Valproat halbieren (Starterkit: 25 mg jede 2. Tag für 2 Wochen, dann 25 mg täglich). SJS-Risiko erhöht.",
+        "clinicalNoteEn": "Valproate inhibits lamotrigine glucuronidation (UGT1A4) → lamotrigine half-life doubled, levels rise. Halve the initial dose and titration schedule when co-prescribing with valproate (starter: 25 mg every other day for 2 weeks, then 25 mg/day). SJS risk increased."
+      },
+      {
+        "interactsWith": "Carbamazepin",
+        "severity": "moderate",
+        "clinicalNoteDe": "Carbamazepin induziert UGT-Enzyme → Lamotrigin-Halbwertszeit halbiert, Spiegel fallen. Höhere Lamotrigin-Dosen erforderlich. Titration schneller möglich (doppelte Standarddosis-Titration nach Herstellerempfehlung).",
+        "clinicalNoteEn": "Carbamazepine induces UGT enzymes → lamotrigine half-life halved, levels fall. Higher lamotrigine doses required. Titration may proceed faster (double standard-dose titration per manufacturer guidance)."
+      },
+      {
+        "interactsWith": "Hormonelle Kontrazeptiva (kombinierte Pille)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Ethinylestradiol induziert Lamotrigin-Glucuronidierung → Lamotrigin-Spiegel fallen um ~50% bei Einnahme der Pille. Bei Pillenpause (pillenfrei) schneller Spiegelanstieg mit Toxizitätszeichen möglich. Nicht-hormonelle Verhütung oder Progesteron-only-Pille bevorzugen.",
+        "clinicalNoteEn": "Ethinylestradiol induces lamotrigine glucuronidation → lamotrigine levels fall ~50% on combined pill. During pill-free interval, rapid level rise with toxicity signs possible. Prefer non-hormonal contraception or progestogen-only pill."
+      },
+      {
+        "interactsWith": "Oxcarbazepin",
+        "severity": "mild",
+        "clinicalNoteDe": "Moderate Enzyminduktion durch Oxcarbazepin kann Lamotrigin-Spiegel reduzieren. Klinisch weniger ausgeprägt als bei Carbamazepin.",
+        "clinicalNoteEn": "Moderate enzyme induction by oxcarbazepine may reduce lamotrigine levels. Less pronounced than with carbamazepine."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Klinisch (kein Laborparameter)",
+        "condition": "Exanthem mit Fieber, Schleimhautbeteiligung oder Blasenbildung",
+        "warningDe": "Sofortiges Absetzen von Lamotrigin. SJS/TEN ist ein lebensbedrohlicher Notfall. Dermatologische Notfallvorstellung. Lamotrigin darf nach SJS nicht wieder angesetzt werden.",
+        "warningEn": "Immediate discontinuation of lamotrigine. SJS/TEN is a life-threatening emergency. Urgent dermatology referral. Lamotrigine must not be re-started after SJS.",
+        "severity": "contraindicated"
+      }
+    ],
+    "renalDosing": "Leichte bis moderate Niereninsuffizienz: Vorsicht, Spiegel können ansteigen. Schwere Niereninsuffizienz (eGFR <30): reduzierte Erhaltungsdosis, engmaschige Überwachung. Hämodialysepatienten: Supplementäre Dosis nach Dialyse erwägen.",
+    "hepaticDosing": "Moderate Leberinsuffizienz (Child-Pugh B): Dosis um 50% reduzieren. Schwere Leberinsuffizienz (Child-Pugh C): Dosis um 75% reduzieren.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "sources": [
+      "DGPPN S3-Leitlinie Bipolare Störungen 2019",
+      "Fachinformation Lamictal (aktuelle Fassung)",
+      "Bowden CL et al., Lamotrigine in bipolar depression, J Clin Psychiatry 2003",
+      "Messenheimer J, Rash in adult and pediatric patients, Drug Saf 1998",
+      "Sabers A et al., Drug interactions involving lamotrigine, Acta Neurol Scand 2001"
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "carbamazepin",
+    "genericName": "Carbamazepin",
+    "brandNamesDACH": [
+      "Tegretal",
+      "Tegretol",
+      "Carbamazepin-neuraxpharm",
+      "Timonil"
+    ],
+    "atcCode": "N03AF01",
+    "substanceClass": "Antikonvulsivum / Mood Stabilizer – Iminodibenzyl-Derivat",
+    "formulations": [
+      "Tabletten",
+      "Retardtabletten",
+      "Saft / Suspension",
+      "Suppositorien"
+    ],
+    "strengthsDACH": [
+      "200 mg, 400 mg Tabletten",
+      "200 mg, 300 mg, 400 mg, 600 mg Retardtabletten",
+      "100 mg/5 ml Saft"
+    ],
+    "kurzinfoDe": "Carbamazepin ist ein Antikonvulsivum mit Wirksamkeit bei akuter Manie (zweite Wahl nach Valproat/Lithium) und bei Trigeminusneuralgie. Wirkmechanismus: Hemmung spannungsgesteuerter Natriumkanäle (zustandsabhängige Blockade), schwache antidopaminerge Wirkung. Starker CYP3A4-Induktor und Autoinduktor → zahlreiche, klinisch bedeutsame Arzneimittelinteraktionen. Wichtig: HLA-B*1502-Screening vor Therapiebeginn bei Patienten asiatischer Herkunft (erhöhtes Stevens-Johnson-Risiko). Spiegelmonitoring erforderlich (therapeutisch 4–12 µg/ml).",
+    "kurzinfoEn": "Carbamazepine is an anticonvulsant with efficacy in acute mania (second line after valproate/lithium) and trigeminal neuralgia. Mechanism: inhibition of voltage-gated sodium channels (state-dependent blockade), weak antidopaminergic activity. Potent CYP3A4 inducer and auto-inducer → numerous clinically significant drug interactions. Important: HLA-B*1502 screening before treatment in patients of Asian origin (elevated Stevens-Johnson risk). Level monitoring required (therapeutic range 4–12 µg/ml).",
+    "receptorProfile": {
+      "sodiumChannel": "Spannungsgesteuerte Natriumkanäle: zustandsabhängige Hemmung, bevorzugt inaktivierter Zustand",
+      "notes": "Strukturell verwandt mit trizyklischen Antidepressiva. Schwache antagonistische Wirkung an Adenosin-, Dopamin- und NMDA-Rezeptoren."
+    },
+    "commonSideEffectsDe": [
+      "Schwindel, Ataxie, Diplopie (dosisabhängig, zu Beginn der Therapie)",
+      "Übelkeit, Erbrechen",
+      "Sedierung, Müdigkeit",
+      "Hyponatriämie (SIADH-artig, häufig bei älteren Patienten)",
+      "Leukopenie (meist milde, passager)",
+      "Transaminasenanstieg",
+      "Rash (milde Exantheme bei ~10%)"
+    ],
+    "commonSideEffectsEn": [
+      "Dizziness, ataxia, diplopia (dose-dependent, at initiation)",
+      "Nausea, vomiting",
+      "Sedation, fatigue",
+      "Hyponatraemia (SIADH-like; frequent in elderly)",
+      "Leukopenia (mostly mild and transient)",
+      "Transaminase elevation",
+      "Rash (mild exanthema in ~10%)"
+    ],
+    "seriousSideEffectsDe": [
+      "Stevens-Johnson-Syndrom / Toxische epidermale Nekrolyse (Risiko bei HLA-B*1502 asiatischer Herkunft drastisch erhöht)",
+      "Aplastische Anämie, Agranulozytose (sehr selten, aber lebensbedrohlich)",
+      "Schwere Hyponatriämie (Krampfanfälle, Herzrhythmusstörungen)",
+      "Hepatotoxizität, Leberversagen (selten)",
+      "AV-Block, Arrhythmien (bei Überdosierung oder kardialer Vorerkrankung)",
+      "Teratogenität: Neuralrohrdefekte (~0,5%), kraniofaziale Fehlbildungen"
+    ],
+    "seriousSideEffectsEn": [
+      "Stevens-Johnson syndrome / Toxic epidermal necrolysis (risk dramatically elevated in HLA-B*1502-positive patients of Asian origin)",
+      "Aplastic anaemia, agranulocytosis (very rare, but life-threatening)",
+      "Severe hyponatraemia (seizures, cardiac arrhythmias)",
+      "Hepatotoxicity, liver failure (rare)",
+      "AV block, arrhythmias (at overdose or in cardiac disease)",
+      "Teratogenicity: neural tube defects (~0.5%), craniofacial malformations"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Carbamazepin-Serumspiegel",
+        "frequency": "Nach 2–4 Wochen (Steady-state nach Autoinduktion), dann alle 3–6 Monate",
+        "warningThreshold": "Toxische Zeichen ab >12 µg/ml; >20 µg/ml schwere Toxizität",
+        "noteDe": "Therapeutischer Bereich 4–12 µg/ml (Manie: eher 8–12 µg/ml). Autoinduktion: Spiegel fallen nach 3–4 Wochen durch CYP3A4-Induktion ab → Dosisanpassung häufig nötig. Talspiegel (morgens vor Einnahme) messen.",
+        "noteEn": "Therapeutic range 4–12 µg/ml (mania: target 8–12 µg/ml). Auto-induction: levels fall after 3–4 weeks as CYP3A4 induction develops → dose adjustment often required. Measure trough (before morning dose)."
+      },
+      {
+        "parameter": "Blutbild (CBC) inkl. Differenzialblutbild",
+        "frequency": "Vor Beginn, nach 2 und 4 Wochen, dann alle 3 Monate",
+        "warningThreshold": "Leukozyten <3000/µl oder Neutrophile <1500/µl",
+        "noteDe": "Milde Leukopenien sind häufig (bis 10% der Patienten) und meistens harmlos. Schwere Leukopenien/Agranulozytosen sind selten, aber potenziell lebensbedrohlich.",
+        "noteEn": "Mild leukopenia is common (up to 10%) and usually benign. Severe leucopenia/agranulocytosis is rare but potentially life-threatening."
+      },
+      {
+        "parameter": "Serumnatrium",
+        "frequency": "Vor Beginn, nach 4 Wochen, dann alle 3–6 Monate; bei Symptomen sofort",
+        "warningThreshold": "Natrium <130 mmol/L symptomatisch",
+        "noteDe": "Carbamazepin stimuliert ADH-Freisetzung → SIADH-artige Hyponatriämie, besonders bei älteren Patienten, Kombination mit anderen SIADH-auslösenden Medikamenten (SSRIs, Thiazide). Symptome: Kopfschmerzen, Verwirrtheit, Krampfanfälle.",
+        "noteEn": "Carbamazepine stimulates ADH release → SIADH-like hyponatraemia, especially in elderly patients and with other SIADH-prone medications (SSRIs, thiazides). Symptoms: headache, confusion, seizures."
+      },
+      {
+        "parameter": "Leberenzyme (AST, ALT, GGT, Bilirubin)",
+        "frequency": "Vor Beginn, nach 4–8 Wochen, dann alle 6 Monate",
+        "warningThreshold": "AST/ALT >3× ULN persistierend",
+        "noteDe": "Passager erhöhte Transaminasen bei etwa 5–10% der Patienten, meist selbstlimitierend. Schwere Hepatotoxizität ist selten.",
+        "noteEn": "Transient transaminase elevation in ~5–10% of patients, usually self-limiting. Severe hepatotoxicity is rare."
+      },
+      {
+        "parameter": "HLA-B*1502-Genotypisierung",
+        "frequency": "Einmalig vor Therapiebeginn bei Patienten asiatischer Herkunft",
+        "warningThreshold": "HLA-B*1502 positiv",
+        "noteDe": "HLA-B*1502 ist stark mit SJS/TEN unter Carbamazepin bei Han-Chinesen, Thais und anderen Südostasiengruppen assoziiert. Bei positivem Befund ist Carbamazepin kontraindiziert (außer bei lebensbedrohlicher Indikation ohne Alternative).",
+        "noteEn": "HLA-B*1502 strongly associates with CBZ-induced SJS/TEN in Han Chinese, Thai, and other Southeast Asian populations. Positive result contraindicates carbamazepine unless life-threatening indication with no alternative."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Zahlreiche Substanzen (CYP3A4-Induktion)",
+        "severity": "severe",
+        "clinicalNoteDe": "Carbamazepin ist einer der stärksten klinischen CYP3A4/2C9/1A2-Induktoren. Substanziell reduzierte Spiegel von: oralen Antikoagulantien (Warfarin, DOAK), Antipsychotika (Haloperidol, Quetiapin, Clozapin, Aripiprazol), Antidepressiva (viele TZA, Mirtazapin), Proteaseinhibitoren, oralen Kontrazeptiva, Immunsuppressiva (Ciclosporin), Steroiden, anderen Antikonvulsiva.",
+        "clinicalNoteEn": "Carbamazepine is one of the most potent clinical CYP3A4/2C9/1A2 inducers. Substantially reduced levels of: oral anticoagulants (warfarin, DOACs), antipsychotics (haloperidol, quetiapine, clozapine, aripiprazole), antidepressants (many TCAs, mirtazapine), protease inhibitors, oral contraceptives, immunosuppressants (ciclosporin), steroids, other anticonvulsants."
+      },
+      {
+        "interactsWith": "MAO-Inhibitoren",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Kombination mit MAO-Inhibitoren ist kontraindiziert (schwere serotonerge/anticholinerge Reaktionen). Mindestens 14 Tage Washout nach MAOI-Absetzen vor Carbamazepin-Beginn.",
+        "clinicalNoteEn": "Combination with MAO inhibitors is contraindicated (severe serotonergic/anticholinergic reactions). At least 14-day washout after MAOI discontinuation before carbamazepine initiation."
+      },
+      {
+        "interactsWith": "Lithium",
+        "severity": "moderate",
+        "clinicalNoteDe": "Erhöhtes Neurotoxizitätsrisiko (Ataxie, Tremor, Konfusion) auch bei therapeutischen Spiegeln beider Substanzen. Engmaschige klinische Überwachung.",
+        "clinicalNoteEn": "Increased neurotoxicity risk (ataxia, tremor, confusion) even at therapeutic levels of both agents. Close clinical monitoring required."
+      },
+      {
+        "interactsWith": "Orale Kontrazeptiva",
+        "severity": "severe",
+        "clinicalNoteDe": "Carbamazepin reduziert Ethinylestradiol- und Gestagenspiegel deutlich → Verhütungsversagen. Zusätzliche nicht-hormonelle Verhütungsmethoden obligat.",
+        "clinicalNoteEn": "Carbamazepine markedly reduces ethinylestradiol and progestogen levels → contraceptive failure. Additional non-hormonal contraception is mandatory."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Serumnatrium",
+        "condition": "<130 mmol/L",
+        "warningDe": "Schwere Hyponatriämie: Carbamazepin pausieren, Ursache klären. Flüssigkeitsrestriktion, ggf. isotone NaCl-Infusion. Bei Krampfanfall oder Verwirrtheit sofortige stationäre Einweisung.",
+        "warningEn": "Severe hyponatraemia: withhold carbamazepine, identify cause. Fluid restriction; isotonic NaCl infusion if needed. Urgent hospital admission for seizure or confusion.",
+        "severity": "contraindicated"
+      },
+      {
+        "labParameter": "Leukozyten",
+        "condition": "<3000/µl oder Neutrophile <1500/µl",
+        "warningDe": "Bedeutsame Leukopenie: Carbamazepin pausieren, Hämatologie einbeziehen. Infektzeichen überwachen.",
+        "warningEn": "Significant leucopenia: withhold carbamazepine, involve haematology. Monitor for signs of infection.",
+        "severity": "reduce_dose"
+      }
+    ],
+    "renalDosing": "Carbamazepin wird vorwiegend hepatisch metabolisiert. Bei Niereninsuffizienz kann aktiver Metabolit (Carbamazepin-10,11-Epoxid) akkumulieren. Vorsicht bei schwerer Niereninsuffizienz; Spiegelmonitoring intensivieren.",
+    "hepaticDosing": "Bei schwerer Leberinsuffizienz ist Carbamazepin kontraindiziert oder nur mit größter Vorsicht einzusetzen.",
+    "tabletSplittable": false,
+    "liquidFormAvailable": true,
+    "sources": [
+      "Fachinformation Tegretal retard (aktuelle Fassung)",
+      "EMA CHMP Statement on HLA-B*1502 and carbamazepine 2008",
+      "Kanner AM, Antiepileptic drug interactions, Neurology 2008",
+      "Hesdorffer DC et al., Antiepileptic drug use and suicide, Epilepsia 2010"
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "oxcarbazepin",
+    "genericName": "Oxcarbazepin",
+    "brandNamesDACH": [
+      "Trileptal",
+      "Oxcarbazepin-neuraxpharm",
+      "Timox"
+    ],
+    "atcCode": "N03AF02",
+    "substanceClass": "Antikonvulsivum – Keto-Analog von Carbamazepin",
+    "formulations": [
+      "Filmtabletten",
+      "Suspension"
+    ],
+    "strengthsDACH": [
+      "150 mg, 300 mg, 600 mg Filmtabletten",
+      "60 mg/ml Suspension"
+    ],
+    "kurzinfoDe": "Oxcarbazepin ist ein Keto-Analogon von Carbamazepin mit ähnlichem Wirkmechanismus (Natriumkanalinhibition), aber günstigerem Interaktionsprofil. Psychiatrisch off-label bei bipolaren Störungen und als Augmentation eingesetzt. Kein Autoinduktor. Hauptproblem: ausgeprägte Hyponatriämie (häufiger als unter Carbamazepin). HLA-B*1502-Assoziation mit SJS ist bei Oxcarbazepin schwächer, wird aber in asiatischen Leitlinien ebenfalls empfohlen zu screenen.",
+    "kurzinfoEn": "Oxcarbazepine is a keto-analogue of carbamazepine with similar mechanism (sodium channel inhibition) but a more favourable interaction profile. Used off-label psychiatrically in bipolar disorder and as augmentation. Not an auto-inducer. Main concern: pronounced hyponatraemia (more frequent than with carbamazepine). HLA-B*1502 association with SJS is weaker than carbamazepine but still recommended for screening in Asian guidelines.",
+    "receptorProfile": {
+      "sodiumChannel": "Hemmung spannungsgesteuerter Natriumkanäle durch aktiven Metaboliten Monohydroxycarbazepin (MHD/Licarbazepine)"
+    },
+    "commonSideEffectsDe": [
+      "Hyponatriämie (häufiger als bei Carbamazepin, bis 40% der Patienten)",
+      "Schwindel, Ataxie, Diplopie",
+      "Übelkeit, Erbrechen",
+      "Müdigkeit, Sedierung",
+      "Kopfschmerzen",
+      "Rash (~5%)"
+    ],
+    "commonSideEffectsEn": [
+      "Hyponatraemia (more frequent than carbamazepine, up to 40% of patients)",
+      "Dizziness, ataxia, diplopia",
+      "Nausea, vomiting",
+      "Fatigue, sedation",
+      "Headache",
+      "Rash (~5%)"
+    ],
+    "seriousSideEffectsDe": [
+      "Schwere symptomatische Hyponatriämie (Krampfanfälle, Herzrhythmusstörungen)",
+      "Stevens-Johnson-Syndrom (seltener als CBZ, aber möglich; HLA-B*1502 beachten)",
+      "Teratogenität (ähnlich Carbamazepin)"
+    ],
+    "seriousSideEffectsEn": [
+      "Severe symptomatic hyponatraemia (seizures, cardiac arrhythmias)",
+      "Stevens-Johnson syndrome (less frequent than CBZ but possible; note HLA-B*1502)",
+      "Teratogenicity (similar to carbamazepine)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Serumnatrium",
+        "frequency": "Vor Beginn, nach 2 und 4 Wochen, dann alle 3 Monate",
+        "warningThreshold": "Natrium <130 mmol/L symptomatisch",
+        "noteDe": "Oxcarbazepin verursacht häufiger eine klinisch relevante Hyponatriämie als Carbamazepin. Ältere Patienten und Kombination mit anderen SIADH-assoziierten Medikamenten (SSRIs, Thiazide) erhöhen das Risiko erheblich.",
+        "noteEn": "Oxcarbazepine causes clinically relevant hyponatraemia more frequently than carbamazepine. Elderly patients and combination with other SIADH-associated drugs (SSRIs, thiazides) considerably increase risk."
+      },
+      {
+        "parameter": "MHD-Serumspiegel (aktiver Metabolit, Licarbazepine)",
+        "frequency": "Optional; bei unzureichendem Ansprechen oder Verdacht auf Toxizität",
+        "warningThreshold": "Therapeutisch 10–35 µg/ml (MHD)",
+        "noteDe": "TDM ist nicht obligat, hilft aber bei Compliance-Fragen und Verdacht auf Toxizität.",
+        "noteEn": "TDM not mandatory but useful for compliance issues and suspected toxicity."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Orale Kontrazeptiva",
+        "severity": "moderate",
+        "clinicalNoteDe": "Oxcarbazepin ist ein schwächerer CYP3A4-Induktor als Carbamazepin, reduziert aber Ethinylestradiol-Spiegel (~50%) und kann zu Verhütungsversagen führen. Zusätzliche Verhütungsmethode empfohlen.",
+        "clinicalNoteEn": "Oxcarbazepine is a weaker CYP3A4 inducer than carbamazepine but reduces ethinylestradiol levels (~50%) and may cause contraceptive failure. Additional contraception recommended."
+      },
+      {
+        "interactsWith": "Lamotrigin",
+        "severity": "mild",
+        "clinicalNoteDe": "Moderate Reduktion von Lamotrigin-Spiegeln durch Enzyminduktion. Klinisch weniger relevant als Carbamazepin-Lamotrigin-Kombination.",
+        "clinicalNoteEn": "Moderate reduction of lamotrigine levels via enzyme induction. Less clinically relevant than carbamazepine-lamotrigine combination."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Serumnatrium",
+        "condition": "<130 mmol/L",
+        "warningDe": "Symptomatische Hyponatriämie: Oxcarbazepin pausieren, Ursache klären, ggf. stationäre Behandlung.",
+        "warningEn": "Symptomatic hyponatraemia: withhold oxcarbazepine, identify cause; hospital admission if needed.",
+        "severity": "contraindicated"
+      }
+    ],
+    "renalDosing": "Bei eGFR <30 ml/min: Startdosis halbieren, langsam titrieren. MHD-Spiegel engmaschig überwachen.",
+    "hepaticDosing": "Bei leichter bis mittelschwerer Leberinsuffizienz keine Dosisanpassung erforderlich. Schwere Leberinsuffizienz: keine Daten, Vorsicht.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": true,
+    "sources": [
+      "Fachinformation Trileptal (aktuelle Fassung)",
+      "Dong X et al., Oxcarbazepine-induced hyponatremia, Epilepsia 2005",
+      "Ketter TA, Oxcarbazepine in bipolar disorder, J Clin Psychiatry 2005"
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "gabapentin",
+    "genericName": "Gabapentin",
+    "brandNamesDACH": [
+      "Neurontin",
+      "Gabapentin-neuraxpharm",
+      "Gabapentin Pfizer",
+      "Gabapentin ratiopharm"
+    ],
+    "atcCode": "N03AX12",
+    "substanceClass": "Antikonvulsivum / Neuropathiemittel – GABA-Analogon (strukturell; nicht GABAerg)",
+    "formulations": [
+      "Hartkapseln",
+      "Filmtabletten"
+    ],
+    "strengthsDACH": [
+      "100 mg, 300 mg, 400 mg Hartkapseln",
+      "600 mg, 800 mg Filmtabletten"
+    ],
+    "kurzinfoDe": "Gabapentin ist ein GABA-Analogon, das jedoch nicht GABAerg wirkt, sondern an die α2δ-Untereinheit spannungsgesteuerter Kalziumkanäle bindet → präsynaptische Kalziumeinstrom-Hemmung → reduzierte Neurotransmitterfreisetzung. Psychiatrische Anwendung überwiegend off-label (Angststörungen, Entzugszustände, bipolare Residualsymptome, Schlafstörungen). Missbrauchspotenzial beachten (insbesondere bei opioidabhängigen Patienten). Rein renale Elimination → erhebliche Dosisanpassung bei Niereninsuffizienz.",
+    "kurzinfoEn": "Gabapentin is a GABA analogue that does not act GABAergically but binds to the α2δ subunit of voltage-gated calcium channels → inhibition of presynaptic calcium influx → reduced neurotransmitter release. Psychiatric use is predominantly off-label (anxiety disorders, withdrawal states, bipolar residual symptoms, sleep disorders). Note misuse potential (especially in opioid-dependent patients). Exclusively renally eliminated → substantial dose adjustment required in renal impairment.",
+    "receptorProfile": {
+      "notes": "Bindet an α2δ-1 und α2δ-2 Untereinheiten spannungsgesteuerter Kalziumkanäle. Keine relevante Bindung an GABA-A/B-Rezeptoren, Glutamatrezeptoren oder Natriumkanäle trotz GABA-ähnlicher Struktur."
+    },
+    "commonSideEffectsDe": [
+      "Schwindel, Sedierung (sehr häufig, dosisabhängig)",
+      "Ataxie",
+      "Gewichtszunahme",
+      "Periphere Ödeme",
+      "Übelkeit",
+      "Nystagmus, Diplopie",
+      "Koordinationsstörungen"
+    ],
+    "commonSideEffectsEn": [
+      "Dizziness, sedation (very common, dose-dependent)",
+      "Ataxia",
+      "Weight gain",
+      "Peripheral oedema",
+      "Nausea",
+      "Nystagmus, diplopia",
+      "Incoordination"
+    ],
+    "seriousSideEffectsDe": [
+      "Respiratorische Depression (besonders in Kombination mit Opioiden, Benzodiazepinen oder Alkohol — Schwarze-Kasten-Warnung)",
+      "Suizidgedanken (klassenweit für Antikonvulsiva)",
+      "Missbrauch und Abhängigkeit (insbesondere bei Patienten mit Suchtanamnese)",
+      "Schwere Hypersensitivitätsreaktionen (DRESS, selten)"
+    ],
+    "seriousSideEffectsEn": [
+      "Respiratory depression (especially combined with opioids, benzodiazepines, or alcohol — black box warning)",
+      "Suicidal ideation (class effect for anticonvulsants)",
+      "Misuse and dependence (especially in patients with substance use history)",
+      "Severe hypersensitivity reactions (DRESS, rare)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Nierenfunktion (eGFR / Kreatinin)",
+        "frequency": "Vor Beginn, dann alle 6–12 Monate",
+        "warningThreshold": "eGFR <60 ml/min: Dosisanpassung erforderlich",
+        "noteDe": "Gabapentin wird ausschließlich renal eliminiert (keine Metabolisierung). Bei Niereninsuffizienz erhebliche Akkumulation und Toxizitätsrisiko (verstärkte Sedierung, Ataxie, Atemdepression).",
+        "noteEn": "Gabapentin is exclusively renally eliminated (no metabolism). In renal impairment, significant accumulation and toxicity risk (enhanced sedation, ataxia, respiratory depression)."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Opioide (Morphin, Tramadol, Oxycodon)",
+        "severity": "severe",
+        "clinicalNoteDe": "Synergistische respiratorische Depression. FDA/EMA Sicherheitswarnung. Kombination nur wenn klinisch zwingend notwendig; niedrigste effektive Dosen, engmaschige Überwachung von Atemfunktion und Sedierungsgrad.",
+        "clinicalNoteEn": "Synergistic respiratory depression. FDA/EMA safety warning. Combine only when clinically compelling; use lowest effective doses, close monitoring of respiratory function and sedation level."
+      },
+      {
+        "interactsWith": "Benzodiazepine / Alkohol / ZNS-Dämpfer",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive sedierende und atemdepressive Wirkung. Kombination mit Vorsicht einsetzen und Patienten über Risiken aufklären.",
+        "clinicalNoteEn": "Additive sedating and respiratory depressant effects. Use combination with caution and counsel patients on risks."
+      },
+      {
+        "interactsWith": "Antazida (Aluminium-/Magnesiumhydroxid)",
+        "severity": "mild",
+        "clinicalNoteDe": "Antazida reduzieren Gabapentin-Resorption (~20%). Gabapentin mindestens 2 h nach Antazidaeinnahme nehmen.",
+        "clinicalNoteEn": "Antacids reduce gabapentin absorption (~20%). Take gabapentin at least 2 h after antacids."
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "eGFR 50–79: max. 1800 mg/Tag in 3 Dosen. eGFR 30–49: max. 900 mg/Tag. eGFR 15–29: max. 600 mg/Tag. eGFR <15: max. 300 mg/Tag. Hämodialyse: Supplementäre Dosis nach jeder Dialysesitzung (200–300 mg) erforderlich.",
+    "hepaticDosing": "Keine hepatische Metabolisierung; keine Dosisanpassung bei Leberinsuffizienz.",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "sources": [
+      "Fachinformation Neurontin (aktuelle Fassung)",
+      "Evoy KE et al., Gabapentin misuse, Pharmacotherapy 2017",
+      "FDA Drug Safety Communication: Gabapentinoids and respiratory depression 2019"
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "pregabalin",
+    "genericName": "Pregabalin",
+    "brandNamesDACH": [
+      "Lyrica",
+      "Pregabalin-neuraxpharm",
+      "Pregabalin Pfizer",
+      "Pregabalin STADA"
+    ],
+    "atcCode": "N03AX16",
+    "substanceClass": "Antikonvulsivum / Anxiolytikum – α2δ-Ligand (GABA-Analogon, strukturell)",
+    "formulations": [
+      "Hartkapseln",
+      "Lösung"
+    ],
+    "strengthsDACH": [
+      "25 mg, 50 mg, 75 mg, 100 mg, 150 mg, 200 mg, 225 mg, 300 mg Hartkapseln",
+      "20 mg/ml Lösung"
+    ],
+    "kurzinfoDe": "Pregabalin bindet wie Gabapentin an die α2δ-Untereinheit spannungsgesteuerter Kalziumkanäle mit jedoch linearer Pharmakokinetik und höherer Bioverfügbarkeit (~90%). Zugelassen für generalisierte Angststörung (GAD), neuropathischen Schmerz und Epilepsie als Add-on. Missbrauchspotenzial (BtM in Deutschland/Österreich seit 2019/2021). Euphorierende Wirkung bei höheren Dosen. Rein renale Elimination → Dosisanpassung bei Niereninsuffizienz zwingend.",
+    "kurzinfoEn": "Pregabalin binds like gabapentin to the α2δ subunit of voltage-gated calcium channels but with linear pharmacokinetics and higher bioavailability (~90%). Licensed for generalised anxiety disorder (GAD), neuropathic pain, and adjunctive epilepsy treatment. Misuse potential (controlled substance in Germany/Austria since 2019/2021). Euphoric effects at higher doses. Exclusively renally eliminated → dose adjustment in renal impairment mandatory.",
+    "receptorProfile": {
+      "notes": "Bindet selektiv an α2δ-1 und α2δ-2 Untereinheiten spannungsgesteuerter Kalziumkanäle. Lineare Pharmakokinetik (im Gegensatz zur sättigbaren Resorption von Gabapentin). Höhere Potenz als Gabapentin."
+    },
+    "commonSideEffectsDe": [
+      "Schwindel, Somnolenz (sehr häufig)",
+      "Ataxie, Koordinationsstörungen",
+      "Gewichtszunahme",
+      "Periphere Ödeme",
+      "Trockener Mund",
+      "Gedächtnis- und Konzentrationsstörungen",
+      "Stimmungsaufhellung / Euphorie (bei manchen Patienten)"
+    ],
+    "commonSideEffectsEn": [
+      "Dizziness, somnolence (very common)",
+      "Ataxia, incoordination",
+      "Weight gain",
+      "Peripheral oedema",
+      "Dry mouth",
+      "Memory and concentration impairment",
+      "Mood elevation / euphoria (in some patients)"
+    ],
+    "seriousSideEffectsDe": [
+      "Respiratorische Depression (besonders mit Opioiden / ZNS-Dämpfern; Schwarze-Kasten-Warnung)",
+      "Abhängigkeit und Entzugssyndrom (Betäubungsmittel in D/A; abruptes Absetzen vermeiden)",
+      "Suizidgedanken (klassenweit für Antikonvulsiva)",
+      "Angioödem (selten, aber akut lebensbedrohlich)",
+      "Visuelle Störungen, Optikusneuritis (selten)"
+    ],
+    "seriousSideEffectsEn": [
+      "Respiratory depression (especially with opioids / CNS depressants; black box warning)",
+      "Dependence and withdrawal syndrome (controlled substance in Germany/Austria; avoid abrupt discontinuation)",
+      "Suicidal ideation (class effect for anticonvulsants)",
+      "Angioedema (rare but acutely life-threatening)",
+      "Visual disturbances, optic neuritis (rare)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Nierenfunktion (eGFR / Kreatinin)",
+        "frequency": "Vor Beginn, dann alle 6–12 Monate",
+        "warningThreshold": "eGFR <60: Dosisanpassung erforderlich",
+        "noteDe": "Pregabalin wird ausschließlich renal unverändert ausgeschieden. Dosisanpassung nach eGFR obligat.",
+        "noteEn": "Pregabalin is excreted renally unchanged. Dose adjustment according to eGFR is mandatory."
+      },
+      {
+        "parameter": "Zeichen von Abhängigkeit / Missbrauch",
+        "frequency": "Bei jeder Visite (klinisches Screening)",
+        "warningThreshold": "Dosissteigerungswunsch, Beschaffungsverhalten",
+        "noteDe": "Pregabalin ist seit 2019 (Deutschland) und 2021 (Österreich) betäubungsmittelpflichtig. Auf Zeichen von Missbrauch, Dosissteigerung und Abhängigkeit achten, insbesondere bei Suchtanamnese.",
+        "noteEn": "Pregabalin is a controlled substance in Germany (since 2019) and Austria (since 2021). Monitor for misuse, dose escalation, and dependence, particularly in patients with substance use history."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Opioide",
+        "severity": "severe",
+        "clinicalNoteDe": "Potenzierung von Atemdepression und Sedierung. Blackbox-Warnung in FDA/EMA. Kombination nur unter enger Überwachung und mit niedrigsten effektiven Dosen.",
+        "clinicalNoteEn": "Potentiation of respiratory depression and sedation. Black box warning from FDA/EMA. Combination only under close monitoring with lowest effective doses."
+      },
+      {
+        "interactsWith": "Benzodiazepine / Alkohol",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive ZNS-Dämpfung. Patienten explizit auf Alkoholverzicht hinweisen. Kombination mit Benzodiazepinen so weit wie möglich vermeiden.",
+        "clinicalNoteEn": "Additive CNS depression. Explicitly advise patients to avoid alcohol. Avoid combination with benzodiazepines as much as possible."
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "eGFR 30–60: Tagesdosis halbieren (max. 300 mg/Tag in 2–3 Dosen). eGFR 15–30: Tagesdosis auf 25% reduzieren (max. 150 mg/Tag). eGFR <15: max. 75 mg/Tag. Hämodialyse: Supplementäre Dosis nach Dialyse.",
+    "hepaticDosing": "Keine hepatische Metabolisierung. Keine Dosisanpassung bei Leberinsuffizienz erforderlich.",
+    "tabletSplittable": false,
+    "liquidFormAvailable": true,
+    "sources": [
+      "Fachinformation Lyrica (aktuelle Fassung)",
+      "BfArM: Unterstellung von Pregabalin unter das BtMG, 2019",
+      "Baldwin DS et al., Pregabalin in GAD, Int J Neuropsychopharmacol 2013",
+      "Evoy KE et al., Pregabalin misuse and abuse, Pharmacotherapy 2017"
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "topiramat",
+    "genericName": "Topiramat",
+    "brandNamesDACH": [
+      "Topamax",
+      "Topiramat-neuraxpharm",
+      "Topiramat STADA"
+    ],
+    "atcCode": "N03AX11",
+    "substanceClass": "Antikonvulsivum – Sulfamat-substituiertes Fructose-Derivat",
+    "formulations": [
+      "Filmtabletten",
+      "Sprinkle-Kapseln (für PEG/Schluckstörungen)"
+    ],
+    "strengthsDACH": [
+      "25 mg, 50 mg, 100 mg, 200 mg Filmtabletten",
+      "15 mg, 25 mg Sprinkle-Kapseln"
+    ],
+    "kurzinfoDe": "Topiramat hat einen multimodalen Wirkmechanismus (Natriumkanalblockade, GABA-A-Potenzierung, AMPA/Kainat-Antagonismus, Karboanhydrasehemmung). Psychiatrisch off-label bei bipolaren Störungen (Körpergewicht! — signifikante Gewichtsreduktion als Nebeneffekt), Alkoholabhängigkeit und Binge-Eating-Störung. Kognitive Nebenwirkungen (Wortfindungsstörungen, Verlangsamung) sind häufig und limitierend. Teratogen (orofaziale Spaltbildungen, Hypospadie).",
+    "kurzinfoEn": "Topiramate has a multimodal mechanism (sodium channel blockade, GABA-A potentiation, AMPA/kainate antagonism, carbonic anhydrase inhibition). Used off-label psychiatrically in bipolar disorder (weight benefit!), alcohol use disorder, and binge-eating disorder. Cognitive side effects (word-finding difficulties, slowing) are common and limiting. Teratogenic (orofacial clefts, hypospadias).",
+    "receptorProfile": {
+      "sodiumChannel": "Zustandsabhängige Hemmung spannungsgesteuerter Natriumkanäle",
+      "gaba": "Positive Modulation von GABA-A-Rezeptoren (nicht-benzodiazepin-Bindungsstelle)",
+      "notes": "Antagonismus an AMPA- und Kainat-Glutamatrezeptoren; Hemmung der Karboanhydrase (Isoenzyme II und IV) → Risiko für metabolische Azidose und Nierensteine."
+    },
+    "commonSideEffectsDe": [
+      "Kognitive Verlangsamung, Wortfindungsstörungen ('Topamax-Tölpel')",
+      "Gewichtsreduktion (klinisch erwünscht bei Adipositas/Metabolischem Syndrom)",
+      "Parästhesien (häufig, gutartig, Karboanhydrasehemmung)",
+      "Sedierung, Müdigkeit",
+      "Schwindel",
+      "Nierensteine (Kalziumphosphat durch Karboanhydrasehemmung)",
+      "Verminderte Schweißproduktion / Hyperthermie (vor allem bei Kindern)"
+    ],
+    "commonSideEffectsEn": [
+      "Cognitive slowing, word-finding difficulties ('Dopamax')",
+      "Weight loss (clinically desirable in obesity/metabolic syndrome)",
+      "Paraesthesiae (common, benign, carbonic anhydrase inhibition)",
+      "Sedation, fatigue",
+      "Dizziness",
+      "Renal calculi (calcium phosphate via carbonic anhydrase inhibition)",
+      "Reduced sweating / hyperthermia (especially in children)"
+    ],
+    "seriousSideEffectsDe": [
+      "Akutes Winkelblockglaukom (akuter Augeninnendruckanstieg — Notfall, sofortiges Absetzen)",
+      "Teratogenität: orofaziale Spaltbildungen (~1,4%) und Hypospadie bei pränataler Exposition",
+      "Metabolische Azidose (Karboanhydrasehemmung; relevant bei Kombination mit Valproat)",
+      "Suizidgedanken (klassenweit für Antikonvulsiva)"
+    ],
+    "seriousSideEffectsEn": [
+      "Acute angle-closure glaucoma (acute intraocular pressure rise — emergency, immediate discontinuation)",
+      "Teratogenicity: orofacial clefts (~1.4%) and hypospadias with prenatal exposure",
+      "Metabolic acidosis (carbonic anhydrase inhibition; relevant with valproate co-medication)",
+      "Suicidal ideation (class effect for anticonvulsants)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Blutgasanalyse / Bikarbonat",
+        "frequency": "Bei klinischem Verdacht auf metabolische Azidose (Hyperventilation, Lethargie)",
+        "warningThreshold": "Bikarbonat <17 mmol/L",
+        "noteDe": "Topiramat hemmt Karboanhydrase → nicht-anionengap metabolische Azidose. Besonders bei hohen Dosen, Niereninsuffizienz und Kombination mit Valproat relevant.",
+        "noteEn": "Topiramate inhibits carbonic anhydrase → non-anion gap metabolic acidosis. Particularly relevant at high doses, renal impairment, and with valproate combination."
+      },
+      {
+        "parameter": "Körpergewicht",
+        "frequency": "Alle 3 Monate",
+        "noteDe": "Gewichtsreduktion ist ein häufiger und oft erwünschter Effekt. Mangelernährung und Untergewicht überwachen.",
+        "noteEn": "Weight loss is a common and often desired effect. Monitor for malnutrition and underweight."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Valproat",
+        "severity": "moderate",
+        "clinicalNoteDe": "Kombination erhöht das Risiko für Hyperammonämie und Enzephalopathie sowie metabolische Azidose über synergistische Effekte.",
+        "clinicalNoteEn": "Combination increases risk of hyperammonaemia/encephalopathy and metabolic acidosis via synergistic effects."
+      },
+      {
+        "interactsWith": "Orale Kontrazeptiva",
+        "severity": "moderate",
+        "clinicalNoteDe": "Bei Topiramat-Dosen >200 mg/Tag möglicherweise reduzierte Wirksamkeit hormoneller Kontrazeptiva durch schwache CYP3A4-Induktion. Zusätzliche Verhütungsmethoden erwägen.",
+        "clinicalNoteEn": "At topiramate doses >200 mg/day, possible reduced efficacy of hormonal contraceptives via weak CYP3A4 induction. Consider additional contraceptive methods."
+      },
+      {
+        "interactsWith": "Carbamazepin / Phenytoin",
+        "severity": "moderate",
+        "clinicalNoteDe": "Enzyminduktoren reduzieren Topiramat-Spiegel um 40–50%. Höhere Topiramat-Dosen ggf. erforderlich.",
+        "clinicalNoteEn": "Enzyme inducers reduce topiramate levels by 40–50%. Higher topiramate doses may be required."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Bikarbonat",
+        "condition": "<17 mmol/L",
+        "warningDe": "Metabolische Azidose: Topiramat-Dosis reduzieren oder absetzen. Ursachen klären (Hydratation, Nierenfunktion). Kaliumsubstitution erwägen.",
+        "warningEn": "Metabolic acidosis: reduce or discontinue topiramate. Investigate cause (hydration, renal function). Consider potassium supplementation.",
+        "severity": "reduce_dose"
+      }
+    ],
+    "renalDosing": "Bei eGFR <70 ml/min: Tagesdosis um 50% reduzieren. Hämodialyse: Supplementäre Dosis nach Dialyse erforderlich.",
+    "hepaticDosing": "Leichte bis moderate Leberinsuffizienz: erhöhte Exposition möglich. Vorsicht, niedrigere Startdosis.",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "sources": [
+      "Fachinformation Topamax (aktuelle Fassung)",
+      "Neri I et al., Topiramate and orofacial clefts, NEJM 2012",
+      "Johnson BA et al., Topiramate in alcohol dependence, NEJM 2007",
+      "McElroy SL et al., Topiramate in bipolar disorder, Biol Psychiatry 2000"
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "levetiracetam",
+    "genericName": "Levetiracetam",
+    "brandNamesDACH": [
+      "Keppra",
+      "Levetiracetam-neuraxpharm",
+      "Levetiracetam UCB"
+    ],
+    "atcCode": "N03AX14",
+    "substanceClass": "Antikonvulsivum – SV2A-Ligand",
+    "formulations": [
+      "Filmtabletten",
+      "Lösung",
+      "Konzentrat zur Infusionslösung (i.v.)"
+    ],
+    "strengthsDACH": [
+      "250 mg, 500 mg, 750 mg, 1000 mg Filmtabletten",
+      "100 mg/ml Lösung",
+      "500 mg/5 ml Konzentrat i.v."
+    ],
+    "kurzinfoDe": "Levetiracetam ist ein Antikonvulsivum mit einzigartigem Wirkmechanismus (Bindung an synaptisches Vesikelprotein SV2A → Modulation der Neurotransmitterfreisetzung). Gut verträglich metabolisch und interaktionsarm. Psychiatrisch relevant wegen häufiger neuropsychiatrischer Nebenwirkungen: Irritabilität, Aggressivität, Angst, Stimmungsschwankungen, selten Psychosen ('Keppra-Rage'). Ausschließlich renale Elimination.",
+    "kurzinfoEn": "Levetiracetam is an anticonvulsant with a unique mechanism (binding to synaptic vesicle protein SV2A → modulation of neurotransmitter release). Metabolically well tolerated and low interaction profile. Psychiatrically relevant due to frequent neuropsychiatric side effects: irritability, aggression, anxiety, mood swings, rarely psychosis ('Keppra rage'). Exclusively renally eliminated.",
+    "receptorProfile": {
+      "notes": "Bindet selektiv an das synaptische Vesikelprotein SV2A → reguliert Neurotransmitterfreisetzung. Kein klassischer Rezeptoragonismus/-antagonismus. Keine GABA- oder Glutamatrezeptor-Bindung."
+    },
+    "commonSideEffectsDe": [
+      "Somnolenz, Müdigkeit",
+      "Schwindel",
+      "Irritabilität, Reizbarkeit (häufig, klinisch bedeutsam)",
+      "Kopfschmerzen",
+      "Infektionen der oberen Atemwege",
+      "Anorexie"
+    ],
+    "commonSideEffectsEn": [
+      "Somnolence, fatigue",
+      "Dizziness",
+      "Irritability (common, clinically significant)",
+      "Headache",
+      "Upper respiratory infections",
+      "Anorexia"
+    ],
+    "seriousSideEffectsDe": [
+      "Schwere psychiatrische Reaktionen: Aggressivität, Psychose, Suizidgedanken, Verhaltensveränderungen",
+      "Schwere Hautreaktionen (Stevens-Johnson-Syndrom, TEN — sehr selten)",
+      "Suizidgedanken (klassenweit für Antikonvulsiva)"
+    ],
+    "seriousSideEffectsEn": [
+      "Severe psychiatric reactions: aggression, psychosis, suicidal ideation, behavioural changes",
+      "Severe skin reactions (Stevens-Johnson syndrome, TEN — very rare)",
+      "Suicidal ideation (class effect for anticonvulsants)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Psychiatrische Symptome / Verhalten",
+        "frequency": "Bei jeder Visite",
+        "warningThreshold": "Neu aufgetretene Aggressivität, Psychose oder Suizidgedanken",
+        "noteDe": "Neuropsychiatrische Nebenwirkungen (Irritabilität, Aggressivität, Stimmungsschwankungen) treten bei 10–30% auf. Patienten und Angehörige aufklären. Bei Psychose: Levetiracetam absetzen oder reduzieren, antipsychotische Behandlung.",
+        "noteEn": "Neuropsychiatric side effects (irritability, aggression, mood swings) occur in 10–30%. Counsel patients and carers. For psychosis: reduce or discontinue levetiracetam; initiate antipsychotic treatment."
+      },
+      {
+        "parameter": "Nierenfunktion (eGFR)",
+        "frequency": "Vor Beginn, dann jährlich oder bei klinischer Indikation",
+        "warningThreshold": "eGFR <80 ml/min: Dosisanpassung",
+        "noteDe": "Ausschließlich renale Elimination; Dosisanpassung nach eGFR-Tabelle erforderlich.",
+        "noteEn": "Exclusively renally eliminated; dose adjustment per eGFR table required."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Andere ZNS-aktive Substanzen",
+        "severity": "mild",
+        "clinicalNoteDe": "Levetiracetam hat wenige pharmakokinetische Interaktionen. Additive ZNS-dämpfende Effekte mit Sedativa und Alkohol. Klinisch interaktionsarme Substanz.",
+        "clinicalNoteEn": "Levetiracetam has few pharmacokinetic interactions. Additive CNS-depressant effects with sedatives and alcohol. Clinically a low-interaction agent."
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "eGFR 50–80: max. 1000–2000 mg zweimal täglich. eGFR 30–50: max. 500–1500 mg zweimal täglich. eGFR <30: max. 500–1000 mg zweimal täglich. Hämodialyse: Loading-Dosis 750 mg initial, dann 500–1000 mg nach jeder Dialysesitzung.",
+    "hepaticDosing": "Keine hepatische Metabolisierung; keine Dosisanpassung bei Leberinsuffizienz allein. Bei schwerer Leberinsuffizienz und gleichzeitiger Niereninsuffizienz kann renale Clearance reduziert sein.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": true,
+    "sources": [
+      "Fachinformation Keppra (aktuelle Fassung)",
+      "Helmstaedter C et al., Cognitive and psychiatric effects of levetiracetam, Epilepsy Behav 2008",
+      "Mula M et al., Psychiatric complications of levetiracetam, Neurology 2003"
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "lacosamid",
+    "genericName": "Lacosamid",
+    "brandNamesDACH": [
+      "Vimpat",
+      "Lacosamid-neuraxpharm"
+    ],
+    "atcCode": "N03AF04",
+    "substanceClass": "Antikonvulsivum – Funktionalisiertes Aminosäurederivat",
+    "formulations": [
+      "Filmtabletten",
+      "Lösung",
+      "Infusionslösung (i.v.)"
+    ],
+    "strengthsDACH": [
+      "50 mg, 100 mg, 150 mg, 200 mg Filmtabletten",
+      "10 mg/ml Lösung",
+      "10 mg/ml Infusionslösung i.v."
+    ],
+    "kurzinfoDe": "Lacosamid wirkt durch selektive Stärkung der langsamen Inaktivierung spannungsgesteuerter Natriumkanäle — einzigartiger Mechanismus unter den Antikonvulsiva. Psychiatrisch off-label als Augmentation bei bipolaren Störungen und Behandlungsresistenz. Günstiges Interaktionsprofil (kein CYP3A4-Induktor). PR-Intervall-Verlängerung → kardiales Monitoring vor Beginn. Missbrauchspotenzial: Betäubungsmittelpflicht (Anhang III BtMG) in Deutschland.",
+    "kurzinfoEn": "Lacosamide acts by selectively enhancing the slow inactivation of voltage-gated sodium channels — a unique mechanism among anticonvulsants. Used off-label psychiatrically as augmentation in bipolar disorder and treatment resistance. Favourable interaction profile (not a CYP3A4 inducer). PR interval prolongation → cardiac monitoring before initiation. Controlled substance (Schedule III BtMG) in Germany.",
+    "receptorProfile": {
+      "sodiumChannel": "Selektive Verstärkung der langsamen Inaktivierung (slow inactivation) spannungsgesteuerter Natriumkanäle — unterscheidet sich mechanistisch von CBZ/LTG (fast inactivation)"
+    },
+    "commonSideEffectsDe": [
+      "Schwindel (sehr häufig, vor allem zu Beginn)",
+      "Kopfschmerzen",
+      "Übelkeit, Erbrechen",
+      "Diplopie",
+      "Müdigkeit",
+      "Koordinationsstörungen"
+    ],
+    "commonSideEffectsEn": [
+      "Dizziness (very common, especially at initiation)",
+      "Headache",
+      "Nausea, vomiting",
+      "Diplopia",
+      "Fatigue",
+      "Incoordination"
+    ],
+    "seriousSideEffectsDe": [
+      "PR-Intervall-Verlängerung → AV-Block (besonders bei kardialer Vorerkrankung oder Komedikation mit PR-verlängernden Substanzen)",
+      "Vorhofflimmern / Vorhofflattern (selten, aber berichtet)",
+      "Suizidgedanken (klassenweit für Antikonvulsiva)"
+    ],
+    "seriousSideEffectsEn": [
+      "PR interval prolongation → AV block (especially with cardiac comorbidities or co-medication with PR-prolonging agents)",
+      "Atrial fibrillation / flutter (rare, but reported)",
+      "Suicidal ideation (class effect for anticonvulsants)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "EKG (PR-Intervall)",
+        "frequency": "Vor Beginn; bei kardialer Vorerkrankung auch unter Therapie",
+        "warningThreshold": "PR >200 ms → Vorsicht; AV-Block Grad II/III → Kontraindikation",
+        "noteDe": "Lacosamid verlängert das PR-Intervall dosisabhängig. Bei bekanntem AV-Block oder Kombination mit anderen PR-verlängernden Substanzen (Digoxin, Verapamil, β-Blocker) Vorsicht. EKG-Ausgangsuntersuchung obligat.",
+        "noteEn": "Lacosamide prolongs the PR interval in a dose-dependent manner. Caution with known AV block or co-medication with other PR-prolonging agents (digoxin, verapamil, β-blockers). Baseline ECG mandatory."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "PR-verlängernde Substanzen (Digoxin, Verapamil, β-Blocker, Amiodaron)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive PR-Intervall-Verlängerung → erhöhtes AV-Block-Risiko. EKG-Monitoring engmaschig.",
+        "clinicalNoteEn": "Additive PR interval prolongation → increased AV block risk. Close ECG monitoring required."
+      },
+      {
+        "interactsWith": "CYP3A4-Induktoren (Carbamazepin, Rifampicin)",
+        "severity": "mild",
+        "clinicalNoteDe": "CYP3A4-Induktoren können Lacosamid-Spiegel reduzieren. Klinisch meist moderat relevant; ggf. Dosisanpassung.",
+        "clinicalNoteEn": "CYP3A4 inducers may reduce lacosamide levels. Usually moderately relevant clinically; dose adjustment may be needed."
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "Leichte bis moderate Niereninsuffizienz (eGFR 30–80): keine Dosisanpassung. Schwere Niereninsuffizienz (eGFR <30): max. 250 mg/Tag. Hämodialyse: nach Dialyse supplementäre Dosis von bis zu 50% der Tagesdosis.",
+    "hepaticDosing": "Leichte bis moderate Leberinsuffizienz: max. 300 mg/Tag (Vorsicht). Schwere Leberinsuffizienz: nicht empfohlen (keine ausreichenden Daten).",
+    "tabletSplittable": true,
+    "liquidFormAvailable": true,
+    "sources": [
+      "Fachinformation Vimpat (aktuelle Fassung)",
+      "Ben-Menachem E et al., Lacosamide as adjunctive therapy, Epilepsia 2007",
+      "Wymer JP et al., Lacosamide in diabetic neuropathy, Clin J Pain 2009"
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "zonisamid",
+    "genericName": "Zonisamid",
+    "brandNamesDACH": [
+      "Zonegran",
+      "Zonisamid-neuraxpharm"
+    ],
+    "atcCode": "N03AX15",
+    "substanceClass": "Antikonvulsivum – Benzisoxazol-Sulfonamid",
+    "formulations": [
+      "Hartkapseln"
+    ],
+    "strengthsDACH": [
+      "25 mg, 50 mg, 100 mg Hartkapseln"
+    ],
+    "kurzinfoDe": "Zonisamid hat einen multimodalen Wirkmechanismus (Natriumkanal- und T-Typ-Kalziumkanalblockade, Karboanhydrasehemmung, schwacher Dopamin-/Serotoninagonismus). Zugelassen als Monotherapie und Adjuvans bei fokalen Epilepsien; off-label psychiatrisch bei bipolarer Störung (Körpergewicht günstig) und Parkinson-Psychose (Japan). Ähnliche Nebenwirkungen wie Topiramat: kognitive Verlangsamung, Nierensteine, Hypohidrose. Lange Halbwertszeit (60–100 h).",
+    "kurzinfoEn": "Zonisamide has a multimodal mechanism (sodium and T-type calcium channel blockade, carbonic anhydrase inhibition, weak dopaminergic/serotonergic agonism). Licensed as monotherapy and adjunct in focal epilepsy; off-label psychiatrically in bipolar disorder (weight benefit) and Parkinson's psychosis (Japan). Similar side effects to topiramate: cognitive slowing, renal calculi, hypohidrosis. Long half-life (60–100 h).",
+    "receptorProfile": {
+      "sodiumChannel": "Spannungsgesteuerte Natriumkanäle (zustandsabhängige Blockade)",
+      "notes": "Hemmung von T-Typ Kalziumkanälen; Karboanhydrasehemmung; schwache dopaminerge und serotonerge Wirkungen. Kein GABAerger Wirkmechanismus."
+    },
+    "commonSideEffectsDe": [
+      "Somnolenz, Müdigkeit",
+      "Schwindel, Ataxie",
+      "Anorexie, Gewichtsverlust",
+      "Gedächtnis- und Konzentrationsstörungen",
+      "Parästhesien (Karboanhydrasehemmung)",
+      "Nierensteine",
+      "Hypohidrose (verminderte Schweißproduktion), Hitzegefühl"
+    ],
+    "commonSideEffectsEn": [
+      "Somnolence, fatigue",
+      "Dizziness, ataxia",
+      "Anorexia, weight loss",
+      "Memory and concentration impairment",
+      "Paraesthesiae (carbonic anhydrase inhibition)",
+      "Renal calculi",
+      "Hypohidrosis (reduced sweating), heat intolerance"
+    ],
+    "seriousSideEffectsDe": [
+      "Schwere Hypersensitivitätsreaktionen (SJS, TEN — selten; Sulfonamid-Struktur beachten)",
+      "Metabolische Azidose",
+      "Psychiatrische Reaktionen: Depression, Psychose (selten)",
+      "Aplastische Anämie (sehr selten; Sulfonamid-Klasse)"
+    ],
+    "seriousSideEffectsEn": [
+      "Severe hypersensitivity reactions (SJS, TEN — rare; note sulphonamide structure)",
+      "Metabolic acidosis",
+      "Psychiatric reactions: depression, psychosis (rare)",
+      "Aplastic anaemia (very rare; sulphonamide class)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Nierenfunktion / Serumkreatinin",
+        "frequency": "Vor Beginn, alle 6 Monate",
+        "noteDe": "Karboanhydrasehemmung kann Nierensteinbildung begünstigen. Ausreichende Flüssigkeitszufuhr empfehlen. Bei Niereninsuffizienz Dosisanpassung und engmaschige Überwachung.",
+        "noteEn": "Carbonic anhydrase inhibition can promote renal stone formation. Advise adequate fluid intake. Dose adjustment and close monitoring with renal impairment."
+      },
+      {
+        "parameter": "Bikarbonat / Blutgasanalyse",
+        "frequency": "Bei Verdacht auf metabolische Azidose",
+        "noteDe": "Ähnlich wie Topiramat kann Zonisamid eine metabolische Azidose verursachen.",
+        "noteEn": "Similar to topiramate, zonisamide can cause metabolic acidosis."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "CYP3A4-Induktoren (Carbamazepin, Phenytoin, Phenobarbital)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Enzyminduktoren erhöhen Zonisamid-Clearance erheblich → Halbwertszeit auf ~36 h reduziert (von 60–100 h). Höhere Dosen erforderlich.",
+        "clinicalNoteEn": "Enzyme inducers substantially increase zonisamide clearance → half-life reduced to ~36 h (from 60–100 h). Higher doses required."
+      },
+      {
+        "interactsWith": "Topiramat / Andere Karboanhydrasehemmer",
+        "severity": "moderate",
+        "clinicalNoteDe": "Kombinierter Karboanhydrasehemmungseffekt → erhöhtes Risiko für Nierensteine, metabolische Azidose und Hypohidrose/Hyperthermie.",
+        "clinicalNoteEn": "Combined carbonic anhydrase inhibition → increased risk of renal calculi, metabolic acidosis, and hypohidrosis/hyperthermia."
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "Bei Niereninsuffizienz langsam titrieren und Spiegel überwachen. Schwere Niereninsuffizienz: Vorsicht, Dosisreduktion. Kontraindiziert bei eGFR <50 ml/min nach einigen Empfehlungen.",
+    "hepaticDosing": "Langsam titrieren; bei schwerer Leberinsuffizienz nicht empfohlen.",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "sources": [
+      "Fachinformation Zonegran (aktuelle Fassung)",
+      "Kothare SV, Kaleyias J, Zonisamide: review of pharmacology, Acta Neurol Scand 2008",
+      "Anand KS et al., Zonisamide in bipolar disorder, Indian J Psychiatry 2010"
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "clonazepam",
+    "genericName": "Clonazepam",
+    "brandNamesDACH": [
+      "Rivotril",
+      "Clonazepam-neuraxpharm"
+    ],
+    "atcCode": "N03AE01",
+    "substanceClass": "Benzodiazepin / Antikonvulsivum",
+    "formulations": [
+      "Tabletten",
+      "Tropfen (Lösung)",
+      "Injektionslösung (i.v.)"
+    ],
+    "strengthsDACH": [
+      "0,5 mg, 2 mg Tabletten",
+      "2,5 mg/ml Tropfen",
+      "1 mg/ml Injektionslösung"
+    ],
+    "kurzinfoDe": "Clonazepam ist ein hochpotentes Benzodiazepin mit antikonvulsiver, anxiolytischer und stimmungsstabilisierender adjuvanter Wirkung. Psychiatrisch als Akuttherapie bei manischen Episoden, Panikstörungen und katatonen Syndromen eingesetzt. Wirkt als positiver allosterischer Modulator an GABA-A-Rezeptoren. Erhebliches Abhängigkeitspotenzial — Langzeitanwendung kritisch zu hinterfragen. Längere Halbwertszeit als Lorazepam (18–50 h).",
+    "kurzinfoEn": "Clonazepam is a high-potency benzodiazepine with anticonvulsant, anxiolytic, and adjuvant mood-stabilising activity. Used psychiatrically as acute treatment in manic episodes, panic disorder, and catatonic syndromes. Acts as a positive allosteric modulator at GABA-A receptors. Significant dependence potential — long-term use requires critical reassessment. Longer half-life than lorazepam (18–50 h).",
+    "receptorProfile": {
+      "gaba": "Positiver allosterischer Modulator an GABA-A-Rezeptoren (Benzodiazepin-Bindungsstelle) → verstärkte Chloridkanalöffnung → Hyperpolarisation"
+    },
+    "commonSideEffectsDe": [
+      "Sedierung, Müdigkeit",
+      "Kognitive Beeinträchtigung, anterograde Amnesie",
+      "Ataxie, Koordinationsstörungen",
+      "Dysarthrie",
+      "Persönlichkeitsveränderungen (Enthemmung, paradoxe Erregung bei einigen Patienten)",
+      "Toleranzentwicklung"
+    ],
+    "commonSideEffectsEn": [
+      "Sedation, fatigue",
+      "Cognitive impairment, anterograde amnesia",
+      "Ataxia, incoordination",
+      "Dysarthria",
+      "Personality changes (disinhibition, paradoxical excitation in some patients)",
+      "Tolerance development"
+    ],
+    "seriousSideEffectsDe": [
+      "Abhängigkeit und Entzugssyndrom (bei abruptem Absetzen: Krampfanfälle, Delirium)",
+      "Respiratorische Depression (besonders mit Opioiden oder Alkohol)",
+      "Paradoxe Reaktion mit Agitation, Impulsivität (insbesondere bei Borderline-PS, Substanzmissbrauch)",
+      "Suizidgedanken (klassenweit für Antikonvulsiva)"
+    ],
+    "seriousSideEffectsEn": [
+      "Dependence and withdrawal syndrome (with abrupt discontinuation: seizures, delirium)",
+      "Respiratory depression (especially with opioids or alcohol)",
+      "Paradoxical reaction with agitation, impulsivity (especially in borderline PD, substance use)",
+      "Suicidal ideation (class effect for anticonvulsants)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Klinische Überprüfung der Indikation",
+        "frequency": "Alle 4–8 Wochen bei akuter Nutzung; monatlich bei Langzeitanwendung",
+        "noteDe": "Clonazepam sollte möglichst nicht länger als 4–8 Wochen eingesetzt werden (Abhängigkeitsrisiko). Regelmäßige Überprüfung der Indikation und Ausschleichplan erstellen.",
+        "noteEn": "Clonazepam should preferably not be used for more than 4–8 weeks (dependence risk). Regular indication review and tapering plan essential."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Opioide",
+        "severity": "severe",
+        "clinicalNoteDe": "Potenzierung der Atemdepression. FDA/EMA Blackbox-Warnung. Kombination nur bei zwingender Indikation, niedrigste effektive Dosen, Überwachung der Atemfunktion.",
+        "clinicalNoteEn": "Potentiation of respiratory depression. FDA/EMA black box warning. Combine only when compelling; use lowest effective doses, monitor respiratory function."
+      },
+      {
+        "interactsWith": "Alkohol / andere ZNS-Dämpfer",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive ZNS-Dämpfung und Atemdepression. Patienten explizit aufklären.",
+        "clinicalNoteEn": "Additive CNS depression and respiratory depression. Explicitly counsel patients."
+      },
+      {
+        "interactsWith": "Flumazenil",
+        "severity": "moderate",
+        "clinicalNoteDe": "Flumazenil antagonisiert Clonazepam kompetitiv am Benzodiazepin-Rezeptor → schnelles Wiederauftreten der Sedierung möglich nach Abklingen von Flumazenil (kurze Halbwertszeit von Flumazenil ~1 h vs. Clonazepam 18–50 h).",
+        "clinicalNoteEn": "Flumazenil competitively antagonises clonazepam at the benzodiazepine receptor → resedation possible after flumazenil wears off (short half-life of flumazenil ~1 h vs clonazepam 18–50 h)."
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "Bei schwerer Niereninsuffizienz Vorsicht (verlängerte Halbwertszeit der aktiven Metaboliten). Dosis reduzieren.",
+    "hepaticDosing": "Bei Leberinsuffizienz deutlich verlängerte Halbwertszeit. Dosis erheblich reduzieren; Clonazepam bei schwerer Leberinsuffizienz meiden.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": true,
+    "sources": [
+      "Fachinformation Rivotril (aktuelle Fassung)",
+      "Freemann MP, Freeman SA, Benzodiazepines in bipolar disorder, CNS Spectrums 2006",
+      "Léo R et al., Clonazepam in acute mania, Bipolar Disord 2003"
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "lorazepam",
+    "genericName": "Lorazepam",
+    "brandNamesDACH": [
+      "Tavor",
+      "Temesta",
+      "Lorazepam-neuraxpharm"
+    ],
+    "atcCode": "N05BA06",
+    "substanceClass": "Benzodiazepin – kurze Halbwertszeit, kein aktiver Metabolit",
+    "formulations": [
+      "Tabletten",
+      "Schmelztabletten (Expidet/lyophilisiert)",
+      "Injektionslösung (i.v. / i.m.)"
+    ],
+    "strengthsDACH": [
+      "0,5 mg, 1 mg, 2,5 mg Tabletten",
+      "1 mg, 2,5 mg Schmelztabletten",
+      "2 mg/ml Injektionslösung"
+    ],
+    "kurzinfoDe": "Lorazepam ist ein mittelpotentes Benzodiazepin ohne aktive Metaboliten (direkte Glukuronidierung, CYP-unabhängig). Halbwertszeit 10–20 h. Psychiatrisch bei akuter Agitation (i.m./i.v.), Katatonie, Status epilepticus und kurzfristiger Angst/Schlaflosigkeit eingesetzt. Geringer Interaktionsanfälligkeit durch fehlende CYP-Metabolisierung. Wegen fehlender aktiver Metaboliten besser verträglich bei Leberinsuffizienz als lange wirkende Benzodiazepine.",
+    "kurzinfoEn": "Lorazepam is a medium-potency benzodiazepine without active metabolites (direct glucuronidation, CYP-independent). Half-life 10–20 h. Used psychiatrically for acute agitation (IM/IV), catatonia, status epilepticus, and short-term anxiety/insomnia. Low interaction susceptibility due to CYP-independent metabolism. Better tolerated in hepatic impairment than long-acting benzodiazepines due to absence of active metabolites.",
+    "receptorProfile": {
+      "gaba": "Positiver allosterischer Modulator an GABA-A-Rezeptoren → verstärkte Chloridkanalöffnung. Direkte Glukuronidierung (UGT-Enzyme); kein CYP-abhängiger Metabolismus."
+    },
+    "commonSideEffectsDe": [
+      "Sedierung (stark ausgeprägt, gewünscht bei Agitation)",
+      "Anterograde Amnesie",
+      "Atemdepression (besonders parenteral, dosisabhängig)",
+      "Ataxie, Koordinationsstörungen",
+      "Muskelschwäche",
+      "Tollheit, Stimmungsveränderungen"
+    ],
+    "commonSideEffectsEn": [
+      "Sedation (pronounced, desirable in agitation)",
+      "Anterograde amnesia",
+      "Respiratory depression (especially parenteral, dose-dependent)",
+      "Ataxia, incoordination",
+      "Muscle weakness",
+      "Mood changes"
+    ],
+    "seriousSideEffectsDe": [
+      "Atemdepression bis Atemstillstand (i.v., besonders mit Opioiden oder hohen Dosen)",
+      "Abhängigkeit und Entzugssyndrom bei längerfristiger Anwendung",
+      "Paradoxe Reaktion (Agitation, Enthemmung — besonders bei Substanzmissbrauch)"
+    ],
+    "seriousSideEffectsEn": [
+      "Respiratory depression to apnoea (IV route, especially with opioids or high doses)",
+      "Dependence and withdrawal with prolonged use",
+      "Paradoxical reaction (agitation, disinhibition — especially in substance use)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Klinische Überprüfung der Indikation",
+        "frequency": "Täglich bei stationärer akuter Anwendung; alle 4 Wochen bei ambulanter Anwendung",
+        "noteDe": "Lorazepam ist zur kurzzeitigen Behandlung (max. 4 Wochen) vorgesehen. Längerer Einsatz erfordert dokumentierte Nutzen-Risiko-Abwägung und Entzugsplanung.",
+        "noteEn": "Lorazepam is intended for short-term treatment (max 4 weeks). Prolonged use requires documented benefit-risk assessment and tapering plan."
+      },
+      {
+        "parameter": "Atemfunktion (bei parenteraler Anwendung)",
+        "frequency": "Kontinuierlich während und 1–2 h nach i.v./i.m.-Applikation",
+        "warningThreshold": "SpO₂ <92%, Atemfrequenz <10/min",
+        "noteDe": "Parenterale Lorazepam-Gabe erfordert Reanimationsbereitschaft und Monitoring. Flumazenil als Antidot bereithalten.",
+        "noteEn": "Parenteral lorazepam administration requires resuscitation readiness and monitoring. Flumazenil antidote must be available."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Opioide",
+        "severity": "severe",
+        "clinicalNoteDe": "Additive/synergistische Atemdepression. Blackbox-Warnung. Bei Kombination immer Überwachung und Reversal mit Flumazenil verfügbar halten.",
+        "clinicalNoteEn": "Additive/synergistic respiratory depression. Black box warning. Always maintain monitoring and flumazenil reversal capability when combining."
+      },
+      {
+        "interactsWith": "Alkohol / Andere ZNS-Dämpfer",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive sedierende und atemdepressive Wirkung.",
+        "clinicalNoteEn": "Additive sedating and respiratory depressant effect."
+      },
+      {
+        "interactsWith": "Valproat",
+        "severity": "mild",
+        "clinicalNoteDe": "Valproat hemmt die Glukuronidierung von Lorazepam → leicht erhöhte Lorazepam-Exposition möglich. Klinisch meist nicht relevant.",
+        "clinicalNoteEn": "Valproate inhibits lorazepam glucuronidation → mildly increased lorazepam exposure possible. Usually not clinically relevant."
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "Lorazepam hat keine aktiven Metaboliten; renale Insuffizienz hat geringen Einfluss auf Pharmakokinetik. Vorsicht bei schwerer Niereninsuffizienz (Ansammlung des Glukuronid-Konjugats).",
+    "hepaticDosing": "Leichte bis moderate Leberinsuffizienz: Lorazepam ist bevorzugtes Benzodiazepin (keine CYP-abhängige Metabolisierung, kein First-pass-Effekt-Problem). Bei schwerer Leberinsuffizienz dennoch vorsichtig titrieren.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "sources": [
+      "Fachinformation Tavor (aktuelle Fassung)",
+      "Rosebush PI, Mazurek MF, Lorazepam-responsive catatonia, J Clin Psychiatry 1996",
+      "Battaglia J, Rapid tranquilisation for agitation, J Clin Psychiatry 2005"
+    ],
+    "lastReviewed": "2026-06-09",
+    "contentDisclaimer": "documentation_support_only"
+  }
+]

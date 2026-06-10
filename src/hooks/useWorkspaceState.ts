@@ -1145,7 +1145,7 @@ export function useWorkspaceState(
   }, [activeSectionId, lastVersion])
 
   const handleRewrite = useCallback(() => {
-    console.info('[mock] rewrite')
+    // Placeholder: rewrite action is not yet implemented.
   }, [])
 
   const handleCopy = useCallback(async () => {
@@ -1203,10 +1203,6 @@ export function useWorkspaceState(
   const selectAiTool = useCallback((key: AiToolKey) => {
     setSelectedAiTool(key)
     setUserToolOverride(true)
-  }, [])
-
-  const mockAction = useCallback((action: string) => {
-    console.info(`[mock] ${action}`)
   }, [])
 
   const isTherapieVerlaufDocument = selectedDocumentType === 'therapie-verlauf'
@@ -1508,7 +1504,6 @@ export function useWorkspaceState(
     selectAiTool,
     setKiExtraInstruction,
     kiInstructions,
-    mockAction,
     getLatestSectionContents,
     restoreFromSnapshot,
     hydrateDocumentFromStorage,

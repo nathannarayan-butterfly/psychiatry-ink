@@ -13,7 +13,6 @@ import { ChecklistPanel } from '../ChecklistPanel'
 import { WorkspaceEditorOverlay } from '../WorkspaceEditorOverlay'
 import { FloatingSelectionToolbar, type SelectionActionId } from './FloatingSelectionToolbar'
 import { NotionSectionAiLinks } from './NotionSectionAiLinks'
-import { PasteAssistant, type PasteActionId } from './PasteAssistant'
 import { showNotionToast } from './NotionToast'
 import { SlashCommandMenu, type SlashCommandId } from './SlashCommandMenu'
 import type { PendingPaste } from './NotionPaper'
@@ -39,7 +38,6 @@ interface NotionMultiSectionEditorProps {
   onSectionAiTool?: (sectionId: string, tool: AiToolKey) => void
   onPasteOrigin: () => void
   onSelectionAction: (action: SelectionActionId, selectedText: string) => void
-  onPasteAction: (action: PasteActionId, pastedText: string) => void
   onSlashCommand: (command: SlashCommandId) => void
   commandMenuRequest?: number
   focusRequest?: number
@@ -80,7 +78,6 @@ export function NotionMultiSectionEditor({
   onSectionAiTool,
   onPasteOrigin,
   onSelectionAction,
-  onPasteAction,
   onSlashCommand,
   commandMenuRequest = 0,
   focusRequest = 0,
@@ -91,10 +88,6 @@ export function NotionMultiSectionEditor({
   const textareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({})
   const [activeTextareaId, setActiveTextareaId] = useState<string | null>(activeSectionId)
   const [selectionToolbar, setSelectionToolbar] = useState<{
-    text: string
-    position: { top: number; left: number }
-  } | null>(null)
-  const [pasteAssistant, setPasteAssistant] = useState<{
     text: string
     position: { top: number; left: number }
   } | null>(null)
@@ -147,10 +140,6 @@ export function NotionMultiSectionEditor({
       textarea.focus()
       textarea.setSelectionRange(pendingPaste.text.length, pendingPaste.text.length)
       resizeTextarea(textarea)
-      setPasteAssistant({
-        text: pendingPaste.text,
-        position: getSelectionPosition(textarea),
-      })
       setSelectionToolbar(null)
       setSlashMenu(null)
     })
@@ -164,7 +153,6 @@ export function NotionMultiSectionEditor({
 
   const closeMenus = useCallback(() => {
     setSelectionToolbar(null)
-    setPasteAssistant(null)
     setSlashMenu(null)
   }, [])
 
@@ -182,7 +170,6 @@ export function NotionMultiSectionEditor({
       sectionId,
     })
     setSelectionToolbar(null)
-    setPasteAssistant(null)
   }, [activeSectionId, activeTextareaId, readOnly])
 
   useEffect(() => {
@@ -224,25 +211,14 @@ export function NotionMultiSectionEditor({
         text: selectedText,
         position: getSelectionPosition(textarea),
       })
-      setPasteAssistant(null)
       setSlashMenu(null)
     },
     [getSectionContent, readOnly, sections],
   )
 
   const handlePaste = useCallback(
-    (event: React.ClipboardEvent<HTMLTextAreaElement>, sectionId: string) => {
+    (_event: React.ClipboardEvent<HTMLTextAreaElement>, _sectionId: string) => {
       onPasteOrigin()
-      const pasted = event.clipboardData.getData('text/plain')
-      if (!pasted.trim()) return
-
-      const textarea = textareaRefs.current[sectionId]
-      if (!textarea) return
-
-      setPasteAssistant({
-        text: pasted,
-        position: getSelectionPosition(textarea),
-      })
       setSelectionToolbar(null)
       setSlashMenu(null)
     },
@@ -362,7 +338,7 @@ export function NotionMultiSectionEditor({
                 window.setTimeout(() => {
                   if (
                     !document.activeElement?.closest(
-                      '.notion-selection-toolbar, .notion-paste-assistant, .notion-slash-menu, .notion-editor__section-ai',
+                      '.notion-selection-toolbar, .notion-slash-menu, .notion-editor__section-ai',
                     )
                   ) {
                     closeMenus()
@@ -406,18 +382,6 @@ export function NotionMultiSectionEditor({
             closeMenus()
           }}
           onClose={closeMenus}
-        />
-      ) : null}
-
-      {pasteAssistant ? (
-        <PasteAssistant
-          position={pasteAssistant.position}
-          pastedText={pasteAssistant.text}
-          onAction={(action, text) => {
-            onPasteAction(action, text)
-            closeMenus()
-          }}
-          onDismiss={closeMenus}
         />
       ) : null}
 

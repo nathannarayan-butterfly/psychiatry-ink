@@ -63,7 +63,7 @@ function AccentColorCard({
         </div>
       <div>
         <span className="text-xs font-medium text-ink">{preset.label}</span>
-        <span className="mt-0.5 block text-[11px] leading-snug text-muted">{preset.description}</span>
+        <span className="mt-0.5 block text-[12px] leading-snug text-muted">{preset.description}</span>
       </div>
     </button>
   )
@@ -97,7 +97,7 @@ function FontFamilyCard({
         Psychiatrie Dokumentation
       </span>
       <span className="text-xs font-medium text-ink">{preset.label}</span>
-      <span className="text-[11px] leading-snug text-muted">{preset.description}</span>
+      <span className="text-[12px] leading-snug text-muted">{preset.description}</span>
     </button>
   )
 }
@@ -162,7 +162,7 @@ export function AppearanceSection({ appearance }: AppearanceSectionProps) {
         <div className="space-y-4">
           {fontFamilyGroups.map((group) => (
             <div key={group.label}>
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
+              <p className="mb-2 text-[12px] font-semibold uppercase tracking-wider text-muted">
                 {group.label}
               </p>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">

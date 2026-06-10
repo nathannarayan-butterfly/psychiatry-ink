@@ -6,7 +6,7 @@ type Localized = Record<UiLanguage, string>
 
 /** @deprecated Use getPsychopathNormalBefundHeading(language, englishVariant) */
 export const psychopathNormalBefundHeading: Localized = {
-  de: 'Psychopathologischer Befund, AMDP-orientiert',
+  de: 'Psychopathologischer Befund',
   en: 'Mental State Examination',
   fr: 'Examen psychiatrique',
   es: 'Exploración psicopatológica',

@@ -1,0 +1,2754 @@
+[
+  {
+    "id": "methylphenidat-ir",
+    "genericName": "Methylphenidat (IR)",
+    "brandNamesDACH": ["Ritalin", "Medikinet", "Equasym", "Rubifen"],
+    "atcCode": "N06BA04",
+    "substanceClass": "Stimulanzien / Dopamin-Noradrenalin-Wiederaufnahmehemmer",
+    "formulations": ["Tablette IR", "Lösung oral (Medikinet 5 mg/ml)"],
+    "strengthsDACH": ["5 mg", "10 mg", "20 mg"],
+    "kurzinfoDe": "Methylphenidat IR ist ein zentrales Stimulans der ersten Wahl bei ADHS im Kindes-, Jugend- und Erwachsenenalter. Es hemmt die Wiederaufnahme von Dopamin und Noradrenalin im präfrontalen Kortex und Striatum. Die kurze Wirkdauer von 3–5 h bedingt in der Regel 2–3 Einnahmen täglich. Unterliegt in Deutschland dem BtMG (Anlage III); Verschreibung nur auf BtM-Rezept. In der Schweiz und Österreich ebenfalls kontrolliert, jedoch mit leicht abweichenden Regelungen.",
+    "kurzinfoEn": "Methylphenidate IR is a first-line central stimulant for ADHD across all age groups. It inhibits reuptake of dopamine and noradrenaline. The short duration of action (3–5 h) typically requires 2–3 daily doses. Classified as a controlled substance under the German Narcotics Act (BtMG Anlage III); special prescription required. Similarly controlled in Switzerland and Austria.",
+    "receptorProfile": {
+      "DAT (Dopamintransporter)": "Hochaffine Hemmung – primärer Wirkmechanismus",
+      "NET (Noradrenalintransporter)": "Moderate Hemmung",
+      "SERT": "Vernachlässigbar"
+    },
+    "commonSideEffectsDe": [
+      "Appetitverlust, Gewichtsabnahme",
+      "Einschlafstörungen (bei Einnahme zu spät)",
+      "Herzfrequenzanstieg, leichter Blutdruckanstieg",
+      "Kopfschmerzen",
+      "Reizbarkeit, emotionale Labilität ('Rebound')",
+      "Mundtrockenheit",
+      "Übelkeit"
+    ],
+    "commonSideEffectsEn": [
+      "Decreased appetite, weight loss",
+      "Insomnia (if dosed too late in the day)",
+      "Increased heart rate, mild blood pressure elevation",
+      "Headache",
+      "Irritability, emotional lability ('rebound')",
+      "Dry mouth",
+      "Nausea"
+    ],
+    "seriousSideEffectsDe": [
+      "Kardiovaskuläre Ereignisse (Hypertonie, Tachykardie, selten Arrhythmie) – Risiko bei vorbestehender Herzerkrankung",
+      "Wachstumsverzögerung bei Kindern (langfristig, dosisabhängig – regelmässige Grössenkontrollen)",
+      "Psychose/Manie (selten, insbesondere bei psychiatrischer Vorerkrankung)",
+      "Tic-Exazerbation (oft vorübergehend)",
+      "Missbrauchspotenzial / Abhängigkeit (v. a. bei i.v. oder inhalativem Missbrauch)"
+    ],
+    "seriousSideEffectsEn": [
+      "Cardiovascular events (hypertension, tachycardia, rarely arrhythmia) – risk elevated in pre-existing cardiac disease",
+      "Growth retardation in children (long-term, dose-dependent – regular height monitoring required)",
+      "Psychosis/mania (rare, particularly with underlying psychiatric conditions)",
+      "Tic exacerbation (often transient)",
+      "Abuse potential/dependence (especially with IV or inhalation misuse)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Herzfrequenz & Blutdruck",
+        "frequency": "Vor Beginn, dann alle 3 Monate (stabil: alle 6 Monate)",
+        "noteDe": "Bei Puls > 100/min oder RR > 140/90 Rücksprache mit Kardiologie; EKG bei Risikopatienten vor Therapiebeginn",
+        "noteEn": "If HR > 100/min or BP > 140/90, cardiology consultation; baseline ECG in patients with cardiac risk factors"
+      },
+      {
+        "parameter": "Körpergrösse & Gewicht (Kinder/Jugendliche)",
+        "frequency": "Alle 6 Monate",
+        "noteDe": "Wachstumskurve führen; bei persistierendem Wachstumsdefizit Dosisreduktion oder 'Drug Holiday' erwägen",
+        "noteEn": "Maintain growth chart; consider dose reduction or drug holiday if persistent growth deficit"
+      },
+      {
+        "parameter": "Psychiatrische Symptome",
+        "frequency": "Bei jedem Kontakt",
+        "noteDe": "Tic-Neuauftreten, Psychose, Stimmungsveränderungen dokumentieren",
+        "noteEn": "Document new onset tics, psychosis, or mood changes"
+      },
+      {
+        "parameter": "Missbrauch / Diversion",
+        "frequency": "Regelmässig",
+        "noteDe": "BtM-Rezept korrekt ausfüllen; bei Verdacht auf Missbrauch Therapieüberprüfung",
+        "noteEn": "Controlled substance prescription vigilance; reassess if diversion or misuse suspected"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Hypertensive Krise möglich; Abstand von mind. 14 Tagen nach MAOI-Absetzen einhalten",
+        "clinicalNoteEn": "Risk of hypertensive crisis; allow at least 14 days after MAOI discontinuation"
+      },
+      {
+        "interactsWith": "Antihypertensiva",
+        "severity": "moderate",
+        "clinicalNoteDe": "Methylphenidat kann blutdrucksenkende Wirkung abschwächen",
+        "clinicalNoteEn": "Methylphenidate may attenuate the antihypertensive effect"
+      },
+      {
+        "interactsWith": "SSRI / Antidepressiva",
+        "severity": "mild",
+        "clinicalNoteDe": "Leichte Verstärkung serotonerger Effekte möglich; klinisch meist tolerabel",
+        "clinicalNoteEn": "Mild additive serotonergic effects; usually clinically tolerable"
+      },
+      {
+        "interactsWith": "Alkohol",
+        "severity": "moderate",
+        "clinicalNoteDe": "Veränderte Kinetik; Patienten über Risiko aufklären",
+        "clinicalNoteEn": "Altered pharmacokinetics; counsel patients on risk"
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Blutdruck",
+        "condition": "RR > 140/90 mmHg unter Therapie",
+        "warningDe": "Dosisreduktion oder Therapiepause erwägen; kardiologische Abklärung",
+        "warningEn": "Consider dose reduction or treatment pause; cardiology referral",
+        "severity": "reduce_dose"
+      }
+    ],
+    "renalDosing": "Keine spezifische Dosisanpassung erforderlich; bei schwerer Niereninsuffizienz Vorsicht",
+    "hepaticDosing": "Keine spezifische Dosisanpassung; bei schwerer Leberfunktionsstörung Vorsicht und engmaschiges Monitoring",
+    "tabletSplittable": true,
+    "liquidFormAvailable": true,
+    "sources": ["Fachinformation Ritalin (Novartis DE, Stand 2024)", "S3-Leitlinie ADHS (DGKJP/DGPPN 2023)", "BAK BtMG Verschreibungsverordnung"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "methylphenidat-oros",
+    "genericName": "Methylphenidat OROS",
+    "brandNamesDACH": ["Concerta"],
+    "atcCode": "N06BA04",
+    "substanceClass": "Stimulanzien / Dopamin-Noradrenalin-Wiederaufnahmehemmer (Retardformulierung)",
+    "formulations": ["Tablette OROS (osmotisches System, nicht teilbar, nicht zermörsern)"],
+    "strengthsDACH": ["18 mg", "27 mg", "36 mg", "54 mg"],
+    "kurzinfoDe": "Concerta verwendet ein osmotisches Pumpsystem (OROS), das Methylphenidat über ca. 12 h kontinuierlich freisetzt. Die Hülle wird unverändert im Stuhl ausgeschieden – Patienten entsprechend aufklären. Die Tablette darf unter keinen Umständen zerteilt, zermörsert oder gekaut werden, da dies zu einer unkontrollierten Freisetzung der Gesamtdosis führt. Unterliegt dem BtMG (Anlage III).",
+    "kurzinfoEn": "Concerta employs an osmotic pump system (OROS) releasing methylphenidate over approximately 12 hours. The tablet shell is excreted intact in the stool – patients should be informed. The tablet must never be split, crushed, or chewed, as this causes immediate release of the entire dose. Controlled substance under the German BtMG (Anlage III).",
+    "receptorProfile": {
+      "DAT (Dopamintransporter)": "Hochaffine Hemmung – primärer Wirkmechanismus",
+      "NET (Noradrenalintransporter)": "Moderate Hemmung"
+    },
+    "commonSideEffectsDe": [
+      "Appetitverlust, Gewichtsabnahme",
+      "Einschlafstörungen",
+      "Herzfrequenzanstieg, Blutdruckanstieg",
+      "Kopfschmerzen",
+      "Reizbarkeit"
+    ],
+    "commonSideEffectsEn": [
+      "Decreased appetite, weight loss",
+      "Insomnia",
+      "Increased heart rate and blood pressure",
+      "Headache",
+      "Irritability"
+    ],
+    "seriousSideEffectsDe": [
+      "Kardiovaskuläre Ereignisse bei Risikopatienten",
+      "Wachstumsverzögerung bei Kindern",
+      "Psychose/Manie (selten)",
+      "Perorale Obstruktion bei enger Passage (OROS-System – bei bekannter GI-Stenose kontraindiziert)"
+    ],
+    "seriousSideEffectsEn": [
+      "Cardiovascular events in high-risk patients",
+      "Growth retardation in children",
+      "Psychosis/mania (rare)",
+      "Oral obstruction in narrow GI passages (OROS system – contraindicated with known GI strictures)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Herzfrequenz & Blutdruck",
+        "frequency": "Vor Beginn, alle 3 Monate",
+        "noteDe": "Wie bei Methylphenidat IR; EKG bei kardialen Risikofaktoren",
+        "noteEn": "As per IR methylphenidate; ECG in patients with cardiac risk factors"
+      },
+      {
+        "parameter": "GI-Anamnese",
+        "frequency": "Vor Beginn",
+        "noteDe": "Kontraindiziert bei GI-Stenosen, Dysphagie oder schwerer Motilitätsstörung",
+        "noteEn": "Contraindicated in GI strictures, dysphagia, or severe motility disorders"
+      },
+      {
+        "parameter": "Körpergrösse & Gewicht (Kinder/Jugendliche)",
+        "frequency": "Alle 6 Monate",
+        "noteDe": "Wachstumskurve führen",
+        "noteEn": "Maintain growth chart"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Hypertensive Krise; Abstand von mind. 14 Tagen erforderlich",
+        "clinicalNoteEn": "Hypertensive crisis; 14-day washout required after MAOI"
+      },
+      {
+        "interactsWith": "Antihypertensiva",
+        "severity": "moderate",
+        "clinicalNoteDe": "Abschwächung des antihypertensiven Effekts möglich",
+        "clinicalNoteEn": "May attenuate antihypertensive effects"
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Blutdruck",
+        "condition": "Anhaltende Hypertonie",
+        "warningDe": "Dosisreduktion oder Therapieumstellung; kardiologische Abklärung",
+        "warningEn": "Dose reduction or switch; cardiology referral",
+        "severity": "reduce_dose"
+      }
+    ],
+    "renalDosing": "Keine spezifische Anpassung erforderlich",
+    "hepaticDosing": "Vorsicht bei schwerer Leberinsuffizienz",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "sources": ["Fachinformation Concerta (Janssen DE, Stand 2024)", "S3-Leitlinie ADHS 2023"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "methylphenidat-retard",
+    "genericName": "Methylphenidat retard",
+    "brandNamesDACH": ["Ritalin LA", "Medikinet retard", "Equasym retard"],
+    "atcCode": "N06BA04",
+    "substanceClass": "Stimulanzien / Dopamin-Noradrenalin-Wiederaufnahmehemmer (biphasische Retardformulierung)",
+    "formulations": ["Kapsel mit Retardgranulat (biphasisch: ~50 % IR + ~50 % verzögert)", "Kapselinhalt kann auf Löffel Nahrung gestreut werden – nicht kauen oder mörsern"],
+    "strengthsDACH": ["5 mg", "10 mg", "15 mg", "20 mg", "25 mg", "30 mg", "40 mg"],
+    "kurzinfoDe": "Ritalin LA und Medikinet retard sind biphasische Kapseln mit ca. 8–10-stündiger Gesamtwirkdauer. Etwa die Hälfte der Dosis wird sofort, die andere Hälfte verzögert freigesetzt. Kapseln können geöffnet und der Inhalt auf weiche Nahrung (z. B. Joghurt) gestreut werden – das Granulat selbst darf nicht gekaut oder gemörsert werden. Unterliegt dem BtMG. Einmal-tägliche Einnahme möglich.",
+    "kurzinfoEn": "Ritalin LA and Medikinet retard are biphasic capsules with approximately 8–10 hours of total duration. About half the dose is released immediately, the remainder in a delayed phase. Capsules may be opened and sprinkled on soft food (e.g., yoghurt) – the pellets must not be chewed or crushed. Controlled substance (BtMG). Once-daily dosing possible.",
+    "receptorProfile": {
+      "DAT (Dopamintransporter)": "Hochaffine Hemmung",
+      "NET (Noradrenalintransporter)": "Moderate Hemmung"
+    },
+    "commonSideEffectsDe": [
+      "Appetitverlust",
+      "Einschlafstörungen (geringer als bei IR)",
+      "Herzfrequenz- und Blutdruckanstieg",
+      "Kopfschmerzen",
+      "Reizbarkeit"
+    ],
+    "commonSideEffectsEn": [
+      "Decreased appetite",
+      "Insomnia (less frequent than IR)",
+      "Elevated heart rate and blood pressure",
+      "Headache",
+      "Irritability"
+    ],
+    "seriousSideEffectsDe": [
+      "Kardiovaskuläre Ereignisse",
+      "Wachstumsverzögerung",
+      "Psychose/Manie"
+    ],
+    "seriousSideEffectsEn": [
+      "Cardiovascular events",
+      "Growth retardation",
+      "Psychosis/mania"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Herzfrequenz & Blutdruck",
+        "frequency": "Vor Beginn, alle 3–6 Monate",
+        "noteDe": "EKG bei kardialen Risikofaktoren vor Beginn",
+        "noteEn": "ECG before initiation in patients with cardiac risk factors"
+      },
+      {
+        "parameter": "Körpergrösse & Gewicht",
+        "frequency": "Alle 6 Monate (Kinder)",
+        "noteDe": "Wachstumsverlaufskurve dokumentieren; 'Drug Holiday' in Schulferien erwägen",
+        "noteEn": "Document growth chart; consider school holiday drug holiday"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Mind. 14 Tage Abstand nach MAOI-Absetzen",
+        "clinicalNoteEn": "Minimum 14-day washout after MAOI"
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "Keine spezifische Anpassung",
+    "hepaticDosing": "Vorsicht bei schwerer Leberinsuffizienz",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "sources": ["Fachinformation Ritalin LA / Medikinet retard (DE, Stand 2024)", "S3-Leitlinie ADHS 2023"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "lisdexamfetamin",
+    "genericName": "Lisdexamfetamin",
+    "brandNamesDACH": ["Elvanse", "Elvanse Adult"],
+    "atcCode": "N06BA12",
+    "substanceClass": "Stimulanzien / Prodrug (Dexamfetamin-Lysin-Konjugat)",
+    "formulations": ["Kapsel zur oralen Einnahme", "Kapselinhalt in Wasser auflösbar"],
+    "strengthsDACH": ["20 mg", "30 mg", "40 mg", "50 mg", "60 mg", "70 mg"],
+    "kurzinfoDe": "Lisdexamfetamin ist ein inaktives Prodrug, das nach oraler Resorption enzymatisch zu aktivem d-Amfetamin gespalten wird. Die langsame Hydrolyse sorgt für ein gleichmässiges Plasma-Profil mit ca. 12–14 h Wirkdauer und reduziert das Missbrauchspotenzial im Vergleich zu direktem Amfetamin. Indiziert bei Kindern ≥ 6 J., Jugendlichen und Erwachsenen mit ADHS. In Deutschland BtMG Anlage III; in CH und AT ebenfalls verschreibungspflichtig und kontrolliert. Stärkere sympathomimetische Wirkung als Methylphenidat; Herzfrequenz- und Blutdruckanstieg ausgeprägt.",
+    "kurzinfoEn": "Lisdexamfetamine is an inactive prodrug hydrolysed to active d-amphetamine after oral absorption. The slow hydrolysis provides a smooth plasma profile (~12–14 h) and reduced abuse potential compared with direct amphetamine. Indicated for ADHD in children ≥ 6 years, adolescents, and adults. Controlled substance (BtMG Anlage III in Germany; similarly in CH/AT). Stronger sympathomimetic effect than methylphenidate; pronounced HR and BP elevation.",
+    "receptorProfile": {
+      "DAT": "Reverser Transport (Dopaminausschüttung), Wiederaufnahmehemmung",
+      "NET": "Reverser Transport (Noradrenalinausschüttung), starke Hemmung",
+      "SERT": "Schwache Aktivität",
+      "TAAR1": "Agonismus – verstärkt monoaminerge Wirkung"
+    },
+    "commonSideEffectsDe": [
+      "Deutlicher Appetitverlust, Gewichtsabnahme",
+      "Einschlafstörungen",
+      "Herzfrequenzanstieg, Blutdruckerhöhung",
+      "Mundtrockenheit",
+      "Kopfschmerzen",
+      "Reizbarkeit, emotionaler Rebound am Abend",
+      "Übelkeit"
+    ],
+    "commonSideEffectsEn": [
+      "Pronounced decreased appetite, weight loss",
+      "Insomnia",
+      "Increased heart rate and blood pressure",
+      "Dry mouth",
+      "Headache",
+      "Irritability, emotional rebound in the evening",
+      "Nausea"
+    ],
+    "seriousSideEffectsDe": [
+      "Kardiovaskuläre Ereignisse; Kontraindikation bei struktureller Herzerkrankung, Hypertonie",
+      "Wachstumsverzögerung bei Kindern",
+      "Psychose, Manie (insbesondere bei Prädisposition)",
+      "Raynaud-Phänomen (Peripheral vasospasm)",
+      "Hohes Missbrauchspotenzial – BtMG-Verschreibung, keine Verordnung bei aktiver Suchterkrankung ohne spezialisierte Abwägung",
+      "Plötzlicher Herztod (sehr selten, primär bei vorbestehender kardialer Pathologie)"
+    ],
+    "seriousSideEffectsEn": [
+      "Cardiovascular events; contraindicated with structural heart disease or hypertension",
+      "Growth retardation in children",
+      "Psychosis, mania (especially with predisposition)",
+      "Raynaud phenomenon (peripheral vasospasm)",
+      "High abuse potential – BtMG-controlled; avoid in active substance use disorder without specialist review",
+      "Sudden cardiac death (very rare, primarily with pre-existing cardiac pathology)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Herzfrequenz & Blutdruck",
+        "frequency": "Vor Beginn, nach 4 Wochen, dann alle 3 Monate",
+        "noteDe": "EKG vor Beginn bei Risikofaktoren obligat; Absetzen bei RR > 150/95 trotz Dosisreduktion",
+        "noteEn": "ECG before initiation mandatory in at-risk patients; discontinue if BP > 150/95 despite dose reduction"
+      },
+      {
+        "parameter": "Körpergrösse & Gewicht",
+        "frequency": "Alle 6 Monate (Kinder)",
+        "noteDe": "Wachstumskurve; Drug Holiday in langen Schulferien erwägen",
+        "noteEn": "Growth chart; consider drug holiday during long school breaks"
+      },
+      {
+        "parameter": "Psychiatrische Beurteilung",
+        "frequency": "Initial häufiger, dann halbjährlich",
+        "noteDe": "Auf manische Symptome, Paranoia, Tics achten",
+        "noteEn": "Monitor for manic symptoms, paranoia, tics"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Hypertensive Krise, serotonerge Toxizität; mind. 14 Tage Abstand",
+        "clinicalNoteEn": "Hypertensive crisis and serotonin toxicity; 14-day washout required"
+      },
+      {
+        "interactsWith": "Antihypertensiva",
+        "severity": "moderate",
+        "clinicalNoteDe": "Sympathomimetischer Effekt schwächt antihypertensive Wirkung ab",
+        "clinicalNoteEn": "Sympathomimetic effect antagonises antihypertensive therapy"
+      },
+      {
+        "interactsWith": "Lithium",
+        "severity": "moderate",
+        "clinicalNoteDe": "Lithium kann die amphetaminerge Wirkung abschwächen; engmaschiges Monitoring",
+        "clinicalNoteEn": "Lithium may attenuate amphetamine effects; monitor closely"
+      },
+      {
+        "interactsWith": "Haloperidol / Antipsychotika",
+        "severity": "moderate",
+        "clinicalNoteDe": "Gegenseitige Wirkungsabschwächung; ADHS-Therapieeffekt reduziert",
+        "clinicalNoteEn": "Mutual antagonism; ADHD therapeutic effect may be reduced"
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Blutdruck",
+        "condition": "RR systolisch > 150 mmHg persistierend",
+        "warningDe": "Dosisreduktion; bei Persistenz Absetzen und internistische Abklärung",
+        "warningEn": "Reduce dose; if persistent, discontinue and refer for internal medicine evaluation",
+        "severity": "reduce_dose"
+      }
+    ],
+    "renalDosing": "Maximaldosis 50 mg/Tag bei schwerer Niereninsuffizienz (eGFR < 30 ml/min)",
+    "hepaticDosing": "Keine spezifischen Daten; Vorsicht bei schwerer Leberinsuffizienz",
+    "tabletSplittable": false,
+    "liquidFormAvailable": true,
+    "sources": ["Fachinformation Elvanse / Elvanse Adult (Takeda DE, Stand 2024)", "S3-Leitlinie ADHS 2023", "BtMVV DE"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "dexamfetamin",
+    "genericName": "Dexamfetamin",
+    "brandNamesDACH": ["Attentin (CH, AT)", "Dexedrine (historisch)"],
+    "atcCode": "N06BA02",
+    "substanceClass": "Stimulanzien / direktes Amfetamin-Enantiomer",
+    "formulations": ["Tablette IR"],
+    "strengthsDACH": ["5 mg (CH/AT)"],
+    "kurzinfoDe": "Dexamfetamin (d-Amfetamin) ist in Deutschland aktuell nicht zugelassen, wird jedoch in der Schweiz (Attentin) und Österreich für ADHS eingesetzt. Es wirkt als starker Releaser und Wiederaufnahmehemmer an DAT und NET. Wirkdauer ca. 4–6 h. Deutlich stärkeres Missbrauchspotenzial als Methylphenidat. In der Schweiz und Österreich als Betäubungsmittel reguliert. Bei Nichtansprechen auf Methylphenidat oder Lisdexamfetamin kann eine Therapie mit Dexamfetamin erwogen werden.",
+    "kurzinfoEn": "Dexamphetamine is not currently approved in Germany but is used in Switzerland (Attentin) and Austria for ADHD. It acts as a potent releaser and reuptake inhibitor at DAT and NET. Duration of action approximately 4–6 h. Significantly higher abuse potential than methylphenidate. Regulated as a narcotic in Switzerland and Austria. May be considered for patients not responding to methylphenidate or lisdexamphetamine.",
+    "receptorProfile": {
+      "DAT": "Reverser Transport + Hemmung (starker Dopaminefflux)",
+      "NET": "Reverser Transport + Hemmung",
+      "TAAR1": "Agonismus"
+    },
+    "commonSideEffectsDe": [
+      "Starker Appetitverlust",
+      "Tachykardie, Hypertonie",
+      "Insomnie",
+      "Mundtrockenheit",
+      "Reizbarkeit, Angst"
+    ],
+    "commonSideEffectsEn": [
+      "Marked appetite loss",
+      "Tachycardia, hypertension",
+      "Insomnia",
+      "Dry mouth",
+      "Irritability, anxiety"
+    ],
+    "seriousSideEffectsDe": [
+      "Hohes Missbrauchspotenzial",
+      "Psychose, Manie",
+      "Kardiovaskuläre Ereignisse"
+    ],
+    "seriousSideEffectsEn": [
+      "High abuse potential",
+      "Psychosis, mania",
+      "Cardiovascular events"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Herzfrequenz & Blutdruck",
+        "frequency": "Vor Beginn, alle 3 Monate",
+        "noteDe": "EKG obligat; strenges kardiovaskuläres Monitoring",
+        "noteEn": "ECG mandatory; strict cardiovascular monitoring"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Lebensbedrohliche hypertensive Krise; absolut kontraindiziert",
+        "clinicalNoteEn": "Life-threatening hypertensive crisis; absolutely contraindicated"
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "Vorsicht bei Niereninsuffizienz; saurer Urin beschleunigt Ausscheidung",
+    "hepaticDosing": "Keine spezifischen Daten",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "sources": ["Fachinformation Attentin (CH, Stand 2024)", "Swissmedic Produktinformation"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "amphetaminsalze",
+    "genericName": "Amphetaminsalze (gemischt)",
+    "brandNamesDACH": ["Adderall (nicht in DE zugelassen)", "Adderal XR (CH/AT: import-/magistralrezeptur-basiert)"],
+    "atcCode": "N06BA01",
+    "substanceClass": "Stimulanzien / gemischte Amfetaminsalze",
+    "formulations": ["Tablette IR (in DE nicht verfügbar)", "Kapsel retard (US: Adderall XR – in DACH nur als Ausnahmeverschreibung/Import)"],
+    "strengthsDACH": ["In Deutschland nicht zugelassen; in CH/AT Einzelfallverschreibung möglich"],
+    "kurzinfoDe": "Gemischte Amphetaminsalze (75 % d-Amfetamin, 25 % l-Amfetamin) sind unter dem Markennamen Adderall in den USA weit verbreitet. In Deutschland sind sie nicht zugelassen. In der Schweiz und Österreich ist eine Verschreibung im Rahmen von Sonder- oder Ausnahmegenehmigungen möglich, wird aber kaum praktiziert. Klinisch ähnlich wie Dexamfetamin, jedoch mit leicht moderaterer Wirkung durch den l-Amfetamin-Anteil. Hohes Missbrauchspotenzial; in DACH primär Methylphenidat und Lisdexamfetamin bevorzugt.",
+    "kurzinfoEn": "Mixed amphetamine salts (75% d-amphetamine, 25% l-amphetamine) are widely used in the US under the brand name Adderall. Not approved in Germany. In Switzerland and Austria, special dispensation prescriptions are theoretically possible but rarely practiced. Clinically similar to dexamphetamine, with slightly more moderate effect due to the l-amphetamine component. High abuse potential; methylphenidate and lisdexamphetamine are strongly preferred in DACH.",
+    "receptorProfile": {
+      "DAT": "Reverser Transport + Hemmung",
+      "NET": "Reverser Transport + Hemmung",
+      "TAAR1": "Agonismus"
+    },
+    "commonSideEffectsDe": [
+      "Appetitminderung, Gewichtsverlust",
+      "Insomnie",
+      "Tachykardie, Hypertonie",
+      "Mundtrockenheit",
+      "Angst, Reizbarkeit"
+    ],
+    "commonSideEffectsEn": [
+      "Decreased appetite, weight loss",
+      "Insomnia",
+      "Tachycardia, hypertension",
+      "Dry mouth",
+      "Anxiety, irritability"
+    ],
+    "seriousSideEffectsDe": [
+      "Hohes Abhängigkeitspotenzial",
+      "Psychose, Manie",
+      "Kardiovaskuläre Ereignisse"
+    ],
+    "seriousSideEffectsEn": [
+      "High dependence potential",
+      "Psychosis, mania",
+      "Cardiovascular events"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Herzfrequenz & Blutdruck",
+        "frequency": "Vor Beginn und regelmässig",
+        "noteDe": "Wie bei anderen Amphetaminen; EKG vor Beginn",
+        "noteEn": "As per other amphetamines; ECG before initiation"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Absolut kontraindiziert; Gefahr der hypertensiven Krise",
+        "clinicalNoteEn": "Absolutely contraindicated; risk of hypertensive crisis"
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "Vorsicht bei eingeschränkter Nierenfunktion",
+    "hepaticDosing": "Keine spezifischen Daten",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "sources": ["FDA Prescribing Information Adderall (2024)", "EMEA Zulassungsregister", "Swissmedic"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "atomoxetin",
+    "genericName": "Atomoxetin",
+    "brandNamesDACH": ["Strattera", "Atomoxetin-Generika"],
+    "atcCode": "N06BA09",
+    "substanceClass": "Selektiver Noradrenalin-Wiederaufnahmehemmer (SNRI-ähnlich) / Nicht-Stimulans",
+    "formulations": ["Kapsel"],
+    "strengthsDACH": ["10 mg", "18 mg", "25 mg", "40 mg", "60 mg", "80 mg", "100 mg"],
+    "kurzinfoDe": "Atomoxetin ist der einzige zugelassene Nicht-Stimulans für ADHS mit vollständig etabliertem Wirksamkeitsnachweis. Als hochselektiver NET-Hemmer wirkt er im präfrontalen Kortex ohne wesentliche Dopamin-Freisetzung. Der therapeutische Effekt setzt verzögert nach 4–6 Wochen ein. Kein BtMG-Rezept erforderlich. Wichtige Warnung: Erhöhtes Risiko suizidaler Gedanken bei Kindern und Jugendlichen (Black-Box-Warnung analog zu Antidepressiva). Seltene, aber potenziell schwerwiegende Hepatotoxizität; LFT-Kontrollen bei Symptomen. CYP2D6-Metabolismus: bei Poor Metabolizern höhere Plasmaspiegel.",
+    "kurzinfoEn": "Atomoxetine is the only approved non-stimulant for ADHD with fully established efficacy evidence. As a highly selective NET inhibitor, it acts in the prefrontal cortex without significant dopamine release. Therapeutic effect is delayed by 4–6 weeks. No controlled substance prescription required. Important warning: increased risk of suicidal ideation in children and adolescents (black-box warning analogous to antidepressants). Rare but potentially serious hepatotoxicity; check LFTs if symptoms arise. CYP2D6 metabolism: poor metabolisers have higher plasma levels.",
+    "receptorProfile": {
+      "NET": "Hochselektive Hemmung – primärer Wirkmechanismus",
+      "DAT": "Vernachlässigbar",
+      "SERT": "Vernachlässigbar"
+    },
+    "commonSideEffectsDe": [
+      "Übelkeit, Erbrechen (v. a. initial)",
+      "Appetitverlust",
+      "Müdigkeit (initial), später mögliche Aktivierung",
+      "Herzfrequenzanstieg, leichte Blutdruckerhöhung",
+      "Bauchschmerzen",
+      "Mundtrockenheit",
+      "Insomnie oder Somnolenz"
+    ],
+    "commonSideEffectsEn": [
+      "Nausea, vomiting (especially initially)",
+      "Decreased appetite",
+      "Fatigue (initially), possible later activation",
+      "Increased heart rate, mild BP elevation",
+      "Abdominal pain",
+      "Dry mouth",
+      "Insomnia or somnolence"
+    ],
+    "seriousSideEffectsDe": [
+      "Suizidale Gedanken / Verhalten bei Kindern und Jugendlichen (Black-Box-Warnung – engmaschige Überwachung in den ersten Wochen obligat)",
+      "Hepatotoxizität (selten; Gelbsucht, erhöhte Transaminasen – Absetzen bei Lebersymptomen)",
+      "Priapismus (sehr selten)",
+      "Kardiovaskuläre Ereignisse bei Risikopatienten"
+    ],
+    "seriousSideEffectsEn": [
+      "Suicidal ideation/behaviour in children and adolescents (black-box warning – close monitoring mandatory in initial weeks)",
+      "Hepatotoxicity (rare; jaundice, elevated transaminases – discontinue if hepatic symptoms arise)",
+      "Priapism (very rare)",
+      "Cardiovascular events in at-risk patients"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Suizidalität (Kinder/Jugendliche)",
+        "frequency": "Wöchentlich in den ersten 4 Wochen, dann alle 2 Wochen bis Woche 12",
+        "noteDe": "Eltern und Patienten auf Warnzeichen suizidaler Gedanken hinweisen; schriftliche Information aushändigen",
+        "noteEn": "Inform patients and caregivers about warning signs of suicidal ideation; provide written information"
+      },
+      {
+        "parameter": "Leberwerte (ALT, AST, Bilirubin)",
+        "frequency": "Bei Auftreten von Symptomen (Ikterus, abdominale Beschwerden, dunkler Urin)",
+        "noteDe": "Kein Routine-Monitoring empfohlen, aber Absetzen bei laborchemischen Zeichen einer Leberschädigung",
+        "noteEn": "Routine monitoring not recommended, but discontinue if biochemical evidence of liver injury arises"
+      },
+      {
+        "parameter": "Herzfrequenz & Blutdruck",
+        "frequency": "Vor Beginn, alle 3–6 Monate",
+        "noteDe": "EKG bei kardialen Risikofaktoren; weniger ausgeprägte kardiovaskuläre Effekte als Stimulanzien",
+        "noteEn": "ECG in cardiac risk patients; cardiovascular effects less pronounced than stimulants"
+      },
+      {
+        "parameter": "CYP2D6-Phänotyp",
+        "frequency": "Einmalig bei ungewöhnlicher Nebenwirkungslast",
+        "noteDe": "Poor Metabolizer haben 10-fach höhere AUC; Dosisreduktion erwägen",
+        "noteEn": "Poor metabolisers have ~10-fold higher AUC; consider dose reduction"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Mind. 14 Tage Abstand; serotonerge/noradrenerge Krise möglich",
+        "clinicalNoteEn": "Minimum 14-day washout; risk of serotonergic/noradrenergic crisis"
+      },
+      {
+        "interactsWith": "CYP2D6-Inhibitoren (Fluoxetin, Paroxetin, Bupropion)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Deutlicher Anstieg der Atomoxetin-Spiegel (bis 2–5-fach); Dosis ggf. reduzieren",
+        "clinicalNoteEn": "Significant increase in atomoxetine levels (up to 2–5-fold); consider dose reduction"
+      },
+      {
+        "interactsWith": "Beta-Agonisten (Salbutamol)",
+        "severity": "mild",
+        "clinicalNoteDe": "Potenzielle additive kardiovaskuläre Effekte",
+        "clinicalNoteEn": "Potential additive cardiovascular effects"
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "ALT / AST",
+        "condition": "Erhöhung > 3-fach ULN mit Symptomen",
+        "warningDe": "Atomoxetin sofort absetzen; hepatologische Abklärung einleiten",
+        "warningEn": "Discontinue atomoxetine immediately; hepatology referral",
+        "severity": "contraindicated"
+      }
+    ],
+    "renalDosing": "Keine Dosisanpassung erforderlich",
+    "hepaticDosing": "Child-Pugh B: Dosis auf 50 % reduzieren; Child-Pugh C: Dosis auf 25 % reduzieren",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "sources": ["Fachinformation Strattera (Lilly DE, Stand 2024)", "S3-Leitlinie ADHS 2023", "FDA Strattera Medication Guide 2024"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "guanfacin",
+    "genericName": "Guanfacin (retard)",
+    "brandNamesDACH": ["Intuniv"],
+    "atcCode": "C02AC02",
+    "substanceClass": "Selektiver Alpha-2A-Adrenozeptor-Agonist / Nicht-Stimulans",
+    "formulations": ["Retardtablette (nicht teilen, nicht mörsern)"],
+    "strengthsDACH": ["1 mg", "2 mg", "3 mg", "4 mg"],
+    "kurzinfoDe": "Guanfacin retard ist ein selektiver Alpha-2A-Rezeptor-Agonist mit Zulassung für ADHS bei Kindern (6–17 J.) als Monotherapie oder Augmentation zu Stimulanzien. Es verstärkt präfrontale Neuronenfunktionen durch Potenzierung von HCN-Kanälen. Besonders geeignet bei komorbider Tic-Störung, Aggression oder Stimulanzien-Intoleranz. Langsame Titration erforderlich (nicht abrupt absetzen – Rebound-Hypertonie möglich). Nicht als BtMG-Substanz eingestuft.",
+    "kurzinfoEn": "Extended-release guanfacine is a selective alpha-2A receptor agonist approved for ADHD in children (6–17 years) as monotherapy or adjunct to stimulants. It enhances prefrontal cortical neuron function by potentiating HCN channels. Particularly suitable for comorbid tic disorders, aggression, or stimulant intolerance. Slow titration required; do not stop abruptly (rebound hypertension possible). Not a controlled substance.",
+    "receptorProfile": {
+      "Alpha-2A-Adrenozeptor (präfrontal)": "Selektiver Agonismus – Verbesserung der Arbeitsgedächtnisfunktion",
+      "Alpha-2B/C": "Schwache Wirkung (weniger Sedierung als Clonidin)"
+    },
+    "commonSideEffectsDe": [
+      "Somnolenz, Sedierung (häufig, insbesondere initial)",
+      "Blutdruckabfall, Bradykardie",
+      "Kopfschmerzen",
+      "Bauchschmerzen",
+      "Übelkeit",
+      "Mundtrockenheit",
+      "Reizbarkeit (paradox, selten)"
+    ],
+    "commonSideEffectsEn": [
+      "Somnolence, sedation (frequent, especially initially)",
+      "Blood pressure decrease, bradycardia",
+      "Headache",
+      "Abdominal pain",
+      "Nausea",
+      "Dry mouth",
+      "Irritability (paradoxical, rare)"
+    ],
+    "seriousSideEffectsDe": [
+      "Rebound-Hypertonie bei abruptem Absetzen",
+      "AV-Block, Sinusbradykardie (selten, EKG-Kontrolle empfohlen)",
+      "Synkope bei orthostatischer Hypotonie"
+    ],
+    "seriousSideEffectsEn": [
+      "Rebound hypertension on abrupt discontinuation",
+      "AV block, sinus bradycardia (rare; ECG monitoring recommended)",
+      "Syncope due to orthostatic hypotension"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Blutdruck & Herzfrequenz",
+        "frequency": "Vor Beginn, nach 1–2 Wochen, dann alle 3 Monate",
+        "noteDe": "Auf orthostatische Hypotonie und Bradykardie achten; EKG bei vorbestehender Herzerkrankung",
+        "noteEn": "Monitor for orthostatic hypotension and bradycardia; ECG in patients with pre-existing cardiac disease"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Antihypertensiva",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive blutdrucksenkende Wirkung; engmaschige RR-Kontrolle",
+        "clinicalNoteEn": "Additive antihypertensive effect; close BP monitoring"
+      },
+      {
+        "interactsWith": "CYP3A4-Inhibitoren (Ketoconazol, Clarithromycin)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Guanfacin-Spiegel steigen; Dosisreduktion auf 50 % erwägen",
+        "clinicalNoteEn": "Increased guanfacine levels; consider 50% dose reduction"
+      },
+      {
+        "interactsWith": "CYP3A4-Induktoren (Rifampicin, Carbamazepin)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Deutlich reduzierte Guanfacin-Wirksamkeit; Dosissteigerung erwägen",
+        "clinicalNoteEn": "Markedly reduced guanfacine efficacy; consider dose increase"
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "Vorsicht; begrenzte Daten bei schwerer Niereninsuffizienz",
+    "hepaticDosing": "Vorsicht bei schwerer Leberinsuffizienz",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "sources": ["Fachinformation Intuniv (Takeda DE, Stand 2024)", "S3-Leitlinie ADHS 2023", "EMA Intuniv EPAR"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "clonidin-adhd",
+    "genericName": "Clonidin (ADHS-Adjuvans)",
+    "brandNamesDACH": ["Catapresan", "Clonidin-Generika"],
+    "atcCode": "C02AC01",
+    "substanceClass": "Alpha-2-Adrenozeptor-Agonist / Off-Label bei ADHS",
+    "formulations": ["Tablette IR", "Pflaster (transdermal, primär kardiovaskuläre Indikation)"],
+    "strengthsDACH": ["0,075 mg", "0,15 mg", "0,3 mg"],
+    "kurzinfoDe": "Clonidin wird bei ADHS off-label eingesetzt, primär als Adjuvans bei Stimulanzien-induzierter Schlafstörung, komorbider Tic-Störung oder aggressivem Verhalten. Wirkt zentralnervös sedierend über Alpha-2-Rezeptoren; weniger selektiv als Guanfacin. Nicht abrupt absetzen (Rebound-Hypertonie). Keine ADHS-Zulassung in DACH; Einsatz auf Basis klinischer Expertise.",
+    "kurzinfoEn": "Clonidine is used off-label in ADHD, primarily as an adjunct for stimulant-induced sleep disturbance, comorbid tic disorder, or aggressive behaviour. Acts centrally via alpha-2 receptors with sedating properties; less selective than guanfacine. Do not discontinue abruptly (rebound hypertension). No ADHD approval in DACH; use based on clinical expertise.",
+    "receptorProfile": {
+      "Alpha-2 (zentral und peripher)": "Nicht-selektiver Agonismus",
+      "Imidazolin-Rezeptoren (I1)": "Agonismus (beiträgt zur zentralen Blutdrucksenkung)"
+    },
+    "commonSideEffectsDe": [
+      "Sedierung, Müdigkeit (ausgeprägt)",
+      "Hypotonie, Bradykardie",
+      "Mundtrockenheit",
+      "Obstipation",
+      "Depression (bei längerer Anwendung)"
+    ],
+    "commonSideEffectsEn": [
+      "Sedation, fatigue (pronounced)",
+      "Hypotension, bradycardia",
+      "Dry mouth",
+      "Constipation",
+      "Depression (with prolonged use)"
+    ],
+    "seriousSideEffectsDe": [
+      "Rebound-Hypertonie bei abruptem Absetzen",
+      "AV-Block, schwere Bradykardie",
+      "Synkope"
+    ],
+    "seriousSideEffectsEn": [
+      "Rebound hypertension on abrupt discontinuation",
+      "AV block, severe bradycardia",
+      "Syncope"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Blutdruck & Herzfrequenz",
+        "frequency": "Engmaschig während Titration, dann alle 3 Monate",
+        "noteDe": "Langsame Dosisreduktion beim Absetzen (nicht abrupt!)",
+        "noteEn": "Gradual dose tapering on discontinuation; never abrupt"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Antihypertensiva, beta-Blocker",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive Hypotonie und Bradykardie; Kombination vorsichtig",
+        "clinicalNoteEn": "Additive hypotension and bradycardia; use with caution"
+      },
+      {
+        "interactsWith": "Trizyklische Antidepressiva",
+        "severity": "moderate",
+        "clinicalNoteDe": "TCA können die antihypertensive Wirkung von Clonidin aufheben",
+        "clinicalNoteEn": "TCAs can antagonise the antihypertensive effect of clonidine"
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "Dosisreduktion bei GFR < 30 ml/min",
+    "hepaticDosing": "Keine spezifischen Anpassungen; Vorsicht bei schwerer Leberinsuffizienz",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "sources": ["Fachinformation Catapresan (Sanofi DE)", "Übersichtsartikel Off-Label ADHS (Banaschewski 2022)", "S3-Leitlinie ADHS 2023"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "bupropion-adhd",
+    "genericName": "Bupropion (ADHS off-label)",
+    "brandNamesDACH": ["Elontril", "Wellbutrin (AT/CH)", "Zyban (Raucherentwöhnung)"],
+    "atcCode": "N06AX12",
+    "substanceClass": "Noradrenalin-Dopamin-Wiederaufnahmehemmer (NDRI) / Off-Label bei ADHS",
+    "formulations": ["Retardtablette"],
+    "strengthsDACH": ["150 mg", "300 mg"],
+    "kurzinfoDe": "Bupropion hemmt die Wiederaufnahme von Dopamin und Noradrenalin und wird bei ADHS off-label eingesetzt, wenn Stimulanzien kontraindiziert sind oder nicht vertragen werden – insbesondere bei Komorbiditäten wie Depression oder Tabakabhängigkeit. Die ADHS-Effekte sind moderat; Wirklatenz ca. 2–4 Wochen. Relevant: Senkung der Krampfschwelle (kontraindiziert bei Epilepsie, Bulimie, Anorexie). Kein BtMG-Rezept erforderlich.",
+    "kurzinfoEn": "Bupropion inhibits reuptake of dopamine and noradrenaline and is used off-label in ADHD when stimulants are contraindicated or not tolerated – particularly with comorbid depression or tobacco dependence. ADHD effects are moderate; onset of action approximately 2–4 weeks. Note: lowers seizure threshold (contraindicated in epilepsy, bulimia, anorexia). Not a controlled substance.",
+    "receptorProfile": {
+      "DAT": "Schwache Hemmung",
+      "NET": "Moderate Hemmung",
+      "nAChR (nikotinerge Azetylcholinrezeptoren)": "Schwacher Antagonismus (relevant für Raucherentwöhnung)"
+    },
+    "commonSideEffectsDe": [
+      "Insomnie (häufig)",
+      "Mundtrockenheit",
+      "Kopfschmerzen",
+      "Agitation, Unruhe",
+      "Übelkeit",
+      "Verstopfung",
+      "Schwitzen"
+    ],
+    "commonSideEffectsEn": [
+      "Insomnia (frequent)",
+      "Dry mouth",
+      "Headache",
+      "Agitation, restlessness",
+      "Nausea",
+      "Constipation",
+      "Sweating"
+    ],
+    "seriousSideEffectsDe": [
+      "Krampfanfälle (dosisabhängig, Risiko > 450 mg/Tag)",
+      "Suizidale Gedanken (Black-Box-Warnung bei unter 24-Jährigen – analoge Antidepressiva-Warnung)",
+      "Neuropsychiatrische Nebenwirkungen (Manie, Agitation)"
+    ],
+    "seriousSideEffectsEn": [
+      "Seizures (dose-dependent; risk increases > 450 mg/day)",
+      "Suicidal ideation (black-box warning for patients < 24 years)",
+      "Neuropsychiatric adverse effects (mania, agitation)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Blutdruck",
+        "frequency": "Vor Beginn, nach 4 Wochen",
+        "noteDe": "Leichter RR-Anstieg möglich; EKG bei kardialen Risikofaktoren",
+        "noteEn": "Mild BP elevation possible; ECG in cardiac risk patients"
+      },
+      {
+        "parameter": "Krampfanfall-Anamnese",
+        "frequency": "Vor Beginn",
+        "noteDe": "Kontraindiziert bei aktiver Epilepsie; Tagesdosis strikt unter 450 mg halten",
+        "noteEn": "Contraindicated in active epilepsy; strictly keep daily dose below 450 mg"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Mind. 14 Tage Abstand",
+        "clinicalNoteEn": "14-day washout required"
+      },
+      {
+        "interactsWith": "CYP2D6-Substrate (Metoprolol, trizyklische AD)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Bupropion ist starker CYP2D6-Inhibitor; Substrate akkumulieren",
+        "clinicalNoteEn": "Bupropion is a potent CYP2D6 inhibitor; substrate levels increase"
+      },
+      {
+        "interactsWith": "Tramadol",
+        "severity": "moderate",
+        "clinicalNoteDe": "Erhöhtes Krampfrisiko durch additive Effekte",
+        "clinicalNoteEn": "Increased seizure risk due to additive effects"
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "Maximaldosis 150 mg/Tag bei schwerer Niereninsuffizienz",
+    "hepaticDosing": "Maximaldosis 150 mg jeden 2. Tag bei schwerer Leberinsuffizienz (Child-Pugh C)",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "sources": ["Fachinformation Elontril (GSK DE, Stand 2024)", "Wilens 2001 (Bupropion ADHD review)", "S3-Leitlinie ADHS 2023"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "viloxazin",
+    "genericName": "Viloxazin",
+    "brandNamesDACH": ["Quelbree (USA – kein EU-Zulassungsstatus per 2026)"],
+    "atcCode": "N06AX09",
+    "substanceClass": "Selektiver Noradrenalin-Wiederaufnahmehemmer / Serotonin-modulierender Wirkstoff",
+    "formulations": ["Retardkapsel (USA)"],
+    "strengthsDACH": ["Nicht in DE/AT/CH zugelassen (Stand 2026); in Europa kein Zulassungsverfahren abgeschlossen"],
+    "kurzinfoDe": "Viloxazin Extended Release (Quelbree) ist seit 2021 in den USA für ADHS bei Kindern und Jugendlichen (6–17 J.) zugelassen. In Europa und der DACH-Region liegt zum Stand 2026 keine Zulassung vor; klinische Erfahrungen beruhen auf US-Studiendaten. Es hemmt NET selektiv und moduliert zusätzlich serotonerge Rezeptoren (5-HT2B-Antagonismus, 5-HT2C-Agonismus). Für DACH aktuell nur im Rahmen von Einzelfallgenehmigungen oder wissenschaftlichen Studien relevant.",
+    "kurzinfoEn": "Viloxazine extended release (Quelbree) was approved in the USA in 2021 for ADHD in children and adolescents (6–17 years). As of 2026, no EU or DACH approval exists; clinical experience is based on US study data. It selectively inhibits NET and additionally modulates serotonergic receptors (5-HT2B antagonism, 5-HT2C agonism). Currently relevant in DACH only for individual compassionate-use cases or research studies.",
+    "receptorProfile": {
+      "NET": "Selektive Hemmung",
+      "5-HT2B": "Antagonismus",
+      "5-HT2C": "Agonismus"
+    },
+    "commonSideEffectsDe": [
+      "Somnolenz",
+      "Appetitverlust",
+      "Übelkeit",
+      "Kopfschmerzen",
+      "Reizbarkeit"
+    ],
+    "commonSideEffectsEn": [
+      "Somnolence",
+      "Decreased appetite",
+      "Nausea",
+      "Headache",
+      "Irritability"
+    ],
+    "seriousSideEffectsDe": [
+      "Suizidale Gedanken (Black-Box-Warnung in den USA analog zu Antidepressiva)",
+      "Blutdruckanstieg, Herzfrequenzerhöhung"
+    ],
+    "seriousSideEffectsEn": [
+      "Suicidal ideation (black-box warning in the US, analogous to antidepressants)",
+      "Blood pressure elevation, increased heart rate"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Blutdruck & Herzfrequenz",
+        "frequency": "Wie bei anderen Nicht-Stimulanzien",
+        "noteDe": "Kardiovaskuläres Monitoring entsprechend Standard",
+        "noteEn": "Cardiovascular monitoring per standard protocol"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Nicht gleichzeitig anwenden",
+        "clinicalNoteEn": "Do not use concomitantly"
+      },
+      {
+        "interactsWith": "CYP1A2-Substrate (Theophyllin, Duloxetin)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Viloxazin ist CYP1A2-Inhibitor; Substrate akkumulieren",
+        "clinicalNoteEn": "Viloxazine is a CYP1A2 inhibitor; substrate levels may increase"
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "Dosisanpassung bei schwerer Niereninsuffizienz (US-Daten)",
+    "hepaticDosing": "Vorsicht bei Leberinsuffizienz (begrenzte Daten)",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "sources": ["FDA Prescribing Information Quelbree (Supernus, 2024)", "EMA Zulassungsregister 2026"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "donepezil",
+    "genericName": "Donepezil",
+    "brandNamesDACH": ["Aricept", "Donepezil-Generika"],
+    "atcCode": "N06DA02",
+    "substanceClass": "Acetylcholinesterase-Inhibitor (AChEI), reversibler Hemmer",
+    "formulations": ["Filmtablette", "Schmelztablette (ODT)"],
+    "strengthsDACH": ["5 mg", "10 mg"],
+    "kurzinfoDe": "Donepezil ist ein reversibler, selektiver AChEI mit langer Halbwertszeit (~70 h), der einmal täglich verabreicht werden kann. Zugelassen für leichte bis schwere Alzheimer-Demenz. Erhöht den synaptischen Acetylcholinspiegel im Hippocampus und Kortex. Wichtig: cholinerge Nebenwirkungen (Übelkeit, Diarrhö, Bradykardie) treten besonders zu Beginn auf; abendliche Einnahme kann GI-NW reduzieren. Wechselwirkung mit QTc-verlängernden Substanzen beachten. Kein Disease-Modifier – symptomatische Therapie.",
+    "kurzinfoEn": "Donepezil is a reversible, selective AChEI with a long half-life (~70 h), enabling once-daily dosing. Approved for mild to severe Alzheimer's disease. Increases synaptic acetylcholine in hippocampus and cortex. Important: cholinergic side effects (nausea, diarrhoea, bradycardia) are most pronounced at initiation; evening dosing may reduce GI side effects. Monitor for interaction with QTc-prolonging substances. Not a disease modifier – symptomatic therapy only.",
+    "receptorProfile": {
+      "Acetylcholinesterase": "Reversibler Hemmer (erhöhte synaptische Ach-Konzentration)",
+      "Muscarinerge Rezeptoren": "Indirekte Stimulation durch erhöhtes ACh"
+    },
+    "commonSideEffectsDe": [
+      "Übelkeit, Erbrechen, Diarrhö (cholinerge GI-Effekte – besonders in der Aufdosierungsphase)",
+      "Schlafstörungen, lebhafte Träume",
+      "Muskelkrämpfe",
+      "Müdigkeit",
+      "Appetitlosigkeit",
+      "Kopfschmerzen",
+      "Bradykardie (vagotoner Effekt)"
+    ],
+    "commonSideEffectsEn": [
+      "Nausea, vomiting, diarrhoea (cholinergic GI effects – especially during titration)",
+      "Sleep disturbance, vivid dreams",
+      "Muscle cramps",
+      "Fatigue",
+      "Anorexia",
+      "Headache",
+      "Bradycardia (vagotonic effect)"
+    ],
+    "seriousSideEffectsDe": [
+      "Bradykardie / Synkope (besonders bei vorbestehender Überleitungsstörung oder bei Kombination mit Betablockern / Antiarrhythmika)",
+      "GI-Blutung bei Ulkusanamnese",
+      "Krampfanfall (selten, durch cholinerge Aktivierung)",
+      "Verschlechterung von Asthma / COPD (Bronchospasmus)"
+    ],
+    "seriousSideEffectsEn": [
+      "Bradycardia/syncope (especially with pre-existing conduction defects or beta-blockers/antiarrhythmics)",
+      "GI bleeding in patients with peptic ulcer history",
+      "Seizure (rare, via cholinergic activation)",
+      "Worsening of asthma/COPD (bronchospasm)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Herzfrequenz / EKG",
+        "frequency": "Vor Beginn; EKG bei Symptomen oder Risikofaktoren",
+        "noteDe": "Bradykardie-Risiko bei vorbestehendem Sinussyndrom, AV-Block oder Kombination mit Bradykardie-auslösenden Medikamenten",
+        "noteEn": "Bradycardia risk with sick sinus syndrome, AV block, or combination with bradycardia-inducing drugs"
+      },
+      {
+        "parameter": "Kognitive Funktion / MMSE / MoCA",
+        "frequency": "Alle 6 Monate",
+        "noteDe": "Therapieerfolg dokumentieren; bei raschem Fortschreiten trotz Therapie Diagnose überprüfen",
+        "noteEn": "Document therapeutic response; review diagnosis if rapid progression despite therapy"
+      },
+      {
+        "parameter": "Körpergewicht",
+        "frequency": "Alle 3–6 Monate",
+        "noteDe": "Anorexie und Gewichtsverlust sind unter AChEI häufig; Ernährungsberatung einbeziehen",
+        "noteEn": "Anorexia and weight loss are common with AChEI; involve nutritional counselling"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Betablocker, Antiarrhythmika, andere Bradykardie-auslösende Substanzen",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive Bradykardie; EKG-Kontrolle und engmaschige Frequenzüberwachung",
+        "clinicalNoteEn": "Additive bradycardia; ECG monitoring and close heart rate surveillance"
+      },
+      {
+        "interactsWith": "Anticholinergika (Biperiden, Trihexyphenidyl, Oxybutynin)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Gegenseitige Wirkungsaufhebung; AChEI-Effekt wird abgeschwächt",
+        "clinicalNoteEn": "Mutual antagonism; AChEI effect is attenuated"
+      },
+      {
+        "interactsWith": "Succinylcholin / neuromuskuläre Blocker",
+        "severity": "moderate",
+        "clinicalNoteDe": "Verlängerte Wirkung von Succinylcholin durch Cholinesterasehemmung; Anästhesist informieren",
+        "clinicalNoteEn": "Prolonged succinylcholine effect due to cholinesterase inhibition; inform anaesthetist"
+      },
+      {
+        "interactsWith": "NSAID",
+        "severity": "mild",
+        "clinicalNoteDe": "Erhöhtes GI-Blutungsrisiko bei gleichzeitiger Anwendung",
+        "clinicalNoteEn": "Increased GI bleeding risk with concomitant use"
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "Keine Dosisanpassung erforderlich",
+    "hepaticDosing": "Vorsicht bei mittelschwerer bis schwerer Leberinsuffizienz; individuelle Titration",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "sources": ["Fachinformation Aricept (Pfizer/Eisai DE, Stand 2024)", "S3-Leitlinie Demenz (DGPPN/DGN 2023)", "NICE Dementia Guideline NG97"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "rivastigmin",
+    "genericName": "Rivastigmin",
+    "brandNamesDACH": ["Exelon (Pflaster, Kapsel)", "Rivastigmin-Generika"],
+    "atcCode": "N06DA03",
+    "substanceClass": "Pseudoirreversibiler Acetylcholinesterase- und Butyrylcholinesterase-Inhibitor (AChEI/BuChEI)",
+    "formulations": ["Kapsel", "Transdermales Pflaster (4,6 mg/24 h; 9,5 mg/24 h; 13,3 mg/24 h)", "Lösung oral"],
+    "strengthsDACH": ["1,5 mg", "3 mg", "4,5 mg", "6 mg (Kapseln)", "4,6/9,5/13,3 mg/24 h (Pflaster)"],
+    "kurzinfoDe": "Rivastigmin hemmt pseudoirreversibel sowohl AChE als auch BuChE. Das transdermale Pflaster bietet gegenüber der oralen Form deutlich bessere GI-Verträglichkeit bei gleichem Wirkprofil; es ist die bevorzugte Applikationsform. Zugelassen für Alzheimer-Demenz (leicht bis mittelschwer) und Parkinson-Demenz. Pflasterwechsel täglich; Applikationsort wechseln (z. B. Rücken, Oberarm) – kein erneutes Aufkleben auf gleiche Stelle.",
+    "kurzinfoEn": "Rivastigmine pseudoirreversibly inhibits both AChE and BuChE. The transdermal patch offers significantly better GI tolerability compared to oral formulation with the same efficacy profile; it is the preferred form of administration. Approved for Alzheimer's dementia (mild to moderate) and Parkinson's dementia. Daily patch change; rotate application site (e.g., back, upper arm) – do not reapply to same site.",
+    "receptorProfile": {
+      "Acetylcholinesterase": "Pseudoirreversible Hemmung (Carbamylierung)",
+      "Butyrylcholinesterase": "Zusätzliche Hemmung (seltenerer off-target-Effekt, potenziell kortexrelevant)"
+    },
+    "commonSideEffectsDe": [
+      "Übelkeit, Erbrechen, Diarrhö (oral > Pflaster)",
+      "Gewichtsverlust",
+      "Anwendungsreaktion am Pflasterort (Erythem, Juckreiz)",
+      "Schwindel",
+      "Bradykardie",
+      "Tremor (bei Parkinson-Patienten gelegentlich verstärkt)"
+    ],
+    "commonSideEffectsEn": [
+      "Nausea, vomiting, diarrhoea (oral >> patch)",
+      "Weight loss",
+      "Local skin reactions at patch site (erythema, pruritus)",
+      "Dizziness",
+      "Bradycardia",
+      "Tremor (occasionally worsened in Parkinson's patients)"
+    ],
+    "seriousSideEffectsDe": [
+      "Bradykardie / Synkope",
+      "Schwere GI-Ereignisse (selten: GI-Blutung, Perforation)",
+      "Krampfanfälle (selten)"
+    ],
+    "seriousSideEffectsEn": [
+      "Bradycardia/syncope",
+      "Serious GI events (rare: bleeding, perforation)",
+      "Seizures (rare)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Herzfrequenz",
+        "frequency": "Vor Beginn, nach 4 Wochen, dann halbjährlich",
+        "noteDe": "Wie bei Donepezil; Bradykardie-Risiko bei Überleitungsstörungen beachten",
+        "noteEn": "As with donepezil; bradycardia risk in conduction defects"
+      },
+      {
+        "parameter": "Pflasterapplikation",
+        "frequency": "Täglich",
+        "noteDe": "Patientenschulung zur korrekten Anwendung und Rotation essenziell; Überdosierung durch mehrere Pflaster möglich",
+        "noteEn": "Patient education on correct application and rotation essential; overdose risk if multiple patches applied"
+      },
+      {
+        "parameter": "Gewicht",
+        "frequency": "Alle 3–6 Monate",
+        "noteDe": "GI-Nebenwirkungen können zu erheblichem Gewichtsverlust führen",
+        "noteEn": "GI side effects can lead to significant weight loss"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Anticholinergika",
+        "severity": "moderate",
+        "clinicalNoteDe": "Antagonismus; AChEI-Effekt abgeschwächt",
+        "clinicalNoteEn": "Antagonism; AChEI effect attenuated"
+      },
+      {
+        "interactsWith": "Betablocker, Antiarrhythmika",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive Bradykardie; EKG-Kontrolle",
+        "clinicalNoteEn": "Additive bradycardia; ECG monitoring"
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "Bei schwerer Niereninsuffizienz: individuelle Titration, niedrige Dosen",
+    "hepaticDosing": "Leichte bis mittelschwere Leberinsuffizienz: langsame Titration; schwere Leberinsuffizienz: Vorsicht",
+    "tabletSplittable": false,
+    "liquidFormAvailable": true,
+    "sources": ["Fachinformation Exelon (Novartis DE, Stand 2024)", "S3-Leitlinie Demenz 2023"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "galantamin",
+    "genericName": "Galantamin",
+    "brandNamesDACH": ["Reminyl", "Galantamin-Generika"],
+    "atcCode": "N06DA04",
+    "substanceClass": "Reversibler AChEI + allosterischer Modulator nikotinerger Acetylcholinrezeptoren (nAChR)",
+    "formulations": ["Retardkapsel", "Filmtablette (IR, seltener verwendet)", "Lösung oral"],
+    "strengthsDACH": ["8 mg", "16 mg", "24 mg (Retardkapseln)"],
+    "kurzinfoDe": "Galantamin hat einen dualen Wirkmechanismus: reversible AChE-Hemmung und allosterische Potenzierung nikotinerger ACh-Rezeptoren (APL-Mechanismus). Zugelassen für leichte bis mittelschwere Alzheimer-Demenz. Retardformulierung bevorzugt (einmal täglich). Titration über 4-wöchige Schritte (8 → 16 → 24 mg). GI-Nebenwirkungen ähnlich wie andere AChEI; Einnahme zu den Mahlzeiten empfohlen.",
+    "kurzinfoEn": "Galantamine has a dual mechanism: reversible AChEI and allosteric potentiation of nicotinic ACh receptors (APL mechanism). Approved for mild to moderate Alzheimer's dementia. Extended-release formulation preferred (once daily). Titration in 4-week steps (8 → 16 → 24 mg). GI side effects similar to other AChEI; intake with meals recommended.",
+    "receptorProfile": {
+      "Acetylcholinesterase": "Reversibler Hemmer",
+      "nAChR (Alpha-4-Beta-2, Alpha-7)": "Allosterischer positiver Modulator (APL-Mechanismus)"
+    },
+    "commonSideEffectsDe": [
+      "Übelkeit, Erbrechen, Diarrhö",
+      "Gewichtsverlust",
+      "Schwindel",
+      "Bradykardie",
+      "Kopfschmerzen",
+      "Müdigkeit"
+    ],
+    "commonSideEffectsEn": [
+      "Nausea, vomiting, diarrhoea",
+      "Weight loss",
+      "Dizziness",
+      "Bradycardia",
+      "Headache",
+      "Fatigue"
+    ],
+    "seriousSideEffectsDe": [
+      "Bradykardie / Synkope",
+      "Krampfanfall (selten)"
+    ],
+    "seriousSideEffectsEn": [
+      "Bradycardia/syncope",
+      "Seizure (rare)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Herzfrequenz / EKG",
+        "frequency": "Vor Beginn; bei Symptomen",
+        "noteDe": "Bradykardie-Risiko wie bei anderen AChEI",
+        "noteEn": "Bradycardia risk as with other AChEI"
+      },
+      {
+        "parameter": "Kognitive Funktion",
+        "frequency": "Alle 6 Monate",
+        "noteDe": "Standardisierte Tests (MMSE, MoCA) zur Verlaufsdokumentation",
+        "noteEn": "Standardised testing (MMSE, MoCA) for monitoring"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Anticholinergika",
+        "severity": "moderate",
+        "clinicalNoteDe": "Antagonismus; AChEI-Wirkung wird aufgehoben",
+        "clinicalNoteEn": "Antagonism; AChEI effect negated"
+      },
+      {
+        "interactsWith": "CYP2D6/CYP3A4-Inhibitoren",
+        "severity": "mild",
+        "clinicalNoteDe": "Leichter Anstieg der Galantamin-Spiegel möglich",
+        "clinicalNoteEn": "Mild increase in galantamine levels possible"
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "GFR < 9 ml/min: kontraindiziert; GFR 9–59: Maximaldosis 16 mg/Tag",
+    "hepaticDosing": "Mittelschwere Leberinsuffizienz: Maximaldosis 16 mg/Tag; schwere Leberinsuffizienz: kontraindiziert",
+    "tabletSplittable": false,
+    "liquidFormAvailable": true,
+    "sources": ["Fachinformation Reminyl (Janssen DE, Stand 2024)", "S3-Leitlinie Demenz 2023"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "memantin",
+    "genericName": "Memantin",
+    "brandNamesDACH": ["Axura", "Ebixa", "Memantin-Generika"],
+    "atcCode": "N06DX01",
+    "substanceClass": "NMDA-Rezeptorantagonist (nicht-kompetitiv, spannungsabhängig)",
+    "formulations": ["Filmtablette", "Lösung oral (10 mg/ml)", "Retardkapsel (in einigen Ländern)"],
+    "strengthsDACH": ["10 mg", "20 mg (Tabletten)", "10 mg/ml (Lösung)"],
+    "kurzinfoDe": "Memantin ist ein nicht-kompetitiver, spannungsabhängiger NMDA-Rezeptor-Antagonist. Es reduziert die exzitotoxische Glutamataktivierung bei Demenz, ohne die physiologische NMDA-Funktion vollständig zu blockieren. Zugelassen für mittelschwere bis schwere Alzheimer-Demenz, häufig in Kombination mit einem AChEI. Gut verträglich; GI-Nebenwirkungen seltener als bei AChEI. Kann Verwirrungszustände und Halluzinationen auslösen (paradox bei Demenzkranken).",
+    "kurzinfoEn": "Memantine is a non-competitive, voltage-dependent NMDA receptor antagonist. It reduces excitotoxic glutamate activation in dementia without fully blocking physiological NMDA function. Approved for moderate to severe Alzheimer's dementia, often combined with an AChEI. Good tolerability; GI side effects less common than AChEI. May paradoxically trigger confusion and hallucinations in some dementia patients.",
+    "receptorProfile": {
+      "NMDA-Rezeptor": "Nicht-kompetitiver, spannungsabhängiger Kanalblocker (bevorzugt bei pathologisch erhöhter Aktivierung)",
+      "5-HT3": "Schwacher Antagonismus",
+      "nAChR": "Schwache Hemmung",
+      "Dopamin-D2": "Schwacher Agonismus"
+    },
+    "commonSideEffectsDe": [
+      "Schwindel",
+      "Kopfschmerzen",
+      "Müdigkeit",
+      "Verstopfung",
+      "Verwirrung (insbesondere bei Demenzkranken)",
+      "Halluzinationen (selten)"
+    ],
+    "commonSideEffectsEn": [
+      "Dizziness",
+      "Headache",
+      "Fatigue",
+      "Constipation",
+      "Confusion (particularly in dementia patients)",
+      "Hallucinations (rare)"
+    ],
+    "seriousSideEffectsDe": [
+      "Akute Psychose / Delir (insbesondere bei hohen Spiegeln oder Nierenschwäche)",
+      "Krampfanfall (selten)"
+    ],
+    "seriousSideEffectsEn": [
+      "Acute psychosis/delirium (especially with high levels or renal impairment)",
+      "Seizure (rare)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Nierenfunktion (Kreatinin, GFR)",
+        "frequency": "Vor Beginn, dann jährlich",
+        "noteDe": "Memantin wird renal eliminiert; bei GFR < 30 ml/min Maximaldosis 10 mg/Tag; bei GFR 5–29: 5–10 mg/Tag",
+        "noteEn": "Memantine is renally eliminated; max 10 mg/day if GFR < 30 ml/min; GFR 5–29: 5–10 mg/day"
+      },
+      {
+        "parameter": "Kognitive Funktion",
+        "frequency": "Alle 6 Monate",
+        "noteDe": "MMSE, ADAS-Cog oder MoCA dokumentieren",
+        "noteEn": "Document MMSE, ADAS-Cog, or MoCA"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Amantadin, Ketamin, Dextromethorphan",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive NMDA-Antagonismus; psychomotorische Effekte möglich",
+        "clinicalNoteEn": "Additive NMDA antagonism; psychomotor effects possible"
+      },
+      {
+        "interactsWith": "Harnalkalisierungsmittel (Carboanhydrasehemmer, Natriumbicarbonat)",
+        "severity": "mild",
+        "clinicalNoteDe": "Erhöhte Memantin-Spiegel durch reduzierte Ausscheidung",
+        "clinicalNoteEn": "Increased memantine levels due to reduced renal excretion"
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "eGFR",
+        "condition": "GFR < 30 ml/min",
+        "warningDe": "Maximaldosis 10 mg/Tag; bei GFR < 5 ml/min kontraindiziert",
+        "warningEn": "Maximum 10 mg/day; contraindicated if GFR < 5 ml/min",
+        "severity": "reduce_dose"
+      }
+    ],
+    "renalDosing": "GFR 30–49: 20 mg/Tag möglich; GFR 5–29: 10 mg/Tag; GFR < 5: kontraindiziert",
+    "hepaticDosing": "Leberinsuffizienz: keine spezifische Dosisanpassung, da hepatischer Metabolismus gering",
+    "tabletSplittable": true,
+    "liquidFormAvailable": true,
+    "sources": ["Fachinformation Axura (Merz DE, Stand 2024)", "S3-Leitlinie Demenz 2023"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "memantin-donepezil-combo",
+    "genericName": "Memantin + Donepezil (Kombination)",
+    "brandNamesDACH": ["Namzaric (USA; in DE/AT/CH keine Fixkombination zugelassen – Einzelsubstanzen parallel verordnen)"],
+    "atcCode": "N06DA52",
+    "substanceClass": "Fixe Kombinationstherapie: NMDA-Antagonist + AChEI",
+    "formulations": ["Kombinationskapsel (nur USA: Namzaric 28 mg Memantin ER / 10 mg Donepezil)", "In DACH: Einzelsubstanzen separat verordnen"],
+    "strengthsDACH": ["Keine Fixkombination in DACH zugelassen; in Europa i.d.R. Memantin 20 mg/Tag + Donepezil 10 mg/Tag als Parallelverschreibung"],
+    "kurzinfoDe": "Eine Fixkombination (Namzaric) existiert in den USA, ist jedoch in der DACH-Region und EU nicht zugelassen. Klinisch wird die Kombination aus Memantin und einem AChEI (meist Donepezil) bei mittelschwerer bis schwerer Alzheimer-Demenz eingesetzt – evidenzbasiert und in der S3-Leitlinie empfohlen. Beide Komponenten werden separat verschrieben. Additive Wirkung auf verschiedenen Ebenen (Glutamat/Acetylcholin). Verträglichkeitsprofil entspricht dem der Einzelsubstanzen; GI-Nebenwirkungen durch Donepezil bleiben relevant.",
+    "kurzinfoEn": "A fixed-dose combination (Namzaric) exists in the USA but is not approved in the DACH region or EU. Clinically, the combination of memantine and an AChEI (usually donepezil) is used for moderate to severe Alzheimer's dementia – evidence-based and recommended in S3 guidelines. Both components are prescribed separately. Additive effect via different mechanisms (glutamate/acetylcholine). Tolerability profile corresponds to individual substances; GI side effects from donepezil remain relevant.",
+    "receptorProfile": {
+      "NMDA-Rezeptor (Memantin)": "Nicht-kompetitiver Antagonismus",
+      "AChE (Donepezil)": "Reversibler Hemmer"
+    },
+    "commonSideEffectsDe": [
+      "Kombinationsprofil der Einzelsubstanzen: Übelkeit, Diarrhö (Donepezil), Schwindel (Memantin)",
+      "Bradykardie (Donepezil-Komponente)"
+    ],
+    "commonSideEffectsEn": [
+      "Combined profile of individual substances: nausea, diarrhoea (donepezil), dizziness (memantine)",
+      "Bradycardia (donepezil component)"
+    ],
+    "seriousSideEffectsDe": [
+      "Synkope durch Bradykardie",
+      "Delir/Psychose (v. a. bei hohen Memantin-Spiegeln)"
+    ],
+    "seriousSideEffectsEn": [
+      "Syncope from bradycardia",
+      "Delirium/psychosis (especially at high memantine levels)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Herzfrequenz & Kognition",
+        "frequency": "Alle 6 Monate",
+        "noteDe": "Monitoring entsprechend den Empfehlungen für Donepezil und Memantin als Einzelsubstanzen",
+        "noteEn": "Monitoring per individual donepezil and memantine recommendations"
+      },
+      {
+        "parameter": "Nierenfunktion",
+        "frequency": "Jährlich",
+        "noteDe": "Memantin-Dosisanpassung bei Niereninsuffizienz; s. Memantin-Eintrag",
+        "noteEn": "Memantine dose adjustment for renal impairment; see memantine entry"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Anticholinergika",
+        "severity": "moderate",
+        "clinicalNoteDe": "Antagonismus zur Donepezil-Komponente",
+        "clinicalNoteEn": "Antagonism to donepezil component"
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "eGFR",
+        "condition": "GFR < 30 ml/min",
+        "warningDe": "Memantin-Dosis auf max. 10 mg/Tag reduzieren",
+        "warningEn": "Reduce memantine to max 10 mg/day",
+        "severity": "reduce_dose"
+      }
+    ],
+    "renalDosing": "Memantin: Dosisreduktion erforderlich (s. Memantin-Eintrag); Donepezil: keine Anpassung",
+    "hepaticDosing": "Donepezil: individuelle Titration; Memantin: keine spezifische Anpassung",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "sources": ["S3-Leitlinie Demenz 2023", "Fachinformationen Donepezil + Memantin", "Tariot et al. JAMA 2004 (Kombination Evidenz)"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "naltrexon",
+    "genericName": "Naltrexon",
+    "brandNamesDACH": ["Naltrexin", "Adepend", "Naltrexon-Generika"],
+    "atcCode": "N07BB04",
+    "substanceClass": "Opioidrezeptor-Antagonist (reiner Antagonist, keine intrinsische agonistische Aktivität)",
+    "formulations": ["Filmtablette", "Depot-Injektion (monatlich, z. B. Vivitrol – in DE limitiert verfügbar)"],
+    "strengthsDACH": ["50 mg (oral)"],
+    "kurzinfoDe": "Naltrexon ist ein reiner, kompetitiver Opioidrezeptor-Antagonist ohne eigene analgetische oder euphorisierende Wirkung. Zugelassen für die Rückfallprophylaxe bei Alkoholabhängigkeit und nach Entgiftung bei Opioidabhängigkeit. Wichtig: Vor Beginn muss eine vollständige Opioid-Entgiftung sichergestellt sein (mind. 7–10 Tage Karenz bei Heroin, 14 Tage bei Methadon) – andernfalls akutes Entzugssyndrom. Naloxon-Test (0,4 mg i.v.) vor oraler Therapie bei Zweifel über Opioidfreiheit. Hepatotoxizität bei supratherapeutischen Dosen beobachtet.",
+    "kurzinfoEn": "Naltrexone is a pure, competitive opioid receptor antagonist with no intrinsic analgesic or euphorigenic activity. Approved for relapse prevention in alcohol dependence and after detoxification in opioid dependence. Important: complete opioid detoxification must be confirmed before initiation (minimum 7–10 days abstinence for heroin, 14 days for methadone) – otherwise acute withdrawal syndrome will be precipitated. Naloxone challenge test (0.4 mg IV) may be performed if opioid-free status is uncertain. Hepatotoxicity observed at supratherapeutic doses.",
+    "receptorProfile": {
+      "Mu-Opioidrezeptor": "Hochaffiner kompetitiver Antagonismus",
+      "Kappa-Opioidrezeptor": "Antagonismus",
+      "Delta-Opioidrezeptor": "Antagonismus"
+    },
+    "commonSideEffectsDe": [
+      "Übelkeit, Erbrechen (v. a. zu Beginn)",
+      "Bauchschmerzen",
+      "Kopfschmerzen",
+      "Müdigkeit",
+      "Schlafstörungen",
+      "Angstzustände (insbesondere bei opioidabhängigen Patienten)"
+    ],
+    "commonSideEffectsEn": [
+      "Nausea, vomiting (especially at initiation)",
+      "Abdominal pain",
+      "Headache",
+      "Fatigue",
+      "Sleep disturbance",
+      "Anxiety (particularly in opioid-dependent patients)"
+    ],
+    "seriousSideEffectsDe": [
+      "Akutes Opioid-Entzugssyndrom (bei nicht vollständig entgifteten Patienten – kann lebensbedrohlich sein)",
+      "Hepatotoxizität (bei Dosierungen > 300 mg/Tag; selten bei therapeutischen Dosierungen von 50 mg/Tag)",
+      "Suizidale Gedanken (selten, Überwachung empfohlen)"
+    ],
+    "seriousSideEffectsEn": [
+      "Acute opioid withdrawal syndrome (in incompletely detoxified patients – can be life-threatening)",
+      "Hepatotoxicity (at doses > 300 mg/day; rare at therapeutic 50 mg/day)",
+      "Suicidal ideation (rare; monitoring recommended)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Leberwerte (ALT, AST, GGT)",
+        "frequency": "Vor Beginn, nach 1 Monat, dann alle 3–6 Monate",
+        "noteDe": "Kontraindiziert bei akuter Hepatitis und schwerer Leberinsuffizienz; bei LFT > 3-fach ULN Absetzen",
+        "noteEn": "Contraindicated in acute hepatitis and severe hepatic impairment; discontinue if LFTs > 3x ULN"
+      },
+      {
+        "parameter": "Opioidfreiheit vor Therapiebeginn",
+        "frequency": "Einmalig vor Beginn",
+        "noteDe": "Urindrogenscreening oder Naloxon-Challenge-Test bei Unklarheit",
+        "noteEn": "Urine drug screen or naloxone challenge test if opioid-free status uncertain"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Opioid-Analgetika",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Vollständige Wirkungsaufhebung; bei Schmerztherapie-Bedarf auf Non-Opioid-Analgetika ausweichen; Notfallschmerz-Management im Voraus besprechen",
+        "clinicalNoteEn": "Complete blockade of opioid analgesia; switch to non-opioid analgesics; pre-plan emergency pain management"
+      },
+      {
+        "interactsWith": "Thioridazin",
+        "severity": "moderate",
+        "clinicalNoteDe": "Erhöhte Lethargie und Somnolenz",
+        "clinicalNoteEn": "Increased lethargy and somnolence"
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "ALT / AST",
+        "condition": "Erhöhung > 3-fach ULN",
+        "warningDe": "Naltrexon absetzen; Hepatologe einbeziehen",
+        "warningEn": "Discontinue naltrexone; hepatology referral",
+        "severity": "contraindicated"
+      }
+    ],
+    "renalDosing": "Vorsicht bei Niereninsuffizienz; begrenzte Daten",
+    "hepaticDosing": "Kontraindiziert bei akuter Hepatitis und schwerer Leberinsuffizienz; moderate Leberinsuffizienz: engmaschiges Monitoring",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "sources": ["Fachinformation Adepend (Mibe DE, Stand 2024)", "S3-Leitlinie Alkohol (AWMF 2021)", "S3-Leitlinie Opioidabhängigkeit (AWMF 2020)"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "nalmefen",
+    "genericName": "Nalmefen",
+    "brandNamesDACH": ["Selincro"],
+    "atcCode": "N07BB05",
+    "substanceClass": "Opioidrezeptor-Modulator (Mu-Antagonist, Kappa-Partialagonist)",
+    "formulations": ["Filmtablette"],
+    "strengthsDACH": ["18 mg"],
+    "kurzinfoDe": "Nalmefen ist zur Reduktion des Alkoholkonsums bei Erwachsenen mit Alkoholabhängigkeit zugelassen (bedarfsorientiertes Prinzip – Einnahme 1–2 h vor Situationen, in denen Alkohol getrunken werden soll). Es ist kein Abstinenz-Mittel wie Naltrexon, sondern zielt auf Trinkmengenreduktion ab. Der Kappa-Partialagonismus kann zu dysphoren Nebenwirkungen führen. Hepatische Metabolisierung; Vorsicht bei Leberinsuffizienz. Nicht für Patienten mit aktueller Opioidtherapie geeignet.",
+    "kurzinfoEn": "Nalmefene is approved for reduction of alcohol consumption in adults with alcohol dependence (as-needed principle – taken 1–2 hours before drinking situations). It is not an abstinence medication like naltrexone but targets drinking reduction. Kappa partial agonism may cause dysphoric side effects. Hepatic metabolism; caution in hepatic impairment. Not suitable for patients on current opioid therapy.",
+    "receptorProfile": {
+      "Mu-Opioidrezeptor": "Antagonismus",
+      "Delta-Opioidrezeptor": "Antagonismus",
+      "Kappa-Opioidrezeptor": "Partialagonismus (bei Abhängigkeit dysphore Effekte)"
+    },
+    "commonSideEffectsDe": [
+      "Übelkeit (häufigste NW)",
+      "Schwindel",
+      "Schlaflosigkeit",
+      "Kopfschmerzen",
+      "Müdigkeit",
+      "Dysphorie, Unwohlsein",
+      "Verminderter Appetit"
+    ],
+    "commonSideEffectsEn": [
+      "Nausea (most frequent AE)",
+      "Dizziness",
+      "Insomnia",
+      "Headache",
+      "Fatigue",
+      "Dysphoria, malaise",
+      "Decreased appetite"
+    ],
+    "seriousSideEffectsDe": [
+      "Akutes Entzugssyndrom bei opioidabhängigen Patienten",
+      "Hepatotoxizität (selten; LFT-Erhöhungen beobachtet)"
+    ],
+    "seriousSideEffectsEn": [
+      "Acute withdrawal syndrome in opioid-dependent patients",
+      "Hepatotoxicity (rare; LFT elevations reported)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Leberwerte",
+        "frequency": "Vor Beginn, dann bei klinischem Verdacht",
+        "noteDe": "Kontraindiziert bei schwerer Leberinsuffizienz (Child-Pugh C)",
+        "noteEn": "Contraindicated in severe hepatic impairment (Child-Pugh C)"
+      },
+      {
+        "parameter": "Trinkmengen-Protokoll",
+        "frequency": "Alle 1–3 Monate",
+        "noteDe": "Nutzung von Trinktagebuch oder validiertem Assessment (z. B. AUDIT-C); Therapieziel Reduktion auf ≤ niedrig-riskante Trinkmenge",
+        "noteEn": "Use drinking diary or validated assessment (e.g., AUDIT-C); treatment goal: reduction to ≤ low-risk drinking level"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Opioid-Analgetika",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Blockiert Opioid-Analgesie; Notfallmanagement im Voraus planen",
+        "clinicalNoteEn": "Blocks opioid analgesia; plan emergency pain management in advance"
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Leberfunktion (Bilirubin, ALT)",
+        "condition": "Child-Pugh C oder schwere Leberinsuffizienz",
+        "warningDe": "Kontraindiziert",
+        "warningEn": "Contraindicated",
+        "severity": "contraindicated"
+      }
+    ],
+    "renalDosing": "Schwere Niereninsuffizienz (GFR < 30): Vorsicht; keine formale Kontraindikation",
+    "hepaticDosing": "Leichte bis mittelschwere Leberinsuffizienz: engmaschig; schwere Leberinsuffizienz (Child-Pugh C): kontraindiziert",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "sources": ["Fachinformation Selincro (Lundbeck DE, Stand 2024)", "S3-Leitlinie Alkohol (AWMF 2021)", "EMA Selincro EPAR"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "acamprosat",
+    "genericName": "Acamprosat",
+    "brandNamesDACH": ["Campral"],
+    "atcCode": "N07BB03",
+    "substanceClass": "Glutamat-modulierender Wirkstoff (NMDA-Modulation, GABA-Agonismus) / Anticraving",
+    "formulations": ["Magensaftresistente Tablette"],
+    "strengthsDACH": ["333 mg (2 Tbl. dreimal täglich = 1998 mg/Tag bei > 60 kg)"],
+    "kurzinfoDe": "Acamprosat unterstützt den Erhalt der Abstinenz nach Alkoholentzug. Der genaue Wirkmechanismus ist nicht vollständig aufgeklärt; wahrscheinlich wirkt es durch Modulation des glutamatergen NMDA-Systems sowie GABAerge Effekte und reduziert das alkoholassoziierte Craving. Wirksamkeit nur bei vollständiger Abstinenz als Therapieziel; bei erneutem Trinken Therapie fortsetzen (kein Abbruchindikator). Renal eliminiert – bei Niereninsuffizienz kontraindiziert oder reduziert. Gute Verträglichkeit; häufigstes NW ist Diarrhö.",
+    "kurzinfoEn": "Acamprosate supports maintenance of abstinence following alcohol detoxification. The exact mechanism is not fully elucidated; likely involves modulation of glutamatergic NMDA systems and GABAergic effects, reducing alcohol-associated craving. Efficacy only established when complete abstinence is the goal; if drinking occurs, continue therapy (not a discontinuation indicator). Renally eliminated – contraindicated or dose-reduced in renal impairment. Good tolerability; diarrhoea is the most frequent side effect.",
+    "receptorProfile": {
+      "NMDA-Rezeptor": "Schwache Modulation (indirekter Glutamat-Effekt)",
+      "GABA-A": "Schwacher Agonismus"
+    },
+    "commonSideEffectsDe": [
+      "Diarrhö (häufigste NW – meist transienter Natur)",
+      "Übelkeit",
+      "Bauchschmerzen",
+      "Pruritus, Hautausschlag"
+    ],
+    "commonSideEffectsEn": [
+      "Diarrhoea (most common AE – usually transient)",
+      "Nausea",
+      "Abdominal pain",
+      "Pruritus, skin rash"
+    ],
+    "seriousSideEffectsDe": [
+      "Suizidale Gedanken (selten; bei alkoholkranken Patienten generell erhöhtes Risiko – Überwachung empfohlen)"
+    ],
+    "seriousSideEffectsEn": [
+      "Suicidal ideation (rare; alcohol-dependent patients have a generally elevated risk – monitoring recommended)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Nierenfunktion",
+        "frequency": "Vor Beginn",
+        "noteDe": "Kontraindiziert bei GFR < 30 ml/min; reduzierte Dosis bei GFR 30–60 (333 mg dreimal täglich statt 666 mg)",
+        "noteEn": "Contraindicated if GFR < 30 ml/min; reduced dose for GFR 30–60 (333 mg three times daily instead of 666 mg)"
+      },
+      {
+        "parameter": "Abstinenz / Alkoholkonsum",
+        "frequency": "Bei jedem Kontakt",
+        "noteDe": "Kombination mit psychosozialer Therapie essenziell; kein Abbruch bei Rückfall",
+        "noteEn": "Combination with psychosocial therapy essential; do not discontinue after relapse"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Alkohol",
+        "severity": "mild",
+        "clinicalNoteDe": "Keine pharmakokinetische Interaktion; therapeutisches Prinzip erfordert Abstinenz",
+        "clinicalNoteEn": "No pharmacokinetic interaction; therapeutic principle requires abstinence"
+      },
+      {
+        "interactsWith": "Naltrexon",
+        "severity": "mild",
+        "clinicalNoteDe": "Kombinierter Einsatz möglich (unterschiedliche Wirkmechanismen); höhere Abstinenzraten in einigen Studien",
+        "clinicalNoteEn": "Combined use possible (different mechanisms); higher abstinence rates in some studies"
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Kreatinin / eGFR",
+        "condition": "GFR < 30 ml/min",
+        "warningDe": "Kontraindiziert",
+        "warningEn": "Contraindicated",
+        "severity": "contraindicated"
+      }
+    ],
+    "renalDosing": "GFR 30–60: 333 mg 3x täglich; GFR < 30: kontraindiziert",
+    "hepaticDosing": "Keine Dosisanpassung erforderlich (nicht hepatisch metabolisiert)",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "sources": ["Fachinformation Campral (Merck Serono DE, Stand 2024)", "S3-Leitlinie Alkohol (AWMF 2021)"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "disulfiram",
+    "genericName": "Disulfiram",
+    "brandNamesDACH": ["Antabus"],
+    "atcCode": "N07BB01",
+    "substanceClass": "Aldehyddehydrogenase-Hemmer / Aversionstherapeutikum",
+    "formulations": ["Tablette"],
+    "strengthsDACH": ["400 mg"],
+    "kurzinfoDe": "Disulfiram hemmt die Aldehyddehydrogenase (ALDH) und verhindert so den Abbau von Acetaldehyd, dem primären Alkohol-Metaboliten. Bei Alkoholkonsumkontakt entsteht die sog. Disulfiram-Alkohol-Reaktion: Flush, Tachykardie, Hypo-/Hypertonie, Übelkeit, Erbrechen, Dyspnoe – potenziell lebensbedrohlich. Einnahme ausschliesslich nach informierter Einwilligung und bei motivierten, abstinenten Patienten. Zahlreiche Arzneimittelinteraktionen über CYP450. Heute in DACH selten eingesetzt; eher Drittlinientherapie.",
+    "kurzinfoEn": "Disulfiram inhibits aldehyde dehydrogenase (ALDH), blocking acetaldehyde metabolism. Upon alcohol exposure, a disulfiram-alcohol reaction occurs: flushing, tachycardia, hypo-/hypertension, nausea, vomiting, dyspnoea – potentially life-threatening. Initiation requires informed consent and a motivated, abstinent patient. Numerous drug interactions via CYP450. Rarely used in DACH today; considered third-line therapy.",
+    "receptorProfile": {
+      "Aldehyddehydrogenase (ALDH)": "Irreversible Hemmung (Acetaldehyd-Akkumulation nach Alkohol)"
+    },
+    "commonSideEffectsDe": [
+      "Müdigkeit, Sedierung (ohne Alkohol)",
+      "Metallischer Geschmack",
+      "Kopfschmerzen",
+      "Periphere Neuropathie (bei Langzeittherapie)"
+    ],
+    "commonSideEffectsEn": [
+      "Fatigue, sedation (without alcohol)",
+      "Metallic taste",
+      "Headache",
+      "Peripheral neuropathy (with long-term use)"
+    ],
+    "seriousSideEffectsDe": [
+      "Disulfiram-Alkohol-Reaktion: Flush, Tachykardie, Erbrechen, Hypotonie, Dyspnoe, kardiovaskulärer Kollaps (bei Alkoholkonsum – potenziell letal)",
+      "Hepatotoxizität (seltene, schwere Leberschädigung möglich)",
+      "Psychose (selten)",
+      "Optische Neuritis"
+    ],
+    "seriousSideEffectsEn": [
+      "Disulfiram-alcohol reaction: flushing, tachycardia, vomiting, hypotension, dyspnoea, cardiovascular collapse (upon alcohol ingestion – potentially lethal)",
+      "Hepatotoxicity (rare but serious liver injury)",
+      "Psychosis (rare)",
+      "Optic neuritis"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Leberwerte",
+        "frequency": "Vor Beginn, nach 2 Wochen, dann alle 1–3 Monate",
+        "noteDe": "Kontraindiziert bei Lebererkrankungen; Absetzen bei LFT-Erhöhung",
+        "noteEn": "Contraindicated in liver disease; discontinue if LFTs elevated"
+      },
+      {
+        "parameter": "Motivationsassessment",
+        "frequency": "Vor Beginn und regelmässig",
+        "noteDe": "Informierte Einwilligung obligat; Patienten über versteckte Alkoholquellen informieren (Mundwasser, Sossen, Arzneimittel)",
+        "noteEn": "Informed consent mandatory; inform patients about hidden alcohol sources (mouthwash, sauces, medications)"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Alkohol (inkl. topisch)",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Lebensbedrohliche Disulfiram-Alkohol-Reaktion; auch topischer Alkohol (Cologne, Händedesinfektion) kann Reaktion auslösen",
+        "clinicalNoteEn": "Life-threatening disulfiram-alcohol reaction; even topical alcohol (cologne, hand sanitiser) can trigger a reaction"
+      },
+      {
+        "interactsWith": "Warfarin",
+        "severity": "severe",
+        "clinicalNoteDe": "Disulfiram hemmt CYP2C9; INR deutlich erhöht",
+        "clinicalNoteEn": "Disulfiram inhibits CYP2C9; INR markedly elevated"
+      },
+      {
+        "interactsWith": "Phenytoin",
+        "severity": "severe",
+        "clinicalNoteDe": "Stark erhöhte Phenytoin-Spiegel (CYP-Hemmung); Toxizitätsgefahr",
+        "clinicalNoteEn": "Markedly elevated phenytoin levels (CYP inhibition); risk of toxicity"
+      },
+      {
+        "interactsWith": "Metronidazol",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Psychotische Reaktionen und Konfusion beschrieben",
+        "clinicalNoteEn": "Psychotic reactions and confusion reported"
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "ALT / AST",
+        "condition": "Vorbestehende Lebererkrankung",
+        "warningDe": "Kontraindiziert bei Leberzirrhose, akuter Hepatitis, schwerer Leberfunktionsstörung",
+        "warningEn": "Contraindicated in cirrhosis, acute hepatitis, severe hepatic impairment",
+        "severity": "contraindicated"
+      }
+    ],
+    "renalDosing": "Vorsicht bei Niereninsuffizienz; keine formale Kontraindikation",
+    "hepaticDosing": "Kontraindiziert bei bestehender Lebererkrankung",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "sources": ["Fachinformation Antabus (Actavis DE, Stand 2024)", "S3-Leitlinie Alkohol (AWMF 2021)"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "methadon",
+    "genericName": "Methadon / Levomethadon",
+    "brandNamesDACH": ["L-Polamidon (Levomethadon; DE, AT)", "Methaddict (Racemisches Methadon; CH)", "Methasan"],
+    "atcCode": "N07BC02",
+    "substanceClass": "Opioid-Agonist (mu-Rezeptor) / Substitutionsmittel / NMDA-Antagonist",
+    "formulations": ["Lösung oral (L-Polamidon 2,5 mg/ml)", "Tablette (CH: Methaddict)"],
+    "strengthsDACH": ["L-Polamidon: 2,5 mg/ml oral; überwachte Einnahme (take-home in definierten Fällen)"],
+    "kurzinfoDe": "Methadon (Racemat) und Levomethadon (L-Polamidon, nur aktives Enantiomer – doppelte Potenz) sind orale Langzeit-Opioidagonisten für die opioidgestützte Behandlung (OGT) bei Opioidabhängigkeit. In Deutschland gemäss BtMVV verschreibungspflichtig; Einnahme in der Apotheke oder Praxis beaufsichtigt. Kritischer Aspekt: QTc-Verlängerung (dosisabhängig, besonders bei > 100 mg/Tag Methadon-Äquivalent) – vor Beginn und im Verlauf EKG obligat. Sehr lange Halbwertszeit (24–36 h, Varianz bis 150 h) erhöht Kumulationsrisiko. Keine Deckelung der analgetischen Wirkung.",
+    "kurzinfoEn": "Methadone (racemate) and levomethadone (L-Polamidon, active enantiomer only – double potency) are oral long-acting opioid agonists used in opioid-assisted treatment (OAT) for opioid dependence. Prescribed under the German BtMVV; supervised administration in pharmacy or clinic. Critical concern: QTc prolongation (dose-dependent, especially > 100 mg/day methadone equivalent) – ECG mandatory at baseline and during treatment. Very long half-life (24–36 h, range up to 150 h) increases risk of accumulation. No ceiling on analgesic effect.",
+    "receptorProfile": {
+      "Mu-Opioidrezeptor": "Voller Agonist",
+      "Delta-Opioidrezeptor": "Agonismus",
+      "NMDA-Rezeptor": "Antagonismus (relevanz für chronischen Schmerz)",
+      "hERG-Kanal": "Hemmung (QTc-Verlängerungsrisiko)"
+    },
+    "commonSideEffectsDe": [
+      "Obstipation (häufig, oft therapiebedürftig)",
+      "Schwitzen (erhöhte Diaphorese)",
+      "Mundtrockenheit",
+      "Übelkeit",
+      "Sedierung (v. a. zu Beginn)",
+      "Libidoverlust, sexuelle Dysfunktion",
+      "Ödeme"
+    ],
+    "commonSideEffectsEn": [
+      "Constipation (frequent, often requiring treatment)",
+      "Sweating (diaphoresis)",
+      "Dry mouth",
+      "Nausea",
+      "Sedation (especially initially)",
+      "Libido loss, sexual dysfunction",
+      "Oedema"
+    ],
+    "seriousSideEffectsDe": [
+      "QTc-Verlängerung / Torsades de Pointes (besonders bei Dosen > 100 mg/Tag, Hypokaliämie, Kombination mit anderen QT-verlängernden Substanzen – regelmässige EKG-Kontrollen zwingend)",
+      "Atemdepression (bei Überdosierung oder Akkumulation – lange HWZ beachten)",
+      "Methadon-Intoxikation bei Kindern (höchst toxisch – sichere Aufbewahrung zwingend)",
+      "Torsades de Pointes / Kammerflimmern"
+    ],
+    "seriousSideEffectsEn": [
+      "QTc prolongation/Torsades de Pointes (especially at doses > 100 mg/day, hypokalaemia, combination with other QT-prolonging substances – mandatory regular ECG monitoring)",
+      "Respiratory depression (overdose or accumulation – note long half-life)",
+      "Methadone poisoning in children (highly toxic – secure storage mandatory)",
+      "Torsades de Pointes/ventricular fibrillation"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "EKG (QTc-Intervall)",
+        "frequency": "Vor Beginn; nach Dosissteigerung (v. a. bei > 40 mg/Tag); dann alle 3–6 Monate",
+        "noteDe": "Bei QTc > 450 ms: Dosisreduktion und Beseitigung korrigierbarer Faktoren; bei QTc > 500 ms: Absetzen oder Wechsel auf Buprenorphin erwägen",
+        "noteEn": "If QTc > 450 ms: dose reduction and correct modifiable factors; if QTc > 500 ms: consider discontinuation or switch to buprenorphine"
+      },
+      {
+        "parameter": "Elektrolyte (Kalium, Magnesium)",
+        "frequency": "Vor Beginn, bei Risikofaktoren regelmässig",
+        "noteDe": "Hypokaliämie und Hypomagnesiämie erhöhen das Torsades-Risiko erheblich",
+        "noteEn": "Hypokalaemia and hypomagnesaemia significantly increase Torsades risk"
+      },
+      {
+        "parameter": "Überprüfung BtMVV-Compliance",
+        "frequency": "Regelmässig (je nach Phase der OGT)",
+        "noteDe": "Urindrogenscreening; Take-Home-Vergabe gemäss BtMVV-Regeln (DE)",
+        "noteEn": "Urine drug screening; take-home dispensing per BtMVV regulations (Germany)"
+      },
+      {
+        "parameter": "Atemdepression / Sedierungsgrad",
+        "frequency": "Insbesondere in der Einstellungsphase",
+        "noteDe": "Langsame Titration; ersten Wochen besonders überwachen",
+        "noteEn": "Slow titration; especially close monitoring in the first weeks"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "QTc-verlängernde Substanzen (Antipsychotika, trizyklische AD, Makrolide, Fluconazol)",
+        "severity": "severe",
+        "clinicalNoteDe": "Additives QTc-Risiko; Kombination wenn möglich vermeiden oder engmaschiges EKG-Monitoring",
+        "clinicalNoteEn": "Additive QTc risk; avoid combination if possible or perform close ECG monitoring"
+      },
+      {
+        "interactsWith": "CYP3A4-Induktoren (Rifampicin, Carbamazepin, Phenytoin)",
+        "severity": "severe",
+        "clinicalNoteDe": "Drastische Reduktion der Methadon-Spiegel – Entzugssymptome drohen; Dosisanpassung nötig",
+        "clinicalNoteEn": "Marked reduction in methadone levels – withdrawal symptoms may emerge; dose adjustment required"
+      },
+      {
+        "interactsWith": "CYP3A4/CYP2D6-Inhibitoren (Fluconazol, Clarithromycin, Fluoxetin)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Erhöhung der Methadon-Spiegel; Toxizitätsrisiko",
+        "clinicalNoteEn": "Increased methadone levels; risk of toxicity"
+      },
+      {
+        "interactsWith": "Benzodiazepine / Sedativa",
+        "severity": "severe",
+        "clinicalNoteDe": "Potenzierung der Atemdepression; kombinierter Einsatz nur mit strenger Indikation",
+        "clinicalNoteEn": "Potentiation of respiratory depression; combined use only with strict indication"
+      },
+      {
+        "interactsWith": "Naltrexon / Naloxon",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Akutes Entzugssyndrom",
+        "clinicalNoteEn": "Acute withdrawal syndrome"
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "QTc-Intervall (EKG)",
+        "condition": "QTc > 500 ms",
+        "warningDe": "Methadon absetzen oder auf Buprenorphin umstellen; kardiologische Mitbetreuung",
+        "warningEn": "Discontinue methadone or switch to buprenorphine; cardiology co-management",
+        "severity": "contraindicated"
+      },
+      {
+        "labParameter": "Kalium",
+        "condition": "Hypokaliämie < 3,0 mmol/l",
+        "warningDe": "Vor Fortführung der Therapie korrigieren; erhöhtes Torsades-Risiko",
+        "warningEn": "Correct before continuing therapy; elevated Torsades risk",
+        "severity": "reduce_dose"
+      }
+    ],
+    "renalDosing": "Keine strikte Dosisanpassung; Vorsicht bei schwerer Niereninsuffizienz (Akkumulation möglich)",
+    "hepaticDosing": "Vorsicht bei schwerer Leberinsuffizienz; verlängerte HWZ durch reduzierten Metabolismus",
+    "tabletSplittable": false,
+    "liquidFormAvailable": true,
+    "sources": ["Fachinformation L-Polamidon (Sanofi DE, Stand 2024)", "BtMVV DE", "S3-Leitlinie Opioidabhängigkeit (AWMF 2020)", "CPIC Methadone Guideline 2022"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "buprenorphin",
+    "genericName": "Buprenorphin (Sublingual)",
+    "brandNamesDACH": ["Subutex", "Buprenorphin-Generika (sublingual)"],
+    "atcCode": "N07BC01",
+    "substanceClass": "Partieller Mu-Opioidrezeptor-Agonist / Kappa-Antagonist / Substitutionsmittel",
+    "formulations": ["Sublingualtablette", "Sublingualfilm"],
+    "strengthsDACH": ["0,4 mg", "2 mg", "8 mg"],
+    "kurzinfoDe": "Buprenorphin ist ein partieller Mu-Agonist mit sehr hoher Rezeptoraffinität und Ceiling-Effekt bei Atemdepression (pharmakologischer Sicherheitsvorteil gegenüber Vollagohisten). Zugelassen für die opioidgestützte Behandlung. Sublingual einzunehmen – Resorption nahezu ausschliesslich transmukös. Kritischer Aspekt: Bei Gabe während akuter Opioidintoxikation oder bei methadonsubstituierten Patienten ohne ausreichend lange Abstinenz droht precipitated withdrawal (Entzugspräzipitation durch Verdrängung des Vollagohnisten vom Rezeptor). In Deutschland BtMVV-pflichtig.",
+    "kurzinfoEn": "Buprenorphine is a partial mu-agonist with very high receptor affinity and a ceiling effect for respiratory depression (pharmacological safety advantage over full agonists). Approved for opioid-assisted treatment. Must be taken sublingually – absorption is almost exclusively transmucosal. Critical concern: administration during acute opioid intoxication or in methadone-maintained patients without adequate abstinence risks precipitated withdrawal (full agonist displaced from receptor by the high-affinity partial agonist). Controlled under BtMVV in Germany.",
+    "receptorProfile": {
+      "Mu-Opioidrezeptor": "Partieller Agonist (sehr hohe Affinität, langsame Dissoziation)",
+      "Kappa-Opioidrezeptor": "Antagonismus",
+      "ORL1/Nociceptin-Rezeptor": "Partieller Agonismus"
+    },
+    "commonSideEffectsDe": [
+      "Obstipation",
+      "Übelkeit",
+      "Kopfschmerzen",
+      "Schwitzen",
+      "Schlafstörungen",
+      "Sedierung (weniger als Methadon)"
+    ],
+    "commonSideEffectsEn": [
+      "Constipation",
+      "Nausea",
+      "Headache",
+      "Sweating",
+      "Sleep disturbance",
+      "Sedation (less than methadone)"
+    ],
+    "seriousSideEffectsDe": [
+      "Entzugspräzipitation ('precipitated withdrawal') bei Gabe zu früh nach letzter Opioiddosis oder während Methadon-Behandlung",
+      "Atemdepression (geringer als Vollagohnisten, aber bei parenteralem Missbrauch + Benzodiazepinen gefährlich)",
+      "Hepatotoxizität (seltene Erhöhungen der Leberwerte – LFT-Kontrolle empfohlen)"
+    ],
+    "seriousSideEffectsEn": [
+      "Precipitated withdrawal (if given too soon after last opioid dose or during methadone treatment)",
+      "Respiratory depression (lower than full agonists but dangerous with IV misuse combined with benzodiazepines)",
+      "Hepatotoxicity (rare LFT elevations – monitoring recommended)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Entzugszeichen / COWS-Score vor Erstgabe",
+        "frequency": "Einmalig vor Erstgabe",
+        "noteDe": "Erstgabe erst bei COWS ≥ 8 (leichter bis mittlerer Entzug) – EWER-Protokoll verwenden; bei < 8: Entzugspräzipitationsrisiko zu hoch",
+        "noteEn": "Initiate only when COWS ≥ 8 (mild to moderate withdrawal); use COWS protocol; if < 8: risk of precipitated withdrawal too high"
+      },
+      {
+        "parameter": "Leberwerte (ALT, AST)",
+        "frequency": "Vor Beginn, nach 1–3 Monaten, dann halbjährlich",
+        "noteDe": "Insbesondere bei bestehender HCV/HBV-Infektion oder Alkoholabusus",
+        "noteEn": "Especially in patients with HCV/HBV infection or alcohol misuse"
+      },
+      {
+        "parameter": "Urindrogenscreening",
+        "frequency": "Regelmässig (je nach BtMVV-Phase)",
+        "noteDe": "BtMVV-Compliance; Take-Home nach Stabilisierung gemäss Regularien",
+        "noteEn": "BtMVV compliance; take-home upon stabilisation per regulations"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Naltrexon / Naloxon",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Akutes Entzugssyndrom; keine Kombination",
+        "clinicalNoteEn": "Acute withdrawal; do not combine"
+      },
+      {
+        "interactsWith": "Benzodiazepine / ZNS-Depressiva",
+        "severity": "severe",
+        "clinicalNoteDe": "Potenzierte Atemdepression; besonders bei parenteralem Missbrauch von Buprenorphin gefährlich",
+        "clinicalNoteEn": "Potentiated respiratory depression; especially dangerous with parenteral misuse of buprenorphine"
+      },
+      {
+        "interactsWith": "CYP3A4-Inhibitoren (Azol-Antimykotika, Proteaseinhibitoren)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Erhöhte Buprenorphin-Spiegel; Sedierungsrisiko steigt",
+        "clinicalNoteEn": "Increased buprenorphine levels; sedation risk increases"
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "ALT / AST",
+        "condition": "Erhöhung > 3-fach ULN",
+        "warningDe": "Engmaschig kontrollieren; bei Symptomen ggf. Umstellen",
+        "warningEn": "Close monitoring; consider switching if symptomatic",
+        "severity": "caution"
+      }
+    ],
+    "renalDosing": "Keine Dosisanpassung erforderlich",
+    "hepaticDosing": "Mittelschwere bis schwere Leberinsuffizienz: reduzierte Dosis; engmaschige LFT-Kontrolle",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "sources": ["Fachinformation Subutex (Indivior DE, Stand 2024)", "BtMVV DE", "S3-Leitlinie Opioidabhängigkeit 2020", "COWS Assessment Tool"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "buprenorphin-naloxon",
+    "genericName": "Buprenorphin + Naloxon",
+    "brandNamesDACH": ["Suboxone", "Buprenorphin/Naloxon-Generika"],
+    "atcCode": "N07BC51",
+    "substanceClass": "Partieller Opioid-Agonist + Opioid-Antagonist (Missbrauchsschutz-Kombination)",
+    "formulations": ["Sublingualtablette", "Sublingualer Film"],
+    "strengthsDACH": ["2 mg/0,5 mg", "8 mg/2 mg (Buprenorphin/Naloxon)"],
+    "kurzinfoDe": "Die Kombination aus Buprenorphin und Naloxon (4:1-Verhältnis) ist der Goldstandard in der opioidgestützten Behandlung. Sublingual wird Naloxon nahezu nicht resorbiert und hat keinen klinisch relevanten Effekt; bei versuchtem parenteralem Missbrauch führt Naloxon jedoch zur Verdrängung des Buprenorphins und löst akuten Opioidentzug aus (Missbrauchsschutzprinzip). Bevorzugt gegenüber Subutex (reines Buprenorphin), wenn kein zwingender klinischer Grund dagegen spricht. Entzugspräzipitation wie bei reinem Buprenorphin möglich; COWS-Score vor Erstgabe obligat.",
+    "kurzinfoEn": "The buprenorphine/naloxone combination (4:1 ratio) is the standard of care in opioid-assisted treatment. When taken sublingually, naloxone is barely absorbed and has no clinically relevant effect; however, if misused parenterally, naloxone displaces buprenorphine and precipitates acute opioid withdrawal (abuse-deterrence principle). Preferred over pure buprenorphine (Subutex) unless there is a compelling clinical contraindication. Precipitated withdrawal risk as with pure buprenorphine; COWS score mandatory before initiation.",
+    "receptorProfile": {
+      "Mu-Opioidrezeptor (Buprenorphin)": "Partieller Agonist",
+      "Mu-Opioidrezeptor (Naloxon, parenteral)": "Antagonismus (Missbrauchsschutz)"
+    },
+    "commonSideEffectsDe": [
+      "Wie reines Buprenorphin: Obstipation, Übelkeit, Schwitzen, Kopfschmerzen, Schlafstörungen"
+    ],
+    "commonSideEffectsEn": [
+      "As per pure buprenorphine: constipation, nausea, sweating, headache, sleep disturbance"
+    ],
+    "seriousSideEffectsDe": [
+      "Entzugspräzipitation (wie bei Subutex – COWS vor Erstgabe obligat)",
+      "Atemdepression bei kombiniertem Missbrauch mit Benzodiazepinen (i.v.)",
+      "Hepatotoxizität (selten)"
+    ],
+    "seriousSideEffectsEn": [
+      "Precipitated withdrawal (as with Subutex – COWS mandatory before initiation)",
+      "Respiratory depression with combined IV misuse of benzodiazepines",
+      "Hepatotoxicity (rare)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "COWS-Score vor Erstgabe",
+        "frequency": "Einmalig vor Erstgabe",
+        "noteDe": "Erstgabe bei COWS ≥ 8; Protokollierung obligat",
+        "noteEn": "Initiate at COWS ≥ 8; documentation mandatory"
+      },
+      {
+        "parameter": "Leberwerte",
+        "frequency": "Halbjährlich",
+        "noteDe": "Wie bei reinem Buprenorphin; HCV/HBV-Status beachten",
+        "noteEn": "As per pure buprenorphine; check HCV/HBV status"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Benzodiazepine",
+        "severity": "severe",
+        "clinicalNoteDe": "Atemdepressionsrisiko; strenge Indikationsstellung",
+        "clinicalNoteEn": "Respiratory depression risk; strict indication required"
+      },
+      {
+        "interactsWith": "CYP3A4-Inhibitoren",
+        "severity": "moderate",
+        "clinicalNoteDe": "Erhöhte Buprenorphin-Exposition",
+        "clinicalNoteEn": "Increased buprenorphine exposure"
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "Keine Dosisanpassung erforderlich",
+    "hepaticDosing": "Leichte Leberinsuffizienz: übliche Dosierung mit LFT-Monitoring; schwere: Vorsicht",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "sources": ["Fachinformation Suboxone (Indivior DE, Stand 2024)", "BtMVV DE", "S3-Leitlinie Opioidabhängigkeit 2020"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "vareniclin",
+    "genericName": "Vareniclin",
+    "brandNamesDACH": ["Champix"],
+    "atcCode": "N07BA03",
+    "substanceClass": "Partieller Agonist an nikotinergen Alpha-4-Beta-2-Acetylcholinrezeptoren",
+    "formulations": ["Filmtablette"],
+    "strengthsDACH": ["0,5 mg", "1 mg"],
+    "kurzinfoDe": "Vareniclin ist das wirksamste Medikament zur Raucherentwöhnung. Als partieller Agonist aktiviert es die nAChR (alpha-4-beta-2) und reduziert Nikotinentzugssymptome, während es gleichzeitig die Belohnungswirkung von Nikotin durch kompetitive Hemmung blockiert. Titration über 1 Woche (0,5 mg dann 1 mg zweimal täglich). Therapiebeginn 1–2 Wochen vor dem Rauchstopp. Wichtige Warnung: neuropsychiatrische Nebenwirkungen und Suizidalität (Black-Box-Warnung in den USA; in EU Kontraindikation nicht absolut, aber engmaschige psychiatrische Überwachung empfohlen, insbesondere bei psychiatrischer Vorerkrankung).",
+    "kurzinfoEn": "Varenicline is the most effective medication for smoking cessation. As a partial agonist at nAChR (alpha-4-beta-2), it activates the receptor to reduce withdrawal symptoms while simultaneously blocking nicotine's reward effect through competitive inhibition. Titration over 1 week (0.5 mg then 1 mg twice daily). Treatment starts 1–2 weeks before the quit date. Important warning: neuropsychiatric side effects and suicidality (black-box warning in US; in EU not absolutely contraindicated but close psychiatric monitoring recommended, especially in patients with pre-existing psychiatric conditions).",
+    "receptorProfile": {
+      "nAChR alpha-4-beta-2": "Partieller Agonist (kompetitive Hemmung durch Nikotin)"
+    },
+    "commonSideEffectsDe": [
+      "Übelkeit (häufigste NW, meist transient – Einnahme zu Mahlzeiten empfohlen)",
+      "Schlafstörungen, Alpträume",
+      "Kopfschmerzen",
+      "Flatulenz, Obstipation",
+      "Mundtrockenheit",
+      "Abnorme Träume"
+    ],
+    "commonSideEffectsEn": [
+      "Nausea (most common AE, usually transient – take with meals)",
+      "Sleep disturbance, abnormal dreams",
+      "Headache",
+      "Flatulence, constipation",
+      "Dry mouth",
+      "Vivid/abnormal dreams"
+    ],
+    "seriousSideEffectsDe": [
+      "Neuropsychiatrische Ereignisse: Agitation, Depression, Suizidalität – insbesondere bei psychiatrischer Vorerkrankung (engmaschig überwachen)",
+      "Kardiovaskuläre Ereignisse (erhöhtes Risiko bei Rauchern mit KHK – klinisch geringes Absolutrisiko, Nutzen überwiegt bei den meisten)",
+      "Krampfanfall (selten)"
+    ],
+    "seriousSideEffectsEn": [
+      "Neuropsychiatric events: agitation, depression, suicidality – especially in patients with pre-existing psychiatric conditions (close monitoring)",
+      "Cardiovascular events (slightly elevated risk in smokers with CAD – low absolute risk, benefits outweigh for most)",
+      "Seizure (rare)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Psychiatrische Symptome / Suizidalität",
+        "frequency": "Nach 1, 4 und 12 Wochen; dann bei Bedarf",
+        "noteDe": "Patienten und Angehörige über neuropsychiatrische Warnsymptome informieren; Absetzen bei Verschlechterung",
+        "noteEn": "Inform patients and caregivers about neuropsychiatric warning signs; discontinue if worsening"
+      },
+      {
+        "parameter": "Rauchstopp-Datum und Craving",
+        "frequency": "Wöchentlich in den ersten 12 Wochen",
+        "noteDe": "Motivierende Gesprächsführung kombinieren; Therapiedauer typisch 12 Wochen + optionale Verlängerung auf 24 Wochen",
+        "noteEn": "Combine with motivational counselling; typical treatment 12 weeks + optional extension to 24 weeks"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Nikotinersatzpräparate",
+        "severity": "mild",
+        "clinicalNoteDe": "Kombination möglich, erhöht jedoch Übelkeitsrate",
+        "clinicalNoteEn": "Combination possible but increases nausea rate"
+      },
+      {
+        "interactsWith": "Alkohol",
+        "severity": "mild",
+        "clinicalNoteDe": "Verstärkte Alkoholwirkung und Gedächtnislücken in Einzelfällen beschrieben",
+        "clinicalNoteEn": "Enhanced alcohol effects and blackouts reported in individual cases"
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "GFR < 30 ml/min: Maximaldosis 1 mg einmal täglich; Dialysepatienten: 0,5 mg einmal täglich",
+    "hepaticDosing": "Keine Dosisanpassung erforderlich",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "sources": ["Fachinformation Champix (Pfizer DE, Stand 2024)", "S3-Leitlinie Tabakabhängigkeit (AWMF 2021)", "Cochrane Review Varenicline 2023"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "bupropion-rauchen",
+    "genericName": "Bupropion (Raucherentwöhnung)",
+    "brandNamesDACH": ["Zyban", "Elontril (off-label für Rauchen in höherer Dosis möglich)"],
+    "atcCode": "N07BA02",
+    "substanceClass": "Noradrenalin-Dopamin-Wiederaufnahmehemmer (NDRI) / Tabakabhängigkeits-Pharmakotherapie",
+    "formulations": ["Retardtablette"],
+    "strengthsDACH": ["150 mg (Zyban)"],
+    "kurzinfoDe": "Bupropion Retard (Zyban) ist zur Raucherentwöhnung zugelassen. Der genaue Mechanismus bei Raucherentwöhnung ist nicht vollständig geklärt; wahrscheinlich spielen dopaminerge Effekte im Belohnungssystem und schwache nikotinerge Rezeptorhemmung eine Rolle. Therapiebeginn 1–2 Wochen vor dem Rauchstopp. Therapiedauer 7–9 Wochen. Effizienz geringer als Vareniclin, aber höher als Placebo. Besonders geeignet, wenn Nikotinersatz unzureichend und Vareniclin kontraindiziert. Krampfschwellen-Senkung und Suizidalitätswarnung beachten (s. Bupropion-ADHS-Eintrag).",
+    "kurzinfoEn": "Bupropion SR (Zyban) is approved for smoking cessation. The exact mechanism is not fully elucidated; dopaminergic effects in the reward system and weak nicotinic receptor antagonism are likely contributors. Begin treatment 1–2 weeks before quit date. Treatment duration 7–9 weeks. Efficacy lower than varenicline but superior to placebo. Particularly suitable when nicotine replacement is insufficient and varenicline is contraindicated. Note seizure threshold lowering and suicidality warning (see bupropion ADHD entry).",
+    "receptorProfile": {
+      "DAT": "Schwache Hemmung (dopaminerge Modulation)",
+      "NET": "Moderate Hemmung",
+      "nAChR": "Schwacher Antagonismus"
+    },
+    "commonSideEffectsDe": [
+      "Insomnie",
+      "Mundtrockenheit",
+      "Kopfschmerzen",
+      "Agitation",
+      "Übelkeit"
+    ],
+    "commonSideEffectsEn": [
+      "Insomnia",
+      "Dry mouth",
+      "Headache",
+      "Agitation",
+      "Nausea"
+    ],
+    "seriousSideEffectsDe": [
+      "Krampfanfälle (Risiko steigt > 300 mg/Tag)",
+      "Suizidale Gedanken (bei jüngeren Patienten)"
+    ],
+    "seriousSideEffectsEn": [
+      "Seizures (risk increases > 300 mg/day)",
+      "Suicidal ideation (in younger patients)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Krampfanfall-Risiko",
+        "frequency": "Vor Beginn",
+        "noteDe": "Kontraindiziert bei Epilepsie, Essstörungen, gleichzeitiger MAOI-Therapie",
+        "noteEn": "Contraindicated in epilepsy, eating disorders, concurrent MAOI therapy"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "14 Tage Abstand nach MAOI; gefährliche Interaktion",
+        "clinicalNoteEn": "14-day washout after MAOI; dangerous interaction"
+      },
+      {
+        "interactsWith": "CYP2D6-Substrate",
+        "severity": "moderate",
+        "clinicalNoteDe": "Bupropion ist starker CYP2D6-Inhibitor",
+        "clinicalNoteEn": "Bupropion is a potent CYP2D6 inhibitor"
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "Schwere Niereninsuffizienz: 150 mg jeden 2. Tag",
+    "hepaticDosing": "Schwere Leberinsuffizienz: 150 mg jeden 2. Tag",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "sources": ["Fachinformation Zyban (GSK DE, Stand 2024)", "S3-Leitlinie Tabakabhängigkeit 2021"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "cytisin",
+    "genericName": "Cytisin (Cytisiniclin)",
+    "brandNamesDACH": ["Tabex (CH, AT; in DE kein Zulassungsstatus per 2026)"],
+    "atcCode": "N07BA04",
+    "substanceClass": "Partieller nAChR-Agonist (Pflanzenalkaloid aus Goldregen / Laburnum anagyroides)",
+    "formulations": ["Filmtablette"],
+    "strengthsDACH": ["1,5 mg (Tabex; CH/AT)"],
+    "kurzinfoDe": "Cytisin ist ein natürliches Pflanzenalkaloid mit ähnlichem Wirkmechanismus wie Vareniclin (partieller Alpha-4-Beta-2-nAChR-Agonist). Historisch in Osteuropa seit Jahrzehnten eingesetzt, in den letzten Jahren wachsende Evidenz aus RCTs (Cochrane 2020). In der Schweiz und Österreich als Tabex verfügbar; in Deutschland kein Zulassungsstatus per 2026. Therapiedauer 25 Tage (intensiver Einnahmeplan mit abnehmender Tagesdosis). Günstiger als Champix. Cytisiniclin (halbsynthetisch modifiziertes Derivat) befindet sich in klinischer Entwicklung.",
+    "kurzinfoEn": "Cytisine is a natural plant alkaloid with a mechanism of action similar to varenicline (partial alpha-4-beta-2 nAChR agonist). Used historically in Eastern Europe for decades; growing evidence from RCTs in recent years (Cochrane 2020). Available in Switzerland and Austria as Tabex; no regulatory approval in Germany as of 2026. Treatment duration 25 days (intensive dosing schedule with decreasing daily doses). Less expensive than Champix. Cytisinicline (semi-synthetic derivative) is in clinical development.",
+    "receptorProfile": {
+      "nAChR alpha-4-beta-2": "Partieller Agonist (natürlicher Ursprung; höhere intrinsische Aktivität als Vareniclin)"
+    },
+    "commonSideEffectsDe": [
+      "Übelkeit",
+      "Mundtrockenheit",
+      "Kopfschmerzen",
+      "Schlafstörungen"
+    ],
+    "commonSideEffectsEn": [
+      "Nausea",
+      "Dry mouth",
+      "Headache",
+      "Sleep disturbance"
+    ],
+    "seriousSideEffectsDe": [
+      "Neuropsychiatrische Ereignisse (analog Vareniclin, aber geringere Datenbasis)"
+    ],
+    "seriousSideEffectsEn": [
+      "Neuropsychiatric events (analogous to varenicline, but less data available)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Psychiatrische Symptome",
+        "frequency": "Wöchentlich in den ersten 4 Wochen",
+        "noteDe": "Wie bei Vareniclin; Aufklärung über neuropsychiatrische Warnsymptome",
+        "noteEn": "As per varenicline; inform about neuropsychiatric warning signs"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Nikotinersatz",
+        "severity": "mild",
+        "clinicalNoteDe": "Kombination nicht gut untersucht; Vorsicht",
+        "clinicalNoteEn": "Combination not well studied; caution"
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "Vorsicht bei Niereninsuffizienz; begrenzte Daten",
+    "hepaticDosing": "Keine spezifischen Daten",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "sources": ["Tabex Fachinformation (CH/AT, Stand 2024)", "Walker et al. Lancet 2014", "Cochrane Review Cytisine 2020", "Swissmedic"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "propranolol",
+    "genericName": "Propranolol",
+    "brandNamesDACH": ["Dociton", "Obsidan", "Propranolol-Generika"],
+    "atcCode": "C07AA05",
+    "substanceClass": "Nicht-selektiver Beta-Adrenozeptor-Antagonist / Betablocker",
+    "formulations": ["Filmtablette", "Lösung oral", "Retardkapsel"],
+    "strengthsDACH": ["10 mg", "40 mg", "80 mg", "160 mg (Retard)"],
+    "kurzinfoDe": "In der Psychiatrie wird Propranolol off-label eingesetzt für: (1) akathisiebedingte Beschwerden unter Antipsychotika (Dosis 20–80 mg/Tag); (2) situative Leistungsangst (z. B. Prüfungs- oder Rednerangst – Einmalgabe 10–40 mg, ca. 60–90 min vorher). Propranolol blockiert periphere Beta-2-adrenerge Symptome der Angst (Zittern, Herzrasen, Schwitzen) ohne die kognitive Leistung oder Wachheit wesentlich zu beeinflussen. Kontraindiziert bei Asthma, COPD, AV-Block, Bradykardie, dekompensierter Herzinsuffizienz. Nicht abrupt absetzen (Rebound-Angina/-Hypertonie).",
+    "kurzinfoEn": "In psychiatry, propranolol is used off-label for: (1) akathisia-associated symptoms with antipsychotics (dose 20–80 mg/day); (2) situational performance anxiety (e.g., exam or public speaking anxiety – single dose 10–40 mg, approximately 60–90 min beforehand). Propranolol blocks peripheral beta-2-adrenergic symptoms of anxiety (tremor, palpitations, sweating) without substantially impairing cognitive performance or wakefulness. Contraindicated in asthma, COPD, AV block, bradycardia, decompensated heart failure. Do not discontinue abruptly (rebound angina/hypertension).",
+    "receptorProfile": {
+      "Beta-1 (Herz)": "Nicht-selektive Blockade",
+      "Beta-2 (Lunge, Gefässe)": "Blockade (Bronchospasmuspotenzial bei Asthma)"
+    },
+    "commonSideEffectsDe": [
+      "Bradykardie",
+      "Hypotonie",
+      "Kältegefühl in Extremitäten",
+      "Müdigkeit",
+      "Schlafstörungen, Albträume",
+      "Libidoverlust"
+    ],
+    "commonSideEffectsEn": [
+      "Bradycardia",
+      "Hypotension",
+      "Cold extremities",
+      "Fatigue",
+      "Sleep disturbance, nightmares",
+      "Decreased libido"
+    ],
+    "seriousSideEffectsDe": [
+      "Bronchospasmus (kontraindiziert bei Asthma/COPD)",
+      "AV-Block, Herzinsuffizienz-Dekompensation",
+      "Maskierung von Hypoglykämie-Symptomen (Vorsicht bei insulinpflichtigen Diabetikern)",
+      "Rebound-Phänomene bei abruptem Absetzen"
+    ],
+    "seriousSideEffectsEn": [
+      "Bronchospasm (contraindicated in asthma/COPD)",
+      "AV block, heart failure decompensation",
+      "Masking of hypoglycaemia symptoms (caution in insulin-dependent diabetes)",
+      "Rebound phenomena on abrupt discontinuation"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Herzfrequenz & Blutdruck",
+        "frequency": "Vor Beginn, nach 2 Wochen, dann alle 3–6 Monate",
+        "noteDe": "Absetzen bei Puls < 50/min oder RR systolisch < 90 mmHg",
+        "noteEn": "Discontinue if HR < 50/min or systolic BP < 90 mmHg"
+      },
+      {
+        "parameter": "Atemwege",
+        "frequency": "Vor Beginn",
+        "noteDe": "Kontraindikationen Asthma, COPD, Bronchospasmus ausschliessen",
+        "noteEn": "Exclude contraindications: asthma, COPD, bronchospasm"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Antidiabetika (Insulin, Sulfonylharnstoffe)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Maskierung der Hypoglykämie-Symptome (Tachykardie ausgeblendet); Schweissausbrüche bleiben sichtbar",
+        "clinicalNoteEn": "Hypoglycaemia symptoms masked (tachycardia blunted); sweating remains visible"
+      },
+      {
+        "interactsWith": "Verapamil, Diltiazem",
+        "severity": "severe",
+        "clinicalNoteDe": "Additiver AV-Block und Bradykardie; Kombination meist kontraindiziert",
+        "clinicalNoteEn": "Additive AV block and bradycardia; combination usually contraindicated"
+      },
+      {
+        "interactsWith": "Adrenalin (Epinephrin)",
+        "severity": "severe",
+        "clinicalNoteDe": "Hypertensive Krise durch unkompensierte Alpha-Stimulation; bei Anaphylaxie Adrenalin nicht kontraindiziert – höhere Dosen erforderlich",
+        "clinicalNoteEn": "Hypertensive crisis due to uncompensated alpha stimulation; adrenaline not contraindicated in anaphylaxis but higher doses may be required"
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "Keine spezifische Dosisanpassung; Vorsicht",
+    "hepaticDosing": "Deutlich verlängerte HWZ bei Leberinsuffizienz; Startdosis reduzieren",
+    "tabletSplittable": true,
+    "liquidFormAvailable": true,
+    "sources": ["Fachinformation Dociton (Kade DE, Stand 2024)", "Lima et al. Cochrane Review Propranolol Akathisia 2004", "S3-Leitlinie Angststörungen 2021"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "biperiden",
+    "genericName": "Biperiden",
+    "brandNamesDACH": ["Akineton"],
+    "atcCode": "N04AA02",
+    "substanceClass": "Anticholinergikum (zentrales und peripheres Antimuscarinikum) / Antiparkinsonmittel",
+    "formulations": ["Filmtablette", "Retardkapsel", "Injektion (i.m./i.v., für akute Dystonien)"],
+    "strengthsDACH": ["2 mg (Tablette)", "4 mg (Retardkapsel)", "5 mg/ml (Injektionslösung)"],
+    "kurzinfoDe": "Biperiden ist ein anticholinerg wirksames Antiparkinsonmittel, das in der Psychiatrie zur Therapie extrapyramidaler Symptome (EPS) unter Antipsychotika eingesetzt wird – insbesondere Frühdyskinesien, Parkinsonoid und Akathisie. Intravenöse oder intramuskuläre Gabe bei akuten Dystonien (z. B. okulogyrer Krise, Torticollis spasmodicus). Cave: erhebliche anticholinerge Nebenwirkungen. Bei älteren Patienten erhöhtes Risiko für delirante Zustände, kognitive Verschlechterung und Stürze. Missbrauchspotenzial (euphorigene Wirkung in höheren Dosen).",
+    "kurzinfoEn": "Biperiden is an anticholinergic antiparkinsonian agent used in psychiatry to treat extrapyramidal symptoms (EPS) from antipsychotics – particularly acute dystonias, parkinsonism, and akathisia. Intravenous or intramuscular administration for acute dystonias (e.g., oculogyric crisis, torticollis). Caution: significant anticholinergic side effects. Elderly patients are at substantially increased risk of delirium, cognitive deterioration, and falls. Misuse potential (euphoric effect at higher doses).",
+    "receptorProfile": {
+      "Muscarinerge M1 (zentral)": "Antagonismus (relevanter EPS-Mechanismus)",
+      "Muscarinerge M2/M3 (peripher)": "Antagonismus (periphere anticholinerge NW)"
+    },
+    "commonSideEffectsDe": [
+      "Mundtrockenheit",
+      "Obstipation",
+      "Miktionsstörungen (Harnverhalt bei Prostatahyperplasie)",
+      "Akkommodationsstörungen, Verschwommensehen",
+      "Tachykardie",
+      "Schwitzen, Wärmegefühl",
+      "Kognitive Beeinträchtigung (besonders ältere Patienten)"
+    ],
+    "commonSideEffectsEn": [
+      "Dry mouth",
+      "Constipation",
+      "Urinary retention (especially with prostatic hypertrophy)",
+      "Accommodation disturbances, blurred vision",
+      "Tachycardia",
+      "Sweating, feeling of warmth",
+      "Cognitive impairment (especially elderly)"
+    ],
+    "seriousSideEffectsDe": [
+      "Delir / akutes anticholinerges Syndrom (v. a. ältere Patienten, hohe Dosen oder Kombination mit anderen Anticholinergika)",
+      "Akuter Glaukomanfall (Kontraindikation bei Engwinkelglaukom)",
+      "Ileus (bei hochgradiger Motilitätshemmung)",
+      "Missbrauch und Abhängigkeit"
+    ],
+    "seriousSideEffectsEn": [
+      "Delirium/acute anticholinergic syndrome (especially elderly, high doses, or combination with other anticholinergics)",
+      "Acute angle-closure glaucoma attack (contraindicated in angle-closure glaucoma)",
+      "Ileus (with severe motility inhibition)",
+      "Misuse and dependence"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Anticholinerge Gesamtlast (Anticholinergic Burden Score)",
+        "frequency": "Vor Beginn und bei Medikationsänderungen",
+        "noteDe": "Bei älteren Patienten anticholinerge Gesamtbelastung systematisch erfassen (z. B. ACB Scale); Kombination mit anderen Anticholinergika vermeiden",
+        "noteEn": "Systematically assess total anticholinergic burden in elderly patients (e.g., ACB Scale); avoid combination with other anticholinergics"
+      },
+      {
+        "parameter": "Kognition (ältere Patienten)",
+        "frequency": "Vor Beginn und regelmässig",
+        "noteDe": "Biperiden bei Demenz kontraindiziert; bei Verdacht auf kognitive Verschlechterung absetzen",
+        "noteEn": "Biperiden contraindicated in dementia; discontinue if cognitive deterioration suspected"
+      },
+      {
+        "parameter": "EPS-Symptome",
+        "frequency": "Bei jedem Kontakt",
+        "noteDe": "Therapie auf Minimum-Dosis beschränken; Antipsychotikum-Dosisreduktion als primäre Strategie erwägen",
+        "noteEn": "Keep dose at minimum; consider antipsychotic dose reduction as primary strategy"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Andere Anticholinergika (Trihexyphenidyl, Clozapin, trizyklische AD, Antihistaminika)",
+        "severity": "severe",
+        "clinicalNoteDe": "Additiver anticholinerger Effekt; erhöhtes Delir-Risiko, v. a. bei älteren Patienten",
+        "clinicalNoteEn": "Additive anticholinergic effect; elevated delirium risk, especially in elderly"
+      },
+      {
+        "interactsWith": "AChEI (Donepezil, Rivastigmin)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Antagonismus – anticholinerge Wirkung hebt AChEI-Wirkung auf; Kombination vermeiden",
+        "clinicalNoteEn": "Antagonism – anticholinergic effect negates AChEI; avoid combination"
+      },
+      {
+        "interactsWith": "Levodopa",
+        "severity": "mild",
+        "clinicalNoteDe": "Mögliche gegenseitige Verstärkung von Dyskinesien",
+        "clinicalNoteEn": "Possible mutual enhancement of dyskinesias"
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "Vorsicht bei Niereninsuffizienz; Akkumulation möglich",
+    "hepaticDosing": "Vorsicht bei Leberinsuffizienz",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "sources": ["Fachinformation Akineton (AbbVie DE, Stand 2024)", "S3-Leitlinie Schizophrenie (DGPPN 2019)", "Campbell et al. ACB Scale 2010"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "trihexyphenidyl",
+    "genericName": "Trihexyphenidyl",
+    "brandNamesDACH": ["Artane", "Parkopan"],
+    "atcCode": "N04AA01",
+    "substanceClass": "Anticholinergikum / Antimuscarinikum (zentraler Schwerpunkt)",
+    "formulations": ["Tablette"],
+    "strengthsDACH": ["2 mg", "5 mg"],
+    "kurzinfoDe": "Trihexyphenidyl (früher: Benzhexol) ist ein zentrales Anticholinergikum mit ähnlichem Profil wie Biperiden, aber stärker zentral wirksam. Eingesetzt zur Behandlung von EPS unter Antipsychotika sowie bei M. Parkinson. In der Psychiatrie oft bei medikamenteninduziertem Parkinsonoid oder Akathisie, wenn Betablocker ungenügend sind. Das stärkere ZNS-Anticholinergikum erhöht im Vergleich zu Biperiden das Risiko für delirante Zustände, Euphorie und Missbrauch. Bei älteren Patienten besonders restriktiver Einsatz; kognitive Beeinträchtigung und Delir sind die zentralen klinischen Risiken.",
+    "kurzinfoEn": "Trihexyphenidyl (formerly benzhexol) is a central anticholinergic with a similar profile to biperiden but stronger central effects. Used for EPS from antipsychotics and Parkinson's disease. In psychiatry, often employed for drug-induced parkinsonism or akathisia when beta-blockers are insufficient. The stronger CNS anticholinergic effect increases the risk of delirium, euphoria, and misuse compared to biperiden. Particularly restrictive use in elderly patients; cognitive impairment and delirium are the primary clinical risks.",
+    "receptorProfile": {
+      "Muscarinerge M1 (zentral/peripher)": "Starker Antagonismus",
+      "Muscarinerge M2/M3": "Antagonismus"
+    },
+    "commonSideEffectsDe": [
+      "Mundtrockenheit",
+      "Obstipation",
+      "Harnverhalt",
+      "Akkommodationsstörungen",
+      "Tachykardie",
+      "Kognitive Verschlechterung",
+      "Euphorisierung (Missbrauchspotenzial)"
+    ],
+    "commonSideEffectsEn": [
+      "Dry mouth",
+      "Constipation",
+      "Urinary retention",
+      "Accommodation disturbances",
+      "Tachycardia",
+      "Cognitive impairment",
+      "Euphoria (misuse potential)"
+    ],
+    "seriousSideEffectsDe": [
+      "Delir / anticholinerges Syndrom (höheres Risiko als Biperiden wegen stärkerer ZNS-Wirkung)",
+      "Akuter Glaukomanfall (Kontraindikation Engwinkelglaukom)",
+      "Missbrauch und psychische Abhängigkeit"
+    ],
+    "seriousSideEffectsEn": [
+      "Delirium/anticholinergic syndrome (higher risk than biperiden due to stronger CNS effect)",
+      "Acute angle-closure glaucoma (contraindicated)",
+      "Misuse and psychological dependence"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Anticholinerge Gesamtlast",
+        "frequency": "Vor Beginn, bei Medikationsänderungen",
+        "noteDe": "ACB-Score systematisch erfassen; bei älteren Patienten Trihexyphenidyl als Hochrisiko-Anticholinergikum einstufen",
+        "noteEn": "Systematically assess ACB score; classify trihexyphenidyl as high-risk anticholinergic in elderly"
+      },
+      {
+        "parameter": "Kognition",
+        "frequency": "Regelmässig",
+        "noteDe": "Bei geringstem Hinweis auf kognitive Verschlechterung Dosisreduktion oder Absetzen",
+        "noteEn": "Reduce dose or discontinue at the slightest sign of cognitive decline"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Andere Anticholinergika",
+        "severity": "severe",
+        "clinicalNoteDe": "Additives anticholinerges Delir-Risiko",
+        "clinicalNoteEn": "Additive anticholinergic delirium risk"
+      },
+      {
+        "interactsWith": "AChEI",
+        "severity": "moderate",
+        "clinicalNoteDe": "Wirkungsantagonismus; Kombination bei Demenzpatienten kontraproduktiv",
+        "clinicalNoteEn": "Antagonism; combination counterproductive in dementia patients"
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "Vorsicht",
+    "hepaticDosing": "Vorsicht",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "sources": ["Fachinformation Artane (Pfizer DE, Stand 2024)", "S3-Leitlinie Schizophrenie 2019", "Tune et al. JAMA 1992 (anticholinerge Kognition)"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "n-acetylcystein",
+    "genericName": "N-Acetylcystein (NAC)",
+    "brandNamesDACH": ["ACC akut", "Fluimucil", "NAC-Generika"],
+    "atcCode": "R05CB01",
+    "substanceClass": "Glutathionvorläufer / Antioxidans / Mukolytikum (off-label in der Psychiatrie)",
+    "formulations": ["Brausetablette", "Granulat", "Kapsel", "Injektionslösung (Antidotum bei Paracetamolvergiftung)"],
+    "strengthsDACH": ["200 mg", "600 mg", "1200 mg"],
+    "kurzinfoDe": "NAC ist primär als Mukolytikum und Antidotum bei Paracetamolvergiftung zugelassen. In der Psychiatrie wird es off-label als Glutathionvorläufer und Modulator des Glutamat-Systems (über Cystingluconat-Transporter) eingesetzt. Beste Evidenz bei OCD als Augmentation (geringere Symptomreduktion als Erstlinientherapie); ferner Evidenz bei Trichotillomanie, Excoriation Disorder, Spielsucht und als Adjuvans bei Schizophrenie (negative Symptome). Dosierung: 600–3000 mg/Tag in psychiatrischen Studien. Sehr günstige Verträglichkeit.",
+    "kurzinfoEn": "NAC is primarily approved as a mucolytic and antidote for paracetamol poisoning. In psychiatry, it is used off-label as a glutathione precursor and modulator of the glutamate system (via cystine-glutamate transporter). Best evidence as an OCD augmentation strategy (modest symptom reduction below first-line therapy); further evidence in trichotillomania, excoriation disorder, gambling disorder, and as an adjunct in schizophrenia (negative symptoms). Dosing: 600–3000 mg/day in psychiatric studies. Very favourable tolerability.",
+    "receptorProfile": {
+      "Cystin-Glutamat-Transporter (xCT)": "Modulation (erhöhte extrasynaptische Glutamatkonzentrationen normalisiert)",
+      "Glutathion-Synthese": "Vorläufer (antioxidativer Schutz)"
+    },
+    "commonSideEffectsDe": [
+      "Übelkeit, Erbrechen (v. a. bei hohen Dosen)",
+      "Diarrhö",
+      "Bauchschmerzen",
+      "Schwefeliger Geruch/Geschmack (Acetylcystein-spezifisch)"
+    ],
+    "commonSideEffectsEn": [
+      "Nausea, vomiting (especially at high doses)",
+      "Diarrhoea",
+      "Abdominal pain",
+      "Sulphurous taste/smell (acetylcysteine-specific)"
+    ],
+    "seriousSideEffectsDe": [
+      "Anaphylaktische Reaktion (v. a. bei i.v.-Gabe in der Notaufnahme – bei oraler psychiatrischer Anwendung sehr selten)"
+    ],
+    "seriousSideEffectsEn": [
+      "Anaphylactic reaction (primarily with IV administration in emergency settings – very rare with oral psychiatric use)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "OCD-Symptome (Y-BOCS)",
+        "frequency": "Alle 4–8 Wochen",
+        "noteDe": "Wirklatenz typisch 4–8 Wochen; bei ausbleibender Response nach 12 Wochen Therapieüberprüfung",
+        "noteEn": "Onset typically 4–8 weeks; reassess if no response after 12 weeks"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Nitroglycerin",
+        "severity": "moderate",
+        "clinicalNoteDe": "NAC kann die vasodilatativen Effekte von Nitroglycerin verstärken",
+        "clinicalNoteEn": "NAC may potentiate vasodilatory effects of nitroglycerin"
+      },
+      {
+        "interactsWith": "Aktivkohle",
+        "severity": "moderate",
+        "clinicalNoteDe": "Aktivkohle adsorbiert NAC; zeitlicher Abstand von 2 h empfohlen",
+        "clinicalNoteEn": "Activated charcoal adsorbs NAC; 2-hour interval recommended"
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "Vorsicht bei schwerer Niereninsuffizienz",
+    "hepaticDosing": "Keine spezifische Anpassung; bei schwerer Leberinsuffizienz Vorsicht",
+    "tabletSplittable": true,
+    "liquidFormAvailable": true,
+    "sources": ["Berk et al. Biol Psychiatry 2012 (NAC Schizophrenie)", "Sarris et al. J Clin Psychiatry 2015 (NAC Psychiatrie Übersicht)", "Fachinformation ACC akut (Hexal DE, Stand 2024)"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "esketamin",
+    "genericName": "Esketamin (intranasal)",
+    "brandNamesDACH": ["Spravato"],
+    "atcCode": "N06AX27",
+    "substanceClass": "NMDA-Rezeptor-Antagonist (S-Enantiomer von Ketamin) / Rapid-Antidepressivum",
+    "formulations": ["Nasenspray (28 mg/Sprühstoss; 2 Sprühstösse = 56 mg oder 3 = 84 mg pro Sitzung)"],
+    "strengthsDACH": ["56 mg (2 Sprühstösse à 28 mg)", "84 mg (3 Sprühstösse à 28 mg)"],
+    "kurzinfoDe": "Esketamin intranasal (Spravato) ist zur Behandlung der therapieresistenten Depression (TRD) und zur Akutbehandlung von Suizidalität bei MDD zugelassen. Der NMDA-Antagonismus führt zu einer raschen, vorübergehenden antidepressiven Wirkung (innerhalb von Stunden bis Tagen). Wegen dissoziativer Wirkung, Missbrauchspotenzial und Kreislaufreaktionen ist Spravato ausschliesslich in zertifizierten Behandlungszentren unter direkter Aufsicht über mind. 2 h nach Applikation anzuwenden (REMS-Programm / Risikomanagementplan in der EU). Nicht zur Selbstanwendung zu Hause. In Deutschland als BtMG-Substanz (Anlage III) klassifiziert.",
+    "kurzinfoEn": "Intranasal esketamine (Spravato) is approved for treatment-resistant depression (TRD) and for acute suicidality in MDD. NMDA antagonism produces a rapid, transient antidepressant effect (within hours to days). Due to dissociative effects, abuse potential, and haemodynamic reactions, Spravato must only be administered in certified treatment centres under direct supervision for at least 2 hours after each dose (REMS programme/risk management plan in the EU). Not for home self-administration. Classified as a controlled substance (BtMG Anlage III) in Germany.",
+    "receptorProfile": {
+      "NMDA-Rezeptor": "Nicht-kompetitiver Antagonismus (höhere Affinität als R-Ketamin, d. h. mehr potent)",
+      "Sigma-Rezeptoren": "Agonismus",
+      "Mu-Opioidrezeptor": "Schwacher Agonismus (klinische Bedeutung unklar)"
+    },
+    "commonSideEffectsDe": [
+      "Dissoziation / Depersonalisation / Derealisation (sehr häufig – dosisabhängig, transient, meist binnen 2 h abgeklungen)",
+      "Schwindel",
+      "Übelkeit, Erbrechen",
+      "Kopfschmerzen",
+      "Sedierung",
+      "Blutdruckanstieg (transient – Monitoring 2 h nach Gabe obligat)",
+      "Kribbeln, Taubheitsgefühl (intranasal)"
+    ],
+    "commonSideEffectsEn": [
+      "Dissociation/depersonalisation/derealisation (very common – dose-dependent, transient, usually resolved within 2 h)",
+      "Dizziness",
+      "Nausea, vomiting",
+      "Headache",
+      "Sedation",
+      "Transient blood pressure elevation (2-hour monitoring mandatory after each dose)",
+      "Nasal tingling/numbness (intranasal)"
+    ],
+    "seriousSideEffectsDe": [
+      "Hypertensive Krise (Blutdruckanstieg von > 40 mmHg systolisch möglich; kontraindiziert bei unkontrollierter Hypertonie, Aneurysma, zerebrovaskulären Erkrankungen)",
+      "Dissoziation / psychotische Episode (bei psychosevulnerablen Patienten; kontraindiziert bei aktiver Psychose)",
+      "Missbrauchspotenzial / Abhängigkeit (BtMG-Kontrolle; Verlangsamung der Toleranzentwicklung durch intermittierende Dosierung)",
+      "Suizidalität (initiale Dosierungsphase: besonders sorgfältige Überwachung)"
+    ],
+    "seriousSideEffectsEn": [
+      "Hypertensive crisis (systolic BP rise > 40 mmHg possible; contraindicated in uncontrolled hypertension, aneurysm, cerebrovascular disease)",
+      "Dissociation/psychotic episode (in psychosis-vulnerable patients; contraindicated in active psychosis)",
+      "Abuse potential/dependence (BtMG-controlled; intermittent dosing slows tolerance development)",
+      "Suicidality (initial dosing phase: particularly close monitoring required)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Blutdruck & Herzfrequenz",
+        "frequency": "Vor jeder Dosis, 40 min nach Gabe, 2 h nach Gabe (Entlassungsbeurteilung)",
+        "noteDe": "Kontraindiziert bei RR > 180/110 mmHg bei Erstbeurteilung; Entlassung erst nach RR-Normalisierung, Dissoziation-Abklingen und Vorliegen von Begleitperson",
+        "noteEn": "Contraindicated if BP > 180/110 mmHg at baseline; patient may only be discharged after BP normalisation, dissociation resolution, and with an accompanying person"
+      },
+      {
+        "parameter": "Dissoziationsgrad (CADSS-Skala)",
+        "frequency": "40 min nach jeder Dosis",
+        "noteDe": "Clinician-Administered Dissociative States Scale (CADSS) oder strukturierte klinische Einschätzung; Dokumentation obligat",
+        "noteEn": "Use Clinician-Administered Dissociative States Scale (CADSS) or structured clinical assessment; documentation mandatory"
+      },
+      {
+        "parameter": "Sedierungslevel",
+        "frequency": "Während der 2-stündigen Beobachtungsphase",
+        "noteDe": "Fahrtüchtigkeit für mindestens 24 h nach Gabe eingeschränkt",
+        "noteEn": "Driving capacity impaired for at least 24 hours after dose"
+      },
+      {
+        "parameter": "Psychiatrische Beurteilung (Suizidalität, Psychose)",
+        "frequency": "Vor jeder Dosis",
+        "noteDe": "Bei akuter Psychose oder anhaltend schwerer Suizidalität ohne Besserungstendenz Therapiestrategie überdenken",
+        "noteEn": "Reassess treatment strategy in acute psychosis or persistent severe suicidality without improvement"
+      },
+      {
+        "parameter": "Missbrauchspotenzial / Suchtanamnese",
+        "frequency": "Vor Therapiebeginn und halbjährlich",
+        "noteDe": "Aktive oder anamnestische Ketaminabhängigkeit ist Kontraindikation; bei Substanzabhängigkeit in der Vorgeschichte besondere Vorsicht und Aufklärung",
+        "noteEn": "Active or historical ketamine dependence is a contraindication; extra caution and counselling required with history of substance use disorder"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "ZNS-Depressiva (Benzodiazepine, Opioide, Alkohol)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive Sedierung und Dissoziation; Kombination vermeiden oder mit strenger Indikation",
+        "clinicalNoteEn": "Additive sedation and dissociation; avoid or use with strict indication"
+      },
+      {
+        "interactsWith": "MAO-Hemmer",
+        "severity": "severe",
+        "clinicalNoteDe": "Gefahr der hypertensiven Krise durch kardiovaskuläre Stimulation; Kombination vermeiden",
+        "clinicalNoteEn": "Risk of hypertensive crisis through cardiovascular stimulation; avoid combination"
+      },
+      {
+        "interactsWith": "Psychostimulanzien",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additiver Blutdruckanstieg möglich",
+        "clinicalNoteEn": "Additive blood pressure elevation possible"
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Blutdruck (prä-Gabe)",
+        "condition": "RR > 180/110 mmHg",
+        "warningDe": "Gabe an diesem Tag kontraindiziert; Hypertonie zunächst behandeln",
+        "warningEn": "Administration on that day contraindicated; treat hypertension first",
+        "severity": "contraindicated"
+      }
+    ],
+    "renalDosing": "Keine spezifische Dosisanpassung; begrenzte Daten bei schwerer Niereninsuffizienz",
+    "hepaticDosing": "Schwere Leberinsuffizienz: verlängerte Wirkung (reduzierter hepatischer Metabolismus); Vorsicht, individuelle Bewertung",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "sources": ["Fachinformation Spravato (Janssen DE, Stand 2024)", "EMA Spravato EPAR", "BtMG Anlage III (DE)", "Popova et al. Am J Psychiatry 2019 (Esketamin TRD-Studie)"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  },
+
+  {
+    "id": "lithium",
+    "genericName": "Lithium",
+    "brandNamesDACH": ["Quilonum retard", "Hypnorex retard", "Lithiofor"],
+    "atcCode": "N05AN01",
+    "substanceClass": "Stimmungsstabilisator / Mood Stabilizer (Lithiumsalz: Lithiumcarbonat, Lithiumacetat)",
+    "formulations": ["Retardtablette"],
+    "strengthsDACH": ["Quilonum 450 mg (Lithiumcarbonat)", "Hypnorex 400 mg (Lithiumcarbonat)", "Lithiofor (Lithiumacetat 564 mg = 400 mg Lithiumcarbonat-Äquivalent)"],
+    "kurzinfoDe": "Lithium ist der etablierteste Stimmungsstabilisator mit überlegener Evidenz für die Langzeitprophylaxe bipolarer Störungen sowie für suizidpräventive Wirkung. Primäreintrag befindet sich in den Mood-Stabilizer-Daten dieser Datenbank – hier nur Kurzreferenz. Therapeutische Breite ist schmal (Zielspiegel 0,6–0,8 mmol/l prophylaktisch, 0,8–1,0 bei akuter Manie). Ab > 1,2 mmol/l Toxizitätsgefahr (Tremor, Verwirrtheit, Niereninsuffizienz, Herzrhythmusstörungen). Regelmässige Spiegelkontrollen, Schilddrüsen- und Nierenfunktionskontrolle essenziell. CAVE: NSAID, ACE-Hemmer und Thiazide erhöhen Lithiumspiegel erheblich.",
+    "kurzinfoEn": "Lithium is the most established mood stabiliser with superior evidence for long-term prophylaxis of bipolar disorder and suicide prevention. The primary entry is in the Mood Stabilisers section of this database – this is a brief cross-reference only. Therapeutic window is narrow (target level 0.6–0.8 mmol/l prophylactically, 0.8–1.0 for acute mania). Toxicity risk begins > 1.2 mmol/l (tremor, confusion, renal impairment, cardiac arrhythmias). Regular serum level monitoring, thyroid, and renal function testing is essential. CAUTION: NSAIDs, ACE inhibitors, and thiazides substantially increase lithium levels.",
+    "receptorProfile": {
+      "Inositol-Monophosphatase": "Hemmung (Inositol-Depletion – ein Wirkhypothese)",
+      "GSK-3beta": "Hemmung",
+      "Neurotrophe Faktoren (BDNF)": "Erhöhung (neuroprotektiver Effekt)"
+    },
+    "commonSideEffectsDe": [
+      "Feinschlägiger Tremor (häufig, dosisabhängig)",
+      "Polyurie, Polydipsie (nephrogener Diabetes insipidus)",
+      "Gewichtszunahme",
+      "Hypothyreose",
+      "Kognitive Verlangsamung, Gedächtnisminderung",
+      "Akne, Alopezie",
+      "Diarrhö, Übelkeit (v. a. bei IR-Präparaten)"
+    ],
+    "commonSideEffectsEn": [
+      "Fine tremor (common, dose-dependent)",
+      "Polyuria, polydipsia (nephrogenic diabetes insipidus)",
+      "Weight gain",
+      "Hypothyroidism",
+      "Cognitive slowing, memory impairment",
+      "Acne, alopecia",
+      "Diarrhoea, nausea (especially with IR formulations)"
+    ],
+    "seriousSideEffectsDe": [
+      "Lithiumintoxikation (Spiegel > 1,5 mmol/l): grobschlägiger Tremor, Ataxie, Delir, Krampfanfall, Koma – notfallmedizinische Behandlung erforderlich",
+      "Chronische Nephropathie (bei Langzeittherapie – Nierenfunktion jährlich kontrollieren)",
+      "Ebstein-Anomalie (teratogen – strikte Kontrazeptionsempfehlung bei Frauen im gebärfähigen Alter)"
+    ],
+    "seriousSideEffectsEn": [
+      "Lithium toxicity (levels > 1.5 mmol/l): coarse tremor, ataxia, delirium, seizure, coma – emergency management required",
+      "Chronic nephropathy (with long-term therapy – annual renal function monitoring)",
+      "Ebstein's anomaly (teratogenic – strict contraception counselling for women of childbearing age)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Lithiumserumspiegel",
+        "frequency": "Alle 3–6 Monate (stabil); nach jeder Dosisänderung nach 5–7 Tagen; nach Beginn von Interaktionsmedikamenten",
+        "noteDe": "Blutabnahme 12 h nach letzter Dosis; Zielspiegel 0,6–0,8 mmol/l (Prophylaxe) bzw. 0,8–1,0 mmol/l (akute Manie)",
+        "noteEn": "Blood draw 12 hours after last dose; target 0.6–0.8 mmol/l (prophylaxis) or 0.8–1.0 mmol/l (acute mania)"
+      },
+      {
+        "parameter": "Nierenfunktion (Kreatinin, GFR)",
+        "frequency": "Vor Beginn, nach 6 Monaten, dann jährlich",
+        "noteDe": "Kontraindiziert bei GFR < 30 ml/min; GFR-Abfall unter Therapie auf chronische Nephropathie prüfen",
+        "noteEn": "Contraindicated if GFR < 30 ml/min; declining GFR during therapy suggests chronic nephropathy"
+      },
+      {
+        "parameter": "Schilddrüsenfunktion (TSH)",
+        "frequency": "Vor Beginn, nach 6 Monaten, dann jährlich",
+        "noteDe": "Hypothyreose tritt bei bis zu 30 % der Patienten auf; Levothyroxin-Substitution ohne Lithium-Absetzen möglich",
+        "noteEn": "Hypothyroidism occurs in up to 30% of patients; levothyroxine substitution possible without discontinuing lithium"
+      },
+      {
+        "parameter": "Calciumspiegel",
+        "frequency": "Jährlich",
+        "noteDe": "Lithium kann Hyperparathyreoidismus induzieren (Hyperkalzämie-Kontrolle)",
+        "noteEn": "Lithium can induce hyperparathyroidism (monitor for hypercalcaemia)"
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "NSAID (Ibuprofen, Diclofenac)",
+        "severity": "severe",
+        "clinicalNoteDe": "Renale Prostaglandinhemmung erhöht Lithiumspiegel um bis zu 25 %; Toxizitätsrisiko; Paracetamol bevorzugen",
+        "clinicalNoteEn": "Renal prostaglandin inhibition increases lithium levels by up to 25%; toxicity risk; prefer paracetamol"
+      },
+      {
+        "interactsWith": "Thiazid-Diuretika",
+        "severity": "severe",
+        "clinicalNoteDe": "Kompensatorische Lithiumretention; Spiegel steigen erheblich an",
+        "clinicalNoteEn": "Compensatory lithium retention; levels rise substantially"
+      },
+      {
+        "interactsWith": "ACE-Hemmer / AT1-Antagonisten",
+        "severity": "severe",
+        "clinicalNoteDe": "Erhöhte renale Lithiumrückresorption; engmaschige Spiegelkontrolle zwingend",
+        "clinicalNoteEn": "Increased renal lithium reabsorption; mandatory close level monitoring"
+      },
+      {
+        "interactsWith": "Haloperidol / Antipsychotika",
+        "severity": "moderate",
+        "clinicalNoteDe": "Seltene neurotoxische Reaktionen (Delir, irreversible neurologische Schäden) beschrieben; Kombination möglich, aber Monitoring",
+        "clinicalNoteEn": "Rare neurotoxic reactions (delirium, irreversible neurological damage) reported; combination possible but monitor"
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Lithiumserumspiegel",
+        "condition": "> 1,2 mmol/l",
+        "warningDe": "Dosis reduzieren; bei > 1,5 mmol/l klinische Toxizitätszeichen suchen; bei > 2,0 mmol/l stationäre Einweisung und ggf. Hämodialyse",
+        "warningEn": "Reduce dose; at > 1.5 mmol/l assess for clinical toxicity; at > 2.0 mmol/l hospitalise and consider haemodialysis",
+        "severity": "reduce_dose"
+      },
+      {
+        "labParameter": "eGFR",
+        "condition": "GFR < 30 ml/min",
+        "warningDe": "Kontraindiziert; falls unvermeidbar, extrem langsame Titration mit sehr häufiger Spiegelkontrolle",
+        "warningEn": "Contraindicated; if unavoidable, extremely slow titration with very frequent level monitoring",
+        "severity": "contraindicated"
+      }
+    ],
+    "renalDosing": "GFR 30–60: Dosisreduktion 25–50 %; GFR < 30: kontraindiziert",
+    "hepaticDosing": "Nicht hepatisch metabolisiert; keine Dosisanpassung bei Leberinsuffizienz nötig",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "sources": ["Fachinformation Quilonum retard (Astellas DE, Stand 2024)", "S3-Leitlinie Bipolare Störungen (DGPPN 2023)", "Müller-Oerlinghausen BMJ 1994", "Cipriani et al. Lancet 2013 (Lithium Antisuizidal)"],
+    "lastReviewed": "2026-06",
+    "contentDisclaimer": "documentation_support_only"
+  }
+]

@@ -10,7 +10,7 @@ export function getPsychopathDocumentTitle(
   englishVariant: EnglishVariant = 'uk',
 ): string {
   if (language === 'en') return resolveEnPsychopathDocumentTitle(englishVariant)
-  if (language === 'de') return 'Psychopathologischer Befund, AMDP-orientiert'
+  if (language === 'de') return 'Psychopathologischer Befund'
   if (language === 'fr') return 'Examen psychiatrique'
   return 'Exploración psicopatológica'
 }

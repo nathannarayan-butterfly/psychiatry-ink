@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   LineChart,
   Line,
@@ -18,6 +18,9 @@ import {
   loadPinnedWidgets,
   savePinnedWidgets,
 } from '../../utils/laborArchive'
+import { SpiegelwerteSection } from './SpiegelwerteSection'
+import { useMedicationPlan } from '../../hooks/useMedicationPlan'
+import { formatDoseScheduleGerman } from '../../utils/medication/doseLine'
 
 // ---------------------------------------------------------------------------
 // Labor dashboard widget
@@ -84,9 +87,9 @@ function LaborDashboardWidget({ caseId }: LaborDashboardWidgetProps) {
               ) : (
                 <ResponsiveContainer width="100%" height={80}>
                   <LineChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: -30 }}>
-                    <XAxis dataKey="date" tick={{ fontSize: 9 }} />
-                    <YAxis tick={{ fontSize: 9 }} />
-                    <Tooltip contentStyle={{ fontSize: 10 }} />
+                    <XAxis dataKey="date" tick={{ fontSize: 10 }} />
+                    <YAxis tick={{ fontSize: 10 }} />
+                    <Tooltip contentStyle={{ fontSize: 11 }} />
                     <Line
                       type="monotone"
                       dataKey="value"
@@ -101,6 +104,65 @@ function LaborDashboardWidget({ caseId }: LaborDashboardWidgetProps) {
           )
         })}
       </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Aktuelle Medikation widget
+// ---------------------------------------------------------------------------
+
+interface AktuelleMedikationWidgetProps {
+  caseId: string
+  onNavigateToTherapie: () => void
+}
+
+function AktuelleMedikationWidget({ caseId, onNavigateToTherapie }: AktuelleMedikationWidgetProps) {
+  const { t } = useTranslation()
+  const { currentPlan } = useMedicationPlan(caseId)
+
+  const activeMeds = useMemo(() => {
+    if (!currentPlan) return []
+    return currentPlan.medications.filter((med) => med.status !== 'discontinued')
+  }, [currentPlan])
+
+  return (
+    <div className="aktuelle-medikation">
+      <h3 className="aktuelle-medikation__title">{t('aktuelleMedikationTitle')}</h3>
+      {activeMeds.length === 0 ? (
+        <p className="aktuelle-medikation__empty">{t('aktuelleMedikationEmpty')}</p>
+      ) : (
+        <ul className="aktuelle-medikation__list">
+          {activeMeds.map((med) => {
+            const schedule = formatDoseScheduleGerman(med.doseSchedule)
+            const strengthPart = med.strength.trim()
+            return (
+              <li key={med.id} className="aktuelle-medikation__row">
+                <span className="aktuelle-medikation__name">{med.substance}</span>
+                <span className="aktuelle-medikation__dose">
+                  {[strengthPart, schedule].filter(Boolean).join(' · ')}
+                </span>
+                {med.status !== 'active' && (
+                  <span className={`aktuelle-medikation__badge aktuelle-medikation__badge--${med.status}`}>
+                    {med.status === 'paused'
+                      ? 'pausiert'
+                      : med.status === 'reduced'
+                        ? 'reduziert'
+                        : 'gesteigert'}
+                  </span>
+                )}
+              </li>
+            )
+          })}
+        </ul>
+      )}
+      <button
+        type="button"
+        className="aktuelle-medikation__link"
+        onClick={onNavigateToTherapie}
+      >
+        {t('aktuelleMedikationGoToTherapie')}
+      </button>
     </div>
   )
 }
@@ -166,6 +228,8 @@ export function PatientDashboardView({
       <div className="patient-dashboard__body">
         <main className="patient-dashboard__main">
           <DiagnosenWidget caseId={caseId} variant="panel" />
+          <AktuelleMedikationWidget caseId={caseId} onNavigateToTherapie={() => onTabSelect('therapie')} />
+          <SpiegelwerteSection caseId={caseId} />
           <LaborDashboardWidget caseId={caseId} />
         </main>
 

@@ -1,16 +1,21 @@
 import {
+  memo,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from '../../context/TranslationContext'
 import { showNotionToast } from './NotionToast'
 import {
   addVerlaufAnnotation,
   appendVerlaufEntry,
+  deleteVerlaufEntry,
   loadVerlaufAnnotations,
   loadVerlaufFeed,
+  updateVerlaufEntry,
   type AnnotationType,
   type VerlaufAnnotation,
   type VerlaufFeedEntry,
@@ -55,6 +60,13 @@ interface CommentPopoverState {
   rangeText: string
 }
 
+interface CommentViewState {
+  visible: boolean
+  x: number
+  y: number
+  text: string
+}
+
 import {
   formatIsoTimestampDate,
   formatIsoTimestampTime,
@@ -75,17 +87,28 @@ const HIGHLIGHT_COLORS: { label: string; value: string; bg: string }[] = [
 function applyAnnotations(content: string, annotations: VerlaufAnnotation[]): string {
   if (annotations.length === 0) return escapeHtml(content)
 
-  // Build a list of ranges sorted by start offset
-  const sorted = [...annotations].sort((a, b) => a.startOffset - b.startOffset)
+  // Clamp offsets to the current content and drop stale ranges, then sort by
+  // start offset so we can walk the content once.
+  const sorted = annotations
+    .map((a) => ({
+      ...a,
+      startOffset: Math.max(0, Math.min(a.startOffset, content.length)),
+      endOffset: Math.max(0, Math.min(a.endOffset, content.length)),
+    }))
+    .filter((a) => a.endOffset > a.startOffset)
+    .sort((a, b) => a.startOffset - b.startOffset || b.endOffset - a.endOffset)
 
   let result = ''
   let cursor = 0
 
   for (const ann of sorted) {
-    if (ann.startOffset > cursor) {
-      result += escapeHtml(content.slice(cursor, ann.startOffset))
+    // Skip ranges fully consumed by an earlier (overlapping) annotation.
+    if (ann.endOffset <= cursor) continue
+    const start = Math.max(ann.startOffset, cursor)
+    if (start > cursor) {
+      result += escapeHtml(content.slice(cursor, start))
     }
-    const snippet = escapeHtml(content.slice(ann.startOffset, ann.endOffset))
+    const snippet = escapeHtml(content.slice(start, ann.endOffset))
     result += wrapAnnotation(snippet, ann)
     cursor = ann.endOffset
   }
@@ -97,18 +120,20 @@ function applyAnnotations(content: string, annotations: VerlaufAnnotation[]): st
   return result
 }
 
+// Newlines are preserved as-is; `.verlauf-entry__body` uses `white-space:
+// pre-wrap` so they render as line breaks. Keeping real "\n" characters means
+// DOM text offsets map 1:1 onto `entry.content` for reliable annotation ranges.
 function escapeHtml(str: string): string {
   return str
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-    .replace(/\n/g, '<br/>')
 }
 
 function wrapAnnotation(snippet: string, ann: VerlaufAnnotation): string {
   const styles: string[] = []
-  let title = ''
+  const attrs: string[] = []
 
   if (ann.type === 'bold') styles.push('font-weight: 700')
   if (ann.type === 'italic') styles.push('font-style: italic')
@@ -118,11 +143,15 @@ function wrapAnnotation(snippet: string, ann: VerlaufAnnotation): string {
     styles.push(`background: ${color}; border-radius: 2px; padding: 0 2px`)
   }
   if (ann.type === 'comment' && ann.comment) {
-    styles.push('border-bottom: 2px dotted #c57900; cursor: help')
-    title = ` title="${ann.comment.replace(/"/g, '&quot;')}"`
+    styles.push(
+      'border-bottom: 2px dotted #c57900; background: rgba(197,121,0,0.08); cursor: pointer',
+    )
+    attrs.push(`title="${escapeHtml(ann.comment)}"`)
+    attrs.push(`data-comment="${escapeHtml(ann.comment)}"`)
   }
 
-  return `<span style="${styles.join('; ')}"${title}>${snippet}</span>`
+  const attrStr = attrs.length ? ` ${attrs.join(' ')}` : ''
+  return `<span style="${styles.join('; ')}"${attrStr}>${snippet}</span>`
 }
 
 // ---------------------------------------------------------------------------
@@ -133,12 +162,14 @@ interface BubbleToolbarProps {
   state: BubbleState
   onFormat: (type: AnnotationType, color?: string) => void
   onComment: () => void
+  onCopy: () => void
   onCreateTimeline: () => void
   onClose: () => void
 }
 
-function BubbleToolbar({ state, onFormat, onComment, onCreateTimeline, onClose }: BubbleToolbarProps) {
+function BubbleToolbar({ state, onFormat, onComment, onCopy, onCreateTimeline, onClose }: BubbleToolbarProps) {
   const ref = useRef<HTMLDivElement>(null)
+  const { t } = useTranslation()
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -146,8 +177,15 @@ function BubbleToolbar({ state, onFormat, onComment, onCreateTimeline, onClose }
         onClose()
       }
     }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
     document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
+    document.addEventListener('keydown', handleKey)
+    return () => {
+      document.removeEventListener('mousedown', handleClick)
+      document.removeEventListener('keydown', handleKey)
+    }
   }, [onClose])
 
   if (!state.visible) return null
@@ -162,7 +200,7 @@ function BubbleToolbar({ state, onFormat, onComment, onCreateTimeline, onClose }
       <button
         type="button"
         className="verlauf-bubble__btn verlauf-bubble__btn--bold"
-        title="Fett"
+        title={t('verlaufEntryEdit') + ' — Fett'}
         onClick={() => onFormat('bold')}
       >
         B
@@ -190,7 +228,7 @@ function BubbleToolbar({ state, onFormat, onComment, onCreateTimeline, onClose }
           type="button"
           className="verlauf-bubble__swatch"
           style={{ background: c.bg }}
-          title={c.label}
+          title={`${t('verlaufHighlight')} — ${c.label}`}
           onClick={() => onFormat('highlight', c.value)}
         />
       ))}
@@ -198,15 +236,23 @@ function BubbleToolbar({ state, onFormat, onComment, onCreateTimeline, onClose }
       <button
         type="button"
         className="verlauf-bubble__btn"
-        title="Kommentar"
+        title={t('verlaufAnnotationComment')}
         onClick={onComment}
       >
         💬
       </button>
       <button
         type="button"
+        className="verlauf-bubble__btn"
+        title={t('verlaufBubbleCopy')}
+        onClick={onCopy}
+      >
+        ⎘
+      </button>
+      <button
+        type="button"
         className="verlauf-bubble__btn verlauf-bubble__btn--timeline"
-        title="Timeline-Eintrag erstellen"
+        title={t('verlaufTimelineCreate')}
         onClick={onCreateTimeline}
       >
         ＋ Timeline
@@ -411,6 +457,45 @@ function CommentPopover({ state, onSave, onClose }: CommentPopoverProps) {
   )
 }
 
+interface CommentViewPopoverProps {
+  state: CommentViewState
+  onClose: () => void
+}
+
+function CommentViewPopover({ state, onClose }: CommentViewPopoverProps) {
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        onClose()
+      }
+    }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('mousedown', handleClick)
+    document.addEventListener('keydown', handleKey)
+    return () => {
+      document.removeEventListener('mousedown', handleClick)
+      document.removeEventListener('keydown', handleKey)
+    }
+  }, [onClose])
+
+  if (!state.visible) return null
+
+  return (
+    <div
+      ref={ref}
+      className="verlauf-popover verlauf-popover--comment-view"
+      style={{ top: state.y, left: state.x }}
+    >
+      <p className="verlauf-popover__title">Kommentar</p>
+      <p className="verlauf-popover__comment-text">{state.text}</p>
+    </div>
+  )
+}
+
 // ---------------------------------------------------------------------------
 // Entry card
 // ---------------------------------------------------------------------------
@@ -425,34 +510,119 @@ interface EntryCardProps {
     entryId: string,
     rect: DOMRect,
   ) => void
+  onCommentView: (text: string, rect: DOMRect) => void
+  onEdit: (id: string, content: string) => void
+  onDelete: (id: string) => void
 }
 
-function EntryCard({ entry, annotations, onSelection }: EntryCardProps) {
+const EntryCard = memo(function EntryCard({
+  entry,
+  annotations,
+  onSelection,
+  onCommentView,
+  onEdit,
+  onDelete,
+}: EntryCardProps) {
   const ref = useRef<HTMLDivElement>(null)
+  const { t } = useTranslation()
+  const [editing, setEditing] = useState(false)
+  const [editText, setEditText] = useState(entry.content)
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
-  const entryAnnotations = annotations.filter((a) => a.entryId === entry.id)
-  const htmlContent = applyAnnotations(entry.content, entryAnnotations)
+  const entryAnnotations = useMemo(
+    () => annotations.filter((a) => a.entryId === entry.id),
+    [annotations, entry.id],
+  )
+  const htmlContent = useMemo(
+    () => applyAnnotations(entry.content, entryAnnotations),
+    [entry.content, entryAnnotations],
+  )
 
   function handleMouseUp() {
-    const sel = window.getSelection()
-    if (!sel || sel.isCollapsed || sel.rangeCount === 0) return
+    if (editing) return
+    // Read the selection on the next animation frame so the browser has fully
+    // committed the native selection first. This keeps drag-selecting smooth
+    // (no synchronous work mid-gesture) and avoids stale/collapsed reads.
+    requestAnimationFrame(() => {
+      const container = ref.current
+      if (!container) return
+      const sel = window.getSelection()
+      if (!sel || sel.isCollapsed || sel.rangeCount === 0) return
 
-    const selectedText = sel.toString().trim()
-    if (!selectedText) return
+      const range = sel.getRangeAt(0)
+      // Selection must start AND end inside this entry's body.
+      if (
+        !container.contains(range.startContainer) ||
+        !container.contains(range.endContainer)
+      ) {
+        return
+      }
 
-    // Ensure selection is within this entry
-    const range = sel.getRangeAt(0)
-    if (!ref.current?.contains(range.commonAncestorContainer)) return
+      const selStr = sel.toString()
+      if (!selStr.trim()) return
 
-    // Calculate text offsets within the raw content
-    const textContent = ref.current.textContent ?? ''
-    const selStr = sel.toString()
-    const startOffset = textContent.indexOf(selStr)
-    if (startOffset < 0) return
-    const endOffset = startOffset + selStr.length
+      // Character offset of the selection start within the entry's text. Because
+      // the body uses `white-space: pre-wrap` with real "\n" characters and no
+      // injected text, these offsets map 1:1 onto `entry.content`.
+      const preRange = document.createRange()
+      preRange.selectNodeContents(container)
+      preRange.setEnd(range.startContainer, range.startOffset)
+      const startOffset = preRange.toString().length
+      const endOffset = startOffset + selStr.length
 
-    const rect = range.getBoundingClientRect()
-    onSelection(selectedText, startOffset, endOffset, entry.id, rect)
+      const rect = range.getBoundingClientRect()
+      onSelection(selStr.trim(), startOffset, endOffset, entry.id, rect)
+    })
+  }
+
+  function handleBodyClick(e: React.MouseEvent) {
+    const target = (e.target as HTMLElement).closest('[data-comment]')
+    if (!target) return
+    const text = target.getAttribute('data-comment') ?? ''
+    if (!text) return
+    onCommentView(text, target.getBoundingClientRect())
+  }
+
+  function handleCopyEntry(e: React.MouseEvent) {
+    e.stopPropagation()
+    void navigator.clipboard.writeText(entry.content)
+  }
+
+  function handleEditStart(e: React.MouseEvent) {
+    e.stopPropagation()
+    setEditText(entry.content)
+    setEditing(true)
+    setConfirmDelete(false)
+  }
+
+  function handleEditSave(e: React.MouseEvent) {
+    e.stopPropagation()
+    if (editText.trim()) {
+      onEdit(entry.id, editText.trim())
+    }
+    setEditing(false)
+  }
+
+  function handleEditCancel(e: React.MouseEvent) {
+    e.stopPropagation()
+    setEditing(false)
+    setEditText(entry.content)
+  }
+
+  function handleDeleteRequest(e: React.MouseEvent) {
+    e.stopPropagation()
+    setConfirmDelete(true)
+    setEditing(false)
+  }
+
+  function handleDeleteConfirm(e: React.MouseEvent) {
+    e.stopPropagation()
+    onDelete(entry.id)
+  }
+
+  function handleDeleteCancel(e: React.MouseEvent) {
+    e.stopPropagation()
+    setConfirmDelete(false)
   }
 
   return (
@@ -470,17 +640,106 @@ function EntryCard({ entry, annotations, onSelection }: EntryCardProps) {
             KI
           </span>
         )}
+        <span className="verlauf-entry__actions" onClick={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            className="verlauf-entry__action-btn"
+            title={t('verlaufEntryEdit')}
+            onClick={handleEditStart}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </button>
+          <button
+            type="button"
+            className="verlauf-entry__action-btn"
+            title={t('verlaufEntryCopy')}
+            onClick={handleCopyEntry}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+          </button>
+          <button
+            type="button"
+            className="verlauf-entry__action-btn verlauf-entry__action-btn--delete"
+            title={t('verlaufEntryDelete')}
+            onClick={handleDeleteRequest}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+              <path d="M10 11v6M14 11v6"/>
+              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+          </button>
+        </span>
       </header>
-      <div
-        ref={ref}
-        className="verlauf-entry__body"
-        // biome-ignore lint/security/noDangerouslySetInnerHtml
-        dangerouslySetInnerHTML={{ __html: htmlContent }}
-        onMouseUp={handleMouseUp}
-      />
+
+      {confirmDelete && (
+        <div className="verlauf-entry__confirm-delete" onClick={(e) => e.stopPropagation()}>
+          <span className="verlauf-entry__confirm-text">{t('verlaufDeleteConfirm')}</span>
+          <button
+            type="button"
+            className="verlauf-entry__confirm-yes"
+            onClick={handleDeleteConfirm}
+          >
+            {t('verlaufDeleteYes')}
+          </button>
+          <button
+            type="button"
+            className="verlauf-entry__confirm-no"
+            onClick={handleDeleteCancel}
+          >
+            {t('verlaufEntryCancel')}
+          </button>
+        </div>
+      )}
+
+      {editing ? (
+        <div className="verlauf-inline-editor" onClick={(e) => e.stopPropagation()}>
+          <textarea
+            className="verlauf-inline-editor__textarea"
+            value={editText}
+            onChange={(e) => setEditText(e.target.value)}
+            rows={Math.max(3, editText.split('\n').length)}
+            // biome-ignore lint/a11y/noAutofocus
+            autoFocus
+          />
+          <div className="verlauf-inline-editor__actions">
+            <button
+              type="button"
+              className="verlauf-inline-editor__cancel"
+              onClick={handleEditCancel}
+            >
+              {t('verlaufEntryCancel')}
+            </button>
+            <button
+              type="button"
+              className="verlauf-inline-editor__save"
+              onClick={handleEditSave}
+              disabled={!editText.trim()}
+            >
+              {t('verlaufEntrySave')}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div
+          ref={ref}
+          className="verlauf-entry__body"
+          // biome-ignore lint/security/noDangerouslySetInnerHtml
+          dangerouslySetInnerHTML={{ __html: htmlContent }}
+          onMouseUp={handleMouseUp}
+          onClick={handleBodyClick}
+        />
+      )}
     </article>
   )
-}
+})
 
 // ---------------------------------------------------------------------------
 // Main page
@@ -527,6 +786,13 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
     rangeText: '',
   })
 
+  const [commentView, setCommentView] = useState<CommentViewState>({
+    visible: false,
+    x: 0,
+    y: 0,
+    text: '',
+  })
+
   // Reload when caseId changes
   useEffect(() => {
     setEntries(loadVerlaufFeed(caseId))
@@ -545,6 +811,19 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
     setCommentPopover((p) => ({ ...p, visible: false }))
   }, [])
 
+  const closeCommentView = useCallback(() => {
+    setCommentView((p) => ({ ...p, visible: false }))
+  }, [])
+
+  const handleCommentView = useCallback((text: string, rect: DOMRect) => {
+    setCommentView({
+      visible: true,
+      x: Math.min(Math.max(rect.left, 12), window.innerWidth - 280),
+      y: rect.bottom + 8,
+      text,
+    })
+  }, [])
+
   const handleSelection = useCallback(
     (
       selectedText: string,
@@ -553,11 +832,20 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
       entryId: string,
       rect: DOMRect,
     ) => {
-      const scrollY = window.scrollY
+      // The toolbar is `position: fixed` and rendered in a portal, so use
+      // viewport coordinates directly (no scroll offset). Place it above the
+      // selection, flipping below it when there is no room at the top.
+      const TOOLBAR_GAP = 48
+      const topCandidate = rect.top - TOOLBAR_GAP
+      const y = topCandidate < 8 ? rect.bottom + 8 : topCandidate
+      const x = Math.min(
+        Math.max(rect.left + rect.width / 2, 90),
+        window.innerWidth - 90,
+      )
       setBubble({
         visible: true,
-        x: rect.left + rect.width / 2,
-        y: rect.top + scrollY - 48,
+        x,
+        y,
         selectedText,
         startOffset,
         endOffset,
@@ -565,6 +853,7 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
       })
       setTimelinePopover((p) => ({ ...p, visible: false }))
       setCommentPopover((p) => ({ ...p, visible: false }))
+      setCommentView((p) => ({ ...p, visible: false }))
     },
     [],
   )
@@ -622,6 +911,13 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
     [caseId, closeCommentPopover, commentPopover],
   )
 
+  const handleBubbleCopy = useCallback(() => {
+    if (bubble.selectedText) {
+      void navigator.clipboard.writeText(bubble.selectedText)
+    }
+    closeBubble()
+  }, [bubble.selectedText, closeBubble])
+
   const handleCreateTimeline = useCallback(() => {
     const { entryId, selectedText, x, y } = bubble
     if (!entryId) return
@@ -636,6 +932,23 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
     })
     closeBubble()
   }, [bubble, closeBubble, entries])
+
+  const handleEntryEdit = useCallback(
+    (id: string, content: string) => {
+      const next = updateVerlaufEntry(id, content, caseId)
+      setEntries(next)
+    },
+    [caseId],
+  )
+
+  const handleEntryDelete = useCallback(
+    (id: string) => {
+      const next = deleteVerlaufEntry(id, caseId)
+      setEntries(next)
+      setAnnotations((prev) => prev.filter((a) => a.entryId !== id))
+    },
+    [caseId],
+  )
 
   const [composerOpen, setComposerOpen] = useState(false)
   const [composerText, setComposerText] = useState('')
@@ -664,7 +977,7 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
   const isEmpty = entries.length === 0
 
   return (
-    <div className="verlauf-feed-page" onClick={closeBubble}>
+    <div className="verlauf-feed-page">
       <header className="verlauf-feed-page__header">
         <h2 className="verlauf-feed-page__title">{t('verlaufFeedTitle')}</h2>
         {!composerOpen && (
@@ -729,6 +1042,9 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
                 entry={entry}
                 annotations={annotations}
                 onSelection={handleSelection}
+                onCommentView={handleCommentView}
+                onEdit={handleEntryEdit}
+                onDelete={handleEntryDelete}
               />
               {index < entries.length - 1 && <div className="verlauf-entry__divider" />}
             </div>
@@ -736,26 +1052,34 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
         </div>
       )}
 
-      <BubbleToolbar
-        state={bubble}
-        onFormat={handleFormat}
-        onComment={handleComment}
-        onCreateTimeline={handleCreateTimeline}
-        onClose={closeBubble}
-      />
+      {createPortal(
+        <>
+          <BubbleToolbar
+            state={bubble}
+            onFormat={handleFormat}
+            onComment={handleComment}
+            onCopy={handleBubbleCopy}
+            onCreateTimeline={handleCreateTimeline}
+            onClose={closeBubble}
+          />
 
-      <TimelinePopover
-        state={timelinePopover}
-        caseId={caseId}
-        onClose={closeTimelinePopover}
-        timelineAddedLabel={t('verlaufTimelineAdded')}
-      />
+          <TimelinePopover
+            state={timelinePopover}
+            caseId={caseId}
+            onClose={closeTimelinePopover}
+            timelineAddedLabel={t('verlaufTimelineAdded')}
+          />
 
-      <CommentPopover
-        state={commentPopover}
-        onSave={handleSaveComment}
-        onClose={closeCommentPopover}
-      />
+          <CommentPopover
+            state={commentPopover}
+            onSave={handleSaveComment}
+            onClose={closeCommentPopover}
+          />
+
+          <CommentViewPopover state={commentView} onClose={closeCommentView} />
+        </>,
+        document.body,
+      )}
     </div>
   )
 }

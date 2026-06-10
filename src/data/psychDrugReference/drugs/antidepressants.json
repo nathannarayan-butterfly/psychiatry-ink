@@ -1,0 +1,2753 @@
+[
+  {
+    "id": "sertralin",
+    "genericName": "Sertralin",
+    "brandNamesDACH": ["Zoloft", "Gladem"],
+    "atcCode": "N06AB06",
+    "substanceClass": "SSRI",
+    "formulations": ["Filmtabletten", "Konzentrat zur Herstellung einer Lösung"],
+    "strengthsDACH": ["50 mg", "100 mg"],
+    "routesOfAdmin": ["oral"],
+    "kurzinfoDe": "Selektiver Serotonin-Wiederaufnahmehemmer mit breitem Indikationsspektrum (Depression, OCD, Panikstörung, PTBS, soziale Angststörung, PMDS). Vergleichsweise günstiges Interaktionsprofil durch moderate CYP2D6-Hemmung; relevant bei Ko-Medikation mit Tamoxifen (verminderte Endoxifen-Bildung) oder TCA. Gilt als bevorzugte Substanz in der Schwangerschaft und bei kardialen Komorbiditäten. Häufiger Durchfall als andere SSRIs infolge serotonerger 5-HT3-Aktivierung im GI-Trakt.",
+    "kurzinfoEn": "Selective serotonin reuptake inhibitor with a broad licensed indication spectrum (depression, OCD, panic disorder, PTSD, social anxiety, PMDD). Favourable interaction profile due to moderate CYP2D6 inhibition; clinically relevant when co-prescribing tamoxifen (reduced endoxifen formation) or TCAs. Preferred agent in pregnancy and cardiac comorbidity. Diarrhoea more common than constipation due to serotonergic 5-HT3 activation in the GI tract.",
+    "receptorProfile": {
+      "netSert": "Highly selective SERT inhibitor; negligible NET inhibition",
+      "serotonin5HT2A": "None",
+      "h1": "Minimal",
+      "m1": "Minimal",
+      "alpha1": "Minimal",
+      "serotonin5HT1A": "None direct; indirect via ↑synaptic 5-HT",
+      "d2": "Weak dopamine transporter affinity at supratherapeutic doses (minor clinical relevance)",
+      "notes": "Most receptor-clean SSRI alongside escitalopram"
+    },
+    "commonSideEffectsDe": [
+      "Übelkeit (v. a. initial, transient)",
+      "Diarrhö",
+      "Kopfschmerzen",
+      "Schlafstörungen oder Somnolenz",
+      "Schwitzen",
+      "Sexuelle Dysfunktion (Libidoverlust, Orgasmusstörung, Ejakulationsverzögerung)",
+      "Mundtrockenheit",
+      "Tremor",
+      "Appetitverlust"
+    ],
+    "commonSideEffectsEn": [
+      "Nausea (especially initially, usually transient)",
+      "Diarrhoea",
+      "Headache",
+      "Insomnia or somnolence",
+      "Sweating",
+      "Sexual dysfunction (decreased libido, anorgasmia, ejaculatory delay)",
+      "Dry mouth",
+      "Tremor",
+      "Decreased appetite"
+    ],
+    "seriousSideEffectsDe": [
+      "Hyponatriämie / SIADH (v. a. ältere Patienten, Diuretika-Komedikation)",
+      "Serotonin-Syndrom (bei Kombination mit anderen Serotonergika)",
+      "Erhöhtes Blutungsrisiko (GI-Blutungen, besonders mit NSAR oder Antikoagulanzien)",
+      "Emergente Suizidalität (v. a. bei Kindern/Jugendlichen, initial)",
+      "QTc-Verlängerung (gering ausgeprägt, selten klinisch relevant)",
+      "Aktivierungssyndrom / Agitiertheit in den ersten Wochen",
+      "Neonatales Adaptationssyndrom bei Exposition im 3. Trimenon"
+    ],
+    "seriousSideEffectsEn": [
+      "Hyponatraemia / SIADH (especially elderly, diuretic co-medication)",
+      "Serotonin syndrome (with serotonergic co-medications)",
+      "Increased bleeding risk (GI bleeds, especially with NSAIDs or anticoagulants)",
+      "Emergent suicidality (primarily in children and adolescents, early treatment)",
+      "QTc prolongation (mild, rarely clinically significant)",
+      "Activation syndrome / agitation in the first weeks",
+      "Neonatal adaptation syndrome with 3rd-trimester exposure"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Serum-Natrium",
+        "frequency": "Vor Therapiebeginn, nach 2–4 Wochen, dann bei klinischen Symptomen (Übelkeit, Verwirrtheit, Lethargie)",
+        "warningThreshold": "< 130 mmol/L → Dosisanpassung; < 125 mmol/L → Absetzen",
+        "noteDe": "Risiko besonders hoch bei Patienten > 65 J., Diuretika-Komedikation und reduzierter Flüssigkeitszufuhr.",
+        "noteEn": "Risk highest in patients >65 years, diuretic co-medication, and low fluid intake."
+      },
+      {
+        "parameter": "Blutungsanzeichen / INR",
+        "frequency": "Bei Ko-Medikation mit Antikoagulanzien oder NSAR",
+        "noteDe": "Thrombozytenfunktionshemmung durch serotonerge Wirkung; INR-Kontrolle bei Antikoagulations-Ko-Therapie.",
+        "noteEn": "Platelet inhibition via serotonergic effect; INR monitoring when co-prescribing anticoagulants."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Irreversible MAO-Hemmer (Tranylcypromin, Phenelzin)",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Lebensgefährliches Serotonin-Syndrom. Mindestens 14 Tage Auswaschphase nach MAOI-Absetzen vor Sertralin-Beginn; 14 Tage nach Sertralin-Absetzen vor MAOI-Beginn.",
+        "clinicalNoteEn": "Life-threatening serotonin syndrome. At least 14-day washout after stopping an irreversible MAOI before starting sertraline; 14 days after stopping sertraline before starting an irreversible MAOI."
+      },
+      {
+        "interactsWith": "Tramadol",
+        "severity": "moderate",
+        "clinicalNoteDe": "Kumuliertes Serotonin-Syndrom-Risiko; zudem schwächere Analgesie durch CYP2D6-Hemmung (reduzierte O-Demethylierung zum aktiven M1-Metaboliten).",
+        "clinicalNoteEn": "Cumulative serotonin syndrome risk; additionally reduced analgesia via CYP2D6 inhibition (less conversion to active M1 metabolite)."
+      },
+      {
+        "interactsWith": "Tamoxifen",
+        "severity": "moderate",
+        "clinicalNoteDe": "CYP2D6-Hemmung reduziert die hepatische Bildung von Endoxifen (aktiver Metabolit); onkologische Wirksamkeit bei Brustkrebspatientinnen potenziell beeinträchtigt. Citalopram oder Venlafaxin bei Bedarf bevorzugen.",
+        "clinicalNoteEn": "CYP2D6 inhibition reduces hepatic conversion to endoxifen (active metabolite); potentially impairs tamoxifen efficacy in breast cancer patients. Prefer citalopram or venlafaxine if antidepressant is required."
+      },
+      {
+        "interactsWith": "Warfarin / Phenprocoumon",
+        "severity": "moderate",
+        "clinicalNoteDe": "Verstärkte Blutungsneigung durch additive Thrombozytenaggregationshemmung. INR-Kontrollen empfohlen.",
+        "clinicalNoteEn": "Enhanced bleeding via additive platelet aggregation inhibition. INR monitoring recommended."
+      },
+      {
+        "interactsWith": "NSAIDs (Ibuprofen, Naproxen, Diclofenac u. a.)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Erhöhtes GI-Blutungsrisiko durch kombinierte Thrombozytenhemmung. PPI-Gastroprotektion erwägen.",
+        "clinicalNoteEn": "Increased GI bleeding risk from combined platelet inhibition. Consider PPI gastroprotection."
+      },
+      {
+        "interactsWith": "Lithium",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive Serotonergizität; Serotonin-Syndrom-Risiko, insbesondere bei Lithiumspiegeln im oberen therapeutischen Bereich.",
+        "clinicalNoteEn": "Additive serotonergic effect; serotonin syndrome risk, especially at high-normal lithium levels."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Natrium",
+        "condition": "Hyponatriämie unter SSRI",
+        "warningDe": "Na+ < 130 mmol/L: Dosisreduktion oder Absetzen in Betracht ziehen. Na+ < 125 mmol/L: Absetzen und stationäre Überwachung.",
+        "warningEn": "Na+ < 130 mmol/L: consider dose reduction or discontinuation. Na+ < 125 mmol/L: discontinue and admit for monitoring.",
+        "severity": "reduce_dose"
+      }
+    ],
+    "renalDosing": "Keine Dosisanpassung erforderlich (hepatische Elimination); bei schwerer Niereninsuffizienz vorsichtshalber niedrigere Startdosis.",
+    "hepaticDosing": "Child-Pugh A/B: Dosis halbieren oder Dosierungsintervall verlängern. Child-Pugh C: kontraindiziert.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": true,
+    "depotAvailable": false,
+    "sources": [
+      "Stahl SM. Essential Psychopharmacology, 5th ed. Cambridge University Press, 2021",
+      "Taylor D et al. Maudsley Prescribing Guidelines in Psychiatry, 14th ed. Wiley-Blackwell, 2021",
+      "Cipriani A et al. Comparative efficacy and acceptability of 21 antidepressant drugs. Lancet 2018;391:1357–1366",
+      "AWMF S3-Leitlinie Unipolare Depression, 2022",
+      "Fachinformation Sertralin (aktuelle Version, DACH)"
+    ],
+    "lastReviewed": "2026-06-01",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "escitalopram",
+    "genericName": "Escitalopram",
+    "brandNamesDACH": ["Cipralex"],
+    "atcCode": "N06AB10",
+    "substanceClass": "SSRI",
+    "formulations": ["Filmtabletten", "Tropfen (Lösung)"],
+    "strengthsDACH": ["5 mg", "10 mg", "15 mg", "20 mg", "Tropfen 20 mg/mL"],
+    "routesOfAdmin": ["oral"],
+    "kurzinfoDe": "S-Enantiomer des Citaloprams und reinster SSRI bezüglich SERT-Selektivität; minimales Interaktionsprofil. Zugelassen für Depression, Panikstörung, GAD, soziale Angststörung und OCD. Dosisabhängige QTc-Verlängerung obligatorisch beachten: Tagesdosis auf 10 mg bei Patienten > 65 Jahre, bei Leberfunktionsstörung und bei CYP2C19-Poor-Metabolizern begrenzen. Gilt als Standardreferenz bei vergleichenden Wirksamkeitsstudien.",
+    "kurzinfoEn": "S-enantiomer of citalopram and the most SERT-selective SSRI; minimal drug interaction profile. Licensed for depression, panic disorder, GAD, social anxiety disorder, and OCD. Dose-dependent QTc prolongation is a mandatory consideration: cap at 10 mg/day in patients >65 years, hepatic impairment, and CYP2C19 poor metabolisers. Considered the comparator benchmark in efficacy meta-analyses.",
+    "receptorProfile": {
+      "netSert": "Highly selective SERT inhibitor; negligible NET inhibition",
+      "serotonin5HT2A": "None",
+      "h1": "Minimal",
+      "m1": "Minimal",
+      "alpha1": "Minimal",
+      "serotonin5HT1A": "None direct",
+      "d2": "None",
+      "notes": "Allosteric binding site on SERT (distinct from primary site) may contribute to superior efficacy vs racemic citalopram"
+    },
+    "commonSideEffectsDe": [
+      "Übelkeit (häufig initial)",
+      "Kopfschmerzen",
+      "Insomnie",
+      "Mundtrockenheit",
+      "Schwitzen",
+      "Sexuelle Dysfunktion",
+      "Sedierung / Müdigkeit",
+      "Tremor"
+    ],
+    "commonSideEffectsEn": [
+      "Nausea (common initially)",
+      "Headache",
+      "Insomnia",
+      "Dry mouth",
+      "Sweating",
+      "Sexual dysfunction",
+      "Sedation / fatigue",
+      "Tremor"
+    ],
+    "seriousSideEffectsDe": [
+      "QTc-Verlängerung (dosisabhängig, TdP-Risiko bei prädisponierenden Faktoren)",
+      "Hyponatriämie / SIADH",
+      "Serotonin-Syndrom",
+      "Erhöhtes Blutungsrisiko",
+      "Aktivierungssyndrom / emergente Suizidalität (initial, v. a. < 25 J.)"
+    ],
+    "seriousSideEffectsEn": [
+      "QTc prolongation (dose-dependent, TdP risk with predisposing factors)",
+      "Hyponatraemia / SIADH",
+      "Serotonin syndrome",
+      "Increased bleeding risk",
+      "Activation syndrome / emergent suicidality (early treatment, especially <25 years)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "EKG / QTc-Intervall",
+        "frequency": "Vor Therapiebeginn; Verlaufskontrolle bei Dosiserhöhung oder Komedikation mit QTc-verlängernden Substanzen",
+        "warningThreshold": "QTc > 450 ms (Männer) / > 470 ms (Frauen) → Dosisreduktion; > 500 ms → Absetzen",
+        "noteDe": "Besonders relevant bei gleichzeitiger Komedikation mit Antipsychotika, Antiarrhythmika oder Antibiotika mit QTc-Potenzial.",
+        "noteEn": "Especially relevant with concurrent antipsychotics, antiarrhythmics, or antibiotics with QTc-prolonging potential."
+      },
+      {
+        "parameter": "Serum-Natrium",
+        "frequency": "Bei Therapiebeginn und nach 2–4 Wochen bei Risikogruppen",
+        "warningThreshold": "< 130 mmol/L → Handlungsbedarf",
+        "noteDe": "Risikogruppen: Patienten > 65 J., Diuretika, niedriges Körpergewicht.",
+        "noteEn": "Risk groups: patients >65 years, diuretics, low body weight."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Irreversible MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Serotonin-Syndrom; 14 Tage Auswaschphase in jede Richtung.",
+        "clinicalNoteEn": "Serotonin syndrome; 14-day washout in each direction."
+      },
+      {
+        "interactsWith": "QTc-verlängernde Substanzen (Antipsychotika, Makrolide, Chinolone, Amiodaron)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additives QTc-Verlängerungsrisiko. EKG-Monitoring obligatorisch.",
+        "clinicalNoteEn": "Additive QTc prolongation risk. ECG monitoring mandatory."
+      },
+      {
+        "interactsWith": "CYP2C19-Inhibitoren (Omeprazol, Esomeprazol, Fluconazol, Fluvoxamin)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Escitalopram-Plasmaspiegel um 50–100 % erhöht; Dosisreduktion und QTc-Kontrolle.",
+        "clinicalNoteEn": "Escitalopram plasma levels increased by 50–100%; dose reduction and QTc monitoring warranted."
+      },
+      {
+        "interactsWith": "Tramadol / andere Serotonergika",
+        "severity": "moderate",
+        "clinicalNoteDe": "Erhöhtes Serotonin-Syndrom-Risiko.",
+        "clinicalNoteEn": "Elevated serotonin syndrome risk."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Natrium",
+        "condition": "Hyponatriämie",
+        "warningDe": "Na+ < 130 mmol/L: Dosisreduktion. Na+ < 125 mmol/L: Absetzen.",
+        "warningEn": "Na+ < 130 mmol/L: reduce dose. Na+ < 125 mmol/L: discontinue.",
+        "severity": "reduce_dose"
+      },
+      {
+        "labParameter": "QTc (EKG)",
+        "condition": "QTc-Verlängerung",
+        "warningDe": "QTc > 500 ms: Escitalopram absetzen und kardiologische Abklärung.",
+        "warningEn": "QTc > 500 ms: discontinue escitalopram and seek cardiology review.",
+        "severity": "contraindicated"
+      }
+    ],
+    "renalDosing": "Keine Dosisanpassung erforderlich. Bei schwerer Niereninsuffizienz (GFR < 30) Vorsicht.",
+    "hepaticDosing": "Leberinsuffizienz: Startdosis 5 mg, Maximaldosis 10 mg/Tag.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": true,
+    "depotAvailable": false,
+    "sources": [
+      "Fachinformation Cipralex (aktuelle Version, DACH)",
+      "Cipriani A et al. Lancet 2018;391:1357–1366",
+      "EMA: PRAC assessment report escitalopram QTc 2011",
+      "Taylor D et al. Maudsley Prescribing Guidelines, 14th ed., 2021",
+      "Stahl SM. Essential Psychopharmacology, 5th ed., 2021"
+    ],
+    "lastReviewed": "2026-06-01",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "citalopram",
+    "genericName": "Citalopram",
+    "brandNamesDACH": ["Cipramil"],
+    "atcCode": "N06AB04",
+    "substanceClass": "SSRI",
+    "formulations": ["Filmtabletten", "Tropfen (Lösung)"],
+    "strengthsDACH": ["10 mg", "20 mg", "40 mg", "Tropfen 40 mg/mL"],
+    "routesOfAdmin": ["oral"],
+    "kurzinfoDe": "Racemisches SSRI aus R- und S-Enantiomer (Escitalopram ist das aktive S-Enantiomer). Klinisch vergleichbar mit anderen SSRIs, jedoch ausgeprägte dosisabhängige QTc-Verlängerung: Maximaldosis 40 mg/Tag allgemein, 20 mg/Tag bei Patienten > 65 Jahre, schwerer Leberinsuffizienz und CYP2C19-Poor-Metabolizern. Gutes Verträglichkeitsprofil; geringes Interaktionspotenzial.",
+    "kurzinfoEn": "Racemic SSRI comprising R- and S-enantiomers (escitalopram is the active S-enantiomer). Clinically similar to other SSRIs, but notable dose-dependent QTc prolongation: maximum 40 mg/day generally, 20 mg/day in patients >65 years, severe hepatic impairment, and CYP2C19 poor metabolisers. Good tolerability profile; low interaction potential.",
+    "receptorProfile": {
+      "netSert": "Selective SERT inhibitor; minimal NET inhibition",
+      "serotonin5HT2A": "None",
+      "h1": "Minimal",
+      "m1": "Minimal",
+      "alpha1": "Minimal",
+      "serotonin5HT1A": "None direct",
+      "d2": "None",
+      "notes": "R-enantiomer is pharmacologically inactive but may contribute to adverse cardiac effects; escitalopram preferred where available"
+    },
+    "commonSideEffectsDe": [
+      "Übelkeit",
+      "Mundtrockenheit",
+      "Schwitzen",
+      "Schlafstörungen",
+      "Sexuelle Dysfunktion",
+      "Tremor",
+      "Somnolenz"
+    ],
+    "commonSideEffectsEn": [
+      "Nausea",
+      "Dry mouth",
+      "Sweating",
+      "Sleep disturbances",
+      "Sexual dysfunction",
+      "Tremor",
+      "Somnolence"
+    ],
+    "seriousSideEffectsDe": [
+      "QTc-Verlängerung / Torsades de Pointes (dosisabhängig)",
+      "Hyponatriämie / SIADH",
+      "Serotonin-Syndrom",
+      "Erhöhtes Blutungsrisiko"
+    ],
+    "seriousSideEffectsEn": [
+      "QTc prolongation / Torsades de Pointes (dose-dependent)",
+      "Hyponatraemia / SIADH",
+      "Serotonin syndrome",
+      "Increased bleeding risk"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "EKG / QTc-Intervall",
+        "frequency": "Vor Therapiebeginn; nach Dosiserhöhung; bei QTc-relevanter Komedikation",
+        "warningThreshold": "QTc > 450 ms (Männer) / > 470 ms (Frauen) → Dosis nicht erhöhen; > 500 ms → Absetzen",
+        "noteDe": "FDA/EMA-Sicherheitshinweis 2011/2012: Tagesdosen > 40 mg nicht überschreiten; Einsatz bei angeborenem Long-QT-Syndrom kontraindiziert.",
+        "noteEn": "FDA/EMA safety communication 2011/2012: do not exceed 40 mg/day; contraindicated in congenital long-QT syndrome."
+      },
+      {
+        "parameter": "Serum-Natrium",
+        "frequency": "Risikogruppen: vor Beginn, nach 2–4 Wochen",
+        "noteDe": "Ältere Patienten und Diuretika-Komedikation priorisieren.",
+        "noteEn": "Prioritise elderly patients and diuretic co-medication."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Irreversible MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Serotonin-Syndrom; 14 Tage Auswaschphase.",
+        "clinicalNoteEn": "Serotonin syndrome; 14-day washout."
+      },
+      {
+        "interactsWith": "CYP2C19-Inhibitoren (Omeprazol, Esomeprazol, Fluconazol)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Erhöhte Citalopram-Plasmaspiegel; Dosis reduzieren und QTc überwachen.",
+        "clinicalNoteEn": "Elevated citalopram plasma levels; reduce dose and monitor QTc."
+      },
+      {
+        "interactsWith": "QTc-verlängernde Substanzen",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additives QTc-Risiko; EKG obligatorisch.",
+        "clinicalNoteEn": "Additive QTc risk; ECG mandatory."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "QTc (EKG)",
+        "condition": "QTc-Verlängerung",
+        "warningDe": "QTc > 500 ms: Citalopram absetzen.",
+        "warningEn": "QTc > 500 ms: discontinue citalopram.",
+        "severity": "contraindicated"
+      },
+      {
+        "labParameter": "Natrium",
+        "condition": "Hyponatriämie",
+        "warningDe": "Na+ < 125 mmol/L: Absetzen und stationäre Abklärung.",
+        "warningEn": "Na+ < 125 mmol/L: discontinue and admit for evaluation.",
+        "severity": "reduce_dose"
+      }
+    ],
+    "renalDosing": "Leichte bis mittelschwere Niereninsuffizienz: keine Anpassung. Schwere Niereninsuffizienz (GFR < 20): nicht empfohlen.",
+    "hepaticDosing": "Maximaldosis 20 mg/Tag. Child-Pugh C: kontraindiziert.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": true,
+    "depotAvailable": false,
+    "sources": [
+      "FDA Safety Communication: Citalopram QTc 2012",
+      "EMA Assessment Report Citalopram QTc 2011",
+      "Fachinformation Cipramil (aktuelle Version, DACH)",
+      "Taylor D et al. Maudsley Prescribing Guidelines, 14th ed., 2021"
+    ],
+    "lastReviewed": "2026-06-01",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "fluoxetin",
+    "genericName": "Fluoxetin",
+    "brandNamesDACH": ["Fluctin", "Fluoxetin-Generika"],
+    "atcCode": "N06AB03",
+    "substanceClass": "SSRI",
+    "formulations": ["Kapseln", "Tabletten", "Lösung zum Einnehmen"],
+    "strengthsDACH": ["20 mg", "40 mg", "Lösung 20 mg/5 mL"],
+    "routesOfAdmin": ["oral"],
+    "kurzinfoDe": "Erster klinisch eingesetzter SSRI mit sehr langer Halbwertszeit (Fluoxetin 1–4 Tage, aktiver Metabolit Norfluoxetin 4–16 Tage): selbsttapernd, minimales Absetzsyndrom. Starker CYP2D6- und moderater CYP3A4-Inhibitor mit ausgeprägtem Interaktionspotenzial. Zugelassen für Depression, OCD, Bulimia nervosa und Panikstörung. Aktivierendster SSRI, daher bevorzugt morgens einzunehmen.",
+    "kurzinfoEn": "First clinically used SSRI with a very long half-life (fluoxetine 1–4 days, active metabolite norfluoxetine 4–16 days): self-tapering with minimal discontinuation syndrome. Potent CYP2D6 and moderate CYP3A4 inhibitor with extensive interaction potential. Licensed for depression, OCD, bulimia nervosa, and panic disorder. Most activating SSRI; administer preferably in the morning.",
+    "receptorProfile": {
+      "netSert": "Selective SERT inhibitor; minimal NET inhibition",
+      "serotonin5HT2A": "Mild antagonism (low clinical relevance)",
+      "h1": "Minimal",
+      "m1": "Minimal",
+      "alpha1": "Minimal",
+      "serotonin5HT1A": "Weak agonist/partial agonist (disputed)",
+      "d2": "None",
+      "notes": "Norfluoxetine (active metabolite) retains potent SERT inhibition and contributes to prolonged pharmacological effect after discontinuation"
+    },
+    "commonSideEffectsDe": [
+      "Übelkeit (initial)",
+      "Insomnie / Schlafstörungen",
+      "Agitiertheit / Nervosität / Unruhe",
+      "Kopfschmerzen",
+      "Sexuelle Dysfunktion",
+      "Appetitminderung / Gewichtsverlust (initial)",
+      "Schwitzen",
+      "Diarrhö"
+    ],
+    "commonSideEffectsEn": [
+      "Nausea (initially)",
+      "Insomnia / sleep disturbances",
+      "Agitation / nervousness / restlessness",
+      "Headache",
+      "Sexual dysfunction",
+      "Decreased appetite / initial weight loss",
+      "Sweating",
+      "Diarrhoea"
+    ],
+    "seriousSideEffectsDe": [
+      "Serotonin-Syndrom (bei Kombination mit Serotonergika)",
+      "Hyponatriämie / SIADH",
+      "Erhöhtes Blutungsrisiko",
+      "Aktivierungssyndrom (bes. in den ersten 2 Wochen)",
+      "Suizidales Risiko initial (< 25 Jahre)",
+      "Verlängerte Auswaschphase: nach Absetzen 5 Wochen vor MAOI-Gabe notwendig"
+    ],
+    "seriousSideEffectsEn": [
+      "Serotonin syndrome (with serotonergic co-medications)",
+      "Hyponatraemia / SIADH",
+      "Increased bleeding risk",
+      "Activation syndrome (especially first 2 weeks)",
+      "Emergent suicidality (< 25 years)",
+      "Prolonged washout: 5 weeks required after fluoxetine before starting an irreversible MAOI"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Serum-Natrium",
+        "frequency": "Risikogruppen: vor Beginn, nach 4 Wochen",
+        "noteDe": "Wie alle SSRIs: Hyponatriämierisiko bei Älteren und Diuretika.",
+        "noteEn": "As with all SSRIs: hyponatraemia risk in elderly and diuretic co-medication."
+      },
+      {
+        "parameter": "Medikamentenspiegel bei TCA-Komedikation",
+        "frequency": "Bei Ko-Medikation mit trizyklischen Antidepressiva",
+        "noteDe": "CYP2D6-Hemmung erhöht TCA-Spiegel erheblich; TCA-TDM obligatorisch.",
+        "noteEn": "CYP2D6 inhibition markedly elevates TCA levels; TDM mandatory when co-prescribing TCAs."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Irreversible MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Serotonin-Syndrom. Aufgrund der langen Halbwertszeit von Norfluoxetin: 5 Wochen Auswaschphase nach Fluoxetin-Absetzen vor MAOI-Beginn.",
+        "clinicalNoteEn": "Serotonin syndrome. Due to norfluoxetine's long half-life: 5-week washout after stopping fluoxetine before starting an irreversible MAOI."
+      },
+      {
+        "interactsWith": "Trizyklische Antidepressiva (Amitriptylin, Nortriptylin, Imipramin u. a.)",
+        "severity": "severe",
+        "clinicalNoteDe": "Starke CYP2D6-Hemmung erhöht TCA-Plasmaspiegel um das 2- bis 10-Fache; TCA-TDM obligatorisch, QTc- und EKG-Kontrolle.",
+        "clinicalNoteEn": "Strong CYP2D6 inhibition raises TCA plasma levels 2–10-fold; TCA TDM and ECG monitoring mandatory."
+      },
+      {
+        "interactsWith": "Tamoxifen",
+        "severity": "severe",
+        "clinicalNoteDe": "Potente CYP2D6-Hemmung reduziert Endoxifen-Bildung erheblich; Fluoxetin bei Tamoxifen-Therapie vermeiden.",
+        "clinicalNoteEn": "Potent CYP2D6 inhibition substantially reduces endoxifen formation; avoid fluoxetine during tamoxifen therapy."
+      },
+      {
+        "interactsWith": "Tramadol, Codein",
+        "severity": "moderate",
+        "clinicalNoteDe": "CYP2D6-Hemmung reduziert Analgesie (Codein → Morphin; Tramadol → M1); erhöhtes Serotonin-Syndrom-Risiko.",
+        "clinicalNoteEn": "CYP2D6 inhibition reduces analgesia (codeine→morphine; tramadol→M1); elevated serotonin syndrome risk."
+      },
+      {
+        "interactsWith": "Antipsychotika (Haloperidol, Risperidon, Aripiprazol)",
+        "severity": "moderate",
+        "clinicalNoteDe": "CYP2D6-Hemmung erhöht Antipsychotika-Plasmaspiegel; EPS- und QTc-Risiko steigt.",
+        "clinicalNoteEn": "CYP2D6 inhibition elevates antipsychotic plasma levels; increased EPS and QTc risk."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Natrium",
+        "condition": "Hyponatriämie",
+        "warningDe": "Na+ < 130 mmol/L: Dosisreduktion. Na+ < 125 mmol/L: Absetzen.",
+        "warningEn": "Na+ < 130 mmol/L: reduce dose. Na+ < 125 mmol/L: discontinue.",
+        "severity": "reduce_dose"
+      }
+    ],
+    "renalDosing": "Keine Dosisanpassung notwendig.",
+    "hepaticDosing": "Leberinsuffizienz: Interday-Dosierung (jeden zweiten Tag) oder niedrigere Dosis; Child-Pugh C: Vorsicht, keine formale Zulassung.",
+    "tabletSplittable": false,
+    "liquidFormAvailable": true,
+    "depotAvailable": false,
+    "sources": [
+      "Stahl SM. Essential Psychopharmacology, 5th ed., 2021",
+      "Taylor D et al. Maudsley Prescribing Guidelines, 14th ed., 2021",
+      "Fachinformation Fluctin (aktuelle Version, DACH)",
+      "Hicks JK et al. CPIC Guideline for Antidepressants. Clin Pharmacol Ther 2015"
+    ],
+    "lastReviewed": "2026-06-01",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "paroxetin",
+    "genericName": "Paroxetin",
+    "brandNamesDACH": ["Seroxat", "Tagonis"],
+    "atcCode": "N06AB05",
+    "substanceClass": "SSRI",
+    "formulations": ["Filmtabletten", "Tabletten mit veränderter Wirkstofffreisetzung (CR)"],
+    "strengthsDACH": ["10 mg", "20 mg", "30 mg", "40 mg", "CR 12,5 mg", "CR 25 mg"],
+    "routesOfAdmin": ["oral"],
+    "kurzinfoDe": "SSRI mit dem stärksten anticholinergen Profil aller SSRIs sowie starkem CYP2D6-Inhibitionspotenzial (hemmt die eigene Metabolisierung). Kurze Halbwertszeit ohne aktiven Metaboliten bedingt das ausgeprägteste Absetzsyndrom aller SSRIs. Breite Zulassung (Depression, OCD, Panikstörung, GAD, soziale Angststörung, PTBS). Das CR-Präparat verringert gastrointestinale Initialnebenwirkungen.",
+    "kurzinfoEn": "SSRI with the strongest anticholinergic profile among SSRIs and potent CYP2D6 inhibition (inhibits its own metabolism). Short half-life without active metabolite causes the most pronounced discontinuation syndrome of any SSRI. Broad licensed indications (depression, OCD, panic disorder, GAD, social anxiety, PTSD). The CR formulation reduces initial GI side effects.",
+    "receptorProfile": {
+      "netSert": "Potent SERT inhibitor; weak NET inhibition",
+      "serotonin5HT2A": "None",
+      "h1": "Mild sedating",
+      "m1": "Moderate anticholinergic (strongest among SSRIs)",
+      "alpha1": "Mild",
+      "serotonin5HT1A": "None direct",
+      "d2": "None",
+      "notes": "Anticholinergic activity clinically meaningful; contributes to constipation, dry mouth, urinary retention, and cognitive effects in elderly"
+    },
+    "commonSideEffectsDe": [
+      "Übelkeit (initial, besser mit CR)",
+      "Mundtrockenheit",
+      "Konstipation",
+      "Sedierung / Müdigkeit",
+      "Schwitzen",
+      "Sexuelle Dysfunktion (häufig, ausgeprägt)",
+      "Gewichtszunahme (Langzeittherapie)",
+      "Harnverhalt (anticholinerg)"
+    ],
+    "commonSideEffectsEn": [
+      "Nausea (initially, better with CR formulation)",
+      "Dry mouth",
+      "Constipation",
+      "Sedation / fatigue",
+      "Sweating",
+      "Sexual dysfunction (frequent, prominent)",
+      "Weight gain (long-term use)",
+      "Urinary retention (anticholinergic)"
+    ],
+    "seriousSideEffectsDe": [
+      "Absetzsyndrom (schwerstes unter SSRIs): Schwindel, Nausea, Elektroschock-Empfindungen, Reizbarkeit — schrittweises Ausschleichen über Monate erforderlich",
+      "Hyponatriämie / SIADH",
+      "Serotonin-Syndrom",
+      "Teratogenität: Herzfehlbildungen (VSD) bei Exposition im 1. Trimenon beschrieben (Daten widersprüchlich)"
+    ],
+    "seriousSideEffectsEn": [
+      "Discontinuation syndrome (most severe of all SSRIs): dizziness, nausea, electric shock sensations, irritability — taper very slowly over months",
+      "Hyponatraemia / SIADH",
+      "Serotonin syndrome",
+      "Teratogenicity: cardiac defects (VSD) reported with 1st-trimester exposure (data conflicting)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Serum-Natrium",
+        "frequency": "Risikogruppen: vor Beginn und nach 4 Wochen",
+        "noteDe": "Ältere Patienten besonders gefährdet.",
+        "noteEn": "Elderly patients at highest risk."
+      },
+      {
+        "parameter": "Absetzplanung",
+        "frequency": "Vor jedem Absetzversuch",
+        "noteDe": "Ausschleichplan individuell anpassen; Dosisreduktion um max. 10 % alle 4 Wochen bei langer Einnahmedauer.",
+        "noteEn": "Individualise tapering plan; reduce by no more than 10% every 4 weeks after prolonged use."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Irreversible MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Serotonin-Syndrom; 14 Tage Auswaschphase.",
+        "clinicalNoteEn": "Serotonin syndrome; 14-day washout."
+      },
+      {
+        "interactsWith": "Tamoxifen",
+        "severity": "severe",
+        "clinicalNoteDe": "Potente CYP2D6-Hemmung: stark reduzierte Endoxifen-Bildung. Bei Tamoxifen-Therapie kontraindiziert; auf Citalopram/Venlafaxin wechseln.",
+        "clinicalNoteEn": "Potent CYP2D6 inhibition: markedly reduced endoxifen formation. Contraindicated with tamoxifen therapy; switch to citalopram or venlafaxine."
+      },
+      {
+        "interactsWith": "Trizyklische Antidepressiva",
+        "severity": "severe",
+        "clinicalNoteDe": "Erhebliche CYP2D6-Hemmung erhöht TCA-Plasmaspiegel; TDM obligatorisch.",
+        "clinicalNoteEn": "Substantial CYP2D6 inhibition elevates TCA plasma levels; TDM mandatory."
+      },
+      {
+        "interactsWith": "Atomoxetin",
+        "severity": "moderate",
+        "clinicalNoteDe": "CYP2D6-Hemmung erhöht Atomoxetin-Exposition; kardiovaskuläre Nebenwirkungen verstärkt.",
+        "clinicalNoteEn": "CYP2D6 inhibition increases atomoxetine exposure; cardiovascular adverse effects amplified."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Natrium",
+        "condition": "Hyponatriämie",
+        "warningDe": "Na+ < 130 mmol/L: Dosisreduktion oder Absetzen.",
+        "warningEn": "Na+ < 130 mmol/L: reduce dose or discontinue.",
+        "severity": "reduce_dose"
+      }
+    ],
+    "renalDosing": "GFR 30–60: max. 20 mg/Tag. GFR < 30: max. 10–20 mg/Tag, Vorsicht.",
+    "hepaticDosing": "Leberinsuffizienz: max. 20 mg/Tag.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "depotAvailable": false,
+    "sources": [
+      "Fachinformation Seroxat / Paroxetin (DACH)",
+      "Taylor D et al. Maudsley Prescribing Guidelines, 14th ed., 2021",
+      "Davies SJC et al. Antidepressant discontinuation syndrome. BMJ 2019",
+      "Hicks JK et al. CPIC Guideline. Clin Pharmacol Ther 2015"
+    ],
+    "lastReviewed": "2026-06-01",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "fluvoxamin",
+    "genericName": "Fluvoxamin",
+    "brandNamesDACH": ["Fevarin"],
+    "atcCode": "N06AB08",
+    "substanceClass": "SSRI",
+    "formulations": ["Filmtabletten", "Retardkapseln (in einigen Ländern)"],
+    "strengthsDACH": ["50 mg", "100 mg", "150 mg"],
+    "routesOfAdmin": ["oral"],
+    "kurzinfoDe": "SSRI mit dem ausgeprägtesten CYP-Interaktionspotenzial der Klasse (starke Inhibition von CYP1A2, CYP3A4, CYP2C9 und CYP2C19). In DACH vor allem für OCD zugelassen; im internationalen Vergleich seltener für Depression verordnet. Stärker sedierend als andere SSRIs; hohe tägliche Dosen oft zweimal täglich zu geben. Sigma-1-Rezeptor-Agonismus zeigt in vitro immunmodulatorische Effekte.",
+    "kurzinfoEn": "SSRI with the most prominent CYP interaction potential in its class (strong inhibition of CYP1A2, CYP3A4, CYP2C9, and CYP2C19). Licensed primarily for OCD in DACH; less commonly prescribed for depression compared to other regions. More sedating than other SSRIs; higher daily doses often require twice-daily administration. Sigma-1 receptor agonism shows immunomodulatory effects in vitro.",
+    "receptorProfile": {
+      "netSert": "Selective SERT inhibitor; negligible NET inhibition",
+      "serotonin5HT2A": "None",
+      "h1": "Mild sedating",
+      "m1": "Minimal",
+      "alpha1": "Minimal",
+      "serotonin5HT1A": "None direct",
+      "d2": "None",
+      "notes": "Sigma-1 receptor agonist — possible neuroprotective and immunomodulatory role; no established clinical benefit currently"
+    },
+    "commonSideEffectsDe": [
+      "Übelkeit (häufig, besonders initial)",
+      "Sedierung / Somnolenz",
+      "Schlafstörungen",
+      "Kopfschmerzen",
+      "Schwitzen",
+      "Sexuelle Dysfunktion",
+      "Appetitverlust"
+    ],
+    "commonSideEffectsEn": [
+      "Nausea (frequent, especially initially)",
+      "Sedation / somnolence",
+      "Sleep disturbances",
+      "Headache",
+      "Sweating",
+      "Sexual dysfunction",
+      "Decreased appetite"
+    ],
+    "seriousSideEffectsDe": [
+      "Serotonin-Syndrom",
+      "Hyponatriämie / SIADH",
+      "Schwerwiegende CYP-Interaktionen (Clozapin-Toxizität, Theophyllin-Toxizität)"
+    ],
+    "seriousSideEffectsEn": [
+      "Serotonin syndrome",
+      "Hyponatraemia / SIADH",
+      "Severe CYP interactions (clozapine toxicity, theophylline toxicity)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Clozapin-Spiegel",
+        "frequency": "Bei Ko-Medikation mit Clozapin: vor Fluvoxamin-Beginn und nach 1–2 Wochen",
+        "warningThreshold": "Clozapin-Spiegel kann auf das 5- bis 10-Fache ansteigen",
+        "noteDe": "CYP1A2-Hemmung durch Fluvoxamin reduziert Clozapin-Clearance erheblich. Bei beabsichtigter Kombination Clozapin-Dosis auf ca. 1/3 reduzieren und Spiegel engmaschig kontrollieren.",
+        "noteEn": "CYP1A2 inhibition by fluvoxamine substantially reduces clozapine clearance. If combination is intended, reduce clozapine dose to approximately one-third and monitor levels closely."
+      },
+      {
+        "parameter": "Serum-Natrium",
+        "frequency": "Risikogruppen: vor Beginn, nach 4 Wochen",
+        "noteDe": "Standard-SSRI-Hyponatriämie-Monitoring.",
+        "noteEn": "Standard SSRI hyponatraemia monitoring."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Irreversible MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Serotonin-Syndrom; 14 Tage Auswaschphase.",
+        "clinicalNoteEn": "Serotonin syndrome; 14-day washout."
+      },
+      {
+        "interactsWith": "Clozapin",
+        "severity": "severe",
+        "clinicalNoteDe": "Fluvoxamin hemmt CYP1A2 stark: Clozapin-Spiegel steigen auf das 5- bis 10-Fache. Kombination nur mit erheblicher Dosisreduktion und TDM vertretbar.",
+        "clinicalNoteEn": "Fluvoxamine potently inhibits CYP1A2: clozapine levels rise 5–10-fold. Combination only acceptable with substantial dose reduction and TDM."
+      },
+      {
+        "interactsWith": "Theophyllin",
+        "severity": "severe",
+        "clinicalNoteDe": "CYP1A2-Hemmung: Theophyllin-Spiegel steigen erheblich, Toxizitätsgefahr (Arrhythmien, Krampfanfälle).",
+        "clinicalNoteEn": "CYP1A2 inhibition: theophylline levels rise substantially, risk of toxicity (arrhythmias, seizures)."
+      },
+      {
+        "interactsWith": "Warfarin / Phenprocoumon",
+        "severity": "moderate",
+        "clinicalNoteDe": "CYP2C9-Hemmung erhöht Antikoagulanzien-Spiegel; INR-Monitoring.",
+        "clinicalNoteEn": "CYP2C9 inhibition raises anticoagulant levels; INR monitoring required."
+      },
+      {
+        "interactsWith": "Olanzapin",
+        "severity": "moderate",
+        "clinicalNoteDe": "CYP1A2-Hemmung: Olanzapin-Spiegel erhöht; auf Sedierung und EPS achten.",
+        "clinicalNoteEn": "CYP1A2 inhibition: elevated olanzapine levels; monitor for sedation and EPS."
+      },
+      {
+        "interactsWith": "Alprazolam, Triazolam (CYP3A4-Substrate)",
+        "severity": "moderate",
+        "clinicalNoteDe": "CYP3A4-Hemmung erhöht Benzodiazepin-Plasmaspiegel; verstärkte Sedierung.",
+        "clinicalNoteEn": "CYP3A4 inhibition elevates benzodiazepine plasma levels; enhanced sedation."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Natrium",
+        "condition": "Hyponatriämie",
+        "warningDe": "Na+ < 130 mmol/L: Dosisreduktion oder Absetzen.",
+        "warningEn": "Na+ < 130 mmol/L: reduce dose or discontinue.",
+        "severity": "reduce_dose"
+      }
+    ],
+    "renalDosing": "Keine formale Dosisanpassung erforderlich; bei schwerer Niereninsuffizienz Vorsicht.",
+    "hepaticDosing": "Leberinsuffizienz: niedrige Startdosis, langsame Titration, engmaschige Überwachung.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "depotAvailable": false,
+    "sources": [
+      "Fachinformation Fevarin (DACH)",
+      "Taylor D et al. Maudsley Prescribing Guidelines, 14th ed., 2021",
+      "Hiemke C et al. AGNP Consensus Guidelines for TDM in Psychiatry. Pharmacopsychiatry 2018"
+    ],
+    "lastReviewed": "2026-06-01",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "venlafaxin",
+    "genericName": "Venlafaxin",
+    "brandNamesDACH": ["Trevilor", "Efexor"],
+    "atcCode": "N06AX16",
+    "substanceClass": "SNRI",
+    "formulations": ["Filmtabletten (IR)", "Hartkapseln mit veränderter Wirkstofffreisetzung (XR/Retard)"],
+    "strengthsDACH": ["IR: 37,5 mg, 50 mg, 75 mg", "XR: 37,5 mg, 75 mg, 150 mg, 225 mg"],
+    "routesOfAdmin": ["oral"],
+    "kurzinfoDe": "SNRI mit ausgeprägter dosisabhängiger NE-Selektivität: bei ≤ 75 mg vorwiegend SERT-Hemmung (SSRI-ähnlich); bei ≥ 150 mg zunehmende NET-Hemmung mit klinisch relevantem Blutdruckanstieg. Bevorzugte Retardformulierung (XR) wegen besserer Verträglichkeit und weniger Pulsatilität. Breite Indikationen: Depression, GAD, soziale Angststörung, Panikstörung. Ausgeprägteres Absetzsyndrom als SSRIs; Ausschleichen essenziell.",
+    "kurzinfoEn": "SNRI with marked dose-dependent noradrenergic selectivity: at ≤75 mg predominantly SERT inhibition (SSRI-like); at ≥150 mg progressive NET inhibition with clinically relevant blood pressure elevation. The extended-release formulation (XR) preferred for better tolerability and reduced pulsatility. Broad indications: depression, GAD, social anxiety disorder, panic disorder. More pronounced discontinuation syndrome than SSRIs; gradual tapering essential.",
+    "receptorProfile": {
+      "netSert": "Low dose: predominantly SERT; high dose (≥150 mg): SERT + NET; very high dose (>375 mg): trace DAT inhibition",
+      "serotonin5HT2A": "None",
+      "h1": "Minimal",
+      "m1": "Minimal",
+      "alpha1": "Minimal",
+      "serotonin5HT1A": "None direct",
+      "d2": "None",
+      "notes": "Active metabolite O-desmethylvenlafaxine (desvenlafaxine) retains similar pharmacology; CYP2D6 involved in conversion"
+    },
+    "commonSideEffectsDe": [
+      "Übelkeit (häufig, besonders initial)",
+      "Kopfschmerzen",
+      "Schwitzen (dosis- und NE-abhängig)",
+      "Insomnie",
+      "Blutdruckanstieg (dosisabhängig)",
+      "Herzfrequenzanstieg (Tachykardie)",
+      "Sexuelle Dysfunktion",
+      "Mundtrockenheit",
+      "Obstipation",
+      "Schwindel"
+    ],
+    "commonSideEffectsEn": [
+      "Nausea (frequent, especially initially)",
+      "Headache",
+      "Sweating (dose- and NE-dependent)",
+      "Insomnia",
+      "Blood pressure elevation (dose-dependent)",
+      "Increased heart rate (tachycardia)",
+      "Sexual dysfunction",
+      "Dry mouth",
+      "Constipation",
+      "Dizziness"
+    ],
+    "seriousSideEffectsDe": [
+      "Hypertensive Krise (bei sehr hohen Dosen oder Kombination mit Serotonergika/Sympathomimetika)",
+      "Serotonin-Syndrom",
+      "Ausgeprägtes Absetzsyndrom: Schwindel, Nausea, Elektroschock-Empfindungen, Agitation — verzögertes Ausschleichen über Wochen bis Monate notwendig",
+      "Hyponatriämie / SIADH",
+      "QTc-Verlängerung (in höheren Dosen)",
+      "Erhöhtes Blutungsrisiko"
+    ],
+    "seriousSideEffectsEn": [
+      "Hypertensive crisis (at very high doses or with serotonergic/sympathomimetic co-medications)",
+      "Serotonin syndrome",
+      "Pronounced discontinuation syndrome: dizziness, nausea, electric shock sensations, agitation — taper slowly over weeks to months",
+      "Hyponatraemia / SIADH",
+      "QTc prolongation (at higher doses)",
+      "Increased bleeding risk"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Blutdruck",
+        "frequency": "Vor Therapiebeginn, bei Dosiserhöhung, dann regelmäßig (mindestens quartalsweise)",
+        "warningThreshold": "Systolisch > 140 mmHg oder Anstieg > 15 mmHg → Dosisüberprüfung",
+        "noteDe": "Dosisabhängiger Blutdruckanstieg relevant ab ≥ 150 mg. Bei vorbestehender Hypertonie engmaschige Kontrolle.",
+        "noteEn": "Dose-dependent BP elevation relevant at ≥150 mg. Close monitoring required in pre-existing hypertension."
+      },
+      {
+        "parameter": "Serum-Natrium",
+        "frequency": "Risikogruppen: Basismessung und nach 2–4 Wochen",
+        "noteDe": "Ältere Patienten und Diuretika-Komedikation.",
+        "noteEn": "Elderly and diuretic co-medication."
+      },
+      {
+        "parameter": "EKG / QTc",
+        "frequency": "Bei höheren Dosen (≥ 225 mg) und QTc-Risikopatienten",
+        "noteDe": "Moderate QTc-Verlängerung bei Hochdosis; EKG-Basismessung empfohlen.",
+        "noteEn": "Moderate QTc prolongation at high doses; baseline ECG recommended."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Irreversible MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Lebensgefährliches Serotonin-Syndrom. 14 Tage Auswaschphase nach MAOI; 7 Tage nach Venlafaxin vor MAOI.",
+        "clinicalNoteEn": "Life-threatening serotonin syndrome. 14-day washout after MAOI; 7 days after venlafaxine before MAOI."
+      },
+      {
+        "interactsWith": "Tramadol / Triptane / Lithium",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additives Serotonin-Syndrom-Risiko.",
+        "clinicalNoteEn": "Additive serotonin syndrome risk."
+      },
+      {
+        "interactsWith": "CYP2D6-Inhibitoren (Bupropion, Fluoxetin, Paroxetin)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Erhöhte Venlafaxin-Exposition, da CYP2D6 am Metabolismus beteiligt; Blutdruck-Monitoring.",
+        "clinicalNoteEn": "Elevated venlafaxine exposure as CYP2D6 is involved in its metabolism; blood pressure monitoring."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Natrium",
+        "condition": "Hyponatriämie",
+        "warningDe": "Na+ < 130 mmol/L: Dosisreduktion oder Absetzen.",
+        "warningEn": "Na+ < 130 mmol/L: reduce dose or discontinue.",
+        "severity": "reduce_dose"
+      }
+    ],
+    "renalDosing": "GFR 10–70: tägliche Gesamtdosis um 25–50 % reduzieren. Dialyse: nicht empfohlen.",
+    "hepaticDosing": "Leichte bis mittelschwere Leberinsuffizienz: Tagesdosis um 50 % reduzieren. Schwere Leberinsuffizienz: kontraindiziert.",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "depotAvailable": false,
+    "sources": [
+      "Fachinformation Trevilor (DACH)",
+      "Cipriani A et al. Lancet 2018",
+      "Taylor D et al. Maudsley Prescribing Guidelines, 14th ed., 2021",
+      "Stahl SM. Essential Psychopharmacology, 5th ed., 2021"
+    ],
+    "lastReviewed": "2026-06-01",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "duloxetin",
+    "genericName": "Duloxetin",
+    "brandNamesDACH": ["Cymbalta", "Duloxetin-Generika"],
+    "atcCode": "N06AX21",
+    "substanceClass": "SNRI",
+    "formulations": ["Magensaftresistente Hartkapseln"],
+    "strengthsDACH": ["30 mg", "60 mg"],
+    "routesOfAdmin": ["oral"],
+    "kurzinfoDe": "Ausgewogener SNRI mit vergleichbarer SERT- und NET-Affinität. Breite Indikationen: MDD, GAD, diabetische periphere Neuropathie, Fibromyalgie und Stressinkontinenz. Hepatotoxizitätsrisiko erfordert Leberwertmonitoring; bei Lebererkrankung oder regelmäßigem Alkoholkonsum kontraindiziert. CYP1A2- und CYP2D6-Substrate und -Inhibitoren sind klinisch relevante Interaktionspartner.",
+    "kurzinfoEn": "Balanced SNRI with comparable SERT and NET affinity. Broad licensed indications: MDD, GAD, diabetic peripheral neuropathy, fibromyalgia, and stress urinary incontinence. Hepatotoxicity risk requires liver enzyme monitoring; contraindicated in liver disease or regular alcohol use. CYP1A2 and CYP2D6 substrates and inhibitors are clinically relevant interaction partners.",
+    "receptorProfile": {
+      "netSert": "Balanced SERT and NET inhibition (approximately 1:1 ratio in vivo)",
+      "serotonin5HT2A": "None",
+      "h1": "Minimal",
+      "m1": "Minimal",
+      "alpha1": "Minimal",
+      "serotonin5HT1A": "None direct",
+      "d2": "None",
+      "notes": "More balanced NE/5-HT inhibition than venlafaxine even at low doses; no dose-dependent shift"
+    },
+    "commonSideEffectsDe": [
+      "Übelkeit (häufigste Nebenwirkung, besonders initial)",
+      "Mundtrockenheit",
+      "Kopfschmerzen",
+      "Schwitzen",
+      "Somnolenz",
+      "Schwindel",
+      "Obstipation",
+      "Schlafstörungen",
+      "Sexuelle Dysfunktion",
+      "Blutdruckanstieg (geringer als Venlafaxin)"
+    ],
+    "commonSideEffectsEn": [
+      "Nausea (most common, especially initially)",
+      "Dry mouth",
+      "Headache",
+      "Sweating",
+      "Somnolence",
+      "Dizziness",
+      "Constipation",
+      "Sleep disturbances",
+      "Sexual dysfunction",
+      "Blood pressure elevation (less than venlafaxine)"
+    ],
+    "seriousSideEffectsDe": [
+      "Hepatotoxizität (Erhöhung der Leberwerte, sehr selten Leberversagen)",
+      "Serotonin-Syndrom",
+      "Hyponatriämie / SIADH",
+      "Erhöhtes Blutungsrisiko",
+      "Blutdruckanstieg (bei höheren Dosen)"
+    ],
+    "seriousSideEffectsEn": [
+      "Hepatotoxicity (elevated liver enzymes, very rarely liver failure)",
+      "Serotonin syndrome",
+      "Hyponatraemia / SIADH",
+      "Increased bleeding risk",
+      "Blood pressure elevation (at higher doses)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Leberwerte (ALT, AST, GGT)",
+        "frequency": "Vor Therapiebeginn; nach 3 und 6 Monaten; dann jährlich; bei Symptomen sofort",
+        "warningThreshold": "ALT > 3× ULN → Duloxetin absetzen",
+        "noteDe": "Bei vorbestehender Lebererkrankung oder regelmäßigem Alkoholkonsum kontraindiziert. Patienten über Symptome einer Leberschädigung aufklären (Übelkeit, Ikterus, dunkler Urin).",
+        "noteEn": "Contraindicated in pre-existing liver disease or regular alcohol use. Educate patients on symptoms of hepatic injury (nausea, jaundice, dark urine)."
+      },
+      {
+        "parameter": "Blutdruck",
+        "frequency": "Vor Therapiebeginn, bei Dosiserhöhung, quartalsweise",
+        "noteDe": "Moderater Blutdruckanstieg möglich; engmaschigere Kontrolle bei vorbestehender Hypertonie.",
+        "noteEn": "Moderate blood pressure elevation possible; closer monitoring with pre-existing hypertension."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Irreversible MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Serotonin-Syndrom; 14 Tage Auswaschphase.",
+        "clinicalNoteEn": "Serotonin syndrome; 14-day washout."
+      },
+      {
+        "interactsWith": "Fluvoxamin, Ciprofloxacin (CYP1A2-Inhibitoren)",
+        "severity": "severe",
+        "clinicalNoteDe": "Duloxetin wird über CYP1A2 metabolisiert; starke CYP1A2-Inhibitoren erhöhen die Duloxetin-Exposition erheblich. Kombination kontraindiziert.",
+        "clinicalNoteEn": "Duloxetine is metabolised via CYP1A2; potent CYP1A2 inhibitors markedly increase duloxetine exposure. Combination contraindicated."
+      },
+      {
+        "interactsWith": "CYP2D6-Substrate (Tricyklika, Metoprolol, Kodein)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Duloxetin hemmt CYP2D6 moderat; erhöhte Substratspiegel möglich.",
+        "clinicalNoteEn": "Duloxetine is a moderate CYP2D6 inhibitor; elevated substrate levels possible."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "ALT / AST",
+        "condition": "Hepatotoxizität",
+        "warningDe": "ALT > 3× ULN: Duloxetin absetzen und Lebererkrankung ausschließen.",
+        "warningEn": "ALT > 3× ULN: discontinue duloxetine and exclude hepatic disease.",
+        "severity": "contraindicated"
+      },
+      {
+        "labParameter": "Natrium",
+        "condition": "Hyponatriämie",
+        "warningDe": "Na+ < 130 mmol/L: Dosisreduktion oder Absetzen.",
+        "warningEn": "Na+ < 130 mmol/L: reduce dose or discontinue.",
+        "severity": "reduce_dose"
+      }
+    ],
+    "renalDosing": "GFR < 30: Duloxetin nicht empfohlen (eingeschränkte Datenlage).",
+    "hepaticDosing": "Lebererkrankung: kontraindiziert.",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "depotAvailable": false,
+    "sources": [
+      "Fachinformation Cymbalta (DACH)",
+      "Taylor D et al. Maudsley Prescribing Guidelines, 14th ed., 2021",
+      "Stahl SM. Essential Psychopharmacology, 5th ed., 2021",
+      "AWMF S3-Leitlinie Unipolare Depression, 2022"
+    ],
+    "lastReviewed": "2026-06-01",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "milnacipran",
+    "genericName": "Milnacipran",
+    "brandNamesDACH": ["Ixel"],
+    "atcCode": "N06AX17",
+    "substanceClass": "SNRI",
+    "formulations": ["Hartkapseln"],
+    "strengthsDACH": ["25 mg", "50 mg", "100 mg"],
+    "routesOfAdmin": ["oral"],
+    "kurzinfoDe": "SNRI mit überwiegend noradrenerger Selektivität (NET:SERT ≈ 3:1) — stärker noradrenerg als Venlafaxin oder Duloxetin. In DACH für Depression zugelassen; klinisch häufiger im Rahmen der Fibromyalgie-Behandlung eingesetzt (offiziell nicht zugelassen in EU für Fibromyalgie, anders als in USA). Weniger hepatotoxisch als Duloxetin; kein CYP-Interaktionspotenzial da renale Ausscheidung.",
+    "kurzinfoEn": "SNRI with a predominantly noradrenergic selectivity profile (NET:SERT ≈ 3:1) — more noradrenergic than venlafaxine or duloxetine. Licensed for depression in DACH; often used clinically in fibromyalgia management (not formally approved in the EU for fibromyalgia, unlike in the USA). Less hepatotoxic than duloxetine; minimal CYP interaction potential due to renal elimination.",
+    "receptorProfile": {
+      "netSert": "NET:SERT ≈ 3:1 — strongly noradrenergic relative to other SNRIs",
+      "serotonin5HT2A": "None",
+      "h1": "None",
+      "m1": "None",
+      "alpha1": "None",
+      "serotonin5HT1A": "None",
+      "d2": "None",
+      "notes": "Racemic mixture; essentially no receptor binding beyond NET/SERT; renal excretion makes it largely free of CYP interactions"
+    },
+    "commonSideEffectsDe": [
+      "Palpitationen / Tachykardie",
+      "Blutdruckanstieg",
+      "Schwitzen (noradrenerg)",
+      "Übelkeit",
+      "Kopfschmerzen",
+      "Miktionsbeschwerden (Dysurie, NE-Effekt)",
+      "Hitzewallungen",
+      "Angst / Unruhe"
+    ],
+    "commonSideEffectsEn": [
+      "Palpitations / tachycardia",
+      "Blood pressure elevation",
+      "Sweating (noradrenergic)",
+      "Nausea",
+      "Headache",
+      "Micturition difficulties (dysuria, NE effect)",
+      "Hot flushes",
+      "Anxiety / restlessness"
+    ],
+    "seriousSideEffectsDe": [
+      "Hypertensive Krisen (bei Hochdosis oder Kombination mit Sympathomimetika)",
+      "Serotonin-Syndrom",
+      "Harnverhalt (noradrenerg)"
+    ],
+    "seriousSideEffectsEn": [
+      "Hypertensive crisis (at high doses or with sympathomimetic co-medications)",
+      "Serotonin syndrome",
+      "Urinary retention (noradrenergic)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Blutdruck und Herzfrequenz",
+        "frequency": "Vor Beginn, bei Dosistitration und quartalsweise",
+        "noteDe": "Ausgeprägterer Blutdruckanstieg als bei anderen SNRIs aufgrund stärkerer NET-Hemmung.",
+        "noteEn": "More pronounced blood pressure elevation than other SNRIs due to stronger NET inhibition."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Irreversible MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Serotonin-Syndrom; 14 Tage Auswaschphase.",
+        "clinicalNoteEn": "Serotonin syndrome; 14-day washout."
+      },
+      {
+        "interactsWith": "Clonidin und andere zentralwirksame Antihypertensiva",
+        "severity": "moderate",
+        "clinicalNoteDe": "NET-Hemmung kann die antihypertensive Wirkung von Clonidin und ähnlichen Substanzen abschwächen.",
+        "clinicalNoteEn": "NET inhibition may attenuate the antihypertensive effect of clonidine and similar agents."
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "GFR 30–60: Dosisreduktion auf 50 mg/Tag. GFR < 30: nicht empfohlen.",
+    "hepaticDosing": "Leichte bis mittelschwere Leberinsuffizienz: keine Anpassung erforderlich (renale Elimination dominiert).",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "depotAvailable": false,
+    "sources": [
+      "Fachinformation Ixel (DACH)",
+      "Stahl SM. Essential Psychopharmacology, 5th ed., 2021",
+      "Taylor D et al. Maudsley Prescribing Guidelines, 14th ed., 2021"
+    ],
+    "lastReviewed": "2026-06-01",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "bupropion",
+    "genericName": "Bupropion",
+    "brandNamesDACH": ["Elontril", "Zyban"],
+    "atcCode": "N06AX12",
+    "substanceClass": "NDRI",
+    "formulations": ["Retardtabletten (XL)"],
+    "strengthsDACH": ["150 mg XL", "300 mg XL"],
+    "routesOfAdmin": ["oral"],
+    "kurzinfoDe": "Noradrenalin-Dopamin-Wiederaufnahmehemmer ohne serotonerge Aktivität — daher keine sexuellen Dysfunktionen und kein Serotonin-Syndrom-Risiko mit SSRIs. Zugelassen für Depression (Elontril) und Nikotinentwöhnung (Zyban). Keine Gewichtszunahme, oft leichter Gewichtsverlust. Dosisabhängige Senkung der Krampfschwelle: bei Tagesdosen > 300 mg und besonders bei prädisponierenden Faktoren (Essstörungen, Alkoholentzug, Schädel-Hirn-Trauma).",
+    "kurzinfoEn": "Norepinephrine-dopamine reuptake inhibitor without serotonergic activity — hence no sexual dysfunction and no serotonin syndrome risk when combined with SSRIs. Licensed for depression (Elontril) and smoking cessation (Zyban). No weight gain; often mild weight loss. Dose-dependent lowering of seizure threshold: relevant at daily doses >300 mg and especially with predisposing factors (eating disorders, alcohol withdrawal, head injury).",
+    "receptorProfile": {
+      "netSert": "DAT and NET inhibition; negligible SERT inhibition",
+      "serotonin5HT2A": "None",
+      "h1": "None",
+      "m1": "None (nicotinic acetylcholine receptor antagonism — relevant for smoking cessation)",
+      "alpha1": "None",
+      "serotonin5HT1A": "None",
+      "d2": "Dopaminergic reuptake inhibition (DAT)",
+      "notes": "nAChR antagonism contributes to smoking cessation efficacy alongside dopaminergic effects"
+    },
+    "commonSideEffectsDe": [
+      "Insomnie / Schlafstörungen",
+      "Agitiertheit / Nervosität",
+      "Kopfschmerzen",
+      "Mundtrockenheit",
+      "Übelkeit",
+      "Tremor",
+      "Blutdruckanstieg (gering)",
+      "Tachykardie"
+    ],
+    "commonSideEffectsEn": [
+      "Insomnia / sleep disturbances",
+      "Agitation / nervousness",
+      "Headache",
+      "Dry mouth",
+      "Nausea",
+      "Tremor",
+      "Blood pressure elevation (mild)",
+      "Tachycardia"
+    ],
+    "seriousSideEffectsDe": [
+      "Krampfanfälle (dosisabhängig; Inzidenz ~ 0,1 % bei ≤ 300 mg/Tag; steigt auf ~ 0,4 % bei 400 mg/Tag)",
+      "Hypertonie (besonders bei Begleit-Nikotinpflaster)",
+      "Neuropsychiatrische Reaktionen bei Raucherentwöhnung (Stimmungsschwankungen, Suizidalität)"
+    ],
+    "seriousSideEffectsEn": [
+      "Seizures (dose-dependent; incidence ~0.1% at ≤300 mg/day; rises to ~0.4% at 400 mg/day)",
+      "Hypertension (especially with concurrent nicotine patch)",
+      "Neuropsychiatric reactions during smoking cessation (mood changes, suicidality)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Blutdruck",
+        "frequency": "Vor Therapiebeginn; nach 2–4 Wochen; dann quartalsweise",
+        "noteDe": "Besonders bei gleichzeitiger Nikotinersatztherapie.",
+        "noteEn": "Especially important when combined with nicotine replacement therapy."
+      },
+      {
+        "parameter": "Anfallsanamnese / Krampfrisikoabschätzung",
+        "frequency": "Vor Therapiebeginn",
+        "noteDe": "Kontraindiziert bei bekannter Epilepsie, aktuellen oder zurückliegenden Essstörungen, Alkohol-/Benzodiazepin-Entzug. Tagesdosis 300 mg XL nicht überschreiten.",
+        "noteEn": "Contraindicated in known epilepsy, current or prior eating disorders, alcohol/benzodiazepine withdrawal. Do not exceed 300 mg XL daily."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "MAO-Hemmer (Tranylcypromin)",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Hypertensive Krise durch additive dopaminerge/adrenerge Effekte; 14 Tage Auswaschphase.",
+        "clinicalNoteEn": "Hypertensive crisis via additive dopaminergic/adrenergic effects; 14-day washout."
+      },
+      {
+        "interactsWith": "CYP2D6-Substrate (TCA, Antipsychotika, Betablocker)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Bupropion ist ein starker CYP2D6-Inhibitor; Plasmaspiegel der Ko-Medikamente können erheblich steigen.",
+        "clinicalNoteEn": "Bupropion is a potent CYP2D6 inhibitor; plasma levels of co-medications may rise substantially."
+      },
+      {
+        "interactsWith": "Krampfschwellensenkende Substanzen (Tramadol, Theophyllin, systemische Steroide)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive Reduktion der Krampfschwelle; Kombination kritisch beurteilen.",
+        "clinicalNoteEn": "Additive lowering of seizure threshold; combination requires careful risk–benefit assessment."
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "GFR < 30: Dosisreduktion auf 150 mg/Tag oder jeden zweiten Tag erwägen.",
+    "hepaticDosing": "Leichte bis mittelschwere Leberinsuffizienz: max. 150 mg/Tag. Schwere Leberinsuffizienz: kontraindiziert.",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "depotAvailable": false,
+    "sources": [
+      "Fachinformation Elontril (DACH)",
+      "Stahl SM. Essential Psychopharmacology, 5th ed., 2021",
+      "Taylor D et al. Maudsley Prescribing Guidelines, 14th ed., 2021",
+      "Cipriani A et al. Lancet 2018"
+    ],
+    "lastReviewed": "2026-06-01",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "mirtazapin",
+    "genericName": "Mirtazapin",
+    "brandNamesDACH": ["Remergil", "Mirtazapin-Generika"],
+    "atcCode": "N06AX11",
+    "substanceClass": "NaSSA",
+    "formulations": ["Filmtabletten", "Schmelztabletten"],
+    "strengthsDACH": ["15 mg", "30 mg", "45 mg"],
+    "routesOfAdmin": ["oral"],
+    "kurzinfoDe": "Noradrenerges und spezifisch serotonerges Antidepressivum (NaSSA): zentraler α2-Autorezeptor- und -Heteroreceptor-Antagonismus erhöht die NE- und 5-HT-Freisetzung; gleichzeitige 5-HT2A/2C- und 5-HT3-Antagonismus minimieren sexuelle Dysfunktion und Nausea. Starke H1-Antagonismus bewirkt ausgeprägte Sedierung und Gewichtszunahme. Paradoxerweise bei 30–45 mg weniger sedierend als bei 15 mg (NE überwiegt H1). Besonders geeignet bei Depression mit Schlafstörung und Appetitverlust.",
+    "kurzinfoEn": "Noradrenergic and specific serotonergic antidepressant (NaSSA): central α2 auto- and heteroreceptor antagonism increases NE and 5-HT release; concurrent 5-HT2A/2C and 5-HT3 antagonism minimises sexual dysfunction and nausea. Potent H1 antagonism causes marked sedation and weight gain. Paradoxically less sedating at 30–45 mg than at 15 mg (noradrenergic outweighs H1 at higher doses). Particularly suited for depression with insomnia and appetite loss.",
+    "receptorProfile": {
+      "netSert": "No direct NET or SERT inhibition; ↑NE and 5-HT release via α2 autoreceptor/heteroreceptor blockade",
+      "serotonin5HT2A": "Strong antagonist",
+      "h1": "Very strong antagonist (strongest sedating effect in class)",
+      "m1": "Minimal",
+      "alpha1": "Moderate antagonist",
+      "serotonin5HT1A": "None direct",
+      "d2": "None",
+      "notes": "5-HT3 antagonism contributes to antiemetic effect and less GI disturbance; weight gain primarily via H1 and 5-HT2C antagonism"
+    },
+    "commonSideEffectsDe": [
+      "Sedierung / Somnolenz (sehr häufig, insbesondere 15 mg)",
+      "Gewichtszunahme / Appetitsteigerung",
+      "Mundtrockenheit",
+      "Obstipation",
+      "Schwindel",
+      "Ödeme (peripher)",
+      "Myalgie / Arthralgie"
+    ],
+    "commonSideEffectsEn": [
+      "Sedation / somnolence (very common, especially at 15 mg)",
+      "Weight gain / increased appetite",
+      "Dry mouth",
+      "Constipation",
+      "Dizziness",
+      "Peripheral oedema",
+      "Myalgia / arthralgia"
+    ],
+    "seriousSideEffectsDe": [
+      "Granulozytopenie / Agranulozytose (selten, < 0,1 %; bei Fieber/Infekten BB-Kontrolle!)",
+      "Serotonin-Syndrom (bei Kombination mit starken Serotonergika)",
+      "Restless-Legs-Exazerbation",
+      "Hyponatriämie (selten, weniger häufig als bei SSRIs)"
+    ],
+    "seriousSideEffectsEn": [
+      "Granulocytopenia / agranulocytosis (rare, <0.1%; check CBC if fever or infection)",
+      "Serotonin syndrome (with potent serotonergic co-medications)",
+      "Restless legs syndrome exacerbation",
+      "Hyponatraemia (rare, less common than with SSRIs)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Blutbild (BB)",
+        "frequency": "Basismessung vor Therapie; bei Fieber, Halsschmerzen oder Infektzeichen sofort",
+        "noteDe": "Agranulocytose-Risiko sehr gering, aber bei infektiösen Symptomen BB obligatorisch.",
+        "noteEn": "Agranulocytosis risk very low, but CBC mandatory at any sign of infection."
+      },
+      {
+        "parameter": "Gewicht / BMI",
+        "frequency": "Vor Beginn, nach 4 Wochen, dann quartalsweise",
+        "noteDe": "Relevante Gewichtszunahme häufig; ernährungstherapeutische Begleitung empfehlen.",
+        "noteEn": "Significant weight gain common; nutritional support/counselling recommended."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Irreversible MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Serotonin-Syndrom; 14 Tage Auswaschphase.",
+        "clinicalNoteEn": "Serotonin syndrome; 14-day washout."
+      },
+      {
+        "interactsWith": "Benzodiazepine / ZNS-Dämpfer",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive Sedierung; erhöhtes Sturz- und Aspirationsrisiko.",
+        "clinicalNoteEn": "Additive sedation; increased fall and aspiration risk."
+      },
+      {
+        "interactsWith": "Tramadol / Triptane",
+        "severity": "moderate",
+        "clinicalNoteDe": "Erhöhtes Serotonin-Syndrom-Risiko trotz fehlender direkter SERT-Hemmung (über gesteigerte 5-HT-Freisetzung).",
+        "clinicalNoteEn": "Elevated serotonin syndrome risk despite no direct SERT inhibition (via enhanced 5-HT release)."
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "Leichte bis mittelschwere Niereninsuffizienz: keine Anpassung. Schwere Niereninsuffizienz: Vorsicht, reduzierte Clearance möglich.",
+    "hepaticDosing": "Leberinsuffizienz: Mirtazapin-Clearance reduziert; Dosis reduzieren oder Intervall verlängern.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "depotAvailable": false,
+    "sources": [
+      "Fachinformation Remergil (DACH)",
+      "Stahl SM. Essential Psychopharmacology, 5th ed., 2021",
+      "Cipriani A et al. Lancet 2018",
+      "Taylor D et al. Maudsley Prescribing Guidelines, 14th ed., 2021"
+    ],
+    "lastReviewed": "2026-06-01",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "vortioxetin",
+    "genericName": "Vortioxetin",
+    "brandNamesDACH": ["Brintellix"],
+    "atcCode": "N06AX26",
+    "substanceClass": "SMS (Serotonin-Modulator und Stimulator)",
+    "formulations": ["Filmtabletten"],
+    "strengthsDACH": ["5 mg", "10 mg", "15 mg", "20 mg"],
+    "routesOfAdmin": ["oral"],
+    "kurzinfoDe": "Multimodales Antidepressivum: SERT-Hemmung kombiniert mit 5-HT3-, 5-HT7- und 5-HT1D-Antagonismus sowie 5-HT1A-Partialagonismus und 5-HT1B-Partialagonismus. Pro-kognitive Wirkung (Gedächtnis, exekutive Funktion) in kontrollierten Studien belegt. Weniger sexuelle Dysfunktion als klassische SSRIs. Einheitliche Tagesdosis (10–20 mg); keine Titration erforderlich. Keine relevante QTc-Wirkung.",
+    "kurzinfoEn": "Multimodal antidepressant: SERT inhibition combined with 5-HT3, 5-HT7, and 5-HT1D antagonism plus 5-HT1A and 5-HT1B partial agonism. Pro-cognitive effects (memory, executive function) demonstrated in controlled trials. Less sexual dysfunction than classical SSRIs. Fixed daily dose (10–20 mg); no titration required. No clinically relevant QTc effect.",
+    "receptorProfile": {
+      "netSert": "Potent SERT inhibitor; no NET inhibition",
+      "serotonin5HT2A": "Antagonist (5-HT2A not primary; 5-HT3 and 5-HT7 are primary targets)",
+      "h1": "None",
+      "m1": "None",
+      "alpha1": "None",
+      "serotonin5HT1A": "Partial agonist",
+      "d2": "None",
+      "notes": "5-HT3 antagonism disinhibits ACh and NE release in cortex; 5-HT7 antagonism may contribute to cognitive and circadian effects"
+    },
+    "commonSideEffectsDe": [
+      "Übelkeit (häufigste Nebenwirkung, dosisabhängig)",
+      "Diarrhö",
+      "Obstipation",
+      "Erbrechen",
+      "Schwitzen",
+      "Schwindel",
+      "Sexuelle Dysfunktion (seltener als SSRIs)"
+    ],
+    "commonSideEffectsEn": [
+      "Nausea (most common, dose-dependent)",
+      "Diarrhoea",
+      "Constipation",
+      "Vomiting",
+      "Sweating",
+      "Dizziness",
+      "Sexual dysfunction (less frequent than SSRIs)"
+    ],
+    "seriousSideEffectsDe": [
+      "Serotonin-Syndrom",
+      "Hyponatriämie / SIADH",
+      "Erhöhtes Blutungsrisiko"
+    ],
+    "seriousSideEffectsEn": [
+      "Serotonin syndrome",
+      "Hyponatraemia / SIADH",
+      "Increased bleeding risk"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Serum-Natrium",
+        "frequency": "Risikogruppen: vor Beginn, nach 4 Wochen",
+        "noteDe": "Wie alle Serotonergika: Hyponatriämierisiko bei Älteren.",
+        "noteEn": "As with all serotonergic agents: hyponatraemia risk in elderly."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Irreversible MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Serotonin-Syndrom; 14 Tage Auswaschphase.",
+        "clinicalNoteEn": "Serotonin syndrome; 14-day washout."
+      },
+      {
+        "interactsWith": "Linezolid (reversibler MAO-Hemmer)",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Serotonin-Syndrom; Kombination vermeiden.",
+        "clinicalNoteEn": "Serotonin syndrome; avoid combination."
+      },
+      {
+        "interactsWith": "CYP2D6-Inhibitoren (Bupropion, Fluoxetin, Paroxetin)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Vortioxetin wird über CYP2D6 metabolisiert; Exposition steigt; Dosisreduktion auf 5 mg erwägen.",
+        "clinicalNoteEn": "Vortioxetine is metabolised via CYP2D6; increased exposure; consider dose reduction to 5 mg."
+      },
+      {
+        "interactsWith": "CYP-Induktoren (Rifampicin, Carbamazepin, Johanniskraut)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Beschleunigte Vortioxetin-Metabolisierung; Dosissteigerung auf max. 20 mg erwägen.",
+        "clinicalNoteEn": "Accelerated vortioxetine metabolism; consider increasing dose up to max. 20 mg."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Natrium",
+        "condition": "Hyponatriämie",
+        "warningDe": "Na+ < 130 mmol/L: Dosisreduktion oder Absetzen.",
+        "warningEn": "Na+ < 130 mmol/L: reduce dose or discontinue.",
+        "severity": "reduce_dose"
+      }
+    ],
+    "renalDosing": "Keine Dosisanpassung erforderlich.",
+    "hepaticDosing": "Leichte bis mittelschwere Leberinsuffizienz: keine Anpassung. Schwere Leberinsuffizienz: nicht empfohlen (keine Daten).",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "depotAvailable": false,
+    "sources": [
+      "Fachinformation Brintellix (DACH)",
+      "McIntyre RS et al. Vortioxetine cognitive effects. Int J Neuropsychopharmacol 2016",
+      "Taylor D et al. Maudsley Prescribing Guidelines, 14th ed., 2021",
+      "Cipriani A et al. Lancet 2018"
+    ],
+    "lastReviewed": "2026-06-01",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "trazodon",
+    "genericName": "Trazodon",
+    "brandNamesDACH": ["Thombran", "Trittico"],
+    "atcCode": "N06AX05",
+    "substanceClass": "SARI (Serotonin-Antagonist und Wiederaufnahmehemmer)",
+    "formulations": ["Filmtabletten", "Retardtabletten"],
+    "strengthsDACH": ["100 mg", "150 mg Retard"],
+    "routesOfAdmin": ["oral"],
+    "kurzinfoDe": "SARI mit dominantem 5-HT2A-Antagonismus und schwacher SERT-Hemmung; zusätzlich H1- und α1-Antagonismus. Bei niedrigen Dosen (25–100 mg) vor allem sedierend und schlaffördernd; antidepressive Wirkdosen liegen bei 200–400 mg/Tag. α1-Blockade verursacht orthostatische Hypotonie und seltene Priapismus-Fälle. Kein anticholinerges Potenzial. In DACH vor allem als Schlafmittel-Augmentans bei SSRI-induzierter Insomnie eingesetzt.",
+    "kurzinfoEn": "SARI with dominant 5-HT2A antagonism and weak SERT inhibition; additional H1 and α1 antagonism. At low doses (25–100 mg) primarily sedating and sleep-promoting; antidepressant doses are 200–400 mg/day. α1 blockade causes orthostatic hypotension and rare priapism. No anticholinergic potential. In DACH primarily used as sleep augmentation adjunct for SSRI-induced insomnia.",
+    "receptorProfile": {
+      "netSert": "Weak SERT inhibition; no NET inhibition",
+      "serotonin5HT2A": "Potent antagonist (dominant pharmacology)",
+      "h1": "Moderate antagonist",
+      "m1": "None",
+      "alpha1": "Moderate antagonist",
+      "serotonin5HT1A": "Partial agonist (via active metabolite mCPP at high doses — proserotoergic; can cause anxiety)",
+      "d2": "None",
+      "notes": "Active metabolite m-chlorophenylpiperazine (mCPP) is a 5-HT2C agonist and may cause dysphoria or anxiety at supratherapeutic exposures"
+    },
+    "commonSideEffectsDe": [
+      "Sedierung (sehr häufig, dosisabhängig)",
+      "Orthostase / Schwindel",
+      "Mundtrockenheit",
+      "Übelkeit",
+      "Kopfschmerzen",
+      "Verschwommenes Sehen",
+      "Verstopfung"
+    ],
+    "commonSideEffectsEn": [
+      "Sedation (very common, dose-dependent)",
+      "Orthostatic hypotension / dizziness",
+      "Dry mouth",
+      "Nausea",
+      "Headache",
+      "Blurred vision",
+      "Constipation"
+    ],
+    "seriousSideEffectsDe": [
+      "Priapismus (selten, aber medizinischer Notfall — sofortiger Arztbesuch bei länger als 4 Stunden andauernder Erektion)",
+      "QTc-Verlängerung (moderat, bei hohen Dosen)",
+      "Orthostatische Hypotonie mit Sturz- und Synkopenrisiko"
+    ],
+    "seriousSideEffectsEn": [
+      "Priapism (rare but a medical emergency — immediate medical attention required for erection lasting >4 hours)",
+      "QTc prolongation (moderate, at high doses)",
+      "Orthostatic hypotension with fall and syncope risk"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Blutdruck (liegend / stehend)",
+        "frequency": "Vor Therapiebeginn; nach Dosissteigerungen",
+        "noteDe": "Orthostatischer Abfall klinisch relevant; besonders bei älteren Patienten und in Kombination mit anderen α1-Blockern oder Antihypertensiva.",
+        "noteEn": "Orthostatic drop clinically relevant; especially in elderly and when combined with other α1 blockers or antihypertensives."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Irreversible MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Serotonin-Syndrom; 14 Tage Auswaschphase.",
+        "clinicalNoteEn": "Serotonin syndrome; 14-day washout."
+      },
+      {
+        "interactsWith": "CYP3A4-Inhibitoren (Ketoconazol, Ritonavir, Clarithromycin)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Trazodon wird hauptsächlich über CYP3A4 metabolisiert; Hemmung erhöht Plasmaspiegel erheblich.",
+        "clinicalNoteEn": "Trazodone is primarily metabolised via CYP3A4; inhibition markedly elevates plasma levels."
+      },
+      {
+        "interactsWith": "Antihypertensiva / α1-Blocker",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive Blutdrucksenkung; Sturzrisiko erhöht.",
+        "clinicalNoteEn": "Additive blood pressure lowering; increased fall risk."
+      },
+      {
+        "interactsWith": "QTc-verlängernde Substanzen",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additives QTc-Risiko bei hohen Trazodon-Dosen.",
+        "clinicalNoteEn": "Additive QTc risk at high trazodone doses."
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "Keine formale Anpassung erforderlich.",
+    "hepaticDosing": "Leberinsuffizienz: Dosis reduzieren; engmaschige Überwachung.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "depotAvailable": false,
+    "sources": [
+      "Fachinformation Thombran / Trittico (DACH)",
+      "Stahl SM. Essential Psychopharmacology, 5th ed., 2021",
+      "Taylor D et al. Maudsley Prescribing Guidelines, 14th ed., 2021"
+    ],
+    "lastReviewed": "2026-06-01",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "amitriptylin",
+    "genericName": "Amitriptylin",
+    "brandNamesDACH": ["Saroten", "Amineurin"],
+    "atcCode": "N06AA09",
+    "substanceClass": "TZA (Trizyklisches Antidepressivum)",
+    "formulations": ["Filmtabletten", "Dragées", "Lösung zum Einnehmen", "Injektionslösung"],
+    "strengthsDACH": ["10 mg", "25 mg", "50 mg", "75 mg", "Lösung 40 mg/mL"],
+    "routesOfAdmin": ["oral", "intravenös"],
+    "kurzinfoDe": "Prototypisches TZA mit starker SERT- > NET-Hemmung sowie ausgeprägtestem H1-, m1- und α1-Antagonismus der Klasse. Antihistaminerge Sedierung und anticholinerge Nebenwirkungen (Mundtrockenheit, Obstipation, Miktionsstörungen, Tachykardie) sehr häufig. Natriumkanalblockade bedingt analgetische und potenziell kardiotoxische (QRS-Verbreiterung) Effekte. Hohes Lethalitätspotenzial bei Überdosierung — Verschreibungsmengen auf < 1 Woche begrenzen bei Suizidrisiko.",
+    "kurzinfoEn": "Prototypical TCA with potent SERT > NET inhibition and the most pronounced H1, m1, and α1 antagonism in its class. Antihistaminergic sedation and anticholinergic side effects (dry mouth, constipation, urinary hesitancy, tachycardia) very common. Sodium channel blockade underlies analgesic and potentially cardiotoxic (QRS widening) effects. High lethality potential in overdose — limit dispensed quantities to <1 week if suicide risk.",
+    "receptorProfile": {
+      "netSert": "Potent SERT inhibitor; moderate NET inhibitor (SERT > NET)",
+      "serotonin5HT2A": "Moderate antagonist",
+      "h1": "Very strong antagonist (strongest sedating TCA)",
+      "m1": "Very strong anticholinergic (strongest in class)",
+      "alpha1": "Strong antagonist (orthostasis)",
+      "serotonin5HT1A": "None",
+      "d2": "None",
+      "notes": "Sodium (Na+) channel blocker — contributes to pain relief (neuropathic, migraine) and cardiac toxicity in overdose (widened QRS, ventricular arrhythmia)"
+    },
+    "commonSideEffectsDe": [
+      "Sedierung / Somnolenz (sehr häufig)",
+      "Mundtrockenheit",
+      "Obstipation",
+      "Gewichtszunahme",
+      "Tachykardie",
+      "Schwindel / Orthostase",
+      "Miktionsstörungen / Harnverhalt",
+      "Akkomodationsstörungen (Verschwommenes Sehen)",
+      "Schwitzen"
+    ],
+    "commonSideEffectsEn": [
+      "Sedation / somnolence (very common)",
+      "Dry mouth",
+      "Constipation",
+      "Weight gain",
+      "Tachycardia",
+      "Dizziness / orthostasis",
+      "Urinary hesitancy / retention",
+      "Accommodation disturbance (blurred vision)",
+      "Sweating"
+    ],
+    "seriousSideEffectsDe": [
+      "Kardiotoxizität bei Überdosierung: QRS-Verbreiterung, Kammertachykardie, Herzstillstand",
+      "QTc-Verlängerung (therapeutische Dosen, besonders bei Komedikation)",
+      "Senkungs-/orthostatische Hypotonie mit Sturz- und Frakturrisiko",
+      "Harnverhalt (Anticholinergikum)",
+      "Delir / kognitive Störungen (v. a. ältere Patienten)",
+      "Zerebrale Krampfanfälle (Senken der Krampfschwelle)",
+      "Leukopenie / Agranulozytose (sehr selten)"
+    ],
+    "seriousSideEffectsEn": [
+      "Cardiotoxicity in overdose: QRS widening, ventricular tachycardia, cardiac arrest",
+      "QTc prolongation (therapeutic doses, especially with co-medications)",
+      "Orthostatic hypotension with fall and fracture risk",
+      "Urinary retention (anticholinergic)",
+      "Delirium / cognitive impairment (especially elderly)",
+      "Seizures (lowered seizure threshold)",
+      "Leukopenia / agranulocytosis (very rare)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "EKG (QTc und QRS-Breite)",
+        "frequency": "Vor Therapiebeginn; nach Dosisanpassung; mindestens jährlich",
+        "warningThreshold": "QTc > 450/470 ms → Dosis nicht erhöhen; QRS > 100 ms → starke Vorsicht; > 120 ms → Absetzen erwägen",
+        "noteDe": "Absolute Kontraindikation bei vorbekanntem Long-QT-Syndrom. QRS-Verbreiterung wichtigster kardialer Marker; kardiologische Mitbeurteilung bei Vorerkrankungen.",
+        "noteEn": "Absolute contraindication in known long-QT syndrome. QRS widening is the key cardiac marker; cardiology consultation with pre-existing cardiac disease."
+      },
+      {
+        "parameter": "Therapeutisches Drug Monitoring (TDM)",
+        "frequency": "Nach 4–6 Wochen bei Steady State; bei Dosisänderung; bei Verdacht auf Toxizität",
+        "warningThreshold": "Therapeutischer Bereich: Amitriptylin + Nortriptylin 80–200 ng/mL",
+        "noteDe": "TCA-TDM obligatorisch bei älteren Patienten, Komedikation mit CYP2D6-Inhibitoren und Verdacht auf Non-Compliance.",
+        "noteEn": "TCA TDM mandatory in elderly patients, CYP2D6 inhibitor co-medication, and suspected non-compliance."
+      },
+      {
+        "parameter": "Blutdruck (Orthostase-Test)",
+        "frequency": "Vor Therapiebeginn; nach Dosissteigerungen",
+        "noteDe": "Orthostatischer Blutdruckabfall häufig; Sturzprophylaxe bei Älteren.",
+        "noteEn": "Orthostatic blood pressure drop common; fall prevention measures in elderly."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Irreversible MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Serotonin-Syndrom und hypertensive Krise; absolut kontraindiziert.",
+        "clinicalNoteEn": "Serotonin syndrome and hypertensive crisis; absolutely contraindicated."
+      },
+      {
+        "interactsWith": "CYP2D6-Inhibitoren (Fluoxetin, Paroxetin, Bupropion, Chinidin)",
+        "severity": "severe",
+        "clinicalNoteDe": "TCA-Plasmaspiegel steigen erheblich (2- bis 10-fach); kardiale und anticholinerge Toxizität. TDM obligatorisch.",
+        "clinicalNoteEn": "TCA plasma levels rise substantially (2–10-fold); cardiac and anticholinergic toxicity. TDM mandatory."
+      },
+      {
+        "interactsWith": "QTc-verlängernde Substanzen (Antipsychotika, Makrolide, Methadon)",
+        "severity": "severe",
+        "clinicalNoteDe": "Additives QTc- und kardiales Arrhythmierisiko; EKG-Monitoring obligatorisch.",
+        "clinicalNoteEn": "Additive QTc and cardiac arrhythmia risk; ECG monitoring mandatory."
+      },
+      {
+        "interactsWith": "Anticholinerge Substanzen (Spasmolytika, Antihistaminika, Clozapin, Quetiapin)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive anticholinerge Effekte: Delir, Ileus, Harnverhalt, Hyperthermie.",
+        "clinicalNoteEn": "Additive anticholinergic effects: delirium, ileus, urinary retention, hyperthermia."
+      },
+      {
+        "interactsWith": "Clonidin",
+        "severity": "moderate",
+        "clinicalNoteDe": "Amitriptylin hebt die antihypertensive Wirkung von Clonidin auf (α2-Blockade verhindert zentralen Wirkmechanismus).",
+        "clinicalNoteEn": "Amitriptyline antagonises clonidine's antihypertensive effect (α2 blockade prevents central mechanism of action)."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "QRS / QTc (EKG)",
+        "condition": "Kardiotoxizität",
+        "warningDe": "QRS > 120 ms: TCA absetzen und Notfallbehandlung einleiten. Bei Überdosierung: Na-Bikarbonat i.v. indiziert.",
+        "warningEn": "QRS > 120 ms: discontinue TCA and initiate emergency treatment. In overdose: IV sodium bicarbonate indicated.",
+        "severity": "contraindicated"
+      }
+    ],
+    "renalDosing": "Keine formale Anpassung erforderlich; bei schwerer Niereninsuffizienz Vorsicht (Akkumulation möglich).",
+    "hepaticDosing": "Leberinsuffizienz: Dosisreduktion und engmaschige Überwachung; schwere Leberinsuffizienz kontraindiziert.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": true,
+    "depotAvailable": false,
+    "sources": [
+      "Fachinformation Saroten (DACH)",
+      "Stahl SM. Essential Psychopharmacology, 5th ed., 2021",
+      "Taylor D et al. Maudsley Prescribing Guidelines, 14th ed., 2021",
+      "Hiemke C et al. AGNP Consensus Guidelines for TDM. Pharmacopsychiatry 2018",
+      "Leucht S et al. TCA antidepressant overdose management. DTB 2019"
+    ],
+    "lastReviewed": "2026-06-01",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "nortriptylin",
+    "genericName": "Nortriptylin",
+    "brandNamesDACH": ["Nortrilen"],
+    "atcCode": "N06AA10",
+    "substanceClass": "TZA (Trizyklisches Antidepressivum)",
+    "formulations": ["Filmtabletten"],
+    "strengthsDACH": ["10 mg", "25 mg"],
+    "routesOfAdmin": ["oral"],
+    "kurzinfoDe": "Aktiver Desmethyl-Metabolit von Amitriptylin mit stärkerer NE- als 5-HT-Selektivität und geringerem anticholinergen Profil. Engerer therapeutischer Bereich (70–170 ng/mL); TDM für Wirksamkeit und Sicherheit essenziell. Weniger sedierend und weniger kardiotoxisch als Amitriptylin; daher verträglicher für ältere Patienten. Gut belegt für neuropathische Schmerzen und postherpetische Neuralgie.",
+    "kurzinfoEn": "Active desmethyl metabolite of amitriptyline with greater NE than 5-HT selectivity and a reduced anticholinergic profile. Narrow therapeutic window (70–170 ng/mL); TDM essential for efficacy and safety. Less sedating and less cardiotoxic than amitriptyline; therefore better tolerated in elderly patients. Well-evidenced for neuropathic pain and post-herpetic neuralgia.",
+    "receptorProfile": {
+      "netSert": "Potent NET inhibitor; moderate SERT inhibition (NET > SERT — opposite of amitriptyline)",
+      "serotonin5HT2A": "Moderate antagonist",
+      "h1": "Moderate antagonist (less than amitriptyline)",
+      "m1": "Moderate anticholinergic (less than amitriptyline)",
+      "alpha1": "Moderate antagonist",
+      "serotonin5HT1A": "None",
+      "d2": "None",
+      "notes": "Therapeutic window is narrow (70–170 ng/mL); below is subtherapeutic, above risks toxicity"
+    },
+    "commonSideEffectsDe": [
+      "Mundtrockenheit",
+      "Sedierung (weniger ausgeprägt als Amitriptylin)",
+      "Obstipation",
+      "Tachykardie",
+      "Schwitzen",
+      "Miktionsstörungen",
+      "Schwindel / Orthostase"
+    ],
+    "commonSideEffectsEn": [
+      "Dry mouth",
+      "Sedation (less pronounced than amitriptyline)",
+      "Constipation",
+      "Tachycardia",
+      "Sweating",
+      "Urinary hesitancy",
+      "Dizziness / orthostasis"
+    ],
+    "seriousSideEffectsDe": [
+      "Kardiotoxizität bei Überdosierung (QRS-Verbreiterung, Arrhythmien — geringer als Amitriptylin)",
+      "QTc-Verlängerung",
+      "Delir / kognitive Beeinträchtigung (bes. ältere Patienten)"
+    ],
+    "seriousSideEffectsEn": [
+      "Cardiotoxicity in overdose (QRS widening, arrhythmias — less than amitriptyline)",
+      "QTc prolongation",
+      "Delirium / cognitive impairment (especially elderly)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "EKG (QTc)",
+        "frequency": "Vor Therapiebeginn; nach Dosisanpassung",
+        "noteDe": "Kardiologische Einschätzung bei Vorerkrankungen des Herzens.",
+        "noteEn": "Cardiology assessment with pre-existing cardiac disease."
+      },
+      {
+        "parameter": "TDM (Nortriptylin-Spiegel)",
+        "frequency": "Nach 4–6 Wochen (Steady State); bei Dosisänderung; bei Interaktion mit CYP2D6-Inhibitoren",
+        "warningThreshold": "Therapeutischer Bereich: 70–170 ng/mL",
+        "noteDe": "Nortriptylin hat den am besten validierten therapeutischen Bereich unter den TCAs.",
+        "noteEn": "Nortriptyline has the best-validated therapeutic window among TCAs."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Irreversible MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Serotonin-Syndrom; absolut kontraindiziert.",
+        "clinicalNoteEn": "Serotonin syndrome; absolutely contraindicated."
+      },
+      {
+        "interactsWith": "CYP2D6-Inhibitoren (Fluoxetin, Paroxetin, Bupropion)",
+        "severity": "severe",
+        "clinicalNoteDe": "Erheblicher Anstieg des Nortriptylin-Spiegels; TDM obligatorisch, Dosis reduzieren.",
+        "clinicalNoteEn": "Substantial rise in nortriptyline levels; TDM mandatory, reduce dose."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "QTc (EKG)",
+        "condition": "QTc-Verlängerung",
+        "warningDe": "QTc > 500 ms: Nortriptylin absetzen.",
+        "warningEn": "QTc > 500 ms: discontinue nortriptyline.",
+        "severity": "contraindicated"
+      }
+    ],
+    "renalDosing": "Keine formale Dosisanpassung; Vorsicht bei schwerer Niereninsuffizienz.",
+    "hepaticDosing": "Leberinsuffizienz: Dosis reduzieren; TDM engmaschiger.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "depotAvailable": false,
+    "sources": [
+      "Fachinformation Nortrilen (DACH)",
+      "Hiemke C et al. AGNP Consensus Guidelines for TDM. Pharmacopsychiatry 2018",
+      "Taylor D et al. Maudsley Prescribing Guidelines, 14th ed., 2021"
+    ],
+    "lastReviewed": "2026-06-01",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "clomipramin",
+    "genericName": "Clomipramin",
+    "brandNamesDACH": ["Anafranil"],
+    "atcCode": "N06AA04",
+    "substanceClass": "TZA (Trizyklisches Antidepressivum)",
+    "formulations": ["Dragées", "Retardkapseln", "Injektionslösung"],
+    "strengthsDACH": ["10 mg", "25 mg", "50 mg", "75 mg Retard", "25 mg/2 mL Injektionslösung"],
+    "routesOfAdmin": ["oral", "intravenös"],
+    "kurzinfoDe": "Potentester serotonerger TZA; gilt als Goldstandard der medikamentösen OCD-Therapie und übertrifft andere SSRIs in direkten Vergleichsstudien bei OCD. Aktiver Metabolit Desmethylclomipramin hemmt selektiv NET. Ausgeprägte anticholinerge Belastung, starke sedative Eigenschaften und erhebliche Kardiotoxizität bei Überdosierung. IV-Applikation möglich für therapieresistente Schwerstverläufe unter stationären Bedingungen.",
+    "kurzinfoEn": "Most potently serotonergic TCA; regarded as the gold standard pharmacotherapy for OCD, outperforming SSRIs in head-to-head OCD trials. Active metabolite desmethylclomipramine selectively inhibits NET. Pronounced anticholinergic burden, strong sedative properties, and substantial cardiotoxicity in overdose. IV administration available for treatment-resistant severe cases under inpatient conditions.",
+    "receptorProfile": {
+      "netSert": "Very potent SERT inhibitor (strongest among TCAs); active metabolite desmethylclomipramine is potent NET inhibitor",
+      "serotonin5HT2A": "Moderate antagonist",
+      "h1": "Strong antagonist",
+      "m1": "Strong anticholinergic",
+      "alpha1": "Strong antagonist",
+      "serotonin5HT1A": "None",
+      "d2": "None",
+      "notes": "Unique dual profile: parent compound = potent SERT; metabolite = potent NET. OCD efficacy requires full serotonergic effect."
+    },
+    "commonSideEffectsDe": [
+      "Sedierung",
+      "Mundtrockenheit",
+      "Obstipation",
+      "Gewichtszunahme",
+      "Schwitzen",
+      "Sexuelle Dysfunktion",
+      "Tachykardie",
+      "Tremor",
+      "Schwindel"
+    ],
+    "commonSideEffectsEn": [
+      "Sedation",
+      "Dry mouth",
+      "Constipation",
+      "Weight gain",
+      "Sweating",
+      "Sexual dysfunction",
+      "Tachycardia",
+      "Tremor",
+      "Dizziness"
+    ],
+    "seriousSideEffectsDe": [
+      "Kardiotoxizität bei Überdosierung (QRS, TdP)",
+      "Krampfanfälle (Senkung der Krampfschwelle)",
+      "Delir (anticholinerg, v. a. ältere Patienten)",
+      "QTc-Verlängerung"
+    ],
+    "seriousSideEffectsEn": [
+      "Cardiotoxicity in overdose (QRS widening, TdP)",
+      "Seizures (lowered seizure threshold)",
+      "Delirium (anticholinergic, especially elderly)",
+      "QTc prolongation"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "EKG",
+        "frequency": "Vor Therapiebeginn; bei Dosisänderung; mindestens jährlich",
+        "noteDe": "QTc- und QRS-Monitoring bei hohen Dosen und Komedikation. TDM empfohlen.",
+        "noteEn": "QTc and QRS monitoring at high doses and with co-medications. TDM recommended."
+      },
+      {
+        "parameter": "TDM (Clomipramin + Desmethylclomipramin)",
+        "frequency": "Nach 4–6 Wochen; bei Dosisänderung",
+        "warningThreshold": "Summe Clomipramin + Desmethylclomipramin: 230–450 ng/mL angestrebt",
+        "noteDe": "Beide Metaboliten müssen gemessen werden; Gesamtkonzentration für kardiales Risiko relevant.",
+        "noteEn": "Both parent and metabolite must be measured; total concentration relevant for cardiac risk."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Irreversible MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Serotonin-Syndrom und hypertensive Krise; absolut kontraindiziert.",
+        "clinicalNoteEn": "Serotonin syndrome and hypertensive crisis; absolutely contraindicated."
+      },
+      {
+        "interactsWith": "CYP2D6-Inhibitoren",
+        "severity": "severe",
+        "clinicalNoteDe": "Erheblicher Anstieg des Clomipramin-Spiegels; TDM obligatorisch.",
+        "clinicalNoteEn": "Substantial rise in clomipramine levels; TDM mandatory."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "QTc (EKG)",
+        "condition": "QTc-Verlängerung",
+        "warningDe": "QTc > 500 ms: Absetzen und kardiologische Abklärung.",
+        "warningEn": "QTc > 500 ms: discontinue and cardiology review.",
+        "severity": "contraindicated"
+      }
+    ],
+    "renalDosing": "Vorsicht bei eingeschränkter Nierenfunktion; TDM empfohlen.",
+    "hepaticDosing": "Schwere Leberinsuffizienz: kontraindiziert.",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "depotAvailable": false,
+    "sources": [
+      "Fachinformation Anafranil (DACH)",
+      "Soomro GM et al. Clomipramine versus SSRIs for OCD. Cochrane Rev 2008",
+      "Taylor D et al. Maudsley Prescribing Guidelines, 14th ed., 2021",
+      "Hiemke C et al. AGNP Consensus Guidelines for TDM. Pharmacopsychiatry 2018"
+    ],
+    "lastReviewed": "2026-06-01",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "imipramin",
+    "genericName": "Imipramin",
+    "brandNamesDACH": ["Tofranil"],
+    "atcCode": "N06AA02",
+    "substanceClass": "TZA (Trizyklisches Antidepressivum)",
+    "formulations": ["Filmtabletten"],
+    "strengthsDACH": ["10 mg", "25 mg"],
+    "routesOfAdmin": ["oral"],
+    "kurzinfoDe": "Erstes klinisch eingeführtes TZA (1957, Kuhn); historisch bedeutsam als Konzeptbeweis der antidepressiven Pharmakotherapie. Ausgewogene NET- und SERT-Hemmung; aktiver Metabolit Desipramin (selektiver NRI). Anticholinerges und kardiovaskuläres Profil ähnlich anderen TCAs. Noch zugelassen für Enuresis nocturna bei Kindern (niedrige Dosen, Cave: strikte Dosislimitierung und EKG vor Gabe).",
+    "kurzinfoEn": "First clinically introduced TCA (1957, Kuhn); historically significant as proof-of-concept for antidepressant pharmacotherapy. Balanced NET and SERT inhibition; active metabolite desipramine (selective NRI). Anticholinergic and cardiovascular profile similar to other TCAs. Still licensed for nocturnal enuresis in children (low doses; caution: strict dose limits and ECG before use).",
+    "receptorProfile": {
+      "netSert": "Balanced NET and SERT inhibition; metabolite desipramine is selective NET inhibitor",
+      "serotonin5HT2A": "Moderate antagonist",
+      "h1": "Moderate antagonist",
+      "m1": "Moderate anticholinergic",
+      "alpha1": "Moderate antagonist",
+      "serotonin5HT1A": "None",
+      "d2": "None",
+      "notes": "Imipramine → desipramine metabolism via CYP2D6 (demethylation); desipramine has a cleaner NRI profile"
+    },
+    "commonSideEffectsDe": [
+      "Mundtrockenheit",
+      "Sedierung",
+      "Obstipation",
+      "Tachykardie",
+      "Schwindel / Orthostase",
+      "Miktionsstörungen",
+      "Gewichtszunahme"
+    ],
+    "commonSideEffectsEn": [
+      "Dry mouth",
+      "Sedation",
+      "Constipation",
+      "Tachycardia",
+      "Dizziness / orthostasis",
+      "Urinary hesitancy",
+      "Weight gain"
+    ],
+    "seriousSideEffectsDe": [
+      "Kardiotoxizität bei Überdosierung",
+      "QTc-Verlängerung",
+      "Delir (anticholinerg, ältere Patienten)"
+    ],
+    "seriousSideEffectsEn": [
+      "Cardiotoxicity in overdose",
+      "QTc prolongation",
+      "Delirium (anticholinergic, elderly)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "EKG",
+        "frequency": "Vor Therapiebeginn (v. a. bei Enuresis-Indikation bei Kindern); nach Dosisänderung",
+        "noteDe": "Bei Kindern mit Enuresis: EKG vor jeder Dosissteigerung obligatorisch. Tagesdosis 2,5 mg/kg KG nicht überschreiten.",
+        "noteEn": "In children with enuresis: ECG mandatory before any dose increase. Do not exceed 2.5 mg/kg/day."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Irreversible MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Serotonin-Syndrom; absolut kontraindiziert.",
+        "clinicalNoteEn": "Serotonin syndrome; absolutely contraindicated."
+      },
+      {
+        "interactsWith": "CYP2D6-Inhibitoren",
+        "severity": "severe",
+        "clinicalNoteDe": "Imipramin-Spiegel erheblich erhöht; TDM obligatorisch.",
+        "clinicalNoteEn": "Imipramine levels substantially elevated; TDM mandatory."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "QTc (EKG)",
+        "condition": "QTc-Verlängerung",
+        "warningDe": "QTc > 500 ms: Absetzen.",
+        "warningEn": "QTc > 500 ms: discontinue.",
+        "severity": "contraindicated"
+      }
+    ],
+    "renalDosing": "Vorsicht bei schwerer Niereninsuffizienz.",
+    "hepaticDosing": "Schwere Leberinsuffizienz: kontraindiziert.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "depotAvailable": false,
+    "sources": [
+      "Fachinformation Tofranil (DACH)",
+      "Taylor D et al. Maudsley Prescribing Guidelines, 14th ed., 2021",
+      "Stahl SM. Essential Psychopharmacology, 5th ed., 2021"
+    ],
+    "lastReviewed": "2026-06-01",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "doxepin",
+    "genericName": "Doxepin",
+    "brandNamesDACH": ["Aponal", "Sinequan"],
+    "atcCode": "N06AA12",
+    "substanceClass": "TZA (Trizyklisches Antidepressivum)",
+    "formulations": ["Filmtabletten", "Kapseln", "Lösung zum Einnehmen"],
+    "strengthsDACH": ["10 mg", "25 mg", "50 mg", "75 mg", "100 mg", "Lösung 10 mg/mL"],
+    "routesOfAdmin": ["oral"],
+    "kurzinfoDe": "TZA mit dem stärksten H1-Antagonismus aller Antidepressiva; daher bei sehr niedrigen Dosen (3–6 mg, in DACH off-label) für primäre Insomnie eingesetzt. Antidepressive Wirkdosen: 75–150 mg/Tag. SERT- und NET-Hemmung vorhanden, aber weniger potent als Amitriptylin. Ausgeprägte anticholinerge und sedative Eigenschaften; hohes Lethalitätspotenzial bei Überdosierung.",
+    "kurzinfoEn": "TCA with the strongest H1 antagonism of any antidepressant; hence used at very low doses (3–6 mg, off-label in DACH) for primary insomnia. Antidepressant doses: 75–150 mg/day. SERT and NET inhibition present but less potent than amitriptyline. Marked anticholinergic and sedative properties; high lethality potential in overdose.",
+    "receptorProfile": {
+      "netSert": "Moderate SERT and NET inhibition",
+      "serotonin5HT2A": "Moderate antagonist",
+      "h1": "Extremely potent antagonist (strongest H1 affinity among antidepressants)",
+      "m1": "Strong anticholinergic",
+      "alpha1": "Strong antagonist",
+      "serotonin5HT1A": "None",
+      "d2": "None",
+      "notes": "Ultra-low doses (1–6 mg) selectively target H1 for insomnia without full TCA receptor engagement"
+    },
+    "commonSideEffectsDe": [
+      "Sedierung (sehr ausgeprägt)",
+      "Mundtrockenheit",
+      "Obstipation",
+      "Gewichtszunahme",
+      "Tachykardie",
+      "Orthostase",
+      "Miktionsstörungen"
+    ],
+    "commonSideEffectsEn": [
+      "Sedation (very pronounced)",
+      "Dry mouth",
+      "Constipation",
+      "Weight gain",
+      "Tachycardia",
+      "Orthostasis",
+      "Urinary hesitancy"
+    ],
+    "seriousSideEffectsDe": [
+      "Kardiotoxizität bei Überdosierung",
+      "QTc-Verlängerung",
+      "Delir (anticholinerg)"
+    ],
+    "seriousSideEffectsEn": [
+      "Cardiotoxicity in overdose",
+      "QTc prolongation",
+      "Delirium (anticholinergic)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "EKG",
+        "frequency": "Vor Beginn (antidepressive Dosen); nach Dosisanpassung",
+        "noteDe": "Bei antidepressiven Dosen: Standard-TCA-Kardiologiemonitoring.",
+        "noteEn": "At antidepressant doses: standard TCA cardiac monitoring."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Irreversible MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Serotonin-Syndrom; absolut kontraindiziert.",
+        "clinicalNoteEn": "Serotonin syndrome; absolutely contraindicated."
+      },
+      {
+        "interactsWith": "Anticholinerge Substanzen",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive anticholinerge Effekte.",
+        "clinicalNoteEn": "Additive anticholinergic effects."
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "Keine formale Anpassung; Vorsicht bei schwerer Niereninsuffizienz.",
+    "hepaticDosing": "Schwere Leberinsuffizienz: kontraindiziert.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": true,
+    "depotAvailable": false,
+    "sources": [
+      "Fachinformation Aponal (DACH)",
+      "Taylor D et al. Maudsley Prescribing Guidelines, 14th ed., 2021",
+      "Stahl SM. Essential Psychopharmacology, 5th ed., 2021"
+    ],
+    "lastReviewed": "2026-06-01",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "trimipramin",
+    "genericName": "Trimipramin",
+    "brandNamesDACH": ["Stangyl", "Herphonal"],
+    "atcCode": "N06AA06",
+    "substanceClass": "TZA (Trizyklisches Antidepressivum)",
+    "formulations": ["Filmtabletten", "Lösung zum Einnehmen"],
+    "strengthsDACH": ["25 mg", "50 mg", "100 mg", "Lösung 40 mg/mL"],
+    "routesOfAdmin": ["oral"],
+    "kurzinfoDe": "Atypisches TZA ohne klinisch relevante SERT- oder NET-Hemmung — antidepressiver Wirkmechanismus nicht vollständig geklärt (möglicherweise über D2-/H1-/α-Antagonismus). Starke sedative Eigenschaften durch H1-Antagonismus; daher bevorzugt bei Depression mit ausgeprägter Insomnie. Deutliche anticholinerge Effekte und α1-Blockade. Kardiovaskuläres Risiko bei Überdosierung trotz fehlender relevanter Monoamin-Wiederaufnahme-Hemmung vorhanden.",
+    "kurzinfoEn": "Atypical TCA without clinically relevant SERT or NET inhibition — antidepressant mechanism incompletely understood (possibly via D2/H1/α antagonism). Strong sedative properties via H1 antagonism; therefore preferred in depression with pronounced insomnia. Marked anticholinergic effects and α1 blockade. Cardiovascular risk in overdose present despite the absence of relevant monoamine reuptake inhibition.",
+    "receptorProfile": {
+      "netSert": "Negligible SERT and NET inhibition (unique among TCAs)",
+      "serotonin5HT2A": "Moderate antagonist",
+      "h1": "Very strong antagonist",
+      "m1": "Strong anticholinergic",
+      "alpha1": "Strong antagonist",
+      "serotonin5HT1A": "None",
+      "d2": "Moderate antagonist",
+      "notes": "Most receptor-diverse TCA; antidepressant mechanism remains debated; sedation is the dominant therapeutic use"
+    },
+    "commonSideEffectsDe": [
+      "Sedierung (sehr ausgeprägt)",
+      "Mundtrockenheit",
+      "Obstipation",
+      "Schwindel / Orthostase",
+      "Gewichtszunahme",
+      "Tachykardie",
+      "Miktionsstörungen"
+    ],
+    "commonSideEffectsEn": [
+      "Sedation (very pronounced)",
+      "Dry mouth",
+      "Constipation",
+      "Dizziness / orthostasis",
+      "Weight gain",
+      "Tachycardia",
+      "Urinary hesitancy"
+    ],
+    "seriousSideEffectsDe": [
+      "Kardiotoxizität bei Überdosierung",
+      "QTc-Verlängerung",
+      "Delir (anticholinerg)"
+    ],
+    "seriousSideEffectsEn": [
+      "Cardiotoxicity in overdose",
+      "QTc prolongation",
+      "Delirium (anticholinergic)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "EKG",
+        "frequency": "Vor Therapiebeginn; bei Dosiserhöhung",
+        "noteDe": "Standard-TCA-Kardiologiemonitoring.",
+        "noteEn": "Standard TCA cardiac monitoring."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Irreversible MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Kontraindiziert; hypertensives und serotonerges Risiko.",
+        "clinicalNoteEn": "Contraindicated; hypertensive and serotonergic risk."
+      },
+      {
+        "interactsWith": "ZNS-Dämpfer / Benzodiazepine",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive Sedierung; Atemdepression möglich.",
+        "clinicalNoteEn": "Additive sedation; respiratory depression possible."
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "Vorsicht bei eingeschränkter Nierenfunktion.",
+    "hepaticDosing": "Schwere Leberinsuffizienz: kontraindiziert.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": true,
+    "depotAvailable": false,
+    "sources": [
+      "Fachinformation Stangyl (DACH)",
+      "Taylor D et al. Maudsley Prescribing Guidelines, 14th ed., 2021",
+      "Stahl SM. Essential Psychopharmacology, 5th ed., 2021"
+    ],
+    "lastReviewed": "2026-06-01",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "maprotilin",
+    "genericName": "Maprotilin",
+    "brandNamesDACH": ["Ludiomil"],
+    "atcCode": "N06AA21",
+    "substanceClass": "Tetrazyklisches Antidepressivum (TetraCA)",
+    "formulations": ["Filmtabletten", "Injektionslösung"],
+    "strengthsDACH": ["10 mg", "25 mg", "50 mg", "75 mg", "25 mg/5 mL Injektionslösung"],
+    "routesOfAdmin": ["oral", "intravenös"],
+    "kurzinfoDe": "Tetrazyklisches Antidepressivum mit selektiver NET-Hemmung ohne klinisch relevante SERT-Komponente. H1-Antagonismus bewirkt Sedierung; anticholinerges Profil geringer als bei klassischen TCAs. Relevante Besonderheit: Maprotilin senkt die Krampfschwelle stärker als andere TCAs — Epilepsie ist eine relative Kontraindikation; Tagesdosen > 150 mg vermeiden. Wirksamkeit vergleichbar mit klassischen TCAs.",
+    "kurzinfoEn": "Tetracyclic antidepressant with selective NET inhibition without clinically relevant SERT activity. H1 antagonism causes sedation; anticholinergic profile is lower than classic TCAs. Key caveat: maprotiline lowers the seizure threshold more than other TCAs — epilepsy is a relative contraindication; avoid daily doses >150 mg. Efficacy comparable to classic TCAs.",
+    "receptorProfile": {
+      "netSert": "Selective NET inhibitor; negligible SERT inhibition",
+      "serotonin5HT2A": "None",
+      "h1": "Strong antagonist",
+      "m1": "Mild anticholinergic (less than TCAs)",
+      "alpha1": "Moderate antagonist",
+      "serotonin5HT1A": "None",
+      "d2": "None",
+      "notes": "Lower anticholinergic burden than TCAs but higher seizure risk; tetracyclic structure differs from tricyclic scaffold"
+    },
+    "commonSideEffectsDe": [
+      "Sedierung",
+      "Mundtrockenheit",
+      "Obstipation",
+      "Schwindel",
+      "Tremor",
+      "Tachykardie"
+    ],
+    "commonSideEffectsEn": [
+      "Sedation",
+      "Dry mouth",
+      "Constipation",
+      "Dizziness",
+      "Tremor",
+      "Tachycardia"
+    ],
+    "seriousSideEffectsDe": [
+      "Zerebrale Krampfanfälle (erhöhtes Risiko, dosisabhängig)",
+      "Kardiotoxizität bei Überdosierung (QRS, QTc)",
+      "Agranulozytose (sehr selten)"
+    ],
+    "seriousSideEffectsEn": [
+      "Seizures (elevated risk, dose-dependent)",
+      "Cardiotoxicity in overdose (QRS, QTc)",
+      "Agranulocytosis (very rare)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "EKG",
+        "frequency": "Vor Therapiebeginn; nach Dosisanpassung",
+        "noteDe": "Standard-TCA-Kardiologiemonitoring.",
+        "noteEn": "Standard TCA cardiac monitoring."
+      },
+      {
+        "parameter": "Anfallsanamnese",
+        "frequency": "Vor Therapiebeginn",
+        "noteDe": "Keine Gabe bei Epilepsie; Tagesdosis 150 mg nicht überschreiten.",
+        "noteEn": "Do not prescribe in epilepsy; do not exceed 150 mg/day."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Irreversible MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Kontraindiziert.",
+        "clinicalNoteEn": "Contraindicated."
+      },
+      {
+        "interactsWith": "Krampfschwellensenkende Substanzen",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additives Anfallsrisiko; Kombination kritisch prüfen.",
+        "clinicalNoteEn": "Additive seizure risk; combination requires careful risk–benefit assessment."
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "Vorsicht bei schwerer Niereninsuffizienz.",
+    "hepaticDosing": "Schwere Leberinsuffizienz: kontraindiziert.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "depotAvailable": false,
+    "sources": [
+      "Fachinformation Ludiomil (DACH)",
+      "Taylor D et al. Maudsley Prescribing Guidelines, 14th ed., 2021",
+      "Stahl SM. Essential Psychopharmacology, 5th ed., 2021"
+    ],
+    "lastReviewed": "2026-06-01",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "tranylcypromin",
+    "genericName": "Tranylcypromin",
+    "brandNamesDACH": ["Jatrosom"],
+    "atcCode": "N06AF04",
+    "substanceClass": "MAOI (irreversibler, nicht-selektiver MAO-Hemmer)",
+    "formulations": ["Tabletten"],
+    "strengthsDACH": ["10 mg"],
+    "routesOfAdmin": ["oral"],
+    "kurzinfoDe": "Irreversibler, nicht-selektiver MAO-A/B-Hemmer mit Amphetamin-ähnlicher chemischer Struktur und leicht stimulierender Eigenwirkung. Gilt als Option bei therapieresistenter Depression (TRD) und atypischer Depression. Tyraminhaltige Lebensmittel (gereifter Käse, Rotwein, gepökeltes Fleisch) sind unter MAO-Hemmung absolut zu meiden (hypertensive Krise). Kombination mit SSRIs, SNRIs, TCAs, Tramadol oder anderen Serotonergika kontraindiziert (Serotonin-Syndrom). 14 Tage Auswaschphase (bzw. 5 Wochen nach Fluoxetin) vor Therapiebeginn.",
+    "kurzinfoEn": "Irreversible, non-selective MAO-A/B inhibitor with an amphetamine-like chemical structure and a mild stimulant action. Option for treatment-resistant depression (TRD) and atypical depression. Tyramine-rich foods (aged cheese, red wine, cured meats) are absolutely contraindicated during MAO inhibition (risk of hypertensive crisis). Combination with SSRIs, SNRIs, TCAs, tramadol, or other serotonergic agents is contraindicated (serotonin syndrome). 14-day washout (or 5 weeks after fluoxetine) before starting treatment.",
+    "receptorProfile": {
+      "netSert": "Inhibits MAO-A and MAO-B irreversibly → ↑↑ synaptic 5-HT, NE, DA; no direct reuptake inhibition",
+      "serotonin5HT2A": "None",
+      "h1": "None",
+      "m1": "None",
+      "alpha1": "None",
+      "serotonin5HT1A": "None",
+      "d2": "None",
+      "notes": "Amphetamine-like structure contributes mild releasing effect on monoamines; irreversible inhibition means full MAO recovery requires ~2 weeks (new enzyme synthesis)"
+    },
+    "commonSideEffectsDe": [
+      "Insomnie (häufig, MAO-B-Hemmung → erhöhtes Dopamin)",
+      "Agitiertheit / Unruhe",
+      "Blutdruckanstieg (bei Tyraminzufuhr: hypertensive Krise!)",
+      "Schwindel / Orthostase",
+      "Gewichtszunahme",
+      "Sexuelle Dysfunktion",
+      "Mundtrockenheit",
+      "Tremor"
+    ],
+    "commonSideEffectsEn": [
+      "Insomnia (common, MAO-B inhibition → elevated dopamine)",
+      "Agitation / restlessness",
+      "Blood pressure elevation (tyramine ingestion: hypertensive crisis!)",
+      "Dizziness / orthostasis",
+      "Weight gain",
+      "Sexual dysfunction",
+      "Dry mouth",
+      "Tremor"
+    ],
+    "seriousSideEffectsDe": [
+      "Hypertensive Krise durch Tyramin (lebensgefährlich; Intensivpflichtig)",
+      "Serotonin-Syndrom bei Kombination mit Serotonergika (kontraindiziert)",
+      "Leberversagen (sehr selten)",
+      "Hyponatriämie"
+    ],
+    "seriousSideEffectsEn": [
+      "Hypertensive crisis from tyramine (life-threatening; requires ICU management)",
+      "Serotonin syndrome with serotonergic co-medications (contraindicated)",
+      "Liver failure (very rare)",
+      "Hyponatraemia"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Blutdruck",
+        "frequency": "Vor Beginn, regelmäßig während der Titration; bei jedem Arztbesuch",
+        "noteDe": "Patienten über Tyramin-Diät eingehend informieren und schriftliche Diätliste aushändigen. Blutdruckselbstmessung empfohlen.",
+        "noteEn": "Educate patients thoroughly on tyramine diet and provide written food list. Self-monitoring of blood pressure recommended."
+      },
+      {
+        "parameter": "Leberwerte (ALT, AST)",
+        "frequency": "Vor Therapiebeginn; nach 3 und 6 Monaten",
+        "noteDe": "Seltene Hepatotoxizität; Monitoring empfohlen.",
+        "noteEn": "Rare hepatotoxicity; monitoring recommended."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "SSRIs / SNRIs / TCAs / Tramadol / Triptane",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Serotonin-Syndrom (lebensgefährlich). Nach Absetzen von SSRIs/SNRIs mindestens 14 Tage vor Tranylcypromin-Beginn warten (5 Wochen nach Fluoxetin).",
+        "clinicalNoteEn": "Serotonin syndrome (life-threatening). After stopping SSRIs/SNRIs, wait at least 14 days before starting tranylcypromine (5 weeks after fluoxetine)."
+      },
+      {
+        "interactsWith": "Tyraminreiche Nahrungsmittel",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "MAO hemmt Tyramin-Abbau im Darm und Leber; unkontrollierte Noradrenalin-Freisetzung → hypertensive Krise (Kopfschmerzen, Schlaganfall, Aortendissektion).",
+        "clinicalNoteEn": "MAO inhibition blocks tyramine catabolism in gut and liver; uncontrolled noradrenaline release → hypertensive crisis (headache, stroke, aortic dissection)."
+      },
+      {
+        "interactsWith": "Sympathomimetika (Ephedrin, Pseudoephedrin, Amphetamine)",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Additive sympathomimetische Wirkung; hypertensive Krise.",
+        "clinicalNoteEn": "Additive sympathomimetic effect; hypertensive crisis."
+      },
+      {
+        "interactsWith": "Bupropion",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Hypertensives und dopaminerges Krisen-Risiko; 14 Tage Auswaschphase.",
+        "clinicalNoteEn": "Hypertensive and dopaminergic crisis risk; 14-day washout."
+      },
+      {
+        "interactsWith": "Antidiabetika",
+        "severity": "moderate",
+        "clinicalNoteDe": "MAO-Hemmer können die blutzuckersenkende Wirkung von Insulin und oralen Antidiabetika verstärken; Hypoglykämiegefahr.",
+        "clinicalNoteEn": "MAOIs may potentiate blood glucose-lowering effects of insulin and oral antidiabetics; hypoglycaemia risk."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "ALT / AST",
+        "condition": "Hepatotoxizität",
+        "warningDe": "ALT > 3× ULN: Tranylcypromin absetzen.",
+        "warningEn": "ALT > 3× ULN: discontinue tranylcypromine.",
+        "severity": "contraindicated"
+      }
+    ],
+    "renalDosing": "Vorsicht bei Niereninsuffizienz; keine formale Dosisempfehlung.",
+    "hepaticDosing": "Leberinsuffizienz: kontraindiziert.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "depotAvailable": false,
+    "sources": [
+      "Fachinformation Jatrosom (DACH)",
+      "Taylor D et al. Maudsley Prescribing Guidelines, 14th ed., 2021",
+      "Stahl SM. Essential Psychopharmacology, 5th ed., 2021",
+      "AWMF S3-Leitlinie Unipolare Depression, 2022"
+    ],
+    "lastReviewed": "2026-06-01",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "moclobemid",
+    "genericName": "Moclobemid",
+    "brandNamesDACH": ["Aurorix"],
+    "atcCode": "N06AG02",
+    "substanceClass": "RIMA (Reversibler, selektiver MAO-A-Hemmer)",
+    "formulations": ["Filmtabletten"],
+    "strengthsDACH": ["150 mg", "300 mg"],
+    "routesOfAdmin": ["oral"],
+    "kurzinfoDe": "Reversibler, selektiver MAO-A-Hemmer (RIMA): hemmt präferenziell den Abbau von Serotonin und Noradrenalin; reversible Bindung erlaubt Tyramin-Verdrängung am Enzym (dosisabhängige, nicht absolute Wechselwirkung). Deutlich sichereres Tyramin-Profil als irreversible MAOIs; auf große Mengen tyraminreicher Speisen dennoch verzichten. Serotonin-Syndrom-Risiko bei Kombination mit SSRIs/SNRIs bleibt bestehen — 24 h Auswaschphase nach Moclobemid vor SSRI ist ausreichend, umgekehrt 24 h nach kurzwirkenden SSRIs (14 Tage nach Fluoxetin).",
+    "kurzinfoEn": "Reversible, selective MAO-A inhibitor (RIMA): preferentially inhibits catabolism of serotonin and noradrenaline; reversible binding allows tyramine displacement at the enzyme (dose-dependent, not absolute interaction). Substantially safer tyramine profile than irreversible MAOIs; nevertheless avoid large amounts of tyramine-rich foods. Serotonin syndrome risk with SSRI/SNRI combinations persists — 24-hour washout after moclobemide before SSRI is sufficient; conversely 24 hours after short-acting SSRIs (14 days after fluoxetine).",
+    "receptorProfile": {
+      "netSert": "No direct reuptake inhibition; ↑5-HT and NE via selective MAO-A inhibition",
+      "serotonin5HT2A": "None",
+      "h1": "None",
+      "m1": "None",
+      "alpha1": "None",
+      "serotonin5HT1A": "None",
+      "d2": "None",
+      "notes": "MAO-B not significantly inhibited (dopamine, phenylethylamine catabolism preserved); hence less tyramine risk than irreversible MAOIs"
+    },
+    "commonSideEffectsDe": [
+      "Insomnie (MAO-A-Hemmung → ↑5-HT, NE)",
+      "Kopfschmerzen",
+      "Schwindel",
+      "Übelkeit",
+      "Agitiertheit",
+      "Mundtrockenheit"
+    ],
+    "commonSideEffectsEn": [
+      "Insomnia (MAO-A inhibition → ↑5-HT, NE)",
+      "Headache",
+      "Dizziness",
+      "Nausea",
+      "Agitation",
+      "Dry mouth"
+    ],
+    "seriousSideEffectsDe": [
+      "Serotonin-Syndrom bei Kombination mit SSRIs/SNRIs/TCAs",
+      "Hypertensive Reaktion bei Hochdosis-Tyraminexposition (dosisabhängig, nicht absolut)",
+      "Manie-Aktivierung (bei bipolarer Vulnerabilität)"
+    ],
+    "seriousSideEffectsEn": [
+      "Serotonin syndrome with SSRIs/SNRIs/TCAs",
+      "Hypertensive reaction with high-dose tyramine exposure (dose-dependent, not absolute)",
+      "Mania switch (in bipolar vulnerability)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Blutdruck",
+        "frequency": "Bei Therapiebeginn und nach Dosisanpassung",
+        "noteDe": "Risiko einer Tyramin-induzierten Blutdruckreaktion erheblich geringer als bei irreversiblen MAOIs; dennoch Basismonitoring.",
+        "noteEn": "Risk of tyramine-induced blood pressure reaction substantially lower than with irreversible MAOIs; baseline monitoring still appropriate."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "SSRIs / SNRIs / Tramadol / Triptane",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Serotonin-Syndrom. 24 Stunden nach Moclobemid-Absetzen vor kurzwirkenden SSRIs; 24 Stunden nach kurzwirkenden SSRIs vor Moclobemid (14 Tage nach Fluoxetin).",
+        "clinicalNoteEn": "Serotonin syndrome. 24 hours after stopping moclobemide before short-acting SSRIs; 24 hours after short-acting SSRIs before moclobemide (14 days after fluoxetine)."
+      },
+      {
+        "interactsWith": "TCAs (Clomipramin, Amitriptylin u. a.)",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Serotonin-Syndrom; kontraindiziert.",
+        "clinicalNoteEn": "Serotonin syndrome; contraindicated."
+      },
+      {
+        "interactsWith": "Tyraminreiche Lebensmittel (große Mengen)",
+        "severity": "moderate",
+        "clinicalNoteDe": "Dosisabhängige Hypertension möglich; übliche Mengen toleriert; große Mengen (> 40 mg Tyramin/Mahlzeit) meiden.",
+        "clinicalNoteEn": "Dose-dependent hypertension possible; usual amounts tolerated; avoid large amounts (>40 mg tyramine/meal)."
+      },
+      {
+        "interactsWith": "Cimetidin",
+        "severity": "moderate",
+        "clinicalNoteDe": "CYP2C19-Hemmung durch Cimetidin erhöht Moclobemid-Plasmaspiegel; Dosis ggf. reduzieren.",
+        "clinicalNoteEn": "CYP2C19 inhibition by cimetidine raises moclobemide plasma levels; dose reduction may be needed."
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "Keine Dosisanpassung erforderlich.",
+    "hepaticDosing": "Leberinsuffizienz: Dosis um 50 % reduzieren.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "depotAvailable": false,
+    "sources": [
+      "Fachinformation Aurorix (DACH)",
+      "Taylor D et al. Maudsley Prescribing Guidelines, 14th ed., 2021",
+      "Stahl SM. Essential Psychopharmacology, 5th ed., 2021",
+      "Lotufo-Neto F et al. Moclobemide for the treatment of depression. Int Clin Psychopharmacol 1999"
+    ],
+    "lastReviewed": "2026-06-01",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "agomelatin",
+    "genericName": "Agomelatin",
+    "brandNamesDACH": ["Valdoxan"],
+    "atcCode": "N06AX22",
+    "substanceClass": "Melatonin-Agonist / 5-HT2C-Antagonist",
+    "formulations": ["Filmtabletten"],
+    "strengthsDACH": ["25 mg"],
+    "routesOfAdmin": ["oral"],
+    "kurzinfoDe": "Einzigartiger Wirkmechanismus: MT1/MT2-Melatoninrezeptor-Agonismus normalisiert den zirkadianen Rhythmus; 5-HT2C-Antagonismus steigert frontokortikale DA- und NA-Freisetzung. Keine Monoamin-Wiederaufnahmehemmung — daher keine sexuelle Dysfunktion, kein Absetzsyndrom, keine Gewichtszunahme. Hepatotoxizität ist die klinisch relevanteste Sicherheitsbedenke: ALT/AST-Monitoring obligatorisch. Wirksamkeit in Meta-Analysen kontrovers diskutiert.",
+    "kurzinfoEn": "Unique mechanism: MT1/MT2 melatonin receptor agonism normalises circadian rhythm; 5-HT2C antagonism increases frontocortical DA and NE release. No monoamine reuptake inhibition — hence no sexual dysfunction, no discontinuation syndrome, no weight gain. Hepatotoxicity is the most clinically relevant safety concern: ALT/AST monitoring mandatory. Efficacy remains controversial in meta-analyses.",
+    "receptorProfile": {
+      "netSert": "None",
+      "serotonin5HT2A": "None (5-HT2C antagonist — distinct from 5-HT2A)",
+      "h1": "None",
+      "m1": "None",
+      "alpha1": "None",
+      "serotonin5HT1A": "None",
+      "d2": "None",
+      "notes": "MT1/MT2 agonism → circadian phase advance and sleep quality improvement; 5-HT2C antagonism → disinhibits mesocortical DA/NE pathways"
+    },
+    "commonSideEffectsDe": [
+      "Übelkeit",
+      "Kopfschmerzen",
+      "Schwindel",
+      "Somnolenz / Müdigkeit",
+      "Insomnie",
+      "Diarrhö",
+      "Rückenschmerzen"
+    ],
+    "commonSideEffectsEn": [
+      "Nausea",
+      "Headache",
+      "Dizziness",
+      "Somnolence / fatigue",
+      "Insomnia",
+      "Diarrhoea",
+      "Back pain"
+    ],
+    "seriousSideEffectsDe": [
+      "Hepatotoxizität: ALT/AST-Erhöhung (1–2 %), Leberversagen (sehr selten)",
+      "Manie-Aktivierung (bei bipolarer Vulnerabilität)"
+    ],
+    "seriousSideEffectsEn": [
+      "Hepatotoxicity: ALT/AST elevation (1–2%), liver failure (very rare)",
+      "Mania switch (in bipolar vulnerability)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Leberwerte (ALT, AST)",
+        "frequency": "Vor Therapiebeginn; nach 3, 6, 12 und 24 Wochen; nach Dosiserhöhung auf 50 mg; danach bei klinischen Symptomen",
+        "warningThreshold": "ALT > 3× ULN: Agomelatin absetzen",
+        "noteDe": "Alkohol und vorbestehende Lebererkrankung sind Kontraindikationen. Patienten über Leberschädigungssymptome aufklären (Schmerzen im Oberbauch, dunkler Urin, Ikterus).",
+        "noteEn": "Alcohol use and pre-existing liver disease are contraindications. Patients must be educated on hepatic injury symptoms (upper abdominal pain, dark urine, jaundice)."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Fluvoxamin (CYP1A2-Inhibitor)",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Fluvoxamin hemmt CYP1A2 stark: Agomelatin-AUC steigt um das 60-Fache. Kombination kontraindiziert.",
+        "clinicalNoteEn": "Fluvoxamine potently inhibits CYP1A2: agomelatin AUC increases 60-fold. Combination contraindicated."
+      },
+      {
+        "interactsWith": "Ciprofloxacin, Enoxacin (CYP1A2-Inhibitoren)",
+        "severity": "severe",
+        "clinicalNoteDe": "Erhebliche Agomelatin-Exposition durch CYP1A2-Hemmung; Kombination vermeiden.",
+        "clinicalNoteEn": "Markedly elevated agomelatin exposure via CYP1A2 inhibition; avoid combination."
+      },
+      {
+        "interactsWith": "Rauchen (CYP1A2-Induktion)",
+        "severity": "mild",
+        "clinicalNoteDe": "Starke Raucher haben beschleunigte Agomelatin-Metabolisierung; möglicherweise reduzierte Wirksamkeit.",
+        "clinicalNoteEn": "Heavy smokers have accelerated agomelatin metabolism; potentially reduced efficacy."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "ALT / AST",
+        "condition": "Hepatotoxizität",
+        "warningDe": "ALT > 3× ULN: Agomelatin sofort absetzen. Lebererkrankung oder Alkohol: kontraindiziert.",
+        "warningEn": "ALT > 3× ULN: discontinue agomelatin immediately. Liver disease or alcohol use: contraindicated.",
+        "severity": "contraindicated"
+      }
+    ],
+    "renalDosing": "Schwere Niereninsuffizienz: Vorsicht (eingeschränkte Datenlage).",
+    "hepaticDosing": "Lebererkrankung (jedes Ausmaß): kontraindiziert.",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "depotAvailable": false,
+    "sources": [
+      "Fachinformation Valdoxan (DACH)",
+      "EMA EPAR Valdoxan (Agomelatin)",
+      "Taylor D et al. Maudsley Prescribing Guidelines, 14th ed., 2021",
+      "Cipriani A et al. Lancet 2018"
+    ],
+    "lastReviewed": "2026-06-01",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "reboxetin",
+    "genericName": "Reboxetin",
+    "brandNamesDACH": ["Edronax"],
+    "atcCode": "N06AX18",
+    "substanceClass": "SNRI (selektiver NRI)",
+    "formulations": ["Filmtabletten"],
+    "strengthsDACH": ["4 mg"],
+    "routesOfAdmin": ["oral"],
+    "kurzinfoDe": "Selektiver Noradrenalin-Wiederaufnahmehemmer (NRI) ohne serotonerge oder dopaminerge Komponente. Wirksam bei mangelndem Antrieb und sozialem Rückzug. Kontroverse Datenlage: eine Lancet-Metaanalyse (2010) zweifelte die klinische Wirksamkeit gegenüber Placebo an; Zulassung in DACH besteht, Erstlinienempfehlung in Leitlinien fehlt. Sympathomimetische Nebenwirkungen (Tachykardie, Miktionsstörungen, Schwitzen) durch NE-Wirkung.",
+    "kurzinfoEn": "Selective noradrenaline reuptake inhibitor (NRI) without serotonergic or dopaminergic component. Potentially beneficial for lack of drive and social withdrawal. Controversial evidence base: a Lancet meta-analysis (2010) questioned clinical efficacy over placebo; marketing authorisation in DACH exists, but first-line guideline recommendation is absent. Sympathomimetic side effects (tachycardia, micturition difficulties, sweating) via NE action.",
+    "receptorProfile": {
+      "netSert": "Highly selective NET inhibitor; no SERT inhibition",
+      "serotonin5HT2A": "None",
+      "h1": "None",
+      "m1": "None",
+      "alpha1": "None",
+      "serotonin5HT1A": "None",
+      "d2": "None",
+      "notes": "Purest clinical NRI; noradrenergic effects include activation, reduced fatigue, and potential pro-social effects"
+    },
+    "commonSideEffectsDe": [
+      "Insomnie",
+      "Schwitzen",
+      "Tachykardie / Palpitationen",
+      "Miktionsstörungen / Dysurie",
+      "Mundtrockenheit",
+      "Obstipation",
+      "Schwindel"
+    ],
+    "commonSideEffectsEn": [
+      "Insomnia",
+      "Sweating",
+      "Tachycardia / palpitations",
+      "Micturition difficulties / dysuria",
+      "Dry mouth",
+      "Constipation",
+      "Dizziness"
+    ],
+    "seriousSideEffectsDe": [
+      "Harnverhalt (selten, noradrenerg)",
+      "Hypokaliämie (beschrieben, Mechanismus unklar)"
+    ],
+    "seriousSideEffectsEn": [
+      "Urinary retention (rare, noradrenergic)",
+      "Hypokalaemia (reported, mechanism unclear)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Blutdruck / Herzfrequenz",
+        "frequency": "Vor Beginn; nach Dosisanpassung",
+        "noteDe": "NE-induzierte Tachykardie kann klinisch relevant sein.",
+        "noteEn": "NE-induced tachycardia may be clinically relevant."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Irreversible MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Hypertensive Krise; kontraindiziert.",
+        "clinicalNoteEn": "Hypertensive crisis; contraindicated."
+      }
+    ],
+    "labWarnings": [],
+    "renalDosing": "Schwere Niereninsuffizienz: Dosis auf 2 mg zweimal täglich reduzieren.",
+    "hepaticDosing": "Leberinsuffizienz: Dosis auf 2 mg zweimal täglich reduzieren.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "depotAvailable": false,
+    "sources": [
+      "Fachinformation Edronax (DACH)",
+      "Eyding D et al. Reboxetine for major depression. BMJ 2010",
+      "Taylor D et al. Maudsley Prescribing Guidelines, 14th ed., 2021"
+    ],
+    "lastReviewed": "2026-06-01",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "mianserin",
+    "genericName": "Mianserin",
+    "brandNamesDACH": ["Tolvin"],
+    "atcCode": "N06AX03",
+    "substanceClass": "Tetrazyklisches Antidepressivum (TetraCA / NaSSA-Vorläufer)",
+    "formulations": ["Filmtabletten"],
+    "strengthsDACH": ["10 mg", "30 mg", "60 mg"],
+    "routesOfAdmin": ["oral"],
+    "kurzinfoDe": "Tetrazyklisches Antidepressivum mit α1/α2-Antagonismus (präsynaptisch → gesteigerte NA-Freisetzung), 5-HT2- und H1-Antagonismus. Keine anticholinerge Aktivität — vorteilhaft bei älteren Patienten. Seltenste, aber ernste Sicherheitsbedenke: Agranulozytose (ca. 1:1000); Blutbildkontrolle bei Infektsymptomen obligatorisch. Strukturell und pharmakologisch Vorläufer von Mirtazapin (jedoch schwächere antidepressive Wirkung in Studien).",
+    "kurzinfoEn": "Tetracyclic antidepressant with α1/α2 antagonism (presynaptic → increased NE release), 5-HT2 and H1 antagonism. No anticholinergic activity — advantageous in elderly patients. Rarest but most serious safety concern: agranulocytosis (~1:1000); CBC mandatory at any sign of infection. Structurally and pharmacologically the precursor to mirtazapine (but weaker antidepressant efficacy in studies).",
+    "receptorProfile": {
+      "netSert": "No direct NET or SERT inhibition; ↑NE via presynaptic α2 blockade",
+      "serotonin5HT2A": "Moderate 5-HT2 antagonist",
+      "h1": "Strong antagonist (sedation)",
+      "m1": "None",
+      "alpha1": "Moderate antagonist",
+      "serotonin5HT1A": "None",
+      "d2": "None",
+      "notes": "No anticholinergic profile; precursor to mirtazapine with similar mechanism but different potency and tolerability"
+    },
+    "commonSideEffectsDe": [
+      "Sedierung (sehr häufig)",
+      "Gewichtszunahme",
+      "Schwindel",
+      "Ödeme",
+      "Hypotonie"
+    ],
+    "commonSideEffectsEn": [
+      "Sedation (very common)",
+      "Weight gain",
+      "Dizziness",
+      "Oedema",
+      "Hypotension"
+    ],
+    "seriousSideEffectsDe": [
+      "Agranulozytose / Granulozytopenie (ca. 1:1000; Fieber/Halsschmerzen → sofortiges BB!)",
+      "Knochenmarkdepression (selten)",
+      "Ikterus / Leberfunktionsstörung (sehr selten)"
+    ],
+    "seriousSideEffectsEn": [
+      "Agranulocytosis / granulocytopenia (~1:1000; fever/sore throat → immediate CBC!)",
+      "Bone marrow suppression (rare)",
+      "Jaundice / hepatic dysfunction (very rare)"
+    ],
+    "monitoringRules": [
+      {
+        "parameter": "Blutbild (BB)",
+        "frequency": "Vor Therapiebeginn; nach 4 Wochen; monatlich in den ersten 3 Monaten; bei Infektzeichen sofort",
+        "noteDe": "Agranulozytose typischerweise in den ersten 3 Monaten. Neutrophilenzahl < 1500/µL → Absetzen.",
+        "noteEn": "Agranulocytosis typically occurs in the first 3 months. Neutrophil count <1500/µL → discontinue."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "Irreversible MAO-Hemmer",
+        "severity": "contraindicated",
+        "clinicalNoteDe": "Kontraindiziert.",
+        "clinicalNoteEn": "Contraindicated."
+      },
+      {
+        "interactsWith": "ZNS-Dämpfer / Alkohol",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive Sedierung.",
+        "clinicalNoteEn": "Additive sedation."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Neutrophile / Leukozyten (BB)",
+        "condition": "Agranulozytose",
+        "warningDe": "Neutrophile < 1500/µL oder Leukozyten < 3000/µL: Mianserin absetzen; hämatologische Abklärung.",
+        "warningEn": "Neutrophils <1500/µL or WBC <3000/µL: discontinue mianserin; haematology review.",
+        "severity": "contraindicated"
+      }
+    ],
+    "renalDosing": "Vorsicht bei schwerer Niereninsuffizienz.",
+    "hepaticDosing": "Leberinsuffizienz: kontraindiziert.",
+    "tabletSplittable": true,
+    "liquidFormAvailable": false,
+    "depotAvailable": false,
+    "sources": [
+      "Fachinformation Tolvin (DACH)",
+      "Taylor D et al. Maudsley Prescribing Guidelines, 14th ed., 2021",
+      "Stahl SM. Essential Psychopharmacology, 5th ed., 2021"
+    ],
+    "lastReviewed": "2026-06-01",
+    "contentDisclaimer": "documentation_support_only"
+  },
+  {
+    "id": "lithium-augmentation-xref",
+    "genericName": "Lithium (Querverweis: Augmentation)",
+    "brandNamesDACH": ["Quilonum", "Hypnorex"],
+    "atcCode": "N05AN01",
+    "substanceClass": "Stimmungsstabilisator (Augmentation bei therapieresistenter Depression)",
+    "formulations": ["Retardtabletten"],
+    "strengthsDACH": ["Quilonum 450 mg (als Lithiumcarbonat)"],
+    "routesOfAdmin": ["oral"],
+    "kurzinfoDe": "Vollständige Dokumentation unter Stimmungsstabilisatoren. Als Augmentationsstrategie bei therapieresistenter unipolarer Depression (TRD) nach Versagen von 2 Antidepressiva gut evidenzbasiert (NNT ≈ 5 in Metaanalysen). Enge therapeutische Breite (Augmentationsspiegel: 0,6–0,8 mmol/L); strenge Spiegelkontrollen erforderlich. Interaktionen mit SSRIs/SNRIs erhöhen Serotonin-Syndrom-Risiko bei hohen Spiegeln.",
+    "kurzinfoEn": "Full documentation in the mood stabilisers section. As an augmentation strategy in treatment-resistant unipolar depression (TRD) after failure of two antidepressants, evidence is well-established (NNT ≈ 5 in meta-analyses). Narrow therapeutic index (augmentation target: 0.6–0.8 mmol/L); strict plasma level monitoring required. Interactions with SSRIs/SNRIs increase serotonin syndrome risk at elevated levels.",
+    "receptorProfile": {
+      "notes": "Cross-reference only — see full mood stabiliser entry for complete receptor/mechanism data"
+    },
+    "commonSideEffectsDe": ["Tremor", "Polyurie/Polydipsie", "Gewichtszunahme", "kognitive Verlangsamung", "Alopezie"],
+    "commonSideEffectsEn": ["Tremor", "Polyuria/polydipsia", "Weight gain", "Cognitive slowing", "Alopecia"],
+    "seriousSideEffectsDe": ["Lithiumtoxizität (Spiegel > 1,5 mmol/L: Ataxie, Verwirrung, Krampfanfälle, renales Versagen)", "Hypothyreose", "Hyperparathyreoidismus", "Nephrogener Diabetes insipidus"],
+    "seriousSideEffectsEn": ["Lithium toxicity (level >1.5 mmol/L: ataxia, confusion, seizures, renal failure)", "Hypothyroidism", "Hyperparathyroidism", "Nephrogenic diabetes insipidus"],
+    "monitoringRules": [
+      {
+        "parameter": "Lithium-Serumspiegel",
+        "frequency": "Wöchentlich bei Dosistitration; monatlich in den ersten 6 Monaten; dann alle 3–6 Monate",
+        "warningThreshold": "Zielbereich TRD-Augmentation: 0,6–0,8 mmol/L; > 1,5 mmol/L toxisch",
+        "noteDe": "12-Stunden-Talspiegel (12 h nach letzter Einnahme) messen.",
+        "noteEn": "Measure 12-hour trough level (12 hours after last dose)."
+      },
+      {
+        "parameter": "TSH, Kreatinin, eGFR, Elektrolyte, Kalzium",
+        "frequency": "Vor Beginn; nach 6 Monaten; dann jährlich",
+        "noteDe": "Langfristige Nephrotoxizität und Schilddrüsenfunktionsstörung überwachen.",
+        "noteEn": "Monitor for long-term nephrotoxicity and thyroid dysfunction."
+      }
+    ],
+    "interactions": [
+      {
+        "interactsWith": "NSAIDs (Ibuprofen, Naproxen)",
+        "severity": "severe",
+        "clinicalNoteDe": "Hemmung renaler Prostaglandinsynthese reduziert Li-Clearance; Spiegel steigen um 10–60 %.",
+        "clinicalNoteEn": "Inhibition of renal prostaglandin synthesis reduces Li clearance; levels may rise 10–60%."
+      },
+      {
+        "interactsWith": "Thiazid-Diuretika",
+        "severity": "severe",
+        "clinicalNoteDe": "Natriumverlust führt zu kompensatorisch erhöhter Li-Reabsorption; Toxizitätsgefahr.",
+        "clinicalNoteEn": "Sodium loss leads to compensatory increased Li reabsorption; toxicity risk."
+      },
+      {
+        "interactsWith": "SSRIs / SNRIs",
+        "severity": "moderate",
+        "clinicalNoteDe": "Additive Serotonergizität; bei hohen Li-Spiegeln Serotonin-Syndrom-Risiko.",
+        "clinicalNoteEn": "Additive serotonergic effect; serotonin syndrome risk at high Li levels."
+      }
+    ],
+    "labWarnings": [
+      {
+        "labParameter": "Lithium-Serumspiegel",
+        "condition": "Lithiumtoxizität",
+        "warningDe": "Spiegel > 1,5 mmol/L: Lithium absetzen, stationäre Aufnahme, forcierte Diurese oder Hämodialyse bei schwerem Verlauf.",
+        "warningEn": "Level >1.5 mmol/L: discontinue lithium, hospital admission, forced diuresis or haemodialysis in severe cases.",
+        "severity": "contraindicated"
+      },
+      {
+        "labParameter": "TSH",
+        "condition": "Hypothyreose",
+        "warningDe": "TSH > 4,0 mU/L unter Lithium: Schilddrüsenhormonsubstitution in Betracht ziehen.",
+        "warningEn": "TSH >4.0 mU/L on lithium: consider thyroid hormone supplementation.",
+        "severity": "caution"
+      }
+    ],
+    "renalDosing": "Niereninsuffizienz: Lithium-Clearance direkt von GFR abhängig; stark reduzierte Dosen, engmaschige Spiegelkontrollen. GFR < 30: relative Kontraindikation.",
+    "hepaticDosing": "Hepatische Metabolisierung nicht relevant (renale Ausscheidung); keine hepatische Anpassung erforderlich.",
+    "tabletSplittable": false,
+    "liquidFormAvailable": false,
+    "depotAvailable": false,
+    "sources": [
+      "Fachinformation Quilonum (DACH)",
+      "Bauer M et al. World Federation of Societies of Biological Psychiatry (WFSBP) Lithium Guidelines 2021",
+      "Taylor D et al. Maudsley Prescribing Guidelines, 14th ed., 2021",
+      "AWMF S3-Leitlinie Unipolare Depression, 2022"
+    ],
+    "lastReviewed": "2026-06-01",
+    "contentDisclaimer": "documentation_support_only"
+  }
+]

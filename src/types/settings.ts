@@ -9,6 +9,7 @@ export type SettingsSectionId =
   | 'workspace'
   | 'language'
   | 'documentation'
+  | 'lab'
   | 'ai'
   | 'account'
   | 'privacy'

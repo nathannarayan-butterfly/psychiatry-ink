@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { UiTranslationKey } from '../../data/uiTranslations'
 
-export type TopNavTabId = 'workspace' | 'verlauf' | 'labor' | 'therapie' | 'dokumente'
+export type TopNavTabId = 'overview' | 'workspace' | 'verlauf' | 'labor' | 'therapie' | 'dokumente'
 
 interface CaseTopNavProps {
   activeTab: TopNavTabId
@@ -32,6 +32,7 @@ interface TabConfig {
 }
 
 const TABS: TabConfig[] = [
+  { id: 'overview', labelKey: 'topNavOverview' },
   { id: 'workspace', labelKey: 'topNavWorkspaceFall' },
   { id: 'verlauf', labelKey: 'topNavVerlauf' },
   { id: 'labor', labelKey: 'topNavLabor' },

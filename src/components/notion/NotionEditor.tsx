@@ -6,7 +6,6 @@ import type { DictationPhase } from '../../types/dictation'
 import { WorkspaceEditorOverlay } from '../WorkspaceEditorOverlay'
 import { FloatingSelectionToolbar, type SelectionActionId } from './FloatingSelectionToolbar'
 import { NotionSectionAiLinks } from './NotionSectionAiLinks'
-import { PasteAssistant, type PasteActionId } from './PasteAssistant'
 import { SlashCommandMenu, type SlashCommandId } from './SlashCommandMenu'
 import type { PendingPaste } from './NotionPaper'
 
@@ -25,7 +24,6 @@ interface NotionEditorProps {
   onBlur?: () => void
   onEditorAiTool?: (tool: AiToolKey) => void
   onSelectionAction: (action: SelectionActionId, selectedText: string) => void
-  onPasteAction: (action: PasteActionId, pastedText: string) => void
   onSlashCommand: (command: SlashCommandId) => void
   commandMenuRequest?: number
   focusRequest?: number
@@ -60,7 +58,6 @@ export function NotionEditor({
   onBlur,
   onEditorAiTool,
   onSelectionAction,
-  onPasteAction,
   onSlashCommand,
   commandMenuRequest = 0,
   focusRequest = 0,
@@ -70,10 +67,6 @@ export function NotionEditor({
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [isFocused, setIsFocused] = useState(false)
   const [selectionToolbar, setSelectionToolbar] = useState<{
-    text: string
-    position: { top: number; left: number }
-  } | null>(null)
-  const [pasteAssistant, setPasteAssistant] = useState<{
     text: string
     position: { top: number; left: number }
   } | null>(null)
@@ -109,10 +102,6 @@ export function NotionEditor({
       if (!textarea) return
       textarea.focus()
       textarea.setSelectionRange(pendingPaste.text.length, pendingPaste.text.length)
-      setPasteAssistant({
-        text: pendingPaste.text,
-        position: getSelectionPosition(textarea),
-      })
       setSelectionToolbar(null)
       setSlashMenu(null)
     })
@@ -139,23 +128,12 @@ export function NotionEditor({
       text: selectedText,
       position: getSelectionPosition(textarea),
     })
-    setPasteAssistant(null)
     setSlashMenu(null)
   }, [content, readOnly])
 
   const handlePaste = useCallback(
-    (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    (_event: React.ClipboardEvent<HTMLTextAreaElement>) => {
       onPasteOrigin()
-      const pasted = event.clipboardData.getData('text/plain')
-      if (!pasted.trim()) return
-
-      const textarea = textareaRef.current
-      if (!textarea) return
-
-      setPasteAssistant({
-        text: pasted,
-        position: getSelectionPosition(textarea),
-      })
       setSelectionToolbar(null)
       setSlashMenu(null)
     },
@@ -164,7 +142,6 @@ export function NotionEditor({
 
   const closeMenus = useCallback(() => {
     setSelectionToolbar(null)
-    setPasteAssistant(null)
     setSlashMenu(null)
   }, [])
 
@@ -179,7 +156,6 @@ export function NotionEditor({
       slashIndex: textarea.selectionStart,
     })
     setSelectionToolbar(null)
-    setPasteAssistant(null)
   }, [readOnly])
 
   useEffect(() => {
@@ -256,7 +232,7 @@ export function NotionEditor({
           window.setTimeout(() => {
             if (
               !document.activeElement?.closest(
-                '.notion-selection-toolbar, .notion-paste-assistant, .notion-slash-menu, .notion-editor__section-ai',
+                '.notion-selection-toolbar, .notion-slash-menu, .notion-editor__section-ai',
               )
             ) {
               closeMenus()
@@ -288,18 +264,6 @@ export function NotionEditor({
             closeMenus()
           }}
           onClose={closeMenus}
-        />
-      ) : null}
-
-      {pasteAssistant ? (
-        <PasteAssistant
-          position={pasteAssistant.position}
-          pastedText={pasteAssistant.text}
-          onAction={(action, text) => {
-            onPasteAction(action, text)
-            closeMenus()
-          }}
-          onDismiss={closeMenus}
         />
       ) : null}
 

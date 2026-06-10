@@ -51,6 +51,14 @@ export const componentTranslations: Record<string, ComponentTranslation> = {
           es: 'Motivo de consulta actual',
         },
       },
+      eigenanamnese: {
+        label: {
+          de: 'Eigenanamnese',
+          en: 'Personal history',
+          fr: 'Anamnèse personnelle',
+          es: 'Anamnesis personal',
+        },
+      },
       'aktuelle-krankheitsanamnese': {
         label: {
           de: 'Aktuelle Krankheitsanamnese',
@@ -157,7 +165,7 @@ export const componentTranslations: Record<string, ComponentTranslation> = {
       },
       'psychopathologischer-befund': {
         label: {
-          de: 'Psychopathologischer Befund, AMDP-orientiert',
+          de: 'Psychopathologischer Befund',
           en: 'Mental State Examination',
           fr: 'Examen psychiatrique',
           es: 'Exploración psicopatológica',
@@ -289,7 +297,7 @@ export const componentTranslations: Record<string, ComponentTranslation> = {
   },
   psychopath: {
     label: {
-      de: 'Psychopathologischer Befund, AMDP-orientiert',
+      de: 'Psychopathologischer Befund',
       en: 'Mental State Examination',
       fr: 'Examen psychiatrique',
       es: 'Exploración psicopatológica',

@@ -4,6 +4,7 @@ import type { WorkspaceSectionTemplate } from '../types/workspaceSettings'
 export const defaultAufnahmeSections: WorkspaceSectionTemplate[] = [
   { id: 'aufnahmeanlass', label: 'Aufnahmeanlass', ai: aufnahmeanlassSectionAi },
   { id: 'aktuelle-beschwerden', label: 'Aktuelle Beschwerden' },
+  { id: 'eigenanamnese', label: 'Eigenanamnese' },
   { id: 'aktuelle-krankheitsanamnese', label: 'Aktuelle Krankheitsanamnese' },
   { id: 'psychiatrische-vorgeschichte', label: 'Psychiatrische Vorgeschichte' },
   { id: 'somatische-anamnese', label: 'Somatische Anamnese' },

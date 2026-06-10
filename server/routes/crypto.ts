@@ -53,8 +53,7 @@ cryptoRouter.post('/public-key', async (req: Request, res: Response) => {
     res.json({ ok: true, tier })
   } catch (error) {
     console.error('[crypto] public-key registration failed:', error)
-    const message = error instanceof Error ? error.message : 'Registration failed'
-    res.status(500).json({ error: message })
+    res.status(500).json({ error: 'Registration failed' })
   }
 })
 

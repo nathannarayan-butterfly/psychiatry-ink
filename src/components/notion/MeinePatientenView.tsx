@@ -1,8 +1,7 @@
-import { LayoutGrid, List, Plus } from 'lucide-react'
+import { LayoutGrid, List, Pencil, Plus } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
-import type { DashboardCase } from '../../hooks/useCaseRegistry'
-import { DEFAULT_CASE_ID } from '../../utils/caseContext'
+import { isListedPatientCase, type DashboardCase } from '../../hooks/useCaseRegistry'
 import { formatSiteLocaleDate } from '../../utils/siteTimezone'
 import { PatientCaseCard } from '../dashboard/PatientCaseCard'
 import { NewPatientDialog } from '../dashboard/NewPatientDialog'
@@ -16,6 +15,7 @@ interface MeinePatientenViewProps {
   error?: string | null
   onOpenPatient: (caseId: string) => void
   onCreatePatient: (patient: NewPatientData) => void
+  onEditPatient: (caseId: string, patient: NewPatientData) => void
 }
 
 function genderLabel(
@@ -28,25 +28,44 @@ function genderLabel(
   return null
 }
 
+function caseToPatientData(caseItem: DashboardCase): NewPatientData {
+  return {
+    vorname: caseItem.localVorname ?? '',
+    nachname: caseItem.localNachname ?? '',
+    name: caseItem.localName ?? caseItem.displayTitle,
+    geburtsdatum: caseItem.localGeburtsdatum ?? '',
+    geschlecht: caseItem.localGeschlecht ?? '',
+  }
+}
+
 export function MeinePatientenView({
   cases,
   loading = false,
   error = null,
   onOpenPatient,
   onCreatePatient,
+  onEditPatient,
 }: MeinePatientenViewProps) {
   const { t, language } = useTranslation()
   const [viewMode, setViewMode] = useState<ViewMode>('cards')
   const [showNewPatientDialog, setShowNewPatientDialog] = useState(false)
+  const [editingCase, setEditingCase] = useState<DashboardCase | null>(null)
 
   const patientCases = useMemo(
-    () => cases.filter((item) => item.caseId !== DEFAULT_CASE_ID),
+    () => cases.filter(isListedPatientCase),
     [cases],
   )
 
   const handleCreated = (patient: NewPatientData) => {
     setShowNewPatientDialog(false)
     onCreatePatient(patient)
+  }
+
+  const handleEdited = (patient: NewPatientData) => {
+    if (!editingCase) return
+    const caseId = editingCase.caseId
+    setEditingCase(null)
+    onEditPatient(caseId, patient)
   }
 
   return (
@@ -108,11 +127,18 @@ export function MeinePatientenView({
       ) : viewMode === 'cards' ? (
         <div className="meine-patienten__grid">
           {patientCases.map((caseItem) => (
-            <PatientCaseCard
-              key={caseItem.caseId}
-              caseItem={caseItem}
-              onOpen={onOpenPatient}
-            />
+            <div key={caseItem.caseId} className="meine-patienten__card-wrap">
+              <PatientCaseCard caseItem={caseItem} onOpen={onOpenPatient} />
+              <button
+                type="button"
+                className="meine-patienten__edit-btn"
+                onClick={() => setEditingCase(caseItem)}
+                aria-label={t('patientEditData')}
+                title={t('patientEditData')}
+              >
+                <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+              </button>
+            </div>
           ))}
         </div>
       ) : (
@@ -127,7 +153,7 @@ export function MeinePatientenView({
             ].filter(Boolean)
 
             return (
-              <li key={caseItem.caseId}>
+              <li key={caseItem.caseId} className="meine-patienten__list-item">
                 <button
                   type="button"
                   className="meine-patienten__list-row"
@@ -140,6 +166,15 @@ export function MeinePatientenView({
                   <span className="meine-patienten__list-date">
                     {formatSiteLocaleDate(caseItem.lastEditedAt, language)}
                   </span>
+                </button>
+                <button
+                  type="button"
+                  className="meine-patienten__edit-btn meine-patienten__edit-btn--list"
+                  onClick={() => setEditingCase(caseItem)}
+                  aria-label={t('patientEditData')}
+                  title={t('patientEditData')}
+                >
+                  <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
                 </button>
               </li>
             )
@@ -155,8 +190,18 @@ export function MeinePatientenView({
 
       {showNewPatientDialog ? (
         <NewPatientDialog
-          onCreated={handleCreated}
+          mode="create"
+          onSubmit={handleCreated}
           onCancel={() => setShowNewPatientDialog(false)}
+        />
+      ) : null}
+
+      {editingCase ? (
+        <NewPatientDialog
+          mode="edit"
+          initialData={caseToPatientData(editingCase)}
+          onSubmit={handleEdited}
+          onCancel={() => setEditingCase(null)}
         />
       ) : null}
     </div>

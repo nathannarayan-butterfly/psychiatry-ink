@@ -94,7 +94,7 @@ function ChecklistItemsEditor({
 }) {
   return (
     <div className="space-y-2 rounded-sm border border-border/70 bg-surface/80 p-2">
-      <p className="text-[11px] font-medium uppercase tracking-wide text-muted">Checklistenpunkte</p>
+      <p className="text-[12px] font-medium uppercase tracking-wide text-muted">Checklistenpunkte</p>
       {items.map((item, index) => (
         <div key={item.id} className="space-y-1.5 border-t border-border/50 pt-2 first:border-t-0 first:pt-0">
           <TextInput
@@ -244,7 +244,7 @@ export function WorkspaceSection({ workspace }: WorkspaceSectionProps) {
                   <p className="truncate text-sm font-medium text-ink">
                     {component.label}
                     {isLocked ? (
-                      <span className="ml-2 rounded-sm bg-surface-hover px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted">
+                      <span className="ml-2 rounded-sm bg-surface-hover px-1.5 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted">
                         Standard
                       </span>
                     ) : null}

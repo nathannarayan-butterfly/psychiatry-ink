@@ -10,12 +10,15 @@ import { isAccountBackupUnlocked } from '../utils/accountBackupSession'
 import { registerClinicalImprintPersistHook } from '../utils/clinicalImprint'
 import { registerIsdmInputPersistHook } from '../utils/isdm/inputStorage'
 import { registerIsdmPersistHook } from '../utils/isdm/storage'
+import { registerMedicationPlanPersistHook } from '../utils/medication/storage'
 import {
   ensureKeyMaterial,
   getOrCreateDeviceId,
   registerPublicKeyIfAllowed,
+  saveWorkspaceVaultBlob,
   type EncryptedVaultBlob,
 } from '../utils/cryptoVault'
+import { saveNotionDocumentSnapshot } from '../utils/notionDocumentActions'
 import {
   applyWorkspacePayloadAsync,
   collectClinicalPayload,
@@ -121,6 +124,7 @@ export function useWorkspaceVault({
   const [error, setError] = useState<string | null>(null)
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null)
   const [lastDbSnapshotAt, setLastDbSnapshotAt] = useState<string | null>(null)
+  const [isDirty, setIsDirty] = useState(false)
   const saveTimerRef = useRef<number | null>(null)
   const initRef = useRef<string | null>(null)
 
@@ -138,10 +142,26 @@ export function useWorkspaceVault({
       if (!enabled) return null
 
       const live = getLivePatch()
+
+      if (live.documentTypeId) {
+        const savedAt = new Date().toISOString()
+        saveNotionDocumentSnapshot(
+          {
+            documentTypeId: live.documentTypeId,
+            pageHeading: live.pageHeading,
+            sectionContents: { ...live.sectionContents },
+            savedAt,
+          },
+          caseId,
+        )
+
+      }
+
       const payload = collectClinicalPayload(live, caseId)
       const blob = await encryptWorkspacePayload(payload)
-      await saveEncryptedWorkspace(live, caseId)
+      await saveWorkspaceVaultBlob(blob, caseId)
       setLastSavedAt(payload.updatedAt)
+      setIsDirty(false)
 
       if (options?.recordExport) {
         recordVaultExport(caseId)
@@ -171,6 +191,7 @@ export function useWorkspaceVault({
   const scheduleSave = useCallback(() => {
     if (!enabled) return
     if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current)
+    setIsDirty(true)
     saveTimerRef.current = window.setTimeout(() => {
       void persist().catch((saveError) => {
         setError(saveError instanceof Error ? saveError.message : 'Workspace vault save failed')
@@ -191,10 +212,14 @@ export function useWorkspaceVault({
     registerIsdmInputPersistHook((persistCaseId) => {
       if (persistCaseId === caseId) scheduleSaveRef.current()
     })
+    registerMedicationPlanPersistHook((persistCaseId) => {
+      if (persistCaseId === caseId) scheduleSaveRef.current()
+    })
     return () => {
       registerClinicalImprintPersistHook(null)
       registerIsdmPersistHook(null)
       registerIsdmInputPersistHook(null)
+      registerMedicationPlanPersistHook(null)
     }
   }, [caseId])
 
@@ -286,9 +311,17 @@ export function useWorkspaceVault({
 
   const showBackupReminder = shouldShowBackupReminder(dbSyncEnabled, Boolean(lastDbSnapshotAt))
 
+  const persistRef = useRef(persist)
+  persistRef.current = persist
+
   useEffect(
     () => () => {
-      if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current)
+      if (saveTimerRef.current !== null) {
+        window.clearTimeout(saveTimerRef.current)
+        // Fire a best-effort vault save when the component unmounts with pending changes
+        // (e.g. patient closed within the 800ms debounce window).
+        void persistRef.current().catch(() => {})
+      }
     },
     [],
   )
@@ -298,6 +331,7 @@ export function useWorkspaceVault({
     ready,
     error,
     dbSyncEnabled,
+    isDirty,
     lastSavedAt,
     lastDbSnapshotAt,
     lastExportAt: getLastVaultExportAt(caseId),

@@ -18,6 +18,7 @@ import {
 import { KiInstructionsSettings } from './KiInstructionsSettings'
 import type { useKiInstructions } from '../../hooks/useKiInstructions'
 import { PatientPrivacySection } from './PatientPrivacySection'
+import { LabImportSection } from './LabImportSection'
 
 interface SectionGroup {
   groupLabel?: string
@@ -71,6 +72,7 @@ export function SettingsPage({
           { id: 'workspace', label: t('settingsWorkspace') },
           { id: 'language', label: t('settingsLanguage') },
           { id: 'documentation', label: t('settingsDocumentation') },
+          { id: 'lab', label: t('settingsLab') },
         ],
       },
       {
@@ -162,6 +164,7 @@ export function SettingsPage({
             />
           ) : null}
           {activeSection === 'documentation' ? <DocumentationSection /> : null}
+          {activeSection === 'lab' ? <LabImportSection /> : null}
           {activeSection === 'ai' ? (
             <KiInstructionsSettings
               kiInstructions={kiInstructions}

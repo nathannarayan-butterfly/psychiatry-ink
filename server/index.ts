@@ -11,6 +11,7 @@ import { creditsRouter } from './routes/credits'
 import { cryptoRouter } from './routes/crypto'
 import { workspaceVaultRouter } from './routes/workspaceVault'
 import { generateRouter } from './routes/generate'
+import { pharmaGenerateRouter } from './routes/pharmaGenerate'
 import { generationLogRouter } from './routes/generationLog'
 import { diagnosisCodesRouter } from './routes/diagnosisCodes'
 import { accountBackupRouter } from './routes/accountBackup'
@@ -30,6 +31,7 @@ app.get('/api/health', (_req, res) => {
 })
 
 app.use('/api/generate', generateRouter)
+app.use('/api/pharma-generate', pharmaGenerateRouter)
 app.use('/api/account', accountRouter)
 app.use('/api/credits', creditsRouter)
 app.use('/api/crypto', cryptoRouter)

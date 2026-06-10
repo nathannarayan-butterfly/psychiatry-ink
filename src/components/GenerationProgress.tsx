@@ -33,7 +33,7 @@ export function GenerationProgress() {
           />
         </svg>
       </div>
-      <p className="text-[11px] font-medium text-secondary sm:text-xs">{t('generating')}</p>
+      <p className="text-[12px] font-medium text-secondary sm:text-xs">{t('generating')}</p>
     </div>
   )
 }

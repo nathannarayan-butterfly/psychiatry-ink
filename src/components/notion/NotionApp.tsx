@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { getCaseMeta, upsertCaseMeta } from '../../hooks/useCaseRegistry'
+import { UnsavedChangesDialog } from './UnsavedChangesDialog'
+import { getCaseMeta } from '../../hooks/useCaseRegistry'
 import { flushSync } from 'react-dom'
 import { useTranslation } from '../../context/TranslationContext'
 import { useCaseRegistry } from '../../hooks/useCaseRegistry'
@@ -34,8 +35,20 @@ import { NewPatientDialog } from '../dashboard/NewPatientDialog'
 import type { NewPatientData } from '../dashboard/NewPatientDialog'
 import { scheduleAiGenerationImprint } from '../../utils/clinicalImprint'
 import { appendVerlaufEntry } from '../../utils/verlaufFeed'
-import { appendDokument, inferDokumentCategory } from '../../utils/dokumenteArchive'
-import { appendSavedDoc, loadSavedDocs, type SavedDoc } from '../../utils/savedDocs'
+import {
+  DOKUMENTE_ARCHIVE_CHANGED_EVENT,
+  inferDokumentCategory,
+  loadDokumente,
+  type DokumentEntry,
+} from '../../utils/dokumenteArchive'
+import { syncWorkspaceDocumentToArchive } from '../../utils/anamnese/syncArchive'
+import {
+  appendSavedDoc,
+  loadSavedDocs,
+  removeSavedDoc,
+  removeSavedDocsByTypeId,
+  type SavedDoc,
+} from '../../utils/savedDocs'
 import { NotionTopBar } from './NotionTopBar'
 import { WorkspaceContextMenu } from './WorkspaceContextMenu'
 import { NotionPaper, type SavedWorkspaceDocumentPayload } from './NotionPaper'
@@ -43,11 +56,14 @@ import { NotionInputBar } from './NotionInputBar'
 import { NotionTimelineCanvas } from './NotionTimelineCanvas'
 import { NotionGenerationReview } from './NotionGenerationReview'
 import { NotionToastHost } from './NotionToast'
+import { PasteDetectionChip } from './PasteDetectionChip'
 import type { SelectionActionId } from './FloatingSelectionToolbar'
 import type { PasteActionId } from './PasteAssistant'
 import { pasteActionTargetPage } from './PasteAssistant'
+import type { ContentCategory } from '../../utils/pasteContentDetector'
 import type { SlashCommandId } from './SlashCommandMenu'
 import { slashCommandToAiTool } from './SlashCommandMenu'
+import { parseAnamneseSections } from '../../utils/anamnese/parseSections'
 import {
   isToolPage,
   isWorkspacePageOpen,
@@ -63,6 +79,7 @@ import {
   resolveDefaultPsychopathSubMode,
   type PsychopathSubMode,
 } from '../../utils/psychopathMode'
+import { loadNotionPageHeading } from '../../utils/notionPageHeading'
 
 type WorkspaceState = ReturnType<typeof useWorkspaceState>
 type LabState = ReturnType<typeof useLabTool>
@@ -110,6 +127,23 @@ interface NotionAppProps {
   isIsdmActive?: boolean
   assessmentStandard: AssessmentStandard
   onSelectAssessmentStandard: (standard: AssessmentStandard) => void
+}
+
+/** Maps a detected ContentCategory to the workspace page to navigate to. */
+function categoryToNotionPage(category: ContentCategory): NotionPageId | null {
+  switch (category) {
+    case 'aufnahme': return 'aufnahme'
+    case 'verlauf': return 'verlauf'
+    case 'labor': return 'labor'
+    case 'medikation': return 'medikation'
+    default: return null
+  }
+}
+
+interface PasteChipState {
+  id: number
+  text: string
+  category: ContentCategory
 }
 
 function isAiToolKey(action: SelectionActionId | PasteActionId): action is AiToolKey {
@@ -160,6 +194,34 @@ export function NotionApp({
   useEffect(() => {
     setSavedDocs(loadSavedDocs(savedDocsKey))
   }, [savedDocsKey])
+
+  // Track whether the current formal document type has a draft-only entry (no
+  // manually-saved version), so we can show the workspace draft warning banner.
+  const [hasDraftOnlyBanner, setHasDraftOnlyBanner] = useState(false)
+  useEffect(() => {
+    const docTypeId = workspace.selectedDocumentType
+    if (!docTypeId || !inferDokumentCategory(docTypeId)) {
+      setHasDraftOnlyBanner(false)
+      return
+    }
+    const checkDraftOnly = () => {
+      const all = loadDokumente(storageCaseId)
+      const forType = all.filter((e) => e.pageType === docTypeId)
+      const hasSaved = forType.some((e) => e.source === 'manual' || e.source === 'ai-accepted')
+      const hasDraft = forType.some((e) => e.source === 'draft')
+      setHasDraftOnlyBanner(hasDraft && !hasSaved)
+    }
+    checkDraftOnly()
+
+    function handleArchiveChanged(e: Event) {
+      const detail = (e as CustomEvent<{ caseId: string }>).detail
+      if (detail?.caseId === storageCaseId) checkDraftOnly()
+    }
+    window.addEventListener(DOKUMENTE_ARCHIVE_CHANGED_EVENT, handleArchiveChanged)
+    return () => {
+      window.removeEventListener(DOKUMENTE_ARCHIVE_CHANGED_EVENT, handleArchiveChanged)
+    }
+  }, [storageCaseId, workspace.selectedDocumentType])
 
   const handleAssessmentStandardChange = useCallback(
     (next: AssessmentStandard) => {
@@ -214,44 +276,111 @@ export function NotionApp({
 
   const VERLAUF_DOCUMENT_TYPES = ['verlauf', 'therapie-verlauf']
 
-  const handleVaultSaveWithFeedAppend = useCallback(async () => {
-    const docTypeId = workspace.selectedDocumentType
-    if (VERLAUF_DOCUMENT_TYPES.includes(docTypeId)) {
-      // Do not append while an AI result is still awaiting physician review
-      if (!workspace.generationPendingReview) {
-        const content =
-          Object.values(workspace.sectionContents).join('\n\n') ||
-          workspace.editorContent
-        if (content.trim()) {
-          const activeSection = workspace.sections.find(
-            (s) => s.id === workspace.activeSectionId,
-          )
-          const source = workspace.generationWasAccepted ? 'ai-accepted' : 'manual'
-          appendVerlaufEntry(storageCaseId, {
-            date: new Date().toISOString(),
-            content: content.trim(),
-            pageType: docTypeId,
-            sectionLabel: activeSection?.label,
-            source,
-          })
-        }
+  const resolveArchiveDocumentTitle = useCallback(
+    (docTypeId: string) => {
+      const pageHeading = loadNotionPageHeading(docTypeId, storageCaseId)
+      if (pageHeading.trim()) return pageHeading.trim()
+      const page = NOTION_PAGES.find((item) => item.documentTypeId === docTypeId)
+      return page ? t(page.labelKey) : docTypeId
+    },
+    [storageCaseId, t],
+  )
+
+  const archiveActiveDocumentIfNeeded = useCallback(
+    (source: 'draft' | 'manual' | 'ai-accepted' = 'draft') => {
+      const docTypeId = workspace.selectedDocumentType
+      if (!docTypeId || workspace.generationPendingReview) return null
+      if (!inferDokumentCategory(docTypeId)) return null
+
+      const title = resolveArchiveDocumentTitle(docTypeId)
+      const archived = syncWorkspaceDocumentToArchive({
+        caseId: storageCaseId,
+        documentTypeId: docTypeId,
+        title,
+        sectionContents: workspace.getLatestSectionContents(),
+        editorContent: workspace.editorContent,
+        source,
+        language: languageSettings.language,
+      })
+
+      // Only add explicitly saved documents (manual or AI-accepted) to Recent.
+      // Draft/autosave archives triggered by navigation are not shown in Recent.
+      if (source !== 'draft' && archived?.content.trim()) {
+        const updated = appendSavedDoc(savedDocsKey, {
+          typeId: archived.pageType,
+          typeLabel: title,
+          date: archived.date,
+          content: archived.content,
+          sectionContents: archived.sectionContents ?? {},
+        })
+        setSavedDocs(updated)
       }
-    }
-    await workspaceVault.saveNow()
-  }, [
-    storageCaseId,
-    workspace.activeSectionId,
-    workspace.editorContent,
-    workspace.generationPendingReview,
-    workspace.generationWasAccepted,
-    workspace.sectionContents,
-    workspace.sections,
-    workspace.selectedDocumentType,
-    workspaceVault,
-  ])
-  const [activeTopTab, setActiveTopTab] = useState<TopNavTabId>('workspace')
-  const [showPatientDashboard, setShowPatientDashboard] = useState(
-    () => initialShowPatientDashboard ?? false,
+
+      return archived
+    },
+    [
+      languageSettings.language,
+      resolveArchiveDocumentTitle,
+      savedDocsKey,
+      storageCaseId,
+      workspace,
+    ],
+  )
+
+  /**
+   * skipDraftArchive: pass true when this function is called from an explicit
+   * manual save (handleVaultSaveWithArchive) that already archived the document
+   * with source='manual', to avoid creating a redundant draft entry on top of it.
+   */
+  const handleVaultSaveWithFeedAppend = useCallback(
+    async (opts?: { skipDraftArchive?: boolean }) => {
+      const docTypeId = workspace.selectedDocumentType
+      if (VERLAUF_DOCUMENT_TYPES.includes(docTypeId)) {
+        // Do not append while an AI result is still awaiting physician review
+        if (!workspace.generationPendingReview) {
+          const content =
+            Object.values(workspace.sectionContents).join('\n\n') ||
+            workspace.editorContent
+          if (content.trim()) {
+            const activeSection = workspace.sections.find(
+              (s) => s.id === workspace.activeSectionId,
+            )
+            const source = workspace.generationWasAccepted ? 'ai-accepted' : 'manual'
+            appendVerlaufEntry(storageCaseId, {
+              date: new Date().toISOString(),
+              content: content.trim(),
+              pageType: docTypeId,
+              sectionLabel: activeSection?.label,
+              source,
+            })
+          }
+        }
+      } else if (
+        !opts?.skipDraftArchive &&
+        !workspace.generationPendingReview &&
+        inferDokumentCategory(docTypeId)
+      ) {
+        archiveActiveDocumentIfNeeded(
+          workspace.generationWasAccepted ? 'ai-accepted' : 'draft',
+        )
+      }
+      await workspaceVault.saveNow()
+    },
+    [
+      archiveActiveDocumentIfNeeded,
+      storageCaseId,
+      workspace.activeSectionId,
+      workspace.editorContent,
+      workspace.generationPendingReview,
+      workspace.generationWasAccepted,
+      workspace.sectionContents,
+      workspace.sections,
+      workspace.selectedDocumentType,
+      workspaceVault,
+    ],
+  )
+  const [activeTopTab, setActiveTopTab] = useState<TopNavTabId>(() =>
+    initialShowPatientDashboard ? 'overview' : 'workspace',
   )
   const [showPatientRegistry, setShowPatientRegistry] = useState(false)
   const initialPageAppliedRef = useRef(false)
@@ -306,10 +435,85 @@ export function NotionApp({
     return undefined
   }, [activePage, activeTopTab, documentLabel, t, workspace.selectedDocumentType])
 
+  type PendingNavAction =
+    | { type: 'closeDocument' }
+    | { type: 'navigateDashboard' }
+    | { type: 'navigateCase'; caseId: string; page?: NotionPageId; showPatientDashboard?: boolean }
+    | { type: 'closeTab'; tabId: string }
+
+  const [pendingNavAction, setPendingNavAction] = useState<PendingNavAction | null>(null)
+  const [isSavingBeforeNav, setIsSavingBeforeNav] = useState(false)
+
+  const executePendingNavAction = useCallback(
+    (action: PendingNavAction) => {
+      if (action.type === 'closeDocument') {
+        workspace.resetToBlankPage()
+        setShowPatientRegistry(false)
+        setActiveTopTab('workspace')
+        setActivePage('aufnahme')
+      } else if (action.type === 'navigateDashboard') {
+        onNavigateDashboard?.()
+      } else if (action.type === 'navigateCase') {
+        onNavigateNewCase?.(action.caseId, action.page, action.showPatientDashboard)
+      } else if (action.type === 'closeTab') {
+        workspaceTabs?.onCloseTab(action.tabId)
+      }
+    },
+    [onNavigateDashboard, onNavigateNewCase, workspace, workspaceTabs],
+  )
+
+  const handleUnsavedSave = useCallback(async () => {
+    if (!pendingNavAction) return
+    setIsSavingBeforeNav(true)
+    try {
+      await handleVaultSaveWithFeedAppend()
+    } finally {
+      setIsSavingBeforeNav(false)
+    }
+    const action = pendingNavAction
+    setPendingNavAction(null)
+    executePendingNavAction(action)
+  }, [executePendingNavAction, handleVaultSaveWithFeedAppend, pendingNavAction])
+
+  const handleUnsavedDiscard = useCallback(() => {
+    const action = pendingNavAction
+    setPendingNavAction(null)
+    if (action) executePendingNavAction(action)
+  }, [executePendingNavAction, pendingNavAction])
+
+  const handleUnsavedCancel = useCallback(() => {
+    setPendingNavAction(null)
+  }, [])
+
+  const guardedNav = useCallback(
+    (action: PendingNavAction, proceed: () => void) => {
+      if (workspaceVault.isDirty) {
+        setPendingNavAction(action)
+      } else {
+        proceed()
+      }
+    },
+    [workspaceVault.isDirty],
+  )
+
   const handleCloseWorkspacePage = useCallback(() => {
-    workspace.resetToBlankPage()
-    setShowPatientDashboard(true)
-  }, [workspace])
+    const doClose = () => {
+      archiveActiveDocumentIfNeeded('draft')
+      workspace.resetToBlankPage()
+      setShowPatientRegistry(false)
+      setActiveTopTab('workspace')
+      setActivePage('aufnahme')
+    }
+    guardedNav({ type: 'closeDocument' }, doClose)
+  }, [archiveActiveDocumentIfNeeded, guardedNav, workspace])
+
+  const handleCloseTab = useCallback(
+    (tabId: string) => {
+      const doClose = () => workspaceTabs?.onCloseTab(tabId)
+      guardedNav({ type: 'closeTab', tabId }, doClose)
+    },
+    [guardedNav, workspaceTabs],
+  )
 
   const handleAcceptGenerationWithArchive = useCallback(async () => {
     const docTypeId = workspace.selectedDocumentType
@@ -324,13 +528,14 @@ export function NotionApp({
       workspace.sections.length > 0 ? workspace.sectionContents : {}
 
     if (category && content.trim()) {
-      appendDokument(storageCaseId, {
-        category,
+      syncWorkspaceDocumentToArchive({
+        caseId: storageCaseId,
+        documentTypeId: docTypeId,
         title: documentLabel,
-        content: content.trim(),
-        date: new Date().toISOString(),
+        sectionContents,
+        editorContent: workspace.editorContent,
         source: 'ai-accepted',
-        pageType: docTypeId,
+        language: languageSettings.language,
       })
     }
 
@@ -352,7 +557,7 @@ export function NotionApp({
     await workspaceVault.saveNow()
     workspace.acceptGeneration()
     workspace.resetToBlankPage()
-  }, [documentLabel, savedDocsKey, storageCaseId, workspace, workspaceVault])
+  }, [documentLabel, languageSettings.language, savedDocsKey, storageCaseId, workspace, workspaceVault])
 
   const handleVaultSaveWithArchive = useCallback(async (payload?: SavedWorkspaceDocumentPayload) => {
     if (!payload) {
@@ -376,13 +581,14 @@ export function NotionApp({
     // or if AI was just accepted (to avoid duplicating the ai-accepted entry)
     if (category && !workspace.generationPendingReview && !workspace.generationWasAccepted) {
       if (content.trim()) {
-        appendDokument(storageCaseId, {
-          category,
+        syncWorkspaceDocumentToArchive({
+          caseId: storageCaseId,
+          documentTypeId: docTypeId,
           title: typeLabel,
-          content: content.trim(),
-          date: savedAt,
+          sectionContents,
+          editorContent: workspace.editorContent,
           source: 'manual',
-          pageType: docTypeId,
+          language: languageSettings.language,
         })
       }
     }
@@ -399,11 +605,12 @@ export function NotionApp({
       setSavedDocs(updated)
     }
 
-    await handleVaultSaveWithFeedAppend()
+    // Skip redundant draft archive: we already wrote a manual entry above.
+    await handleVaultSaveWithFeedAppend({ skipDraftArchive: true })
     if (docTypeId && content.trim() && !workspace.generationPendingReview) {
       workspace.resetToBlankPage()
     }
-  }, [documentLabel, handleVaultSaveWithFeedAppend, savedDocsKey, storageCaseId, workspace])
+  }, [documentLabel, handleVaultSaveWithFeedAppend, languageSettings.language, savedDocsKey, storageCaseId, workspace])
 
   const handleViewSavedDoc = useCallback(
     (doc: SavedDoc) => {
@@ -420,6 +627,57 @@ export function NotionApp({
         workspace.setEditorContent(doc.content)
       }
       // Navigate to workspace tab to show the document
+      setActiveTopTab('workspace')
+    },
+    [workspace],
+  )
+
+  const handleRemoveSavedDoc = useCallback(
+    (id: string) => {
+      const updated = removeSavedDoc(savedDocsKey, id)
+      setSavedDocs(updated)
+    },
+    [savedDocsKey],
+  )
+
+  const handleAfterDeleteDokument = useCallback(
+    (pageType: string) => {
+      const updated = removeSavedDocsByTypeId(savedDocsKey, pageType)
+      setSavedDocs(updated)
+    },
+    [savedDocsKey],
+  )
+
+  /**
+   * Navigate to the workspace page for the given draft entry and inject its content
+   * so the user can continue editing there. An explicit Save in the workspace will
+   * promote the draft to a manual (non-draft) document.
+   */
+  const handleEditDraft = useCallback(
+    (entry: DokumentEntry) => {
+      // Lab documents live in the dedicated Labor tool tab, not the document workspace.
+      if (entry.pageType === 'labor' || entry.category === 'laborbefunde') {
+        setActiveTopTab('labor')
+        return
+      }
+
+      const pageId = resolveNotionPageFromDocumentType(entry.pageType)
+      const hasSectionContents =
+        entry.sectionContents && Object.keys(entry.sectionContents).length > 0
+
+      if (hasSectionContents) {
+        workspace.restoreFromSnapshot({
+          documentTypeId: entry.pageType,
+          pageHeading: entry.title,
+          sectionContents: entry.sectionContents!,
+          savedAt: entry.date,
+        })
+      } else {
+        workspace.selectDocumentType(entry.pageType)
+        workspace.setEditorContent(entry.content)
+      }
+
+      setActivePage(pageId)
       setActiveTopTab('workspace')
     },
     [workspace],
@@ -545,6 +803,118 @@ export function NotionApp({
     [workspace],
   )
 
+  /** Strip a previously-appended paste block from the active editor content. */
+  const removeTextFromEditor = useCallback(
+    (text: string) => {
+      const trimmed = text.trim()
+      if (!trimmed) return
+      const current = workspace.editorContent
+      if (!current.includes(trimmed)) return
+      const next = current.split(trimmed).join('').replace(/\n{3,}/g, '\n\n').trim()
+      workspace.setEditorContent(next)
+    },
+    [workspace],
+  )
+
+  const [pasteChip, setPasteChip] = useState<PasteChipState | null>(null)
+
+  const applyDetectedCategory = useCallback(
+    (text: string, category: ContentCategory) => {
+      const targetPage = categoryToNotionPage(category)
+      if (targetPage) {
+        handlePageSelect(targetPage)
+      }
+      appendTextToEditor(text)
+    },
+    [appendTextToEditor, handlePageSelect],
+  )
+
+  // Insert a detected paste into the correct page WITHOUT touching the chip.
+  // For Aufnahme: attempt to distribute pasted text to the correct section tabs
+  // via section-aware parsing. If ≥ 2 sections are found, use restoreFromSnapshot
+  // so the workspace shows each section immediately. restoreFromSnapshot runs
+  // after handlePageSelect in the same React update batch, so its state writes
+  // override the blank-state initialisation from selectDocumentType.
+  const insertDetectedCategory = useCallback(
+    (text: string, category: ContentCategory) => {
+      if (category === 'aufnahme') {
+        const parsed = parseAnamneseSections(text)
+        if (Object.keys(parsed).length >= 2) {
+          handlePageSelect('aufnahme')
+          workspace.restoreFromSnapshot({
+            documentTypeId: 'aufnahme',
+            pageHeading: '',
+            sectionContents: parsed,
+            savedAt: new Date().toISOString(),
+          })
+          return
+        }
+      }
+      applyDetectedCategory(text, category)
+    },
+    [applyDetectedCategory, handlePageSelect, workspace],
+  )
+
+  // Remove a previously-inserted paste from its page. Operates on the currently
+  // active page, which is the page the paste was inserted into.
+  const clearDetectedCategory = useCallback(
+    (text: string, category: ContentCategory) => {
+      if (category === 'aufnahme') {
+        const parsed = parseAnamneseSections(text)
+        if (Object.keys(parsed).length >= 2) {
+          workspace.restoreFromSnapshot({
+            documentTypeId: 'aufnahme',
+            pageHeading: '',
+            sectionContents: {},
+            savedAt: new Date().toISOString(),
+          })
+          return
+        }
+      }
+      removeTextFromEditor(text)
+    },
+    [removeTextFromEditor, workspace],
+  )
+
+  const handleDetectedPaste = useCallback(
+    (text: string, category: ContentCategory) => {
+      insertDetectedCategory(text, category)
+      setPasteChip({ id: Date.now(), text, category })
+    },
+    [insertDetectedCategory],
+  )
+
+  // Deferred re-route for the chip's "change category" action. We clear the old
+  // page first (committed in the triggering render), then insert into the new
+  // page from this effect. Splitting the move across two renders avoids the
+  // stale-closure content that selectDocumentType would otherwise persist back
+  // to the old document during navigation — which is what caused content to be
+  // duplicated instead of moved.
+  const [pendingReroute, setPendingReroute] = useState<{
+    text: string
+    category: ContentCategory
+  } | null>(null)
+
+  useEffect(() => {
+    if (!pendingReroute) return
+    const { text, category } = pendingReroute
+    setPendingReroute(null)
+    insertDetectedCategory(text, category)
+  }, [pendingReroute, insertDetectedCategory])
+
+  const handleChangePasteCategory = useCallback(
+    (newCategory: ContentCategory) => {
+      const chip = pasteChip
+      if (!chip || newCategory === chip.category) return
+      clearDetectedCategory(chip.text, chip.category)
+      setPendingReroute({ text: chip.text, category: newCategory })
+      setPasteChip((current) =>
+        current ? { ...current, category: newCategory } : null,
+      )
+    },
+    [clearDetectedCategory, pasteChip],
+  )
+
   const handlePasteAction = useCallback(
     (action: PasteActionId, pastedText: string) => {
       const targetPage = pasteActionTargetPage(action)
@@ -623,11 +993,29 @@ export function NotionApp({
   )
   const hasPatient = Boolean(currentPatientName)
 
+  // Keep the workspace tab label in sync with the current patient name.
+  // Uses stable refs so it only fires when the patient name or active tab actually changes.
+  const onUpdateTabPatient = workspaceTabs?.onUpdateTabPatient
+  const activeWorkspaceTabId = workspaceTabs?.activeTabId
+  useEffect(() => {
+    if (!showWorkspaceTabs || !onUpdateTabPatient || !activeWorkspaceTabId) return
+    onUpdateTabPatient(activeWorkspaceTabId, currentPatientName ?? '')
+  }, [currentPatientName, showWorkspaceTabs, onUpdateTabPatient, activeWorkspaceTabId])
+
+  // Update the browser tab title to reflect the active patient.
+  useEffect(() => {
+    const base = 'Psychiatry.ink'
+    document.title = currentPatientName ? `${currentPatientName} – ${base}` : base
+    return () => {
+      document.title = base
+    }
+  }, [currentPatientName])
+
   const [showCreatePatientDialog, setShowCreatePatientDialog] = useState(false)
 
   const handlePatientCreated = useCallback(
     (patient: NewPatientData) => {
-      upsertCaseMeta(caseId, {
+      caseRegistry.upsertCaseMeta(caseId, {
         localName: patient.name || undefined,
         localVorname: patient.vorname || undefined,
         localNachname: patient.nachname || undefined,
@@ -639,7 +1027,24 @@ export function NotionApp({
       void caseRegistry.refresh()
       setShowCreatePatientDialog(false)
       setShowPatientRegistry(false)
-      setShowPatientDashboard(true)
+      setActiveTopTab('overview')
+    },
+    [caseId, caseRegistry],
+  )
+
+  const handleRegistryEditPatient = useCallback(
+    (targetCaseId: string, patient: NewPatientData) => {
+      caseRegistry.upsertCaseMeta(targetCaseId, {
+        localName: patient.name || undefined,
+        localVorname: patient.vorname || undefined,
+        localNachname: patient.nachname || undefined,
+        localGeburtsdatum: patient.geburtsdatum || undefined,
+        localGeschlecht: patient.geschlecht || undefined,
+      })
+      if (targetCaseId === caseId) {
+        setPatientMetaVersion((v) => v + 1)
+      }
+      void caseRegistry.refresh()
     },
     [caseId, caseRegistry],
   )
@@ -648,12 +1053,18 @@ export function NotionApp({
     (targetCaseId: string) => {
       if (targetCaseId === caseId) {
         setShowPatientRegistry(false)
-        setShowPatientDashboard(true)
+        setActiveTopTab('overview')
         return
       }
-      onNavigateNewCase?.(targetCaseId, undefined, true)
+      guardedNav(
+        { type: 'navigateCase', caseId: targetCaseId, showPatientDashboard: true },
+        () => {
+          archiveActiveDocumentIfNeeded('draft')
+          onNavigateNewCase?.(targetCaseId, undefined, true)
+        },
+      )
     },
-    [caseId, onNavigateNewCase],
+    [archiveActiveDocumentIfNeeded, caseId, guardedNav, onNavigateNewCase],
   )
 
   const handleRegistryCreatePatient = useCallback(
@@ -668,9 +1079,16 @@ export function NotionApp({
           localGeschlecht: patient.geschlecht || undefined,
         })
       }
-      onNavigateNewCase?.(newCaseId, undefined, true)
+      void caseRegistry.refresh()
+      guardedNav(
+        { type: 'navigateCase', caseId: newCaseId, showPatientDashboard: true },
+        () => {
+          archiveActiveDocumentIfNeeded('draft')
+          onNavigateNewCase?.(newCaseId, undefined, true)
+        },
+      )
     },
-    [caseRegistry, onNavigateNewCase],
+    [archiveActiveDocumentIfNeeded, caseRegistry, guardedNav, onNavigateNewCase],
   )
 
   return (
@@ -680,7 +1098,15 @@ export function NotionApp({
       <NotionTopBar
         creditBalance={workspace.creditBalance}
         onOpenSettings={settingsPanel.openSettings}
-        onNavigateDashboard={onNavigateDashboard}
+        onNavigateDashboard={
+          onNavigateDashboard
+            ? () =>
+                guardedNav({ type: 'navigateDashboard' }, () => {
+                  archiveActiveDocumentIfNeeded('draft')
+                  onNavigateDashboard()
+                })
+            : undefined
+        }
       />
 
       {showWorkspaceTabs && workspaceTabs && (
@@ -689,7 +1115,7 @@ export function NotionApp({
           activeTabId={workspaceTabs.activeTabId}
           onTabSelect={workspaceTabs.onTabSelect}
           onAddTab={workspaceTabs.onAddTab}
-          onCloseTab={workspaceTabs.onCloseTab}
+          onCloseTab={handleCloseTab}
         />
       )}
 
@@ -717,18 +1143,24 @@ export function NotionApp({
       <CaseTopNav
         activeTab={activeTopTab}
         onTabSelect={(tab) => {
+          if (
+            activeTopTab === 'workspace' &&
+            tab !== 'workspace' &&
+            workspace.selectedDocumentType
+          ) {
+            archiveActiveDocumentIfNeeded('draft')
+          }
           setShowPatientRegistry(false)
-          setShowPatientDashboard(false)
           setActiveTopTab(tab)
         }}
         patientName={currentPatientName}
         onPatientClick={() => {
           setShowPatientRegistry(false)
-          setShowPatientDashboard(true)
+          setActiveTopTab('overview')
         }}
         onRegistryClick={() => {
-          setShowPatientDashboard(false)
           setShowPatientRegistry(true)
+          void caseRegistry.refresh()
         }}
         registryActive={showPatientRegistry}
         hasPatient={hasPatient}
@@ -736,7 +1168,6 @@ export function NotionApp({
         activePageLabel={workspacePageLabel}
         onCloseWorkspacePage={
           activeTopTab === 'workspace' &&
-          !showPatientDashboard &&
           !showPatientRegistry &&
           isWorkspacePageOpen(activePage, workspace.selectedDocumentType)
             ? handleCloseWorkspacePage
@@ -752,25 +1183,22 @@ export function NotionApp({
             error={caseRegistry.error}
             onOpenPatient={handleRegistryOpenPatient}
             onCreatePatient={handleRegistryCreatePatient}
+            onEditPatient={handleRegistryEditPatient}
           />
         ) : null}
 
-        {!showPatientRegistry && showPatientDashboard ? (
+        {!showPatientRegistry && activeTopTab === 'overview' ? (
           <PatientDashboardView
             caseId={caseId}
-            onTabSelect={(tab) => {
-              setShowPatientDashboard(false)
-              setActiveTopTab(tab)
-            }}
+            onTabSelect={setActiveTopTab}
             onOpenWorkspacePage={(pageId) => {
-              setShowPatientDashboard(false)
               setActiveTopTab('workspace')
               handlePageSelect(pageId)
             }}
           />
         ) : null}
 
-        {!showPatientRegistry && !showPatientDashboard && activeTopTab === 'verlauf' ? (
+        {!showPatientRegistry && activeTopTab === 'verlauf' ? (
           <div className="notion-tab-content-row">
             <aside className="notion-tab-content-row__sidebar">
               <PanelDateCard layout="sidebar" />
@@ -782,26 +1210,31 @@ export function NotionApp({
           </div>
         ) : null}
 
-        {!showPatientRegistry && !showPatientDashboard && activeTopTab === 'dokumente' ? (
+        {!showPatientRegistry && activeTopTab === 'dokumente' ? (
           <div className="notion-tab-content-row">
             <div className="notion-tab-content-row__body notion-tab-content-row__body--full">
-              <DokumentePage caseId={storageCaseId} />
+              <DokumentePage
+            caseId={storageCaseId}
+            onAfterDelete={handleAfterDeleteDokument}
+            onEditDraft={handleEditDraft}
+          />
             </div>
           </div>
         ) : null}
 
-        {!showPatientRegistry && !showPatientDashboard && activeTopTab === 'labor' ? (
+        {!showPatientRegistry && activeTopTab === 'labor' ? (
           <div className="notion-tab-content-row notion-tab-content-row--full">
             <div className="notion-tab-content-row__body notion-tab-content-row__body--full">
-              <LaborPage caseId={storageCaseId} />
+              <LaborPage caseId={storageCaseId} hasPatient={hasPatient} />
             </div>
           </div>
         ) : null}
 
-        {!showPatientRegistry && !showPatientDashboard && activeTopTab === 'therapie' ? (
+        {!showPatientRegistry && activeTopTab === 'therapie' ? (
           <div className="notion-tab-content-row">
             <aside className="notion-tab-content-row__sidebar">
               <PanelDateCard layout="sidebar" />
+              <DiagnosenWidget caseId={caseId} onDiagnosesChanged={workspaceVault.scheduleSave} />
             </aside>
             <div className="notion-tab-content-row__body">
               <TherapiePage caseId={storageCaseId} />
@@ -809,7 +1242,7 @@ export function NotionApp({
           </div>
         ) : null}
 
-        {!showPatientRegistry && !showPatientDashboard && activeTopTab === 'workspace' ? (
+        {!showPatientRegistry && activeTopTab === 'workspace' ? (
           <>
         <WorkspaceContextMenu
           activePage={activePage}
@@ -828,9 +1261,16 @@ export function NotionApp({
             ) : activePage === 'labor' || activePage === 'visualisation' ? (
               <LaborPage
                 caseId={storageCaseId}
+                hasPatient={hasPatient}
                 onCreatePatient={() => setShowCreatePatientDialog(true)}
               />
             ) : (
+              <>
+                {hasDraftOnlyBanner && workspace.selectedDocumentType && (
+                  <div className="workspace-draft-banner" role="status">
+                    {t('anamneseDraftWarning')}
+                  </div>
+                )}
               <NotionPaper
                 caseId={caseId}
                 workspaceStorageId={storageCaseId}
@@ -867,6 +1307,7 @@ export function NotionApp({
                 onEditorChange={workspace.setEditorContent}
                 onSectionContentChange={workspace.setSectionContent}
                 onEditorPaste={workspace.onEditorPaste}
+                onDetectedPaste={handleDetectedPaste}
                 onSaveSection={workspace.saveSection}
                 onSelectAiModelTier={workspace.setAiModelTier}
                 onSelectAiTool={workspace.selectAiTool}
@@ -900,16 +1341,17 @@ export function NotionApp({
                 onSwitchToWrite={() => workspace.setInputMode('write')}
                 dictationDisabled={!workspace.dictationCreditsAvailable}
                 onNavigateToLabor={() => {
-                  setShowPatientDashboard(false)
                   setActiveTopTab('labor')
                 }}
                 savedDocs={savedDocs}
                 onViewSavedDoc={handleViewSavedDoc}
+                onRemoveSavedDoc={handleRemoveSavedDoc}
                 onCloseDocument={
                   workspace.selectedDocumentType ? handleCloseWorkspacePage : undefined
                 }
                 onPsychopathModeSelect={handlePsychopathModeSelect}
               />
+              </>
             )}
           </div>
         </WorkspaceContextMenu>
@@ -940,13 +1382,32 @@ export function NotionApp({
 
       {showCreatePatientDialog && (
         <NewPatientDialog
-          onCreated={handlePatientCreated}
+          onSubmit={handlePatientCreated}
           onCancel={() => setShowCreatePatientDialog(false)}
         />
       )}
 
       <NotionToastHost />
+
+      {pasteChip ? (
+        <PasteDetectionChip
+          key={pasteChip.id}
+          category={pasteChip.category}
+          onChangeCategory={handleChangePasteCategory}
+          onDismiss={() => setPasteChip(null)}
+        />
+      ) : null}
+
       <LottieCharacterStage />
+
+      {pendingNavAction && (
+        <UnsavedChangesDialog
+          onSave={() => void handleUnsavedSave()}
+          onDiscard={handleUnsavedDiscard}
+          onCancel={handleUnsavedCancel}
+          isSaving={isSavingBeforeNav}
+        />
+      )}
     </div>
   )
 }

@@ -167,14 +167,14 @@ function GenerateHintControls({
       />
       {openPopover === 'recommended' ? (
         <div className="generate-hint-popover" role="dialog" aria-label={t('generateHintRecommended')}>
-          <p className="text-[11px] leading-snug text-ink sm:text-xs">
+          <p className="text-[12px] leading-snug text-ink sm:text-xs">
             {aiHintMessage ?? t('aiContextHintNoTools')}
           </p>
         </div>
       ) : null}
       {openPopover === 'cost' ? (
         <div className="generate-hint-popover" role="dialog" aria-label={t('generateHintCost')}>
-          <p className="flex items-center gap-1.5 text-[11px] leading-snug text-ink sm:text-xs">
+          <p className="flex items-center gap-1.5 text-[12px] leading-snug text-ink sm:text-xs">
             <Coins className="h-3.5 w-3.5 shrink-0 text-muted" strokeWidth={1.5} aria-hidden />
             {costLabel}
           </p>
@@ -274,14 +274,14 @@ export function InputMethodPanel({
             <button
               type="button"
               onClick={onConfirmIncompleteGeneration}
-              className="rounded-md border border-ink/20 bg-surface-active px-2.5 py-1 text-[11px] font-medium text-ink transition-colors hover:bg-surface-hover"
+              className="rounded-md border border-ink/20 bg-surface-active px-2.5 py-1 text-[12px] font-medium text-ink transition-colors hover:bg-surface-hover"
             >
               {t('generationIncompleteConfirm')}
             </button>
             <button
               type="button"
               onClick={onDismissIncompleteGenerationWarning}
-              className="rounded-md border border-border/60 px-2.5 py-1 text-[11px] text-ink transition-colors hover:bg-surface-hover"
+              className="rounded-md border border-border/60 px-2.5 py-1 text-[12px] text-ink transition-colors hover:bg-surface-hover"
             >
               {t('generationIncompleteCancel')}
             </button>
@@ -301,7 +301,7 @@ export function InputMethodPanel({
 
       {showTherapieVerlaufExtract && inputMode === 'extract' && !generationPendingReview ? (
         <div className="therapie-verlauf-extract rounded-md border border-border/50 bg-surface px-3 py-3">
-          <p className="mb-2 text-[11px] leading-snug text-muted sm:text-xs">
+          <p className="mb-2 text-[12px] leading-snug text-muted sm:text-xs">
             {t('therapieVerlaufExtractHint')}
           </p>
           <textarea
@@ -312,7 +312,7 @@ export function InputMethodPanel({
             spellCheck
           />
           <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-[10px] text-muted sm:text-[11px]">{t('therapieVerlaufManualHint')}</p>
+            <p className="text-[11px] text-muted sm:text-[12px]">{t('therapieVerlaufManualHint')}</p>
             <button
               type="button"
               onClick={onExtractTherapieVerlauf}
@@ -488,7 +488,7 @@ export function InputMethodPanel({
       </div>
 
       {showVerificationNote ? (
-        <p className="flex items-center justify-center gap-1.5 text-center text-[10px] leading-snug text-muted sm:text-[11px]" role="note">
+        <p className="flex items-center justify-center gap-1.5 text-center text-[11px] leading-snug text-muted sm:text-[12px]" role="note">
           <Info className="h-3 w-3 shrink-0 opacity-60" strokeWidth={1.5} aria-hidden />
           {t('aiVerificationWarning')}
         </p>

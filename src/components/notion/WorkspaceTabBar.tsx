@@ -1,5 +1,9 @@
 import type { WorkspaceTab } from '../../hooks/useWorkspaceTabs'
 
+function truncateLabel(label: string, max = 20): string {
+  return label.length > max ? `${label.slice(0, max - 1)}\u2026` : label
+}
+
 interface WorkspaceTabBarProps {
   tabs: WorkspaceTab[]
   activeTabId: string
@@ -33,23 +37,21 @@ export function WorkspaceTabBar({
                 .trim()}
               onClick={() => onTabSelect(tab.id)}
             >
-              <span className="workspace-tab__label">
-                {tab.patientName ?? tab.name}
+              <span className="workspace-tab__label" title={tab.patientName ?? tab.name}>
+                {truncateLabel(tab.patientName ?? tab.name)}
               </span>
-              {tabs.length > 1 && (
-                <button
-                  type="button"
-                  className="workspace-tab__close"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onCloseTab(tab.id)
-                  }}
-                  aria-label={`Close ${tab.patientName ?? tab.name}`}
-                  tabIndex={-1}
-                >
-                  ×
-                </button>
-              )}
+              <button
+                type="button"
+                className="workspace-tab__close"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onCloseTab(tab.id)
+                }}
+                aria-label={`Close ${tab.patientName ?? tab.name}`}
+                tabIndex={-1}
+              >
+                ×
+              </button>
             </div>
           )
         })}

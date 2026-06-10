@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Pencil, Plus, X } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
+import { useDiagnosenCodingSystem } from '../../hooks/useDiagnosenCodingSystem'
 import {
   searchDiagnosisCodes,
   type DiagnosisSearchHit,
@@ -147,10 +148,12 @@ interface DiagnosenWidgetProps {
 
 export function DiagnosenWidget({ caseId, variant = 'sidebar', onDiagnosesChanged }: DiagnosenWidgetProps) {
   const { t } = useTranslation()
+  const { activeSystem, setActiveSystem } = useDiagnosenCodingSystem(caseId)
+  const showSystemTabs = variant === 'panel'
   const [entries, setEntries] = useState<DiagnoseEntry[]>([])
   const [loadingDiagnoses, setLoadingDiagnoses] = useState(true)
+  const [hydrated, setHydrated] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
-  const [activeSystem, setActiveSystem] = useState<CodingSystem>('icd10')
   const [adding, setAdding] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<DiagnosisSearchHit[]>([])
@@ -161,10 +164,12 @@ export function DiagnosenWidget({ caseId, variant = 'sidebar', onDiagnosesChange
   useEffect(() => {
     let active = true
     setLoadingDiagnoses(true)
+    setHydrated(false)
     void loadDiagnosenAsync(caseId).then((loaded) => {
       if (!active) return
       setEntries(loaded)
       setLoadingDiagnoses(false)
+      setHydrated(true)
     })
     setEditingId(null)
     setAdding(false)
@@ -175,9 +180,10 @@ export function DiagnosenWidget({ caseId, variant = 'sidebar', onDiagnosesChange
   }, [caseId])
 
   useEffect(() => {
+    if (!hydrated) return
     saveDiagnosen(caseId, entries)
     onDiagnosesChanged?.()
-  }, [caseId, entries, onDiagnosesChanged])
+  }, [caseId, entries, hydrated, onDiagnosesChanged])
 
   useEffect(() => {
     if (adding) searchRef.current?.focus()
@@ -301,95 +307,116 @@ export function DiagnosenWidget({ caseId, variant = 'sidebar', onDiagnosesChange
 
       {!collapsed ? (
         <div className="diagnosen-widget__body">
-          <div className="diagnosen-widget__system-toggle" role="tablist" aria-label={t('diagnosenSystemToggle')}>
-            {CODING_SYSTEMS.map((system) => (
-              <button
-                key={system}
-                type="button"
-                role="tab"
-                aria-selected={activeSystem === system}
-                className={[
-                  'diagnosen-widget__system-btn',
-                  activeSystem === system ? 'diagnosen-widget__system-btn--active' : '',
-                ].join(' ').trim()}
-                onClick={() => {
-                  setActiveSystem(system)
-                  setEditingId(null)
-                }}
-              >
-                {t(SYSTEM_LABEL_KEYS[system])}
-              </button>
-            ))}
-          </div>
-
-          {adding ? (
-            <div className="diagnosen-widget__search">
-              <input
-                ref={searchRef}
-                type="search"
-                className="diagnosen-widget__search-input"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t('diagnosenSearchPlaceholder')}
-                aria-label={t('diagnosenSearchPlaceholder')}
-              />
-              <ul className="diagnosen-widget__search-results" role="listbox">
-                {searchResults.map((result) => (
-                  <li key={`${result.system}-${result.code}`}>
-                    <button
-                      type="button"
-                      className="diagnosen-widget__search-item"
-                      role="option"
-                      onClick={() => handleAddFromHit(result)}
-                    >
-                      <span className="diagnosen-widget__search-code">{result.code}</span>
-                      <span className="diagnosen-widget__search-label">{result.label}</span>
-                    </button>
-                  </li>
-                ))}
-                {showFreeTextOption ? (
-                  <li>
-                    <button
-                      type="button"
-                      className="diagnosen-widget__search-item diagnosen-widget__search-item--free"
-                      role="option"
-                      onClick={handleAddFreeText}
-                    >
-                      {t('diagnosenAddFreeText').replace('{text}', trimmedQuery)}
-                    </button>
-                  </li>
-                ) : null}
-                {searching ? (
-                  <li className="diagnosen-widget__search-hint">{t('dashboardLoading')}</li>
-                ) : null}
-                {!searching && !showFreeTextOption && searchResults.length === 0 ? (
-                  <li className="diagnosen-widget__search-hint">{t('diagnosenSearchHint')}</li>
-                ) : null}
-              </ul>
+          {showSystemTabs ? (
+            <div
+              className="diagnosen-widget__tabs"
+              role="tablist"
+              aria-label={t('diagnosenSystemToggle')}
+            >
+              {CODING_SYSTEMS.map((system) => {
+                const isActive = activeSystem === system
+                return (
+                  <button
+                    key={system}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    aria-controls={`diagnosen-panel-${system}`}
+                    id={`diagnosen-tab-${system}`}
+                    className={[
+                      'diagnosen-widget__tab',
+                      isActive ? 'diagnosen-widget__tab--active' : '',
+                    ].join(' ').trim()}
+                    onClick={() => {
+                      setActiveSystem(system)
+                      setEditingId(null)
+                    }}
+                  >
+                    {t(SYSTEM_LABEL_KEYS[system])}
+                  </button>
+                )
+              })}
             </div>
           ) : null}
 
-          {loadingDiagnoses ? (
-            <p className="diagnosen-widget__empty">{t('dashboardLoading')}</p>
-          ) : entries.length === 0 ? (
-            <p className="diagnosen-widget__empty">{t('diagnosenEmpty')}</p>
-          ) : (
-            <ol className="diagnosen-widget__list" aria-label={t('diagnosenTitle')}>
-              {entries.map((entry, index) => (
-                <DiagnoseRow
-                  key={entry.id}
-                  index={index + 1}
-                  entry={entry}
-                  system={activeSystem}
-                  editing={editingId === entry.id}
-                  onStartEdit={() => setEditingId(entry.id)}
-                  onCancelEdit={() => setEditingId(null)}
-                  onSaveEdit={(code, label) => handleSaveEdit(entry.id, activeSystem, code, label)}
-                  onDelete={() => handleDelete(entry.id)}
+          <div
+            className="diagnosen-widget__panel"
+            role={showSystemTabs ? 'tabpanel' : undefined}
+            id={`diagnosen-panel-${activeSystem}`}
+            aria-labelledby={showSystemTabs ? `diagnosen-tab-${activeSystem}` : undefined}
+          >
+            {adding ? (
+              <div className="diagnosen-widget__search">
+                <input
+                  ref={searchRef}
+                  type="search"
+                  className="diagnosen-widget__search-input"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={t('diagnosenSearchPlaceholder')}
+                  aria-label={t('diagnosenSearchPlaceholder')}
                 />
-              ))}
-            </ol>
-          )}
+                <ul className="diagnosen-widget__search-results" role="listbox">
+                  {searchResults.map((result) => (
+                    <li key={`${result.system}-${result.code}`}>
+                      <button
+                        type="button"
+                        className="diagnosen-widget__search-item"
+                        role="option"
+                        onClick={() => handleAddFromHit(result)}
+                      >
+                        <span className="diagnosen-widget__search-code">{result.code}</span>
+                        <span className="diagnosen-widget__search-label">{result.label}</span>
+                      </button>
+                    </li>
+                  ))}
+                  {showFreeTextOption ? (
+                    <li>
+                      <button
+                        type="button"
+                        className="diagnosen-widget__search-item diagnosen-widget__search-item--free"
+                        role="option"
+                        onClick={handleAddFreeText}
+                      >
+                        {t('diagnosenAddFreeText').replace('{text}', trimmedQuery)}
+                      </button>
+                    </li>
+                  ) : null}
+                  {searching ? (
+                    <li className="diagnosen-widget__search-hint">{t('dashboardLoading')}</li>
+                  ) : null}
+                  {!searching && trimmedQuery.length === 0 ? (
+                    <li className="diagnosen-widget__search-hint">{t('diagnosenSearchHint')}</li>
+                  ) : null}
+                  {!searching && trimmedQuery.length > 0 && searchResults.length === 0 ? (
+                    <li className="diagnosen-widget__search-hint">{t('diagnosenSearchNoResults')}</li>
+                  ) : null}
+                </ul>
+              </div>
+            ) : null}
+
+            {loadingDiagnoses ? (
+              <p className="diagnosen-widget__empty">{t('dashboardLoading')}</p>
+            ) : entries.length === 0 ? (
+              <p className="diagnosen-widget__empty">{t('diagnosenEmpty')}</p>
+            ) : (
+              <ol className="diagnosen-widget__list" aria-label={t('diagnosenTitle')}>
+                {entries.map((entry, index) => (
+                  <DiagnoseRow
+                    key={entry.id}
+                    index={index + 1}
+                    entry={entry}
+                    system={activeSystem}
+                    editing={editingId === entry.id}
+                    onStartEdit={() => setEditingId(entry.id)}
+                    onCancelEdit={() => setEditingId(null)}
+                    onSaveEdit={(code, label) => handleSaveEdit(entry.id, activeSystem, code, label)}
+                    onDelete={() => handleDelete(entry.id)}
+                  />
+                ))}
+              </ol>
+            )}
+          </div>
         </div>
       ) : null}
     </section>

@@ -20,6 +20,7 @@ function mapSectionTemplates(sections: WorkspaceSectionTemplate[]): DocumentSect
 
 function inferVariantMode(variant: WorkspaceComponentVariant) {
   if (variant.mode) return variant.mode
+  if (variant.id === 'isdm') return 'isdm' as const
   if (!variant.multistage) return 'free' as const
   if (variant.sections.some((section) => section.checklistItems?.length)) return 'checklist' as const
   return 'sections' as const

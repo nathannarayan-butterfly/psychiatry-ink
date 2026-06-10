@@ -41,7 +41,7 @@ function ProgressRing({ percent }: { percent: number }) {
           strokeDashoffset={offset}
         />
       </svg>
-      <span className="absolute text-[8px] font-semibold tabular-nums text-ink">{percent}</span>
+      <span className="absolute text-[9px] font-semibold tabular-nums text-ink">{percent}</span>
     </div>
   )
 }
@@ -88,7 +88,7 @@ export function SectionRail({
           aria-label={t('sectionsCompletePercent').replace('{percent}', String(completionPercent))}
         >
           <ProgressRing percent={completionPercent} />
-          <span className="hidden truncate text-[11px] font-medium tabular-nums text-muted sm:inline sm:text-xs">
+          <span className="hidden truncate text-[12px] font-medium tabular-nums text-muted sm:inline sm:text-xs">
             {completionPercent}%
           </span>
         </div>

@@ -7,7 +7,7 @@ import { defaultPsychopathSections } from './psychopathSections'
 
 /** @deprecated Use getPsychopathNormalBefundHeading(language, englishVariant) */
 export const psychopathNormalBefundHeading =
-  'Psychopathologischer Befund, AMDP-orientiert'
+  'Psychopathologischer Befund'
 
 function resolveSectionsWithChecklist(
   sections?: Array<Pick<DocumentSection, 'id' | 'label' | 'checklistItems'>>,

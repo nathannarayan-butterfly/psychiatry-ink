@@ -1,3 +1,7 @@
+/**
+ * Clinical Imprint — Layer 1 (ingestion) of the Clinical Analysis system.
+ * See `clinicalAnalysis.ts` for full architecture (profiles: ISDM, medication; future: Butterfly).
+ */
 export type ClinicalSourceType =
   | 'anamnesis'
   | 'verlauf'

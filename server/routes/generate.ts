@@ -23,6 +23,11 @@ generateRouter.post('/', async (req: Request, res: Response) => {
       return
     }
 
+    if (!['fast', 'standard', 'thorough'].includes(body.tier)) {
+      res.status(400).json({ error: 'Invalid tier' })
+      return
+    }
+
     if (
       typeof body.systemPrompt !== 'string' ||
       typeof body.userPrompt !== 'string' ||
@@ -45,7 +50,6 @@ generateRouter.post('/', async (req: Request, res: Response) => {
     })
   } catch (error) {
     console.error('[generate] failed:', error)
-    const message = error instanceof Error ? error.message : 'Generation failed'
-    res.status(500).json({ error: message })
+    res.status(500).json({ error: 'Generation failed' })
   }
 })

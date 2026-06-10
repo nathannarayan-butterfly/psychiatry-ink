@@ -62,7 +62,7 @@ export function ToolBox({
         <Icon className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" strokeWidth={1.5} aria-hidden />
       </span>
       {labelLines && labelLines.length > 0 ? (
-        <span className="tool-box-label flex max-w-full flex-col text-[9px] leading-tight text-ink sm:text-[10px]">
+        <span className="tool-box-label flex max-w-full flex-col text-[10px] leading-tight text-ink sm:text-[11px]">
           {labelLines.map((line) => (
             <span key={line} className="truncate">
               {line}
@@ -70,7 +70,7 @@ export function ToolBox({
           ))}
         </span>
       ) : (
-        <span className="tool-box-label line-clamp-2 max-w-full text-[9px] leading-tight text-ink sm:text-[10px]">
+        <span className="tool-box-label line-clamp-2 max-w-full text-[10px] leading-tight text-ink sm:text-[11px]">
           {label}
         </span>
       )}

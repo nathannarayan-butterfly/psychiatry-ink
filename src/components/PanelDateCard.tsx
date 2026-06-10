@@ -117,10 +117,10 @@ export function PanelDateCard({ date, layout = 'panel' }: PanelDateCardProps) {
 
       <div className="panel-date-card__meta flex shrink-0 flex-col items-center gap-0.5">
         <p className="panel-date-card__time tabular-nums leading-none text-ink">{parts.time}</p>
-        <p className="panel-date-card__weekday max-w-full truncate text-[9px] leading-tight text-secondary sm:text-[10px]">
+        <p className="panel-date-card__weekday max-w-full truncate text-[10px] leading-tight text-secondary sm:text-[11px]">
           {parts.weekday}
         </p>
-        <p className="panel-date-card__week text-[8px] font-medium tabular-nums uppercase tracking-wider text-muted sm:text-[9px]">
+        <p className="panel-date-card__week text-[9px] font-medium tabular-nums uppercase tracking-wider text-muted sm:text-[10px]">
           {t('calendarWeek')} {parts.week}
         </p>
       </div>

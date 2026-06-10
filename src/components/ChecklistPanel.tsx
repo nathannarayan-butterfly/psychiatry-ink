@@ -50,9 +50,9 @@ export function ChecklistPanel({
           <div key={group.name || 'default'} className="checklist-group">
             {group.name ? (
               <div className="mb-1">
-                <p className="text-[11px] font-medium text-ink sm:text-xs">{group.name}</p>
+                <p className="text-[12px] font-medium text-ink sm:text-xs">{group.name}</p>
                 {group.hint ? (
-                  <p className="mt-0.5 text-[10px] leading-snug text-muted sm:text-[11px]">
+                  <p className="mt-0.5 text-[11px] leading-snug text-muted sm:text-[12px]">
                     {group.hint}
                   </p>
                 ) : null}
@@ -67,7 +67,7 @@ export function ChecklistPanel({
                   <label
                     key={item.id}
                     title={item.hint}
-                    className={`checklist-item inline-flex cursor-pointer items-center gap-1.5 rounded-[calc(var(--radius-sm)-0.25rem)] border px-2 py-1 text-[11px] shadow-[var(--shadow-elevated-sm)] transition-colors sm:text-xs ${
+                    className={`checklist-item inline-flex cursor-pointer items-center gap-1.5 rounded-[calc(var(--radius-sm)-0.25rem)] border px-2 py-1 text-[12px] shadow-[var(--shadow-elevated-sm)] transition-colors sm:text-xs ${
                       checked
                         ? 'checklist-item--active border-accent bg-surface text-ink'
                         : 'border-border/70 bg-surface text-muted hover:border-border hover:text-ink'

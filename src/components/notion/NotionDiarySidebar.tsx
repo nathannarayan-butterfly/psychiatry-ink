@@ -19,6 +19,7 @@ interface NotionDiarySidebarProps {
   onNavigateToLabor?: () => void
   savedDocs?: SavedDoc[]
   onViewSavedDoc?: (doc: SavedDoc) => void
+  onRemoveSavedDoc?: (id: string) => void
   showPsychopathModeRail?: boolean
   psychopathActiveMode?: PsychopathSubMode
   psychopathModeDisabled?: boolean
@@ -47,6 +48,7 @@ export function NotionDiarySidebar({
   onNavigateToLabor,
   savedDocs,
   onViewSavedDoc,
+  onRemoveSavedDoc,
   showPsychopathModeRail = false,
   psychopathActiveMode = 'free',
   psychopathModeDisabled = false,
@@ -100,10 +102,10 @@ export function NotionDiarySidebar({
 
           {hasSavedDocs && (
             <div className="notion-diary-sidebar__saved-docs">
-              <p className="notion-diary-sidebar__saved-docs-heading">Dokumente</p>
+              <p className="notion-diary-sidebar__saved-docs-heading">{t('savedDocsHeading')}</p>
               <ul className="notion-diary-sidebar__saved-docs-list">
                 {savedDocs.map((doc) => (
-                  <li key={doc.id}>
+                  <li key={doc.id} className="notion-diary-sidebar__saved-doc-row">
                     <button
                       type="button"
                       className="notion-diary-sidebar__saved-doc-item"
@@ -117,6 +119,20 @@ export function NotionDiarySidebar({
                         {formatShortDate(doc.date)}
                       </span>
                     </button>
+                    {onRemoveSavedDoc && (
+                      <button
+                        type="button"
+                        className="notion-diary-sidebar__saved-doc-remove"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onRemoveSavedDoc(doc.id)
+                        }}
+                        title={t('savedDocsRemove')}
+                        aria-label={t('savedDocsRemove')}
+                      >
+                        ×
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>

@@ -1,11 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
+import { componentTranslations } from '../../data/componentTranslations'
 import {
   deleteDokument,
+  DOKUMENTE_ARCHIVE_CHANGED_EVENT,
   loadDokumente,
   type DokumentCategory,
   type DokumentEntry,
 } from '../../utils/dokumenteArchive'
+import { syncLaborDokumente } from '../../utils/laborDokumente'
+import { defaultAufnahmeSections } from '../../data/aufnahmeSections'
+import { formatIsoTimestampDate } from '../../utils/siteTimezone'
+import type { UiLanguage } from '../../types/settings'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -33,7 +39,36 @@ const CATEGORY_TABS: CategoryTabConfig[] = [
   { id: 'externe-befunde', labelKey: 'dokumenteCategoryExterneBefunde' },
 ]
 
-import { formatIsoTimestampDate } from '../../utils/siteTimezone'
+/** Display order for grouped category sections in the "All" view. */
+const CATEGORY_ORDER: DokumentCategory[] = [
+  'anamnese',
+  'arztbrief',
+  'laborbefunde',
+  'untersuchungsbefunde',
+  'externe-befunde',
+]
+
+function getSourceLabelKey(
+  source: DokumentEntry['source'],
+): 'dokumenteSourceAi' | 'dokumenteSourceManual' | 'dokumenteSourceDraft' | null {
+  switch (source) {
+    case 'ai-accepted':
+      return 'dokumenteSourceAi'
+    case 'manual':
+      return 'dokumenteSourceManual'
+    case 'draft':
+      return 'dokumenteSourceDraft'
+    default:
+      return null
+  }
+}
+
+function resolveSectionLabel(sectionId: string, language: UiLanguage): string {
+  const translated = componentTranslations.aufnahme?.sections?.[sectionId]?.label?.[language]
+  if (translated?.trim()) return translated
+  const fallback = defaultAufnahmeSections.find((section) => section.id === sectionId)
+  return fallback?.label ?? sectionId
+}
 
 function getCategoryLabelKey(category: DokumentCategory): CategoryTabConfig['labelKey'] {
   switch (category) {
@@ -66,7 +101,19 @@ interface DocumentModalProps {
 }
 
 function DocumentModal({ entry, categoryLabel, onClose }: DocumentModalProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
+
+  const sourceLabelKey = getSourceLabelKey(entry.source)
+
+  const sectionEntries = entry.sectionContents
+    ? defaultAufnahmeSections
+        .map((section) => ({
+          id: section.id,
+          label: resolveSectionLabel(section.id, language),
+          content: entry.sectionContents?.[section.id]?.trim() ?? '',
+        }))
+        .filter((section) => section.content)
+    : []
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -93,9 +140,13 @@ function DocumentModal({ entry, categoryLabel, onClose }: DocumentModalProps) {
             <span className={`dokumente-badge ${getCategoryColor(entry.category)}`}>
               {categoryLabel}
             </span>
-            {entry.source === 'ai-accepted' && (
-              <span className="dokumente-source-badge dokumente-source-badge--ai">
-                {t('dokumenteSourceAi')}
+            {sourceLabelKey && (
+              <span
+                className={`dokumente-source-badge${
+                  entry.source === 'ai-accepted' ? ' dokumente-source-badge--ai' : ''
+                }`}
+              >
+                {t(sourceLabelKey)}
               </span>
             )}
             <time className="dokumente-modal__date">{formatIsoTimestampDate(entry.date)}</time>
@@ -104,7 +155,22 @@ function DocumentModal({ entry, categoryLabel, onClose }: DocumentModalProps) {
         </header>
 
         <div className="dokumente-modal__content">
-          <pre className="dokumente-modal__text">{entry.content}</pre>
+          {sectionEntries.length > 0 ? (
+            <>
+              <p className="dokumente-modal__hint">{t('dokumenteAutoCategorizedHint')}</p>
+              <h3 className="dokumente-modal__sections-heading">{t('dokumenteSectionsHeading')}</h3>
+              <div className="dokumente-modal__sections">
+                {sectionEntries.map((section) => (
+                  <section key={section.id} className="dokumente-modal__section">
+                    <h4 className="dokumente-modal__section-title">{section.label}</h4>
+                    <pre className="dokumente-modal__text">{section.content}</pre>
+                  </section>
+                ))}
+              </div>
+            </>
+          ) : (
+            <pre className="dokumente-modal__text">{entry.content}</pre>
+          )}
         </div>
 
         <footer className="dokumente-modal__footer">
@@ -130,11 +196,14 @@ interface DocumentCardProps {
   categoryLabel: string
   onExpand: () => void
   onDelete: () => void
+  /** Only provided for draft entries; navigates to the appropriate workspace page for editing. */
+  onEdit?: () => void
 }
 
-function DocumentCard({ entry, categoryLabel, onExpand, onDelete }: DocumentCardProps) {
+function DocumentCard({ entry, categoryLabel, onExpand, onDelete, onEdit }: DocumentCardProps) {
   const { t } = useTranslation()
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const sourceLabelKey = getSourceLabelKey(entry.source)
 
   const preview = entry.content.slice(0, 100).replace(/\n+/g, ' ').trim()
   const hasMore = entry.content.length > 100
@@ -167,12 +236,14 @@ function DocumentCard({ entry, categoryLabel, onExpand, onDelete }: DocumentCard
           <span className={`dokumente-badge ${getCategoryColor(entry.category)}`}>
             {categoryLabel}
           </span>
-          {entry.source === 'ai-accepted' && (
+          {sourceLabelKey && (
             <span
-              className="dokumente-source-badge dokumente-source-badge--ai"
-              title={t('dokumenteSourceAi')}
+              className={`dokumente-source-badge${
+                entry.source === 'ai-accepted' ? ' dokumente-source-badge--ai' : ''
+              }`}
+              title={t(sourceLabelKey)}
             >
-              {t('dokumenteSourceAi')}
+              {t(sourceLabelKey)}
             </span>
           )}
         </div>
@@ -207,14 +278,26 @@ function DocumentCard({ entry, categoryLabel, onExpand, onDelete }: DocumentCard
             </button>
           </div>
         ) : (
-          <button
-            type="button"
-            className="dokumente-card__delete"
-            onClick={handleDeleteClick}
-            title={t('dokumenteDelete')}
-          >
-            {t('dokumenteDelete')}
-          </button>
+          <div className="dokumente-card__actions">
+            {onEdit && (
+              <button
+                type="button"
+                className="dokumente-card__edit"
+                onClick={(e) => { e.stopPropagation(); onEdit() }}
+                title={entry.source === 'draft' ? t('dokumenteEditDraft') : t('dokumenteOpenInWorkspace')}
+              >
+                {entry.source === 'draft' ? t('dokumenteEditDraft') : t('dokumenteOpenInWorkspace')}
+              </button>
+            )}
+            <button
+              type="button"
+              className="dokumente-card__delete"
+              onClick={handleDeleteClick}
+              title={t('dokumenteDelete')}
+            >
+              {t('dokumenteDelete')}
+            </button>
+          </div>
         )}
       </footer>
     </article>
@@ -227,16 +310,41 @@ function DocumentCard({ entry, categoryLabel, onExpand, onDelete }: DocumentCard
 
 interface DokumentePageProps {
   caseId: string
+  /** Called after a document is hard-deleted so callers can sync other stores (e.g. savedDocs). */
+  onAfterDelete?: (pageType: string) => void
+  /**
+   * Called when the user clicks "Entwurf bearbeiten" on a draft card.
+   * The parent should navigate to the appropriate workspace page and inject the draft content.
+   */
+  onEditDraft?: (entry: DokumentEntry) => void
 }
 
-export function DokumentePage({ caseId }: DokumentePageProps) {
+export function DokumentePage({ caseId, onAfterDelete, onEditDraft }: DokumentePageProps) {
   const { t } = useTranslation()
   const [entries, setEntries] = useState<DokumentEntry[]>(() => loadDokumente(caseId))
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all')
   const [expandedEntry, setExpandedEntry] = useState<DokumentEntry | null>(null)
 
+  // Backfill: mirror any lab befunde that predate the Dokumente wiring, then load.
+  // Idempotent — re-running never creates duplicates.
   useEffect(() => {
+    syncLaborDokumente(caseId, t('laborDocumentTitle'))
     setEntries(loadDokumente(caseId))
+  }, [caseId, t])
+
+  // Refresh entries when the archive is updated in the same window (storage events
+  // only fire for cross-window changes, so we use a custom event).
+  useEffect(() => {
+    function handleArchiveChanged(e: Event) {
+      const detail = (e as CustomEvent<{ caseId: string }>).detail
+      if (detail?.caseId === caseId) {
+        setEntries(loadDokumente(caseId))
+      }
+    }
+    window.addEventListener(DOKUMENTE_ARCHIVE_CHANGED_EVENT, handleArchiveChanged)
+    return () => {
+      window.removeEventListener(DOKUMENTE_ARCHIVE_CHANGED_EVENT, handleArchiveChanged)
+    }
   }, [caseId])
 
   const filtered =
@@ -246,11 +354,13 @@ export function DokumentePage({ caseId }: DokumentePageProps) {
 
   const handleDelete = useCallback(
     (id: string) => {
+      const pageType = entries.find((e) => e.id === id)?.pageType
       deleteDokument(caseId, id)
       setEntries(loadDokumente(caseId))
       if (expandedEntry?.id === id) setExpandedEntry(null)
+      if (pageType) onAfterDelete?.(pageType)
     },
-    [caseId, expandedEntry],
+    [caseId, entries, expandedEntry, onAfterDelete],
   )
 
   const showExterneUpload = activeCategory === 'all' || activeCategory === 'externe-befunde'
@@ -293,25 +403,40 @@ export function DokumentePage({ caseId }: DokumentePageProps) {
         )}
       </aside>
 
-      {/* Document list */}
+      {/* Document list — grouped by category (entries are already newest-first) */}
       <main className="dokumente-main">
         {filtered.length === 0 ? (
           <p className="dokumente-empty">{t('dokumenteEmpty')}</p>
         ) : (
-          <div className="dokumente-list">
-            {filtered.map((entry) => {
-              const catKey = getCategoryLabelKey(entry.category)
-              return (
-                <DocumentCard
-                  key={entry.id}
-                  entry={entry}
-                  categoryLabel={t(catKey)}
-                  onExpand={() => setExpandedEntry(entry)}
-                  onDelete={() => handleDelete(entry.id)}
-                />
-              )
-            })}
-          </div>
+          (activeCategory === 'all'
+            ? CATEGORY_ORDER
+            : [activeCategory]
+          )
+            .map((category) => ({
+              category,
+              items: filtered.filter((e) => e.category === category),
+            }))
+            .filter((group) => group.items.length > 0)
+            .map((group) => (
+              <section key={group.category} className="dokumente-group">
+                <h3 className="dokumente-group__heading">
+                  {t(getCategoryLabelKey(group.category))}
+                  <span className="dokumente-group__count">{group.items.length}</span>
+                </h3>
+                <div className="dokumente-list">
+                  {group.items.map((entry) => (
+                    <DocumentCard
+                      key={entry.id}
+                      entry={entry}
+                      categoryLabel={t(getCategoryLabelKey(entry.category))}
+                      onExpand={() => setExpandedEntry(entry)}
+                      onDelete={() => handleDelete(entry.id)}
+                      onEdit={onEditDraft ? () => onEditDraft(entry) : undefined}
+                    />
+                  ))}
+                </div>
+              </section>
+            ))
         )}
       </main>
 

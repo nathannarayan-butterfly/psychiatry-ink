@@ -21,7 +21,7 @@ import type { NotionPageId } from '../notion/notionPages'
 import { useAssessmentStandardSettings } from '../../hooks/useAssessmentStandardSettings'
 import { useAppearanceSettings } from '../../hooks/useAppearanceSettings'
 import { useAccountDisplayName } from '../../hooks/useAccountDisplayName'
-import { useCaseRegistry } from '../../hooks/useCaseRegistry'
+import { isListedPatientCase, useCaseRegistry } from '../../hooks/useCaseRegistry'
 import type { DashboardCase } from '../../hooks/useCaseRegistry'
 import { useCredits } from '../../hooks/useCredits'
 import { useKiInstructions } from '../../hooks/useKiInstructions'
@@ -40,6 +40,7 @@ import { IdentifierStorageOnboarding } from '../privacy/IdentifierStorageOnboard
 import { needsIdentifierStorageOnboarding } from '../../utils/identifierStorage'
 import { DashboardHinweise } from './DashboardHinweise'
 import { DashboardTopBar } from './DashboardTopBar'
+import { KnowledgeBaseTile } from './KnowledgeBase'
 import { NewPatientDialog } from './NewPatientDialog'
 import type { NewPatientData } from './NewPatientDialog'
 import { NewCaseWorkflowDialog } from './NewCaseWorkflowDialog'
@@ -210,7 +211,7 @@ export function DashboardPage({
   const patientCases = useMemo(
     () =>
       registry.cases
-        .filter((caseItem) => caseItem.caseId !== DEFAULT_CASE_ID)
+        .filter(isListedPatientCase)
         .sort((a, b) => new Date(b.lastEditedAt).getTime() - new Date(a.lastEditedAt).getTime()),
     [registry.cases],
   )
@@ -562,6 +563,15 @@ export function DashboardPage({
 
       <div className="dashboard-section__divider" role="separator" />
 
+      <section className="dashboard-section dashboard-section--compact" aria-labelledby="dashboard-section-kb">
+        <h2 id="dashboard-section-kb" className="dashboard-section__heading">
+          {t('kbTitle')}
+        </h2>
+        <KnowledgeBaseTile />
+      </section>
+
+      <div className="dashboard-section__divider" role="separator" />
+
       <section className="dashboard-section dashboard-section--compact" aria-labelledby="dashboard-section-settings">
         <h2 id="dashboard-section-settings" className="dashboard-section__heading">
           {t('dashboardSectionSettings')}
@@ -596,7 +606,7 @@ export function DashboardPage({
 
       {showNewPatientDialog ? (
         <NewPatientDialog
-          onCreated={handleNewPatientCreated}
+          onSubmit={handleNewPatientCreated}
           onCancel={() => setShowNewPatientDialog(false)}
         />
       ) : null}
