@@ -19,7 +19,6 @@ export function TopBar({ creditBalance, onOpenSettings }: TopBarProps) {
 
   return (
     <header
-      data-lottie-exclusion
       className="glass-header relative z-20 flex shrink-0 items-center justify-between border-b border-border/50 px-3 py-3 sm:px-4 sm:py-3.5"
     >
       <div className="flex min-w-0 items-center gap-2 sm:gap-3">

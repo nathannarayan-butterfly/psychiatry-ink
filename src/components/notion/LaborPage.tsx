@@ -1,4 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Check, Clipboard, Printer, Trash2, X as XIcon } from 'lucide-react'
 import {
   LineChart,
   Line,
@@ -24,10 +25,16 @@ import {
   type PinnedLaborWidget,
 } from '../../utils/laborArchive'
 import { syncLaborDokumente } from '../../utils/laborDokumente'
+import { appendDokument, deleteDokument } from '../../utils/dokumenteArchive'
 import { parseLabText } from '../../utils/laborParser'
 import { showNotionToast } from './NotionToast'
 import { API_BASE } from '../../services/apiClient'
 import { useTranslation } from '../../context/TranslationContext'
+import { loadMedicationPlanState } from '../../utils/medication/storage'
+import { loadDiagnosen } from '../../utils/diagnosenArchive'
+import { getCaseMeta } from '../../hooks/useCaseRegistry'
+import { loadNotionDocumentSnapshot } from '../../utils/notionDocumentActions'
+import type { MedicationStatus } from '../../types/medicationPlan'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -88,13 +95,102 @@ const LINE_COLORS = [
 ]
 
 // ---------------------------------------------------------------------------
+// KI Analysis Modal
+// ---------------------------------------------------------------------------
+
+interface KiAnalyseModalProps {
+  text: string
+  title: string
+  onAccept: () => void
+  onReject: () => void
+  onCopy?: () => void
+}
+
+function KiAnalyseModal({ text, title, onAccept, onReject, onCopy }: KiAnalyseModalProps) {
+  const overlayRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onReject()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onReject])
+
+  function handleOverlayClick(e: React.MouseEvent) {
+    if (e.target === overlayRef.current) onReject()
+  }
+
+  return (
+    <div
+      className="therapy-modal-overlay"
+      ref={overlayRef}
+      onClick={handleOverlayClick}
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+    >
+      <div className="therapy-modal therapy-modal--wide labor-ki-modal">
+        <div className="therapy-modal__head">
+          <div className="therapy-modal__heading">
+            <span className="labor-ki-modal__icon">🤖</span>
+            <h2 className="therapy-modal__title">{title}</h2>
+          </div>
+          <button
+            type="button"
+            className="therapy-modal__close"
+            onClick={onReject}
+            aria-label="Schließen"
+          >
+            ×
+          </button>
+        </div>
+        <div className="therapy-modal__body">
+          <p className="labor-ki-modal__text">{text}</p>
+        </div>
+        <div className="therapy-modal__footer">
+          <button
+            type="button"
+            className="labor-ki-modal__btn labor-ki-modal__btn--reject"
+            onClick={onReject}
+          >
+            <XIcon size={15} />
+            Ablehnen
+          </button>
+          {onCopy && (
+            <button
+              type="button"
+              className="labor-ki-modal__btn labor-ki-modal__btn--copy"
+              onClick={onCopy}
+            >
+              <Clipboard size={15} />
+              Kopieren
+            </button>
+          )}
+          <button
+            type="button"
+            className="labor-ki-modal__btn labor-ki-modal__btn--accept"
+            onClick={onAccept}
+          >
+            <Check size={15} />
+            Annehmen
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Inline Paste Zone
 // ---------------------------------------------------------------------------
 
 type ParseStatus = 'idle' | 'analyzing' | 'success' | 'too-few'
 
 interface LaborPasteZoneProps {
+  caseId?: string
   onSave: (date: string, rawText: string, categories: LaborCategory[], label?: string) => void
+  onKiAnalysisAccept?: (text: string, date: string, label?: string) => void
   textareaRef?: React.RefObject<HTMLTextAreaElement | null>
 }
 
@@ -112,7 +208,109 @@ Kategorien: Blutbild, Nierenwerte, Leberwerte, Elektrolyte, Medikamentenspiegel,
 Antworte NUR mit einem gültigen JSON-Array (kein Markdown, keine Erklärungen):
 [{"id":"blutbild","label":"Blutbild","values":[{"name":"Hämoglobin","value":"12.5","unit":"g/dL","refText":"13.5-17.5","isAbnormal":true},{"name":"Leukozyten","value":"7.8","unit":"10^9/L","refText":"4.0-10.0","isAbnormal":false}]},{"id":"medikamentenspiegel","label":"Medikamentenspiegel","values":[{"name":"Olanzapin","value":"32","unit":"ng/mL","refText":"20-80","isAbnormal":false}]}]`
 
-const KI_ANALYSE_SYSTEM_PROMPT = `Du bist ein Facharzt für Psychiatrie. Analysiere die folgenden Laborwerte klinisch. Hebe auffällige Werte hervor, interpretiere mögliche Zusammenhänge und gib eine kurze klinische Einschätzung. Antworte auf Deutsch in 3-5 Sätzen.`
+const KI_ANALYSE_SYSTEM_PROMPT = `Du bist ein Facharzt für Psychiatrie und Innere Medizin. Analysiere die folgenden Laborwerte klinisch im Kontext der mitgegebenen Patienteninformationen.
+
+Beachte insbesondere:
+- Auffällige und pathologische Werte sowie deren klinische Relevanz
+- Mögliche medikamentös bedingte Laborveränderungen (z.B. Clozapin → Leukozyten/Agranulozytose-Risiko, Lithium → TSH/Kreatinin/GFR, Valproat → Leberwerte/Thrombozyten, Antipsychotika → Prolaktin/Glukose/Lipide, SSRI → Natrium/Hyponatriämie)
+- Zusammenhänge zwischen Laborveränderungen, psychiatrischen Diagnosen und somatischen Komorbiditäten
+- Handlungsbedarf (z.B. Dosisanpassung, Verlaufskontrolle, Konsiliaruntersuchung)
+
+Falls klinischer Kontext (Medikamente, Diagnosen, Demografie) mitgeliefert wird, nutze ihn aktiv für die Interpretation. Fehlen Angaben, analysiere anhand der Laborwerte allein.
+Antworte auf Deutsch in 4–6 Sätzen. Beginne direkt mit der klinischen Einschätzung ohne einleitende Floskeln.`
+
+const ACTIVE_MED_STATUSES: ReadonlySet<MedicationStatus> = new Set<MedicationStatus>([
+  'active',
+  'paused',
+  'reduced',
+  'increased',
+])
+
+/**
+ * Gather available clinical context for AI lab analysis.
+ * Gracefully omits any piece that is missing or empty.
+ */
+function gatherClinicalContext(caseId: string): string {
+  const parts: string[] = []
+
+  // Patient age & sex from case registry
+  const meta = getCaseMeta(caseId)
+  const ageSexParts: string[] = []
+  if (meta?.localAge?.trim()) ageSexParts.push(`Alter: ${meta.localAge} Jahre`)
+  if (meta?.localGeschlecht) {
+    const sexMap: Record<string, string> = {
+      maennlich: 'männlich',
+      weiblich: 'weiblich',
+      divers: 'divers',
+    }
+    ageSexParts.push(`Geschlecht: ${sexMap[meta.localGeschlecht] ?? meta.localGeschlecht}`)
+  }
+  if (ageSexParts.length > 0) parts.push(ageSexParts.join(', '))
+
+  // Diagnoses (ICD-10 preferred)
+  try {
+    const diagnosen = loadDiagnosen(caseId)
+    if (diagnosen.length > 0) {
+      const diagLines = diagnosen
+        .map((d) => {
+          const code = d.icd10.code.trim()
+          const label = d.icd10.label.trim()
+          if (code && label) return `${code} ${label}`
+          return code || label
+        })
+        .filter(Boolean)
+      if (diagLines.length > 0) parts.push(`Diagnosen: ${diagLines.join('; ')}`)
+    }
+  } catch {
+    // Non-critical — skip if unavailable
+  }
+
+  // Active/relevant medications from the current medication plan
+  try {
+    const planState = loadMedicationPlanState(caseId)
+    if (planState) {
+      const currentPlan = planState.plans.find((p) => p.id === planState.currentPlanId)
+      if (currentPlan) {
+        const activeMeds = currentPlan.medications.filter((m) =>
+          ACTIVE_MED_STATUSES.has(m.status),
+        )
+        if (activeMeds.length > 0) {
+          const medLines = activeMeds.map((m) => {
+            const line = m.doseLineGerman.trim() || `${m.substance} ${m.strength}`.trim()
+            const statusNote = m.status !== 'active' ? ` (${m.status})` : ''
+            return `${line}${statusNote}`
+          })
+          parts.push(`Aktuelle Medikation:\n${medLines.map((l) => `  - ${l}`).join('\n')}`)
+        }
+      }
+    }
+  } catch {
+    // Non-critical — skip if unavailable
+  }
+
+  // Somatic anamnese excerpt from Aufnahme document
+  try {
+    const aufnahme = loadNotionDocumentSnapshot('aufnahme', caseId)
+    if (aufnahme) {
+      const somaticRaw = [
+        aufnahme.sectionContents['somatische-anamnese'],
+        aufnahme.sectionContents['somatischer-befund'],
+      ]
+        .map((s) => s?.trim() ?? '')
+        .filter(Boolean)
+        .join('\n')
+      if (somaticRaw) {
+        const excerpt = somaticRaw.length > 600 ? somaticRaw.slice(0, 600) + '…' : somaticRaw
+        parts.push(`Somatische Anamnese:\n${excerpt}`)
+      }
+    }
+  } catch {
+    // Non-critical — skip if unavailable
+  }
+
+  if (parts.length === 0) return ''
+  return `KLINISCHER KONTEXT:\n${parts.join('\n\n')}`
+}
 
 function extractJsonFromAiText(text: string): string {
   // Strip markdown code fences
@@ -170,7 +368,7 @@ async function callAiGenerate(systemPrompt: string, userPrompt: string): Promise
   return data.text
 }
 
-function LaborPasteZone({ onSave, textareaRef }: LaborPasteZoneProps) {
+function LaborPasteZone({ caseId, onSave, onKiAnalysisAccept, textareaRef }: LaborPasteZoneProps) {
   const today = new Date().toISOString().slice(0, 10)
   const [date, setDate] = useState(today)
   const [rawText, setRawText] = useState('')
@@ -181,7 +379,6 @@ function LaborPasteZone({ onSave, textareaRef }: LaborPasteZoneProps) {
   const [isKiStructuring, setIsKiStructuring] = useState(false)
   const [isKiAnalysing, setIsKiAnalysing] = useState(false)
   const [kiAnalysisText, setKiAnalysisText] = useState<string | null>(null)
-  const [kiAnalysisOpen, setKiAnalysisOpen] = useState(true)
   const [kiError, setKiError] = useState<string | null>(null)
   const internalRef = useRef<HTMLTextAreaElement>(null)
   const isPasteRef = useRef(false)
@@ -264,6 +461,16 @@ function LaborPasteZone({ onSave, textareaRef }: LaborPasteZoneProps) {
     resolvedRef.current?.focus()
   }, [resolvedRef])
 
+  const handleKiModalAccept = useCallback(() => {
+    if (!kiAnalysisText) return
+    if (onKiAnalysisAccept) onKiAnalysisAccept(kiAnalysisText, date, label.trim() || detectedTitle || undefined)
+    setKiAnalysisText(null)
+  }, [kiAnalysisText, onKiAnalysisAccept, date, label, detectedTitle])
+
+  const handleKiModalReject = useCallback(() => {
+    setKiAnalysisText(null)
+  }, [])
+
   const handleKiStrukturieren = useCallback(async () => {
     if (!rawText.trim() || isKiStructuring) return
     setIsKiStructuring(true)
@@ -288,9 +495,9 @@ function LaborPasteZone({ onSave, textareaRef }: LaborPasteZoneProps) {
     setIsKiAnalysing(true)
     setKiError(null)
     try {
-      let userPrompt: string
+      let labSection: string
       if (parsed && parsed.length > 0) {
-        userPrompt = parsed
+        labSection = parsed
           .map((cat) => {
             const values = cat.values
               .map((v) => {
@@ -303,17 +510,20 @@ function LaborPasteZone({ onSave, textareaRef }: LaborPasteZoneProps) {
           })
           .join('\n\n')
       } else {
-        userPrompt = rawText
+        labSection = rawText
       }
+      const clinicalContext = caseId ? gatherClinicalContext(caseId) : ''
+      const userPrompt = clinicalContext
+        ? `${clinicalContext}\n\nLABORWERTE:\n${labSection}`
+        : `LABORWERTE:\n${labSection}`
       const aiText = await callAiGenerate(KI_ANALYSE_SYSTEM_PROMPT, userPrompt)
       setKiAnalysisText(aiText.trim())
-      setKiAnalysisOpen(true)
     } catch {
       setKiError('KI-Analyse fehlgeschlagen. Bitte versuche es erneut.')
     } finally {
       setIsKiAnalysing(false)
     }
-  }, [parsed, rawText, isKiAnalysing])
+  }, [parsed, rawText, isKiAnalysing, caseId])
 
   const kiLoading = isKiStructuring || isKiAnalysing
 
@@ -457,20 +667,6 @@ function LaborPasteZone({ onSave, textareaRef }: LaborPasteZoneProps) {
             </button>
           </div>
           {kiError && <p className="labor-paste-zone__ki-error">{kiError}</p>}
-          {kiAnalysisText && (
-            <div className="labor-paste-zone__ki-analysis">
-              <button
-                type="button"
-                className="labor-paste-zone__ki-analysis-header"
-                onClick={() => setKiAnalysisOpen((o) => !o)}
-              >
-                <span>{kiAnalysisOpen ? '▾' : '▶'}</span> KI-Analyse
-              </button>
-              {kiAnalysisOpen && (
-                <p className="labor-paste-zone__ki-analysis-text">{kiAnalysisText}</p>
-              )}
-            </div>
-          )}
         </>
       )}
 
@@ -508,21 +704,16 @@ function LaborPasteZone({ onSave, textareaRef }: LaborPasteZoneProps) {
             </button>
           </div>
           {kiError && <p className="labor-paste-zone__ki-error">{kiError}</p>}
-          {kiAnalysisText && (
-            <div className="labor-paste-zone__ki-analysis">
-              <button
-                type="button"
-                className="labor-paste-zone__ki-analysis-header"
-                onClick={() => setKiAnalysisOpen((o) => !o)}
-              >
-                <span>{kiAnalysisOpen ? '▾' : '▶'}</span> KI-Analyse
-              </button>
-              {kiAnalysisOpen && (
-                <p className="labor-paste-zone__ki-analysis-text">{kiAnalysisText}</p>
-              )}
-            </div>
-          )}
         </>
+      )}
+
+      {kiAnalysisText && (
+        <KiAnalyseModal
+          text={kiAnalysisText}
+          title="KI-Analyse"
+          onAccept={handleKiModalAccept}
+          onReject={handleKiModalReject}
+        />
       )}
     </div>
   )
@@ -1274,10 +1465,18 @@ function CategorySection({
 interface KumulativViewProps {
   befunde: LaborBefund[]
   normalwerteLabel: string
+  caseId?: string
 }
 
-function KumulativView({ befunde, normalwerteLabel }: KumulativViewProps) {
+function KumulativView({ befunde, normalwerteLabel, caseId }: KumulativViewProps) {
   const { t } = useTranslation()
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'done'>('idle')
+  const [kiStatus, setKiStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+  const [kiText, setKiText] = useState<string | null>(null)
+  const [kiError, setKiError] = useState<string | null>(null)
+  const [kiSavedId, setKiSavedId] = useState<string | null>(null)
+  const [kiSavedText, setKiSavedText] = useState<string | null>(null)
+  const [kiSavedOpen, setKiSavedOpen] = useState(false)
 
   // Sort befunde by date ascending (oldest = first column, newest = last)
   const sorted = useMemo(
@@ -1367,6 +1566,304 @@ function KumulativView({ befunde, normalwerteLabel }: KumulativViewProps) {
     return u
   }, [paramNames, sorted])
 
+  // ── Copy as TSV ──────────────────────────────────────────────────────────
+  const handleCopyTsv = useCallback(() => {
+    const headerRow = [
+      'Parameter',
+      ...sorted.map((b) => {
+        const d = formatDate(b.date)
+        return b.label ? `${d} ${b.label}` : d
+      }),
+      t('labUnit'),
+      normalwerteLabel,
+    ]
+    const rows: string[] = [headerRow.join('\t')]
+
+    for (const group of categoryGroups) {
+      // Group header as a single merged cell (works well in Excel)
+      rows.push(group.label)
+      for (const name of group.paramNames) {
+        const row = matrix[name]
+        const cells = sorted.map((_, i) => {
+          const val = row?.[i]
+          if (!val) return '—'
+          const flag = val.isAbnormal ? ' ⚠' : ''
+          return `${val.value}${flag}`
+        })
+        rows.push([name, ...cells, unitTexts[name] ?? '', refTexts[name] ?? '–'].join('\t'))
+      }
+    }
+
+    const tsv = rows.join('\n')
+    navigator.clipboard.writeText(tsv).then(() => {
+      setCopyStatus('done')
+      setTimeout(() => setCopyStatus('idle'), 1500)
+    }).catch(() => {
+      const ta = document.createElement('textarea')
+      ta.value = tsv
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+      setCopyStatus('done')
+      setTimeout(() => setCopyStatus('idle'), 1500)
+    })
+  }, [sorted, categoryGroups, matrix, unitTexts, refTexts, normalwerteLabel, t])
+
+  // ── Print preview ─────────────────────────────────────────────────────────
+  const handlePrint = useCallback(() => {
+    const meta = caseId ? getCaseMeta(caseId) : null
+    const patientLine = [meta?.localName, meta?.localAge ? `(${meta.localAge} J.)` : '']
+      .filter(Boolean).join(' ').trim()
+    const printDate = new Date().toLocaleString('de-DE', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    })
+
+    const colCount = sorted.length + 3 // param + dates + unit + ref
+
+    // Build table rows HTML
+    let tbodyHtml = ''
+    for (const group of categoryGroups) {
+      tbodyHtml += `<tr class="cat-header"><td colspan="${colCount}">${group.label}</td></tr>`
+      for (const name of group.paramNames) {
+        const row = matrix[name]
+        const hasAbnormal = row?.some((v) => v?.isAbnormal)
+        const rowClass = hasAbnormal ? ' class="row-abnormal"' : ''
+        let cells = ''
+        for (let i = 0; i < sorted.length; i++) {
+          const val = row?.[i]
+          if (val) {
+            const cls = val.isAbnormal ? ' class="cell-abnormal"' : ''
+            cells += `<td${cls}>${val.value}</td>`
+          } else {
+            cells += `<td class="cell-missing">—</td>`
+          }
+        }
+        tbodyHtml += `<tr${rowClass}><td class="td-param">${name}</td>${cells}<td class="td-unit">${unitTexts[name] ?? ''}</td><td class="td-ref">${refTexts[name] ?? '–'}</td></tr>`
+      }
+    }
+
+    const dateHeaders = sorted.map((b) => {
+      const d = formatDate(b.date)
+      const sub = b.label ? `<span class="th-sub">${b.label}</span>` : ''
+      const badge = b.id === sorted[sorted.length - 1]?.id ? ' <span class="badge-new">neu</span>' : ''
+      return `<th class="th-date">${d}${badge}${sub}</th>`
+    }).join('')
+
+    const html = `<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8"/>
+<title>Kumulativer Laborbefund</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; color: #1a1a18; background: #fff; }
+  .print-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 0.6rem 1rem 0.5rem; border-bottom: 2px solid #333; margin-bottom: 0.6rem; }
+  .print-header__title { font-size: 13pt; font-weight: 700; }
+  .print-header__patient { font-size: 9.5pt; color: #444; margin-top: 2px; }
+  .print-header__date { font-size: 8.5pt; color: #666; text-align: right; }
+  table { border-collapse: collapse; width: 100%; font-size: 9.5pt; }
+  th, td { border: 1px solid #d0d0cc; padding: 3px 6px; vertical-align: middle; }
+  thead th { background: #f0f0ec; font-weight: 600; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.03em; color: #555; }
+  .th-date { text-align: center; min-width: 70px; }
+  .th-sub { display: block; font-size: 7.5pt; font-weight: 400; text-transform: none; letter-spacing: 0; color: #777; }
+  .badge-new { display: inline-block; font-size: 6.5pt; padding: 1px 3px; border-radius: 3px; background: #dff0e8; color: #2d7a50; font-weight: 700; vertical-align: middle; margin-left: 2px; }
+  .th-param { text-align: left; min-width: 150px; }
+  .th-unit, .th-ref { text-align: left; }
+  .td-param { font-weight: 500; }
+  .td-unit, .td-ref { color: #666; font-size: 8.5pt; }
+  .cat-header td { background: #f4f4f0; font-size: 7.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #777; padding: 3px 6px; border-top: 2px solid #ccc; }
+  .row-abnormal { background: #fff5f5; }
+  .cell-abnormal { color: #c0392b; font-weight: 700; }
+  .cell-missing { color: #aaa; text-align: center; }
+  td[class~="td-value"] { text-align: center; }
+  .print-footer { margin-top: 1rem; padding-top: 0.4rem; border-top: 1px solid #ccc; font-size: 8pt; color: #888; display: flex; justify-content: space-between; }
+  @media print { body { margin: 0.8cm; } button { display: none !important; } }
+</style>
+</head>
+<body>
+<div class="print-header">
+  <div>
+    <div class="print-header__title">Kumulativer Laborbefund</div>
+    ${patientLine ? `<div class="print-header__patient">${patientLine}</div>` : ''}
+  </div>
+  <div class="print-header__date">Ausdruck: ${printDate}</div>
+</div>
+<table>
+  <thead>
+    <tr>
+      <th class="th-param">Parameter</th>
+      ${dateHeaders}
+      <th class="th-unit">Einheit</th>
+      <th class="th-ref">${normalwerteLabel}</th>
+    </tr>
+  </thead>
+  <tbody>${tbodyHtml}</tbody>
+</table>
+<div class="print-footer">
+  <span>psychiatry-ink — Kumulativer Laborbefund</span>
+  <span>${printDate}</span>
+</div>
+<script>
+  window.addEventListener('load', function() { window.print(); });
+  window.addEventListener('afterprint', function() { window.close(); });
+</script>
+</body>
+</html>`
+
+    const w = window.open('', '_blank', 'width=900,height=700')
+    if (!w) return
+    w.document.write(html)
+    w.document.close()
+    w.focus()
+  }, [sorted, categoryGroups, matrix, unitTexts, refTexts, normalwerteLabel, caseId])
+
+  // ── KI Verlaufsanalyse ────────────────────────────────────────────────────
+
+  const formatCumulativeForPrompt = useCallback((): string => {
+    if (sorted.length === 0) return ''
+    const firstDate = formatDate(sorted[0].date)
+    const lastDate = formatDate(sorted[sorted.length - 1].date)
+    const dateHeaders = sorted.map((b) => formatDate(b.date))
+
+    const lines: string[] = []
+    lines.push('VERLAUFSANALYSE – Kumulativer Laborbefund')
+    lines.push(`Zeitraum: ${firstDate} – ${lastDate} (${sorted.length} Befunde)`)
+    lines.push('')
+
+    // Build fixed-width columns
+    const paramW = Math.min(32, Math.max(16, ...Object.keys(matrix).map((n) => n.length)))
+    const unitW = 10
+    const refW = 16
+    const valW = 14
+
+    const sep = [
+      '-'.repeat(paramW),
+      '-'.repeat(unitW),
+      '-'.repeat(refW),
+      ...dateHeaders.map(() => '-'.repeat(valW)),
+    ].join('-+-')
+    const header = [
+      'Parameter'.padEnd(paramW),
+      'Einheit'.padEnd(unitW),
+      'Referenz'.padEnd(refW),
+      ...dateHeaders.map((d) => d.padEnd(valW)),
+    ].join(' | ')
+    lines.push(header)
+    lines.push(sep)
+
+    for (const group of categoryGroups) {
+      lines.push(`\n[${group.label}]`)
+      for (const name of group.paramNames) {
+        const row = matrix[name]
+        const unit = unitTexts[name] ?? ''
+        const ref = refTexts[name] ?? ''
+        const values = sorted.map((_, i) => {
+          const v = row?.[i]
+          if (!v) return '—'
+          return v.isAbnormal ? `${v.value} ⚠` : v.value
+        })
+        const line = [
+          name.padEnd(paramW),
+          unit.padEnd(unitW),
+          ref.padEnd(refW),
+          ...values.map((val) => val.padEnd(valW)),
+        ].join(' | ')
+        lines.push(line)
+      }
+    }
+    return lines.join('\n')
+  }, [sorted, categoryGroups, matrix, unitTexts, refTexts])
+
+  const handleKiVerlaufsanalyse = useCallback(async () => {
+    if (kiStatus === 'loading' || sorted.length < 2) return
+    setKiStatus('loading')
+    setKiText(null)
+    setKiError(null)
+    setKiSavedId(null)
+    setKiSavedText(null)
+    setKiSavedOpen(false)
+    try {
+      const cumulativeTable = formatCumulativeForPrompt()
+      const clinicalContext = caseId ? gatherClinicalContext(caseId) : ''
+      const verlaufSection = [
+        'VERLAUFSANALYSE:',
+        'Analysiere bitte alle Laborwerte im zeitlichen Verlauf (Verlaufsanalyse/Longitudinalanalyse). Kommentiere insbesondere:',
+        '- Trends über Zeit (Verbesserungen, Verschlechterungen)',
+        '- Persistente oder zunehmende Normabweichungen',
+        '- Neu aufgetretene oder verschwundene pathologische Befunde',
+        '- Klinisch relevante Muster und deren zeitliche Entwicklung',
+        '- Dringenden Handlungsbedarf aufgrund des Verlaufs',
+        '',
+        cumulativeTable,
+      ].join('\n')
+      const userPrompt = clinicalContext
+        ? `${clinicalContext}\n\n${verlaufSection}`
+        : verlaufSection
+      const aiText = await callAiGenerate(KI_ANALYSE_SYSTEM_PROMPT, userPrompt)
+      setKiText(aiText.trim())
+      setKiStatus('done')
+    } catch {
+      setKiError('KI-Verlaufsanalyse fehlgeschlagen. Bitte versuche es erneut.')
+      setKiStatus('error')
+    }
+  }, [kiStatus, sorted, formatCumulativeForPrompt, caseId])
+
+  const handleKiModalAccept = useCallback(() => {
+    if (!kiText) return
+    const today = new Date()
+    const dd = String(today.getDate()).padStart(2, '0')
+    const mm = String(today.getMonth() + 1).padStart(2, '0')
+    const yyyy = today.getFullYear()
+    const title = `KI-Verlaufsanalyse: Labor ${dd}.${mm}.${yyyy}`
+    const entry = appendDokument(caseId ?? '', {
+      category: 'laborbefunde',
+      title,
+      content: kiText,
+      date: today.toISOString(),
+      source: 'ai-accepted',
+      pageType: 'labor-ki-verlauf',
+      sectionLabel: 'KI-Verlaufsanalyse',
+    })
+    showNotionToast('KI-Verlaufsanalyse in Dokumente gespeichert')
+    setKiSavedId(entry.id)
+    setKiSavedText(kiText)
+    setKiSavedOpen(false)
+    setKiText(null)
+    setKiStatus('idle')
+  }, [kiText, caseId])
+
+  const handleKiModalReject = useCallback(() => {
+    setKiText(null)
+    setKiStatus('idle')
+  }, [])
+
+  const handleKiSavedCopy = useCallback(() => {
+    if (!kiSavedText) return
+    navigator.clipboard.writeText(kiSavedText).then(() => {
+      showNotionToast('Verlaufsanalyse kopiert')
+    }).catch(() => {
+      const ta = document.createElement('textarea')
+      ta.value = kiSavedText
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+      showNotionToast('Verlaufsanalyse kopiert')
+    })
+  }, [kiSavedText])
+
+  const handleKiSavedDelete = useCallback(() => {
+    if (!kiSavedId) return
+    if (!window.confirm('KI-Verlaufsanalyse löschen?')) return
+    deleteDokument(caseId ?? '', kiSavedId)
+    setKiSavedId(null)
+    setKiSavedText(null)
+    setKiSavedOpen(false)
+    showNotionToast('KI-Verlaufsanalyse gelöscht')
+  }, [caseId, kiSavedId])
+
   if (sorted.length === 0) {
     return (
       <p className="labor-page__empty-text" style={{ padding: '1.5rem' }}>
@@ -1380,6 +1877,114 @@ function KumulativView({ befunde, normalwerteLabel }: KumulativViewProps) {
 
   return (
     <div className="labor-kumulativ">
+      <div className="labor-kumulativ__toolbar">
+        <button
+          type="button"
+          className={[
+            'labor-kumulativ__tool-btn',
+            copyStatus === 'done' ? 'labor-kumulativ__tool-btn--success' : '',
+          ].join(' ').trim()}
+          onClick={handleCopyTsv}
+          title={t('laborKumulativCopy')}
+          aria-label={t('laborKumulativCopy')}
+        >
+          <Clipboard size={14} />
+          <span>{copyStatus === 'done' ? t('laborKumulativCopied') : t('laborKumulativCopy')}</span>
+        </button>
+        <button
+          type="button"
+          className="labor-kumulativ__tool-btn"
+          onClick={handlePrint}
+          title={t('laborKumulativPrint')}
+          aria-label={t('laborKumulativPrint')}
+        >
+          <Printer size={14} />
+          <span>{t('laborKumulativPrint')}</span>
+        </button>
+        <button
+          type="button"
+          className={[
+            'labor-kumulativ__tool-btn labor-kumulativ__tool-btn--ki',
+            kiStatus === 'loading' ? 'labor-kumulativ__tool-btn--loading' : '',
+          ].join(' ').trim()}
+          onClick={handleKiVerlaufsanalyse}
+          disabled={kiStatus === 'loading' || sorted.length < 2}
+          title={sorted.length < 2 ? 'Mindestens 2 Befunde für Verlaufsanalyse erforderlich' : 'Alle Befunde mit KI analysieren (Verlaufsanalyse)'}
+        >
+          🤖
+          <span>{kiStatus === 'loading' ? 'KI analysiert…' : 'KI Verlaufsanalyse'}</span>
+        </button>
+      </div>
+
+      {/* KI error */}
+      {kiStatus === 'error' && kiError && (
+        <p className="labor-paste-zone__ki-error" style={{ margin: '0.5rem 0.75rem' }}>{kiError}</p>
+      )}
+
+      {/* Saved KI Verlaufsanalyse inline section */}
+      {kiSavedId && kiSavedText && (
+        <div className="labor-ki-saved labor-kumulativ__ki-saved">
+          <div className="labor-ki-saved__header">
+            <button
+              type="button"
+              className="labor-ki-saved__toggle"
+              onClick={() => setKiSavedOpen((o) => !o)}
+              aria-expanded={kiSavedOpen}
+            >
+              <span className="labor-ki-saved__chevron">{kiSavedOpen ? '▾' : '▶'}</span>
+              🤖 KI-Verlaufsanalyse
+            </button>
+            <span className="labor-ki-saved__badge">
+              <Check size={12} /> In Dokumente gespeichert
+            </span>
+            <div className="labor-ki-saved__actions">
+              <button
+                type="button"
+                className="labor-ki-saved__icon-btn"
+                onClick={handleKiSavedCopy}
+                title="Verlaufsanalyse kopieren"
+                aria-label="Verlaufsanalyse kopieren"
+              >
+                <Clipboard size={14} />
+              </button>
+              <button
+                type="button"
+                className="labor-ki-saved__icon-btn labor-ki-saved__icon-btn--delete"
+                onClick={handleKiSavedDelete}
+                title="Verlaufsanalyse löschen"
+                aria-label="Verlaufsanalyse löschen"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          </div>
+          {kiSavedOpen && (
+            <p className="labor-ki-saved__text">{kiSavedText}</p>
+          )}
+        </div>
+      )}
+
+      {/* KI analysis result modal */}
+      {kiStatus === 'done' && kiText && (
+        <KiAnalyseModal
+          text={kiText}
+          title="KI-Verlaufsanalyse"
+          onAccept={handleKiModalAccept}
+          onReject={handleKiModalReject}
+          onCopy={() => {
+            navigator.clipboard.writeText(kiText).catch(() => {
+              const ta = document.createElement('textarea')
+              ta.value = kiText
+              document.body.appendChild(ta)
+              ta.select()
+              document.execCommand('copy')
+              document.body.removeChild(ta)
+            })
+            showNotionToast('Verlaufsanalyse kopiert')
+          }}
+        />
+      )}
+
       <div className="labor-kumulativ__scroll-wrap">
         <table className="labor-kumulativ__table">
           <thead>
@@ -1508,6 +2113,14 @@ export function LaborPage({ caseId, onCreatePatient, hasPatient = false }: Labor
   const labelInputRef = useRef<HTMLInputElement>(null)
   const pasteTextareaRef = useRef<HTMLTextAreaElement>(null)
 
+  // Re-analysis state for saved befunde
+  const [kiReStatus, setKiReStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+  const [kiReText, setKiReText] = useState<string | null>(null)
+  const [kiReError, setKiReError] = useState<string | null>(null)
+  const [kiReSavedId, setKiReSavedId] = useState<string | null>(null)
+  const [kiReSavedText, setKiReSavedText] = useState<string | null>(null)
+  const [kiReSavedOpen, setKiReSavedOpen] = useState(false)
+
   useEffect(() => {
     const loaded = [...loadBefunde(caseId)].sort((a, b) => b.date.localeCompare(a.date))
     setBefunde(loaded)
@@ -1519,6 +2132,16 @@ export function LaborPage({ caseId, onCreatePatient, hasPatient = false }: Labor
     const id = window.setTimeout(() => pasteTextareaRef.current?.focus(), 60)
     return () => window.clearTimeout(id)
   }, [pasteZoneOpen])
+
+  // Reset re-analysis state whenever the selected befund changes
+  useEffect(() => {
+    setKiReStatus('idle')
+    setKiReText(null)
+    setKiReError(null)
+    setKiReSavedId(null)
+    setKiReSavedText(null)
+    setKiReSavedOpen(false)
+  }, [selectedId])
 
   const selectedBefund = useMemo(
     () => befunde.find((b) => b.id === selectedId) ?? null,
@@ -1597,25 +2220,94 @@ export function LaborPage({ caseId, onCreatePatient, hasPatient = false }: Labor
 
   const handlePrint = useCallback(() => {
     if (!selectedBefund) return
-    const lines: string[] = [
-      `<h2>Laborbefund ${selectedBefund.date}${selectedBefund.label ? ' — ' + selectedBefund.label : ''}</h2>`,
-    ]
+    const meta = getCaseMeta(caseId)
+    const patientLine = [meta?.localName, meta?.localAge ? `(${meta.localAge} J.)` : '']
+      .filter(Boolean).join(' ').trim()
+    const printDate = new Date().toLocaleString('de-DE', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    })
+    const title = `Laborbefund ${selectedBefund.date}${selectedBefund.label ? ' — ' + selectedBefund.label : ''}`
+
+    let tbodyHtml = ''
     for (const cat of selectedBefund.categories) {
-      lines.push(`<h3>${cat.label}</h3><table border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:14px">`)
-      lines.push('<tr><th>Parameter</th><th>Wert</th><th>Einheit</th><th>Referenz</th></tr>')
+      const colSpan = 5
+      tbodyHtml += `<tr class="cat-header"><td colspan="${colSpan}">${cat.label}</td></tr>`
       for (const v of cat.values) {
-        const color = v.isAbnormal ? ' style="color:#dc2626;font-weight:bold"' : ''
-        lines.push(`<tr><td>${v.name}</td><td${color}>${v.value}</td><td>${v.unit}</td><td>${v.refText ?? '–'}</td></tr>`)
+        const rowCls = v.isAbnormal ? ' class="row-abnormal"' : ''
+        const cellCls = v.isAbnormal ? ' class="cell-abnormal"' : ''
+        const flag = v.isAbnormal ? '<span class="flag-abn">↑↓</span>' : ''
+        tbodyHtml += `<tr${rowCls}><td class="td-param">${v.name}</td><td${cellCls}>${v.value}${flag}</td><td class="td-unit">${v.unit}</td><td class="td-ref">${v.refText ?? '–'}</td><td class="td-flag">${v.isAbnormal ? '!' : ''}</td></tr>`
       }
-      lines.push('</table><br/>')
     }
-    const w = window.open('', '_blank')
+
+    const html = `<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8"/>
+<title>${title}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; color: #1a1a18; background: #fff; }
+  .print-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 0.6rem 1rem 0.5rem; border-bottom: 2px solid #333; margin-bottom: 0.6rem; }
+  .print-header__title { font-size: 13pt; font-weight: 700; }
+  .print-header__patient { font-size: 9.5pt; color: #444; margin-top: 2px; }
+  .print-header__date { font-size: 8.5pt; color: #666; text-align: right; }
+  table { border-collapse: collapse; width: 100%; font-size: 9.5pt; }
+  th, td { border: 1px solid #d0d0cc; padding: 3px 6px; vertical-align: middle; }
+  thead th { background: #f0f0ec; font-weight: 600; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.03em; color: #555; }
+  .th-param { text-align: left; min-width: 160px; }
+  .th-val { text-align: left; min-width: 70px; }
+  .th-unit, .th-ref { text-align: left; }
+  .th-flag { text-align: center; width: 28px; }
+  .td-param { font-weight: 500; }
+  .td-unit, .td-ref { color: #666; font-size: 8.5pt; }
+  .td-flag { text-align: center; font-weight: 700; color: #c0392b; font-size: 9pt; }
+  .cat-header td { background: #f4f4f0; font-size: 7.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #777; padding: 3px 6px; border-top: 2px solid #ccc; }
+  .row-abnormal { background: #fff5f5; }
+  .cell-abnormal { color: #c0392b; font-weight: 700; }
+  .flag-abn { display: none; }
+  .print-footer { margin-top: 1rem; padding-top: 0.4rem; border-top: 1px solid #ccc; font-size: 8pt; color: #888; display: flex; justify-content: space-between; }
+  @media print { body { margin: 0.8cm; } button { display: none !important; } }
+</style>
+</head>
+<body>
+<div class="print-header">
+  <div>
+    <div class="print-header__title">${title}</div>
+    ${patientLine ? `<div class="print-header__patient">${patientLine}</div>` : ''}
+  </div>
+  <div class="print-header__date">Ausdruck: ${printDate}</div>
+</div>
+<table>
+  <thead>
+    <tr>
+      <th class="th-param">Parameter</th>
+      <th class="th-val">Wert</th>
+      <th class="th-unit">Einheit</th>
+      <th class="th-ref">Referenz</th>
+      <th class="th-flag">⚑</th>
+    </tr>
+  </thead>
+  <tbody>${tbodyHtml}</tbody>
+</table>
+<div class="print-footer">
+  <span>psychiatry-ink — Laborbefund</span>
+  <span>${printDate}</span>
+</div>
+<script>
+  window.addEventListener('load', function() { window.print(); });
+  window.addEventListener('afterprint', function() { window.close(); });
+</script>
+</body>
+</html>`
+
+    const w = window.open('', '_blank', 'width=860,height=700')
     if (!w) return
-    w.document.write(`<html><head><title>Laborbefund</title><style>body{font-family:sans-serif;padding:1rem}h2{margin-bottom:0.5rem}h3{margin:1rem 0 0.25rem}@media print{button{display:none}}</style></head><body>${lines.join('')}<br/><button onclick="window.print()">Drucken</button></body></html>`)
+    w.document.write(html)
     w.document.close()
     w.focus()
-    setTimeout(() => w.print(), 400)
-  }, [selectedBefund])
+  }, [selectedBefund, caseId])
 
   const handleEditLabel = useCallback(() => {
     if (!selectedBefund) return
@@ -1661,6 +2353,111 @@ export function LaborPage({ caseId, onCreatePatient, hasPatient = false }: Labor
     },
     [caseId],
   )
+
+  const handleReAnalyze = useCallback(async () => {
+    if (!selectedBefund || kiReStatus === 'loading') return
+    setKiReStatus('loading')
+    setKiReText(null)
+    setKiReError(null)
+    setKiReSavedId(null)
+    try {
+      const labSection = selectedBefund.categories.length > 0
+        ? selectedBefund.categories
+            .map((cat) => {
+              const values = cat.values
+                .map((v) => {
+                  const ref = v.refText ? ` (Ref: ${v.refText})` : ''
+                  const flag = v.isAbnormal ? ' ⚠' : ''
+                  return `  ${v.name}: ${v.value} ${v.unit}${ref}${flag}`
+                })
+                .join('\n')
+              return `${cat.label}:\n${values}`
+            })
+            .join('\n\n')
+        : selectedBefund.rawText
+      const clinicalContext = gatherClinicalContext(caseId)
+      const userPrompt = clinicalContext
+        ? `${clinicalContext}\n\nLABORWERTE:\n${labSection}`
+        : `LABORWERTE:\n${labSection}`
+      const aiText = await callAiGenerate(KI_ANALYSE_SYSTEM_PROMPT, userPrompt)
+      setKiReText(aiText.trim())
+      setKiReStatus('done')
+    } catch {
+      setKiReError('KI-Analyse fehlgeschlagen. Bitte versuche es erneut.')
+      setKiReStatus('error')
+    }
+  }, [selectedBefund, kiReStatus, caseId])
+
+  const saveKiAnalysisDokument = useCallback((text: string, befund: typeof selectedBefund) => {
+    if (!befund) return null
+    const befundTitle = befund.label
+      ? `${befund.label} (${formatDate(befund.date)})`
+      : formatDate(befund.date)
+    const title = `KI-Analyse: ${befundTitle}`
+    const entry = appendDokument(caseId, {
+      category: 'laborbefunde',
+      title,
+      content: text,
+      date: new Date().toISOString(),
+      source: 'ai-accepted',
+      pageType: 'labor-ki-analyse',
+      sectionLabel: 'KI-Analyse',
+    })
+    showNotionToast('KI-Analyse in Dokumente gespeichert')
+    return entry.id
+  }, [caseId])
+
+  const handleReAnalyzeAccept = useCallback(() => {
+    if (!kiReText) return
+    const savedId = saveKiAnalysisDokument(kiReText, selectedBefund)
+    if (savedId) {
+      setKiReSavedId(savedId)
+      setKiReSavedText(kiReText)
+      setKiReSavedOpen(false)
+    }
+    setKiReText(null)
+    setKiReStatus('idle')
+  }, [kiReText, saveKiAnalysisDokument, selectedBefund])
+
+  const handleReAnalyzeReject = useCallback(() => {
+    setKiReText(null)
+    setKiReStatus('idle')
+  }, [])
+
+  const handleKiPasteAccept = useCallback((text: string, date: string, label?: string) => {
+    const targetBefund = selectedBefund ?? ({ label, date } as LaborBefund)
+    const savedId = saveKiAnalysisDokument(text, targetBefund)
+    if (savedId) {
+      setKiReSavedId(savedId)
+      setKiReSavedText(text)
+      setKiReSavedOpen(false)
+    }
+  }, [saveKiAnalysisDokument, selectedBefund])
+
+  const handleKiSavedCopy = useCallback(() => {
+    if (!kiReSavedText) return
+    navigator.clipboard.writeText(kiReSavedText).then(() => {
+      showNotionToast('Analyse kopiert')
+    }).catch(() => {
+      const ta = document.createElement('textarea')
+      ta.value = kiReSavedText
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+      showNotionToast('Analyse kopiert')
+    })
+  }, [kiReSavedText])
+
+  const handleKiSavedDelete = useCallback(() => {
+    if (!kiReSavedId) return
+    if (!window.confirm('KI-Analyse löschen?')) return
+    deleteDokument(caseId, kiReSavedId)
+    setKiReSavedId(null)
+    setKiReSavedText(null)
+    setKiReSavedOpen(false)
+    showNotionToast('KI-Analyse gelöscht')
+  }, [caseId, kiReSavedId])
 
   return (
     <div className="labor-page">
@@ -1744,13 +2541,18 @@ export function LaborPage({ caseId, onCreatePatient, hasPatient = false }: Labor
             >
               ×
             </button>
-            <LaborPasteZone onSave={handleSaveBefund} textareaRef={pasteTextareaRef} />
+            <LaborPasteZone
+              caseId={caseId}
+              onSave={handleSaveBefund}
+              onKiAnalysisAccept={handleKiPasteAccept}
+              textareaRef={pasteTextareaRef}
+            />
           </div>
         )}
 
         {/* Kumulativ view */}
         {viewMode === 'kumulativ' && (
-          <KumulativView befunde={befunde} normalwerteLabel={t('laborNormalwerte')} />
+          <KumulativView befunde={befunde} normalwerteLabel={t('laborNormalwerte')} caseId={caseId} />
         )}
 
         {viewMode === 'einzeln' && selectedBefund ? (
@@ -1810,6 +2612,18 @@ export function LaborPage({ caseId, onCreatePatient, hasPatient = false }: Labor
                 </button>
                 <button
                   type="button"
+                  className={[
+                    'labor-befund-header__action-btn labor-befund-header__action-btn--ai',
+                    kiReStatus === 'loading' ? 'labor-befund-header__action-btn--loading' : '',
+                  ].join(' ').trim()}
+                  onClick={handleReAnalyze}
+                  disabled={kiReStatus === 'loading'}
+                  title="Befund mit KI analysieren"
+                >
+                  {kiReStatus === 'loading' ? '🤖 analysiert…' : '🤖 KI analysieren'}
+                </button>
+                <button
+                  type="button"
                   className="labor-befund-header__delete-btn"
                   onClick={handleDelete}
                   title="Befund löschen"
@@ -1835,6 +2649,75 @@ export function LaborPage({ caseId, onCreatePatient, hasPatient = false }: Labor
                     onShowGraph={setPendingGraphCat}
                   />
                 ))}
+              </div>
+            )}
+
+            {/* KI re-analysis error */}
+            {kiReStatus === 'error' && kiReError && (
+              <p className="labor-paste-zone__ki-error" style={{ marginTop: '1rem' }}>{kiReError}</p>
+            )}
+
+            {/* KI re-analysis modal — shown while result is pending acceptance */}
+            {kiReStatus === 'done' && kiReText && (
+              <KiAnalyseModal
+                text={kiReText}
+                title="KI-Analyse"
+                onAccept={handleReAnalyzeAccept}
+                onReject={handleReAnalyzeReject}
+                onCopy={() => {
+                  navigator.clipboard.writeText(kiReText).catch(() => {
+                    const ta = document.createElement('textarea')
+                    ta.value = kiReText
+                    document.body.appendChild(ta)
+                    ta.select()
+                    document.execCommand('copy')
+                    document.body.removeChild(ta)
+                  })
+                  showNotionToast('Analyse kopiert')
+                }}
+              />
+            )}
+
+            {/* Saved KI analysis inline section */}
+            {kiReSavedId && kiReSavedText && (
+              <div className="labor-ki-saved">
+                <div className="labor-ki-saved__header">
+                  <button
+                    type="button"
+                    className="labor-ki-saved__toggle"
+                    onClick={() => setKiReSavedOpen((o) => !o)}
+                    aria-expanded={kiReSavedOpen}
+                  >
+                    <span className="labor-ki-saved__chevron">{kiReSavedOpen ? '▾' : '▶'}</span>
+                    🤖 KI-Analyse
+                  </button>
+                  <span className="labor-ki-saved__badge">
+                    <Check size={12} /> In Dokumente gespeichert
+                  </span>
+                  <div className="labor-ki-saved__actions">
+                    <button
+                      type="button"
+                      className="labor-ki-saved__icon-btn"
+                      onClick={handleKiSavedCopy}
+                      title="Analyse kopieren"
+                      aria-label="Analyse kopieren"
+                    >
+                      <Clipboard size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      className="labor-ki-saved__icon-btn labor-ki-saved__icon-btn--delete"
+                      onClick={handleKiSavedDelete}
+                      title="Analyse löschen"
+                      aria-label="Analyse löschen"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+                {kiReSavedOpen && (
+                  <p className="labor-ki-saved__text">{kiReSavedText}</p>
+                )}
               </div>
             )}
 

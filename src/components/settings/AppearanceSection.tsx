@@ -229,7 +229,7 @@ export function AppearanceSection({ appearance }: AppearanceSectionProps) {
 
       <SettingsField
         label="Grafik im Bedienfeld"
-        description="Zeigt eine dezente Lottie-Animation rechts im unteren Bedienfeld."
+        description="Zeigt eine dezente Grafik rechts im unteren Bedienfeld."
       >
         <label className="inline-flex items-center gap-2 text-sm text-ink">
           <input

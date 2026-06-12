@@ -26,6 +26,13 @@ import {
   saveTimelinesList,
 } from '../../utils/timelinePersistence'
 import type { TimelineEntry } from '../../types/timeline'
+import { useClinicalFeedEvents } from '../../hooks/useClinicalFeedEvents'
+import {
+  clinicalEventTime,
+  translateClinicalEventSource,
+  type ClinicalEventSource,
+  type ClinicalFeedEvent,
+} from '../../utils/verlauf/clinicalEvents'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -742,6 +749,78 @@ const EntryCard = memo(function EntryCard({
 })
 
 // ---------------------------------------------------------------------------
+// Derived (read-only) entry card — sourced from a Therapie section
+// ---------------------------------------------------------------------------
+
+interface DerivedEntryCardProps {
+  event: ClinicalFeedEvent
+  readonlyLabel: string
+  copyLabel: string
+}
+
+const DerivedEntryCard = memo(function DerivedEntryCard({
+  event,
+  readonlyLabel,
+  copyLabel,
+}: DerivedEntryCardProps) {
+  function handleCopy(e: React.MouseEvent) {
+    e.stopPropagation()
+    void navigator.clipboard.writeText(`${event.title}: ${event.body}`)
+  }
+
+  return (
+    <article className="verlauf-entry verlauf-entry--derived">
+      <header className="verlauf-entry__header">
+        <time className="verlauf-entry__date" dateTime={event.date}>
+          {formatIsoTimestampDate(event.date)}
+        </time>
+        <span
+          className={`verlauf-entry__source-badge verlauf-entry__source-badge--${event.source}`}
+          title={readonlyLabel}
+        >
+          {event.sourceLabel}
+        </span>
+        <span className="verlauf-entry__actions" onClick={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            className="verlauf-entry__action-btn"
+            title={copyLabel}
+            onClick={handleCopy}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+          </button>
+        </span>
+      </header>
+      <div className="verlauf-entry__body verlauf-entry__body--derived">
+        <span className="verlauf-derived__title">{event.title}: </span>
+        {event.body}
+      </div>
+    </article>
+  )
+})
+
+// ---------------------------------------------------------------------------
+// Unified feed model
+// ---------------------------------------------------------------------------
+
+type FeedSource = 'manuell' | ClinicalEventSource
+
+type UnifiedItem =
+  | { kind: 'manual'; id: string; ts: number; source: FeedSource; entry: VerlaufFeedEntry }
+  | { kind: 'derived'; id: string; ts: number; source: FeedSource; event: ClinicalFeedEvent }
+
+const ALL_FEED_SOURCES: FeedSource[] = [
+  'manuell',
+  'medikation',
+  'psychotherapie',
+  'komplementaer',
+  'sozialtherapie',
+]
+
+// ---------------------------------------------------------------------------
 // Main page
 // ---------------------------------------------------------------------------
 
@@ -750,7 +829,12 @@ interface VerlaufFeedPageProps {
 }
 
 export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
+
+  const derivedEvents = useClinicalFeedEvents(caseId)
+  const [activeSources, setActiveSources] = useState<Set<FeedSource>>(
+    () => new Set(ALL_FEED_SOURCES),
+  )
 
   const [entries, setEntries] = useState<VerlaufFeedEntry[]>(() => loadVerlaufFeed(caseId))
   const [annotations, setAnnotations] = useState<VerlaufAnnotation[]>(() =>
@@ -974,7 +1058,62 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
     setComposerOpen(false)
   }, [])
 
-  const isEmpty = entries.length === 0
+  const allItems = useMemo<UnifiedItem[]>(() => {
+    const manualItems: UnifiedItem[] = entries.map((entry) => ({
+      kind: 'manual',
+      id: entry.id,
+      ts: clinicalEventTime(entry.date),
+      source: 'manuell',
+      entry,
+    }))
+    const derivedItems: UnifiedItem[] = derivedEvents.map((event) => ({
+      kind: 'derived',
+      id: event.id,
+      ts: clinicalEventTime(event.date),
+      source: event.source,
+      event,
+    }))
+    return [...manualItems, ...derivedItems].sort((a, b) => b.ts - a.ts)
+  }, [entries, derivedEvents])
+
+  // Sources that actually have at least one entry — these become filter chips.
+  const availableSources = useMemo<FeedSource[]>(() => {
+    const present = new Set<FeedSource>()
+    for (const item of allItems) present.add(item.source)
+    return ALL_FEED_SOURCES.filter((src) => present.has(src))
+  }, [allItems])
+
+  const visibleItems = useMemo(
+    () => allItems.filter((item) => activeSources.has(item.source)),
+    [allItems, activeSources],
+  )
+
+  const toggleSource = useCallback((source: FeedSource) => {
+    setActiveSources((prev) => {
+      const next = new Set(prev)
+      if (next.has(source)) next.delete(source)
+      else next.add(source)
+      return next
+    })
+  }, [])
+
+  const selectAllSources = useCallback(() => {
+    setActiveSources(new Set(ALL_FEED_SOURCES))
+  }, [])
+
+  const allActive = availableSources.every((src) => activeSources.has(src))
+
+  const sourceChipLabel = useCallback(
+    (source: FeedSource): string =>
+      source === 'manuell'
+        ? t('verlaufSourceManuell')
+        : translateClinicalEventSource(language, source),
+    [language, t],
+  )
+
+  const isEmpty = allItems.length === 0
+  const derivedReadonlyLabel = t('verlaufDerivedReadonly')
+  const copyLabel = t('verlaufEntryCopy')
 
   return (
     <div className="verlauf-feed-page">
@@ -1032,21 +1171,54 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
         </div>
       )}
 
+      {availableSources.length > 1 && (
+        <div className="verlauf-filter" role="group" aria-label={t('verlaufFilterLabel')}>
+          <button
+            type="button"
+            className={`verlauf-filter__chip${allActive ? ' verlauf-filter__chip--active' : ''}`}
+            onClick={selectAllSources}
+          >
+            {t('verlaufFilterAll')}
+          </button>
+          {availableSources.map((source) => (
+            <button
+              key={source}
+              type="button"
+              className={`verlauf-filter__chip verlauf-filter__chip--${source}${
+                activeSources.has(source) ? ' verlauf-filter__chip--active' : ''
+              }`}
+              aria-pressed={activeSources.has(source)}
+              onClick={() => toggleSource(source)}
+            >
+              {sourceChipLabel(source)}
+            </button>
+          ))}
+        </div>
+      )}
+
       {isEmpty && !composerOpen ? (
         <p className="verlauf-feed-page__empty">{t('verlaufFeedEmpty')}</p>
       ) : isEmpty ? null : (
         <div className="verlauf-feed-page__list">
-          {entries.map((entry, index) => (
-            <div key={entry.id}>
-              <EntryCard
-                entry={entry}
-                annotations={annotations}
-                onSelection={handleSelection}
-                onCommentView={handleCommentView}
-                onEdit={handleEntryEdit}
-                onDelete={handleEntryDelete}
-              />
-              {index < entries.length - 1 && <div className="verlauf-entry__divider" />}
+          {visibleItems.map((item, index) => (
+            <div key={item.id}>
+              {item.kind === 'manual' ? (
+                <EntryCard
+                  entry={item.entry}
+                  annotations={annotations}
+                  onSelection={handleSelection}
+                  onCommentView={handleCommentView}
+                  onEdit={handleEntryEdit}
+                  onDelete={handleEntryDelete}
+                />
+              ) : (
+                <DerivedEntryCard
+                  event={item.event}
+                  readonlyLabel={derivedReadonlyLabel}
+                  copyLabel={copyLabel}
+                />
+              )}
+              {index < visibleItems.length - 1 && <div className="verlauf-entry__divider" />}
             </div>
           ))}
         </div>

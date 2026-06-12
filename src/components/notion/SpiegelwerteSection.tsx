@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import {
   LineChart,
   Line,
@@ -11,6 +11,13 @@ import {
 } from 'recharts'
 import { loadBefunde, type LaborBefund } from '../../utils/laborArchive'
 import { useTranslation } from '../../context/TranslationContext'
+import { useOverviewHiddenGraphs } from '../../hooks/useOverviewHiddenGraphs'
+import { GraphEnlargeModal } from './GraphEnlargeModal'
+
+/** Graph id namespace for the shared Overview hidden-graphs store. */
+function spiegelGraphId(name: string): string {
+  return `spiegel:${name}`
+}
 
 // ---------------------------------------------------------------------------
 // Spiegelwert detection
@@ -195,18 +202,143 @@ function getTrendDir(points: SpiegelDataPoint[]): TrendDir {
 // Single sparkline card
 // ---------------------------------------------------------------------------
 
-interface SpiegelCardProps {
-  series: SpiegelSeries
+/** Reference-range label, e.g. "20–80 ng/mL". */
+function refRangeLabel(series: SpiegelSeries): string | null {
+  if (series.refText) {
+    return series.unit ? `${series.refText} ${series.unit}` : series.refText
+  }
+  if (series.refMin !== undefined && series.refMax !== undefined) {
+    return `${series.refMin}–${series.refMax}${series.unit ? ` ${series.unit}` : ''}`
+  }
+  if (series.refMin !== undefined) {
+    return `≥ ${series.refMin}${series.unit ? ` ${series.unit}` : ''}`
+  }
+  if (series.refMax !== undefined) {
+    return `≤ ${series.refMax}${series.unit ? ` ${series.unit}` : ''}`
+  }
+  return null
 }
 
-function SpiegelCard({ series }: SpiegelCardProps) {
-  const { t } = useTranslation()
+interface SpiegelChartViewProps {
+  series: SpiegelSeries
+  height: number
+  large?: boolean
+}
 
+/** Shared Recharts line chart used in both the small card and the enlarge modal. */
+function SpiegelChartView({ series, height, large = false }: SpiegelChartViewProps) {
   const chartData = series.points.map((p) => ({
     date: shortDate(p.date),
     value: p.value,
     isAbnormal: p.isAbnormal ?? false,
   }))
+
+  const latest = series.points[series.points.length - 1]
+  const isOutOfRange =
+    latest.isAbnormal === true ||
+    (series.refMin !== undefined && latest.value < series.refMin) ||
+    (series.refMax !== undefined && latest.value > series.refMax)
+
+  const allValues = series.points.map((p) => p.value)
+  const dataMin = Math.min(...allValues)
+  const dataMax = Math.max(...allValues)
+  const rangeMin = series.refMin !== undefined ? Math.min(dataMin, series.refMin) : dataMin
+  const rangeMax = series.refMax !== undefined ? Math.max(dataMax, series.refMax) : dataMax
+  const pad = (rangeMax - rangeMin) * 0.2 || 1
+  const yMin = Math.max(0, rangeMin - pad)
+  const yMax = rangeMax + pad
+
+  const hasRefBand = series.refMin !== undefined || series.refMax !== undefined
+  const refBandMin = series.refMin ?? yMin
+  const refBandMax = series.refMax ?? yMax
+
+  const tickSize = large ? 12 : 9
+  const dotRadius = large ? 4 : 3
+
+  return (
+    <ResponsiveContainer width="100%" height={height}>
+      <LineChart
+        data={chartData}
+        margin={{ top: 6, right: large ? 16 : 4, bottom: 0, left: large ? 0 : -30 }}
+      >
+        <XAxis dataKey="date" tick={{ fontSize: tickSize }} interval={0} />
+        <YAxis
+          tick={{ fontSize: tickSize }}
+          domain={[yMin, yMax]}
+          width={large ? 44 : 36}
+        />
+        <Tooltip
+          contentStyle={{ fontSize: large ? 12 : 10, padding: '2px 6px' }}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          formatter={(v: any) => [`${v} ${series.unit}`, series.name]}
+        />
+
+        {hasRefBand && (
+          <ReferenceArea
+            y1={refBandMin}
+            y2={refBandMax}
+            fill="#22c55e"
+            fillOpacity={0.1}
+            ifOverflow="extendDomain"
+          />
+        )}
+        {series.refMin !== undefined && (
+          <ReferenceLine
+            y={series.refMin}
+            stroke="#16a34a"
+            strokeDasharray="3 2"
+            strokeOpacity={0.6}
+          />
+        )}
+        {series.refMax !== undefined && (
+          <ReferenceLine
+            y={series.refMax}
+            stroke="#16a34a"
+            strokeDasharray="3 2"
+            strokeOpacity={0.6}
+          />
+        )}
+
+        <Line
+          type="monotone"
+          dataKey="value"
+          stroke={isOutOfRange ? '#ef4444' : '#3b82f6'}
+          strokeWidth={large ? 2 : 1.5}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          dot={(dotProps: any) => {
+            const { cx, cy, payload } = dotProps as {
+              cx: number | undefined
+              cy: number | undefined
+              payload: { isAbnormal: boolean }
+            }
+            if (cx === undefined || cy === undefined) return <g key="empty" />
+            const color = payload.isAbnormal ? '#ef4444' : (isOutOfRange ? '#ef4444' : '#3b82f6')
+            return (
+              <circle
+                key={`dot-${cx}-${cy}`}
+                cx={cx}
+                cy={cy}
+                r={dotRadius}
+                fill={color}
+                stroke={color}
+              />
+            )
+          }}
+          connectNulls
+        />
+      </LineChart>
+    </ResponsiveContainer>
+  )
+}
+
+interface SpiegelCardProps {
+  series: SpiegelSeries
+  onEnlarge: () => void
+  onHide: () => void
+}
+
+function SpiegelCard({ series, onEnlarge, onHide }: SpiegelCardProps) {
+  const { t } = useTranslation()
 
   const latest = series.points[series.points.length - 1]
   const trendDir = getTrendDir(series.points)
@@ -230,20 +362,6 @@ function SpiegelCard({ series }: SpiegelCardProps) {
     (series.refMin !== undefined && latest.value < series.refMin) ||
     (series.refMax !== undefined && latest.value > series.refMax)
 
-  // Compute Y domain with some padding + reference range
-  const allValues = series.points.map((p) => p.value)
-  const dataMin = Math.min(...allValues)
-  const dataMax = Math.max(...allValues)
-  const rangeMin = series.refMin !== undefined ? Math.min(dataMin, series.refMin) : dataMin
-  const rangeMax = series.refMax !== undefined ? Math.max(dataMax, series.refMax) : dataMax
-  const pad = (rangeMax - rangeMin) * 0.2 || 1
-  const yMin = Math.max(0, rangeMin - pad)
-  const yMax = rangeMax + pad
-
-  const hasRefBand = series.refMin !== undefined || series.refMax !== undefined
-  const refBandMin = series.refMin ?? yMin
-  const refBandMax = series.refMax ?? yMax
-
   return (
     <div className={['spiegelwerte-card', isOutOfRange ? 'spiegelwerte-card--abnormal' : ''].join(' ').trim()}>
       <div className="spiegelwerte-card__header">
@@ -251,6 +369,26 @@ function SpiegelCard({ series }: SpiegelCardProps) {
         <span className={['spiegelwerte-card__trend', trendClass].join(' ')}>
           {trendLabel}
         </span>
+        <div className="overview-chart-card__actions">
+          <button
+            type="button"
+            className="overview-chart-card__action"
+            onClick={onEnlarge}
+            title={t('overviewChartEnlarge')}
+            aria-label={t('overviewChartEnlarge')}
+          >
+            ⤢
+          </button>
+          <button
+            type="button"
+            className="overview-chart-card__action overview-chart-card__action--close"
+            onClick={onHide}
+            title={t('overviewChartHide')}
+            aria-label={t('overviewChartHide')}
+          >
+            ×
+          </button>
+        </div>
       </div>
 
       <div className="spiegelwerte-card__latest">
@@ -263,82 +401,7 @@ function SpiegelCard({ series }: SpiegelCardProps) {
         )}
       </div>
 
-      <ResponsiveContainer width="100%" height={72}>
-        <LineChart
-          data={chartData}
-          margin={{ top: 6, right: 4, bottom: 0, left: -30 }}
-        >
-          <XAxis
-            dataKey="date"
-            tick={{ fontSize: 9 }}
-            interval={0}
-          />
-          <YAxis
-            tick={{ fontSize: 9 }}
-            domain={[yMin, yMax]}
-            width={36}
-          />
-          <Tooltip
-            contentStyle={{ fontSize: 10, padding: '2px 6px' }}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          formatter={(v: any) => [`${v} ${series.unit}`, series.name]}
-          />
-
-          {hasRefBand && (
-            <ReferenceArea
-              y1={refBandMin}
-              y2={refBandMax}
-              fill="#22c55e"
-              fillOpacity={0.1}
-              ifOverflow="extendDomain"
-            />
-          )}
-          {series.refMin !== undefined && (
-            <ReferenceLine
-              y={series.refMin}
-              stroke="#16a34a"
-              strokeDasharray="3 2"
-              strokeOpacity={0.6}
-            />
-          )}
-          {series.refMax !== undefined && (
-            <ReferenceLine
-              y={series.refMax}
-              stroke="#16a34a"
-              strokeDasharray="3 2"
-              strokeOpacity={0.6}
-            />
-          )}
-
-          <Line
-            type="monotone"
-            dataKey="value"
-            stroke={isOutOfRange ? '#ef4444' : '#3b82f6'}
-            strokeWidth={1.5}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            dot={(dotProps: any) => {
-              const { cx, cy, payload } = dotProps as {
-                cx: number | undefined
-                cy: number | undefined
-                payload: { isAbnormal: boolean }
-              }
-              if (cx === undefined || cy === undefined) return <g key="empty" />
-              const color = payload.isAbnormal ? '#ef4444' : (isOutOfRange ? '#ef4444' : '#3b82f6')
-              return (
-                <circle
-                  key={`dot-${cx}-${cy}`}
-                  cx={cx}
-                  cy={cy}
-                  r={3}
-                  fill={color}
-                  stroke={color}
-                />
-              )
-            }}
-            connectNulls
-          />
-        </LineChart>
-      </ResponsiveContainer>
+      <SpiegelChartView series={series} height={72} />
     </div>
   )
 }
@@ -353,6 +416,9 @@ interface SpiegelwerteSectionProps {
 
 export function SpiegelwerteSection({ caseId }: SpiegelwerteSectionProps) {
   const { t } = useTranslation()
+  const { isHidden, hide, unhide } = useOverviewHiddenGraphs(caseId)
+  const [enlarged, setEnlarged] = useState<SpiegelSeries | null>(null)
+  const [showHiddenMenu, setShowHiddenMenu] = useState(false)
 
   const series = useMemo(() => {
     const befunde = loadBefunde(caseId)
@@ -361,14 +427,69 @@ export function SpiegelwerteSection({ caseId }: SpiegelwerteSectionProps) {
 
   if (series.length === 0) return null
 
+  const visibleSeries = series.filter((s) => !isHidden(spiegelGraphId(s.name)))
+  const hiddenSeries = series.filter((s) => isHidden(spiegelGraphId(s.name)))
+
   return (
     <div className="spiegelwerte-section">
-      <h3 className="spiegelwerte-section__title">{t('spiegelwerteSectionTitle')}</h3>
-      <div className="spiegelwerte-section__grid">
-        {series.map((s) => (
-          <SpiegelCard key={s.name} series={s} />
-        ))}
+      <div className="spiegelwerte-section__head">
+        <h3 className="spiegelwerte-section__title">{t('spiegelwerteSectionTitle')}</h3>
+        {hiddenSeries.length > 0 && (
+          <div className="overview-hidden-menu">
+            <button
+              type="button"
+              className="overview-hidden-menu__toggle"
+              onClick={() => setShowHiddenMenu((v) => !v)}
+              aria-expanded={showHiddenMenu}
+            >
+              {t('overviewChartAdd')} ({hiddenSeries.length})
+            </button>
+            {showHiddenMenu && (
+              <ul className="overview-hidden-menu__list">
+                {hiddenSeries.map((s) => (
+                  <li key={s.name} className="overview-hidden-menu__item">
+                    <span className="overview-hidden-menu__name">{s.name}</span>
+                    <button
+                      type="button"
+                      className="overview-hidden-menu__add"
+                      onClick={() => {
+                        unhide(spiegelGraphId(s.name))
+                        if (hiddenSeries.length <= 1) setShowHiddenMenu(false)
+                      }}
+                    >
+                      {t('overviewChartAddBack')}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
       </div>
+
+      {visibleSeries.length > 0 && (
+        <div className="spiegelwerte-section__grid">
+          {visibleSeries.map((s) => (
+            <SpiegelCard
+              key={s.name}
+              series={s}
+              onEnlarge={() => setEnlarged(s)}
+              onHide={() => hide(spiegelGraphId(s.name))}
+            />
+          ))}
+        </div>
+      )}
+
+      {enlarged && (
+        <GraphEnlargeModal
+          title={enlarged.name}
+          subtitle={enlarged.unit}
+          refText={refRangeLabel(enlarged)}
+          onClose={() => setEnlarged(null)}
+        >
+          <SpiegelChartView series={enlarged} height={420} large />
+        </GraphEnlargeModal>
+      )}
     </div>
   )
 }

@@ -539,6 +539,67 @@
   font-weight: 600;
 }
 
+/* —— Patient nav icon buttons (Meine Patienten / Prev / Next) —— */
+
+.case-topnav__nav-text-btn {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  padding: 0.2rem 0.45rem;
+  border: none;
+  border-radius: 0.25rem;
+  background: transparent;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted, #6b7280);
+  cursor: pointer;
+  white-space: nowrap;
+  line-height: 1.4;
+  transition: background 0.15s, color 0.15s;
+}
+
+.case-topnav__nav-text-btn:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: color-mix(in srgb, var(--accent) 85%, var(--text-ink));
+}
+
+.case-topnav__nav-text-btn--active {
+  color: var(--accent, #4a6fa5);
+  background: color-mix(in srgb, var(--accent, #4a6fa5) 12%, transparent);
+}
+
+.case-topnav__nav-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+  flex-shrink: 0;
+}
+
+.case-topnav__nav-icon-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: color-mix(in srgb, var(--accent) 85%, var(--text-ink));
+}
+
+.case-topnav__nav-icon-btn--active {
+  color: var(--accent, #4a6fa5);
+  background: color-mix(in srgb, var(--accent, #4a6fa5) 12%, transparent);
+}
+
+.case-topnav__nav-icon-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
 /* —— Diagnosen widget (sidebar) —— */
 
 .diagnosen-widget {
@@ -1859,6 +1920,53 @@
   margin-top: 0.1rem;
 }
 
+.notion-diary-sidebar__open-doc {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.notion-diary-sidebar__open-doc-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.22rem 0.3rem;
+  border-radius: 0.3rem;
+  background: color-mix(in srgb, var(--accent, #6366f1) 8%, transparent);
+}
+
+.notion-diary-sidebar__open-doc-label {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--ink, #1a1a2e);
+}
+
+.notion-diary-sidebar__open-doc-close {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  padding: 0;
+  border: none;
+  border-radius: 0.2rem;
+  background: transparent;
+  color: var(--text-muted, #9ca3af);
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.notion-diary-sidebar__open-doc-close:hover {
+  background: color-mix(in srgb, var(--danger, #ef4444) 12%, transparent);
+  color: var(--danger, #ef4444);
+}
+
 .notion-diary-sidebar__saved-docs-heading {
   margin: 0 0 0.3rem 0;
   font-size: 0.6rem;
@@ -2010,6 +2118,35 @@
   gap: 0.3rem;
   padding-top: 0.6rem;
   border-top: 1px solid color-mix(in srgb, var(--border-soft) 60%, transparent);
+}
+
+.labor-sidebar-widget__header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.labor-sidebar-widget__close {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  padding: 0;
+  border: none;
+  border-radius: 0.2rem;
+  background: transparent;
+  color: var(--text-muted, #9ca3af);
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.labor-sidebar-widget__close:hover {
+  background: color-mix(in srgb, var(--danger, #ef4444) 12%, transparent);
+  color: var(--danger, #ef4444);
 }
 
 .labor-sidebar-widget__header {
@@ -4557,6 +4694,88 @@
   gap: 0;
 }
 
+/* Source filter (manual + derived Therapie sources) */
+
+.verlauf-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.verlauf-filter__chip {
+  font-family: inherit;
+  font-size: 0.74rem;
+  line-height: 1;
+  padding: 0.32em 0.7em;
+  border-radius: 999px;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  background: transparent;
+  color: var(--text-muted, #888);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+
+.verlauf-filter__chip:hover {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border-soft));
+  color: var(--text-ink, #1a1a1a);
+}
+
+.verlauf-filter__chip--active {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  color: color-mix(in srgb, var(--accent) 75%, var(--text-ink));
+  font-weight: 600;
+}
+
+/* Derived entry source badge */
+
+.verlauf-entry__source-badge {
+  font-size: 0.72rem;
+  color: color-mix(in srgb, var(--accent) 70%, var(--text-muted));
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  border-radius: 3px;
+  padding: 0.1em 0.4em;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  user-select: none;
+}
+
+.verlauf-entry__source-badge--medikation {
+  color: #2e7d6b;
+  background: rgba(46, 125, 107, 0.1);
+  border-color: rgba(46, 125, 107, 0.28);
+}
+
+.verlauf-entry__source-badge--psychotherapie {
+  color: #3f5bb5;
+  background: rgba(63, 91, 181, 0.1);
+  border-color: rgba(63, 91, 181, 0.28);
+}
+
+.verlauf-entry__source-badge--komplementaer {
+  color: #b07415;
+  background: rgba(176, 116, 21, 0.1);
+  border-color: rgba(176, 116, 21, 0.28);
+}
+
+.verlauf-entry__source-badge--sozialtherapie {
+  color: #8a4fa3;
+  background: rgba(138, 79, 163, 0.1);
+  border-color: rgba(138, 79, 163, 0.28);
+}
+
+.verlauf-derived__title {
+  font-weight: 600;
+  color: var(--text-ink, #1a1a1a);
+}
+
+.verlauf-entry__body--derived {
+  cursor: text;
+}
+
 /* Entry cards */
 
 .verlauf-entry {
@@ -6676,6 +6895,223 @@
   background: color-mix(in srgb, var(--color-danger, #dc2626) 8%, transparent);
 }
 
+.labor-befund-header__action-btn--ai {
+  border-color: color-mix(in srgb, var(--accent, #4a7c59) 40%, transparent);
+  color: var(--accent, #4a7c59);
+}
+
+.labor-befund-header__action-btn--ai:hover {
+  background: color-mix(in srgb, var(--accent, #4a7c59) 10%, transparent);
+  border-color: var(--accent, #4a7c59);
+  color: var(--accent, #4a7c59);
+}
+
+.labor-befund-header__action-btn--loading {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* —— KI re-analysis result panel —— */
+
+.labor-ki-reanalysis {
+  margin-top: 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--accent, #4a7c59) 30%, transparent);
+  border-radius: 8px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--accent, #4a7c59) 4%, var(--bg-paper, #fff));
+}
+
+.labor-ki-reanalysis__header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 0.5rem 0 0;
+}
+
+.labor-ki-reanalysis__save-btn {
+  margin-left: auto;
+  padding: 0.25rem 0.7rem;
+  background: none;
+  border: 1px solid color-mix(in srgb, var(--accent, #4a7c59) 40%, transparent);
+  border-radius: 5px;
+  font-size: 0.75rem;
+  color: var(--accent, #4a7c59);
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background 0.1s ease;
+}
+
+.labor-ki-reanalysis__save-btn:hover {
+  background: color-mix(in srgb, var(--accent, #4a7c59) 10%, transparent);
+}
+
+.labor-ki-reanalysis__saved-badge {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--accent, #4a7c59);
+  padding: 0.25rem 0.5rem;
+  white-space: nowrap;
+}
+
+/* —— KI Analysis Modal —— */
+
+.labor-ki-modal__icon {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.labor-ki-modal__text {
+  margin: 0;
+  font-size: 0.925rem;
+  line-height: 1.65;
+  color: var(--ink, #1a1a18);
+  white-space: pre-wrap;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.labor-ki-modal__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: 7px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.labor-ki-modal__btn--reject {
+  background: var(--bg-muted, #f3f3ef);
+  color: var(--text-muted, #6b6b63);
+  border: 1px solid var(--border-soft, #e8e8e4);
+}
+
+.labor-ki-modal__btn--reject:hover {
+  background: color-mix(in srgb, #ef4444 10%, var(--bg-muted, #f3f3ef));
+  color: #dc2626;
+}
+
+.labor-ki-modal__btn--copy {
+  background: none;
+  color: var(--text-muted, #6b6b63);
+  border: 1px solid var(--border-soft, #e8e8e4);
+}
+
+.labor-ki-modal__btn--copy:hover {
+  background: color-mix(in srgb, var(--ink, #1a1a18) 6%, transparent);
+  color: var(--ink, #1a1a18);
+}
+
+.labor-ki-modal__btn--accept {
+  background: var(--accent, #4a7c59);
+  color: #fff;
+}
+
+.labor-ki-modal__btn--accept:hover {
+  background: color-mix(in srgb, var(--accent, #4a7c59) 85%, #000);
+}
+
+/* —— Saved KI Analysis inline section —— */
+
+.labor-ki-saved {
+  margin-top: 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--accent, #4a7c59) 30%, transparent);
+  border-radius: 8px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--accent, #4a7c59) 4%, var(--bg-paper, #fff));
+}
+
+.labor-ki-saved__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.6rem 0.3rem 0;
+  flex-wrap: wrap;
+}
+
+.labor-ki-saved__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.6rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--accent, #4a7c59);
+}
+
+.labor-ki-saved__toggle:hover {
+  color: color-mix(in srgb, var(--accent, #4a7c59) 75%, #000);
+}
+
+.labor-ki-saved__chevron {
+  font-size: 0.75rem;
+}
+
+.labor-ki-saved__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  color: var(--accent, #4a7c59);
+  padding: 0.15rem 0.45rem;
+  background: color-mix(in srgb, var(--accent, #4a7c59) 10%, transparent);
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.labor-ki-saved__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: auto;
+  padding-right: 0.35rem;
+}
+
+.labor-ki-saved__icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 5px;
+  background: none;
+  cursor: pointer;
+  color: var(--text-muted, #8a8a80);
+  transition: background 0.12s, color 0.12s;
+}
+
+.labor-ki-saved__icon-btn:hover {
+  background: var(--bg-muted, #f3f3ef);
+  color: var(--ink, #1a1a18);
+}
+
+.labor-ki-saved__icon-btn--delete:hover {
+  background: color-mix(in srgb, #ef4444 10%, var(--bg-muted, #f3f3ef));
+  color: #dc2626;
+  border-color: color-mix(in srgb, #ef4444 30%, transparent);
+}
+
+.labor-ki-saved__text {
+  margin: 0;
+  padding: 0.75rem 0.9rem 0.9rem;
+  font-size: 0.875rem;
+  line-height: 1.65;
+  color: var(--ink, #1a1a18);
+  border-top: 1px solid color-mix(in srgb, var(--accent, #4a7c59) 18%, transparent);
+  white-space: pre-wrap;
+}
+
 /* —— Category accordion —— */
 
 .labor-category {
@@ -7597,253 +8033,1030 @@
   filter: brightness(1.08);
 }
 
-/* ── Therapie page ───────────────────────────────────────────────────────── */
+/* ============================================================
+   Therapie page — unified design system
+   ------------------------------------------------------------
+   ONE visual language shared by every Therapie section
+   (Medikamentöse Therapie, Psychotherapie, Komplementäre
+   Therapien, Sozialtherapie, Therapie-Notizen).
 
-.therapie-page {
+   Shared primitives, all prefixed `.therapy-`:
+     · section shell        .therapy-section(__header/__title/__body)
+     · add button           .therapy-add-btn
+     · buttons              .therapy-btn(--primary/--ghost/--danger), .therapy-link-btn
+     · status pills         .therapy-status(--green/--blue/--amber/--violet/--gray)
+     · cards                .therapy-card-grid, .therapy-card
+     · key/value meta       .therapy-meta-label / .therapy-meta-value, .therapy-summary
+     · detail panel (modal) .therapy-modal-overlay, .therapy-modal
+     · forms                .therapy-field(-grid), .therapy-input/.therapy-select/.therapy-textarea
+     · add picker           .therapy-picker, .therapy-chip
+     · session/task logs    .therapy-log, .therapy-tasks
+     · journal              .therapy-entry, .therapy-composer
+   ============================================================ */
+
+:root {
+  --therapy-radius: 10px;
+  --therapy-radius-lg: 14px;
+  --therapy-gap: 0.85rem;
+  --therapy-card-shadow: var(--shadow-elevated-sm, 0 1px 2px rgba(0, 0, 0, 0.04));
+  --therapy-card-shadow-hover: var(--shadow-elevated-md, 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.06));
+}
+
+.therapy-page {
   padding: 1.5rem 1.5rem 3rem;
   display: flex;
   flex-direction: column;
   gap: 2rem;
 }
 
-/* Therapie sections (Medikamente, Psychotherapie, Soziotherapie, Notizen) */
-.therapie-section {
+/* ── Section shell ───────────────────────────────────────────────────────── */
+.therapy-section {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--therapy-gap);
 }
 
-.therapie-section__header {
+.therapy-section__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-soft, #e8e8e4);
 }
 
-.therapie-section__title {
+.therapy-section__heading {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.therapy-section__title {
+  margin: 0;
   font-size: 1rem;
   font-weight: 700;
+  letter-spacing: -0.01em;
   color: var(--ink, #1a1a18);
-  margin: 0;
-  padding-bottom: 0.4rem;
-  border-bottom: 1.5px solid var(--border-soft, #e8e8e4);
 }
 
-.therapie-section__body {
-  /* wrapper so MedicationWorkspace sits cleanly inside the section */
-}
-
-.therapie-section--placeholder .therapie-section__title {
-  color: var(--text-muted, #8a8a80);
-}
-
-.therapie-section__coming-soon {
-  font-size: 0.85rem;
-  color: var(--text-muted, #8a8a80);
-  margin: 0;
-  padding: 0.75rem 0;
-  font-style: italic;
-}
-
-/* Subsection inside a therapie-section — visually subordinate to the section title */
-.therapie-subsection {
-  margin-top: 1rem;
-  padding-top: 0.85rem;
-  padding-left: 0.75rem;
-  border-top: 1px solid var(--border-soft, #e8e8e4);
-  border-left: 2px solid var(--border-soft, #e8e8e4);
-}
-
-.therapie-page__header {
+.therapy-section__actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.5rem;
-}
-
-.therapie-page__title {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--ink, #1a1a18);
-  margin: 0;
-}
-
-.therapie-page__new-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
-  padding: 0.3rem 0.8rem;
-  font-size: 0.8rem;
-  font-family: inherit;
-  font-weight: 500;
-  color: var(--accent, #4a7c59);
-  background: transparent;
-  border: 1px solid var(--accent, #4a7c59);
-  border-radius: 6px;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.15s;
+  gap: 0.6rem;
   flex-shrink: 0;
 }
 
-.therapie-page__new-btn:hover {
-  background: color-mix(in srgb, var(--accent, #4a7c59) 10%, transparent);
+/* Header actions share ONE height: any secondary `.therapy-btn` placed in the
+   header actions group is normalized to match the primary `.therapy-add-btn`
+   (same padding + font-size) so the row never looks ragged. */
+.therapy-section__actions .therapy-btn {
+  padding: 0.32rem 0.8rem;
+  font-size: 0.8rem;
 }
 
-.therapie-page__empty {
-  font-size: 0.9rem;
-  color: var(--text-muted, #8a8a80);
-  padding: 2rem 0;
-  text-align: center;
-  margin: 0;
-}
-
-.therapie-page__list {
+.therapy-section__body {
   display: flex;
   flex-direction: column;
+  gap: var(--therapy-gap);
+}
+
+/* Medication workspace sits cleanly inside the shared section shell:
+   strip its standalone-page padding so it aligns with the other sections. */
+.therapy-section__body .medication-workspace {
+  padding: 0;
+}
+
+.therapy-empty {
+  font-size: 0.85rem;
+  color: var(--text-muted, #8a8a80);
+  margin: 0;
+  padding: 0.4rem 0;
+  font-style: italic;
+}
+
+/* ── Add button ("＋ …") ─────────────────────────────────────────────────── */
+.therapy-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.32rem 0.8rem;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent, #4a7c59);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--accent, #4a7c59) 45%, var(--border-soft, #e8e8e4));
+  border-radius: 7px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.therapy-add-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent, #4a7c59) 8%, transparent);
+  border-color: var(--accent, #4a7c59);
+}
+
+.therapy-add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+.therapy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.42rem 0.95rem;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: 7px;
+  cursor: pointer;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.therapy-btn--primary {
+  color: #fff;
+  background: var(--accent, #4a7c59);
+  border-color: var(--accent, #4a7c59);
+}
+
+.therapy-btn--primary:hover:not(:disabled) {
+  background: var(--accent-hover, color-mix(in srgb, var(--accent, #4a7c59) 85%, #000));
+}
+
+.therapy-btn--ghost {
+  color: var(--ink, #1a1a18);
+  background: transparent;
+  border-color: var(--border-strong, #d8d8d2);
+}
+
+.therapy-btn--ghost:hover:not(:disabled) {
+  background: var(--surface-hover, #f5f5f5);
+}
+
+.therapy-btn--danger {
+  color: var(--color-danger, #b04a3a);
+  background: transparent;
+  border-color: color-mix(in srgb, var(--color-danger, #b04a3a) 40%, var(--border-soft, #e8e8e4));
+}
+
+.therapy-btn--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-danger, #b04a3a) 8%, transparent);
+}
+
+.therapy-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.therapy-link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent, #4a7c59);
+  cursor: pointer;
+}
+
+.therapy-link-btn:hover {
+  text-decoration: underline;
+}
+
+.therapy-link-btn--muted {
+  color: var(--text-muted, #8a8a80);
+  font-weight: 500;
+}
+
+.therapy-link-btn--danger {
+  color: var(--color-danger, #b04a3a);
+}
+
+/* Inline action rows + empty state */
+.therapy-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.therapy-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.4rem 0;
+}
+
+/* ── Status pills — ONE palette reused by every section ──────────────────── */
+.therapy-status {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  font-size: 0.66rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  border: 1px solid transparent;
+}
+
+.therapy-status--green {
+  color: #2f6b46;
+  background: color-mix(in srgb, #3a8a5a 13%, transparent);
+  border-color: color-mix(in srgb, #3a8a5a 24%, transparent);
+}
+
+.therapy-status--blue {
+  color: #2f5d8a;
+  background: color-mix(in srgb, #3a6f9c 12%, transparent);
+  border-color: color-mix(in srgb, #3a6f9c 22%, transparent);
+}
+
+.therapy-status--amber {
+  color: #946200;
+  background: color-mix(in srgb, #d39b00 15%, transparent);
+  border-color: color-mix(in srgb, #d39b00 28%, transparent);
+}
+
+.therapy-status--violet {
+  color: #5a4a8a;
+  background: color-mix(in srgb, #6f5ab0 12%, transparent);
+  border-color: color-mix(in srgb, #6f5ab0 22%, transparent);
+}
+
+.therapy-status--gray {
+  color: #5a564f;
+  background: color-mix(in srgb, #8a8a80 14%, transparent);
+  border-color: color-mix(in srgb, #8a8a80 24%, transparent);
+}
+
+/* ── Cards ───────────────────────────────────────────────────────────────── */
+.therapy-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(248px, 1fr));
   gap: 0.75rem;
 }
 
-.therapie-entry {
-  background: var(--notion-paper-bg, #fff);
-  border: 1px solid var(--border-soft, #e8e8e4);
-  border-radius: 10px;
-  padding: 0.9rem 1.1rem;
+@media (max-width: 560px) {
+  .therapy-card-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
-.therapie-entry__header {
+.therapy-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  padding: 0.85rem 0.95rem;
+  background: var(--notion-paper-bg, #fff);
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: var(--therapy-radius);
+  box-shadow: var(--therapy-card-shadow);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+
+.therapy-card:hover {
+  border-color: color-mix(in srgb, var(--accent, #4a7c59) 45%, var(--border-soft, #e8e8e4));
+  box-shadow: var(--therapy-card-shadow-hover);
+}
+
+.therapy-card:focus-visible {
+  outline: 2px solid var(--accent, #4a7c59);
+  outline-offset: 2px;
+}
+
+.therapy-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.therapy-card__title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ink, #1a1a18);
+  line-height: 1.3;
+}
+
+.therapy-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.therapy-card__row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+
+/* ── Key / value typography (labels, values, meta) ───────────────────────── */
+.therapy-meta-label {
+  font-size: 0.64rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #8a8a80);
+}
+
+.therapy-meta-value {
+  font-size: 0.8rem;
+  color: var(--ink, #1a1a18);
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+/* Multi-column scannable summary (psychotherapy overview) */
+.therapy-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.1rem 1.75rem;
+}
+
+.therapy-summary__row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--border-soft, #ececea);
+}
+
+.therapy-summary__label {
+  font-size: 0.64rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #8a8a80);
+}
+
+.therapy-summary__value {
+  font-size: 0.85rem;
+  color: var(--ink, #1a1a18);
+  line-height: 1.4;
+}
+
+/* Soft callout (generated summaries, hints) */
+.therapy-callout {
+  padding: 0.75rem 0.9rem;
+  background: color-mix(in srgb, var(--accent, #4a7c59) 5%, transparent);
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 8px;
+}
+
+.therapy-callout__head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.5rem;
+  gap: 1rem;
+  margin-bottom: 0.4rem;
 }
 
-.therapie-entry__date {
-  font-size: 0.82rem;
+.therapy-callout__text {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--ink, #1a1a18);
+  white-space: pre-wrap;
+}
+
+/* ── Detail / edit panel — ONE modal pattern for all card sections ───────── */
+.therapy-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: max(4vh, 1.5rem) 1.5rem;
+  background: rgba(26, 26, 24, 0.34);
+  overflow-y: auto;
+}
+
+.therapy-modal {
+  width: 100%;
+  max-width: 640px;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem 1.4rem 1.4rem;
+  background: var(--notion-paper-bg, #fff);
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: var(--therapy-radius-lg);
+  box-shadow: var(--shadow-elevated-xl, 0 12px 40px rgba(0, 0, 0, 0.18));
+}
+
+.therapy-modal--wide {
+  max-width: 880px;
+}
+
+.therapy-modal--narrow {
+  max-width: 460px;
+}
+
+.therapy-modal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--border-soft, #e8e8e4);
+}
+
+.therapy-modal__heading {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.therapy-modal__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ink, #1a1a18);
+}
+
+.therapy-modal__close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--text-muted, #8a8a80);
+  cursor: pointer;
+  padding: 0 0.15rem;
+  flex-shrink: 0;
+}
+
+.therapy-modal__close:hover {
+  color: var(--ink, #1a1a18);
+}
+
+.therapy-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.therapy-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border-soft, #e8e8e4);
+}
+
+/* Detail panel rendered inside a modal — the modal provides the outer card
+   chrome (bg, border, shadow, padding), so strip duplicates from the panel. */
+.therapy-modal .therapy-detail-panel {
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* ── Master/detail split — left list/links + right detail panel ──────────────
+   Retained for Medication; non-medication sections now use the modal model.
+   "＋ add" opens a modal popup (.therapy-modal). On narrow viewports the
+   right panel gracefully stacks below the list. */
+.therapy-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.therapy-split__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+/* Inside a split, cards stack in a single column (compact list of small cards) */
+.therapy-split__list .therapy-card-grid {
+  grid-template-columns: 1fr;
+}
+
+.therapy-split__detail {
+  min-width: 0;
+  position: sticky;
+  top: 1rem;
+}
+
+@media (max-width: 900px) {
+  .therapy-split {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .therapy-split__detail {
+    position: static;
+  }
+}
+
+/* Selected card in the left list */
+.therapy-card.is-selected {
+  border-color: var(--accent, #4a7c59);
+  box-shadow: 0 0 0 1px var(--accent, #4a7c59), var(--therapy-card-shadow-hover);
+}
+
+/* Right-side detail panel (reuses modal head/body/footer rhythm, inline) */
+.therapy-detail-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.15rem 1.3rem 1.3rem;
+  background: var(--notion-paper-bg, #fff);
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: var(--therapy-radius-lg);
+  box-shadow: var(--therapy-card-shadow);
+}
+
+.therapy-detail-panel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--border-soft, #e8e8e4);
+}
+
+.therapy-detail-panel__heading {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.therapy-detail-panel__title {
+  margin: 0;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--ink, #1a1a18);
+  word-break: break-word;
+}
+
+.therapy-detail-panel__close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--text-muted, #8a8a80);
+  cursor: pointer;
+  padding: 0 0.15rem;
+  flex-shrink: 0;
+}
+
+.therapy-detail-panel__close:hover {
+  color: var(--ink, #1a1a18);
+}
+
+.therapy-detail-panel__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.therapy-detail-panel__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border-soft, #e8e8e4);
+}
+
+/* Empty right-panel placeholder ("Wähle einen Eintrag") */
+.therapy-detail-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 200px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  color: var(--text-muted, #8a8a80);
+  font-size: 0.88rem;
+  background: color-mix(in srgb, var(--accent, #4a7c59) 2.5%, transparent);
+  border: 1px dashed var(--border-strong, #d8d8d2);
+  border-radius: var(--therapy-radius-lg);
+}
+
+.therapy-detail-empty p {
+  margin: 0;
+}
+
+.therapy-detail-empty__hint {
+  font-size: 0.78rem;
+  max-width: 30ch;
+  opacity: 0.85;
+}
+
+/* Vertical list of clickable section links (medication sub-sections) */
+.therapy-link-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.therapy-link-list__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--ink, #1a1a18);
+  background: transparent;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.therapy-link-list__item:hover {
+  background: var(--surface-hover, #f5f5f5);
+  border-color: color-mix(in srgb, var(--accent, #4a7c59) 45%, var(--border-soft, #e8e8e4));
+}
+
+.therapy-link-list__item.is-active {
+  color: var(--accent, #4a7c59);
+  border-color: var(--accent, #4a7c59);
+  background: color-mix(in srgb, var(--accent, #4a7c59) 7%, transparent);
+}
+
+.therapy-link-list__chevron {
+  color: var(--text-muted, #8a8a80);
+  flex-shrink: 0;
+}
+
+.therapy-link-list__item.is-active .therapy-link-list__chevron {
+  color: var(--accent, #4a7c59);
+}
+
+/* Group label above the medication section links */
+.therapy-link-list__label {
+  font-size: 0.64rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #8a8a80);
+  margin: 0.4rem 0 0.15rem;
+}
+
+/* ── Forms ───────────────────────────────────────────────────────────────── */
+.therapy-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 0.85rem;
+}
+
+@media (max-width: 560px) {
+  .therapy-field-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.therapy-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.therapy-field--wide {
+  grid-column: 1 / -1;
+}
+
+.therapy-field__label {
+  font-size: 0.66rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #8a8a80);
+}
+
+.therapy-input,
+.therapy-select,
+.therapy-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: var(--ink, #1a1a18);
+  padding: 0.42rem 0.55rem;
+  background: var(--notion-paper-bg, #fff);
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 7px;
+  transition: border-color 0.15s;
+}
+
+.therapy-input:focus,
+.therapy-select:focus,
+.therapy-textarea:focus {
+  outline: none;
+  border-color: var(--accent, #4a7c59);
+}
+
+.therapy-textarea {
+  resize: vertical;
+  line-height: 1.5;
+  min-height: 3.5rem;
+}
+
+/* ── Add picker (chips + custom input) ───────────────────────────────────── */
+.therapy-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0.85rem;
+  border: 1px dashed color-mix(in srgb, var(--accent, #4a7c59) 35%, var(--border-soft, #e8e8e4));
+  border-radius: var(--therapy-radius);
+  background: color-mix(in srgb, var(--accent, #4a7c59) 3%, transparent);
+}
+
+.therapy-picker__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.therapy-chip {
+  font-family: inherit;
+  font-size: 0.78rem;
+  color: var(--ink, #1a1a18);
+  background: var(--notion-paper-bg, #fff);
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 999px;
+  padding: 0.3rem 0.75rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.therapy-chip:hover {
+  border-color: var(--accent, #4a7c59);
+  background: color-mix(in srgb, var(--accent, #4a7c59) 8%, transparent);
+}
+
+.therapy-chip.is-selected {
+  color: var(--accent, #4a7c59);
+  border-color: var(--accent, #4a7c59);
+  background: color-mix(in srgb, var(--accent, #4a7c59) 10%, transparent);
+  font-weight: 600;
+}
+
+.therapy-picker__custom {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.therapy-picker__custom .therapy-input {
+  flex: 1;
+}
+
+/* ── Session / log lists (complementary sessions) ────────────────────────── */
+.therapy-log {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.therapy-log__title {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ink, #1a1a18);
+}
+
+.therapy-log__composer {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.therapy-log__composer .therapy-input:not(.therapy-log__date) {
+  flex: 1;
+}
+
+.therapy-log__date {
+  width: auto;
+  flex-shrink: 0;
+}
+
+.therapy-log__empty {
+  font-size: 0.8rem;
+  color: var(--text-muted, #8a8a80);
+  font-style: italic;
+  margin: 0;
+}
+
+.therapy-log__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.therapy-log__item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--border-soft, #f0f0ec);
+}
+
+.therapy-log__item-date {
+  flex-shrink: 0;
   font-weight: 600;
   color: var(--text-muted, #8a8a80);
 }
 
-.therapie-entry__delete-btn {
+.therapy-log__item-note {
+  flex: 1;
+  color: var(--ink, #1a1a18);
+  line-height: 1.35;
+}
+
+.therapy-log__item-delete {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--text-muted, #8a8a80);
+  cursor: pointer;
+}
+
+.therapy-log__item-delete:hover {
+  color: var(--color-danger, #b04a3a);
+}
+
+/* ── Task checklists (sozialtherapie) ────────────────────────────────────── */
+.therapy-tasks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.therapy-task {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.therapy-task__label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+  color: var(--ink, #1a1a18);
+  cursor: pointer;
+}
+
+.therapy-task__text--done {
+  text-decoration: line-through;
+  color: var(--text-muted, #8a8a80);
+}
+
+.therapy-task__remove {
+  background: transparent;
+  border: none;
+  color: var(--text-muted, #8a8a80);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 0.2rem;
+}
+
+.therapy-task__remove:hover {
+  color: var(--color-danger, #b04a3a);
+}
+
+.therapy-task__add {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.therapy-task__add .therapy-input {
+  flex: 1;
+}
+
+/* ── Therapie-Notizen journal ────────────────────────────────────────────── */
+.therapy-entry-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.therapy-entry {
+  background: var(--notion-paper-bg, #fff);
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: var(--therapy-radius);
+  box-shadow: var(--therapy-card-shadow);
+  padding: 0.85rem 1rem;
+}
+
+.therapy-entry__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.45rem;
+}
+
+.therapy-entry__date {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted, #8a8a80);
+}
+
+.therapy-entry__delete {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 1rem;
-  color: var(--text-muted, #8a8a80);
+  font-size: 1.1rem;
   line-height: 1;
-  padding: 0;
-  font-family: inherit;
+  padding: 0 0.15rem;
+  color: var(--text-muted, #8a8a80);
   transition: color 0.15s;
 }
 
-.therapie-entry__delete-btn:hover {
-  color: var(--color-danger, #dc2626);
+.therapy-entry__delete:hover {
+  color: var(--color-danger, #b04a3a);
 }
 
-.therapie-entry__text {
-  font-size: 0.9rem;
+.therapy-entry__text {
+  font-size: 0.88rem;
   line-height: 1.6;
   color: var(--ink, #1a1a18);
   margin: 0;
   white-space: pre-wrap;
 }
 
-/* Therapie composer (shares styles with verlauf-composer) */
-.therapie-composer {
-  background: var(--notion-paper-bg, #fff);
-  border: 1px solid var(--border-soft, #e8e8e4);
-  border-radius: 10px;
-  padding: 1rem 1.25rem;
-  margin-bottom: 1.25rem;
+.therapy-composer {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.7rem;
+  background: var(--notion-paper-bg, #fff);
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: var(--therapy-radius);
+  padding: 1rem 1.1rem;
 }
 
-.therapie-composer__date-row {
+.therapy-composer__date-label {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-.therapie-composer__date-label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   color: var(--text-muted, #8a8a80);
 }
 
-.therapie-composer__date-input {
-  font-size: 0.82rem;
-  font-family: inherit;
-  border: 1px solid var(--border-soft, #e8e8e4);
-  border-radius: 5px;
-  padding: 0.2rem 0.5rem;
-  background: transparent;
-  color: inherit;
+.therapy-composer__date-label .therapy-input {
+  width: auto;
 }
 
-.therapie-composer__textarea {
-  width: 100%;
-  font-size: 0.9rem;
-  font-family: inherit;
-  line-height: 1.55;
-  border: 1px solid var(--border-soft, #e8e8e4);
-  border-radius: 6px;
-  padding: 0.6rem 0.75rem;
-  background: transparent;
-  color: inherit;
-  resize: vertical;
-  min-height: 100px;
+.therapy-composer__textarea {
+  min-height: 110px;
 }
 
-.therapie-composer__textarea:focus {
-  outline: none;
-  border-color: var(--accent, #4a7c59);
-}
-
-.therapie-composer__actions {
+.therapy-composer__actions {
   display: flex;
   justify-content: flex-end;
   gap: 0.6rem;
 }
 
-.therapie-composer__cancel-btn,
-.therapie-composer__save-btn {
-  font-size: 0.82rem;
-  font-family: inherit;
-  padding: 0.3rem 0.9rem;
-  border-radius: 6px;
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition: background 0.15s, color 0.15s;
-}
-
-.therapie-composer__cancel-btn {
-  background: transparent;
-  border-color: var(--border-soft, #e8e8e4);
-  color: var(--text-muted, #8a8a80);
-}
-
-.therapie-composer__cancel-btn:hover {
-  background: var(--border-soft, #e8e8e4);
-}
-
-.therapie-composer__save-btn {
-  background: var(--accent, #4a7c59);
-  color: #fff;
-}
-
-.therapie-composer__save-btn:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-
-.therapie-composer__save-btn:not(:disabled):hover {
-  filter: brightness(1.08);
-}
+/* Legacy per-section styles (.ct-*, .therapie-*, .soz-*, .pt-card*) were
+   replaced by the unified `.therapy-*` design system defined above. */
 
 /* ============================================================
    Labor inline paste zone
@@ -8332,6 +9545,68 @@
   padding: 0.5rem 0;
 }
 
+.labor-kumulativ__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  padding: 0.25rem 0.75rem 0.35rem;
+  border-bottom: 1px solid var(--border-soft, #e8e8e4);
+}
+
+.labor-kumulativ__tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.22rem 0.6rem;
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: var(--text-muted, #8a8a80);
+  background: transparent;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: color 0.12s, background 0.12s, border-color 0.12s;
+  line-height: 1.4;
+}
+
+.labor-kumulativ__tool-btn:hover {
+  color: var(--ink, #1a1a18);
+  background: color-mix(in srgb, var(--accent, #4a7c59) 6%, transparent);
+  border-color: color-mix(in srgb, var(--accent, #4a7c59) 30%, var(--border-soft, #e8e8e4));
+}
+
+.labor-kumulativ__tool-btn--success {
+  color: var(--accent, #4a7c59);
+  border-color: color-mix(in srgb, var(--accent, #4a7c59) 40%, var(--border-soft, #e8e8e4));
+  background: color-mix(in srgb, var(--accent, #4a7c59) 8%, transparent);
+}
+
+.labor-kumulativ__tool-btn--ki {
+  color: var(--accent, #4a7c59);
+  border-color: color-mix(in srgb, var(--accent, #4a7c59) 35%, var(--border-soft, #e8e8e4));
+  font-weight: 600;
+}
+
+.labor-kumulativ__tool-btn--ki:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent, #4a7c59) 10%, transparent);
+  border-color: color-mix(in srgb, var(--accent, #4a7c59) 55%, var(--border-soft, #e8e8e4));
+}
+
+.labor-kumulativ__tool-btn--loading {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.labor-kumulativ__tool-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.labor-kumulativ__ki-saved {
+  margin: 0.5rem 0.75rem 0;
+}
+
 .labor-kumulativ__scroll-wrap {
   overflow-x: auto;
   flex: 1;
@@ -8565,8 +9840,8 @@
 /* Two-column layout: editing content (left) + visual/analytical widgets (right) */
 .medication-workspace__columns {
   display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
-  gap: 1.75rem;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 1.5rem;
   align-items: start;
 }
 
@@ -8583,11 +9858,11 @@
   top: 1rem;
 }
 
-/* Collapse to a single column on narrow viewports so nothing is cramped */
-@media (max-width: 1100px) {
+/* Collapse to a single column at the same breakpoint as .therapy-split */
+@media (max-width: 900px) {
   .medication-workspace__columns {
     grid-template-columns: 1fr;
-    gap: 0.5rem;
+    gap: 1rem;
   }
 
   .medication-workspace__aside {
@@ -8599,32 +9874,36 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.15rem 0.55rem;
-  padding: 0.15rem 0 0.35rem;
-  border-bottom: var(--border-width) solid var(--border-soft);
+  gap: 0.4rem 0.75rem;
+  padding: 0 0 0.6rem;
 }
 
 .medication-toolbar--empty {
-  border-bottom: none;
   padding-bottom: 0;
 }
 
+/* Quiet secondary utility actions (edit/export/print/copy/history) sit to the
+   right of the shared "＋ add" button; the add button is the clear primary. */
 .medication-toolbar__btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.15rem 0;
-  font-size: 0.68rem;
+  gap: 0.3rem;
+  padding: 0.3rem 0.55rem;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 500;
   color: var(--text-secondary);
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
+  border-radius: 7px;
   cursor: pointer;
-  border-radius: 0;
-  transition: color 0.15s;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
 }
 
 .medication-toolbar__btn:hover:not(:disabled) {
   color: var(--ink);
+  background: var(--surface-hover, #f5f5f5);
+  border-color: var(--border-soft, #e8e8e4);
 }
 
 .medication-toolbar__btn:disabled {
@@ -8632,18 +9911,9 @@
   cursor: not-allowed;
 }
 
-.medication-toolbar__btn--primary {
-  color: var(--ink);
-  font-weight: 500;
-  padding: 0.15rem 0.5rem;
-  border: 1px solid var(--border-strong);
-  border-radius: 0.375rem;
-  background: var(--surface);
-  transition: background 0.15s, color 0.15s;
-}
-
-.medication-toolbar__btn--primary:hover:not(:disabled) {
-  background: var(--surface-hover);
+/* First secondary action pushes the utility group to the right of the add button */
+.therapy-add-btn + .medication-toolbar__btn {
+  margin-left: auto;
 }
 
 .medication-plan-nav {
@@ -8701,6 +9971,7 @@
 .medication-workspace__list {
   display: flex;
   flex-direction: column;
+  gap: 0.75rem;
 }
 
 .medication-workspace__empty {
@@ -8721,21 +9992,36 @@
   line-height: 1.45;
 }
 
+/* Medication list rows adopt the shared therapy-card language so the
+   medication left list matches the complementary / sozialtherapie card lists. */
 .medication-row {
-  border-bottom: var(--border-width) solid var(--border-soft);
-  padding: 0.5rem 0.5rem;
-  margin: 0 -0.5rem;
+  background: var(--notion-paper-bg, #fff);
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: var(--therapy-radius);
+  box-shadow: var(--therapy-card-shadow);
+  padding: 0.8rem 0.95rem;
   cursor: pointer;
-  transition: background 0.12s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-.medication-row:hover,
-.medication-row--selected {
-  background: color-mix(in srgb, var(--surface-active) 65%, transparent);
+.medication-row:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border-soft, #e8e8e4));
+  box-shadow: var(--therapy-card-shadow-hover);
 }
 
 .medication-row--selected {
-  box-shadow: inset 2px 0 0 var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), var(--therapy-card-shadow-hover);
+}
+
+.medication-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.medication-row__status {
+  margin-left: auto;
+  align-self: center;
 }
 
 .medication-row__main {
@@ -8871,62 +10157,9 @@
   }
 }
 
-.medication-lower-sections {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  margin-top: 0.75rem;
-  border-top: var(--border-width) solid var(--border-soft);
-  padding-top: 0.65rem;
-}
-
-/* Right-hand visual column: no leading divider; sits at the top of the aside */
-.medication-lower-sections--aside {
-  margin-top: 0;
-  border-top: none;
-  padding-top: 0;
-}
-
-.medication-lower-sections--aside .medication-lower-section:first-child {
-  border-top: none;
-}
-
-.medication-lower-section {
-  border-bottom: var(--border-width) solid var(--border-soft);
-}
-
-.medication-lower-section summary {
-  cursor: pointer;
-  padding: 0.45rem 0;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  list-style: none;
-  transition: color 0.15s;
-}
-
-.medication-lower-section summary:hover {
-  color: var(--ink);
-}
-
-.medication-lower-section summary::-webkit-details-marker {
-  display: none;
-}
-
-.medication-lower-section summary::before {
-  content: '▸';
-  display: inline-block;
-  width: 0.9rem;
-  font-size: 0.6rem;
-  color: var(--text-muted);
-}
-
-.medication-lower-section[open] > summary::before {
-  content: '▾';
-}
-
+/* Medication sub-section body (rendered inside the shared .therapy-detail-panel) */
 .medication-lower-section__body {
-  padding: 0 0 0.65rem;
+  padding: 0;
 }
 
 .medication-lower-section__warning,
@@ -8938,64 +10171,16 @@
   line-height: 1.45;
 }
 
-.medication-lower-section__textarea {
-  width: 100%;
-  font-size: 0.75rem;
-  padding: 0.45rem 0.55rem;
-  border: var(--border-width) solid var(--border-soft);
-  border-radius: 0.375rem;
-  background: var(--surface);
-  resize: vertical;
-}
-
-.medication-lower-section__textarea:focus {
-  outline: none;
-  border-color: var(--border-strong);
-}
-
-.medication-lower-section__form {
+/* Global side-effect report form (rendered inside the side-effects detail panel)
+   uses the shared therapy field / chip / button primitives. */
+.medication-side-effect-form {
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: 0.7rem;
 }
 
-.medication-symptom-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-}
-
-.medication-symptom-chips__chip {
-  border: var(--border-width) solid var(--border-soft);
-  border-radius: 999px;
-  background: transparent;
-  padding: 0.15rem 0.45rem;
-  font-size: 0.65rem;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.medication-symptom-chips__chip--active,
-.medication-symptom-chips__chip:hover:not(:disabled) {
-  border-color: var(--border-strong);
-  color: var(--ink);
-  background: var(--surface-active);
-}
-
-.medication-lower-section__submit {
+.medication-side-effect-form__submit {
   align-self: flex-start;
-  font-size: 0.72rem;
-  padding: 0.3rem 0.55rem;
-  border: var(--border-width) solid var(--border-soft);
-  border-radius: 0.375rem;
-  background: transparent;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.medication-lower-section__submit:hover:not(:disabled) {
-  border-color: var(--border-strong);
-  background: var(--surface-hover);
 }
 
 .medication-lower-section__list {
@@ -9003,20 +10188,6 @@
   padding-left: 1rem;
   font-size: 0.72rem;
   color: var(--text-secondary);
-}
-
-.medication-edit-dialog .timeline-entry-dialog__header,
-.side-effect-dialog .timeline-entry-dialog__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.medication-edit-dialog .timeline-entry-dialog__header h2,
-.side-effect-dialog .timeline-entry-dialog__header h2 {
-  margin: 0;
-  flex: 1;
 }
 
 .timeline-entry-dialog__close {
@@ -9038,28 +10209,33 @@
   color: var(--text-primary, inherit);
 }
 
+/* Medication dialogs reuse the shared .therapy-modal chrome; only the width is
+   widened to fit the multi-column dose grid / side-effect fields. */
 .medication-edit-dialog {
-  width: min(100%, 48rem);
-  min-width: min(100%, 36rem);
-  max-width: 48rem;
+  max-width: 720px;
 }
 
 .side-effect-dialog {
-  width: min(100%, 42rem);
-  min-width: min(100%, 32rem);
-  max-width: 42rem;
+  max-width: 640px;
 }
 
-@media (max-width: 39.999rem) {
-  .medication-edit-dialog,
-  .side-effect-dialog {
-    min-width: 0;
-  }
+/* Bare <label><span> field labels inside the converted medication dialogs pick
+   up the shared therapy field-label styling. */
+.medication-edit-dialog .therapy-field > span,
+.side-effect-dialog .therapy-field > span,
+.medication-side-effect-form .therapy-field > span {
+  font-size: 0.66rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #8a8a80);
 }
 
 .medication-edit-dialog__body {
   max-height: min(70vh, 520px);
   overflow-y: auto;
+  /* keep room for focus rings inside the scroll area */
+  padding-right: 0.15rem;
 }
 
 .medication-edit-dialog__strength-custom {
@@ -9741,7 +10917,7 @@ details[open].receptor-radar .receptor-radar__summary::before {
 }
 
 .receptor-profile__tab--active {
-  background: var(--surface-active, #eef2ff);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
   color: var(--ink);
 }
 
@@ -9945,7 +11121,8 @@ details[open].receptor-radar .receptor-radar__summary::before {
 
 @media print {
   .medication-toolbar,
-  .medication-lower-sections,
+  .medication-workspace__aside,
+  .therapy-link-list,
   .medication-plan-nav {
     display: none !important;
   }
@@ -10060,11 +11237,233 @@ details[open].receptor-radar .receptor-radar__summary::before {
 }
 
 /* ---------------------------------------------------------------------------
+   Overview chart cards: enlarge / hide actions + hidden-charts menu + modal
+--------------------------------------------------------------------------- */
+
+.spiegelwerte-section__head,
+.labor-dashboard-widgets__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.overview-chart-card__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+  flex-shrink: 0;
+  margin-left: 0.25rem;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.spiegelwerte-card:hover .overview-chart-card__actions,
+.labor-dashboard-widget:hover .overview-chart-card__actions,
+.overview-chart-card__actions:focus-within {
+  opacity: 1;
+}
+
+.overview-chart-card__action {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0.1rem 0.2rem;
+  color: var(--text-muted, #9ca3af);
+  font-family: inherit;
+  border-radius: 4px;
+  transition: color 0.12s, background 0.12s;
+}
+
+.overview-chart-card__action:hover {
+  color: var(--accent, #4a7c59);
+  background: color-mix(in srgb, var(--accent, #4a7c59) 10%, transparent);
+}
+
+.overview-chart-card__action--close:hover {
+  color: var(--color-danger, #dc2626);
+  background: color-mix(in srgb, #dc2626 10%, transparent);
+}
+
+/* —— Hidden charts re-add menu —— */
+
+.overview-hidden-menu {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.overview-hidden-menu__toggle {
+  background: none;
+  border: 1px solid var(--border-soft, #e5e7eb);
+  border-radius: 5px;
+  font-size: 0.68rem;
+  font-family: inherit;
+  padding: 0.15rem 0.45rem;
+  cursor: pointer;
+  color: var(--text-muted, #9ca3af);
+  white-space: nowrap;
+  transition: color 0.12s, border-color 0.12s;
+}
+
+.overview-hidden-menu__toggle:hover {
+  color: var(--accent, #4a7c59);
+  border-color: var(--accent, #4a7c59);
+}
+
+.overview-hidden-menu__list {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  right: 0;
+  z-index: 30;
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem;
+  min-width: 180px;
+  max-height: 50vh;
+  overflow-y: auto;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border-soft, #e5e7eb);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.overview-hidden-menu__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.25rem 0.35rem;
+  border-radius: 4px;
+}
+
+.overview-hidden-menu__item:hover {
+  background: var(--surface-hover, #f4f4f2);
+}
+
+.overview-hidden-menu__name {
+  font-size: 0.78rem;
+  color: var(--text-primary, #111827);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overview-hidden-menu__add {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-family: inherit;
+  font-weight: 600;
+  color: var(--accent, #4a7c59);
+  flex-shrink: 0;
+  padding: 0.1rem 0.2rem;
+}
+
+.overview-hidden-menu__add:hover {
+  text-decoration: underline;
+}
+
+/* —— Lab Verlauf reference range label —— */
+
+.labor-dashboard-widget__ref {
+  font-size: 0.68rem;
+  color: var(--text-muted, #8a8a80);
+  margin-top: 0.15rem;
+}
+
+/* —— Enlarge modal —— */
+
+.overview-chart-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 1.5rem;
+}
+
+.overview-chart-modal {
+  background: var(--notion-paper-bg, #fff);
+  border: 1px solid var(--border-soft, #e5e7eb);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  width: min(94vw, 760px);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.overview-chart-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem 0.5rem;
+}
+
+.overview-chart-modal__heading {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.overview-chart-modal__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--ink, #1a1a18);
+}
+
+.overview-chart-modal__subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted, #8a8a80);
+}
+
+.overview-chart-modal__close {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: var(--text-muted, #8a8a80);
+  line-height: 1;
+  padding: 0 0.25rem;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+
+.overview-chart-modal__close:hover {
+  color: var(--ink, #1a1a18);
+}
+
+.overview-chart-modal__ref {
+  font-size: 0.8rem;
+  color: var(--text-muted, #8a8a80);
+  margin: 0;
+  padding: 0 1.25rem 0.5rem;
+}
+
+.overview-chart-modal__body {
+  padding: 0.5rem 1.25rem 1.5rem;
+  overflow-y: auto;
+}
+
+/* ---------------------------------------------------------------------------
    Aktuelle Medikation widget (patient dashboard / overview)
 --------------------------------------------------------------------------- */
 
 .aktuelle-medikation {
   margin-top: 1rem;
+  max-width: 50%;
 }
 
 .aktuelle-medikation__title {
@@ -10168,6 +11567,228 @@ details[open].receptor-radar .receptor-radar__summary::before {
 .aktuelle-medikation__link:hover {
   text-decoration: underline;
   color: var(--accent-dark, #2563eb);
+}
+
+.aktuelle-medikation__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.aktuelle-medikation__header .aktuelle-medikation__title {
+  margin: 0;
+}
+
+.aktuelle-medikation__add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 0.25rem;
+  background: var(--surface, #fff);
+  color: var(--text-muted, #9ca3af);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.1s ease, border-color 0.1s ease;
+}
+
+.aktuelle-medikation__add:hover {
+  color: var(--text-ink, #111827);
+  border-color: var(--accent, #3b82f6);
+}
+
+/* ── Übersicht two-column overview layout ─────────────────────────────────── */
+
+.patient-dashboard__overview-grid {
+  display: grid;
+  /* 3:2 — left (Diagnose, Medikation, Therapien) is primary; right is a compact chart sidebar */
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 2rem;
+  align-items: start;
+}
+
+.patient-dashboard__col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Each column is an inline-size query container so its inner grids (planned-therapy
+   cards on the left, lab charts on the right) respond to the column's own width —
+   this reconciles automatically with the 900px page collapse, where the columns
+   widen to full width and the inner grids gain back their columns. */
+.patient-dashboard__col--left {
+  container: overview-left / inline-size;
+}
+
+.patient-dashboard__col--right {
+  container: overview-right / inline-size;
+}
+
+/* Inside the left column the Diagnose/Medikation widgets fill the column rather
+   than the old full-width 50% constraint. */
+.patient-dashboard__col--left .diagnosen-widget--panel,
+.patient-dashboard__col--left .aktuelle-medikation {
+  max-width: none;
+}
+
+@media (max-width: 900px) {
+  .patient-dashboard__overview-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+/* ── Weitere Therapien (planned/other therapies) compact cards ────────────── */
+
+.overview-therapies {
+  margin-top: 1rem;
+}
+
+.overview-therapies__title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted, #9ca3af);
+  margin: 0 0 0.5rem;
+  padding: 0;
+}
+
+.overview-therapies__empty {
+  font-size: 0.78rem;
+  color: var(--text-muted, #9ca3af);
+  margin: 0;
+  font-style: italic;
+}
+
+/* Planned-therapy cards: 1 column by default, widening to 2 then 3 columns as the
+   left column gains width (3 → 2 → 1 collapse). */
+.overview-therapies__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+}
+
+@container overview-left (min-width: 320px) {
+  .overview-therapies__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container overview-left (min-width: 480px) {
+  .overview-therapies__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.overview-therapy-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  padding: 0.55rem 0.65rem;
+  background: var(--surface, #fff);
+  border: var(--border-width, 1px) solid var(--border-soft, #e5e7eb);
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.overview-therapy-card:hover {
+  border-color: color-mix(in srgb, var(--accent, #4a7c59) 45%, var(--border-soft, #e5e7eb));
+  box-shadow: var(--shadow-elevated-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+}
+
+.overview-therapy-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.overview-therapy-card__kind {
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #9ca3af);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.overview-therapy-card__name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+  line-height: 1.25;
+}
+
+.overview-therapy-card__detail {
+  font-size: 0.72rem;
+  color: var(--text-secondary, #6b7280);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Right column: compact chart grids (Spiegelwerte + Lab-Verlauf) ───────── */
+
+/* Single column by default; two columns once the sidebar column is wide enough.
+   Cards are capped so charts don't stretch to fill empty sidebar space. */
+.patient-dashboard__col--right .spiegelwerte-section__grid,
+.patient-dashboard__col--right .labor-dashboard-widgets__grid {
+  grid-template-columns: 1fr;
+  justify-content: start;
+  justify-items: start;
+}
+
+/* Tighten inter-card gap in the sidebar so filled space doesn't feel sprawling */
+.patient-dashboard__col--right .spiegelwerte-section__grid {
+  gap: 0.4rem;
+}
+
+.patient-dashboard__col--right .labor-dashboard-widgets__grid {
+  gap: 0.5rem;
+}
+
+.patient-dashboard__col--right .spiegelwerte-card,
+.patient-dashboard__col--right .labor-dashboard-widget {
+  width: 100%;
+  max-width: 230px;
+}
+
+/* Keep overview sidebar charts readable but not oversized */
+.patient-dashboard__col--right .spiegelwerte-card .recharts-responsive-container {
+  max-height: 110px !important;
+}
+
+.patient-dashboard__col--right .labor-dashboard-widget .recharts-responsive-container {
+  max-height: 120px !important;
+}
+
+@container overview-right (min-width: 320px) {
+  .patient-dashboard__col--right .spiegelwerte-section__grid,
+  .patient-dashboard__col--right .labor-dashboard-widgets__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  /* Stacked layout: keep charts compact in one column until there's room for two. */
+  .patient-dashboard__col--right .spiegelwerte-section__grid,
+  .patient-dashboard__col--right .labor-dashboard-widgets__grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 230px));
+  }
 }
 
 /* ── KB Pharma Subsection Tile (in KB overlay) ─────────────────────────────── */
@@ -11218,4 +12839,426 @@ details[open].receptor-radar .receptor-radar__summary::before {
   color: var(--text-main);
   cursor: pointer;
 }
+
+/* ───────────────────────────────────────────────────────────────────
+   Psychotherapie — compact overview card + planning page
+   ─────────────────────────────────────────────────────────────────── */
+
+/* The overview card now uses the shared `.therapy-*` design system.
+   Planning-page primitives (.pt-btn, .pt-field, .pt-section, …) remain below. */
+
+/* Shared buttons */
+.pt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.82rem;
+  font-family: inherit;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.pt-btn--primary {
+  color: #fff;
+  background: var(--accent, #4a7c59);
+  border: 1px solid var(--accent, #4a7c59);
+}
+
+.pt-btn--primary:hover {
+  background: color-mix(in srgb, var(--accent, #4a7c59) 88%, #000);
+}
+
+.pt-btn--primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pt-btn--ghost {
+  color: var(--ink, #1a1a18);
+  background: transparent;
+  border: 1px solid var(--border-soft, #d8d8d2);
+}
+
+.pt-btn--ghost:hover {
+  background: color-mix(in srgb, var(--ink, #1a1a18) 5%, transparent);
+}
+
+.pt-link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--accent, #4a7c59);
+  cursor: pointer;
+}
+
+.pt-link-btn:hover {
+  text-decoration: underline;
+}
+
+.pt-link-btn--danger {
+  color: var(--color-danger, #dc2626);
+}
+
+.pt-icon-btn {
+  background: none;
+  border: 1px solid var(--border-soft, #e0e0db);
+  border-radius: 5px;
+  width: 1.7rem;
+  height: 1.7rem;
+  font-size: 0.9rem;
+  line-height: 1;
+  color: var(--text-muted, #8a8a80);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.pt-icon-btn:hover:not(:disabled) {
+  border-color: var(--accent, #4a7c59);
+  color: var(--accent, #4a7c59);
+}
+
+.pt-icon-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.pt-muted {
+  margin: 0.3rem 0;
+  font-size: 0.83rem;
+  font-style: italic;
+  color: var(--text-muted, #8a8a80);
+}
+
+/* Planning page (focused overlay opened from the card) */
+.pt-planung-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: color-mix(in srgb, #000 35%, transparent);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 3vh 1rem;
+  overflow: auto;
+}
+
+.pt-planung {
+  width: min(880px, 100%);
+  max-height: 94vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--notion-paper-bg, #fff);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+.pt-planung__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.5rem;
+  border-bottom: 1px solid var(--border-soft, #e8e8e4);
+}
+
+.pt-planung__title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ink, #1a1a18);
+}
+
+.pt-disclaimer {
+  margin: 0;
+  padding: 0.6rem 1.5rem;
+  font-size: 0.76rem;
+  color: var(--text-muted, #8a8a80);
+  background: color-mix(in srgb, var(--accent, #4a7c59) 4%, transparent);
+  border-bottom: 1px solid var(--border-soft, #f0f0ec);
+}
+
+.pt-planung__scroll {
+  overflow-y: auto;
+  padding: 0.5rem 1.5rem 1.5rem;
+}
+
+/* Collapsible section */
+.pt-section {
+  border-bottom: 1px solid var(--border-soft, #ececea);
+  padding: 0.4rem 0;
+}
+
+.pt-section__head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0.55rem 0;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+
+.pt-section__chevron {
+  font-size: 0.7rem;
+  color: var(--text-muted, #8a8a80);
+  transition: transform 0.15s;
+}
+
+.pt-section__chevron.is-open {
+  transform: rotate(90deg);
+}
+
+.pt-section__title {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--ink, #1a1a18);
+}
+
+.pt-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.4rem 0 0.9rem 1.2rem;
+}
+
+/* Fields */
+.pt-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.pt-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.pt-field__label {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-muted, #8a8a80);
+}
+
+.pt-input,
+.pt-textarea {
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: var(--ink, #1a1a18);
+  background: var(--notion-paper-bg, #fff);
+  border: 1px solid var(--border-soft, #ddddd8);
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+.pt-input:focus,
+.pt-textarea:focus {
+  outline: none;
+  border-color: var(--accent, #4a7c59);
+}
+
+.pt-textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.pt-input--compact {
+  width: auto;
+  min-width: 120px;
+}
+
+.pt-add-select {
+  align-self: flex-start;
+  color: var(--accent, #4a7c59);
+}
+
+/* Goals */
+.pt-goal-bucket {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.pt-goal-bucket__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.pt-goal-bucket__title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink, #1a1a18);
+}
+
+.pt-goal-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* Stages */
+.pt-stage-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--border-soft, #ececea);
+  border-radius: 7px;
+}
+
+.pt-stage-row__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.pt-stage-row__name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink, #1a1a18);
+}
+
+.pt-stage-row__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* Methods */
+.pt-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.pt-chip {
+  padding: 0.35rem 0.75rem;
+  font-family: inherit;
+  font-size: 0.8rem;
+  color: var(--text-muted, #6b6b63);
+  background: transparent;
+  border: 1px solid var(--border-soft, #ddddd8);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pt-chip:hover {
+  border-color: var(--accent, #4a7c59);
+}
+
+.pt-chip.is-selected {
+  color: var(--accent, #4a7c59);
+  background: color-mix(in srgb, var(--accent, #4a7c59) 10%, transparent);
+  border-color: var(--accent, #4a7c59);
+  font-weight: 600;
+}
+
+.pt-method-note {
+  margin-top: 0.25rem;
+}
+
+/* Planned + session items */
+.pt-planned-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border-soft, #ececea);
+  border-radius: 8px;
+}
+
+.pt-session-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border-soft, #e0e0db);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--accent, #4a7c59) 3%, transparent);
+}
+
+.pt-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.pt-paragraph-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--notion-paper-bg, #fff);
+  border: 1px dashed var(--border-soft, #d8d8d2);
+  border-radius: 7px;
+}
+
+.pt-paragraph-preview__text {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--ink, #1a1a18);
+}
+
+.pt-session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.85rem;
+}
+
+.pt-session-item {
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--border-soft, #ececea);
+  border-radius: 8px;
+}
+
+.pt-session-item__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.4rem;
+}
+
+.pt-session-item__meta {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted, #8a8a80);
+}
+
+.pt-session-item__actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.pt-session-item__text {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--ink, #1a1a18);
+  white-space: pre-wrap;
+}
+
+/* Sozialtherapie now uses the shared `.therapy-*` design system (cards,
+   status pills, modal detail panel, fields, picker, task list). */
 

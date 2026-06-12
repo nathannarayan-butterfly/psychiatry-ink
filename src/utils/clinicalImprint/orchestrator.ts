@@ -11,7 +11,9 @@ import type {
 import { extractClinicalImprint, hasClinicalSignal } from './extract'
 import { emptyClinicalImprintIndex, imprintKeyFor, upsertClinicalImprint } from './storage'
 import { collectMedicationStateJobs } from '../medication/imprint'
+import { collectPsychotherapyPlanJobs } from '../psychotherapy/imprint'
 import type { MedicationPlanState } from '../../types/medicationPlan'
+import type { PsychotherapyPlan } from '../../types/psychotherapy'
 
 const pendingJobs = new Map<string, ClinicalImprintJob>()
 let flushHandle: number | null = null
@@ -299,6 +301,7 @@ export function collectPayloadImprintJobs(
     timelines?: SavedTimeline[]
     labGraphs?: SavedLabGraph[]
     medicationPlanState?: MedicationPlanState
+    psychotherapyPlan?: PsychotherapyPlan
   },
 ): ClinicalImprintJob[] {
   const jobs: ClinicalImprintJob[] = []
@@ -322,6 +325,10 @@ export function collectPayloadImprintJobs(
 
   if (payload.medicationPlanState) {
     jobs.push(...collectMedicationStateJobs(caseId, payload.medicationPlanState))
+  }
+
+  if (payload.psychotherapyPlan) {
+    jobs.push(...collectPsychotherapyPlanJobs(caseId, payload.psychotherapyPlan))
   }
 
   return jobs

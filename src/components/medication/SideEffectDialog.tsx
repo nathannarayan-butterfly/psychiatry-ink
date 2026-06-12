@@ -1,5 +1,4 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { X } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
 import {
   COMMON_UNCLEAR_SYMPTOMS,
@@ -70,70 +69,72 @@ export function SideEffectDialog({
   }
 
   return (
-    <div className="timeline-entry-dialog__backdrop" role="presentation" onClick={onClose}>
+    <div className="therapy-modal-overlay" role="presentation" onClick={onClose}>
       <div
-        className="timeline-entry-dialog workspace-float-block side-effect-dialog"
+        className="therapy-modal side-effect-dialog"
         role="dialog"
         aria-modal="true"
         aria-labelledby="side-effect-dialog-title"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="timeline-entry-dialog__header">
-          <h2 id="side-effect-dialog-title" className="text-sm font-semibold text-ink">
-            {translateMedicationUi(language, 'medReportSideEffect')}
-          </h2>
+        <div className="therapy-modal__head">
+          <div className="therapy-modal__heading">
+            <h4 id="side-effect-dialog-title" className="therapy-modal__title">
+              {translateMedicationUi(language, 'medReportSideEffect')}
+            </h4>
+          </div>
           <button
             type="button"
-            className="timeline-entry-dialog__close"
+            className="therapy-modal__close"
             onClick={onClose}
             aria-label={t('settingsClose')}
           >
-            <X className="h-4 w-4" strokeWidth={1.5} />
+            ×
           </button>
         </div>
 
-        <div className="timeline-entry-dialog__body">
-          <label className="timeline-entry-dialog__field">
+        <div className="therapy-modal__body">
+          <label className="therapy-field">
             <span>{translateMedicationUi(language, 'medSymptom')}</span>
             <input
               type="text"
               value={symptom}
               disabled={disabled}
-              className="timeline-entry-dialog__input"
+              className="therapy-input"
               autoFocus
               onChange={(event) => setSymptom(event.target.value)}
             />
           </label>
 
-          <div className="lab-entry-dialog__row">
-            <label className="timeline-entry-dialog__field">
+          <div className="therapy-field-grid">
+            <label className="therapy-field">
               <span>{translateMedicationUi(language, 'medOnset')}</span>
               <input
                 type="date"
                 value={onsetDate}
                 disabled={disabled}
-                className="timeline-entry-dialog__input"
+                className="therapy-input"
                 onChange={(event) => setOnsetDate(event.target.value)}
               />
             </label>
-            <label className="timeline-entry-dialog__field">
+            <label className="therapy-field">
               <span>{translateMedicationUi(language, 'medSeverity')}</span>
               <input
                 type="text"
                 value={severity}
                 disabled={disabled}
-                className="timeline-entry-dialog__input"
+                className="therapy-input"
                 onChange={(event) => setSeverity(event.target.value)}
               />
             </label>
           </div>
 
-          <label className="timeline-entry-dialog__field">
+          <label className="therapy-field">
             <span>{translateMedicationUi(language, 'medSubstance')}</span>
             <select
               value={suspectedMedicationId}
               disabled={disabled}
-              className="timeline-entry-dialog__input"
+              className="therapy-input"
               onChange={(event) => setSuspectedMedicationId(event.target.value)}
             >
               <option value="">—</option>
@@ -145,45 +146,45 @@ export function SideEffectDialog({
             </select>
           </label>
 
-          <label className="timeline-entry-dialog__field">
+          <label className="therapy-field">
             <span>{translateMedicationUi(language, 'medTemporal')}</span>
             <input
               type="text"
               value={temporalRelation}
               disabled={disabled}
-              className="timeline-entry-dialog__input"
+              className="therapy-input"
               onChange={(event) => setTemporalRelation(event.target.value)}
             />
           </label>
 
-          <label className="timeline-entry-dialog__field">
+          <label className="therapy-field">
             <span>{translateMedicationUi(language, 'medActionTaken')}</span>
             <input
               type="text"
               value={actionTaken}
               disabled={disabled}
-              className="timeline-entry-dialog__input"
+              className="therapy-input"
               onChange={(event) => setActionTaken(event.target.value)}
             />
           </label>
 
-          <label className="timeline-entry-dialog__field">
+          <label className="therapy-field">
             <span>{translateMedicationUi(language, 'medOutcome')}</span>
             <input
               type="text"
               value={outcome}
               disabled={disabled}
-              className="timeline-entry-dialog__input"
+              className="therapy-input"
               onChange={(event) => setOutcome(event.target.value)}
             />
           </label>
 
-          <label className="timeline-entry-dialog__field">
+          <label className="therapy-field">
             <span>{translateMedicationUi(language, 'medAttribution')}</span>
             <select
               value={attribution}
               disabled={disabled}
-              className="timeline-entry-dialog__input"
+              className="therapy-input"
               onChange={(event) => setAttribution(event.target.value as SideEffectAttribution)}
             >
               {ATTRIBUTIONS.map((item) => (
@@ -194,25 +195,25 @@ export function SideEffectDialog({
             </select>
           </label>
 
-          <label className="timeline-entry-dialog__field">
+          <label className="therapy-field">
             <span>{translateMedicationUi(language, 'medFreeText')}</span>
             <textarea
               value={note}
               disabled={disabled}
-              className="timeline-entry-dialog__input"
+              className="therapy-input"
               rows={2}
               onChange={(event) => setNote(event.target.value)}
             />
           </label>
         </div>
 
-        <div className="timeline-entry-dialog__footer">
-          <button type="button" className="timeline-entry-dialog__btn" onClick={onClose}>
+        <div className="therapy-modal__footer">
+          <button type="button" className="therapy-btn therapy-btn--ghost" onClick={onClose}>
             {translateMedicationUi(language, 'medCancel')}
           </button>
           <button
             type="button"
-            className="timeline-entry-dialog__btn timeline-entry-dialog__btn--primary"
+            className="therapy-btn therapy-btn--primary"
             disabled={disabled || !symptom.trim()}
             onClick={handleSave}
           >
@@ -261,18 +262,18 @@ export function GlobalSideEffectForm({
   }
 
   return (
-    <form className="medication-lower-section__form" onSubmit={handleSubmit}>
+    <form className="medication-side-effect-form" onSubmit={handleSubmit}>
       <p className="medication-lower-section__hint">
         {translateMedicationUi(language, 'medGlobalSideEffectHint')}
       </p>
 
-      <div className="medication-symptom-chips" role="list">
+      <div className="therapy-picker__chips" role="list">
         {COMMON_UNCLEAR_SYMPTOMS[language].map((label) => (
           <button
             key={label}
             type="button"
             role="listitem"
-            className={`medication-symptom-chips__chip${symptom === label ? ' medication-symptom-chips__chip--active' : ''}`}
+            className={`therapy-chip${symptom === label ? ' is-selected' : ''}`}
             disabled={disabled}
             onClick={() => setSymptom(label)}
           >
@@ -281,36 +282,36 @@ export function GlobalSideEffectForm({
         ))}
       </div>
 
-      <div className="lab-entry-dialog__row">
-        <label className="timeline-entry-dialog__field">
+      <div className="therapy-field-grid">
+        <label className="therapy-field">
           <span>{translateMedicationUi(language, 'medSymptom')}</span>
           <input
             type="text"
             value={symptom}
             disabled={disabled}
-            className="timeline-entry-dialog__input"
+            className="therapy-input"
             onChange={(event) => setSymptom(event.target.value)}
           />
         </label>
-        <label className="timeline-entry-dialog__field">
+        <label className="therapy-field">
           <span>{translateMedicationUi(language, 'medOnset')}</span>
           <input
             type="date"
             value={onsetDate}
             disabled={disabled}
-            className="timeline-entry-dialog__input"
+            className="therapy-input"
             onChange={(event) => setOnsetDate(event.target.value)}
           />
         </label>
       </div>
 
       {medications.length > 0 ? (
-        <label className="timeline-entry-dialog__field">
+        <label className="therapy-field">
           <span>{translateMedicationUi(language, 'medSuspectedMedication')}</span>
           <select
             value={suspectedMedicationId}
             disabled={disabled}
-            className="timeline-entry-dialog__input"
+            className="therapy-input"
             onChange={(event) => setSuspectedMedicationId(event.target.value)}
           >
             <option value="">—</option>
@@ -323,17 +324,21 @@ export function GlobalSideEffectForm({
         </label>
       ) : null}
 
-      <label className="timeline-entry-dialog__field">
+      <label className="therapy-field">
         <span>{translateMedicationUi(language, 'medFreeText')}</span>
         <input
           type="text"
           value={note}
           disabled={disabled}
-          className="timeline-entry-dialog__input"
+          className="therapy-input"
           onChange={(event) => setNote(event.target.value)}
         />
       </label>
-      <button type="submit" className="medication-lower-section__submit" disabled={disabled || !symptom.trim()}>
+      <button
+        type="submit"
+        className="therapy-btn therapy-btn--primary medication-side-effect-form__submit"
+        disabled={disabled || !symptom.trim()}
+      >
         {translateMedicationUi(language, 'medReportSideEffect')}
       </button>
     </form>

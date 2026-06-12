@@ -28,7 +28,7 @@ export function NotionTopBar({
   const creditsTooltip = t('creditsRemaining').replace('{balance}', String(creditBalance))
 
   return (
-    <header className="notion-topbar" data-lottie-exclusion>
+    <header className="notion-topbar">
       <div className="notion-topbar__left">
         <AppLogo onClick={onNavigateDashboard} />
       </div>

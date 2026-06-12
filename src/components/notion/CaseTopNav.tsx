@@ -8,13 +8,21 @@ export type TopNavTabId = 'overview' | 'workspace' | 'verlauf' | 'labor' | 'ther
 interface CaseTopNavProps {
   activeTab: TopNavTabId
   onTabSelect: (tab: TopNavTabId) => void
-  /** Patient's local name to display in the assignment control. */
+  /** Patient's local name (retained for accessibility/title context). */
   patientName?: string
-  /** Called when the patient name chip is clicked — typically navigates to dashboard. */
+  /** Called when navigating to the patient dashboard overview. */
   onPatientClick?: () => void
-  /** Called when the patient registry chip is clicked. */
+  /** Display name of the next patient in the Meine Patienten list. */
+  nextPatientName?: string
+  /** Called when the next-patient button is clicked. */
+  onNextPatientClick?: () => void
+  /** Display name of the previous patient in the Meine Patienten list. */
+  prevPatientName?: string
+  /** Called when the prev-patient button is clicked. */
+  onPrevPatientClick?: () => void
+  /** Called when the Meine Patienten icon button is clicked. */
   onRegistryClick?: () => void
-  /** Highlight the registry chip when the registry view is open. */
+  /** Highlight the Meine Patienten button when the registry view is open. */
   registryActive?: boolean
   /** Whether a patient is linked to this case. Controls which tabs are visible. */
   hasPatient?: boolean
@@ -43,8 +51,12 @@ const TABS: TabConfig[] = [
 export function CaseTopNav({
   activeTab,
   onTabSelect,
-  patientName,
-  onPatientClick,
+  patientName: _patientName,
+  onPatientClick: _onPatientClick,
+  nextPatientName,
+  onNextPatientClick,
+  prevPatientName,
+  onPrevPatientClick,
   onRegistryClick,
   registryActive = false,
   hasPatient = true,
@@ -56,7 +68,8 @@ export function CaseTopNav({
   const [zuordnenOpen, setZuordnenOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  const displayName = patientName?.trim()
+  const nextName = nextPatientName?.trim()
+  const prevName = prevPatientName?.trim()
   const visibleTabs = hasPatient ? TABS : TABS.filter((tab) => tab.id === 'workspace')
 
   useEffect(() => {
@@ -109,17 +122,45 @@ export function CaseTopNav({
       ))}
 
       <div className="case-topnav__right">
+        {hasPatient && onPrevPatientClick && (
+          <button
+            type="button"
+            className="case-topnav__nav-text-btn"
+            onClick={onPrevPatientClick}
+            title={prevName ? `${t('topNavPrevPatient')}: ${prevName}` : t('topNavPrevPatient')}
+            aria-label={prevName ? `${t('topNavPrevPatient')}: ${prevName}` : t('topNavPrevPatient')}
+          >
+            {t('topNavPrevPatient')}
+          </button>
+        )}
+
+        {/* Meine Patienten — navigates to the patient list */}
         <button
           type="button"
           className={[
-            'case-topnav__registry-link',
-            registryActive ? 'case-topnav__registry-link--active' : '',
+            'case-topnav__nav-text-btn',
+            registryActive ? 'case-topnav__nav-text-btn--active' : '',
           ].join(' ').trim()}
           onClick={onRegistryClick}
-          title={t('patientNavFallback')}
+          title={t('topNavMeinePatienten')}
+          aria-label={t('topNavMeinePatienten')}
+          aria-pressed={registryActive}
         >
-          {t('patientNavFallback')}
+          {t('topNavMeinePatienten')}
         </button>
+
+        {hasPatient && onNextPatientClick && (
+          <button
+            type="button"
+            className="case-topnav__nav-text-btn"
+            onClick={onNextPatientClick}
+            title={nextName ? `${t('topNavNextPatient')}: ${nextName}` : t('topNavNextPatient')}
+            aria-label={nextName ? `${t('topNavNextPatient')}: ${nextName}` : t('topNavNextPatient')}
+          >
+            {t('topNavNextPatient')}
+          </button>
+        )}
+
         {!hasPatient && (
           <div className="labor-zuordnen-dropdown" ref={dropdownRef}>
             <button
@@ -162,17 +203,6 @@ export function CaseTopNav({
             )}
           </div>
         )}
-        {displayName ? (
-          <button
-            type="button"
-            className="case-topnav__patient-name"
-            onClick={onPatientClick}
-            title={displayName}
-            aria-label={displayName}
-          >
-            {displayName}
-          </button>
-        ) : null}
       </div>
     </nav>
   )

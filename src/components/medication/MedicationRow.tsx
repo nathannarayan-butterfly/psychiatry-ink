@@ -7,8 +7,17 @@ import {
   getStatusLabel,
   translateMedicationUi,
 } from '../../data/medicationUiTranslations'
-import type { MedicationEntry } from '../../types/medicationPlan'
+import type { MedicationEntry, MedicationStatus } from '../../types/medicationPlan'
 import { ChangeTypeIcon } from './MedicationToolbar'
+
+/** Maps medication status onto the shared therapy status-pill palette. */
+const MED_STATUS_TONE: Record<MedicationStatus, string> = {
+  active: 'green',
+  reduced: 'blue',
+  increased: 'violet',
+  paused: 'amber',
+  discontinued: 'gray',
+}
 
 interface MedicationRowProps {
   entry: MedicationEntry
@@ -54,6 +63,11 @@ export function MedicationRow({
               {getFormulationLabel(entry.formulation, language)}
               {entry.strength ? ` · ${entry.strength}` : ''}
             </span>
+            <span
+              className={`therapy-status therapy-status--${MED_STATUS_TONE[entry.status] ?? 'gray'} medication-row__status`}
+            >
+              {getStatusLabel(entry.status, language)}
+            </span>
           </div>
           <div className="medication-row__dose">{entry.doseLineGerman}</div>
           <div className="medication-row__meta">
@@ -64,7 +78,6 @@ export function MedicationRow({
               {translateMedicationUi(language, 'medLastChange')}:{' '}
               {entry.lastChangeAt ? new Date(entry.lastChangeAt).toLocaleDateString() : '—'}
             </span>
-            <span>{getStatusLabel(entry.status, language)}</span>
           </div>
         </div>
         <div className="medication-row__actions">

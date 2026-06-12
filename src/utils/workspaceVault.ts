@@ -56,8 +56,23 @@ import {
   loadMedicationPlanState,
 } from './medication/storage'
 import type { MedicationPlanState } from '../types/medicationPlan'
+import {
+  applyPsychotherapyPlan,
+  loadPsychotherapyPlan,
+} from './psychotherapy/storage'
+import type { PsychotherapyPlan } from '../types/psychotherapy'
+import {
+  applyComplementaryTherapies,
+  loadComplementaryTherapies,
+} from './complementaryTherapy/storage'
+import type { ComplementaryTherapy } from '../types/complementaryTherapy'
+import {
+  applyWeitereTherapie,
+  loadWeitereTherapie,
+} from './weitereTherapie/storage'
+import type { WeitereTherapie } from '../types/weitereTherapie'
 
-export const WORKSPACE_PAYLOAD_VERSION = 7
+export const WORKSPACE_PAYLOAD_VERSION = 8
 
 export const LAST_VAULT_EXPORT_KEY = 'psychiatry-ink:last-vault-export-at'
 
@@ -113,6 +128,12 @@ export interface ClinicalWorkspacePayload {
   isdmInput?: IsdmInputState
   /** Layer 2b — medication intelligence profile (plan, side effects, lab correlation). */
   medicationPlanState?: MedicationPlanState
+  /** Layer 2c — psychotherapy plan & session documentation (v8+; defaults absent on older payloads). */
+  psychotherapyPlan?: PsychotherapyPlan
+  /** Layer 2d — complementary therapies (additive; absent on older payloads, falls back to localStorage). */
+  complementaryTherapies?: ComplementaryTherapy[]
+  /** Layer 2e — weitere Therapieverfahren / neurostimulation (additive; absent on older payloads). */
+  weitereTherapie?: WeitereTherapie[]
   /** Per-document variant selection (e.g. psychopath sub-mode). */
   activeVariantIds?: Record<string, string>
   /** @deprecated v1 — stripped on write */
@@ -243,6 +264,9 @@ export function collectClinicalPayload(
   const isdmAnalysis = loadIsdmAnalysis(storageCaseId) ?? undefined
   const isdmInput = loadIsdmInput(storageCaseId) ?? undefined
   const medicationPlanState = loadMedicationPlanState(storageCaseId) ?? undefined
+  const psychotherapyPlan = loadPsychotherapyPlan(storageCaseId) ?? undefined
+  const complementaryTherapies = loadComplementaryTherapies(storageCaseId)
+  const weitereTherapie = loadWeitereTherapie(storageCaseId)
 
   return {
     version: WORKSPACE_PAYLOAD_VERSION,
@@ -262,6 +286,9 @@ export function collectClinicalPayload(
     isdmAnalysis,
     isdmInput,
     medicationPlanState,
+    psychotherapyPlan,
+    complementaryTherapies: complementaryTherapies.length ? complementaryTherapies : undefined,
+    weitereTherapie: weitereTherapie.length ? weitereTherapie : undefined,
     activeVariantIds: live?.activeVariantIds,
   }
 }
@@ -328,6 +355,18 @@ export function applyClinicalPayload(
   if (normalized.medicationPlanState) {
     applyMedicationPlanState(normalized.medicationPlanState, storageCaseId)
   }
+
+  if (normalized.psychotherapyPlan) {
+    applyPsychotherapyPlan(normalized.psychotherapyPlan, storageCaseId)
+  }
+
+  if (normalized.complementaryTherapies) {
+    applyComplementaryTherapies(normalized.complementaryTherapies, storageCaseId)
+  }
+
+  if (normalized.weitereTherapie) {
+    applyWeitereTherapie(normalized.weitereTherapie, storageCaseId)
+  }
 }
 
 /** Strips legacy patient metadata from older vault files; never applies name/age from sync. */
@@ -382,6 +421,9 @@ export async function decryptWorkspaceBlob(blob: EncryptedVaultBlob): Promise<Cl
     isdmAnalysis: payload.isdmAnalysis,
     isdmInput: payload.isdmInput,
     medicationPlanState: payload.medicationPlanState,
+    psychotherapyPlan: payload.psychotherapyPlan,
+    complementaryTherapies: payload.complementaryTherapies,
+    weitereTherapie: payload.weitereTherapie,
   }
 }
 

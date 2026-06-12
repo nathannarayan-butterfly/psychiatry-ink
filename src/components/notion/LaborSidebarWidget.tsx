@@ -1,11 +1,33 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useCallback, useMemo, useState, useEffect } from 'react'
+import { X } from 'lucide-react'
 import { LineChart, Line, ResponsiveContainer, Tooltip } from 'recharts'
+import { useTranslation } from '../../context/TranslationContext'
+import { caseStorageKey } from '../../utils/caseContext'
 import { loadBefunde, loadPinnedWidgets } from '../../utils/laborArchive'
 import type { LaborBefund, PinnedLaborWidget } from '../../utils/laborArchive'
 
 interface LaborSidebarWidgetProps {
   caseId: string
   onNavigateToLabor?: () => void
+}
+
+// Persisted per-case flag so the dismissed lab visualization stays hidden across reloads.
+const HIDDEN_FLAG_BASE = 'psychiatry-ink:workspaceLabPanelHidden'
+
+function loadHidden(caseId: string): boolean {
+  try {
+    return localStorage.getItem(caseStorageKey(HIDDEN_FLAG_BASE, caseId)) === '1'
+  } catch {
+    return false
+  }
+}
+
+function saveHidden(caseId: string, hidden: boolean): void {
+  try {
+    localStorage.setItem(caseStorageKey(HIDDEN_FLAG_BASE, caseId), hidden ? '1' : '0')
+  } catch {
+    // ignore storage errors
+  }
 }
 
 function shortDate(iso: string): string {
@@ -43,25 +65,49 @@ function buildSparkData(widget: PinnedLaborWidget, befunde: LaborBefund[]) {
 }
 
 export function LaborSidebarWidget({ caseId, onNavigateToLabor }: LaborSidebarWidgetProps) {
+  const { t } = useTranslation()
   const [, setTick] = useState(0)
+  const [hidden, setHidden] = useState<boolean>(() => loadHidden(caseId))
 
   // Re-read from storage on mount (no live subscription needed — sidebar is
   // only mounted once per workspace session)
   useEffect(() => {
     setTick((t) => t + 1)
+    setHidden(loadHidden(caseId))
+  }, [caseId])
+
+  const handleClose = useCallback(() => {
+    saveHidden(caseId, true)
+    setHidden(true)
   }, [caseId])
 
   const befunde = useMemo(() => loadBefunde(caseId), [caseId])
   const pinned = useMemo(() => loadPinnedWidgets(caseId), [caseId])
 
+  if (hidden) return null
   if (befunde.length === 0) return null
 
   const latestDate = [...befunde].sort((a, b) => b.date.localeCompare(a.date))[0]?.date
 
+  const closeButton = (
+    <button
+      type="button"
+      className="labor-sidebar-widget__close"
+      onClick={handleClose}
+      title={t('laborSidebarHide')}
+      aria-label={t('laborSidebarHide')}
+    >
+      <X className="h-3 w-3" strokeWidth={2} aria-hidden />
+    </button>
+  )
+
   if (pinned.length === 0) {
     return (
       <div className="labor-sidebar-widget">
-        <span className="labor-sidebar-widget__header">Labor</span>
+        <div className="labor-sidebar-widget__header-row">
+          <span className="labor-sidebar-widget__header">Labor</span>
+          {closeButton}
+        </div>
         {latestDate && (
           <span className="labor-sidebar-widget__param-name">{formatDate(latestDate)}</span>
         )}
@@ -78,7 +124,10 @@ export function LaborSidebarWidget({ caseId, onNavigateToLabor }: LaborSidebarWi
 
   return (
     <div className="labor-sidebar-widget">
-      <span className="labor-sidebar-widget__header">Lab Visualisierung</span>
+      <div className="labor-sidebar-widget__header-row">
+        <span className="labor-sidebar-widget__header">Lab Visualisierung</span>
+        {closeButton}
+      </div>
       {pinned.map((widget) => {
         const sparkData = buildSparkData(widget, befunde)
         if (sparkData.length < 2) return null

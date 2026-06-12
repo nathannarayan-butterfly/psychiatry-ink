@@ -1,6 +1,7 @@
+import { X } from 'lucide-react'
 import { useCallback } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
-import { useRandomLottie } from '../../hooks/useRandomLottie'
+import { usePanelGraphicSchedule } from '../../hooks/usePanelGraphicSchedule'
 import { PanelDateCard } from '../PanelDateCard'
 import { PanelGraphic } from '../PanelGraphic'
 import { PsychopathModeRail } from '../workspace/PsychopathModeRail'
@@ -11,7 +12,7 @@ import type { PsychopathSubMode } from '../../utils/psychopathMode'
 
 interface NotionDiarySidebarProps {
   panelGraphicEnabled: boolean
-  breakLottieActive: boolean
+  breakReminderActive: boolean
   onClosePanelGraphic: () => void
   collapsed?: boolean
   onBreakStart?: () => void
@@ -20,6 +21,10 @@ interface NotionDiarySidebarProps {
   savedDocs?: SavedDoc[]
   onViewSavedDoc?: (doc: SavedDoc) => void
   onRemoveSavedDoc?: (id: string) => void
+  /** Label of the currently-open workspace document, if any. */
+  openDocumentLabel?: string
+  /** Close the currently-open workspace document (guarded by unsaved-changes warning). */
+  onCloseDocument?: () => void
   showPsychopathModeRail?: boolean
   psychopathActiveMode?: PsychopathSubMode
   psychopathModeDisabled?: boolean
@@ -40,7 +45,7 @@ function formatShortDate(iso: string): string {
 
 export function NotionDiarySidebar({
   panelGraphicEnabled,
-  breakLottieActive,
+  breakReminderActive,
   onClosePanelGraphic,
   collapsed = false,
   onBreakStart,
@@ -49,22 +54,24 @@ export function NotionDiarySidebar({
   savedDocs,
   onViewSavedDoc,
   onRemoveSavedDoc,
+  openDocumentLabel,
+  onCloseDocument,
   showPsychopathModeRail = false,
   psychopathActiveMode = 'free',
   psychopathModeDisabled = false,
   onPsychopathModeSelect,
 }: NotionDiarySidebarProps) {
   const { t } = useTranslation()
-  const { visible: randomLottieVisible, dismiss: dismissRandomLottie } = useRandomLottie({
+  const { visible: graphicVisible, dismiss: dismissGraphic } = usePanelGraphicSchedule({
     enabled: panelGraphicEnabled,
-    paused: breakLottieActive,
+    paused: breakReminderActive,
   })
-  const showPanelGraphic = breakLottieActive || randomLottieVisible
+  const showPanelGraphic = breakReminderActive || graphicVisible
 
   const handleClosePanelGraphic = useCallback(() => {
-    dismissRandomLottie()
+    dismissGraphic()
     onClosePanelGraphic()
-  }, [dismissRandomLottie, onClosePanelGraphic])
+  }, [dismissGraphic, onClosePanelGraphic])
 
   const hasSavedDocs = savedDocs && savedDocs.length > 0
 
@@ -99,6 +106,31 @@ export function NotionDiarySidebar({
           {caseId && (
             <LaborSidebarWidget caseId={caseId} onNavigateToLabor={onNavigateToLabor} />
           )}
+
+          {onCloseDocument && openDocumentLabel ? (
+            <div className="notion-diary-sidebar__open-doc">
+              <p className="notion-diary-sidebar__saved-docs-heading">
+                {t('workspaceOpenDocumentHeading')}
+              </p>
+              <div className="notion-diary-sidebar__open-doc-row">
+                <span
+                  className="notion-diary-sidebar__open-doc-label"
+                  title={openDocumentLabel}
+                >
+                  {openDocumentLabel}
+                </span>
+                <button
+                  type="button"
+                  className="notion-diary-sidebar__open-doc-close"
+                  onClick={onCloseDocument}
+                  title={t('workspaceCloseDocument')}
+                  aria-label={t('workspaceCloseDocument')}
+                >
+                  <X className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+                </button>
+              </div>
+            </div>
+          ) : null}
 
           {hasSavedDocs && (
             <div className="notion-diary-sidebar__saved-docs">

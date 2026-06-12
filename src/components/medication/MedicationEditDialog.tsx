@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import { X } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
 import {
   DEMO_MEDICATION_SUGGESTIONS,
@@ -134,38 +133,40 @@ export function MedicationEditDialog({
   }
 
   return (
-    <div className="timeline-entry-dialog__backdrop" role="presentation" onClick={onClose}>
+    <div className="therapy-modal-overlay" role="presentation" onClick={onClose}>
       <div
-        className="timeline-entry-dialog workspace-float-block medication-edit-dialog"
+        className="therapy-modal medication-edit-dialog"
         role="dialog"
         aria-modal="true"
         aria-labelledby="medication-edit-title"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="timeline-entry-dialog__header">
-          <h2 id="medication-edit-title" className="text-sm font-semibold text-ink">
-            {editingEntry
-              ? translateMedicationUi(language, 'medEdit')
-              : translateMedicationUi(language, 'medAdd')}
-          </h2>
+        <div className="therapy-modal__head">
+          <div className="therapy-modal__heading">
+            <h4 id="medication-edit-title" className="therapy-modal__title">
+              {editingEntry
+                ? translateMedicationUi(language, 'medEdit')
+                : translateMedicationUi(language, 'medAdd')}
+            </h4>
+          </div>
           <button
             type="button"
-            className="timeline-entry-dialog__close"
+            className="therapy-modal__close"
             onClick={onClose}
             aria-label={t('settingsClose')}
           >
-            <X className="h-4 w-4" strokeWidth={1.5} />
+            ×
           </button>
         </div>
 
-        <div className="timeline-entry-dialog__body medication-edit-dialog__body">
-          <label className="timeline-entry-dialog__field">
+        <div className="therapy-modal__body medication-edit-dialog__body">
+          <label className="therapy-field">
             <span>{translateMedicationUi(language, 'medSubstance')}</span>
             <input
               type="text"
               value={draft.substance}
               disabled={disabled}
-              className="timeline-entry-dialog__input"
+              className="therapy-input"
               autoFocus
               onChange={(event) => setDraft((current) => ({ ...current, substance: event.target.value }))}
             />
@@ -203,13 +204,13 @@ export function MedicationEditDialog({
             </div>
           ) : null}
 
-          <div className="lab-entry-dialog__row">
-            <label className="timeline-entry-dialog__field">
+          <div className="therapy-field-grid">
+            <label className="therapy-field">
               <span>{translateMedicationUi(language, 'medFormulation')}</span>
               <select
                 value={draft.formulation}
                 disabled={disabled}
-                className="timeline-entry-dialog__input"
+                className="therapy-input"
                 onChange={(event) =>
                   setDraft((current) =>
                     applyFormulationChange(
@@ -226,13 +227,13 @@ export function MedicationEditDialog({
                 ))}
               </select>
             </label>
-            <label className="timeline-entry-dialog__field">
+            <label className="therapy-field">
               <span>{translateMedicationUi(language, 'medStrength')}</span>
               {strengthOptions.length > 0 ? (
                 <select
                   value={strengthSelectValue}
                   disabled={disabled}
-                  className="timeline-entry-dialog__input"
+                  className="therapy-input"
                   onChange={(event) => {
                     const value = event.target.value
                     if (value === '') {
@@ -269,7 +270,7 @@ export function MedicationEditDialog({
                   type="text"
                   value={draft.strength}
                   disabled={disabled}
-                  className="timeline-entry-dialog__input medication-edit-dialog__strength-custom"
+                  className="therapy-input medication-edit-dialog__strength-custom"
                   placeholder={translateMedicationUi(language, 'medStrengthCustom')}
                   onChange={(event) =>
                     setDraft((current) => ({ ...current, strength: event.target.value }))
@@ -293,8 +294,8 @@ export function MedicationEditDialog({
           </p>
 
           {doseInputMode === 'single' ? (
-            <div className="lab-entry-dialog__row">
-              <label className="timeline-entry-dialog__field">
+            <div className="therapy-field-grid">
+              <label className="therapy-field">
                 <span>
                   {draft.formulation === 'patch'
                     ? translateMedicationUi(language, 'medDosePerPatch')
@@ -304,7 +305,7 @@ export function MedicationEditDialog({
                   type="text"
                   value={draft.doseSchedule.morning}
                   disabled={disabled}
-                  className="timeline-entry-dialog__input"
+                  className="therapy-input"
                   onChange={(event) =>
                     setDraft((current) => ({
                       ...current,
@@ -313,13 +314,13 @@ export function MedicationEditDialog({
                   }
                 />
               </label>
-              <label className="timeline-entry-dialog__field">
+              <label className="therapy-field">
                 <span>{translateMedicationUi(language, 'medDoseUnit')}</span>
                 <input
                   type="text"
                   value={draft.doseSchedule.unit}
                   disabled={disabled}
-                  className="timeline-entry-dialog__input"
+                  className="therapy-input"
                   onChange={(event) =>
                     setDraft((current) => ({
                       ...current,
@@ -339,13 +340,13 @@ export function MedicationEditDialog({
                   ['night', 'medDoseNight'],
                 ] as const
               ).map(([field, labelKey]) => (
-                <label key={field} className="timeline-entry-dialog__field">
+                <label key={field} className="therapy-field">
                   <span>{translateMedicationUi(language, labelKey)}</span>
                   <input
                     type="text"
                     value={draft.doseSchedule[field]}
                     disabled={disabled}
-                    className="timeline-entry-dialog__input"
+                    className="therapy-input"
                     onChange={(event) =>
                       setDraft((current) => ({
                         ...current,
@@ -355,13 +356,13 @@ export function MedicationEditDialog({
                   />
                 </label>
               ))}
-              <label className="timeline-entry-dialog__field">
+              <label className="therapy-field">
                 <span>{translateMedicationUi(language, 'medDoseUnit')}</span>
                 <input
                   type="text"
                   value={draft.doseSchedule.unit}
                   disabled={disabled}
-                  className="timeline-entry-dialog__input"
+                  className="therapy-input"
                   onChange={(event) =>
                     setDraft((current) => ({
                       ...current,
@@ -386,13 +387,13 @@ export function MedicationEditDialog({
           ) : null}
 
           {isDepot ? (
-            <label className="timeline-entry-dialog__field">
+            <label className="therapy-field">
               <span>{translateMedicationUi(language, 'medDepotInterval')}</span>
               <input
                 type="text"
                 value={draft.depotInterval}
                 disabled={disabled}
-                className="timeline-entry-dialog__input"
+                className="therapy-input"
                 placeholder={language === 'de' ? 'z. B. alle 2 Wochen' : 'e.g. every 2 weeks'}
                 onChange={(event) =>
                   setDraft((current) => ({ ...current, depotInterval: event.target.value }))
@@ -401,23 +402,23 @@ export function MedicationEditDialog({
             </label>
           ) : null}
 
-          <div className="lab-entry-dialog__row">
-            <label className="timeline-entry-dialog__field">
+          <div className="therapy-field-grid">
+            <label className="therapy-field">
               <span>{translateMedicationUi(language, 'medStartDate')}</span>
               <input
                 type="date"
                 value={draft.startDate}
                 disabled={disabled}
-                className="timeline-entry-dialog__input"
+                className="therapy-input"
                 onChange={(event) => setDraft((current) => ({ ...current, startDate: event.target.value }))}
               />
             </label>
-            <label className="timeline-entry-dialog__field">
+            <label className="therapy-field">
               <span>{translateMedicationUi(language, 'medStatus')}</span>
               <select
                 value={draft.status}
                 disabled={disabled}
-                className="timeline-entry-dialog__input"
+                className="therapy-input"
                 onChange={(event) =>
                   setDraft((current) => ({
                     ...current,
@@ -435,12 +436,12 @@ export function MedicationEditDialog({
           </div>
 
           {editingEntry ? (
-            <label className="timeline-entry-dialog__field">
+            <label className="therapy-field">
               <span>{translateMedicationUi(language, 'medReasonChange')}</span>
               <select
                 value={draft.changeType}
                 disabled={disabled}
-                className="timeline-entry-dialog__input"
+                className="therapy-input"
                 onChange={(event) =>
                   setDraft((current) => ({
                     ...current,
@@ -457,50 +458,50 @@ export function MedicationEditDialog({
             </label>
           ) : null}
 
-          <label className="timeline-entry-dialog__field">
+          <label className="therapy-field">
             <span>{translateMedicationUi(language, 'medIndication')}</span>
             <input
               type="text"
               value={draft.indication}
               disabled={disabled}
-              className="timeline-entry-dialog__input"
+              className="therapy-input"
               onChange={(event) => setDraft((current) => ({ ...current, indication: event.target.value }))}
             />
           </label>
 
-          <label className="timeline-entry-dialog__field">
+          <label className="therapy-field">
             <span>{translateMedicationUi(language, 'medReasonChange')}</span>
             <input
               type="text"
               value={draft.reasonForChange}
               disabled={disabled}
-              className="timeline-entry-dialog__input"
+              className="therapy-input"
               onChange={(event) =>
                 setDraft((current) => ({ ...current, reasonForChange: event.target.value }))
               }
             />
           </label>
 
-          <label className="timeline-entry-dialog__field">
+          <label className="therapy-field">
             <span>{translateMedicationUi(language, 'medAdherence')}</span>
             <input
               type="text"
               value={draft.adherenceNote}
               disabled={disabled}
-              className="timeline-entry-dialog__input"
+              className="therapy-input"
               onChange={(event) =>
                 setDraft((current) => ({ ...current, adherenceNote: event.target.value }))
               }
             />
           </label>
 
-          <label className="timeline-entry-dialog__field">
+          <label className="therapy-field">
             <span>{translateMedicationUi(language, 'medFreeText')}</span>
             <input
               type="text"
               value={draft.freeTextLine}
               disabled={disabled}
-              className="timeline-entry-dialog__input"
+              className="therapy-input"
               onChange={(event) => setDraft((current) => ({ ...current, freeTextLine: event.target.value }))}
             />
           </label>
@@ -508,13 +509,13 @@ export function MedicationEditDialog({
           <p className="medication-edit-dialog__preview">{dosePreview}</p>
         </div>
 
-        <div className="timeline-entry-dialog__footer">
-          <button type="button" className="timeline-entry-dialog__btn" onClick={onClose}>
+        <div className="therapy-modal__footer">
+          <button type="button" className="therapy-btn therapy-btn--ghost" onClick={onClose}>
             {translateMedicationUi(language, 'medCancel')}
           </button>
           <button
             type="button"
-            className="timeline-entry-dialog__btn timeline-entry-dialog__btn--primary"
+            className="therapy-btn therapy-btn--primary"
             disabled={disabled || !draft.substance.trim()}
             onClick={handleSave}
           >

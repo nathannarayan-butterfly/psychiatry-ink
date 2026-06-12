@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { UnsavedChangesDialog } from './UnsavedChangesDialog'
-import { getCaseMeta } from '../../hooks/useCaseRegistry'
+import { getCaseMeta, isListedPatientCase } from '../../hooks/useCaseRegistry'
 import { flushSync } from 'react-dom'
 import { useTranslation } from '../../context/TranslationContext'
 import { useCaseRegistry } from '../../hooks/useCaseRegistry'
@@ -17,7 +17,6 @@ import type { useWorkspaceSettings } from '../../hooks/useWorkspaceSettings'
 import type { useWorkspaceVault } from '../../hooks/useWorkspaceVault'
 import type { AiToolKey } from '../../data/aiTools'
 import type { WorkspaceTabsInfo } from '../CaseWorkspacePage'
-import { LottieCharacterStage } from '../LottieCharacterStage'
 import { SettingsPage } from '../settings/SettingsPage'
 import { DocumentationTodayTotalSync } from '../DocumentationTodayTotalSync'
 import { WorkspaceActivitySync } from '../WorkspaceActivitySync'
@@ -185,11 +184,12 @@ export function NotionApp({
   onSelectAssessmentStandard,
 }: NotionAppProps) {
   const { t } = useTranslation()
-  const [breakLottieActive, setBreakLottieActive] = useState(false)
+  const [breakReminderActive, setBreakReminderActive] = useState(false)
   // Each workspace tab gets its own saved-docs list via a per-tab storage key.
   const savedDocsKey = savedDocsCaseId ?? caseId
   const [savedDocs, setSavedDocs] = useState<SavedDoc[]>(() => loadSavedDocs(savedDocsKey))
   const storageCaseId = workspaceStorageId ?? caseId
+  const [pendingMedicationAdd, setPendingMedicationAdd] = useState(false)
 
   useEffect(() => {
     setSavedDocs(loadSavedDocs(savedDocsKey))
@@ -245,12 +245,12 @@ export function NotionApp({
   )
 
   const handleBreakStart = useCallback(() => {
-    setBreakLottieActive(true)
+    setBreakReminderActive(true)
   }, [])
 
   const handleClosePanelGraphic = useCallback(() => {
     appearance.setShowPanelGraphic(false)
-    setBreakLottieActive(false)
+    setBreakReminderActive(false)
   }, [appearance])
 
   const documentTypeLabel = useCallback(
@@ -440,9 +440,31 @@ export function NotionApp({
     | { type: 'navigateDashboard' }
     | { type: 'navigateCase'; caseId: string; page?: NotionPageId; showPatientDashboard?: boolean }
     | { type: 'closeTab'; tabId: string }
+    | { type: 'viewSavedDoc'; doc: SavedDoc }
 
   const [pendingNavAction, setPendingNavAction] = useState<PendingNavAction | null>(null)
   const [isSavingBeforeNav, setIsSavingBeforeNav] = useState(false)
+
+  // Load a Recent/saved document into the workspace. Extracted so it can run
+  // both directly (no unsaved changes) and after the unsaved-changes guard.
+  const viewSavedDocNow = useCallback(
+    (doc: SavedDoc) => {
+      const hasSectionContents = Object.keys(doc.sectionContents).length > 0
+      workspace.selectDocumentType(doc.typeId)
+      if (hasSectionContents) {
+        workspace.restoreFromSnapshot({
+          documentTypeId: doc.typeId,
+          pageHeading: '',
+          sectionContents: doc.sectionContents,
+          savedAt: doc.date,
+        })
+      } else {
+        workspace.setEditorContent(doc.content)
+      }
+      setActiveTopTab('workspace')
+    },
+    [workspace],
+  )
 
   const executePendingNavAction = useCallback(
     (action: PendingNavAction) => {
@@ -457,9 +479,11 @@ export function NotionApp({
         onNavigateNewCase?.(action.caseId, action.page, action.showPatientDashboard)
       } else if (action.type === 'closeTab') {
         workspaceTabs?.onCloseTab(action.tabId)
+      } else if (action.type === 'viewSavedDoc') {
+        viewSavedDocNow(action.doc)
       }
     },
-    [onNavigateDashboard, onNavigateNewCase, workspace, workspaceTabs],
+    [onNavigateDashboard, onNavigateNewCase, viewSavedDocNow, workspace, workspaceTabs],
   )
 
   const handleUnsavedSave = useCallback(async () => {
@@ -614,22 +638,11 @@ export function NotionApp({
 
   const handleViewSavedDoc = useCallback(
     (doc: SavedDoc) => {
-      const hasSectionContents = Object.keys(doc.sectionContents).length > 0
-      workspace.selectDocumentType(doc.typeId)
-      if (hasSectionContents) {
-        workspace.restoreFromSnapshot({
-          documentTypeId: doc.typeId,
-          pageHeading: '',
-          sectionContents: doc.sectionContents,
-          savedAt: doc.date,
-        })
-      } else {
-        workspace.setEditorContent(doc.content)
-      }
-      // Navigate to workspace tab to show the document
-      setActiveTopTab('workspace')
+      // Opening another Recent document replaces the currently-open one, so warn
+      // first if the active document has unsaved changes.
+      guardedNav({ type: 'viewSavedDoc', doc }, () => viewSavedDocNow(doc))
     },
-    [workspace],
+    [guardedNav, viewSavedDocNow],
   )
 
   const handleRemoveSavedDoc = useCallback(
@@ -993,6 +1006,42 @@ export function NotionApp({
   )
   const hasPatient = Boolean(currentPatientName)
 
+  const nextPatient = useMemo(() => {
+    const listedPatients = caseRegistry.cases.filter(isListedPatientCase)
+    if (listedPatients.length <= 1) return undefined
+
+    const currentIndex = listedPatients.findIndex((item) => item.caseId === caseId)
+    if (currentIndex === -1 || currentIndex >= listedPatients.length - 1) return undefined
+    return listedPatients[currentIndex + 1]
+  }, [caseId, caseRegistry.cases])
+
+  const prevPatient = useMemo(() => {
+    const listedPatients = caseRegistry.cases.filter(isListedPatientCase)
+    if (listedPatients.length <= 1) return undefined
+
+    const currentIndex = listedPatients.findIndex((item) => item.caseId === caseId)
+    if (currentIndex <= 0) return undefined
+    return listedPatients[currentIndex - 1]
+  }, [caseId, caseRegistry.cases])
+
+  const nextPatientName = useMemo(() => {
+    if (!nextPatient) return undefined
+    const meta = getCaseMeta(nextPatient.caseId)
+    const structuredName = [meta?.localVorname?.trim(), meta?.localNachname?.trim()]
+      .filter(Boolean)
+      .join(' ')
+    return structuredName || meta?.localName?.trim() || nextPatient.displayTitle
+  }, [nextPatient, patientMetaVersion])
+
+  const prevPatientName = useMemo(() => {
+    if (!prevPatient) return undefined
+    const meta = getCaseMeta(prevPatient.caseId)
+    const structuredName = [meta?.localVorname?.trim(), meta?.localNachname?.trim()]
+      .filter(Boolean)
+      .join(' ')
+    return structuredName || meta?.localName?.trim() || prevPatient.displayTitle
+  }, [prevPatient, patientMetaVersion])
+
   // Keep the workspace tab label in sync with the current patient name.
   // Uses stable refs so it only fires when the patient name or active tab actually changes.
   const onUpdateTabPatient = workspaceTabs?.onUpdateTabPatient
@@ -1158,6 +1207,14 @@ export function NotionApp({
           setShowPatientRegistry(false)
           setActiveTopTab('overview')
         }}
+        nextPatientName={nextPatientName}
+        onNextPatientClick={
+          nextPatient ? () => handleRegistryOpenPatient(nextPatient.caseId) : undefined
+        }
+        prevPatientName={prevPatientName}
+        onPrevPatientClick={
+          prevPatient ? () => handleRegistryOpenPatient(prevPatient.caseId) : undefined
+        }
         onRegistryClick={() => {
           setShowPatientRegistry(true)
           void caseRegistry.refresh()
@@ -1175,7 +1232,7 @@ export function NotionApp({
         }
       />
 
-      <main className="notion-preview-main" data-lottie-exclusion>
+      <main className="notion-preview-main">
         {showPatientRegistry ? (
           <MeinePatientenView
             cases={caseRegistry.cases}
@@ -1190,7 +1247,12 @@ export function NotionApp({
         {!showPatientRegistry && activeTopTab === 'overview' ? (
           <PatientDashboardView
             caseId={caseId}
+            therapyCaseId={storageCaseId}
             onTabSelect={setActiveTopTab}
+            onAddMedication={() => {
+              setPendingMedicationAdd(true)
+              setActiveTopTab('therapie')
+            }}
             onOpenWorkspacePage={(pageId) => {
               setActiveTopTab('workspace')
               handlePageSelect(pageId)
@@ -1237,7 +1299,11 @@ export function NotionApp({
               <DiagnosenWidget caseId={caseId} onDiagnosesChanged={workspaceVault.scheduleSave} />
             </aside>
             <div className="notion-tab-content-row__body">
-              <TherapiePage caseId={storageCaseId} />
+              <TherapiePage
+                caseId={storageCaseId}
+                autoOpenMedicationAdd={pendingMedicationAdd}
+                onAutoOpenMedicationAddHandled={() => setPendingMedicationAdd(false)}
+              />
             </div>
           </div>
         ) : null}
@@ -1302,7 +1368,7 @@ export function NotionApp({
                 selectedAiTool={workspace.selectedAiTool}
                 aiCanGenerate={workspace.aiCanGenerate}
                 panelGraphicEnabled={appearance.settings.showPanelGraphic}
-                breakLottieActive={breakLottieActive}
+                breakReminderActive={breakReminderActive}
                 pageType={appearance.settings.pageType}
                 onEditorChange={workspace.setEditorContent}
                 onSectionContentChange={workspace.setSectionContent}
@@ -1397,9 +1463,6 @@ export function NotionApp({
           onDismiss={() => setPasteChip(null)}
         />
       ) : null}
-
-      <LottieCharacterStage />
-
       {pendingNavAction && (
         <UnsavedChangesDialog
           onSave={() => void handleUnsavedSave()}

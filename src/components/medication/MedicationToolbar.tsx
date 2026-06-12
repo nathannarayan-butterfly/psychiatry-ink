@@ -20,6 +20,7 @@ interface MedicationToolbarProps {
   disabled?: boolean
   hasMedications?: boolean
   hasPlanHistory?: boolean
+  showAdd?: boolean
   onAdd: () => void
   onEdit?: () => void
   onExport: () => void
@@ -33,6 +34,7 @@ export function MedicationToolbar({
   disabled = false,
   hasMedications = false,
   hasPlanHistory = false,
+  showAdd = true,
   onAdd,
   onEdit,
   onExport,
@@ -43,17 +45,25 @@ export function MedicationToolbar({
 }: MedicationToolbarProps) {
   const { language } = useTranslation()
 
+  // When the add trigger has been promoted to the section header, the toolbar
+  // only holds secondary utility actions; render nothing if there are none.
+  if (!showAdd && !hasMedications && !hasPlanHistory) {
+    return null
+  }
+
   return (
     <div className={`medication-toolbar${hasMedications ? '' : ' medication-toolbar--empty'}`}>
-      <button
-        type="button"
-        className="medication-toolbar__btn medication-toolbar__btn--primary"
-        disabled={disabled}
-        onClick={onAdd}
-      >
-        <Plus size={14} aria-hidden />
-        {translateMedicationUi(language, 'medAdd')}
-      </button>
+      {showAdd ? (
+        <button
+          type="button"
+          className="therapy-add-btn"
+          disabled={disabled}
+          onClick={onAdd}
+        >
+          <Plus size={14} aria-hidden />
+          {translateMedicationUi(language, 'medAdd')}
+        </button>
+      ) : null}
       {hasMedications ? (
         <>
           <button

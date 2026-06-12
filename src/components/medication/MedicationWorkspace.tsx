@@ -1,11 +1,11 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import { translateMedicationUi } from '../../data/medicationUiTranslations'
 import { useMedicationPlan } from '../../hooks/useMedicationPlan'
 import type { MedicationEntry } from '../../types/medicationPlan'
 import type { MedicationDraft } from '../../utils/medication/planOps'
 import { MedicationEditDialog } from './MedicationEditDialog'
-import { MedicationLowerSections } from './MedicationLowerSections'
+import { MedicationLowerSections, type MedicationSectionKey } from './MedicationLowerSections'
 import { MedicationRow } from './MedicationRow'
 import { MedicationToolbar } from './MedicationToolbar'
 import { MedicationHistoryPanel, PlanNavigator } from './PlanNavigator'
@@ -14,9 +14,17 @@ import { SideEffectDialog } from './SideEffectDialog'
 interface MedicationWorkspaceProps {
   caseId: string
   disabled?: boolean
+  /** Hide the toolbar's "add" button (e.g. when the trigger is promoted to the section header). */
+  showToolbarAdd?: boolean
 }
 
-export function MedicationWorkspace({ caseId, disabled = false }: MedicationWorkspaceProps) {
+/** Imperative handle so a parent (e.g. the Therapie section header) can trigger the add dialog. */
+export interface MedicationWorkspaceHandle {
+  openAdd: () => void
+}
+
+export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, MedicationWorkspaceProps>(
+  function MedicationWorkspace({ caseId, disabled = false, showToolbarAdd = true }, ref) {
   const { language } = useTranslation()
   const med = useMedicationPlan(caseId)
   const printRef = useRef<HTMLDivElement>(null)
@@ -27,6 +35,7 @@ export function MedicationWorkspace({ caseId, disabled = false }: MedicationWork
   const [sideEffectOpen, setSideEffectOpen] = useState(false)
   const [sideEffectMedId, setSideEffectMedId] = useState<string | undefined>()
   const [showPlanHistory, setShowPlanHistory] = useState(false)
+  const [selectedSection, setSelectedSection] = useState<MedicationSectionKey | null>('receptor')
 
   const medications = med.currentPlan?.medications ?? []
   const hasMedications = medications.length > 0
@@ -45,6 +54,8 @@ export function MedicationWorkspace({ caseId, disabled = false }: MedicationWork
     setEditingEntry(null)
     setEditOpen(true)
   }, [])
+
+  useImperativeHandle(ref, () => ({ openAdd }), [openAdd])
 
   const openEdit = useCallback((entry: MedicationEntry) => {
     setEditingEntry(entry)
@@ -118,6 +129,7 @@ export function MedicationWorkspace({ caseId, disabled = false }: MedicationWork
             disabled={disabled}
             hasMedications={hasMedications}
             hasPlanHistory={hasPlanHistory}
+            showAdd={showToolbarAdd}
             onAdd={openAdd}
             onEdit={() => selectedEntry && openEdit(selectedEntry)}
             editDisabled={!selectedEntry}
@@ -169,7 +181,9 @@ export function MedicationWorkspace({ caseId, disabled = false }: MedicationWork
             disabled={disabled}
             onReportSideEffect={med.reportSideEffect}
             onLabNotesChange={med.updateLabNotes}
-            variant="main"
+            mode="links"
+            activeSection={selectedSection}
+            onSelectSection={setSelectedSection}
           />
         </div>
 
@@ -180,7 +194,8 @@ export function MedicationWorkspace({ caseId, disabled = false }: MedicationWork
             disabled={disabled}
             onReportSideEffect={med.reportSideEffect}
             onLabNotesChange={med.updateLabNotes}
-            variant="aside"
+            mode="detail"
+            activeSection={selectedSection}
           />
         </aside>
       </div>
@@ -203,4 +218,4 @@ export function MedicationWorkspace({ caseId, disabled = false }: MedicationWork
       />
     </div>
   )
-}
+})

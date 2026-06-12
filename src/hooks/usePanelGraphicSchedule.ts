@@ -1,27 +1,30 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-/** Minimum wait between random Lottie appearances (3 minutes). */
-export const RANDOM_LOTTIE_MIN_WAIT_MS = 180_000
+/** Minimum wait between random panel graphic appearances (3 minutes). */
+export const RANDOM_GRAPHIC_MIN_WAIT_MS = 180_000
 
-/** Maximum wait between random Lottie appearances (10 minutes). */
-export const RANDOM_LOTTIE_MAX_WAIT_MS = 600_000
+/** Maximum wait between random panel graphic appearances (10 minutes). */
+export const RANDOM_GRAPHIC_MAX_WAIT_MS = 600_000
 
-/** How long a random Lottie stays visible before auto-hiding (1 minute). */
-export const RANDOM_LOTTIE_DISPLAY_MS = 60_000
+/** How long a random panel graphic stays visible before auto-hiding (1 minute). */
+export const RANDOM_GRAPHIC_DISPLAY_MS = 60_000
 
 function randomWaitMs(): number {
-  const span = RANDOM_LOTTIE_MAX_WAIT_MS - RANDOM_LOTTIE_MIN_WAIT_MS
-  return RANDOM_LOTTIE_MIN_WAIT_MS + Math.floor(Math.random() * (span + 1))
+  const span = RANDOM_GRAPHIC_MAX_WAIT_MS - RANDOM_GRAPHIC_MIN_WAIT_MS
+  return RANDOM_GRAPHIC_MIN_WAIT_MS + Math.floor(Math.random() * (span + 1))
 }
 
-interface UseRandomLottieOptions {
+interface UsePanelGraphicScheduleOptions {
   /** Master toggle from appearance settings — random intervals only when true. */
   enabled: boolean
-  /** When true (e.g. pomodoro break), random Lottie is suppressed. */
+  /** When true (e.g. pomodoro break), random appearances are suppressed. */
   paused?: boolean
 }
 
-export function useRandomLottie({ enabled, paused = false }: UseRandomLottieOptions) {
+export function usePanelGraphicSchedule({
+  enabled,
+  paused = false,
+}: UsePanelGraphicScheduleOptions) {
   const [visible, setVisible] = useState(false)
   const showTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -60,7 +63,7 @@ export function useRandomLottie({ enabled, paused = false }: UseRandomLottieOpti
         hideTimerRef.current = null
         setVisible(false)
         scheduleNextAppearance()
-      }, RANDOM_LOTTIE_DISPLAY_MS)
+      }, RANDOM_GRAPHIC_DISPLAY_MS)
     }, randomWaitMs())
   }, [])
 

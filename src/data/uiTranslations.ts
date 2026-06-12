@@ -1167,28 +1167,34 @@ export const uiTranslations = {
     es: 'Controles gráficos',
   },
   panelGraphicChange: {
-    de: 'Andere Animation',
-    en: 'Different animation',
-    fr: 'Autre animation',
-    es: 'Otra animación',
+    de: 'Andere Grafik',
+    en: 'Different graphic',
+    fr: 'Autre graphique',
+    es: 'Otro gráfico',
   },
   panelGraphicPrevious: {
-    de: 'Vorherige Animation',
-    en: 'Previous animation',
-    fr: 'Animation précédente',
-    es: 'Animación anterior',
+    de: 'Vorherige Grafik',
+    en: 'Previous graphic',
+    fr: 'Graphique précédent',
+    es: 'Gráfico anterior',
   },
   panelGraphicNext: {
-    de: 'Nächste Animation',
-    en: 'Next animation',
-    fr: 'Animation suivante',
-    es: 'Animación siguiente',
+    de: 'Nächste Grafik',
+    en: 'Next graphic',
+    fr: 'Graphique suivant',
+    es: 'Gráfico siguiente',
   },
   panelGraphicClose: {
     de: 'Grafik ausblenden',
     en: 'Hide graphic',
     fr: 'Masquer le graphique',
     es: 'Ocultar gráfico',
+  },
+  panelGraphicBreak: {
+    de: 'Zeit für eine Pause',
+    en: 'Time for a break',
+    fr: 'Temps de faire une pause',
+    es: 'Hora de un descanso',
   },
   panelGraphicClock: {
     de: 'Uhrzeit',
@@ -3890,17 +3896,47 @@ export const uiTranslations = {
     fr: 'Documents',
     es: 'Documentos',
   },
+  topNavNextPatient: {
+    de: 'Weiter ▶',
+    en: 'Next →',
+    fr: 'Suivant →',
+    es: 'Siguiente →',
+  },
+  topNavPrevPatient: {
+    de: '◀ Zurück',
+    en: '← Back',
+    fr: '← Retour',
+    es: '← Atrás',
+  },
+  topNavMeinePatienten: {
+    de: 'Meine Patienten',
+    en: 'My Patients',
+    fr: 'Mes Patients',
+    es: 'Mis Pacientes',
+  },
   savedDocsHeading: {
     de: 'Zuletzt gespeichert',
     en: 'Recent',
     fr: 'Récents',
     es: 'Recientes',
   },
+  workspaceOpenDocumentHeading: {
+    de: 'Geöffnetes Dokument',
+    en: 'Open document',
+    fr: 'Document ouvert',
+    es: 'Documento abierto',
+  },
   savedDocsRemove: {
     de: 'Aus Verlauf entfernen',
     en: 'Remove from recent',
     fr: 'Retirer des récents',
     es: 'Quitar de recientes',
+  },
+  laborSidebarHide: {
+    de: 'Ausblenden',
+    en: 'Hide',
+    fr: 'Masquer',
+    es: 'Ocultar',
   },
   topNavVerlaufPlaceholder: {
     de: 'Gesamtes Verlauf — demnächst verfügbar',
@@ -3955,6 +3991,30 @@ export const uiTranslations = {
     en: 'Timeline entry added',
     fr: 'Entrée de chronologie ajoutée',
     es: 'Entrada de línea de tiempo añadida',
+  },
+  verlaufFilterAll: {
+    de: 'Alle',
+    en: 'All',
+    fr: 'Tous',
+    es: 'Todos',
+  },
+  verlaufFilterLabel: {
+    de: 'Quelle',
+    en: 'Source',
+    fr: 'Source',
+    es: 'Fuente',
+  },
+  verlaufSourceManuell: {
+    de: 'Manuell',
+    en: 'Manual',
+    fr: 'Manuel',
+    es: 'Manual',
+  },
+  verlaufDerivedReadonly: {
+    de: 'Aus Therapie-Bereich übernommen — im Quellbereich bearbeiten',
+    en: 'Derived from the Therapy section — edit in the source section',
+    fr: 'Issu de la section Thérapie — modifier dans la section source',
+    es: 'Derivado de la sección Terapia — editar en la sección de origen',
   },
   dokumenteTitle: {
     de: 'Dokumente',
@@ -4015,6 +4075,24 @@ export const uiTranslations = {
     en: 'Reference',
     fr: 'Valeurs normales',
     es: 'Valores normales',
+  },
+  laborKumulativCopy: {
+    de: 'Kopieren',
+    en: 'Copy',
+    fr: 'Copier',
+    es: 'Copiar',
+  },
+  laborKumulativCopied: {
+    de: 'Kopiert!',
+    en: 'Copied!',
+    fr: 'Copié!',
+    es: '¡Copiado!',
+  },
+  laborKumulativPrint: {
+    de: 'Drucken',
+    en: 'Print',
+    fr: 'Imprimer',
+    es: 'Imprimir',
   },
   dokumenteCategoryUntersuchungsbefunde: {
     de: 'Untersuchungsbefunde',
@@ -4532,6 +4610,48 @@ export const uiTranslations = {
     fr: 'Supprimer le widget',
     es: 'Eliminar widget',
   },
+  laborKiModalTitle: {
+    de: 'KI-Analyse',
+    en: 'AI Analysis',
+    fr: 'Analyse IA',
+    es: 'Análisis IA',
+  },
+  laborKiAccept: {
+    de: 'Annehmen',
+    en: 'Accept',
+    fr: 'Accepter',
+    es: 'Aceptar',
+  },
+  laborKiReject: {
+    de: 'Ablehnen',
+    en: 'Reject',
+    fr: 'Rejeter',
+    es: 'Rechazar',
+  },
+  laborKiCopyAnalysis: {
+    de: 'Analyse kopieren',
+    en: 'Copy analysis',
+    fr: 'Copier l\'analyse',
+    es: 'Copiar análisis',
+  },
+  laborKiDeleteAnalysis: {
+    de: 'Analyse löschen',
+    en: 'Delete analysis',
+    fr: 'Supprimer l\'analyse',
+    es: 'Eliminar análisis',
+  },
+  laborKiDeleteConfirm: {
+    de: 'KI-Analyse löschen?',
+    en: 'Delete AI analysis?',
+    fr: 'Supprimer l\'analyse IA ?',
+    es: '¿Eliminar análisis IA?',
+  },
+  laborKiSavedBadge: {
+    de: 'In Dokumente gespeichert',
+    en: 'Saved to documents',
+    fr: 'Enregistré dans les documents',
+    es: 'Guardado en documentos',
+  },
   topNavCreatePatient: {
     de: 'Zuordnen',
     en: 'Assign',
@@ -4640,6 +4760,246 @@ export const uiTranslations = {
     fr: 'Bientôt disponible',
     es: 'Próximamente',
   },
+  complementaryTherapiesTitle: {
+    de: 'Komplementäre Therapien',
+    en: 'Complementary Therapies',
+    fr: 'Thérapies complémentaires',
+    es: 'Terapias complementarias',
+  },
+  ctAddTherapy: {
+    de: 'Therapie hinzufügen',
+    en: 'Add therapy',
+    fr: 'Ajouter une thérapie',
+    es: 'Añadir terapia',
+  },
+  ctEmpty: {
+    de: 'Noch keine komplementären Therapien',
+    en: 'No complementary therapies yet',
+    fr: 'Aucune thérapie complémentaire',
+    es: 'Sin terapias complementarias',
+  },
+  ctFieldName: {
+    de: 'Name',
+    en: 'Name',
+    fr: 'Nom',
+    es: 'Nombre',
+  },
+  ctFieldStatus: {
+    de: 'Status',
+    en: 'Status',
+    fr: 'Statut',
+    es: 'Estado',
+  },
+  ctFieldFrequency: {
+    de: 'Frequenz',
+    en: 'Frequency',
+    fr: 'Fréquence',
+    es: 'Frecuencia',
+  },
+  ctFieldSetting: {
+    de: 'Setting',
+    en: 'Setting',
+    fr: 'Cadre',
+    es: 'Entorno',
+  },
+  ctFieldMainGoal: {
+    de: 'Hauptziel',
+    en: 'Main goal',
+    fr: 'Objectif principal',
+    es: 'Objetivo principal',
+  },
+  ctFieldAdditionalGoals: {
+    de: 'Weitere Ziele',
+    en: 'Additional goals',
+    fr: 'Objectifs supplémentaires',
+    es: 'Objetivos adicionales',
+  },
+  ctFieldParticipation: {
+    de: 'Teilnahme / Ansprechen',
+    en: 'Participation / response',
+    fr: 'Participation / réponse',
+    es: 'Participación / respuesta',
+  },
+  ctFieldStartDate: {
+    de: 'Beginn',
+    en: 'Start date',
+    fr: 'Date de début',
+    es: 'Fecha de inicio',
+  },
+  ctFieldNotes: {
+    de: 'Notizen',
+    en: 'Notes',
+    fr: 'Notes',
+    es: 'Notas',
+  },
+  ctFieldNextFocus: {
+    de: 'Nächster Fokus',
+    en: 'Next focus',
+    fr: 'Prochain objectif',
+    es: 'Próximo enfoque',
+  },
+  ctStatusActive: {
+    de: 'Aktiv',
+    en: 'Active',
+    fr: 'Active',
+    es: 'Activa',
+  },
+  ctStatusPlanned: {
+    de: 'Geplant',
+    en: 'Planned',
+    fr: 'Planifiée',
+    es: 'Planificada',
+  },
+  ctStatusPaused: {
+    de: 'Pausiert',
+    en: 'Paused',
+    fr: 'En pause',
+    es: 'En pausa',
+  },
+  ctStatusCompleted: {
+    de: 'Abgeschlossen',
+    en: 'Completed',
+    fr: 'Terminée',
+    es: 'Completada',
+  },
+  ctSessionLog: {
+    de: 'Teilnahme-Protokoll',
+    en: 'Participation log',
+    fr: 'Journal de participation',
+    es: 'Registro de participación',
+  },
+  ctSessionAdd: {
+    de: 'Hinzufügen',
+    en: 'Add',
+    fr: 'Ajouter',
+    es: 'Añadir',
+  },
+  ctSessionNote: {
+    de: 'Notiz …',
+    en: 'Note …',
+    fr: 'Note …',
+    es: 'Nota …',
+  },
+  ctSessionEmpty: {
+    de: 'Noch keine Einträge',
+    en: 'No entries yet',
+    fr: 'Aucune entrée',
+    es: 'Sin entradas',
+  },
+  ctPickerTitle: {
+    de: 'Therapie auswählen',
+    en: 'Choose a therapy',
+    fr: 'Choisir une thérapie',
+    es: 'Elegir una terapia',
+  },
+  ctPickerCustomPlaceholder: {
+    de: 'Eigene Therapie …',
+    en: 'Custom therapy …',
+    fr: 'Thérapie personnalisée …',
+    es: 'Terapia personalizada …',
+  },
+  ctPickerAdd: {
+    de: 'Hinzufügen',
+    en: 'Add',
+    fr: 'Ajouter',
+    es: 'Añadir',
+  },
+  ctDelete: {
+    de: 'Löschen',
+    en: 'Delete',
+    fr: 'Supprimer',
+    es: 'Eliminar',
+  },
+  ctDeleteConfirm: {
+    de: 'Therapie löschen?',
+    en: 'Delete therapy?',
+    fr: 'Supprimer la thérapie ?',
+    es: '¿Eliminar terapia?',
+  },
+  ctClose: {
+    de: 'Schließen',
+    en: 'Close',
+    fr: 'Fermer',
+    es: 'Cerrar',
+  },
+  ctSelectPlaceholder: {
+    de: 'Wähle einen Eintrag',
+    en: 'Select an entry',
+    fr: 'Sélectionnez une entrée',
+    es: 'Selecciona una entrada',
+  },
+  ctSelectPlaceholderHint: {
+    de: 'Klicke links auf eine Therapie, um Details rechts zu öffnen.',
+    en: 'Click a therapy on the left to open its details on the right.',
+    fr: 'Cliquez sur une thérapie à gauche pour afficher ses détails à droite.',
+    es: 'Haz clic en una terapia a la izquierda para ver sus detalles a la derecha.',
+  },
+  ctTypeErgotherapie: {
+    de: 'Ergotherapie',
+    en: 'Occupational therapy',
+    fr: 'Ergothérapie',
+    es: 'Terapia ocupacional',
+  },
+  ctTypeSporttherapie: {
+    de: 'Sporttherapie',
+    en: 'Sport therapy',
+    fr: 'Thérapie sportive',
+    es: 'Terapia deportiva',
+  },
+  ctTypeMusiktherapie: {
+    de: 'Musiktherapie',
+    en: 'Music therapy',
+    fr: 'Musicothérapie',
+    es: 'Musicoterapia',
+  },
+  ctTypeKunsttherapie: {
+    de: 'Kunsttherapie',
+    en: 'Art therapy',
+    fr: 'Art-thérapie',
+    es: 'Arteterapia',
+  },
+  ctTypeSkillgruppe: {
+    de: 'Skillgruppe',
+    en: 'Skills group',
+    fr: 'Groupe de compétences',
+    es: 'Grupo de habilidades',
+  },
+  ctTypeFokusgruppe: {
+    de: 'Fokusgruppe',
+    en: 'Focus group',
+    fr: 'Groupe de discussion',
+    es: 'Grupo focal',
+  },
+  ctTypePsychoedukation: {
+    de: 'Psychoedukation',
+    en: 'Psychoeducation',
+    fr: 'Psychoéducation',
+    es: 'Psicoeducación',
+  },
+  ctTypeSuchtgruppe: {
+    de: 'Suchtgruppe',
+    en: 'Addiction group',
+    fr: 'Groupe addiction',
+    es: 'Grupo de adicciones',
+  },
+  ctTypeEntspannungstraining: {
+    de: 'Entspannungstraining',
+    en: 'Relaxation training',
+    fr: 'Entraînement à la relaxation',
+    es: 'Entrenamiento de relajación',
+  },
+  ctTypeArbeitstherapie: {
+    de: 'Arbeitstherapie',
+    en: 'Work therapy',
+    fr: 'Ergothérapie professionnelle',
+    es: 'Laborterapia',
+  },
+  ctTypeGruppentherapien: {
+    de: 'Gruppentherapien',
+    en: 'Group therapies',
+    fr: 'Thérapies de groupe',
+    es: 'Terapias de grupo',
+  },
   unsavedChangesTitle: {
     de: 'Ungespeicherte Änderungen',
     en: 'Unsaved Changes',
@@ -4688,6 +5048,48 @@ export const uiTranslations = {
     fr: '→ Thérapie',
     es: '→ Terapia',
   },
+  aktuelleMedikationAdd: {
+    de: 'Medikament hinzufügen',
+    en: 'Add medication',
+    fr: 'Ajouter un médicament',
+    es: 'Añadir medicación',
+  },
+  overviewWeitereTherapienTitle: {
+    de: 'Weitere Therapien',
+    en: 'Other therapies',
+    fr: 'Autres thérapies',
+    es: 'Otras terapias',
+  },
+  overviewWeitereTherapienEmpty: {
+    de: 'Keine weiteren Therapien geplant',
+    en: 'No other therapies planned',
+    fr: 'Aucune autre thérapie prévue',
+    es: 'No hay otras terapias planificadas',
+  },
+  overviewTherapyKindPsychotherapie: {
+    de: 'Psychotherapie',
+    en: 'Psychotherapy',
+    fr: 'Psychothérapie',
+    es: 'Psicoterapia',
+  },
+  overviewTherapyKindKomplementaer: {
+    de: 'Komplementär',
+    en: 'Complementary',
+    fr: 'Complémentaire',
+    es: 'Complementaria',
+  },
+  overviewTherapyKindSozial: {
+    de: 'Sozialtherapie',
+    en: 'Social therapy',
+    fr: 'Thérapie sociale',
+    es: 'Terapia social',
+  },
+  overviewTherapyKindWeitere: {
+    de: 'Verfahren',
+    en: 'Procedure',
+    fr: 'Procédure',
+    es: 'Procedimiento',
+  },
   spiegelwerteSectionTitle: {
     de: 'Spiegelwerte',
     en: 'Drug Levels',
@@ -4711,6 +5113,42 @@ export const uiTranslations = {
     en: '→ stable',
     fr: '→ stable',
     es: '→ estable',
+  },
+  overviewChartEnlarge: {
+    de: 'Vergrößern',
+    en: 'Enlarge',
+    fr: 'Agrandir',
+    es: 'Ampliar',
+  },
+  overviewChartHide: {
+    de: 'Diagramm ausblenden',
+    en: 'Hide chart',
+    fr: 'Masquer le graphique',
+    es: 'Ocultar gráfico',
+  },
+  overviewChartClose: {
+    de: 'Schließen',
+    en: 'Close',
+    fr: 'Fermer',
+    es: 'Cerrar',
+  },
+  overviewChartAdd: {
+    de: '+ Diagramm hinzufügen',
+    en: '+ Add chart',
+    fr: '+ Ajouter un graphique',
+    es: '+ Añadir gráfico',
+  },
+  overviewChartAddBack: {
+    de: 'Hinzufügen',
+    en: 'Add',
+    fr: 'Ajouter',
+    es: 'Añadir',
+  },
+  overviewChartReference: {
+    de: 'Referenz',
+    en: 'Reference',
+    fr: 'Référence',
+    es: 'Referencia',
   },
   kbTitle: {
     de: 'Wissensdatenbank',
@@ -5317,5 +5755,13 @@ export function translateUi(
 ): string {
   const psychopathOverride = resolvePsychopathUiTranslation(key, language, englishVariant)
   if (psychopathOverride !== undefined) return psychopathOverride
-  return uiTranslations[key][language]
+  // Defensive fallback: a missing key (or missing locale) must never white-screen the app.
+  const entry = uiTranslations[key]
+  if (!entry) {
+    if (import.meta.env?.DEV) {
+      console.warn(`[translateUi] Missing translation key: "${key}"`)
+    }
+    return key
+  }
+  return entry[language] ?? entry.de ?? key
 }

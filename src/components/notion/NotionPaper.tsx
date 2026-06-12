@@ -90,7 +90,7 @@ interface NotionPaperProps {
   kiExtraInstruction: string
   aiCanGenerate: boolean
   panelGraphicEnabled: boolean
-  breakLottieActive: boolean
+  breakReminderActive: boolean
   pageType: PageType
   privacy: ReturnType<typeof usePrivacySettings>
   clinicalAge: {
@@ -184,7 +184,7 @@ export function NotionPaper({
   kiExtraInstruction,
   aiCanGenerate,
   panelGraphicEnabled,
-  breakLottieActive,
+  breakReminderActive,
   pageType: _pageType,
   privacy,
   clinicalAge,
@@ -622,7 +622,7 @@ export function NotionPaper({
       <div className="notion-paper__sidebar-anchor">
         <NotionDiarySidebar
           panelGraphicEnabled={panelGraphicEnabled}
-          breakLottieActive={breakLottieActive}
+          breakReminderActive={breakReminderActive}
           onClosePanelGraphic={onClosePanelGraphic}
           collapsed={sidebarCollapsed}
           onBreakStart={onBreakStart}
@@ -631,6 +631,8 @@ export function NotionPaper({
           savedDocs={savedDocs}
           onViewSavedDoc={onViewSavedDoc}
           onRemoveSavedDoc={onRemoveSavedDoc}
+          openDocumentLabel={documentTypeId ? documentLabel : undefined}
+          onCloseDocument={onCloseDocument}
         />
       </div>
 

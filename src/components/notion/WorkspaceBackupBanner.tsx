@@ -13,7 +13,7 @@ export function WorkspaceBackupBanner({ visible, onExport, onDismiss }: Workspac
   if (!visible) return null
 
   return (
-    <div className="workspace-backup-banner" role="status" data-lottie-exclusion>
+    <div className="workspace-backup-banner" role="status">
       <ShieldAlert className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} aria-hidden />
       <span className="workspace-backup-banner__text">{t('workspaceBackupReminder')}</span>
       <button

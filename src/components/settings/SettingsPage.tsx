@@ -105,7 +105,7 @@ export function SettingsPage({
   }, [sectionGroups, activeSection])
 
   return (
-    <div className="settings-fullpage" data-lottie-exclusion>
+    <div className="settings-fullpage">
       {/* Left sidebar */}
       <nav className="settings-fullpage__sidebar" aria-label={t('settingsTitle')}>
         <div className="settings-fullpage__sidebar-top">

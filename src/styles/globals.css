@@ -1053,6 +1053,9 @@
   }
 
   .panel-graphic__stage .panel-graphic__player {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: min(100cqw, 100cqh, var(--panel-graphic-player-size));
     height: min(100cqw, 100cqh, var(--panel-graphic-player-size));
     max-width: min(100cqw, 100cqh, var(--panel-graphic-player-size));
@@ -1061,22 +1064,25 @@
     min-width: 0;
     min-height: 0;
     overflow: hidden;
+    color: color-mix(in srgb, var(--color-accent) 70%, var(--color-ink));
+    opacity: 0.85;
   }
 
-  .panel-graphic__stage .panel-graphic__player > div {
-    width: 100% !important;
-    height: 100% !important;
-    max-width: 100%;
-    max-height: 100%;
-  }
-
-  .panel-graphic__stage .panel-graphic__player svg,
-  .panel-graphic__stage .panel-graphic__player canvas {
-    width: 100% !important;
-    height: 100% !important;
+  .panel-graphic__stage .panel-graphic__player svg {
+    width: 70%;
+    height: 70%;
     max-width: 100%;
     max-height: 100%;
     display: block;
+  }
+
+  .panel-graphic__caption {
+    margin-top: clamp(0.25rem, 2cqi, 0.5rem);
+    font-size: clamp(0.625rem, 4.5cqi, 0.8125rem);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: color-mix(in srgb, var(--color-muted) 70%, var(--color-ink));
+    text-align: center;
   }
 
   @keyframes fade-in-up {
@@ -1349,14 +1355,6 @@
 
   .workspace-column__scroll::-webkit-scrollbar {
     display: none;
-  }
-
-  .lottie-character-stage {
-    position: fixed;
-    inset: 0;
-    z-index: 1;
-    pointer-events: none;
-    overflow: hidden;
   }
 
   .workspace-header {
@@ -1739,11 +1737,6 @@
     .input-method-actions {
       gap: 0.25rem;
       flex-wrap: nowrap;
-    }
-
-    .lottie-character__player {
-      height: 5.5rem;
-      width: 7rem;
     }
   }
 

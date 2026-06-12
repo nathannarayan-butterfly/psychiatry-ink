@@ -30,7 +30,6 @@
     "express": "^5.1.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
-    "lottie-react": "^2.4.1",
     "lucide-react": "^0.511.0",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^6.0.227",

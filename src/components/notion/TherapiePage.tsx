@@ -1,6 +1,14 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
-import { MedicationWorkspace } from '../medication/MedicationWorkspace'
+import { translateMedicationUi } from '../../data/medicationUiTranslations'
+import {
+  MedicationWorkspace,
+  type MedicationWorkspaceHandle,
+} from '../medication/MedicationWorkspace'
+import { PsychotherapieOverviewCard } from '../psychotherapy/PsychotherapieOverviewCard'
+import { ComplementaryTherapiesSection } from './ComplementaryTherapiesSection'
+import { WeitereTherapieSection } from './WeitereTherapieSection'
+import { SozialtherapieSection } from '../sozialtherapie/SozialtherapieSection'
 import {
   appendTherapieEintrag,
   deleteTherapieEintrag,
@@ -10,6 +18,10 @@ import {
 
 interface TherapiePageProps {
   caseId: string
+  /** When true on mount, the medication add dialog is opened automatically (cross-tab trigger from Übersicht). */
+  autoOpenMedicationAdd?: boolean
+  /** Called once the auto-open request has been consumed, so the parent can reset its flag. */
+  onAutoOpenMedicationAddHandled?: () => void
 }
 
 function formatDate(iso: string): string {
@@ -24,8 +36,13 @@ function formatDate(iso: string): string {
   }
 }
 
-export function TherapiePage({ caseId }: TherapiePageProps) {
-  const { t } = useTranslation()
+export function TherapiePage({
+  caseId,
+  autoOpenMedicationAdd = false,
+  onAutoOpenMedicationAddHandled,
+}: TherapiePageProps) {
+  const { t, language } = useTranslation()
+  const medicationRef = useRef<MedicationWorkspaceHandle>(null)
   const [entries, setEntries] = useState<TherapieEintrag[]>(() => loadTherapieEintraege(caseId))
   const [composerOpen, setComposerOpen] = useState(false)
   const [composerText, setComposerText] = useState('')
@@ -34,6 +51,12 @@ export function TherapiePage({ caseId }: TherapiePageProps) {
   useEffect(() => {
     setEntries(loadTherapieEintraege(caseId))
   }, [caseId])
+
+  useEffect(() => {
+    if (!autoOpenMedicationAdd) return
+    medicationRef.current?.openAdd()
+    onAutoOpenMedicationAddHandled?.()
+  }, [autoOpenMedicationAdd, onAutoOpenMedicationAddHandled])
 
   const handleSave = useCallback(() => {
     if (!composerText.trim()) return
@@ -63,107 +86,153 @@ export function TherapiePage({ caseId }: TherapiePageProps) {
   )
 
   return (
-    <div className="therapie-page">
+    <div className="therapy-page">
 
       {/* ── Section 1: Medikamentöse Therapie ───────────────────────── */}
-      <section className="therapie-section">
-        <h3 className="therapie-section__title">{t('therapieSectionMedikamente')}</h3>
-        <div className="therapie-section__body">
-          <MedicationWorkspace caseId={caseId} />
+      <section className="therapy-section">
+        <header className="therapy-section__header">
+          <div className="therapy-section__heading">
+            <h3 className="therapy-section__title">{t('therapieSectionMedikamente')}</h3>
+          </div>
+          <div className="therapy-section__actions">
+            <button
+              type="button"
+              className="therapy-add-btn"
+              onClick={() => medicationRef.current?.openAdd()}
+            >
+              ＋ {translateMedicationUi(language, 'medAddMedication')}
+            </button>
+          </div>
+        </header>
+        <div className="therapy-section__body">
+          <MedicationWorkspace ref={medicationRef} caseId={caseId} showToolbarAdd={false} />
         </div>
       </section>
 
-      {/* ── Section 2: Psychotherapie (placeholder) ─────────────────── */}
-      <section className="therapie-section therapie-section--placeholder">
-        <h3 className="therapie-section__title">{t('therapieSectionPsychotherapie')}</h3>
-        <p className="therapie-section__coming-soon">{t('therapieSectionComingSoon')}</p>
-      </section>
+      {/* ── Section 2: Weitere Therapieverfahren (Neurostimulation/biologisch) ── */}
+      <WeitereTherapieSection caseId={caseId} />
 
-      {/* ── Section 3: Soziotherapie (placeholder) ──────────────────── */}
-      <section className="therapie-section therapie-section--placeholder">
-        <h3 className="therapie-section__title">{t('therapieSectionSoziotherapie')}</h3>
-        <p className="therapie-section__coming-soon">{t('therapieSectionComingSoon')}</p>
-      </section>
+      {/* ── Section 3: Psychotherapie (compact overview) ────────────── */}
+      <PsychotherapieOverviewCard caseId={caseId} />
 
-      {/* ── Section 4: Therapie-Notizen (existing journal) ──────────── */}
-      <section className="therapie-section">
-        <div className="therapie-section__header">
-          <h3 className="therapie-section__title">{t('therapieSectionNotizen')}</h3>
-          {!composerOpen && (
-            <button
-              type="button"
-              className="therapie-page__new-btn"
-              onClick={() => setComposerOpen(true)}
-            >
-              ＋ {t('therapieNewEntry')}
-            </button>
+      {/* ── Section 4: Komplementäre Therapien ──────────────────────── */}
+      <ComplementaryTherapiesSection caseId={caseId} />
+
+      {/* ── Section 5: Sozialtherapie ───────────────────────────────── */}
+      <SozialtherapieSection caseId={caseId} />
+
+      {/* ── Section 6: Therapie-Notizen (existing journal) ──────────── */}
+      <section className="therapy-section">
+        <header className="therapy-section__header">
+          <div className="therapy-section__heading">
+            <h3 className="therapy-section__title">{t('therapieSectionNotizen')}</h3>
+          </div>
+          <div className="therapy-section__actions">
+            {!composerOpen && (
+              <button
+                type="button"
+                className="therapy-add-btn"
+                onClick={() => setComposerOpen(true)}
+              >
+                ＋ {t('therapieNewEntry')}
+              </button>
+            )}
+          </div>
+        </header>
+
+        <div className="therapy-section__body">
+          {entries.length === 0 ? (
+            <p className="therapy-empty">{t('therapieEmpty')}</p>
+          ) : (
+            <div className="therapy-entry-list">
+              {entries.map((entry) => (
+                <article key={entry.id} className="therapy-entry">
+                  <header className="therapy-entry__header">
+                    <time className="therapy-entry__date" dateTime={entry.date}>
+                      {formatDate(entry.date)}
+                    </time>
+                    <button
+                      type="button"
+                      className="therapy-entry__delete"
+                      onClick={() => handleDelete(entry.id)}
+                      title="Eintrag löschen"
+                      aria-label="Eintrag löschen"
+                    >
+                      ×
+                    </button>
+                  </header>
+                  <p className="therapy-entry__text">{entry.text}</p>
+                </article>
+              ))}
+            </div>
           )}
         </div>
 
         {composerOpen && (
-          <div className="therapie-composer">
-            <div className="therapie-composer__date-row">
-              <label className="therapie-composer__date-label">
-                Datum
-                <input
-                  type="date"
-                  className="therapie-composer__date-input"
-                  value={composerDate}
-                  onChange={(e) => setComposerDate(e.target.value)}
-                />
-              </label>
-            </div>
-            <textarea
-              className="therapie-composer__textarea"
-              value={composerText}
-              onChange={(e) => setComposerText(e.target.value)}
-              placeholder={t('therapieNewEntry') + '…'}
-              rows={5}
-              autoFocus
-            />
-            <div className="therapie-composer__actions">
-              <button
-                type="button"
-                className="therapie-composer__cancel-btn"
-                onClick={handleCancel}
-              >
-                {t('verlaufEntryCancel')}
-              </button>
-              <button
-                type="button"
-                className="therapie-composer__save-btn"
-                onClick={handleSave}
-                disabled={!composerText.trim()}
-              >
-                {t('verlaufEntrySave')}
-              </button>
-            </div>
-          </div>
-        )}
+          <div
+            className="therapy-modal-overlay"
+            role="dialog"
+            aria-modal="true"
+            onClick={handleCancel}
+          >
+            <div
+              className="therapy-modal therapy-modal--narrow"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="therapy-modal__head">
+                <div className="therapy-modal__heading">
+                  <h4 className="therapy-modal__title">{t('therapieNewEntry')}</h4>
+                </div>
+                <button
+                  type="button"
+                  className="therapy-modal__close"
+                  onClick={handleCancel}
+                  aria-label={t('verlaufEntryCancel')}
+                >
+                  ×
+                </button>
+              </div>
 
-        {entries.length === 0 && !composerOpen ? (
-          <p className="therapie-page__empty">{t('therapieEmpty')}</p>
-        ) : (
-          <div className="therapie-page__list">
-            {entries.map((entry) => (
-              <article key={entry.id} className="therapie-entry">
-                <header className="therapie-entry__header">
-                  <time className="therapie-entry__date" dateTime={entry.date}>
-                    {formatDate(entry.date)}
-                  </time>
-                  <button
-                    type="button"
-                    className="therapie-entry__delete-btn"
-                    onClick={() => handleDelete(entry.id)}
-                    title="Eintrag löschen"
-                    aria-label="Eintrag löschen"
-                  >
-                    ×
-                  </button>
-                </header>
-                <p className="therapie-entry__text">{entry.text}</p>
-              </article>
-            ))}
+              <div className="therapy-modal__body">
+                <div className="therapy-composer">
+                  <label className="therapy-composer__date-label">
+                    Datum
+                    <input
+                      type="date"
+                      className="therapy-input"
+                      value={composerDate}
+                      onChange={(e) => setComposerDate(e.target.value)}
+                    />
+                  </label>
+                  <textarea
+                    className="therapy-textarea therapy-composer__textarea"
+                    value={composerText}
+                    onChange={(e) => setComposerText(e.target.value)}
+                    placeholder={t('therapieNewEntry') + '…'}
+                    rows={5}
+                    autoFocus
+                  />
+                </div>
+              </div>
+
+              <div className="therapy-modal__footer">
+                <button
+                  type="button"
+                  className="therapy-btn therapy-btn--ghost"
+                  onClick={handleCancel}
+                >
+                  {t('verlaufEntryCancel')}
+                </button>
+                <button
+                  type="button"
+                  className="therapy-btn therapy-btn--primary"
+                  onClick={handleSave}
+                  disabled={!composerText.trim()}
+                >
+                  {t('verlaufEntrySave')}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </section>

@@ -11,6 +11,9 @@ import { registerClinicalImprintPersistHook } from '../utils/clinicalImprint'
 import { registerIsdmInputPersistHook } from '../utils/isdm/inputStorage'
 import { registerIsdmPersistHook } from '../utils/isdm/storage'
 import { registerMedicationPlanPersistHook } from '../utils/medication/storage'
+import { registerPsychotherapyPlanPersistHook } from '../utils/psychotherapy/storage'
+import { registerComplementaryTherapiesPersistHook } from '../utils/complementaryTherapy/storage'
+import { registerWeitereTherapiePersistHook } from '../utils/weitereTherapie/storage'
 import {
   ensureKeyMaterial,
   getOrCreateDeviceId,
@@ -215,11 +218,23 @@ export function useWorkspaceVault({
     registerMedicationPlanPersistHook((persistCaseId) => {
       if (persistCaseId === caseId) scheduleSaveRef.current()
     })
+    registerPsychotherapyPlanPersistHook((persistCaseId) => {
+      if (persistCaseId === caseId) scheduleSaveRef.current()
+    })
+    registerComplementaryTherapiesPersistHook((persistCaseId) => {
+      if (persistCaseId === caseId) scheduleSaveRef.current()
+    })
+    registerWeitereTherapiePersistHook((persistCaseId) => {
+      if (persistCaseId === caseId) scheduleSaveRef.current()
+    })
     return () => {
       registerClinicalImprintPersistHook(null)
       registerIsdmPersistHook(null)
       registerIsdmInputPersistHook(null)
       registerMedicationPlanPersistHook(null)
+      registerPsychotherapyPlanPersistHook(null)
+      registerComplementaryTherapiesPersistHook(null)
+      registerWeitereTherapiePersistHook(null)
     }
   }, [caseId])
 

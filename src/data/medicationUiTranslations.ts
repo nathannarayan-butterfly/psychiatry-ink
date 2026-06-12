@@ -22,6 +22,12 @@ export const medicationUiTranslations = {
     es: 'Sugerencias de dosis e info breve son datos demo — decisión clínica del médico tratante.',
   },
   medAdd: { de: 'Hinzufügen', en: 'Add medication', fr: 'Ajouter', es: 'Añadir' },
+  medAddMedication: {
+    de: 'Medikament hinzufügen',
+    en: 'Add medication',
+    fr: 'Ajouter un médicament',
+    es: 'Añadir medicamento',
+  },
   medEdit: { de: 'Bearbeiten', en: 'Edit', fr: 'Modifier', es: 'Editar' },
   medExport: { de: 'Export', en: 'Export', fr: 'Exporter', es: 'Exportar' },
   medPrint: { de: 'Drucken', en: 'Print', fr: 'Imprimer', es: 'Imprimir' },
@@ -234,6 +240,24 @@ export const medicationUiTranslations = {
     en: 'Receptor profile',
     fr: 'Profil récepteur',
     es: 'Perfil de receptores',
+  },
+  medSelectSection: {
+    de: 'Wähle einen Bereich',
+    en: 'Select a section',
+    fr: 'Sélectionnez une section',
+    es: 'Selecciona una sección',
+  },
+  medSelectSectionHint: {
+    de: 'Klicke links auf einen Bereich, um Details und Grafiken rechts zu öffnen.',
+    en: 'Click a section on the left to open its details and graphs on the right.',
+    fr: 'Cliquez sur une section à gauche pour afficher ses détails et graphiques à droite.',
+    es: 'Haz clic en una sección a la izquierda para ver sus detalles y gráficos a la derecha.',
+  },
+  medSectionsLabel: {
+    de: 'Analysen & Details',
+    en: 'Analyses & details',
+    fr: 'Analyses et détails',
+    es: 'Análisis y detalles',
   },
   medReceptorTabMatrix: {
     de: 'Matrix',
