@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react'
 import {
   DEFAULT_MEDICATIONS_COLLECTION_ID,
   type KnowledgeBaseDrug,
@@ -6,6 +6,12 @@ import {
 import { KB_DRUG_SEED_DATA } from '../data/knowledgeBaseDrugSeedData'
 import { flagLegacyReceptorProfiles } from '../utils/medication/receptorAffinity'
 import { useKnowledgeBaseUserProfile, type KnowledgeBaseUserProfile } from './useKnowledgeBaseUserId'
+import {
+  deleteKnowledgeBaseDrug,
+  fetchAllKnowledgeBaseDrugs,
+  isKnowledgeBaseSupabaseReady,
+  upsertKnowledgeBaseDrugs,
+} from '../services/knowledgeBaseDrugsApi'
 
 const STORAGE_KEY = 'psychiatry-ink:knowledgeBaseDrugs'
 
@@ -80,7 +86,19 @@ function migrateCollectionId(drugs: KnowledgeBaseDrug[]): KnowledgeBaseDrug[] {
   return migrateAuditMetadata(migrateDataModel(flagLegacyReceptorProfiles(result)))
 }
 
-function loadDrugs(): KnowledgeBaseDrug[] {
+/** Merge two drug lists by id; entries from `override` win over `base`. */
+function mergeById(
+  base: KnowledgeBaseDrug[],
+  override: KnowledgeBaseDrug[],
+): KnowledgeBaseDrug[] {
+  const byId = new Map<string, KnowledgeBaseDrug>()
+  for (const drug of base) byId.set(drug.id, drug)
+  for (const drug of override) byId.set(drug.id, drug)
+  return Array.from(byId.values())
+}
+
+/** Read whatever the browser currently has cached (or the seed if empty). */
+function loadCachedDrugs(): KnowledgeBaseDrug[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return migrateCollectionId(KB_DRUG_SEED_DATA)
@@ -92,7 +110,24 @@ function loadDrugs(): KnowledgeBaseDrug[] {
   }
 }
 
-function saveDrugs(drugs: KnowledgeBaseDrug[]): void {
+/**
+ * Raw localStorage entries (no seed fallback) — used ONLY for the one-time
+ * migration of pre-existing browser entries into Supabase. Returns [] when the
+ * cache is empty/unreadable so we never re-seed via this path.
+ */
+function loadRawLocalStorageDrugs(): KnowledgeBaseDrug[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as KnowledgeBaseDrug[]
+    if (!Array.isArray(parsed)) return []
+    return parsed
+  } catch {
+    return []
+  }
+}
+
+function saveCache(drugs: KnowledgeBaseDrug[]): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(drugs))
   } catch {
@@ -154,17 +189,129 @@ function stampUpdate(
   }
 }
 
+// ── Shared module-level store ────────────────────────────────────────────────
+// All hook instances subscribe to one store so edits propagate live across the
+// app and the Supabase load/seed runs exactly once per session (avoiding
+// duplicate seeding when several components mount the hook at the same time).
+
+let storeDrugs: KnowledgeBaseDrug[] = loadCachedDrugs()
+const listeners = new Set<() => void>()
+let loadStarted = false
+let loadPromise: Promise<void> | null = null
+
+function emit(): void {
+  for (const listener of listeners) listener()
+}
+
+function setStoreDrugs(next: KnowledgeBaseDrug[]): void {
+  storeDrugs = next
+  saveCache(next)
+  emit()
+}
+
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener)
+  return () => {
+    listeners.delete(listener)
+  }
+}
+
+function getSnapshot(): KnowledgeBaseDrug[] {
+  return storeDrugs
+}
+
+/**
+ * Load KB drugs from Supabase exactly once. Seeds an empty table from
+ * `KB_DRUG_SEED_DATA`, migrates any pre-existing localStorage entries into the
+ * shared table (idempotent by id), and applies all backward-compat migrations.
+ * On any failure it keeps the local cache/seed so the page stays usable.
+ */
+function ensureLoaded(): Promise<void> {
+  if (loadStarted) return loadPromise ?? Promise.resolve()
+  loadStarted = true
+  loadPromise = (async () => {
+    if (!isKnowledgeBaseSupabaseReady()) {
+      console.error(
+        '[knowledgeBaseDrugs] Supabase nicht konfiguriert — Wissensdatenbank nutzt lokalen Cache (nur dieses Gerät).',
+      )
+      return
+    }
+    try {
+      const remote = await fetchAllKnowledgeBaseDrugs()
+      const localEntries = loadRawLocalStorageDrugs()
+
+      if (remote.length === 0) {
+        // Empty table → one-time seed (plus any pre-existing local entries).
+        const seeded = migrateCollectionId(mergeById(KB_DRUG_SEED_DATA, localEntries))
+        await upsertKnowledgeBaseDrugs(seeded)
+        setStoreDrugs(seeded)
+        return
+      }
+
+      const migratedRemote = migrateCollectionId(remote)
+      const remoteIds = new Set(migratedRemote.map((drug) => drug.id))
+      const localOnly = localEntries.filter((drug) => !remoteIds.has(drug.id))
+
+      if (localOnly.length > 0) {
+        // Upload pre-existing browser entries the user created before this
+        // feature landed so nothing is lost. Idempotent (matched by id).
+        const migratedLocalOnly = migrateCollectionId(localOnly)
+        await upsertKnowledgeBaseDrugs(migratedLocalOnly)
+        setStoreDrugs(mergeById(migratedRemote, migratedLocalOnly))
+        return
+      }
+
+      setStoreDrugs(migratedRemote)
+    } catch (err) {
+      console.error(
+        '[knowledgeBaseDrugs] Laden aus Supabase fehlgeschlagen — lokaler Cache wird verwendet.',
+        err,
+      )
+    }
+  })()
+  return loadPromise
+}
+
+/** Optimistic local update + write-through to Supabase. */
+function upsertDrugInStore(drug: KnowledgeBaseDrug): void {
+  const exists = storeDrugs.some((d) => d.id === drug.id)
+  setStoreDrugs(exists ? storeDrugs.map((d) => (d.id === drug.id ? drug : d)) : [...storeDrugs, drug])
+  void (async () => {
+    try {
+      await upsertKnowledgeBaseDrugs([drug])
+    } catch (err) {
+      console.error('[knowledgeBaseDrugs] Speichern in Supabase fehlgeschlagen.', err)
+    }
+  })()
+}
+
+/** Optimistic local delete + write-through to Supabase. */
+function removeDrugFromStore(id: string): void {
+  setStoreDrugs(storeDrugs.filter((d) => d.id !== id))
+  void (async () => {
+    try {
+      await deleteKnowledgeBaseDrug(id)
+    } catch (err) {
+      console.error('[knowledgeBaseDrugs] Löschen in Supabase fehlgeschlagen.', err)
+    }
+  })()
+}
+
 /**
  * Drug store hook. When `collectionId` is provided, the returned `drugs` are
  * scoped to that collection and newly added drugs are assigned to it.
+ *
+ * Backed by Supabase (shared across all users/devices) with a localStorage
+ * cache for instant first paint and offline fallback. The public API is
+ * unchanged: `{ drugs, addDrug, updateDrug, deleteDrug, duplicateDrug }`.
  */
 export function useKnowledgeBaseDrugs(collectionId?: string) {
   const actor = useKnowledgeBaseUserProfile()
-  const [drugs, setDrugs] = useState<KnowledgeBaseDrug[]>(loadDrugs)
+  const drugs = useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
 
   useEffect(() => {
-    saveDrugs(drugs)
-  }, [drugs])
+    void ensureLoaded()
+  }, [])
 
   const scopedDrugs = useMemo(() => {
     if (!collectionId) return drugs
@@ -183,7 +330,7 @@ export function useKnowledgeBaseDrugs(collectionId?: string) {
         createdAt: now,
         updatedAt: now,
       }, actor, now)
-      setDrugs((prev) => [...prev, newDrug])
+      upsertDrugInStore(newDrug)
       return newDrug
     },
     [actor, collectionId],
@@ -191,19 +338,16 @@ export function useKnowledgeBaseDrugs(collectionId?: string) {
 
   const updateDrug = useCallback((updated: KnowledgeBaseDrug): void => {
     const now = new Date().toISOString()
-    setDrugs((prev) =>
-      prev.map((drug) =>
-        drug.id === updated.id ? stampUpdate(updated, actor, now, drug) : drug,
-      ),
-    )
+    const previous = storeDrugs.find((drug) => drug.id === updated.id)
+    upsertDrugInStore(stampUpdate(updated, actor, now, previous))
   }, [actor])
 
   const deleteDrug = useCallback((id: string): void => {
-    setDrugs((prev) => prev.filter((drug) => drug.id !== id))
+    removeDrugFromStore(id)
   }, [])
 
   const duplicateDrug = useCallback((id: string): KnowledgeBaseDrug | null => {
-    const source = drugs.find((drug) => drug.id === id)
+    const source = storeDrugs.find((drug) => drug.id === id)
     if (!source) return null
     const now = new Date().toISOString()
     const copy: KnowledgeBaseDrug = {
@@ -223,9 +367,9 @@ export function useKnowledgeBaseDrugs(collectionId?: string) {
         id: `${section.key}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       })),
     }
-    setDrugs((prev) => [...prev, copy])
+    upsertDrugInStore(copy)
     return copy
-  }, [actor, drugs])
+  }, [actor])
 
   return { drugs: scopedDrugs, addDrug, updateDrug, deleteDrug, duplicateDrug }
 }
