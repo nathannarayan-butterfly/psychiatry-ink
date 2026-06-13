@@ -28,6 +28,7 @@ import {
   type ReceptorProfileDetail,
 } from '../../types/knowledgeBase'
 import { formatSiteLocaleDate } from '../../utils/siteTimezone'
+import { getDisplayReceptorProfile } from '../../utils/medication/receptorAffinity'
 import { KnowledgeBaseReceptorEditor } from './KnowledgeBaseReceptorEditor'
 
 interface KnowledgeBasePharmaProps {
@@ -40,6 +41,35 @@ interface KnowledgeBasePharmaProps {
 type SortKey = 'name' | 'class' | 'updated'
 
 const ALL_CATEGORIES = 'all'
+
+/**
+ * Build the partial update that upgrades a drug to a v2 relative-affinity
+ * profile, preserving any pre-existing legacy 1–5 data in `legacyReceptorProfile`
+ * (never silently discarded) and stamping the regeneration time.
+ */
+function buildReceptorUpgradePatch(
+  drug: KnowledgeBaseDrug,
+  receptorAffinityProfile: KnowledgeBaseDrug['receptorAffinityProfile'],
+): Partial<KnowledgeBaseDrug> {
+  const patch: Partial<KnowledgeBaseDrug> = {
+    receptorProfileVersion: 2,
+    affinityScale: 'relative_log_ki_percent',
+    receptorAffinityProfile,
+    lastReceptorProfileUpdatedAt: new Date().toISOString(),
+  }
+  // Snapshot legacy data once, the first time we upgrade.
+  const hasLegacyData =
+    (drug.receptorProfile && Object.keys(drug.receptorProfile).length > 0) ||
+    (drug.receptorProfileDetails && Object.keys(drug.receptorProfileDetails).length > 0)
+  if (drug.receptorProfileVersion !== 2 && hasLegacyData && !drug.legacyReceptorProfile) {
+    patch.legacyReceptorProfile = {
+      profile: drug.receptorProfile,
+      details: drug.receptorProfileDetails,
+      archivedAt: new Date().toISOString(),
+    }
+  }
+  return patch
+}
 
 // ── Add Drug Dialog ──────────────────────────────────────────────────────────
 
@@ -566,6 +596,8 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
   const [aiError, setAiError] = useState<string | null>(null)
   const [aiReferences, setAiReferences] = useState<string[]>([])
   const [aiNotice, setAiNotice] = useState(false)
+  const [receptorLoading, setReceptorLoading] = useState(false)
+  const [receptorError, setReceptorError] = useState<string | null>(null)
 
   const enterEditMode = () => {
     setDraft({ ...drug, sections: drug.sections.map((s) => ({ ...s })) })
@@ -621,11 +653,13 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
           const aiContent = result.sections[s.key as DrugSectionKey]
           return aiContent ? { ...s, content: aiContent } : s
         })
-        // Merge AI receptor scores additively, never discarding existing entries.
-        const receptorProfile = result.receptorProfile
-          ? { ...(prev.receptorProfile ?? {}), ...result.receptorProfile }
-          : prev.receptorProfile
-        return { ...prev, sections, receptorProfile }
+        // Upgrade to a v2 relative-affinity profile when the model returned one,
+        // preserving any pre-existing legacy 1–5 data.
+        const receptorPatch =
+          result.receptorAffinityProfile.length > 0
+            ? buildReceptorUpgradePatch(prev, result.receptorAffinityProfile)
+            : {}
+        return { ...prev, sections, ...receptorPatch }
       })
       setAiReferences(result.references)
       setAiNotice(true)
@@ -634,6 +668,41 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
       setAiError(t('kbPharmaAiError'))
     } finally {
       setAiLoading(false)
+    }
+  }
+
+  // Regenerate ONLY the receptor-affinity profile for this single medication and
+  // persist immediately (single-medication upgrade path). The pre-existing
+  // legacy 1–5 profile is preserved in `legacyReceptorProfile`.
+  const handleRegenerateReceptor = async () => {
+    setReceptorError(null)
+    setReceptorLoading(true)
+    try {
+      const result = await generatePharmaDetails({
+        genericName: drug.genericName,
+        brandNames: drug.brandNames,
+        drugClass: drug.drugClass,
+        category: drug.category,
+        sections: ['rezeptorprofil'],
+        language: language as 'de' | 'en' | 'fr' | 'es',
+      })
+      if (result.receptorAffinityProfile.length === 0) {
+        setReceptorError(t('kbReceptorRegenerateEmpty'))
+        return
+      }
+      const base = editMode ? draft : drug
+      const patch = buildReceptorUpgradePatch(base, result.receptorAffinityProfile)
+      const next = { ...base, ...patch }
+      if (editMode) {
+        setDraft(next)
+      } else {
+        onUpdate(next)
+      }
+      showNotionToast(t('kbReceptorRegenerateSuccess'))
+    } catch {
+      setReceptorError(t('kbReceptorRegenerateError'))
+    } finally {
+      setReceptorLoading(false)
     }
   }
 
@@ -807,12 +876,48 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
       )}
 
       <div className="kbp-receptor-section">
-        <h3 className="kbp-receptor-section__title">{t('kbReceptorTitle')}</h3>
+        <div className="kbp-receptor-section__head">
+          <h3 className="kbp-receptor-section__title">{t('kbReceptorTitle')}</h3>
+          <div className="kbp-receptor-section__head-meta">
+            {activeDrug.receptorProfileVersion === 2 ? (
+              <span className="kbp-receptor-section__badge">{t('kbReceptorV2Badge')}</span>
+            ) : getDisplayReceptorProfile(activeDrug).isLegacy ? (
+              <span className="kbp-receptor-section__badge kbp-receptor-section__badge--legacy">
+                {t('kbReceptorLegacyBadge')}
+              </span>
+            ) : null}
+            <button
+              type="button"
+              className="kbp-btn kbp-btn--sm kbp-btn--ai"
+              onClick={handleRegenerateReceptor}
+              disabled={receptorLoading || aiLoading}
+              title={t('kbReceptorRegenerate')}
+            >
+              <Sparkles
+                className={`h-3.5 w-3.5${receptorLoading ? ' kbp-spin' : ''}`}
+                strokeWidth={1.75}
+                aria-hidden
+              />
+              {receptorLoading ? t('kbReceptorRegenerating') : t('kbReceptorRegenerate')}
+            </button>
+          </div>
+        </div>
+        {receptorError ? (
+          <p className="kbp-ai-error" role="alert">{receptorError}</p>
+        ) : null}
+        {activeDrug.lastReceptorProfileUpdatedAt ? (
+          <p className="kbp-receptor-section__updated">
+            {t('kbReceptorLastUpdated')}:{' '}
+            {formatSiteLocaleDate(
+              activeDrug.lastReceptorProfileUpdatedAt,
+              language as 'de' | 'en' | 'fr' | 'es',
+            )}
+          </p>
+        ) : null}
         <KnowledgeBaseReceptorEditor
           editMode={editMode}
-          profile={activeDrug.receptorProfile}
-          details={activeDrug.receptorProfileDetails}
-          onChange={updateDraftReceptor}
+          drug={activeDrug}
+          onLegacyChange={updateDraftReceptor}
         />
       </div>
 

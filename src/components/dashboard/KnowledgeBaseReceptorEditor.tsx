@@ -1,5 +1,8 @@
 import { useTranslation } from '../../context/TranslationContext'
 import {
+  getClinicalRelevanceLabel,
+  getEvidenceQualityLabel,
+  getReceptorActionLabel,
   getReceptorClinicalMeaning,
   getActionLabel,
   getScoreLabel,
@@ -9,10 +12,13 @@ import {
   RECEPTOR_SCORE_MIN,
 } from '../../data/receptorProfile'
 import type {
-  ReceptorAction,
+  KnowledgeBaseDrug,
+  LegacyReceptorAction,
+  ReceptorAffinityEntry,
   ReceptorConfidence,
   ReceptorProfileDetail,
 } from '../../types/knowledgeBase'
+import { getDisplayReceptorProfile } from '../../utils/medication/receptorAffinity'
 
 const SCORE_OPTIONS = Array.from(
   { length: RECEPTOR_SCORE_MAX - RECEPTOR_SCORE_MIN + 1 },
@@ -23,9 +29,9 @@ const CONFIDENCE_OPTIONS: ReceptorConfidence[] = ['curated', 'estimated', 'unkno
 
 interface KnowledgeBaseReceptorEditorProps {
   editMode: boolean
-  profile?: Record<string, number>
-  details?: Record<string, ReceptorProfileDetail>
-  onChange: (
+  drug: KnowledgeBaseDrug
+  /** Legacy 1–5 editing callback (only used for non-v2 entries). */
+  onLegacyChange: (
     profile: Record<string, number>,
     details: Record<string, ReceptorProfileDetail>,
   ) => void
@@ -33,11 +39,12 @@ interface KnowledgeBaseReceptorEditorProps {
 
 export function KnowledgeBaseReceptorEditor({
   editMode,
-  profile = {},
-  details = {},
-  onChange,
+  drug,
+  onLegacyChange,
 }: KnowledgeBaseReceptorEditorProps) {
   const { t, language } = useTranslation()
+  const isV2 = drug.receptorProfileVersion === 2 && Array.isArray(drug.receptorAffinityProfile)
+  const display = getDisplayReceptorProfile(drug)
 
   const confidenceLabel = (c: ReceptorConfidence): string => {
     switch (c) {
@@ -49,6 +56,9 @@ export function KnowledgeBaseReceptorEditor({
         return t('kbReceptorConfidenceUnknown')
     }
   }
+
+  const profile = drug.receptorProfile ?? {}
+  const details = drug.receptorProfileDetails ?? {}
 
   const updateReceptor = (key: string, patch: Partial<ReceptorProfileDetail>) => {
     const prevDetail = details[key] ?? { score: profile[key] ?? 0 }
@@ -63,13 +73,23 @@ export function KnowledgeBaseReceptorEditor({
     } else {
       delete nextDetails[key]
     }
-    onChange(nextProfile, nextDetails)
+    onLegacyChange(nextProfile, nextDetails)
   }
 
+  // ── Edit mode ────────────────────────────────────────────────────────────
   if (editMode) {
+    // v2 profiles are read-only here; updates go through "Regenerate".
+    if (isV2) {
+      return (
+        <div className="kbp-receptor">
+          <p className="kbp-receptor__hint">{t('kbReceptorV2EditHint')}</p>
+          <V2ProfileList entries={display.entries} language={language} />
+        </div>
+      )
+    }
     return (
       <div className="kbp-receptor">
-        <p className="kbp-receptor__hint">{t('kbReceptorHint')}</p>
+        <p className="kbp-receptor__hint kbp-receptor__hint--legacy">{t('kbReceptorLegacyEditHint')}</p>
         <div className="kbp-receptor__scroll">
           <table className="kbp-receptor__table">
             <thead>
@@ -119,7 +139,7 @@ export function KnowledgeBaseReceptorEditor({
                         disabled={!hasDetail}
                         onChange={(e) =>
                           updateReceptor(receptor.key, {
-                            action: e.target.value as ReceptorAction,
+                            action: e.target.value as LegacyReceptorAction,
                           })
                         }
                         aria-label={`${receptor.label} ${t('kbReceptorColAction')}`}
@@ -173,45 +193,73 @@ export function KnowledgeBaseReceptorEditor({
     )
   }
 
-  // ── View mode ──────────────────────────────────────────────────────────────
-  const activeReceptors = RECEPTOR_CONFIG.filter((r) => (profile[r.key] ?? 0) > 0)
-
-  if (activeReceptors.length === 0) {
+  // ── View mode (percentage display for v2 + legacy) ─────────────────────────
+  if (display.isEmpty) {
     return <p className="kbp-receptor__empty">{t('kbReceptorEmptyView')}</p>
   }
 
   return (
     <div className="kbp-receptor">
-      <ul className="kbp-receptor__list">
-        {activeReceptors.map((receptor) => {
-          const detail = details[receptor.key]
-          const score = profile[receptor.key] ?? detail?.score ?? 0
-          return (
-            <li key={receptor.key} className="kbp-receptor__list-item">
-              <span className="kbp-receptor__list-symbol">{receptor.label}</span>
-              <span className="kbp-receptor__list-score" aria-hidden>
-                {renderScoreDots(score)}
-              </span>
-              <span className="kbp-receptor__list-score-text">
-                {score} · {getScoreLabel(score, language)}
-              </span>
-              {detail?.action && detail.action !== 'unknown' ? (
-                <span className="kbp-receptor__list-action">
-                  {getActionLabel(detail.action, language)}
-                </span>
-              ) : null}
-              <span className="kbp-receptor__list-meaning">
-                {detail?.clinicalMeaning || getReceptorClinicalMeaning(receptor.key, language)}
-              </span>
-            </li>
-          )
-        })}
-      </ul>
+      {display.isLegacy ? (
+        <p className="kbp-receptor__legacy-note">{t('kbReceptorLegacyConverted')}</p>
+      ) : null}
+      <V2ProfileList entries={display.entries} language={language} />
+      <p className="kbp-receptor__scale-note">{t('kbReceptorAffinityNote')}</p>
     </div>
   )
 }
 
-function renderScoreDots(score: number): string {
-  const filled = Math.max(0, Math.min(RECEPTOR_SCORE_MAX, Math.round(score)))
-  return '●'.repeat(filled) + '○'.repeat(RECEPTOR_SCORE_MAX - filled)
+function V2ProfileList({
+  entries,
+  language,
+}: {
+  entries: ReceptorAffinityEntry[]
+  language: 'de' | 'en' | 'fr' | 'es'
+}) {
+  const { t } = useTranslation()
+  const sorted = [...entries].sort(
+    (a, b) => (b.affinityPercent ?? -1) - (a.affinityPercent ?? -1),
+  )
+  return (
+    <ul className="kbp-receptor__list">
+      {sorted.map((entry) => {
+        const hasRaw = entry.rawKiNm != null || entry.rawIc50Nm != null || entry.pKi != null
+        return (
+          <li key={entry.target} className="kbp-receptor__list-item">
+            <span className="kbp-receptor__list-symbol">{entry.target}</span>
+            <span className="kbp-receptor__list-score-text">
+              {entry.affinityPercent == null ? '—' : `${entry.affinityPercent}%`}
+            </span>
+            {entry.action !== 'unknown' ? (
+              <span className="kbp-receptor__list-action">
+                {getReceptorActionLabel(entry.action, language)}
+              </span>
+            ) : null}
+            {entry.clinicalRelevance ? (
+              <span className="kbp-receptor__list-relevance">
+                {getClinicalRelevanceLabel(entry.clinicalRelevance, language)}
+              </span>
+            ) : null}
+            {entry.isEstimated ? (
+              <span className="kbp-receptor__est-badge">{t('kbReceptorEstimated')}</span>
+            ) : null}
+            <span className="kbp-receptor__list-meaning">
+              {getEvidenceQualityLabel(entry.evidenceQuality, language)}
+              {entry.sourceNote ? ` · ${entry.sourceNote}` : ''}
+            </span>
+            {hasRaw ? (
+              <details className="kbp-receptor__raw">
+                <summary>{t('kbReceptorRawDataSummary')}</summary>
+                <span className="kbp-receptor__raw-values">
+                  {entry.rawKiNm != null ? `Ki ${entry.rawKiNm} nM` : null}
+                  {entry.rawIc50Nm != null ? ` · IC50 ${entry.rawIc50Nm} nM` : null}
+                  {entry.pKi != null ? ` · pKi ${entry.pKi}` : null}
+                </span>
+              </details>
+            ) : null}
+          </li>
+        )
+      })}
+    </ul>
+  )
 }

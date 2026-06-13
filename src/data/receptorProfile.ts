@@ -1,5 +1,10 @@
 import type { UiLanguage } from '../types/settings'
-import type { ReceptorAction } from '../types/knowledgeBase'
+import type {
+  EvidenceQuality,
+  LegacyReceptorAction,
+  ReceptorAction,
+  ReceptorClinicalRelevance,
+} from '../types/knowledgeBase'
 
 type LocaleMap = Record<UiLanguage, string>
 
@@ -231,9 +236,9 @@ export function getScoreLabel(score: number, language: UiLanguage): string {
   return SCORE_LABELS[clamped]?.[language] ?? String(clamped)
 }
 
-// ── Action types ─────────────────────────────────────────────────────────────
+// ── Action types (legacy 1–5 model) ──────────────────────────────────────────
 
-export const RECEPTOR_ACTIONS: ReceptorAction[] = [
+export const RECEPTOR_ACTIONS: LegacyReceptorAction[] = [
   'antagonist',
   'partial-agonist',
   'agonist',
@@ -241,7 +246,7 @@ export const RECEPTOR_ACTIONS: ReceptorAction[] = [
   'unknown',
 ]
 
-const ACTION_LABELS: Record<ReceptorAction, LocaleMap> = {
+const ACTION_LABELS: Record<LegacyReceptorAction, LocaleMap> = {
   antagonist: { de: 'Antagonist', en: 'Antagonist', fr: 'Antagoniste', es: 'Antagonista' },
   'partial-agonist': {
     de: 'Partialagonist',
@@ -259,8 +264,169 @@ const ACTION_LABELS: Record<ReceptorAction, LocaleMap> = {
   unknown: { de: 'Unbekannt', en: 'Unknown', fr: 'Inconnu', es: 'Desconocido' },
 }
 
-export function getActionLabel(action: ReceptorAction, language: UiLanguage): string {
+export function getActionLabel(action: LegacyReceptorAction, language: UiLanguage): string {
   return ACTION_LABELS[action][language]
+}
+
+// ── Action types (v2 relative-affinity model) ────────────────────────────────
+
+export const RECEPTOR_V2_ACTIONS: ReceptorAction[] = [
+  'antagonist',
+  'partial_agonist',
+  'agonist',
+  'inverse_agonist',
+  'reuptake_inhibitor',
+  'enzyme_inhibitor',
+  'mixed',
+  'unknown',
+]
+
+const V2_ACTION_LABELS: Record<ReceptorAction, LocaleMap> = {
+  antagonist: { de: 'Antagonist', en: 'Antagonist', fr: 'Antagoniste', es: 'Antagonista' },
+  partial_agonist: {
+    de: 'Partialagonist',
+    en: 'Partial agonist',
+    fr: 'Agoniste partiel',
+    es: 'Agonista parcial',
+  },
+  agonist: { de: 'Agonist', en: 'Agonist', fr: 'Agoniste', es: 'Agonista' },
+  inverse_agonist: {
+    de: 'Inverser Agonist',
+    en: 'Inverse agonist',
+    fr: 'Agoniste inverse',
+    es: 'Agonista inverso',
+  },
+  reuptake_inhibitor: {
+    de: 'Wiederaufnahmehemmer',
+    en: 'Reuptake inhibitor',
+    fr: 'Inhibiteur de recapture',
+    es: 'Inhibidor de recaptación',
+  },
+  enzyme_inhibitor: {
+    de: 'Enzymhemmer',
+    en: 'Enzyme inhibitor',
+    fr: "Inhibiteur d'enzyme",
+    es: 'Inhibidor enzimático',
+  },
+  mixed: { de: 'Gemischt', en: 'Mixed', fr: 'Mixte', es: 'Mixto' },
+  unknown: { de: 'Unbekannt', en: 'Unknown', fr: 'Inconnu', es: 'Desconocido' },
+}
+
+export function getReceptorActionLabel(action: ReceptorAction, language: UiLanguage): string {
+  return (V2_ACTION_LABELS[action] ?? V2_ACTION_LABELS.unknown)[language]
+}
+
+// ── Evidence quality + clinical relevance labels (v2) ─────────────────────────
+
+const EVIDENCE_QUALITY_LABELS: Record<EvidenceQuality, LocaleMap> = {
+  high: { de: 'hohe Evidenz', en: 'high evidence', fr: 'preuve élevée', es: 'evidencia alta' },
+  moderate: {
+    de: 'moderate Evidenz',
+    en: 'moderate evidence',
+    fr: 'preuve modérée',
+    es: 'evidencia moderada',
+  },
+  low: { de: 'geringe Evidenz', en: 'low evidence', fr: 'preuve faible', es: 'evidencia baja' },
+  estimated: { de: 'geschätzt', en: 'estimated', fr: 'estimé', es: 'estimado' },
+  unknown: { de: 'unbekannt', en: 'unknown', fr: 'inconnu', es: 'desconocido' },
+}
+
+export function getEvidenceQualityLabel(quality: EvidenceQuality, language: UiLanguage): string {
+  return (EVIDENCE_QUALITY_LABELS[quality] ?? EVIDENCE_QUALITY_LABELS.unknown)[language]
+}
+
+const CLINICAL_RELEVANCE_LABELS: Record<ReceptorClinicalRelevance, LocaleMap> = {
+  high: { de: 'hohe Relevanz', en: 'high relevance', fr: 'pertinence élevée', es: 'relevancia alta' },
+  moderate: {
+    de: 'moderate Relevanz',
+    en: 'moderate relevance',
+    fr: 'pertinence modérée',
+    es: 'relevancia moderada',
+  },
+  low: { de: 'geringe Relevanz', en: 'low relevance', fr: 'pertinence faible', es: 'relevancia baja' },
+  uncertain: { de: 'unklare Relevanz', en: 'uncertain relevance', fr: 'pertinence incertaine', es: 'relevancia incierta' },
+}
+
+export function getClinicalRelevanceLabel(
+  relevance: ReceptorClinicalRelevance,
+  language: UiLanguage,
+): string {
+  return (CLINICAL_RELEVANCE_LABELS[relevance] ?? CLINICAL_RELEVANCE_LABELS.uncertain)[language]
+}
+
+// ── Default receptor axes + target normalization (v2 visualisation) ───────────
+
+/**
+ * Default ordered receptor axes for the v2 affinity radar. Targets are stored
+ * sparsely per drug; the chart fills any missing axis with null/0 as needed.
+ */
+export const DEFAULT_RECEPTOR_AXES = [
+  'D2',
+  'D3',
+  'D1',
+  '5-HT2A',
+  '5-HT2C',
+  '5-HT1A',
+  'H1',
+  'M1',
+  'α1',
+  'α2',
+  'SERT',
+  'NET',
+  'DAT',
+] as const
+
+/**
+ * Normalize a free-text receptor target to a canonical display symbol so that
+ * legacy keys ("alpha1") and v2 targets ("α1", "Alpha-1", "a1") collapse to the
+ * same axis. Returns the trimmed original when no mapping is known.
+ */
+export function normalizeReceptorTarget(target: string): string {
+  const raw = (target ?? '').trim()
+  if (!raw) return raw
+  const compact = raw
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\s_-]+/g, '')
+  const map: Record<string, string> = {
+    alpha1: 'α1',
+    a1: 'α1',
+    α1: 'α1',
+    alpha2: 'α2',
+    a2: 'α2',
+    α2: 'α2',
+    d1: 'D1',
+    d2: 'D2',
+    d3: 'D3',
+    d4: 'D4',
+    h1: 'H1',
+    m1: 'M1',
+    m3: 'M3',
+    sert: 'SERT',
+    net: 'NET',
+    dat: 'DAT',
+    '5ht1a': '5-HT1A',
+    '5ht2a': '5-HT2A',
+    '5ht2c': '5-HT2C',
+    '5ht7': '5-HT7',
+    '5ht6': '5-HT6',
+  }
+  return map[compact] ?? raw
+}
+
+const RECEPTOR_BY_TARGET = new Map<string, ReceptorConfigEntry>(
+  RECEPTOR_CONFIG.map((entry) => [normalizeReceptorTarget(entry.key), entry]),
+)
+
+/** Resolve receptor config from a free-text / display target symbol. */
+export function getReceptorConfigByTarget(target: string): ReceptorConfigEntry | undefined {
+  return RECEPTOR_BY_TARGET.get(normalizeReceptorTarget(target))
+}
+
+/** Localised one-line clinical meaning for a free-text / display target symbol. */
+export function getReceptorMeaningByTarget(target: string, language: UiLanguage): string {
+  return RECEPTOR_BY_TARGET.get(normalizeReceptorTarget(target))?.clinicalMeaning[language] ?? ''
 }
 
 // ── Per-drug colour palette (calm clinical hues, assigned by index) ───────────

@@ -11,20 +11,19 @@ import {
 } from 'recharts'
 import { translateMedicationUi } from '../../data/medicationUiTranslations'
 import {
-  getActionLabel,
-  getOrderedReceptorKeys,
-  getReceptorClinicalMeaning,
-  getReceptorLabel,
-  getScoreLabel,
-  loadUserReceptorConfig,
-  RECEPTOR_SCORE_MAX,
+  getEvidenceQualityLabel,
+  getReceptorActionLabel,
+  getReceptorMeaningByTarget,
+  normalizeReceptorTarget,
 } from '../../data/receptorProfile'
-import type { KnowledgeBaseDrug } from '../../types/knowledgeBase'
+import type { KnowledgeBaseDrug, ReceptorAffinityEntry } from '../../types/knowledgeBase'
 import type { UiLanguage } from '../../types/settings'
 import {
+  AFFINITY_MAX,
   computeCombinedBurden,
-  getActiveReceptorKeys,
-  getScore,
+  getActiveReceptorTargets,
+  getAffinityPercent,
+  getEntry,
   resolveReceptorProfiles,
   type BurdenLevel,
   type ReceptorMedInput,
@@ -47,9 +46,9 @@ function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
-function cellShade(color: string, score: number): string {
-  if (score <= 0) return 'transparent'
-  const alpha = 0.12 + (score / RECEPTOR_SCORE_MAX) * 0.55
+function cellShade(color: string, percent: number): string {
+  if (percent <= 0) return 'transparent'
+  const alpha = 0.1 + (percent / 100) * 0.55
   return hexToRgba(color, alpha)
 }
 
@@ -64,6 +63,12 @@ function burdenWord(level: BurdenLevel, language: UiLanguage): string {
   }
 }
 
+/** Short action text appended after a value (omitted when unknown). */
+function actionSuffix(entry: ReceptorAffinityEntry | undefined, language: UiLanguage): string {
+  if (!entry || entry.action === 'unknown') return ''
+  return ` · ${getReceptorActionLabel(entry.action, language)}`
+}
+
 export function ReceptorProfileSection({
   activeMeds,
   drugs,
@@ -76,11 +81,7 @@ export function ReceptorProfileSection({
     [activeMeds, drugs],
   )
 
-  const orderedKeys = useMemo(() => getOrderedReceptorKeys(loadUserReceptorConfig()), [])
-  const activeKeys = useMemo(
-    () => getActiveReceptorKeys(resolved, orderedKeys),
-    [resolved, orderedKeys],
-  )
+  const activeTargets = useMemo(() => getActiveReceptorTargets(resolved), [resolved])
 
   if (resolved.length === 0) {
     return (
@@ -96,6 +97,11 @@ export function ReceptorProfileSection({
         <li key={r.medId} className="receptor-profile__legend-item">
           <span className="receptor-profile__swatch" style={{ background: r.color }} aria-hidden />
           {r.medName}
+          {r.isLegacy ? (
+            <span className="receptor-profile__legacy-badge" title={translateMedicationUi(language, 'medReceptorLegacyConverted')}>
+              {translateMedicationUi(language, 'medReceptorLegacyBadge')}
+            </span>
+          ) : null}
         </li>
       ))}
     </ul>
@@ -116,13 +122,13 @@ export function ReceptorProfileSection({
       </div>
 
       {view === 'matrix' && (
-        <MatrixView resolved={resolved} activeKeys={activeKeys} language={language} legend={legend} />
+        <MatrixView resolved={resolved} activeTargets={activeTargets} language={language} legend={legend} />
       )}
       {view === 'burden' && (
-        <BurdenView resolved={resolved} activeKeys={activeKeys} language={language} legend={legend} />
+        <BurdenView resolved={resolved} activeTargets={activeTargets} language={language} legend={legend} />
       )}
       {view === 'radar' && (
-        <RadarView resolved={resolved} activeKeys={activeKeys} language={language} legend={legend} />
+        <RadarView resolved={resolved} activeTargets={activeTargets} language={language} legend={legend} />
       )}
 
       <p className="receptor-profile__safety">
@@ -158,13 +164,13 @@ function TabButton({
 
 interface ViewProps {
   resolved: ReturnType<typeof resolveReceptorProfiles>
-  activeKeys: ReturnType<typeof getActiveReceptorKeys>
+  activeTargets: string[]
   language: UiLanguage
   legend: React.ReactNode
 }
 
-function MatrixView({ resolved, activeKeys, language, legend }: ViewProps) {
-  if (activeKeys.length === 0) {
+function MatrixView({ resolved, activeTargets, language, legend }: ViewProps) {
+  if (activeTargets.length === 0) {
     return <p className="receptor-profile__empty">{translateMedicationUi(language, 'medReceptorEmpty')}</p>
   }
   return (
@@ -191,27 +197,35 @@ function MatrixView({ resolved, activeKeys, language, legend }: ViewProps) {
             </tr>
           </thead>
           <tbody>
-            {activeKeys.map((key) => (
-              <tr key={key}>
-                <th className="receptor-matrix__row-header">{getReceptorLabel(key)}</th>
+            {activeTargets.map((target) => (
+              <tr key={normalizeReceptorTarget(target)}>
+                <th className="receptor-matrix__row-header">{target}</th>
                 {resolved.map((r) => {
-                  const score = getScore(r, key)
-                  const action = r.details?.[key]?.action
-                  const actionText =
-                    action && action !== 'unknown' ? ` · ${getActionLabel(action, language)}` : ''
+                  const entry = getEntry(r, target)
+                  const percent = entry?.affinityPercent ?? null
+                  const hasValue = percent != null && percent > 0
+                  const estimated = entry?.isEstimated || r.isLegacy
+                  const title = entry
+                    ? `${target} · ${r.medName} · ${percent == null ? '—' : `${percent}%`}${actionSuffix(entry, language)}${
+                        estimated ? ` · ${translateMedicationUi(language, 'medReceptorEstimated')}` : ''
+                      }`
+                    : `${target} · ${r.medName} · —`
                   return (
                     <td
                       key={r.medId}
-                      className={`receptor-matrix__cell${score > 0 ? '' : ' receptor-matrix__cell--zero'}`}
-                      style={{ background: cellShade(r.color, score) }}
-                      title={`${getReceptorLabel(key)} · ${r.medName} · ${score}/${RECEPTOR_SCORE_MAX} (${getScoreLabel(score, language)})${actionText}`}
+                      className={`receptor-matrix__cell${hasValue ? '' : ' receptor-matrix__cell--zero'}`}
+                      style={{ background: cellShade(r.color, percent ?? 0) }}
+                      title={title}
                     >
-                      {score}
+                      {percent == null ? '—' : `${percent}%`}
+                      {hasValue && estimated ? (
+                        <span className="receptor-matrix__est" aria-hidden> ~</span>
+                      ) : null}
                     </td>
                   )
                 })}
                 <td className="receptor-matrix__meaning">
-                  {getReceptorClinicalMeaning(key, language)}
+                  {getReceptorMeaningByTarget(target, language)}
                 </td>
               </tr>
             ))}
@@ -222,10 +236,10 @@ function MatrixView({ resolved, activeKeys, language, legend }: ViewProps) {
   )
 }
 
-// ── View 2: Combined receptor burden ─────────────────────────────────────────
+// ── View 2: Combined receptor affinity ───────────────────────────────────────
 
-function BurdenView({ resolved, activeKeys, language, legend }: ViewProps) {
-  const burdens = computeCombinedBurden(resolved, activeKeys).filter((b) => b.total > 0)
+function BurdenView({ resolved, activeTargets, language, legend }: ViewProps) {
+  const burdens = computeCombinedBurden(resolved, activeTargets).filter((b) => b.total > 0)
 
   if (burdens.length === 0) {
     return <p className="receptor-profile__empty">{translateMedicationUi(language, 'medReceptorEmpty')}</p>
@@ -240,18 +254,16 @@ function BurdenView({ resolved, activeKeys, language, legend }: ViewProps) {
       </p>
       <ul className="receptor-burden">
         {burdens.map((b) => (
-          <li key={b.key} className={`receptor-burden__row receptor-burden__row--${b.level}`}>
+          <li key={normalizeReceptorTarget(b.target)} className={`receptor-burden__row receptor-burden__row--${b.level}`}>
             <div className="receptor-burden__head">
-              <span className="receptor-burden__label">{getReceptorLabel(b.key)}</span>
+              <span className="receptor-burden__label">{b.target}</span>
               <span className="receptor-burden__level">{burdenWord(b.level, language)}</span>
               {b.level === 'high' ? (
                 <span className="receptor-burden__warning" aria-hidden>
                   ⚠
                 </span>
               ) : null}
-              <span className="receptor-burden__value">
-                {b.total}/{RECEPTOR_SCORE_MAX}
-              </span>
+              <span className="receptor-burden__value">{b.total}%</span>
             </div>
             <div className="receptor-burden__bar" role="presentation">
               {b.contributors.map((c) => (
@@ -259,10 +271,10 @@ function BurdenView({ resolved, activeKeys, language, legend }: ViewProps) {
                   key={c.medId}
                   className="receptor-burden__segment"
                   style={{
-                    width: `${(c.score / RECEPTOR_SCORE_MAX) * 100}%`,
+                    width: `${(c.percent / AFFINITY_MAX) * 100}%`,
                     background: c.color,
                   }}
-                  title={`${c.medName} · ${c.score}/${RECEPTOR_SCORE_MAX}`}
+                  title={`${c.medName} · ${c.percent}%`}
                 />
               ))}
             </div>
@@ -272,7 +284,7 @@ function BurdenView({ resolved, activeKeys, language, legend }: ViewProps) {
               </span>
               <span className="receptor-burden__meaning">
                 {' — '}
-                {getReceptorClinicalMeaning(b.key, language)}
+                {getReceptorMeaningByTarget(b.target, language)}
               </span>
             </div>
           </li>
@@ -282,10 +294,17 @@ function BurdenView({ resolved, activeKeys, language, legend }: ViewProps) {
   )
 }
 
-// ── View 3: Radar / receptor fingerprint (optional) ──────────────────────────
+// ── View 3: Radar / receptor affinity fingerprint ────────────────────────────
 
-function RadarView({ resolved, activeKeys, language, legend }: ViewProps) {
-  if (activeKeys.length < 3) {
+interface RadarTooltipPayloadItem {
+  name?: unknown
+  value?: unknown
+  color?: string
+  payload?: Record<string, unknown>
+}
+
+function RadarView({ resolved, activeTargets, language, legend }: ViewProps) {
+  if (activeTargets.length < 3) {
     return (
       <div className="receptor-profile__view">
         {legend}
@@ -294,15 +313,75 @@ function RadarView({ resolved, activeKeys, language, legend }: ViewProps) {
     )
   }
 
-  const data = activeKeys.map((key) => {
-    const entry: Record<string, number | string> = { receptor: getReceptorLabel(key) }
-    for (const r of resolved) entry[r.medId] = getScore(r, key)
+  const data = activeTargets.map((target) => {
+    const entry: Record<string, number | string | null> = {
+      receptor: target,
+      __target: target,
+    }
+    for (const r of resolved) entry[r.medId] = getAffinityPercent(r, target) ?? 0
     return entry
   })
+
+  const renderTooltip = ({
+    active,
+    payload,
+  }: {
+    active?: boolean
+    payload?: readonly RadarTooltipPayloadItem[]
+  }) => {
+    if (!active || !payload || payload.length === 0) return null
+    const target = (payload[0]?.payload?.__target as string) ?? ''
+    return (
+      <div
+        className="receptor-radar-tooltip"
+        style={{
+          fontSize: '0.72rem',
+          borderRadius: '0.4rem',
+          border: '1px solid var(--border-soft)',
+          background: 'var(--surface, #fff)',
+          padding: '0.5rem 0.6rem',
+          maxWidth: 260,
+        }}
+      >
+        <strong>{target}</strong>
+        <ul style={{ listStyle: 'none', margin: '0.25rem 0', padding: 0 }}>
+          {payload.map((item) => {
+            const medId = String(item.name ?? '')
+            const r = resolved.find((d) => d.medId === medId)
+            if (!r) return null
+            const e = getEntry(r, target)
+            const value = Number(item.value ?? 0)
+            const parts: string[] = [`${Number.isFinite(value) ? value : 0}%`]
+            if (e && e.action !== 'unknown') parts.push(getReceptorActionLabel(e.action, language))
+            if (e?.rawKiNm != null) parts.push(`Ki ${e.rawKiNm} nM`)
+            if (e?.pKi != null) parts.push(`pKi ${e.pKi}`)
+            if (e) parts.push(getEvidenceQualityLabel(e.evidenceQuality, language))
+            const flag = r.isLegacy
+              ? ` · ${translateMedicationUi(language, 'medReceptorLegacyBadge')}`
+              : e?.isEstimated
+                ? ` · ${translateMedicationUi(language, 'medReceptorEstimated')}`
+                : ''
+            return (
+              <li key={medId} style={{ color: item.color }}>
+                {r.medName}: {parts.join(' · ')}
+                {flag}
+              </li>
+            )
+          })}
+        </ul>
+        <span style={{ color: 'var(--text-muted)' }}>
+          {translateMedicationUi(language, 'medReceptorTooltipDisclaimer')}
+        </span>
+      </div>
+    )
+  }
 
   return (
     <div className="receptor-profile__view">
       {legend}
+      <p className="receptor-profile__approx">
+        {translateMedicationUi(language, 'medReceptorAffinityAxisLabel')}
+      </p>
       {resolved.length > 3 ? (
         <p className="receptor-profile__hint">{translateMedicationUi(language, 'medReceptorRadarManyHint')}</p>
       ) : null}
@@ -315,15 +394,15 @@ function RadarView({ resolved, activeKeys, language, legend }: ViewProps) {
               tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
             />
             <PolarRadiusAxis
-              domain={[0, RECEPTOR_SCORE_MAX]}
-              tickCount={RECEPTOR_SCORE_MAX + 1}
+              domain={[0, AFFINITY_MAX]}
+              tickCount={6}
               tick={{ fill: 'var(--text-muted)', fontSize: 9 }}
               axisLine={false}
             />
             {resolved.map((r) => (
               <Radar
                 key={r.medId}
-                name={r.medName}
+                name={r.medId}
                 dataKey={r.medId}
                 stroke={r.color}
                 fill={r.color}
@@ -331,15 +410,11 @@ function RadarView({ resolved, activeKeys, language, legend }: ViewProps) {
                 strokeWidth={1.6}
               />
             ))}
-            <Tooltip
-              formatter={(value, name) => [`${value}/${RECEPTOR_SCORE_MAX}`, name]}
-              contentStyle={{
-                fontSize: '0.72rem',
-                borderRadius: '0.4rem',
-                border: '1px solid var(--border-soft)',
-              }}
+            <Tooltip content={renderTooltip} />
+            <Legend
+              wrapperStyle={{ fontSize: '0.72rem' }}
+              formatter={(value) => resolved.find((r) => r.medId === value)?.medName ?? value}
             />
-            <Legend wrapperStyle={{ fontSize: '0.72rem' }} />
           </RadarChart>
         </ResponsiveContainer>
       </div>

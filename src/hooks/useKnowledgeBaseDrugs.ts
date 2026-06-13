@@ -4,10 +4,14 @@ import {
   type KnowledgeBaseDrug,
 } from '../types/knowledgeBase'
 import { KB_DRUG_SEED_DATA } from '../data/knowledgeBaseDrugSeedData'
+import { flagLegacyReceptorProfiles } from '../utils/medication/receptorAffinity'
 
 const STORAGE_KEY = 'psychiatry-ink:knowledgeBaseDrugs'
 
-/** Assign the default Psychopharmakologie collection to any drug missing a collectionId. */
+/**
+ * Assign the default Psychopharmakologie collection to any drug missing a
+ * collectionId, and non-destructively flag legacy (1–5) receptor profiles.
+ */
 function migrateCollectionId(drugs: KnowledgeBaseDrug[]): KnowledgeBaseDrug[] {
   let changed = false
   const migrated = drugs.map((drug) => {
@@ -17,7 +21,8 @@ function migrateCollectionId(drugs: KnowledgeBaseDrug[]): KnowledgeBaseDrug[] {
     }
     return drug
   })
-  return changed ? migrated : drugs
+  const result = changed ? migrated : drugs
+  return flagLegacyReceptorProfiles(result)
 }
 
 function loadDrugs(): KnowledgeBaseDrug[] {

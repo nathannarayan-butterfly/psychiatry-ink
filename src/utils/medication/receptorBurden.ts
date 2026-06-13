@@ -1,21 +1,18 @@
 import {
+  DEFAULT_RECEPTOR_AXES,
   getDrugColor,
-  RECEPTOR_KEYS,
-  RECEPTOR_SCORE_MAX,
-  type BurdenTag,
-  type ReceptorKey,
+  normalizeReceptorTarget,
 } from '../../data/receptorProfile'
-import type { KnowledgeBaseDrug, ReceptorProfileDetail } from '../../types/knowledgeBase'
-import { getReceptorConfig } from '../../data/receptorProfile'
+import type { KnowledgeBaseDrug, ReceptorAffinityEntry } from '../../types/knowledgeBase'
+import { getDisplayReceptorProfile } from './receptorAffinity'
 
 /**
- * Receptor-burden utilities.
+ * Receptor-affinity resolution utilities (v2 relative-affinity model).
  *
- * These are deliberately framework-agnostic and language-agnostic so they can
- * be reused beyond the receptor-profile visualisations — e.g. to later derive
- * sedation burden, anticholinergic load, EPS/prolactin risk, QT overview, or to
- * feed AI medication comments and lab-monitoring suggestions. Components resolve
- * labels / clinical meanings / colours from `receptorProfile.ts`.
+ * Values are a *relative receptor affinity index (%)* (0–100), NOT receptor
+ * occupancy or clinical blockade. All medication → profile resolution flows
+ * through {@link getDisplayReceptorProfile} so legacy (1–5) and v2 entries are
+ * handled uniformly. Components resolve labels / colours from `receptorProfile.ts`.
  */
 
 /** Minimal medication shape needed to resolve a receptor profile. */
@@ -31,9 +28,12 @@ export interface ResolvedDrugProfile {
   medName: string
   /** Matching Knowledge Base entry. */
   drug: KnowledgeBaseDrug
-  /** receptor key → score 0..5 (non-zero entries). */
-  profile: Record<string, number>
-  details?: Record<string, ReceptorProfileDetail>
+  /** v2 (or legacy-converted) affinity entries. */
+  entries: ReceptorAffinityEntry[]
+  /** normalized target → entry (for fast axis lookup). */
+  byTarget: Map<string, ReceptorAffinityEntry>
+  /** True when entries were converted from a legacy 1–5 profile (display only). */
+  isLegacy: boolean
   /** Stable per-drug colour for matrix / radar legends. */
   color: string
   colorIndex: number
@@ -48,11 +48,6 @@ function normName(value: string): string {
     .replace(/[-_\s]+/g, '')
 }
 
-function profileHasData(profile?: Record<string, number>): boolean {
-  if (!profile) return false
-  return Object.values(profile).some((score) => Number(score) > 0)
-}
-
 /** True when a medication's substance matches a KB drug's generic / brand names. */
 function drugMatchesSubstance(drug: KnowledgeBaseDrug, substance: string): boolean {
   const q = normName(substance)
@@ -65,10 +60,19 @@ function drugMatchesSubstance(drug: KnowledgeBaseDrug, substance: string): boole
   })
 }
 
+function indexByTarget(entries: ReceptorAffinityEntry[]): Map<string, ReceptorAffinityEntry> {
+  const map = new Map<string, ReceptorAffinityEntry>()
+  for (const entry of entries) {
+    map.set(normalizeReceptorTarget(entry.target), entry)
+  }
+  return map
+}
+
 /**
  * Match each medication to a Knowledge Base pharma entry (case/accent
- * insensitive, generic or brand name) and keep only those that carry a
- * non-empty receptor profile. Colours are assigned by inclusion order.
+ * insensitive, generic or brand name) and resolve its display receptor profile
+ * (v2 or legacy-converted). Only medications with at least one affinity entry
+ * are returned. Colours are assigned by inclusion order.
  */
 export function resolveReceptorProfiles(
   meds: ReceptorMedInput[],
@@ -76,17 +80,20 @@ export function resolveReceptorProfiles(
 ): ResolvedDrugProfile[] {
   const resolved: ResolvedDrugProfile[] = []
   for (const med of meds) {
-    const match = drugs.find(
-      (drug) => profileHasData(drug.receptorProfile) && drugMatchesSubstance(drug, med.substance),
-    )
-    if (!match || !match.receptorProfile) continue
+    const match = drugs.find((drug) => {
+      if (!drugMatchesSubstance(drug, med.substance)) return false
+      return !getDisplayReceptorProfile(drug).isEmpty
+    })
+    if (!match) continue
+    const display = getDisplayReceptorProfile(match)
     const colorIndex = resolved.length
     resolved.push({
       medId: med.id,
       medName: med.substance,
       drug: match,
-      profile: match.receptorProfile,
-      details: match.receptorProfileDetails,
+      entries: display.entries,
+      byTarget: indexByTarget(display.entries),
+      isLegacy: display.isLegacy,
       color: getDrugColor(colorIndex),
       colorIndex,
     })
@@ -94,83 +101,105 @@ export function resolveReceptorProfiles(
   return resolved
 }
 
-export function getScore(resolved: ResolvedDrugProfile, key: string): number {
-  const raw = resolved.profile[key]
-  return typeof raw === 'number' && Number.isFinite(raw) ? raw : 0
+/** Entry for a normalized receptor target on a resolved drug (if present). */
+export function getEntry(resolved: ResolvedDrugProfile, target: string): ReceptorAffinityEntry | undefined {
+  return resolved.byTarget.get(normalizeReceptorTarget(target))
 }
 
 /**
- * Ordered receptor keys to display. By default returns only receptors that have
- * a non-zero value across the resolved drugs (clinically relevant rows). Pass
- * `includeAllConfigured` to always show the full configured set.
+ * Relative affinity index (0–100) for a target, or null when the target is not
+ * present or its value is unknown.
  */
-export function getActiveReceptorKeys(
-  resolved: ResolvedDrugProfile[],
-  orderedKeys: ReceptorKey[] = RECEPTOR_KEYS,
-  includeAllConfigured = false,
-): ReceptorKey[] {
-  if (includeAllConfigured) return orderedKeys
-  return orderedKeys.filter((key) => resolved.some((r) => getScore(r, key) > 0))
+export function getAffinityPercent(resolved: ResolvedDrugProfile, target: string): number | null {
+  const entry = getEntry(resolved, target)
+  if (!entry) return null
+  return entry.affinityPercent
 }
+
+/**
+ * Ordered receptor targets to display. Starts from {@link DEFAULT_RECEPTOR_AXES}
+ * (keeping only axes for which some drug has data), then appends any extra
+ * targets present on the resolved drugs that are not part of the default set.
+ */
+export function getActiveReceptorTargets(
+  resolved: ResolvedDrugProfile[],
+  axes: readonly string[] = DEFAULT_RECEPTOR_AXES,
+  includeAllAxes = false,
+): string[] {
+  const hasData = (target: string): boolean =>
+    resolved.some((r) => {
+      const entry = r.byTarget.get(normalizeReceptorTarget(target))
+      return entry != null && (entry.affinityPercent ?? 0) > 0
+    })
+
+  const ordered: string[] = []
+  const seen = new Set<string>()
+  for (const axis of axes) {
+    const norm = normalizeReceptorTarget(axis)
+    if (seen.has(norm)) continue
+    if (includeAllAxes || hasData(axis)) {
+      ordered.push(axis)
+      seen.add(norm)
+    }
+  }
+  // Append drug-specific targets not covered by the default axes.
+  for (const r of resolved) {
+    for (const entry of r.entries) {
+      const norm = normalizeReceptorTarget(entry.target)
+      if (seen.has(norm)) continue
+      if ((entry.affinityPercent ?? 0) > 0) {
+        ordered.push(entry.target)
+        seen.add(norm)
+      }
+    }
+  }
+  return ordered
+}
+
+// ── Combined receptor "burden" (relative-affinity approximation) ──────────────
+
+export const AFFINITY_MAX = 100
 
 export type BurdenLevel = 'none' | 'low' | 'moderate' | 'high'
 
 export interface ReceptorBurden {
-  key: ReceptorKey
-  /** Sum of scores across drugs, capped at RECEPTOR_SCORE_MAX. */
+  target: string
+  /** Combined relative-affinity index across drugs, capped at 100. */
   total: number
   /** Uncapped sum (useful for tooltips / future weighting). */
   rawTotal: number
   level: BurdenLevel
-  contributors: { medId: string; medName: string; score: number; color: string }[]
+  contributors: { medId: string; medName: string; percent: number; color: string }[]
 }
 
 export function burdenLevel(total: number): BurdenLevel {
-  if (total >= 4) return 'high'
-  if (total >= 2) return 'moderate'
+  if (total >= 66) return 'high'
+  if (total >= 33) return 'moderate'
   if (total > 0) return 'low'
   return 'none'
 }
 
 /**
- * Combined receptor burden = capped sum of scores across active medications.
- * A deliberately simplified clinical approximation (clearly labelled in UI).
+ * Combined receptor affinity = capped sum of relative-affinity indices across
+ * active medications for each target. A deliberately simplified clinical
+ * approximation (clearly labelled in the UI) — NOT receptor occupancy.
  */
 export function computeCombinedBurden(
   resolved: ResolvedDrugProfile[],
-  keys: ReceptorKey[],
+  targets: string[],
 ): ReceptorBurden[] {
-  return keys.map((key) => {
+  return targets.map((target) => {
     const contributors = resolved
       .map((r) => ({
         medId: r.medId,
         medName: r.medName,
-        score: getScore(r, key),
+        percent: getAffinityPercent(r, target) ?? 0,
         color: r.color,
       }))
-      .filter((c) => c.score > 0)
-      .sort((a, b) => b.score - a.score)
-    const rawTotal = contributors.reduce((sum, c) => sum + c.score, 0)
-    const total = Math.min(RECEPTOR_SCORE_MAX, rawTotal)
-    return { key, rawTotal, total, level: burdenLevel(total), contributors }
+      .filter((c) => c.percent > 0)
+      .sort((a, b) => b.percent - a.percent)
+    const rawTotal = contributors.reduce((sum, c) => sum + c.percent, 0)
+    const total = Math.min(AFFINITY_MAX, rawTotal)
+    return { target, rawTotal, total, level: burdenLevel(total), contributors }
   })
-}
-
-/**
- * Future-compat: aggregate receptor scores into a higher-level clinical burden
- * (e.g. sedation, anticholinergic). Returns the capped combined score across
- * all receptors tagged with the requested burden category. Not surfaced in the
- * UI yet — provided so sedation/anticholinergic/EPS/QT views can build on it.
- */
-export function computeTaggedBurden(
-  resolved: ResolvedDrugProfile[],
-  tag: BurdenTag,
-): { total: number; rawTotal: number; level: BurdenLevel } {
-  const keys = RECEPTOR_KEYS.filter((key) => getReceptorConfig(key)?.burdenTags.includes(tag))
-  let rawTotal = 0
-  for (const r of resolved) {
-    for (const key of keys) rawTotal += getScore(r, key)
-  }
-  const total = Math.min(RECEPTOR_SCORE_MAX, rawTotal)
-  return { total, rawTotal, level: burdenLevel(total) }
 }

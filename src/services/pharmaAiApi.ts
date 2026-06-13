@@ -1,4 +1,10 @@
-import type { DrugSectionKey } from '../types/knowledgeBase'
+import type {
+  AffinityScale,
+  DrugSectionKey,
+  ReceptorAffinityEntry,
+  ReceptorProfileVersion,
+} from '../types/knowledgeBase'
+import { sanitizeAffinityProfile } from '../utils/medication/receptorAffinity'
 import { API_BASE } from './apiClient'
 
 export interface PharmaGenerateParams {
@@ -14,8 +20,14 @@ export interface PharmaGenerateParams {
 export interface PharmaGenerateResult {
   /** Generated content keyed by drug section key (subset of requested). */
   sections: Partial<Record<DrugSectionKey, string>>
-  /** Optional receptor-strength map (0–5) when the model provided one. */
-  receptorProfile?: Record<string, number>
+  /** v2 receptor-profile schema version. */
+  receptorProfileVersion: ReceptorProfileVersion
+  /** Normalization scale of the affinity profile. */
+  affinityScale: AffinityScale
+  /** v2 relative receptor-affinity entries (validated, may be empty). */
+  receptorAffinityProfile: ReceptorAffinityEntry[]
+  /** True when the model emitted a deprecated 1–5 score map (ignored). */
+  legacyScoreProfileDetected?: boolean
   /** AI-suggested references — must be verified by the clinician. */
   references: string[]
   model?: { provider: string; modelId: string; label: string }
@@ -47,10 +59,17 @@ export async function generatePharmaDetails(
     throw new Error(detail?.error ?? `AI request failed (${response.status})`)
   }
 
-  const data = (await response.json()) as PharmaGenerateResult
+  const data = (await response.json()) as Partial<PharmaGenerateResult> & {
+    receptorAffinityProfile?: unknown
+  }
+  // Re-validate the affinity profile client-side so malformed entries are never
+  // persisted, regardless of what the API returned.
   return {
     sections: data.sections ?? {},
-    receptorProfile: data.receptorProfile,
+    receptorProfileVersion: 2,
+    affinityScale: 'relative_log_ki_percent',
+    receptorAffinityProfile: sanitizeAffinityProfile(data.receptorAffinityProfile),
+    legacyScoreProfileDetected: data.legacyScoreProfileDetected,
     references: Array.isArray(data.references) ? data.references : [],
     model: data.model,
   }

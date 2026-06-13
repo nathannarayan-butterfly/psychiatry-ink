@@ -332,16 +332,64 @@ export const medicationUiTranslations = {
     es: 'El radar funciona mejor con 1–3 sustancias. Para más medicamentos, la vista Matriz es más clara.',
   },
   medReceptorSafetyNote: {
-    de: 'Rezeptor-Scores sind vereinfachte klinische Näherungen aus der lokalen Wissensdatenbank. Sie repräsentieren keine exakte Rezeptorbesetzung, Dosisäquivalenz, Plasmakonzentration oder individuelle Patientenreaktion.',
-    en: 'Receptor scores are simplified clinical approximations from the local knowledge base. They do not represent exact receptor occupancy, dose equivalence, plasma concentration, or individual patient response.',
-    fr: 'Les scores des récepteurs sont des approximations cliniques simplifiées issues de la base de connaissances locale. Ils ne représentent pas l’occupation exacte des récepteurs, l’équivalence de dose, la concentration plasmatique ni la réponse individuelle du patient.',
-    es: 'Las puntuaciones de receptores son aproximaciones clínicas simplificadas de la base de conocimiento local. No representan la ocupación exacta de receptores, la equivalencia de dosis, la concentración plasmática ni la respuesta individual del paciente.',
+    de: 'Werte sind ein relativer Rezeptoraffinitäts-Index (%) aus der lokalen Wissensdatenbank — keine Rezeptorbesetzung, keine klinische Blockade, keine Dosisäquivalenz oder individuelle Patientenreaktion.',
+    en: 'Values are a relative receptor affinity index (%) from the local knowledge base — not receptor occupancy, not clinical blockade, not dose equivalence or individual patient response.',
+    fr: 'Les valeurs sont un indice relatif d’affinité des récepteurs (%) issu de la base de connaissances locale — pas l’occupation des récepteurs, pas le blocage clinique, ni l’équivalence de dose ou la réponse individuelle.',
+    es: 'Los valores son un índice relativo de afinidad de receptores (%) de la base de conocimiento local — no ocupación de receptores, no bloqueo clínico, ni equivalencia de dosis o respuesta individual.',
   },
   medReceptorLegend: {
     de: 'Legende',
     en: 'Legend',
     fr: 'Légende',
     es: 'Leyenda',
+  },
+  medReceptorAffinityAxisLabel: {
+    de: 'Relative Rezeptoraffinität (%)',
+    en: 'Relative receptor affinity (%)',
+    fr: 'Affinité relative des récepteurs (%)',
+    es: 'Afinidad relativa de receptores (%)',
+  },
+  medReceptorColAffinity: {
+    de: 'Affinität',
+    en: 'Affinity',
+    fr: 'Affinité',
+    es: 'Afinidad',
+  },
+  medReceptorAffinityIndex: {
+    de: 'Affinitätsindex',
+    en: 'Affinity index',
+    fr: 'Indice d’affinité',
+    es: 'Índice de afinidad',
+  },
+  medReceptorEstimated: {
+    de: 'geschätzt',
+    en: 'estimated',
+    fr: 'estimé',
+    es: 'estimado',
+  },
+  medReceptorEvidence: {
+    de: 'Evidenz',
+    en: 'Evidence',
+    fr: 'Preuve',
+    es: 'Evidencia',
+  },
+  medReceptorLegacyConverted: {
+    de: 'Legacy: umgerechnet aus 1–5-Score',
+    en: 'Legacy: converted from 1–5 score',
+    fr: 'Hérité : converti depuis le score 1–5',
+    es: 'Heredado: convertido desde la puntuación 1–5',
+  },
+  medReceptorLegacyBadge: {
+    de: 'Legacy-Rezeptorprofil',
+    en: 'Legacy receptor profile',
+    fr: 'Profil récepteur hérité',
+    es: 'Perfil de receptores heredado',
+  },
+  medReceptorTooltipDisclaimer: {
+    de: 'Relativer Affinitätsindex. Entspricht nicht der Rezeptorbesetzung oder klinischen Blockade.',
+    en: 'Relative affinity index. This does not equal receptor occupancy or clinical blockade.',
+    fr: 'Indice d’affinité relatif. N’équivaut pas à l’occupation des récepteurs ni au blocage clinique.',
+    es: 'Índice de afinidad relativo. No equivale a la ocupación de receptores ni al bloqueo clínico.',
   },
 } as const satisfies Record<string, LocaleMap>
 
