@@ -1,35 +1,87 @@
 import {
   ArrowLeft,
+  Bold,
+  BookOpen,
   ChevronDown,
   ChevronUp,
   Copy,
   Eye,
   EyeOff,
+  Highlighter,
+  MessageSquarePlus,
   Pencil,
   Plus,
   RotateCcw,
   Search,
   Sparkles,
   Trash2,
+  Underline,
   X,
 } from 'lucide-react'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from '../../context/TranslationContext'
+import { useKnowledgeBaseAnnotations } from '../../hooks/useKnowledgeBaseAnnotations'
 import { useKnowledgeBaseDrugs } from '../../hooks/useKnowledgeBaseDrugs'
+import { useKnowledgeBasePermissions } from '../../hooks/useKnowledgeBasePermissions'
+import {
+  useCountrySpecificPreparations,
+  formatPreparationStrength,
+  isVerifiedPreparation,
+} from '../../hooks/useMedicationMarketAvailability'
+import {
+  PRESCRIBING_COUNTRY_LABELS,
+  usePrescribingCountry,
+} from '../../hooks/usePrescribingCountry'
 import { showNotionToast } from '../notion/NotionToast'
 import { generatePharmaDetails } from '../../services/pharmaAiApi'
+import { useKnowledgeBaseAiTier, type KbAiTier } from '../../hooks/useKnowledgeBaseAiTier'
+import type { StructuredAiBundle } from '../../utils/medication/structuredAi'
 import {
   createDefaultSections,
   DEFAULT_SECTION_TEMPLATES,
   DRUG_CATEGORIES,
+  getSectionKind,
+  sectionHasStructuredData,
   type DrugSection,
   type DrugSectionKey,
   type KnowledgeBaseDrug,
+  type MedicationMarketAvailability,
+  type PrescribingCountryCode,
+  type PreparationVerificationStatus,
+  type ReceptorAffinityEntry,
   type ReceptorProfileDetail,
 } from '../../types/knowledgeBase'
+import {
+  CLINICAL_HINT_SECTION_KEYS,
+  KB_CANONICAL_PLACEHOLDER,
+  canonicalSectionNumber,
+  sectionByKey,
+  visibleCanonicalSections,
+  type CanonicalKbSection,
+} from '../../data/knowledgeBaseSectionRegistry'
+import { getReceptorActionLabel } from '../../data/receptorProfile'
+import {
+  HIGHLIGHT_COLORS,
+  KB_RECEPTOR_SECTION_ID,
+  type HighlightColor,
+  type HighlightStyle,
+  type UserHighlight,
+} from '../../types/knowledgeBaseAnnotations'
 import { formatSiteLocaleDate } from '../../utils/siteTimezone'
 import { getDisplayReceptorProfile } from '../../utils/medication/receptorAffinity'
+import { sectionToFullText } from '../../utils/medication/structuredSectionText'
+import { HighlightedText, getTextSelectionOffsets } from './KnowledgeBaseHighlightedText'
+import { KnowledgeBaseNotes } from './KnowledgeBaseNotes'
+import { KnowledgeBaseReadingPanel, type ReadingPanelRequest } from './KnowledgeBaseReadingPanel'
 import { KnowledgeBaseReceptorEditor } from './KnowledgeBaseReceptorEditor'
+import { MedicationExportMenu } from './MedicationExportMenu'
+import { KeyFactsTable } from '../medication/kb/KeyFactsTable'
+import { KbStructuredSection } from '../medication/kb/KbStructuredSection'
+import { KbStructuredEditor } from '../medication/kb/KbStructuredEditor'
+import { KbSectionNav, kbSectionDomId, type KbNavItem } from '../medication/kb/KbSectionNav'
+import { ReceptorRadar } from '../medication/kb/charts/ReceptorRadar'
+import { kbT } from '../medication/kb/kbStrings'
 
 interface KnowledgeBasePharmaProps {
   onClose: () => void
@@ -39,8 +91,123 @@ interface KnowledgeBasePharmaProps {
 }
 
 type SortKey = 'name' | 'class' | 'updated'
+type KnowledgeBaseMode = 'reading' | 'editing'
+type CreateProfileAction = 'empty' | 'ai_draft' | 'source_import'
+type PreparationDraft = Omit<MedicationMarketAvailability, 'id' | 'createdAt'> | MedicationMarketAvailability
 
 const ALL_CATEGORIES = 'all'
+
+/**
+ * Sentinel section id used to drive the reading panel (Ask AI / comments) for
+ * the country-specific preparations table, which is not a real `DrugSection`.
+ */
+const KB_PREPARATIONS_SECTION_ID = 'preparations'
+
+function drugSnapshotsEqual(a: KnowledgeBaseDrug, b: KnowledgeBaseDrug): boolean {
+  return JSON.stringify(a) === JSON.stringify(b)
+}
+
+/**
+ * Serialize the available-preparations table into plain text so the Ask-AI flow
+ * can answer "what's available / which strengths" questions. Reading mode only
+ * shows verified entries, mirroring what the clinician sees.
+ */
+function serializePreparationsForAsk(
+  drug: KnowledgeBaseDrug,
+  country: PrescribingCountryCode,
+  entries: MedicationMarketAvailability[],
+): string {
+  const header = [
+    `Medikament: ${drug.genericName}`,
+    `Land: ${getCountryLabel(country)}`,
+    'Verfügbare Präparate (Wissensdatenbank):',
+  ].join('\n')
+  if (entries.length === 0) {
+    return `${header}\n(Keine verifizierten Präparate für dieses Land hinterlegt.)`
+  }
+  const lines = entries.map((entry) => {
+    const parts = [
+      entry.tradeName,
+      formatPreparationStrength(entry),
+      entry.dosageForm,
+      entry.route,
+    ].filter(Boolean)
+    return `- ${parts.join(' · ')}`
+  })
+  return [header, ...lines].join('\n')
+}
+
+function getSectionDataForAsk(
+  drug: KnowledgeBaseDrug,
+  sectionId: string,
+  sections: DrugSection[],
+): string {
+  if (sectionId === KB_RECEPTOR_SECTION_ID) {
+    const prose = sections.find((s) => s.key === 'rezeptorprofil')?.content ?? ''
+    const profile = getDisplayReceptorProfile(drug)
+    const summary = profile.entries
+      .slice(0, 12)
+      .map((e) => `${e.target}: ${e.affinityPercent ?? '—'}% (${e.action})`)
+      .join('\n')
+    return [prose, summary].filter(Boolean).join('\n\n')
+  }
+  if (sectionId === 'canonical-klinischeHinweise') {
+    return CLINICAL_HINT_SECTION_KEYS
+      .map((key) => sections.find((section) => section.key === key))
+      .filter((section): section is DrugSection => Boolean(section))
+      .map((section) => sectionToFullText(section))
+      .filter(Boolean)
+      .join('\n\n')
+  }
+  const section = sections.find((s) => s.id === sectionId) ?? sections.find((s) => s.key === sectionId)
+  return section ? sectionToFullText(section) : ''
+}
+
+/**
+ * Merge an AI structured bundle into the matching sections by `key`, also
+ * stamping `kind` so the structured renderer/editor activates. Only the section
+ * keys covered by the bundle are touched; everything else is returned as-is.
+ */
+function applyStructuredBundle(
+  sections: DrugSection[],
+  bundle: StructuredAiBundle,
+  /** When set, restrict application to a single section key (per-section regen). */
+  onlyKey?: DrugSectionKey,
+): DrugSection[] {
+  if (
+    !bundle.pk &&
+    !bundle.titration &&
+    !bundle.taper &&
+    !bundle.depotOptions &&
+    !bundle.sideEffects &&
+    !bundle.cyp
+  ) {
+    return sections
+  }
+  return sections.map((s) => {
+    if (onlyKey && s.key !== onlyKey) return s
+    switch (s.key) {
+      case 'pharmakokinetik':
+        return bundle.pk ? { ...s, kind: 'pk' as const, pk: bundle.pk } : s
+      case 'dosierung':
+        return bundle.titration ? { ...s, kind: 'titration' as const, titration: bundle.titration } : s
+      case 'absetzen':
+        return bundle.taper ? { ...s, kind: 'taper' as const, titration: bundle.taper } : s
+      case 'umstellung':
+        return bundle.depotOptions
+          ? { ...s, kind: 'depot' as const, depotOptions: bundle.depotOptions }
+          : s
+      case 'nebenwirkungen':
+        return bundle.sideEffects
+          ? { ...s, kind: 'sideEffects' as const, sideEffects: bundle.sideEffects }
+          : s
+      case 'wechselwirkungen':
+        return bundle.cyp ? { ...s, kind: 'cyp' as const, cyp: bundle.cyp } : s
+      default:
+        return s
+    }
+  })
+}
 
 /**
  * Build the partial update that upgrades a drug to a v2 relative-affinity
@@ -74,7 +241,7 @@ function buildReceptorUpgradePatch(
 // ── Add Drug Dialog ──────────────────────────────────────────────────────────
 
 interface AddDrugDialogProps {
-  onSubmit: (drug: Omit<KnowledgeBaseDrug, 'id' | 'createdAt' | 'updatedAt'>) => void
+  onSubmit: (drug: Omit<KnowledgeBaseDrug, 'id' | 'createdAt' | 'updatedAt'>, action: CreateProfileAction) => void
   onCancel: () => void
 }
 
@@ -82,12 +249,8 @@ function AddDrugDialog({ onSubmit, onCancel }: AddDrugDialogProps) {
   const { t } = useTranslation()
   const [genericName, setGenericName] = useState('')
   const [brandNamesRaw, setBrandNamesRaw] = useState('')
-  const [drugClass, setDrugClass] = useState('')
-  const [category, setCategory] = useState<string>(DRUG_CATEGORIES[0])
-  const [atcCode, setAtcCode] = useState('')
-  const [tagsRaw, setTagsRaw] = useState('')
-  const [authorEditor, setAuthorEditor] = useState('')
-  const [status, setStatus] = useState<'active' | 'inactive'>('active')
+  const [category, setCategory] = useState<string>('Auto')
+  const [creationAction, setCreationAction] = useState<CreateProfileAction>('empty')
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -96,14 +259,15 @@ function AddDrugDialog({ onSubmit, onCancel }: AddDrugDialogProps) {
     onSubmit({
       genericName: trimmed,
       brandNames: brandNamesRaw.split(',').map((s) => s.trim()).filter(Boolean),
-      drugClass: drugClass.trim(),
+      drugClass: '',
       category,
-      atcCode: atcCode.trim() || undefined,
-      tags: tagsRaw.split(',').map((s) => s.trim()).filter(Boolean) || undefined,
-      authorEditor: authorEditor.trim() || undefined,
-      status,
+      tags: [],
+      status: 'active',
+      dataModelVersion: 2,
+      verificationStatus: creationAction === 'empty' ? 'draft' : 'ai_draft',
+      sourceHierarchyLevel: creationAction === 'source_import' ? 'source-import-requested' : undefined,
       sections: createDefaultSections(),
-    })
+    }, creationAction)
   }
 
   return (
@@ -144,18 +308,6 @@ function AddDrugDialog({ onSubmit, onCancel }: AddDrugDialogProps) {
             />
           </div>
           <div className="kbp-field">
-            <label className="kbp-field__label" htmlFor="kbp-drug-class">
-              {t('kbPharmaFieldClass')}
-            </label>
-            <input
-              id="kbp-drug-class"
-              type="text"
-              className="kbp-field__input"
-              value={drugClass}
-              onChange={(e) => setDrugClass(e.target.value)}
-            />
-          </div>
-          <div className="kbp-field">
             <label className="kbp-field__label" htmlFor="kbp-category">
               {t('kbPharmaFieldCategory')}
             </label>
@@ -165,58 +317,26 @@ function AddDrugDialog({ onSubmit, onCancel }: AddDrugDialogProps) {
               value={category}
               onChange={(e) => setCategory(e.target.value)}
             >
+              <option value="Auto">Auto</option>
               {DRUG_CATEGORIES.map((cat) => (
                 <option key={cat} value={cat}>{cat}</option>
               ))}
             </select>
           </div>
           <div className="kbp-field">
-            <label className="kbp-field__label" htmlFor="kbp-atc">
-              {t('kbPharmaFieldAtcCode')}
-            </label>
-            <input
-              id="kbp-atc"
-              type="text"
-              className="kbp-field__input"
-              value={atcCode}
-              onChange={(e) => setAtcCode(e.target.value)}
-              placeholder="N05AD01"
-            />
-          </div>
-          <div className="kbp-field">
-            <label className="kbp-field__label" htmlFor="kbp-tags">
-              {t('kbPharmaFieldTags')}
-            </label>
-            <input
-              id="kbp-tags"
-              type="text"
-              className="kbp-field__input"
-              value={tagsRaw}
-              onChange={(e) => setTagsRaw(e.target.value)}
-            />
-          </div>
-          <div className="kbp-field">
-            <label className="kbp-field__label" htmlFor="kbp-author">
-              {t('kbPharmaFieldAuthor')}
-            </label>
-            <input
-              id="kbp-author"
-              type="text"
-              className="kbp-field__input"
-              value={authorEditor}
-              onChange={(e) => setAuthorEditor(e.target.value)}
-            />
-          </div>
-          <div className="kbp-field">
-            <label className="kbp-field__label">{t('kbPharmaFieldStatus')}</label>
+            <label className="kbp-field__label">Startaktion</label>
             <div className="kbp-field__radio-group">
               <label className="kbp-field__radio">
-                <input type="radio" value="active" checked={status === 'active'} onChange={() => setStatus('active')} />
-                {t('kbPharmaStatusActive')}
+                <input type="radio" value="empty" checked={creationAction === 'empty'} onChange={() => setCreationAction('empty')} />
+                Leeres Profil erstellen
               </label>
               <label className="kbp-field__radio">
-                <input type="radio" value="inactive" checked={status === 'inactive'} onChange={() => setStatus('inactive')} />
-                {t('kbPharmaStatusInactive')}
+                <input type="radio" value="ai_draft" checked={creationAction === 'ai_draft'} onChange={() => setCreationAction('ai_draft')} />
+                Mit KI-Entwurf erstellen
+              </label>
+              <label className="kbp-field__radio">
+                <input type="radio" value="source_import" checked={creationAction === 'source_import'} onChange={() => setCreationAction('source_import')} />
+                Quelle importieren/anreichern (TODO: startet KI-Entwurf)
               </label>
             </div>
           </div>
@@ -225,6 +345,39 @@ function AddDrugDialog({ onSubmit, onCancel }: AddDrugDialogProps) {
             <button type="button" className="kbp-btn" onClick={onCancel}>{t('kbPharmaCancel')}</button>
           </div>
         </form>
+      </div>
+    </div>
+  )
+}
+
+// ── Finalize Confirm Dialog ──────────────────────────────────────────────────
+
+function FinalizeConfirmDialog({
+  onConfirm,
+  onDiscard,
+  onCancel,
+}: {
+  onConfirm: () => void
+  onDiscard: () => void
+  onCancel: () => void
+}) {
+  const { t } = useTranslation()
+  return (
+    <div className="kbp-overlay" role="dialog" aria-modal>
+      <div className="kbp-dialog kbp-dialog--sm">
+        <h2 className="kbp-dialog__title">{t('kbFinalizeTitle')}</h2>
+        <p className="kbp-dialog__delete-text">{t('kbFinalizeMessage')}</p>
+        <div className="kbp-dialog__actions">
+          <button type="button" className="kbp-btn kbp-btn--primary" onClick={onConfirm}>
+            {t('kbFinalizeYes')}
+          </button>
+          <button type="button" className="kbp-btn" onClick={onDiscard}>
+            {t('kbFinalizeNo')}
+          </button>
+          <button type="button" className="kbp-btn" onClick={onCancel}>
+            {t('kbPharmaCancel')}
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -384,9 +537,6 @@ function DrugListView({ drugs, onSelect, onAdd, language }: DrugListViewProps) {
                   )}
                 </span>
                 <span className="kbp-drug-row__meta">
-                  <span className={`kbp-status-badge${drug.status === 'inactive' ? ' kbp-status-badge--inactive' : ''}`}>
-                    {drug.status === 'active' ? t('kbPharmaStatusActive') : t('kbPharmaStatusInactive')}
-                  </span>
                   <span className="kbp-drug-row__date">
                     {formatSiteLocaleDate(drug.updatedAt, language as 'de' | 'en' | 'fr' | 'es')}
                   </span>
@@ -404,39 +554,120 @@ function DrugListView({ drugs, onSelect, onAdd, language }: DrugListViewProps) {
 
 interface SectionItemProps {
   section: DrugSection
+  drug: KnowledgeBaseDrug
+  language: string
   isFirst: boolean
   isLast: boolean
   isCollapsed: boolean
-  editMode: boolean
+  mode: KnowledgeBaseMode
+  isActive?: boolean
+  displayTitle?: string
+  domId?: string
+  isSubsection?: boolean
+  emptyText?: string
+  onActivate?: () => void
   onToggleCollapse: () => void
   onContentChange: (content: string) => void
+  onStructuredChange?: (patch: Partial<DrugSection>) => void
   onLabelChange: (label: string) => void
   onMoveUp: () => void
   onMoveDown: () => void
   onToggleHidden: () => void
   onDuplicate: () => void
   onDelete: () => void
+  onRegenerate?: () => void
+  regenerateLoading?: boolean
+  regenerateError?: string | null
+  highlights?: UserHighlight[]
+  onAddAnnotation?: (
+    startOffset: number,
+    endOffset: number,
+    text: string,
+    style: HighlightStyle,
+    color?: HighlightColor,
+  ) => void
+  onRemoveHighlight?: (highlightId: string) => void
+  onCommentSelection?: (text: string) => void
+  onAskAiSelection?: (text: string) => void
+  /** Section-level comment trigger (graph sections, where in-text select N/A). */
+  onSectionComment?: () => void
+  onSectionAskAi?: () => void
 }
 
 function SectionItem({
   section,
+  drug,
+  language,
   isFirst,
   isLast,
   isCollapsed,
-  editMode,
+  mode,
+  isActive = false,
+  displayTitle,
+  domId,
+  isSubsection = false,
+  emptyText,
+  onActivate,
   onToggleCollapse,
   onContentChange,
+  onStructuredChange,
   onLabelChange,
   onMoveUp,
   onMoveDown,
   onToggleHidden,
   onDuplicate,
   onDelete,
+  onRegenerate,
+  regenerateLoading = false,
+  regenerateError = null,
+  highlights = [],
+  onAddAnnotation,
+  onRemoveHighlight,
+  onCommentSelection,
+  onAskAiSelection,
+  onSectionComment,
+  // onSectionAskAi is intentionally not used here: the section-level KI action
+  // is edit-mode only, so it is omitted from the reading-mode section header.
 }: SectionItemProps) {
   const { t } = useTranslation()
   const [editingLabel, setEditingLabel] = useState(false)
   const [labelDraft, setLabelDraft] = useState(section.label)
+  const [selectionToolbar, setSelectionToolbar] = useState<{ top: number; left: number } | null>(null)
+  const [pendingSelection, setPendingSelection] = useState<{ startOffset: number; endOffset: number; text: string } | null>(null)
+  const [showHighlightColors, setShowHighlightColors] = useState(false)
   const labelInputRef = useRef<HTMLInputElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
+  const toolbarRef = useRef<HTMLDivElement>(null)
+  const editMode = mode === 'editing'
+  const sectionKind = getSectionKind(section)
+  const isStructured = sectionKind !== 'text'
+  const isEmptyReadingSection =
+    !editMode && !section.content.trim() && !sectionHasStructuredData(section)
+
+  const closeSelectionToolbar = useCallback(() => {
+    setSelectionToolbar(null)
+    setPendingSelection(null)
+    setShowHighlightColors(false)
+  }, [])
+
+  // Dismiss the floating toolbar on click-away or when the selection clears.
+  useEffect(() => {
+    if (!selectionToolbar) return
+    const handlePointerDown = (e: MouseEvent) => {
+      if (toolbarRef.current?.contains(e.target as Node)) return
+      closeSelectionToolbar()
+    }
+    const handleSelectionChange = () => {
+      const sel = window.getSelection()
+      if (!sel || sel.isCollapsed) closeSelectionToolbar()
+    }
+    document.addEventListener('mousedown', handlePointerDown)
+    document.addEventListener('selectionchange', handleSelectionChange)
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown)
+      document.removeEventListener('selectionchange', handleSelectionChange)
+    }
+  }, [selectionToolbar, closeSelectionToolbar])
 
   if (section.hidden && !editMode) return null
 
@@ -449,15 +680,90 @@ function SectionItem({
     else setLabelDraft(section.label)
   }
 
+  const handleReadingHeaderClick = () => {
+    onActivate?.()
+    onToggleCollapse()
+  }
+
+  const handleContentMouseUp = () => {
+    if (editMode || !contentRef.current) return
+    // Read the selection on the next frame so the browser has committed the
+    // native selection first (keeps drag-selecting smooth, avoids stale reads).
+    requestAnimationFrame(() => {
+      const container = contentRef.current
+      if (!container) return
+      const offsets = getTextSelectionOffsets(container, section.content)
+      if (!offsets) {
+        closeSelectionToolbar()
+        return
+      }
+      const sel = window.getSelection()
+      if (!sel || sel.rangeCount === 0) return
+      const rect = sel.getRangeAt(0).getBoundingClientRect()
+      if (!rect) return
+      onActivate?.()
+      setPendingSelection(offsets)
+      // The toolbar is `position: fixed` and rendered in a portal on document.body,
+      // so use viewport coordinates directly (no offset-parent / scroll math). This
+      // keeps it from being clipped by the scrolling, full-width reading layout.
+      // Place it above the selection, flipping below when there is no room at the top.
+      const TOOLBAR_GAP = 44
+      const topCandidate = rect.top - TOOLBAR_GAP
+      const top = topCandidate < 8 ? rect.bottom + 8 : topCandidate
+      const left = Math.min(
+        Math.max(rect.left + rect.width / 2, 80),
+        window.innerWidth - 80,
+      )
+      setSelectionToolbar({ top, left })
+    })
+  }
+
+  const handleAnnotate = (style: HighlightStyle, color?: HighlightColor) => {
+    if (!pendingSelection || !onAddAnnotation) return
+    onAddAnnotation(pendingSelection.startOffset, pendingSelection.endOffset, pendingSelection.text, style, color)
+    closeSelectionToolbar()
+    window.getSelection()?.removeAllRanges()
+  }
+
+  const handleCopySelection = async () => {
+    if (!pendingSelection) return
+    try {
+      await navigator.clipboard.writeText(pendingSelection.text)
+      showNotionToast(t('kbReadingCopied'))
+    } catch {
+      showNotionToast(t('kbReadingCopyFailed'))
+    }
+    closeSelectionToolbar()
+    window.getSelection()?.removeAllRanges()
+  }
+
+  const handleCommentClick = () => {
+    if (!pendingSelection || !onCommentSelection) return
+    onCommentSelection(pendingSelection.text)
+    closeSelectionToolbar()
+    window.getSelection()?.removeAllRanges()
+  }
+
+  const handleAskAiClick = () => {
+    if (!pendingSelection || !onAskAiSelection) return
+    onAskAiSelection(pendingSelection.text)
+    closeSelectionToolbar()
+    window.getSelection()?.removeAllRanges()
+  }
+
   return (
-    <div className={`kbp-section${dimmed ? ' kbp-section--hidden' : ''}`}>
+    <div
+      id={domId ?? kbSectionDomId(section.id)}
+      data-kb-section={section.key}
+      className={`kbp-section${isSubsection ? ' kbp-section--subsection' : ''}${dimmed ? ' kbp-section--hidden' : ''}${isActive && !editMode ? ' kbp-section--active' : ''}`}
+    >
       <div
         className="kbp-section__header"
         role={editMode ? undefined : 'button'}
         tabIndex={editMode ? undefined : 0}
-        onClick={editMode ? undefined : onToggleCollapse}
+        onClick={editMode ? undefined : handleReadingHeaderClick}
         onKeyDown={editMode ? undefined : (e) => {
-          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggleCollapse() }
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleReadingHeaderClick() }
         }}
       >
         {editMode ? (
@@ -508,6 +814,18 @@ function SectionItem({
             )}
 
             <div className="kbp-section__edit-actions">
+              {onRegenerate && section.key !== 'custom' ? (
+                <button
+                  type="button"
+                  className="kbp-btn kbp-btn--sm kbp-btn--ai"
+                  onClick={onRegenerate}
+                  disabled={regenerateLoading}
+                  title={t('kbSectionRegenerate')}
+                >
+                  <Sparkles className={`h-3 w-3${regenerateLoading ? ' kbp-spin' : ''}`} strokeWidth={1.75} aria-hidden />
+                  {regenerateLoading ? t('kbSectionRegenerating') : t('kbSectionRegenerate')}
+                </button>
+              ) : null}
               <button
                 type="button"
                 className="kbp-icon-btn kbp-icon-btn--xs"
@@ -538,34 +856,705 @@ function SectionItem({
           </div>
         ) : (
           <div className="kbp-section__header-view">
-            <span className="kbp-section__label">{section.label}</span>
-            <ChevronDown
-              className={`kbp-section__chevron h-3.5 w-3.5${isCollapsed ? '' : ' kbp-section__chevron--open'}`}
-              strokeWidth={1.75}
-              aria-hidden
-            />
+            <span className="kbp-section__title-wrap">
+              <span className="kbp-section__label">
+                <span className="kbp-section__title">{displayTitle ?? section.label}</span>
+              </span>
+            </span>
+            <div className="kbp-section__header-right">
+              {/* Section-level AI ("KI restructure") action is edit-mode only;
+                  reading mode keeps just the Comment study affordance. */}
+              {isStructured && onSectionComment ? (
+                <span
+                  className="kbp-section__actions"
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                >
+                  <button
+                    type="button"
+                    className="kbp-section__action-btn"
+                    onClick={onSectionComment}
+                    title={kbT(language, 'sectionComment')}
+                    aria-label={kbT(language, 'sectionComment')}
+                  >
+                    <MessageSquarePlus className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+                  </button>
+                </span>
+              ) : null}
+              <ChevronDown
+                className={`kbp-section__chevron h-3.5 w-3.5${isCollapsed ? '' : ' kbp-section__chevron--open'}`}
+                strokeWidth={1.75}
+                aria-hidden
+              />
+            </div>
           </div>
         )}
       </div>
 
+      {regenerateError ? <p className="kbp-ai-error" role="alert">{regenerateError}</p> : null}
+
       {(!isCollapsed || editMode) && (
         <div className="kbp-section__body">
           {editMode ? (
-            <textarea
-              className="kbp-section__textarea"
-              value={section.content}
-              onChange={(e) => onContentChange(e.target.value)}
-              placeholder={t('kbPharmaContentPlaceholder')}
-              rows={4}
-            />
-          ) : section.content ? (
-            <p className="kbp-section__text">{section.content}</p>
+            <>
+              <textarea
+                className="kbp-section__textarea"
+                value={section.content}
+                onChange={(e) => onContentChange(e.target.value)}
+                placeholder={t('kbPharmaContentPlaceholder')}
+                rows={4}
+              />
+              {isStructured && onStructuredChange ? (
+                <KbStructuredEditor section={section} language={language} onChange={onStructuredChange} />
+              ) : null}
+            </>
+          ) : isEmptyReadingSection ? (
+            <p className="kbp-section__text kbp-section__text--empty">
+              {emptyText ?? t('kbPharmaSectionEmpty')}
+            </p>
+          ) : isStructured ? (
+            <div className="kbp-section__reading-content">
+              <KbStructuredSection section={section} drug={drug} language={language} />
+            </div>
           ) : (
-            <p className="kbp-section__text kbp-section__text--empty">{t('kbPharmaSectionEmpty')}</p>
+            <div
+              ref={contentRef}
+              className="kbp-section__reading-content"
+              onMouseUp={handleContentMouseUp}
+            >
+              {section.content ? (
+                <HighlightedText
+                  content={section.content}
+                  highlights={highlights}
+                  onRemoveHighlight={onRemoveHighlight}
+                />
+              ) : (
+                <p className="kbp-section__text kbp-section__text--empty">{t('kbPharmaSectionEmpty')}</p>
+              )}
+              {selectionToolbar
+                ? createPortal(
+                    <div
+                      ref={toolbarRef}
+                      className="kbp-selection-toolbar"
+                      style={{ top: selectionToolbar.top, left: selectionToolbar.left }}
+                      onMouseDown={(e) => e.preventDefault()}
+                      role="toolbar"
+                      aria-label={t('kbReadingSelectionToolbar')}
+                    >
+                  <button
+                    type="button"
+                    className="kbp-selection-toolbar__btn"
+                    onClick={handleCommentClick}
+                    title={t('kbReadingComment')}
+                    aria-label={t('kbReadingComment')}
+                  >
+                    <MessageSquarePlus className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+                  </button>
+                  <span className="kbp-selection-toolbar__hl">
+                    <button
+                      type="button"
+                      className={`kbp-selection-toolbar__btn${showHighlightColors ? ' kbp-selection-toolbar__btn--active' : ''}`}
+                      onClick={() => setShowHighlightColors((open) => !open)}
+                      title={t('kbReadingHighlight')}
+                      aria-label={t('kbReadingHighlight')}
+                      aria-expanded={showHighlightColors}
+                    >
+                      <Highlighter className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+                    </button>
+                    {showHighlightColors ? (
+                      <span className="kbp-swatches" role="group" aria-label={kbT(language, 'highlightColor')}>
+                        {HIGHLIGHT_COLORS.map((color) => (
+                          <button
+                            key={color}
+                            type="button"
+                            className={`kbp-swatch kbp-swatch--${color}`}
+                            onClick={() => handleAnnotate('highlight', color)}
+                            title={kbT(language, `highlightColor_${color}` as const)}
+                            aria-label={kbT(language, `highlightColor_${color}` as const)}
+                          />
+                        ))}
+                      </span>
+                    ) : null}
+                  </span>
+                  <button
+                    type="button"
+                    className="kbp-selection-toolbar__btn"
+                    onClick={() => handleAnnotate('underline')}
+                    title={t('kbReadingUnderline')}
+                    aria-label={t('kbReadingUnderline')}
+                  >
+                    <Underline className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+                  </button>
+                  <button
+                    type="button"
+                    className="kbp-selection-toolbar__btn"
+                    onClick={() => handleAnnotate('bold')}
+                    title={t('kbReadingBold')}
+                    aria-label={t('kbReadingBold')}
+                  >
+                    <Bold className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+                  </button>
+                  <button
+                    type="button"
+                    className="kbp-selection-toolbar__btn"
+                    onClick={() => void handleCopySelection()}
+                    title={t('kbReadingCopy')}
+                    aria-label={t('kbReadingCopy')}
+                  >
+                    <Copy className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+                  </button>
+                  <span className="kbp-selection-toolbar__divider" aria-hidden />
+                  <button
+                    type="button"
+                    className="kbp-selection-toolbar__btn kbp-selection-toolbar__btn--ai"
+                    onClick={handleAskAiClick}
+                    title={t('kbReadingAskAiAction')}
+                    aria-label={t('kbReadingAskAiAction')}
+                  >
+                    <Sparkles className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+                    <span className="kbp-selection-toolbar__label">{t('kbReadingAskAiAction')}</span>
+                  </button>
+                    </div>,
+                    document.body,
+                  )
+                : null}
+            </div>
           )}
         </div>
       )}
     </div>
+  )
+}
+
+function CanonicalPlaceholderSection({
+  id,
+  title,
+  isActive,
+  onActivate,
+}: {
+  id: string
+  title: string
+  isActive: boolean
+  onActivate: () => void
+}) {
+  return (
+    <section
+      id={kbSectionDomId(id)}
+      data-kb-section={id}
+      className={`kbp-section${isActive ? ' kbp-section--active' : ''}`}
+      onClick={onActivate}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onActivate()
+        }
+      }}
+      role="button"
+      tabIndex={0}
+    >
+      <div className="kbp-section__header-view kbp-section__header-view--static">
+        <span className="kbp-section__title-wrap">
+          <span className="kbp-section__label">
+            <span className="kbp-section__title">{title}</span>
+          </span>
+        </span>
+      </div>
+      <div className="kbp-section__body">
+        <p className="kbp-section__text kbp-section__text--empty">{KB_CANONICAL_PLACEHOLDER}</p>
+      </div>
+    </section>
+  )
+}
+
+function TextbookBox({
+  tone,
+  title,
+  children,
+}: {
+  tone: 'clinical' | 'caution' | 'monitoring' | 'evidence'
+  title: string
+  children: React.ReactNode
+}) {
+  return (
+    <aside className={`kb-textbook-box kb-textbook-box--${tone}`}>
+      <p className="kb-textbook-box__title">{title}</p>
+      <div className="kb-textbook-box__body">{children}</div>
+    </aside>
+  )
+}
+
+function formatKbDate(value: string | undefined, language: string): string {
+  return value ? formatSiteLocaleDate(value, language as 'de' | 'en' | 'fr' | 'es') : '—'
+}
+
+function formatAuditLine(prefix: string, name: string | undefined, date: string | undefined, language: string): string {
+  return `${prefix} ${name ?? 'Unbekannt'} · ${formatKbDate(date, language)}`
+}
+
+function getCountryLabel(country: PrescribingCountryCode): string {
+  return `${country} · ${PRESCRIBING_COUNTRY_LABELS[country]}`
+}
+
+function emptyPreparationDraft(
+  drug: KnowledgeBaseDrug,
+  countryCode: PrescribingCountryCode,
+): Omit<MedicationMarketAvailability, 'id' | 'createdAt'> {
+  return {
+    substanceId: drug.id,
+    countryCode,
+    tradeName: '',
+    genericName: drug.genericName,
+    strengthValue: '',
+    strengthUnit: 'mg',
+    dosageForm: 'tablet',
+    route: 'oral',
+    packageSize: '',
+    productIdentifierType: 'PZN',
+    productIdentifier: '',
+    prescriptionStatus: 'verschreibungspflichtig',
+    marketStatus: 'available',
+    sourceName: '',
+    sourceUrl: '',
+    sourceReference: '',
+    verificationStatus: 'unverified',
+    notes: '',
+  }
+}
+
+function PreparationForm({
+  draft,
+  disabled,
+  onChange,
+  onSubmit,
+  onCancel,
+  submitLabel,
+}: {
+  draft: PreparationDraft
+  disabled?: boolean
+  onChange: (draft: PreparationDraft) => void
+  onSubmit: () => void
+  onCancel?: () => void
+  submitLabel: string
+}) {
+  const setField = <K extends keyof PreparationDraft>(key: K, value: PreparationDraft[K]) => {
+    onChange({ ...draft, [key]: value })
+  }
+  return (
+    <div className="kb-prep-form">
+      <div className="kb-prep-form__grid">
+        <label className="kbp-field">
+          <span className="kbp-field__label">Handelsname</span>
+          <input className="kbp-field__input" value={draft.tradeName} disabled={disabled} onChange={(e) => setField('tradeName', e.target.value)} />
+        </label>
+        <label className="kbp-field">
+          <span className="kbp-field__label">Wirkstoff</span>
+          <input className="kbp-field__input" value={draft.genericName} disabled={disabled} onChange={(e) => setField('genericName', e.target.value)} />
+        </label>
+        <label className="kbp-field">
+          <span className="kbp-field__label">Stärke</span>
+          <input className="kbp-field__input" value={draft.strengthValue} disabled={disabled} onChange={(e) => setField('strengthValue', e.target.value)} />
+        </label>
+        <label className="kbp-field">
+          <span className="kbp-field__label">Einheit</span>
+          <input className="kbp-field__input" value={draft.strengthUnit} disabled={disabled} onChange={(e) => setField('strengthUnit', e.target.value)} />
+        </label>
+        <label className="kbp-field">
+          <span className="kbp-field__label">Darreichungsform</span>
+          <input className="kbp-field__input" value={draft.dosageForm} disabled={disabled} onChange={(e) => setField('dosageForm', e.target.value)} />
+        </label>
+        <label className="kbp-field">
+          <span className="kbp-field__label">Route</span>
+          <input className="kbp-field__input" value={draft.route} disabled={disabled} onChange={(e) => setField('route', e.target.value)} />
+        </label>
+        <label className="kbp-field">
+          <span className="kbp-field__label">Packung</span>
+          <input className="kbp-field__input" value={draft.packageSize ?? ''} disabled={disabled} onChange={(e) => setField('packageSize', e.target.value)} />
+        </label>
+        <label className="kbp-field">
+          <span className="kbp-field__label">Produkt-ID</span>
+          <input className="kbp-field__input" value={draft.productIdentifier ?? ''} disabled={disabled} onChange={(e) => setField('productIdentifier', e.target.value)} />
+        </label>
+        <label className="kbp-field">
+          <span className="kbp-field__label">Quelle</span>
+          <input className="kbp-field__input" value={draft.sourceName ?? ''} disabled={disabled} onChange={(e) => setField('sourceName', e.target.value)} />
+        </label>
+        <label className="kbp-field">
+          <span className="kbp-field__label">Verifikation</span>
+          <select className="kbp-field__select" value={draft.verificationStatus} disabled={disabled} onChange={(e) => setField('verificationStatus', e.target.value as PreparationVerificationStatus)}>
+            <option value="unverified">unverified</option>
+            <option value="ai_draft">ai_draft</option>
+            <option value="manually_verified">manually_verified</option>
+            <option value="imported_verified">imported_verified</option>
+          </select>
+        </label>
+      </div>
+      <label className="kbp-field">
+        <span className="kbp-field__label">Notizen / Quellenreferenz</span>
+        <textarea className="kbp-section__textarea" rows={2} value={draft.notes ?? draft.sourceReference ?? ''} disabled={disabled} onChange={(e) => setField('notes', e.target.value)} />
+      </label>
+      <div className="kb-prep-form__actions">
+        <button type="button" className="kbp-btn kbp-btn--primary" disabled={disabled || !draft.tradeName.trim() || !draft.strengthValue.trim()} onClick={onSubmit}>
+          {submitLabel}
+        </button>
+        {onCancel ? <button type="button" className="kbp-btn" onClick={onCancel}>Abbrechen</button> : null}
+      </div>
+    </div>
+  )
+}
+
+function CountryPreparationsSection({
+  drug,
+  mode,
+  language,
+  onAskAi,
+}: {
+  drug: KnowledgeBaseDrug
+  mode: KnowledgeBaseMode
+  language: string
+  /** Reading-mode only: open the right panel's Ask AI with prep context. */
+  onAskAi?: (contextText: string) => void
+}) {
+  // Single source of truth: the prescribing country comes from settings. The
+  // section is read-only here; change the country on the Settings page.
+  const { defaultPrescribingCountry } = usePrescribingCountry()
+  const country = defaultPrescribingCountry
+  const { byCountry, addPreparation, updatePreparation, deletePreparation } = useCountrySpecificPreparations(drug.id)
+  const [showAdd, setShowAdd] = useState(false)
+  const [newDraft, setNewDraft] = useState(() => emptyPreparationDraft(drug, defaultPrescribingCountry))
+  const [editingId, setEditingId] = useState<string | null>(null)
+
+  useEffect(() => {
+    setNewDraft((current) => ({ ...current, substanceId: drug.id, genericName: drug.genericName, countryCode: country }))
+  }, [country, drug.genericName, drug.id])
+
+  const entries = byCountry(country, mode === 'reading')
+  const allEntriesForCountry = byCountry(country, false)
+  const hasVerified = allEntriesForCountry.some(isVerifiedPreparation)
+
+  const title = mode === 'reading' ? 'Verfügbare Präparate' : 'Verfügbare Präparate / Country-specific preparations'
+
+  return (
+    <section data-kb-section="preparations" className={`kbp-section kbp-preparations-section${mode === 'reading' ? ' kbp-section--subsection' : ''}`}>
+      <div className="kbp-section__header-view kbp-section__header-view--static">
+        <span className="kbp-section__title-wrap">
+          <span className="kbp-section__label">
+            <span className="kbp-section__title">{title}</span>
+          </span>
+        </span>
+        <span className="kb-prep-header-meta" onClick={(e) => e.stopPropagation()}>
+          <span className="kb-prep-country-static">
+            {kbT(language, 'prepCountryLabel')}: {getCountryLabel(country)}
+          </span>
+          {mode === 'reading' && onAskAi ? (
+            <button
+              type="button"
+              className="kbp-section__action-btn kbp-section__action-btn--ai"
+              onClick={() => onAskAi(serializePreparationsForAsk(drug, country, entries))}
+              title={kbT(language, 'prepAskAiTitle')}
+              aria-label={kbT(language, 'prepAskAiTitle')}
+            >
+              <Sparkles className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+            </button>
+          ) : null}
+        </span>
+      </div>
+      <div className="kbp-section__body">
+        {entries.length === 0 ? (
+          <p className="kbp-section__text kbp-section__text--empty">
+            No verified preparation data available for {PRESCRIBING_COUNTRY_LABELS[country]}. Add manually or run source enrichment.
+          </p>
+        ) : mode === 'reading' ? (
+          <div className="kb-prep-table-wrap">
+            <table className="kb-prep-table kb-prep-table--reading">
+              <thead>
+                <tr>
+                  <th>Präparat</th>
+                  <th>Stärke</th>
+                  <th>Form</th>
+                  <th>Quelle / Verifiziert</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map((entry) => (
+                  <tr key={entry.id}>
+                    <td><strong>{entry.tradeName}</strong></td>
+                    <td>{formatPreparationStrength(entry)}</td>
+                    <td>{entry.dosageForm}</td>
+                    <td>
+                      {entry.sourceName || entry.sourceReference || '—'}
+                      {entry.lastVerifiedAt ? (
+                        <span className="kb-prep-table__verified">
+                          {formatKbDate(entry.lastVerifiedAt, language)}
+                        </span>
+                      ) : null}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="kb-prep-table-wrap">
+            <table className="kb-prep-table">
+              <thead>
+                <tr>
+                  <th>Präparat</th>
+                  <th>Stärke</th>
+                  <th>Form</th>
+                  <th>Quelle</th>
+                  <th>Verifiziert</th>
+                  {mode === 'editing' ? <th>Aktionen</th> : null}
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map((entry) => (
+                  <tr key={entry.id}>
+                    <td>
+                      <strong>{entry.tradeName}</strong>
+                      <span className="kb-prep-table__meta">{entry.genericName}</span>
+                      {mode === 'editing' ? (
+                        <span className="kb-prep-table__meta">
+                          {formatAuditLine('Erstellt von', entry.createdByDisplayName, entry.createdAt, language)}
+                          {' · '}
+                          {formatAuditLine('Geändert von', entry.lastModifiedByDisplayName, entry.lastModifiedAt, language)}
+                        </span>
+                      ) : null}
+                    </td>
+                    <td>{formatPreparationStrength(entry)}</td>
+                    <td>{entry.dosageForm} · {entry.route}</td>
+                    <td>{entry.sourceName || entry.sourceReference || '—'}</td>
+                    <td>{entry.verificationStatus} · {formatKbDate(entry.lastVerifiedAt, language)}</td>
+                    {mode === 'editing' ? (
+                      <td>
+                        <div className="kb-prep-table__actions">
+                          <button type="button" className="kbp-btn kbp-btn--sm" onClick={() => setEditingId(entry.id)}>Bearbeiten</button>
+                          <button type="button" className="kbp-icon-btn kbp-icon-btn--xs kbp-icon-btn--danger" onClick={() => deletePreparation(entry.id)} title="Löschen">
+                            <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+                          </button>
+                        </div>
+                        {editingId === entry.id ? (
+                          <PreparationForm
+                            draft={entry}
+                            onChange={(next) => updatePreparation(next as MedicationMarketAvailability)}
+                            onSubmit={() => setEditingId(null)}
+                            onCancel={() => setEditingId(null)}
+                            submitLabel="Fertig"
+                          />
+                        ) : null}
+                      </td>
+                    ) : null}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {mode === 'reading' && entries.length > 0 ? (
+          <p className="kb-prep-source-note">
+            Quellenstand: {entries.map((entry) => entry.sourceName || entry.sourceReference).filter(Boolean).slice(0, 2).join(', ') || '—'}
+          </p>
+        ) : null}
+        {mode === 'editing' ? (
+          <div className="kb-prep-edit-panel">
+            {!hasVerified ? (
+              <p className="kbp-section__text kbp-section__text--empty">
+                No verified preparation data available for {PRESCRIBING_COUNTRY_LABELS[country]}. Add manually or run source enrichment.
+              </p>
+            ) : null}
+            <div className="kb-prep-edit-panel__actions">
+              <button type="button" className="kbp-btn kbp-btn--sm" onClick={() => { setShowAdd((open) => !open); setNewDraft(emptyPreparationDraft(drug, country)) }}>
+                <Plus className="h-3.5 w-3.5" strokeWidth={2.25} aria-hidden />
+                Präparat hinzufügen
+              </button>
+              <button type="button" className="kbp-btn kbp-btn--sm" onClick={() => showNotionToast('Source enrichment is not implemented yet.')}>
+                Import / Anreichern
+              </button>
+            </div>
+            {showAdd ? (
+              <PreparationForm
+                draft={newDraft}
+                onChange={(next) => setNewDraft(next as Omit<MedicationMarketAvailability, 'id' | 'createdAt'>)}
+                onSubmit={() => {
+                  addPreparation(newDraft)
+                  setNewDraft(emptyPreparationDraft(drug, country))
+                  setShowAdd(false)
+                }}
+                onCancel={() => setShowAdd(false)}
+                submitLabel="Präparat speichern"
+              />
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    </section>
+  )
+}
+
+function targetMatches(entry: ReceptorAffinityEntry, aliases: string[]): boolean {
+  const normalized = entry.target.toLowerCase().replace(/[α]/g, 'alpha').replace(/[^a-z0-9]/g, '')
+  return aliases.some((alias) => normalized.includes(alias))
+}
+
+function interpretationLine(entry: ReceptorAffinityEntry, text: string): string {
+  const value = entry.affinityPercent == null ? 'unbekannter relativer Affinität' : `${entry.affinityPercent}% relativer Affinität`
+  return `${entry.target} (${value}): ${text}`
+}
+
+function buildClinicalInterpretation(entries: ReceptorAffinityEntry[]): string[] {
+  const items: string[] = []
+  const d2 = entries.find((entry) => targetMatches(entry, ['d2']))
+  if (d2) {
+    items.push(interpretationLine(d2, 'stützt antipsychotische Wirksamkeit; hohe Werte erhöhen die Relevanz von EPS und Prolaktin.'))
+  }
+  const ht2a = entries.find((entry) => targetMatches(entry, ['5ht2a']))
+  if (ht2a) {
+    items.push(interpretationLine(ht2a, 'kann EPS-Risiko und Negativsymptomatik günstig modulieren.'))
+  }
+  const alpha1 = entries.find((entry) => targetMatches(entry, ['alpha1', 'a1']))
+  if (alpha1) {
+    items.push(interpretationLine(alpha1, 'spricht klinisch für Orthostase- und Sedierungsrisiko.'))
+  }
+  const h1 = entries.find((entry) => targetMatches(entry, ['h1']))
+  if (h1) {
+    items.push(interpretationLine(h1, 'ist vor allem für Sedierung, Appetitsteigerung und Gewicht relevant.'))
+  }
+  const alpha2 = entries.find((entry) => targetMatches(entry, ['alpha2', 'a2']))
+  if (alpha2) {
+    items.push(interpretationLine(alpha2, 'weist auf noradrenerge Modulation mit potenzieller Wirkung auf Vigilanz und Affekt hin.'))
+  }
+  return items
+}
+
+function ReceptorProfileChapterSection({
+  drug,
+  language,
+  prose,
+  isActive,
+  onActivate,
+  onSectionComment,
+  // onSectionAskAi: edit-mode only; not rendered in the reading chapter header.
+}: {
+  drug: KnowledgeBaseDrug
+  language: string
+  prose: string
+  isActive: boolean
+  onActivate: () => void
+  onSectionComment: () => void
+  onSectionAskAi: () => void
+}) {
+  const { t } = useTranslation()
+  const receptorDisplay = getDisplayReceptorProfile(drug)
+  const lang = language === 'en' || language === 'fr' || language === 'es' ? language : 'de'
+  const ranked = [...receptorDisplay.entries]
+    .sort((a, b) => (b.affinityPercent ?? -1) - (a.affinityPercent ?? -1))
+    .slice(0, 8)
+  const interpretation = buildClinicalInterpretation(ranked)
+  const hasContent = prose.trim() || ranked.length > 0
+
+  return (
+    <section
+      id={kbSectionDomId(KB_RECEPTOR_SECTION_ID)}
+      data-kb-section={KB_RECEPTOR_SECTION_ID}
+      className={`kbp-receptor-section${isActive ? ' kbp-section--active' : ''}`}
+      onClick={onActivate}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onActivate()
+        }
+      }}
+      role="button"
+      tabIndex={0}
+    >
+      <div className="kbp-receptor-section__head">
+        <div className="kbp-section__title-wrap">
+          <h3 className="kbp-section__label kbp-section__label--heading">
+            <span className="kbp-section__title">Rezeptorprofil</span>
+          </h3>
+        </div>
+        <div className="kbp-receptor-section__head-meta">
+          {drug.receptorProfileVersion === 2 ? (
+            <span className="kbp-receptor-section__badge">{t('kbReceptorV2Badge')}</span>
+          ) : receptorDisplay.isLegacy ? (
+            <span className="kbp-receptor-section__badge kbp-receptor-section__badge--legacy">
+              {t('kbReceptorLegacyBadge')}
+            </span>
+          ) : null}
+          <span
+            className="kbp-section__actions"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            {/* KI restructure action is edit-mode only; reading keeps Comment. */}
+            <button
+              type="button"
+              className="kbp-section__action-btn"
+              onClick={onSectionComment}
+              title={kbT(language, 'sectionComment')}
+              aria-label={kbT(language, 'sectionComment')}
+            >
+              <MessageSquarePlus className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+            </button>
+          </span>
+        </div>
+      </div>
+      {drug.lastReceptorProfileUpdatedAt ? (
+        <p className="kbp-receptor-section__updated">
+          {t('kbReceptorLastUpdated')}:{' '}
+          {formatSiteLocaleDate(drug.lastReceptorProfileUpdatedAt, language as 'de' | 'en' | 'fr' | 'es')}
+        </p>
+      ) : null}
+      {!hasContent ? (
+        <p className="kbp-section__text kbp-section__text--empty">{KB_CANONICAL_PLACEHOLDER}</p>
+      ) : (
+        <>
+          {prose.trim() ? <p className="kbp-receptor-section__prose">{prose}</p> : null}
+          {ranked.length > 0 ? (
+            <figure className="kb-receptor-figure" onClick={(e) => e.stopPropagation()}>
+              <div className="kb-receptor-figure__grid">
+                <ReceptorRadar entries={receptorDisplay.entries} language={language} compact>
+                  <KnowledgeBaseReceptorEditor
+                    editMode={false}
+                    drug={drug}
+                    onLegacyChange={() => undefined}
+                  />
+                </ReceptorRadar>
+                <table className="kb-receptor-table">
+                  <thead>
+                    <tr>
+                      <th>Target</th>
+                      <th>Affinity</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ranked.map((entry) => (
+                      <tr key={entry.target}>
+                        <th scope="row">{entry.target}</th>
+                        <td>{entry.affinityPercent == null ? '—' : `${entry.affinityPercent}%`}</td>
+                        <td>{getReceptorActionLabel(entry.action, lang)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <figcaption className="kb-receptor-figure__caption">
+                Figure 12.1 Relative receptor affinity profile.
+              </figcaption>
+            </figure>
+          ) : null}
+          {interpretation.length > 0 ? (
+            <TextbookBox tone="clinical" title="Clinical interpretation">
+              <ul>
+                {interpretation.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </TextbookBox>
+          ) : null}
+        </>
+      )}
+    </section>
   )
 }
 
@@ -582,40 +1571,173 @@ interface DrugDetailViewProps {
 
 function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, language }: DrugDetailViewProps) {
   const { t } = useTranslation()
-  const [editMode, setEditMode] = useState(false)
+  const permissions = useKnowledgeBasePermissions()
+  const annotations = useKnowledgeBaseAnnotations(drug.id)
+  const [mode, setMode] = useState<KnowledgeBaseMode>('reading')
   const [draft, setDraft] = useState<KnowledgeBaseDrug>(drug)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(() => {
-    const s = new Set<string>()
-    for (const section of drug.sections) {
-      if (section.isCollapsedByDefault) s.add(section.id)
-    }
-    return s
+  const [showFinalizeConfirm, setShowFinalizeConfirm] = useState(false)
+  const [finalizeAction, setFinalizeAction] = useState<'save' | 'exit'>('save')
+  const [panelCollapsed, setPanelCollapsed] = useState(true)
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(() => new Set())
+  const [activeSectionId, setActiveSectionId] = useState<string>(() => {
+    const first = [...drug.sections].sort((a, b) => a.order - b.order).find((s) => !s.hidden)
+    return first?.id ?? KB_RECEPTOR_SECTION_ID
   })
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
   const [aiReferences, setAiReferences] = useState<string[]>([])
   const [aiNotice, setAiNotice] = useState(false)
-  const [receptorLoading, setReceptorLoading] = useState(false)
-  const [receptorError, setReceptorError] = useState<string | null>(null)
+  const [aiTier, setAiTier] = useKnowledgeBaseAiTier()
+  const [aiModelLabel, setAiModelLabel] = useState<string | null>(null)
+  const [sectionRegenKey, setSectionRegenKey] = useState<string | null>(null)
+  const [sectionRegenError, setSectionRegenError] = useState<string | null>(null)
+  const [panelRequest, setPanelRequest] = useState<ReadingPanelRequest | null>(null)
+  const [prepAskContext, setPrepAskContext] = useState<string>('')
+  // The preparations table is not a real section and is not tracked by the
+  // scroll-spy, so we pin the panel to it explicitly until the clinician
+  // interacts with another section (where the scroll-spy resumes control).
+  const [panelPrepMode, setPanelPrepMode] = useState(false)
+
+  const handleCommentSelection = useCallback((sectionId: string, text: string) => {
+    setPanelPrepMode(false)
+    setActiveSectionId(sectionId)
+    setPanelCollapsed(false)
+    setPanelRequest({ nonce: Date.now(), tab: 'comments', commentText: `„${text}“\n` })
+  }, [])
+
+  const handleAskAiSelection = useCallback((sectionId: string, text: string) => {
+    setPanelPrepMode(false)
+    setActiveSectionId(sectionId)
+    setPanelCollapsed(false)
+    setPanelRequest({ nonce: Date.now(), tab: 'askAi', question: text, autoSend: true })
+  }, [])
+
+  // Section-level panel triggers for graph (non-text) sections, where the
+  // in-text selection toolbar does not apply.
+  const handleSectionComment = useCallback((sectionId: string) => {
+    setPanelPrepMode(false)
+    setActiveSectionId(sectionId)
+    setPanelCollapsed(false)
+    setPanelRequest({ nonce: Date.now(), tab: 'comments' })
+  }, [])
+
+  const handleSectionAskAi = useCallback((sectionId: string) => {
+    setPanelPrepMode(false)
+    setActiveSectionId(sectionId)
+    setPanelCollapsed(false)
+    setPanelRequest({ nonce: Date.now(), tab: 'askAi' })
+  }, [])
+
+  // Preparations table has no selectable prose, so its "Ask KI" button passes a
+  // serialized snapshot of the available preparations up as the panel context.
+  const handlePreparationsAskAi = useCallback((contextText: string) => {
+    setPrepAskContext(contextText)
+    setPanelPrepMode(true)
+    setPanelCollapsed(false)
+    setPanelRequest({ nonce: Date.now(), tab: 'askAi' })
+  }, [])
+
+  useEffect(() => {
+    if (mode === 'reading') {
+      setDraft(drug)
+    }
+  }, [drug, mode])
+
+  const editMode = mode === 'editing'
+  const isDraftDirty = editMode && !drugSnapshotsEqual(draft, drug)
 
   const enterEditMode = () => {
+    if (!permissions.canEdit) {
+      showNotionToast(t('kbModeEditDenied'))
+      return
+    }
     setDraft({ ...drug, sections: drug.sections.map((s) => ({ ...s })) })
-    setEditMode(true)
+    setMode('editing')
   }
 
-  const cancelEdit = () => {
+  const requestReadingMode = () => {
+    if (isDraftDirty) {
+      setFinalizeAction('exit')
+      setShowFinalizeConfirm(true)
+      return
+    }
     setDraft(drug)
-    setEditMode(false)
+    setMode('reading')
   }
 
-  const saveEdit = () => {
+  const discardDraftAndExitEdit = () => {
+    setDraft(drug)
+    setMode('reading')
+    setShowFinalizeConfirm(false)
+  }
+
+  const finalizeDraft = () => {
     onUpdate(draft)
-    setEditMode(false)
+    setMode('reading')
+    setShowFinalizeConfirm(false)
+    showNotionToast(t('kbFinalizeSaved'))
+  }
+
+  const requestSave = () => {
+    if (!isDraftDirty) {
+      setMode('reading')
+      return
+    }
+    setFinalizeAction('save')
+    setShowFinalizeConfirm(true)
+  }
+
+  const handleBack = () => {
+    if (isDraftDirty) {
+      setFinalizeAction('exit')
+      setShowFinalizeConfirm(true)
+      return
+    }
+    onBack()
   }
 
   const activeDrug = editMode ? draft : drug
   const sortedSections = [...activeDrug.sections].sort((a, b) => a.order - b.order)
+  const visibleSections = sortedSections.filter((s) => !s.hidden || editMode)
+  const renderedSections = editMode ? sortedSections : []
+  const canonicalSections = visibleCanonicalSections(activeDrug)
+
+  const receptorProse = activeDrug.sections.find((s) => s.key === 'rezeptorprofil')?.content ?? ''
+  const receptorDisplay = getDisplayReceptorProfile(activeDrug)
+
+  const canonicalAnchorId = (section: CanonicalKbSection): string => {
+    if (section.id === 'rezeptorprofil') return KB_RECEPTOR_SECTION_ID
+    if (section.id === 'klinischeHinweise') return 'canonical-klinischeHinweise'
+    return section.sectionKey ? (sectionByKey(activeDrug, section.sectionKey)?.id ?? `canonical-${section.id}`) : `canonical-${section.id}`
+  }
+
+  const navItems: KbNavItem[] = canonicalSections.map((section) => ({
+    id: canonicalAnchorId(section),
+    label: section.title,
+    number: canonicalSectionNumber(section),
+    group: section.group,
+  }))
+
+  const activeSection =
+    visibleSections.find((s) => s.id === activeSectionId) ??
+    visibleSections[0] ??
+    null
+  const panelSectionId = panelPrepMode
+    ? KB_PREPARATIONS_SECTION_ID
+    : activeSectionId === KB_RECEPTOR_SECTION_ID
+      ? KB_RECEPTOR_SECTION_ID
+      : (activeSection?.id ?? activeSectionId)
+  const panelSectionLabel =
+    panelSectionId === KB_RECEPTOR_SECTION_ID
+      ? t('kbReceptorTitle')
+      : panelSectionId === KB_PREPARATIONS_SECTION_ID
+        ? 'Verfügbare Präparate'
+        : (navItems.find((item) => item.id === activeSectionId)?.label ?? activeSection?.label ?? t('kbReadingPanelTitle'))
+  const panelSectionData =
+    panelSectionId === KB_PREPARATIONS_SECTION_ID
+      ? prepAskContext
+      : getSectionDataForAsk(activeDrug, panelSectionId, sortedSections)
 
   const updateDraftSection = (sectionId: string, patch: Partial<DrugSection>) => {
     setDraft((prev) => ({
@@ -634,11 +1756,6 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
   const handleAiFill = async () => {
     setAiError(null)
     setAiLoading(true)
-    // Switch into edit mode so the clinician reviews the AI draft before saving.
-    if (!editMode) {
-      setDraft({ ...drug, sections: drug.sections.map((s) => ({ ...s })) })
-      setEditMode(true)
-    }
     try {
       const result = await generatePharmaDetails({
         genericName: drug.genericName,
@@ -646,20 +1763,21 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
         drugClass: drug.drugClass,
         category: drug.category,
         language: language as 'de' | 'en' | 'fr' | 'es',
+        tier: aiTier,
       })
+      setAiModelLabel(result.model?.label ?? null)
       setDraft((prev) => {
-        const sections = prev.sections.map((s) => {
+        let sections = prev.sections.map((s) => {
           if (s.key === 'custom') return s
           const aiContent = result.sections[s.key as DrugSectionKey]
           return aiContent ? { ...s, content: aiContent } : s
         })
-        // Upgrade to a v2 relative-affinity profile when the model returned one,
-        // preserving any pre-existing legacy 1–5 data.
+        sections = applyStructuredBundle(sections, result.structured)
         const receptorPatch =
           result.receptorAffinityProfile.length > 0
             ? buildReceptorUpgradePatch(prev, result.receptorAffinityProfile)
             : {}
-        return { ...prev, sections, ...receptorPatch }
+        return { ...prev, sections, dataModelVersion: 2 as const, ...receptorPatch }
       })
       setAiReferences(result.references)
       setAiNotice(true)
@@ -671,38 +1789,62 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
     }
   }
 
-  // Regenerate ONLY the receptor-affinity profile for this single medication and
-  // persist immediately (single-medication upgrade path). The pre-existing
-  // legacy 1–5 profile is preserved in `legacyReceptorProfile`.
-  const handleRegenerateReceptor = async () => {
-    setReceptorError(null)
-    setReceptorLoading(true)
+  const handleRegenerateSection = async (sectionKey: DrugSectionKey | 'receptor') => {
+    if (mode !== 'editing') return
+    const regenId = sectionKey === 'receptor' ? KB_RECEPTOR_SECTION_ID : sectionKey
+    setSectionRegenError(null)
+    setSectionRegenKey(regenId)
     try {
+      const apiSection = sectionKey === 'receptor' ? 'rezeptorprofil' : sectionKey
       const result = await generatePharmaDetails({
-        genericName: drug.genericName,
-        brandNames: drug.brandNames,
-        drugClass: drug.drugClass,
-        category: drug.category,
-        sections: ['rezeptorprofil'],
+        genericName: draft.genericName,
+        brandNames: draft.brandNames,
+        drugClass: draft.drugClass,
+        category: draft.category,
+        sections: [apiSection],
         language: language as 'de' | 'en' | 'fr' | 'es',
+        tier: aiTier,
       })
-      if (result.receptorAffinityProfile.length === 0) {
-        setReceptorError(t('kbReceptorRegenerateEmpty'))
+      setAiModelLabel(result.model?.label ?? null)
+
+      setDraft((prev) => {
+        let next = { ...prev }
+        const aiContent = result.sections[apiSection]
+        if (aiContent) {
+          next = {
+            ...next,
+            sections: next.sections.map((s) =>
+              s.key === apiSection ? { ...s, content: aiContent } : s,
+            ),
+          }
+        }
+        if (sectionKey !== 'receptor') {
+          next = {
+            ...next,
+            sections: applyStructuredBundle(next.sections, result.structured, apiSection),
+          }
+        }
+        if (sectionKey === 'receptor' || apiSection === 'rezeptorprofil') {
+          if (result.receptorAffinityProfile.length === 0 && !aiContent) {
+            return prev
+          }
+          if (result.receptorAffinityProfile.length > 0) {
+            next = { ...next, ...buildReceptorUpgradePatch(prev, result.receptorAffinityProfile) }
+          }
+        }
+        return next
+      })
+
+      if (sectionKey === 'receptor' && result.receptorAffinityProfile.length === 0 && !result.sections.rezeptorprofil) {
+        setSectionRegenError(t('kbReceptorRegenerateEmpty'))
         return
       }
-      const base = editMode ? draft : drug
-      const patch = buildReceptorUpgradePatch(base, result.receptorAffinityProfile)
-      const next = { ...base, ...patch }
-      if (editMode) {
-        setDraft(next)
-      } else {
-        onUpdate(next)
-      }
-      showNotionToast(t('kbReceptorRegenerateSuccess'))
+
+      showNotionToast(t('kbSectionRegenerateSuccess'))
     } catch {
-      setReceptorError(t('kbReceptorRegenerateError'))
+      setSectionRegenError(t('kbSectionRegenerateError'))
     } finally {
-      setReceptorLoading(false)
+      setSectionRegenKey(null)
     }
   }
 
@@ -779,10 +1921,8 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
     })
   }
 
-  const kurzprofilContent = activeDrug.sections.find((s) => s.key === 'kurzprofil')?.content
-
   return (
-    <div className="kbp-detail-view">
+    <div className={`kbp-detail-view${editMode ? ' kbp-detail-view--editing' : ' kbp-detail-view--reading'}`}>
       {showDeleteConfirm && (
         <DeleteConfirmDialog
           drugName={drug.genericName}
@@ -790,34 +1930,80 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
           onCancel={() => setShowDeleteConfirm(false)}
         />
       )}
+      {showFinalizeConfirm && (
+        <FinalizeConfirmDialog
+          onConfirm={() => {
+            finalizeDraft()
+            if (finalizeAction === 'exit') onBack()
+          }}
+          onDiscard={() => {
+            discardDraftAndExitEdit()
+            if (finalizeAction === 'exit') onBack()
+          }}
+          onCancel={() => setShowFinalizeConfirm(false)}
+        />
+      )}
 
       <div className="kbp-detail-topbar">
-        <button type="button" className="kbp-back-btn" onClick={onBack}>
+        <button type="button" className="kbp-back-btn" onClick={handleBack}>
           <ArrowLeft className="h-4 w-4" strokeWidth={1.75} aria-hidden />
           {t('kbPharmaBackToList')}
         </button>
         <div className="kbp-detail-topbar__actions">
-          <button
-            type="button"
-            className="kbp-btn kbp-btn--ai"
-            onClick={handleAiFill}
-            disabled={aiLoading}
-            title={t('kbPharmaAiFill')}
-          >
-            <Sparkles className={`h-3.5 w-3.5${aiLoading ? ' kbp-spin' : ''}`} strokeWidth={1.75} aria-hidden />
-            {aiLoading ? t('kbPharmaAiFilling') : t('kbPharmaAiFill')}
-          </button>
+          <div className="kbp-mode-toggle" role="group" aria-label={t('kbModeToggleLabel')}>
+            <button
+              type="button"
+              className={`kbp-mode-toggle__btn${mode === 'reading' ? ' kbp-mode-toggle__btn--active' : ''}`}
+              onClick={requestReadingMode}
+            >
+              <BookOpen className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+              {t('kbModeReading')}
+            </button>
+            <button
+              type="button"
+              className={`kbp-mode-toggle__btn${mode === 'editing' ? ' kbp-mode-toggle__btn--active' : ''}`}
+              onClick={enterEditMode}
+              disabled={!permissions.canEdit}
+              title={!permissions.canEdit ? t('kbModeEditDenied') : undefined}
+            >
+              <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+              {t('kbModeEditing')}
+            </button>
+          </div>
           {editMode ? (
             <>
-              <button type="button" className="kbp-btn kbp-btn--primary" onClick={saveEdit}>{t('kbPharmaSave')}</button>
-              <button type="button" className="kbp-btn" onClick={cancelEdit}>{t('kbPharmaCancel')}</button>
+              <label className="kbp-ai-mode" title={kbT(language, 'aiModeTitle')}>
+                <span className="kbp-ai-mode__label">{kbT(language, 'aiModeLabel')}</span>
+                <select
+                  className="kbp-ai-mode__select"
+                  value={aiTier}
+                  onChange={(e) => setAiTier(e.target.value as KbAiTier)}
+                  disabled={aiLoading}
+                >
+                  <option value="thorough">{kbT(language, 'aiModeThorough')}</option>
+                  <option value="fast">{kbT(language, 'aiModeFast')}</option>
+                </select>
+              </label>
+              <button
+                type="button"
+                className="kbp-btn kbp-btn--ai"
+                onClick={() => void handleAiFill()}
+                disabled={aiLoading}
+                title={t('kbPharmaAiFill')}
+              >
+                <Sparkles className={`h-3.5 w-3.5${aiLoading ? ' kbp-spin' : ''}`} strokeWidth={1.75} aria-hidden />
+                {aiLoading ? t('kbPharmaAiFilling') : t('kbPharmaAiFill')}
+              </button>
+              <button type="button" className="kbp-btn kbp-btn--primary" onClick={requestSave}>
+                {t('kbPharmaSave')}
+              </button>
+              <button type="button" className="kbp-btn" onClick={requestReadingMode}>
+                {t('kbPharmaCancel')}
+              </button>
             </>
           ) : (
             <>
-              <button type="button" className="kbp-btn" onClick={enterEditMode}>
-                <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
-                {t('kbPharmaEdit')}
-              </button>
+              <MedicationExportMenu drug={activeDrug} language={language} />
               <button type="button" className="kbp-icon-btn" onClick={onDuplicate} title={t('kbPharmaDuplicate')}>
                 <Copy className="h-4 w-4" strokeWidth={1.75} />
               </button>
@@ -829,140 +2015,460 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
         </div>
       </div>
 
-      <div className="kbp-drug-header">
-        <div className="kbp-drug-header__top">
-          <h2 className="kbp-drug-header__name">{activeDrug.genericName}</h2>
-          {activeDrug.brandNames.length > 0 && (
-            <span className="kbp-drug-header__brands">{activeDrug.brandNames.join(', ')}</span>
-          )}
-        </div>
-        <div className="kbp-drug-header__meta">
-          {activeDrug.drugClass && <span className="kbp-drug-header__class">{activeDrug.drugClass}</span>}
-          {activeDrug.atcCode && <span className="kbp-drug-header__atc">ATC: {activeDrug.atcCode}</span>}
-          <span className={`kbp-status-badge${activeDrug.status === 'inactive' ? ' kbp-status-badge--inactive' : ''}`}>
-            {activeDrug.status === 'active' ? t('kbPharmaStatusActive') : t('kbPharmaStatusInactive')}
-          </span>
-        </div>
-        {kurzprofilContent && !editMode && (
-          <p className="kbp-drug-header__summary">{kurzprofilContent}</p>
-        )}
-        <p className="kbp-drug-header__updated">
-          {t('kbPharmaLastUpdated')}: {formatSiteLocaleDate(activeDrug.updatedAt, language as 'de' | 'en' | 'fr' | 'es')}
-          {activeDrug.authorEditor ? ` · ${activeDrug.authorEditor}` : ''}
-        </p>
-      </div>
+      <div
+        className={`kbp-detail-layout${editMode ? ' kbp-detail-layout--editing' : ' kbp-detail-layout--reading'}${
+          !editMode && panelCollapsed ? ' kbp-detail-layout--panel-collapsed' : ''
+        }`}
+      >
+        {!editMode ? (
+          <KbSectionNav
+            items={navItems}
+            activeId={activeSectionId}
+            onActivate={setActiveSectionId}
+            language={language}
+          />
+        ) : null}
+        <div className="kbp-detail-main">
+          <div className="kbp-drug-header">
+            <div className="kbp-drug-header__top">
+              <h2 className="kbp-drug-header__name">{activeDrug.genericName}</h2>
+              {activeDrug.brandNames.length > 0 && (
+                <span className="kbp-drug-header__brands">{activeDrug.brandNames.join(', ')}</span>
+              )}
+            </div>
+            <div className="kbp-drug-header__meta">
+              {activeDrug.drugClass && <span className="kbp-drug-header__class">{activeDrug.drugClass}</span>}
+              {activeDrug.atcCode && <span className="kbp-drug-header__atc">ATC: {activeDrug.atcCode}</span>}
+              {isDraftDirty ? <span className="kbp-draft-badge">{t('kbDraftBadge')}</span> : null}
+            </div>
+            <p className="kbp-drug-header__updated">
+              {t('kbPharmaLastUpdated')}: {formatSiteLocaleDate(activeDrug.updatedAt, language as 'de' | 'en' | 'fr' | 'es')}
+            </p>
+            <div className="kbp-drug-header__audit" aria-label="Profil-Metadaten">
+              <span>{formatAuditLine('Created by', activeDrug.createdByDisplayName, activeDrug.createdAt, language)}</span>
+              <span>{formatAuditLine('Last modified by', activeDrug.lastModifiedByDisplayName, activeDrug.lastModifiedAt ?? activeDrug.updatedAt, language)}</span>
+              {activeDrug.lastReviewedAt ? (
+                <span>{formatAuditLine('Last reviewed by', activeDrug.lastReviewedByDisplayName ?? activeDrug.lastReviewedByUserId, activeDrug.lastReviewedAt, language)}</span>
+              ) : null}
+              <span>Verification: {activeDrug.verificationStatus ?? 'draft'}</span>
+            </div>
+            {!editMode ? <KeyFactsTable drug={activeDrug} language={language} /> : null}
+          </div>
 
-      {aiError && (
-        <p className="kbp-ai-error" role="alert">{aiError}</p>
-      )}
+          {aiError && <p className="kbp-ai-error" role="alert">{aiError}</p>}
 
-      {aiNotice && (
-        <div className="kbp-ai-notice" role="note">
-          <p className="kbp-ai-notice__disclaimer">
-            <Sparkles className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
-            {t('kbPharmaAiDisclaimer')}
-          </p>
-          {aiReferences.length > 0 && (
-            <div className="kbp-ai-notice__refs">
-              <span className="kbp-ai-notice__refs-title">{t('kbPharmaAiReferences')}</span>
-              <ul className="kbp-ai-notice__refs-list">
-                {aiReferences.map((ref, i) => (
-                  <li key={i}>{ref}</li>
-                ))}
-              </ul>
+          {aiNotice && editMode && (
+            <div className="kbp-ai-notice" role="note">
+              <p className="kbp-ai-notice__disclaimer">
+                <Sparkles className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+                {t('kbPharmaAiDisclaimer')}
+              </p>
+              {aiModelLabel && (
+                <p className="kbp-ai-notice__model">
+                  {kbT(language, 'aiModelResolved')}: {aiModelLabel}
+                </p>
+              )}
+              {aiReferences.length > 0 && (
+                <div className="kbp-ai-notice__refs">
+                  <span className="kbp-ai-notice__refs-title">{t('kbPharmaAiReferences')}</span>
+                  <ul className="kbp-ai-notice__refs-list">
+                    {aiReferences.map((ref, i) => (
+                      <li key={i}>{ref}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
-        </div>
-      )}
 
-      <div className="kbp-receptor-section">
-        <div className="kbp-receptor-section__head">
-          <h3 className="kbp-receptor-section__title">{t('kbReceptorTitle')}</h3>
-          <div className="kbp-receptor-section__head-meta">
-            {activeDrug.receptorProfileVersion === 2 ? (
-              <span className="kbp-receptor-section__badge">{t('kbReceptorV2Badge')}</span>
-            ) : getDisplayReceptorProfile(activeDrug).isLegacy ? (
-              <span className="kbp-receptor-section__badge kbp-receptor-section__badge--legacy">
-                {t('kbReceptorLegacyBadge')}
-              </span>
-            ) : null}
-            <button
-              type="button"
-              className="kbp-btn kbp-btn--sm kbp-btn--ai"
-              onClick={handleRegenerateReceptor}
-              disabled={receptorLoading || aiLoading}
-              title={t('kbReceptorRegenerate')}
+          {editMode ? (
+            <div
+              id={kbSectionDomId(KB_RECEPTOR_SECTION_ID)}
+              className={`kbp-receptor-section${activeSectionId === KB_RECEPTOR_SECTION_ID && !editMode ? ' kbp-section--active' : ''}`}
+              onClick={!editMode ? () => setActiveSectionId(KB_RECEPTOR_SECTION_ID) : undefined}
+              onKeyDown={!editMode ? (e) => {
+                if (e.key === 'Enter' || e.key === ' ') setActiveSectionId(KB_RECEPTOR_SECTION_ID)
+              } : undefined}
+              role={!editMode ? 'button' : undefined}
+              tabIndex={!editMode ? 0 : undefined}
             >
-              <Sparkles
-                className={`h-3.5 w-3.5${receptorLoading ? ' kbp-spin' : ''}`}
-                strokeWidth={1.75}
-                aria-hidden
-              />
-              {receptorLoading ? t('kbReceptorRegenerating') : t('kbReceptorRegenerate')}
-            </button>
+              <div className="kbp-receptor-section__head">
+                <h3 className="kbp-receptor-section__title">{t('kbReceptorTitle')}</h3>
+                <div className="kbp-receptor-section__head-meta">
+                  {activeDrug.receptorProfileVersion === 2 ? (
+                    <span className="kbp-receptor-section__badge">{t('kbReceptorV2Badge')}</span>
+                  ) : receptorDisplay.isLegacy ? (
+                    <span className="kbp-receptor-section__badge kbp-receptor-section__badge--legacy">
+                      {t('kbReceptorLegacyBadge')}
+                    </span>
+                  ) : null}
+                  {!editMode ? (
+                    <span
+                      className="kbp-section__actions"
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        type="button"
+                        className="kbp-section__action-btn"
+                        onClick={() => handleSectionComment(KB_RECEPTOR_SECTION_ID)}
+                        title={kbT(language, 'sectionComment')}
+                        aria-label={kbT(language, 'sectionComment')}
+                      >
+                        <MessageSquarePlus className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+                      </button>
+                      <button
+                        type="button"
+                        className="kbp-section__action-btn kbp-section__action-btn--ai"
+                        onClick={() => handleSectionAskAi(KB_RECEPTOR_SECTION_ID)}
+                        title={kbT(language, 'sectionAskAi')}
+                        aria-label={kbT(language, 'sectionAskAi')}
+                      >
+                        <Sparkles className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+                      </button>
+                    </span>
+                  ) : null}
+                  {editMode ? (
+                    <button
+                      type="button"
+                      className="kbp-btn kbp-btn--sm kbp-btn--ai"
+                      onClick={() => void handleRegenerateSection('receptor')}
+                      disabled={sectionRegenKey === KB_RECEPTOR_SECTION_ID || aiLoading}
+                      title={t('kbSectionRegenerate')}
+                    >
+                      <Sparkles
+                        className={`h-3.5 w-3.5${sectionRegenKey === KB_RECEPTOR_SECTION_ID ? ' kbp-spin' : ''}`}
+                        strokeWidth={1.75}
+                        aria-hidden
+                      />
+                      {sectionRegenKey === KB_RECEPTOR_SECTION_ID ? t('kbSectionRegenerating') : t('kbSectionRegenerate')}
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+              {sectionRegenKey === KB_RECEPTOR_SECTION_ID && sectionRegenError ? (
+                <p className="kbp-ai-error" role="alert">{sectionRegenError}</p>
+              ) : null}
+              {activeDrug.lastReceptorProfileUpdatedAt ? (
+                <p className="kbp-receptor-section__updated">
+                  {t('kbReceptorLastUpdated')}:{' '}
+                  {formatSiteLocaleDate(
+                    activeDrug.lastReceptorProfileUpdatedAt,
+                    language as 'de' | 'en' | 'fr' | 'es',
+                  )}
+                </p>
+              ) : null}
+              {!editMode ? (
+                <>
+                  {receptorProse ? <p className="kbp-receptor-section__prose">{receptorProse}</p> : null}
+                  <ReceptorRadar entries={receptorDisplay.entries} language={language}>
+                    <KnowledgeBaseReceptorEditor
+                      editMode={false}
+                      drug={activeDrug}
+                      onLegacyChange={updateDraftReceptor}
+                    />
+                  </ReceptorRadar>
+                </>
+              ) : (
+                <KnowledgeBaseReceptorEditor
+                  editMode
+                  drug={activeDrug}
+                  onLegacyChange={updateDraftReceptor}
+                />
+              )}
+            </div>
+          ) : null}
+
+          <div className="kbp-sections">
+            {editMode && (
+              <div className="kbp-edit-toolbar">
+                <button type="button" className="kbp-btn kbp-btn--sm" onClick={resetSectionOrder}>
+                  <RotateCcw className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+                  {t('kbPharmaResetOrder')}
+                </button>
+              </div>
+            )}
+
+            {!editMode && canonicalSections.map((canonicalSection, idx) => {
+              const anchorId = canonicalAnchorId(canonicalSection)
+
+              if (canonicalSection.id === 'rezeptorprofil') {
+                return (
+                  <ReceptorProfileChapterSection
+                    key={canonicalSection.id}
+                    drug={activeDrug}
+                    language={language}
+                    prose={receptorProse}
+                    isActive={activeSectionId === KB_RECEPTOR_SECTION_ID}
+                    onActivate={() => setActiveSectionId(KB_RECEPTOR_SECTION_ID)}
+                    onSectionComment={() => handleSectionComment(KB_RECEPTOR_SECTION_ID)}
+                    onSectionAskAi={() => handleSectionAskAi(KB_RECEPTOR_SECTION_ID)}
+                  />
+                )
+              }
+
+              if (canonicalSection.id === 'klinischeHinweise') {
+                const childSections = (canonicalSection.subsections ?? [])
+                  .map((subsection) => ({
+                    subsection,
+                    section: sectionByKey(activeDrug, subsection.id),
+                  }))
+                  .filter(({ section }) => section && !section.hidden && (section.content.trim() || sectionHasStructuredData(section)))
+
+                return (
+                  <section
+                    key={canonicalSection.id}
+                    id={kbSectionDomId(anchorId)}
+                    data-kb-section="klinischeHinweise"
+                    className={`kbp-section kbp-section--group${activeSectionId === anchorId ? ' kbp-section--active' : ''}`}
+                  >
+                    <div
+                      className="kbp-section__header-view kbp-section__header-view--static"
+                      onClick={() => setActiveSectionId(anchorId)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          setActiveSectionId(anchorId)
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                    >
+                      <span className="kbp-section__title-wrap">
+                        <span className="kbp-section__label">
+                          <span className="kbp-section__title">{canonicalSection.title}</span>
+                        </span>
+                      </span>
+                    </div>
+                    <div className="kbp-section__body">
+                      {childSections.length === 0 ? (
+                        <p className="kbp-section__text kbp-section__text--empty">{KB_CANONICAL_PLACEHOLDER}</p>
+                      ) : (
+                        <div className="kbp-subsections">
+                          {childSections.map(({ subsection, section }) => (
+                            <SectionItem
+                              key={section!.id}
+                              section={section!}
+                              drug={activeDrug}
+                              language={language}
+                              isFirst={false}
+                              isLast={false}
+                              isCollapsed={collapsedSections.has(section!.id)}
+                              mode={mode}
+                              displayTitle={subsection.title}
+                              isSubsection
+                              emptyText={KB_CANONICAL_PLACEHOLDER}
+                              onActivate={() => setActiveSectionId(section!.id)}
+                              onToggleCollapse={() =>
+                                setCollapsedSections((prev) => {
+                                  const next = new Set(prev)
+                                  if (next.has(section!.id)) next.delete(section!.id)
+                                  else next.add(section!.id)
+                                  return next
+                                })
+                              }
+                              onContentChange={(content) => updateDraftSection(section!.id, { content })}
+                              onStructuredChange={(patch) => updateDraftSection(section!.id, patch)}
+                              onLabelChange={(label) => updateDraftSection(section!.id, { label })}
+                              onMoveUp={() => moveSection(section!.id, 'up')}
+                              onMoveDown={() => moveSection(section!.id, 'down')}
+                              onToggleHidden={() => updateDraftSection(section!.id, { hidden: !section!.hidden })}
+                              onDuplicate={() => duplicateSection(section!.id)}
+                              onDelete={() => setDraft((prev) => ({ ...prev, sections: prev.sections.filter((s) => s.id !== section!.id) }))}
+                              highlights={annotations.forSection(section!.id).highlights}
+                              onAddAnnotation={(startOffset, endOffset, text, style, color) => {
+                                annotations.addHighlight({ sectionId: section!.id, startOffset, endOffset, text, style, color })
+                              }}
+                              onRemoveHighlight={annotations.removeHighlight}
+                              onCommentSelection={(text) => handleCommentSelection(section!.id, text)}
+                              onAskAiSelection={(text) => handleAskAiSelection(section!.id, text)}
+                              onSectionComment={() => handleSectionComment(section!.id)}
+                              onSectionAskAi={() => handleSectionAskAi(section!.id)}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </section>
+                )
+              }
+
+              const section = canonicalSection.sectionKey ? sectionByKey(activeDrug, canonicalSection.sectionKey) : undefined
+              if (!section) {
+                return (
+                  <CanonicalPlaceholderSection
+                    key={canonicalSection.id}
+                    id={anchorId}
+                    title={canonicalSection.title}
+                    isActive={activeSectionId === anchorId}
+                    onActivate={() => setActiveSectionId(anchorId)}
+                  />
+                )
+              }
+
+              const sectionItem = (
+                <SectionItem
+                  key={canonicalSection.id}
+                  section={section}
+                  drug={activeDrug}
+                  language={language}
+                  isFirst={idx === 0}
+                  isLast={idx === canonicalSections.length - 1}
+                  isCollapsed={collapsedSections.has(section.id)}
+                  mode={mode}
+                  isActive={activeSectionId === section.id}
+                  displayTitle={canonicalSection.title}
+                  domId={kbSectionDomId(anchorId)}
+                  emptyText={KB_CANONICAL_PLACEHOLDER}
+                  onActivate={() => setActiveSectionId(section.id)}
+                  onToggleCollapse={() =>
+                    setCollapsedSections((prev) => {
+                      const next = new Set(prev)
+                      if (next.has(section.id)) next.delete(section.id)
+                      else next.add(section.id)
+                      return next
+                    })
+                  }
+                  onContentChange={(content) => updateDraftSection(section.id, { content })}
+                  onStructuredChange={(patch) => updateDraftSection(section.id, patch)}
+                  onLabelChange={(label) => updateDraftSection(section.id, { label })}
+                  onMoveUp={() => moveSection(section.id, 'up')}
+                  onMoveDown={() => moveSection(section.id, 'down')}
+                  onToggleHidden={() => updateDraftSection(section.id, { hidden: !section.hidden })}
+                  onDuplicate={() => duplicateSection(section.id)}
+                  onDelete={() => setDraft((prev) => ({ ...prev, sections: prev.sections.filter((s) => s.id !== section.id) }))}
+                  highlights={annotations.forSection(section.id).highlights}
+                  onAddAnnotation={(startOffset, endOffset, text, style, color) => {
+                    annotations.addHighlight({ sectionId: section.id, startOffset, endOffset, text, style, color })
+                  }}
+                  onRemoveHighlight={annotations.removeHighlight}
+                  onCommentSelection={(text) => handleCommentSelection(section.id, text)}
+                  onAskAiSelection={(text) => handleAskAiSelection(section.id, text)}
+                  onSectionComment={() => handleSectionComment(section.id)}
+                  onSectionAskAi={() => handleSectionAskAi(section.id)}
+                />
+              )
+              if (canonicalSection.id !== 'umstellung') return sectionItem
+              return [
+                sectionItem,
+                <CountryPreparationsSection
+                  key="country-preparations"
+                  drug={activeDrug}
+                  mode={mode}
+                  language={language}
+                  onAskAi={handlePreparationsAskAi}
+                />,
+              ]
+            })}
+
+            {editMode && renderedSections.map((section, idx) => {
+              const sectionItem = (
+                <SectionItem
+                  key={section.id}
+                  section={section}
+                  drug={activeDrug}
+                  language={language}
+                  isFirst={idx === 0}
+                  isLast={idx === renderedSections.length - 1}
+                  isCollapsed={collapsedSections.has(section.id)}
+                  mode={mode}
+                  isActive={activeSectionId === section.id}
+                  onActivate={() => setActiveSectionId(section.id)}
+                  onToggleCollapse={() =>
+                    setCollapsedSections((prev) => {
+                      const next = new Set(prev)
+                      if (next.has(section.id)) next.delete(section.id)
+                      else next.add(section.id)
+                      return next
+                    })
+                  }
+                  onContentChange={(content) => updateDraftSection(section.id, { content })}
+                  onStructuredChange={(patch) => updateDraftSection(section.id, patch)}
+                  onLabelChange={(label) => updateDraftSection(section.id, { label })}
+                  onMoveUp={() => moveSection(section.id, 'up')}
+                  onMoveDown={() => moveSection(section.id, 'down')}
+                  onToggleHidden={() => updateDraftSection(section.id, { hidden: !section.hidden })}
+                  onDuplicate={() => duplicateSection(section.id)}
+                  onDelete={() => setDraft((prev) => ({ ...prev, sections: prev.sections.filter((s) => s.id !== section.id) }))}
+                  onRegenerate={
+                    editMode && section.key !== 'custom'
+                      ? () => void handleRegenerateSection(section.key as DrugSectionKey)
+                      : undefined
+                  }
+                  regenerateLoading={sectionRegenKey === section.key}
+                  regenerateError={sectionRegenKey === section.key ? sectionRegenError : null}
+                  highlights={annotations.forSection(section.id).highlights}
+                  onAddAnnotation={
+                    !editMode
+                      ? (startOffset, endOffset, text, style, color) => {
+                          annotations.addHighlight({ sectionId: section.id, startOffset, endOffset, text, style, color })
+                        }
+                      : undefined
+                  }
+                  onRemoveHighlight={!editMode ? annotations.removeHighlight : undefined}
+                  onCommentSelection={
+                    !editMode ? (text) => handleCommentSelection(section.id, text) : undefined
+                  }
+                  onAskAiSelection={
+                    !editMode ? (text) => handleAskAiSelection(section.id, text) : undefined
+                  }
+                  onSectionComment={!editMode ? () => handleSectionComment(section.id) : undefined}
+                  onSectionAskAi={!editMode ? () => handleSectionAskAi(section.id) : undefined}
+                />
+              )
+              if (section.key !== 'umstellung') return sectionItem
+              return [
+                sectionItem,
+                <CountryPreparationsSection
+                  key="country-preparations-editor"
+                  drug={activeDrug}
+                  mode={mode}
+                  language={language}
+                />,
+              ]
+            })}
+
+            {editMode && (
+              <button type="button" className="kbp-add-section-btn" onClick={addCustomSection}>
+                <Plus className="h-3.5 w-3.5" strokeWidth={2.25} aria-hidden />
+                {t('kbPharmaAddSection')}
+              </button>
+            )}
           </div>
         </div>
-        {receptorError ? (
-          <p className="kbp-ai-error" role="alert">{receptorError}</p>
+
+        {!editMode ? (
+          panelCollapsed ? (
+            <KnowledgeBaseReadingPanel
+              medicationId={drug.id}
+              medicationName={drug.genericName}
+              sectionId={panelSectionId}
+              sectionLabel={panelSectionLabel}
+              sectionData={panelSectionData}
+              language={language}
+              collapsed
+              onToggleCollapse={() => setPanelCollapsed((prev) => !prev)}
+              request={panelRequest}
+              tier={aiTier}
+            />
+          ) : (
+            <div className="kbp-reading-column">
+              <KnowledgeBaseReadingPanel
+                medicationId={drug.id}
+                medicationName={drug.genericName}
+                sectionId={panelSectionId}
+                sectionLabel={panelSectionLabel}
+                sectionData={panelSectionData}
+                language={language}
+                collapsed={false}
+                onToggleCollapse={() => setPanelCollapsed((prev) => !prev)}
+                request={panelRequest}
+                tier={aiTier}
+              />
+              <KnowledgeBaseNotes medicationId={drug.id} language={language} />
+            </div>
+          )
         ) : null}
-        {activeDrug.lastReceptorProfileUpdatedAt ? (
-          <p className="kbp-receptor-section__updated">
-            {t('kbReceptorLastUpdated')}:{' '}
-            {formatSiteLocaleDate(
-              activeDrug.lastReceptorProfileUpdatedAt,
-              language as 'de' | 'en' | 'fr' | 'es',
-            )}
-          </p>
-        ) : null}
-        <KnowledgeBaseReceptorEditor
-          editMode={editMode}
-          drug={activeDrug}
-          onLegacyChange={updateDraftReceptor}
-        />
-      </div>
-
-      <div className="kbp-sections">
-        {editMode && (
-          <div className="kbp-edit-toolbar">
-            <button type="button" className="kbp-btn kbp-btn--sm" onClick={resetSectionOrder}>
-              <RotateCcw className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
-              {t('kbPharmaResetOrder')}
-            </button>
-          </div>
-        )}
-
-        {sortedSections.map((section, idx) => (
-          <SectionItem
-            key={section.id}
-            section={section}
-            isFirst={idx === 0}
-            isLast={idx === sortedSections.length - 1}
-            isCollapsed={collapsedSections.has(section.id)}
-            editMode={editMode}
-            onToggleCollapse={() =>
-              setCollapsedSections((prev) => {
-                const next = new Set(prev)
-                if (next.has(section.id)) next.delete(section.id)
-                else next.add(section.id)
-                return next
-              })
-            }
-            onContentChange={(content) => updateDraftSection(section.id, { content })}
-            onLabelChange={(label) => updateDraftSection(section.id, { label })}
-            onMoveUp={() => moveSection(section.id, 'up')}
-            onMoveDown={() => moveSection(section.id, 'down')}
-            onToggleHidden={() => updateDraftSection(section.id, { hidden: !section.hidden })}
-            onDuplicate={() => duplicateSection(section.id)}
-            onDelete={() => setDraft((prev) => ({ ...prev, sections: prev.sections.filter((s) => s.id !== section.id) }))}
-          />
-        ))}
-
-        {editMode && (
-          <button type="button" className="kbp-add-section-btn" onClick={addCustomSection}>
-            <Plus className="h-3.5 w-3.5" strokeWidth={2.25} aria-hidden />
-            {t('kbPharmaAddSection')}
-          </button>
-        )}
       </div>
     </div>
   )
@@ -980,10 +2486,13 @@ export function KnowledgeBasePharma({ onClose, onCloseAll, collectionId, collect
   const selectedDrug = selectedDrugId ? (drugs.find((d) => d.id === selectedDrugId) ?? null) : null
 
   const handleAddDrug = useCallback(
-    (draft: Omit<KnowledgeBaseDrug, 'id' | 'createdAt' | 'updatedAt'>) => {
+    (draft: Omit<KnowledgeBaseDrug, 'id' | 'createdAt' | 'updatedAt'>, action: CreateProfileAction) => {
       const created = addDrug(draft)
       setShowAddDialog(false)
       setSelectedDrugId(created.id)
+      if (action === 'source_import') {
+        showNotionToast('Source import is not implemented yet. Created an AI draft profile TODO.')
+      }
     },
     [addDrug],
   )
@@ -1027,7 +2536,7 @@ export function KnowledgeBasePharma({ onClose, onCloseAll, collectionId, collect
         </button>
       </div>
 
-      <div className="kbp-content">
+      <div className={`kbp-content${selectedDrug ? ' kbp-content--detail' : ''}`}>
         {selectedDrug ? (
           <DrugDetailView
             drug={selectedDrug}

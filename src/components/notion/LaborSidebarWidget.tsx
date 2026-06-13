@@ -105,7 +105,7 @@ export function LaborSidebarWidget({ caseId, onNavigateToLabor }: LaborSidebarWi
     return (
       <div className="labor-sidebar-widget">
         <div className="labor-sidebar-widget__header-row">
-          <span className="labor-sidebar-widget__header">Labor</span>
+          <span className="labor-sidebar-widget__header">{t('diagnosticsPageTitle')}</span>
           {closeButton}
         </div>
         {latestDate && (
@@ -116,7 +116,7 @@ export function LaborSidebarWidget({ caseId, onNavigateToLabor }: LaborSidebarWi
           className="labor-sidebar-widget__link"
           onClick={onNavigateToLabor}
         >
-          Zum Labor →
+          Zu Diagnostik →
         </button>
       </div>
     )
@@ -125,7 +125,7 @@ export function LaborSidebarWidget({ caseId, onNavigateToLabor }: LaborSidebarWi
   return (
     <div className="labor-sidebar-widget">
       <div className="labor-sidebar-widget__header-row">
-        <span className="labor-sidebar-widget__header">Lab Visualisierung</span>
+        <span className="labor-sidebar-widget__header">Diagnostik Visualisierung</span>
         {closeButton}
       </div>
       {pinned.map((widget) => {

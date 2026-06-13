@@ -9,18 +9,23 @@ import { callLlm } from '../services/llmProvider'
  */
 const SECTION_KEYS = [
   'kurzprofil',
+  'steckbrief',
   'wirkmechanismus',
   'rezeptorprofil',
+  'pharmakokinetik',
   'indikationen',
   'dosierung',
   'nebenwirkungen',
   'kontraindikationen',
   'wechselwirkungen',
+  'qtc',
   'kontrollen',
   'besonderheiten',
   'umstellung',
   'schwangerschaft',
   'niereLeber',
+  'ueberdosierung',
+  'absetzen',
   'merksaetze',
   'quellen',
 ] as const
@@ -29,22 +34,50 @@ type SectionKey = (typeof SECTION_KEYS)[number]
 
 /** Human-readable hints used to steer the model per section. */
 const SECTION_GUIDE: Record<SectionKey, string> = {
-  kurzprofil: 'Kurzprofil/Overview: 1–2 Sätze zur Einordnung (Klasse, Hauptindikation).',
-  wirkmechanismus: 'Wirkmechanismus: prägnante Beschreibung des pharmakodynamischen Mechanismus.',
-  rezeptorprofil: 'Rezeptorprofil: kurze Prosa zu den wichtigsten relativen Rezeptoraffinitäten und deren klinischer Bedeutung (keine 1–5 Scores).',
-  indikationen: 'Indikationen: zugelassene und relevante Off-Label-Indikationen als Stichpunkte.',
-  dosierung: 'Dosierung: typische Start-/Zieldosen, Titration, Maximaldosis (Erwachsene).',
-  nebenwirkungen: 'Nebenwirkungen: häufige und klinisch relevante/gefährliche UAW als Stichpunkte.',
-  kontraindikationen: 'Kontraindikationen: absolute und wichtige relative Kontraindikationen.',
-  wechselwirkungen: 'Wechselwirkungen: relevante CYP-/pharmakodynamische Interaktionen.',
-  kontrollen: 'Kontrollen: Baseline- und Verlaufsmonitoring (Labor, EKG, Spiegel).',
-  besonderheiten: 'Besonderheiten: klinisch wichtige Hinweise / Fallstricke.',
-  umstellung: 'Umstellung/Depot/Absetzen: Cross-Taper, Depotformulierungen, Absetzschema.',
-  schwangerschaft: 'Schwangerschaft/Stillzeit: Risiken und Empfehlungen.',
-  niereLeber: 'Niere/Leber: Dosisanpassung bei Nieren-/Leberfunktionsstörung.',
-  merksaetze: 'Merksätze/Clinical Pearls: 2–4 kurze, einprägsame Praxistipps.',
-  quellen: 'Quellen/References: konkrete Quellen (Fachinformation, S3-Leitlinien, Standardwerke).',
+  kurzprofil:
+    'Kurzprofil/Overview: 1 kompakter Einordnungsabsatz plus 3–5 klinische Kernpunkte (Nutzenprofil, Hauptindikation, Differenzierung zu Alternativen, wichtigste Sicherheits-/Monitoring-Ampel).',
+  steckbrief:
+    'Steckbrief/At-a-glance: dichtes Snapshot-Format mit Klasse, primären Targets, Halbwertszeit/aktiven Metaboliten, Dosisrahmen, QTc-/metabolischem/EPS-/Sedierungsrisiko und Depotstatus, aber ohne lange Prosa.',
+  wirkmechanismus:
+    'Wirkmechanismus: 2–4 substantielle Absätze zum primären Mechanismus, relevanten Downstream-Effekten, Zeitverlauf der Wirkung und klinischer Übersetzung; nicht nur Wirkstoffklasse wiederholen.',
+  rezeptorprofil:
+    'Rezeptorprofil: Interpretationsabsatz plus target-by-target Implikationen (Wirksamkeit, EPS/Prolaktin, Sedierung/Gewicht, Orthostase, anticholinerge Last, serotonerge/noradrenerge Effekte). Keine 1–5 Scores.',
+  pharmakokinetik:
+    'Pharmakokinetik: 2–5 Absätze/Bullet-Cluster zu Resorption, Tmax, Halbwertszeit, Steady State, aktiven Metaboliten, Proteinbindung, CYP/Transportern, TDM und klinischen Konsequenzen; präzise Zahlen zusätzlich im strukturierten "pk"-Block.',
+  indikationen:
+    'Indikationen: zugelassene Indikationen, relevante Off-Label-Kontexte, Patientenselektion, Symptomdimensionen, Wirklatenz und Grenzen der Evidenz in klinisch brauchbaren Bullet-Clustern.',
+  dosierung:
+    'Dosierung: Startdosis, üblicher Ziel-/Erhaltungsbereich, Maximaldosis, Titrationstempo, Einnahmezeitpunkt, Formulierungen sowie ältere Patient:innen, somatische Komorbidität und Nieren-/Leberhinweise; Schema im strukturierten "titration"-Block.',
+  nebenwirkungen:
+    'Nebenwirkungen: häufige vs. schwerwiegende UAW, frühe vs. späte Risiken, Warnzeichen, Risikofaktoren, Prävention/Mitigation und Monitoring; strukturiert priorisiert im "sideEffects"-Block.',
+  kontraindikationen:
+    'Kontraindikationen: absolute und relative Kontraindikationen mit klinischer Nuance, Risikokonstellationen, Vorsichtssituationen und praktischen Alternativ-/Monitoring-Hinweisen.',
+  wechselwirkungen:
+    'Wechselwirkungen & CYP450: CYP-Substrat/Inhibition/Induktion, relevante Wirkstoffklassen, QTc-/Sedierungs-/EPS-/Serotonin-/Blutungs-/Krampfschwellen-Additionen, Rauchen/Alkohol und Management; strukturiert im "cyp"-Block.',
+  qtc:
+    'QTc/EKG: Risikostufe, Dosis-/Spiegelbezug, typische EKG-Situationen (Baseline/Folgekontrollen), Elektrolyte, additive QTc-Arzneien, Schwellen für Vorsicht und Handlungsprinzipien.',
+  kontrollen:
+    'Kontrollen: Baseline- und Verlaufsmonitoring mit konkreten Intervallen soweit etabliert (Labor, Gewicht/BMI/Taille, Blutdruck/Puls, EKG, Spiegel, Bewegungsstörungen, Skalen, Adhärenz, Substanzkonsum).',
+  besonderheiten:
+    'Besonderheiten: praxisnahe klinische Fallstricke, Differenzialindikationen, Komorbiditäten, Formulierungsdetails, Adhärenz-/Depotfragen, Patientenedukation und Entscheidungsperlen.',
+  umstellung:
+    'Umstellung & Depot: praktische Switch-Prinzipien, Cross-Taper, Washout-/Überlappungslogik, Depot/LAI-Optionen, Loading/Oral-Overlap, Äquivalenz-Unsicherheit und typische Fehler; Depot-Details im strukturierten "depotOptions"-Block.',
+  schwangerschaft:
+    'Schwangerschaft/Stillzeit: Nutzen-Risiko-Abwägung, Trimester-/peripartale Aspekte, neonatale Anpassungssymptome, Stillen, Monitoring und wann Spezialberatung/Fachinformation nötig ist.',
+  niereLeber:
+    'Niere/Leber: Elimination, Dosisanpassung/Vorsicht nach Schweregrad, Dialyse-/Zirrhose-Aspekte sofern bekannt, relevante Monitoringparameter und qualitative Empfehlung, wenn Zahlen unsicher sind.',
+  ueberdosierung:
+    'Überdosierung/Toxizität: Leitsymptome, zeitlicher Verlauf, gefährliche Komplikationen, Basismaßnahmen, Monitoring (EKG/Vitalparameter/Labor), Antidot/Supportivtherapie und Intoxikationsfallen.',
+  absetzen:
+    'Absetzen/Taper: Absetzsyndrom-/Relapse-Risiko, Tempo nach Expositionsdauer/Dosis, Hochrisikogruppen, Rebound-Phänomene, Switching-Caveats und Stufenplan im strukturierten "taper"-Block.',
+  merksaetze:
+    'Merksätze/Clinical Pearls: 4–7 prägnante, klinisch verwertbare Pearls mit konkretem Handlungsbezug; keine generischen Merksätze.',
+  quellen:
+    'Quellen/References: source-aware Kurzabschnitt mit Fachinformation/SmPC, Leitlinien und Standardwerken; keine erfundenen exakten Zitate, DOI, Seitenzahlen oder Jahreszahlen, wenn unsicher.',
 }
+
+const WHOLE_DRUG_MAX_TOKENS = 16_000
+const SINGLE_SECTION_MAX_TOKENS = 7_000
 
 /**
  * Default receptor / transporter / enzyme targets for the v2 relative
@@ -137,6 +170,15 @@ export interface PharmaGenerateResponseBody {
    * NOT used as a scientific profile and the entry should be regenerated.
    */
   legacyScoreProfileDetected?: boolean
+  /** Structured section payloads (PK / titration / taper / depot / side-effects / CYP). */
+  structured?: {
+    pk?: Record<string, unknown>
+    titration?: Record<string, unknown>
+    taper?: Record<string, unknown>
+    depotOptions?: unknown[]
+    sideEffects?: unknown[]
+    cyp?: Record<string, unknown>
+  }
   references: string[]
   model: { provider: string; modelId: string; label: string }
 }
@@ -170,10 +212,12 @@ function resolveLanguageName(lang: string | undefined): string {
 
 function buildSystemPrompt(): string {
   return [
-    'You are a clinical pharmacology expert assistant. You generate concise, accurate psychiatric drug monographs for clinician reference.',
-    'Audience: psychiatrists and clinical staff. Be compact and clinically useful: short bullet points or brief paragraphs per section.',
+    'You are a clinical pharmacology expert assistant. You generate accurate psychiatric drug monographs for clinician reference.',
+    'Audience: psychiatrists and clinical staff. Output should read like a dense clinical pharmacology textbook chapter: clinically useful, section-specific, source-aware, and practical at the point of care.',
+    'Write in concise paragraphs and structured bullet clusters, but do not be short. Avoid one-line generic statements. Each requested section must contain enough depth to be useful on its own.',
     'Be accurate and conservative. If you are uncertain about a fact, explicitly mark it as uncertain (e.g. "unsicher" / "ggf. prüfen") rather than inventing specifics.',
     'Never invent precise numeric values (doses, levels, Ki/IC50) you are not confident about; prefer estimates clearly flagged as such.',
+    'When numeric evidence is uncertain, set structured numeric fields to null or mark isEstimated/sourceNote, while still giving qualitative clinical explanation in prose.',
     'Receptor data uses a RELATIVE AFFINITY INDEX (0–100), NOT a 1–5 score, NOT receptor occupancy, NOT clinical blockade. Never output a 1–5 receptor scale.',
     'ALWAYS provide a "quellen" (references) section and a structured "references" array citing standard sources such as the Fachinformation (SmPC), S3-Leitlinien, AMDP, and recognised psychopharmacology references. These references are AI-suggested and MUST be verified against official sources by the clinician.',
     'Output STRICT JSON only — no markdown, no commentary, no code fences.',
@@ -193,7 +237,17 @@ function buildUserPrompt(body: PharmaGenerateRequestBody, targetSections: Sectio
     body.drugClass ? `Drug class: ${body.drugClass}` : 'Drug class: (unknown)',
     body.category ? `Category: ${body.category}` : 'Category: (unknown)',
     '',
-    'Fill the following sections. For each, return a single string value (use line breaks / "•" bullets where helpful):',
+    'Canonical chapter structure is stable: do NOT add new sections or keys. Fill only the requested keys below; these map into the existing 13 textbook chapter sections in the UI.',
+    '',
+    'Depth contract for every requested section:',
+    '- Return a single content string per key, but make the string clinically dense and section-specific.',
+    '- Whole-drug generation: most sections should be 2–5 concise but substantive paragraphs or bullet clusters; short sections still need concrete clinical details.',
+    '- Single-section regeneration: generate the same depth for that one section; do not answer with only a short paragraph.',
+    '- Use line breaks and "•" bullets where helpful for readability. Avoid filler, disclaimers, and generic textbook boilerplate.',
+    '- Include concrete clinical details where known: dosing ranges, titration caveats, half-life/active metabolite, monitoring intervals, contraindication nuance, CYP/QTc risks, depot/oral overlap, adverse-effect prioritization, switching/taper caveats, evidence/source notes.',
+    '- If a precise value is uncertain, do not invent it. Use qualitative phrasing such as "je nach Fachinformation prüfen" and keep structured numeric fields null or estimated.',
+    '',
+    'Fill the following sections:',
     sectionLines,
     '',
     '── RECEPTOR AFFINITY (v2 model) ──',
@@ -205,6 +259,14 @@ function buildUserPrompt(body: PharmaGenerateRequestBody, targetSections: Sectio
     'Only include targets that are clinically relevant for this drug. Suggested target symbols: ' + RECEPTOR_TARGETS.join(', ') + ' (others allowed, e.g. 5-HT7, D4, M3).',
     'Each entry fields: target (string), action (one of: ' + RECEPTOR_ACTIONS.join(', ') + '), affinityPercent (0–100 or null), rawKiNm (number|null), rawIc50Nm (number|null), pKi (number|null), evidenceQuality (one of: ' + EVIDENCE_QUALITIES.join(', ') + '), clinicalRelevance (one of: ' + CLINICAL_RELEVANCES.join(', ') + '), isEstimated (boolean), sourceNote (short string).',
     '',
+    '── STRUCTURED CLINICAL DATA (v2) ──',
+    'ALSO return a "structured" object with the machine-readable payloads that power the reading-mode graphs.',
+    'SAME DISCIPLINE AS RECEPTORS: do NOT invent precise half-life / Ki / dose / loading numbers. If a number is not confidently known, set it to null and set isEstimated:true, and put the qualitative statement in the matching text section. Always provide a sourceNote where applicable.',
+    'For depot/LAI loading regimens and oral-overlap days: mark isEstimated:true unless taken from the SmPC (Fachinformation) or a guideline. Set "oralOverlapDays": 0 when no oral overlap is required.',
+    'For short-acting acetate forms (e.g. Zuclopenthixolacetat / Acuphase) set "isShortActingNotDepot": true (these are NOT maintenance depots).',
+    'Only include the structured keys that are clinically relevant for THIS drug; omit the rest. "titration" = uptitration schedule (dosierung section); "taper" = discontinuation/tapering schedule (absetzen section) — include "taper" whenever the drug carries significant discontinuation risk (e.g. SSRIs, SNRIs, benzodiazepines, antipsychotics with discontinuation syndrome). A taper step with doseMg:null marks the final stop. Numbers are in: half-life/Tmax = hours, steady state = days, doses = mg, depot intervals/days = days, timeToSteadyStateWeeks = weeks.',
+    'For richer graph/table payloads, include enough structured rows when relevant: typically 4–8 titration/taper steps, all clinically important LAI options, 8–14 prioritized side-effect rows, and the major CYP/pharmacodynamic interactions.',
+    '',
     'Also return a "references" array of short citation strings (these are AI-suggested and must be verified).',
     '',
     'Respond with STRICT JSON of exactly this shape (no extra keys, no markdown, NO 1–5 scores):',
@@ -213,8 +275,17 @@ function buildUserPrompt(body: PharmaGenerateRequestBody, targetSections: Sectio
     '  "receptorAffinityProfile": [',
     '    { "target": "D2", "action": "antagonist", "affinityPercent": 92, "rawKiNm": 1.2, "rawIc50Nm": null, "pKi": 8.9, "evidenceQuality": "high", "clinicalRelevance": "high", "isEstimated": false, "sourceNote": "…" }',
     '  ],',
+    '  "structured": {',
+    '    "pk": { "halfLifeHours": 24, "halfLifeNote": "aktiver Metabolit …", "tmaxHours": 4, "timeToSteadyStateDays": 7, "bioavailabilityPercent": 70, "proteinBindingPercent": 90, "tdm": { "lowNgMl": 20, "highNgMl": 60, "unit": "ng/ml", "note": "…" }, "isEstimated": false, "sourceNote": "Fachinformation" },',
+    '    "titration": { "unit": "mg", "steps": [ { "label": "Start", "startDay": 0, "doseMg": 2, "note": "…" } ], "targetDoseMg": 6, "maxDoseMg": 16, "isEstimated": false },',
+    '    "taper": { "unit": "mg", "steps": [ { "label": "Ausgangsdosis", "startDay": 0, "doseMg": 100 }, { "startDay": 14, "doseMg": 50 }, { "startDay": 28, "doseMg": 25 }, { "label": "Absetzen", "startDay": 42, "doseMg": null } ], "isEstimated": true },',
+    '    "depotOptions": [ { "name": "…", "brandName": "…", "injectionIntervalDays": 28, "loadingRegimen": [ { "day": 1, "doseLabel": "150 mg eq.", "route": "deltoid" } ], "oralOverlapDays": 0, "doseEquivalence": "…", "timeToSteadyStateWeeks": 26, "firstMaintenanceDay": 35, "flexWindowDays": 7, "postInjectionMonitoring": "…", "isShortActingNotDepot": false, "isEstimated": false, "sourceNote": "SmPC" } ],',
+    '    "sideEffects": [ { "effect": "…", "system": "metabolisch", "frequency": "common", "severity": "moderate", "note": "…" } ],',
+    '    "cyp": { "enzymes": [ { "enzyme": "CYP2D6", "role": "substrate", "strength": "major", "note": "…" } ], "interactions": [ { "withDrugOrClass": "…", "severity": "major", "effect": "…" } ], "qtcRisk": "moderate", "isEstimated": false }',
+    '  },',
     '  "references": ["<citation>", ...]',
     '}',
+    'frequency ∈ {veryCommon, common, uncommon, rare, unknown}; severity ∈ {mild, moderate, severe, dangerous}; cyp role ∈ {substrate, inhibitor, inducer}; interaction severity ∈ {major, moderate, minor}; qtcRisk ∈ {low, moderate, high}.',
   ].join('\n')
 }
 
@@ -224,6 +295,7 @@ function parseModelJson(raw: string): {
   receptorAffinityProfile?: unknown
   /** Deprecated 1–5 map; detected only to flag legacy output. */
   receptorProfile?: Record<string, unknown>
+  structured?: unknown
   references?: unknown
 } | null {
   let text = raw.trim()
@@ -328,11 +400,234 @@ function coerceAffinityProfile(raw: unknown): ReceptorAffinityEntryV2[] {
       entry.clinicalRelevance = r.clinicalRelevance as ClinicalRelevanceV2
     }
     if (typeof r.sourceNote === 'string' && r.sourceNote.trim()) {
-      entry.sourceNote = r.sourceNote.trim().slice(0, 400)
+      entry.sourceNote = r.sourceNote.trim().slice(0, 600)
     }
     out.push(entry)
   }
   return out
+}
+
+// ── Structured section payloads (v2) ─────────────────────────────────────────
+
+const SIDE_EFFECT_FREQUENCIES = ['veryCommon', 'common', 'uncommon', 'rare', 'unknown'] as const
+type SideEffectFrequencyV2 = (typeof SIDE_EFFECT_FREQUENCIES)[number]
+const SIDE_EFFECT_SEVERITIES = ['mild', 'moderate', 'severe', 'dangerous'] as const
+type SideEffectSeverityV2 = (typeof SIDE_EFFECT_SEVERITIES)[number]
+const CYP_ROLES = ['substrate', 'inhibitor', 'inducer'] as const
+type CypRoleV2 = (typeof CYP_ROLES)[number]
+const CYP_IX_SEVERITIES = ['major', 'moderate', 'minor'] as const
+type CypIxSeverityV2 = (typeof CYP_IX_SEVERITIES)[number]
+const QTC_RISKS = ['low', 'moderate', 'high'] as const
+type QtcRiskV2 = (typeof QTC_RISKS)[number]
+
+interface StructuredBundleV2 {
+  pk?: Record<string, unknown>
+  titration?: Record<string, unknown>
+  taper?: Record<string, unknown>
+  depotOptions?: unknown[]
+  sideEffects?: unknown[]
+  cyp?: Record<string, unknown>
+}
+
+function str(value: unknown, max = 900): string | undefined {
+  return typeof value === 'string' && value.trim() ? value.trim().slice(0, max) : undefined
+}
+
+function boolOr(value: unknown, fallback: boolean): boolean {
+  return typeof value === 'boolean' ? value : fallback
+}
+
+function coercePk(raw: unknown): Record<string, unknown> | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+  const r = raw as Record<string, unknown>
+  const tdmRaw = r.tdm && typeof r.tdm === 'object' ? (r.tdm as Record<string, unknown>) : null
+  const tdm = tdmRaw
+    ? {
+        lowNgMl: toPositiveOrNull(tdmRaw.lowNgMl),
+        highNgMl: toPositiveOrNull(tdmRaw.highNgMl),
+        unit: str(tdmRaw.unit, 20),
+        note: str(tdmRaw.note),
+      }
+    : undefined
+  const out: Record<string, unknown> = {
+    halfLifeHours: toPositiveOrNull(r.halfLifeHours),
+    halfLifeNote: str(r.halfLifeNote),
+    tmaxHours: toPositiveOrNull(r.tmaxHours),
+    timeToSteadyStateDays: toPositiveOrNull(r.timeToSteadyStateDays),
+    bioavailabilityPercent: toPercentOrNull(r.bioavailabilityPercent),
+    proteinBindingPercent: toPercentOrNull(r.proteinBindingPercent),
+    isEstimated: boolOr(r.isEstimated, true),
+    sourceNote: str(r.sourceNote, 600),
+  }
+  if (tdm && (tdm.lowNgMl != null || tdm.highNgMl != null || tdm.note)) out.tdm = tdm
+  const hasAny =
+    out.halfLifeHours != null ||
+    out.tmaxHours != null ||
+    out.timeToSteadyStateDays != null ||
+    out.bioavailabilityPercent != null ||
+    out.proteinBindingPercent != null ||
+    out.halfLifeNote != null ||
+    out.tdm != null
+  return hasAny ? out : undefined
+}
+
+function coerceTitration(raw: unknown): Record<string, unknown> | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+  const r = raw as Record<string, unknown>
+  if (!Array.isArray(r.steps)) return undefined
+  const steps = r.steps
+    .map((s) => {
+      if (!s || typeof s !== 'object') return null
+      const st = s as Record<string, unknown>
+      const startDay = toFiniteOrNull(st.startDay)
+      if (startDay == null) return null
+      return {
+        label: str(st.label, 120),
+        startDay,
+        doseMg: toFiniteOrNull(st.doseMg),
+        note: str(st.note, 600),
+      }
+    })
+    .filter((s): s is NonNullable<typeof s> => s !== null)
+  if (steps.length === 0) return undefined
+  return {
+    unit: str(r.unit, 20) ?? 'mg',
+    steps,
+    targetDoseMg: toPositiveOrNull(r.targetDoseMg),
+    maxDoseMg: toPositiveOrNull(r.maxDoseMg),
+    isEstimated: boolOr(r.isEstimated, true),
+  }
+}
+
+function coerceDepotOptions(raw: unknown, acetateGuard: boolean): unknown[] | undefined {
+  if (!Array.isArray(raw)) return undefined
+  const out = raw
+    .map((o) => {
+      if (!o || typeof o !== 'object') return null
+      const r = o as Record<string, unknown>
+      const name = str(r.name, 120)
+      if (!name) return null
+      const interval = toPositiveOrNull(r.injectionIntervalDays)
+      const loadingRegimen = Array.isArray(r.loadingRegimen)
+        ? r.loadingRegimen
+            .map((d) => {
+              if (!d || typeof d !== 'object') return null
+              const dr = d as Record<string, unknown>
+              const day = toFiniteOrNull(dr.day)
+              const doseLabel = str(dr.doseLabel, 80)
+              if (day == null || !doseLabel) return null
+              return { day, doseLabel, route: str(dr.route, 40), note: str(dr.note, 600) }
+            })
+            .filter((d): d is NonNullable<typeof d> => d !== null)
+        : []
+      const nameLc = `${name} ${str(r.brandName, 120) ?? ''}`.toLowerCase()
+      const isAcetate = /acetat|acuphase/.test(nameLc)
+      return {
+        name,
+        brandName: str(r.brandName, 120),
+        injectionIntervalDays: interval ?? 28,
+        loadingRegimen,
+        oralOverlapDays: Math.max(0, toFiniteOrNull(r.oralOverlapDays) ?? 0),
+        doseEquivalence: str(r.doseEquivalence, 500),
+        timeToSteadyStateWeeks: toPositiveOrNull(r.timeToSteadyStateWeeks),
+        firstMaintenanceDay: toFiniteOrNull(r.firstMaintenanceDay),
+        flexWindowDays: toPositiveOrNull(r.flexWindowDays),
+        postInjectionMonitoring: str(r.postInjectionMonitoring, 700),
+        isShortActingNotDepot: boolOr(r.isShortActingNotDepot, acetateGuard && isAcetate),
+        isEstimated: boolOr(r.isEstimated, true),
+        sourceNote: str(r.sourceNote, 600),
+      }
+    })
+    .filter((o): o is NonNullable<typeof o> => o !== null)
+  return out.length > 0 ? out : undefined
+}
+
+function coerceSideEffects(raw: unknown): unknown[] | undefined {
+  if (!Array.isArray(raw)) return undefined
+  const out = raw
+    .map((e) => {
+      if (!e || typeof e !== 'object') return null
+      const r = e as Record<string, unknown>
+      const effect = str(r.effect, 160)
+      if (!effect) return null
+      const frequency: SideEffectFrequencyV2 = SIDE_EFFECT_FREQUENCIES.includes(
+        r.frequency as SideEffectFrequencyV2,
+      )
+        ? (r.frequency as SideEffectFrequencyV2)
+        : 'unknown'
+      const severity: SideEffectSeverityV2 = SIDE_EFFECT_SEVERITIES.includes(
+        r.severity as SideEffectSeverityV2,
+      )
+        ? (r.severity as SideEffectSeverityV2)
+        : 'mild'
+      return { effect, system: str(r.system, 60), frequency, severity, note: str(r.note, 700) }
+    })
+    .filter((e): e is NonNullable<typeof e> => e !== null)
+  return out.length > 0 ? out : undefined
+}
+
+function coerceCyp(raw: unknown): Record<string, unknown> | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+  const r = raw as Record<string, unknown>
+  const enzymes = Array.isArray(r.enzymes)
+    ? r.enzymes
+        .map((en) => {
+          if (!en || typeof en !== 'object') return null
+          const e = en as Record<string, unknown>
+          const enzyme = str(e.enzyme, 40)
+          if (!enzyme) return null
+          const role: CypRoleV2 = CYP_ROLES.includes(e.role as CypRoleV2)
+            ? (e.role as CypRoleV2)
+            : 'substrate'
+          return { enzyme, role, strength: str(e.strength, 40), note: str(e.note, 600) }
+        })
+        .filter((e): e is NonNullable<typeof e> => e !== null)
+    : []
+  const interactions = Array.isArray(r.interactions)
+    ? r.interactions
+        .map((ix) => {
+          if (!ix || typeof ix !== 'object') return null
+          const i = ix as Record<string, unknown>
+          const withDrugOrClass = str(i.withDrugOrClass, 160)
+          const effect = str(i.effect, 700)
+          if (!withDrugOrClass || !effect) return null
+          const severity: CypIxSeverityV2 = CYP_IX_SEVERITIES.includes(i.severity as CypIxSeverityV2)
+            ? (i.severity as CypIxSeverityV2)
+            : 'moderate'
+          return { withDrugOrClass, severity, effect }
+        })
+        .filter((i): i is NonNullable<typeof i> => i !== null)
+    : []
+  const qtcRisk: QtcRiskV2 | undefined = QTC_RISKS.includes(r.qtcRisk as QtcRiskV2)
+    ? (r.qtcRisk as QtcRiskV2)
+    : undefined
+  if (enzymes.length === 0 && interactions.length === 0 && !qtcRisk) return undefined
+  return {
+    enzymes,
+    ...(interactions.length > 0 ? { interactions } : {}),
+    ...(qtcRisk ? { qtcRisk } : {}),
+    isEstimated: boolOr(r.isEstimated, true),
+  }
+}
+
+/** Coerce the model's structured bundle; drops malformed parts. */
+function coerceStructured(raw: unknown, acetateGuard: boolean): StructuredBundleV2 | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+  const r = raw as Record<string, unknown>
+  const bundle: StructuredBundleV2 = {}
+  const pk = coercePk(r.pk)
+  if (pk) bundle.pk = pk
+  const titration = coerceTitration(r.titration)
+  if (titration) bundle.titration = titration
+  const taper = coerceTitration(r.taper)
+  if (taper) bundle.taper = taper
+  const depotOptions = coerceDepotOptions(r.depotOptions, acetateGuard)
+  if (depotOptions) bundle.depotOptions = depotOptions
+  const sideEffects = coerceSideEffects(r.sideEffects)
+  if (sideEffects) bundle.sideEffects = sideEffects
+  const cyp = coerceCyp(r.cyp)
+  if (cyp) bundle.cyp = cyp
+  return Object.keys(bundle).length > 0 ? bundle : undefined
 }
 
 pharmaGenerateRouter.post('/', async (req: Request, res: Response) => {
@@ -371,6 +666,8 @@ pharmaGenerateRouter.post('/', async (req: Request, res: Response) => {
       tier,
       systemPrompt: buildSystemPrompt(),
       userPrompt: buildUserPrompt(normalizedBody, effectiveSections),
+      maxTokens: effectiveSections.length === 1 ? SINGLE_SECTION_MAX_TOKENS : WHOLE_DRUG_MAX_TOKENS,
+      jsonResponse: true,
     })
 
     const parsed = parseModelJson(result.text)
@@ -382,6 +679,12 @@ pharmaGenerateRouter.post('/', async (req: Request, res: Response) => {
 
     const sections = coerceSections(parsed.sections, effectiveSections)
     const receptorAffinityProfile = coerceAffinityProfile(parsed.receptorAffinityProfile)
+    // Acetate name guard: depot timelines must never be drawn for short-acting
+    // acetate forms even if the model forgets the flag.
+    const acetateGuard = /acetat|acuphase|zuclopenthixolacetat/i.test(
+      `${normalizedBody.genericName} ${(normalizedBody.brandNames ?? []).join(' ')}`,
+    )
+    const structured = coerceStructured(parsed.structured, acetateGuard)
     // Detect deprecated 1–5 score output: flag it but never use it as a profile.
     const legacyScoreProfileDetected =
       parsed.receptorProfile != null &&
@@ -403,6 +706,7 @@ pharmaGenerateRouter.post('/', async (req: Request, res: Response) => {
       affinityScale: AFFINITY_SCALE,
       receptorAffinityProfile,
       legacyScoreProfileDetected,
+      ...(structured ? { structured } : {}),
       references,
       model: result.model,
     }

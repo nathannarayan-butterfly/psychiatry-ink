@@ -1,20 +1,170 @@
 export type DrugSectionKey =
   | 'kurzprofil'
+  | 'steckbrief'
   | 'wirkmechanismus'
   | 'rezeptorprofil'
+  | 'pharmakokinetik'
   | 'indikationen'
   | 'dosierung'
   | 'nebenwirkungen'
   | 'kontraindikationen'
   | 'wechselwirkungen'
+  | 'qtc'
   | 'kontrollen'
   | 'besonderheiten'
   | 'umstellung'
   | 'schwangerschaft'
   | 'niereLeber'
+  | 'ueberdosierung'
+  | 'absetzen'
   | 'merksaetze'
   | 'quellen'
   | 'custom'
+
+/**
+ * Render strategy for a section. Absent ⇒ `'text'` so every legacy section (and
+ * any stored drug predating the structured model) renders unchanged. UI code
+ * MUST resolve via `kind ?? 'text'`.
+ */
+export type DrugSectionKind =
+  | 'text'
+  | 'pk'
+  | 'titration'
+  | 'taper'
+  | 'depot'
+  | 'sideEffects'
+  | 'cyp'
+  | 'glance'
+
+// ── Structured section payloads (all optional / all-nullable numerics) ────────
+// These are additive: a section keeps its free-text `content` as the canonical
+// narrative; the structured payload only powers the reading-mode graphs. When a
+// payload is absent the section degrades gracefully to its text content.
+
+/** Pharmacokinetic numeric summary (kind: 'pk'). Numbers are nullable. */
+export interface PharmacokineticData {
+  halfLifeHours?: number | null
+  /** Free-text qualifier, e.g. "aktiver Metabolit 9-OH 24 h". */
+  halfLifeNote?: string
+  tmaxHours?: number | null
+  timeToSteadyStateDays?: number | null
+  bioavailabilityPercent?: number | null
+  proteinBindingPercent?: number | null
+  /** Therapeutic drug-monitoring reference range. */
+  tdm?: {
+    lowNgMl?: number | null
+    highNgMl?: number | null
+    unit?: string
+    note?: string
+  }
+  /** True when values are estimated rather than from SmPC / a reference. */
+  isEstimated?: boolean
+  sourceNote?: string
+}
+
+/** A single dosing step on a titration / taper schedule. */
+export interface TitrationStep {
+  label?: string
+  /** Day offset from start (day 0 = first dose). */
+  startDay: number
+  /** Target daily dose at this step; null marks a stop / unknown. */
+  doseMg: number | null
+  note?: string
+}
+
+/** An ordered titration (up) or taper (down) schedule (kind: 'titration'|'taper'). */
+export interface TitrationSchedule {
+  unit?: string
+  steps: TitrationStep[]
+  targetDoseMg?: number | null
+  maxDoseMg?: number | null
+  isEstimated?: boolean
+}
+
+/** A loading injection within a depot switching regimen. */
+export interface DepotLoadingDose {
+  /** Day offset from depot initiation (day 0 = first injection). */
+  day: number
+  doseLabel: string
+  route?: string
+  note?: string
+}
+
+/** A long-acting injectable (LAI / depot) switching option (kind: 'depot'). */
+export interface DepotOption {
+  name: string
+  brandName?: string
+  injectionIntervalDays: number
+  loadingRegimen: DepotLoadingDose[]
+  /** Days of oral antipsychotic overlap required (0 ⇒ "kein orales Overlap"). */
+  oralOverlapDays: number
+  doseEquivalence?: string
+  timeToSteadyStateWeeks?: number | null
+  /** Day the first regular maintenance injection is due. */
+  firstMaintenanceDay?: number | null
+  /** Allowed +/- window (days) for a maintenance injection. */
+  flexWindowDays?: number | null
+  postInjectionMonitoring?: string
+  /** Short-acting acetate (e.g. Acuphase) — NOT a maintenance depot. */
+  isShortActingNotDepot?: boolean
+  isEstimated?: boolean
+  sourceNote?: string
+}
+
+export type SideEffectFrequency =
+  | 'veryCommon'
+  | 'common'
+  | 'uncommon'
+  | 'rare'
+  | 'unknown'
+
+export type SideEffectSeverity = 'mild' | 'moderate' | 'severe' | 'dangerous'
+
+/** A single adverse-effect row (kind: 'sideEffects'). */
+export interface SideEffectEntry {
+  effect: string
+  /** Organ system / grouping, e.g. "metabolisch", "EPS", "kardial". */
+  system?: string
+  frequency: SideEffectFrequency
+  severity: SideEffectSeverity
+  note?: string
+}
+
+export type CypRole = 'substrate' | 'inhibitor' | 'inducer'
+
+export interface CypEnzymeInvolvement {
+  enzyme: string
+  role: CypRole
+  /** Qualitative strength, e.g. "stark" / "schwach" / "major". */
+  strength?: string
+  note?: string
+}
+
+export interface CypInteraction {
+  withDrugOrClass: string
+  severity: 'major' | 'moderate' | 'minor'
+  effect: string
+}
+
+/** CYP450 / interaction profile (kind: 'cyp'). */
+export interface CypProfile {
+  enzymes: CypEnzymeInvolvement[]
+  interactions?: CypInteraction[]
+  qtcRisk?: 'low' | 'moderate' | 'high'
+  isEstimated?: boolean
+}
+
+/** At-a-glance KPI strip payload (kind: 'glance'). All fields optional/derived. */
+export interface GlanceData {
+  drugClass?: string
+  halfLifeSummary?: string
+  primaryTargets?: string[]
+  qtcRisk?: 'low' | 'moderate' | 'high'
+  pregnancy?: string
+  lactation?: string
+  depotAvailable?: boolean
+  isEstimated?: boolean
+}
 
 export interface DrugSection {
   id: string
@@ -25,6 +175,15 @@ export interface DrugSection {
   isCollapsedByDefault: boolean
   order: number
   hidden: boolean
+  /** Render strategy. Absent ⇒ 'text' (100% backward compatible). */
+  kind?: DrugSectionKind
+  // ── Optional structured payloads (only the one matching `kind` is used) ──
+  pk?: PharmacokineticData
+  titration?: TitrationSchedule
+  depotOptions?: DepotOption[]
+  sideEffects?: SideEffectEntry[]
+  cyp?: CypProfile
+  glance?: GlanceData
 }
 
 export type DrugStatus = 'active' | 'inactive'
@@ -148,19 +307,93 @@ export interface LegacyReceptorProfileSnapshot {
   archivedAt?: string
 }
 
+/** Current structured-data model version produced by the redesigned KB. */
+export const DATA_MODEL_VERSION = 2 as const
+export type DataModelVersion = 1 | 2
+
+export type KnowledgeBaseVerificationStatus =
+  | 'draft'
+  | 'ai_draft'
+  | 'reviewed'
+  | 'verified'
+  | 'deprecated'
+
+export type PrescribingCountryCode = 'DE' | 'CH' | 'AT' | 'UK'
+
+export type PreparationVerificationStatus =
+  | 'unverified'
+  | 'ai_draft'
+  | 'manually_verified'
+  | 'imported_verified'
+
+export interface KnowledgeBaseAuditFields {
+  createdByUserId?: string
+  createdByDisplayName?: string
+  lastModifiedAt?: string
+  lastModifiedByUserId?: string
+  lastModifiedByDisplayName?: string
+  lastReviewedAt?: string
+  lastReviewedByUserId?: string
+  lastReviewedByDisplayName?: string
+}
+
+export interface MedicationMarketAvailability extends KnowledgeBaseAuditFields {
+  id: string
+  substanceId: string
+  countryCode: PrescribingCountryCode
+  tradeName: string
+  genericName: string
+  strengthValue: string
+  strengthUnit: string
+  dosageForm: string
+  route: string
+  packageSize?: string
+  productIdentifierType?: 'PZN' | 'AMIceId' | 'nationalProductCode' | string
+  productIdentifier?: string
+  prescriptionStatus?: string
+  marketStatus?: string
+  sourceName?: string
+  sourceUrl?: string
+  sourceReference?: string
+  lastVerifiedAt?: string
+  verificationStatus: PreparationVerificationStatus
+  notes?: string
+  createdAt: string
+}
+
 export interface KnowledgeBaseDrug {
   id: string
   collectionId?: string
+  /**
+   * Structured-data model version. Absent / 1 → predates the structured
+   * sections (PK / titration / depot / side-effects / CYP). Stamped on load by
+   * `migrateDataModel` without touching content.
+   */
+  dataModelVersion?: DataModelVersion
   genericName: string
   brandNames: string[]
   drugClass: string
   category: string
   atcCode?: string
   tags?: string[]
-  status: DrugStatus
+  /**
+   * @deprecated Active/inactive status is no longer surfaced in the UI. Kept
+   * optional for backward compatibility with existing stored data and seeds.
+   */
+  status?: DrugStatus
   authorEditor?: string
   createdAt: string
   updatedAt: string
+  createdByUserId?: string
+  createdByDisplayName?: string
+  lastModifiedAt?: string
+  lastModifiedByUserId?: string
+  lastModifiedByDisplayName?: string
+  lastReviewedAt?: string
+  lastReviewedByUserId?: string
+  lastReviewedByDisplayName?: string
+  verificationStatus?: KnowledgeBaseVerificationStatus
+  sourceHierarchyLevel?: string
   sections: DrugSection[]
   /**
    * LEGACY: receptor key → score 0..5 (compact map). Retained for backward
@@ -237,26 +470,41 @@ export const DEFAULT_SECTION_TEMPLATES: {
   label: string
   isCollapsedByDefault: boolean
   order: number
+  kind: DrugSectionKind
 }[] = [
-  { key: 'kurzprofil', label: 'Kurzprofil / Overview', isCollapsedByDefault: false, order: 0 },
-  { key: 'wirkmechanismus', label: 'Wirkmechanismus / Mechanism of Action', isCollapsedByDefault: false, order: 1 },
-  { key: 'rezeptorprofil', label: 'Rezeptorprofil / Receptor Profile', isCollapsedByDefault: true, order: 2 },
-  { key: 'indikationen', label: 'Indikationen / Indications', isCollapsedByDefault: false, order: 3 },
-  { key: 'dosierung', label: 'Dosierung / Dosing', isCollapsedByDefault: false, order: 4 },
-  { key: 'nebenwirkungen', label: 'Nebenwirkungen / Side Effects', isCollapsedByDefault: false, order: 5 },
-  { key: 'kontraindikationen', label: 'Kontraindikationen / Contraindications', isCollapsedByDefault: true, order: 6 },
-  { key: 'wechselwirkungen', label: 'Wechselwirkungen / Interactions', isCollapsedByDefault: true, order: 7 },
-  { key: 'kontrollen', label: 'Kontrollen / Monitoring', isCollapsedByDefault: true, order: 8 },
-  { key: 'besonderheiten', label: 'Besonderheiten / Special Clinical Notes', isCollapsedByDefault: false, order: 9 },
-  { key: 'umstellung', label: 'Umstellung / Depot / Absetzen', isCollapsedByDefault: true, order: 10 },
-  { key: 'schwangerschaft', label: 'Schwangerschaft / Stillzeit', isCollapsedByDefault: true, order: 11 },
-  { key: 'niereLeber', label: 'Niere / Leber-Anpassung', isCollapsedByDefault: true, order: 12 },
-  { key: 'merksaetze', label: 'Merksätze / Clinical Pearls', isCollapsedByDefault: true, order: 13 },
-  { key: 'quellen', label: 'Quellen / References', isCollapsedByDefault: true, order: 14 },
+  { key: 'kurzprofil', label: 'Kurzprofil / Overview', isCollapsedByDefault: false, order: 0, kind: 'text' },
+  { key: 'steckbrief', label: 'Steckbrief / At a Glance', isCollapsedByDefault: false, order: 1, kind: 'glance' },
+  { key: 'wirkmechanismus', label: 'Wirkmechanismus / Mechanism of Action', isCollapsedByDefault: false, order: 2, kind: 'text' },
+  { key: 'rezeptorprofil', label: 'Rezeptorprofil / Receptor Profile', isCollapsedByDefault: true, order: 3, kind: 'text' },
+  { key: 'pharmakokinetik', label: 'Pharmakokinetik / Pharmacokinetics', isCollapsedByDefault: true, order: 4, kind: 'pk' },
+  { key: 'indikationen', label: 'Indikationen / Indications', isCollapsedByDefault: false, order: 5, kind: 'text' },
+  { key: 'dosierung', label: 'Dosierung & Titration / Dosing', isCollapsedByDefault: false, order: 6, kind: 'titration' },
+  { key: 'umstellung', label: 'Umstellung & Depot / Switching & LAI', isCollapsedByDefault: true, order: 7, kind: 'depot' },
+  { key: 'nebenwirkungen', label: 'Nebenwirkungen / Side Effects', isCollapsedByDefault: false, order: 8, kind: 'sideEffects' },
+  { key: 'kontraindikationen', label: 'Kontraindikationen / Contraindications', isCollapsedByDefault: true, order: 9, kind: 'text' },
+  { key: 'wechselwirkungen', label: 'Wechselwirkungen & CYP450 / Interactions', isCollapsedByDefault: true, order: 10, kind: 'cyp' },
+  { key: 'qtc', label: 'QTc / EKG', isCollapsedByDefault: true, order: 11, kind: 'text' },
+  { key: 'kontrollen', label: 'Kontrollen / Monitoring', isCollapsedByDefault: true, order: 12, kind: 'text' },
+  { key: 'schwangerschaft', label: 'Schwangerschaft / Stillzeit', isCollapsedByDefault: true, order: 13, kind: 'text' },
+  { key: 'niereLeber', label: 'Niere / Leber-Anpassung', isCollapsedByDefault: true, order: 14, kind: 'text' },
+  { key: 'ueberdosierung', label: 'Überdosierung / Toxizität', isCollapsedByDefault: true, order: 15, kind: 'text' },
+  { key: 'absetzen', label: 'Absetzen / Taper', isCollapsedByDefault: true, order: 16, kind: 'taper' },
+  { key: 'besonderheiten', label: 'Besonderheiten / Special Clinical Notes', isCollapsedByDefault: false, order: 17, kind: 'text' },
+  { key: 'merksaetze', label: 'Merksätze / Clinical Pearls', isCollapsedByDefault: true, order: 18, kind: 'text' },
+  { key: 'quellen', label: 'Quellen / References', isCollapsedByDefault: true, order: 19, kind: 'text' },
 ]
+
+/** Structured payloads that can be attached to default sections at creation. */
+export type SectionStructuredOverrides = Partial<
+  Record<
+    DrugSectionKey,
+    Pick<DrugSection, 'pk' | 'titration' | 'depotOptions' | 'sideEffects' | 'cyp' | 'glance'>
+  >
+>
 
 export function createDefaultSections(
   overrides: Partial<Record<DrugSectionKey, string>> = {},
+  structured: SectionStructuredOverrides = {},
 ): DrugSection[] {
   return DEFAULT_SECTION_TEMPLATES.map((template) => ({
     id: `${template.key}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -267,5 +515,71 @@ export function createDefaultSections(
     isCollapsedByDefault: template.isCollapsedByDefault,
     order: template.order,
     hidden: false,
+    kind: template.kind,
+    ...(structured[template.key] ?? {}),
   }))
+}
+
+// ── Safe section accessors ────────────────────────────────────────────────────
+// All reading/editing UI resolves a section's render strategy + payload through
+// these helpers so absent fields gracefully degrade (kind ?? 'text', [] / null).
+
+export function getSectionKind(section: DrugSection): DrugSectionKind {
+  return section.kind ?? 'text'
+}
+
+export function getDepotOptions(section: DrugSection): DepotOption[] {
+  return Array.isArray(section.depotOptions) ? section.depotOptions : []
+}
+
+export function getTitrationSchedule(section: DrugSection): TitrationSchedule | null {
+  const t = section.titration
+  if (!t || !Array.isArray(t.steps) || t.steps.length === 0) return null
+  return t
+}
+
+export function getSideEffects(section: DrugSection): SideEffectEntry[] {
+  return Array.isArray(section.sideEffects) ? section.sideEffects : []
+}
+
+export function getCypProfile(section: DrugSection): CypProfile | null {
+  const c = section.cyp
+  if (!c) return null
+  const hasEnzymes = Array.isArray(c.enzymes) && c.enzymes.length > 0
+  const hasInteractions = Array.isArray(c.interactions) && c.interactions.length > 0
+  if (!hasEnzymes && !hasInteractions && !c.qtcRisk) return null
+  return c
+}
+
+export function getPharmacokinetics(section: DrugSection): PharmacokineticData | null {
+  const p = section.pk
+  if (!p) return null
+  const hasAny =
+    p.halfLifeHours != null ||
+    p.tmaxHours != null ||
+    p.timeToSteadyStateDays != null ||
+    p.bioavailabilityPercent != null ||
+    p.proteinBindingPercent != null ||
+    (p.tdm != null && (p.tdm.lowNgMl != null || p.tdm.highNgMl != null)) ||
+    !!p.halfLifeNote
+  return hasAny ? p : null
+}
+
+/** True when a structured section carries renderable data for its kind. */
+export function sectionHasStructuredData(section: DrugSection): boolean {
+  switch (getSectionKind(section)) {
+    case 'pk':
+      return getPharmacokinetics(section) != null
+    case 'titration':
+    case 'taper':
+      return getTitrationSchedule(section) != null
+    case 'depot':
+      return getDepotOptions(section).length > 0
+    case 'sideEffects':
+      return getSideEffects(section).length > 0
+    case 'cyp':
+      return getCypProfile(section) != null
+    default:
+      return false
+  }
 }

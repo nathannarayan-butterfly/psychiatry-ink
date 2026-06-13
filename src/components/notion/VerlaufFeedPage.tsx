@@ -31,8 +31,15 @@ import {
   clinicalEventTime,
   translateClinicalEventSource,
   type ClinicalEventSource,
-  type ClinicalFeedEvent,
 } from '../../utils/verlauf/clinicalEvents'
+import {
+  DOKUMENTE_ARCHIVE_CHANGED_EVENT,
+  loadDokumente,
+  type DokumentEntry,
+} from '../../utils/dokumenteArchive'
+import { defaultAufnahmeSections } from '../../data/aufnahmeSections'
+import { componentTranslations } from '../../data/componentTranslations'
+import type { UiLanguage } from '../../types/settings'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -72,6 +79,17 @@ interface CommentViewState {
   x: number
   y: number
   text: string
+}
+
+interface DerivedFeedEvent {
+  /** Deterministic, stable id derived from the source record. */
+  id: string
+  /** ISO 8601 (or YYYY-MM-DD) — used for display and non-pinned sorting. */
+  date: string
+  source: Exclude<FeedSource, 'manuell'>
+  sourceLabel: string
+  title: string
+  body: string
 }
 
 import {
@@ -749,11 +767,11 @@ const EntryCard = memo(function EntryCard({
 })
 
 // ---------------------------------------------------------------------------
-// Derived (read-only) entry card — sourced from a Therapie section
+// Derived (read-only) entry card — sourced from another clinical section/document
 // ---------------------------------------------------------------------------
 
 interface DerivedEntryCardProps {
-  event: ClinicalFeedEvent
+  event: DerivedFeedEvent
   readonlyLabel: string
   copyLabel: string
 }
@@ -806,19 +824,69 @@ const DerivedEntryCard = memo(function DerivedEntryCard({
 // Unified feed model
 // ---------------------------------------------------------------------------
 
-type FeedSource = 'manuell' | ClinicalEventSource
+type FeedSource = 'manuell' | 'aufnahmebefund' | ClinicalEventSource
 
 type UnifiedItem =
   | { kind: 'manual'; id: string; ts: number; source: FeedSource; entry: VerlaufFeedEntry }
-  | { kind: 'derived'; id: string; ts: number; source: FeedSource; event: ClinicalFeedEvent }
+  | { kind: 'derived'; id: string; ts: number; source: FeedSource; event: DerivedFeedEvent }
 
 const ALL_FEED_SOURCES: FeedSource[] = [
   'manuell',
+  'aufnahmebefund',
   'medikation',
   'psychotherapie',
   'komplementaer',
   'sozialtherapie',
 ]
+
+function resolveAufnahmeSectionLabel(sectionId: string, language: UiLanguage): string {
+  const translated = componentTranslations.aufnahme?.sections?.[sectionId]?.label?.[language]
+  if (translated?.trim()) return translated
+  const fallback = defaultAufnahmeSections.find((section) => section.id === sectionId)
+  return fallback?.label ?? sectionId
+}
+
+function formatAufnahmeContent(entry: DokumentEntry, language: UiLanguage): string {
+  const sectionContents = entry.sectionContents ?? {}
+  const orderedSections = defaultAufnahmeSections
+    .map((section) => ({
+      id: section.id,
+      label: resolveAufnahmeSectionLabel(section.id, language),
+      content: sectionContents[section.id]?.trim() ?? '',
+    }))
+    .filter((section) => section.content)
+
+  if (orderedSections.length > 0) {
+    return orderedSections
+      .map((section) => `${section.label}:\n${section.content}`)
+      .join('\n\n')
+  }
+
+  return entry.content.trim()
+}
+
+function buildAufnahmeFeedEvent(
+  documents: DokumentEntry[],
+  sourceLabel: string,
+  language: UiLanguage,
+): DerivedFeedEvent | null {
+  const anamneseDocuments = documents.filter(
+    (entry) => entry.category === 'anamnese' && entry.content.trim(),
+  )
+  const entry =
+    anamneseDocuments.find((item) => item.pageType === 'aufnahme') ?? anamneseDocuments[0]
+
+  if (!entry) return null
+
+  return {
+    id: `aufnahmebefund:${entry.id}`,
+    date: entry.date,
+    source: 'aufnahmebefund',
+    sourceLabel,
+    title: sourceLabel,
+    body: formatAufnahmeContent(entry, language),
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Main page
@@ -832,6 +900,7 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
   const { t, language } = useTranslation()
 
   const derivedEvents = useClinicalFeedEvents(caseId)
+  const [dokumenteRevision, setDokumenteRevision] = useState(0)
   const [activeSources, setActiveSources] = useState<Set<FeedSource>>(
     () => new Set(ALL_FEED_SOURCES),
   )
@@ -881,6 +950,19 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
   useEffect(() => {
     setEntries(loadVerlaufFeed(caseId))
     setAnnotations(loadVerlaufAnnotations(caseId))
+  }, [caseId])
+
+  useEffect(() => {
+    function handleArchiveChanged(e: Event) {
+      const detail = (e as CustomEvent<{ caseId: string }>).detail
+      if (detail?.caseId === caseId) {
+        setDokumenteRevision((revision) => revision + 1)
+      }
+    }
+    window.addEventListener(DOKUMENTE_ARCHIVE_CHANGED_EVENT, handleArchiveChanged)
+    return () => {
+      window.removeEventListener(DOKUMENTE_ARCHIVE_CHANGED_EVENT, handleArchiveChanged)
+    }
   }, [caseId])
 
   const closeBubble = useCallback(() => {
@@ -1058,6 +1140,12 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
     setComposerOpen(false)
   }, [])
 
+  const aufnahmeFeedEvent = useMemo(
+    () => buildAufnahmeFeedEvent(loadDokumente(caseId), t('dokumenteCategoryAnamnese'), language),
+    // `dokumenteRevision` intentionally participates so archive updates trigger a recompute.
+    [caseId, dokumenteRevision, language, t],
+  )
+
   const allItems = useMemo<UnifiedItem[]>(() => {
     const manualItems: UnifiedItem[] = entries.map((entry) => ({
       kind: 'manual',
@@ -1073,8 +1161,21 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
       source: event.source,
       event,
     }))
-    return [...manualItems, ...derivedItems].sort((a, b) => b.ts - a.ts)
-  }, [entries, derivedEvents])
+    const sorted = [...manualItems, ...derivedItems].sort((a, b) => b.ts - a.ts)
+    if (!aufnahmeFeedEvent) return sorted
+    return [
+      {
+        kind: 'derived',
+        id: aufnahmeFeedEvent.id,
+        // Pin Aufnahmebefund as the first visible Verlauf item; its header still
+        // shows the source document date.
+        ts: Number.MAX_SAFE_INTEGER,
+        source: 'aufnahmebefund',
+        event: aufnahmeFeedEvent,
+      },
+      ...sorted,
+    ]
+  }, [entries, derivedEvents, aufnahmeFeedEvent])
 
   // Sources that actually have at least one entry — these become filter chips.
   const availableSources = useMemo<FeedSource[]>(() => {
@@ -1107,12 +1208,15 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
     (source: FeedSource): string =>
       source === 'manuell'
         ? t('verlaufSourceManuell')
-        : translateClinicalEventSource(language, source),
+        : source === 'aufnahmebefund'
+          ? t('dokumenteCategoryAnamnese')
+          : translateClinicalEventSource(language, source),
     [language, t],
   )
 
   const isEmpty = allItems.length === 0
   const derivedReadonlyLabel = t('verlaufDerivedReadonly')
+  const aufnahmeReadonlyLabel = t('verlaufAufnahmeReadonly' as Parameters<typeof t>[0])
   const copyLabel = t('verlaufEntryCopy')
 
   return (
@@ -1214,7 +1318,11 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
               ) : (
                 <DerivedEntryCard
                   event={item.event}
-                  readonlyLabel={derivedReadonlyLabel}
+                  readonlyLabel={
+                    item.event.source === 'aufnahmebefund'
+                      ? aufnahmeReadonlyLabel
+                      : derivedReadonlyLabel
+                  }
                   copyLabel={copyLabel}
                 />
               )}

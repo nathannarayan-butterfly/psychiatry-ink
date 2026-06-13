@@ -12,8 +12,9 @@ export interface StrengthOption {
   strength: string
   unit?: string
   label: string
-  /** 'reference' = from curated drug DB, 'demo' = fallback placeholder data */
-  source: 'reference' | 'demo'
+  /** 'kb' = market availability, 'reference' = curated drug DB, 'demo' = fallback placeholder data */
+  source: 'kb' | 'reference' | 'demo'
+  sourceLabel?: string
 }
 
 /** Demo-only defaults per formulation — not a clinical reference. */

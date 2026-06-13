@@ -8,6 +8,11 @@ import { useTranslation } from '../../context/TranslationContext'
 import type { AssessmentStandard } from '../../types/isdm'
 import type { EnglishVariant, UiLanguage } from '../../types/settings'
 import { readPomodoroDuration, savePomodoroDuration } from '../../hooks/usePomodoroTimer'
+import {
+  PRESCRIBING_COUNTRIES,
+  PRESCRIBING_COUNTRY_LABELS,
+  usePrescribingCountry,
+} from '../../hooks/usePrescribingCountry'
 import { SettingsField } from './SettingsField'
 import { SettingsOptionGroup } from './SettingsOptionGroup'
 
@@ -66,6 +71,7 @@ export function LanguageSection({
   onSelectAssessmentStandard,
 }: LanguageSectionProps) {
   const { t } = useTranslation()
+  const { defaultPrescribingCountry, setDefaultPrescribingCountry } = usePrescribingCountry()
 
   return (
     <div>
@@ -124,6 +130,23 @@ export function LanguageSection({
           />
           <PlaceholderOption label={`Research-Grade (${t('assessmentStandardComingSoon')})`} />
         </div>
+      </SettingsField>
+
+      <SettingsField
+        label="Standard-Verordnungsland"
+        description="Wird für verfügbare Präparate in Wissensdatenbank und Medikation vorausgewählt."
+      >
+        <select
+          value={defaultPrescribingCountry}
+          onChange={(event) => setDefaultPrescribingCountry(event.target.value as typeof defaultPrescribingCountry)}
+          className="w-full rounded-sm border-2 border-border bg-surface px-3 py-2 text-sm text-ink outline-none transition-colors focus:border-ink"
+        >
+          {PRESCRIBING_COUNTRIES.map((country) => (
+            <option key={country} value={country}>
+              {country} · {PRESCRIBING_COUNTRY_LABELS[country]}
+            </option>
+          ))}
+        </select>
       </SettingsField>
 
       <SettingsField label="Dokumentationssprache" description="Sprache für generierte Texte.">

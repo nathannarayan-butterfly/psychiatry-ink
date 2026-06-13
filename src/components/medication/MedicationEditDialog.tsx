@@ -15,6 +15,13 @@ import {
   type MedicationFormulation,
 } from '../../types/medicationPlan'
 import { formatDoseLineGerman } from '../../utils/medication/doseLine'
+import { useMedicationPreparationOptions } from '../../hooks/useMedicationPreparationOptions'
+import { formatPreparationStrength } from '../../hooks/useMedicationMarketAvailability'
+import {
+  PRESCRIBING_COUNTRIES,
+  PRESCRIBING_COUNTRY_LABELS,
+  usePrescribingCountry,
+} from '../../hooks/usePrescribingCountry'
 import {
   createDefaultMedicationDraft,
   medicationDraftFromEntry,
@@ -77,12 +84,15 @@ export function MedicationEditDialog({
   onSave,
 }: MedicationEditDialogProps) {
   const { language, t } = useTranslation()
+  const { defaultPrescribingCountry } = usePrescribingCountry()
   const [draft, setDraft] = useState<MedicationDraft>(() => createDefaultMedicationDraft())
+  const [selectedCountry, setSelectedCountry] = useState(defaultPrescribingCountry)
 
   useEffect(() => {
     if (!open) return
     setDraft(editingEntry ? medicationDraftFromEntry(editingEntry) : createDefaultMedicationDraft())
-  }, [open, editingEntry])
+    setSelectedCountry(defaultPrescribingCountry)
+  }, [open, editingEntry, defaultPrescribingCountry])
 
   const dosePreview = useMemo(() => {
     const schedule = {
@@ -105,12 +115,27 @@ export function MedicationEditDialog({
     [draft.substance],
   )
 
-  const strengthOptions = useMemo(
+  const kbPreparationOptions = useMedicationPreparationOptions(
+    draft.substance,
+    draft.formulation,
+    selectedCountry,
+  )
+
+  const fallbackStrengthOptions = useMemo(
     () => getStrengthOptions(draft.substance, draft.formulation, language),
     [draft.substance, draft.formulation, language],
   )
 
-  const hasReferenceData = referenceMatches.length > 0
+  const strengthOptions = useMemo(
+    () => kbPreparationOptions.options.length > 0 ? kbPreparationOptions.options : fallbackStrengthOptions,
+    [fallbackStrengthOptions, kbPreparationOptions.options],
+  )
+
+  const hasReferenceData = referenceMatches.length > 0 || kbPreparationOptions.hasVerifiedCountryData
+  const showNoVerifiedCountryData =
+    draft.substance.trim().length >= 2 &&
+    kbPreparationOptions.hasKbDrugMatch &&
+    !kbPreparationOptions.hasVerifiedCountryData
 
   const showCustomStrength =
     strengthOptions.length === 0 || isCustomStrengthValue(draft.strength, strengthOptions)
@@ -174,7 +199,9 @@ export function MedicationEditDialog({
 
           {hasReferenceData ? (
             <p className="medication-edit-dialog__reference-badge">
-              {translateMedicationUi(language, 'medReferenceDataAvailable')}
+              {kbPreparationOptions.options.length > 0
+                ? `✓ KB-Präparate ${selectedCountry}: verifiziert`
+                : translateMedicationUi(language, 'medReferenceDataAvailable')}
             </p>
           ) : suggestions.length > 0 ? (
             <div className="medication-edit-dialog__suggestions">
@@ -202,6 +229,57 @@ export function MedicationEditDialog({
                 </button>
               ))}
             </div>
+          ) : null}
+
+          <label className="therapy-field">
+            <span>Land der Verordnung</span>
+            <select
+              value={selectedCountry}
+              disabled={disabled}
+              className="therapy-input"
+              onChange={(event) => setSelectedCountry(event.target.value as typeof selectedCountry)}
+            >
+              {PRESCRIBING_COUNTRIES.map((country) => (
+                <option key={country} value={country}>
+                  {country} · {PRESCRIBING_COUNTRY_LABELS[country]}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {kbPreparationOptions.verifiedPreparations.length > 0 ? (
+            <div className="medication-edit-dialog__preparations">
+              <p className="medication-edit-dialog__preparations-label">
+                {`Verfügbare Präparate · ${selectedCountry} · ${PRESCRIBING_COUNTRY_LABELS[selectedCountry]}`}
+              </p>
+              <table className="medication-prep-table">
+                <thead>
+                  <tr>
+                    <th>Präparat</th>
+                    <th>Stärke</th>
+                    <th>Form</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {kbPreparationOptions.verifiedPreparations.map((prep) => (
+                    <tr key={prep.id}>
+                      <td>{prep.tradeName}</td>
+                      <td>{formatPreparationStrength(prep)}</td>
+                      <td>{prep.dosageForm}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="medication-edit-dialog__preparations-source">
+                {translateMedicationUi(language, 'medReferenceDisclaimer')}
+              </p>
+            </div>
+          ) : null}
+
+          {showNoVerifiedCountryData ? (
+            <p className="medication-edit-dialog__country-warning">
+              No verified preparation list available for this country. Manual entry required.
+            </p>
           ) : null}
 
           <div className="therapy-field-grid">
@@ -280,6 +358,11 @@ export function MedicationEditDialog({
               {strengthOptions.length > 0 && strengthOptions[0]?.source === 'demo' && draft.substance.trim().length >= 2 ? (
                 <span className="medication-edit-dialog__demo-hint">
                   {translateMedicationUi(language, 'medStrengthDemoHint')}
+                </span>
+              ) : null}
+              {strengthOptions.length > 0 && strengthOptions[0]?.source === 'kb' ? (
+                <span className="medication-edit-dialog__demo-hint">
+                  Quelle: {strengthOptions[0]?.sourceLabel || 'KB-Verfügbarkeitsdaten'}
                 </span>
               ) : null}
             </label>

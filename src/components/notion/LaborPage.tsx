@@ -30,6 +30,7 @@ import { parseLabText } from '../../utils/laborParser'
 import { showNotionToast } from './NotionToast'
 import { API_BASE } from '../../services/apiClient'
 import { useTranslation } from '../../context/TranslationContext'
+import type { UiTranslationKey } from '../../data/uiTranslations'
 import { loadMedicationPlanState } from '../../utils/medication/storage'
 import { loadDiagnosen } from '../../utils/diagnosenArchive'
 import { getCaseMeta } from '../../hooks/useCaseRegistry'
@@ -225,6 +226,17 @@ const ACTIVE_MED_STATUSES: ReadonlySet<MedicationStatus> = new Set<MedicationSta
   'reduced',
   'increased',
 ])
+
+const DIAGNOSTICS_SECTIONS: Array<{
+  id: 'labor' | 'lp' | 'imaging' | 'neurophysiology'
+  labelKey: UiTranslationKey
+  enabled: boolean
+}> = [
+  { id: 'labor', labelKey: 'diagnosticsSectionLabor', enabled: true },
+  { id: 'lp', labelKey: 'diagnosticsSectionLp', enabled: false },
+  { id: 'imaging', labelKey: 'diagnosticsSectionImaging', enabled: false },
+  { id: 'neurophysiology', labelKey: 'diagnosticsSectionNeurophysiology', enabled: false },
+]
 
 /**
  * Gather available clinical context for AI lab analysis.
@@ -2529,6 +2541,35 @@ export function LaborPage({ caseId, onCreatePatient, hasPatient = false }: Labor
 
       {/* Main area */}
       <div className="labor-page__main">
+        <header className="labor-page__diagnostics-header">
+          <div>
+            <h1 className="labor-page__diagnostics-title">{t('diagnosticsPageTitle')}</h1>
+            <p className="labor-page__diagnostics-subtitle">{t('diagnosticsPageSubtitle')}</p>
+          </div>
+          <nav className="labor-page__diagnostics-nav" aria-label={t('diagnosticsPageTitle')}>
+            {DIAGNOSTICS_SECTIONS.map((section) => (
+              <button
+                key={section.id}
+                type="button"
+                className={[
+                  'labor-page__diagnostics-tab',
+                  section.id === 'labor' ? 'labor-page__diagnostics-tab--active' : '',
+                ].join(' ').trim()}
+                disabled={!section.enabled}
+                aria-current={section.id === 'labor' ? 'page' : undefined}
+                title={section.enabled ? undefined : t('diagnosticsSectionComingSoon')}
+              >
+                <span>{t(section.labelKey)}</span>
+                {!section.enabled && (
+                  <span className="labor-page__diagnostics-tab-status">
+                    {t('diagnosticsSectionComingSoon')}
+                  </span>
+                )}
+              </button>
+            ))}
+          </nav>
+        </header>
+
         {/* Inline paste zone — collapsed by default, toggled via "+ Labor hinzufügen" */}
         {pasteZoneOpen && (
           <div className="labor-paste-collapse">

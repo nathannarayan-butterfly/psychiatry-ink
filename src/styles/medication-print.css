@@ -1,0 +1,149 @@
+/*
+ * Standalone print stylesheet for a single medication knowledge entry.
+ *
+ * This file is intentionally self-contained and is NOT imported into the app
+ * bundle for screen rendering. It is loaded as a raw string (via Vite `?raw`)
+ * and injected into the dedicated print window opened by
+ * `printMedication()` in `src/utils/medication/exportMedication.ts`, so the
+ * printout is clean (title, sections, receptor table) with no app chrome.
+ */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  color: #1a1a1a;
+  line-height: 1.5;
+  font-size: 12pt;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.med-print {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.med-print__header {
+  border-bottom: 2px solid #7c3aed;
+  padding-bottom: 12px;
+  margin-bottom: 20px;
+}
+
+.med-print__title {
+  font-size: 22pt;
+  font-weight: 700;
+  margin: 0 0 4px;
+  color: #111;
+}
+
+.med-print__brands {
+  font-size: 12pt;
+  color: #555;
+  margin: 0 0 8px;
+}
+
+.med-print__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  font-size: 9.5pt;
+  color: #444;
+}
+
+.med-print__meta-item {
+  white-space: nowrap;
+}
+
+.med-print__badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 8.5pt;
+  font-weight: 600;
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.med-print__badge--inactive {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.med-print__section {
+  margin: 0 0 16px;
+  page-break-inside: avoid;
+}
+
+.med-print__section-title {
+  font-size: 13pt;
+  font-weight: 600;
+  margin: 0 0 6px;
+  color: #6d28d9;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 3px;
+}
+
+.med-print__section-body {
+  white-space: pre-wrap;
+  font-size: 11pt;
+  color: #222;
+}
+
+.med-print__receptor-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10pt;
+  margin-top: 4px;
+}
+
+.med-print__receptor-table th,
+.med-print__receptor-table td {
+  text-align: left;
+  padding: 4px 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.med-print__receptor-table th {
+  background: #f5f3ff;
+  font-weight: 600;
+  color: #4c1d95;
+}
+
+.med-print__receptor-table td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.med-print__legacy-note {
+  font-size: 9pt;
+  color: #92400e;
+  margin: 4px 0 0;
+}
+
+.med-print__footer {
+  margin-top: 24px;
+  padding-top: 10px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 8.5pt;
+  color: #888;
+}
+
+@page {
+  margin: 16mm;
+}
+
+@media print {
+  .med-print {
+    padding: 0;
+  }
+}

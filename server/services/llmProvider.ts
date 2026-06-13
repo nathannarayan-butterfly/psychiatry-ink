@@ -19,6 +19,7 @@ async function callChatCompletions(
   apiKey: string,
   modelId: string,
   messages: ChatMessage[],
+  options: { maxTokens?: number; jsonResponse?: boolean } = {},
 ): Promise<string> {
   const response = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
@@ -30,6 +31,8 @@ async function callChatCompletions(
       model: modelId,
       messages,
       temperature: 0.3,
+      ...(options.maxTokens ? { max_tokens: options.maxTokens } : {}),
+      ...(options.jsonResponse ? { response_format: { type: 'json_object' } } : {}),
     }),
   })
 
@@ -70,6 +73,8 @@ export async function callLlm(params: {
   tier: AiModelTier
   systemPrompt: string
   userPrompt: string
+  maxTokens?: number
+  jsonResponse?: boolean
 }): Promise<{ text: string; model: AiModelSpec }> {
   const model = resolveModelWithFallback(params.tier)
   const apiKey = providerApiKey(model.provider)
@@ -80,6 +85,11 @@ export async function callLlm(params: {
     return { text: mockCompletion(params.userPrompt, params.tier), model }
   }
 
+  const maxTokens =
+    params.maxTokens && model.provider === 'deepseek'
+      ? Math.min(params.maxTokens, 8_000)
+      : params.maxTokens
+
   const text = await callChatCompletions(
     providerBaseUrl(model.provider),
     apiKey,
@@ -88,6 +98,7 @@ export async function callLlm(params: {
       { role: 'system', content: params.systemPrompt },
       { role: 'user', content: params.userPrompt },
     ],
+    { maxTokens, jsonResponse: params.jsonResponse },
   )
 
   return { text, model }

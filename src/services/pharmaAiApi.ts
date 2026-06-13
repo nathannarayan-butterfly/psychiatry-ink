@@ -5,6 +5,7 @@ import type {
   ReceptorProfileVersion,
 } from '../types/knowledgeBase'
 import { sanitizeAffinityProfile } from '../utils/medication/receptorAffinity'
+import { sanitizeStructuredBundle, type StructuredAiBundle } from '../utils/medication/structuredAi'
 import { API_BASE } from './apiClient'
 
 export interface PharmaGenerateParams {
@@ -15,6 +16,8 @@ export interface PharmaGenerateParams {
   /** Subset of section keys to fill; omit / empty → all sections. */
   sections?: DrugSectionKey[]
   language?: 'de' | 'en' | 'fr' | 'es'
+  /** AI mode/model tier; backend defaults to `thorough` when omitted. */
+  tier?: 'fast' | 'standard' | 'thorough'
 }
 
 export interface PharmaGenerateResult {
@@ -28,6 +31,8 @@ export interface PharmaGenerateResult {
   receptorAffinityProfile: ReceptorAffinityEntry[]
   /** True when the model emitted a deprecated 1–5 score map (ignored). */
   legacyScoreProfileDetected?: boolean
+  /** Validated structured section payloads (PK / titration / depot / SE / CYP). */
+  structured: StructuredAiBundle
   /** AI-suggested references — must be verified by the clinician. */
   references: string[]
   model?: { provider: string; modelId: string; label: string }
@@ -51,6 +56,7 @@ export async function generatePharmaDetails(
       category: params.category ?? '',
       sections: params.sections ?? [],
       language: params.language ?? 'de',
+      ...(params.tier ? { tier: params.tier } : {}),
     }),
   })
 
@@ -61,15 +67,17 @@ export async function generatePharmaDetails(
 
   const data = (await response.json()) as Partial<PharmaGenerateResult> & {
     receptorAffinityProfile?: unknown
+    structured?: unknown
   }
-  // Re-validate the affinity profile client-side so malformed entries are never
-  // persisted, regardless of what the API returned.
+  // Re-validate the affinity profile + structured payloads client-side so
+  // malformed entries are never persisted, regardless of what the API returned.
   return {
     sections: data.sections ?? {},
     receptorProfileVersion: 2,
     affinityScale: 'relative_log_ki_percent',
     receptorAffinityProfile: sanitizeAffinityProfile(data.receptorAffinityProfile),
     legacyScoreProfileDetected: data.legacyScoreProfileDetected,
+    structured: sanitizeStructuredBundle(data.structured),
     references: Array.isArray(data.references) ? data.references : [],
     model: data.model,
   }

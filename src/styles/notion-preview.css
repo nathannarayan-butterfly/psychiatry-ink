@@ -6701,6 +6701,70 @@
   background: var(--notion-paper-bg, #fff);
 }
 
+.labor-page__diagnostics-header {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem 0.85rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-soft, #e0e0d8) 72%, transparent);
+  background: color-mix(in srgb, var(--accent) 3%, var(--notion-paper-bg, #fff));
+}
+
+.labor-page__diagnostics-title {
+  margin: 0;
+  color: var(--ink, #1a1a18);
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+.labor-page__diagnostics-subtitle {
+  max-width: 48rem;
+  margin: 0.18rem 0 0;
+  color: var(--text-muted, #8a8a80);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.labor-page__diagnostics-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.labor-page__diagnostics-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2rem;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--border-soft, #e0e0d8) 88%, transparent);
+  border-radius: 999px;
+  background: var(--notion-paper-bg, #fff);
+  color: var(--text-muted, #8a8a80);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.labor-page__diagnostics-tab--active {
+  border-color: color-mix(in srgb, var(--accent) 36%, var(--border-soft, #e0e0d8));
+  background: color-mix(in srgb, var(--accent) 12%, var(--notion-paper-bg, #fff));
+  color: var(--ink, #1a1a18);
+}
+
+.labor-page__diagnostics-tab:disabled {
+  cursor: default;
+  opacity: 0.72;
+}
+
+.labor-page__diagnostics-tab-status {
+  color: var(--text-muted, #8a8a80);
+  font-size: 0.68rem;
+  font-weight: 500;
+}
+
 .labor-page__empty {
   display: flex;
   align-items: center;
@@ -10310,6 +10374,53 @@
   color: var(--text-secondary);
 }
 
+/* ── Read-only KB preparations overview inside the Therapie add/change dialog ─
+   Sourced from the Wissensdatenbank for the selected prescribing country; calm
+   textbook table style (light bottom rules, muted header). */
+.medication-edit-dialog__preparations {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.medication-edit-dialog__preparations-label {
+  margin: 0;
+  font-size: 0.66rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.medication-prep-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.72rem;
+}
+
+.medication-prep-table th,
+.medication-prep-table td {
+  padding: 0.25rem 0.45rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: var(--border-width) solid var(--border-soft);
+  color: var(--text-main);
+}
+
+.medication-prep-table thead th {
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.medication-edit-dialog__preparations-source {
+  margin: 0;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+}
+
 .medication-edit-dialog__demo-hint {
   font-size: 0.62rem;
   color: var(--text-muted);
@@ -10719,16 +10830,19 @@ details[open].receptor-radar .receptor-radar__summary::before {
 --------------------------------------------------------------------------- */
 
 .kbp-receptor-section {
-  margin: 1rem 0 0.5rem;
-  padding: 0.75rem 0 0.85rem;
-  border-top: var(--border-width) solid var(--border-soft);
+  margin: 0.85rem 0 0.4rem;
+  padding: 0.72rem 0 0.75rem;
+  border-top: 1px solid var(--border-soft);
 }
 
 .kbp-receptor-section__title {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-size: var(--kbp-sz-section);
+  font-weight: 650;
+  color: var(--text-main);
   margin: 0 0 0.5rem;
+  letter-spacing: 0.02em;
+  line-height: var(--kbp-lh-heading);
+  text-transform: uppercase;
 }
 
 .kbp-receptor__hint {
@@ -12083,7 +12197,7 @@ details[open].receptor-radar .receptor-radar__summary::before {
   z-index: 200;
   display: flex;
   flex-direction: column;
-  background: var(--surface);
+  background: #fbfaf8;
   overflow: hidden;
 }
 
@@ -12106,10 +12220,10 @@ details[open].receptor-radar .receptor-radar__summary::before {
 
 .kbp-topbar__title {
   margin: 0;
-  font-size: 1.125rem;
-  font-weight: 700;
+  font-size: 1.02rem;
+  font-weight: 650;
   color: var(--text-main);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.004em;
   line-height: 1.2;
 }
 
@@ -12126,6 +12240,13 @@ details[open].receptor-radar .receptor-radar__summary::before {
   width: 100%;
   margin: 0 auto;
   box-sizing: border-box;
+}
+
+/* Detail view breaks out of the centered 58rem reading column so reading mode
+   can use the full page width for a dedicated right-hand panel. Editing mode is
+   re-clamped to a comfortable measure via `.kbp-detail-view--editing`. */
+.kbp-content--detail {
+  max-width: none;
 }
 
 /* ── KBP List View ─────────────────────────────────────────────────────────── */
@@ -12275,13 +12396,13 @@ details[open].receptor-radar .receptor-radar__summary::before {
 .kbp-status-badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.125rem 0.4rem;
-  border-radius: 0.25rem;
-  font-size: 0.6875rem;
+  padding: 0.08rem 0.35rem;
+  border-radius: 0.2rem;
+  font-size: 0.68rem;
   font-weight: 500;
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-  color: var(--accent);
-  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid color-mix(in srgb, var(--border-soft) 82%, var(--text-muted));
 }
 
 .kbp-status-badge--inactive {
@@ -12336,7 +12457,7 @@ details[open].receptor-radar .receptor-radar__summary::before {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  padding-bottom: 1rem;
+  padding-bottom: 0.85rem;
   border-bottom: 1px solid var(--border-soft);
 }
 
@@ -12349,15 +12470,15 @@ details[open].receptor-radar .receptor-radar__summary::before {
 
 .kbp-drug-header__name {
   margin: 0;
-  font-size: 1.375rem;
-  font-weight: 700;
+  font-size: var(--kbp-sz-title);
+  font-weight: 650;
   color: var(--text-main);
-  letter-spacing: -0.015em;
-  line-height: 1.2;
+  letter-spacing: -0.006em;
+  line-height: var(--kbp-lh-heading);
 }
 
 .kbp-drug-header__brands {
-  font-size: 0.875rem;
+  font-size: var(--kbp-sz-meta);
   color: var(--text-secondary);
 }
 
@@ -12381,15 +12502,27 @@ details[open].receptor-radar .receptor-radar__summary::before {
 }
 
 .kbp-drug-header__summary {
-  margin: 0;
-  font-size: 0.875rem;
+  margin: 0.2rem 0 0;
+  max-width: 68ch;
+  padding-left: 0.75rem;
+  border-left: 2px solid color-mix(in srgb, var(--border-strong) 75%, transparent);
+  font-size: var(--kbp-sz-body);
   color: var(--text-secondary);
-  line-height: 1.55;
+  line-height: var(--kbp-lh-body);
 }
 
 .kbp-drug-header__updated {
   margin: 0;
   font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+
+.kbp-drug-header__audit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  font-size: 0.7rem;
+  line-height: 1.35;
   color: var(--text-muted);
 }
 
@@ -12424,9 +12557,9 @@ details[open].receptor-radar .receptor-radar__summary::before {
 .kbp-ai-notice {
   margin: 0 0 1rem;
   padding: 0.625rem 0.875rem;
-  border-radius: 0.5rem;
-  background: rgba(124, 58, 237, 0.06);
-  border: 1px solid rgba(124, 58, 237, 0.22);
+  border-radius: 0.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
 }
 
 .kbp-ai-notice__disclaimer {
@@ -12442,7 +12575,7 @@ details[open].receptor-radar .receptor-radar__summary::before {
 .kbp-ai-notice__refs {
   margin-top: 0.5rem;
   padding-top: 0.5rem;
-  border-top: 1px solid rgba(124, 58, 237, 0.18);
+  border-top: 1px solid var(--border-soft);
 }
 
 .kbp-ai-notice__refs-title {
@@ -12506,15 +12639,26 @@ details[open].receptor-radar .receptor-radar__summary::before {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  padding: 0.625rem 0;
+  padding: 0.72rem 0.4rem 0.72rem 0;
+  margin: 0 -0.5rem 0 -0.75rem;
+  border-radius: 0.2rem;
   cursor: pointer;
+  transition: background 0.12s;
+}
+
+.kbp-section__header-view:hover {
+  background: var(--surface-hover);
 }
 
 .kbp-section__label {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  letter-spacing: 0.005em;
+  position: relative;
+  font-size: var(--kbp-sz-section);
+  font-weight: 650;
+  color: var(--text-main);
+  letter-spacing: 0.02em;
+  line-height: var(--kbp-lh-heading);
+  padding-left: 0;
+  text-transform: uppercase;
 }
 
 .kbp-section__chevron {
@@ -12583,7 +12727,7 @@ details[open].receptor-radar .receptor-radar__summary::before {
 }
 
 .kbp-section__body {
-  padding: 0 0 0.875rem;
+  padding: 0 0 0.75rem;
 }
 
 .kbp-section__textarea {
@@ -12608,9 +12752,10 @@ details[open].receptor-radar .receptor-radar__summary::before {
 
 .kbp-section__text {
   margin: 0;
-  font-size: 1rem;
-  line-height: 1.65;
-  color: var(--text-main);
+  max-width: 68ch;
+  font-size: var(--kbp-sz-body);
+  line-height: var(--kbp-lh-body);
+  color: color-mix(in srgb, var(--text-main) 88%, var(--text-secondary));
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -13262,3 +13407,2443 @@ details[open].receptor-radar .receptor-radar__summary::before {
 /* Sozialtherapie now uses the shared `.therapy-*` design system (cards,
    status pills, modal detail panel, fields, picker, task list). */
 
+/* ── Knowledge Base reading mode ─────────────────────────────────────────── */
+
+.kbp-detail-layout {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+/* Reading mode: full-width two-column layout. The main reading column keeps a
+   comfortable measure (>= the previous ~35rem), and the docked right panel
+   grows to fill the otherwise-unused horizontal width of the page. */
+.kbp-detail-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 48rem;
+}
+
+.kbp-detail-layout--panel-collapsed .kbp-detail-main {
+  max-width: none;
+}
+
+/* Editing mode keeps the original single, centered, comfortably narrow column. */
+.kbp-detail-view--editing {
+  max-width: 58rem;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
+.kbp-detail-layout--editing .kbp-detail-main {
+  width: 100%;
+  max-width: none;
+}
+
+.kbp-mode-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+.kbp-mode-toggle__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.375rem 0.625rem;
+  border: none;
+  background: var(--surface);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.kbp-mode-toggle__btn + .kbp-mode-toggle__btn {
+  border-left: 1px solid var(--border-soft);
+}
+
+.kbp-mode-toggle__btn--active {
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  color: var(--accent);
+}
+
+.kbp-mode-toggle__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.kbp-draft-badge {
+  display: inline-flex;
+  padding: 0.125rem 0.45rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--warning) 12%, var(--surface));
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.kbp-section--active {
+  background: color-mix(in srgb, var(--accent) 2.25%, transparent);
+  border-radius: 0.15rem;
+}
+
+.kbp-section__reading-content {
+  position: relative;
+  padding: 0 0 0.25rem 0;
+}
+
+/* ── User annotation marks (per-user, never source edits) ─────────────────── */
+
+.kbp-annot {
+  color: inherit;
+  cursor: pointer;
+  border-radius: 0.125rem;
+  transition: background 0.12s, text-decoration-color 0.12s;
+}
+
+.kbp-annot--highlight,
+.kbp-highlight {
+  /* Default tint (yellow) — overridden by .kbp-annot--highlight-* below.
+     Kept for backward-compat with marks rendered without a color class. */
+  background: color-mix(in srgb, #facc15 38%, transparent);
+  padding: 0 0.05em;
+}
+
+.kbp-annot--highlight:hover {
+  background: color-mix(in srgb, #facc15 55%, transparent);
+}
+
+/* Per-user highlight color variants (subtle, on-theme textbook tints). */
+.kbp-annot--highlight-yellow {
+  background: color-mix(in srgb, #facc15 38%, transparent);
+}
+.kbp-annot--highlight-yellow:hover {
+  background: color-mix(in srgb, #facc15 55%, transparent);
+}
+.kbp-annot--highlight-green {
+  background: color-mix(in srgb, #4ade80 38%, transparent);
+}
+.kbp-annot--highlight-green:hover {
+  background: color-mix(in srgb, #4ade80 55%, transparent);
+}
+.kbp-annot--highlight-blue {
+  background: color-mix(in srgb, #60a5fa 38%, transparent);
+}
+.kbp-annot--highlight-blue:hover {
+  background: color-mix(in srgb, #60a5fa 55%, transparent);
+}
+.kbp-annot--highlight-pink {
+  background: color-mix(in srgb, #f472b6 38%, transparent);
+}
+.kbp-annot--highlight-pink:hover {
+  background: color-mix(in srgb, #f472b6 55%, transparent);
+}
+.kbp-annot--highlight-orange {
+  background: color-mix(in srgb, #fb923c 40%, transparent);
+}
+.kbp-annot--highlight-orange:hover {
+  background: color-mix(in srgb, #fb923c 58%, transparent);
+}
+.kbp-annot--highlight-purple {
+  background: color-mix(in srgb, #c084fc 36%, transparent);
+}
+.kbp-annot--highlight-purple:hover {
+  background: color-mix(in srgb, #c084fc 52%, transparent);
+}
+.kbp-annot--highlight-teal {
+  background: color-mix(in srgb, #2dd4bf 34%, transparent);
+}
+.kbp-annot--highlight-teal:hover {
+  background: color-mix(in srgb, #2dd4bf 50%, transparent);
+}
+.kbp-annot--highlight-gray {
+  background: color-mix(in srgb, #94a3b8 32%, transparent);
+}
+.kbp-annot--highlight-gray:hover {
+  background: color-mix(in srgb, #94a3b8 48%, transparent);
+}
+.kbp-annot--highlight-red {
+  background: color-mix(in srgb, #f87171 34%, transparent);
+}
+.kbp-annot--highlight-red:hover {
+  background: color-mix(in srgb, #f87171 50%, transparent);
+}
+.kbp-annot--highlight-beige {
+  background: color-mix(in srgb, #d6b47d 42%, transparent);
+}
+.kbp-annot--highlight-beige:hover {
+  background: color-mix(in srgb, #d6b47d 58%, transparent);
+}
+
+.kbp-annot--underline {
+  background: transparent;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent) 70%, transparent);
+  text-decoration-thickness: 0.12em;
+  text-underline-offset: 0.18em;
+}
+
+.kbp-annot--underline:hover {
+  text-decoration-color: var(--accent);
+}
+
+.kbp-annot--bold {
+  background: transparent;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.kbp-annot--bold:hover {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+/* ── Floating text-selection toolbar ──────────────────────────────────────── */
+
+.kbp-selection-toolbar {
+  position: fixed;
+  z-index: 9999;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  transform: translateX(-50%);
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.16), 0 1px 3px rgba(15, 23, 42, 0.1);
+  animation: kbp-toolbar-in 0.12s ease-out;
+}
+
+@keyframes kbp-toolbar-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.kbp-selection-toolbar__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.4rem;
+  border: none;
+  border-radius: 0.3rem;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.kbp-selection-toolbar__btn:hover {
+  background: var(--surface-hover);
+  color: var(--text-main);
+}
+
+.kbp-selection-toolbar__btn--active {
+  background: var(--surface-hover);
+  color: var(--text-main);
+}
+
+/* Highlight color swatch picker (revealed by the highlighter button). */
+.kbp-selection-toolbar__hl {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.kbp-swatches {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+  max-width: 6.6rem;
+  padding: 0 0.15rem 0 0.25rem;
+  margin-left: 0.05rem;
+  border-left: 1px solid var(--border-soft);
+}
+
+.kbp-swatch {
+  width: 1.05rem;
+  height: 1.05rem;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--text-main) 18%, transparent);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.kbp-swatch:hover {
+  transform: scale(1.15);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.22);
+}
+
+.kbp-swatch--yellow {
+  background: color-mix(in srgb, #facc15 70%, white);
+}
+.kbp-swatch--green {
+  background: color-mix(in srgb, #4ade80 70%, white);
+}
+.kbp-swatch--blue {
+  background: color-mix(in srgb, #60a5fa 70%, white);
+}
+.kbp-swatch--pink {
+  background: color-mix(in srgb, #f472b6 70%, white);
+}
+.kbp-swatch--orange {
+  background: color-mix(in srgb, #fb923c 75%, white);
+}
+.kbp-swatch--purple {
+  background: color-mix(in srgb, #c084fc 72%, white);
+}
+.kbp-swatch--teal {
+  background: color-mix(in srgb, #2dd4bf 72%, white);
+}
+.kbp-swatch--gray {
+  background: color-mix(in srgb, #94a3b8 72%, white);
+}
+.kbp-swatch--red {
+  background: color-mix(in srgb, #f87171 72%, white);
+}
+.kbp-swatch--beige {
+  background: color-mix(in srgb, #d6b47d 78%, white);
+}
+
+.kbp-selection-toolbar__btn--ai {
+  color: var(--accent);
+}
+
+.kbp-selection-toolbar__btn--ai:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent);
+}
+
+.kbp-selection-toolbar__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.kbp-selection-toolbar__divider {
+  width: 1px;
+  align-self: stretch;
+  margin: 0.15rem 0.15rem;
+  background: var(--border-soft);
+}
+
+.kbp-reading-panel {
+  flex: 1 1 24rem;
+  min-width: 20rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.375rem;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 8.5rem);
+  position: sticky;
+  top: 0.5rem;
+}
+
+.kbp-reading-panel--collapsed {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  position: sticky;
+  top: 0.5rem;
+}
+
+.kbp-reading-panel__expand-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  min-height: 7.5rem;
+  padding: 0.55rem 0.35rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 36%, var(--border-soft));
+  border-left: 3px solid var(--accent);
+  border-radius: 0.55rem;
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+  color: color-mix(in srgb, var(--accent) 82%, var(--text-main));
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+}
+
+.kbp-reading-panel__expand-btn:hover {
+  border-color: color-mix(in srgb, var(--accent) 54%, var(--border-soft));
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  color: var(--accent);
+}
+
+.kbp-reading-panel__rail-label {
+  font-size: 0.74rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  line-height: 1.15;
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
+}
+
+.kbp-reading-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.kbp-reading-panel__title {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.kbp-reading-panel__section {
+  margin: 0.15rem 0 0;
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+
+.kbp-reading-panel__tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.kbp-reading-panel__tab {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.45rem 0.5rem;
+  border: none;
+  background: transparent;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.kbp-reading-panel__tab--active {
+  color: var(--accent);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.kbp-reading-panel__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding: 0.625rem 0.75rem 0.75rem;
+  overflow: auto;
+  flex: 1;
+}
+
+.kbp-reading-panel__textarea {
+  width: 100%;
+  padding: 0.45rem 0.5rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.25rem;
+  background: var(--surface);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--text-main);
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.kbp-reading-panel__comment-form,
+.kbp-reading-panel__ask-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.kbp-reading-panel__empty {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.kbp-reading-panel__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.kbp-reading-panel__comment {
+  padding: 0.45rem 0.5rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, var(--accent) 2%, var(--surface));
+}
+
+.kbp-reading-panel__comment-text {
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--text-main);
+  white-space: pre-wrap;
+}
+
+.kbp-reading-panel__comment-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.625rem;
+  color: var(--text-muted);
+}
+
+.kbp-reading-panel__chat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1 1 auto;
+  min-height: 8rem;
+  overflow: auto;
+}
+
+.kbp-reading-panel__chat-msg {
+  padding: 0.45rem 0.5rem;
+  border-radius: 0.25rem;
+  border: 1px solid var(--border-soft);
+}
+
+.kbp-reading-panel__chat-msg--user {
+  background: color-mix(in srgb, var(--accent) 5%, var(--surface));
+}
+
+.kbp-reading-panel__chat-msg--assistant {
+  background: var(--surface);
+}
+
+.kbp-reading-panel__chat-role {
+  margin: 0 0 0.2rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.kbp-reading-panel__chat-text {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--text-main);
+  white-space: pre-wrap;
+}
+
+/* ── Right reading column: Studienbereich panel + per-user notes stacked ──
+   The column owns the sticky positioning and the viewport-height cap; the
+   panel and the notes section share that height and scroll internally. */
+.kbp-reading-column {
+  flex: 1 1 24rem;
+  min-width: 20rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  position: sticky;
+  top: 0.5rem;
+  align-self: flex-start;
+  max-height: calc(100vh - 8.5rem);
+}
+
+.kbp-reading-column > .kbp-reading-panel {
+  position: static;
+  top: auto;
+  flex: 1 1 auto;
+  min-height: 8rem;
+  max-height: none;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+
+/* ── Per-user reading-mode notes (collapsible) ── */
+.kbp-notes {
+  display: flex;
+  flex-direction: column;
+}
+
+.kbp-notes--closed {
+  flex: 0 0 auto;
+}
+
+.kbp-notes__toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.375rem;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.kbp-notes__toggle:hover {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border-soft));
+  color: var(--accent);
+}
+
+.kbp-notes__toggle-label {
+  flex: 1;
+  text-align: left;
+}
+
+.kbp-notes__toggle-chevron {
+  opacity: 0.55;
+}
+
+.kbp-notes--open {
+  flex: 1 1 24rem;
+  min-height: 22rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.375rem;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.kbp-notes__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.7rem;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.kbp-notes__title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  color: var(--text-main);
+}
+
+.kbp-notes__title {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.kbp-notes__private {
+  font-size: 0.625rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kbp-notes__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--border-soft);
+  background: color-mix(in srgb, var(--accent) 3%, var(--surface));
+}
+
+.kbp-notes__toolbar-sep {
+  width: 1px;
+  align-self: stretch;
+  margin: 0.1rem 0.2rem;
+  background: var(--border-soft);
+}
+
+.kbp-notes__font-select {
+  height: 1.65rem;
+  padding: 0 0.35rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.25rem;
+  background: var(--surface);
+  color: var(--text-main);
+  font-size: 0.6875rem;
+  cursor: pointer;
+}
+
+.kbp-notes__tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.kbp-notes__tool:hover {
+  border-color: var(--border-soft);
+  background: var(--surface);
+  color: var(--accent);
+}
+
+.kbp-notes__tool--highlight:hover {
+  color: #b45309;
+}
+
+.kbp-notes__highlight-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.1rem 0.2rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.3rem;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+}
+
+.kbp-notes__highlight-icon {
+  flex: 0 0 auto;
+  color: #b45309;
+  margin: 0 0.05rem;
+}
+
+.kbp-notes__swatch {
+  width: 0.95rem;
+  height: 0.95rem;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--text-main) 16%, transparent);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.kbp-notes__swatch:hover {
+  transform: scale(1.14);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.2);
+}
+
+.kbp-notes__editor {
+  flex: 1;
+  min-height: 16rem;
+  padding: 0.7rem 0.8rem;
+  overflow: auto;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--text-main);
+  outline: none;
+  word-break: break-word;
+}
+
+.kbp-notes__editor:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.kbp-receptor-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.kbp-receptor-section__head-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.kbp-receptor-section__badge {
+  display: inline-flex;
+  padding: 0.125rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  color: var(--text-secondary);
+}
+
+.kbp-receptor-section__badge--legacy {
+  background: color-mix(in srgb, var(--warning) 10%, var(--surface));
+}
+
+.kbp-receptor-section__updated {
+  margin: 0 0 0.5rem;
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+
+/* Below this width there isn't room for a comfortable reading column AND a
+   useful side panel, so stack the panel beneath the content. */
+@media (max-width: 1080px) {
+  .kbp-detail-layout {
+    flex-direction: column;
+  }
+
+  .kbp-detail-main {
+    max-width: none;
+  }
+
+  .kbp-reading-panel {
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 auto;
+    max-height: 26rem;
+    position: static;
+  }
+
+  .kbp-reading-panel__chat {
+    min-height: 0;
+  }
+
+  /* Stacked layout: the column spans full width and is no longer sticky or
+     viewport-capped; the panel reverts to its own scroll cap. */
+  .kbp-reading-column {
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 auto;
+    position: static;
+    max-height: none;
+  }
+
+  .kbp-reading-column > .kbp-reading-panel {
+    max-height: 26rem;
+  }
+
+  .kbp-notes--open {
+    min-height: 20rem;
+    max-height: 34rem;
+  }
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Wissensdatenbank — structured reading/editing redesign
+   (sticky TOC, At-a-glance, graph cards, depot timeline, structured editors)
+   On-theme: warm paper bg, accent-tinted active state, CSS-variable colours.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Clinical severity / risk palette (CSS-variable only; reused by charts). */
+  --kb-sev-mild: #4a7c59;
+  --kb-sev-moderate: var(--warning);
+  --kb-sev-severe: #c2410c;
+  --kb-sev-dangerous: var(--color-recording);
+  --kb-qtc-low: #4a7c59;
+  --kb-qtc-moderate: var(--warning);
+  --kb-qtc-high: var(--color-recording);
+
+  /* ── KBP typography scale ───────────────────────────────────────────────────
+     Refined clinical-reference hierarchy: body sits comfortably below section
+     headers; drug title is prominent but never shouting.
+     ───────────────────────────────────────────────────────────────────────── */
+  --kbp-sz-title:    1.3rem;    /* drug name / detail-page heading            */
+  --kbp-sz-section:  0.94rem;   /* section headers (accordion labels, h3)     */
+  --kbp-sz-body:     0.89rem;   /* reading-mode body / narrative text         */
+  --kbp-sz-sub:      0.82rem;   /* sub-labels, brand names, dialog titles     */
+  --kbp-sz-meta:     0.76rem;   /* secondary metadata, class badge text       */
+  --kbp-sz-small:    0.72rem;   /* chips, badges, small labels                */
+  --kbp-sz-xs:       0.68rem;   /* timestamps, tiny muted text                */
+  --kbp-lh-body:     1.7;       /* running-text line-height                   */
+  --kbp-lh-heading:  1.3;       /* heading / section-header line-height       */
+}
+
+/* ── KI mode / model selector (editing toolbar) ─────────────────────────────── */
+.kbp-ai-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.kbp-ai-mode__label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.kbp-ai-mode__select {
+  font-size: 0.78rem;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.375rem;
+  background: var(--surface);
+  color: var(--text-main);
+  cursor: pointer;
+  max-width: 16rem;
+}
+
+.kbp-ai-mode__select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.kbp-ai-notice__model {
+  margin: 0.25rem 0 0;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+/* ── Reading layout: TOC | main | panel ─────────────────────────────────────── */
+.kbp-detail-layout--reading {
+  align-items: flex-start;
+}
+
+/* Content-first hierarchy on wide screens (the <=1080px stack rule below wins on
+   narrow viewports because it lives in its own media query):
+   - The medication content is the dominant, centered column with a comfortable
+     reading measure.
+   - The Comments / Ask-AI panel is a NARROW docked secondary column that never
+     grows to compete (capped well below 50/50).
+   - Extra horizontal space on wide/ultrawide screens becomes margin/whitespace
+     around the centered TOC + content + panel cluster, not a ballooning panel. */
+@media (min-width: 1081px) {
+  .kbp-detail-layout--reading {
+    justify-content: center;
+  }
+
+  .kbp-detail-layout--reading .kbp-detail-main {
+    flex: 0 1 48rem;
+    max-width: 48rem;
+  }
+
+  /* Collapsed panel → content reclaims the freed width (wider measure). */
+  .kbp-detail-layout--reading.kbp-detail-layout--panel-collapsed .kbp-detail-main {
+    flex: 1 1 auto;
+    max-width: 62rem;
+  }
+
+  .kbp-detail-layout--reading .kbp-reading-panel {
+    flex: 0 0 22rem;
+    min-width: 18rem;
+    max-width: 22rem;
+  }
+
+  .kbp-detail-layout--reading .kbp-reading-column {
+    flex: 0 0 22rem;
+    min-width: 18rem;
+    max-width: 22rem;
+  }
+
+  /* Keep the panel filling the column (vertical share) rather than inheriting
+     the fixed 22rem flex-basis, which would be read as height in the column. */
+  .kbp-detail-layout--reading .kbp-reading-column > .kbp-reading-panel {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: none;
+  }
+}
+
+.kb-toc {
+  flex: 0 0 12.5rem;
+  position: sticky;
+  top: 0.5rem;
+  align-self: flex-start;
+  max-height: calc(100vh - 8.5rem);
+  overflow: auto;
+}
+
+.kb-toc__dropdown {
+  display: none;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.kb-toc__dropdown-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.kb-toc__select {
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.375rem;
+  background: var(--surface);
+  color: var(--text-main);
+  font-size: 0.8125rem;
+}
+
+.kb-toc__title {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.kb-toc__group {
+  margin-bottom: 0.6rem;
+}
+
+.kb-toc__group-label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 0.35rem 0 0.2rem;
+}
+
+.kb-toc__items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+
+.kb-toc__link {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.25rem 0.5rem;
+  border: none;
+  border-left: 2px solid transparent;
+  background: transparent;
+  font-size: 0.74rem;
+  line-height: 1.3;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 0 0.25rem 0.25rem 0;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.kb-toc__link:hover {
+  background: var(--surface-hover);
+  color: var(--text-main);
+}
+
+.kb-toc__link--active {
+  background: color-mix(in srgb, var(--text-muted) 5%, transparent);
+  border-left-color: color-mix(in srgb, var(--text-muted) 62%, transparent);
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+/* ── At-a-glance KPI strip ───────────────────────────────────────────────────── */
+.kbp-glance-wrap {
+  scroll-margin-top: 0.75rem;
+}
+
+.kb-glance {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: 0;
+  margin: 0.1rem 0 0.45rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.25rem;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.kb-glance__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.45rem 0.65rem;
+  border-right: 1px solid var(--border-soft);
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--surface);
+}
+
+.kb-glance__label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.035em;
+  color: var(--text-muted);
+}
+
+.kb-glance__value {
+  font-size: var(--kbp-sz-meta);
+  font-weight: 550;
+  color: var(--text-main);
+  line-height: 1.4;
+}
+
+.kb-glance__chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.kb-glance__chip {
+  display: inline-flex;
+  padding: 0.02rem 0.32rem;
+  border-radius: 0.2rem;
+  background: color-mix(in srgb, var(--text-muted) 6%, transparent);
+  color: var(--text-secondary);
+  font-size: 0.68rem;
+  font-weight: 500;
+}
+
+.kb-glance__badge {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  padding: 0.06rem 0.42rem;
+  border-radius: 0.2rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.kb-glance__badge--qtc-low {
+  background: color-mix(in srgb, var(--kb-qtc-low) 8%, transparent);
+  color: var(--kb-qtc-low);
+  border-color: color-mix(in srgb, var(--kb-qtc-low) 22%, transparent);
+}
+
+.kb-glance__badge--qtc-moderate {
+  background: color-mix(in srgb, var(--kb-qtc-moderate) 9%, transparent);
+  color: var(--kb-qtc-moderate);
+  border-color: color-mix(in srgb, var(--kb-qtc-moderate) 24%, transparent);
+}
+
+.kb-glance__badge--qtc-high {
+  background: color-mix(in srgb, var(--kb-qtc-high) 10%, transparent);
+  color: var(--kb-qtc-high);
+  border-color: color-mix(in srgb, var(--kb-qtc-high) 26%, transparent);
+}
+
+.kb-glance__badge--depot {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: var(--border-soft);
+}
+
+.kb-glance__badge--muted {
+  background: color-mix(in srgb, var(--text-muted) 10%, transparent);
+  color: var(--text-muted);
+}
+
+/* ── Section header: section-level graph actions ────────────────────────────── */
+.kbp-section__header-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.kbp-section__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.kbp-section__action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.375rem;
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.kbp-section__action-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text-main);
+}
+
+.kbp-section__action-btn--ai:hover {
+  color: var(--accent);
+}
+
+/* ── Structured section wrappers + charts ───────────────────────────────────── */
+.kb-structured {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.15rem 0 0.45rem;
+}
+
+.kb-structured__text {
+  margin: 0;
+  font-size: var(--kbp-sz-body);
+  line-height: var(--kbp-lh-body);
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+}
+
+.kb-structured__empty {
+  margin: 0;
+  font-size: 0.82rem;
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+.kb-chart__caption {
+  margin: 0 0 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.kb-chart__canvas {
+  width: 100%;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.25rem;
+  background: var(--surface);
+  padding: 0.4rem 0.3rem 0.2rem;
+}
+
+.kb-chart__note {
+  margin: 0.3rem 0 0;
+  font-size: 0.68rem;
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+.kb-details {
+  border-top: 1px dashed color-mix(in srgb, var(--border-soft) 80%, transparent);
+  padding-top: 0.4rem;
+}
+
+.kb-details__summary {
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  list-style: none;
+}
+
+.kb-details__summary::-webkit-details-marker {
+  display: none;
+}
+
+.kb-details__summary::before {
+  content: '▸ ';
+  color: var(--text-muted);
+}
+
+.kb-details[open] .kb-details__summary::before {
+  content: '▾ ';
+}
+
+.kb-details__body {
+  padding-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* ── PK numeric strip ────────────────────────────────────────────────────────── */
+.kb-pk-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+  gap: 0;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.25rem;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.kb-pk-strip__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  padding: 0.38rem 0.4rem;
+  border-right: 1px solid var(--border-soft);
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--surface);
+}
+
+.kb-pk-strip__value {
+  font-size: 0.86rem;
+  font-weight: 650;
+  color: var(--text-main);
+}
+
+.kb-pk-strip__label {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+}
+
+/* ── Mini tables (titration steps, etc.) ────────────────────────────────────── */
+.kb-mini-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.kb-mini-table th,
+.kb-mini-table td {
+  text-align: left;
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid var(--border-soft);
+  color: var(--text-secondary);
+}
+
+.kb-mini-table th {
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* ── Callouts (depot lead, overdose, short-acting warning) ───────────────────── */
+.kb-callout {
+  margin: 0;
+  padding: 0.5rem 0.7rem;
+  border-left: 2px solid var(--border-strong);
+  border-radius: 0 0.2rem 0.2rem 0;
+  background: var(--surface);
+  font-size: var(--kbp-sz-body);
+  line-height: var(--kbp-lh-body);
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+}
+
+.kb-callout--warn {
+  border-left-color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 8%, var(--surface));
+  color: color-mix(in srgb, var(--warning) 80%, var(--text-main));
+  font-weight: 500;
+}
+
+/* ── Side-effect heatmap ─────────────────────────────────────────────────────── */
+.kb-se__groups {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.kb-se__group {
+  display: grid;
+  grid-template-columns: 7rem 1fr;
+  gap: 0.5rem;
+  align-items: start;
+}
+
+.kb-se__group-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding-top: 0.2rem;
+}
+
+.kb-se__cells {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.kb-se__cell {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.14rem 0.42rem;
+  border-radius: 0.25rem;
+  border: 1px solid transparent;
+  font-size: 0.72rem;
+  color: var(--text-main);
+  cursor: default;
+}
+
+.kb-se__warn {
+  color: var(--kb-sev-dangerous);
+  font-weight: 700;
+}
+
+/* ── CYP chips + interactions ────────────────────────────────────────────────── */
+.kb-cyp {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.kb-cyp__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.kb-cyp__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.16rem 0.42rem;
+  border-radius: 0.25rem;
+  border: 1px solid var(--border-soft);
+  font-size: 0.72rem;
+  background: var(--surface);
+}
+
+.kb-cyp__chip--substrate {
+  border-color: color-mix(in srgb, var(--accent) 22%, transparent);
+  background: color-mix(in srgb, var(--accent) 3%, var(--surface));
+}
+
+.kb-cyp__chip--inhibitor {
+  border-color: color-mix(in srgb, var(--kb-sev-dangerous) 26%, transparent);
+  background: color-mix(in srgb, var(--kb-sev-dangerous) 4%, var(--surface));
+}
+
+.kb-cyp__chip--inducer {
+  border-color: color-mix(in srgb, var(--warning) 26%, transparent);
+  background: color-mix(in srgb, var(--warning) 4%, var(--surface));
+}
+
+.kb-cyp__enzyme {
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.kb-cyp__role {
+  color: var(--text-secondary);
+}
+
+.kb-cyp__strength {
+  font-size: 0.66rem;
+  color: var(--text-muted);
+}
+
+.kb-cyp__interactions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.kb-cyp__interaction {
+  display: grid;
+  grid-template-columns: 0.5rem auto 1fr;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.25rem;
+  font-size: 0.74rem;
+}
+
+.kb-cyp__ix-sev {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--text-muted);
+}
+
+.kb-cyp__interaction--major .kb-cyp__ix-sev {
+  background: var(--kb-sev-dangerous);
+}
+
+.kb-cyp__interaction--moderate .kb-cyp__ix-sev {
+  background: var(--warning);
+}
+
+.kb-cyp__interaction--minor .kb-cyp__ix-sev {
+  background: var(--kb-sev-mild);
+}
+
+.kb-cyp__ix-drug {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.kb-cyp__ix-effect {
+  color: var(--text-secondary);
+}
+
+/* ── Receptor radar / ranked tabs ───────────────────────────────────────────── */
+.kbp-receptor-section__prose {
+  margin: 0 0 0.6rem;
+  font-size: var(--kbp-sz-body);
+  line-height: var(--kbp-lh-body);
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+}
+
+/* ── KBP textbook chapter reading mode ─────────────────────────────────────── */
+.kbp-detail-view--reading {
+  --kb-book-bg: #fbfcfd;
+  --kb-book-paper: #ffffff;
+  --kb-book-border: #e4e8ed;
+  --kb-book-ink: #1f2933;
+  --kb-book-muted: #667085;
+  --kb-book-accent: #315b61;
+}
+
+.kbp-detail-view--reading .kbp-detail-layout {
+  gap: 1.15rem;
+}
+
+.kbp-detail-view--reading .kbp-detail-main {
+  max-width: 58rem;
+  padding: 1.25rem 1.65rem 2rem;
+  border: 1px solid color-mix(in srgb, var(--kb-book-border) 75%, transparent);
+  background: var(--kb-book-paper);
+  color: var(--kb-book-ink);
+  box-shadow: none;
+}
+
+.kbp-detail-view--reading .kbp-drug-header {
+  gap: 0.7rem;
+  padding-bottom: 1rem;
+  margin-bottom: 0.35rem;
+  border-bottom: 1px solid var(--kb-book-border);
+}
+
+.kbp-detail-view--reading .kbp-drug-header__name {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2rem, 3vw, 2.75rem);
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+  color: var(--kb-book-ink);
+}
+
+.kbp-detail-view--reading .kbp-drug-header__brands,
+.kbp-detail-view--reading .kbp-drug-header__meta,
+.kbp-detail-view--reading .kbp-drug-header__updated {
+  color: var(--kb-book-muted);
+}
+
+.kb-key-facts {
+  width: 100%;
+  max-width: 54rem;
+  margin-top: 0.35rem;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.kb-key-facts th,
+.kb-key-facts td {
+  padding: 0.42rem 0.6rem;
+  border-top: 1px solid color-mix(in srgb, var(--kb-book-border) 80%, transparent);
+  vertical-align: top;
+}
+
+.kb-key-facts th {
+  width: 13rem;
+  color: var(--kb-book-muted);
+  font-weight: 650;
+  text-align: left;
+}
+
+.kb-key-facts td {
+  color: var(--kb-book-ink);
+}
+
+.kbp-detail-view--reading .kbp-section,
+.kbp-detail-view--reading .kbp-receptor-section {
+  border-bottom: 1px solid var(--kb-book-border);
+  background: transparent;
+  scroll-margin-top: 0.75rem;
+}
+
+.kbp-detail-view--reading .kbp-section--active,
+.kbp-detail-view--reading .kbp-receptor-section.kbp-section--active {
+  background: transparent;
+  border-radius: 0;
+}
+
+/* Chapter-band tinting is handled exclusively by the [data-kb-section]
+   full-bleed system further below. The legacy :nth-of-type boxed bands were
+   removed: they produced rounded/bordered cards at the wrong width and
+   conflicted with the data-attribute approach. */
+
+.kbp-detail-view--reading .kbp-section__header-view {
+  align-items: flex-end;
+  padding: 1.15rem 0 0.55rem;
+  margin: 0;
+  border-radius: 0;
+}
+
+.kbp-detail-view--reading .kbp-section__header-view:hover {
+  background: transparent;
+}
+
+.kbp-detail-view--reading .kbp-section__header-view--static {
+  cursor: default;
+}
+
+.kbp-section__title-wrap {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.16rem;
+}
+
+.kbp-section__eyebrow {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--kb-book-accent, var(--text-muted));
+}
+
+.kbp-detail-view--reading .kbp-section__label {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  font-size: 1.16rem;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  text-transform: none;
+  color: var(--kb-book-ink);
+}
+
+.kbp-section__label--heading {
+  margin: 0;
+}
+
+.kbp-section__number {
+  font-size: 0.78em;
+  font-weight: 650;
+  color: var(--kb-book-muted, var(--text-muted));
+}
+
+.kbp-detail-view--reading .kbp-section__title {
+  color: var(--kb-book-ink);
+}
+
+.kbp-detail-view--reading .kbp-section__body {
+  padding: 0.15rem 0 1.15rem;
+}
+
+.kbp-detail-view--reading .kbp-section__reading-content,
+.kbp-detail-view--reading .kbp-section__text,
+.kbp-detail-view--reading .kb-structured__text,
+.kbp-detail-view--reading .kbp-receptor-section__prose {
+  max-width: 68ch;
+  font-size: 0.94rem;
+  line-height: 1.62;
+  color: var(--kb-book-ink);
+}
+
+.kbp-detail-view--reading .kbp-section__text--empty,
+.kbp-detail-view--reading .kb-structured__empty {
+  color: var(--kb-book-muted);
+  font-size: 0.86rem;
+}
+
+.kbp-detail-view--reading .kbp-section--subsection {
+  margin-left: 1.1rem;
+  border-bottom-color: color-mix(in srgb, var(--kb-book-border) 62%, transparent);
+}
+
+.kbp-detail-view--reading .kbp-section--subsection .kbp-section__label {
+  font-size: 1.02rem;
+}
+
+.kbp-subsections {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.kb-receptor-figure {
+  margin: 0.8rem 0 0.9rem;
+}
+
+.kb-receptor-figure__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(16rem, 0.9fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.kb-receptor-figure .kb-chart__canvas {
+  border: 1px solid color-mix(in srgb, var(--kb-book-border) 72%, transparent);
+  background: color-mix(in srgb, var(--kb-book-bg) 42%, var(--kb-book-paper));
+}
+
+.kb-receptor-figure .kb-chart__canvas .recharts-responsive-container {
+  min-height: 240px;
+}
+
+.kb-receptor-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
+.kb-receptor-table th,
+.kb-receptor-table td {
+  padding: 0.38rem 0.45rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--kb-book-border) 72%, transparent);
+  text-align: left;
+}
+
+.kb-receptor-table thead th {
+  color: var(--kb-book-muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.kb-receptor-figure__caption {
+  margin-top: 0.45rem;
+  color: var(--kb-book-muted);
+  font-size: 0.82rem;
+  font-style: italic;
+}
+
+.kb-textbook-box {
+  max-width: 68ch;
+  margin: 0.85rem 0 0.2rem;
+  padding: 0.65rem 0.8rem;
+  border-left: 3px solid var(--kb-book-accent);
+  background: color-mix(in srgb, var(--kb-book-accent) 5%, var(--kb-book-paper));
+}
+
+.kb-textbook-box__title {
+  margin: 0 0 0.25rem;
+  font-size: 0.76rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--kb-book-accent);
+}
+
+.kb-textbook-box__body,
+.kb-textbook-box__body p,
+.kb-textbook-box__body ul {
+  margin: 0;
+  color: var(--kb-book-ink);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.kb-textbook-box__body ul {
+  padding-left: 1.1rem;
+}
+
+.kb-textbook-box--caution {
+  border-left-color: #8a5a32;
+  background: #fbf5ea;
+}
+
+.kb-textbook-box--monitoring {
+  border-left-color: #4f6f52;
+  background: #f2f6ef;
+}
+
+.kb-textbook-box--evidence {
+  border-left-color: #5f6570;
+  background: #f3f2ef;
+}
+
+.kbp-detail-view--reading .kb-toc {
+  color: var(--kb-book-muted);
+}
+
+.kbp-detail-view--reading .kb-toc__title,
+.kbp-detail-view--reading .kb-toc__group-label {
+  color: color-mix(in srgb, var(--kb-book-muted) 84%, transparent);
+}
+
+.kbp-detail-view--reading .kb-toc__link {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.22rem 0.45rem;
+  border-left-color: transparent;
+  color: var(--kb-book-muted);
+  font-size: 0.74rem;
+}
+
+.kb-toc__number {
+  flex: 0 0 auto;
+  min-width: 2.3rem;
+  color: color-mix(in srgb, var(--kb-book-muted, var(--text-muted)) 78%, transparent);
+  font-variant-numeric: tabular-nums;
+}
+
+.kb-toc__label {
+  min-width: 0;
+}
+
+.kbp-detail-view--reading .kb-toc__link--active {
+  background: transparent;
+  border-left-color: var(--kb-book-accent);
+  color: var(--kb-book-ink);
+}
+
+.kbp-reading-panel__expand-btn {
+  gap: 0.35rem;
+}
+
+.kbp-reading-panel__rail-label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.kbp-detail-view--reading .kb-receptor-radar__tabs {
+  margin-bottom: 0.4rem;
+  border-radius: 0;
+  border-color: color-mix(in srgb, var(--kb-book-border) 78%, transparent);
+  background: transparent;
+}
+
+.kbp-detail-view--reading .kb-receptor-radar__tab {
+  padding: 0.16rem 0.42rem;
+  font-size: 0.68rem;
+}
+
+/* ── Wissensdatenbank visual polish: calm paper + semantic chapter tints ─────
+   Keep the textbook layout intact while making chapter bands easier to scan.
+   Tints are intentionally very low-contrast, closer to margin wash than cards. */
+.kbp-content--detail {
+  background: #fff;
+}
+
+.kbp-detail-view--reading {
+  --kb-book-bg: #fff;
+  --kb-book-paper: #fff;
+  --kb-book-border: #ebe7df;
+  --kb-book-ink: #202621;
+  --kb-book-muted: #68706a;
+  --kb-book-accent: #2f5f64;
+  --kb-chapter-pharm: #eaf6f7;
+  --kb-chapter-use: #eef8f0;
+  --kb-chapter-risk: #fff2f2;
+  --kb-chapter-monitoring: #fff8e8;
+}
+
+.kbp-detail-view--reading .kbp-detail-main {
+  background: #fff;
+}
+
+/* ── Compact clinical-textbook reading scale ─────────────────────────────────
+   These declarations are intentionally the LAST reading-mode font rules in the
+   file so they win the cascade over the earlier reading block (which set body
+   to 0.94rem) and the legacy 0.875rem polish values. Sizes target a genuinely
+   dense reference-book feel. */
+.kbp-detail-view--reading .kbp-drug-header__name {
+  font-size: 1.4rem;
+  line-height: 1.18;
+}
+
+.kbp-detail-view--reading .kb-key-facts {
+  font-size: 0.78rem;
+}
+
+.kbp-detail-view--reading .kbp-section__label {
+  font-size: 0.95rem;
+  line-height: 1.3;
+}
+
+.kbp-detail-view--reading .kbp-section--subsection .kbp-section__label {
+  font-size: 0.88rem;
+}
+
+.kbp-detail-view--reading .kbp-section__reading-content,
+.kbp-detail-view--reading .kbp-section__text,
+.kbp-detail-view--reading .kb-structured__text,
+.kbp-detail-view--reading .kbp-receptor-section__prose {
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
+
+.kbp-detail-view--reading .kbp-section__text--empty,
+.kbp-detail-view--reading .kb-structured__empty {
+  font-size: 0.8rem;
+}
+
+.kbp-detail-view--reading .kb-chart__caption,
+.kbp-detail-view--reading .kb-receptor-figure__caption {
+  font-size: 0.72rem;
+}
+
+.kbp-detail-view--reading .kb-mini-table,
+.kbp-detail-view--reading .kb-receptor-table,
+.kbp-detail-view--reading .kb-prep-table {
+  font-size: 0.77rem;
+}
+
+/* Audit metadata (created/modified/reviewed/verification) is small, muted,
+   de-emphasized — never inherits the reading body size. */
+.kbp-detail-view--reading .kbp-drug-header__audit {
+  font-size: 0.7rem;
+  line-height: 1.35;
+  color: var(--kb-book-muted);
+}
+
+/* ── Simplified reading-mode preparations table ──────────────────────────────
+   Calm textbook style matching kb-mini-table / kb-receptor-table: light bottom
+   rules only, no heavy borders or card chrome. Full detail stays in edit mode. */
+.kbp-detail-view--reading .kb-prep-table--reading {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.kbp-detail-view--reading .kb-prep-table--reading th,
+.kbp-detail-view--reading .kb-prep-table--reading td {
+  padding: 0.3rem 0.55rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid color-mix(in srgb, var(--kb-book-border) 70%, transparent);
+  color: var(--kb-book-ink);
+}
+
+.kbp-detail-view--reading .kb-prep-table--reading thead th {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--kb-book-muted);
+}
+
+.kbp-detail-view--reading .kb-prep-table--reading .kb-prep-table__verified {
+  display: block;
+  font-size: 0.66rem;
+  color: var(--kb-book-muted);
+}
+
+/* Preparations section header: static country label (settings-driven) + the
+   reading-mode "Ask KI" affordance. The country switcher was removed; the
+   prescribing country is changed only on the Settings page. */
+.kb-prep-header-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.kb-prep-country-static {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ── Chapter color bands ─────────────────────────────────────────────────────
+   A single full-bleed system. Each chapter's tint spans the ENTIRE reading
+   column edge-to-edge: no cards, no boxed borders, no rounded corners, no
+   width reduction. The negative horizontal margins exactly cancel the
+   .kbp-detail-main horizontal padding (1.65rem desktop / 1rem <=1080px), so the
+   band reaches the column edges while the inner text keeps its normal left
+   alignment and reading measure.
+
+   Bands are applied only to TOP-LEVEL section wrappers and to the
+   "Klinische Hinweise" group container — never to indented .kbp-section--
+   subsection blocks (which would misalign because of their margin-left). The
+   group's subsections simply sit on top of the group's band.
+
+   Note the receptor chapter emits data-kb-section="receptor"
+   (KB_RECEPTOR_SECTION_ID), not "rezeptorprofil"; the group emits
+   data-kb-section="klinischeHinweise". */
+.kbp-detail-view--reading [data-kb-section="receptor"],
+.kbp-detail-view--reading [data-kb-section="wirkmechanismus"],
+.kbp-detail-view--reading [data-kb-section="pharmakokinetik"],
+.kbp-detail-view--reading [data-kb-section="indikationen"],
+.kbp-detail-view--reading [data-kb-section="dosierung"],
+.kbp-detail-view--reading [data-kb-section="umstellung"],
+.kbp-detail-view--reading [data-kb-section="nebenwirkungen"],
+.kbp-detail-view--reading [data-kb-section="wechselwirkungen"],
+.kbp-detail-view--reading [data-kb-section="qtc"],
+.kbp-detail-view--reading [data-kb-section="kontrollen"],
+.kbp-detail-view--reading [data-kb-section="klinischeHinweise"] {
+  margin-left: -1.65rem;
+  margin-right: -1.65rem;
+  padding-left: 1.65rem;
+  padding-right: 1.65rem;
+  border-top: 0;
+  border-right: 0;
+  border-left: 0;
+  border-radius: 0;
+  border-bottom-color: color-mix(in srgb, var(--kb-section-accent, var(--kb-book-border)) 12%, var(--kb-book-border));
+}
+
+/* pharmacology / receptor / PK — very light teal */
+.kbp-detail-view--reading [data-kb-section="receptor"],
+.kbp-detail-view--reading [data-kb-section="wirkmechanismus"],
+.kbp-detail-view--reading [data-kb-section="pharmakokinetik"] {
+  --kb-section-accent: #1f7a83;
+  background: color-mix(in srgb, var(--kb-chapter-pharm) 56%, #fff);
+}
+
+/* indications / dosing / depot — very light green */
+.kbp-detail-view--reading [data-kb-section="indikationen"],
+.kbp-detail-view--reading [data-kb-section="dosierung"],
+.kbp-detail-view--reading [data-kb-section="umstellung"] {
+  --kb-section-accent: #3a7a48;
+  background: color-mix(in srgb, var(--kb-chapter-use) 58%, #fff);
+}
+
+/* safety / risk + the Klinische Hinweise risk chapter — very light rose */
+.kbp-detail-view--reading [data-kb-section="nebenwirkungen"],
+.kbp-detail-view--reading [data-kb-section="wechselwirkungen"],
+.kbp-detail-view--reading [data-kb-section="klinischeHinweise"] {
+  --kb-section-accent: #a94747;
+  background: color-mix(in srgb, var(--kb-chapter-risk) 62%, #fff);
+}
+
+/* QTc / monitoring — very light amber */
+.kbp-detail-view--reading [data-kb-section="qtc"],
+.kbp-detail-view--reading [data-kb-section="kontrollen"] {
+  --kb-section-accent: #9a6b1f;
+  background: color-mix(in srgb, var(--kb-chapter-monitoring) 62%, #fff);
+}
+
+.kbp-detail-view--reading [data-kb-section] .kbp-section__eyebrow {
+  color: color-mix(in srgb, var(--kb-section-accent, var(--kb-book-accent)) 76%, var(--kb-book-muted));
+}
+
+.kbp-detail-view--reading .kbp-reading-panel__expand-btn {
+  width: 3.4rem;
+  min-height: 8.25rem;
+  border-color: color-mix(in srgb, var(--kb-book-accent) 44%, var(--kb-book-border));
+  border-left-width: 4px;
+  background: color-mix(in srgb, var(--kb-book-accent) 8%, #fff);
+  color: color-mix(in srgb, var(--kb-book-accent) 88%, var(--kb-book-ink));
+}
+
+.kbp-detail-view--reading .kbp-reading-panel__expand-btn:hover {
+  background: color-mix(in srgb, var(--kb-book-accent) 12%, #fff);
+  border-color: color-mix(in srgb, var(--kb-book-accent) 62%, var(--kb-book-border));
+}
+
+.kbp-detail-view--reading .kbp-reading-panel__rail-label {
+  font-size: 0.76rem;
+  letter-spacing: 0.07em;
+  color: inherit;
+}
+
+@media (max-width: 1080px) {
+  /* Match the tighter .kbp-detail-main padding (1rem) at this breakpoint so
+     bands stay flush with the column edges. */
+  .kbp-detail-view--reading [data-kb-section="receptor"],
+  .kbp-detail-view--reading [data-kb-section="wirkmechanismus"],
+  .kbp-detail-view--reading [data-kb-section="pharmakokinetik"],
+  .kbp-detail-view--reading [data-kb-section="indikationen"],
+  .kbp-detail-view--reading [data-kb-section="dosierung"],
+  .kbp-detail-view--reading [data-kb-section="umstellung"],
+  .kbp-detail-view--reading [data-kb-section="nebenwirkungen"],
+  .kbp-detail-view--reading [data-kb-section="wechselwirkungen"],
+  .kbp-detail-view--reading [data-kb-section="qtc"],
+  .kbp-detail-view--reading [data-kb-section="kontrollen"],
+  .kbp-detail-view--reading [data-kb-section="klinischeHinweise"] {
+    margin-left: -1rem;
+    margin-right: -1rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+@media (max-width: 1080px) {
+  .kb-receptor-figure__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .kbp-detail-view--reading .kbp-detail-main {
+    max-width: none;
+    padding: 1rem;
+  }
+}
+
+.kb-receptor-radar__tabs {
+  display: inline-flex;
+  gap: 0.2rem;
+  margin-bottom: 0.6rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.25rem;
+  padding: 0.15rem;
+}
+
+.kb-receptor-radar__tab {
+  padding: 0.22rem 0.6rem;
+  border: none;
+  border-radius: 0.18rem;
+  background: transparent;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.kb-receptor-radar__tab--active {
+  background: color-mix(in srgb, var(--text-muted) 6%, var(--surface));
+  color: var(--text-main);
+}
+
+.kb-receptor-ranked {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.kb-receptor-ranked__row {
+  display: grid;
+  grid-template-columns: 4rem 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.kb-receptor-ranked__label {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.kb-receptor-ranked__bar-wrap {
+  height: 0.42rem;
+  background: color-mix(in srgb, var(--border-soft) 60%, transparent);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.kb-receptor-ranked__bar {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.kb-receptor-ranked__value {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.kb-receptor-ranked__action {
+  color: var(--text-muted);
+}
+
+/* ── Depot accordion + SVG switching timeline ───────────────────────────────── */
+.kb-depot-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.kb-depot-accordion__item {
+  border: 1px solid var(--border-soft);
+  border-radius: 0.25rem;
+  overflow: hidden;
+}
+
+.kb-depot-accordion__item--open {
+  border-color: var(--border-strong);
+}
+
+.kb-depot-accordion__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.48rem 0.65rem;
+  border: none;
+  background: var(--surface);
+  cursor: pointer;
+  text-align: left;
+}
+
+.kb-depot-accordion__name {
+  font-size: 0.8rem;
+  font-weight: 650;
+  color: var(--text-main);
+}
+
+.kb-depot-accordion__interval {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.kb-depot-accordion__body {
+  padding: 0.55rem 0.65rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  border-top: 1px solid var(--border-soft);
+}
+
+.kb-depot-facts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+}
+
+.kb-depot-facts strong {
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.kb-depot-facts__monitoring {
+  color: color-mix(in srgb, var(--warning) 80%, var(--text-main));
+}
+
+.kb-depot-facts__source {
+  font-size: 0.7rem;
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+.kb-depot-timeline__scroll {
+  overflow-x: auto;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.25rem;
+  background: var(--surface);
+  padding: 0.25rem;
+}
+
+.kb-depot-timeline__svg {
+  display: block;
+}
+
+.kb-depot-timeline__overlap {
+  fill: color-mix(in srgb, var(--accent) 4%, transparent);
+}
+
+.kb-depot-timeline__grid {
+  stroke: color-mix(in srgb, var(--border-soft) 70%, transparent);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+
+.kb-depot-timeline__axis-label {
+  fill: var(--text-muted);
+  font-size: 9px;
+}
+
+.kb-depot-timeline__axis-title {
+  fill: var(--text-muted);
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.kb-depot-timeline__row-tint {
+  fill: color-mix(in srgb, var(--border-soft) 22%, transparent);
+}
+
+.kb-depot-timeline__row-label {
+  fill: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.kb-depot-timeline__oral-bar {
+  fill: color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.kb-depot-timeline__no-overlap {
+  fill: var(--text-muted);
+  font-size: 10px;
+  font-style: italic;
+}
+
+.kb-depot-timeline__loading-dot {
+  fill: color-mix(in srgb, var(--warning) 70%, var(--surface));
+  stroke: var(--surface);
+  stroke-width: 1.5;
+}
+
+.kb-depot-timeline__dose-label {
+  fill: var(--text-secondary);
+  font-size: 9px;
+}
+
+.kb-depot-timeline__maint-tick {
+  stroke: color-mix(in srgb, var(--accent) 62%, var(--text-secondary));
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.kb-depot-timeline__maint-tick--first {
+  stroke-width: 3;
+}
+
+.kb-depot-timeline__tooltip {
+  position: absolute;
+  z-index: 20;
+  transform: translateX(-50%);
+  padding: 0.3rem 0.5rem;
+  border-radius: 0.35rem;
+  background: var(--text-main);
+  color: var(--surface);
+  font-size: 0.68rem;
+  line-height: 1.3;
+  max-width: 16rem;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+
+/* ── Structured editors (edit mode) ─────────────────────────────────────────── */
+.kb-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+  padding: 0.6rem;
+  border: 1px dashed var(--border-soft);
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--accent) 1.5%, var(--surface));
+}
+
+.kb-edit__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: 0.5rem;
+}
+
+.kb-edit__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.kb-edit__field--inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.kb-edit__label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+}
+
+.kb-edit__input {
+  font-size: 0.8rem;
+  padding: 0.3rem 0.45rem;
+}
+
+.kb-edit__input--xs {
+  max-width: 5rem;
+}
+
+.kb-edit__input--sm {
+  max-width: 9rem;
+}
+
+.kb-edit__check,
+.kb-edit__checks {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+
+.kb-edit__rows {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.kb-edit__rows th {
+  text-align: left;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+  padding: 0.2rem 0.3rem;
+}
+
+.kb-edit__rows td {
+  padding: 0.2rem 0.3rem;
+}
+
+.kb-edit__card {
+  border: 1px solid var(--border-soft);
+  border-radius: 0.5rem;
+  padding: 0.6rem;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.kb-edit__card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kb-edit__card-title {
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: var(--text-main);
+}
+
+.kb-edit__loading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.kb-edit__loading-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.kb-edit__preview {
+  border-top: 1px dashed var(--border-soft);
+  padding-top: 0.5rem;
+}
+
+.kb-edit__preview-label {
+  display: block;
+  font-size: 0.66rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+/* ── Responsive: collapse TOC into a dropdown, stack panel ───────────────────── */
+@media (max-width: 1080px) {
+  .kb-toc {
+    position: static;
+    flex: 1 1 auto;
+    width: 100%;
+    max-height: none;
+    overflow: visible;
+    order: -1;
+  }
+
+  .kb-toc__list {
+    display: none;
+  }
+
+  .kb-toc__dropdown {
+    display: flex;
+  }
+}
