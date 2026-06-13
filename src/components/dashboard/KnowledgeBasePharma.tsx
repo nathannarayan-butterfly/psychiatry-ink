@@ -41,8 +41,11 @@ import type { StructuredAiBundle } from '../../utils/medication/structuredAi'
 import {
   createDefaultSections,
   DEFAULT_SECTION_TEMPLATES,
-  DRUG_CATEGORIES,
   getSectionKind,
+  isPsychClassUnset,
+  normalizePsychClass,
+  PSYCH_CLASS_TO_CATEGORY,
+  PSYCHOPHARMACA_CLASSES,
   sectionHasStructuredData,
   type DrugSection,
   type DrugSectionKey,
@@ -50,6 +53,7 @@ import {
   type MedicationMarketAvailability,
   type PrescribingCountryCode,
   type PreparationVerificationStatus,
+  type PsychopharmacaClass,
   type ReceptorAffinityEntry,
   type ReceptorProfileDetail,
 } from '../../types/knowledgeBase'
@@ -83,6 +87,7 @@ import { KbStructuredEditor } from '../medication/kb/KbStructuredEditor'
 import { KbSectionNav, kbSectionDomId, type KbNavItem } from '../medication/kb/KbSectionNav'
 import { ReceptorRadar } from '../medication/kb/charts/ReceptorRadar'
 import { kbT } from '../medication/kb/kbStrings'
+import { derivePsychClass, getPsychClassLabel } from '../../utils/medication/psychClass'
 
 interface KnowledgeBasePharmaProps {
   onClose: () => void
@@ -211,21 +216,32 @@ interface AddDrugDialogProps {
 }
 
 function AddDrugDialog({ onSubmit, onCancel }: AddDrugDialogProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const [genericName, setGenericName] = useState('')
   const [brandNamesRaw, setBrandNamesRaw] = useState('')
-  const [category, setCategory] = useState<string>('Auto')
+  const [psychClass, setPsychClass] = useState<PsychopharmacaClass>('unspecified')
+  const [classTouched, setClassTouched] = useState(false)
   const [creationAction, setCreationAction] = useState<CreateProfileAction>('empty')
+
+  // Derive a sensible default class from the typed name until the user overrides
+  // it, so new profiles get a real classification instead of "Auto"/empty.
+  const handleGenericNameChange = (value: string) => {
+    setGenericName(value)
+    if (!classTouched) setPsychClass(derivePsychClass(value))
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const trimmed = genericName.trim()
     if (!trimmed) return
+    const resolvedClass = classTouched ? psychClass : derivePsychClass(trimmed)
+    const derivedCategory = PSYCH_CLASS_TO_CATEGORY[resolvedClass] ?? 'Auto'
     onSubmit({
       genericName: trimmed,
       brandNames: brandNamesRaw.split(',').map((s) => s.trim()).filter(Boolean),
       drugClass: '',
-      category,
+      category: derivedCategory,
+      psychClass: resolvedClass,
       tags: [],
       status: 'active',
       dataModelVersion: 2,
@@ -254,7 +270,7 @@ function AddDrugDialog({ onSubmit, onCancel }: AddDrugDialogProps) {
               type="text"
               className="kbp-field__input"
               value={genericName}
-              onChange={(e) => setGenericName(e.target.value)}
+              onChange={(e) => handleGenericNameChange(e.target.value)}
               required
               autoFocus
             />
@@ -273,18 +289,20 @@ function AddDrugDialog({ onSubmit, onCancel }: AddDrugDialogProps) {
             />
           </div>
           <div className="kbp-field">
-            <label className="kbp-field__label" htmlFor="kbp-category">
-              {t('kbPharmaFieldCategory')}
+            <label className="kbp-field__label" htmlFor="kbp-classification">
+              {t('kbPharmaFieldClassification')}
             </label>
             <select
-              id="kbp-category"
+              id="kbp-classification"
               className="kbp-field__select"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              value={psychClass}
+              onChange={(e) => {
+                setClassTouched(true)
+                setPsychClass(e.target.value as PsychopharmacaClass)
+              }}
             >
-              <option value="Auto">Auto</option>
-              {DRUG_CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
+              {PSYCHOPHARMACA_CLASSES.map((cls) => (
+                <option key={cls} value={cls}>{getPsychClassLabel(cls, language)}</option>
               ))}
             </select>
           </div>
@@ -1081,6 +1099,32 @@ function shouldApplyAiBrandNames(drug: Pick<KnowledgeBaseDrug, 'brandNames'>): b
 function applyAiBrandNamesIfEmpty<T extends KnowledgeBaseDrug>(drug: T, brandNames: string[]): T {
   if (!shouldApplyAiBrandNames(drug) || brandNames.length === 0) return drug
   return { ...drug, brandNames } as T
+}
+
+/**
+ * Apply an AI-suggested classification (and NbN descriptor) only when the
+ * clinician has not set one — never overwrite a curated entry. The `psychClass`
+ * is taken when still 'unspecified'; `nbn` is taken when currently empty.
+ */
+function applyAiClassificationIfEmpty<T extends KnowledgeBaseDrug>(
+  drug: T,
+  classification: PsychopharmacaClass,
+  nbn: string,
+): T {
+  const next: T = { ...drug }
+  let changed = false
+  if (isPsychClassUnset(drug.psychClass) && classification !== 'unspecified') {
+    next.psychClass = classification
+    if (PSYCH_CLASS_TO_CATEGORY[classification] && (!drug.category || drug.category === 'Auto')) {
+      next.category = PSYCH_CLASS_TO_CATEGORY[classification] as string
+    }
+    changed = true
+  }
+  if (!drug.nbn?.trim() && nbn.trim()) {
+    next.nbn = nbn.trim()
+    changed = true
+  }
+  return changed ? next : drug
 }
 
 function emptyPreparationDraft(
@@ -1882,10 +1926,12 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
           result.receptorAffinityProfile.length > 0
             ? buildReceptorUpgradePatch(prev, result.receptorAffinityProfile)
             : {}
-        return applyAiBrandNamesIfEmpty(
+        const withClass = applyAiClassificationIfEmpty(
           { ...prev, sections, dataModelVersion: 2 as const, ...receptorPatch },
-          result.brandNames,
+          result.classification,
+          result.nbn,
         )
+        return applyAiBrandNamesIfEmpty(withClass, result.brandNames)
       })
       const prepDrafts = generatedPreparationsToDrafts(drug, result.marketAvailability)
       if (prepDrafts.length > 0) {
@@ -2210,10 +2256,41 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
               )}
             </div>
             <div className="kbp-drug-header__meta">
+              <span className="kbp-drug-header__classification">
+                {getPsychClassLabel(activeDrug.psychClass, language)}
+              </span>
               {activeDrug.drugClass && <span className="kbp-drug-header__class">{activeDrug.drugClass}</span>}
               {activeDrug.atcCode && <span className="kbp-drug-header__atc">ATC: {activeDrug.atcCode}</span>}
+              {activeDrug.nbn && <span className="kbp-drug-header__nbn">NbN: {activeDrug.nbn}</span>}
               {isDraftDirty ? <span className="kbp-draft-badge">{t('kbDraftBadge')}</span> : null}
             </div>
+            {editMode ? (
+              <div className="kbp-field kbp-drug-header__classification-edit">
+                <label className="kbp-field__label" htmlFor="kbp-edit-classification">
+                  {t('kbPharmaFieldClassification')}
+                </label>
+                <select
+                  id="kbp-edit-classification"
+                  className="kbp-field__select"
+                  value={normalizePsychClass(draft.psychClass)}
+                  onChange={(e) => {
+                    const value = e.target.value as PsychopharmacaClass
+                    setDraft((prev) => {
+                      const next = { ...prev, psychClass: value }
+                      const mapped = PSYCH_CLASS_TO_CATEGORY[value]
+                      if (mapped && (!prev.category || prev.category === 'Auto')) {
+                        next.category = mapped as string
+                      }
+                      return next
+                    })
+                  }}
+                >
+                  {PSYCHOPHARMACA_CLASSES.map((cls) => (
+                    <option key={cls} value={cls}>{getPsychClassLabel(cls, language)}</option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
             <p className="kbp-drug-header__updated">
               {t('kbPharmaLastUpdated')}: {formatSiteLocaleDate(activeDrug.updatedAt, language as 'de' | 'en' | 'fr' | 'es')}
             </p>
@@ -2640,7 +2717,11 @@ export function KnowledgeBasePharma({ onClose, onCloseAll, collectionId, collect
                 ? buildReceptorUpgradePatch(created, result.receptorAffinityProfile)
                 : {}
             const generatedDrug = applyAiBrandNamesIfEmpty(
-              { ...created, sections, dataModelVersion: 2 as const, ...receptorPatch },
+              applyAiClassificationIfEmpty(
+                { ...created, sections, dataModelVersion: 2 as const, ...receptorPatch },
+                result.classification,
+                result.nbn,
+              ),
               result.brandNames,
             )
             updateDrug(generatedDrug)

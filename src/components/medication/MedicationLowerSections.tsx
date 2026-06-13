@@ -133,12 +133,13 @@ export function MedicationLowerSections({
     const matchedDrugs = findKbDrugMatches(med, knowledgeBaseDrugs)
     const matchedIds = new Set(matchedDrugs.map((drug) => drug.id))
     const query = normalizeMedicationName(med.substance)
-    const preparations = allPreparations.filter(
-      (entry) =>
-        entry.countryCode === defaultPrescribingCountry &&
-        isVerifiedPreparation(entry) &&
-        (matchedIds.has(entry.substanceId) || normalizeMedicationName(entry.genericName).includes(query)),
-    )
+    const preparations = allPreparations.filter((entry) => {
+      if (entry.countryCode !== defaultPrescribingCountry) return false
+      if (!isVerifiedPreparation(entry)) return false
+      if (matchedIds.has(entry.substanceId)) return true
+      const generic = normalizeMedicationName(entry.genericName)
+      return generic.length >= 2 && (generic.includes(query) || query.includes(generic))
+    })
     return { med, preparations }
   })
   const medsWithPreparations = preparationEntries.filter((entry) => entry.preparations.length > 0)
@@ -289,7 +290,7 @@ export function MedicationLowerSections({
         {PRESCRIBING_COUNTRY_LABELS[defaultPrescribingCountry]}
       </p>
       {medsWithPreparations.length === 0 ? (
-        <p className="medication-lower-section__warning">
+        <p className="medication-lower-section__empty">
           {translateMedicationUi(language, 'medPreparationsEmpty')}
         </p>
       ) : (

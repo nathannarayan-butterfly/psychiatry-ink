@@ -3,9 +3,11 @@ import type {
   DrugSectionKey,
   MedicationMarketAvailability,
   PrescribingCountryCode,
+  PsychopharmacaClass,
   ReceptorAffinityEntry,
   ReceptorProfileVersion,
 } from '../types/knowledgeBase'
+import { normalizePsychClass } from '../types/knowledgeBase'
 import { sanitizeAffinityProfile } from '../utils/medication/receptorAffinity'
 import { sanitizeStructuredBundle, type StructuredAiBundle } from '../utils/medication/structuredAi'
 import { API_BASE } from './apiClient'
@@ -47,6 +49,10 @@ export interface PharmaGenerateResult {
   brandNames: string[]
   /** Alias for callers that prefer trade-name terminology. */
   tradeNames: string[]
+  /** AI-suggested default psychopharmacology classification (validated enum). */
+  classification: PsychopharmacaClass
+  /** AI-suggested Neuroscience-based Nomenclature descriptor; '' if unknown. */
+  nbn: string
   /** v2 receptor-profile schema version. */
   receptorProfileVersion: ReceptorProfileVersion
   /** Normalization scale of the affinity profile. */
@@ -99,6 +105,8 @@ export async function generatePharmaDetails(
     marketAvailability?: unknown
     brandNames?: unknown
     tradeNames?: unknown
+    classification?: unknown
+    nbn?: unknown
   }
   // Re-validate the affinity profile + structured payloads client-side so
   // malformed entries are never persisted, regardless of what the API returned.
@@ -106,6 +114,8 @@ export async function generatePharmaDetails(
     sections: data.sections ?? {},
     brandNames: sanitizeNameList(data.brandNames ?? data.tradeNames, 2),
     tradeNames: sanitizeNameList(data.tradeNames ?? data.brandNames, 2),
+    classification: normalizePsychClass(data.classification),
+    nbn: stringField(data.nbn, 200),
     receptorProfileVersion: 2,
     affinityScale: 'relative_log_ki_percent',
     receptorAffinityProfile: sanitizeAffinityProfile(data.receptorAffinityProfile),

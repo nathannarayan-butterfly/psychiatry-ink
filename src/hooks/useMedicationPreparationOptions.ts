@@ -42,11 +42,12 @@ export function useMedicationPreparationOptions(
     })
     const matchedIds = new Set(matchedDrugs.map((drug) => drug.id))
 
-    const countryPreparations = allPreparations.filter(
-      (entry) =>
-        entry.countryCode === countryCode &&
-        (matchedIds.has(entry.substanceId) || normalize(entry.genericName).includes(query)),
-    )
+    const countryPreparations = allPreparations.filter((entry) => {
+      if (entry.countryCode !== countryCode) return false
+      if (matchedIds.has(entry.substanceId)) return true
+      const generic = normalize(entry.genericName)
+      return generic.length >= 2 && (generic.includes(query) || query.includes(generic))
+    })
     const verified = countryPreparations.filter(isVerifiedPreparation)
     const relevant = verified.filter((entry) =>
       matchDosageFormToMedicationFormulation(entry.dosageForm, formulation),

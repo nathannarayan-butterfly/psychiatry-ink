@@ -75,6 +75,7 @@ const STRINGS = {
   // ── At-a-glance KPI strip ──
   glanceTitle: { de: 'Steckbrief', en: 'At a glance', fr: 'En bref', es: 'Resumen' },
   glanceClass: { de: 'Klasse', en: 'Class', fr: 'Classe', es: 'Clase' },
+  classification: { de: 'Klassifikation', en: 'Classification', fr: 'Classification', es: 'Clasificación' },
   glanceHalfLife: { de: 'Halbwertszeit', en: 'Half-life', fr: 'Demi-vie', es: 'Semivida' },
   glanceTargets: { de: 'Hauptangriffspunkte', en: 'Primary targets', fr: 'Cibles principales', es: 'Dianas principales' },
   glanceQtc: { de: 'QTc-Risiko', en: 'QTc risk', fr: 'Risque QTc', es: 'Riesgo QTc' },

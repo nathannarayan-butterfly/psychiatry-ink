@@ -202,10 +202,16 @@ export const medicationUiTranslations = {
     es: 'Preparados disponibles',
   },
   medPreparationsEmpty: {
-    de: 'Keine verifizierten KB-Präparate für die aktuellen Medikamente und das gewählte Verordnungsland hinterlegt.',
-    en: 'No verified KB preparations are recorded for the current medications and prescribing country.',
-    fr: 'Aucune préparation KB vérifiée pour les médicaments actuels et le pays de prescription choisi.',
-    es: 'No hay preparados verificados en la KB para los medicamentos actuales y el país de prescripción elegido.',
+    de: 'Keine verifizierten Präparate für das gewählte Verordnungsland hinterlegt. In der Wissensdatenbank ergänzen und verifizieren.',
+    en: 'No verified preparations recorded for the selected prescribing country. Add and verify them in the Knowledge Base.',
+    fr: 'Aucune préparation vérifiée pour le pays de prescription choisi. À compléter et vérifier dans la base de connaissances.',
+    es: 'No hay preparados verificados para el país de prescripción elegido. Añádelos y verifícalos en la base de conocimiento.',
+  },
+  medPreparationsEditEmpty: {
+    de: 'Keine verifizierten Präparate für dieses Land. In der Wissensdatenbank ergänzen oder Stärke manuell eintragen.',
+    en: 'No verified preparations for this country. Add them in the Knowledge Base or enter the strength manually.',
+    fr: 'Aucune préparation vérifiée pour ce pays. À compléter dans la base de connaissances ou saisir la dose manuellement.',
+    es: 'No hay preparados verificados para este país. Añádelos en la base de conocimiento o introduce la dosis manualmente.',
   },
   medPreparationsCountry: {
     de: 'Verordnungsland',

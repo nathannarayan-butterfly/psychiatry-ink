@@ -32,6 +32,33 @@ const SECTION_KEYS = [
 
 type SectionKey = (typeof SECTION_KEYS)[number]
 
+/**
+ * Default psychopharmacology classification enum. MUST mirror
+ * `PsychopharmacaClass` in `src/types/knowledgeBase.ts` so the AI returns a
+ * value the client recognises.
+ */
+const PSYCH_CLASSES = [
+  'antipsychotic_typical',
+  'antipsychotic_atypical',
+  'antidepressant_ssri',
+  'antidepressant_snri',
+  'antidepressant_tricyclic',
+  'antidepressant_maoi',
+  'antidepressant_nassa',
+  'antidepressant_other',
+  'mood_stabilizer',
+  'anticonvulsant',
+  'anxiolytic_benzodiazepine',
+  'anxiolytic_other',
+  'hypnotic',
+  'psychostimulant',
+  'antidementia',
+  'addiction',
+  'other',
+  'unspecified',
+] as const
+type PsychClass = (typeof PSYCH_CLASSES)[number]
+
 /** Human-readable hints used to steer the model per section. */
 const SECTION_GUIDE: Record<SectionKey, string> = {
   kurzprofil:
@@ -169,6 +196,10 @@ export interface PharmaGenerateResponseBody {
   brandNames: string[]
   /** Alias for clients that use trade-name terminology. */
   tradeNames: string[]
+  /** AI-suggested default psychopharmacology classification (validated enum). */
+  classification: PsychClass
+  /** Optional Neuroscience-based Nomenclature (NbN) descriptor; '' if unknown. */
+  nbn: string
   /** v2 relative receptor-affinity profile (validated). */
   receptorProfileVersion: typeof RECEPTOR_PROFILE_VERSION
   affinityScale: typeof AFFINITY_SCALE
@@ -204,6 +235,12 @@ function sanitizeStringList(value: unknown, max = 20): string[] {
     .map((v) => v.trim())
     .filter(Boolean)
     .slice(0, max)
+}
+
+function coercePsychClass(value: unknown): PsychClass {
+  return typeof value === 'string' && (PSYCH_CLASSES as readonly string[]).includes(value)
+    ? (value as PsychClass)
+    : 'unspecified'
 }
 
 function resolveLanguageName(lang: string | undefined): string {
@@ -297,6 +334,13 @@ function buildUserPrompt(
     'Only include the structured keys that are clinically relevant for THIS drug; omit the rest. "titration" = uptitration schedule (dosierung section); "taper" = discontinuation/tapering schedule (absetzen section) — include "taper" whenever the drug carries significant discontinuation risk (e.g. SSRIs, SNRIs, benzodiazepines, antipsychotics with discontinuation syndrome). A taper step with doseMg:null marks the final stop. Numbers are in: half-life/Tmax = hours, steady state = days, doses = mg, depot intervals/days = days, timeToSteadyStateWeeks = weeks.',
     'For richer graph/table payloads, include enough structured rows when relevant: typically 4–8 titration/taper steps, all clinically important LAI options, 8–14 prioritized side-effect rows, and the major CYP/pharmacodynamic interactions.',
     '',
+    '',
+    '── DEFAULT CLASSIFICATION ──',
+    'ALSO return "classification": the single best-fitting psychopharmacology class for THIS drug, chosen from EXACTLY this enum (German clinical taxonomy):',
+    PSYCH_CLASSES.join(', ') + '.',
+    'Guidance: antipsychotic_typical = FGA/typische Antipsychotika; antipsychotic_atypical = SGA/atypische inkl. Partialagonisten; antidepressant_ssri/_snri/_tricyclic/_maoi/_nassa for the matching antidepressant subclass, antidepressant_other for the rest (Bupropion, Agomelatin, Trazodon, Vortioxetin, …); mood_stabilizer = Lithium; anticonvulsant = Antiepileptika als Phasenprophylaktika (Valproat, Lamotrigin, Carbamazepin); anxiolytic_benzodiazepine = Benzodiazepine; anxiolytic_other = sonstige Anxiolytika (Buspiron, Pregabalin); hypnotic = Hypnotika/Sedativa (Z-Substanzen, Melatonin); psychostimulant = ADHS/Stimulanzien; antidementia = Antidementiva; addiction = Suchtmedizin/Substitution. Use "other" only for a clearly psychotropic drug that fits none, and "unspecified" only if genuinely unsure.',
+    'ALSO return "nbn": a short Neuroscience-based Nomenclature descriptor (pharmacological domain + mode of action), e.g. "Serotonin – Reuptake inhibitor (SERT)" or "Dopamine, Serotonin – Receptor antagonist". Return "" if unsure. Do NOT fabricate.',
+    '',
     'Also return a "references" array of short citation strings (these are AI-suggested and must be verified).',
     'Also return "brandNames": 1–2 common available brand/trade names if known. Be country-aware where possible for DE/CH/AT/UK, but do NOT fabricate; return [] if uncertain. "tradeNames" may mirror the same array.',
     marketAvailabilityInstructions,
@@ -305,6 +349,8 @@ function buildUserPrompt(
     '{',
     '  "brandNames": ["<1–2 common brand/trade names, or empty>"],',
     '  "tradeNames": ["<same as brandNames or empty>"],',
+    '  "classification": "<one enum value, e.g. antidepressant_ssri>",',
+    '  "nbn": "<NbN domain – mode of action, or empty>",',
     '  "sections": { "<sectionKey>": "<content string>", ... },',
     '  "receptorAffinityProfile": [',
     '    { "target": "D2", "action": "antagonist", "affinityPercent": 92, "rawKiNm": 1.2, "rawIc50Nm": null, "pKi": 8.9, "evidenceQuality": "high", "clinicalRelevance": "high", "isEstimated": false, "sourceNote": "…" }',
@@ -330,6 +376,8 @@ function buildUserPrompt(
 function parseModelJson(raw: string): {
   brandNames?: unknown
   tradeNames?: unknown
+  classification?: unknown
+  nbn?: unknown
   sections?: Record<string, unknown>
   receptorAffinityProfile?: unknown
   /** Deprecated 1–5 map; detected only to flag legacy output. */
@@ -900,10 +948,15 @@ pharmaGenerateRouter.post('/', async (req: Request, res: Response) => {
       sections.quellen = references.map((r) => `• ${r}`).join('\n')
     }
 
+    const classification = coercePsychClass(parsed.classification)
+    const nbn = str(parsed.nbn, 200) ?? ''
+
     const responseBody: PharmaGenerateResponseBody = {
       sections,
       brandNames,
       tradeNames: brandNames,
+      classification,
+      nbn,
       receptorProfileVersion: RECEPTOR_PROFILE_VERSION,
       affinityScale: AFFINITY_SCALE,
       receptorAffinityProfile,

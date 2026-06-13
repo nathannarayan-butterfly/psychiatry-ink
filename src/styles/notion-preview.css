@@ -10235,6 +10235,15 @@
   line-height: 1.45;
 }
 
+/* Subtle, compact empty state for the "Verfügbare Präparate" overview. */
+.medication-lower-section__empty {
+  margin: 0;
+  font-size: 0.72rem;
+  font-style: italic;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
 /* Global side-effect report form (rendered inside the side-effects detail panel)
    uses the shared therapy field / chip / button primitives. */
 .medication-side-effect-form {
@@ -10372,6 +10381,16 @@
   margin: 0;
   font-size: 0.68rem;
   color: var(--text-secondary);
+}
+
+/* Subtle, compact empty state when no verified preparations exist for the
+   selected country — keeps the calm reading style instead of large body text. */
+.medication-edit-dialog__country-warning {
+  margin: 0;
+  font-size: 0.68rem;
+  font-style: italic;
+  color: var(--text-muted);
+  line-height: 1.45;
 }
 
 /* ── Read-only KB preparations overview inside the Therapie add/change dialog ─
@@ -12558,6 +12577,27 @@ details[open].receptor-radar .receptor-radar__summary::before {
   font-size: 0.8125rem;
   font-weight: 500;
   color: var(--text-secondary);
+}
+
+.kbp-drug-header__classification {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--accent, #7c3aed) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent, #7c3aed) 30%, transparent);
+  white-space: nowrap;
+}
+
+.kbp-drug-header__nbn {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.kbp-drug-header__classification-edit {
+  margin-top: 0.5rem;
+  max-width: 28rem;
 }
 
 .kbp-drug-header__atc {

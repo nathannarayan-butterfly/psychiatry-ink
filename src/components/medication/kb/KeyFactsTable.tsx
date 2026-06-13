@@ -8,6 +8,7 @@ import {
   type KnowledgeBaseDrug,
 } from '../../../types/knowledgeBase'
 import { getDisplayReceptorProfile } from '../../../utils/medication/receptorAffinity'
+import { getPsychClassLabel } from '../../../utils/medication/psychClass'
 import { kbT } from './kbStrings'
 
 type QtcRisk = 'low' | 'moderate' | 'high'
@@ -94,6 +95,7 @@ export function KeyFactsTable({ drug, language }: KeyFactsTableProps) {
     : na
 
   const rows = [
+    [kbT(language, 'classification'), getPsychClassLabel(drug.psychClass, language)],
     ['Class', facts.drugClass || na],
     ['Half-life', facts.halfLifeSummary || na],
     ['Active metabolite', facts.activeMetabolite || na],

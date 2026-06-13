@@ -5504,6 +5504,12 @@ export const uiTranslations = {
     fr: 'Catégorie',
     es: 'Categoría',
   },
+  kbPharmaFieldClassification: {
+    de: 'Klassifikation',
+    en: 'Classification',
+    fr: 'Classification',
+    es: 'Clasificación',
+  },
   kbPharmaFieldAtcCode: {
     de: 'ATC-Code',
     en: 'ATC code',

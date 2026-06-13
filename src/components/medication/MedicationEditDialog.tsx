@@ -278,7 +278,7 @@ export function MedicationEditDialog({
 
           {showNoVerifiedCountryData ? (
             <p className="medication-edit-dialog__country-warning">
-              No verified preparation list available for this country. Manual entry required.
+              {translateMedicationUi(language, 'medPreparationsEditEmpty')}
             </p>
           ) : null}
 

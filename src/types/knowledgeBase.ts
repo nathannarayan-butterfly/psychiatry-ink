@@ -213,6 +213,112 @@ export const DRUG_CATEGORIES: DrugCategory[] = [
   'Depotpräparate',
 ]
 
+// ── Default psychopharmacology classification ────────────────────────────────
+// The canonical, researched *default* drug-class taxonomy for KB medication
+// profiles. It is a defined enum (NOT free text) following the traditional
+// German clinical psychopharmaka class system (this app is German-first), at a
+// clinically useful granularity (e.g. antidepressant subclasses SSRI/SNRI/TZA…).
+//
+// This is COMPLEMENTARY to the existing fields and does not replace them:
+//   - `category`  → coarse top-level group (filter chips); kept as-is.
+//   - `drugClass` → free-text clinician label (e.g. "hochpotentes FGA"); kept.
+//   - `atcCode`   → WHO ATC structured backbone; kept.
+//   - `psychClass`→ NEW default classification enum (this taxonomy).
+//   - `nbn`       → OPTIONAL complementary Neuroscience-based Nomenclature note
+//                   (pharmacological domain + mode of action, free text).
+//
+// Existing entries without `psychClass` remain valid: readers resolve via
+// {@link normalizePsychClass} / {@link DEFAULT_PSYCH_CLASS}.
+
+export type PsychopharmacaClass =
+  | 'antipsychotic_typical'
+  | 'antipsychotic_atypical'
+  | 'antidepressant_ssri'
+  | 'antidepressant_snri'
+  | 'antidepressant_tricyclic'
+  | 'antidepressant_maoi'
+  | 'antidepressant_nassa'
+  | 'antidepressant_other'
+  | 'mood_stabilizer'
+  | 'anticonvulsant'
+  | 'anxiolytic_benzodiazepine'
+  | 'anxiolytic_other'
+  | 'hypnotic'
+  | 'psychostimulant'
+  | 'antidementia'
+  | 'addiction'
+  | 'other'
+  | 'unspecified'
+
+/** Ordered list of all classes (drives select menus). */
+export const PSYCHOPHARMACA_CLASSES: PsychopharmacaClass[] = [
+  'antipsychotic_typical',
+  'antipsychotic_atypical',
+  'antidepressant_ssri',
+  'antidepressant_snri',
+  'antidepressant_tricyclic',
+  'antidepressant_maoi',
+  'antidepressant_nassa',
+  'antidepressant_other',
+  'mood_stabilizer',
+  'anticonvulsant',
+  'anxiolytic_benzodiazepine',
+  'anxiolytic_other',
+  'hypnotic',
+  'psychostimulant',
+  'antidementia',
+  'addiction',
+  'other',
+  'unspecified',
+]
+
+/** Default classification for new / blank profiles (instead of "Auto"/empty). */
+export const DEFAULT_PSYCH_CLASS: PsychopharmacaClass = 'unspecified'
+
+const PSYCH_CLASS_SET = new Set<string>(PSYCHOPHARMACA_CLASSES)
+
+/**
+ * Coerce any stored value to a valid {@link PsychopharmacaClass}. Absent /
+ * unknown values fall back to {@link DEFAULT_PSYCH_CLASS} so legacy entries
+ * (which never had this field) keep rendering.
+ */
+export function normalizePsychClass(value: unknown): PsychopharmacaClass {
+  return typeof value === 'string' && PSYCH_CLASS_SET.has(value)
+    ? (value as PsychopharmacaClass)
+    : DEFAULT_PSYCH_CLASS
+}
+
+/** True when the class still needs to be set (so AI/derivation may fill it). */
+export function isPsychClassUnset(value: unknown): boolean {
+  return normalizePsychClass(value) === 'unspecified'
+}
+
+/**
+ * Coarse {@link DrugCategory} implied by a psychopharmaka class. Used to keep
+ * the legacy `category` field populated (filter chips) when a class is chosen,
+ * instead of leaving the old "Auto" default. `null` ⇒ no clean 1:1 mapping.
+ */
+export const PSYCH_CLASS_TO_CATEGORY: Record<PsychopharmacaClass, DrugCategory | null> = {
+  antipsychotic_typical: 'Antipsychotika',
+  antipsychotic_atypical: 'Antipsychotika',
+  antidepressant_ssri: 'Antidepressiva',
+  antidepressant_snri: 'Antidepressiva',
+  antidepressant_tricyclic: 'Antidepressiva',
+  antidepressant_maoi: 'Antidepressiva',
+  antidepressant_nassa: 'Antidepressiva',
+  antidepressant_other: 'Antidepressiva',
+  mood_stabilizer: 'Phasenprophylaktika',
+  anticonvulsant: 'Phasenprophylaktika',
+  anxiolytic_benzodiazepine: 'Benzodiazepine',
+  anxiolytic_other: null,
+  hypnotic: 'Hypnotika',
+  psychostimulant: 'ADHS',
+  antidementia: 'Antidemenz',
+  addiction: 'Suchtmedizin',
+  other: null,
+  unspecified: null,
+}
+
 /**
  * LEGACY receptor-profile pharmacodynamic action types (clinician-entered,
  * 1–5 score model). Retained for backward-compatible display of v1 entries.
@@ -374,6 +480,19 @@ export interface KnowledgeBaseDrug {
   brandNames: string[]
   drugClass: string
   category: string
+  /**
+   * Default psychopharmacology classification (defined enum, German clinical
+   * taxonomy). Absent ⇒ {@link DEFAULT_PSYCH_CLASS} ('unspecified'); resolve via
+   * {@link normalizePsychClass}. This is the primary structured class field;
+   * `category`/`drugClass` are retained for backward compatibility.
+   */
+  psychClass?: PsychopharmacaClass
+  /**
+   * OPTIONAL complementary Neuroscience-based Nomenclature (NbN) descriptor —
+   * pharmacological domain + mode of action, e.g. "Serotonin – Reuptake
+   * inhibitor (SERT)". Free text; populated by AI when known, never required.
+   */
+  nbn?: string
   atcCode?: string
   tags?: string[]
   /**
