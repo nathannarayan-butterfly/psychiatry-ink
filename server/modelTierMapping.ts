@@ -10,7 +10,37 @@ export interface AiModelSpec {
 const OPENAI_FAST = process.env.OPENAI_FAST_MODEL ?? 'gpt-4o-mini'
 const OPENAI_STANDARD = process.env.OPENAI_STANDARD_MODEL ?? 'gpt-4o-mini'
 const OPENAI_THOROUGH = process.env.OPENAI_THOROUGH_MODEL ?? 'gpt-4.1'
-const DEEPSEEK_FAST = process.env.DEEPSEEK_FAST_MODEL ?? 'deepseek-chat'
+
+/**
+ * DeepSeek model id.
+ *
+ * IMPORTANT (forward-compat): DeepSeek announced (2026-04-24 change log) that
+ * the legacy aliases `deepseek-chat` and `deepseek-reasoner` are deprecated and
+ * will be **fully retired on 2026-07-24**. They currently route to
+ * `deepseek-v4-flash` (non-thinking / thinking). The base URL and the
+ * OpenAI-compatible ChatCompletions request shape are unchanged — only the
+ * `model` value needs to migrate. We therefore default to `deepseek-v4-flash`
+ * (available now, survives the cutover) and keep it overridable via env.
+ *
+ * `deepseek-v4-flash` supports up to 384K output tokens, so the old hard 8K
+ * `max_tokens` clamp is no longer required (see `llmProvider.ts`).
+ */
+const DEEPSEEK_FAST = process.env.DEEPSEEK_FAST_MODEL ?? 'deepseek-v4-flash'
+
+/** Legacy DeepSeek models capped at 8K output tokens (retired 2026-07-24). */
+const DEEPSEEK_LEGACY_8K_MODELS = new Set(['deepseek-chat', 'deepseek-reasoner'])
+
+/**
+ * Max output tokens a given model can safely emit. Legacy DeepSeek models are
+ * limited to 8K; `deepseek-v4-*` and OpenAI models allow far more, so we just
+ * return a generous cap and let the caller's requested budget apply.
+ */
+export function maxOutputTokensFor(model: AiModelSpec): number {
+  if (model.provider === 'deepseek' && DEEPSEEK_LEGACY_8K_MODELS.has(model.modelId)) {
+    return 8_000
+  }
+  return 64_000
+}
 
 export const MODEL_TIER_SPECS: Record<AiModelTier, AiModelSpec> = {
   fast: {

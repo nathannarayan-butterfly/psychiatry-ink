@@ -157,10 +157,18 @@ export interface PharmaGenerateRequestBody {
   tier?: AiModelTier
   /** UI language for the generated content; defaults to German. */
   language?: 'de' | 'en' | 'fr' | 'es'
+  /** Also ask for country-specific preparation availability. */
+  includeMarketAvailability?: boolean
+  /** Generate only country-specific preparation availability, no text sections. */
+  marketAvailabilityOnly?: boolean
 }
 
 export interface PharmaGenerateResponseBody {
   sections: Partial<Record<SectionKey, string>>
+  /** AI-suggested common brand / trade names; empty when uncertain. */
+  brandNames: string[]
+  /** Alias for clients that use trade-name terminology. */
+  tradeNames: string[]
   /** v2 relative receptor-affinity profile (validated). */
   receptorProfileVersion: typeof RECEPTOR_PROFILE_VERSION
   affinityScale: typeof AFFINITY_SCALE
@@ -180,6 +188,7 @@ export interface PharmaGenerateResponseBody {
     cyp?: Record<string, unknown>
   }
   references: string[]
+  marketAvailability?: MarketAvailabilityEntryV2[]
   model: { provider: string; modelId: string; label: string }
 }
 
@@ -224,10 +233,31 @@ function buildSystemPrompt(): string {
   ].join(' ')
 }
 
-function buildUserPrompt(body: PharmaGenerateRequestBody, targetSections: SectionKey[]): string {
+function buildUserPrompt(
+  body: PharmaGenerateRequestBody,
+  targetSections: SectionKey[],
+  includeMarketAvailability: boolean,
+): string {
   const languageName = resolveLanguageName(body.language)
   const brands = (body.brandNames ?? []).join(', ')
-  const sectionLines = targetSections.map((key) => `- "${key}": ${SECTION_GUIDE[key]}`).join('\n')
+  const sectionLines = targetSections.length
+    ? targetSections.map((key) => `- "${key}": ${SECTION_GUIDE[key]}`).join('\n')
+    : '- Keine Textabschnitte angefordert; fülle "sections": {}.'
+  const marketAvailabilityInstructions = includeMarketAvailability
+    ? [
+        '',
+        '── COUNTRY-SPECIFIC PREPARATIONS / MARKET AVAILABILITY ──',
+        'ALSO return a "marketAvailability" array with known country-specific preparations where reasonably possible.',
+        'Scope: Germany (DE), Switzerland (CH), Austria (AT), United Kingdom (UK). Only include entries you can state plausibly from standard medicine directories / SmPC knowledge. It is better to return a short incomplete list than to invent availability.',
+        'This array is separate from the pharmacology profile and will be stored as unverified KB preparation data linked to this substance.',
+        'Every entry MUST be marked verificationStatus "ai_draft" or "unverified" — NEVER "manually_verified" or "imported_verified".',
+        'Keep entries COMPACT. We only need identity and route/form fields: countryCode, tradeName, genericName, strengthValue, strengthUnit, dosageForm, route, verificationStatus, plus sourceName/sourceReference if known.',
+        'Do NOT write long source prose, package descriptions, clinical notes, dosing narratives, or availability essays. sourceReference and notes must be short labels only (max one short phrase).',
+        'If market precision is uncertain, set marketStatus:"needs_verification" and use a short sourceName/sourceReference such as "Fachinformation/AMIce prüfen".',
+        'Required entry fields: countryCode, tradeName, genericName, strengthValue, strengthUnit, dosageForm, route, verificationStatus.',
+        'Optional compact fields only: marketStatus, sourceName, sourceReference, notes. Avoid packageSize/product identifiers unless confidently known and very short.',
+      ].join('\n')
+    : ''
 
   return [
     `Generate a psychiatric drug monograph in ${languageName} for the following drug.`,
@@ -268,9 +298,13 @@ function buildUserPrompt(body: PharmaGenerateRequestBody, targetSections: Sectio
     'For richer graph/table payloads, include enough structured rows when relevant: typically 4–8 titration/taper steps, all clinically important LAI options, 8–14 prioritized side-effect rows, and the major CYP/pharmacodynamic interactions.',
     '',
     'Also return a "references" array of short citation strings (these are AI-suggested and must be verified).',
+    'Also return "brandNames": 1–2 common available brand/trade names if known. Be country-aware where possible for DE/CH/AT/UK, but do NOT fabricate; return [] if uncertain. "tradeNames" may mirror the same array.',
+    marketAvailabilityInstructions,
     '',
     'Respond with STRICT JSON of exactly this shape (no extra keys, no markdown, NO 1–5 scores):',
     '{',
+    '  "brandNames": ["<1–2 common brand/trade names, or empty>"],',
+    '  "tradeNames": ["<same as brandNames or empty>"],',
     '  "sections": { "<sectionKey>": "<content string>", ... },',
     '  "receptorAffinityProfile": [',
     '    { "target": "D2", "action": "antagonist", "affinityPercent": 92, "rawKiNm": 1.2, "rawIc50Nm": null, "pKi": 8.9, "evidenceQuality": "high", "clinicalRelevance": "high", "isEstimated": false, "sourceNote": "…" }',
@@ -283,7 +317,10 @@ function buildUserPrompt(body: PharmaGenerateRequestBody, targetSections: Sectio
     '    "sideEffects": [ { "effect": "…", "system": "metabolisch", "frequency": "common", "severity": "moderate", "note": "…" } ],',
     '    "cyp": { "enzymes": [ { "enzyme": "CYP2D6", "role": "substrate", "strength": "major", "note": "…" } ], "interactions": [ { "withDrugOrClass": "…", "severity": "major", "effect": "…" } ], "qtcRisk": "moderate", "isEstimated": false }',
     '  },',
-    '  "references": ["<citation>", ...]',
+    '  "references": ["<citation>", ...],',
+    '  "marketAvailability": [',
+    '    { "countryCode": "DE", "tradeName": "…", "genericName": "…", "strengthValue": "10", "strengthUnit": "mg", "dosageForm": "Tablette", "route": "oral", "marketStatus": "needs_verification", "sourceName": "Fachinformation/AMIce prüfen", "sourceReference": "Kurz prüfen", "verificationStatus": "ai_draft", "notes": "" }',
+    '  ]',
     '}',
     'frequency ∈ {veryCommon, common, uncommon, rare, unknown}; severity ∈ {mild, moderate, severe, dangerous}; cyp role ∈ {substrate, inhibitor, inducer}; interaction severity ∈ {major, moderate, minor}; qtcRisk ∈ {low, moderate, high}.',
   ].join('\n')
@@ -291,11 +328,14 @@ function buildUserPrompt(body: PharmaGenerateRequestBody, targetSections: Sectio
 
 /** Strip optional ```json fences and parse, tolerating minor wrapping. */
 function parseModelJson(raw: string): {
+  brandNames?: unknown
+  tradeNames?: unknown
   sections?: Record<string, unknown>
   receptorAffinityProfile?: unknown
   /** Deprecated 1–5 map; detected only to flag legacy output. */
   receptorProfile?: Record<string, unknown>
   structured?: unknown
+  marketAvailability?: unknown
   references?: unknown
 } | null {
   let text = raw.trim()
@@ -311,8 +351,83 @@ function parseModelJson(raw: string): {
   try {
     return JSON.parse(text)
   } catch {
+    // The response may be truncated (DeepSeek JSON mode + max_tokens length cut).
+    // Attempt a best-effort repair so completed leading fields (e.g. brandNames
+    // and the earliest sections) are still recovered instead of failing wholesale.
+    const repaired = repairTruncatedJson(text)
+    if (repaired) {
+      try {
+        return JSON.parse(repaired)
+      } catch {
+        return null
+      }
+    }
     return null
   }
+}
+
+/**
+ * Best-effort repair of a truncated JSON object: drop any dangling partial
+ * key/value after the last complete property, terminate an unterminated string,
+ * and append the closing brackets implied by the bracket/brace stack. Returns
+ * `null` if nothing salvageable is found. This is intentionally conservative —
+ * malformed parts are dropped later by the field-level coercers.
+ */
+function repairTruncatedJson(input: string): string | null {
+  if (!input.startsWith('{')) return null
+  const stack: string[] = []
+  let inString = false
+  let escaped = false
+  // Index just past the last position where the object was structurally valid
+  // to close (i.e. right after a completed value at depth ≥ 1).
+  let lastSafe = -1
+
+  for (let i = 0; i < input.length; i += 1) {
+    const ch = input[i]
+    if (inString) {
+      if (escaped) escaped = false
+      else if (ch === '\\') escaped = true
+      else if (ch === '"') inString = false
+      continue
+    }
+    if (ch === '"') {
+      inString = true
+    } else if (ch === '{' || ch === '[') {
+      stack.push(ch === '{' ? '}' : ']')
+    } else if (ch === '}' || ch === ']') {
+      stack.pop()
+    }
+    // A comma or closing bracket at depth ≥ 1 marks a clean cut point.
+    if (ch === ',' || ch === '}' || ch === ']') {
+      if (stack.length >= 1) lastSafe = i
+    }
+  }
+
+  if (lastSafe < 0) return null
+  // Cut at the last completed property; if it ended with a comma, drop it.
+  let truncated = input.slice(0, lastSafe + 1)
+  if (truncated.trimEnd().endsWith(',')) {
+    truncated = truncated.slice(0, truncated.lastIndexOf(','))
+  }
+
+  // Recompute the open-bracket stack for the cut string and close it.
+  const closers: string[] = []
+  let s = false
+  let esc = false
+  for (let i = 0; i < truncated.length; i += 1) {
+    const ch = truncated[i]
+    if (s) {
+      if (esc) esc = false
+      else if (ch === '\\') esc = true
+      else if (ch === '"') s = false
+      continue
+    }
+    if (ch === '"') s = true
+    else if (ch === '{') closers.push('}')
+    else if (ch === '[') closers.push(']')
+    else if (ch === '}' || ch === ']') closers.pop()
+  }
+  return truncated + closers.reverse().join('')
 }
 
 function coerceSections(
@@ -427,6 +542,29 @@ interface StructuredBundleV2 {
   depotOptions?: unknown[]
   sideEffects?: unknown[]
   cyp?: Record<string, unknown>
+}
+
+const COUNTRY_CODES = ['DE', 'CH', 'AT', 'UK'] as const
+type PrescribingCountryCodeV2 = (typeof COUNTRY_CODES)[number]
+
+interface MarketAvailabilityEntryV2 {
+  countryCode: PrescribingCountryCodeV2
+  tradeName: string
+  genericName: string
+  strengthValue: string
+  strengthUnit: string
+  dosageForm: string
+  route: string
+  packageSize?: string
+  productIdentifierType?: string
+  productIdentifier?: string
+  prescriptionStatus?: string
+  marketStatus?: string
+  sourceName?: string
+  sourceUrl?: string
+  sourceReference?: string
+  verificationStatus: 'ai_draft' | 'unverified'
+  notes?: string
 }
 
 function str(value: unknown, max = 900): string | undefined {
@@ -630,6 +768,49 @@ function coerceStructured(raw: unknown, acetateGuard: boolean): StructuredBundle
   return Object.keys(bundle).length > 0 ? bundle : undefined
 }
 
+function isCountryCode(value: unknown): value is PrescribingCountryCodeV2 {
+  return COUNTRY_CODES.includes(value as PrescribingCountryCodeV2)
+}
+
+function coerceMarketAvailability(raw: unknown): MarketAvailabilityEntryV2[] | undefined {
+  if (!Array.isArray(raw)) return undefined
+  const out = raw
+    .map((item): MarketAvailabilityEntryV2 | null => {
+      if (!item || typeof item !== 'object') return null
+      const r = item as Record<string, unknown>
+      if (!isCountryCode(r.countryCode)) return null
+      const tradeName = str(r.tradeName, 160)
+      const genericName = str(r.genericName, 160)
+      const strengthValue = str(r.strengthValue, 60)
+      const strengthUnit = str(r.strengthUnit, 40)
+      const dosageForm = str(r.dosageForm, 120)
+      const route = str(r.route, 80)
+      if (!tradeName || !genericName || !strengthValue || !strengthUnit || !dosageForm || !route) return null
+      return {
+        countryCode: r.countryCode,
+        tradeName,
+        genericName,
+        strengthValue,
+        strengthUnit,
+        dosageForm,
+        route,
+        packageSize: str(r.packageSize, 80),
+        productIdentifierType: str(r.productIdentifierType, 60),
+        productIdentifier: str(r.productIdentifier, 120),
+        prescriptionStatus: str(r.prescriptionStatus, 120),
+        marketStatus: str(r.marketStatus, 120) ?? 'needs_verification',
+        sourceName: str(r.sourceName, 80) ?? 'KI-Entwurf',
+        sourceUrl: str(r.sourceUrl, 300),
+        sourceReference: str(r.sourceReference, 120),
+        verificationStatus: r.verificationStatus === 'unverified' ? 'unverified' : 'ai_draft',
+        notes: str(r.notes, 120),
+      } satisfies MarketAvailabilityEntryV2
+    })
+    .filter((entry): entry is MarketAvailabilityEntryV2 => entry !== null)
+    .slice(0, 80)
+  return out.length > 0 ? out : undefined
+}
+
 pharmaGenerateRouter.post('/', async (req: Request, res: Response) => {
   try {
     const body = (req.body ?? {}) as PharmaGenerateRequestBody
@@ -648,11 +829,23 @@ pharmaGenerateRouter.post('/', async (req: Request, res: Response) => {
       ? (body.tier as AiModelTier)
       : 'thorough'
 
+    const includeMarketAvailability =
+      typeof body.includeMarketAvailability === 'boolean'
+        ? body.includeMarketAvailability
+        : !Array.isArray(body.sections) || body.sections.length === 0
+    const marketAvailabilityOnly = body.marketAvailabilityOnly === true
+
     const requested = sanitizeStringList(body.sections)
-    const targetSections: SectionKey[] = requested.length
+    const targetSections: SectionKey[] = marketAvailabilityOnly
+      ? []
+      : requested.length
       ? SECTION_KEYS.filter((k) => requested.includes(k))
       : [...SECTION_KEYS]
-    const effectiveSections = targetSections.length ? targetSections : [...SECTION_KEYS]
+    const effectiveSections = marketAvailabilityOnly
+      ? []
+      : targetSections.length
+        ? targetSections
+        : [...SECTION_KEYS]
 
     const normalizedBody: PharmaGenerateRequestBody = {
       genericName,
@@ -665,8 +858,8 @@ pharmaGenerateRouter.post('/', async (req: Request, res: Response) => {
     const result = await callLlm({
       tier,
       systemPrompt: buildSystemPrompt(),
-      userPrompt: buildUserPrompt(normalizedBody, effectiveSections),
-      maxTokens: effectiveSections.length === 1 ? SINGLE_SECTION_MAX_TOKENS : WHOLE_DRUG_MAX_TOKENS,
+      userPrompt: buildUserPrompt(normalizedBody, effectiveSections, includeMarketAvailability || marketAvailabilityOnly),
+      maxTokens: effectiveSections.length === 1 || marketAvailabilityOnly ? SINGLE_SECTION_MAX_TOKENS : WHOLE_DRUG_MAX_TOKENS,
       jsonResponse: true,
     })
 
@@ -685,6 +878,9 @@ pharmaGenerateRouter.post('/', async (req: Request, res: Response) => {
       `${normalizedBody.genericName} ${(normalizedBody.brandNames ?? []).join(' ')}`,
     )
     const structured = coerceStructured(parsed.structured, acetateGuard)
+    const marketAvailability = includeMarketAvailability || marketAvailabilityOnly
+      ? coerceMarketAvailability(parsed.marketAvailability)
+      : undefined
     // Detect deprecated 1–5 score output: flag it but never use it as a profile.
     const legacyScoreProfileDetected =
       parsed.receptorProfile != null &&
@@ -694,6 +890,10 @@ pharmaGenerateRouter.post('/', async (req: Request, res: Response) => {
       console.warn('[pharma-generate] model returned deprecated 1–5 receptorProfile; ignored')
     }
     const references = sanitizeStringList(parsed.references, 30)
+    const brandNames = [
+      ...sanitizeStringList(parsed.brandNames, 2),
+      ...sanitizeStringList(parsed.tradeNames, 2),
+    ].filter((name, index, all) => all.findIndex((candidate) => candidate.toLowerCase() === name.toLowerCase()) === index).slice(0, 2)
 
     // Mirror references into the quellen section if the model left it empty.
     if (!sections.quellen && references.length && effectiveSections.includes('quellen')) {
@@ -702,12 +902,15 @@ pharmaGenerateRouter.post('/', async (req: Request, res: Response) => {
 
     const responseBody: PharmaGenerateResponseBody = {
       sections,
+      brandNames,
+      tradeNames: brandNames,
       receptorProfileVersion: RECEPTOR_PROFILE_VERSION,
       affinityScale: AFFINITY_SCALE,
       receptorAffinityProfile,
       legacyScoreProfileDetected,
       ...(structured ? { structured } : {}),
       references,
+      ...(marketAvailability ? { marketAvailability } : {}),
       model: result.model,
     }
     res.json(responseBody)

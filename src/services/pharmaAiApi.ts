@@ -1,6 +1,8 @@
 import type {
   AffinityScale,
   DrugSectionKey,
+  MedicationMarketAvailability,
+  PrescribingCountryCode,
   ReceptorAffinityEntry,
   ReceptorProfileVersion,
 } from '../types/knowledgeBase'
@@ -18,11 +20,33 @@ export interface PharmaGenerateParams {
   language?: 'de' | 'en' | 'fr' | 'es'
   /** AI mode/model tier; backend defaults to `thorough` when omitted. */
   tier?: 'fast' | 'standard' | 'thorough'
+  /** Ask the model to also return country-specific preparations. */
+  includeMarketAvailability?: boolean
+  /** Generate only country-specific preparations, without section prose. */
+  marketAvailabilityOnly?: boolean
 }
+
+export type AiGeneratedPreparation = Omit<
+  MedicationMarketAvailability,
+  | 'id'
+  | 'createdAt'
+  | 'createdByUserId'
+  | 'createdByDisplayName'
+  | 'lastModifiedAt'
+  | 'lastModifiedByUserId'
+  | 'lastModifiedByDisplayName'
+  | 'lastReviewedAt'
+  | 'lastReviewedByUserId'
+  | 'lastReviewedByDisplayName'
+>
 
 export interface PharmaGenerateResult {
   /** Generated content keyed by drug section key (subset of requested). */
   sections: Partial<Record<DrugSectionKey, string>>
+  /** AI-suggested common brand / trade names; empty when uncertain. */
+  brandNames: string[]
+  /** Alias for callers that prefer trade-name terminology. */
+  tradeNames: string[]
   /** v2 receptor-profile schema version. */
   receptorProfileVersion: ReceptorProfileVersion
   /** Normalization scale of the affinity profile. */
@@ -35,6 +59,8 @@ export interface PharmaGenerateResult {
   structured: StructuredAiBundle
   /** AI-suggested references — must be verified by the clinician. */
   references: string[]
+  /** AI-suggested country-specific preparations; always unverified/ai_draft. */
+  marketAvailability: AiGeneratedPreparation[]
   model?: { provider: string; modelId: string; label: string }
 }
 
@@ -57,6 +83,8 @@ export async function generatePharmaDetails(
       sections: params.sections ?? [],
       language: params.language ?? 'de',
       ...(params.tier ? { tier: params.tier } : {}),
+      includeMarketAvailability: params.includeMarketAvailability ?? !params.sections?.length,
+      marketAvailabilityOnly: params.marketAvailabilityOnly ?? false,
     }),
   })
 
@@ -68,17 +96,83 @@ export async function generatePharmaDetails(
   const data = (await response.json()) as Partial<PharmaGenerateResult> & {
     receptorAffinityProfile?: unknown
     structured?: unknown
+    marketAvailability?: unknown
+    brandNames?: unknown
+    tradeNames?: unknown
   }
   // Re-validate the affinity profile + structured payloads client-side so
   // malformed entries are never persisted, regardless of what the API returned.
   return {
     sections: data.sections ?? {},
+    brandNames: sanitizeNameList(data.brandNames ?? data.tradeNames, 2),
+    tradeNames: sanitizeNameList(data.tradeNames ?? data.brandNames, 2),
     receptorProfileVersion: 2,
     affinityScale: 'relative_log_ki_percent',
     receptorAffinityProfile: sanitizeAffinityProfile(data.receptorAffinityProfile),
     legacyScoreProfileDetected: data.legacyScoreProfileDetected,
     structured: sanitizeStructuredBundle(data.structured),
     references: Array.isArray(data.references) ? data.references : [],
+    marketAvailability: sanitizeMarketAvailability(data.marketAvailability),
     model: data.model,
   }
+}
+
+function isCountryCode(value: unknown): value is PrescribingCountryCode {
+  return value === 'DE' || value === 'CH' || value === 'AT' || value === 'UK'
+}
+
+function stringField(value: unknown, max = 500): string {
+  return typeof value === 'string' ? value.trim().slice(0, max) : ''
+}
+
+function sanitizeNameList(value: unknown, max = 2): string[] {
+  if (!Array.isArray(value)) return []
+  const names = value
+    .filter((item): item is string => typeof item === 'string')
+    .map((item) => item.trim())
+    .filter(Boolean)
+  return names
+    .filter((name, index) => names.findIndex((candidate) => candidate.toLowerCase() === name.toLowerCase()) === index)
+    .slice(0, max)
+}
+
+function sanitizeMarketAvailability(raw: unknown): AiGeneratedPreparation[] {
+  if (!Array.isArray(raw)) return []
+  return raw
+    .map((item): AiGeneratedPreparation | null => {
+      if (!item || typeof item !== 'object') return null
+      const r = item as Record<string, unknown>
+      const countryCode = r.countryCode
+      const tradeName = stringField(r.tradeName, 160)
+      const genericName = stringField(r.genericName, 160)
+      const strengthValue = stringField(r.strengthValue, 60)
+      const strengthUnit = stringField(r.strengthUnit, 40)
+      const dosageForm = stringField(r.dosageForm, 120)
+      const route = stringField(r.route, 80)
+      if (!isCountryCode(countryCode) || !tradeName || !genericName || !strengthValue || !strengthUnit || !dosageForm || !route) {
+        return null
+      }
+      return {
+        substanceId: stringField(r.substanceId, 160),
+        countryCode,
+        tradeName,
+        genericName,
+        strengthValue,
+        strengthUnit,
+        dosageForm,
+        route,
+        packageSize: stringField(r.packageSize, 80),
+        productIdentifierType: stringField(r.productIdentifierType, 60),
+        productIdentifier: stringField(r.productIdentifier, 120),
+        prescriptionStatus: stringField(r.prescriptionStatus, 120),
+        marketStatus: stringField(r.marketStatus, 120) || 'needs_verification',
+        sourceName: stringField(r.sourceName, 80) || 'KI-Entwurf',
+        sourceUrl: stringField(r.sourceUrl, 300),
+        sourceReference: stringField(r.sourceReference, 120),
+        verificationStatus: r.verificationStatus === 'unverified' ? 'unverified' : 'ai_draft',
+        notes: stringField(r.notes, 120),
+        lastVerifiedAt: undefined,
+      }
+    })
+    .filter((entry): entry is AiGeneratedPreparation => entry != null)
 }

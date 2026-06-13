@@ -267,16 +267,16 @@ export const uiTranslations = {
     es: 'Modelo',
   },
   aiModelFast: {
-    de: 'Schnell',
-    en: 'Fast',
-    fr: 'Rapide',
-    es: 'Rápido',
+    de: 'Economical',
+    en: 'Economical',
+    fr: 'Economical',
+    es: 'Economical',
   },
   aiModelFastHint: {
-    de: 'schnell und günstig',
-    en: 'fast and affordable',
-    fr: 'rapide et économique',
-    es: 'rápido y económico',
+    de: 'kostengünstig (DeepSeek)',
+    en: 'cost-efficient (DeepSeek)',
+    fr: 'économique (DeepSeek)',
+    es: 'económico (DeepSeek)',
   },
   aiModelStandard: {
     de: 'Standard',
@@ -5390,6 +5390,18 @@ export const uiTranslations = {
     fr: 'Enregistrer',
     es: 'Guardar',
   },
+  kbPharmaApply: {
+    de: 'Übernehmen',
+    en: 'Apply',
+    fr: 'Appliquer',
+    es: 'Aplicar',
+  },
+  kbDraftDiscard: {
+    de: 'Verwerfen',
+    en: 'Discard',
+    fr: 'Ignorer',
+    es: 'Descartar',
+  },
   kbPharmaEdit: {
     de: 'Bearbeiten',
     en: 'Edit',
@@ -5787,10 +5799,10 @@ export const uiTranslations = {
     es: 'Fuentes sugeridas por IA (a verificar)',
   },
   kbPharmaAiSuccess: {
-    de: 'KI-Entwurf erstellt – bitte prüfen und speichern.',
-    en: 'AI draft created – please review and save.',
-    fr: 'Brouillon IA créé – vérifiez et enregistrez.',
-    es: 'Borrador de IA creado: revise y guarde.',
+    de: 'KI-Entwurf erstellt – bitte prüfen und übernehmen.',
+    en: 'AI draft created – please review and apply.',
+    fr: 'Brouillon IA créé – vérifiez et appliquez.',
+    es: 'Borrador de IA creado: revise y aplique.',
   },
   kbPharmaAiError: {
     de: 'KI-Generierung fehlgeschlagen. Bitte erneut versuchen.',
@@ -5827,6 +5839,24 @@ export const uiTranslations = {
     en: 'Draft',
     fr: 'Brouillon',
     es: 'Borrador',
+  },
+  kbDraftUnsavedNotice: {
+    de: 'Ungespeicherte Änderungen im Entwurf.',
+    en: 'Unsaved draft changes.',
+    fr: 'Modifications du brouillon non enregistrées.',
+    es: 'Cambios de borrador sin guardar.',
+  },
+  kbDraftAiNotice: {
+    de: 'KI-Entwurf erstellt – Änderungen übernehmen oder verwerfen.',
+    en: 'AI draft created – apply or discard the changes.',
+    fr: 'Brouillon IA créé – appliquez ou ignorez les modifications.',
+    es: 'Borrador de IA creado: aplique o descarte los cambios.',
+  },
+  kbDraftActionHint: {
+    de: 'Übernehmen öffnet die bestehende Bestätigung. Verwerfen lässt den Entwurf fallen.',
+    en: 'Apply opens the existing confirmation. Discard drops the draft.',
+    fr: 'Appliquer ouvre la confirmation existante. Ignorer abandonne le brouillon.',
+    es: 'Aplicar abre la confirmación existente. Descartar elimina el borrador.',
   },
   kbFinalizeTitle: {
     de: 'Änderungen übernehmen?',
@@ -5871,10 +5901,10 @@ export const uiTranslations = {
     es: 'Generando…',
   },
   kbSectionRegenerateSuccess: {
-    de: 'Abschnitt neu generiert – bitte prüfen und speichern.',
-    en: 'Section regenerated – please review and save.',
-    fr: 'Section régénérée – vérifiez et enregistrez.',
-    es: 'Sección regenerada: revise y guarde.',
+    de: 'Abschnitt neu generiert – bitte prüfen und übernehmen.',
+    en: 'Section regenerated – please review and apply.',
+    fr: 'Section régénérée – vérifiez et appliquez.',
+    es: 'Sección regenerada: revise y aplique.',
   },
   kbSectionRegenerateError: {
     de: 'Abschnitts-Generierung fehlgeschlagen.',

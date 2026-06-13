@@ -6,8 +6,21 @@ import {
 } from '../../data/medicationUiTranslations'
 import { getDrugsForSubstance } from '../../data/psychDrugReference/index'
 import type { InteractionEntry } from '../../data/psychDrugReference/schema'
-import { DEFAULT_MEDICATIONS_COLLECTION_ID } from '../../types/knowledgeBase'
+import {
+  DEFAULT_MEDICATIONS_COLLECTION_ID,
+  type KnowledgeBaseDrug,
+  type MedicationMarketAvailability,
+} from '../../types/knowledgeBase'
 import { useKnowledgeBaseDrugs } from '../../hooks/useKnowledgeBaseDrugs'
+import {
+  formatPreparationStrength,
+  isVerifiedPreparation,
+  useMedicationMarketAvailability,
+} from '../../hooks/useMedicationMarketAvailability'
+import {
+  PRESCRIBING_COUNTRY_LABELS,
+  usePrescribingCountry,
+} from '../../hooks/usePrescribingCountry'
 import type { MedicationEntry, MedicationPlanState, SideEffectReport } from '../../types/medicationPlan'
 import type { UiLanguage } from '../../types/settings'
 import { InteractionMatrix } from './InteractionMatrix'
@@ -19,6 +32,7 @@ import { MonitoringTimeline } from './MonitoringTimeline'
 /** Ordered medication sub-sections shown as left-side links → right-side detail. */
 export const MEDICATION_SECTIONS = [
   { key: 'combination', labelKey: 'medSectionCombination' },
+  { key: 'preparations', labelKey: 'medSectionPreparations' },
   { key: 'receptor', labelKey: 'medSectionReceptorProfile' },
   { key: 'monitoring', labelKey: 'medSectionMonitoringTimeline' },
   { key: 'sideEffects', labelKey: 'medSectionSideEffects' },
@@ -72,6 +86,19 @@ function severityLabel(severity: InteractionSeverity, language: UiLanguage): str
   }
 }
 
+function normalizeMedicationName(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9äöüß]/gi, '')
+}
+
+function findKbDrugMatches(med: MedicationEntry, drugs: KnowledgeBaseDrug[]): KnowledgeBaseDrug[] {
+  const query = normalizeMedicationName(med.substance.trim())
+  if (query.length < 2) return []
+  return drugs.filter((drug) => {
+    const names = [drug.genericName, ...drug.brandNames].map(normalizeMedicationName)
+    return names.some((name) => name.includes(query) || query.includes(name))
+  })
+}
+
 export function MedicationLowerSections({
   state,
   medications,
@@ -84,6 +111,8 @@ export function MedicationLowerSections({
 }: MedicationLowerSectionsProps) {
   const { language } = useTranslation()
   const { drugs: knowledgeBaseDrugs } = useKnowledgeBaseDrugs(DEFAULT_MEDICATIONS_COLLECTION_ID)
+  const { allPreparations } = useMedicationMarketAvailability()
+  const { defaultPrescribingCountry } = usePrescribingCountry()
 
   const activeMeds = medications.filter(
     (med) => med.status === 'active' || med.status === 'reduced' || med.status === 'increased',
@@ -96,6 +125,23 @@ export function MedicationLowerSections({
 
   const coveredMeds = referenceEntries.filter((entry) => entry.drugs.length > 0)
   const uncoveredMeds = referenceEntries.filter((entry) => entry.drugs.length === 0)
+
+  const preparationEntries: {
+    med: MedicationEntry
+    preparations: MedicationMarketAvailability[]
+  }[] = activeMeds.map((med) => {
+    const matchedDrugs = findKbDrugMatches(med, knowledgeBaseDrugs)
+    const matchedIds = new Set(matchedDrugs.map((drug) => drug.id))
+    const query = normalizeMedicationName(med.substance)
+    const preparations = allPreparations.filter(
+      (entry) =>
+        entry.countryCode === defaultPrescribingCountry &&
+        isVerifiedPreparation(entry) &&
+        (matchedIds.has(entry.substanceId) || normalizeMedicationName(entry.genericName).includes(query)),
+    )
+    return { med, preparations }
+  })
+  const medsWithPreparations = preparationEntries.filter((entry) => entry.preparations.length > 0)
 
   const crossInteractions: {
     drugA: string
@@ -236,6 +282,49 @@ export function MedicationLowerSections({
     />
   )
 
+  const renderPreparations = () => (
+    <div className="medication-preparations-overview">
+      <p className="medication-lower-section__hint">
+        {translateMedicationUi(language, 'medPreparationsCountry')}: {defaultPrescribingCountry} ·{' '}
+        {PRESCRIBING_COUNTRY_LABELS[defaultPrescribingCountry]}
+      </p>
+      {medsWithPreparations.length === 0 ? (
+        <p className="medication-lower-section__warning">
+          {translateMedicationUi(language, 'medPreparationsEmpty')}
+        </p>
+      ) : (
+        medsWithPreparations.map(({ med, preparations }) => (
+          <section key={med.id} className="medication-preparations-overview__drug">
+            <h5 className="medication-preparations-overview__title">{med.substance}</h5>
+            <table className="medication-prep-table medication-prep-table--compact">
+              <thead>
+                <tr>
+                  <th>Präparat</th>
+                  <th>Stärke</th>
+                  <th>Form</th>
+                  <th>Quelle</th>
+                </tr>
+              </thead>
+              <tbody>
+                {preparations.slice(0, 8).map((prep) => (
+                  <tr key={prep.id}>
+                    <td>{prep.tradeName}</td>
+                    <td>{formatPreparationStrength(prep)}</td>
+                    <td>{prep.dosageForm}</td>
+                    <td>{prep.sourceName || prep.sourceReference || 'KB'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        ))
+      )}
+      <p className="medication-lower-section__disclaimer">
+        {translateMedicationUi(language, 'medReferenceDisclaimer')}
+      </p>
+    </div>
+  )
+
   const renderMonitoring = () => (
     <>
       <MonitoringTimeline medications={medications} language={language} />
@@ -346,6 +435,8 @@ export function MedicationLowerSections({
     switch (key) {
       case 'combination':
         return renderCombination()
+      case 'preparations':
+        return renderPreparations()
       case 'receptor':
         return renderReceptor()
       case 'monitoring':

@@ -10415,6 +10415,29 @@
   color: var(--text-muted);
 }
 
+.medication-prep-table--compact {
+  font-size: 0.68rem;
+}
+
+.medication-preparations-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.medication-preparations-overview__drug {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.medication-preparations-overview__title {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: var(--text-main);
+}
+
 .medication-edit-dialog__preparations-source {
   margin: 0;
   font-size: 0.6rem;
@@ -12433,6 +12456,48 @@ details[open].receptor-radar .receptor-radar__summary::before {
   gap: 0.5rem;
 }
 
+.kbp-draft-action-bar {
+  position: sticky;
+  top: 0.5rem;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--border-soft));
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--text-main) 10%, transparent);
+}
+
+.kbp-draft-action-bar:focus {
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.kbp-draft-action-bar__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
+
+.kbp-draft-action-bar__copy strong {
+  color: var(--text-main);
+  font-weight: 650;
+}
+
+.kbp-draft-action-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
 .kbp-back-btn {
   display: inline-flex;
   align-items: center;
@@ -12878,6 +12943,15 @@ details[open].receptor-radar .receptor-radar__summary::before {
   cursor: default;
 }
 
+.kb-prep-table__row--pending {
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+
+.kb-prep-table__pending-action {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
 /* ── KBP Dialog / Overlay ─────────────────────────────────────────────────── */
 
 .kbp-overlay {
@@ -12904,6 +12978,10 @@ details[open].receptor-radar .receptor-radar__summary::before {
 
 .kbp-dialog--sm {
   width: min(22rem, 100%);
+}
+
+.kbp-dialog--prep {
+  width: min(42rem, 100%);
 }
 
 .kbp-dialog__header {
@@ -15324,6 +15402,99 @@ details[open].receptor-radar .receptor-radar__summary::before {
   display: block;
   font-size: 0.66rem;
   color: var(--kb-book-muted);
+}
+
+.kb-prep-table-wrap {
+  overflow-x: auto;
+}
+
+.kb-prep-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.kb-prep-table th,
+.kb-prep-table td {
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-soft) 70%, transparent);
+}
+
+.kb-prep-table th {
+  font-size: 0.68rem;
+  font-weight: 650;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.kb-prep-table__meta,
+.kb-prep-table__verified {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.66rem;
+  color: var(--text-muted);
+}
+
+.kb-prep-table__actions,
+.kb-prep-edit-panel__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.kb-prep-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.kb-prep-form__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.kb-prep-form__grid .kbp-field:first-child,
+.kb-prep-form__grid .kbp-field:nth-child(5) {
+  grid-column: span 2;
+}
+
+.kb-prep-form__details {
+  border-top: 1px solid var(--border-soft);
+  padding-top: 0.55rem;
+}
+
+.kb-prep-form__details summary {
+  cursor: pointer;
+  margin-bottom: 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.kb-prep-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.kb-prep-edit-panel {
+  margin-top: 0.75rem;
+}
+
+.kb-prep-source-note {
+  margin: 0.45rem 0 0;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+@media (max-width: 760px) {
+  .kb-prep-form__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 /* Preparations section header: static country label (settings-driven) + the

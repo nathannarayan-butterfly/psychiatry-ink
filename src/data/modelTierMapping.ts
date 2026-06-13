@@ -5,13 +5,13 @@ import type { AiModelTier } from '../types'
 export const MODEL_TIER_SPECS: Record<AiModelTier, AiModelSpec> = {
   fast: {
     provider: 'deepseek',
-    modelId: 'deepseek-chat',
-    label: 'DeepSeek (schnell)',
+    modelId: 'deepseek-v4-flash',
+    label: 'DeepSeek (Economical)',
   },
   standard: {
     provider: 'deepseek',
-    modelId: 'deepseek-chat',
-    label: 'DeepSeek (standard)',
+    modelId: 'deepseek-v4-flash',
+    label: 'DeepSeek (Economical)',
   },
   thorough: {
     provider: 'openai',

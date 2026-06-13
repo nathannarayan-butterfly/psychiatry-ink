@@ -203,10 +203,10 @@ const STRINGS = {
     es: 'Elegir el modelo de IA para generación y preguntas',
   },
   aiModeFast: {
-    de: 'Schnell (DeepSeek)',
-    en: 'Fast (DeepSeek)',
-    fr: 'Rapide (DeepSeek)',
-    es: 'Rápido (DeepSeek)',
+    de: 'Economical (DeepSeek)',
+    en: 'Economical (DeepSeek)',
+    fr: 'Economical (DeepSeek)',
+    es: 'Economical (DeepSeek)',
   },
   aiModeThorough: {
     de: 'Gründlich – höchste Qualität (OpenAI)',

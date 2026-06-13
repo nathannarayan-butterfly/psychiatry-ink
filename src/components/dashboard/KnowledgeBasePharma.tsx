@@ -26,6 +26,7 @@ import { useKnowledgeBaseDrugs } from '../../hooks/useKnowledgeBaseDrugs'
 import { useKnowledgeBasePermissions } from '../../hooks/useKnowledgeBasePermissions'
 import {
   useCountrySpecificPreparations,
+  useMedicationMarketAvailability,
   formatPreparationStrength,
   isVerifiedPreparation,
 } from '../../hooks/useMedicationMarketAvailability'
@@ -34,7 +35,7 @@ import {
   usePrescribingCountry,
 } from '../../hooks/usePrescribingCountry'
 import { showNotionToast } from '../notion/NotionToast'
-import { generatePharmaDetails } from '../../services/pharmaAiApi'
+import { generatePharmaDetails, type AiGeneratedPreparation } from '../../services/pharmaAiApi'
 import { useKnowledgeBaseAiTier, type KbAiTier } from '../../hooks/useKnowledgeBaseAiTier'
 import type { StructuredAiBundle } from '../../utils/medication/structuredAi'
 import {
@@ -97,44 +98,8 @@ type PreparationDraft = Omit<MedicationMarketAvailability, 'id' | 'createdAt'> |
 
 const ALL_CATEGORIES = 'all'
 
-/**
- * Sentinel section id used to drive the reading panel (Ask AI / comments) for
- * the country-specific preparations table, which is not a real `DrugSection`.
- */
-const KB_PREPARATIONS_SECTION_ID = 'preparations'
-
 function drugSnapshotsEqual(a: KnowledgeBaseDrug, b: KnowledgeBaseDrug): boolean {
   return JSON.stringify(a) === JSON.stringify(b)
-}
-
-/**
- * Serialize the available-preparations table into plain text so the Ask-AI flow
- * can answer "what's available / which strengths" questions. Reading mode only
- * shows verified entries, mirroring what the clinician sees.
- */
-function serializePreparationsForAsk(
-  drug: KnowledgeBaseDrug,
-  country: PrescribingCountryCode,
-  entries: MedicationMarketAvailability[],
-): string {
-  const header = [
-    `Medikament: ${drug.genericName}`,
-    `Land: ${getCountryLabel(country)}`,
-    'Verfügbare Präparate (Wissensdatenbank):',
-  ].join('\n')
-  if (entries.length === 0) {
-    return `${header}\n(Keine verifizierten Präparate für dieses Land hinterlegt.)`
-  }
-  const lines = entries.map((entry) => {
-    const parts = [
-      entry.tradeName,
-      formatPreparationStrength(entry),
-      entry.dosageForm,
-      entry.route,
-    ].filter(Boolean)
-    return `- ${parts.join(' · ')}`
-  })
-  return [header, ...lines].join('\n')
 }
 
 function getSectionDataForAsk(
@@ -336,7 +301,7 @@ function AddDrugDialog({ onSubmit, onCancel }: AddDrugDialogProps) {
               </label>
               <label className="kbp-field__radio">
                 <input type="radio" value="source_import" checked={creationAction === 'source_import'} onChange={() => setCreationAction('source_import')} />
-                Quelle importieren/anreichern (TODO: startet KI-Entwurf)
+                Quelle importieren/anreichern (KI-Entwurf)
               </label>
             </div>
           </div>
@@ -1087,12 +1052,35 @@ function formatKbDate(value: string | undefined, language: string): string {
   return value ? formatSiteLocaleDate(value, language as 'de' | 'en' | 'fr' | 'es') : '—'
 }
 
+function formatAuditName(name: string | undefined): string {
+  const trimmed = name?.trim()
+  if (!trimmed) return 'Unbekannt'
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+    return trimmed.split('@')[0] || 'Benutzer'
+  }
+  return trimmed
+}
+
 function formatAuditLine(prefix: string, name: string | undefined, date: string | undefined, language: string): string {
-  return `${prefix} ${name ?? 'Unbekannt'} · ${formatKbDate(date, language)}`
+  return `${prefix} ${formatAuditName(name)} · ${formatKbDate(date, language)}`
 }
 
 function getCountryLabel(country: PrescribingCountryCode): string {
   return `${country} · ${PRESCRIBING_COUNTRY_LABELS[country]}`
+}
+
+function compactText(value: string | undefined, max = 120): string | undefined {
+  const trimmed = value?.replace(/\s+/g, ' ').trim()
+  return trimmed ? trimmed.slice(0, max) : undefined
+}
+
+function shouldApplyAiBrandNames(drug: Pick<KnowledgeBaseDrug, 'brandNames'>): boolean {
+  return drug.brandNames.filter((name) => name.trim()).length === 0
+}
+
+function applyAiBrandNamesIfEmpty<T extends KnowledgeBaseDrug>(drug: T, brandNames: string[]): T {
+  if (!shouldApplyAiBrandNames(drug) || brandNames.length === 0) return drug
+  return { ...drug, brandNames } as T
 }
 
 function emptyPreparationDraft(
@@ -1121,6 +1109,45 @@ function emptyPreparationDraft(
   }
 }
 
+function aiPreparationToDraft(
+  drug: KnowledgeBaseDrug,
+  entry: AiGeneratedPreparation,
+): Omit<MedicationMarketAvailability, 'id' | 'createdAt'> | null {
+  if (!entry.tradeName.trim() || !entry.strengthValue.trim() || !entry.strengthUnit.trim()) {
+    return null
+  }
+  return {
+    substanceId: drug.id,
+    countryCode: entry.countryCode,
+    tradeName: entry.tradeName,
+    genericName: entry.genericName || drug.genericName,
+    strengthValue: entry.strengthValue,
+    strengthUnit: entry.strengthUnit,
+    dosageForm: entry.dosageForm || 'unbekannt',
+    route: entry.route || 'unbekannt',
+    packageSize: entry.packageSize,
+    productIdentifierType: entry.productIdentifierType,
+    productIdentifier: entry.productIdentifier,
+    prescriptionStatus: entry.prescriptionStatus,
+    marketStatus: entry.marketStatus || 'needs_verification',
+    sourceName: compactText(entry.sourceName, 80) || 'KI-Entwurf',
+    sourceUrl: compactText(entry.sourceUrl, 300),
+    sourceReference: compactText(entry.sourceReference, 120),
+    verificationStatus: entry.verificationStatus === 'unverified' ? 'unverified' : 'ai_draft',
+    notes: compactText(entry.notes, 120),
+    lastVerifiedAt: undefined,
+  }
+}
+
+function generatedPreparationsToDrafts(
+  targetDrug: KnowledgeBaseDrug,
+  marketAvailability: AiGeneratedPreparation[],
+): Omit<MedicationMarketAvailability, 'id' | 'createdAt'>[] {
+  return marketAvailability
+    .map((entry) => aiPreparationToDraft(targetDrug, entry))
+    .filter((entry): entry is Omit<MedicationMarketAvailability, 'id' | 'createdAt'> => entry != null)
+}
+
 function PreparationForm({
   draft,
   disabled,
@@ -1147,10 +1174,6 @@ function PreparationForm({
           <input className="kbp-field__input" value={draft.tradeName} disabled={disabled} onChange={(e) => setField('tradeName', e.target.value)} />
         </label>
         <label className="kbp-field">
-          <span className="kbp-field__label">Wirkstoff</span>
-          <input className="kbp-field__input" value={draft.genericName} disabled={disabled} onChange={(e) => setField('genericName', e.target.value)} />
-        </label>
-        <label className="kbp-field">
           <span className="kbp-field__label">Stärke</span>
           <input className="kbp-field__input" value={draft.strengthValue} disabled={disabled} onChange={(e) => setField('strengthValue', e.target.value)} />
         </label>
@@ -1167,14 +1190,6 @@ function PreparationForm({
           <input className="kbp-field__input" value={draft.route} disabled={disabled} onChange={(e) => setField('route', e.target.value)} />
         </label>
         <label className="kbp-field">
-          <span className="kbp-field__label">Packung</span>
-          <input className="kbp-field__input" value={draft.packageSize ?? ''} disabled={disabled} onChange={(e) => setField('packageSize', e.target.value)} />
-        </label>
-        <label className="kbp-field">
-          <span className="kbp-field__label">Produkt-ID</span>
-          <input className="kbp-field__input" value={draft.productIdentifier ?? ''} disabled={disabled} onChange={(e) => setField('productIdentifier', e.target.value)} />
-        </label>
-        <label className="kbp-field">
           <span className="kbp-field__label">Quelle</span>
           <input className="kbp-field__input" value={draft.sourceName ?? ''} disabled={disabled} onChange={(e) => setField('sourceName', e.target.value)} />
         </label>
@@ -1188,10 +1203,31 @@ function PreparationForm({
           </select>
         </label>
       </div>
-      <label className="kbp-field">
-        <span className="kbp-field__label">Notizen / Quellenreferenz</span>
-        <textarea className="kbp-section__textarea" rows={2} value={draft.notes ?? draft.sourceReference ?? ''} disabled={disabled} onChange={(e) => setField('notes', e.target.value)} />
-      </label>
+      <details className="kb-prep-form__details">
+        <summary>Weitere Felder</summary>
+        <div className="kb-prep-form__grid">
+          <label className="kbp-field">
+            <span className="kbp-field__label">Wirkstoff</span>
+            <input className="kbp-field__input" value={draft.genericName} disabled={disabled} onChange={(e) => setField('genericName', e.target.value)} />
+          </label>
+          <label className="kbp-field">
+            <span className="kbp-field__label">Quellenreferenz</span>
+            <input className="kbp-field__input" value={draft.sourceReference ?? ''} disabled={disabled} onChange={(e) => setField('sourceReference', e.target.value)} />
+          </label>
+          <label className="kbp-field">
+            <span className="kbp-field__label">Packung</span>
+            <input className="kbp-field__input" value={draft.packageSize ?? ''} disabled={disabled} onChange={(e) => setField('packageSize', e.target.value)} />
+          </label>
+          <label className="kbp-field">
+            <span className="kbp-field__label">Produkt-ID</span>
+            <input className="kbp-field__input" value={draft.productIdentifier ?? ''} disabled={disabled} onChange={(e) => setField('productIdentifier', e.target.value)} />
+          </label>
+        </div>
+        <label className="kbp-field">
+          <span className="kbp-field__label">Kurze Notiz</span>
+          <textarea className="kbp-section__textarea" rows={2} value={draft.notes ?? ''} disabled={disabled} onChange={(e) => setField('notes', e.target.value)} />
+        </label>
+      </details>
       <div className="kb-prep-form__actions">
         <button type="button" className="kbp-btn kbp-btn--primary" disabled={disabled || !draft.tradeName.trim() || !draft.strengthValue.trim()} onClick={onSubmit}>
           {submitLabel}
@@ -1202,17 +1238,57 @@ function PreparationForm({
   )
 }
 
+function PreparationDialog({
+  title,
+  draft,
+  onChange,
+  onSubmit,
+  onCancel,
+  submitLabel,
+}: {
+  title: string
+  draft: PreparationDraft
+  onChange: (draft: PreparationDraft) => void
+  onSubmit: () => void
+  onCancel: () => void
+  submitLabel: string
+}) {
+  return createPortal(
+    <div className="kbp-overlay" role="dialog" aria-modal>
+      <div className="kbp-dialog kbp-dialog--prep">
+        <div className="kbp-dialog__header">
+          <h2 className="kbp-dialog__title">{title}</h2>
+          <button type="button" className="kbp-icon-btn" onClick={onCancel} aria-label="Schließen">
+            <X className="h-4 w-4" strokeWidth={1.75} />
+          </button>
+        </div>
+        <PreparationForm
+          draft={draft}
+          onChange={onChange}
+          onSubmit={onSubmit}
+          onCancel={onCancel}
+          submitLabel={submitLabel}
+        />
+      </div>
+    </div>,
+    document.body,
+  )
+}
+
 function CountryPreparationsSection({
   drug,
   mode,
   language,
-  onAskAi,
+  onRegenerate,
+  regenerateLoading = false,
+  pendingGeneratedPreparations = [],
 }: {
   drug: KnowledgeBaseDrug
   mode: KnowledgeBaseMode
   language: string
-  /** Reading-mode only: open the right panel's Ask AI with prep context. */
-  onAskAi?: (contextText: string) => void
+  onRegenerate?: () => void
+  regenerateLoading?: boolean
+  pendingGeneratedPreparations?: Omit<MedicationMarketAvailability, 'id' | 'createdAt'>[]
 }) {
   // Single source of truth: the prescribing country comes from settings. The
   // section is read-only here; change the country on the Settings page.
@@ -1229,9 +1305,13 @@ function CountryPreparationsSection({
 
   const entries = byCountry(country, mode === 'reading')
   const allEntriesForCountry = byCountry(country, false)
+  const pendingEntries = mode === 'editing'
+    ? pendingGeneratedPreparations.filter((entry) => entry.countryCode === country)
+    : []
   const hasVerified = allEntriesForCountry.some(isVerifiedPreparation)
+  const editingEntry = editingId ? allEntriesForCountry.find((entry) => entry.id === editingId) : undefined
 
-  const title = mode === 'reading' ? 'Verfügbare Präparate' : 'Verfügbare Präparate / Country-specific preparations'
+  const title = 'Verfügbare Präparate'
 
   return (
     <section data-kb-section="preparations" className={`kbp-section kbp-preparations-section${mode === 'reading' ? ' kbp-section--subsection' : ''}`}>
@@ -1245,23 +1325,26 @@ function CountryPreparationsSection({
           <span className="kb-prep-country-static">
             {kbT(language, 'prepCountryLabel')}: {getCountryLabel(country)}
           </span>
-          {mode === 'reading' && onAskAi ? (
+          {mode === 'editing' && onRegenerate ? (
             <button
               type="button"
-              className="kbp-section__action-btn kbp-section__action-btn--ai"
-              onClick={() => onAskAi(serializePreparationsForAsk(drug, country, entries))}
-              title={kbT(language, 'prepAskAiTitle')}
-              aria-label={kbT(language, 'prepAskAiTitle')}
+              className="kbp-btn kbp-btn--sm kbp-btn--ai"
+              disabled={regenerateLoading}
+              onClick={onRegenerate}
+              title="Mit KI anreichern"
+              aria-label="Verfügbare Präparate mit KI anreichern"
             >
-              <Sparkles className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+              <Sparkles className={`h-3.5 w-3.5${regenerateLoading ? ' kbp-spin' : ''}`} strokeWidth={1.75} aria-hidden />
+              {regenerateLoading ? 'KI läuft …' : 'Mit KI anreichern'}
             </button>
           ) : null}
         </span>
       </div>
       <div className="kbp-section__body">
-        {entries.length === 0 ? (
+        {entries.length === 0 && pendingEntries.length === 0 ? (
           <p className="kbp-section__text kbp-section__text--empty">
-            No verified preparation data available for {PRESCRIBING_COUNTRY_LABELS[country]}. Add manually or run source enrichment.
+            Keine verifizierten Präparate für {PRESCRIBING_COUNTRY_LABELS[country]} hinterlegt.
+            {mode === 'editing' ? ' Manuell hinzufügen oder per KI als Entwurf anreichern.' : ''}
           </p>
         ) : mode === 'reading' ? (
           <div className="kb-prep-table-wrap">
@@ -1281,7 +1364,7 @@ function CountryPreparationsSection({
                     <td>{formatPreparationStrength(entry)}</td>
                     <td>{entry.dosageForm}</td>
                     <td>
-                      {entry.sourceName || entry.sourceReference || '—'}
+                      {compactText(entry.sourceName || entry.sourceReference, 80) || '—'}
                       {entry.lastVerifiedAt ? (
                         <span className="kb-prep-table__verified">
                           {formatKbDate(entry.lastVerifiedAt, language)}
@@ -1322,7 +1405,7 @@ function CountryPreparationsSection({
                     </td>
                     <td>{formatPreparationStrength(entry)}</td>
                     <td>{entry.dosageForm} · {entry.route}</td>
-                    <td>{entry.sourceName || entry.sourceReference || '—'}</td>
+                    <td>{compactText(entry.sourceName || entry.sourceReference, 80) || '—'}</td>
                     <td>{entry.verificationStatus} · {formatKbDate(entry.lastVerifiedAt, language)}</td>
                     {mode === 'editing' ? (
                       <td>
@@ -1332,15 +1415,24 @@ function CountryPreparationsSection({
                             <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
                           </button>
                         </div>
-                        {editingId === entry.id ? (
-                          <PreparationForm
-                            draft={entry}
-                            onChange={(next) => updatePreparation(next as MedicationMarketAvailability)}
-                            onSubmit={() => setEditingId(null)}
-                            onCancel={() => setEditingId(null)}
-                            submitLabel="Fertig"
-                          />
-                        ) : null}
+                      </td>
+                    ) : null}
+                  </tr>
+                ))}
+                {pendingEntries.map((entry, index) => (
+                  <tr key={`pending-${entry.countryCode}-${entry.tradeName}-${entry.strengthValue}-${index}`} className="kb-prep-table__row--pending">
+                    <td>
+                      <strong>{entry.tradeName}</strong>
+                      <span className="kb-prep-table__meta">{entry.genericName}</span>
+                      <span className="kb-prep-table__meta">KI-Entwurf - noch nicht übernommen</span>
+                    </td>
+                    <td>{`${entry.strengthValue} ${entry.strengthUnit}`.trim()}</td>
+                    <td>{entry.dosageForm} · {entry.route}</td>
+                    <td>{compactText(entry.sourceName || entry.sourceReference, 80) || 'KI-Entwurf'}</td>
+                    <td>{entry.verificationStatus} · —</td>
+                    {mode === 'editing' ? (
+                      <td>
+                        <span className="kb-prep-table__pending-action">Übernehmen/Verwerfen oben</span>
                       </td>
                     ) : null}
                   </tr>
@@ -1351,14 +1443,14 @@ function CountryPreparationsSection({
         )}
         {mode === 'reading' && entries.length > 0 ? (
           <p className="kb-prep-source-note">
-            Quellenstand: {entries.map((entry) => entry.sourceName || entry.sourceReference).filter(Boolean).slice(0, 2).join(', ') || '—'}
+            Quellenstand: {entries.map((entry) => compactText(entry.sourceName || entry.sourceReference, 60)).filter(Boolean).slice(0, 2).join(', ') || '—'}
           </p>
         ) : null}
         {mode === 'editing' ? (
           <div className="kb-prep-edit-panel">
             {!hasVerified ? (
               <p className="kbp-section__text kbp-section__text--empty">
-                No verified preparation data available for {PRESCRIBING_COUNTRY_LABELS[country]}. Add manually or run source enrichment.
+                Keine verifizierten Präparate für {PRESCRIBING_COUNTRY_LABELS[country]} hinterlegt. KI-Entwürfe müssen geprüft werden.
               </p>
             ) : null}
             <div className="kb-prep-edit-panel__actions">
@@ -1366,24 +1458,32 @@ function CountryPreparationsSection({
                 <Plus className="h-3.5 w-3.5" strokeWidth={2.25} aria-hidden />
                 Präparat hinzufügen
               </button>
-              <button type="button" className="kbp-btn kbp-btn--sm" onClick={() => showNotionToast('Source enrichment is not implemented yet.')}>
-                Import / Anreichern
-              </button>
             </div>
-            {showAdd ? (
-              <PreparationForm
-                draft={newDraft}
-                onChange={(next) => setNewDraft(next as Omit<MedicationMarketAvailability, 'id' | 'createdAt'>)}
-                onSubmit={() => {
-                  addPreparation(newDraft)
-                  setNewDraft(emptyPreparationDraft(drug, country))
-                  setShowAdd(false)
-                }}
-                onCancel={() => setShowAdd(false)}
-                submitLabel="Präparat speichern"
-              />
-            ) : null}
           </div>
+        ) : null}
+        {mode === 'editing' && editingEntry ? (
+          <PreparationDialog
+            title="Präparat bearbeiten"
+            draft={editingEntry}
+            onChange={(next) => updatePreparation(next as MedicationMarketAvailability)}
+            onSubmit={() => setEditingId(null)}
+            onCancel={() => setEditingId(null)}
+            submitLabel="Fertig"
+          />
+        ) : null}
+        {mode === 'editing' && showAdd ? (
+          <PreparationDialog
+            title="Präparat hinzufügen"
+            draft={newDraft}
+            onChange={(next) => setNewDraft(next as Omit<MedicationMarketAvailability, 'id' | 'createdAt'>)}
+            onSubmit={() => {
+              addPreparation(newDraft)
+              setNewDraft(emptyPreparationDraft(drug, country))
+              setShowAdd(false)
+            }}
+            onCancel={() => setShowAdd(false)}
+            submitLabel="Präparat speichern"
+          />
         ) : null}
       </div>
     </section>
@@ -1573,6 +1673,7 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
   const { t } = useTranslation()
   const permissions = useKnowledgeBasePermissions()
   const annotations = useKnowledgeBaseAnnotations(drug.id)
+  const { upsertGeneratedPreparations } = useMedicationMarketAvailability()
   const [mode, setMode] = useState<KnowledgeBaseMode>('reading')
   const [draft, setDraft] = useState<KnowledgeBaseDrug>(drug)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -1592,22 +1693,20 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
   const [aiModelLabel, setAiModelLabel] = useState<string | null>(null)
   const [sectionRegenKey, setSectionRegenKey] = useState<string | null>(null)
   const [sectionRegenError, setSectionRegenError] = useState<string | null>(null)
+  const [draftNotice, setDraftNotice] = useState<string | null>(null)
+  const [pendingGeneratedPreparations, setPendingGeneratedPreparations] = useState<
+    Omit<MedicationMarketAvailability, 'id' | 'createdAt'>[]
+  >([])
   const [panelRequest, setPanelRequest] = useState<ReadingPanelRequest | null>(null)
-  const [prepAskContext, setPrepAskContext] = useState<string>('')
-  // The preparations table is not a real section and is not tracked by the
-  // scroll-spy, so we pin the panel to it explicitly until the clinician
-  // interacts with another section (where the scroll-spy resumes control).
-  const [panelPrepMode, setPanelPrepMode] = useState(false)
+  const draftActionBarRef = useRef<HTMLDivElement>(null)
 
   const handleCommentSelection = useCallback((sectionId: string, text: string) => {
-    setPanelPrepMode(false)
     setActiveSectionId(sectionId)
     setPanelCollapsed(false)
     setPanelRequest({ nonce: Date.now(), tab: 'comments', commentText: `„${text}“\n` })
   }, [])
 
   const handleAskAiSelection = useCallback((sectionId: string, text: string) => {
-    setPanelPrepMode(false)
     setActiveSectionId(sectionId)
     setPanelCollapsed(false)
     setPanelRequest({ nonce: Date.now(), tab: 'askAi', question: text, autoSend: true })
@@ -1616,24 +1715,13 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
   // Section-level panel triggers for graph (non-text) sections, where the
   // in-text selection toolbar does not apply.
   const handleSectionComment = useCallback((sectionId: string) => {
-    setPanelPrepMode(false)
     setActiveSectionId(sectionId)
     setPanelCollapsed(false)
     setPanelRequest({ nonce: Date.now(), tab: 'comments' })
   }, [])
 
   const handleSectionAskAi = useCallback((sectionId: string) => {
-    setPanelPrepMode(false)
     setActiveSectionId(sectionId)
-    setPanelCollapsed(false)
-    setPanelRequest({ nonce: Date.now(), tab: 'askAi' })
-  }, [])
-
-  // Preparations table has no selectable prose, so its "Ask KI" button passes a
-  // serialized snapshot of the available preparations up as the panel context.
-  const handlePreparationsAskAi = useCallback((contextText: string) => {
-    setPrepAskContext(contextText)
-    setPanelPrepMode(true)
     setPanelCollapsed(false)
     setPanelRequest({ nonce: Date.now(), tab: 'askAi' })
   }, [])
@@ -1641,11 +1729,23 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
   useEffect(() => {
     if (mode === 'reading') {
       setDraft(drug)
+      setPendingGeneratedPreparations([])
+      setDraftNotice(null)
     }
   }, [drug, mode])
 
   const editMode = mode === 'editing'
-  const isDraftDirty = editMode && !drugSnapshotsEqual(draft, drug)
+  const hasDrugDraftChanges = !drugSnapshotsEqual(draft, drug)
+  const hasPendingPreparationDrafts = pendingGeneratedPreparations.length > 0
+  const isDraftDirty = editMode && (hasDrugDraftChanges || hasPendingPreparationDrafts)
+
+  const announceDraftNotice = (message: string) => {
+    setDraftNotice(message)
+    window.requestAnimationFrame(() => {
+      draftActionBarRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+      draftActionBarRef.current?.focus()
+    })
+  }
 
   const enterEditMode = () => {
     if (!permissions.canEdit) {
@@ -1653,6 +1753,8 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
       return
     }
     setDraft({ ...drug, sections: drug.sections.map((s) => ({ ...s })) })
+    setPendingGeneratedPreparations([])
+    setDraftNotice(null)
     setMode('editing')
   }
 
@@ -1668,12 +1770,21 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
 
   const discardDraftAndExitEdit = () => {
     setDraft(drug)
+    setPendingGeneratedPreparations([])
+    setDraftNotice(null)
     setMode('reading')
     setShowFinalizeConfirm(false)
   }
 
   const finalizeDraft = () => {
-    onUpdate(draft)
+    if (hasDrugDraftChanges) {
+      onUpdate(draft)
+    }
+    if (hasPendingPreparationDrafts) {
+      upsertGeneratedPreparations(pendingGeneratedPreparations)
+      setPendingGeneratedPreparations([])
+    }
+    setDraftNotice(null)
     setMode('reading')
     setShowFinalizeConfirm(false)
     showNotionToast(t('kbFinalizeSaved'))
@@ -1723,21 +1834,14 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
     visibleSections.find((s) => s.id === activeSectionId) ??
     visibleSections[0] ??
     null
-  const panelSectionId = panelPrepMode
-    ? KB_PREPARATIONS_SECTION_ID
-    : activeSectionId === KB_RECEPTOR_SECTION_ID
+  const panelSectionId = activeSectionId === KB_RECEPTOR_SECTION_ID
       ? KB_RECEPTOR_SECTION_ID
       : (activeSection?.id ?? activeSectionId)
   const panelSectionLabel =
     panelSectionId === KB_RECEPTOR_SECTION_ID
       ? t('kbReceptorTitle')
-      : panelSectionId === KB_PREPARATIONS_SECTION_ID
-        ? 'Verfügbare Präparate'
-        : (navItems.find((item) => item.id === activeSectionId)?.label ?? activeSection?.label ?? t('kbReadingPanelTitle'))
-  const panelSectionData =
-    panelSectionId === KB_PREPARATIONS_SECTION_ID
-      ? prepAskContext
-      : getSectionDataForAsk(activeDrug, panelSectionId, sortedSections)
+      : (navItems.find((item) => item.id === activeSectionId)?.label ?? activeSection?.label ?? t('kbReadingPanelTitle'))
+  const panelSectionData = getSectionDataForAsk(activeDrug, panelSectionId, sortedSections)
 
   const updateDraftSection = (sectionId: string, patch: Partial<DrugSection>) => {
     setDraft((prev) => ({
@@ -1764,6 +1868,7 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
         category: drug.category,
         language: language as 'de' | 'en' | 'fr' | 'es',
         tier: aiTier,
+        includeMarketAvailability: true,
       })
       setAiModelLabel(result.model?.label ?? null)
       setDraft((prev) => {
@@ -1777,10 +1882,21 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
           result.receptorAffinityProfile.length > 0
             ? buildReceptorUpgradePatch(prev, result.receptorAffinityProfile)
             : {}
-        return { ...prev, sections, dataModelVersion: 2 as const, ...receptorPatch }
+        return applyAiBrandNamesIfEmpty(
+          { ...prev, sections, dataModelVersion: 2 as const, ...receptorPatch },
+          result.brandNames,
+        )
       })
+      const prepDrafts = generatedPreparationsToDrafts(drug, result.marketAvailability)
+      if (prepDrafts.length > 0) {
+        setPendingGeneratedPreparations(prepDrafts)
+      }
       setAiReferences(result.references)
       setAiNotice(true)
+      if (prepDrafts.length > 0) {
+        showNotionToast(`KI-Entwurf erstellt: ${prepDrafts.length} Präparate`)
+      }
+      announceDraftNotice(t('kbDraftAiNotice'))
       showNotionToast(t('kbPharmaAiSuccess'))
     } catch {
       setAiError(t('kbPharmaAiError'))
@@ -1832,7 +1948,7 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
             next = { ...next, ...buildReceptorUpgradePatch(prev, result.receptorAffinityProfile) }
           }
         }
-        return next
+        return applyAiBrandNamesIfEmpty(next, result.brandNames)
       })
 
       if (sectionKey === 'receptor' && result.receptorAffinityProfile.length === 0 && !result.sections.rezeptorprofil) {
@@ -1840,7 +1956,42 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
         return
       }
 
+      announceDraftNotice(t('kbDraftAiNotice'))
       showNotionToast(t('kbSectionRegenerateSuccess'))
+    } catch {
+      setSectionRegenError(t('kbSectionRegenerateError'))
+    } finally {
+      setSectionRegenKey(null)
+    }
+  }
+
+  const handleRegeneratePreparations = async () => {
+    if (mode !== 'editing') return
+    setSectionRegenError(null)
+    setSectionRegenKey('preparations')
+    try {
+      const result = await generatePharmaDetails({
+        genericName: draft.genericName,
+        brandNames: draft.brandNames,
+        drugClass: draft.drugClass,
+        category: draft.category,
+        sections: [],
+        language: language as 'de' | 'en' | 'fr' | 'es',
+        tier: aiTier,
+        includeMarketAvailability: true,
+        marketAvailabilityOnly: true,
+      })
+      setAiModelLabel(result.model?.label ?? null)
+      const prepDrafts = generatedPreparationsToDrafts(draft, result.marketAvailability)
+      setAiReferences(result.references)
+      setAiNotice(true)
+      if (prepDrafts.length === 0) {
+        setSectionRegenError('Keine neuen KI-Präparate zurückgegeben.')
+        return
+      }
+      setPendingGeneratedPreparations(prepDrafts)
+      announceDraftNotice(t('kbDraftAiNotice'))
+      showNotionToast(`KI-Entwurf erstellt: ${prepDrafts.length} Präparate`)
     } catch {
       setSectionRegenError(t('kbSectionRegenerateError'))
     } finally {
@@ -1995,10 +2146,10 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
                 {aiLoading ? t('kbPharmaAiFilling') : t('kbPharmaAiFill')}
               </button>
               <button type="button" className="kbp-btn kbp-btn--primary" onClick={requestSave}>
-                {t('kbPharmaSave')}
+                {t('kbPharmaApply')}
               </button>
               <button type="button" className="kbp-btn" onClick={requestReadingMode}>
-                {t('kbPharmaCancel')}
+                {isDraftDirty ? t('kbDraftDiscard') : t('kbPharmaCancel')}
               </button>
             </>
           ) : (
@@ -2014,6 +2165,28 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
           )}
         </div>
       </div>
+
+      {editMode && isDraftDirty ? (
+        <div
+          ref={draftActionBarRef}
+          className="kbp-draft-action-bar"
+          role="status"
+          tabIndex={-1}
+        >
+          <div className="kbp-draft-action-bar__copy">
+            <strong>{draftNotice ?? t('kbDraftUnsavedNotice')}</strong>
+            <span>{t('kbDraftActionHint')}</span>
+          </div>
+          <div className="kbp-draft-action-bar__actions">
+            <button type="button" className="kbp-btn kbp-btn--primary" onClick={requestSave}>
+              {t('kbPharmaApply')}
+            </button>
+            <button type="button" className="kbp-btn" onClick={requestReadingMode}>
+              {t('kbDraftDiscard')}
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <div
         className={`kbp-detail-layout${editMode ? ' kbp-detail-layout--editing' : ' kbp-detail-layout--reading'}${
@@ -2082,16 +2255,7 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
           )}
 
           {editMode ? (
-            <div
-              id={kbSectionDomId(KB_RECEPTOR_SECTION_ID)}
-              className={`kbp-receptor-section${activeSectionId === KB_RECEPTOR_SECTION_ID && !editMode ? ' kbp-section--active' : ''}`}
-              onClick={!editMode ? () => setActiveSectionId(KB_RECEPTOR_SECTION_ID) : undefined}
-              onKeyDown={!editMode ? (e) => {
-                if (e.key === 'Enter' || e.key === ' ') setActiveSectionId(KB_RECEPTOR_SECTION_ID)
-              } : undefined}
-              role={!editMode ? 'button' : undefined}
-              tabIndex={!editMode ? 0 : undefined}
-            >
+            <div id={kbSectionDomId(KB_RECEPTOR_SECTION_ID)} className="kbp-receptor-section">
               <div className="kbp-receptor-section__head">
                 <h3 className="kbp-receptor-section__title">{t('kbReceptorTitle')}</h3>
                 <div className="kbp-receptor-section__head-meta">
@@ -2102,48 +2266,20 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
                       {t('kbReceptorLegacyBadge')}
                     </span>
                   ) : null}
-                  {!editMode ? (
-                    <span
-                      className="kbp-section__actions"
-                      onClick={(e) => e.stopPropagation()}
-                      onKeyDown={(e) => e.stopPropagation()}
-                    >
-                      <button
-                        type="button"
-                        className="kbp-section__action-btn"
-                        onClick={() => handleSectionComment(KB_RECEPTOR_SECTION_ID)}
-                        title={kbT(language, 'sectionComment')}
-                        aria-label={kbT(language, 'sectionComment')}
-                      >
-                        <MessageSquarePlus className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
-                      </button>
-                      <button
-                        type="button"
-                        className="kbp-section__action-btn kbp-section__action-btn--ai"
-                        onClick={() => handleSectionAskAi(KB_RECEPTOR_SECTION_ID)}
-                        title={kbT(language, 'sectionAskAi')}
-                        aria-label={kbT(language, 'sectionAskAi')}
-                      >
-                        <Sparkles className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
-                      </button>
-                    </span>
-                  ) : null}
-                  {editMode ? (
-                    <button
-                      type="button"
-                      className="kbp-btn kbp-btn--sm kbp-btn--ai"
-                      onClick={() => void handleRegenerateSection('receptor')}
-                      disabled={sectionRegenKey === KB_RECEPTOR_SECTION_ID || aiLoading}
-                      title={t('kbSectionRegenerate')}
-                    >
-                      <Sparkles
-                        className={`h-3.5 w-3.5${sectionRegenKey === KB_RECEPTOR_SECTION_ID ? ' kbp-spin' : ''}`}
-                        strokeWidth={1.75}
-                        aria-hidden
-                      />
-                      {sectionRegenKey === KB_RECEPTOR_SECTION_ID ? t('kbSectionRegenerating') : t('kbSectionRegenerate')}
-                    </button>
-                  ) : null}
+                  <button
+                    type="button"
+                    className="kbp-btn kbp-btn--sm kbp-btn--ai"
+                    onClick={() => void handleRegenerateSection('receptor')}
+                    disabled={sectionRegenKey === KB_RECEPTOR_SECTION_ID || aiLoading}
+                    title={t('kbSectionRegenerate')}
+                  >
+                    <Sparkles
+                      className={`h-3.5 w-3.5${sectionRegenKey === KB_RECEPTOR_SECTION_ID ? ' kbp-spin' : ''}`}
+                      strokeWidth={1.75}
+                      aria-hidden
+                    />
+                    {sectionRegenKey === KB_RECEPTOR_SECTION_ID ? t('kbSectionRegenerating') : t('kbSectionRegenerate')}
+                  </button>
                 </div>
               </div>
               {sectionRegenKey === KB_RECEPTOR_SECTION_ID && sectionRegenError ? (
@@ -2158,24 +2294,11 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
                   )}
                 </p>
               ) : null}
-              {!editMode ? (
-                <>
-                  {receptorProse ? <p className="kbp-receptor-section__prose">{receptorProse}</p> : null}
-                  <ReceptorRadar entries={receptorDisplay.entries} language={language}>
-                    <KnowledgeBaseReceptorEditor
-                      editMode={false}
-                      drug={activeDrug}
-                      onLegacyChange={updateDraftReceptor}
-                    />
-                  </ReceptorRadar>
-                </>
-              ) : (
-                <KnowledgeBaseReceptorEditor
-                  editMode
-                  drug={activeDrug}
-                  onLegacyChange={updateDraftReceptor}
-                />
-              )}
+              <KnowledgeBaseReceptorEditor
+                editMode
+                drug={activeDrug}
+                onLegacyChange={updateDraftReceptor}
+              />
             </div>
           ) : null}
 
@@ -2356,7 +2479,7 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
                   drug={activeDrug}
                   mode={mode}
                   language={language}
-                  onAskAi={handlePreparationsAskAi}
+                  pendingGeneratedPreparations={pendingGeneratedPreparations}
                 />,
               ]
             })}
@@ -2424,6 +2547,9 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
                   drug={activeDrug}
                   mode={mode}
                   language={language}
+                  onRegenerate={() => void handleRegeneratePreparations()}
+                  regenerateLoading={sectionRegenKey === 'preparations'}
+                  pendingGeneratedPreparations={pendingGeneratedPreparations}
                 />,
               ]
             })}
@@ -2479,6 +2605,8 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
 export function KnowledgeBasePharma({ onClose, onCloseAll, collectionId, collectionName }: KnowledgeBasePharmaProps) {
   const { t, language } = useTranslation()
   const { drugs, addDrug, updateDrug, deleteDrug, duplicateDrug } = useKnowledgeBaseDrugs(collectionId)
+  const { upsertGeneratedPreparations } = useMedicationMarketAvailability()
+  const [aiTier] = useKnowledgeBaseAiTier()
 
   const [selectedDrugId, setSelectedDrugId] = useState<string | null>(null)
   const [showAddDialog, setShowAddDialog] = useState(false)
@@ -2490,11 +2618,48 @@ export function KnowledgeBasePharma({ onClose, onCloseAll, collectionId, collect
       const created = addDrug(draft)
       setShowAddDialog(false)
       setSelectedDrugId(created.id)
-      if (action === 'source_import') {
-        showNotionToast('Source import is not implemented yet. Created an AI draft profile TODO.')
+      if (action !== 'empty') {
+        void (async () => {
+          try {
+            const result = await generatePharmaDetails({
+              genericName: created.genericName,
+              brandNames: created.brandNames,
+              drugClass: created.drugClass,
+              category: created.category,
+              language: language as 'de' | 'en' | 'fr' | 'es',
+              tier: aiTier,
+              includeMarketAvailability: true,
+            })
+            let sections = created.sections.map((section) => {
+              const aiContent = result.sections[section.key as DrugSectionKey]
+              return aiContent ? { ...section, content: aiContent } : section
+            })
+            sections = applyStructuredBundle(sections, result.structured)
+            const receptorPatch =
+              result.receptorAffinityProfile.length > 0
+                ? buildReceptorUpgradePatch(created, result.receptorAffinityProfile)
+                : {}
+            const generatedDrug = applyAiBrandNamesIfEmpty(
+              { ...created, sections, dataModelVersion: 2 as const, ...receptorPatch },
+              result.brandNames,
+            )
+            updateDrug(generatedDrug)
+            const prepDrafts = result.marketAvailability
+              .map((entry) => aiPreparationToDraft(generatedDrug, entry))
+              .filter((entry): entry is Omit<MedicationMarketAvailability, 'id' | 'createdAt'> => entry != null)
+            const prepSummary = upsertGeneratedPreparations(prepDrafts)
+            showNotionToast(
+              prepSummary.created + prepSummary.updated > 0
+                ? `KI-Entwurf erstellt inkl. ${prepSummary.created + prepSummary.updated} Präparate`
+                : t('kbPharmaAiSuccess'),
+            )
+          } catch {
+            showNotionToast(t('kbPharmaAiError'))
+          }
+        })()
       }
     },
-    [addDrug],
+    [addDrug, aiTier, language, t, updateDrug, upsertGeneratedPreparations],
   )
 
   const handleDuplicate = useCallback(() => {

@@ -6,7 +6,7 @@ import type { AiModelTier } from '../../types'
 import { SettingsField } from './SettingsField'
 
 const tierLabels: Record<AiModelTier, string> = {
-  fast: 'Schnell',
+  fast: 'Economical',
   standard: 'Standard',
   thorough: 'Gründlich',
 }

@@ -44,6 +44,22 @@ function generateId(): string {
   return `prep-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 }
 
+function preparationKey(entry: Pick<
+  MedicationMarketAvailability,
+  'substanceId' | 'countryCode' | 'tradeName' | 'genericName' | 'strengthValue' | 'strengthUnit' | 'dosageForm' | 'route'
+>): string {
+  return [
+    entry.substanceId,
+    entry.countryCode,
+    entry.tradeName,
+    entry.genericName,
+    entry.strengthValue,
+    entry.strengthUnit,
+    entry.dosageForm,
+    entry.route,
+  ].map((value) => value.trim().toLowerCase()).join('|')
+}
+
 export function isVerifiedPreparation(entry: MedicationMarketAvailability): boolean {
   return VERIFIED_STATUSES.includes(entry.verificationStatus)
 }
@@ -121,6 +137,72 @@ export function useMedicationMarketAvailability(substanceId?: string) {
     [actor, persist, preparations],
   )
 
+  const upsertGeneratedPreparations = useCallback(
+    (drafts: Omit<MedicationMarketAvailability, 'id' | 'createdAt'>[]): {
+      created: number
+      updated: number
+      skippedVerified: number
+    } => {
+      const now = new Date().toISOString()
+      const next = [...preparations]
+      const indexByKey = new Map(next.map((entry, index) => [preparationKey(entry), index]))
+      const summary = { created: 0, updated: 0, skippedVerified: 0 }
+
+      for (const rawDraft of drafts) {
+        const draft: Omit<MedicationMarketAvailability, 'id' | 'createdAt'> = {
+          ...rawDraft,
+          verificationStatus:
+            rawDraft.verificationStatus === 'manually_verified' ||
+            rawDraft.verificationStatus === 'imported_verified'
+              ? 'ai_draft'
+              : rawDraft.verificationStatus,
+          lastVerifiedAt: undefined,
+        }
+        const key = preparationKey(draft)
+        const existingIndex = indexByKey.get(key)
+        if (existingIndex != null) {
+          const existing = next[existingIndex]
+          if (!existing || isVerifiedPreparation(existing)) {
+            summary.skippedVerified += 1
+            continue
+          }
+          next[existingIndex] = {
+            ...existing,
+            ...draft,
+            id: existing.id,
+            createdAt: existing.createdAt,
+            createdByUserId: existing.createdByUserId,
+            createdByDisplayName: existing.createdByDisplayName,
+            lastModifiedAt: now,
+            lastModifiedByUserId: actor.userId,
+            lastModifiedByDisplayName: actor.displayName,
+          }
+          summary.updated += 1
+          continue
+        }
+        const entry: MedicationMarketAvailability = {
+          ...draft,
+          id: generateId(),
+          createdAt: now,
+          createdByUserId: actor.userId,
+          createdByDisplayName: actor.displayName,
+          lastModifiedAt: now,
+          lastModifiedByUserId: actor.userId,
+          lastModifiedByDisplayName: actor.displayName,
+        }
+        next.push(entry)
+        indexByKey.set(key, next.length - 1)
+        summary.created += 1
+      }
+
+      if (summary.created > 0 || summary.updated > 0) {
+        persist(next)
+      }
+      return summary
+    },
+    [actor, persist, preparations],
+  )
+
   const updatePreparation = useCallback(
     (entry: MedicationMarketAvailability) => {
       const now = new Date().toISOString()
@@ -160,6 +242,7 @@ export function useMedicationMarketAvailability(substanceId?: string) {
     preparations: scopedPreparations,
     allPreparations: preparations,
     addPreparation,
+    upsertGeneratedPreparations,
     updatePreparation,
     deletePreparation,
     byCountry,

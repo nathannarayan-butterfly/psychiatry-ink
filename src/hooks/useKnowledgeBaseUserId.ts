@@ -26,17 +26,25 @@ export interface KnowledgeBaseUserProfile {
   displayName: string
 }
 
+function isEmailLike(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+}
+
 function resolveDisplayName(user: ReturnType<typeof useAuth>['user'], fallbackId: string): string {
   const metadata = user?.user_metadata as Record<string, unknown> | undefined
   const candidates = [
     metadata?.full_name,
     metadata?.name,
     metadata?.display_name,
-    user?.email,
     fallbackId,
     'Lokaler Benutzer',
   ]
-  return candidates.find((value): value is string => typeof value === 'string' && value.trim().length > 0) ?? 'Lokaler Benutzer'
+  const name = candidates.find(
+    (value): value is string =>
+      typeof value === 'string' && value.trim().length > 0 && !isEmailLike(value),
+  )
+  if (name) return name.trim()
+  return user?.email?.trim() || 'Lokaler Benutzer'
 }
 
 /** Current KB actor for audit stamps, with anonymous local fallback. */
