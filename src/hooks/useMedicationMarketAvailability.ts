@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react'
 import { KB_PREPARATION_SEED_DATA } from '../data/knowledgeBasePreparationSeedData'
 import type {
   MedicationMarketAvailability,
@@ -7,6 +7,12 @@ import type {
 } from '../types/knowledgeBase'
 import type { MedicationFormulation } from '../types/medicationPlan'
 import { useKnowledgeBaseUserProfile } from './useKnowledgeBaseUserId'
+import {
+  deletePreparation as deletePreparationRemote,
+  fetchAllPreparations,
+  isPreparationsSupabaseReady,
+  upsertPreparations,
+} from '../services/knowledgeBasePreparationsApi'
 
 const STORAGE_KEY = 'psychiatry-ink:medicationMarketAvailability'
 
@@ -15,7 +21,8 @@ const VERIFIED_STATUSES: PreparationVerificationStatus[] = [
   'imported_verified',
 ]
 
-function loadPreparations(): MedicationMarketAvailability[] {
+/** Read whatever the browser currently has cached, merged with the seed. */
+function loadCachedPreparations(): MedicationMarketAvailability[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return KB_PREPARATION_SEED_DATA
@@ -31,13 +38,40 @@ function loadPreparations(): MedicationMarketAvailability[] {
   }
 }
 
-function savePreparations(preparations: MedicationMarketAvailability[]): void {
+/**
+ * Raw localStorage entries (no seed fallback) — used ONLY for the one-time
+ * migration of pre-existing browser entries into Supabase. Returns [] when the
+ * cache is empty/unreadable so we never re-seed via this path.
+ */
+function loadRawLocalStoragePreparations(): MedicationMarketAvailability[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as MedicationMarketAvailability[]
+    if (!Array.isArray(parsed)) return []
+    return parsed
+  } catch {
+    return []
+  }
+}
+
+function saveCache(preparations: MedicationMarketAvailability[]): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(preparations))
-    window.dispatchEvent(new CustomEvent('psychiatry-ink:market-availability-changed'))
   } catch {
     // ignore storage errors
   }
+}
+
+/** Merge two preparation lists by id; entries from `override` win over `base`. */
+function mergeById(
+  base: MedicationMarketAvailability[],
+  override: MedicationMarketAvailability[],
+): MedicationMarketAvailability[] {
+  const byId = new Map<string, MedicationMarketAvailability>()
+  for (const entry of base) byId.set(entry.id, entry)
+  for (const entry of override) byId.set(entry.id, entry)
+  return Array.from(byId.values())
 }
 
 function generateId(): string {
@@ -93,23 +127,126 @@ export function matchDosageFormToMedicationFormulation(
   }
 }
 
+// ── Shared module-level store ────────────────────────────────────────────────
+// All hook instances subscribe to one store so edits propagate live across the
+// app and the Supabase load/seed runs exactly once per session (avoiding
+// duplicate seeding when several components mount the hook at the same time).
+
+let storePreparations: MedicationMarketAvailability[] = loadCachedPreparations()
+const listeners = new Set<() => void>()
+let loadStarted = false
+let loadPromise: Promise<void> | null = null
+
+function emit(): void {
+  for (const listener of listeners) listener()
+}
+
+function setStorePreparations(next: MedicationMarketAvailability[]): void {
+  storePreparations = next
+  saveCache(next)
+  emit()
+}
+
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener)
+  return () => {
+    listeners.delete(listener)
+  }
+}
+
+function getSnapshot(): MedicationMarketAvailability[] {
+  return storePreparations
+}
+
+/**
+ * Load preparations from Supabase exactly once. Seeds an empty table from
+ * `KB_PREPARATION_SEED_DATA` if empty, migrates any pre-existing localStorage
+ * entries into the shared table (idempotent by id). On any failure it keeps the
+ * local cache/seed so the page stays usable.
+ */
+function ensureLoaded(): Promise<void> {
+  if (loadStarted) return loadPromise ?? Promise.resolve()
+  loadStarted = true
+  loadPromise = (async () => {
+    if (!isPreparationsSupabaseReady()) {
+      console.error(
+        '[knowledgeBasePreparations] Supabase nicht konfiguriert — Präparate nutzen lokalen Cache (nur dieses Gerät).',
+      )
+      return
+    }
+    try {
+      const remote = await fetchAllPreparations()
+      const localEntries = loadRawLocalStoragePreparations()
+
+      if (remote.length === 0) {
+        // Empty table → one-time seed (plus any pre-existing local entries).
+        const seeded = mergeById(KB_PREPARATION_SEED_DATA, localEntries)
+        await upsertPreparations(seeded)
+        setStorePreparations(seeded)
+        return
+      }
+
+      const remoteIds = new Set(remote.map((entry) => entry.id))
+      const localOnly = localEntries.filter((entry) => !remoteIds.has(entry.id))
+
+      if (localOnly.length > 0) {
+        // Upload pre-existing browser entries the user created before this
+        // feature landed so nothing is lost. Idempotent (matched by id).
+        await upsertPreparations(localOnly)
+        setStorePreparations(mergeById(remote, localOnly))
+        return
+      }
+
+      setStorePreparations(remote)
+    } catch (err) {
+      console.error(
+        '[knowledgeBasePreparations] Laden aus Supabase fehlgeschlagen — lokaler Cache wird verwendet.',
+        err,
+      )
+    }
+  })()
+  return loadPromise
+}
+
+/** Fire-and-forget write-through to Supabase for one or more preparations. */
+function writeThroughUpsert(entries: MedicationMarketAvailability[]): void {
+  if (entries.length === 0) return
+  void (async () => {
+    try {
+      await upsertPreparations(entries)
+    } catch (err) {
+      console.error('[knowledgeBasePreparations] Speichern in Supabase fehlgeschlagen.', err)
+    }
+  })()
+}
+
+/** Optimistic local upsert (by id) + write-through to Supabase. */
+function upsertPreparationInStore(entry: MedicationMarketAvailability): void {
+  const exists = storePreparations.some((item) => item.id === entry.id)
+  setStorePreparations(
+    exists ? storePreparations.map((item) => (item.id === entry.id ? entry : item)) : [...storePreparations, entry],
+  )
+  writeThroughUpsert([entry])
+}
+
+/** Optimistic local delete + write-through to Supabase. */
+function removePreparationFromStore(id: string): void {
+  setStorePreparations(storePreparations.filter((item) => item.id !== id))
+  void (async () => {
+    try {
+      await deletePreparationRemote(id)
+    } catch (err) {
+      console.error('[knowledgeBasePreparations] Löschen in Supabase fehlgeschlagen.', err)
+    }
+  })()
+}
+
 export function useMedicationMarketAvailability(substanceId?: string) {
   const actor = useKnowledgeBaseUserProfile()
-  const [preparations, setPreparations] = useState<MedicationMarketAvailability[]>(loadPreparations)
+  const preparations = useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
 
   useEffect(() => {
-    const handleChange = () => setPreparations(loadPreparations())
-    window.addEventListener('psychiatry-ink:market-availability-changed', handleChange)
-    window.addEventListener('storage', handleChange)
-    return () => {
-      window.removeEventListener('psychiatry-ink:market-availability-changed', handleChange)
-      window.removeEventListener('storage', handleChange)
-    }
-  }, [])
-
-  const persist = useCallback((next: MedicationMarketAvailability[]) => {
-    setPreparations(next)
-    savePreparations(next)
+    void ensureLoaded()
   }, [])
 
   const scopedPreparations = useMemo(
@@ -131,10 +268,10 @@ export function useMedicationMarketAvailability(substanceId?: string) {
         lastModifiedByDisplayName: actor.displayName,
         lastVerifiedAt: draft.verificationStatus === 'manually_verified' ? now : draft.lastVerifiedAt,
       }
-      persist([...preparations, entry])
+      upsertPreparationInStore(entry)
       return entry
     },
-    [actor, persist, preparations],
+    [actor],
   )
 
   const upsertGeneratedPreparations = useCallback(
@@ -144,8 +281,9 @@ export function useMedicationMarketAvailability(substanceId?: string) {
       skippedVerified: number
     } => {
       const now = new Date().toISOString()
-      const next = [...preparations]
+      const next = [...storePreparations]
       const indexByKey = new Map(next.map((entry, index) => [preparationKey(entry), index]))
+      const changed: MedicationMarketAvailability[] = []
       const summary = { created: 0, updated: 0, skippedVerified: 0 }
 
       for (const rawDraft of drafts) {
@@ -166,7 +304,7 @@ export function useMedicationMarketAvailability(substanceId?: string) {
             summary.skippedVerified += 1
             continue
           }
-          next[existingIndex] = {
+          const merged: MedicationMarketAvailability = {
             ...existing,
             ...draft,
             id: existing.id,
@@ -177,6 +315,8 @@ export function useMedicationMarketAvailability(substanceId?: string) {
             lastModifiedByUserId: actor.userId,
             lastModifiedByDisplayName: actor.displayName,
           }
+          next[existingIndex] = merged
+          changed.push(merged)
           summary.updated += 1
           continue
         }
@@ -192,43 +332,41 @@ export function useMedicationMarketAvailability(substanceId?: string) {
         }
         next.push(entry)
         indexByKey.set(key, next.length - 1)
+        changed.push(entry)
         summary.created += 1
       }
 
       if (summary.created > 0 || summary.updated > 0) {
-        persist(next)
+        setStorePreparations(next)
+        writeThroughUpsert(changed)
       }
       return summary
     },
-    [actor, persist, preparations],
+    [actor],
   )
 
   const updatePreparation = useCallback(
     (entry: MedicationMarketAvailability) => {
       const now = new Date().toISOString()
-      persist(preparations.map((item) =>
-        item.id === entry.id
-          ? {
-              ...entry,
-              lastModifiedAt: now,
-              lastModifiedByUserId: actor.userId,
-              lastModifiedByDisplayName: actor.displayName,
-              lastVerifiedAt: entry.verificationStatus === 'manually_verified'
-                ? (entry.lastVerifiedAt ?? now)
-                : entry.lastVerifiedAt,
-            }
-          : item,
-      ))
+      const previous = storePreparations.find((item) => item.id === entry.id)
+      const updated: MedicationMarketAvailability = {
+        ...entry,
+        lastModifiedAt: now,
+        lastModifiedByUserId: actor.userId,
+        lastModifiedByDisplayName: actor.displayName,
+        lastVerifiedAt: entry.verificationStatus === 'manually_verified'
+          ? (entry.lastVerifiedAt ?? now)
+          : entry.lastVerifiedAt,
+      }
+      if (!previous) return
+      upsertPreparationInStore(updated)
     },
-    [actor, persist, preparations],
+    [actor],
   )
 
-  const deletePreparation = useCallback(
-    (id: string) => {
-      persist(preparations.filter((item) => item.id !== id))
-    },
-    [persist, preparations],
-  )
+  const deletePreparation = useCallback((id: string) => {
+    removePreparationFromStore(id)
+  }, [])
 
   const byCountry = useCallback(
     (countryCode: PrescribingCountryCode, verifiedOnly = false) =>
