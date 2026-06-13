@@ -38,11 +38,8 @@ create index if not exists knowledge_base_preparations_trade_name_idx
 
 -- ── Row Level Security ──────────────────────────────────────────────────────
 -- READ: public (anon + authenticated) — the KB is readable by everyone.
--- WRITE: currently OPEN to anon as well, because the app talks to Supabase with
---        the publishable/anon key and has no guaranteed Auth session yet.
---        ⚠️ This means anyone with the publishable key can write. TIGHTEN this
---        to `to authenticated` for insert/update/delete once the user
---        hierarchy / Supabase Auth session is enforced for editors.
+-- WRITE: kb editors only (`is_kb_editor()` / app_metadata.kb_admin).
+-- Service role bypasses RLS for projection sync (deferred).
 alter table public.knowledge_base_preparations enable row level security;
 
 drop policy if exists knowledge_base_preparations_select on public.knowledge_base_preparations;
@@ -53,26 +50,26 @@ create policy knowledge_base_preparations_select
   using (true);
 
 drop policy if exists knowledge_base_preparations_insert on public.knowledge_base_preparations;
-create policy knowledge_base_preparations_insert
+create policy knowledge_base_preparations_insert_editor
   on public.knowledge_base_preparations
   for insert
-  to anon, authenticated
-  with check (true);
+  to authenticated
+  with check (public.is_kb_editor());
 
 drop policy if exists knowledge_base_preparations_update on public.knowledge_base_preparations;
-create policy knowledge_base_preparations_update
+create policy knowledge_base_preparations_update_editor
   on public.knowledge_base_preparations
   for update
-  to anon, authenticated
-  using (true)
-  with check (true);
+  to authenticated
+  using (public.is_kb_editor())
+  with check (public.is_kb_editor());
 
 drop policy if exists knowledge_base_preparations_delete on public.knowledge_base_preparations;
-create policy knowledge_base_preparations_delete
+create policy knowledge_base_preparations_delete_editor
   on public.knowledge_base_preparations
   for delete
-  to anon, authenticated
-  using (true);
+  to authenticated
+  using (public.is_kb_editor());
 
 -- ── Optional: keep updated_at fresh on every update ─────────────────────────
 create or replace function public.set_knowledge_base_preparations_updated_at()

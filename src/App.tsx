@@ -10,6 +10,7 @@ import { isAppRoute, useAppRouter } from './hooks/useAppRouter'
 import { DEFAULT_CASE_ID } from './utils/caseContext'
 import { CaseWorkspacePage } from './components/CaseWorkspacePage'
 import { DashboardPage } from './components/dashboard/DashboardPage'
+import { KbAdminPage } from './components/kb-admin/KbAdminPage'
 import { ensureDefaultCase, hydrateCaseRegistry } from './hooks/useCaseRegistry'
 
 export default function App() {
@@ -46,6 +47,7 @@ export default function App() {
   }, [authLoading, isConfigured, navigate, route, user])
 
   const showDashboard = route.view === 'dashboard'
+  const showKbAdmin = route.view === 'kb-admin'
   const caseId = route.view === 'case' ? route.caseId : DEFAULT_CASE_ID
 
   const handleNavigateHome = useCallback(() => {
@@ -106,12 +108,15 @@ export default function App() {
       englishVariant={languageSettings.englishVariant}
     >
       <WorkspaceSessionProvider>
-        {showDashboard ? (
+        {showKbAdmin ? (
+          <KbAdminPage onBack={() => navigate('/dashboard')} />
+        ) : showDashboard ? (
           <DashboardPage
             privacy={privacy}
             languageSettings={languageSettings}
             plan={plan}
             onNavigateHome={handleNavigateHome}
+            onOpenKbAdmin={() => navigate('/dashboard/kb-admin')}
             onOpenCase={(id, page, showPatientDashboard) => {
               const base = `/case/${encodeURIComponent(id)}`
               let url = page ? `${base}?page=${encodeURIComponent(page)}` : base

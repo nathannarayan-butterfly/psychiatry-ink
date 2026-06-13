@@ -3,6 +3,7 @@ import {
   ArrowRight,
   Clock,
   Download,
+  FlaskConical,
   LayoutGrid,
   List,
   Palette,
@@ -41,6 +42,7 @@ import { needsIdentifierStorageOnboarding } from '../../utils/identifierStorage'
 import { DashboardHinweise } from './DashboardHinweise'
 import { DashboardTopBar } from './DashboardTopBar'
 import { KnowledgeBaseTile } from './KnowledgeBase'
+import { isKbAdminUiEnabled } from '../../services/kbAdminApi'
 import { NewPatientDialog } from './NewPatientDialog'
 import type { NewPatientData } from './NewPatientDialog'
 import { NewCaseWorkflowDialog } from './NewCaseWorkflowDialog'
@@ -71,6 +73,7 @@ interface DashboardPageProps {
   onOpenCase: (caseId: string, page?: NotionPageId, showPatientDashboard?: boolean) => void
   onNavigateHome?: () => void
   onOpenSettings?: () => void
+  onOpenKbAdmin?: () => void
 }
 
 function UsageBar({ value, max }: { value: number; max: number }) {
@@ -115,6 +118,7 @@ export function DashboardPage({
   plan: _plan,
   onOpenCase,
   onNavigateHome,
+  onOpenKbAdmin,
 }: DashboardPageProps) {
   const { t, language } = useTranslation()
   const displayName = useAccountDisplayName()
@@ -568,6 +572,12 @@ export function DashboardPage({
           {t('kbTitle')}
         </h2>
         <KnowledgeBaseTile />
+        {isKbAdminUiEnabled() && onOpenKbAdmin ? (
+          <button type="button" className="dashboard-settings-chip" onClick={onOpenKbAdmin} style={{ marginTop: '0.75rem' }}>
+            <FlaskConical className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
+            KB Batch Review (Admin)
+          </button>
+        ) : null}
       </section>
 
       <div className="dashboard-section__divider" role="separator" />

@@ -19,6 +19,9 @@
     "db:build-diagnoses": "tsx scripts/build-diagnosis-crosswalk.ts",
     "db:seed-diagnoses": "tsx scripts/seed-diagnosis-codes.ts",
     "db:import-diagnoses": "npm run db:build-diagnoses && npm run db:seed-diagnoses",
+    "kb:seed:psychiatric-drugs": "tsx scripts/seed-psychiatric-drug-kb.ts",
+    "kb:verify": "tsx scripts/verify-kb-substance.ts",
+    "kb:publish-all": "tsx scripts/publish-all-kb-substances.ts",
     "postinstall": "prisma generate",
     "dev:stop": "bash scripts/stop-dev.sh"
   },
@@ -35,7 +38,9 @@
     "pdfjs-dist": "^6.0.227",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "recharts": "^3.8.1"
+    "recharts": "^3.8.1",
+    "ws": "^8.21.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.8",
@@ -44,6 +49,7 @@
     "@types/node": "^25.9.2",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
+    "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^4.4.1",
     "concurrently": "^9.2.1",
     "prisma": "^6.19.3",

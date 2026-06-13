@@ -6,6 +6,7 @@ interface ImportMetaEnv {
   /** Browser anon key (eyJ…) or publishable key (sb_publishable_…) — never service_role. */
   readonly VITE_SUPABASE_ANON_KEY?: string
   readonly VITE_API_BASE_URL?: string
+  readonly VITE_KB_ADMIN_ENABLED?: string
 }
 
 interface ImportMeta {

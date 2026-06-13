@@ -21,6 +21,7 @@ export type AppRoute =
   | { view: 'login' }
   | { view: 'signup' }
   | { view: 'dashboard' }
+  | { view: 'kb-admin' }
   | { view: 'case'; caseId: string; page?: NotionPageId; initialView?: 'overview' }
 
 export function isPublicRoute(route: AppRoute): boolean {
@@ -28,7 +29,7 @@ export function isPublicRoute(route: AppRoute): boolean {
 }
 
 export function isAppRoute(route: AppRoute): boolean {
-  return route.view === 'dashboard' || route.view === 'case'
+  return route.view === 'dashboard' || route.view === 'case' || route.view === 'kb-admin'
 }
 
 function parsePathname(pathname: string, search = ''): AppRoute {
@@ -37,6 +38,7 @@ function parsePathname(pathname: string, search = ''): AppRoute {
   if (path === '/login') return { view: 'login' }
   if (path === '/signup') return { view: 'signup' }
   if (path === '/dashboard' || path === '/app') return { view: 'dashboard' }
+  if (path === '/dashboard/kb-admin') return { view: 'kb-admin' }
   if (path === '/workspace') {
     return { view: 'case', caseId: DEFAULT_CASE_ID }
   }
@@ -57,6 +59,7 @@ export function routeToPath(route: AppRoute): string {
   if (route.view === 'login') return '/login'
   if (route.view === 'signup') return '/signup'
   if (route.view === 'dashboard') return '/dashboard'
+  if (route.view === 'kb-admin') return '/dashboard/kb-admin'
   const base = `/case/${encodeURIComponent(route.caseId)}`
   if (route.page) return `${base}?page=${encodeURIComponent(route.page)}`
   return base

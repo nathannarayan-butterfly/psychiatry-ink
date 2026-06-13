@@ -107,6 +107,44 @@ function drugSnapshotsEqual(a: KnowledgeBaseDrug, b: KnowledgeBaseDrug): boolean
   return JSON.stringify(a) === JSON.stringify(b)
 }
 
+function isNormalizedKbDrug(drug: KnowledgeBaseDrug): boolean {
+  return drug.tags?.includes('normalized-kb') ?? false
+}
+
+function drugNeedsClinicalReview(drug: KnowledgeBaseDrug): boolean {
+  if (drug.needsClinicalReview === true) return true
+  if (drug.needsClinicalReview === false) return false
+  return isNormalizedKbDrug(drug)
+}
+
+function clinicalReviewBadgeCopy(language: string): { label: string; title: string } {
+  if (language === 'de') {
+    return {
+      label: 'Klinische Prüfung empfohlen',
+      title:
+        'Inhalt ist sichtbar und editierbar. Bitte vor klinischer Anwendung selbst prüfen und bei Bedarf personalisieren.',
+    }
+  }
+  return {
+    label: 'Review needed',
+    title:
+      'Content is visible and editable. Verify before clinical use and personalize as needed.',
+  }
+}
+
+function communityEditableBadgeCopy(language: string): { label: string; title: string } {
+  if (language === 'de') {
+    return {
+      label: 'Community editierbar',
+      title: 'Aus normalisierter KB projiziert — klinisch editierbar.',
+    }
+  }
+  return {
+    label: 'Community editable',
+    title: 'Projected from normalized KB — clinically editable.',
+  }
+}
+
 function getSectionDataForAsk(
   drug: KnowledgeBaseDrug,
   sectionId: string,
@@ -2301,6 +2339,22 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
                 <span>{formatAuditLine('Last reviewed by', activeDrug.lastReviewedByDisplayName ?? activeDrug.lastReviewedByUserId, activeDrug.lastReviewedAt, language)}</span>
               ) : null}
               <span>Verification: {activeDrug.verificationStatus ?? 'draft'}</span>
+              {isNormalizedKbDrug(activeDrug) ? (
+                <span
+                  className="kbp-community-editable-badge"
+                  title={communityEditableBadgeCopy(language).title}
+                >
+                  {communityEditableBadgeCopy(language).label}
+                </span>
+              ) : null}
+              {drugNeedsClinicalReview(activeDrug) ? (
+                <span
+                  className="kbp-clinical-review-badge"
+                  title={clinicalReviewBadgeCopy(language).title}
+                >
+                  {clinicalReviewBadgeCopy(language).label}
+                </span>
+              ) : null}
             </div>
             {!editMode ? <KeyFactsTable drug={activeDrug} language={language} /> : null}
           </div>

@@ -9,6 +9,7 @@ import { defaultAppearanceSettings } from './types/settings'
 import './styles/globals.css'
 import './styles/notion-preview.css'
 import './styles/landing.css'
+import './styles/kb-admin.css'
 
 const APPEARANCE_KEY = 'psychiatry-ink-appearance'
 const LANGUAGE_KEY = 'psychiatry-ink-language'

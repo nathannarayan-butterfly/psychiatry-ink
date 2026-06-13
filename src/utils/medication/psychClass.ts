@@ -254,6 +254,11 @@ const SUBSTANCE_CLASS_LOOKUP: Record<string, PsychopharmacaClass> = {
   temazepam: 'hypnotic',
   triazolam: 'hypnotic',
   promethazin: 'hypnotic',
+  estazolam: 'hypnotic',
+  quazepam: 'hypnotic',
+  meprobamate: 'hypnotic',
+  dexmedetomidine: 'hypnotic',
+  prazosin: 'anxiolytic_other',
   // ── Psychostimulants / ADHD ──
   methylphenidat: 'psychostimulant',
   dexamfetamin: 'psychostimulant',
@@ -262,11 +267,15 @@ const SUBSTANCE_CLASS_LOOKUP: Record<string, PsychopharmacaClass> = {
   atomoxetin: 'psychostimulant',
   guanfacin: 'psychostimulant',
   modafinil: 'psychostimulant',
+  viloxazine: 'psychostimulant',
+  pitolisant: 'psychostimulant',
+  solriamfetol: 'psychostimulant',
   // ── Antidementia ──
   donepezil: 'antidementia',
   rivastigmin: 'antidementia',
   galantamin: 'antidementia',
   memantin: 'antidementia',
+  tacrine: 'antidementia',
   // ── Addiction / substitution ──
   methadon: 'addiction',
   levomethadon: 'addiction',
@@ -277,6 +286,29 @@ const SUBSTANCE_CLASS_LOOKUP: Record<string, PsychopharmacaClass> = {
   acamprosat: 'addiction',
   disulfiram: 'addiction',
   clomethiazol: 'addiction',
+  lofexidine: 'addiction',
+  nicotine: 'addiction',
+  baclofen: 'addiction',
+  // ── Other / augmentation / biologics ──
+  xanomeline: 'antipsychotic_atypical',
+  bromperidol: 'antipsychotic_typical',
+  fluspirilene: 'antipsychotic_typical',
+  clotiapine: 'antipsychotic_typical',
+  periciazine: 'antipsychotic_typical',
+  trimeprazine: 'antipsychotic_typical',
+  alimemazine: 'antipsychotic_typical',
+  dibenzepin: 'antidepressant_tricyclic',
+  melitracen: 'antidepressant_tricyclic',
+  butriptyline: 'antidepressant_tricyclic',
+  quinupramine: 'antidepressant_tricyclic',
+  iprindole: 'antidepressant_other',
+  'imipramine oxide': 'antidepressant_tricyclic',
+  amantadine: 'other',
+  cyproheptadine: 'other',
+  liothyronine: 'antidepressant_other',
+  aducanumab: 'other',
+  lecanemab: 'other',
+  donanemab: 'other',
 }
 
 /** Normalize a generic name for lookup: lowercase, strip diacritics/®/salts. */
@@ -294,21 +326,31 @@ function normalizeName(name: string): string {
 function classFromCategory(category: string | undefined): PsychopharmacaClass | null {
   switch ((category ?? '').toLowerCase()) {
     case 'antipsychotika':
+    case 'antipsychotics':
       return 'antipsychotic_atypical'
     case 'antidepressiva':
+    case 'antidepressants':
       return 'antidepressant_other'
     case 'phasenprophylaktika':
+    case 'mood stabilizers':
       return 'mood_stabilizer'
     case 'benzodiazepine':
       return 'anxiolytic_benzodiazepine'
     case 'hypnotika':
+    case 'anxiolytics/hypnotics':
       return 'hypnotic'
     case 'adhs':
       return 'psychostimulant'
     case 'antidemenz':
+    case 'anti-dementia':
       return 'antidementia'
     case 'suchtmedizin':
+    case 'addiction':
       return 'addiction'
+    case 'eps management':
+      return 'other'
+    case 'additional':
+      return 'other'
     default:
       return null
   }

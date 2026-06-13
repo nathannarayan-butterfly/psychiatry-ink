@@ -512,6 +512,8 @@ export interface KnowledgeBaseDrug {
   lastReviewedByUserId?: string
   lastReviewedByDisplayName?: string
   verificationStatus?: KnowledgeBaseVerificationStatus
+  /** True when content is visible but individual clinician verification is still expected. */
+  needsClinicalReview?: boolean
   sourceHierarchyLevel?: string
   sections: DrugSection[]
   /**

@@ -12631,6 +12631,30 @@ details[open].receptor-radar .receptor-radar__summary::before {
   color: var(--text-muted);
 }
 
+.kbp-community-editable-badge {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 0.15rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: #ecfdf5;
+  color: #047857;
+  font-size: 0.65rem;
+  font-weight: 500;
+}
+
+.kbp-clinical-review-badge {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 0.15rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: #fff7ed;
+  color: #c2410c;
+  font-size: 0.65rem;
+  font-weight: 500;
+}
+
 /* ── KBP AI assist ────────────────────────────────────────────────────────── */
 
 .kbp-btn--ai {

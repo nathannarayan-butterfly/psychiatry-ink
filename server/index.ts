@@ -16,6 +16,7 @@ import { pharmaAskRouter } from './routes/pharmaAsk'
 import { generationLogRouter } from './routes/generationLog'
 import { diagnosisCodesRouter } from './routes/diagnosisCodes'
 import { accountBackupRouter } from './routes/accountBackup'
+import { kbAdminRouter } from './routes/kbAdmin'
 import { patientsRouter } from './routes/patients'
 import { transcribeRouter } from './routes/transcribe'
 
@@ -42,6 +43,7 @@ app.use('/api/patients', patientsRouter)
 app.use('/api/account-backup', accountBackupRouter)
 app.use('/api/diagnosis-codes', diagnosisCodesRouter)
 app.use('/api/generation-logs', generationLogRouter)
+app.use('/api/kb-admin', kbAdminRouter)
 
 app.listen(port, () => {
   const openai = Boolean(process.env.OPENAI_API_KEY?.trim())
