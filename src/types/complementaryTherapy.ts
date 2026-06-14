@@ -22,11 +22,13 @@ export const COMPLEMENTARY_THERAPY_STATUSES: ComplementaryTherapyStatus[] = [
   'completed',
 ]
 
-/** A single dated entry in the participation/session log. */
+import type { TherapyEntryAttribution } from '../types/therapy'
+
 export interface ComplementaryTherapySession {
   id: string
   date: string
   note: string
+  attribution?: TherapyEntryAttribution
 }
 
 export interface ComplementaryTherapy {

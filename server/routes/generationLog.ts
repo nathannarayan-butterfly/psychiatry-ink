@@ -5,6 +5,7 @@ import type { AiModelTier } from '../modelTierMapping'
 import { resolveModelForTier } from '../modelTierMapping'
 import { canAfford, deductCredits } from '../services/credits'
 import { resolveAccountId } from '../middleware/auth'
+import { pathParam } from '../utils/expressParams'
 
 export type GenerationLogStatus = 'started' | 'completed' | 'failed'
 
@@ -75,7 +76,7 @@ generationLogRouter.post('/', async (req: Request, res: Response) => {
 
 generationLogRouter.patch('/:id', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const id = pathParam(req, 'id')
     const body = req.body as UpdateGenerationLogBody
     const userId = resolveAccountId(req)
 

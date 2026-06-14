@@ -32,10 +32,17 @@ import { API_BASE } from '../../services/apiClient'
 import { useTranslation } from '../../context/TranslationContext'
 import type { UiTranslationKey } from '../../data/uiTranslations'
 import { loadMedicationPlanState } from '../../utils/medication/storage'
+import { isMedicationVisible } from '../../utils/medication/planOps'
 import { loadDiagnosen } from '../../utils/diagnosenArchive'
 import { getCaseMeta } from '../../hooks/useCaseRegistry'
 import { loadNotionDocumentSnapshot } from '../../utils/notionDocumentActions'
 import type { MedicationStatus } from '../../types/medicationPlan'
+import { consumeDiagnosticsSectionPref } from '../../utils/befundArchive'
+import {
+  DiagnostikBefundeMain,
+  DiagnostikBefundeSidebar,
+  useDiagnostikBefunde,
+} from '../diagnostik/DiagnostikBefundeSection'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -227,12 +234,15 @@ const ACTIVE_MED_STATUSES: ReadonlySet<MedicationStatus> = new Set<MedicationSta
   'increased',
 ])
 
+type DiagnosticsSectionId = 'labor' | 'befunde' | 'lp' | 'imaging' | 'neurophysiology'
+
 const DIAGNOSTICS_SECTIONS: Array<{
-  id: 'labor' | 'lp' | 'imaging' | 'neurophysiology'
+  id: DiagnosticsSectionId
   labelKey: UiTranslationKey
   enabled: boolean
 }> = [
   { id: 'labor', labelKey: 'diagnosticsSectionLabor', enabled: true },
+  { id: 'befunde', labelKey: 'diagnosticsSectionBefunde', enabled: true },
   { id: 'lp', labelKey: 'diagnosticsSectionLp', enabled: false },
   { id: 'imaging', labelKey: 'diagnosticsSectionImaging', enabled: false },
   { id: 'neurophysiology', labelKey: 'diagnosticsSectionNeurophysiology', enabled: false },
@@ -284,7 +294,7 @@ function gatherClinicalContext(caseId: string): string {
       const currentPlan = planState.plans.find((p) => p.id === planState.currentPlanId)
       if (currentPlan) {
         const activeMeds = currentPlan.medications.filter((m) =>
-          ACTIVE_MED_STATUSES.has(m.status),
+          isMedicationVisible(m) && ACTIVE_MED_STATUSES.has(m.status),
         )
         if (activeMeds.length > 0) {
           const medLines = activeMeds.map((m) => {
@@ -366,11 +376,20 @@ function parseAiCategories(text: string): LaborCategory[] {
   }))
 }
 
-async function callAiGenerate(systemPrompt: string, userPrompt: string): Promise<string> {
+async function callAiGenerate(
+  systemPrompt: string,
+  userPrompt: string,
+  caseId?: string,
+): Promise<string> {
   const response = await fetch(`${API_BASE}/api/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ tier: 'fast', systemPrompt, userPrompt }),
+    body: JSON.stringify({
+      tier: 'fast',
+      systemPrompt,
+      userPrompt,
+      ...(caseId?.trim() ? { caseId: caseId.trim() } : {}),
+    }),
   })
   if (!response.ok) {
     const detail = await response.json().catch(() => null) as { error?: string } | null
@@ -489,7 +508,7 @@ function LaborPasteZone({ caseId, onSave, onKiAnalysisAccept, textareaRef }: Lab
     setKiError(null)
     setKiAnalysisText(null)
     try {
-      const aiText = await callAiGenerate(KI_STRUKTUR_SYSTEM_PROMPT, rawText)
+      const aiText = await callAiGenerate(KI_STRUKTUR_SYSTEM_PROMPT, rawText, caseId)
       const cats = parseAiCategories(aiText)
       const total = cats.reduce((sum, c) => sum + c.values.length, 0)
       if (total === 0) throw new Error('Keine Laborwerte erkannt')
@@ -528,7 +547,7 @@ function LaborPasteZone({ caseId, onSave, onKiAnalysisAccept, textareaRef }: Lab
       const userPrompt = clinicalContext
         ? `${clinicalContext}\n\nLABORWERTE:\n${labSection}`
         : `LABORWERTE:\n${labSection}`
-      const aiText = await callAiGenerate(KI_ANALYSE_SYSTEM_PROMPT, userPrompt)
+      const aiText = await callAiGenerate(KI_ANALYSE_SYSTEM_PROMPT, userPrompt, caseId)
       setKiAnalysisText(aiText.trim())
     } catch {
       setKiError('KI-Analyse fehlgeschlagen. Bitte versuche es erneut.')
@@ -1813,7 +1832,7 @@ function KumulativView({ befunde, normalwerteLabel, caseId }: KumulativViewProps
       const userPrompt = clinicalContext
         ? `${clinicalContext}\n\n${verlaufSection}`
         : verlaufSection
-      const aiText = await callAiGenerate(KI_ANALYSE_SYSTEM_PROMPT, userPrompt)
+      const aiText = await callAiGenerate(KI_ANALYSE_SYSTEM_PROMPT, userPrompt, caseId)
       setKiText(aiText.trim())
       setKiStatus('done')
     } catch {
@@ -2106,6 +2125,11 @@ interface LaborPageProps {
 
 export function LaborPage({ caseId, onCreatePatient, hasPatient = false }: LaborPageProps) {
   const { t } = useTranslation()
+  const [diagnosticsSection, setDiagnosticsSection] = useState<DiagnosticsSectionId>(() => {
+    const pref = consumeDiagnosticsSectionPref(caseId)
+    return pref === 'befunde' ? 'befunde' : 'labor'
+  })
+  const diagnostikBefunde = useDiagnostikBefunde(caseId)
   const [viewMode, setViewMode] = useState<'einzeln' | 'kumulativ'>('einzeln')
   const [befunde, setBefunde] = useState<LaborBefund[]>(() =>
     [...loadBefunde(caseId)].sort((a, b) => b.date.localeCompare(a.date)),
@@ -2391,7 +2415,7 @@ export function LaborPage({ caseId, onCreatePatient, hasPatient = false }: Labor
       const userPrompt = clinicalContext
         ? `${clinicalContext}\n\nLABORWERTE:\n${labSection}`
         : `LABORWERTE:\n${labSection}`
-      const aiText = await callAiGenerate(KI_ANALYSE_SYSTEM_PROMPT, userPrompt)
+      const aiText = await callAiGenerate(KI_ANALYSE_SYSTEM_PROMPT, userPrompt, caseId)
       setKiReText(aiText.trim())
       setKiReStatus('done')
     } catch {
@@ -2475,68 +2499,77 @@ export function LaborPage({ caseId, onCreatePatient, hasPatient = false }: Labor
     <div className="labor-page">
       {/* Sidebar */}
       <aside className="labor-page__sidebar">
-        <button
-          type="button"
-          className={[
-            'labor-page__add-btn',
-            pasteZoneOpen ? 'labor-page__add-btn--active' : '',
-          ].join(' ').trim()}
-          onClick={() => setPasteZoneOpen((open) => !open)}
-          aria-expanded={pasteZoneOpen}
-        >
-          {pasteZoneOpen ? '×' : '+'} {t('laborAddBefund')}
-        </button>
+        {diagnosticsSection === 'labor' ? (
+          <>
+            <button
+              type="button"
+              className={[
+                'labor-page__add-btn',
+                pasteZoneOpen ? 'labor-page__add-btn--active' : '',
+              ].join(' ').trim()}
+              onClick={() => setPasteZoneOpen((open) => !open)}
+              aria-expanded={pasteZoneOpen}
+            >
+              {pasteZoneOpen ? '×' : '+'} {t('laborAddBefund')}
+            </button>
 
-        {/* View toggle */}
-        <div className="labor-view-toggle" role="group" aria-label="Ansicht">
-          <button
-            type="button"
-            className={[
-              'labor-view-toggle__btn',
-              viewMode === 'einzeln' ? 'labor-view-toggle__btn--active' : '',
-            ].join(' ').trim()}
-            onClick={() => setViewMode('einzeln')}
-          >
-            {t('laborViewEinzeln')}
-          </button>
-          <button
-            type="button"
-            className={[
-              'labor-view-toggle__btn',
-              viewMode === 'kumulativ' ? 'labor-view-toggle__btn--active' : '',
-            ].join(' ').trim()}
-            onClick={() => setViewMode('kumulativ')}
-          >
-            {t('laborViewKumulativ')}
-          </button>
-        </div>
+            <div className="labor-view-toggle" role="group" aria-label="Ansicht">
+              <button
+                type="button"
+                className={[
+                  'labor-view-toggle__btn',
+                  viewMode === 'einzeln' ? 'labor-view-toggle__btn--active' : '',
+                ].join(' ').trim()}
+                onClick={() => setViewMode('einzeln')}
+              >
+                {t('laborViewEinzeln')}
+              </button>
+              <button
+                type="button"
+                className={[
+                  'labor-view-toggle__btn',
+                  viewMode === 'kumulativ' ? 'labor-view-toggle__btn--active' : '',
+                ].join(' ').trim()}
+                onClick={() => setViewMode('kumulativ')}
+              >
+                {t('laborViewKumulativ')}
+              </button>
+            </div>
 
-        {befunde.length === 0 ? (
-          <p className="labor-page__sidebar-empty">Kein Laborbefund vorhanden</p>
-        ) : (
-          <ul className="labor-page__befund-list" role="listbox" aria-label="Laborbefunde">
-            {befunde.map((b) => (
-              <li key={b.id}>
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={b.id === selectedId}
-                  className={[
-                    'labor-page__befund-item',
-                    b.id === selectedId ? 'labor-page__befund-item--active' : '',
-                  ].join(' ').trim()}
-                  onClick={() => setSelectedId(b.id)}
-                >
-                  <span className="labor-page__befund-date">{formatDate(b.date)}</span>
-                  {b.label && (
-                    <span className="labor-page__befund-label">{b.label}</span>
-                  )}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-
+            {befunde.length === 0 ? (
+              <p className="labor-page__sidebar-empty">Kein Laborbefund vorhanden</p>
+            ) : (
+              <ul className="labor-page__befund-list" role="listbox" aria-label="Laborbefunde">
+                {befunde.map((b) => (
+                  <li key={b.id}>
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={b.id === selectedId}
+                      className={[
+                        'labor-page__befund-item',
+                        b.id === selectedId ? 'labor-page__befund-item--active' : '',
+                      ].join(' ').trim()}
+                      onClick={() => setSelectedId(b.id)}
+                    >
+                      <span className="labor-page__befund-date">{formatDate(b.date)}</span>
+                      {b.label && (
+                        <span className="labor-page__befund-label">{b.label}</span>
+                      )}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        ) : diagnosticsSection === 'befunde' ? (
+          <DiagnostikBefundeSidebar
+            caseId={caseId}
+            records={diagnostikBefunde.records}
+            selectedId={diagnostikBefunde.selectedId}
+            onSelect={diagnostikBefunde.setSelectedId}
+          />
+        ) : null}
       </aside>
 
       {/* Main area */}
@@ -2553,11 +2586,12 @@ export function LaborPage({ caseId, onCreatePatient, hasPatient = false }: Labor
                 type="button"
                 className={[
                   'labor-page__diagnostics-tab',
-                  section.id === 'labor' ? 'labor-page__diagnostics-tab--active' : '',
+                  section.id === diagnosticsSection ? 'labor-page__diagnostics-tab--active' : '',
                 ].join(' ').trim()}
                 disabled={!section.enabled}
-                aria-current={section.id === 'labor' ? 'page' : undefined}
+                aria-current={section.id === diagnosticsSection ? 'page' : undefined}
                 title={section.enabled ? undefined : t('diagnosticsSectionComingSoon')}
+                onClick={() => section.enabled && setDiagnosticsSection(section.id)}
               >
                 <span>{t(section.labelKey)}</span>
                 {!section.enabled && (
@@ -2570,8 +2604,22 @@ export function LaborPage({ caseId, onCreatePatient, hasPatient = false }: Labor
           </nav>
         </header>
 
+        {diagnosticsSection === 'befunde' ? (
+          <DiagnostikBefundeMain
+            caseId={caseId}
+            records={diagnostikBefunde.records}
+            selectedId={diagnostikBefunde.selectedId}
+            onSelect={diagnostikBefunde.setSelectedId}
+            onRecordsChange={diagnostikBefunde.refresh}
+          />
+        ) : diagnosticsSection !== 'labor' ? (
+          <div className="labor-page__empty">
+            <p className="labor-page__empty-text">{t('diagnosticsSectionComingSoon')}</p>
+          </div>
+        ) : null}
+
         {/* Inline paste zone — collapsed by default, toggled via "+ Labor hinzufügen" */}
-        {pasteZoneOpen && (
+        {diagnosticsSection === 'labor' && pasteZoneOpen && (
           <div className="labor-paste-collapse">
             <button
               type="button"
@@ -2592,11 +2640,11 @@ export function LaborPage({ caseId, onCreatePatient, hasPatient = false }: Labor
         )}
 
         {/* Kumulativ view */}
-        {viewMode === 'kumulativ' && (
+        {diagnosticsSection === 'labor' && viewMode === 'kumulativ' && (
           <KumulativView befunde={befunde} normalwerteLabel={t('laborNormalwerte')} caseId={caseId} />
         )}
 
-        {viewMode === 'einzeln' && selectedBefund ? (
+        {diagnosticsSection === 'labor' && viewMode === 'einzeln' && selectedBefund ? (
           <div className="labor-page__content">
             {/* Befund header */}
             <header className="labor-befund-header">
@@ -2765,7 +2813,7 @@ export function LaborPage({ caseId, onCreatePatient, hasPatient = false }: Labor
             {/* Patient assignment collapsible — only when no patient is linked yet */}
             {!hasPatient && <PatientsZuordnen onCreatePatient={onCreatePatient} />}
           </div>
-        ) : viewMode === 'einzeln' ? (
+        ) : diagnosticsSection === 'labor' && viewMode === 'einzeln' ? (
           <div className="labor-page__empty">
             <p className="labor-page__empty-text">
               Laborbefund einfügen oder auswählen

@@ -1,0 +1,245 @@
+{
+  "meta": {
+    "project": "Psychiatry.ink / Butterfly.ink",
+    "date": "2026-06-14",
+    "version": "0.1.0",
+    "auditor": "AI-assisted (Cursor Agent)",
+    "workspace": "/home/nathan-narayan/Projects/psychiatry-ink"
+  },
+  "summary": {
+    "buildStatus": "pass",
+    "testStatus": "pass",
+    "testCount": 17,
+    "testFiles": 3,
+    "workflowAudit": "9/9 pass",
+    "eslintConfigured": false,
+    "p0Count": 3,
+    "p1Count": 12,
+    "minorFixesApplied": 8
+  },
+  "checklist": [
+    { "area": "Build (tsc + vite)", "status": "pass", "notes": "Clean build; chunk size warning (4.38 MB main bundle)" },
+    { "area": "Tests (vitest)", "status": "pass", "notes": "17/17 pass; coverage limited to demo module" },
+    { "area": "Workflow audit", "status": "pass", "notes": "npm run audit:workflows — 9/9" },
+    { "area": "TypeScript", "status": "pass", "notes": "tsc -b succeeds" },
+    { "area": "ESLint", "status": "warn", "notes": "No eslint config in package.json" },
+    { "area": "Auth / org / permissions", "status": "warn", "notes": "optionalAuth + legacy dev account bypass when Supabase/org unconfigured" },
+    { "area": "Patient/case workspace", "status": "pass", "notes": "E2EE vault, case access panel, org headers wired" },
+    { "area": "Demo patient (canonical sync)", "status": "warn", "notes": "Bundled seed v2; canonical sync infra ready; publisher-only writes" },
+    { "area": "Anamnese / Verlauf / Diagnostik", "status": "pass", "notes": "Rich demo fixture; workflow matrix passes" },
+    { "area": "Therapie / Medikation (AI tools)", "status": "warn", "notes": "Combination/lab-med/prep AI routes require language; /api/generate does not" },
+    { "area": "Calendar / day schedule", "status": "warn", "notes": "Encrypted payloads; Supabase migration 20260627000000 required" },
+    { "area": "Documents / Vorlagen", "status": "pass", "notes": "Template workspace, placeholder bindings" },
+    { "area": "Konsil / DiscussCase", "status": "warn", "notes": "Supabase-backed; LiveKit voice needs env; demo fixture placeholders only" },
+    { "area": "Integrations hub", "status": "warn", "notes": "FHIR mapper stubs; migration 20260625000000" },
+    { "area": "Audit logs", "status": "warn", "notes": "Dev bypasses audit.view permission check" },
+    { "area": "Clinical Imprint", "status": "pass", "notes": "ISDM engine integrated; workflow cases covered" },
+    { "area": "AI API (language/org/Quelle)", "status": "warn", "notes": "clinicalApiFetch sends X-Organisation-Id + Accept-Language; legacy generate route gap" },
+    { "area": "Security / PHI", "status": "warn", "notes": "Demo synthetic markers OK; production auth must be enforced" },
+    { "area": "Secrets in repo", "status": "pass", "notes": ".env* gitignored; .env.local not committed" },
+    { "area": "Demo read-only enforcement", "status": "pass", "notes": "isDemoCaseReadOnly gates edits; publisher email bypass" },
+    { "area": "UX / design polish", "status": "pass", "notes": "Demo i18n + layout fixes applied this audit" }
+  ],
+  "critical": [
+    {
+      "id": "P0-001",
+      "title": "Unauthenticated AI access in dev/legacy mode",
+      "severity": "P0",
+      "module": "server/auth",
+      "files": ["server/middleware/auth.ts", "server/utils/requireRouteAuth.ts", "server/utils/caseAiAccessGuard.ts"],
+      "description": "When Supabase auth and org store are not configured, optionalAuth allows requests as account 'default' and allowLegacyDevAccount() permits AI generation without login.",
+      "recommendation": "Require authentication for all AI routes in staging/production; set SUPABASE_URL+ANON_KEY and SUPABASE_SERVICE_ROLE_KEY; disable legacy bypass via env flag."
+    },
+    {
+      "id": "P0-002",
+      "title": "KB Admin API enabled by default outside production",
+      "severity": "P0",
+      "module": "server/routes/kbAdmin.ts",
+      "files": ["server/routes/kbAdmin.ts"],
+      "description": "kbAdminEnabled() returns true when NODE_ENV !== 'production' unless KB_ADMIN_API_ENABLED=false. Misconfigured staging could expose substance publish/admin endpoints.",
+      "recommendation": "Default KB_ADMIN_API_ENABLED=false; require explicit opt-in per environment."
+    },
+    {
+      "id": "P0-003",
+      "title": "Dual migration systems — deployment drift risk",
+      "severity": "P0",
+      "module": "database",
+      "files": ["prisma/migrations/", "supabase/migrations/"],
+      "description": "Prisma migrations cover credits/patient-registry/SQLite paths; org, konsil, discuss-case, calendar, integration, demo canonical live in 20+ Supabase SQL migrations not tracked by Prisma.",
+      "recommendation": "Document and automate Supabase migration apply in CI/CD; add preflight check that required tables exist before server start."
+    }
+  ],
+  "major": [
+    {
+      "id": "P1-001",
+      "title": "Minimal automated test coverage",
+      "severity": "P1",
+      "module": "testing",
+      "description": "Only 3 test files (17 tests), all demo-patient focused. No server route, permission, or UI integration tests.",
+      "recommendation": "Add vitest tests for org permissions, caseAiAccessGuard, demo read-only enforcement, and critical API routes."
+    },
+    {
+      "id": "P1-002",
+      "title": "Main JS bundle 4.38 MB — no code splitting",
+      "severity": "P1",
+      "module": "build",
+      "description": "Vite warns single chunk >500 kB. Enterprise, konsil, KB admin, pdf tooling all in one bundle.",
+      "recommendation": "Route-based dynamic imports for enterprise, consultation, discuss-case, templates, calendar."
+    },
+    {
+      "id": "P1-003",
+      "title": "/api/generate missing clinical language enforcement",
+      "severity": "P1",
+      "module": "server/routes/generate.ts",
+      "description": "Combination check, lab-med, prep AI use requireClinicalLanguage(); legacy generate route does not validate Accept-Language or body.language.",
+      "recommendation": "Align generate route with resolveClinicalLanguage pattern used by other AI endpoints."
+    },
+    {
+      "id": "P1-004",
+      "title": "Audit log view permission bypass in non-production",
+      "severity": "P1",
+      "module": "server/routes/audit.ts",
+      "description": "canViewAuditLogs returns true whenever NODE_ENV !== 'production', skipping audit.view permission.",
+      "recommendation": "Gate dev bypass behind explicit AUDIT_DEBUG=true env; never skip in staging."
+    },
+    {
+      "id": "P1-005",
+      "title": "Demo seed version still v2 (canonical sync ready for v3+)",
+      "severity": "P1",
+      "module": "demo",
+      "files": ["src/demo/constants.ts", "src/demo/demoPatient.fixture.json"],
+      "description": "DEMO_SEED_VERSION=v2 in bundled fixture. Canonical sync via /api/demo-patient/canonical supports publisher bump to v3+ but not yet published.",
+      "recommendation": "Publish v3 canonical fixture via demo publisher before sales demos; run demo:fixture:regen + publish API."
+    },
+    {
+      "id": "P1-006",
+      "title": "Enterprise module largely stubbed",
+      "severity": "P1",
+      "module": "enterprise",
+      "description": "Enterprise routes gated by ENABLE_ENTERPRISE_ORG_HIERARCHY; SSO, departments, external consultant flows are placeholders.",
+      "recommendation": "Treat enterprise UI as preview-only; document feature flag requirements."
+    },
+    {
+      "id": "P1-007",
+      "title": "DiscussCase voice requires LiveKit env",
+      "severity": "P1",
+      "module": "discuss-case",
+      "description": "LiveKit voice panel shows config error without LIVEKIT_API_KEY, LIVEKIT_API_SECRET, LIVEKIT_URL on server.",
+      "recommendation": "Document env vars; degrade gracefully in demo mode."
+    },
+    {
+      "id": "P1-008",
+      "title": "Combination check AI runs stored in-memory",
+      "severity": "P1",
+      "module": "server/routes/combinationCheck.ts",
+      "description": "pendingRuns Map is process-local; lost on restart and not shared across instances.",
+      "recommendation": "Persist runs to Supabase or Redis for multi-instance deployments."
+    },
+    {
+      "id": "P1-009",
+      "title": "Integration FHIR adapter is stub",
+      "severity": "P1",
+      "module": "integration",
+      "files": ["src/utils/integration/adapters/fhirMapper.ts"],
+      "description": "FHIR R4 mapping marked as stubs; hub UI present but full round-trip not verified.",
+      "recommendation": "Complete FHIR mapper or hide from production nav until ready."
+    },
+    {
+      "id": "P1-010",
+      "title": "Konsil/DiscussCase excluded from demo fixture",
+      "severity": "P1",
+      "module": "demo",
+      "description": "Demo QA checklist marks Konsil and DiscussCase as server-side placeholders only — not sales-demo ready for those modules.",
+      "recommendation": "Add lightweight demo fixtures or guided empty-state UX for sales walkthrough."
+    },
+    {
+      "id": "P1-011",
+      "title": "No ESLint / pre-commit quality gate",
+      "severity": "P1",
+      "module": "tooling",
+      "description": "package.json has no lint script; dead imports and style drift not caught automatically.",
+      "recommendation": "Add eslint + typescript-eslint with CI step."
+    },
+    {
+      "id": "P1-012",
+      "title": "Workspace vault falls back to deviceId without auth",
+      "severity": "P1",
+      "module": "server/routes/workspaceVault.ts",
+      "description": "Unauthenticated clients can use deviceId as owner key when regional tier allows snapshot sync.",
+      "recommendation": "Require auth for cloud snapshot sync in production deployments."
+    }
+  ],
+  "minorFixes": [
+    {
+      "id": "FIX-001",
+      "title": "Demo UI labels translated (DE-first)",
+      "files": ["src/data/uiTranslations.ts", "src/demo/demoReadOnly.ts"]
+    },
+    {
+      "id": "FIX-002",
+      "title": "Demo read-only banner uses i18n",
+      "files": ["src/components/notion/NotionApp.tsx"]
+    },
+    {
+      "id": "FIX-003",
+      "title": "Dashboard demo chip uses i18n",
+      "files": ["src/components/dashboard/DashboardPage.tsx", "src/components/dashboard/PatientCaseCard.tsx"]
+    },
+    {
+      "id": "FIX-004",
+      "title": "Archive demo action translated",
+      "files": ["src/components/dashboard/PatientCaseCard.tsx"]
+    },
+    {
+      "id": "FIX-005",
+      "title": "Patient dashboard demo name i18n",
+      "files": ["src/components/notion/PatientDashboardView.tsx"]
+    },
+    {
+      "id": "FIX-006",
+      "title": "Demo banner layout polish (wrap, center)",
+      "files": ["src/styles/demo-patient-dev.css"]
+    },
+    {
+      "id": "FIX-007",
+      "title": "Patient card title flex overflow fix",
+      "files": ["src/styles/globals.css"]
+    },
+    {
+      "id": "FIX-008",
+      "title": "Dashboard patient list name flex-wrap for demo chip",
+      "files": ["src/styles/globals.css"]
+    }
+  ],
+  "designPolish": [
+    "Demo read-only banner: centered, wraps on narrow viewports",
+    "Dashboard patient list: demo chip no longer overflows title row",
+    "Patient case card: title flexes with min-width:0 for long names + chip"
+  ],
+  "demoPatient": {
+    "caseId": "DEMO-CASE-0001",
+    "patientId": "DEMO-0001",
+    "bundledSeedVersion": "v2",
+    "fixtureVersion": "1",
+    "displayName": "Max Demo",
+    "readOnlyEnforcement": "Client-side via isDemoCaseReadOnly; publisher email bypass",
+    "canonicalSync": "GET/POST /api/demo-patient/canonical (Supabase demo_patient_canonical)",
+    "qaModules": "Anamnese, Diagnosen, Medikation, Kombi-Check, Lab-Med, Verlauf, Labor, Dokumente — cached in fixture",
+    "salesReadiness": "warn",
+    "salesReadinessNotes": "Core clinical walkthrough strong; Konsil/DiscussCase/voice not in fixture; publish v3 canonical before field demos"
+  },
+  "testBuildResults": {
+    "build": { "command": "npm run build", "exitCode": 0, "warnings": ["chunk > 500kB", "dynamic/static import conflicts"] },
+    "test": { "command": "npm test", "exitCode": 0, "files": 3, "tests": 17 },
+    "workflowAudit": { "command": "npm run audit:workflows", "exitCode": 0, "passed": 9 }
+  },
+  "recommendations": [
+    "Apply all supabase/migrations/* to production Supabase before enabling org/konsil/calendar features",
+    "Publish demo canonical fixture v3 for sales team",
+    "Require auth on AI routes in all non-local environments",
+    "Add route-level code splitting to reduce initial load",
+    "Expand test suite beyond demo module",
+    "Add ESLint CI gate",
+    "Set KB_ADMIN_API_ENABLED=false by default outside explicit dev"
+  ]
+}

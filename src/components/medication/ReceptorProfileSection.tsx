@@ -13,7 +13,9 @@ import { translateMedicationUi } from '../../data/medicationUiTranslations'
 import {
   getEvidenceQualityLabel,
   getReceptorActionLabel,
+  getReceptorDisplayLabel,
   getReceptorMeaningByTarget,
+  getReceptorTitleLabel,
   normalizeReceptorTarget,
 } from '../../data/receptorProfile'
 import type { KnowledgeBaseDrug, ReceptorAffinityEntry } from '../../types/knowledgeBase'
@@ -197,9 +199,12 @@ function MatrixView({ resolved, activeTargets, language, legend }: ViewProps) {
             </tr>
           </thead>
           <tbody>
-            {activeTargets.map((target) => (
+            {activeTargets.map((target) => {
+              const displayLabel = getReceptorDisplayLabel(target)
+              const titleLabel = getReceptorTitleLabel(target)
+              return (
               <tr key={normalizeReceptorTarget(target)}>
-                <th className="receptor-matrix__row-header">{target}</th>
+                <th className="receptor-matrix__row-header" title={titleLabel}>{displayLabel}</th>
                 {resolved.map((r) => {
                   const entry = getEntry(r, target)
                   const percent = entry?.affinityPercent ?? null
@@ -228,7 +233,8 @@ function MatrixView({ resolved, activeTargets, language, legend }: ViewProps) {
                   {getReceptorMeaningByTarget(target, language)}
                 </td>
               </tr>
-            ))}
+              )
+            })}
           </tbody>
         </table>
       </div>
@@ -253,10 +259,13 @@ function BurdenView({ resolved, activeTargets, language, legend }: ViewProps) {
         {translateMedicationUi(language, 'medReceptorBurdenApprox')}
       </p>
       <ul className="receptor-burden">
-        {burdens.map((b) => (
+        {burdens.map((b) => {
+          const displayLabel = getReceptorDisplayLabel(b.target)
+          const titleLabel = getReceptorTitleLabel(b.target)
+          return (
           <li key={normalizeReceptorTarget(b.target)} className={`receptor-burden__row receptor-burden__row--${b.level}`}>
             <div className="receptor-burden__head">
-              <span className="receptor-burden__label">{b.target}</span>
+              <span className="receptor-burden__label" title={titleLabel}>{displayLabel}</span>
               <span className="receptor-burden__level">{burdenWord(b.level, language)}</span>
               {b.level === 'high' ? (
                 <span className="receptor-burden__warning" aria-hidden>
@@ -288,7 +297,8 @@ function BurdenView({ resolved, activeTargets, language, legend }: ViewProps) {
               </span>
             </div>
           </li>
-        ))}
+          )
+        })}
       </ul>
     </div>
   )
@@ -315,7 +325,7 @@ function RadarView({ resolved, activeTargets, language, legend }: ViewProps) {
 
   const data = activeTargets.map((target) => {
     const entry: Record<string, number | string | null> = {
-      receptor: target,
+      receptor: getReceptorDisplayLabel(target),
       __target: target,
     }
     for (const r of resolved) entry[r.medId] = getAffinityPercent(r, target) ?? 0
@@ -331,6 +341,8 @@ function RadarView({ resolved, activeTargets, language, legend }: ViewProps) {
   }) => {
     if (!active || !payload || payload.length === 0) return null
     const target = (payload[0]?.payload?.__target as string) ?? ''
+    const displayLabel = getReceptorDisplayLabel(target)
+    const titleLabel = getReceptorTitleLabel(target)
     return (
       <div
         className="receptor-radar-tooltip"
@@ -343,7 +355,7 @@ function RadarView({ resolved, activeTargets, language, legend }: ViewProps) {
           maxWidth: 260,
         }}
       >
-        <strong>{target}</strong>
+        <strong title={titleLabel}>{displayLabel}</strong>
         <ul style={{ listStyle: 'none', margin: '0.25rem 0', padding: 0 }}>
           {payload.map((item) => {
             const medId = String(item.name ?? '')

@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useAuth } from '../../context/AuthContext'
 import { useTranslation } from '../../context/TranslationContext'
+import { usePermissionContext } from '../../contexts/PermissionContext'
+import { useCanAccessModule } from '../../hooks/permissions/useCanAccessModule'
+import { usePermissions } from '../../hooks/permissions'
 import { translateMedicationUi } from '../../data/medicationUiTranslations'
+import { TherapyAttributionBadge } from '../therapy/TherapyAttributionBadge'
+import { buildTherapyAttribution } from '../../types/therapy'
 import {
   MedicationWorkspace,
   type MedicationWorkspaceHandle,
@@ -15,6 +21,7 @@ import {
   loadTherapieEintraege,
   type TherapieEintrag,
 } from '../../utils/therapieArchive'
+import { therapyPageSectionDomId } from '../../data/therapyPageSections'
 
 interface TherapiePageProps {
   caseId: string
@@ -42,6 +49,11 @@ export function TherapiePage({
   onAutoOpenMedicationAddHandled,
 }: TherapiePageProps) {
   const { t, language } = useTranslation()
+  const { user } = useAuth()
+  const { member, role } = usePermissionContext()
+  const { canCreateTherapyEntry: canCreateEntry } = usePermissions()
+  const canAccessTherapyModule = useCanAccessModule(caseId, 'therapy')
+  const canAddTherapyNote = canAccessTherapyModule && canCreateEntry(caseId)
   const medicationRef = useRef<MedicationWorkspaceHandle>(null)
   const [entries, setEntries] = useState<TherapieEintrag[]>(() => loadTherapieEintraege(caseId))
   const [composerOpen, setComposerOpen] = useState(false)
@@ -60,15 +72,22 @@ export function TherapiePage({
 
   const handleSave = useCallback(() => {
     if (!composerText.trim()) return
+    const attribution = buildTherapyAttribution(
+      user?.id ?? member?.userId ?? '',
+      role,
+      member?.therapyDiscipline,
+      member?.therapyDisciplineCustom,
+    )
     appendTherapieEintrag(caseId, {
       date: composerDate || new Date().toISOString().slice(0, 10),
       text: composerText.trim(),
+      ...(attribution ? { attribution } : {}),
     })
     setEntries(loadTherapieEintraege(caseId))
     setComposerText('')
     setComposerDate(new Date().toISOString().slice(0, 10))
     setComposerOpen(false)
-  }, [caseId, composerDate, composerText])
+  }, [caseId, composerDate, composerText, member, role, user?.id])
 
   const handleCancel = useCallback(() => {
     setComposerText('')
@@ -122,13 +141,13 @@ export function TherapiePage({
       <SozialtherapieSection caseId={caseId} />
 
       {/* ── Section 6: Therapie-Notizen (existing journal) ──────────── */}
-      <section className="therapy-section">
+      <section className="therapy-section" id={therapyPageSectionDomId('notizen')}>
         <header className="therapy-section__header">
           <div className="therapy-section__heading">
             <h3 className="therapy-section__title">{t('therapieSectionNotizen')}</h3>
           </div>
           <div className="therapy-section__actions">
-            {!composerOpen && (
+            {!composerOpen && canAddTherapyNote && (
               <button
                 type="button"
                 className="therapy-add-btn"
@@ -151,6 +170,9 @@ export function TherapiePage({
                     <time className="therapy-entry__date" dateTime={entry.date}>
                       {formatDate(entry.date)}
                     </time>
+                    {entry.attribution ? (
+                      <TherapyAttributionBadge attribution={entry.attribution} />
+                    ) : null}
                     <button
                       type="button"
                       className="therapy-entry__delete"

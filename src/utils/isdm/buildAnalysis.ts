@@ -12,7 +12,7 @@ import type {
   SyndromeCluster,
   SymptomFinding,
 } from '../../types/isdm'
-import { getCurrentPlan } from '../medication/planOps'
+import { getCurrentPlan, isMedicationVisible } from '../medication/planOps'
 import {
   buildMedicationEntryClinicalText,
   buildSideEffectClinicalText,
@@ -154,7 +154,7 @@ function mapMedicationPlanToFindings(
 
   const currentPlan = getCurrentPlan(state)
   const medications = currentPlan?.medications ?? []
-  const activeMedications = medications.filter((med) => med.status !== 'discontinued')
+  const activeMedications = medications.filter((med) => isMedicationVisible(med) && med.status !== 'discontinued')
 
   for (const med of activeMedications) {
     const text = buildMedicationEntryClinicalText(med)
@@ -651,7 +651,7 @@ function buildInterviewGaps(
 
   const currentPlan = medicationPlanState ? getCurrentPlan(medicationPlanState) : null
   const activeMedications =
-    currentPlan?.medications.filter((med) => med.status !== 'discontinued') ?? []
+    currentPlan?.medications.filter((med) => isMedicationVisible(med) && med.status !== 'discontinued') ?? []
   const sideEffectReports = medicationPlanState?.sideEffectReports ?? []
 
   if (activeMedications.length > 0 && sideEffectReports.length === 0) {

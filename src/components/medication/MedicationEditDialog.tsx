@@ -34,6 +34,8 @@ import {
   STRENGTH_CUSTOM_VALUE,
 } from '../../utils/medication/strengthOptions'
 import { getDrugsForSubstance } from '../../data/psychDrugReference/index'
+import { MedicationDrugSuggest } from './MedicationDrugSuggest'
+import type { KbDrugSuggestResult } from '../../utils/medication/kbDrugSuggest'
 
 interface MedicationEditDialogProps {
   open: boolean
@@ -149,6 +151,41 @@ export function MedicationEditDialog({
   const doseInputMode = getDoseInputMode(draft.formulation)
   const showPrn = showPrnCheckbox(draft.formulation)
 
+  const handleDrugSelect = (result: KbDrugSuggestResult) => {
+    setDraft((current) => {
+      let next: MedicationDraft = {
+        ...current,
+        substance: result.substance,
+        kbDrugId: result.kbDrugId,
+        substanceId: result.substanceId ?? result.kbDrugId,
+        displayBrandName: result.displayBrandName,
+      }
+      if (result.formulation) {
+        next = applyFormulationChange(next, result.formulation)
+      }
+      if (result.strength) {
+        next = {
+          ...next,
+          strength: result.strength,
+          doseSchedule: result.unit
+            ? { ...next.doseSchedule, unit: result.unit }
+            : next.doseSchedule,
+        }
+      }
+      return next
+    })
+  }
+
+  const handleSubstanceChange = (value: string) => {
+    setDraft((current) => ({
+      ...current,
+      substance: value,
+      kbDrugId: undefined,
+      substanceId: undefined,
+      displayBrandName: undefined,
+    }))
+  }
+
   const handleSave = () => {
     if (!draft.substance.trim()) return
     onSave({
@@ -186,17 +223,15 @@ export function MedicationEditDialog({
         </div>
 
         <div className="therapy-modal__body medication-edit-dialog__body">
-          <label className="therapy-field">
-            <span>{translateMedicationUi(language, 'medSubstance')}</span>
-            <input
-              type="text"
-              value={draft.substance}
-              disabled={disabled}
-              className="therapy-input"
-              autoFocus
-              onChange={(event) => setDraft((current) => ({ ...current, substance: event.target.value }))}
-            />
-          </label>
+          <MedicationDrugSuggest
+            value={draft.substance}
+            displayBrandName={draft.displayBrandName}
+            disabled={disabled}
+            autoFocus
+            label={translateMedicationUi(language, 'medSubstance')}
+            onChange={handleSubstanceChange}
+            onSelect={handleDrugSelect}
+          />
 
           {hasReferenceData ? (
             <p className="medication-edit-dialog__reference-badge">

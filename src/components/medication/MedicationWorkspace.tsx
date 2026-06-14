@@ -1,15 +1,21 @@
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
+import {
+  medicationSectionDomId,
+  useMedicationSectionNavOptional,
+} from '../../contexts/MedicationSectionNavContext'
 import { translateMedicationUi } from '../../data/medicationUiTranslations'
+import { useKnowledgeBaseUserId } from '../../hooks/useKnowledgeBaseUserId'
 import { useMedicationPlan } from '../../hooks/useMedicationPlan'
 import type { MedicationEntry } from '../../types/medicationPlan'
 import type { MedicationDraft } from '../../utils/medication/planOps'
+import { visibleMedications } from '../../utils/medication/planOps'
+import { MedicationDeleteDialog } from './MedicationDeleteDialog'
 import { MedicationEditDialog } from './MedicationEditDialog'
 import { MedicationLowerSections, type MedicationSectionKey } from './MedicationLowerSections'
 import { MedicationRow } from './MedicationRow'
 import { MedicationToolbar } from './MedicationToolbar'
 import { MedicationHistoryPanel, PlanNavigator } from './PlanNavigator'
-import { SideEffectDialog } from './SideEffectDialog'
 
 interface MedicationWorkspaceProps {
   caseId: string
@@ -26,18 +32,24 @@ export interface MedicationWorkspaceHandle {
 export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, MedicationWorkspaceProps>(
   function MedicationWorkspace({ caseId, disabled = false, showToolbarAdd = true }, ref) {
   const { language } = useTranslation()
+  const sectionNav = useMedicationSectionNavOptional()
+  const [localSection, setLocalSection] = useState<MedicationSectionKey>('plan')
+  const selectedSection = sectionNav?.activeSection ?? localSection
+  const deletedBy = useKnowledgeBaseUserId()
   const med = useMedicationPlan(caseId)
   const printRef = useRef<HTMLDivElement>(null)
 
   const [editOpen, setEditOpen] = useState(false)
   const [editingEntry, setEditingEntry] = useState<MedicationEntry | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [sideEffectOpen, setSideEffectOpen] = useState(false)
-  const [sideEffectMedId, setSideEffectMedId] = useState<string | undefined>()
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deletingEntry, setDeletingEntry] = useState<MedicationEntry | null>(null)
   const [showPlanHistory, setShowPlanHistory] = useState(false)
-  const [selectedSection, setSelectedSection] = useState<MedicationSectionKey | null>('receptor')
 
-  const medications = med.currentPlan?.medications ?? []
+  const medications = useMemo(
+    () => visibleMedications(med.currentPlan?.medications ?? []),
+    [med.currentPlan?.medications],
+  )
   const hasMedications = medications.length > 0
   const hasPlanHistory = useMemo(
     () =>
@@ -61,6 +73,19 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
     setEditingEntry(entry)
     setEditOpen(true)
   }, [])
+
+  const openDelete = useCallback((entry: MedicationEntry) => {
+    setDeletingEntry(entry)
+    setDeleteOpen(true)
+  }, [])
+
+  const handleDeleteConfirm = useCallback(
+    (medicationId: string, input: Parameters<typeof med.deleteMedication>[1]) => {
+      med.deleteMedication(medicationId, input)
+      if (selectedId === medicationId) setSelectedId(null)
+    },
+    [med, selectedId],
+  )
 
   const handleSaveDraft = useCallback(
     (draft: MedicationDraft) => {
@@ -124,7 +149,10 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
       </div>
 
       <div className="medication-workspace__columns">
-        <div className="medication-workspace__main">
+        <div
+          className="medication-workspace__main"
+          id={medicationSectionDomId('plan')}
+        >
           <MedicationToolbar
             disabled={disabled}
             hasMedications={hasMedications}
@@ -166,36 +194,37 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
                   selected={selectedId === entry.id}
                   onSelect={() => setSelectedId(entry.id)}
                   onEdit={() => openEdit(entry)}
-                  onAddSideEffect={() => {
-                    setSideEffectMedId(entry.id)
-                    setSideEffectOpen(true)
-                  }}
+                  onDelete={() => openDelete(entry)}
                 />
               ))
             )}
           </div>
 
-          <MedicationLowerSections
-            state={med.state}
-            medications={medications}
-            disabled={disabled}
-            onReportSideEffect={med.reportSideEffect}
-            onLabNotesChange={med.updateLabNotes}
-            mode="links"
-            activeSection={selectedSection}
-            onSelectSection={setSelectedSection}
-          />
+          {!sectionNav ? (
+            <MedicationLowerSections
+              caseId={caseId}
+              state={med.state}
+              medications={medications}
+              disabled={disabled}
+              onReportSideEffect={med.reportSideEffect}
+              onLabNotesChange={med.updateLabNotes}
+              mode="links"
+              activeSection={selectedSection}
+              onSelectSection={setLocalSection}
+            />
+          ) : null}
         </div>
 
         <aside className="medication-workspace__aside">
           <MedicationLowerSections
+            caseId={caseId}
             state={med.state}
             medications={medications}
             disabled={disabled}
             onReportSideEffect={med.reportSideEffect}
             onLabNotesChange={med.updateLabNotes}
             mode="detail"
-            activeSection={selectedSection}
+            activeSection={selectedSection === 'plan' ? null : selectedSection}
           />
         </aside>
       </div>
@@ -208,13 +237,13 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
         onSave={handleSaveDraft}
       />
 
-      <SideEffectDialog
-        open={sideEffectOpen}
-        medications={medications}
-        preselectedMedicationId={sideEffectMedId}
+      <MedicationDeleteDialog
+        open={deleteOpen}
+        entry={deletingEntry}
         disabled={disabled}
-        onClose={() => setSideEffectOpen(false)}
-        onSave={med.reportSideEffect}
+        deletedBy={deletedBy}
+        onClose={() => setDeleteOpen(false)}
+        onConfirm={handleDeleteConfirm}
       />
     </div>
   )

@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useAuth } from '../../context/AuthContext'
 import { useTranslation } from '../../context/TranslationContext'
+import { usePermissionContext } from '../../contexts/PermissionContext'
+import { useCanAccessModule } from '../../hooks/permissions/useCanAccessModule'
+import { usePermissions } from '../../hooks/permissions'
 import type { UiTranslationKey } from '../../data/uiTranslations'
+import { therapyPageSectionDomId } from '../../data/therapyPageSections'
+import { buildTherapyAttribution } from '../../types/therapy'
 import {
   COMPLEMENTARY_THERAPY_STATUSES,
   DEFAULT_COMPLEMENTARY_THERAPY_TYPES,
@@ -58,6 +64,11 @@ function formatDate(iso: string): string {
 
 export function ComplementaryTherapiesSection({ caseId }: ComplementaryTherapiesSectionProps) {
   const { t } = useTranslation()
+  const { user } = useAuth()
+  const { member, role } = usePermissionContext()
+  const { canCreateTherapyEntry: canCreateEntry } = usePermissions()
+  const canAccessTherapy = useCanAccessModule(caseId, 'therapy')
+  const canEditComplementary = canAccessTherapy && canCreateEntry(caseId)
   const { therapies, addTherapy, updateTherapy, removeTherapy, addSession, removeSession } =
     useComplementaryTherapies(caseId)
 
@@ -90,9 +101,16 @@ export function ComplementaryTherapiesSection({ caseId }: ComplementaryTherapies
 
   const handleAddSession = () => {
     if (!selected || !sessionNote.trim()) return
+    const attribution = buildTherapyAttribution(
+      user?.id ?? member?.userId ?? '',
+      role,
+      member?.therapyDiscipline,
+      member?.therapyDisciplineCustom,
+    )
     addSession(selected.id, {
       date: sessionDate || new Date().toISOString().slice(0, 10),
       note: sessionNote.trim(),
+      ...(attribution ? { attribution } : {}),
     })
     setSessionNote('')
     setSessionDate(new Date().toISOString().slice(0, 10))
@@ -105,19 +123,21 @@ export function ComplementaryTherapiesSection({ caseId }: ComplementaryTherapies
   }
 
   return (
-    <section className="therapy-section">
+    <section className="therapy-section" id={therapyPageSectionDomId('komplementaer')}>
       <header className="therapy-section__header">
         <div className="therapy-section__heading">
           <h3 className="therapy-section__title">{t('complementaryTherapiesTitle')}</h3>
         </div>
         <div className="therapy-section__actions">
-          <button
-            type="button"
-            className="therapy-add-btn"
-            onClick={() => setPickerOpen(true)}
-          >
-            ＋ {t('ctAddTherapy')}
-          </button>
+          {canEditComplementary ? (
+            <button
+              type="button"
+              className="therapy-add-btn"
+              onClick={() => setPickerOpen(true)}
+            >
+              ＋ {t('ctAddTherapy')}
+            </button>
+          ) : null}
         </div>
       </header>
 

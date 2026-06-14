@@ -1,0 +1,23 @@
+{
+  "runAt": "2026-06-13T20:40:59.350Z",
+  "options": {
+    "dryRun": false,
+    "limit": 0,
+    "offset": 0,
+    "drug": "Haloperidol",
+    "force": false,
+    "rerun": true,
+    "provider": "deepseek",
+    "country": "DE",
+    "includeReceptorAffinity": true,
+    "includeMarketAvailability": false,
+    "delayMs": 2500,
+    "maxRetries": 2
+  },
+  "total": 1,
+  "success": 1,
+  "skipped": 0,
+  "dryRun": 0,
+  "failed": 0,
+  "failures": []
+}

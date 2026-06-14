@@ -1,0 +1,25 @@
+{
+  "runAt": "2026-06-13T21:45:20.938Z",
+  "options": {
+    "dryRun": false,
+    "limit": 150,
+    "offset": 0,
+    "drug": null,
+    "force": false,
+    "rerun": false,
+    "provider": "deepseek",
+    "country": "DE",
+    "includeReceptorAffinity": true,
+    "includeMarketAvailability": false,
+    "delayMs": 2500,
+    "maxRetries": 2,
+    "source": "core",
+    "publishAll": false
+  },
+  "total": 150,
+  "success": 48,
+  "skipped": 102,
+  "dryRun": 0,
+  "failed": 0,
+  "failures": []
+}

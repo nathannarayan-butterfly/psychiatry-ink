@@ -2,7 +2,7 @@ import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
 import { transcribeAudioBuffer } from '../services/transcriptionProvider'
 import { canAfford, deductCredits } from '../services/credits'
-import { resolveAccountId } from '../middleware/auth'
+import { requireAuthenticatedUserOrDevBypass } from '../utils/requireAuthenticatedUserOrDevBypass'
 
 /** Matches src/data/subscriptionPlans.ts TRANSCRIBE_CREDITS */
 const TRANSCRIBE_CREDITS = 5
@@ -17,7 +17,8 @@ export const transcribeRouter: Router = createRouter()
 transcribeRouter.post('/', async (req: Request, res: Response) => {
   try {
     const body = req.body as TranscribeRequestBody
-    const userId = resolveAccountId(req)
+    const userId = requireAuthenticatedUserOrDevBypass(req, res)
+    if (!userId) return
 
     if (!body.audioBase64?.trim()) {
       res.status(400).json({ error: 'Missing audioBase64' })

@@ -1,8 +1,4 @@
-import dotenv from 'dotenv'
-
-// Match Vite precedence: .env then .env.local (local overrides). Never load .env.example.
-dotenv.config()
-dotenv.config({ path: '.env.local', override: true })
+import './loadEnv'
 import cors from 'cors'
 import express from 'express'
 import { optionalAuth } from './middleware/auth'
@@ -20,6 +16,19 @@ import { kbAdminRouter } from './routes/kbAdmin'
 import { kbContributionsRouter } from './routes/kbContributions'
 import { patientsRouter } from './routes/patients'
 import { transcribeRouter } from './routes/transcribe'
+import { discussCaseRouter } from './routes/discussCase'
+import { consultationRouter } from './routes/consultation'
+import { orgRouter } from './routes/org'
+import { auditRouter } from './routes/audit'
+import { integrationRouter } from './routes/integration'
+import { enterpriseRouter } from './routes/enterprise'
+import { calendarRouter } from './routes/calendar'
+import { combinationCheckRouter } from './routes/combinationCheck'
+import { labMedicationCorrelationRouter } from './routes/labMedicationCorrelation'
+import { prepAiCheckRouter } from './routes/prepAiCheck'
+import { demoPatientRouter } from './routes/demoPatient'
+import { liveKitMissingEnvVars } from './services/livekitVoice'
+import { isEnterpriseOrgHierarchyEnabled } from './utils/featureFlags'
 
 const app = express()
 const port = Number(process.env.API_PORT ?? 3001)
@@ -32,6 +41,13 @@ app.use(express.json({ limit: '2mb' }))
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true })
 })
+
+if (process.env.NODE_ENV !== 'production') {
+  app.get('/api/health/voice', (_req, res) => {
+    const missing = liveKitMissingEnvVars()
+    res.json({ configured: missing.length === 0, missing })
+  })
+}
 
 app.use('/api/generate', generateRouter)
 app.use('/api/pharma-generate', pharmaGenerateRouter)
@@ -46,10 +62,30 @@ app.use('/api/diagnosis-codes', diagnosisCodesRouter)
 app.use('/api/generation-logs', generationLogRouter)
 app.use('/api/kb-admin', kbAdminRouter)
 app.use('/api/kb-contributions', kbContributionsRouter)
+app.use('/api/discuss-case', discussCaseRouter)
+app.use('/api/consultation', consultationRouter)
+app.use('/api/org', orgRouter)
+app.use('/api/audit', auditRouter)
+app.use('/api/integration', integrationRouter)
+app.use('/api/calendar', calendarRouter)
+app.use('/api/combination-check', combinationCheckRouter)
+app.use('/api/lab-med-correlation', labMedicationCorrelationRouter)
+app.use('/api/medication/prep-ai-check', prepAiCheckRouter)
+app.use('/api/demo-patient', demoPatientRouter)
+if (isEnterpriseOrgHierarchyEnabled()) {
+  app.use('/api/enterprise', enterpriseRouter)
+}
 
 app.listen(port, () => {
   const openai = Boolean(process.env.OPENAI_API_KEY?.trim())
   const deepseek = Boolean(process.env.DEEPSEEK_API_KEY?.trim())
+  const livekitMissing = liveKitMissingEnvVars()
+  const livekit = livekitMissing.length === 0
   console.log(`[api] listening on http://127.0.0.1:${port}`)
-  console.log(`[api] keys: OPENAI=${openai ? 'yes' : 'no'} DEEPSEEK=${deepseek ? 'yes' : 'no'}`)
+  console.log(`[api] keys: OPENAI=${openai ? 'yes' : 'no'} DEEPSEEK=${deepseek ? 'yes' : 'no'} LIVEKIT=${livekit ? 'yes' : 'no'}`)
+  if (livekit) {
+    console.log('[api] LiveKit: configured')
+  } else {
+    console.log(`[api] LiveKit: missing ${livekitMissing.join(', ')}`)
+  }
 })

@@ -3,19 +3,22 @@ import { useTranslation } from '../../context/TranslationContext'
 import type { DashboardCase } from '../../hooks/useCaseRegistry'
 import type { CaseClinicalStats } from '../../utils/dashboardCaseStats'
 import { formatSiteLocaleDate } from '../../utils/siteTimezone'
+import { isDemoCase } from '../../demo'
 
 interface PatientCaseCardProps {
   caseItem: DashboardCase
   clinicalStats?: CaseClinicalStats
   onOpen: (caseId: string) => void
+  onArchiveDemo?: () => void
 }
 
 function formatLocalDate(isoDate: string, locale: string): string {
   return formatSiteLocaleDate(isoDate, locale)
 }
 
-export function PatientCaseCard({ caseItem, clinicalStats, onOpen }: PatientCaseCardProps) {
+export function PatientCaseCard({ caseItem, clinicalStats, onOpen, onArchiveDemo }: PatientCaseCardProps) {
   const { t, language } = useTranslation()
+  const demo = isDemoCase(caseItem.caseId)
   const genderLabel =
     caseItem.localGeschlecht === 'maennlich'
       ? t('patientGeschlechtMaennlich')
@@ -57,7 +60,10 @@ export function PatientCaseCard({ caseItem, clinicalStats, onOpen }: PatientCase
     >
       <div className="patient-case-card__header">
         <FileText className="patient-case-card__icon" strokeWidth={1.5} aria-hidden />
-        <h3 className="patient-case-card__title">{caseItem.displayTitle}</h3>
+        <h3 className="patient-case-card__title">
+          {caseItem.displayTitle}
+          {demo ? <span className="demo-patient-chip">{t('demoCaseLabel')}</span> : null}
+        </h3>
       </div>
 
       {patientDetails.length > 0 ? (
@@ -96,6 +102,26 @@ export function PatientCaseCard({ caseItem, clinicalStats, onOpen }: PatientCase
 
       {caseItem.localName || caseItem.localVorname || caseItem.localNachname ? (
         <p className="patient-case-card__local-hint">{t('dashboardLocalNameHint')}</p>
+      ) : null}
+      {demo && onArchiveDemo ? (
+        <span
+          role="button"
+          tabIndex={0}
+          className="patient-case-card__archive-demo"
+          onClick={(event) => {
+            event.stopPropagation()
+            onArchiveDemo()
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              event.stopPropagation()
+              onArchiveDemo()
+            }
+          }}
+        >
+          {t('demoArchiveAction')}
+        </span>
       ) : null}
     </button>
   )

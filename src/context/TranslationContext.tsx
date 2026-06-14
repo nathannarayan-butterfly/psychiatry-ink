@@ -1,5 +1,6 @@
-import { createContext, useContext, useMemo, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, type ReactNode } from 'react'
 import { translateUi, type UiTranslationKey } from '../data/uiTranslations'
+import { registerClinicalLanguageResolver } from '../services/clinicalApiFetch'
 import type { EnglishVariant, UiLanguage } from '../types/settings'
 
 interface TranslationContextValue {
@@ -29,6 +30,10 @@ export function TranslationProvider({
     }),
     [language, englishVariant],
   )
+
+  useEffect(() => {
+    registerClinicalLanguageResolver(() => language)
+  }, [language])
 
   return <TranslationContext.Provider value={value}>{children}</TranslationContext.Provider>
 }

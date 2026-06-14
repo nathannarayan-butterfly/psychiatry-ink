@@ -193,10 +193,11 @@ export function buildSideEffectClinicalText(
 }
 
 export function buildReadableClinicalSentence(plan: MedicationPlan, language: UiLanguage = 'de'): string {
-  if (plan.medications.length === 0) {
+  const visible = plan.medications.filter((med) => !med.deletedAt)
+  if (visible.length === 0) {
     return language === 'de' ? 'Keine Medikation dokumentiert.' : 'No medication documented.'
   }
 
-  const lines = plan.medications.map((med) => buildMedicationEntryClinicalText(med, language))
+  const lines = visible.map((med) => buildMedicationEntryClinicalText(med, language))
   return `${medicationPlanPrefix(language)} ${lines.join('; ')}`
 }

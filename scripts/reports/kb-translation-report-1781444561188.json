@@ -1,0 +1,24 @@
+{
+  "timestamp": "2026-06-14T13:42:41.187Z",
+  "dryRun": false,
+  "force": true,
+  "only": "Clozapine",
+  "limit": null,
+  "totals": {
+    "substances": 1,
+    "translated": 1,
+    "partial": 0,
+    "skipped": 0,
+    "failed": 0,
+    "fieldsTranslated": 72
+  },
+  "results": [
+    {
+      "id": "d897e40f-e195-493e-90ab-490d31c4e6d2",
+      "genericName": "Clozapine",
+      "fieldsRequested": 72,
+      "fieldsTranslated": 72,
+      "status": "translated"
+    }
+  ]
+}

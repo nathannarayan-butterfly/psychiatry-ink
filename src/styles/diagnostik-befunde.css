@@ -1,0 +1,321 @@
+/* Diagnostik Befunde — EKG/EEG structured findings */
+
+.diagnostik-befunde__main {
+  /* Reuses .labor-page__content horizontal padding (1.5rem) to match Labor tab. */
+  min-height: 0;
+}
+
+.diagnostik-befunde__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 0 1rem;
+  border-bottom: 1px solid var(--border-soft, #e8e8e4);
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.diagnostik-befunde__detail {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 1rem;
+  min-height: 0;
+}
+
+.diagnostik-befunde__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 10rem;
+}
+
+.diagnostik-befunde__actions-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #8a8a80);
+}
+
+.diagnostik-befunde__action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.diagnostik-befunde__action-btn {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--ink, #1a1a18);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.diagnostik-befunde__action-btn:hover {
+  border-color: var(--accent, #4a7c59);
+  background: color-mix(in srgb, var(--accent, #4a7c59) 6%, #fff);
+}
+
+.diagnostik-befunde__detail .labor-befund-header__left {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.diagnostik-befunde__content {
+  margin: 0;
+  padding: 1rem 0;
+  font-family: inherit;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  color: var(--ink, #1a1a18);
+  background: transparent;
+  border: none;
+}
+
+.befund-status-badge {
+  font-size: 0.68rem;
+  font-weight: 500;
+}
+
+.befund-status-badge--draft {
+  color: var(--text-muted, #8a8a80);
+}
+
+.befund-status-badge--vidert {
+  color: var(--accent, #4a7c59);
+}
+
+.befund-status-pill {
+  display: inline-block;
+  padding: 0.125rem 0.4rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.befund-status-pill--draft {
+  background: color-mix(in srgb, var(--text-muted, #8a8a80) 12%, #fff);
+  color: var(--text-muted, #8a8a80);
+}
+
+.befund-status-pill--vidert {
+  background: color-mix(in srgb, var(--accent, #4a7c59) 12%, #fff);
+  color: var(--accent, #4a7c59);
+}
+
+/* Schema form inside popup */
+
+.befund-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.befund-form__meta {
+  display: flex;
+  gap: 1rem;
+}
+
+.befund-form__date-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  color: var(--text-muted, #8a8a80);
+}
+
+.befund-form__date-input,
+.befund-form__input,
+.befund-form__select {
+  padding: 0.35rem 0.5rem;
+  font-size: 0.82rem;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--ink, #1a1a18);
+}
+
+.befund-form__section-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #8a8a80);
+}
+
+.befund-form__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.befund-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.befund-form__field-label {
+  font-size: 0.78rem;
+  color: var(--text-muted, #8a8a80);
+}
+
+.befund-form__textarea {
+  padding: 0.45rem 0.55rem;
+  font-family: inherit;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 4px;
+  resize: vertical;
+  min-height: 4rem;
+}
+
+.befund-form__fieldset {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.befund-form__legend {
+  font-size: 0.78rem;
+  color: var(--text-muted, #8a8a80);
+  margin-bottom: 0.35rem;
+  padding: 0;
+}
+
+.befund-form__checkbox-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.75rem;
+}
+
+.befund-form__checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--ink, #1a1a18);
+  cursor: pointer;
+}
+
+.befund-form__checkbox-label--single {
+  padding: 0.2rem 0;
+}
+
+.befund-form__checkbox-label input[type='checkbox'] {
+  accent-color: var(--accent, #4a7c59);
+}
+
+.befund-form__radio-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.75rem;
+}
+
+.befund-form__radio-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--ink, #1a1a18);
+  cursor: pointer;
+}
+
+.befund-form__radio-label input[type='radio'] {
+  accent-color: var(--accent, #4a7c59);
+}
+
+.befund-popup__footer {
+  justify-content: space-between;
+}
+
+.befund-popup__footer-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.befund-popup__btn {
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border-radius: 4px;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  cursor: pointer;
+  background: #fff;
+  color: var(--ink, #1a1a18);
+}
+
+.befund-popup__btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.befund-popup__btn--ghost {
+  border-color: transparent;
+  color: var(--text-muted, #8a8a80);
+}
+
+.befund-popup__btn--ghost:hover:not(:disabled) {
+  color: var(--ink, #1a1a18);
+}
+
+.befund-popup__btn--secondary:hover:not(:disabled) {
+  border-color: var(--accent, #4a7c59);
+}
+
+.befund-popup__btn--primary {
+  background: var(--accent, #4a7c59);
+  border-color: var(--accent, #4a7c59);
+  color: #fff;
+}
+
+.befund-popup__btn--primary:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+/* Sidebar exam rows */
+
+.labor-sidebar-widget__exam-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-top: 0.35rem;
+}
+
+.labor-sidebar-widget__exam-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.25rem 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 0.72rem;
+  color: var(--text-muted, #8a8a80);
+  cursor: pointer;
+  text-align: left;
+}
+
+.labor-sidebar-widget__exam-row:hover {
+  color: var(--accent, #4a7c59);
+}
+
+.labor-sidebar-widget__exam-status {
+  font-size: 0.65rem;
+  flex-shrink: 0;
+}

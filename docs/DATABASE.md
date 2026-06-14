@@ -1,5 +1,12 @@
 # Local database (SQLite + Prisma)
 
+> **Production schema authority:** the deployed database is **Supabase Postgres**, and
+> **`supabase/migrations/*.sql` is the single source of truth** for the production schema
+> (tables, RLS, auth policies, indexes, triggers, functions). Prisma below is **local
+> SQLite ORM/typing only** and must never mutate production. See
+> **[docs/database-migration-policy.md](./database-migration-policy.md)** and run
+> `npm run db:check` to enforce it.
+
 Psychiatry.ink uses **SQLite** locally via **Prisma ORM**. This project is **Vite + React** (not Next.js). Prisma runs in **Node only** — the Express API (`server/`) and scripts — never in the browser bundle.
 
 ## Quick start
@@ -7,9 +14,10 @@ Psychiatry.ink uses **SQLite** locally via **Prisma ORM**. This project is **Vit
 ```bash
 cp .env.example .env          # if needed
 npm install
-npm run db:migrate            # apply migrations (dev)
+npm run db:migrate            # apply migrations to LOCAL SQLite (dev)
 npm run db:generate           # generate Prisma Client
-npm run db:check              # verify connection
+npm run db:check              # structural migration sanity / drift guard (no DB needed)
+npm run db:smoke              # optional: local SQLite connection smoke test (needs dev.db)
 ```
 
 Database file: `prisma/dev.db` (gitignored; path is relative to `prisma/schema.prisma`).
@@ -24,7 +32,8 @@ Database file: `prisma/dev.db` (gitignored; path is relative to `prisma/schema.p
 | `npm run db:push` | Push schema without migration files (prototyping only) |
 | `npm run db:generate` | Regenerate client after schema changes |
 | `npm run db:studio` | Open Prisma Studio GUI |
-| `npm run db:check` | Connection smoke test |
+| `npm run db:check` | Migration sanity / drift guard (structural, CI-safe — see [migration policy](./database-migration-policy.md)) |
+| `npm run db:smoke` | Local SQLite connection smoke test (needs `dev.db`) |
 | `npm run db:build-diagnoses` | Build ICD crosswalk JSON from WHO (+ optional BfArM) sources |
 | `npm run db:seed-diagnoses` | Load crosswalk into `DiagnosisCode` table |
 | `npm run db:import-diagnoses` | Build + seed diagnosis reference data |

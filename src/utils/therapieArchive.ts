@@ -4,6 +4,7 @@
  */
 
 import { caseStorageKey } from './caseContext'
+import type { TherapyEntryAttribution } from '../types/therapy'
 
 const THERAPIE_KEY = 'psychiatry-ink:therapieEintraege'
 
@@ -12,6 +13,7 @@ export interface TherapieEintrag {
   date: string       // ISO 8601 date string (yyyy-mm-dd)
   text: string
   createdAt: string  // ISO 8601 full timestamp
+  attribution?: TherapyEntryAttribution
 }
 
 function storageKey(caseId: string): string {

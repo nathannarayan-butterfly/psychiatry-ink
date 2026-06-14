@@ -69,7 +69,7 @@ import {
   visibleCanonicalSections,
   type CanonicalKbSection,
 } from '../../data/knowledgeBaseSectionRegistry'
-import { getReceptorActionLabel } from '../../data/receptorProfile'
+import { getReceptorActionLabel, getReceptorDisplayLabel, getReceptorTitleLabel } from '../../data/receptorProfile'
 import {
   HIGHLIGHT_COLORS,
   KB_RECEPTOR_SECTION_ID,
@@ -1431,13 +1431,16 @@ function CountryPreparationsSection({
 }
 
 function targetMatches(entry: ReceptorAffinityEntry, aliases: string[]): boolean {
-  const normalized = entry.target.toLowerCase().replace(/[α]/g, 'alpha').replace(/[^a-z0-9]/g, '')
+  const normalized = getReceptorDisplayLabel(entry.target)
+    .toLowerCase()
+    .replace(/[α]/g, 'alpha')
+    .replace(/[^a-z0-9]/g, '')
   return aliases.some((alias) => normalized.includes(alias))
 }
 
 function interpretationLine(entry: ReceptorAffinityEntry, text: string): string {
   const value = entry.affinityPercent == null ? 'unbekannter relativer Affinität' : `${entry.affinityPercent}% relativer Affinität`
-  return `${entry.target} (${value}): ${text}`
+  return `${getReceptorDisplayLabel(entry.target)} (${value}): ${text}`
 }
 
 function buildClinicalInterpretation(entries: ReceptorAffinityEntry[]): string[] {
@@ -1570,7 +1573,9 @@ function ReceptorProfileChapterSection({
                   <tbody>
                     {ranked.map((entry) => (
                       <tr key={entry.target}>
-                        <th scope="row">{entry.target}</th>
+                        <th scope="row" title={getReceptorTitleLabel(entry.target)}>
+                          {getReceptorDisplayLabel(entry.target)}
+                        </th>
                         <td>{entry.affinityPercent == null ? '—' : `${entry.affinityPercent}%`}</td>
                         <td>{getReceptorActionLabel(entry.action, lang)}</td>
                       </tr>

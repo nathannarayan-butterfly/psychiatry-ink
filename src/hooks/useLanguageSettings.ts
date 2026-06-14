@@ -1,21 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
-import { defaultLanguage, languageOptions } from '../data/languages'
+import { languageOptions } from '../data/languages'
 import type { EnglishVariant, UiLanguage } from '../types/settings'
+import { LANGUAGE_STORAGE_KEY, loadStoredUiLanguage } from '../utils/clinicalLanguage'
 import { safeSetItem } from '../utils/safeStorage'
 
-const STORAGE_KEY = 'psychiatry-ink-language'
 const ENGLISH_VARIANT_KEY = 'psychiatry-ink-english-variant'
-
-function loadLanguage(): UiLanguage {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return defaultLanguage
-    const match = languageOptions.find((option) => option.value === raw)
-    return match ? match.value : defaultLanguage
-  } catch {
-    return defaultLanguage
-  }
-}
 
 function loadEnglishVariant(): EnglishVariant {
   try {
@@ -27,13 +16,13 @@ function loadEnglishVariant(): EnglishVariant {
 }
 
 export function useLanguageSettings() {
-  const [language, setLanguage] = useState<UiLanguage>(loadLanguage)
+  const [language, setLanguage] = useState<UiLanguage>(loadStoredUiLanguage)
   const [englishVariant, setEnglishVariant] = useState<EnglishVariant>(loadEnglishVariant)
 
   useEffect(() => {
     document.documentElement.lang =
       language === 'en' ? (englishVariant === 'us' ? 'en-US' : 'en-GB') : language
-    safeSetItem(STORAGE_KEY, language)
+    safeSetItem(LANGUAGE_STORAGE_KEY, language)
   }, [language, englishVariant])
 
   useEffect(() => {

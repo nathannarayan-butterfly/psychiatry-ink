@@ -30,6 +30,8 @@ import { VerlaufFeedPage } from './VerlaufFeedPage'
 import { LaborPage } from './LaborPage'
 import { DokumentePage } from './DokumentePage'
 import { TherapiePage } from './TherapiePage'
+import { MedicationSectionNav } from '../medication/MedicationSectionNav'
+import { MedicationSectionNavProvider } from '../../contexts/MedicationSectionNavContext'
 import { NewPatientDialog } from '../dashboard/NewPatientDialog'
 import type { NewPatientData } from '../dashboard/NewPatientDialog'
 import { scheduleAiGenerationImprint } from '../../utils/clinicalImprint'
@@ -79,6 +81,24 @@ import {
   type PsychopathSubMode,
 } from '../../utils/psychopathMode'
 import { loadNotionPageHeading } from '../../utils/notionPageHeading'
+import { DEFAULT_CASE_ID } from '../../utils/caseContext'
+import { recordAuditEvent } from '../../services/auditApi'
+import { TemplateWorkspaceHost } from '../templates/TemplateWorkspaceHost'
+import { usePermissionContext } from '../../contexts/PermissionContext'
+import { useAuth } from '../../context/AuthContext'
+import { buildTherapyAttribution } from '../../types/therapy'
+import { isDemoCase, isDemoCaseReadOnly } from '../../demo'
+import '../../styles/demo-patient-dev.css'
+import { useCanAccessCase } from '../../hooks/permissions'
+import { fetchTeamSnapshot } from '../../services/orgApi'
+import { CaseAccessPanel } from '../case/CaseAccessPanel'
+import { ActiveAppointmentBar } from '../calendar/ActiveAppointmentBar'
+import { CalendarItemModal } from '../calendar/CalendarItemModal'
+import { useActiveAppointment } from '../../contexts/ActiveAppointmentContext'
+import { useCalendar } from '../../hooks/useCalendar'
+import { useNextPatientWorkflow } from '../../hooks/useNextPatientWorkflow'
+import { endOfDayIso, startOfDayIso } from '../../utils/calendarLabels'
+import type { CreateCalendarItemInput } from '../../types/calendar'
 
 type WorkspaceState = ReturnType<typeof useWorkspaceState>
 type LabState = ReturnType<typeof useLabTool>
@@ -112,7 +132,10 @@ interface NotionAppProps {
   clinicalAge: ClinicalAgeState
   onMigratedAge?: (age: string) => void
   onNavigateDashboard?: () => void
-  onNavigateNewCase?: (caseId: string, page?: NotionPageId, showPatientDashboard?: boolean) => void
+  onNavigateNewCase?: (caseId: string, page?: NotionPageId, showPatientDashboard?: boolean, appointmentId?: string) => void
+  onOpenDiscuss?: () => void
+  onOpenKonsil?: () => void
+  onOpenKonsilRequest?: (requestId: string) => void
   plan: SubscriptionPlan
   workspaceTabs?: WorkspaceTabsInfo
   workspaceStorageId?: string
@@ -174,6 +197,9 @@ export function NotionApp({
   onMigratedAge,
   onNavigateDashboard,
   onNavigateNewCase,
+  onOpenDiscuss,
+  onOpenKonsil,
+  onOpenKonsilRequest,
   plan: _plan,
   workspaceTabs,
   workspaceStorageId,
@@ -184,16 +210,45 @@ export function NotionApp({
   onSelectAssessmentStandard,
 }: NotionAppProps) {
   const { t } = useTranslation()
+  const { user } = useAuth()
+  const { organisation, member, role } = usePermissionContext()
+  const storageCaseIdForAccess = workspaceStorageId ?? caseId
+  const caseAccessChecks = useCanAccessCase(storageCaseIdForAccess)
+  const [showCaseAccessPanel, setShowCaseAccessPanel] = useState(false)
+  const [teamMemberCount, setTeamMemberCount] = useState(1)
   const [breakReminderActive, setBreakReminderActive] = useState(false)
   // Each workspace tab gets its own saved-docs list via a per-tab storage key.
   const savedDocsKey = savedDocsCaseId ?? caseId
   const [savedDocs, setSavedDocs] = useState<SavedDoc[]>(() => loadSavedDocs(savedDocsKey))
   const storageCaseId = workspaceStorageId ?? caseId
   const [pendingMedicationAdd, setPendingMedicationAdd] = useState(false)
+  const [templateHostOpen, setTemplateHostOpen] = useState(false)
 
   useEffect(() => {
     setSavedDocs(loadSavedDocs(savedDocsKey))
   }, [savedDocsKey])
+
+  useEffect(() => {
+    if (!organisation) {
+      setTeamMemberCount(1)
+      return
+    }
+    let cancelled = false
+    void fetchTeamSnapshot()
+      .then((snapshot) => {
+        if (!cancelled) setTeamMemberCount(snapshot.memberCount)
+      })
+      .catch(() => {
+        if (!cancelled) setTeamMemberCount(1)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [organisation?.id])
+
+  const showCaseAccessButton =
+    (organisation?.tier === 'small_praxis' || teamMemberCount > 1) &&
+    caseAccessChecks.canManageSharing
 
   // Track whether the current formal document type has a draft-only entry (no
   // manually-saved version), so we can show the workspace draft warning banner.
@@ -346,12 +401,19 @@ export function NotionApp({
               (s) => s.id === workspace.activeSectionId,
             )
             const source = workspace.generationWasAccepted ? 'ai-accepted' : 'manual'
+            const attribution = buildTherapyAttribution(
+              user?.id ?? member?.userId ?? '',
+              role,
+              member?.therapyDiscipline,
+              member?.therapyDisciplineCustom,
+            )
             appendVerlaufEntry(storageCaseId, {
               date: new Date().toISOString(),
               content: content.trim(),
               pageType: docTypeId,
               sectionLabel: activeSection?.label,
               source,
+              ...(attribution && docTypeId === 'therapie-verlauf' ? { attribution } : {}),
             })
           }
         }
@@ -377,10 +439,39 @@ export function NotionApp({
       workspace.sections,
       workspace.selectedDocumentType,
       workspaceVault,
+      member,
+      role,
+      user?.id,
     ],
   )
   const [activeTopTab, setActiveTopTab] = useState<TopNavTabId>(() =>
     initialShowPatientDashboard ? 'overview' : 'workspace',
+  )
+  const { activeAppointment, setActiveAppointmentId } = useActiveAppointment()
+  const calendarRange = useMemo(
+    () => ({ from: startOfDayIso(new Date()), to: endOfDayIso(new Date()) }),
+    [],
+  )
+  const { create: createCalendarItem, update: updateCalendarItem, complete: completeCalendarItem } =
+    useCalendar(calendarRange)
+  const [calendarPrefill, setCalendarPrefill] = useState<Partial<CreateCalendarItemInput> | null>(null)
+  const [calendarModalOpen, setCalendarModalOpen] = useState(false)
+
+  const showActiveAppointment =
+    activeAppointment != null &&
+    activeAppointment.caseId === caseId &&
+    activeAppointment.status !== 'cancelled'
+
+  const { completeAndGoToNext } = useNextPatientWorkflow({
+    setActiveAppointmentId,
+    onNavigateToCase: (nextCaseId, apptId) => {
+      onNavigateNewCase?.(nextCaseId, undefined, true, apptId)
+    },
+  })
+
+  const patientCases = useMemo(
+    () => caseRegistry.cases.filter(isListedPatientCase),
+    [caseRegistry.cases],
   )
   const [showPatientRegistry, setShowPatientRegistry] = useState(false)
   const initialPageAppliedRef = useRef(false)
@@ -413,6 +504,15 @@ export function NotionApp({
       setActivePage(resolveNotionPageFromDocumentType(workspace.selectedDocumentType))
     }
   }, [workspace.selectedDocumentType, activePage])
+
+  useEffect(() => {
+    if (activeTopTab !== 'workspace') return
+    if (isToolPage(activePage)) return
+    void recordAuditEvent('clinical_document_viewed', {
+      caseId: storageCaseId,
+      metadata: { pageId: activePage },
+    })
+  }, [activePage, activeTopTab, storageCaseId])
 
   const activePageConfig = useMemo(
     () => NOTION_PAGES.find((page) => page.id === activePage) ?? NOTION_PAGES[0],
@@ -671,6 +771,11 @@ export function NotionApp({
       // Lab documents live in the dedicated Labor tool tab, not the document workspace.
       if (entry.pageType === 'labor' || entry.category === 'laborbefunde') {
         setActiveTopTab('labor')
+        return
+      }
+
+      if (entry.pageType.startsWith('template-doc:') && entry.sourceRefId) {
+        setTemplateHostOpen(true)
         return
       }
 
@@ -999,10 +1104,13 @@ export function NotionApp({
       const structuredName = [meta?.localVorname?.trim(), meta?.localNachname?.trim()]
         .filter(Boolean)
         .join(' ')
-      return structuredName || meta?.localName?.trim() || undefined
+      return (
+        structuredName ||
+        meta?.localName?.trim() ||
+        (isDemoCase(caseId) ? t('demoPatientDisplayName') : undefined)
+      )
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [caseId, patientMetaVersion],
+    [caseId, patientMetaVersion, t],
   )
   const hasPatient = Boolean(currentPatientName)
 
@@ -1140,8 +1248,39 @@ export function NotionApp({
     [archiveActiveDocumentIfNeeded, caseRegistry, guardedNav, onNavigateNewCase],
   )
 
+  const workspaceReadOnly = !caseAccessChecks.canEdit || isDemoCaseReadOnly(storageCaseIdForAccess ?? caseId, user?.email)
+  const showDemoBanner = isDemoCaseReadOnly(storageCaseIdForAccess ?? caseId, user?.email)
+
+  if (storageCaseIdForAccess && caseAccessChecks.isLoading) {
+    return (
+      <div className="notion-preview-app text-ink case-access-state" aria-busy="true">
+        <div className="case-access-state__inner">…</div>
+      </div>
+    )
+  }
+
+  if (storageCaseIdForAccess && !caseAccessChecks.canView) {
+    return (
+      <div className="notion-preview-app text-ink case-access-denied">
+        <div className="case-access-denied__inner">
+          <h1 className="case-access-denied__title">Kein Zugriff auf diesen Fall</h1>
+          {onNavigateDashboard ? (
+            <button type="button" className="btn-secondary" onClick={onNavigateDashboard}>
+              Zum Dashboard
+            </button>
+          ) : null}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="notion-preview-app text-ink">
+      {showDemoBanner ? (
+        <div className="demo-readonly-banner" role="status">
+          {t('demoReadOnlyBanner')}
+        </div>
+      ) : null}
       <WorkspaceActivitySync workspace={workspace} />
       <DocumentationTodayTotalSync isDocumentationPage={showDocumentCanvas} />
       <NotionTopBar
@@ -1192,6 +1331,14 @@ export function NotionApp({
       <CaseTopNav
         activeTab={activeTopTab}
         onTabSelect={(tab) => {
+          if (tab === 'discuss') {
+            onOpenDiscuss?.()
+            return
+          }
+          if (tab === 'konsil') {
+            onOpenKonsil?.()
+            return
+          }
           if (
             activeTopTab === 'workspace' &&
             tab !== 'workspace' &&
@@ -1230,6 +1377,47 @@ export function NotionApp({
             ? handleCloseWorkspacePage
             : undefined
         }
+        showCaseAccessButton={showCaseAccessButton}
+        onOpenCaseAccess={() => setShowCaseAccessPanel(true)}
+      />
+
+      {showActiveAppointment && activeAppointment ? (
+        <ActiveAppointmentBar
+          appointment={activeAppointment}
+          onNavigateTab={(tab, page) => {
+            setShowPatientRegistry(false)
+            setActiveTopTab(tab)
+            if (page) {
+              setActivePage(page)
+              const notionPage = NOTION_PAGES.find((item) => item.id === page)
+              if (notionPage?.kind === 'document' && notionPage.documentTypeId) {
+                workspace.selectDocumentType(notionPage.documentTypeId)
+              }
+            }
+          }}
+          onCreateFollowUp={(prefill) => {
+            setCalendarPrefill({ ...prefill, caseId })
+            setCalendarModalOpen(true)
+          }}
+          onAddNote={(notes) => {
+            void updateCalendarItem(activeAppointment.id, { notes })
+          }}
+          onComplete={() => void completeCalendarItem(activeAppointment.id)}
+          onCompleteAndNext={() => void completeAndGoToNext(activeAppointment)}
+        />
+      ) : null}
+
+      <CalendarItemModal
+        open={calendarModalOpen}
+        onClose={() => {
+          setCalendarModalOpen(false)
+          setCalendarPrefill(null)
+        }}
+        cases={patientCases}
+        initial={calendarPrefill as CreateCalendarItemInput | null}
+        onSave={async (input) => {
+          await createCalendarItem({ ...input, caseId: input.caseId ?? caseId })
+        }}
       />
 
       <main className="notion-preview-main">
@@ -1248,6 +1436,7 @@ export function NotionApp({
           <PatientDashboardView
             caseId={caseId}
             therapyCaseId={storageCaseId}
+            konsilCaseId={storageCaseId}
             onTabSelect={setActiveTopTab}
             onAddMedication={() => {
               setPendingMedicationAdd(true)
@@ -1257,6 +1446,8 @@ export function NotionApp({
               setActiveTopTab('workspace')
               handlePageSelect(pageId)
             }}
+            onOpenKonsil={onOpenKonsil}
+            onOpenKonsilRequest={onOpenKonsilRequest}
           />
         ) : null}
 
@@ -1293,19 +1484,22 @@ export function NotionApp({
         ) : null}
 
         {!showPatientRegistry && activeTopTab === 'therapie' ? (
-          <div className="notion-tab-content-row">
-            <aside className="notion-tab-content-row__sidebar">
-              <PanelDateCard layout="sidebar" />
-              <DiagnosenWidget caseId={caseId} onDiagnosesChanged={workspaceVault.scheduleSave} />
-            </aside>
-            <div className="notion-tab-content-row__body">
-              <TherapiePage
-                caseId={storageCaseId}
-                autoOpenMedicationAdd={pendingMedicationAdd}
-                onAutoOpenMedicationAddHandled={() => setPendingMedicationAdd(false)}
-              />
+          <MedicationSectionNavProvider>
+            <div className="notion-tab-content-row">
+              <aside className="notion-tab-content-row__sidebar">
+                <PanelDateCard layout="sidebar" />
+                <DiagnosenWidget caseId={caseId} onDiagnosesChanged={workspaceVault.scheduleSave} />
+                <MedicationSectionNav />
+              </aside>
+              <div className="notion-tab-content-row__body">
+                <TherapiePage
+                  caseId={storageCaseId}
+                  autoOpenMedicationAdd={pendingMedicationAdd}
+                  onAutoOpenMedicationAddHandled={() => setPendingMedicationAdd(false)}
+                />
+              </div>
             </div>
-          </div>
+          </MedicationSectionNavProvider>
         ) : null}
 
         {!showPatientRegistry && activeTopTab === 'workspace' ? (
@@ -1316,6 +1510,13 @@ export function NotionApp({
           pageSubsections={pageSubsections}
           onSelect={handlePageSelect}
           onSelectWithSection={handlePageSelectWithSection}
+          templateAction={{
+            labelKey:
+              storageCaseId === DEFAULT_CASE_ID
+                ? 'templateOpenEmpty'
+                : 'templateCreateFromPatient',
+            onSelect: () => setTemplateHostOpen(true),
+          }}
         >
           <div className="notion-preview-canvas">
             {activePage === 'timeline' ? (
@@ -1332,6 +1533,25 @@ export function NotionApp({
               />
             ) : (
               <>
+                <div className="notion-template-toolbar">
+                  {storageCaseId === DEFAULT_CASE_ID ? (
+                    <button
+                      type="button"
+                      className="dt-entry-btn"
+                      onClick={() => setTemplateHostOpen(true)}
+                    >
+                      {t('templateOpenEmpty')}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="dt-entry-btn"
+                      onClick={() => setTemplateHostOpen(true)}
+                    >
+                      {t('templateCreateFromPatient')}
+                    </button>
+                  )}
+                </div>
                 {hasDraftOnlyBanner && workspace.selectedDocumentType && (
                   <div className="workspace-draft-banner" role="status">
                     {t('anamneseDraftWarning')}
@@ -1366,7 +1586,7 @@ export function NotionApp({
                 isGenerating={workspace.isGenerating}
                 aiModelTier={workspace.aiModelTier}
                 selectedAiTool={workspace.selectedAiTool}
-                aiCanGenerate={workspace.aiCanGenerate}
+                aiCanGenerate={workspace.aiCanGenerate && caseAccessChecks.canUseAI}
                 panelGraphicEnabled={appearance.settings.showPanelGraphic}
                 breakReminderActive={breakReminderActive}
                 pageType={appearance.settings.pageType}
@@ -1416,6 +1636,7 @@ export function NotionApp({
                   workspace.selectedDocumentType ? handleCloseWorkspacePage : undefined
                 }
                 onPsychopathModeSelect={handlePsychopathModeSelect}
+                accessReadOnly={workspaceReadOnly}
               />
               </>
             )}
@@ -1471,6 +1692,23 @@ export function NotionApp({
           isSaving={isSavingBeforeNav}
         />
       )}
+
+      {templateHostOpen ? (
+        <TemplateWorkspaceHost
+          caseId={storageCaseId !== DEFAULT_CASE_ID ? storageCaseId : undefined}
+          context={storageCaseId !== DEFAULT_CASE_ID ? 'patientWorkspace' : 'emptyWorkspace'}
+          saveToPatientDocuments={false}
+          onClose={() => setTemplateHostOpen(false)}
+        />
+      ) : null}
+
+      {showCaseAccessPanel ? (
+        <CaseAccessPanel
+          caseId={storageCaseIdForAccess}
+          caseTitle={currentPatientName}
+          onClose={() => setShowCaseAccessPanel(false)}
+        />
+      ) : null}
     </div>
   )
 }

@@ -2,6 +2,7 @@ import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
 import { prisma } from '../db'
 import { resolveAccountId } from '../middleware/auth'
+import { pathParam } from '../utils/expressParams'
 
 export const patientsRouter: Router = createRouter()
 
@@ -103,7 +104,7 @@ patientsRouter.post('/', async (req: Request, res: Response) => {
 patientsRouter.patch('/:caseId', async (req: Request, res: Response) => {
   try {
     const accountId = resolveAccountId(req)
-    const caseId = req.params.caseId.trim()
+    const caseId = pathParam(req, 'caseId').trim()
     const body = req.body as CaseRegistryPatchBody
 
     const existing = await prisma.patientCase.findUnique({ where: { caseId } })
@@ -127,7 +128,7 @@ patientsRouter.patch('/:caseId', async (req: Request, res: Response) => {
         ...(body.lastDocumentType !== undefined
           ? { lastDocumentType: normalizeOptionalString(body.lastDocumentType) }
           : {}),
-        ...(body.lastOpened !== undefined ? { lastOpened: new Date(body.lastOpened) } : {}),
+        ...(body.lastOpened ? { lastOpened: new Date(body.lastOpened) } : {}),
       },
     })
 

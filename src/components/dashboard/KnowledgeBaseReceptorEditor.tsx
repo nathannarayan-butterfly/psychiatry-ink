@@ -4,6 +4,8 @@ import {
   getEvidenceQualityLabel,
   getReceptorActionLabel,
   getReceptorClinicalMeaning,
+  getReceptorDisplayLabel,
+  getReceptorTitleLabel,
   getActionLabel,
   getScoreLabel,
   RECEPTOR_ACTIONS,
@@ -226,7 +228,9 @@ function V2ProfileList({
         const hasRaw = entry.rawKiNm != null || entry.rawIc50Nm != null || entry.pKi != null
         return (
           <li key={entry.target} className="kbp-receptor__list-item">
-            <span className="kbp-receptor__list-symbol">{entry.target}</span>
+            <span className="kbp-receptor__list-symbol" title={getReceptorTitleLabel(entry.target)}>
+              {getReceptorDisplayLabel(entry.target)}
+            </span>
             <span className="kbp-receptor__list-score-text">
               {entry.affinityPercent == null ? '—' : `${entry.affinityPercent}%`}
             </span>

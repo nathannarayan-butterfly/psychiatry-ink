@@ -1,0 +1,30 @@
+{
+  "runAt": "2026-06-13T20:40:10.305Z",
+  "options": {
+    "dryRun": false,
+    "limit": 10,
+    "offset": 0,
+    "drug": null,
+    "force": false,
+    "rerun": false,
+    "provider": "deepseek",
+    "country": "DE",
+    "includeReceptorAffinity": true,
+    "includeMarketAvailability": false,
+    "delayMs": 2500,
+    "maxRetries": 2
+  },
+  "total": 10,
+  "success": 8,
+  "skipped": 1,
+  "dryRun": 0,
+  "failed": 1,
+  "failures": [
+    {
+      "genericName": "Flupentixol",
+      "normalizedName": "flupentixol",
+      "error": "JSON parse: SyntaxError: Expected ',' or ']' after array element in JSON at position 8099",
+      "stage": "validation"
+    }
+  ]
+}

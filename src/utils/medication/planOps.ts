@@ -1,5 +1,6 @@
 import type {
   MedicationChangeType,
+  MedicationDeleteReasonCode,
   MedicationEntry,
   MedicationPlan,
   MedicationPlanState,
@@ -16,6 +17,9 @@ import type { UiLanguage } from '../../types/settings'
 
 export interface MedicationDraft {
   substance: string
+  kbDrugId?: string
+  substanceId?: string
+  displayBrandName?: string
   formulation: MedicationEntry['formulation']
   strength: string
   doseSchedule: MedicationEntry['doseSchedule']
@@ -53,6 +57,9 @@ export function createDefaultMedicationDraft(): MedicationDraft {
 export function medicationDraftFromEntry(entry: MedicationEntry): MedicationDraft {
   return {
     substance: entry.substance,
+    kbDrugId: entry.kbDrugId,
+    substanceId: entry.substanceId,
+    displayBrandName: entry.displayBrandName,
     formulation: entry.formulation,
     strength: entry.strength,
     doseSchedule: { ...entry.doseSchedule },
@@ -123,6 +130,9 @@ function buildEntryFromDraft(
   const next: MedicationEntry = {
     ...base,
     substance: draft.substance.trim(),
+    kbDrugId: draft.kbDrugId,
+    substanceId: draft.substanceId ?? draft.kbDrugId,
+    displayBrandName: draft.displayBrandName?.trim() || undefined,
     formulation: draft.formulation,
     strength: draft.strength.trim(),
     doseSchedule: schedule,
@@ -150,6 +160,55 @@ function buildEntryFromDraft(
 
   next.history = existing ? [...existing.history, changeEvent] : [changeEvent]
   return next
+}
+
+export function isMedicationVisible(entry: MedicationEntry): boolean {
+  return !entry.deletedAt
+}
+
+export function visibleMedications(medications: MedicationEntry[]): MedicationEntry[] {
+  return medications.filter(isMedicationVisible)
+}
+
+export interface MedicationDeleteInput {
+  reasonCode: MedicationDeleteReasonCode
+  reasonText?: string
+  deletedBy: string
+}
+
+function formatDeleteReason(input: MedicationDeleteInput): string {
+  if (input.reasonCode === 'wrong_entry') return 'Falsch Eintrag'
+  if (input.reasonCode === 'duplicate') return 'Duplikat'
+  const text = input.reasonText?.trim()
+  return text || 'Sonstiges'
+}
+
+export function deleteMedicationFromPlan(
+  state: MedicationPlanState,
+  planId: string,
+  medicationId: string,
+  input: MedicationDeleteInput,
+  language: UiLanguage = 'de',
+): MedicationPlanState {
+  const now = new Date().toISOString()
+  return withUpdatedPlan(
+    state,
+    planId,
+    (plan) => ({
+      ...plan,
+      medications: plan.medications.map((med) =>
+        med.id === medicationId
+          ? {
+              ...med,
+              deletedAt: now,
+              deletedBy: input.deletedBy,
+              deleteReason: formatDeleteReason(input),
+            }
+          : med,
+      ),
+    }),
+    language,
+  )
 }
 
 export function getCurrentPlan(state: MedicationPlanState): MedicationPlan | null {

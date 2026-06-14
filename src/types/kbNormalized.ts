@@ -23,6 +23,20 @@ export interface KbSubstance {
   hepaticRenalCaution: string | null
   contraindications: string[]
   severeRisks: string[]
+  // ── German localization (bilingual; English columns above stay as source) ──
+  substanceClassDe: string | null
+  mechanismSummaryDe: string | null
+  pharmacodynamicProfileDe: string | null
+  clinicalPearlsDe: string | null
+  uncertaintyNotesDe: string | null
+  pregnancyLactationCautionDe: string | null
+  geriatricCautionDe: string | null
+  hepaticRenalCautionDe: string | null
+  primaryPsychiatricUsesDe: string[] | null
+  contraindicationsDe: string[] | null
+  severeRisksDe: string[] | null
+  translationStatus: string
+  translatedAt: string | null
   status: KbSubstanceStatus
   reviewStatus: KbReviewStatus
   sourceQuality: KbSourceQuality
@@ -48,6 +62,7 @@ export interface KbReceptorAffinity {
   effectType: string
   confidence: string
   explanation: string | null
+  explanationDe: string | null
   isEstimated: boolean
 }
 
@@ -60,6 +75,9 @@ export interface KbSideEffect {
   severity: string
   isSevereRisk: boolean
   note: string | null
+  effectDe: string | null
+  systemDe: string | null
+  noteDe: string | null
 }
 
 export interface KbMonitoringRecommendation {
@@ -69,6 +87,9 @@ export interface KbMonitoringRecommendation {
   intervalText: string | null
   rationale: string | null
   priority: string
+  parameterDe: string | null
+  intervalTextDe: string | null
+  rationaleDe: string | null
 }
 
 export interface KbDosageGuidance {
@@ -80,6 +101,12 @@ export interface KbDosageGuidance {
   maxDose: string | null
   titrationNotes: string | null
   administrationNotes: string | null
+  populationDe: string | null
+  startDoseDe: string | null
+  targetDoseDe: string | null
+  maxDoseDe: string | null
+  titrationNotesDe: string | null
+  administrationNotesDe: string | null
 }
 
 export interface KbInteractionNote {
@@ -89,6 +116,9 @@ export interface KbInteractionNote {
   severity: string
   mechanism: string | null
   clinicalManagement: string | null
+  interactsWithDe: string | null
+  mechanismDe: string | null
+  clinicalManagementDe: string | null
 }
 
 export interface KbSource {

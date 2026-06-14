@@ -7,6 +7,7 @@ import {
   type GlanceData,
   type KnowledgeBaseDrug,
 } from '../../../types/knowledgeBase'
+import { getReceptorDisplayLabel } from '../../../data/receptorProfile'
 import { getDisplayReceptorProfile } from '../../../utils/medication/receptorAffinity'
 import { kbT } from './kbStrings'
 
@@ -53,7 +54,7 @@ function deriveGlance(drug: KnowledgeBaseDrug): Required<Pick<GlanceData, 'drugC
       .filter((e) => e.affinityPercent != null)
       .sort((a, b) => (b.affinityPercent ?? 0) - (a.affinityPercent ?? 0))
       .slice(0, 3)
-      .map((e) => e.target)
+      .map((e) => getReceptorDisplayLabel(e.target))
   }
 
   // QTc risk from a CYP section or explicit glance.
@@ -93,7 +94,7 @@ export function AtAGlanceStrip({ drug, language }: AtAGlanceStripProps) {
         : kbT(language, 'qtcHigh')
 
   return (
-    <div className="kb-glance" role="group" aria-label="At a glance">
+    <div className="kb-glance" role="group" aria-label={kbT(language, 'glanceTitle')}>
       <div className="kb-glance__item">
         <span className="kb-glance__label">{kbT(language, 'glanceClass')}</span>
         <span className="kb-glance__value">{glance.drugClass || na}</span>
