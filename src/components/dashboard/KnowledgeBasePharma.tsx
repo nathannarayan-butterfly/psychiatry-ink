@@ -2623,30 +2623,7 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
 
         {!editMode ? (
           <div className="kbp-right-rail">
-            <button
-              type="button"
-              className="kbp-contribution-bookmark"
-              onClick={openContributionDialog}
-              title={kbT(language, 'contributionBookmarkTitle')}
-              aria-label={kbT(language, 'contributionBookmarkTitle')}
-            >
-              <Bookmark className="kbp-contribution-bookmark__icon" strokeWidth={1.75} aria-hidden />
-              <span className="kbp-contribution-bookmark__label">{kbT(language, 'contributionBookmark')}</span>
-            </button>
-            {panelCollapsed ? (
-              <KnowledgeBaseReadingPanel
-                medicationId={drug.id}
-                medicationName={drug.genericName}
-                sectionId={panelSectionId}
-                sectionLabel={panelSectionLabel}
-                sectionData={panelSectionData}
-                language={language}
-                collapsed
-                onToggleCollapse={() => setPanelCollapsed((prev) => !prev)}
-                request={panelRequest}
-                tier={aiTier}
-              />
-            ) : (
+            {!panelCollapsed ? (
               <div className="kbp-reading-column">
                 <KnowledgeBaseReadingPanel
                   medicationId={drug.id}
@@ -2662,7 +2639,33 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
                 />
                 <KnowledgeBaseNotes medicationId={drug.id} language={language} />
               </div>
-            )}
+            ) : null}
+            <div className="kbp-right-rail__tabs">
+              <button
+                type="button"
+                className="kbp-contribution-bookmark"
+                onClick={openContributionDialog}
+                title={kbT(language, 'contributionBookmarkTitle')}
+                aria-label={kbT(language, 'contributionBookmarkTitle')}
+              >
+                <Bookmark className="kbp-contribution-bookmark__icon" strokeWidth={1.75} aria-hidden />
+                <span className="kbp-contribution-bookmark__label">{kbT(language, 'contributionBookmark')}</span>
+              </button>
+              {panelCollapsed ? (
+                <KnowledgeBaseReadingPanel
+                  medicationId={drug.id}
+                  medicationName={drug.genericName}
+                  sectionId={panelSectionId}
+                  sectionLabel={panelSectionLabel}
+                  sectionData={panelSectionData}
+                  language={language}
+                  collapsed
+                  onToggleCollapse={() => setPanelCollapsed((prev) => !prev)}
+                  request={panelRequest}
+                  tier={aiTier}
+                />
+              ) : null}
+            </div>
           </div>
         ) : null}
       </div>

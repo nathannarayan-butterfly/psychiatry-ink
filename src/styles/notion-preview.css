@@ -13737,42 +13737,59 @@ details[open].receptor-radar .receptor-radar__summary::before {
 }
 
 .kbp-detail-main--reading {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 0.35rem;
+  min-width: 0;
 }
 
 .kbp-detail-main__content {
   min-width: 0;
 }
 
-.kbp-contribution-bookmark {
+/* Right rail: expanded panel (left) + vertically stacked bookmark tabs (right edge). */
+.kbp-right-rail {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.5rem;
+  flex-shrink: 0;
   position: sticky;
-  top: 5.5rem;
+  top: 0.5rem;
+  align-self: flex-start;
+  max-height: calc(100vh - 8.5rem);
+}
+
+.kbp-right-rail__tabs {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.375rem;
+  flex-shrink: 0;
+}
+
+.kbp-contribution-bookmark {
+  --kb-contribution-accent: #c2620a;
   z-index: 2;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
-  width: 2.65rem;
-  min-height: 7rem;
+  width: 3rem;
+  min-height: 7.5rem;
   padding: 0.55rem 0.35rem;
-  border: 1px solid color-mix(in srgb, var(--accent) 36%, var(--border-soft));
-  border-right: 3px solid var(--accent);
-  border-radius: 0.55rem 0 0 0.55rem;
-  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
-  color: color-mix(in srgb, var(--accent) 82%, var(--text-main));
+  border: 1px solid color-mix(in srgb, var(--kb-contribution-accent) 36%, var(--border-soft));
+  border-left: 3px solid var(--kb-contribution-accent);
+  border-radius: 0 0.55rem 0.55rem 0;
+  background: color-mix(in srgb, var(--kb-contribution-accent) 7%, var(--surface));
+  color: color-mix(in srgb, var(--kb-contribution-accent) 82%, var(--text-main));
   cursor: pointer;
   box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
   flex-shrink: 0;
 }
 
 .kbp-contribution-bookmark:hover {
-  border-color: color-mix(in srgb, var(--accent) 54%, var(--border-soft));
-  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
-  color: var(--accent);
+  border-color: color-mix(in srgb, var(--kb-contribution-accent) 54%, var(--border-soft));
+  background: color-mix(in srgb, var(--kb-contribution-accent) 10%, var(--surface));
+  color: var(--kb-contribution-accent);
 }
 
 .kbp-contribution-bookmark__icon {
@@ -13788,6 +13805,7 @@ details[open].receptor-radar .receptor-radar__summary::before {
   line-height: 1.15;
   text-transform: uppercase;
   writing-mode: vertical-rl;
+  transform: rotate(180deg);
 }
 
 .kbp-detail-layout--panel-collapsed .kbp-detail-main {
@@ -14122,8 +14140,15 @@ details[open].receptor-radar .receptor-radar__summary::before {
   min-width: 0;
   border: none;
   background: transparent;
-  position: sticky;
-  top: 0.5rem;
+  position: static;
+  top: auto;
+  max-height: none;
+}
+
+.kbp-right-rail__tabs > .kbp-reading-panel--collapsed {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 0;
 }
 
 .kbp-reading-panel__expand-btn {
@@ -14135,7 +14160,7 @@ details[open].receptor-radar .receptor-radar__summary::before {
   padding: 0.55rem 0.35rem;
   border: 1px solid color-mix(in srgb, var(--accent) 36%, var(--border-soft));
   border-left: 3px solid var(--accent);
-  border-radius: 0.55rem;
+  border-radius: 0 0.55rem 0.55rem 0;
   background: color-mix(in srgb, var(--accent) 7%, var(--surface));
   color: color-mix(in srgb, var(--accent) 82%, var(--text-main));
   cursor: pointer;
@@ -14322,10 +14347,11 @@ details[open].receptor-radar .receptor-radar__summary::before {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  position: sticky;
-  top: 0.5rem;
-  align-self: flex-start;
-  max-height: calc(100vh - 8.5rem);
+  position: static;
+  top: auto;
+  align-self: stretch;
+  max-height: none;
+  overflow: hidden;
 }
 
 .kbp-reading-column > .kbp-reading-panel {
@@ -14565,39 +14591,72 @@ details[open].receptor-radar .receptor-radar__summary::before {
   }
 
   .kbp-detail-main--reading {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto 1fr;
-    gap: 0;
+    width: 100%;
   }
 
-  .kbp-detail-main__content {
-    grid-row: 2;
-    grid-column: 1;
+  .kbp-right-rail {
+    width: 100%;
+    flex-direction: column;
+    position: static;
+    max-height: none;
+    gap: 0.5rem;
+    align-items: stretch;
+  }
+
+  .kbp-right-rail__tabs {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.375rem;
+    align-self: flex-end;
   }
 
   .kbp-contribution-bookmark {
-    grid-row: 1;
-    grid-column: 1;
-    position: sticky;
-    top: 0.35rem;
-    justify-self: end;
-    z-index: 2;
     flex-direction: row;
     width: auto;
     min-height: 0;
     min-width: 0;
     padding: 0.35rem 0.65rem;
-    margin: 0 0 0.35rem;
+    margin: 0;
     border-radius: 0.45rem;
-    border-right: 1px solid color-mix(in srgb, var(--accent) 36%, var(--border-soft));
-    border-bottom: 3px solid var(--accent);
-    writing-mode: horizontal-tb;
+    border-left: 1px solid color-mix(in srgb, var(--kb-contribution-accent) 36%, var(--border-soft));
+    border-bottom: 3px solid var(--kb-contribution-accent);
   }
 
   .kbp-contribution-bookmark__label {
     writing-mode: horizontal-tb;
+    transform: none;
     text-transform: none;
     font-size: 0.72rem;
+  }
+
+  .kbp-right-rail__tabs > .kbp-reading-panel--collapsed {
+    width: auto;
+  }
+
+  .kbp-reading-panel__expand-btn {
+    flex-direction: row;
+    width: auto;
+    min-height: 0;
+    padding: 0.35rem 0.65rem;
+    border-radius: 0.45rem;
+    border-left: 1px solid color-mix(in srgb, var(--accent) 36%, var(--border-soft));
+    border-bottom: 3px solid var(--accent);
+  }
+
+  .kbp-detail-view--reading .kbp-contribution-bookmark {
+    border-left: 1px solid color-mix(in srgb, var(--kb-contribution-accent) 44%, var(--kb-book-border));
+    border-bottom: 3px solid var(--kb-contribution-accent);
+  }
+
+  .kbp-detail-view--reading .kbp-reading-panel__expand-btn {
+    border-left: 1px solid color-mix(in srgb, var(--kb-book-accent) 44%, var(--kb-book-border));
+    border-bottom: 3px solid var(--kb-book-accent);
+  }
+
+  .kbp-reading-panel__rail-label {
+    writing-mode: horizontal-tb;
+    transform: none;
   }
 
   .kbp-reading-panel {
@@ -14734,6 +14793,10 @@ details[open].receptor-radar .receptor-radar__summary::before {
     flex: 0 0 22rem;
     min-width: 18rem;
     max-width: 22rem;
+  }
+
+  .kbp-detail-layout--reading .kbp-right-rail {
+    flex: 0 0 auto;
   }
 
   .kbp-detail-layout--reading .kbp-reading-column {
@@ -15792,8 +15855,18 @@ details[open].receptor-radar .receptor-radar__summary::before {
 /* ── Compact reading-mode preparations list (textbook style) ─────────────── */
 .kbp-prep-list-intro {
   margin: 0 0 0.35rem;
-  font-size: 0.82rem;
-  color: var(--kb-book-ink);
+  font-size: inherit;
+  line-height: inherit;
+  color: var(--kb-book-ink, var(--text-main));
+}
+
+.kbp-detail-view--reading .kbp-preparations-section .kbp-section__header-view {
+  align-items: flex-end;
+  padding: 1.15rem 0 0.55rem;
+}
+
+.kbp-detail-view--reading .kbp-preparations-section .kbp-section__body {
+  padding: 0.15rem 0 1.15rem;
 }
 
 .kb-prep-compact-list,
@@ -15973,6 +16046,7 @@ details[open].receptor-radar .receptor-radar__summary::before {
 .kbp-detail-view--reading [data-kb-section="indikationen"],
 .kbp-detail-view--reading [data-kb-section="dosierung"],
 .kbp-detail-view--reading [data-kb-section="umstellung"],
+.kbp-detail-view--reading [data-kb-section="preparations"],
 .kbp-detail-view--reading [data-kb-section="nebenwirkungen"],
 .kbp-detail-view--reading [data-kb-section="wechselwirkungen"],
 .kbp-detail-view--reading [data-kb-section="qtc"],
@@ -16000,7 +16074,8 @@ details[open].receptor-radar .receptor-radar__summary::before {
 /* indications / dosing / depot — very light green */
 .kbp-detail-view--reading [data-kb-section="indikationen"],
 .kbp-detail-view--reading [data-kb-section="dosierung"],
-.kbp-detail-view--reading [data-kb-section="umstellung"] {
+.kbp-detail-view--reading [data-kb-section="umstellung"],
+.kbp-detail-view--reading [data-kb-section="preparations"] {
   --kb-section-accent: #3a7a48;
   background: color-mix(in srgb, var(--kb-chapter-use) 58%, #fff);
 }
@@ -16024,9 +16099,33 @@ details[open].receptor-radar .receptor-radar__summary::before {
   color: color-mix(in srgb, var(--kb-section-accent, var(--kb-book-accent)) 76%, var(--kb-book-muted));
 }
 
-.kbp-detail-view--reading .kbp-reading-panel__expand-btn {
+.kbp-detail-view--reading .kbp-contribution-bookmark {
+  --kb-contribution-accent: #b45309;
+  border-color: color-mix(in srgb, var(--kb-contribution-accent) 44%, var(--kb-book-border));
+  border-left-width: 4px;
+  background: color-mix(in srgb, var(--kb-contribution-accent) 8%, #fff);
+  color: color-mix(in srgb, var(--kb-contribution-accent) 88%, var(--kb-book-ink));
+}
+
+.kbp-detail-view--reading .kbp-contribution-bookmark:hover {
+  background: color-mix(in srgb, var(--kb-contribution-accent) 12%, #fff);
+  border-color: color-mix(in srgb, var(--kb-contribution-accent) 62%, var(--kb-book-border));
+  color: var(--kb-contribution-accent);
+}
+
+.kbp-detail-view--reading .kbp-contribution-bookmark__label {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: inherit;
+}
+
+.kbp-detail-view--reading .kbp-right-rail__tabs .kbp-contribution-bookmark,
+.kbp-detail-view--reading .kbp-right-rail__tabs .kbp-reading-panel__expand-btn {
   width: 3.4rem;
   min-height: 8.25rem;
+}
+
+.kbp-detail-view--reading .kbp-reading-panel__expand-btn {
   border-color: color-mix(in srgb, var(--kb-book-accent) 44%, var(--kb-book-border));
   border-left-width: 4px;
   background: color-mix(in srgb, var(--kb-book-accent) 8%, #fff);
@@ -16053,6 +16152,7 @@ details[open].receptor-radar .receptor-radar__summary::before {
   .kbp-detail-view--reading [data-kb-section="indikationen"],
   .kbp-detail-view--reading [data-kb-section="dosierung"],
   .kbp-detail-view--reading [data-kb-section="umstellung"],
+  .kbp-detail-view--reading [data-kb-section="preparations"],
   .kbp-detail-view--reading [data-kb-section="nebenwirkungen"],
   .kbp-detail-view--reading [data-kb-section="wechselwirkungen"],
   .kbp-detail-view--reading [data-kb-section="qtc"],
