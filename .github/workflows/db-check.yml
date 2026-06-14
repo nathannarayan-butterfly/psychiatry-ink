@@ -1,0 +1,30 @@
+name: db-check
+
+# Enforces docs/database-migration-policy.md:
+#   Supabase SQL migrations are the single production source of truth;
+#   Prisma must not silently mutate production schema.
+# Structural-only: needs no live database (DB-connected drift checks skip gracefully).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  db-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Migration sanity & drift guard
+        run: npm run db:check

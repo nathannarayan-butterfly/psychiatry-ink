@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
+import { therapyPageSectionDomId } from '../../data/therapyPageSections'
 import {
   translateProgressStatus,
   translatePsychotherapyStatus,
@@ -64,7 +65,7 @@ export function PsychotherapieOverviewCard({ caseId }: PsychotherapieOverviewCar
 
   if (!hasPlan) {
     return (
-      <section className="therapy-section">
+      <section className="therapy-section" id={therapyPageSectionDomId('psychotherapie')}>
         <header className="therapy-section__header">
           <div className="therapy-section__heading">
             <h3 className="therapy-section__title">{sectionTitle}</h3>
@@ -94,7 +95,7 @@ export function PsychotherapieOverviewCard({ caseId }: PsychotherapieOverviewCar
     : undefined
 
   return (
-    <section className="therapy-section">
+    <section className="therapy-section" id={therapyPageSectionDomId('psychotherapie')}>
       <header className="therapy-section__header">
         <div className="therapy-section__heading">
           <h3 className="therapy-section__title">{sectionTitle}</h3>

@@ -8,6 +8,10 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from '../../context/TranslationContext'
+import { useAuth } from '../../context/AuthContext'
+import { usePermissionContext } from '../../contexts/PermissionContext'
+import { TherapyAttributionBadge } from '../therapy/TherapyAttributionBadge'
+import { buildTherapyAttribution } from '../../types/therapy'
 import { showNotionToast } from './NotionToast'
 import {
   addVerlaufAnnotation,
@@ -665,6 +669,7 @@ const EntryCard = memo(function EntryCard({
             KI
           </span>
         )}
+        {entry.attribution ? <TherapyAttributionBadge attribution={entry.attribution} /> : null}
         <span className="verlauf-entry__actions" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
@@ -898,6 +903,8 @@ interface VerlaufFeedPageProps {
 
 export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
   const { t, language } = useTranslation()
+  const { user } = useAuth()
+  const { member, role } = usePermissionContext()
 
   const derivedEvents = useClinicalFeedEvents(caseId)
   const [dokumenteRevision, setDokumenteRevision] = useState(0)
@@ -1122,17 +1129,24 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
 
   const handleComposerSave = useCallback(() => {
     if (!composerText.trim()) return
+    const attribution = buildTherapyAttribution(
+      user?.id ?? member?.userId ?? '',
+      role,
+      member?.therapyDiscipline,
+      member?.therapyDisciplineCustom,
+    )
     const newEntry = appendVerlaufEntry(caseId, {
       date: composerDate ? new Date(composerDate).toISOString() : new Date().toISOString(),
       content: composerText.trim(),
       pageType: 'verlauf',
       source: 'manual',
+      ...(attribution ? { attribution } : {}),
     })
     setEntries((prev) => [newEntry, ...prev])
     setComposerText('')
     setComposerDate(new Date().toISOString().slice(0, 10))
     setComposerOpen(false)
-  }, [caseId, composerDate, composerText])
+  }, [caseId, composerDate, composerText, member, role, user?.id])
 
   const handleComposerCancel = useCallback(() => {
     setComposerText('')

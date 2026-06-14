@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { UiTranslationKey } from '../../data/uiTranslations'
 
-export type TopNavTabId = 'overview' | 'workspace' | 'verlauf' | 'labor' | 'therapie' | 'dokumente'
+export type TopNavTabId = 'overview' | 'workspace' | 'verlauf' | 'labor' | 'therapie' | 'dokumente' | 'discuss' | 'konsil'
 
 interface CaseTopNavProps {
   activeTab: TopNavTabId
@@ -32,6 +32,10 @@ interface CaseTopNavProps {
   activePageLabel?: string
   /** Close the open workspace page and return to the default case home. */
   onCloseWorkspacePage?: () => void
+  /** Open case sharing panel (Small Praxis). */
+  onOpenCaseAccess?: () => void
+  /** Show case access button when multi-member org. */
+  showCaseAccessButton?: boolean
 }
 
 interface TabConfig {
@@ -46,6 +50,8 @@ const TABS: TabConfig[] = [
   { id: 'labor', labelKey: 'topNavLabor' },
   { id: 'therapie', labelKey: 'topNavTherapie' },
   { id: 'dokumente', labelKey: 'topNavDokumente' },
+  { id: 'discuss', labelKey: 'topNavDiscuss' },
+  { id: 'konsil', labelKey: 'topNavKonsil' },
 ]
 
 export function CaseTopNav({
@@ -63,6 +69,8 @@ export function CaseTopNav({
   onCreatePatient,
   activePageLabel,
   onCloseWorkspacePage,
+  onOpenCaseAccess,
+  showCaseAccessButton = false,
 }: CaseTopNavProps) {
   const { t } = useTranslation()
   const [zuordnenOpen, setZuordnenOpen] = useState(false)
@@ -122,6 +130,18 @@ export function CaseTopNav({
       ))}
 
       <div className="case-topnav__right">
+        {showCaseAccessButton && onOpenCaseAccess ? (
+          <button
+            type="button"
+            className="case-topnav__access-btn"
+            onClick={onOpenCaseAccess}
+            title="Fallfreigabe"
+            aria-label="Fallfreigabe"
+          >
+            Zugriff
+          </button>
+        ) : null}
+
         {hasPatient && onPrevPatientClick && (
           <button
             type="button"

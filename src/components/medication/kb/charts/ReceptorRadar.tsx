@@ -9,7 +9,7 @@ import {
   Tooltip,
 } from 'recharts'
 import type { ReceptorAffinityEntry } from '../../../../types/knowledgeBase'
-import { getReceptorActionLabel } from '../../../../data/receptorProfile'
+import { getReceptorActionLabel, getReceptorDisplayLabel, getReceptorTitleLabel } from '../../../../data/receptorProfile'
 import { RECEPTOR_DRUG_PALETTE } from '../../../../data/receptorProfile'
 import type { UiLanguage } from '../../../../types/settings'
 import { kbT } from '../kbStrings'
@@ -39,7 +39,12 @@ export function ReceptorRadar({ entries, language, compact = false, children }: 
     () =>
       ranked
         .filter((e) => e.affinityPercent != null)
-        .map((e) => ({ receptor: e.target, value: e.affinityPercent ?? 0, action: e.action })),
+        .map((e) => ({
+          receptor: getReceptorDisplayLabel(e.target),
+          __target: e.target,
+          value: e.affinityPercent ?? 0,
+          action: e.action,
+        })),
     [ranked],
   )
 
@@ -105,6 +110,10 @@ export function ReceptorRadar({ entries, language, compact = false, children }: 
                     border: '1px solid var(--border-soft)',
                     background: 'var(--surface)',
                   }}
+                  labelFormatter={(_label, payload) => {
+                    const target = (payload?.[0]?.payload as { __target?: string } | undefined)?.__target
+                    return target ? getReceptorDisplayLabel(target) : _label
+                  }}
                   formatter={(value) => [`${value}%`, '']}
                 />
               </RadarChart>
@@ -120,9 +129,11 @@ export function ReceptorRadar({ entries, language, compact = false, children }: 
         <div className="kb-receptor-ranked">
           {ranked.map((e) => {
             const pct = e.affinityPercent ?? 0
+            const displayLabel = getReceptorDisplayLabel(e.target)
+            const titleLabel = getReceptorTitleLabel(e.target)
             return (
               <div key={e.target} className="kb-receptor-ranked__row">
-                <span className="kb-receptor-ranked__label">{e.target}</span>
+                <span className="kb-receptor-ranked__label" title={titleLabel}>{displayLabel}</span>
                 <span className="kb-receptor-ranked__bar-wrap">
                   <span
                     className="kb-receptor-ranked__bar"

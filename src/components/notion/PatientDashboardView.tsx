@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { Plus } from 'lucide-react'
 import {
   LineChart,
@@ -11,6 +11,9 @@ import {
   ReferenceLine,
 } from 'recharts'
 import { getCaseMeta } from '../../hooks/useCaseRegistry'
+import { recordAuditEvent } from '../../services/auditApi'
+import { formatSiteLocaleDate } from '../../utils/siteTimezone'
+import { isDemoCase } from '../../demo'
 import { useTranslation } from '../../context/TranslationContext'
 import { DiagnosenWidget } from './DiagnosenWidget'
 import type { TopNavTabId } from './CaseTopNav'
@@ -27,6 +30,7 @@ import { GraphEnlargeModal } from './GraphEnlargeModal'
 import { useOverviewHiddenGraphs } from '../../hooks/useOverviewHiddenGraphs'
 import { useMedicationPlan } from '../../hooks/useMedicationPlan'
 import { formatDoseScheduleGerman } from '../../utils/medication/doseLine'
+import { isMedicationVisible } from '../../utils/medication/planOps'
 import { usePsychotherapyPlan } from '../../hooks/usePsychotherapyPlan'
 import { useComplementaryTherapies } from '../../hooks/useComplementaryTherapies'
 import { useSozialtherapie } from '../../hooks/useSozialtherapie'
@@ -42,6 +46,7 @@ import {
 } from '../../data/weitereTherapieUiTranslations'
 import type { ComplementaryTherapyStatus } from '../../types/complementaryTherapy'
 import { TherapieAdherenceSection } from './TherapieAdherenceSection'
+import { ConsultationCaseSection } from '../consultation/ConsultationCaseSection'
 
 // ---------------------------------------------------------------------------
 // Labor dashboard widget
@@ -336,7 +341,7 @@ function AktuelleMedikationWidget({
 
   const activeMeds = useMemo(() => {
     if (!currentPlan) return []
-    return currentPlan.medications.filter((med) => med.status !== 'discontinued')
+    return currentPlan.medications.filter((med) => isMedicationVisible(med) && med.status !== 'discontinued')
   }, [currentPlan])
 
   return (
@@ -589,9 +594,13 @@ interface PatientDashboardViewProps {
   caseId: string
   /** Storage-scoped case id used by the Therapie data hooks; falls back to caseId. */
   therapyCaseId?: string
+  /** Storage-scoped case id for Konsil requests; falls back to caseId. */
+  konsilCaseId?: string
   onTabSelect: (tab: TopNavTabId) => void
   onAddMedication?: () => void
   onOpenWorkspacePage?: (pageId: NotionPageId) => void
+  onOpenKonsil?: () => void
+  onOpenKonsilRequest?: (requestId: string) => void
 }
 
 /** Primary clinical areas a psychiatrist needs at a glance. */
@@ -609,19 +618,33 @@ const DOCUMENT_START_PAGES = NOTION_PAGES.filter((page) => page.kind === 'docume
 export function PatientDashboardView({
   caseId,
   therapyCaseId,
+  konsilCaseId,
   onTabSelect,
   onAddMedication,
   onOpenWorkspacePage,
+  onOpenKonsil,
+  onOpenKonsilRequest,
 }: PatientDashboardViewProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const meta = getCaseMeta(caseId)
   const therapyScopeId = therapyCaseId ?? caseId
+  const konsilScopeId = konsilCaseId ?? caseId
+
+  useEffect(() => {
+    void recordAuditEvent('patient_identity_viewed', { caseId })
+  }, [caseId])
 
   const structuredName = [meta?.localVorname?.trim(), meta?.localNachname?.trim()]
     .filter(Boolean)
     .join(' ')
-  const name = structuredName || meta?.localName?.trim() || t('patientNavFallback')
-  const geburtsdatum = meta?.localGeburtsdatum?.trim()
+  const name =
+    structuredName ||
+    meta?.localName?.trim() ||
+    (isDemoCase(caseId) ? t('demoPatientDisplayName') : t('patientNavFallback'))
+  const geburtsdatumRaw = meta?.localGeburtsdatum?.trim()
+  const geburtsdatum = geburtsdatumRaw
+    ? formatSiteLocaleDate(geburtsdatumRaw, language)
+    : undefined
   const geschlecht = meta?.localGeschlecht
 
   const genderLabel =
@@ -662,6 +685,21 @@ export function PatientDashboardView({
               <PlannedTherapiesSection
                 caseId={therapyScopeId}
                 onNavigateToTherapie={() => onTabSelect('therapie')}
+              />
+              <ConsultationCaseSection
+                caseId={konsilScopeId}
+                onRequestConsultation={
+                  onOpenKonsil ?? (() => onTabSelect('konsil'))
+                }
+                onOpenRequest={(id) => {
+                  if (onOpenKonsilRequest) {
+                    onOpenKonsilRequest(id)
+                  } else if (onOpenKonsil) {
+                    onOpenKonsil()
+                  } else {
+                    onTabSelect('konsil')
+                  }
+                }}
               />
               <TherapieAdherenceSection caseId={therapyScopeId} />
             </div>

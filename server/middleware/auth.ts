@@ -13,6 +13,10 @@ export function resolveAccountId(req: Request): string {
 
 let configWarningLogged = false
 
+export function isServerAuthConfigured(): boolean {
+  return resolveServerSupabaseEnv() !== null
+}
+
 function resolveServerSupabaseEnv(): { url: string; key: string } | null {
   const url =
     process.env.SUPABASE_URL?.trim() ??

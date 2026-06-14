@@ -1,7 +1,9 @@
 import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
 import type { AiModelTier } from '../modelTierMapping'
+import { resolveAccountId } from '../middleware/auth'
 import { callLlm } from '../services/llmProvider'
+import { assertAiGenerationAllowed, recordAiGenerationUsed } from '../utils/caseAiAccessGuard'
 
 /**
  * Canonical drug-monograph section keys. Mirrors `DrugSectionKey` on the client
@@ -182,12 +184,13 @@ export interface PharmaGenerateRequestBody {
   sections?: string[]
   /** Optional model tier; defaults to `thorough` (OpenAI primary). */
   tier?: AiModelTier
-  /** UI language for the generated content; defaults to German. */
+  /** UI language for the generated content (from Settings). */
   language?: 'de' | 'en' | 'fr' | 'es'
   /** Also ask for country-specific preparation availability. */
   includeMarketAvailability?: boolean
   /** Generate only country-specific preparation availability, no text sections. */
   marketAvailabilityOnly?: boolean
+  caseId?: string
 }
 
 export interface PharmaGenerateResponseBody {
@@ -906,6 +909,8 @@ pharmaGenerateRouter.post('/', async (req: Request, res: Response) => {
       language: body.language,
     }
 
+    if (!(await assertAiGenerationAllowed(req, res, body.caseId))) return
+
     const result = await callLlm({
       tier,
       systemPrompt: buildSystemPrompt(),
@@ -919,6 +924,19 @@ pharmaGenerateRouter.post('/', async (req: Request, res: Response) => {
       // Model returned non-JSON (e.g. mock mode without an API key).
       res.status(502).json({ error: 'AI returned an unparseable response' })
       return
+    }
+
+    const userId = resolveAccountId(req)
+    if (userId && userId !== 'default') {
+      void recordAiGenerationUsed(req, userId, {
+        caseId: typeof body.caseId === 'string' ? body.caseId.trim() || null : null,
+        metadata: {
+          route: 'pharma-generate',
+          tier,
+          genericName: normalizedBody.genericName,
+          sections: effectiveSections.length,
+        },
+      })
     }
 
     const sections = coerceSections(parsed.sections, effectiveSections)

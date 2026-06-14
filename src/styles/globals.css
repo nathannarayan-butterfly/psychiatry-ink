@@ -3384,6 +3384,11 @@
     font-size: 0.875rem;
     font-weight: 600;
     color: var(--text-ink);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem;
+    min-width: 0;
   }
 
   .dashboard-patients-list__meta,
@@ -3654,6 +3659,8 @@
     font-size: 0.9375rem;
     font-weight: 600;
     line-height: 1.35;
+    min-width: 0;
+    flex: 1;
   }
 
   .patient-case-card__doc-type {
@@ -3952,6 +3959,45 @@
   .dashboard-settings-chip__icon {
     width: 0.875rem;
     height: 0.875rem;
+    color: var(--text-muted);
+  }
+
+  .dashboard-dev-tier {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.5rem;
+    border: 1px dashed color-mix(in srgb, var(--border) 70%, var(--accent));
+    border-radius: 0.25rem;
+    background: color-mix(in srgb, var(--accent) 3%, #fff);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .dashboard-dev-tier__label {
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .dashboard-dev-tier__select {
+    border: 1px solid var(--border);
+    border-radius: 0.2rem;
+    padding: 0.125rem 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-ink);
+    background: #fff;
+    cursor: pointer;
+  }
+
+  .dashboard-dev-tier__select:disabled {
+    opacity: 0.6;
+    cursor: wait;
+  }
+
+  .dashboard-dev-tier__note {
+    margin: 0.375rem 0 0;
+    font-size: 0.75rem;
     color: var(--text-muted);
   }
 

@@ -1,0 +1,266 @@
+/* Shared clinical UI primitives — DiscussCase, Konsil, templates */
+
+/* —— Compact logo header for full-page clinical views —— */
+
+.clinical-full-page {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  min-height: 0;
+  background: var(--notion-paper-bg, #fff);
+}
+
+.clinical-full-page__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.clinical-full-page__body > .discuss-case-page,
+.clinical-full-page__body > .consultation-page,
+.clinical-full-page__body > .consultation-consultant,
+.clinical-full-page__body > .consultation-workspace,
+.clinical-full-page__body > .discuss-case-builder,
+.clinical-full-page__body > .consultation-builder {
+  flex: 1;
+  min-height: 0;
+}
+
+.app-logo-header {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 0.5rem 1.5rem;
+  min-height: 2.75rem;
+  background: #fff;
+  border-bottom: 1px solid color-mix(in srgb, var(--text-main, #1a1a1a) 12%, transparent);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--accent, #4a7c59) 8%, transparent);
+}
+
+.app-logo-header .topbar-logo {
+  font-size: 1rem;
+}
+
+@media (min-width: 40rem) {
+  .app-logo-header .topbar-logo {
+    font-size: 1.0625rem;
+  }
+}
+
+.app-logo-header .topbar-logo__mark {
+  height: 2.5em;
+  max-width: 3.5em;
+}
+
+:root {
+  --clinical-muted: color-mix(in srgb, var(--text-main, #1a1a1a) 55%, transparent);
+  --clinical-spinner: var(--accent, #4a7c59);
+}
+
+/* —— Loading spinner —— */
+
+.clinical-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  padding: 1.5rem;
+  min-height: 4rem;
+}
+
+.clinical-loading--inline {
+  flex-direction: row;
+  min-height: 0;
+  padding: 0.375rem 0;
+  justify-content: flex-start;
+}
+
+.clinical-loading--compact {
+  min-height: 2.5rem;
+  padding: 1rem 1.5rem;
+}
+
+.clinical-loading__spinner {
+  display: block;
+  width: 1.125rem;
+  height: 1.125rem;
+  border: 2px solid color-mix(in srgb, var(--clinical-spinner) 18%, transparent);
+  border-top-color: var(--clinical-spinner);
+  border-radius: 50%;
+  animation: clinical-spin 0.75s linear infinite;
+  flex-shrink: 0;
+}
+
+.clinical-loading--inline .clinical-loading__spinner {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+@keyframes clinical-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* —— Empty & secondary text —— */
+
+.clinical-empty-state {
+  margin: 0;
+  padding: 1.25rem 1.5rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--clinical-muted);
+}
+
+.clinical-empty-state--compact {
+  padding: 0;
+}
+
+.clinical-info-text,
+.clinical-muted {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--clinical-muted);
+}
+
+/* —— Back navigation —— */
+
+.clinical-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 0.8125rem;
+  color: var(--clinical-muted);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.clinical-back-link:hover {
+  color: var(--text-main, #1a1a1a);
+}
+
+.clinical-back-link:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* —— Floating selection action bubble (Verlauf-style) —— */
+
+.clinical-selection-bubble {
+  position: fixed;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: #fff;
+  border: 1px solid color-mix(in srgb, var(--accent, #4a7c59) 20%, var(--border-soft, #e8e8e4));
+  border-radius: 6px;
+  padding: 4px 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.07);
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.clinical-selection-bubble__item {
+  display: inline-flex;
+  align-items: center;
+}
+
+.clinical-selection-bubble__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 8px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  font-size: 0.78rem;
+  color: var(--text-ink, var(--text-main, #1a1a1a));
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.clinical-selection-bubble__btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent, #4a7c59) 10%, transparent);
+}
+
+.clinical-selection-bubble__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.case-access-denied,
+.case-access-state {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.case-access-denied__inner,
+.case-access-state__inner {
+  text-align: center;
+  max-width: 24rem;
+}
+
+.case-access-denied__title {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.org-permission-error {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+}
+
+.org-permission-error p {
+  margin: 0 0 1rem;
+}
+
+.clinical-selection-bubble__divider {
+  display: inline-block;
+  width: 1px;
+  height: 1.25rem;
+  background: color-mix(in srgb, var(--accent, #4a7c59) 15%, var(--border-soft, #e8e8e4));
+  margin: 0 3px;
+  flex-shrink: 0;
+}
+
+.therapy-discipline-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: color-mix(in srgb, var(--accent, #4a7c59) 12%, transparent);
+  color: var(--accent, #4a7c59);
+  border: 1px solid color-mix(in srgb, var(--accent, #4a7c59) 25%, transparent);
+}
+
+.enterprise-role-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+  color: var(--text-secondary, #666);
+}

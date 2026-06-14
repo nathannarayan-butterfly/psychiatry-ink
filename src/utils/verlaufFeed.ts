@@ -12,6 +12,8 @@ import { scheduleVerlaufFeedImprint } from './clinicalImprint'
 const VERLAUF_FEED_KEY = 'psychiatry-ink:verlaufFeed'
 const VERLAUF_ANNOTATIONS_KEY = 'psychiatry-ink:verlaufAnnotations'
 
+import type { TherapyEntryAttribution } from '../types/therapy'
+
 export interface VerlaufFeedEntry {
   id: string
   date: string       // ISO 8601
@@ -20,6 +22,8 @@ export interface VerlaufFeedEntry {
   sectionLabel?: string
   /** Provenance: 'manual' = physician-typed, 'ai-accepted' = physician explicitly accepted AI output */
   source?: 'manual' | 'ai-accepted'
+  /** Therapist attribution when created by allied therapist role. */
+  attribution?: TherapyEntryAttribution
 }
 
 export type AnnotationType = 'bold' | 'italic' | 'underline' | 'highlight' | 'comment'

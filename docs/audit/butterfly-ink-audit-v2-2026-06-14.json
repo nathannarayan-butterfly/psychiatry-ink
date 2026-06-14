@@ -1,0 +1,103 @@
+{
+  "report": "Butterfly.ink Audit v2 (Supplemental)",
+  "date": "2026-06-14",
+  "version": "0.1.0",
+  "extends": "butterfly-ink-audit-2026-06-14",
+  "focus": ["data-layer language consistency", "tag/badge space efficiency"],
+  "build": { "command": "npm run build", "exitCode": 0, "warnings": ["chunk >500kB", "dynamic import mixing"] },
+  "tests": { "command": "npm test", "exitCode": 0, "passed": 17, "total": 17, "note": "sandbox emits spurious kill EACCES on worker teardown; unsandboxed run is clean" },
+  "whatV1Missed": [
+    "Did not inspect actual database rows; bulk KB content language never checked",
+    "Did not audit the ~20 one-off badge/chip/pill classes for space efficiency"
+  ],
+  "languageFindings": [
+    {
+      "id": "L-001",
+      "severity": "critical",
+      "location": "kb_substances (Supabase, 150 rows)",
+      "mixedLangs": "English content in German-first product",
+      "evidence": {
+        "mechanism_summary_english": "146/150",
+        "clinical_pearls_english": "150/150",
+        "pharmacodynamic_profile_english": "150/150",
+        "example": "Clozapine: 'Clozapine is a multi-receptor antagonist...'; pearls 'In Germany, mandatory blood monitoring...' (English written for German audience)"
+      },
+      "fixed": false
+    },
+    {
+      "id": "L-002",
+      "severity": "critical",
+      "location": "kb_side_effects, kb_monitoring_recommendations, kb_interaction_notes, kb_dosage_guidance",
+      "mixedLangs": "English content in German-first product",
+      "evidence": {
+        "side_effects_effect_english": "396/1528 (e.g. 'Dry mouth', 'Dizziness', 'Seizures') rendered raw in SideEffectHeatmap.tsx:95",
+        "side_effects_frequency": "free-text English ('very common', 'common at high doses', 'uncommon')",
+        "monitoring_rationale_english": "440/559",
+        "interaction_clinical_management_english": "414/574",
+        "dosage_titration_notes_english": "210/232"
+      },
+      "fixed": false
+    },
+    {
+      "id": "L-003",
+      "severity": "major",
+      "location": "kb_substances vs knowledge_base_drugs vs local seeds",
+      "mixedLangs": "English INN vs German drug names; duplicate-language rows",
+      "evidence": {
+        "kb_substances": "English INN (Clozapine, Olanzapine, Lithium carbonate)",
+        "knowledge_base_drugs": "7 German active rows + 150 English null-status rows; duplicates Clozapin/Clozapine, Aripiprazol/Aripiprazole",
+        "local_seeds": "psychiatric-drug-seed-list.ts English; medicationLabCorrelationSeed.ts German (substanceId 'clozapin') -> cross-store mismatch risk"
+      },
+      "fixed": false
+    },
+    {
+      "id": "L-004",
+      "severity": "minor",
+      "location": "src/data/uiTranslations.ts",
+      "mixedLangs": "German label left in English (de === en)",
+      "evidence": { "keys": ["timelineCreator", "labVisualisation", "integrationsFhirEndpoint"] },
+      "fixed": true
+    }
+  ],
+  "languageVerifiedClean": [
+    "demoPatient.fixture.json (German; 'vidert' is intentional BefundStatus enum)",
+    "uiTranslations.ts (1214 keys, 0 missing de)",
+    "medicationUiTranslations.ts (134 keys, fully translated)",
+    "receptorProfile.ts / medicationLabCorrelationSeed.ts (German LocaleMap)",
+    "org_organisations.name (German)"
+  ],
+  "tagFindings": {
+    "summary": "~20 one-off badge/chip/pill classes, no shared primitive, inconsistent padding (0.05-0.32rem vertical, mixed em/rem)",
+    "compactBaseline": "0.125rem 0.4rem (patient-case-card__chip, kb-entry__tag, medication-interaction__badge)",
+    "fixes": [
+      { "file": "src/styles/consultation.css", "class": ".consultation-badge", "before": "0.125rem 0.5rem", "after": "0.125rem 0.4rem" },
+      { "file": "src/styles/diagnostik-befunde.css", "class": ".befund-status-pill", "before": "0.15rem 0.5rem", "after": "0.125rem 0.4rem" },
+      { "file": "src/styles/notion-preview.css", "class": ".dokumente-badge", "before": "0.15em 0.55em", "after": "0.125em 0.45em" },
+      { "file": "src/styles/notion-preview.css", "class": ".labor-ki-reanalysis__saved-badge", "before": "0.25rem 0.5rem", "after": "0.15rem 0.4rem" }
+    ],
+    "leftUnchanged": ["therapy-chip (interactive tap target)", "verlauf-filter__chip (interactive tap target)"]
+  },
+  "newIssues": [
+    { "id": "V2-C1", "severity": "critical", "title": "German-first product serves English knowledge base (L-001 + L-002)" },
+    { "id": "V2-M1", "severity": "major", "title": "KB substance naming + duplication inconsistency across three stores (L-003)" },
+    { "id": "V2-m1", "severity": "minor", "title": "No shared compact tag/badge primitive" }
+  ],
+  "smallFixesApplied": [
+    { "id": "V2-FIX-001", "file": "src/data/uiTranslations.ts", "change": "timelineCreator de -> 'Zeitstrahl' (+fr/es)" },
+    { "id": "V2-FIX-002", "file": "src/data/uiTranslations.ts", "change": "labVisualisation de -> 'Laborvisualisierung' (+fr/es)" },
+    { "id": "V2-FIX-003", "file": "src/data/uiTranslations.ts", "change": "integrationsFhirEndpoint de -> 'Endpunkt-URL'" },
+    { "id": "V2-FIX-004", "file": "src/styles/consultation.css", "change": ".consultation-badge padding tightened" },
+    { "id": "V2-FIX-005", "file": "src/styles/diagnostik-befunde.css", "change": ".befund-status-pill padding tightened" },
+    { "id": "V2-FIX-006", "file": "src/styles/notion-preview.css", "change": ".dokumente-badge padding tightened" },
+    { "id": "V2-FIX-007", "file": "src/styles/notion-preview.css", "change": ".labor-ki-reanalysis__saved-badge padding tightened" }
+  ],
+  "recommendations": [
+    "Localize the KB to German or store *_de/*_en and select by Accept-Language; no silent machine translation of clinical content",
+    "Stopgap: flag/hide English KB content in the German UI until localized",
+    "Reconcile the three KB stores: canonical German display name + language-neutral substanceId; de-duplicate legacy rows",
+    "Replace free-text English frequency with controlled SideEffectFrequency vocabulary",
+    "Add a shared compact .tag primitive and migrate one-off badges",
+    "Add i18n lint/CI: fail on de===en multiword keys (allowlist proper nouns) + DB content-language check in seed pipeline"
+  ],
+  "v1StillOpen": ["P0-001", "P0-002", "P0-003", "P1-001", "P1-002", "P1-003", "P1-004", "P1-005", "P1-006", "P1-007", "P1-008", "P1-009", "P1-010", "P1-011", "P1-012"]
+}

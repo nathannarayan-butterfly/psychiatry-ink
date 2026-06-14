@@ -5,6 +5,12 @@ import { useTranslation } from '../../context/TranslationContext'
 import { caseStorageKey } from '../../utils/caseContext'
 import { loadBefunde, loadPinnedWidgets } from '../../utils/laborArchive'
 import type { LaborBefund, PinnedLaborWidget } from '../../utils/laborArchive'
+import {
+  BEFUND_ARCHIVE_CHANGED_EVENT,
+  loadDiagnostikBefunde,
+  setDiagnosticsSectionPref,
+} from '../../utils/befundArchive'
+import { formatBefundDate, getBefundTypeLabel } from '../../utils/befundRender'
 
 interface LaborSidebarWidgetProps {
   caseId: string
@@ -66,14 +72,20 @@ function buildSparkData(widget: PinnedLaborWidget, befunde: LaborBefund[]) {
 
 export function LaborSidebarWidget({ caseId, onNavigateToLabor }: LaborSidebarWidgetProps) {
   const { t } = useTranslation()
-  const [, setTick] = useState(0)
+  const [tick, setTick] = useState(0)
   const [hidden, setHidden] = useState<boolean>(() => loadHidden(caseId))
 
-  // Re-read from storage on mount (no live subscription needed — sidebar is
-  // only mounted once per workspace session)
   useEffect(() => {
-    setTick((t) => t + 1)
     setHidden(loadHidden(caseId))
+  }, [caseId])
+
+  useEffect(() => {
+    function handleChange(e: Event) {
+      const detail = (e as CustomEvent<{ caseId: string }>).detail
+      if (detail?.caseId === caseId) setTick((t) => t + 1)
+    }
+    window.addEventListener(BEFUND_ARCHIVE_CHANGED_EVENT, handleChange)
+    return () => window.removeEventListener(BEFUND_ARCHIVE_CHANGED_EVENT, handleChange)
   }, [caseId])
 
   const handleClose = useCallback(() => {
@@ -81,13 +93,25 @@ export function LaborSidebarWidget({ caseId, onNavigateToLabor }: LaborSidebarWi
     setHidden(true)
   }, [caseId])
 
-  const befunde = useMemo(() => loadBefunde(caseId), [caseId])
-  const pinned = useMemo(() => loadPinnedWidgets(caseId), [caseId])
+  const befunde = useMemo(() => loadBefunde(caseId), [caseId, hidden, tick])
+  const examBefunde = useMemo(
+    () =>
+      [...loadDiagnostikBefunde(caseId)]
+        .sort((a, b) => b.examDate.localeCompare(a.examDate))
+        .slice(0, 3),
+    [caseId, hidden, tick],
+  )
+  const pinned = useMemo(() => loadPinnedWidgets(caseId), [caseId, hidden, tick])
 
   if (hidden) return null
-  if (befunde.length === 0) return null
+  if (befunde.length === 0 && examBefunde.length === 0) return null
 
   const latestDate = [...befunde].sort((a, b) => b.date.localeCompare(a.date))[0]?.date
+
+  const navigateToBefunde = () => {
+    setDiagnosticsSectionPref(caseId, 'befunde')
+    onNavigateToLabor?.()
+  }
 
   const closeButton = (
     <button
@@ -101,6 +125,39 @@ export function LaborSidebarWidget({ caseId, onNavigateToLabor }: LaborSidebarWi
     </button>
   )
 
+  if (pinned.length === 0 && befunde.length === 0) {
+    return (
+      <div className="labor-sidebar-widget">
+        <div className="labor-sidebar-widget__header-row">
+          <span className="labor-sidebar-widget__header">{t('diagnosticsPageTitle')}</span>
+          {closeButton}
+        </div>
+        {examBefunde.map((record) => (
+          <button
+            key={record.id}
+            type="button"
+            className="labor-sidebar-widget__exam-row"
+            onClick={navigateToBefunde}
+          >
+            <span className="labor-sidebar-widget__param-name">
+              {getBefundTypeLabel(record.type)} {formatBefundDate(record.examDate)}
+            </span>
+            <span className="labor-sidebar-widget__exam-status">
+              {record.status === 'vidert' ? t('befundStatusVidert') : t('befundStatusDraft')}
+            </span>
+          </button>
+        ))}
+        <button
+          type="button"
+          className="labor-sidebar-widget__link"
+          onClick={navigateToBefunde}
+        >
+          {t('befundSidebarLink')} →
+        </button>
+      </div>
+    )
+  }
+
   if (pinned.length === 0) {
     return (
       <div className="labor-sidebar-widget">
@@ -111,12 +168,28 @@ export function LaborSidebarWidget({ caseId, onNavigateToLabor }: LaborSidebarWi
         {latestDate && (
           <span className="labor-sidebar-widget__param-name">{formatDate(latestDate)}</span>
         )}
+        {examBefunde.length > 0 ? (
+          <div className="labor-sidebar-widget__exam-list">
+            {examBefunde.map((record) => (
+              <button
+                key={record.id}
+                type="button"
+                className="labor-sidebar-widget__exam-row"
+                onClick={navigateToBefunde}
+              >
+                <span className="labor-sidebar-widget__param-name">
+                  {getBefundTypeLabel(record.type)} {formatBefundDate(record.examDate)}
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : null}
         <button
           type="button"
           className="labor-sidebar-widget__link"
           onClick={onNavigateToLabor}
         >
-          Zu Diagnostik →
+          {t('befundSidebarLink')} →
         </button>
       </div>
     )
@@ -161,6 +234,22 @@ export function LaborSidebarWidget({ caseId, onNavigateToLabor }: LaborSidebarWi
           </div>
         )
       })}
+      {examBefunde.length > 0 ? (
+        <div className="labor-sidebar-widget__exam-list">
+          {examBefunde.map((record) => (
+            <button
+              key={record.id}
+              type="button"
+              className="labor-sidebar-widget__exam-row"
+              onClick={navigateToBefunde}
+            >
+              <span className="labor-sidebar-widget__param-name">
+                {getBefundTypeLabel(record.type)} {formatBefundDate(record.examDate)}
+              </span>
+            </button>
+          ))}
+        </div>
+      ) : null}
     </div>
   )
 }

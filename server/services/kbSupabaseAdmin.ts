@@ -18,7 +18,13 @@ export function getKbSupabaseAdmin(): SupabaseClient {
 
   adminClient = createClient(url, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
-    realtime: { transport: ws },
+    realtime: {
+      // The `ws` package's WebSocket constructor is the documented Node transport for
+      // supabase-js realtime and is structurally compatible at runtime; the mismatch is a
+      // known @supabase/supabase-js + @types/ws typing gap.
+      // @ts-expect-error third-party type gap (ws WebSocket vs WebSocketLikeConstructor)
+      transport: ws,
+    },
   })
   return adminClient
 }

@@ -1,0 +1,300 @@
+/* Compact list — fits narrow medication aside without horizontal scroll */
+
+.lab-med-correlation__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.lab-med-correlation__action-btn {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+  background: var(--surface);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.lab-med-correlation__action-btn:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.lab-med-correlation__action-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.lab-med-correlation__compact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.lab-med-correlation__compact-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto 1.25rem;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  padding: 0 0.45rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+}
+
+.lab-med-correlation__row {
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  padding: 0.25rem 0.45rem;
+  background: var(--surface);
+  min-width: 0;
+}
+
+.lab-med-correlation__summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto 1.25rem;
+  align-items: start;
+  gap: 0.35rem 0.5rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.lab-med-correlation__summary::-webkit-details-marker {
+  display: none;
+}
+
+.lab-med-correlation__row[open] .combination-check__expand-hint {
+  transform: rotate(180deg);
+}
+
+.lab-med-correlation__param {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.lab-med-correlation__param-label {
+  font-weight: 600;
+  font-size: 0.8125rem;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lab-med-correlation__value-ref {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lab-med-correlation__strength {
+  display: inline-block;
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  align-self: start;
+}
+
+.lab-med-correlation__strength--high {
+  background: #fde8e8;
+  color: #9b2c2c;
+}
+
+.lab-med-correlation__strength--moderate {
+  background: #fef3cd;
+  color: #856404;
+}
+
+.lab-med-correlation__strength--low {
+  background: #e8f4fd;
+  color: #1a5276;
+}
+
+.lab-med-correlation__strength--none {
+  background: var(--surface-hover);
+  color: var(--text-muted);
+}
+
+.lab-med-correlation__mehr {
+  display: inline;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: none;
+  font-size: inherit;
+  color: var(--text-link, #3d5a9e);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.lab-med-correlation__mehr:hover {
+  color: var(--ink, #1a1a18);
+}
+
+.lab-med-correlation__comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.lab-med-correlation__comparison-col {
+  padding: 0.45rem;
+  border-radius: 4px;
+  border: 1px solid var(--border-soft);
+  background: var(--surface);
+  font-size: 0.75rem;
+}
+
+.lab-med-correlation__comparison-col h6 {
+  margin: 0 0 0.35rem;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.lab-med-correlation__comparison-col--pending {
+  border-color: #f0d78c;
+  background: color-mix(in srgb, #fef3cd 35%, white);
+}
+
+.lab-med-correlation__second-opinion {
+  margin-top: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.lab-med-correlation__second-opinion button {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.lab-med-correlation__notes-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  margin: 0;
+}
+
+.lab-med-correlation__notes-field textarea {
+  font-size: 0.8125rem;
+}
+
+.lab-med-correlation__notes {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Full-view modal table — scroll contained inside modal, not the aside */
+
+.lab-med-correlation__modal-body {
+  min-width: 0;
+}
+
+.lab-med-correlation__full-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.lab-med-correlation__full-table {
+  width: 100%;
+  min-width: 42rem;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.lab-med-correlation__full-table th,
+.lab-med-correlation__full-table td {
+  border: 1px solid var(--border-soft);
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.lab-med-correlation__full-table th {
+  background: var(--surface-hover);
+  font-weight: 600;
+  white-space: nowrap;
+  font-size: 0.75rem;
+}
+
+.lab-med-correlation__full-table td {
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.lab-med-correlation__modal-footer {
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.lab-med-correlation__modal-count {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.lab-med-correlation__modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-left: auto;
+}
+
+@media (max-width: 720px) {
+  .lab-med-correlation__comparison {
+    grid-template-columns: 1fr;
+  }
+
+  .lab-med-correlation__compact-header {
+    display: none;
+  }
+
+  .lab-med-correlation__summary {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'param expand'
+      'badges expand';
+  }
+
+  .lab-med-correlation__param {
+    grid-area: param;
+  }
+
+  .lab-med-correlation__strength {
+    grid-area: badges;
+    justify-self: start;
+  }
+
+  .lab-med-correlation__summary .combination-check__source {
+    grid-area: badges;
+    justify-self: end;
+    margin-left: 0.35rem;
+  }
+
+  .lab-med-correlation__summary .combination-check__expand-hint {
+    grid-area: expand;
+    align-self: center;
+  }
+}

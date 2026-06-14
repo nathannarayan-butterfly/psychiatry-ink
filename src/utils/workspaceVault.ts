@@ -402,9 +402,17 @@ function stripLegacyFields(raw: LegacyWorkspacePayload): ClinicalWorkspacePayloa
 export async function encryptWorkspacePayload(
   payload: ClinicalWorkspacePayload,
 ): Promise<EncryptedVaultBlob> {
+  const toEncrypt = clinicalPayloadForEncryption(payload)
+  return encryptJsonPayload(toEncrypt)
+}
+
+/** Normalized clinical payload for org case-key encryption (no user RSA wrap). */
+export function clinicalPayloadForEncryption(
+  payload: ClinicalWorkspacePayload,
+): Omit<ClinicalWorkspacePayload, 'lab' | 'timeline'> {
   const normalized = migrateV1GraphFields(payload)
   const { lab: _lab, timeline: _timeline, ...toEncrypt } = normalized
-  return encryptJsonPayload(toEncrypt)
+  return toEncrypt
 }
 
 export async function decryptWorkspaceBlob(blob: EncryptedVaultBlob): Promise<ClinicalWorkspacePayload> {

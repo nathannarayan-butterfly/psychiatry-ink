@@ -1,7 +1,9 @@
 import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
 import type { AiModelTier } from '../modelTierMapping'
+import { resolveAccountId } from '../middleware/auth'
 import { callLlm } from '../services/llmProvider'
+import { assertAiGenerationAllowed, recordAiGenerationUsed } from '../utils/caseAiAccessGuard'
 
 export interface PharmaAskRequestBody {
   medicationName: string
@@ -10,6 +12,7 @@ export interface PharmaAskRequestBody {
   question: string
   language?: 'de' | 'en' | 'fr' | 'es'
   tier?: AiModelTier
+  caseId?: string
 }
 
 export interface PharmaAskResponseBody {
@@ -58,6 +61,8 @@ pharmaAskRouter.post('/', async (req: Request, res: Response) => {
       : 'standard'
     const languageName = resolveLanguageName(body.language)
 
+    if (!(await assertAiGenerationAllowed(req, res, body.caseId))) return
+
     const systemPrompt = [
       'You are a clinical pharmacology assistant helping psychiatrists study medication monographs.',
       'Answer concisely and accurately based on the provided section context.',
@@ -76,6 +81,14 @@ pharmaAskRouter.post('/', async (req: Request, res: Response) => {
       .join('\n')
 
     const result = await callLlm({ tier, systemPrompt, userPrompt })
+
+    const userId = resolveAccountId(req)
+    if (userId && userId !== 'default') {
+      void recordAiGenerationUsed(req, userId, {
+        caseId: typeof body.caseId === 'string' ? body.caseId.trim() || null : null,
+        metadata: { route: 'pharma-ask', tier, medicationName },
+      })
+    }
 
     const responseBody: PharmaAskResponseBody = {
       answer: result.text.trim(),

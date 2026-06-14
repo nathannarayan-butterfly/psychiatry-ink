@@ -11,11 +11,27 @@ import {
   listKbContributionDiscussions,
   upsertKbContributionVote,
 } from '../services/kbContributionDiscussionsStore'
-import { getKbAdminApprovalThreshold, requireKbAdminUser } from '../services/kbAdminAuth'
+import { getKbAdminApprovalThreshold, resolveKbAdminActor } from '../services/kbAdminAuth'
+import { recordKbAdminAudit } from '../services/auditLog'
 import { publishKbSubstance } from '../services/kbPublish'
 import type { KbContributionVoteValue } from '../../src/types/kbContributions'
+import { pathParam } from '../utils/expressParams'
 
 const VOTE_VALUES: KbContributionVoteValue[] = ['approve', 'reject', 'abstain']
+
+/**
+ * Resolve the KB admin actor for a request that has already passed
+ * {@link requireKbAdmin} gating in the kbAdmin router. Falls back to the raw
+ * actor resolver for handlers reachable via other gated routes.
+ */
+function resolveGatedActor(req: Request, res: Response): string | null {
+  const actorId = req.kbAdminActorId ?? resolveKbAdminActor(req)
+  if (!actorId) {
+    res.status(401).json({ error: 'KB admin authentication required' })
+    return null
+  }
+  return actorId
+}
 
 export async function handleListDiscussions(req: Request, res: Response): Promise<void> {
   try {
@@ -31,7 +47,7 @@ export async function handleListDiscussions(req: Request, res: Response): Promis
 }
 
 export async function handleCreateDiscussion(req: Request, res: Response): Promise<void> {
-  const actorId = requireKbAdminUser(req, res)
+  const actorId = resolveGatedActor(req, res)
   if (!actorId) return
   try {
     const body = req.body as {
@@ -51,6 +67,14 @@ export async function handleCreateDiscussion(req: Request, res: Response): Promi
       authorDisplayName: body.authorDisplayName ?? null,
       body: body.body,
     })
+    void recordKbAdminAudit({
+      actorUserId: actorId,
+      action: 'contribution.discussion.create',
+      entityType: 'kb_contribution_discussion',
+      entityId: body.contributionId ?? body.substanceId ?? null,
+      source: 'admin',
+      req,
+    })
     res.status(201).json({ discussion })
   } catch (error) {
     console.error('[kb-admin] create discussion failed:', error)
@@ -60,9 +84,9 @@ export async function handleCreateDiscussion(req: Request, res: Response): Promi
 
 export async function handleGetVoteSummary(req: Request, res: Response): Promise<void> {
   try {
-    const actorId = requireKbAdminUser(req, res)
+    const actorId = resolveGatedActor(req, res)
     if (!actorId) return
-    const summary = await getKbContributionVoteSummary(req.params.contributionId, actorId)
+    const summary = await getKbContributionVoteSummary(pathParam(req, 'contributionId'), actorId)
     res.json({ summary })
   } catch (error) {
     console.error('[kb-admin] vote summary failed:', error)
@@ -71,7 +95,7 @@ export async function handleGetVoteSummary(req: Request, res: Response): Promise
 }
 
 export async function handleCastVote(req: Request, res: Response): Promise<void> {
-  const actorId = requireKbAdminUser(req, res)
+  const actorId = resolveGatedActor(req, res)
   if (!actorId) return
   try {
     const body = req.body as { vote?: string }
@@ -80,20 +104,35 @@ export async function handleCastVote(req: Request, res: Response): Promise<void>
       return
     }
     const vote = await upsertKbContributionVote({
-      contributionId: req.params.contributionId,
+      contributionId: pathParam(req, 'contributionId'),
       voterUserId: actorId,
       vote: body.vote as KbContributionVoteValue,
     })
-    const summary = await getKbContributionVoteSummary(req.params.contributionId, actorId)
+    const summary = await getKbContributionVoteSummary(pathParam(req, 'contributionId'), actorId)
 
     if (summary.isRejected) {
       await updateKbContributionStatus(
-        req.params.contributionId,
+        pathParam(req, 'contributionId'),
         'rejected',
         `Rejected after ${summary.reject} reject vote(s)`,
         actorId,
       )
     }
+
+    void recordKbAdminAudit({
+      actorUserId: actorId,
+      action: 'contribution.vote',
+      entityType: 'kb_contribution',
+      entityId: pathParam(req, 'contributionId'),
+      afterSummary: {
+        vote: body.vote,
+        approve: summary.approve,
+        reject: summary.reject,
+        isRejected: summary.isRejected,
+      },
+      source: 'admin',
+      req,
+    })
 
     res.json({ vote, summary })
   } catch (error) {
@@ -103,10 +142,10 @@ export async function handleCastVote(req: Request, res: Response): Promise<void>
 }
 
 export async function handlePublishContribution(req: Request, res: Response): Promise<void> {
-  const actorId = requireKbAdminUser(req, res)
+  const actorId = resolveGatedActor(req, res)
   if (!actorId) return
   try {
-    const contribution = await getKbContributionById(req.params.contributionId)
+    const contribution = await getKbContributionById(pathParam(req, 'contributionId'))
     if (!contribution) {
       res.status(404).json({ error: 'Contribution not found' })
       return
@@ -120,7 +159,7 @@ export async function handlePublishContribution(req: Request, res: Response): Pr
       return
     }
 
-    const summary = await getKbContributionVoteSummary(req.params.contributionId, actorId)
+    const summary = await getKbContributionVoteSummary(pathParam(req, 'contributionId'), actorId)
     if (!summary.canPublish) {
       res.status(403).json({
         error: `Need ${summary.threshold} approve vote(s) with no reject votes (currently ${summary.approve} approve, ${summary.reject} reject)`,
@@ -131,7 +170,7 @@ export async function handlePublishContribution(req: Request, res: Response): Pr
 
     await applyKbContribution(contribution)
     const updated = await updateKbContributionStatus(
-      req.params.contributionId,
+      pathParam(req, 'contributionId'),
       'accepted',
       'Published via admin vote workflow',
       actorId,
@@ -142,6 +181,21 @@ export async function handlePublishContribution(req: Request, res: Response): Pr
       projectedDrugId = await publishKbSubstance(contribution.substanceId)
     }
 
+    void recordKbAdminAudit({
+      actorUserId: actorId,
+      action: 'contribution.publish',
+      entityType: 'kb_contribution',
+      entityId: pathParam(req, 'contributionId'),
+      afterSummary: {
+        substanceId: contribution.substanceId ?? null,
+        contributionType: contribution.contributionType ?? null,
+        projectedDrugId,
+        status: 'accepted',
+      },
+      source: 'admin',
+      req,
+    })
+
     res.json({ contribution: updated, projectedDrugId, summary })
   } catch (error) {
     console.error('[kb-admin] publish contribution failed:', error)
@@ -150,16 +204,25 @@ export async function handlePublishContribution(req: Request, res: Response): Pr
 }
 
 export async function handleRejectContribution(req: Request, res: Response): Promise<void> {
-  const actorId = requireKbAdminUser(req, res)
+  const actorId = resolveGatedActor(req, res)
   if (!actorId) return
   try {
     const body = req.body as { notes?: string }
     const updated = await updateKbContributionStatus(
-      req.params.contributionId,
+      pathParam(req, 'contributionId'),
       'rejected',
       body.notes?.trim() || 'Rejected by admin',
       actorId,
     )
+    void recordKbAdminAudit({
+      actorUserId: actorId,
+      action: 'contribution.reject',
+      entityType: 'kb_contribution',
+      entityId: pathParam(req, 'contributionId'),
+      afterSummary: { status: 'rejected' },
+      source: 'admin',
+      req,
+    })
     res.json({ contribution: updated })
   } catch (error) {
     console.error('[kb-admin] reject contribution failed:', error)

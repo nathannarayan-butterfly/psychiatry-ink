@@ -1,4 +1,4 @@
-import { ChevronRight, Plus } from 'lucide-react'
+import { ChevronRight, History, Pencil, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import {
@@ -25,7 +25,7 @@ interface MedicationRowProps {
   selected?: boolean
   onSelect: () => void
   onEdit: () => void
-  onAddSideEffect: () => void
+  onDelete: () => void
 }
 
 export function MedicationRow({
@@ -34,10 +34,14 @@ export function MedicationRow({
   selected = false,
   onSelect,
   onEdit,
-  onAddSideEffect,
+  onDelete,
 }: MedicationRowProps) {
   const { language } = useTranslation()
   const [historyOpen, setHistoryOpen] = useState(false)
+
+  const editLabel = translateMedicationUi(language, 'medEdit')
+  const historyLabel = translateMedicationUi(language, 'medHistoryToggle')
+  const deleteLabel = translateMedicationUi(language, 'medDelete')
 
   return (
     <div
@@ -58,7 +62,12 @@ export function MedicationRow({
         </span>
         <div className="medication-row__content">
           <div className="medication-row__title">
-            <span className="medication-row__substance">{entry.substance}</span>
+            <span className="medication-row__substance">
+              {entry.substance}
+              {entry.displayBrandName ? (
+                <span className="medication-row__brand"> ({entry.displayBrandName})</span>
+              ) : null}
+            </span>
             <span className="medication-row__form">
               {getFormulationLabel(entry.formulation, language)}
               {entry.strength ? ` · ${entry.strength}` : ''}
@@ -80,47 +89,44 @@ export function MedicationRow({
             </span>
           </div>
         </div>
-        <div className="medication-row__actions">
+        <div className="medication-row__actions" onClick={(event) => event.stopPropagation()}>
+          <button
+            type="button"
+            className="medication-row__action-btn"
+            disabled={disabled}
+            title={editLabel}
+            aria-label={editLabel}
+            onClick={onEdit}
+          >
+            <Pencil size={13} strokeWidth={1.75} aria-hidden />
+          </button>
           {entry.history.length > 0 ? (
             <button
               type="button"
-              className="medication-row__history-btn"
+              className={`medication-row__action-btn${historyOpen ? ' medication-row__action-btn--active' : ''}`}
               disabled={disabled}
-              onClick={(event) => {
-                event.stopPropagation()
-                setHistoryOpen((open) => !open)
-              }}
+              title={historyLabel}
+              aria-label={historyLabel}
+              aria-expanded={historyOpen}
+              onClick={() => setHistoryOpen((open) => !open)}
             >
+              <History size={13} strokeWidth={1.75} aria-hidden />
               <ChevronRight
-                size={14}
+                size={10}
                 aria-hidden
                 className={`medication-row__chevron${historyOpen ? ' medication-row__chevron--open' : ''}`}
               />
-              {translateMedicationUi(language, 'medHistoryToggle')}
             </button>
           ) : null}
           <button
             type="button"
-            className="medication-row__side-effect-btn"
+            className="medication-row__action-btn medication-row__action-btn--delete"
             disabled={disabled}
-            onClick={(event) => {
-              event.stopPropagation()
-              onAddSideEffect()
-            }}
+            title={deleteLabel}
+            aria-label={deleteLabel}
+            onClick={onDelete}
           >
-            <Plus size={12} aria-hidden />
-            {translateMedicationUi(language, 'medAddSideEffect')}
-          </button>
-          <button
-            type="button"
-            className="medication-row__edit-btn"
-            disabled={disabled}
-            onClick={(event) => {
-              event.stopPropagation()
-              onEdit()
-            }}
-          >
-            {translateMedicationUi(language, 'medEdit')}
+            <Trash2 size={13} strokeWidth={1.75} aria-hidden />
           </button>
         </div>
       </div>

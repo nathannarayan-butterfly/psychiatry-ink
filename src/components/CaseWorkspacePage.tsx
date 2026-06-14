@@ -12,12 +12,14 @@ import { useWorkspaceState } from '../hooks/useWorkspaceState'
 import { useWorkspaceVault } from '../hooks/useWorkspaceVault'
 import { useWorkspaceTabs, type WorkspaceTab } from '../hooks/useWorkspaceTabs'
 import { touchCaseOpened, upsertCaseMeta } from '../hooks/useCaseRegistry'
+import { recordAuditEvent } from '../services/auditApi'
 import { NOTION_PAGES, resolveNotionPageFromDocumentType, type NotionPageId } from './notion/notionPages'
 import { loadNotionPageDate } from '../utils/notionPageDate'
 import { loadNotionPageTime } from '../utils/notionPageTime'
 import { loadNotionPageHeading } from '../utils/notionPageHeading'
 import type { ClinicalWorkspacePayload } from '../utils/workspaceVault'
 import { DEFAULT_CASE_ID, setActiveCaseId } from '../utils/caseContext'
+import { isDemoCaseReadOnly } from '../demo'
 import {
   applyHintTranslationsToComponents,
   ensureHintsTranslated,
@@ -27,8 +29,12 @@ import { toDocumentTypes } from '../utils/workspaceComponents'
 import type { DocumentType } from '../types'
 import type { UiLanguage } from '../types/settings'
 import { NotionApp } from './notion/NotionApp'
+import { DiscussCasePage } from './discuss-case/DiscussCasePage'
+import { ConsultationCasePage } from './consultation/ConsultationCasePage'
 import { useTranslation } from '../context/TranslationContext'
 import { useAuth } from '../context/AuthContext'
+import { usePermissionContext } from '../contexts/PermissionContext'
+import { useActiveAppointment, useSyncAppointmentFromUrl } from '../contexts/ActiveAppointmentContext'
 import type { SubscriptionPlan } from '../data/subscriptionPlans'
 
 // ——— Type aliases for prop shapes ———
@@ -58,7 +64,8 @@ interface WorkspaceInnerProps {
   initialPage?: NotionPageId
   initialShowPatientDashboard?: boolean
   onNavigateDashboard?: () => void
-  onNavigateNewCase?: (caseId: string, page?: NotionPageId, showPatientDashboard?: boolean) => void
+  onNavigateNewCase?: (caseId: string, page?: NotionPageId, showPatientDashboard?: boolean, appointmentId?: string) => void
+  onNavigate?: (path: string) => void
   documentTypes: DocumentType[]
   language: UiLanguage
   appearance: AppearanceState
@@ -78,8 +85,14 @@ interface CaseWorkspacePageProps {
   caseId: string
   initialPage?: NotionPageId
   initialShowPatientDashboard?: boolean
+  appointmentId?: string
+  discussMode?: boolean
+  discussId?: string
+  konsilMode?: boolean
+  konsilId?: string
+  onNavigate?: (path: string) => void
   onNavigateDashboard?: () => void
-  onNavigateNewCase?: (caseId: string, page?: NotionPageId, showPatientDashboard?: boolean) => void
+  onNavigateNewCase?: (caseId: string, page?: NotionPageId, showPatientDashboard?: boolean, appointmentId?: string) => void
 }
 
 // ——— Per-tab workspace content (keyed by activeTabId to isolate state) ———
@@ -90,6 +103,7 @@ function WorkspaceInner({
   initialShowPatientDashboard,
   onNavigateDashboard,
   onNavigateNewCase,
+  onNavigate,
   documentTypes,
   language,
   appearance,
@@ -103,11 +117,15 @@ function WorkspaceInner({
   workspaceStorageId,
 }: WorkspaceInnerProps) {
   const { t } = useTranslation()
+  const { user } = useAuth()
+  const { organisation } = usePermissionContext()
   const storesCaseMeta = workspaceStorageId === caseId
+  const demoReadOnly = isDemoCaseReadOnly(caseId, user?.email)
 
   useEffect(() => {
     setActiveCaseId(workspaceStorageId)
     touchCaseOpened(caseId)
+    void recordAuditEvent('case_opened', { caseId })
   }, [caseId, workspaceStorageId])
 
   const workspace = useWorkspaceState(
@@ -260,6 +278,9 @@ function WorkspaceInner({
     getLivePatch,
     onRestored: handleVaultRestored,
     documentTypeLabel,
+    orgVault: organisation
+      ? { organisationId: organisation.id, organisationTier: organisation.tier }
+      : undefined,
   })
 
   useIsdmEngine({
@@ -282,6 +303,7 @@ function WorkspaceInner({
 
   useEffect(() => {
     if (!workspaceVault.ready) return
+    if (demoReadOnly) return
     workspaceVault.scheduleSave()
   }, [
     clinicalAge,
@@ -299,17 +321,19 @@ function WorkspaceInner({
     timeline.savedTimelines,
     workspaceVault.ready,
     workspaceVault.scheduleSave,
+    demoReadOnly,
   ])
 
   useEffect(() => {
     if (!workspaceVault.ready) return
+    if (demoReadOnly) return
     if (!storesCaseMeta) return
     const heading = loadNotionPageHeading(workspace.selectedDocumentType, workspaceStorageId)
     upsertCaseMeta(caseId, {
       lastDocumentType: workspace.selectedDocumentType,
       pageHeading: heading.trim() || undefined,
     })
-  }, [caseId, storesCaseMeta, workspace.selectedDocumentType, workspaceStorageId, workspaceVault.ready])
+  }, [caseId, demoReadOnly, storesCaseMeta, workspace.selectedDocumentType, workspaceStorageId, workspaceVault.ready])
 
   return (
     <NotionApp
@@ -333,6 +357,24 @@ function WorkspaceInner({
       onMigratedAge={handleMigratedAge}
       onNavigateDashboard={onNavigateDashboard}
       onNavigateNewCase={onNavigateNewCase}
+      onOpenDiscuss={
+        onNavigate
+          ? () => onNavigate(`/case/${encodeURIComponent(workspaceStorageId)}/discuss`)
+          : undefined
+      }
+      onOpenKonsil={
+        onNavigate
+          ? () => onNavigate(`/case/${encodeURIComponent(workspaceStorageId)}/konsil`)
+          : undefined
+      }
+      onOpenKonsilRequest={
+        onNavigate
+          ? (requestId) =>
+              onNavigate(
+                `/case/${encodeURIComponent(workspaceStorageId)}/konsil/${encodeURIComponent(requestId)}`,
+              )
+          : undefined
+      }
       plan={plan}
       workspaceTabs={workspaceTabs}
       savedDocsCaseId={workspaceStorageId}
@@ -351,10 +393,23 @@ export function CaseWorkspacePage({
   caseId,
   initialPage,
   initialShowPatientDashboard,
+  appointmentId,
+  discussMode = false,
+  discussId,
+  konsilMode = false,
+  konsilId,
+  onNavigate,
   onNavigateDashboard,
   onNavigateNewCase,
 }: CaseWorkspacePageProps) {
   const { plan } = useAuth()
+  const { setActiveAppointmentId } = useActiveAppointment()
+  useSyncAppointmentFromUrl(window.location.search)
+
+  useEffect(() => {
+    if (appointmentId) setActiveAppointmentId(appointmentId)
+  }, [appointmentId, setActiveAppointmentId])
+
   const workspaceSettings = useWorkspaceSettings()
   const languageSettings = useLanguageSettings()
   const assessmentStandardSettings = useAssessmentStandardSettings()
@@ -410,6 +465,28 @@ export function CaseWorkspacePage({
     [tabs, activeTabId, setActiveTabId, addTab, handleCloseTab, updateTabPatient],
   )
 
+  if (discussMode && onNavigate) {
+    return (
+      <DiscussCasePage
+        caseId={workspaceStorageId}
+        discussionId={discussId}
+        onNavigate={onNavigate}
+        onNavigateHome={onNavigateDashboard}
+      />
+    )
+  }
+
+  if (konsilMode && onNavigate) {
+    return (
+      <ConsultationCasePage
+        caseId={workspaceStorageId}
+        requestId={konsilId}
+        onNavigate={onNavigate}
+        onNavigateHome={onNavigateDashboard}
+      />
+    )
+  }
+
   return (
     <WorkspaceInner
       key={workspaceStorageId}
@@ -418,6 +495,7 @@ export function CaseWorkspacePage({
       initialShowPatientDashboard={activeTabIndex === 0 ? initialShowPatientDashboard : false}
       onNavigateDashboard={onNavigateDashboard}
       onNavigateNewCase={onNavigateNewCase}
+      onNavigate={onNavigate}
       documentTypes={documentTypes}
       language={languageSettings.language}
       appearance={appearance}

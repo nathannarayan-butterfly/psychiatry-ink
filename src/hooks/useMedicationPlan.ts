@@ -6,7 +6,9 @@ import {
   addSideEffectReport,
   copyMedicationPlan,
   createDefaultMedicationDraft,
+  deleteMedicationFromPlan,
   getCurrentPlan,
+  type MedicationDeleteInput,
   type MedicationDraft,
   selectMedicationPlan,
   updateMedicationInPlan,
@@ -61,6 +63,14 @@ export function useMedicationPlan(caseId: string) {
     [currentPlan, language, persist, state],
   )
 
+  const deleteMedication = useCallback(
+    (medicationId: string, input: MedicationDeleteInput) => {
+      if (!currentPlan) return
+      persist(deleteMedicationFromPlan(state, currentPlan.id, medicationId, input, language))
+    },
+    [currentPlan, language, persist, state],
+  )
+
   const reportSideEffect = useCallback(
     (report: Omit<SideEffectReport, 'id'>) => {
       persist(addSideEffectReport(state, report))
@@ -92,6 +102,7 @@ export function useMedicationPlan(caseId: string) {
     currentPlan,
     addMedication,
     updateMedication,
+    deleteMedication,
     reportSideEffect,
     copyPlan,
     selectPlan,

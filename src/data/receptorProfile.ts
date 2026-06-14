@@ -376,13 +376,40 @@ export const DEFAULT_RECEPTOR_AXES = [
   'DAT',
 ] as const
 
+/** Remove parenthetical expansions, e.g. "TSPO (peripheral …)" → "TSPO". */
+export function stripReceptorParenthetical(target: string): string {
+  return (target ?? '').replace(/\s*\([^)]*\)/g, '').trim()
+}
+
+/**
+ * Short label for receptor profile / chart UI. Strips parenthetical expansions,
+ * normalizes known aliases, and falls back to configured symbols (D2, 5-HT2A, …).
+ */
+export function getReceptorDisplayLabel(target: string): string {
+  const raw = (target ?? '').trim()
+  if (!raw) return raw
+  const stripped = stripReceptorParenthetical(raw)
+  const normalized = normalizeReceptorTarget(stripped)
+  const config = getReceptorConfigByTarget(normalized)
+  if (config) return config.label
+  return normalized
+}
+
+/** Full receptor name when it differs from the short display label (for tooltips). */
+export function getReceptorTitleLabel(target: string): string | undefined {
+  const raw = (target ?? '').trim()
+  if (!raw) return undefined
+  const display = getReceptorDisplayLabel(raw)
+  return display !== raw ? raw : undefined
+}
+
 /**
  * Normalize a free-text receptor target to a canonical display symbol so that
  * legacy keys ("alpha1") and v2 targets ("α1", "Alpha-1", "a1") collapse to the
  * same axis. Returns the trimmed original when no mapping is known.
  */
 export function normalizeReceptorTarget(target: string): string {
-  const raw = (target ?? '').trim()
+  const raw = stripReceptorParenthetical((target ?? '').trim())
   if (!raw) return raw
   const compact = raw
     .toLowerCase()

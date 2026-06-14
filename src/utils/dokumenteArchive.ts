@@ -17,6 +17,7 @@ export type DokumentCategory =
   | 'laborbefunde'
   | 'untersuchungsbefunde'
   | 'externe-befunde'
+  | 'formulare'
 
 export interface DokumentEntry {
   id: string

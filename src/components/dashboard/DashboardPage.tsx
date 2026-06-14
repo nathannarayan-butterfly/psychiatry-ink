@@ -12,9 +12,14 @@ import {
   Search,
   Shield,
   Sparkles,
+  Building2,
+  ClipboardList,
+  FileText,
+  Plug,
   Users,
+  CalendarDays,
 } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState, type ChangeEvent } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import { useWorkspaceSession } from '../../context/WorkspaceSessionContext'
 import { NOTION_PAGES } from '../notion/notionPages'
@@ -32,6 +37,7 @@ import { useWorkspaceVault } from '../../hooks/useWorkspaceVault'
 import type { usePrivacySettings } from '../../hooks/usePrivacySettings'
 import type { useLanguageSettings } from '../../hooks/useLanguageSettings'
 import type { SubscriptionPlan } from '../../data/subscriptionPlans'
+import { hasIntegrationCapability } from '../../data/org/planCapabilities'
 import { DEFAULT_CASE_ID } from '../../utils/caseContext'
 import { getCaseClinicalStats } from '../../utils/dashboardCaseStats'
 import { formatSiteLocaleDate } from '../../utils/siteTimezone'
@@ -44,10 +50,18 @@ import { DashboardTopBar } from './DashboardTopBar'
 import { KnowledgeBaseTile } from './KnowledgeBase'
 import { isKbAdminApiEnabled } from '../../services/kbAdminApi'
 import { useKbAdminAccess } from '../../hooks/useKbAdminAccess'
+import { useCurrentOrganisation } from '../../hooks/permissions'
+import { setDevOrganisationTier } from '../../services/orgApi'
+import { useAuditDebugAccess } from '../../hooks/useAuditDebugAccess'
+import { useAuth } from '../../context/AuthContext'
+import { isDemoCaseVisibleOnDashboard } from '../../hooks/useDemoPatient'
+import { archiveDemoPatient, isDemoCase } from '../../demo'
+import { useEnterpriseFeatures } from '../../hooks/useEnterpriseFeatures'
 import { NewPatientDialog } from './NewPatientDialog'
 import type { NewPatientData } from './NewPatientDialog'
 import { NewCaseWorkflowDialog } from './NewCaseWorkflowDialog'
 import { PatientCaseCard } from './PatientCaseCard'
+import { DaySchedulePanel } from '../calendar/DaySchedulePanel'
 
 const CREDITS_DEFAULT_MAX = 500
 const DOCUMENTATION_DAY_GOAL_SECONDS = 8 * 60 * 60
@@ -71,10 +85,17 @@ interface DashboardPageProps {
   privacy: PrivacyState
   languageSettings: LanguageState
   plan: SubscriptionPlan
-  onOpenCase: (caseId: string, page?: NotionPageId, showPatientDashboard?: boolean) => void
+  onOpenCase: (caseId: string, page?: NotionPageId, showPatientDashboard?: boolean, appointmentId?: string) => void
   onNavigateHome?: () => void
   onOpenSettings?: () => void
   onOpenKbAdmin?: () => void
+  onOpenAuditDebug?: () => void
+  onOpenDemoPatient?: () => void
+  onOpenTemplates?: () => void
+  onOpenTeamSettings?: () => void
+  onOpenIntegrations?: () => void
+  onOpenCalendar?: () => void
+  onOpenEnterprise?: () => void
 }
 
 function UsageBar({ value, max }: { value: number; max: number }) {
@@ -120,11 +141,23 @@ export function DashboardPage({
   onOpenCase,
   onNavigateHome,
   onOpenKbAdmin,
+  onOpenAuditDebug,
+  onOpenDemoPatient,
+  onOpenTemplates,
+  onOpenTeamSettings,
+  onOpenIntegrations,
+  onOpenCalendar,
+  onOpenEnterprise,
 }: DashboardPageProps) {
   const { t, language } = useTranslation()
   const displayName = useAccountDisplayName()
+  const { organisation, refresh: refreshOrganisation } = useCurrentOrganisation()
+  const { canAccessEnterpriseUi } = useEnterpriseFeatures()
   const settingsPanel = useSettingsPanel()
   const hasKbAdminAccess = useKbAdminAccess()
+  const hasAuditDebugAccess = useAuditDebugAccess()
+  const { user } = useAuth()
+  const userId = user?.id ?? 'anonymous'
   const appearance = useAppearanceSettings()
   const assessmentStandardSettings = useAssessmentStandardSettings()
   const kiInstructions = useKiInstructions()
@@ -150,6 +183,33 @@ export function DashboardPage({
   const [patientViewMode, setPatientViewMode] = useState<PatientViewMode>('cards')
   const [showIdentifierOnboarding, setShowIdentifierOnboarding] = useState(
     () => needsIdentifierStorageOnboarding(),
+  )
+  const [devTierSwitching, setDevTierSwitching] = useState(false)
+  const [devTierNote, setDevTierNote] = useState<string | null>(null)
+
+  const showDevTierSwitcher =
+    import.meta.env.DEV && organisation != null && organisation.tier !== 'enterprise'
+  const devTierValue = organisation?.tier === 'small_praxis' ? 'small_praxis' : 'single_use'
+
+  const handleDevTierChange = useCallback(
+    async (event: ChangeEvent<HTMLSelectElement>) => {
+      const tier = event.target.value as 'single_use' | 'small_praxis'
+      if (tier === devTierValue || devTierSwitching) return
+
+      setDevTierSwitching(true)
+      setDevTierNote(null)
+      try {
+        await setDevOrganisationTier(tier)
+        await refreshOrganisation()
+        setDevTierNote('Dev: Modus gewechselt')
+        window.setTimeout(() => setDevTierNote(null), 2200)
+      } catch (err) {
+        setDevTierNote(err instanceof Error ? err.message : 'Dev: Wechsel fehlgeschlagen')
+      } finally {
+        setDevTierSwitching(false)
+      }
+    },
+    [devTierSwitching, devTierValue, refreshOrganisation],
   )
 
   const documentTypeLabel = useCallback(
@@ -218,9 +278,15 @@ export function DashboardPage({
     () =>
       registry.cases
         .filter(isListedPatientCase)
+        .filter((caseItem) => isDemoCaseVisibleOnDashboard(caseItem.caseId, userId))
         .sort((a, b) => new Date(b.lastEditedAt).getTime() - new Date(a.lastEditedAt).getTime()),
-    [registry.cases],
+    [registry.cases, userId],
   )
+
+  const handleArchiveDemo = useCallback(() => {
+    archiveDemoPatient(userId)
+    void registry.refresh()
+  }, [registry, userId])
 
   const filteredPatients = useMemo(
     () => patientCases.filter((caseItem) => matchesPatientSearch(caseItem, patientSearch)),
@@ -243,6 +309,21 @@ export function DashboardPage({
   const lastPatient = patientCases[0] ?? null
   const todayLabel = formatSiteLocaleDate(new Date().toISOString(), language)
   const greeting = t('dashboardGreeting').replace('{name}', displayName)
+  const showTeamSettingsLink =
+    Boolean(onOpenTeamSettings) && organisation?.tier === 'small_praxis'
+  const showIntegrationsLink =
+    Boolean(onOpenIntegrations) &&
+    organisation != null &&
+    organisation.tier !== 'enterprise' &&
+    hasIntegrationCapability(organisation.tier, 'fileImportExport')
+  const showDaySchedule =
+    organisation?.tier === 'small_praxis' || (import.meta.env.DEV && organisation?.tier === 'single_use')
+  const handleScheduleOpenCase = useCallback(
+    (caseId: string, appointmentId?: string) => {
+      onOpenCase(caseId, undefined, true, appointmentId)
+    },
+    [onOpenCase],
+  )
 
   if (settingsPanel.isOpen) {
     return (
@@ -409,6 +490,10 @@ export function DashboardPage({
         </article>
       </section>
 
+      {showDaySchedule ? (
+        <DaySchedulePanel cases={patientCases} onOpenCase={handleScheduleOpenCase} />
+      ) : null}
+
       <section className="dashboard-section" aria-labelledby="dashboard-section-patients">
         <div className="dashboard-section__header-row">
           <h2 id="dashboard-section-patients" className="dashboard-section__heading">
@@ -479,6 +564,7 @@ export function DashboardPage({
                 caseItem={caseItem}
                 clinicalStats={clinicalStatsByCase.get(caseItem.caseId)}
                 onOpen={(caseId) => onOpenCase(caseId, undefined, true)}
+                onArchiveDemo={isDemoCase(caseItem.caseId) ? handleArchiveDemo : undefined}
               />
             ))}
           </div>
@@ -502,7 +588,12 @@ export function DashboardPage({
                     onClick={() => onOpenCase(caseItem.caseId, undefined, true)}
                   >
                     <span className="dashboard-patients-list__main">
-                      <span className="dashboard-patients-list__name">{caseItem.displayTitle}</span>
+                      <span className="dashboard-patients-list__name">
+                        {caseItem.displayTitle}
+                        {isDemoCase(caseItem.caseId) ? (
+                          <span className="demo-patient-chip">{t('demoCaseLabel')}</span>
+                        ) : null}
+                      </span>
                       {details.length > 0 ? (
                         <span className="dashboard-patients-list__meta">{details.join(' · ')}</span>
                       ) : null}
@@ -569,6 +660,23 @@ export function DashboardPage({
 
       <div className="dashboard-section__divider" role="separator" />
 
+      <section className="dashboard-section dashboard-section--compact" aria-labelledby="dashboard-section-templates">
+        <h2 id="dashboard-section-templates" className="dashboard-section__heading">
+          {t('templateDashboardTitle')}
+        </h2>
+        {onOpenTemplates ? (
+          <button type="button" className="dt-dashboard-tile" onClick={onOpenTemplates}>
+            <span>
+              <span className="dt-dashboard-tile__title">{t('templateOpenBuilder')}</span>
+              <span className="dt-dashboard-tile__subtitle">{t('templateDashboardSubtitle')}</span>
+            </span>
+            <FileText className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+          </button>
+        ) : null}
+      </section>
+
+      <div className="dashboard-section__divider" role="separator" />
+
       <section className="dashboard-section dashboard-section--compact" aria-labelledby="dashboard-section-kb">
         <h2 id="dashboard-section-kb" className="dashboard-section__heading">
           {t('kbTitle')}
@@ -578,6 +686,18 @@ export function DashboardPage({
           <button type="button" className="dashboard-settings-chip" onClick={onOpenKbAdmin} style={{ marginTop: '0.75rem' }}>
             <FlaskConical className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
             KB Batch Review (Admin)
+          </button>
+        ) : null}
+        {hasAuditDebugAccess && onOpenAuditDebug ? (
+          <button type="button" className="dashboard-settings-chip" onClick={onOpenAuditDebug} style={{ marginTop: '0.75rem' }}>
+            <ClipboardList className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
+            Audit Logs (Dev)
+          </button>
+        ) : null}
+        {hasAuditDebugAccess && onOpenDemoPatient ? (
+          <button type="button" className="dashboard-settings-chip" onClick={onOpenDemoPatient} style={{ marginTop: '0.75rem' }}>
+            <FlaskConical className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
+            Demo Patient QA (Dev)
           </button>
         ) : null}
       </section>
@@ -613,7 +733,63 @@ export function DashboardPage({
             <Download className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
             {t('dashboardSettingsVault')}
           </button>
+          {showTeamSettingsLink ? (
+            <button
+              type="button"
+              className="dashboard-settings-chip"
+              onClick={onOpenTeamSettings}
+            >
+              <Users className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
+              Team-Einstellungen
+            </button>
+          ) : null}
+          {showIntegrationsLink && onOpenIntegrations ? (
+            <button
+              type="button"
+              className="dashboard-settings-chip"
+              onClick={onOpenIntegrations}
+            >
+              <Plug className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
+              Integrationen
+            </button>
+          ) : null}
+          {onOpenCalendar ? (
+            <button type="button" className="dashboard-settings-chip" onClick={onOpenCalendar}>
+              <CalendarDays className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
+              Kalender
+            </button>
+          ) : null}
+          {canAccessEnterpriseUi && onOpenEnterprise ? (
+            <button
+              type="button"
+              className="dashboard-settings-chip"
+              onClick={onOpenEnterprise}
+            >
+              <Building2 className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
+              Enterprise
+            </button>
+          ) : null}
+          {showDevTierSwitcher ? (
+            <label className="dashboard-dev-tier">
+              <span className="dashboard-dev-tier__label">Dev Modus</span>
+              <select
+                className="dashboard-dev-tier__select"
+                value={devTierValue}
+                disabled={devTierSwitching}
+                onChange={handleDevTierChange}
+                aria-label="Entwicklermodus: Organisations-Tier wechseln"
+              >
+                <option value="single_use">Einzelnutzung (Single Use)</option>
+                <option value="small_praxis">Kleine Praxis (Small Praxis)</option>
+              </select>
+            </label>
+          ) : null}
         </div>
+        {devTierNote ? (
+          <p className="dashboard-dev-tier__note" role="status">
+            {devTierNote}
+          </p>
+        ) : null}
       </section>
 
       {showNewPatientDialog ? (

@@ -1,7 +1,8 @@
-import { Check, ChevronRight, FlaskConical, GitBranch, LineChart } from 'lucide-react'
+import { Check, ChevronRight, FileText, FlaskConical, GitBranch, LineChart } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from '../../context/TranslationContext'
+import type { UiTranslationKey } from '../../data/uiTranslations'
 import { NOTION_PAGES, type NotionPageId } from './notionPages'
 
 const DOCUMENT_PAGES = NOTION_PAGES.filter((page) => page.kind === 'document')
@@ -30,12 +31,18 @@ interface SubmenuState {
   left: number
 }
 
+interface TemplateMenuAction {
+  labelKey: UiTranslationKey
+  onSelect: () => void
+}
+
 interface WorkspaceContextMenuProps {
   activePage: NotionPageId
   activeSectionId?: string | null
   pageSubsections?: Partial<Record<NotionPageId, SubsectionItem[]>>
   onSelect: (pageId: NotionPageId) => void
   onSelectWithSection?: (pageId: NotionPageId, sectionId: string) => void
+  templateAction?: TemplateMenuAction
   children: ReactNode
 }
 
@@ -45,6 +52,7 @@ export function WorkspaceContextMenu({
   pageSubsections,
   onSelect,
   onSelectWithSection,
+  templateAction,
   children,
 }: WorkspaceContextMenuProps) {
   const { t } = useTranslation()
@@ -90,7 +98,7 @@ export function WorkspaceContextMenu({
     }
     event.preventDefault()
     const MENU_WIDTH = 216
-    const MENU_HEIGHT = 340
+    const MENU_HEIGHT = templateAction ? 400 : 340
     const x = Math.min(event.clientX, window.innerWidth - MENU_WIDTH - 8)
     const y = Math.min(event.clientY, window.innerHeight - MENU_HEIGHT - 8)
     setMenu({ x, y })
@@ -112,6 +120,13 @@ export function WorkspaceContextMenu({
     }
     close()
   }
+
+  const handleTemplateSelect = () => {
+    templateAction?.onSelect()
+    close()
+  }
+
+  const menuItemCount = ALL_PAGES.length + (templateAction ? 1 : 0)
 
   const triggerSubmenu = (pageId: NotionPageId, itemEl: HTMLButtonElement) => {
     clearHoverTimer()
@@ -194,7 +209,7 @@ export function WorkspaceContextMenu({
           break
         case 'ArrowDown':
           event.preventDefault()
-          setFocusedIndex((i) => Math.min(i + 1, ALL_PAGES.length - 1))
+          setFocusedIndex((i) => Math.min(i + 1, menuItemCount - 1))
           break
         case 'ArrowUp':
           event.preventDefault()
@@ -214,8 +229,12 @@ export function WorkspaceContextMenu({
         case 'Enter':
         case ' ': {
           event.preventDefault()
-          const page = ALL_PAGES[focusedIndex]
-          if (page) handleSelect(page.id)
+          if (focusedIndex >= ALL_PAGES.length) {
+            handleTemplateSelect()
+          } else {
+            const page = ALL_PAGES[focusedIndex]
+            if (page) handleSelect(page.id)
+          }
           break
         }
         default:
@@ -333,6 +352,35 @@ export function WorkspaceContextMenu({
                   {t('notionContextMenuTools')}
                 </p>
                 {TOOL_PAGES.map((page, index) => renderItem(page, DOCUMENT_PAGES.length + index))}
+
+                {templateAction ? (
+                  <>
+                    <div className="workspace-context-menu__sep" role="separator" />
+                    <p className="workspace-context-menu__heading">
+                      {t('dokumenteCategoryFormulare')}
+                    </p>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      tabIndex={focusedIndex === ALL_PAGES.length ? 0 : -1}
+                      className="workspace-context-menu__item"
+                      onClick={handleTemplateSelect}
+                      onMouseEnter={() => {
+                        setFocusedIndex(ALL_PAGES.length)
+                        setOpenSubmenu(null)
+                      }}
+                    >
+                      <FileText
+                        className="workspace-context-menu__item-icon h-3.5 w-3.5"
+                        strokeWidth={1.75}
+                        aria-hidden
+                      />
+                      <span className="workspace-context-menu__item-label">
+                        {t(templateAction.labelKey)}
+                      </span>
+                    </button>
+                  </>
+                ) : null}
               </div>
 
               {openSubmenu && openSubmenuSections.length > 0

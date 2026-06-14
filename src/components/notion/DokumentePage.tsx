@@ -9,9 +9,11 @@ import {
   type DokumentEntry,
 } from '../../utils/dokumenteArchive'
 import { syncLaborDokumente } from '../../utils/laborDokumente'
+import { syncAllBefundDokumente } from '../../utils/befundDokumente'
 import { defaultAufnahmeSections } from '../../data/aufnahmeSections'
 import { formatIsoTimestampDate } from '../../utils/siteTimezone'
 import type { UiLanguage } from '../../types/settings'
+import { TemplateWorkspaceHost } from '../templates/TemplateWorkspaceHost'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -28,6 +30,7 @@ interface CategoryTabConfig {
     | 'dokumenteCategoryLaborbefunde'
     | 'dokumenteCategoryUntersuchungsbefunde'
     | 'dokumenteCategoryExterneBefunde'
+    | 'dokumenteCategoryFormulare'
 }
 
 const CATEGORY_TABS: CategoryTabConfig[] = [
@@ -37,6 +40,7 @@ const CATEGORY_TABS: CategoryTabConfig[] = [
   { id: 'laborbefunde', labelKey: 'dokumenteCategoryLaborbefunde' },
   { id: 'untersuchungsbefunde', labelKey: 'dokumenteCategoryUntersuchungsbefunde' },
   { id: 'externe-befunde', labelKey: 'dokumenteCategoryExterneBefunde' },
+  { id: 'formulare', labelKey: 'dokumenteCategoryFormulare' },
 ]
 
 /** Display order for grouped category sections in the "All" view. */
@@ -46,6 +50,7 @@ const CATEGORY_ORDER: DokumentCategory[] = [
   'laborbefunde',
   'untersuchungsbefunde',
   'externe-befunde',
+  'formulare',
 ]
 
 function getSourceLabelKey(
@@ -77,6 +82,7 @@ function getCategoryLabelKey(category: DokumentCategory): CategoryTabConfig['lab
     case 'laborbefunde': return 'dokumenteCategoryLaborbefunde'
     case 'untersuchungsbefunde': return 'dokumenteCategoryUntersuchungsbefunde'
     case 'externe-befunde': return 'dokumenteCategoryExterneBefunde'
+    case 'formulare': return 'dokumenteCategoryFormulare'
   }
 }
 
@@ -87,6 +93,7 @@ function getCategoryColor(category: DokumentCategory): string {
     case 'laborbefunde': return 'dokumente-badge--laborbefunde'
     case 'untersuchungsbefunde': return 'dokumente-badge--untersuchungsbefunde'
     case 'externe-befunde': return 'dokumente-badge--externe'
+    case 'formulare': return 'dokumente-badge--formulare'
   }
 }
 
@@ -324,11 +331,14 @@ export function DokumentePage({ caseId, onAfterDelete, onEditDraft }: DokumenteP
   const [entries, setEntries] = useState<DokumentEntry[]>(() => loadDokumente(caseId))
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all')
   const [expandedEntry, setExpandedEntry] = useState<DokumentEntry | null>(null)
+  const [templateHostOpen, setTemplateHostOpen] = useState(false)
+  const [templateDocId, setTemplateDocId] = useState<string | undefined>()
 
   // Backfill: mirror any lab befunde that predate the Dokumente wiring, then load.
   // Idempotent — re-running never creates duplicates.
   useEffect(() => {
     syncLaborDokumente(caseId, t('laborDocumentTitle'))
+    syncAllBefundDokumente(caseId)
     setEntries(loadDokumente(caseId))
   }, [caseId, t])
 
@@ -364,6 +374,19 @@ export function DokumentePage({ caseId, onAfterDelete, onEditDraft }: DokumenteP
   )
 
   const showExterneUpload = activeCategory === 'all' || activeCategory === 'externe-befunde'
+  const showTemplateActions = activeCategory === 'all' || activeCategory === 'formulare'
+
+  const handleEditEntry = useCallback(
+    (entry: DokumentEntry) => {
+      if (entry.pageType.startsWith('template-doc:') && entry.sourceRefId) {
+        setTemplateDocId(entry.sourceRefId)
+        setTemplateHostOpen(true)
+        return
+      }
+      onEditDraft?.(entry)
+    },
+    [onEditDraft],
+  )
 
   return (
     <div className="dokumente-page">
@@ -401,6 +424,21 @@ export function DokumentePage({ caseId, onAfterDelete, onEditDraft }: DokumenteP
             </button>
           </div>
         )}
+
+        {showTemplateActions && (
+          <div className="dokumente-sidebar__upload">
+            <button
+              type="button"
+              className="dt-entry-btn dokumente-sidebar__upload-btn"
+              onClick={() => {
+                setTemplateDocId(undefined)
+                setTemplateHostOpen(true)
+              }}
+            >
+              {t('templateUseNew')}
+            </button>
+          </div>
+        )}
       </aside>
 
       {/* Document list — grouped by category (entries are already newest-first) */}
@@ -431,7 +469,7 @@ export function DokumentePage({ caseId, onAfterDelete, onEditDraft }: DokumenteP
                       categoryLabel={t(getCategoryLabelKey(entry.category))}
                       onExpand={() => setExpandedEntry(entry)}
                       onDelete={() => handleDelete(entry.id)}
-                      onEdit={onEditDraft ? () => onEditDraft(entry) : undefined}
+                      onEdit={onEditDraft || entry.pageType.startsWith('template-doc:') ? () => handleEditEntry(entry) : undefined}
                     />
                   ))}
                 </div>
@@ -448,6 +486,21 @@ export function DokumentePage({ caseId, onAfterDelete, onEditDraft }: DokumenteP
           onClose={() => setExpandedEntry(null)}
         />
       )}
+
+      {templateHostOpen ? (
+        <TemplateWorkspaceHost
+          caseId={caseId}
+          context="patientDocuments"
+          saveToPatientDocuments
+          autoOpen={!templateDocId}
+          existingDocId={templateDocId}
+          onClose={() => {
+            setTemplateHostOpen(false)
+            setTemplateDocId(undefined)
+            setEntries(loadDokumente(caseId))
+          }}
+        />
+      ) : null}
     </div>
   )
 }

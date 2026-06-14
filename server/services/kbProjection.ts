@@ -23,6 +23,57 @@ import { getKbSupabaseAdmin } from './kbSupabaseAdmin'
 
 const PROJECTION_TAG = 'normalized-kb'
 
+/** Prefer a non-empty German value, falling back to the English source. */
+function de(deValue: string | null | undefined, enValue: string | null | undefined): string | null {
+  const d = typeof deValue === 'string' ? deValue.trim() : ''
+  if (d) return deValue as string
+  const e = typeof enValue === 'string' ? enValue.trim() : ''
+  return e ? (enValue as string) : null
+}
+
+/** Prefer a non-empty German array, falling back to the English source array. */
+function deArr(deValue: string[] | null | undefined, enValue: string[]): string[] {
+  if (Array.isArray(deValue) && deValue.length) return deValue
+  return enValue
+}
+
+/**
+ * Map the AI-seeded English `category` to the German {@link DrugCategory} enum
+ * used by the medication UI filter chips. Unknown values fall through unchanged
+ * (already German entries are preserved).
+ */
+function mapCategoryToGerman(raw: string | null): string | null {
+  if (!raw) return null
+  const n = raw.trim().toLowerCase()
+  const map: Record<string, string> = {
+    antipsychotics: 'Antipsychotika',
+    antipsychotic: 'Antipsychotika',
+    antidepressants: 'Antidepressiva',
+    antidepressant: 'Antidepressiva',
+    'mood stabilizers': 'Phasenprophylaktika',
+    'mood stabilizer': 'Phasenprophylaktika',
+    anticonvulsants: 'Phasenprophylaktika',
+    benzodiazepines: 'Benzodiazepine',
+    benzodiazepine: 'Benzodiazepine',
+    'anxiolytics/hypnotics': 'Hypnotika',
+    anxiolytics: 'Benzodiazepine',
+    hypnotics: 'Hypnotika',
+    hypnotic: 'Hypnotika',
+    adhd: 'ADHS',
+    stimulants: 'ADHS',
+    stimulant: 'ADHS',
+    'cognitive enhancers': 'Antidemenz',
+    antidementia: 'Antidemenz',
+    'anti-dementia': 'Antidemenz',
+    addiction: 'Suchtmedizin',
+    'addiction medicine': 'Suchtmedizin',
+    'substance use disorders': 'Suchtmedizin',
+    emergency: 'Notfallmedikation',
+    depot: 'Depotpräparate',
+  }
+  return map[n] ?? raw
+}
+
 function mapEffectType(raw: string): ReceptorAction {
   const n = raw.trim().toLowerCase().replace(/-/g, '_')
   const map: Record<string, ReceptorAction> = {
@@ -45,18 +96,29 @@ function mapEvidenceQuality(raw: string): EvidenceQuality {
 }
 
 function mapSideEffectFrequency(raw: string): SideEffectFrequency {
-  const n = raw.trim().toLowerCase().replace(/_/g, '')
-  if (n === 'verycommon') return 'veryCommon'
-  if (n === 'common') return 'common'
-  if (n === 'uncommon') return 'uncommon'
-  if (n === 'rare') return 'rare'
+  // Free-text seeded values vary ("very common", "common at high doses",
+  // "less common", "dose-dependent", …). Normalize by collapsing whitespace and
+  // matching the leading qualifier so the heatmap intensity is accurate.
+  const n = raw.trim().toLowerCase().replace(/[_-]/g, ' ').replace(/\s+/g, ' ')
+  if (n.startsWith('very common')) return 'veryCommon'
+  if (n.startsWith('less common')) return 'uncommon'
+  if (n.startsWith('uncommon')) return 'uncommon'
+  if (n.startsWith('common')) return 'common'
+  if (n.startsWith('rare')) return 'rare'
   return 'unknown'
 }
 
 function mapSideEffectSeverity(raw: string, isSevereRisk: boolean): SideEffectSeverity {
   if (isSevereRisk) return 'dangerous'
-  const n = raw.trim().toLowerCase()
-  if (n === 'mild' || n === 'moderate' || n === 'severe' || n === 'dangerous') return n
+  // Collapse compound free-text ("mild to moderate", "moderate-major",
+  // "serious", "high"/"low") onto the four-value display enum.
+  const n = raw.trim().toLowerCase().replace(/[_-]/g, ' ').replace(/\s+/g, ' ')
+  if (n.includes('danger') || n === 'serious' || n === 'high') return 'dangerous'
+  if (n.startsWith('severe') || n.includes('to severe') || n.includes('to major')) return 'severe'
+  if (n.startsWith('mild') && !n.includes('moderate')) return 'mild'
+  if (n === 'low') return 'mild'
+  if (n.startsWith('moderate') || n.includes('moderate')) return 'moderate'
+  if (n.startsWith('mild')) return 'mild'
   return 'moderate'
 }
 
@@ -64,6 +126,18 @@ function mapInteractionSeverity(raw: string): 'major' | 'moderate' | 'minor' {
   const n = raw.trim().toLowerCase()
   if (n === 'major' || n === 'moderate' || n === 'minor') return n
   return 'moderate'
+}
+
+/** German label for the free-text interaction severity shown in projected prose. */
+function germanInteractionSeverity(raw: string): string {
+  const n = raw.trim().toLowerCase()
+  if (n === 'contraindicated') return 'kontraindiziert'
+  if (n === 'major') return 'schwerwiegend'
+  if (n === 'moderate') return 'mäßig'
+  if (n === 'minor') return 'gering'
+  if (n === 'low') return 'gering'
+  if (n.includes('moderate') && n.includes('major')) return 'mäßig bis schwerwiegend'
+  return raw
 }
 
 function bulletList(items: string[]): string {
@@ -74,15 +148,20 @@ function formatDosageGuidance(detail: KbSubstanceDetail): string {
   if (!detail.dosageGuidance.length) return ''
   return detail.dosageGuidance
     .map((d) => {
-      const lines = [`**${d.population}**`]
+      const lines = [`**${de(d.populationDe, d.population)}**`]
+      const startDose = de(d.startDoseDe, d.startDose)
+      const targetDose = de(d.targetDoseDe, d.targetDose)
+      const maxDose = de(d.maxDoseDe, d.maxDose)
       const doses = [
-        d.startDose ? `Start: ${d.startDose}` : null,
-        d.targetDose ? `Ziel: ${d.targetDose}` : null,
-        d.maxDose ? `Max: ${d.maxDose}` : null,
+        startDose ? `Start: ${startDose}` : null,
+        targetDose ? `Ziel: ${targetDose}` : null,
+        maxDose ? `Max: ${maxDose}` : null,
       ].filter(Boolean)
       if (doses.length) lines.push(doses.join(' · '))
-      if (d.titrationNotes) lines.push(`Titration: ${d.titrationNotes}`)
-      if (d.administrationNotes) lines.push(`Verabreichung: ${d.administrationNotes}`)
+      const titration = de(d.titrationNotesDe, d.titrationNotes)
+      if (titration) lines.push(`Titration: ${titration}`)
+      const administration = de(d.administrationNotesDe, d.administrationNotes)
+      if (administration) lines.push(`Verabreichung: ${administration}`)
       return lines.join('\n')
     })
     .join('\n\n')
@@ -92,10 +171,12 @@ function formatMonitoring(detail: KbSubstanceDetail): string {
   if (!detail.monitoring.length) return ''
   return detail.monitoring
     .map((m) => {
-      const interval = m.intervalText ? ` (${m.intervalText})` : ''
-      const rationale = m.rationale ? ` — ${m.rationale}` : ''
+      const intervalText = de(m.intervalTextDe, m.intervalText)
+      const rationaleText = de(m.rationaleDe, m.rationale)
+      const interval = intervalText ? ` (${intervalText})` : ''
+      const rationale = rationaleText ? ` — ${rationaleText}` : ''
       const priority = m.priority !== 'routine' ? ` [${m.priority}]` : ''
-      return `• ${m.parameter}${interval}${rationale}${priority}`
+      return `• ${de(m.parameterDe, m.parameter)}${interval}${rationale}${priority}`
     })
     .join('\n')
 }
@@ -104,9 +185,13 @@ function formatInteractionsText(detail: KbSubstanceDetail): string {
   if (!detail.interactions.length) return ''
   return detail.interactions
     .map((ix) => {
-      const parts = [`**${ix.interactsWith}** (${ix.severity})`]
-      if (ix.mechanism) parts.push(ix.mechanism)
-      if (ix.clinicalManagement) parts.push(`Management: ${ix.clinicalManagement}`)
+      const parts = [
+        `**${de(ix.interactsWithDe, ix.interactsWith)}** (${germanInteractionSeverity(ix.severity)})`,
+      ]
+      const mechanism = de(ix.mechanismDe, ix.mechanism)
+      if (mechanism) parts.push(mechanism)
+      const management = de(ix.clinicalManagementDe, ix.clinicalManagement)
+      if (management) parts.push(`Management: ${management}`)
       return parts.join(' — ')
     })
     .join('\n\n')
@@ -128,7 +213,8 @@ function formatReceptorSummary(detail: KbSubstanceDetail): string {
   return detail.receptorAffinities
     .map((r) => {
       const pct = r.affinityPercent != null ? `${r.affinityPercent}%` : '—'
-      return `${r.receptor}: ${pct} (${r.effectType})${r.explanation ? ` — ${r.explanation}` : ''}`
+      const explanation = de(r.explanationDe, r.explanation)
+      return `${r.receptor}: ${pct} (${r.effectType})${explanation ? ` — ${explanation}` : ''}`
     })
     .join('\n')
 }
@@ -182,50 +268,60 @@ async function upsertProjectedPreparations(detail: KbSubstanceDetail, drugId: st
 }
 
 function buildSectionOverrides(detail: KbSubstanceDetail): Partial<Record<DrugSectionKey, string>> {
+  const substanceClass = de(detail.substanceClassDe, detail.substanceClass)
+  const mechanismSummary = de(detail.mechanismSummaryDe, detail.mechanismSummary)
+  const pharmacodynamicProfile = de(detail.pharmacodynamicProfileDe, detail.pharmacodynamicProfile)
+  const uses = deArr(detail.primaryPsychiatricUsesDe, detail.primaryPsychiatricUses)
+  const uncertaintyNotes = de(detail.uncertaintyNotesDe, detail.uncertaintyNotes)
+  const geriatricCaution = de(detail.geriatricCautionDe, detail.geriatricCaution)
+
   const kurzParts = [
-    detail.substanceClass,
-    detail.primaryPsychiatricUses.length ? detail.primaryPsychiatricUses.join(', ') : null,
-    detail.mechanismSummary,
+    substanceClass,
+    uses.length ? uses.join(', ') : null,
+    mechanismSummary,
   ].filter(Boolean)
 
   const besonderheitenParts = [
-    detail.uncertaintyNotes ? `Unsicherheiten: ${detail.uncertaintyNotes}` : null,
-    detail.geriatricCaution ? `Geriatrie: ${detail.geriatricCaution}` : null,
+    uncertaintyNotes ? `Unsicherheiten: ${uncertaintyNotes}` : null,
+    geriatricCaution ? `Geriatrie: ${geriatricCaution}` : null,
   ].filter(Boolean)
 
   return {
     kurzprofil: kurzParts.join('. ').slice(0, 600),
-    wirkmechanismus: [detail.mechanismSummary, detail.pharmacodynamicProfile].filter(Boolean).join('\n\n'),
+    wirkmechanismus: [mechanismSummary, pharmacodynamicProfile].filter(Boolean).join('\n\n'),
     rezeptorprofil: formatReceptorSummary(detail),
-    indikationen: detail.primaryPsychiatricUses.join(', '),
+    indikationen: uses.join(', '),
     dosierung: formatDosageGuidance(detail),
     nebenwirkungen: detail.sideEffects.length
       ? ''
-      : bulletList(detail.severeRisks),
-    kontraindikationen: bulletList(detail.contraindications),
+      : bulletList(deArr(detail.severeRisksDe, detail.severeRisks)),
+    kontraindikationen: bulletList(deArr(detail.contraindicationsDe, detail.contraindications)),
     wechselwirkungen: formatInteractionsText(detail),
     kontrollen: formatMonitoring(detail),
-    schwangerschaft: detail.pregnancyLactationCaution ?? '',
-    niereLeber: detail.hepaticRenalCaution ?? '',
+    schwangerschaft: de(detail.pregnancyLactationCautionDe, detail.pregnancyLactationCaution) ?? '',
+    niereLeber: de(detail.hepaticRenalCautionDe, detail.hepaticRenalCaution) ?? '',
     besonderheiten: besonderheitenParts.join('\n\n'),
-    merksaetze: detail.clinicalPearls ?? '',
+    merksaetze: de(detail.clinicalPearlsDe, detail.clinicalPearls) ?? '',
     quellen: formatSources(detail),
   }
 }
 
 function buildStructuredOverrides(detail: KbSubstanceDetail): SectionStructuredOverrides {
   const sideEffects: SideEffectEntry[] = detail.sideEffects.map((s) => ({
-    effect: s.effect,
-    system: s.system ?? undefined,
+    effect: de(s.effectDe, s.effect) ?? s.effect,
+    system: de(s.systemDe, s.system) ?? undefined,
     frequency: mapSideEffectFrequency(s.frequency),
     severity: mapSideEffectSeverity(s.severity, s.isSevereRisk),
-    note: s.note ?? undefined,
+    note: de(s.noteDe, s.note) ?? undefined,
   }))
 
   const interactions: CypInteraction[] = detail.interactions.map((ix) => ({
-    withDrugOrClass: ix.interactsWith,
+    withDrugOrClass: de(ix.interactsWithDe, ix.interactsWith) ?? ix.interactsWith,
     severity: mapInteractionSeverity(ix.severity),
-    effect: [ix.mechanism, ix.clinicalManagement].filter(Boolean).join(' — ') || '—',
+    effect:
+      [de(ix.mechanismDe, ix.mechanism), de(ix.clinicalManagementDe, ix.clinicalManagement)]
+        .filter(Boolean)
+        .join(' — ') || '—',
   }))
 
   const primaryTargets = detail.receptorAffinities
@@ -237,7 +333,7 @@ function buildStructuredOverrides(detail: KbSubstanceDetail): SectionStructuredO
   return {
     steckbrief: {
       glance: {
-        drugClass: detail.substanceClass ?? undefined,
+        drugClass: de(detail.substanceClassDe, detail.substanceClass) ?? undefined,
         primaryTargets: primaryTargets.length ? primaryTargets : undefined,
         isEstimated: detail.sourceQuality.startsWith('ai_'),
       },
@@ -309,8 +405,8 @@ export function projectKbSubstanceDetailToDrug(
       : {}),
     genericName: detail.genericName,
     brandNames,
-    drugClass: detail.substanceClass ?? '',
-    category: detail.category ?? 'Antipsychotika',
+    drugClass: de(detail.substanceClassDe, detail.substanceClass) ?? '',
+    category: mapCategoryToGerman(detail.category) ?? 'Antipsychotika',
     tags: [PROJECTION_TAG, `kb-substance:${detail.id}`],
     createdAt: detail.createdAt,
     updatedAt: now,
@@ -367,12 +463,39 @@ async function findExistingDrugId(detail: KbSubstanceDetail): Promise<string | n
   return null
 }
 
+/**
+ * Substances (normalized English INN) that already have a hand-curated German
+ * seed entry in `knowledge_base_drugs` (see `knowledgeBaseDrugSeedData.ts`,
+ * German names like "Clozapin", "Olanzapin"). The English INN and the German
+ * INN normalize differently ("clozapine" vs "clozapin"), so the projection's
+ * name-based dedup misses them and would create a duplicate English-named row
+ * (audit v2 finding L-003 / V2-M1). For these the curated German entry is the
+ * canonical display, so projection is skipped to avoid a duplicate.
+ *
+ * These rows remain regenerable: remove an entry here and re-run
+ * `kb:publish-all` to re-create the projected row.
+ */
+const LEGACY_CURATED_GERMAN_DUPLICATES = new Set<string>([
+  'clozapine',
+  'olanzapine',
+  'risperidone',
+  'aripiprazole',
+  'sertraline',
+])
+
 /** Upsert projected drug into knowledge_base_drugs (service role). Returns drug id. */
 export async function projectAndUpsertKnowledgeBaseDrug(substanceId: string): Promise<string> {
   const detail = await getKbSubstanceById(substanceId)
   if (!detail) throw new Error(`Substance not found: ${substanceId}`)
   if (detail.status !== 'published' || detail.reviewStatus !== 'approved') {
     throw new Error('Projection requires status=published and review_status=approved')
+  }
+
+  // L-003: a curated German entry already exists for this substance — keep it
+  // canonical instead of projecting a duplicate English-named row.
+  if (LEGACY_CURATED_GERMAN_DUPLICATES.has(normalizeGenericName(detail.genericName))) {
+    const curatedId = await findExistingDrugId(detail)
+    return curatedId ?? `kb-norm-${detail.id}`
   }
 
   const existingId = await findExistingDrugId(detail)

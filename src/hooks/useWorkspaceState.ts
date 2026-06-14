@@ -707,9 +707,15 @@ export function useWorkspaceState(
   )
 
   const getLatestSectionContents = useCallback(() => {
-    if (!activeSectionId) return sectionContents
-    return { ...sectionContents, [activeSectionId]: editorContent }
-  }, [activeSectionId, editorContent, sectionContents])
+    if (activeSectionId) {
+      return { ...sectionContents, [activeSectionId]: editorContent }
+    }
+    // Free-text documents (e.g. therapie-verlauf) have no active section — persist editor body.
+    if (editorContent.trim() && sections.length === 0) {
+      return { ...sectionContents, body: editorContent }
+    }
+    return sectionContents
+  }, [activeSectionId, editorContent, sectionContents, sections.length])
 
   const getIncompleteSections = useCallback(() => {
     return sections.filter((section) => section.status !== 'saved')
@@ -941,6 +947,7 @@ export function useWorkspaceState(
       const hints = isPseudonymizationEnabled() ? patientHintsRef.current : {}
       const requestWithHints = {
         ...request,
+        caseId,
         patientHints:
           hints.patientName || hints.patientDob
             ? { patientName: hints.patientName, patientDob: hints.patientDob }

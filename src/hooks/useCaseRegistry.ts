@@ -13,6 +13,7 @@ import {
   saveRegistryMapToStorage,
 } from '../utils/caseRegistryStorage'
 import { createCaseId, DEFAULT_CASE_ID, shortCaseId } from '../utils/caseContext'
+import { DEMO_CASE_ID } from '../demo/constants'
 import { countLabGraphs } from '../utils/labPersistence'
 import { countTimelines } from '../utils/timelinePersistence'
 import { getOrCreateDeviceId } from '../utils/cryptoVault'
@@ -31,6 +32,10 @@ export interface LocalCaseMeta {
   lastDocumentType?: string
   lastOpened: string
   createdAt: string
+  /** Synthetic demo patient — read-only, seeded from fixture. */
+  isDemoPatient?: boolean
+  demoSeedVersion?: string
+  demoPatientId?: string
 }
 
 export interface RemoteCaseMeta {
@@ -197,6 +202,7 @@ export function listLocalCases(): LocalCaseMeta[] {
 
 /** Default workspace case is hidden from patient lists unless patient data was entered. */
 export function isListedPatientCase(caseItem: DashboardCase): boolean {
+  if (caseItem.caseId === DEMO_CASE_ID) return true
   if (caseItem.caseId !== DEFAULT_CASE_ID) return true
   return Boolean(
     caseItem.localName?.trim() ||

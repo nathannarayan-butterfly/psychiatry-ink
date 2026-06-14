@@ -15,6 +15,7 @@ import { chunkDocumentSections, chunkTextByTokens } from '../utils/chunkText'
 import { dePseudonymizeText, pseudonymizeText, type PseudoMap } from '../utils/pseudonymize'
 import { showNotionToast } from '../components/notion/NotionToast'
 import { API_BASE } from './apiClient'
+import { getAuthHeaders } from './authHeaders'
 import { logGenerationUsage } from './generationLogClient'
 
 export const PSEUDONYMIZE_KEY = 'psychiatry-ink-pseudonymize'
@@ -112,14 +113,19 @@ async function callModel(
   chunkLabel = 'text',
 ): Promise<{ text: string; model: AiResolvedCall['model'] }> {
   const userPrompt = buildChunkPrompt(request, resolved, chunkLabel, chunkContent)
+  const authHeaders = await getAuthHeaders()
 
   const response = await fetch(`${API_BASE}/api/generate`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...authHeaders,
+    },
     body: JSON.stringify({
       tier: request.tier,
       systemPrompt: resolved.systemPrompt,
       userPrompt,
+      ...(request.caseId?.trim() ? { caseId: request.caseId.trim() } : {}),
     }),
   })
 

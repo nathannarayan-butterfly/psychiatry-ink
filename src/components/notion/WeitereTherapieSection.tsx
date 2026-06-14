@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
+import { therapyPageSectionDomId } from '../../data/therapyPageSections'
 import { useWeitereTherapie } from '../../hooks/useWeitereTherapie'
 import {
   translateWeitereTherapieStatus,
@@ -80,7 +81,7 @@ export function WeitereTherapieSection({ caseId }: WeitereTherapieSectionProps) 
   }
 
   return (
-    <section className="therapy-section">
+    <section className="therapy-section" id={therapyPageSectionDomId('weitere')}>
       <header className="therapy-section__header">
         <div className="therapy-section__heading">
           <h3 className="therapy-section__title">{ts(language, 'wtSectionTitle')}</h3>

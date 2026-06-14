@@ -2,6 +2,7 @@ import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
 import { prisma } from '../db'
 import { allowsPublicKeyRegistration, resolvePrivacyTier } from '../privacyRegions'
+import { pathParam } from '../utils/expressParams'
 
 export interface PublicKeyRegistrationBody {
   deviceId: string
@@ -60,7 +61,7 @@ cryptoRouter.post('/public-key', async (req: Request, res: Response) => {
 cryptoRouter.get('/public-key/:deviceId', async (req: Request, res: Response) => {
   try {
     const record = await prisma.userPublicKey.findUnique({
-      where: { deviceId: req.params.deviceId },
+      where: { deviceId: pathParam(req, 'deviceId') },
       select: { publicKeyJwk: true, countryCode: true, createdAt: true },
     })
 

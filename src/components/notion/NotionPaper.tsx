@@ -137,6 +137,8 @@ interface NotionPaperProps {
   onRemoveSavedDoc?: (id: string) => void
   /** Close the open document and return to the default workspace home. */
   onCloseDocument?: () => void
+  /** Case-level edit lock from org_case_access (view-only grant). */
+  accessReadOnly?: boolean
   onPsychopathModeSelect?: (mode: PsychopathSubMode) => void
 }
 
@@ -226,17 +228,18 @@ export function NotionPaper({
   onRemoveSavedDoc,
   onCloseDocument,
   onPsychopathModeSelect,
+  accessReadOnly = false,
 }: NotionPaperProps) {
   const { t } = useTranslation()
   const storageCaseId = workspaceStorageId ?? caseId
   const storesCaseMeta = storageCaseId === caseId
   const patient = usePatientMetadata({
-    caseId,
+    caseId: storageCaseId,
     tier: privacy.tier,
     countryCode: privacy.countryCode,
     onMigratedAge,
   })
-  const editorLocked = isDictationActive || isGenerating
+  const editorLocked = isDictationActive || isGenerating || accessReadOnly
   const isPsychopathDocument = documentTypeId === 'psychopath'
   const isMedicationDocument = documentTypeId === 'medikation'
   const psychopathActiveMode: PsychopathSubMode =

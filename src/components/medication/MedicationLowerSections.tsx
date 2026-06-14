@@ -1,11 +1,13 @@
+import { useCallback, useRef, useState } from 'react'
+import { Sparkles } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
 import {
   DEMO_INTELLIGENCE,
+  formatMedicationUiTemplate,
   getAttributionLabel,
   translateMedicationUi,
 } from '../../data/medicationUiTranslations'
 import { getDrugsForSubstance } from '../../data/psychDrugReference/index'
-import type { InteractionEntry } from '../../data/psychDrugReference/schema'
 import {
   DEFAULT_MEDICATIONS_COLLECTION_ID,
   type KnowledgeBaseDrug,
@@ -18,20 +20,25 @@ import {
 } from '../../hooks/useMedicationMarketAvailability'
 import {
   PRESCRIBING_COUNTRY_LABELS,
-  PRESCRIBING_COUNTRY_NATIVE_LABELS,
   usePrescribingCountry,
 } from '../../hooks/usePrescribingCountry'
-import { formatPreparationLine } from '../../utils/kb/formatPreparationLine'
+import { useCanAccessCase } from '../../hooks/permissions/useCanAccessCase'
+import { useCanAccessModule } from '../../hooks/permissions/useCanAccessModule'
 import type { MedicationEntry, MedicationPlanState, SideEffectReport } from '../../types/medicationPlan'
-import type { UiLanguage } from '../../types/settings'
-import { InteractionMatrix } from './InteractionMatrix'
+import { isMedicationVisible } from '../../utils/medication/planOps'
+import { medicationSectionDomId } from '../../contexts/MedicationSectionNavContext'
+import { CombinationCheckPanel } from '../therapy/CombinationCheckPanel'
+import { LabMedicationCorrelationPanel } from '../therapy/LabMedicationCorrelationPanel'
+import { PreparationDrugBlock } from './PreparationDrugBlock'
 import { ReceptorProfileSection } from './ReceptorProfileSection'
 import { ReceptorRadarChart } from './ReceptorRadarChart'
 import { GlobalSideEffectForm } from './SideEffectDialog'
 import { MonitoringTimeline } from './MonitoringTimeline'
+import { ClinicalLoading } from '../ui/ClinicalLoading'
 
-/** Ordered medication sub-sections shown as left-side links → right-side detail. */
+/** Ordered medication sub-sections for sidebar navigation → detail panel. */
 export const MEDICATION_SECTIONS = [
+  { key: 'plan', labelKey: 'medPageTitle' },
   { key: 'combination', labelKey: 'medSectionCombination' },
   { key: 'preparations', labelKey: 'medSectionPreparations' },
   { key: 'receptor', labelKey: 'medSectionReceptorProfile' },
@@ -44,6 +51,7 @@ export const MEDICATION_SECTIONS = [
 export type MedicationSectionKey = (typeof MEDICATION_SECTIONS)[number]['key']
 
 interface MedicationLowerSectionsProps {
+  caseId: string
   state: MedicationPlanState
   medications: MedicationEntry[]
   disabled?: boolean
@@ -60,33 +68,6 @@ interface MedicationLowerSectionsProps {
   onSelectSection?: (key: MedicationSectionKey) => void
 }
 
-type InteractionSeverity = InteractionEntry['severity']
-
-function severityClass(severity: InteractionSeverity): string {
-  switch (severity) {
-    case 'contraindicated':
-    case 'severe':
-      return 'medication-interaction--severe'
-    case 'moderate':
-      return 'medication-interaction--moderate'
-    default:
-      return 'medication-interaction--mild'
-  }
-}
-
-function severityLabel(severity: InteractionSeverity, language: UiLanguage): string {
-  switch (severity) {
-    case 'contraindicated':
-      return translateMedicationUi(language, 'medInteractionContraindicated')
-    case 'severe':
-      return translateMedicationUi(language, 'medInteractionSevere')
-    case 'moderate':
-      return translateMedicationUi(language, 'medInteractionModerate')
-    default:
-      return translateMedicationUi(language, 'medInteractionMild')
-  }
-}
-
 function normalizeMedicationName(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9äöüß]/gi, '')
 }
@@ -101,6 +82,7 @@ function findKbDrugMatches(med: MedicationEntry, drugs: KnowledgeBaseDrug[]): Kn
 }
 
 export function MedicationLowerSections({
+  caseId,
   state,
   medications,
   disabled = false,
@@ -114,77 +96,82 @@ export function MedicationLowerSections({
   const { drugs: knowledgeBaseDrugs } = useKnowledgeBaseDrugs(DEFAULT_MEDICATIONS_COLLECTION_ID)
   const { allPreparations } = useMedicationMarketAvailability()
   const { defaultPrescribingCountry } = usePrescribingCountry()
+  const { canUseAI } = useCanAccessCase(caseId)
+  const canViewMedication = useCanAccessModule(caseId, 'medication')
+  const canRunPrepAi = canViewMedication && canUseAI
+  const prepRunHandlersRef = useRef<Map<string, () => Promise<boolean>>>(new Map())
+  const [bulkPrepRun, setBulkPrepRun] = useState<{
+    active: boolean
+    current: number
+    total: number
+    currentMedId: string | null
+    failedCount: number
+  }>({ active: false, current: 0, total: 0, currentMedId: null, failedCount: 0 })
 
   const activeMeds = medications.filter(
-    (med) => med.status === 'active' || med.status === 'reduced' || med.status === 'increased',
+    (med) =>
+      isMedicationVisible(med) &&
+      (med.status === 'active' || med.status === 'reduced' || med.status === 'increased'),
   )
 
-  const referenceEntries = activeMeds.map((med) => ({
-    med,
-    drugs: getDrugsForSubstance(med.substance),
-  }))
+  const registerPrepRunCheck = useCallback((medId: string, run: () => Promise<boolean>) => {
+    prepRunHandlersRef.current.set(medId, run)
+  }, [])
 
-  const coveredMeds = referenceEntries.filter((entry) => entry.drugs.length > 0)
-  const uncoveredMeds = referenceEntries.filter((entry) => entry.drugs.length === 0)
+  const unregisterPrepRunCheck = useCallback((medId: string) => {
+    prepRunHandlersRef.current.delete(medId)
+  }, [])
 
-  const preparationEntries: {
-    med: MedicationEntry
-    preparations: MedicationMarketAvailability[]
-  }[] = activeMeds.map((med) => {
+  const runAllPrepChecks = useCallback(async () => {
+    if (bulkPrepRun.active) return
+    const meds = activeMeds
+    if (meds.length === 0) return
+
+    setBulkPrepRun({
+      active: true,
+      current: 0,
+      total: meds.length,
+      currentMedId: null,
+      failedCount: 0,
+    })
+
+    let failedCount = 0
+    for (let index = 0; index < meds.length; index += 1) {
+      const med = meds[index]!
+      setBulkPrepRun((prev) => ({
+        ...prev,
+        current: index + 1,
+        currentMedId: med.id,
+      }))
+      const run = prepRunHandlersRef.current.get(med.id)
+      if (!run) {
+        failedCount += 1
+        continue
+      }
+      const ok = await run()
+      if (!ok) failedCount += 1
+    }
+
+    setBulkPrepRun({
+      active: false,
+      current: 0,
+      total: 0,
+      currentMedId: null,
+      failedCount,
+    })
+  }, [activeMeds, bulkPrepRun.active])
+
+  const resolveKbPreparations = (med: MedicationEntry): MedicationMarketAvailability[] => {
     const matchedDrugs = findKbDrugMatches(med, knowledgeBaseDrugs)
     const matchedIds = new Set(matchedDrugs.map((drug) => drug.id))
     const query = normalizeMedicationName(med.substance)
-    const preparations = allPreparations.filter((entry) => {
+    return allPreparations.filter((entry) => {
       if (entry.countryCode !== defaultPrescribingCountry) return false
       if (!isVerifiedPreparation(entry)) return false
       if (matchedIds.has(entry.substanceId)) return true
       const generic = normalizeMedicationName(entry.genericName)
       return generic.length >= 2 && (generic.includes(query) || query.includes(generic))
     })
-    return { med, preparations }
-  })
-  const medsWithPreparations = preparationEntries.filter((entry) => entry.preparations.length > 0)
-
-  const crossInteractions: {
-    drugA: string
-    drugB: string
-    interaction: InteractionEntry
-  }[] = []
-
-  for (let i = 0; i < coveredMeds.length; i++) {
-    const entryA = coveredMeds[i]!
-    for (let j = i + 1; j < coveredMeds.length; j++) {
-      const entryB = coveredMeds[j]!
-      for (const drugA of entryA.drugs) {
-        for (const interaction of drugA.interactions) {
-          const matchesBName = entryB.drugs.some((drugB) => {
-            const target = interaction.interactsWith.toLowerCase()
-            const generic = drugB.genericName.toLowerCase()
-            const brands = drugB.brandNamesDACH?.map((b) => b.toLowerCase()) ?? []
-            return (
-              target.includes(generic) ||
-              generic.includes(target) ||
-              brands.some((b) => target.includes(b))
-            )
-          })
-          if (matchesBName) {
-            const alreadyAdded = crossInteractions.some(
-              (x) =>
-                x.interaction.interactsWith === interaction.interactsWith &&
-                ((x.drugA === drugA.genericName && x.drugB === entryB.med.substance) ||
-                  (x.drugB === drugA.genericName && x.drugA === entryB.med.substance)),
-            )
-            if (!alreadyAdded) {
-              crossInteractions.push({
-                drugA: drugA.genericName,
-                drugB: entryB.med.substance,
-                interaction,
-              })
-            }
-          }
-        }
-      }
-    }
   }
 
   const renderSideEffects = () => (
@@ -216,64 +203,13 @@ export function MedicationLowerSections({
   )
 
   const renderCombination = () => (
-    <>
-      <InteractionMatrix
-        activeMeds={activeMeds}
-        crossInteractions={crossInteractions}
-        language={language}
-      />
-      {crossInteractions.length > 0 ? (
-        <>
-          <ul className="medication-interaction-list">
-            {crossInteractions.map((item, idx) => (
-              <li
-                key={idx}
-                className={`medication-interaction-list__item ${severityClass(item.interaction.severity)}`}
-              >
-                <span className="medication-interaction__badge">
-                  {severityLabel(item.interaction.severity, language)}
-                </span>
-                <strong>
-                  {item.drugA} ↔ {item.drugB}
-                </strong>
-                {item.interaction.mechanismNote ? (
-                  <span className="medication-interaction__mechanism">
-                    {' '}· {item.interaction.mechanismNote}
-                  </span>
-                ) : null}
-                <p className="medication-interaction__note">
-                  {language === 'de'
-                    ? item.interaction.clinicalNoteDe
-                    : item.interaction.clinicalNoteEn}
-                </p>
-              </li>
-            ))}
-          </ul>
-          <p className="medication-lower-section__disclaimer">
-            {translateMedicationUi(language, 'medReferenceDisclaimer')}
-          </p>
-        </>
-      ) : (
-        <>
-          <p className="medication-lower-section__warning">
-            {translateMedicationUi(language, 'medCombinationWarning')}
-          </p>
-          {coveredMeds.length > 0 && uncoveredMeds.length === 0 ? (
-            <p className="medication-lower-section__hint">
-              {translateMedicationUi(language, 'medNoInteractionsFound')}
-            </p>
-          ) : null}
-        </>
-      )}
-      {uncoveredMeds.length > 0 ? (
-        <p className="medication-lower-section__warning">
-          {translateMedicationUi(language, 'medCombinationWarning')}
-          {' ('}
-          {uncoveredMeds.map((e) => e.med.substance).join(', ')}
-          {')'}
-        </p>
-      ) : null}
-    </>
+    <CombinationCheckPanel
+      caseId={caseId}
+      medications={medications}
+      state={state}
+      disabled={disabled}
+      language={language}
+    />
   )
 
   const renderReceptor = () => (
@@ -286,27 +222,69 @@ export function MedicationLowerSections({
 
   const renderPreparations = () => (
     <div className="medication-preparations-overview">
-      <p className="medication-lower-section__hint">
-        {translateMedicationUi(language, 'medPreparationsCountry')}: {defaultPrescribingCountry} ·{' '}
-        {PRESCRIBING_COUNTRY_LABELS[defaultPrescribingCountry]}
-      </p>
-      {medsWithPreparations.length === 0 ? (
+      <div className="medication-preparations-overview__toolbar">
+        <p className="medication-lower-section__hint medication-preparations-overview__country">
+          {translateMedicationUi(language, 'medPreparationsCountry')}: {defaultPrescribingCountry} ·{' '}
+          {PRESCRIBING_COUNTRY_LABELS[defaultPrescribingCountry]}
+        </p>
+        {canRunPrepAi && activeMeds.length > 0 ? (
+          <button
+            type="button"
+            className="medication-prep-ai-btn medication-prep-ai-btn--bulk"
+            disabled={disabled || bulkPrepRun.active}
+            onClick={() => void runAllPrepChecks()}
+            title={translateMedicationUi(language, 'medPrepAiCheckAllTitle')}
+          >
+            <Sparkles
+              className={`medication-prep-ai-btn__icon${bulkPrepRun.active ? ' medication-prep-ai-btn__icon--spin' : ''}`}
+              strokeWidth={1.75}
+              aria-hidden
+            />
+            {bulkPrepRun.active
+              ? formatMedicationUiTemplate(language, 'medPrepAiCheckAllProgress', {
+                  current: bulkPrepRun.current,
+                  total: bulkPrepRun.total,
+                })
+              : translateMedicationUi(language, 'medPrepAiCheckAllButton')}
+          </button>
+        ) : null}
+      </div>
+      {bulkPrepRun.active ? (
+        <ClinicalLoading
+          variant="inline"
+          label={formatMedicationUiTemplate(language, 'medPrepAiCheckAllProgress', {
+            current: bulkPrepRun.current,
+            total: bulkPrepRun.total,
+          })}
+          className="medication-prep-ai-loading medication-prep-ai-loading--bulk"
+        />
+      ) : null}
+      {!bulkPrepRun.active && bulkPrepRun.failedCount > 0 ? (
+        <p className="medication-prep-ai-error">
+          {formatMedicationUiTemplate(language, 'medPrepAiCheckAllPartialWarning', {
+            count: bulkPrepRun.failedCount,
+          })}
+        </p>
+      ) : null}
+      {activeMeds.length === 0 ? (
         <p className="medication-lower-section__empty">
           {translateMedicationUi(language, 'medPreparationsEmpty')}
         </p>
       ) : (
-        medsWithPreparations.map(({ med, preparations }) => (
-          <section key={med.id} className="medication-preparations-overview__drug">
-            <h5 className="medication-preparations-overview__title">
-              {med.substance} — verfügbare Zubereitungen in{' '}
-              {PRESCRIBING_COUNTRY_NATIVE_LABELS[defaultPrescribingCountry]}:
-            </h5>
-            <ul className="medication-prep-compact-list">
-              {preparations.slice(0, 8).map((prep) => (
-                <li key={prep.id}>{formatPreparationLine(prep)}</li>
-              ))}
-            </ul>
-          </section>
+        activeMeds.map((med) => (
+          <PreparationDrugBlock
+            key={med.id}
+            caseId={caseId}
+            med={med}
+            kbPreparations={resolveKbPreparations(med)}
+            country={defaultPrescribingCountry}
+            language={language}
+            canRunAi={canRunPrepAi}
+            disabled={disabled || bulkPrepRun.active}
+            bulkLoading={bulkPrepRun.active && bulkPrepRun.currentMedId === med.id}
+            onRegisterRunCheck={registerPrepRunCheck}
+            onUnregisterRunCheck={unregisterPrepRunCheck}
+          />
         ))
       )}
       <p className="medication-lower-section__disclaimer">
@@ -325,13 +303,13 @@ export function MedicationLowerSections({
   )
 
   const renderLab = () => (
-    <textarea
-      className="therapy-textarea"
-      value={state.labCorrelationNotes ?? ''}
-      onChange={(e) => onLabNotesChange?.(e.target.value)}
-      placeholder={translateMedicationUi(language, 'medLabPlaceholder')}
+    <LabMedicationCorrelationPanel
+      caseId={caseId}
+      medications={medications}
+      state={state}
       disabled={disabled}
-      rows={4}
+      onLabNotesChange={onLabNotesChange}
+      language={language}
     />
   )
 
@@ -481,7 +459,10 @@ export function MedicationLowerSections({
     'medSectionReceptorProfile'
 
   return (
-    <div className="therapy-detail-panel">
+    <div
+      className="therapy-detail-panel"
+      id={medicationSectionDomId(activeSection)}
+    >
       <div className="therapy-detail-panel__head">
         <div className="therapy-detail-panel__heading">
           <h4 className="therapy-detail-panel__title">

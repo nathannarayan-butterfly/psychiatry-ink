@@ -19,6 +19,7 @@ import type {
   ReceptorAction,
   ReceptorAffinityEntry,
 } from '../../types/knowledgeBase'
+import { getReceptorDisplayLabel } from '../../data/receptorProfile'
 import { getDisplayReceptorProfile } from './receptorAffinity'
 import { sectionHasStructuredData } from '../../types/knowledgeBase'
 import { structuredSectionToText } from './structuredSectionText'
@@ -160,7 +161,7 @@ export function buildMedicationMarkdown(
         ? `${entry.evidenceQuality} (${labels.receptorEstimated})`
         : entry.evidenceQuality
       lines.push(
-        `| ${entry.target} | ${formatAffinity(entry)} | ${humanizeAction(entry.action)} | ${evidence} |`,
+        `| ${getReceptorDisplayLabel(entry.target)} | ${formatAffinity(entry)} | ${humanizeAction(entry.action)} | ${evidence} |`,
       )
     }
     if (profile.isLegacy) {
@@ -211,7 +212,7 @@ export function buildMedicationHtml(
         const evidence = entry.isEstimated
           ? `${entry.evidenceQuality} (${labels.receptorEstimated})`
           : entry.evidenceQuality
-        return `<tr><td>${escapeHtml(entry.target)}</td><td class="num">${escapeHtml(
+        return `<tr><td>${escapeHtml(getReceptorDisplayLabel(entry.target))}</td><td class="num">${escapeHtml(
           formatAffinity(entry),
         )}</td><td>${escapeHtml(humanizeAction(entry.action))}</td><td>${escapeHtml(evidence)}</td></tr>`
       })

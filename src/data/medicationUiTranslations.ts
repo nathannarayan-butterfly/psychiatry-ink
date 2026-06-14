@@ -29,6 +29,29 @@ export const medicationUiTranslations = {
     es: 'Añadir medicamento',
   },
   medEdit: { de: 'Bearbeiten', en: 'Edit', fr: 'Modifier', es: 'Editar' },
+  medDelete: { de: 'Löschen', en: 'Delete', fr: 'Supprimer', es: 'Eliminar' },
+  medDeleteTitle: {
+    de: 'Medikament entfernen',
+    en: 'Remove medication',
+    fr: 'Retirer le médicament',
+    es: 'Eliminar medicamento',
+  },
+  medDeleteReason: { de: 'Grund', en: 'Reason', fr: 'Motif', es: 'Motivo' },
+  medDeleteReasonWrong: {
+    de: 'Falsch Eintrag',
+    en: 'Wrong entry',
+    fr: 'Entrée incorrecte',
+    es: 'Entrada incorrecta',
+  },
+  medDeleteReasonDuplicate: { de: 'Duplikat', en: 'Duplicate', fr: 'Doublon', es: 'Duplicado' },
+  medDeleteReasonOther: { de: 'Freitext', en: 'Free text', fr: 'Texte libre', es: 'Texto libre' },
+  medDeleteReasonOtherPlaceholder: {
+    de: 'Optionaler Zusatz …',
+    en: 'Optional details …',
+    fr: 'Précision optionnelle …',
+    es: 'Detalle opcional …',
+  },
+  medConfirm: { de: 'Bestätigen', en: 'Confirm', fr: 'Confirmer', es: 'Confirmar' },
   medExport: { de: 'Export', en: 'Export', fr: 'Exporter', es: 'Exportar' },
   medPrint: { de: 'Drucken', en: 'Print', fr: 'Imprimer', es: 'Imprimir' },
   medCopyPlan: { de: 'Plan kopieren', en: 'Copy plan', fr: 'Copier le plan', es: 'Copiar plan' },
@@ -151,10 +174,22 @@ export const medicationUiTranslations = {
     es: 'Info breve medicamento',
   },
   medCombinationWarning: {
-    de: 'Automatischer Interaktions- und Kombinationscheck ist in V1 nicht aktiv — manuelle Prüfung erforderlich.',
-    en: 'Automatic interaction and combination check is not active in v1 — manual review required.',
-    fr: 'Contrôle automatique des interactions inactif en v1 — vérification manuelle requise.',
-    es: 'Control automático de interacciones inactivo en v1 — revisión manual necesaria.',
+    de: 'Kombinationscheck: paarweise Prüfung über Wissensdatenbank und optional KI-Fallback.',
+    en: 'Combination check: pairwise review via knowledge base and optional AI fallback.',
+    fr: 'Contrôle de combinaison : revue par paires via base de connaissances et option IA.',
+    es: 'Control de combinación: revisión por pares vía base de conocimiento y opción IA.',
+  },
+  medCombinationNoneSummary: {
+    de: 'Für die geprüften Kombinationen ({pairs}) wurden keine relevanten Wechselwirkungen in der Wissensdatenbank oder per KI gefunden.',
+    en: 'No relevant interactions were found in the knowledge base or via AI for the checked combinations ({pairs}).',
+    fr: 'Aucune interaction pertinente trouvée dans la base ou via IA pour les combinaisons vérifiées ({pairs}).',
+    es: 'No se encontraron interacciones relevantes en la base o vía IA para las combinaciones revisadas ({pairs}).',
+  },
+  medCombinationNoneSummaryMany: {
+    de: '{pairs} … ({count} Kombinationen)',
+    en: '{pairs} … ({count} combinations)',
+    fr: '{pairs} … ({count} combinaisons)',
+    es: '{pairs} … ({count} combinaciones)',
   },
   medLabPlaceholder: {
     de: 'Beispiele: Nierenfunktion bei Lithium/ACE-Hemmern, Leberwerte bei Valproat, TSH unter Lithium, QT-relevante Kombinationen.',
@@ -219,6 +254,144 @@ export const medicationUiTranslations = {
     fr: 'Pays de prescription',
     es: 'País de prescripción',
   },
+  medPreparationsInCountry: {
+    de: 'verfügbare Zubereitungen in',
+    en: 'available preparations in',
+    fr: 'préparations disponibles en',
+    es: 'preparados disponibles en',
+  },
+  medPreparationsNoKbForDrug: {
+    de: 'Keine verifizierten Präparate in der Wissensdatenbank. KI-Prüfung kann Marktübersicht ergänzen.',
+    en: 'No verified preparations in the Knowledge Base. AI check can supplement a market overview.',
+    fr: 'Aucune préparation vérifiée dans la base de connaissances. La vérification IA peut compléter.',
+    es: 'No hay preparados verificados en la base de conocimiento. La comprobación IA puede complementar.',
+  },
+  medPrepAiCheckButton: {
+    de: 'Verfügbarkeit prüfen (KI)',
+    en: 'AI Check',
+    fr: 'Vérifier disponibilité (IA)',
+    es: 'Comprobar disponibilidad (IA)',
+  },
+  medPrepAiCheckTitle: {
+    de: 'Marktverfügbarkeit per KI prüfen (Gelbe Liste / Fachinfo Referenz)',
+    en: 'Check market availability with AI (Gelbe Liste / SmPC reference)',
+    fr: 'Vérifier la disponibilité marché via IA',
+    es: 'Comprobar disponibilidad de mercado con IA',
+  },
+  medPrepAiCheckRunning: {
+    de: 'KI prüft …',
+    en: 'AI checking …',
+    fr: 'Vérification IA …',
+    es: 'Comprobación IA …',
+  },
+  medPrepSourceKb: {
+    de: 'Wissensdatenbank',
+    en: 'Knowledge Base',
+    fr: 'Base de connaissances',
+    es: 'Base de conocimiento',
+  },
+  medPrepSourceAi: {
+    de: 'KI-Marktübersicht',
+    en: 'AI market overview',
+    fr: 'Aperçu marché IA',
+    es: 'Resumen de mercado IA',
+  },
+  medPrepAiDisclaimer: {
+    de: 'KI-generierte Marktübersicht — nicht Echtzeit-Gelbe-Liste. Klinisch verifizieren.',
+    en: 'AI-generated market overview — not a live Gelbe Liste feed. Verify clinically.',
+    fr: 'Aperçu marché généré par IA — pas de Gelbe Liste en temps réel. Vérifier cliniquement.',
+    es: 'Resumen de mercado generado por IA — no es Gelbe Liste en tiempo real. Verificar clínicamente.',
+  },
+  medPrepAiNoSupplement: {
+    de: 'Keine zusätzlichen Präparate über die Wissensdatenbank hinaus vorgeschlagen.',
+    en: 'No additional preparations suggested beyond the Knowledge Base.',
+    fr: 'Aucune préparation supplémentaire au-delà de la base de connaissances.',
+    es: 'No se sugieren preparados adicionales más allá de la base de conocimiento.',
+  },
+  medPrepColBrand: {
+    de: 'Präparat',
+    en: 'Product',
+    fr: 'Préparat',
+    es: 'Preparado',
+  },
+  medPrepColStrength: {
+    de: 'Stärke',
+    en: 'Strength',
+    fr: 'Dosage',
+    es: 'Dosis',
+  },
+  medPrepColForm: {
+    de: 'Form',
+    en: 'Form',
+    fr: 'Forme',
+    es: 'Forma',
+  },
+  medPrepColNote: {
+    de: 'Hinweis',
+    en: 'Note',
+    fr: 'Note',
+    es: 'Nota',
+  },
+  medPrepAiPrepCount: {
+    de: 'Präparate',
+    en: 'preparations',
+    fr: 'préparations',
+    es: 'preparados',
+  },
+  medPrepAiCollapseShow: {
+    de: 'KI-Marktübersicht anzeigen',
+    en: 'Show AI market overview',
+    fr: 'Afficher l’aperçu marché IA',
+    es: 'Mostrar resumen de mercado IA',
+  },
+  medPrepAiCollapseHide: {
+    de: 'einklappen',
+    en: 'Collapse',
+    fr: 'Réduire',
+    es: 'Contraer',
+  },
+  medPrepSourceQuelle: {
+    de: 'Quelle',
+    en: 'Source',
+    fr: 'Source',
+    es: 'Fuente',
+  },
+  medPrepSourceDeepseek: {
+    de: 'DeepSeek',
+    en: 'DeepSeek',
+    fr: 'DeepSeek',
+    es: 'DeepSeek',
+  },
+  medPrepSourceOpenai: {
+    de: 'OpenAI',
+    en: 'OpenAI',
+    fr: 'OpenAI',
+    es: 'OpenAI',
+  },
+  medPrepAiCheckAllButton: {
+    de: 'Alle prüfen',
+    en: 'Check all',
+    fr: 'Tout vérifier',
+    es: 'Comprobar todo',
+  },
+  medPrepAiCheckAllTitle: {
+    de: 'KI-Verfügbarkeitsprüfung für alle aktiven Medikamente',
+    en: 'AI availability check for all active medications',
+    fr: 'Vérification IA de disponibilité pour tous les médicaments actifs',
+    es: 'Comprobación IA de disponibilidad para todos los medicamentos activos',
+  },
+  medPrepAiCheckAllProgress: {
+    de: 'Prüfe {current} von {total} …',
+    en: 'Checking {current} of {total} …',
+    fr: 'Vérification {current} sur {total} …',
+    es: 'Comprobando {current} de {total} …',
+  },
+  medPrepAiCheckAllPartialWarning: {
+    de: '{count} Prüfung(en) fehlgeschlagen — Ergebnisse für übrige Medikamente sind verfügbar.',
+    en: '{count} check(s) failed — results for remaining medications are available.',
+    fr: '{count} vérification(s) échouée(s) — résultats disponibles pour les autres médicaments.',
+    es: '{count} comprobación(es) fallida(s) — resultados disponibles para el resto de medicamentos.',
+  },
   medInteractionSevere: { de: 'Schwerwiegend', en: 'Severe', fr: 'Sévère', es: 'Grave' },
   medInteractionModerate: { de: 'Moderat', en: 'Moderate', fr: 'Modéré', es: 'Moderada' },
   medInteractionMild: { de: 'Leicht', en: 'Mild', fr: 'Légère', es: 'Leve' },
@@ -272,16 +445,22 @@ export const medicationUiTranslations = {
     es: 'Selecciona una sección',
   },
   medSelectSectionHint: {
-    de: 'Klicke links auf einen Bereich, um Details und Grafiken rechts zu öffnen.',
-    en: 'Click a section on the left to open its details and graphs on the right.',
-    fr: 'Cliquez sur une section à gauche pour afficher ses détails et graphiques à droite.',
-    es: 'Haz clic en una sección a la izquierda para ver sus detalles y gráficos a la derecha.',
+    de: 'Wähle links im Seitenbereich einen Abschnitt, um Details und Grafiken zu öffnen.',
+    en: 'Choose a section in the left sidebar to open details and graphs.',
+    fr: 'Choisissez une section dans le panneau latéral pour afficher détails et graphiques.',
+    es: 'Elige una sección en el panel lateral para ver detalles y gráficos.',
   },
   medSectionsLabel: {
-    de: 'Analysen & Details',
-    en: 'Analyses & details',
-    fr: 'Analyses et détails',
-    es: 'Análisis y detalles',
+    de: 'Medikamentöse Therapie',
+    en: 'Medication therapy',
+    fr: 'Thérapie médicamenteuse',
+    es: 'Terapia medicamentosa',
+  },
+  medNavJump: {
+    de: 'Bereich der medikamentösen Therapie',
+    en: 'Medication therapy section',
+    fr: 'Section thérapie médicamenteuse',
+    es: 'Sección terapia medicamentosa',
   },
   medReceptorTabMatrix: {
     de: 'Matrix',
@@ -421,6 +600,33 @@ export type MedicationUiKey = keyof typeof medicationUiTranslations
 
 export function translateMedicationUi(language: UiLanguage, key: MedicationUiKey): string {
   return medicationUiTranslations[key][language]
+}
+
+export function formatPrepAiQuelleLabel(
+  language: UiLanguage,
+  response: {
+    source: 'deepseek' | 'openai' | 'other'
+    sourceLabel?: string
+    model?: { label?: string }
+  },
+): string {
+  if (response.sourceLabel?.trim()) return response.sourceLabel.trim()
+  if (response.source === 'openai') return translateMedicationUi(language, 'medPrepSourceOpenai')
+  if (response.source === 'deepseek') return translateMedicationUi(language, 'medPrepSourceDeepseek')
+  if (response.model?.label?.trim()) return response.model.label.trim()
+  return translateMedicationUi(language, 'medPrepSourceAi')
+}
+
+export function formatMedicationUiTemplate(
+  language: UiLanguage,
+  key: MedicationUiKey,
+  vars: Record<string, string | number>,
+): string {
+  let text = translateMedicationUi(language, key)
+  for (const [name, value] of Object.entries(vars)) {
+    text = text.replaceAll(`{${name}}`, String(value))
+  }
+  return text
 }
 
 const formulationLabels: Record<MedicationFormulation, LocaleMap> = {

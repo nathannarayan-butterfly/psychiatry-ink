@@ -7,6 +7,7 @@ import {
   type GlanceData,
   type KnowledgeBaseDrug,
 } from '../../../types/knowledgeBase'
+import { getReceptorDisplayLabel } from '../../../data/receptorProfile'
 import { getDisplayReceptorProfile } from '../../../utils/medication/receptorAffinity'
 import { getPsychClassLabel } from '../../../utils/medication/psychClass'
 import { kbT } from './kbStrings'
@@ -51,7 +52,7 @@ function deriveKeyFacts(drug: KnowledgeBaseDrug) {
       .filter((entry) => entry.affinityPercent != null)
       .sort((a, b) => (b.affinityPercent ?? 0) - (a.affinityPercent ?? 0))
       .slice(0, 5)
-      .map((entry) => entry.target)
+      .map((entry) => getReceptorDisplayLabel(entry.target))
   }
 
   let qtcRisk: QtcRisk | null = explicit.qtcRisk ?? null
@@ -96,17 +97,17 @@ export function KeyFactsTable({ drug, language }: KeyFactsTableProps) {
 
   const rows = [
     [kbT(language, 'classification'), getPsychClassLabel(drug.psychClass, language)],
-    ['Class', facts.drugClass || na],
-    ['Half-life', facts.halfLifeSummary || na],
-    ['Active metabolite', facts.activeMetabolite || na],
-    ['Main receptor targets', facts.primaryTargets.length > 0 ? facts.primaryTargets.join(', ') : na],
-    ['QTc risk', qtcLabel],
-    ['Depot availability', facts.depotAvailable ? kbT(language, 'glanceDepotYes') : kbT(language, 'glanceDepotNo')],
-    ['Main clinical cautions', facts.mainCautions || na],
+    [kbT(language, 'glanceClass'), facts.drugClass || na],
+    [kbT(language, 'glanceHalfLife'), facts.halfLifeSummary || na],
+    [kbT(language, 'kfActiveMetabolite'), facts.activeMetabolite || na],
+    [kbT(language, 'kfMainTargets'), facts.primaryTargets.length > 0 ? facts.primaryTargets.join(', ') : na],
+    [kbT(language, 'glanceQtc'), qtcLabel],
+    [kbT(language, 'glanceDepot'), facts.depotAvailable ? kbT(language, 'glanceDepotYes') : kbT(language, 'glanceDepotNo')],
+    [kbT(language, 'kfMainCautions'), facts.mainCautions || na],
   ] as const
 
   return (
-    <table className="kb-key-facts" aria-label="Key Facts">
+    <table className="kb-key-facts" aria-label={kbT(language, 'kfTableLabel')}>
       <tbody>
         {rows.map(([label, value]) => (
           <tr key={label}>

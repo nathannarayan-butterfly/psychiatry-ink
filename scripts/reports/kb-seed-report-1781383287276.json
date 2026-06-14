@@ -1,0 +1,23 @@
+{
+  "runAt": "2026-06-13T20:41:27.276Z",
+  "options": {
+    "dryRun": false,
+    "limit": 10,
+    "offset": 0,
+    "drug": null,
+    "force": false,
+    "rerun": false,
+    "provider": "deepseek",
+    "country": "DE",
+    "includeReceptorAffinity": true,
+    "includeMarketAvailability": false,
+    "delayMs": 2500,
+    "maxRetries": 2
+  },
+  "total": 10,
+  "success": 0,
+  "skipped": 10,
+  "dryRun": 0,
+  "failed": 0,
+  "failures": []
+}

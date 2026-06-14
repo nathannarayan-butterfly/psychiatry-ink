@@ -62,6 +62,8 @@ export interface AiGenerationRequest {
   extraInstruction?: string
   /** Patient hints for client-side pseudonymization. Present only when pseudonymization is enabled. */
   patientHints?: AiPatientHints
+  /** Case scope for server-side ai.use enforcement. */
+  caseId?: string
 }
 
 export interface AiGenerationChunk {

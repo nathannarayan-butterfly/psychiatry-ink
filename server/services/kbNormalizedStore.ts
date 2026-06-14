@@ -36,6 +36,27 @@ function mapSubstance(row: Record<string, unknown>): KbSubstance {
     hepaticRenalCaution: row.hepatic_renal_caution ? String(row.hepatic_renal_caution) : null,
     contraindications: Array.isArray(row.contraindications) ? (row.contraindications as string[]) : [],
     severeRisks: Array.isArray(row.severe_risks) ? (row.severe_risks as string[]) : [],
+    substanceClassDe: row.substance_class_de ? String(row.substance_class_de) : null,
+    mechanismSummaryDe: row.mechanism_summary_de ? String(row.mechanism_summary_de) : null,
+    pharmacodynamicProfileDe: row.pharmacodynamic_profile_de
+      ? String(row.pharmacodynamic_profile_de)
+      : null,
+    clinicalPearlsDe: row.clinical_pearls_de ? String(row.clinical_pearls_de) : null,
+    uncertaintyNotesDe: row.uncertainty_notes_de ? String(row.uncertainty_notes_de) : null,
+    pregnancyLactationCautionDe: row.pregnancy_lactation_caution_de
+      ? String(row.pregnancy_lactation_caution_de)
+      : null,
+    geriatricCautionDe: row.geriatric_caution_de ? String(row.geriatric_caution_de) : null,
+    hepaticRenalCautionDe: row.hepatic_renal_caution_de ? String(row.hepatic_renal_caution_de) : null,
+    primaryPsychiatricUsesDe: Array.isArray(row.primary_psychiatric_uses_de)
+      ? (row.primary_psychiatric_uses_de as string[])
+      : null,
+    contraindicationsDe: Array.isArray(row.contraindications_de)
+      ? (row.contraindications_de as string[])
+      : null,
+    severeRisksDe: Array.isArray(row.severe_risks_de) ? (row.severe_risks_de as string[]) : null,
+    translationStatus: String(row.translation_status ?? 'pending'),
+    translatedAt: row.translated_at ? String(row.translated_at) : null,
     status: row.status as KbSubstance['status'],
     reviewStatus: row.review_status as KbSubstance['reviewStatus'],
     sourceQuality: row.source_quality as KbSubstance['sourceQuality'],
@@ -107,6 +128,7 @@ export async function getKbSubstanceById(id: string): Promise<KbSubstanceDetail 
         effectType: String(r.effect_type),
         confidence: String(r.confidence),
         explanation: r.explanation ? String(r.explanation) : null,
+        explanationDe: r.explanation_de ? String(r.explanation_de) : null,
         isEstimated: Boolean(r.is_estimated),
       }),
     ),
@@ -120,6 +142,9 @@ export async function getKbSubstanceById(id: string): Promise<KbSubstanceDetail 
         severity: String(r.severity),
         isSevereRisk: Boolean(r.is_severe_risk),
         note: r.note ? String(r.note) : null,
+        effectDe: r.effect_de ? String(r.effect_de) : null,
+        systemDe: r.system_de ? String(r.system_de) : null,
+        noteDe: r.note_de ? String(r.note_de) : null,
       }),
     ),
     monitoring: (monitoring.data ?? []).map(
@@ -130,6 +155,9 @@ export async function getKbSubstanceById(id: string): Promise<KbSubstanceDetail 
         intervalText: r.interval_text ? String(r.interval_text) : null,
         rationale: r.rationale ? String(r.rationale) : null,
         priority: String(r.priority),
+        parameterDe: r.parameter_de ? String(r.parameter_de) : null,
+        intervalTextDe: r.interval_text_de ? String(r.interval_text_de) : null,
+        rationaleDe: r.rationale_de ? String(r.rationale_de) : null,
       }),
     ),
     dosageGuidance: (dosage.data ?? []).map(
@@ -142,6 +170,12 @@ export async function getKbSubstanceById(id: string): Promise<KbSubstanceDetail 
         maxDose: r.max_dose ? String(r.max_dose) : null,
         titrationNotes: r.titration_notes ? String(r.titration_notes) : null,
         administrationNotes: r.administration_notes ? String(r.administration_notes) : null,
+        populationDe: r.population_de ? String(r.population_de) : null,
+        startDoseDe: r.start_dose_de ? String(r.start_dose_de) : null,
+        targetDoseDe: r.target_dose_de ? String(r.target_dose_de) : null,
+        maxDoseDe: r.max_dose_de ? String(r.max_dose_de) : null,
+        titrationNotesDe: r.titration_notes_de ? String(r.titration_notes_de) : null,
+        administrationNotesDe: r.administration_notes_de ? String(r.administration_notes_de) : null,
       }),
     ),
     interactions: (interactions.data ?? []).map(
@@ -152,6 +186,9 @@ export async function getKbSubstanceById(id: string): Promise<KbSubstanceDetail 
         severity: String(r.severity),
         mechanism: r.mechanism ? String(r.mechanism) : null,
         clinicalManagement: r.clinical_management ? String(r.clinical_management) : null,
+        interactsWithDe: r.interacts_with_de ? String(r.interacts_with_de) : null,
+        mechanismDe: r.mechanism_de ? String(r.mechanism_de) : null,
+        clinicalManagementDe: r.clinical_management_de ? String(r.clinical_management_de) : null,
       }),
     ),
     sources: (sources.data ?? []).map(

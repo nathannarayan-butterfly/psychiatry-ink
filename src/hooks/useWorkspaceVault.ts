@@ -39,6 +39,13 @@ import {
   type WorkspaceLivePatch,
 } from '../utils/workspaceVault'
 
+import type { OrganisationTier } from '../types/organisation'
+import {
+  bootstrapOrgCaseVault,
+  getCachedOrgCaseKey,
+  saveOrgCaseVaultPayload,
+} from '../utils/orgCaseVault'
+
 interface UseWorkspaceVaultOptions {
   caseId: string
   tier: PrivacyTier
@@ -46,6 +53,11 @@ interface UseWorkspaceVaultOptions {
   getLivePatch: () => WorkspaceLivePatch
   onRestored?: (payload: ClinicalWorkspacePayload) => void
   documentTypeLabel?: (typeId: string) => string
+  /** Small Praxis org-scoped encrypted vault (shared ciphertext). */
+  orgVault?: {
+    organisationId: string
+    organisationTier: OrganisationTier
+  }
 }
 
 interface RemoteSnapshotMeta {
@@ -120,9 +132,13 @@ export function useWorkspaceVault({
   getLivePatch,
   onRestored,
   documentTypeLabel,
+  orgVault,
 }: UseWorkspaceVaultOptions) {
   const enabled = allowsWorkspaceVault(tier)
-  const dbSyncEnabled = allowsWorkspaceDbSnapshot(tier) || isAccountBackupUnlocked()
+  const orgVaultEnabled =
+    Boolean(orgVault?.organisationId) && orgVault?.organisationTier === 'small_praxis'
+  const dbSyncEnabled =
+    (allowsWorkspaceDbSnapshot(tier) || isAccountBackupUnlocked()) && !orgVaultEnabled
   const [ready, setReady] = useState(!enabled)
   const [error, setError] = useState<string | null>(null)
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null)
@@ -170,7 +186,16 @@ export function useWorkspaceVault({
         recordVaultExport(caseId)
       }
 
-      if (dbSyncEnabled && options?.syncRemote !== false) {
+      if (orgVaultEnabled && orgVault?.organisationId) {
+        const caseKey = getCachedOrgCaseKey(orgVault.organisationId, caseId)
+        const remoteUpdatedAt = await saveOrgCaseVaultPayload(
+          orgVault.organisationId,
+          caseId,
+          payload,
+          caseKey ?? undefined,
+        )
+        setLastDbSnapshotAt(remoteUpdatedAt)
+      } else if (dbSyncEnabled && options?.syncRemote !== false) {
         const material = await ensureKeyMaterial()
         await registerPublicKeyIfAllowed(tier, countryCode, API_BASE)
         const titleHint = documentTypeLabel
@@ -188,7 +213,7 @@ export function useWorkspaceVault({
 
       return blob
     },
-    [caseId, countryCode, dbSyncEnabled, documentTypeLabel, enabled, getLivePatch, tier],
+    [caseId, countryCode, dbSyncEnabled, documentTypeLabel, enabled, getLivePatch, orgVault, orgVaultEnabled, tier],
   )
 
   const scheduleSave = useCallback(() => {
@@ -285,29 +310,53 @@ export function useWorkspaceVault({
       try {
         const local = await loadEncryptedWorkspace(caseId)
         let remote: { blob: EncryptedVaultBlob; updatedAt: string } | null = null
+        let orgPayload: ClinicalWorkspacePayload | null = null
+        let orgUpdatedAt: string | null = null
 
-        if (dbSyncEnabled) {
+        if (orgVaultEnabled && orgVault?.organisationId) {
+          const boot = await bootstrapOrgCaseVault(orgVault.organisationId, caseId, {
+            localLegacyBlob: local?.blob ?? null,
+            localLegacyPayload: local?.payload ?? null,
+          })
+          orgPayload = boot.payload
+          orgUpdatedAt = boot.snapshotUpdatedAt
+          if (orgUpdatedAt) setLastDbSnapshotAt(orgUpdatedAt)
+        } else if (dbSyncEnabled) {
           const deviceId = getOrCreateDeviceId()
           remote = await fetchRemoteSnapshot(deviceId, countryCode, caseId)
           if (remote) setLastDbSnapshotAt(remote.updatedAt)
         }
 
         const localUpdated = local?.payload.updatedAt ?? null
-        const remoteUpdated = remote?.updatedAt ?? null
-        const useRemote =
+        const remoteUpdated = orgUpdatedAt ?? remote?.updatedAt ?? null
+
+        const useOrgRemote =
+          orgVaultEnabled &&
+          orgPayload &&
+          (!localUpdated ||
+            (orgUpdatedAt !== null &&
+              localUpdated !== null &&
+              new Date(orgUpdatedAt).getTime() > new Date(localUpdated).getTime()))
+
+        const usePersonalRemote =
+          !orgVaultEnabled &&
           remote &&
           (!localUpdated ||
             (remoteUpdated !== null &&
               localUpdated !== null &&
               new Date(remoteUpdated).getTime() > new Date(localUpdated).getTime()))
 
-        if (useRemote && remote) {
+        if (useOrgRemote && orgPayload && !cancelled) {
+          await applyPayload(orgPayload)
+        } else if (usePersonalRemote && remote) {
           const payload = await decryptWorkspaceBlob(remote.blob)
           if (!cancelled) {
             await applyPayload(payload)
           }
         } else if (local && !cancelled) {
           await applyPayload(local.payload)
+        } else if (orgPayload && !local && !cancelled) {
+          await applyPayload(orgPayload)
         }
 
         if (!cancelled) setReady(true)
@@ -322,7 +371,7 @@ export function useWorkspaceVault({
     return () => {
       cancelled = true
     }
-  }, [applyPayload, caseId, countryCode, dbSyncEnabled, enabled])
+  }, [applyPayload, caseId, countryCode, dbSyncEnabled, enabled, orgVault, orgVaultEnabled])
 
   const showBackupReminder = shouldShowBackupReminder(dbSyncEnabled, Boolean(lastDbSnapshotAt))
 
@@ -346,6 +395,7 @@ export function useWorkspaceVault({
     ready,
     error,
     dbSyncEnabled,
+    orgVaultEnabled,
     isDirty,
     lastSavedAt,
     lastDbSnapshotAt,

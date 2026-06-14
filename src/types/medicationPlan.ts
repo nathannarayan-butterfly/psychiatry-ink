@@ -70,6 +70,12 @@ export interface MedicationIntelligencePlaceholder {
 export interface MedicationEntry {
   id: string
   substance: string
+  /** KB substance id when resolved from Wissensdatenbank autocomplete. */
+  kbDrugId?: string
+  /** Alias for kbDrugId — used by correlation / combination modules. */
+  substanceId?: string
+  /** Trade/brand name when entered via Handelsname autocomplete. */
+  displayBrandName?: string
   formulation: MedicationFormulation
   strength: string
   doseSchedule: DoseSchedule
@@ -89,7 +95,13 @@ export interface MedicationEntry {
   lastChangeType: MedicationChangeType
   history: MedicationChangeEvent[]
   intelligence?: MedicationIntelligencePlaceholder
+  /** Soft-delete audit — entry stays in plan history but is hidden from active lists. */
+  deletedAt?: string
+  deletedBy?: string
+  deleteReason?: string
 }
+
+export type MedicationDeleteReasonCode = 'wrong_entry' | 'duplicate' | 'other'
 
 export interface MedicationPlan {
   id: string

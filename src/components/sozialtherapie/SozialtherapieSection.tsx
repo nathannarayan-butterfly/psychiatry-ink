@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
+import { therapyPageSectionDomId } from '../../data/therapyPageSections'
 import { useSozialtherapie } from '../../hooks/useSozialtherapie'
 import {
   SOZIALTHERAPIE_ROLES,
@@ -65,7 +66,7 @@ export function SozialtherapieSection({ caseId }: SozialtherapieSectionProps) {
   }
 
   return (
-    <section className="therapy-section">
+    <section className="therapy-section" id={therapyPageSectionDomId('sozial')}>
       <header className="therapy-section__header">
         <div className="therapy-section__heading">
           <h3 className="therapy-section__title">{ts(language, 'szSectionTitle')}</h3>
