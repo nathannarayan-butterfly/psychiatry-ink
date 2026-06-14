@@ -19,10 +19,13 @@ import {
   deleteVerlaufEntry,
   loadVerlaufAnnotations,
   loadVerlaufFeed,
+  loadVerlaufSortOrder,
+  saveVerlaufSortOrder,
   updateVerlaufEntry,
   type AnnotationType,
   type VerlaufAnnotation,
   type VerlaufFeedEntry,
+  type VerlaufSortOrder,
 } from '../../utils/verlaufFeed'
 import {
   getActiveTimelineId,
@@ -911,6 +914,14 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
   const [activeSources, setActiveSources] = useState<Set<FeedSource>>(
     () => new Set(ALL_FEED_SOURCES),
   )
+  const [sortOrder, setSortOrder] = useState<VerlaufSortOrder>(() => loadVerlaufSortOrder())
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false)
+  const filterMenuRef = useRef<HTMLDivElement>(null)
+
+  const handleSortChange = useCallback((order: VerlaufSortOrder) => {
+    setSortOrder(order)
+    saveVerlaufSortOrder(order)
+  }, [])
 
   const [entries, setEntries] = useState<VerlaufFeedEntry[]>(() => loadVerlaufFeed(caseId))
   const [annotations, setAnnotations] = useState<VerlaufAnnotation[]>(() =>
@@ -971,6 +982,24 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
       window.removeEventListener(DOKUMENTE_ARCHIVE_CHANGED_EVENT, handleArchiveChanged)
     }
   }, [caseId])
+
+  useEffect(() => {
+    if (!filterMenuOpen) return
+    function handleClick(e: MouseEvent) {
+      if (filterMenuRef.current && !filterMenuRef.current.contains(e.target as Node)) {
+        setFilterMenuOpen(false)
+      }
+    }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setFilterMenuOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    document.addEventListener('keydown', handleKey)
+    return () => {
+      document.removeEventListener('mousedown', handleClick)
+      document.removeEventListener('keydown', handleKey)
+    }
+  }, [filterMenuOpen])
 
   const closeBubble = useCallback(() => {
     setBubble((b) => ({ ...b, visible: false }))
@@ -1175,21 +1204,23 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
       source: event.source,
       event,
     }))
-    const sorted = [...manualItems, ...derivedItems].sort((a, b) => b.ts - a.ts)
+    const sorted = [...manualItems, ...derivedItems].sort((a, b) =>
+      sortOrder === 'oldest' ? a.ts - b.ts : b.ts - a.ts,
+    )
     if (!aufnahmeFeedEvent) return sorted
+    // Aufnahmebefund is the admission anchor and stays pinned to the top in both
+    // sort orders; its header still shows the source document date.
     return [
       {
         kind: 'derived',
         id: aufnahmeFeedEvent.id,
-        // Pin Aufnahmebefund as the first visible Verlauf item; its header still
-        // shows the source document date.
-        ts: Number.MAX_SAFE_INTEGER,
+        ts: sortOrder === 'oldest' ? Number.MIN_SAFE_INTEGER : Number.MAX_SAFE_INTEGER,
         source: 'aufnahmebefund',
         event: aufnahmeFeedEvent,
       },
       ...sorted,
     ]
-  }, [entries, derivedEvents, aufnahmeFeedEvent])
+  }, [entries, derivedEvents, aufnahmeFeedEvent, sortOrder])
 
   // Sources that actually have at least one entry — these become filter chips.
   const availableSources = useMemo<FeedSource[]>(() => {
@@ -1289,28 +1320,98 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
         </div>
       )}
 
-      {availableSources.length > 1 && (
-        <div className="verlauf-filter" role="group" aria-label={t('verlaufFilterLabel')}>
-          <button
-            type="button"
-            className={`verlauf-filter__chip${allActive ? ' verlauf-filter__chip--active' : ''}`}
-            onClick={selectAllSources}
-          >
-            {t('verlaufFilterAll')}
-          </button>
-          {availableSources.map((source) => (
+      {!isEmpty && (
+        <div className="verlauf-toolbar">
+          <div className="verlauf-sort" role="group" aria-label={t('verlaufSortLabel')}>
             <button
-              key={source}
               type="button"
-              className={`verlauf-filter__chip verlauf-filter__chip--${source}${
-                activeSources.has(source) ? ' verlauf-filter__chip--active' : ''
-              }`}
-              aria-pressed={activeSources.has(source)}
-              onClick={() => toggleSource(source)}
+              className={`verlauf-sort__btn${sortOrder === 'newest' ? ' verlauf-sort__btn--active' : ''}`}
+              aria-pressed={sortOrder === 'newest'}
+              onClick={() => handleSortChange('newest')}
             >
-              {sourceChipLabel(source)}
+              {t('verlaufSortNewest')}
             </button>
-          ))}
+            <button
+              type="button"
+              className={`verlauf-sort__btn${sortOrder === 'oldest' ? ' verlauf-sort__btn--active' : ''}`}
+              aria-pressed={sortOrder === 'oldest'}
+              onClick={() => handleSortChange('oldest')}
+            >
+              {t('verlaufSortOldest')}
+            </button>
+          </div>
+
+          {availableSources.length > 1 && (
+            <div className="verlauf-filter-menu" ref={filterMenuRef}>
+              <button
+                type="button"
+                className={`verlauf-filter-menu__trigger${
+                  !allActive ? ' verlauf-filter-menu__trigger--active' : ''
+                }`}
+                aria-haspopup="true"
+                aria-expanded={filterMenuOpen}
+                onClick={() => setFilterMenuOpen((open) => !open)}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+                </svg>
+                {t('verlaufFilterButton')}
+                {!allActive && (
+                  <span className="verlauf-filter-menu__count">
+                    {availableSources.filter((src) => activeSources.has(src)).length}
+                  </span>
+                )}
+              </button>
+
+              {filterMenuOpen && (
+                <div
+                  className="verlauf-filter-menu__panel"
+                  role="group"
+                  aria-label={t('verlaufFilterLabel')}
+                >
+                  <div className="verlauf-filter-menu__header">
+                    <span className="verlauf-filter-menu__title">{t('verlaufFilterLabel')}</span>
+                    <button
+                      type="button"
+                      className="verlauf-filter-menu__reset"
+                      onClick={selectAllSources}
+                      disabled={allActive}
+                    >
+                      {t('verlaufFilterReset')}
+                    </button>
+                  </div>
+                  <div className="verlauf-filter-menu__options">
+                    {availableSources.map((source) => {
+                      const checked = activeSources.has(source)
+                      return (
+                        <button
+                          key={source}
+                          type="button"
+                          className={`verlauf-filter-menu__option verlauf-filter-menu__option--${source}${
+                            checked ? ' verlauf-filter-menu__option--checked' : ''
+                          }`}
+                          role="checkbox"
+                          aria-checked={checked}
+                          onClick={() => toggleSource(source)}
+                        >
+                          <span className="verlauf-filter-menu__check" aria-hidden>
+                            {checked && (
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            )}
+                          </span>
+                          <span className="verlauf-filter-menu__option-label">
+                            {sourceChipLabel(source)}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

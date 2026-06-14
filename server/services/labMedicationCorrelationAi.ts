@@ -1,4 +1,5 @@
-import type { AiModelSpec } from '../modelTierMapping'
+import type { AiUsageContext } from '../ai/types'
+import { recordAiUsageLog } from '../ai/usage/recordAiUsageLog'
 import {
   clinicalLanguagePromptInstruction,
   type ClinicalLanguage,
@@ -62,8 +63,11 @@ async function callProviderLlm(params: {
   systemPrompt: string
   userPrompt: string
   maxTokens?: number
-}): Promise<{ text: string; model: AiModelSpec }> {
+  usageContext?: AiUsageContext
+}): Promise<{ text: string; model: { provider: LabCorrelationAiProvider; modelId: string; label: string } }> {
   const maxTokens = params.maxTokens ?? 1800
+  const inputText = `${params.systemPrompt}\n${params.userPrompt}`
+  const started = Date.now()
 
   if (params.provider === 'deepseek') {
     const apiKey = process.env.DEEPSEEK_API_KEY?.trim()
@@ -90,10 +94,27 @@ async function callProviderLlm(params: {
       throw new Error(`DeepSeek failed (${response.status}): ${detail.slice(0, 280)}`)
     }
     const data = (await response.json()) as {
+      id?: string
+      usage?: unknown
       choices?: Array<{ message?: { content?: string } }>
     }
     const text = data.choices?.[0]?.message?.content?.trim()
     if (!text) throw new Error('DeepSeek returned empty JSON response')
+    const latencyMs = Date.now() - started
+    if (params.usageContext) {
+      void recordAiUsageLog({
+        ...params.usageContext,
+        provider: 'deepseek',
+        model: DEEPSEEK_MODEL,
+        rawUsage: data.usage,
+        inputText,
+        outputText: text,
+        requestId: data.id ?? null,
+        latencyMs,
+        success: true,
+      })
+    }
+
     return {
       text,
       model: { provider: 'deepseek', modelId: DEEPSEEK_MODEL, label: `DeepSeek (${DEEPSEEK_MODEL})` },
@@ -124,10 +145,27 @@ async function callProviderLlm(params: {
     throw new Error(`OpenAI failed (${response.status}): ${detail.slice(0, 280)}`)
   }
   const data = (await response.json()) as {
+    id?: string
+    usage?: unknown
     choices?: Array<{ message?: { content?: string } }>
   }
   const text = data.choices?.[0]?.message?.content?.trim()
   if (!text) throw new Error('OpenAI returned empty JSON response')
+  const latencyMs = Date.now() - started
+  if (params.usageContext) {
+    void recordAiUsageLog({
+      ...params.usageContext,
+      provider: 'openai',
+      model: OPENAI_MODEL,
+      rawUsage: data.usage,
+      inputText,
+      outputText: text,
+      requestId: data.id ?? null,
+      latencyMs,
+      success: true,
+      metadata: { ...params.usageContext.metadata, openaiFallback: true },
+    })
+  }
   return {
     text,
     model: { provider: 'openai', modelId: OPENAI_MODEL, label: `OpenAI (${OPENAI_MODEL})` },
@@ -367,6 +405,7 @@ export async function assessLabCorrelationsBatchWithAi(params: {
       systemPrompt,
       userPrompt,
       maxTokens: 4000,
+      usageContext: { featureKey: 'lab_medication_correlation', requestKind: 'chat', metadata: { batch: true } },
     })
     const parsed = parseStructuredJson(text)
     if (!parsed || typeof parsed !== 'object') {
@@ -429,7 +468,13 @@ export async function assessLabCorrelationWithAi(params: {
   })
 
   try {
-    const { text } = await callProviderLlm({ provider, systemPrompt, userPrompt, maxTokens: 2000 })
+    const { text } = await callProviderLlm({
+      provider,
+      systemPrompt,
+      userPrompt,
+      maxTokens: 2000,
+      usageContext: { featureKey: 'lab_medication_correlation', metadata: { provider } },
+    })
     const parsed = parseStructuredJson(text)
     return parseAiResult(parsed, params.substanceId, params.med.substance, params.lab.normalizedParameter)
   } catch (error) {

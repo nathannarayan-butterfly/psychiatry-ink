@@ -3,7 +3,7 @@ import {
   clinicalLanguagePromptInstruction,
   type ClinicalLanguage,
 } from '../utils/resolveClinicalLanguage'
-import { callLlm } from './llmProvider'
+import { callLlm, llmResultModel } from './llmProvider'
 import { parseStructuredJson } from '../utils/parseStructuredJson'
 import type { PrepAiCheckPreparation } from '../../src/types/prepAiCheck'
 import type { PrescribingCountryCode } from '../../src/types/knowledgeBase'
@@ -115,6 +115,10 @@ export async function assessPreparationAvailabilityWithAi(params: {
     userPrompt,
     jsonResponse: true,
     maxTokens: 4000,
+    usageContext: {
+      featureKey: 'prep_ai_check',
+      metadata: { country },
+    },
   })
 
   const parsed = parseStructuredJson(result.text) as Record<string, unknown> | null
@@ -127,6 +131,6 @@ export async function assessPreparationAvailabilityWithAi(params: {
     preparations,
     disclaimer,
     country,
-    model: result.model,
+    model: llmResultModel(result),
   }
 }

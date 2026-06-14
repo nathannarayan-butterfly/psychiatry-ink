@@ -8,7 +8,7 @@ import type {
   CreateCalendarItemInput,
 } from '../../types/calendar'
 import { CALENDAR_ITEM_TYPES } from '../../types/calendar'
-import { CALENDAR_PRIORITY_LABELS, CALENDAR_TYPE_LABELS } from '../../utils/calendarLabels'
+import { CALENDAR_PRIORITY_LABELS, CALENDAR_TYPE_LABELS, typeAccentClass } from '../../utils/calendarLabels'
 
 interface CalendarItemModalProps {
   open: boolean
@@ -103,7 +103,7 @@ export function CalendarItemModal({
   return (
     <div className="calendar-modal-backdrop" role="presentation" onClick={onClose}>
       <div
-        className="calendar-modal"
+        className={`calendar-modal ${typeAccentClass(type)}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="calendar-modal-title"

@@ -27,6 +27,7 @@ import { combinationCheckRouter } from './routes/combinationCheck'
 import { labMedicationCorrelationRouter } from './routes/labMedicationCorrelation'
 import { prepAiCheckRouter } from './routes/prepAiCheck'
 import { demoPatientRouter } from './routes/demoPatient'
+import { aiBudgetRouter, aiUsageRouter } from './routes/aiUsage'
 import { liveKitMissingEnvVars } from './services/livekitVoice'
 import { isEnterpriseOrgHierarchyEnabled } from './utils/featureFlags'
 
@@ -72,6 +73,8 @@ app.use('/api/combination-check', combinationCheckRouter)
 app.use('/api/lab-med-correlation', labMedicationCorrelationRouter)
 app.use('/api/medication/prep-ai-check', prepAiCheckRouter)
 app.use('/api/demo-patient', demoPatientRouter)
+app.use('/api/ai-usage', aiUsageRouter)
+app.use('/api/ai-budget', aiBudgetRouter)
 if (isEnterpriseOrgHierarchyEnabled()) {
   app.use('/api/enterprise', enterpriseRouter)
 }

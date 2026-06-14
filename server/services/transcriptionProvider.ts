@@ -10,15 +10,36 @@ function extensionForMimeType(mimeType: string): string {
   return 'webm'
 }
 
+/** Rough duration estimate from buffer size when provider omits duration. */
+function estimateAudioSeconds(buffer: Buffer, mimeType: string): number {
+  if (mimeType.includes('webm') || mimeType.includes('ogg')) {
+    return Math.max(1, buffer.length / 16_000)
+  }
+  return Math.max(1, buffer.length / 32_000)
+}
+
 export async function transcribeAudioBuffer(
   audioBuffer: Buffer,
   mimeType = 'audio/webm',
-): Promise<{ text: string; model: string }> {
+  options?: {
+    userId?: string | null
+    organisationId?: string | null
+    caseId?: string | null
+  },
+): Promise<{
+  text: string
+  model: string
+  provider: string
+  audioSeconds: number
+  requestId: string | null
+  latencyMs: number
+}> {
   const apiKey = process.env.OPENAI_API_KEY?.trim()
   if (!apiKey) {
     throw new Error('Set OPENAI_API_KEY in .env for dictation. Restart dev:server after changes.')
   }
 
+  const started = Date.now()
   const extension = extensionForMimeType(mimeType)
   const blob = new Blob([audioBuffer], { type: mimeType })
   const formData = new FormData()
@@ -38,9 +59,35 @@ export async function transcribeAudioBuffer(
     throw new Error(`Transcription failed (${response.status}): ${detail.slice(0, 240)}`)
   }
 
-  const data = (await response.json()) as { text?: string }
+  const data = (await response.json()) as { text?: string; duration?: number }
   const text = data.text?.trim()
   if (!text) throw new Error('Transcription returned empty text')
 
-  return { text, model: OPENAI_TRANSCRIBE_MODEL }
+  const audioSeconds = data.duration ?? estimateAudioSeconds(audioBuffer, mimeType)
+  const latencyMs = Date.now() - started
+
+  if (options?.userId || options?.organisationId) {
+    const { recordAiUsageLog } = await import('../ai/usage/recordAiUsageLog')
+    void recordAiUsageLog({
+      userId: options.userId,
+      organisationId: options.organisationId,
+      caseId: options.caseId,
+      featureKey: 'transcription',
+      provider: 'openai',
+      model: OPENAI_TRANSCRIBE_MODEL,
+      requestKind: 'transcription',
+      audioSeconds,
+      success: true,
+      latencyMs,
+    })
+  }
+
+  return {
+    text,
+    model: OPENAI_TRANSCRIBE_MODEL,
+    provider: 'openai',
+    audioSeconds,
+    requestId: null,
+    latencyMs,
+  }
 }

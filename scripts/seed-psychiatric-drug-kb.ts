@@ -174,6 +174,11 @@ async function seedOneDrug(
         }),
         provider: opts.provider,
         temperature: 0.15,
+        usageContext: {
+          featureKey: 'kb_seed',
+          requestKind: 'batch',
+          metadata: { script: 'seed-psychiatric-drug-kb', genericName: entry.genericName },
+        },
       })
 
       let parsed: unknown
@@ -183,8 +188,8 @@ async function seedOneDrug(
         await recordAiGeneration({
           substanceId: existingId,
           genericName: entry.genericName,
-          provider: llm.model.provider,
-          model: llm.model.modelId,
+          provider: llm.modelSpec.provider,
+          model: llm.modelSpec.modelId,
           status: 'failed_validation',
           rawResponse: llm.text,
           validationErrors: { parse: String(parseErr) },
@@ -206,8 +211,8 @@ async function seedOneDrug(
         await recordAiGeneration({
           substanceId: existingId,
           genericName: entry.genericName,
-          provider: llm.model.provider,
-          model: llm.model.modelId,
+          provider: llm.modelSpec.provider,
+          model: llm.modelSpec.modelId,
           status: 'failed_validation',
           rawResponse: parsed,
           validationErrors: validated.error.flatten(),
@@ -239,8 +244,8 @@ async function seedOneDrug(
       await recordAiGeneration({
         substanceId,
         genericName: entry.genericName,
-        provider: llm.model.provider,
-        model: llm.model.modelId,
+        provider: llm.modelSpec.provider,
+        model: llm.modelSpec.modelId,
         status: 'success',
         rawResponse: parsed,
         validatedPayload: draft,
@@ -341,6 +346,10 @@ async function main(): Promise<void> {
     dryRun,
     failed: failures.length,
     failures,
+    usageSummary: {
+      note: 'Token/cost totals are persisted to ai_usage_logs when Supabase is configured',
+      featureKey: 'kb_seed',
+    },
   }
 
   const reportDir = join(process.cwd(), 'scripts', 'reports')

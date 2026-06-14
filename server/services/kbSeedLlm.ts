@@ -2,11 +2,54 @@
  * LLM helper for KB seed script — low temperature, strict JSON.
  */
 import type { AiModelSpec } from '../modelTierMapping'
+import type { AiUsageContext, LlmCallResult } from '../ai/types'
+import { normalizeAiUsage } from '../ai/usage/normalizeUsage'
+import { recordAiUsageLog } from '../ai/usage/recordAiUsageLog'
 
 const DEEPSEEK_MODEL = process.env.DEEPSEEK_FAST_MODEL ?? 'deepseek-v4-flash'
 
 function deepseekBaseUrl(): string {
   return process.env.DEEPSEEK_BASE_URL?.replace(/\/$/, '') ?? 'https://api.deepseek.com/v1'
+}
+
+async function postChat(params: {
+  baseUrl: string
+  apiKey: string
+  model: string
+  systemPrompt: string
+  userPrompt: string
+  maxTokens: number
+  temperature: number
+}): Promise<{ text: string; rawUsage: unknown; requestId: string | null }> {
+  const response = await fetch(`${params.baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${params.apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: params.model,
+      messages: [
+        { role: 'system', content: params.systemPrompt },
+        { role: 'user', content: params.userPrompt },
+      ],
+      temperature: params.temperature,
+      max_tokens: params.maxTokens,
+      response_format: { type: 'json_object' },
+    }),
+  })
+  if (!response.ok) {
+    const detail = await response.text().catch(() => '')
+    throw new Error(`LLM failed (${response.status}): ${detail.slice(0, 300)}`)
+  }
+  const data = (await response.json()) as {
+    id?: string
+    usage?: unknown
+    choices?: Array<{ message?: { content?: string } }>
+  }
+  const text = data.choices?.[0]?.message?.content?.trim()
+  if (!text) throw new Error('LLM returned empty JSON response')
+  return { text, rawUsage: data.usage ?? null, requestId: data.id ?? null }
 }
 
 export async function callKbSeedLlm(params: {
@@ -15,83 +58,132 @@ export async function callKbSeedLlm(params: {
   provider: 'deepseek' | 'openai'
   maxTokens?: number
   temperature?: number
-}): Promise<{ text: string; model: AiModelSpec; durationMs: number }> {
+  usageContext?: AiUsageContext
+}): Promise<LlmCallResult & { modelSpec: AiModelSpec; durationMs: number }> {
   const start = Date.now()
   const temperature = params.temperature ?? 0.15
   const maxTokens = params.maxTokens ?? 12_000
+  const inputText = `${params.systemPrompt}\n${params.userPrompt}`
 
-  if (params.provider === 'deepseek') {
-    const apiKey = process.env.DEEPSEEK_API_KEY?.trim()
-    if (!apiKey) {
-      throw new Error('DEEPSEEK_API_KEY missing for KB seed')
-    }
-    const response = await fetch(`${deepseekBaseUrl()}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+  try {
+    if (params.provider === 'deepseek') {
+      const apiKey = process.env.DEEPSEEK_API_KEY?.trim()
+      if (!apiKey) throw new Error('DEEPSEEK_API_KEY missing for KB seed')
+      const result = await postChat({
+        baseUrl: deepseekBaseUrl(),
+        apiKey,
         model: DEEPSEEK_MODEL,
-        messages: [
-          { role: 'system', content: params.systemPrompt },
-          { role: 'user', content: params.userPrompt },
-        ],
+        systemPrompt: params.systemPrompt,
+        userPrompt: params.userPrompt,
+        maxTokens,
         temperature,
-        max_tokens: maxTokens,
-        response_format: { type: 'json_object' },
-      }),
-    })
-    if (!response.ok) {
-      const detail = await response.text().catch(() => '')
-      throw new Error(`DeepSeek failed (${response.status}): ${detail.slice(0, 300)}`)
+      })
+      const durationMs = Date.now() - start
+      const modelSpec: AiModelSpec = {
+        provider: 'deepseek',
+        modelId: DEEPSEEK_MODEL,
+        label: `DeepSeek (${DEEPSEEK_MODEL})`,
+      }
+      const usage = normalizeAiUsage({
+        provider: 'deepseek',
+        model: DEEPSEEK_MODEL,
+        rawUsage: result.rawUsage,
+        inputText,
+        outputText: result.text,
+      })
+      if (params.usageContext) {
+        void recordAiUsageLog({
+          ...params.usageContext,
+          provider: 'deepseek',
+          model: DEEPSEEK_MODEL,
+          requestKind: params.usageContext.requestKind ?? 'batch',
+          rawUsage: result.rawUsage,
+          inputText,
+          outputText: result.text,
+          requestId: result.requestId,
+          latencyMs: durationMs,
+          success: true,
+        })
+      }
+      return {
+        text: result.text,
+        provider: 'deepseek',
+        model: DEEPSEEK_MODEL,
+        usage,
+        requestId: result.requestId,
+        latencyMs: durationMs,
+        modelSpec,
+        durationMs,
+      }
     }
-    const data = (await response.json()) as {
-      choices?: Array<{ message?: { content?: string } }>
-    }
-    const text = data.choices?.[0]?.message?.content?.trim()
-    if (!text) throw new Error('DeepSeek returned empty JSON response')
-    return {
-      text,
-      model: { provider: 'deepseek', modelId: DEEPSEEK_MODEL, label: `DeepSeek (${DEEPSEEK_MODEL})` },
-      durationMs: Date.now() - start,
-    }
-  }
 
-  const apiKey = process.env.OPENAI_API_KEY?.trim()
-  if (!apiKey) throw new Error('OPENAI_API_KEY missing for KB seed')
-  const model = process.env.OPENAI_THOROUGH_MODEL ?? 'gpt-4.1'
-  const baseUrl = process.env.OPENAI_BASE_URL?.replace(/\/$/, '') ?? 'https://api.openai.com/v1'
-  const response = await fetch(`${baseUrl}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: 'system', content: params.systemPrompt },
-        { role: 'user', content: params.userPrompt },
-      ],
+    const apiKey = process.env.OPENAI_API_KEY?.trim()
+    if (!apiKey) throw new Error('OPENAI_API_KEY missing for KB seed')
+    const modelId = process.env.OPENAI_THOROUGH_MODEL ?? 'gpt-4.1'
+    const baseUrl = process.env.OPENAI_BASE_URL?.replace(/\/$/, '') ?? 'https://api.openai.com/v1'
+    const result = await postChat({
+      baseUrl,
+      apiKey,
+      model: modelId,
+      systemPrompt: params.systemPrompt,
+      userPrompt: params.userPrompt,
+      maxTokens,
       temperature,
-      max_tokens: maxTokens,
-      response_format: { type: 'json_object' },
-    }),
-  })
-  if (!response.ok) {
-    const detail = await response.text().catch(() => '')
-    throw new Error(`OpenAI failed (${response.status}): ${detail.slice(0, 300)}`)
-  }
-  const data = (await response.json()) as {
-    choices?: Array<{ message?: { content?: string } }>
-  }
-  const text = data.choices?.[0]?.message?.content?.trim()
-  if (!text) throw new Error('OpenAI returned empty JSON response')
-  return {
-    text,
-    model: { provider: 'openai', modelId: model, label: `OpenAI (${model})` },
-    durationMs: Date.now() - start,
+    })
+    const durationMs = Date.now() - start
+    const modelSpec: AiModelSpec = {
+      provider: 'openai',
+      modelId,
+      label: `OpenAI (${modelId})`,
+    }
+    const usage = normalizeAiUsage({
+      provider: 'openai',
+      model: modelId,
+      rawUsage: result.rawUsage,
+      inputText,
+      outputText: result.text,
+    })
+    if (params.usageContext) {
+      void recordAiUsageLog({
+        ...params.usageContext,
+        provider: 'openai',
+        model: modelId,
+        requestKind: params.usageContext.requestKind ?? 'batch',
+        rawUsage: result.rawUsage,
+        inputText,
+        outputText: result.text,
+        requestId: result.requestId,
+        latencyMs: durationMs,
+        success: true,
+      })
+    }
+    return {
+      text: result.text,
+      provider: 'openai',
+      model: modelId,
+      usage,
+      requestId: result.requestId,
+      latencyMs: durationMs,
+      modelSpec,
+      durationMs,
+    }
+  } catch (error) {
+    const durationMs = Date.now() - start
+    const provider = params.provider
+    const modelId = provider === 'deepseek' ? DEEPSEEK_MODEL : (process.env.OPENAI_THOROUGH_MODEL ?? 'gpt-4.1')
+    if (params.usageContext) {
+      void recordAiUsageLog({
+        ...params.usageContext,
+        provider,
+        model: modelId,
+        requestKind: params.usageContext.requestKind ?? 'batch',
+        inputText,
+        latencyMs: durationMs,
+        success: false,
+        errorCode: 'kb_seed_error',
+      })
+    }
+    throw error
   }
 }
 

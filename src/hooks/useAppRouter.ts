@@ -30,6 +30,7 @@ export type AppRoute =
   | { view: 'templates' }
   | { view: 'team-settings' }
   | { view: 'integrations' }
+  | { view: 'budget' }
   | { view: 'calendar' }
   | { view: 'team-invite'; token: string }
   | { view: 'case'; caseId: string; page?: NotionPageId; initialView?: 'overview'; appointmentId?: string; discussMode?: boolean; discussId?: string; konsilMode?: boolean; konsilId?: string }
@@ -56,6 +57,7 @@ export function isAppRoute(route: AppRoute): boolean {
     route.view === 'templates' ||
     route.view === 'team-settings' ||
     route.view === 'integrations' ||
+    route.view === 'budget' ||
     route.view === 'calendar' ||
     route.view === 'team-invite' ||
     route.view === 'discuss-invite' ||
@@ -82,6 +84,7 @@ function parsePathname(pathname: string, search = ''): AppRoute {
   if (path === '/dashboard/templates') return { view: 'templates' }
   if (path === '/dashboard/team' || path === '/settings/team') return { view: 'team-settings' }
   if (path === '/dashboard/integrations') return { view: 'integrations' }
+  if (path === '/dashboard/budget' || path === '/settings/budget') return { view: 'budget' }
   if (path === '/dashboard/calendar') return { view: 'calendar' }
   if (ENTERPRISE_ROUTES_ENABLED) {
     if (path === '/dashboard/enterprise') return { view: 'enterprise' }
@@ -144,6 +147,7 @@ export function routeToPath(route: AppRoute): string {
   if (route.view === 'templates') return '/dashboard/templates'
   if (route.view === 'team-settings') return '/dashboard/team'
   if (route.view === 'integrations') return '/dashboard/integrations'
+  if (route.view === 'budget') return '/dashboard/budget'
   if (route.view === 'calendar') return '/dashboard/calendar'
   if (ENTERPRISE_ROUTES_ENABLED) {
     if (route.view === 'enterprise') return '/dashboard/enterprise'

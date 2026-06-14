@@ -3,7 +3,8 @@ import { Router as createRouter } from 'express'
 import type { AiModelTier } from '../modelTierMapping'
 import { resolveAccountId } from '../middleware/auth'
 import { recordUserAuditLog } from '../services/auditLog'
-import { callLlm } from '../services/llmProvider'
+import { callLlm, llmResultModel } from '../services/llmProvider'
+import { resolveUsageContextFromRequest } from '../ai/usage/resolveUsageContext'
 import { assertAiQuota, recordAiGenerationUsed } from '../utils/caseAiAccessGuard'
 import {
   clinicalLanguagePromptInstruction,
@@ -547,7 +548,13 @@ discussCaseRouter.post('/:id/ask-ai', async (req: Request, res: Response) => {
       `Question: ${question}`,
     ].join('\n')
 
-    const result = await callLlm({ tier, systemPrompt, userPrompt })
+    const usageContext = await resolveUsageContextFromRequest(req, session.userId, {
+      caseId: session.discussion.caseId,
+      featureKey: 'discuss_case_ai',
+      metadata: { route: 'discuss-case-ask-ai', tier, discussionId: session.discussion.id },
+    })
+
+    const result = await callLlm({ tier, systemPrompt, userPrompt, usageContext })
 
     await recordAiRequest({
       discussionId: session.discussion.id,
@@ -563,7 +570,7 @@ discussCaseRouter.post('/:id/ask-ai', async (req: Request, res: Response) => {
 
     res.json({
       answer: result.text.trim(),
-      model: result.model,
+      model: llmResultModel(result),
       draft: true,
     })
   } catch (error) {

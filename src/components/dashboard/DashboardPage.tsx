@@ -62,6 +62,7 @@ import type { NewPatientData } from './NewPatientDialog'
 import { NewCaseWorkflowDialog } from './NewCaseWorkflowDialog'
 import { PatientCaseCard } from './PatientCaseCard'
 import { DaySchedulePanel } from '../calendar/DaySchedulePanel'
+import { TemplateWorkspaceHost } from '../templates/TemplateWorkspaceHost'
 
 const CREDITS_DEFAULT_MAX = 500
 const DOCUMENTATION_DAY_GOAL_SECONDS = 8 * 60 * 60
@@ -94,6 +95,7 @@ interface DashboardPageProps {
   onOpenTemplates?: () => void
   onOpenTeamSettings?: () => void
   onOpenIntegrations?: () => void
+  onOpenBudget?: () => void
   onOpenCalendar?: () => void
   onOpenEnterprise?: () => void
 }
@@ -146,6 +148,7 @@ export function DashboardPage({
   onOpenTemplates,
   onOpenTeamSettings,
   onOpenIntegrations,
+  onOpenBudget,
   onOpenCalendar,
   onOpenEnterprise,
 }: DashboardPageProps) {
@@ -178,6 +181,7 @@ export function DashboardPage({
   const { todayTotalLabel, todayTotalSeconds } = useWorkspaceSession()
   const [creditsDialogOpen, setCreditsDialogOpen] = useState(false)
   const [showNewPatientDialog, setShowNewPatientDialog] = useState(false)
+  const [showGeneralDocumentation, setShowGeneralDocumentation] = useState(false)
   const [workflowCaseId, setWorkflowCaseId] = useState<string | null>(null)
   const [patientSearch, setPatientSearch] = useState('')
   const [patientViewMode, setPatientViewMode] = useState<PatientViewMode>('cards')
@@ -412,7 +416,7 @@ export function DashboardPage({
           <button
             type="button"
             className="dashboard-quick-action"
-            onClick={() => onOpenCase(DEFAULT_CASE_ID)}
+            onClick={() => setShowGeneralDocumentation(true)}
           >
             <span className="dashboard-quick-action__icon-wrap" aria-hidden>
               <PenLine className="h-4 w-4" strokeWidth={1.75} />
@@ -753,6 +757,12 @@ export function DashboardPage({
               Integrationen
             </button>
           ) : null}
+          {onOpenBudget ? (
+            <button type="button" className="dashboard-settings-chip" onClick={onOpenBudget}>
+              <Sparkles className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
+              KI-Budget
+            </button>
+          ) : null}
           {onOpenCalendar ? (
             <button type="button" className="dashboard-settings-chip" onClick={onOpenCalendar}>
               <CalendarDays className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
@@ -796,6 +806,14 @@ export function DashboardPage({
         <NewPatientDialog
           onSubmit={handleNewPatientCreated}
           onCancel={() => setShowNewPatientDialog(false)}
+        />
+      ) : null}
+
+      {showGeneralDocumentation ? (
+        <TemplateWorkspaceHost
+          context="emptyWorkspace"
+          saveToPatientDocuments={false}
+          onClose={() => setShowGeneralDocumentation(false)}
         />
       ) : null}
 

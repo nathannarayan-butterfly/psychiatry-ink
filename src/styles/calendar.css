@@ -171,9 +171,11 @@
   grid-template-columns: auto auto 1fr auto auto;
   gap: 0.5rem 0.75rem;
   align-items: center;
-  padding: 0.5rem 0.65rem;
+  padding: 0.5rem 0.65rem 0.5rem 0.6rem;
   border: 1px solid color-mix(in srgb, var(--text-main, #1a1a1a) 8%, transparent);
+  border-left: 3px solid var(--cal-type-color, var(--accent, #8a5a2b));
   border-radius: 0.375rem;
+  background: color-mix(in srgb, var(--cal-type-color, var(--accent, #8a5a2b)) 4%, #fff);
   font-size: 0.8125rem;
 }
 
@@ -237,9 +239,11 @@
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.2rem 0.25rem;
+  padding: 0.2rem 0.3rem;
   font-size: 0.6875rem;
-  border-radius: 0.2rem;
+  border-radius: 0.25rem;
+  border-left: 2.5px solid var(--cal-type-color, var(--accent, #8a5a2b));
+  background: color-mix(in srgb, var(--cal-type-color, var(--accent, #8a5a2b)) 9%, #fff);
 }
 
 .calendar-week-chip__time {
@@ -282,7 +286,11 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 0.1rem;
+  margin-bottom: 0.15rem;
+  padding: 0.05rem 0.3rem;
+  border-left: 2px solid var(--cal-type-color, var(--accent, #8a5a2b));
+  border-radius: 0.2rem;
+  background: color-mix(in srgb, var(--cal-type-color, var(--accent, #8a5a2b)) 10%, #fff);
 }
 
 .calendar-month-cell__more {
@@ -426,10 +434,12 @@
   grid-template-columns: auto auto 1fr auto auto;
   gap: 0.35rem 0.65rem;
   align-items: center;
-  padding: 0.45rem 0.5rem;
+  padding: 0.45rem 0.5rem 0.45rem 0.45rem;
   font-size: 0.8125rem;
   border-radius: 0.3rem;
   border: 1px solid color-mix(in srgb, var(--text-main, #1a1a1a) 6%, transparent);
+  border-left: 3px solid var(--cal-type-color, var(--accent, #8a5a2b));
+  background: color-mix(in srgb, var(--cal-type-color, var(--accent, #8a5a2b)) 4%, #fff);
 }
 
 .day-schedule-row--completed {
@@ -464,8 +474,9 @@
   gap: 0.5rem 1rem;
   padding: 0.5rem 0.85rem;
   margin: 0 0 0.5rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--accent, #4a7c59) 25%, transparent);
-  background: color-mix(in srgb, var(--accent, #4a7c59) 6%, #fff);
+  border-left: 3px solid var(--cal-type-color, var(--accent, #8a5a2b));
+  border-bottom: 1px solid color-mix(in srgb, var(--cal-type-color, var(--accent, #8a5a2b)) 28%, transparent);
+  background: color-mix(in srgb, var(--cal-type-color, var(--accent, #8a5a2b)) 7%, #fff);
   font-size: 0.8125rem;
 }
 
@@ -507,4 +518,51 @@
 
 .dashboard-settings-chip--calendar {
   margin-top: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Appointment category colour coding                                  */
+/* A muted, clinical palette layered onto the existing concept via thin */
+/* left-border accents, soft background tints and category badges. Each  */
+/* type sets `--cal-type-color`; status dots still convey status.        */
+/* ------------------------------------------------------------------ */
+.calendar-type--consultation { --cal-type-color: #3a72a6; }          /* Konsultation — clinical blue */
+.calendar-type--follow_up { --cal-type-color: #3f7d57; }             /* Folgetermin — green */
+.calendar-type--lab_test { --cal-type-color: #7a57a6; }              /* Laboruntersuchung — violet */
+.calendar-type--phone_call { --cal-type-color: #b07d2b; }            /* Telefonat — amber */
+.calendar-type--video_call { --cal-type-color: #2f8a8a; }            /* Videosprechstunde — teal */
+.calendar-type--medication_review { --cal-type-color: #a8552e; }     /* Medikationsreview — terracotta */
+.calendar-type--document_task { --cal-type-color: #5a6b82; }         /* Dokumentenaufgabe — slate */
+.calendar-type--external_consultation { --cal-type-color: #4f5aa6; } /* Externes Konsil — indigo */
+.calendar-type--other { --cal-type-color: #7a736b; }                 /* Sonstiges — warm grey */
+
+/* Category badge: tinted pill + colour dot used for the type label. */
+.calendar-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 0.7rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--cal-type-color, var(--accent, #8a5a2b)) 72%, #1a1a1a);
+  background: color-mix(in srgb, var(--cal-type-color, var(--accent, #8a5a2b)) 12%, #fff);
+  border: 1px solid color-mix(in srgb, var(--cal-type-color, var(--accent, #8a5a2b)) 22%, transparent);
+}
+
+.calendar-type-badge::before {
+  content: '';
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: var(--cal-type-color, var(--accent, #8a5a2b));
+  flex-shrink: 0;
+}
+
+/* Modal: thin category accent on the heading reflects the selected type. */
+.calendar-modal__title {
+  padding-left: 0.6rem;
+  border-left: 3px solid var(--cal-type-color, var(--accent, #8a5a2b));
 }

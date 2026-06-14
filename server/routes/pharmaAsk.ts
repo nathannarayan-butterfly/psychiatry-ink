@@ -2,7 +2,8 @@ import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
 import type { AiModelTier } from '../modelTierMapping'
 import { resolveAccountId } from '../middleware/auth'
-import { callLlm } from '../services/llmProvider'
+import { callLlm, llmResultModel } from '../services/llmProvider'
+import { resolveUsageContextFromRequest } from '../ai/usage/resolveUsageContext'
 import { assertAiGenerationAllowed, recordAiGenerationUsed } from '../utils/caseAiAccessGuard'
 
 export interface PharmaAskRequestBody {
@@ -80,9 +81,18 @@ pharmaAskRouter.post('/', async (req: Request, res: Response) => {
       .filter(Boolean)
       .join('\n')
 
-    const result = await callLlm({ tier, systemPrompt, userPrompt })
-
     const userId = resolveAccountId(req)
+    const usageContext =
+      userId && userId !== 'default'
+        ? await resolveUsageContextFromRequest(req, userId, {
+            caseId: typeof body.caseId === 'string' ? body.caseId.trim() || null : null,
+            featureKey: 'pharma_ask',
+            metadata: { route: 'pharma-ask', tier, medicationName },
+          })
+        : undefined
+
+    const result = await callLlm({ tier, systemPrompt, userPrompt, usageContext })
+
     if (userId && userId !== 'default') {
       void recordAiGenerationUsed(req, userId, {
         caseId: typeof body.caseId === 'string' ? body.caseId.trim() || null : null,
@@ -92,7 +102,7 @@ pharmaAskRouter.post('/', async (req: Request, res: Response) => {
 
     const responseBody: PharmaAskResponseBody = {
       answer: result.text.trim(),
-      model: result.model,
+      model: llmResultModel(result),
     }
     res.json(responseBody)
   } catch (error) {

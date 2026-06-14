@@ -2,7 +2,8 @@ import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
 import type { AiModelTier } from '../modelTierMapping'
 import { resolveAccountId } from '../middleware/auth'
-import { callLlm } from '../services/llmProvider'
+import { callLlm, llmResultModel } from '../services/llmProvider'
+import { resolveUsageContextFromRequest } from '../ai/usage/resolveUsageContext'
 import { assertAiGenerationAllowed, recordAiGenerationUsed } from '../utils/caseAiAccessGuard'
 
 /**
@@ -911,12 +912,28 @@ pharmaGenerateRouter.post('/', async (req: Request, res: Response) => {
 
     if (!(await assertAiGenerationAllowed(req, res, body.caseId))) return
 
+    const userId = resolveAccountId(req)
+    const usageContext =
+      userId && userId !== 'default'
+        ? await resolveUsageContextFromRequest(req, userId, {
+            caseId: typeof body.caseId === 'string' ? body.caseId.trim() || null : null,
+            featureKey: 'pharma_generate',
+            metadata: {
+              route: 'pharma-generate',
+              tier,
+              genericName: normalizedBody.genericName,
+              sections: effectiveSections.length,
+            },
+          })
+        : undefined
+
     const result = await callLlm({
       tier,
       systemPrompt: buildSystemPrompt(),
       userPrompt: buildUserPrompt(normalizedBody, effectiveSections, includeMarketAvailability || marketAvailabilityOnly),
       maxTokens: effectiveSections.length === 1 || marketAvailabilityOnly ? SINGLE_SECTION_MAX_TOKENS : WHOLE_DRUG_MAX_TOKENS,
       jsonResponse: true,
+      usageContext,
     })
 
     const parsed = parseModelJson(result.text)
@@ -926,9 +943,9 @@ pharmaGenerateRouter.post('/', async (req: Request, res: Response) => {
       return
     }
 
-    const userId = resolveAccountId(req)
-    if (userId && userId !== 'default') {
-      void recordAiGenerationUsed(req, userId, {
+    const userIdAfter = resolveAccountId(req)
+    if (userIdAfter && userIdAfter !== 'default') {
+      void recordAiGenerationUsed(req, userIdAfter, {
         caseId: typeof body.caseId === 'string' ? body.caseId.trim() || null : null,
         metadata: {
           route: 'pharma-generate',
@@ -985,7 +1002,7 @@ pharmaGenerateRouter.post('/', async (req: Request, res: Response) => {
       ...(structured ? { structured } : {}),
       references,
       ...(marketAvailability ? { marketAvailability } : {}),
-      model: result.model,
+      model: llmResultModel(result),
     }
     res.json(responseBody)
   } catch (error) {

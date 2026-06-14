@@ -11,6 +11,26 @@ import { scheduleVerlaufFeedImprint } from './clinicalImprint'
 
 const VERLAUF_FEED_KEY = 'psychiatry-ink:verlaufFeed'
 const VERLAUF_ANNOTATIONS_KEY = 'psychiatry-ink:verlaufAnnotations'
+const VERLAUF_SORT_ORDER_KEY = 'psychiatry-ink:verlaufSortOrder'
+
+/** Feed ordering preference. `newest` (default) matches the historical behavior. */
+export type VerlaufSortOrder = 'newest' | 'oldest'
+
+export function loadVerlaufSortOrder(): VerlaufSortOrder {
+  try {
+    return localStorage.getItem(VERLAUF_SORT_ORDER_KEY) === 'oldest' ? 'oldest' : 'newest'
+  } catch {
+    return 'newest'
+  }
+}
+
+export function saveVerlaufSortOrder(order: VerlaufSortOrder): void {
+  try {
+    localStorage.setItem(VERLAUF_SORT_ORDER_KEY, order)
+  } catch {
+    // ignore storage quota errors
+  }
+}
 
 import type { TherapyEntryAttribution } from '../types/therapy'
 

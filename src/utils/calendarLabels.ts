@@ -78,6 +78,16 @@ export function isSameDay(a: Date, b: Date): boolean {
   )
 }
 
+/**
+ * Maps an appointment type to a CSS class that exposes a per-category
+ * `--cal-type-color` token (defined in calendar.css). Used to drive subtle
+ * colour accents (left borders, soft tints, category badges) without changing
+ * any calendar logic.
+ */
+export function typeAccentClass(type: CalendarItemType): string {
+  return `calendar-type--${type}`
+}
+
 export function statusDotClass(status: CalendarItemStatus): string {
   switch (status) {
     case 'scheduled':

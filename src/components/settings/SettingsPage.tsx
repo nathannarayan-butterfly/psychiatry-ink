@@ -16,6 +16,7 @@ import {
   LanguageSection,
 } from './PlaceholderSection'
 import { KiInstructionsSettings } from './KiInstructionsSettings'
+import { AiUsageTrackerPanel } from './AiUsageTrackerPanel'
 import type { useKiInstructions } from '../../hooks/useKiInstructions'
 import { PatientPrivacySection } from './PatientPrivacySection'
 import { LabImportSection } from './LabImportSection'
@@ -169,11 +170,14 @@ export function SettingsPage({
           {activeSection === 'lab' ? <LabImportSection /> : null}
           {activeSection === 'kb-admin' ? <KbAdminSection /> : null}
           {activeSection === 'ai' ? (
-            <KiInstructionsSettings
-              kiInstructions={kiInstructions}
-              aiAutoMode={aiAutoMode}
-              onToggleAiAuto={onToggleAiAuto}
-            />
+            <>
+              <KiInstructionsSettings
+                kiInstructions={kiInstructions}
+                aiAutoMode={aiAutoMode}
+                onToggleAiAuto={onToggleAiAuto}
+              />
+              <AiUsageTrackerPanel />
+            </>
           ) : null}
           {activeSection === 'account' ? <AccountSection /> : null}
           {activeSection === 'privacy' ? (

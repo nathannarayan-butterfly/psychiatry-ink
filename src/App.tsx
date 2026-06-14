@@ -31,6 +31,7 @@ import { EnterpriseSitesPage } from './components/enterprise/EnterpriseSitesPage
 import { EnterpriseCompliancePage } from './components/enterprise/EnterpriseCompliancePage'
 import { EnterpriseIntegrationsPage } from './components/enterprise/EnterpriseIntegrationsPage'
 import { EnterpriseSsoPlaceholder } from './components/enterprise/EnterpriseSsoPlaceholder'
+import { BudgetManagerPage } from './components/settings/BudgetManagerPage'
 import { IntegrationsPage } from './components/settings/IntegrationsPage'
 import { CalendarPage } from './components/calendar/CalendarPage'
 
@@ -123,6 +124,7 @@ export default function App() {
   const showTemplates = route.view === 'templates'
   const showTeamSettings = route.view === 'team-settings'
   const showIntegrations = route.view === 'integrations'
+  const showBudget = route.view === 'budget'
   const showCalendar = route.view === 'calendar'
   const showTeamInvite = route.view === 'team-invite'
   const showDiscussInvite = route.view === 'discuss-invite'
@@ -236,6 +238,8 @@ export default function App() {
           <TeamSettingsPage onBack={() => navigate('/dashboard')} />
         ) : showIntegrations ? (
           <IntegrationsPage onBack={() => navigate('/dashboard')} />
+        ) : showBudget ? (
+          <BudgetManagerPage onBack={() => navigate('/dashboard')} />
         ) : showCalendar ? (
           <CalendarPage
             onBack={() => navigate('/dashboard')}
@@ -262,6 +266,7 @@ export default function App() {
             onOpenTemplates={() => navigate('/dashboard/templates')}
             onOpenTeamSettings={() => navigate('/dashboard/team')}
             onOpenIntegrations={() => navigate('/dashboard/integrations')}
+            onOpenBudget={() => navigate('/dashboard/budget')}
             onOpenCalendar={() => navigate('/dashboard/calendar')}
             onOpenEnterprise={
               ENTERPRISE_ROUTES_ENABLED ? () => navigate('/dashboard/enterprise') : undefined

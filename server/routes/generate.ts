@@ -2,7 +2,9 @@ import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
 import type { AiModelTier } from '../modelTierMapping'
 import { resolveAccountId } from '../middleware/auth'
-import { callLlm } from '../services/llmProvider'
+import { callLlm, llmResultModel } from '../services/llmProvider'
+import { resolveUsageContextFromRequest } from '../ai/usage/resolveUsageContext'
+import type { AiFeatureKey } from '../../src/types/aiUsage'
 import { assertAiGenerationAllowed, recordAiGenerationUsed } from '../utils/caseAiAccessGuard'
 
 export interface GenerateRequestBody {
@@ -10,6 +12,7 @@ export interface GenerateRequestBody {
   systemPrompt: string
   userPrompt: string
   caseId?: string
+  featureKey?: AiFeatureKey
 }
 
 export const generateRouter: Router = createRouter()
@@ -43,13 +46,23 @@ generateRouter.post('/', async (req: Request, res: Response) => {
 
     if (!(await assertAiGenerationAllowed(req, res, body.caseId))) return
 
+    const userId = resolveAccountId(req)
+    const usageContext =
+      userId && userId !== 'default'
+        ? await resolveUsageContextFromRequest(req, userId, {
+            caseId: typeof body.caseId === 'string' ? body.caseId.trim() || null : null,
+            featureKey: body.featureKey ?? 'document_generation',
+            metadata: { route: 'generate', tier: body.tier },
+          })
+        : undefined
+
     const result = await callLlm({
       tier: body.tier,
       systemPrompt: body.systemPrompt,
       userPrompt: body.userPrompt,
+      usageContext,
     })
 
-    const userId = resolveAccountId(req)
     if (userId && userId !== 'default') {
       void recordAiGenerationUsed(req, userId, {
         caseId: typeof body.caseId === 'string' ? body.caseId.trim() || null : null,
@@ -59,7 +72,7 @@ generateRouter.post('/', async (req: Request, res: Response) => {
 
     res.json({
       text: result.text,
-      model: result.model,
+      model: llmResultModel(result),
     })
   } catch (error) {
     console.error('[generate] failed:', error)

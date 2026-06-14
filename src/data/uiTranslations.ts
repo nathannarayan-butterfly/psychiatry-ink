@@ -4640,6 +4640,36 @@ export const uiTranslations = {
     fr: 'Source',
     es: 'Fuente',
   },
+  verlaufFilterButton: {
+    de: 'Filter',
+    en: 'Filter',
+    fr: 'Filtres',
+    es: 'Filtros',
+  },
+  verlaufFilterReset: {
+    de: 'Alle anzeigen',
+    en: 'Show all',
+    fr: 'Tout afficher',
+    es: 'Mostrar todo',
+  },
+  verlaufSortLabel: {
+    de: 'Sortierung',
+    en: 'Sort',
+    fr: 'Tri',
+    es: 'Orden',
+  },
+  verlaufSortNewest: {
+    de: 'Neueste zuerst',
+    en: 'Newest first',
+    fr: 'Plus récent d\'abord',
+    es: 'Más reciente primero',
+  },
+  verlaufSortOldest: {
+    de: 'Älteste zuerst',
+    en: 'Oldest first',
+    fr: 'Plus ancien d\'abord',
+    es: 'Más antiguo primero',
+  },
   verlaufSourceManuell: {
     de: 'Manuell',
     en: 'Manual',

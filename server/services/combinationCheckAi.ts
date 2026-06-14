@@ -3,7 +3,7 @@ import {
   clinicalLanguagePromptInstruction,
   type ClinicalLanguage,
 } from '../utils/resolveClinicalLanguage'
-import { callLlm } from './llmProvider'
+import { callLlm, llmResultModel } from './llmProvider'
 import { parseStructuredJson } from '../utils/parseStructuredJson'
 import type {
   CombinationCheckAIResult,
@@ -178,12 +178,16 @@ export async function assessCombinationWithAi(params: {
     userPrompt,
     jsonResponse: true,
     maxTokens: params.thorough ? 2400 : 1200,
+    usageContext: {
+      featureKey: 'medication_combination_check',
+      metadata: { thorough: Boolean(params.thorough) },
+    },
   })
 
   const parsed = parseStructuredJson(llm.text)
   const result = parseAiResult(parsed, params.medA.substance, params.medB.substance)
   if (!result) return null
-  return { result, model: llm.model }
+  return { result, model: llmResultModel(llm) }
 }
 
 // Deferred (not MVP): triple combinations, lab-linked triggers, receptor burden scoring, country-specific formularies.

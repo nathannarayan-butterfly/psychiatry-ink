@@ -63,6 +63,25 @@ const CONCURRENCY = parseArg('concurrency') ? Math.max(1, Number(parseArg('concu
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
+const usageAccumulator = {
+  calls: 0,
+  inputTokens: 0,
+  outputTokens: 0,
+  totalTokens: 0,
+  costEur: 0,
+  providerReportedCount: 0,
+  estimatedCount: 0,
+}
+
+function trackLlmUsage(result: Awaited<ReturnType<typeof callLlm>>): void {
+  usageAccumulator.calls += 1
+  usageAccumulator.inputTokens += result.usage.inputTokens
+  usageAccumulator.outputTokens += result.usage.outputTokens
+  usageAccumulator.totalTokens += result.usage.totalTokens
+  if (result.usage.usageSource === 'provider_reported') usageAccumulator.providerReportedCount += 1
+  else usageAccumulator.estimatedCount += 1
+}
+
 // ── Translation request unit ────────────────────────────────────────────────
 type StringField = { key: string; text: string }
 
@@ -224,14 +243,20 @@ async function translateBatch(fields: StringField[]): Promise<Record<string, str
   let lastErr: unknown
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const { text } = await callLlm({
+      const result = await callLlm({
         tier: 'fast',
         systemPrompt: SYSTEM_PROMPT,
         userPrompt,
         jsonResponse: true,
         maxTokens: 16_000,
+        usageContext: {
+          featureKey: 'kb_translation_de',
+          requestKind: 'batch',
+          metadata: { script: 'translate-kb-to-german' },
+        },
       })
-      const parsed = JSON.parse(text) as Record<string, unknown>
+      trackLlmUsage(result)
+      const parsed = JSON.parse(result.text) as Record<string, unknown>
       const out: Record<string, string> = {}
       for (const f of fields) {
         const v = parsed[f.key]
@@ -428,6 +453,16 @@ async function main(): Promise<void> {
       skipped: results.filter((r) => r.status === 'skipped').length,
       failed: results.filter((r) => r.status === 'failed').length,
       fieldsTranslated: results.reduce((acc, r) => acc + r.fieldsTranslated, 0),
+    },
+    usageSummary: {
+      featureKey: 'kb_translation_de',
+      calls: usageAccumulator.calls,
+      inputTokens: usageAccumulator.inputTokens,
+      outputTokens: usageAccumulator.outputTokens,
+      totalTokens: usageAccumulator.totalTokens,
+      providerReportedCount: usageAccumulator.providerReportedCount,
+      estimatedCount: usageAccumulator.estimatedCount,
+      note: 'Costs persisted to ai_usage_logs when Supabase is configured',
     },
     results,
   }

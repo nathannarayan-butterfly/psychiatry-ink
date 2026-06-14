@@ -24,6 +24,7 @@ import {
   startOfDayIso,
   startOfWeek,
   statusDotClass,
+  typeAccentClass,
 } from '../../utils/calendarLabels'
 import { printDaySchedule } from '../../utils/calendar/printDaySchedule'
 import { CalendarItemModal, CalendarRescheduleModal } from './CalendarItemModal'
@@ -150,12 +151,12 @@ export function CalendarPage({ onBack, onOpenCase }: CalendarPageProps) {
   )
 
   const renderItemRow = (item: CalendarItem) => (
-    <li key={item.id} className={`calendar-list-row calendar-list-row--${item.status}`}>
+    <li key={item.id} className={`calendar-list-row calendar-list-row--${item.status} ${typeAccentClass(item.type)}`}>
       <span className={`calendar-status-dot ${statusDotClass(item.status)}`} aria-hidden />
       <span className="calendar-list-row__time">{formatCalendarTime(item.startTime)}</span>
       <span className="calendar-list-row__title">{item.title}</span>
       <span className="calendar-list-row__meta">
-        {CALENDAR_TYPE_LABELS[item.type]}
+        <span className="calendar-type-badge">{CALENDAR_TYPE_LABELS[item.type]}</span>
         {item.caseId ? ` · ${resolvePatientName(patientCases, item.caseId)}` : ''}
       </span>
       <span className="calendar-list-row__status">{CALENDAR_STATUS_LABELS[item.status]}</span>
@@ -246,7 +247,7 @@ export function CalendarPage({ onBack, onOpenCase }: CalendarPageProps) {
                 <div className="calendar-week-col__head">{formatCalendarDate(day.toISOString())}</div>
                 <ul className="calendar-week-col__list">
                   {dayItems.map((item) => (
-                    <li key={item.id} className={`calendar-week-chip calendar-week-chip--${item.status}`}>
+                    <li key={item.id} className={`calendar-week-chip calendar-week-chip--${item.status} ${typeAccentClass(item.type)}`}>
                       <span className={`calendar-status-dot ${statusDotClass(item.status)}`} />
                       <span className="calendar-week-chip__time">{formatCalendarTime(item.startTime)}</span>
                       <span className="calendar-week-chip__title">{item.title}</span>
@@ -275,7 +276,7 @@ export function CalendarPage({ onBack, onOpenCase }: CalendarPageProps) {
               >
                 <span className="calendar-month-cell__day">{day.getDate()}</span>
                 {dayItems.slice(0, 3).map((item) => (
-                  <span key={item.id} className="calendar-month-cell__event">
+                  <span key={item.id} className={`calendar-month-cell__event ${typeAccentClass(item.type)}`}>
                     <span className={`calendar-status-dot ${statusDotClass(item.status)}`} />
                     {formatCalendarTime(item.startTime)} {item.title}
                   </span>

@@ -5,6 +5,9 @@ import {
   type AiModelSpec,
   type AiModelTier,
 } from '../modelTierMapping'
+import type { AiUsageContext, LlmCallResult } from '../ai/types'
+import { normalizeAiUsage } from '../ai/usage/normalizeUsage'
+import { recordAiUsageLog } from '../ai/usage/recordAiUsageLog'
 
 function mockSuffix(tier: AiModelTier): string {
   return `[AI draft — ${missingApiKeyMessage(tier)}]`
@@ -17,22 +20,15 @@ interface ChatMessage {
 
 interface ChatCompletionResult {
   text: string
-  /** OpenAI/DeepSeek finish reason; `length` signals max_tokens truncation. */
   finishReason: string | null
+  rawUsage: unknown
+  requestId: string | null
 }
 
 /**
  * One ChatCompletions call against an OpenAI-compatible endpoint (OpenAI or
  * DeepSeek). Returns the content plus the finish reason so callers can detect
  * truncation. Throws on transport / HTTP errors and on empty content.
- *
- * DeepSeek compatibility notes:
- *  - We only send OpenAI-standard params (model, messages, temperature,
- *    max_tokens, response_format). `frequency_penalty`/`presence_penalty` are
- *    deprecated on DeepSeek and intentionally NOT sent.
- *  - JSON mode (`response_format: {type:'json_object'}`) is supported, but the
- *    prompt must contain the word "json" + an example (it does) and `max_tokens`
- *    must be high enough to avoid mid-stream truncation.
  */
 async function callChatCompletions(
   baseUrl: string,
@@ -71,18 +67,24 @@ async function callChatCompletions(
   }
 
   const data = (await response.json().catch(() => null)) as {
+    id?: string
+    usage?: unknown
     choices?: Array<{ message?: { content?: string }; finish_reason?: string }>
   } | null
   const choice = data?.choices?.[0]
   const text = choice?.message?.content?.trim()
   const finishReason = choice?.finish_reason ?? null
   if (!text) {
-    // DeepSeek JSON mode occasionally returns empty content; surface clearly.
     throw new Error(
       `LLM returned empty response for ${modelId}${finishReason ? ` (finish_reason=${finishReason})` : ''}`,
     )
   }
-  return { text, finishReason }
+  return {
+    text,
+    finishReason,
+    rawUsage: data?.usage ?? null,
+    requestId: data?.id ?? null,
+  }
 }
 
 function mockCompletion(userPrompt: string, tier: AiModelTier): string {
@@ -101,12 +103,44 @@ function providerApiKey(provider: AiModelSpec['provider']): string | undefined {
 }
 
 function providerBaseUrl(provider: AiModelSpec['provider']): string {
-  // DeepSeek's OpenAI-compatible base. `/v1` is accepted for OpenAI parity and
-  // is unaffected by the 2026-07-24 model-name migration.
   if (provider === 'deepseek') {
     return process.env.DEEPSEEK_BASE_URL?.replace(/\/$/, '') ?? 'https://api.deepseek.com/v1'
   }
   return process.env.OPENAI_BASE_URL?.replace(/\/$/, '') ?? 'https://api.openai.com/v1'
+}
+
+function buildInputText(systemPrompt: string, userPrompt: string): string {
+  return `${systemPrompt}\n${userPrompt}`
+}
+
+async function logUsage(params: {
+  model: AiModelSpec
+  systemPrompt: string
+  userPrompt: string
+  result: ChatCompletionResult
+  latencyMs: number
+  usageContext?: AiUsageContext
+  success: boolean
+  errorCode?: string | null
+}): Promise<void> {
+  if (!params.usageContext) return
+  void recordAiUsageLog({
+    userId: params.usageContext.userId,
+    organisationId: params.usageContext.organisationId,
+    caseId: params.usageContext.caseId,
+    featureKey: params.usageContext.featureKey,
+    provider: params.model.provider,
+    model: params.model.modelId,
+    requestKind: params.usageContext.requestKind ?? 'chat',
+    rawUsage: params.result.rawUsage,
+    inputText: buildInputText(params.systemPrompt, params.userPrompt),
+    outputText: params.result.text,
+    requestId: params.result.requestId,
+    latencyMs: params.latencyMs,
+    success: params.success,
+    errorCode: params.errorCode,
+    metadata: params.usageContext.metadata,
+  })
 }
 
 export async function callLlm(params: {
@@ -115,20 +149,46 @@ export async function callLlm(params: {
   userPrompt: string
   maxTokens?: number
   jsonResponse?: boolean
-}): Promise<{ text: string; model: AiModelSpec; truncated: boolean }> {
+  usageContext?: AiUsageContext
+}): Promise<LlmCallResult> {
   const model = resolveModelWithFallback(params.tier)
   const apiKey = providerApiKey(model.provider)
+  const started = Date.now()
 
   if (!apiKey) {
     console.warn(`[generate] mock mode (${params.tier}): ${missingApiKeyMessage(params.tier)}`)
     await new Promise((resolve) => setTimeout(resolve, 400))
-    return { text: mockCompletion(params.userPrompt, params.tier), model, truncated: false }
+    const text = mockCompletion(params.userPrompt, params.tier)
+    const usage = normalizeAiUsage({
+      provider: model.provider,
+      model: model.modelId,
+      inputText: buildInputText(params.systemPrompt, params.userPrompt),
+      outputText: text,
+    })
+    const latencyMs = Date.now() - started
+    if (params.usageContext) {
+      void recordAiUsageLog({
+        ...params.usageContext,
+        provider: model.provider,
+        model: model.modelId,
+        requestKind: params.usageContext.requestKind ?? 'chat',
+        inputText: buildInputText(params.systemPrompt, params.userPrompt),
+        outputText: text,
+        latencyMs,
+        metadata: { ...params.usageContext.metadata, mock: true },
+      })
+    }
+    return {
+      text,
+      provider: model.provider,
+      model: model.modelId,
+      usage,
+      requestId: null,
+      latencyMs,
+      truncated: false,
+    }
   }
 
-  // Clamp the requested budget to what the resolved model can emit. Legacy
-  // DeepSeek models cap at 8K; `deepseek-v4-*` and OpenAI allow far more, so the
-  // previous unconditional 8K clamp (which silently truncated whole-drug JSON
-  // and broke DeepSeek generation) no longer applies.
   const modelCap = maxOutputTokensFor(model)
   const maxTokens = params.maxTokens ? Math.min(params.maxTokens, modelCap) : undefined
 
@@ -144,8 +204,6 @@ export async function callLlm(params: {
       jsonResponse: params.jsonResponse,
     })
   } catch (error) {
-    // DeepSeek JSON mode can intermittently return empty content; one retry
-    // (with a slightly larger budget) recovers most of these cases.
     const message = error instanceof Error ? error.message : String(error)
     if (params.jsonResponse && /empty response/.test(message)) {
       console.warn(`[llm] retrying ${model.modelId} after empty JSON response`)
@@ -154,6 +212,17 @@ export async function callLlm(params: {
         jsonResponse: params.jsonResponse,
       })
     } else {
+      const latencyMs = Date.now() - started
+      void logUsage({
+        model,
+        systemPrompt: params.systemPrompt,
+        userPrompt: params.userPrompt,
+        result: { text: '', finishReason: null, rawUsage: null, requestId: null },
+        latencyMs,
+        usageContext: params.usageContext,
+        success: false,
+        errorCode: 'llm_error',
+      })
       throw error
     }
   }
@@ -165,5 +234,41 @@ export async function callLlm(params: {
     )
   }
 
-  return { text: result.text, model, truncated }
+  const latencyMs = Date.now() - started
+  const usage = normalizeAiUsage({
+    provider: model.provider,
+    model: model.modelId,
+    rawUsage: result.rawUsage,
+    inputText: buildInputText(params.systemPrompt, params.userPrompt),
+    outputText: result.text,
+  })
+
+  void logUsage({
+    model,
+    systemPrompt: params.systemPrompt,
+    userPrompt: params.userPrompt,
+    result,
+    latencyMs,
+    usageContext: params.usageContext,
+    success: true,
+  })
+
+  return {
+    text: result.text,
+    provider: model.provider,
+    model: model.modelId,
+    usage,
+    requestId: result.requestId,
+    latencyMs,
+    truncated,
+  }
+}
+
+/** @deprecated Use LlmCallResult fields directly */
+export function llmResultModel(result: LlmCallResult): AiModelSpec {
+  return {
+    provider: result.provider as AiModelSpec['provider'],
+    modelId: result.model,
+    label: `${result.provider} (${result.model})`,
+  }
 }

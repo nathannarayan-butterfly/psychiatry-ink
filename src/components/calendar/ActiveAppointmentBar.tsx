@@ -12,6 +12,7 @@ import {
   CALENDAR_TYPE_LABELS,
   formatCalendarTime,
   statusDotClass,
+  typeAccentClass,
 } from '../../utils/calendarLabels'
 import type { NotionPageId } from '../notion/notionPages'
 
@@ -48,13 +49,13 @@ export function ActiveAppointmentBar({
   })
 
   return (
-    <div className="active-appointment-bar" role="region" aria-label="Aktiver Termin">
+    <div className={`active-appointment-bar ${typeAccentClass(appointment.type)}`} role="region" aria-label="Aktiver Termin">
       <div className="active-appointment-bar__main">
         <span className={`calendar-status-dot ${statusDotClass(appointment.status)}`} aria-hidden />
         <span className="active-appointment-bar__time">
           {formatCalendarTime(appointment.startTime)} – {formatCalendarTime(appointment.endTime)}
         </span>
-        <span className="active-appointment-bar__type">{CALENDAR_TYPE_LABELS[appointment.type]}</span>
+        <span className="active-appointment-bar__type calendar-type-badge">{CALENDAR_TYPE_LABELS[appointment.type]}</span>
         {appointment.reason ? (
           <span className="active-appointment-bar__reason">{appointment.reason}</span>
         ) : null}

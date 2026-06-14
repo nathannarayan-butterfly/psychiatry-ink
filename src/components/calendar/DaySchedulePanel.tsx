@@ -9,6 +9,7 @@ import {
   CALENDAR_TYPE_LABELS,
   formatCalendarTime,
   statusDotClass,
+  typeAccentClass,
 } from '../../utils/calendarLabels'
 import { printDaySchedule } from '../../utils/calendar/printDaySchedule'
 import { ClinicalLoading } from '../ui/ClinicalLoading'
@@ -109,11 +110,11 @@ export function DaySchedulePanel({ cases, onOpenCase }: DaySchedulePanelProps) {
 
       <ul className="day-schedule-list">
         {items.map((item) => (
-          <li key={item.id} className={`day-schedule-row day-schedule-row--${item.status}`}>
+          <li key={item.id} className={`day-schedule-row day-schedule-row--${item.status} ${typeAccentClass(item.type)}`}>
             <span className={`calendar-status-dot ${statusDotClass(item.status)}`} aria-hidden />
             <span className="day-schedule-row__time">{formatCalendarTime(item.startTime)}</span>
             <span className="day-schedule-row__patient">{resolvePatientName(cases, item.caseId)}</span>
-            <span className="day-schedule-row__type">{CALENDAR_TYPE_LABELS[item.type]}</span>
+            <span className="day-schedule-row__type calendar-type-badge">{CALENDAR_TYPE_LABELS[item.type]}</span>
             {item.reason ? <span className="day-schedule-row__reason">{item.reason}</span> : null}
             <span className="day-schedule-row__badge">{CALENDAR_STATUS_LABELS[item.status]}</span>
             <div className="day-schedule-row__actions">

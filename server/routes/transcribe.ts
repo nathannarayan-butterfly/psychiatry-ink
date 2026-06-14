@@ -2,6 +2,7 @@ import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
 import { transcribeAudioBuffer } from '../services/transcriptionProvider'
 import { canAfford, deductCredits } from '../services/credits'
+import { getCurrentOrganisation, ORG_HEADER } from '../services/orgPermissions'
 import { requireAuthenticatedUserOrDevBypass } from '../utils/requireAuthenticatedUserOrDevBypass'
 
 /** Matches src/data/subscriptionPlans.ts TRANSCRIBE_CREDITS */
@@ -36,7 +37,11 @@ transcribeRouter.post('/', async (req: Request, res: Response) => {
       return
     }
 
-    const result = await transcribeAudioBuffer(audioBuffer, body.mimeType ?? 'audio/webm')
+    const org = await getCurrentOrganisation(userId, req.headers[ORG_HEADER])
+    const result = await transcribeAudioBuffer(audioBuffer, body.mimeType ?? 'audio/webm', {
+      userId,
+      organisationId: org?.id ?? null,
+    })
     const balance = await deductCredits(TRANSCRIBE_CREDITS, userId)
 
     res.json({ ...result, balance, creditsCharged: TRANSCRIBE_CREDITS })
