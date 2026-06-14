@@ -32,8 +32,10 @@ import {
 } from '../../hooks/useMedicationMarketAvailability'
 import {
   PRESCRIBING_COUNTRY_LABELS,
+  PRESCRIBING_COUNTRY_NATIVE_LABELS,
   usePrescribingCountry,
 } from '../../hooks/usePrescribingCountry'
+import { formatPreparationLine } from '../../utils/kb/formatPreparationLine'
 import { KbPharmaClassifiedBrowse } from './KbPharmaClassifiedBrowse'
 import { showNotionToast } from '../notion/NotionToast'
 import { generatePharmaDetails, type AiGeneratedPreparation } from '../../services/pharmaAiApi'
@@ -1269,31 +1271,33 @@ function CountryPreparationsSection({
   const title = 'Verfügbare Präparate'
 
   return (
-    <section data-kb-section="preparations" className={`kbp-section kbp-preparations-section${mode === 'reading' ? ' kbp-section--subsection' : ''}`}>
+    <section data-kb-section="preparations" className="kbp-section kbp-preparations-section">
       <div className="kbp-section__header-view kbp-section__header-view--static">
         <span className="kbp-section__title-wrap">
           <span className="kbp-section__label">
             <span className="kbp-section__title">{title}</span>
           </span>
         </span>
-        <span className="kb-prep-header-meta" onClick={(e) => e.stopPropagation()}>
-          <span className="kb-prep-country-static">
-            {kbT(language, 'prepCountryLabel')}: {getCountryLabel(country)}
+        {mode === 'editing' ? (
+          <span className="kb-prep-header-meta" onClick={(e) => e.stopPropagation()}>
+            <span className="kb-prep-country-static">
+              {kbT(language, 'prepCountryLabel')}: {getCountryLabel(country)}
+            </span>
+            {onRegenerate ? (
+              <button
+                type="button"
+                className="kbp-btn kbp-btn--sm kbp-btn--ai"
+                disabled={regenerateLoading}
+                onClick={onRegenerate}
+                title="Mit KI anreichern"
+                aria-label="Verfügbare Präparate mit KI anreichern"
+              >
+                <Sparkles className={`h-3.5 w-3.5${regenerateLoading ? ' kbp-spin' : ''}`} strokeWidth={1.75} aria-hidden />
+                {regenerateLoading ? 'KI läuft …' : 'Mit KI anreichern'}
+              </button>
+            ) : null}
           </span>
-          {mode === 'editing' && onRegenerate ? (
-            <button
-              type="button"
-              className="kbp-btn kbp-btn--sm kbp-btn--ai"
-              disabled={regenerateLoading}
-              onClick={onRegenerate}
-              title="Mit KI anreichern"
-              aria-label="Verfügbare Präparate mit KI anreichern"
-            >
-              <Sparkles className={`h-3.5 w-3.5${regenerateLoading ? ' kbp-spin' : ''}`} strokeWidth={1.75} aria-hidden />
-              {regenerateLoading ? 'KI läuft …' : 'Mit KI anreichern'}
-            </button>
-          ) : null}
-        </span>
+        ) : null}
       </div>
       <div className="kbp-section__body">
         {entries.length === 0 && pendingEntries.length === 0 ? (
@@ -1302,34 +1306,15 @@ function CountryPreparationsSection({
             {mode === 'editing' ? ' Manuell hinzufügen oder per KI als Entwurf anreichern.' : ''}
           </p>
         ) : mode === 'reading' ? (
-          <div className="kb-prep-table-wrap">
-            <table className="kb-prep-table kb-prep-table--reading">
-              <thead>
-                <tr>
-                  <th>Präparat</th>
-                  <th>Stärke</th>
-                  <th>Form</th>
-                  <th>Quelle / Verifiziert</th>
-                </tr>
-              </thead>
-              <tbody>
-                {entries.map((entry) => (
-                  <tr key={entry.id}>
-                    <td><strong>{entry.tradeName}</strong></td>
-                    <td>{formatPreparationStrength(entry)}</td>
-                    <td>{entry.dosageForm}</td>
-                    <td>
-                      {compactText(entry.sourceName || entry.sourceReference, 80) || '—'}
-                      {entry.lastVerifiedAt ? (
-                        <span className="kb-prep-table__verified">
-                          {formatKbDate(entry.lastVerifiedAt, language)}
-                        </span>
-                      ) : null}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="kb-prep-reading-list">
+            <p className="kbp-section__text kbp-prep-list-intro">
+              {drug.genericName} — verfügbare Zubereitungen in {PRESCRIBING_COUNTRY_NATIVE_LABELS[country]}:
+            </p>
+            <ul className="kb-prep-compact-list">
+              {entries.map((entry) => (
+                <li key={entry.id}>{formatPreparationLine(entry)}</li>
+              ))}
+            </ul>
           </div>
         ) : (
           <div className="kb-prep-table-wrap">
@@ -1623,6 +1608,7 @@ function contributionKeyForActiveSection(
   canonicalSections: CanonicalKbSection[],
 ): KbContributionSectionKey {
   if (activeSectionId === KB_RECEPTOR_SECTION_ID) return 'rezeptorprofil'
+  if (activeSectionId === 'country-preparations') return 'verfuegbare_praeparate'
 
   const activeDrugSection = drug.sections.find((section) => section.id === activeSectionId)
   if (activeDrugSection) return contributionKeyForDrugSection(activeDrugSection)
@@ -2633,7 +2619,10 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
             ) : null}
           </div>
           </div>
-          {!editMode ? (
+        </div>
+
+        {!editMode ? (
+          <div className="kbp-right-rail">
             <button
               type="button"
               className="kbp-contribution-bookmark"
@@ -2644,25 +2633,7 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
               <Bookmark className="kbp-contribution-bookmark__icon" strokeWidth={1.75} aria-hidden />
               <span className="kbp-contribution-bookmark__label">{kbT(language, 'contributionBookmark')}</span>
             </button>
-          ) : null}
-        </div>
-
-        {!editMode ? (
-          panelCollapsed ? (
-            <KnowledgeBaseReadingPanel
-              medicationId={drug.id}
-              medicationName={drug.genericName}
-              sectionId={panelSectionId}
-              sectionLabel={panelSectionLabel}
-              sectionData={panelSectionData}
-              language={language}
-              collapsed
-              onToggleCollapse={() => setPanelCollapsed((prev) => !prev)}
-              request={panelRequest}
-              tier={aiTier}
-            />
-          ) : (
-            <div className="kbp-reading-column">
+            {panelCollapsed ? (
               <KnowledgeBaseReadingPanel
                 medicationId={drug.id}
                 medicationName={drug.genericName}
@@ -2670,14 +2641,29 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
                 sectionLabel={panelSectionLabel}
                 sectionData={panelSectionData}
                 language={language}
-                collapsed={false}
+                collapsed
                 onToggleCollapse={() => setPanelCollapsed((prev) => !prev)}
                 request={panelRequest}
                 tier={aiTier}
               />
-              <KnowledgeBaseNotes medicationId={drug.id} language={language} />
-            </div>
-          )
+            ) : (
+              <div className="kbp-reading-column">
+                <KnowledgeBaseReadingPanel
+                  medicationId={drug.id}
+                  medicationName={drug.genericName}
+                  sectionId={panelSectionId}
+                  sectionLabel={panelSectionLabel}
+                  sectionData={panelSectionData}
+                  language={language}
+                  collapsed={false}
+                  onToggleCollapse={() => setPanelCollapsed((prev) => !prev)}
+                  request={panelRequest}
+                  tier={aiTier}
+                />
+                <KnowledgeBaseNotes medicationId={drug.id} language={language} />
+              </div>
+            )}
+          </div>
         ) : null}
       </div>
 

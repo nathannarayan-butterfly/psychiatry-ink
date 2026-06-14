@@ -16,12 +16,13 @@ import {
 } from '../../types/medicationPlan'
 import { formatDoseLineGerman } from '../../utils/medication/doseLine'
 import { useMedicationPreparationOptions } from '../../hooks/useMedicationPreparationOptions'
-import { formatPreparationStrength } from '../../hooks/useMedicationMarketAvailability'
 import {
   PRESCRIBING_COUNTRIES,
   PRESCRIBING_COUNTRY_LABELS,
+  PRESCRIBING_COUNTRY_NATIVE_LABELS,
   usePrescribingCountry,
 } from '../../hooks/usePrescribingCountry'
+import { formatPreparationLine } from '../../utils/kb/formatPreparationLine'
 import {
   createDefaultMedicationDraft,
   medicationDraftFromEntry,
@@ -250,26 +251,13 @@ export function MedicationEditDialog({
           {kbPreparationOptions.verifiedPreparations.length > 0 ? (
             <div className="medication-edit-dialog__preparations">
               <p className="medication-edit-dialog__preparations-label">
-                {`Verfügbare Präparate · ${selectedCountry} · ${PRESCRIBING_COUNTRY_LABELS[selectedCountry]}`}
+                {`${draft.substance} — verfügbare Zubereitungen in ${PRESCRIBING_COUNTRY_NATIVE_LABELS[selectedCountry]}:`}
               </p>
-              <table className="medication-prep-table">
-                <thead>
-                  <tr>
-                    <th>Präparat</th>
-                    <th>Stärke</th>
-                    <th>Form</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {kbPreparationOptions.verifiedPreparations.map((prep) => (
-                    <tr key={prep.id}>
-                      <td>{prep.tradeName}</td>
-                      <td>{formatPreparationStrength(prep)}</td>
-                      <td>{prep.dosageForm}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <ul className="medication-prep-compact-list">
+                {kbPreparationOptions.verifiedPreparations.map((prep) => (
+                  <li key={prep.id}>{formatPreparationLine(prep)}</li>
+                ))}
+              </ul>
               <p className="medication-edit-dialog__preparations-source">
                 {translateMedicationUi(language, 'medReferenceDisclaimer')}
               </p>

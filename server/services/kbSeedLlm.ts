@@ -103,6 +103,8 @@ export function buildKbSeedSystemPrompt(): string {
     'Receptor affinity uses affinityPercent 0–100 (relative index), NOT 1–5 scores.',
     'Do NOT invent German PZN codes or verified market identifiers.',
     'Country preparations (if requested) must be country-neutral dosage forms/strengths only.',
+    'For countryPreparations: return compact display-ready lines — dosageForm as human-readable German text (e.g. "Tabletten", "Filmtabletten", "Lösung zum Einnehmen"), not English enum codes.',
+    'Do NOT include PZN, package size, product identifiers, or verbose source prose in countryPreparations.',
   ].join(' ')
 }
 
@@ -116,7 +118,7 @@ export function buildKbSeedUserPrompt(params: {
   const prepBlock = params.includeMarketAvailability
     ? '"countryPreparations": [{ "countryCode": "' +
       params.country +
-      '", "dosageForm": "tablet", "strengthValue": "10", "strengthUnit": "mg", "route": "oral", "notes": "draft — verify" }],'
+      '", "dosageForm": "Tabletten", "strengthValue": "50", "strengthUnit": "mg", "route": "oral", "tradeName": "", "notes": "draft — verify" }],'
     : ''
 
   const receptorNote = params.includeReceptorAffinity

@@ -1,6 +1,7 @@
 import type { SubstanceProfileDraft } from '../../src/schemas/kb/substanceProfile'
 import type {
   KbAiGeneration,
+  KbCountryPreparation,
   KbDosageGuidance,
   KbInteractionNote,
   KbMonitoringRecommendation,
@@ -66,7 +67,7 @@ export async function getKbSubstanceById(id: string): Promise<KbSubstanceDetail 
   if (error) throw error
   if (!substance) return null
 
-  const [tradeNames, affinities, sideEffects, monitoring, dosage, interactions, sources, generations] =
+  const [tradeNames, affinities, sideEffects, monitoring, dosage, interactions, sources, countryPreparations, generations] =
     await Promise.all([
       supabase.from('kb_substance_trade_names').select('*').eq('substance_id', id),
       supabase.from('kb_receptor_affinities').select('*').eq('substance_id', id).order('sort_order'),
@@ -75,6 +76,7 @@ export async function getKbSubstanceById(id: string): Promise<KbSubstanceDetail 
       supabase.from('kb_dosage_guidance').select('*').eq('substance_id', id).order('sort_order'),
       supabase.from('kb_interaction_notes').select('*').eq('substance_id', id).order('sort_order'),
       supabase.from('kb_sources').select('*').eq('substance_id', id).order('created_at'),
+      supabase.from('kb_country_preparations').select('*').eq('substance_id', id).order('strength_value'),
       supabase
         .from('kb_ai_generations')
         .select('*')
@@ -160,6 +162,20 @@ export async function getKbSubstanceById(id: string): Promise<KbSubstanceDetail 
         citation: String(r.citation),
         url: r.url ? String(r.url) : null,
         accessedAt: r.accessed_at ? String(r.accessed_at) : null,
+      }),
+    ),
+    countryPreparations: (countryPreparations.data ?? []).map(
+      (r): KbCountryPreparation => ({
+        id: String(r.id),
+        substanceId: String(r.substance_id),
+        countryCode: String(r.country_code),
+        dosageForm: String(r.dosage_form),
+        strengthValue: String(r.strength_value),
+        strengthUnit: String(r.strength_unit),
+        route: String(r.route),
+        tradeName: r.trade_name ? String(r.trade_name) : null,
+        verificationStatus: String(r.verification_status),
+        notes: r.notes ? String(r.notes) : null,
       }),
     ),
     latestGeneration: latestGen

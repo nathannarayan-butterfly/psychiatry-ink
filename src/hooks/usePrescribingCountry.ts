@@ -13,6 +13,14 @@ export const PRESCRIBING_COUNTRY_LABELS: Record<PrescribingCountryCode, string> 
   UK: 'United Kingdom',
 }
 
+/** Native country names for German UI copy (e.g. preparation list headings). */
+export const PRESCRIBING_COUNTRY_NATIVE_LABELS: Record<PrescribingCountryCode, string> = {
+  DE: 'Deutschland',
+  CH: 'Schweiz',
+  AT: 'Österreich',
+  UK: 'Vereinigtes Königreich',
+}
+
 function readDefaultCountry(): PrescribingCountryCode {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)

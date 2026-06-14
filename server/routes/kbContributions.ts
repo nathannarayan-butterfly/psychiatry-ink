@@ -65,6 +65,45 @@ kbContributionsRouter.post('/', async (req: Request, res: Response) => {
       }
     }
 
+    if (body.contributionType === 'add_preparation') {
+      const sourceCitation =
+        typeof body.payload.sourceCitation === 'string' ? body.payload.sourceCitation.trim() : ''
+      const sourceType =
+        typeof body.payload.sourceType === 'string' ? body.payload.sourceType.trim() : ''
+      const countryCode =
+        typeof body.payload.countryCode === 'string' ? body.payload.countryCode.trim() : ''
+      const preparations = body.payload.preparations
+
+      if (!sourceCitation) {
+        res.status(400).json({ error: 'sourceCitation is required' })
+        return
+      }
+      if (!VALID_SOURCE_TYPES.includes(sourceType as (typeof VALID_SOURCE_TYPES)[number])) {
+        res.status(400).json({ error: 'sourceType is required' })
+        return
+      }
+      if (!countryCode) {
+        res.status(400).json({ error: 'countryCode is required' })
+        return
+      }
+      if (!Array.isArray(preparations) || preparations.length === 0) {
+        res.status(400).json({ error: 'preparations array is required' })
+        return
+      }
+      const hasCompleteRow = preparations.some((row) => {
+        if (!row || typeof row !== 'object') return false
+        const r = row as Record<string, unknown>
+        const strengthValue = typeof r.strengthValue === 'string' ? r.strengthValue.trim() : ''
+        const strengthUnit = typeof r.strengthUnit === 'string' ? r.strengthUnit.trim() : ''
+        const dosageForm = typeof r.dosageForm === 'string' ? r.dosageForm.trim() : ''
+        return Boolean(strengthValue && strengthUnit && dosageForm)
+      })
+      if (!hasCompleteRow) {
+        res.status(400).json({ error: 'At least one complete preparation row is required' })
+        return
+      }
+    }
+
     const contribution = await submitKbContribution({
       substanceId: body.substanceId ?? null,
       contributionType: body.contributionType as KbContributionType,

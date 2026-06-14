@@ -101,6 +101,61 @@ const STRINGS = {
     es: 'Se requiere aceptar la licencia',
   },
 
+  contributionPreparationSection: {
+    de: 'Verfügbare Präparate',
+    en: 'Available preparations',
+    fr: 'Préparations disponibles',
+    es: 'Preparaciones disponibles',
+  },
+  contributionPreparationCountryLabel: {
+    de: 'Land',
+    en: 'Country',
+    fr: 'Pays',
+    es: 'País',
+  },
+  contributionPreparationTradeNameLabel: {
+    de: 'Handelsname (optional)',
+    en: 'Trade name (optional)',
+    fr: 'Nom commercial (facultatif)',
+    es: 'Nombre comercial (opcional)',
+  },
+  contributionPreparationStrengthLabel: {
+    de: 'Stärke',
+    en: 'Strength',
+    fr: 'Dosage',
+    es: 'Concentración',
+  },
+  contributionPreparationFormLabel: {
+    de: 'Darreichungsform',
+    en: 'Dosage form',
+    fr: 'Forme galénique',
+    es: 'Forma farmacéutica',
+  },
+  contributionPreparationNotesLabel: {
+    de: 'Anmerkungen (optional)',
+    en: 'Notes (optional)',
+    fr: 'Remarques (facultatif)',
+    es: 'Notas (opcional)',
+  },
+  contributionPreparationAddRow: {
+    de: 'Zeile hinzufügen',
+    en: 'Add row',
+    fr: 'Ajouter une ligne',
+    es: 'Añadir fila',
+  },
+  contributionPreparationRemoveRow: {
+    de: 'Zeile entfernen',
+    en: 'Remove row',
+    fr: 'Supprimer la ligne',
+    es: 'Eliminar fila',
+  },
+  contributionPreparationRowRequired: {
+    de: 'Mindestens eine vollständige Zubereitung (Stärke und Darreichungsform) ist erforderlich.',
+    en: 'At least one complete preparation (strength and dosage form) is required.',
+    fr: 'Au moins une préparation complète (dosage et forme) est requise.',
+    es: 'Se requiere al menos una preparación completa (concentración y forma).',
+  },
+
   // ── Section-level actions (graph cards) ──
   sectionComment: {
     de: 'Kommentar zu diesem Abschnitt',

@@ -14,8 +14,9 @@ import {
   type SideEffectSeverity,
 } from '../../src/types/knowledgeBase'
 import type { KbSubstanceDetail } from '../../src/types/kbNormalized'
-import { normalizeGenericName } from '../../src/utils/kb/normalizeGenericName'
 import type { KbRelease } from '../../src/types/kbReleases'
+import type { MedicationMarketAvailability, PrescribingCountryCode } from '../../src/types/knowledgeBase'
+import { normalizeGenericName } from '../../src/utils/kb/normalizeGenericName'
 import { getKbSubstanceById } from './kbNormalizedStore'
 import { getCurrentKbRelease } from './kbReleases'
 import { getKbSupabaseAdmin } from './kbSupabaseAdmin'
@@ -130,6 +131,54 @@ function formatReceptorSummary(detail: KbSubstanceDetail): string {
       return `${r.receptor}: ${pct} (${r.effectType})${r.explanation ? ` — ${r.explanation}` : ''}`
     })
     .join('\n')
+}
+
+function projectCountryPreparation(
+  prep: KbSubstanceDetail['countryPreparations'][number],
+  drugId: string,
+  genericName: string,
+): MedicationMarketAvailability {
+  const now = new Date().toISOString()
+  return {
+    id: `kb-norm-prep-${prep.id}`,
+    substanceId: drugId,
+    countryCode: prep.countryCode as PrescribingCountryCode,
+    tradeName: prep.tradeName ?? '',
+    genericName,
+    strengthValue: prep.strengthValue,
+    strengthUnit: prep.strengthUnit,
+    dosageForm: prep.dosageForm,
+    route: prep.route,
+    verificationStatus: prep.verificationStatus as MedicationMarketAvailability['verificationStatus'],
+    notes: prep.notes ?? undefined,
+    sourceName: 'KB normalized projection',
+    createdAt: now,
+    lastModifiedAt: now,
+    createdByUserId: 'kb-admin',
+    createdByDisplayName: 'KB Admin (normalized)',
+    lastModifiedByUserId: 'kb-admin',
+    lastModifiedByDisplayName: 'KB Admin (normalized)',
+  }
+}
+
+async function upsertProjectedPreparations(detail: KbSubstanceDetail, drugId: string): Promise<void> {
+  if (!detail.countryPreparations.length) return
+  const supabase = getKbSupabaseAdmin()
+  const rows = detail.countryPreparations.map((prep) => {
+    const entry = projectCountryPreparation(prep, drugId, detail.genericName)
+    return {
+      id: entry.id,
+      data: entry,
+      substance_id: entry.substanceId,
+      country_code: entry.countryCode,
+      verification_status: entry.verificationStatus,
+      generic_name: entry.genericName,
+      trade_name: entry.tradeName || null,
+      updated_at: new Date().toISOString(),
+    }
+  })
+  const { error } = await supabase.from('knowledge_base_preparations').upsert(rows, { onConflict: 'id' })
+  if (error) throw error
 }
 
 function buildSectionOverrides(detail: KbSubstanceDetail): Partial<Record<DrugSectionKey, string>> {
@@ -342,6 +391,8 @@ export async function projectAndUpsertKnowledgeBaseDrug(substanceId: string): Pr
     { onConflict: 'id' },
   )
   if (error) throw error
+
+  await upsertProjectedPreparations(detail, drug.id)
 
   return drug.id
 }

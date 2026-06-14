@@ -13,14 +13,15 @@ import {
 } from '../../types/knowledgeBase'
 import { useKnowledgeBaseDrugs } from '../../hooks/useKnowledgeBaseDrugs'
 import {
-  formatPreparationStrength,
   isVerifiedPreparation,
   useMedicationMarketAvailability,
 } from '../../hooks/useMedicationMarketAvailability'
 import {
   PRESCRIBING_COUNTRY_LABELS,
+  PRESCRIBING_COUNTRY_NATIVE_LABELS,
   usePrescribingCountry,
 } from '../../hooks/usePrescribingCountry'
+import { formatPreparationLine } from '../../utils/kb/formatPreparationLine'
 import type { MedicationEntry, MedicationPlanState, SideEffectReport } from '../../types/medicationPlan'
 import type { UiLanguage } from '../../types/settings'
 import { InteractionMatrix } from './InteractionMatrix'
@@ -296,27 +297,15 @@ export function MedicationLowerSections({
       ) : (
         medsWithPreparations.map(({ med, preparations }) => (
           <section key={med.id} className="medication-preparations-overview__drug">
-            <h5 className="medication-preparations-overview__title">{med.substance}</h5>
-            <table className="medication-prep-table medication-prep-table--compact">
-              <thead>
-                <tr>
-                  <th>Präparat</th>
-                  <th>Stärke</th>
-                  <th>Form</th>
-                  <th>Quelle</th>
-                </tr>
-              </thead>
-              <tbody>
-                {preparations.slice(0, 8).map((prep) => (
-                  <tr key={prep.id}>
-                    <td>{prep.tradeName}</td>
-                    <td>{formatPreparationStrength(prep)}</td>
-                    <td>{prep.dosageForm}</td>
-                    <td>{prep.sourceName || prep.sourceReference || 'KB'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <h5 className="medication-preparations-overview__title">
+              {med.substance} — verfügbare Zubereitungen in{' '}
+              {PRESCRIBING_COUNTRY_NATIVE_LABELS[defaultPrescribingCountry]}:
+            </h5>
+            <ul className="medication-prep-compact-list">
+              {preparations.slice(0, 8).map((prep) => (
+                <li key={prep.id}>{formatPreparationLine(prep)}</li>
+              ))}
+            </ul>
           </section>
         ))
       )}

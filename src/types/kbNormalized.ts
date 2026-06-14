@@ -100,6 +100,19 @@ export interface KbSource {
   accessedAt: string | null
 }
 
+export interface KbCountryPreparation {
+  id: string
+  substanceId: string
+  countryCode: string
+  dosageForm: string
+  strengthValue: string
+  strengthUnit: string
+  route: string
+  tradeName: string | null
+  verificationStatus: string
+  notes: string | null
+}
+
 export interface KbAiGeneration {
   id: string
   substanceId: string | null
@@ -122,5 +135,6 @@ export interface KbSubstanceDetail extends KbSubstance {
   dosageGuidance: KbDosageGuidance[]
   interactions: KbInteractionNote[]
   sources: KbSource[]
+  countryPreparations: KbCountryPreparation[]
   latestGeneration: KbAiGeneration | null
 }

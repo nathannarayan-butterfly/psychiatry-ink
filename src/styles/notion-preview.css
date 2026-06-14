@@ -14973,7 +14973,48 @@ details[open].receptor-radar .receptor-radar__summary::before {
 }
 
 .kbp-dialog--contribution {
-  width: min(32rem, 100%);
+  width: min(36rem, 100%);
+}
+
+.kbp-contribution-prep-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.kbp-contribution-prep-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  padding: 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--border-soft) 80%, transparent);
+  border-radius: 0.45rem;
+  background: color-mix(in srgb, var(--surface-soft) 60%, transparent);
+}
+
+.kbp-contribution-prep-row__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+  flex: 1;
+}
+
+.kbp-field--compact .kbp-field__label {
+  font-size: 0.68rem;
+}
+
+.kbp-field--wide {
+  grid-column: 1 / -1;
+}
+
+.kbp-contribution-prep-strength {
+  display: grid;
+  grid-template-columns: 1fr 4.5rem;
+  gap: 0.35rem;
+}
+
+.kbp-field__input--unit {
+  min-width: 0;
 }
 
 .kbp-contribution-dialog__subtitle {
@@ -15748,9 +15789,32 @@ details[open].receptor-radar .receptor-radar__summary::before {
   color: var(--kb-book-muted);
 }
 
-/* ── Simplified reading-mode preparations table ──────────────────────────────
-   Calm textbook style matching kb-mini-table / kb-receptor-table: light bottom
-   rules only, no heavy borders or card chrome. Full detail stays in edit mode. */
+/* ── Compact reading-mode preparations list (textbook style) ─────────────── */
+.kbp-prep-list-intro {
+  margin: 0 0 0.35rem;
+  font-size: 0.82rem;
+  color: var(--kb-book-ink);
+}
+
+.kb-prep-compact-list,
+.medication-prep-compact-list {
+  margin: 0;
+  padding-left: 1.15rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--kb-book-ink, var(--text-main));
+}
+
+.kb-prep-compact-list li,
+.medication-prep-compact-list li {
+  margin: 0.12rem 0;
+}
+
+.kbp-detail-view--reading .kb-prep-compact-list {
+  font-size: 0.8rem;
+}
+
+/* ── Simplified reading-mode preparations table (edit/legacy) ───────────── */
 .kbp-detail-view--reading .kb-prep-table--reading {
   width: 100%;
   border-collapse: collapse;
