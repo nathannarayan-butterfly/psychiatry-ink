@@ -1,5 +1,7 @@
 # Wissensdatenbank — Dual Model Coexistence
 
+> **Wiki split architecture:** see [kb-wiki-architecture.md](./kb-wiki-architecture.md) for psychopharmacology.wiki ↔ Psychiatry.ink releases, contributions queue, and provenance.
+
 This repo currently runs **two** KB persistence models in parallel during transition.
 
 ## Legacy JSONB model (existing UI)
@@ -46,7 +48,7 @@ Seed list (150 drugs)
     → project/sync → knowledge_base_drugs JSONB (one-way, on publish via /api/kb-admin)
 ```
 
-On **Publish**, the server maps the normalized profile into a `KnowledgeBaseDrug` JSONB blob and upserts `knowledge_base_drugs`. Clinicians then see it in **Psychopharmacologie** (`KnowledgeBasePharma`) via the existing `useKnowledgeBaseDrugs` hook — no frontend read of `kb_substances`.
+On **Publish**, the server maps the normalized profile into a `KnowledgeBaseDrug` JSONB blob and upserts `knowledge_base_drugs`. The projection stamps `kbReleaseVersion` and `kbReleaseSyncedAt` from the current `kb_releases` row. Clinicians then see it in **Psychopharmacologie** (`KnowledgeBasePharma`) via the existing `useKnowledgeBaseDrugs` hook — no frontend read of `kb_substances`.
 
 **Publish semantics (dev vs release UX):**
 

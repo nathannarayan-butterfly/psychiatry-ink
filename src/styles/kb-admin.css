@@ -1,16 +1,28 @@
-/* KB Admin batch review (MVP) */
+/* KB Admin batch review */
 .kb-admin-page {
-  min-height: 100dvh;
-  padding: 1.5rem 2rem 3rem;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+  padding: 1rem 1.25rem;
   background: var(--bg, #f8fafc);
   color: var(--text, #0f172a);
+}
+
+.kb-admin-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: 0.75rem;
 }
 
 .kb-admin-header {
   display: flex;
   align-items: flex-start;
   gap: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.75rem;
+  flex-shrink: 0;
 }
 
 .kb-admin-header h1 {
@@ -33,21 +45,233 @@
   border-radius: 8px;
   padding: 0.4rem 0.75rem;
   cursor: pointer;
+  flex-shrink: 0;
+}
+
+.kb-admin-tabs {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.kb-admin-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.kb-admin-tab--active {
+  background: #eef4ff;
+  border-color: #2563eb;
+  font-weight: 600;
+}
+
+.kb-admin-tab__count {
+  display: inline-flex;
+  min-width: 1.25rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.7rem;
+  line-height: 1.25rem;
+  text-align: center;
 }
 
 .kb-admin-layout {
   display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 1rem;
-  align-items: start;
+  grid-template-columns: 260px minmax(0, 1fr) 300px;
+  gap: 0.75rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.kb-admin-list,
+.kb-admin-detail,
+.kb-admin-sidebar {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .kb-admin-list,
 .kb-admin-detail {
+  padding: 0.75rem;
+}
+
+.kb-admin-list {
+  overflow: hidden;
+}
+
+.kb-admin-detail {
+  overflow-y: auto;
+}
+
+.kb-admin-sidebar {
+  padding: 0.75rem;
+  overflow: hidden;
+}
+
+.kb-admin-sidebar__header h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+}
+
+.kb-admin-sidebar__count {
+  margin-left: auto;
+  font-size: 0.75rem;
+  background: #e2e8f0;
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+}
+
+.kb-admin-discussion-thread {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin-bottom: 0.75rem;
+}
+
+.kb-admin-discussion-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.kb-admin-discussion-list li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.85rem;
+}
+
+.kb-admin-discussion-list p {
+  margin: 0.25rem 0 0;
+  white-space: pre-wrap;
+}
+
+.kb-admin-discussion-compose {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.kb-admin-discussion-compose textarea {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0.5rem;
+  font: inherit;
+  resize: vertical;
+}
+
+.kb-admin-discussion-compose button {
+  align-self: flex-end;
+  border: 1px solid #cbd5e1;
   background: #fff;
+  border-radius: 8px;
+  padding: 0.35rem 0.65rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.kb-admin-votes {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.kb-admin-votes__counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.kb-admin-votes__approve { color: #047857; }
+.kb-admin-votes__reject { color: #b91c1c; }
+.kb-admin-votes__abstain { color: #64748b; }
+.kb-admin-votes__threshold { color: #64748b; }
+
+.kb-admin-votes__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+
+.kb-admin-votes__actions button {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  border-radius: 8px;
+  padding: 0.3rem 0.55rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.kb-admin-publish-btn {
+  width: 100%;
+  border: 1px solid #6ee7b7;
+  background: #ecfdf5;
+  color: #047857;
+  border-radius: 8px;
+  padding: 0.45rem 0.65rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+}
+
+.kb-admin-reject-box textarea {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0.4rem;
+  font: inherit;
+  margin-bottom: 0.35rem;
+}
+
+.kb-admin-reject-btn {
+  width: 100%;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+  border-radius: 8px;
+  padding: 0.35rem 0.55rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.kb-admin-contribution-status {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin: 0.35rem 0 0;
+}
+
+.kb-admin-payload {
+  background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 1rem;
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-size: 0.75rem;
+  overflow: auto;
+  max-height: 320px;
 }
 
 .kb-admin-filters {
@@ -55,6 +279,7 @@
   flex-direction: column;
   gap: 0.5rem;
   margin-bottom: 0.75rem;
+  flex-shrink: 0;
 }
 
 .kb-admin-filters label {
@@ -103,6 +328,7 @@
   background: #f0fdf4;
   border: 1px solid #bbf7d0;
   border-radius: 8px;
+  flex-shrink: 0;
 }
 
 .kb-admin-bulk-summary ul {
@@ -118,8 +344,9 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  max-height: 70vh;
-  overflow: auto;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .kb-admin-list-items button {
@@ -141,6 +368,12 @@
 }
 
 .kb-admin-list-items span {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.kb-admin-contribution-meta {
+  display: block;
   font-size: 0.75rem;
   color: #64748b;
 }
@@ -210,6 +443,7 @@
 
 .kb-admin-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
 }
 
@@ -272,8 +506,9 @@
   border-radius: 8px;
   background: #fff7ed;
   border: 1px solid #fed7aa;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   font-size: 0.875rem;
+  flex-shrink: 0;
 }
 
 .kb-admin-alert--error {
@@ -365,10 +600,23 @@
   margin-top: 0.5rem;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
+  .kb-admin-layout {
+    grid-template-columns: 220px minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(180px, 28vh);
+  }
+
+  .kb-admin-sidebar {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 800px) {
   .kb-admin-layout {
     grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr) auto;
   }
+
   .kb-admin-compare {
     grid-template-columns: 1fr;
   }

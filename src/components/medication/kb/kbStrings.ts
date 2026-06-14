@@ -17,6 +17,90 @@ const STRINGS = {
   tocTitle: { de: 'Inhalt', en: 'Contents', fr: 'Sommaire', es: 'Contenido' },
   tocJump: { de: 'Zum Abschnitt springen', en: 'Jump to section', fr: 'Aller à la section', es: 'Ir a la sección' },
 
+  /** Reading-mode bookmark tab — opens contribution dialog (section chosen inside). */
+  contributionBookmark: { de: 'Beitrag', en: 'Contribute', fr: 'Contribution', es: 'Aportar' },
+  contributionBookmarkTitle: {
+    de: 'Beitrag einreichen — Abschnitt bearbeiten vorschlagen',
+    en: 'Submit contribution — suggest a section edit',
+    fr: 'Soumettre une contribution — proposer une modification de section',
+    es: 'Enviar aportación — proponer edición de sección',
+  },
+  contributionDialogTitle: {
+    de: 'Beitrag einreichen',
+    en: 'Submit contribution',
+    fr: 'Soumettre une contribution',
+    es: 'Enviar aportación',
+  },
+  contributionDialogSubtitle: {
+    de: 'Abschnitt bearbeiten vorschlagen',
+    en: 'Suggest an edit for this section',
+    fr: 'Proposer une modification pour cette section',
+    es: 'Proponer una edición para esta sección',
+  },
+  contributionSectionLabel: { de: 'Abschnitt', en: 'Section', fr: 'Section', es: 'Sección' },
+  contributionContentLabel: {
+    de: 'Vorgeschlagener Inhalt',
+    en: 'Proposed content',
+    fr: 'Contenu proposé',
+    es: 'Contenido propuesto',
+  },
+  contributionContentPlaceholder: {
+    de: 'Ihre Korrektur, Ergänzung oder neue Daten zu diesem Abschnitt …',
+    en: 'Your correction, addition, or new data for this section …',
+    fr: 'Votre correction, ajout ou nouvelles données pour cette section …',
+    es: 'Su corrección, adición o nuevos datos para esta sección …',
+  },
+  contributionSourceLabel: {
+    de: 'Quellenangabe',
+    en: 'Source citation',
+    fr: 'Citation source',
+    es: 'Cita de fuente',
+  },
+  contributionSourcePlaceholder: {
+    de: 'z. B. Fachinformation, Stahl, PMID …',
+    en: 'e.g. SmPC, Stahl, PMID …',
+    fr: 'p. ex. RCP, Stahl, PMID …',
+    es: 'p. ej. ficha técnica, Stahl, PMID …',
+  },
+  contributionSourceTypeLabel: { de: 'Quellentyp', en: 'Source type', fr: 'Type de source', es: 'Tipo de fuente' },
+  contributionSourceType_fachinformation: {
+    de: 'Fachinformation',
+    en: 'SmPC / label',
+    fr: 'RCP / notice',
+    es: 'Ficha técnica',
+  },
+  contributionSourceType_stahl: { de: 'Stahl', en: 'Stahl', fr: 'Stahl', es: 'Stahl' },
+  contributionSourceType_literature: { de: 'Literatur', en: 'Literature', fr: 'Littérature', es: 'Literatura' },
+  contributionSourceType_guideline: { de: 'Leitlinie', en: 'Guideline', fr: 'Recommandation', es: 'Guía clínica' },
+  contributionSourceType_fda_label: { de: 'FDA-Label', en: 'FDA label', fr: 'Label FDA', es: 'Etiqueta FDA' },
+  contributionSourceType_unknown: { de: 'Sonstige', en: 'Other', fr: 'Autre', es: 'Otro' },
+  contributionSubmit: { de: 'Einreichen', en: 'Submit', fr: 'Soumettre', es: 'Enviar' },
+  contributionSubmitting: { de: 'Wird eingereicht …', en: 'Submitting …', fr: 'Envoi …', es: 'Enviando …' },
+  contributionSuccess: {
+    de: 'Beitrag zur Prüfung eingereicht',
+    en: 'Contribution submitted for review',
+    fr: 'Contribution soumise pour examen',
+    es: 'Aportación enviada para revisión',
+  },
+  contributionError: {
+    de: 'Beitrag konnte nicht eingereicht werden.',
+    en: 'Could not submit contribution.',
+    fr: 'Impossible de soumettre la contribution.',
+    es: 'No se pudo enviar la aportación.',
+  },
+  contributionReferenceRequired: {
+    de: 'Referenz ist erforderlich',
+    en: 'Reference is required',
+    fr: 'La référence est obligatoire',
+    es: 'La referencia es obligatoria',
+  },
+  contributionLicenseRequired: {
+    de: 'Lizenzannahme ist erforderlich',
+    en: 'License acceptance is required',
+    fr: "L'acceptation de la licence est obligatoire",
+    es: 'Se requiere aceptar la licencia',
+  },
+
   // ── Section-level actions (graph cards) ──
   sectionComment: {
     de: 'Kommentar zu diesem Abschnitt',

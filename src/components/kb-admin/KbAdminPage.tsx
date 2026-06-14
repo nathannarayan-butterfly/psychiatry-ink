@@ -1,6 +1,7 @@
 import { AlertTriangle, Archive, CheckCircle, Eye, FlaskConical, RefreshCw, RotateCcw, ShieldAlert } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { PSYCHIATRIC_DRUG_CATEGORIES } from '../../data/kb/psychiatric-drug-seed-list'
+import { useKnowledgeBaseUserProfile } from '../../hooks/useKnowledgeBaseUserId'
 import {
   approveAllKbSubstances,
   approveKbSubstance,
@@ -12,7 +13,10 @@ import {
   publishKbSubstance,
   type KbBulkPublishSummary,
 } from '../../services/kbAdminApi'
+import { fetchKbAdminContributions } from '../../services/kbContributionsApi'
+import type { KbContribution } from '../../types/kbContributions'
 import type { KbSubstance, KbSubstanceDetail } from '../../types/kbNormalized'
+import { KbAdminDiscussionsPanel } from './KbAdminDiscussionsPanel'
 
 interface KbAdminPageProps {
   onBack: () => void
@@ -64,10 +68,12 @@ function substanceBadges(s: KbSubstance, detail?: KbSubstanceDetail | null) {
 }
 
 export function KbAdminPage({ onBack }: KbAdminPageProps) {
+  const { userId, displayName } = useKnowledgeBaseUserProfile()
   const [statusFilter, setStatusFilter] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [substances, setSubstances] = useState<KbSubstance[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selectedContributionId, setSelectedContributionId] = useState<string | null>(null)
   const [detail, setDetail] = useState<KbSubstanceDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -78,6 +84,9 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
   const [publishNotice, setPublishNotice] = useState<string | null>(null)
   const [bulkRunning, setBulkRunning] = useState(false)
   const [bulkSummary, setBulkSummary] = useState<KbBulkPublishSummary | null>(null)
+  const [adminTab, setAdminTab] = useState<'substances' | 'contributions'>('substances')
+  const [contributions, setContributions] = useState<KbContribution[]>([])
+  const [contributionsLoading, setContributionsLoading] = useState(false)
 
   const approvableSubstances = useMemo(() => {
     const unpublished = substances.filter((s) => s.status !== 'published' && s.status !== 'archived')
@@ -87,11 +96,16 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
     return unpublished
   }, [substances, statusFilter])
 
+  const selectedContribution = useMemo(
+    () => contributions.find((entry) => entry.id === selectedContributionId) ?? null,
+    [contributions, selectedContributionId],
+  )
+
   const loadList = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const list = await fetchKbAdminSubstances({
+      const list = await fetchKbAdminSubstances(userId, {
         status: statusFilter || undefined,
         category: categoryFilter || undefined,
       })
@@ -101,18 +115,18 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
     } finally {
       setLoading(false)
     }
-  }, [statusFilter, categoryFilter])
+  }, [statusFilter, categoryFilter, userId])
 
   const loadDetail = useCallback(async (id: string) => {
     try {
-      const d = await fetchKbAdminSubstance(id)
+      const d = await fetchKbAdminSubstance(userId, id)
       setDetail(d)
       setEditMechanism(d.mechanismSummary ?? '')
       setEditPearls(d.clinicalPearls ?? '')
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     }
-  }, [])
+  }, [userId])
 
   const handleApproveAll = useCallback(async () => {
     const count = approvableSubstances.length
@@ -126,7 +140,7 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
     setBulkSummary(null)
     setError(null)
     try {
-      const summary = await approveAllKbSubstances({
+      const summary = await approveAllKbSubstances(userId, {
         status: statusFilter || undefined,
         category: categoryFilter || undefined,
       })
@@ -138,7 +152,19 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
     } finally {
       setBulkRunning(false)
     }
-  }, [approvableSubstances.length, bulkRunning, statusFilter, categoryFilter, loadList, loadDetail, selectedId])
+  }, [approvableSubstances.length, bulkRunning, statusFilter, categoryFilter, loadList, loadDetail, selectedId, userId])
+
+  const loadContributions = useCallback(async () => {
+    setContributionsLoading(true)
+    try {
+      const list = await fetchKbAdminContributions(userId, 'pending')
+      setContributions(list)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setContributionsLoading(false)
+    }
+  }, [userId])
 
   useEffect(() => {
     void fetchKbAdminStatus()
@@ -149,7 +175,8 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
   useEffect(() => {
     if (!apiReady) return
     void loadList()
-  }, [apiReady, loadList])
+    void loadContributions()
+  }, [apiReady, loadList, loadContributions])
 
   useEffect(() => {
     if (selectedId) {
@@ -193,9 +220,79 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
 
       {error && <div className="kb-admin-alert kb-admin-alert--error">{error}</div>}
 
-      <div className="kb-admin-layout">
-        <aside className="kb-admin-list">
-          <div className="kb-admin-filters">
+      <div className="kb-admin-body">
+        <div className="kb-admin-tabs">
+          <button
+            type="button"
+            className={adminTab === 'substances' ? 'kb-admin-tab kb-admin-tab--active' : 'kb-admin-tab'}
+            onClick={() => {
+              setAdminTab('substances')
+              setSelectedContributionId(null)
+            }}
+          >
+            Substances
+          </button>
+          <button
+            type="button"
+            className={adminTab === 'contributions' ? 'kb-admin-tab kb-admin-tab--active' : 'kb-admin-tab'}
+            onClick={() => {
+              setAdminTab('contributions')
+              setSelectedId(null)
+              setDetail(null)
+            }}
+          >
+            Contributions
+            {contributions.length > 0 && (
+              <span className="kb-admin-tab__count">{contributions.length}</span>
+            )}
+          </button>
+        </div>
+
+        <div className="kb-admin-layout">
+          <aside className="kb-admin-list">
+            {adminTab === 'contributions' ? (
+              <>
+                <div className="kb-admin-filters">
+                  <button type="button" onClick={() => void loadContributions()} disabled={contributionsLoading}>
+                    <RefreshCw size={14} /> Aktualisieren
+                  </button>
+                </div>
+                {contributionsLoading ? (
+                  <p>Laden…</p>
+                ) : contributions.length === 0 ? (
+                  <p className="kb-admin-sub">No pending contributions.</p>
+                ) : (
+                  <ul className="kb-admin-list-items">
+                    {contributions.map((c) => (
+                      <li key={c.id}>
+                        <button
+                          type="button"
+                          className={selectedContributionId === c.id ? 'is-active' : ''}
+                          onClick={() => {
+                            setSelectedContributionId(c.id)
+                            if (c.substanceId) {
+                              setSelectedId(c.substanceId)
+                              void loadDetail(c.substanceId)
+                            } else {
+                              setSelectedId(null)
+                              setDetail(null)
+                            }
+                          }}
+                        >
+                          <strong>{c.contributionType}</strong>
+                          <span>{c.submitterDisplayName ?? 'Anonymous'}</span>
+                          <div className="kb-admin-badge-row">
+                            <span className="kb-admin-badge kb-admin-badge--unreviewed">{c.status}</span>
+                          </div>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="kb-admin-filters">
             <label>
               Status
               <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
@@ -261,7 +358,10 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
                   <button
                     type="button"
                     className={selectedId === s.id ? 'is-active' : ''}
-                    onClick={() => setSelectedId(s.id)}
+                    onClick={() => {
+                      setSelectedId(s.id)
+                      setSelectedContributionId(null)
+                    }}
                   >
                     <strong>{s.genericName}</strong>
                     <span>{s.category}</span>
@@ -276,10 +376,33 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
               {substances.length === 0 && <li className="kb-admin-empty">Keine Einträge</li>}
             </ul>
           )}
+              </>
+            )}
         </aside>
 
         <main className="kb-admin-detail">
-          {!detail ? (
+          {adminTab === 'contributions' && selectedContribution ? (
+            <>
+              <div className="kb-admin-detail-header">
+                <h2>{selectedContribution.contributionType}</h2>
+                <div className="kb-admin-badge-row">
+                  <KbBadge variant="unreviewed" label={selectedContribution.status} />
+                </div>
+              </div>
+              <section className="kb-admin-section">
+                <h3>Submission</h3>
+                <dl className="kb-admin-dl">
+                  <dt>Submitter</dt>
+                  <dd>{selectedContribution.submitterDisplayName ?? '—'}</dd>
+                  <dt>Created</dt>
+                  <dd>{selectedContribution.createdAt}</dd>
+                  <dt>Substance</dt>
+                  <dd>{selectedContribution.substanceId ?? '—'}</dd>
+                </dl>
+                <pre className="kb-admin-payload">{JSON.stringify(selectedContribution.payload, null, 2)}</pre>
+              </section>
+            </>
+          ) : !detail ? (
             <p className="kb-admin-empty">Profil auswählen (AI draft öffnen)</p>
           ) : (
             <>
@@ -291,13 +414,13 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
                   ))}
                 </div>
                 <div className="kb-admin-actions">
-                  <button type="button" onClick={() => void approveKbSubstance(detail.id).then(() => loadDetail(detail.id))}>
+                  <button type="button" onClick={() => void approveKbSubstance(userId, detail.id).then(() => loadDetail(detail.id))}>
                     <CheckCircle size={14} /> Approve
                   </button>
                   <button
                     type="button"
                     onClick={() =>
-                      void publishKbSubstance(detail.id)
+                      void publishKbSubstance(userId, detail.id)
                         .then((result) => {
                           setPublishNotice(
                             `Published → Psychopharmacologie (knowledge_base_drugs id: ${result.projectedDrugId})`,
@@ -309,7 +432,7 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
                   >
                     Publish
                   </button>
-                  <button type="button" onClick={() => void archiveKbSubstance(detail.id).then(() => loadDetail(detail.id))}>
+                  <button type="button" onClick={() => void archiveKbSubstance(userId, detail.id).then(() => loadDetail(detail.id))}>
                     <Archive size={14} /> Archive
                   </button>
                   <button
@@ -585,7 +708,7 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
                 <button
                   type="button"
                   onClick={() =>
-                    void patchKbAdminSubstance(detail.id, {
+                    void patchKbAdminSubstance(userId, detail.id, {
                       mechanismSummary: editMechanism,
                       clinicalPearls: editPearls,
                     }).then(() => loadDetail(detail.id))
@@ -634,6 +757,15 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
             </>
           )}
         </main>
+
+        <KbAdminDiscussionsPanel
+          userId={userId}
+          displayName={displayName}
+          contribution={adminTab === 'contributions' ? selectedContribution : null}
+          substanceId={selectedId}
+          onContributionUpdated={() => void loadContributions()}
+        />
+      </div>
       </div>
     </div>
   )

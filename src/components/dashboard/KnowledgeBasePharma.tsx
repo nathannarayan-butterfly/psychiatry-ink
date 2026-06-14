@@ -2,6 +2,7 @@ import {
   ArrowLeft,
   Bold,
   BookOpen,
+  Bookmark,
   ChevronDown,
   ChevronUp,
   Copy,
@@ -12,13 +13,12 @@ import {
   Pencil,
   Plus,
   RotateCcw,
-  Search,
   Sparkles,
   Trash2,
   Underline,
   X,
 } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from '../../context/TranslationContext'
 import { useKnowledgeBaseAnnotations } from '../../hooks/useKnowledgeBaseAnnotations'
@@ -34,9 +34,11 @@ import {
   PRESCRIBING_COUNTRY_LABELS,
   usePrescribingCountry,
 } from '../../hooks/usePrescribingCountry'
+import { KbPharmaClassifiedBrowse } from './KbPharmaClassifiedBrowse'
 import { showNotionToast } from '../notion/NotionToast'
 import { generatePharmaDetails, type AiGeneratedPreparation } from '../../services/pharmaAiApi'
 import { useKnowledgeBaseAiTier, type KbAiTier } from '../../hooks/useKnowledgeBaseAiTier'
+import { useKbCurrentRelease } from '../../hooks/useKbCurrentRelease'
 import type { StructuredAiBundle } from '../../utils/medication/structuredAi'
 import {
   createDefaultSections,
@@ -79,6 +81,10 @@ import { sectionToFullText } from '../../utils/medication/structuredSectionText'
 import { HighlightedText, getTextSelectionOffsets } from './KnowledgeBaseHighlightedText'
 import { KnowledgeBaseNotes } from './KnowledgeBaseNotes'
 import { KnowledgeBaseReadingPanel, type ReadingPanelRequest } from './KnowledgeBaseReadingPanel'
+import {
+  KbSectionContributionDialog,
+  type KbContributionSectionKey,
+} from './KbSectionContributionDialog'
 import { KnowledgeBaseReceptorEditor } from './KnowledgeBaseReceptorEditor'
 import { MedicationExportMenu } from './MedicationExportMenu'
 import { KeyFactsTable } from '../medication/kb/KeyFactsTable'
@@ -88,6 +94,8 @@ import { KbSectionNav, kbSectionDomId, type KbNavItem } from '../medication/kb/K
 import { ReceptorRadar } from '../medication/kb/charts/ReceptorRadar'
 import { kbT } from '../medication/kb/kbStrings'
 import { derivePsychClass, getPsychClassLabel } from '../../utils/medication/psychClass'
+import { extractKbSubstanceId } from '../../utils/kbSubstanceId'
+import { useKbContributors } from '../../hooks/useKbContributors'
 
 interface KnowledgeBasePharmaProps {
   onClose: () => void
@@ -96,12 +104,9 @@ interface KnowledgeBasePharmaProps {
   collectionName?: string
 }
 
-type SortKey = 'name' | 'class' | 'updated'
 type KnowledgeBaseMode = 'reading' | 'editing'
 type CreateProfileAction = 'empty' | 'ai_draft' | 'source_import'
 type PreparationDraft = Omit<MedicationMarketAvailability, 'id' | 'createdAt'> | MedicationMarketAvailability
-
-const ALL_CATEGORIES = 'all'
 
 function drugSnapshotsEqual(a: KnowledgeBaseDrug, b: KnowledgeBaseDrug): boolean {
   return JSON.stringify(a) === JSON.stringify(b)
@@ -437,140 +442,6 @@ function DeleteConfirmDialog({
   )
 }
 
-// ── Drug List View ───────────────────────────────────────────────────────────
-
-interface DrugListViewProps {
-  drugs: KnowledgeBaseDrug[]
-  onSelect: (id: string) => void
-  onAdd: () => void
-  language: string
-}
-
-function DrugListView({ drugs, onSelect, onAdd, language }: DrugListViewProps) {
-  const { t } = useTranslation()
-  const [search, setSearch] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState(ALL_CATEGORIES)
-  const [sortBy, setSortBy] = useState<SortKey>('name')
-
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    return drugs
-      .filter((drug) => {
-        if (categoryFilter !== ALL_CATEGORIES && drug.category !== categoryFilter) return false
-        if (!q) return true
-        return [
-          drug.genericName,
-          ...drug.brandNames,
-          drug.drugClass,
-          drug.category,
-          ...(drug.tags ?? []),
-          ...drug.sections.map((s) => s.content),
-        ].join(' ').toLowerCase().includes(q)
-      })
-      .sort((a, b) => {
-        if (sortBy === 'updated') return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-        if (sortBy === 'class') return a.drugClass.localeCompare(b.drugClass)
-        return a.genericName.localeCompare(b.genericName)
-      })
-  }, [drugs, search, categoryFilter, sortBy])
-
-  const activeCategories = useMemo(
-    () => [...new Set(drugs.map((d) => d.category))].sort(),
-    [drugs],
-  )
-
-  return (
-    <div className="kbp-list-view">
-      <div className="kbp-list-toolbar">
-        <label className="kb-search">
-          <Search className="kb-search__icon h-3.5 w-3.5" strokeWidth={2} aria-hidden />
-          <input
-            type="search"
-            className="kb-search__input"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t('kbPharmaSearch')}
-            aria-label={t('kbPharmaSearch')}
-          />
-        </label>
-        <div className="kbp-list-toolbar__right">
-          <label className="kbp-sort-label">
-            <span className="kbp-sort-label__text">{t('kbPharmaSortBy')}</span>
-            <select
-              className="kbp-sort-select"
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortKey)}
-            >
-              <option value="name">{t('kbPharmaSortName')}</option>
-              <option value="class">{t('kbPharmaSortClass')}</option>
-              <option value="updated">{t('kbPharmaSortUpdated')}</option>
-            </select>
-          </label>
-          <button type="button" className="kbp-btn kbp-btn--primary" onClick={onAdd}>
-            <Plus className="h-3.5 w-3.5" strokeWidth={2.25} aria-hidden />
-            {t('kbPharmaNewDrug')}
-          </button>
-        </div>
-      </div>
-
-      <div className="kb-category-chips" role="group" aria-label={t('kbPharmaFieldCategory')}>
-        <button
-          type="button"
-          className={`kb-chip${categoryFilter === ALL_CATEGORIES ? ' kb-chip--active' : ''}`}
-          onClick={() => setCategoryFilter(ALL_CATEGORIES)}
-        >
-          {t('kbPharmaAllCategories')}
-        </button>
-        {activeCategories.map((cat) => (
-          <button
-            key={cat}
-            type="button"
-            className={`kb-chip${categoryFilter === cat ? ' kb-chip--active' : ''}`}
-            onClick={() => setCategoryFilter(cat)}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
-      {drugs.length === 0 ? (
-        <div className="kbp-empty">
-          <p className="kbp-empty__text">{t('kbPharmaEmpty')}</p>
-          <button type="button" className="kbp-btn kbp-btn--primary" onClick={onAdd}>
-            <Plus className="h-3.5 w-3.5" strokeWidth={2.25} aria-hidden />
-            {t('kbPharmaNewDrug')}
-          </button>
-        </div>
-      ) : filtered.length === 0 ? (
-        <p className="kbp-list-view__no-results">{t('kbPharmaNoResults')}</p>
-      ) : (
-        <ul className="kbp-drug-list">
-          {filtered.map((drug) => (
-            <li key={drug.id}>
-              <button type="button" className="kbp-drug-row" onClick={() => onSelect(drug.id)}>
-                <span className="kbp-drug-row__main">
-                  <span className="kbp-drug-row__name">{drug.genericName}</span>
-                  {drug.brandNames.length > 0 && (
-                    <span className="kbp-drug-row__brands">{drug.brandNames.join(', ')}</span>
-                  )}
-                  {drug.drugClass && (
-                    <span className="kbp-drug-row__class">{drug.drugClass}</span>
-                  )}
-                </span>
-                <span className="kbp-drug-row__meta">
-                  <span className="kbp-drug-row__date">
-                    {formatSiteLocaleDate(drug.updatedAt, language as 'de' | 'en' | 'fr' | 'es')}
-                  </span>
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  )
-}
-
 // ── Section Item ─────────────────────────────────────────────────────────────
 
 interface SectionItemProps {
@@ -884,22 +755,24 @@ function SectionItem({
             </span>
             <div className="kbp-section__header-right">
               {/* Section-level AI ("KI restructure") action is edit-mode only;
-                  reading mode keeps just the Comment study affordance. */}
-              {isStructured && onSectionComment ? (
+                  reading mode keeps Comment affordance. */}
+              {onSectionComment ? (
                 <span
                   className="kbp-section__actions"
                   onClick={(e) => e.stopPropagation()}
                   onKeyDown={(e) => e.stopPropagation()}
                 >
-                  <button
-                    type="button"
-                    className="kbp-section__action-btn"
-                    onClick={onSectionComment}
-                    title={kbT(language, 'sectionComment')}
-                    aria-label={kbT(language, 'sectionComment')}
-                  >
-                    <MessageSquarePlus className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
-                  </button>
+                  {isStructured && onSectionComment ? (
+                    <button
+                      type="button"
+                      className="kbp-section__action-btn"
+                      onClick={onSectionComment}
+                      title={kbT(language, 'sectionComment')}
+                      aria-label={kbT(language, 'sectionComment')}
+                    >
+                      <MessageSquarePlus className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+                    </button>
+                  ) : null}
                 </span>
               ) : null}
               <ChevronDown
@@ -1740,6 +1613,40 @@ function ReceptorProfileChapterSection({
   )
 }
 
+function contributionKeyForDrugSection(section: DrugSection): KbContributionSectionKey {
+  return section.key === 'custom' ? 'kurzprofil' : section.key
+}
+
+function contributionKeyForActiveSection(
+  activeSectionId: string,
+  drug: KnowledgeBaseDrug,
+  canonicalSections: CanonicalKbSection[],
+): KbContributionSectionKey {
+  if (activeSectionId === KB_RECEPTOR_SECTION_ID) return 'rezeptorprofil'
+
+  const activeDrugSection = drug.sections.find((section) => section.id === activeSectionId)
+  if (activeDrugSection) return contributionKeyForDrugSection(activeDrugSection)
+
+  const canonicalMatch = canonicalSections.find((section) => {
+    if (section.id === 'rezeptorprofil') return activeSectionId === KB_RECEPTOR_SECTION_ID
+    if (section.id === 'klinischeHinweise') return activeSectionId === 'canonical-klinischeHinweise'
+    if (section.sectionKey) {
+      const mapped = sectionByKey(drug, section.sectionKey)
+      return mapped?.id === activeSectionId || activeSectionId === `canonical-${section.id}`
+    }
+    return activeSectionId === `canonical-${section.id}`
+  })
+
+  if (canonicalMatch) {
+    if (canonicalMatch.id === 'rezeptorprofil') return 'rezeptorprofil'
+    if (canonicalMatch.sectionKey) return canonicalMatch.sectionKey
+    if (canonicalMatch.subsections?.[0]) return canonicalMatch.subsections[0].id
+    return canonicalMatch.id as KbContributionSectionKey
+  }
+
+  return 'kurzprofil'
+}
+
 // ── Drug Detail View ─────────────────────────────────────────────────────────
 
 interface DrugDetailViewProps {
@@ -1749,6 +1656,24 @@ interface DrugDetailViewProps {
   onDuplicate: () => void
   onDelete: () => void
   language: string
+}
+
+function KbContributorsFooter({ substanceId, language }: { substanceId: string | null; language: string }) {
+  const { contributors, loading } = useKbContributors(substanceId)
+  if (!substanceId || loading || contributors.length === 0) return null
+
+  const title = language === 'de' ? 'Mitwirkende' : 'Contributors'
+
+  return (
+    <section className="kbp-contributors-footer" aria-label={title}>
+      <h3 className="kbp-contributors-footer__title">{title}</h3>
+      <ul className="kbp-contributors-footer__list">
+        {contributors.map((entry) => (
+          <li key={entry.displayName}>{entry.displayName}</li>
+        ))}
+      </ul>
+    </section>
+  )
 }
 
 function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, language }: DrugDetailViewProps) {
@@ -1780,7 +1705,12 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
     Omit<MedicationMarketAvailability, 'id' | 'createdAt'>[]
   >([])
   const [panelRequest, setPanelRequest] = useState<ReadingPanelRequest | null>(null)
+  const [contributionDialogOpen, setContributionDialogOpen] = useState(false)
   const draftActionBarRef = useRef<HTMLDivElement>(null)
+
+  const openContributionDialog = useCallback(() => {
+    setContributionDialogOpen(true)
+  }, [])
 
   const handleCommentSelection = useCallback((sectionId: string, text: string) => {
     setActiveSectionId(sectionId)
@@ -1924,6 +1854,11 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
       ? t('kbReceptorTitle')
       : (navItems.find((item) => item.id === activeSectionId)?.label ?? activeSection?.label ?? t('kbReadingPanelTitle'))
   const panelSectionData = getSectionDataForAsk(activeDrug, panelSectionId, sortedSections)
+  const contributionInitialSectionKey = contributionKeyForActiveSection(
+    activeSectionId,
+    activeDrug,
+    canonicalSections,
+  )
 
   const updateDraftSection = (sectionId: string, patch: Partial<DrugSection>) => {
     setDraft((prev) => ({
@@ -2285,7 +2220,8 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
             language={language}
           />
         ) : null}
-        <div className="kbp-detail-main">
+        <div className={`kbp-detail-main${!editMode ? ' kbp-detail-main--reading' : ''}`}>
+          <div className="kbp-detail-main__content">
           <div className="kbp-drug-header">
             <div className="kbp-drug-header__top">
               <h2 className="kbp-drug-header__name">{activeDrug.genericName}</h2>
@@ -2691,7 +2627,24 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
                 {t('kbPharmaAddSection')}
               </button>
             )}
+
+            {!editMode ? (
+              <KbContributorsFooter substanceId={extractKbSubstanceId(activeDrug)} language={language} />
+            ) : null}
           </div>
+          </div>
+          {!editMode ? (
+            <button
+              type="button"
+              className="kbp-contribution-bookmark"
+              onClick={openContributionDialog}
+              title={kbT(language, 'contributionBookmarkTitle')}
+              aria-label={kbT(language, 'contributionBookmarkTitle')}
+            >
+              <Bookmark className="kbp-contribution-bookmark__icon" strokeWidth={1.75} aria-hidden />
+              <span className="kbp-contribution-bookmark__label">{kbT(language, 'contributionBookmark')}</span>
+            </button>
+          ) : null}
         </div>
 
         {!editMode ? (
@@ -2727,6 +2680,16 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
           )
         ) : null}
       </div>
+
+      {contributionDialogOpen ? (
+        <KbSectionContributionDialog
+          substanceId={extractKbSubstanceId(drug)}
+          drugName={drug.genericName}
+          language={language}
+          initialSectionKey={contributionInitialSectionKey}
+          onClose={() => setContributionDialogOpen(false)}
+        />
+      ) : null}
     </div>
   )
 }
@@ -2738,6 +2701,7 @@ export function KnowledgeBasePharma({ onClose, onCloseAll, collectionId, collect
   const { drugs, addDrug, updateDrug, deleteDrug, duplicateDrug } = useKnowledgeBaseDrugs(collectionId)
   const { upsertGeneratedPreparations } = useMedicationMarketAvailability()
   const [aiTier] = useKnowledgeBaseAiTier()
+  const { release: kbRelease } = useKbCurrentRelease()
 
   const [selectedDrugId, setSelectedDrugId] = useState<string | null>(null)
   const [showAddDialog, setShowAddDialog] = useState(false)
@@ -2836,6 +2800,28 @@ export function KnowledgeBasePharma({ onClose, onCloseAll, collectionId, collect
         </button>
       </div>
 
+      {(kbRelease || drugs.some((d) => d.kbReleaseVersion)) && (
+        <div className="kbp-meta-strip" aria-label="KB release metadata">
+          <span>
+            {t('kbPharmaKbVersionLabel')}:{' '}
+            <strong>{kbRelease?.versionLabel ?? drugs.find((d) => d.kbReleaseVersion)?.kbReleaseVersion}</strong>
+          </span>
+          <span>
+            {t('kbPharmaKbLastSyncedLabel')}:{' '}
+            <strong>
+              {formatSiteLocaleDate(
+                kbRelease?.syncedAt ?? drugs.find((d) => d.kbReleaseSyncedAt)?.kbReleaseSyncedAt ?? '',
+                language,
+              )}
+            </strong>
+          </span>
+          <span>
+            {t('kbPharmaKbSourceLabel')}:{' '}
+            <strong>{kbRelease?.source ?? 'psychopharmacology.wiki'}</strong>
+          </span>
+        </div>
+      )}
+
       <div className={`kbp-content${selectedDrug ? ' kbp-content--detail' : ''}`}>
         {selectedDrug ? (
           <DrugDetailView
@@ -2847,7 +2833,7 @@ export function KnowledgeBasePharma({ onClose, onCloseAll, collectionId, collect
             language={language}
           />
         ) : (
-          <DrugListView
+          <KbPharmaClassifiedBrowse
             drugs={drugs}
             onSelect={setSelectedDrugId}
             onAdd={() => setShowAddDialog(true)}
@@ -2855,6 +2841,8 @@ export function KnowledgeBasePharma({ onClose, onCloseAll, collectionId, collect
           />
         )}
       </div>
+
+      <p className="kbp-license-strip">{t('kbPharmaCommunityLicense')}</p>
 
       {showAddDialog && (
         <AddDrugDialog

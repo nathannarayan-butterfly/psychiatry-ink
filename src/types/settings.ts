@@ -14,6 +14,7 @@ export type SettingsSectionId =
   | 'account'
   | 'privacy'
   | 'about'
+  | 'kb-admin'
 
 export type PreferredAccentColor = 'brown' | 'blue' | 'green' | 'burgundy' | 'violet'
 

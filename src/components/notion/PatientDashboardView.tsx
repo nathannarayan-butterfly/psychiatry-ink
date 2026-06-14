@@ -41,6 +41,7 @@ import {
   translateWeitereTherapieType,
 } from '../../data/weitereTherapieUiTranslations'
 import type { ComplementaryTherapyStatus } from '../../types/complementaryTherapy'
+import { TherapieAdherenceSection } from './TherapieAdherenceSection'
 
 // ---------------------------------------------------------------------------
 // Labor dashboard widget
@@ -662,6 +663,7 @@ export function PatientDashboardView({
                 caseId={therapyScopeId}
                 onNavigateToTherapie={() => onTabSelect('therapie')}
               />
+              <TherapieAdherenceSection caseId={therapyScopeId} />
             </div>
             <div className="patient-dashboard__col patient-dashboard__col--right">
               <SpiegelwerteSection caseId={caseId} />

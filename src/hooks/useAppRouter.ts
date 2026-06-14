@@ -29,7 +29,11 @@ export function isPublicRoute(route: AppRoute): boolean {
 }
 
 export function isAppRoute(route: AppRoute): boolean {
-  return route.view === 'dashboard' || route.view === 'case' || route.view === 'kb-admin'
+  return (
+    route.view === 'dashboard' ||
+    route.view === 'case' ||
+    route.view === 'kb-admin'
+  )
 }
 
 function parsePathname(pathname: string, search = ''): AppRoute {

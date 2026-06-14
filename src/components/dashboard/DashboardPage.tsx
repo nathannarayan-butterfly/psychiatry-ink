@@ -42,7 +42,8 @@ import { needsIdentifierStorageOnboarding } from '../../utils/identifierStorage'
 import { DashboardHinweise } from './DashboardHinweise'
 import { DashboardTopBar } from './DashboardTopBar'
 import { KnowledgeBaseTile } from './KnowledgeBase'
-import { isKbAdminUiEnabled } from '../../services/kbAdminApi'
+import { isKbAdminApiEnabled } from '../../services/kbAdminApi'
+import { useKbAdminAccess } from '../../hooks/useKbAdminAccess'
 import { NewPatientDialog } from './NewPatientDialog'
 import type { NewPatientData } from './NewPatientDialog'
 import { NewCaseWorkflowDialog } from './NewCaseWorkflowDialog'
@@ -123,6 +124,7 @@ export function DashboardPage({
   const { t, language } = useTranslation()
   const displayName = useAccountDisplayName()
   const settingsPanel = useSettingsPanel()
+  const hasKbAdminAccess = useKbAdminAccess()
   const appearance = useAppearanceSettings()
   const assessmentStandardSettings = useAssessmentStandardSettings()
   const kiInstructions = useKiInstructions()
@@ -572,7 +574,7 @@ export function DashboardPage({
           {t('kbTitle')}
         </h2>
         <KnowledgeBaseTile />
-        {isKbAdminUiEnabled() && onOpenKbAdmin ? (
+        {hasKbAdminAccess && isKbAdminApiEnabled() && onOpenKbAdmin ? (
           <button type="button" className="dashboard-settings-chip" onClick={onOpenKbAdmin} style={{ marginTop: '0.75rem' }}>
             <FlaskConical className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
             KB Batch Review (Admin)

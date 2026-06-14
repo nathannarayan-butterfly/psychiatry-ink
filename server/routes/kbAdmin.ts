@@ -6,7 +6,18 @@ import {
   updateKbSubstance,
 } from '../services/kbNormalizedStore'
 import { publishAllKbSubstances, publishKbSubstance } from '../services/kbPublish'
+import { listKbContributions } from '../services/kbContributionsStore'
 import { isKbAdminConfigured } from '../services/kbSupabaseAdmin'
+import { requireKbAdminUser } from '../services/kbAdminAuth'
+import {
+  handleAdminConfig,
+  handleCastVote,
+  handleCreateDiscussion,
+  handleGetVoteSummary,
+  handleListDiscussions,
+  handlePublishContribution,
+  handleRejectContribution,
+} from './kbAdminContributions'
 
 export const kbAdminRouter: Router = createRouter()
 
@@ -15,7 +26,7 @@ function kbAdminEnabled(): boolean {
   return process.env.KB_ADMIN_API_ENABLED === 'true' || process.env.NODE_ENV !== 'production'
 }
 
-function requireKbAdmin(_req: Request, res: Response): boolean {
+function requireKbAdmin(req: Request, res: Response): boolean {
   if (!kbAdminEnabled()) {
     res.status(403).json({ error: 'KB admin API disabled. Set KB_ADMIN_API_ENABLED=true.' })
     return false
@@ -26,6 +37,7 @@ function requireKbAdmin(_req: Request, res: Response): boolean {
     })
     return false
   }
+  if (!requireKbAdminUser(req, res)) return false
   return true
 }
 
@@ -74,6 +86,21 @@ kbAdminRouter.post('/substances/approve-all', async (req, res) => {
   } catch (error) {
     console.error('[kb-admin] approve-all failed:', error)
     res.status(500).json({ error: 'Failed to approve all substances' })
+  }
+})
+
+kbAdminRouter.get('/contributions', async (req, res) => {
+  if (!requireKbAdmin(req, res)) return
+  try {
+    const status = typeof req.query.status === 'string' ? req.query.status : 'pending'
+    const contributions = await listKbContributions({
+      status: status as 'pending' | 'accepted' | 'rejected' | 'modified',
+      limit: 200,
+    })
+    res.json({ contributions })
+  } catch (error) {
+    console.error('[kb-admin] list contributions failed:', error)
+    res.status(500).json({ error: 'Failed to list contributions' })
   }
 })
 
@@ -160,4 +187,35 @@ kbAdminRouter.post('/substances/:id/approve', async (req, res) => {
     console.error('[kb-admin] approve failed:', error)
     res.status(500).json({ error: 'Failed to approve' })
   }
+})
+
+kbAdminRouter.get('/config', (req, res) => {
+  if (!requireKbAdmin(req, res)) return
+  handleAdminConfig(req, res)
+})
+
+kbAdminRouter.get('/discussions', async (req, res) => {
+  if (!requireKbAdmin(req, res)) return
+  await handleListDiscussions(req, res)
+})
+kbAdminRouter.post('/discussions', async (req, res) => {
+  if (!requireKbAdmin(req, res)) return
+  await handleCreateDiscussion(req, res)
+})
+
+kbAdminRouter.get('/contributions/:contributionId/votes', async (req, res) => {
+  if (!requireKbAdmin(req, res)) return
+  await handleGetVoteSummary(req, res)
+})
+kbAdminRouter.post('/contributions/:contributionId/votes', async (req, res) => {
+  if (!requireKbAdmin(req, res)) return
+  await handleCastVote(req, res)
+})
+kbAdminRouter.post('/contributions/:contributionId/publish', async (req, res) => {
+  if (!requireKbAdmin(req, res)) return
+  await handlePublishContribution(req, res)
+})
+kbAdminRouter.post('/contributions/:contributionId/reject', async (req, res) => {
+  if (!requireKbAdmin(req, res)) return
+  await handleRejectContribution(req, res)
 })

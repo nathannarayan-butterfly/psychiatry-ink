@@ -11,6 +11,7 @@ import { DEFAULT_CASE_ID } from './utils/caseContext'
 import { CaseWorkspacePage } from './components/CaseWorkspacePage'
 import { DashboardPage } from './components/dashboard/DashboardPage'
 import { KbAdminPage } from './components/kb-admin/KbAdminPage'
+import { useKbAdminAccess } from './hooks/useKbAdminAccess'
 import { ensureDefaultCase, hydrateCaseRegistry } from './hooks/useCaseRegistry'
 
 export default function App() {
@@ -18,6 +19,7 @@ export default function App() {
   const privacy = usePrivacySettings()
   const { route, navigate } = useAppRouter()
   const { user, loading: authLoading, isConfigured, plan } = useAuth()
+  const hasKbAdminAccess = useKbAdminAccess()
 
   useEffect(() => {
     ensureDefaultCase()
@@ -39,12 +41,16 @@ export default function App() {
       return
     }
 
+    if (user && route.view === 'kb-admin' && !hasKbAdminAccess) {
+      navigate('/dashboard', true)
+    }
+
     if (user && onAuthPage) {
       const params = new URLSearchParams(window.location.search)
       const redirect = params.get('redirect')
       navigate(redirect && redirect.startsWith('/') ? redirect : '/dashboard', true)
     }
-  }, [authLoading, isConfigured, navigate, route, user])
+  }, [authLoading, hasKbAdminAccess, isConfigured, navigate, route, user])
 
   const showDashboard = route.view === 'dashboard'
   const showKbAdmin = route.view === 'kb-admin'
@@ -108,7 +114,7 @@ export default function App() {
       englishVariant={languageSettings.englishVariant}
     >
       <WorkspaceSessionProvider>
-        {showKbAdmin ? (
+        {showKbAdmin && hasKbAdminAccess ? (
           <KbAdminPage onBack={() => navigate('/dashboard')} />
         ) : showDashboard ? (
           <DashboardPage

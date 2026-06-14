@@ -11,6 +11,7 @@ import type {
   KbSubstanceDetail,
   KbSubstanceTradeName,
 } from '../../src/types/kbNormalized'
+import { writeAiSeedProvenance } from './kbProvenance'
 import { getKbSupabaseAdmin } from './kbSupabaseAdmin'
 
 function mapSubstance(row: Record<string, unknown>): KbSubstance {
@@ -240,6 +241,7 @@ export async function insertNormalizedProfile(params: {
     supabase.from('kb_interaction_notes').delete().eq('substance_id', sid),
     supabase.from('kb_sources').delete().eq('substance_id', sid),
     supabase.from('kb_country_preparations').delete().eq('substance_id', sid),
+    supabase.from('kb_field_provenance').delete().eq('substance_id', sid),
   ])
 
   if (draft.commonTradeNames.length) {
@@ -381,6 +383,8 @@ export async function insertNormalizedProfile(params: {
     created_by: 'seed-script',
   })
   if (revError) throw revError
+
+  await writeAiSeedProvenance(sid, draft)
 
   return sid
 }

@@ -5138,6 +5138,36 @@ export const uiTranslations = {
     fr: 'Procédure',
     es: 'Procedimiento',
   },
+  therapyAdherenceTitle: {
+    de: 'Therapieadhärenz',
+    en: 'Therapy adherence',
+    fr: 'Observance thérapeutique',
+    es: 'Adherencia terapéutica',
+  },
+  therapyAdherenceLabel: {
+    de: 'Adhärenz',
+    en: 'Adherence',
+    fr: 'Observance',
+    es: 'Adherencia',
+  },
+  therapyAdherenceEmpty: {
+    de: 'Keine angeordneten Therapien',
+    en: 'No ordered therapies',
+    fr: 'Aucune thérapie prescrite',
+    es: 'Sin terapias indicadas',
+  },
+  therapyAdherenceFullyCompliant: {
+    de: 'Patient vollständig compliant mit angeordneten Therapien',
+    en: 'Patient fully compliant with ordered therapies',
+    fr: 'Patient entièrement observant aux thérapies prescrites',
+    es: 'Paciente totalmente adherente a las terapias indicadas',
+  },
+  therapyAdherenceWindow: {
+    de: 'Letzte {days} Tage · aus Verlauf',
+    en: 'Last {days} days · from progress notes',
+    fr: 'Derniers {days} jours · d’après le suivi',
+    es: 'Últimos {days} días · según evolución',
+  },
   spiegelwerteSectionTitle: {
     de: 'Spiegelwerte',
     en: 'Drug Levels',
@@ -5342,6 +5372,30 @@ export const uiTranslations = {
     fr: 'Profils cliniques des médicaments',
     es: 'Perfiles clínicos de fármacos',
   },
+  kbPharmaKbVersionLabel: {
+    de: 'Psychopharmacology KB-Version',
+    en: 'Psychopharmacology KB version',
+    fr: 'Version KB psychopharmacologie',
+    es: 'Versión KB psicofarmacología',
+  },
+  kbPharmaKbLastSyncedLabel: {
+    de: 'Zuletzt synchronisiert',
+    en: 'Last synced',
+    fr: 'Dernière synchronisation',
+    es: 'Última sincronización',
+  },
+  kbPharmaKbSourceLabel: {
+    de: 'Quelle',
+    en: 'Source',
+    fr: 'Source',
+    es: 'Fuente',
+  },
+  kbPharmaCommunityLicense: {
+    de: 'Mit dem Einreichen akzeptiere ich die Community-Lizenz: Mein Beitrag wird an psychopharmacology.wiki und Psychiatry.ink für Nutzung, Bearbeitung, Veröffentlichung, Weiterverbreitung und Integration in klinische Software übertragen.',
+    en: 'By submitting, I accept the community license: my contribution is transferred to psychopharmacology.wiki and Psychiatry.ink for use, modification, publication, redistribution, and integration into clinical software.',
+    fr: 'En soumettant, j’accepte la licence communautaire : ma contribution est transférée à psychopharmacology.wiki et Psychiatry.ink pour utilisation, modification, publication, redistribution et intégration dans des logiciels cliniques.',
+    es: 'Al enviar, acepto la licencia comunitaria: mi aportación se transfiere a psychopharmacology.wiki y Psychiatry.ink para uso, modificación, publicación, redistribución e integración en software clínico.',
+  },
   kbPharmaBackToKb: {
     de: 'Wissensdatenbank',
     en: 'Knowledge Base',
@@ -5479,6 +5533,24 @@ export const uiTranslations = {
     en: 'No results found.',
     fr: 'Aucun résultat trouvé.',
     es: 'No se encontraron resultados.',
+  },
+  kbPharmaContributorLine: {
+    de: 'Mitwirkende: {name}',
+    en: 'Contributor: {name}',
+    fr: 'Contributeur : {name}',
+    es: 'Colaborador: {name}',
+  },
+  kbPharmaStructureImagesLabel: {
+    de: 'Strukturformeln',
+    en: 'Structure diagrams',
+    fr: 'Formules structurales',
+    es: 'Fórmulas estructurales',
+  },
+  kbPharmaStructureImagesFooter: {
+    de: 'Strukturbilder © jeweilige Wikimedia-Commons-Mitwirkende, verwendet unter Creative-Commons-Lizenzen. Einzelnachweise und vollständige Attribution auf den jeweiligen Dateiseiten.',
+    en: 'Chemical structure images © respective Wikimedia Commons contributors, used under Creative Commons licenses. See individual file pages for attribution.',
+    fr: 'Images de structure © contributeurs Wikimedia Commons respectifs, utilisées sous licences Creative Commons. Voir les pages de fichiers pour l’attribution.',
+    es: 'Imágenes de estructura © respectivos colaboradores de Wikimedia Commons, usadas bajo licencias Creative Commons. Consulte las páginas de archivo para la atribución.',
   },
   kbPharmaFieldGenericName: {
     de: 'Generischer Name',
@@ -5935,6 +6007,12 @@ export const uiTranslations = {
     en: 'Open panel',
     fr: 'Ouvrir le panneau',
     es: 'Abrir panel',
+  },
+  kbReadingPanelRailLabel: {
+    de: 'KI & Notizen',
+    en: 'AI & Notes',
+    fr: 'IA & notes',
+    es: 'IA y notas',
   },
   kbReadingTabComments: {
     de: 'Kommentare',

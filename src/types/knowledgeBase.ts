@@ -184,6 +184,8 @@ export interface DrugSection {
   sideEffects?: SideEffectEntry[]
   cyp?: CypProfile
   glance?: GlanceData
+  /** Lightweight provenance hints projected from kb_field_provenance (read-only). */
+  fieldProvenance?: Array<{ fieldPath: string; sourceType: string }>
 }
 
 export type DrugStatus = 'active' | 'inactive'
@@ -535,6 +537,10 @@ export interface KnowledgeBaseDrug {
   legacyReceptorProfile?: LegacyReceptorProfileSnapshot
   /** ISO timestamp of the last v2 receptor-profile (re)generation. */
   lastReceptorProfileUpdatedAt?: string
+  /** KB release version tag when projected from normalized publish (psychopharmacology.wiki). */
+  kbReleaseVersion?: string
+  /** ISO timestamp of the KB release sync consumed by Psychiatry.ink. */
+  kbReleaseSyncedAt?: string
 }
 
 // ── Knowledge Collections ────────────────────────────────────────────────────

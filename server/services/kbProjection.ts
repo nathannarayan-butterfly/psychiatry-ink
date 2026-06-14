@@ -15,7 +15,9 @@ import {
 } from '../../src/types/knowledgeBase'
 import type { KbSubstanceDetail } from '../../src/types/kbNormalized'
 import { normalizeGenericName } from '../../src/utils/kb/normalizeGenericName'
+import type { KbRelease } from '../../src/types/kbReleases'
 import { getKbSubstanceById } from './kbNormalizedStore'
+import { getCurrentKbRelease } from './kbReleases'
 import { getKbSupabaseAdmin } from './kbSupabaseAdmin'
 
 const PROJECTION_TAG = 'normalized-kb'
@@ -219,16 +221,43 @@ function mapReceptorProfile(detail: KbSubstanceDetail): ReceptorAffinityEntry[] 
 export function projectKbSubstanceDetailToDrug(
   detail: KbSubstanceDetail,
   existingId?: string | null,
+  release?: KbRelease | null,
 ): KnowledgeBaseDrug {
   const now = new Date().toISOString()
   const brandNames = detail.tradeNames.map((t) => t.tradeName)
   const receptors = mapReceptorProfile(detail)
   const hasReceptors = receptors.length > 0
 
+  const sections = createDefaultSections(buildSectionOverrides(detail), buildStructuredOverrides(detail))
+  if (detail.mechanismSummary) {
+    const wirk = sections.find((s) => s.key === 'wirkmechanismus')
+    if (wirk) {
+      wirk.fieldProvenance = [{ fieldPath: 'mechanismSummary', sourceType: 'ai_draft' }]
+    }
+  }
+  const firstReceptor = detail.receptorAffinities[0]
+  if (firstReceptor) {
+    const rezeptor = sections.find((s) => s.key === 'rezeptorprofil')
+    if (rezeptor) {
+      rezeptor.fieldProvenance = [
+        {
+          fieldPath: `receptorAffinities.${firstReceptor.receptor}.action`,
+          sourceType: 'ai_draft',
+        },
+      ]
+    }
+  }
+
   const drug: KnowledgeBaseDrug = {
     id: existingId ?? `kb-norm-${detail.id}`,
     collectionId: DEFAULT_MEDICATIONS_COLLECTION_ID,
     dataModelVersion: 2,
+    ...(release
+      ? {
+          kbReleaseVersion: release.versionLabel,
+          kbReleaseSyncedAt: release.syncedAt,
+        }
+      : {}),
     genericName: detail.genericName,
     brandNames,
     drugClass: detail.substanceClass ?? '',
@@ -247,7 +276,7 @@ export function projectKbSubstanceDetailToDrug(
     verificationStatus: 'reviewed',
     needsClinicalReview: detail.needsClinicalReview,
     sourceHierarchyLevel: 'normalized-kb-projection',
-    sections: createDefaultSections(buildSectionOverrides(detail), buildStructuredOverrides(detail)),
+    sections,
     ...(hasReceptors
       ? {
           receptorProfileVersion: RECEPTOR_PROFILE_VERSION,
@@ -298,7 +327,8 @@ export async function projectAndUpsertKnowledgeBaseDrug(substanceId: string): Pr
   }
 
   const existingId = await findExistingDrugId(detail)
-  const drug = projectKbSubstanceDetailToDrug(detail, existingId)
+  const release = await getCurrentKbRelease()
+  const drug = projectKbSubstanceDetailToDrug(detail, existingId, release)
 
   const supabase = getKbSupabaseAdmin()
   const { error } = await supabase.from('knowledge_base_drugs').upsert(

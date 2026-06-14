@@ -125,7 +125,7 @@ export function KnowledgeBaseReadingPanel({
           title={t('kbReadingPanelExpand')}
         >
           <MessageSquare className="h-4 w-4" strokeWidth={1.75} />
-          <span className="kbp-reading-panel__rail-label">Ask / Notes</span>
+          <span className="kbp-reading-panel__rail-label">{t('kbReadingPanelRailLabel')}</span>
         </button>
       </aside>
     )
