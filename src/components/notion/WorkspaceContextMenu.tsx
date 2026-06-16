@@ -1,8 +1,9 @@
-import { Check, ChevronRight, FileText, FlaskConical, GitBranch, LineChart } from 'lucide-react'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { Check, ChevronRight, FileText, FlaskConical, GitBranch, LineChart, Stethoscope } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from '../../context/TranslationContext'
 import type { UiTranslationKey } from '../../data/uiTranslations'
+import { isCommandMenuShortcut } from '../../utils/notionKeyboardShortcuts'
 import { NOTION_PAGES, type NotionPageId } from './notionPages'
 
 const DOCUMENT_PAGES = NOTION_PAGES.filter((page) => page.kind === 'document')
@@ -43,6 +44,10 @@ interface WorkspaceContextMenuProps {
   onSelect: (pageId: NotionPageId) => void
   onSelectWithSection?: (pageId: NotionPageId, sectionId: string) => void
   templateAction?: TemplateMenuAction
+  /** Optional clinical-area action (e.g. Konsil) exposed at the bottom of the menu. */
+  konsilAction?: TemplateMenuAction
+  /** Increment to open the menu programmatically (toolbar button, etc.). */
+  openMenuRequest?: number
   children: ReactNode
 }
 
@@ -53,6 +58,8 @@ export function WorkspaceContextMenu({
   onSelect,
   onSelectWithSection,
   templateAction,
+  konsilAction,
+  openMenuRequest = 0,
   children,
 }: WorkspaceContextMenuProps) {
   const { t } = useTranslation()
@@ -77,6 +84,48 @@ export function WorkspaceContextMenu({
     setOpenSubmenu(null)
   }
 
+  const extraItemsHeight = (templateAction ? 60 : 0) + (konsilAction ? 60 : 0)
+
+  const openMenuAt = useCallback(
+    (clientX: number, clientY: number) => {
+      const MENU_WIDTH = 216
+      const MENU_HEIGHT = 340 + extraItemsHeight
+      const x = Math.max(8, Math.min(clientX, window.innerWidth - MENU_WIDTH - 8))
+      const y = Math.max(8, Math.min(clientY, window.innerHeight - MENU_HEIGHT - 8))
+      setMenu({ x, y })
+      setOpenSubmenu(null)
+      const activeIdx = ALL_PAGES.findIndex((p) => p.id === activePage)
+      setFocusedIndex(activeIdx >= 0 ? activeIdx : 0)
+    },
+    [activePage, extraItemsHeight],
+  )
+
+  const openMenuAtCenter = useCallback(() => {
+    const MENU_WIDTH = 216
+    const MENU_HEIGHT = 340 + extraItemsHeight
+    openMenuAt(
+      (window.innerWidth - MENU_WIDTH) / 2,
+      (window.innerHeight - MENU_HEIGHT) / 2,
+    )
+  }, [openMenuAt, extraItemsHeight])
+
+  useEffect(() => {
+    if (openMenuRequest === 0) return
+    openMenuAtCenter()
+  }, [openMenuRequest, openMenuAtCenter])
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!isCommandMenuShortcut(event)) return
+      event.preventDefault()
+      event.stopPropagation()
+      openMenuAtCenter()
+    }
+
+    window.addEventListener('keydown', handleKeyDown, true)
+    return () => window.removeEventListener('keydown', handleKeyDown, true)
+  }, [openMenuAtCenter])
+
   const handleContextMenu = (event: React.MouseEvent) => {
     // Only respond to genuine right-click (button 2); keyboard context-menu key
     // or trackpad gestures that produce button !== 2 should not open the workspace
@@ -97,14 +146,7 @@ export function WorkspaceContextMenu({
       return
     }
     event.preventDefault()
-    const MENU_WIDTH = 216
-    const MENU_HEIGHT = templateAction ? 400 : 340
-    const x = Math.min(event.clientX, window.innerWidth - MENU_WIDTH - 8)
-    const y = Math.min(event.clientY, window.innerHeight - MENU_HEIGHT - 8)
-    setMenu({ x, y })
-    setOpenSubmenu(null)
-    const activeIdx = ALL_PAGES.findIndex((p) => p.id === activePage)
-    setFocusedIndex(activeIdx >= 0 ? activeIdx : 0)
+    openMenuAt(event.clientX, event.clientY)
   }
 
   const handleSelect = (pageId: NotionPageId) => {
@@ -126,7 +168,18 @@ export function WorkspaceContextMenu({
     close()
   }
 
-  const menuItemCount = ALL_PAGES.length + (templateAction ? 1 : 0)
+  const handleKonsilSelect = () => {
+    konsilAction?.onSelect()
+    close()
+  }
+
+  // Index layout: [...ALL_PAGES, konsilAction?, templateAction?]
+  const konsilIndex = konsilAction ? ALL_PAGES.length : -1
+  const templateIndex = templateAction
+    ? ALL_PAGES.length + (konsilAction ? 1 : 0)
+    : -1
+  const menuItemCount =
+    ALL_PAGES.length + (konsilAction ? 1 : 0) + (templateAction ? 1 : 0)
 
   const triggerSubmenu = (pageId: NotionPageId, itemEl: HTMLButtonElement) => {
     clearHoverTimer()
@@ -229,7 +282,9 @@ export function WorkspaceContextMenu({
         case 'Enter':
         case ' ': {
           event.preventDefault()
-          if (focusedIndex >= ALL_PAGES.length) {
+          if (konsilAction && focusedIndex === konsilIndex) {
+            handleKonsilSelect()
+          } else if (templateAction && focusedIndex === templateIndex) {
             handleTemplateSelect()
           } else {
             const page = ALL_PAGES[focusedIndex]
@@ -353,6 +408,35 @@ export function WorkspaceContextMenu({
                 </p>
                 {TOOL_PAGES.map((page, index) => renderItem(page, DOCUMENT_PAGES.length + index))}
 
+                {konsilAction ? (
+                  <>
+                    <div className="workspace-context-menu__sep" role="separator" />
+                    <p className="workspace-context-menu__heading">
+                      {t('notionContextMenuAreas')}
+                    </p>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      tabIndex={focusedIndex === konsilIndex ? 0 : -1}
+                      className="workspace-context-menu__item"
+                      onClick={handleKonsilSelect}
+                      onMouseEnter={() => {
+                        setFocusedIndex(konsilIndex)
+                        setOpenSubmenu(null)
+                      }}
+                    >
+                      <Stethoscope
+                        className="workspace-context-menu__item-icon h-3.5 w-3.5"
+                        strokeWidth={1.75}
+                        aria-hidden
+                      />
+                      <span className="workspace-context-menu__item-label">
+                        {t(konsilAction.labelKey)}
+                      </span>
+                    </button>
+                  </>
+                ) : null}
+
                 {templateAction ? (
                   <>
                     <div className="workspace-context-menu__sep" role="separator" />
@@ -362,11 +446,11 @@ export function WorkspaceContextMenu({
                     <button
                       type="button"
                       role="menuitem"
-                      tabIndex={focusedIndex === ALL_PAGES.length ? 0 : -1}
+                      tabIndex={focusedIndex === templateIndex ? 0 : -1}
                       className="workspace-context-menu__item"
                       onClick={handleTemplateSelect}
                       onMouseEnter={() => {
-                        setFocusedIndex(ALL_PAGES.length)
+                        setFocusedIndex(templateIndex)
                         setOpenSubmenu(null)
                       }}
                     >

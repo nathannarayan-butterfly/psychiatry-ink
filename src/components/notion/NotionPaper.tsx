@@ -38,7 +38,6 @@ import { NotionDocumentBreadcrumb } from './NotionDocumentBreadcrumb'
 import { NotionEmptyState } from './NotionEmptyState'
 import {
   isAiFeaturesShortcut,
-  isCommandMenuShortcut,
   isEmptyPageDictateShortcut,
   isEmptyPageTypeShortcut,
   isNativeClipboardShortcut,
@@ -140,6 +139,10 @@ interface NotionPaperProps {
   /** Case-level edit lock from org_case_access (view-only grant). */
   accessReadOnly?: boolean
   onPsychopathModeSelect?: (mode: PsychopathSubMode) => void
+  /** Open the workspace navigation menu (same as Strg+K / right-click). */
+  onOpenWorkspaceMenu?: () => void
+  /** Diary sidebar is rendered in the global case sidebar panel instead. */
+  useExternalSidebar?: boolean
 }
 
 export interface PendingPaste {
@@ -229,6 +232,8 @@ export function NotionPaper({
   onCloseDocument,
   onPsychopathModeSelect,
   accessReadOnly = false,
+  onOpenWorkspaceMenu,
+  useExternalSidebar = false,
 }: NotionPaperProps) {
   const { t } = useTranslation()
   const storageCaseId = workspaceStorageId ?? caseId
@@ -260,7 +265,6 @@ export function NotionPaper({
   )
   const [amdpKompiliert, setAmdpKompiliert] = useState(false)
   const [aiDropdownOpen, setAiDropdownOpen] = useState(false)
-  const [commandMenuRequest, setCommandMenuRequest] = useState(0)
   const [documentEditingStarted, setDocumentEditingStarted] = useState(false)
   const [editorFocusRequest, setEditorFocusRequest] = useState(0)
   const [pendingPaste, setPendingPaste] = useState<PendingPaste | null>(null)
@@ -322,15 +326,12 @@ export function NotionPaper({
     !documentEditingStarted &&
     !editorLocked
 
-  const requestCommandMenu = useCallback(() => {
-    if (editorLocked) return
-    setAiDropdownOpen(false)
-    setCommandMenuRequest((current) => current + 1)
-  }, [editorLocked])
+  const requestWorkspaceMenu = useCallback(() => {
+    onOpenWorkspaceMenu?.()
+  }, [onOpenWorkspaceMenu])
 
   const handleAiFeaturesShortcut = useCallback(() => {
     if (editorLocked) return
-    setCommandMenuRequest(0)
     setAiDropdownOpen((current) => !current)
   }, [editorLocked])
 
@@ -456,22 +457,9 @@ export function NotionPaper({
   ])
 
   useEffect(() => {
-    if (commandMenuRequest === 0) return
-    if (showDocumentBlankState) {
-      beginDocumentEditing()
-    }
-  }, [beginDocumentEditing, commandMenuRequest, showDocumentBlankState])
-
-  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (isEditableTarget(event.target) && isNativeClipboardShortcut(event)) return
       if (editorLocked) return
-      if (isCommandMenuShortcut(event)) {
-        event.preventDefault()
-        event.stopPropagation()
-        requestCommandMenu()
-        return
-      }
       if (isAiFeaturesShortcut(event)) {
         event.preventDefault()
         event.stopPropagation()
@@ -481,7 +469,7 @@ export function NotionPaper({
 
     window.addEventListener('keydown', handleKeyDown, true)
     return () => window.removeEventListener('keydown', handleKeyDown, true)
-  }, [editorLocked, handleAiFeaturesShortcut, isEditableTarget, requestCommandMenu])
+  }, [editorLocked, handleAiFeaturesShortcut, isEditableTarget])
 
   const handlePageHeadingChange = useCallback(
     (value: string) => {
@@ -620,32 +608,42 @@ export function NotionPaper({
 
   return (
     <article
-      className={`notion-paper notion-paper--blank${sidebarCollapsed ? ' notion-paper--sidebar-collapsed' : ''}`}
+      className={[
+        'notion-paper notion-paper--blank',
+        sidebarCollapsed && !useExternalSidebar ? ' notion-paper--sidebar-collapsed' : '',
+        useExternalSidebar ? ' notion-paper--external-sidebar' : '',
+      ]
+        .join('')
+        .trim()}
     >
-      <div className="notion-paper__sidebar-anchor">
-        <NotionDiarySidebar
-          panelGraphicEnabled={panelGraphicEnabled}
-          breakReminderActive={breakReminderActive}
-          onClosePanelGraphic={onClosePanelGraphic}
-          collapsed={sidebarCollapsed}
-          onBreakStart={onBreakStart}
-          caseId={storageCaseId}
-          onNavigateToLabor={onNavigateToLabor}
-          savedDocs={savedDocs}
-          onViewSavedDoc={onViewSavedDoc}
-          onRemoveSavedDoc={onRemoveSavedDoc}
-          openDocumentLabel={documentTypeId ? documentLabel : undefined}
-          onCloseDocument={onCloseDocument}
-        />
-      </div>
+      {!useExternalSidebar ? (
+        <>
+          <div className="notion-paper__sidebar-anchor">
+            <NotionDiarySidebar
+              panelGraphicEnabled={panelGraphicEnabled}
+              breakReminderActive={breakReminderActive}
+              onClosePanelGraphic={onClosePanelGraphic}
+              collapsed={sidebarCollapsed}
+              onBreakStart={onBreakStart}
+              caseId={storageCaseId}
+              onNavigateToLabor={onNavigateToLabor}
+              savedDocs={savedDocs}
+              onViewSavedDoc={onViewSavedDoc}
+              onRemoveSavedDoc={onRemoveSavedDoc}
+              openDocumentLabel={documentTypeId ? documentLabel : undefined}
+              onCloseDocument={onCloseDocument}
+            />
+          </div>
 
-      <NotionSidebarCollapseHandle
-        collapsed={sidebarCollapsed}
-        onToggle={toggleSidebarCollapsed}
-        ariaLabel={
-          sidebarCollapsed ? t('notionShowDiarySidebar') : t('notionHideDiarySidebar')
-        }
-      />
+          <NotionSidebarCollapseHandle
+            collapsed={sidebarCollapsed}
+            onToggle={toggleSidebarCollapsed}
+            ariaLabel={
+              sidebarCollapsed ? t('notionShowDiarySidebar') : t('notionHideDiarySidebar')
+            }
+          />
+        </>
+      ) : null}
 
       <div className="notion-paper__body">
         {isDictationActive ? (
@@ -714,24 +712,26 @@ export function NotionPaper({
                 </button>
               </div>
             ) : null}
-            <button
-              type="button"
-              className="notion-command-btn"
-              disabled={editorLocked}
-              onClick={requestCommandMenu}
-              aria-label={t('notionCommandMenuButton')}
-              title={t('notionCommandMenuButton')}
-            >
-              <Command className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
-            </button>
-            <NotionDocumentActions
-              disabled={editorLocked}
-              copyDisabled={!hasAnyContent}
-              onSave={handleSaveDocument}
-              onCopy={handleCopyDocument}
-              onPrint={handlePrintDocument}
-              onExport={handleExportDocument}
-            />
+            <div className="notion-paper__doc-tools">
+              <button
+                type="button"
+                className="notion-command-btn"
+                onClick={requestWorkspaceMenu}
+                aria-label={t('notionCommandMenuButton')}
+                title={t('notionCommandMenuButton')}
+              >
+                <Command className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+              </button>
+              <span className="notion-paper__tool-divider" aria-hidden />
+              <NotionDocumentActions
+                disabled={editorLocked}
+                copyDisabled={!hasAnyContent}
+                onSave={handleSaveDocument}
+                onCopy={handleCopyDocument}
+                onPrint={handlePrintDocument}
+                onExport={handleExportDocument}
+              />
+            </div>
             <NotionAiModeDropdown
               tier={aiModelTier}
               selectedTool={selectedAiTool}
@@ -851,7 +851,6 @@ export function NotionPaper({
                 onPasteOrigin={onEditorPaste}
                 onSelectionAction={onSelectionAction}
                 onSlashCommand={onSlashCommand}
-                commandMenuRequest={commandMenuRequest}
                 focusRequest={editorFocusRequest}
                 pendingPaste={pendingPaste}
               />
@@ -885,7 +884,6 @@ export function NotionPaper({
               onEditorAiTool={onEditorAiTool}
               onSelectionAction={onSelectionAction}
               onSlashCommand={onSlashCommand}
-              commandMenuRequest={commandMenuRequest}
               focusRequest={editorFocusRequest}
               pendingPaste={pendingPaste}
             />

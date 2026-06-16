@@ -68,6 +68,8 @@ export interface DiscussCaseDiscussion {
 /** Discussion row in the case list — includes permission hints for list actions. */
 export interface DiscussCaseListItem extends DiscussCaseDiscussion {
   canManage: boolean
+  /** True when the current viewer created the discussion (owner_user_id match). */
+  isOwner: boolean
 }
 
 export interface DiscussCasePackage {
@@ -119,6 +121,8 @@ export interface DiscussCaseMessage {
   body: string
   quoteExcerpt: DiscussQuoteExcerpt | null
   createdAt: string
+  /** Set when the author has edited the message after posting. */
+  editedAt: string | null
 }
 
 export interface DiscussQuoteExcerpt {

@@ -6,7 +6,7 @@ export function isMacPlatform(): boolean {
 }
 
 /**
- * Workspace command menu (slash commands). Uses Ctrl/Cmd+K like Notion/GitHub.
+ * Workspace navigation menu (documents, tools, templates). Uses Ctrl/Cmd+K.
  * Conflicts with browser "focus address bar" (Firefox Ctrl+K, Chrome Ctrl+K) —
  * preventDefault is attempted but may not win in all browsers when focus is outside the editor.
  */
@@ -62,6 +62,13 @@ export function getNotionShortcutLabels(language: UiLanguage): {
   return isMac
     ? { command: '⌘K', ai: '⌘⇧K' }
     : { command: 'Ctrl+K', ai: 'Ctrl+Shift+K' }
+}
+
+export function getWorkspaceContextMenuLabel(language: UiLanguage): string {
+  if (language === 'de') return 'Rechtsklick'
+  if (language === 'fr') return 'clic droit'
+  if (language === 'es') return 'clic derecho'
+  return 'right-click'
 }
 
 export function getEmptyPageShortcutLabels(language: UiLanguage): {

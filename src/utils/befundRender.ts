@@ -2,6 +2,18 @@ import { getBefundSchema } from '../data/befundSchemas'
 import type { BefundFieldDef } from '../data/befundSchemas/types'
 import type { BefundRecord } from '../types/befund'
 
+export interface BefundDisplayField {
+  label: string
+  value: string
+  isLongText?: boolean
+}
+
+export interface BefundDisplaySection {
+  id: string
+  label: string
+  fields: BefundDisplayField[]
+}
+
 function formatFieldValue(field: BefundFieldDef, raw: string | string[] | boolean | undefined): string {
   if (raw === undefined || raw === '' || raw === false) return ''
   if (field.type === 'checkbox') {
@@ -44,6 +56,26 @@ export function renderBefundContent(record: BefundRecord): string {
   }
 
   return lines.join('\n\n')
+}
+
+/** Structured sections for card-style befund display. */
+export function getBefundDisplaySections(record: BefundRecord): BefundDisplaySection[] {
+  const schema = getBefundSchema(record.type)
+
+  return schema.sections
+    .map((section) => {
+      const fields = section.fields.flatMap((field) => {
+        const value = formatFieldValue(field, record.fieldValues[field.id])
+        if (!value) return []
+        return [{
+          label: field.label,
+          value,
+          isLongText: field.type === 'long_text',
+        }]
+      })
+      return { id: section.id, label: section.label, fields }
+    })
+    .filter((section) => section.fields.length > 0)
 }
 
 export function buildBefundTitle(record: BefundRecord): string {

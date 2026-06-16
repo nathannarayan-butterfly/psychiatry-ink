@@ -1350,8 +1350,10 @@ function CountryPreparationsSection({
                     {mode === 'editing' ? (
                       <td>
                         <div className="kb-prep-table__actions">
-                          <button type="button" className="kbp-btn kbp-btn--sm" onClick={() => setEditingId(entry.id)}>Bearbeiten</button>
-                          <button type="button" className="kbp-icon-btn kbp-icon-btn--xs kbp-icon-btn--danger" onClick={() => deletePreparation(entry.id)} title="Löschen">
+                          <button type="button" className="kbp-icon-btn kbp-icon-btn--xs" onClick={() => setEditingId(entry.id)} title="Bearbeiten" aria-label="Bearbeiten">
+                            <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} />
+                          </button>
+                          <button type="button" className="kbp-icon-btn kbp-icon-btn--xs kbp-icon-btn--danger" onClick={() => deletePreparation(entry.id)} title="Löschen" aria-label="Löschen">
                             <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
                           </button>
                         </div>
@@ -2209,6 +2211,7 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
             activeId={activeSectionId}
             onActivate={setActiveSectionId}
             language={language}
+            variant="sidebar"
           />
         ) : null}
         <div className={`kbp-detail-main${!editMode ? ' kbp-detail-main--reading' : ''}`}>

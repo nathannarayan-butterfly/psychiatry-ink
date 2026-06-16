@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { Check, Clipboard } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
 import { therapyPageSectionDomId } from '../../data/therapyPageSections'
 import {
@@ -142,8 +143,14 @@ export function PsychotherapieOverviewCard({ caseId }: PsychotherapieOverviewCar
           <div className="therapy-callout">
             <div className="therapy-callout__head">
               <span className="therapy-field__label">{tp(language, 'ptSummaryHeading')}</span>
-              <button type="button" className="therapy-link-btn" onClick={handleCopy}>
-                {copied ? tp(language, 'ptCopied') : tp(language, 'ptCopy')}
+              <button
+                type="button"
+                className={`icon-action-btn${copied ? ' icon-action-btn--success' : ''}`}
+                onClick={handleCopy}
+                title={copied ? tp(language, 'ptCopied') : tp(language, 'ptCopy')}
+                aria-label={copied ? tp(language, 'ptCopied') : tp(language, 'ptCopy')}
+              >
+                {copied ? <Check strokeWidth={1.75} aria-hidden /> : <Clipboard strokeWidth={1.75} aria-hidden />}
               </button>
             </div>
             <p className="therapy-callout__text">{summaryText}</p>

@@ -1,0 +1,75 @@
+/*
+ * Shared icon-only action buttons
+ * ---------------------------------
+ * Uniform pattern for secondary row / card / toolbar actions
+ * (print, copy, edit, delete, duplicate, export, …).
+ * Always pair with `title` + `aria-label` so meaning is preserved.
+ * Neutral location so any page (incl. Medikation) can adopt it.
+ */
+
+.icon-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-muted, #8a8a80);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+  font-family: inherit;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.icon-action-btn > svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.icon-action-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent, #4a7c59) 10%, transparent);
+  color: var(--ink, #1a1a18);
+}
+
+.icon-action-btn:active:not(:disabled) {
+  background: color-mix(in srgb, var(--accent, #4a7c59) 16%, transparent);
+}
+
+.icon-action-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Destructive actions (delete) */
+.icon-action-btn--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-danger, #dc2626) 10%, transparent);
+  color: var(--color-danger, #dc2626);
+}
+
+/* Success / confirmation state (e.g. "copied") */
+.icon-action-btn--success,
+.icon-action-btn--success:hover:not(:disabled) {
+  color: var(--accent, #4a7c59);
+  background: color-mix(in srgb, var(--accent, #4a7c59) 8%, transparent);
+}
+
+/*
+ * Bordered variant for standalone toolbars that sit next to text buttons
+ * or on light surfaces where a hairline frame improves affordance.
+ */
+.icon-action-btn--bordered {
+  border: 1px solid var(--border-soft, #e8e8e4);
+  background: var(--surface, #fff);
+}
+
+.icon-action-btn--bordered:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent, #4a7c59) 30%, var(--border-soft, #e8e8e4));
+}
+
+.icon-action-btn--bordered.icon-action-btn--danger:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--color-danger, #dc2626) 35%, transparent);
+}

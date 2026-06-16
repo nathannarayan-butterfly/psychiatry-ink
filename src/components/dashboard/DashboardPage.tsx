@@ -27,7 +27,7 @@ import type { NotionPageId } from '../notion/notionPages'
 import { useAssessmentStandardSettings } from '../../hooks/useAssessmentStandardSettings'
 import { useAppearanceSettings } from '../../hooks/useAppearanceSettings'
 import { useAccountDisplayName } from '../../hooks/useAccountDisplayName'
-import { isListedPatientCase, useCaseRegistry } from '../../hooks/useCaseRegistry'
+import { getCaseMeta, isListedPatientCase, useCaseRegistry } from '../../hooks/useCaseRegistry'
 import type { DashboardCase } from '../../hooks/useCaseRegistry'
 import { useCredits } from '../../hooks/useCredits'
 import { useKiInstructions } from '../../hooks/useKiInstructions'
@@ -39,7 +39,6 @@ import type { useLanguageSettings } from '../../hooks/useLanguageSettings'
 import type { SubscriptionPlan } from '../../data/subscriptionPlans'
 import { hasIntegrationCapability } from '../../data/org/planCapabilities'
 import { DEFAULT_CASE_ID } from '../../utils/caseContext'
-import { getCaseClinicalStats } from '../../utils/dashboardCaseStats'
 import { formatSiteLocaleDate } from '../../utils/siteTimezone'
 import { SettingsPage } from '../settings/SettingsPage'
 import { CreditsPurchaseDialog } from '../notion/CreditsPurchaseDialog'
@@ -54,15 +53,20 @@ import { useCurrentOrganisation } from '../../hooks/permissions'
 import { setDevOrganisationTier } from '../../services/orgApi'
 import { useAuditDebugAccess } from '../../hooks/useAuditDebugAccess'
 import { useAuth } from '../../context/AuthContext'
-import { isDemoCaseVisibleOnDashboard } from '../../hooks/useDemoPatient'
-import { archiveDemoPatient, isDemoCase } from '../../demo'
+import { isCaseListedOnDashboard } from '../../hooks/useDemoPatient'
+import { isDemoCase } from '../../demo'
+import {
+  archivePatientCase,
+  deletePatientCasePermanently,
+  isPatientCaseArchived,
+  patientCaseMetaToEditData,
+} from '../../utils/casePatientLifecycle'
 import { useEnterpriseFeatures } from '../../hooks/useEnterpriseFeatures'
 import { NewPatientDialog } from './NewPatientDialog'
 import type { NewPatientData } from './NewPatientDialog'
 import { NewCaseWorkflowDialog } from './NewCaseWorkflowDialog'
 import { PatientCaseCard } from './PatientCaseCard'
 import { DaySchedulePanel } from '../calendar/DaySchedulePanel'
-import { TemplateWorkspaceHost } from '../templates/TemplateWorkspaceHost'
 
 const CREDITS_DEFAULT_MAX = 500
 const DOCUMENTATION_DAY_GOAL_SECONDS = 8 * 60 * 60
@@ -87,6 +91,8 @@ interface DashboardPageProps {
   languageSettings: LanguageState
   plan: SubscriptionPlan
   onOpenCase: (caseId: string, page?: NotionPageId, showPatientDashboard?: boolean, appointmentId?: string) => void
+  /** General documentation without a patient — opens /workspace (blank NotionApp canvas, not Vorlage Builder). */
+  onOpenWorkspace?: () => void
   onNavigateHome?: () => void
   onOpenSettings?: () => void
   onOpenKbAdmin?: () => void
@@ -126,21 +132,12 @@ function matchesPatientSearch(caseItem: DashboardCase, query: string): boolean {
   return haystack.includes(q)
 }
 
-function genderLabel(
-  geschlecht: DashboardCase['localGeschlecht'],
-  t: (key: 'patientGeschlechtMaennlich' | 'patientGeschlechtWeiblich' | 'patientGeschlechtDivers') => string,
-): string | null {
-  if (geschlecht === 'maennlich') return t('patientGeschlechtMaennlich')
-  if (geschlecht === 'weiblich') return t('patientGeschlechtWeiblich')
-  if (geschlecht === 'divers') return t('patientGeschlechtDivers')
-  return null
-}
-
 export function DashboardPage({
   privacy,
   languageSettings,
   plan: _plan,
   onOpenCase,
+  onOpenWorkspace,
   onNavigateHome,
   onOpenKbAdmin,
   onOpenAuditDebug,
@@ -181,7 +178,7 @@ export function DashboardPage({
   const { todayTotalLabel, todayTotalSeconds } = useWorkspaceSession()
   const [creditsDialogOpen, setCreditsDialogOpen] = useState(false)
   const [showNewPatientDialog, setShowNewPatientDialog] = useState(false)
-  const [showGeneralDocumentation, setShowGeneralDocumentation] = useState(false)
+  const [editingCaseId, setEditingCaseId] = useState<string | null>(null)
   const [workflowCaseId, setWorkflowCaseId] = useState<string | null>(null)
   const [patientSearch, setPatientSearch] = useState('')
   const [patientViewMode, setPatientViewMode] = useState<PatientViewMode>('cards')
@@ -278,39 +275,82 @@ export function DashboardPage({
     setWorkflowCaseId(null)
   }, [])
 
-  const patientCases = useMemo(
+  const listedCases = useMemo(
     () =>
       registry.cases
         .filter(isListedPatientCase)
-        .filter((caseItem) => isDemoCaseVisibleOnDashboard(caseItem.caseId, userId))
+        .filter((caseItem) => isCaseListedOnDashboard(caseItem.caseId, userId))
         .sort((a, b) => new Date(b.lastEditedAt).getTime() - new Date(a.lastEditedAt).getTime()),
     [registry.cases, userId],
   )
 
-  const handleArchiveDemo = useCallback(() => {
-    archiveDemoPatient(userId)
-    void registry.refresh()
-  }, [registry, userId])
+  const activePatients = useMemo(
+    () => listedCases.filter((caseItem) => !isPatientCaseArchived(caseItem.caseId, userId)),
+    [listedCases, userId],
+  )
+
+  const archivedPatients = useMemo(
+    () => listedCases.filter((caseItem) => isPatientCaseArchived(caseItem.caseId, userId)),
+    [listedCases, userId],
+  )
+
+  const handleArchivePatient = useCallback(
+    (caseId: string) => {
+      archivePatientCase(caseId, userId)
+      void registry.refresh()
+    },
+    [registry, userId],
+  )
+
+  const handleDeletePatient = useCallback(
+    async (caseId: string) => {
+      await deletePatientCasePermanently(caseId, userId)
+      await registry.refresh()
+    },
+    [registry, userId],
+  )
+
+  const handleEditPatient = useCallback((caseId: string) => {
+    setEditingCaseId(caseId)
+  }, [])
+
+  const handleEditPatientSaved = useCallback(
+    (patient: NewPatientData) => {
+      if (!editingCaseId) return
+      registry.upsertCaseMeta(editingCaseId, {
+        localName: patient.name || undefined,
+        localVorname: patient.vorname || undefined,
+        localNachname: patient.nachname || undefined,
+        localGeburtsdatum: patient.geburtsdatum || undefined,
+        localGeschlecht: patient.geschlecht || undefined,
+      })
+      setEditingCaseId(null)
+      void registry.refresh()
+    },
+    [editingCaseId, registry],
+  )
+
+  const editingPatientData = useMemo(() => {
+    if (!editingCaseId) return undefined
+    return patientCaseMetaToEditData(getCaseMeta(editingCaseId))
+  }, [editingCaseId, registry.cases])
 
   const filteredPatients = useMemo(
-    () => patientCases.filter((caseItem) => matchesPatientSearch(caseItem, patientSearch)),
-    [patientCases, patientSearch],
+    () => activePatients.filter((caseItem) => matchesPatientSearch(caseItem, patientSearch)),
+    [activePatients, patientSearch],
   )
 
-  const clinicalStatsByCase = useMemo(() => {
-    const map = new Map<string, ReturnType<typeof getCaseClinicalStats>>()
-    for (const caseItem of patientCases) {
-      map.set(caseItem.caseId, getCaseClinicalStats(caseItem.caseId))
-    }
-    return map
-  }, [patientCases])
+  const filteredArchivedPatients = useMemo(
+    () => archivedPatients.filter((caseItem) => matchesPatientSearch(caseItem, patientSearch)),
+    [archivedPatients, patientSearch],
+  )
 
   const recentActivity = useMemo(
-    () => patientCases.slice(0, RECENT_ACTIVITY_LIMIT),
-    [patientCases],
+    () => activePatients.slice(0, RECENT_ACTIVITY_LIMIT),
+    [activePatients],
   )
 
-  const lastPatient = patientCases[0] ?? null
+  const lastPatient = activePatients[0] ?? null
   const todayLabel = formatSiteLocaleDate(new Date().toISOString(), language)
   const greeting = t('dashboardGreeting').replace('{name}', displayName)
   const showTeamSettingsLink =
@@ -329,6 +369,13 @@ export function DashboardPage({
     [onOpenCase],
   )
 
+  function genderSymbol(geschlecht: DashboardCase['localGeschlecht']): string | null {
+    if (geschlecht === 'maennlich') return '♂'
+    if (geschlecht === 'weiblich') return '♀'
+    if (geschlecht === 'divers') return '⚧'
+    return null
+  }
+
   if (settingsPanel.isOpen) {
     return (
       <div className="settings-fullpage-host text-ink">
@@ -336,6 +383,7 @@ export function DashboardPage({
           activeSection={settingsPanel.activeSection}
           onSectionChange={settingsPanel.setActiveSection}
           onClose={settingsPanel.closeSettings}
+          creditBalance={creditBalance}
           appearance={appearance}
           privacy={privacy}
           workspace={workspaceSettings}
@@ -364,27 +412,17 @@ export function DashboardPage({
         />
       ) : null}
       <DashboardTopBar
-        creditBalance={creditBalance}
-        creditsLoading={creditsLoading}
-        onOpenCredits={() => setCreditsDialogOpen(true)}
         onOpenSettings={settingsPanel.openSettings}
         onNavigateHome={onNavigateHome}
       />
 
       <section className="dashboard-hero" aria-labelledby="dashboard-hero-title">
         <DashboardHinweise identifierStorage={privacy.identifierStorage} />
-        <div className="dashboard-hero__copy">
+        <div className="dashboard-hero__copy fade-in-up">
           <p className="dashboard-hero__date">{todayLabel}</p>
           <h1 id="dashboard-hero-title" className="dashboard-hero__title">
             {greeting.trim()}
           </h1>
-          <p className="dashboard-hero__intro">
-            {t(
-              privacy.identifierStorage === 'account'
-                ? 'dashboardIntroAccount'
-                : 'dashboardIntroDevice',
-            )}
-          </p>
         </div>
       </section>
 
@@ -396,7 +434,7 @@ export function DashboardPage({
           {lastPatient ? (
             <button
               type="button"
-              className="dashboard-quick-action dashboard-quick-action--primary"
+              className="dashboard-quick-action dashboard-quick-action--primary clinical-card clinical-card--interactive"
               onClick={() => onOpenCase(lastPatient.caseId, undefined, true)}
             >
               <span className="dashboard-quick-action__icon-wrap" aria-hidden>
@@ -413,10 +451,11 @@ export function DashboardPage({
             </button>
           ) : null}
 
+          {/* Allgemeine Dokumentation ohne Patient → /workspace (blank canvas); not patient case, not Vorlage Builder */}
           <button
             type="button"
-            className="dashboard-quick-action"
-            onClick={() => setShowGeneralDocumentation(true)}
+            className="dashboard-quick-action clinical-card clinical-card--interactive"
+            onClick={() => onOpenWorkspace?.()}
           >
             <span className="dashboard-quick-action__icon-wrap" aria-hidden>
               <PenLine className="h-4 w-4" strokeWidth={1.75} />
@@ -429,7 +468,7 @@ export function DashboardPage({
 
           <button
             type="button"
-            className="dashboard-quick-action"
+            className="dashboard-quick-action clinical-card clinical-card--interactive"
             onClick={() => setShowNewPatientDialog(true)}
           >
             <span className="dashboard-quick-action__icon-wrap" aria-hidden>
@@ -443,21 +482,21 @@ export function DashboardPage({
         </div>
       </section>
 
-      <section className="dashboard-kpi-grid" aria-label={t('dashboardSectionUsage')}>
-        <article className="dashboard-kpi">
+      <section className="dashboard-kpi-grid stagger-children" aria-label={t('dashboardSectionUsage')}>
+        <article className="dashboard-kpi clinical-card">
           <Users className="dashboard-kpi__icon" strokeWidth={1.5} aria-hidden />
-          <span className="dashboard-kpi__value">{patientCases.length}</span>
+          <span className="dashboard-kpi__value">{activePatients.length}</span>
           <span className="dashboard-kpi__label">{t('dashboardStatPatients')}</span>
         </article>
 
-        <article className="dashboard-kpi">
+        <article className="dashboard-kpi clinical-card">
           <Clock className="dashboard-kpi__icon" strokeWidth={1.5} aria-hidden />
           <span className="dashboard-kpi__value">{todayTotalLabel}</span>
           <span className="dashboard-kpi__label">{t('dashboardUsageDocumentation')}</span>
           <UsageBar value={todayTotalSeconds} max={DOCUMENTATION_DAY_GOAL_SECONDS} />
         </article>
 
-        <article className="dashboard-kpi">
+        <article className="dashboard-kpi clinical-card">
           <Sparkles className="dashboard-kpi__icon" strokeWidth={1.75} aria-hidden />
           {creditsLoading ? (
             <span className="dashboard-kpi__value">…</span>
@@ -474,7 +513,7 @@ export function DashboardPage({
           <UsageBar value={creditBalance} max={CREDITS_DEFAULT_MAX} />
         </article>
 
-        <article className="dashboard-kpi">
+        <article className="dashboard-kpi clinical-card">
           <Download className="dashboard-kpi__icon" strokeWidth={1.5} aria-hidden />
           <span
             className={[
@@ -494,8 +533,40 @@ export function DashboardPage({
         </article>
       </section>
 
+      <section className="dashboard-section" aria-label={t('dashboardNavCards')}>
+        <div className="dashboard-nav-cards">
+          {onOpenCalendar ? (
+            <button type="button" className="dashboard-nav-card dashboard-nav-card--calendar clinical-card clinical-card--interactive" onClick={onOpenCalendar}>
+              <span className="dashboard-nav-card__icon-wrap" aria-hidden>
+                <CalendarDays className="h-5 w-5" strokeWidth={1.75} />
+              </span>
+              <span className="dashboard-nav-card__body">
+                <span className="dashboard-nav-card__title">{t('dashboardCalendarCardTitle')}</span>
+                <span className="dashboard-nav-card__subtitle">{t('dashboardCalendarCardSubtitle')}</span>
+              </span>
+              <ArrowRight className="dashboard-nav-card__arrow h-4 w-4" strokeWidth={1.75} aria-hidden />
+            </button>
+          ) : null}
+
+          <KnowledgeBaseTile />
+
+          {onOpenTemplates ? (
+            <button type="button" className="dashboard-nav-card dashboard-nav-card--templates clinical-card clinical-card--interactive" onClick={onOpenTemplates}>
+              <span className="dashboard-nav-card__icon-wrap" aria-hidden>
+                <FileText className="h-5 w-5" strokeWidth={1.75} />
+              </span>
+              <span className="dashboard-nav-card__body">
+                <span className="dashboard-nav-card__title">{t('templateOpenBuilder')}</span>
+                <span className="dashboard-nav-card__subtitle">{t('templateDashboardSubtitle')}</span>
+              </span>
+              <ArrowRight className="dashboard-nav-card__arrow h-4 w-4" strokeWidth={1.75} aria-hidden />
+            </button>
+          ) : null}
+        </div>
+      </section>
+
       {showDaySchedule ? (
-        <DaySchedulePanel cases={patientCases} onOpenCase={handleScheduleOpenCase} />
+        <DaySchedulePanel cases={activePatients} onOpenCase={handleScheduleOpenCase} />
       ) : null}
 
       <section className="dashboard-section" aria-labelledby="dashboard-section-patients">
@@ -546,9 +617,12 @@ export function DashboardPage({
 
         {registry.loading ? (
           <p className="dashboard-page__status">{t('dashboardLoading')}</p>
-        ) : patientCases.length === 0 ? (
-          <div className="dashboard-page__empty">
-            <p className="dashboard-page__status">{t('dashboardEmpty')}</p>
+        ) : activePatients.length === 0 ? (
+          <div className="clinical-empty-state-card">
+            <span className="clinical-empty-state-card__icon" aria-hidden>
+              <Users className="h-5 w-5" strokeWidth={1.5} />
+            </span>
+            <p className="clinical-empty-state-card__text">{t('dashboardEmpty')}</p>
             <button
               type="button"
               className="dashboard-page__new-btn"
@@ -561,27 +635,26 @@ export function DashboardPage({
         ) : filteredPatients.length === 0 ? (
           <p className="dashboard-page__status">{t('dashboardSearchNoResults')}</p>
         ) : patientViewMode === 'cards' ? (
-          <div className="dashboard-page__grid">
+          <div className="dashboard-page__grid stagger-children">
             {filteredPatients.map((caseItem) => (
               <PatientCaseCard
                 key={caseItem.caseId}
                 caseItem={caseItem}
-                clinicalStats={clinicalStatsByCase.get(caseItem.caseId)}
                 onOpen={(caseId) => onOpenCase(caseId, undefined, true)}
-                onArchiveDemo={isDemoCase(caseItem.caseId) ? handleArchiveDemo : undefined}
+                onEdit={handleEditPatient}
+                onArchive={handleArchivePatient}
               />
             ))}
           </div>
         ) : (
           <ul className="dashboard-patients-list">
             {filteredPatients.map((caseItem) => {
-              const stats = clinicalStatsByCase.get(caseItem.caseId)
-              const gender = genderLabel(caseItem.localGeschlecht, t)
+              const symbol = genderSymbol(caseItem.localGeschlecht)
               const details = [
                 caseItem.localGeburtsdatum
                   ? formatSiteLocaleDate(caseItem.localGeburtsdatum, language)
                   : null,
-                gender,
+                symbol,
               ].filter(Boolean)
 
               return (
@@ -601,17 +674,7 @@ export function DashboardPage({
                       {details.length > 0 ? (
                         <span className="dashboard-patients-list__meta">{details.join(' · ')}</span>
                       ) : null}
-                      {caseItem.documentTypeSummary ? (
-                        <span className="dashboard-patients-list__doc">{caseItem.documentTypeSummary}</span>
-                      ) : null}
                     </span>
-                    {stats ? (
-                      <span className="dashboard-patients-list__stats">
-                        {stats.diagnoses > 0 ? `${stats.diagnoses} Dx` : null}
-                        {stats.documents > 0 ? `${stats.documents} Doc` : null}
-                        {stats.verlauf > 0 ? `${stats.verlauf} Verl.` : null}
-                      </span>
-                    ) : null}
                     <span className="dashboard-patients-list__date">
                       {formatSiteLocaleDate(caseItem.lastEditedAt, language)}
                     </span>
@@ -628,6 +691,33 @@ export function DashboardPage({
           </p>
         ) : null}
       </section>
+
+      {archivedPatients.length > 0 ? (
+        <>
+          <div className="dashboard-section__divider" role="separator" />
+          <section className="dashboard-section dashboard-section--archive" aria-labelledby="dashboard-section-archive">
+            <h2 id="dashboard-section-archive" className="dashboard-section__heading">
+              {t('dashboardArchiveSection')}
+            </h2>
+            <p className="dashboard-section__intro">{t('dashboardArchiveIntro')}</p>
+            {filteredArchivedPatients.length === 0 ? (
+              <p className="dashboard-page__status">{t('dashboardSearchNoResults')}</p>
+            ) : (
+              <div className="dashboard-page__grid">
+                {filteredArchivedPatients.map((caseItem) => (
+                  <PatientCaseCard
+                    key={caseItem.caseId}
+                    caseItem={caseItem}
+                    archived
+                    onOpen={(caseId) => onOpenCase(caseId, undefined, true)}
+                    onDelete={(caseId) => void handleDeletePatient(caseId)}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        </>
+      ) : null}
 
       {recentActivity.length > 0 ? (
         <>
@@ -661,50 +751,6 @@ export function DashboardPage({
           </section>
         </>
       ) : null}
-
-      <div className="dashboard-section__divider" role="separator" />
-
-      <section className="dashboard-section dashboard-section--compact" aria-labelledby="dashboard-section-templates">
-        <h2 id="dashboard-section-templates" className="dashboard-section__heading">
-          {t('templateDashboardTitle')}
-        </h2>
-        {onOpenTemplates ? (
-          <button type="button" className="dt-dashboard-tile" onClick={onOpenTemplates}>
-            <span>
-              <span className="dt-dashboard-tile__title">{t('templateOpenBuilder')}</span>
-              <span className="dt-dashboard-tile__subtitle">{t('templateDashboardSubtitle')}</span>
-            </span>
-            <FileText className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-          </button>
-        ) : null}
-      </section>
-
-      <div className="dashboard-section__divider" role="separator" />
-
-      <section className="dashboard-section dashboard-section--compact" aria-labelledby="dashboard-section-kb">
-        <h2 id="dashboard-section-kb" className="dashboard-section__heading">
-          {t('kbTitle')}
-        </h2>
-        <KnowledgeBaseTile />
-        {hasKbAdminAccess && isKbAdminApiEnabled() && onOpenKbAdmin ? (
-          <button type="button" className="dashboard-settings-chip" onClick={onOpenKbAdmin} style={{ marginTop: '0.75rem' }}>
-            <FlaskConical className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
-            KB Batch Review (Admin)
-          </button>
-        ) : null}
-        {hasAuditDebugAccess && onOpenAuditDebug ? (
-          <button type="button" className="dashboard-settings-chip" onClick={onOpenAuditDebug} style={{ marginTop: '0.75rem' }}>
-            <ClipboardList className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
-            Audit Logs (Dev)
-          </button>
-        ) : null}
-        {hasAuditDebugAccess && onOpenDemoPatient ? (
-          <button type="button" className="dashboard-settings-chip" onClick={onOpenDemoPatient} style={{ marginTop: '0.75rem' }}>
-            <FlaskConical className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
-            Demo Patient QA (Dev)
-          </button>
-        ) : null}
-      </section>
 
       <div className="dashboard-section__divider" role="separator" />
 
@@ -763,10 +809,22 @@ export function DashboardPage({
               KI-Budget
             </button>
           ) : null}
-          {onOpenCalendar ? (
-            <button type="button" className="dashboard-settings-chip" onClick={onOpenCalendar}>
-              <CalendarDays className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
-              Kalender
+          {hasKbAdminAccess && isKbAdminApiEnabled() && onOpenKbAdmin ? (
+            <button type="button" className="dashboard-settings-chip" onClick={onOpenKbAdmin}>
+              <FlaskConical className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
+              KB Batch Review (Admin)
+            </button>
+          ) : null}
+          {hasAuditDebugAccess && onOpenAuditDebug ? (
+            <button type="button" className="dashboard-settings-chip" onClick={onOpenAuditDebug}>
+              <ClipboardList className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
+              Audit Logs (Dev)
+            </button>
+          ) : null}
+          {hasAuditDebugAccess && onOpenDemoPatient ? (
+            <button type="button" className="dashboard-settings-chip" onClick={onOpenDemoPatient}>
+              <FlaskConical className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
+              Demo Patient QA (Dev)
             </button>
           ) : null}
           {canAccessEnterpriseUi && onOpenEnterprise ? (
@@ -809,11 +867,12 @@ export function DashboardPage({
         />
       ) : null}
 
-      {showGeneralDocumentation ? (
-        <TemplateWorkspaceHost
-          context="emptyWorkspace"
-          saveToPatientDocuments={false}
-          onClose={() => setShowGeneralDocumentation(false)}
+      {editingCaseId && editingPatientData ? (
+        <NewPatientDialog
+          mode="edit"
+          initialData={editingPatientData}
+          onSubmit={handleEditPatientSaved}
+          onCancel={() => setEditingCaseId(null)}
         />
       ) : null}
 

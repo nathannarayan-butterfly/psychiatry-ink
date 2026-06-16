@@ -1,30 +1,36 @@
+import { Plus } from 'lucide-react'
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
-import {
-  medicationSectionDomId,
-  useMedicationSectionNavOptional,
-} from '../../contexts/MedicationSectionNavContext'
+import { useMedicationSectionNavOptional } from '../../contexts/MedicationSectionNavContext'
 import { translateMedicationUi } from '../../data/medicationUiTranslations'
 import { useKnowledgeBaseUserId } from '../../hooks/useKnowledgeBaseUserId'
 import { useMedicationPlan } from '../../hooks/useMedicationPlan'
 import type { MedicationEntry } from '../../types/medicationPlan'
 import type { MedicationDraft } from '../../utils/medication/planOps'
-import { visibleMedications } from '../../utils/medication/planOps'
+import { derivePlanTimeline, visibleMedications } from '../../utils/medication/planOps'
 import { MedicationDeleteDialog } from './MedicationDeleteDialog'
 import { MedicationEditDialog } from './MedicationEditDialog'
-import { MedicationLowerSections, type MedicationSectionKey } from './MedicationLowerSections'
+import {
+  MEDICATION_SECTIONS,
+  MedicationLowerSections,
+  type MedicationSectionKey,
+} from './MedicationLowerSections'
+import { MEDICATION_SECTION_META } from './medicationSectionMeta'
+import { MedicationEntryHistoryDialog } from './MedicationEntryHistoryDialog'
+import { MedicationInsightStrip } from './MedicationInsightStrip'
+import { MedicationPlanDashboard } from './MedicationPlanDashboard'
+import { MedicationPlanHistory } from './MedicationPlanHistory'
 import { MedicationRow } from './MedicationRow'
 import { MedicationToolbar } from './MedicationToolbar'
-import { MedicationHistoryPanel, PlanNavigator } from './PlanNavigator'
 
 interface MedicationWorkspaceProps {
   caseId: string
   disabled?: boolean
-  /** Hide the toolbar's "add" button (e.g. when the trigger is promoted to the section header). */
+  /** Hide the hero's primary "add" button (e.g. when a parent owns the trigger). */
   showToolbarAdd?: boolean
 }
 
-/** Imperative handle so a parent (e.g. the Therapie section header) can trigger the add dialog. */
+/** Imperative handle so a parent (e.g. a cross-tab trigger) can open the add dialog. */
 export interface MedicationWorkspaceHandle {
   openAdd: () => void
 }
@@ -44,19 +50,29 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deletingEntry, setDeletingEntry] = useState<MedicationEntry | null>(null)
-  const [showPlanHistory, setShowPlanHistory] = useState(false)
+  const [historyMode, setHistoryMode] = useState(false)
+  const [historyEntry, setHistoryEntry] = useState<MedicationEntry | null>(null)
+
+  const selectSection = useCallback(
+    (key: MedicationSectionKey) => {
+      if (key === 'plan') setHistoryMode(false)
+      if (sectionNav) sectionNav.setActiveSection(key)
+      else setLocalSection(key)
+    },
+    [sectionNav],
+  )
 
   const medications = useMemo(
     () => visibleMedications(med.currentPlan?.medications ?? []),
     [med.currentPlan?.medications],
   )
   const hasMedications = medications.length > 0
-  const hasPlanHistory = useMemo(
-    () =>
-      med.state.plans.length > 1 ||
-      med.state.plans.some((plan) => plan.medications.length > 0),
-    [med.state.plans],
+  const planTimeline = useMemo(
+    () => derivePlanTimeline(med.currentPlan?.medications ?? []),
+    [med.currentPlan?.medications],
   )
+  // Only meaningful once there is at least one prior plan state to look back at.
+  const hasPlanHistory = planTimeline.length > 1
   const selectedEntry = useMemo(
     () => medications.find((item) => item.id === selectedId) ?? null,
     [medications, selectedId],
@@ -137,53 +153,76 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
     printWindow.close()
   }, [language])
 
-  const jumpToCurrentPlan = useCallback(() => {
-    const current = med.state.plans.find((plan) => plan.isCurrent)
-    if (current) med.selectPlan(current.id)
-  }, [med])
+  const isPlan = selectedSection === 'plan'
 
-  return (
-    <div className="medication-workspace">
-      <div className="medication-workspace__disclaimer">
-        <p>{translateMedicationUi(language, 'medDisclaimerDemo')}</p>
-      </div>
+  const planHero = (
+    <div className="medication-plan" id="med-section-plan">
+      <header className="medication-hero">
+        <div className="medication-hero__intro">
+          <span className="medication-hero__eyebrow">
+            {translateMedicationUi(language, 'medHeroEyebrow')}
+          </span>
+          <h2 className="medication-hero__title">{translateMedicationUi(language, 'medPageTitle')}</h2>
+          <p className="medication-hero__desc">{translateMedicationUi(language, 'medDescPlan')}</p>
+        </div>
+        <div className="medication-hero__actions">
+          {showToolbarAdd ? (
+            <button
+              type="button"
+              className="medication-hero__add"
+              disabled={disabled}
+              onClick={openAdd}
+            >
+              <Plus size={15} strokeWidth={2.2} aria-hidden />
+              {translateMedicationUi(language, 'medAddMedication')}
+            </button>
+          ) : null}
+        </div>
+      </header>
 
-      <div className="medication-workspace__columns">
-        <div
-          className="medication-workspace__main"
-          id={medicationSectionDomId('plan')}
-        >
+      {!historyMode && hasMedications ? (
+        <MedicationInsightStrip medications={medications} />
+      ) : null}
+
+      {historyMode ? (
+        <MedicationPlanHistory timeline={planTimeline} onBackToCurrent={() => setHistoryMode(false)} />
+      ) : (
+        <>
           <MedicationToolbar
             disabled={disabled}
             hasMedications={hasMedications}
-            hasPlanHistory={hasPlanHistory}
-            showAdd={showToolbarAdd}
+            showAdd={false}
             onAdd={openAdd}
             onEdit={() => selectedEntry && openEdit(selectedEntry)}
             editDisabled={!selectedEntry}
             onExport={handleExport}
             onPrint={handlePrint}
             onCopyPlan={med.copyPlan}
-            onViewHistory={() => setShowPlanHistory((open) => !open)}
+            hasPlanHistory={hasPlanHistory}
+            historyMode={historyMode}
+            onToggleHistory={() => setHistoryMode((open) => !open)}
           />
 
-          <PlanNavigator
-            plans={med.state.plans}
-            currentPlanId={med.state.currentPlanId}
-            showHistory={showPlanHistory && hasPlanHistory}
-            onSelectPlan={med.selectPlan}
-            onJumpToCurrent={jumpToCurrentPlan}
-          />
-
-          {showPlanHistory && hasPlanHistory ? (
-            <MedicationHistoryPanel plans={med.state.plans} />
-          ) : null}
-
-          <div className="medication-workspace__list" ref={printRef}>
+          <div className="medication-plan__list" ref={printRef}>
             {!hasMedications ? (
               <div className="medication-workspace__empty">
-                <p className="medication-workspace__empty-text">{translateMedicationUi(language, 'medEmpty')}</p>
-                <p className="medication-workspace__empty-hint">{translateMedicationUi(language, 'medEmptyHint')}</p>
+                <p className="medication-workspace__empty-text">
+                  {translateMedicationUi(language, 'medEmpty')}
+                </p>
+                <p className="medication-workspace__empty-hint">
+                  {translateMedicationUi(language, 'medEmptyHint')}
+                </p>
+                {showToolbarAdd ? (
+                  <button
+                    type="button"
+                    className="medication-hero__add"
+                    disabled={disabled}
+                    onClick={openAdd}
+                  >
+                    <Plus size={15} strokeWidth={2.2} aria-hidden />
+                    {translateMedicationUi(language, 'medAddMedication')}
+                  </button>
+                ) : null}
               </div>
             ) : (
               medications.map((entry) => (
@@ -193,6 +232,7 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
                   disabled={disabled}
                   selected={selectedId === entry.id}
                   onSelect={() => setSelectedId(entry.id)}
+                  onHistory={() => setHistoryEntry(entry)}
                   onEdit={() => openEdit(entry)}
                   onDelete={() => openDelete(entry)}
                 />
@@ -200,34 +240,92 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
             )}
           </div>
 
-          {!sectionNav ? (
-            <MedicationLowerSections
-              caseId={caseId}
-              state={med.state}
-              medications={medications}
-              disabled={disabled}
-              onReportSideEffect={med.reportSideEffect}
-              onLabNotesChange={med.updateLabNotes}
-              mode="links"
-              activeSection={selectedSection}
-              onSelectSection={setLocalSection}
-            />
+          {hasMedications ? (
+            <MedicationPlanDashboard medications={medications} onOpenSection={selectSection} />
           ) : null}
-        </div>
 
-        <aside className="medication-workspace__aside">
-          <MedicationLowerSections
-            caseId={caseId}
-            state={med.state}
-            medications={medications}
-            disabled={disabled}
-            onReportSideEffect={med.reportSideEffect}
-            onLabNotesChange={med.updateLabNotes}
-            mode="detail"
-            activeSection={selectedSection === 'plan' ? null : selectedSection}
-          />
-        </aside>
-      </div>
+          {hasMedications ? (
+            <section className="medication-explore" aria-label={translateMedicationUi(language, 'medExploreSections')}>
+              <p className="medication-explore__label">
+                {translateMedicationUi(language, 'medExploreSections')}
+              </p>
+              <div className="medication-explore__grid">
+                {MEDICATION_SECTIONS.filter((section) => section.key !== 'plan').map((section) => {
+                  const meta = MEDICATION_SECTION_META[section.key]
+                  const Icon = meta.Icon
+                  return (
+                    <button
+                      key={section.key}
+                      type="button"
+                      className="medication-explore__card"
+                      data-section={section.key}
+                      onClick={() => selectSection(section.key)}
+                    >
+                      <span className="medication-explore__icon" aria-hidden="true">
+                        <Icon size={18} strokeWidth={1.85} />
+                      </span>
+                      <span className="medication-explore__text">
+                        <span className="medication-explore__title">
+                          {translateMedicationUi(language, meta.labelKey)}
+                        </span>
+                        <span className="medication-explore__desc">
+                          {translateMedicationUi(language, meta.descKey)}
+                        </span>
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </section>
+          ) : null}
+
+          <p className="medication-workspace__disclaimer-note">
+            {translateMedicationUi(language, 'medDisclaimerDemo')}
+          </p>
+        </>
+      )}
+    </div>
+  )
+
+  return (
+    <div className="medication-workspace medication-workspace--flagship">
+      {!sectionNav ? (
+        <nav className="medication-tabs" aria-label={translateMedicationUi(language, 'medSectionsLabel')}>
+          {MEDICATION_SECTIONS.map((section) => {
+            const meta = MEDICATION_SECTION_META[section.key]
+            const Icon = meta.Icon
+            const isActive = selectedSection === section.key
+            return (
+              <button
+                key={section.key}
+                type="button"
+                className={`medication-tabs__tab${isActive ? ' medication-tabs__tab--active' : ''}`}
+                onClick={() => selectSection(section.key)}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                <Icon size={14} strokeWidth={1.9} aria-hidden />
+                {translateMedicationUi(language, section.labelKey)}
+              </button>
+            )
+          })}
+        </nav>
+      ) : null}
+
+      {isPlan ? (
+        planHero
+      ) : (
+        <MedicationLowerSections
+          caseId={caseId}
+          state={med.state}
+          medications={medications}
+          disabled={disabled}
+          onReportSideEffect={med.reportSideEffect}
+          onLabNotesChange={med.updateLabNotes}
+          mode="detail"
+          activeSection={selectedSection}
+          onBack={() => selectSection('plan')}
+        />
+      )}
 
       <MedicationEditDialog
         open={editOpen}
@@ -244,6 +342,12 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
         deletedBy={deletedBy}
         onClose={() => setDeleteOpen(false)}
         onConfirm={handleDeleteConfirm}
+      />
+
+      <MedicationEntryHistoryDialog
+        open={historyEntry !== null}
+        entry={historyEntry}
+        onClose={() => setHistoryEntry(null)}
       />
     </div>
   )

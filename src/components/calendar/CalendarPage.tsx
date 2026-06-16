@@ -28,6 +28,7 @@ import {
 } from '../../utils/calendarLabels'
 import { printDaySchedule } from '../../utils/calendar/printDaySchedule'
 import { CalendarItemModal, CalendarRescheduleModal } from './CalendarItemModal'
+import type { NewPatientData } from '../dashboard/NewPatientDialog'
 import { ClinicalLoading } from '../ui/ClinicalLoading'
 
 interface CalendarPageProps {
@@ -86,6 +87,24 @@ export function CalendarPage({ onBack, onOpenCase }: CalendarPageProps) {
     fallbackTitle: (id) => t('dashboardCaseFallback').replace('{id}', id),
   })
   const patientCases = useMemo(() => registry.cases.filter(isListedPatientCase), [registry.cases])
+
+  const handleCreatePatientForCalendar = useCallback(
+    async (patient: NewPatientData) => {
+      const newCaseId = registry.addCase()
+      if (patient.name || patient.vorname || patient.nachname || patient.geburtsdatum || patient.geschlecht) {
+        registry.upsertCaseMeta(newCaseId, {
+          localName: patient.name || undefined,
+          localVorname: patient.vorname || undefined,
+          localNachname: patient.nachname || undefined,
+          localGeburtsdatum: patient.geburtsdatum || undefined,
+          localGeschlecht: patient.geschlecht || undefined,
+        })
+      }
+      await registry.refresh()
+      return newCaseId
+    },
+    [registry],
+  )
 
   const dayItems = useMemo(
     () => items.filter((item) => isSameDay(new Date(item.startTime), anchorDate)),
@@ -296,6 +315,7 @@ export function CalendarPage({ onBack, onOpenCase }: CalendarPageProps) {
         cases={patientCases}
         initial={editItem}
         defaultStart={anchorDate}
+        onCreatePatient={handleCreatePatientForCalendar}
         onSave={async (input) => {
           if (editItem?.id) await update(editItem.id, input)
           else await create(input)

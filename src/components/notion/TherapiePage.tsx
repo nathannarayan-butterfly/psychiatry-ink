@@ -1,16 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { useTranslation } from '../../context/TranslationContext'
 import { usePermissionContext } from '../../contexts/PermissionContext'
 import { useCanAccessModule } from '../../hooks/permissions/useCanAccessModule'
 import { usePermissions } from '../../hooks/permissions'
-import { translateMedicationUi } from '../../data/medicationUiTranslations'
 import { TherapyAttributionBadge } from '../therapy/TherapyAttributionBadge'
 import { buildTherapyAttribution } from '../../types/therapy'
-import {
-  MedicationWorkspace,
-  type MedicationWorkspaceHandle,
-} from '../medication/MedicationWorkspace'
 import { PsychotherapieOverviewCard } from '../psychotherapy/PsychotherapieOverviewCard'
 import { ComplementaryTherapiesSection } from './ComplementaryTherapiesSection'
 import { WeitereTherapieSection } from './WeitereTherapieSection'
@@ -25,10 +20,6 @@ import { therapyPageSectionDomId } from '../../data/therapyPageSections'
 
 interface TherapiePageProps {
   caseId: string
-  /** When true on mount, the medication add dialog is opened automatically (cross-tab trigger from Übersicht). */
-  autoOpenMedicationAdd?: boolean
-  /** Called once the auto-open request has been consumed, so the parent can reset its flag. */
-  onAutoOpenMedicationAddHandled?: () => void
 }
 
 function formatDate(iso: string): string {
@@ -43,18 +34,13 @@ function formatDate(iso: string): string {
   }
 }
 
-export function TherapiePage({
-  caseId,
-  autoOpenMedicationAdd = false,
-  onAutoOpenMedicationAddHandled,
-}: TherapiePageProps) {
-  const { t, language } = useTranslation()
+export function TherapiePage({ caseId }: TherapiePageProps) {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const { member, role } = usePermissionContext()
   const { canCreateTherapyEntry: canCreateEntry } = usePermissions()
   const canAccessTherapyModule = useCanAccessModule(caseId, 'therapy')
   const canAddTherapyNote = canAccessTherapyModule && canCreateEntry(caseId)
-  const medicationRef = useRef<MedicationWorkspaceHandle>(null)
   const [entries, setEntries] = useState<TherapieEintrag[]>(() => loadTherapieEintraege(caseId))
   const [composerOpen, setComposerOpen] = useState(false)
   const [composerText, setComposerText] = useState('')
@@ -63,12 +49,6 @@ export function TherapiePage({
   useEffect(() => {
     setEntries(loadTherapieEintraege(caseId))
   }, [caseId])
-
-  useEffect(() => {
-    if (!autoOpenMedicationAdd) return
-    medicationRef.current?.openAdd()
-    onAutoOpenMedicationAddHandled?.()
-  }, [autoOpenMedicationAdd, onAutoOpenMedicationAddHandled])
 
   const handleSave = useCallback(() => {
     if (!composerText.trim()) return
@@ -106,41 +86,12 @@ export function TherapiePage({
 
   return (
     <div className="therapy-page">
-
-      {/* ── Section 1: Medikamentöse Therapie ───────────────────────── */}
-      <section className="therapy-section">
-        <header className="therapy-section__header">
-          <div className="therapy-section__heading">
-            <h3 className="therapy-section__title">{t('therapieSectionMedikamente')}</h3>
-          </div>
-          <div className="therapy-section__actions">
-            <button
-              type="button"
-              className="therapy-add-btn"
-              onClick={() => medicationRef.current?.openAdd()}
-            >
-              ＋ {translateMedicationUi(language, 'medAddMedication')}
-            </button>
-          </div>
-        </header>
-        <div className="therapy-section__body">
-          <MedicationWorkspace ref={medicationRef} caseId={caseId} showToolbarAdd={false} />
-        </div>
-      </section>
-
-      {/* ── Section 2: Weitere Therapieverfahren (Neurostimulation/biologisch) ── */}
       <WeitereTherapieSection caseId={caseId} />
-
-      {/* ── Section 3: Psychotherapie (compact overview) ────────────── */}
       <PsychotherapieOverviewCard caseId={caseId} />
-
-      {/* ── Section 4: Komplementäre Therapien ──────────────────────── */}
       <ComplementaryTherapiesSection caseId={caseId} />
-
-      {/* ── Section 5: Sozialtherapie ───────────────────────────────── */}
       <SozialtherapieSection caseId={caseId} />
 
-      {/* ── Section 6: Therapie-Notizen (existing journal) ──────────── */}
+      {/* Therapie-Notizen (existing journal) */}
       <section className="therapy-section" id={therapyPageSectionDomId('notizen')}>
         <header className="therapy-section__header">
           <div className="therapy-section__heading">

@@ -102,12 +102,13 @@ export function ConsultationCaseSection({
           </button>
           <button
             type="button"
-            className="overview-konsile__action"
+            className="icon-action-btn icon-action-btn--bordered"
             disabled={sortedRequests.length === 0 || printingId != null}
             onClick={() => void handlePrintLatest()}
             title="Konsilanfrage drucken"
+            aria-label="Konsilanfrage drucken"
           >
-            Drucken
+            <Printer size={14} aria-hidden />
           </button>
         </div>
       </div>

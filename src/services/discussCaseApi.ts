@@ -112,6 +112,40 @@ export async function sendDiscussMessage(
   return data.message
 }
 
+export async function editDiscussMessage(
+  discussionId: string,
+  messageId: string,
+  body: string,
+): Promise<DiscussCaseMessage> {
+  const response = await apiFetch(
+    `/api/discuss-case/${encodeURIComponent(discussionId)}/messages/${encodeURIComponent(messageId)}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ body }),
+    },
+  )
+  if (!response.ok) {
+    const detail = (await response.json().catch(() => null)) as { error?: string } | null
+    throw new Error(detail?.error ?? `Nachricht konnte nicht bearbeitet werden (${response.status})`)
+  }
+  const data = (await response.json()) as { message: DiscussCaseMessage }
+  return data.message
+}
+
+export async function deleteDiscussMessage(
+  discussionId: string,
+  messageId: string,
+): Promise<void> {
+  const response = await apiFetch(
+    `/api/discuss-case/${encodeURIComponent(discussionId)}/messages/${encodeURIComponent(messageId)}`,
+    { method: 'DELETE' },
+  )
+  if (!response.ok) {
+    const detail = (await response.json().catch(() => null)) as { error?: string } | null
+    throw new Error(detail?.error ?? `Nachricht konnte nicht gelöscht werden (${response.status})`)
+  }
+}
+
 export async function addDiscussAnnotation(
   discussionId: string,
   input: {

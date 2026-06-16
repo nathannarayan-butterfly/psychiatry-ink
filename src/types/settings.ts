@@ -16,7 +16,15 @@ export type SettingsSectionId =
   | 'about'
   | 'kb-admin'
 
-export type PreferredAccentColor = 'brown' | 'blue' | 'green' | 'burgundy' | 'violet'
+export type PreferredAccentColor =
+  | 'terracotta'
+  | 'blue'
+  | 'green'
+  | 'teal'
+  | 'indigo'
+  | 'burgundy'
+  | 'amber'
+  | 'slate'
 
 export type FontSize = 'sm' | 'md' | 'lg'
 
@@ -55,7 +63,7 @@ export interface AppearanceSettings {
 }
 
 export const defaultAppearanceSettings: AppearanceSettings = {
-  preferredAccentColor: 'brown',
+  preferredAccentColor: 'terracotta',
   fontFamily: 'inter',
   fontSize: 'md',
   workspaceScale: 'standard',
@@ -78,9 +86,12 @@ export const paperColorIds: PaperColor[] = [
 ]
 
 export const preferredAccentColorIds: PreferredAccentColor[] = [
-  'brown',
+  'terracotta',
   'blue',
   'green',
+  'teal',
+  'indigo',
   'burgundy',
-  'violet',
+  'amber',
+  'slate',
 ]

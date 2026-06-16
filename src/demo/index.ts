@@ -43,6 +43,7 @@ export {
   loadDemoUserState,
   saveDemoUserState,
   isDemoArchivedForUser,
+  isDemoRemovedForUser,
   shouldAutoInstallDemo,
 } from './demoUserState'
 export { clearDemoCaseStorage } from './clearDemoCaseStorage'

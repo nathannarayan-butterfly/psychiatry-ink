@@ -13,12 +13,15 @@ interface NotionTopBarProps {
   creditBalance: number
   onOpenSettings: (section?: SettingsSectionId) => void
   onNavigateDashboard?: () => void
+  /** Hide logo (shown elsewhere, e.g. overview sidebar prototype). */
+  hideLogo?: boolean
 }
 
 export function NotionTopBar({
   creditBalance,
   onOpenSettings,
   onNavigateDashboard,
+  hideLogo = false,
 }: NotionTopBarProps) {
   const { t } = useTranslation()
   const { signOut, isConfigured } = useAuth()
@@ -30,7 +33,7 @@ export function NotionTopBar({
   return (
     <header className="notion-topbar">
       <div className="notion-topbar__left">
-        <AppLogo onClick={onNavigateDashboard} />
+        {hideLogo ? null : <AppLogo onClick={onNavigateDashboard} />}
       </div>
 
       <div className="notion-topbar__right">

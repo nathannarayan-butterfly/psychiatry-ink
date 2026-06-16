@@ -238,9 +238,13 @@
 }
 
 .dt-btn--primary {
-  background: var(--text-main, #1a1a1a);
-  color: var(--dt-surface);
+  background: var(--accent);
+  color: var(--color-accent-foreground, #fff);
   border-color: transparent;
+}
+
+.dt-btn--primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 88%, black);
 }
 
 .dt-btn--secondary {

@@ -280,6 +280,7 @@ export default function App() {
               const qs = params.toString()
               navigate(qs ? `${base}?${qs}` : base)
             }}
+            onOpenWorkspace={() => navigate('/workspace')}
           />
         ) : (
           <CaseWorkspacePage

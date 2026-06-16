@@ -18,6 +18,12 @@ interface KbSectionNavProps {
   activeId: string
   onActivate: (id: string) => void
   language: string
+  /**
+   * Visual treatment. `'sidebar'` renders the dark, accent-tinted "case sidebar"
+   * panel design used on individual medication pages; `'default'` keeps the
+   * light inline table-of-contents used elsewhere.
+   */
+  variant?: 'default' | 'sidebar'
 }
 
 /** DOM id for a section card so the TOC can scroll to / observe it. */
@@ -25,7 +31,7 @@ export function kbSectionDomId(sectionId: string): string {
   return `kb-sec-${sectionId}`
 }
 
-export function KbSectionNav({ items, activeId, onActivate, language }: KbSectionNavProps) {
+export function KbSectionNav({ items, activeId, onActivate, language, variant = 'default' }: KbSectionNavProps) {
   const observerRef = useRef<IntersectionObserver | null>(null)
 
   const grouped = useMemo(() => {
@@ -79,7 +85,10 @@ export function KbSectionNav({ items, activeId, onActivate, language }: KbSectio
   }, [items.map((i) => i.id).join('|')])
 
   return (
-    <nav className="kb-toc" aria-label={kbT(language, 'tocTitle')}>
+    <nav
+      className={`kb-toc${variant === 'sidebar' ? ' kb-toc--sidebar' : ''}`}
+      aria-label={kbT(language, 'tocTitle')}
+    >
       {/* Compact dropdown (shown under the responsive breakpoint via CSS). */}
       <label className="kb-toc__dropdown">
         <span className="kb-toc__dropdown-label">{kbT(language, 'tocTitle')}</span>

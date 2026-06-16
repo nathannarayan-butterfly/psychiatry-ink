@@ -1,4 +1,4 @@
-import { Copy, MessageSquare, RefreshCw, Send, Sparkles, Trash2 } from 'lucide-react'
+import { Check, Copy, MessageSquare, Pencil, RefreshCw, Send, Sparkles, Trash2, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type {
   DiscussCaseMessage,
@@ -6,7 +6,12 @@ import type {
   DiscussCasePermission,
   DiscussQuoteExcerpt,
 } from '../../types/discussCase'
-import { askDiscussAi, sendDiscussMessage } from '../../services/discussCaseApi'
+import {
+  askDiscussAi,
+  deleteDiscussMessage,
+  editDiscussMessage,
+  sendDiscussMessage,
+} from '../../services/discussCaseApi'
 import { getParticipantColor } from '../../utils/discussCase/participantColors'
 
 interface DiscussCaseChatPanelProps {
@@ -26,6 +31,25 @@ const ROLE_TAGS: Record<DiscussCaseParticipant['role'], string> = {
   owner: 'Eigentümer',
   internal: 'Intern',
   external: 'Extern',
+}
+
+/** Group consecutive messages by the same author within this window (ms). */
+const GROUP_WINDOW_MS = 5 * 60 * 1000
+
+function authorInitials(name: string): string {
+  const trimmed = name.trim()
+  if (!trimmed) return '?'
+  const parts = trimmed.split(/\s+/)
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
+  return trimmed.slice(0, 2).toUpperCase()
+}
+
+function formatMessageTime(iso: string): string {
+  try {
+    return new Date(iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+  } catch {
+    return ''
+  }
 }
 
 export function DiscussCaseChatPanel({
@@ -58,6 +82,10 @@ export function DiscussCaseChatPanel({
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
   const [sending, setSending] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editDraft, setEditDraft] = useState('')
+  const [actionBusyId, setActionBusyId] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
 
   const canSend = permissions.includes('send_message')
@@ -89,6 +117,61 @@ export function DiscussCaseChatPanel({
       setSending(false)
     }
   }, [canSend, discussionId, messageDraft, messages, sending])
+
+  const beginEdit = useCallback((message: DiscussCaseMessage) => {
+    setEditingId(message.id)
+    setEditDraft(message.body)
+    setActionError(null)
+  }, [])
+
+  const cancelEdit = useCallback(() => {
+    setEditingId(null)
+    setEditDraft('')
+  }, [])
+
+  const saveEdit = useCallback(
+    async (message: DiscussCaseMessage) => {
+      const body = editDraft.trim()
+      if (!body || actionBusyId) return
+      if (body === message.body) {
+        cancelEdit()
+        return
+      }
+      setActionBusyId(message.id)
+      setActionError(null)
+      try {
+        const updated = await editDiscussMessage(discussionId, message.id, body)
+        onMessagesChange(messages.map((m) => (m.id === updated.id ? updated : m)))
+        setEditingId(null)
+        setEditDraft('')
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : 'Bearbeiten fehlgeschlagen')
+      } finally {
+        setActionBusyId(null)
+      }
+    },
+    [actionBusyId, cancelEdit, discussionId, editDraft, messages, onMessagesChange],
+  )
+
+  const handleDelete = useCallback(
+    async (message: DiscussCaseMessage) => {
+      if (actionBusyId) return
+      const confirmed = window.confirm('Nachricht löschen? Dies kann nicht rückgängig gemacht werden.')
+      if (!confirmed) return
+      setActionBusyId(message.id)
+      setActionError(null)
+      try {
+        await deleteDiscussMessage(discussionId, message.id)
+        onMessagesChange(messages.filter((m) => m.id !== message.id))
+        if (editingId === message.id) cancelEdit()
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : 'Löschen fehlgeschlagen')
+      } finally {
+        setActionBusyId(null)
+      }
+    },
+    [actionBusyId, cancelEdit, discussionId, editingId, messages, onMessagesChange],
+  )
 
   const handleAskAi = useCallback(async () => {
     const question = aiQuestion.trim()
@@ -123,49 +206,168 @@ export function DiscussCaseChatPanel({
 
       <div className="discuss-case-chat__messages">
         {messages.length === 0 ? (
-          <p className="clinical-empty-state clinical-empty-state--compact discuss-case-chat__empty">Noch keine Nachrichten.</p>
+          <div className="discuss-case-chat__empty-state">
+            <span className="discuss-case-chat__empty-icon" aria-hidden="true">
+              <MessageSquare className="h-6 w-6" strokeWidth={1.5} />
+            </span>
+            <p className="discuss-case-chat__empty-title">Noch keine Nachrichten</p>
+            <p className="discuss-case-chat__empty-hint">
+              Starten Sie die Diskussion oder zitieren Sie eine Stelle aus dem Dokument.
+            </p>
+          </div>
         ) : (
-          messages.map((message) => {
+          messages.map((message, index) => {
             const author = resolveAuthor(message)
-            const isSelf = currentUserId && message.authorUserId === currentUserId
+            const isSelf = Boolean(currentUserId && message.authorUserId === currentUserId)
             const color = isSelf ? null : getParticipantColor(message.authorUserId)
+            const prev = messages[index - 1]
+            const grouped =
+              Boolean(prev) &&
+              prev.authorUserId === message.authorUserId &&
+              new Date(message.createdAt).getTime() - new Date(prev.createdAt).getTime() <
+                GROUP_WINDOW_MS
+            const canModify = isSelf && canSend
+            const isEditing = editingId === message.id
+            const busy = actionBusyId === message.id
             return (
               <article
                 key={message.id}
                 className={[
                   'discuss-case-chat__message',
-                  isSelf ? 'discuss-case-chat__message--self' : '',
+                  isSelf ? 'discuss-case-chat__message--self' : 'discuss-case-chat__message--other',
+                  grouped ? 'discuss-case-chat__message--grouped' : '',
                 ].join(' ').trim()}
               >
-                <header className="discuss-case-chat__message-meta">
+                {!isSelf ? (
                   <span
-                    className="discuss-case-chat__message-author"
-                    style={color ? { color: color.text } : undefined}
+                    className="discuss-case-chat__avatar discuss-case-avatar"
+                    style={
+                      color
+                        ? { backgroundColor: color.bg, color: color.text, borderColor: color.border }
+                        : undefined
+                    }
+                    aria-hidden={grouped ? 'true' : undefined}
                   >
-                    {author.name}
-                    {author.tag ? (
-                      <span className="discuss-case-chat__message-role">{author.tag}</span>
-                    ) : null}
+                    {grouped ? '' : authorInitials(author.name)}
                   </span>
-                  <time>{new Date(message.createdAt).toLocaleString('de-DE')}</time>
-                </header>
-                <div
-                  className="discuss-case-chat__message-bubble"
-                  style={
-                    color
-                      ? {
-                          backgroundColor: color.bg,
-                          borderColor: color.border,
-                        }
-                      : undefined
-                  }
-                >
-                  {message.quoteExcerpt ? (
-                    <blockquote className="discuss-case-chat__quote">
-                      {message.quoteExcerpt.text}
-                    </blockquote>
+                ) : null}
+                <div className="discuss-case-chat__message-content">
+                  {!grouped ? (
+                    <header className="discuss-case-chat__message-meta">
+                      <span
+                        className="discuss-case-chat__message-author"
+                        style={color ? { color: color.text } : undefined}
+                      >
+                        {author.name}
+                        {author.tag ? (
+                          <span className="discuss-case-chat__message-role">{author.tag}</span>
+                        ) : null}
+                      </span>
+                      <time dateTime={message.createdAt}>{formatMessageTime(message.createdAt)}</time>
+                    </header>
                   ) : null}
-                  <p className="discuss-case-chat__message-body">{message.body}</p>
+                  <div
+                    className="discuss-case-chat__message-bubble"
+                    style={
+                      color
+                        ? {
+                            backgroundColor: color.bg,
+                            borderColor: color.border,
+                          }
+                        : undefined
+                    }
+                  >
+                    {message.quoteExcerpt ? (
+                      <blockquote className="discuss-case-chat__quote">
+                        {message.quoteExcerpt.text}
+                      </blockquote>
+                    ) : null}
+                    {isEditing ? (
+                      <div className="discuss-case-chat__message-edit">
+                        <textarea
+                          className="discuss-case-chat__input discuss-case-chat__message-edit-input"
+                          rows={3}
+                          autoFocus
+                          value={editDraft}
+                          disabled={busy}
+                          onChange={(e) => setEditDraft(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                              e.preventDefault()
+                              void saveEdit(message)
+                            }
+                            if (e.key === 'Escape') {
+                              e.preventDefault()
+                              cancelEdit()
+                            }
+                          }}
+                        />
+                        <div className="discuss-case-chat__message-edit-actions">
+                          <button
+                            type="button"
+                            className="discuss-case-chat__edit-cancel"
+                            onClick={cancelEdit}
+                            disabled={busy}
+                          >
+                            <X className="h-3.5 w-3.5" strokeWidth={1.75} />
+                            Abbrechen
+                          </button>
+                          <button
+                            type="button"
+                            className="discuss-case-chat__edit-save"
+                            onClick={() => void saveEdit(message)}
+                            disabled={busy || !editDraft.trim()}
+                          >
+                            <Check className="h-3.5 w-3.5" strokeWidth={2} />
+                            Speichern
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="discuss-case-chat__message-body">{message.body}</p>
+                        {message.editedAt || grouped ? (
+                          <span className="discuss-case-chat__message-footer">
+                            {message.editedAt ? (
+                              <span className="discuss-case-chat__message-edited">bearbeitet</span>
+                            ) : null}
+                            {grouped ? (
+                              <time
+                                className="discuss-case-chat__message-time"
+                                dateTime={message.createdAt}
+                              >
+                                {formatMessageTime(message.createdAt)}
+                              </time>
+                            ) : null}
+                          </span>
+                        ) : null}
+                      </>
+                    )}
+                    {canModify && !isEditing ? (
+                      <div className="discuss-case-chat__message-actions">
+                        <button
+                          type="button"
+                          className="icon-action-btn"
+                          onClick={() => beginEdit(message)}
+                          disabled={busy}
+                          aria-label="Nachricht bearbeiten"
+                          title="Bearbeiten"
+                        >
+                          <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} />
+                        </button>
+                        <button
+                          type="button"
+                          className="icon-action-btn icon-action-btn--danger"
+                          onClick={() => void handleDelete(message)}
+                          disabled={busy}
+                          aria-label="Nachricht löschen"
+                          title="Löschen"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
               </article>
             )
@@ -173,6 +375,12 @@ export function DiscussCaseChatPanel({
         )}
         <div ref={chatEndRef} />
       </div>
+
+      {actionError ? (
+        <p className="discuss-case-chat__action-error" role="alert">
+          {actionError}
+        </p>
+      ) : null}
 
       {canSend ? (
         <div className="discuss-case-chat__composer">

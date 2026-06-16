@@ -1,0 +1,1212 @@
+/* =============================================================================
+ * Übersicht (patient overview) dashboard — at-a-glance bento grid.
+ *
+ * Isolated stylesheet (imported from main.tsx) so it never collides with the
+ * concurrently-edited globals.css / case-sidebar.css / notion-preview.css.
+ *
+ * Theme contract:
+ *   • Neutral surfaces use --surface / --ink / --border-soft + the elevation
+ *     ladder + radius scale from globals.css.
+ *   • PRIMARY links/actions use var(--accent) (the theme accent).
+ *   • The Übersicht area hue var(--area-accent) is used ONLY as subtle
+ *     decoration — icon chips, hairline accents, faint tints (data-area="overview"
+ *     is set on the shell).
+ *   • SEMANTIC status colors below are reserved for safety / alerts / abnormal
+ *     items and are intentionally NOT derived from the area accent.
+ * ========================================================================== */
+
+.ov-dashboard {
+  --ov-danger: #c0392b;
+  --ov-danger-soft: color-mix(in srgb, #c0392b 12%, transparent);
+  --ov-warn: #b45309;
+  --ov-warn-soft: color-mix(in srgb, #d39b00 15%, transparent);
+  --ov-ok: #2f8a5b;
+  --ov-ok-soft: color-mix(in srgb, #3a8a5a 13%, transparent);
+  --ov-info: #3a6f9c;
+  --ov-info-soft: color-mix(in srgb, #3a6f9c 12%, transparent);
+
+  /* Local rhythm tokens so spacing/curves stay consistent across cards. */
+  --ov-pad-x: 1.05rem;
+  --ov-gap: 1.1rem;
+  --ov-row-radius: var(--radius-control, 0.4375rem);
+  --ov-transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --ov-tint: color-mix(in srgb, var(--area-accent, var(--accent)) 7%, transparent);
+  --ov-tint-strong: color-mix(in srgb, var(--area-accent, var(--accent)) 12%, transparent);
+  --ov-hairline: color-mix(in srgb, var(--border-soft) 72%, transparent);
+
+  width: 100%;
+  margin-top: 1.25rem;
+}
+
+/* ── Bento grid ──────────────────────────────────────────────────────────── */
+
+.ov-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--ov-gap);
+  align-items: stretch;
+}
+
+.ov-col-3 {
+  grid-column: span 3;
+}
+.ov-col-4 {
+  grid-column: span 4;
+}
+.ov-col-5 {
+  grid-column: span 5;
+}
+.ov-col-6 {
+  grid-column: span 6;
+}
+.ov-col-7 {
+  grid-column: span 7;
+}
+.ov-col-8 {
+  grid-column: span 8;
+}
+
+/* Tablet: two-column flow with dense backfill so the varied spans reflow without
+   leaving holes; the widest cards keep the full row. */
+@media (max-width: 1180px) {
+  .ov-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    grid-auto-flow: row dense;
+  }
+  .ov-col-3,
+  .ov-col-4,
+  .ov-col-5,
+  .ov-col-6 {
+    grid-column: span 1;
+  }
+  .ov-col-7,
+  .ov-col-8,
+  .ov-col-span-full-md {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Phone: single column. */
+@media (max-width: 720px) {
+  .ov-grid {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+  .ov-col-3,
+  .ov-col-4,
+  .ov-col-5,
+  .ov-col-6,
+  .ov-col-7,
+  .ov-col-8,
+  .ov-col-span-full-md {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ── Card shell ──────────────────────────────────────────────────────────── */
+
+.ov-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border-soft, #e8e4df);
+  border-radius: var(--radius-card, 0.6875rem);
+  box-shadow: var(--shadow-elevated-sm, 0 1px 2px rgba(0, 0, 0, 0.04));
+  overflow: hidden;
+  transition:
+    box-shadow var(--ov-transition),
+    border-color var(--ov-transition),
+    transform var(--ov-transition);
+}
+
+/* Gentle, purposeful hover lift — the primary micro-interaction. */
+.ov-card:hover {
+  border-color: color-mix(in srgb, var(--area-accent, var(--accent)) 22%, var(--border-soft));
+  box-shadow: var(--shadow-elevated-md, 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.06));
+  transform: translateY(-2px);
+}
+
+/* Subtle area-accent top hairline — fades to the right so it reads as a
+   refined edge highlight rather than a heavy bar. The only ambient use of the
+   area hue on neutral cards. */
+.ov-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--area-accent, var(--accent)) 55%, transparent) 0%,
+    color-mix(in srgb, var(--area-accent, var(--accent)) 22%, transparent) 45%,
+    transparent 100%
+  );
+  opacity: 0.85;
+  transition: opacity var(--ov-transition);
+  z-index: 1;
+}
+
+.ov-card:hover::before {
+  opacity: 1;
+}
+
+/* ── Anchor cards (wide medication) — quiet authority, not loud ──────────── */
+
+.ov-card--anchor::before {
+  height: 3px;
+}
+.ov-card--anchor .ov-card__head {
+  background: linear-gradient(180deg, var(--ov-tint) 0%, transparent 100%);
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+
+.ov-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.7rem var(--ov-pad-x) 0.6rem;
+  border-bottom: 1px solid var(--ov-hairline);
+}
+
+.ov-card__title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+/* Icon chip — a small tinted square carrying the area hue. Premium + cohesive. */
+.ov-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 0.5rem;
+  flex-shrink: 0;
+  color: color-mix(in srgb, var(--area-accent, var(--accent)) 88%, var(--text-main));
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 11%, transparent);
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 16%, transparent);
+}
+
+.ov-card__title {
+  margin: 0;
+  font-family: var(--font-ui, inherit);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+  color: var(--text-secondary, #6d655c);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ov-card__head-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.ov-card__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  background: none;
+  border: none;
+  padding: 0.18rem 0.4rem;
+  margin-right: -0.2rem;
+  font-family: var(--font-ui, inherit);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent, #8a5a2b);
+  cursor: pointer;
+  white-space: nowrap;
+  border-radius: var(--radius-control, 0.4375rem);
+  transition: color var(--ov-transition), background var(--ov-transition);
+}
+
+.ov-card__action:hover {
+  color: var(--accent-hover, #6f4722);
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+}
+
+.ov-card__action:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 50%, transparent);
+  outline-offset: 1px;
+}
+
+/* Arrow nudge on hover (the only motion on the link). */
+.ov-card__action > span[aria-hidden] {
+  display: inline-block;
+  transition: transform var(--ov-transition);
+}
+.ov-card__action:hover > span[aria-hidden] {
+  transform: translateX(2px);
+}
+
+.ov-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.75rem var(--ov-pad-x) 0.95rem;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Safety / semantic emphasis variant ──────────────────────────────────── */
+
+.ov-card--safety::before {
+  height: 3px;
+  opacity: 1;
+  background: var(--text-muted);
+}
+.ov-card--safety.ov-card--tone-high::before {
+  background: linear-gradient(90deg, var(--ov-danger) 0%, color-mix(in srgb, var(--ov-danger) 55%, transparent) 100%);
+}
+.ov-card--safety.ov-card--tone-moderate::before {
+  background: linear-gradient(90deg, var(--ov-warn) 0%, color-mix(in srgb, var(--ov-warn) 55%, transparent) 100%);
+}
+.ov-card--safety.ov-card--tone-info::before {
+  background: linear-gradient(90deg, var(--ov-info) 0%, color-mix(in srgb, var(--ov-info) 55%, transparent) 100%);
+}
+.ov-card--safety.ov-card--tone-ok::before,
+.ov-card--safety.ov-card--tone-low::before {
+  background: linear-gradient(90deg, var(--ov-ok) 0%, color-mix(in srgb, var(--ov-ok) 55%, transparent) 100%);
+}
+
+/* Safety icon chip + frame inherit the headline tone (semantic, not area hue). */
+.ov-card--safety.ov-card--tone-high {
+  border-color: color-mix(in srgb, var(--ov-danger) 32%, var(--border-soft));
+}
+.ov-card--safety.ov-card--tone-high:hover {
+  border-color: color-mix(in srgb, var(--ov-danger) 45%, var(--border-soft));
+}
+.ov-card--safety.ov-card--tone-high .ov-card__icon {
+  color: var(--ov-danger);
+  background: var(--ov-danger-soft);
+  border-color: color-mix(in srgb, var(--ov-danger) 26%, transparent);
+}
+.ov-card--safety.ov-card--tone-moderate .ov-card__icon {
+  color: var(--ov-warn);
+  background: var(--ov-warn-soft);
+  border-color: color-mix(in srgb, var(--ov-warn) 26%, transparent);
+}
+.ov-card--safety.ov-card--tone-info .ov-card__icon {
+  color: var(--ov-info);
+  background: var(--ov-info-soft);
+  border-color: color-mix(in srgb, var(--ov-info) 26%, transparent);
+}
+.ov-card--safety.ov-card--tone-ok .ov-card__icon,
+.ov-card--safety.ov-card--tone-low .ov-card__icon {
+  color: var(--ov-ok);
+  background: var(--ov-ok-soft);
+  border-color: color-mix(in srgb, var(--ov-ok) 26%, transparent);
+}
+
+/* ── Pills (semantic) ────────────────────────────────────────────────────── */
+
+.ov-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.22rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+/* A leading status dot makes the tone legible at a glance. */
+.ov-pill::before {
+  content: '';
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 999px;
+  background: currentColor;
+  flex-shrink: 0;
+}
+.ov-pill--neutral::before {
+  display: none;
+}
+
+.ov-pill--high {
+  color: var(--ov-danger);
+  background: var(--ov-danger-soft);
+  border-color: color-mix(in srgb, var(--ov-danger) 30%, transparent);
+}
+.ov-pill--moderate {
+  color: var(--ov-warn);
+  background: var(--ov-warn-soft);
+  border-color: color-mix(in srgb, var(--ov-warn) 30%, transparent);
+}
+.ov-pill--info {
+  color: var(--ov-info);
+  background: var(--ov-info-soft);
+  border-color: color-mix(in srgb, var(--ov-info) 26%, transparent);
+}
+.ov-pill--ok,
+.ov-pill--low {
+  color: var(--ov-ok);
+  background: var(--ov-ok-soft);
+  border-color: color-mix(in srgb, var(--ov-ok) 28%, transparent);
+}
+.ov-pill--neutral {
+  color: var(--text-secondary, #6d655c);
+  background: color-mix(in srgb, var(--text-muted) 12%, transparent);
+  border-color: color-mix(in srgb, var(--text-muted) 24%, transparent);
+}
+
+/* ── Shared content primitives ───────────────────────────────────────────── */
+
+.ov-empty {
+  margin: auto 0;
+  padding: 0.6rem 0;
+  font-size: 0.8rem;
+  color: var(--text-muted, #91887e);
+  font-style: italic;
+  text-align: center;
+  opacity: 0.85;
+}
+
+.ov-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ov-meta {
+  font-size: 0.74rem;
+  color: var(--text-muted, #91887e);
+}
+
+/* Key/value rows (status card). */
+.ov-kv {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.82rem;
+  padding: 0.12rem 0;
+}
+.ov-kv__label {
+  color: var(--text-muted, #91887e);
+  flex-shrink: 0;
+}
+.ov-kv__value {
+  color: var(--text-main, #24211e);
+  font-weight: 600;
+  text-align: right;
+  min-width: 0;
+}
+.ov-kv__value--emphasis {
+  color: color-mix(in srgb, var(--area-accent, var(--accent)) 85%, var(--text-main));
+}
+
+/* ── Safety alerts list ──────────────────────────────────────────────────── */
+
+.ov-risk {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: var(--ov-row-radius);
+  background: color-mix(in srgb, var(--text-muted) 7%, transparent);
+}
+.ov-risk__label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary, #6d655c);
+}
+.ov-risk__detail {
+  font-size: 0.82rem;
+  color: var(--text-main, #24211e);
+  text-align: right;
+}
+
+.ov-alert {
+  display: flex;
+  gap: 0.55rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: var(--ov-row-radius);
+  background: color-mix(in srgb, var(--text-muted) 6%, transparent);
+  border-left: 3px solid var(--text-muted);
+  transition: background var(--ov-transition);
+}
+.ov-alert--high {
+  background: var(--ov-danger-soft);
+  border-left-color: var(--ov-danger);
+}
+.ov-alert--moderate {
+  background: var(--ov-warn-soft);
+  border-left-color: var(--ov-warn);
+}
+.ov-alert--info {
+  background: var(--ov-info-soft);
+  border-left-color: var(--ov-info);
+}
+.ov-alert--ok,
+.ov-alert--low {
+  background: var(--ov-ok-soft);
+  border-left-color: var(--ov-ok);
+}
+.ov-alert__body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+.ov-alert__title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-main, #24211e);
+}
+.ov-alert__detail {
+  font-size: 0.76rem;
+  color: var(--text-secondary, #6d655c);
+  line-height: 1.35;
+}
+
+.ov-allclear {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: auto 0;
+  padding: 0.55rem 0.65rem;
+  font-size: 0.84rem;
+  color: var(--ov-ok);
+  font-weight: 600;
+  background: var(--ov-ok-soft);
+  border-radius: var(--ov-row-radius);
+}
+.ov-allclear::before {
+  content: '✓';
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+/* ── Medication card ─────────────────────────────────────────────────────── */
+
+.ov-med__regimen {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.ov-med__row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  padding: 0.4rem 0.5rem;
+  margin: 0 -0.5rem;
+  border-radius: var(--ov-row-radius);
+  border-bottom: 1px solid var(--ov-hairline);
+  transition: background var(--ov-transition);
+}
+.ov-med__row:last-child {
+  border-bottom: none;
+}
+.ov-med__row:hover {
+  background: var(--ov-tint);
+}
+/* Leading marker dot — quietly threads the area hue through the regimen. */
+.ov-med__row::before {
+  content: '';
+  align-self: center;
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 55%, transparent);
+}
+.ov-med__name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--text-main, #24211e);
+}
+.ov-med__dose {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #6d655c);
+  margin-left: auto;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.ov-med__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem 1.1rem;
+  margin-top: 0.65rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--ov-hairline);
+}
+.ov-med__block-label {
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted, #91887e);
+  margin: 0 0 0.35rem;
+}
+.ov-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.ov-chip {
+  font-size: 0.73rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 22%, transparent);
+  color: color-mix(in srgb, var(--area-accent, var(--accent)) 78%, var(--text-main));
+  white-space: nowrap;
+  transition: background var(--ov-transition), border-color var(--ov-transition);
+}
+.ov-chip:hover {
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 16%, transparent);
+}
+.ov-chip--mono {
+  background: color-mix(in srgb, var(--text-muted) 10%, transparent);
+  border-color: color-mix(in srgb, var(--text-muted) 22%, transparent);
+  color: var(--text-secondary, #6d655c);
+}
+.ov-chip--mono:hover {
+  background: color-mix(in srgb, var(--text-muted) 16%, transparent);
+}
+
+/* ── Lists for verlauf / labs / konsile ──────────────────────────────────── */
+
+.ov-feed {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.ov-feed__item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+  text-align: left;
+  padding-left: 0.95rem;
+  border-left: 2px solid color-mix(in srgb, var(--area-accent, var(--accent)) 28%, var(--border-soft));
+}
+/* Timeline node anchoring each entry to the rail. */
+.ov-feed__item::before {
+  content: '';
+  position: absolute;
+  left: -0.31rem;
+  top: 0.28rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 2px solid color-mix(in srgb, var(--area-accent, var(--accent)) 55%, var(--border-soft));
+}
+.ov-feed__head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.ov-feed__date {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary, #6d655c);
+}
+.ov-feed__source {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #91887e);
+}
+.ov-feed__text {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text-main, #24211e);
+}
+
+.ov-lab {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--ov-row-radius);
+  background: color-mix(in srgb, var(--text-muted) 6%, transparent);
+  border-left: 3px solid transparent;
+  transition: background var(--ov-transition);
+}
+.ov-lab--abnormal {
+  background: var(--ov-danger-soft);
+  border-left-color: var(--ov-danger);
+}
+.ov-lab__main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+.ov-lab__name {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text-main, #24211e);
+}
+.ov-lab__rationale {
+  font-size: 0.72rem;
+  color: var(--text-secondary, #6d655c);
+}
+.ov-lab__value {
+  text-align: right;
+  flex-shrink: 0;
+}
+.ov-lab__num {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-main, #24211e);
+  font-variant-numeric: tabular-nums;
+}
+.ov-lab--abnormal .ov-lab__num {
+  color: var(--ov-danger);
+}
+.ov-lab__ref {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--text-muted, #91887e);
+  font-variant-numeric: tabular-nums;
+}
+.ov-lab__date {
+  display: block;
+  font-size: 0.66rem;
+  color: var(--text-muted, #91887e);
+}
+
+.ov-subhead {
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted, #91887e);
+  margin: 0.45rem 0 0.15rem;
+}
+.ov-subhead:first-child {
+  margin-top: 0;
+}
+
+.ov-konsil {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: var(--ov-row-radius);
+  background: color-mix(in srgb, var(--text-muted) 6%, transparent);
+  transition: background var(--ov-transition);
+}
+.ov-konsil:hover {
+  background: color-mix(in srgb, var(--text-muted) 11%, transparent);
+}
+.ov-konsil__title {
+  font-size: 0.82rem;
+  color: var(--text-main, #24211e);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ov-task {
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+  font-size: 0.82rem;
+  color: var(--text-main, #24211e);
+  padding: 0.1rem 0;
+}
+.ov-task::before {
+  content: '';
+  align-self: center;
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+  border: 1.5px solid color-mix(in srgb, var(--area-accent, var(--accent)) 50%, var(--text-muted));
+}
+.ov-task__area {
+  font-size: 0.68rem;
+  color: var(--text-muted, #91887e);
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* ── Symptom snapshot ────────────────────────────────────────────────────── */
+
+.ov-snapshot__text {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.55;
+  color: var(--text-main, #24211e);
+}
+.ov-snapshot__cues {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.55rem 0.9rem;
+  margin-top: 0.15rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--ov-hairline);
+}
+.ov-snapshot__cue-label {
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #91887e);
+  margin-bottom: 0.1rem;
+}
+.ov-snapshot__cue-value {
+  font-size: 0.82rem;
+  color: var(--text-main, #24211e);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+/* Headless body adds the top padding the standardized header normally provides. */
+.ov-card__body--headless {
+  padding-top: 0.95rem;
+}
+
+/* Nested reused widgets (Diagnose / Spiegel) sit flush inside an ov-card body and
+   keep their own functional headers (add-diagnosis, restore-hidden-graphs). */
+.ov-card__body .diagnosen-widget,
+.ov-card__body .diagnosen-widget--panel,
+.ov-card__body .spiegelwerte-section {
+  margin: 0;
+  max-width: none;
+}
+.ov-card__body .spiegelwerte-section__grid {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+
+/* ── Hero executive-summary band ─────────────────────────────────────────── */
+
+.ov-dashboard {
+  --ov-spark: color-mix(in srgb, var(--area-accent, var(--accent)) 72%, var(--text-secondary));
+}
+
+.ov-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 1.15rem;
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 24%, var(--border-soft));
+  border-radius: var(--radius-card, 0.6875rem);
+  background:
+    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--area-accent, var(--accent)) 14%, transparent) 0%, transparent 60%),
+    linear-gradient(135deg, color-mix(in srgb, var(--area-accent, var(--accent)) 9%, var(--surface)) 0%, var(--surface) 70%);
+  box-shadow: var(--shadow-elevated-md, 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.06));
+  overflow: hidden;
+}
+/* Confident accent rule across the top of the band. */
+.ov-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--area-accent, var(--accent)) 0%,
+    color-mix(in srgb, var(--area-accent, var(--accent)) 30%, transparent) 70%,
+    transparent 100%
+  );
+}
+
+.ov-hero__metric {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 1.05rem 1.15rem;
+  min-width: 0;
+  border-left: 1px solid var(--ov-hairline);
+}
+.ov-hero__metric:first-child {
+  border-left: none;
+}
+
+.ov-hero__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.6rem;
+  flex-shrink: 0;
+  color: color-mix(in srgb, var(--area-accent, var(--accent)) 90%, var(--text-main));
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 13%, transparent);
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 20%, transparent);
+}
+
+.ov-hero__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+.ov-hero__caption {
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-muted, #91887e);
+}
+.ov-hero__value {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--text-main, #24211e);
+  letter-spacing: -0.01em;
+}
+.ov-hero__value--num {
+  font-variant-numeric: tabular-nums;
+  font-size: 1.85rem;
+  color: color-mix(in srgb, var(--area-accent, var(--accent)) 80%, var(--text-main));
+}
+.ov-hero__value--code {
+  font-size: 1.5rem;
+  color: color-mix(in srgb, var(--area-accent, var(--accent)) 82%, var(--text-main));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.ov-hero__value--accent {
+  font-size: 1.2rem;
+  color: color-mix(in srgb, var(--area-accent, var(--accent)) 78%, var(--text-main));
+}
+.ov-hero__value--muted {
+  color: var(--text-muted, #91887e);
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+.ov-hero__sub {
+  font-size: 0.74rem;
+  color: var(--text-secondary, #6d655c);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Risk metric carries semantic tone (never the area hue). */
+.ov-hero__risk-dot {
+  width: 0.62rem;
+  height: 0.62rem;
+  border-radius: 999px;
+  background: var(--ov-ok);
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ov-ok) 18%, transparent);
+}
+.ov-hero__metric--tone-high .ov-hero__value { color: var(--ov-danger); }
+.ov-hero__metric--tone-high .ov-hero__risk-dot {
+  background: var(--ov-danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ov-danger) 22%, transparent);
+}
+.ov-hero__metric--tone-moderate .ov-hero__value { color: var(--ov-warn); }
+.ov-hero__metric--tone-moderate .ov-hero__risk-dot {
+  background: var(--ov-warn);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ov-warn) 22%, transparent);
+}
+.ov-hero__metric--tone-info .ov-hero__value { color: var(--ov-info); }
+.ov-hero__metric--tone-info .ov-hero__risk-dot {
+  background: var(--ov-info);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ov-info) 22%, transparent);
+}
+.ov-hero__metric--tone-moderate .ov-hero__icon,
+.ov-hero__metric--tone-high .ov-hero__icon {
+  color: var(--ov-danger);
+  background: var(--ov-danger-soft);
+  border-color: color-mix(in srgb, var(--ov-danger) 24%, transparent);
+}
+.ov-hero__metric--risk.ov-hero__metric--tone-moderate .ov-hero__icon {
+  color: var(--ov-warn);
+  background: var(--ov-warn-soft);
+  border-color: color-mix(in srgb, var(--ov-warn) 24%, transparent);
+}
+
+@media (max-width: 1180px) {
+  .ov-hero {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ov-hero__metric:nth-child(odd) {
+    border-left: none;
+  }
+  .ov-hero__metric:nth-child(n + 3) {
+    border-top: 1px solid var(--ov-hairline);
+  }
+}
+@media (max-width: 720px) {
+  .ov-hero {
+    grid-template-columns: 1fr;
+  }
+  .ov-hero__metric {
+    border-left: none;
+    border-top: 1px solid var(--ov-hairline);
+  }
+  .ov-hero__metric:first-child {
+    border-top: none;
+  }
+}
+
+/* ── Risk gauge (Safety) ─────────────────────────────────────────────────── */
+
+.ov-gauge {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+  --gauge-color: var(--ov-ok);
+}
+.ov-gauge--high { --gauge-color: var(--ov-danger); }
+.ov-gauge--moderate { --gauge-color: var(--ov-warn); }
+.ov-gauge--info { --gauge-color: var(--ov-info); }
+.ov-gauge--low,
+.ov-gauge--ok { --gauge-color: var(--ov-ok); }
+.ov-gauge--neutral { --gauge-color: var(--text-muted); }
+
+.ov-gauge__track {
+  stroke: color-mix(in srgb, var(--text-muted) 16%, transparent);
+}
+.ov-gauge__value {
+  stroke: var(--gauge-color);
+  transition: stroke-dasharray var(--ov-transition);
+}
+.ov-gauge__center {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 88px;
+  display: grid;
+  place-items: center;
+}
+.ov-gauge__num {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--gauge-color);
+  font-variant-numeric: tabular-nums;
+}
+.ov-gauge__label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gauge-color);
+}
+
+/* ── Safety summary row ──────────────────────────────────────────────────── */
+
+.ov-safety__summary {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-bottom: 0.7rem;
+  margin-bottom: 0.1rem;
+  border-bottom: 1px solid var(--ov-hairline);
+}
+.ov-safety__headline {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+  min-width: 0;
+}
+.ov-safety__risk-label {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary, #6d655c);
+}
+.ov-safety__risk-detail {
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--text-main, #24211e);
+}
+
+/* ── Medication layout + class bars ──────────────────────────────────────── */
+
+.ov-med__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 0.9rem 1.4rem;
+  align-items: start;
+}
+.ov-med__viz {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  min-width: 0;
+}
+.ov-med__block {
+  min-width: 0;
+}
+
+.ov-bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.32rem;
+}
+.ov-bar {
+  display: grid;
+  grid-template-columns: minmax(5rem, 8rem) 1fr 1.4rem;
+  align-items: center;
+  gap: 0.5rem;
+}
+.ov-bar__label {
+  font-size: 0.74rem;
+  color: var(--text-secondary, #6d655c);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ov-bar__track {
+  height: 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 10%, transparent);
+  overflow: hidden;
+}
+.ov-bar__fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--area-accent, var(--accent)) 55%, transparent) 0%,
+    var(--area-accent, var(--accent)) 100%
+  );
+  transition: width var(--ov-transition);
+}
+.ov-bar__count {
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-align: right;
+  color: var(--text-secondary, #6d655c);
+  font-variant-numeric: tabular-nums;
+}
+
+.ov-chip--monitor {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: var(--ov-info-soft);
+  border-color: color-mix(in srgb, var(--ov-info) 24%, transparent);
+  color: var(--ov-info);
+}
+.ov-chip--monitor:hover {
+  background: color-mix(in srgb, var(--ov-info) 18%, transparent);
+}
+
+/* ── Lab sparkline ───────────────────────────────────────────────────────── */
+
+.ov-lab__spark {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+.ov-spark {
+  display: block;
+}
+.ov-spark__line {
+  stroke: var(--ov-spark);
+  fill: none;
+}
+.ov-spark__dot {
+  fill: var(--ov-spark);
+}
+.ov-spark--abnormal .ov-spark__line,
+.ov-spark--abnormal .ov-spark__dot {
+  stroke: var(--ov-danger);
+  fill: var(--ov-danger);
+}
+.ov-lab__arrow {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-secondary, #6d655c);
+  width: 0.8rem;
+  text-align: center;
+}
+.ov-lab--abnormal .ov-lab__arrow {
+  color: var(--ov-danger);
+}
+
+/* ── Symptom trajectory ──────────────────────────────────────────────────── */
+
+.ov-snapshot__trend {
+  margin-bottom: 0.2rem;
+  padding: 0.45rem 0.55rem 0.2rem;
+  border-radius: var(--ov-row-radius);
+  background: var(--ov-tint);
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 14%, transparent);
+}
+.ov-trajectory {
+  width: 100%;
+}
+
+/* ── Heavyweight presence (Safety + Medication anchors) ──────────────────── */
+
+.ov-card--anchor,
+.ov-card--safety.ov-card--tone-high {
+  box-shadow: var(--shadow-elevated-md, 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.06));
+}
+
+/* ── Motion preferences ──────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .ov-card {
+    transition:
+      box-shadow var(--transition-fast, 150ms ease),
+      border-color var(--transition-fast, 150ms ease);
+  }
+  .ov-card:hover {
+    transform: none;
+  }
+  .ov-card__action > span[aria-hidden] {
+    transition: none;
+  }
+  .ov-card__action:hover > span[aria-hidden] {
+    transform: none;
+  }
+  .ov-gauge__value,
+  .ov-bar__fill {
+    transition: none;
+  }
+}
+
+/* Medication layout collapses on the tablet/phone breakpoints. */
+@media (max-width: 720px) {
+  .ov-med__layout {
+    grid-template-columns: 1fr;
+  }
+}

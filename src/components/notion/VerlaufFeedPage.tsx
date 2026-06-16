@@ -10,6 +10,12 @@ import { createPortal } from 'react-dom'
 import { useTranslation } from '../../context/TranslationContext'
 import { useAuth } from '../../context/AuthContext'
 import { usePermissionContext } from '../../contexts/PermissionContext'
+import { useDemoPatient } from '../../hooks/useDemoPatient'
+import {
+  SelectionActionBubble,
+  selectionBubblePosition,
+  type SelectionAction,
+} from '../ui/SelectionActionBubble'
 import { TherapyAttributionBadge } from '../therapy/TherapyAttributionBadge'
 import { buildTherapyAttribution } from '../../types/therapy'
 import { showNotionToast } from './NotionToast'
@@ -46,6 +52,10 @@ import {
 } from '../../utils/dokumenteArchive'
 import { defaultAufnahmeSections } from '../../data/aufnahmeSections'
 import { componentTranslations } from '../../data/componentTranslations'
+import {
+  VERLAUF_ENTRY_TYPE_OPTIONS,
+  type VerlaufDocumentType,
+} from './notionPages'
 import type { UiLanguage } from '../../types/settings'
 
 // ---------------------------------------------------------------------------
@@ -60,6 +70,46 @@ interface BubbleState {
   startOffset: number
   endOffset: number
   entryId: string
+  readonly: boolean
+}
+
+interface ContainedSelection {
+  text: string
+  startOffset: number
+  endOffset: number
+  rect: DOMRect
+}
+
+function readContainedSelection(container: HTMLElement): ContainedSelection | null {
+  const sel = window.getSelection()
+  if (!sel || sel.isCollapsed || sel.rangeCount === 0) return null
+
+  const range = sel.getRangeAt(0)
+  if (
+    !container.contains(range.startContainer) ||
+    !container.contains(range.endContainer)
+  ) {
+    return null
+  }
+
+  const selStr = sel.toString()
+  const trimmedText = selStr.trim()
+  if (!trimmedText) return null
+
+  const preRange = document.createRange()
+  preRange.selectNodeContents(container)
+  preRange.setEnd(range.startContainer, range.startOffset)
+  const rawStart = preRange.toString().length
+  const leadingWhitespace = selStr.length - selStr.trimStart().length
+  const startOffset = rawStart + leadingWhitespace
+  const endOffset = startOffset + trimmedText.length
+
+  return {
+    text: trimmedText,
+    startOffset,
+    endOffset,
+    rect: range.getBoundingClientRect(),
+  }
 }
 
 interface TimelinePopoverState {
@@ -88,6 +138,12 @@ interface CommentViewState {
   text: string
 }
 
+interface AufnahmeSection {
+  id: string
+  label: string
+  content: string
+}
+
 interface DerivedFeedEvent {
   /** Deterministic, stable id derived from the source record. */
   id: string
@@ -97,6 +153,19 @@ interface DerivedFeedEvent {
   sourceLabel: string
   title: string
   body: string
+}
+
+interface AufnahmeFeedEvent extends DerivedFeedEvent {
+  source: 'aufnahmebefund'
+  sections: AufnahmeSection[]
+}
+
+function aufnahmeSectionEntryId(eventId: string, sectionId: string): string {
+  return `${eventId}:${sectionId}`
+}
+
+function isAufnahmeFeedEvent(event: DerivedFeedEvent): event is AufnahmeFeedEvent {
+  return event.source === 'aufnahmebefund' && 'sections' in event
 }
 
 import {
@@ -204,6 +273,7 @@ function BubbleToolbar({ state, onFormat, onComment, onCopy, onCreateTimeline, o
   const { t } = useTranslation()
 
   useEffect(() => {
+    if (!state.visible) return
     function handleClick(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         onClose()
@@ -218,9 +288,9 @@ function BubbleToolbar({ state, onFormat, onComment, onCopy, onCreateTimeline, o
       document.removeEventListener('mousedown', handleClick)
       document.removeEventListener('keydown', handleKey)
     }
-  }, [onClose])
+  }, [onClose, state.visible])
 
-  if (!state.visible) return null
+  if (!state.visible || state.readonly) return null
 
   return (
     <div
@@ -541,6 +611,7 @@ interface EntryCardProps {
     endOffset: number,
     entryId: string,
     rect: DOMRect,
+    readonly: boolean,
   ) => void
   onCommentView: (text: string, rect: DOMRect) => void
   onEdit: (id: string, content: string) => void
@@ -578,32 +649,16 @@ const EntryCard = memo(function EntryCard({
     requestAnimationFrame(() => {
       const container = ref.current
       if (!container) return
-      const sel = window.getSelection()
-      if (!sel || sel.isCollapsed || sel.rangeCount === 0) return
-
-      const range = sel.getRangeAt(0)
-      // Selection must start AND end inside this entry's body.
-      if (
-        !container.contains(range.startContainer) ||
-        !container.contains(range.endContainer)
-      ) {
-        return
-      }
-
-      const selStr = sel.toString()
-      if (!selStr.trim()) return
-
-      // Character offset of the selection start within the entry's text. Because
-      // the body uses `white-space: pre-wrap` with real "\n" characters and no
-      // injected text, these offsets map 1:1 onto `entry.content`.
-      const preRange = document.createRange()
-      preRange.selectNodeContents(container)
-      preRange.setEnd(range.startContainer, range.startOffset)
-      const startOffset = preRange.toString().length
-      const endOffset = startOffset + selStr.length
-
-      const rect = range.getBoundingClientRect()
-      onSelection(selStr.trim(), startOffset, endOffset, entry.id, rect)
+      const selection = readContainedSelection(container)
+      if (!selection) return
+      onSelection(
+        selection.text,
+        selection.startOffset,
+        selection.endOffset,
+        entry.id,
+        selection.rect,
+        false,
+      )
     })
   }
 
@@ -764,6 +819,8 @@ const EntryCard = memo(function EntryCard({
         <div
           ref={ref}
           className="verlauf-entry__body"
+          data-verlauf-entry-id={entry.id}
+          data-verlauf-selection-mode="full"
           // biome-ignore lint/security/noDangerouslySetInnerHtml
           dangerouslySetInnerHTML={{ __html: htmlContent }}
           onMouseUp={handleMouseUp}
@@ -782,16 +839,44 @@ interface DerivedEntryCardProps {
   event: DerivedFeedEvent
   readonlyLabel: string
   copyLabel: string
+  onSelection: (
+    text: string,
+    startOffset: number,
+    endOffset: number,
+    entryId: string,
+    rect: DOMRect,
+    readonly: boolean,
+  ) => void
 }
 
 const DerivedEntryCard = memo(function DerivedEntryCard({
   event,
   readonlyLabel,
   copyLabel,
+  onSelection,
 }: DerivedEntryCardProps) {
+  const bodyRef = useRef<HTMLDivElement>(null)
+
   function handleCopy(e: React.MouseEvent) {
     e.stopPropagation()
     void navigator.clipboard.writeText(`${event.title}: ${event.body}`)
+  }
+
+  function handleMouseUp() {
+    requestAnimationFrame(() => {
+      const container = bodyRef.current
+      if (!container) return
+      const selection = readContainedSelection(container)
+      if (!selection) return
+      onSelection(
+        selection.text,
+        selection.startOffset,
+        selection.endOffset,
+        event.id,
+        selection.rect,
+        true,
+      )
+    })
   }
 
   return (
@@ -820,10 +905,135 @@ const DerivedEntryCard = memo(function DerivedEntryCard({
           </button>
         </span>
       </header>
-      <div className="verlauf-entry__body verlauf-entry__body--derived">
+      <div
+        ref={bodyRef}
+        className="verlauf-entry__body verlauf-entry__body--derived"
+        data-verlauf-entry-id={event.id}
+        data-verlauf-selection-mode="copy-only"
+        onMouseUp={handleMouseUp}
+      >
         <span className="verlauf-derived__title">{event.title}: </span>
         {event.body}
       </div>
+    </article>
+  )
+})
+
+// ---------------------------------------------------------------------------
+// Aufnahmebefund (Anamnese) — single collapsible block with annotation support
+// ---------------------------------------------------------------------------
+
+interface AufnahmeEntryCardProps {
+  event: AufnahmeFeedEvent
+  annotations: VerlaufAnnotation[]
+  readonlyLabel: string
+  copyLabel: string
+  onSelection: EntryCardProps['onSelection']
+  onCommentView: EntryCardProps['onCommentView']
+}
+
+const AufnahmeEntryCard = memo(function AufnahmeEntryCard({
+  event,
+  annotations,
+  readonlyLabel,
+  copyLabel,
+  onSelection,
+  onCommentView,
+}: AufnahmeEntryCardProps) {
+  const { t } = useTranslation()
+  const sectionRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+
+  function handleCopy(e: React.MouseEvent) {
+    e.stopPropagation()
+    void navigator.clipboard.writeText(event.body)
+  }
+
+  function handleSectionMouseUp(sectionId: string) {
+    requestAnimationFrame(() => {
+      const container = sectionRefs.current.get(sectionId)
+      if (!container) return
+      const selection = readContainedSelection(container)
+      if (!selection) return
+      onSelection(
+        selection.text,
+        selection.startOffset,
+        selection.endOffset,
+        aufnahmeSectionEntryId(event.id, sectionId),
+        selection.rect,
+        false,
+      )
+    })
+  }
+
+  function handleBodyClick(e: React.MouseEvent) {
+    const target = (e.target as HTMLElement).closest('[data-comment]')
+    if (!target) return
+    const text = target.getAttribute('data-comment') ?? ''
+    if (!text) return
+    onCommentView(text, target.getBoundingClientRect())
+  }
+
+  return (
+    <article className="verlauf-entry verlauf-entry--aufnahme">
+      <header className="verlauf-entry__header">
+        <time className="verlauf-entry__date" dateTime={event.date}>
+          {formatIsoTimestampDate(event.date)}
+        </time>
+        <span
+          className="verlauf-entry__source-badge verlauf-entry__source-badge--aufnahmebefund"
+          title={readonlyLabel}
+        >
+          {event.sourceLabel}
+        </span>
+        <span className="verlauf-entry__actions" onClick={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            className="verlauf-entry__action-btn"
+            title={copyLabel}
+            onClick={handleCopy}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+          </button>
+        </span>
+      </header>
+
+      <details className="verlauf-anamnese">
+        <summary className="verlauf-anamnese__summary">
+          <span className="verlauf-anamnese__chevron" aria-hidden>
+            ▸
+          </span>
+          <span className="verlauf-anamnese__title">{t('dokumenteCategoryAnamnese')}</span>
+        </summary>
+        <div className="verlauf-anamnese__content">
+          {event.sections.map((section) => {
+            const sectionEntryId = aufnahmeSectionEntryId(event.id, section.id)
+            const sectionAnnotations = annotations.filter((a) => a.entryId === sectionEntryId)
+            const htmlContent = applyAnnotations(section.content, sectionAnnotations)
+
+            return (
+              <div key={section.id} className="verlauf-anamnese__section-block">
+                <h4 className="verlauf-anamnese__section-label">{section.label}</h4>
+                <div
+                  ref={(el) => {
+                    if (el) sectionRefs.current.set(section.id, el)
+                    else sectionRefs.current.delete(section.id)
+                  }}
+                  className="verlauf-entry__body verlauf-anamnese__body"
+                  data-verlauf-entry-id={sectionEntryId}
+                  data-verlauf-selection-mode="full"
+                  // biome-ignore lint/security/noDangerouslySetInnerHTML
+                  dangerouslySetInnerHTML={{ __html: htmlContent }}
+                  onMouseUp={() => handleSectionMouseUp(section.id)}
+                  onClick={handleBodyClick}
+                />
+              </div>
+            )
+          })}
+        </div>
+      </details>
     </article>
   )
 })
@@ -873,11 +1083,25 @@ function formatAufnahmeContent(entry: DokumentEntry, language: UiLanguage): stri
   return entry.content.trim()
 }
 
+function buildAufnahmeSections(
+  entry: DokumentEntry,
+  language: UiLanguage,
+): AufnahmeSection[] {
+  const sectionContents = entry.sectionContents ?? {}
+  return defaultAufnahmeSections
+    .map((section) => ({
+      id: section.id,
+      label: resolveAufnahmeSectionLabel(section.id, language),
+      content: sectionContents[section.id]?.trim() ?? '',
+    }))
+    .filter((section) => section.content)
+}
+
 function buildAufnahmeFeedEvent(
   documents: DokumentEntry[],
   sourceLabel: string,
   language: UiLanguage,
-): DerivedFeedEvent | null {
+): AufnahmeFeedEvent | null {
   const anamneseDocuments = documents.filter(
     (entry) => entry.category === 'anamnese' && entry.content.trim(),
   )
@@ -886,6 +1110,8 @@ function buildAufnahmeFeedEvent(
 
   if (!entry) return null
 
+  const sections = buildAufnahmeSections(entry, language)
+
   return {
     id: `aufnahmebefund:${entry.id}`,
     date: entry.date,
@@ -893,6 +1119,7 @@ function buildAufnahmeFeedEvent(
     sourceLabel,
     title: sourceLabel,
     body: formatAufnahmeContent(entry, language),
+    sections,
   }
 }
 
@@ -908,6 +1135,7 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
   const { t, language } = useTranslation()
   const { user } = useAuth()
   const { member, role } = usePermissionContext()
+  const { readOnly: demoReadOnly } = useDemoPatient(caseId)
 
   const derivedEvents = useClinicalFeedEvents(caseId)
   const [dokumenteRevision, setDokumenteRevision] = useState(0)
@@ -936,6 +1164,7 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
     startOffset: 0,
     endOffset: 0,
     entryId: '',
+    readonly: false,
   })
 
   const [timelinePopover, setTimelinePopover] = useState<TimelinePopoverState>({
@@ -1033,17 +1262,9 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
       endOffset: number,
       entryId: string,
       rect: DOMRect,
+      readonly: boolean,
     ) => {
-      // The toolbar is `position: fixed` and rendered in a portal, so use
-      // viewport coordinates directly (no scroll offset). Place it above the
-      // selection, flipping below it when there is no room at the top.
-      const TOOLBAR_GAP = 48
-      const topCandidate = rect.top - TOOLBAR_GAP
-      const y = topCandidate < 8 ? rect.bottom + 8 : topCandidate
-      const x = Math.min(
-        Math.max(rect.left + rect.width / 2, 90),
-        window.innerWidth - 90,
-      )
+      const { x, y } = selectionBubblePosition(rect)
       setBubble({
         visible: true,
         x,
@@ -1052,16 +1273,18 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
         startOffset,
         endOffset,
         entryId,
+        readonly: readonly || demoReadOnly,
       })
       setTimelinePopover((p) => ({ ...p, visible: false }))
       setCommentPopover((p) => ({ ...p, visible: false }))
       setCommentView((p) => ({ ...p, visible: false }))
     },
-    [],
+    [demoReadOnly],
   )
 
   const handleFormat = useCallback(
     (type: AnnotationType, color?: string) => {
+      if (bubble.readonly) return
       const { entryId, startOffset, endOffset, selectedText } = bubble
       if (!entryId) return
 
@@ -1081,6 +1304,7 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
   )
 
   const handleComment = useCallback(() => {
+    if (bubble.readonly) return
     const { entryId, startOffset, endOffset, selectedText, x, y } = bubble
     if (!entryId) return
     setCommentPopover({
@@ -1120,20 +1344,16 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
     closeBubble()
   }, [bubble.selectedText, closeBubble])
 
-  const handleCreateTimeline = useCallback(() => {
-    const { entryId, selectedText, x, y } = bubble
-    if (!entryId) return
-    const entry = entries.find((e) => e.id === entryId)
-    setTimelinePopover({
-      visible: true,
-      x,
-      y: y + 60,
-      entryId,
-      entryDate: entry?.date ?? new Date().toISOString(),
-      selectedText,
-    })
-    closeBubble()
-  }, [bubble, closeBubble, entries])
+  const readonlyBubbleActions = useMemo((): SelectionAction[] => {
+    if (!bubble.selectedText) return []
+    return [
+      {
+        id: 'copy',
+        label: t('verlaufBubbleCopy'),
+        onClick: handleBubbleCopy,
+      },
+    ]
+  }, [bubble.selectedText, handleBubbleCopy, t])
 
   const handleEntryEdit = useCallback(
     (id: string, content: string) => {
@@ -1155,31 +1375,41 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
   const [composerOpen, setComposerOpen] = useState(false)
   const [composerText, setComposerText] = useState('')
   const [composerDate, setComposerDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [composerType, setComposerType] = useState<VerlaufDocumentType>('verlauf')
 
   const handleComposerSave = useCallback(() => {
     if (!composerText.trim()) return
-    const attribution = buildTherapyAttribution(
-      user?.id ?? member?.userId ?? '',
-      role,
-      member?.therapyDiscipline,
-      member?.therapyDisciplineCustom,
-    )
+    const typeOption =
+      VERLAUF_ENTRY_TYPE_OPTIONS.find((option) => option.id === composerType) ??
+      VERLAUF_ENTRY_TYPE_OPTIONS[0]
+    // Mirror the Workspace save flow: attribution is attached only for the
+    // Arztbrief / Therapie-Verlauf type, not for plain Verlaufsdokumentation.
+    const attribution = typeOption.attachAttribution
+      ? buildTherapyAttribution(
+          user?.id ?? member?.userId ?? '',
+          role,
+          member?.therapyDiscipline,
+          member?.therapyDisciplineCustom,
+        )
+      : undefined
     const newEntry = appendVerlaufEntry(caseId, {
       date: composerDate ? new Date(composerDate).toISOString() : new Date().toISOString(),
       content: composerText.trim(),
-      pageType: 'verlauf',
+      pageType: typeOption.id,
       source: 'manual',
       ...(attribution ? { attribution } : {}),
     })
     setEntries((prev) => [newEntry, ...prev])
     setComposerText('')
     setComposerDate(new Date().toISOString().slice(0, 10))
+    setComposerType('verlauf')
     setComposerOpen(false)
-  }, [caseId, composerDate, composerText, member, role, user?.id])
+  }, [caseId, composerDate, composerText, composerType, member, role, user?.id])
 
   const handleComposerCancel = useCallback(() => {
     setComposerText('')
     setComposerDate(new Date().toISOString().slice(0, 10))
+    setComposerType('verlauf')
     setComposerOpen(false)
   }, [])
 
@@ -1188,6 +1418,26 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
     // `dokumenteRevision` intentionally participates so archive updates trigger a recompute.
     [caseId, dokumenteRevision, language, t],
   )
+
+  const handleCreateTimeline = useCallback(() => {
+    if (bubble.readonly) return
+    const { entryId, selectedText, x, y } = bubble
+    if (!entryId) return
+    const entry = entries.find((e) => e.id === entryId)
+    const aufnahmeDate =
+      aufnahmeFeedEvent && entryId.startsWith(aufnahmeFeedEvent.id)
+        ? aufnahmeFeedEvent.date
+        : undefined
+    setTimelinePopover({
+      visible: true,
+      x,
+      y: y + 60,
+      entryId,
+      entryDate: entry?.date ?? aufnahmeDate ?? new Date().toISOString(),
+      selectedText,
+    })
+    closeBubble()
+  }, [aufnahmeFeedEvent, bubble, closeBubble, entries])
 
   const allItems = useMemo<UnifiedItem[]>(() => {
     const manualItems: UnifiedItem[] = entries.map((entry) => ({
@@ -1204,9 +1454,19 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
       source: event.source,
       event,
     }))
-    const sorted = [...manualItems, ...derivedItems].sort((a, b) =>
-      sortOrder === 'oldest' ? a.ts - b.ts : b.ts - a.ts,
+    const merged = [...manualItems, ...derivedItems].filter(
+      (item) => !aufnahmeFeedEvent || item.id !== aufnahmeFeedEvent.id,
     )
+    const sorted = merged
+      .map((item, index) => ({ item, index }))
+      .sort((a, b) => {
+        const byTs =
+          sortOrder === 'oldest' ? a.item.ts - b.item.ts : b.item.ts - a.item.ts
+        if (byTs !== 0) return byTs
+        // When timestamps tie (e.g. unparsed dates → ts 0), still flip order on toggle.
+        return sortOrder === 'oldest' ? a.index - b.index : b.index - a.index
+      })
+      .map(({ item }) => item)
     if (!aufnahmeFeedEvent) return sorted
     // Aufnahmebefund is the admission anchor and stays pinned to the top in both
     // sort orders; its header still shows the source document date.
@@ -1281,6 +1541,28 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
 
       {composerOpen && (
         <div className="verlauf-composer" onClick={(e) => e.stopPropagation()}>
+          <div className="verlauf-composer__type-row" role="radiogroup" aria-label={t('verlaufEntryType')}>
+            <span className="verlauf-composer__type-label">{t('verlaufEntryType')}</span>
+            <div className="verlauf-composer__type-options">
+              {VERLAUF_ENTRY_TYPE_OPTIONS.map((option) => {
+                const active = composerType === option.id
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    className={`verlauf-composer__type-btn${
+                      active ? ' verlauf-composer__type-btn--active' : ''
+                    }`}
+                    onClick={() => setComposerType(option.id)}
+                  >
+                    {t(option.labelKey)}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
           <div className="verlauf-composer__date-row">
             <label className="verlauf-composer__date-label">
               Datum
@@ -1416,7 +1698,9 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
       )}
 
       {isEmpty && !composerOpen ? (
-        <p className="verlauf-feed-page__empty">{t('verlaufFeedEmpty')}</p>
+        <div className="clinical-empty-state-card verlauf-feed-page__empty-card">
+          <p className="clinical-empty-state-card__text">{t('verlaufFeedEmpty')}</p>
+        </div>
       ) : isEmpty ? null : (
         <div className="verlauf-feed-page__list">
           {visibleItems.map((item, index) => (
@@ -1430,6 +1714,15 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
                   onEdit={handleEntryEdit}
                   onDelete={handleEntryDelete}
                 />
+              ) : isAufnahmeFeedEvent(item.event) && item.event.sections.length > 0 ? (
+                <AufnahmeEntryCard
+                  event={item.event}
+                  annotations={annotations}
+                  readonlyLabel={aufnahmeReadonlyLabel}
+                  copyLabel={copyLabel}
+                  onSelection={handleSelection}
+                  onCommentView={handleCommentView}
+                />
               ) : (
                 <DerivedEntryCard
                   event={item.event}
@@ -1439,6 +1732,7 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
                       : derivedReadonlyLabel
                   }
                   copyLabel={copyLabel}
+                  onSelection={handleSelection}
                 />
               )}
               {index < visibleItems.length - 1 && <div className="verlauf-entry__divider" />}
@@ -1455,6 +1749,13 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
             onComment={handleComment}
             onCopy={handleBubbleCopy}
             onCreateTimeline={handleCreateTimeline}
+            onClose={closeBubble}
+          />
+
+          <SelectionActionBubble
+            visible={bubble.visible && bubble.readonly}
+            position={{ x: bubble.x, y: bubble.y }}
+            actions={readonlyBubbleActions}
             onClose={closeBubble}
           />
 

@@ -10,7 +10,7 @@ type LocaleMap = Record<UiLanguage, string>
 
 export const medicationUiTranslations = {
   medPageTitle: {
-    de: 'Medikationsplan',
+    de: 'Medikamentenplan',
     en: 'Medication plan',
     fr: 'Plan médicamenteux',
     es: 'Plan de medicación',
@@ -55,7 +55,27 @@ export const medicationUiTranslations = {
   medExport: { de: 'Export', en: 'Export', fr: 'Exporter', es: 'Exportar' },
   medPrint: { de: 'Drucken', en: 'Print', fr: 'Imprimer', es: 'Imprimir' },
   medCopyPlan: { de: 'Plan kopieren', en: 'Copy plan', fr: 'Copier le plan', es: 'Copiar plan' },
+  medCopied: { de: 'Kopiert', en: 'Copied', fr: 'Copié', es: 'Copiado' },
   medViewHistory: { de: 'Planverlauf', en: 'Plan history', fr: 'Historique du plan', es: 'Historial del plan' },
+  medPlanHistoryOpen: { de: 'Verlauf', en: 'History', fr: 'Historique', es: 'Historial' },
+  medPlanHistoryTitle: {
+    de: 'Verlauf des Medikamentenplans',
+    en: 'Medication plan history',
+    fr: 'Historique du plan médicamenteux',
+    es: 'Historial del plan de medicación',
+  },
+  medPlanHistorySubtitle: {
+    de: 'Frühere Planstände – wähle ein Datum, um den Plan zu diesem Zeitpunkt anzuzeigen.',
+    en: 'Previous plan states — pick a date to view the plan as it was then.',
+    fr: 'États antérieurs du plan — choisissez une date pour voir le plan à ce moment.',
+    es: 'Estados anteriores del plan — elige una fecha para ver el plan en ese momento.',
+  },
+  medPlanHistoryEmpty: {
+    de: 'Noch keine Änderungen am Medikamentenplan erfasst.',
+    en: 'No medication plan changes recorded yet.',
+    fr: 'Aucune modification du plan médicamenteux enregistrée.',
+    es: 'Sin cambios registrados en el plan de medicación.',
+  },
   medLastPlan: { de: 'Aktueller Plan', en: 'Current plan', fr: 'Plan actuel', es: 'Plan actual' },
   medEmpty: {
     de: 'Noch keine Medikamente erfasst.',
@@ -64,7 +84,7 @@ export const medicationUiTranslations = {
     es: 'Sin medicamentos registrados.',
   },
   medEmptyHint: {
-    de: 'Fügen Sie das erste Präparat hinzu, um den Medikationsplan zu beginnen.',
+    de: 'Fügen Sie das erste Präparat hinzu, um den Medikamentenplan zu beginnen.',
     en: 'Add the first medication to start the plan.',
     fr: 'Ajoutez le premier médicament pour commencer le plan.',
     es: 'Añada el primer medicamento para iniciar el plan.',
@@ -593,6 +613,279 @@ export const medicationUiTranslations = {
     en: 'Relative affinity index. This does not equal receptor occupancy or clinical blockade.',
     fr: 'Indice d’affinité relatif. N’équivaut pas à l’occupation des récepteurs ni au blocage clinique.',
     es: 'Índice de afinidad relativo. No equivale a la ocupación de receptores ni al bloqueo clínico.',
+  },
+
+  // ── Flagship Medikation page: section descriptions & hero ────────────────
+  medDescPlan: {
+    de: 'Der aktuelle Medikamentenplan auf einen Blick — Wirkstoffe, Dosierung, Status und letzte Änderungen.',
+    en: 'The current medication plan at a glance — substances, dosing, status and recent changes.',
+    fr: 'Le plan médicamenteux actuel en un coup d’œil — substances, posologie, statut et changements récents.',
+    es: 'El plan de medicación actual de un vistazo — sustancias, dosis, estado y cambios recientes.',
+  },
+  medDescCombination: {
+    de: 'Paarweise Interaktions- und Kombinationsprüfung über die Wissensdatenbank mit optionaler KI-Unterstützung.',
+    en: 'Pairwise interaction and combination review via the knowledge base with optional AI support.',
+    fr: 'Revue par paires des interactions et combinaisons via la base de connaissances avec option IA.',
+    es: 'Revisión por pares de interacciones y combinaciones vía base de conocimiento con apoyo de IA opcional.',
+  },
+  medDescPreparations: {
+    de: 'Verfügbare, verifizierte Präparate je Wirkstoff im gewählten Verordnungsland.',
+    en: 'Available, verified preparations per substance in the selected prescribing country.',
+    fr: 'Préparations vérifiées disponibles par substance dans le pays de prescription choisi.',
+    es: 'Preparados verificados disponibles por sustancia en el país de prescripción elegido.',
+  },
+  medDescReceptor: {
+    de: 'Rezeptoraffinitätsprofile der aktiven Wirkstoffe — als Matrix, kombinierte Last und Radar.',
+    en: 'Receptor affinity profiles of the active substances — as matrix, combined burden and radar.',
+    fr: 'Profils d’affinité récepteur des substances actives — matrice, charge combinée et radar.',
+    es: 'Perfiles de afinidad de receptores de las sustancias activas — matriz, carga combinada y radar.',
+  },
+  medDescMonitoring: {
+    de: 'Empfohlene Monitoring-Parameter und Zeitpläne abgeleitet aus den verordneten Wirkstoffen.',
+    en: 'Recommended monitoring parameters and schedules derived from the prescribed substances.',
+    fr: 'Paramètres et calendriers de surveillance recommandés selon les substances prescrites.',
+    es: 'Parámetros y cronogramas de monitorización recomendados según las sustancias prescritas.',
+  },
+  medDescSideEffects: {
+    de: 'Nebenwirkungen erfassen und einer Einzelsubstanz oder Kombination kausal zuordnen.',
+    en: 'Capture side effects and attribute them causally to a single drug or combination.',
+    fr: 'Saisir les effets indésirables et les attribuer à un médicament seul ou une combinaison.',
+    es: 'Registrar efectos adversos y atribuirlos a un fármaco único o combinación.',
+  },
+  medDescLab: {
+    de: 'Korrelation relevanter Laborwerte mit der Medikation — Sicherheit und Verträglichkeit im Verlauf.',
+    en: 'Correlate relevant lab values with the medication — safety and tolerability over time.',
+    fr: 'Corréler les valeurs de laboratoire pertinentes avec la médication — sécurité et tolérance.',
+    es: 'Correlacionar valores de laboratorio relevantes con la medicación — seguridad y tolerancia.',
+  },
+  medDescIntelligence: {
+    de: 'Kurzinfos, Rezeptorgrafik und Monitoring-Regeln je Wirkstoff aus der Referenzdatenbank.',
+    en: 'Brief info, receptor graphic and monitoring rules per substance from the reference database.',
+    fr: 'Infos brèves, graphique récepteur et règles de surveillance par substance.',
+    es: 'Info breve, gráfico de receptores y reglas de monitorización por sustancia.',
+  },
+  medHeroEyebrow: {
+    de: 'Medikamentöse Therapie',
+    en: 'Medication therapy',
+    fr: 'Thérapie médicamenteuse',
+    es: 'Terapia medicamentosa',
+  },
+  medStatActive: { de: 'Aktiv', en: 'Active', fr: 'Actifs', es: 'Activos' },
+  medStatAdjusted: { de: 'Angepasst', en: 'Adjusted', fr: 'Ajustés', es: 'Ajustados' },
+  medStatPaused: { de: 'Pausiert', en: 'Paused', fr: 'En pause', es: 'En pausa' },
+  medStatTotal: { de: 'Präparate', en: 'Medications', fr: 'Médicaments', es: 'Medicamentos' },
+  medStatLastChange: { de: 'Letzte Änderung', en: 'Last change', fr: 'Dernier changement', es: 'Último cambio' },
+  medExploreSections: {
+    de: 'Analyse & Werkzeuge',
+    en: 'Analysis & tools',
+    fr: 'Analyse et outils',
+    es: 'Análisis y herramientas',
+  },
+  medBackToPlan: {
+    de: 'Zum Medikamentenplan',
+    en: 'Back to plan',
+    fr: 'Retour au plan',
+    es: 'Volver al plan',
+  },
+
+  // ── Per-medication Verlauf (row history dialog) ─────────────────────────
+  medEntryHistory: { de: 'Verlauf', en: 'History', fr: 'Historique', es: 'Historial' },
+  medEntryHistoryTitle: {
+    de: 'Verlauf dieses Medikaments',
+    en: 'History of this medication',
+    fr: 'Historique de ce médicament',
+    es: 'Historial de este medicamento',
+  },
+  medEntryHistoryEmpty: {
+    de: 'Noch keine Änderungen für dieses Medikament erfasst.',
+    en: 'No changes recorded for this medication yet.',
+    fr: 'Aucune modification enregistrée pour ce médicament.',
+    es: 'Aún no hay cambios registrados para este medicamento.',
+  },
+
+  // ── Intelligent clinical-analysis summary ───────────────────────────────
+  medInsightsHeading: {
+    de: 'Klinische Analyse',
+    en: 'Clinical analysis',
+    fr: 'Analyse clinique',
+    es: 'Análisis clínico',
+  },
+  medInsightActive: {
+    de: 'Aktive Medikation',
+    en: 'Active medication',
+    fr: 'Médication active',
+    es: 'Medicación activa',
+  },
+  medInsightTried: {
+    de: 'Bisher versuchte Neuroleptika',
+    en: 'Antipsychotics previously tried',
+    fr: 'Antipsychotiques déjà essayés',
+    es: 'Antipsicóticos ya probados',
+  },
+  medInsightNone: { de: 'keine', en: 'none', fr: 'aucun', es: 'ninguno' },
+  medInsightLastModified: {
+    de: 'Zuletzt geändert',
+    en: 'Last modified',
+    fr: 'Dernière modification',
+    es: 'Última modificación',
+  },
+  medInsightReceptors: {
+    de: 'Zielrezeptoren',
+    en: 'Targeted receptors',
+    fr: 'Récepteurs ciblés',
+    es: 'Receptores diana',
+  },
+  medInsightSideEffects: {
+    de: 'Wichtige Nebenwirkungen',
+    en: 'Key side effects',
+    fr: 'Effets indésirables clés',
+    es: 'Efectos adversos clave',
+  },
+  medActiveRegimen: {
+    de: 'Aktuelles Regime',
+    en: 'Current regimen',
+    fr: 'Régime actuel',
+    es: 'Régimen actual',
+  },
+  medDose: { de: 'Dosierung', en: 'Dose', fr: 'Posologie', es: 'Dosis' },
+  medSideEffectsCommon: {
+    de: 'Häufige Nebenwirkungen',
+    en: 'Common side effects',
+    fr: 'Effets indésirables fréquents',
+    es: 'Efectos adversos frecuentes',
+  },
+  medSideEffectsSerious: {
+    de: 'Schwerwiegende Risiken',
+    en: 'Serious risks',
+    fr: 'Risques graves',
+    es: 'Riesgos graves',
+  },
+  medSideEffectsRecorded: {
+    de: 'Dokumentierte Nebenwirkungen',
+    en: 'Recorded side effects',
+    fr: 'Effets indésirables documentés',
+    es: 'Efectos adversos registrados',
+  },
+  medSideEffectsReportsTitle: {
+    de: 'Gemeldete Nebenwirkungen',
+    en: 'Reported side effects',
+    fr: 'Effets indésirables signalés',
+    es: 'Efectos adversos notificados',
+  },
+  medInteractionsLabel: {
+    de: 'Relevante Interaktionen',
+    en: 'Relevant interactions',
+    fr: 'Interactions pertinentes',
+    es: 'Interacciones relevantes',
+  },
+
+  // ── Plan landing clinical dashboard ─────────────────────────────────────
+  medDashHeading: {
+    de: 'Klinisches Dashboard',
+    en: 'Clinical dashboard',
+    fr: 'Tableau de bord clinique',
+    es: 'Panel clínico',
+  },
+  medDashOpenSection: { de: 'Details', en: 'Details', fr: 'Détails', es: 'Detalles' },
+  medDashReceptorTitle: {
+    de: 'Kombiniertes Rezeptorprofil',
+    en: 'Combined receptor profile',
+    fr: 'Profil récepteur combiné',
+    es: 'Perfil de receptores combinado',
+  },
+  medDashReceptorHint: {
+    de: 'Stärkste Affinität pro Rezeptor im aktiven Regime',
+    en: 'Strongest affinity per receptor across the active regimen',
+    fr: 'Affinité la plus forte par récepteur du régime actif',
+    es: 'Afinidad más fuerte por receptor en el régimen activo',
+  },
+  medDashReceptorEmpty: {
+    de: 'Keine Rezeptordaten für das aktive Regime verfügbar.',
+    en: 'No receptor data available for the active regimen.',
+    fr: 'Aucune donnée de récepteur disponible pour le régime actif.',
+    es: 'No hay datos de receptores para el régimen activo.',
+  },
+  medDashKombiTitle: {
+    de: 'Kombinationsanalyse',
+    en: 'Combination analysis',
+    fr: 'Analyse des associations',
+    es: 'Análisis de combinación',
+  },
+  medDashKombiInteractions: {
+    de: 'Paarweise Interaktionen',
+    en: 'Pairwise interactions',
+    fr: 'Interactions par paires',
+    es: 'Interacciones por pares',
+  },
+  medDashKombiEmpty: {
+    de: 'Keine additiven Risiken oder Interaktionen aus der Referenz erkannt.',
+    en: 'No additive risks or interactions detected from the reference.',
+    fr: 'Aucun risque additif ni interaction détecté dans la référence.',
+    es: 'No se detectaron riesgos aditivos ni interacciones en la referencia.',
+  },
+  medDashMonitoringTitle: {
+    de: 'Monitoring-Bedarf',
+    en: 'Monitoring required',
+    fr: 'Surveillance requise',
+    es: 'Monitorización requerida',
+  },
+  medDashMonitoringEmpty: {
+    de: 'Kein spezifisches Monitoring aus der Referenz ableitbar.',
+    en: 'No specific monitoring derivable from the reference.',
+    fr: 'Aucune surveillance spécifique dérivable de la référence.',
+    es: 'No se puede derivar monitorización específica de la referencia.',
+  },
+
+  // ── Combination risk labels (additive pharmacodynamics) ─────────────────
+  medRiskDuplicateClass: {
+    de: 'Mehrfachtherapie',
+    en: 'Duplicate-class therapy',
+    fr: 'Thérapie de classe redondante',
+    es: 'Terapia de clase duplicada',
+  },
+  medRiskAnticholinergic: {
+    de: 'Anticholinerge Last',
+    en: 'Anticholinergic burden',
+    fr: 'Charge anticholinergique',
+    es: 'Carga anticolinérgica',
+  },
+  medRiskSedation: {
+    de: 'Additive Sedierung',
+    en: 'Additive sedation',
+    fr: 'Sédation additive',
+    es: 'Sedación aditiva',
+  },
+  medRiskOrthostatic: {
+    de: 'Orthostase-Risiko',
+    en: 'Orthostatic risk',
+    fr: 'Risque orthostatique',
+    es: 'Riesgo ortostático',
+  },
+  medRiskQtc: {
+    de: 'QTc-Verlängerung (additiv)',
+    en: 'Additive QTc prolongation',
+    fr: 'Allongement du QTc (additif)',
+    es: 'Prolongación del QTc (aditiva)',
+  },
+  medRiskSerotonergic: {
+    de: 'Serotonerge Last',
+    en: 'Serotonergic load',
+    fr: 'Charge sérotoninergique',
+    es: 'Carga serotoninérgica',
+  },
+  medRiskLevelHigh: { de: 'Hoch', en: 'High', fr: 'Élevé', es: 'Alto' },
+  medRiskLevelModerate: { de: 'Moderat', en: 'Moderate', fr: 'Modéré', es: 'Moderado' },
+  medRiskLevelInfo: { de: 'Hinweis', en: 'Note', fr: 'Remarque', es: 'Aviso' },
+
+  // ── Reference interaction severities ────────────────────────────────────
+  medSeverityMild: { de: 'Mild', en: 'Mild', fr: 'Léger', es: 'Leve' },
+  medSeverityModerate: { de: 'Moderat', en: 'Moderate', fr: 'Modéré', es: 'Moderado' },
+  medSeveritySevere: { de: 'Schwer', en: 'Severe', fr: 'Sévère', es: 'Grave' },
+  medSeverityContraindicated: {
+    de: 'Kontraindiziert',
+    en: 'Contraindicated',
+    fr: 'Contre-indiqué',
+    es: 'Contraindicado',
   },
 } as const satisfies Record<string, LocaleMap>
 

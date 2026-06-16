@@ -70,11 +70,11 @@ export function DaySchedulePanel({ cases, onOpenCase }: DaySchedulePanelProps) {
           </h2>
         </div>
         <div className="day-schedule-panel__nav">
-          <button type="button" className="calendar-nav__btn" onClick={() => shiftDay(-1)} aria-label="Vorheriger Tag">
+          <button type="button" className="day-schedule-panel__nav-btn" onClick={() => shiftDay(-1)} aria-label="Vorheriger Tag">
             <ChevronLeft className="h-4 w-4" />
           </button>
           <span className="day-schedule-panel__date">{dateLabel}</span>
-          <button type="button" className="calendar-nav__btn" onClick={() => shiftDay(1)} aria-label="Nächster Tag">
+          <button type="button" className="day-schedule-panel__nav-btn" onClick={() => shiftDay(1)} aria-label="Nächster Tag">
             <ChevronRight className="h-4 w-4" />
           </button>
           {!loading ? (

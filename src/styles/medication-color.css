@@ -1,0 +1,140 @@
+/*
+ * Medikation semantic colour layer
+ * --------------------------------------------------------------------------
+ * The Medikation page used to lean on a single accent. This layer introduces a
+ * small, restrained, theme-aware palette so each functional area is gently
+ * colour-coded "auf einen Blick" — without becoming a rainbow.
+ *
+ * Every hue is derived from the existing area-accent / color-mix token system
+ * in globals.css, so it still follows the clinician's chosen theme colour. We
+ * recolour by re-binding `--area-accent` on the relevant structural blocks,
+ * which lets the existing `var(--area-accent, …)` rules in notion-preview.css
+ * adopt the semantic hue automatically (tints, borders, chips, the receptor
+ * radar, etc.). All rules are scoped under `.medication-workspace` so they win
+ * on specificity and never touch the shared stylesheet.
+ *
+ * Palette / meaning:
+ *   --med-plan      violet  — the active medication plan (primary accent)
+ *   --med-receptor  teal    — receptor / pharmacodynamic profile
+ *   --med-monitor   blue    — monitoring & labs (Spiegel / diagnostics)
+ *   --med-caution   amber   — interactions & side-effects (caution)
+ *   --med-history   slate   — history / snapshots / prior exposure (neutral)
+ */
+
+.medication-workspace {
+  --med-plan: var(--area-medikation, var(--area-accent, var(--accent, #7d5cc6)));
+  --med-receptor: var(--area-verlauf, #2f9189);
+  --med-monitor: var(--area-labor, #3f78c6);
+  --med-caution: color-mix(in srgb, var(--accent, #8a5a2b) 15%, #c0832e);
+  --med-history: var(--area-workspace, #5b7595);
+}
+
+/* ── Insight strip — one quiet hue per metric box ──────────────────────── */
+.medication-workspace .medication-insight {
+  border-left-width: 3px;
+  border-left-color: color-mix(in srgb, var(--area-accent, var(--accent)) 45%, var(--border-soft, #e8e8e4));
+}
+
+/* 1 · Active medications → primary plan hue (violet) */
+.medication-workspace .medication-insight:nth-child(1) {
+  --area-accent: var(--med-plan);
+}
+
+/* 2 · Tried antipsychotics & 3 · last modified → neutral history slate */
+.medication-workspace .medication-insight:nth-child(2),
+.medication-workspace .medication-insight:nth-child(3) {
+  --area-accent: var(--med-history);
+}
+
+/* 4 · Targeted receptors → pharmacodynamic teal */
+.medication-workspace .medication-insight:nth-child(4) {
+  --area-accent: var(--med-receptor);
+}
+
+/* 5 · Key side-effects → caution amber */
+.medication-workspace .medication-insight:nth-child(5) {
+  --area-accent: var(--med-caution);
+}
+
+.medication-workspace .medication-insight:nth-child(1) .medication-insight__label {
+  color: color-mix(in srgb, var(--med-plan) 70%, var(--text-muted, #8a8a80));
+}
+.medication-workspace .medication-insight:nth-child(4) .medication-insight__label {
+  color: color-mix(in srgb, var(--med-receptor) 72%, var(--text-muted, #8a8a80));
+}
+.medication-workspace .medication-insight:nth-child(5) .medication-insight__label {
+  color: color-mix(in srgb, var(--med-caution) 74%, var(--text-muted, #8a8a80));
+}
+
+/* ── Plan dashboard panels — each functional card gets its own hue ─────── */
+.medication-workspace .medication-dash-panel {
+  border-left-width: 3px;
+  border-left-color: color-mix(in srgb, var(--area-accent, var(--accent)) 50%, var(--border-soft, #e8e8e4));
+}
+
+/* Receptor fingerprint → teal (recolours tint, border, title bar, the
+   combined-burden bars and the inline radar polygon via --area-accent). */
+.medication-workspace .medication-dash-panel--receptor {
+  --area-accent: var(--med-receptor);
+}
+
+/* Combination / interaction analysis → caution amber */
+.medication-workspace .medication-dash-panel--kombi {
+  --area-accent: var(--med-caution);
+}
+
+/* Monitoring burden → diagnostic blue */
+.medication-workspace .medication-dash-panel--monitoring {
+  --area-accent: var(--med-monitor);
+}
+
+/* The monitoring title has no wrapping <div>, so the shared `::before` accent
+   bar never applied — add a matching blue one for visual parity. */
+.medication-workspace .medication-dash-panel--monitoring .medication-dash-panel__head > .medication-dash-panel__title::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 0.82em;
+  margin-right: 0.45rem;
+  vertical-align: -1px;
+  border-radius: 2px;
+  background: var(--med-monitor);
+}
+
+/* The dashboard section heading + dot stay on the primary plan hue so the
+   group still reads as one coherent area. */
+.medication-workspace .medication-dashboard__heading,
+.medication-workspace .medication-dashboard__heading::before {
+  --area-accent: var(--med-plan);
+}
+
+/* ── Quick-jump explore cards — colour the icon by destination section ─── */
+.medication-workspace .medication-explore__card[data-section='combination'],
+.medication-workspace .medication-explore__card[data-section='sideEffects'] {
+  --area-accent: var(--med-caution);
+}
+.medication-workspace .medication-explore__card[data-section='receptor'] {
+  --area-accent: var(--med-receptor);
+}
+.medication-workspace .medication-explore__card[data-section='monitoring'],
+.medication-workspace .medication-explore__card[data-section='lab'] {
+  --area-accent: var(--med-monitor);
+}
+
+/* ── Section detail view — the whole section adopts its semantic hue ───── */
+.medication-workspace .medication-section-detail[data-section='combination'],
+.medication-workspace .medication-section-detail[data-section='sideEffects'] {
+  --area-accent: var(--med-caution);
+}
+.medication-workspace .medication-section-detail[data-section='receptor'] {
+  --area-accent: var(--med-receptor);
+}
+.medication-workspace .medication-section-detail[data-section='monitoring'],
+.medication-workspace .medication-section-detail[data-section='lab'] {
+  --area-accent: var(--med-monitor);
+}
+
+/* ── Plan history / snapshots — neutral slate (it is the "past") ───────── */
+.medication-workspace .medication-history {
+  --area-accent: var(--med-history);
+}

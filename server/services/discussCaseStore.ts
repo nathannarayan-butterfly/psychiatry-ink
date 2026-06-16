@@ -88,6 +88,7 @@ function mapMessage(row: Record<string, unknown>): DiscussCaseMessage {
     body: String(row.body),
     quoteExcerpt: (row.quote_excerpt as DiscussCaseMessage['quoteExcerpt']) ?? null,
     createdAt: String(row.created_at),
+    editedAt: row.edited_at ? String(row.edited_at) : null,
   }
 }
 
@@ -175,7 +176,7 @@ export async function listParticipants(
 export async function listDiscussionsForCase(
   caseId: string,
   userId: string,
-): Promise<Array<DiscussCaseDiscussion & { canManage: boolean }>> {
+): Promise<Array<DiscussCaseDiscussion & { canManage: boolean; isOwner: boolean }>> {
   const supabase = getKbSupabaseAdmin()
   const { data: memberships, error: memberError } = await supabase
     .from('dc_participants')
@@ -205,6 +206,7 @@ export async function listDiscussionsForCase(
     return {
       ...discussion,
       canManage: permissions.includes('manage_discussion'),
+      isOwner: discussion.ownerUserId === userId,
     }
   })
 }
@@ -491,6 +493,56 @@ export async function addMessage(input: {
   return mapMessage(data as Record<string, unknown>)
 }
 
+/**
+ * Edit an existing message. Scoped to the original author: the update only
+ * matches when both the discussion and the author id line up, so a participant
+ * can never modify someone else's post.
+ */
+export async function updateMessage(input: {
+  messageId: string
+  discussionId: string
+  authorUserId: string
+  body: string
+}): Promise<DiscussCaseMessage> {
+  const body = input.body.trim()
+  if (!body) throw new Error('Message body required')
+
+  const supabase = getKbSupabaseAdmin()
+  const { data, error } = await supabase
+    .from('dc_messages')
+    .update({ body, edited_at: new Date().toISOString() })
+    .eq('id', input.messageId)
+    .eq('discussion_id', input.discussionId)
+    .eq('author_user_id', input.authorUserId)
+    .select('*')
+    .maybeSingle()
+  if (error) throw error
+  if (!data) throw new Error('Message not found')
+
+  return mapMessage(data as Record<string, unknown>)
+}
+
+/**
+ * Delete a message. Scoped to the original author the same way as the edit
+ * path, so the delete is a no-op (and surfaces an error) for non-authors.
+ */
+export async function deleteMessage(input: {
+  messageId: string
+  discussionId: string
+  authorUserId: string
+}): Promise<void> {
+  const supabase = getKbSupabaseAdmin()
+  const { data, error } = await supabase
+    .from('dc_messages')
+    .delete()
+    .eq('id', input.messageId)
+    .eq('discussion_id', input.discussionId)
+    .eq('author_user_id', input.authorUserId)
+    .select('id')
+  if (error) throw error
+  if (!data || data.length === 0) throw new Error('Message not found')
+}
+
 export async function listAnnotations(discussionId: string): Promise<DiscussCaseAnnotation[]> {
   const supabase = getKbSupabaseAdmin()
   const { data, error } = await supabase
@@ -707,15 +759,29 @@ export async function archiveDiscussion(input: {
   return mapDiscussion(data as Record<string, unknown>)
 }
 
+/**
+ * Permanently delete a discussion and (via FK `on delete cascade`) every child
+ * row: packages, invites, participants, messages, annotations, AI requests and
+ * audit logs. This operates purely on row ids and never touches the E2EE
+ * package payload, so the owner can delete a discussion even when they no
+ * longer hold the decryption key and cannot open the session.
+ *
+ * `requireArchived` keeps the original safety rail for the in-session manager
+ * flow (only archived discussions are deletable there). The list-page owner
+ * flow passes `requireArchived: false` so a creator can remove a discussion
+ * they are locked out of without first archiving it.
+ */
 export async function deleteDiscussion(input: {
   discussionId: string
   actorUserId: string
+  requireArchived?: boolean
 }): Promise<void> {
+  const requireArchived = input.requireArchived ?? true
   const discussion = await getDiscussion(input.discussionId)
   if (!discussion) {
     throw new Error('Discussion not found')
   }
-  if (discussion.status !== 'archived') {
+  if (requireArchived && discussion.status !== 'archived') {
     throw new Error('Only archived discussions can be deleted')
   }
 
@@ -731,11 +797,11 @@ export async function deleteDiscussion(input: {
   })
 
   const supabase = getKbSupabaseAdmin()
-  const { error } = await supabase
-    .from('dc_discussions')
-    .delete()
-    .eq('id', input.discussionId)
-    .eq('status', 'archived')
+  let query = supabase.from('dc_discussions').delete().eq('id', input.discussionId)
+  if (requireArchived) {
+    query = query.eq('status', 'archived')
+  }
+  const { error } = await query
   if (error) throw error
 }
 

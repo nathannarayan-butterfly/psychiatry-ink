@@ -30,9 +30,13 @@ import { parseLabText } from '../../utils/laborParser'
 import { showNotionToast } from './NotionToast'
 import { API_BASE } from '../../services/apiClient'
 import { useTranslation } from '../../context/TranslationContext'
-import type { UiTranslationKey } from '../../data/uiTranslations'
 import { loadMedicationPlanState } from '../../utils/medication/storage'
 import { isMedicationVisible } from '../../utils/medication/planOps'
+import {
+  buildLabRelevance,
+  classifyAnalyte,
+  formatRationaleCaption,
+} from '../../utils/diagnostics/labRelevance'
 import { loadDiagnosen } from '../../utils/diagnosenArchive'
 import { getCaseMeta } from '../../hooks/useCaseRegistry'
 import { loadNotionDocumentSnapshot } from '../../utils/notionDocumentActions'
@@ -43,6 +47,9 @@ import {
   DiagnostikBefundeSidebar,
   useDiagnostikBefunde,
 } from '../diagnostik/DiagnostikBefundeSection'
+import { DIAGNOSTICS_SECTIONS, type DiagnosticsSectionId } from '../../data/diagnosticsSections'
+import { useLaborBefundeList } from '../../hooks/useLaborBefundeList'
+import { useDiagnosticsSectionNavOptional } from '../../contexts/DiagnosticsSectionNavContext'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -233,20 +240,6 @@ const ACTIVE_MED_STATUSES: ReadonlySet<MedicationStatus> = new Set<MedicationSta
   'reduced',
   'increased',
 ])
-
-type DiagnosticsSectionId = 'labor' | 'befunde' | 'lp' | 'imaging' | 'neurophysiology'
-
-const DIAGNOSTICS_SECTIONS: Array<{
-  id: DiagnosticsSectionId
-  labelKey: UiTranslationKey
-  enabled: boolean
-}> = [
-  { id: 'labor', labelKey: 'diagnosticsSectionLabor', enabled: true },
-  { id: 'befunde', labelKey: 'diagnosticsSectionBefunde', enabled: true },
-  { id: 'lp', labelKey: 'diagnosticsSectionLp', enabled: false },
-  { id: 'imaging', labelKey: 'diagnosticsSectionImaging', enabled: false },
-  { id: 'neurophysiology', labelKey: 'diagnosticsSectionNeurophysiology', enabled: false },
-]
 
 /**
  * Gather available clinical context for AI lab analysis.
@@ -1912,25 +1905,23 @@ function KumulativView({ befunde, normalwerteLabel, caseId }: KumulativViewProps
         <button
           type="button"
           className={[
-            'labor-kumulativ__tool-btn',
-            copyStatus === 'done' ? 'labor-kumulativ__tool-btn--success' : '',
+            'icon-action-btn icon-action-btn--bordered',
+            copyStatus === 'done' ? 'icon-action-btn--success' : '',
           ].join(' ').trim()}
           onClick={handleCopyTsv}
-          title={t('laborKumulativCopy')}
-          aria-label={t('laborKumulativCopy')}
+          title={copyStatus === 'done' ? t('laborKumulativCopied') : t('laborKumulativCopy')}
+          aria-label={copyStatus === 'done' ? t('laborKumulativCopied') : t('laborKumulativCopy')}
         >
-          <Clipboard size={14} />
-          <span>{copyStatus === 'done' ? t('laborKumulativCopied') : t('laborKumulativCopy')}</span>
+          {copyStatus === 'done' ? <Check strokeWidth={1.75} /> : <Clipboard strokeWidth={1.75} />}
         </button>
         <button
           type="button"
-          className="labor-kumulativ__tool-btn"
+          className="icon-action-btn icon-action-btn--bordered"
           onClick={handlePrint}
           title={t('laborKumulativPrint')}
           aria-label={t('laborKumulativPrint')}
         >
-          <Printer size={14} />
-          <span>{t('laborKumulativPrint')}</span>
+          <Printer strokeWidth={1.75} />
         </button>
         <button
           type="button"
@@ -2113,6 +2104,434 @@ function KumulativView({ befunde, normalwerteLabel, caseId }: KumulativViewProps
 }
 
 // ---------------------------------------------------------------------------
+// Verlauf overview — auto-generated trend graphs (small multiples)
+// ---------------------------------------------------------------------------
+
+interface VerlaufPoint {
+  date: string
+  shortDate: string
+  value: number
+  isAbnormal: boolean
+}
+
+interface VerlaufSeries {
+  name: string
+  categoryId: string
+  categoryLabel: string
+  unit: string
+  refMin?: number
+  refMax?: number
+  refText?: string
+  points: VerlaufPoint[]
+  hasAbnormal: boolean
+}
+
+/** Trim trailing zeros for compact value display. */
+function formatNum(n: number): string {
+  if (Number.isInteger(n)) return String(n)
+  const fixed = n.toFixed(Math.abs(n) < 1 ? 3 : 2)
+  return fixed.replace(/\.?0+$/, '')
+}
+
+/**
+ * Collapse all befunde into one time-series per numeric parameter.
+ * Only parameters with at least two numeric data points are returned, since a
+ * single point cannot form a trend line. Reference range / unit prefer the most
+ * recent befund (ascending iteration → last write wins).
+ */
+function buildVerlaufSeries(befunde: LaborBefund[]): VerlaufSeries[] {
+  const sorted = [...befunde].sort((a, b) => a.date.localeCompare(b.date))
+  const map = new Map<string, VerlaufSeries>()
+  const order: string[] = []
+  for (const b of sorted) {
+    for (const cat of b.categories) {
+      for (const v of cat.values) {
+        if (v.numericValue === undefined || Number.isNaN(v.numericValue)) continue
+        const key = `${cat.label}\u0000${v.name}`
+        let series = map.get(key)
+        if (!series) {
+          series = {
+            name: v.name,
+            categoryId: cat.id || cat.label,
+            categoryLabel: cat.label,
+            unit: v.unit ?? '',
+            points: [],
+            hasAbnormal: false,
+          }
+          map.set(key, series)
+          order.push(key)
+        }
+        series.points.push({
+          date: b.date,
+          shortDate: shortDate(b.date),
+          value: v.numericValue,
+          isAbnormal: v.isAbnormal ?? false,
+        })
+        if (v.isAbnormal) series.hasAbnormal = true
+        if (v.unit) series.unit = v.unit
+        if (v.refMin !== undefined) series.refMin = v.refMin
+        if (v.refMax !== undefined) series.refMax = v.refMax
+        if (v.refText) series.refText = v.refText
+      }
+    }
+  }
+  return order.map((k) => map.get(k)!).filter((s) => s.points.length >= 2)
+}
+
+/** Read the app accent colour as a concrete value for recharts strokes. */
+function useAccentColor(): string {
+  const [accent, setAccent] = useState('#8A5A2B')
+  useEffect(() => {
+    try {
+      const v = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()
+      if (v) setAccent(v)
+    } catch {
+      // keep fallback
+    }
+  }, [])
+  return accent
+}
+
+function VerlaufCard({
+  series,
+  accent,
+  rationale,
+  isSpiegel = false,
+}: {
+  series: VerlaufSeries
+  accent: string
+  rationale?: string
+  isSpiegel?: boolean
+}) {
+  const data = useMemo(
+    () => series.points.map((p) => ({ date: p.shortDate, value: p.value, abn: p.isAbnormal })),
+    [series],
+  )
+  const first = series.points[0]
+  const last = series.points[series.points.length - 1]
+  const delta = last.value - first.value
+  const trendDir = delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat'
+  const hasBand = series.refMin !== undefined && series.refMax !== undefined
+
+  return (
+    <div
+      className={[
+        'labor-verlauf-card',
+        series.hasAbnormal ? 'labor-verlauf-card--abnormal' : '',
+      ].join(' ').trim()}
+    >
+      <div className="labor-verlauf-card__head">
+        <div className="labor-verlauf-card__titles">
+          <span className="labor-verlauf-card__name" title={series.name}>{series.name}</span>
+          {isSpiegel ? (
+            <span className="labor-verlauf-card__badge" title="Medikamentenspiegel — immer angezeigt">
+              Spiegel
+            </span>
+          ) : null}
+          {series.unit ? <span className="labor-verlauf-card__unit">{series.unit}</span> : null}
+        </div>
+        <div className="labor-verlauf-card__latest">
+          <span
+            className={[
+              'labor-verlauf-card__latest-val',
+              last.isAbnormal ? 'labor-verlauf-card__latest-val--abnormal' : '',
+            ].join(' ').trim()}
+          >
+            {formatNum(last.value)}
+          </span>
+          <span className={['labor-verlauf-card__trend', `labor-verlauf-card__trend--${trendDir}`].join(' ')}>
+            {trendDir === 'up' ? '↑' : trendDir === 'down' ? '↓' : '→'}
+            {delta !== 0 ? ` ${delta > 0 ? '+' : ''}${formatNum(delta)}` : ''}
+          </span>
+        </div>
+      </div>
+      <div className="labor-verlauf-card__chart">
+        <ResponsiveContainer width="100%" height={140}>
+          <LineChart data={data} margin={{ top: 14, right: 14, bottom: 0, left: -10 }}>
+            <XAxis dataKey="date" tick={{ fontSize: 10 }} tickLine={false} axisLine={{ stroke: '#e5e3dd' }} />
+            <YAxis tick={{ fontSize: 10 }} width={36} tickLine={false} axisLine={false} domain={['auto', 'auto']} />
+            <Tooltip
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              formatter={(val: any) => [`${val} ${series.unit}`.trim(), series.name]}
+            />
+            {hasBand ? (
+              <ReferenceArea
+                y1={series.refMin}
+                y2={series.refMax}
+                fill="#22c55e"
+                fillOpacity={0.09}
+                ifOverflow="extendDomain"
+              />
+            ) : null}
+            {series.refMin !== undefined ? (
+              <ReferenceLine y={series.refMin} stroke="#22c55e" strokeDasharray="4 2" strokeOpacity={0.55} />
+            ) : null}
+            {series.refMax !== undefined ? (
+              <ReferenceLine y={series.refMax} stroke="#22c55e" strokeDasharray="4 2" strokeOpacity={0.55} />
+            ) : null}
+            <Line
+              type="monotone"
+              dataKey="value"
+              stroke={accent}
+              strokeWidth={2}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              dot={(dotProps: any) => {
+                const { cx, cy, index } = dotProps as { cx: number; cy: number; index: number }
+                const abn = data[index]?.abn === true
+                return (
+                  <circle
+                    key={index}
+                    cx={cx}
+                    cy={cy}
+                    r={3.5}
+                    fill={abn ? '#ef4444' : accent}
+                    stroke="#fff"
+                    strokeWidth={1}
+                  />
+                )
+              }}
+              activeDot={{ r: 5 }}
+              connectNulls
+              isAnimationActive={false}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+      {rationale ? (
+        <div className="labor-verlauf-card__rationale" title={rationale}>{rationale}</div>
+      ) : null}
+      {series.refText ? <div className="labor-verlauf-card__ref">Ref: {series.refText}</div> : null}
+    </div>
+  )
+}
+
+/** Active substance names from the case's current medication plan. */
+function readActiveSubstances(caseId: string): string[] {
+  try {
+    const planState = loadMedicationPlanState(caseId)
+    if (!planState) return []
+    const currentPlan =
+      planState.plans.find((p) => p.id === planState.currentPlanId) ?? planState.plans[0]
+    if (!currentPlan) return []
+    return currentPlan.medications
+      .filter((m) => isMedicationVisible(m) && ACTIVE_MED_STATUSES.has(m.status))
+      .map((m) => m.substance.trim())
+      .filter(Boolean)
+  } catch {
+    return []
+  }
+}
+
+interface ClassifiedSeries {
+  series: VerlaufSeries
+  isSpiegel: boolean
+  isRelevant: boolean
+  priority: number
+  rationaleCaption: string
+}
+
+function LaborVerlaufOverview({ befunde, caseId }: { befunde: LaborBefund[]; caseId: string }) {
+  const [onlyAbnormal, setOnlyAbnormal] = useState(false)
+  const [showAll, setShowAll] = useState(false)
+  const accent = useAccentColor()
+
+  const allSeries = useMemo(() => buildVerlaufSeries(befunde), [befunde])
+
+  const activeSubstances = useMemo(() => readActiveSubstances(caseId), [caseId])
+  const relevance = useMemo(() => buildLabRelevance(activeSubstances), [activeSubstances])
+
+  const classified = useMemo<ClassifiedSeries[]>(
+    () =>
+      allSeries.map((s) => {
+        const c = classifyAnalyte(s.name, relevance, s.categoryLabel, s.categoryId)
+        return {
+          series: s,
+          isSpiegel: c.isSpiegel,
+          isRelevant: c.isRelevant,
+          priority: c.priority,
+          rationaleCaption: c.isSpiegel
+            ? 'Medikamentenspiegel — immer angezeigt'
+            : formatRationaleCaption(c.rationale),
+        }
+      }),
+    [allSeries, relevance],
+  )
+
+  const classifiedByName = useMemo(() => {
+    const m = new Map<VerlaufSeries, ClassifiedSeries>()
+    for (const c of classified) m.set(c.series, c)
+    return m
+  }, [classified])
+
+  const relevantList = useMemo(
+    () =>
+      classified
+        .filter((c) => c.isRelevant)
+        .sort((a, b) => {
+          if (a.priority !== b.priority) return a.priority - b.priority
+          return a.series.name.localeCompare(b.series.name)
+        }),
+    [classified],
+  )
+
+  const hasCuration = relevantList.length > 0
+  // Never permanently hide values: when nothing is relevant (no recognised
+  // medication and no Spiegel), fall back to the full set automatically.
+  const effectiveShowAll = showAll || !hasCuration
+
+  const befundeCount = befunde.length
+
+  // Category-grouped view for "show all" mode (original behaviour).
+  const groups = useMemo(() => {
+    const base = onlyAbnormal ? allSeries.filter((s) => s.hasAbnormal) : allSeries
+    const m = new Map<string, { label: string; items: VerlaufSeries[] }>()
+    const order: string[] = []
+    for (const s of base) {
+      if (!m.has(s.categoryLabel)) {
+        m.set(s.categoryLabel, { label: s.categoryLabel, items: [] })
+        order.push(s.categoryLabel)
+      }
+      m.get(s.categoryLabel)!.items.push(s)
+    }
+    for (const k of order) {
+      m.get(k)!.items.sort((a, b) => {
+        if (a.hasAbnormal !== b.hasAbnormal) return a.hasAbnormal ? -1 : 1
+        return a.name.localeCompare(b.name)
+      })
+    }
+    return order.map((k) => m.get(k)!)
+  }, [allSeries, onlyAbnormal])
+
+  const relevantVisible = useMemo(
+    () => (onlyAbnormal ? relevantList.filter((c) => c.series.hasAbnormal) : relevantList),
+    [relevantList, onlyAbnormal],
+  )
+
+  const baseScope = effectiveShowAll ? allSeries : relevantList.map((c) => c.series)
+  const abnormalCount = baseScope.filter((s) => s.hasAbnormal).length
+
+  const dateRange = useMemo(() => {
+    if (befundeCount === 0) return ''
+    const dates = befunde.map((b) => b.date).sort()
+    const start = formatDate(dates[0])
+    const end = formatDate(dates[dates.length - 1])
+    return start === end ? start : `${start} – ${end}`
+  }, [befunde, befundeCount])
+
+  if (befundeCount === 0) {
+    return (
+      <div className="labor-page__empty">
+        <p className="labor-page__empty-text">
+          Noch keine Laborbefunde — füge einen Befund hinzu, um Verlaufsgrafiken zu sehen.
+        </p>
+      </div>
+    )
+  }
+
+  if (allSeries.length === 0) {
+    return (
+      <div className="labor-page__empty">
+        <p className="labor-page__empty-text">
+          Mindestens zwei Laborbefunde mit numerischen Werten sind nötig, um Verlaufsgrafiken zu erstellen.
+          {befundeCount === 1 ? ' Aktuell ist nur ein Befund vorhanden.' : ''}
+        </p>
+      </div>
+    )
+  }
+
+  const subtitle = effectiveShowAll
+    ? `${allSeries.length} Parameter · ${befundeCount} Befunde · ${dateRange}`
+    : `${relevantList.length} relevante Parameter · ${befundeCount} Befunde · ${dateRange}`
+
+  const drugContext =
+    relevance.recognizedDrugs.length > 0
+      ? `Kuratiert für aktuelle Medikation: ${relevance.recognizedDrugs.join(', ')}`
+      : hasCuration
+        ? 'Medikamentenspiegel werden immer angezeigt.'
+        : 'Keine medikationsbasierte Relevanz erkannt — alle Parameter werden angezeigt.'
+
+  return (
+    <div className="labor-verlauf">
+      <header className="labor-verlauf__header">
+        <div className="labor-verlauf__heading">
+          <h2 className="labor-verlauf__title">Laborverlauf</h2>
+          <p className="labor-verlauf__subtitle">{subtitle}</p>
+          <p className="labor-verlauf__context">{drugContext}</p>
+        </div>
+        <div className="labor-verlauf__controls">
+          {abnormalCount > 0 ? (
+            <label className="labor-verlauf__filter">
+              <input
+                type="checkbox"
+                checked={onlyAbnormal}
+                onChange={(e) => setOnlyAbnormal(e.target.checked)}
+              />
+              <span>Nur auffällige ({abnormalCount})</span>
+            </label>
+          ) : null}
+          {hasCuration && allSeries.length > relevantList.length ? (
+            <button
+              type="button"
+              className="labor-verlauf__showall"
+              onClick={() => setShowAll((v) => !v)}
+              aria-pressed={showAll}
+            >
+              {showAll ? 'Nur relevante anzeigen' : `Alle Werte anzeigen (${allSeries.length})`}
+            </button>
+          ) : null}
+        </div>
+      </header>
+
+      {effectiveShowAll ? (
+        groups.length === 0 ? (
+          <p className="labor-page__empty-text" style={{ padding: '1.5rem 0' }}>
+            Keine auffälligen Parameter im Verlauf.
+          </p>
+        ) : (
+          groups.map((g) => (
+            <section key={g.label} className="labor-verlauf__group">
+              <h3 className="labor-verlauf__group-title">{g.label}</h3>
+              <div className="labor-verlauf__grid">
+                {g.items.map((s) => {
+                  const c = classifiedByName.get(s)
+                  return (
+                    <VerlaufCard
+                      key={`${g.label}\u0000${s.name}`}
+                      series={s}
+                      accent={accent}
+                      isSpiegel={c?.isSpiegel ?? false}
+                      rationale={c?.isRelevant ? c.rationaleCaption : undefined}
+                    />
+                  )
+                })}
+              </div>
+            </section>
+          ))
+        )
+      ) : relevantVisible.length === 0 ? (
+        <p className="labor-page__empty-text" style={{ padding: '1.5rem 0' }}>
+          Keine auffälligen relevanten Parameter im Verlauf.
+        </p>
+      ) : (
+        <section className="labor-verlauf__group">
+          <div className="labor-verlauf__grid">
+            {relevantVisible.map((c) => (
+              <VerlaufCard
+                key={`relevant\u0000${c.series.categoryLabel}\u0000${c.series.name}`}
+                series={c.series}
+                accent={accent}
+                isSpiegel={c.isSpiegel}
+                rationale={c.rationaleCaption || undefined}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Main LaborPage
 // ---------------------------------------------------------------------------
 
@@ -2121,23 +2540,35 @@ interface LaborPageProps {
   onCreatePatient?: () => void
   /** Whether a patient is already linked to this case. Hides the assignment UI when true. */
   hasPatient?: boolean
+  /** When true, section nav and befund lists live in the global case sidebar. */
+  useExternalSidebar?: boolean
 }
 
-export function LaborPage({ caseId, onCreatePatient, hasPatient = false }: LaborPageProps) {
+export function LaborPage({ caseId, onCreatePatient, hasPatient = false, useExternalSidebar = false }: LaborPageProps) {
   const { t } = useTranslation()
-  const [diagnosticsSection, setDiagnosticsSection] = useState<DiagnosticsSectionId>(() => {
+  const externalNav = useDiagnosticsSectionNavOptional()
+  const isExternal = useExternalSidebar && externalNav != null
+
+  const [localDiagnosticsSection, setLocalDiagnosticsSection] = useState<DiagnosticsSectionId>(() => {
     const pref = consumeDiagnosticsSectionPref(caseId)
     return pref === 'befunde' ? 'befunde' : 'labor'
   })
-  const diagnostikBefunde = useDiagnostikBefunde(caseId)
-  const [viewMode, setViewMode] = useState<'einzeln' | 'kumulativ'>('einzeln')
-  const [befunde, setBefunde] = useState<LaborBefund[]>(() =>
-    [...loadBefunde(caseId)].sort((a, b) => b.date.localeCompare(a.date)),
-  )
-  const [selectedId, setSelectedId] = useState<string | null>(() => {
-    const sorted = [...loadBefunde(caseId)].sort((a, b) => b.date.localeCompare(a.date))
-    return sorted[0]?.id ?? null
-  })
+  const [localViewMode, setLocalViewMode] = useState<'einzeln' | 'kumulativ' | 'verlauf'>('einzeln')
+  const [localPasteZoneOpen, setLocalPasteZoneOpen] = useState(false)
+  const localLabor = useLaborBefundeList(caseId)
+  const localDiagnostikBefunde = useDiagnostikBefunde(caseId)
+
+  const diagnosticsSection = isExternal ? externalNav.diagnosticsSection : localDiagnosticsSection
+  const setDiagnosticsSection = isExternal ? externalNav.setDiagnosticsSection : setLocalDiagnosticsSection
+  const viewMode = isExternal ? externalNav.viewMode : localViewMode
+  const setViewMode = isExternal ? externalNav.setViewMode : setLocalViewMode
+  const pasteZoneOpen = isExternal ? externalNav.pasteZoneOpen : localPasteZoneOpen
+  const setPasteZoneOpen = isExternal ? externalNav.setPasteZoneOpen : setLocalPasteZoneOpen
+  const befunde = isExternal ? externalNav.labor.befunde : localLabor.befunde
+  const setBefunde = isExternal ? externalNav.labor.setBefunde : localLabor.setBefunde
+  const selectedId = isExternal ? externalNav.labor.selectedId : localLabor.selectedId
+  const setSelectedId = isExternal ? externalNav.labor.setSelectedId : localLabor.setSelectedId
+  const diagnostikBefunde = isExternal ? externalNav.diagnostikBefunde : localDiagnostikBefunde
   const [pendingGraphCat, setPendingGraphCat] = useState<LaborCategory | null>(null)
   const [graphConfig, setGraphConfig] = useState<{
     category: LaborCategory
@@ -2145,7 +2576,6 @@ export function LaborPage({ caseId, onCreatePatient, hasPatient = false }: Labor
   } | null>(null)
   const [editingLabel, setEditingLabel] = useState(false)
   const [labelDraft, setLabelDraft] = useState('')
-  const [pasteZoneOpen, setPasteZoneOpen] = useState(false)
   const labelInputRef = useRef<HTMLInputElement>(null)
   const pasteTextareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -2156,12 +2586,6 @@ export function LaborPage({ caseId, onCreatePatient, hasPatient = false }: Labor
   const [kiReSavedId, setKiReSavedId] = useState<string | null>(null)
   const [kiReSavedText, setKiReSavedText] = useState<string | null>(null)
   const [kiReSavedOpen, setKiReSavedOpen] = useState(false)
-
-  useEffect(() => {
-    const loaded = [...loadBefunde(caseId)].sort((a, b) => b.date.localeCompare(a.date))
-    setBefunde(loaded)
-    setSelectedId(loaded[0]?.id ?? null)
-  }, [caseId])
 
   useEffect(() => {
     if (!pasteZoneOpen) return
@@ -2497,7 +2921,6 @@ export function LaborPage({ caseId, onCreatePatient, hasPatient = false }: Labor
 
   return (
     <div className="labor-page">
-      {/* Sidebar */}
       <aside className="labor-page__sidebar">
         {diagnosticsSection === 'labor' ? (
           <>
@@ -2507,7 +2930,7 @@ export function LaborPage({ caseId, onCreatePatient, hasPatient = false }: Labor
                 'labor-page__add-btn',
                 pasteZoneOpen ? 'labor-page__add-btn--active' : '',
               ].join(' ').trim()}
-              onClick={() => setPasteZoneOpen((open) => !open)}
+              onClick={() => setPasteZoneOpen(!pasteZoneOpen)}
               aria-expanded={pasteZoneOpen}
             >
               {pasteZoneOpen ? '×' : '+'} {t('laborAddBefund')}
@@ -2533,6 +2956,16 @@ export function LaborPage({ caseId, onCreatePatient, hasPatient = false }: Labor
                 onClick={() => setViewMode('kumulativ')}
               >
                 {t('laborViewKumulativ')}
+              </button>
+              <button
+                type="button"
+                className={[
+                  'labor-view-toggle__btn',
+                  viewMode === 'verlauf' ? 'labor-view-toggle__btn--active' : '',
+                ].join(' ').trim()}
+                onClick={() => setViewMode('verlauf')}
+              >
+                {t('laborViewVerlauf')}
               </button>
             </div>
 
@@ -2574,6 +3007,7 @@ export function LaborPage({ caseId, onCreatePatient, hasPatient = false }: Labor
 
       {/* Main area */}
       <div className="labor-page__main">
+        {!isExternal ? (
         <header className="labor-page__diagnostics-header">
           <div>
             <h1 className="labor-page__diagnostics-title">{t('diagnosticsPageTitle')}</h1>
@@ -2603,6 +3037,7 @@ export function LaborPage({ caseId, onCreatePatient, hasPatient = false }: Labor
             ))}
           </nav>
         </header>
+        ) : null}
 
         {diagnosticsSection === 'befunde' ? (
           <DiagnostikBefundeMain
@@ -2642,6 +3077,11 @@ export function LaborPage({ caseId, onCreatePatient, hasPatient = false }: Labor
         {/* Kumulativ view */}
         {diagnosticsSection === 'labor' && viewMode === 'kumulativ' && (
           <KumulativView befunde={befunde} normalwerteLabel={t('laborNormalwerte')} caseId={caseId} />
+        )}
+
+        {/* Verlauf view — medication-driven trend graphs (relevant subset + always-on Spiegel) */}
+        {diagnosticsSection === 'labor' && viewMode === 'verlauf' && (
+          <LaborVerlaufOverview befunde={befunde} caseId={caseId} />
         )}
 
         {diagnosticsSection === 'labor' && viewMode === 'einzeln' && selectedBefund ? (
@@ -2818,6 +3258,15 @@ export function LaborPage({ caseId, onCreatePatient, hasPatient = false }: Labor
             <p className="labor-page__empty-text">
               Laborbefund einfügen oder auswählen
             </p>
+            {befunde.length >= 2 && (
+              <button
+                type="button"
+                className="labor-page__empty-cta"
+                onClick={() => setViewMode('verlauf')}
+              >
+                📈 {t('laborViewVerlauf')} anzeigen
+              </button>
+            )}
           </div>
         ) : null}
       </div>

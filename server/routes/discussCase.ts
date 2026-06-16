@@ -22,6 +22,7 @@ import {
   createDiscussion,
   createInvite,
   deleteDiscussion,
+  deleteMessage,
   getDiscussion,
   getLatestPackages,
   getParticipant,
@@ -36,6 +37,7 @@ import {
   resolveAnnotation,
   revokeInvite,
   revokeParticipant,
+  updateMessage,
   writeAuditLog,
 } from '../services/discussCaseStore'
 import type { StoredPackageContent } from '../services/discussCaseStore'
@@ -348,6 +350,67 @@ discussCaseRouter.post('/:id/messages', async (req: Request, res: Response) => {
   }
 })
 
+// PATCH /api/discuss-case/:id/messages/:messageId — edit own message
+discussCaseRouter.patch('/:id/messages/:messageId', async (req: Request, res: Response) => {
+  try {
+    const session = await loadSession(req, res, pathParam(req, 'id'))
+    if (!session) return
+
+    assertPermission(session.permissions, 'send_message')
+
+    const body = typeof req.body?.body === 'string' ? req.body.body : ''
+    if (!body.trim()) {
+      res.status(400).json({ error: 'Message body required' })
+      return
+    }
+
+    const message = await updateMessage({
+      messageId: pathParam(req, 'messageId'),
+      discussionId: session.discussion.id,
+      authorUserId: session.userId,
+      body,
+    })
+
+    res.json({ message })
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Failed'
+    const status = msg.startsWith('Missing permission')
+      ? 403
+      : msg.includes('not found')
+        ? 404
+        : 500
+    console.error('[discuss-case] edit message failed:', error)
+    res.status(status).json({ error: msg })
+  }
+})
+
+// DELETE /api/discuss-case/:id/messages/:messageId — delete own message
+discussCaseRouter.delete('/:id/messages/:messageId', async (req: Request, res: Response) => {
+  try {
+    const session = await loadSession(req, res, pathParam(req, 'id'))
+    if (!session) return
+
+    assertPermission(session.permissions, 'send_message')
+
+    await deleteMessage({
+      messageId: pathParam(req, 'messageId'),
+      discussionId: session.discussion.id,
+      authorUserId: session.userId,
+    })
+
+    res.json({ ok: true })
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Failed'
+    const status = msg.startsWith('Missing permission')
+      ? 403
+      : msg.includes('not found')
+        ? 404
+        : 500
+    console.error('[discuss-case] delete message failed:', error)
+    res.status(status).json({ error: msg })
+  }
+})
+
 // POST /api/discuss-case/:id/annotations
 discussCaseRouter.post('/:id/annotations', async (req: Request, res: Response) => {
   try {
@@ -652,24 +715,31 @@ discussCaseRouter.post('/:id/voice-token', async (req: Request, res: Response) =
   }
 })
 
-// DELETE /api/discuss-case/:id — permanently remove archived discussions
+// DELETE /api/discuss-case/:id — permanently remove a discussion.
+// The owner/creator can delete at any status (incl. while locked out of the
+// E2EE package), since deletion operates on row ids and never decrypts. Other
+// managers keep the archived-only safety rail.
 discussCaseRouter.delete('/:id', async (req: Request, res: Response) => {
   try {
     const session = await loadSession(req, res, pathParam(req, 'id'))
     if (!session) return
 
-    assertPermission(session.permissions, 'manage_discussion')
+    const isOwner = session.discussion.ownerUserId === session.userId
 
-    if (session.discussion.status !== 'archived') {
-      res.status(400).json({
-        error: 'Nur archivierte Besprechungen können gelöscht werden. Bitte zuerst archivieren.',
-      })
-      return
+    if (!isOwner) {
+      assertPermission(session.permissions, 'manage_discussion')
+      if (session.discussion.status !== 'archived') {
+        res.status(400).json({
+          error: 'Nur archivierte Besprechungen können gelöscht werden. Bitte zuerst archivieren.',
+        })
+        return
+      }
     }
 
     await deleteDiscussion({
       discussionId: session.discussion.id,
       actorUserId: session.userId,
+      requireArchived: !isOwner,
     })
 
     res.json({ ok: true })

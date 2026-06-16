@@ -1,0 +1,101 @@
+import type { Disorder, OperationalRule } from './schema'
+import { met, notMet, UNKNOWN } from './schema'
+
+/**
+ * Alkoholabhängigkeitssyndrom — operationalized from ICD-10 F10.2 / ICD-11 6C40.2.
+ * Clinical fact: ≥ 3 of 6 dependence features within a 12-month period. Wording
+ * is original; the standard is referenced via `sourceRef`.
+ *
+ * Each dependence-feature predicate: a present substance-domain finding matching
+ * the feature → `met`; documented controlled/occasional use without dependence
+ * features → `not_met` (positive evidence against dependence); otherwise
+ * `unknown` (becomes a clinician checkbox). This keeps the engine honest — it
+ * never infers a dependence feature from silence.
+ */
+function dependenceFeature(match: RegExp): OperationalRule {
+  return (ctx) => {
+    const present = ctx.present('substance_related_features', match)
+    if (present) return met(present.label)
+    const absent = ctx.absent('substance_related_features', match)
+    if (absent) return notMet(absent.label)
+    if (ctx.substanceControlledUse) {
+      return notMet('Dokumentierter kontrollierter/gelegentlicher Konsum ohne Abhängigkeitsmerkmal')
+    }
+    return UNKNOWN
+  }
+}
+
+export const alcoholDependence: Disorder = {
+  id: 'alcohol_dependence',
+  classification: 'icd10',
+  code: 'F10.2',
+  name_de: 'Alkoholabhängigkeit',
+  crosswalkKey: 'F10.2',
+  sourceRef: 'operationalisiert nach ICD-10 F10.2 / ICD-11 6C40.2',
+  version: 1,
+  status: 'draft',
+  codingSystems: {
+    icd10: { code: 'F10.2', label_de: 'Psychische und Verhaltensstörung durch Alkohol: Abhängigkeitssyndrom' },
+    icd11: { code: '6C40.2', label_de: 'Alkoholabhängigkeit' },
+    dsm5tr: { code: '303.90', label_de: 'Alcohol Use Disorder, moderate–severe (Crosswalk)' },
+  },
+  differentials_de: [
+    'Schädlicher Gebrauch / riskanter Konsum (F10.1) ohne Abhängigkeit',
+    'Akute Intoxikation (F10.0)',
+    'Substanzinduzierte affektive oder Angststörung',
+  ],
+  groups: [
+    {
+      id: 'f10_2.dependence',
+      label_de: 'Abhängigkeitsmerkmale (mindestens 3 innerhalb von 12 Monaten)',
+      logic: 'at_least_n_of',
+      threshold: 3,
+      groupType: 'inclusion',
+      timeWindow: { withinDays: 365 },
+      criteria: [
+        {
+          id: 'f10_2.craving',
+          text_de: 'Starkes Verlangen oder eine Art Zwang, Alkohol zu konsumieren (Craving)',
+          mappingHints: [{ kind: 'isdm_domain', ref: 'substance_related_features', deepLinkPageId: 'anamnese' }],
+          allowClinicianAttest: true,
+          operationalRule: dependenceFeature(/verlangen|craving|suchtdruck|zwang.*konsum/i),
+        },
+        {
+          id: 'f10_2.impaired_control',
+          text_de: 'Verminderte Kontrolle über Beginn, Menge oder Beendigung des Konsums',
+          mappingHints: [{ kind: 'isdm_domain', ref: 'substance_related_features', deepLinkPageId: 'anamnese' }],
+          allowClinicianAttest: true,
+          operationalRule: dependenceFeature(/kontrollverlust|verminderte\s+kontrolle|kann.*nicht.*aufh[öo]r|exzessiv/i),
+        },
+        {
+          id: 'f10_2.withdrawal',
+          text_de: 'Körperliches Entzugssyndrom bei Reduktion oder Beendigung des Konsums',
+          mappingHints: [{ kind: 'isdm_domain', ref: 'substance_related_features', deepLinkPageId: 'anamnese' }],
+          allowClinicianAttest: true,
+          operationalRule: dependenceFeature(/entzug|withdrawal|tremor.*morgen|entzugssymptom/i),
+        },
+        {
+          id: 'f10_2.tolerance',
+          text_de: 'Toleranzentwicklung (Dosissteigerung für die gleiche Wirkung erforderlich)',
+          mappingHints: [{ kind: 'isdm_domain', ref: 'substance_related_features', deepLinkPageId: 'anamnese' }],
+          allowClinicianAttest: true,
+          operationalRule: dependenceFeature(/toleranz|tolerance|dosissteiger|mehr.*menge/i),
+        },
+        {
+          id: 'f10_2.neglect',
+          text_de: 'Vernachlässigung anderer Interessen oder Verpflichtungen zugunsten des Konsums',
+          mappingHints: [{ kind: 'isdm_domain', ref: 'substance_related_features', deepLinkPageId: 'anamnese' }],
+          allowClinicianAttest: true,
+          operationalRule: dependenceFeature(/vernachl[äa]ssig|interessenverlust.*konsum|aufgabe.*aktivit/i),
+        },
+        {
+          id: 'f10_2.persistence_harm',
+          text_de: 'Anhaltender Konsum trotz eindeutig schädlicher körperlicher, psychischer oder sozialer Folgen',
+          mappingHints: [{ kind: 'isdm_domain', ref: 'substance_related_features', deepLinkPageId: 'anamnese' }],
+          allowClinicianAttest: true,
+          operationalRule: dependenceFeature(/trotz.*sch[äa]d|fortgesetzt.*trotz|weiter.*trotz.*folgen/i),
+        },
+      ],
+    },
+  ],
+}

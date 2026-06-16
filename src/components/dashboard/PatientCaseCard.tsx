@@ -1,128 +1,129 @@
-import { FileText } from 'lucide-react'
+import { Archive, Pencil, Trash2 } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
-import type { DashboardCase } from '../../hooks/useCaseRegistry'
-import type { CaseClinicalStats } from '../../utils/dashboardCaseStats'
+import type { DashboardCase, LocalGeschlecht } from '../../hooks/useCaseRegistry'
 import { formatSiteLocaleDate } from '../../utils/siteTimezone'
 import { isDemoCase } from '../../demo'
 
 interface PatientCaseCardProps {
   caseItem: DashboardCase
-  clinicalStats?: CaseClinicalStats
   onOpen: (caseId: string) => void
-  onArchiveDemo?: () => void
+  onEdit?: (caseId: string) => void
+  onArchive?: (caseId: string) => void
+  onDelete?: (caseId: string) => void
+  archived?: boolean
 }
 
-function formatLocalDate(isoDate: string, locale: string): string {
-  return formatSiteLocaleDate(isoDate, locale)
+function genderSymbol(geschlecht: LocalGeschlecht | undefined): string | null {
+  if (geschlecht === 'maennlich') return '♂'
+  if (geschlecht === 'weiblich') return '♀'
+  if (geschlecht === 'divers') return '⚧'
+  return null
 }
 
-export function PatientCaseCard({ caseItem, clinicalStats, onOpen, onArchiveDemo }: PatientCaseCardProps) {
+function genderAriaLabel(
+  geschlecht: LocalGeschlecht | undefined,
+  t: (key: 'patientGeschlechtMaennlich' | 'patientGeschlechtWeiblich' | 'patientGeschlechtDivers') => string,
+): string | null {
+  if (geschlecht === 'maennlich') return t('patientGeschlechtMaennlich')
+  if (geschlecht === 'weiblich') return t('patientGeschlechtWeiblich')
+  if (geschlecht === 'divers') return t('patientGeschlechtDivers')
+  return null
+}
+
+export function PatientCaseCard({
+  caseItem,
+  onOpen,
+  onEdit,
+  onArchive,
+  onDelete,
+  archived = false,
+}: PatientCaseCardProps) {
   const { t, language } = useTranslation()
   const demo = isDemoCase(caseItem.caseId)
-  const genderLabel =
-    caseItem.localGeschlecht === 'maennlich'
-      ? t('patientGeschlechtMaennlich')
-      : caseItem.localGeschlecht === 'weiblich'
-        ? t('patientGeschlechtWeiblich')
-        : caseItem.localGeschlecht === 'divers'
-          ? t('patientGeschlechtDivers')
-          : null
-  const patientDetails = [
-    caseItem.localGeburtsdatum
-      ? `${t('patientFieldGeburtsdatum')}: ${formatLocalDate(caseItem.localGeburtsdatum, language)}`
-      : null,
-    genderLabel,
-  ].filter(Boolean)
-
-  const statChips = clinicalStats
-    ? [
-        clinicalStats.diagnoses > 0
-          ? t('dashboardStatChipDiagnoses').replace('{count}', String(clinicalStats.diagnoses))
-          : null,
-        clinicalStats.documents > 0
-          ? t('dashboardStatChipDocuments').replace('{count}', String(clinicalStats.documents))
-          : null,
-        clinicalStats.verlauf > 0
-          ? t('dashboardStatChipVerlauf').replace('{count}', String(clinicalStats.verlauf))
-          : null,
-        clinicalStats.labor > 0
-          ? t('dashboardStatChipLabor').replace('{count}', String(clinicalStats.labor))
-          : null,
-      ].filter(Boolean)
-    : []
+  const symbol = genderSymbol(caseItem.localGeschlecht)
+  const genderLabel = genderAriaLabel(caseItem.localGeschlecht, t)
 
   return (
-    <button
-      type="button"
-      className="patient-case-card"
-      onClick={() => onOpen(caseItem.caseId)}
-      aria-label={t('dashboardOpenCase').replace('{title}', caseItem.displayTitle)}
+    <article
+      className={[
+        'patient-case-card',
+        archived ? 'patient-case-card--archived' : '',
+      ].join(' ').trim()}
     >
-      <div className="patient-case-card__header">
-        <FileText className="patient-case-card__icon" strokeWidth={1.5} aria-hidden />
+      <button
+        type="button"
+        className="patient-case-card__main"
+        onClick={() => onOpen(caseItem.caseId)}
+        aria-label={t('dashboardOpenCase').replace('{title}', caseItem.displayTitle)}
+      >
         <h3 className="patient-case-card__title">
           {caseItem.displayTitle}
           {demo ? <span className="demo-patient-chip">{t('demoCaseLabel')}</span> : null}
         </h3>
-      </div>
 
-      {patientDetails.length > 0 ? (
-        <p className="patient-case-card__details">{patientDetails.join(' · ')}</p>
-      ) : null}
-
-      {caseItem.documentTypeSummary ? (
-        <p className="patient-case-card__doc-type">{caseItem.documentTypeSummary}</p>
-      ) : null}
-
-      {statChips.length > 0 ? (
-        <div className="patient-case-card__chips" aria-label={t('dashboardClinicalOverview')}>
-          {statChips.map((chip) => (
-            <span key={chip} className="patient-case-card__chip">
-              {chip}
+        <div className="patient-case-card__facts">
+          {caseItem.localGeburtsdatum ? (
+            <span className="patient-case-card__fact">
+              <span className="patient-case-card__fact-label">{t('patientFieldGeburtsdatum')}</span>
+              <span className="patient-case-card__fact-value">
+                {formatSiteLocaleDate(caseItem.localGeburtsdatum, language)}
+              </span>
             </span>
-          ))}
+          ) : null}
+          {symbol ? (
+            <span
+              className="patient-case-card__gender"
+              aria-label={genderLabel ?? undefined}
+              title={genderLabel ?? undefined}
+            >
+              {symbol}
+            </span>
+          ) : null}
         </div>
-      ) : null}
 
-      <p className="patient-case-card__meta">
-        {t('dashboardLastOpened')}: {formatSiteLocaleDate(caseItem.lastEditedAt, language)}
-      </p>
-
-      {caseItem.timelineCount || caseItem.labGraphCount ? (
-        <p className="patient-case-card__counts">
-          {caseItem.timelineCount
-            ? t('dashboardTimelineCount').replace('{count}', String(caseItem.timelineCount))
-            : null}
-          {caseItem.timelineCount && caseItem.labGraphCount ? ' · ' : null}
-          {caseItem.labGraphCount
-            ? t('dashboardLabGraphCount').replace('{count}', String(caseItem.labGraphCount))
-            : null}
+        <p className="patient-case-card__meta">
+          {t('dashboardLastOpened')}: {formatSiteLocaleDate(caseItem.lastEditedAt, language)}
         </p>
-      ) : null}
+      </button>
 
-      {caseItem.localName || caseItem.localVorname || caseItem.localNachname ? (
-        <p className="patient-case-card__local-hint">{t('dashboardLocalNameHint')}</p>
-      ) : null}
-      {demo && onArchiveDemo ? (
-        <span
-          role="button"
-          tabIndex={0}
-          className="patient-case-card__archive-demo"
-          onClick={(event) => {
-            event.stopPropagation()
-            onArchiveDemo()
-          }}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-              event.preventDefault()
-              event.stopPropagation()
-              onArchiveDemo()
-            }
-          }}
-        >
-          {t('demoArchiveAction')}
-        </span>
-      ) : null}
-    </button>
+      <div className="patient-case-card__actions">
+        {!archived && onEdit ? (
+          <button
+            type="button"
+            className="patient-case-card__action-btn"
+            onClick={() => onEdit(caseItem.caseId)}
+            aria-label={t('patientEditData')}
+            title={t('patientEditData')}
+          >
+            <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+            <span>{t('patientEditData')}</span>
+          </button>
+        ) : null}
+        {!archived && onArchive ? (
+          <button
+            type="button"
+            className="patient-case-card__action-btn patient-case-card__action-btn--muted"
+            onClick={() => onArchive(caseItem.caseId)}
+            aria-label={t('patientArchiveAction')}
+            title={t('patientArchiveAction')}
+          >
+            <Archive className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+            <span>{t('patientArchiveAction')}</span>
+          </button>
+        ) : null}
+        {archived && onDelete ? (
+          <button
+            type="button"
+            className="patient-case-card__action-btn patient-case-card__action-btn--danger"
+            onClick={() => onDelete(caseItem.caseId)}
+            aria-label={t('patientDeletePermanent')}
+            title={t('patientDeletePermanent')}
+          >
+            <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+            <span>{t('patientDeletePermanent')}</span>
+          </button>
+        ) : null}
+      </div>
+    </article>
   )
 }

@@ -1936,10 +1936,14 @@
       "type": "ecg",
       "schemaVersion": 1,
       "fieldValues": {
-        "rhythm": "Sinusrhythmus",
-        "rate": "72",
-        "qtc": "410",
-        "findings": "Keine relevante Pathologie"
+        "rhythm": ["sinus"],
+        "rate": "72/min",
+        "ekg_type": "linkstyp",
+        "pq": "160 ms",
+        "qtc": "410 ms",
+        "st": ["normal"],
+        "blocks": ["none"],
+        "conclusion_preset": ["unremarkable"]
       },
       "status": "vidert",
       "examDate": "2026-06-08",

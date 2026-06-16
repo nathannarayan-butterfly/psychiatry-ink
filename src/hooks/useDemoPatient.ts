@@ -5,6 +5,7 @@ import {
   isDemoArchivedForUser,
   isDemoCase,
   isDemoCaseReadOnly,
+  isDemoRemovedForUser,
   loadDemoUserState,
 } from '../demo'
 
@@ -33,4 +34,10 @@ export function useDemoPatient(caseId: string | undefined) {
 export function isDemoCaseVisibleOnDashboard(caseId: string, userId: string): boolean {
   if (!isDemoCase(caseId)) return true
   return !isDemoArchivedForUser(userId)
+}
+
+/** Demo removed cases are hidden entirely; archived demo cases appear under Archiv. */
+export function isCaseListedOnDashboard(caseId: string, userId: string): boolean {
+  if (!isDemoCase(caseId)) return true
+  return !isDemoRemovedForUser(userId)
 }

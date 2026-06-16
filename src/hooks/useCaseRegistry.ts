@@ -17,6 +17,7 @@ import { DEMO_CASE_ID } from '../demo/constants'
 import { countLabGraphs } from '../utils/labPersistence'
 import { countTimelines } from '../utils/timelinePersistence'
 import { getOrCreateDeviceId } from '../utils/cryptoVault'
+import { removeStaleCasesFromRegistry, isStaleCaseId } from '../utils/casePatientLifecycle'
 
 export type LocalGeschlecht = 'maennlich' | 'weiblich' | 'divers'
 
@@ -36,6 +37,8 @@ export interface LocalCaseMeta {
   isDemoPatient?: boolean
   demoSeedVersion?: string
   demoPatientId?: string
+  /** When set, case is hidden from the active patient list and shown under Archiv. */
+  archivedAt?: string
 }
 
 export interface RemoteCaseMeta {
@@ -99,6 +102,7 @@ export async function hydrateCaseRegistry(): Promise<void> {
   }
 
   hydratePromise = (async () => {
+    await removeStaleCasesFromRegistry()
     const localMap = loadRegistryMapFromStorage()
     let apiCases: Awaited<ReturnType<typeof fetchPatientsFromApi>> = []
 
@@ -202,6 +206,7 @@ export function listLocalCases(): LocalCaseMeta[] {
 
 /** Default workspace case is hidden from patient lists unless patient data was entered. */
 export function isListedPatientCase(caseItem: DashboardCase): boolean {
+  if (isStaleCaseId(caseItem.caseId)) return false
   if (caseItem.caseId === DEMO_CASE_ID) return true
   if (caseItem.caseId !== DEFAULT_CASE_ID) return true
   return Boolean(

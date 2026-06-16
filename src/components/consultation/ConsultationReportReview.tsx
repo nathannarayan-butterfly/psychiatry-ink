@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Check, Clipboard, Printer } from 'lucide-react'
 import { ClinicalLoading } from '../ui/ClinicalLoading'
 import type { ConsultationSession } from '../../types/consultation'
 import {
@@ -184,11 +185,23 @@ export function ConsultationReportReview({ requestId, onBack }: ConsultationRepo
           </div>
 
           <div className="consultation-review__actions">
-            <button type="button" className="consultation-workspace__btn" onClick={handlePrint}>
-              Drucken
+            <button
+              type="button"
+              className="icon-action-btn icon-action-btn--bordered"
+              onClick={handlePrint}
+              title="Drucken"
+              aria-label="Drucken"
+            >
+              <Printer strokeWidth={1.75} aria-hidden />
             </button>
-            <button type="button" className="consultation-workspace__btn" onClick={() => void handleCopy()}>
-              {copied ? 'Kopiert' : 'Kopieren'}
+            <button
+              type="button"
+              className={`icon-action-btn icon-action-btn--bordered${copied ? ' icon-action-btn--success' : ''}`}
+              onClick={() => void handleCopy()}
+              title={copied ? 'Kopiert' : 'Kopieren'}
+              aria-label={copied ? 'Kopiert' : 'Kopieren'}
+            >
+              {copied ? <Check strokeWidth={1.75} aria-hidden /> : <Clipboard strokeWidth={1.75} aria-hidden />}
             </button>
             <button
               type="button"

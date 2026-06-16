@@ -19,6 +19,12 @@
   --accent-soft: color-mix(in srgb, var(--accent) 14%, white);
   --accent-ultrasoft: color-mix(in srgb, var(--accent) 7%, white);
 
+  /* Semantic status hues — accent-derived so the legacy multi-hue dashboard
+     unifies onto the clinical palette while keeping subtle directional lean. */
+  --status-info: color-mix(in srgb, var(--accent) 60%, #2563eb);
+  --status-warn: color-mix(in srgb, var(--accent) 55%, #b45309);
+  --status-success: color-mix(in srgb, var(--accent) 58%, #0d9488);
+
   --color-page: var(--app-bg);
   --color-surface-raised: var(--surface);
   --color-editor-surface: var(--surface);
@@ -41,6 +47,10 @@
   --gradient-surface-spot: var(--app-bg);
 
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  /* Typography roles: display (Playfair) for hero/patient names, UI (DM Sans)
+     for labels/dates, body stays Inter via --font-sans. */
+  --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-ui: "DM Sans", system-ui, -apple-system, sans-serif;
 
   --shadow-workspace: 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.05);
   --shadow-panel: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 14px rgba(0, 0, 0, 0.06);
@@ -102,6 +112,10 @@
   --border-width-thick: calc(var(--border-width) * 1.5);
   --border-width-accent: calc(var(--border-width) * 2);
   --radius-sm: 0.75rem;
+  /* Unified radius scale: cards vs. interactive controls. Legacy one-off radii
+     (0.25rem / 5px / 0.375rem) migrate toward these. */
+  --radius-card: 0.6875rem;
+  --radius-control: 0.4375rem;
 
   --bp-compact: 40rem;
   --bp-phone: 22.5rem;
@@ -145,10 +159,93 @@
   --hover-bg: var(--surface-hover);
   --radius-md: 0.5rem;
 
+  /* Clinical card elevation — shared with therapy/medication cards. Defined here
+     (in addition to notion-preview.css) so .clinical-card resolves regardless of
+     stylesheet load order. */
+  --therapy-card-shadow: var(--shadow-elevated-sm);
+  --therapy-card-shadow-hover: var(--shadow-elevated-md);
+
+  /* Shared chart theme — consumed by src/utils/chartTheme.ts (recharts). */
+  --chart-axis: var(--text-muted);
+  --chart-grid: color-mix(in srgb, var(--border-soft) 70%, transparent);
+  --chart-line: var(--accent);
+  --chart-tooltip-bg: var(--surface);
+  --chart-tooltip-border: color-mix(in srgb, var(--accent) 22%, var(--border-soft));
+
   /* Notion paper metrics: rule height drives line rhythm + section padding */
   --notion-rule: 1.65rem;
   --notion-rule-color: color-mix(in srgb, var(--accent) 14%, #e6e4df);
   --notion-paper-bg: var(--surface);
+
+  /*
+   * Curated clinical-area accent palette.
+   *
+   * Goal: the app is no longer a single monochrome accent on every page —
+   * each clinical area carries its own subtle signature hue. To stay cohesive
+   * (and to keep honouring the user's chosen theme accent), every signature
+   * hue is mixed WITH `--accent` via color-mix: switching the global accent
+   * still shifts the whole family, while the per-area target hue keeps each
+   * area individually recognizable. `--area-mix` controls how strongly the
+   * theme accent pulls the family together — higher = more cohesive/muted,
+   * lower = more distinct. Kept subtle by design (clinical, not loud).
+   */
+  --area-mix: 45%;
+  --area-overview: color-mix(in srgb, var(--accent) 80%, #c79a52); /* warm anchor — the brand/home hue */
+  --area-workspace: color-mix(in srgb, var(--accent) var(--area-mix), #5b7595); /* slate blue */
+  --area-verlauf: color-mix(in srgb, var(--accent) var(--area-mix), #2f9189); /* teal */
+  --area-diagnose: color-mix(in srgb, var(--accent) var(--area-mix), #c25a5a); /* clinical red */
+  --area-labor: color-mix(in srgb, var(--accent) var(--area-mix), #3f78c6); /* diagnostic blue */
+  --area-medikation: color-mix(in srgb, var(--accent) var(--area-mix), #7d5cc6); /* violet */
+  --area-therapie: color-mix(in srgb, var(--accent) var(--area-mix), #3fa06d); /* emerald */
+  --area-dokumente: color-mix(in srgb, var(--accent) var(--area-mix), #b8862f); /* ochre/gold */
+  --area-discuss: color-mix(in srgb, var(--accent) var(--area-mix), #c46686); /* rose */
+  --area-konsil: color-mix(in srgb, var(--accent) var(--area-mix), #5a6bc7); /* indigo */
+
+  /*
+   * Current area accent. Components consume `--area-accent` ("the current
+   * area's signature color"); it defaults to the theme accent so anything
+   * outside a clinical area renders exactly as before. Set it by adding a
+   * `data-area="…"` attribute on any ancestor — the rules below resolve it
+   * for that subtree.
+   */
+  --area-accent: var(--accent);
+}
+
+/*
+ * Generic consumption mechanism: any element (or ancestor) carrying a
+ * data-area attribute exposes that area's signature hue as `--area-accent`
+ * for its subtree. Used by the clinical-area nav (per-link) and the case
+ * shell (current area → patient header + content surfaces).
+ */
+[data-area='overview'] {
+  --area-accent: var(--area-overview);
+}
+[data-area='workspace'] {
+  --area-accent: var(--area-workspace);
+}
+[data-area='verlauf'] {
+  --area-accent: var(--area-verlauf);
+}
+[data-area='diagnose'] {
+  --area-accent: var(--area-diagnose);
+}
+[data-area='labor'] {
+  --area-accent: var(--area-labor);
+}
+[data-area='medikation'] {
+  --area-accent: var(--area-medikation);
+}
+[data-area='therapie'] {
+  --area-accent: var(--area-therapie);
+}
+[data-area='dokumente'] {
+  --area-accent: var(--area-dokumente);
+}
+[data-area='discuss'] {
+  --area-accent: var(--area-discuss);
+}
+[data-area='konsil'] {
+  --area-accent: var(--area-konsil);
 }
 
 @layer base {
@@ -234,9 +331,9 @@
   }
 
   .glass-subtle {
+    /* Surface tokens are opaque, so the former backdrop blur was dead weight —
+       dropped for perf. Sticky chrome that wants depth uses --shadow-elevated-*. */
     background: var(--glass-bg-subtle);
-    backdrop-filter: blur(calc(var(--glass-blur) * 0.75)) saturate(1.2);
-    -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 0.75)) saturate(1.2);
   }
 
   .glass-header {
@@ -1135,6 +1232,118 @@
     .tool-box:hover:not(:disabled) {
       transform: none;
     }
+  }
+
+  /* ──────────────────────────────────────────────────────────────────────────
+     Clinical card primitive — the shared surface for dashboard/legacy panels,
+     modelled on the therapy/medication dashboard cards. Use the class directly
+     or @extend-style by adding it alongside legacy card classes.
+     ────────────────────────────────────────────────────────────────────────── */
+  .clinical-card {
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    box-shadow: var(--therapy-card-shadow, var(--shadow-elevated-sm));
+    transition:
+      transform var(--transition-fast),
+      box-shadow var(--transition-fast),
+      border-color var(--transition-fast);
+  }
+
+  .clinical-card--interactive {
+    cursor: pointer;
+  }
+
+  .clinical-card:hover,
+  a.clinical-card:hover,
+  button.clinical-card:hover,
+  .clinical-card--interactive:hover {
+    border-color: color-mix(in srgb, var(--accent) 28%, var(--border-soft));
+    box-shadow: var(--therapy-card-shadow-hover, var(--shadow-elevated-md));
+    transform: translateY(-1px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .clinical-card {
+      transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+    }
+
+    .clinical-card:hover,
+    a.clinical-card:hover,
+    button.clinical-card:hover,
+    .clinical-card--interactive:hover {
+      transform: none;
+    }
+  }
+
+  /* Staggered entrance — opt-in via .stagger-children on a container; each direct
+     child eases in with an increasing delay. Reused for dashboard hero/grids. */
+  .stagger-children > * {
+    animation: fade-in-up 0.4s ease-out both;
+  }
+
+  .stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+  .stagger-children > *:nth-child(2) { animation-delay: 50ms; }
+  .stagger-children > *:nth-child(3) { animation-delay: 100ms; }
+  .stagger-children > *:nth-child(4) { animation-delay: 150ms; }
+  .stagger-children > *:nth-child(5) { animation-delay: 200ms; }
+  .stagger-children > *:nth-child(6) { animation-delay: 250ms; }
+
+  .fade-in-up {
+    animation: fade-in-up 0.4s ease-out both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stagger-children > *,
+    .fade-in-up {
+      animation: none;
+    }
+  }
+
+  /* Clinical empty-state surface — richer than a bare italic line; dashed card
+     with centred copy + optional action. */
+  .clinical-empty-state-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    border: 1px dashed color-mix(in srgb, var(--accent) 22%, var(--border-soft));
+    border-radius: var(--radius-card);
+    background: color-mix(in srgb, var(--accent) 3%, var(--surface));
+  }
+
+  .clinical-empty-state-card__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+    color: color-mix(in srgb, var(--accent) 70%, var(--text-main));
+    margin-bottom: 0.15rem;
+  }
+
+  .clinical-empty-state-card__title {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text-main);
+  }
+
+  .clinical-empty-state-card__text {
+    margin: 0;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+    max-width: 28rem;
+  }
+
+  .verlauf-feed-page__empty-card {
+    margin: 2rem 0;
   }
 
   .workspace-frame {
@@ -2912,7 +3121,7 @@
     padding: 0 1.5rem 3rem;
     max-width: 72rem;
     margin: 0 auto;
-    background: #fff;
+    background: var(--app-bg);
     -webkit-overflow-scrolling: touch;
   }
 
@@ -2924,8 +3133,8 @@
     margin: 0 -1.5rem 0;
     padding: 0.65rem 1.5rem;
     border-bottom: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border-soft));
-    background: #fff;
-    box-shadow: 0 1px 0 color-mix(in srgb, var(--accent) 8%, transparent);
+    background: var(--surface);
+    box-shadow: var(--shadow-elevated-sm);
     position: sticky;
     top: 0;
     z-index: 20;
@@ -2945,6 +3154,130 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 10rem;
+    padding-right: 0.25rem;
+  }
+
+  .dashboard-nav-cards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  @media (max-width: 52rem) {
+    .dashboard-nav-cards {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .dashboard-nav-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.875rem 1rem;
+    text-align: left;
+  }
+
+  .dashboard-nav-card__icon-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: var(--radius-control);
+    background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+    color: color-mix(in srgb, var(--accent) 75%, var(--text-ink));
+  }
+
+  .dashboard-nav-card--calendar {
+    border-color: color-mix(in srgb, var(--status-info) 28%, var(--border));
+    background: color-mix(in srgb, var(--status-info) 5%, var(--surface));
+  }
+
+  .dashboard-nav-card--calendar .dashboard-nav-card__icon-wrap {
+    background: color-mix(in srgb, var(--status-info) 14%, var(--surface));
+    color: color-mix(in srgb, var(--status-info) 82%, black);
+  }
+
+  .dashboard-nav-card--calendar:hover {
+    border-color: color-mix(in srgb, var(--status-info) 38%, var(--border));
+    background: color-mix(in srgb, var(--status-info) 7%, var(--surface));
+  }
+
+  .dashboard-nav-card--templates {
+    border-color: color-mix(in srgb, var(--status-warn) 28%, var(--border));
+    background: color-mix(in srgb, var(--status-warn) 5%, var(--surface));
+  }
+
+  .dashboard-nav-card--templates .dashboard-nav-card__icon-wrap {
+    background: color-mix(in srgb, var(--status-warn) 14%, var(--surface));
+    color: color-mix(in srgb, var(--status-warn) 82%, black);
+  }
+
+  .dashboard-nav-card--templates:hover {
+    border-color: color-mix(in srgb, var(--status-warn) 38%, var(--border));
+    background: color-mix(in srgb, var(--status-warn) 7%, var(--surface));
+  }
+
+  .dashboard-nav-card--kb {
+    border-color: color-mix(in srgb, var(--status-success) 28%, var(--border));
+    background: color-mix(in srgb, var(--status-success) 5%, var(--surface));
+  }
+
+  .dashboard-nav-card--kb .dashboard-nav-card__icon-wrap {
+    background: color-mix(in srgb, var(--status-success) 14%, var(--surface));
+    color: color-mix(in srgb, var(--status-success) 82%, black);
+  }
+
+  .dashboard-nav-card--kb:hover {
+    border-color: color-mix(in srgb, var(--status-success) 38%, var(--border));
+    background: color-mix(in srgb, var(--status-success) 7%, var(--surface));
+  }
+
+  .dashboard-nav-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .dashboard-nav-card__title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .dashboard-nav-card__subtitle {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    line-height: 1.35;
+  }
+
+  .dashboard-nav-card__arrow {
+    flex-shrink: 0;
+    color: var(--text-muted);
+    transition: transform 0.15s ease;
+  }
+
+  .dashboard-nav-card:hover .dashboard-nav-card__arrow {
+    transform: translateX(2px);
+  }
+
+  .dashboard-section__heading--visually-muted {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .dashboard-section__intro {
+    margin: -0.25rem 0 0.75rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
   }
 
   .dashboard-topbar__actions {
@@ -2972,6 +3305,35 @@
 
   .dashboard-hero {
     padding: 1.5rem 0 0.75rem;
+  }
+
+  .dashboard-hero__copy {
+    position: relative;
+    margin-top: 0.25rem;
+    padding: 1.25rem 1.5rem;
+    border-radius: var(--radius-card);
+    border: 1px solid color-mix(in srgb, var(--accent) 16%, var(--border-soft));
+    background:
+      linear-gradient(
+        120deg,
+        color-mix(in srgb, var(--accent) 10%, var(--surface)),
+        color-mix(in srgb, var(--accent) 3%, var(--surface)) 65%
+      );
+    box-shadow: var(--shadow-elevated-sm);
+    overflow: hidden;
+  }
+
+  .dashboard-hero__copy::after {
+    content: '';
+    position: absolute;
+    inset: 0 0 0 auto;
+    width: 40%;
+    background: radial-gradient(
+      120% 140% at 100% 0%,
+      color-mix(in srgb, var(--accent) 14%, transparent),
+      transparent 70%
+    );
+    pointer-events: none;
   }
 
   .dashboard-hinweise-stack {
@@ -3100,28 +3462,25 @@
   }
 
   .dashboard-hero__date {
-    margin: 0 0 0.25rem;
+    position: relative;
+    margin: 0 0 0.35rem;
+    font-family: var(--font-ui);
     font-size: 0.6875rem;
     font-weight: 600;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--text-muted);
+    color: color-mix(in srgb, var(--accent) 62%, var(--text-muted));
   }
 
   .dashboard-hero__title {
-    margin: 0 0 0.375rem;
-    font-size: 1.625rem;
-    font-weight: 600;
-    line-height: 1.2;
-    letter-spacing: -0.02em;
-  }
-
-  .dashboard-hero__intro {
+    position: relative;
     margin: 0;
-    max-width: 42rem;
-    font-size: 0.875rem;
-    line-height: 1.55;
-    color: var(--text-muted);
+    font-family: var(--font-display);
+    font-size: 2.1rem;
+    font-weight: 600;
+    line-height: 1.12;
+    letter-spacing: -0.01em;
+    color: color-mix(in srgb, var(--accent) 30%, var(--text-main));
   }
 
   .dashboard-quick-actions {
@@ -3135,22 +3494,12 @@
     align-items: flex-start;
     gap: 0.75rem;
     padding: 0.875rem 1rem;
-    border: 1px solid var(--border);
-    border-radius: 0.375rem;
-    background: #fff;
     text-align: left;
-    cursor: pointer;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-  }
-
-  .dashboard-quick-action:hover {
-    border-color: color-mix(in srgb, var(--border) 40%, var(--text-ink));
-    box-shadow: 0 1px 0 color-mix(in srgb, var(--accent) 10%, transparent);
   }
 
   .dashboard-quick-action--primary {
     border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
-    background: color-mix(in srgb, var(--accent) 4%, #fff);
+    background: color-mix(in srgb, var(--accent) 4%, var(--surface));
   }
 
   .dashboard-quick-action__icon-wrap {
@@ -3160,13 +3509,13 @@
     flex-shrink: 0;
     width: 2rem;
     height: 2rem;
-    border-radius: 0.375rem;
+    border-radius: var(--radius-control);
     background: color-mix(in srgb, var(--accent) 8%, var(--surface));
     color: var(--text-muted);
   }
 
   .dashboard-quick-action--primary .dashboard-quick-action__icon-wrap {
-    background: color-mix(in srgb, var(--accent) 14%, #fff);
+    background: color-mix(in srgb, var(--accent) 14%, var(--surface));
     color: var(--text-ink);
   }
 
@@ -3214,22 +3563,22 @@
     flex-direction: column;
     gap: 0.25rem;
     padding: 0.875rem;
-    border: 1px solid var(--border);
-    border-radius: 0.375rem;
-    background: #fff;
   }
 
   .dashboard-kpi__icon {
     width: 1rem;
     height: 1rem;
-    color: var(--text-muted);
+    color: color-mix(in srgb, var(--accent) 55%, var(--text-muted));
   }
 
   .dashboard-kpi__value {
-    font-size: 1.125rem;
+    font-size: 1.375rem;
     font-weight: 600;
-    line-height: 1.2;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
     color: var(--text-ink);
+    font-variant-numeric: tabular-nums lining-nums;
+    font-feature-settings: 'tnum' 1, 'lnum' 1;
   }
 
   .dashboard-kpi__value--btn {
@@ -3246,7 +3595,7 @@
   }
 
   .dashboard-kpi__value--warn {
-    color: #b45309;
+    color: var(--warning);
   }
 
   .dashboard-kpi__label {
@@ -3260,17 +3609,22 @@
   }
 
   .dashboard-kpi__bar {
-    height: 3px;
-    margin-top: 0.25rem;
+    height: 4px;
+    margin-top: 0.375rem;
     border-radius: 999px;
-    background: color-mix(in srgb, var(--accent) 10%, var(--border-soft));
+    background: color-mix(in srgb, var(--accent) 12%, var(--border-soft));
     overflow: hidden;
   }
 
   .dashboard-kpi__bar-fill {
     height: 100%;
     border-radius: inherit;
-    background: color-mix(in srgb, var(--accent) 55%, var(--text-ink));
+    background: linear-gradient(
+      90deg,
+      var(--accent),
+      color-mix(in srgb, var(--accent) 65%, white)
+    );
+    transition: width var(--transition-smooth);
   }
 
   .dashboard-section__header-row {
@@ -3299,8 +3653,8 @@
     gap: 0.375rem;
     padding: 0.375rem 0.625rem;
     border: 1px solid var(--border);
-    border-radius: 0.25rem;
-    background: #fff;
+    border-radius: var(--radius-control);
+    background: var(--surface);
     min-width: 12rem;
   }
 
@@ -3321,7 +3675,7 @@
   .dashboard-patients-view-toggle {
     display: inline-flex;
     border: 1px solid var(--border);
-    border-radius: 0.25rem;
+    border-radius: var(--radius-control);
     overflow: hidden;
   }
 
@@ -3332,13 +3686,13 @@
     width: 2rem;
     height: 2rem;
     border: none;
-    background: #fff;
+    background: var(--surface);
     color: var(--text-muted);
     cursor: pointer;
   }
 
   .dashboard-patients-view-btn--active {
-    background: color-mix(in srgb, var(--accent) 8%, #fff);
+    background: color-mix(in srgb, var(--accent) 8%, var(--surface));
     color: var(--text-ink);
   }
 
@@ -3347,7 +3701,7 @@
     margin: 0;
     padding: 0;
     border: 1px solid var(--border);
-    border-radius: 0.375rem;
+    border-radius: var(--radius-card);
     overflow: hidden;
   }
 
@@ -3360,7 +3714,7 @@
     padding: 0.75rem 0.875rem;
     border: none;
     border-bottom: 1px solid var(--border);
-    background: #fff;
+    background: var(--surface);
     text-align: left;
     cursor: pointer;
   }
@@ -3370,7 +3724,7 @@
   }
 
   .dashboard-patients-list__row:hover {
-    background: color-mix(in srgb, var(--accent) 4%, #fff);
+    background: color-mix(in srgb, var(--accent) 4%, var(--surface));
   }
 
   .dashboard-patients-list__main {
@@ -3414,7 +3768,7 @@
     margin: 0;
     padding: 0;
     border: 1px solid var(--border);
-    border-radius: 0.375rem;
+    border-radius: var(--radius-card);
     overflow: hidden;
   }
 
@@ -3427,7 +3781,7 @@
     padding: 0.75rem 0.875rem;
     border: none;
     border-bottom: 1px solid var(--border);
-    background: #fff;
+    background: var(--surface);
     text-align: left;
     cursor: pointer;
   }
@@ -3437,7 +3791,7 @@
   }
 
   .dashboard-activity-list__row:hover {
-    background: color-mix(in srgb, var(--accent) 4%, #fff);
+    background: color-mix(in srgb, var(--accent) 4%, var(--surface));
   }
 
   .dashboard-activity-list__main {
@@ -3619,26 +3973,54 @@
     gap: 0.75rem;
     padding: 1rem;
     border: 1px solid var(--border);
-    border-radius: 0.25rem;
-    background: #fff;
+    border-radius: var(--radius-card);
+    background: var(--surface);
   }
 
   .patient-case-card {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 0.375rem;
+    gap: 0.5rem;
     padding: 0.875rem;
     border: 1px solid var(--border);
-    border-radius: 0.25rem;
-    background: #fff;
+    border-radius: var(--radius-card);
+    background: var(--surface);
+    text-align: left;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+
+  .patient-case-card--archived {
+    background: color-mix(in srgb, var(--text-muted) 4%, var(--surface));
+  }
+
+  .patient-case-card__main {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.375rem;
+    width: 100%;
+    padding: 0;
+    border: none;
+    background: transparent;
     text-align: left;
     cursor: pointer;
-    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+
+  .patient-case-card__main:hover .patient-case-card__title {
+    color: color-mix(in srgb, var(--accent) 55%, var(--ink));
   }
 
   .patient-case-card:hover {
     border-color: color-mix(in srgb, var(--border) 40%, var(--text-ink));
+    border-left: 3px solid color-mix(in srgb, var(--accent) 55%, transparent);
+    padding-left: calc(0.875rem - 2px);
+  }
+
+  .dashboard-section--archive {
+    padding: 0.75rem;
+    border-radius: var(--radius-card);
+    background: color-mix(in srgb, var(--text-muted) 4%, var(--surface));
+    border: 1px dashed color-mix(in srgb, var(--text-muted) 18%, var(--border));
   }
 
   .patient-case-card__header {
@@ -3661,6 +4043,83 @@
     line-height: 1.35;
     min-width: 0;
     flex: 1;
+    transition: color 0.15s ease;
+  }
+
+  .patient-case-card__facts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+  }
+
+  .patient-case-card__fact {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    font-size: 0.75rem;
+  }
+
+  .patient-case-card__fact-label {
+    color: var(--text-muted);
+  }
+
+  .patient-case-card__fact-value {
+    color: var(--text-ink);
+  }
+
+  .patient-case-card__gender {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.375rem;
+    height: 1.375rem;
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-ink);
+    background: color-mix(in srgb, var(--text-muted) 10%, #fff);
+  }
+
+  .patient-case-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    padding-top: 0.25rem;
+    border-top: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  }
+
+  .patient-case-card__action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 0.25rem;
+    background: #fff;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    color: var(--text-ink);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+
+  .patient-case-card__action-btn:hover {
+    border-color: color-mix(in srgb, var(--border) 40%, var(--text-ink));
+    background: color-mix(in srgb, var(--accent) 5%, #fff);
+  }
+
+  .patient-case-card__action-btn--muted {
+    color: var(--text-muted);
+  }
+
+  .patient-case-card__action-btn--danger {
+    color: #b45309;
+    border-color: color-mix(in srgb, #b45309 25%, var(--border));
+  }
+
+  .patient-case-card__action-btn--danger:hover {
+    background: color-mix(in srgb, #fef3c7 40%, #fff);
   }
 
   .patient-case-card__doc-type {
@@ -4160,13 +4619,14 @@
   }
 
   .unsaved-changes-dialog__btn--save {
-    background: var(--text-ink);
-    color: var(--surface);
-    border-color: var(--text-ink);
+    background: var(--accent);
+    color: var(--color-accent-foreground, #fff);
+    border-color: var(--accent);
   }
 
   .unsaved-changes-dialog__btn--save:hover:not(:disabled) {
-    opacity: 0.88;
+    background: color-mix(in srgb, var(--accent) 88%, black);
+    border-color: color-mix(in srgb, var(--accent) 88%, black);
   }
 
   .unsaved-changes-dialog__btn--discard {

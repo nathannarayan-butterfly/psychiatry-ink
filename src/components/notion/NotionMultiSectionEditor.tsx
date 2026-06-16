@@ -39,7 +39,6 @@ interface NotionMultiSectionEditorProps {
   onPasteOrigin: () => void
   onSelectionAction: (action: SelectionActionId, selectedText: string) => void
   onSlashCommand: (command: SlashCommandId) => void
-  commandMenuRequest?: number
   focusRequest?: number
   pendingPaste?: PendingPaste | null
 }
@@ -79,7 +78,6 @@ export function NotionMultiSectionEditor({
   onPasteOrigin,
   onSelectionAction,
   onSlashCommand,
-  commandMenuRequest = 0,
   focusRequest = 0,
   pendingPaste = null,
 }: NotionMultiSectionEditorProps) {
@@ -155,27 +153,6 @@ export function NotionMultiSectionEditor({
     setSelectionToolbar(null)
     setSlashMenu(null)
   }, [])
-
-  const openCommandMenu = useCallback(() => {
-    if (readOnly) return
-    const sectionId = activeTextareaId ?? activeSectionId
-    if (!sectionId) return
-    const textarea = textareaRefs.current[sectionId]
-    if (!textarea) return
-
-    setSlashMenu({
-      filter: '',
-      position: getSelectionPosition(textarea),
-      slashIndex: textarea.selectionStart,
-      sectionId,
-    })
-    setSelectionToolbar(null)
-  }, [activeSectionId, activeTextareaId, readOnly])
-
-  useEffect(() => {
-    if (commandMenuRequest === 0) return
-    openCommandMenu()
-  }, [commandMenuRequest, openCommandMenu])
 
   const handleCopySection = useCallback(
     async (section: DocumentSection) => {

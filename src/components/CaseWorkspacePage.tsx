@@ -29,8 +29,7 @@ import { toDocumentTypes } from '../utils/workspaceComponents'
 import type { DocumentType } from '../types'
 import type { UiLanguage } from '../types/settings'
 import { NotionApp } from './notion/NotionApp'
-import { DiscussCasePage } from './discuss-case/DiscussCasePage'
-import { ConsultationCasePage } from './consultation/ConsultationCasePage'
+import type { TopNavTabId } from './notion/CaseTopNav'
 import { useTranslation } from '../context/TranslationContext'
 import { useAuth } from '../context/AuthContext'
 import { usePermissionContext } from '../contexts/PermissionContext'
@@ -66,6 +65,9 @@ interface WorkspaceInnerProps {
   onNavigateDashboard?: () => void
   onNavigateNewCase?: (caseId: string, page?: NotionPageId, showPatientDashboard?: boolean, appointmentId?: string) => void
   onNavigate?: (path: string) => void
+  initialTopTab?: TopNavTabId
+  initialDiscussId?: string
+  initialKonsilId?: string
   documentTypes: DocumentType[]
   language: UiLanguage
   appearance: AppearanceState
@@ -104,6 +106,9 @@ function WorkspaceInner({
   onNavigateDashboard,
   onNavigateNewCase,
   onNavigate,
+  initialTopTab,
+  initialDiscussId,
+  initialKonsilId,
   documentTypes,
   language,
   appearance,
@@ -357,24 +362,10 @@ function WorkspaceInner({
       onMigratedAge={handleMigratedAge}
       onNavigateDashboard={onNavigateDashboard}
       onNavigateNewCase={onNavigateNewCase}
-      onOpenDiscuss={
-        onNavigate
-          ? () => onNavigate(`/case/${encodeURIComponent(workspaceStorageId)}/discuss`)
-          : undefined
-      }
-      onOpenKonsil={
-        onNavigate
-          ? () => onNavigate(`/case/${encodeURIComponent(workspaceStorageId)}/konsil`)
-          : undefined
-      }
-      onOpenKonsilRequest={
-        onNavigate
-          ? (requestId) =>
-              onNavigate(
-                `/case/${encodeURIComponent(workspaceStorageId)}/konsil/${encodeURIComponent(requestId)}`,
-              )
-          : undefined
-      }
+      onNavigate={onNavigate}
+      initialTopTab={initialTopTab}
+      initialDiscussId={initialDiscussId}
+      initialKonsilId={initialKonsilId}
       plan={plan}
       workspaceTabs={workspaceTabs}
       savedDocsCaseId={workspaceStorageId}
@@ -465,27 +456,11 @@ export function CaseWorkspacePage({
     [tabs, activeTabId, setActiveTabId, addTab, handleCloseTab, updateTabPatient],
   )
 
-  if (discussMode && onNavigate) {
-    return (
-      <DiscussCasePage
-        caseId={workspaceStorageId}
-        discussionId={discussId}
-        onNavigate={onNavigate}
-        onNavigateHome={onNavigateDashboard}
-      />
-    )
-  }
-
-  if (konsilMode && onNavigate) {
-    return (
-      <ConsultationCasePage
-        caseId={workspaceStorageId}
-        requestId={konsilId}
-        onNavigate={onNavigate}
-        onNavigateHome={onNavigateDashboard}
-      />
-    )
-  }
+  const initialTopTab: TopNavTabId | undefined = discussMode
+    ? 'discuss'
+    : konsilMode
+      ? 'konsil'
+      : undefined
 
   return (
     <WorkspaceInner
@@ -496,6 +471,9 @@ export function CaseWorkspacePage({
       onNavigateDashboard={onNavigateDashboard}
       onNavigateNewCase={onNavigateNewCase}
       onNavigate={onNavigate}
+      initialTopTab={initialTopTab}
+      initialDiscussId={discussId}
+      initialKonsilId={konsilId}
       documentTypes={documentTypes}
       language={languageSettings.language}
       appearance={appearance}

@@ -2,10 +2,8 @@ import { X } from 'lucide-react'
 import { useCallback } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import { usePanelGraphicSchedule } from '../../hooks/usePanelGraphicSchedule'
-import { PanelDateCard } from '../PanelDateCard'
 import { PanelGraphic } from '../PanelGraphic'
 import { PsychopathModeRail } from '../workspace/PsychopathModeRail'
-import { PomodoroWidget } from './PomodoroWidget'
 import { LaborSidebarWidget } from './LaborSidebarWidget'
 import type { SavedDoc } from '../../utils/savedDocs'
 import type { PsychopathSubMode } from '../../utils/psychopathMode'
@@ -48,7 +46,7 @@ export function NotionDiarySidebar({
   breakReminderActive,
   onClosePanelGraphic,
   collapsed = false,
-  onBreakStart,
+  onBreakStart: _onBreakStart,
   caseId,
   onNavigateToLabor,
   savedDocs,
@@ -80,16 +78,8 @@ export function NotionDiarySidebar({
       className={`notion-diary-sidebar${collapsed ? ' notion-diary-sidebar--collapsed' : ''}`}
       aria-label={t('notionMetadata')}
     >
-      {collapsed ? (
-        <div className="notion-diary-sidebar__collapsed-datetime">
-          <PanelDateCard layout="vertical" />
-        </div>
-      ) : (
+      {collapsed ? null : (
         <>
-          <div className="notion-diary-sidebar__date">
-            <PanelDateCard layout="sidebar" />
-          </div>
-
           {showPsychopathModeRail && onPsychopathModeSelect ? (
             <PsychopathModeRail
               activeMode={psychopathActiveMode}
@@ -98,10 +88,6 @@ export function NotionDiarySidebar({
               onSelect={onPsychopathModeSelect}
             />
           ) : null}
-
-          <div className="notion-diary-sidebar__timers">
-            <PomodoroWidget onBreakStart={onBreakStart ?? (() => {})} variant="sidebar" />
-          </div>
 
           {caseId && (
             <LaborSidebarWidget caseId={caseId} onNavigateToLabor={onNavigateToLabor} />

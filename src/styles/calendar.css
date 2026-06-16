@@ -371,13 +371,33 @@
   margin-top: 1rem;
 }
 
-/* Day schedule panel */
+.calendar-patient-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.calendar-patient-field > :first-child {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.calendar-patient-field__linked {
+  margin: 0.35rem 0 0;
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--accent, #4a7c59) 80%, var(--text-main, #1a1a1a));
+}
+
+/* Day schedule panel — warm slate/teal palette (distinct from calendar nav card blue) */
 .day-schedule-panel {
+  --day-schedule-header: #475569;
+  --day-schedule-accent: #0f766e;
   margin-bottom: 1.25rem;
   padding: 0.85rem 1rem;
-  border: 1px solid color-mix(in srgb, var(--text-main, #1a1a1a) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--day-schedule-header) 18%, var(--border, #e5e5e5));
   border-radius: 0.5rem;
-  background: color-mix(in srgb, var(--text-main, #1a1a1a) 2%, #fff);
+  background: color-mix(in srgb, var(--day-schedule-header) 2.5%, #fff);
 }
 
 .day-schedule-panel__header {
@@ -392,6 +412,11 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
+  color: var(--day-schedule-header);
+}
+
+.day-schedule-panel__title-row svg {
+  color: var(--day-schedule-accent);
 }
 
 .day-schedule-panel__title {
@@ -411,6 +436,25 @@
   font-size: 0.75rem;
   min-width: 8rem;
   text-align: center;
+  color: color-mix(in srgb, var(--day-schedule-header) 85%, var(--text-main, #1a1a1a));
+}
+
+.day-schedule-panel__nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid color-mix(in srgb, var(--day-schedule-header) 16%, transparent);
+  border-radius: 0.25rem;
+  background: transparent;
+  color: var(--day-schedule-header);
+  cursor: pointer;
+}
+
+.day-schedule-panel__nav-btn:hover {
+  border-color: color-mix(in srgb, var(--day-schedule-accent) 35%, transparent);
+  color: var(--day-schedule-accent);
 }
 
 .day-schedule-panel__filter {

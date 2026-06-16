@@ -1,0 +1,386 @@
+/**
+ * Butterfly criteria-support panel.
+ *
+ * Themed via the global design tokens (var(--accent) for primary action,
+ * area-accent tints for subtle surfaces, and semantic status tokens for
+ * met / not-met / insufficient states). No black buttons; no edits to
+ * globals.css / case-sidebar.css / notion-preview.css.
+ */
+
+.butterfly-panel {
+  --bf-met: var(--status-success, #0d9488);
+  --bf-not-met: var(--status-warn, #b45309);
+  --bf-insufficient: var(--text-secondary, #6d655c);
+  margin-top: 1.25rem;
+  padding: 1.1rem 1.25rem 1.25rem;
+  border: var(--border-width, 1px) solid var(--border-soft, #e8e4df);
+  border-radius: 14px;
+  background: var(--surface, #fff);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+/* ── Idle ("observing") state ───────────────────────────────────────────── */
+.butterfly-panel--idle {
+  background: var(--accent-ultrasoft, #faf6f1);
+  border-style: dashed;
+}
+
+.butterfly-panel__idle-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  text-align: center;
+  padding: 0.75rem 0;
+  color: var(--text-secondary, #6d655c);
+}
+
+.butterfly-panel__idle-mark {
+  font-size: 1.5rem;
+  opacity: 0.7;
+}
+
+.butterfly-panel__idle-title {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-primary, #1f1b16);
+}
+
+.butterfly-panel__idle-hint {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+.butterfly-panel__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.butterfly-panel__title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.butterfly-panel__mark {
+  font-size: 1.35rem;
+  line-height: 1.4;
+}
+
+.butterfly-panel__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary, #1f1b16);
+}
+
+.butterfly-panel__subtitle,
+.butterfly-panel__updated,
+.butterfly-panel__draft-notice {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #6d655c);
+}
+
+.butterfly-panel__draft-notice {
+  font-style: italic;
+}
+
+.butterfly-panel__disclaimer {
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--text-secondary, #6d655c);
+  background: var(--accent-ultrasoft, #faf6f1);
+  border-left: 3px solid var(--accent, #8a5a2b);
+  border-radius: 8px;
+}
+
+/* ── Sections ───────────────────────────────────────────────────────────── */
+.butterfly-panel__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.butterfly-panel__section-title {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-primary, #1f1b16);
+}
+
+.butterfly-panel__empty {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary, #6d655c);
+}
+
+.butterfly-panel__review-note {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent, #8a5a2b);
+}
+
+/* ── Recommendation cards ───────────────────────────────────────────────── */
+.butterfly-card-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.butterfly-card {
+  --bf-card-accent: var(--bf-insufficient);
+  padding: 0.85rem 0.9rem;
+  border: 1px solid var(--border-soft, #e8e4df);
+  border-left: 4px solid var(--bf-card-accent);
+  border-radius: 12px;
+  background: var(--surface, #fff);
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.butterfly-card--met {
+  --bf-card-accent: var(--bf-met);
+}
+.butterfly-card--not_met {
+  --bf-card-accent: var(--bf-not-met);
+}
+.butterfly-card--insufficient {
+  --bf-card-accent: var(--bf-insufficient);
+}
+.butterfly-card--unavailable {
+  --bf-card-accent: var(--border-strong, #c8c4be);
+  background: var(--accent-ultrasoft, #faf6f1);
+}
+
+.butterfly-card__unavailable {
+  margin: 0;
+  font-size: 0.83rem;
+  font-style: italic;
+  color: var(--text-secondary, #6d655c);
+}
+
+.butterfly-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.butterfly-card__heading {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.butterfly-card__name {
+  font-weight: 700;
+  color: var(--text-primary, #1f1b16);
+}
+
+.butterfly-card__code {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent, #8a5a2b);
+  background: var(--accent-soft, #efe2d4);
+  padding: 0.05rem 0.4rem;
+  border-radius: 6px;
+}
+
+.butterfly-verdict {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  white-space: nowrap;
+  color: #fff;
+  background: var(--bf-card-accent);
+}
+
+.butterfly-card__advice {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--text-primary, #1f1b16);
+}
+
+.butterfly-card__group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.butterfly-card__group-label {
+  margin: 0;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-secondary, #6d655c);
+}
+
+.butterfly-chip-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.butterfly-chip {
+  font-size: 0.78rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 8px;
+  background: var(--surface-hover, #f5f5f5);
+  color: var(--text-primary, #1f1b16);
+}
+
+.butterfly-chip--met {
+  background: color-mix(in srgb, var(--bf-met) 14%, white);
+  color: color-mix(in srgb, var(--bf-met) 70%, black);
+}
+
+/* ── Attestation rows ───────────────────────────────────────────────────── */
+.butterfly-attest-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.butterfly-attest {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--border-soft, #e8e4df);
+  border-radius: 9px;
+  background: var(--accent-ultrasoft, #faf6f1);
+}
+
+.butterfly-attest__text {
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--text-primary, #1f1b16);
+}
+
+.butterfly-attest__actions {
+  display: inline-flex;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+
+.butterfly-attest__btn {
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 0.22rem 0.55rem;
+  border-radius: 7px;
+  border: 1px solid var(--border-strong, #c8c4be);
+  background: var(--surface, #fff);
+  color: var(--text-secondary, #6d655c);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+
+.butterfly-attest__btn:hover {
+  border-color: var(--accent, #8a5a2b);
+  color: var(--accent, #8a5a2b);
+}
+
+.butterfly-attest__btn--met.is-active {
+  background: color-mix(in srgb, var(--bf-met) 16%, white);
+  border-color: var(--bf-met);
+  color: color-mix(in srgb, var(--bf-met) 72%, black);
+}
+
+.butterfly-attest__btn--not-met.is-active {
+  background: color-mix(in srgb, var(--bf-not-met) 16%, white);
+  border-color: var(--bf-not-met);
+  color: color-mix(in srgb, var(--bf-not-met) 72%, black);
+}
+
+.butterfly-attest__hint {
+  margin: 0;
+  font-size: 0.74rem;
+  color: var(--text-secondary, #6d655c);
+}
+
+/* ── Differentials + source ─────────────────────────────────────────────── */
+.butterfly-card__differentials {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #6d655c);
+}
+
+.butterfly-card__differentials summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--accent, #8a5a2b);
+}
+
+.butterfly-card__differentials ul {
+  margin: 0.4rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.butterfly-card__source {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--text-secondary, #6d655c);
+}
+
+/* ── Suggested questions (interview gaps) ───────────────────────────────── */
+.butterfly-gap-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.butterfly-gap {
+  padding: 0.5rem 0.65rem;
+  border-radius: 9px;
+  background: var(--surface-hover, #f5f5f5);
+  border-left: 3px solid var(--border-strong, #c8c4be);
+}
+
+.butterfly-gap--high {
+  border-left-color: var(--bf-not-met);
+  background: color-mix(in srgb, var(--bf-not-met) 8%, white);
+}
+
+.butterfly-gap--medium {
+  border-left-color: var(--accent, #8a5a2b);
+}
+
+.butterfly-gap__question {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary, #1f1b16);
+}
+
+.butterfly-gap__rationale {
+  margin: 0.15rem 0 0;
+  font-size: 0.76rem;
+  color: var(--text-secondary, #6d655c);
+}

@@ -21,16 +21,15 @@ import type { useKiInstructions } from '../../hooks/useKiInstructions'
 import { PatientPrivacySection } from './PatientPrivacySection'
 import { LabImportSection } from './LabImportSection'
 import { KbAdminSection } from './KbAdminSection'
-
-interface SectionGroup {
-  groupLabel?: string
-  items: { id: SettingsSectionId; label: string }[]
-}
+import { SettingsSidebarPanel } from './SettingsSidebarPanel'
+import type { SettingsSectionGroup } from './SettingsSectionNav'
+import '../../styles/case-sidebar.css'
 
 interface SettingsPageProps {
   activeSection: SettingsSectionId
   onSectionChange: (section: SettingsSectionId) => void
   onClose: () => void
+  creditBalance: number
   appearance: ReturnType<typeof useAppearanceSettings>
   privacy: ReturnType<typeof usePrivacySettings>
   workspace: ReturnType<typeof useWorkspaceSettings>
@@ -50,6 +49,7 @@ export function SettingsPage({
   activeSection,
   onSectionChange,
   onClose,
+  creditBalance,
   appearance,
   privacy,
   workspace,
@@ -66,7 +66,7 @@ export function SettingsPage({
 }: SettingsPageProps) {
   const { t } = useTranslation()
 
-  const sectionGroups: SectionGroup[] = useMemo(
+  const sectionGroups: SettingsSectionGroup[] = useMemo(
     () => [
       {
         groupLabel: t('settingsNavGroupGeneral'),
@@ -108,48 +108,28 @@ export function SettingsPage({
   }, [sectionGroups, activeSection])
 
   return (
-    <div className="settings-fullpage">
-      {/* Left sidebar */}
-      <nav className="settings-fullpage__sidebar" aria-label={t('settingsTitle')}>
-        <div className="settings-fullpage__sidebar-top">
+    <div className="settings-sidebar-layout text-ink">
+      <SettingsSidebarPanel
+        groups={sectionGroups}
+        activeSection={activeSection}
+        onSectionChange={onSectionChange}
+        onClose={onClose}
+        creditBalance={creditBalance}
+      />
+
+      {/* Right content area */}
+      <div className="settings-fullpage__content settings-sidebar-main">
+        <div className="case-main-top-bar">
           <button
             type="button"
-            className="settings-fullpage__back"
+            className="case-sidebar-back-link case-sidebar-back-link--content"
             onClick={onClose}
             aria-label={t('settingsBack')}
           >
-            <ArrowLeft className="settings-fullpage__back-icon" strokeWidth={1.5} aria-hidden />
-            <span className="settings-fullpage__back-label">{t('settingsBack')}</span>
+            <ArrowLeft className="case-sidebar-back-link__icon" strokeWidth={2} aria-hidden />
+            <span>{t('settingsBack')}</span>
           </button>
-
-          <p className="settings-fullpage__sidebar-title">{t('settingsTitle')}</p>
         </div>
-
-        <div className="settings-fullpage__nav">
-          {sectionGroups.map((group, gi) => (
-            <div key={gi} className="settings-fullpage__nav-group">
-              {group.groupLabel ? (
-                <span className="settings-fullpage__nav-group-label">{group.groupLabel}</span>
-              ) : (
-                gi > 0 && <div className="settings-fullpage__nav-sep" />
-              )}
-              {group.items.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={`settings-fullpage__nav-item${activeSection === item.id ? ' settings-fullpage__nav-item--active' : ''}`}
-                  onClick={() => onSectionChange(item.id)}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          ))}
-        </div>
-      </nav>
-
-      {/* Right content area */}
-      <div className="settings-fullpage__content">
         <header className="settings-fullpage__content-header">
           <h1 className="settings-fullpage__content-title">{activeSectionLabel}</h1>
         </header>

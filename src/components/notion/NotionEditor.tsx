@@ -25,7 +25,6 @@ interface NotionEditorProps {
   onEditorAiTool?: (tool: AiToolKey) => void
   onSelectionAction: (action: SelectionActionId, selectedText: string) => void
   onSlashCommand: (command: SlashCommandId) => void
-  commandMenuRequest?: number
   focusRequest?: number
   pendingPaste?: PendingPaste | null
 }
@@ -59,7 +58,6 @@ export function NotionEditor({
   onEditorAiTool,
   onSelectionAction,
   onSlashCommand,
-  commandMenuRequest = 0,
   focusRequest = 0,
   pendingPaste = null,
 }: NotionEditorProps) {
@@ -144,24 +142,6 @@ export function NotionEditor({
     setSelectionToolbar(null)
     setSlashMenu(null)
   }, [])
-
-  const openCommandMenu = useCallback(() => {
-    if (readOnly) return
-    const textarea = textareaRef.current
-    if (!textarea) return
-
-    setSlashMenu({
-      filter: '',
-      position: getSelectionPosition(textarea),
-      slashIndex: textarea.selectionStart,
-    })
-    setSelectionToolbar(null)
-  }, [readOnly])
-
-  useEffect(() => {
-    if (commandMenuRequest === 0) return
-    openCommandMenu()
-  }, [commandMenuRequest, openCommandMenu])
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLTextAreaElement>) => {

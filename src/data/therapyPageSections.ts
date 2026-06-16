@@ -1,4 +1,4 @@
-/** Major Therapie tab page sections (below Medikamentöse Therapie). */
+/** Major Therapie tab page sections (non-medication therapies). */
 export const THERAPY_PAGE_SECTIONS = [
   { key: 'weitere' },
   { key: 'psychotherapie' },

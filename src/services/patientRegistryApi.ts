@@ -36,6 +36,7 @@ export function mergeServerCaseWithLocal(api: ApiCaseRecord, local?: LocalCaseMe
     isDemoPatient: local?.isDemoPatient,
     demoSeedVersion: local?.demoSeedVersion,
     demoPatientId: local?.demoPatientId,
+    archivedAt: local?.archivedAt,
   }
 }
 
@@ -69,6 +70,17 @@ export async function upsertPatientOnApi(meta: LocalCaseMeta): Promise<ApiCaseRe
   }
   const data = (await response.json()) as { patient?: ApiCaseRecord }
   return data.patient ?? payload
+}
+
+export async function deletePatientOnApi(caseId: string): Promise<void> {
+  const headers = await getAuthHeaders()
+  const response = await fetch(`${API_BASE}/api/patients/${encodeURIComponent(caseId)}`, {
+    method: 'DELETE',
+    headers,
+  })
+  if (!response.ok && response.status !== 404) {
+    throw new Error(`Failed to delete patient (${response.status})`)
+  }
 }
 
 export async function createPatientOnApi(meta: LocalCaseMeta): Promise<ApiCaseRecord> {

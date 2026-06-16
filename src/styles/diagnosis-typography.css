@@ -1,0 +1,74 @@
+/* Diagnosis typography — readability overrides
+ *
+ * A patient's coded diagnosis (ICD/DSM code + free-text label) is clinically
+ * important and must be comfortably legible. The base widget sizes in
+ * notion-preview.css are very small (≈0.68–0.72rem). This sheet bumps the ICD
+ * code and the free-text/description up a step or two in the type scale.
+ *
+ * NOTE ON OWNERSHIP: the base rules live in layout-agent-owned files
+ * (notion-preview.css / case-sidebar.css). To avoid editing those, all rules
+ * here are additive and use two-class selectors (specificity 0,2,0) so they
+ * win over the single-class base rules regardless of stylesheet import order.
+ * This file is imported last in main.tsx. */
+
+/* —— Read-only display (both sidebar + panel variants) —— */
+.diagnosen-widget .diagnosen-widget__code {
+  font-size: 0.82rem;
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.diagnosen-widget .diagnosen-widget__label {
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.diagnosen-widget .diagnosen-widget__index {
+  font-size: 0.82rem;
+}
+
+/* —— Panel variant (dedicated Diagnose page + patient dashboard) ——
+ * Primary clinical surface: render diagnoses a touch larger still. Placed after
+ * the base rules above so equal-specificity order resolves in its favour. */
+.diagnosen-widget--panel .diagnosen-widget__code {
+  font-size: 0.92rem;
+}
+
+.diagnosen-widget--panel .diagnosen-widget__label {
+  font-size: 1rem;
+}
+
+.diagnosen-widget--panel .diagnosen-widget__index {
+  font-size: 0.92rem;
+}
+
+/* —— Editing inputs: match the larger display sizes so editing isn't jarring —— */
+.diagnosen-widget .diagnosen-widget__icd-input {
+  font-size: 0.82rem;
+}
+
+.diagnosen-widget .diagnosen-widget__desc-input {
+  font-size: 0.88rem;
+}
+
+.diagnosen-widget--panel .diagnosen-widget__icd-input {
+  font-size: 0.92rem;
+  width: 4.6rem;
+}
+
+.diagnosen-widget--panel .diagnosen-widget__desc-input {
+  font-size: 1rem;
+}
+
+/* —— Search results (add-diagnosis dropdown): keep the code/label readable —— */
+.diagnosen-widget .diagnosen-widget__search-item {
+  font-size: 0.8rem;
+}
+
+.diagnosen-widget .diagnosen-widget__search-code {
+  font-size: 0.82rem;
+}
+
+.diagnosen-widget .diagnosen-widget__search-label {
+  font-size: 0.82rem;
+}

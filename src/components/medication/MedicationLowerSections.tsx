@@ -1,10 +1,11 @@
 import { useCallback, useRef, useState } from 'react'
-import { Sparkles } from 'lucide-react'
+import { ArrowLeft, Sparkles } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
 import {
   DEMO_INTELLIGENCE,
   formatMedicationUiTemplate,
   getAttributionLabel,
+  getStatusLabel,
   translateMedicationUi,
 } from '../../data/medicationUiTranslations'
 import { getDrugsForSubstance } from '../../data/psychDrugReference/index'
@@ -27,6 +28,7 @@ import { useCanAccessModule } from '../../hooks/permissions/useCanAccessModule'
 import type { MedicationEntry, MedicationPlanState, SideEffectReport } from '../../types/medicationPlan'
 import { isMedicationVisible } from '../../utils/medication/planOps'
 import { medicationSectionDomId } from '../../contexts/MedicationSectionNavContext'
+import { MEDICATION_SECTION_META } from './medicationSectionMeta'
 import { CombinationCheckPanel } from '../therapy/CombinationCheckPanel'
 import { LabMedicationCorrelationPanel } from '../therapy/LabMedicationCorrelationPanel'
 import { PreparationDrugBlock } from './PreparationDrugBlock'
@@ -50,6 +52,15 @@ export const MEDICATION_SECTIONS = [
 
 export type MedicationSectionKey = (typeof MEDICATION_SECTIONS)[number]['key']
 
+/** Maps medication status onto the shared therapy status-pill palette. */
+const MED_STATUS_TONE: Record<string, string> = {
+  active: 'green',
+  reduced: 'blue',
+  increased: 'violet',
+  paused: 'amber',
+  discontinued: 'gray',
+}
+
 interface MedicationLowerSectionsProps {
   caseId: string
   state: MedicationPlanState
@@ -66,6 +77,8 @@ interface MedicationLowerSectionsProps {
   mode: 'links' | 'detail'
   activeSection?: MedicationSectionKey | null
   onSelectSection?: (key: MedicationSectionKey) => void
+  /** When provided, renders a "back to plan" control in the detail header. */
+  onBack?: () => void
 }
 
 function normalizeMedicationName(value: string): string {
@@ -91,6 +104,7 @@ export function MedicationLowerSections({
   mode,
   activeSection = null,
   onSelectSection,
+  onBack,
 }: MedicationLowerSectionsProps) {
   const { language } = useTranslation()
   const { drugs: knowledgeBaseDrugs } = useKnowledgeBaseDrugs(DEFAULT_MEDICATIONS_COLLECTION_ID)
@@ -174,33 +188,109 @@ export function MedicationLowerSections({
     })
   }
 
-  const renderSideEffects = () => (
-    <>
-      <GlobalSideEffectForm
-        medications={medications}
-        disabled={disabled}
-        onSave={onReportSideEffect}
-      />
-      {state.sideEffectReports.length > 0 ? (
-        <ul className="medication-lower-section__list">
-          {state.sideEffectReports.map((report) => {
-            const suspected = medications.find((med) => med.id === report.suspectedMedicationId)
-            return (
-              <li key={report.id}>
-                <strong>{report.symptom}</strong>
-                {report.onsetDate ? ` · ${report.onsetDate}` : ''}
-                {suspected ? ` · ${suspected.substance}` : ''}
-                {report.attribution
-                  ? ` · ${getAttributionLabel(report.attribution, language)}`
-                  : ''}
-                {report.note ? ` — ${report.note}` : ''}
-              </li>
-            )
-          })}
+  const renderRegimenBar = () => {
+    if (activeMeds.length === 0) return null
+    return (
+      <div className="medication-regimen-bar">
+        <span className="medication-regimen-bar__label">
+          {translateMedicationUi(language, 'medActiveRegimen')}
+        </span>
+        <ul className="medication-regimen-bar__chips">
+          {activeMeds.map((med) => (
+            <li key={med.id} className="medication-regimen-chip">
+              <span className="medication-regimen-chip__name">
+                {med.substance}
+                {med.displayBrandName ? (
+                  <span className="medication-regimen-chip__brand"> ({med.displayBrandName})</span>
+                ) : null}
+              </span>
+              {med.doseLineGerman ? (
+                <span className="medication-regimen-chip__dose">{med.doseLineGerman}</span>
+              ) : null}
+              <span
+                className={`therapy-status therapy-status--${MED_STATUS_TONE[med.status] ?? 'gray'}`}
+              >
+                {getStatusLabel(med.status, language)}
+              </span>
+            </li>
+          ))}
         </ul>
-      ) : null}
-    </>
-  )
+      </div>
+    )
+  }
+
+  const renderSideEffects = () => {
+    const recorded = activeMeds.filter((med) => med.sideEffects.length > 0)
+    return (
+      <>
+        {recorded.length > 0 ? (
+          <div className="medication-se-recorded">
+            <p className="medication-lower-section__subhead">
+              {translateMedicationUi(language, 'medSideEffectsRecorded')}
+            </p>
+            <ul className="medication-se-recorded__list">
+              {recorded.map((med) => (
+                <li key={med.id} className="medication-se-recorded__item">
+                  <span className="medication-se-recorded__drug">{med.substance}</span>
+                  <span className="medication-se-recorded__chips">
+                    {med.sideEffects.map((effect, idx) => (
+                      <span key={idx} className="medication-se-recorded__chip">
+                        {effect}
+                      </span>
+                    ))}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        <GlobalSideEffectForm
+          medications={medications}
+          disabled={disabled}
+          onSave={onReportSideEffect}
+        />
+
+        {state.sideEffectReports.length > 0 ? (
+          <div className="medication-se-reports">
+            <p className="medication-lower-section__subhead">
+              {translateMedicationUi(language, 'medSideEffectsReportsTitle')} ({state.sideEffectReports.length})
+            </p>
+            <ul className="medication-se-reports__list">
+              {state.sideEffectReports.map((report) => {
+                const suspected = medications.find((med) => med.id === report.suspectedMedicationId)
+                return (
+                  <li key={report.id} className="medication-se-report">
+                    <div className="medication-se-report__head">
+                      <strong className="medication-se-report__symptom">{report.symptom}</strong>
+                      {report.severity ? (
+                        <span className="medication-se-report__severity">{report.severity}</span>
+                      ) : null}
+                      {report.attribution ? (
+                        <span className="medication-se-report__attribution">
+                          {getAttributionLabel(report.attribution, language)}
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="medication-se-report__meta">
+                      {report.onsetDate ? <span>{report.onsetDate}</span> : null}
+                      {suspected ? <span>{suspected.substance}</span> : null}
+                      {report.temporalRelation ? <span>{report.temporalRelation}</span> : null}
+                      {report.actionTaken ? <span>{report.actionTaken}</span> : null}
+                      {report.outcome ? <span>{report.outcome}</span> : null}
+                    </div>
+                    {report.note ? (
+                      <p className="medication-se-report__note">{report.note}</p>
+                    ) : null}
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        ) : null}
+      </>
+    )
+  }
 
   const renderCombination = () => (
     <CombinationCheckPanel
@@ -324,59 +414,143 @@ export function MedicationLowerSections({
             const drug = refDrugs[0]!
             const kurzinfo = language === 'de' ? drug.kurzinfoDe : drug.kurzinfoEn
             const monitoringRules = drug.monitoringRules
+            const commonSe = language === 'de' ? drug.commonSideEffectsDe : drug.commonSideEffectsEn
+            const seriousSe = language === 'de' ? drug.seriousSideEffectsDe : drug.seriousSideEffectsEn
+            const interactions = drug.interactions
             return (
-              <li key={med.id} className="medication-intelligence-list__item">
-                <details>
-                  <summary>{med.substance}</summary>
-                  <p className="medication-intelligence__kurzinfo">{kurzinfo}</p>
-                  {drug.receptorProfile ? (
-                    <ReceptorRadarChart
-                      profile={drug.receptorProfile}
-                      substanceName={drug.genericName}
-                      language={language}
-                    />
+              <li key={med.id} className="medication-intelligence-card">
+                <div className="medication-intelligence-card__head">
+                  <div className="medication-intelligence-card__title">
+                    <span className="medication-intelligence-card__substance">{med.substance}</span>
+                    <span
+                      className={`therapy-status therapy-status--${MED_STATUS_TONE[med.status] ?? 'gray'}`}
+                    >
+                      {getStatusLabel(med.status, language)}
+                    </span>
+                  </div>
+                  <span className="medication-intelligence-card__class">{drug.substanceClass}</span>
+                </div>
+
+                <dl className="medication-intelligence-card__facts">
+                  {med.doseLineGerman ? (
+                    <div>
+                      <dt>{translateMedicationUi(language, 'medDose')}</dt>
+                      <dd>{med.doseLineGerman}</dd>
+                    </div>
                   ) : null}
-                  {monitoringRules.length > 0 ? (
-                    <>
-                      <p className="medication-intelligence__section-label">
-                        {translateMedicationUi(language, 'medSectionMonitoring')}
-                      </p>
-                      <ul className="medication-monitoring-list">
-                        {monitoringRules.map((rule, idx) => (
-                          <li key={idx} className="medication-monitoring-list__item">
-                            <strong>{rule.parameter}</strong>
-                            {rule.frequency ? (
-                              <span className="medication-monitoring__frequency">
-                                {' · '}
-                                {translateMedicationUi(language, 'medMonitoringFrequency')}
-                                {': '}
-                                {rule.frequency}
-                              </span>
-                            ) : null}
-                            {rule.warningThreshold ? (
-                              <span className="medication-monitoring__threshold">
-                                {' · ⚠ '}{rule.warningThreshold}
-                              </span>
-                            ) : null}
-                            <p className="medication-monitoring__note">
-                              {language === 'de' ? rule.noteDe : rule.noteEn}
-                            </p>
-                          </li>
-                        ))}
-                      </ul>
-                    </>
+                  {med.indication ? (
+                    <div>
+                      <dt>{translateMedicationUi(language, 'medIndication')}</dt>
+                      <dd>{med.indication}</dd>
+                    </div>
                   ) : null}
-                  <p className="medication-intelligence__disclaimer">
-                    {translateMedicationUi(language, 'medReferenceDisclaimer')}
-                  </p>
-                  {drug.sources.length > 0 ? (
-                    <p className="medication-intelligence__sources">
-                      {translateMedicationUi(language, 'medKurzinfoSource')}
-                      {': '}
-                      {drug.sources.join(' · ')}
+                  {drug.atcCode ? (
+                    <div>
+                      <dt>ATC</dt>
+                      <dd>{drug.atcCode}</dd>
+                    </div>
+                  ) : null}
+                </dl>
+
+                <p className="medication-intelligence__kurzinfo">{kurzinfo}</p>
+
+                {drug.receptorProfile ? (
+                  <ReceptorRadarChart
+                    profile={drug.receptorProfile}
+                    substanceName={drug.genericName}
+                    language={language}
+                  />
+                ) : null}
+
+                {commonSe.length > 0 ? (
+                  <div className="medication-intelligence__block">
+                    <p className="medication-intelligence__section-label">
+                      {translateMedicationUi(language, 'medSideEffectsCommon')}
                     </p>
-                  ) : null}
-                </details>
+                    <div className="medication-intelligence__chips">
+                      {commonSe.map((se, idx) => (
+                        <span key={idx} className="medication-intelligence__chip">{se}</span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {seriousSe.length > 0 ? (
+                  <div className="medication-intelligence__block">
+                    <p className="medication-intelligence__section-label medication-intelligence__section-label--warn">
+                      {translateMedicationUi(language, 'medSideEffectsSerious')}
+                    </p>
+                    <ul className="medication-intelligence__serious">
+                      {seriousSe.map((se, idx) => (
+                        <li key={idx}>{se}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                {interactions.length > 0 ? (
+                  <div className="medication-intelligence__block">
+                    <p className="medication-intelligence__section-label">
+                      {translateMedicationUi(language, 'medInteractionsLabel')}
+                    </p>
+                    <ul className="medication-interactions-list">
+                      {interactions.slice(0, 5).map((interaction, idx) => (
+                        <li key={idx} className="medication-interaction">
+                          <span
+                            className={`medication-interaction__severity medication-interaction__severity--${interaction.severity}`}
+                          >
+                            {interaction.interactsWith}
+                          </span>
+                          <span className="medication-interaction__note">
+                            {language === 'de' ? interaction.clinicalNoteDe : interaction.clinicalNoteEn}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                {monitoringRules.length > 0 ? (
+                  <div className="medication-intelligence__block">
+                    <p className="medication-intelligence__section-label">
+                      {translateMedicationUi(language, 'medSectionMonitoring')}
+                    </p>
+                    <ul className="medication-monitoring-list">
+                      {monitoringRules.map((rule, idx) => (
+                        <li key={idx} className="medication-monitoring-list__item">
+                          <strong>{rule.parameter}</strong>
+                          {rule.frequency ? (
+                            <span className="medication-monitoring__frequency">
+                              {' · '}
+                              {translateMedicationUi(language, 'medMonitoringFrequency')}
+                              {': '}
+                              {rule.frequency}
+                            </span>
+                          ) : null}
+                          {rule.warningThreshold ? (
+                            <span className="medication-monitoring__threshold">
+                              {' · ⚠ '}{rule.warningThreshold}
+                            </span>
+                          ) : null}
+                          <p className="medication-monitoring__note">
+                            {language === 'de' ? rule.noteDe : rule.noteEn}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                <p className="medication-intelligence__disclaimer">
+                  {translateMedicationUi(language, 'medReferenceDisclaimer')}
+                </p>
+                {drug.sources.length > 0 ? (
+                  <p className="medication-intelligence__sources">
+                    {translateMedicationUi(language, 'medKurzinfoSource')}
+                    {': '}
+                    {drug.sources.join(' · ')}
+                  </p>
+                ) : null}
               </li>
             )
           }
@@ -385,14 +559,14 @@ export function MedicationLowerSections({
           const demo = Object.entries(DEMO_INTELLIGENCE).find(([name]) => key.includes(name))
           if (!demo) return null
           return (
-            <li key={med.id} className="medication-intelligence-list__item">
-              <details>
-                <summary>{med.substance}</summary>
-                <p>{demo[1].summary}</p>
-                <p className="medication-intelligence__disclaimer">
-                  {translateMedicationUi(language, 'medStrengthDemoHint')}
-                </p>
-              </details>
+            <li key={med.id} className="medication-intelligence-card">
+              <div className="medication-intelligence-card__head">
+                <span className="medication-intelligence-card__substance">{med.substance}</span>
+              </div>
+              <p>{demo[1].summary}</p>
+              <p className="medication-intelligence__disclaimer">
+                {translateMedicationUi(language, 'medStrengthDemoHint')}
+              </p>
             </li>
           )
         })}
@@ -454,25 +628,40 @@ export function MedicationLowerSections({
     )
   }
 
-  const activeLabelKey =
-    MEDICATION_SECTIONS.find((section) => section.key === activeSection)?.labelKey ??
-    'medSectionReceptorProfile'
+  const meta = MEDICATION_SECTION_META[activeSection]
+  const SectionIcon = meta.Icon
 
   return (
-    <div
-      className="therapy-detail-panel"
+    <section
+      className="medication-section-detail"
+      data-section={activeSection}
       id={medicationSectionDomId(activeSection)}
     >
-      <div className="therapy-detail-panel__head">
-        <div className="therapy-detail-panel__heading">
-          <h4 className="therapy-detail-panel__title">
-            {translateMedicationUi(language, activeLabelKey)}
-          </h4>
+      <header className="medication-section-detail__head">
+        {onBack ? (
+          <button type="button" className="medication-section-detail__back" onClick={onBack}>
+            <ArrowLeft size={14} aria-hidden />
+            {translateMedicationUi(language, 'medBackToPlan')}
+          </button>
+        ) : null}
+        <div className="medication-section-detail__title-row">
+          <span className="medication-section-detail__icon" aria-hidden="true">
+            <SectionIcon size={20} strokeWidth={1.85} />
+          </span>
+          <div className="medication-section-detail__heading">
+            <h2 className="medication-section-detail__title">
+              {translateMedicationUi(language, meta.labelKey)}
+            </h2>
+            <p className="medication-section-detail__desc">
+              {translateMedicationUi(language, meta.descKey)}
+            </p>
+          </div>
         </div>
-      </div>
-      <div className="therapy-detail-panel__body medication-lower-section__body">
+      </header>
+      {renderRegimenBar()}
+      <div className="medication-section-detail__body medication-lower-section__body">
         {renderActiveBody(activeSection)}
       </div>
-    </div>
+    </section>
   )
 }

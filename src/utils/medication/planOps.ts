@@ -2,8 +2,10 @@ import type {
   MedicationChangeType,
   MedicationDeleteReasonCode,
   MedicationEntry,
+  MedicationFormulation,
   MedicationPlan,
   MedicationPlanState,
+  MedicationStatus,
   SideEffectReport,
 } from '../../types/medicationPlan'
 import {
@@ -339,6 +341,82 @@ export function selectMedicationPlan(
     currentPlanId: planId,
     plans: state.plans.map((plan) => ({ ...plan, isCurrent: plan.id === planId })),
   }
+}
+
+/**
+ * A single medication line as it stood at one change point in the plan timeline.
+ */
+export interface PlanTimelineMed {
+  id: string
+  substance: string
+  displayBrandName?: string
+  formulation: MedicationFormulation
+  strength: string
+  doseLineGerman: string
+  status: MedicationStatus
+  /** This medication was one of the things that changed at this exact timestamp. */
+  changedNow: boolean
+  /** Change type of the latest event applied at-or-before this point (drives the row icon). */
+  changeType: MedicationChangeType
+}
+
+/**
+ * A whole-plan snapshot reconstructed for one change point ("Datum").
+ */
+export interface PlanTimelineEntry {
+  changedAt: string
+  medications: PlanTimelineMed[]
+  /** What changed at this exact timestamp (used for the timeline summary line). */
+  changes: { substance: string; changeType: MedicationChangeType; note?: string }[]
+}
+
+/**
+ * Derives plan-level, time-stamped snapshots from the per-medication change log
+ * that {@link buildEntryFromDraft} already records on every add / edit / discontinue.
+ *
+ * For each distinct change timestamp we reconstruct the full plan as it stood then:
+ * every visible medication that already existed shows the latest event at-or-before
+ * that moment. This avoids a parallel snapshot store and works retroactively for
+ * existing patients without any data migration.
+ */
+export function derivePlanTimeline(medications: MedicationEntry[]): PlanTimelineEntry[] {
+  const visible = visibleMedications(medications)
+  const timestamps = Array.from(
+    new Set(visible.flatMap((med) => med.history.map((event) => event.changedAt))),
+  ).sort()
+
+  return timestamps.map((timestamp) => {
+    const changes: PlanTimelineEntry['changes'] = []
+    const meds: PlanTimelineMed[] = []
+
+    for (const med of visible) {
+      const applicable = [...med.history]
+        .filter((event) => event.changedAt <= timestamp)
+        .sort((a, b) => a.changedAt.localeCompare(b.changedAt))
+      if (applicable.length === 0) continue
+
+      const last = applicable[applicable.length - 1]
+      const eventsNow = med.history.filter((event) => event.changedAt === timestamp)
+      const changedNow = eventsNow.length > 0
+      for (const event of eventsNow) {
+        changes.push({ substance: med.substance, changeType: event.changeType, note: event.note })
+      }
+
+      meds.push({
+        id: med.id,
+        substance: med.substance,
+        displayBrandName: med.displayBrandName,
+        formulation: last.snapshot.formulation,
+        strength: last.snapshot.strength,
+        doseLineGerman: last.snapshot.doseLineGerman,
+        status: last.snapshot.status,
+        changedNow,
+        changeType: last.changeType,
+      })
+    }
+
+    return { changedAt: timestamp, medications: meds, changes }
+  })
 }
 
 export function ensureMedicationPlanState(

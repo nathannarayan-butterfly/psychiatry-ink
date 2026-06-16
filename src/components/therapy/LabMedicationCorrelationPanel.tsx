@@ -547,7 +547,7 @@ export function LabMedicationCorrelationPanel({
       <p className="combination-check__disclaimer">
         Labor-Medikament-Korrelation (MVP): paarweise Prüfung auffälliger Laborwerte gegen aktive
         Medikamente. KI-Befunde erst nach expliziter Akzeptanz klinisch verbindlich. Keine automatische
-        Änderung des Medikationsplans oder Arztbriefs. Longitudinale Trends, Kumulativlast und
+        Änderung des Medikamentenplans oder Arztbriefs. Longitudinale Trends, Kumulativlast und
         Auto-Trigger — geplant, nicht enthalten.
       </p>
     </div>

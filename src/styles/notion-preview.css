@@ -2403,35 +2403,73 @@
   opacity: 0.5;
 }
 
+/* Segmented "document tools" group: command menu + save/copy/print/export.
+   Mirrors the contained pill treatment of .notion-paper__input-modes so the
+   workspace header reads as a few tidy clusters rather than scattered boxes. */
+.notion-paper__doc-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+  padding: 0.15rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border-soft));
+  border-radius: 999px;
+  background: #fff;
+}
+
+.notion-paper__tool-divider {
+  width: 1px;
+  align-self: stretch;
+  margin: 0.25rem 0.1rem;
+  background: color-mix(in srgb, var(--accent) 16%, var(--border-soft));
+}
+
 .notion-command-btn,
-.notion-structured-btn {
+.notion-structured-btn,
+.notion-document-actions__btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border-soft));
-  border-radius: 4px;
-  background: #fff;
-  padding: 0.35rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
   color: var(--text-muted);
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
 }
 
 .notion-command-btn:hover:not(:disabled),
-.notion-structured-btn:hover:not(:disabled) {
+.notion-structured-btn:hover:not(:disabled),
+.notion-document-actions__btn:hover:not(:disabled) {
   color: var(--ink);
-  background: color-mix(in srgb, var(--accent) 6%, #fff);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.notion-command-btn:active:not(:disabled),
+.notion-structured-btn:active:not(:disabled),
+.notion-document-actions__btn:active:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+.notion-command-btn:focus-visible,
+.notion-structured-btn:focus-visible,
+.notion-document-actions__btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  outline-offset: 1px;
 }
 
 .notion-structured-btn--active {
   color: var(--ink);
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--border-soft));
-  background: color-mix(in srgb, var(--accent) 8%, #fff);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 .notion-command-btn:disabled,
-.notion-structured-btn:disabled {
+.notion-structured-btn:disabled,
+.notion-document-actions__btn:disabled {
   cursor: not-allowed;
-  opacity: 0.5;
+  opacity: 0.45;
 }
 
 .notion-paper__header-actions {
@@ -2440,35 +2478,13 @@
   shrink: 0;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.45rem;
+  gap: 0.4rem;
 }
 
 .notion-document-actions {
   display: inline-flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 0.2rem;
-}
-
-.notion-document-actions__btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border-soft));
-  border-radius: 4px;
-  background: #fff;
-  padding: 0.35rem;
-  color: var(--ink);
-  transition: background 0.15s ease;
-}
-
-.notion-document-actions__btn:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--accent) 6%, #fff);
-}
-
-.notion-document-actions__btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
+  gap: 0.05rem;
 }
 
 .notion-paper__section-select {
@@ -4427,31 +4443,42 @@
 
 .notion-paper__input-modes {
   display: inline-flex;
-  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border-soft));
+  align-items: center;
+  gap: 0.1rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border-soft));
   border-radius: 999px;
   background: #fff;
-  padding: 0.1rem;
+  padding: 0.15rem;
 }
 
 .notion-paper__input-mode {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
   border: none;
   border-radius: 999px;
   background: transparent;
-  padding: 0.28rem 0.42rem;
   color: var(--text-muted);
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background 0.12s ease, color 0.12s ease;
 }
 
 .notion-paper__input-mode:hover:not(:disabled) {
   color: var(--ink);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
-.notion-paper__input-mode--active {
-  background: color-mix(in srgb, var(--accent) 10%, #f3f3f1);
+.notion-paper__input-mode:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  outline-offset: 1px;
+}
+
+.notion-paper__input-mode--active,
+.notion-paper__input-mode--active:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 14%, #f3f3f1);
   color: var(--ink);
 }
 
@@ -4668,8 +4695,9 @@
   flex-direction: column;
   min-height: 100%;
   padding: 2rem 1.5rem 4rem;
+  /* Anchored to the left; right space is intentionally left open for future content. */
   max-width: 800px;
-  margin: 0 auto;
+  margin: 0 auto 0 0;
   width: 100%;
 }
 
@@ -4717,14 +4745,14 @@
 }
 
 .verlauf-filter__chip:hover {
-  border-color: color-mix(in srgb, var(--accent) 40%, var(--border-soft));
+  border-color: color-mix(in srgb, var(--area-accent, var(--accent)) 40%, var(--border-soft));
   color: var(--text-ink, #1a1a1a);
 }
 
 .verlauf-filter__chip--active {
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
-  color: color-mix(in srgb, var(--accent) 75%, var(--text-ink));
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 12%, transparent);
+  border-color: color-mix(in srgb, var(--area-accent, var(--accent)) 35%, transparent);
+  color: color-mix(in srgb, var(--area-accent, var(--accent)) 75%, var(--text-ink));
   font-weight: 600;
 }
 
@@ -4742,7 +4770,7 @@
 .verlauf-sort {
   display: inline-flex;
   align-items: stretch;
-  background: color-mix(in srgb, var(--accent) 5%, transparent);
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 5%, transparent);
   border: 1px solid var(--border-soft, #e8e8e4);
   border-radius: 999px;
   padding: 2px;
@@ -4768,7 +4796,7 @@
 
 .verlauf-sort__btn--active {
   background: var(--notion-paper-bg, #fff);
-  color: color-mix(in srgb, var(--accent) 75%, var(--text-ink));
+  color: color-mix(in srgb, var(--area-accent, var(--accent)) 75%, var(--text-ink));
   font-weight: 600;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
@@ -4795,14 +4823,14 @@
 }
 
 .verlauf-filter-menu__trigger:hover {
-  border-color: color-mix(in srgb, var(--accent) 40%, var(--border-soft));
+  border-color: color-mix(in srgb, var(--area-accent, var(--accent)) 40%, var(--border-soft));
   color: var(--text-ink, #1a1a1a);
 }
 
 .verlauf-filter-menu__trigger--active {
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
-  color: color-mix(in srgb, var(--accent) 75%, var(--text-ink));
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 12%, transparent);
+  border-color: color-mix(in srgb, var(--area-accent, var(--accent)) 35%, transparent);
+  color: color-mix(in srgb, var(--area-accent, var(--accent)) 75%, var(--text-ink));
   font-weight: 600;
 }
 
@@ -4814,7 +4842,7 @@
   height: 1.25em;
   padding: 0 0.3em;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--accent) 70%, var(--text-ink));
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 70%, var(--text-ink));
   color: #fff;
   font-size: 0.62rem;
   font-weight: 700;
@@ -4868,7 +4896,7 @@
   font-size: 0.72rem;
   border: none;
   background: transparent;
-  color: var(--accent, #4a7c59);
+  color: var(--area-accent, var(--accent, #4a7c59));
   cursor: pointer;
   padding: 0;
 }
@@ -4903,7 +4931,7 @@
 }
 
 .verlauf-filter-menu__option:hover {
-  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 8%, transparent);
 }
 
 .verlauf-filter-menu__check {
@@ -4920,8 +4948,8 @@
 }
 
 .verlauf-filter-menu__option--checked .verlauf-filter-menu__check {
-  background: var(--accent, #4a7c59);
-  border-color: var(--accent, #4a7c59);
+  background: var(--area-accent, var(--accent, #4a7c59));
+  border-color: var(--area-accent, var(--accent, #4a7c59));
 }
 
 .verlauf-filter-menu__option-label {
@@ -4947,9 +4975,9 @@
 
 .verlauf-entry__source-badge {
   font-size: 0.72rem;
-  color: color-mix(in srgb, var(--accent) 70%, var(--text-muted));
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  color: color-mix(in srgb, var(--area-accent, var(--accent)) 70%, var(--text-muted));
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 25%, transparent);
   border-radius: 3px;
   padding: 0.1em 0.4em;
   font-weight: 500;
@@ -4989,6 +5017,86 @@
 
 .verlauf-entry__body--derived {
   cursor: text;
+  user-select: text;
+}
+
+/* Aufnahmebefund — single collapsible Anamnese block */
+
+.verlauf-entry--aufnahme {
+  padding-bottom: 0.25rem;
+}
+
+.verlauf-anamnese {
+  margin-top: 0.15rem;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 3%, var(--notion-paper-bg, #fff));
+  overflow: hidden;
+}
+
+.verlauf-anamnese__summary {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 0.65rem;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.verlauf-anamnese__summary::-webkit-details-marker {
+  display: none;
+}
+
+.verlauf-anamnese__chevron {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  color: var(--text-muted, #888);
+  transition: transform 0.15s ease;
+}
+
+.verlauf-anamnese[open] .verlauf-anamnese__chevron {
+  transform: rotate(90deg);
+}
+
+.verlauf-anamnese__title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-ink, #1a1a1a);
+  line-height: 1.35;
+}
+
+.verlauf-anamnese__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0 0.65rem 0.65rem;
+  border-top: 1px solid color-mix(in srgb, var(--border-soft, #e8e8e4) 80%, transparent);
+}
+
+.verlauf-anamnese__section-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.verlauf-anamnese__section-label {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted, #666);
+  line-height: 1.35;
+}
+
+.verlauf-anamnese__body {
+  margin-top: 0;
+  padding: 0;
+}
+
+.verlauf-entry__source-badge--aufnahmebefund {
+  color: color-mix(in srgb, var(--area-accent, var(--accent)) 70%, var(--text-muted));
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 10%, transparent);
+  border-color: color-mix(in srgb, var(--area-accent, var(--accent)) 25%, transparent);
 }
 
 /* Entry cards */
@@ -5019,9 +5127,9 @@
 
 .verlauf-entry__section {
   font-size: 0.72rem;
-  color: color-mix(in srgb, var(--accent) 70%, var(--text-muted));
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  color: color-mix(in srgb, var(--area-accent, var(--accent)) 70%, var(--text-muted));
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 25%, transparent);
   border-radius: 3px;
   padding: 0.1em 0.4em;
   font-weight: 500;
@@ -5053,7 +5161,7 @@
 
 .verlauf-entry__divider {
   height: 1px;
-  background: color-mix(in srgb, var(--accent) 12%, var(--border-soft));
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 12%, var(--border-soft));
   margin: 0;
 }
 
@@ -5092,7 +5200,7 @@
 }
 
 .verlauf-entry__action-btn:hover {
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 10%, transparent);
   color: var(--text-ink, #1a1a1a);
 }
 
@@ -5160,7 +5268,7 @@
   font-family: inherit;
   line-height: 1.7;
   padding: 0.4rem 0.55rem;
-  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border-soft));
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 35%, var(--border-soft));
   border-radius: 5px;
   background: var(--notion-paper-bg, #fff);
   color: var(--text-ink, #1a1a1a);
@@ -5169,7 +5277,7 @@
 }
 
 .verlauf-inline-editor__textarea:focus {
-  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+  border-color: color-mix(in srgb, var(--area-accent, var(--accent)) 60%, transparent);
 }
 
 .verlauf-inline-editor__actions {
@@ -5222,7 +5330,7 @@
   align-items: center;
   gap: 2px;
   background: #fff;
-  border: 1px solid color-mix(in srgb, var(--accent) 20%, var(--border-soft));
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 20%, var(--border-soft));
   border-radius: 6px;
   padding: 4px 6px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.07);
@@ -5246,7 +5354,7 @@
 }
 
 .verlauf-bubble__btn:hover {
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 10%, transparent);
 }
 
 .verlauf-bubble__btn--bold {
@@ -5264,7 +5372,7 @@
 .verlauf-bubble__btn--timeline {
   font-size: 0.72rem;
   padding: 3px 8px;
-  color: color-mix(in srgb, var(--accent) 80%, var(--text-ink));
+  color: color-mix(in srgb, var(--area-accent, var(--accent)) 80%, var(--text-ink));
   font-weight: 500;
 }
 
@@ -5272,7 +5380,7 @@
   display: inline-block;
   width: 1px;
   height: 1.25rem;
-  background: color-mix(in srgb, var(--accent) 15%, var(--border-soft));
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 15%, var(--border-soft));
   margin: 0 3px;
   flex-shrink: 0;
 }
@@ -5302,7 +5410,7 @@
   flex-direction: column;
   gap: 0.6rem;
   background: #fff;
-  border: 1px solid color-mix(in srgb, var(--accent) 20%, var(--border-soft));
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 20%, var(--border-soft));
   border-radius: 8px;
   padding: 0.9rem 1rem;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.13), 0 2px 6px rgba(0, 0, 0, 0.07);
@@ -5344,7 +5452,7 @@
 .verlauf-popover__textarea {
   font-size: 0.83rem;
   padding: 0.35rem 0.5rem;
-  border: 1px solid color-mix(in srgb, var(--accent) 20%, var(--border-soft));
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 20%, var(--border-soft));
   border-radius: 4px;
   background: var(--surface, #fff);
   color: var(--text-ink, #1a1a1a);
@@ -5356,7 +5464,7 @@
 
 .verlauf-popover__input:focus,
 .verlauf-popover__textarea:focus {
-  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+  border-color: color-mix(in srgb, var(--area-accent, var(--accent)) 60%, transparent);
 }
 
 .verlauf-popover__actions {
@@ -5368,7 +5476,7 @@
 
 .verlauf-popover__cancel {
   padding: 0.3rem 0.75rem;
-  border: 1px solid color-mix(in srgb, var(--accent) 15%, var(--border-soft));
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 15%, var(--border-soft));
   border-radius: 4px;
   background: transparent;
   font-size: 0.78rem;
@@ -5417,79 +5525,6 @@
   height: 100%;
   min-height: 0;
   overflow: hidden;
-}
-
-/* Sidebar */
-
-.dokumente-sidebar {
-  display: flex;
-  flex-direction: column;
-  width: 13rem;
-  flex-shrink: 0;
-  border-right: 1px solid color-mix(in srgb, var(--accent) 14%, var(--border-soft));
-  background: color-mix(in srgb, var(--accent) 3%, #fff);
-  padding: 1.25rem 0.75rem 1rem;
-  gap: 0.5rem;
-  overflow-y: auto;
-}
-
-.dokumente-sidebar__title {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--text-muted, #888);
-  padding: 0 0.5rem;
-  margin: 0 0 0.5rem;
-}
-
-.dokumente-sidebar__nav {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.dokumente-sidebar__tab {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding: 0.42rem 0.6rem;
-  border: none;
-  border-radius: 0.35rem;
-  background: transparent;
-  font-size: 0.82rem;
-  color: var(--text-ink, #1a1a1a);
-  cursor: pointer;
-  transition: background 0.1s ease, color 0.1s ease;
-}
-
-.dokumente-sidebar__tab:hover {
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-}
-
-.dokumente-sidebar__tab--active {
-  background: color-mix(in srgb, var(--accent) 15%, transparent);
-  font-weight: 600;
-  color: color-mix(in srgb, var(--accent) 80%, var(--text-ink));
-}
-
-.dokumente-sidebar__upload {
-  margin-top: auto;
-  padding-top: 0.75rem;
-}
-
-.dokumente-sidebar__upload-btn {
-  display: block;
-  width: 100%;
-  padding: 0.42rem 0.6rem;
-  border: 1px dashed color-mix(in srgb, var(--accent) 30%, var(--border-soft));
-  border-radius: 0.35rem;
-  background: transparent;
-  font-size: 0.76rem;
-  color: var(--text-muted, #888);
-  cursor: not-allowed;
-  text-align: left;
-  opacity: 0.7;
 }
 
 /* Main content */
@@ -6764,6 +6799,15 @@
   min-height: 0;
   height: 100%;
   overflow: hidden;
+}
+
+.labor-page--external-sidebar {
+  display: block;
+}
+
+.labor-page--external-sidebar .labor-page__main {
+  width: 100%;
+  max-width: none;
 }
 
 .labor-page__sidebar {
@@ -8105,7 +8149,7 @@
 }
 
 .labor-dashboard-widget {
-  background: color-mix(in srgb, var(--accent) 3%, var(--notion-paper-bg, #fff));
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 3%, var(--notion-paper-bg, #fff));
   border: 1px solid var(--border-soft, #e8e8e4);
   border-radius: 8px;
   padding: 0.65rem 0.75rem;
@@ -8636,6 +8680,21 @@
   font-weight: 600;
   color: var(--ink, #1a1a18);
   line-height: 1.3;
+}
+
+.therapy-card--compact {
+  gap: 0.35rem;
+  padding: 0.55rem 0.65rem;
+}
+
+.therapy-card__detail {
+  font-size: 0.72rem;
+  color: var(--text-secondary, #6b7280);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .therapy-card__meta {
@@ -10102,60 +10161,1244 @@
 }
 
 /* ── Medication workspace ── */
-.medication-workspace {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-  padding: 0 1.5rem 1.5rem 2.75rem;
-}
-
-.medication-workspace__disclaimer {
-  padding: 0 0 0.45rem;
-  border-bottom: var(--border-width) solid var(--border-soft);
-}
-
-.medication-workspace__disclaimer p {
-  margin: 0;
-  font-size: 0.68rem;
-  color: var(--text-muted);
-  line-height: 1.45;
-}
-
-/* Two-column layout: editing content (left) + visual/analytical widgets (right) */
-.medication-workspace__columns {
-  display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-  gap: 1.5rem;
-  align-items: start;
-}
-
 [id^='med-section-'],
 [id^='therapy-section-'] {
   scroll-margin-top: 1rem;
 }
 
-.medication-workspace__main {
-  min-width: 0;
+/* ============================================================
+   FLAGSHIP MEDIKATION PAGE
+   Section-router: sidebar nav swaps the main content to a
+   section's detailed view. The Plan is the hero landing view.
+   ============================================================ */
+
+.medication-page {
+  padding: 1.5rem 1.75rem 3rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.medication-workspace {
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
 }
 
-.medication-workspace__aside {
-  min-width: 0;
-  position: sticky;
-  top: 1rem;
+.medication-workspace--flagship {
+  gap: 1.25rem;
 }
 
-/* Collapse to a single column at the same breakpoint as .therapy-split */
-@media (max-width: 900px) {
-  .medication-workspace__columns {
-    grid-template-columns: 1fr;
+/* Standalone usage (no dark sidebar): in-page section tabs */
+.medication-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-soft, #e8e8e4);
+}
+
+.medication-tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.7rem;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted, #8a8a80);
+  background: transparent;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.medication-tabs__tab:hover {
+  color: var(--ink, #1a1a18);
+  border-color: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 45%, var(--border-soft, #e8e8e4));
+}
+
+.medication-tabs__tab--active {
+  color: #fff;
+  background: var(--area-accent, var(--accent, #4a7c59));
+  border-color: var(--area-accent, var(--accent, #4a7c59));
+}
+
+/* ── Plan hero ─────────────────────────────────────────────── */
+.medication-plan {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.medication-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.4rem 1.5rem;
+  border-radius: var(--therapy-radius-lg, 14px);
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 22%, var(--border-soft, #e8e8e4));
+  background:
+    radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 12%, transparent) 0%, transparent 55%),
+    linear-gradient(180deg, color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 6%, var(--notion-paper-bg, #fff)) 0%, var(--notion-paper-bg, #fff) 100%);
+  box-shadow: var(--therapy-card-shadow);
+}
+
+.medication-hero__intro {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.medication-hero__eyebrow {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--area-accent, var(--accent, #4a7c59));
+}
+
+.medication-hero__title {
+  margin: 0;
+  font-size: 1.55rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--ink, #1a1a18);
+}
+
+.medication-hero__desc {
+  margin: 0;
+  max-width: 52ch;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-muted, #8a8a80);
+}
+
+.medication-hero__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-shrink: 0;
+}
+
+.medication-hero__add {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 650;
+  color: #fff;
+  background: var(--accent, #4a7c59);
+  border: 1px solid var(--accent, #4a7c59);
+  border-radius: 9px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--accent, #4a7c59) 35%, transparent);
+  transition: background 0.15s, box-shadow 0.15s, transform 0.05s;
+}
+
+.medication-hero__add:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent, #4a7c59) 88%, #000);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent, #4a7c59) 38%, transparent);
+}
+
+.medication-hero__add:active:not(:disabled) {
+  transform: translateY(0.5px);
+}
+
+.medication-hero__add:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Intelligent clinical-analysis summary ─────────────────── */
+.medication-insights {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 0;
+}
+
+.medication-insight {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--radius-card, var(--therapy-radius, 10px));
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 14%, var(--border-soft, #e8e8e4));
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 4%, var(--notion-paper-bg, #fff));
+  box-shadow: var(--therapy-card-shadow);
+  min-width: 0;
+}
+
+/* Receptor / side-effect chip cards stretch across the full row width. */
+.medication-insight--chips {
+  grid-column: span 3;
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 6%, var(--notion-paper-bg, #fff));
+}
+
+.medication-insight__label {
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted, #8a8a80);
+}
+
+.medication-insight__value {
+  font-size: 1.55rem;
+  font-weight: 760;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink, #1a1a18);
+}
+
+.medication-insight__value--date {
+  font-size: 1.05rem;
+  font-weight: 680;
+}
+
+.medication-insight__detail {
+  font-size: 0.74rem;
+  line-height: 1.35;
+  color: var(--text-muted, #8a8a80);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.medication-insight__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.medication-insight__chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.2rem;
+  padding: 0.22rem 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 550;
+  color: var(--ink, #1a1a18);
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 9%, transparent);
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 22%, transparent);
+  border-radius: 999px;
+}
+
+.medication-insight__chip--strong {
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 18%, transparent);
+  border-color: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 42%, transparent);
+  font-weight: 650;
+}
+
+.medication-insight__chip--shared {
+  border-style: solid;
+  border-color: color-mix(in srgb, #c08a2e 45%, var(--border-soft, #e8e8e4));
+  background: color-mix(in srgb, #c08a2e 10%, transparent);
+}
+
+.medication-insight__chip em {
+  font-style: normal;
+  font-size: 0.66rem;
+  color: var(--text-muted, #8a8a80);
+}
+
+.medication-insight__empty {
+  font-size: 0.9rem;
+  color: var(--text-muted, #8a8a80);
+}
+
+/* ── Plan landing clinical dashboard ───────────────────────── */
+.medication-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.medication-dashboard__heading {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--area-accent, var(--accent, #4a7c59));
+}
+
+.medication-dashboard__heading::before {
+  content: '';
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--area-accent, var(--accent, #4a7c59));
+}
+
+.medication-dashboard__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+/* The receptor panel is the headline — it spans the full width, slightly richer tint. */
+.medication-dash-panel--receptor {
+  grid-column: 1 / -1;
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 7%, var(--notion-paper-bg, #fff));
+}
+
+.medication-dash-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: var(--radius-card, var(--therapy-radius, 10px));
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 14%, var(--border-soft, #e8e8e4));
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 4%, var(--notion-paper-bg, #fff));
+  box-shadow: var(--therapy-card-shadow);
+  min-width: 0;
+}
+
+.medication-dash-panel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 12%, var(--border-soft, #e8e8e4));
+}
+
+.medication-dash-panel__title {
+  position: relative;
+}
+
+.medication-dash-panel__title-row .medication-dash-panel__title::before,
+.medication-dash-panel__head > div > .medication-dash-panel__title::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 0.82em;
+  margin-right: 0.45rem;
+  vertical-align: -1px;
+  border-radius: 2px;
+  background: var(--area-accent, var(--accent, #4a7c59));
+}
+
+.medication-dash-panel__title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.medication-dash-panel__title {
+  margin: 0;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--ink, #1a1a18);
+}
+
+.medication-dash-panel__hint {
+  margin: 0.1rem 0 0;
+  font-size: 0.7rem;
+  color: var(--text-muted, #8a8a80);
+}
+
+.medication-dash-panel__subhead {
+  margin: 0 0 0.35rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted, #8a8a80);
+}
+
+.medication-dash-panel__detail {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--area-accent, var(--accent, #4a7c59));
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 22%, transparent);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.medication-dash-panel__detail:hover {
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 16%, transparent);
+}
+
+.medication-dash-panel__empty {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-muted, #8a8a80);
+}
+
+/* Receptor panel: radar + combined-burden list side by side. */
+.medication-dash-panel__receptor-body {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  flex-wrap: wrap;
+}
+
+.receptor-radar--inline {
+  flex-shrink: 0;
+}
+
+.receptor-radar--inline .receptor-radar__svg {
+  width: 200px;
+  height: 200px;
+}
+
+.medication-receptor-burden {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+
+.medication-receptor-burden__row {
+  display: grid;
+  grid-template-columns: 3.2rem 1fr;
+  grid-template-areas: 'label drugs' 'bar bar';
+  align-items: center;
+  gap: 0.3rem 0.55rem;
+  font-size: 0.76rem;
+}
+
+.medication-receptor-burden__label {
+  grid-area: label;
+  font-weight: 650;
+  color: var(--ink, #1a1a18);
+}
+
+.medication-receptor-burden__drugs {
+  grid-area: drugs;
+  color: var(--text-muted, #8a8a80);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.medication-receptor-burden__bar {
+  grid-area: bar;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--surface-hover, #f0f0ee);
+  overflow: hidden;
+}
+
+.medication-receptor-burden__fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--area-accent, var(--accent, #4a7c59));
+}
+
+/* Kombi panel: additive-risk rows + interaction rows. */
+.medication-risk-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.medication-risk {
+  display: grid;
+  grid-template-columns: 0.55rem 1fr;
+  align-items: baseline;
+  gap: 0.2rem 0.5rem;
+  padding: 0.4rem 0.55rem;
+  font-size: 0.78rem;
+  border-radius: 7px;
+  border-left: 3px solid transparent;
+}
+
+.medication-risk--high {
+  background: color-mix(in srgb, #b4452f 8%, transparent);
+  border-left-color: #b4452f;
+}
+.medication-risk--moderate {
+  background: color-mix(in srgb, #c08a2e 9%, transparent);
+  border-left-color: #c08a2e;
+}
+.medication-risk--info {
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 7%, transparent);
+  border-left-color: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 55%, var(--border-soft));
+}
+
+.medication-risk__dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  align-self: center;
+}
+
+.medication-risk--high .medication-risk__dot {
+  background: #b4452f;
+}
+.medication-risk--moderate .medication-risk__dot {
+  background: #c08a2e;
+}
+.medication-risk--info .medication-risk__dot {
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 60%, var(--border-soft));
+}
+
+.medication-risk__label {
+  font-weight: 650;
+  color: var(--ink, #1a1a18);
+}
+
+.medication-risk--high .medication-risk__label {
+  color: #b4452f;
+}
+
+.medication-risk__drugs {
+  grid-column: 2;
+  font-size: 0.72rem;
+  color: var(--text-muted, #8a8a80);
+}
+
+.medication-interaction-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.medication-interaction-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.1rem 0.5rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 7px;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-left-width: 3px;
+  font-size: 0.76rem;
+}
+
+.medication-interaction-row--high {
+  border-left-color: #b4452f;
+  background: color-mix(in srgb, #b4452f 6%, var(--notion-paper-bg, #fff));
+}
+.medication-interaction-row--moderate {
+  border-left-color: #c08a2e;
+  background: color-mix(in srgb, #c08a2e 7%, var(--notion-paper-bg, #fff));
+}
+.medication-interaction-row--info {
+  border-left-color: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 50%, var(--border-soft));
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 5%, var(--notion-paper-bg, #fff));
+}
+
+.medication-interaction-row__pair {
+  font-weight: 650;
+  color: var(--ink, #1a1a18);
+}
+
+.medication-interaction-row__severity {
+  font-size: 0.68rem;
+  font-weight: 650;
+  color: var(--text-muted, #8a8a80);
+  text-align: right;
+}
+
+.medication-interaction-row__note {
+  grid-column: 1 / -1;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--text-muted, #8a8a80);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.medication-risk-badge {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+}
+
+.medication-risk-badge--high {
+  color: #b4452f;
+  background: color-mix(in srgb, #b4452f 14%, transparent);
+}
+.medication-risk-badge--moderate {
+  color: #9a6a18;
+  background: color-mix(in srgb, #c08a2e 16%, transparent);
+}
+.medication-risk-badge--info {
+  color: var(--area-accent, var(--accent, #4a7c59));
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 12%, transparent);
+}
+
+/* Monitoring burden list. */
+.medication-monitoring-burden {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.medication-monitoring-burden__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  font-size: 0.78rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--border-soft, #e8e8e4);
+}
+
+.medication-monitoring-burden__row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.medication-monitoring-burden__param {
+  font-weight: 600;
+  color: var(--ink, #1a1a18);
+}
+
+.medication-monitoring-burden__drugs {
+  font-size: 0.72rem;
+  color: var(--text-muted, #8a8a80);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 55%;
+}
+
+/* ── Section regimen context bar ───────────────────────────── */
+.medication-regimen-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--therapy-radius, 10px);
+  border: 1px solid var(--border-soft, #e8e8e4);
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 3%, var(--notion-paper-bg, #fff));
+}
+
+.medication-regimen-bar__label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted, #8a8a80);
+}
+
+.medication-regimen-bar__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.medication-regimen-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.55rem;
+  border-radius: 7px;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  background: var(--notion-paper-bg, #fff);
+  font-size: 0.78rem;
+}
+
+.medication-regimen-chip__name {
+  font-weight: 650;
+  color: var(--ink, #1a1a18);
+}
+
+.medication-regimen-chip__brand {
+  font-weight: 450;
+  color: var(--text-muted, #8a8a80);
+}
+
+.medication-regimen-chip__dose {
+  color: var(--text-muted, #8a8a80);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Side-effects section (denser) ─────────────────────────── */
+.medication-lower-section__subhead {
+  margin: 0 0 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted, #8a8a80);
+}
+
+.medication-se-recorded__list,
+.medication-se-reports__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.medication-se-recorded__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.medication-se-recorded__drug {
+  font-weight: 650;
+  font-size: 0.82rem;
+  color: var(--ink, #1a1a18);
+}
+
+.medication-se-recorded__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.medication-se-recorded__chip {
+  padding: 0.18rem 0.5rem;
+  font-size: 0.74rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, #c08a2e 10%, transparent);
+  border: 1px solid color-mix(in srgb, #c08a2e 30%, var(--border-soft, #e8e8e4));
+}
+
+.medication-se-report {
+  padding: 0.6rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  background: var(--notion-paper-bg, #fff);
+}
+
+.medication-se-report__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.medication-se-report__symptom {
+  font-size: 0.86rem;
+  color: var(--ink, #1a1a18);
+}
+
+.medication-se-report__severity,
+.medication-se-report__attribution {
+  font-size: 0.7rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: var(--surface-hover, #f5f5f5);
+  color: var(--text-muted, #8a8a80);
+}
+
+.medication-se-report__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.7rem;
+  margin-top: 0.3rem;
+  font-size: 0.74rem;
+  color: var(--text-muted, #8a8a80);
+}
+
+.medication-se-report__note {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--ink, #1a1a18);
+}
+
+/* ── Intelligence cards (comprehensive per-drug) ───────────── */
+.medication-intelligence-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius-card, var(--therapy-radius, 10px));
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 13%, var(--border-soft, #e8e8e4));
+  border-left: 3px solid color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 30%, var(--border-soft, #e8e8e4));
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 4%, var(--notion-paper-bg, #fff));
+  box-shadow: var(--therapy-card-shadow);
+}
+
+.medication-intelligence-card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 12%, var(--border-soft, #e8e8e4));
+}
+
+.medication-intelligence-card__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.medication-intelligence-card__substance {
+  font-size: 1rem;
+  font-weight: 720;
+  color: var(--ink, #1a1a18);
+}
+
+.medication-intelligence-card__class {
+  font-size: 0.74rem;
+  color: var(--text-muted, #8a8a80);
+  text-align: right;
+}
+
+.medication-intelligence-card__facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.5rem 1rem;
+  margin: 0;
+}
+
+.medication-intelligence-card__facts div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.medication-intelligence-card__facts dt {
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted, #8a8a80);
+}
+
+.medication-intelligence-card__facts dd {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--ink, #1a1a18);
+}
+
+.medication-intelligence__block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.medication-intelligence__section-label--warn {
+  color: #b4452f;
+}
+
+.medication-intelligence__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.medication-intelligence__chip {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.74rem;
+  border-radius: 999px;
+  background: var(--surface-hover, #f5f5f5);
+  border: 1px solid var(--border-soft, #e8e8e4);
+  color: var(--ink, #1a1a18);
+}
+
+.medication-intelligence__serious {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--ink, #1a1a18);
+}
+
+.medication-interactions-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.medication-interaction {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.medication-interaction__severity {
+  align-self: flex-start;
+  font-size: 0.74rem;
+  font-weight: 650;
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  color: var(--ink, #1a1a18);
+}
+
+.medication-interaction__severity--moderate {
+  background: color-mix(in srgb, #c08a2e 14%, transparent);
+  border-color: color-mix(in srgb, #c08a2e 35%, var(--border-soft, #e8e8e4));
+}
+
+.medication-interaction__severity--severe,
+.medication-interaction__severity--contraindicated {
+  background: color-mix(in srgb, #b4452f 14%, transparent);
+  border-color: color-mix(in srgb, #b4452f 40%, var(--border-soft, #e8e8e4));
+  color: #b4452f;
+}
+
+.medication-interaction__note {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--text-muted, #8a8a80);
+}
+
+/* ── Per-medication Verlauf dialog ─────────────────────────── */
+.medication-entry-history {
+  max-width: 38rem;
+  width: 100%;
+}
+
+.medication-entry-history__brand {
+  font-weight: 450;
+  color: var(--text-muted, #8a8a80);
+}
+
+.medication-entry-history__subtitle {
+  margin: 0.15rem 0 0;
+  font-size: 0.76rem;
+  color: var(--text-muted, #8a8a80);
+}
+
+.medication-entry-history__empty {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--text-muted, #8a8a80);
+}
+
+.medication-entry-history__timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.medication-entry-history__event {
+  display: grid;
+  grid-template-columns: 1.6rem 1fr;
+  gap: 0.6rem;
+  padding: 0.55rem 0 0.7rem 0;
+  position: relative;
+}
+
+.medication-entry-history__event:not(:last-child) {
+  border-left: 0;
+}
+
+.medication-entry-history__event:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 0.78rem;
+  top: 1.6rem;
+  bottom: -0.1rem;
+  width: 1px;
+  background: var(--border-soft, #e8e8e4);
+}
+
+.medication-entry-history__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  background: var(--notion-paper-bg, #fff);
+  color: var(--text-muted, #8a8a80);
+  z-index: 1;
+}
+
+.medication-entry-history__event--latest .medication-entry-history__icon {
+  border-color: var(--area-accent, var(--accent, #4a7c59));
+  color: var(--area-accent, var(--accent, #4a7c59));
+}
+
+.medication-entry-history__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.medication-entry-history__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.medication-entry-history__type {
+  font-weight: 650;
+  font-size: 0.84rem;
+  color: var(--ink, #1a1a18);
+}
+
+.medication-entry-history__date {
+  font-size: 0.74rem;
+  color: var(--text-muted, #8a8a80);
+  font-variant-numeric: tabular-nums;
+}
+
+.medication-entry-history__dose {
+  font-size: 0.82rem;
+  color: var(--ink, #1a1a18);
+}
+
+.medication-entry-history__note {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--text-muted, #8a8a80);
+}
+
+/* ── Plan list ─────────────────────────────────────────────── */
+.medication-plan__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+/* ── Explore (quick-jump) cards ────────────────────────────── */
+.medication-explore {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding-top: 0.35rem;
+}
+
+.medication-explore__label {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted, #8a8a80);
+}
+
+.medication-explore__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 0.7rem;
+}
+
+.medication-explore__card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  text-align: left;
+  padding: 0.85rem 0.95rem;
+  font-family: inherit;
+  border-radius: var(--radius-card, var(--therapy-radius, 10px));
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 12%, var(--border-soft, #e8e8e4));
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 3.5%, var(--notion-paper-bg, #fff));
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.08s, background 0.15s;
+}
+
+.medication-explore__card:hover {
+  border-color: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 50%, var(--border-soft, #e8e8e4));
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 7%, var(--notion-paper-bg, #fff));
+  box-shadow: var(--therapy-card-shadow-hover);
+  transform: translateY(-1px);
+}
+
+.medication-explore__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 8px;
+  color: var(--area-accent, var(--accent, #4a7c59));
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 10%, transparent);
+}
+
+.medication-explore__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.medication-explore__title {
+  font-size: 0.86rem;
+  font-weight: 650;
+  color: var(--ink, #1a1a18);
+}
+
+.medication-explore__desc {
+  font-size: 0.76rem;
+  line-height: 1.4;
+  color: var(--text-muted, #8a8a80);
+}
+
+.medication-workspace__disclaimer-note {
+  margin: 0.25rem 0 0;
+  font-size: 0.68rem;
+  line-height: 1.45;
+  color: var(--text-muted, #8a8a80);
+}
+
+/* ── Section detail (router target for non-plan sections) ──── */
+.medication-section-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.medication-section-detail__head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.medication-section-detail__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  align-self: flex-start;
+  padding: 0.25rem 0.55rem 0.25rem 0.4rem;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted, #8a8a80);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.medication-section-detail__back:hover {
+  color: var(--area-accent, var(--accent, #4a7c59));
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 8%, transparent);
+}
+
+.medication-section-detail__title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-soft, #e8e8e4);
+}
+
+.medication-section-detail__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 11px;
+  color: var(--area-accent, var(--accent, #4a7c59));
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 11%, transparent);
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 22%, transparent);
+}
+
+.medication-section-detail__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.medication-section-detail__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 720;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  color: var(--ink, #1a1a18);
+}
+
+.medication-section-detail__desc {
+  margin: 0;
+  max-width: 70ch;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-muted, #8a8a80);
+}
+
+.medication-section-detail__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+@media (max-width: 720px) {
+  .medication-page {
+    padding: 1.1rem 1.1rem 2.5rem;
+  }
+
+  .medication-hero {
+    flex-direction: column;
+    align-items: stretch;
     gap: 1rem;
   }
 
-  .medication-workspace__aside {
-    position: static;
+  .medication-hero__actions {
+    flex-wrap: wrap;
+  }
+
+  .medication-insights {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .medication-insight--chips {
+    grid-column: 1 / -1;
+  }
+
+  .medication-dashboard__grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -10238,9 +11481,9 @@
 }
 
 .med-therapy-nav__link--active {
-  color: var(--accent, #4a7c59);
-  border-left-color: var(--accent, #4a7c59);
-  background: color-mix(in srgb, var(--accent, #4a7c59) 7%, transparent);
+  color: var(--area-accent, var(--accent, #4a7c59));
+  border-left-color: var(--area-accent, var(--accent, #4a7c59));
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 7%, transparent);
   font-weight: 600;
 }
 
@@ -10264,40 +11507,6 @@
 
 .medication-toolbar--empty {
   padding-bottom: 0;
-}
-
-/* Quiet secondary utility actions (edit/export/print/copy/history) sit to the
-   right of the shared "＋ add" button; the add button is the clear primary. */
-.medication-toolbar__btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.3rem 0.55rem;
-  font-family: inherit;
-  font-size: 0.78rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 7px;
-  cursor: pointer;
-  transition: color 0.15s, background 0.15s, border-color 0.15s;
-}
-
-.medication-toolbar__btn:hover:not(:disabled) {
-  color: var(--ink);
-  background: var(--surface-hover, #f5f5f5);
-  border-color: var(--border-soft, #e8e8e4);
-}
-
-.medication-toolbar__btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-/* First secondary action pushes the utility group to the right of the add button */
-.therapy-add-btn + .medication-toolbar__btn {
-  margin-left: auto;
 }
 
 .medication-plan-nav {
@@ -10379,27 +11588,32 @@
 /* Medication list rows adopt the shared therapy-card language so the
    medication left list matches the complementary / sozialtherapie card lists. */
 .medication-row {
-  background: var(--notion-paper-bg, #fff);
-  border: 1px solid var(--border-soft, #e8e8e4);
-  border-radius: var(--therapy-radius);
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 3%, var(--notion-paper-bg, #fff));
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 12%, var(--border-soft, #e8e8e4));
+  border-left: 3px solid color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 32%, var(--border-soft, #e8e8e4));
+  border-radius: var(--radius-card, var(--therapy-radius));
   box-shadow: var(--therapy-card-shadow);
   padding: 0.8rem 0.95rem;
   cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
 }
 
 .medication-row:hover {
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--border-soft, #e8e8e4));
+  border-color: color-mix(in srgb, var(--area-accent, var(--accent)) 45%, var(--border-soft, #e8e8e4));
+  border-left-color: var(--area-accent, var(--accent));
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 6%, var(--notion-paper-bg, #fff));
   box-shadow: var(--therapy-card-shadow-hover);
 }
 
 .medication-row--selected {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent), var(--therapy-card-shadow-hover);
+  border-color: var(--area-accent, var(--accent));
+  border-left-color: var(--area-accent, var(--accent));
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 8%, var(--notion-paper-bg, #fff));
+  box-shadow: 0 0 0 1px var(--area-accent, var(--accent)), var(--therapy-card-shadow-hover);
 }
 
 .medication-row:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--area-accent, var(--accent));
   outline-offset: 2px;
 }
 
@@ -10470,43 +11684,6 @@
   justify-content: flex-end;
   gap: 0.15rem;
   flex-shrink: 0;
-}
-
-.medication-row__action-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.05rem;
-  width: 1.55rem;
-  height: 1.55rem;
-  padding: 0;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease;
-  font-family: inherit;
-}
-
-.medication-row__action-btn:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-  color: var(--ink);
-}
-
-.medication-row__action-btn--active {
-  color: var(--ink);
-  background: color-mix(in srgb, var(--accent) 8%, transparent);
-}
-
-.medication-row__action-btn--delete:hover:not(:disabled) {
-  background: color-mix(in srgb, #e53935 10%, transparent);
-  color: #e53935;
-}
-
-.medication-row__action-btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
 }
 
 .medication-delete-dialog__body {
@@ -11076,33 +12253,230 @@
   color: var(--text-muted);
 }
 
-.medication-history-panel {
-  font-size: 0.72rem;
-  color: var(--text-secondary);
-  padding: 0.35rem 0;
+/* ── Plan-level history view (top "History" link + dated snapshots) ──────── */
+.medication-workspace__topbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 0 0.4rem;
 }
 
-.medication-history-panel__plan + .medication-history-panel__plan {
-  margin-top: 0.65rem;
-  padding-top: 0.65rem;
-  border-top: var(--border-width) solid var(--border-soft);
+.medication-history {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding-top: 0.6rem;
 }
 
-.medication-history-panel__date {
-  margin: 0 0 0.25rem;
-  font-weight: 600;
+.medication-history__bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
-.medication-history-panel__meds {
+.medication-history__title {
   margin: 0;
-  padding-left: 1rem;
+  font-size: 0.95rem;
+  color: var(--ink);
 }
 
-.medication-history-panel__events {
+.medication-history__subtitle {
   margin: 0.2rem 0 0;
-  padding-left: 1rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  max-width: 52ch;
+  line-height: 1.45;
+}
+
+.medication-history__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.6rem;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--area-accent, var(--accent, #4a7c59));
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 35%, transparent);
+  border-radius: 7px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.medication-history__back:hover {
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 15%, transparent);
+}
+
+.medication-history__empty {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.medication-history__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (max-width: 760px) {
+  .medication-history__layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.medication-history__timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  border-left: var(--border-width, 1px) solid var(--border-soft);
+}
+
+.medication-history__entry {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.medication-history__entry:hover {
+  background: var(--surface-hover, #f5f5f5);
+}
+
+.medication-history__entry--active {
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 8%, transparent);
+  border-color: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 30%, transparent);
+}
+
+.medication-history__entry-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.medication-history__entry-summary {
   font-size: 0.68rem;
   color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.medication-history__badge {
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--area-accent, var(--accent, #4a7c59));
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 12%, transparent);
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+}
+
+.medication-history__badge--strong {
+  font-size: 0.65rem;
+}
+
+.medication-history__snapshot {
+  border: var(--border-width, 1px) solid var(--border-soft);
+  border-radius: 10px;
+  padding: 0.85rem 0.95rem;
+  background: var(--surface, #fff);
+}
+
+.medication-history__snapshot-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+  padding-bottom: 0.5rem;
+  border-bottom: var(--border-width, 1px) solid var(--border-soft);
+}
+
+.medication-history__snapshot-date {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.medication-history__snapshot-empty {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.medication-history__meds {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.medication-history__med {
+  display: flex;
+  gap: 0.55rem;
+  padding: 0.4rem 0.45rem;
+  border-radius: 7px;
+}
+
+.medication-history__med--changed {
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 7%, transparent);
+}
+
+.medication-history__med-icon {
+  display: inline-flex;
+  padding-top: 0.1rem;
+}
+
+.medication-history__med-body {
+  min-width: 0;
+}
+
+.medication-history__med-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.medication-history__med-substance {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.medication-history__med-brand {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.medication-history__med-form {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.medication-history__med-dose {
+  margin-top: 0.15rem;
+  font-size: 0.74rem;
+  color: var(--text-secondary);
 }
 
 .medication-intelligence-list {
@@ -11686,7 +13060,7 @@ details[open].receptor-radar .receptor-radar__summary::before {
 }
 
 .receptor-profile__tab--active {
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 10%, transparent);
   color: var(--ink);
 }
 
@@ -12050,8 +13424,8 @@ details[open].receptor-radar .receptor-radar__summary::before {
 }
 
 .overview-chart-card__action:hover {
-  color: var(--accent, #4a7c59);
-  background: color-mix(in srgb, var(--accent, #4a7c59) 10%, transparent);
+  color: var(--area-accent, var(--accent, #4a7c59));
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 10%, transparent);
 }
 
 .overview-chart-card__action--close:hover {
@@ -12080,8 +13454,8 @@ details[open].receptor-radar .receptor-radar__summary::before {
 }
 
 .overview-hidden-menu__toggle:hover {
-  color: var(--accent, #4a7c59);
-  border-color: var(--accent, #4a7c59);
+  color: var(--area-accent, var(--accent, #4a7c59));
+  border-color: var(--area-accent, var(--accent, #4a7c59));
 }
 
 .overview-hidden-menu__list {
@@ -12132,7 +13506,7 @@ details[open].receptor-radar .receptor-radar__summary::before {
   font-size: 0.72rem;
   font-family: inherit;
   font-weight: 600;
-  color: var(--accent, #4a7c59);
+  color: var(--area-accent, var(--accent, #4a7c59));
   flex-shrink: 0;
   padding: 0.1rem 0.2rem;
 }
@@ -12370,7 +13744,7 @@ details[open].receptor-radar .receptor-radar__summary::before {
 
 .aktuelle-medikation__add:hover {
   color: var(--text-ink, #111827);
-  border-color: var(--accent, #3b82f6);
+  border-color: var(--area-accent, var(--accent, #3b82f6));
 }
 
 /* ── Übersicht two-column overview layout ─────────────────────────────────── */
@@ -12438,22 +13812,28 @@ details[open].receptor-radar .receptor-radar__summary::before {
   font-style: italic;
 }
 
+.overview-therapies__groups {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
 /* Planned-therapy cards: 1 column by default, widening to 2 then 3 columns as the
    left column gains width (3 → 2 → 1 collapse). */
-.overview-therapies__grid {
+.overview-therapy-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 0.5rem;
 }
 
 @container overview-left (min-width: 320px) {
-  .overview-therapies__grid {
+  .overview-therapy-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @container overview-left (min-width: 480px) {
-  .overview-therapies__grid {
+  .overview-therapy-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
@@ -12474,7 +13854,7 @@ details[open].receptor-radar .receptor-radar__summary::before {
 }
 
 .overview-therapy-card:hover {
-  border-color: color-mix(in srgb, var(--accent, #4a7c59) 45%, var(--border-soft, #e5e7eb));
+  border-color: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 45%, var(--border-soft, #e5e7eb));
   box-shadow: var(--shadow-elevated-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
 }
 
@@ -12538,7 +13918,7 @@ details[open].receptor-radar .receptor-radar__summary::before {
 
 .therapy-adherence__compliant {
   font-size: 0.8rem;
-  color: var(--accent, #4a7c59);
+  color: var(--area-accent, var(--accent, #4a7c59));
   margin: 0;
   line-height: 1.35;
 }
@@ -12764,7 +14144,7 @@ details[open].receptor-radar .receptor-radar__summary::before {
 }
 
 .overview-konsile__card:hover {
-  border-color: color-mix(in srgb, var(--accent, #4a7c59) 45%, var(--border-soft, #e5e7eb));
+  border-color: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 45%, var(--border-soft, #e5e7eb));
   box-shadow: var(--shadow-elevated-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
 }
 
@@ -16542,6 +17922,58 @@ details[open].receptor-radar .receptor-radar__summary::before {
   color: var(--kb-book-ink);
 }
 
+/* —— Individual medication page: dark "case sidebar" design ——
+   A single drug is treated as its own page, so its section nav adopts the same
+   accent-tinted dark panel used by the global case sidebar. The Psychopharmaka
+   overview (KbPharmaClassifiedBrowse) and the Wissensdatenbank notes view keep
+   their light, natural layout (no dark panel). Selectors are scoped under
+   .kbp-detail-view--reading so they win over the light reading-mode overrides. */
+.kbp-detail-view--reading .kb-toc--sidebar {
+  --kb-toc-sidebar-bg: color-mix(in srgb, var(--accent) 82%, black);
+  --kb-toc-sidebar-bg-hover: color-mix(in srgb, var(--accent) 70%, white 12%);
+  --kb-toc-sidebar-muted: color-mix(in srgb, white 62%, transparent);
+  --kb-toc-sidebar-border: color-mix(in srgb, white 14%, transparent);
+  flex-basis: 14rem;
+  padding: 1rem 0.85rem;
+  background: var(--kb-toc-sidebar-bg);
+  border: 1px solid var(--kb-toc-sidebar-border);
+  border-radius: 0.6rem;
+  color: #fff;
+}
+
+.kbp-detail-view--reading .kb-toc--sidebar .kb-toc__title,
+.kbp-detail-view--reading .kb-toc--sidebar .kb-toc__group-label,
+.kbp-detail-view--reading .kb-toc--sidebar .kb-toc__dropdown-label {
+  color: var(--kb-toc-sidebar-muted);
+}
+
+.kbp-detail-view--reading .kb-toc--sidebar .kb-toc__link {
+  color: color-mix(in srgb, white 85%, transparent);
+  border-left-color: transparent;
+}
+
+.kbp-detail-view--reading .kb-toc--sidebar .kb-toc__number {
+  color: var(--kb-toc-sidebar-muted);
+}
+
+.kbp-detail-view--reading .kb-toc--sidebar .kb-toc__link:hover {
+  background: var(--kb-toc-sidebar-bg-hover);
+  color: #fff;
+}
+
+.kbp-detail-view--reading .kb-toc--sidebar .kb-toc__link--active {
+  background: color-mix(in srgb, white 16%, transparent);
+  border-left-color: color-mix(in srgb, white 70%, transparent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.kbp-detail-view--reading .kb-toc--sidebar .kb-toc__select {
+  background: color-mix(in srgb, black 25%, transparent);
+  border-color: var(--kb-toc-sidebar-border);
+  color: #fff;
+}
+
 .kbp-reading-panel__expand-btn {
   gap: 0.35rem;
 }
@@ -17620,5 +19052,26 @@ details[open].receptor-radar .receptor-radar__summary::before {
 
   .kb-classified-preview__legend {
     position: static;
+  }
+}
+
+/* ── Diagnose page (dedicated clinical-area page for coded diagnoses) ──────── */
+.diagnose-page {
+  padding: 1.5rem 1.75rem 3rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.diagnose-page .diagnosen-widget--panel {
+  max-width: 720px;
+}
+
+@media (max-width: 768px) {
+  .diagnose-page {
+    padding: 1.1rem 1.1rem 2.5rem;
+  }
+
+  .diagnose-page .diagnosen-widget--panel {
+    max-width: none;
   }
 }

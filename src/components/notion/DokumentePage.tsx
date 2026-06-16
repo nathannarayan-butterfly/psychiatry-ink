@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { ChevronLeft, Trash2 } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
 import { componentTranslations } from '../../data/componentTranslations'
 import {
@@ -14,44 +15,16 @@ import { defaultAufnahmeSections } from '../../data/aufnahmeSections'
 import { formatIsoTimestampDate } from '../../utils/siteTimezone'
 import type { UiLanguage } from '../../types/settings'
 import { TemplateWorkspaceHost } from '../templates/TemplateWorkspaceHost'
+import { useDokumenteSectionNavOptional } from '../../contexts/DokumenteSectionNavContext'
+import {
+  CATEGORY_ORDER,
+  getCategoryLabelKey,
+  type CategoryFilter,
+} from '../../data/dokumenteCategories'
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-
-type CategoryFilter = 'all' | DokumentCategory
-
-interface CategoryTabConfig {
-  id: CategoryFilter
-  labelKey:
-    | 'dokumenteCategoryAll'
-    | 'dokumenteCategoryAnamnese'
-    | 'dokumenteCategoryArztbrief'
-    | 'dokumenteCategoryLaborbefunde'
-    | 'dokumenteCategoryUntersuchungsbefunde'
-    | 'dokumenteCategoryExterneBefunde'
-    | 'dokumenteCategoryFormulare'
-}
-
-const CATEGORY_TABS: CategoryTabConfig[] = [
-  { id: 'all', labelKey: 'dokumenteCategoryAll' },
-  { id: 'anamnese', labelKey: 'dokumenteCategoryAnamnese' },
-  { id: 'arztbrief', labelKey: 'dokumenteCategoryArztbrief' },
-  { id: 'laborbefunde', labelKey: 'dokumenteCategoryLaborbefunde' },
-  { id: 'untersuchungsbefunde', labelKey: 'dokumenteCategoryUntersuchungsbefunde' },
-  { id: 'externe-befunde', labelKey: 'dokumenteCategoryExterneBefunde' },
-  { id: 'formulare', labelKey: 'dokumenteCategoryFormulare' },
-]
-
-/** Display order for grouped category sections in the "All" view. */
-const CATEGORY_ORDER: DokumentCategory[] = [
-  'anamnese',
-  'arztbrief',
-  'laborbefunde',
-  'untersuchungsbefunde',
-  'externe-befunde',
-  'formulare',
-]
 
 function getSourceLabelKey(
   source: DokumentEntry['source'],
@@ -75,17 +48,6 @@ function resolveSectionLabel(sectionId: string, language: UiLanguage): string {
   return fallback?.label ?? sectionId
 }
 
-function getCategoryLabelKey(category: DokumentCategory): CategoryTabConfig['labelKey'] {
-  switch (category) {
-    case 'anamnese': return 'dokumenteCategoryAnamnese'
-    case 'arztbrief': return 'dokumenteCategoryArztbrief'
-    case 'laborbefunde': return 'dokumenteCategoryLaborbefunde'
-    case 'untersuchungsbefunde': return 'dokumenteCategoryUntersuchungsbefunde'
-    case 'externe-befunde': return 'dokumenteCategoryExterneBefunde'
-    case 'formulare': return 'dokumenteCategoryFormulare'
-  }
-}
-
 function getCategoryColor(category: DokumentCategory): string {
   switch (category) {
     case 'anamnese': return 'dokumente-badge--anamnese'
@@ -98,16 +60,20 @@ function getCategoryColor(category: DokumentCategory): string {
 }
 
 // ---------------------------------------------------------------------------
-// Document Detail Modal
+// Document Detail (in-place view)
 // ---------------------------------------------------------------------------
 
-interface DocumentModalProps {
+interface DocumentDetailProps {
   entry: DokumentEntry
   categoryLabel: string
-  onClose: () => void
+  /** Whether a "back to list" button should be shown (there's a file list to return to). */
+  showBack: boolean
+  onBack: () => void
+  /** Only provided for draft / template entries; opens the appropriate workspace for editing. */
+  onEdit?: () => void
 }
 
-function DocumentModal({ entry, categoryLabel, onClose }: DocumentModalProps) {
+function DocumentDetail({ entry, categoryLabel, showBack, onBack, onEdit }: DocumentDetailProps) {
   const { t, language } = useTranslation()
 
   const sourceLabelKey = getSourceLabelKey(entry.source)
@@ -122,75 +88,81 @@ function DocumentModal({ entry, categoryLabel, onClose }: DocumentModalProps) {
         .filter((section) => section.content)
     : []
 
+  // Escape returns to the list, mirroring the previous modal behaviour.
   useEffect(() => {
+    if (!showBack) return
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') onBack()
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [onClose])
+  }, [showBack, onBack])
 
   return (
-    <div
-      className="dokumente-modal-overlay"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label={entry.title}
-    >
-      <div
-        className="dokumente-modal"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <header className="dokumente-modal__header">
-          <div className="dokumente-modal__meta">
-            <span className={`dokumente-badge ${getCategoryColor(entry.category)}`}>
-              {categoryLabel}
-            </span>
-            {sourceLabelKey && (
-              <span
-                className={`dokumente-source-badge${
-                  entry.source === 'ai-accepted' ? ' dokumente-source-badge--ai' : ''
-                }`}
-              >
-                {t(sourceLabelKey)}
-              </span>
-            )}
-            <time className="dokumente-modal__date">{formatIsoTimestampDate(entry.date)}</time>
-          </div>
-          <h2 className="dokumente-modal__title">{entry.title}</h2>
-        </header>
-
-        <div className="dokumente-modal__content">
-          {sectionEntries.length > 0 ? (
-            <>
-              <p className="dokumente-modal__hint">{t('dokumenteAutoCategorizedHint')}</p>
-              <h3 className="dokumente-modal__sections-heading">{t('dokumenteSectionsHeading')}</h3>
-              <div className="dokumente-modal__sections">
-                {sectionEntries.map((section) => (
-                  <section key={section.id} className="dokumente-modal__section">
-                    <h4 className="dokumente-modal__section-title">{section.label}</h4>
-                    <pre className="dokumente-modal__text">{section.content}</pre>
-                  </section>
-                ))}
-              </div>
-            </>
-          ) : (
-            <pre className="dokumente-modal__text">{entry.content}</pre>
-          )}
-        </div>
-
-        <footer className="dokumente-modal__footer">
+    <article className="dokumente-detail" aria-label={entry.title}>
+      {showBack && (
+        <div className="dokumente-detail__toolbar">
           <button
             type="button"
-            className="dokumente-modal__close"
-            onClick={onClose}
+            className="dokumente-detail__back"
+            onClick={onBack}
           >
-            {t('dokumenteClose')}
+            <ChevronLeft className="dokumente-detail__back-icon" aria-hidden strokeWidth={2} />
+            <span>{t('dokumenteBack')}</span>
+          </button>
+        </div>
+      )}
+
+      <header className="dokumente-detail__header">
+        <div className="dokumente-detail__meta">
+          <span className={`dokumente-badge ${getCategoryColor(entry.category)}`}>
+            {categoryLabel}
+          </span>
+          {sourceLabelKey && (
+            <span
+              className={`dokumente-source-badge${
+                entry.source === 'ai-accepted' ? ' dokumente-source-badge--ai' : ''
+              }`}
+            >
+              {t(sourceLabelKey)}
+            </span>
+          )}
+          <time className="dokumente-detail__date">{formatIsoTimestampDate(entry.date)}</time>
+        </div>
+        <h2 className="dokumente-detail__title">{entry.title}</h2>
+      </header>
+
+      <div className="dokumente-detail__content">
+        {sectionEntries.length > 0 ? (
+          <>
+            <p className="dokumente-detail__hint">{t('dokumenteAutoCategorizedHint')}</p>
+            <h3 className="dokumente-detail__sections-heading">{t('dokumenteSectionsHeading')}</h3>
+            <div className="dokumente-detail__sections">
+              {sectionEntries.map((section) => (
+                <section key={section.id} className="dokumente-detail__section">
+                  <h4 className="dokumente-detail__section-title">{section.label}</h4>
+                  <pre className="dokumente-modal__text">{section.content}</pre>
+                </section>
+              ))}
+            </div>
+          </>
+        ) : (
+          <pre className="dokumente-modal__text">{entry.content}</pre>
+        )}
+      </div>
+
+      {onEdit && (
+        <footer className="dokumente-detail__footer">
+          <button
+            type="button"
+            className="dokumente-detail__edit"
+            onClick={onEdit}
+          >
+            {entry.source === 'draft' ? t('dokumenteEditDraft') : t('dokumenteOpenInWorkspace')}
           </button>
         </footer>
-      </div>
-    </div>
+      )}
+    </article>
   )
 }
 
@@ -298,11 +270,12 @@ function DocumentCard({ entry, categoryLabel, onExpand, onDelete, onEdit }: Docu
             )}
             <button
               type="button"
-              className="dokumente-card__delete"
+              className="icon-action-btn icon-action-btn--danger"
               onClick={handleDeleteClick}
               title={t('dokumenteDelete')}
+              aria-label={t('dokumenteDelete')}
             >
-              {t('dokumenteDelete')}
+              <Trash2 strokeWidth={1.75} aria-hidden />
             </button>
           </div>
         )}
@@ -328,11 +301,27 @@ interface DokumentePageProps {
 
 export function DokumentePage({ caseId, onAfterDelete, onEditDraft }: DokumentePageProps) {
   const { t } = useTranslation()
+  const nav = useDokumenteSectionNavOptional()
   const [entries, setEntries] = useState<DokumentEntry[]>(() => loadDokumente(caseId))
-  const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all')
+  const [localCategory] = useState<CategoryFilter>('all')
+  const activeCategory = nav?.activeCategory ?? localCategory
   const [expandedEntry, setExpandedEntry] = useState<DokumentEntry | null>(null)
   const [templateHostOpen, setTemplateHostOpen] = useState(false)
   const [templateDocId, setTemplateDocId] = useState<string | undefined>()
+  const mainRef = useRef<HTMLElement>(null)
+  const savedScrollRef = useRef(0)
+
+  // Expose the "new template document" action to the global sidebar nav.
+  const handleNewTemplate = useCallback(() => {
+    setTemplateDocId(undefined)
+    setTemplateHostOpen(true)
+  }, [])
+
+  useEffect(() => {
+    if (!nav) return
+    nav.setNewTemplateHandler(handleNewTemplate)
+    return () => nav.setNewTemplateHandler(null)
+  }, [nav, handleNewTemplate])
 
   // Backfill: mirror any lab befunde that predate the Dokumente wiring, then load.
   // Idempotent — re-running never creates duplicates.
@@ -362,6 +351,29 @@ export function DokumentePage({ caseId, onAfterDelete, onEditDraft }: DokumenteP
       ? entries
       : entries.filter((e) => e.category === activeCategory)
 
+  // Open a file in place, remembering where the list was scrolled so we can
+  // restore that position when the user navigates back.
+  const handleExpand = useCallback((entry: DokumentEntry) => {
+    savedScrollRef.current = mainRef.current?.scrollTop ?? 0
+    setExpandedEntry(entry)
+  }, [])
+
+  const handleBack = useCallback(() => {
+    setExpandedEntry(null)
+  }, [])
+
+  // Selecting another category in the sidebar nav returns to the list view.
+  useEffect(() => {
+    setExpandedEntry(null)
+  }, [activeCategory])
+
+  // Restore the list scroll position after returning from a detail view.
+  useEffect(() => {
+    if (!expandedEntry && mainRef.current) {
+      mainRef.current.scrollTop = savedScrollRef.current
+    }
+  }, [expandedEntry])
+
   const handleDelete = useCallback(
     (id: string) => {
       const pageType = entries.find((e) => e.id === id)?.pageType
@@ -372,9 +384,6 @@ export function DokumentePage({ caseId, onAfterDelete, onEditDraft }: DokumenteP
     },
     [caseId, entries, expandedEntry, onAfterDelete],
   )
-
-  const showExterneUpload = activeCategory === 'all' || activeCategory === 'externe-befunde'
-  const showTemplateActions = activeCategory === 'all' || activeCategory === 'formulare'
 
   const handleEditEntry = useCallback(
     (entry: DokumentEntry) => {
@@ -389,63 +398,25 @@ export function DokumentePage({ caseId, onAfterDelete, onEditDraft }: DokumenteP
   )
 
   return (
-    <div className="dokumente-page">
-      {/* Sidebar */}
-      <aside className="dokumente-sidebar">
-        <h2 className="dokumente-sidebar__title">{t('dokumenteTitle')}</h2>
-        <nav className="dokumente-sidebar__nav" aria-label="Dokumentkategorien">
-          {CATEGORY_TABS.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              className={[
-                'dokumente-sidebar__tab',
-                activeCategory === tab.id ? 'dokumente-sidebar__tab--active' : '',
-              ]
-                .join(' ')
-                .trim()}
-              onClick={() => setActiveCategory(tab.id)}
-              aria-pressed={activeCategory === tab.id}
-            >
-              {t(tab.labelKey)}
-            </button>
-          ))}
-        </nav>
-
-        {showExterneUpload && (
-          <div className="dokumente-sidebar__upload">
-            <button
-              type="button"
-              className="dokumente-sidebar__upload-btn"
-              disabled
-              title={t('dokumenteUpload')}
-            >
-              {t('dokumenteUpload')}
-            </button>
-          </div>
-        )}
-
-        {showTemplateActions && (
-          <div className="dokumente-sidebar__upload">
-            <button
-              type="button"
-              className="dt-entry-btn dokumente-sidebar__upload-btn"
-              onClick={() => {
-                setTemplateDocId(undefined)
-                setTemplateHostOpen(true)
-              }}
-            >
-              {t('templateUseNew')}
-            </button>
-          </div>
-        )}
-      </aside>
-
-      {/* Document list — grouped by category (entries are already newest-first) */}
-      <main className="dokumente-main">
-        {filtered.length === 0 ? (
+    <div className="dokumente-page dokumente-page--single-column">
+      <main className="dokumente-main" ref={mainRef}>
+        {expandedEntry ? (
+          /* In-place detail view — replaces the list, with a back button to return. */
+          <DocumentDetail
+            entry={expandedEntry}
+            categoryLabel={t(getCategoryLabelKey(expandedEntry.category))}
+            showBack={filtered.length > 0}
+            onBack={handleBack}
+            onEdit={
+              onEditDraft || expandedEntry.pageType.startsWith('template-doc:')
+                ? () => handleEditEntry(expandedEntry)
+                : undefined
+            }
+          />
+        ) : filtered.length === 0 ? (
           <p className="dokumente-empty">{t('dokumenteEmpty')}</p>
         ) : (
+          /* Document list — grouped by category (entries are already newest-first) */
           (activeCategory === 'all'
             ? CATEGORY_ORDER
             : [activeCategory]
@@ -467,7 +438,7 @@ export function DokumentePage({ caseId, onAfterDelete, onEditDraft }: DokumenteP
                       key={entry.id}
                       entry={entry}
                       categoryLabel={t(getCategoryLabelKey(entry.category))}
-                      onExpand={() => setExpandedEntry(entry)}
+                      onExpand={() => handleExpand(entry)}
                       onDelete={() => handleDelete(entry.id)}
                       onEdit={onEditDraft || entry.pageType.startsWith('template-doc:') ? () => handleEditEntry(entry) : undefined}
                     />
@@ -477,15 +448,6 @@ export function DokumentePage({ caseId, onAfterDelete, onEditDraft }: DokumenteP
             ))
         )}
       </main>
-
-      {/* Detail modal */}
-      {expandedEntry && (
-        <DocumentModal
-          entry={expandedEntry}
-          categoryLabel={t(getCategoryLabelKey(expandedEntry.category))}
-          onClose={() => setExpandedEntry(null)}
-        />
-      )}
 
       {templateHostOpen ? (
         <TemplateWorkspaceHost

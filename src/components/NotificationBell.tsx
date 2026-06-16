@@ -1,5 +1,6 @@
 import { Bell, X } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from '../context/TranslationContext'
 import {
   addNotification,
@@ -29,16 +30,20 @@ interface NotificationBellProps {
   creditBalance?: number
   buttonClassName?: string
   wrapClassName?: string
+  openClassName?: string
 }
 
 export function NotificationBell({
   creditBalance,
   buttonClassName = 'notion-topbar__notif-btn',
   wrapClassName = 'notion-topbar__notif-wrap',
+  openClassName = 'notion-topbar__notif-btn--open',
 }: NotificationBellProps) {
   const { t } = useTranslation()
   const [notifOpen, setNotifOpen] = useState(false)
   const notifRef = useRef<HTMLDivElement>(null)
+  const popoverRef = useRef<HTMLDivElement>(null)
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null)
   const { notifications, unreadCount } = useNotifications()
 
   useEffect(() => {
@@ -53,12 +58,71 @@ export function NotificationBell({
   useEffect(() => {
     if (!notifOpen) return
     function handleOutside(e: MouseEvent) {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+      const target = e.target as Node
+      const inWrap = notifRef.current?.contains(target)
+      const inPopover = popoverRef.current?.contains(target)
+      if (!inWrap && !inPopover) {
         setNotifOpen(false)
       }
     }
     document.addEventListener('mousedown', handleOutside)
     return () => document.removeEventListener('mousedown', handleOutside)
+  }, [notifOpen])
+
+  // The popover is rendered in a portal and positioned with viewport-aware
+  // fixed coordinates so it always opens into the visible area, regardless of
+  // where the bell lives (e.g. the bottom-left case sidebar) and without being
+  // clipped by an ancestor's `overflow: hidden`.
+  useLayoutEffect(() => {
+    if (!notifOpen) {
+      setCoords(null)
+      return
+    }
+
+    function computePosition() {
+      const wrap = notifRef.current
+      const pop = popoverRef.current
+      if (!wrap || !pop) return
+
+      const rect = wrap.getBoundingClientRect()
+      const popW = pop.offsetWidth
+      const popH = pop.offsetHeight
+      const gap = 8
+      const margin = 8
+      const vw = window.innerWidth
+      const vh = window.innerHeight
+
+      // Horizontal: prefer aligning the popover's left edge to the bell's left
+      // (expands rightward into the content area). Flip to right-align if that
+      // would overflow the viewport, then clamp to stay on-screen.
+      let left = rect.left
+      if (left + popW + margin > vw) {
+        left = rect.right - popW
+      }
+      left = Math.min(Math.max(left, margin), Math.max(margin, vw - popW - margin))
+
+      // Vertical: open downward when there's room below the bell, otherwise
+      // open upward (e.g. when the bell is pinned to the bottom of the sidebar).
+      const spaceBelow = vh - rect.bottom
+      const spaceAbove = rect.top
+      let top: number
+      if (spaceBelow >= popH + gap + margin || spaceBelow >= spaceAbove) {
+        top = rect.bottom + gap
+      } else {
+        top = rect.top - gap - popH
+      }
+      top = Math.min(Math.max(top, margin), Math.max(margin, vh - popH - margin))
+
+      setCoords({ top, left })
+    }
+
+    computePosition()
+    window.addEventListener('resize', computePosition)
+    window.addEventListener('scroll', computePosition, true)
+    return () => {
+      window.removeEventListener('resize', computePosition)
+      window.removeEventListener('scroll', computePosition, true)
+    }
   }, [notifOpen])
 
   const handleBellClick = useCallback(() => {
@@ -72,7 +136,7 @@ export function NotificationBell({
     <div className={wrapClassName} ref={notifRef}>
       <button
         type="button"
-        className={`${buttonClassName}${notifOpen ? ' notion-topbar__notif-btn--open' : ''}`}
+        className={`${buttonClassName}${notifOpen ? ` ${openClassName}` : ''}`}
         onClick={handleBellClick}
         aria-label={t('notificationsTitle')}
         title={t('notificationsTitle')}
@@ -87,9 +151,23 @@ export function NotificationBell({
         ) : null}
       </button>
 
-      {notifOpen ? (
-        <div className="notion-topbar__notif-popover" role="dialog" aria-label={t('notificationsTitle')}>
-          <div className="notion-topbar__notif-header">
+      {notifOpen
+        ? createPortal(
+            <div
+              ref={popoverRef}
+              className="notion-topbar__notif-popover"
+              role="dialog"
+              aria-label={t('notificationsTitle')}
+              style={{
+                position: 'fixed',
+                top: coords ? `${coords.top}px` : 0,
+                left: coords ? `${coords.left}px` : 0,
+                right: 'auto',
+                bottom: 'auto',
+                visibility: coords ? 'visible' : 'hidden',
+              }}
+            >
+              <div className="notion-topbar__notif-header">
             <span className="notion-topbar__notif-title">{t('notificationsTitle')}</span>
             {notifications.length > 0 ? (
               <button
@@ -133,8 +211,10 @@ export function NotificationBell({
               ))}
             </ul>
           )}
-        </div>
-      ) : null}
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   )
 }

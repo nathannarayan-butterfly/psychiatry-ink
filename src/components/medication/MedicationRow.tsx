@@ -1,5 +1,4 @@
-import { ChevronRight, History, Pencil, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { History, Pencil, Trash2 } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
 import {
   getChangeTypeLabel,
@@ -24,6 +23,7 @@ interface MedicationRowProps {
   disabled?: boolean
   selected?: boolean
   onSelect: () => void
+  onHistory: () => void
   onEdit: () => void
   onDelete: () => void
 }
@@ -33,14 +33,14 @@ export function MedicationRow({
   disabled = false,
   selected = false,
   onSelect,
+  onHistory,
   onEdit,
   onDelete,
 }: MedicationRowProps) {
   const { language } = useTranslation()
-  const [historyOpen, setHistoryOpen] = useState(false)
 
+  const historyLabel = translateMedicationUi(language, 'medEntryHistory')
   const editLabel = translateMedicationUi(language, 'medEdit')
-  const historyLabel = translateMedicationUi(language, 'medHistoryToggle')
   const deleteLabel = translateMedicationUi(language, 'medDelete')
 
   return (
@@ -92,60 +92,35 @@ export function MedicationRow({
         <div className="medication-row__actions" onClick={(event) => event.stopPropagation()}>
           <button
             type="button"
-            className="medication-row__action-btn"
+            className="icon-action-btn"
+            title={historyLabel}
+            aria-label={historyLabel}
+            onClick={onHistory}
+          >
+            <History strokeWidth={1.75} aria-hidden />
+          </button>
+          <button
+            type="button"
+            className="icon-action-btn"
             disabled={disabled}
             title={editLabel}
             aria-label={editLabel}
             onClick={onEdit}
           >
-            <Pencil size={13} strokeWidth={1.75} aria-hidden />
+            <Pencil strokeWidth={1.75} aria-hidden />
           </button>
-          {entry.history.length > 0 ? (
-            <button
-              type="button"
-              className={`medication-row__action-btn${historyOpen ? ' medication-row__action-btn--active' : ''}`}
-              disabled={disabled}
-              title={historyLabel}
-              aria-label={historyLabel}
-              aria-expanded={historyOpen}
-              onClick={() => setHistoryOpen((open) => !open)}
-            >
-              <History size={13} strokeWidth={1.75} aria-hidden />
-              <ChevronRight
-                size={10}
-                aria-hidden
-                className={`medication-row__chevron${historyOpen ? ' medication-row__chevron--open' : ''}`}
-              />
-            </button>
-          ) : null}
           <button
             type="button"
-            className="medication-row__action-btn medication-row__action-btn--delete"
+            className="icon-action-btn icon-action-btn--danger"
             disabled={disabled}
             title={deleteLabel}
             aria-label={deleteLabel}
             onClick={onDelete}
           >
-            <Trash2 size={13} strokeWidth={1.75} aria-hidden />
+            <Trash2 strokeWidth={1.75} aria-hidden />
           </button>
         </div>
       </div>
-
-      {historyOpen ? (
-        <ul className="medication-row__history">
-          {[...entry.history].reverse().map((event) => (
-            <li key={event.id}>
-              <span className="medication-row__history-date">
-                {new Date(event.changedAt).toLocaleDateString()}
-              </span>
-              <ChangeTypeIcon changeType={event.changeType} />
-              <span>{getChangeTypeLabel(event.changeType, language)}</span>
-              <span className="medication-row__history-dose">{event.snapshot.doseLineGerman}</span>
-              {event.note ? <span className="medication-row__history-note">{event.note}</span> : null}
-            </li>
-          ))}
-        </ul>
-      ) : null}
     </div>
   )
 }

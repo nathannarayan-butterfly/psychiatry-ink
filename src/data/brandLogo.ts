@@ -22,3 +22,23 @@ function resolveLogoInkSrc(): string | null {
 export const logoInkSrc = resolveLogoInkSrc()
 
 export const hasLogoInkMark = logoInkSrc !== null
+
+/**
+ * Raw SVG source (only the .svg variant). Inlined so the dark-sidebar (light)
+ * variant can recolor the two artwork groups independently for a two-tone look
+ * instead of a flat invert filter that white-washes the mark.
+ */
+const logoRawModules = import.meta.glob('../assets/brand/logo-ink.svg', {
+  eager: true,
+  query: '?raw',
+  import: 'default',
+}) as Record<string, string>
+
+function resolveLogoInkRawSvg(): string | null {
+  const entry = Object.entries(logoRawModules).find(([path]) =>
+    path.endsWith('/logo-ink.svg'),
+  )
+  return entry ? entry[1] : null
+}
+
+export const logoInkRawSvg = resolveLogoInkRawSvg()

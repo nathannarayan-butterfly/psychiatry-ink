@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { ArrowLeft, FileText, Users } from 'lucide-react'
 import { ClinicalLoading } from '../ui/ClinicalLoading'
 import type {
   DiscussCaseAnnotation,
@@ -15,6 +16,7 @@ import {
   isEncryptedEnvelope,
   resolveKey,
 } from '../../utils/e2ee'
+import { getParticipantColor } from '../../utils/discussCase/participantColors'
 import { DiscussCaseDocumentViewer } from './DiscussCaseDocumentViewer'
 import { DiscussCaseParticipants } from './DiscussCaseParticipants'
 import { DiscussCaseVoicePanel } from './DiscussCaseVoicePanel'
@@ -25,9 +27,20 @@ interface DiscussCaseViewProps {
   discussionId: string
   onSaveDraftToCase?: (text: string) => void
   onArchived?: () => void
+  onBack?: () => void
 }
 
-export function DiscussCaseView({ discussionId, onSaveDraftToCase, onArchived }: DiscussCaseViewProps) {
+type RightPanel = 'document' | 'participants' | null
+
+function participantInitials(name: string): string {
+  const trimmed = name.trim()
+  if (!trimmed) return '?'
+  const parts = trimmed.split(/\s+/)
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
+  return trimmed.slice(0, 2).toUpperCase()
+}
+
+export function DiscussCaseView({ discussionId, onSaveDraftToCase, onArchived, onBack }: DiscussCaseViewProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [title, setTitle] = useState('')
@@ -41,7 +54,15 @@ export function DiscussCaseView({ discussionId, onSaveDraftToCase, onArchived }:
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined)
   const [voiceConfigured, setVoiceConfigured] = useState(false)
   const [canJoinVoice, setCanJoinVoice] = useState(false)
-  const [sidebarTab, setSidebarTab] = useState<'chat' | 'teilnehmer'>('chat')
+  // The chat is the centerpiece — open as a clean single column. The shared
+  // package document and participant roster are opt-in drawers via the header
+  // toggles, so Discuss never stacks extra panels around the conversation.
+  const [rightPanel, setRightPanel] = useState<RightPanel>(null)
+
+  const activeParticipants = useMemo(
+    () => participants.filter((p) => p.status !== 'revoked'),
+    [participants],
+  )
 
   const handleArchive = useCallback(async () => {
     if (archiving) return
@@ -139,6 +160,10 @@ export function DiscussCaseView({ discussionId, onSaveDraftToCase, onArchived }:
     [annotations, discussionId, permissions],
   )
 
+  const handleQuoteToChat = useCallback((quote: DiscussQuoteExcerpt) => {
+    setQuoteDraft(quote)
+  }, [])
+
   if (loading) {
     return (
       <div className="discuss-case-view">
@@ -155,12 +180,77 @@ export function DiscussCaseView({ discussionId, onSaveDraftToCase, onArchived }:
     )
   }
 
+  const togglePanel = (panel: Exclude<RightPanel, null>) =>
+    setRightPanel((current) => (current === panel ? null : panel))
+
   return (
     <div className="discuss-case-view">
       <header className="discuss-case-view__header">
-        <h1 className="discuss-case-view__title">{title}</h1>
+        <div className="discuss-case-view__header-main">
+          {onBack ? (
+            <button
+              type="button"
+              className="discuss-case-view__back icon-action-btn"
+              onClick={onBack}
+              title="Zurück zur Übersicht"
+            >
+              <ArrowLeft className="h-4 w-4" strokeWidth={1.75} />
+            </button>
+          ) : null}
+          <div className="discuss-case-view__heading">
+            <h1 className="discuss-case-view__title">{title}</h1>
+            <span className="discuss-case-view__badge">DiscussCase</span>
+          </div>
+        </div>
+
         <div className="discuss-case-view__header-actions">
-          <span className="discuss-case-view__badge">DiscussCase</span>
+          <button
+            type="button"
+            className="discuss-case-view__avatars"
+            onClick={() => togglePanel('participants')}
+            aria-pressed={rightPanel === 'participants'}
+            title="Teilnehmer"
+          >
+            <span className="discuss-case-view__avatar-stack">
+              {activeParticipants.slice(0, 4).map((participant) => {
+                const isSelf = currentUserId && participant.userId === currentUserId
+                const name = isSelf ? 'Sie' : participant.userId.slice(0, 12)
+                const color = getParticipantColor(participant.userId)
+                return (
+                  <span
+                    key={participant.id}
+                    className="discuss-case-avatar discuss-case-avatar--sm"
+                    style={{ backgroundColor: color.bg, color: color.text, borderColor: color.border }}
+                    title={name}
+                  >
+                    {participantInitials(name)}
+                  </span>
+                )
+              })}
+              {activeParticipants.length > 4 ? (
+                <span className="discuss-case-avatar discuss-case-avatar--sm discuss-case-avatar--more">
+                  +{activeParticipants.length - 4}
+                </span>
+              ) : null}
+            </span>
+            <span className="discuss-case-view__avatars-label">
+              <Users className="h-3.5 w-3.5" strokeWidth={1.75} />
+              {activeParticipants.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            className={`discuss-case-view__panel-toggle${
+              rightPanel === 'document' ? ' discuss-case-view__panel-toggle--active' : ''
+            }`}
+            onClick={() => togglePanel('document')}
+            aria-pressed={rightPanel === 'document'}
+          >
+            <FileText className="h-4 w-4" strokeWidth={1.75} />
+            Dokument
+          </button>
+
           {permissions.includes('manage_discussion') ? (
             <button
               type="button"
@@ -175,85 +265,60 @@ export function DiscussCaseView({ discussionId, onSaveDraftToCase, onArchived }:
         </div>
       </header>
 
-      <div className="discuss-case-view__split">
-        <DiscussCaseDocumentViewer
-          packageContent={packageContent}
-          annotations={annotations}
-          participants={participants}
-          currentUserId={currentUserId}
-          canHighlight={permissions.includes('highlight')}
-          canComment={permissions.includes('comment')}
-          canCopy={permissions.includes('copy_text')}
-          canQuote={permissions.includes('send_message')}
-          onHighlight={(input) => void handleHighlight(input)}
-          onQuoteToChat={(quote) => setQuoteDraft(quote)}
-        />
+      <div
+        className={`discuss-case-view__split${
+          rightPanel ? ' discuss-case-view__split--with-aside' : ''
+        }`}
+      >
+        <section className="discuss-case-view__chat-column">
+          <DiscussCaseVoicePanel
+            discussionId={discussionId}
+            canJoinVoice={canJoinVoice}
+            voiceConfigured={voiceConfigured}
+            currentUserId={currentUserId}
+          />
+          <DiscussCaseChatPanel
+            discussionId={discussionId}
+            permissions={permissions}
+            messages={messages}
+            onMessagesChange={setMessages}
+            quoteDraft={quoteDraft}
+            onQuoteConsumed={() => setQuoteDraft(null)}
+            onSaveDraftToCase={onSaveDraftToCase}
+            participants={participants}
+            currentUserId={currentUserId}
+            embedded
+          />
+        </section>
 
-        <aside className="discuss-case-view__sidebar">
-          <nav className="discuss-case-sidebar-tabs" aria-label="Seitenleiste">
-            <button
-              type="button"
-              className={[
-                'discuss-case-sidebar-tabs__tab',
-                sidebarTab === 'chat' ? 'discuss-case-sidebar-tabs__tab--active' : '',
-              ].join(' ').trim()}
-              onClick={() => setSidebarTab('chat')}
-            >
-              Chat
-            </button>
-            <button
-              type="button"
-              className={[
-                'discuss-case-sidebar-tabs__tab',
-                sidebarTab === 'teilnehmer' ? 'discuss-case-sidebar-tabs__tab--active' : '',
-              ].join(' ').trim()}
-              onClick={() => setSidebarTab('teilnehmer')}
-            >
-              Teilnehmer
-              {participants.filter((p) => p.status !== 'revoked').length > 0 ? (
-                <span className="discuss-case-sidebar-tabs__count">
-                  {participants.filter((p) => p.status !== 'revoked').length}
-                </span>
-              ) : null}
-            </button>
-          </nav>
-
-          {sidebarTab === 'chat' ? (
-            <div className="discuss-case-view__sidebar-panel">
-              <DiscussCaseVoicePanel
-                discussionId={discussionId}
-                canJoinVoice={canJoinVoice}
-                voiceConfigured={voiceConfigured}
-                currentUserId={currentUserId}
-              />
-
-              <DiscussCaseChatPanel
-                discussionId={discussionId}
-                permissions={permissions}
-                messages={messages}
-                onMessagesChange={setMessages}
-                quoteDraft={quoteDraft}
-                onQuoteConsumed={() => setQuoteDraft(null)}
-                onSaveDraftToCase={onSaveDraftToCase}
-                participants={participants}
-                currentUserId={currentUserId}
-                embedded
-              />
-            </div>
-          ) : (
-            <div className="discuss-case-view__sidebar-panel discuss-case-view__sidebar-panel--teilnehmer">
-              <DiscussCaseParticipants
-                discussionId={discussionId}
-                participants={participants}
-                currentUserId={currentUserId}
-                canManage={permissions.includes('manage_discussion')}
-                canInvite={permissions.includes('invite_others')}
-                onParticipantsChange={setParticipants}
-                variant="tab"
-              />
-            </div>
-          )}
-        </aside>
+        {rightPanel === 'document' ? (
+          <aside className="discuss-case-view__aside discuss-case-view__aside--document">
+            <DiscussCaseDocumentViewer
+              packageContent={packageContent}
+              annotations={annotations}
+              participants={participants}
+              currentUserId={currentUserId}
+              canHighlight={permissions.includes('highlight')}
+              canComment={permissions.includes('comment')}
+              canCopy={permissions.includes('copy_text')}
+              canQuote={permissions.includes('send_message')}
+              onHighlight={(input) => void handleHighlight(input)}
+              onQuoteToChat={handleQuoteToChat}
+            />
+          </aside>
+        ) : rightPanel === 'participants' ? (
+          <aside className="discuss-case-view__aside discuss-case-view__aside--participants">
+            <DiscussCaseParticipants
+              discussionId={discussionId}
+              participants={participants}
+              currentUserId={currentUserId}
+              canManage={permissions.includes('manage_discussion')}
+              canInvite={permissions.includes('invite_others')}
+              onParticipantsChange={setParticipants}
+              variant="tab"
+            />
+          </aside>
+        ) : null}
       </div>
     </div>
   )

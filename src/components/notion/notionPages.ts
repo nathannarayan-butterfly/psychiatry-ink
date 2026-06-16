@@ -59,6 +59,39 @@ export const NOTION_PAGES: NotionPageConfig[] = [
   { id: 'timeline', labelKey: 'notionPageTimeline', kind: 'lab' },
 ]
 
+/**
+ * Document types whose saves are appended to the Verlauf feed as manual entries.
+ * Shared between the Workspace save flow (NotionApp) and the Verlauf feed
+ * "Neuer Eintrag" composer so both offer the same entry-type options and stay
+ * consistent going forward.
+ */
+export const VERLAUF_DOCUMENT_TYPES = ['verlauf', 'therapie-verlauf'] as const
+
+export type VerlaufDocumentType = (typeof VERLAUF_DOCUMENT_TYPES)[number]
+
+export interface VerlaufEntryTypeOption {
+  id: VerlaufDocumentType
+  labelKey: NotionPageConfig['labelKey']
+  /**
+   * Mirrors the Workspace save flow: therapist attribution is attached only for
+   * the Arztbrief / Therapie-Verlauf type, not for plain Verlaufsdokumentation.
+   */
+  attachAttribution: boolean
+}
+
+/** Entry-type options offered by the Verlauf feed composer, in display order. */
+export const VERLAUF_ENTRY_TYPE_OPTIONS: VerlaufEntryTypeOption[] = [
+  { id: 'verlauf', labelKey: 'notionPageVerlauf', attachAttribution: false },
+  { id: 'therapie-verlauf', labelKey: 'notionPageTherapieVerlauf', attachAttribution: true },
+]
+
+/** True when the given document type id is appended to the Verlauf feed. */
+export function isVerlaufDocumentType(
+  documentTypeId: string,
+): documentTypeId is VerlaufDocumentType {
+  return (VERLAUF_DOCUMENT_TYPES as readonly string[]).includes(documentTypeId)
+}
+
 export function isToolPage(pageId: NotionPageId): boolean {
   return pageId === 'labor' || pageId === 'visualisation' || pageId === 'timeline'
 }

@@ -141,7 +141,10 @@ export function extractSpiegelwerte(befunde: LaborBefund[]): SpiegelSeries[] {
   const result: SpiegelSeries[] = []
 
   for (const [name, points] of map.entries()) {
-    if (points.length < 2) continue
+    // Render a graph whenever at least one Spiegel value exists, even a lone
+    // measurement — recharts plots a single dot and the reference band still
+    // makes the value clinically interpretable.
+    if (points.length < 1) continue
 
     // Take the last 3 only
     const last3 = points.slice(-3)

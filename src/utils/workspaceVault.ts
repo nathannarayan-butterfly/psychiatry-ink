@@ -52,6 +52,11 @@ import type { ClinicalImprintIndex } from '../types/clinicalImprint'
 import type { IsdmClinicalAnalysis, IsdmInputState } from '../types/isdm'
 import { applyIsdmAnalysis, applyIsdmInput, loadIsdmAnalysis, loadIsdmInput } from './isdm'
 import {
+  applyAttestationState,
+  loadAttestationState,
+  type ClinicianAttestationState,
+} from './butterfly/attestationStorage'
+import {
   applyMedicationPlanState,
   loadMedicationPlanState,
 } from './medication/storage'
@@ -126,6 +131,8 @@ export interface ClinicalWorkspacePayload {
   isdmAnalysis?: IsdmClinicalAnalysis
   /** Layer 2a — ISDM phenomenology domain input (clinician-entered). */
   isdmInput?: IsdmInputState
+  /** Layer 2a — Butterfly clinician attestations (criterionId → met/not_met). */
+  butterflyAttestations?: ClinicianAttestationState
   /** Layer 2b — medication intelligence profile (plan, side effects, lab correlation). */
   medicationPlanState?: MedicationPlanState
   /** Layer 2c — psychotherapy plan & session documentation (v8+; defaults absent on older payloads). */
@@ -263,6 +270,10 @@ export function collectClinicalPayload(
   const clinicalImprints = loadClinicalImprintIndex(storageCaseId)
   const isdmAnalysis = loadIsdmAnalysis(storageCaseId) ?? undefined
   const isdmInput = loadIsdmInput(storageCaseId) ?? undefined
+  const butterflyAttestationState = loadAttestationState(storageCaseId)
+  const butterflyAttestations = Object.keys(butterflyAttestationState).length
+    ? butterflyAttestationState
+    : undefined
   const medicationPlanState = loadMedicationPlanState(storageCaseId) ?? undefined
   const psychotherapyPlan = loadPsychotherapyPlan(storageCaseId) ?? undefined
   const complementaryTherapies = loadComplementaryTherapies(storageCaseId)
@@ -285,6 +296,7 @@ export function collectClinicalPayload(
     clinicalImprints,
     isdmAnalysis,
     isdmInput,
+    butterflyAttestations,
     medicationPlanState,
     psychotherapyPlan,
     complementaryTherapies: complementaryTherapies.length ? complementaryTherapies : undefined,
@@ -349,6 +361,13 @@ export function applyClinicalPayload(
     applyIsdmInput(normalized.isdmInput, storageCaseId)
     void import('./isdm').then(({ scheduleIsdmRebuild }) => {
       scheduleIsdmRebuild(storageCaseId, 'input')
+    })
+  }
+
+  if (normalized.butterflyAttestations) {
+    applyAttestationState(normalized.butterflyAttestations, storageCaseId)
+    void import('./isdm').then(({ scheduleIsdmRebuild }) => {
+      scheduleIsdmRebuild(storageCaseId, 'attestation')
     })
   }
 
@@ -428,6 +447,7 @@ export async function decryptWorkspaceBlob(blob: EncryptedVaultBlob): Promise<Cl
     clinicalImprints: payload.clinicalImprints,
     isdmAnalysis: payload.isdmAnalysis,
     isdmInput: payload.isdmInput,
+    butterflyAttestations: payload.butterflyAttestations,
     medicationPlanState: payload.medicationPlanState,
     psychotherapyPlan: payload.psychotherapyPlan,
     complementaryTherapies: payload.complementaryTherapies,

@@ -1,6 +1,7 @@
 import {
   ArrowDown,
   ArrowUp,
+  Check,
   Circle,
   CircleDot,
   Copy,
@@ -12,6 +13,7 @@ import {
   Printer,
   Square,
 } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import { translateMedicationUi } from '../../data/medicationUiTranslations'
 import type { MedicationChangeType } from '../../types/medicationPlan'
@@ -19,37 +21,65 @@ import type { MedicationChangeType } from '../../types/medicationPlan'
 interface MedicationToolbarProps {
   disabled?: boolean
   hasMedications?: boolean
-  hasPlanHistory?: boolean
   showAdd?: boolean
   onAdd: () => void
   onEdit?: () => void
   onExport: () => void
   onPrint: () => void
   onCopyPlan: () => void
-  onViewHistory: () => void
   editDisabled?: boolean
+  /** When true, the plan-history toggle joins the toolbar icon group. */
+  hasPlanHistory?: boolean
+  /** Whether the plan-history view is currently active (toggle pressed). */
+  historyMode?: boolean
+  /** Flip between the live plan and the plan-history view. */
+  onToggleHistory?: () => void
 }
 
 export function MedicationToolbar({
   disabled = false,
   hasMedications = false,
-  hasPlanHistory = false,
   showAdd = true,
   onAdd,
   onEdit,
   onExport,
   onPrint,
   onCopyPlan,
-  onViewHistory,
   editDisabled = true,
+  hasPlanHistory = false,
+  historyMode = false,
+  onToggleHistory,
 }: MedicationToolbarProps) {
   const { language } = useTranslation()
+  const [copied, setCopied] = useState(false)
+  const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (copiedTimer.current) clearTimeout(copiedTimer.current)
+    }
+  }, [])
+
+  const handleCopyPlan = useCallback(() => {
+    onCopyPlan()
+    setCopied(true)
+    if (copiedTimer.current) clearTimeout(copiedTimer.current)
+    copiedTimer.current = setTimeout(() => setCopied(false), 1800)
+  }, [onCopyPlan])
+
+  const showHistoryToggle = hasPlanHistory && !!onToggleHistory
 
   // When the add trigger has been promoted to the section header, the toolbar
   // only holds secondary utility actions; render nothing if there are none.
-  if (!showAdd && !hasMedications && !hasPlanHistory) {
+  if (!showAdd && !hasMedications && !showHistoryToggle) {
     return null
   }
+
+  const historyLabel = translateMedicationUi(language, historyMode ? 'medLastPlan' : 'medPlanHistoryOpen')
+  const editLabel = translateMedicationUi(language, 'medEdit')
+  const exportLabel = translateMedicationUi(language, 'medExport')
+  const printLabel = translateMedicationUi(language, 'medPrint')
+  const copyLabel = translateMedicationUi(language, copied ? 'medCopied' : 'medCopyPlan')
 
   return (
     <div className={`medication-toolbar${hasMedications ? '' : ' medication-toolbar--empty'}`}>
@@ -64,36 +94,61 @@ export function MedicationToolbar({
           {translateMedicationUi(language, 'medAdd')}
         </button>
       ) : null}
+      {showHistoryToggle ? (
+        <button
+          type="button"
+          className={`icon-action-btn icon-action-btn--bordered${historyMode ? ' icon-action-btn--success' : ''}`}
+          onClick={onToggleHistory}
+          aria-pressed={historyMode}
+          title={historyLabel}
+          aria-label={historyLabel}
+        >
+          <History strokeWidth={1.75} aria-hidden />
+        </button>
+      ) : null}
       {hasMedications ? (
         <>
           <button
             type="button"
-            className="medication-toolbar__btn"
+            className="icon-action-btn icon-action-btn--bordered"
             disabled={disabled || editDisabled}
             onClick={onEdit}
+            title={editLabel}
+            aria-label={editLabel}
           >
-            <Pencil size={14} aria-hidden />
-            {translateMedicationUi(language, 'medEdit')}
+            <Pencil strokeWidth={1.75} aria-hidden />
           </button>
-          <button type="button" className="medication-toolbar__btn" disabled={disabled} onClick={onExport}>
-            <Download size={14} aria-hidden />
-            {translateMedicationUi(language, 'medExport')}
+          <button
+            type="button"
+            className="icon-action-btn icon-action-btn--bordered"
+            disabled={disabled}
+            onClick={onExport}
+            title={exportLabel}
+            aria-label={exportLabel}
+          >
+            <Download strokeWidth={1.75} aria-hidden />
           </button>
-          <button type="button" className="medication-toolbar__btn" disabled={disabled} onClick={onPrint}>
-            <Printer size={14} aria-hidden />
-            {translateMedicationUi(language, 'medPrint')}
+          <button
+            type="button"
+            className="icon-action-btn icon-action-btn--bordered"
+            disabled={disabled}
+            onClick={onPrint}
+            title={printLabel}
+            aria-label={printLabel}
+          >
+            <Printer strokeWidth={1.75} aria-hidden />
           </button>
-          <button type="button" className="medication-toolbar__btn" disabled={disabled} onClick={onCopyPlan}>
-            <Copy size={14} aria-hidden />
-            {translateMedicationUi(language, 'medCopyPlan')}
+          <button
+            type="button"
+            className={`icon-action-btn icon-action-btn--bordered${copied ? ' icon-action-btn--success' : ''}`}
+            disabled={disabled}
+            onClick={handleCopyPlan}
+            title={copyLabel}
+            aria-label={copyLabel}
+          >
+            {copied ? <Check strokeWidth={1.75} aria-hidden /> : <Copy strokeWidth={1.75} aria-hidden />}
           </button>
         </>
-      ) : null}
-      {hasPlanHistory ? (
-        <button type="button" className="medication-toolbar__btn" disabled={disabled} onClick={onViewHistory}>
-          <History size={14} aria-hidden />
-          {translateMedicationUi(language, 'medViewHistory')}
-        </button>
       ) : null}
     </div>
   )

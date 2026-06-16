@@ -21,10 +21,10 @@ export interface AccentColorPreset {
 }
 
 export const accentColorPresets: Record<PreferredAccentColor, AccentColorPreset> = {
-  brown: {
-    label: 'Kupfer',
-    description: 'Warmes Braun — Standard',
-    hex: '#8A5A2B',
+  terracotta: {
+    label: 'Terrakotta',
+    description: 'Warmer Ton, erdig — Standard',
+    hex: '#A0573F',
   },
   blue: {
     label: 'Klinisches Blau',
@@ -36,37 +36,54 @@ export const accentColorPresets: Record<PreferredAccentColor, AccentColorPreset>
     description: 'Natürlich-klinisch',
     hex: '#3F7A5F',
   },
-  burgundy: {
-    label: 'Burgunder',
-    description: 'Gedämpft und warm',
-    hex: '#8E4B4B',
+  teal: {
+    label: 'Petrol',
+    description: 'Kühles Blaugrün, klar',
+    hex: '#2F7474',
   },
-  violet: {
-    label: 'Schieferviolett',
-    description: 'Zurückhaltend',
-    hex: '#62527A',
+  indigo: {
+    label: 'Indigo',
+    description: 'Tiefes Violettblau',
+    hex: '#4F4E8A',
+  },
+  burgundy: {
+    label: 'Bordeaux',
+    description: 'Gedämpftes Weinrot',
+    hex: '#8B4351',
+  },
+  amber: {
+    label: 'Bernstein',
+    description: 'Warmes Ockergold',
+    hex: '#9A7330',
+  },
+  slate: {
+    label: 'Schiefer',
+    description: 'Ruhiges Stahlgrau',
+    hex: '#556373',
   },
 }
 
 /** Maps retired full-theme ids to nearest accent. */
 const legacyColorSchemeToAccent: Record<string, PreferredAccentColor> = {
   classic: 'green',
-  warm: 'brown',
+  warm: 'terracotta',
   cool: 'blue',
-  contrast: 'brown',
+  contrast: 'terracotta',
   salbei: 'green',
-  lavendel: 'violet',
+  lavendel: 'indigo',
   ozean: 'blue',
   rose: 'burgundy',
-  schiefer: 'blue',
-  koralle: 'brown',
-  komplement: 'brown',
-  nacht: 'blue',
-  graphit: 'violet',
+  schiefer: 'slate',
+  koralle: 'terracotta',
+  komplement: 'terracotta',
+  nacht: 'indigo',
+  graphit: 'slate',
   wald: 'green',
   himmel: 'blue',
-  sandstein: 'brown',
-  bernstein: 'brown',
+  sandstein: 'amber',
+  bernstein: 'amber',
+  brown: 'terracotta',
+  violet: 'indigo',
 }
 
 export function migratePreferredAccentColor(
@@ -75,6 +92,9 @@ export function migratePreferredAccentColor(
 ): PreferredAccentColor {
   if (typeof value === 'string' && value in accentColorPresets) {
     return value as PreferredAccentColor
+  }
+  if (typeof value === 'string' && value in legacyColorSchemeToAccent) {
+    return legacyColorSchemeToAccent[value]
   }
   if (typeof legacyColorScheme === 'string' && legacyColorScheme in legacyColorSchemeToAccent) {
     return legacyColorSchemeToAccent[legacyColorScheme]
@@ -299,7 +319,7 @@ function applyAccentTokens(root: HTMLElement, accent: string) {
 export function applyAppearanceSettings(settings: AppearanceSettings) {
   const root = document.documentElement
   const accentPreset =
-    accentColorPresets[settings.preferredAccentColor] ?? accentColorPresets.brown
+    accentColorPresets[settings.preferredAccentColor] ?? accentColorPresets.terracotta
   const font = fontSizePresets[settings.fontSize]
   const fontFamily = fontFamilyPresets[settings.fontFamily] ?? fontFamilyPresets.inter
   const workspace = workspaceScalePresets[settings.workspaceScale]

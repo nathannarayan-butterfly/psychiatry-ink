@@ -2,6 +2,7 @@ import { loadDiagnosen } from '../diagnosenArchive'
 import { loadNotionDocumentSnapshot } from '../notionDocumentActions'
 import { loadClinicalImprintIndex } from '../clinicalImprint'
 import { loadMedicationPlanState } from '../medication/storage'
+import { loadAttestations } from '../butterfly/attestationStorage'
 import { buildIsdmAnalysis, type IsdmBuildInput } from './buildAnalysis'
 import { loadIsdmInput } from './inputStorage'
 import { saveIsdmAnalysis } from './storage'
@@ -14,6 +15,7 @@ export type IsdmRebuildReason =
   | 'profile'
   | 'vault'
   | 'input'
+  | 'attestation'
 
 type ChecklistGetter = () => Record<string, Record<string, boolean>>
 
@@ -43,6 +45,7 @@ export function collectIsdmBuildInput(
     diagnoses: loadDiagnosen(caseId),
     verlaufText: collectVerlaufText(caseId),
     medicationPlanState: loadMedicationPlanState(caseId) ?? undefined,
+    attestations: loadAttestations(caseId),
   }
 }
 

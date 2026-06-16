@@ -1,0 +1,1339 @@
+/**
+ * Global case layout — dark left sidebar for open patient cases.
+ * Uses the user's accent via --accent (set globally by appearance settings).
+ */
+
+.notion-preview-app--case-sidebar {
+  --case-sidebar-width: 15.5rem;
+  --case-panel-inset-top: 1.1rem;
+  --case-content-inset-top: 0.9rem;
+  /* Shared chrome rail — viewport top → horizontal divider under logo / patient header */
+  --case-main-top-bar-block: 1.6rem;
+  --case-patient-header-block: 4.8rem;
+  --case-chrome-rail-top: calc(
+    var(--case-content-inset-top) + var(--case-main-top-bar-block) + var(--case-patient-header-block)
+  );
+  --case-sidebar-logo-padding-after: 1.25rem;
+  --case-sidebar-logo-row-margin-after: 0.15rem;
+}
+
+/* Right-side content only — not over the dark left column */
+.notion-preview-app--case-sidebar .workspace-tab-bar,
+.notion-preview-app--case-sidebar .active-appointment-bar,
+.notion-preview-app--case-sidebar .notion-preview-main {
+  margin-left: var(--case-sidebar-width);
+}
+
+.notion-preview-app--case-sidebar .demo-readonly-banner {
+  position: relative;
+  z-index: 30;
+}
+
+.notion-preview-main--case-sidebar {
+  padding: var(--case-content-inset-top) 1.25rem 1rem;
+  gap: 0;
+}
+
+/* —— Fixed dark left panel shell —— */
+
+.case-sidebar-panel {
+  --case-sidebar-bg: color-mix(in srgb, var(--accent) 82%, black);
+  --case-sidebar-bg-hover: color-mix(in srgb, var(--accent) 70%, white 12%);
+  --case-sidebar-widget-bg: color-mix(in srgb, var(--accent) 58%, white 22%);
+  --case-sidebar-muted: color-mix(in srgb, white 62%, transparent);
+  --case-sidebar-border: color-mix(in srgb, white 14%, transparent);
+  --case-sidebar-accent-text: color-mix(in srgb, white 92%, var(--accent) 8%);
+
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 20;
+  flex-shrink: 0;
+  width: var(--case-sidebar-width, 15.5rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: var(--case-sidebar-bg);
+  color: #fff;
+  /* Left inset respects a system safe area (e.g. a left dock/menu on Ubuntu)
+     while keeping the existing 1.15rem internal padding as the floor. Width is
+     fixed (border-box) so this never changes the sidebar↔content offset math. */
+  padding: var(--case-panel-inset-top, 1.35rem) 1.15rem 1.25rem
+    max(env(safe-area-inset-left), 1.15rem);
+  overflow: hidden;
+  border-right: 1px solid var(--case-sidebar-border);
+}
+
+.case-sidebar-panel__logo-row {
+  display: flex;
+  flex-shrink: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  box-sizing: border-box;
+  min-height: calc(
+    var(--case-chrome-rail-top, 7.9rem) - var(--case-panel-inset-top, 1.35rem) -
+      var(--case-sidebar-logo-row-margin-after, 0.15rem)
+  );
+  padding-bottom: var(--case-sidebar-logo-padding-after, 1.25rem);
+  margin-bottom: var(--case-sidebar-logo-row-margin-after, 0.15rem);
+  border-bottom: 1px solid var(--case-sidebar-border);
+}
+
+.case-sidebar-panel__logo {
+  display: flex;
+  flex-shrink: 1;
+  align-items: center;
+  min-width: 0;
+}
+
+.case-sidebar-panel__nav {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding-bottom: 0.85rem;
+  margin-bottom: 0.35rem;
+  border-bottom: 1px solid var(--case-sidebar-border);
+}
+
+.case-sidebar-panel__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-width: 0;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-top: 0.35rem;
+}
+
+.case-sidebar-panel__widgets {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding-top: 0.75rem;
+  margin-top: auto;
+  border-top: 1px solid var(--case-sidebar-border);
+}
+
+.case-sidebar-panel__footer-spacer {
+  flex-shrink: 0;
+  min-height: 0.5rem;
+}
+
+.case-sidebar-panel__logo .topbar-logo {
+  max-width: 100%;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+@media (min-width: 40rem) {
+  .case-sidebar-panel__logo .topbar-logo {
+    font-size: 1.26rem;
+  }
+}
+
+/* —— Light logo variant (white wordmark + mark on the dark panel) —— */
+
+.case-sidebar-panel .topbar-logo--light .topbar-logo__lockup {
+  gap: 0.28rem;
+  min-width: 0;
+}
+
+.case-sidebar-panel .topbar-logo--light .topbar-logo__row {
+  align-items: center;
+  gap: 0.08rem;
+  min-width: 0;
+  line-height: 1;
+}
+
+.case-sidebar-panel .topbar-logo--light .topbar-logo__stem,
+.case-sidebar-panel .topbar-logo--light .truncate {
+  color: color-mix(in srgb, white 96%, var(--accent) 4%);
+  font-weight: 680;
+  letter-spacing: -0.022em;
+  line-height: 0.96;
+  padding-bottom: 0;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.18);
+  translate: 0;
+}
+
+.case-sidebar-panel__logo .topbar-logo__mark {
+  height: 2.42em;
+  max-width: none;
+  margin-left: -0.16rem;
+  translate: 0 0.02em;
+}
+
+/*
+ * Two-tone mark for the dark sidebar. The mark is inlined as <svg> (see
+ * AppLogo light variant) so its two groups recolor independently instead of a
+ * flat invert that washed the whole thing white: #black-artwork becomes the
+ * light silhouette, #white-details become dark engraved accents so the nib,
+ * inkwell rim and interior lettering keep their depth on the dark panel.
+ */
+.topbar-logo--light .topbar-logo__mark-host {
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+}
+
+.topbar-logo--light .topbar-logo__mark--inline {
+  opacity: 0.99;
+  filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.34));
+}
+
+.topbar-logo--light .topbar-logo__mark--inline #black-artwork,
+.topbar-logo--light .topbar-logo__mark--inline #black-artwork path {
+  fill: color-mix(in srgb, white 95%, var(--accent) 5%);
+}
+
+.topbar-logo--light .topbar-logo__mark--inline #white-details,
+.topbar-logo--light .topbar-logo__mark--inline #white-details path {
+  fill: color-mix(in srgb, black 80%, var(--accent) 20%);
+}
+
+.case-sidebar-panel .topbar-logo--light .topbar-logo__beta {
+  display: inline-flex;
+  align-items: center;
+  margin-top: -0.03rem;
+  margin-left: 0.02rem;
+  padding: 0.15rem 0.46rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, white 10%, transparent);
+  border: 1px solid color-mix(in srgb, white 22%, transparent);
+  color: color-mix(in srgb, white 84%, var(--accent) 16%);
+  font-size: 0.48rem;
+  font-weight: 750;
+  letter-spacing: 0.18em;
+  line-height: 1;
+  text-indent: 0.18em;
+}
+
+.case-sidebar-panel .topbar-logo--light.topbar-logo--link:focus-visible {
+  outline-color: color-mix(in srgb, white 55%, transparent);
+}
+
+/* —— Back link to patient list —— */
+
+.case-sidebar-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 0.2rem 0;
+  background: none;
+  border: none;
+  border-radius: 0.25rem;
+  color: color-mix(in srgb, var(--accent) 72%, var(--ink, #1a1a18));
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: right;
+  white-space: nowrap;
+  transition: color 0.12s ease, opacity 0.12s ease;
+}
+
+.case-sidebar-back-link__icon {
+  width: 0.8rem;
+  height: 0.8rem;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.case-sidebar-back-link:hover {
+  color: color-mix(in srgb, var(--accent) 58%, white 42%);
+}
+
+.case-sidebar-back-link--active {
+  color: color-mix(in srgb, var(--accent) 58%, white 42%);
+}
+
+.case-sidebar-back-link:focus-visible {
+  outline: 2px solid color-mix(in srgb, white 70%, transparent);
+  outline-offset: 1px;
+}
+
+.case-sidebar-back-link--content {
+  color: color-mix(in srgb, var(--accent) 72%, var(--ink, #1a1a18));
+  font-size: 0.78rem;
+}
+
+.case-sidebar-back-link--content:hover,
+.case-sidebar-back-link--content.case-sidebar-back-link--active {
+  color: color-mix(in srgb, var(--accent) 85%, var(--ink, #1a1a18));
+}
+
+.case-sidebar-back-link--content:focus-visible {
+  outline-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+/* —— Main content top bar (Meine Patienten) —— */
+
+.case-main-top-bar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 0.45rem;
+  margin: -0.35rem 0 0.5rem;
+  min-height: calc(var(--case-main-top-bar-block, 1.6rem) - 0.5rem + 0.35rem);
+  box-sizing: border-box;
+}
+
+.case-main-top-bar__sep {
+  flex-shrink: 0;
+  color: color-mix(in srgb, var(--accent) 35%, var(--text-muted, #8a8a80));
+  font-size: 0.72rem;
+  font-weight: 400;
+  line-height: 1;
+  user-select: none;
+}
+
+.case-sidebar-next-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+  padding: 0.2rem 0;
+  background: none;
+  border: none;
+  border-radius: 0.25rem;
+  color: color-mix(in srgb, var(--accent) 72%, var(--ink, #1a1a18));
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: right;
+  white-space: nowrap;
+  transition: color 0.12s ease, opacity 0.12s ease;
+}
+
+.case-sidebar-next-link:hover {
+  color: color-mix(in srgb, var(--accent) 58%, white 42%);
+}
+
+.case-sidebar-next-link:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  outline-offset: 1px;
+}
+
+.case-sidebar-next-link--content {
+  color: color-mix(in srgb, var(--accent) 72%, var(--ink, #1a1a18));
+  font-size: 0.78rem;
+}
+
+.case-sidebar-next-link--content:hover {
+  color: color-mix(in srgb, var(--accent) 85%, var(--ink, #1a1a18));
+}
+
+.case-sidebar-next-link--disabled,
+.case-sidebar-next-link--disabled:hover {
+  color: var(--text-muted, #8a8a80);
+  opacity: 0.55;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* —— Clinical areas nav links —— */
+
+.case-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.case-sidebar-panel__content .case-sidebar-nav + .case-sidebar-nav,
+.case-sidebar-nav + .case-sidebar-nav {
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--case-sidebar-border);
+}
+
+.case-sidebar-nav__heading {
+  margin: 0 0 0.45rem;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--case-sidebar-muted);
+}
+
+.case-sidebar-nav__link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+  background: none;
+  border: none;
+  border-radius: 0.35rem;
+  padding: 0.42rem 0.55rem;
+  text-align: left;
+  font-size: 0.86rem;
+  font-weight: 450;
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+  font-family: inherit;
+  line-height: 1.35;
+}
+
+/* Left accent bar — collapsed by default, grows in on the active item.
+   Tinted with the link's own clinical-area signature hue (set via data-area
+   on each nav link), brightened so it reads on the dark sidebar. */
+.case-sidebar-nav__link::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 3px;
+  height: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--area-accent) 60%, white 40%);
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: height 0.16s ease, opacity 0.16s ease, background 0.16s ease;
+}
+
+.case-sidebar-nav__link-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.case-sidebar-nav__link:hover {
+  background: var(--case-sidebar-bg-hover);
+  color: #fff;
+}
+
+/* Active item adopts its clinical area's subtle signature tint: a faint
+   colored wash over the dark panel, a matching inset ring, and a soft colored
+   glow. Navigating between areas now shows gentle per-area color variation. */
+.case-sidebar-nav__link--active {
+  background: color-mix(in srgb, var(--area-accent) 26%, color-mix(in srgb, white 12%, transparent));
+  color: color-mix(in srgb, white 92%, var(--area-accent) 8%);
+  font-weight: 600;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--area-accent) 34%, transparent),
+    0 1px 9px -3px color-mix(in srgb, var(--area-accent) 50%, transparent);
+}
+
+.case-sidebar-nav__link--active::before {
+  height: 1.05rem;
+  opacity: 1;
+  background: color-mix(in srgb, var(--area-accent) 64%, white 36%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .case-sidebar-nav__link,
+  .case-sidebar-nav__link::before {
+    transition: none;
+  }
+}
+
+.case-sidebar-nav__link:focus-visible {
+  outline: 2px solid color-mix(in srgb, white 70%, transparent);
+  outline-offset: 1px;
+}
+
+.case-sidebar-assign {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.case-sidebar-assign .case-sidebar-nav__link {
+  font-size: 0.82rem;
+}
+
+/* —— User footer at sidebar bottom —— */
+
+.case-sidebar-user-footer {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--case-sidebar-border);
+}
+
+.case-sidebar-user-footer__name {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--case-sidebar-muted);
+  padding: 0 0.2rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.case-sidebar-user-footer__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.case-sidebar-user-footer__action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--case-sidebar-border);
+  border-radius: 0.4rem;
+  background: color-mix(in srgb, white 8%, transparent);
+  color: var(--case-sidebar-muted);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+
+.case-sidebar-user-footer__action-btn:hover,
+.case-sidebar-user-footer__action-btn--open {
+  background: var(--case-sidebar-bg-hover);
+  color: #fff;
+  border-color: color-mix(in srgb, white 22%, transparent);
+}
+
+.case-sidebar-user-footer__action-btn svg {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.case-sidebar-user-footer__action-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, white 70%, transparent);
+  outline-offset: 1px;
+}
+
+.case-sidebar-user-footer__euro-symbol {
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.case-sidebar-user-footer__notif-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.case-sidebar-panel .case-sidebar-user-footer__notif-wrap .notion-topbar__notif-badge {
+  top: -0.2rem;
+  right: -0.2rem;
+}
+
+/* —— Patient header in content area —— */
+
+.case-patient-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  min-height: var(--case-patient-header-block, 4.8rem);
+  padding: 0 1.25rem 1.25rem;
+  /* Bottom rule carries a faint tint of the current area's signature hue. */
+  border-bottom: 1px solid color-mix(in srgb, var(--area-accent) 18%, var(--border, #e0e0dc));
+  margin: 0 -1.25rem 1rem;
+}
+
+.case-patient-header__name {
+  font-family: var(--font-display, 'Playfair Display', Georgia, serif);
+  font-size: 1.85rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  /* Patient name leans toward the current area's signature hue (subtle). */
+  color: color-mix(in srgb, var(--area-accent) 68%, var(--ink, #1a1a18));
+  margin: 0;
+  line-height: 1.18;
+}
+
+.case-patient-header__meta {
+  font-family: var(--font-ui, system-ui, sans-serif);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--text-muted, #8a8a80);
+  margin: 0;
+}
+
+.case-tab-shell {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.case-tab-shell__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.case-tab-shell__body--full {
+  display: flex;
+  flex-direction: column;
+}
+
+.case-workspace-doc-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  padding: 0 0 0.85rem;
+  margin: 0 0 0.75rem;
+  border-bottom: 1px solid var(--border, #e0e0dc);
+}
+
+.case-workspace-doc-bar__label {
+  font-size: 0.82rem;
+  color: var(--text-muted, #8a8a80);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.case-workspace-doc-bar__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.65rem;
+  height: 1.65rem;
+  padding: 0;
+  border: 1px solid var(--border, #e0e0dc);
+  border-radius: 0.35rem;
+  background: transparent;
+  color: var(--text-muted, #8a8a80);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.case-workspace-doc-bar__close:hover {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  color: var(--ink, #1a1a18);
+}
+
+/* —— Dark-theme overrides for sidebar widgets —— */
+
+.panel-date-card--sidebar-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: 0.6rem 0.72rem;
+  background: var(--case-sidebar-widget-bg);
+  border: 1px solid var(--case-sidebar-border);
+  border-radius: 0.5rem;
+  box-shadow: none;
+  container-type: normal;
+  overflow: hidden;
+}
+
+.panel-date-card__footer-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.panel-date-card__footer-date {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.26rem;
+  min-width: 0;
+}
+
+.panel-date-card__footer-clock {
+  flex: 0 0 4.25rem;
+  width: 4.25rem;
+  min-width: 4.25rem;
+  max-width: 4.25rem;
+  height: 4.25rem;
+  align-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+
+.panel-date-card__art-row {
+  display: flex;
+  align-items: center;
+  gap: 0.42rem;
+  line-height: 1;
+}
+
+.panel-date-card__art-day {
+  font-family: 'Playfair Display', 'Times New Roman', Georgia, serif;
+  font-weight: 600;
+  font-size: 2.5rem;
+  line-height: 0.78;
+  letter-spacing: -0.02em;
+  font-variant-numeric: lining-nums;
+  font-feature-settings: 'lnum' 1;
+  color: color-mix(in srgb, white 97%, var(--accent) 3%);
+}
+
+.panel-date-card__art-monthyear {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.12rem;
+  padding-top: 0.08rem;
+}
+
+.panel-date-card__art-month {
+  font-family: 'DM Sans', 'Outfit', system-ui, sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, white 78%, var(--accent) 22%);
+  line-height: 1;
+}
+
+.panel-date-card__art-year {
+  font-family: 'DM Sans', 'Outfit', system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, white 50%, transparent);
+  line-height: 1;
+}
+
+.case-sidebar-panel .panel-date-card--sidebar-footer .panel-date-card__ink-weekday {
+  font-size: 0.74rem;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  line-height: 1.1;
+  color: color-mix(in srgb, white 82%, transparent);
+}
+
+.panel-date-card__ink-meta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.32rem;
+  white-space: nowrap;
+}
+
+.case-sidebar-panel .panel-date-card--sidebar-footer .panel-date-card__ink-kw,
+.case-sidebar-panel .panel-date-card--sidebar-footer .panel-date-card__ink-dot,
+.case-sidebar-panel .panel-date-card--sidebar-footer .panel-date-card__ink-digital-time {
+  color: var(--case-sidebar-muted);
+}
+
+.panel-date-card__ink-kw {
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.panel-date-card__ink-dot {
+  font-size: 0.62rem;
+  line-height: 1;
+  opacity: 0.55;
+}
+
+.panel-date-card__ink-digital-time {
+  font-size: 0.66rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* —— Analog clock (sidebar date widget) —— */
+
+.analog-clock {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: 1;
+  box-sizing: border-box;
+  overflow: visible;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+.analog-clock__face {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  shape-rendering: geometricPrecision;
+}
+
+.analog-clock__dial {
+  fill: none;
+  stroke: color-mix(in srgb, white 82%, transparent);
+  stroke-width: 1.5;
+}
+
+.analog-clock__tick {
+  stroke: color-mix(in srgb, white 48%, transparent);
+  stroke-width: 1;
+  stroke-linecap: round;
+}
+
+.analog-clock__tick-dot {
+  fill: color-mix(in srgb, white 42%, transparent);
+}
+
+.analog-clock__tick--major {
+  stroke: color-mix(in srgb, white 80%, var(--accent) 20%);
+  stroke-width: 1.6;
+}
+
+.analog-clock__hand line {
+  stroke-linecap: round;
+}
+
+.analog-clock__hand--hour line {
+  stroke: color-mix(in srgb, white 94%, var(--accent) 6%);
+  stroke-width: 3.4;
+}
+
+.analog-clock__hand--minute line {
+  stroke: #fff;
+  stroke-width: 2.2;
+}
+
+.analog-clock__hand--second line {
+  stroke: color-mix(in srgb, var(--accent) 60%, white 40%);
+  stroke-width: 0.9;
+}
+
+.analog-clock__second-weight {
+  fill: color-mix(in srgb, var(--accent) 60%, white 40%);
+}
+
+.analog-clock__hub {
+  fill: color-mix(in srgb, white 90%, var(--accent) 10%);
+}
+
+.analog-clock__hub-ring {
+  fill: color-mix(in srgb, var(--accent) 55%, white 45%);
+}
+
+.case-sidebar-panel .pomodoro-sidebar-lines {
+  color: var(--case-sidebar-muted);
+}
+
+.case-sidebar-panel .pomodoro-sidebar-lines__countdown:hover {
+  color: #fff;
+}
+
+.case-sidebar-panel .panel-date-card__ink-date {
+  color: #fff;
+}
+
+.case-sidebar-panel .panel-date-card__ink-weekday,
+.case-sidebar-panel .panel-date-card__ink-kw {
+  color: var(--case-sidebar-muted);
+}
+
+.case-sidebar-panel .diagnosen-widget {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+.case-sidebar-panel .diagnosen-widget__title,
+.case-sidebar-panel .diagnosen-widget__title-btn,
+.case-sidebar-panel .diagnosen-widget__code,
+.case-sidebar-panel .diagnosen-widget__label,
+.case-sidebar-panel .diagnosen-widget__display {
+  color: #fff;
+}
+
+.case-sidebar-panel .diagnosen-widget__title-btn:hover {
+  color: #fff;
+  background: var(--case-sidebar-bg-hover);
+}
+
+.case-sidebar-panel .diagnosen-widget__add-btn,
+.case-sidebar-panel .diagnosen-widget__edit-btn {
+  color: var(--case-sidebar-muted);
+  border-color: var(--case-sidebar-border);
+}
+
+.case-sidebar-panel .diagnosen-widget__add-btn:hover,
+.case-sidebar-panel .diagnosen-widget__edit-btn:hover {
+  color: #fff;
+  background: var(--case-sidebar-bg-hover);
+}
+
+.case-sidebar-panel .diagnosen-widget__empty {
+  color: var(--case-sidebar-muted);
+}
+
+.case-sidebar-panel .diagnosen-widget__search-input {
+  background: color-mix(in srgb, black 25%, transparent);
+  border-color: var(--case-sidebar-border);
+  color: #fff;
+}
+
+.case-sidebar-panel .diagnosen-widget__search-results {
+  background: color-mix(in srgb, black 30%, transparent);
+  border-color: var(--case-sidebar-border);
+}
+
+.case-sidebar-panel .diagnosen-widget__search-item {
+  color: #fff;
+}
+
+.case-sidebar-panel .diagnosen-widget__search-item:hover {
+  background: var(--case-sidebar-bg-hover);
+}
+
+.case-sidebar-panel .med-therapy-nav__dropdown-label,
+.case-sidebar-panel .med-therapy-nav__title {
+  color: var(--case-sidebar-muted);
+}
+
+.case-sidebar-panel .med-therapy-nav__select {
+  background: color-mix(in srgb, black 25%, transparent);
+  border-color: var(--case-sidebar-border);
+  color: #fff;
+}
+
+.case-sidebar-panel .med-therapy-nav__link {
+  color: color-mix(in srgb, white 85%, transparent);
+}
+
+.case-sidebar-panel .med-therapy-nav__link:hover {
+  background: var(--case-sidebar-bg-hover);
+  color: #fff;
+}
+
+.case-sidebar-panel .med-therapy-nav__link--active {
+  background: color-mix(in srgb, white 18%, transparent);
+  color: #fff;
+}
+
+/* —— Medikation section router nav (icon + label) —— */
+
+.med-section-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.med-section-nav__title {
+  margin: 0 0 0.15rem;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--case-sidebar-muted);
+}
+
+.med-section-nav__items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.med-section-nav__link {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.42rem 0.55rem;
+  background: none;
+  border: none;
+  border-radius: 0.4rem;
+  text-align: left;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 450;
+  line-height: 1.3;
+  color: color-mix(in srgb, white 84%, transparent);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.med-section-nav__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.55rem;
+  height: 1.55rem;
+  border-radius: 0.35rem;
+  color: color-mix(in srgb, white 78%, transparent);
+  background: color-mix(in srgb, white 8%, transparent);
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.med-section-nav__label {
+  flex: 1;
+  min-width: 0;
+}
+
+.med-section-nav__link:hover {
+  background: var(--case-sidebar-bg-hover);
+  color: #fff;
+}
+
+.med-section-nav__link:hover .med-section-nav__icon {
+  color: #fff;
+}
+
+.med-section-nav__link--active {
+  background: color-mix(in srgb, white 16%, transparent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.med-section-nav__link--active .med-section-nav__icon {
+  color: #fff;
+  background: color-mix(in srgb, white 22%, transparent);
+}
+
+.med-section-nav__link:focus-visible {
+  outline: 2px solid color-mix(in srgb, white 70%, transparent);
+  outline-offset: 1px;
+}
+
+/* —— Dokumente sidebar nav —— */
+
+.dokumente-section-nav__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.65rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--case-sidebar-border);
+}
+
+.dokumente-section-nav__action {
+  display: block;
+  width: 100%;
+  padding: 0.42rem 0.55rem;
+  background: color-mix(in srgb, white 16%, transparent);
+  color: #fff;
+  border: 1px solid var(--case-sidebar-border);
+  border-radius: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.12s ease;
+}
+
+.dokumente-section-nav__action:hover:not(:disabled) {
+  background: var(--case-sidebar-bg-hover);
+}
+
+.dokumente-section-nav__action--disabled,
+.dokumente-section-nav__action:disabled {
+  background: transparent;
+  border-style: dashed;
+  color: var(--case-sidebar-muted);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* —— Diagnostik/Labor sidebar nav —— */
+
+.diagnostics-sidebar-nav__labor,
+.diagnostics-sidebar-nav__befunde {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.65rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--case-sidebar-border);
+}
+
+.diagnostics-sidebar-nav__add-btn {
+  display: block;
+  width: 100%;
+  padding: 0.42rem 0.55rem;
+  background: color-mix(in srgb, white 16%, transparent);
+  color: #fff;
+  border: 1px solid var(--case-sidebar-border);
+  border-radius: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.12s ease;
+}
+
+.diagnostics-sidebar-nav__add-btn:hover {
+  background: var(--case-sidebar-bg-hover);
+}
+
+.diagnostics-sidebar-nav__add-btn--active {
+  background: color-mix(in srgb, white 24%, transparent);
+}
+
+.diagnostics-sidebar-nav__view-toggle {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.diagnostics-sidebar-nav__view-btn {
+  flex: 1;
+  padding: 0.32rem 0.4rem;
+  background: none;
+  border: 1px solid var(--case-sidebar-border);
+  border-radius: 0.3rem;
+  color: color-mix(in srgb, white 80%, transparent);
+  font-size: 0.72rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.diagnostics-sidebar-nav__view-btn:hover {
+  background: var(--case-sidebar-bg-hover);
+  color: #fff;
+}
+
+.diagnostics-sidebar-nav__view-btn--active {
+  background: color-mix(in srgb, white 18%, transparent);
+  color: #fff;
+}
+
+.diagnostics-sidebar-nav__empty {
+  margin: 0.25rem 0 0;
+  font-size: 0.78rem;
+  color: var(--case-sidebar-muted);
+  line-height: 1.4;
+}
+
+.diagnostics-sidebar-nav__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  max-height: min(40vh, 20rem);
+  overflow-y: auto;
+}
+
+.diagnostics-sidebar-nav__item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  padding: 0.38rem 0.5rem;
+  background: none;
+  border: none;
+  border-radius: 0.35rem;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.12s ease;
+}
+
+.diagnostics-sidebar-nav__item:hover {
+  background: var(--case-sidebar-bg-hover);
+}
+
+.diagnostics-sidebar-nav__item--active {
+  background: color-mix(in srgb, white 18%, transparent);
+}
+
+.diagnostics-sidebar-nav__item-date {
+  font-size: 0.72rem;
+  color: var(--case-sidebar-muted);
+  line-height: 1.3;
+}
+
+.diagnostics-sidebar-nav__item-label {
+  font-size: 0.82rem;
+  color: #fff;
+  line-height: 1.35;
+}
+
+.case-sidebar-panel .notion-diary-sidebar {
+  gap: 0.65rem;
+}
+
+.case-sidebar-panel .notion-diary-sidebar__saved-docs-heading {
+  color: var(--case-sidebar-muted);
+}
+
+.case-sidebar-panel .notion-diary-sidebar__saved-doc-item,
+.case-sidebar-panel .notion-diary-sidebar__open-doc-label {
+  color: #fff;
+}
+
+.case-sidebar-panel .notion-diary-sidebar__saved-doc-item:hover {
+  background: var(--case-sidebar-bg-hover);
+}
+
+.case-sidebar-panel .notion-diary-sidebar__saved-doc-date {
+  color: var(--case-sidebar-muted);
+}
+
+.case-sidebar-panel .notion-diary-sidebar__saved-doc-remove,
+.case-sidebar-panel .notion-diary-sidebar__open-doc-close {
+  color: var(--case-sidebar-muted);
+}
+
+.case-sidebar-panel .notion-diary-sidebar__saved-doc-remove:hover,
+.case-sidebar-panel .notion-diary-sidebar__open-doc-close:hover {
+  color: #fff;
+  background: var(--case-sidebar-bg-hover);
+}
+
+/* Patient overview content (no embedded left panel) */
+/* Double-class selector raises specificity above the base `.patient-dashboard`
+   rule (notion-preview.css) so the case-sidebar variant's zero padding wins —
+   otherwise the base 2rem top padding pushes the patient header below where it
+   sits on every other case tab. */
+.patient-dashboard.patient-dashboard--case-sidebar {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+
+.patient-dashboard--case-sidebar .patient-dashboard__content {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  padding: 0 1.25rem 2rem;
+}
+
+.patient-dashboard--case-sidebar .patient-dashboard__body {
+  display: block;
+  flex: 1;
+  min-height: 0;
+}
+
+.patient-dashboard--case-sidebar .patient-dashboard__main {
+  width: 100%;
+}
+
+.patient-dashboard--case-sidebar .case-patient-header {
+  /* Cancel the .patient-dashboard__content horizontal padding (1.25rem) so the
+     patient name lines up at the exact same x as on the other case tabs, where
+     the header lives in a zero-padding .case-tab-shell. Without this the name is
+     indented an extra 1.25rem on Übersicht. */
+  margin: 0 -1.25rem 0.25rem;
+  padding: 0 0 1.25rem;
+  min-height: var(--case-patient-header-block, 4.8rem);
+}
+
+/* Workspace tab — full width when diary sidebar is external */
+.notion-paper--external-sidebar .notion-paper__body {
+  flex: 1;
+}
+
+/* —— Settings view — reuses the dark case sidebar shell —— */
+
+.settings-sidebar-layout {
+  --case-sidebar-width: 15.5rem;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  background: var(--notion-paper-bg, #fff);
+}
+
+/* In-flow dark panel (avoids overlapping app chrome like the demo banner) */
+.settings-sidebar-layout .case-sidebar-panel {
+  position: static;
+}
+
+/* Content column sits right of the dark panel */
+.settings-sidebar-main {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.settings-sidebar-main .case-main-top-bar {
+  padding: 0 2rem;
+  margin: 0;
+  min-height: var(--case-main-top-bar-block, 1.6rem);
+}
+
+@media (max-width: 600px) {
+  .settings-sidebar-main .case-main-top-bar {
+    padding: 0 1.25rem;
+  }
+}
+
+@media (max-width: 52rem) {
+  .notion-preview-app--case-sidebar .workspace-tab-bar,
+  .notion-preview-app--case-sidebar .active-appointment-bar,
+  .notion-preview-app--case-sidebar .notion-preview-main {
+    margin-left: 0;
+  }
+
+  .settings-sidebar-layout {
+    flex-direction: column;
+  }
+
+  .settings-sidebar-main {
+    margin-left: 0;
+  }
+
+  .case-sidebar-panel {
+    position: static;
+    width: 100%;
+    flex-shrink: 0;
+    border-right: none;
+    border-bottom: 1px solid var(--case-sidebar-border);
+    max-height: min(55vh, 28rem);
+  }
+
+  .case-sidebar-panel__logo-row {
+    min-height: auto;
+    padding-bottom: var(--case-sidebar-logo-padding-after, 1.25rem);
+    margin-bottom: 0;
+  }
+
+  .case-sidebar-panel__logo {
+    min-height: auto;
+  }
+
+  .patient-dashboard--case-sidebar .patient-dashboard__content {
+    overflow-y: visible;
+  }
+}

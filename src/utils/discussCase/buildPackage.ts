@@ -73,16 +73,23 @@ function extractDocumentSections(
   return sections
 }
 
+/**
+ * Verlauf is one complete thing — never an enumerated per-entry list. We gather
+ * the document-based Verlauf content plus every chronological feed entry and
+ * flatten them into a SINGLE "Therapie und Verlauf" section so the package nav
+ * shows one Verlauf link that opens the whole timeline.
+ */
 function formatTherapieVerlauf(
   payload: ClinicalWorkspacePayload,
   caseId: string,
 ): DiscussPackageSection[] {
-  const sections: DiscussPackageSection[] = []
+  const blocks: string[] = []
 
   for (const documentTypeId of ['therapie-verlauf', 'verlauf'] as const) {
     const doc = payload.documents?.[documentTypeId]
-    if (doc) {
-      sections.push(...extractDocumentSections(doc, 'therapie-verlauf'))
+    if (!doc) continue
+    for (const section of extractDocumentSections(doc, 'therapie-verlauf')) {
+      blocks.push(section.label ? `${section.label}\n${section.content}` : section.content)
     }
   }
 
@@ -93,18 +100,21 @@ function formatTherapieVerlauf(
     const text = entry.content.trim()
     if (!text) continue
     const dateLabel = new Date(entry.date).toLocaleDateString('de-DE')
-    sections.push({
-      key: 'therapie-verlauf',
-      id: `feed:${entry.id}`,
-      label: entry.sectionLabel
-        ? `${dateLabel} — ${entry.sectionLabel}`
-        : `${dateLabel} — ${DISCUSS_PACKAGE_SECTION_LABELS['therapie-verlauf']}`,
-      content: text,
-      documentTypeId: entry.pageType,
-    })
+    const heading = entry.sectionLabel ? `${dateLabel} — ${entry.sectionLabel}` : dateLabel
+    blocks.push(`${heading}\n${text}`)
   }
 
-  return sections
+  const content = blocks.filter(Boolean).join('\n\n').trim()
+  if (!content) return []
+
+  return [
+    {
+      key: 'therapie-verlauf',
+      id: 'therapie-verlauf',
+      label: DISCUSS_PACKAGE_SECTION_LABELS['therapie-verlauf'],
+      content,
+    },
+  ]
 }
 
 function formatDiagnoses(payload: ClinicalWorkspacePayload): string {

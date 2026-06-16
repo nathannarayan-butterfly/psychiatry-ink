@@ -881,18 +881,18 @@ export function KnowledgeBaseTile() {
   return (
     <button
       type="button"
-      className="kb-tile"
+      className="dashboard-nav-card dashboard-nav-card--kb clinical-card clinical-card--interactive"
       onClick={() => setOpen(true)}
       aria-label={t('kbTitle')}
     >
-      <span className="kb-tile__icon-wrap" aria-hidden>
+      <span className="dashboard-nav-card__icon-wrap" aria-hidden>
         <BookOpen className="h-5 w-5" strokeWidth={1.75} />
       </span>
-      <span className="kb-tile__body">
-        <span className="kb-tile__title">{t('kbTitle')}</span>
-        <span className="kb-tile__badge">{collections.length} {t('kbCollectionsCount')}</span>
+      <span className="dashboard-nav-card__body">
+        <span className="dashboard-nav-card__title">{t('kbTitle')}</span>
+        <span className="dashboard-nav-card__subtitle">{t('kbTileSubtitle')}</span>
       </span>
-      <ArrowRight className="kb-tile__arrow h-4 w-4" strokeWidth={1.75} aria-hidden />
+      <ArrowRight className="dashboard-nav-card__arrow h-4 w-4" strokeWidth={1.75} aria-hidden />
     </button>
   )
 }

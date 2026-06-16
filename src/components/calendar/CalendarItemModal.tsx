@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from '../../context/TranslationContext'
 import type { DashboardCase } from '../../hooks/useCaseRegistry'
 import { IntegrationCasePicker } from '../settings/IntegrationCasePicker'
+import { NewPatientDialog, type NewPatientData } from '../dashboard/NewPatientDialog'
 import type {
   CalendarItem,
   CalendarItemType,
@@ -17,6 +19,7 @@ interface CalendarItemModalProps {
   cases: DashboardCase[]
   initial?: Partial<CalendarItem> | null
   defaultStart?: Date
+  onCreatePatient?: (patient: NewPatientData) => Promise<string>
 }
 
 function toLocalInputValue(date: Date): string {
@@ -37,7 +40,9 @@ export function CalendarItemModal({
   cases,
   initial,
   defaultStart,
+  onCreatePatient,
 }: CalendarItemModalProps) {
+  const { t } = useTranslation()
   const startDefault = defaultStart ?? new Date()
   const [type, setType] = useState<CalendarItemType>('consultation')
   const [title, setTitle] = useState('')
@@ -50,6 +55,9 @@ export function CalendarItemModal({
   const [reason, setReason] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showNewPatientDialog, setShowNewPatientDialog] = useState(false)
+  const [linkedPatientLabel, setLinkedPatientLabel] = useState<string | null>(null)
+  const [creatingPatient, setCreatingPatient] = useState(false)
 
   useEffect(() => {
     if (!open) return
@@ -67,7 +75,30 @@ export function CalendarItemModal({
     setNotes(initial?.notes ?? '')
     setReason(initial?.reason ?? '')
     setError(null)
+    setShowNewPatientDialog(false)
+    setLinkedPatientLabel(null)
   }, [open, initial, startDefault])
+
+  const handleNewPatientSubmit = useCallback(
+    async (patient: NewPatientData) => {
+      if (!onCreatePatient) return
+      setCreatingPatient(true)
+      setError(null)
+      try {
+        const newCaseId = await onCreatePatient(patient)
+        const label = patient.name || [patient.vorname, patient.nachname].filter(Boolean).join(' ')
+        setCaseId(newCaseId)
+        setLinkedPatientLabel(label || null)
+        if (!title.trim() && label) setTitle(label)
+        setShowNewPatientDialog(false)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Patient konnte nicht angelegt werden')
+      } finally {
+        setCreatingPatient(false)
+      }
+    },
+    [onCreatePatient, title],
+  )
 
   const handleSubmit = useCallback(async () => {
     if (!title.trim()) {
@@ -136,15 +167,35 @@ export function CalendarItemModal({
           </label>
 
           <div className="calendar-field calendar-field--full">
-            <IntegrationCasePicker
-              cases={caseOptions}
-              value={caseId}
-              onChange={setCaseId}
-              label="Patient / Fall"
-              searchPlaceholder="Patient suchen…"
-              noResultsLabel="Keine Treffer"
-              id="calendar-case-picker"
-            />
+            <div className="calendar-patient-field">
+              <IntegrationCasePicker
+                cases={caseOptions}
+                value={caseId}
+                onChange={(nextCaseId) => {
+                  setCaseId(nextCaseId)
+                  setLinkedPatientLabel(null)
+                }}
+                label="Patient / Fall"
+                searchPlaceholder="Patient suchen…"
+                noResultsLabel="Keine Treffer"
+                id="calendar-case-picker"
+              />
+              {onCreatePatient ? (
+                <button
+                  type="button"
+                  className="calendar-btn calendar-btn--ghost calendar-btn--xs"
+                  onClick={() => setShowNewPatientDialog(true)}
+                  disabled={creatingPatient}
+                >
+                  {t('calendarNewPatientButton')}
+                </button>
+              ) : null}
+            </div>
+            {linkedPatientLabel ? (
+              <p className="calendar-patient-field__linked">
+                {t('calendarPatientLinked').replace('{name}', linkedPatientLabel)}
+              </p>
+            ) : null}
           </div>
 
           <label className="calendar-field">
@@ -227,6 +278,13 @@ export function CalendarItemModal({
           </button>
         </div>
       </div>
+
+      {showNewPatientDialog && onCreatePatient ? (
+        <NewPatientDialog
+          onSubmit={(patient) => void handleNewPatientSubmit(patient)}
+          onCancel={() => setShowNewPatientDialog(false)}
+        />
+      ) : null}
     </div>
   )
 }

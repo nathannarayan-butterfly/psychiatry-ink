@@ -100,6 +100,30 @@ patientsRouter.post('/', async (req: Request, res: Response) => {
   }
 })
 
+/** DELETE /api/patients/:caseId — remove opaque case code for the current account. */
+patientsRouter.delete('/:caseId', async (req: Request, res: Response) => {
+  try {
+    const accountId = resolveAccountId(req)
+    const caseId = pathParam(req, 'caseId').trim()
+
+    const existing = await prisma.patientCase.findUnique({ where: { caseId } })
+    if (!existing) {
+      res.status(404).json({ error: 'Case not found' })
+      return
+    }
+    if (existing.accountId !== accountId) {
+      res.status(403).json({ error: 'Case belongs to another account' })
+      return
+    }
+
+    await prisma.patientCase.delete({ where: { caseId } })
+    res.status(204).send()
+  } catch (error) {
+    console.error('[patients] delete failed', error)
+    res.status(500).json({ error: 'Failed to delete patient' })
+  }
+})
+
 /** PATCH /api/patients/:caseId — upsert non-identifying sync metadata for a case code. */
 patientsRouter.patch('/:caseId', async (req: Request, res: Response) => {
   try {

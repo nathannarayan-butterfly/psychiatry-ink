@@ -3,12 +3,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { usePermissionContext } from '../../contexts/PermissionContext'
 import {
-  CASE_ACCESS_LABELS_DE,
-  CASE_ACCESS_LEVELS,
-  parseCaseAccessLevel,
-  type CaseAccessLevel,
-} from '../../data/org/caseAccessLevels'
-import {
   resolveInviteRolesForOrg,
   resolveUiRolesForOrg,
   teamRoleLabelDe,
@@ -16,15 +10,12 @@ import {
 import { THERAPY_DISCIPLINES, THERAPY_DISCIPLINE_LABEL_KEYS } from '../../data/org/therapyDiscipline'
 import type { TherapyDiscipline } from '../../types/organisation'
 import { useTranslation } from '../../context/TranslationContext'
-import { isListedPatientCase, useCaseRegistry } from '../../hooks/useCaseRegistry'
 import { usePermissions } from '../../hooks/permissions'
 import {
   createOrgInvite,
   deactivateOrgMember,
-  fetchCaseAccessGrants,
   fetchTeamSnapshot,
   revokeOrgInvite,
-  setCaseAccessGrant,
   updateOrgMember,
   updateOrganisationName,
   upgradeToSmallPraxis,
@@ -32,7 +23,7 @@ import {
   type TeamSnapshot,
 } from '../../services/orgApi'
 import { MemberEditPanel } from './MemberEditPanel'
-import type { CaseAccess, OrganisationRole } from '../../types/organisation'
+import type { OrganisationRole } from '../../types/organisation'
 import { ClinicalLoading } from '../ui/ClinicalLoading'
 
 interface TeamSettingsPageProps {
@@ -111,7 +102,6 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
   const { hasPermission, canInviteUsers } = usePermissions()
 
   const [snapshot, setSnapshot] = useState<TeamSnapshot | null>(null)
-  const [caseGrants, setCaseGrants] = useState<CaseAccess[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
@@ -133,27 +123,10 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
   const [upgrading, setUpgrading] = useState(false)
   const [editingMember, setEditingMember] = useState<TeamMemberProfile | null>(null)
 
-  const registry = useCaseRegistry({
-    tier: 'local_only',
-    countryCode: 'DE',
-    documentTypeLabel: () => '',
-    fallbackTitle: (id) => id,
-  })
-
-  const recentCases = useMemo(
-    () =>
-      registry.cases
-        .filter(isListedPatientCase)
-        .sort((a, b) => new Date(b.lastEditedAt).getTime() - new Date(a.lastEditedAt).getTime())
-        .slice(0, 8),
-    [registry.cases],
-  )
-
   const isSmallPraxis = snapshot?.organisation.tier === 'small_praxis'
   const canManageOrg = hasPermission('org.manage')
   const canManageRoles = hasPermission('roles.manage')
   const canRemoveUsers = hasPermission('users.remove')
-  const canManageCaseAccess = canManageOrg || canManageRoles
   const slotsFull = (snapshot?.occupiedSlots ?? 0) >= (snapshot?.maxMembers ?? 4)
 
   const inviteRoles = useMemo(
@@ -172,20 +145,6 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
     [snapshot],
   )
 
-  const grantLevelByKey = useMemo(() => {
-    const map = new Map<string, CaseAccessLevel>()
-    for (const grant of caseGrants) {
-      if (!grant.userId) continue
-      map.set(`${grant.caseId}:${grant.userId}`, parseCaseAccessLevel(grant.grantedPermissions))
-    }
-    return map
-  }, [caseGrants])
-
-  const activeMembers = useMemo(
-    () => snapshot?.members.filter((m) => m.status === 'active') ?? [],
-    [snapshot?.members],
-  )
-
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -193,12 +152,6 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
       const team = await fetchTeamSnapshot()
       setSnapshot(team)
       setOrgName(team.organisation.name)
-      if (team.organisation.tier === 'small_praxis') {
-        const grants = await fetchCaseAccessGrants()
-        setCaseGrants(grants)
-      } else {
-        setCaseGrants([])
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Team-Einstellungen konnten nicht geladen werden')
       setSnapshot(null)
@@ -319,26 +272,6 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
     }
   }
 
-  const handleCaseAccessChange = async (
-    caseId: string,
-    memberUserId: string,
-    level: CaseAccessLevel,
-  ) => {
-    clearActionFeedback()
-    try {
-      const grant = await setCaseAccessGrant(caseId, memberUserId, level)
-      setCaseGrants((prev) => {
-        const key = `${caseId}:${memberUserId}`
-        const filtered = prev.filter((g) => `${g.caseId}:${g.userId}` !== key)
-        if (grant) return [grant, ...filtered]
-        return filtered
-      })
-      setActionSuccess('Fallfreigabe gespeichert.')
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Fallfreigabe fehlgeschlagen')
-    }
-  }
-
   const copyInviteUrl = async (url: string, key: string) => {
     if (!url) return
     try {
@@ -400,8 +333,8 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
                 Praxis-Modus aktivieren
               </h2>
               <p className="team-settings-upgrade__text">
-                Aktivieren Sie den Praxis-Modus, um bis zu vier Teammitglieder einzuladen und
-                Fallfreigaben zu verwalten. Ihr persönlicher Arbeitsbereich bleibt erhalten.
+                Aktivieren Sie den Praxis-Modus, um bis zu vier Teammitglieder einzuladen.
+                Ihr persönlicher Arbeitsbereich bleibt erhalten.
               </p>
               <div className="team-settings-inline-form">
                 <div className="team-settings-field team-settings-field--grow">
@@ -737,79 +670,6 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
                     onCopy={(url, key) => void copyInviteUrl(url, key)}
                   />
                 ) : null}
-              </section>
-            ) : null}
-
-            {isSmallPraxis && canManageCaseAccess && activeMembers.length > 1 ? (
-              <section className="team-settings-section" aria-labelledby="team-case-access">
-                <h2 id="team-case-access" className="team-settings-section__heading">
-                  Fallfreigabe
-                </h2>
-                <p className="team-settings-section__sub">
-                  Legen Sie pro Fall fest, welches Teammitglied welchen Zugriff erhält.
-                </p>
-                {recentCases.length === 0 ? (
-                  <p className="clinical-empty-state clinical-empty-state--compact">
-                    Noch keine Fälle im lokalen Register.
-                  </p>
-                ) : (
-                  <div className="team-settings-table-wrap team-settings-case-grid">
-                    <table className="team-settings-table">
-                      <thead>
-                        <tr>
-                          <th>Fall</th>
-                          {activeMembers
-                            .filter((m) => m.userId !== user?.id)
-                            .map((member) => (
-                              <th key={member.userId}>
-                                {memberDisplayName(
-                                  member.displayName,
-                                  member.email,
-                                  member.userId,
-                                )}
-                              </th>
-                            ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {recentCases.map((caseItem) => (
-                          <tr key={caseItem.caseId}>
-                            <td>{caseItem.displayTitle}</td>
-                            {activeMembers
-                              .filter((m) => m.userId !== user?.id)
-                              .map((member) => {
-                                const level =
-                                  grantLevelByKey.get(`${caseItem.caseId}:${member.userId}`) ??
-                                  'no_access'
-                                return (
-                                  <td key={member.userId}>
-                                    <select
-                                      className="team-settings-select"
-                                      value={level}
-                                      onChange={(e) =>
-                                        void handleCaseAccessChange(
-                                          caseItem.caseId,
-                                          member.userId,
-                                          e.target.value as CaseAccessLevel,
-                                        )
-                                      }
-                                      aria-label={`Zugriff ${caseItem.displayTitle}`}
-                                    >
-                                      {CASE_ACCESS_LEVELS.map((opt) => (
-                                        <option key={opt} value={opt}>
-                                          {CASE_ACCESS_LABELS_DE[opt]}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </td>
-                                )
-                              })}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
               </section>
             ) : null}
           </>

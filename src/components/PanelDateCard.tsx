@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { AnalogClock } from './AnalogClock'
 import { useTranslation } from '../context/TranslationContext'
 import type { UiLanguage } from '../types/settings'
 import { formatInSiteTimezone, getISOWeekInSiteTimezone, getSiteZonedParts, SITE_TIMEZONE } from '../utils/siteTimezone'
@@ -11,7 +12,7 @@ interface PanelDateCardProps {
   /** When set, display is fixed to this instant (no live clock). */
   date?: Date
   /** Sidebar layout: content-sized card without bottom-panel stretch behavior. */
-  layout?: 'panel' | 'sidebar' | 'vertical'
+  layout?: 'panel' | 'sidebar' | 'vertical' | 'sidebar-footer'
 }
 
 export function PanelDateCard({ date, layout = 'panel' }: PanelDateCardProps) {
@@ -25,9 +26,10 @@ export function PanelDateCard({ date, layout = 'panel' }: PanelDateCardProps) {
     }
 
     setNow(new Date())
-    const id = window.setInterval(() => setNow(new Date()), 30_000)
+    const intervalMs = layout === 'sidebar-footer' ? 1000 : 30_000
+    const id = window.setInterval(() => setNow(new Date()), intervalMs)
     return () => window.clearInterval(id)
-  }, [date])
+  }, [date, layout])
 
   const parts = useMemo(() => {
     const locale = localeForLanguage(language)
@@ -47,16 +49,68 @@ export function PanelDateCard({ date, layout = 'panel' }: PanelDateCardProps) {
       hour: '2-digit',
       minute: '2-digit',
     })
+    const timeWithSeconds = formatInSiteTimezone(now, 'en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    })
     const weekday = formatInSiteTimezone(now, locale, { weekday: 'long' })
     const weekdayShort = formatInSiteTimezone(now, locale, { weekday: 'short' })
       .replace(/\.$/, '')
       .toUpperCase()
     const week = getISOWeekInSiteTimezone(now)
 
-    return { dayNumber, dayNumberPadded, month, monthAbbr, monthFull, yearShort, time, weekday, weekdayShort, week }
+    return {
+      dayNumber,
+      dayNumberPadded,
+      month,
+      monthAbbr,
+      monthFull,
+      year,
+      yearShort,
+      time,
+      timeWithSeconds,
+      weekday,
+      weekdayShort,
+      week,
+    }
   }, [now, language])
 
   const isSidebar = layout === 'sidebar'
+  const isSidebarFooter = layout === 'sidebar-footer'
+
+  if (isSidebarFooter) {
+    return (
+      <div
+        className="panel-date-card panel-date-card--sidebar-footer"
+        aria-label={`${parts.weekday}, ${parts.dayNumberPadded} ${parts.monthFull} ${parts.yearShort}, ${parts.timeWithSeconds}, ${t('calendarWeek')} ${parts.week}`}
+      >
+        <div className="panel-date-card__footer-top">
+          <div className="panel-date-card__footer-date">
+            <div className="panel-date-card__art-row">
+              <span className="panel-date-card__art-day">{parts.dayNumber}</span>
+              <span className="panel-date-card__art-monthyear">
+                <span className="panel-date-card__art-month">{parts.month}</span>
+                <span className="panel-date-card__art-year">&rsquo;{parts.yearShort}</span>
+              </span>
+            </div>
+            <span className="panel-date-card__ink-weekday">{parts.weekday}</span>
+            <span className="panel-date-card__ink-meta">
+              <span className="panel-date-card__ink-kw">
+                {t('calendarWeek')} {parts.week}
+              </span>
+              <span className="panel-date-card__ink-dot" aria-hidden>
+                &middot;
+              </span>
+              <span className="panel-date-card__ink-digital-time">{parts.timeWithSeconds}</span>
+            </span>
+          </div>
+          <AnalogClock className="panel-date-card__footer-clock" date={date} />
+        </div>
+      </div>
+    )
+  }
 
   if (isSidebar) {
     return (

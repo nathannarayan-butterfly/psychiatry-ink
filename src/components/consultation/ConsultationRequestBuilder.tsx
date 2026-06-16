@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
+import { Check, Clipboard, Printer } from 'lucide-react'
 import type { ClinicalWorkspacePayload } from '../../utils/workspaceVault'
 import type {
   ConsultationAccessType,
@@ -254,21 +255,25 @@ export function ConsultationRequestBuilder({
             <div className="consultation-builder__actions">
               <button
                 type="button"
-                className="consultation-builder__secondary"
+                className="icon-action-btn icon-action-btn--bordered"
                 onClick={handlePrintPreview}
+                title="Drucken"
+                aria-label="Drucken"
               >
-                Drucken
+                <Printer strokeWidth={1.75} aria-hidden />
               </button>
               <button
                 type="button"
-                className="consultation-builder__secondary"
+                className={`icon-action-btn icon-action-btn--bordered${copied ? ' icon-action-btn--success' : ''}`}
                 onClick={() => {
                   void navigator.clipboard.writeText(inviteLink)
                   setCopied(true)
                   setTimeout(() => setCopied(false), 2000)
                 }}
+                title={copied ? 'Kopiert' : 'Link kopieren'}
+                aria-label={copied ? 'Kopiert' : 'Link kopieren'}
               >
-                {copied ? 'Kopiert' : 'Link kopieren'}
+                {copied ? <Check strokeWidth={1.75} aria-hidden /> : <Clipboard strokeWidth={1.75} aria-hidden />}
               </button>
               <button
                 type="button"
@@ -519,11 +524,13 @@ export function ConsultationRequestBuilder({
         <div className="consultation-builder__actions">
           <button
             type="button"
-            className="consultation-builder__secondary"
+            className="icon-action-btn icon-action-btn--bordered"
             disabled={loading}
             onClick={handlePrintPreview}
+            title="Drucken"
+            aria-label="Drucken"
           >
-            Drucken
+            <Printer strokeWidth={1.75} aria-hidden />
           </button>
           <button
             type="button"

@@ -76,7 +76,10 @@ export function ReceptorProfileSection({
   drugs,
   language,
 }: ReceptorProfileSectionProps) {
-  const [view, setView] = useState<ReceptorView>('matrix')
+  // `null` until the clinician explicitly picks a tab. While null we default to
+  // the radar fingerprint — the most insightful view — but degrade to the matrix
+  // when the regimen has too few receptor axes for a meaningful radar (<3).
+  const [userView, setUserView] = useState<ReceptorView | null>(null)
 
   const resolved = useMemo(
     () => resolveReceptorProfiles(activeMeds, drugs),
@@ -84,6 +87,10 @@ export function ReceptorProfileSection({
   )
 
   const activeTargets = useMemo(() => getActiveReceptorTargets(resolved), [resolved])
+
+  const canRenderRadar = activeTargets.length >= 3
+  const view: ReceptorView = userView ?? (canRenderRadar ? 'radar' : 'matrix')
+  const setView = setUserView
 
   if (resolved.length === 0) {
     return (

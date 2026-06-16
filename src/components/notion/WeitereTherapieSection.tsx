@@ -34,19 +34,6 @@ const STATUS_TONE: Record<WeitereTherapieStatus, string> = {
   contraindicated: 'amber',
 }
 
-function formatDate(iso?: string): string {
-  if (!iso) return ''
-  try {
-    const d = new Date(iso)
-    if (Number.isNaN(d.getTime())) return iso
-    const dd = String(d.getDate()).padStart(2, '0')
-    const mm = String(d.getMonth() + 1).padStart(2, '0')
-    return `${dd}.${mm}.${d.getFullYear()}`
-  } catch {
-    return iso
-  }
-}
-
 export function WeitereTherapieSection({ caseId }: WeitereTherapieSectionProps) {
   const { language } = useTranslation()
   const { entries, addTherapie, updateTherapie, removeTherapie } = useWeitereTherapie(caseId)
@@ -210,17 +197,16 @@ interface WeitereTherapieCardProps {
 
 function WeitereTherapieCard({ entry, language, selected, onOpen }: WeitereTherapieCardProps) {
   const typeLabel = translateWeitereTherapieType(language, entry.type)
-  const sessionsValue =
-    entry.frequency && entry.frequency.trim()
-      ? entry.frequency
-      : entry.plannedSessions !== undefined
-        ? String(entry.plannedSessions)
-        : undefined
+  const detail =
+    entry.clinicalGoal?.trim() ||
+    entry.indication?.trim() ||
+    entry.frequency?.trim() ||
+    (entry.plannedSessions !== undefined ? String(entry.plannedSessions) : undefined)
 
   return (
     <button
       type="button"
-      className={`therapy-card${selected ? ' is-selected' : ''}`}
+      className={`therapy-card therapy-card--compact${selected ? ' is-selected' : ''}`}
       onClick={onOpen}
     >
       <div className="therapy-card__head">
@@ -229,19 +215,7 @@ function WeitereTherapieCard({ entry, language, selected, onOpen }: WeitereThera
           {translateWeitereTherapieStatus(language, entry.status)}
         </span>
       </div>
-      <div className="therapy-card__meta">
-        <SummaryRow label={ts(language, 'wtIndication')} value={entry.indication} />
-        <SummaryRow
-          label={
-            entry.frequency && entry.frequency.trim()
-              ? ts(language, 'wtFrequency')
-              : ts(language, 'wtPlannedSessions')
-          }
-          value={sessionsValue}
-        />
-        <SummaryRow label={ts(language, 'wtResponsible')} value={entry.responsible} />
-        <SummaryRow label={ts(language, 'wtNextReviewDate')} value={formatDate(entry.nextReviewDate)} />
-      </div>
+      {detail ? <span className="therapy-card__detail">{detail}</span> : null}
     </button>
   )
 }
@@ -640,16 +614,6 @@ function WeitereTherapieDetail({
           {ts(language, 'wtClose')}
         </button>
       </div>
-    </div>
-  )
-}
-
-function SummaryRow({ label, value }: { label: string; value?: string }) {
-  if (!value || !value.trim()) return null
-  return (
-    <div className="therapy-card__row">
-      <span className="therapy-meta-label">{label}</span>
-      <span className="therapy-meta-value">{value}</span>
     </div>
   )
 }

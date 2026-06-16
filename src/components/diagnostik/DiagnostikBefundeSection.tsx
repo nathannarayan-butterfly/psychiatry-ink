@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Clipboard, Pencil, Trash2 } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
+import { useDemoPatient } from '../../hooks/useDemoPatient'
 import { BEFUND_TYPES, getBefundSchema } from '../../data/befundSchemas'
+import type { UiTranslationKey } from '../../data/uiTranslations'
 import type { BefundRecord, BefundType } from '../../types/befund'
 import {
   BEFUND_ARCHIVE_CHANGED_EVENT,
@@ -14,6 +17,7 @@ import {
   renderBefundContent,
 } from '../../utils/befundRender'
 import { BefundPopup } from './BefundPopup'
+import { EcgBefundCard } from './EcgBefundCard'
 
 export interface DiagnostikBefundeSidebarProps {
   caseId: string
@@ -63,12 +67,31 @@ export function DiagnostikBefundeSidebar({
   )
 }
 
+const BEFUND_ADD_LABEL_KEY: Record<BefundType, UiTranslationKey> = {
+  ecg: 'befundAddEcg',
+  eeg: 'befundAddEeg',
+}
+
 interface DiagnostikBefundeMainProps {
   caseId: string
   records: BefundRecord[]
   selectedId: string | null
   onSelect: (id: string | null) => void
   onRecordsChange: () => void
+}
+
+function copyBefundToClipboard(record: BefundRecord): void {
+  const text = renderBefundContent(record)
+  const header = `${getBefundSchema(record.type).title} — ${formatBefundDate(record.examDate)}`
+  const payload = `${header}\n\n${text}`
+  navigator.clipboard.writeText(payload).catch(() => {
+    const ta = document.createElement('textarea')
+    ta.value = payload
+    document.body.appendChild(ta)
+    ta.select()
+    document.execCommand('copy')
+    document.body.removeChild(ta)
+  })
 }
 
 export function DiagnostikBefundeMain({
@@ -79,6 +102,7 @@ export function DiagnostikBefundeMain({
   onRecordsChange,
 }: DiagnostikBefundeMainProps) {
   const { t } = useTranslation()
+  const { readOnly } = useDemoPatient(caseId)
   const [popupType, setPopupType] = useState<BefundType | null>(null)
   const [editRecordId, setEditRecordId] = useState<string | undefined>()
 
@@ -88,37 +112,29 @@ export function DiagnostikBefundeMain({
   )
 
   const openNew = useCallback((type: BefundType) => {
+    if (readOnly) return
     setEditRecordId(undefined)
     setPopupType(type)
-  }, [])
+  }, [readOnly])
 
   const openEdit = useCallback((record: BefundRecord) => {
+    if (readOnly) return
     setEditRecordId(record.id)
     setPopupType(record.type)
-  }, [])
+  }, [readOnly])
 
-  const handleDelete = useCallback(() => {
-    if (!selected) return
+  const handleDelete = useCallback((record: BefundRecord) => {
+    if (readOnly) return
     if (!window.confirm(t('befundDeleteConfirm'))) return
-    deleteDiagnostikBefund(caseId, selected.id)
-    removeBefundDokument(caseId, selected.id)
+    deleteDiagnostikBefund(caseId, record.id)
+    removeBefundDokument(caseId, record.id)
     onRecordsChange()
     onSelect(null)
-  }, [caseId, onRecordsChange, onSelect, selected, t])
+  }, [caseId, onRecordsChange, onSelect, readOnly, t])
 
-  const handleCopy = useCallback(() => {
-    if (!selected) return
-    const text = renderBefundContent(selected)
-    const header = `${getBefundSchema(selected.type).title} — ${formatBefundDate(selected.examDate)}`
-    navigator.clipboard.writeText(`${header}\n\n${text}`).catch(() => {
-      const ta = document.createElement('textarea')
-      ta.value = `${header}\n\n${text}`
-      document.body.appendChild(ta)
-      ta.select()
-      document.execCommand('copy')
-      document.body.removeChild(ta)
-    })
-  }, [selected])
+  const handleCopy = useCallback((record: BefundRecord) => {
+    copyBefundToClipboard(record)
+  }, [])
 
   return (
     <>
@@ -126,60 +142,86 @@ export function DiagnostikBefundeMain({
         <div className="diagnostik-befunde__actions">
           <span className="diagnostik-befunde__actions-label">{t('befundActionLabel')}</span>
           <div className="diagnostik-befunde__action-row">
-            {BEFUND_TYPES.map((type) => (
-              <button
-                key={type}
-                type="button"
-                className="diagnostik-befunde__action-btn"
-                onClick={() => openNew(type)}
-              >
-                {getBefundSchema(type).shortLabel}
-              </button>
-            ))}
+            {BEFUND_TYPES.map((type) => {
+              const addLabel = t(BEFUND_ADD_LABEL_KEY[type])
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  className="diagnostik-befunde__action-btn diagnostik-befunde__action-btn--add"
+                  disabled={readOnly}
+                  onClick={() => openNew(type)}
+                  title={addLabel}
+                  aria-label={addLabel}
+                >
+                  <span aria-hidden="true">+ {getBefundSchema(type).shortLabel}</span>
+                </button>
+              )
+            })}
           </div>
         </div>
 
         {selected ? (
           <div className="diagnostik-befunde__detail">
-            <header className="labor-befund-header">
-              <div className="labor-befund-header__left">
-                <h2 className="labor-befund-header__date">
-                  {getBefundSchema(selected.type).title} — {formatBefundDate(selected.examDate)}
-                </h2>
-                <span
-                  className={[
-                    'befund-status-pill',
-                    selected.status === 'vidert' ? 'befund-status-pill--vidert' : 'befund-status-pill--draft',
-                  ].join(' ').trim()}
-                >
-                  {selected.status === 'vidert' ? t('befundStatusVidert') : t('befundStatusDraft')}
-                </span>
-              </div>
-              <div className="labor-befund-header__actions">
-                <button
-                  type="button"
-                  className="labor-befund-header__action-btn"
-                  onClick={() => openEdit(selected)}
-                >
-                  {t('befundEdit')}
-                </button>
-                <button
-                  type="button"
-                  className="labor-befund-header__action-btn"
-                  onClick={handleCopy}
-                >
-                  {t('befundCopy')}
-                </button>
-                <button
-                  type="button"
-                  className="labor-befund-header__delete-btn"
-                  onClick={handleDelete}
-                >
-                  {t('befundDelete')}
-                </button>
-              </div>
-            </header>
-            <pre className="diagnostik-befunde__content">{renderBefundContent(selected)}</pre>
+            {selected.type === 'ecg' ? (
+              <EcgBefundCard
+                record={selected}
+                readOnly={readOnly}
+                onEdit={() => openEdit(selected)}
+                onCopy={() => handleCopy(selected)}
+                onDelete={() => handleDelete(selected)}
+              />
+            ) : (
+              <>
+                <header className="labor-befund-header">
+                  <div className="labor-befund-header__left">
+                    <h2 className="labor-befund-header__date">
+                      {getBefundSchema(selected.type).title} — {formatBefundDate(selected.examDate)}
+                    </h2>
+                    <span
+                      className={[
+                        'befund-status-pill',
+                        selected.status === 'vidert' ? 'befund-status-pill--vidert' : 'befund-status-pill--draft',
+                      ].join(' ').trim()}
+                    >
+                      {selected.status === 'vidert' ? t('befundStatusVidert') : t('befundStatusDraft')}
+                    </span>
+                  </div>
+                  <div className="labor-befund-header__actions">
+                    <button
+                      type="button"
+                      className="icon-action-btn"
+                      title={t('befundCopy')}
+                      aria-label={t('befundCopy')}
+                      onClick={() => handleCopy(selected)}
+                    >
+                      <Clipboard strokeWidth={1.75} aria-hidden />
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-action-btn"
+                      title={t('befundEdit')}
+                      aria-label={t('befundEdit')}
+                      disabled={readOnly}
+                      onClick={() => openEdit(selected)}
+                    >
+                      <Pencil strokeWidth={1.75} aria-hidden />
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-action-btn icon-action-btn--danger"
+                      title={t('befundDelete')}
+                      aria-label={t('befundDelete')}
+                      disabled={readOnly}
+                      onClick={() => handleDelete(selected)}
+                    >
+                      <Trash2 strokeWidth={1.75} aria-hidden />
+                    </button>
+                  </div>
+                </header>
+                <pre className="diagnostik-befunde__content">{renderBefundContent(selected)}</pre>
+              </>
+            )}
           </div>
         ) : (
           <div className="diagnostik-befunde__empty">
@@ -188,7 +230,7 @@ export function DiagnostikBefundeMain({
         )}
       </div>
 
-      {popupType && (
+      {popupType && !readOnly && (
         <BefundPopup
           caseId={caseId}
           type={popupType}

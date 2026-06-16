@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Printer } from 'lucide-react'
 import { ClinicalLoading } from '../ui/ClinicalLoading'
 import { getCaseMeta } from '../../hooks/useCaseRegistry'
@@ -18,6 +18,8 @@ interface ConsultationCasePageProps {
   requestId?: string
   onNavigate: (path: string) => void
   onNavigateHome?: () => void
+  /** Render inside NotionApp case shell (no full-page layout). */
+  embedded?: boolean
 }
 
 function statusBadgeClass(status: ConsultationRequestStatus): string {
@@ -29,8 +31,13 @@ export function ConsultationCasePage({
   requestId,
   onNavigate,
   onNavigateHome,
+  embedded = false,
 }: ConsultationCasePageProps) {
   const handleNavigateHome = onNavigateHome ?? (() => onNavigate('/dashboard'))
+  const wrap = (content: ReactNode) =>
+    embedded ? content : (
+      <ClinicalFullPageLayout onNavigateHome={handleNavigateHome}>{content}</ClinicalFullPageLayout>
+    )
   const payload = useMemo(() => collectClinicalPayload(undefined, caseId), [caseId])
   const caseMeta = getCaseMeta(caseId)
   const [mode, setMode] = useState<KonsilMode>(requestId ? 'review' : 'list')
@@ -61,7 +68,10 @@ export function ConsultationCasePage({
     if (requestId) {
       setActiveRequestId(requestId)
       setMode('review')
+      return
     }
+    setActiveRequestId('')
+    setMode('list')
   }, [requestId])
 
   const openRequest = useCallback(
@@ -93,50 +103,47 @@ export function ConsultationCasePage({
   )
 
   if (mode === 'create' && payload) {
-    return (
-      <ClinicalFullPageLayout onNavigateHome={handleNavigateHome}>
-        <ConsultationRequestBuilder
-          caseId={caseId}
-          payload={payload}
-          patientName={
-            caseMeta?.localName ||
-            [caseMeta?.localVorname, caseMeta?.localNachname].filter(Boolean).join(' ')
-          }
-          onBack={() => setMode('list')}
-          onCreated={(id) => openRequest(id)}
-        />
-      </ClinicalFullPageLayout>
+    return wrap(
+      <ConsultationRequestBuilder
+        caseId={caseId}
+        payload={payload}
+        patientName={
+          caseMeta?.localName ||
+          [caseMeta?.localVorname, caseMeta?.localNachname].filter(Boolean).join(' ')
+        }
+        onBack={() => setMode('list')}
+        onCreated={(id) => openRequest(id)}
+      />,
     )
   }
 
   if (mode === 'review' && activeRequestId) {
-    return (
-      <ClinicalFullPageLayout onNavigateHome={handleNavigateHome}>
-        <div className="consultation-page">
-          <ConsultationReportReview
-            requestId={activeRequestId}
-            onBack={() => {
-              setMode('list')
-              onNavigate(`/case/${encodeURIComponent(caseId)}/konsil`)
-            }}
-          />
-        </div>
-      </ClinicalFullPageLayout>
+    return wrap(
+      <div className="consultation-page">
+        <ConsultationReportReview
+          requestId={activeRequestId}
+          onBack={() => {
+            setMode('list')
+            onNavigate(`/case/${encodeURIComponent(caseId)}/konsil`)
+          }}
+        />
+      </div>,
     )
   }
 
-  return (
-    <ClinicalFullPageLayout onNavigateHome={handleNavigateHome}>
+  return wrap(
     <div className="consultation-page">
       <header className="consultation-page__header">
         <div>
-          <button
-            type="button"
-            className="consultation-page__back clinical-back-link"
-            onClick={() => onNavigate(`/case/${encodeURIComponent(caseId)}?view=overview`)}
-          >
-            ← Fallübersicht
-          </button>
+          {!embedded ? (
+            <button
+              type="button"
+              className="consultation-page__back clinical-back-link"
+              onClick={() => onNavigate(`/case/${encodeURIComponent(caseId)}?view=overview`)}
+            >
+              ← Fallübersicht
+            </button>
+          ) : null}
           <h1 className="consultation-page__title">Konsile</h1>
           <p className="consultation-page__subtitle">Externe Konsiliarberichte — formal, strukturiert</p>
         </div>
@@ -206,7 +213,6 @@ export function ConsultationCasePage({
           ))}
         </ul>
       )}
-    </div>
-    </ClinicalFullPageLayout>
+    </div>,
   )
 }

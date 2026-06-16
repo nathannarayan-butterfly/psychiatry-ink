@@ -26,6 +26,10 @@ import {
   matchDomainsInText,
   PSYCHOPATH_SECTION_DOMAIN_MAP,
 } from './domainMap'
+import { matchDisorderToCodes } from '../../data/diagnosisCriteria'
+import type { AttestationMap } from '../diagnosisCriteria/context'
+import { buildEvaluationContext } from '../diagnosisCriteria/context'
+import { evaluateDisorder } from '../diagnosisCriteria/evaluateDisorder'
 
 export interface IsdmBuildInput {
   caseId: string
@@ -35,6 +39,8 @@ export interface IsdmBuildInput {
   diagnoses: DiagnoseEntry[]
   verlaufText?: string
   medicationPlanState?: MedicationPlanState
+  /** Butterfly clinician attestations (criterionId → met/not_met). */
+  attestations?: AttestationMap
 }
 
 function emptyPhenomenology(): Record<IsdmPhenomenologyDomain, SymptomFinding[]> {
@@ -477,93 +483,102 @@ function buildSyndromeClusters(
   return clusters
 }
 
+/** Maps an authored disorder to the ISDM syndrome cluster type that supports it. */
+export const DISORDER_CLUSTER_MAP: Record<string, SyndromeCluster['clusterType']> = {
+  depressive_episode: 'depressive',
+  generalized_anxiety_disorder: 'anxiety',
+  panic_disorder: 'anxiety',
+  alcohol_dependence: 'substance',
+  schizophrenia: 'psychotic',
+}
+
+function confidenceForVerdict(verdict: string): DiagnosticMapping['confidence'] {
+  if (verdict === 'criteria_met') return 3
+  if (verdict === 'insufficient_data') return 2
+  return 1
+}
+
 function buildDiagnosticMappings(
   clusters: SyndromeCluster[],
   diagnoses: DiagnoseEntry[],
   phenomenology: Record<IsdmPhenomenologyDomain, SymptomFinding[]>,
+  coursePattern: CoursePattern,
+  attestations: AttestationMap,
 ): DiagnosticMapping[] {
   const mappings: DiagnosticMapping[] = []
 
+  // ── Butterfly criteria verification is scoped to clinician-ENTERED diagnoses ──
+  // For each entered diagnosis we either verify it against its authored criteria
+  // set (matched by ICD code) or, if no set exists yet, surface a transparent
+  // "not yet available" state. Butterfly never proposes/verifies disorders the
+  // clinician has not entered.
+  const evalContext = buildEvaluationContext({ phenomenology, coursePattern, attestations })
+  const evaluatedDisorderIds = new Set<string>()
+
   for (const entry of diagnoses) {
-    if (!entry.icd10.code.trim() && !entry.icd10.label.trim()) continue
-    mappings.push({
-      id: `dx:existing:${entry.id}`,
-      label: entry.icd10.label.trim() || entry.icd10.code.trim(),
-      codingSystems: {
-        icd10: entry.icd10.code
-          ? { code: entry.icd10.code, label: entry.icd10.label }
-          : undefined,
-        icd11: entry.icd11.code
-          ? { code: entry.icd11.code, label: entry.icd11.label }
-          : undefined,
-        dsm5tr: entry.dsm.code ? { code: entry.dsm.code, label: entry.dsm.label } : undefined,
-      },
-      confidence: 3,
-      criteriaMet: ['Clinician-entered diagnosis present'],
-      criteriaMissing: [],
-      exclusions: [],
-      differentials: [],
-      supportingClusters: clusters.map((item) => item.id),
-      clinicianReviewRequired: true,
-    })
-  }
+    if (!entry.icd10.code.trim() && !entry.icd10.label.trim() && !entry.icd11.code.trim()) continue
 
-  const hasCluster = (type: SyndromeCluster['clusterType']) =>
-    clusters.some((item) => item.clusterType === type)
+    const codingSystems: DiagnosticMapping['codingSystems'] = {
+      icd10: entry.icd10.code ? { code: entry.icd10.code, label: entry.icd10.label } : undefined,
+      icd11: entry.icd11.code ? { code: entry.icd11.code, label: entry.icd11.label } : undefined,
+      dsm5tr: entry.dsm.code ? { code: entry.dsm.code, label: entry.dsm.label } : undefined,
+    }
+    const label = entry.icd10.label.trim() || entry.icd10.code.trim() || entry.icd11.label.trim()
 
-  if (hasCluster('psychotic') && !mappings.some((item) => /F2|schizophren|psychot/i.test(item.label))) {
-    mappings.push({
-      id: 'hyp:psychotic-spectrum',
-      label: 'Psychotic spectrum condition (hypothesis)',
-      codingSystems: {
-        icd10: { code: 'F29', label: 'Nichtorganische Psychose, nicht näher bezeichnet' },
-        icd11: { code: '6E60', label: 'Primary psychotic disorder, unspecified' },
-        dsm5tr: { code: '298.9', label: 'Other specified schizophrenia spectrum disorder' },
-      },
-      confidence: 2,
-      criteriaMet: ['Psychotic phenomenology documented'],
-      criteriaMissing: ['Duration and functional impact not fully established', 'Exclusion of organic causes'],
-      exclusions: ['Acute intoxication not ruled out'],
-      differentials: ['Brief psychotic disorder', 'Schizoaffective disorder', 'Mood disorder with psychotic features'],
-      supportingClusters: clusters.filter((item) => item.clusterType === 'psychotic').map((item) => item.id),
-      clinicianReviewRequired: true,
-    })
-  }
+    const disorder = matchDisorderToCodes(entry.icd10.code, entry.icd11.code)
 
-  if (hasCluster('depressive') && !mappings.some((item) => /F32|F33|depress/i.test(item.label))) {
-    mappings.push({
-      id: 'hyp:depressive-episode',
-      label: 'Depressive episode (hypothesis)',
-      codingSystems: {
-        icd10: { code: 'F32.9', label: 'Depressive Episode, nicht näher bezeichnet' },
-        icd11: { code: '6A70', label: 'Single episode depressive disorder, unspecified' },
-        dsm5tr: { code: '296.20', label: 'Major depressive disorder, single episode, unspecified' },
-      },
-      confidence: 2,
-      criteriaMet: ['Depressive phenomenology cluster present'],
-      criteriaMissing: ['Symptom count and duration criteria not verified', 'Functional impairment unclear'],
-      exclusions: ['Substance or medical cause not excluded'],
-      differentials: ['Adjustment disorder', 'Bipolar depression', 'Persistent depressive disorder'],
-      supportingClusters: clusters.filter((item) => item.clusterType === 'depressive').map((item) => item.id),
-      clinicianReviewRequired: true,
-    })
-  }
+    if (!disorder) {
+      // Entered diagnosis with no authored criteria set yet.
+      mappings.push({
+        id: `dx:existing:${entry.id}`,
+        label,
+        codingSystems,
+        confidence: 2,
+        criteriaMet: [],
+        criteriaMissing: ['Kriterienprüfung für diese Diagnose noch nicht verfügbar'],
+        exclusions: [],
+        differentials: [],
+        supportingClusters: [],
+        clinicianReviewRequired: true,
+      })
+      continue
+    }
 
-  if (hasCluster('anxiety') && !mappings.some((item) => /F40|F41|anxiety|angst/i.test(item.label))) {
+    // De-duplicate when several entries map to the same authored disorder.
+    if (evaluatedDisorderIds.has(disorder.id)) continue
+    evaluatedDisorderIds.add(disorder.id)
+
+    const evaluation = evaluateDisorder(disorder, evalContext)
+    const clusterType = DISORDER_CLUSTER_MAP[disorder.id]
+    const triggeredExclusions = evaluation.groupResults
+      .filter((group) => group.groupType === 'exclusion' && group.satisfaction === 'yes')
+      .flatMap((group) => group.metCriteria)
+
     mappings.push({
-      id: 'hyp:anxiety-disorder',
-      label: 'Anxiety disorder (hypothesis)',
+      id: `dx:${entry.id}`,
+      label: label || disorder.name_de,
       codingSystems: {
-        icd10: { code: 'F41.9', label: 'Angstneurose, nicht näher bezeichnet' },
-        icd11: { code: '6B00', label: 'Generalised anxiety disorder' },
-        dsm5tr: { code: '300.00', label: 'Other specified anxiety disorder' },
+        icd10: codingSystems.icd10 ??
+          (disorder.codingSystems.icd10
+            ? { code: disorder.codingSystems.icd10.code, label: disorder.codingSystems.icd10.label_de }
+            : undefined),
+        icd11: codingSystems.icd11 ??
+          (disorder.codingSystems.icd11
+            ? { code: disorder.codingSystems.icd11.code, label: disorder.codingSystems.icd11.label_de }
+            : undefined),
+        dsm5tr: codingSystems.dsm5tr ??
+          (disorder.codingSystems.dsm5tr
+            ? { code: disorder.codingSystems.dsm5tr.code, label: disorder.codingSystems.dsm5tr.label_de }
+            : undefined),
       },
-      confidence: 2,
-      criteriaMet: ['Anxiety-related findings documented'],
-      criteriaMissing: ['Pattern subtype not established', 'Impairment threshold unclear'],
-      exclusions: [],
-      differentials: ['Panic disorder', 'Social anxiety disorder', 'Medical anxiety mimic'],
-      supportingClusters: clusters.filter((item) => item.clusterType === 'anxiety').map((item) => item.id),
+      confidence: confidenceForVerdict(evaluation.verdict),
+      criteriaMet: evaluation.criteriaMet,
+      criteriaMissing: evaluation.criteriaMissing,
+      exclusions: triggeredExclusions,
+      differentials: disorder.differentials_de,
+      supportingClusters: clusterType
+        ? clusters.filter((item) => item.clusterType === clusterType).map((item) => item.id)
+        : [],
       clinicianReviewRequired: true,
     })
   }
@@ -574,11 +589,11 @@ function buildDiagnosticMappings(
   ) {
     mappings.push({
       id: 'hyp:elevated-risk',
-      label: 'Elevated clinical risk (hypothesis marker)',
+      label: 'Erhöhtes klinisches Risiko (Hinweis)',
       codingSystems: {},
       confidence: 2,
-      criteriaMet: ['Self or other-directed risk signals present'],
-      criteriaMissing: ['Risk formulation and protective factors incomplete'],
+      criteriaMet: ['Hinweise auf Eigen- oder Fremdgefährdung dokumentiert'],
+      criteriaMissing: ['Risikoeinschätzung und Schutzfaktoren noch unvollständig'],
       exclusions: [],
       differentials: [],
       supportingClusters: [],
@@ -751,7 +766,13 @@ export function buildIsdmAnalysis(input: IsdmBuildInput): IsdmClinicalAnalysis {
 
   const coursePattern = buildCoursePattern(imprints, input.verlaufText)
   const syndromeClusters = buildSyndromeClusters(phenomenology)
-  const diagnosticMappings = buildDiagnosticMappings(syndromeClusters, input.diagnoses, phenomenology)
+  const diagnosticMappings = buildDiagnosticMappings(
+    syndromeClusters,
+    input.diagnoses,
+    phenomenology,
+    coursePattern,
+    input.attestations ?? {},
+  )
   const interviewGaps = buildInterviewGaps(
     phenomenology,
     coursePattern,

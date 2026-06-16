@@ -87,9 +87,15 @@
 .consultation-page__create-btn,
 .consultation-builder__primary,
 .consultation-workspace__btn--primary {
-  background: var(--text-main, #1a1a1a);
-  color: var(--ks-surface);
+  background: var(--accent);
+  color: var(--color-accent-foreground, #fff);
   border-color: transparent;
+}
+
+.consultation-page__create-btn:hover:not(:disabled),
+.consultation-builder__primary:hover:not(:disabled),
+.consultation-workspace__btn--primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 88%, black);
 }
 
 .consultation-page__list {

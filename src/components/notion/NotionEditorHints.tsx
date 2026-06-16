@@ -1,5 +1,5 @@
 import { useTranslation } from '../../context/TranslationContext'
-import { getNotionShortcutLabels } from '../../utils/notionKeyboardShortcuts'
+import { getNotionShortcutLabels, getWorkspaceContextMenuLabel } from '../../utils/notionKeyboardShortcuts'
 
 interface NotionEditorHintsProps {
   showStructuredFeatures: boolean
@@ -8,13 +8,16 @@ interface NotionEditorHintsProps {
 export function NotionEditorHints({ showStructuredFeatures }: NotionEditorHintsProps) {
   const { t, language } = useTranslation()
   const shortcuts = getNotionShortcutLabels(language)
+  const contextMenu = getWorkspaceContextMenuLabel(language)
 
   const hint = showStructuredFeatures
     ? t('notionEditorShortcutHintStructured')
         .replace('{command}', shortcuts.command)
+        .replace('{contextMenu}', contextMenu)
         .replace('{ai}', shortcuts.ai)
     : t('notionEditorShortcutHint')
         .replace('{command}', shortcuts.command)
+        .replace('{contextMenu}', contextMenu)
         .replace('{ai}', shortcuts.ai)
 
   return (
