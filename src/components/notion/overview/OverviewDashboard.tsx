@@ -9,6 +9,7 @@ import { OverviewHero } from './OverviewHero'
 import { SafetyAlertsCard } from './SafetyAlertsCard'
 import { StatusCard } from './StatusCard'
 import { MedicationOverviewCard } from './MedicationOverviewCard'
+import { PriorTherapiesOverviewCard } from './PriorTherapiesOverviewCard'
 import { SymptomSnapshotCard } from './SymptomSnapshotCard'
 import { RecentVerlaufCard } from './RecentVerlaufCard'
 import { LabsDueCard } from './LabsDueCard'
@@ -396,6 +397,12 @@ export function OverviewDashboard({
 
         <MedicationOverviewCard
           data={medicationData}
+          onOpenMedikation={() => onTabSelect('medikation')}
+        />
+
+        <PriorTherapiesOverviewCard
+          caseId={caseId}
+          medications={medications}
           onOpenMedikation={() => onTabSelect('medikation')}
         />
 

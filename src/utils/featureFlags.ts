@@ -8,3 +8,23 @@
 export function isEnterpriseOrgHierarchyEnabled(): boolean {
   return import.meta.env.VITE_ENABLE_ENTERPRISE_ORG_HIERARCHY === 'true'
 }
+
+/**
+ * CMEA (Clinical Metadata Extraction Agent) flags.
+ *
+ * The deterministic path is ALWAYS live: the regex extractor (Pass A) writes
+ * cheap, provenance-tagged facts onto every imprint record regardless of these
+ * flags. The flags only gate the (cost-bearing) LLM enrichment pass and whether
+ * downstream consumers READ facts instead of their bespoke LLM routes.
+ *
+ * Enable locally in `.env.local`:
+ *   VITE_ENABLE_CMEA_LLM=true              # run Pass B LLM enrichment on save
+ *   VITE_ENABLE_CMEA_CONSUMER_READS=true   # consumers read facts via accessor
+ */
+export function isCmeaLlmEnrichmentEnabled(): boolean {
+  return import.meta.env.VITE_ENABLE_CMEA_LLM === 'true'
+}
+
+export function isCmeaConsumerReadEnabled(): boolean {
+  return import.meta.env.VITE_ENABLE_CMEA_CONSUMER_READS === 'true'
+}

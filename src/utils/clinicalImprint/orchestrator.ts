@@ -9,7 +9,19 @@ import type {
   ClinicalSourceType,
 } from '../../types/clinicalImprint'
 import { extractClinicalImprint, hasClinicalSignal } from './extract'
-import { emptyClinicalImprintIndex, imprintKeyFor, upsertClinicalImprint } from './storage'
+import {
+  emptyClinicalImprintIndex,
+  imprintKeyFor,
+  loadClinicalImprintIndex,
+  upsertClinicalImprint,
+} from './storage'
+import {
+  applyLlmFacts,
+  mergeRecordFacts,
+  shouldRunLlmEnrichment,
+} from '../clinicalMetadata/mergeFacts'
+import { isCmeaLlmEnrichmentEnabled } from '../featureFlags'
+import type { ClinicalFact } from '../../types/clinicalMetadata'
 import { collectMedicationStateJobs } from '../medication/imprint'
 import { collectPsychotherapyPlanJobs } from '../psychotherapy/imprint'
 import type { MedicationPlanState } from '../../types/medicationPlan'
@@ -70,24 +82,72 @@ export function buildImprintIndexFromJobs(jobs: ClinicalImprintJob[]): ClinicalI
   }
 }
 
+/** One source queued for LLM enrichment (Pass B), grouped per case downstream. */
+interface EnrichmentCandidate {
+  imprintKey: string
+  sourceId: string
+  sourceType: ClinicalSourceType
+  sourceDate: string
+  text: string
+}
+
 export async function flushClinicalImprintQueue(): Promise<void> {
   if (pendingJobs.size === 0) return
 
   const batch = [...pendingJobs.values()]
   pendingJobs.clear()
 
+  // Pass A — deterministic regex facts (synchronous, always on). Freshness is
+  // honoured here: regex facts are regenerated, llm facts are carried over when
+  // content is unchanged, clinician facts are always preserved.
+  const enrichmentByCase = new Map<string, EnrichmentCandidate[]>()
+
   for (const job of batch) {
     try {
       const metadata = extractClinicalImprint(job)
       if (!metadata) continue
 
+      const imprintKey = imprintKeyFor(metadata.sourceType, metadata.sourceId)
+      const existing = loadClinicalImprintIndex(job.caseId).imprints.find(
+        (item) => item.imprintKey === imprintKey,
+      )
+      const contentChanged = existing?.contentHash !== metadata.contentHash
+
+      const mergedFacts = mergeRecordFacts({
+        regexFacts: metadata.facts,
+        previous: existing,
+        contentChanged,
+      })
+
       const record: ClinicalImprintRecord = {
         ...metadata,
-        imprintKey: imprintKeyFor(metadata.sourceType, metadata.sourceId),
+        facts: mergedFacts,
+        imprintKey,
       }
       upsertClinicalImprint(record, job.caseId)
+
+      // Decide (freshness gate) whether the LLM pass is worth running.
+      if (shouldRunLlmEnrichment(job, existing, metadata.contentHash)) {
+        const list = enrichmentByCase.get(job.caseId) ?? []
+        list.push({
+          imprintKey,
+          sourceId: metadata.sourceId,
+          sourceType: metadata.sourceType,
+          sourceDate: metadata.sourceDate,
+          text: job.text,
+        })
+        enrichmentByCase.set(job.caseId, list)
+      }
     } catch {
       // Non-blocking — skip failed extraction
+    }
+  }
+
+  // Pass B — single batched, de-identified LLM enrichment per case. Gated by the
+  // CMEA flag; in mock mode / on error it returns empty so Pass A stands.
+  if (isCmeaLlmEnrichmentEnabled()) {
+    for (const [caseId, candidates] of enrichmentByCase) {
+      await runLlmEnrichmentForCase(caseId, candidates)
     }
   }
 
@@ -99,6 +159,52 @@ export async function flushClinicalImprintQueue(): Promise<void> {
     } catch {
       // Non-blocking
     }
+  }
+}
+
+/**
+ * Run the ONE central LLM extraction for a case's changed sources and merge the
+ * returned (advisory) facts into the imprint records. Non-blocking + resilient:
+ * any failure leaves the deterministic regex facts in place.
+ */
+async function runLlmEnrichmentForCase(
+  caseId: string,
+  candidates: EnrichmentCandidate[],
+): Promise<void> {
+  if (candidates.length === 0) return
+  try {
+    const { extractClinicalMetadata } = await import('../../services/clinicalMetadataExtractApi')
+    const response = await extractClinicalMetadata({
+      caseId,
+      sections: candidates.map((candidate) => ({
+        sourceId: candidate.sourceId,
+        sourceType: candidate.sourceType,
+        sourceDate: candidate.sourceDate,
+        text: candidate.text,
+      })),
+    })
+    if (!response.facts.length) return
+
+    const factsBySource = new Map<string, ClinicalFact[]>()
+    for (const fact of response.facts) {
+      const list = factsBySource.get(fact.provenance.sourceId) ?? []
+      list.push(fact)
+      factsBySource.set(fact.provenance.sourceId, list)
+    }
+
+    const index = loadClinicalImprintIndex(caseId)
+    for (const candidate of candidates) {
+      const sourceFacts = factsBySource.get(candidate.sourceId)
+      if (!sourceFacts || sourceFacts.length === 0) continue
+      const record = index.imprints.find((item) => item.imprintKey === candidate.imprintKey)
+      if (!record) continue
+      upsertClinicalImprint(
+        { ...record, facts: applyLlmFacts(record.facts, sourceFacts) },
+        caseId,
+      )
+    }
+  } catch {
+    // Non-blocking — deterministic regex facts remain.
   }
 }
 

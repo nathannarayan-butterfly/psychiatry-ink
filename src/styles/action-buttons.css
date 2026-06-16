@@ -15,14 +15,22 @@
   height: 1.75rem;
   padding: 0;
   border: none;
-  border-radius: 5px;
+  border-radius: var(--radius-control, 0.4375rem);
   background: transparent;
   color: var(--text-muted, #8a8a80);
   cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+  transition:
+    background var(--duration-instant, 0.12s) var(--ease-standard, ease),
+    color var(--duration-instant, 0.12s) var(--ease-standard, ease),
+    border-color var(--duration-instant, 0.12s) var(--ease-standard, ease);
   font-family: inherit;
   flex-shrink: 0;
   align-self: center;
+}
+
+.icon-action-btn:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, color-mix(in srgb, var(--accent) 52%, transparent));
+  outline-offset: var(--focus-ring-offset, 2px);
 }
 
 .icon-action-btn > svg {

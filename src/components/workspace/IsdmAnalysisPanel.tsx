@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import { getIsdmSafetyDisclaimer } from '../../data/isdmLabels'
 import type { EnglishVariant, UiLanguage } from '../../types/settings'
@@ -12,14 +12,32 @@ import {
   evaluateDisorder,
   type DisorderEvaluation,
 } from '../../utils/diagnosisCriteria'
-import type { ClinicianAttestationValue } from '../../utils/diagnosisCriteria/context'
+import type { PerCriterionResult } from '../../utils/diagnosisCriteria/evaluateDisorder'
+import type { ClinicianAttestationValue, AttestationMap } from '../../utils/diagnosisCriteria/context'
 import { loadAttestations, setAttestation } from '../../utils/butterfly/attestationStorage'
+import {
+  acceptAiSuggestion,
+  dismissAiSuggestion,
+  loadAiSuggestions,
+  saveAiSuggestions,
+  type ButterflyAiSuggestionState,
+} from '../../utils/butterfly/aiSuggestions'
+import { selectUnresolvedCriteria, resolveDeepLinkPage } from '../../utils/butterfly/criterionPrompts'
+import { suggestionsFromCaseFacts } from '../../utils/butterfly/factSuggestions'
+import { buildButterflyContextPackage, hasButterflyContext } from '../../utils/butterfly/contextPackage'
+import { extractButterflyCriteria } from '../../services/butterflyExtractApi'
+import { isCmeaConsumerReadEnabled } from '../../utils/featureFlags'
 import { loadDiagnosen, type DiagnoseEntry } from '../../utils/diagnosenArchive'
+import type { NotionPageId } from '../notion/notionPages'
+
+type Translate = ReturnType<typeof useTranslation>['t']
 
 interface IsdmAnalysisPanelProps {
   caseId: string
   /** Bumped by the parent when diagnoses change, to retrigger a reload. */
   diagnosesVersion?: number
+  /** Jump to a workspace documentation page so the clinician can add a finding. */
+  onJumpToSection?: (pageId: NotionPageId) => void
 }
 
 function formatUpdatedAt(iso: string, language: UiLanguage): string {
@@ -35,9 +53,7 @@ function formatUpdatedAt(iso: string, language: UiLanguage): string {
 }
 
 function hasCodeOrLabel(entry: DiagnoseEntry): boolean {
-  return Boolean(
-    entry.icd10.code.trim() || entry.icd10.label.trim() || entry.icd11.code.trim(),
-  )
+  return Boolean(entry.icd10.code.trim() || entry.icd10.label.trim() || entry.icd11.code.trim())
 }
 
 /** One row per clinician-entered diagnosis — verified or "not available". */
@@ -50,22 +66,40 @@ interface EnteredDiagnosisResult {
   evaluation?: DisorderEvaluation
 }
 
-export function IsdmAnalysisPanel({ caseId, diagnosesVersion }: IsdmAnalysisPanelProps) {
+type ProvenanceKind = 'deterministic' | 'confirmed' | 'ai' | 'open'
+
+function provenanceFor(
+  result: PerCriterionResult,
+  hasActionableSuggestion: boolean,
+): ProvenanceKind {
+  if (result.source === 'attested') return 'confirmed'
+  if (result.status === 'met' || result.status === 'not_met') return 'deterministic'
+  if (hasActionableSuggestion) return 'ai'
+  return 'open'
+}
+
+export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }: IsdmAnalysisPanelProps) {
   const { t, language, englishVariant } = useTranslation()
   const [analysis, setAnalysis] = useState<IsdmClinicalAnalysis | null>(() => loadIsdmAnalysis(caseId))
   const [attestations, setAttestations] = useState(() => loadAttestations(caseId))
+  const [aiSuggestions, setAiSuggestions] = useState<ButterflyAiSuggestionState>(() => loadAiSuggestions(caseId))
   const [diagnoses, setDiagnoses] = useState<DiagnoseEntry[]>(() => loadDiagnosen(caseId))
   const [refreshing, setRefreshing] = useState(false)
+  const [pendingDisorders, setPendingDisorders] = useState<ReadonlySet<string>>(() => new Set())
+  const [aiErrors, setAiErrors] = useState<Record<string, boolean>>({})
+  const autoAttempted = useRef<Set<string>>(new Set())
 
   const refresh = useCallback(() => {
     setAnalysis(loadIsdmAnalysis(caseId))
     setAttestations(loadAttestations(caseId))
+    setAiSuggestions(loadAiSuggestions(caseId))
     setDiagnoses(loadDiagnosen(caseId))
   }, [caseId])
 
   useEffect(() => {
     setRefreshing(true)
     setDiagnoses(loadDiagnosen(caseId))
+    setAiSuggestions(loadAiSuggestions(caseId))
     scheduleIsdmRebuild(caseId, 'profile')
     const timer = window.setTimeout(() => {
       refresh()
@@ -96,16 +130,8 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion }: IsdmAnalysisPane
       }
       if (seenDisorders.has(disorder.id)) continue
       seenDisorders.add(disorder.id)
-      out.push({
-        key: entry.id,
-        label,
-        code,
-        available: true,
-        disorder,
-        evaluation: evaluateDisorder(disorder, ctx),
-      })
+      out.push({ key: entry.id, label, code, available: true, disorder, evaluation: evaluateDisorder(disorder, ctx) })
     }
-    // Verified rows first (met → not_met → insufficient), "not available" last.
     const rank = (r: EnteredDiagnosisResult) => {
       if (!r.available || !r.evaluation) return 3
       return r.evaluation.verdict === 'criteria_met' ? 0 : r.evaluation.verdict === 'not_met' ? 1 : 2
@@ -121,9 +147,116 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion }: IsdmAnalysisPane
     [caseId],
   )
 
+  const handleUnclear = useCallback(
+    (criterionId: string) => {
+      setAttestation(caseId, criterionId, null)
+      dismissAiSuggestion(caseId, criterionId)
+      setAttestations(loadAttestations(caseId))
+      setAiSuggestions(loadAiSuggestions(caseId))
+    },
+    [caseId],
+  )
+
+  const handleAcceptSuggestion = useCallback(
+    (criterionId: string) => {
+      if (acceptAiSuggestion(caseId, criterionId)) {
+        setAttestations(loadAttestations(caseId))
+        setAiSuggestions(loadAiSuggestions(caseId))
+      }
+    },
+    [caseId],
+  )
+
+  const handleDismissSuggestion = useCallback(
+    (criterionId: string) => {
+      dismissAiSuggestion(caseId, criterionId)
+      setAiSuggestions(loadAiSuggestions(caseId))
+    },
+    [caseId],
+  )
+
+  const runExtraction = useCallback(
+    async (disorder: Disorder, evaluation: DisorderEvaluation) => {
+      let unresolved = selectUnresolvedCriteria(evaluation)
+      if (unresolved.length === 0) return
+
+      // CMEA Phase 2: resolve unknowns from pre-computed facts (compute once,
+      // reuse many). Only residual unknowns fall through to the bespoke route.
+      if (isCmeaConsumerReadEnabled() && analysis) {
+        const { suggestions, residualUnresolved } = suggestionsFromCaseFacts({
+          caseId,
+          disorder,
+          evaluation,
+          coursePattern: analysis.coursePattern,
+        })
+        if (suggestions.length > 0) {
+          saveAiSuggestions(caseId, disorder.id, 'cmea-facts', suggestions)
+          setAiSuggestions(loadAiSuggestions(caseId))
+        }
+        unresolved = residualUnresolved
+        if (unresolved.length === 0) return
+      }
+
+      const pkg = buildButterflyContextPackage(caseId)
+      if (!hasButterflyContext(pkg)) return
+      setPendingDisorders((prev) => new Set(prev).add(disorder.id))
+      setAiErrors((prev) => ({ ...prev, [disorder.id]: false }))
+      try {
+        const response = await extractButterflyCriteria({
+          caseId,
+          disorderId: disorder.id,
+          disorderName: disorder.name_de,
+          criteria: unresolved,
+          packageContent: pkg,
+        })
+        saveAiSuggestions(
+          caseId,
+          disorder.id,
+          response.model.modelId,
+          response.results.map((result) => ({
+            criterionId: result.id,
+            status: result.status,
+            evidenceQuote: result.evidenceQuote,
+            confidence: result.confidence,
+          })),
+        )
+        setAiSuggestions(loadAiSuggestions(caseId))
+      } catch {
+        setAiErrors((prev) => ({ ...prev, [disorder.id]: true }))
+      } finally {
+        setPendingDisorders((prev) => {
+          const next = new Set(prev)
+          next.delete(disorder.id)
+          return next
+        })
+      }
+    },
+    [caseId, analysis],
+  )
+
+  // Background trigger: once per disorder per mount, resolve unknown criteria via
+  // the LLM when none of them has a suggestion yet (cheap, low doc volume).
+  useEffect(() => {
+    for (const result of results) {
+      if (!result.available || !result.disorder || !result.evaluation) continue
+      const key = `${caseId}:${result.disorder.id}`
+      if (autoAttempted.current.has(key)) continue
+      const unresolved = selectUnresolvedCriteria(result.evaluation)
+      if (unresolved.length === 0) {
+        autoAttempted.current.add(key)
+        continue
+      }
+      if (unresolved.some((criterion) => aiSuggestions[criterion.id])) {
+        autoAttempted.current.add(key)
+        continue
+      }
+      autoAttempted.current.add(key)
+      void runExtraction(result.disorder, result.evaluation)
+    }
+  }, [results, caseId, aiSuggestions, runExtraction])
+
   const disclaimer = getIsdmSafetyDisclaimer(language, englishVariant as EnglishVariant)
 
-  // Idle / silent states ----------------------------------------------------
   if (!hasDiagnoses) {
     return (
       <div className="butterfly-panel butterfly-panel--idle" role="region" aria-label={t('butterflyTitle')}>
@@ -194,94 +327,25 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion }: IsdmAnalysisPane
                 </li>
               )
             }
-
-            const { disorder, evaluation } = result
-            const advice = buildDisorderAdvice(evaluation, disorder)
             return (
-              <li key={result.key} className={`butterfly-card butterfly-card--${advice.tone}`}>
-                <div className="butterfly-card__head">
-                  <div className="butterfly-card__heading">
-                    <span className="butterfly-card__name">{result.label || disorder.name_de}</span>
-                    {result.code ? <span className="butterfly-card__code">{result.code}</span> : null}
-                  </div>
-                  <span className={`butterfly-verdict butterfly-verdict--${advice.tone}`}>
-                    {advice.tone === 'met'
-                      ? t('butterflyVerdictMet')
-                      : advice.tone === 'not_met'
-                        ? t('butterflyVerdictNotMet')
-                        : t('butterflyVerdictInsufficient')}
-                  </span>
-                </div>
-
-                <p className="butterfly-card__advice">{advice.headline}</p>
-
-                {evaluation.criteriaMet.length > 0 ? (
-                  <div className="butterfly-card__group">
-                    <p className="butterfly-card__group-label">{t('butterflyCriteriaMetLabel')}</p>
-                    <ul className="butterfly-chip-list">
-                      {evaluation.criteriaMet.map((text) => (
-                        <li key={text} className="butterfly-chip butterfly-chip--met">
-                          {text}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
-
-                {evaluation.openAttestations.length > 0 ? (
-                  <div className="butterfly-card__group">
-                    <p className="butterfly-card__group-label">{t('butterflyOpenCriteria')}</p>
-                    <ul className="butterfly-attest-list">
-                      {evaluation.openAttestations.map((criterion) => {
-                        const current = attestations[criterion.criterionId]
-                        return (
-                          <li key={criterion.criterionId} className="butterfly-attest">
-                            <span className="butterfly-attest__text">{criterion.text_de}</span>
-                            <span className="butterfly-attest__actions">
-                              <button
-                                type="button"
-                                className={`butterfly-attest__btn butterfly-attest__btn--met${
-                                  current === 'met' ? ' is-active' : ''
-                                }`}
-                                aria-pressed={current === 'met'}
-                                onClick={() => handleAttest(criterion.criterionId, current, 'met')}
-                              >
-                                {t('butterflyAttestMet')}
-                              </button>
-                              <button
-                                type="button"
-                                className={`butterfly-attest__btn butterfly-attest__btn--not-met${
-                                  current === 'not_met' ? ' is-active' : ''
-                                }`}
-                                aria-pressed={current === 'not_met'}
-                                onClick={() => handleAttest(criterion.criterionId, current, 'not_met')}
-                              >
-                                {t('butterflyAttestNotMet')}
-                              </button>
-                            </span>
-                          </li>
-                        )
-                      })}
-                    </ul>
-                    <p className="butterfly-attest__hint">{t('butterflyAttestHint')}</p>
-                  </div>
-                ) : null}
-
-                {disorder.differentials_de.length > 0 ? (
-                  <details className="butterfly-card__differentials">
-                    <summary>{t('butterflyDifferentials')}</summary>
-                    <ul>
-                      {disorder.differentials_de.map((d) => (
-                        <li key={d}>{d}</li>
-                      ))}
-                    </ul>
-                  </details>
-                ) : null}
-
-                <p className="butterfly-card__source">
-                  {t('butterflySource')}: {disorder.sourceRef}
-                </p>
-              </li>
+              <ButterflyDiagnosisCard
+                key={result.key}
+                t={t}
+                disorder={result.disorder}
+                evaluation={result.evaluation}
+                label={result.label}
+                code={result.code}
+                attestations={attestations}
+                aiSuggestions={aiSuggestions}
+                pending={pendingDisorders.has(result.disorder.id)}
+                aiError={Boolean(aiErrors[result.disorder.id])}
+                onAttest={handleAttest}
+                onUnclear={handleUnclear}
+                onAcceptSuggestion={handleAcceptSuggestion}
+                onDismissSuggestion={handleDismissSuggestion}
+                onCheckAi={() => result.disorder && result.evaluation && runExtraction(result.disorder, result.evaluation)}
+                onJumpToSection={onJumpToSection}
+              />
             )
           })}
         </ul>
@@ -303,5 +367,215 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion }: IsdmAnalysisPane
 
       <p className="butterfly-panel__review-note">{t('isdmPanelClinicianReview')}</p>
     </div>
+  )
+}
+
+interface ButterflyDiagnosisCardProps {
+  t: Translate
+  disorder: Disorder
+  evaluation: DisorderEvaluation
+  label: string
+  code: string
+  attestations: AttestationMap
+  aiSuggestions: ButterflyAiSuggestionState
+  pending: boolean
+  aiError: boolean
+  onAttest: (criterionId: string, current: ClinicianAttestationValue | undefined, value: ClinicianAttestationValue) => void
+  onUnclear: (criterionId: string) => void
+  onAcceptSuggestion: (criterionId: string) => void
+  onDismissSuggestion: (criterionId: string) => void
+  onCheckAi: () => void
+  onJumpToSection?: (pageId: NotionPageId) => void
+}
+
+function ButterflyDiagnosisCard({
+  t,
+  disorder,
+  evaluation,
+  label,
+  code,
+  attestations,
+  aiSuggestions,
+  pending,
+  aiError,
+  onAttest,
+  onUnclear,
+  onAcceptSuggestion,
+  onDismissSuggestion,
+  onCheckAi,
+  onJumpToSection,
+}: ButterflyDiagnosisCardProps) {
+  const advice = buildDisorderAdvice(evaluation, disorder)
+  const exclusionGroupIds = new Set(
+    disorder.groups.filter((group) => group.groupType === 'exclusion').map((group) => group.id),
+  )
+  const criteria = evaluation.perCriterion.filter((result) => !exclusionGroupIds.has(result.groupId))
+  const hasUnresolved = criteria.some((result) => result.status === 'unknown' && result.source !== 'attested')
+
+  return (
+    <li className={`butterfly-card butterfly-card--${advice.tone}`}>
+      <div className="butterfly-card__head">
+        <div className="butterfly-card__heading">
+          <span className="butterfly-card__name">{label || disorder.name_de}</span>
+          {code ? <span className="butterfly-card__code">{code}</span> : null}
+        </div>
+        <span className={`butterfly-verdict butterfly-verdict--${advice.tone}`}>
+          {advice.tone === 'met'
+            ? t('butterflyVerdictMet')
+            : advice.tone === 'not_met'
+              ? t('butterflyVerdictNotMet')
+              : t('butterflyVerdictInsufficient')}
+        </span>
+      </div>
+
+      <p className="butterfly-card__advice">{advice.headline}</p>
+
+      <div className="butterfly-card__group">
+        <div className="butterfly-card__group-head">
+          <p className="butterfly-card__group-label">{t('butterflyCriteriaProvenanceTitle')}</p>
+          {hasUnresolved ? (
+            <button
+              type="button"
+              className="butterfly-ai-check"
+              onClick={onCheckAi}
+              disabled={pending}
+            >
+              {pending ? t('butterflyChecking') : t('butterflyCheckAi')}
+            </button>
+          ) : null}
+        </div>
+
+        <ul className="butterfly-criteria-list">
+          {criteria.map((criterion) => {
+            const attestation = attestations[criterion.criterionId]
+            const suggestion = aiSuggestions[criterion.criterionId]
+            const actionableSuggestion =
+              suggestion && (suggestion.status === 'met' || suggestion.status === 'not_met')
+                ? suggestion
+                : undefined
+            const provenance = provenanceFor(criterion, Boolean(actionableSuggestion))
+            const isOpen = criterion.status === 'unknown' && criterion.source !== 'attested'
+            const jumpPage = resolveDeepLinkPage(disorder, criterion.criterionId)
+
+            return (
+              <li key={criterion.criterionId} className={`butterfly-criterion butterfly-criterion--${provenance}`}>
+                <div className="butterfly-criterion__row">
+                  <span className="butterfly-criterion__text">{criterion.text_de}</span>
+                  <span className={`butterfly-prov butterfly-prov--${provenance}`}>
+                    {provenance === 'deterministic'
+                      ? `${criterion.status === 'met' ? '✓' : '×'} ${t('butterflyProvenanceDeterministic')}`
+                      : provenance === 'confirmed'
+                        ? `${attestation === 'met' ? '✓' : '×'} ${t('butterflyProvenanceConfirmed')}`
+                        : provenance === 'ai'
+                          ? t('butterflyProvenanceAi')
+                          : t('butterflyProvenanceOpen')}
+                  </span>
+                </div>
+
+                {isOpen ? (
+                  <div className="butterfly-criterion__resolve">
+                    {actionableSuggestion ? (
+                      <div className="butterfly-suggestion">
+                        <p className="butterfly-suggestion__verdict">
+                          {actionableSuggestion.status === 'met'
+                            ? t('butterflyAiSuggestionMet')
+                            : t('butterflyAiSuggestionNotMet')}
+                          <span className="butterfly-suggestion__confidence">
+                            {' · '}
+                            {t('butterflyAiConfidence')} {Math.round(actionableSuggestion.confidence * 100)}%
+                          </span>
+                        </p>
+                        {actionableSuggestion.evidenceQuote ? (
+                          <p className="butterfly-suggestion__quote">
+                            <span className="butterfly-suggestion__quote-label">{t('butterflyAiQuoteLabel')}:</span>{' '}
+                            «{actionableSuggestion.evidenceQuote}»
+                          </p>
+                        ) : null}
+                        <div className="butterfly-suggestion__actions">
+                          <button
+                            type="button"
+                            className="butterfly-suggestion__btn butterfly-suggestion__btn--accept"
+                            onClick={() => onAcceptSuggestion(criterion.criterionId)}
+                          >
+                            {t('butterflyAccept')}
+                          </button>
+                          <button
+                            type="button"
+                            className="butterfly-suggestion__btn butterfly-suggestion__btn--dismiss"
+                            onClick={() => onDismissSuggestion(criterion.criterionId)}
+                          >
+                            {t('butterflyDismiss')}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="butterfly-criterion__prompt">{t('butterflyAskTemplate')}</p>
+                        {suggestion && suggestion.status === 'unclear' ? (
+                          <p className="butterfly-criterion__ai-unclear">{t('butterflyAiUnclear')}</p>
+                        ) : null}
+                      </>
+                    )}
+
+                    <div className="butterfly-attest__actions">
+                      <button
+                        type="button"
+                        className={`butterfly-attest__btn butterfly-attest__btn--met${attestation === 'met' ? ' is-active' : ''}`}
+                        aria-pressed={attestation === 'met'}
+                        onClick={() => onAttest(criterion.criterionId, attestation, 'met')}
+                      >
+                        {t('butterflyAttestMet')}
+                      </button>
+                      <button
+                        type="button"
+                        className={`butterfly-attest__btn butterfly-attest__btn--not-met${attestation === 'not_met' ? ' is-active' : ''}`}
+                        aria-pressed={attestation === 'not_met'}
+                        onClick={() => onAttest(criterion.criterionId, attestation, 'not_met')}
+                      >
+                        {t('butterflyAttestNotMet')}
+                      </button>
+                      <button
+                        type="button"
+                        className="butterfly-attest__btn butterfly-attest__btn--unclear"
+                        onClick={() => onUnclear(criterion.criterionId)}
+                      >
+                        {t('butterflyAttestUnclear')}
+                      </button>
+                      {jumpPage && onJumpToSection ? (
+                        <button
+                          type="button"
+                          className="butterfly-attest__btn butterfly-attest__btn--jump"
+                          onClick={() => onJumpToSection(jumpPage)}
+                        >
+                          {t('butterflyJumpToDoc')}
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
+              </li>
+            )
+          })}
+        </ul>
+
+        {aiError ? <p className="butterfly-ai-error">{t('butterflyAiError')}</p> : null}
+        {hasUnresolved ? <p className="butterfly-attest__hint">{t('butterflyAiPendingNote')}</p> : null}
+      </div>
+
+      {disorder.differentials_de.length > 0 ? (
+        <details className="butterfly-card__differentials">
+          <summary>{t('butterflyDifferentials')}</summary>
+          <ul>
+            {disorder.differentials_de.map((d) => (
+              <li key={d}>{d}</li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
+
+      <p className="butterfly-card__source">
+        {t('butterflySource')}: {disorder.sourceRef}
+      </p>
+    </li>
   )
 }

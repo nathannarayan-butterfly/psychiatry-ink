@@ -90,10 +90,26 @@ export interface StructuredClinicalMetadata {
   excludeReason: string | null
 }
 
-/** One structured clinical memory entry — stored inside encrypted workspace payload. */
+/**
+ * One structured clinical memory entry — stored inside encrypted workspace payload.
+ *
+ * The `facts`/`schemaVersion`/`extractorVersion`/`contentHash` fields are the
+ * CMEA (Clinical Metadata Extraction Agent) additions. They are OPTIONAL so v1
+ * records (no facts) remain valid; the accessor up-converts them to `facts: []`.
+ * `ClinicalFact` is imported type-only to avoid a runtime import cycle with
+ * `clinicalMetadata.ts`.
+ */
 export type ClinicalImprintEntry = StructuredClinicalMetadata & {
   /** Stable key for upsert: `${sourceType}:${sourceId}` */
   imprintKey: string
+  /** Versioned, provenance-tagged clinical facts (CMEA). Absent on v1 records. */
+  facts?: import('./clinicalMetadata').ClinicalFact[]
+  /** CMEA canonical schema version that produced `facts`. */
+  schemaVersion?: number
+  /** CMEA extractor logic version that produced `facts`. */
+  extractorVersion?: number
+  /** Stable hash of the normalized source text — drives freshness gating. */
+  contentHash?: string
 }
 
 export interface ClinicalImprintRecord extends ClinicalImprintEntry {}

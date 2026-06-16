@@ -15,6 +15,9 @@ export type AiFeatureKey =
   | 'pharma_ask'
   | 'discuss_case_ai'
   | 'document_generation'
+  | 'butterfly'
+  | 'prior_therapies'
+  | 'clinical_metadata_extraction'
   | 'unknown'
 
 export type AiUsageSource = 'provider_reported' | 'estimated_from_chars'

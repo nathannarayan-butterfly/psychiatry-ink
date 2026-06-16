@@ -209,6 +209,77 @@
    * for that subtree.
    */
   --area-accent: var(--accent);
+
+  /* ──────────────────────────────────────────────────────────────────────
+   * Spacing rhythm — a single 4px-based scale so padding/margins/gaps share
+   * one rhythm across pages instead of ad-hoc rem values. Additive: existing
+   * literals keep working; new/refined chrome consumes these.
+   * ────────────────────────────────────────────────────────────────────── */
+  --space-px: 1px;
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-7: 1.75rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* ──────────────────────────────────────────────────────────────────────
+   * Type scale + line-height roles. The font families (display/ui/sans) are
+   * defined in @theme; these are the size + leading steps that keep headings,
+   * labels and body text on a shared modular rhythm.
+   * ────────────────────────────────────────────────────────────────────── */
+  --text-2xs: 0.6875rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.9375rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+  --tracking-tight: -0.018em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.04em;
+  --tracking-caps: 0.1em;
+  --weight-regular: 450;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 680;
+
+  /* ──────────────────────────────────────────────────────────────────────
+   * Motion tokens. Named easings + durations complement the existing
+   * --transition-* shorthands so components can compose their own
+   * transitions consistently (and tune them in one place).
+   * ────────────────────────────────────────────────────────────────────── */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-emphasized: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --duration-instant: 100ms;
+  --duration-fast: 150ms;
+  --duration-medium: 280ms;
+  --duration-slow: 400ms;
+
+  /* ──────────────────────────────────────────────────────────────────────
+   * Focus ring — one token consumed by :focus-visible so every interactive
+   * surface gets the same calm, accessible (WCAG-visible) keyboard ring.
+   * ────────────────────────────────────────────────────────────────────── */
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+  --focus-ring-color: color-mix(in srgb, var(--accent) 52%, transparent);
+
+  /* Themed scrollbar palette (consumed by the global scrollbar treatment). */
+  --scrollbar-thumb: color-mix(in srgb, var(--accent) 22%, var(--border-strong));
+  --scrollbar-thumb-hover: color-mix(in srgb, var(--accent) 40%, var(--border-strong));
 }
 
 /*
@@ -296,8 +367,60 @@
 
   /* Visible keyboard focus on all interactive elements, without mouse-focus rings */
   :focus-visible {
-    outline: 2px solid color-mix(in srgb, var(--accent) 50%, transparent);
-    outline-offset: 2px;
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
+  }
+
+  /*
+   * Themed scrollbars — thin, accent-tinted, calm. Scoped surfaces that opt
+   * out (scrollbar-width: none / ::-webkit-scrollbar { display:none }) keep
+   * winning on specificity, so this only restyles the previously-default bars.
+   */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 11px;
+    height: 11px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+    transition: background-color var(--duration-fast) var(--ease-standard);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover);
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /*
+   * Global reduced-motion safety net. Per-component blocks already opt out of
+   * specific animations; this guarantees anything not individually handled also
+   * respects the user's preference (near-instant rather than fully removed so
+   * state changes stay legible).
+   */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
@@ -3985,8 +4108,12 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-card);
     background: var(--surface);
+    box-shadow: var(--shadow-elevated-sm);
     text-align: left;
-    transition: border-color 0.15s ease, background 0.15s ease;
+    transition:
+      border-color var(--duration-fast, 150ms) var(--ease-standard, ease),
+      box-shadow var(--duration-fast, 150ms) var(--ease-standard, ease),
+      transform var(--duration-fast, 150ms) var(--ease-standard, ease);
   }
 
   .patient-case-card--archived {
@@ -4011,9 +4138,12 @@
   }
 
   .patient-case-card:hover {
-    border-color: color-mix(in srgb, var(--border) 40%, var(--text-ink));
-    border-left: 3px solid color-mix(in srgb, var(--accent) 55%, transparent);
-    padding-left: calc(0.875rem - 2px);
+    border-color: color-mix(in srgb, var(--accent) 28%, var(--border-soft));
+    /* Inset left accent + lift: depth cue without the former 1px layout jump. */
+    box-shadow:
+      var(--shadow-elevated-md),
+      inset 3px 0 0 color-mix(in srgb, var(--accent) 55%, transparent);
+    transform: translateY(-1px);
   }
 
   .dashboard-section--archive {
@@ -4095,13 +4225,15 @@
     gap: 0.3rem;
     padding: 0.25rem 0.5rem;
     border: 1px solid var(--border);
-    border-radius: 0.25rem;
+    border-radius: var(--radius-control, 0.4375rem);
     background: #fff;
     font-size: 0.6875rem;
     font-weight: 500;
     color: var(--text-ink);
     cursor: pointer;
-    transition: border-color 0.15s ease, background 0.15s ease;
+    transition:
+      border-color var(--duration-fast, 150ms) var(--ease-standard, ease),
+      background var(--duration-fast, 150ms) var(--ease-standard, ease);
   }
 
   .patient-case-card__action-btn:hover {

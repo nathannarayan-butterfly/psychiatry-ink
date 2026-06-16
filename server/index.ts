@@ -17,6 +17,8 @@ import { kbContributionsRouter } from './routes/kbContributions'
 import { patientsRouter } from './routes/patients'
 import { transcribeRouter } from './routes/transcribe'
 import { discussCaseRouter } from './routes/discussCase'
+import { butterflyRouter } from './routes/butterfly'
+import { clinicalMetadataRouter } from './routes/clinicalMetadata'
 import { consultationRouter } from './routes/consultation'
 import { orgRouter } from './routes/org'
 import { auditRouter } from './routes/audit'
@@ -26,6 +28,7 @@ import { calendarRouter } from './routes/calendar'
 import { combinationCheckRouter } from './routes/combinationCheck'
 import { labMedicationCorrelationRouter } from './routes/labMedicationCorrelation'
 import { prepAiCheckRouter } from './routes/prepAiCheck'
+import { medicationPriorTherapiesRouter } from './routes/medicationPriorTherapies'
 import { demoPatientRouter } from './routes/demoPatient'
 import { aiBudgetRouter, aiUsageRouter } from './routes/aiUsage'
 import { liveKitMissingEnvVars } from './services/livekitVoice'
@@ -64,6 +67,8 @@ app.use('/api/generation-logs', generationLogRouter)
 app.use('/api/kb-admin', kbAdminRouter)
 app.use('/api/kb-contributions', kbContributionsRouter)
 app.use('/api/discuss-case', discussCaseRouter)
+app.use('/api/butterfly', butterflyRouter)
+app.use('/api/clinical-metadata', clinicalMetadataRouter)
 app.use('/api/consultation', consultationRouter)
 app.use('/api/org', orgRouter)
 app.use('/api/audit', auditRouter)
@@ -72,6 +77,7 @@ app.use('/api/calendar', calendarRouter)
 app.use('/api/combination-check', combinationCheckRouter)
 app.use('/api/lab-med-correlation', labMedicationCorrelationRouter)
 app.use('/api/medication/prep-ai-check', prepAiCheckRouter)
+app.use('/api/medication/prior-therapies', medicationPriorTherapiesRouter)
 app.use('/api/demo-patient', demoPatientRouter)
 app.use('/api/ai-usage', aiUsageRouter)
 app.use('/api/ai-budget', aiBudgetRouter)

@@ -1,7 +1,12 @@
 import type { ClinicalImprintIndex, ClinicalImprintRecord } from '../../types/clinicalImprint'
 import { getActiveCaseId } from '../caseContext'
 
-export const CLINICAL_IMPRINT_INDEX_VERSION = 1
+/**
+ * Bumped to 2 for the CMEA `facts[]` model (records may now carry
+ * `facts`/`schemaVersion`/`extractorVersion`/`contentHash`). v1 records remain
+ * valid — the accessor up-converts missing facts to `[]`.
+ */
+export const CLINICAL_IMPRINT_INDEX_VERSION = 2
 
 /** In-memory session cache — persisted only via encrypted workspace vault. */
 const imprintCache = new Map<string, ClinicalImprintIndex>()
@@ -77,6 +82,13 @@ export function upsertClinicalImprint(
     index.imprints[existingIdx] = {
       ...nextRecord,
       createdAt: previous.createdAt,
+      // Preserve previously-computed CMEA facts when the incoming record does
+      // not carry its own (e.g. a regex-only re-extraction must not wipe the
+      // LLM enrichment merged in by a later pass).
+      facts: nextRecord.facts ?? previous.facts,
+      schemaVersion: nextRecord.schemaVersion ?? previous.schemaVersion,
+      extractorVersion: nextRecord.extractorVersion ?? previous.extractorVersion,
+      contentHash: nextRecord.contentHash ?? previous.contentHash,
     }
   } else {
     index.imprints.push(nextRecord)

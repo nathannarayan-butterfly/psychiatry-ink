@@ -20,6 +20,7 @@ import { MedicationEntryHistoryDialog } from './MedicationEntryHistoryDialog'
 import { MedicationInsightStrip } from './MedicationInsightStrip'
 import { MedicationPlanDashboard } from './MedicationPlanDashboard'
 import { MedicationPlanHistory } from './MedicationPlanHistory'
+import { PriorTherapiesPanel } from './PriorTherapiesPanel'
 import { MedicationRow } from './MedicationRow'
 import { MedicationToolbar } from './MedicationToolbar'
 
@@ -243,6 +244,9 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
           {hasMedications ? (
             <MedicationPlanDashboard medications={medications} onOpenSection={selectSection} />
           ) : null}
+
+          <PriorTherapiesPanel caseId={caseId} medications={medications} />
+
 
           {hasMedications ? (
             <section className="medication-explore" aria-label={translateMedicationUi(language, 'medExploreSections')}>

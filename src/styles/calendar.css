@@ -71,9 +71,17 @@
   width: 1.75rem;
   height: 1.75rem;
   border: 1px solid color-mix(in srgb, var(--text-main, #1a1a1a) 12%, transparent);
-  border-radius: 0.25rem;
+  border-radius: var(--radius-control, 0.4375rem);
   background: transparent;
   cursor: pointer;
+  transition:
+    background var(--duration-fast, 150ms) var(--ease-standard, ease),
+    border-color var(--duration-fast, 150ms) var(--ease-standard, ease);
+}
+
+.calendar-nav__btn:hover {
+  background: color-mix(in srgb, var(--accent, #8a5a2b) 8%, transparent);
+  border-color: color-mix(in srgb, var(--accent, #8a5a2b) 30%, transparent);
 }
 
 .calendar-nav__label {
@@ -102,16 +110,30 @@
   gap: 0.35rem;
   padding: 0.4rem 0.75rem;
   font-size: 0.8125rem;
-  border-radius: 0.375rem;
+  border-radius: var(--radius-control, 0.4375rem);
   border: 1px solid color-mix(in srgb, var(--text-main, #1a1a1a) 14%, transparent);
   background: #fff;
   cursor: pointer;
+  transition:
+    background var(--duration-fast, 150ms) var(--ease-standard, ease),
+    border-color var(--duration-fast, 150ms) var(--ease-standard, ease),
+    box-shadow var(--duration-fast, 150ms) var(--ease-standard, ease);
+}
+
+.calendar-btn:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent, #8a5a2b) 32%, var(--border-strong, #c8c4be));
+  background: color-mix(in srgb, var(--accent, #8a5a2b) 4%, #fff);
 }
 
 .calendar-btn--primary {
   background: var(--accent, #4a7c59);
   border-color: var(--accent, #4a7c59);
   color: #fff;
+}
+
+.calendar-btn--primary:hover:not(:disabled) {
+  background: var(--accent-hover, #6a4420);
+  border-color: var(--accent-hover, #6a4420);
 }
 
 .calendar-btn--ghost {
@@ -142,11 +164,11 @@
 }
 
 .calendar-status-dot--scheduled {
-  background: #4a7c59;
+  background: var(--status-success, #4a7c59);
 }
 
 .calendar-status-dot--active {
-  background: #d97706;
+  background: var(--status-warn, #d97706);
 }
 
 .calendar-status-dot--completed {

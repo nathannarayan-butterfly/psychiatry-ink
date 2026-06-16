@@ -6,6 +6,12 @@ import type {
   EvidenceStrength,
   StructuredClinicalMetadata,
 } from '../../types/clinicalImprint'
+import {
+  CMEA_EXTRACTOR_VERSION,
+  CMEA_SCHEMA_VERSION,
+  type CanonicalClinicalMetadata,
+} from '../../types/clinicalMetadata'
+import { buildRegexFacts, computeContentHash } from '../clinicalMetadata/regexFacts'
 import { redactIdentifierPatterns } from './redactEvidence'
 
 const MIN_SIGNAL_LENGTH = 12
@@ -178,7 +184,7 @@ export function hasClinicalSignal(text: string): boolean {
   return normalizeWhitespace(text).length >= MIN_SIGNAL_LENGTH
 }
 
-export function extractClinicalImprint(job: ClinicalImprintJob): StructuredClinicalMetadata | null {
+export function extractClinicalImprint(job: ClinicalImprintJob): CanonicalClinicalMetadata | null {
   const text = normalizeWhitespace(job.text)
   if (!hasClinicalSignal(text)) return null
 
@@ -190,7 +196,7 @@ export function extractClinicalImprint(job: ClinicalImprintJob): StructuredClini
   const fieldHits = extractFieldHits(text)
   const now = new Date().toISOString()
 
-  return {
+  const base: StructuredClinicalMetadata = {
     patientId: job.caseId,
     caseId: job.caseId,
     sourceType,
@@ -234,5 +240,17 @@ export function extractClinicalImprint(job: ClinicalImprintJob): StructuredClini
     evidenceQuoteRange: null,
     analysisEligible: true,
     excludeReason: null,
+  }
+
+  // Pass A: deterministic regex facts (always on — the permanent fallback).
+  // Uses the original job text (preserves sentence boundaries for quotes).
+  const facts = buildRegexFacts(job, base)
+
+  return {
+    ...base,
+    schemaVersion: CMEA_SCHEMA_VERSION,
+    extractorVersion: CMEA_EXTRACTOR_VERSION,
+    contentHash: computeContentHash(text),
+    facts,
   }
 }

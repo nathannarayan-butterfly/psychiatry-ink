@@ -1627,7 +1627,13 @@ export function NotionApp({
           <div className="case-tab-shell">
             <CasePatientHeader caseId={caseId} metaVersion={patientMetaVersion} />
             <div className="case-tab-shell__body case-tab-shell__body--full">
-              <DiagnosePage caseId={caseId} />
+              <DiagnosePage
+                caseId={caseId}
+                onJumpToSection={(pageId) => {
+                  setActiveTopTab('workspace')
+                  setActivePage(pageId)
+                }}
+              />
             </div>
           </div>
         ) : null}

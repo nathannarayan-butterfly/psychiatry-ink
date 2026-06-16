@@ -6536,6 +6536,9 @@
   background: transparent;
   color: var(--text-muted, #8a8a80);
   cursor: pointer;
+  transition:
+    background var(--duration-fast, 150ms) var(--ease-standard, ease),
+    color var(--duration-fast, 150ms) var(--ease-standard, ease);
 }
 .meine-patienten__view-btn:hover {
   color: var(--ink, #1a1a18);
@@ -6557,10 +6560,15 @@
   color: var(--ink, #1a1a18);
   font-size: 0.85rem;
   cursor: pointer;
+  transition:
+    background var(--duration-fast, 150ms) var(--ease-standard, ease),
+    border-color var(--duration-fast, 150ms) var(--ease-standard, ease),
+    color var(--duration-fast, 150ms) var(--ease-standard, ease);
 }
 .meine-patienten__add-btn:hover {
   border-color: var(--accent, #4a6fa5);
   color: var(--accent, #4a6fa5);
+  background: color-mix(in srgb, var(--accent, #8a5a2b) 5%, var(--notion-paper-bg, #fff));
 }
 
 .meine-patienten__grid {
@@ -6602,6 +6610,9 @@
   background: transparent;
   color: var(--text-muted, #8a8a80);
   cursor: pointer;
+  transition:
+    background var(--duration-fast, 150ms) var(--ease-standard, ease),
+    color var(--duration-fast, 150ms) var(--ease-standard, ease);
 }
 .meine-patienten__edit-btn:hover {
   color: var(--accent, #4a6fa5);
@@ -6632,9 +6643,14 @@
   background: var(--notion-paper-bg, #fff);
   text-align: left;
   cursor: pointer;
+  box-shadow: inset 0 0 0 0 transparent;
+  transition:
+    background var(--duration-fast, 150ms) var(--ease-standard, ease),
+    box-shadow var(--duration-fast, 150ms) var(--ease-standard, ease);
 }
 .meine-patienten__list-row:hover {
-  background: var(--bg-secondary, #f7f7f5);
+  background: color-mix(in srgb, var(--accent, #8a5a2b) 5%, var(--bg-secondary, #f7f7f5));
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--accent, #8a5a2b) 50%, transparent);
 }
 
 .meine-patienten__list-name {
