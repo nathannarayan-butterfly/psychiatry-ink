@@ -47,7 +47,7 @@ export function PriorTherapiesOverviewCard({
     <OverviewCard
       title={de ? 'Vortherapien' : 'Prior therapies'}
       icon={<History size={15} />}
-      className="ov-col-5"
+      className="ov-col-6"
       badge={items.length > 0 ? { label: String(items.length), tone: 'neutral' } : undefined}
       action={{ label: de ? 'Zur Medikation' : 'Open medication', onClick: onOpenMedikation }}
     >

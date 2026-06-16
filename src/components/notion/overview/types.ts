@@ -146,5 +146,6 @@ export interface HeroSummaryData {
   risk: { tone: SemanticTone; label: string } | null
   activeMedCount: number
   alertCount: number
+  lastContact: { dateLabel: string; relativeLabel: string | null } | null
   nextAppointment: { dateLabel: string; relativeLabel: string | null; title: string } | null
 }

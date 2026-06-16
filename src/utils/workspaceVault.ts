@@ -57,6 +57,11 @@ import {
   type ClinicianAttestationState,
 } from './butterfly/attestationStorage'
 import {
+  applyClinicalQuestionNoteState,
+  loadClinicalQuestionNoteState,
+  type ClinicalQuestionNoteState,
+} from './clinicalQuestions/answerNotes'
+import {
   applyMedicationPlanState,
   loadMedicationPlanState,
 } from './medication/storage'
@@ -77,7 +82,7 @@ import {
 } from './weitereTherapie/storage'
 import type { WeitereTherapie } from '../types/weitereTherapie'
 
-export const WORKSPACE_PAYLOAD_VERSION = 8
+export const WORKSPACE_PAYLOAD_VERSION = 9
 
 export const LAST_VAULT_EXPORT_KEY = 'psychiatry-ink:last-vault-export-at'
 
@@ -133,6 +138,11 @@ export interface ClinicalWorkspacePayload {
   isdmInput?: IsdmInputState
   /** Layer 2a — Butterfly clinician attestations (criterionId → met/not_met). */
   butterflyAttestations?: ClinicianAttestationState
+  /**
+   * Layer 2a — clinical-question finding notes (PHI free text answered against
+   * suggested questions). Vault-only by design; absent on older payloads.
+   */
+  clinicalQuestionNotes?: ClinicalQuestionNoteState
   /** Layer 2b — medication intelligence profile (plan, side effects, lab correlation). */
   medicationPlanState?: MedicationPlanState
   /** Layer 2c — psychotherapy plan & session documentation (v8+; defaults absent on older payloads). */
@@ -274,6 +284,8 @@ export function collectClinicalPayload(
   const butterflyAttestations = Object.keys(butterflyAttestationState).length
     ? butterflyAttestationState
     : undefined
+  const questionNoteState = loadClinicalQuestionNoteState(storageCaseId)
+  const clinicalQuestionNotes = Object.keys(questionNoteState).length ? questionNoteState : undefined
   const medicationPlanState = loadMedicationPlanState(storageCaseId) ?? undefined
   const psychotherapyPlan = loadPsychotherapyPlan(storageCaseId) ?? undefined
   const complementaryTherapies = loadComplementaryTherapies(storageCaseId)
@@ -297,6 +309,7 @@ export function collectClinicalPayload(
     isdmAnalysis,
     isdmInput,
     butterflyAttestations,
+    clinicalQuestionNotes,
     medicationPlanState,
     psychotherapyPlan,
     complementaryTherapies: complementaryTherapies.length ? complementaryTherapies : undefined,
@@ -369,6 +382,10 @@ export function applyClinicalPayload(
     void import('./isdm').then(({ scheduleIsdmRebuild }) => {
       scheduleIsdmRebuild(storageCaseId, 'attestation')
     })
+  }
+
+  if (normalized.clinicalQuestionNotes) {
+    applyClinicalQuestionNoteState(normalized.clinicalQuestionNotes, storageCaseId)
   }
 
   if (normalized.medicationPlanState) {

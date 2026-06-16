@@ -3,8 +3,12 @@ import { useTranslation } from '../../context/TranslationContext'
 import type { AiToolKey } from '../../data/aiTools'
 import type { InputMode } from '../../types'
 import type { DictationPhase } from '../../types/dictation'
+import { isInlineAiEditEnabled } from '../../utils/featureFlags'
+import { isInlineAiEditShortcut } from '../../utils/notionKeyboardShortcuts'
+import { applyEdit } from '../../utils/inlineAiEdit/buildEditContext'
 import { WorkspaceEditorOverlay } from '../WorkspaceEditorOverlay'
 import { FloatingSelectionToolbar, type SelectionActionId } from './FloatingSelectionToolbar'
+import { useInlineAiEdit } from './inlineAiEdit/useInlineAiEdit'
 import { NotionSectionAiLinks } from './NotionSectionAiLinks'
 import { SlashCommandMenu, type SlashCommandId } from './SlashCommandMenu'
 import type { PendingPaste } from './NotionPaper'
@@ -27,6 +31,7 @@ interface NotionEditorProps {
   onSlashCommand: (command: SlashCommandId) => void
   focusRequest?: number
   pendingPaste?: PendingPaste | null
+  caseId?: string
 }
 
 function getSelectionPosition(textarea: HTMLTextAreaElement): { top: number; left: number } {
@@ -60,14 +65,19 @@ export function NotionEditor({
   onSlashCommand,
   focusRequest = 0,
   pendingPaste = null,
+  caseId,
 }: NotionEditorProps) {
   const { t } = useTranslation()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [isFocused, setIsFocused] = useState(false)
   const [selectionToolbar, setSelectionToolbar] = useState<{
     text: string
+    start: number
+    end: number
     position: { top: number; left: number }
   } | null>(null)
+  const aiEditEnabled = isInlineAiEditEnabled()
+  const inlineEdit = useInlineAiEdit({ caseId })
   const [slashMenu, setSlashMenu] = useState<{
     filter: string
     position: { top: number; left: number }
@@ -124,10 +134,43 @@ export function NotionEditor({
 
     setSelectionToolbar({
       text: selectedText,
+      start,
+      end,
       position: getSelectionPosition(textarea),
     })
     setSlashMenu(null)
   }, [content, readOnly])
+
+  const openAiEdit = useCallback(
+    (range: { start: number; end: number }) => {
+      const textarea = textareaRef.current
+      if (!textarea) return
+      const selectedText = content.slice(range.start, range.end)
+      if (!selectedText.trim()) return
+      inlineEdit.open({
+        selectedText,
+        fullText: content,
+        selectionStart: range.start,
+        selectionEnd: range.end,
+        position: getSelectionPosition(textarea),
+        applyReplacement: (editedText) => {
+          const next = applyEdit(content, range.start, range.end, editedText)
+          onChange(next)
+          requestAnimationFrame(() => {
+            const node = textareaRef.current
+            if (!node) return
+            const caret = range.start + editedText.length
+            node.focus()
+            node.setSelectionRange(caret, caret)
+            resizeTextarea(node)
+          })
+        },
+      })
+      setSelectionToolbar(null)
+      setSlashMenu(null)
+    },
+    [content, inlineEdit, onChange],
+  )
 
   const handlePaste = useCallback(
     (_event: React.ClipboardEvent<HTMLTextAreaElement>) => {
@@ -146,6 +189,15 @@ export function NotionEditor({
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (readOnly) return
+
+      if (aiEditEnabled && isInlineAiEditShortcut(event.nativeEvent)) {
+        const textarea = textareaRef.current
+        if (textarea && textarea.selectionStart !== textarea.selectionEnd) {
+          event.preventDefault()
+          openAiEdit({ start: textarea.selectionStart, end: textarea.selectionEnd })
+        }
+        return
+      }
 
       if (slashMenu) {
         if (event.key === 'Escape') {
@@ -167,7 +219,7 @@ export function NotionEditor({
         }
       }
     },
-    [closeMenus, readOnly, slashMenu],
+    [aiEditEnabled, closeMenus, openAiEdit, readOnly, slashMenu],
   )
 
   const handleSlashSelect = useCallback(
@@ -244,8 +296,15 @@ export function NotionEditor({
             closeMenus()
           }}
           onClose={closeMenus}
+          onAiEdit={
+            aiEditEnabled
+              ? () => openAiEdit({ start: selectionToolbar.start, end: selectionToolbar.end })
+              : undefined
+          }
         />
       ) : null}
+
+      {inlineEdit.popup}
 
       {slashMenu ? (
         <SlashCommandMenu

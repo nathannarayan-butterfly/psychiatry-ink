@@ -31,7 +31,7 @@ export function SymptomSnapshotCard({ data, onOpen }: SymptomSnapshotCardProps) 
 
       {data.trajectory.length >= 2 ? (
         <div className="ov-snapshot__trend">
-          <p className="ov-med__block-label">Verlaufstendenz</p>
+          <p className="ov-block-label">Verlaufstendenz</p>
           <SymptomTrajectoryChart points={data.trajectory} />
         </div>
       ) : null}

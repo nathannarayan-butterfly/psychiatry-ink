@@ -1,5 +1,7 @@
+import { Sparkles } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { AiToolKey } from '../../data/aiTools'
+import { getInlineAiEditShortcutLabel } from '../../utils/notionKeyboardShortcuts'
 
 export type SelectionActionId =
   | AiToolKey
@@ -11,6 +13,8 @@ interface FloatingSelectionToolbarProps {
   position: { top: number; left: number }
   onAction: (action: SelectionActionId) => void
   onClose: () => void
+  /** When provided, renders the voice-driven "Ask AI to edit selection" trigger. */
+  onAiEdit?: () => void
 }
 
 const PRIMARY_ACTIONS: { id: SelectionActionId; labelKey: 'summarize' | 'structure' | 'shorten' | 'formalize' }[] = [
@@ -30,8 +34,9 @@ export function FloatingSelectionToolbar({
   position,
   onAction,
   onClose,
+  onAiEdit,
 }: FloatingSelectionToolbarProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
 
   return (
     <>
@@ -47,6 +52,21 @@ export function FloatingSelectionToolbar({
         role="toolbar"
         aria-label={t('notionSelectionToolbar')}
       >
+        {onAiEdit ? (
+          <>
+            <button
+              type="button"
+              className="notion-selection-toolbar__btn notion-selection-toolbar__btn--ai-edit"
+              onClick={onAiEdit}
+              title={`${t('inlineAiEditAria')} (${getInlineAiEditShortcutLabel(language)})`}
+              aria-label={`${t('inlineAiEditAria')} (${getInlineAiEditShortcutLabel(language)})`}
+            >
+              <Sparkles className="notion-selection-toolbar__icon" strokeWidth={1.75} aria-hidden />
+              <span>{t('inlineAiEditTitle')}</span>
+            </button>
+            <span className="notion-selection-toolbar__divider" aria-hidden />
+          </>
+        ) : null}
         {PRIMARY_ACTIONS.map((action) => (
           <button
             key={action.id}

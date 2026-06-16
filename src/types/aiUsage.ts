@@ -18,6 +18,7 @@ export type AiFeatureKey =
   | 'butterfly'
   | 'prior_therapies'
   | 'clinical_metadata_extraction'
+  | 'inline_text_edit'
   | 'unknown'
 
 export type AiUsageSource = 'provider_reported' | 'estimated_from_chars'

@@ -45,6 +45,29 @@ export interface CriterionSignal {
 /** Predicate that derives a criterion signal from structured app data. */
 export type OperationalRule = (ctx: DisorderEvaluationContext) => CriterionSignal
 
+/**
+ * Structured, language-neutral source citation for a single criterion.
+ *
+ * This records WHERE the operationalized (original-wording) criterion was
+ * derived from — the classification system + exact code, and (ideally) the
+ * criterion identifier within that source. It does NOT contain any copyrighted
+ * criterion *text*; it is pure coding metadata, which is why it lives in the
+ * criteria data (not in the i18n layer).
+ */
+export interface CriterionSource {
+  /** Classification system the criterion is anchored to. */
+  classification: DisorderClassification
+  /** Exact code in that system (e.g. "F10.2", "6C40.2"). */
+  code: string
+  /**
+   * Identifier of this criterion within the cited source document, when it is
+   * unambiguous (e.g. "a"–"f" for ICD-10 F10.2, "B1"/"C3"/"G2" for ICD-10 F32).
+   * Omitted where the app's operationalization unions multiple sub-criteria or
+   * where the source does not enumerate criteria with stable identifiers.
+   */
+  ref?: string
+}
+
 export interface Criterion {
   /** Globally-unique id, prefixed with the disorder code (e.g. "f10_2.craving"). */
   id: string
@@ -58,6 +81,12 @@ export interface Criterion {
   allowClinicianAttest: boolean
   /** Optional citation override at criterion level. */
   sourceRef?: string
+  /**
+   * Structured, language-neutral source citation(s) for this criterion. Anchored
+   * to the classification whose criterion *structure* the app follows (ICD-10 for
+   * the Phase-1 set). The disorder header still surfaces the ICD-11/DSM crosswalk.
+   */
+  citation?: CriterionSource[]
 }
 
 export type CriterionGroupLogic = 'all_of' | 'any_of' | 'at_least_n_of' | 'none_of'
@@ -132,4 +161,25 @@ export function notMet(evidence?: string): CriterionSignal {
 }
 export function partiallyMet(evidence?: string): CriterionSignal {
   return { status: 'partially_met', evidence }
+}
+
+/** Human-readable label per classification system (language-neutral). */
+const CLASSIFICATION_LABEL: Record<DisorderClassification, string> = {
+  icd10: 'ICD-10',
+  icd11: 'ICD-11',
+}
+
+/**
+ * Render a criterion's structured citation as a compact, language-neutral string,
+ * e.g. `ICD-10 F32 (B1)` or `ICD-10 F10.2 (a) · ICD-11 6C40.2`. Returns an empty
+ * string when no citation is present.
+ */
+export function formatCriterionCitation(citation: CriterionSource[] | undefined): string {
+  if (!citation || citation.length === 0) return ''
+  return citation
+    .map((source) => {
+      const head = `${CLASSIFICATION_LABEL[source.classification]} ${source.code}`
+      return source.ref ? `${head} (${source.ref})` : head
+    })
+    .join(' · ')
 }

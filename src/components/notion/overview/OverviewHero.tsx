@@ -1,4 +1,4 @@
-import { CalendarClock, Pill, ShieldAlert, Stethoscope } from 'lucide-react'
+import { CalendarClock, History, Pill, ShieldAlert, Stethoscope } from 'lucide-react'
 import type { HeroSummaryData } from './types'
 
 interface OverviewHeroProps {
@@ -6,83 +6,110 @@ interface OverviewHeroProps {
 }
 
 /**
- * Executive-summary band anchoring the Übersicht: the four headline facts a
- * psychiatrist reads first. Bold numerals + small captions, a subtle
- * theme-derived gradient for presence. All values are real; absent sources show
- * a calm placeholder. Risk uses semantic tone; everything else uses the theme
- * accent / area hue only as decoration.
+ * Slim "Auf einen Blick" summary strip — the orientation layer of the Übersicht.
+ * One calm row of the few facts a psychiatrist scans first (Hauptdiagnose, Risiko,
+ * Medikation, letzter/nächster Kontakt). Headline values only; the cards below
+ * carry the detail. Risk uses semantic tone; everything else uses the area hue as
+ * quiet decoration. Absent sources degrade to a muted placeholder.
  */
 export function OverviewHero({ data }: OverviewHeroProps) {
-  const { primaryDiagnosis, risk, activeMedCount, alertCount, nextAppointment } = data
+  const { primaryDiagnosis, risk, activeMedCount, alertCount, lastContact, nextAppointment } = data
 
   return (
-    <section className="ov-hero" aria-label="Übersicht auf einen Blick">
-      <div className="ov-hero__metric">
-        <span className="ov-hero__icon" aria-hidden>
+    <section className="ov-summary" aria-label="Übersicht auf einen Blick">
+      <div className="ov-summary__item">
+        <span className="ov-summary__icon" aria-hidden>
           <Stethoscope size={16} />
         </span>
-        <div className="ov-hero__content">
-          <span className="ov-hero__caption">Hauptdiagnose</span>
+        <div className="ov-summary__content">
+          <span className="ov-summary__caption">Hauptdiagnose</span>
           {primaryDiagnosis ? (
             <>
-              <span className="ov-hero__value ov-hero__value--code">
-                {primaryDiagnosis.code || '—'}
+              <span className="ov-summary__value" title={primaryDiagnosis.label}>
+                {primaryDiagnosis.code || primaryDiagnosis.label}
               </span>
-              <span className="ov-hero__sub" title={primaryDiagnosis.label}>
-                {primaryDiagnosis.label}
-              </span>
+              {primaryDiagnosis.code ? (
+                <span className="ov-summary__sub" title={primaryDiagnosis.label}>
+                  {primaryDiagnosis.label}
+                </span>
+              ) : null}
             </>
           ) : (
-            <span className="ov-hero__value ov-hero__value--muted">—</span>
+            <span className="ov-summary__value ov-summary__value--muted">—</span>
           )}
         </div>
       </div>
 
-      <div className={`ov-hero__metric ov-hero__metric--risk ${risk ? `ov-hero__metric--tone-${risk.tone}` : ''}`.trim()}>
-        <span className="ov-hero__icon" aria-hidden>
+      <div className={`ov-summary__item ${risk ? `ov-summary__item--tone-${risk.tone}` : ''}`.trim()}>
+        <span className="ov-summary__icon" aria-hidden>
           <ShieldAlert size={16} />
         </span>
-        <div className="ov-hero__content">
-          <span className="ov-hero__caption">Risiko</span>
-          <span className="ov-hero__value">
-            <span className="ov-hero__risk-dot" aria-hidden />
+        <div className="ov-summary__content">
+          <span className="ov-summary__caption">Risiko</span>
+          <span className="ov-summary__value">
+            <span className="ov-summary__dot" aria-hidden />
             {risk ? risk.label : 'unauffällig'}
           </span>
-          <span className="ov-hero__sub">
-            {alertCount > 0 ? `${alertCount} aktive${alertCount === 1 ? 'r' : ''} Alert${alertCount === 1 ? '' : 's'}` : 'keine Alerts'}
+          <span className="ov-summary__sub">
+            {alertCount > 0
+              ? `${alertCount} ${alertCount === 1 ? 'Alert' : 'Alerts'}`
+              : 'keine Alerts'}
           </span>
         </div>
       </div>
 
-      <div className="ov-hero__metric">
-        <span className="ov-hero__icon" aria-hidden>
+      <div className="ov-summary__item">
+        <span className="ov-summary__icon" aria-hidden>
           <Pill size={16} />
         </span>
-        <div className="ov-hero__content">
-          <span className="ov-hero__caption">Medikation</span>
-          <span className="ov-hero__value ov-hero__value--num">{activeMedCount}</span>
-          <span className="ov-hero__sub">{activeMedCount === 1 ? 'aktives Präparat' : 'aktive Präparate'}</span>
+        <div className="ov-summary__content">
+          <span className="ov-summary__caption">Medikation</span>
+          <span className="ov-summary__value">{activeMedCount}</span>
+          <span className="ov-summary__sub">
+            {activeMedCount === 1 ? 'aktives Präparat' : 'aktive Präparate'}
+          </span>
         </div>
       </div>
 
-      <div className="ov-hero__metric">
-        <span className="ov-hero__icon" aria-hidden>
+      <div className="ov-summary__item">
+        <span className="ov-summary__icon" aria-hidden>
+          <History size={16} />
+        </span>
+        <div className="ov-summary__content">
+          <span className="ov-summary__caption">Letzter Kontakt</span>
+          {lastContact ? (
+            <>
+              <span className="ov-summary__value">
+                {lastContact.relativeLabel ?? lastContact.dateLabel}
+              </span>
+              {lastContact.relativeLabel ? (
+                <span className="ov-summary__sub">{lastContact.dateLabel}</span>
+              ) : null}
+            </>
+          ) : (
+            <span className="ov-summary__value ov-summary__value--muted">—</span>
+          )}
+        </div>
+      </div>
+
+      <div className="ov-summary__item">
+        <span className="ov-summary__icon" aria-hidden>
           <CalendarClock size={16} />
         </span>
-        <div className="ov-hero__content">
-          <span className="ov-hero__caption">Nächster Termin</span>
+        <div className="ov-summary__content">
+          <span className="ov-summary__caption">Nächster Termin</span>
           {nextAppointment ? (
             <>
-              <span className="ov-hero__value ov-hero__value--accent">
+              <span className="ov-summary__value">
                 {nextAppointment.relativeLabel ?? nextAppointment.dateLabel}
               </span>
-              <span className="ov-hero__sub" title={nextAppointment.title}>
+              <span className="ov-summary__sub" title={nextAppointment.title}>
                 {nextAppointment.relativeLabel ? `${nextAppointment.dateLabel} · ` : ''}
                 {nextAppointment.title}
               </span>
             </>
           ) : (
-            <span className="ov-hero__value ov-hero__value--muted">kein Termin</span>
+            <span className="ov-summary__value ov-summary__value--muted">kein Termin</span>
           )}
         </div>
       </div>

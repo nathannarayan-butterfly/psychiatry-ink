@@ -39,6 +39,27 @@ export function isEmptyPageDictateShortcut(event: KeyboardEvent): boolean {
   return mod && event.altKey && !event.shiftKey && event.key.toLowerCase() === 'd'
 }
 
+/**
+ * Inline AI edit on the current selection ("KI-Bearbeitung"). Uses the Alt/Option
+ * modifier to mirror the existing editor shortcuts (Ctrl/Cmd+Alt+T, Ctrl/Cmd+Alt+D)
+ * and to stay clear of the Ctrl/Cmd+K command-menu bindings.
+ *
+ * Why "B" (Bearbeiten): it has no German AltGr special character (AltGr+E=€,
+ * AltGr+Q=@ would clash on a German keyboard) and Ctrl/Cmd+Alt+B is not a default
+ * browser or OS binding. The handler only acts when a selection is active inside
+ * the editor and calls preventDefault, so it cannot hijack typing.
+ */
+export function isInlineAiEditShortcut(event: KeyboardEvent): boolean {
+  const mod = event.metaKey || event.ctrlKey
+  return mod && event.altKey && !event.shiftKey && event.key.toLowerCase() === 'b'
+}
+
+export function getInlineAiEditShortcutLabel(language: UiLanguage): string {
+  const isMac = isMacPlatform()
+  void language
+  return isMac ? '⌘⌥B' : 'Strg+Alt+B'
+}
+
 /** Native clipboard shortcuts — must not be intercepted by app-level handlers. */
 export function isNativeClipboardShortcut(event: KeyboardEvent): boolean {
   const mod = event.metaKey || event.ctrlKey

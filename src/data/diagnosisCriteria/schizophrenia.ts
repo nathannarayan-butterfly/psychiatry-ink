@@ -36,7 +36,8 @@ export const schizophrenia: Disorder = {
       criteria: [
         {
           id: 'f20.ego_disturbance',
-          text_de: 'Ich-Störungen wie Gedankeneingebung, -entzug, -ausbreitung oder Gefühl des Gemachten',
+          text_de: 'Ich-Störungen: Gedankenlautwerden, Gedankeneingebung, -entzug oder -ausbreitung sowie Kontroll- bzw. Beeinflussungserleben oder Gefühl des Gemachten (Passivitätserleben)',
+          citation: [{ classification: 'icd10', code: 'F20', ref: 'a/b' }],
           mappingHints: [{ kind: 'isdm_domain', ref: 'self_experience_ego_disturbance', deepLinkPageId: 'psychopathologie' }],
           allowClinicianAttest: true,
           operationalRule: domainSignal(
@@ -47,7 +48,8 @@ export const schizophrenia: Disorder = {
         },
         {
           id: 'f20.auditory_hallucinations',
-          text_de: 'Anhaltende Halluzinationen, insbesondere kommentierende oder dialogische Stimmen',
+          text_de: 'Kommentierende oder dialogische (über die Person sprechende) Stimmen bzw. andere anhaltende Stimmen aus einem Körperteil',
+          citation: [{ classification: 'icd10', code: 'F20', ref: 'c' }],
           mappingHints: [{ kind: 'isdm_domain', ref: 'perception_hallucinations', deepLinkPageId: 'psychopathologie' }],
           allowClinicianAttest: true,
           operationalRule: domainSignal(
@@ -58,7 +60,8 @@ export const schizophrenia: Disorder = {
         },
         {
           id: 'f20.delusions',
-          text_de: 'Anhaltende, kulturell unangemessene oder bizarre Wahnüberzeugungen',
+          text_de: 'Anhaltender, kulturell unangemessener und völlig unrealistischer (bizarrer) Wahn',
+          citation: [{ classification: 'icd10', code: 'F20', ref: 'd' }],
           mappingHints: [{ kind: 'isdm_domain', ref: 'delusions_overvalued_ideas', deepLinkPageId: 'psychopathologie' }],
           allowClinicianAttest: true,
           operationalRule: domainSignal(
@@ -69,7 +72,8 @@ export const schizophrenia: Disorder = {
         },
         {
           id: 'f20.formal_thought_disorder',
-          text_de: 'Formale Denkstörung mit Zerfahrenheit, Gedankenabreißen oder Neologismen',
+          text_de: 'Gedankenabreißen oder Einschiebungen in den Gedankenfluss mit Zerfahrenheit, Danebenreden oder Neologismen',
+          citation: [{ classification: 'icd10', code: 'F20', ref: 'f' }],
           mappingHints: [{ kind: 'isdm_domain', ref: 'formal_thought_disorder', deepLinkPageId: 'psychopathologie' }],
           allowClinicianAttest: true,
           operationalRule: domainSignal(
@@ -89,7 +93,8 @@ export const schizophrenia: Disorder = {
       criteria: [
         {
           id: 'f20.duration_one_month',
-          text_de: 'Symptome bestehen über einen Zeitraum von etwa einem Monat oder länger',
+          text_de: 'Die charakteristischen Symptome bestehen die meiste Zeit während eines Zeitraums von mindestens einem Monat',
+          citation: [{ classification: 'icd10', code: 'F20' }],
           mappingHints: [{ kind: 'course', ref: 'duration' }],
           allowClinicianAttest: true,
           operationalRule: durationSignal(30),
@@ -104,13 +109,15 @@ export const schizophrenia: Disorder = {
       criteria: [
         {
           id: 'f20.exclude_mood_primary',
-          text_de: 'Ein vorrangiges manisches oder depressives Zustandsbild erklärt die Symptomatik besser',
+          text_de: 'Bei gleichzeitig ausgeprägter manischer oder depressiver Symptomatik gingen die schizophrenen Symptome der affektiven Störung voraus (kein vorrangiges affektives Zustandsbild)',
+          citation: [{ classification: 'icd10', code: 'F20' }],
           mappingHints: [{ kind: 'isdm_domain', ref: 'mood_affect' }],
           allowClinicianAttest: true,
         },
         {
           id: 'f20.exclude_organic_substance',
-          text_de: 'Symptome sind besser durch eine organische Erkrankung oder Substanzwirkung erklärt',
+          text_de: 'Symptome sind nicht auf eine organische Hirnerkrankung oder auf Intoxikation, Abhängigkeit bzw. Entzug einer psychotropen Substanz zurückzuführen',
+          citation: [{ classification: 'icd10', code: 'F20' }],
           mappingHints: [{ kind: 'isdm_domain', ref: 'substance_related_features' }],
           allowClinicianAttest: true,
         },

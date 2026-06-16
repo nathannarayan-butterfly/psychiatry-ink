@@ -38,7 +38,9 @@ export const depressiveEpisode: Disorder = {
       criteria: [
         {
           id: 'f32.depressed_mood',
-          text_de: 'Gedrückte, niedergeschlagene Stimmung über die meiste Zeit des Tages',
+          text_de:
+            'Gedrückte, niedergeschlagene Stimmung an fast allen Tagen und über die meiste Zeit des Tages, weitgehend unabhängig von den äußeren Umständen',
+          citation: [{ classification: 'icd10', code: 'F32', ref: 'B1' }],
           mappingHints: [{ kind: 'isdm_domain', ref: 'mood_affect', deepLinkPageId: 'psychopathologie' }],
           allowClinicianAttest: true,
           operationalRule: domainSignal(
@@ -49,7 +51,9 @@ export const depressiveEpisode: Disorder = {
         },
         {
           id: 'f32.anhedonia',
-          text_de: 'Verlust von Interesse oder Freude an üblicherweise angenehmen Aktivitäten',
+          text_de:
+            'Deutlicher Verlust von Interesse oder Freude an üblicherweise angenehmen Aktivitäten',
+          citation: [{ classification: 'icd10', code: 'F32', ref: 'B2' }],
           mappingHints: [{ kind: 'isdm_domain', ref: 'mood_affect', deepLinkPageId: 'psychopathologie' }],
           allowClinicianAttest: true,
           operationalRule: domainSignal(
@@ -60,7 +64,9 @@ export const depressiveEpisode: Disorder = {
         },
         {
           id: 'f32.reduced_energy',
-          text_de: 'Verminderter Antrieb oder gesteigerte Ermüdbarkeit',
+          text_de:
+            'Verminderte Energie bzw. verminderter Antrieb oder erhöhte Ermüdbarkeit, bereits nach geringer Anstrengung',
+          citation: [{ classification: 'icd10', code: 'F32', ref: 'B3' }],
           mappingHints: [{ kind: 'isdm_domain', ref: 'drive_psychomotor_activity', deepLinkPageId: 'psychopathologie' }],
           allowClinicianAttest: true,
           operationalRule: domainSignal(
@@ -79,7 +85,8 @@ export const depressiveEpisode: Disorder = {
       criteria: [
         {
           id: 'f32.concentration',
-          text_de: 'Verminderte Konzentration und Aufmerksamkeit',
+          text_de: 'Verminderte Fähigkeit zu denken, sich zu konzentrieren oder Entscheidungen zu treffen',
+          citation: [{ classification: 'icd10', code: 'F32', ref: 'C4' }],
           mappingHints: [{ kind: 'isdm_domain', ref: 'attention_concentration', deepLinkPageId: 'psychopathologie' }],
           allowClinicianAttest: true,
           operationalRule: domainSignal(
@@ -90,14 +97,16 @@ export const depressiveEpisode: Disorder = {
         },
         {
           id: 'f32.guilt_worthlessness',
-          text_de: 'Gefühle von Wertlosigkeit oder unangemessene Schuldgefühle',
+          text_de: 'Vermindertes Selbstwertgefühl bzw. Selbstvertrauen oder unangemessene Schuld- und Wertlosigkeitsgefühle',
+          citation: [{ classification: 'icd10', code: 'F32', ref: 'C1/C2' }],
           mappingHints: [{ kind: 'isdm_domain', ref: 'thought_content', deepLinkPageId: 'psychopathologie' }],
           allowClinicianAttest: true,
           operationalRule: domainSignal('thought_content', /schuld|wertlos|insuffizien|selbstvorw/i),
         },
         {
           id: 'f32.hopelessness',
-          text_de: 'Pessimistische, hoffnungslose Zukunftsperspektive',
+          text_de: 'Pessimistische, hoffnungslose Sicht auf die Zukunft',
+          citation: [{ classification: 'icd10', code: 'F32' }],
           mappingHints: [{ kind: 'isdm_domain', ref: 'thought_content', deepLinkPageId: 'psychopathologie' }],
           allowClinicianAttest: true,
           operationalRule: domainSignal('thought_content', /hoffnungslos|perspektivlos|aussichtslos/i),
@@ -105,6 +114,7 @@ export const depressiveEpisode: Disorder = {
         {
           id: 'f32.sleep',
           text_de: 'Schlafstörung jeglicher Art',
+          citation: [{ classification: 'icd10', code: 'F32', ref: 'C6' }],
           mappingHints: [{ kind: 'isdm_domain', ref: 'sleep_appetite_vegetative', deepLinkPageId: 'psychopathologie' }],
           allowClinicianAttest: true,
           operationalRule: domainSignal(
@@ -114,21 +124,24 @@ export const depressiveEpisode: Disorder = {
         },
         {
           id: 'f32.appetite',
-          text_de: 'Appetit- oder Gewichtsveränderung',
+          text_de: 'Appetitveränderung (Minderung oder Steigerung) mit entsprechender Gewichtsveränderung',
+          citation: [{ classification: 'icd10', code: 'F32', ref: 'C7' }],
           mappingHints: [{ kind: 'isdm_domain', ref: 'sleep_appetite_vegetative', deepLinkPageId: 'psychopathologie' }],
           allowClinicianAttest: true,
           operationalRule: domainSignal('sleep_appetite_vegetative', /appetit|gewicht/i),
         },
         {
           id: 'f32.psychomotor',
-          text_de: 'Psychomotorische Hemmung oder Agitiertheit',
+          text_de: 'Veränderung der psychomotorischen Aktivität mit Agitiertheit oder Hemmung (subjektiv oder beobachtbar)',
+          citation: [{ classification: 'icd10', code: 'F32', ref: 'C5' }],
           mappingHints: [{ kind: 'isdm_domain', ref: 'drive_psychomotor_activity', deepLinkPageId: 'psychopathologie' }],
           allowClinicianAttest: true,
           operationalRule: domainSignal('drive_psychomotor_activity', /verlangsamt|gehemmt|agitiert|unruhig|erstarrt/i),
         },
         {
           id: 'f32.suicidality',
-          text_de: 'Suizidgedanken oder selbstschädigendes Verhalten',
+          text_de: 'Wiederkehrende Gedanken an den Tod oder an Suizid bzw. suizidales oder selbstschädigendes Verhalten',
+          citation: [{ classification: 'icd10', code: 'F32', ref: 'C3' }],
           mappingHints: [{ kind: 'isdm_domain', ref: 'risk_self', deepLinkPageId: 'psychopathologie' }],
           allowClinicianAttest: true,
           operationalRule: domainSignal(
@@ -147,7 +160,8 @@ export const depressiveEpisode: Disorder = {
       criteria: [
         {
           id: 'f32.exclude_mania',
-          text_de: 'Aktuelle oder frühere manische bzw. hypomane Episode (spräche für eine bipolare Störung)',
+          text_de: 'Zu keinem Zeitpunkt der Lebensgeschichte hypomanische oder manische Symptome in einem Ausmaß, das die Kriterien einer hypomanen/manischen Episode erfüllt (spräche für eine bipolare Störung)',
+          citation: [{ classification: 'icd10', code: 'F32', ref: 'G2' }],
           mappingHints: [{ kind: 'isdm_domain', ref: 'mood_affect' }],
           allowClinicianAttest: true,
           operationalRule: (ctx) => {
@@ -157,7 +171,8 @@ export const depressiveEpisode: Disorder = {
         },
         {
           id: 'f32.exclude_organic_substance',
-          text_de: 'Symptome sind besser durch eine organische Ursache oder Substanzwirkung erklärt',
+          text_de: 'Episode ist nicht auf eine psychotrope Substanz oder eine organische psychische Störung zurückzuführen',
+          citation: [{ classification: 'icd10', code: 'F32', ref: 'G3' }],
           mappingHints: [{ kind: 'isdm_domain', ref: 'substance_related_features' }],
           allowClinicianAttest: true,
         },

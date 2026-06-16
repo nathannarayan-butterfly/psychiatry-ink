@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { getDisorderById } from '../../../data/diagnosisCriteria'
+import { translateUi } from '../../../data/uiTranslations'
 import type { DisorderEvaluation } from '../../diagnosisCriteria/evaluateDisorder'
-import { resolveDeepLinkPage, selectUnresolvedCriteria } from '../criterionPrompts'
+import {
+  buildCriterionQuestions,
+  resolveDeepLinkPage,
+  selectUnresolvedCriteria,
+} from '../criterionPrompts'
 
 function evaluationWith(perCriterion: DisorderEvaluation['perCriterion']): DisorderEvaluation {
   return { perCriterion } as unknown as DisorderEvaluation
@@ -38,5 +43,139 @@ describe('resolveDeepLinkPage', () => {
   it('returns undefined for an unknown criterion', () => {
     const depression = getDisorderById('depressive_episode')
     expect(resolveDeepLinkPage(depression!, 'does.not.exist')).toBeUndefined()
+  })
+})
+
+describe('buildCriterionQuestions', () => {
+  const depression = getDisorderById('depressive_episode')!
+
+  it('derives one German question per unknown criterion of an entered diagnosis', () => {
+    const evaluation = evaluationWith([
+      {
+        criterionId: 'f32.depressed_mood',
+        groupId: 'g',
+        text_de: 'Gedrückte Stimmung über die meiste Zeit',
+        status: 'unknown',
+        source: 'unanswered',
+        attestable: true,
+      },
+      { criterionId: 'c.met', groupId: 'g', text_de: 'Erfüllt', status: 'met', source: 'auto', attestable: true },
+    ])
+
+    const questions = buildCriterionQuestions(
+      [{ disorder: depression, label: 'Depressive Episode', evaluation }],
+      (key) => translateUi('de', key),
+    )
+
+    expect(questions).toHaveLength(1)
+    // Targets the specific missing criterion of the entered diagnosis, in German.
+    expect(questions[0].id).toBe('diagnosis_criteria:f32.depressed_mood')
+    expect(questions[0].sectionId).toBe('diagnosis_criteria')
+    expect(questions[0].targetId).toBe('f32.depressed_mood')
+    expect(questions[0].criterionId).toBe('f32.depressed_mood')
+    expect(questions[0].disorderId).toBe('depressive_episode')
+    // Attestable criterion → a Ja/Nein answer can deterministically resolve it.
+    expect(questions[0].resolvable).toBe(true)
+    expect(questions[0].question).toContain('Kriterium')
+    expect(questions[0].question).toContain('Gedrückte Stimmung über die meiste Zeit')
+    expect(questions[0].question).toContain('Depressive Episode')
+    expect(questions[0].question).not.toContain('{criterion}')
+    expect(questions[0].question).not.toContain('{diagnosis}')
+    expect(questions[0].rationale).toContain('Depressive Episode')
+    expect(questions[0].deepLinkPageId).toBe('psychopath')
+  })
+
+  it('marks non-attestable criteria as not resolvable (cannot flip via Ja/Nein)', () => {
+    const evaluation = evaluationWith([
+      {
+        criterionId: 'f32.duration',
+        groupId: 'g',
+        text_de: 'Mindestdauer',
+        status: 'unknown',
+        source: 'unanswered',
+        attestable: false,
+      },
+    ])
+    const [question] = buildCriterionQuestions(
+      [{ disorder: depression, label: 'Depressive Episode', evaluation }],
+      (key) => translateUi('de', key),
+    )
+    expect(question.resolvable).toBe(false)
+  })
+
+  it('drops a question once its criterion is resolved (re-evaluation removes it)', () => {
+    // Same criterion, but now clinician-attested as met → no longer `unknown`.
+    const evaluation = evaluationWith([
+      {
+        criterionId: 'f32.depressed_mood',
+        groupId: 'g',
+        text_de: 'Gedrückte Stimmung',
+        status: 'met',
+        source: 'attested',
+        attestable: true,
+      },
+    ])
+    expect(
+      buildCriterionQuestions(
+        [{ disorder: depression, label: 'Depressive Episode', evaluation }],
+        (key) => translateUi('de', key),
+      ),
+    ).toEqual([])
+  })
+
+  it('localizes the question to the active UI language', () => {
+    const evaluation = evaluationWith([
+      {
+        criterionId: 'f32.depressed_mood',
+        groupId: 'g',
+        text_de: 'Gedrückte Stimmung',
+        status: 'unknown',
+        source: 'unanswered',
+        attestable: true,
+      },
+    ])
+
+    const [de] = buildCriterionQuestions(
+      [{ disorder: depression, label: 'Depressive Episode', evaluation }],
+      (key) => translateUi('de', key),
+    )
+    const [en] = buildCriterionQuestions(
+      [{ disorder: depression, label: 'Depressive Episode', evaluation }],
+      (key) => translateUi('en', key),
+    )
+
+    expect(de.question).toContain('Um das Kriterium')
+    expect(en.question).toContain('To assess the criterion')
+  })
+
+  it('emits no questions when an entered diagnosis has no unknown criteria', () => {
+    const evaluation = evaluationWith([
+      { criterionId: 'c.met', groupId: 'g', text_de: 'Erfüllt', status: 'met', source: 'auto', attestable: true },
+    ])
+    expect(
+      buildCriterionQuestions(
+        [{ disorder: depression, label: 'Depressive Episode', evaluation }],
+        (key) => translateUi('de', key),
+      ),
+    ).toEqual([])
+  })
+
+  it('caps the number of questions at the requested limit', () => {
+    const evaluation = evaluationWith(
+      Array.from({ length: 20 }, (_, i) => ({
+        criterionId: `c.unknown${i}`,
+        groupId: 'g',
+        text_de: `Offen ${i}`,
+        status: 'unknown' as const,
+        source: 'unanswered' as const,
+        attestable: true,
+      })),
+    )
+    const questions = buildCriterionQuestions(
+      [{ disorder: depression, label: 'Depressive Episode', evaluation }],
+      (key) => translateUi('de', key),
+      5,
+    )
+    expect(questions).toHaveLength(5)
   })
 })

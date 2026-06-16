@@ -35,14 +35,16 @@ export const panicDisorder: Disorder = {
       criteria: [
         {
           id: 'f41_0.recurrent_attacks',
-          text_de: 'Wiederkehrende Panikattacken, die nicht auf eine spezifische Situation beschränkt sind',
+          text_de: 'Wiederkehrende, schwere Panikattacken, die nicht konsistent auf eine spezifische Situation oder ein bestimmtes Objekt beschränkt sind und oft spontan auftreten',
+          citation: [{ classification: 'icd10', code: 'F41.0' }],
           mappingHints: [{ kind: 'isdm_domain', ref: 'anxiety_panic_phobic_symptoms', deepLinkPageId: 'psychopathologie' }],
           allowClinicianAttest: true,
           operationalRule: domainSignal('anxiety_panic_phobic_symptoms', /panik|panikattacke|paroxysmal/i, /keine\s+angst/i),
         },
         {
           id: 'f41_0.anticipatory_worry',
-          text_de: 'Anhaltende Sorge vor weiteren Attacken oder deren Folgen',
+          text_de: 'Anhaltende Besorgnis über weitere Attacken oder deren Folgen zwischen den Attacken (Erwartungsangst)',
+          citation: [{ classification: 'icd10', code: 'F41.0' }],
           mappingHints: [{ kind: 'isdm_domain', ref: 'anxiety_panic_phobic_symptoms' }],
           allowClinicianAttest: true,
           operationalRule: (ctx) => {
@@ -61,7 +63,8 @@ export const panicDisorder: Disorder = {
       criteria: [
         {
           id: 'f41_0.palpitations',
-          text_de: 'Herzklopfen oder beschleunigter Herzschlag',
+          text_de: 'Herzklopfen, Herzstolpern oder beschleunigter Herzschlag',
+          citation: [{ classification: 'icd10', code: 'F41.0' }],
           mappingHints: [{ kind: 'isdm_domain', ref: 'somatic_preoccupation' }],
           allowClinicianAttest: true,
           operationalRule: domainSignal('somatic_preoccupation', /herzklopfen|palpit|herzrasen|tachykard/i),
@@ -69,27 +72,31 @@ export const panicDisorder: Disorder = {
         {
           id: 'f41_0.sweating_trembling',
           text_de: 'Schwitzen, Zittern oder Beben',
+          citation: [{ classification: 'icd10', code: 'F41.0' }],
           mappingHints: [{ kind: 'isdm_domain', ref: 'somatic_preoccupation' }],
           allowClinicianAttest: true,
           operationalRule: domainSignal('somatic_preoccupation', /schwitz|zittern|beben|tremor/i),
         },
         {
           id: 'f41_0.dyspnea',
-          text_de: 'Atemnot, Erstickungsgefühl oder Engegefühl in der Brust',
+          text_de: 'Atemnot, Erstickungs- oder Würgegefühl bzw. Beklemmung in der Brust',
+          citation: [{ classification: 'icd10', code: 'F41.0' }],
           mappingHints: [{ kind: 'isdm_domain', ref: 'somatic_preoccupation' }],
           allowClinicianAttest: true,
           operationalRule: domainSignal('somatic_preoccupation', /atemnot|erstick|engegef|brustenge|dyspno/i),
         },
         {
           id: 'f41_0.dizziness',
-          text_de: 'Schwindel, Benommenheit oder Unsicherheitsgefühl',
+          text_de: 'Schwindel, Benommenheit, Unsicherheits- oder Ohnmachtsgefühl',
+          citation: [{ classification: 'icd10', code: 'F41.0' }],
           mappingHints: [{ kind: 'isdm_domain', ref: 'somatic_preoccupation' }],
           allowClinicianAttest: true,
           operationalRule: domainSignal('somatic_preoccupation', /schwindel|benommen|unsicher/i),
         },
         {
           id: 'f41_0.depersonalization',
-          text_de: 'Entfremdungserleben (Depersonalisation/Derealisation) während der Attacke',
+          text_de: 'Entfremdungserleben (Depersonalisation oder Derealisation) während der Attacke',
+          citation: [{ classification: 'icd10', code: 'F41.0' }],
           mappingHints: [{ kind: 'isdm_domain', ref: 'self_experience_ego_disturbance' }],
           allowClinicianAttest: true,
           operationalRule: domainSignal('self_experience_ego_disturbance', /depersonal|dereal|entfremd/i),
@@ -97,6 +104,7 @@ export const panicDisorder: Disorder = {
         {
           id: 'f41_0.fear_dying',
           text_de: 'Angst zu sterben, die Kontrolle zu verlieren oder „verrückt zu werden“',
+          citation: [{ classification: 'icd10', code: 'F41.0' }],
           mappingHints: [{ kind: 'isdm_domain', ref: 'anxiety_panic_phobic_symptoms' }],
           allowClinicianAttest: true,
           operationalRule: domainSignal('anxiety_panic_phobic_symptoms', /todesangst|angst\s+zu\s+sterben|kontrollverlust|verr[üu]ckt\s+zu\s+werden/i),
@@ -111,7 +119,8 @@ export const panicDisorder: Disorder = {
       criteria: [
         {
           id: 'f41_0.exclude_organic_substance',
-          text_de: 'Attacken sind besser durch eine somatische Ursache oder Substanzwirkung erklärt',
+          text_de: 'Attacken sind nicht Folge einer körperlichen Störung, einer organischen psychischen Störung oder einer anderen psychischen Störung',
+          citation: [{ classification: 'icd10', code: 'F41.0' }],
           mappingHints: [{ kind: 'isdm_domain', ref: 'substance_related_features' }],
           allowClinicianAttest: true,
         },

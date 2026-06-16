@@ -9,9 +9,13 @@ import {
   getNotionSectionCopyText,
 } from '../../utils/notionDocumentActions'
 import { getInitialEditorContent } from '../../utils/workspaceComponents'
+import { isInlineAiEditEnabled } from '../../utils/featureFlags'
+import { isInlineAiEditShortcut } from '../../utils/notionKeyboardShortcuts'
+import { applyEdit } from '../../utils/inlineAiEdit/buildEditContext'
 import { ChecklistPanel } from '../ChecklistPanel'
 import { WorkspaceEditorOverlay } from '../WorkspaceEditorOverlay'
 import { FloatingSelectionToolbar, type SelectionActionId } from './FloatingSelectionToolbar'
+import { useInlineAiEdit } from './inlineAiEdit/useInlineAiEdit'
 import { NotionSectionAiLinks } from './NotionSectionAiLinks'
 import { showNotionToast } from './NotionToast'
 import { SlashCommandMenu, type SlashCommandId } from './SlashCommandMenu'
@@ -41,6 +45,7 @@ interface NotionMultiSectionEditorProps {
   onSlashCommand: (command: SlashCommandId) => void
   focusRequest?: number
   pendingPaste?: PendingPaste | null
+  caseId?: string
 }
 
 function getSelectionPosition(textarea: HTMLTextAreaElement): { top: number; left: number } {
@@ -80,6 +85,7 @@ export function NotionMultiSectionEditor({
   onSlashCommand,
   focusRequest = 0,
   pendingPaste = null,
+  caseId,
 }: NotionMultiSectionEditorProps) {
   const { t } = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
@@ -87,8 +93,13 @@ export function NotionMultiSectionEditor({
   const [activeTextareaId, setActiveTextareaId] = useState<string | null>(activeSectionId)
   const [selectionToolbar, setSelectionToolbar] = useState<{
     text: string
+    start: number
+    end: number
+    sectionId: string
     position: { top: number; left: number }
   } | null>(null)
+  const aiEditEnabled = isInlineAiEditEnabled()
+  const inlineEdit = useInlineAiEdit({ caseId })
   const [slashMenu, setSlashMenu] = useState<{
     filter: string
     position: { top: number; left: number }
@@ -186,11 +197,47 @@ export function NotionMultiSectionEditor({
 
       setSelectionToolbar({
         text: selectedText,
+        start,
+        end,
+        sectionId,
         position: getSelectionPosition(textarea),
       })
       setSlashMenu(null)
     },
     [getSectionContent, readOnly, sections],
+  )
+
+  const openAiEdit = useCallback(
+    (sectionId: string, range: { start: number; end: number }) => {
+      const textarea = textareaRefs.current[sectionId]
+      const section = sections.find((item) => item.id === sectionId)
+      if (!textarea || !section) return
+      const content = getSectionContent(section)
+      const selectedText = content.slice(range.start, range.end)
+      if (!selectedText.trim()) return
+      inlineEdit.open({
+        selectedText,
+        fullText: content,
+        selectionStart: range.start,
+        selectionEnd: range.end,
+        position: getSelectionPosition(textarea),
+        applyReplacement: (editedText) => {
+          const next = applyEdit(content, range.start, range.end, editedText)
+          onSectionContentChange(sectionId, next)
+          requestAnimationFrame(() => {
+            const node = textareaRefs.current[sectionId]
+            if (!node) return
+            const caret = range.start + editedText.length
+            node.focus()
+            node.setSelectionRange(caret, caret)
+            resizeTextarea(node)
+          })
+        },
+      })
+      setSelectionToolbar(null)
+      setSlashMenu(null)
+    },
+    [getSectionContent, inlineEdit, onSectionContentChange, sections],
   )
 
   const handlePaste = useCallback(
@@ -205,6 +252,15 @@ export function NotionMultiSectionEditor({
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLTextAreaElement>, sectionId: string) => {
       if (readOnly) return
+
+      if (aiEditEnabled && isInlineAiEditShortcut(event.nativeEvent)) {
+        const textarea = textareaRefs.current[sectionId]
+        if (textarea && textarea.selectionStart !== textarea.selectionEnd) {
+          event.preventDefault()
+          openAiEdit(sectionId, { start: textarea.selectionStart, end: textarea.selectionEnd })
+        }
+        return
+      }
 
       if (slashMenu && slashMenu.sectionId === sectionId) {
         if (event.key === 'Escape') {
@@ -226,7 +282,7 @@ export function NotionMultiSectionEditor({
         }
       }
     },
-    [closeMenus, readOnly, slashMenu],
+    [aiEditEnabled, closeMenus, openAiEdit, readOnly, slashMenu],
   )
 
   const handleSlashSelect = useCallback(
@@ -359,8 +415,19 @@ export function NotionMultiSectionEditor({
             closeMenus()
           }}
           onClose={closeMenus}
+          onAiEdit={
+            aiEditEnabled
+              ? () =>
+                  openAiEdit(selectionToolbar.sectionId, {
+                    start: selectionToolbar.start,
+                    end: selectionToolbar.end,
+                  })
+              : undefined
+          }
         />
       ) : null}
+
+      {inlineEdit.popup}
 
       {slashMenu ? (
         <SlashCommandMenu

@@ -16,6 +16,7 @@ import { kbAdminRouter } from './routes/kbAdmin'
 import { kbContributionsRouter } from './routes/kbContributions'
 import { patientsRouter } from './routes/patients'
 import { transcribeRouter } from './routes/transcribe'
+import { inlineEditRouter } from './routes/inlineEdit'
 import { discussCaseRouter } from './routes/discussCase'
 import { butterflyRouter } from './routes/butterfly'
 import { clinicalMetadataRouter } from './routes/clinicalMetadata'
@@ -40,6 +41,9 @@ const port = Number(process.env.API_PORT ?? 3001)
 app.use(cors({ origin: true }))
 app.use(optionalAuth)
 app.use('/api/transcribe', express.json({ limit: '25mb' }), transcribeRouter)
+// Inline AI edit: the /transcribe sub-route carries base64 audio, so it needs a
+// larger JSON limit than the global parser.
+app.use('/api/inline-edit', express.json({ limit: '25mb' }), inlineEditRouter)
 app.use(express.json({ limit: '2mb' }))
 
 app.get('/api/health', (_req, res) => {

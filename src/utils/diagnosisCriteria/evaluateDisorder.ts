@@ -18,6 +18,7 @@
 import type {
   Criterion,
   CriterionGroup,
+  CriterionSource,
   CriterionStatus,
   Disorder,
 } from '../../data/diagnosisCriteria/schema'
@@ -35,6 +36,8 @@ export interface PerCriterionResult {
   source: CriterionResultSource
   evidence?: string
   attestable: boolean
+  /** Structured, language-neutral source citation(s) for this criterion. */
+  citation?: CriterionSource[]
 }
 
 /** For inclusion groups: yes/no/unknown. For exclusion groups: yes = triggered. */
@@ -85,6 +88,7 @@ function evaluateCriterion(
       status: attestation,
       source: 'attested',
       attestable: criterion.allowClinicianAttest,
+      citation: criterion.citation,
     }
   }
 
@@ -98,6 +102,7 @@ function evaluateCriterion(
       source: signal.status === 'unknown' ? 'unanswered' : 'auto',
       evidence: signal.evidence,
       attestable: criterion.allowClinicianAttest,
+      citation: criterion.citation,
     }
   }
 
@@ -108,6 +113,7 @@ function evaluateCriterion(
     status: 'unknown',
     source: 'unanswered',
     attestable: criterion.allowClinicianAttest,
+    citation: criterion.citation,
   }
 }
 

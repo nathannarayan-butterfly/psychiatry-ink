@@ -56,7 +56,6 @@ export function LabsDueCard({ data, onOpenLabor }: LabsDueCardProps) {
     <OverviewCard
       title="Monitoring & Labor"
       icon={<FlaskConical size={15} />}
-      span="wide"
       className="ov-col-6"
       badge={badge}
       action={{ label: 'Zum Labor', onClick: onOpenLabor }}

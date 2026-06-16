@@ -1,7 +1,6 @@
 import { ShieldAlert } from 'lucide-react'
 
 import { OverviewCard, type SemanticTone } from './OverviewCard'
-import { RiskGauge } from './RiskGauge'
 import type { SafetyData } from './types'
 
 interface SafetyAlertsCardProps {
@@ -24,16 +23,6 @@ const TONE_LABEL: Record<SemanticTone, string> = {
   low: 'gering',
   info: 'beachten',
   neutral: '—',
-}
-
-/** Severity → gauge fill fraction (semantic, not the area accent). */
-const TONE_FRACTION: Record<SemanticTone, number> = {
-  high: 1,
-  moderate: 0.66,
-  info: 0.42,
-  low: 0.24,
-  ok: 0.12,
-  neutral: 0.12,
 }
 
 function highestTone(tones: SemanticTone[]): SemanticTone {
@@ -63,8 +52,6 @@ export function SafetyAlertsCard({ data }: SafetyAlertsCardProps) {
         }
       : undefined
 
-  const gaugeValue = data.hasAnySignal ? String(data.alerts.length) : '✓'
-
   return (
     <OverviewCard
       title="Sicherheit & Alerts"
@@ -72,35 +59,32 @@ export function SafetyAlertsCard({ data }: SafetyAlertsCardProps) {
       variant="safety"
       tone={headlineTone}
       badge={badge}
-      className="ov-col-5"
+      className="ov-col-6"
     >
-      <div className="ov-safety__summary">
-        <RiskGauge
-          tone={headlineTone}
-          fraction={TONE_FRACTION[headlineTone]}
-          value={gaugeValue}
-          label={TONE_LABEL[headlineTone]}
-        />
-        <div className="ov-safety__headline">
-          {data.risk ? (
-            <>
-              <span className="ov-safety__risk-label">{data.risk.label}</span>
-              <span className={`ov-pill ov-pill--${data.risk.tone}`}>
-                {TONE_LABEL[data.risk.tone]}
-              </span>
-              {data.risk.detail ? (
-                <span className="ov-safety__risk-detail">{data.risk.detail}</span>
-              ) : null}
-            </>
-          ) : data.hasAnySignal ? (
+      <div className="ov-safety__headline">
+        {data.risk ? (
+          <>
+            <span className="ov-safety__risk-label">{data.risk.label}</span>
+            <span className={`ov-pill ov-pill--${data.risk.tone}`}>{TONE_LABEL[data.risk.tone]}</span>
+            {data.risk.detail ? (
+              <span className="ov-safety__risk-detail">{data.risk.detail}</span>
+            ) : null}
+          </>
+        ) : data.hasAnySignal ? (
+          <>
+            <span className="ov-safety__risk-label">Risiko</span>
+            <span className={`ov-pill ov-pill--${headlineTone}`}>{TONE_LABEL[headlineTone]}</span>
             <span className="ov-safety__risk-detail">
               {data.alerts.length} aktive{data.alerts.length === 1 ? 's' : ''} Sicherheitssignal
               {data.alerts.length === 1 ? '' : 'e'} aus dem Regime.
             </span>
-          ) : (
-            <span className="ov-allclear">Keine aktiven Sicherheitssignale.</span>
-          )}
-        </div>
+          </>
+        ) : (
+          <>
+            <span className="ov-safety__risk-label">Risiko</span>
+            <span className="ov-pill ov-pill--ok">unauffällig</span>
+          </>
+        )}
       </div>
 
       {data.alerts.length > 0 ? (
@@ -109,13 +93,13 @@ export function SafetyAlertsCard({ data }: SafetyAlertsCardProps) {
             <li key={alert.id} className={`ov-alert ov-alert--${alert.tone}`}>
               <div className="ov-alert__body">
                 <span className="ov-alert__title">{alert.title}</span>
-                {alert.detail ? (
-                  <span className="ov-alert__detail">{alert.detail}</span>
-                ) : null}
+                {alert.detail ? <span className="ov-alert__detail">{alert.detail}</span> : null}
               </div>
             </li>
           ))}
         </ul>
+      ) : !data.hasAnySignal ? (
+        <div className="ov-allclear">Keine aktiven Sicherheitssignale.</div>
       ) : null}
     </OverviewCard>
   )

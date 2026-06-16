@@ -1,34 +1,25 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useTranslation } from '../../../context/TranslationContext'
 import type { TopNavTabId } from '../CaseTopNav'
 import type { NotionPageId } from '../notionPages'
 import { DiagnosenWidget } from '../DiagnosenWidget'
 import { SpiegelwerteSection, extractSpiegelwerte } from '../SpiegelwerteSection'
-import { OverviewCard, OverviewCardShell, OverviewEmpty } from './OverviewCard'
+import { OverviewCardShell } from './OverviewCard'
 import { OverviewHero } from './OverviewHero'
 import { SafetyAlertsCard } from './SafetyAlertsCard'
-import { StatusCard } from './StatusCard'
 import { MedicationOverviewCard } from './MedicationOverviewCard'
 import { PriorTherapiesOverviewCard } from './PriorTherapiesOverviewCard'
 import { SymptomSnapshotCard } from './SymptomSnapshotCard'
-import { RecentVerlaufCard } from './RecentVerlaufCard'
 import { LabsDueCard } from './LabsDueCard'
-import { KonsileTasksCard } from './KonsileTasksCard'
 import type {
   HeroSummaryData,
-  KonsilCardItem,
   MedicationOverviewData,
   MedRegimenItem,
-  OpenTaskItem,
-  PatientStatusData,
-  StatusEntry,
   SymptomSnapshotData,
 } from './types'
 import type { SemanticTone } from './OverviewCard'
 import { useMedicationPlan } from '../../../hooks/useMedicationPlan'
 import { useCaseAppointments } from '../../../hooks/useCaseAppointments'
-import { usePsychotherapyPlan } from '../../../hooks/usePsychotherapyPlan'
-import { useSozialtherapie } from '../../../hooks/useSozialtherapie'
 import { isMedicationVisible } from '../../../utils/medication/planOps'
 import { formatDoseScheduleGerman } from '../../../utils/medication/doseLine'
 import { computeMedicationInsights } from '../../../utils/medication/medicationInsights'
@@ -39,12 +30,9 @@ import { loadNotionPageDate } from '../../../utils/notionPageDate'
 import { loadClinicalImprintIndex } from '../../../utils/clinicalImprint'
 import { buildPatientSafety } from '../../../utils/overview/patientSafety'
 import { buildLabsDue } from '../../../utils/overview/labsDue'
-import { getRecentVerlauf } from '../../../utils/overview/recentVerlauf'
 import { getSymptomTrajectory } from '../../../utils/overview/symptomTrajectory'
 import { formatDateDe, relativeDayDe } from '../../../utils/overview/dateLabels'
 import { loadDiagnosen } from '../../../utils/diagnosenArchive'
-import { listConsultationsForCase } from '../../../services/consultationApi'
-import { listDiscussions } from '../../../services/discussCaseApi'
 import type { ClinicalImprintRecord, CourseDirection } from '../../../types/clinicalImprint'
 import type { MedicationStatus } from '../../../types/medicationPlan'
 
@@ -71,20 +59,7 @@ const COURSE_LABEL: Record<CourseDirection, string> = {
   unclear: 'unklar',
 }
 
-const KONSIL_OPEN_STATUS: Record<string, { label: string; tone: SemanticTone } | undefined> = {
-  sent: { label: 'gesendet', tone: 'info' },
-  viewed: { label: 'gesehen', tone: 'info' },
-  in_progress: { label: 'in Bearbeitung', tone: 'info' },
-  more_info_requested: { label: 'Rückfrage', tone: 'moderate' },
-  submitted: { label: 'beantwortet', tone: 'ok' },
-}
-
-const DISCUSS_OPEN_STATUS: Record<string, { label: string; tone: SemanticTone } | undefined> = {
-  active: { label: 'aktiv', tone: 'info' },
-  draft: { label: 'Entwurf', tone: 'neutral' },
-}
-
-/** Headline severity ranking + German label for the hero risk metric. */
+/** Headline severity ranking + German label for the summary-strip risk metric. */
 const TONE_SEVERITY: Record<SemanticTone, number> = {
   high: 5,
   moderate: 4,
@@ -119,15 +94,6 @@ function readAllergyText(caseId: string): string | null {
   return parts.length > 0 ? parts.join('\n') : null
 }
 
-function readSetting(caseId: string): string | null {
-  const aufnahme = loadNotionDocumentSnapshot('aufnahme', caseId)
-  if (!aufnahme) return null
-  const joined = Object.values(aufnahme.sectionContents).join(' ').toLowerCase()
-  if (/station[äa]r/.test(joined)) return 'stationär'
-  if (/ambulant/.test(joined)) return 'ambulant'
-  return null
-}
-
 function readPsychopathSnapshot(caseId: string): { text: string | null; savedAt: string | null } {
   const snap = loadNotionDocumentSnapshot('psychopath', caseId)
   if (!snap) return { text: null, savedAt: null }
@@ -145,66 +111,21 @@ function latestPsychopathImprint(imprints: ClinicalImprintRecord[]): ClinicalImp
 }
 
 /**
- * The at-a-glance Übersicht dashboard: a responsive bento grid of clinical
- * cards composed from real patient/demo data. Owns data wiring; the cards are
- * pure presentational components.
+ * The Übersicht dashboard: a slim "Auf einen Blick" summary strip + a restrained
+ * two-column grid of the cards a psychiatrist needs at a glance — safety, current
+ * medication, diagnoses, psychopathology/trajectory, labs/monitoring, prior
+ * therapies, and drug levels (only when present). Owns all data wiring; the cards
+ * are pure presentational components.
  */
 export function OverviewDashboard({
   caseId,
-  therapyScopeId,
+  therapyScopeId: _therapyScopeId,
   onTabSelect,
   onOpenWorkspacePage,
 }: OverviewDashboardProps) {
   const { language } = useTranslation()
   const { currentPlan } = useMedicationPlan(caseId)
   const appointments = useCaseAppointments(caseId)
-  const { summary: ptSummary, hasPlan: hasPtPlan } = usePsychotherapyPlan(therapyScopeId)
-  const { targets: sozialTargets } = useSozialtherapie(therapyScopeId)
-
-  const [konsilItems, setKonsilItems] = useState<KonsilCardItem[]>([])
-  const [discussionItems, setDiscussionItems] = useState<KonsilCardItem[]>([])
-  const [remoteLoading, setRemoteLoading] = useState(true)
-
-  useEffect(() => {
-    let active = true
-    setRemoteLoading(true)
-    Promise.allSettled([listConsultationsForCase(caseId), listDiscussions(caseId)])
-      .then(([consultRes, discussRes]) => {
-        if (!active) return
-        if (consultRes.status === 'fulfilled') {
-          setKonsilItems(
-            consultRes.value
-              .map((req): KonsilCardItem | null => {
-                const meta = KONSIL_OPEN_STATUS[req.status]
-                if (!meta) return null
-                return { id: req.id, title: req.title || req.specialty || 'Konsil', statusLabel: meta.label, tone: meta.tone }
-              })
-              .filter((x): x is KonsilCardItem => x !== null),
-          )
-        } else {
-          setKonsilItems([])
-        }
-        if (discussRes.status === 'fulfilled') {
-          setDiscussionItems(
-            discussRes.value
-              .map((d): KonsilCardItem | null => {
-                const meta = DISCUSS_OPEN_STATUS[d.status]
-                if (!meta) return null
-                return { id: d.id, title: d.title || 'Fallbesprechung', statusLabel: meta.label, tone: meta.tone }
-              })
-              .filter((x): x is KonsilCardItem => x !== null),
-          )
-        } else {
-          setDiscussionItems([])
-        }
-      })
-      .finally(() => {
-        if (active) setRemoteLoading(false)
-      })
-    return () => {
-      active = false
-    }
-  }, [caseId])
 
   const medications = useMemo(() => currentPlan?.medications ?? [], [currentPlan])
 
@@ -255,42 +176,26 @@ export function OverviewDashboard({
     })
   }, [caseId, medications, language])
 
-  // ── Status card ───────────────────────────────────────────────────────────
-  const statusData = useMemo<PatientStatusData>(() => {
-    const entries: StatusEntry[] = []
-    const setting = readSetting(caseId)
-    if (setting) entries.push({ id: 'setting', label: 'Setting', value: setting, emphasis: true })
-
-    const admission = formatDateDe(loadNotionPageDate('aufnahme', caseId))
-    if (admission) entries.push({ id: 'admission', label: 'Aufnahme', value: admission })
-
-    const lastContactIso =
+  // ── Appointment orientation (summary strip) ───────────────────────────────
+  const lastContact = useMemo(() => {
+    const iso =
       appointments.lastContact?.endTime ??
       loadVerlaufFeed(caseId)[0]?.date ??
       loadNotionPageDate('verlauf', caseId)
-    const lastContact = formatDateDe(lastContactIso)
-    if (lastContact) {
-      const rel = relativeDayDe(lastContactIso)
-      entries.push({ id: 'last', label: 'Letzter Kontakt', value: rel ? `${lastContact} (${rel})` : lastContact })
-    }
+    const dateLabel = formatDateDe(iso)
+    if (!dateLabel) return null
+    return { dateLabel, relativeLabel: relativeDayDe(iso) }
+  }, [caseId, appointments])
 
-    if (hasPtPlan && ptSummary.currentStage) {
-      entries.push({ id: 'phase', label: 'Therapiephase', value: ptSummary.currentStage })
-    }
-
+  const nextAppointment = useMemo(() => {
     const next = appointments.next
+    if (!next) return null
     return {
-      entries,
-      nextAppointment: next
-        ? {
-            title: next.title,
-            dateLabel: formatDateDe(next.startTime) ?? next.startTime,
-            relativeLabel: relativeDayDe(next.startTime) ?? undefined,
-          }
-        : null,
-      appointmentsLoading: appointments.loading,
+      title: next.title,
+      dateLabel: formatDateDe(next.startTime) ?? next.startTime,
+      relativeLabel: relativeDayDe(next.startTime),
     }
-  }, [caseId, appointments, hasPtPlan, ptSummary])
+  }, [appointments])
 
   // ── Symptom snapshot card ─────────────────────────────────────────────────
   const symptomData = useMemo<SymptomSnapshotData>(() => {
@@ -315,9 +220,6 @@ export function OverviewDashboard({
     }
   }, [caseId])
 
-  // ── Recent Verlauf card ───────────────────────────────────────────────────
-  const recentVerlauf = useMemo(() => getRecentVerlauf(caseId, language, 4), [caseId, language])
-
   // ── Labs / monitoring card ────────────────────────────────────────────────
   const labsData = useMemo(() => {
     const activeSubstances = medications
@@ -332,19 +234,7 @@ export function OverviewDashboard({
     [caseId],
   )
 
-  // ── Open tasks (social-work) ──────────────────────────────────────────────
-  const tasks = useMemo<OpenTaskItem[]>(() => {
-    return sozialTargets
-      .filter((t) => t.status !== 'resolved' && t.status !== 'not-relevant')
-      .flatMap((target) =>
-        (target.tasks ?? [])
-          .filter((task) => !task.done)
-          .map((task) => ({ id: task.id, text: task.text, area: target.area || null })),
-      )
-      .slice(0, 5)
-  }, [sozialTargets])
-
-  // ── Hero executive-summary band ───────────────────────────────────────────
+  // ── Summary strip ─────────────────────────────────────────────────────────
   const heroData = useMemo<HeroSummaryData>(() => {
     const diagnoses = loadDiagnosen(caseId)
     const primary = diagnoses[0]
@@ -377,64 +267,46 @@ export function OverviewDashboard({
       risk,
       activeMedCount: medicationData.activeCount,
       alertCount: safetyData.alerts.length,
-      nextAppointment: statusData.nextAppointment
-        ? {
-            dateLabel: statusData.nextAppointment.dateLabel,
-            relativeLabel: statusData.nextAppointment.relativeLabel ?? null,
-            title: statusData.nextAppointment.title,
-          }
-        : null,
+      lastContact,
+      nextAppointment,
     }
-  }, [caseId, safetyData, medicationData, statusData])
+  }, [caseId, safetyData, medicationData, lastContact, nextAppointment])
 
   return (
     <div className="ov-dashboard">
       <OverviewHero data={heroData} />
 
       <div className="ov-grid">
-        {/* Heavyweights — Safety + Medication anchor the page. */}
+        {/* Row 1 — what's urgent + what they're on. */}
         <SafetyAlertsCard data={safetyData} />
-
         <MedicationOverviewCard
           data={medicationData}
           onOpenMedikation={() => onTabSelect('medikation')}
         />
 
+        {/* Row 2 — the clinical picture. */}
+        <OverviewCardShell className="ov-col-6">
+          <DiagnosenWidget caseId={caseId} variant="panel" />
+        </OverviewCardShell>
+        <SymptomSnapshotCard
+          data={symptomData}
+          onOpen={onOpenWorkspacePage ? () => onOpenWorkspacePage('psychopath') : undefined}
+        />
+
+        {/* Row 3 — monitoring + treatment history. */}
+        <LabsDueCard data={labsData} onOpenLabor={() => onTabSelect('labor')} />
         <PriorTherapiesOverviewCard
           caseId={caseId}
           medications={medications}
           onOpenMedikation={() => onTabSelect('medikation')}
         />
 
-        <OverviewCardShell className="ov-col-5">
-          <DiagnosenWidget caseId={caseId} variant="panel" />
-        </OverviewCardShell>
-
+        {/* Drug levels — full width, only when values exist. */}
         {hasSpiegel ? (
-          <OverviewCardShell className="ov-col-4">
+          <OverviewCardShell className="ov-col-12">
             <SpiegelwerteSection caseId={caseId} />
           </OverviewCardShell>
-        ) : (
-          <OverviewCard title="Spiegel (Talspiegel)" className="ov-col-4">
-            <OverviewEmpty>Keine Spiegelwerte vorhanden.</OverviewEmpty>
-          </OverviewCard>
-        )}
-
-        <StatusCard data={statusData} />
-
-        <SymptomSnapshotCard
-          data={symptomData}
-          onOpen={onOpenWorkspacePage ? () => onOpenWorkspacePage('psychopath') : undefined}
-        />
-
-        <LabsDueCard data={labsData} onOpenLabor={() => onTabSelect('labor')} />
-
-        <RecentVerlaufCard items={recentVerlauf} onOpenVerlauf={() => onTabSelect('verlauf')} />
-
-        <KonsileTasksCard
-          data={{ konsile: konsilItems, discussions: discussionItems, tasks, loading: remoteLoading }}
-          onOpenKonsil={() => onTabSelect('konsil')}
-        />
+        ) : null}
       </div>
     </div>
   )

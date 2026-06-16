@@ -611,6 +611,14 @@ function presentRisk(phenomenology: Record<IsdmPhenomenologyDomain, SymptomFindi
   )
 }
 
+/**
+ * INTERNAL domain-coverage signal only. These gaps feed `computeOverallUncertainty`
+ * and a numeric count in the ISDM summary — they are deliberately NOT the
+ * user-facing "Vorgeschlagene Fragen". Those questions are derived strictly from
+ * the still-`unknown` criteria of clinician-entered diagnoses (see
+ * `buildCriterionQuestions` in `utils/butterfly/criterionPrompts.ts`); no generic
+ * or open-ended question text from here is ever rendered as a suggested question.
+ */
 function buildInterviewGaps(
   phenomenology: Record<IsdmPhenomenologyDomain, SymptomFinding[]>,
   course: CoursePattern,

@@ -5,7 +5,7 @@ import type { EnglishVariant, UiLanguage } from '../../types/settings'
 import type { IsdmClinicalAnalysis } from '../../types/isdm'
 import { loadIsdmAnalysis } from '../../utils/isdm/storage'
 import { scheduleIsdmRebuild } from '../../utils/isdm'
-import { matchDisorderToCodes, type Disorder } from '../../data/diagnosisCriteria'
+import { formatCriterionCitation, matchDisorderToCodes, type Disorder } from '../../data/diagnosisCriteria'
 import {
   buildDisorderAdvice,
   buildEvaluationContext,
@@ -22,7 +22,21 @@ import {
   saveAiSuggestions,
   type ButterflyAiSuggestionState,
 } from '../../utils/butterfly/aiSuggestions'
-import { selectUnresolvedCriteria, resolveDeepLinkPage } from '../../utils/butterfly/criterionPrompts'
+import {
+  selectUnresolvedCriteria,
+  resolveDeepLinkPage,
+  buildCriterionQuestions,
+  type ButterflyCriterionQuestion,
+} from '../../utils/butterfly/criterionPrompts'
+import {
+  clinicalQuestionId,
+  loadClinicalQuestionNoteState,
+  setClinicalQuestionNote,
+  clearClinicalQuestionNote,
+  resolutionToAttestation,
+  type ClinicalQuestionNoteState,
+  type ClinicalQuestionResolution,
+} from '../../utils/clinicalQuestions'
 import { suggestionsFromCaseFacts } from '../../utils/butterfly/factSuggestions'
 import { buildButterflyContextPackage, hasButterflyContext } from '../../utils/butterfly/contextPackage'
 import { extractButterflyCriteria } from '../../services/butterflyExtractApi'
@@ -84,6 +98,10 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
   const [attestations, setAttestations] = useState(() => loadAttestations(caseId))
   const [aiSuggestions, setAiSuggestions] = useState<ButterflyAiSuggestionState>(() => loadAiSuggestions(caseId))
   const [diagnoses, setDiagnoses] = useState<DiagnoseEntry[]>(() => loadDiagnosen(caseId))
+  const [questionNotes, setQuestionNotes] = useState<ClinicalQuestionNoteState>(() =>
+    loadClinicalQuestionNoteState(caseId),
+  )
+  const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({})
   const [refreshing, setRefreshing] = useState(false)
   const [pendingDisorders, setPendingDisorders] = useState<ReadonlySet<string>>(() => new Set())
   const [aiErrors, setAiErrors] = useState<Record<string, boolean>>({})
@@ -94,6 +112,7 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
     setAttestations(loadAttestations(caseId))
     setAiSuggestions(loadAiSuggestions(caseId))
     setDiagnoses(loadDiagnosen(caseId))
+    setQuestionNotes(loadClinicalQuestionNoteState(caseId))
   }, [caseId])
 
   useEffect(() => {
@@ -139,6 +158,22 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
     return out.sort((a, b) => rank(a) - rank(b))
   }, [analysis, attestations, enteredDiagnoses])
 
+  // "Vorgeschlagene Fragen" — derived STRICTLY from the still-`unknown` criteria
+  // of the clinician-entered diagnoses (no generic/open-ended prompts), localized
+  // to the active UI language.
+  const criterionQuestions = useMemo(
+    () =>
+      buildCriterionQuestions(
+        results.flatMap((result) =>
+          result.available && result.disorder && result.evaluation
+            ? [{ disorder: result.disorder, label: result.label, evaluation: result.evaluation }]
+            : [],
+        ),
+        t,
+      ),
+    [results, t],
+  )
+
   const handleAttest = useCallback(
     (criterionId: string, current: ClinicianAttestationValue | undefined, value: ClinicianAttestationValue) => {
       setAttestation(caseId, criterionId, current === value ? null : value)
@@ -151,10 +186,51 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
     (criterionId: string) => {
       setAttestation(caseId, criterionId, null)
       dismissAiSuggestion(caseId, criterionId)
+      clearClinicalQuestionNote(clinicalQuestionId('diagnosis_criteria', criterionId), caseId)
       setAttestations(loadAttestations(caseId))
       setAiSuggestions(loadAiSuggestions(caseId))
+      setQuestionNotes(loadClinicalQuestionNoteState(caseId))
     },
     [caseId],
+  )
+
+  // Feedback loop: record the patient's answer to a suggested question. A
+  // Ja/Nein answer is bridged to the clinician-attestation store (authoritative,
+  // overrides everything) so the deterministic evaluator flips the criterion and
+  // the answered question drops off the list. The optional finding note is PHI →
+  // persisted to the encrypted vault only.
+  const handleAnswerQuestion = useCallback(
+    (question: ButterflyCriterionQuestion, resolution: ClinicalQuestionResolution) => {
+      const attestationValue = resolutionToAttestation(resolution)
+      setAttestation(caseId, question.criterionId, attestationValue)
+      if (attestationValue === null) {
+        // "Unklar" — keep the criterion open and drop any AI suggestion noise.
+        dismissAiSuggestion(caseId, question.criterionId)
+      }
+      const draft = noteDrafts[question.id] ?? ''
+      if (attestationValue === null || !draft.trim()) {
+        clearClinicalQuestionNote(question.id, caseId)
+      } else {
+        setClinicalQuestionNote(
+          {
+            questionId: question.id,
+            sectionId: question.sectionId,
+            targetId: question.targetId,
+            note: draft,
+          },
+          caseId,
+        )
+      }
+      setNoteDrafts((prev) => {
+        const next = { ...prev }
+        delete next[question.id]
+        return next
+      })
+      setAttestations(loadAttestations(caseId))
+      setAiSuggestions(loadAiSuggestions(caseId))
+      setQuestionNotes(loadClinicalQuestionNoteState(caseId))
+    },
+    [caseId, noteDrafts],
   )
 
   const handleAcceptSuggestion = useCallback(
@@ -337,10 +413,12 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
                 code={result.code}
                 attestations={attestations}
                 aiSuggestions={aiSuggestions}
+                questionNotes={questionNotes}
                 pending={pendingDisorders.has(result.disorder.id)}
                 aiError={Boolean(aiErrors[result.disorder.id])}
                 onAttest={handleAttest}
                 onUnclear={handleUnclear}
+                onReset={handleUnclear}
                 onAcceptSuggestion={handleAcceptSuggestion}
                 onDismissSuggestion={handleDismissSuggestion}
                 onCheckAi={() => result.disorder && result.evaluation && runExtraction(result.disorder, result.evaluation)}
@@ -351,16 +429,67 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
         </ul>
       </section>
 
-      {analysis.interviewGaps.length > 0 ? (
+      {criterionQuestions.length > 0 ? (
         <section className="butterfly-panel__section">
           <h3 className="butterfly-panel__section-title">{t('butterflyQuestions')}</h3>
+          <p className="butterfly-gap-list__hint">{t('butterflyQuestionAnswerHint')}</p>
           <ul className="butterfly-gap-list">
-            {analysis.interviewGaps.map((gap) => (
-              <li key={gap.id} className={`butterfly-gap butterfly-gap--${gap.priority}`}>
-                <p className="butterfly-gap__question">{gap.question}</p>
-                <p className="butterfly-gap__rationale">{gap.rationale}</p>
-              </li>
-            ))}
+            {criterionQuestions.map((question) => {
+              const jumpPage = question.deepLinkPageId
+              return (
+                <li key={question.id} className={`butterfly-gap butterfly-gap--${question.priority}`}>
+                  <p className="butterfly-gap__question">{question.question}</p>
+                  <p className="butterfly-gap__rationale">{question.rationale}</p>
+                  <div className="butterfly-gap__answer">
+                    {question.resolvable ? (
+                      <div className="butterfly-gap__answer-actions" role="group" aria-label={question.question}>
+                        <button
+                          type="button"
+                          className="butterfly-answer-btn butterfly-answer-btn--yes"
+                          onClick={() => handleAnswerQuestion(question, 'present')}
+                        >
+                          {t('butterflyQuestionYes')}
+                        </button>
+                        <button
+                          type="button"
+                          className="butterfly-answer-btn butterfly-answer-btn--no"
+                          onClick={() => handleAnswerQuestion(question, 'absent')}
+                        >
+                          {t('butterflyQuestionNo')}
+                        </button>
+                        <button
+                          type="button"
+                          className="butterfly-answer-btn butterfly-answer-btn--unclear"
+                          onClick={() => handleAnswerQuestion(question, 'unclear')}
+                        >
+                          {t('butterflyQuestionUnclear')}
+                        </button>
+                      </div>
+                    ) : null}
+                    {jumpPage && onJumpToSection ? (
+                      <button
+                        type="button"
+                        className="butterfly-answer-btn butterfly-answer-btn--jump"
+                        onClick={() => onJumpToSection(jumpPage)}
+                      >
+                        {t('butterflyJumpToDoc')}
+                      </button>
+                    ) : null}
+                  </div>
+                  {question.resolvable ? (
+                    <input
+                      type="text"
+                      className="butterfly-gap__note"
+                      value={noteDrafts[question.id] ?? ''}
+                      placeholder={t('butterflyQuestionNotePlaceholder')}
+                      onChange={(event) =>
+                        setNoteDrafts((prev) => ({ ...prev, [question.id]: event.target.value }))
+                      }
+                    />
+                  ) : null}
+                </li>
+              )
+            })}
           </ul>
         </section>
       ) : null}
@@ -378,10 +507,12 @@ interface ButterflyDiagnosisCardProps {
   code: string
   attestations: AttestationMap
   aiSuggestions: ButterflyAiSuggestionState
+  questionNotes: ClinicalQuestionNoteState
   pending: boolean
   aiError: boolean
   onAttest: (criterionId: string, current: ClinicianAttestationValue | undefined, value: ClinicianAttestationValue) => void
   onUnclear: (criterionId: string) => void
+  onReset: (criterionId: string) => void
   onAcceptSuggestion: (criterionId: string) => void
   onDismissSuggestion: (criterionId: string) => void
   onCheckAi: () => void
@@ -396,10 +527,12 @@ function ButterflyDiagnosisCard({
   code,
   attestations,
   aiSuggestions,
+  questionNotes,
   pending,
   aiError,
   onAttest,
   onUnclear,
+  onReset,
   onAcceptSuggestion,
   onDismissSuggestion,
   onCheckAi,
@@ -455,12 +588,23 @@ function ButterflyDiagnosisCard({
                 : undefined
             const provenance = provenanceFor(criterion, Boolean(actionableSuggestion))
             const isOpen = criterion.status === 'unknown' && criterion.source !== 'attested'
+            const isAttested = criterion.source === 'attested'
             const jumpPage = resolveDeepLinkPage(disorder, criterion.criterionId)
+            const answerNote = questionNotes[clinicalQuestionId('diagnosis_criteria', criterion.criterionId)]?.note
+
+            const citationLabel = formatCriterionCitation(criterion.citation)
 
             return (
               <li key={criterion.criterionId} className={`butterfly-criterion butterfly-criterion--${provenance}`}>
                 <div className="butterfly-criterion__row">
-                  <span className="butterfly-criterion__text">{criterion.text_de}</span>
+                  <div className="butterfly-criterion__main">
+                    <span className="butterfly-criterion__text">{criterion.text_de}</span>
+                    {citationLabel ? (
+                      <span className="butterfly-criterion__cite" title={`${t('butterflySource')}: ${citationLabel}`}>
+                        {t('butterflySource')}: {citationLabel}
+                      </span>
+                    ) : null}
+                  </div>
                   <span className={`butterfly-prov butterfly-prov--${provenance}`}>
                     {provenance === 'deterministic'
                       ? `${criterion.status === 'met' ? '✓' : '×'} ${t('butterflyProvenanceDeterministic')}`
@@ -551,6 +695,24 @@ function ButterflyDiagnosisCard({
                         </button>
                       ) : null}
                     </div>
+                  </div>
+                ) : null}
+
+                {isAttested ? (
+                  <div className="butterfly-criterion__confirmed">
+                    {answerNote ? (
+                      <p className="butterfly-criterion__note">
+                        <span className="butterfly-criterion__note-label">{t('butterflyAiQuoteLabel')}:</span>{' '}
+                        {answerNote}
+                      </p>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="butterfly-criterion__reset"
+                      onClick={() => onReset(criterion.criterionId)}
+                    >
+                      {t('butterflyCriterionReset')}
+                    </button>
                   </div>
                 ) : null}
               </li>

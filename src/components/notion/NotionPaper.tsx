@@ -853,6 +853,7 @@ export function NotionPaper({
                 onSlashCommand={onSlashCommand}
                 focusRequest={editorFocusRequest}
                 pendingPaste={pendingPaste}
+                caseId={storageCaseId ?? caseId}
               />
               {showKompilierenButton ? (
                 <div className="notion-paper__kompilieren-row">
@@ -886,6 +887,7 @@ export function NotionPaper({
               onSlashCommand={onSlashCommand}
               focusRequest={editorFocusRequest}
               pendingPaste={pendingPaste}
+              caseId={storageCaseId ?? caseId}
             />
           )}
         </div>

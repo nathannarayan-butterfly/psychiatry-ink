@@ -33,6 +33,7 @@ import './styles/overview-dashboard.css'
 import './styles/diagnosis-typography.css'
 import './styles/butterfly.css'
 import './styles/dokumente-inline.css'
+import './styles/inline-ai-edit.css'
 
 const APPEARANCE_KEY = 'psychiatry-ink-appearance'
 

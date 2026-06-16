@@ -14,6 +14,7 @@ import { registerMedicationPlanPersistHook } from '../utils/medication/storage'
 import { registerPsychotherapyPlanPersistHook } from '../utils/psychotherapy/storage'
 import { registerComplementaryTherapiesPersistHook } from '../utils/complementaryTherapy/storage'
 import { registerWeitereTherapiePersistHook } from '../utils/weitereTherapie/storage'
+import { registerClinicalQuestionNotePersistHook } from '../utils/clinicalQuestions/answerNotes'
 import {
   ensureKeyMaterial,
   getOrCreateDeviceId,
@@ -252,6 +253,9 @@ export function useWorkspaceVault({
     registerWeitereTherapiePersistHook((persistCaseId) => {
       if (persistCaseId === caseId) scheduleSaveRef.current()
     })
+    registerClinicalQuestionNotePersistHook((persistCaseId) => {
+      if (persistCaseId === caseId) scheduleSaveRef.current()
+    })
     return () => {
       registerClinicalImprintPersistHook(null)
       registerIsdmPersistHook(null)
@@ -260,6 +264,7 @@ export function useWorkspaceVault({
       registerPsychotherapyPlanPersistHook(null)
       registerComplementaryTherapiesPersistHook(null)
       registerWeitereTherapiePersistHook(null)
+      registerClinicalQuestionNotePersistHook(null)
     }
   }, [caseId])
 

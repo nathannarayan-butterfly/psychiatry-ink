@@ -28,3 +28,12 @@ export function isCmeaLlmEnrichmentEnabled(): boolean {
 export function isCmeaConsumerReadEnabled(): boolean {
   return import.meta.env.VITE_ENABLE_CMEA_CONSUMER_READS === 'true'
 }
+
+/**
+ * Voice-driven inline AI text editing ("Ask AI to edit selection"). Enabled by
+ * default; disable locally in `.env.local` if needed:
+ *   VITE_DISABLE_INLINE_AI_EDIT=true
+ */
+export function isInlineAiEditEnabled(): boolean {
+  return import.meta.env.VITE_DISABLE_INLINE_AI_EDIT !== 'true'
+}
