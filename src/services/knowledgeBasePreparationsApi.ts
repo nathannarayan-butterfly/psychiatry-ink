@@ -1,5 +1,7 @@
 import type { MedicationMarketAvailability } from '../types/knowledgeBase'
 import { getSupabase } from '../lib/supabase'
+import { API_BASE } from './apiClient'
+import { getAuthHeaders } from './authHeaders'
 
 /**
  * Supabase data-access for the shared country-specific medication preparations
@@ -12,22 +14,16 @@ import { getSupabase } from '../lib/supabase'
  * `generic_name`, and `trade_name` are denormalized for cheap
  * filtering/sorting; everything else lives inside `data`.
  *
+ * READ is public and served directly by the browser anon client. WRITE is gated
+ * by RLS (`is_kb_editor()` / `app_metadata.kb_admin`), so direct browser writes
+ * silently fail for non-editor clinicians. All writes are therefore routed
+ * through the service-role server endpoint (`/api/kb-admin/preparations`), which
+ * authenticates the caller and authorizes KB-editor permission before writing.
+ *
  * Table + RLS: see `supabase/knowledge_base_preparations.sql`.
  */
 
 export const KNOWLEDGE_BASE_PREPARATIONS_TABLE = 'knowledge_base_preparations'
-
-interface KnowledgeBasePreparationRow {
-  id: string
-  data: MedicationMarketAvailability
-  substance_id: string | null
-  country_code: string | null
-  verification_status: string | null
-  generic_name: string | null
-  trade_name: string | null
-  created_at?: string
-  updated_at?: string
-}
 
 /** True when a usable Supabase client exists (env configured). */
 export function isPreparationsSupabaseReady(): boolean {
@@ -40,20 +36,6 @@ function requireSupabase() {
     throw new Error('Supabase ist nicht konfiguriert (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY fehlen).')
   }
   return supabase
-}
-
-/** Map a domain object to a persisted row. `created_at` is left to the DB default. */
-function toRow(preparation: MedicationMarketAvailability): KnowledgeBasePreparationRow {
-  return {
-    id: preparation.id,
-    data: preparation,
-    substance_id: preparation.substanceId ?? null,
-    country_code: preparation.countryCode ?? null,
-    verification_status: preparation.verificationStatus ?? null,
-    generic_name: preparation.genericName ?? null,
-    trade_name: preparation.tradeName ?? null,
-    updated_at: new Date().toISOString(),
-  }
 }
 
 /** Fetch every preparation. Returns the canonical JSONB payload of each row. */
@@ -71,22 +53,36 @@ export async function fetchAllPreparations(): Promise<MedicationMarketAvailabili
     .filter((preparation): preparation is MedicationMarketAvailability => preparation != null)
 }
 
-/** Insert-or-update one or more preparations (write-through). No-op for empty input. */
-export async function upsertPreparations(preparations: MedicationMarketAvailability[]): Promise<void> {
-  if (preparations.length === 0) return
-  const supabase = requireSupabase()
-  const { error } = await supabase
-    .from(KNOWLEDGE_BASE_PREPARATIONS_TABLE)
-    .upsert(preparations.map(toRow), { onConflict: 'id' })
-  if (error) throw error
+async function kbWriteFetch(path: string, init: RequestInit): Promise<void> {
+  const auth = await getAuthHeaders()
+  const res = await fetch(`${API_BASE}/api/kb-admin${path}`, {
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      ...auth,
+      ...(init.headers ?? {}),
+    },
+  })
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { error?: string }
+    throw new Error(body.error ?? `KB preparation write failed (${res.status})`)
+  }
 }
 
-/** Delete a preparation by id. */
+/**
+ * Insert-or-update one or more preparations (write-through) via the service-role
+ * server endpoint. No-op for empty input. Throws for non-editor callers
+ * (handled by the caller, which keeps the optimistic local cache).
+ */
+export async function upsertPreparations(preparations: MedicationMarketAvailability[]): Promise<void> {
+  if (preparations.length === 0) return
+  await kbWriteFetch('/preparations', {
+    method: 'POST',
+    body: JSON.stringify({ preparations }),
+  })
+}
+
+/** Delete a preparation by id via the service-role server endpoint. */
 export async function deletePreparation(id: string): Promise<void> {
-  const supabase = requireSupabase()
-  const { error } = await supabase
-    .from(KNOWLEDGE_BASE_PREPARATIONS_TABLE)
-    .delete()
-    .eq('id', id)
-  if (error) throw error
+  await kbWriteFetch(`/preparations/${encodeURIComponent(id)}`, { method: 'DELETE' })
 }

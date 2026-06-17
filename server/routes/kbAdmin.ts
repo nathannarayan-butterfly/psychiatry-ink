@@ -12,6 +12,16 @@ import { hasKbAdminRole } from '../services/kbAdminAuth'
 import { requireRouteAuth } from '../utils/requireRouteAuth'
 import { recordKbAdminAudit } from '../services/auditLog'
 import {
+  adminDeleteKnowledgeBaseDrug,
+  adminDeletePreparation,
+  adminUpsertKnowledgeBaseDrugs,
+  adminUpsertPreparations,
+} from '../services/kbLegacyJsonbStore'
+import type {
+  KnowledgeBaseDrug,
+  MedicationMarketAvailability,
+} from '../../src/types/knowledgeBase'
+import {
   handleAdminConfig,
   handleCastVote,
   handleCreateDiscussion,
@@ -74,6 +84,36 @@ async function requireKbAdmin(req: Request, res: Response): Promise<string | nul
   if (!allowed) {
     res.status(403).json({
       error: 'KB admin access denied: requires owner/admin/kb_admin role.',
+    })
+    return null
+  }
+  if (!isKbAdminConfigured()) {
+    res.status(503).json({ error: 'SUPABASE_SERVICE_ROLE_KEY not configured on server.' })
+    return null
+  }
+  req.kbAdminActorId = userId
+  return userId
+}
+
+/**
+ * Gate the legacy JSONB KB write endpoints (drugs / preparations).
+ *
+ * Unlike {@link requireKbAdmin}, this is NOT behind the `ENABLE_KB_ADMIN_API`
+ * env flag: these endpoints back the everyday clinician KB editing UI, not the
+ * admin console. They still enforce the SAME identity + permission model as the
+ * RLS policy they stand in for (`is_kb_editor()`):
+ *   1. unauthenticated                 → 401
+ *   2. authenticated but not KB editor → 403
+ *   3. service role key not configured → 503
+ * Returns the resolved actor id, or null when a response was already sent.
+ */
+async function requireKbEditor(req: Request, res: Response): Promise<string | null> {
+  const userId = requireRouteAuth(req, res)
+  if (!userId) return null
+  const allowed = await hasKbAdminRole(req, userId)
+  if (!allowed) {
+    res.status(403).json({
+      error: 'KB write denied: requires KB editor (owner/admin/kb_admin) permission.',
     })
     return null
   }
@@ -321,4 +361,110 @@ kbAdminRouter.post('/contributions/:contributionId/publish', async (req, res) =>
 kbAdminRouter.post('/contributions/:contributionId/reject', async (req, res) => {
   if (!(await requireKbAdmin(req, res))) return
   await handleRejectContribution(req, res)
+})
+
+// ── Legacy JSONB KB write-through (drugs / preparations) ─────────────────────
+// Service-role writes that stand in for direct browser writes the secure RLS now
+// blocks for non-editors. Reads stay public/direct from the browser anon client.
+
+kbAdminRouter.post('/drugs', async (req, res) => {
+  const actorId = await requireKbEditor(req, res)
+  if (!actorId) return
+  try {
+    const body = req.body as { drugs?: unknown }
+    const drugs = Array.isArray(body?.drugs) ? (body.drugs as KnowledgeBaseDrug[]) : null
+    if (!drugs || drugs.some((drug) => !drug || typeof drug.id !== 'string' || !drug.id)) {
+      res.status(400).json({ error: 'Body must be { drugs: KnowledgeBaseDrug[] } with valid ids.' })
+      return
+    }
+    await adminUpsertKnowledgeBaseDrugs(drugs)
+    void recordKbAdminAudit({
+      actorUserId: actorId,
+      action: 'legacy-drug.upsert',
+      entityType: 'knowledge_base_drugs',
+      afterSummary: { count: drugs.length, ids: drugs.slice(0, 25).map((drug) => drug.id) },
+      source: 'manual',
+      req,
+    })
+    res.json({ upserted: drugs.length })
+  } catch (error) {
+    console.error('[kb-admin] legacy drug upsert failed:', error)
+    res.status(500).json({ error: 'Failed to save KB drugs' })
+  }
+})
+
+kbAdminRouter.delete('/drugs/:id', async (req, res) => {
+  const actorId = await requireKbEditor(req, res)
+  if (!actorId) return
+  try {
+    await adminDeleteKnowledgeBaseDrug(req.params.id)
+    void recordKbAdminAudit({
+      actorUserId: actorId,
+      action: 'legacy-drug.delete',
+      entityType: 'knowledge_base_drugs',
+      entityId: req.params.id,
+      source: 'manual',
+      req,
+    })
+    res.json({ deleted: req.params.id })
+  } catch (error) {
+    console.error('[kb-admin] legacy drug delete failed:', error)
+    res.status(500).json({ error: 'Failed to delete KB drug' })
+  }
+})
+
+kbAdminRouter.post('/preparations', async (req, res) => {
+  const actorId = await requireKbEditor(req, res)
+  if (!actorId) return
+  try {
+    const body = req.body as { preparations?: unknown }
+    const preparations = Array.isArray(body?.preparations)
+      ? (body.preparations as MedicationMarketAvailability[])
+      : null
+    if (
+      !preparations ||
+      preparations.some((entry) => !entry || typeof entry.id !== 'string' || !entry.id)
+    ) {
+      res.status(400).json({
+        error: 'Body must be { preparations: MedicationMarketAvailability[] } with valid ids.',
+      })
+      return
+    }
+    await adminUpsertPreparations(preparations)
+    void recordKbAdminAudit({
+      actorUserId: actorId,
+      action: 'legacy-preparation.upsert',
+      entityType: 'knowledge_base_preparations',
+      afterSummary: {
+        count: preparations.length,
+        ids: preparations.slice(0, 25).map((entry) => entry.id),
+      },
+      source: 'manual',
+      req,
+    })
+    res.json({ upserted: preparations.length })
+  } catch (error) {
+    console.error('[kb-admin] legacy preparation upsert failed:', error)
+    res.status(500).json({ error: 'Failed to save KB preparations' })
+  }
+})
+
+kbAdminRouter.delete('/preparations/:id', async (req, res) => {
+  const actorId = await requireKbEditor(req, res)
+  if (!actorId) return
+  try {
+    await adminDeletePreparation(req.params.id)
+    void recordKbAdminAudit({
+      actorUserId: actorId,
+      action: 'legacy-preparation.delete',
+      entityType: 'knowledge_base_preparations',
+      entityId: req.params.id,
+      source: 'manual',
+      req,
+    })
+    res.json({ deleted: req.params.id })
+  } catch (error) {
+    console.error('[kb-admin] legacy preparation delete failed:', error)
+    res.status(500).json({ error: 'Failed to delete KB preparation' })
+  }
 })

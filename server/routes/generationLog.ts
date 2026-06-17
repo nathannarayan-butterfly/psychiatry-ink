@@ -1,9 +1,13 @@
 import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
-import { prisma } from '../db'
 import type { AiModelTier } from '../modelTierMapping'
 import { resolveModelForTier } from '../modelTierMapping'
 import { getCreditBalance, refundCredits, reserveCredits } from '../services/credits'
+import {
+  createGenerationLog,
+  findGenerationLogById,
+  updateGenerationLog,
+} from '../services/generationLogStore'
 import { getCurrentOrganisation, ORG_HEADER } from '../services/orgPermissions'
 import { requireRouteAuth } from '../utils/requireRouteAuth'
 import { pathParam } from '../utils/expressParams'
@@ -60,23 +64,21 @@ generationLogRouter.post('/', async (req: Request, res: Response) => {
     const org = await getCurrentOrganisation(userId, req.headers[ORG_HEADER])
     const resolvedModel = body.tier ? resolveModelForTier(body.tier) : null
 
-    const entry = await prisma.generationLog.create({
-      data: {
-        userId,
-        organisationId: org?.id ?? null,
-        documentType: body.documentType,
-        aiMode: body.aiMode,
-        inputTextLength: body.inputTextLength,
-        estimatedInputTokens: body.estimatedInputTokens ?? 0,
-        estimatedCredits,
-        provider: body.provider ?? resolvedModel?.provider,
-        model: body.model ?? resolvedModel?.modelId,
-        tool: body.tool,
-        scope: body.scope,
-        schemaId: body.schemaId,
-        status: 'started',
-        creditsDeducted: estimatedCredits > 0,
-      },
+    const entry = await createGenerationLog({
+      userId,
+      organisationId: org?.id ?? null,
+      documentType: body.documentType,
+      aiMode: body.aiMode,
+      inputTextLength: body.inputTextLength,
+      estimatedInputTokens: body.estimatedInputTokens ?? 0,
+      estimatedCredits,
+      provider: body.provider ?? resolvedModel?.provider ?? null,
+      model: body.model ?? resolvedModel?.modelId ?? null,
+      tool: body.tool ?? null,
+      scope: body.scope ?? null,
+      schemaId: body.schemaId ?? null,
+      status: 'started',
+      creditsDeducted: estimatedCredits > 0,
     })
 
     res.status(201).json({ id: entry.id, balance: reservation.balance })
@@ -99,7 +101,7 @@ generationLogRouter.patch('/:id', async (req: Request, res: Response) => {
       return
     }
 
-    const existing = await prisma.generationLog.findUnique({ where: { id } })
+    const existing = await findGenerationLogById(id)
     if (!existing) {
       res.status(404).json({ error: 'Log not found' })
       return
@@ -122,17 +124,14 @@ generationLogRouter.patch('/:id', async (req: Request, res: Response) => {
       balance = await getCreditBalance(existing.userId ?? userId)
     }
 
-    const entry = await prisma.generationLog.update({
-      where: { id },
-      data: {
-        status: body.status,
-        errorMessage: body.status === 'failed' ? body.errorMessage ?? 'Unknown error' : null,
-        resultTextLength: body.status === 'completed' ? body.resultTextLength : null,
-        provider: body.provider ?? existing.provider,
-        model: body.model ?? existing.model,
-        completedAt: new Date(),
-        creditsDeducted: body.status === 'failed' ? false : existing.creditsDeducted,
-      },
+    const entry = await updateGenerationLog(id, {
+      status: body.status,
+      errorMessage: body.status === 'failed' ? body.errorMessage ?? 'Unknown error' : null,
+      resultTextLength: body.status === 'completed' ? body.resultTextLength ?? null : null,
+      provider: body.provider ?? existing.provider,
+      model: body.model ?? existing.model,
+      completedAt: new Date().toISOString(),
+      creditsDeducted: body.status === 'failed' ? false : existing.creditsDeducted,
     })
 
     res.json({ id: entry.id, status: entry.status, balance })

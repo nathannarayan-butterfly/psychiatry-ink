@@ -1,0 +1,58 @@
+---
+description: Production completeness standard — deliver full data/content, never samples or placeholders
+alwaysApply: true
+---
+
+# This is a production clinical platform for psychiatrists
+
+Psychiatry.Ink is a real product used by clinicians. Data and content must be
+complete and trustworthy. There is no downstream team that "fills in the rest" —
+if a task is delegated, the agent that owns it delivers the FULL scope.
+
+## Hard rule: no sampling, no placeholders
+
+When asked to implement data or content (diagnostic criteria, drug/medication
+data, knowledge-base entries, translations, catalogs, enums, etc.):
+
+- Deliver the **complete set** the request implies. "All psychiatric diseases"
+  means every clinically relevant disorder, not 2–3 examples.
+- For each item, fill **all** required fields fully and faithfully — never leave
+  `TODO`, `...`, "add more here", `placeholder`, dummy strings, or empty arrays
+  where real content is expected.
+- Do **not** silently narrow scope for brevity, token budget, or convenience. A
+  "representative subset" is only acceptable if the user explicitly asks for one.
+
+## When scope is genuinely large
+
+Do not shrink the deliverable — partition it and complete every partition:
+
+- Break the work into sections/blocks and cover each one fully (e.g. ICD-10
+  F0–F9 across separate modules, each comprehensive).
+- If you cannot finish in one pass, say so explicitly and state exactly what
+  remains (which items/fields), so a follow-up can complete it. Never present
+  partial output as if it were complete.
+
+## Examples
+
+```
+// ❌ BAD — sampled, with a placeholder gap
+export const moodDisorders = [
+  bipolarAffective,
+  recurrentDepressive,
+  // TODO: add the rest of F3 later
+]
+
+// ✅ GOOD — full block, every clinically relevant disorder, all fields populated
+export const moodDisorders = [
+  manicEpisode, bipolarAffective, recurrentDepressive,
+  cyclothymia, dysthymia, mixedAffectiveEpisode, /* …complete… */
+]
+```
+
+## Quality bar for clinical content
+
+- Accuracy and clinical fidelity come first; keep wording licensing-safe
+  (original paraphrases, never verbatim copyrighted criteria text) and cite the
+  source code.
+- Ship unreviewed clinical content as `status: 'draft'` for clinician review —
+  but `draft` means "awaiting sign-off", never "incomplete data".

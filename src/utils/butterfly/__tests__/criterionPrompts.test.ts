@@ -49,7 +49,7 @@ describe('resolveDeepLinkPage', () => {
 describe('buildCriterionQuestions', () => {
   const depression = getDisorderById('depressive_episode')!
 
-  it('derives one German question per unknown criterion of an entered diagnosis', () => {
+  it('derives concrete, patient-directed interview questions per unknown criterion', () => {
     const evaluation = evaluationWith([
       {
         criterionId: 'f32.depressed_mood',
@@ -76,13 +76,58 @@ describe('buildCriterionQuestions', () => {
     expect(questions[0].disorderId).toBe('depressive_episode')
     // Attestable criterion → a Ja/Nein answer can deterministically resolve it.
     expect(questions[0].resolvable).toBe(true)
-    expect(questions[0].question).toContain('Kriterium')
+    // Without an LLM resolver, deterministic patient-directed fallback questions
+    // grounded in the criterion text are produced (1–3, no leftover placeholders).
+    expect(questions[0].interviewQuestions.length).toBeGreaterThanOrEqual(1)
+    expect(questions[0].interviewQuestions.length).toBeLessThanOrEqual(3)
+    expect(questions[0].question).toBe(questions[0].interviewQuestions[0])
+    expect(questions[0].question).toContain('Sie')
     expect(questions[0].question).toContain('Gedrückte Stimmung über die meiste Zeit')
-    expect(questions[0].question).toContain('Depressive Episode')
     expect(questions[0].question).not.toContain('{criterion}')
     expect(questions[0].question).not.toContain('{diagnosis}')
     expect(questions[0].rationale).toContain('Depressive Episode')
     expect(questions[0].deepLinkPageId).toBe('psychopath')
+  })
+
+  it('uses LLM-generated questions from the resolver when available (capped at 3)', () => {
+    const evaluation = evaluationWith([
+      {
+        criterionId: 'f32.depressed_mood',
+        groupId: 'g',
+        text_de: 'Gedrückte Stimmung über die meiste Zeit',
+        status: 'unknown',
+        source: 'unanswered',
+        attestable: true,
+      },
+    ])
+    const llmQuestions = ['Frage A?', 'Frage B?', 'Frage C?', 'Frage D?']
+    const [question] = buildCriterionQuestions(
+      [{ disorder: depression, label: 'Depressive Episode', evaluation }],
+      (key) => translateUi('de', key),
+      ({ criterionId }) => (criterionId === 'f32.depressed_mood' ? llmQuestions : undefined),
+    )
+    expect(question.interviewQuestions).toEqual(['Frage A?', 'Frage B?', 'Frage C?'])
+    expect(question.question).toBe('Frage A?')
+  })
+
+  it('falls back to deterministic template when the resolver returns nothing', () => {
+    const evaluation = evaluationWith([
+      {
+        criterionId: 'f32.depressed_mood',
+        groupId: 'g',
+        text_de: 'Gedrückte Stimmung',
+        status: 'unknown',
+        source: 'unanswered',
+        attestable: true,
+      },
+    ])
+    const [question] = buildCriterionQuestions(
+      [{ disorder: depression, label: 'Depressive Episode', evaluation }],
+      (key) => translateUi('de', key),
+      () => undefined,
+    )
+    expect(question.interviewQuestions.length).toBeGreaterThanOrEqual(1)
+    expect(question.interviewQuestions[0]).toContain('Gedrückte Stimmung')
   })
 
   it('marks non-attestable criteria as not resolvable (cannot flip via Ja/Nein)', () => {
@@ -144,8 +189,9 @@ describe('buildCriterionQuestions', () => {
       (key) => translateUi('en', key),
     )
 
-    expect(de.question).toContain('Um das Kriterium')
-    expect(en.question).toContain('To assess the criterion')
+    // Deterministic fallback questions follow the active locale.
+    expect(de.question).toContain('Trifft das Folgende auf Sie zu')
+    expect(en.question).toContain('Does the following apply to you')
   })
 
   it('emits no questions when an entered diagnosis has no unknown criteria', () => {
@@ -174,6 +220,7 @@ describe('buildCriterionQuestions', () => {
     const questions = buildCriterionQuestions(
       [{ disorder: depression, label: 'Depressive Episode', evaluation }],
       (key) => translateUi('de', key),
+      undefined,
       5,
     )
     expect(questions).toHaveLength(5)

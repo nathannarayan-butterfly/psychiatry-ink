@@ -5,9 +5,9 @@
 }
 
 .team-settings-page__inner {
-  max-width: 52rem;
+  max-width: 72rem;
   margin: 0 auto;
-  padding: 1.5rem 1.25rem 3rem;
+  padding: 1.5rem 1.5rem 3rem;
 }
 
 .team-settings-page__header {
@@ -44,6 +44,7 @@
 
 .team-settings-section__sub {
   margin: 0 0 1rem;
+  max-width: 60ch;
   font-size: 0.8125rem;
   color: var(--clinical-muted, color-mix(in srgb, var(--text-main) 55%, transparent));
 }
@@ -65,6 +66,7 @@
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 0.5rem;
+  max-width: 48rem;
 }
 
 .team-settings-field {
@@ -258,6 +260,7 @@
 }
 
 .team-settings-upgrade {
+  max-width: 48rem;
   padding: 1rem 1.125rem;
   border: 1px dashed color-mix(in srgb, var(--accent, #4a7c59) 35%, var(--border-soft));
   border-radius: 6px;

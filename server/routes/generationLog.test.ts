@@ -20,14 +20,13 @@ const reserveCredits = vi.fn()
 const refundCredits = vi.fn()
 const getCreditBalance = vi.fn()
 
-vi.mock('../db', () => ({
-  prisma: {
-    generationLog: {
-      create: (...a: unknown[]) => generationLogCreate(...a),
-      findUnique: (...a: unknown[]) => generationLogFindUnique(...a),
-      update: (...a: unknown[]) => generationLogUpdate(...a),
-    },
-  },
+// GenerationLog now lives in Supabase (Postgres) behind the service-role admin
+// client; the route talks to it through this data-access module. The credit
+// balance + atomic reserve/refund stay in Prisma/SQLite (services/credits).
+vi.mock('../services/generationLogStore', () => ({
+  createGenerationLog: (...a: unknown[]) => generationLogCreate(...a),
+  findGenerationLogById: (...a: unknown[]) => generationLogFindUnique(...a),
+  updateGenerationLog: (...a: unknown[]) => generationLogUpdate(...a),
 }))
 
 vi.mock('../services/credits', () => ({
@@ -116,10 +115,22 @@ describe('generation-log ownership + reservation (Priority 3)', () => {
     expect(res.status).toBe(201)
 
     expect(reserveCredits).toHaveBeenCalledWith(5, 'user-1')
-    const createArg = generationLogCreate.mock.calls[0]![0] as { data: Record<string, unknown> }
-    expect(createArg.data.userId).toBe('user-1')
-    expect(createArg.data.organisationId).toBe('org-1')
-    expect(createArg.data.creditsDeducted).toBe(true)
+    const createArg = generationLogCreate.mock.calls[0]![0] as Record<string, unknown>
+    expect(createArg.userId).toBe('user-1')
+    expect(createArg.organisationId).toBe('org-1')
+    expect(createArg.creditsDeducted).toBe(true)
+  })
+
+  it('keeps credits reserved (no refund) and returns 500 if the Supabase log insert fails', async () => {
+    // Faithful to the pre-migration behaviour: the reservation is the atomic
+    // money operation; a failed audit-log write does not auto-refund here.
+    reserveCredits.mockResolvedValue({ ok: true, balance: 95 })
+    generationLogCreate.mockRejectedValue(new Error('insert failed'))
+
+    const res = await postLog(validBody, { 'x-test-user': 'user-1' })
+    expect(res.status).toBe(500)
+    expect(reserveCredits).toHaveBeenCalledWith(5, 'user-1')
+    expect(refundCredits).not.toHaveBeenCalled()
   })
 
   it('returns 402 (and creates no log) when reservation fails', async () => {

@@ -1550,6 +1550,24 @@ export const uiTranslations = {
     fr: 'Enregistrez la réponse du patient — elle alimente directement l’évaluation des critères.',
     es: 'Registre la respuesta del paciente — se incorpora directamente a la evaluación de criterios.',
   },
+  butterflyInterviewIntro: {
+    de: 'Konkrete Fragen an die Patientin/den Patienten zu diesem Kriterium:',
+    en: 'Concrete questions to ask the patient about this criterion:',
+    fr: 'Questions concrètes à poser au patient concernant ce critère :',
+    es: 'Preguntas concretas para hacerle al paciente sobre este criterio:',
+  },
+  butterflyInterviewFallback1: {
+    de: 'Trifft das Folgende auf Sie zu: „{criterion}“? Bitte schildern Sie es mir mit Ihren eigenen Worten.',
+    en: 'Does the following apply to you: “{criterion}”? Please describe it in your own words.',
+    fr: 'Est-ce que ceci vous concerne : « {criterion} » ? Décrivez-le avec vos propres mots, s’il vous plaît.',
+    es: '¿Le ocurre lo siguiente: «{criterion}»? Descríbalo con sus propias palabras, por favor.',
+  },
+  butterflyInterviewFallback2: {
+    de: 'Haben Sie in letzter Zeit etwas in dieser Art bei sich bemerkt: „{criterion}“?',
+    en: 'Have you noticed anything like this recently: “{criterion}”?',
+    fr: 'Avez-vous remarqué quelque chose de ce genre récemment : « {criterion} » ?',
+    es: '¿Ha notado algo así últimamente: «{criterion}»?',
+  },
   butterflyQuestionYes: {
     de: 'Ja',
     en: 'Yes',

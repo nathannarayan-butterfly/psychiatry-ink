@@ -110,3 +110,59 @@ describe('POST /api/butterfly/extract', () => {
     expect(res.status).toBe(401)
   })
 })
+
+async function postInterview(body: unknown, user = 'user-1') {
+  return fetch(`${baseUrl}/api/butterfly/interview-questions`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-test-user': user },
+    body: JSON.stringify(body),
+  })
+}
+
+describe('POST /api/butterfly/interview-questions', () => {
+  it('returns concrete interview questions per criterion (mock mode, deterministic)', async () => {
+    const res = await postInterview({
+      caseId: 'case-1',
+      disorderId: 'alcohol_dependence',
+      disorderName: 'Alkoholabhängigkeit',
+      criteria: [
+        { id: 'f10_2.craving', text: 'Starkes Verlangen, Alkohol zu konsumieren', citation: 'ICD-10 F10.2 (a)' },
+        { id: 'f10_2.tolerance', text: 'Toleranzentwicklung' },
+      ],
+      language: 'de',
+    })
+    expect(res.status).toBe(200)
+    const data = (await res.json()) as {
+      mock: boolean
+      results: Array<{ criterionId: string; questions: string[] }>
+    }
+    expect(data.mock).toBe(true)
+    expect(data.results).toHaveLength(2)
+    expect(data.results.map((r) => r.criterionId).sort()).toEqual(['f10_2.craving', 'f10_2.tolerance'])
+    for (const result of data.results) {
+      expect(result.questions.length).toBeGreaterThanOrEqual(1)
+      expect(result.questions.length).toBeLessThanOrEqual(3)
+    }
+    // Patient-directed and grounded in the criterion text.
+    expect(data.results[0].questions[0]).toContain('Starkes Verlangen, Alkohol zu konsumieren')
+  })
+
+  it('requires caseId, disorderName and criteria', async () => {
+    const res = await postInterview({ caseId: 'case-1', language: 'de' })
+    expect(res.status).toBe(400)
+  })
+
+  it('rejects unauthenticated requests', async () => {
+    const res = await fetch(`${baseUrl}/api/butterfly/interview-questions`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        caseId: 'case-1',
+        disorderName: 'X',
+        criteria: [{ id: 'c1', text: 'Test' }],
+        language: 'de',
+      }),
+    })
+    expect(res.status).toBe(401)
+  })
+})

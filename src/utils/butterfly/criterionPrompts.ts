@@ -5,8 +5,10 @@
 
 import type { NotionPageId } from '../../components/notion/notionPages'
 import type { Disorder } from '../../data/diagnosisCriteria'
+import { formatCriterionCitation } from '../../data/diagnosisCriteria'
 import type { DisorderEvaluation } from '../diagnosisCriteria/evaluateDisorder'
 import type { ButterflyCriterionQuery } from '../../services/butterflyExtractApi'
+import type { InterviewQuestionCriterion } from '../../services/interviewQuestionsApi'
 import type { UiTranslationKey } from '../../data/uiTranslations'
 import type { ClinicalQuestion } from '../clinicalQuestions/types'
 import { clinicalQuestionId } from '../clinicalQuestions/ids'
@@ -29,6 +31,30 @@ export function selectUnresolvedCriteria(evaluation: DisorderEvaluation): Butter
     if (seen.has(result.criterionId)) continue
     seen.add(result.criterionId)
     out.push({ id: result.criterionId, text: result.text_de })
+  }
+  return out
+}
+
+/**
+ * Unresolved criteria packaged for interview-question generation — adds the
+ * language-neutral citation string for prompt grounding. Carries only generic
+ * (non-PHI) reference content.
+ */
+export function selectUnresolvedInterviewCriteria(
+  evaluation: DisorderEvaluation,
+): InterviewQuestionCriterion[] {
+  const seen = new Set<string>()
+  const out: InterviewQuestionCriterion[] = []
+  for (const result of evaluation.perCriterion) {
+    if (result.status !== 'unknown') continue
+    if (seen.has(result.criterionId)) continue
+    seen.add(result.criterionId)
+    const citation = formatCriterionCitation(result.citation)
+    out.push({
+      id: result.criterionId,
+      text: result.text_de,
+      ...(citation ? { citation } : {}),
+    })
   }
   return out
 }
@@ -64,7 +90,26 @@ export interface ButterflyCriterionQuestion extends ClinicalQuestion {
   disorderId: string
   /** The criterion id this question resolves (mirror of `targetId`). */
   criterionId: string
+  /**
+   * 1–3 CONCRETE, patient-directed interview questions a clinician can ask the
+   * patient verbatim to elicit evidence for this criterion. The patient's answer
+   * (Ja/Nein/Unklar) maps back to the single criterion via `targetId`. `question`
+   * mirrors the first entry for {@link ClinicalQuestion} compatibility.
+   */
+  interviewQuestions: string[]
 }
+
+/**
+ * Resolve the concrete interview questions for a criterion from the
+ * (LLM-generated, cached) store. Returns `undefined` when none are cached yet,
+ * in which case {@link buildCriterionQuestions} uses a deterministic template.
+ */
+export type InterviewQuestionResolver = (input: {
+  disorderId: string
+  version: number
+  criterionId: string
+  criterionText: string
+}) => string[] | undefined
 
 /** One clinician-entered diagnosis plus its deterministic evaluation. */
 export interface EnteredDiagnosisEvaluation {
@@ -83,23 +128,43 @@ function applyTemplate(template: string, values: { criterion: string; diagnosis:
 }
 
 /**
+ * Deterministic, templated patient-interview questions derived from the
+ * criterion text. Used as the instant client-side fallback before the LLM
+ * resolves (and offline). Licensing-safe, original wording — mirrors the
+ * server-side mock fallback so the panel is always concrete.
+ */
+export function buildFallbackInterviewQuestions(
+  criterionText: string,
+  translate: (key: UiTranslationKey) => string,
+): string[] {
+  const clean = criterionText.trim().replace(/[.;]+$/, '')
+  const values = { criterion: clean, diagnosis: '' }
+  return [
+    applyTemplate(translate('butterflyInterviewFallback1'), values),
+    applyTemplate(translate('butterflyInterviewFallback2'), values),
+  ]
+}
+
+/**
  * Derive the "suggested questions" STRICTLY from the deterministic criteria-gap
  * analysis: for each clinician-entered diagnosis, every criterion still resolving
- * to `unknown` becomes one targeted question ("to assess criterion X for
- * [diagnosis] …"). Localized through the passed `translate` fn (German under the
- * German locale). Only clinician-entered diagnoses are considered — never
- * arbitrary differentials — and nothing generic/open-ended is produced.
+ * to `unknown` yields a group of 1–3 CONCRETE, patient-directed interview
+ * questions the clinician can ask the patient to elicit evidence for THAT
+ * criterion. The questions come from the LLM (resolved via `resolveInterview`)
+ * and fall back to a deterministic German template until/if the LLM resolves.
+ * Localized through the passed `translate` fn. Only clinician-entered diagnoses
+ * are considered — never arbitrary differentials.
  *
  * Resolved criteria (met/not_met, incl. clinician-attested) are excluded, so an
- * answered question disappears on the next re-evaluation — that is the feedback
- * loop's "drops off the list" behaviour.
+ * answered criterion's questions disappear on the next re-evaluation — that is
+ * the feedback loop's "drops off the list" behaviour.
  */
 export function buildCriterionQuestions(
   diagnoses: EnteredDiagnosisEvaluation[],
   translate: (key: UiTranslationKey) => string,
+  resolveInterview?: InterviewQuestionResolver,
   limit: number = MAX_CRITERION_QUESTIONS,
 ): ButterflyCriterionQuestion[] {
-  const promptTemplate = translate('butterflyQuestionPrompt')
   const rationaleTemplate = translate('butterflyQuestionRationale')
   const out: ButterflyCriterionQuestion[] = []
   const seen = new Set<string>()
@@ -112,13 +177,24 @@ export function buildCriterionQuestions(
       seen.add(result.criterionId)
       const id = clinicalQuestionId('diagnosis_criteria', result.criterionId)
       const values = { criterion: result.text_de, diagnosis: diagnosisLabel }
+      const resolved = resolveInterview?.({
+        disorderId: disorder.id,
+        version: disorder.version,
+        criterionId: result.criterionId,
+        criterionText: result.text_de,
+      })
+      const interviewQuestions =
+        resolved && resolved.length > 0
+          ? resolved.slice(0, 3)
+          : buildFallbackInterviewQuestions(result.text_de, translate)
       out.push({
         id,
         sectionId: 'diagnosis_criteria',
         targetId: result.criterionId,
         disorderId: disorder.id,
         criterionId: result.criterionId,
-        question: applyTemplate(promptTemplate, values),
+        question: interviewQuestions[0],
+        interviewQuestions,
         rationale: applyTemplate(rationaleTemplate, values),
         priority: 'medium',
         deepLinkPageId: resolveDeepLinkPage(disorder, result.criterionId),

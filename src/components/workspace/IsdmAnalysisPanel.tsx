@@ -5,7 +5,12 @@ import type { EnglishVariant, UiLanguage } from '../../types/settings'
 import type { IsdmClinicalAnalysis } from '../../types/isdm'
 import { loadIsdmAnalysis } from '../../utils/isdm/storage'
 import { scheduleIsdmRebuild } from '../../utils/isdm'
-import { formatCriterionCitation, matchDisorderToCodes, type Disorder } from '../../data/diagnosisCriteria'
+import {
+  formatCriterionCitation,
+  getLocalizedDisorder,
+  matchDisorderToCodes,
+  type Disorder,
+} from '../../data/diagnosisCriteria'
 import {
   buildDisorderAdvice,
   buildEvaluationContext,
@@ -24,10 +29,19 @@ import {
 } from '../../utils/butterfly/aiSuggestions'
 import {
   selectUnresolvedCriteria,
+  selectUnresolvedInterviewCriteria,
   resolveDeepLinkPage,
   buildCriterionQuestions,
   type ButterflyCriterionQuestion,
+  type InterviewQuestionResolver,
 } from '../../utils/butterfly/criterionPrompts'
+import {
+  loadInterviewQuestionCache,
+  getCachedInterviewQuestions,
+  saveInterviewQuestions,
+  type InterviewQuestionCacheState,
+} from '../../utils/butterfly/interviewQuestionsCache'
+import { generateInterviewQuestions } from '../../services/interviewQuestionsApi'
 import {
   clinicalQuestionId,
   loadClinicalQuestionNoteState,
@@ -105,7 +119,11 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
   const [refreshing, setRefreshing] = useState(false)
   const [pendingDisorders, setPendingDisorders] = useState<ReadonlySet<string>>(() => new Set())
   const [aiErrors, setAiErrors] = useState<Record<string, boolean>>({})
+  const [interviewCache, setInterviewCache] = useState<InterviewQuestionCacheState>(() =>
+    loadInterviewQuestionCache(),
+  )
   const autoAttempted = useRef<Set<string>>(new Set())
+  const interviewAttempted = useRef<Set<string>>(new Set())
 
   const refresh = useCallback(() => {
     setAnalysis(loadIsdmAnalysis(caseId))
@@ -142,11 +160,15 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
     for (const entry of enteredDiagnoses) {
       const code = entry.icd10.code.trim() || entry.icd11.code.trim()
       const label = entry.icd10.label.trim() || entry.icd10.code.trim() || entry.icd11.label.trim() || code
-      const disorder = matchDisorderToCodes(entry.icd10.code, entry.icd11.code)
-      if (!disorder) {
+      const sourceDisorder = matchDisorderToCodes(entry.icd10.code, entry.icd11.code)
+      if (!sourceDisorder) {
         out.push({ key: entry.id, label, code, available: false })
         continue
       }
+      // Localize the matched disorder to the active UI language (DE fallback per
+      // field) BEFORE evaluation, so per-criterion text, differentials and the
+      // name flow through localized everywhere downstream.
+      const disorder = getLocalizedDisorder(sourceDisorder, language)
       if (seenDisorders.has(disorder.id)) continue
       seenDisorders.add(disorder.id)
       out.push({ key: entry.id, label, code, available: true, disorder, evaluation: evaluateDisorder(disorder, ctx) })
@@ -156,11 +178,21 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
       return r.evaluation.verdict === 'criteria_met' ? 0 : r.evaluation.verdict === 'not_met' ? 1 : 2
     }
     return out.sort((a, b) => rank(a) - rank(b))
-  }, [analysis, attestations, enteredDiagnoses])
+  }, [analysis, attestations, enteredDiagnoses, language])
+
+  // Resolve cached, LLM-generated concrete interview questions for a criterion
+  // (language- and version-scoped). Returns undefined until the LLM resolves, in
+  // which case the builder uses a deterministic German template.
+  const resolveInterview = useCallback<InterviewQuestionResolver>(
+    ({ disorderId, version, criterionId }) =>
+      getCachedInterviewQuestions(interviewCache, disorderId, version, criterionId, language),
+    [interviewCache, language],
+  )
 
   // "Vorgeschlagene Fragen" — derived STRICTLY from the still-`unknown` criteria
-  // of the clinician-entered diagnoses (no generic/open-ended prompts), localized
-  // to the active UI language.
+  // of the clinician-entered diagnoses. Each criterion yields concrete,
+  // patient-directed interview questions (LLM-generated, cached), localized to
+  // the active UI language.
   const criterionQuestions = useMemo(
     () =>
       buildCriterionQuestions(
@@ -170,8 +202,9 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
             : [],
         ),
         t,
+        resolveInterview,
       ),
-    [results, t],
+    [results, t, resolveInterview],
   )
 
   const handleAttest = useCallback(
@@ -331,6 +364,54 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
     }
   }, [results, caseId, aiSuggestions, runExtraction])
 
+  // Background trigger: generate concrete interview questions for any still-open
+  // criteria that have none cached for the active language/version. The request
+  // carries ONLY generic criterion reference metadata (no patient PHI); in mock
+  // mode the server returns deterministic templates. Once per disorder/language
+  // per mount.
+  useEffect(() => {
+    for (const result of results) {
+      if (!result.available || !result.disorder || !result.evaluation) continue
+      const disorder = result.disorder
+      const version = disorder.version
+      const key = `${disorder.id}:v${version}:${language}`
+      if (interviewAttempted.current.has(key)) continue
+      const unresolved = selectUnresolvedInterviewCriteria(result.evaluation)
+      const missing = unresolved.filter(
+        (criterion) =>
+          !getCachedInterviewQuestions(interviewCache, disorder.id, version, criterion.id, language),
+      )
+      if (missing.length === 0) {
+        if (unresolved.length === 0) interviewAttempted.current.add(key)
+        continue
+      }
+      interviewAttempted.current.add(key)
+      void (async () => {
+        try {
+          const response = await generateInterviewQuestions({
+            caseId,
+            disorderId: disorder.id,
+            disorderName: disorder.name_de,
+            criteria: missing,
+            language,
+          })
+          saveInterviewQuestions(
+            disorder.id,
+            version,
+            language,
+            response.model.modelId,
+            response.results,
+          )
+          setInterviewCache(loadInterviewQuestionCache())
+        } catch {
+          // Non-fatal: the panel keeps showing the deterministic template
+          // questions. Allow a later re-attempt on the next mount.
+          interviewAttempted.current.delete(key)
+        }
+      })()
+    }
+  }, [results, caseId, language, interviewCache])
+
   const disclaimer = getIsdmSafetyDisclaimer(language, englishVariant as EnglishVariant)
 
   if (!hasDiagnoses) {
@@ -438,7 +519,14 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
               const jumpPage = question.deepLinkPageId
               return (
                 <li key={question.id} className={`butterfly-gap butterfly-gap--${question.priority}`}>
-                  <p className="butterfly-gap__question">{question.question}</p>
+                  <p className="butterfly-gap__intro">{t('butterflyInterviewIntro')}</p>
+                  <ul className="butterfly-gap__questions">
+                    {question.interviewQuestions.map((interviewQuestion, index) => (
+                      <li key={`${question.id}#${index}`} className="butterfly-gap__question">
+                        {interviewQuestion}
+                      </li>
+                    ))}
+                  </ul>
                   <p className="butterfly-gap__rationale">{question.rationale}</p>
                   <div className="butterfly-gap__answer">
                     {question.resolvable ? (

@@ -111,3 +111,80 @@ describe('KB Admin API gating (P0-2)', () => {
     expect(res.status).toBe(503)
   })
 })
+
+async function postDrugs(headers: Record<string, string> = {}, body: unknown = { drugs: [] }) {
+  return fetch(`${baseUrl}/api/kb-admin/drugs`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', ...headers },
+    body: JSON.stringify(body),
+  })
+}
+
+async function postPreparations(
+  headers: Record<string, string> = {},
+  body: unknown = { preparations: [] },
+) {
+  return fetch(`${baseUrl}/api/kb-admin/preparations`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', ...headers },
+    body: JSON.stringify(body),
+  })
+}
+
+/**
+ * Coverage for the legacy JSONB KB write endpoints that replace direct browser
+ * writes the secure RLS now blocks. These are gated by KB-editor permission but
+ * NOT by the `ENABLE_KB_ADMIN_API` console flag, so they must enforce auth even
+ * when that flag is unset.
+ */
+describe('KB legacy JSONB write endpoints (RLS reroute)', () => {
+  it('is reachable without ENABLE_KB_ADMIN_API (401, not 404) when unauthenticated', async () => {
+    makeAuthConfigured()
+    const drugRes = await postDrugs()
+    const prepRes = await postPreparations()
+    expect(drugRes.status).toBe(401)
+    expect(prepRes.status).toBe(401)
+  })
+
+  it('rejects authenticated non-editors with 403', async () => {
+    process.env.KB_ADMIN_USER_IDS = 'admin-1'
+    makeAuthConfigured()
+    const drugRes = await postDrugs({ 'x-test-user': 'random-user' })
+    const prepRes = await postPreparations({ 'x-test-user': 'random-user' })
+    expect(drugRes.status).toBe(403)
+    expect(prepRes.status).toBe(403)
+  })
+
+  it('returns 503 for KB editors when the service-role key is not configured', async () => {
+    process.env.KB_ADMIN_USER_IDS = 'admin-1'
+    makeAuthConfigured()
+    // SUPABASE_SERVICE_ROLE_KEY intentionally unset.
+    const drugRes = await postDrugs({ 'x-test-user': 'admin-1' }, { drugs: [{ id: 'd1' }] })
+    expect(drugRes.status).toBe(503)
+  })
+
+  it('validates the body for authorized KB editors (400 on malformed payload)', async () => {
+    process.env.KB_ADMIN_USER_IDS = 'admin-1'
+    makeAuthConfigured()
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'sb_secret_testkey'
+    const missingArray = await postDrugs({ 'x-test-user': 'admin-1' }, { drugs: 'nope' })
+    const missingId = await postDrugs({ 'x-test-user': 'admin-1' }, { drugs: [{ generic: 'x' }] })
+    const prepMissingId = await postPreparations(
+      { 'x-test-user': 'admin-1' },
+      { preparations: [{ tradeName: 'x' }] },
+    )
+    expect(missingArray.status).toBe(400)
+    expect(missingId.status).toBe(400)
+    expect(prepMissingId.status).toBe(400)
+  })
+
+  it('rejects deletes from non-editors with 403', async () => {
+    process.env.KB_ADMIN_USER_IDS = 'admin-1'
+    makeAuthConfigured()
+    const res = await fetch(`${baseUrl}/api/kb-admin/drugs/some-id`, {
+      method: 'DELETE',
+      headers: { 'x-test-user': 'random-user' },
+    })
+    expect(res.status).toBe(403)
+  })
+})

@@ -37,13 +37,10 @@ export function CaseSidebarContent({
   workspaceSidebar,
 }: CaseSidebarContentProps) {
   switch (activeTab) {
+    // Übersicht has no quick-nav: documentation is started from the Workspace
+    // context (its sidebar fallback and the workspace command/context menu).
     case 'overview':
-      return (
-        <CaseSidebarQuickNav
-          onOpenWorkspacePage={onOpenWorkspacePage}
-          onOpenTemplateFromPatient={onOpenTemplateFromPatient}
-        />
-      )
+      return null
 
     case 'dokumente':
       return <DokumenteSectionNav />

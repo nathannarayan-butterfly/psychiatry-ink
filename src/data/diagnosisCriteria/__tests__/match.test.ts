@@ -23,8 +23,11 @@ describe('matchDisorderToCodes', () => {
   })
 
   it('returns undefined for a diagnosis with no authored criteria set', () => {
-    expect(matchDisorderToCodes('F60.3')).toBeUndefined()
-    expect(matchDisorderToCodes('F90.0')).toBeUndefined()
+    // F99 (unspecified mental disorder) is intentionally not operationalized, and
+    // somatic codes (epilepsy, diabetes) lie entirely outside the criteria pack.
+    expect(matchDisorderToCodes('F99')).toBeUndefined()
+    expect(matchDisorderToCodes('G40.9')).toBeUndefined()
+    expect(matchDisorderToCodes('E11.9')).toBeUndefined()
     expect(matchDisorderToCodes('')).toBeUndefined()
   })
 
