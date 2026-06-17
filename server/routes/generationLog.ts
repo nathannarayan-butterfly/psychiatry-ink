@@ -3,8 +3,9 @@ import { Router as createRouter } from 'express'
 import { prisma } from '../db'
 import type { AiModelTier } from '../modelTierMapping'
 import { resolveModelForTier } from '../modelTierMapping'
-import { canAfford, deductCredits } from '../services/credits'
-import { resolveAccountId } from '../middleware/auth'
+import { getCreditBalance, refundCredits, reserveCredits } from '../services/credits'
+import { getCurrentOrganisation, ORG_HEADER } from '../services/orgPermissions'
+import { requireRouteAuth } from '../utils/requireRouteAuth'
 import { pathParam } from '../utils/expressParams'
 
 export type GenerationLogStatus = 'started' | 'completed' | 'failed'
@@ -35,8 +36,10 @@ export const generationLogRouter: Router = createRouter()
 
 generationLogRouter.post('/', async (req: Request, res: Response) => {
   try {
+    const userId = requireRouteAuth(req, res)
+    if (!userId) return
+
     const body = req.body as CreateGenerationLogBody
-    const userId = resolveAccountId(req)
 
     if (!body.documentType || !body.aiMode || body.inputTextLength == null) {
       res.status(400).json({ error: 'Missing required fields' })
@@ -44,15 +47,23 @@ generationLogRouter.post('/', async (req: Request, res: Response) => {
     }
 
     const estimatedCredits = body.estimatedCredits ?? 0
-    if (!(await canAfford(estimatedCredits, userId))) {
+
+    // Reserve credits ATOMICALLY up front. A conditional decrement closes the
+    // check-then-deduct race that previously let concurrent generations both
+    // pass `canAfford` and overspend. Credits are refunded on failure (PATCH).
+    const reservation = await reserveCredits(estimatedCredits, userId)
+    if (!reservation.ok) {
       res.status(402).json({ error: 'Insufficient credits' })
       return
     }
 
+    const org = await getCurrentOrganisation(userId, req.headers[ORG_HEADER])
     const resolvedModel = body.tier ? resolveModelForTier(body.tier) : null
 
     const entry = await prisma.generationLog.create({
       data: {
+        userId,
+        organisationId: org?.id ?? null,
         documentType: body.documentType,
         aiMode: body.aiMode,
         inputTextLength: body.inputTextLength,
@@ -64,10 +75,11 @@ generationLogRouter.post('/', async (req: Request, res: Response) => {
         scope: body.scope,
         schemaId: body.schemaId,
         status: 'started',
+        creditsDeducted: estimatedCredits > 0,
       },
     })
 
-    res.status(201).json({ id: entry.id })
+    res.status(201).json({ id: entry.id, balance: reservation.balance })
   } catch (error) {
     console.error('[generation-log] create failed:', error)
     res.status(500).json({ error: 'Failed to create log' })
@@ -76,9 +88,11 @@ generationLogRouter.post('/', async (req: Request, res: Response) => {
 
 generationLogRouter.patch('/:id', async (req: Request, res: Response) => {
   try {
+    const userId = requireRouteAuth(req, res)
+    if (!userId) return
+
     const id = pathParam(req, 'id')
     const body = req.body as UpdateGenerationLogBody
-    const userId = resolveAccountId(req)
 
     if (!body.status || (body.status !== 'completed' && body.status !== 'failed')) {
       res.status(400).json({ error: 'Invalid status' })
@@ -91,10 +105,21 @@ generationLogRouter.patch('/:id', async (req: Request, res: Response) => {
       return
     }
 
+    // Ownership: a log can only be finalised by the account that created it, so
+    // one user can never deduct/refund credits against another user's log.
+    if (existing.userId && existing.userId !== userId) {
+      res.status(403).json({ error: 'Zugriff verweigert' })
+      return
+    }
+
     let balance: number | undefined
 
-    if (body.status === 'completed' && !existing.creditsDeducted) {
-      balance = await deductCredits(existing.estimatedCredits, userId)
+    // Credits were reserved at creation; release them back if the generation
+    // ultimately failed so callers are only charged for successful work.
+    if (body.status === 'failed' && existing.creditsDeducted) {
+      balance = await refundCredits(existing.estimatedCredits, existing.userId ?? userId)
+    } else {
+      balance = await getCreditBalance(existing.userId ?? userId)
     }
 
     const entry = await prisma.generationLog.update({
@@ -106,7 +131,7 @@ generationLogRouter.patch('/:id', async (req: Request, res: Response) => {
         provider: body.provider ?? existing.provider,
         model: body.model ?? existing.model,
         completedAt: new Date(),
-        creditsDeducted: body.status === 'completed' ? true : existing.creditsDeducted,
+        creditsDeducted: body.status === 'failed' ? false : existing.creditsDeducted,
       },
     })
 

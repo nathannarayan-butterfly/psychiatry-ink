@@ -134,4 +134,6 @@ describe('db:check migration authority (P0-3)', () => {
     expect(status).toBe(0)
     expect(output).toContain('allowed via ALLOW_PRISMA_PROD_MIGRATE')
   })
-})
+  // Each case spawns `tsx` + `prisma validate` end-to-end (~3s alone), which can
+  // exceed the 5s default under parallel-suite CPU contention. Give them headroom.
+}, 30000)

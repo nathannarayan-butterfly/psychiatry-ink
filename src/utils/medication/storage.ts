@@ -4,11 +4,20 @@ import {
   MEDICATION_PLAN_STATE_VERSION,
 } from '../../types/medicationPlan'
 import { getActiveCaseId } from '../caseContext'
+import { readOrMigrateEncryptedJson, writeEncryptedJson } from '../encryptedLocalStore'
 import { scheduleMedicationStateImprints } from './imprint'
 import { ensureMedicationPlanState } from './planOps'
 
-/** In-memory session cache — backed by localStorage for crash/close durability. */
+/** In-memory session cache — backed by encrypted localStorage for crash/close durability. */
 const planCache = new Map<string, MedicationPlanState>()
+
+/**
+ * Synchronous decrypted mirror of the encrypted localStorage durability copy. Because
+ * Web Crypto is async, `readLocalStorage`/`writeLocalStorage` operate on this shadow
+ * (keeping the existing synchronous merge logic intact) while the on-disk bytes are
+ * ciphertext. The shadow is filled by `hydrateMedicationPlanFromEncryptedLocal` on load.
+ */
+const localShadow = new Map<string, MedicationPlanState>()
 
 const LS_PREFIX = 'psychiatry-ink:medication-plan:'
 
@@ -17,20 +26,31 @@ function lsKey(caseId: string): string {
 }
 
 function writeLocalStorage(caseId: string, state: MedicationPlanState): void {
-  try {
-    localStorage.setItem(lsKey(caseId), JSON.stringify(state))
-  } catch {
-    // quota exceeded or private browsing — ignore
-  }
+  localShadow.set(caseId, state)
+  // Persist the durability copy encrypted-at-rest (async, best-effort).
+  void writeEncryptedJson(lsKey(caseId), state)
 }
 
 function readLocalStorage(caseId: string): MedicationPlanState | null {
+  return localShadow.has(caseId) ? localShadow.get(caseId)! : null
+}
+
+/**
+ * Decrypt (and, on first run, migrate any legacy plaintext) the durability copy into the
+ * synchronous shadow + in-memory cache. Must run before the workspace vault applies its
+ * snapshot so the newer-wins merge can compare against the locally-persisted state.
+ */
+export async function hydrateMedicationPlanFromEncryptedLocal(caseId?: string): Promise<void> {
+  const resolved = resolveCaseId(caseId)
   try {
-    const raw = localStorage.getItem(lsKey(caseId))
-    if (!raw) return null
-    return JSON.parse(raw) as MedicationPlanState
+    const persisted = await readOrMigrateEncryptedJson<MedicationPlanState>(lsKey(resolved))
+    if (!persisted) return
+    const normalized = ensureMedicationPlanState(persisted, resolved)
+    localShadow.set(resolved, normalized)
+    if (!planCache.has(resolved)) planCache.set(resolved, normalized)
+    notifyListeners(resolved)
   } catch {
-    return null
+    // Hydration is best-effort; the vault remains the authoritative source.
   }
 }
 

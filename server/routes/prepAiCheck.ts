@@ -10,6 +10,7 @@ import {
 } from '../utils/caseAiAccessGuard'
 import { requireRouteAuth } from '../utils/requireRouteAuth'
 import { requireClinicalLanguage } from '../utils/resolveClinicalLanguage'
+import { resolveUsageContextFromRequest } from '../ai/usage/resolveUsageContext'
 import type { PrepAiCheckRequest, PrepAiCheckResponse } from '../../src/types/prepAiCheck'
 import type { PrescribingCountryCode } from '../../src/types/knowledgeBase'
 
@@ -100,6 +101,13 @@ prepAiCheckRouter.post('/', async (req: Request, res: Response) => {
           }
         : undefined
 
+    const userId = resolveAccountId(req)
+    const usageContext = await resolveUsageContextFromRequest(req, userId, {
+      caseId,
+      featureKey: 'prep_ai_check',
+      metadata: { route: 'medication/prep-ai-check', tier, country },
+    })
+
     const result = await assessPreparationAvailabilityWithAi({
       substance,
       genericName,
@@ -108,9 +116,9 @@ prepAiCheckRouter.post('/', async (req: Request, res: Response) => {
       kbPreparations: sanitizeKbPreparations(body.kbPreparations),
       tier,
       language,
+      usageContext,
     })
 
-    const userId = resolveAccountId(req)
     if (userId && userId !== 'default') {
       void recordAiGenerationUsed(req, userId, {
         caseId,

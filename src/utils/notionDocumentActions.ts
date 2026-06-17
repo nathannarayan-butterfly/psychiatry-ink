@@ -1,6 +1,7 @@
 import type { DocumentSection } from '../types'
 import { caseStorageKey, DEFAULT_CASE_ID, getActiveCaseId } from './caseContext'
 import { scheduleDocumentSnapshotImprints } from './clinicalImprint'
+import { readOrMigrateEncryptedJson, writeEncryptedJson } from './encryptedLocalStore'
 import { getInitialEditorContent } from './workspaceComponents'
 
 const SNAPSHOT_KEY_PREFIX = 'psychiatry-ink:notion-document'
@@ -12,6 +13,14 @@ export interface NotionDocumentSnapshot {
   savedAt: string
 }
 
+/**
+ * Synchronous decrypted mirror of the encrypted-at-rest localStorage durability copy, keyed
+ * by the full storage key. Document section text is the largest PHI exposure, so the on-disk
+ * bytes are ciphertext while reads stay synchronous against this shadow. Filled by
+ * `hydrateNotionDocumentsFromEncryptedLocal` (vault mount) and by `saveNotionDocumentSnapshot`.
+ */
+const localShadow = new Map<string, NotionDocumentSnapshot>()
+
 export function notionDocumentSnapshotKey(documentTypeId: string, caseId?: string): string {
   return caseStorageKey(`${SNAPSHOT_KEY_PREFIX}:${documentTypeId}`, caseId)
 }
@@ -21,14 +30,10 @@ export function saveNotionDocumentSnapshot(
   caseId?: string,
 ): void {
   const storageCaseId = caseId ?? getActiveCaseId()
-  try {
-    localStorage.setItem(
-      notionDocumentSnapshotKey(snapshot.documentTypeId, caseId),
-      JSON.stringify(snapshot),
-    )
-  } catch {
-    // ignore quota errors
-  }
+  const key = notionDocumentSnapshotKey(snapshot.documentTypeId, caseId)
+  localShadow.set(key, snapshot)
+  // Persist the durability copy encrypted-at-rest (async, best-effort).
+  void writeEncryptedJson(key, snapshot)
   scheduleDocumentSnapshotImprints(storageCaseId, snapshot)
 }
 
@@ -37,15 +42,60 @@ function legacyDocumentSnapshotKey(documentTypeId: string): string {
 }
 
 export function loadNotionDocumentSnapshot(documentTypeId: string, caseId?: string): NotionDocumentSnapshot | null {
+  const snapshot = localShadow.get(notionDocumentSnapshotKey(documentTypeId, caseId))
+  if (snapshot) return snapshot
+  if ((caseId ?? getActiveCaseId()) === DEFAULT_CASE_ID) {
+    return localShadow.get(legacyDocumentSnapshotKey(documentTypeId)) ?? null
+  }
+  return null
+}
+
+/** Drop a snapshot from the shadow + ciphertext store (used when the vault has none). */
+export function removeNotionDocumentSnapshot(documentTypeId: string, caseId?: string): void {
+  const key = notionDocumentSnapshotKey(documentTypeId, caseId)
+  localShadow.delete(key)
   try {
-    let raw = localStorage.getItem(notionDocumentSnapshotKey(documentTypeId, caseId))
-    if (!raw && (caseId ?? getActiveCaseId()) === DEFAULT_CASE_ID) {
-      raw = localStorage.getItem(legacyDocumentSnapshotKey(documentTypeId))
-    }
-    if (!raw) return null
-    return JSON.parse(raw) as NotionDocumentSnapshot
+    localStorage.removeItem(key)
   } catch {
-    return null
+    // ignore
+  }
+}
+
+/** All localStorage snapshot keys belonging to `caseId` (plus legacy un-scoped keys for default). */
+function collectSnapshotKeys(caseId: string): string[] {
+  const keys = new Set<string>()
+  const scopedSuffix = `::${caseId}`
+  try {
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const k = localStorage.key(i)
+      if (!k || !k.startsWith(`${SNAPSHOT_KEY_PREFIX}:`)) continue
+      if (k.endsWith(scopedSuffix)) {
+        keys.add(k)
+      } else if (caseId === DEFAULT_CASE_ID && !k.includes('::')) {
+        // Legacy snapshot written before case-scoped keys existed.
+        keys.add(k)
+      }
+    }
+  } catch {
+    // localStorage unavailable — nothing to hydrate.
+  }
+  return [...keys]
+}
+
+/**
+ * Decrypt (and, on first run, migrate any legacy plaintext) every persisted document snapshot
+ * for `caseId` into the synchronous shadow. Wired into `hydrateLocalClinicalCaches` so it runs
+ * before the workspace vault applies its snapshot.
+ */
+export async function hydrateNotionDocumentsFromEncryptedLocal(caseId?: string): Promise<void> {
+  const resolved = caseId ?? getActiveCaseId()
+  try {
+    for (const key of collectSnapshotKeys(resolved)) {
+      const persisted = await readOrMigrateEncryptedJson<NotionDocumentSnapshot>(key)
+      if (persisted && !localShadow.has(key)) localShadow.set(key, persisted)
+    }
+  } catch {
+    // Hydration is best-effort; the vault remains the authoritative source.
   }
 }
 

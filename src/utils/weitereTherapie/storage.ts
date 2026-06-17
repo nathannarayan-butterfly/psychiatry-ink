@@ -10,9 +10,17 @@
 import type { WeitereTherapie } from '../../types/weitereTherapie'
 import { ensureWeitereTherapien } from '../../types/weitereTherapie'
 import { getActiveCaseId } from '../caseContext'
+import { readOrMigrateEncryptedJson, writeEncryptedJson } from '../encryptedLocalStore'
 
-/** In-memory session cache — backed by localStorage for crash/close durability. */
+/** In-memory session cache — backed by encrypted localStorage for crash/close durability. */
 const cache = new Map<string, WeitereTherapie[]>()
+
+/**
+ * Synchronous decrypted mirror of the encrypted localStorage durability copy (see the
+ * matching note in `medication/storage.ts`). Filled by
+ * `hydrateWeitereTherapieFromEncryptedLocal` on load.
+ */
+const localShadow = new Map<string, WeitereTherapie[]>()
 
 const LS_PREFIX = 'psychiatry-ink:weitere-therapie:'
 
@@ -21,20 +29,29 @@ function lsKey(caseId: string): string {
 }
 
 function writeLocalStorage(caseId: string, entries: WeitereTherapie[]): void {
-  try {
-    localStorage.setItem(lsKey(caseId), JSON.stringify(entries))
-  } catch {
-    // quota exceeded or private browsing — ignore
-  }
+  localShadow.set(caseId, entries)
+  void writeEncryptedJson(lsKey(caseId), entries)
 }
 
 function readLocalStorage(caseId: string): WeitereTherapie[] | null {
+  return localShadow.has(caseId) ? localShadow.get(caseId)! : null
+}
+
+/**
+ * Decrypt (and, on first run, migrate any legacy plaintext) the durability copy into the
+ * synchronous shadow + in-memory cache before the workspace vault applies its snapshot.
+ */
+export async function hydrateWeitereTherapieFromEncryptedLocal(caseId?: string): Promise<void> {
+  const resolved = resolveCaseId(caseId)
   try {
-    const raw = localStorage.getItem(lsKey(caseId))
-    if (!raw) return null
-    return ensureWeitereTherapien(JSON.parse(raw))
+    const persisted = await readOrMigrateEncryptedJson<WeitereTherapie[]>(lsKey(resolved))
+    if (!persisted) return
+    const normalized = ensureWeitereTherapien(persisted)
+    localShadow.set(resolved, normalized)
+    if (!cache.has(resolved)) cache.set(resolved, normalized)
+    notifyListeners(resolved)
   } catch {
-    return null
+    // Hydration is best-effort; the vault remains the authoritative source.
   }
 }
 

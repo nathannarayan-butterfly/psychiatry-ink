@@ -5,10 +5,18 @@ import {
   PSYCHOTHERAPY_PLAN_VERSION,
 } from '../../types/psychotherapy'
 import { getActiveCaseId } from '../caseContext'
+import { readOrMigrateEncryptedJson, writeEncryptedJson } from '../encryptedLocalStore'
 import { schedulePsychotherapyPlanImprints } from './imprint'
 
-/** In-memory session cache — backed by localStorage for crash/close durability. */
+/** In-memory session cache — backed by encrypted localStorage for crash/close durability. */
 const planCache = new Map<string, PsychotherapyPlan>()
+
+/**
+ * Synchronous decrypted mirror of the encrypted localStorage durability copy (see the
+ * matching note in `medication/storage.ts`). Filled by
+ * `hydratePsychotherapyPlanFromEncryptedLocal` on load.
+ */
+const localShadow = new Map<string, PsychotherapyPlan>()
 
 const LS_PREFIX = 'psychiatry-ink:psychotherapy-plan:'
 
@@ -17,20 +25,29 @@ function lsKey(caseId: string): string {
 }
 
 function writeLocalStorage(caseId: string, plan: PsychotherapyPlan): void {
-  try {
-    localStorage.setItem(lsKey(caseId), JSON.stringify(plan))
-  } catch {
-    // quota exceeded or private browsing — ignore
-  }
+  localShadow.set(caseId, plan)
+  void writeEncryptedJson(lsKey(caseId), plan)
 }
 
 function readLocalStorage(caseId: string): PsychotherapyPlan | null {
+  return localShadow.has(caseId) ? localShadow.get(caseId)! : null
+}
+
+/**
+ * Decrypt (and, on first run, migrate any legacy plaintext) the durability copy into the
+ * synchronous shadow + in-memory cache before the workspace vault applies its snapshot.
+ */
+export async function hydratePsychotherapyPlanFromEncryptedLocal(caseId?: string): Promise<void> {
+  const resolved = resolveCaseId(caseId)
   try {
-    const raw = localStorage.getItem(lsKey(caseId))
-    if (!raw) return null
-    return JSON.parse(raw) as PsychotherapyPlan
+    const persisted = await readOrMigrateEncryptedJson<PsychotherapyPlan>(lsKey(resolved))
+    if (!persisted) return
+    const normalized = ensurePsychotherapyPlan(persisted)
+    localShadow.set(resolved, normalized)
+    if (!planCache.has(resolved)) planCache.set(resolved, normalized)
+    notifyListeners(resolved)
   } catch {
-    return null
+    // Hydration is best-effort; the vault remains the authoritative source.
   }
 }
 

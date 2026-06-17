@@ -11,10 +11,15 @@ datasource db {
 }
 
 /// Metadata-only AI generation usage log (no clinical text).
+/// `userId`/`organisationId` bind a log to its creator so credits are reserved
+/// and deducted against the correct owner and PATCH cannot mutate another
+/// account's log. Nullable for backwards compatibility with pre-migration rows.
 model GenerationLog {
   id                   String    @id @default(cuid())
   createdAt            DateTime  @default(now())
   completedAt          DateTime?
+  userId               String?
+  organisationId       String?
   documentType         String
   aiMode               String
   inputTextLength      Int
@@ -29,6 +34,8 @@ model GenerationLog {
   schemaId             String?
   resultTextLength     Int?
   creditsDeducted      Boolean   @default(false)
+
+  @@index([userId, createdAt])
 }
 
 /// Per-user credit balance (Supabase user id or "default" for local dev).

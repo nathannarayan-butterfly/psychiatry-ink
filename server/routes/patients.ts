@@ -1,7 +1,7 @@
 import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
 import { prisma } from '../db'
-import { resolveAccountId } from '../middleware/auth'
+import { requireRouteAuth } from '../utils/requireRouteAuth'
 import { pathParam } from '../utils/expressParams'
 
 export const patientsRouter: Router = createRouter()
@@ -48,7 +48,8 @@ async function canWriteCase(caseId: string, accountId: string): Promise<boolean>
 /** GET /api/patients — list opaque case codes for the current account. */
 patientsRouter.get('/', async (req: Request, res: Response) => {
   try {
-    const accountId = resolveAccountId(req)
+    const accountId = requireRouteAuth(req, res)
+    if (!accountId) return
     const rows = await prisma.patientCase.findMany({
       where: { accountId },
       orderBy: { lastOpened: 'desc' },
@@ -63,7 +64,8 @@ patientsRouter.get('/', async (req: Request, res: Response) => {
 /** POST /api/patients — register a new opaque case code. */
 patientsRouter.post('/', async (req: Request, res: Response) => {
   try {
-    const accountId = resolveAccountId(req)
+    const accountId = requireRouteAuth(req, res)
+    if (!accountId) return
     const body = req.body as { caseId?: string } & CaseRegistryPatchBody
     const caseId = body.caseId?.trim()
     if (!caseId) {
@@ -103,7 +105,8 @@ patientsRouter.post('/', async (req: Request, res: Response) => {
 /** DELETE /api/patients/:caseId — remove opaque case code for the current account. */
 patientsRouter.delete('/:caseId', async (req: Request, res: Response) => {
   try {
-    const accountId = resolveAccountId(req)
+    const accountId = requireRouteAuth(req, res)
+    if (!accountId) return
     const caseId = pathParam(req, 'caseId').trim()
 
     const existing = await prisma.patientCase.findUnique({ where: { caseId } })
@@ -127,7 +130,8 @@ patientsRouter.delete('/:caseId', async (req: Request, res: Response) => {
 /** PATCH /api/patients/:caseId — upsert non-identifying sync metadata for a case code. */
 patientsRouter.patch('/:caseId', async (req: Request, res: Response) => {
   try {
-    const accountId = resolveAccountId(req)
+    const accountId = requireRouteAuth(req, res)
+    if (!accountId) return
     const caseId = pathParam(req, 'caseId').trim()
     const body = req.body as CaseRegistryPatchBody
 

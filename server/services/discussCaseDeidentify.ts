@@ -7,6 +7,19 @@ const IDENTIFIER_PATTERNS: RegExp[] = [
   /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, // email
 ]
 
+/**
+ * Authoritative, server-side de-identification of a free-text string.
+ *
+ * Reuses the same identifier patterns as the package redactor so every
+ * LLM-bound free-text path (discuss-case questions, clinical/lab notes) can be
+ * scrubbed before prompt assembly. The client `is_deidentified` claim is never
+ * trusted — this is recomputed here regardless of what the client asserts.
+ */
+export function deidentifyText(text: string, patientName?: string): string {
+  if (!text) return text
+  return redactIdentifiers(text, patientName)
+}
+
 function redactIdentifiers(text: string, patientName?: string): string {
   let result = text
   if (patientName?.trim()) {

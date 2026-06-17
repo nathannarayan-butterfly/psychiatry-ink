@@ -13,7 +13,11 @@ import {
 import { canAccessCase, getCurrentOrganisation, ORG_HEADER } from '../services/orgPermissions'
 import { isKbAdminConfigured } from '../services/kbSupabaseAdmin'
 import { assertPermission, hasPermission } from '../services/discussCasePermissions'
-import { resolvePackageForViewer } from '../services/discussCaseDeidentify'
+import {
+  deidentifyPackageContent,
+  deidentifyText,
+  resolvePackageForViewer,
+} from '../services/discussCaseDeidentify'
 import {
   acceptInvite,
   addAnnotation,
@@ -588,13 +592,25 @@ discussCaseRouter.post('/:id/ask-ai', async (req: Request, res: Response) => {
     // The identified package is E2EE ciphertext the server cannot read, so AI
     // context is always built from the de-identified (plaintext) package. This
     // also matches the assistant's mandate to reason over de-identified data.
-    const deidentified = session.packages.deidentified?.content
+    //
+    // SECURITY: the stored de-identified package was uploaded by the client and
+    // carries a client-asserted `isDeidentified` flag. We do NOT trust it — the
+    // redactor is re-run server-side here before the text reaches the provider,
+    // so any identifier the client's de-id missed is scrubbed authoritatively.
+    const storedDeidentified = session.packages.deidentified?.content
+    const deidentified = storedDeidentified
+      ? deidentifyPackageContent(storedDeidentified, undefined, storedDeidentified.patientLabel ?? 'Patient')
+      : undefined
     const contextText = deidentified && Array.isArray(deidentified.sections)
       ? deidentified.sections
           .map((section) => `## ${section.label}\n${section.content}`)
           .join('\n\n')
           .slice(0, 12000)
       : '(no package content)'
+
+    // The clinician's free-text question can also leak identifiers — redact it
+    // server-side before it is sent to the external provider.
+    const safeQuestion = deidentifyText(question)
 
     const systemPrompt = [
       'You are a clinical psychiatry assistant helping clinicians discuss a de-identified case package.',
@@ -608,7 +624,7 @@ discussCaseRouter.post('/:id/ask-ai', async (req: Request, res: Response) => {
       `Discussion package for ${deidentified?.patientLabel ?? 'patient'}:`,
       contextText,
       '',
-      `Question: ${question}`,
+      `Question: ${safeQuestion}`,
     ].join('\n')
 
     const usageContext = await resolveUsageContextFromRequest(req, session.userId, {
@@ -622,7 +638,8 @@ discussCaseRouter.post('/:id/ask-ai', async (req: Request, res: Response) => {
     await recordAiRequest({
       discussionId: session.discussion.id,
       requesterUserId: session.userId,
-      prompt: question,
+      // Store the redacted question — never persist raw PHI in the AI request log.
+      prompt: safeQuestion,
       responseText: result.text.trim(),
     })
 

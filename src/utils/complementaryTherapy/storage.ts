@@ -10,9 +10,17 @@
 import type { ComplementaryTherapy } from '../../types/complementaryTherapy'
 import { ensureComplementaryTherapies } from '../../types/complementaryTherapy'
 import { getActiveCaseId } from '../caseContext'
+import { readOrMigrateEncryptedJson, writeEncryptedJson } from '../encryptedLocalStore'
 
-/** In-memory session cache — backed by localStorage for crash/close durability. */
+/** In-memory session cache — backed by encrypted localStorage for crash/close durability. */
 const cache = new Map<string, ComplementaryTherapy[]>()
+
+/**
+ * Synchronous decrypted mirror of the encrypted localStorage durability copy (see the
+ * matching note in `medication/storage.ts`). Filled by
+ * `hydrateComplementaryTherapiesFromEncryptedLocal` on load.
+ */
+const localShadow = new Map<string, ComplementaryTherapy[]>()
 
 const LS_PREFIX = 'psychiatry-ink:complementary-therapies:'
 
@@ -21,20 +29,31 @@ function lsKey(caseId: string): string {
 }
 
 function writeLocalStorage(caseId: string, therapies: ComplementaryTherapy[]): void {
-  try {
-    localStorage.setItem(lsKey(caseId), JSON.stringify(therapies))
-  } catch {
-    // quota exceeded or private browsing — ignore
-  }
+  localShadow.set(caseId, therapies)
+  void writeEncryptedJson(lsKey(caseId), therapies)
 }
 
 function readLocalStorage(caseId: string): ComplementaryTherapy[] | null {
+  return localShadow.has(caseId) ? localShadow.get(caseId)! : null
+}
+
+/**
+ * Decrypt (and, on first run, migrate any legacy plaintext) the durability copy into the
+ * synchronous shadow + in-memory cache before the workspace vault applies its snapshot.
+ */
+export async function hydrateComplementaryTherapiesFromEncryptedLocal(
+  caseId?: string,
+): Promise<void> {
+  const resolved = resolveCaseId(caseId)
   try {
-    const raw = localStorage.getItem(lsKey(caseId))
-    if (!raw) return null
-    return ensureComplementaryTherapies(JSON.parse(raw))
+    const persisted = await readOrMigrateEncryptedJson<ComplementaryTherapy[]>(lsKey(resolved))
+    if (!persisted) return
+    const normalized = ensureComplementaryTherapies(persisted)
+    localShadow.set(resolved, normalized)
+    if (!cache.has(resolved)) cache.set(resolved, normalized)
+    notifyListeners(resolved)
   } catch {
-    return null
+    // Hydration is best-effort; the vault remains the authoritative source.
   }
 }
 

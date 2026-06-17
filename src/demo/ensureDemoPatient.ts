@@ -66,6 +66,12 @@ export async function ensureDemoPatientExists(
   const meta = getCaseMeta(DEMO_CASE_ID)
   const localVersion = state.seedVersion || meta?.demoSeedVersion || ''
   const outdated = isDemoSeedVersionOutdated(localVersion)
+
+  // The demo's diagnoses + document snapshots are encrypted-at-rest; decrypt them into their
+  // synchronous shadows before the completeness check so a previously-seeded demo is not
+  // falsely seen as incomplete (which would trigger an unnecessary reseed on every load).
+  const { hydrateLocalClinicalCaches } = await import('../utils/clinicalCacheHydration')
+  await hydrateLocalClinicalCaches(DEMO_CASE_ID)
   const incomplete = !isDemoSeedDataComplete(DEMO_CASE_ID)
 
   if (meta?.isDemoPatient && state.status === 'installed' && !outdated && !incomplete) {

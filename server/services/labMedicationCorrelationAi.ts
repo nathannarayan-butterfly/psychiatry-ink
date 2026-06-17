@@ -4,6 +4,7 @@ import {
   clinicalLanguagePromptInstruction,
   type ClinicalLanguage,
 } from '../utils/resolveClinicalLanguage'
+import { deidentifyText } from './discussCaseDeidentify'
 import { parseStructuredJson } from '../utils/parseStructuredJson'
 import type {
   LabBefundSnapshotInput,
@@ -385,6 +386,7 @@ export async function assessLabCorrelationsBatchWithAi(params: {
   }>
   resolvedByName: Map<string, { substanceId: string }>
   language: ClinicalLanguage
+  usageContext?: AiUsageContext
 }): Promise<{ results: LabCorrelationAIResult[]; parseFailed: boolean }> {
   if (params.focusPairs.length === 0) {
     return { results: [], parseFailed: false }
@@ -394,7 +396,8 @@ export async function assessLabCorrelationsBatchWithAi(params: {
     medications: params.medications,
     lastTwoLabSnapshots: params.lastTwoLabSnapshots,
     abnormalParameters: params.abnormalParameters,
-    clinicalNotes: params.clinicalNotes,
+    // De-identify free-text clinical notes BEFORE they reach the provider.
+    clinicalNotes: deidentifyText(params.clinicalNotes ?? ''),
     focusPairs: params.focusPairs,
     language: params.language,
   })
@@ -405,7 +408,12 @@ export async function assessLabCorrelationsBatchWithAi(params: {
       systemPrompt,
       userPrompt,
       maxTokens: 4000,
-      usageContext: { featureKey: 'lab_medication_correlation', requestKind: 'chat', metadata: { batch: true } },
+      usageContext: {
+        featureKey: 'lab_medication_correlation',
+        requestKind: 'chat',
+        ...params.usageContext,
+        metadata: { ...params.usageContext?.metadata, batch: true },
+      },
     })
     const parsed = parseStructuredJson(text)
     if (!parsed || typeof parsed !== 'object') {
@@ -454,13 +462,15 @@ export async function assessLabCorrelationWithAi(params: {
   priorAiResult?: LabCorrelationAIResult | null
   substanceId: string
   language: ClinicalLanguage
+  usageContext?: AiUsageContext
 }): Promise<LabCorrelationAIResult | null> {
   const provider = params.provider ?? 'deepseek'
   const language = params.language
   const { systemPrompt, userPrompt } = buildSinglePairPrompt({
     med: params.med,
     lab: params.lab,
-    clinicalNotes: params.clinicalNotes,
+    // De-identify free-text clinical notes BEFORE they reach the provider.
+    clinicalNotes: deidentifyText(params.clinicalNotes ?? ''),
     kbHint: params.kbHint,
     provider,
     priorAiResult: params.priorAiResult,
@@ -473,7 +483,11 @@ export async function assessLabCorrelationWithAi(params: {
       systemPrompt,
       userPrompt,
       maxTokens: 2000,
-      usageContext: { featureKey: 'lab_medication_correlation', metadata: { provider } },
+      usageContext: {
+        featureKey: 'lab_medication_correlation',
+        ...params.usageContext,
+        metadata: { ...params.usageContext?.metadata, provider },
+      },
     })
     const parsed = parseStructuredJson(text)
     return parseAiResult(parsed, params.substanceId, params.med.substance, params.lab.normalizedParameter)

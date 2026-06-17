@@ -1,6 +1,7 @@
 import type { DiagnosisSearchHit } from '../services/diagnosisReferenceApi'
 import { fetchCrosswalkByIcd10 } from '../services/diagnosisReferenceApi'
 import { scheduleDiagnosisImprints } from './clinicalImprint'
+import { readOrMigrateEncryptedJson, writeEncryptedJson } from './encryptedLocalStore'
 
 export type CodingSystem = 'icd10' | 'icd11' | 'dsm'
 
@@ -23,6 +24,14 @@ export interface DiagnoseEntry {
 function storageKey(caseId: string): string {
   return `diagnosen:${caseId}`
 }
+
+/**
+ * Synchronous decrypted mirror of the encrypted-at-rest localStorage durability copy.
+ * Because Web Crypto is async, `loadDiagnosen`/`saveDiagnosen` operate on this shadow
+ * (keeping their synchronous contract intact) while the on-disk bytes are ciphertext.
+ * Filled by `hydrateDiagnosenFromEncryptedLocal` (vault mount) and by `saveDiagnosen`.
+ */
+const localShadow = new Map<string, DiagnoseEntry[]>()
 
 function emptyCoding(): CodingValue {
   return { code: '', label: '', overridden: false }
@@ -111,33 +120,49 @@ function migrateLegacyEntry(raw: Record<string, unknown>): DiagnoseEntry | null 
   }
 }
 
+/** Normalize a parsed array, migrating any legacy diagnosis shapes. */
+function normalizeEntries(parsed: unknown): DiagnoseEntry[] {
+  if (!Array.isArray(parsed)) return []
+  return parsed
+    .map((item) => migrateLegacyEntry(item as Record<string, unknown>))
+    .filter((e): e is DiagnoseEntry => e !== null)
+}
+
 export function loadDiagnosen(caseId: string): DiagnoseEntry[] {
-  try {
-    const raw = localStorage.getItem(storageKey(caseId))
-    if (!raw) return []
-    const parsed = JSON.parse(raw) as unknown[]
-    if (!Array.isArray(parsed)) return []
-    return parsed
-      .map((item) => migrateLegacyEntry(item as Record<string, unknown>))
-      .filter((e): e is DiagnoseEntry => e !== null)
-  } catch {
-    return []
-  }
+  return localShadow.get(caseId) ?? []
 }
 
 export function saveDiagnosen(caseId: string, entries: DiagnoseEntry[]): void {
-  try {
-    localStorage.setItem(storageKey(caseId), JSON.stringify(entries))
-  } catch {
-    // ignore quota errors
-  }
+  localShadow.set(caseId, entries)
+  // Persist the durability copy encrypted-at-rest (async, best-effort).
+  void writeEncryptedJson(storageKey(caseId), entries)
   scheduleDiagnosisImprints(caseId, entries)
   void import('./isdm').then(({ scheduleIsdmRebuild }) => {
     scheduleIsdmRebuild(caseId, 'diagnosis')
   })
 }
 
-/** Load diagnoses from device-local storage only (never synced to server). */
+/**
+ * Decrypt (and, on first run, migrate any legacy plaintext) the durability copy into the
+ * synchronous shadow. Wired into `hydrateLocalClinicalCaches` so it runs before the vault
+ * applies its snapshot; does not clobber a shadow already populated by a newer write.
+ */
+export async function hydrateDiagnosenFromEncryptedLocal(caseId: string): Promise<void> {
+  try {
+    const persisted = await readOrMigrateEncryptedJson<unknown[]>(storageKey(caseId))
+    if (persisted === null) return
+    if (!localShadow.has(caseId)) localShadow.set(caseId, normalizeEntries(persisted))
+  } catch {
+    // Hydration is best-effort; the vault remains the authoritative source.
+  }
+}
+
+/**
+ * Load diagnoses from device-local storage only (never synced to server). Ensures the
+ * encrypted durability copy is decrypted into the shadow first, so consumers that mount
+ * before the workspace-vault hydration (e.g. the diagnosis widget) still get persisted data.
+ */
 export async function loadDiagnosenAsync(caseId: string): Promise<DiagnoseEntry[]> {
+  await hydrateDiagnosenFromEncryptedLocal(caseId)
   return loadDiagnosen(caseId)
 }

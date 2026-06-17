@@ -14,6 +14,7 @@ import {
 } from '../utils/caseAiAccessGuard'
 import { requireRouteAuth } from '../utils/requireRouteAuth'
 import { requireClinicalLanguage } from '../utils/resolveClinicalLanguage'
+import { resolveUsageContextFromRequest } from '../ai/usage/resolveUsageContext'
 import type {
   CombinationCheckAIRun,
   CombinationCheckMedicationInput,
@@ -203,6 +204,14 @@ combinationCheckRouter.post('/run', async (req: Request, res: Response) => {
       if (!(await assertAiGenerationAllowed(req, res, caseId))) return
     }
 
+    const usageContext = needsAi
+      ? await resolveUsageContextFromRequest(req, resolveAccountId(req), {
+          caseId,
+          featureKey: 'medication_combination_check',
+          metadata: { route: 'combination-check' },
+        })
+      : undefined
+
     for (const [medA, medB] of pairs) {
       const key = pairKeyForMeds(medA, medB, resolved)
       const kbHit =
@@ -233,6 +242,7 @@ combinationCheckRouter.post('/run', async (req: Request, res: Response) => {
         thorough: Boolean(body.thorough),
         kbHint: kbHit ?? null,
         language,
+        usageContext,
       })
 
       if (!aiAssessment || !aiAssessment.result) {

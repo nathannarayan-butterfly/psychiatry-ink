@@ -5,6 +5,7 @@ import {
 } from '../utils/resolveClinicalLanguage'
 import { callLlm, llmResultModel } from './llmProvider'
 import { parseStructuredJson } from '../utils/parseStructuredJson'
+import type { AiUsageContext } from '../ai/types'
 import type { PrepAiCheckPreparation } from '../../src/types/prepAiCheck'
 import type { PrescribingCountryCode } from '../../src/types/knowledgeBase'
 
@@ -57,6 +58,7 @@ export async function assessPreparationAvailabilityWithAi(params: {
   kbPreparations?: Array<{ tradeName: string; strength: string; form: string }>
   tier?: AiModelTier
   language: ClinicalLanguage
+  usageContext?: AiUsageContext
 }): Promise<{
   preparations: PrepAiCheckPreparation[]
   disclaimer: string
@@ -117,7 +119,8 @@ export async function assessPreparationAvailabilityWithAi(params: {
     maxTokens: 4000,
     usageContext: {
       featureKey: 'prep_ai_check',
-      metadata: { country },
+      ...params.usageContext,
+      metadata: { ...params.usageContext?.metadata, country },
     },
   })
 

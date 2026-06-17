@@ -1,13 +1,14 @@
 import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
 import { canAfford, getCreditBalance } from '../services/credits'
-import { resolveAccountId } from '../middleware/auth'
+import { requireRouteAuth } from '../utils/requireRouteAuth'
 
 export const creditsRouter: Router = createRouter()
 
 creditsRouter.get('/', async (req: Request, res: Response) => {
   try {
-    const userId = resolveAccountId(req)
+    const userId = requireRouteAuth(req, res)
+    if (!userId) return
     const balance = await getCreditBalance(userId)
     res.json({ balance })
   } catch (error) {
@@ -24,7 +25,8 @@ creditsRouter.post('/check', async (req: Request, res: Response) => {
       return
     }
 
-    const userId = resolveAccountId(req)
+    const userId = requireRouteAuth(req, res)
+    if (!userId) return
     const balance = await getCreditBalance(userId)
     const ok = await canAfford(amount, userId)
 

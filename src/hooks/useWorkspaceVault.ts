@@ -8,6 +8,7 @@ import { API_BASE } from '../services/apiClient'
 import { getAuthHeaders } from '../services/authHeaders'
 import { isAccountBackupUnlocked } from '../utils/accountBackupSession'
 import { registerClinicalImprintPersistHook } from '../utils/clinicalImprint'
+import { hydrateLocalClinicalCaches } from '../utils/clinicalCacheHydration'
 import { registerIsdmInputPersistHook } from '../utils/isdm/inputStorage'
 import { registerIsdmPersistHook } from '../utils/isdm/storage'
 import { registerMedicationPlanPersistHook } from '../utils/medication/storage'
@@ -313,6 +314,11 @@ export function useWorkspaceVault({
 
     void (async () => {
       try {
+        // Decrypt the encrypted-at-rest PHI durability caches into their synchronous
+        // shadows (and migrate any legacy plaintext) BEFORE applying the vault snapshot,
+        // so each store's newer-wins merge can see locally-persisted-but-unflushed edits.
+        await hydrateLocalClinicalCaches(caseId)
+
         const local = await loadEncryptedWorkspace(caseId)
         let remote: { blob: EncryptedVaultBlob; updatedAt: string } | null = null
         let orgPayload: ClinicalWorkspacePayload | null = null

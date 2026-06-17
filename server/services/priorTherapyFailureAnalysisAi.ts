@@ -4,6 +4,7 @@ import {
   type ClinicalLanguage,
 } from '../utils/resolveClinicalLanguage'
 import { callLlm, llmResultModel } from './llmProvider'
+import type { AiUsageContext } from '../ai/types'
 import { parseStructuredJson } from '../utils/parseStructuredJson'
 import { isLlmMockMode } from './priorTherapiesAi'
 import {
@@ -142,6 +143,7 @@ export async function extractFailureAnalyses(params: {
   language: ClinicalLanguage
   caseId?: string
   tier?: AiModelTier
+  usageContext?: AiUsageContext
 }): Promise<FailureAnalysisExtractionResult> {
   const { systemPrompt, userPrompt } = buildPrompt({
     drugs: params.drugs,
@@ -159,7 +161,8 @@ export async function extractFailureAnalyses(params: {
     usageContext: {
       featureKey: 'prior_therapies',
       caseId: params.caseId ?? null,
-      metadata: { route: 'medication/prior-therapies/failure-analysis' },
+      ...params.usageContext,
+      metadata: { ...params.usageContext?.metadata, route: 'medication/prior-therapies/failure-analysis' },
     },
   })
 

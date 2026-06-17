@@ -1,4 +1,5 @@
 import type { AiModelSpec, AiModelTier } from '../modelTierMapping'
+import type { AiUsageContext } from '../ai/types'
 import {
   clinicalLanguagePromptInstruction,
   type ClinicalLanguage,
@@ -224,6 +225,7 @@ export async function extractPriorTherapies(params: {
   language: ClinicalLanguage
   caseId?: string
   tier?: AiModelTier
+  usageContext?: AiUsageContext
 }): Promise<PriorTherapyExtractionResult> {
   const { systemPrompt, userPrompt } = buildPrompt({
     aufnahmeText: params.aufnahmeText,
@@ -240,7 +242,8 @@ export async function extractPriorTherapies(params: {
     usageContext: {
       featureKey: 'prior_therapies',
       caseId: params.caseId ?? null,
-      metadata: { route: 'medication/prior-therapies' },
+      ...params.usageContext,
+      metadata: { ...params.usageContext?.metadata, route: 'medication/prior-therapies' },
     },
   })
 

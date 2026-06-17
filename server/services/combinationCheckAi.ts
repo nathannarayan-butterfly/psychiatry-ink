@@ -4,7 +4,9 @@ import {
   type ClinicalLanguage,
 } from '../utils/resolveClinicalLanguage'
 import { callLlm, llmResultModel } from './llmProvider'
+import { deidentifyText } from './discussCaseDeidentify'
 import { parseStructuredJson } from '../utils/parseStructuredJson'
+import type { AiUsageContext } from '../ai/types'
 import type {
   CombinationCheckAIResult,
   CombinationCheckMedicationInput,
@@ -159,6 +161,7 @@ export async function assessCombinationWithAi(params: {
   kbHint?: MedicationCombinationKnowledge | null
   tier?: AiModelTier
   language: ClinicalLanguage
+  usageContext?: AiUsageContext
 }): Promise<{ result: CombinationCheckAIResult | null; model: AiModelSpec } | null> {
   const tier: AiModelTier = params.thorough ? 'thorough' : 'standard'
   const language = params.language
@@ -166,7 +169,8 @@ export async function assessCombinationWithAi(params: {
     medA: params.medA,
     medB: params.medB,
     risk: params.risk,
-    labNotes: params.labNotes,
+    // De-identify free-text lab/clinical notes BEFORE they reach the provider.
+    labNotes: deidentifyText(params.labNotes ?? ''),
     thorough: Boolean(params.thorough),
     kbHint: params.kbHint,
     language,
@@ -180,7 +184,8 @@ export async function assessCombinationWithAi(params: {
     maxTokens: params.thorough ? 2400 : 1200,
     usageContext: {
       featureKey: 'medication_combination_check',
-      metadata: { thorough: Boolean(params.thorough) },
+      ...params.usageContext,
+      metadata: { ...params.usageContext?.metadata, thorough: Boolean(params.thorough) },
     },
   })
 

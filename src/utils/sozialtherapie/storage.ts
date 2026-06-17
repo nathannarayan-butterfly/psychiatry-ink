@@ -13,9 +13,18 @@
 import type { SozialtherapieTarget } from '../../types/sozialtherapie'
 import { ensureSozialtherapieTargets } from '../../types/sozialtherapie'
 import { getActiveCaseId } from '../caseContext'
+import { readOrMigrateEncryptedJson, writeEncryptedJson } from '../encryptedLocalStore'
 
-/** In-memory session cache — backed by localStorage for crash/close durability. */
+/** In-memory session cache — backed by encrypted localStorage for crash/close durability. */
 const cache = new Map<string, SozialtherapieTarget[]>()
+
+/**
+ * Synchronous decrypted mirror of the encrypted localStorage durability copy (see the
+ * matching note in `medication/storage.ts`). This store is localStorage-only (not part of
+ * the workspace vault payload), so hydration is its sole load path. Filled by
+ * `hydrateSozialtherapieFromEncryptedLocal` on load.
+ */
+const localShadow = new Map<string, SozialtherapieTarget[]>()
 
 const LS_PREFIX = 'psychiatry-ink:sozialtherapie:'
 
@@ -24,20 +33,30 @@ function lsKey(caseId: string): string {
 }
 
 function writeLocalStorage(caseId: string, targets: SozialtherapieTarget[]): void {
-  try {
-    localStorage.setItem(lsKey(caseId), JSON.stringify(targets))
-  } catch {
-    // quota exceeded or private browsing — ignore
-  }
+  localShadow.set(caseId, targets)
+  void writeEncryptedJson(lsKey(caseId), targets)
 }
 
 function readLocalStorage(caseId: string): SozialtherapieTarget[] | null {
+  return localShadow.has(caseId) ? localShadow.get(caseId)! : null
+}
+
+/**
+ * Decrypt (and, on first run, migrate any legacy plaintext) the durability copy into the
+ * synchronous shadow + in-memory cache. As this store is not vault-mirrored, this is the
+ * authoritative load path after a page reload.
+ */
+export async function hydrateSozialtherapieFromEncryptedLocal(caseId?: string): Promise<void> {
+  const resolved = resolveCaseId(caseId)
   try {
-    const raw = localStorage.getItem(lsKey(caseId))
-    if (!raw) return null
-    return ensureSozialtherapieTargets(JSON.parse(raw))
+    const persisted = await readOrMigrateEncryptedJson<SozialtherapieTarget[]>(lsKey(resolved))
+    if (!persisted) return
+    const normalized = ensureSozialtherapieTargets(persisted)
+    localShadow.set(resolved, normalized)
+    if (!cache.has(resolved)) cache.set(resolved, normalized)
+    notifyListeners(resolved)
   } catch {
-    return null
+    // Hydration is best-effort.
   }
 }
 

@@ -19,6 +19,7 @@ import {
 } from '../utils/caseAiAccessGuard'
 import { requireRouteAuth } from '../utils/requireRouteAuth'
 import { requireClinicalLanguage } from '../utils/resolveClinicalLanguage'
+import { resolveUsageContextFromRequest } from '../ai/usage/resolveUsageContext'
 import type {
   LabBefundSnapshotInput,
   LabCorrelationAIResult,
@@ -289,6 +290,12 @@ labMedicationCorrelationRouter.post('/run', async (req: Request, res: Response) 
 
     let aiParseFailed = false
     if (needsAi && focusPairs.length > 0) {
+      const usageContext = await resolveUsageContextFromRequest(req, resolveAccountId(req), {
+        caseId,
+        featureKey: 'lab_medication_correlation',
+        requestKind: 'chat',
+        metadata: { route: 'lab-med-correlation', batch: true },
+      })
       const batch = await assessLabCorrelationsBatchWithAi({
         medications: active,
         lastTwoLabSnapshots: snapshots,
@@ -297,6 +304,7 @@ labMedicationCorrelationRouter.post('/run', async (req: Request, res: Response) 
         focusPairs,
         resolvedByName,
         language,
+        usageContext,
       })
 
       if (batch.parseFailed) {
@@ -588,6 +596,11 @@ labMedicationCorrelationRouter.post('/:findingId/openai-second-opinion', async (
   const priorAi = finding.aiResult ?? null
   const language = requireClinicalLanguage(req, res, req.body?.language)
   if (!language) return
+  const usageContext = await resolveUsageContextFromRequest(req, userId, {
+    caseId: finding.caseId,
+    featureKey: 'lab_medication_correlation',
+    metadata: { route: 'lab-med-correlation', provider: 'openai', secondOpinion: true },
+  })
   const aiResult = await assessLabCorrelationWithAi({
     med,
     lab,
@@ -597,6 +610,7 @@ labMedicationCorrelationRouter.post('/:findingId/openai-second-opinion', async (
     substanceId: finding.substanceId,
     clinicalNotes: typeof snapshot?.clinicalNotes === 'string' ? snapshot.clinicalNotes : undefined,
     language,
+    usageContext,
   })
 
   if (!aiResult) {

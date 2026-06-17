@@ -56,8 +56,10 @@ export default function App() {
       route.view === 'enterprise-sso')
 
   useEffect(() => {
-    ensureDefaultCase()
-    void hydrateCaseRegistry()
+    // The registry is encrypted-at-rest, so it must be decrypted asynchronously before the
+    // default case is ensured — a synchronous `ensureDefaultCase()` here would read an empty
+    // (not-yet-hydrated) map and overwrite the stored ciphertext with just the default case.
+    void hydrateCaseRegistry().finally(() => ensureDefaultCase())
   }, [])
 
   useEffect(() => {

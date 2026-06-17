@@ -9,6 +9,7 @@ import {
 } from '../services/patientRegistryApi'
 import { isAccountBackupUnlocked } from '../utils/accountBackupSession'
 import {
+  hydrateCaseRegistryFromEncryptedLocal,
   loadRegistryMapFromStorage,
   saveRegistryMapToStorage,
 } from '../utils/caseRegistryStorage'
@@ -102,6 +103,10 @@ export async function hydrateCaseRegistry(): Promise<void> {
   }
 
   hydratePromise = (async () => {
+    // Decrypt the encrypted-at-rest registry into its synchronous shadow (and migrate any
+    // legacy plaintext) BEFORE any synchronous read/write of the registry map below, so the
+    // ciphertext is never clobbered by a falsely-empty map.
+    await hydrateCaseRegistryFromEncryptedLocal()
     await removeStaleCasesFromRegistry()
     const localMap = loadRegistryMapFromStorage()
     let apiCases: Awaited<ReturnType<typeof fetchPatientsFromApi>> = []

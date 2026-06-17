@@ -8,6 +8,7 @@ import {
 } from '../utils/caseAiAccessGuard'
 import { requireRouteAuth } from '../utils/requireRouteAuth'
 import { requireClinicalLanguage } from '../utils/resolveClinicalLanguage'
+import { resolveUsageContextFromRequest } from '../ai/usage/resolveUsageContext'
 import { deidentifyPriorTherapySources } from '../services/priorTherapiesDeidentify'
 import { extractPriorTherapies, isLlmMockMode } from '../services/priorTherapiesAi'
 import { extractFailureAnalyses } from '../services/priorTherapyFailureAnalysisAi'
@@ -83,14 +84,21 @@ medicationPriorTherapiesRouter.post('/run', async (req: Request, res: Response) 
       patientName,
     })
 
+    const userId = resolveAccountId(req)
+    const usageContext = await resolveUsageContextFromRequest(req, userId, {
+      caseId,
+      featureKey: 'prior_therapies',
+      metadata: { route: 'medication/prior-therapies' },
+    })
+
     const result = await extractPriorTherapies({
       aufnahmeText: deidentified.aufnahmeText,
       verlaufText: deidentified.verlaufText,
       language,
       caseId,
+      usageContext,
     })
 
-    const userId = resolveAccountId(req)
     if (userId && userId !== 'default') {
       void recordAiGenerationUsed(req, userId, {
         caseId,
@@ -203,15 +211,22 @@ medicationPriorTherapiesRouter.post('/failure-analysis', async (req: Request, re
       patientName,
     })
 
+    const userId = resolveAccountId(req)
+    const usageContext = await resolveUsageContextFromRequest(req, userId, {
+      caseId,
+      featureKey: 'prior_therapies',
+      metadata: { route: 'medication/prior-therapies/failure-analysis' },
+    })
+
     const result = await extractFailureAnalyses({
       drugs,
       aufnahmeText: deidentified.aufnahmeText,
       verlaufText: deidentified.verlaufText,
       language,
       caseId,
+      usageContext,
     })
 
-    const userId = resolveAccountId(req)
     if (userId && userId !== 'default') {
       void recordAiGenerationUsed(req, userId, {
         caseId,

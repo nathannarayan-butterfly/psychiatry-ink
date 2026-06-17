@@ -29,7 +29,7 @@ import {
 } from './labPersistence'
 import {
   loadNotionDocumentSnapshot,
-  notionDocumentSnapshotKey,
+  removeNotionDocumentSnapshot,
   saveNotionDocumentSnapshot,
   type NotionDocumentSnapshot,
 } from './notionDocumentActions'
@@ -329,11 +329,7 @@ export function applyClinicalPayload(
     if (snapshot) {
       saveNotionDocumentSnapshot(snapshot, caseId)
     } else {
-      try {
-        localStorage.removeItem(notionDocumentSnapshotKey(documentTypeId, caseId))
-      } catch {
-        // ignore
-      }
+      removeNotionDocumentSnapshot(documentTypeId, caseId)
     }
 
     const heading = normalized.pageHeadings[documentTypeId] ?? snapshot?.pageHeading ?? ''

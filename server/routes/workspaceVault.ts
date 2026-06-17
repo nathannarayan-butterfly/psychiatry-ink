@@ -2,6 +2,7 @@ import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
 import { prisma } from '../db'
 import { allowsWorkspaceDbSnapshot, resolvePrivacyTier } from '../privacyRegions'
+import { requireRouteAuth } from '../utils/requireRouteAuth'
 
 export interface WorkspaceSnapshotBody {
   deviceId: string
@@ -38,6 +39,7 @@ function allowsSnapshotSync(req: Request, countryCode: string): boolean {
  */
 workspaceVaultRouter.put('/snapshot', async (req: Request, res: Response) => {
   try {
+    if (!requireRouteAuth(req, res)) return
     const body = req.body as WorkspaceSnapshotBody
 
     if (
@@ -98,6 +100,7 @@ workspaceVaultRouter.put('/snapshot', async (req: Request, res: Response) => {
 
 workspaceVaultRouter.get('/snapshot', async (req: Request, res: Response) => {
   try {
+    if (!requireRouteAuth(req, res)) return
     const deviceId = (req.query.deviceId as string | undefined)?.trim()
     const caseId = (req.query.caseId as string | undefined)?.trim()
     const countryCode = (
@@ -150,6 +153,7 @@ workspaceVaultRouter.get('/snapshot', async (req: Request, res: Response) => {
 /** List encrypted cases for dashboard — metadata only, no ciphertext. */
 workspaceVaultRouter.get('/cases', async (req: Request, res: Response) => {
   try {
+    if (!requireRouteAuth(req, res)) return
     const deviceId = (req.query.deviceId as string | undefined)?.trim()
     const countryCode = (
       (req.query.countryCode as string | undefined) ??

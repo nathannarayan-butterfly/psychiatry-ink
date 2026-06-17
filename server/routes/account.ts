@@ -1,13 +1,14 @@
 import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
 import { getCreditBalance, getUserPlan, setUserPlan } from '../services/credits'
-import { resolveAccountId } from '../middleware/auth'
+import { requireRouteAuth } from '../utils/requireRouteAuth'
 
 export const accountRouter: Router = createRouter()
 
 accountRouter.get('/plan', async (req: Request, res: Response) => {
   try {
-    const userId = resolveAccountId(req)
+    const userId = requireRouteAuth(req, res)
+    if (!userId) return
     const [plan, balance] = await Promise.all([getUserPlan(userId), getCreditBalance(userId)])
     res.json({ plan, balance, userId: userId === 'default' ? null : userId })
   } catch (error) {
@@ -26,9 +27,9 @@ accountRouter.post('/plan', async (req: Request, res: Response) => {
       return
     }
 
-    const userId = resolveAccountId(req)
-    if (userId === 'default') {
-      res.status(400).json({ error: 'Authentication required' })
+    const userId = requireRouteAuth(req, res)
+    if (!userId || userId === 'default') {
+      if (!res.headersSent) res.status(401).json({ error: 'Anmeldung erforderlich' })
       return
     }
 
