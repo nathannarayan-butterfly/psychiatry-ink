@@ -77,12 +77,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     let active = true
 
-    void supabase.auth.getSession().then(({ data }) => {
-      if (!active) return
-      setSession(data.session)
-      setUser(data.session?.user ?? null)
-      setLoading(false)
-    })
+    void supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (!active) return
+        setSession(data.session)
+        setUser(data.session?.user ?? null)
+        setLoading(false)
+      })
+      .catch(() => {
+        if (!active) return
+        setLoading(false)
+      })
 
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession)

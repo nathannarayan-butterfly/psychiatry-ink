@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CaseAccessSnapshot } from '../services/orgApi'
 import { fetchCaseAccessSnapshot } from '../services/orgApi'
 import { usePermissionContext } from '../contexts/PermissionContext'
@@ -18,8 +18,10 @@ export function useCaseAccessSnapshot(caseId?: string): UseCaseAccessSnapshotRes
   const [snapshot, setSnapshot] = useState<CaseAccessSnapshot | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const requestIdRef = useRef(0)
 
   const load = useCallback(async () => {
+    const requestId = ++requestIdRef.current
     if (!caseId || !organisation) {
       setSnapshot(null)
       setError(null)
@@ -30,12 +32,14 @@ export function useCaseAccessSnapshot(caseId?: string): UseCaseAccessSnapshotRes
     setError(null)
     try {
       const data = await fetchCaseAccessSnapshot(caseId)
+      if (requestIdRef.current !== requestId) return
       setSnapshot(data)
     } catch (err) {
+      if (requestIdRef.current !== requestId) return
       setSnapshot(null)
       setError(err instanceof Error ? err.message : 'Failed to load case access')
     } finally {
-      setIsLoading(false)
+      if (requestIdRef.current === requestId) setIsLoading(false)
     }
   }, [caseId, organisation?.id])
 

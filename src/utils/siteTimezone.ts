@@ -32,7 +32,7 @@ export function getSiteZonedParts(date: Date): SiteZonedParts {
     year: partValue(parts, 'year'),
     month: partValue(parts, 'month'),
     day: partValue(parts, 'day'),
-    hour: partValue(parts, 'hour'),
+    hour: partValue(parts, 'hour') % 24,
     minute: partValue(parts, 'minute'),
   }
 }

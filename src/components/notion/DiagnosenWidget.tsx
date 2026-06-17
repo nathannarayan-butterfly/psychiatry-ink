@@ -165,12 +165,19 @@ export function DiagnosenWidget({ caseId, variant = 'sidebar', onDiagnosesChange
     let active = true
     setLoadingDiagnoses(true)
     setHydrated(false)
-    void loadDiagnosenAsync(caseId).then((loaded) => {
-      if (!active) return
-      setEntries(loaded)
-      setLoadingDiagnoses(false)
-      setHydrated(true)
-    })
+    void loadDiagnosenAsync(caseId)
+      .then((loaded) => {
+        if (!active) return
+        setEntries(loaded)
+        setLoadingDiagnoses(false)
+        setHydrated(true)
+      })
+      .catch(() => {
+        // Keep `hydrated` false on failure so the save effect never persists an
+        // empty list over existing stored diagnoses; just stop the spinner.
+        if (!active) return
+        setLoadingDiagnoses(false)
+      })
     setEditingId(null)
     setAdding(false)
     setSearchQuery('')

@@ -5357,6 +5357,19 @@
   background: color-mix(in srgb, var(--area-accent, var(--accent)) 10%, transparent);
 }
 
+.verlauf-bubble__btn--ai-edit {
+  color: color-mix(in srgb, var(--area-accent, var(--accent)) 85%, var(--text-ink));
+}
+
+.verlauf-bubble__btn--ai-edit:hover {
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 16%, transparent);
+}
+
+.verlauf-bubble__ai-icon {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
 .verlauf-bubble__btn--bold {
   font-weight: 700;
 }

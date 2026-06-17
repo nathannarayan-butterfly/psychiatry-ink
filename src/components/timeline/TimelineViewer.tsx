@@ -48,6 +48,7 @@ export function TimelineViewer({
     if (!node) return
 
     const observer = new ResizeObserver(([entry]) => {
+      if (!entry) return
       const { width, height } = entry.contentRect
       setViewportSize({ width: Math.max(width, 1), height: Math.max(height, 1) })
     })

@@ -1,6 +1,7 @@
 import type { LabSnapshot, SavedLabGraph } from '../types/lab'
 import { caseStorageKey, DEFAULT_CASE_ID, getActiveCaseId } from './caseContext'
 import { scheduleLabGraphImprints } from './clinicalImprint'
+import { safeSetItem } from './safeStorage'
 
 const STORAGE_KEY = 'psychiatry-ink-lab-session'
 const LAB_GRAPHS_KEY = 'psychiatry-ink:lab-graphs'
@@ -91,7 +92,7 @@ export function loadLabGraphsList(caseId?: string): SavedLabGraph[] {
 }
 
 export function saveLabGraphsList(graphs: SavedLabGraph[], caseId?: string): void {
-  localStorage.setItem(labGraphsListKey(caseId), JSON.stringify(graphs))
+  safeSetItem(labGraphsListKey(caseId), JSON.stringify(graphs))
   scheduleLabGraphImprints(caseId ?? getActiveCaseId(), graphs)
 }
 

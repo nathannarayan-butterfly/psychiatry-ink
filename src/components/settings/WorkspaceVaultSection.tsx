@@ -1,5 +1,5 @@
 import { Download, Upload } from 'lucide-react'
-import { useRef, useState, type ChangeEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { useWorkspaceVault } from '../../hooks/useWorkspaceVault'
 import {
@@ -46,7 +46,19 @@ export function WorkspaceVaultSection({
   const [passphraseStatus, setPassphraseStatus] = useState<string | null>(null)
   const [hasBackup, setHasBackup] = useState(false)
 
-  void getPassphraseBackup().then((backup) => setHasBackup(Boolean(backup)))
+  useEffect(() => {
+    let active = true
+    void getPassphraseBackup()
+      .then((backup) => {
+        if (active) setHasBackup(Boolean(backup))
+      })
+      .catch(() => {
+        if (active) setHasBackup(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [])
 
   const handleImportClick = () => fileInputRef.current?.click()
 

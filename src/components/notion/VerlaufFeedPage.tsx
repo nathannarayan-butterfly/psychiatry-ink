@@ -7,6 +7,7 @@ import {
   useState,
 } from 'react'
 import { createPortal } from 'react-dom'
+import { Sparkles } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
 import { useAuth } from '../../context/AuthContext'
 import { usePermissionContext } from '../../contexts/PermissionContext'
@@ -57,6 +58,14 @@ import {
   type VerlaufDocumentType,
 } from './notionPages'
 import type { UiLanguage } from '../../types/settings'
+import { isInlineAiEditEnabled } from '../../utils/featureFlags'
+import {
+  getInlineAiEditShortcutLabel,
+  isInlineAiEditShortcut,
+} from '../../utils/notionKeyboardShortcuts'
+import { applyEdit } from '../../utils/inlineAiEdit/buildEditContext'
+import { resolveVerlaufAiEditTarget } from '../../utils/inlineAiEdit/verlaufInlineEdit'
+import { useInlineAiEdit } from './inlineAiEdit/useInlineAiEdit'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -266,11 +275,13 @@ interface BubbleToolbarProps {
   onCopy: () => void
   onCreateTimeline: () => void
   onClose: () => void
+  /** When provided, renders the voice-driven "Ask AI to edit selection" trigger. */
+  onAiEdit?: () => void
 }
 
-function BubbleToolbar({ state, onFormat, onComment, onCopy, onCreateTimeline, onClose }: BubbleToolbarProps) {
+function BubbleToolbar({ state, onFormat, onComment, onCopy, onCreateTimeline, onClose, onAiEdit }: BubbleToolbarProps) {
   const ref = useRef<HTMLDivElement>(null)
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
 
   useEffect(() => {
     if (!state.visible) return
@@ -299,6 +310,20 @@ function BubbleToolbar({ state, onFormat, onComment, onCopy, onCreateTimeline, o
       style={{ top: state.y, left: state.x }}
       onMouseDown={(e) => e.preventDefault()}
     >
+      {onAiEdit ? (
+        <>
+          <button
+            type="button"
+            className="verlauf-bubble__btn verlauf-bubble__btn--ai-edit"
+            onClick={onAiEdit}
+            title={`${t('inlineAiEditAria')} (${getInlineAiEditShortcutLabel(language)})`}
+            aria-label={`${t('inlineAiEditAria')} (${getInlineAiEditShortcutLabel(language)})`}
+          >
+            <Sparkles className="verlauf-bubble__ai-icon" strokeWidth={1.75} aria-hidden />
+          </button>
+          <span className="verlauf-bubble__divider" />
+        </>
+      ) : null}
       <button
         type="button"
         className="verlauf-bubble__btn verlauf-bubble__btn--bold"
@@ -1137,6 +1162,9 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
   const { member, role } = usePermissionContext()
   const { readOnly: demoReadOnly } = useDemoPatient(caseId)
 
+  const aiEditEnabled = isInlineAiEditEnabled()
+  const inlineEdit = useInlineAiEdit({ caseId })
+
   const derivedEvents = useClinicalFeedEvents(caseId)
   const [dokumenteRevision, setDokumenteRevision] = useState(0)
   const [activeSources, setActiveSources] = useState<Set<FeedSource>>(
@@ -1418,6 +1446,54 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
     // `dokumenteRevision` intentionally participates so archive updates trigger a recompute.
     [caseId, dokumenteRevision, language, t],
   )
+
+  // Inline AI edit only applies to editable manual entries (those that own a
+  // plain-text `content` written back via `updateVerlaufEntry`). Derived /
+  // Aufnahme cards are read-only history, so the helper returns null for them.
+  const aiEditTarget = useMemo(
+    () =>
+      aiEditEnabled
+        ? resolveVerlaufAiEditTarget(entries, {
+            entryId: bubble.entryId,
+            selectedText: bubble.selectedText,
+            startOffset: bubble.startOffset,
+            endOffset: bubble.endOffset,
+            readonly: bubble.readonly,
+          })
+        : null,
+    [aiEditEnabled, bubble, entries],
+  )
+
+  const handleAiEdit = useCallback(() => {
+    if (!aiEditTarget) return
+    const { entryId, fullText, selectedText, selectionStart, selectionEnd } = aiEditTarget
+    inlineEdit.open({
+      selectedText,
+      fullText,
+      selectionStart,
+      selectionEnd,
+      position: { top: bubble.y, left: bubble.x },
+      applyReplacement: (editedText) => {
+        const nextContent = applyEdit(fullText, selectionStart, selectionEnd, editedText)
+        setEntries(updateVerlaufEntry(entryId, nextContent, caseId))
+      },
+    })
+    closeBubble()
+  }, [aiEditTarget, bubble.x, bubble.y, caseId, closeBubble, inlineEdit])
+
+  // ⌘⌥B / Strg+Alt+B — same shortcut as the Notion editors, active only while an
+  // editable selection bubble is showing.
+  useEffect(() => {
+    if (!aiEditTarget) return
+    function handleKey(e: KeyboardEvent) {
+      if (isInlineAiEditShortcut(e)) {
+        e.preventDefault()
+        handleAiEdit()
+      }
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [aiEditTarget, handleAiEdit])
 
   const handleCreateTimeline = useCallback(() => {
     if (bubble.readonly) return
@@ -1750,6 +1826,7 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
             onCopy={handleBubbleCopy}
             onCreateTimeline={handleCreateTimeline}
             onClose={closeBubble}
+            onAiEdit={aiEditTarget ? handleAiEdit : undefined}
           />
 
           <SelectionActionBubble
@@ -1773,6 +1850,8 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
           />
 
           <CommentViewPopover state={commentView} onClose={closeCommentView} />
+
+          {inlineEdit.popup}
         </>,
         document.body,
       )}

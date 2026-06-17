@@ -3,6 +3,7 @@ import { caseStorageKey, DEFAULT_CASE_ID, getActiveCaseId } from './caseContext'
 import { scheduleTimelineImprints } from './clinicalImprint'
 import { buildTimelinePrintHtml } from './timelinePrint'
 import { exportTimelinePdf as writeTimelinePdf, importPortablePdf } from './portablePdf'
+import { safeSetItem } from './safeStorage'
 
 const SESSION_KEY = 'psychiatry-ink-timeline-session'
 const TIMELINES_KEY = 'psychiatry-ink:timelines'
@@ -105,7 +106,7 @@ export function loadTimelinesList(caseId?: string): SavedTimeline[] {
 }
 
 export function saveTimelinesList(timelines: SavedTimeline[], caseId?: string): void {
-  localStorage.setItem(timelinesListKey(caseId), JSON.stringify(timelines))
+  safeSetItem(timelinesListKey(caseId), JSON.stringify(timelines))
   scheduleTimelineImprints(caseId ?? getActiveCaseId(), timelines)
 }
 

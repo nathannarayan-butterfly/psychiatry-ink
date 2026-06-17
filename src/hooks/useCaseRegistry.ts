@@ -121,7 +121,12 @@ export async function hydrateCaseRegistry(): Promise<void> {
       merged[apiCase.caseId] = mergeServerCaseWithLocal(apiCase, localMap[apiCase.caseId])
     }
 
-    const migratedFlag = localStorage.getItem(REGISTRY_MIGRATED_KEY) === 'true'
+    let migratedFlag = false
+    try {
+      migratedFlag = localStorage.getItem(REGISTRY_MIGRATED_KEY) === 'true'
+    } catch {
+      migratedFlag = false
+    }
     const localOnly = Object.values(localMap).filter((item) => !merged[item.caseId])
 
     if (!migratedFlag && localOnly.length > 0) {
@@ -137,7 +142,12 @@ export async function hydrateCaseRegistry(): Promise<void> {
         }
       }
       if (allMigrated) {
-        localStorage.setItem(REGISTRY_MIGRATED_KEY, 'true')
+        try {
+          localStorage.setItem(REGISTRY_MIGRATED_KEY, 'true')
+        } catch {
+          // best-effort migration flag; ignore storage failures so hydration
+          // always completes and the hydrate promise never wedges.
+        }
       }
     }
 
@@ -198,9 +208,16 @@ export function getCaseMeta(caseId: string): LocalCaseMeta | null {
   return readCacheMap()[caseId] ?? null
 }
 
+/** Parse a date string to epoch ms, falling back to 0 for invalid/corrupt values. */
+function safeDateMs(value: string | undefined): number {
+  if (!value) return 0
+  const ms = new Date(value).getTime()
+  return Number.isFinite(ms) ? ms : 0
+}
+
 export function listLocalCases(): LocalCaseMeta[] {
   return Object.values(readCacheMap()).sort(
-    (a, b) => new Date(b.lastOpened).getTime() - new Date(a.lastOpened).getTime(),
+    (a, b) => safeDateMs(b.lastOpened) - safeDateMs(a.lastOpened),
   )
 }
 
@@ -343,7 +360,7 @@ export function useCaseRegistry({
       buildDashboardCase(caseId, localMap[caseId], remoteMap[caseId], documentTypeLabel, fallbackTitle),
     )
 
-    merged.sort((a, b) => new Date(b.lastEditedAt).getTime() - new Date(a.lastEditedAt).getTime())
+    merged.sort((a, b) => safeDateMs(b.lastEditedAt) - safeDateMs(a.lastEditedAt))
     setCases(merged)
     setLoading(false)
   }, [countryCode, dbSyncEnabled, documentTypeLabel, fallbackTitle])

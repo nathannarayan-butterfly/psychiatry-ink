@@ -22,7 +22,11 @@ function base64ToBuffer(base64: string): ArrayBuffer {
   return bytes.buffer
 }
 
-async function deriveAesKeyFromPassphrase(passphrase: string, salt: Uint8Array): Promise<CryptoKey> {
+async function deriveAesKeyFromPassphrase(
+  passphrase: string,
+  salt: Uint8Array,
+  iterations: number = PBKDF2_ITERATIONS,
+): Promise<CryptoKey> {
   const encoder = new TextEncoder()
   const baseKey = await crypto.subtle.importKey(
     'raw',
@@ -35,7 +39,7 @@ async function deriveAesKeyFromPassphrase(passphrase: string, salt: Uint8Array):
     {
       name: 'PBKDF2',
       salt,
-      iterations: PBKDF2_ITERATIONS,
+      iterations,
       hash: 'SHA-256',
     },
     baseKey,
@@ -72,7 +76,11 @@ export async function decryptJsonWithPassphrase<T>(
 ): Promise<T> {
   const salt = new Uint8Array(base64ToBuffer(blob.salt))
   const iv = new Uint8Array(base64ToBuffer(blob.iv))
-  const aesKey = await deriveAesKeyFromPassphrase(passphrase, salt)
+  const iterations =
+    typeof blob.iterations === 'number' && blob.iterations > 0
+      ? blob.iterations
+      : PBKDF2_ITERATIONS
+  const aesKey = await deriveAesKeyFromPassphrase(passphrase, salt, iterations)
   const plaintext = await crypto.subtle.decrypt(
     { name: 'AES-GCM', iv },
     aesKey,
