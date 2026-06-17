@@ -94,6 +94,29 @@ describe('answer → criterion resolution (deterministic feedback loop)', () => 
   })
 })
 
+describe('per-question answers aggregate onto one criterion (last answer wins)', () => {
+  // The panel now renders an independent Ja/Nein/Unklar control next to EACH
+  // interview question, but every phrasing probes the SAME criterion. The
+  // aggregation rule: each answer is bridged to `question.criterionId`, so the
+  // first present/absent resolves the criterion (last write wins) and the whole
+  // group of phrasings drops off on re-evaluation.
+  it('exposes several phrasings but a single criterion per gap', () => {
+    const gap = questionsFor({}).find((q) => q.criterionId === CRITERION)
+    expect(gap).toBeDefined()
+    expect(gap!.interviewQuestions.length).toBeGreaterThan(1)
+    // criterionId mirrors targetId — the answer key is unambiguous.
+    expect(gap!.criterionId).toBe(gap!.targetId)
+  })
+
+  it('answering ANY of a criterion’s questions resolves the whole gap', () => {
+    const gap = questionsFor({}).find((q) => q.criterionId === CRITERION)!
+    // A "Ja" on any single phrasing bridges to the one shared criterion id.
+    const attestation = resolutionToAttestation('present')!
+    const resolved = questionsFor({ [gap.criterionId]: attestation })
+    expect(resolved.some((q) => q.criterionId === CRITERION)).toBe(false)
+  })
+})
+
 describe('clinician-override precedence', () => {
   it('a clinician answer overrides the deterministic auto-evaluation', () => {
     // Documentation alone would auto-resolve depressed mood to met …

@@ -513,67 +513,80 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
       {criterionQuestions.length > 0 ? (
         <section className="butterfly-panel__section">
           <h3 className="butterfly-panel__section-title">{t('butterflyQuestions')}</h3>
-          <p className="butterfly-gap-list__hint">{t('butterflyQuestionAnswerHint')}</p>
+          {/* The "record the answer → criterion" instruction is shown ONCE here,
+              never repeated per question/criterion. */}
+          <p className="butterfly-gap-list__hint">{t('butterflyQuestionSectionHint')}</p>
           <ul className="butterfly-gap-list">
             {criterionQuestions.map((question) => {
               const jumpPage = question.deepLinkPageId
+              const hasFooter = question.resolvable || Boolean(jumpPage && onJumpToSection)
               return (
                 <li key={question.id} className={`butterfly-gap butterfly-gap--${question.priority}`}>
-                  <p className="butterfly-gap__intro">{t('butterflyInterviewIntro')}</p>
+                  <p className="butterfly-gap__rationale">{question.rationale}</p>
                   <ul className="butterfly-gap__questions">
                     {question.interviewQuestions.map((interviewQuestion, index) => (
-                      <li key={`${question.id}#${index}`} className="butterfly-gap__question">
-                        {interviewQuestion}
+                      <li key={`${question.id}#${index}`} className="butterfly-gap__q-row">
+                        <span className="butterfly-gap__question">{interviewQuestion}</span>
+                        {question.resolvable ? (
+                          // Each interview question is answerable on its own row, but
+                          // every phrasing probes the SAME criterion: the answer is
+                          // bridged to `question.criterionId` (last answer wins). The
+                          // first present/absent resolves the criterion and the whole
+                          // group drops off on re-evaluation.
+                          <div
+                            className="butterfly-gap__answer-actions"
+                            role="group"
+                            aria-label={interviewQuestion}
+                          >
+                            <button
+                              type="button"
+                              className="butterfly-answer-btn butterfly-answer-btn--yes"
+                              onClick={() => handleAnswerQuestion(question, 'present')}
+                            >
+                              {t('butterflyQuestionYes')}
+                            </button>
+                            <button
+                              type="button"
+                              className="butterfly-answer-btn butterfly-answer-btn--no"
+                              onClick={() => handleAnswerQuestion(question, 'absent')}
+                            >
+                              {t('butterflyQuestionNo')}
+                            </button>
+                            <button
+                              type="button"
+                              className="butterfly-answer-btn butterfly-answer-btn--unclear"
+                              onClick={() => handleAnswerQuestion(question, 'unclear')}
+                            >
+                              {t('butterflyQuestionUnclear')}
+                            </button>
+                          </div>
+                        ) : null}
                       </li>
                     ))}
                   </ul>
-                  <p className="butterfly-gap__rationale">{question.rationale}</p>
-                  <div className="butterfly-gap__answer">
-                    {question.resolvable ? (
-                      <div className="butterfly-gap__answer-actions" role="group" aria-label={question.question}>
+                  {hasFooter ? (
+                    <div className="butterfly-gap__footer">
+                      {question.resolvable ? (
+                        <input
+                          type="text"
+                          className="butterfly-gap__note"
+                          value={noteDrafts[question.id] ?? ''}
+                          placeholder={t('butterflyQuestionNotePlaceholder')}
+                          onChange={(event) =>
+                            setNoteDrafts((prev) => ({ ...prev, [question.id]: event.target.value }))
+                          }
+                        />
+                      ) : null}
+                      {jumpPage && onJumpToSection ? (
                         <button
                           type="button"
-                          className="butterfly-answer-btn butterfly-answer-btn--yes"
-                          onClick={() => handleAnswerQuestion(question, 'present')}
+                          className="butterfly-answer-btn butterfly-answer-btn--jump"
+                          onClick={() => onJumpToSection(jumpPage)}
                         >
-                          {t('butterflyQuestionYes')}
+                          {t('butterflyJumpToDoc')}
                         </button>
-                        <button
-                          type="button"
-                          className="butterfly-answer-btn butterfly-answer-btn--no"
-                          onClick={() => handleAnswerQuestion(question, 'absent')}
-                        >
-                          {t('butterflyQuestionNo')}
-                        </button>
-                        <button
-                          type="button"
-                          className="butterfly-answer-btn butterfly-answer-btn--unclear"
-                          onClick={() => handleAnswerQuestion(question, 'unclear')}
-                        >
-                          {t('butterflyQuestionUnclear')}
-                        </button>
-                      </div>
-                    ) : null}
-                    {jumpPage && onJumpToSection ? (
-                      <button
-                        type="button"
-                        className="butterfly-answer-btn butterfly-answer-btn--jump"
-                        onClick={() => onJumpToSection(jumpPage)}
-                      >
-                        {t('butterflyJumpToDoc')}
-                      </button>
-                    ) : null}
-                  </div>
-                  {question.resolvable ? (
-                    <input
-                      type="text"
-                      className="butterfly-gap__note"
-                      value={noteDrafts[question.id] ?? ''}
-                      placeholder={t('butterflyQuestionNotePlaceholder')}
-                      onChange={(event) =>
-                        setNoteDrafts((prev) => ({ ...prev, [question.id]: event.target.value }))
-                      }
-                    />
+                      ) : null}
+                    </div>
                   ) : null}
                 </li>
               )
@@ -666,6 +679,12 @@ function ButterflyDiagnosisCard({
           ) : null}
         </div>
 
+        {/* The "no documented finding — add / attest / let Butterfly check"
+            instruction appears ONCE here for the whole group, not per criterion. */}
+        {hasUnresolved ? (
+          <p className="butterfly-card__open-hint">{t('butterflyOpenCriteriaHint')}</p>
+        ) : null}
+
         <ul className="butterfly-criteria-list">
           {criteria.map((criterion) => {
             const attestation = attestations[criterion.criterionId]
@@ -740,14 +759,9 @@ function ButterflyDiagnosisCard({
                           </button>
                         </div>
                       </div>
-                    ) : (
-                      <>
-                        <p className="butterfly-criterion__prompt">{t('butterflyAskTemplate')}</p>
-                        {suggestion && suggestion.status === 'unclear' ? (
-                          <p className="butterfly-criterion__ai-unclear">{t('butterflyAiUnclear')}</p>
-                        ) : null}
-                      </>
-                    )}
+                    ) : suggestion && suggestion.status === 'unclear' ? (
+                      <p className="butterfly-criterion__ai-unclear">{t('butterflyAiUnclear')}</p>
+                    ) : null}
 
                     <div className="butterfly-attest__actions">
                       <button

@@ -1550,6 +1550,12 @@ export const uiTranslations = {
     fr: 'Enregistrez la réponse du patient — elle alimente directement l’évaluation des critères.',
     es: 'Registre la respuesta del paciente — se incorpora directamente a la evaluación de criterios.',
   },
+  butterflyQuestionSectionHint: {
+    de: 'Konkrete Fragen an die Patientin/den Patienten. Jede Frage einzeln mit Ja/Nein/Unklar beantworten — die Antwort fließt direkt in die Kriterienbewertung ein.',
+    en: 'Concrete questions to ask the patient. Answer each one with Yes/No/Unclear — the answer feeds directly into the criteria evaluation.',
+    fr: 'Questions concrètes à poser au patient. Répondez à chacune par Oui/Non/Incertain — la réponse alimente directement l’évaluation des critères.',
+    es: 'Preguntas concretas para hacerle al paciente. Responda cada una con Sí/No/Incierto — la respuesta se incorpora directamente a la evaluación de criterios.',
+  },
   butterflyInterviewIntro: {
     de: 'Konkrete Fragen an die Patientin/den Patienten zu diesem Kriterium:',
     en: 'Concrete questions to ask the patient about this criterion:',
@@ -1645,6 +1651,12 @@ export const uiTranslations = {
     en: 'This criterion needs a corresponding finding in the documentation. Not found — please add it, attest it, or let Butterfly check.',
     fr: 'Ce critère nécessite un constat correspondant dans la documentation. Introuvable — veuillez l’ajouter, l’attester ou laisser Butterfly vérifier.',
     es: 'Este criterio necesita un hallazgo correspondiente en la documentación. No encontrado — agréguelo, atéstelo o deje que Butterfly lo verifique.',
+  },
+  butterflyOpenCriteriaHint: {
+    de: 'Für die noch offenen Kriterien ist kein Befund dokumentiert — bitte je Kriterium ergänzen, attestieren oder von Butterfly prüfen lassen.',
+    en: 'No documented finding yet for the still-open criteria — for each, please add it, attest it, or let Butterfly check.',
+    fr: 'Aucun constat documenté pour les critères encore ouverts — pour chacun, veuillez l’ajouter, l’attester ou laisser Butterfly vérifier.',
+    es: 'Aún no hay hallazgo documentado para los criterios abiertos — para cada uno, agréguelo, atéstelo o deje que Butterfly lo verifique.',
   },
   butterflyAttestUnclear: {
     de: 'Unklar',
