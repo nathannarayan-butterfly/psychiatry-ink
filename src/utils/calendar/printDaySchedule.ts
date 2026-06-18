@@ -5,6 +5,7 @@ import {
   formatCalendarTime,
 } from '../calendarLabels'
 import { escapeHtml } from '../documentTemplate/htmlUtils'
+import { FONT_SANS } from '../../styles/typographyTokens'
 
 export interface PrintDayScheduleOptions {
   /** Include notes column (default: false). */
@@ -104,7 +105,7 @@ export function buildDaySchedulePrintHtml(
 <style>
 @page { size: A4; margin: 14mm 12mm; }
 * { box-sizing: border-box; }
-body { margin: 0; padding: 0; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 10pt; line-height: 1.4; color: #1a1a1a; background: #fff; }
+body { margin: 0; padding: 0; font-family: ${FONT_SANS}; font-size: 10pt; line-height: 1.4; color: #1a1a1a; background: #fff; }
 .cal-print-page { max-width: 186mm; margin: 0 auto; }
 .cal-print-header { border-bottom: 1px solid #ccc; margin-bottom: 5mm; padding-bottom: 3mm; }
 .cal-print-title { margin: 0 0 1.5mm; font-size: 15pt; font-weight: 600; letter-spacing: -0.01em; }

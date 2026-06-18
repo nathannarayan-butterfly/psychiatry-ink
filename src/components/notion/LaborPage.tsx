@@ -40,6 +40,7 @@ import {
 import { loadDiagnosen } from '../../utils/diagnosenArchive'
 import { getCaseMeta } from '../../hooks/useCaseRegistry'
 import { loadNotionDocumentSnapshot } from '../../utils/notionDocumentActions'
+import { FONT_SANS } from '../../styles/typographyTokens'
 import type { MedicationStatus } from '../../types/medicationPlan'
 import { consumeDiagnosticsSectionPref } from '../../utils/befundArchive'
 import {
@@ -1682,7 +1683,7 @@ function KumulativView({ befunde, normalwerteLabel, caseId }: KumulativViewProps
 <title>Kumulativer Laborbefund</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; color: #1a1a18; background: #fff; }
+  body { font-family: ${FONT_SANS}; font-size: 10pt; color: #1a1a18; background: #fff; }
   .print-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 0.6rem 1rem 0.5rem; border-bottom: 2px solid #333; margin-bottom: 0.6rem; }
   .print-header__title { font-size: 13pt; font-weight: 700; }
   .print-header__patient { font-size: 9.5pt; color: #444; margin-top: 2px; }
@@ -2708,7 +2709,7 @@ export function LaborPage({ caseId, onCreatePatient, hasPatient = false, useExte
 <title>${title}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; color: #1a1a18; background: #fff; }
+  body { font-family: ${FONT_SANS}; font-size: 10pt; color: #1a1a18; background: #fff; }
   .print-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 0.6rem 1rem 0.5rem; border-bottom: 2px solid #333; margin-bottom: 0.6rem; }
   .print-header__title { font-size: 13pt; font-weight: 700; }
   .print-header__patient { font-size: 9.5pt; color: #444; margin-top: 2px; }

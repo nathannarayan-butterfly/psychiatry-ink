@@ -19,7 +19,7 @@ body {
 }
 
 body {
-  font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  font-family: var(--font-sans);
   color: #1a1a1a;
   line-height: 1.5;
   font-size: 12pt;

@@ -8,6 +8,7 @@ import { useMedicationPlan } from '../../hooks/useMedicationPlan'
 import type { MedicationEntry } from '../../types/medicationPlan'
 import type { MedicationDraft } from '../../utils/medication/planOps'
 import { derivePlanTimeline, visibleMedications } from '../../utils/medication/planOps'
+import { FONT_SANS } from '../../styles/typographyTokens'
 import { MedicationDeleteDialog } from './MedicationDeleteDialog'
 import { MedicationEditDialog } from './MedicationEditDialog'
 import {
@@ -141,7 +142,7 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
     printWindow.document.write(`
       <!DOCTYPE html><html><head><title>${translateMedicationUi(language, 'medPageTitle')}</title>
       <style>
-        body { font-family: system-ui, sans-serif; font-size: 13px; padding: 1.5rem; }
+        body { font-family: ${FONT_SANS}; font-size: 13px; padding: 1.5rem; }
         h1 { font-size: 1rem; margin-bottom: 1rem; }
         .med { border-bottom: 1px solid #ddd; padding: 0.5rem 0; }
       </style></head><body>

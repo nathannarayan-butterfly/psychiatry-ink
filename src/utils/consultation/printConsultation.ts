@@ -7,6 +7,7 @@ import type {
 } from '../../types/consultation'
 import { CONSULTATION_STATUS_LABELS } from '../../types/consultation'
 import { escapeHtml } from '../documentTemplate/htmlUtils'
+import { FONT_SANS } from '../../styles/typographyTokens'
 
 const URGENCY_LABELS: Record<ConsultationUrgency, string> = {
   routine: 'Routine',
@@ -186,7 +187,7 @@ export function buildConsultationPrintHtml(
 <style>
 @page { size: A4; margin: 18mm 16mm; }
 * { box-sizing: border-box; }
-body { margin: 0; padding: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 11pt; line-height: 1.55; color: #1a1a1a; background: #fff; }
+body { margin: 0; padding: 0; font-family: ${FONT_SANS}; font-size: 11pt; line-height: 1.55; color: #1a1a1a; background: #fff; }
 .ks-print-page { max-width: 178mm; margin: 0 auto; }
 .ks-print-header { border-bottom: 1px solid #ccc; margin-bottom: 6mm; padding-bottom: 3mm; }
 .ks-print-title { margin: 0 0 2mm; font-size: 16pt; font-weight: 600; letter-spacing: -0.01em; }

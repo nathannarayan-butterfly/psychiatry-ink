@@ -3,6 +3,7 @@ import { UNRESOLVED_PLACEHOLDER } from './constants'
 import { htmlToPlainLines, sanitizeRichHtml, escapeHtml } from './htmlUtils'
 import { resolveBinding } from './placeholderContext'
 import { resolvePageSettings } from './pageSettings'
+import { FONT_SANS } from '../../styles/typographyTokens'
 
 function isPlaceholderType(type: TemplateField['type']): boolean {
   return (
@@ -320,7 +321,7 @@ export function buildPrintHtmlDocument(
 <style>
 @page { size: A4; margin: 0; }
 * { box-sizing: border-box; }
-body { margin: 0; padding: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 11pt; line-height: 1.55; color: #1a1a1a; }
+body { margin: 0; padding: 0; font-family: ${FONT_SANS}; font-size: 11pt; line-height: 1.55; color: #1a1a1a; }
 .dt-doc-page { width: 210mm; min-height: 297mm; margin: 0 auto; padding: var(--dt-margin-top) var(--dt-margin-right) var(--dt-margin-bottom) var(--dt-margin-left); display: flex; flex-direction: column; }
 .dt-doc-header, .dt-doc-footer { font-size: 9pt; color: #444; }
 .dt-doc-header { border-bottom: 1px solid #ddd; margin-bottom: 4mm; padding-bottom: 2mm; }

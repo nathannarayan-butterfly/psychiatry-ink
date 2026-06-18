@@ -9,6 +9,7 @@ import {
   formatCaseRef,
   formatValueRef,
 } from './labMedCorrelationLabels'
+import { FONT_SANS } from '../../styles/typographyTokens'
 
 export interface LabMedCorrelationPrintContext {
   caseId: string
@@ -136,7 +137,7 @@ export function buildLabMedCorrelationPrintHtml(context: LabMedCorrelationPrintC
 <style>
 @page { size: A4 landscape; margin: 14mm 12mm; }
 * { box-sizing: border-box; }
-body { margin: 0; padding: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 10pt; line-height: 1.45; color: #1a1a1a; background: #fff; }
+body { margin: 0; padding: 0; font-family: ${FONT_SANS}; font-size: 10pt; line-height: 1.45; color: #1a1a1a; background: #fff; }
 .ks-print-page { max-width: 100%; margin: 0 auto; }
 .ks-print-header { border-bottom: 1px solid #ccc; margin-bottom: 5mm; padding-bottom: 3mm; }
 .ks-print-title { margin: 0 0 2mm; font-size: 14pt; font-weight: 600; }

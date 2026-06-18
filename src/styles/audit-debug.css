@@ -3,7 +3,7 @@
   background: #fafafa;
   color: #1a1a1a;
   padding: 1.5rem 2rem 3rem;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .audit-debug-header {
@@ -120,7 +120,7 @@
 }
 
 .audit-debug-table__mono {
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: 0.75rem;
 }
 

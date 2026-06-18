@@ -3,6 +3,7 @@ import { caseStorageKey, DEFAULT_CASE_ID, getActiveCaseId } from './caseContext'
 import { scheduleDocumentSnapshotImprints } from './clinicalImprint'
 import { readOrMigrateEncryptedJson, writeEncryptedJson } from './encryptedLocalStore'
 import { getInitialEditorContent } from './workspaceComponents'
+import { FONT_SANS } from '../styles/typographyTokens'
 
 const SNAPSHOT_KEY_PREFIX = 'psychiatry-ink:notion-document'
 
@@ -198,7 +199,7 @@ export function printNotionDocument(
   <meta charset="utf-8" />
   <title>${escapeHtml(title)}</title>
   <style>
-    body { font-family: Georgia, serif; font-size: 12pt; line-height: 1.6; margin: 2cm; color: #111; }
+    body { font-family: ${FONT_SANS}; font-size: 12pt; line-height: 1.6; margin: 2cm; color: #111; }
     h1 { font-size: 18pt; font-weight: 600; margin: 0 0 1.2rem; }
     h2 { font-size: 11pt; font-weight: 600; margin: 1.4rem 0 0.4rem; text-transform: uppercase; letter-spacing: 0.04em; }
     pre { white-space: pre-wrap; font-family: inherit; margin: 0 0 0.8rem; }

@@ -123,7 +123,7 @@
 }
 
 .budget-table__mono {
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: 0.75rem;
 }
 
@@ -197,7 +197,7 @@
 }
 
 .ai-usage-tracker__mono {
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
 }
 
 .ai-usage-tracker__empty,

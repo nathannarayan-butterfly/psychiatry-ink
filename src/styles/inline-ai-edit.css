@@ -24,7 +24,7 @@
   background: var(--surface);
   box-shadow: var(--shadow-elevated-lg);
   padding: var(--space-4);
-  font-family: var(--font-ui);
+  font-family: var(--font-sans);
   color: var(--text-main);
   animation: inline-ai-edit-in var(--duration-fast) var(--ease-out);
 }
@@ -251,7 +251,7 @@
   border-radius: var(--radius-control);
   background: var(--surface);
   padding: var(--space-2) var(--space-3);
-  font-family: var(--font-ui);
+  font-family: var(--font-sans);
   font-size: var(--text-sm);
   font-weight: 500;
   color: var(--text-main);

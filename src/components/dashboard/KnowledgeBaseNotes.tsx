@@ -7,6 +7,7 @@ import {
   type HighlightColor,
 } from '../../types/knowledgeBaseAnnotations'
 import { kbT } from '../medication/kb/kbStrings'
+import { FONT_MONO, FONT_SANS } from '../../styles/typographyTokens'
 
 interface KnowledgeBaseNotesProps {
   medicationId: string
@@ -16,10 +17,10 @@ interface KnowledgeBaseNotesProps {
 type FontKey = 'sans' | 'serif' | 'mono' | 'handwriting'
 
 const FONT_FAMILIES: Record<FontKey, string> = {
-  sans: "'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif",
-  serif: "Georgia, 'Times New Roman', 'Iowan Old Style', serif",
-  mono: "'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace",
-  handwriting: "'Comic Sans MS', 'Comic Sans', 'Bradley Hand', cursive",
+  sans: FONT_SANS,
+  serif: FONT_SANS,
+  mono: FONT_MONO,
+  handwriting: FONT_SANS,
 }
 
 /**

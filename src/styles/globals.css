@@ -46,11 +46,11 @@
   --gradient-accent-spot: var(--app-bg);
   --gradient-surface-spot: var(--app-bg);
 
+  /* Typography roles — 2 families + mono (display uses weight/size, same sans). */
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
-  /* Typography roles: display (Playfair) for hero/patient names, UI (DM Sans)
-     for labels/dates, body stays Inter via --font-sans. */
-  --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
-  --font-ui: "DM Sans", system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-sans);
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", monospace;
+  --font-ui: var(--font-sans);
 
   --shadow-workspace: 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.05);
   --shadow-panel: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 14px rgba(0, 0, 0, 0.06);
@@ -3587,7 +3587,7 @@
   .dashboard-hero__date {
     position: relative;
     margin: 0 0 0.35rem;
-    font-family: var(--font-ui);
+    font-family: var(--font-sans);
     font-size: 0.6875rem;
     font-weight: 600;
     letter-spacing: 0.08em;
@@ -4488,7 +4488,7 @@
   }
 
   .dashboard-usage__value {
-    font-family: ui-monospace, monospace;
+    font-family: var(--font-mono);
     font-size: 0.6875rem;
     color: var(--text-ink);
   }

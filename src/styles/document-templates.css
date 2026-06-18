@@ -500,7 +500,7 @@
 }
 
 .dt-editor__preview {
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: var(--font-sans);
   font-size: 0.9375rem;
   line-height: 1.6;
   white-space: pre-wrap;
@@ -599,7 +599,7 @@
 }
 
 .dt-a4-page--preview .dt-a4-page__inner {
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: var(--font-sans);
   font-size: 11pt;
   line-height: 1.55;
 }
@@ -815,7 +815,7 @@
 }
 
 .dt-canvas-field--placeholder .dt-canvas-placeholder {
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: 0.75rem;
   color: var(--dt-muted);
 }

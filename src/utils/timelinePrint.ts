@@ -7,6 +7,7 @@ import {
   TIMELINE_BOX_HEIGHT,
   TIMELINE_BOX_WIDTH,
 } from './timelineLayout'
+import { FONT_SANS } from '../styles/typographyTokens'
 
 const PRIORITY_LABEL: Record<TimelineEntry['priority'], string> = {
   low: 'Low',
@@ -151,7 +152,7 @@ export function buildTimelinePrintHtml(snapshot: TimelineSnapshot, title: string
   <meta charset="utf-8" />
   <title>${escapeHtml(title)}</title>
   <style>
-    body { font-family: system-ui, sans-serif; margin: 1.5rem; color: #24211e; }
+    body { font-family: ${FONT_SANS}; margin: 1.5rem; color: #24211e; }
     h1 { font-size: 1.125rem; margin: 0 0 0.25rem; }
     p { margin: 0 0 1rem; color: #6d655c; font-size: 0.8125rem; }
     table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }

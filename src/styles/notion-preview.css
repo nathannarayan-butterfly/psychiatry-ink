@@ -320,7 +320,7 @@
   border: 1px solid transparent;
   border-radius: 0.25rem;
   background: transparent;
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: 0.7rem;
   line-height: 1.2;
   white-space: nowrap;
@@ -785,7 +785,7 @@
 
 .diagnosen-widget__search-code {
   font-weight: 600;
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
   color: var(--accent);
 }
 
@@ -840,7 +840,7 @@
 .diagnosen-widget__code {
   font-size: 0.68rem;
   font-weight: 600;
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
   color: var(--accent);
 }
 
@@ -931,7 +931,7 @@
   width: 3.8rem;
   flex-shrink: 0;
   font-size: 0.7rem;
-  font-family: 'JetBrains Mono', 'Fira Mono', monospace;
+  font-family: var(--font-mono);
   font-weight: 600;
   border: 1px solid transparent;
   border-radius: 0.2rem;
@@ -1822,7 +1822,7 @@
 }
 
 .panel-date-card__vertical-line--time {
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: 0.6rem;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -2104,7 +2104,7 @@
 }
 
 .pomodoro-sidebar-lines__countdown {
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: 0.72rem;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
@@ -4575,7 +4575,7 @@
   border: none;
   background: transparent;
   padding: 0.1rem 0.25rem 0.1rem 0;
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -4628,7 +4628,7 @@
 }
 
 .pomodoro-widget__total-label {
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
@@ -6228,7 +6228,7 @@
   font-size: 0.82rem;
   font-weight: 600;
   line-height: 1;
-  font-family: system-ui, sans-serif;
+  font-family: var(--font-sans);
 }
 
 /* —— Top bar: notification bell —— */
@@ -15029,7 +15029,7 @@ details[open].receptor-radar .receptor-radar__summary::before {
 .kbp-drug-header__atc {
   font-size: 0.75rem;
   color: var(--text-muted);
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
 }
 
 .kbp-drug-header__summary {
@@ -17727,7 +17727,7 @@ details[open].receptor-radar .receptor-radar__summary::before {
 }
 
 .kbp-detail-view--reading .kbp-drug-header__name {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-sans);
   font-size: clamp(2rem, 3vw, 2.75rem);
   line-height: 1.08;
   letter-spacing: -0.025em;
