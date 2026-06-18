@@ -1,4 +1,13 @@
-import { Check, ChevronRight, FileText, FlaskConical, GitBranch, LineChart, Stethoscope } from 'lucide-react'
+import {
+  Check,
+  ChevronRight,
+  ClipboardList,
+  FileText,
+  FlaskConical,
+  GitBranch,
+  LineChart,
+  Stethoscope,
+} from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from '../../context/TranslationContext'
@@ -44,8 +53,9 @@ interface WorkspaceContextMenuProps {
   onSelect: (pageId: NotionPageId) => void
   onSelectWithSection?: (pageId: NotionPageId, sectionId: string) => void
   templateAction?: TemplateMenuAction
-  /** Optional clinical-area action (e.g. Konsil) exposed at the bottom of the menu. */
+  /** Optional clinical-area actions (e.g. Konsil, Anforderung) exposed at the bottom of the menu. */
   konsilAction?: TemplateMenuAction
+  anforderungAction?: TemplateMenuAction
   /** Increment to open the menu programmatically (toolbar button, etc.). */
   openMenuRequest?: number
   children: ReactNode
@@ -59,6 +69,7 @@ export function WorkspaceContextMenu({
   onSelectWithSection,
   templateAction,
   konsilAction,
+  anforderungAction,
   openMenuRequest = 0,
   children,
 }: WorkspaceContextMenuProps) {
@@ -84,7 +95,10 @@ export function WorkspaceContextMenu({
     setOpenSubmenu(null)
   }
 
-  const extraItemsHeight = (templateAction ? 60 : 0) + (konsilAction ? 60 : 0)
+  const clinicalAreaCount = (konsilAction ? 1 : 0) + (anforderungAction ? 1 : 0)
+  const clinicalAreasHeight =
+    clinicalAreaCount > 0 ? 60 + Math.max(0, clinicalAreaCount - 1) * 40 : 0
+  const extraItemsHeight = (templateAction ? 60 : 0) + clinicalAreasHeight
 
   const openMenuAt = useCallback(
     (clientX: number, clientY: number) => {
@@ -173,13 +187,20 @@ export function WorkspaceContextMenu({
     close()
   }
 
-  // Index layout: [...ALL_PAGES, konsilAction?, templateAction?]
+  const handleAnforderungSelect = () => {
+    anforderungAction?.onSelect()
+    close()
+  }
+
+  // Index layout: [...ALL_PAGES, konsilAction?, anforderungAction?, templateAction?]
   const konsilIndex = konsilAction ? ALL_PAGES.length : -1
-  const templateIndex = templateAction
+  const anforderungIndex = anforderungAction
     ? ALL_PAGES.length + (konsilAction ? 1 : 0)
     : -1
-  const menuItemCount =
-    ALL_PAGES.length + (konsilAction ? 1 : 0) + (templateAction ? 1 : 0)
+  const templateIndex = templateAction
+    ? ALL_PAGES.length + clinicalAreaCount
+    : -1
+  const menuItemCount = ALL_PAGES.length + clinicalAreaCount + (templateAction ? 1 : 0)
 
   const triggerSubmenu = (pageId: NotionPageId, itemEl: HTMLButtonElement) => {
     clearHoverTimer()
@@ -284,6 +305,8 @@ export function WorkspaceContextMenu({
           event.preventDefault()
           if (konsilAction && focusedIndex === konsilIndex) {
             handleKonsilSelect()
+          } else if (anforderungAction && focusedIndex === anforderungIndex) {
+            handleAnforderungSelect()
           } else if (templateAction && focusedIndex === templateIndex) {
             handleTemplateSelect()
           } else {
@@ -408,32 +431,56 @@ export function WorkspaceContextMenu({
                 </p>
                 {TOOL_PAGES.map((page, index) => renderItem(page, DOCUMENT_PAGES.length + index))}
 
-                {konsilAction ? (
+                {clinicalAreaCount > 0 ? (
                   <>
                     <div className="workspace-context-menu__sep" role="separator" />
                     <p className="workspace-context-menu__heading">
                       {t('notionContextMenuAreas')}
                     </p>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      tabIndex={focusedIndex === konsilIndex ? 0 : -1}
-                      className="workspace-context-menu__item"
-                      onClick={handleKonsilSelect}
-                      onMouseEnter={() => {
-                        setFocusedIndex(konsilIndex)
-                        setOpenSubmenu(null)
-                      }}
-                    >
-                      <Stethoscope
-                        className="workspace-context-menu__item-icon h-3.5 w-3.5"
-                        strokeWidth={1.75}
-                        aria-hidden
-                      />
-                      <span className="workspace-context-menu__item-label">
-                        {t(konsilAction.labelKey)}
-                      </span>
-                    </button>
+                    {konsilAction ? (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        tabIndex={focusedIndex === konsilIndex ? 0 : -1}
+                        className="workspace-context-menu__item"
+                        onClick={handleKonsilSelect}
+                        onMouseEnter={() => {
+                          setFocusedIndex(konsilIndex)
+                          setOpenSubmenu(null)
+                        }}
+                      >
+                        <Stethoscope
+                          className="workspace-context-menu__item-icon h-3.5 w-3.5"
+                          strokeWidth={1.75}
+                          aria-hidden
+                        />
+                        <span className="workspace-context-menu__item-label">
+                          {t(konsilAction.labelKey)}
+                        </span>
+                      </button>
+                    ) : null}
+                    {anforderungAction ? (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        tabIndex={focusedIndex === anforderungIndex ? 0 : -1}
+                        className="workspace-context-menu__item"
+                        onClick={handleAnforderungSelect}
+                        onMouseEnter={() => {
+                          setFocusedIndex(anforderungIndex)
+                          setOpenSubmenu(null)
+                        }}
+                      >
+                        <ClipboardList
+                          className="workspace-context-menu__item-icon h-3.5 w-3.5"
+                          strokeWidth={1.75}
+                          aria-hidden
+                        />
+                        <span className="workspace-context-menu__item-label">
+                          {t(anforderungAction.labelKey)}
+                        </span>
+                      </button>
+                    ) : null}
                   </>
                 ) : null}
 

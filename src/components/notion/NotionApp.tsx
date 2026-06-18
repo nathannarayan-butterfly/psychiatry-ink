@@ -1756,6 +1756,16 @@ export function NotionApp({
                 }
               : undefined
           }
+          anforderungAction={
+            hasPatient &&
+            storageCaseId !== DEFAULT_CASE_ID &&
+            !workspaceReadOnly
+              ? {
+                  labelKey: 'anforderungAddTitle',
+                  onSelect: () => setAnforderungModalOpen(true),
+                }
+              : undefined
+          }
           templateAction={{
             labelKey:
               storageCaseId === DEFAULT_CASE_ID
