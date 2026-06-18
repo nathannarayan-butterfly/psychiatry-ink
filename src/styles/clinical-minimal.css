@@ -8,16 +8,16 @@
 
 :root {
   --cm-font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
-  --cm-hero-name-size: 1.375rem;
+  --cm-hero-name-size: 1.5rem;
   --cm-hero-thesis-size: 0.9375rem;
   --cm-eyebrow-size: 0.6875rem;
-  --cm-section-gap: 2.25rem;
+  --cm-section-gap: 2.75rem;
   --cm-col-gap: 3rem;
-  --cm-content-max: 57.5rem;
+  --cm-prose-max: 42em;
   --cm-hairline: color-mix(in srgb, var(--border-soft, #e8e4df) 72%, transparent);
   --cm-quiet-border: color-mix(in srgb, var(--border-soft, #e8e4df) 88%, transparent);
-  --cm-page-pad-x: 3rem;
-  --cm-page-pad-y: 2.5rem;
+  --cm-page-pad-x: 1.75rem;
+  --cm-page-pad-y: 1.5rem;
 }
 
 /* —— Page shell —— */
@@ -25,14 +25,14 @@
 .cm-workspace {
   width: 100%;
   min-width: 0;
-  max-width: var(--cm-content-max);
-  margin: 0 auto;
-  padding: var(--cm-page-pad-y) var(--cm-page-pad-x) 2rem;
+  max-width: none;
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
 }
 
 .cm-workspace--flush {
-  padding-top: 0;
+  padding: 0;
 }
 
 /* —— Page eyebrow (ÜBERSICHT + rule) —— */
@@ -41,7 +41,7 @@
   display: flex;
   align-items: flex-end;
   gap: 0.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 2.25rem;
 }
 
 .cm-page-eyebrow__label {
@@ -89,6 +89,7 @@
   padding-bottom: 1.75rem;
   border-bottom: 1px solid var(--cm-hairline);
   margin-bottom: 0;
+  text-align: left;
 }
 
 .cm-hero__row {
@@ -126,7 +127,7 @@
 
 .cm-hero__thesis {
   margin: 0;
-  max-width: 42em;
+  max-width: var(--cm-prose-max);
   font-size: var(--cm-hero-thesis-size);
   font-weight: 500;
   line-height: 1.55;
@@ -136,10 +137,12 @@
 /* —— Quiet authority strip (safety) —— */
 
 .cm-quiet-strip {
+  width: 100%;
   padding-left: 0.875rem;
   border-left: 2px solid var(--cm-quiet-border);
   margin-top: 1.75rem;
-  margin-bottom: 2.25rem;
+  margin-bottom: 2.75rem;
+  text-align: left;
 }
 
 .cm-quiet-strip--tone-high {
@@ -178,6 +181,7 @@
   flex-direction: column;
   min-width: 0;
   margin-bottom: var(--cm-section-gap);
+  text-align: left;
 }
 
 .cm-section__head {
@@ -268,8 +272,8 @@
 .cm-dx-title {
   margin: 0;
   font-size: var(--text-sm, 0.8125rem);
-  line-height: 1.5;
-  max-width: 36em;
+  line-height: 1.55;
+  max-width: none;
   color: var(--text-main, #24211e);
 }
 
@@ -290,10 +294,11 @@
 .cm-med-dose {
   margin: 0.15rem 0 0.5rem;
   font-family: var(--cm-font-mono);
-  font-size: 1.25rem;
+  font-size: 1.375rem;
   font-weight: 500;
   letter-spacing: 0.06em;
   color: var(--text-main, #24211e);
+  text-align: left;
 }
 
 .cm-med-dose-unit {
@@ -417,7 +422,8 @@
   padding-top: 1.25rem;
   border-top: 1px solid var(--cm-hairline);
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
+  width: 100%;
 }
 
 .cm-layout-footer__btn {
@@ -450,6 +456,7 @@
   font-size: var(--text-sm, 0.8125rem);
   color: var(--text-muted, #91887e);
   font-style: italic;
+  text-align: left;
 }
 
 /* —— Global patient header alignment —— */
@@ -465,20 +472,6 @@
 .case-patient-header--minimal .cm-hero {
   padding-bottom: 1.25rem;
   border-bottom: 1px solid var(--cm-hairline);
-}
-
-/* —— Workspace page shells —— */
-
-.diagnose-page,
-.medication-page,
-.dokumente-page,
-.verlauf-page,
-.therapy-page {
-  max-width: var(--cm-content-max);
-}
-
-.therapy-page {
-  padding: var(--cm-page-pad-y, 2.5rem) var(--cm-page-pad-x, 3rem) 3rem;
 }
 
 @media (max-width: 768px) {

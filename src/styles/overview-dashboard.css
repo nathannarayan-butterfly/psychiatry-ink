@@ -44,6 +44,8 @@
 
 .ov-hero-widget {
   margin-bottom: 0;
+  width: 100%;
+  text-align: left;
 }
 
 .ov-hero-widget .cm-hero {
@@ -463,8 +465,9 @@
   display: grid;
   grid-template-columns: 1.55fr 1fr;
   gap: var(--cm-col-gap, 3rem) var(--cm-col-gap, 3rem);
-  row-gap: var(--cm-section-gap, 2.25rem);
+  row-gap: var(--cm-section-gap, 2.75rem);
   align-items: start;
+  width: 100%;
 }
 .ov-grid > * {
   min-width: 0;
@@ -722,12 +725,12 @@
 /* ── Shared content primitives ───────────────────────────────────────────── */
 
 .ov-empty {
-  margin: auto 0;
+  margin: 0;
   padding: var(--space-2, 0.5rem) 0;
   font-size: var(--text-sm, 0.8125rem);
   color: var(--text-muted, #91887e);
   font-style: italic;
-  text-align: center;
+  text-align: left;
   opacity: 0.85;
 }
 .ov-list {
@@ -766,6 +769,7 @@
 
 .ov-safety-strip {
   margin-top: 0;
+  width: 100%;
 }
 
 .ov-safety__signals--flat {
@@ -948,7 +952,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin: auto 0;
+  margin: 0;
   padding: 0.55rem 0.65rem;
   font-size: var(--text-sm, 0.8125rem);
   color: var(--ov-ok);
@@ -1223,6 +1227,7 @@
 
 .ov-layout-footer {
   margin-top: 0;
+  width: 100%;
 }
 .ov-snapshot__cue-label {
   font-size: var(--text-2xs, 0.6875rem);
