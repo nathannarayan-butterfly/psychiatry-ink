@@ -4,12 +4,13 @@
 
 ## What we do
 
-- Show optional 2D structure thumbnails on drug cards, sourced from [Wikimedia Commons](https://commons.wikimedia.org/) thumb URLs (see `src/utils/kb/wikimediaStructureImages.ts`).
+- Show optional 2D structure thumbnails on drug cards and drug detail pages, sourced from [Wikimedia Commons](https://commons.wikimedia.org/) thumb URLs (see `src/data/kb/wikimediaStructureImageData.ts`, resolved via `scripts/fetch-wikimedia-structure-images.ts`).
 - Hotlink thumbnails with `loading="lazy"` and `onError` placeholder fallback.
 - Provide page-level attribution on the KB browse view:
   - Lead line: “Strukturformeln / Structure diagrams: Wikimedia Commons” (linked).
   - Per-file links to Commons file pages with license hint where known (e.g. CC BY-SA 3.0, Public domain).
   - Footer disclaimer (DE + EN via `uiTranslations`): images © respective Commons contributors, used under Creative Commons licenses; see file pages for full attribution.
+- Drug detail view (`KnowledgeBasePharma` → `DrugDetailView`) shows a larger structure image in the header and a per-drug **Bildnachweis** block (author, license, Commons file link) at the bottom of the monograph.
 
 ## Is the prior preview approach protective enough?
 
@@ -26,7 +27,7 @@ The dev preview listed three example files in a small footnote. That is **direct
 
 ## Residual risks / deferred work
 
-- **Coverage**: Only mapped generics show images; others use a placeholder (no Commons reuse).
+- **Coverage**: 183/184 psychopharmacology seed entries mapped; `Lecanemab` (monoclonal antibody) has no suitable 2D structure on Commons — placeholder icon remains. Unmapped custom KB drugs also fall back to the flask icon.
 - **Hotlink fragility**: Commons URL or file moves can break thumbs (mitigated by placeholder, not by local cache).
 - **Local cache**: Not implemented; would improve availability but needs separate license audit per cached file.
 - **Bulk contributor API**: Card “Mitwirkende” uses accepted contributors when available, else `createdByDisplayName` / seed author.

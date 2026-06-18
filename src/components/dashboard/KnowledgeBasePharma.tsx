@@ -18,7 +18,7 @@ import {
   Underline,
   X,
 } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from '../../context/TranslationContext'
 import { useKnowledgeBaseAnnotations } from '../../hooks/useKnowledgeBaseAnnotations'
@@ -36,7 +36,9 @@ import {
   usePrescribingCountry,
 } from '../../hooks/usePrescribingCountry'
 import { formatPreparationLine } from '../../utils/kb/formatPreparationLine'
+import { getStructureImageAttribution } from '../../utils/kb/wikimediaStructureImages'
 import { KbPharmaClassifiedBrowse } from './KbPharmaClassifiedBrowse'
+import { KbStructureImage, KbStructureImageAttributionFooter } from './KbStructureImage'
 import { showNotionToast } from '../notion/NotionToast'
 import { generatePharmaDetails, type AiGeneratedPreparation } from '../../services/pharmaAiApi'
 import { useKnowledgeBaseAiTier, type KbAiTier } from '../../hooks/useKnowledgeBaseAiTier'
@@ -1814,6 +1816,10 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
   }
 
   const activeDrug = editMode ? draft : drug
+  const structureImageAttribution = useMemo(
+    () => getStructureImageAttribution(activeDrug.genericName),
+    [activeDrug.genericName],
+  )
   const sortedSections = [...activeDrug.sections].sort((a, b) => a.order - b.order)
   const visibleSections = sortedSections.filter((s) => !s.hidden || editMode)
   const renderedSections = editMode ? sortedSections : []
@@ -2218,10 +2224,19 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
           <div className="kbp-detail-main__content">
           <div className="kbp-drug-header">
             <div className="kbp-drug-header__top">
-              <h2 className="kbp-drug-header__name">{activeDrug.genericName}</h2>
-              {activeDrug.brandNames.length > 0 && (
-                <span className="kbp-drug-header__brands">{activeDrug.brandNames.join(', ')}</span>
-              )}
+              {!editMode ? (
+                <KbStructureImage
+                  attribution={structureImageAttribution}
+                  variant="detail"
+                  className="kbp-drug-header__structure"
+                />
+              ) : null}
+              <div className="kbp-drug-header__identity">
+                <h2 className="kbp-drug-header__name">{activeDrug.genericName}</h2>
+                {activeDrug.brandNames.length > 0 && (
+                  <span className="kbp-drug-header__brands">{activeDrug.brandNames.join(', ')}</span>
+                )}
+              </div>
             </div>
             <div className="kbp-drug-header__meta">
               <span className="kbp-drug-header__classification">
@@ -2623,7 +2638,10 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
             )}
 
             {!editMode ? (
-              <KbContributorsFooter substanceId={extractKbSubstanceId(activeDrug)} language={language} />
+              <>
+                <KbContributorsFooter substanceId={extractKbSubstanceId(activeDrug)} language={language} />
+                <KbStructureImageAttributionFooter attribution={structureImageAttribution} variant="detail" />
+              </>
             ) : null}
           </div>
           </div>

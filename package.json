@@ -31,6 +31,7 @@
     "kb:verify": "tsx scripts/verify-kb-substance.ts",
     "kb:publish-all": "tsx scripts/publish-all-kb-substances.ts",
     "kb:translate-de": "tsx scripts/translate-kb-to-german.ts",
+    "kb:fetch-structure-images": "tsx scripts/fetch-wikimedia-structure-images.ts",
     "postinstall": "prisma generate",
     "dev:stop": "bash scripts/stop-dev.sh"
   },

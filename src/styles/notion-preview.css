@@ -19141,6 +19141,107 @@ details[open].receptor-radar .receptor-radar__summary::before {
   }
 }
 
+/* ── KB Wikimedia structure images (browse + detail) ─────────────────────── */
+
+.kb-structure-image {
+  object-fit: contain;
+  background: #f8f7f4;
+  border: 1px solid color-mix(in srgb, var(--border-soft) 80%, transparent);
+}
+
+.kb-structure-image--thumb {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 0.25rem;
+}
+
+.kb-structure-image--detail {
+  width: min(100%, 18rem);
+  max-height: 10rem;
+  border-radius: 0.375rem;
+  padding: 0.35rem;
+}
+
+.kb-structure-image--placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+
+.kbp-drug-header__top {
+  align-items: flex-start;
+}
+
+.kbp-drug-header__structure {
+  flex-shrink: 0;
+}
+
+.kbp-drug-header__identity {
+  min-width: 0;
+  flex: 1;
+}
+
+.kb-structure-attribution {
+  margin-top: 1.25rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-soft);
+}
+
+.kb-structure-attribution__title {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.kb-structure-attribution__list {
+  margin: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.kb-structure-attribution__row {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.kb-structure-attribution__row dt {
+  margin: 0;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.kb-structure-attribution__row dd {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.kb-structure-attribution__row a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.kb-structure-attribution__row a:hover {
+  text-decoration: underline;
+}
+
+.kb-structure-attribution__disclaimer {
+  margin: 0.65rem 0 0;
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.kbp-detail-view--reading .kbp-drug-header__top {
+  gap: 0.85rem;
+}
+
 /* ── Diagnose page (dedicated clinical-area page for coded diagnoses) ──────── */
 .diagnose-page {
   padding: 1.5rem 1.75rem 3rem;

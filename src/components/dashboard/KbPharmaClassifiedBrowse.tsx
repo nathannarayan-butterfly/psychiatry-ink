@@ -1,5 +1,6 @@
-import { FlaskConical, Plus, Search } from 'lucide-react'
+import { Plus, Search } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { KbStructureImage } from './KbStructureImage'
 import { useTranslation } from '../../context/TranslationContext'
 import { useKbBulkContributors } from '../../hooks/useKbBulkContributors'
 import type { KnowledgeBaseDrug } from '../../types/knowledgeBase'
@@ -28,31 +29,6 @@ type ClassifiedSection = {
   title: string
   subtitle: string
   drugs: ClassifiedDrugCard[]
-}
-
-function StructureThumbnail({ attribution }: { attribution: StructureImageAttribution | null }) {
-  const [failed, setFailed] = useState(false)
-
-  if (!attribution || failed) {
-    return (
-      <span className="kb-classified-drug__structure kb-classified-drug__structure--placeholder" aria-hidden>
-        <FlaskConical className="h-5 w-5" strokeWidth={1.5} />
-      </span>
-    )
-  }
-
-  return (
-    <img
-      src={attribution.thumbUrl}
-      alt=""
-      loading="lazy"
-      width={56}
-      height={56}
-      className="kb-classified-drug__structure"
-      title={attribution.fileName}
-      onError={() => setFailed(true)}
-    />
-  )
 }
 
 function resolveFallbackContributor(drug: KnowledgeBaseDrug): string {
@@ -194,7 +170,11 @@ export function KbPharmaClassifiedBrowse({
                     onClick={() => onSelect(card.drug.id)}
                   >
                     <div className="kb-classified-drug__top">
-                      <StructureThumbnail attribution={card.structureImageAttribution} />
+                      <KbStructureImage
+                        attribution={card.structureImageAttribution}
+                        variant="thumb"
+                        className="kb-classified-drug__structure"
+                      />
                       <div className="kb-classified-drug__body">
                         <h3 className="kb-classified-drug__name">{card.drug.genericName}</h3>
                         {card.drug.brandNames.length > 0 ? (
