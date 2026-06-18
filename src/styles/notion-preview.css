@@ -19067,19 +19067,6 @@ details[open].receptor-radar .receptor-radar__summary::before {
 
 .kb-classified-drug__structure {
   flex-shrink: 0;
-  width: 3.5rem;
-  height: 3.5rem;
-  object-fit: contain;
-  border-radius: 0.25rem;
-  background: #f8f7f4;
-  border: 1px solid color-mix(in srgb, var(--border-soft) 80%, transparent);
-}
-
-.kb-classified-drug__structure--placeholder {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
 }
 
 .kb-classified-drug__body {
@@ -19145,21 +19132,33 @@ details[open].receptor-radar .receptor-radar__summary::before {
 
 .kb-structure-image {
   object-fit: contain;
-  background: #f8f7f4;
-  border: 1px solid color-mix(in srgb, var(--border-soft) 80%, transparent);
+  background: color-mix(in srgb, var(--surface-hover, #f5f5f5) 55%, #e8eaed);
+  border: 1px solid color-mix(in srgb, var(--border-soft) 88%, #888);
+  box-sizing: border-box;
+}
+
+.kb-structure-image:not(.kb-structure-image--placeholder) {
+  filter: contrast(1.2) saturate(1.1);
+}
+
+@media (prefers-contrast: more) {
+  .kb-structure-image:not(.kb-structure-image--placeholder) {
+    filter: contrast(1.35) saturate(1.15);
+  }
 }
 
 .kb-structure-image--thumb {
-  width: 3.5rem;
-  height: 3.5rem;
+  width: 4rem;
+  height: 4rem;
   border-radius: 0.25rem;
+  padding: 0.2rem;
 }
 
 .kb-structure-image--detail {
-  width: min(100%, 18rem);
-  max-height: 10rem;
+  width: min(100%, 22rem);
+  max-height: 14rem;
   border-radius: 0.375rem;
-  padding: 0.35rem;
+  padding: 0.5rem;
 }
 
 .kb-structure-image--placeholder {

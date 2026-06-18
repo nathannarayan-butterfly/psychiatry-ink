@@ -8,7 +8,29 @@ import { normalizeGenericName } from './normalizeGenericName'
  * compliant reuse (link back to file page + license). URLs can change if files are
  * moved; onError fallback shows a placeholder. Regenerate mappings via
  * `npx tsx scripts/fetch-wikimedia-structure-images.ts`.
+ *
+ * Stored data uses small list thumbs (120px); browse/detail views upscale at resolve
+ * time via {@link rescaleCommonsThumbUrl} so we avoid regenerating the data file.
  */
+const BROWSE_THUMB_WIDTH = 320
+const DETAIL_THUMB_WIDTH = 640
+
+/** Rewrite a Commons `/thumb/.../{N}px-...` URL to a larger width (no-op if unmatched). */
+export function rescaleCommonsThumbUrl(url: string, width: number): string {
+  return url.replace(/\/(\d+)px-([^/?#]+)(?=$|[?#])/, `/${width}px-$2`)
+}
+
+function withDisplayThumbSizes(attribution: StructureImageAttribution): StructureImageAttribution {
+  return {
+    ...attribution,
+    thumbUrl: rescaleCommonsThumbUrl(attribution.thumbUrl, BROWSE_THUMB_WIDTH),
+    detailThumbUrl: rescaleCommonsThumbUrl(
+      attribution.detailThumbUrl ?? attribution.thumbUrl,
+      DETAIL_THUMB_WIDTH,
+    ),
+  }
+}
+
 export interface StructureImageAttribution {
   thumbUrl: string
   /** Larger thumb for drug detail hero (falls back to thumbUrl when absent). */
@@ -48,7 +70,8 @@ export function getStructureImageAttribution(genericName: string): StructureImag
   const normalized = normalizeGenericName(genericName)
   if (!normalized) return null
   const key = lookupKey(normalized)
-  return key ? (STRUCTURE_LOOKUP.get(key) ?? null) : null
+  const attribution = key ? (STRUCTURE_LOOKUP.get(key) ?? null) : null
+  return attribution ? withDisplayThumbSizes(attribution) : null
 }
 
 /** Larger detail image URL when mapped, otherwise null. */
