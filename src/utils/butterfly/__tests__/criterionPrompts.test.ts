@@ -4,6 +4,7 @@ import { translateUi } from '../../../data/uiTranslations'
 import type { DisorderEvaluation } from '../../diagnosisCriteria/evaluateDisorder'
 import {
   buildCriterionQuestions,
+  groupCriterionQuestionsByDiagnosis,
   resolveDeepLinkPage,
   selectUnresolvedCriteria,
 } from '../criterionPrompts'
@@ -73,6 +74,7 @@ describe('buildCriterionQuestions', () => {
     expect(questions[0].sectionId).toBe('diagnosis_criteria')
     expect(questions[0].targetId).toBe('f32.depressed_mood')
     expect(questions[0].criterionId).toBe('f32.depressed_mood')
+    expect(questions[0].criterionLabel).toBe('Gedrückte Stimmung über die meiste Zeit')
     expect(questions[0].disorderId).toBe('depressive_episode')
     // Attestable criterion → a Ja/Nein answer can deterministically resolve it.
     expect(questions[0].resolvable).toBe(true)
@@ -224,5 +226,55 @@ describe('buildCriterionQuestions', () => {
       5,
     )
     expect(questions).toHaveLength(5)
+  })
+})
+
+describe('groupCriterionQuestionsByDiagnosis', () => {
+  const depression = getDisorderById('depressive_episode')!
+  const alcohol = getDisorderById('alcohol_dependence')!
+
+  function unknownEvaluation(criterionId: string, text: string): DisorderEvaluation {
+    return evaluationWith([
+      {
+        criterionId,
+        groupId: 'g',
+        text_de: text,
+        status: 'unknown',
+        source: 'unanswered',
+        attestable: true,
+      },
+    ])
+  }
+
+  it('groups questions under their diagnosis in caller order', () => {
+    const depressionEval = unknownEvaluation('f32.depressed_mood', 'Gedrückte Stimmung')
+    const alcoholCriterionId = alcohol.groups[0].criteria[0].id
+    const alcoholEval = unknownEvaluation(alcoholCriterionId, alcohol.groups[0].criteria[0].text_de)
+
+    const questions = buildCriterionQuestions(
+      [
+        { disorder: depression, label: 'Depressive Episode', evaluation: depressionEval },
+        { disorder: alcohol, label: 'Alkoholabhängigkeit', evaluation: alcoholEval },
+      ],
+      (key) => translateUi('de', key),
+    )
+
+    const groups = groupCriterionQuestionsByDiagnosis(questions, [
+      { disorderId: depression.id, label: 'Depressive Episode', code: 'F32.1' },
+      { disorderId: alcohol.id, label: 'Alkoholabhängigkeit', code: 'F10.2' },
+    ])
+
+    expect(groups).toHaveLength(2)
+    expect(groups[0].disorderId).toBe('depressive_episode')
+    expect(groups[0].code).toBe('F32.1')
+    expect(groups[0].questions).toHaveLength(1)
+    expect(groups[0].questions[0].criterionLabel).toBe('Gedrückte Stimmung')
+    expect(groups[1].disorderId).toBe('alcohol_dependence')
+    expect(groups[1].code).toBe('F10.2')
+    expect(groups[1].questions).toHaveLength(1)
+  })
+
+  it('returns an empty array when there are no questions', () => {
+    expect(groupCriterionQuestionsByDiagnosis([], [])).toEqual([])
   })
 })

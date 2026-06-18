@@ -90,6 +90,8 @@ export interface ButterflyCriterionQuestion extends ClinicalQuestion {
   disorderId: string
   /** The criterion id this question resolves (mirror of `targetId`). */
   criterionId: string
+  /** Localized criterion text this question probes (the open gap). */
+  criterionLabel: string
   /**
    * 1–3 CONCRETE, patient-directed interview questions a clinician can ask the
    * patient verbatim to elicit evidence for this criterion. The patient's answer
@@ -97,6 +99,16 @@ export interface ButterflyCriterionQuestion extends ClinicalQuestion {
    * mirrors the first entry for {@link ClinicalQuestion} compatibility.
    */
   interviewQuestions: string[]
+}
+
+/** Questions for one clinician-entered diagnosis, grouped for panel rendering. */
+export interface ButterflyDiagnosisQuestionGroup {
+  disorderId: string
+  /** Clinician-facing diagnosis label (falls back to disorder name). */
+  label: string
+  /** Version-resolved ICD code for the active coding system. */
+  code: string
+  questions: ButterflyCriterionQuestion[]
 }
 
 /**
@@ -193,6 +205,7 @@ export function buildCriterionQuestions(
         targetId: result.criterionId,
         disorderId: disorder.id,
         criterionId: result.criterionId,
+        criterionLabel: result.text_de,
         question: interviewQuestions[0],
         interviewQuestions,
         rationale: applyTemplate(rationaleTemplate, values),
@@ -206,4 +219,47 @@ export function buildCriterionQuestions(
   }
 
   return out
+}
+
+/** Metadata for one entered diagnosis when grouping questions. */
+export interface DiagnosisQuestionGroupInput {
+  disorderId: string
+  label: string
+  code: string
+}
+
+/**
+ * Group flat criterion questions under their clinician-entered diagnoses,
+ * preserving the diagnosis iteration order from the caller.
+ */
+export function groupCriterionQuestionsByDiagnosis(
+  questions: ButterflyCriterionQuestion[],
+  diagnoses: DiagnosisQuestionGroupInput[],
+): ButterflyDiagnosisQuestionGroup[] {
+  if (questions.length === 0) return []
+
+  const byDisorder = new Map<string, ButterflyCriterionQuestion[]>()
+  for (const question of questions) {
+    const list = byDisorder.get(question.disorderId) ?? []
+    list.push(question)
+    byDisorder.set(question.disorderId, list)
+  }
+
+  const groups: ButterflyDiagnosisQuestionGroup[] = []
+  const seen = new Set<string>()
+
+  for (const { disorderId, label, code } of diagnoses) {
+    if (seen.has(disorderId)) continue
+    const disorderQuestions = byDisorder.get(disorderId)
+    if (!disorderQuestions || disorderQuestions.length === 0) continue
+    seen.add(disorderId)
+    groups.push({
+      disorderId,
+      label,
+      code,
+      questions: disorderQuestions,
+    })
+  }
+
+  return groups
 }

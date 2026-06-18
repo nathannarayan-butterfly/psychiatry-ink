@@ -679,6 +679,43 @@
 }
 
 /* ── Suggested questions (interview gaps) ───────────────────────────────── */
+.butterfly-gap-diagnosis-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.butterfly-gap-diagnosis {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.butterfly-gap-diagnosis__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.5rem;
+  padding: 0.15rem 0.1rem 0;
+}
+
+.butterfly-gap-diagnosis__name {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-primary, #1f1b16);
+}
+
+.butterfly-gap-diagnosis__code {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  color: var(--text-secondary, #6d655c);
+  letter-spacing: 0.02em;
+}
+
 .butterfly-gap-list {
   list-style: none;
   margin: 0;
@@ -750,6 +787,14 @@
   top: 0;
   color: var(--accent, #8a5a2b);
   font-weight: 700;
+}
+
+.butterfly-gap__criterion-label {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: var(--leading-snug);
+  color: var(--text-secondary, #6d655c);
 }
 
 .butterfly-gap__rationale {

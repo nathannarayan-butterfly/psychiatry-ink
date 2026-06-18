@@ -261,8 +261,8 @@ function resolveIcd10Label(
 ): string {
   const upper = code.toUpperCase()
   return (
-    override?.icd10.label ||
     bfarm.get(upper) ||
+    override?.icd10.label ||
     icd10De.get(upper) ||
     whoTitle ||
     upper

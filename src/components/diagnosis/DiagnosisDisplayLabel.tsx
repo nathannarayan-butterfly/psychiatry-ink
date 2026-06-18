@@ -7,6 +7,7 @@ interface DiagnosisDisplayLabelProps {
   language?: string
   criteriaLabel?: string | null
   enteredLabel?: string | null
+  overridden?: boolean
   className?: string
   loadingClassName?: string
   title?: string
@@ -22,6 +23,7 @@ export function DiagnosisDisplayLabel({
   language = 'de',
   criteriaLabel,
   enteredLabel,
+  overridden = false,
   className,
   loadingClassName = 'diagnosis-display-label--loading',
   title,
@@ -32,6 +34,7 @@ export function DiagnosisDisplayLabel({
     language,
     criteriaLabel,
     enteredLabel,
+    overridden,
     enabled: Boolean(code.trim()),
   })
 

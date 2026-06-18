@@ -12,6 +12,7 @@ export interface DiagnosisTitleRequest {
   version: IcdTitleVersion
   criteriaLabel?: string | null
   enteredLabel?: string | null
+  overridden?: boolean
 }
 
 export function useDiagnosisDisplayTitles(
@@ -29,6 +30,7 @@ export function useDiagnosisDisplayTitles(
           version: item.version,
           criteriaLabel: item.criteriaLabel ?? null,
           enteredLabel: item.enteredLabel ?? null,
+          overridden: item.overridden ?? false,
         })),
     [items],
   )
@@ -87,6 +89,7 @@ export function useDiagnosisDisplayTitles(
           criteriaLabel: item.criteriaLabel,
           enteredLabel: item.enteredLabel,
           code: item.code,
+          overridden: item.overridden,
         }),
       )
     }

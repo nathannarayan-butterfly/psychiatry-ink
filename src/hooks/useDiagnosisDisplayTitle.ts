@@ -9,6 +9,7 @@ export interface UseDiagnosisDisplayTitleParams {
   language?: string
   criteriaLabel?: string | null
   enteredLabel?: string | null
+  overridden?: boolean
   enabled?: boolean
 }
 
@@ -19,6 +20,7 @@ export function useDiagnosisDisplayTitle(params: UseDiagnosisDisplayTitleParams)
     language = 'de',
     criteriaLabel,
     enteredLabel,
+    overridden = false,
     enabled = true,
   } = params
 
@@ -28,8 +30,9 @@ export function useDiagnosisDisplayTitle(params: UseDiagnosisDisplayTitleParams)
         criteriaLabel,
         enteredLabel,
         code,
+        overridden,
       }),
-    [criteriaLabel, enteredLabel, code],
+    [criteriaLabel, enteredLabel, code, overridden],
   )
 
   const [apiTitle, setApiTitle] = useState<string | null>(null)
@@ -68,6 +71,7 @@ export function useDiagnosisDisplayTitle(params: UseDiagnosisDisplayTitleParams)
     criteriaLabel,
     enteredLabel,
     code,
+    overridden,
   })
 
   return { title, fallback, loading, apiTitle }

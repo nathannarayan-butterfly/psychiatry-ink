@@ -2,15 +2,11 @@ import { useMemo } from 'react'
 import { useTranslation } from '../../../context/TranslationContext'
 import type { TopNavTabId } from '../CaseTopNav'
 import type { NotionPageId } from '../notionPages'
-import { DiagnosenWidget } from '../DiagnosenWidget'
-import { SpiegelwerteSection, extractSpiegelwerte, pickLatestSpiegelSeries, spiegelGraphId } from '../SpiegelwerteSection'
-import { OverviewCardShell } from './OverviewCard'
-import { OverviewHero } from './OverviewHero'
-import { SafetyAlertsCard } from './SafetyAlertsCard'
-import { MedicationOverviewCard } from './MedicationOverviewCard'
-import { PriorTherapiesOverviewCard } from './PriorTherapiesOverviewCard'
-import { SymptomSnapshotCard } from './SymptomSnapshotCard'
-import { LabsDueCard } from './LabsDueCard'
+import { extractSpiegelwerte, pickLatestSpiegelSeries, spiegelGraphId } from '../SpiegelwerteSection'
+import { useOverviewLayout } from '../../../hooks/useOverviewLayout'
+import { OverviewLayoutToolbar } from './OverviewLayoutToolbar'
+import { OverviewWidgetGrid } from './OverviewWidgetGrid'
+import type { OverviewWidgetRenderContext } from './OverviewWidgetContent'
 import type {
   HeroSummaryData,
   MedicationOverviewData,
@@ -33,8 +29,15 @@ import { buildLabsDue } from '../../../utils/overview/labsDue'
 import { buildPsychopathologyStructuredCues, mergePsychopathologyProfiles } from '../../../utils/overview/psychopathologyDomains'
 import { getSymptomTrajectory } from '../../../utils/overview/symptomTrajectory'
 import { formatDateDe, relativeDayDe } from '../../../utils/overview/dateLabels'
+import { getRecentVerlauf } from '../../../utils/overview/recentVerlauf'
+import { buildDokumentationSummary } from '../../../utils/overview/dokumentationSummary'
+import { buildRecentLabResults } from '../../../utils/overview/recentLabResults'
+import { buildButterflySummary, hasButterflyCriteriaSupport } from '../../../utils/overview/butterflySummary'
+import { loadIsdmAnalysis } from '../../../utils/isdm/storage'
 import { loadDiagnosen } from '../../../utils/diagnosenArchive'
 import { useOverviewHiddenGraphs } from '../../../hooks/useOverviewHiddenGraphs'
+import { useOverviewCollaboration } from '../../../hooks/useOverviewCollaboration'
+import { usePsychotherapyPlan } from '../../../hooks/usePsychotherapyPlan'
 import type { ClinicalImprintRecord, CourseDirection } from '../../../types/clinicalImprint'
 import type { MedicationStatus } from '../../../types/medicationPlan'
 
@@ -128,6 +131,8 @@ export function OverviewDashboard({
   const { language } = useTranslation()
   const { currentPlan } = useMedicationPlan(caseId)
   const appointments = useCaseAppointments(caseId)
+  const collaboration = useOverviewCollaboration(caseId)
+  const { summary: psychotherapySummary, hasPlan: hasPsychotherapyPlan } = usePsychotherapyPlan(caseId)
   const { isHidden } = useOverviewHiddenGraphs(caseId)
 
   const medications = useMemo(() => currentPlan?.medications ?? [], [currentPlan])
@@ -226,8 +231,18 @@ export function OverviewDashboard({
     return buildLabsDue({ befunde: loadBefunde(caseId), activeSubstances })
   }, [caseId, medications])
 
+  const befunde = useMemo(() => loadBefunde(caseId), [caseId])
+  const hasLabData = befunde.length > 0
+  const recentLabResults = useMemo(() => buildRecentLabResults(befunde), [befunde])
+  const recentVerlauf = useMemo(() => getRecentVerlauf(caseId, language), [caseId, language])
+  const dokumentation = useMemo(() => buildDokumentationSummary(caseId), [caseId])
+  const isdmAnalysis = useMemo(() => loadIsdmAnalysis(caseId), [caseId])
+  const hasIsdm = isdmAnalysis !== null
+  const butterflySummary = useMemo(() => buildButterflySummary(caseId, language), [caseId, language])
+  const hasButterfly = useMemo(() => hasButterflyCriteriaSupport(caseId), [caseId])
+
   // ── Spiegel availability (preserve "≥1 value ⇒ show graph" rule) ──────────
-  const spiegelSeries = useMemo(() => extractSpiegelwerte(loadBefunde(caseId)), [caseId])
+  const spiegelSeries = useMemo(() => extractSpiegelwerte(befunde), [befunde])
   const hasSpiegel = spiegelSeries.length > 0
   const hasAdditionalSpiegel = useMemo(() => {
     const visible = spiegelSeries.filter((s) => !isHidden(spiegelGraphId(s.name)))
@@ -254,7 +269,12 @@ export function OverviewDashboard({
           ? 'dsm'
           : 'icd10'
     const primaryDiagnosis = coding
-      ? { code: coding.code, label: coding.label, version: primaryVersion }
+      ? {
+          code: coding.code,
+          label: coding.label,
+          version: primaryVersion,
+          overridden: coding.overridden,
+        }
       : null
 
     const tones: SemanticTone[] = [
@@ -282,50 +302,92 @@ export function OverviewDashboard({
     }
   }, [caseId, safetyData, medicationData, lastContact, nextAppointment])
 
+  const {
+    layout,
+    editMode,
+    toggleEditMode,
+    moveWidget,
+    removeWidget,
+    addWidget,
+    setWidgetWidth,
+    resetToDefault,
+  } = useOverviewLayout()
+
+  const widgetContext = useMemo<OverviewWidgetRenderContext>(
+    () => ({
+      caseId,
+      heroData,
+      safetyData,
+      medicationData,
+      symptomData,
+      labsData,
+      medications,
+      recentVerlauf,
+      appointments: { upcoming: appointments.upcoming, loading: appointments.loading },
+      dokumentation,
+      psychotherapy: { summary: psychotherapySummary, hasPlan: hasPsychotherapyPlan },
+      isdmAnalysis,
+      collaboration,
+      recentLabResults,
+      butterflySummary,
+      onTabSelect,
+      onOpenWorkspacePage,
+    }),
+    [
+      caseId,
+      heroData,
+      safetyData,
+      medicationData,
+      symptomData,
+      labsData,
+      medications,
+      recentVerlauf,
+      appointments.upcoming,
+      appointments.loading,
+      dokumentation,
+      psychotherapySummary,
+      hasPsychotherapyPlan,
+      isdmAnalysis,
+      collaboration,
+      recentLabResults,
+      butterflySummary,
+      onTabSelect,
+      onOpenWorkspacePage,
+    ],
+  )
+
+  const visibilityContext = useMemo(
+    () => ({
+      hasSpiegel,
+      hasAdditionalSpiegel,
+      hasPsychotherapy: hasPsychotherapyPlan,
+      hasIsdm,
+      hasLabData,
+      hasButterfly,
+    }),
+    [hasSpiegel, hasAdditionalSpiegel, hasPsychotherapyPlan, hasIsdm, hasLabData, hasButterfly],
+  )
+
   return (
-    <div className="ov-dashboard">
-      <OverviewHero data={heroData} />
+    <div className={`ov-dashboard${editMode ? ' ov-dashboard--edit-mode' : ''}`}>
+      <OverviewWidgetGrid
+        widgets={layout.widgets}
+        editMode={editMode}
+        renderContext={widgetContext}
+        visibilityContext={visibilityContext}
+        onMove={moveWidget}
+        onRemove={removeWidget}
+        onResize={setWidgetWidth}
+      />
 
-      <div className="ov-grid">
-        {/* Row 1 — what's urgent + what they're on (+ latest Spiegel beside meds). */}
-        <SafetyAlertsCard data={safetyData} />
-        <div className="ov-col-6 ov-med-spiegel">
-          <MedicationOverviewCard
-            data={medicationData}
-            onOpenMedikation={() => onTabSelect('medikation')}
-            className=""
-          />
-          {hasSpiegel ? (
-            <OverviewCardShell>
-              <SpiegelwerteSection caseId={caseId} mode="latest" />
-            </OverviewCardShell>
-          ) : null}
-        </div>
-
-        {/* Row 2 — the clinical picture. */}
-        <OverviewCardShell className="ov-col-6">
-          <DiagnosenWidget caseId={caseId} variant="panel" />
-        </OverviewCardShell>
-        <SymptomSnapshotCard
-          data={symptomData}
-          onOpen={onOpenWorkspacePage ? () => onOpenWorkspacePage('psychopath') : undefined}
-        />
-
-        {/* Row 3 — monitoring + treatment history. */}
-        <LabsDueCard data={labsData} onOpenLabor={() => onTabSelect('labor')} />
-        <PriorTherapiesOverviewCard
-          caseId={caseId}
-          medications={medications}
-          onOpenMedikation={() => onTabSelect('medikation')}
-        />
-
-        {/* Remaining drug levels — full width when more than the latest near meds. */}
-        {hasAdditionalSpiegel ? (
-          <OverviewCardShell className="ov-col-12">
-            <SpiegelwerteSection caseId={caseId} skipLatest />
-          </OverviewCardShell>
-        ) : null}
-      </div>
+      <OverviewLayoutToolbar
+        editMode={editMode}
+        layout={layout}
+        visibilityContext={visibilityContext}
+        onToggleEditMode={toggleEditMode}
+        onAddWidget={addWidget}
+        onResetToDefault={resetToDefault}
+      />
     </div>
   )
 }

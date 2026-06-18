@@ -163,7 +163,12 @@ export interface KonsileTasksData {
  * to a calm placeholder rather than a fabricated value.
  */
 export interface HeroSummaryData {
-  primaryDiagnosis: { code: string; label: string; version: 'icd10' | 'icd11' | 'dsm' } | null
+  primaryDiagnosis: {
+    code: string
+    label: string
+    version: 'icd10' | 'icd11' | 'dsm'
+    overridden?: boolean
+  } | null
   /** Headline risk: tone drives the semantic color, label is the German severity word. */
   risk: { tone: SemanticTone; label: string } | null
   activeMedCount: number

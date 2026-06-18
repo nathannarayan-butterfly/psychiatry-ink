@@ -40,6 +40,7 @@ import {
   selectUnresolvedInterviewCriteria,
   resolveDeepLinkPage,
   buildCriterionQuestions,
+  groupCriterionQuestionsByDiagnosis,
   type ButterflyCriterionQuestion,
   type InterviewQuestionResolver,
 } from '../../utils/butterfly/criterionPrompts'
@@ -323,6 +324,21 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
         resolveInterview,
       ),
     [results, t, resolveInterview],
+  )
+
+  const questionGroups = useMemo(
+    () =>
+      groupCriterionQuestionsByDiagnosis(
+        criterionQuestions,
+        results
+          .filter((result) => result.available && result.disorder)
+          .map((result) => ({
+            disorderId: result.disorder!.id,
+            label: diagnosisDisplayTitles.get(result.key) ?? result.label,
+            code: result.code,
+          })),
+      ),
+    [criterionQuestions, results, diagnosisDisplayTitles],
   )
 
   const handleAttest = useCallback(
@@ -630,92 +646,126 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
         </ul>
       </CollapsibleSection>
 
-      {criterionQuestions.length > 0 ? (
+      {questionGroups.length > 0 ? (
         <CollapsibleSection title={t('butterflyQuestions')} defaultOpen>
           {/* The "record the answer → criterion" instruction is shown ONCE here,
               never repeated per question/criterion. */}
           <p className="butterfly-gap-list__hint">{t('butterflyQuestionSectionHint')}</p>
-          <ul className="butterfly-gap-list">
-            {criterionQuestions.map((question) => {
-              const jumpPage = question.deepLinkPageId
-              const hasFooter = question.resolvable || Boolean(jumpPage && onJumpToSection)
-              return (
-                <li key={question.id} className={`butterfly-gap butterfly-gap--${question.priority}`}>
-                  <p className="butterfly-gap__rationale">{question.rationale}</p>
-                  <ul className="butterfly-gap__questions">
-                    {question.interviewQuestions.map((interviewQuestion, index) => (
-                      <li key={`${question.id}#${index}`} className="butterfly-gap__q-row">
-                        <span className="butterfly-gap__question">{interviewQuestion}</span>
-                        {question.resolvable ? (
-                          // Each interview question is answerable on its own row, but
-                          // every phrasing probes the SAME criterion: the answer is
-                          // bridged to `question.criterionId` (last answer wins). The
-                          // first present/absent resolves the criterion and the whole
-                          // group drops off on re-evaluation.
-                          <div
-                            className="butterfly-gap__answer-actions"
-                            role="group"
-                            aria-label={interviewQuestion}
-                          >
-                            <button
-                              type="button"
-                              className="butterfly-answer-btn butterfly-answer-btn--yes"
-                              onClick={() => handleAnswerQuestion(question, 'present')}
-                            >
-                              {t('butterflyQuestionYes')}
-                            </button>
-                            <button
-                              type="button"
-                              className="butterfly-answer-btn butterfly-answer-btn--no"
-                              onClick={() => handleAnswerQuestion(question, 'absent')}
-                            >
-                              {t('butterflyQuestionNo')}
-                            </button>
-                            <button
-                              type="button"
-                              className="butterfly-answer-btn butterfly-answer-btn--unclear"
-                              onClick={() => handleAnswerQuestion(question, 'unclear')}
-                            >
-                              {t('butterflyQuestionUnclear')}
-                            </button>
-                          </div>
-                        ) : null}
-                      </li>
-                    ))}
-                  </ul>
-                  {hasFooter ? (
-                    <div className="butterfly-gap__footer">
-                      {question.resolvable ? (
-                        <input
-                          type="text"
-                          className="butterfly-gap__note"
-                          value={noteDrafts[question.id] ?? ''}
-                          placeholder={t('butterflyQuestionNotePlaceholder')}
-                          onChange={(event) =>
-                            setNoteDrafts((prev) => ({ ...prev, [question.id]: event.target.value }))
-                          }
-                        />
-                      ) : null}
-                      {jumpPage && onJumpToSection ? (
-                        <button
-                          type="button"
-                          className="butterfly-answer-btn butterfly-answer-btn--jump"
-                          onClick={() => onJumpToSection(jumpPage)}
-                        >
-                          {t('butterflyJumpToDoc')}
-                        </button>
-                      ) : null}
-                    </div>
-                  ) : null}
-                </li>
-              )
-            })}
+          <ul className="butterfly-gap-diagnosis-list">
+            {questionGroups.map((group) => (
+              <li key={group.disorderId} className="butterfly-gap-diagnosis">
+                <div className="butterfly-gap-diagnosis__head">
+                  <span className="butterfly-gap-diagnosis__name">{group.label}</span>
+                  {group.code ? <span className="butterfly-gap-diagnosis__code">{group.code}</span> : null}
+                </div>
+                <ul className="butterfly-gap-list">
+                  {group.questions.map((question) => (
+                    <ButterflyCriterionQuestionItem
+                      key={question.id}
+                      question={question}
+                      noteDraft={noteDrafts[question.id] ?? ''}
+                      onNoteChange={(value) =>
+                        setNoteDrafts((prev) => ({ ...prev, [question.id]: value }))
+                      }
+                      onAnswer={handleAnswerQuestion}
+                      onJumpToSection={onJumpToSection}
+                      t={t}
+                    />
+                  ))}
+                </ul>
+              </li>
+            ))}
           </ul>
         </CollapsibleSection>
       ) : null}
 
       <p className="butterfly-panel__review-note">{t('isdmPanelClinicianReview')}</p>
     </div>
+  )
+}
+
+interface ButterflyCriterionQuestionItemProps {
+  t: Translate
+  question: ButterflyCriterionQuestion
+  noteDraft: string
+  onNoteChange: (value: string) => void
+  onAnswer: (question: ButterflyCriterionQuestion, resolution: ClinicalQuestionResolution) => void
+  onJumpToSection?: (pageId: NotionPageId) => void
+}
+
+function ButterflyCriterionQuestionItem({
+  t,
+  question,
+  noteDraft,
+  onNoteChange,
+  onAnswer,
+  onJumpToSection,
+}: ButterflyCriterionQuestionItemProps) {
+  const jumpPage = question.deepLinkPageId
+  const hasFooter = question.resolvable || Boolean(jumpPage && onJumpToSection)
+
+  return (
+    <li className={`butterfly-gap butterfly-gap--${question.priority}`}>
+      <p className="butterfly-gap__criterion-label">{question.criterionLabel}</p>
+      <ul className="butterfly-gap__questions">
+        {question.interviewQuestions.map((interviewQuestion, index) => (
+          <li key={`${question.id}#${index}`} className="butterfly-gap__q-row">
+            <span className="butterfly-gap__question">{interviewQuestion}</span>
+            {question.resolvable ? (
+              // Each interview question is answerable on its own row, but every
+              // phrasing probes the SAME criterion: the answer is bridged to
+              // `question.criterionId` (last answer wins). The first present/absent
+              // resolves the criterion and the whole group drops off on re-evaluation.
+              <div className="butterfly-gap__answer-actions" role="group" aria-label={interviewQuestion}>
+                <button
+                  type="button"
+                  className="butterfly-answer-btn butterfly-answer-btn--yes"
+                  onClick={() => onAnswer(question, 'present')}
+                >
+                  {t('butterflyQuestionYes')}
+                </button>
+                <button
+                  type="button"
+                  className="butterfly-answer-btn butterfly-answer-btn--no"
+                  onClick={() => onAnswer(question, 'absent')}
+                >
+                  {t('butterflyQuestionNo')}
+                </button>
+                <button
+                  type="button"
+                  className="butterfly-answer-btn butterfly-answer-btn--unclear"
+                  onClick={() => onAnswer(question, 'unclear')}
+                >
+                  {t('butterflyQuestionUnclear')}
+                </button>
+              </div>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+      {hasFooter ? (
+        <div className="butterfly-gap__footer">
+          {question.resolvable ? (
+            <input
+              type="text"
+              className="butterfly-gap__note"
+              value={noteDraft}
+              placeholder={t('butterflyQuestionNotePlaceholder')}
+              onChange={(event) => onNoteChange(event.target.value)}
+            />
+          ) : null}
+          {jumpPage && onJumpToSection ? (
+            <button
+              type="button"
+              className="butterfly-answer-btn butterfly-answer-btn--jump"
+              onClick={() => onJumpToSection(jumpPage)}
+            >
+              {t('butterflyJumpToDoc')}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+    </li>
   )
 }
 

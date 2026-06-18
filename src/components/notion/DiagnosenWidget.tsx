@@ -7,6 +7,7 @@ import {
   searchDiagnosisCodes,
   type DiagnosisSearchHit,
 } from '../../services/diagnosisReferenceApi'
+import { lookupCatalogLabel } from '../../data/diagnosisCatalog'
 import {
   createDiagnoseFreeText,
   createDiagnoseFromHit,
@@ -290,7 +291,9 @@ export function DiagnosenWidget({ caseId, variant = 'sidebar', onDiagnosesChange
           key: entry.id,
           code: coding.code,
           version: activeSystem,
-          enteredLabel: coding.label,
+          criteriaLabel: lookupCatalogLabel(coding.code, activeSystem),
+          enteredLabel: coding.overridden ? coding.label : null,
+          overridden: coding.overridden,
         }
       }),
     [entries, activeSystem],
@@ -304,12 +307,15 @@ export function DiagnosenWidget({ caseId, variant = 'sidebar', onDiagnosesChange
 
   const searchTitleRequests = useMemo(
     () =>
-      searchResults.map((result) => ({
-        key: `${result.system}-${result.code}`,
-        code: result.code,
-        version: result.system === 'dsm5tr' ? ('dsm' as const) : result.system,
-        enteredLabel: result.label,
-      })),
+      searchResults.map((result) => {
+        const version = result.system === 'dsm5tr' ? ('dsm' as const) : result.system
+        return {
+          key: `${result.system}-${result.code}`,
+          code: result.code,
+          version,
+          criteriaLabel: result.label || lookupCatalogLabel(result.code, version),
+        }
+      }),
     [searchResults],
   )
 
@@ -450,20 +456,28 @@ export function DiagnosenWidget({ caseId, variant = 'sidebar', onDiagnosesChange
               <p className="diagnosen-widget__empty">{t('diagnosenEmpty')}</p>
             ) : (
               <ol className="diagnosen-widget__list" aria-label={t('diagnosenTitle')}>
-                {entries.map((entry, index) => (
-                  <DiagnoseRow
-                    key={entry.id}
-                    index={index + 1}
-                    entry={entry}
-                    system={activeSystem}
-                    displayLabel={entryDisplayTitles.get(entry.id) ?? getActiveCoding(entry, activeSystem).label}
-                    editing={editingId === entry.id}
-                    onStartEdit={() => setEditingId(entry.id)}
-                    onCancelEdit={() => setEditingId(null)}
-                    onSaveEdit={(code, label) => handleSaveEdit(entry.id, activeSystem, code, label)}
-                    onDelete={() => handleDelete(entry.id)}
-                  />
-                ))}
+                {entries.map((entry, index) => {
+                  const coding = getActiveCoding(entry, activeSystem)
+                  const displayLabel =
+                    entryDisplayTitles.get(entry.id)
+                    ?? lookupCatalogLabel(coding.code, activeSystem)
+                    ?? coding.label
+                    ?? coding.code
+                  return (
+                    <DiagnoseRow
+                      key={entry.id}
+                      index={index + 1}
+                      entry={entry}
+                      system={activeSystem}
+                      displayLabel={displayLabel}
+                      editing={editingId === entry.id}
+                      onStartEdit={() => setEditingId(entry.id)}
+                      onCancelEdit={() => setEditingId(null)}
+                      onSaveEdit={(code, label) => handleSaveEdit(entry.id, activeSystem, code, label)}
+                      onDelete={() => handleDelete(entry.id)}
+                    />
+                  )
+                })}
               </ol>
             )}
           </div>

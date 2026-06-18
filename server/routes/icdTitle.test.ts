@@ -61,9 +61,9 @@ describe('GET /api/icd/title', () => {
     vi.mocked(prisma.diagnosisCode.findFirst).mockResolvedValue({
       system: 'icd10',
       code: 'F12.2',
-      labelDe: 'Abhängigkeitssyndrom bei Cannabinoiden',
+      labelDe: 'Psychische und Verhaltensstörungen durch Cannabinoide : Abhängigkeitssyndrom',
       icd10Code: 'F12.2',
-      icd10Label: 'Abhängigkeitssyndrom bei Cannabinoiden',
+      icd10Label: 'Psychische und Verhaltensstörungen durch Cannabinoide : Abhängigkeitssyndrom',
       icd11Code: '6C41.2',
       icd11Label: 'Cannabisabhängigkeit',
       dsmCode: '304.30',
@@ -74,7 +74,7 @@ describe('GET /api/icd/title', () => {
     const res = await fetch(`${baseUrl}/api/icd/title?code=F12.2&version=icd10&language=de`)
     expect(res.status).toBe(200)
     const body = (await res.json()) as { title: string; source: string }
-    expect(body.title).toBe('Abhängigkeitssyndrom bei Cannabinoiden')
+    expect(body.title).toBe('Psychische und Verhaltensstörungen durch Cannabinoide : Abhängigkeitssyndrom')
     expect(body.source).toBe('crosswalk')
   })
 

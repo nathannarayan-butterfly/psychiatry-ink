@@ -1,4 +1,5 @@
 import { CalendarClock, History, Pill, ShieldAlert, Stethoscope } from 'lucide-react'
+import { lookupCatalogLabel } from '../../../data/diagnosisCatalog'
 import { DiagnosisDisplayLabel } from '../../diagnosis/DiagnosisDisplayLabel'
 import type { HeroSummaryData } from './types'
 
@@ -34,7 +35,9 @@ export function OverviewHero({ data }: OverviewHeroProps) {
                   <DiagnosisDisplayLabel
                     code={primaryDiagnosis.code}
                     version={primaryDiagnosis.version}
-                    enteredLabel={primaryDiagnosis.label}
+                    criteriaLabel={lookupCatalogLabel(primaryDiagnosis.code, primaryDiagnosis.version)}
+                    enteredLabel={primaryDiagnosis.overridden ? primaryDiagnosis.label : null}
+                    overridden={primaryDiagnosis.overridden}
                     className="ov-summary__sub"
                   />
                 </span>

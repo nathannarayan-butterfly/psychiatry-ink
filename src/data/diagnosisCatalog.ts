@@ -183,27 +183,32 @@ export const DIAGNOSIS_CATALOG: DiagnosisCatalogEntry[] = [
     dsm: { code: '301.83', label: 'Borderline-Persönlichkeitsstörung' },
   },
   {
-    icd10: { code: 'F10.2', label: 'Abhängigkeitssyndrom bei Alkohol' },
+    icd10: { code: 'F10.2', label: 'Psychische und Verhaltensstörungen durch Alkohol : Abhängigkeitssyndrom' },
     icd11: { code: '6C40.2', label: 'Alkoholabhängigkeit' },
     dsm: { code: '303.90', label: 'Alkoholgebrauchsstörung, schwer' },
   },
   {
-    icd10: { code: 'F11.2', label: 'Abhängigkeitssyndrom bei Opioiden' },
+    icd10: { code: 'F11.2', label: 'Psychische und Verhaltensstörungen durch Opioide : Abhängigkeitssyndrom' },
     icd11: { code: '6C43.2', label: 'Opioidabhängigkeit' },
     dsm: { code: '304.00', label: 'Opioidgebrauchsstörung, schwer' },
   },
   {
-    icd10: { code: 'F12.2', label: 'Abhängigkeitssyndrom bei Cannabinoiden' },
+    icd10: { code: 'F12.2', label: 'Psychische und Verhaltensstörungen durch Cannabinoide : Abhängigkeitssyndrom' },
     icd11: { code: '6C41.2', label: 'Cannabisabhängigkeit' },
     dsm: { code: '304.30', label: 'Cannabisgebrauchsstörung, schwer' },
   },
   {
-    icd10: { code: 'F17.2', label: 'Abhängigkeitssyndrom bei Tabak' },
+    icd10: { code: 'F15.2', label: 'Psychische und Verhaltensstörungen durch andere Stimulanzien, einschließlich Koffein : Abhängigkeitssyndrom' },
+    icd11: { code: '6C45.2', label: 'Störungen durch Amphetamin oder ähnlich wirkende Substanzen, Abhängigkeitssyndrom' },
+    dsm: { code: '304.40', label: 'Stimulanziengebrauchsstörung, schwer' },
+  },
+  {
+    icd10: { code: 'F17.2', label: 'Psychische und Verhaltensstörungen durch Tabak : Abhängigkeitssyndrom' },
     icd11: { code: '6C4A.2', label: 'Tabakabhängigkeit' },
     dsm: { code: '305.1', label: 'Tabakgebrauchsstörung, schwer' },
   },
   {
-    icd10: { code: 'F19.2', label: 'Abhängigkeitssyndrom bei multipler Drogenreizung' },
+    icd10: { code: 'F19.2', label: 'Psychische und Verhaltensstörungen durch multiplen Substanzgebrauch und Verwendung anderer psychotroper Substanzen : Abhängigkeitssyndrom' },
     icd11: { code: '6C4E.2', label: 'Abhängigkeit von multiplen Substanzen' },
     dsm: { code: '304.90', label: 'Substanzgebrauchsstörung, schwer' },
   },
@@ -255,4 +260,27 @@ export function searchDiagnosisCatalog(query: string, limit = 8): DiagnosisCatal
 export function lookupByIcd10Code(code: string): DiagnosisCatalogEntry | undefined {
   const normalized = code.trim().toUpperCase()
   return DIAGNOSIS_CATALOG.find((e) => e.icd10.code.toUpperCase() === normalized)
+}
+
+/** Bundled crosswalk label for interim display while WHO/API titles resolve. */
+export function lookupCatalogLabel(
+  code: string,
+  system: 'icd10' | 'icd11' | 'dsm',
+): string | null {
+  const trimmed = code.trim()
+  if (!trimmed) return null
+
+  const upper = trimmed.toUpperCase()
+  for (const entry of DIAGNOSIS_CATALOG) {
+    if (system === 'icd10' && entry.icd10.code.toUpperCase() === upper) {
+      return entry.icd10.label
+    }
+    if (system === 'icd11' && entry.icd11.code.toUpperCase() === upper) {
+      return entry.icd11.label
+    }
+    if (system === 'dsm' && entry.dsm.code.toUpperCase() === upper) {
+      return entry.dsm.label
+    }
+  }
+  return null
 }

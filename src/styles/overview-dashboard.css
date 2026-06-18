@@ -153,6 +153,291 @@
   border-color: color-mix(in srgb, var(--ov-warn) 24%, transparent);
 }
 
+/* ── Layout toolbar + editable widget grid ─────────────────────────────────── */
+
+.ov-layout-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+  margin-top: var(--space-3, 0.75rem);
+  margin-bottom: max(var(--space-2, 0.5rem), env(safe-area-inset-bottom, 0px));
+}
+
+.ov-layout-toolbar--active {
+  position: sticky;
+  bottom: 0;
+  z-index: 15;
+  padding-top: var(--space-2, 0.5rem);
+  padding-bottom: max(var(--space-2, 0.5rem), env(safe-area-inset-bottom, 0px));
+  background: color-mix(in srgb, var(--surface, #fff) 94%, transparent);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--border-soft, #e8e4df);
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.ov-layout-toolbar__main {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2, 0.5rem);
+  min-width: 0;
+}
+
+.ov-layout-toolbar__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: var(--radius-control, 0.4375rem);
+  border: 1px solid var(--border-soft, #e8e4df);
+  background: var(--surface, #fff);
+  color: var(--text-secondary, #6d655c);
+  font-family: var(--font-ui, inherit);
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: var(--weight-semibold, 600);
+  cursor: pointer;
+  transition:
+    color var(--ov-transition),
+    border-color var(--ov-transition),
+    background var(--ov-transition);
+}
+.ov-layout-toolbar__toggle:hover {
+  color: var(--text-main, #24211e);
+  border-color: color-mix(in srgb, var(--area-accent, var(--accent)) 24%, var(--border-soft));
+}
+.ov-layout-toolbar__toggle:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid
+    var(--focus-ring-color, color-mix(in srgb, var(--accent) 52%, transparent));
+  outline-offset: var(--focus-ring-offset, 2px);
+}
+.ov-layout-toolbar__toggle--active,
+.ov-layout-toolbar--active .ov-layout-toolbar__toggle {
+  color: var(--accent, #8a5a2b);
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--border-soft));
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+}
+
+.ov-layout-toolbar__hint {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-muted, #91887e);
+}
+
+.ov-layout-toolbar__edit-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2, 0.5rem);
+}
+
+.ov-layout-toolbar__add {
+  position: relative;
+}
+
+.ov-layout-toolbar__add-btn,
+.ov-layout-toolbar__reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: var(--radius-control, 0.4375rem);
+  border: 1px solid var(--border-soft, #e8e4df);
+  background: var(--surface, #fff);
+  color: var(--text-secondary, #6d655c);
+  font-family: var(--font-ui, inherit);
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: var(--weight-semibold, 600);
+  cursor: pointer;
+  transition:
+    color var(--ov-transition),
+    border-color var(--ov-transition),
+    background var(--ov-transition);
+}
+.ov-layout-toolbar__add-btn:hover:not(:disabled),
+.ov-layout-toolbar__reset:hover {
+  color: var(--text-main, #24211e);
+  border-color: color-mix(in srgb, var(--area-accent, var(--accent)) 24%, var(--border-soft));
+}
+.ov-layout-toolbar__add-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ov-layout-palette {
+  position: absolute;
+  bottom: calc(100% + 0.35rem);
+  left: 0;
+  z-index: 20;
+  list-style: none;
+  margin: 0;
+  padding: 0.35rem;
+  min-width: 12rem;
+  border: 1px solid var(--border-soft, #e8e4df);
+  border-radius: var(--radius-card, 0.6875rem);
+  background: var(--surface, #fff);
+  box-shadow: var(--shadow-elevated-md, 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.06));
+}
+
+.ov-layout-palette__item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.45rem 0.55rem;
+  border: none;
+  border-radius: var(--radius-control, 0.4375rem);
+  background: transparent;
+  color: var(--text-main, #24211e);
+  font-family: var(--font-ui, inherit);
+  font-size: var(--text-sm, 0.8125rem);
+  cursor: pointer;
+}
+.ov-layout-palette__item:hover {
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 10%, transparent);
+}
+
+.ov-dashboard--edit-mode {
+  outline: 1px dashed color-mix(in srgb, var(--area-accent, var(--accent)) 28%, var(--border-soft));
+  outline-offset: 0.35rem;
+  border-radius: var(--radius-card, 0.6875rem);
+  padding: 0.15rem;
+}
+
+.ov-widget-slot {
+  position: relative;
+  min-width: 0;
+}
+.ov-widget-slot--half {
+  grid-column: span 6;
+}
+.ov-widget-slot--full {
+  grid-column: span 12;
+}
+.ov-widget-slot--hero .ov-widget-slot__content > .ov-summary {
+  margin-bottom: 0;
+}
+
+.ov-widget-slot--editable {
+  border: 1px dashed color-mix(in srgb, var(--area-accent, var(--accent)) 30%, var(--border-soft));
+  border-radius: var(--radius-card, 0.6875rem);
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 4%, var(--surface));
+}
+.ov-widget-slot--editable .ov-widget-slot__content {
+  pointer-events: none;
+}
+.ov-widget-slot--editable .ov-widget-edit-bar,
+.ov-widget-slot--editable .ov-widget-edit-bar button {
+  pointer-events: auto;
+}
+
+.ov-widget-slot--dragging {
+  opacity: 0.55;
+}
+.ov-widget-slot--drop-target {
+  outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  outline-offset: 2px;
+}
+
+.ov-widget-edit-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2, 0.5rem);
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--ov-hairline);
+  background: color-mix(in srgb, var(--surface) 88%, var(--area-accent, var(--accent)) 12%);
+  cursor: grab;
+}
+.ov-widget-slot--dragging .ov-widget-edit-bar {
+  cursor: grabbing;
+}
+
+.ov-widget-edit-bar__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: var(--weight-semibold, 600);
+  color: var(--text-secondary, #6d655c);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ov-widget-edit-bar__grip {
+  flex-shrink: 0;
+  opacity: 0.65;
+}
+
+.ov-widget-edit-bar__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
+
+.ov-widget-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  padding: 0;
+  border: 1px solid var(--border-soft, #e8e4df);
+  border-radius: var(--radius-control, 0.4375rem);
+  background: var(--surface, #fff);
+  color: var(--text-secondary, #6d655c);
+  cursor: pointer;
+  transition:
+    color var(--ov-transition),
+    border-color var(--ov-transition),
+    background var(--ov-transition);
+}
+.ov-widget-edit-btn:hover:not(:disabled) {
+  color: var(--text-main, #24211e);
+  border-color: color-mix(in srgb, var(--area-accent, var(--accent)) 24%, var(--border-soft));
+}
+.ov-widget-edit-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.ov-widget-edit-btn:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid
+    var(--focus-ring-color, color-mix(in srgb, var(--accent) 52%, transparent));
+  outline-offset: var(--focus-ring-offset, 2px);
+}
+.ov-widget-edit-btn--remove:hover:not(:disabled) {
+  color: var(--ov-danger);
+  border-color: color-mix(in srgb, var(--ov-danger) 34%, var(--border-soft));
+  background: var(--ov-danger-soft);
+}
+
+.ov-grid--edit {
+  gap: var(--space-3, 0.75rem);
+}
+
+@media (max-width: 1100px) {
+  .ov-widget-slot--half {
+    grid-column: auto;
+  }
+  .ov-widget-slot--full {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 720px) {
+  .ov-widget-slot--half,
+  .ov-widget-slot--full {
+    grid-column: 1 / -1;
+  }
+  .ov-layout-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .ov-layout-toolbar__edit-actions {
+    justify-content: space-between;
+  }
+}
+
 /* ── Grid ────────────────────────────────────────────────────────────────── */
 
 .ov-grid {
@@ -916,14 +1201,126 @@
   grid-template-columns: 1fr;
 }
 
+/* ── Feed-style list rows (Verlauf, Termine, Dokumentation …) ───────────── */
+
+.ov-feed {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.ov-feed__item {
+  padding: 0.55rem 0.65rem;
+  border-radius: var(--ov-radius-row);
+  border: 1px solid var(--ov-hairline);
+  background: color-mix(in srgb, var(--text-muted) 4%, transparent);
+}
+
+.ov-feed__item--abnormal {
+  border-color: color-mix(in srgb, var(--ov-danger) 28%, var(--border-soft));
+  background: var(--ov-danger-soft);
+}
+
+.ov-feed__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  margin-bottom: 0.2rem;
+}
+
+.ov-feed__date {
+  font-size: var(--text-2xs, 0.6875rem);
+  font-weight: var(--weight-semibold, 600);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted, #91887e);
+}
+
+.ov-feed__tag {
+  font-size: var(--text-2xs, 0.6875rem);
+  padding: 0.08rem 0.4rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 12%, transparent);
+  color: color-mix(in srgb, var(--area-accent, var(--accent)) 80%, var(--text-main));
+}
+
+.ov-feed__tag--draft {
+  background: var(--ov-info-soft);
+  color: var(--ov-info);
+}
+
+.ov-feed__tag--warn {
+  background: var(--ov-warn-soft);
+  color: var(--ov-warn);
+}
+
+.ov-feed__text {
+  margin: 0;
+  font-size: var(--text-sm, 0.8125rem);
+  line-height: var(--leading-snug, 1.35);
+  color: var(--text-main);
+}
+
+/* ── Key-value rows (Psychotherapie widget) ─────────────────────────────── */
+
+.ov-kv-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.ov-kv {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, 38%) 1fr;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.ov-kv__label {
+  font-size: var(--text-2xs, 0.6875rem);
+  font-weight: var(--weight-bold, 680);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted, #91887e);
+}
+
+.ov-kv__value {
+  font-size: var(--text-sm, 0.8125rem);
+  line-height: var(--leading-snug, 1.35);
+  color: var(--text-main);
+}
+
+/* ── ISDM summary embed ─────────────────────────────────────────────────── */
+
+.ov-isdm-widget__head {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem) 0;
+}
+
+.ov-isdm-widget .isdm-analysis-summary {
+  padding: 0 var(--space-3, 0.75rem) var(--space-3, 0.75rem);
+}
+
 /* ── Motion preferences ──────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
   .ov-card,
-  .ov-card__action > span[aria-hidden] {
+  .ov-card__action > span[aria-hidden],
+  .ov-layout-toolbar__toggle,
+  .ov-layout-toolbar__add-btn,
+  .ov-layout-toolbar__reset,
+  .ov-widget-edit-btn {
     transition: none;
   }
   .ov-card__action:hover > span[aria-hidden] {
     transform: none;
+  }
+  .ov-widget-slot--dragging {
+    opacity: 0.75;
   }
 }

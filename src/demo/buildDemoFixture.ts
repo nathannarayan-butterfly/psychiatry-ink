@@ -807,17 +807,30 @@ export function buildDemoPatientFixture(): DemoPatientFixture {
     },
     {
       id: 'demo-dx-02',
-      icd10: { code: 'F12.2', label: 'Psychische Störung durch Cannabinoide', overridden: true },
-      icd11: { code: '', label: 'Substanzbedingte Störung (Verdacht)', overridden: true },
-      dsm: { code: '', label: '', overridden: false },
+      icd10: {
+        code: 'F12.2',
+        label: 'Psychische und Verhaltensstörungen durch Cannabinoide : Abhängigkeitssyndrom',
+        overridden: false,
+      },
+      icd11: { code: '6C41.2', label: 'Cannabisabhängigkeit', overridden: false },
+      dsm: { code: '304.30', label: 'Cannabisgebrauchsstörung, schwer', overridden: false },
       createdAt: NOW,
       updatedAt: NOW,
     },
     {
       id: 'demo-dx-03',
-      icd10: { code: 'F15.2', label: 'Psychische Störung durch Stimulanzien', overridden: true },
-      icd11: { code: '', label: 'Amphetamin-assoziiert (Verdacht)', overridden: true },
-      dsm: { code: '', label: '', overridden: false },
+      icd10: {
+        code: 'F15.2',
+        label:
+          'Psychische und Verhaltensstörungen durch andere Stimulanzien, einschließlich Koffein : Abhängigkeitssyndrom',
+        overridden: false,
+      },
+      icd11: {
+        code: '6C45.2',
+        label: 'Störungen durch Amphetamin oder ähnlich wirkende Substanzen, Abhängigkeitssyndrom',
+        overridden: false,
+      },
+      dsm: { code: '304.40', label: 'Stimulanziengebrauchsstörung, schwer', overridden: false },
       createdAt: NOW,
       updatedAt: NOW,
     },
