@@ -95,9 +95,9 @@
 .cm-hero__name {
   font-family: var(--font-sans, system-ui, sans-serif);
   font-size: var(--cm-hero-name-size);
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+  font-weight: var(--display-weight, 700);
+  letter-spacing: var(--display-tracking, -0.025em);
+  line-height: var(--display-leading, 1.08);
   color: color-mix(in srgb, var(--area-accent, var(--accent)) 42%, var(--text-main, #24211e));
   margin: 0 0 0.35rem;
 }

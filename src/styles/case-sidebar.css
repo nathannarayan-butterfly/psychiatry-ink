@@ -153,9 +153,9 @@
 .case-sidebar-panel .topbar-logo--light .topbar-logo__stem,
 .case-sidebar-panel .topbar-logo--light .truncate {
   color: color-mix(in srgb, white 96%, var(--accent) 4%);
-  font-weight: 680;
+  font-weight: var(--weight-bold, 700);
   letter-spacing: -0.022em;
-  line-height: 0.96;
+  line-height: 1.05;
   padding-bottom: 0;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.18);
   translate: 0;
@@ -376,7 +376,7 @@
   padding: 0.42rem 0.55rem;
   text-align: left;
   font-size: 0.86rem;
-  font-weight: 450;
+  font-weight: var(--weight-regular, 400);
   color: #fff;
   text-decoration: none;
   cursor: pointer;
@@ -545,11 +545,11 @@
 .case-patient-header__name {
   font-family: var(--font-sans, system-ui, sans-serif);
   font-size: var(--cm-hero-name-size, 1.375rem);
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  font-weight: var(--display-weight, 700);
+  letter-spacing: var(--display-tracking, -0.025em);
   color: color-mix(in srgb, var(--area-accent) 42%, var(--ink, #1a1a18));
   margin: 0;
-  line-height: 1.2;
+  line-height: var(--display-leading, 1.08);
 }
 
 .case-patient-header__meta {
@@ -676,11 +676,11 @@
 }
 
 .panel-date-card__art-day {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 2.5rem;
-  line-height: 0.78;
-  letter-spacing: -0.02em;
+  font-family: var(--font-display, var(--font-sans, system-ui, sans-serif));
+  font-weight: var(--display-weight, 700);
+  font-size: 2.35rem;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
   font-variant-numeric: lining-nums;
   font-feature-settings: 'lnum' 1;
   color: color-mix(in srgb, white 97%, var(--accent) 3%);
@@ -695,23 +695,23 @@
 }
 
 .panel-date-card__art-month {
-  font-family: var(--font-sans);
-  font-size: 0.82rem;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 0.78rem;
   font-weight: 600;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: color-mix(in srgb, white 78%, var(--accent) 22%);
-  line-height: 1;
+  line-height: 1.1;
 }
 
 .panel-date-card__art-year {
-  font-family: var(--font-sans);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 0.72rem;
   font-weight: 500;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   font-variant-numeric: tabular-nums;
   color: color-mix(in srgb, white 50%, transparent);
-  line-height: 1;
+  line-height: 1.1;
 }
 
 .case-sidebar-panel .panel-date-card--sidebar-footer .panel-date-card__ink-weekday {
@@ -973,7 +973,7 @@
   text-align: left;
   font-family: inherit;
   font-size: 0.85rem;
-  font-weight: 450;
+  font-weight: var(--weight-regular, 400);
   line-height: 1.3;
   color: color-mix(in srgb, white 84%, transparent);
   cursor: pointer;

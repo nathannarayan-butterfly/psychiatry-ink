@@ -159,6 +159,11 @@
   --hover-bg: var(--surface-hover);
   --radius-md: 0.5rem;
 
+  /* Typography mirrors — resolve with appearance overrides on :root. */
+  --font-display: var(--font-sans);
+  --font-ui: var(--font-sans);
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", monospace;
+
   /* Clinical card elevation — shared with therapy/medication cards. Defined here
      (in addition to notion-preview.css) so .clinical-card resolves regardless of
      stylesheet load order. */
@@ -251,10 +256,15 @@
   --tracking-normal: 0;
   --tracking-wide: 0.04em;
   --tracking-caps: 0.1em;
-  --weight-regular: 450;
+  --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
-  --weight-bold: 680;
+  --weight-bold: 700;
+
+  /* Display role — same family as sans; hierarchy via weight/size/tracking. */
+  --display-weight: 700;
+  --display-tracking: -0.025em;
+  --display-leading: 1.08;
 
   /* ──────────────────────────────────────────────────────────────────────
    * Motion tokens. Named easings + durations complement the existing
@@ -1097,8 +1107,9 @@
   }
 
   .panel-date-card__day {
+    font-family: var(--font-display, var(--font-sans));
     font-size: clamp(1.5rem, 36cqh, 2.125rem);
-    font-weight: 600;
+    font-weight: var(--display-weight, 700);
     letter-spacing: -0.04em;
     line-height: 1;
   }
@@ -3598,11 +3609,11 @@
   .dashboard-hero__title {
     position: relative;
     margin: 0;
-    font-family: var(--font-display);
+    font-family: var(--font-display, var(--font-sans));
     font-size: 2.1rem;
-    font-weight: 600;
-    line-height: 1.12;
-    letter-spacing: -0.01em;
+    font-weight: var(--display-weight, 700);
+    line-height: var(--display-leading, 1.08);
+    letter-spacing: var(--display-tracking, -0.025em);
     color: color-mix(in srgb, var(--accent) 30%, var(--text-main));
   }
 

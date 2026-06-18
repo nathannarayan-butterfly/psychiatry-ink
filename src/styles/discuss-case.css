@@ -671,8 +671,10 @@
 }
 
 .discuss-case-view__title {
-  font-family: var(--font-display, inherit);
+  font-family: var(--font-display, var(--font-sans, inherit));
   font-size: 1.25rem;
+  font-weight: var(--display-weight, 700);
+  letter-spacing: var(--display-tracking, -0.025em);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1573,11 +1575,11 @@
 
 .discuss-case-hero__title {
   margin: 0.5rem 0 0;
-  font-family: var(--font-display, inherit);
+  font-family: var(--font-display, var(--font-sans, inherit));
   font-size: clamp(1.625rem, 3vw, 2.25rem);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  line-height: 1.1;
+  font-weight: var(--display-weight, 700);
+  letter-spacing: var(--display-tracking, -0.025em);
+  line-height: var(--display-leading, 1.08);
 }
 
 .discuss-case-hero__subtitle {

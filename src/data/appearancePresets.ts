@@ -338,6 +338,7 @@ export function applyAppearanceSettings(settings: AppearanceSettings) {
 
   root.style.setProperty('--font-sans', fontFamily.cssFamily)
   root.style.setProperty('--font-display', fontFamily.cssFamily)
+  root.style.setProperty('--font-ui', fontFamily.cssFamily)
   root.style.setProperty('--editor-font-size', font.size)
   root.style.setProperty('--editor-line-height', lineHeight.value)
   root.style.setProperty('--border-width', border.width)

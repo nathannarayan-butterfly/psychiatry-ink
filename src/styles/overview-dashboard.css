@@ -111,7 +111,7 @@
 }
 .ov-summary__caption {
   font-size: var(--text-2xs, 0.6875rem);
-  font-weight: var(--weight-bold, 680);
+  font-weight: var(--weight-bold, 700);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-muted, #91887e);
@@ -560,7 +560,7 @@
   margin: 0;
   font-family: var(--font-sans, inherit);
   font-size: var(--text-xs, 0.75rem);
-  font-weight: var(--weight-bold, 680);
+  font-weight: var(--weight-bold, 700);
   letter-spacing: 0.055em;
   text-transform: uppercase;
   color: var(--text-secondary, #6d655c);
@@ -680,7 +680,7 @@
   align-items: center;
   gap: 0.25rem;
   font-size: var(--text-2xs, 0.6875rem);
-  font-weight: var(--weight-bold, 680);
+  font-weight: var(--weight-bold, 700);
   line-height: 1;
   padding: 0.22rem 0.5rem;
   border-radius: 999px;
@@ -751,7 +751,7 @@
 }
 .ov-subhead {
   font-size: var(--text-2xs, 0.6875rem);
-  font-weight: var(--weight-bold, 680);
+  font-weight: var(--weight-bold, 700);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-muted, #91887e);
@@ -762,7 +762,7 @@
 }
 .ov-block-label {
   font-size: var(--text-2xs, 0.6875rem);
-  font-weight: var(--weight-bold, 680);
+  font-weight: var(--weight-bold, 700);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-muted, #91887e);
@@ -1079,7 +1079,7 @@
 }
 .ov-lab__num {
   font-size: var(--text-base, 0.9375rem);
-  font-weight: var(--weight-bold, 680);
+  font-weight: var(--weight-bold, 700);
   color: var(--text-main, #24211e);
   font-variant-numeric: tabular-nums;
 }
@@ -1105,7 +1105,7 @@
 }
 .ov-lab__arrow {
   font-size: var(--text-sm, 0.8125rem);
-  font-weight: var(--weight-bold, 680);
+  font-weight: var(--weight-bold, 700);
   color: var(--text-secondary, #6d655c);
   width: 0.8rem;
   text-align: center;
@@ -1394,7 +1394,7 @@
 
 .ov-kv__label {
   font-size: var(--text-2xs, 0.6875rem);
-  font-weight: var(--weight-bold, 680);
+  font-weight: var(--weight-bold, 700);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--text-muted, #91887e);
