@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { IcdTitleVersion } from '../../shared/icdTitle'
 import { fetchIcdDisplayTitle } from '../services/icdTitleApi'
 import { resolveDiagnosisDisplayTitle } from '../utils/diagnosisDisplayTitle'
+import { resolveDisplayCriteriaLabel } from '../utils/diagnosisDisplayRequests'
 
 export interface UseDiagnosisDisplayTitleParams {
   code: string
@@ -24,15 +25,23 @@ export function useDiagnosisDisplayTitle(params: UseDiagnosisDisplayTitleParams)
     enabled = true,
   } = params
 
+  // Resilient by construction: when the caller does not supply a criteria label,
+  // resolve the synchronous bundled title from in-app data so the component never
+  // renders a bare code while the (optional) WHO/API title is still loading.
+  const effectiveCriteriaLabel = useMemo(
+    () => criteriaLabel?.trim() || resolveDisplayCriteriaLabel(code, version),
+    [criteriaLabel, code, version],
+  )
+
   const fallback = useMemo(
     () =>
       resolveDiagnosisDisplayTitle({
-        criteriaLabel,
+        criteriaLabel: effectiveCriteriaLabel,
         enteredLabel,
         code,
         overridden,
       }),
-    [criteriaLabel, enteredLabel, code, overridden],
+    [effectiveCriteriaLabel, enteredLabel, code, overridden],
   )
 
   const [apiTitle, setApiTitle] = useState<string | null>(null)
@@ -68,7 +77,7 @@ export function useDiagnosisDisplayTitle(params: UseDiagnosisDisplayTitleParams)
 
   const title = resolveDiagnosisDisplayTitle({
     apiTitle,
-    criteriaLabel,
+    criteriaLabel: effectiveCriteriaLabel,
     enteredLabel,
     code,
     overridden,

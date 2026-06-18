@@ -99,6 +99,29 @@ export function getActiveCoding(entry: DiagnoseEntry, system: CodingSystem): Cod
   return entry[system]
 }
 
+/** True when a coding carries any clinician-entered content (code or label). */
+export function codingHasContent(coding: CodingValue): boolean {
+  return Boolean(coding.code.trim() || coding.label.trim())
+}
+
+/** True when any of an entry's codings (ICD-10/ICD-11/DSM) carries content. */
+export function hasAnyCodingContent(entry: DiagnoseEntry): boolean {
+  return codingHasContent(entry.icd10) || codingHasContent(entry.icd11) || codingHasContent(entry.dsm)
+}
+
+/**
+ * Pick the primary coding to display for an entry and the version it belongs to.
+ * Prefers ICD-10, then ICD-11, then DSM by content presence. Centralizing this
+ * here keeps display surfaces from reaching into raw `entry.*.label` fields.
+ */
+export function selectPrimaryCoding(
+  entry: DiagnoseEntry,
+): { coding: CodingValue; version: CodingSystem } {
+  if (codingHasContent(entry.icd10)) return { coding: entry.icd10, version: 'icd10' }
+  if (codingHasContent(entry.icd11)) return { coding: entry.icd11, version: 'icd11' }
+  return { coding: entry.dsm, version: 'dsm' }
+}
+
 function migrateLegacyEntry(raw: Record<string, unknown>): DiagnoseEntry | null {
   if (raw.icd10 && raw.icd11 && raw.dsm) {
     return raw as unknown as DiagnoseEntry

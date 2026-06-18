@@ -37,7 +37,7 @@ import { buildDokumentationSummary } from '../../../utils/overview/dokumentation
 import { buildRecentLabResults } from '../../../utils/overview/recentLabResults'
 import { buildButterflySummary, hasButterflyCriteriaSupport } from '../../../utils/overview/butterflySummary'
 import { loadIsdmAnalysis } from '../../../utils/isdm/storage'
-import { loadDiagnosen } from '../../../utils/diagnosenArchive'
+import { loadDiagnosen, selectPrimaryCoding } from '../../../utils/diagnosenArchive'
 import { resolveDiagnosisLabelSync } from '../../../utils/diagnosisDisplayRequests'
 import { useOverviewHiddenGraphs } from '../../../hooks/useOverviewHiddenGraphs'
 import { useOverviewCollaboration } from '../../../hooks/useOverviewCollaboration'
@@ -264,25 +264,13 @@ export function OverviewDashboard({
   const heroData = useMemo<HeroSummaryData>(() => {
     const diagnoses = loadDiagnosen(caseId)
     const primary = diagnoses[0]
-    const coding = primary
-      ? primary.icd10.code || primary.icd10.label
-        ? primary.icd10
-        : primary.icd11.code || primary.icd11.label
-          ? primary.icd11
-          : primary.dsm
-      : null
-    const primaryVersion: 'icd10' | 'icd11' | 'dsm' =
-      primary && coding === primary.icd11
-        ? 'icd11'
-        : primary && coding === primary.dsm
-          ? 'dsm'
-          : 'icd10'
-    const primaryDiagnosis = coding
+    const selected = primary ? selectPrimaryCoding(primary) : null
+    const primaryDiagnosis = selected
       ? {
-          code: coding.code,
-          label: resolveDiagnosisLabelSync(coding, primaryVersion),
-          version: primaryVersion,
-          overridden: coding.overridden,
+          code: selected.coding.code,
+          label: resolveDiagnosisLabelSync(selected.coding, selected.version),
+          version: selected.version,
+          overridden: selected.coding.overridden,
         }
       : null
 

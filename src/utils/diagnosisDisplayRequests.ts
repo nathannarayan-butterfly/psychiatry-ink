@@ -1,5 +1,6 @@
 import type { IcdTitleVersion } from '../../shared/icdTitle'
 import { lookupCatalogLabel } from '../data/diagnosisCatalog'
+import { bundledDiagnosisTitle } from '../data/bundledDiagnosisTitles'
 import type { DiagnosisTitleRequest } from '../hooks/useDiagnosisDisplayTitles'
 import type { CodingSystem, CodingValue, DiagnoseEntry } from './diagnosenArchive'
 import { getActiveCoding } from './diagnosenArchive'
@@ -9,7 +10,14 @@ export function codingSystemToTitleVersion(system: CodingSystem): IcdTitleVersio
   return system
 }
 
-/** Prefer bundled crosswalk labels over criteria-pack shorthand for display. */
+/**
+ * Resolve the synchronous bundled display title for a diagnosis code — step 3 of
+ * the shared resolution chain. Consults the in-app data in priority order:
+ *   1. Curated catalog (precise sub-code wording, e.g. F20.0).
+ *   2. Bundled criteria-pack index + coarse stem fallback (every authored code).
+ *   3. A caller-supplied criteria label (contextual hint), when given.
+ * Returns `null` only for truly unknown codes. NEVER touches network or DB.
+ */
 export function resolveDisplayCriteriaLabel(
   code: string,
   version: IcdTitleVersion,
@@ -17,6 +25,8 @@ export function resolveDisplayCriteriaLabel(
 ): string | null {
   const catalog = lookupCatalogLabel(code, version)
   if (catalog) return catalog
+  const bundled = bundledDiagnosisTitle(code, version)
+  if (bundled) return bundled
   const disorder = disorderCriteriaLabel?.trim()
   return disorder || null
 }

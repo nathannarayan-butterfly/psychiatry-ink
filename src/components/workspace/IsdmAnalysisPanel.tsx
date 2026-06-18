@@ -20,11 +20,16 @@ import {
 } from '../../utils/diagnosenCodingSystem'
 import {
   getActiveCoding,
+  hasAnyCodingContent,
   loadDiagnosen,
   type CodingSystem,
   type DiagnoseEntry,
 } from '../../utils/diagnosenArchive'
-import { buildDiagnosisTitleRequest } from '../../utils/diagnosisDisplayRequests'
+import {
+  buildDiagnosisTitleRequest,
+  codingSystemToTitleVersion,
+  resolveDiagnosisLabelSync,
+} from '../../utils/diagnosisDisplayRequests'
 import {
   buildDisorderAdvice,
   buildEvaluationContext,
@@ -97,7 +102,7 @@ function formatUpdatedAt(iso: string, language: UiLanguage): string {
 }
 
 function hasCodeOrLabel(entry: DiagnoseEntry): boolean {
-  return Boolean(entry.icd10.code.trim() || entry.icd10.label.trim() || entry.icd11.code.trim())
+  return hasAnyCodingContent(entry)
 }
 
 /** One row per clinician-entered diagnosis — verified or "not available". */
@@ -238,7 +243,14 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
       const enteredIcd10 = entry.icd10.code.trim()
       const enteredIcd11 = entry.icd11.code.trim()
       const code = enteredIcd10 || enteredIcd11
-      const label = entry.icd10.label.trim() || enteredIcd10 || entry.icd11.label.trim() || code
+      // Synchronous bundled title (shared resolver) — never a raw stored label.
+      const labelSystem: CodingSystem = enteredIcd10 ? 'icd10' : 'icd11'
+      const labelCoding = getActiveCoding(entry, labelSystem)
+      const label =
+        resolveDiagnosisLabelSync(
+          labelCoding,
+          codingSystemToTitleVersion(labelSystem),
+        ) || code
       const sourceDisorder = matchDisorderToCodes(entry.icd10.code, entry.icd11.code)
       if (!sourceDisorder) {
         // No criteria pack matched — fall back to the clinician-entered codes.

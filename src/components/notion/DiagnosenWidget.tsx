@@ -109,8 +109,9 @@ function DiagnoseRow({
   }
 
   const displayCode = coding.code || '—'
-  const labelText =
-    displayLabel || (coding.overridden ? coding.label : '') || coding.code || t('diagnosenNoLabel')
+  // `displayLabel` already comes from the shared resolver (override → bundled →
+  // code); never reach back into the raw stored label here.
+  const labelText = displayLabel || coding.code || t('diagnosenNoLabel')
 
   return (
     <li className="diagnosen-widget__row">
