@@ -80,12 +80,11 @@ function normalizeItem(raw: unknown, fallbackWidth: OverviewWidgetWidth): Overvi
   }
 }
 
-/** Default layout mirrors the original fixed Übersicht grid (hero + cards). */
+/** Default layout — hero is fixed above the grid; cards only here. */
 export function getDefaultOverviewLayout(): OverviewLayout {
   return {
     version: OVERVIEW_LAYOUT_VERSION,
     widgets: [
-      { instanceId: 'default-hero', widgetId: 'hero-summary', width: 'full' },
       { instanceId: 'default-safety', widgetId: 'safety', width: 'half' },
       { instanceId: 'default-medication', widgetId: 'medication', width: 'half' },
       { instanceId: 'default-diagnoses', widgetId: 'diagnoses', width: 'half' },

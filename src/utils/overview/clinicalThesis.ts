@@ -1,17 +1,117 @@
 import { loadNotionDocumentSnapshot } from '../notionDocumentActions'
 import { loadVerlaufFeed } from '../verlaufFeed'
-import { loadNotionPageDate } from '../notionPageDate'
+import { loadClinicalImprintIndex } from '../clinicalImprint'
+import type { ClinicalImprintRecord, CourseDirection } from '../../types/clinicalImprint'
 
 function clamp(text: string, max: number): string {
   const t = text.replace(/\s+/g, ' ').trim()
   return t.length > max ? `${t.slice(0, max - 1)}…` : t
 }
 
+function latestPsychopathImprint(imprints: ClinicalImprintRecord[]): ClinicalImprintRecord | null {
+  return (
+    [...imprints]
+      .filter((i) => i.clinicalDomain === 'psychopathology')
+      .sort((a, b) => (b.sourceDate ?? '').localeCompare(a.sourceDate ?? ''))[0] ?? null
+  )
+}
+
+const COURSE_PHRASE: Partial<Record<CourseDirection, string>> = {
+  improved: 'Besserung',
+  stable: 'Stabilisierung',
+  worsened: 'Verschlechterung',
+  fluctuating: 'Fluktuation',
+  resolved: 'Remission',
+}
+
+/** Compose a lead clause from documented Verlauf / Therapieverlauf sections — no invented facts. */
+export function composeThesisFromDocumentedSections(
+  psychopathologie: string | undefined,
+  complianceInsight: string | undefined,
+  therapieVerlauf: string | undefined,
+): string | null {
+  const clauses: string[] = []
+
+  const hasStabilization = Boolean(therapieVerlauf?.match(/stabilisierung/i))
+  const hasParanoidContext = Boolean(psychopathologie?.match(/paranoid/i))
+  const hasAntipsychotic = Boolean(therapieVerlauf?.match(/antipsychotikum/i))
+
+  if (hasStabilization) {
+    let lead = 'Stabilisierung'
+    if (hasParanoidContext) lead += ' der paranoiden Symptomatik'
+    if (hasAntipsychotic) lead += ' unter Antipsychotikum'
+    clauses.push(lead)
+  } else if (psychopathologie) {
+    const firstClause = psychopathologie.split(/[.;]/)[0]?.trim()
+    if (firstClause && firstClause.length > 20) clauses.push(firstClause)
+  } else if (therapieVerlauf) {
+    const firstClause = therapieVerlauf.split(/[.;]/)[0]?.trim()
+    if (firstClause && firstClause.length > 20) clauses.push(firstClause)
+  }
+
+  if (complianceInsight?.match(/einsicht/i)) {
+    const insightMatch = complianceInsight.match(/einsicht[^.]*/i)
+    if (insightMatch) {
+      const tail = insightMatch[0].replace(/^einsicht\s*/i, '').trim()
+      if (tail) clauses.push(`Krankheitseinsicht ${tail}`)
+    }
+  }
+
+  if (clauses.length >= 2) return clamp(`${clauses.join(' — ')}.`, 220)
+  if (clauses.length === 1 && clauses[0].length >= 30) return clamp(`${clauses[0]}.`, 220)
+  return null
+}
+
+function composeFromImprint(imprint: ClinicalImprintRecord): string | null {
+  const parts: string[] = []
+  const course = imprint.courseDirection ? COURSE_PHRASE[imprint.courseDirection] : null
+  if (course) parts.push(course)
+
+  if (imprint.thoughtContent?.match(/paranoid/i)) {
+    parts.push('paranoide Symptomatik')
+  } else if (imprint.readableClinicalSentence) {
+    const sentence = imprint.readableClinicalSentence.split(/[.;]/)[0]?.trim()
+    if (sentence && sentence.length > 20) parts.push(sentence)
+  }
+
+  if (imprint.insight?.match(/zunehmend|verbessert/i)) {
+    parts.push(`Krankheitseinsicht ${imprint.insight}`)
+  }
+
+  if (parts.length >= 2) return clamp(parts.join(' — '), 220)
+  if (imprint.readableClinicalSentence && imprint.readableClinicalSentence.length > 30) {
+    return clamp(imprint.readableClinicalSentence, 220)
+  }
+  return null
+}
+
 /**
  * Derive a one-line clinical thesis for the Übersicht hero from real documentation.
- * Prefers the latest psychopathology free-text, then the newest Verlauf entry.
+ * Synthesizes from Verlauf sections, psychopathology imprints, and narrative fallbacks.
  */
 export function buildClinicalThesis(caseId: string): string | null {
+  const verlaufSnap = loadNotionDocumentSnapshot('verlauf', caseId)
+  const sections = verlaufSnap?.sectionContents ?? {}
+  const therapieBody = loadNotionDocumentSnapshot('therapie-verlauf', caseId)?.sectionContents['body']?.trim()
+
+  const fromSections = composeThesisFromDocumentedSections(
+    sections['psychopathologie']?.trim(),
+    sections['compliance-krankheitseinsicht']?.trim(),
+    therapieBody,
+  )
+  if (fromSections) return fromSections
+
+  const beurteilung = sections['beurteilung-plan']?.trim()
+  if (beurteilung && beurteilung.length > 25) {
+    return clamp(beurteilung.split(/[.;]/)[0] ?? beurteilung, 220)
+  }
+
+  const imprint = latestPsychopathImprint(loadClinicalImprintIndex(caseId).imprints)
+  if (imprint) {
+    const fromImprint = composeFromImprint(imprint)
+    if (fromImprint) return fromImprint
+  }
+
   const psychopath = loadNotionDocumentSnapshot('psychopath', caseId)
   const free = psychopath?.sectionContents['free']?.trim()
   if (free && free.length > 20) {
@@ -23,12 +123,10 @@ export function buildClinicalThesis(caseId: string): string | null {
     return clamp(verlauf.content, 220)
   }
 
-  const verlaufSnap = loadNotionDocumentSnapshot('verlauf', caseId)
-  const risiko = verlaufSnap?.sectionContents['risiko']?.trim()
+  const risiko = sections['risiko']?.trim()
   if (risiko && risiko.length > 20) {
     return clamp(risiko, 220)
   }
 
-  void loadNotionPageDate('verlauf', caseId)
   return null
 }

@@ -1,11 +1,8 @@
 import { useMemo } from 'react'
-import { getCaseMeta } from '../../hooks/useCaseRegistry'
-import { isDemoCase } from '../../demo'
-import { useTranslation } from '../../context/TranslationContext'
 import { ClinicalHeroStrip } from '../clinical/ClinicalHeroStrip'
 import { buildClinicalThesis } from '../../utils/overview/clinicalThesis'
-import { loadNotionPageDate } from '../../utils/notionPageDate'
-import { formatDateDe } from '../../utils/overview/dateLabels'
+import { buildClinicalHeroMeta } from '../../utils/overview/clinicalHeroMeta'
+import { useTranslation } from '../../context/TranslationContext'
 
 interface CasePatientHeaderProps {
   caseId: string
@@ -28,39 +25,10 @@ export function CasePatientHeader({
 
   const { name, metaLine, thesis } = useMemo(() => {
     void metaVersion
-    const meta = getCaseMeta(caseId)
-    const structuredName = [meta?.localVorname?.trim(), meta?.localNachname?.trim()]
-      .filter(Boolean)
-      .join(' ')
-    const displayName =
-      structuredName ||
-      meta?.localName?.trim() ||
-      (isDemoCase(caseId) ? t('demoPatientDisplayName') : t('patientNavFallback'))
-
-    const geschlecht = meta?.localGeschlecht
-
-    const genderLabel =
-      geschlecht === 'maennlich'
-        ? t('patientGeschlechtMaennlich')
-        : geschlecht === 'weiblich'
-          ? t('patientGeschlechtWeiblich')
-          : geschlecht === 'divers'
-            ? t('patientGeschlechtDivers')
-            : null
-
-    const ageLabel = meta?.localAge?.trim() ? `${meta.localAge} J` : null
-    const admissionIso = loadNotionPageDate('aufnahme', caseId)
-    const admissionLabel = admissionIso ? formatDateDe(admissionIso) : null
-
-    const metaParts = [
-      ageLabel,
-      genderLabel,
-      admissionLabel ? `Aufnahme ${admissionLabel}` : null,
-    ].filter(Boolean)
-
+    void language
+    const hero = buildClinicalHeroMeta(caseId, t)
     return {
-      name: displayName,
-      metaLine: metaParts.length > 0 ? metaParts.join(' · ') : null,
+      ...hero,
       thesis: showThesis ? buildClinicalThesis(caseId) : null,
     }
   }, [caseId, language, metaVersion, showThesis, t])

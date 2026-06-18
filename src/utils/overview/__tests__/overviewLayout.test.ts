@@ -21,10 +21,11 @@ describe('overviewLayout', () => {
   it('returns a stable default layout with all core widgets', () => {
     const layout = getDefaultOverviewLayout()
     expect(layout.version).toBe(1)
-    expect(layout.widgets.length).toBeGreaterThanOrEqual(8)
-    expect(layout.widgets[0]?.widgetId).toBe('hero-summary')
+    expect(layout.widgets.length).toBeGreaterThanOrEqual(7)
+    expect(layout.widgets[0]?.widgetId).toBe('safety')
     expect(layout.widgets.some((w) => w.widgetId === 'safety')).toBe(true)
     expect(layout.widgets.some((w) => w.widgetId === 'medication')).toBe(true)
+    expect(layout.widgets.some((w) => w.widgetId !== 'hero-summary')).toBe(true)
   })
 
   it('normalizes invalid persisted payloads to the default layout', () => {
@@ -71,7 +72,7 @@ describe('overviewLayout', () => {
   it('tracks used widget ids for the add palette', () => {
     const used = usedOverviewWidgetIds(getDefaultOverviewLayout())
     expect(used.has('safety')).toBe(true)
-    expect(used.has('hero-summary')).toBe(true)
+    expect(used.has('hero-summary')).toBe(false)
   })
 
   it('registry includes all known widget ids', () => {

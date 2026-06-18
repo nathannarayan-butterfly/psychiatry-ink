@@ -33,6 +33,7 @@ export function OverviewLayoutToolbar({
   const addableWidgets = useMemo(() => {
     const used = usedOverviewWidgetIds(layout)
     return OVERVIEW_WIDGET_LIST.filter((def) => {
+      if (def.id === 'hero-summary') return false
       if (def.singleton && used.has(def.id)) return false
       return isOverviewWidgetVisible(def.id, def.visibility, visibilityContext)
     })

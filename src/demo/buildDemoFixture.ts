@@ -28,6 +28,8 @@ import type { DemoPatientFixture } from './types'
 
 const LAB_BEFUND_1_DATE = '2026-06-05'
 const LAB_BEFUND_2_DATE = '2026-06-20'
+const LAB_BEFUND_ANTHRO_DATE = '2026-06-10'
+const LAB_BEFUND_GLUCOSE_DATE = '2026-06-12'
 
 type LabParamInput = {
   name: string
@@ -369,8 +371,8 @@ function buildLaborBefunde(): LaborBefund[] {
       { name: 'Glukose (nüchtern)', value: '96', numericValue: 96, unit: 'mg/dl', refMin: 70, refMax: 100 },
       {
         name: 'HbA1c',
-        value: '5,7',
-        numericValue: 5.7,
+        value: '5,8',
+        numericValue: 5.8,
         unit: '%',
         refMin: 4.0,
         refMax: 6.0,
@@ -407,6 +409,30 @@ function buildLaborBefunde(): LaborBefund[] {
 
   const label1 = 'Aufnahme — Risperidon 3 mg'
   const label2 = 'Verlaufskontrolle — Aripiprazol 10 mg'
+  const labelAnthro = 'Anthropometrie — Verlauf'
+  const labelGlucose = 'Nüchternglukose — Zwischenkontrolle'
+
+  const anthroCategories: LaborCategory[] = [
+    labCategory('anthropometrie', 'Anthropometrie', [
+      {
+        name: 'BMI',
+        value: '26,4',
+        numericValue: 26.4,
+        unit: 'kg/m²',
+        refMin: 18.5,
+        refMax: 24.9,
+        isAbnormal: true,
+      },
+      { name: 'Gewicht', value: '82', numericValue: 82, unit: 'kg' },
+      { name: 'Körpergröße', value: '176', numericValue: 176, unit: 'cm' },
+    ]),
+  ]
+
+  const glucoseCategories: LaborCategory[] = [
+    labCategory('stoffwechsel', 'Stoffwechsel', [
+      { name: 'Glukose (nüchtern)', value: '98', numericValue: 98, unit: 'mg/dl', refMin: 70, refMax: 100 },
+    ]),
+  ]
 
   return [
     {
@@ -426,6 +452,24 @@ function buildLaborBefunde(): LaborBefund[] {
       rawText: buildLaborBefundRawText(LAB_BEFUND_2_DATE, label2, befund2Categories),
       categories: befund2Categories,
       createdAt: `${LAB_BEFUND_2_DATE}T08:15:00.000Z`,
+    },
+    {
+      id: 'demo-labor-befund-anthro',
+      caseId: DEMO_CASE_ID,
+      date: LAB_BEFUND_ANTHRO_DATE,
+      label: labelAnthro,
+      rawText: buildLaborBefundRawText(LAB_BEFUND_ANTHRO_DATE, labelAnthro, anthroCategories),
+      categories: anthroCategories,
+      createdAt: `${LAB_BEFUND_ANTHRO_DATE}T10:00:00.000Z`,
+    },
+    {
+      id: 'demo-labor-befund-glucose',
+      caseId: DEMO_CASE_ID,
+      date: LAB_BEFUND_GLUCOSE_DATE,
+      label: labelGlucose,
+      rawText: buildLaborBefundRawText(LAB_BEFUND_GLUCOSE_DATE, labelGlucose, glucoseCategories),
+      categories: glucoseCategories,
+      createdAt: `${LAB_BEFUND_GLUCOSE_DATE}T08:30:00.000Z`,
     },
   ]
 }
