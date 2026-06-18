@@ -357,6 +357,7 @@ export function CalendarPage({ onBack, onOpenCase }: CalendarPageProps) {
               today={today}
               onSelectDay={handleSelectDay}
               weekdayLabels={weekdayLabels}
+              monthLabel={monthTitle}
               ariaLabel={monthTitle}
             />
           </div>

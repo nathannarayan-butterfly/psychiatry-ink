@@ -96,7 +96,7 @@ export function CalendarSidePanels({
               <span className="calendar-side-panel__next-title">{nextTodayAppointment.title}</span>
             </p>
           ) : (
-            <p className="clinical-empty-state clinical-empty-state--compact">{t('calendarNoSessionsToday')}</p>
+            <p className="calendar-side-panel__empty">{t('calendarNoSessionsToday')}</p>
           )}
         </div>
       </section>
@@ -149,7 +149,7 @@ export function CalendarSidePanels({
         </div>
         <p className="calendar-side-panel__date-label">{selectedLabel}</p>
         {selectedDayItems.length === 0 ? (
-          <p className="clinical-empty-state clinical-empty-state--compact">{t('calendarNoAppointmentsDay')}</p>
+          <p className="calendar-side-panel__empty">{t('calendarNoAppointmentsDay')}</p>
         ) : (
           <ul className="calendar-agenda-list">
             {selectedDayItems.map((item) => (

@@ -46,6 +46,7 @@ export function CalendarMonthGrid({
   }, [items])
 
   const isMini = variant === 'mini'
+  const isMain = variant === 'main'
 
   return (
     <div
@@ -54,11 +55,22 @@ export function CalendarMonthGrid({
       aria-label={ariaLabel}
     >
       {monthLabel ? (
-        <p className="calendar-month-view__label">{monthLabel}</p>
+        <div className={`calendar-month-view__header${isMain ? ' calendar-month-view__header--main' : ''}`}>
+          <p className="calendar-month-view__label">{monthLabel}</p>
+        </div>
       ) : null}
       <div className="calendar-month-view__weekdays" role="row">
-        {weekdayLabels.map((label) => (
-          <span key={label} className="calendar-month-view__weekday" role="columnheader">
+        {weekdayLabels.map((label, index) => (
+          <span
+            key={label}
+            className={[
+              'calendar-month-view__weekday',
+              index >= 5 ? 'calendar-month-view__weekday--weekend' : '',
+            ]
+              .join(' ')
+              .trim()}
+            role="columnheader"
+          >
             {label}
           </span>
         ))}
@@ -72,6 +84,7 @@ export function CalendarMonthGrid({
           ).length
           const isToday = isSameDay(day, today)
           const isSelected = isSameDay(day, selectedDay)
+          const isWeekend = day.getDay() === 0 || day.getDay() === 6
 
           return (
             <button
@@ -81,6 +94,7 @@ export function CalendarMonthGrid({
               className={[
                 'calendar-month-view__cell',
                 inMonth ? '' : 'calendar-month-view__cell--outside',
+                isWeekend ? 'calendar-month-view__cell--weekend' : '',
                 isToday ? 'calendar-month-view__cell--today' : '',
                 isSelected ? 'calendar-month-view__cell--selected' : '',
               ]
