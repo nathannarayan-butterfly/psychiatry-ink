@@ -11,6 +11,7 @@ import {
   buildDiagnosisTitleRequest,
   buildDiagnosisTitleRequestFromEntry,
   codingSystemToTitleVersion,
+  resolveDiagnosisLabelSync,
 } from '../../utils/diagnosisDisplayRequests'
 import {
   createDiagnoseFreeText,
@@ -416,7 +417,14 @@ export function DiagnosenWidget({ caseId, variant = 'sidebar', onDiagnosesChange
                       >
                         <span className="diagnosen-widget__search-code">{result.code}</span>
                         <span className="diagnosen-widget__search-label">
-                          {searchDisplayTitles.get(`${result.system}-${result.code}`) ?? result.code}
+                          {searchDisplayTitles.get(`${result.system}-${result.code}`)
+                            ?? resolveDiagnosisLabelSync(
+                              { code: result.code, label: result.label, overridden: false },
+                              codingSystemToTitleVersion(
+                                result.system === 'dsm5tr' ? 'dsm' : result.system,
+                              ),
+                              result.label,
+                            )}
                         </span>
                       </button>
                     </li>
@@ -453,7 +461,10 @@ export function DiagnosenWidget({ caseId, variant = 'sidebar', onDiagnosesChange
             ) : (
               <ol className="diagnosen-widget__list" aria-label={t('diagnosenTitle')}>
                 {entries.map((entry, index) => {
-                  const displayLabel = entryDisplayTitles.get(entry.id) ?? ''
+                  const coding = getActiveCoding(entry, activeSystem)
+                  const displayLabel =
+                    entryDisplayTitles.get(entry.id)
+                    ?? resolveDiagnosisLabelSync(coding, codingSystemToTitleVersion(activeSystem))
                   return (
                     <DiagnoseRow
                       key={entry.id}

@@ -1,11 +1,10 @@
 import { useMemo } from 'react'
 import { ClinicalHeroStrip } from '../../clinical/ClinicalHeroStrip'
+import { DiagnosisDisplayLabel } from '../../diagnosis/DiagnosisDisplayLabel'
 import { buildClinicalThesis } from '../../../utils/overview/clinicalThesis'
-import { getCaseMeta } from '../../../hooks/useCaseRegistry'
-import { isDemoCase } from '../../../demo'
+import { buildClinicalHeroMeta } from '../../../utils/overview/clinicalHeroMeta'
+import { resolveDisplayCriteriaLabel } from '../../../utils/diagnosisDisplayRequests'
 import { useTranslation } from '../../../context/TranslationContext'
-import { loadNotionPageDate } from '../../../utils/notionPageDate'
-import { formatDateDe } from '../../../utils/overview/dateLabels'
 import type { HeroSummaryData } from './types'
 
 interface OverviewHeroProps {
@@ -14,53 +13,18 @@ interface OverviewHeroProps {
 }
 
 /**
- * Übersicht hero widget — typographic patient strip with clinical thesis.
- * Replaces the former boxed "Auf einen Blick" metric strip with the canvas
- * minimal hero pattern. Supplementary orientation facts render as quiet meta.
+ * Übersicht hero — typographic patient strip with clinical thesis.
+ * Supplementary orientation facts render as quiet meta below the hairline.
  */
 export function OverviewHero({ data, caseId }: OverviewHeroProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
 
-  const { name, metaLine } = useMemo(() => {
-    const meta = getCaseMeta(caseId)
-    const structuredName = [meta?.localVorname?.trim(), meta?.localNachname?.trim()]
-      .filter(Boolean)
-      .join(' ')
-    const displayName =
-      structuredName ||
-      meta?.localName?.trim() ||
-      (isDemoCase(caseId) ? t('demoPatientDisplayName') : t('patientNavFallback'))
-
-    const geschlecht = meta?.localGeschlecht
-    const genderLabel =
-      geschlecht === 'maennlich'
-        ? t('patientGeschlechtMaennlich')
-        : geschlecht === 'weiblich'
-          ? t('patientGeschlechtWeiblich')
-          : geschlecht === 'divers'
-            ? t('patientGeschlechtDivers')
-            : null
-
-    const ageLabel = meta?.localAge?.trim() ? `${meta.localAge} J` : null
-    const admissionIso = loadNotionPageDate('aufnahme', caseId)
-    const admissionLabel = admissionIso ? formatDateDe(admissionIso) : null
-
-    const parts = [
-      ageLabel,
-      genderLabel,
-      admissionLabel ? `Aufnahme ${admissionLabel}` : null,
-    ].filter(Boolean)
-
-    return { name: displayName, metaLine: parts.length > 0 ? parts.join(' · ') : null }
-  }, [caseId, t])
+  const { name, metaLine } = useMemo(() => buildClinicalHeroMeta(caseId, t), [caseId, t])
 
   const thesis = useMemo(() => buildClinicalThesis(caseId), [caseId])
 
-  const orientationMeta = useMemo(() => {
+  const orientationTail = useMemo(() => {
     const parts: string[] = []
-    if (data.primaryDiagnosis?.code) {
-      parts.push(data.primaryDiagnosis.code)
-    }
     if (data.risk?.label) {
       parts.push(`Risiko ${data.risk.label}`)
     }
@@ -77,15 +41,36 @@ export function OverviewHero({ data, caseId }: OverviewHeroProps) {
         `Nächster Termin ${data.nextAppointment.relativeLabel ?? data.nextAppointment.dateLabel}`,
       )
     }
-    return parts.length > 0 ? parts.join(' · ') : null
+    return parts
   }, [data])
+
+  const primaryDiagnosis = data.primaryDiagnosis
+  const showOrientation = Boolean(primaryDiagnosis?.code) || orientationTail.length > 0
 
   return (
     <div className="ov-hero-widget">
       <ClinicalHeroStrip name={name} metaLine={metaLine} caseId={caseId} thesis={thesis} />
-      {orientationMeta ? (
+      {showOrientation ? (
         <p className="ov-hero-widget__orientation" aria-label="Orientierung">
-          {orientationMeta}
+          {primaryDiagnosis?.code ? (
+            <>
+              {primaryDiagnosis.code}
+              {' · '}
+              <DiagnosisDisplayLabel
+                code={primaryDiagnosis.code}
+                version={primaryDiagnosis.version}
+                language={language}
+                criteriaLabel={resolveDisplayCriteriaLabel(
+                  primaryDiagnosis.code,
+                  primaryDiagnosis.version,
+                )}
+                enteredLabel={primaryDiagnosis.overridden ? primaryDiagnosis.label : null}
+                overridden={primaryDiagnosis.overridden ?? false}
+              />
+            </>
+          ) : null}
+          {primaryDiagnosis?.code && orientationTail.length > 0 ? ' · ' : null}
+          {orientationTail.join(' · ')}
         </p>
       ) : null}
     </div>
