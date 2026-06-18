@@ -104,4 +104,57 @@ export const alcoholDependence: Disorder = {
       ],
     },
   ],
+  // ICD-11 6C40.2 — distinct structure: ≥ 2 of THREE central features (vs ICD-10's
+  // ≥ 3 of six) over ≥ 12 months (or ≥ 1 month with continuous use). Folds the
+  // six ICD-10 features into impaired control (incl. craving), increasing
+  // salience/persistence-despite-harm, and physiological features.
+  icd11: {
+    sourceRef: 'operationalisiert nach ICD-11 6C40.2',
+    groups: [
+      {
+        id: '6c40_2.dependence',
+        label_de:
+          'Abhängigkeitsmerkmale nach ICD-11 (mindestens 2 von 3, über ≥ 12 Monate – bei kontinuierlichem Konsum ≥ 1 Monat)',
+        logic: 'at_least_n_of',
+        threshold: 2,
+        groupType: 'inclusion',
+        timeWindow: { withinDays: 365 },
+        criteria: [
+          {
+            id: '6c40_2.impaired_control',
+            text_de:
+              'Beeinträchtigte Kontrolle über den Alkoholkonsum (Beginn, Menge, Umstände oder Beendigung), häufig begleitet von starkem Verlangen (Craving)',
+            citation: [{ classification: 'icd11', code: '6C40.2', ref: '1' }],
+            mappingHints: [{ kind: 'isdm_domain', ref: 'substance_related_features', deepLinkPageId: 'anamnese' }],
+            allowClinicianAttest: true,
+            operationalRule: dependenceFeature(
+              /kontrollverlust|verminderte\s+kontrolle|kann.*nicht.*aufh[öo]r|exzessiv|verlangen|craving|suchtdruck|zwang.*konsum/i,
+            ),
+          },
+          {
+            id: '6c40_2.salience',
+            text_de:
+              'Zunehmender Stellenwert des Alkoholkonsums gegenüber anderen Interessen und Verpflichtungen, mit fortgesetztem Konsum trotz eingetretener schädlicher Folgen',
+            citation: [{ classification: 'icd11', code: '6C40.2', ref: '2' }],
+            mappingHints: [{ kind: 'isdm_domain', ref: 'substance_related_features', deepLinkPageId: 'anamnese' }],
+            allowClinicianAttest: true,
+            operationalRule: dependenceFeature(
+              /vernachl[äa]ssig|interessenverlust.*konsum|aufgabe.*aktivit|trotz.*sch[äa]d|fortgesetzt.*trotz|weiter.*trotz.*folgen|stellenwert|priorit/i,
+            ),
+          },
+          {
+            id: '6c40_2.physiological',
+            text_de:
+              'Physiologische Merkmale: Toleranzentwicklung, Entzugssymptome bei Reduktion oder Beendigung des Konsums oder Konsum zur Vermeidung bzw. Linderung von Entzugssymptomen',
+            citation: [{ classification: 'icd11', code: '6C40.2', ref: '3' }],
+            mappingHints: [{ kind: 'isdm_domain', ref: 'substance_related_features', deepLinkPageId: 'anamnese' }],
+            allowClinicianAttest: true,
+            operationalRule: dependenceFeature(
+              /toleranz|tolerance|dosissteiger|mehr.*menge|entzug|withdrawal|tremor.*morgen|entzugssymptom/i,
+            ),
+          },
+        ],
+      },
+    ],
+  },
 }

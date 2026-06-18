@@ -5,6 +5,13 @@ import { domainSignal } from './predicateHelpers'
 /**
  * Panikstörung — operationalized from ICD-10 F41.0 / ICD-11 6B01.
  * Original wording; the standard is referenced via `sourceRef`.
+ *
+ * ICD-11 6B01: Auf dem hier kodierten Granularitätsniveau klinisch ÄQUIVALENT zur
+ * ICD-10-Operationalisierung — wiederkehrende, unerwartete Panikattacken mit
+ * abruptem Beginn, charakteristischen vegetativen Begleitsymptomen und anhaltender
+ * Erwartungsangst bzw. maladaptiver Verhaltensänderung. Es besteht keine relevante
+ * strukturelle Divergenz → BEWUSSTER icd10==icd11-Fallback über den Resolver, daher
+ * KEIN eigener `icd11`-Baum (dokumentierte Gleichsetzung, kein Daten-Gap).
  */
 export const panicDisorder: Disorder = {
   id: 'panic_disorder',

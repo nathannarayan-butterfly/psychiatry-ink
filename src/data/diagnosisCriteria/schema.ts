@@ -120,6 +120,33 @@ export interface DisorderCodingRef {
   label_de: string
 }
 
+/**
+ * Optional, DISTINCT ICD-11 criteria tree for a disorder.
+ *
+ * ADDITIVE & BACKWARD-COMPATIBLE: when a disorder omits this field, ICD-11 mode
+ * deliberately falls back to the disorder's ICD-10 `groups` (see
+ * `resolveDisorderForCodingSystem` in `./version`). When present, it carries an
+ * INDEPENDENT set of `CriterionGroup`s authored against the ICD-11 CDDR — with
+ * its own thresholds, time windows, operational rules and exclusions — so the
+ * Butterfly engine evaluates a genuinely different criteria structure when the
+ * clinician toggles to ICD-11.
+ *
+ * INVARIANTS (so the i18n layer composes without a resolver change):
+ *  - Every group/criterion `id` here MUST be globally unique AND distinct from
+ *    the disorder's ICD-10 group/criterion ids (prefix ICD-11 ids, e.g.
+ *    `6c40_2.impaired_control`). The flat i18n `groups`/`criteria` maps then
+ *    carry both versions side-by-side, keyed by id.
+ *  - The disorder's display `name_de` and `differentials_de` are SHARED across
+ *    versions (ICD-11 mode reuses them), so their index-aligned translations
+ *    stay valid. Only the criteria tree differs per version.
+ */
+export interface Icd11CriteriaSet {
+  /** ICD-11 criterion groups (DISTINCT ids from the ICD-10 `groups`). */
+  groups: CriterionGroup[]
+  /** Optional ICD-11-specific citation string; falls back to `Disorder.sourceRef`. */
+  sourceRef?: string
+}
+
 export interface Disorder {
   /** Stable id, e.g. "depressive_episode". */
   id: string
@@ -145,7 +172,13 @@ export interface Disorder {
   }
   /** Differential considerations (OUR wording) surfaced as advice, not assertions. */
   differentials_de: string[]
+  /** ICD-10-structured criteria tree (the Phase-1 anchor; always present). */
   groups: CriterionGroup[]
+  /**
+   * Optional DISTINCT ICD-11 criteria tree. Absent → ICD-11 mode falls back to
+   * `groups` (the ICD-10 tree). See {@link Icd11CriteriaSet}.
+   */
+  icd11?: Icd11CriteriaSet
 }
 
 /** Convenience signal constructors for predicate authoring. */

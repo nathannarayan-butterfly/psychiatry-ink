@@ -26,7 +26,13 @@ import {
   matchDomainsInText,
   PSYCHOPATH_SECTION_DOMAIN_MAP,
 } from './domainMap'
-import { matchDisorderToCodes } from '../../data/diagnosisCriteria'
+import {
+  matchDisorderToCodes,
+  resolveDisorderForCodingSystem,
+  toButterflyIcdVersion,
+  type ButterflyIcdVersion,
+} from '../../data/diagnosisCriteria'
+import type { CodingSystem } from '../diagnosenArchive'
 import type { AttestationMap } from '../diagnosisCriteria/context'
 import { buildEvaluationContext } from '../diagnosisCriteria/context'
 import { evaluateDisorder } from '../diagnosisCriteria/evaluateDisorder'
@@ -41,6 +47,12 @@ export interface IsdmBuildInput {
   medicationPlanState?: MedicationPlanState
   /** Butterfly clinician attestations (criterionId → met/not_met). */
   attestations?: AttestationMap
+  /**
+   * Case-selected Diagnosen coding system. Butterfly verifies entered diagnoses
+   * against the matching criteria version (ICD-11 falls back to ICD-10 when no
+   * distinct set is authored; DSM reuses the ICD-10 tree). Defaults to ICD-10.
+   */
+  codingSystem?: CodingSystem
 }
 
 function emptyPhenomenology(): Record<IsdmPhenomenologyDomain, SymptomFinding[]> {
@@ -504,6 +516,7 @@ function buildDiagnosticMappings(
   phenomenology: Record<IsdmPhenomenologyDomain, SymptomFinding[]>,
   coursePattern: CoursePattern,
   attestations: AttestationMap,
+  icdVersion: ButterflyIcdVersion,
 ): DiagnosticMapping[] {
   const mappings: DiagnosticMapping[] = []
 
@@ -525,7 +538,10 @@ function buildDiagnosticMappings(
     }
     const label = entry.icd10.label.trim() || entry.icd10.code.trim() || entry.icd11.label.trim()
 
-    const disorder = matchDisorderToCodes(entry.icd10.code, entry.icd11.code)
+    const matched = matchDisorderToCodes(entry.icd10.code, entry.icd11.code)
+    // Resolve to the active version's criteria tree (ICD-11 → ICD-10 fallback)
+    // so the verdict reflects the system the clinician toggled to.
+    const disorder = matched ? resolveDisorderForCodingSystem(matched, icdVersion) : undefined
 
     if (!disorder) {
       // Entered diagnosis with no authored criteria set yet.
@@ -780,6 +796,7 @@ export function buildIsdmAnalysis(input: IsdmBuildInput): IsdmClinicalAnalysis {
     phenomenology,
     coursePattern,
     input.attestations ?? {},
+    toButterflyIcdVersion(input.codingSystem ?? 'icd10'),
   )
   const interviewGaps = buildInterviewGaps(
     phenomenology,

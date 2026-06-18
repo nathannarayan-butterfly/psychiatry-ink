@@ -4,14 +4,18 @@
  * The concrete patient-interview questions generated for a criterion are GENERIC
  * clinical reference content (derived only from our criterion paraphrase +
  * disorder name + citation — never patient PHI). They depend solely on the
- * disorder, the criterion, and the dataset version, so we cache them GLOBALLY
- * (not per-case) keyed by `${disorderId}:${criterionId}:v${version}`. This lets
+ * disorder, the criterion, the dataset version AND the active ICD version
+ * (ICD-10 vs ICD-11 criteria differ), so we cache them GLOBALLY (not per-case)
+ * keyed by `${disorderId}:${criterionId}:v${version}:${icdVersion}`. This lets
  * the panel reuse them across renders and across cases without re-calling the
- * LLM each time.
+ * LLM each time, while toggling ICD-10 ↔ ICD-11 re-derives (rather than serving
+ * the other version's cached) questions.
  *
  * Cached values are also language-scoped (questions are generated per UI
  * language), so the key folds in the active language.
  */
+
+import type { ButterflyIcdVersion } from '../../data/diagnosisCriteria/version'
 
 const STORAGE_KEY = 'butterfly-interview-questions'
 
@@ -26,10 +30,11 @@ export type InterviewQuestionCacheState = Record<string, CachedInterviewQuestion
 export function interviewQuestionCacheKey(
   disorderId: string,
   version: number,
+  icdVersion: ButterflyIcdVersion,
   criterionId: string,
   language: string,
 ): string {
-  return `${disorderId}:${criterionId}:v${version}:${language}`
+  return `${disorderId}:${criterionId}:v${version}:${icdVersion}:${language}`
 }
 
 export function loadInterviewQuestionCache(): InterviewQuestionCacheState {
@@ -56,10 +61,11 @@ export function getCachedInterviewQuestions(
   state: InterviewQuestionCacheState,
   disorderId: string,
   version: number,
+  icdVersion: ButterflyIcdVersion,
   criterionId: string,
   language: string,
 ): string[] | undefined {
-  const entry = state[interviewQuestionCacheKey(disorderId, version, criterionId, language)]
+  const entry = state[interviewQuestionCacheKey(disorderId, version, icdVersion, criterionId, language)]
   return entry && entry.questions.length > 0 ? entry.questions : undefined
 }
 
@@ -75,6 +81,7 @@ export interface IncomingInterviewQuestions {
 export function saveInterviewQuestions(
   disorderId: string,
   version: number,
+  icdVersion: ButterflyIcdVersion,
   language: string,
   model: string,
   results: IncomingInterviewQuestions[],
@@ -83,7 +90,7 @@ export function saveInterviewQuestions(
   const generatedAt = new Date().toISOString()
   for (const result of results) {
     if (result.questions.length === 0) continue
-    state[interviewQuestionCacheKey(disorderId, version, result.criterionId, language)] = {
+    state[interviewQuestionCacheKey(disorderId, version, icdVersion, result.criterionId, language)] = {
       questions: result.questions,
       model,
       generatedAt,

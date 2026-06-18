@@ -1,7 +1,19 @@
 import { describe, expect, it } from 'vitest'
 import { DISORDER_CRITERIA } from '../../index'
 import { getDisorderTranslationMap, getLocalizedDisorder } from '../index'
+import { resolveDisorderForCodingSystem } from '../../version'
+import type { CriterionGroup, Disorder } from '../../schema'
 import type { DisorderTranslationMap } from '../types'
+
+/**
+ * All criterion groups a disorder carries across BOTH versions — the ICD-10
+ * `groups` plus the optional distinct ICD-11 tree. Translations for every id in
+ * this list must exist (the ICD-11 group/criterion ids are globally unique and
+ * live in the same flat per-disorder maps).
+ */
+function allGroups(disorder: Disorder): CriterionGroup[] {
+  return [...disorder.groups, ...(disorder.icd11?.groups ?? [])]
+}
 
 /**
  * Completeness gate for the Butterfly criteria i18n layer.
@@ -51,11 +63,11 @@ describe('Butterfly criteria i18n coverage', () => {
         expect(issues, `[${lang}] differential issues:\n${issues.join('\n')}`).toEqual([])
       })
 
-      it('translates every group label (non-empty)', () => {
+      it('translates every group label (non-empty) — ICD-10 + ICD-11', () => {
         const missing: string[] = []
         for (const disorder of DISORDER_CRITERIA) {
           const groups = map[disorder.id]?.groups ?? {}
-          for (const group of disorder.groups) {
+          for (const group of allGroups(disorder)) {
             const label = groups[group.id]
             if (!label || !label.trim()) missing.push(`${disorder.id} → ${group.id}`)
           }
@@ -63,11 +75,11 @@ describe('Butterfly criteria i18n coverage', () => {
         expect(missing, `[${lang}] group labels missing: ${missing.join(', ')}`).toEqual([])
       })
 
-      it('translates every criterion text (non-empty)', () => {
+      it('translates every criterion text (non-empty) — ICD-10 + ICD-11', () => {
         const missing: string[] = []
         for (const disorder of DISORDER_CRITERIA) {
           const criteria = map[disorder.id]?.criteria ?? {}
-          for (const group of disorder.groups) {
+          for (const group of allGroups(disorder)) {
             for (const criterion of group.criteria) {
               const text = criteria[criterion.id]
               if (!text || !text.trim()) missing.push(`${disorder.id} → ${criterion.id}`)
@@ -86,6 +98,28 @@ describe('Butterfly criteria i18n coverage', () => {
             expect(group.label_de).toBe(map[disorder.id].groups[group.id])
             group.criteria.forEach((criterion) => {
               expect(criterion.text_de).toBe(map[disorder.id].criteria[criterion.id])
+            })
+          })
+        }
+      })
+
+      it('resolves + localizes the ICD-11 tree (no German leakage) where authored', () => {
+        // Compose version FIRST (pick the ICD-11 tree), then localize: the
+        // distinct ICD-11 group/criterion strings must come through translated.
+        for (const disorder of DISORDER_CRITERIA) {
+          if (!disorder.icd11) continue
+          const localized = getLocalizedDisorder(
+            resolveDisorderForCodingSystem(disorder, 'icd11'),
+            lang,
+          )
+          localized.groups.forEach((group) => {
+            expect(group.label_de, `[${lang}] ${disorder.id} → ${group.id}`).toBe(
+              map[disorder.id].groups[group.id],
+            )
+            group.criteria.forEach((criterion) => {
+              expect(criterion.text_de, `[${lang}] ${disorder.id} → ${criterion.id}`).toBe(
+                map[disorder.id].criteria[criterion.id],
+              )
             })
           })
         }

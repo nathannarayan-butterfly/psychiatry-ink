@@ -9,8 +9,15 @@ import {
   formatCriterionCitation,
   getLocalizedDisorder,
   matchDisorderToCodes,
+  resolveDisorderForCodingSystem,
+  toButterflyIcdVersion,
   type Disorder,
 } from '../../data/diagnosisCriteria'
+import {
+  DIAGNOSEN_CODING_SYSTEM_EVENT,
+  loadDiagnosenCodingSystem,
+} from '../../utils/diagnosenCodingSystem'
+import type { CodingSystem } from '../../utils/diagnosenArchive'
 import {
   buildDisorderAdvice,
   buildEvaluationContext,
@@ -122,6 +129,11 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
   const [interviewCache, setInterviewCache] = useState<InterviewQuestionCacheState>(() =>
     loadInterviewQuestionCache(),
   )
+  // Case-scoped Diagnosen coding system (ICD-10 / ICD-11 / DSM). Butterfly picks
+  // the matching criteria tree (DSM falls back to ICD-10). Kept in sync with the
+  // DiagnosenWidget toggle via the broadcast event so toggling re-evaluates.
+  const [codingSystem, setCodingSystem] = useState<CodingSystem>(() => loadDiagnosenCodingSystem(caseId))
+  const icdVersion = toButterflyIcdVersion(codingSystem)
   const autoAttempted = useRef<Set<string>>(new Set())
   const interviewAttempted = useRef<Set<string>>(new Set())
 
@@ -134,6 +146,22 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
   }, [caseId])
 
   useEffect(() => {
+    setCodingSystem(loadDiagnosenCodingSystem(caseId))
+  }, [caseId])
+
+  // React to the Diagnosen coding-system toggle (broadcast per case). Changing
+  // the system re-resolves every matched disorder to the chosen version's
+  // criteria and re-runs the deterministic evaluation + question derivation.
+  useEffect(() => {
+    function handleChange(event: Event) {
+      const detail = (event as CustomEvent<{ caseId: string; system: CodingSystem }>).detail
+      if (detail?.caseId === caseId) setCodingSystem(detail.system)
+    }
+    window.addEventListener(DIAGNOSEN_CODING_SYSTEM_EVENT, handleChange)
+    return () => window.removeEventListener(DIAGNOSEN_CODING_SYSTEM_EVENT, handleChange)
+  }, [caseId])
+
+  useEffect(() => {
     setRefreshing(true)
     setDiagnoses(loadDiagnosen(caseId))
     setAiSuggestions(loadAiSuggestions(caseId))
@@ -143,7 +171,7 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
       setRefreshing(false)
     }, 500)
     return () => window.clearTimeout(timer)
-  }, [caseId, refresh, diagnosesVersion])
+  }, [caseId, refresh, diagnosesVersion, codingSystem])
 
   const enteredDiagnoses = useMemo(() => diagnoses.filter(hasCodeOrLabel), [diagnoses])
   const hasDiagnoses = enteredDiagnoses.length > 0
@@ -165,10 +193,13 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
         out.push({ key: entry.id, label, code, available: false })
         continue
       }
-      // Localize the matched disorder to the active UI language (DE fallback per
-      // field) BEFORE evaluation, so per-criterion text, differentials and the
-      // name flow through localized everywhere downstream.
-      const disorder = getLocalizedDisorder(sourceDisorder, language)
+      // Composition order: resolve the ICD VERSION first (pick the ICD-10 or
+      // ICD-11 criteria tree, ICD-11 falling back to ICD-10 when not authored),
+      // THEN localize to the active UI language (DE fallback per field). After
+      // this the per-criterion text, citations, differentials, name and advice
+      // headline all reflect the active version + language downstream.
+      const versioned = resolveDisorderForCodingSystem(sourceDisorder, icdVersion)
+      const disorder = getLocalizedDisorder(versioned, language)
       if (seenDisorders.has(disorder.id)) continue
       seenDisorders.add(disorder.id)
       out.push({ key: entry.id, label, code, available: true, disorder, evaluation: evaluateDisorder(disorder, ctx) })
@@ -178,15 +209,15 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
       return r.evaluation.verdict === 'criteria_met' ? 0 : r.evaluation.verdict === 'not_met' ? 1 : 2
     }
     return out.sort((a, b) => rank(a) - rank(b))
-  }, [analysis, attestations, enteredDiagnoses, language])
+  }, [analysis, attestations, enteredDiagnoses, language, icdVersion])
 
   // Resolve cached, LLM-generated concrete interview questions for a criterion
   // (language- and version-scoped). Returns undefined until the LLM resolves, in
   // which case the builder uses a deterministic German template.
   const resolveInterview = useCallback<InterviewQuestionResolver>(
     ({ disorderId, version, criterionId }) =>
-      getCachedInterviewQuestions(interviewCache, disorderId, version, criterionId, language),
-    [interviewCache, language],
+      getCachedInterviewQuestions(interviewCache, disorderId, version, icdVersion, criterionId, language),
+    [interviewCache, language, icdVersion],
   )
 
   // "Vorgeschlagene Fragen" — derived STRICTLY from the still-`unknown` criteria
@@ -348,7 +379,7 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
   useEffect(() => {
     for (const result of results) {
       if (!result.available || !result.disorder || !result.evaluation) continue
-      const key = `${caseId}:${result.disorder.id}`
+      const key = `${caseId}:${result.disorder.id}:${icdVersion}`
       if (autoAttempted.current.has(key)) continue
       const unresolved = selectUnresolvedCriteria(result.evaluation)
       if (unresolved.length === 0) {
@@ -362,7 +393,7 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
       autoAttempted.current.add(key)
       void runExtraction(result.disorder, result.evaluation)
     }
-  }, [results, caseId, aiSuggestions, runExtraction])
+  }, [results, caseId, icdVersion, aiSuggestions, runExtraction])
 
   // Background trigger: generate concrete interview questions for any still-open
   // criteria that have none cached for the active language/version. The request
@@ -374,12 +405,12 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
       if (!result.available || !result.disorder || !result.evaluation) continue
       const disorder = result.disorder
       const version = disorder.version
-      const key = `${disorder.id}:v${version}:${language}`
+      const key = `${disorder.id}:v${version}:${icdVersion}:${language}`
       if (interviewAttempted.current.has(key)) continue
       const unresolved = selectUnresolvedInterviewCriteria(result.evaluation)
       const missing = unresolved.filter(
         (criterion) =>
-          !getCachedInterviewQuestions(interviewCache, disorder.id, version, criterion.id, language),
+          !getCachedInterviewQuestions(interviewCache, disorder.id, version, icdVersion, criterion.id, language),
       )
       if (missing.length === 0) {
         if (unresolved.length === 0) interviewAttempted.current.add(key)
@@ -398,6 +429,7 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
           saveInterviewQuestions(
             disorder.id,
             version,
+            icdVersion,
             language,
             response.model.modelId,
             response.results,
@@ -410,7 +442,7 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
         }
       })()
     }
-  }, [results, caseId, language, interviewCache])
+  }, [results, caseId, language, icdVersion, interviewCache])
 
   const disclaimer = getIsdmSafetyDisclaimer(language, englishVariant as EnglishVariant)
 

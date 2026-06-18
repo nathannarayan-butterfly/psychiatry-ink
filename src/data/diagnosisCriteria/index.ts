@@ -13,16 +13,16 @@ import { generalizedAnxiety } from './generalizedAnxiety'
 import { alcoholDependence } from './alcoholDependence'
 import { panicDisorder } from './panicDisorder'
 import { schizophrenia } from './schizophrenia'
-import { f0OrganicDisorders } from './blocks/f0Organic'
-import { f1SubstanceDisorders } from './blocks/f1Substance'
-import { f2PsychoticDisorders } from './blocks/f2Psychotic'
-import { f3MoodDisorders } from './blocks/f3Mood'
-import { f4NeuroticStressDisorders } from './blocks/f4NeuroticStress'
-import { f5BehaviouralDisorders } from './blocks/f5Behavioural'
-import { f6PersonalityDisorders } from './blocks/f6Personality'
-import { f7IntellectualDisorders } from './blocks/f7Intellectual'
-import { f8DevelopmentalDisorders } from './blocks/f8Developmental'
-import { f9ChildhoodOnsetDisorders } from './blocks/f9ChildhoodOnset'
+import { organicNeurocognitiveDisorders } from './blocks/organicNeurocognitive'
+import { substanceUseDisorders } from './blocks/substanceUse'
+import { psychoticDisorders } from './blocks/psychotic'
+import { moodDisorders } from './blocks/mood'
+import { neuroticStressSomatoformDisorders } from './blocks/neuroticStressSomatoform'
+import { behaviouralSyndromesDisorders } from './blocks/behaviouralSyndromes'
+import { personalityDisorders } from './blocks/personality'
+import { intellectualDevelopmentDisorders } from './blocks/intellectualDevelopment'
+import { neurodevelopmentalDisorders } from './blocks/neurodevelopmental'
+import { childhoodOnsetDisorders } from './blocks/childhoodOnset'
 
 /** Dataset version for the whole Butterfly criteria pack. */
 export const DIAGNOSIS_CRITERIA_VERSION = 1
@@ -42,16 +42,16 @@ export const DISORDER_CRITERIA: Disorder[] = [
   alcoholDependence,
   panicDisorder,
   schizophrenia,
-  ...f0OrganicDisorders,
-  ...f1SubstanceDisorders,
-  ...f2PsychoticDisorders,
-  ...f3MoodDisorders,
-  ...f4NeuroticStressDisorders,
-  ...f5BehaviouralDisorders,
-  ...f6PersonalityDisorders,
-  ...f7IntellectualDisorders,
-  ...f8DevelopmentalDisorders,
-  ...f9ChildhoodOnsetDisorders,
+  ...organicNeurocognitiveDisorders,
+  ...substanceUseDisorders,
+  ...psychoticDisorders,
+  ...moodDisorders,
+  ...neuroticStressSomatoformDisorders,
+  ...behaviouralSyndromesDisorders,
+  ...personalityDisorders,
+  ...intellectualDevelopmentDisorders,
+  ...neurodevelopmentalDisorders,
+  ...childhoodOnsetDisorders,
 ]
 
 export function getDisorderById(id: string): Disorder | undefined {
@@ -60,4 +60,5 @@ export function getDisorderById(id: string): Disorder | undefined {
 
 export * from './schema'
 export * from './match'
+export * from './version'
 export * from './i18n'
