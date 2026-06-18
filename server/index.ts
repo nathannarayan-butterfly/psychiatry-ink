@@ -1,6 +1,7 @@
 import './loadEnv'
 import cors from 'cors'
 import express from 'express'
+import { prisma } from './db'
 import { optionalAuth } from './middleware/auth'
 import { accountRouter } from './routes/account'
 import { creditsRouter } from './routes/credits'
@@ -103,4 +104,25 @@ app.listen(port, () => {
   } else {
     console.log(`[api] LiveKit: missing ${livekitMissing.join(', ')}`)
   }
+
+  // Diagnosis-code self-check: an empty crosswalk table is the silent failure
+  // mode behind "Diagnosen widget shows a short/wrong label" — WHO ICD-10 German
+  // is English-only on the API, so German titles depend on this seeded table.
+  // Surface it loudly at startup with the exact remediation command instead of
+  // failing invisibly at request time (resolver returns source:'none').
+  void prisma.diagnosisCode
+    .count()
+    .then((count) => {
+      if (count === 0) {
+        console.warn(
+          '[api] diagnosisCode table is EMPTY — ICD/DSM titles will resolve to empty (source:none). ' +
+            'Run `npm run db:seed-diagnoses` (or `npm run db:import-diagnoses`) to seed the crosswalk.',
+        )
+      } else {
+        console.log(`[api] diagnosis crosswalk: ${count} codes seeded`)
+      }
+    })
+    .catch((error) => {
+      console.warn('[api] diagnosisCode self-check skipped (DB unreachable)', error)
+    })
 })
