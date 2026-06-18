@@ -1,0 +1,500 @@
+/* =============================================================================
+ * Clinical minimal — typographic workspace surfaces (Übersicht redesign).
+ *
+ * Flat authority: eyebrows + hairlines, quiet left-border strips, generous
+ * whitespace, monospace dose notation. Works WITH theme accent (--accent /
+ * --area-accent), not replacing it.
+ * ========================================================================== */
+
+:root {
+  --cm-font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
+  --cm-hero-name-size: 1.375rem;
+  --cm-hero-thesis-size: 0.9375rem;
+  --cm-eyebrow-size: 0.6875rem;
+  --cm-section-gap: 2.25rem;
+  --cm-col-gap: 3rem;
+  --cm-content-max: 57.5rem;
+  --cm-hairline: color-mix(in srgb, var(--border-soft, #e8e4df) 72%, transparent);
+  --cm-quiet-border: color-mix(in srgb, var(--border-soft, #e8e4df) 88%, transparent);
+  --cm-page-pad-x: 3rem;
+  --cm-page-pad-y: 2.5rem;
+}
+
+/* —— Page shell —— */
+
+.cm-workspace {
+  width: 100%;
+  min-width: 0;
+  max-width: var(--cm-content-max);
+  margin: 0 auto;
+  padding: var(--cm-page-pad-y) var(--cm-page-pad-x) 2rem;
+  box-sizing: border-box;
+}
+
+.cm-workspace--flush {
+  padding-top: 0;
+}
+
+/* —— Page eyebrow (ÜBERSICHT + rule) —— */
+
+.cm-page-eyebrow {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.cm-page-eyebrow__label {
+  margin: 0;
+  font-family: var(--font-ui, inherit);
+  font-size: var(--cm-eyebrow-size);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted, #91887e);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.cm-page-eyebrow__rule {
+  flex: 1;
+  height: 1px;
+  margin: 0 0 0.15rem;
+  border: none;
+  background: var(--cm-hairline);
+}
+
+/* —— Section eyebrow —— */
+
+.cm-eyebrow {
+  display: block;
+  margin: 0 0 0.5rem;
+  font-family: var(--font-ui, inherit);
+  font-size: var(--cm-eyebrow-size);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted, #91887e);
+  line-height: 1.2;
+}
+
+.cm-eyebrow--inline {
+  display: inline-block;
+  margin-bottom: 0;
+}
+
+/* —— Hero strip —— */
+
+.cm-hero {
+  padding-bottom: 1.75rem;
+  border-bottom: 1px solid var(--cm-hairline);
+  margin-bottom: 0;
+}
+
+.cm-hero__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.35rem 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.cm-hero__name {
+  font-family: var(--font-ui, system-ui, sans-serif);
+  font-size: var(--cm-hero-name-size);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: color-mix(in srgb, var(--area-accent, var(--accent)) 42%, var(--text-main, #24211e));
+  margin: 0;
+}
+
+.cm-hero__meta {
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 400;
+  color: var(--text-muted, #91887e);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+}
+
+.cm-hero__case-id {
+  margin-left: auto;
+  font-size: var(--text-xs, 0.75rem);
+  color: color-mix(in srgb, var(--text-muted, #91887e) 72%, transparent);
+  font-variant-numeric: tabular-nums;
+}
+
+.cm-hero__thesis {
+  margin: 0;
+  max-width: 42em;
+  font-size: var(--cm-hero-thesis-size);
+  font-weight: 500;
+  line-height: 1.55;
+  color: var(--text-secondary, #6d655c);
+}
+
+/* —— Quiet authority strip (safety) —— */
+
+.cm-quiet-strip {
+  padding-left: 0.875rem;
+  border-left: 2px solid var(--cm-quiet-border);
+  margin-top: 1.75rem;
+  margin-bottom: 2.25rem;
+}
+
+.cm-quiet-strip--tone-high {
+  border-left-color: color-mix(in srgb, #c0392b 55%, var(--cm-quiet-border));
+}
+.cm-quiet-strip--tone-moderate {
+  border-left-color: color-mix(in srgb, #b45309 55%, var(--cm-quiet-border));
+}
+.cm-quiet-strip--tone-info {
+  border-left-color: color-mix(in srgb, #3a6f9c 55%, var(--cm-quiet-border));
+}
+.cm-quiet-strip--tone-ok,
+.cm-quiet-strip--tone-low {
+  border-left-color: color-mix(in srgb, #2f8a5b 45%, var(--cm-quiet-border));
+}
+
+.cm-quiet-strip__headline {
+  margin: 0 0 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text-main, #24211e);
+}
+
+.cm-quiet-strip__detail {
+  margin: 0;
+  font-size: var(--text-xs, 0.75rem);
+  line-height: 1.4;
+  color: var(--text-muted, #91887e);
+}
+
+/* —— Flat clinical section (replaces heavy cards) —— */
+
+.cm-section {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin-bottom: var(--cm-section-gap);
+}
+
+.cm-section__head {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.cm-section__head .cm-eyebrow {
+  margin-bottom: 0;
+}
+
+.cm-section__head-spacer {
+  flex: 1;
+  min-width: 0.5rem;
+}
+
+.cm-section__meta {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-muted, #91887e);
+  line-height: 1.3;
+}
+
+.cm-section__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: var(--font-ui, inherit);
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 500;
+  color: var(--accent, #8a5a2b);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--duration-fast, 150ms) ease;
+}
+.cm-section__action:hover {
+  color: var(--accent-hover, #6f4722);
+}
+.cm-section__action:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid
+    var(--focus-ring-color, color-mix(in srgb, var(--accent) 52%, transparent));
+  outline-offset: var(--focus-ring-offset, 2px);
+  border-radius: 2px;
+}
+
+.cm-section__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+/* —— Diagnosis typography —— */
+
+.cm-dx-entry {
+  margin-bottom: 1.25rem;
+}
+.cm-dx-entry:last-child {
+  margin-bottom: 0;
+}
+
+.cm-dx-entry__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.35rem 0.65rem;
+  margin-bottom: 0.25rem;
+}
+
+.cm-dx-code {
+  font-family: var(--cm-font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-main, #24211e);
+}
+
+.cm-dx-meta {
+  font-size: var(--text-xs, 0.75rem);
+  color: color-mix(in srgb, var(--text-muted, #91887e) 82%, transparent);
+}
+
+.cm-dx-title {
+  margin: 0;
+  font-size: var(--text-sm, 0.8125rem);
+  line-height: 1.5;
+  max-width: 36em;
+  color: var(--text-main, #24211e);
+}
+
+/* —— Medication block —— */
+
+.cm-med-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-main, #24211e);
+}
+
+.cm-med-since {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-muted, #91887e);
+}
+
+.cm-med-dose {
+  margin: 0.15rem 0 0.5rem;
+  font-family: var(--cm-font-mono);
+  font-size: 1.25rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--text-main, #24211e);
+}
+
+.cm-med-dose-unit {
+  font-size: 0.8125rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--text-muted, #91887e);
+  margin-left: 0.35rem;
+}
+
+.cm-med-note {
+  margin: 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-muted, #91887e);
+  line-height: 1.45;
+}
+
+.cm-med-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.55rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--cm-hairline);
+}
+.cm-med-row:last-child {
+  border-bottom: none;
+}
+
+/* —— Psychopath cue rows —— */
+
+.cm-cue-row {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 0.15rem 0;
+}
+
+.cm-cue-label {
+  flex-shrink: 0;
+  min-width: 10.5rem;
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-muted, #91887e);
+  line-height: 1.4;
+}
+
+.cm-cue-value {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-main, #24211e);
+  line-height: 1.4;
+}
+
+/* —— Chart labels —— */
+
+.cm-chart-title {
+  margin: 0 0 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-main, #24211e);
+}
+
+.cm-chart-axis {
+  margin: 0 0 0.5rem;
+  font-size: var(--text-xs, 0.75rem);
+  color: color-mix(in srgb, var(--text-muted, #91887e) 78%, transparent);
+  line-height: 1.4;
+}
+
+.cm-chart-source {
+  margin: 0.35rem 0 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: color-mix(in srgb, var(--text-muted, #91887e) 78%, transparent);
+}
+
+/* —— Flat feed rows (no boxed tiles) —— */
+
+.cm-feed {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.cm-feed__item {
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--cm-hairline);
+}
+.cm-feed__item:last-child {
+  border-bottom: none;
+}
+
+.cm-feed__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  margin-bottom: 0.15rem;
+}
+
+.cm-feed__date {
+  font-size: var(--text-2xs, 0.6875rem);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted, #91887e);
+}
+
+.cm-feed__text {
+  margin: 0;
+  font-size: var(--text-sm, 0.8125rem);
+  line-height: 1.45;
+  color: var(--text-main, #24211e);
+}
+
+/* —— Ghost layout footer —— */
+
+.cm-layout-footer {
+  margin-top: 3.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--cm-hairline);
+  display: flex;
+  justify-content: center;
+}
+
+.cm-layout-footer__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border: none;
+  border-radius: var(--radius-control, 0.4375rem);
+  background: transparent;
+  font-family: var(--font-ui, inherit);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--text-muted, #91887e) 78%, transparent);
+  cursor: pointer;
+  transition: color var(--duration-fast, 150ms) ease;
+}
+.cm-layout-footer__btn:hover {
+  color: var(--text-secondary, #6d655c);
+}
+.cm-layout-footer__btn:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid
+    var(--focus-ring-color, color-mix(in srgb, var(--accent) 52%, transparent));
+  outline-offset: var(--focus-ring-offset, 2px);
+}
+
+.cm-empty {
+  margin: 0;
+  padding: 0.25rem 0;
+  font-size: var(--text-sm, 0.8125rem);
+  color: var(--text-muted, #91887e);
+  font-style: italic;
+}
+
+/* —— Global patient header alignment —— */
+
+.case-patient-header--minimal {
+  display: block;
+  min-height: 0;
+  padding: 0 1.25rem 1.25rem;
+  margin: 0 -1.25rem 0;
+  border-bottom: none;
+}
+
+.case-patient-header--minimal .cm-hero {
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--cm-hairline);
+}
+
+/* —— Workspace page shells —— */
+
+.diagnose-page,
+.medication-page,
+.dokumente-page,
+.verlauf-page,
+.therapy-page {
+  max-width: var(--cm-content-max);
+}
+
+.therapy-page {
+  padding: var(--cm-page-pad-y, 2.5rem) var(--cm-page-pad-x, 3rem) 3rem;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --cm-page-pad-x: 1.25rem;
+    --cm-page-pad-y: 1.5rem;
+    --cm-col-gap: 2rem;
+  }
+  .cm-cue-label {
+    min-width: 7.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cm-section__action,
+  .cm-layout-footer__btn {
+    transition: none;
+  }
+}

@@ -538,20 +538,18 @@
   box-sizing: border-box;
   min-height: var(--case-patient-header-block, 4.8rem);
   padding: 0 1.25rem 1.25rem;
-  /* Bottom rule carries a faint tint of the current area's signature hue. */
-  border-bottom: 1px solid color-mix(in srgb, var(--area-accent) 18%, var(--border, #e0e0dc));
+  border-bottom: 1px solid var(--cm-hairline, color-mix(in srgb, var(--border-soft) 72%, transparent));
   margin: 0 -1.25rem 1rem;
 }
 
 .case-patient-header__name {
-  font-family: var(--font-display, 'Playfair Display', Georgia, serif);
-  font-size: 1.85rem;
+  font-family: var(--font-ui, system-ui, sans-serif);
+  font-size: var(--cm-hero-name-size, 1.375rem);
   font-weight: 600;
-  letter-spacing: -0.01em;
-  /* Patient name leans toward the current area's signature hue (subtle). */
-  color: color-mix(in srgb, var(--area-accent) 68%, var(--ink, #1a1a18));
+  letter-spacing: -0.02em;
+  color: color-mix(in srgb, var(--area-accent) 42%, var(--ink, #1a1a18));
   margin: 0;
-  line-height: 1.18;
+  line-height: 1.2;
 }
 
 .case-patient-header__meta {

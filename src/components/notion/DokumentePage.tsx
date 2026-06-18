@@ -398,7 +398,7 @@ export function DokumentePage({ caseId, onAfterDelete, onEditDraft }: DokumenteP
   )
 
   return (
-    <div className="dokumente-page dokumente-page--single-column">
+    <div className="dokumente-page dokumente-page--single-column cm-workspace">
       <main className="dokumente-main" ref={mainRef}>
         {expandedEntry ? (
           /* In-place detail view — replaces the list, with a back button to return. */

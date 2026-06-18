@@ -2,19 +2,31 @@ import { useMemo } from 'react'
 import { getCaseMeta } from '../../hooks/useCaseRegistry'
 import { isDemoCase } from '../../demo'
 import { useTranslation } from '../../context/TranslationContext'
-import { formatSiteLocaleDate } from '../../utils/siteTimezone'
+import { ClinicalHeroStrip } from '../clinical/ClinicalHeroStrip'
+import { buildClinicalThesis } from '../../utils/overview/clinicalThesis'
+import { loadNotionPageDate } from '../../utils/notionPageDate'
+import { formatDateDe } from '../../utils/overview/dateLabels'
 
 interface CasePatientHeaderProps {
   caseId: string
   /** Bump when local patient meta changes so the header re-reads registry data. */
   metaVersion?: number
+  /** When true, show a one-line clinical thesis below demographics (Übersicht hero). */
+  showThesis?: boolean
+  /** Minimal layout — typographic strip without boxed chrome. */
+  variant?: 'default' | 'minimal'
 }
 
 /** Patient name and demographics at the top of each case tab content area. */
-export function CasePatientHeader({ caseId, metaVersion = 0 }: CasePatientHeaderProps) {
+export function CasePatientHeader({
+  caseId,
+  metaVersion = 0,
+  showThesis = false,
+  variant = 'minimal',
+}: CasePatientHeaderProps) {
   const { t, language } = useTranslation()
 
-  const { name, metaParts } = useMemo(() => {
+  const { name, metaLine, thesis } = useMemo(() => {
     void metaVersion
     const meta = getCaseMeta(caseId)
     const structuredName = [meta?.localVorname?.trim(), meta?.localNachname?.trim()]
@@ -25,10 +37,6 @@ export function CasePatientHeader({ caseId, metaVersion = 0 }: CasePatientHeader
       meta?.localName?.trim() ||
       (isDemoCase(caseId) ? t('demoPatientDisplayName') : t('patientNavFallback'))
 
-    const geburtsdatumRaw = meta?.localGeburtsdatum?.trim()
-    const geburtsdatum = geburtsdatumRaw
-      ? formatSiteLocaleDate(geburtsdatumRaw, language)
-      : undefined
     const geschlecht = meta?.localGeschlecht
 
     const genderLabel =
@@ -40,20 +48,36 @@ export function CasePatientHeader({ caseId, metaVersion = 0 }: CasePatientHeader
             ? t('patientGeschlechtDivers')
             : null
 
-    const parts = [
-      geburtsdatum ? `${t('patientFieldGeburtsdatum')}: ${geburtsdatum}` : null,
+    const ageLabel = meta?.localAge?.trim() ? `${meta.localAge} J` : null
+    const admissionIso = loadNotionPageDate('aufnahme', caseId)
+    const admissionLabel = admissionIso ? formatDateDe(admissionIso) : null
+
+    const metaParts = [
+      ageLabel,
       genderLabel,
+      admissionLabel ? `Aufnahme ${admissionLabel}` : null,
     ].filter(Boolean)
 
-    return { name: displayName, metaParts: parts }
-  }, [caseId, language, metaVersion, t])
+    return {
+      name: displayName,
+      metaLine: metaParts.length > 0 ? metaParts.join(' · ') : null,
+      thesis: showThesis ? buildClinicalThesis(caseId) : null,
+    }
+  }, [caseId, language, metaVersion, showThesis, t])
+
+  const headerClass =
+    variant === 'minimal'
+      ? 'case-patient-header case-patient-header--minimal'
+      : 'case-patient-header'
 
   return (
-    <header className="case-patient-header">
-      <h1 className="case-patient-header__name">{name}</h1>
-      {metaParts.length > 0 ? (
-        <p className="case-patient-header__meta">{metaParts.join(' · ')}</p>
-      ) : null}
-    </header>
+    <div className={headerClass}>
+      <ClinicalHeroStrip
+        name={name}
+        metaLine={metaLine}
+        caseId={caseId}
+        thesis={thesis}
+      />
+    </div>
   )
 }

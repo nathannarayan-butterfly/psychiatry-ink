@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { ClinicalSection, ClinicalEmpty, type ClinicalSectionAction } from '../../clinical/ClinicalSection'
 
 /** Semantic tone used by status pills and the safety card. Distinct from the area accent. */
 export type SemanticTone = 'high' | 'moderate' | 'low' | 'info' | 'ok' | 'neutral'
@@ -10,11 +11,13 @@ export interface OverviewCardAction {
 
 export interface OverviewCardProps {
   title: string
-  /** Small leading glyph (lucide icon element). */
+  /** Optional right-aligned meta line in the section header. */
+  meta?: string | null
+  /** Small leading glyph (lucide icon element). Ignored in flat minimal layout. */
   icon?: ReactNode
-  /** `safety` draws a semantic emphasis frame; `default` uses the subtle area-accent stripe. */
+  /** `safety` uses quiet-strip styling via the card consumer; `default` is flat. */
   variant?: 'default' | 'safety'
-  /** Overall tone for the safety/emphasis frame. */
+  /** Overall tone for safety/emphasis. */
   tone?: SemanticTone
   /** Bento span hint — combined with grid placement in the dashboard stylesheet. */
   span?: 'normal' | 'wide' | 'tall'
@@ -29,19 +32,18 @@ export interface OverviewCardProps {
   children: ReactNode
 }
 
+function badgeMeta(badge?: { label: string; tone?: SemanticTone }): string | null {
+  return badge?.label ?? null
+}
+
 /**
- * Shared bento card shell for the Übersicht dashboard. Owns the card surface,
- * elevation, header (title + optional badge + action link) and the subtle
- * area-accent top stripe. Semantic emphasis (`variant="safety"`) is reserved
- * for the safety / alerts card — everything else leans on the neutral surface
- * with the per-area accent only as a subtle tint, per the theme contract.
+ * Flat clinical section shell for the Übersicht dashboard. Replaces the former
+ * heavy card chrome with typographic eyebrows and generous whitespace.
  */
 export function OverviewCard({
   title,
-  icon,
-  variant = 'default',
-  tone = 'neutral',
-  span = 'normal',
+  meta,
+  variant: _variant = 'default',
   action,
   badge,
   headerExtra,
@@ -49,44 +51,22 @@ export function OverviewCard({
   bodyClassName,
   children,
 }: OverviewCardProps) {
-  const classes = [
-    'ov-card',
-    `ov-card--${variant}`,
-    variant === 'safety' ? `ov-card--tone-${tone}` : '',
-    span !== 'normal' ? `ov-card--${span}` : '',
-    className ?? '',
-  ]
-    .filter(Boolean)
-    .join(' ')
+  const sectionAction: ClinicalSectionAction | undefined = action
+    ? { label: action.label, onClick: action.onClick }
+    : undefined
+  const headerMeta = meta ?? badgeMeta(badge)
 
   return (
-    <section className={classes}>
-      <header className="ov-card__head">
-        <div className="ov-card__title-wrap">
-          {icon ? (
-            <span className="ov-card__icon" aria-hidden>
-              {icon}
-            </span>
-          ) : null}
-          <h3 className="ov-card__title">{title}</h3>
-          {badge ? (
-            <span className={`ov-pill ov-pill--${badge.tone ?? 'neutral'}`}>{badge.label}</span>
-          ) : null}
-        </div>
-        <div className="ov-card__head-actions">
-          {headerExtra}
-          {action ? (
-            <button type="button" className="ov-card__action" onClick={action.onClick}>
-              {action.label}
-              <span aria-hidden>→</span>
-            </button>
-          ) : null}
-        </div>
-      </header>
-      <div className={['ov-card__body', bodyClassName ?? ''].filter(Boolean).join(' ')}>
-        {children}
-      </div>
-    </section>
+    <ClinicalSection
+      eyebrow={title}
+      meta={headerMeta}
+      action={sectionAction}
+      headerExtra={headerExtra}
+      className={className}
+      bodyClassName={bodyClassName}
+    >
+      {children}
+    </ClinicalSection>
   )
 }
 
@@ -96,24 +76,18 @@ interface OverviewCardShellProps {
 }
 
 /**
- * Headless card surface (same chrome + area-accent stripe as {@link OverviewCard}
- * but no standardized header). Used to host reused widgets that already render
- * their own functional header/title (Diagnosen, Spiegelwerte) so their titles
- * are not duplicated and their inline controls stay intact.
+ * Headless flat surface for reused widgets that render their own section headers
+ * (Diagnosen, Spiegelwerte).
  */
 export function OverviewCardShell({ className, children }: OverviewCardShellProps) {
-  return (
-    <section className={['ov-card', className ?? ''].filter(Boolean).join(' ')}>
-      <div className="ov-card__body ov-card__body--headless">{children}</div>
-    </section>
-  )
+  return <div className={['cm-section cm-section--embedded', className ?? ''].filter(Boolean).join(' ')}>{children}</div>
 }
 
 interface OverviewEmptyProps {
   children: ReactNode
 }
 
-/** Consistent muted empty-state line used inside cards when a data source is absent. */
+/** Consistent muted empty-state line used inside sections when a data source is absent. */
 export function OverviewEmpty({ children }: OverviewEmptyProps) {
-  return <p className="ov-empty">{children}</p>
+  return <ClinicalEmpty>{children}</ClinicalEmpty>
 }

@@ -85,7 +85,7 @@ export function TherapiePage({ caseId }: TherapiePageProps) {
   )
 
   return (
-    <div className="therapy-page">
+    <div className="therapy-page cm-workspace">
       <WeitereTherapieSection caseId={caseId} />
       <PsychotherapieOverviewCard caseId={caseId} />
       <ComplementaryTherapiesSection caseId={caseId} />

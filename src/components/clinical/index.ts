@@ -1,0 +1,6 @@
+export { ClinicalEyebrow } from './ClinicalEyebrow'
+export { ClinicalPageEyebrow } from './ClinicalPageEyebrow'
+export { ClinicalHeroStrip } from './ClinicalHeroStrip'
+export { ClinicalQuietStrip } from './ClinicalQuietStrip'
+export { ClinicalSection, ClinicalEmpty } from './ClinicalSection'
+export type { ClinicalSectionAction } from './ClinicalSection'

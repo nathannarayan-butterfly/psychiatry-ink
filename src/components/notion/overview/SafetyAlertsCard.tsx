@@ -1,6 +1,8 @@
 import { CircleCheck, ShieldAlert } from 'lucide-react'
 
-import { OverviewCard, type SemanticTone } from './OverviewCard'
+import { ClinicalQuietStrip } from '../../clinical/ClinicalQuietStrip'
+import { ClinicalEyebrow } from '../../clinical/ClinicalEyebrow'
+import type { SemanticTone } from './OverviewCard'
 import type { SafetyAlert, SafetyData, SafetyRiskSignal } from './types'
 
 interface SafetyAlertsCardProps {
@@ -16,15 +18,6 @@ const TONE_SEVERITY: Record<SemanticTone, number> = {
   neutral: 0,
 }
 
-const TONE_LABEL: Record<SemanticTone, string> = {
-  high: 'akut',
-  moderate: 'erhöht',
-  ok: 'unauffällig',
-  low: 'gering',
-  info: 'beachten',
-  neutral: '—',
-}
-
 function highestTone(tones: SemanticTone[]): SemanticTone {
   return tones.reduce<SemanticTone>(
     (acc, tone) => (TONE_SEVERITY[tone] > TONE_SEVERITY[acc] ? tone : acc),
@@ -34,23 +27,19 @@ function highestTone(tones: SemanticTone[]): SemanticTone {
 
 function RiskSignalIcon({ tone }: { tone: SemanticTone }) {
   if (tone === 'ok' || tone === 'low') {
-    return <CircleCheck size={16} aria-hidden className="ov-safety__signal-icon" />
+    return <CircleCheck size={14} aria-hidden className="ov-safety__signal-icon" />
   }
-  return <ShieldAlert size={16} aria-hidden className="ov-safety__signal-icon" />
+  return <ShieldAlert size={14} aria-hidden className="ov-safety__signal-icon" />
 }
 
-function SafetySignalCard({ signal }: { signal: SafetyRiskSignal }) {
-  const pillLabel = signal.pillLabel ?? TONE_LABEL[signal.tone]
+function SafetySignalRow({ signal }: { signal: SafetyRiskSignal }) {
   return (
-    <div className={`ov-safety__signal ov-safety__signal--${signal.tone}`}>
-      <div className="ov-safety__signal-head">
-        <RiskSignalIcon tone={signal.tone} />
-        <p className="ov-safety__signal-primary">{signal.label}</p>
+    <div className={`ov-safety__signal-row ov-safety__signal-row--${signal.tone}`}>
+      <RiskSignalIcon tone={signal.tone} />
+      <div className="ov-safety__signal-copy">
+        <span className="ov-safety__signal-primary">{signal.label}</span>
+        {signal.value ? <span className="ov-safety__signal-detail">{signal.value}</span> : null}
       </div>
-      {signal.value ? <p className="ov-safety__signal-detail">{signal.value}</p> : null}
-      {signal.showPill ? (
-        <span className={`ov-pill ov-pill--${signal.tone}`}>{pillLabel}</span>
-      ) : null}
     </div>
   )
 }
@@ -58,9 +47,9 @@ function SafetySignalCard({ signal }: { signal: SafetyRiskSignal }) {
 function AlertList({ alerts }: { alerts: SafetyAlert[] }) {
   if (alerts.length === 0) return null
   return (
-    <ul className="ov-list">
+    <ul className="ov-list ov-list--flat">
       {alerts.map((alert) => (
-        <li key={alert.id} className={`ov-alert ov-alert--${alert.tone}`}>
+        <li key={alert.id} className={`ov-alert ov-alert--${alert.tone} ov-alert--flat`}>
           <div className="ov-alert__body">
             <span className="ov-alert__title">{alert.title}</span>
             {alert.detail ? <span className="ov-alert__detail">{alert.detail}</span> : null}
@@ -78,19 +67,6 @@ export function SafetyAlertsCard({ data }: SafetyAlertsCardProps) {
   ]
   const headlineTone: SemanticTone = allTones.length > 0 ? highestTone(allTones) : 'ok'
 
-  const severeAlerts = data.alerts.filter(
-    (alert) => alert.tone === 'high' || alert.tone === 'moderate',
-  )
-  const badge =
-    severeAlerts.length > 0
-      ? {
-          label: `${severeAlerts.length} Alerts`,
-          tone: severeAlerts.some((alert) => alert.tone === 'high')
-            ? ('high' as const)
-            : ('moderate' as const),
-        }
-      : undefined
-
   const acuteSignals = data.risk?.signals ?? []
   const allergyAlerts = data.alerts.filter((alert) => alert.category === 'allergy')
   const interactionAlerts = data.alerts.filter((alert) => alert.category === 'interaction')
@@ -102,64 +78,56 @@ export function SafetyAlertsCard({ data }: SafetyAlertsCardProps) {
   const showInteractionSubhead = interactionAlerts.length > 0 && groupedAlertSections > 1
   const showMonitoringSubhead = monitoringAlerts.length > 0
 
+  const headline =
+    acuteSignals.length > 0
+      ? acuteSignals[0].label
+      : data.risk?.label ??
+        (data.alerts.length > 0
+          ? `${data.alerts.length} aktive Sicherheitssignale`
+          : 'Keine akute Eigengefährdung')
+
+  const detail =
+    data.risk?.detail ??
+    (data.alerts.length > 0 && !data.risk?.detail
+      ? `Letzte Beurteilung aus Verlaufsdokumentation · ${data.alerts.length} Alert${data.alerts.length === 1 ? '' : 's'}`
+      : 'Letzte Beurteilung aus Verlaufsdokumentation')
+
   return (
-    <OverviewCard
-      title="Sicherheit & Alerts"
-      icon={<ShieldAlert size={15} />}
-      variant="safety"
+    <ClinicalQuietStrip
+      eyebrow="Sicherheit"
+      headline={headline}
+      detail={detail}
       tone={headlineTone}
-      badge={badge}
-      className="ov-col-6"
+      className="ov-col-6 ov-safety-strip"
+      aria-label="Sicherheitsbeurteilung"
     >
-      {acuteSignals.length > 0 ? (
-        <section className="ov-safety__signals" aria-label="Akute Sicherheitssignale">
-          {acuteSignals.map((signal) => (
-            <SafetySignalCard key={signal.id} signal={signal} />
+      {acuteSignals.length > 1 ? (
+        <div className="ov-safety__signals ov-safety__signals--flat">
+          {acuteSignals.slice(1).map((signal) => (
+            <SafetySignalRow key={signal.id} signal={signal} />
           ))}
-        </section>
-      ) : data.risk ? (
-        <div className="ov-safety__headline">
-          <span className="ov-safety__risk-label">{data.risk.label}</span>
-          <span className={`ov-pill ov-pill--${data.risk.tone}`}>{TONE_LABEL[data.risk.tone]}</span>
-          {data.risk.detail ? (
-            <span className="ov-safety__risk-detail">{data.risk.detail}</span>
-          ) : null}
         </div>
-      ) : data.hasAnySignal ? (
-        <div className="ov-safety__headline">
-          <span className="ov-safety__risk-label">Risiko</span>
-          <span className={`ov-pill ov-pill--${headlineTone}`}>{TONE_LABEL[headlineTone]}</span>
-          <span className="ov-safety__risk-detail">
-            {data.alerts.length} aktive{data.alerts.length === 1 ? 's' : ''} Sicherheitssignal
-            {data.alerts.length === 1 ? '' : 'e'} aus dem Regime.
-          </span>
-        </div>
-      ) : (
-        <div className="ov-safety__headline">
-          <span className="ov-safety__risk-label">Risiko</span>
-          <span className="ov-pill ov-pill--ok">unauffällig</span>
-        </div>
-      )}
+      ) : null}
 
       {allergyAlerts.length > 0 ? <AlertList alerts={allergyAlerts} /> : null}
 
       {interactionAlerts.length > 0 ? (
         <>
-          {showInteractionSubhead ? <p className="ov-subhead">Wechselwirkungen</p> : null}
+          {showInteractionSubhead ? <ClinicalEyebrow>Wechselwirkungen</ClinicalEyebrow> : null}
           <AlertList alerts={interactionAlerts} />
         </>
       ) : null}
 
       {monitoringAlerts.length > 0 ? (
         <>
-          {showMonitoringSubhead ? <p className="ov-subhead">Überwachung</p> : null}
+          {showMonitoringSubhead ? <ClinicalEyebrow>Überwachung</ClinicalEyebrow> : null}
           <AlertList alerts={monitoringAlerts} />
         </>
       ) : null}
 
       {data.alerts.length === 0 && !data.hasAnySignal ? (
-        <div className="ov-allclear">Keine aktiven Sicherheitssignale.</div>
+        <p className="cm-quiet-strip__detail">Keine aktiven Sicherheitssignale.</p>
       ) : null}
-    </OverviewCard>
+    </ClinicalQuietStrip>
   )
 }

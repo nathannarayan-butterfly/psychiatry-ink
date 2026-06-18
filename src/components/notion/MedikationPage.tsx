@@ -26,7 +26,7 @@ export function MedikationPage({
   }, [autoOpenMedicationAdd, onAutoOpenMedicationAddHandled])
 
   return (
-    <div className="medication-page">
+    <div className="medication-page cm-workspace">
       <MedicationWorkspace ref={medicationRef} caseId={caseId} />
     </div>
   )

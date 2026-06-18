@@ -20,27 +20,46 @@
 
 .ov-dashboard {
   --ov-danger: #c0392b;
-  --ov-danger-soft: color-mix(in srgb, #c0392b 12%, transparent);
+  --ov-danger-soft: color-mix(in srgb, #c0392b 10%, transparent);
   --ov-warn: #b45309;
-  --ov-warn-soft: color-mix(in srgb, #d39b00 15%, transparent);
+  --ov-warn-soft: color-mix(in srgb, #d39b00 12%, transparent);
   --ov-ok: #2f8a5b;
-  --ov-ok-soft: color-mix(in srgb, #3a8a5a 13%, transparent);
+  --ov-ok-soft: color-mix(in srgb, #3a8a5a 10%, transparent);
   --ov-info: #3a6f9c;
-  --ov-info-soft: color-mix(in srgb, #3a6f9c 12%, transparent);
+  --ov-info-soft: color-mix(in srgb, #3a6f9c 10%, transparent);
 
   --ov-radius-row: var(--radius-control, 0.4375rem);
   --ov-transition: var(--duration-fast, 150ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
-  --ov-tint: color-mix(in srgb, var(--area-accent, var(--accent)) 6%, transparent);
-  --ov-hairline: color-mix(in srgb, var(--border-soft) 72%, transparent);
+  --ov-tint: color-mix(in srgb, var(--area-accent, var(--accent)) 5%, transparent);
+  --ov-hairline: var(--cm-hairline, color-mix(in srgb, var(--border-soft) 72%, transparent));
   --ov-spark: color-mix(in srgb, var(--area-accent, var(--accent)) 72%, var(--text-secondary));
 
   width: 100%;
   min-width: 0;
-  margin-top: var(--space-4, 1rem);
+  margin-top: 0;
   container: overview-dashboard / inline-size;
 }
 
-/* ── Summary strip ("Auf einen Blick") ───────────────────────────────────── */
+/* ── Hero widget (typographic strip) ─────────────────────────────────────── */
+
+.ov-hero-widget {
+  margin-bottom: 0;
+}
+
+.ov-hero-widget .cm-hero {
+  padding-bottom: 1.75rem;
+}
+
+.ov-hero-widget__orientation {
+  margin: -0.75rem 0 0;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--ov-hairline);
+  font-size: var(--text-xs, 0.75rem);
+  line-height: 1.45;
+  color: var(--text-muted, #91887e);
+}
+
+/* ── Summary strip (legacy — kept for settings preview compatibility) ─────── */
 
 .ov-summary {
   display: grid;
@@ -297,10 +316,10 @@
 }
 
 .ov-dashboard--edit-mode {
-  outline: 1px dashed color-mix(in srgb, var(--area-accent, var(--accent)) 28%, var(--border-soft));
-  outline-offset: 0.35rem;
+  outline: 1px dashed color-mix(in srgb, var(--area-accent, var(--accent)) 22%, var(--border-soft));
+  outline-offset: 0.5rem;
   border-radius: var(--radius-card, 0.6875rem);
-  padding: 0.15rem;
+  padding: 0.35rem;
 }
 
 .ov-widget-slot {
@@ -308,19 +327,19 @@
   min-width: 0;
 }
 .ov-widget-slot--half {
-  grid-column: span 6;
+  grid-column: auto;
 }
 .ov-widget-slot--full {
-  grid-column: span 12;
+  grid-column: 1 / -1;
 }
 .ov-widget-slot--hero .ov-widget-slot__content > .ov-summary {
   margin-bottom: 0;
 }
 
 .ov-widget-slot--editable {
-  border: 1px dashed color-mix(in srgb, var(--area-accent, var(--accent)) 30%, var(--border-soft));
-  border-radius: var(--radius-card, 0.6875rem);
-  background: color-mix(in srgb, var(--area-accent, var(--accent)) 4%, var(--surface));
+  border: 1px dashed color-mix(in srgb, var(--area-accent, var(--accent)) 24%, var(--border-soft));
+  border-radius: var(--radius-control, 0.4375rem);
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 3%, transparent);
 }
 .ov-widget-slot--editable .ov-widget-slot__content {
   pointer-events: none;
@@ -438,84 +457,66 @@
   }
 }
 
-/* ── Grid ────────────────────────────────────────────────────────────────── */
+/* ── Grid — asymmetric calm 2-column layout ─────────────────────────────── */
 
 .ov-grid {
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: var(--space-4, 1rem);
-  /* Top-align rows so a tall safety card does not stretch shorter neighbours. */
+  grid-template-columns: 1.55fr 1fr;
+  gap: var(--cm-col-gap, 3rem) var(--cm-col-gap, 3rem);
+  row-gap: var(--cm-section-gap, 2.25rem);
   align-items: start;
 }
 .ov-grid > * {
   min-width: 0;
 }
 .ov-col-6 {
-  grid-column: span 6;
+  grid-column: auto;
 }
 .ov-col-12 {
-  grid-column: span 12;
+  grid-column: 1 / -1;
+}
+
+.ov-widget-slot--full {
+  grid-column: 1 / -1;
+}
+.ov-widget-slot--half {
+  grid-column: auto;
 }
 
 @media (max-width: 1100px) {
-  /* auto-fit collapses to one column when the pane is too narrow for two ~320px cards */
   .ov-grid {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+    grid-template-columns: 1fr;
   }
-  .ov-col-6 {
-    grid-column: auto;
-  }
-  .ov-col-12 {
+  .ov-widget-slot--half,
+  .ov-widget-slot--full {
     grid-column: 1 / -1;
   }
 }
 @media (max-width: 720px) {
   .ov-grid {
-    grid-template-columns: 1fr;
-    gap: var(--space-3, 0.75rem);
-  }
-  .ov-col-6,
-  .ov-col-12 {
-    grid-column: 1 / -1;
-  }
-  .ov-summary {
-    grid-template-columns: 1fr;
-  }
-  .ov-summary__item {
-    border-left: none;
-    border-top: 1px solid var(--ov-hairline);
-  }
-  .ov-summary__item:first-child {
-    border-top: none;
-  }
-  .ov-safety__signals {
-    grid-template-columns: 1fr;
-  }
-  .ov-card__head-actions {
-    width: 100%;
-    justify-content: flex-end;
+    gap: var(--space-4, 1rem);
   }
 }
 
-/* ── Card shell ──────────────────────────────────────────────────────────── */
+/* ── Card shell (legacy class names — now flat sections) ─────────────────── */
 
-.ov-card {
+.ov-card,
+.cm-section--embedded {
   position: relative;
   display: flex;
   flex-direction: column;
   min-width: 0;
-  background: var(--surface, #fff);
-  border: 1px solid var(--border-soft, #e8e4df);
-  border-radius: var(--radius-card, 0.6875rem);
-  box-shadow: var(--shadow-elevated-sm, 0 1px 2px rgba(0, 0, 0, 0.04));
-  overflow: hidden;
-  transition:
-    box-shadow var(--ov-transition),
-    border-color var(--ov-transition);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
 }
-.ov-card:hover {
-  border-color: color-mix(in srgb, var(--area-accent, var(--accent)) 20%, var(--border-soft));
-  box-shadow: var(--shadow-elevated-md, 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.06));
+
+.ov-card__head,
+.ov-card__body,
+.ov-card__body--headless {
+  display: contents;
 }
 
 /* ── Header ──────────────────────────────────────────────────────────────── */
@@ -763,13 +764,49 @@
 
 /* ── Safety: compact headline + alert list ───────────────────────────────── */
 
-.ov-safety__signals {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr));
-  gap: 0.55rem;
-  padding-bottom: var(--space-2, 0.5rem);
-  margin-bottom: 0.1rem;
-  border-bottom: 1px solid var(--ov-hairline);
+.ov-safety-strip {
+  margin-top: 0;
+}
+
+.ov-safety__signals--flat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.ov-safety__signal-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+}
+
+.ov-safety__signal-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.ov-list--flat {
+  margin-top: 0.65rem;
+}
+
+.ov-alert--flat {
+  background: transparent;
+  border-left-width: 2px;
+  padding: 0.35rem 0 0.35rem 0.55rem;
+}
+
+.ov-pill--text {
+  font-size: var(--text-2xs, 0.6875rem);
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-muted, #91887e);
+}
+.ov-pill--text::before {
+  display: none;
 }
 
 .ov-safety__signal {
@@ -1136,13 +1173,56 @@
   line-height: var(--leading-relaxed, 1.55);
   color: var(--text-main, #24211e);
 }
-.ov-snapshot__cues {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.75rem), 1fr));
-  gap: 0.55rem 0.9rem;
-  margin-top: 0.15rem;
-  padding-top: 0.55rem;
-  border-top: 1px solid var(--ov-hairline);
+.ov-med__regimen--flat {
+  margin-top: 0.5rem;
+}
+
+.ov-snapshot__cues--flat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.ov-snapshot__trend--flat {
+  margin-top: 1rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.ov-snapshot__trend--flat .ov-trajectory {
+  min-height: 5.5rem;
+}
+
+.cm-cue-value--missing {
+  color: var(--text-muted, #91887e);
+  font-style: italic;
+}
+
+/* Flat feed rows inside overview widgets */
+.ov-feed__item {
+  padding: 0.35rem 0;
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid var(--ov-hairline);
+  background: transparent;
+}
+.ov-feed__item:last-child {
+  border-bottom: none;
+}
+
+.ov-lab {
+  background: transparent;
+  border-left-width: 2px;
+  padding: 0.35rem 0 0.35rem 0.55rem;
+  border-radius: 0;
+}
+
+.ov-layout-footer {
+  margin-top: 0;
 }
 .ov-snapshot__cue-label {
   font-size: var(--text-2xs, 0.6875rem);
@@ -1165,13 +1245,38 @@
 
 /* ── Nested reused widgets (Diagnose / Spiegel) ──────────────────────────── */
 
-.ov-card__body .diagnosen-widget,
-.ov-card__body .diagnosen-widget--panel,
-.ov-card__body .spiegelwerte-section {
+/* Embedded reused widgets — flat, no nested card chrome */
+.cm-section--embedded .diagnosen-widget,
+.cm-section--embedded .diagnosen-widget--panel,
+.cm-section--embedded .spiegelwerte-section {
   margin: 0;
   max-width: none;
   width: 100%;
   min-width: 0;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+.cm-section--embedded .spiegelwerte-section__head {
+  min-width: 0;
+  border-bottom: none;
+  padding: 0 0 0.5rem;
+}
+
+.cm-section--embedded .spiegelwerte-section__title {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-main, #24211e);
+}
+
+.cm-section--embedded .spiegelwerte-card {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  padding: 0;
 }
 .ov-card__body .spiegelwerte-section__head {
   min-width: 0;

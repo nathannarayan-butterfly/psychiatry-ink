@@ -4,6 +4,7 @@ import type { TopNavTabId } from '../CaseTopNav'
 import type { NotionPageId } from '../notionPages'
 import { extractSpiegelwerte, pickLatestSpiegelSeries, spiegelGraphId } from '../SpiegelwerteSection'
 import { useOverviewLayout } from '../../../hooks/useOverviewLayout'
+import { ClinicalPageEyebrow } from '../../clinical/ClinicalPageEyebrow'
 import { OverviewLayoutToolbar } from './OverviewLayoutToolbar'
 import { OverviewWidgetGrid } from './OverviewWidgetGrid'
 import type { OverviewWidgetRenderContext } from './OverviewWidgetContent'
@@ -369,7 +370,8 @@ export function OverviewDashboard({
   )
 
   return (
-    <div className={`ov-dashboard${editMode ? ' ov-dashboard--edit-mode' : ''}`}>
+    <div className={`ov-dashboard cm-workspace cm-workspace--flush${editMode ? ' ov-dashboard--edit-mode' : ''}`}>
+      <ClinicalPageEyebrow label="Übersicht" />
       <OverviewWidgetGrid
         widgets={layout.widgets}
         editMode={editMode}

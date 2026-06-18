@@ -62,7 +62,7 @@ export function renderOverviewWidget(
 ): ReactNode {
   switch (widgetId) {
     case 'hero-summary':
-      return <OverviewHero data={ctx.heroData} />
+      return <OverviewHero data={ctx.heroData} caseId={ctx.caseId} />
     case 'safety':
       return <SafetyAlertsCard data={ctx.safetyData} />
     case 'medication':

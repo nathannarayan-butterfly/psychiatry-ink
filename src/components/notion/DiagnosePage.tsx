@@ -21,7 +21,7 @@ export function DiagnosePage({ caseId, onDiagnosesChanged, onJumpToSection }: Di
   }, [onDiagnosesChanged])
 
   return (
-    <div className="diagnose-page">
+    <div className="diagnose-page cm-workspace">
       <DiagnosenWidget caseId={caseId} variant="panel" onDiagnosesChanged={handleDiagnosesChanged} />
       <IsdmAnalysisPanel
         caseId={caseId}

@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
 import { recordAuditEvent } from '../../services/auditApi'
-import { CasePatientHeader } from './CasePatientHeader'
 import type { TopNavTabId } from './CaseTopNav'
 import type { NotionPageId } from './notionPages'
 import { OverviewDashboard } from './overview/OverviewDashboard'
@@ -26,7 +25,7 @@ interface PatientDashboardViewProps {
  */
 export function PatientDashboardView({
   caseId,
-  metaVersion,
+  metaVersion: _metaVersion,
   therapyCaseId,
   onTabSelect,
   onAddMedication: _onAddMedication,
@@ -43,8 +42,6 @@ export function PatientDashboardView({
   return (
     <div className="patient-dashboard patient-dashboard--case-sidebar">
       <div className="patient-dashboard__content">
-        <CasePatientHeader caseId={caseId} metaVersion={metaVersion} />
-
         <div className="patient-dashboard__body">
           <main className="patient-dashboard__main">
             <OverviewDashboard

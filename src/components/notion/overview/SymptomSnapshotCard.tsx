@@ -1,4 +1,3 @@
-import { Activity } from 'lucide-react'
 import { OverviewCard, OverviewEmpty } from './OverviewCard'
 import { SymptomTrajectoryChart } from './SymptomTrajectoryChart'
 import type { SymptomSnapshotData } from './types'
@@ -9,56 +8,57 @@ interface SymptomSnapshotCardProps {
 }
 
 /**
- * Symptom trajectory surrogate. The model has no psychometric score timeseries,
- * so we present the latest psychopathology snapshot + structured cues (affect,
- * drive, thought content, insight) and the course direction instead.
+ * Psychopathology section — structured cues + thin trajectory chart, flat layout.
  */
 export function SymptomSnapshotCard({ data, onOpen }: SymptomSnapshotCardProps) {
   const hasContent =
     Boolean(data.snapshotText) || data.structured.length > 0 || Boolean(data.courseLabel)
   const title = data.contextLabel ? `Psychopathologie (${data.contextLabel})` : 'Psychopathologie'
+  const meta =
+    [data.courseLabel, data.asOfLabel ? `Stand ${data.asOfLabel}` : null].filter(Boolean).join(' · ') ||
+    null
 
   return (
     <OverviewCard
       title={title}
-      icon={<Activity size={15} />}
       className="ov-col-6"
-      badge={data.courseLabel ? { label: data.courseLabel, tone: 'neutral' } : undefined}
+      meta={meta}
       action={onOpen ? { label: 'Befund öffnen', onClick: onOpen } : undefined}
     >
       {!hasContent ? (
         <OverviewEmpty>Kein psychopathologischer Befund hinterlegt.</OverviewEmpty>
       ) : null}
 
-      {data.trajectory.length >= 2 ? (
-        <div className="ov-snapshot__trend">
-          <p className="ov-block-label">Verlaufstendenz</p>
-          <SymptomTrajectoryChart points={data.trajectory} />
-        </div>
-      ) : null}
-
-      {data.snapshotText ? <p className="ov-snapshot__text">{data.snapshotText}</p> : null}
-
       {data.structured.length > 0 ? (
-        <div className="ov-snapshot__cues">
+        <div className="ov-snapshot__cues ov-snapshot__cues--flat">
           {data.structured.map((cue) => (
-            <div key={cue.label}>
-              <div className="ov-snapshot__cue-label">{cue.label}</div>
-              <div
+            <div key={cue.label} className="cm-cue-row">
+              <span className="cm-cue-label">{cue.label}</span>
+              <span
                 className={
                   cue.value === 'nicht dokumentiert'
-                    ? 'ov-snapshot__cue-value ov-snapshot__cue-value--missing'
-                    : 'ov-snapshot__cue-value'
+                    ? 'cm-cue-value cm-cue-value--missing'
+                    : 'cm-cue-value'
                 }
               >
                 {cue.value}
-              </div>
+              </span>
             </div>
           ))}
         </div>
       ) : null}
 
-      {data.asOfLabel ? <span className="ov-meta">Stand: {data.asOfLabel}</span> : null}
+      {data.snapshotText ? <p className="ov-snapshot__text">{data.snapshotText}</p> : null}
+
+      {data.trajectory.length >= 2 ? (
+        <div className="ov-snapshot__trend ov-snapshot__trend--flat">
+          <p className="cm-chart-title">Verlaufstendenz</p>
+          <p className="cm-chart-axis">
+            Y-Achse: Verlaufsrichtung · X-Achse: Zeit · niedrigere Werte = weniger Symptomlast
+          </p>
+          <SymptomTrajectoryChart points={data.trajectory} />
+        </div>
+      ) : null}
     </OverviewCard>
   )
 }
