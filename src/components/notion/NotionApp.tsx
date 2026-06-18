@@ -26,6 +26,7 @@ import { CaseSidebarPanel } from './CaseSidebarPanel'
 import { CaseSidebarBackLink } from './CaseSidebarBackLink'
 import { CaseSidebarNextLink } from './CaseSidebarNextLink'
 import { CaseSidebarContent } from './CaseSidebarContent'
+import { AnforderungCreateModal } from '../anforderungen/AnforderungCreateModal'
 import { CasePatientHeader } from './CasePatientHeader'
 import { WorkspaceTabBar } from './WorkspaceTabBar'
 import { MeinePatientenView } from './MeinePatientenView'
@@ -101,7 +102,7 @@ import { useAuth } from '../../context/AuthContext'
 import { buildTherapyAttribution } from '../../types/therapy'
 import { isDemoCase, isDemoCaseReadOnly } from '../../demo'
 import '../../styles/demo-patient-dev.css'
-import '../../styles/case-sidebar.css'
+import '../../styles/anforderungen.css'
 import { useCanAccessCase } from '../../hooks/permissions'
 import { ActiveAppointmentBar } from '../calendar/ActiveAppointmentBar'
 import { CalendarItemModal } from '../calendar/CalendarItemModal'
@@ -261,6 +262,7 @@ export function NotionApp({
   const storageCaseId = workspaceStorageId ?? caseId
   const [pendingMedicationAdd, setPendingMedicationAdd] = useState(false)
   const [templateHostOpen, setTemplateHostOpen] = useState(false)
+  const [anforderungModalOpen, setAnforderungModalOpen] = useState(false)
 
   useEffect(() => {
     setSavedDocs(loadSavedDocs(savedDocsKey))
@@ -1516,6 +1518,9 @@ export function NotionApp({
               handlePageSelect(pageId)
             }}
             onOpenTemplateFromPatient={() => setTemplateHostOpen(true)}
+            onAddAnforderung={
+              workspaceReadOnly ? undefined : () => setAnforderungModalOpen(true)
+            }
             workspaceSidebar={
               activeTopTab === 'workspace'
                 ? {
@@ -1532,6 +1537,10 @@ export function NotionApp({
                     onCloseDocument: workspace.selectedDocumentType
                       ? handleCloseWorkspacePage
                       : undefined,
+                    onAddAnforderung: workspaceReadOnly
+                      ? undefined
+                      : () => setAnforderungModalOpen(true),
+                    anforderungenReadOnly: workspaceReadOnly,
                   }
                 : undefined
             }
@@ -1935,6 +1944,12 @@ export function NotionApp({
           onClose={() => setTemplateHostOpen(false)}
         />
       ) : null}
+
+      <AnforderungCreateModal
+        caseId={storageCaseId}
+        open={anforderungModalOpen}
+        onClose={() => setAnforderungModalOpen(false)}
+      />
     </div>
   )
 }

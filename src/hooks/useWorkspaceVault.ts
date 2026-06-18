@@ -15,6 +15,7 @@ import { registerMedicationPlanPersistHook } from '../utils/medication/storage'
 import { registerPsychotherapyPlanPersistHook } from '../utils/psychotherapy/storage'
 import { registerComplementaryTherapiesPersistHook } from '../utils/complementaryTherapy/storage'
 import { registerWeitereTherapiePersistHook } from '../utils/weitereTherapie/storage'
+import { registerAnforderungenPersistHook } from '../utils/anforderungen/storage'
 import { registerClinicalQuestionNotePersistHook } from '../utils/clinicalQuestions/answerNotes'
 import {
   ensureKeyMaterial,
@@ -254,6 +255,9 @@ export function useWorkspaceVault({
     registerWeitereTherapiePersistHook((persistCaseId) => {
       if (persistCaseId === caseId) scheduleSaveRef.current()
     })
+    registerAnforderungenPersistHook((persistCaseId) => {
+      if (persistCaseId === caseId) scheduleSaveRef.current()
+    })
     registerClinicalQuestionNotePersistHook((persistCaseId) => {
       if (persistCaseId === caseId) scheduleSaveRef.current()
     })
@@ -265,6 +269,7 @@ export function useWorkspaceVault({
       registerPsychotherapyPlanPersistHook(null)
       registerComplementaryTherapiesPersistHook(null)
       registerWeitereTherapiePersistHook(null)
+      registerAnforderungenPersistHook(null)
       registerClinicalQuestionNotePersistHook(null)
     }
   }, [caseId])

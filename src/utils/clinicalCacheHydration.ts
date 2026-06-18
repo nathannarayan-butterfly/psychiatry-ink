@@ -20,6 +20,7 @@ import { hydrateNotionDocumentsFromEncryptedLocal } from './notionDocumentAction
 import { hydratePsychotherapyPlanFromEncryptedLocal } from './psychotherapy/storage'
 import { hydrateSozialtherapieFromEncryptedLocal } from './sozialtherapie/storage'
 import { hydrateWeitereTherapieFromEncryptedLocal } from './weitereTherapie/storage'
+import { hydrateAnforderungenFromEncryptedLocal } from './anforderungen/storage'
 
 export async function hydrateLocalClinicalCaches(caseId: string): Promise<void> {
   await Promise.allSettled([
@@ -27,6 +28,7 @@ export async function hydrateLocalClinicalCaches(caseId: string): Promise<void> 
     hydratePsychotherapyPlanFromEncryptedLocal(caseId),
     hydrateComplementaryTherapiesFromEncryptedLocal(caseId),
     hydrateWeitereTherapieFromEncryptedLocal(caseId),
+    hydrateAnforderungenFromEncryptedLocal(caseId),
     hydrateSozialtherapieFromEncryptedLocal(caseId),
     hydrateNotionDocumentsFromEncryptedLocal(caseId),
     hydrateDiagnosenFromEncryptedLocal(caseId),

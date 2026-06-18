@@ -3,6 +3,7 @@ import { useCallback } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import { usePanelGraphicSchedule } from '../../hooks/usePanelGraphicSchedule'
 import { PanelGraphic } from '../PanelGraphic'
+import { AnforderungenSidebarSection } from '../anforderungen/AnforderungenSidebarSection'
 import { PsychopathModeRail } from '../workspace/PsychopathModeRail'
 import { LaborSidebarWidget } from './LaborSidebarWidget'
 import type { SavedDoc } from '../../utils/savedDocs'
@@ -23,6 +24,8 @@ interface NotionDiarySidebarProps {
   openDocumentLabel?: string
   /** Close the currently-open workspace document (guarded by unsaved-changes warning). */
   onCloseDocument?: () => void
+  onAddAnforderung?: () => void
+  anforderungenReadOnly?: boolean
   showPsychopathModeRail?: boolean
   psychopathActiveMode?: PsychopathSubMode
   psychopathModeDisabled?: boolean
@@ -54,6 +57,8 @@ export function NotionDiarySidebar({
   onRemoveSavedDoc,
   openDocumentLabel,
   onCloseDocument,
+  onAddAnforderung,
+  anforderungenReadOnly = false,
   showPsychopathModeRail = false,
   psychopathActiveMode = 'free',
   psychopathModeDisabled = false,
@@ -86,6 +91,15 @@ export function NotionDiarySidebar({
               disabled={psychopathModeDisabled}
               collapsed={collapsed}
               onSelect={onPsychopathModeSelect}
+            />
+          ) : null}
+
+          {caseId && onAddAnforderung ? (
+            <AnforderungenSidebarSection
+              caseId={caseId}
+              onAddClick={onAddAnforderung}
+              onNavigateToLabor={onNavigateToLabor}
+              readOnly={anforderungenReadOnly}
             />
           ) : null}
 

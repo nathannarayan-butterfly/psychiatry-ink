@@ -81,8 +81,13 @@ import {
   loadWeitereTherapie,
 } from './weitereTherapie/storage'
 import type { WeitereTherapie } from '../types/weitereTherapie'
+import type { Anforderung } from '../types/anforderung'
+import {
+  applyAnforderungen,
+  loadAnforderungen,
+} from './anforderungen/storage'
 
-export const WORKSPACE_PAYLOAD_VERSION = 9
+export const WORKSPACE_PAYLOAD_VERSION = 10
 
 export const LAST_VAULT_EXPORT_KEY = 'psychiatry-ink:last-vault-export-at'
 
@@ -151,6 +156,8 @@ export interface ClinicalWorkspacePayload {
   complementaryTherapies?: ComplementaryTherapy[]
   /** Layer 2e — weitere Therapieverfahren / neurostimulation (additive; absent on older payloads). */
   weitereTherapie?: WeitereTherapie[]
+  /** Layer 2f — clinical orders / requisitions (Anforderungen; v10+). */
+  anforderungen?: Anforderung[]
   /** Per-document variant selection (e.g. psychopath sub-mode). */
   activeVariantIds?: Record<string, string>
   /** @deprecated v1 — stripped on write */
@@ -290,6 +297,7 @@ export function collectClinicalPayload(
   const psychotherapyPlan = loadPsychotherapyPlan(storageCaseId) ?? undefined
   const complementaryTherapies = loadComplementaryTherapies(storageCaseId)
   const weitereTherapie = loadWeitereTherapie(storageCaseId)
+  const anforderungen = loadAnforderungen(storageCaseId)
 
   return {
     version: WORKSPACE_PAYLOAD_VERSION,
@@ -314,6 +322,7 @@ export function collectClinicalPayload(
     psychotherapyPlan,
     complementaryTherapies: complementaryTherapies.length ? complementaryTherapies : undefined,
     weitereTherapie: weitereTherapie.length ? weitereTherapie : undefined,
+    anforderungen: anforderungen.length ? anforderungen : undefined,
     activeVariantIds: live?.activeVariantIds,
   }
 }
@@ -399,6 +408,10 @@ export function applyClinicalPayload(
   if (normalized.weitereTherapie) {
     applyWeitereTherapie(normalized.weitereTherapie, storageCaseId)
   }
+
+  if (normalized.anforderungen) {
+    applyAnforderungen(normalized.anforderungen, storageCaseId)
+  }
 }
 
 /** Strips legacy patient metadata from older vault files; never applies name/age from sync. */
@@ -465,6 +478,7 @@ export async function decryptWorkspaceBlob(blob: EncryptedVaultBlob): Promise<Cl
     psychotherapyPlan: payload.psychotherapyPlan,
     complementaryTherapies: payload.complementaryTherapies,
     weitereTherapie: payload.weitereTherapie,
+    anforderungen: payload.anforderungen,
   }
 }
 
