@@ -18,7 +18,13 @@ import {
   DIAGNOSEN_CODING_SYSTEM_EVENT,
   loadDiagnosenCodingSystem,
 } from '../../utils/diagnosenCodingSystem'
-import type { CodingSystem } from '../../utils/diagnosenArchive'
+import {
+  getActiveCoding,
+  loadDiagnosen,
+  type CodingSystem,
+  type DiagnoseEntry,
+} from '../../utils/diagnosenArchive'
+import { buildDiagnosisTitleRequest } from '../../utils/diagnosisDisplayRequests'
 import {
   buildDisorderAdvice,
   buildEvaluationContext,
@@ -64,7 +70,6 @@ import { suggestionsFromCaseFacts } from '../../utils/butterfly/factSuggestions'
 import { buildButterflyContextPackage, hasButterflyContext } from '../../utils/butterfly/contextPackage'
 import { extractButterflyCriteria } from '../../services/butterflyExtractApi'
 import { isCmeaConsumerReadEnabled } from '../../utils/featureFlags'
-import { loadDiagnosen, type DiagnoseEntry } from '../../utils/diagnosenArchive'
 import { useDiagnosisDisplayTitles } from '../../hooks/useDiagnosisDisplayTitles'
 import type { IcdTitleVersion } from '../../../shared/icdTitle'
 import type { NotionPageId } from '../notion/notionPages'
@@ -277,21 +282,29 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
 
   const diagnosisTitleVersion: IcdTitleVersion = icdVersion === 'icd11' ? 'icd11' : 'icd10'
 
-  const diagnosisTitleRequests = useMemo(
-    () =>
-      results.map((result) => ({
+  const diagnosisTitleRequests = useMemo(() => {
+    const system: CodingSystem = icdVersion === 'icd11' ? 'icd11' : 'icd10'
+    return results.map((result) => {
+      const entry = enteredDiagnoses.find((item) => item.id === result.key)
+      const coding = entry
+        ? getActiveCoding(entry, system)
+        : { code: result.code, label: '', overridden: false }
+      return buildDiagnosisTitleRequest({
         key: result.key,
-        code: result.code,
+        coding: {
+          code: result.code,
+          label: coding.label,
+          overridden: coding.overridden,
+        },
         version: diagnosisTitleVersion,
-        criteriaLabel: result.disorder
+        disorderCriteriaLabel: result.disorder
           ? icdVersion === 'icd11'
             ? result.disorder.codingSystems.icd11?.label_de
             : result.disorder.codingSystems.icd10?.label_de
           : null,
-        enteredLabel: result.label,
-      })),
-    [results, diagnosisTitleVersion, icdVersion],
-  )
+      })
+    })
+  }, [results, enteredDiagnoses, diagnosisTitleVersion, icdVersion])
 
   const { titlesByKey: diagnosisDisplayTitles } = useDiagnosisDisplayTitles(
     diagnosisTitleRequests,
@@ -334,7 +347,7 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
           .filter((result) => result.available && result.disorder)
           .map((result) => ({
             disorderId: result.disorder!.id,
-            label: diagnosisDisplayTitles.get(result.key) ?? result.label,
+            label: diagnosisDisplayTitles.get(result.key) ?? result.code,
             code: result.code,
           })),
       ),
@@ -605,7 +618,7 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
       <CollapsibleSection title={t('butterflyRecommendations')} defaultOpen>
         <ul className="butterfly-card-list">
           {results.map((result, index) => {
-            const displayLabel = diagnosisDisplayTitles.get(result.key) ?? result.label
+            const displayLabel = diagnosisDisplayTitles.get(result.key) ?? result.code
             if (!result.available || !result.disorder || !result.evaluation) {
               return (
                 <li key={result.key} className="butterfly-card butterfly-card--unavailable">

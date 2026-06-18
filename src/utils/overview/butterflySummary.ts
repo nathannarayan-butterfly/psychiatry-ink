@@ -5,6 +5,10 @@ import type { UiLanguage } from '../../types/settings'
 import type { DiagnoseEntry } from '../diagnosenArchive'
 import { loadDiagnosen } from '../diagnosenArchive'
 import { loadDiagnosenCodingSystem } from '../diagnosenCodingSystem'
+import {
+  codingSystemToTitleVersion,
+  resolveDiagnosisLabelSync,
+} from '../diagnosisDisplayRequests'
 import { loadAttestations } from '../butterfly/attestationStorage'
 import { loadIsdmAnalysis } from '../isdm/storage'
 import { buildEvaluationContext } from '../diagnosisCriteria/context'
@@ -17,6 +21,9 @@ export interface ButterflySummaryItem {
   id: string
   label: string
   code: string
+  version: 'icd10' | 'icd11' | 'dsm'
+  overridden: boolean
+  enteredLabel: string
   verdict: DisorderVerdict | 'unavailable'
   tone: SemanticTone
   headline: string
@@ -52,6 +59,7 @@ export function buildButterflySummary(caseId: string, language: UiLanguage, limi
 
   const codingSystem = loadDiagnosenCodingSystem(caseId)
   const icdVersion = toButterflyIcdVersion(codingSystem)
+  const titleVersion = codingSystemToTitleVersion(codingSystem)
   const attestations = loadAttestations(caseId)
   const ctx = buildEvaluationContext({
     phenomenology: analysis.phenomenology,
@@ -64,14 +72,28 @@ export function buildButterflySummary(caseId: string, language: UiLanguage, limi
 
   for (const entry of loadDiagnosen(caseId).filter(hasCodeOrLabel)) {
     const sourceDisorder = matchDisorderToCodes(entry.icd10.code, entry.icd11.code)
-    const code = entry.icd10.code.trim() || entry.icd11.code.trim()
-    const label = entry.icd10.label.trim() || entry.icd11.label.trim() || code
+    const activeCoding =
+      codingSystem === 'icd11' && entry.icd11.code.trim()
+        ? entry.icd11
+        : entry.icd10.code.trim()
+          ? entry.icd10
+          : entry.icd11
+    const code = activeCoding.code.trim() || entry.icd11.code.trim() || entry.icd10.code.trim()
+    const disorderCriteriaLabel = sourceDisorder
+      ? icdVersion === 'icd11'
+        ? sourceDisorder.codingSystems.icd11?.label_de
+        : sourceDisorder.codingSystems.icd10?.label_de
+      : null
+    const label = resolveDiagnosisLabelSync(activeCoding, titleVersion, disorderCriteriaLabel)
 
     if (!sourceDisorder) {
       out.push({
         id: entry.id,
         label,
         code,
+        version: titleVersion,
+        overridden: activeCoding.overridden,
+        enteredLabel: activeCoding.label,
         verdict: 'unavailable',
         tone: 'neutral',
         headline: '',
@@ -95,6 +117,9 @@ export function buildButterflySummary(caseId: string, language: UiLanguage, limi
       id: entry.id,
       label,
       code: icdVersion === 'icd11' ? entry.icd11.code.trim() || versioned.codingSystems.icd11?.code || code : code,
+      version: titleVersion,
+      overridden: activeCoding.overridden,
+      enteredLabel: activeCoding.label,
       verdict: evaluation.verdict,
       tone: toneForVerdict(evaluation.verdict),
       headline: advice.headline,

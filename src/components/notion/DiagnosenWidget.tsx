@@ -7,7 +7,11 @@ import {
   searchDiagnosisCodes,
   type DiagnosisSearchHit,
 } from '../../services/diagnosisReferenceApi'
-import { lookupCatalogLabel } from '../../data/diagnosisCatalog'
+import {
+  buildDiagnosisTitleRequest,
+  buildDiagnosisTitleRequestFromEntry,
+  codingSystemToTitleVersion,
+} from '../../utils/diagnosisDisplayRequests'
 import {
   createDiagnoseFreeText,
   createDiagnoseFromHit,
@@ -104,7 +108,8 @@ function DiagnoseRow({
   }
 
   const displayCode = coding.code || '—'
-  const labelText = displayLabel || coding.label || t('diagnosenNoLabel')
+  const labelText =
+    displayLabel || (coding.overridden ? coding.label : '') || coding.code || t('diagnosenNoLabel')
 
   return (
     <li className="diagnosen-widget__row">
@@ -284,18 +289,7 @@ export function DiagnosenWidget({ caseId, variant = 'sidebar', onDiagnosesChange
   const showFreeTextOption = trimmedQuery.length > 0
 
   const entryTitleRequests = useMemo(
-    () =>
-      entries.map((entry) => {
-        const coding = getActiveCoding(entry, activeSystem)
-        return {
-          key: entry.id,
-          code: coding.code,
-          version: activeSystem,
-          criteriaLabel: lookupCatalogLabel(coding.code, activeSystem),
-          enteredLabel: coding.overridden ? coding.label : null,
-          overridden: coding.overridden,
-        }
-      }),
+    () => entries.map((entry) => buildDiagnosisTitleRequestFromEntry(entry, activeSystem)),
     [entries, activeSystem],
   )
 
@@ -308,13 +302,15 @@ export function DiagnosenWidget({ caseId, variant = 'sidebar', onDiagnosesChange
   const searchTitleRequests = useMemo(
     () =>
       searchResults.map((result) => {
-        const version = result.system === 'dsm5tr' ? ('dsm' as const) : result.system
-        return {
+        const version = codingSystemToTitleVersion(
+          result.system === 'dsm5tr' ? 'dsm' : result.system,
+        )
+        return buildDiagnosisTitleRequest({
           key: `${result.system}-${result.code}`,
-          code: result.code,
+          coding: { code: result.code, label: result.label, overridden: false },
           version,
-          criteriaLabel: result.label || lookupCatalogLabel(result.code, version),
-        }
+          disorderCriteriaLabel: result.label,
+        })
       }),
     [searchResults],
   )
@@ -420,7 +416,7 @@ export function DiagnosenWidget({ caseId, variant = 'sidebar', onDiagnosesChange
                       >
                         <span className="diagnosen-widget__search-code">{result.code}</span>
                         <span className="diagnosen-widget__search-label">
-                          {searchDisplayTitles.get(`${result.system}-${result.code}`) ?? result.label}
+                          {searchDisplayTitles.get(`${result.system}-${result.code}`) ?? result.code}
                         </span>
                       </button>
                     </li>
@@ -457,12 +453,7 @@ export function DiagnosenWidget({ caseId, variant = 'sidebar', onDiagnosesChange
             ) : (
               <ol className="diagnosen-widget__list" aria-label={t('diagnosenTitle')}>
                 {entries.map((entry, index) => {
-                  const coding = getActiveCoding(entry, activeSystem)
-                  const displayLabel =
-                    entryDisplayTitles.get(entry.id)
-                    ?? lookupCatalogLabel(coding.code, activeSystem)
-                    ?? coding.label
-                    ?? coding.code
+                  const displayLabel = entryDisplayTitles.get(entry.id) ?? ''
                   return (
                     <DiagnoseRow
                       key={entry.id}

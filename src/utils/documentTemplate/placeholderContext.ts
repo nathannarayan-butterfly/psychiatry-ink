@@ -2,6 +2,7 @@ import { getCaseMeta } from '../../hooks/useCaseRegistry'
 import { loadPatientMetadata } from '../cryptoVault'
 import { shortCaseId } from '../caseContext'
 import { loadDiagnosen } from '../diagnosenArchive'
+import { resolveDiagnosisLabelSync } from '../diagnosisDisplayRequests'
 import type { TemplateRenderContext } from '../../types/documentTemplate'
 
 function formatDate(iso?: string): string {
@@ -60,10 +61,10 @@ export async function buildTemplateRenderContext(caseId?: string): Promise<Templ
   }
 
   const diagnoses = loadDiagnosen(caseId)
-  const primaryDiagnosis =
-    diagnoses[0]?.icd10?.label ||
-    diagnoses[0]?.icd10?.code ||
-    undefined
+  const primaryCoding = diagnoses[0]?.icd10
+  const primaryDiagnosis = primaryCoding
+    ? resolveDiagnosisLabelSync(primaryCoding, 'icd10') || primaryCoding.code || undefined
+    : undefined
 
   return {
     patient,
