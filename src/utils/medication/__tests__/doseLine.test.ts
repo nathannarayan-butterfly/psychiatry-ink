@@ -160,4 +160,38 @@ describe('formatMedicationOverviewDoseGerman', () => {
       ),
     ).toBe('1 mg bei Bedarf (max. 2 mg/24 h)')
   })
+
+  it('ignores stale doseLineGerman with Stk. counts in favour of mg-per-slot schedule', () => {
+    expect(
+      formatMedicationOverviewDoseGerman(
+        makeEntry({
+          doseLineGerman: 'Aripiprazol 10 mg 1-0-0-0 Stk.',
+        }),
+      ),
+    ).toBe('10-0-0-0 mg')
+  })
+
+  it('ignores stale doseLineGerman with duplicated strength', () => {
+    expect(
+      formatMedicationOverviewDoseGerman(
+        makeEntry({
+          doseLineGerman: 'Aripiprazol 10mg. 10-0-0-0 mg',
+        }),
+      ),
+    ).toBe('10-0-0-0 mg')
+  })
+
+  it('uses canonical PRN schedule when doseLineGerman matches b.B. pattern', () => {
+    expect(
+      formatMedicationOverviewDoseGerman(
+        makeEntry({
+          substance: 'Lorazepam',
+          strength: '1 mg',
+          doseLineGerman: 'Lorazepam 1 mg b.B.',
+          doseSchedule: { morning: '', noon: '', evening: '', night: '', unit: 'mg', prn: true },
+          prn: true,
+        }),
+      ),
+    ).toBe('1 mg b.B.')
+  })
 })

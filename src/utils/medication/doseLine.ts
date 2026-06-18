@@ -126,34 +126,39 @@ export function formatDoseScheduleGerman(
   return unit ? `${base} ${unit}`.trim() : base
 }
 
+function stripSubstancePrefix(line: string, substance: string): string {
+  const trimmed = line.trim()
+  if (!trimmed) return ''
+  if (substance && trimmed.startsWith(substance)) {
+    return trimmed.slice(substance.length).trim()
+  }
+  return trimmed
+}
+
 /**
  * Dose portion for Übersicht and other compact views where substance is shown separately.
- * Prefers the canonical `doseLineGerman` (same as Medikation tab) and strips the leading
- * substance name when present.
+ * Schedule-derived mg-per-slot notation is preferred over stored `doseLineGerman`, which may
+ * be stale (e.g. duplicated strength or Stk. counts from older saves).
  */
 export function formatMedicationOverviewDoseGerman(entry: MedicationEntry): string {
-  const doseLine = entry.doseLineGerman.trim()
   const substance = entry.substance.trim()
-
-  if (doseLine) {
-    if (substance && doseLine.startsWith(substance)) {
-      const remainder = doseLine.slice(substance.length).trim()
-      if (remainder) return remainder
-    }
-    return doseLine
-  }
-
-  if (entry.doseSchedule.prn || entry.prn) {
-    return formatDoseScheduleGerman(entry.doseSchedule, {
-      formulation: entry.formulation,
-      strength: entry.strength,
-    })
-  }
-
-  return formatDoseScheduleGerman(entry.doseSchedule, {
+  const scheduleDose = formatDoseScheduleGerman(entry.doseSchedule, {
     formulation: entry.formulation,
     strength: entry.strength,
   })
+  const doseLine = entry.doseLineGerman.trim()
+  const isPrn = entry.doseSchedule.prn || entry.prn
+
+  if (isPrn) {
+    const stripped = stripSubstancePrefix(doseLine, substance)
+    if (stripped && stripped !== scheduleDose) return stripped
+    return scheduleDose
+  }
+
+  if (scheduleDose) return scheduleDose
+
+  const stripped = stripSubstancePrefix(doseLine, substance)
+  return stripped || doseLine
 }
 
 export function formatDoseLineGerman(
