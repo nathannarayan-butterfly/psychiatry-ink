@@ -5,7 +5,7 @@ import {
   Plus,
   Printer,
 } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import { usePrivacySettings } from '../../hooks/usePrivacySettings'
 import { isListedPatientCase, useCaseRegistry } from '../../hooks/useCaseRegistry'
@@ -14,13 +14,16 @@ import { useCalendar } from '../../hooks/useCalendar'
 import type { CalendarItem, CalendarViewMode } from '../../types/calendar'
 import {
   addDays,
+  addMonths,
   CALENDAR_STATUS_LABELS,
   CALENDAR_TYPE_LABELS,
-  CALENDAR_VIEW_LABELS,
   endOfDayIso,
   formatCalendarDate,
   formatCalendarTime,
+  formatMonthYear,
+  getWeekdayLabels,
   isSameDay,
+  localeForUiLanguage,
   startOfDayIso,
   startOfWeek,
   statusDotClass,
@@ -28,12 +31,21 @@ import {
 } from '../../utils/calendarLabels'
 import { printDaySchedule } from '../../utils/calendar/printDaySchedule'
 import { CalendarItemModal, CalendarRescheduleModal } from './CalendarItemModal'
+import { CalendarMonthGrid } from './CalendarMonthGrid'
+import { CalendarSidePanels } from './CalendarSidePanels'
 import type { NewPatientData } from '../dashboard/NewPatientDialog'
 import { ClinicalLoading } from '../ui/ClinicalLoading'
 
 interface CalendarPageProps {
   onBack: () => void
   onOpenCase?: (caseId: string, appointmentId?: string) => void
+}
+
+const VIEW_MODE_KEYS: Record<CalendarViewMode, 'calendarViewDay' | 'calendarViewWeek' | 'calendarViewMonth' | 'calendarViewList'> = {
+  day: 'calendarViewDay',
+  week: 'calendarViewWeek',
+  month: 'calendarViewMonth',
+  list: 'calendarViewList',
 }
 
 function resolvePatientName(cases: ReturnType<typeof useCaseRegistry>['cases'], caseId?: string): string {
@@ -43,12 +55,18 @@ function resolvePatientName(cases: ReturnType<typeof useCaseRegistry>['cases'], 
 }
 
 export function CalendarPage({ onBack, onOpenCase }: CalendarPageProps) {
-  const [viewMode, setViewMode] = useState<CalendarViewMode>('week')
+  const today = new Date()
+  const [viewMode, setViewMode] = useState<CalendarViewMode>('month')
   const [anchorDate, setAnchorDate] = useState(() => new Date())
+  const [selectedDay, setSelectedDay] = useState(() => new Date())
   const [modalOpen, setModalOpen] = useState(false)
   const [editItem, setEditItem] = useState<CalendarItem | null>(null)
   const [rescheduleItem, setRescheduleItem] = useState<CalendarItem | null>(null)
   const [printIncludeNotes, setPrintIncludeNotes] = useState(false)
+
+  const { language, t } = useTranslation()
+  const locale = localeForUiLanguage(language)
+  const weekdayLabels = useMemo(() => getWeekdayLabels(locale), [locale])
 
   const range = useMemo(() => {
     if (viewMode === 'day') {
@@ -60,9 +78,9 @@ export function CalendarPage({ onBack, onOpenCase }: CalendarPageProps) {
       return { from: startOfDayIso(weekStart), to: endOfDayIso(weekEnd) }
     }
     if (viewMode === 'month') {
-      const monthStart = new Date(anchorDate.getFullYear(), anchorDate.getMonth(), 1)
-      const monthEnd = new Date(anchorDate.getFullYear(), anchorDate.getMonth() + 1, 0)
-      return { from: startOfDayIso(monthStart), to: endOfDayIso(monthEnd) }
+      const prevMonthStart = addMonths(anchorDate, -1)
+      const nextMonthEnd = new Date(anchorDate.getFullYear(), anchorDate.getMonth() + 2, 0)
+      return { from: startOfDayIso(prevMonthStart), to: endOfDayIso(nextMonthEnd) }
     }
     const listStart = addDays(anchorDate, -14)
     const listEnd = addDays(anchorDate, 30)
@@ -71,7 +89,6 @@ export function CalendarPage({ onBack, onOpenCase }: CalendarPageProps) {
 
   const { items, loading, error, create, update, reschedule, complete, cancel } = useCalendar(range)
   const privacy = usePrivacySettings()
-  const { t } = useTranslation()
   const documentTypeLabel = useCallback(
     (typeId: string | undefined) => {
       if (!typeId) return ''
@@ -111,12 +128,19 @@ export function CalendarPage({ onBack, onOpenCase }: CalendarPageProps) {
     [items, anchorDate],
   )
 
+  const selectedDayItems = useMemo(
+    () => items.filter((item) => isSameDay(new Date(item.startTime), selectedDay)),
+    [items, selectedDay],
+  )
+
   const handlePrintDay = useCallback(() => {
-    printDaySchedule(dayItems, anchorDate, {
+    const printItems = viewMode === 'month' ? selectedDayItems : dayItems
+    const printDate = viewMode === 'month' ? selectedDay : anchorDate
+    printDaySchedule(printItems, printDate, {
       includeNotes: printIncludeNotes,
       resolvePatientName: (caseId) => resolvePatientName(patientCases, caseId),
     })
-  }, [anchorDate, dayItems, patientCases, printIncludeNotes])
+  }, [anchorDate, dayItems, patientCases, printIncludeNotes, selectedDay, selectedDayItems, viewMode])
 
   const shiftAnchor = useCallback(
     (delta: number) => {
@@ -132,37 +156,80 @@ export function CalendarPage({ onBack, onOpenCase }: CalendarPageProps) {
     [viewMode],
   )
 
+  const handleSelectDay = useCallback((day: Date) => {
+    setSelectedDay(day)
+    setAnchorDate((prev) => {
+      if (day.getMonth() === prev.getMonth() && day.getFullYear() === prev.getFullYear()) return prev
+      return new Date(day.getFullYear(), day.getMonth(), 1)
+    })
+  }, [])
+
+  const goToToday = useCallback(() => {
+    const now = new Date()
+    setAnchorDate(now)
+    setSelectedDay(now)
+  }, [])
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (modalOpen || rescheduleItem) return
+      const target = event.target
+      if (target instanceof HTMLElement && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return
+      }
+      let delta = 0
+      if (event.key === 'ArrowLeft') delta = -1
+      else if (event.key === 'ArrowRight') delta = 1
+      else if (event.key === 'ArrowUp') delta = -7
+      else if (event.key === 'ArrowDown') delta = 7
+      else return
+      event.preventDefault()
+      setSelectedDay((prev) => {
+        const next = addDays(prev, delta)
+        setAnchorDate((anchor) => {
+          if (next.getMonth() === anchor.getMonth() && next.getFullYear() === anchor.getFullYear()) return anchor
+          return new Date(next.getFullYear(), next.getMonth(), 1)
+        })
+        return next
+      })
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [modalOpen, rescheduleItem])
+
   const weekDays = useMemo(() => {
     const start = startOfWeek(anchorDate)
     return Array.from({ length: 7 }, (_, i) => addDays(start, i))
   }, [anchorDate])
 
-  const monthCells = useMemo(() => {
-    const first = new Date(anchorDate.getFullYear(), anchorDate.getMonth(), 1)
-    const start = startOfWeek(first)
-    return Array.from({ length: 42 }, (_, i) => addDays(start, i))
-  }, [anchorDate])
+  const prevMonthAnchor = useMemo(() => addMonths(anchorDate, -1), [anchorDate])
+  const nextMonthAnchor = useMemo(() => addMonths(anchorDate, 1), [anchorDate])
+
+  const openQuickAdd = useCallback(() => {
+    setEditItem(null)
+    setModalOpen(true)
+  }, [])
 
   const renderItemActions = (item: CalendarItem) => (
     <div className="calendar-item-actions">
       {item.caseId && onOpenCase ? (
         <button type="button" className="calendar-btn calendar-btn--xs" onClick={() => onOpenCase(item.caseId!, item.id)}>
-          Fall öffnen
+          {t('calendarOpenCase')}
         </button>
       ) : null}
       <button type="button" className="calendar-btn calendar-btn--xs" onClick={() => { setEditItem(item); setModalOpen(true) }}>
-        Bearbeiten
+        {t('calendarEdit')}
       </button>
       <button type="button" className="calendar-btn calendar-btn--xs" onClick={() => setRescheduleItem(item)}>
-        Verschieben
+        {t('calendarReschedule')}
       </button>
       {item.status !== 'completed' && item.status !== 'cancelled' ? (
         <>
           <button type="button" className="calendar-btn calendar-btn--xs" onClick={() => void complete(item.id)}>
-            Abschließen
+            {t('calendarComplete')}
           </button>
           <button type="button" className="calendar-btn calendar-btn--xs calendar-btn--danger" onClick={() => void cancel(item.id)}>
-            Stornieren
+            {t('calendarCancel')}
           </button>
         </>
       ) : null}
@@ -183,23 +250,28 @@ export function CalendarPage({ onBack, onOpenCase }: CalendarPageProps) {
     </li>
   )
 
+  const monthTitle = formatMonthYear(anchorDate, locale)
+
   return (
-    <div className="calendar-page text-ink">
+    <div className="calendar-page cm-workspace text-ink">
       <header className="calendar-page__header">
         <button type="button" className="clinical-back-link" onClick={onBack}>
           <ArrowLeft className="h-4 w-4" aria-hidden />
           Dashboard
         </button>
-        <h1 className="calendar-page__title">Kalender</h1>
-        <button type="button" className="calendar-btn calendar-btn--primary" onClick={() => { setEditItem(null); setModalOpen(true) }}>
+        <div className="cm-page-eyebrow calendar-page__eyebrow">
+          <h1 className="cm-page-eyebrow__label">{t('calendarTitle')}</h1>
+          <hr className="cm-page-eyebrow__rule" />
+        </div>
+        <button type="button" className="calendar-btn calendar-btn--primary" onClick={openQuickAdd}>
           <Plus className="h-4 w-4" aria-hidden />
-          Termin
+          {t('calendarNewAppointment')}
         </button>
       </header>
 
       <div className="calendar-toolbar">
-        <div className="calendar-view-toggle" role="group" aria-label="Ansicht">
-          {(Object.keys(CALENDAR_VIEW_LABELS) as CalendarViewMode[]).map((mode) => (
+        <div className="calendar-view-toggle" role="group" aria-label={t('calendarViewLabel')}>
+          {(Object.keys(VIEW_MODE_KEYS) as CalendarViewMode[]).map((mode) => (
             <button
               key={mode}
               type="button"
@@ -207,22 +279,22 @@ export function CalendarPage({ onBack, onOpenCase }: CalendarPageProps) {
               onClick={() => setViewMode(mode)}
               aria-pressed={viewMode === mode}
             >
-              {CALENDAR_VIEW_LABELS[mode]}
+              {t(VIEW_MODE_KEYS[mode])}
             </button>
           ))}
         </div>
         <div className="calendar-nav">
-          <button type="button" className="calendar-nav__btn" onClick={() => shiftAnchor(-1)} aria-label="Zurück">
+          <button type="button" className="calendar-nav__btn" onClick={() => shiftAnchor(-1)} aria-label={t('calendarNavBack')}>
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <span className="calendar-nav__label">{formatCalendarDate(anchorDate.toISOString())}</span>
-          <button type="button" className="calendar-nav__btn" onClick={() => shiftAnchor(1)} aria-label="Weiter">
+          <span className="calendar-nav__label">{viewMode === 'month' ? monthTitle : formatCalendarDate(anchorDate.toISOString())}</span>
+          <button type="button" className="calendar-nav__btn" onClick={() => shiftAnchor(1)} aria-label={t('calendarNavForward')}>
             <ChevronRight className="h-4 w-4" />
           </button>
-          <button type="button" className="calendar-btn calendar-btn--ghost calendar-btn--xs" onClick={() => setAnchorDate(new Date())}>
-            Heute
+          <button type="button" className="calendar-btn calendar-btn--ghost calendar-btn--xs" onClick={goToToday}>
+            {t('calendarToday')}
           </button>
-          {(viewMode === 'day' || viewMode === 'list') && !loading ? (
+          {(viewMode === 'day' || viewMode === 'list' || viewMode === 'month') && !loading ? (
             <>
               <label className="calendar-print-notes-toggle">
                 <input
@@ -230,24 +302,76 @@ export function CalendarPage({ onBack, onOpenCase }: CalendarPageProps) {
                   checked={printIncludeNotes}
                   onChange={(event) => setPrintIncludeNotes(event.target.checked)}
                 />
-                Notizen
+                {t('calendarPrintNotes')}
               </label>
               <button
                 type="button"
                 className="calendar-btn calendar-btn--ghost calendar-btn--xs"
                 onClick={handlePrintDay}
-                disabled={dayItems.length === 0}
+                disabled={(viewMode === 'month' ? selectedDayItems : dayItems).length === 0}
               >
                 <Printer className="h-3.5 w-3.5" aria-hidden />
-                Drucken
+                {t('calendarPrint')}
               </button>
             </>
           ) : null}
         </div>
       </div>
 
-      {loading ? <ClinicalLoading variant="compact" label="Kalender wird geladen…" /> : null}
+      {loading ? <ClinicalLoading variant="compact" label={t('calendarLoading')} /> : null}
       {error ? <p className="calendar-page__error" role="alert">{error}</p> : null}
+
+      {!loading && viewMode === 'month' ? (
+        <div className="calendar-layout">
+          <aside className="calendar-layout__side calendar-layout__side--left" aria-label={t('calendarSidePanelsLabel')}>
+            <CalendarMonthGrid
+              monthAnchor={prevMonthAnchor}
+              items={items}
+              variant="mini"
+              selectedDay={selectedDay}
+              today={today}
+              onSelectDay={handleSelectDay}
+              weekdayLabels={weekdayLabels}
+              monthLabel={formatMonthYear(prevMonthAnchor, locale)}
+              ariaLabel={t('calendarPreviousMonth')}
+            />
+            <CalendarMonthGrid
+              monthAnchor={nextMonthAnchor}
+              items={items}
+              variant="mini"
+              selectedDay={selectedDay}
+              today={today}
+              onSelectDay={handleSelectDay}
+              weekdayLabels={weekdayLabels}
+              monthLabel={formatMonthYear(nextMonthAnchor, locale)}
+              ariaLabel={t('calendarNextMonthLabel')}
+            />
+          </aside>
+
+          <div className="calendar-layout__main">
+            <CalendarMonthGrid
+              monthAnchor={anchorDate}
+              items={items}
+              variant="main"
+              selectedDay={selectedDay}
+              today={today}
+              onSelectDay={handleSelectDay}
+              weekdayLabels={weekdayLabels}
+              ariaLabel={monthTitle}
+            />
+          </div>
+
+          <CalendarSidePanels
+            items={items}
+            selectedDay={selectedDay}
+            today={today}
+            cases={patientCases}
+            onSelectDay={handleSelectDay}
+            onQuickAdd={openQuickAdd}
+            onOpenCase={onOpenCase}
+          />
+        </div>
+      ) : null}
 
       {!loading && viewMode === 'day' ? (
         <ul className="calendar-list">{dayItems.map(renderItemRow)}</ul>
@@ -260,12 +384,12 @@ export function CalendarPage({ onBack, onOpenCase }: CalendarPageProps) {
       {!loading && viewMode === 'week' ? (
         <div className="calendar-week-grid">
           {weekDays.map((day) => {
-            const dayItems = items.filter((i) => isSameDay(new Date(i.startTime), day))
+            const colItems = items.filter((i) => isSameDay(new Date(i.startTime), day))
             return (
-              <div key={day.toISOString()} className={`calendar-week-col${isSameDay(day, new Date()) ? ' calendar-week-col--today' : ''}`}>
+              <div key={day.toISOString()} className={`calendar-week-col${isSameDay(day, today) ? ' calendar-week-col--today' : ''}`}>
                 <div className="calendar-week-col__head">{formatCalendarDate(day.toISOString())}</div>
                 <ul className="calendar-week-col__list">
-                  {dayItems.map((item) => (
+                  {colItems.map((item) => (
                     <li key={item.id} className={`calendar-week-chip calendar-week-chip--${item.status} ${typeAccentClass(item.type)}`}>
                       <span className={`calendar-status-dot ${statusDotClass(item.status)}`} />
                       <span className="calendar-week-chip__time">{formatCalendarTime(item.startTime)}</span>
@@ -279,42 +403,12 @@ export function CalendarPage({ onBack, onOpenCase }: CalendarPageProps) {
         </div>
       ) : null}
 
-      {!loading && viewMode === 'month' ? (
-        <div className="calendar-month-grid">
-          {monthCells.map((day) => {
-            const dayItems = items.filter((i) => isSameDay(new Date(i.startTime), day))
-            const inMonth = day.getMonth() === anchorDate.getMonth()
-            return (
-              <div
-                key={day.toISOString()}
-                className={[
-                  'calendar-month-cell',
-                  inMonth ? '' : 'calendar-month-cell--outside',
-                  isSameDay(day, new Date()) ? 'calendar-month-cell--today' : '',
-                ].join(' ').trim()}
-              >
-                <span className="calendar-month-cell__day">{day.getDate()}</span>
-                {dayItems.slice(0, 3).map((item) => (
-                  <span key={item.id} className={`calendar-month-cell__event ${typeAccentClass(item.type)}`}>
-                    <span className={`calendar-status-dot ${statusDotClass(item.status)}`} />
-                    {formatCalendarTime(item.startTime)} {item.title}
-                  </span>
-                ))}
-                {dayItems.length > 3 ? (
-                  <span className="calendar-month-cell__more">+{dayItems.length - 3}</span>
-                ) : null}
-              </div>
-            )
-          })}
-        </div>
-      ) : null}
-
       <CalendarItemModal
         open={modalOpen}
         onClose={() => { setModalOpen(false); setEditItem(null) }}
         cases={patientCases}
         initial={editItem}
-        defaultStart={anchorDate}
+        defaultStart={selectedDay}
         onCreatePatient={handleCreatePatientForCalendar}
         onSave={async (input) => {
           if (editItem?.id) await update(editItem.id, input)

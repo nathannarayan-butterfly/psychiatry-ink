@@ -78,6 +78,57 @@ export function isSameDay(a: Date, b: Date): boolean {
   )
 }
 
+export function localeForUiLanguage(language: string): string {
+  switch (language) {
+    case 'en':
+      return 'en-GB'
+    case 'fr':
+      return 'fr-FR'
+    case 'es':
+      return 'es-ES'
+    default:
+      return 'de-DE'
+  }
+}
+
+export function getMonthStart(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), 1)
+}
+
+export function addMonths(date: Date, months: number): Date {
+  return new Date(date.getFullYear(), date.getMonth() + months, 1)
+}
+
+/** Six-row grid (42 cells) covering the month that contains `monthAnchor`. */
+export function getMonthGridCells(monthAnchor: Date): Date[] {
+  const first = getMonthStart(monthAnchor)
+  const start = startOfWeek(first)
+  return Array.from({ length: 42 }, (_, i) => addDays(start, i))
+}
+
+export function formatMonthYear(date: Date, locale: string): string {
+  return date.toLocaleDateString(locale, { month: 'long', year: 'numeric' })
+}
+
+export function formatDayHeader(date: Date, locale: string): string {
+  return date.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })
+}
+
+export function getWeekdayLabels(locale: string): string[] {
+  const monday = startOfWeek(new Date(2024, 0, 8))
+  return Array.from({ length: 7 }, (_, i) =>
+    addDays(monday, i).toLocaleDateString(locale, { weekday: 'narrow' }),
+  )
+}
+
+export function dayKey(date: Date): string {
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+}
+
+export function countActiveAppointments(items: { status: string }[]): number {
+  return items.filter((item) => item.status !== 'cancelled' && item.status !== 'no_show').length
+}
+
 /**
  * Maps an appointment type to a CSS class that exposes a per-category
  * `--cal-type-color` token (defined in calendar.css). Used to drive subtle
