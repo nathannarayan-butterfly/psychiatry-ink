@@ -542,24 +542,9 @@
   margin: 0 -1.25rem 1rem;
 }
 
-.case-patient-header__name {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: var(--cm-hero-name-size, 1.375rem);
-  font-weight: var(--display-weight, 700);
-  letter-spacing: var(--display-tracking, -0.025em);
-  color: color-mix(in srgb, var(--area-accent) 42%, var(--ink, #1a1a18));
-  margin: 0;
-  line-height: var(--display-leading, 1.08);
-}
-
-.case-patient-header__meta {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: 0.8rem;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  color: var(--text-muted, #8a8a80);
-  margin: 0;
-}
+/* Patient identity now renders through the shared <ClinicalHeroStrip> (.cm-hero*)
+   inside .case-patient-header; the former .case-patient-header__name/__meta
+   rules were leftover from the pre-minimal layout and have been removed. */
 
 .case-tab-shell {
   display: flex;

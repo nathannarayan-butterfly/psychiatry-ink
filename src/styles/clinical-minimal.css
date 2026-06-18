@@ -8,12 +8,28 @@
 
 :root {
   --cm-font-mono: var(--font-mono);
-  --cm-hero-name-size: 1.5rem;
-  --cm-hero-thesis-size: 0.9375rem;
-  --cm-eyebrow-size: 0.6875rem;
-  --cm-section-gap: 2.75rem;
-  --cm-col-gap: 3rem;
+
+  /* —— Type scale (clinical surfaces) ——
+   * One coherent ladder shared by every workspace surface. Body/label sizes
+   * reference the global --text-* tokens; the display sizes below are the only
+   * surface-specific steps. Pages MUST consume these rather than ad-hoc rems. */
+  --cm-hero-name-size: 1.5rem;     /* patient identity (h1) */
+  --cm-hero-thesis-size: 0.9375rem; /* clinical thesis lede */
+  --cm-section-title-size: 0.8125rem; /* embedded chart / sub-section titles */
+  --cm-eyebrow-size: 0.6875rem;    /* uppercase section / page eyebrows */
+
+  /* Uppercase micro-label rhythm — every eyebrow / kicker / kv-label uses this
+   * single tracking so the small caps read as one family across surfaces. */
+  --cm-label-size: 0.6875rem;
+  --cm-label-weight: 500;
+  --cm-label-tracking: 0.08em;
+
+  /* —— Vertical + horizontal rhythm —— */
+  --cm-section-gap: 2.75rem;        /* space between flat sections / grid rows */
+  --cm-block-gap: 1rem;             /* head → body within a section */
+  --cm-col-gap: 3rem;              /* asymmetric two-column gutter */
   --cm-prose-max: 42em;
+
   --cm-hairline: color-mix(in srgb, var(--border-soft, #e8e4df) 72%, transparent);
   --cm-quiet-border: color-mix(in srgb, var(--border-soft, #e8e4df) 88%, transparent);
   --cm-page-pad-x: 1.75rem;
@@ -48,8 +64,8 @@
   margin: 0;
   font-family: var(--font-sans, inherit);
   font-size: var(--cm-eyebrow-size);
-  font-weight: 500;
-  letter-spacing: 0.1em;
+  font-weight: var(--cm-label-weight, 500);
+  letter-spacing: var(--cm-label-tracking, 0.08em);
   text-transform: uppercase;
   color: var(--text-muted, #91887e);
   line-height: 1;
@@ -71,8 +87,8 @@
   margin: 0 0 0.5rem;
   font-family: var(--font-sans, inherit);
   font-size: var(--cm-eyebrow-size);
-  font-weight: 500;
-  letter-spacing: 0.08em;
+  font-weight: var(--cm-label-weight, 500);
+  letter-spacing: var(--cm-label-tracking, 0.08em);
   text-transform: uppercase;
   color: var(--text-muted, #91887e);
   line-height: 1.2;
@@ -92,6 +108,15 @@
   text-align: left;
 }
 
+/* Identity row — name + demographics inline, case id trailing (reference look). */
+.cm-hero__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.75rem;
+  margin-bottom: 0.45rem;
+}
+
 .cm-hero__name {
   font-family: var(--font-sans, system-ui, sans-serif);
   font-size: var(--cm-hero-name-size);
@@ -99,11 +124,11 @@
   letter-spacing: var(--display-tracking, -0.025em);
   line-height: var(--display-leading, 1.08);
   color: color-mix(in srgb, var(--area-accent, var(--accent)) 42%, var(--text-main, #24211e));
-  margin: 0 0 0.35rem;
+  margin: 0;
 }
 
 .cm-hero__meta {
-  margin: 0 0 0.25rem;
+  margin: 0;
   font-size: var(--text-xs, 0.75rem);
   font-weight: 400;
   color: var(--text-muted, #91887e);
@@ -112,12 +137,20 @@
 }
 
 .cm-hero__case-id {
-  margin: 0 0 0.65rem;
+  margin: 0 0 0 auto;
   font-family: var(--font-mono, ui-monospace, monospace);
   font-size: var(--text-xs, 0.75rem);
   color: color-mix(in srgb, var(--text-muted, #91887e) 72%, transparent);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
+}
+
+@media (max-width: 540px) {
+  /* On narrow widths let the case id wrap under the name instead of forcing a
+     wide gap to the right edge. */
+  .cm-hero__case-id {
+    margin-left: 0;
+  }
 }
 
 .cm-hero__thesis {
