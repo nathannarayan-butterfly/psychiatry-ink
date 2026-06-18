@@ -6,7 +6,6 @@ import {
   type CombinationRiskKind,
   type RiskLevel,
 } from '../medication/medicationInsights'
-import { analyteLabel, buildLabRelevance, type AnalyteKey } from '../diagnostics/labRelevance'
 import type { SemanticTone } from '../../components/notion/overview/OverviewCard'
 import type { SafetyAlert, SafetyData, SafetyRiskSignal } from '../../components/notion/overview/types'
 
@@ -36,37 +35,6 @@ const SEVERITY_LABELS: Record<string, string> = {
   moderate: 'moderat',
   minor: 'gering',
 }
-
-/** Safety-critical analytes get a stronger tone in the monitoring list. */
-const CRITICAL_ANALYTES = new Set<AnalyteKey>([
-  'neutrophils',
-  'leukocytes',
-  'troponin',
-  'sodium',
-  'platelets',
-  'liverEnzymes',
-  'ammonia',
-])
-
-const MONITORING_ORDER: AnalyteKey[] = [
-  'neutrophils',
-  'leukocytes',
-  'troponin',
-  'sodium',
-  'platelets',
-  'liverEnzymes',
-  'ammonia',
-  'creatinine',
-  'egfr',
-  'tsh',
-  'calcium',
-  'qtc',
-  'prolactin',
-  'glucose',
-  'hba1c',
-  'lipids',
-  'weight',
-]
 
 function riskToneFromText(value: string | null | undefined): SemanticTone | null {
   if (!value) return null
@@ -326,29 +294,6 @@ export function buildPatientSafety(input: PatientSafetyInput): SafetyData {
     })
   }
 
-  // Active monitoring obligations driven by the regimen (clozapine→ANC, lithium→level/renal/TSH …).
-  const activeSubstances = input.medications
-    .filter((m) => m.status === 'active' || m.status === 'reduced' || m.status === 'increased')
-    .map((m) => m.substance)
-  const relevance = buildLabRelevance(activeSubstances)
-  const monitoringKeys = [...relevance.rationaleByKey.keys()].sort(
-    (a, b) =>
-      (MONITORING_ORDER.indexOf(a) + 1 || 99) - (MONITORING_ORDER.indexOf(b) + 1 || 99),
-  )
-  for (const key of monitoringKeys.slice(0, 4)) {
-    const rationale = relevance.rationaleByKey.get(key) ?? []
-    if (rationale.length === 0) continue
-    const drugs = [...new Set(rationale.map((r) => r.drug))].join(', ')
-    const reasons = [...new Set(rationale.map((r) => r.reason))].join(' · ')
-    alerts.push({
-      id: `mon:${key}`,
-      category: 'monitoring',
-      tone: CRITICAL_ANALYTES.has(key) ? 'moderate' : 'info',
-      title: `${analyteLabel(key)} überwachen`,
-      detail: `${drugs}: ${reasons}`,
-    })
-  }
-
   const allergyAlert = buildAllergyAlert(input.allergyText)
   if (allergyAlert) alerts.unshift(allergyAlert)
 
@@ -365,5 +310,5 @@ export function buildPatientSafety(input: PatientSafetyInput): SafetyData {
   const risk = buildRisk(input)
   const hasAnySignal = risk !== null || alerts.length > 0
 
-  return { risk, alerts, hasAnySignal }
+  return { risk, alerts, medicationMonitoring: [], hasAnySignal }
 }

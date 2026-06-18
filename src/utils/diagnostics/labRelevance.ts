@@ -372,6 +372,19 @@ export const DRUG_LAB_RULES: DrugLabRule[] = [
   },
 ]
 
+/**
+ * Recommended monitoring analytes for a single substance (curated rules + class fallback).
+ * Used by overview safety card to group parameters under each medication.
+ */
+export function getMonitoringAnalytesForSubstance(substance: string): AnalyteRule[] {
+  const trimmed = substance.trim()
+  if (!trimmed) return []
+  const normalized = normalizeSubstance(trimmed)
+  const explicit = DRUG_LAB_RULES.find((rule) => rule.match.test(normalized))
+  if (explicit) return explicit.analytes
+  return classFallbackAnalytes(trimmed)
+}
+
 /** lowercase + strip accents + drop separators, to match brand/generic loosely. */
 function normalizeSubstance(s: string): string {
   return s

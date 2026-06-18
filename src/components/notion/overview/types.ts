@@ -42,8 +42,24 @@ export interface SafetyData {
     signals?: SafetyRiskSignal[]
   } | null
   alerts: SafetyAlert[]
+  /** Per-medication monitoring parameters with latest lab values. */
+  medicationMonitoring: MedicationMonitoringGroup[]
   /** True when no risk + no alerts could be derived at all (hide / "all clear"). */
   hasAnySignal: boolean
+}
+
+export interface MedicationMonitoringParameter {
+  key: string
+  label: string
+  valueLabel: string | null
+  dateLabel: string | null
+  missing: boolean
+}
+
+export interface MedicationMonitoringGroup {
+  medicationId: string
+  medicationName: string
+  parameters: MedicationMonitoringParameter[]
 }
 
 export interface StatusEntry {

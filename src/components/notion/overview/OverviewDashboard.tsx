@@ -7,6 +7,7 @@ import { useOverviewLayout } from '../../../hooks/useOverviewLayout'
 import { ClinicalPageEyebrow } from '../../clinical/ClinicalPageEyebrow'
 import { OverviewLayoutToolbar } from './OverviewLayoutToolbar'
 import { OverviewWidgetGrid } from './OverviewWidgetGrid'
+import { OverviewHero } from './OverviewHero'
 import type { OverviewWidgetRenderContext } from './OverviewWidgetContent'
 import type {
   HeroSummaryData,
@@ -26,6 +27,7 @@ import { loadNotionDocumentSnapshot } from '../../../utils/notionDocumentActions
 import { loadNotionPageDate } from '../../../utils/notionPageDate'
 import { loadClinicalImprintIndex } from '../../../utils/clinicalImprint'
 import { buildPatientSafety } from '../../../utils/overview/patientSafety'
+import { getMedicationMonitoringGroups } from '../../../utils/overview/medicationMonitoring'
 import { buildLabsDue } from '../../../utils/overview/labsDue'
 import { buildPsychopathologyStructuredCues, mergePsychopathologyProfiles } from '../../../utils/overview/psychopathologyDomains'
 import { getSymptomTrajectory } from '../../../utils/overview/symptomTrajectory'
@@ -36,6 +38,7 @@ import { buildRecentLabResults } from '../../../utils/overview/recentLabResults'
 import { buildButterflySummary, hasButterflyCriteriaSupport } from '../../../utils/overview/butterflySummary'
 import { loadIsdmAnalysis } from '../../../utils/isdm/storage'
 import { loadDiagnosen } from '../../../utils/diagnosenArchive'
+import { resolveDiagnosisLabelSync } from '../../../utils/diagnosisDisplayRequests'
 import { useOverviewHiddenGraphs } from '../../../hooks/useOverviewHiddenGraphs'
 import { useOverviewCollaboration } from '../../../hooks/useOverviewCollaboration'
 import { usePsychotherapyPlan } from '../../../hooks/usePsychotherapyPlan'
@@ -174,13 +177,18 @@ export function OverviewDashboard({
   const safetyData = useMemo(() => {
     const imprints = loadClinicalImprintIndex(caseId).imprints
     const riskText = loadNotionDocumentSnapshot('verlauf', caseId)?.sectionContents['risiko'] ?? null
-    return buildPatientSafety({
+    const base = buildPatientSafety({
       medications,
       language,
       imprints,
       riskText,
       allergyText: readAllergyText(caseId),
     })
+    const medicationMonitoring = getMedicationMonitoringGroups({
+      medications,
+      befunde: loadBefunde(caseId),
+    })
+    return { ...base, medicationMonitoring }
   }, [caseId, medications, language])
 
   // ── Appointment orientation (summary strip) ───────────────────────────────
@@ -272,7 +280,7 @@ export function OverviewDashboard({
     const primaryDiagnosis = coding
       ? {
           code: coding.code,
-          label: coding.label,
+          label: resolveDiagnosisLabelSync(coding, primaryVersion),
           version: primaryVersion,
           overridden: coding.overridden,
         }
@@ -369,11 +377,17 @@ export function OverviewDashboard({
     [hasSpiegel, hasAdditionalSpiegel, hasPsychotherapyPlan, hasIsdm, hasLabData, hasButterfly],
   )
 
+  const gridWidgets = useMemo(
+    () => layout.widgets.filter((w) => w.widgetId !== 'hero-summary'),
+    [layout.widgets],
+  )
+
   return (
     <div className={`ov-dashboard cm-workspace cm-workspace--flush${editMode ? ' ov-dashboard--edit-mode' : ''}`}>
       <ClinicalPageEyebrow label="Übersicht" />
+      <OverviewHero data={heroData} caseId={caseId} />
       <OverviewWidgetGrid
-        widgets={layout.widgets}
+        widgets={gridWidgets}
         editMode={editMode}
         renderContext={widgetContext}
         visibilityContext={visibilityContext}

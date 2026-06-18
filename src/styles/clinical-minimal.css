@@ -7,7 +7,7 @@
  * ========================================================================== */
 
 :root {
-  --cm-font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
+  --cm-font-mono: var(--font-mono);
   --cm-hero-name-size: 1.5rem;
   --cm-hero-thesis-size: 0.9375rem;
   --cm-eyebrow-size: 0.6875rem;
@@ -46,7 +46,7 @@
 
 .cm-page-eyebrow__label {
   margin: 0;
-  font-family: var(--font-ui, inherit);
+  font-family: var(--font-sans, inherit);
   font-size: var(--cm-eyebrow-size);
   font-weight: 500;
   letter-spacing: 0.1em;
@@ -69,7 +69,7 @@
 .cm-eyebrow {
   display: block;
   margin: 0 0 0.5rem;
-  font-family: var(--font-ui, inherit);
+  font-family: var(--font-sans, inherit);
   font-size: var(--cm-eyebrow-size);
   font-weight: 500;
   letter-spacing: 0.08em;
@@ -92,25 +92,18 @@
   text-align: left;
 }
 
-.cm-hero__row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 0.35rem 0.75rem;
-  margin-bottom: 0.65rem;
-}
-
 .cm-hero__name {
-  font-family: var(--font-ui, system-ui, sans-serif);
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: var(--cm-hero-name-size);
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.2;
   color: color-mix(in srgb, var(--area-accent, var(--accent)) 42%, var(--text-main, #24211e));
-  margin: 0;
+  margin: 0 0 0.35rem;
 }
 
 .cm-hero__meta {
+  margin: 0 0 0.25rem;
   font-size: var(--text-xs, 0.75rem);
   font-weight: 400;
   color: var(--text-muted, #91887e);
@@ -119,10 +112,12 @@
 }
 
 .cm-hero__case-id {
-  margin-left: auto;
+  margin: 0 0 0.65rem;
+  font-family: var(--font-mono, ui-monospace, monospace);
   font-size: var(--text-xs, 0.75rem);
   color: color-mix(in srgb, var(--text-muted, #91887e) 72%, transparent);
   font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
 }
 
 .cm-hero__thesis {
@@ -174,6 +169,17 @@
   color: var(--text-muted, #91887e);
 }
 
+/* Compact axis strip — stacked acute safety lines inside a section */
+.cm-quiet-strip--axis {
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-left: 0.65rem;
+}
+
+.cm-quiet-strip--axis + .cm-quiet-strip--axis {
+  margin-top: 0.45rem;
+}
+
 /* —— Flat clinical section (replaces heavy cards) —— */
 
 .cm-section {
@@ -214,7 +220,7 @@
   padding: 0;
   border: none;
   background: none;
-  font-family: var(--font-ui, inherit);
+  font-family: var(--font-sans, inherit);
   font-size: var(--text-xs, 0.75rem);
   font-weight: 500;
   color: var(--accent, #8a5a2b);
@@ -434,7 +440,7 @@
   border: none;
   border-radius: var(--radius-control, 0.4375rem);
   background: transparent;
-  font-family: var(--font-ui, inherit);
+  font-family: var(--font-sans, inherit);
   font-size: 0.75rem;
   font-weight: 500;
   color: color-mix(in srgb, var(--text-muted, #91887e) 78%, transparent);

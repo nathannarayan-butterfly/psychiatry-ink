@@ -48,6 +48,10 @@
   text-align: left;
 }
 
+.ov-dashboard > .ov-hero-widget {
+  margin-bottom: var(--space-4, 1rem);
+}
+
 .ov-hero-widget .cm-hero {
   padding-bottom: 1.75rem;
 }
@@ -215,7 +219,7 @@
   border: 1px solid var(--border-soft, #e8e4df);
   background: var(--surface, #fff);
   color: var(--text-secondary, #6d655c);
-  font-family: var(--font-ui, inherit);
+  font-family: var(--font-sans, inherit);
   font-size: var(--text-xs, 0.75rem);
   font-weight: var(--weight-semibold, 600);
   cursor: pointer;
@@ -266,7 +270,7 @@
   border: 1px solid var(--border-soft, #e8e4df);
   background: var(--surface, #fff);
   color: var(--text-secondary, #6d655c);
-  font-family: var(--font-ui, inherit);
+  font-family: var(--font-sans, inherit);
   font-size: var(--text-xs, 0.75rem);
   font-weight: var(--weight-semibold, 600);
   cursor: pointer;
@@ -309,7 +313,7 @@
   border-radius: var(--radius-control, 0.4375rem);
   background: transparent;
   color: var(--text-main, #24211e);
-  font-family: var(--font-ui, inherit);
+  font-family: var(--font-sans, inherit);
   font-size: var(--text-sm, 0.8125rem);
   cursor: pointer;
 }
@@ -554,7 +558,7 @@
 }
 .ov-card__title {
   margin: 0;
-  font-family: var(--font-ui, inherit);
+  font-family: var(--font-sans, inherit);
   font-size: var(--text-xs, 0.75rem);
   font-weight: var(--weight-bold, 680);
   letter-spacing: 0.055em;
@@ -578,7 +582,7 @@
   border: none;
   padding: 0.18rem 0.4rem;
   margin-right: -0.2rem;
-  font-family: var(--font-ui, inherit);
+  font-family: var(--font-sans, inherit);
   font-size: var(--text-xs, 0.75rem);
   font-weight: var(--weight-semibold, 600);
   color: var(--accent, #8a5a2b);
@@ -765,41 +769,60 @@
   margin: 0 0 0.35rem;
 }
 
-/* ── Safety: compact headline + alert list ───────────────────────────────── */
+/* ── Safety: flat section — axis strips + grouped monitoring ─────────────── */
 
-.ov-safety-strip {
-  margin-top: 0;
-  width: 100%;
+.ov-safety.cm-section {
+  margin-bottom: 0;
 }
 
-.ov-safety__signals--flat {
+.ov-safety__axes {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-}
-
-.ov-safety__signal-row {
-  display: flex;
-  align-items: flex-start;
   gap: 0.45rem;
 }
 
-.ov-safety__signal-copy {
+.ov-safety__severity {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: var(--text-2xs, 0.6875rem);
+  font-weight: var(--weight-medium, 500);
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  color: var(--text-muted, #91887e);
+}
+
+.ov-safety__block {
+  margin-top: 1.125rem;
+}
+
+.ov-safety__subhead {
+  margin-bottom: 0.45rem;
+  font-size: var(--text-2xs, 0.6875rem);
+  letter-spacing: 0.06em;
+}
+
+.ov-safety__allergy-lines {
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
-  min-width: 0;
+  gap: 0.35rem;
 }
 
-.ov-list--flat {
-  margin-top: 0.65rem;
+.ov-safety__allergy-line {
+  margin: 0;
+  font-size: var(--text-sm, 0.8125rem);
+  line-height: var(--leading-snug, 1.35);
+  color: var(--text-main, #24211e);
 }
 
-.ov-alert--flat {
-  background: transparent;
-  border-left-width: 2px;
-  padding: 0.35rem 0 0.35rem 0.55rem;
+.ov-safety__allergy-primary {
+  font-weight: var(--weight-medium, 500);
+}
+
+.ov-safety__allergy-detail {
+  display: block;
+  margin-top: 0.1rem;
+  font-weight: var(--weight-normal, 400);
+  color: var(--text-secondary, #6d655c);
 }
 
 .ov-pill--text {
@@ -813,98 +836,77 @@
   display: none;
 }
 
-.ov-safety__signal {
+.ov-safety__interactions {
+  margin-top: 0;
+}
+
+.ov-list--flat {
+  margin-top: 0.65rem;
+}
+
+.ov-alert--flat {
+  background: transparent;
+  border-left-width: 2px;
+  padding: 0.35rem 0 0.35rem 0.55rem;
+}
+
+/* ── Safety: medication monitoring (grouped under drug) ─────────────────── */
+
+.ov-safety__monitoring {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  min-width: 0;
-  padding: 0.65rem 0.75rem;
-  border-radius: var(--ov-radius-row);
-  border: 1px solid var(--ov-hairline);
-  background: color-mix(in srgb, var(--text-muted) 5%, transparent);
+  gap: 0.75rem;
 }
 
-.ov-safety__signal--high {
-  background: var(--ov-danger-soft);
-  border-color: color-mix(in srgb, var(--ov-danger) 34%, var(--border-soft));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ov-danger) 10%, transparent);
-}
-.ov-safety__signal--moderate {
-  background: var(--ov-warn-soft);
-  border-color: color-mix(in srgb, var(--ov-warn) 34%, var(--border-soft));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ov-warn) 10%, transparent);
-}
-.ov-safety__signal--info {
-  background: var(--ov-info-soft);
-  border-color: color-mix(in srgb, var(--ov-info) 30%, var(--border-soft));
-}
-.ov-safety__signal--ok,
-.ov-safety__signal--low {
-  background: var(--ov-ok-soft);
-  border-color: color-mix(in srgb, var(--ov-ok) 30%, var(--border-soft));
-}
-
-.ov-safety__signal-head {
+.ov-safety__med-group {
   display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  min-width: 0;
-}
-.ov-safety__signal-icon {
-  flex-shrink: 0;
-}
-.ov-safety__signal--high .ov-safety__signal-icon {
-  color: var(--ov-danger);
-}
-.ov-safety__signal--moderate .ov-safety__signal-icon {
-  color: var(--ov-warn);
-}
-.ov-safety__signal--info .ov-safety__signal-icon {
-  color: var(--ov-info);
-}
-.ov-safety__signal--ok .ov-safety__signal-icon,
-.ov-safety__signal--low .ov-safety__signal-icon {
-  color: var(--ov-ok);
+  flex-direction: column;
+  gap: 0.2rem;
 }
 
-.ov-safety__signal-primary {
-  margin: 0;
-  min-width: 0;
-  font-size: var(--text-base, 0.9375rem);
+.ov-safety__med-name {
+  font-size: var(--text-sm, 0.8125rem);
   font-weight: var(--weight-semibold, 600);
   line-height: var(--leading-snug, 1.35);
   color: var(--text-main, #24211e);
-  overflow-wrap: anywhere;
+  margin-bottom: 0.1rem;
 }
-.ov-safety__signal-detail {
-  margin: 0;
+
+.ov-safety__param-row {
+  display: grid;
+  grid-template-columns: minmax(4.25rem, 5.75rem) minmax(0, 1fr);
+  gap: 0.35rem 0.75rem;
+  align-items: baseline;
+  padding: 0.1rem 0;
+  min-width: 0;
+}
+
+.ov-safety__param-label {
   font-size: var(--text-sm, 0.8125rem);
   font-weight: var(--weight-medium, 500);
-  line-height: var(--leading-snug, 1.35);
   color: var(--text-secondary, #6d655c);
 }
 
-.ov-safety__headline {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.45rem 0.6rem;
-  padding-bottom: var(--space-2, 0.5rem);
-  margin-bottom: 0.1rem;
-  border-bottom: 1px solid var(--ov-hairline);
-}
-.ov-safety__risk-label {
-  font-size: var(--text-2xs, 0.6875rem);
-  font-weight: var(--weight-bold, 680);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--text-secondary, #6d655c);
-}
-.ov-safety__risk-detail {
-  flex-basis: 100%;
+.ov-safety__param-value {
+  min-width: 0;
   font-size: var(--text-sm, 0.8125rem);
+  font-weight: var(--weight-medium, 500);
   line-height: var(--leading-snug, 1.35);
+  font-variant-numeric: tabular-nums;
   color: var(--text-main, #24211e);
+  overflow-wrap: anywhere;
+}
+
+.ov-safety__param-value--missing {
+  color: var(--text-muted, #91887e);
+  font-weight: var(--weight-normal, 400);
+}
+
+@media (max-width: 480px) {
+  .ov-safety__param-row {
+    grid-template-columns: minmax(3.5rem, 4.5rem) minmax(0, 1fr);
+    gap: 0.25rem 0.5rem;
+  }
 }
 
 .ov-alert {
