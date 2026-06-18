@@ -38,6 +38,7 @@ import {
   formatRationaleCaption,
 } from '../../utils/diagnostics/labRelevance'
 import { loadDiagnosen } from '../../utils/diagnosenArchive'
+import { resolveDiagnosisLabelSync } from '../../utils/diagnosisDisplayRequests'
 import { getCaseMeta } from '../../hooks/useCaseRegistry'
 import { loadNotionDocumentSnapshot } from '../../utils/notionDocumentActions'
 import { FONT_SANS } from '../../styles/typographyTokens'
@@ -270,7 +271,7 @@ function gatherClinicalContext(caseId: string): string {
       const diagLines = diagnosen
         .map((d) => {
           const code = d.icd10.code.trim()
-          const label = d.icd10.label.trim()
+          const label = resolveDiagnosisLabelSync(d.icd10, 'icd10')
           if (code && label) return `${code} ${label}`
           return code || label
         })
