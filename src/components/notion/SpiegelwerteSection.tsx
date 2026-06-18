@@ -15,7 +15,7 @@ import { useOverviewHiddenGraphs } from '../../hooks/useOverviewHiddenGraphs'
 import { GraphEnlargeModal } from './GraphEnlargeModal'
 
 /** Graph id namespace for the shared Overview hidden-graphs store. */
-function spiegelGraphId(name: string): string {
+export function spiegelGraphId(name: string): string {
   return `spiegel:${name}`
 }
 
@@ -173,6 +173,16 @@ export function extractSpiegelwerte(befunde: LaborBefund[]): SpiegelSeries[] {
   }
 
   return result
+}
+
+/** Most recent measurement across series (by latest point date). */
+export function pickLatestSpiegelSeries(series: SpiegelSeries[]): SpiegelSeries | null {
+  if (series.length === 0) return null
+  return series.reduce((acc, s) => {
+    const accDate = acc.points[acc.points.length - 1].date
+    const sDate = s.points[s.points.length - 1].date
+    return sDate.localeCompare(accDate) > 0 ? s : acc
+  })
 }
 
 // ---------------------------------------------------------------------------
@@ -415,9 +425,17 @@ function SpiegelCard({ series, onEnlarge, onHide }: SpiegelCardProps) {
 
 interface SpiegelwerteSectionProps {
   caseId: string
+  /** Full grid (default) or only the most recently measured substance. */
+  mode?: 'all' | 'latest'
+  /** Omit the latest visible series — for a secondary grid when latest is shown elsewhere. */
+  skipLatest?: boolean
 }
 
-export function SpiegelwerteSection({ caseId }: SpiegelwerteSectionProps) {
+export function SpiegelwerteSection({
+  caseId,
+  mode = 'all',
+  skipLatest = false,
+}: SpiegelwerteSectionProps) {
   const { t } = useTranslation()
   const { isHidden, hide, unhide } = useOverviewHiddenGraphs(caseId)
   const [enlarged, setEnlarged] = useState<SpiegelSeries | null>(null)
@@ -430,8 +448,18 @@ export function SpiegelwerteSection({ caseId }: SpiegelwerteSectionProps) {
 
   if (series.length === 0) return null
 
-  const visibleSeries = series.filter((s) => !isHidden(spiegelGraphId(s.name)))
+  let visibleSeries = series.filter((s) => !isHidden(spiegelGraphId(s.name)))
   const hiddenSeries = series.filter((s) => isHidden(spiegelGraphId(s.name)))
+
+  const latestVisible = pickLatestSpiegelSeries(visibleSeries)
+
+  if (mode === 'latest') {
+    if (!latestVisible) return null
+    visibleSeries = [latestVisible]
+  } else if (skipLatest && latestVisible) {
+    visibleSeries = visibleSeries.filter((s) => s.name !== latestVisible.name)
+    if (visibleSeries.length === 0) return null
+  }
 
   return (
     <div className="spiegelwerte-section">

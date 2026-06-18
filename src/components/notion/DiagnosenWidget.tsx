@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Pencil, Plus, X } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
 import { useDiagnosenCodingSystem } from '../../hooks/useDiagnosenCodingSystem'
+import { useDiagnosisDisplayTitles } from '../../hooks/useDiagnosisDisplayTitles'
 import {
   searchDiagnosisCodes,
   type DiagnosisSearchHit,
@@ -29,6 +30,7 @@ interface DiagnoseRowProps {
   index: number
   entry: DiagnoseEntry
   system: CodingSystem
+  displayLabel: string
   editing: boolean
   onStartEdit: () => void
   onCancelEdit: () => void
@@ -40,6 +42,7 @@ function DiagnoseRow({
   index,
   entry,
   system,
+  displayLabel,
   editing,
   onStartEdit,
   onCancelEdit,
@@ -100,14 +103,14 @@ function DiagnoseRow({
   }
 
   const displayCode = coding.code || '—'
-  const displayLabel = coding.label || t('diagnosenNoLabel')
+  const labelText = displayLabel || coding.label || t('diagnosenNoLabel')
 
   return (
     <li className="diagnosen-widget__row">
       <span className="diagnosen-widget__index" aria-hidden>{index}.</span>
       <div className="diagnosen-widget__display">
         <span className="diagnosen-widget__code">{displayCode}</span>
-        <span className="diagnosen-widget__label">{displayLabel}</span>
+        <span className="diagnosen-widget__label">{labelText}</span>
         {coding.overridden ? (
           <span className="diagnosen-widget__override-badge" title={t('diagnosenOverriddenHint')}>
             ✎
@@ -147,7 +150,7 @@ interface DiagnosenWidgetProps {
 }
 
 export function DiagnosenWidget({ caseId, variant = 'sidebar', onDiagnosesChanged }: DiagnosenWidgetProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const { activeSystem, setActiveSystem } = useDiagnosenCodingSystem(caseId)
   const showSystemTabs = variant === 'panel'
   const [entries, setEntries] = useState<DiagnoseEntry[]>([])
@@ -279,6 +282,43 @@ export function DiagnosenWidget({ caseId, variant = 'sidebar', onDiagnosesChange
   const trimmedQuery = searchQuery.trim()
   const showFreeTextOption = trimmedQuery.length > 0
 
+  const entryTitleRequests = useMemo(
+    () =>
+      entries.map((entry) => {
+        const coding = getActiveCoding(entry, activeSystem)
+        return {
+          key: entry.id,
+          code: coding.code,
+          version: activeSystem,
+          enteredLabel: coding.label,
+        }
+      }),
+    [entries, activeSystem],
+  )
+
+  const { titlesByKey: entryDisplayTitles } = useDiagnosisDisplayTitles(
+    entryTitleRequests,
+    language,
+    hydrated,
+  )
+
+  const searchTitleRequests = useMemo(
+    () =>
+      searchResults.map((result) => ({
+        key: `${result.system}-${result.code}`,
+        code: result.code,
+        version: result.system === 'dsm5tr' ? ('dsm' as const) : result.system,
+        enteredLabel: result.label,
+      })),
+    [searchResults],
+  )
+
+  const { titlesByKey: searchDisplayTitles } = useDiagnosisDisplayTitles(
+    searchTitleRequests,
+    language,
+    adding && searchTitleRequests.length > 0,
+  )
+
   return (
     <section
       className={[
@@ -373,7 +413,9 @@ export function DiagnosenWidget({ caseId, variant = 'sidebar', onDiagnosesChange
                         onClick={() => handleAddFromHit(result)}
                       >
                         <span className="diagnosen-widget__search-code">{result.code}</span>
-                        <span className="diagnosen-widget__search-label">{result.label}</span>
+                        <span className="diagnosen-widget__search-label">
+                          {searchDisplayTitles.get(`${result.system}-${result.code}`) ?? result.label}
+                        </span>
                       </button>
                     </li>
                   ))}
@@ -414,6 +456,7 @@ export function DiagnosenWidget({ caseId, variant = 'sidebar', onDiagnosesChange
                     index={index + 1}
                     entry={entry}
                     system={activeSystem}
+                    displayLabel={entryDisplayTitles.get(entry.id) ?? getActiveCoding(entry, activeSystem).label}
                     editing={editingId === entry.id}
                     onStartEdit={() => setEditingId(entry.id)}
                     onCancelEdit={() => setEditingId(null)}

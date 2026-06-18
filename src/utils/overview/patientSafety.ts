@@ -8,7 +8,7 @@ import {
 } from '../medication/medicationInsights'
 import { analyteLabel, buildLabRelevance, type AnalyteKey } from '../diagnostics/labRelevance'
 import type { SemanticTone } from '../../components/notion/overview/OverviewCard'
-import type { SafetyAlert, SafetyData } from '../../components/notion/overview/types'
+import type { SafetyAlert, SafetyData, SafetyRiskSignal } from '../../components/notion/overview/types'
 
 export interface PatientSafetyInput {
   medications: MedicationEntry[]
@@ -86,6 +86,133 @@ function combineTone(a: SemanticTone | null, b: SemanticTone | null): SemanticTo
   return rank[a] >= rank[b] ? a : b
 }
 
+function trimRiskValue(value: string, max = 80): string {
+  const trimmed = value.trim()
+  return trimmed.length > max ? `${trimmed.slice(0, max - 1)}…` : trimmed
+}
+
+type HarmAxis = 'self' | 'other'
+
+function harmAxisForSignal(id: SafetyRiskSignal['id']): HarmAxis {
+  return id === 'riskOthers' ? 'other' : 'self'
+}
+
+function derivePillLabel(rawValue: string, tone: SemanticTone): string | null {
+  if (tone === 'ok' || tone === 'low' || tone === 'neutral') return null
+  const v = rawValue.toLowerCase()
+  if (/passiv/.test(v)) return 'passiv'
+  if (/aktiv|akut|imperativ|drängend|konkret/.test(v)) return 'akut'
+  if (/suizidgedanken|gedanken|latent|ambivalen|fraglich|leicht|gering|chronisch/.test(v)) {
+    return 'erhöht'
+  }
+  if (tone === 'high') return 'akut'
+  if (tone === 'moderate') return 'erhöht'
+  return null
+}
+
+function pillAddsInformation(
+  value: string | undefined,
+  pillLabel: string,
+  primaryLabel: string,
+): boolean {
+  const haystack = `${primaryLabel} ${value ?? ''}`.toLowerCase()
+  return !haystack.includes(pillLabel.toLowerCase())
+}
+
+function composeRiskSignal(id: SafetyRiskSignal['id'], rawValue: string): SafetyRiskSignal {
+  const detail = trimRiskValue(rawValue)
+  const tone = riskToneFromText(detail) ?? 'info'
+  const axis = harmAxisForSignal(id)
+
+  if (tone === 'ok' || tone === 'low') {
+    return {
+      id,
+      label:
+        axis === 'self' ? 'Keine akute Eigengefährdung' : 'Keine akute Fremdgefährdung',
+      tone,
+      showPill: false,
+    }
+  }
+
+  const primaryLabel =
+    tone === 'high'
+      ? axis === 'self'
+        ? 'Akute Eigengefährdung'
+        : 'Akute Fremdgefährdung'
+      : axis === 'self'
+        ? 'Eigengefährdung'
+        : 'Fremdgefährdung'
+
+  const pillLabel = derivePillLabel(detail, tone)
+  const showPill =
+    pillLabel !== null && pillAddsInformation(detail, pillLabel, primaryLabel)
+
+  return {
+    id,
+    label: primaryLabel,
+    value: detail,
+    tone,
+    showPill,
+    pillLabel: showPill ? pillLabel ?? undefined : undefined,
+  }
+}
+
+function parseRiskTextSignals(text: string): SafetyRiskSignal[] {
+  const trimmed = text.trim()
+  if (!trimmed) return []
+
+  const combined = trimmed.match(
+    /^(.+?suizid\w*)[^.]*\s+oder\s+(.+?fremd\s*gef\w*[^.]*)/i,
+  )
+  if (combined) {
+    const suicidality = trimRiskValue(combined[1])
+    const riskOthers = trimRiskValue(combined[2].replace(/\.$/, ''))
+    return [
+      composeRiskSignal('suicidality', suicidality),
+      composeRiskSignal('riskOthers', riskOthers),
+    ]
+  }
+
+  const signals: SafetyRiskSignal[] = []
+  if (/suizid/i.test(trimmed)) {
+    const value =
+      /\bkeine?\b[^.!?]*suizid\w*/i.exec(trimmed)?.[0]?.trim() ??
+      trimmed
+        .split(/(?<=[.!?])\s+/)
+        .find((sentence) => /suizid/i.test(sentence))
+        ?.trim() ??
+      trimmed
+    signals.push(composeRiskSignal('suicidality', trimRiskValue(value)))
+  }
+  if (/fremd\s*gef/i.test(trimmed)) {
+    const value =
+      /\bkeine?\b[^.!?]*fremd\s*gef\w*/i.exec(trimmed)?.[0]?.trim() ??
+      /fremd\s*gef[^.!?]*/i.exec(trimmed)?.[0]?.trim() ??
+      trimmed
+    signals.push(composeRiskSignal('riskOthers', trimRiskValue(value)))
+  }
+  if (/eigengef|selbstgef/i.test(trimmed) && !signals.some((signal) => signal.id === 'riskSelf')) {
+    const value =
+      /eigengef[^.!?]*/i.exec(trimmed)?.[0]?.trim() ??
+      /selbstgef[^.!?]*/i.exec(trimmed)?.[0]?.trim() ??
+      trimmed
+    signals.push(composeRiskSignal('riskSelf', trimRiskValue(value)))
+  }
+  return signals
+}
+
+function buildRiskSignals(
+  suicidality: string | null | undefined,
+  riskSelf: string | null | undefined,
+  riskOthers: string | null | undefined,
+): SafetyRiskSignal[] {
+  const signals: SafetyRiskSignal[] = []
+  if (suicidality) signals.push(composeRiskSignal('suicidality', suicidality))
+  if (riskSelf) signals.push(composeRiskSignal('riskSelf', riskSelf))
+  if (riskOthers) signals.push(composeRiskSignal('riskOthers', riskOthers))
+  return signals
+}
+
 function levelToTone(level: RiskLevel): SemanticTone {
   return level === 'high' ? 'high' : level === 'moderate' ? 'moderate' : 'info'
 }
@@ -111,7 +238,12 @@ function buildRisk(input: PatientSafetyInput): SafetyData['risk'] {
       tone = combineTone(tone, riskToneFromText(latest.riskOthers))
     }
     if (parts.length > 0) {
-      return { tone: tone ?? 'info', label: 'Risiko', detail: parts.join(' · ') }
+      return {
+        tone: tone ?? 'info',
+        label: 'Risiko',
+        detail: parts.join(' · '),
+        signals: buildRiskSignals(latest.suicidality, latest.riskSelf, latest.riskOthers),
+      }
     }
   }
 
@@ -119,7 +251,13 @@ function buildRisk(input: PatientSafetyInput): SafetyData['risk'] {
   if (text) {
     const tone = riskToneFromText(text) ?? 'info'
     const detail = text.length > 140 ? `${text.slice(0, 137)}…` : text
-    return { tone, label: 'Risiko', detail }
+    const signals = parseRiskTextSignals(text)
+    return {
+      tone,
+      label: 'Risiko',
+      detail,
+      signals: signals.length > 0 ? signals : undefined,
+    }
   }
   return null
 }

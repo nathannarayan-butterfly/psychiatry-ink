@@ -314,14 +314,19 @@
 .ov-prior__row {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.45rem;
   min-width: 0;
 }
 
 .ov-prior__name {
   font-size: var(--text-sm);
   font-weight: 600;
-  flex-shrink: 0;
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ov-prior__reason {

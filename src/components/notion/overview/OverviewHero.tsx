@@ -1,4 +1,5 @@
 import { CalendarClock, History, Pill, ShieldAlert, Stethoscope } from 'lucide-react'
+import { DiagnosisDisplayLabel } from '../../diagnosis/DiagnosisDisplayLabel'
 import type { HeroSummaryData } from './types'
 
 interface OverviewHeroProps {
@@ -29,8 +30,13 @@ export function OverviewHero({ data }: OverviewHeroProps) {
                 {primaryDiagnosis.code || primaryDiagnosis.label}
               </span>
               {primaryDiagnosis.code ? (
-                <span className="ov-summary__sub" title={primaryDiagnosis.label}>
-                  {primaryDiagnosis.label}
+                <span className="ov-summary__sub">
+                  <DiagnosisDisplayLabel
+                    code={primaryDiagnosis.code}
+                    version={primaryDiagnosis.version}
+                    enteredLabel={primaryDiagnosis.label}
+                    className="ov-summary__sub"
+                  />
                 </span>
               ) : null}
             </>

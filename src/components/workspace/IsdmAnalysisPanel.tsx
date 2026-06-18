@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
+import { ChevronDown } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
 import { getIsdmSafetyDisclaimer } from '../../data/isdmLabels'
 import type { EnglishVariant, UiLanguage } from '../../types/settings'
@@ -63,6 +64,8 @@ import { buildButterflyContextPackage, hasButterflyContext } from '../../utils/b
 import { extractButterflyCriteria } from '../../services/butterflyExtractApi'
 import { isCmeaConsumerReadEnabled } from '../../utils/featureFlags'
 import { loadDiagnosen, type DiagnoseEntry } from '../../utils/diagnosenArchive'
+import { useDiagnosisDisplayTitles } from '../../hooks/useDiagnosisDisplayTitles'
+import type { IcdTitleVersion } from '../../../shared/icdTitle'
 import type { NotionPageId } from '../notion/notionPages'
 
 type Translate = ReturnType<typeof useTranslation>['t']
@@ -111,6 +114,46 @@ function provenanceFor(
   if (result.status === 'met' || result.status === 'not_met') return 'deterministic'
   if (hasActionableSuggestion) return 'ai'
   return 'open'
+}
+
+/**
+ * Collapsible panel section: an `h3` header that toggles its body open/closed.
+ * Pure local state — collapse preference is not persisted across reloads. The
+ * chevron rotates via CSS (honoring `prefers-reduced-motion`) and the button
+ * carries `aria-expanded` / `aria-controls` for screen readers + keyboard.
+ */
+function CollapsibleSection({
+  title,
+  defaultOpen = true,
+  children,
+}: {
+  title: ReactNode
+  defaultOpen?: boolean
+  children: ReactNode
+}) {
+  const [open, setOpen] = useState(defaultOpen)
+  const bodyId = useId()
+  return (
+    <section className="butterfly-panel__section">
+      <h3 className="butterfly-panel__section-title">
+        <button
+          type="button"
+          className="butterfly-collapsible-toggle"
+          aria-expanded={open}
+          aria-controls={bodyId}
+          onClick={() => setOpen((value) => !value)}
+        >
+          <ChevronDown className="butterfly-collapsible__chevron" size={16} aria-hidden />
+          <span>{title}</span>
+        </button>
+      </h3>
+      {open ? (
+        <div id={bodyId} className="butterfly-panel__section-body">
+          {children}
+        </div>
+      ) : null}
+    </section>
+  )
 }
 
 export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }: IsdmAnalysisPanelProps) {
@@ -186,11 +229,16 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
     const seenDisorders = new Set<string>()
     const out: EnteredDiagnosisResult[] = []
     for (const entry of enteredDiagnoses) {
-      const code = entry.icd10.code.trim() || entry.icd11.code.trim()
-      const label = entry.icd10.label.trim() || entry.icd10.code.trim() || entry.icd11.label.trim() || code
+      const enteredIcd10 = entry.icd10.code.trim()
+      const enteredIcd11 = entry.icd11.code.trim()
+      const code = enteredIcd10 || enteredIcd11
+      const label = entry.icd10.label.trim() || enteredIcd10 || entry.icd11.label.trim() || code
       const sourceDisorder = matchDisorderToCodes(entry.icd10.code, entry.icd11.code)
       if (!sourceDisorder) {
-        out.push({ key: entry.id, label, code, available: false })
+        // No criteria pack matched — fall back to the clinician-entered codes.
+        // In ICD-11 mode prefer the entered 6xx code over the ICD-10 F-code.
+        const displayCode = icdVersion === 'icd11' ? enteredIcd11 || code : code
+        out.push({ key: entry.id, label, code: displayCode, available: false })
         continue
       }
       // Composition order: resolve the ICD VERSION first (pick the ICD-10 or
@@ -202,7 +250,22 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
       const disorder = getLocalizedDisorder(versioned, language)
       if (seenDisorders.has(disorder.id)) continue
       seenDisorders.add(disorder.id)
-      out.push({ key: entry.id, label, code, available: true, disorder, evaluation: evaluateDisorder(disorder, ctx) })
+      // Heading code follows the ACTIVE coding system: ICD-11 surfaces the
+      // version-resolved 6xx code (the clinician-entered ICD-11 code wins when
+      // present, then the crosswalk, then the resolved disorder code), while
+      // ICD-10 / DSM keep showing the ICD-10 F-code as before.
+      const displayCode =
+        icdVersion === 'icd11'
+          ? enteredIcd11 || versioned.codingSystems.icd11?.code || versioned.code || code
+          : code
+      out.push({
+        key: entry.id,
+        label,
+        code: displayCode,
+        available: true,
+        disorder,
+        evaluation: evaluateDisorder(disorder, ctx),
+      })
     }
     const rank = (r: EnteredDiagnosisResult) => {
       if (!r.available || !r.evaluation) return 3
@@ -210,6 +273,30 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
     }
     return out.sort((a, b) => rank(a) - rank(b))
   }, [analysis, attestations, enteredDiagnoses, language, icdVersion])
+
+  const diagnosisTitleVersion: IcdTitleVersion = icdVersion === 'icd11' ? 'icd11' : 'icd10'
+
+  const diagnosisTitleRequests = useMemo(
+    () =>
+      results.map((result) => ({
+        key: result.key,
+        code: result.code,
+        version: diagnosisTitleVersion,
+        criteriaLabel: result.disorder
+          ? icdVersion === 'icd11'
+            ? result.disorder.codingSystems.icd11?.label_de
+            : result.disorder.codingSystems.icd10?.label_de
+          : null,
+        enteredLabel: result.label,
+      })),
+    [results, diagnosisTitleVersion, icdVersion],
+  )
+
+  const { titlesByKey: diagnosisDisplayTitles } = useDiagnosisDisplayTitles(
+    diagnosisTitleRequests,
+    language,
+    results.length > 0,
+  )
 
   // Resolve cached, LLM-generated concrete interview questions for a criterion
   // (language- and version-scoped). Returns undefined until the LLM resolves, in
@@ -499,16 +586,16 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
       </p>
       <p className="butterfly-panel__draft-notice">{t('butterflyDraftNotice')}</p>
 
-      <section className="butterfly-panel__section">
-        <h3 className="butterfly-panel__section-title">{t('butterflyRecommendations')}</h3>
+      <CollapsibleSection title={t('butterflyRecommendations')} defaultOpen>
         <ul className="butterfly-card-list">
-          {results.map((result) => {
+          {results.map((result, index) => {
+            const displayLabel = diagnosisDisplayTitles.get(result.key) ?? result.label
             if (!result.available || !result.disorder || !result.evaluation) {
               return (
                 <li key={result.key} className="butterfly-card butterfly-card--unavailable">
                   <div className="butterfly-card__head">
                     <div className="butterfly-card__heading">
-                      <span className="butterfly-card__name">{result.label}</span>
+                      <span className="butterfly-card__name">{displayLabel}</span>
                       {result.code ? <span className="butterfly-card__code">{result.code}</span> : null}
                     </div>
                   </div>
@@ -520,9 +607,10 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
               <ButterflyDiagnosisCard
                 key={result.key}
                 t={t}
+                defaultOpen={index === 0}
                 disorder={result.disorder}
                 evaluation={result.evaluation}
-                label={result.label}
+                label={displayLabel}
                 code={result.code}
                 attestations={attestations}
                 aiSuggestions={aiSuggestions}
@@ -540,11 +628,10 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
             )
           })}
         </ul>
-      </section>
+      </CollapsibleSection>
 
       {criterionQuestions.length > 0 ? (
-        <section className="butterfly-panel__section">
-          <h3 className="butterfly-panel__section-title">{t('butterflyQuestions')}</h3>
+        <CollapsibleSection title={t('butterflyQuestions')} defaultOpen>
           {/* The "record the answer → criterion" instruction is shown ONCE here,
               never repeated per question/criterion. */}
           <p className="butterfly-gap-list__hint">{t('butterflyQuestionSectionHint')}</p>
@@ -624,7 +711,7 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
               )
             })}
           </ul>
-        </section>
+        </CollapsibleSection>
       ) : null}
 
       <p className="butterfly-panel__review-note">{t('isdmPanelClinicianReview')}</p>
@@ -634,6 +721,8 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
 
 interface ButterflyDiagnosisCardProps {
   t: Translate
+  /** Whether the card body starts expanded (top recommendation defaults open). */
+  defaultOpen?: boolean
   disorder: Disorder
   evaluation: DisorderEvaluation
   label: string
@@ -654,6 +743,7 @@ interface ButterflyDiagnosisCardProps {
 
 function ButterflyDiagnosisCard({
   t,
+  defaultOpen = false,
   disorder,
   evaluation,
   label,
@@ -677,14 +767,25 @@ function ButterflyDiagnosisCard({
   )
   const criteria = evaluation.perCriterion.filter((result) => !exclusionGroupIds.has(result.groupId))
   const hasUnresolved = criteria.some((result) => result.status === 'unknown' && result.source !== 'attested')
+  const [open, setOpen] = useState(defaultOpen)
+  const [groupOpen, setGroupOpen] = useState(true)
+  const bodyId = useId()
+  const groupBodyId = useId()
 
   return (
     <li className={`butterfly-card butterfly-card--${advice.tone}`}>
-      <div className="butterfly-card__head">
-        <div className="butterfly-card__heading">
-          <span className="butterfly-card__name">{label || disorder.name_de}</span>
+      <button
+        type="button"
+        className="butterfly-card__head butterfly-card__toggle"
+        aria-expanded={open}
+        aria-controls={bodyId}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span className="butterfly-card__heading">
+          <ChevronDown className="butterfly-collapsible__chevron" size={16} aria-hidden />
+          <span className="butterfly-card__name">{label}</span>
           {code ? <span className="butterfly-card__code">{code}</span> : null}
-        </div>
+        </span>
         <span className={`butterfly-verdict butterfly-verdict--${advice.tone}`}>
           {advice.tone === 'met'
             ? t('butterflyVerdictMet')
@@ -692,32 +793,45 @@ function ButterflyDiagnosisCard({
               ? t('butterflyVerdictNotMet')
               : t('butterflyVerdictInsufficient')}
         </span>
-      </div>
+      </button>
 
-      <p className="butterfly-card__advice">{advice.headline}</p>
+      {open ? (
+        <div id={bodyId} className="butterfly-card__body">
+          <p className="butterfly-card__advice">{advice.headline}</p>
 
-      <div className="butterfly-card__group">
-        <div className="butterfly-card__group-head">
-          <p className="butterfly-card__group-label">{t('butterflyCriteriaProvenanceTitle')}</p>
-          {hasUnresolved ? (
-            <button
-              type="button"
-              className="butterfly-ai-check"
-              onClick={onCheckAi}
-              disabled={pending}
-            >
-              {pending ? t('butterflyChecking') : t('butterflyCheckAi')}
-            </button>
-          ) : null}
-        </div>
+          <div className="butterfly-card__group">
+            <div className="butterfly-card__group-head">
+              <button
+                type="button"
+                className="butterfly-group-toggle"
+                aria-expanded={groupOpen}
+                aria-controls={groupBodyId}
+                onClick={() => setGroupOpen((value) => !value)}
+              >
+                <ChevronDown className="butterfly-collapsible__chevron" size={14} aria-hidden />
+                <span className="butterfly-card__group-label">{t('butterflyCriteriaProvenanceTitle')}</span>
+              </button>
+              {hasUnresolved ? (
+                <button
+                  type="button"
+                  className="butterfly-ai-check"
+                  onClick={onCheckAi}
+                  disabled={pending}
+                >
+                  {pending ? t('butterflyChecking') : t('butterflyCheckAi')}
+                </button>
+              ) : null}
+            </div>
 
-        {/* The "no documented finding — add / attest / let Butterfly check"
-            instruction appears ONCE here for the whole group, not per criterion. */}
-        {hasUnresolved ? (
-          <p className="butterfly-card__open-hint">{t('butterflyOpenCriteriaHint')}</p>
-        ) : null}
+            {groupOpen ? (
+              <div id={groupBodyId} className="butterfly-card__group-body">
+                {/* The "no documented finding — add / attest / let Butterfly check"
+                    instruction appears ONCE here for the whole group, not per criterion. */}
+                {hasUnresolved ? (
+                  <p className="butterfly-card__open-hint">{t('butterflyOpenCriteriaHint')}</p>
+                ) : null}
 
-        <ul className="butterfly-criteria-list">
+                <ul className="butterfly-criteria-list">
           {criteria.map((criterion) => {
             const attestation = attestations[criterion.criterionId]
             const suggestion = aiSuggestions[criterion.criterionId]
@@ -852,26 +966,30 @@ function ButterflyDiagnosisCard({
               </li>
             )
           })}
-        </ul>
+                </ul>
 
-        {aiError ? <p className="butterfly-ai-error">{t('butterflyAiError')}</p> : null}
-        {hasUnresolved ? <p className="butterfly-attest__hint">{t('butterflyAiPendingNote')}</p> : null}
-      </div>
+                {aiError ? <p className="butterfly-ai-error">{t('butterflyAiError')}</p> : null}
+                {hasUnresolved ? <p className="butterfly-attest__hint">{t('butterflyAiPendingNote')}</p> : null}
+              </div>
+            ) : null}
+          </div>
 
-      {disorder.differentials_de.length > 0 ? (
-        <details className="butterfly-card__differentials">
-          <summary>{t('butterflyDifferentials')}</summary>
-          <ul>
-            {disorder.differentials_de.map((d) => (
-              <li key={d}>{d}</li>
-            ))}
-          </ul>
-        </details>
+          {disorder.differentials_de.length > 0 ? (
+            <details className="butterfly-card__differentials">
+              <summary>{t('butterflyDifferentials')}</summary>
+              <ul>
+                {disorder.differentials_de.map((d) => (
+                  <li key={d}>{d}</li>
+                ))}
+              </ul>
+            </details>
+          ) : null}
+
+          <p className="butterfly-card__source">
+            {t('butterflySource')}: {disorder.sourceRef}
+          </p>
+        </div>
       ) : null}
-
-      <p className="butterfly-card__source">
-        {t('butterflySource')}: {disorder.sourceRef}
-      </p>
     </li>
   )
 }

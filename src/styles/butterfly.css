@@ -118,6 +118,63 @@
   color: var(--text-primary, #1f1b16);
 }
 
+.butterfly-panel__section-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* ── Collapsible affordances (sections, cards, criteria group) ──────────── */
+/* Header toggles reset native button chrome so they read as the existing
+   heading text, with a rotating chevron and a clear keyboard focus ring. */
+.butterfly-panel .butterfly-collapsible-toggle,
+.butterfly-panel .butterfly-card__toggle,
+.butterfly-panel .butterfly-group-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.butterfly-panel .butterfly-collapsible-toggle,
+.butterfly-panel .butterfly-card__toggle {
+  width: 100%;
+}
+
+.butterfly-panel .butterfly-collapsible-toggle:focus-visible,
+.butterfly-panel .butterfly-card__toggle:focus-visible,
+.butterfly-panel .butterfly-group-toggle:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid
+    var(--focus-ring-color, color-mix(in srgb, var(--accent) 52%, transparent));
+  outline-offset: var(--focus-ring-offset, 2px);
+  border-radius: var(--radius-control, 0.4375rem);
+}
+
+.butterfly-panel .butterfly-collapsible__chevron {
+  flex-shrink: 0;
+  align-self: center;
+  color: var(--text-secondary, #6d655c);
+  transition: transform var(--duration-fast, 180ms) var(--ease-standard, ease);
+}
+
+/* Chevron points down when expanded; rotates to point right when collapsed. */
+.butterfly-panel [aria-expanded='false'] .butterfly-collapsible__chevron {
+  transform: rotate(-90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .butterfly-panel .butterfly-collapsible__chevron {
+    transition: none;
+  }
+}
+
 .butterfly-panel__empty {
   margin: 0;
   font-size: var(--text-sm);
@@ -221,7 +278,21 @@
   color: var(--text-primary, #1f1b16);
 }
 
+/* Collapsible body of a recommendation card (advice + criteria group + source). */
+.butterfly-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
 .butterfly-card__group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+/* Collapsible body of the criteria-provenance group. */
+.butterfly-card__group-body {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;

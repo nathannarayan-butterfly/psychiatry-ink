@@ -74,3 +74,7 @@
 .diagnosen-widget .diagnosen-widget__search-label {
   font-size: var(--text-sm);
 }
+
+.diagnosis-display-label--loading {
+  opacity: 0.72;
+}

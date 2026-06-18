@@ -18,24 +18,142 @@ const formulationGerman: Record<MedicationFormulation, string> = {
   other: '',
 }
 
+const SOLID_ORAL_FORMULATIONS = new Set<MedicationFormulation>(['tablet', 'capsule'])
+
+const PIECE_UNITS = new Set([
+  'stk.',
+  'stk',
+  'tab',
+  'tablette',
+  'tabletten',
+  'kapsel',
+  'kps.',
+  'kps',
+  'kaps.',
+])
+
+type DoseDisplayMode = 'mgPerSlot' | 'scheduleValues' | 'prn'
+
 function formatDoseSegment(value: string): string {
   const trimmed = value.trim()
   if (!trimmed) return '0'
   return trimmed.replace('.', ',')
 }
 
-export function formatDoseScheduleGerman(schedule: DoseSchedule): string {
-  const parts = [
-    formatDoseSegment(schedule.morning),
-    formatDoseSegment(schedule.noon),
-    formatDoseSegment(schedule.evening),
-    formatDoseSegment(schedule.night),
+function parseStrengthMg(strength: string): number | null {
+  const match = strength.trim().match(/^([\d.,]+)\s*mg\b/i)
+  if (!match) return null
+  const value = Number.parseFloat(match[1].replace(',', '.'))
+  return Number.isFinite(value) ? value : null
+}
+
+function isPieceUnit(unit: string): boolean {
+  return PIECE_UNITS.has(unit.trim().toLowerCase())
+}
+
+function resolveDoseDisplayMode(
+  formulation: MedicationFormulation,
+  strength: string,
+  schedule: DoseSchedule,
+): DoseDisplayMode {
+  if (schedule.prn) return 'prn'
+  if (!SOLID_ORAL_FORMULATIONS.has(formulation)) return 'scheduleValues'
+  const strengthMg = parseStrengthMg(strength)
+  if (strengthMg === null) return 'scheduleValues'
+  const unit = schedule.unit.trim().toLowerCase()
+  if (isPieceUnit(schedule.unit) || unit === 'mg') return 'mgPerSlot'
+  return 'scheduleValues'
+}
+
+function slotToDisplayAmount(value: string, strengthMg: number | null, unitIsPiece: boolean): string {
+  const trimmed = value.trim()
+  if (!trimmed) return '0'
+  if (!unitIsPiece || strengthMg === null) return formatDoseSegment(trimmed)
+  const count = Number.parseFloat(trimmed.replace(',', '.'))
+  if (!Number.isFinite(count)) return formatDoseSegment(trimmed)
+  const mg = count * strengthMg
+  if (Number.isInteger(mg)) return String(mg)
+  return formatDoseSegment(String(mg))
+}
+
+function scheduleSlots(
+  schedule: DoseSchedule,
+  mode: DoseDisplayMode,
+  strength: string,
+): [string, string, string, string] {
+  const strengthMg = parseStrengthMg(strength)
+  const unitIsPiece = isPieceUnit(schedule.unit)
+  const toSlot = (value: string) =>
+    mode === 'mgPerSlot'
+      ? slotToDisplayAmount(value, strengthMg, unitIsPiece)
+      : formatDoseSegment(value)
+
+  return [
+    toSlot(schedule.morning),
+    toSlot(schedule.noon),
+    toSlot(schedule.evening),
+    toSlot(schedule.night),
   ]
-  const unit = schedule.unit.trim()
+}
+
+export interface DoseScheduleFormatOptions {
+  formulation?: MedicationFormulation
+  strength?: string
+}
+
+export function formatDoseScheduleGerman(
+  schedule: DoseSchedule,
+  options?: DoseScheduleFormatOptions,
+): string {
+  const formulation = options?.formulation
+  const strength = options?.strength ?? ''
+  const mode =
+    formulation !== undefined
+      ? resolveDoseDisplayMode(formulation, strength, schedule)
+      : schedule.prn
+        ? 'prn'
+        : 'scheduleValues'
+
+  if (mode === 'prn') {
+    const strengthPart = strength.trim()
+    return strengthPart ? `${strengthPart} b.B.` : 'b.B.'
+  }
+
+  const parts = scheduleSlots(schedule, mode, strength)
+  const unit = mode === 'mgPerSlot' ? 'mg' : schedule.unit.trim()
   const base = parts.join('-')
-  if (schedule.prn) return `${base} ${unit} b.B.`.trim()
   if (schedule.depotInterval?.trim()) return `${base} ${unit} (${schedule.depotInterval})`.trim()
   return unit ? `${base} ${unit}`.trim() : base
+}
+
+/**
+ * Dose portion for Übersicht and other compact views where substance is shown separately.
+ * Prefers the canonical `doseLineGerman` (same as Medikation tab) and strips the leading
+ * substance name when present.
+ */
+export function formatMedicationOverviewDoseGerman(entry: MedicationEntry): string {
+  const doseLine = entry.doseLineGerman.trim()
+  const substance = entry.substance.trim()
+
+  if (doseLine) {
+    if (substance && doseLine.startsWith(substance)) {
+      const remainder = doseLine.slice(substance.length).trim()
+      if (remainder) return remainder
+    }
+    return doseLine
+  }
+
+  if (entry.doseSchedule.prn || entry.prn) {
+    return formatDoseScheduleGerman(entry.doseSchedule, {
+      formulation: entry.formulation,
+      strength: entry.strength,
+    })
+  }
+
+  return formatDoseScheduleGerman(entry.doseSchedule, {
+    formulation: entry.formulation,
+    strength: entry.strength,
+  })
 }
 
 export function formatDoseLineGerman(
@@ -45,10 +163,26 @@ export function formatDoseLineGerman(
   schedule: DoseSchedule,
 ): string {
   const name = substance.trim()
-  const form = formulationGerman[formulation]
-  const strengthPart = strength.trim()
-  const schedulePart = formatDoseScheduleGerman(schedule)
-  const segments = [name, form, strengthPart, schedulePart].filter(Boolean)
+
+  if (schedule.prn) {
+    const schedulePart = formatDoseScheduleGerman(schedule, { formulation, strength })
+    return schedulePart ? `${name} ${schedulePart}`.trim() : name
+  }
+
+  const mode = resolveDoseDisplayMode(formulation, strength, schedule)
+  const schedulePart = formatDoseScheduleGerman(schedule, { formulation, strength })
+
+  if (mode === 'mgPerSlot') {
+    return `${name} ${schedulePart}`.trim()
+  }
+
+  const includeFormulation =
+    formulation === 'solution' ||
+    formulation === 'drops' ||
+    formulation === 'depot' ||
+    formulation === 'injection'
+  const formPart = includeFormulation ? formulationGerman[formulation] : ''
+  const segments = [name, formPart, schedulePart].filter(Boolean)
   return segments.join(' ')
 }
 

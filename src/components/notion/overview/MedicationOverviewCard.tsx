@@ -6,6 +6,7 @@ import type { MedicationOverviewData } from './types'
 interface MedicationOverviewCardProps {
   data: MedicationOverviewData
   onOpenMedikation: () => void
+  className?: string
 }
 
 /**
@@ -13,14 +14,18 @@ interface MedicationOverviewCardProps {
  * — the academic receptor/class breakdown lives on the Medikation tab; here we
  * show only what a psychiatrist needs to read the plan, plus the last change.
  */
-export function MedicationOverviewCard({ data, onOpenMedikation }: MedicationOverviewCardProps) {
+export function MedicationOverviewCard({
+  data,
+  onOpenMedikation,
+  className = 'ov-col-6',
+}: MedicationOverviewCardProps) {
   const hasMeds = data.meds.length > 0
 
   return (
     <OverviewCard
       title="Aktuelle Medikation"
       icon={<Pill size={15} />}
-      className="ov-col-6"
+      className={className}
       badge={{ label: `${data.activeCount} aktiv`, tone: 'neutral' }}
       action={{ label: 'Zur Medikation', onClick: onOpenMedikation }}
     >

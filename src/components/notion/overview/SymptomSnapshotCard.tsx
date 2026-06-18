@@ -16,10 +16,11 @@ interface SymptomSnapshotCardProps {
 export function SymptomSnapshotCard({ data, onOpen }: SymptomSnapshotCardProps) {
   const hasContent =
     Boolean(data.snapshotText) || data.structured.length > 0 || Boolean(data.courseLabel)
+  const title = data.contextLabel ? `Psychopathologie (${data.contextLabel})` : 'Psychopathologie'
 
   return (
     <OverviewCard
-      title="Psychopathologie"
+      title={title}
       icon={<Activity size={15} />}
       className="ov-col-6"
       badge={data.courseLabel ? { label: data.courseLabel, tone: 'neutral' } : undefined}
@@ -43,7 +44,15 @@ export function SymptomSnapshotCard({ data, onOpen }: SymptomSnapshotCardProps) 
           {data.structured.map((cue) => (
             <div key={cue.label}>
               <div className="ov-snapshot__cue-label">{cue.label}</div>
-              <div className="ov-snapshot__cue-value">{cue.value}</div>
+              <div
+                className={
+                  cue.value === 'nicht dokumentiert'
+                    ? 'ov-snapshot__cue-value ov-snapshot__cue-value--missing'
+                    : 'ov-snapshot__cue-value'
+                }
+              >
+                {cue.value}
+              </div>
             </div>
           ))}
         </div>

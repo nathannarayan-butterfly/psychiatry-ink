@@ -3,7 +3,7 @@ import { useTranslation } from '../../../context/TranslationContext'
 import type { TopNavTabId } from '../CaseTopNav'
 import type { NotionPageId } from '../notionPages'
 import { DiagnosenWidget } from '../DiagnosenWidget'
-import { SpiegelwerteSection, extractSpiegelwerte } from '../SpiegelwerteSection'
+import { SpiegelwerteSection, extractSpiegelwerte, pickLatestSpiegelSeries, spiegelGraphId } from '../SpiegelwerteSection'
 import { OverviewCardShell } from './OverviewCard'
 import { OverviewHero } from './OverviewHero'
 import { SafetyAlertsCard } from './SafetyAlertsCard'
@@ -21,7 +21,7 @@ import type { SemanticTone } from './OverviewCard'
 import { useMedicationPlan } from '../../../hooks/useMedicationPlan'
 import { useCaseAppointments } from '../../../hooks/useCaseAppointments'
 import { isMedicationVisible } from '../../../utils/medication/planOps'
-import { formatDoseScheduleGerman } from '../../../utils/medication/doseLine'
+import { formatMedicationOverviewDoseGerman } from '../../../utils/medication/doseLine'
 import { computeMedicationInsights } from '../../../utils/medication/medicationInsights'
 import { loadBefunde } from '../../../utils/laborArchive'
 import { loadVerlaufFeed } from '../../../utils/verlaufFeed'
@@ -30,9 +30,11 @@ import { loadNotionPageDate } from '../../../utils/notionPageDate'
 import { loadClinicalImprintIndex } from '../../../utils/clinicalImprint'
 import { buildPatientSafety } from '../../../utils/overview/patientSafety'
 import { buildLabsDue } from '../../../utils/overview/labsDue'
+import { buildPsychopathologyStructuredCues, mergePsychopathologyProfiles } from '../../../utils/overview/psychopathologyDomains'
 import { getSymptomTrajectory } from '../../../utils/overview/symptomTrajectory'
 import { formatDateDe, relativeDayDe } from '../../../utils/overview/dateLabels'
 import { loadDiagnosen } from '../../../utils/diagnosenArchive'
+import { useOverviewHiddenGraphs } from '../../../hooks/useOverviewHiddenGraphs'
 import type { ClinicalImprintRecord, CourseDirection } from '../../../types/clinicalImprint'
 import type { MedicationStatus } from '../../../types/medicationPlan'
 
@@ -126,6 +128,7 @@ export function OverviewDashboard({
   const { language } = useTranslation()
   const { currentPlan } = useMedicationPlan(caseId)
   const appointments = useCaseAppointments(caseId)
+  const { isHidden } = useOverviewHiddenGraphs(caseId)
 
   const medications = useMemo(() => currentPlan?.medications ?? [], [currentPlan])
 
@@ -135,9 +138,7 @@ export function OverviewDashboard({
     const meds: MedRegimenItem[] = medications
       .filter((med) => isMedicationVisible(med) && med.status !== 'discontinued')
       .map((med) => {
-        const dose = [med.strength.trim(), formatDoseScheduleGerman(med.doseSchedule)]
-          .filter(Boolean)
-          .join(' · ')
+        const dose = formatMedicationOverviewDoseGerman(med)
         const status = (med.status === 'discontinued' ? 'active' : med.status) as MedRegimenItem['status']
         return {
           id: med.id,
@@ -202,18 +203,15 @@ export function OverviewDashboard({
     const { text, savedAt } = readPsychopathSnapshot(caseId)
     const imprints = loadClinicalImprintIndex(caseId).imprints
     const imprint = latestPsychopathImprint(imprints)
-    const structured: SymptomSnapshotData['structured'] = []
-    if (imprint) {
-      if (imprint.affect) structured.push({ label: 'Affekt', value: imprint.affect })
-      if (imprint.drive) structured.push({ label: 'Antrieb', value: imprint.drive })
-      if (imprint.thoughtContent) structured.push({ label: 'Denkinhalt', value: imprint.thoughtContent })
-      if (imprint.insight) structured.push({ label: 'Krankheitseinsicht', value: imprint.insight })
-    }
+    const icd10Codes = loadDiagnosen(caseId).map((d) => d.icd10.code)
+    const { contextLabel } = mergePsychopathologyProfiles(icd10Codes)
+    const structured = buildPsychopathologyStructuredCues(imprint, icd10Codes)
     const courseLabel = imprint?.courseDirection ? COURSE_LABEL[imprint.courseDirection] : null
     const asOf = savedAt ?? imprint?.sourceDate ?? null
     return {
       snapshotText: text,
       structured,
+      contextLabel,
       courseLabel,
       asOfLabel: asOf ? formatDateDe(asOf) : null,
       trajectory: getSymptomTrajectory(imprints),
@@ -229,10 +227,14 @@ export function OverviewDashboard({
   }, [caseId, medications])
 
   // ── Spiegel availability (preserve "≥1 value ⇒ show graph" rule) ──────────
-  const hasSpiegel = useMemo(
-    () => extractSpiegelwerte(loadBefunde(caseId)).length > 0,
-    [caseId],
-  )
+  const spiegelSeries = useMemo(() => extractSpiegelwerte(loadBefunde(caseId)), [caseId])
+  const hasSpiegel = spiegelSeries.length > 0
+  const hasAdditionalSpiegel = useMemo(() => {
+    const visible = spiegelSeries.filter((s) => !isHidden(spiegelGraphId(s.name)))
+    const latest = pickLatestSpiegelSeries(visible)
+    if (!latest) return false
+    return visible.some((s) => s.name !== latest.name)
+  }, [spiegelSeries, isHidden])
 
   // ── Summary strip ─────────────────────────────────────────────────────────
   const heroData = useMemo<HeroSummaryData>(() => {
@@ -245,7 +247,15 @@ export function OverviewDashboard({
           ? primary.icd11
           : primary.dsm
       : null
-    const primaryDiagnosis = coding ? { code: coding.code, label: coding.label } : null
+    const primaryVersion: 'icd10' | 'icd11' | 'dsm' =
+      primary && coding === primary.icd11
+        ? 'icd11'
+        : primary && coding === primary.dsm
+          ? 'dsm'
+          : 'icd10'
+    const primaryDiagnosis = coding
+      ? { code: coding.code, label: coding.label, version: primaryVersion }
+      : null
 
     const tones: SemanticTone[] = [
       ...(safetyData.risk ? [safetyData.risk.tone] : []),
@@ -277,12 +287,20 @@ export function OverviewDashboard({
       <OverviewHero data={heroData} />
 
       <div className="ov-grid">
-        {/* Row 1 — what's urgent + what they're on. */}
+        {/* Row 1 — what's urgent + what they're on (+ latest Spiegel beside meds). */}
         <SafetyAlertsCard data={safetyData} />
-        <MedicationOverviewCard
-          data={medicationData}
-          onOpenMedikation={() => onTabSelect('medikation')}
-        />
+        <div className="ov-col-6 ov-med-spiegel">
+          <MedicationOverviewCard
+            data={medicationData}
+            onOpenMedikation={() => onTabSelect('medikation')}
+            className=""
+          />
+          {hasSpiegel ? (
+            <OverviewCardShell>
+              <SpiegelwerteSection caseId={caseId} mode="latest" />
+            </OverviewCardShell>
+          ) : null}
+        </div>
 
         {/* Row 2 — the clinical picture. */}
         <OverviewCardShell className="ov-col-6">
@@ -301,10 +319,10 @@ export function OverviewDashboard({
           onOpenMedikation={() => onTabSelect('medikation')}
         />
 
-        {/* Drug levels — full width, only when values exist. */}
-        {hasSpiegel ? (
+        {/* Remaining drug levels — full width when more than the latest near meds. */}
+        {hasAdditionalSpiegel ? (
           <OverviewCardShell className="ov-col-12">
-            <SpiegelwerteSection caseId={caseId} />
+            <SpiegelwerteSection caseId={caseId} skipLatest />
           </OverviewCardShell>
         ) : null}
       </div>

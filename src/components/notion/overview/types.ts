@@ -8,6 +8,20 @@ import type { SemanticTone } from './OverviewCard'
 
 export type SafetyCategory = 'risk' | 'allergy' | 'interaction' | 'monitoring'
 
+/** One acute safety axis (suicidality, self-/other-harm) for prominent display. */
+export interface SafetyRiskSignal {
+  id: 'suicidality' | 'riskSelf' | 'riskOthers'
+  /** Primary clinical phrase shown prominently in the tile. */
+  label: string
+  /** Optional supporting detail (imprint wording) when it adds specificity. */
+  value?: string
+  tone: SemanticTone
+  /** When false, no severity pill is rendered (default for unremarkable states). */
+  showPill?: boolean
+  /** Override default tone-based pill label (passiv, akut, erhöht …). */
+  pillLabel?: string
+}
+
 export interface SafetyAlert {
   id: string
   category: SafetyCategory
@@ -20,7 +34,13 @@ export interface SafetyAlert {
 
 export interface SafetyData {
   /** Headline risk chip (suicidality / self- / other-harm), null when not modeled. */
-  risk: { tone: SemanticTone; label: string; detail?: string } | null
+  risk: {
+    tone: SemanticTone
+    label: string
+    detail?: string
+    /** Structured acute axes when imprint or parsed risk text provides them. */
+    signals?: SafetyRiskSignal[]
+  } | null
   alerts: SafetyAlert[]
   /** True when no risk + no alerts could be derived at all (hide / "all clear"). */
   hasAnySignal: boolean
@@ -80,6 +100,8 @@ export interface SymptomTrajectoryPoint {
 export interface SymptomSnapshotData {
   snapshotText: string | null
   structured: SymptomStructuredCue[]
+  /** Optional diagnosis-context subtitle, e.g. "schizophrenes Spektrum". */
+  contextLabel: string | null
   courseLabel: string | null
   asOfLabel: string | null
   /** Real course-direction history (≥2 points) → mini trend chart. */
@@ -141,7 +163,7 @@ export interface KonsileTasksData {
  * to a calm placeholder rather than a fabricated value.
  */
 export interface HeroSummaryData {
-  primaryDiagnosis: { code: string; label: string } | null
+  primaryDiagnosis: { code: string; label: string; version: 'icd10' | 'icd11' | 'dsm' } | null
   /** Headline risk: tone drives the semantic color, label is the German severity word. */
   risk: { tone: SemanticTone; label: string } | null
   activeMedCount: number

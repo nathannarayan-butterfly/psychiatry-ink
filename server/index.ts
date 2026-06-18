@@ -11,6 +11,7 @@ import { pharmaGenerateRouter } from './routes/pharmaGenerate'
 import { pharmaAskRouter } from './routes/pharmaAsk'
 import { generationLogRouter } from './routes/generationLog'
 import { diagnosisCodesRouter } from './routes/diagnosisCodes'
+import { icdTitleRouter } from './routes/icdTitle'
 import { accountBackupRouter } from './routes/accountBackup'
 import { kbAdminRouter } from './routes/kbAdmin'
 import { kbContributionsRouter } from './routes/kbContributions'
@@ -67,6 +68,7 @@ app.use('/api/workspace', workspaceVaultRouter)
 app.use('/api/patients', patientsRouter)
 app.use('/api/account-backup', accountBackupRouter)
 app.use('/api/diagnosis-codes', diagnosisCodesRouter)
+app.use('/api/icd', icdTitleRouter)
 app.use('/api/generation-logs', generationLogRouter)
 app.use('/api/kb-admin', kbAdminRouter)
 app.use('/api/kb-contributions', kbContributionsRouter)

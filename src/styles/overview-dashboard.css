@@ -35,7 +35,9 @@
   --ov-spark: color-mix(in srgb, var(--area-accent, var(--accent)) 72%, var(--text-secondary));
 
   width: 100%;
+  min-width: 0;
   margin-top: var(--space-4, 1rem);
+  container: overview-dashboard / inline-size;
 }
 
 /* ── Summary strip ("Auf einen Blick") ───────────────────────────────────── */
@@ -157,7 +159,11 @@
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: var(--space-4, 1rem);
-  align-items: stretch;
+  /* Top-align rows so a tall safety card does not stretch shorter neighbours. */
+  align-items: start;
+}
+.ov-grid > * {
+  min-width: 0;
 }
 .ov-col-6 {
   grid-column: span 6;
@@ -167,11 +173,12 @@
 }
 
 @media (max-width: 1100px) {
+  /* auto-fit collapses to one column when the pane is too narrow for two ~320px cards */
   .ov-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
   }
   .ov-col-6 {
-    grid-column: span 1;
+    grid-column: auto;
   }
   .ov-col-12 {
     grid-column: 1 / -1;
@@ -185,6 +192,23 @@
   .ov-col-6,
   .ov-col-12 {
     grid-column: 1 / -1;
+  }
+  .ov-summary {
+    grid-template-columns: 1fr;
+  }
+  .ov-summary__item {
+    border-left: none;
+    border-top: 1px solid var(--ov-hairline);
+  }
+  .ov-summary__item:first-child {
+    border-top: none;
+  }
+  .ov-safety__signals {
+    grid-template-columns: 1fr;
+  }
+  .ov-card__head-actions {
+    width: 100%;
+    justify-content: flex-end;
   }
 }
 
@@ -215,6 +239,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: var(--space-2, 0.5rem);
   padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
   border-bottom: 1px solid var(--ov-hairline);
@@ -224,6 +249,7 @@
   align-items: center;
   gap: var(--space-2, 0.5rem);
   min-width: 0;
+  flex: 1 1 auto;
 }
 .ov-card__icon {
   display: inline-flex;
@@ -452,6 +478,86 @@
 
 /* ── Safety: compact headline + alert list ───────────────────────────────── */
 
+.ov-safety__signals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr));
+  gap: 0.55rem;
+  padding-bottom: var(--space-2, 0.5rem);
+  margin-bottom: 0.1rem;
+  border-bottom: 1px solid var(--ov-hairline);
+}
+
+.ov-safety__signal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--ov-radius-row);
+  border: 1px solid var(--ov-hairline);
+  background: color-mix(in srgb, var(--text-muted) 5%, transparent);
+}
+
+.ov-safety__signal--high {
+  background: var(--ov-danger-soft);
+  border-color: color-mix(in srgb, var(--ov-danger) 34%, var(--border-soft));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ov-danger) 10%, transparent);
+}
+.ov-safety__signal--moderate {
+  background: var(--ov-warn-soft);
+  border-color: color-mix(in srgb, var(--ov-warn) 34%, var(--border-soft));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ov-warn) 10%, transparent);
+}
+.ov-safety__signal--info {
+  background: var(--ov-info-soft);
+  border-color: color-mix(in srgb, var(--ov-info) 30%, var(--border-soft));
+}
+.ov-safety__signal--ok,
+.ov-safety__signal--low {
+  background: var(--ov-ok-soft);
+  border-color: color-mix(in srgb, var(--ov-ok) 30%, var(--border-soft));
+}
+
+.ov-safety__signal-head {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+.ov-safety__signal-icon {
+  flex-shrink: 0;
+}
+.ov-safety__signal--high .ov-safety__signal-icon {
+  color: var(--ov-danger);
+}
+.ov-safety__signal--moderate .ov-safety__signal-icon {
+  color: var(--ov-warn);
+}
+.ov-safety__signal--info .ov-safety__signal-icon {
+  color: var(--ov-info);
+}
+.ov-safety__signal--ok .ov-safety__signal-icon,
+.ov-safety__signal--low .ov-safety__signal-icon {
+  color: var(--ov-ok);
+}
+
+.ov-safety__signal-primary {
+  margin: 0;
+  min-width: 0;
+  font-size: var(--text-base, 0.9375rem);
+  font-weight: var(--weight-semibold, 600);
+  line-height: var(--leading-snug, 1.35);
+  color: var(--text-main, #24211e);
+  overflow-wrap: anywhere;
+}
+.ov-safety__signal-detail {
+  margin: 0;
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: var(--weight-medium, 500);
+  line-height: var(--leading-snug, 1.35);
+  color: var(--text-secondary, #6d655c);
+}
+
 .ov-safety__headline {
   display: flex;
   align-items: center;
@@ -534,6 +640,19 @@
   line-height: 1;
 }
 
+/* Medication + latest Spiegel stacked in one grid column (row 1, right). */
+.ov-med-spiegel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 1rem);
+  min-width: 0;
+  width: 100%;
+}
+.ov-med-spiegel > .ov-card {
+  flex: 0 0 auto;
+  width: 100%;
+}
+
 /* ── Medication: clean regimen list ──────────────────────────────────────── */
 
 .ov-med__regimen {
@@ -546,7 +665,9 @@
 .ov-med__row {
   display: flex;
   align-items: baseline;
-  gap: 0.55rem;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.55rem;
+  min-width: 0;
   padding: 0.42rem 0.5rem;
   margin: 0 -0.5rem;
   border-radius: var(--ov-radius-row);
@@ -569,9 +690,12 @@
   background: color-mix(in srgb, var(--area-accent, var(--accent)) 55%, transparent);
 }
 .ov-med__name {
+  min-width: 0;
+  flex: 1 1 8rem;
   font-weight: var(--weight-semibold, 600);
   font-size: var(--text-base, 0.9375rem);
   color: var(--text-main, #24211e);
+  overflow-wrap: anywhere;
 }
 .ov-med__dose {
   font-size: var(--text-sm, 0.8125rem);
@@ -579,6 +703,7 @@
   margin-left: auto;
   text-align: right;
   font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
 }
 .ov-med__footer {
   margin-top: 0.55rem;
@@ -592,7 +717,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.6rem;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.6rem;
+  min-width: 0;
   padding: 0.5rem 0.6rem;
   border-radius: var(--ov-radius-row);
   background: color-mix(in srgb, var(--text-muted) 6%, transparent);
@@ -711,6 +838,12 @@
 }
 .ov-trajectory {
   width: 100%;
+  min-width: 0;
+  min-height: 5.5rem;
+  overflow: hidden;
+}
+.ov-trajectory .recharts-responsive-container {
+  min-width: 0;
 }
 .ov-snapshot__text {
   margin: 0;
@@ -720,7 +853,7 @@
 }
 .ov-snapshot__cues {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.75rem), 1fr));
   gap: 0.55rem 0.9rem;
   margin-top: 0.15rem;
   padding-top: 0.55rem;
@@ -739,6 +872,11 @@
   font-weight: var(--weight-semibold, 600);
   line-height: var(--leading-snug, 1.35);
 }
+.ov-snapshot__cue-value--missing {
+  color: var(--text-muted, #91887e);
+  font-weight: var(--weight-normal, 400);
+  font-style: italic;
+}
 
 /* ── Nested reused widgets (Diagnose / Spiegel) ──────────────────────────── */
 
@@ -747,9 +885,35 @@
 .ov-card__body .spiegelwerte-section {
   margin: 0;
   max-width: none;
+  width: 100%;
+  min-width: 0;
+}
+.ov-card__body .spiegelwerte-section__head {
+  min-width: 0;
+}
+.ov-card__body .spiegelwerte-section__title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .ov-card__body .spiegelwerte-section__grid {
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.375rem), 1fr));
+}
+.ov-card__body .spiegelwerte-card {
+  min-width: 0;
+  width: 100%;
+}
+.ov-card__body .spiegelwerte-card__header {
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.ov-card__body .spiegelwerte-card .recharts-responsive-container {
+  min-width: 0;
+}
+/* Latest Spiegel sits beside meds — keep a single readable column when narrow. */
+.ov-med-spiegel .spiegelwerte-section__grid {
+  grid-template-columns: 1fr;
 }
 
 /* ── Motion preferences ──────────────────────────────────────────────────── */

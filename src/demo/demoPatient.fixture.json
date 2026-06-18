@@ -999,13 +999,13 @@
               "formulation": "tablet",
               "strength": "10 mg",
               "doseSchedule": {
-                "morning": "10",
+                "morning": "1",
                 "noon": "",
                 "evening": "",
                 "night": "",
-                "unit": "mg"
+                "unit": "Stk."
               },
-              "doseLineGerman": "Aripiprazol 10 mg 1-0-0",
+              "doseLineGerman": "Aripiprazol 10-0-0-0 mg",
               "prn": false,
               "startDate": "2026-06-09",
               "indication": "Antipsychotische Stabilisierung",
@@ -1030,13 +1030,13 @@
                     "formulation": "tablet",
                     "strength": "10 mg",
                     "doseSchedule": {
-                      "morning": "10",
+                      "morning": "1",
                       "noon": "",
                       "evening": "",
                       "night": "",
-                      "unit": "mg"
+                      "unit": "Stk."
                     },
-                    "doseLineGerman": "Aripiprazol 10 mg 1-0-0",
+                    "doseLineGerman": "Aripiprazol 10-0-0-0 mg",
                     "status": "active",
                     "reasonForChange": "Umstellung"
                   }
@@ -1051,11 +1051,11 @@
               "doseSchedule": {
                 "morning": "",
                 "noon": "",
-                "evening": "3",
+                "evening": "1",
                 "night": "",
-                "unit": "mg"
+                "unit": "Stk."
               },
-              "doseLineGerman": "Risperidon 3 mg 0-0-1 (ausgeschlichen)",
+              "doseLineGerman": "Risperidon 0-0-3-0 mg (ausgeschlichen)",
               "prn": false,
               "startDate": "2026-06-02",
               "indication": "Akute Psychose",
@@ -1936,14 +1936,22 @@
       "type": "ecg",
       "schemaVersion": 1,
       "fieldValues": {
-        "rhythm": ["sinus"],
+        "rhythm": [
+          "sinus"
+        ],
         "rate": "72/min",
         "ekg_type": "linkstyp",
         "pq": "160 ms",
         "qtc": "410 ms",
-        "st": ["normal"],
-        "blocks": ["none"],
-        "conclusion_preset": ["unremarkable"]
+        "st": [
+          "normal"
+        ],
+        "blocks": [
+          "none"
+        ],
+        "conclusion_preset": [
+          "unremarkable"
+        ]
       },
       "status": "vidert",
       "examDate": "2026-06-08",
