@@ -234,6 +234,116 @@ describe('consolidateImportCandidates medication pass', () => {
   })
 })
 
+describe('parseMedicationLine — narrative false-positive guard', () => {
+  it('parses glued dose/strength after preprocessing', () => {
+    expect(parseMedicationLine('Mirtazapin0-0-30-0 mg')).toMatchObject({
+      substance: 'Mirtazapin',
+      doseText: '0-0-30-0',
+    })
+    expect(parseMedicationLine('Melperon25 mg b.B.')).toMatchObject({
+      substance: 'Melperon',
+      strength: '25 mg',
+      isPrn: true,
+    })
+    expect(parseMedicationLine('Mirtazapin 30 mg 0-0-1-0')).toMatchObject({
+      substance: 'Mirtazapin',
+      strength: '30 mg',
+      doseText: '0-0-1-0',
+    })
+  })
+
+  it('rejects narrative garbage in conservative narrative mode', () => {
+    const narrativeFixtures = [
+      'Herr Araya geht langsam durch den Gang.',
+      'Herr Araya0-0-0-0 mg',
+      'Patient wirkt müde und antriebsarm.',
+      'Procedere: Xeplion0-0-0-0 mg (alle 28 Tage)',
+      'Proc.: Olanzapingesteigert0-0-0-20 mg',
+      'Im0-0-0-0 mg',
+      'Geht0-0-0-0 mg (täglich)',
+      'aufgrund0-0-0-0 mg',
+      'Sieht den Patienten heute zur Visite.',
+    ]
+
+    for (const line of narrativeFixtures) {
+      expect(parseMedicationLine(line, { mode: 'narrative' })).toBeNull()
+    }
+  })
+
+  it('still extracts real medications from structured and narrative contexts', () => {
+    expect(parseMedicationLine('Mirtazapin 30 mg 0-0-1')).toMatchObject({
+      substance: 'Mirtazapin',
+      strength: '30 mg',
+      doseText: '0-0-1',
+    })
+    expect(parseMedicationLine('Risperidon OKEDI 100 mg i.m. alle 28 Tage')).toMatchObject({
+      substance: 'Risperidon OKEDI',
+      strength: '100 mg',
+      isDepot: true,
+    })
+    expect(parseMedicationLine('Melperon 25 mg b.B.')).toMatchObject({
+      substance: 'Melperon',
+      strength: '25 mg',
+      isPrn: true,
+    })
+    expect(parseMedicationLine('Medikation: Risperidon OKEDI 100 mg i.m. alle 28 Tage', { mode: 'narrative' })).toMatchObject({
+      substance: 'Risperidon OKEDI',
+    })
+  })
+})
+
+describe('appendMedicationCandidatesFromNarrative — verlauf regression', () => {
+  const narrativeGarbage = [
+    'Herr Araya geht langsam durch den Gang.',
+    'Mirtazapin0-0-30-0 mg',
+    'Olanzapin0-0-10-0 mg',
+    'Herr Araya0-0-0-0 mg',
+    'Im0-0-0-0 mg',
+    'Patient wirkt müde.',
+    'Proc.: Olanzapingesteigert0-0-0-20 mg',
+    'Procedere: Xeplion0-0-0-0 mg (alle 28 Tage)',
+  ].join('\n')
+
+  it('does not emit false-positive meds from flattened verlauf narrative', () => {
+    const base = [
+      makeCandidate({
+        module: 'verlauf',
+        sourceLocation: { section: 'Verlauf' },
+        data: { text: narrativeGarbage },
+      }),
+    ]
+
+    const meds = appendMedicationCandidatesFromNarrative(base).filter((c) => c.module === 'medication')
+    expect(meds).toHaveLength(0)
+  })
+
+  it('still extracts explicit inline med lines and beginn-mit sentences', () => {
+    const base = [
+      makeCandidate({
+        module: 'verlauf',
+        sourceLocation: { section: 'Verlauf' },
+        data: {
+          date: '2024-03-14',
+          text: [
+            narrativeGarbage,
+            'Medikation: Mirtazapin 30 mg 0-0-1',
+            'Beginn mit Olanzapin 10 mg 0-0-1.',
+            'Melperon 25 mg b.B.',
+          ].join('\n'),
+        },
+      }),
+    ]
+
+    const meds = appendMedicationCandidatesFromNarrative(base).filter((c) => c.module === 'medication')
+    const substances = meds
+      .filter((c) => c.module === 'medication')
+      .map((c) => (c.module === 'medication' ? c.data.substance : ''))
+
+    expect(substances).toEqual(expect.arrayContaining(['Mirtazapin', 'Olanzapin']))
+    expect(substances.some((s) => /herr|patient|proc|im|geht/i.test(s))).toBe(false)
+  })
+})
+
 describe('persistAcceptedCandidates — comprehensive medication fields', () => {
   const envelope: ClinicalImportEnvelope = {
     envelopeVersion: 1,

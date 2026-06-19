@@ -9,6 +9,7 @@ import { frPersonality } from './personality'
 import { frIntellectualDevelopment } from './intellectualDevelopment'
 import { frNeurodevelopmental } from './neurodevelopmental'
 import { frChildhoodOnset } from './childhoodOnset'
+import { gapFR } from '../gapCoverage/fr'
 
 /** Full FR translation map (merged ICD-10 block modules). */
 export const fr: DisorderTranslationMap = {
@@ -22,4 +23,5 @@ export const fr: DisorderTranslationMap = {
   ...frIntellectualDevelopment,
   ...frNeurodevelopmental,
   ...frChildhoodOnset,
+  ...gapFR,
 }

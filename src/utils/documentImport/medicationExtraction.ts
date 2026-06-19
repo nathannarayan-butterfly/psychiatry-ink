@@ -31,6 +31,8 @@ export interface ParsedMedicationLine {
   status?: string
 }
 
+export type MedicationScanMode = 'structured' | 'narrative'
+
 const DOSE_RE = /\b(\d+(?:[.,]\d+)?(?:\s*[-–]\s*\d+(?:[.,]\d+)?){1,3})\b/
 const STRENGTH_RE = /\b(\d+(?:[.,]\d+)?)\s*(mg|µg|mcg|g|ml|mmol|ie|i\.e\.)\b/i
 
@@ -55,7 +57,7 @@ const FORMULATION_PATTERNS: { formulation: string; re: RegExp }[] = [
   { formulation: 'injection', re: /\b(?:injektion|inj\.?)\b/i },
 ]
 
-const PRN_RE = /\b(?:bedarfsweise|bei\s+bedarf|prn|nach\s+bedarf)\b/i
+const PRN_RE = /\b(?:bedarfsweise|bei\s+bedarf|prn|nach\s+bedarf|b\.?\s*b\.?)\b/i
 const FREQUENCY_PATTERNS: { frequency: string; re: RegExp }[] = [
   { frequency: 'täglich', re: /\b(?:tgl\.?|täglich|daily)\b/i },
   { frequency: 'morgens', re: /\bmorgens\b/i },
@@ -75,8 +77,225 @@ const MED_CHANGE_STATUS_PATTERNS: { status: string; re: RegExp }[] = [
 const NARRATIVE_MED_INLINE_RE = /(?:aktuelle\s+)?medikation\s*:?\s*([^.\n]+)/gi
 const NARRATIVE_BEGIN_RE = /\b(?:beginn|start)\s+(?:mit\s+)?([^.\n]+)/gi
 
+const INLINE_MEDIKATION_LABEL_RE = /^(?:aktuelle\s+)?medikation\b\s*:?\s*(.*)$/i
+const REJECTED_LINE_PREFIX_RE =
+  /^(?:procedere|proc\.?|anliegen|visite|herr|frau|patient|pat\.?|verlauf|befund|plan|diagnose|diagnosen|therapie)\b/i
+
+const NARRATIVE_MAX_LINE_LEN = 140
+const NARRATIVE_CHANGE_MAX_LEN = 90
+
+/** Common German tokens that precede dose-like patterns in flattened narrative. */
+const SUBSTANCE_BLOCKLIST = new Set([
+  'herr',
+  'frau',
+  'patient',
+  'pat',
+  'im',
+  'bei',
+  'geht',
+  'sieht',
+  'braucht',
+  'wirkt',
+  'wird',
+  'viel',
+  'bisschen',
+  'aufgrund',
+  'hygiene',
+  'anliegen',
+  'procedere',
+  'proc',
+  'verlauf',
+  'visite',
+  'morgens',
+  'abends',
+  'mittags',
+  'heute',
+  'gestern',
+  'danach',
+  'dabei',
+  'weiter',
+  'keine',
+  'kein',
+  'oder',
+  'und',
+  'mit',
+  'ohne',
+  'sehr',
+  'gut',
+  'schlecht',
+  'erhöhung',
+  'reduktion',
+  'reduzierung',
+  'steigerung',
+])
+
+/** Psych suffix stems and depot brands commonly seen in German letters. */
+const DRUG_SUFFIX_RE =
+  /(?:in|ol|id|am|pin|pram|zepam|zepin|done|tript|axin|azin|azep|xetin|prid|peron|perid|idon|apin|apin|prazol|tidin|tidine|oxin|afil|vastatin|mycin|cillin)$/i
+
+const KNOWN_PSYCH_STEMS = new Set([
+  'mirtazapin',
+  'risperidon',
+  'olanzapin',
+  'quetiapin',
+  'clozapin',
+  'haloperidol',
+  'aripiprazol',
+  'paliperidon',
+  'sertralin',
+  'citalopram',
+  'escitalopram',
+  'fluoxetin',
+  'paroxetin',
+  'venlafaxin',
+  'duloxetin',
+  'lorazepam',
+  'diazepam',
+  'melperon',
+  'promethazin',
+  'levomepromazin',
+  'lithium',
+  'valproat',
+  'carbamazepin',
+  'lamotrigin',
+  'gabapentin',
+  'pregabalin',
+  'methylphenidat',
+  'atomoxetin',
+  'bupropion',
+  'trazodon',
+  'amitriptylin',
+  'trimipramin',
+  'maprotilin',
+  'zopiclon',
+  'zolpidem',
+  'promethazin',
+])
+
+const KNOWN_BRAND_TOKENS = new Set([
+  'okedi',
+  'xeplion',
+  'invega',
+  'abilify',
+  'maintena',
+  'risperdal',
+  'zyprexa',
+  'seroquel',
+  'clopixol',
+  'haldol',
+  'zypadhera',
+])
+
 function normalizeSubstanceKey(value: string): string {
   return value.trim().toLowerCase().replace(/\s+/g, ' ')
+}
+
+function normalizeToken(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9-]/g, '')
+}
+
+function firstToken(value: string): string {
+  return value.trim().split(/\s+/)[0] ?? ''
+}
+
+function isBlocklistedSubstance(substance: string): boolean {
+  const token = normalizeToken(firstToken(substance))
+  return !token || SUBSTANCE_BLOCKLIST.has(token)
+}
+
+function tokenLooksLikeDrug(token: string): boolean {
+  const norm = normalizeToken(token)
+  if (norm.length < 4) return false
+  if (SUBSTANCE_BLOCKLIST.has(norm)) return false
+  if (KNOWN_PSYCH_STEMS.has(norm)) return true
+  if (KNOWN_BRAND_TOKENS.has(norm)) return true
+  for (const stem of KNOWN_PSYCH_STEMS) {
+    if (norm.startsWith(stem) || norm.includes(stem)) return true
+  }
+  for (const brand of KNOWN_BRAND_TOKENS) {
+    if (norm.includes(brand)) return true
+  }
+  if (DRUG_SUFFIX_RE.test(norm)) return true
+  return /^[A-ZÄÖÜ]/.test(token) && norm.length >= 5 && DRUG_SUFFIX_RE.test(norm)
+}
+
+function isDrugLikeSubstance(substance: string): boolean {
+  const tokens = substance.trim().split(/\s+/).filter(Boolean)
+  if (tokens.length === 0) return false
+  if (!tokenLooksLikeDrug(tokens[0])) return false
+  if (tokens.length >= 2 && /^[A-ZÄÖÜ]/.test(tokens[1])) {
+    return tokenLooksLikeDrug(tokens[0]) || KNOWN_BRAND_TOKENS.has(normalizeToken(tokens[1]))
+  }
+  return true
+}
+
+function isRejectedLinePrefix(line: string): boolean {
+  return REJECTED_LINE_PREFIX_RE.test(line.trim())
+}
+
+/** Insert whitespace between glued substance tokens and numeric dose/strength segments. */
+export function preprocessMedicationLine(line: string): string {
+  return line
+    .replace(/([A-Za-zÄÖÜäöü]{3,})(\d+(?:[.,]\d+)?(?:\s*[-–]\s*\d+){1,3})\b/g, '$1 $2')
+    .replace(
+      /([A-Za-zÄÖÜäöü]{3,})(\d+(?:[.,]\d+)?)\s*(mg|µg|mcg|g|ml|mmol|ie|i\.e\.)\b/gi,
+      '$1 $2 $3',
+    )
+}
+
+function hasGluedSubstanceDose(line: string): boolean {
+  return /[A-Za-zÄÖÜäöü]\d+(?:-\d+){1,3}\b/.test(line) || /[A-Za-zÄÖÜäöü]\d+(?:[.,]\d+)?\s*mg\b/i.test(line)
+}
+
+function substanceEndsBeforeNumbers(line: string, index: number): boolean {
+  if (index <= 0) return false
+  const charBefore = line[index - 1]
+  return /[\s:,\-–(]/.test(charBefore)
+}
+
+function isValidStrengthMatch(line: string, match: RegExpExecArray | null): match is RegExpExecArray {
+  if (!match || match.index === undefined || match.index <= 0) return false
+  return /\s/.test(line[match.index - 1])
+}
+
+function isValidDoseMatch(line: string, match: RegExpExecArray | null): match is RegExpExecArray {
+  if (!match || match.index === undefined) return false
+  if (match.index === 0) return true
+  const charBefore = line[match.index - 1]
+  return !/[A-Za-zÄÖÜäöü]/.test(charBefore)
+}
+
+function findValidStrengthMatch(line: string): RegExpExecArray | null {
+  const re = new RegExp(STRENGTH_RE.source, 'gi')
+  let match: RegExpExecArray | null
+  while ((match = re.exec(line)) !== null) {
+    if (isValidStrengthMatch(line, match)) return match
+  }
+  return null
+}
+
+function findValidDoseMatch(line: string): RegExpExecArray | null {
+  const re = new RegExp(DOSE_RE.source, 'g')
+  let match: RegExpExecArray | null
+  while ((match = re.exec(line)) !== null) {
+    if (isValidDoseMatch(line, match)) return match
+  }
+  return null
+}
+
+function stripNarrativeMedicationPrefix(raw: string): string {
+  const inlineLabel = INLINE_MEDIKATION_LABEL_RE.exec(raw.trim())
+  if (inlineLabel?.[1]?.trim()) return inlineLabel[1].trim()
+
+  const beginnMatch = /\b(?:beginn|start)\s+mit\s+(.+?)\.?\s*$/i.exec(raw.trim())
+  if (beginnMatch?.[1]?.trim()) return beginnMatch[1].trim()
+
+  return raw.trim()
 }
 
 function splitBrandFromSubstance(raw: string): { substance: string; displayBrandName?: string } {
@@ -174,21 +393,29 @@ function extractChangeStatus(text: string): { status?: string; changeContext?: s
   return {}
 }
 
-function hasMedicationSignal(parsed: ParsedMedicationLine): boolean {
+function hasStrongMedicationSignal(parsed: ParsedMedicationLine): boolean {
   return Boolean(
     parsed.strength ||
       parsed.doseText ||
       parsed.isDepot ||
       parsed.formulation ||
       parsed.route ||
-      parsed.frequency ||
-      parsed.isPrn ||
-      parsed.changeContext,
+      parsed.isPrn,
   )
 }
 
-function extractSubstance(trimmed: string, strengthMatch: RegExpExecArray | null): string {
-  if (strengthMatch?.index !== undefined && strengthMatch.index > 0) {
+function hasMedicationSignal(parsed: ParsedMedicationLine): boolean {
+  if (hasStrongMedicationSignal(parsed)) return true
+  if (parsed.changeContext && parsed.status) return true
+  return Boolean(parsed.frequency && parsed.strength)
+}
+
+function extractSubstance(
+  trimmed: string,
+  strengthMatch: RegExpExecArray | null,
+  doseMatch: RegExpExecArray | null,
+): string {
+  if (strengthMatch?.index !== undefined && strengthMatch.index > 0 && substanceEndsBeforeNumbers(trimmed, strengthMatch.index)) {
     return trimmed
       .slice(0, strengthMatch.index)
       .replace(/\bauf\s*$/i, '')
@@ -196,21 +423,95 @@ function extractSubstance(trimmed: string, strengthMatch: RegExpExecArray | null
       .trim()
   }
 
-  const firstNum = trimmed.search(/\d/)
-  let rawSubstance =
-    firstNum > 0 ? trimmed.slice(0, firstNum).trim() : trimmed.split(/\s+/).slice(0, 2).join(' ')
-  return rawSubstance.replace(/\s+(i\.?\s*m\.?|s\.?\s*c\.?|p\.?\s*o\.?)\.?\s*$/i, '').trim()
+  if (doseMatch?.index !== undefined && doseMatch.index > 0 && substanceEndsBeforeNumbers(trimmed, doseMatch.index)) {
+    return trimmed
+      .slice(0, doseMatch.index)
+      .replace(/\s+(i\.?\s*m\.?|s\.?\s*c\.?|p\.?\s*o\.?)\.?\s*$/i, '')
+      .trim()
+  }
+
+  const firstNum = trimmed.search(/(?:^|\s)\d/)
+  if (firstNum > 0 && substanceEndsBeforeNumbers(trimmed, firstNum)) {
+    return trimmed
+      .slice(0, firstNum)
+      .replace(/\s+(i\.?\s*m\.?|s\.?\s*c\.?|p\.?\s*o\.?)\.?\s*$/i, '')
+      .trim()
+  }
+
+  const tokens = trimmed.split(/\s+/).slice(0, 2).join(' ')
+  return tokens.replace(/\s+(i\.?\s*m\.?|s\.?\s*c\.?|p\.?\s*o\.?)\.?\s*$/i, '').trim()
+}
+
+function isShortMedicationChangeSentence(line: string, parsed: ParsedMedicationLine): boolean {
+  if (!parsed.changeContext || !parsed.status) return false
+  if (line.length > NARRATIVE_CHANGE_MAX_LEN) return false
+  return Boolean(parsed.strength || parsed.doseText || parsed.isDepot)
+}
+
+function qualifiesStructuredMedicationLine(line: string, parsed: ParsedMedicationLine): boolean {
+  if (isRejectedLinePrefix(line)) return false
+  if (isBlocklistedSubstance(parsed.substance)) return false
+  if (!isDrugLikeSubstance(parsed.substance)) return false
+  if (hasGluedSubstanceDose(line)) return false
+  return hasMedicationSignal(parsed)
+}
+
+function qualifiesNarrativeMedicationLine(
+  line: string,
+  parsed: ParsedMedicationLine,
+  rawLine: string,
+): boolean {
+  if (!qualifiesStructuredMedicationLine(line, parsed)) return false
+  if (INLINE_MEDIKATION_LABEL_RE.test(rawLine.trim())) return true
+  if (line.length > NARRATIVE_MAX_LINE_LEN && !/\bmedikation\s*:/i.test(rawLine)) return false
+
+  const inlineLabel = INLINE_MEDIKATION_LABEL_RE.exec(line.trim())
+  if (inlineLabel?.[1]?.trim()) return true
+  if (/\b(?:beginn|start)\s+mit\b/i.test(rawLine) && rawLine.length <= NARRATIVE_MAX_LINE_LEN) return true
+  if (isShortMedicationChangeSentence(rawLine, parsed)) return true
+
+  if (parsed.strength && (parsed.doseText || parsed.isDepot || parsed.route)) {
+    return rawLine.length <= NARRATIVE_MAX_LINE_LEN
+  }
+
+  if (parsed.strength && parsed.isPrn) return rawLine.length <= NARRATIVE_MAX_LINE_LEN
+
+  if (parsed.changeContext && parsed.status && !parsed.strength && rawLine.length <= NARRATIVE_CHANGE_MAX_LEN) {
+    return isDrugLikeSubstance(parsed.substance)
+  }
+
+  return false
+}
+
+function lineQualifies(
+  line: string,
+  parsed: ParsedMedicationLine,
+  mode: MedicationScanMode,
+  rawLine: string,
+): boolean {
+  return mode === 'structured'
+    ? qualifiesStructuredMedicationLine(line, parsed)
+    : qualifiesNarrativeMedicationLine(line, parsed, rawLine)
 }
 
 /** Parse one medication line (list item or inline mention). */
-export function parseMedicationLine(line: string): ParsedMedicationLine | null {
-  const trimmed = line.replace(/^[-*•\d.)\s]+/, '').trim()
+export function parseMedicationLine(
+  line: string,
+  options: { mode?: MedicationScanMode } = {},
+): ParsedMedicationLine | null {
+  const mode = options.mode ?? 'structured'
+  const rawTrimmed = line.replace(/^[-*•\d.)\s]+/, '').trim()
+  if (!rawTrimmed) return null
+
+  const workingRaw = stripNarrativeMedicationPrefix(rawTrimmed)
+  const trimmed = preprocessMedicationLine(workingRaw)
   if (!trimmed) return null
+  if (hasGluedSubstanceDose(workingRaw) && trimmed === workingRaw) return null
 
-  const strengthMatch = STRENGTH_RE.exec(trimmed)
-  const doseMatch = DOSE_RE.exec(trimmed)
+  const strengthMatch = findValidStrengthMatch(trimmed)
+  const doseMatch = findValidDoseMatch(trimmed)
 
-  const rawSubstance = extractSubstance(trimmed, strengthMatch) || trimmed
+  const rawSubstance = extractSubstance(trimmed, strengthMatch, doseMatch) || trimmed
   const { substance, displayBrandName } = splitBrandFromSubstance(rawSubstance)
   if (!substance || substance.length < 2) return null
 
@@ -233,35 +534,93 @@ export function parseMedicationLine(line: string): ParsedMedicationLine | null {
     ...change,
   }
 
-  return hasMedicationSignal(parsed) ? parsed : null
+  if (!hasMedicationSignal(parsed)) return null
+  if (!lineQualifies(trimmed, parsed, mode, rawTrimmed)) return null
+  return parsed
 }
 
-function splitMedicationListLine(line: string): string[] {
+function splitMedicationListLine(line: string, mode: MedicationScanMode): string[] {
   const trimmed = line.trim()
   if (!trimmed) return []
 
   if (trimmed.includes(';')) {
     const parts = trimmed.split(';').map((part) => part.trim()).filter(Boolean)
-    if (parts.length > 1 && parts.every((part) => parseMedicationLine(part))) return parts
+    if (parts.length > 1 && parts.every((part) => parseMedicationLine(part, { mode }))) return parts
   }
 
   const commaParts = trimmed.split(/,\s*(?=[A-ZÄÖÜ])/).map((part) => part.trim()).filter(Boolean)
-  if (commaParts.length > 1 && commaParts.every((part) => parseMedicationLine(part))) {
+  if (commaParts.length > 1 && commaParts.every((part) => parseMedicationLine(part, { mode }))) {
     return commaParts
   }
 
   const undParts = trimmed.split(/\s+und\s+/i).map((part) => part.trim()).filter(Boolean)
-  if (undParts.length > 1 && undParts.every((part) => parseMedicationLine(part))) {
+  if (undParts.length > 1 && undParts.every((part) => parseMedicationLine(part, { mode }))) {
     return undParts
   }
 
   return [trimmed]
 }
 
-const INLINE_MEDIKATION_LABEL_RE = /^(?:aktuelle\s+)?medikation\b\s*:?\s*(.*)$/i
-
 function linesFromText(text: string): string[] {
   return text.split('\n').map((line) => line.trim()).filter(Boolean)
+}
+
+function isNarrativeMedChangeLine(line: string): boolean {
+  const trimmed = preprocessMedicationLine(line.trim())
+  if (!trimmed || isRejectedLinePrefix(trimmed)) return false
+  if (trimmed.length > NARRATIVE_CHANGE_MAX_LEN) return false
+  if (!MED_CHANGE_STATUS_PATTERNS.some(({ re }) => re.test(trimmed))) return false
+  const parsed = parseMedicationLine(trimmed, { mode: 'narrative' })
+  return parsed !== null
+}
+
+function collectCandidateLinesFromText(text: string, mode: MedicationScanMode): string[] {
+  const out: string[] = []
+
+  for (const line of linesFromText(text)) {
+    const inline = INLINE_MEDIKATION_LABEL_RE.exec(line)
+    if (inline?.[1]?.trim()) {
+      out.push(...splitMedicationListLine(inline[1].trim(), 'structured'))
+      continue
+    }
+    if (INLINE_MEDIKATION_LABEL_RE.test(line)) continue
+
+    if (mode === 'structured') {
+      out.push(...splitMedicationListLine(line, mode))
+      continue
+    }
+
+    if (/\b(?:beginn|start)\s+mit\b/i.test(line) && line.length <= NARRATIVE_MAX_LINE_LEN) {
+      out.push(stripNarrativeMedicationPrefix(line))
+      continue
+    }
+
+    if (isNarrativeMedChangeLine(line)) {
+      out.push(line)
+      continue
+    }
+
+    if (
+      line.length <= NARRATIVE_MAX_LINE_LEN &&
+      !isRejectedLinePrefix(line) &&
+      parseMedicationLine(line, { mode: 'narrative' })
+    ) {
+      out.push(line)
+    }
+  }
+
+  if (mode === 'narrative') {
+    for (const re of [NARRATIVE_MED_INLINE_RE, NARRATIVE_BEGIN_RE]) {
+      re.lastIndex = 0
+      let match: RegExpExecArray | null
+      while ((match = re.exec(text)) !== null) {
+        const snippet = match[1]?.trim()
+        if (snippet) out.push(...splitMedicationListLine(snippet, 'structured'))
+      }
+    }
+  }
+
+  return out
 }
 
 function medicationConfidence(parsed: ParsedMedicationLine): 'high' | 'medium' | 'low' {
@@ -341,43 +700,17 @@ function existingMedicationSubstances(candidates: ClinicalImportCandidate[]): Se
   return keys
 }
 
-function collectCandidateLinesFromText(text: string): string[] {
-  const out: string[] = []
-
-  for (const line of linesFromText(text)) {
-    const inline = INLINE_MEDIKATION_LABEL_RE.exec(line)
-    if (inline?.[1]?.trim()) {
-      out.push(...splitMedicationListLine(inline[1].trim()))
-      continue
-    }
-    if (INLINE_MEDIKATION_LABEL_RE.test(line)) continue
-    // Inline narrative patterns are handled by the regex passes below.
-    if (/\b(?:beginn|start)\s+mit\b/i.test(line) || /\bmedikation\s*:/i.test(line)) continue
-    out.push(...splitMedicationListLine(line))
-  }
-
-  for (const re of [NARRATIVE_MED_INLINE_RE, NARRATIVE_BEGIN_RE]) {
-    re.lastIndex = 0
-    let match: RegExpExecArray | null
-    while ((match = re.exec(text)) !== null) {
-      const snippet = match[1]?.trim()
-      if (snippet) out.push(...splitMedicationListLine(snippet))
-    }
-  }
-
-  return out
-}
-
 function extractFromTextBlock(
   text: string,
   location: ImportSourceLocation,
   existing: Set<string>,
+  mode: MedicationScanMode,
   startDate?: string,
 ): ClinicalImportCandidate[] {
   const out: ClinicalImportCandidate[] = []
 
-  for (const candidateLine of collectCandidateLinesFromText(text)) {
-    const parsed = parseMedicationLine(candidateLine)
+  for (const candidateLine of collectCandidateLinesFromText(text, mode)) {
+    const parsed = parseMedicationLine(candidateLine, { mode })
     if (!parsed) continue
     const key = normalizeSubstanceKey(parsed.substance)
     if (existing.has(key)) continue
@@ -395,6 +728,31 @@ const NARRATIVE_MEDICATION_SOURCE_MODULES = new Set<ClinicalImportCandidate['mod
   'anamnese',
 ])
 
+function medicationScanBlocks(
+  candidate: ClinicalImportCandidate,
+): { text: string; mode: MedicationScanMode }[] {
+  if (candidate.module === 'anamnese') {
+    const sectionContents = candidate.data.sectionContents
+    if (sectionContents?.['medikamentenanamnese']?.trim()) {
+      return [{ text: sectionContents['medikamentenanamnese'], mode: 'structured' }]
+    }
+    if (candidate.data.sectionId === 'medikamentenanamnese' && candidate.data.text?.trim()) {
+      return [{ text: candidate.data.text, mode: 'structured' }]
+    }
+    return [{ text: candidate.data.text, mode: 'narrative' }]
+  }
+
+  if (candidate.module === 'therapy') {
+    return [{ text: `${candidate.data.title}\n${candidate.data.text}`, mode: 'narrative' }]
+  }
+
+  if (candidate.module === 'verlauf') {
+    return [{ text: candidate.data.text, mode: 'narrative' }]
+  }
+
+  return []
+}
+
 /**
  * Scan narrative candidates for inline Medikation lines and medication mentions;
  * append structured medication candidates without duplicating dedicated
@@ -409,27 +767,22 @@ export function appendMedicationCandidatesFromNarrative(
   for (const candidate of candidates) {
     if (!NARRATIVE_MEDICATION_SOURCE_MODULES.has(candidate.module)) continue
 
-    const text =
-      candidate.module === 'anamnese'
-        ? candidate.data.text
-        : candidate.module === 'therapy'
-          ? `${candidate.data.title}\n${candidate.data.text}`
-          : candidate.module === 'verlauf'
-            ? candidate.data.text
-            : ''
-    if (!text) continue
-
-    const location: ImportSourceLocation = {
-      ...candidate.sourceLocation,
-      section: candidate.sourceLocation.section
-        ? `${candidate.sourceLocation.section} → Medikation`
-        : 'Medikation',
-    }
-
+    const blocks = medicationScanBlocks(candidate)
     const startDate =
       candidate.module === 'verlauf' && candidate.data.date ? candidate.data.date : undefined
 
-    derived.push(...extractFromTextBlock(text, location, existing, startDate))
+    for (const block of blocks) {
+      if (!block.text?.trim()) continue
+
+      const location: ImportSourceLocation = {
+        ...candidate.sourceLocation,
+        section: candidate.sourceLocation.section
+          ? `${candidate.sourceLocation.section} → Medikation`
+          : 'Medikation',
+      }
+
+      derived.push(...extractFromTextBlock(block.text, location, existing, block.mode, startDate))
+    }
   }
 
   return derived.length > 0 ? [...candidates, ...derived] : candidates

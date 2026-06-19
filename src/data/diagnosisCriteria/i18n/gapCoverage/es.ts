@@ -1,0 +1,1551 @@
+import type { DisorderTranslationMap } from '../types'
+
+export const gapES: DisorderTranslationMap = {
+  "dementia_other_diseases_stem": {
+    "name": "Dementia in other diseases classified elsewhere",
+    "differentials": [
+      "Demenz bei Alzheimer-Krankheit (F00)",
+      "Vaskuläre Demenz (F01)",
+      "Primär psychiatrische Störung mit kognitiven Symptomen",
+      "Delir (akuter Beginn, fluktuierende Bewusstseinslage)"
+    ],
+    "groups": {
+      "f02.core": "Criterios principales",
+      "f02.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f02.core_symptoms": "Síndrome de demencia",
+      "f02.exclude_other": "La presentación no se explica mejor por un trastorno mental primario o el consumo de sustancias por sí solo"
+    }
+  },
+  "dementia_cjd": {
+    "name": "Dementia in Creutzfeldt-Jakob disease",
+    "differentials": [
+      "Schnell progrediente Demenz anderer Ätiologie",
+      "Delir",
+      "Depressive Pseudodemenz"
+    ],
+    "groups": {
+      "f02_1.cognition": "Síndrome de demencia",
+      "f02_1.aetiology": "Atribución etiológica",
+      "f02_1.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f02_1.memory_decline": "Deterioro de la memoria",
+      "f02_1.cognitive_decline": "Abnahme höherer kognitiver Funktionen gegenüber dem früheren Leistungsniveau",
+      "f02_1.functional_impact": "Deterioro en la gestión de las actividades diarias",
+      "f02_1.underlying_disease": "Nachweis oder begründete Annahme einer Creutzfeldt-Jakob-Krankheit (Prionerkrankung) als ursächlicher Grunderkrankung",
+      "f02_1.exclude_delirium": "Sin alteración de la conciencia que sugiera un delirio"
+    }
+  },
+  "dementia_huntington": {
+    "name": "Dementia in Huntington disease",
+    "differentials": [
+      "Andere neurodegenerative Demenz",
+      "Medikamenteninduzierte Chorea",
+      "Tardive Dyskinesie"
+    ],
+    "groups": {
+      "f02_2.cognition": "Síndrome de demencia",
+      "f02_2.aetiology": "Atribución etiológica",
+      "f02_2.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f02_2.memory_decline": "Deterioro de la memoria",
+      "f02_2.cognitive_decline": "Abnahme höherer kognitiver Funktionen gegenüber dem früheren Leistungsniveau",
+      "f02_2.functional_impact": "Deterioro en la gestión de las actividades diarias",
+      "f02_2.underlying_disease": "Nachweis oder begründete Annahme einer Huntington-Krankheit als ursächlicher Grunderkrankung",
+      "f02_2.exclude_delirium": "Sin alteración de la conciencia que sugiera un delirio"
+    }
+  },
+  "dementia_parkinson": {
+    "name": "Dementia in Parkinson disease",
+    "differentials": [
+      "Demenz mit Lewy-Körperchen",
+      "Vaskuläre Demenz",
+      "Depressive Pseudodemenz"
+    ],
+    "groups": {
+      "f02_3.cognition": "Síndrome de demencia",
+      "f02_3.aetiology": "Atribución etiológica",
+      "f02_3.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f02_3.memory_decline": "Deterioro de la memoria",
+      "f02_3.cognitive_decline": "Abnahme höherer kognitiver Funktionen gegenüber dem früheren Leistungsniveau",
+      "f02_3.functional_impact": "Deterioro en la gestión de las actividades diarias",
+      "f02_3.underlying_disease": "Nachweis oder begründete Annahme einer Parkinson-Krankheit als ursächlicher Grunderkrankung",
+      "f02_3.exclude_delirium": "Sin alteración de la conciencia que sugiera un delirio"
+    }
+  },
+  "dementia_hiv": {
+    "name": "Dementia in human immunodeficiency virus [HIV] disease",
+    "differentials": [
+      "HIV-assoziierte Neurokognitionsstörung ohne Demenz",
+      "Opportunistische ZNS-Infektion",
+      "Substanzbedingte kognitive Störung"
+    ],
+    "groups": {
+      "f02_4.cognition": "Síndrome de demencia",
+      "f02_4.aetiology": "Atribución etiológica",
+      "f02_4.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f02_4.memory_decline": "Deterioro de la memoria",
+      "f02_4.cognitive_decline": "Abnahme höherer kognitiver Funktionen gegenüber dem früheren Leistungsniveau",
+      "f02_4.functional_impact": "Deterioro en la gestión de las actividades diarias",
+      "f02_4.underlying_disease": "Nachweis oder begründete Annahme einer HIV-Infektion als ursächlicher Grunderkrankung",
+      "f02_4.exclude_delirium": "Sin alteración de la conciencia que sugiera un delirio"
+    }
+  },
+  "unspecified_dementia": {
+    "name": "Unspecified dementia",
+    "differentials": [
+      "Demenz bei Alzheimer-Krankheit (F00)",
+      "Vaskuläre Demenz (F01)",
+      "Demenz bei anderenorts klassifizierten Krankheiten (F02)",
+      "Delir"
+    ],
+    "groups": {
+      "f03.core": "Sintomatología clínica sin información suficiente para una asignación más específica",
+      "f03.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f03.core_symptoms": "Síndrome de demencia",
+      "f03.insufficient_information": "La información disponible es insuficiente o contradictoria para un diagnóstico más específico (categoría provisional o de reserva)",
+      "f03.exclude_other": "Síndrome de demencia"
+    }
+  },
+  "organic_mental_disorders_stem": {
+    "name": "Other mental trastornos due to brain damage and dysfunction and to physical disease",
+    "differentials": [
+      "Primäre psychische Störung ohne organische Ursache",
+      "Substanz-/medikamenteninduzierte psychische Störung",
+      "Delir (F05)"
+    ],
+    "groups": {
+      "f06.core": "Sintomatología clínica sin información suficiente para una asignación más específica",
+      "f06.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f06.core_symptoms": "Psychische Symptomatik (außerhalb der bereits separat erfassten organischen Syndrome), die einer nachgewiesenen oder wahrscheinlichen Hirnschädigung, Hirndysfunktion oder körperlichen Erkrankung zugeordnet wird",
+      "f06.insufficient_information": "La información disponible es insuficiente o contradictoria para un diagnóstico más específico (categoría provisional o de reserva)",
+      "f06.exclude_other": "La presentación no se explica mejor por un trastorno mental primario o el consumo de sustancias por sí solo"
+    }
+  },
+  "organic_catatonic_disorder": {
+    "name": "Organic catatonic trastorno",
+    "differentials": [
+      "Katatonie bei Schizophrenie",
+      "Neuroleptisches malignes Syndrom",
+      "Delir"
+    ],
+    "groups": {
+      "f06_1.syndrome": "Síndrome clínico",
+      "f06_1.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f06_1.clinical_picture": "Katatonie (z. B. Stupor, Mutismus, Negativismus, Wachsflexibilität, Stereotypien, Manierismen) im Zusammenhang mit einer organischen Ursache",
+      "f06_1.organic_cause": "Evidencia o suposición razonable de una enfermedad física, cerebral o sistémica causal que puede explicar el síndrome mental",
+      "f06_1.exclude_primary": "La presentación no se explica mejor por un trastorno mental primario o el consumo de sustancias por sí solo"
+    }
+  },
+  "organic_anxiety_disorder": {
+    "name": "Organic anxiety trastorno",
+    "differentials": [
+      "Generalisierte Angststörung (F41.1)",
+      "Panikstörung (F41.0)",
+      "Substanzinduzierte Angst"
+    ],
+    "groups": {
+      "f06_4.syndrome": "Síndrome clínico",
+      "f06_4.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f06_4.clinical_picture": "Ausgeprägte Angstsymptomatik, die einer organischen Ursache zugeordnet wird",
+      "f06_4.organic_cause": "Evidencia o suposición razonable de una enfermedad física, cerebral o sistémica causal que puede explicar el síndrome mental",
+      "f06_4.exclude_primary": "La presentación no se explica mejor por un trastorno mental primario o el consumo de sustancias por sí solo"
+    }
+  },
+  "organic_dissociative_disorder": {
+    "name": "Organic dissociative trastorno",
+    "differentials": [
+      "Dissoziative Störungen (F44)",
+      "PTBS",
+      "Substanzinduzierte Dissoziation"
+    ],
+    "groups": {
+      "f06_5.syndrome": "Síndrome clínico",
+      "f06_5.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f06_5.clinical_picture": "Dissoziative Symptomatik (z. B. Depersonalisation, Derealisation, Amnesie, Identitätsstörung), die einer organischen Ursache zugeordnet wird",
+      "f06_5.organic_cause": "Evidencia o suposición razonable de una enfermedad física, cerebral o sistémica causal que puede explicar el síndrome mental",
+      "f06_5.exclude_primary": "La presentación no se explica mejor por un trastorno mental primario o el consumo de sustancias por sí solo"
+    }
+  },
+  "organic_mental_disorder_other": {
+    "name": "Other specified mental trastornos due to brain damage and dysfunction and to physical disease",
+    "differentials": [
+      "Spezifische organische Syndrome (F06.0–F06.7)",
+      "Primäre psychische Störung"
+    ],
+    "groups": {
+      "f06_8.core": "Criterios principales",
+      "f06_8.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f06_8.core_symptoms": "Näher bezeichnete psychische Symptomatik, die einer Hirnschädigung, Hirndysfunktion oder körperlichen Erkrankung zugeordnet wird und keiner der spezifischeren F06-Unterkategorien entspricht",
+      "f06_8.exclude_other": "La presentación no se explica mejor por un trastorno mental primario o el consumo de sustancias por sí solo"
+    }
+  },
+  "organic_mental_disorder_unspecified": {
+    "name": "Unspecified mental trastorno due to brain damage and dysfunction and to physical disease",
+    "differentials": [
+      "Spezifische organische Syndrome (F06.0–F06.8)",
+      "Primäre psychische Störung"
+    ],
+    "groups": {
+      "f06_9.core": "Sintomatología clínica sin información suficiente para una asignación más específica",
+      "f06_9.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f06_9.core_symptoms": "Psychische Symptomatik, die einer organischen Ursache zugeordnet wird, ohne dass eine spezifischere F06-Unterkategorie zutrifft",
+      "f06_9.insufficient_information": "La información disponible es insuficiente o contradictoria para un diagnóstico más específico (categoría provisional o de reserva)",
+      "f06_9.exclude_other": "La presentación no se explica mejor por un trastorno mental primario o el consumo de sustancias por sí solo"
+    }
+  },
+  "postencephalitic_syndrome": {
+    "name": "Postencephalitic syndrome",
+    "differentials": [
+      "Organische Persönlichkeitsstörung (F07.0)",
+      "Demenz",
+      "Chronisches Erschöpfungssyndrom"
+    ],
+    "groups": {
+      "f07_1.core": "Criterios principales",
+      "f07_1.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f07_1.core_symptoms": "Anhaltende psychische oder Verhaltensveränderungen (z. B. Erschöpfung, Affektlabilität, Konzentrationsstörung, Schlafstörung) nach einer Enzephalitis oder vergleichbarer zerebraler Infektion/Entzündung",
+      "f07_1.exclude_other": "La presentación no se explica mejor por un trastorno mental primario o el consumo de sustancias por sí solo"
+    }
+  },
+  "organic_personality_disorder_other": {
+    "name": "Other organic personality and behavioural trastornos due to brain disease, damage and dysfunction",
+    "differentials": [
+      "Organische Persönlichkeitsstörung (F07.0)",
+      "Primäre Persönlichkeitsstörung (F60)"
+    ],
+    "groups": {
+      "f07_8.core": "Criterios principales",
+      "f07_8.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f07_8.core_symptoms": "Näher bezeichnete, organische Ursache zugeschriebene Veränderung von Persönlichkeit und Verhalten, die keiner spezifischeren F07-Unterkategorie entspricht",
+      "f07_8.exclude_other": "La presentación no se explica mejor por un trastorno mental primario o el consumo de sustancias por sí solo"
+    }
+  },
+  "organic_personality_disorder_unspecified": {
+    "name": "Unspecified organic personality and behavioural trastorno due to brain disease, damage and dysfunction",
+    "differentials": [
+      "Organische Persönlichkeitsstörung (F07.0)",
+      "Primäre Persönlichkeitsstörung (F60)"
+    ],
+    "groups": {
+      "f07_9.core": "Sintomatología clínica sin información suficiente para una asignación más específica",
+      "f07_9.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f07_9.core_symptoms": "Organische Ursache zugeschriebene Veränderung von Persönlichkeit und Verhalten, ohne nähere Spezifizierung",
+      "f07_9.insufficient_information": "La información disponible es insuficiente o contradictoria para un diagnóstico más específico (categoría provisional o de reserva)",
+      "f07_9.exclude_other": "La presentación no se explica mejor por un trastorno mental primario o el consumo de sustancias por sí solo"
+    }
+  },
+  "unspecified_organic_mental_disorder": {
+    "name": "Unspecified organic or symptomatic mental trastorno",
+    "differentials": [
+      "Spezifische organische Syndrome (F00–F07)",
+      "Primäre psychische Störung",
+      "Substanzbedingte Störung"
+    ],
+    "groups": {
+      "f09.core": "Sintomatología clínica sin información suficiente para una asignación más específica",
+      "f09.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f09.core_symptoms": "Psychische Symptomatik mit Hinweis auf eine organische oder symptomatische Ursache, die keiner spezifischeren F0-Kategorie zugeordnet werden kann",
+      "f09.insufficient_information": "La información disponible es insuficiente o contradictoria para un diagnóstico más específico (categoría provisional o de reserva)",
+      "f09.exclude_other": "La presentación no se explica mejor por un trastorno mental primario o el consumo de sustancias por sí solo"
+    }
+  },
+  "stimulants_substance_stem": {
+    "name": "Mental and behavioural trastornos due to use of other stimulants, including caffeine",
+    "differentials": [
+      "Stimulanzien-Abhängigkeit (F15.2)",
+      "Stimulanzien-Intoxikation (F15.0)",
+      "Primäre psychische Störung ohne Substanzbezug"
+    ],
+    "groups": {
+      "f15.core": "Criterios principales",
+      "f15.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f15.core_symptoms": "Klinisch bedeutsame psychische oder Verhaltensstörung im Zusammenhang mit dem Gebrauch anderer Stimulanzien (einschließlich Koffein), wenn keine spezifischere F15-Unterkategorie angegeben ist",
+      "f15.exclude_other": "La presentación no se explica mejor por un trastorno mental primario o el consumo de sustancias por sí solo"
+    }
+  },
+  "multiple_substances_stem": {
+    "name": "Mental and behavioural trastornos due to multiple drug use and use of other psychoactive substances",
+    "differentials": [
+      "Abhängigkeit von multiplen Substanzen (F19.2)",
+      "Einzelsubstanz-Störungen (F10–F18)",
+      "Primäre psychische Störung ohne Substanzbezug"
+    ],
+    "groups": {
+      "f19.core": "Criterios principales",
+      "f19.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f19.core_symptoms": "Klinisch bedeutsame psychische oder Verhaltensstörung im Zusammenhang mit multiplem Substanzgebrauch oder anderen psychotropen Substanzen, wenn keine spezifischere F19-Unterkategorie angegeben ist",
+      "f19.exclude_other": "La presentación no se explica mejor por un trastorno mental primario o el consumo de sustancias por sí solo"
+    }
+  },
+  "persistent_affective_disorders_stem": {
+    "name": "Persistent mood [affective] trastornos",
+    "differentials": [
+      "Zyklothymie (F34.0)",
+      "Dysthymie (F34.1)",
+      "Rezidivierende depressive Störung (F33)",
+      "Bipolare Störung (F31)"
+    ],
+    "groups": {
+      "f34.core": "Criterios principales",
+      "f34.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f34.core_symptoms": "Anhaltende affektive Symptomatik über einen längeren Zeitraum, die den Schweregrad einer depressiven oder manischen Episode nicht erreicht",
+      "f34.exclude_other": "La sintomatología no es atribuible a un trastorno mental orgánico o al consumo de sustancias"
+    }
+  },
+  "persistent_affective_disorder_unspecified": {
+    "name": "Persistent affective trastorno, unspecified",
+    "differentials": [
+      "Zyklothymie (F34.0)",
+      "Dysthymie (F34.1)",
+      "Otros anhaltende affektive Störung (F34.8)"
+    ],
+    "groups": {
+      "f34_9.core": "Sintomatología clínica sin información suficiente para una asignación más específica",
+      "f34_9.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f34_9.core_symptoms": "Anhaltende affektive Symptomatik, die keiner spezifischeren F34-Unterkategorie zugeordnet werden kann",
+      "f34_9.insufficient_information": "La información disponible es insuficiente o contradictoria para un diagnóstico más específico (categoría provisional o de reserva)",
+      "f34_9.exclude_other": "La sintomatología no es atribuible a un trastorno mental orgánico o al consumo de sustancias"
+    }
+  },
+  "phobic_anxiety_disorders_stem": {
+    "name": "Phobic anxiety trastornos",
+    "differentials": [
+      "Agoraphobie (F40.0)",
+      "Soziale Phobie (F40.1)",
+      "Spezifische Phobie (F40.2)",
+      "Panikstörung (F41.0)"
+    ],
+    "groups": {
+      "f40.core": "Criterios principales",
+      "f40.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f40.core_symptoms": "Ausgeprägte, situationsgebundene oder spezifische Angst mit Vermeidung oder Ertragen nur unter Leidensdruck",
+      "f40.exclude_other": "Die Angstsymptomatik ist nicht besser durch eine organische Störung oder Substanzwirkung allein erklärbar"
+    }
+  },
+  "phobic_anxiety_disorder_other": {
+    "name": "Other phobic anxiety trastornos",
+    "differentials": [
+      "Agoraphobie (F40.0)",
+      "Soziale Phobie (F40.1)",
+      "Spezifische Phobie (F40.2)"
+    ],
+    "groups": {
+      "f40_8.core": "Criterios principales",
+      "f40_8.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f40_8.core_symptoms": "Näher bezeichnete phobische Angststörung, die keiner der spezifischeren F40-Unterkategorien entspricht",
+      "f40_8.exclude_other": "Die Angstsymptomatik ist nicht besser durch eine organische Störung oder Substanzwirkung allein erklärbar"
+    }
+  },
+  "phobic_anxiety_disorder_unspecified": {
+    "name": "Phobic anxiety trastorno, unspecified",
+    "differentials": [
+      "Agoraphobie (F40.0)",
+      "Soziale Phobie (F40.1)",
+      "Spezifische Phobie (F40.2)"
+    ],
+    "groups": {
+      "f40_9.core": "Sintomatología clínica sin información suficiente para una asignación más específica",
+      "f40_9.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f40_9.core_symptoms": "Phobische Angstsymptomatik ohne nähere Spezifizierung der Phobie",
+      "f40_9.insufficient_information": "La información disponible es insuficiente o contradictoria para un diagnóstico más específico (categoría provisional o de reserva)",
+      "f40_9.exclude_other": "Die Angstsymptomatik ist nicht besser durch eine organische Störung oder Substanzwirkung allein erklärbar"
+    }
+  },
+  "other_anxiety_disorders_stem": {
+    "name": "Other anxiety trastornos",
+    "differentials": [
+      "Panikstörung (F41.0)",
+      "Generalisierte Angststörung (F41.1)",
+      "Gemischte Angst-Depression (F41.2)"
+    ],
+    "groups": {
+      "f41.core": "Criterios principales",
+      "f41.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f41.core_symptoms": "Klinisch bedeutsame Angstsymptomatik, die keiner spezifischeren F41-Unterkategorie zugeordnet ist",
+      "f41.exclude_other": "Die Angstsymptomatik ist nicht besser durch eine organische Störung oder Substanzwirkung allein erklärbar"
+    }
+  },
+  "mixed_anxiety_disorder_other": {
+    "name": "Other mixed anxiety trastornos",
+    "differentials": [
+      "Gemischte Angst-Depression (F41.2)",
+      "Generalisierte Angststörung (F41.1)"
+    ],
+    "groups": {
+      "f41_3.core": "Criterios principales",
+      "f41_3.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f41_3.core_symptoms": "Gemischte Angstsymptomatik mit überlappenden Angstmustern, die keiner spezifischeren F41-Unterkategorie entspricht",
+      "f41_3.exclude_other": "Die Symptomatik ist nicht besser durch eine organische Störung oder Substanzwirkung allein erklärbar"
+    }
+  },
+  "anxiety_disorder_other": {
+    "name": "Other specified anxiety trastornos",
+    "differentials": [
+      "Panikstörung (F41.0)",
+      "Generalisierte Angststörung (F41.1)",
+      "Phobische Störungen (F40)"
+    ],
+    "groups": {
+      "f41_8.core": "Criterios principales",
+      "f41_8.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f41_8.core_symptoms": "Näher bezeichnete Angststörung, die keiner der spezifischeren F41-Unterkategorien entspricht",
+      "f41_8.exclude_other": "Die Angstsymptomatik ist nicht besser durch eine organische Störung oder Substanzwirkung allein erklärbar"
+    }
+  },
+  "anxiety_disorder_unspecified": {
+    "name": "Anxiety trastorno, unspecified",
+    "differentials": [
+      "Panikstörung (F41.0)",
+      "Generalisierte Angststörung (F41.1)",
+      "Phobische Störungen (F40)"
+    ],
+    "groups": {
+      "f41_9.core": "Sintomatología clínica sin información suficiente para una asignación más específica",
+      "f41_9.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f41_9.core_symptoms": "Klinisch bedeutsame Angstsymptomatik ohne nähere Spezifizierung",
+      "f41_9.insufficient_information": "La información disponible es insuficiente o contradictoria para un diagnóstico más específico (categoría provisional o de reserva)",
+      "f41_9.exclude_other": "Die Angstsymptomatik ist nicht besser durch eine organische Störung oder Substanzwirkung allein erklärbar"
+    }
+  },
+  "stress_reaction_disorders_stem": {
+    "name": "Reaction to severe stress, and adjustment trastornos",
+    "differentials": [
+      "Akute Belastungsreaktion (F43.0)",
+      "PTBS (F43.1)",
+      "Anpassungsstörung (F43.2)"
+    ],
+    "groups": {
+      "f43.core": "Criterios principales",
+      "f43.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f43.core_symptoms": "Psychische Reaktion auf einen identifizierbaren schweren Stressor mit klinisch bedeutsamer Symptomatik",
+      "f43.exclude_other": "La presentación no se explica mejor por un trastorno mental primario o el consumo de sustancias por sí solo"
+    }
+  },
+  "stress_reaction_other": {
+    "name": "Other reactions to severe stress",
+    "differentials": [
+      "Akute Belastungsreaktion (F43.0)",
+      "PTBS (F43.1)",
+      "Anpassungsstörung (F43.2)"
+    ],
+    "groups": {
+      "f43_8.core": "Criterios principales",
+      "f43_8.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f43_8.core_symptoms": "Näher bezeichnete Reaktion auf schweren Stress, die keiner der spezifischeren F43-Unterkategorien entspricht",
+      "f43_8.exclude_other": "La presentación no se explica mejor por un trastorno mental primario o el consumo de sustancias por sí solo"
+    }
+  },
+  "stress_reaction_unspecified": {
+    "name": "Reaction to severe stress, unspecified",
+    "differentials": [
+      "Akute Belastungsreaktion (F43.0)",
+      "PTBS (F43.1)",
+      "Anpassungsstörung (F43.2)"
+    ],
+    "groups": {
+      "f43_9.core": "Sintomatología clínica sin información suficiente para una asignación más específica",
+      "f43_9.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f43_9.core_symptoms": "Reaktion auf schweren Stress ohne nähere Spezifizierung",
+      "f43_9.insufficient_information": "La información disponible es insuficiente o contradictoria para un diagnóstico más específico (categoría provisional o de reserva)",
+      "f43_9.exclude_other": "La presentación no se explica mejor por un trastorno mental primario o el consumo de sustancias por sí solo"
+    }
+  },
+  "other_neurotic_disorders_stem": {
+    "name": "Other neurotic trastornos",
+    "differentials": [
+      "Neurasthenie (F48.0)",
+      "Depersonalisation/Derealisation (F48.1)",
+      "Dissoziative Störungen (F44)"
+    ],
+    "groups": {
+      "f48.core": "Criterios principales",
+      "f48.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f48.core_symptoms": "Neurotische Symptomatik, die keiner spezifischeren F4-Unterkategorie zugeordnet ist",
+      "f48.exclude_other": "Die Symptomatik ist nicht besser durch eine organische Störung oder Substanzwirkung allein erklärbar"
+    }
+  },
+  "neurasthenia": {
+    "name": "Neurasthenia",
+    "differentials": [
+      "Burnout",
+      "Depressive Episode",
+      "Chronisches Erschöpfungssyndrom",
+      "Somatische Ursache der Müdigkeit"
+    ],
+    "groups": {
+      "f48_0.core": "Criterios principales",
+      "f48_0.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f48_0.core_symptoms": "Anhaltende Erschöpfung mit reduzierter Leistungsfähigkeit und vegetativen Beschwerden nach psychischer oder körperlicher Überanstrengung",
+      "f48_0.exclude_other": "Die Erschöpfung ist nicht besser durch eine somatische Erkrankung oder eine depressive Episode allein erklärbar"
+    }
+  },
+  "depersonalization_derealization_disorder": {
+    "name": "Depersonalization-derealization trastorno",
+    "differentials": [
+      "Dissoziative Störungen (F44)",
+      "Panikstörung",
+      "Substanzinduzierte Dissoziation",
+      "Schizophrenie"
+    ],
+    "groups": {
+      "f48_1.core": "Criterios principales",
+      "f48_1.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f48_1.core_symptoms": "Wiederkehrende oder anhaltende Depersonalisations- und/oder Derealisationserlebnisse bei erhaltenem Realitätsbewusstsein",
+      "f48_1.exclude_other": "Die Erlebnisse sind nicht besser durch eine andere psychische Störung, Substanzwirkung oder organische Ursache erklärbar"
+    }
+  },
+  "neurotic_disorder_other": {
+    "name": "Other specified neurotic trastornos",
+    "differentials": [
+      "Neurasthenie (F48.0)",
+      "Depersonalisation/Derealisation (F48.1)"
+    ],
+    "groups": {
+      "f48_8.core": "Criterios principales",
+      "f48_8.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f48_8.core_symptoms": "Näher bezeichnete neurotische Störung, die keiner der spezifischeren F48-Unterkategorien entspricht",
+      "f48_8.exclude_other": "Die Symptomatik ist nicht besser durch eine organische Störung oder Substanzwirkung allein erklärbar"
+    }
+  },
+  "neurotic_disorder_unspecified": {
+    "name": "Neurotic trastorno, unspecified",
+    "differentials": [
+      "Neurasthenie (F48.0)",
+      "Depersonalisation/Derealisation (F48.1)"
+    ],
+    "groups": {
+      "f48_9.core": "Sintomatología clínica sin información suficiente para una asignación más específica",
+      "f48_9.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f48_9.core_symptoms": "Neurotische Symptomatik ohne nähere Spezifizierung",
+      "f48_9.insufficient_information": "La información disponible es insuficiente o contradictoria para un diagnóstico más específico (categoría provisional o de reserva)",
+      "f48_9.exclude_other": "Die Symptomatik ist nicht besser durch eine organische Störung oder Substanzwirkung allein erklärbar"
+    }
+  },
+  "eating_disorders_stem": {
+    "name": "Eating trastornos",
+    "differentials": [
+      "Anorexia nervosa (F50.0)",
+      "Bulimia nervosa (F50.2)",
+      "Binge-Eating-Störung"
+    ],
+    "groups": {
+      "f50.core": "Criterios principales",
+      "f50.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f50.core_symptoms": "Klinisch bedeutsame Störung des Essverhaltens oder der Körperwahrnehmung im Zusammenhang mit dem Essen",
+      "f50.exclude_other": "Die Symptomatik ist nicht besser durch eine somatische Erkrankung oder eine primäre affektive Störung allein erklärbar"
+    }
+  },
+  "vomiting_psychological": {
+    "name": "Vomiting associated with other psychological disturbances",
+    "differentials": [
+      "Bulimia nervosa",
+      "Gastrointestinale Ursache",
+      "Schwangerschaftserbrechen"
+    ],
+    "groups": {
+      "f50_5.core": "Criterios principales",
+      "f50_5.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f50_5.core_symptoms": "Wiederholtes Erbrechen ohne hinreichende somatische Erklärung, das einer psychischen Störung zugeordnet wird",
+      "f50_5.exclude_other": "La presentación no se explica mejor por un trastorno mental primario o el consumo de sustancias por sí solo"
+    }
+  },
+  "eating_disorder_other": {
+    "name": "Other eating trastornos",
+    "differentials": [
+      "Anorexia nervosa (F50.0)",
+      "Bulimia nervosa (F50.2)",
+      "Binge-Eating-Störung"
+    ],
+    "groups": {
+      "f50_8.core": "Criterios principales",
+      "f50_8.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f50_8.core_symptoms": "Näher bezeichnete Essstörung, die keiner der spezifischeren F50-Unterkategorien entspricht",
+      "f50_8.exclude_other": "La presentación no se explica mejor por un trastorno mental primario o el consumo de sustancias por sí solo"
+    }
+  },
+  "eating_disorder_unspecified": {
+    "name": "Eating trastorno, unspecified",
+    "differentials": [
+      "Anorexia nervosa (F50.0)",
+      "Bulimia nervosa (F50.2)"
+    ],
+    "groups": {
+      "f50_9.core": "Sintomatología clínica sin información suficiente para una asignación más específica",
+      "f50_9.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f50_9.core_symptoms": "Störung des Essverhaltens ohne nähere Spezifizierung",
+      "f50_9.insufficient_information": "La información disponible es insuficiente o contradictoria para un diagnóstico más específico (categoría provisional o de reserva)",
+      "f50_9.exclude_other": "La presentación no se explica mejor por un trastorno mental primario o el consumo de sustancias por sí solo"
+    }
+  },
+  "nonorganic_sleep_disorders_stem": {
+    "name": "Nonorganic sleep trastornos",
+    "differentials": [
+      "Insomnie (F51.0)",
+      "Albträume (F51.5)",
+      "Pavor nocturnus (F51.4)",
+      "Organische Schlafstörung"
+    ],
+    "groups": {
+      "f51.core": "Criterios principales",
+      "f51.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f51.core_symptoms": "Klinisch bedeutsame Schlafstörung ohne hinreichende organische Erklärung",
+      "f51.exclude_other": "Die Schlafstörung ist nicht besser durch eine somatische Erkrankung oder Substanzwirkung allein erklärbar"
+    }
+  },
+  "nonorganic_hypersomnia": {
+    "name": "Nonorganic hypersomnia",
+    "differentials": [
+      "Insomnie (F51.0)",
+      "Depressive Episode mit Hypersomnie",
+      "Narkolepsie",
+      "Schlafapnoe"
+    ],
+    "groups": {
+      "f51_1.core": "Criterios principales",
+      "f51_1.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f51_1.core_symptoms": "Anhaltende übermäßige Tagesschläfrigkeit oder verlängerte Schlafdauer bei erhaltenem Schlafbedürfnis trotz adäquater Schlafgelegenheit",
+      "f51_1.exclude_other": "Die Hypersomnie ist nicht besser durch eine somatische Erkrankung oder Substanzwirkung allein erklärbar"
+    }
+  },
+  "sleep_wake_schedule_disorder": {
+    "name": "Nonorganic trastorno of the sleep-wake schedule",
+    "differentials": [
+      "Insomnie (F51.0)",
+      "Schichtarbeit",
+      "Jetlag",
+      "Organische Schlafstörung"
+    ],
+    "groups": {
+      "f51_2.core": "Criterios principales",
+      "f51_2.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f51_2.core_symptoms": "Persistierende Störung des Schlaf-Wach-Rhythmus mit Einschlaf- oder Aufwachzeitpunkt außerhalb des gewünschten Zeitfensters und damit verbundener Beeinträchtigung",
+      "f51_2.exclude_other": "Die Störung ist nicht besser durch eine somatische Erkrankung oder Substanzwirkung allein erklärbar"
+    }
+  },
+  "sleep_disorder_other": {
+    "name": "Other nonorganic sleep trastornos",
+    "differentials": [
+      "Insomnie (F51.0)",
+      "Hypersomnie (F51.1)",
+      "Albträume (F51.5)"
+    ],
+    "groups": {
+      "f51_8.core": "Criterios principales",
+      "f51_8.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f51_8.core_symptoms": "Näher bezeichnete nichtorganische Schlafstörung, die keiner der spezifischeren F51-Unterkategorien entspricht",
+      "f51_8.exclude_other": "La presentación no se explica mejor por un trastorno mental primario o el consumo de sustancias por sí solo"
+    }
+  },
+  "sleep_disorder_unspecified": {
+    "name": "Nonorganic sleep trastorno, unspecified",
+    "differentials": [
+      "Insomnie (F51.0)",
+      "Hypersomnie (F51.1)"
+    ],
+    "groups": {
+      "f51_9.core": "Sintomatología clínica sin información suficiente para una asignación más específica",
+      "f51_9.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f51_9.core_symptoms": "Nichtorganische Schlafstörung ohne nähere Spezifizierung",
+      "f51_9.insufficient_information": "La información disponible es insuficiente o contradictoria para un diagnóstico más específico (categoría provisional o de reserva)",
+      "f51_9.exclude_other": "La presentación no se explica mejor por un trastorno mental primario o el consumo de sustancias por sí solo"
+    }
+  },
+  "psychological_factors_somatic": {
+    "name": "Psychological and behavioural factors associated with trastornos or diseases classified elsewhere",
+    "differentials": [
+      "Somatoforme Störung (F45)",
+      "Körperliche Belastungsstörung",
+      "Primäre psychische Störung"
+    ],
+    "groups": {
+      "f54.core": "Criterios principales",
+      "f54.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f54.core_symptoms": "Psychologische oder Verhaltensfaktoren (z. B. Denkmuster, Emotionen, Krankheitsverhalten), die den Verlauf, die Behandlung oder die Prognose einer anderenorts klassifizierten somatischen Erkrankung nachteilig beeinflussen",
+      "f54.exclude_other": "Die somatische Erkrankung ist nicht allein durch die psychologischen Faktoren verursacht"
+    }
+  },
+  "non_dependence_substance_abuse": {
+    "name": "Abuse of non-dependence-producing substances",
+    "differentials": [
+      "Substanzabhängigkeit (F1x.2)",
+      "Essstörung mit Laxanzien-/Diuretikamissbrauch"
+    ],
+    "groups": {
+      "f55.core": "Criterios principales",
+      "f55.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f55.core_symptoms": "Wiederholter Konsum nichtabhängigkeitserzeugender Substanzen (z. B. Laxanzien, Analgetika, Vitamine, pflanzliche Präparate) mit psychischen oder körperlichen Schäden, ohne Erfüllung der Abhängigkeitskriterien",
+      "f55.exclude_other": "Die Kriterien einer Substanzabhängigkeit sind nicht erfüllt"
+    }
+  },
+  "unspecified_behavioural_syndrome": {
+    "name": "Unspecified behavioural syndromes associated with physiological disturbances and physical factors",
+    "differentials": [
+      "Essstörungen (F50)",
+      "Schlafstörungen (F51)",
+      "Sexuelle Funktionsstörungen (F52)"
+    ],
+    "groups": {
+      "f59.core": "Sintomatología clínica sin información suficiente para una asignación más específica",
+      "f59.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f59.core_symptoms": "Verhaltenssyndrom mit physiologischen Störungen und körperlichen Faktoren, das keiner spezifischeren F5-Kategorie zugeordnet werden kann",
+      "f59.insufficient_information": "La información disponible es insuficiente o contradictoria para un diagnóstico más específico (categoría provisional o de reserva)",
+      "f59.exclude_other": "La presentación no se explica mejor por un trastorno mental primario o el consumo de sustancias por sí solo"
+    }
+  },
+  "enduring_personality_change_stem": {
+    "name": "Enduring personality changes, not attributable to brain damage and disease",
+    "differentials": [
+      "Organische Persönlichkeitsstörung (F07)",
+      "PTBS (F43.1)",
+      "Primäre Persönlichkeitsstörung (F60)"
+    ],
+    "groups": {
+      "f62.core": "Criterios principales",
+      "f62.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f62.core_symptoms": "Dauerhafte, tiefgreifende Veränderung der Persönlichkeit nach einer belastenden Lebensumstände, ohne Hinweis auf organische Ursache",
+      "f62.exclude_other": "Die Veränderung ist nicht Folge einer Hirnschädigung oder -krankheit"
+    }
+  },
+  "personality_change_catastrophic": {
+    "name": "Enduring personality change after catastrophic experience",
+    "differentials": [
+      "PTBS (F43.1)",
+      "Anpassungsstörung (F43.2)",
+      "Organische Persönlichkeitsstörung (F07)"
+    ],
+    "groups": {
+      "f62_0.core": "Criterios principales",
+      "f62_0.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f62_0.core_symptoms": "Dauerhafte Veränderung von Persönlichkeit und Verhalten nach einer extrem belastenden Erfahrung (z. B. längerer Haft, Katastrophe, Krieg), die über eine akute Belastungsreaktion hinausgeht",
+      "f62_0.exclude_other": "Die Veränderung ist nicht Folge einer Hirnschädigung oder -krankheit und nicht besser durch PTBS allein erklärbar"
+    }
+  },
+  "habit_impulse_disorders_stem": {
+    "name": "Habit and impulse trastornos",
+    "differentials": [
+      "Pathologisches Spielen (F63.0)",
+      "Pyromanie (F63.1)",
+      "Kleptomanie (F63.2)",
+      "Trichotillomanie (F63.3)"
+    ],
+    "groups": {
+      "f63.core": "Criterios principales",
+      "f63.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f63.core_symptoms": "Wiederholtes, schwer kontrollierbares Verhalten mit innerem Drang und Erleichterung oder Befriedigung danach",
+      "f63.exclude_other": "Das Verhalten ist nicht besser durch eine andere psychische Störung oder Substanzwirkung erklärbar"
+    }
+  },
+  "habit_impulse_disorder_other": {
+    "name": "Other habit and impulse trastornos",
+    "differentials": [
+      "Pathologisches Spielen (F63.0)",
+      "Pyromanie (F63.1)",
+      "Kleptomanie (F63.2)"
+    ],
+    "groups": {
+      "f63_8.core": "Criterios principales",
+      "f63_8.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f63_8.core_symptoms": "Näher bezeichnete Habit- oder Impulsstörung, die keiner der spezifischeren F63-Unterkategorien entspricht",
+      "f63_8.exclude_other": "Das Verhalten ist nicht besser durch eine andere psychische Störung erklärbar"
+    }
+  },
+  "habit_impulse_disorder_unspecified": {
+    "name": "Habit and impulse trastorno, unspecified",
+    "differentials": [
+      "Pathologisches Spielen (F63.0)",
+      "Pyromanie (F63.1)",
+      "Kleptomanie (F63.2)"
+    ],
+    "groups": {
+      "f63_9.core": "Sintomatología clínica sin información suficiente para una asignación más específica",
+      "f63_9.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f63_9.core_symptoms": "Habit- oder Impulsstörung ohne nähere Spezifizierung",
+      "f63_9.insufficient_information": "La información disponible es insuficiente o contradictoria para un diagnóstico más específico (categoría provisional o de reserva)",
+      "f63_9.exclude_other": "Das Verhalten ist nicht besser durch eine andere psychische Störung erklärbar"
+    }
+  },
+  "gender_identity_disorders_stem": {
+    "name": "Gender identity trastornos",
+    "differentials": [
+      "Geschlechtsdysphorie im Erwachsenenalter (F64.0)",
+      "Geschlechtsdysphorie im Kindesalter (F64.2)",
+      "Transvestismus ohne Geschlechtsdysphorie"
+    ],
+    "groups": {
+      "f64.core": "Criterios principales",
+      "f64.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f64.core_symptoms": "Anhaltende Inkongruenz zwischen erlebtem Geschlecht und dem bei der Geburt zugewiesenen Geschlecht mit Leidensdruck und/oder Funktionsbeeinträchtigung",
+      "f64.exclude_other": "Die Inkongruenz ist nicht besser durch eine andere psychische Störung allein erklärbar"
+    }
+  },
+  "gender_dysphoria_adult": {
+    "name": "Gender dysphoria in adolescents and adults",
+    "differentials": [
+      "Geschlechtsdysphorie im Kindesalter (F64.2)",
+      "Transvestismus (F64.1)",
+      "Körperdysmorphe Störung"
+    ],
+    "groups": {
+      "f64_0.core": "Criterios principales",
+      "f64_0.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f64_0.core_symptoms": "Anhaltende Inkongruenz zwischen erlebtem Geschlecht und dem bei der Geburt zugewiesenen Geschlecht mit Wunsch nach geschlechtsangleichenden Maßnahmen und Leidensdruck und/oder Funktionsbeeinträchtigung",
+      "f64_0.exclude_other": "Die Inkongruenz ist nicht besser durch eine andere psychische Störung allein erklärbar"
+    }
+  },
+  "dual_role_transvestism": {
+    "name": "Dual-role transvestism",
+    "differentials": [
+      "Geschlechtsdysphorie (F64.0)",
+      "Fetischistischer Transvestismus (F65.1)"
+    ],
+    "groups": {
+      "f64_1.core": "Criterios principales",
+      "f64_1.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f64_1.core_symptoms": "Wiederholtes Tragen von Kleidung des anderen Geschlechts, um vorübergehend sowohl männliche als auch weibliche Identität zu erleben, ohne Wunsch nach dauerhafter Geschlechtsumwandlung und ohne primäre sexuelle Erregung durch das Cross-Dressing",
+      "f64_1.exclude_other": "Das Verhalten ist nicht besser durch Geschlechtsdysphorie oder einen primären Fetischismus erklärbar"
+    }
+  },
+  "gender_dysphoria_childhood": {
+    "name": "Gender dysphoria in childhood",
+    "differentials": [
+      "Geschlechtsuntypisches Verhalten ohne Dysphorie",
+      "Geschlechtsdysphorie im Erwachsenenalter (F64.0)"
+    ],
+    "groups": {
+      "f64_2.core": "Criterios principales",
+      "f64_2.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f64_2.core_symptoms": "Anhaltende Inkongruenz zwischen erlebtem Geschlecht und dem bei der Geburt zugewiesenen Geschlecht mit deutlichem Wunsch, das andere Geschlecht zu sein oder als anderes Geschlecht behandelt zu werden, und Leidensdruck und/oder Funktionsbeeinträchtigung",
+      "f64_2.exclude_other": "Die Inkongruenz ist nicht besser durch eine andere psychische Störung allein erklärbar"
+    }
+  },
+  "gender_identity_disorder_other": {
+    "name": "Other gender identity trastornos",
+    "differentials": [
+      "Geschlechtsdysphorie (F64.0/F64.2)",
+      "Zwitterrolle-Transvestismus (F64.1)"
+    ],
+    "groups": {
+      "f64_8.core": "Criterios principales",
+      "f64_8.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f64_8.core_symptoms": "Näher bezeichnete Störung der Geschlechtsidentität, die keiner der spezifischeren F64-Unterkategorien entspricht",
+      "f64_8.exclude_other": "Die Störung ist nicht besser durch eine andere psychische Störung allein erklärbar"
+    }
+  },
+  "gender_identity_disorder_unspecified": {
+    "name": "Gender identity trastorno, unspecified",
+    "differentials": [
+      "Geschlechtsdysphorie (F64.0/F64.2)"
+    ],
+    "groups": {
+      "f64_9.core": "Sintomatología clínica sin información suficiente para una asignación más específica",
+      "f64_9.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f64_9.core_symptoms": "Störung der Geschlechtsidentität ohne nähere Spezifizierung",
+      "f64_9.insufficient_information": "La información disponible es insuficiente o contradictoria para un diagnóstico más específico (categoría provisional o de reserva)",
+      "f64_9.exclude_other": "Die Störung ist nicht besser durch eine andere psychische Störung allein erklärbar"
+    }
+  },
+  "sexual_preference_disorders_stem": {
+    "name": "trastornos of sexual preference",
+    "differentials": [
+      "Fetischismus (F65.0)",
+      "Exhibitionismus (F65.2)",
+      "Voyeurismus (F65.3)",
+      "Pädophilie (F65.4)"
+    ],
+    "groups": {
+      "f65.core": "Criterios principales",
+      "f65.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f65.core_symptoms": "Wiederkehrende, intensivierte sexuelle Fantasien, Impulse oder Verhaltensweisen mit atypischer Sexualpräferenz, die zu Leidensdruck oder Beeinträchtigung führen oder ein Risiko für Dritte darstellen",
+      "f65.exclude_other": "Las prácticas sexuales consensuadas entre adultos sin malestar ni deterioro no constituyen un trastorno"
+    }
+  },
+  "fetishism": {
+    "name": "Fetishism",
+    "differentials": [
+      "Fetischistischer Transvestismus (F65.1)",
+      "Normophile sexuelle Präferenz"
+    ],
+    "groups": {
+      "f65_0.preference": "Preferencia y conducta sexual",
+      "f65_0.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f65_0.recurrent_preference": "Wiederkehrende, intensive sexuelle Erregung durch unbelebte Objekte oder spezifische Körperteile (außer Kleidung des anderen Geschlechts), mit wiederholtem Verhalten oder Fantasien",
+      "f65_0.distress_impairment": "La preferencia causa malestar personal y/o deterioro en áreas sociales, laborales u otras importantes, o supone un riesgo de daño a terceros",
+      "f65_0.exclude_consensual_adult": "Las prácticas sexuales consensuadas entre adultos sin malestar ni deterioro no constituyen un trastorno"
+    }
+  },
+  "fetishistic_transvestism": {
+    "name": "Fetishistic transvestism",
+    "differentials": [
+      "Geschlechtsdysphorie (F64.0)",
+      "Zwitterrolle-Transvestismus (F64.1)"
+    ],
+    "groups": {
+      "f65_1.preference": "Preferencia y conducta sexual",
+      "f65_1.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f65_1.recurrent_preference": "Wiederkehrende, intensive sexuelle Erregung durch das Tragen von Kleidung des anderen Geschlechts, mit wiederholtem Verhalten oder Fantasien",
+      "f65_1.distress_impairment": "La preferencia causa malestar personal y/o deterioro en áreas sociales, laborales u otras importantes, o supone un riesgo de daño a terceros",
+      "f65_1.exclude_consensual_adult": "Las prácticas sexuales consensuadas entre adultos sin malestar ni deterioro no constituyen un trastorno"
+    }
+  },
+  "exhibitionism": {
+    "name": "Exhibitionism",
+    "differentials": [
+      "Voyeurismus (F65.3)",
+      "Antisoziale Persönlichkeitsstörung"
+    ],
+    "groups": {
+      "f65_2.preference": "Preferencia y conducta sexual",
+      "f65_2.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f65_2.recurrent_preference": "Wiederkehrende, intensive sexuelle Erregung durch das Entblößen des eigenen Genitales vor einer nicht einverstandenen Person, mit wiederholtem Verhalten oder Fantasien",
+      "f65_2.distress_impairment": "La preferencia causa malestar personal y/o deterioro en áreas sociales, laborales u otras importantes, o supone un riesgo de daño a terceros",
+      "f65_2.exclude_consensual_adult": "Las prácticas sexuales consensuadas entre adultos sin malestar ni deterioro no constituyen un trastorno"
+    }
+  },
+  "voyeurism": {
+    "name": "Voyeurism",
+    "differentials": [
+      "Exhibitionismus (F65.2)",
+      "Stalking ohne sexuelle Motivation"
+    ],
+    "groups": {
+      "f65_3.preference": "Preferencia y conducta sexual",
+      "f65_3.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f65_3.recurrent_preference": "Wiederkehrende, intensive sexuelle Erregung durch das heimliche Beobachten unsicherer oder nackter Personen, mit wiederholtem Verhalten oder Fantasien",
+      "f65_3.distress_impairment": "La preferencia causa malestar personal y/o deterioro en áreas sociales, laborales u otras importantes, o supone un riesgo de daño a terceros",
+      "f65_3.exclude_consensual_adult": "Las prácticas sexuales consensuadas entre adultos sin malestar ni deterioro no constituyen un trastorno"
+    }
+  },
+  "paedophilia": {
+    "name": "Paedophilia",
+    "differentials": [
+      "Hebephilie",
+      "Antisoziale Persönlichkeitsstörung",
+      "Intellektuelle Entwicklungsstörung mit unangemessenem Sexualverhalten"
+    ],
+    "groups": {
+      "f65_4.preference": "Preferencia y conducta sexual",
+      "f65_4.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f65_4.recurrent_preference": "Wiederkehrende, intensive sexuelle Erregung durch präpubertäre oder früh pubertäre Kinder (in der Regel ≤ 13 Jahre), mit wiederholtem Verhalten oder Fantasien",
+      "f65_4.distress_impairment": "La preferencia causa malestar personal y/o deterioro en áreas sociales, laborales u otras importantes, o supone un riesgo de daño a terceros",
+      "f65_4.exclude_consensual_adult": "Las prácticas sexuales consensuadas entre adultos sin malestar ni deterioro no constituyen un trastorno"
+    }
+  },
+  "sadomasochism": {
+    "name": "Sadomasochism",
+    "differentials": [
+      "Einvernehmliche BDSM-Praktiken ohne Leidensdruck",
+      "Antisoziale Persönlichkeitsstörung"
+    ],
+    "groups": {
+      "f65_5.preference": "Preferencia y conducta sexual",
+      "f65_5.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f65_5.recurrent_preference": "Wiederkehrende, intensive sexuelle Erregung durch das Zufügen von Schmerz/Humiliation oder das Erleiden von Schmerz/Humiliation, mit wiederholtem Verhalten oder Fantasien",
+      "f65_5.distress_impairment": "La preferencia causa malestar personal y/o deterioro en áreas sociales, laborales u otras importantes, o supone un riesgo de daño a terceros",
+      "f65_5.exclude_consensual_adult": "Las prácticas sexuales consensuadas entre adultos sin malestar ni deterioro no constituyen un trastorno"
+    }
+  },
+  "multiple_sexual_preferences": {
+    "name": "Multiple trastornos of sexual preference",
+    "differentials": [
+      "Einzelne Paraphilie (F65.0–F65.5)"
+    ],
+    "groups": {
+      "f65_6.preference": "Preferencia y conducta sexual",
+      "f65_6.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f65_6.recurrent_preference": "Wiederkehrende, intensive sexuelle Erregung durch mehrere atypische Sexualpräferenzen (z. B. Kombination aus Fetischismus, Exhibitionismus und Voyeurismus), mit wiederholtem Verhalten oder Fantasien",
+      "f65_6.distress_impairment": "La preferencia causa malestar personal y/o deterioro en áreas sociales, laborales u otras importantes, o supone un riesgo de daño a terceros",
+      "f65_6.exclude_consensual_adult": "Las prácticas sexuales consensuadas entre adultos sin malestar ni deterioro no constituyen un trastorno"
+    }
+  },
+  "sexual_preference_disorder_other": {
+    "name": "Other trastornos of sexual preference",
+    "differentials": [
+      "Spezifische Paraphilien (F65.0–F65.6)"
+    ],
+    "groups": {
+      "f65_8.preference": "Preferencia y conducta sexual",
+      "f65_8.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f65_8.recurrent_preference": "Näher bezeichnete atypische Sexualpräferenz, die keiner der spezifischeren F65-Unterkategorien entspricht, mit wiederholtem Verhalten oder Fantasien",
+      "f65_8.distress_impairment": "La preferencia causa malestar personal y/o deterioro en áreas sociales, laborales u otras importantes, o supone un riesgo de daño a terceros",
+      "f65_8.exclude_consensual_adult": "Las prácticas sexuales consensuadas entre adultos sin malestar ni deterioro no constituyen un trastorno"
+    }
+  },
+  "sexual_preference_disorder_unspecified": {
+    "name": "trastorno of sexual preference, unspecified",
+    "differentials": [
+      "Spezifische Paraphilien (F65.0–F65.8)"
+    ],
+    "groups": {
+      "f65_9.preference": "Preferencia y conducta sexual",
+      "f65_9.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f65_9.recurrent_preference": "Atypische Sexualpräferenz ohne nähere Spezifizierung, mit wiederholtem Verhalten oder Fantasien und Leidensdruck oder Beeinträchtigung",
+      "f65_9.distress_impairment": "La preferencia causa malestar personal y/o deterioro en áreas sociales, laborales u otras importantes, o supone un riesgo de daño a terceros",
+      "f65_9.exclude_consensual_adult": "Las prácticas sexuales consensuadas entre adultos sin malestar ni deterioro no constituyen un trastorno"
+    }
+  },
+  "psychosexual_development_disorders_stem": {
+    "name": "Psychological and behavioural trastornos associated with sexual development and orientation",
+    "differentials": [
+      "Geschlechtsdysphorie (F64)",
+      "Egodystone sexuelle Orientierung (F66.1)",
+      "Sexuelle Beziehungsstörung (F66.2)"
+    ],
+    "groups": {
+      "f66.core": "Criterios principales",
+      "f66.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f66.core_symptoms": "Psychologische oder Verhaltensstörung im Zusammenhang mit sexueller Entwicklung oder -orientierung mit Leidensdruck und/oder Funktionsbeeinträchtigung",
+      "f66.exclude_other": "Die sexuelle Orientierung an sich ist keine Störung; nur assoziierte Leidensdruck- oder Funktionsstörungen werden hier kodiert"
+    }
+  },
+  "sexual_maturation_disorder": {
+    "name": "Sexual maturation trastorno",
+    "differentials": [
+      "Normale Pubertätsentwicklung",
+      "Geschlechtsdysphorie (F64)"
+    ],
+    "groups": {
+      "f66_0.core": "Criterios principales",
+      "f66_0.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f66_0.core_symptoms": "Unsicherheit, Verwirrung oder Leidensdruck im Zusammenhang mit der sexuellen Reifung und der Entwicklung der sexuellen Identität",
+      "f66_0.exclude_other": "Die Unsicherheit ist nicht besser durch eine andere psychische Störung allein erklärbar"
+    }
+  },
+  "egodystonic_sexual_orientation": {
+    "name": "Egodystonic sexual orientation",
+    "differentials": [
+      "Interne Homo-/Transphobie",
+      "Depressive Episode",
+      "Anpassungsstörung"
+    ],
+    "groups": {
+      "f66_1.core": "Criterios principales",
+      "f66_1.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f66_1.core_symptoms": "Leidensdruck und/oder Funktionsbeeinträchtigung aufgrund der eigenen sexuellen Orientierung, ohne Wunsch nach einer Veränderung der Orientierung selbst",
+      "f66_1.exclude_other": "Die sexuelle Orientierung an sich ist keine Störung; nur der assoziierte Leidensdruck wird hier erfasst"
+    }
+  },
+  "sexual_relationship_disorder": {
+    "name": "Sexual relationship trastorno",
+    "differentials": [
+      "Paartherapeutische Konflikte ohne Störung",
+      "Sexuelle Funktionsstörung (F52)"
+    ],
+    "groups": {
+      "f66_2.core": "Criterios principales",
+      "f66_2.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f66_2.core_symptoms": "Leidensdruck und/oder Funktionsbeeinträchtigung in der sexuellen Beziehung zu einem Partner, unabhängig von der sexuellen Orientierung",
+      "f66_2.exclude_other": "La presentación no se explica mejor por un trastorno mental primario o el consumo de sustancias por sí solo"
+    }
+  },
+  "psychosexual_development_disorder_other": {
+    "name": "Other psychosexual development trastornos",
+    "differentials": [
+      "Geschlechtsdysphorie (F64)",
+      "Spezifische F66-Unterkategorien"
+    ],
+    "groups": {
+      "f66_8.core": "Criterios principales",
+      "f66_8.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f66_8.core_symptoms": "Näher bezeichnete psychosexuelle Entwicklungsstörung, die keiner der spezifischeren F66-Unterkategorien entspricht",
+      "f66_8.exclude_other": "Die Störung ist nicht besser durch eine andere psychische Störung allein erklärbar"
+    }
+  },
+  "psychosexual_development_disorder_unspecified": {
+    "name": "Psychosexual development trastorno, unspecified",
+    "differentials": [
+      "Geschlechtsdysphorie (F64)",
+      "Spezifische F66-Unterkategorien"
+    ],
+    "groups": {
+      "f66_9.core": "Sintomatología clínica sin información suficiente para una asignación más específica",
+      "f66_9.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f66_9.core_symptoms": "Psychosexuelle Entwicklungsstörung ohne nähere Spezifizierung",
+      "f66_9.insufficient_information": "La información disponible es insuficiente o contradictoria para un diagnóstico más específico (categoría provisional o de reserva)",
+      "f66_9.exclude_other": "Die Störung ist nicht besser durch eine andere psychische Störung allein erklärbar"
+    }
+  },
+  "other_adult_personality_behaviour_stem": {
+    "name": "Other trastornos of adult personality and behaviour",
+    "differentials": [
+      "Artifizielle Störung (F68.1)",
+      "Symptomüberspitzung (F68.0)",
+      "Primäre Persönlichkeitsstörung (F60)"
+    ],
+    "groups": {
+      "f68.core": "Criterios principales",
+      "f68.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f68.core_symptoms": "Störung der erwachsenen Persönlichkeit oder des Verhaltens, die keiner spezifischeren F68-Unterkategorie zugeordnet ist",
+      "f68.exclude_other": "La presentación no se explica mejor por un trastorno mental primario o el consumo de sustancias por sí solo"
+    }
+  },
+  "elaboration_physical_symptoms": {
+    "name": "Elaboration of physical symptoms for psychological reasons",
+    "differentials": [
+      "Somatoforme Störung (F45)",
+      "Artifizielle Störung (F68.1)",
+      "Malingering"
+    ],
+    "groups": {
+      "f68_0.core": "Criterios principales",
+      "f68_0.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f68_0.core_symptoms": "Übertriebene Darstellung oder Überspitzung tatsächlich vorhandener körperlicher Symptome aus psychologischen Gründen (z. B. um Aufmerksamkeit oder Unterstützung zu erhalten), ohne bewusste Täuschungsabsicht",
+      "f68_0.exclude_other": "Es liegt keine bewusste Täuschung oder Simulation vor (sonst F68.1)"
+    }
+  },
+  "factitious_disorder": {
+    "name": "Intentional production or feigning of symptoms or disabilities [factitious trastorno]",
+    "differentials": [
+      "Malingering",
+      "Somatoforme Störung (F45)",
+      "Symptomüberspitzung (F68.0)"
+    ],
+    "groups": {
+      "f68_1.core": "Criterios principales",
+      "f68_1.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f68_1.core_symptoms": "Wiederholte, absichtliche Erzeugung oder Vortäuschung körperlicher oder psychischer Symptome oder Behinderungen, um in der Rolle eines kranken oder verletzten Patienten behandelt zu werden",
+      "f68_1.exclude_other": "Die Symptome sind nicht besser durch eine somatoforme Störung ohne Täuschungsabsicht erklärbar"
+    }
+  },
+  "adult_personality_behaviour_disorder_other": {
+    "name": "Other specified trastornos of adult personality and behaviour",
+    "differentials": [
+      "Artifizielle Störung (F68.1)",
+      "Symptomüberspitzung (F68.0)",
+      "Primäre Persönlichkeitsstörung (F60)"
+    ],
+    "groups": {
+      "f68_8.core": "Criterios principales",
+      "f68_8.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f68_8.core_symptoms": "Näher bezeichnete Störung der erwachsenen Persönlichkeit oder des Verhaltens, die keiner der spezifischeren F68-Unterkategorien entspricht",
+      "f68_8.exclude_other": "La presentación no se explica mejor por un trastorno mental primario o el consumo de sustancias por sí solo"
+    }
+  },
+  "mixed_specific_developmental_disorder": {
+    "name": "Mixed specific developmental trastornos",
+    "differentials": [
+      "Legasthenie (F81.0)",
+      "Rechenstörung (F81.2)",
+      "Intellektuelle Entwicklungsstörung (F70–F79)"
+    ],
+    "groups": {
+      "f83.core": "Criterios principales",
+      "f83.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f83.core_symptoms": "Kombinierte, spezifische Entwicklungsstörungen in mindestens zwei Bereichen (z. B. Sprache und motorische Koordination oder Lesen und Rechnen), die nicht allein durch eine allgemeine intellektuelle Entwicklungsstörung erklärbar sind",
+      "f83.exclude_other": "Der Leistungsrückstand ist nicht allein durch eine intellektuelle Entwicklungsstörung oder soziale Deprivation erklärbar"
+    }
+  },
+  "other_psychological_development_disorder": {
+    "name": "Other trastornos of psychological development",
+    "differentials": [
+      "ADHS (F90)",
+      "Autismus-Spektrum (F84)",
+      "Spezifische Entwicklungsstörungen (F80–F83)"
+    ],
+    "groups": {
+      "f88.core": "Criterios principales",
+      "f88.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f88.core_symptoms": "Näher bezeichnete Störung der psychologischen Entwicklung, die keiner der spezifischeren F8-Unterkategorien entspricht",
+      "f88.exclude_other": "Die Störung ist nicht besser durch eine intellektuelle Entwicklungsstörung oder eine primäre psychische Störung allein erklärbar"
+    }
+  },
+  "unspecified_psychological_development_disorder": {
+    "name": "Unspecified trastorno of psychological development",
+    "differentials": [
+      "ADHS (F90)",
+      "Autismus-Spektrum (F84)",
+      "Spezifische Entwicklungsstörungen (F80–F83)"
+    ],
+    "groups": {
+      "f89.core": "Sintomatología clínica sin información suficiente para una asignación más específica",
+      "f89.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f89.core_symptoms": "Störung der psychologischen Entwicklung ohne nähere Spezifizierung",
+      "f89.insufficient_information": "La información disponible es insuficiente o contradictoria para un diagnóstico más específico (categoría provisional o de reserva)",
+      "f89.exclude_other": "Die Störung ist nicht besser durch eine intellektuelle Entwicklungsstörung allein erklärbar"
+    }
+  },
+  "childhood_emotional_disorders_stem": {
+    "name": "Emotional trastornos with onset specific to childhood",
+    "differentials": [
+      "Trennungsangst (F93.0)",
+      "Phobische Angst im Kindesalter (F93.1)",
+      "Soziale Angst im Kindesalter (F93.2)"
+    ],
+    "groups": {
+      "f93.core": "Criterios principales",
+      "f93.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f93.core_symptoms": "Emotionale Störung mit Beginn in der Kindheit, die keiner spezifischeren F93-Unterkategorie zugeordnet ist",
+      "f93.exclude_other": "La presentación no se explica mejor por un trastorno mental primario o el consumo de sustancias por sí solo"
+    }
+  },
+  "childhood_phobic_anxiety": {
+    "name": "Phobic anxiety trastorno of childhood",
+    "differentials": [
+      "Spezifische Phobie (F40.2)",
+      "Trennungsangst (F93.0)",
+      "Normaler Entwicklungsangst"
+    ],
+    "groups": {
+      "f93_1.core": "Criterios principales",
+      "f93_1.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f93_1.core_symptoms": "Ausgeprägte, altersunangemessene Angst vor bestimmten Objekten oder Situationen mit Vermeidung oder Ertragen nur unter Leidensdruck, mit Beginn in der Kindheit",
+      "f93_1.exclude_other": "Die Angst ist nicht besser durch eine andere psychische Störung allein erklärbar"
+    }
+  },
+  "childhood_social_anxiety": {
+    "name": "Social anxiety trastorno of childhood",
+    "differentials": [
+      "Soziale Phobie (F40.1)",
+      "Mutismus (F94.0)",
+      "Autismus-Spektrum (F84)"
+    ],
+    "groups": {
+      "f93_2.core": "Criterios principales",
+      "f93_2.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f93_2.core_symptoms": "Ausgeprägte, altersunangemessene Angst in sozialen Situationen mit Vermeidung oder Ertragen nur unter Leidensdruck, mit Beginn in der Kindheit",
+      "f93_2.exclude_other": "Die Angst ist nicht besser durch Autismus-Spektrum-Störung oder Mutismus allein erklärbar"
+    }
+  },
+  "sibling_rivalry_disorder": {
+    "name": "Sibling rivalry trastorno",
+    "differentials": [
+      "Normale Geschwisterrivalität",
+      "Verhaltensstörung (F91)",
+      "Anpassungsstörung nach Geschwistergeburt"
+    ],
+    "groups": {
+      "f93_3.core": "Criterios principales",
+      "f93_3.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f93_3.core_symptoms": "Ausgeprägte Eifersucht, Rivalität oder aggressives Verhalten gegenüber einem Geschwisterkind, das über altersübliche Reaktionen auf die Geburt oder Anwesenheit eines Geschwisters hinausgeht und zu Funktionsbeeinträchtigung führt",
+      "f93_3.exclude_other": "Das Verhalten ist nicht besser durch eine Verhaltensstörung oder eine primäre affektive Störung allein erklärbar"
+    }
+  },
+  "childhood_emotional_disorder_other": {
+    "name": "Other childhood emotional trastornos",
+    "differentials": [
+      "Trennungsangst (F93.0)",
+      "Phobische Angst im Kindesalter (F93.1)"
+    ],
+    "groups": {
+      "f93_8.core": "Criterios principales",
+      "f93_8.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f93_8.core_symptoms": "Näher bezeichnete emotionale Störung mit Beginn in der Kindheit, die keiner der spezifischeren F93-Unterkategorien entspricht",
+      "f93_8.exclude_other": "Die Symptomatik ist nicht besser durch eine andere psychische Störung allein erklärbar"
+    }
+  },
+  "childhood_emotional_disorder_unspecified": {
+    "name": "Childhood emotional trastorno, unspecified",
+    "differentials": [
+      "Trennungsangst (F93.0)",
+      "Phobische Angst im Kindesalter (F93.1)"
+    ],
+    "groups": {
+      "f93_9.core": "Sintomatología clínica sin información suficiente para una asignación más específica",
+      "f93_9.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f93_9.core_symptoms": "Emotionale Störung mit Beginn in der Kindheit ohne nähere Spezifizierung",
+      "f93_9.insufficient_information": "La información disponible es insuficiente o contradictoria para un diagnóstico más específico (categoría provisional o de reserva)",
+      "f93_9.exclude_other": "Die Symptomatik ist nicht besser durch eine andere psychische Störung allein erklärbar"
+    }
+  },
+  "childhood_social_functioning_disorders_stem": {
+    "name": "trastornos of social functioning with onset specific to childhood and adolescence",
+    "differentials": [
+      "Elektiver Mutismus (F94.0)",
+      "Reaktive Bindungsstörung (F94.1)",
+      "Bindungsstörung mit Enthemmung (F94.2)"
+    ],
+    "groups": {
+      "f94.core": "Criterios principales",
+      "f94.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f94.core_symptoms": "Störung des Sozialverhaltens mit Beginn in Kindheit oder Jugend, die keiner spezifischeren F94-Unterkategorie zugeordnet ist",
+      "f94.exclude_other": "Die Störung ist nicht besser durch Autismus-Spektrum-Störung allein erklärbar"
+    }
+  },
+  "childhood_social_functioning_disorder_other": {
+    "name": "Other childhood trastornos of social functioning",
+    "differentials": [
+      "Elektiver Mutismus (F94.0)",
+      "Bindungsstörungen (F94.1/F94.2)"
+    ],
+    "groups": {
+      "f94_8.core": "Criterios principales",
+      "f94_8.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f94_8.core_symptoms": "Näher bezeichnete Störung des Sozialverhaltens mit Beginn in Kindheit oder Jugend, die keiner der spezifischeren F94-Unterkategorien entspricht",
+      "f94_8.exclude_other": "Die Störung ist nicht besser durch Autismus-Spektrum-Störung allein erklärbar"
+    }
+  },
+  "childhood_social_functioning_disorder_unspecified": {
+    "name": "Childhood trastorno of social functioning, unspecified",
+    "differentials": [
+      "Elektiver Mutismus (F94.0)",
+      "Bindungsstörungen (F94.1/F94.2)"
+    ],
+    "groups": {
+      "f94_9.core": "Sintomatología clínica sin información suficiente para una asignación más específica",
+      "f94_9.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f94_9.core_symptoms": "Störung des Sozialverhaltens mit Beginn in Kindheit oder Jugend ohne nähere Spezifizierung",
+      "f94_9.insufficient_information": "La información disponible es insuficiente o contradictoria para un diagnóstico más específico (categoría provisional o de reserva)",
+      "f94_9.exclude_other": "Die Störung ist nicht besser durch Autismus-Spektrum-Störung allein erklärbar"
+    }
+  },
+  "childhood_behavioural_emotional_disorders_stem": {
+    "name": "Other behavioural and emotional trastornos with onset usually occurring in childhood and adolescence",
+    "differentials": [
+      "Enuresis (F98.0)",
+      "Enkopresis (F98.1)",
+      "Pica (F98.3)",
+      "Stereotype Bewegungsstörung (F98.4)"
+    ],
+    "groups": {
+      "f98.core": "Criterios principales",
+      "f98.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f98.core_symptoms": "Verhaltens- oder emotionale Störung mit Beginn in Kindheit oder Jugend, die keiner spezifischeren F98-Unterkategorie zugeordnet ist",
+      "f98.exclude_other": "Die Störung ist nicht besser durch eine andere psychische Störung allein erklärbar"
+    }
+  },
+  "pica_childhood": {
+    "name": "Pica of childhood",
+    "differentials": [
+      "Normales exploratives Verhalten im Kleinkindalter",
+      "Intellektuelle Entwicklungsstörung",
+      "Zwangsstörung"
+    ],
+    "groups": {
+      "f98_3.core": "Criterios principales",
+      "f98_3.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f98_3.core_symptoms": "Wiederholtes oder anhaltendes Essen nicht essbarer Substanzen (z. B. Erde, Farbe, Sand, Papier) über ein altersgerechtes Maß hinaus, über mindestens einen Monat",
+      "f98_3.exclude_other": "Das Verhalten ist nicht besser durch eine intellektuelle Entwicklungsstörung oder kulturelle Praxis allein erklärbar"
+    }
+  },
+  "childhood_behavioural_disorder_other": {
+    "name": "Other specified behavioural and emotional trastornos with onset usually occurring in childhood and adolescence",
+    "differentials": [
+      "Enuresis (F98.0)",
+      "Enkopresis (F98.1)",
+      "Pica (F98.3)"
+    ],
+    "groups": {
+      "f98_8.core": "Criterios principales",
+      "f98_8.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f98_8.core_symptoms": "Näher bezeichnete Verhaltens- oder emotionale Störung mit Beginn in Kindheit oder Jugend, die keiner der spezifischeren F98-Unterkategorien entspricht",
+      "f98_8.exclude_other": "Die Störung ist nicht besser durch eine andere psychische Störung allein erklärbar"
+    }
+  },
+  "childhood_behavioural_disorder_unspecified": {
+    "name": "Unspecified behavioural and emotional trastornos with onset usually occurring in childhood and adolescence",
+    "differentials": [
+      "Enuresis (F98.0)",
+      "Enkopresis (F98.1)",
+      "Pica (F98.3)"
+    ],
+    "groups": {
+      "f98_9.core": "Sintomatología clínica sin información suficiente para una asignación más específica",
+      "f98_9.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f98_9.core_symptoms": "Verhaltens- oder emotionale Störung mit Beginn in Kindheit oder Jugend ohne nähere Spezifizierung",
+      "f98_9.insufficient_information": "La información disponible es insuficiente o contradictoria para un diagnóstico más específico (categoría provisional o de reserva)",
+      "f98_9.exclude_other": "Die Störung ist nicht besser durch eine andere psychische Störung allein erklärbar"
+    }
+  },
+  "unspecified_mental_disorder": {
+    "name": "Mental trastorno, not otherwise specified",
+    "differentials": [
+      "Spezifische psychische Störung bei vollständiger Kriterienerfüllung",
+      "Organische oder substanzbedingte Störung",
+      "Normale Reaktion auf Lebensumstände"
+    ],
+    "groups": {
+      "f99.core": "Sintomatología clínica sin información suficiente para una asignación más específica",
+      "f99.exclusions": "Exclusiones"
+    },
+    "criteria": {
+      "f99.core_symptoms": "Hay sintomatología mental clínicamente significativa, pero no puede asignarse a un trastorno mental específico por falta de información suficiente",
+      "f99.insufficient_information": "La información disponible es insuficiente o contradictoria para un diagnóstico más específico (categoría provisional o de reserva)",
+      "f99.exclude_other": "La presentación no se explica mejor por un trastorno mental primario o el consumo de sustancias por sí solo"
+    }
+  },
+}

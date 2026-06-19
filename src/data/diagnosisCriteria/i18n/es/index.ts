@@ -9,6 +9,7 @@ import { esPersonality } from './personality'
 import { esIntellectualDevelopment } from './intellectualDevelopment'
 import { esNeurodevelopmental } from './neurodevelopmental'
 import { esChildhoodOnset } from './childhoodOnset'
+import { gapES } from '../gapCoverage/es'
 
 /** Full ES translation map (merged ICD-10 block modules). */
 export const es: DisorderTranslationMap = {
@@ -22,4 +23,5 @@ export const es: DisorderTranslationMap = {
   ...esIntellectualDevelopment,
   ...esNeurodevelopmental,
   ...esChildhoodOnset,
+  ...gapES,
 }

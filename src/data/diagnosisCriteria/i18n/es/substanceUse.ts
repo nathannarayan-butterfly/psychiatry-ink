@@ -810,6 +810,164 @@ const esSubstanceUseBase: DisorderTranslationMap = {
       'f18_2.persistence_harm': 'Consumo continuado a pesar de evidencia de consecuencias perjudiciales a nivel físico, psíquico o social',
     },
   },
+  multiple_substances_acute_intoxication: {
+    name: 'Intoxicación aguda por consumo múltiple de sustancias y otras sustancias psicotrópicas',
+    differentials: [
+      'Síndrome de abstinencia (F19.3)',
+      'Delírium u otra causa orgánica',
+      'Trastorno psicótico agudo',
+      'Intoxicación por una sola clase de sustancia (F10–F18)',
+    ],
+    groups: {
+      'f19_0.use': 'Evidencia de consumo',
+      'f19_0.signs': 'Signos de intoxicación típicos de la sustancia (al menos 1)',
+      'f19_0.exclusions': 'Exclusiones',
+    },
+    criteria: {
+      'f19_0.recent_use':
+        'Consumo reciente de múltiples sustancias u otras sustancias psicotrópicas en una dosis suficientemente alta',
+      'f19_0.causal_link':
+        'Los síntomas guardan una relación temporal y causal directa con el efecto agudo de la sustancia y son transitorios',
+      'f19_0.mixed_signs':
+        'Cuadro de intoxicación variable según las sustancias involucradas (p. ej. patrón de estimulantes o de sedantes/opioides)',
+      'f19_0.disinhibition': 'Desinhibición, labilidad del ánimo o agitación paradójica',
+      'f19_0.consciousness':
+        'Conciencia alterada, llegando al estupor con sustancias sedantes',
+      'f19_0.autonomic':
+        'Síntomas autonómicos (taquicardia, tamaño pupilar, sudoración) acordes con las sustancias consumidas',
+      'f19_0.coordination': 'Alteración de la coordinación o la marcha, habla farfullante',
+      'f19_0.perceptual':
+        'Alteraciones perceptivas o alucinaciones con sustancias psicotrópicas',
+      'f19_0.exclude_other_cause':
+        'Los síntomas no se explican mejor por una enfermedad somática, un delírium u otro trastorno mental',
+    },
+  },
+  multiple_substances_harmful_use: {
+    name: 'Uso perjudicial de múltiples sustancias y otras sustancias psicotrópicas',
+    differentials: [
+      'Síndrome de dependencia (F19.2)',
+      'Intoxicación aguda (F19.0)',
+      'Consumo de bajo riesgo sin daño identificable',
+    ],
+    groups: {
+      'f19_1.harm': 'Consumo con daño para la salud',
+      'f19_1.exclusions': 'Exclusiones',
+    },
+    criteria: {
+      'f19_1.actual_use':
+        'Está documentado un consumo real de múltiples sustancias u otras sustancias psicotrópicas',
+      'f19_1.health_damage':
+        'Daño demostrable de la salud física o psíquica como consecuencia del consumo',
+      'f19_1.exclude_dependence':
+        'No se cumplen los criterios de un síndrome de dependencia (F19.2)',
+    },
+  },
+  multiple_substances_dependence: {
+    name: 'Síndrome de dependencia por consumo múltiple de sustancias y otras sustancias psicotrópicas',
+    differentials: [
+      'Uso perjudicial de múltiples sustancias (F19.1) sin dependencia',
+      'Intoxicación aguda (F19.0)',
+      'Trastorno afectivo o psicótico inducido por sustancias',
+    ],
+    groups: {
+      'f19_2.dependence': 'Rasgos de dependencia (al menos 3 en un período de 12 meses)',
+    },
+    criteria: {
+      'f19_2.craving':
+        'Deseo intenso o una especie de compulsión por consumir múltiples sustancias u otras sustancias psicotrópicas (craving)',
+      'f19_2.impaired_control':
+        'Disminución de la capacidad de controlar el inicio, la finalización y la cantidad del consumo',
+      'f19_2.withdrawal':
+        'Síndrome de abstinencia físico al reducir o interrumpir el consumo, o consumo para aliviar los síntomas de abstinencia',
+      'f19_2.tolerance':
+        'Desarrollo de tolerancia, con necesidad de aumentar la dosis para lograr el efecto inicial',
+      'f19_2.neglect':
+        'Abandono progresivo de otros intereses y mayor tiempo dedicado a obtener la sustancia, consumirla y recuperarse de sus efectos',
+      'f19_2.persistence_harm':
+        'Consumo continuado a pesar de evidencia de consecuencias perjudiciales a nivel físico, psíquico o social',
+    },
+  },
+  multiple_substances_withdrawal: {
+    name: 'Síndrome de abstinencia por consumo múltiple de sustancias y otras sustancias psicotrópicas',
+    differentials: [
+      'Intoxicación aguda (F19.0)',
+      'Síndrome de abstinencia con delírium (F19.4)',
+      'Trastorno de ansiedad o afectivo',
+      'Enfermedad somática con síntomas autonómicos',
+    ],
+    groups: {
+      'f19_3.context': 'Contexto de abstinencia',
+      'f19_3.symptoms': 'Síntomas de abstinencia (al menos 1)',
+      'f19_3.exclusions': 'Exclusiones',
+    },
+    criteria: {
+      'f19_3.cessation':
+        'Interrupción o reducción del consumo de múltiples sustancias u otras sustancias psicotrópicas tras un consumo repetido, generalmente sostenido y/o en dosis altas',
+      'f19_3.withdrawal_syndrome': 'Existe un síndrome de abstinencia típico de la sustancia',
+      'f19_3.mixed_withdrawal':
+        'Síntomas de abstinencia acordes con las sustancias involucradas (p. ej. temblor, hiperactividad autonómica, disforia, alteración del sueño)',
+      'f19_3.craving': 'Deseo intenso (craving) de una o más sustancias',
+      'f19_3.anxiety_agitation': 'Ansiedad, inquietud o agitación',
+      'f19_3.autonomic': 'Síntomas autonómicos de abstinencia (sudoración, taquicardia, temblor)',
+      'f19_3.insomnia': 'Alteración del sueño',
+      'f19_3.dysphoria': 'Estado de ánimo disfórico o depresivo',
+      'f19_3.exclude_other_cause':
+        'Los síntomas no se explican mejor por otro trastorno somático o mental',
+    },
+  },
+  multiple_substances_withdrawal_delirium: {
+    name: 'Síndrome de abstinencia con delírium por consumo múltiple de sustancias y otras sustancias psicotrópicas',
+    differentials: [
+      'Síndrome de abstinencia sin delírium (F19.3)',
+      'Delírium de otra (física) causa (F05)',
+      'Trastorno psicótico inducido por sustancias',
+      'Encefalopatía de Wernicke (en consumo de alcohol)',
+    ],
+    groups: {
+      'f19_4.context': 'Abstinencia con alteración de la conciencia',
+      'f19_4.features': 'Rasgos delirantes asociados (al menos 1)',
+      'f19_4.exclusions': 'Exclusiones',
+    },
+    criteria: {
+      'f19_4.withdrawal_context':
+        'Interrupción o reducción del consumo de múltiples sustancias u otras sustancias psicotrópicas en contexto de dependencia preexistente',
+      'f19_4.clouding':
+        'Alteración de la conciencia con disminución de la alerta y la atención (estado delirante)',
+      'f19_4.disorientation': 'Desorientación y alteración global de las funciones cognitivas',
+      'f19_4.hallucinations':
+        'Alucinaciones o ilusiones vívidas (frecuentemente visuales o escénicas)',
+      'f19_4.psychomotor': 'Agitación psicomotora o inquietud marcada',
+      'f19_4.autonomic':
+        'Hiperactividad autonómica marcada (p. ej. taquicardia, sudoración, hipertensión, temblor amplio); posibles convulsiones',
+      'f19_4.exclude_other_cause':
+        'El delírium no se explica mejor por una enfermedad física independiente',
+    },
+  },
+  multiple_substances_psychotic_disorder: {
+    name: 'Trastorno psicótico por consumo múltiple de sustancias y otras sustancias psicotrópicas',
+    differentials: [
+      'Esquizofrenia o trastorno delirante persistente',
+      'Intoxicación aguda (F19.0) con fenómenos psicóticos',
+      'Síndrome de abstinencia con delírium (F19.4)',
+      'Trastorno afectivo con síntomas psicóticos',
+    ],
+    groups: {
+      'f19_5.symptoms': 'Síntomas psicóticos (al menos 1)',
+      'f19_5.context': 'Relación temporal con el consumo',
+      'f19_5.exclusions': 'Exclusiones',
+    },
+    criteria: {
+      'f19_5.hallucinations':
+        'Alucinaciones (frecuentemente auditivas o visuales) que no son únicamente expresión de una intoxicación simple',
+      'f19_5.delusions': 'Ideas delirantes, frecuentemente delirios persecutorios o de referencia',
+      'f19_5.temporal_relation':
+        'Inicio de los síntomas psicóticos durante o poco después (generalmente dentro de dos semanas) del consumo de múltiples sustancias u otras sustancias psicotrópicas',
+      'f19_5.partial_remission':
+        'Los síntomas suelen remitir al menos parcialmente en un período limitado (del orden de semanas a pocos meses)',
+      'f19_5.exclude_primary_psychosis':
+        'El cuadro no se explica mejor por un trastorno psicótico primario y no ocurre exclusivamente en contexto de intoxicación o delírium de abstinencia',
+    },
+  },
 }
 
 /** ES translations — bloque CIE-10 F1 + fragmentos CIE-11 (6C4x) generados. */
@@ -823,6 +981,7 @@ export const esSubstanceUse: DisorderTranslationMap = withIcd11SubstanceTranslat
     stimulants_dependence: 'de otros estimulantes incluida la cafeína',
     nicotine_dependence: 'de tabaco/nicotina',
     volatile_solvents_dependence: 'de disolventes volátiles',
+    multiple_substances_dependence: 'de múltiples sustancias y otras sustancias psicotrópicas',
     opioids_harmful_use: 'de opioides',
     cannabinoids_harmful_use: 'de cannabinoides',
     sedatives_harmful_use: 'de sedantes o hipnóticos',
@@ -831,6 +990,7 @@ export const esSubstanceUse: DisorderTranslationMap = withIcd11SubstanceTranslat
     hallucinogens_harmful_use: 'de alucinógenos',
     nicotine_harmful_use: 'de tabaco/nicotina',
     volatile_solvents_harmful_use: 'de disolventes volátiles',
+    multiple_substances_harmful_use: 'de múltiples sustancias y otras sustancias psicotrópicas',
   },
   depGroupLabel:
     'Rasgos de dependencia según la CIE-11 (al menos 2 de 3, durante ≥ 12 meses — o ≥ 1 mes con consumo continuo)',

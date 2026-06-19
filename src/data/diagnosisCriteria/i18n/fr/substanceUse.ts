@@ -1007,6 +1007,164 @@ const frSubstanceUseBase: DisorderTranslationMap = {
         'Poursuite de la consommation malgré des conséquences physiques, psychiques ou sociales manifestement nocives avérées',
     },
   },
+  multiple_substances_acute_intoxication: {
+    name: 'Intoxication aiguë due à l’usage multiple de substances et à d’autres substances psychotropes',
+    differentials: [
+      'Syndrome de sevrage (F19.3)',
+      'Delirium ou autre cause organique',
+      'Trouble psychotique aigu',
+      'Intoxication par une seule classe de substance (F10–F18)',
+    ],
+    groups: {
+      'f19_0.use': 'Preuve de consommation',
+      'f19_0.signs': 'Signes d’intoxication typiques de la substance (au moins 1)',
+      'f19_0.exclusions': 'Exclusions',
+    },
+    criteria: {
+      'f19_0.recent_use':
+        'Consommation récente de substances multiples ou d’autres substances psychotropes à une dose suffisamment élevée',
+      'f19_0.causal_link':
+        'Les symptômes sont en lien temporel et causal direct avec l’effet aigu de la substance et sont transitoires',
+      'f19_0.mixed_signs':
+        'Tableau d’intoxication variable selon les substances impliquées (p. ex. pattern stimulant ou sédatif/opioïde)',
+      'f19_0.disinhibition': 'Désinhibition, labilité de l’humeur ou agitation paradoxale',
+      'f19_0.consciousness':
+        'Conscience altérée, pouvant aller jusqu’à la stupeur avec des substances sédatives',
+      'f19_0.autonomic':
+        'Symptômes autonomes (tachycardie, taille pupillaire, sudation) selon le pattern des substances consommées',
+      'f19_0.coordination': 'Trouble de la coordination ou de la marche, discours bredouillant',
+      'f19_0.perceptual':
+        'Altérations perceptives ou hallucinations avec des substances psychotropes',
+      'f19_0.exclude_other_cause':
+        'Les symptômes ne sont pas mieux expliqués par une affection somatique, un delirium ou un autre trouble psychique',
+    },
+  },
+  multiple_substances_harmful_use: {
+    name: 'Usage nocif de substances multiples et d’autres substances psychotropes',
+    differentials: [
+      'Syndrome de dépendance (F19.2)',
+      'Intoxication aiguë (F19.0)',
+      'Usage à faible risque sans dommage identifiable',
+    ],
+    groups: {
+      'f19_1.harm': 'Consommation avec dommage pour la santé',
+      'f19_1.exclusions': 'Exclusions',
+    },
+    criteria: {
+      'f19_1.actual_use':
+        'La consommation effective de substances multiples ou d’autres substances psychotropes est documentée',
+      'f19_1.health_damage':
+        'Atteinte démontrable de la santé physique ou psychique résultant de la consommation',
+      'f19_1.exclude_dependence':
+        'Les critères d’un syndrome de dépendance (F19.2) ne sont pas remplis',
+    },
+  },
+  multiple_substances_dependence: {
+    name: 'Syndrome de dépendance lié à l’usage multiple de substances et à d’autres substances psychotropes',
+    differentials: [
+      'Usage nocif de substances multiples (F19.1) sans dépendance',
+      'Intoxication aiguë (F19.0)',
+      'Trouble affectif ou psychotique induit par une substance',
+    ],
+    groups: {
+      'f19_2.dependence': 'Caractéristiques de dépendance (au moins 3 en 12 mois)',
+    },
+    criteria: {
+      'f19_2.craving':
+        'Désir puissant ou sorte de compulsion à consommer des substances multiples ou d’autres substances psychotropes (craving)',
+      'f19_2.impaired_control':
+        'Contrôle réduit sur le début, l’arrêt et la quantité de la consommation',
+      'f19_2.withdrawal':
+        'Syndrome de sevrage physique lors de la réduction ou de l’arrêt de la consommation, ou consommation visant à soulager les symptômes de sevrage',
+      'f19_2.tolerance':
+        'Développement d’une tolérance nécessitant une augmentation des doses pour obtenir l’effet initial',
+      'f19_2.neglect':
+        'Négligence croissante d’autres intérêts et temps accru consacré à se procurer la substance, à la consommer et à récupérer',
+      'f19_2.persistence_harm':
+        'Poursuite de la consommation malgré des conséquences physiques, psychiques ou sociales manifestement nocives avérées',
+    },
+  },
+  multiple_substances_withdrawal: {
+    name: 'Syndrome de sevrage lié à l’usage multiple de substances et à d’autres substances psychotropes',
+    differentials: [
+      'Intoxication aiguë (F19.0)',
+      'Syndrome de sevrage avec delirium (F19.4)',
+      'Trouble anxieux ou affectif',
+      'Affection somatique avec symptômes autonomes',
+    ],
+    groups: {
+      'f19_3.context': 'Contexte de sevrage',
+      'f19_3.symptoms': 'Symptômes de sevrage (au moins 1)',
+      'f19_3.exclusions': 'Exclusions',
+    },
+    criteria: {
+      'f19_3.cessation':
+        'Arrêt ou réduction de substances multiples ou d’autres substances psychotropes après une consommation répétée, généralement soutenue et/ou à dose élevée',
+      'f19_3.withdrawal_syndrome': 'Un syndrome de sevrage typique de la substance est présent',
+      'f19_3.mixed_withdrawal':
+        'Symptômes de sevrage selon le pattern des substances impliquées (p. ex. tremblement, hyperactivité autonome, dysphorie, trouble du sommeil)',
+      'f19_3.craving': 'Fort craving pour une ou plusieurs substances',
+      'f19_3.anxiety_agitation': 'Anxiété, agitation intérieure ou agitation',
+      'f19_3.autonomic': 'Symptômes autonomes de sevrage (sudation, tachycardie, tremblement)',
+      'f19_3.insomnia': 'Trouble du sommeil',
+      'f19_3.dysphoria': 'Humeur dysphorique ou dépressive',
+      'f19_3.exclude_other_cause':
+        'Les symptômes ne sont pas mieux expliqués par un autre trouble somatique ou psychique',
+    },
+  },
+  multiple_substances_withdrawal_delirium: {
+    name: 'Syndrome de sevrage avec delirium lié à l’usage multiple de substances et à d’autres substances psychotropes',
+    differentials: [
+      'Syndrome de sevrage sans delirium (F19.3)',
+      'Delirium d’une autre (physique) cause (F05)',
+      'Trouble psychotique induit par une substance',
+      'Encéphalopathie de Wernicke (en cas d’usage d’alcool)',
+    ],
+    groups: {
+      'f19_4.context': 'Sevrage avec trouble de la conscience',
+      'f19_4.features': 'Caractéristiques delirantes associées (au moins 1)',
+      'f19_4.exclusions': 'Exclusions',
+    },
+    criteria: {
+      'f19_4.withdrawal_context':
+        'Arrêt ou réduction de substances multiples ou d’autres substances psychotropes dans un contexte de dépendance préexistante',
+      'f19_4.clouding':
+        'Trouble de la conscience avec altération de la vigilance et de l’attention (état delirant)',
+      'f19_4.disorientation': 'Désorientation et trouble global des fonctions cognitives',
+      'f19_4.hallucinations':
+        'Hallucinations ou illusions vives (fréquemment visuelles ou scéniques)',
+      'f19_4.psychomotor': 'Agitation psychomotrice ou agitation marquée',
+      'f19_4.autonomic':
+        'Hyperactivité autonome marquée (p. ex. tachycardie, sudation, hypertension, tremblement ample) ; crises convulsives possibles',
+      'f19_4.exclude_other_cause':
+        'Le delirium n’est pas mieux expliqué par une affection physique indépendante',
+    },
+  },
+  multiple_substances_psychotic_disorder: {
+    name: 'Trouble psychotique lié à l’usage multiple de substances et à d’autres substances psychotropes',
+    differentials: [
+      'Schizophrénie ou trouble délirant persistant',
+      'Intoxication aiguë (F19.0) avec phénomènes psychotiques',
+      'Syndrome de sevrage avec delirium (F19.4)',
+      'Trouble affectif avec symptômes psychotiques',
+    ],
+    groups: {
+      'f19_5.symptoms': 'Symptômes psychotiques (au moins 1)',
+      'f19_5.context': 'Relation temporelle avec la consommation',
+      'f19_5.exclusions': 'Exclusions',
+    },
+    criteria: {
+      'f19_5.hallucinations':
+        'Hallucinations (fréquemment auditives ou visuelles) qui ne sont pas uniquement l’expression d’une intoxication simple',
+      'f19_5.delusions': 'Idées délirantes, fréquemment délire de persécution ou de référence',
+      'f19_5.temporal_relation':
+        'Début des symptômes psychotiques pendant ou peu après (généralement dans les deux semaines) la consommation de substances multiples ou d’autres substances psychotropes',
+      'f19_5.partial_remission':
+        'Les symptômes régressent typiquement au moins partiellement dans un délai limité (de l’ordre de quelques semaines à quelques mois)',
+      'f19_5.exclude_primary_psychosis':
+        'Le tableau n’est pas mieux expliqué par un trouble psychotique primaire et ne survient pas exclusivement dans un contexte d’intoxication ou de delirium de sevrage',
+    },
+  },
 }
 
 /** FR translations — bloc CIM-10 F1 + fragments CIM-11 (6C4x) générés. */
@@ -1020,6 +1178,7 @@ export const frSubstanceUse: DisorderTranslationMap = withIcd11SubstanceTranslat
     stimulants_dependence: "d’autres stimulants dont la caféine",
     nicotine_dependence: 'de tabac/nicotine',
     volatile_solvents_dependence: 'de solvants volatils',
+    multiple_substances_dependence: 'de substances multiples et d’autres substances psychotropes',
     opioids_harmful_use: "d’opioïdes",
     cannabinoids_harmful_use: 'de cannabinoïdes',
     sedatives_harmful_use: 'de sédatifs ou hypnotiques',
@@ -1028,6 +1187,7 @@ export const frSubstanceUse: DisorderTranslationMap = withIcd11SubstanceTranslat
     hallucinogens_harmful_use: "d’hallucinogènes",
     nicotine_harmful_use: 'de tabac/nicotine',
     volatile_solvents_harmful_use: 'de solvants volatils',
+    multiple_substances_harmful_use: 'de substances multiples et d’autres substances psychotropes',
   },
   depGroupLabel:
     'Caractéristiques de dépendance selon la CIM-11 (au moins 2 sur 3, sur ≥ 12 mois — ou ≥ 1 mois en cas de consommation continue)',

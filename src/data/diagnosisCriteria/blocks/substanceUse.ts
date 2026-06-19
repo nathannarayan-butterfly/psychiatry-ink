@@ -973,6 +973,65 @@ const solvents: SubstanceSpec = {
   withdrawal: [],
 }
 
+const multipleSubstances: SubstanceSpec = {
+  key: 'multiple_substances',
+  icd10: 'F19',
+  icd11: '6C4E',
+  name_de: 'multiplen Substanzgebrauch und andere psychotrope Substanzen',
+  dativeName: 'multiplen Substanzen und anderen psychotropen Substanzen',
+  dsmLabel: 'Polysubstance (Other Psychoactive Substance)',
+  useMatch:
+    /multiplen\s+substanz|mischkonsum|polysubstanz|polydrug|mehrere\s+substanz|multiple\s+(drug|substance)|psychotrop/i,
+  intox: [
+    {
+      key: 'mixed_signs',
+      text_de:
+        'Variabler Intoxikationsbefund je nach involvierten Substanzen (z. B. Stimulanzien- oder Sedativa-/Opioid-Muster)',
+      hint: 'substance_related_features',
+    },
+    { key: 'disinhibition', text_de: 'Enthemmung, Stimmungslabilität oder paradoxe Erregung', hint: 'mood_affect' },
+    {
+      key: 'consciousness',
+      text_de: 'Beeinträchtigtes Bewusstsein bis hin zu Sopor bei sedierenden Substanzen',
+      hint: 'consciousness_orientation',
+    },
+    {
+      key: 'autonomic',
+      text_de: 'Vegetative Symptome (Tachykardie, Pupillenweite, Schwitzen) im Muster der konsumierten Substanzen',
+    },
+    {
+      key: 'coordination',
+      text_de: 'Koordinations- oder Gangstörung, verwaschene Sprache',
+      hint: 'appearance_behavior',
+    },
+    {
+      key: 'perceptual',
+      text_de: 'Wahrnehmungsveränderungen oder Halluzinationen bei psychotropen Substanzen',
+      hint: 'perception_hallucinations',
+    },
+  ],
+  withdrawal: [
+    {
+      key: 'mixed_withdrawal',
+      text_de:
+        'Entzugssymptome im Muster der involvierten Substanzen (z. B. Tremor, vegetative Übererregung, Dysphorie, Schlafstörung)',
+    },
+    { key: 'craving', text_de: 'Starkes Verlangen (Craving) nach einer oder mehreren Substanzen' },
+    {
+      key: 'anxiety_agitation',
+      text_de: 'Ängstlichkeit, innere Unruhe oder Agitation',
+      hint: 'anxiety_panic_phobic_symptoms',
+    },
+    {
+      key: 'autonomic',
+      text_de: 'Vegetative Entzugssymptome (Schwitzen, Tachykardie, Tremor)',
+      hint: 'somatic_preoccupation',
+    },
+    { key: 'insomnia', text_de: 'Schlafstörung', hint: 'sleep_appetite_vegetative' },
+    { key: 'dysphoria', text_de: 'Dysphorische oder gedrückte Stimmung', hint: 'mood_affect' },
+  ],
+}
+
 // ---------------------------------------------------------------------------
 // Generated matrix — only the cells a psychiatrist routinely diagnoses.
 // ---------------------------------------------------------------------------
@@ -1032,4 +1091,12 @@ export const substanceUseDisorders: Disorder[] = [
   acuteIntoxication(solvents),
   harmfulUse(solvents),
   dependenceSyndrome(solvents),
+
+  // Multiple drug use / other psychoactive substances (F19)
+  acuteIntoxication(multipleSubstances),
+  harmfulUse(multipleSubstances),
+  dependenceSyndrome(multipleSubstances),
+  withdrawalState(multipleSubstances),
+  withdrawalDelirium(multipleSubstances),
+  psychoticDisorder(multipleSubstances),
 ]

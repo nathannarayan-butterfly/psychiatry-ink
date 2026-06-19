@@ -23,6 +23,7 @@ import { personalityDisorders } from './blocks/personality'
 import { intellectualDevelopmentDisorders } from './blocks/intellectualDevelopment'
 import { neurodevelopmentalDisorders } from './blocks/neurodevelopmental'
 import { childhoodOnsetDisorders } from './blocks/childhoodOnset'
+import { allCrosswalkGapDisorders } from './blocks/gapCoverage'
 
 /** Dataset version for the whole Butterfly criteria pack. */
 export const DIAGNOSIS_CRITERIA_VERSION = 1
@@ -34,7 +35,7 @@ export const BUTTERFLY_PROFILE_ID = 'butterfly_criteria_support'
  * Full Butterfly criteria registry. The five disorders authored first
  * (depressive episode, GAD, alcohol dependence, panic disorder, schizophrenia)
  * lead the list; the comprehensive ICD-10 F0–F9 block modules follow, grouped
- * by chapter. Each block fills out its chapter completely (no sampling).
+ * by chapter, plus crosswalk-gap coverage for any residual F codes.
  */
 export const DISORDER_CRITERIA: Disorder[] = [
   depressiveEpisode,
@@ -52,6 +53,7 @@ export const DISORDER_CRITERIA: Disorder[] = [
   ...intellectualDevelopmentDisorders,
   ...neurodevelopmentalDisorders,
   ...childhoodOnsetDisorders,
+  ...allCrosswalkGapDisorders,
 ]
 
 export function getDisorderById(id: string): Disorder | undefined {

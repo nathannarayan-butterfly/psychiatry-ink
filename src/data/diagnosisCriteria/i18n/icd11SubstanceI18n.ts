@@ -30,6 +30,7 @@ export const ICD11_DEPENDENCE_DISORDERS: ReadonlyArray<{ disorderId: string; icd
   { disorderId: 'stimulants_dependence', icd11Stem: '6C46' },
   { disorderId: 'nicotine_dependence', icd11Stem: '6C4A' },
   { disorderId: 'volatile_solvents_dependence', icd11Stem: '6C4B' },
+  { disorderId: 'multiple_substances_dependence', icd11Stem: '6C4E' },
 ]
 
 /** Disorders carrying a distinct ICD-11 harmful-pattern set (6C4x.1). */
@@ -42,6 +43,7 @@ export const ICD11_HARMFUL_USE_DISORDERS: ReadonlyArray<{ disorderId: string; ic
   { disorderId: 'hallucinogens_harmful_use', icd11Stem: '6C49' },
   { disorderId: 'nicotine_harmful_use', icd11Stem: '6C4A' },
   { disorderId: 'volatile_solvents_harmful_use', icd11Stem: '6C4B' },
+  { disorderId: 'multiple_substances_harmful_use', icd11Stem: '6C4E' },
 ]
 
 /** Language-specific text pack for the (structurally identical) ICD-11 fragments. */

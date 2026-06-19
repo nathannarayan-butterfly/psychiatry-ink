@@ -942,6 +942,164 @@ const enSubstanceUseBase: DisorderTranslationMap = {
         'Continued consumption despite demonstrably harmful physical, psychological or social consequences',
     },
   },
+  multiple_substances_acute_intoxication: {
+    name: 'Acute intoxication due to multiple drug use and other psychoactive substances',
+    differentials: [
+      'Withdrawal state (F19.3)',
+      'Delirium or other organic cause',
+      'Acute psychotic disorder',
+      'Intoxication with a single substance class (F10–F18)',
+    ],
+    groups: {
+      'f19_0.use': 'Evidence of consumption',
+      'f19_0.signs': 'Signs of intoxication typical of the substance (at least 1)',
+      'f19_0.exclusions': 'Exclusions',
+    },
+    criteria: {
+      'f19_0.recent_use':
+        'Recent consumption of multiple substances or other psychoactive substances at a sufficiently high dose',
+      'f19_0.causal_link':
+        'The symptoms are in direct temporal and causal relationship with the acute effect of the substance and are transient',
+      'f19_0.mixed_signs':
+        'Variable intoxication picture depending on the substances involved (e.g. stimulant or sedative/opioid pattern)',
+      'f19_0.disinhibition': 'Disinhibition, mood lability or paradoxical agitation',
+      'f19_0.consciousness':
+        'Impaired consciousness, progressing to stupor with sedating substances',
+      'f19_0.autonomic':
+        'Autonomic symptoms (tachycardia, pupillary size, sweating) matching the consumed substances',
+      'f19_0.coordination': 'Impaired coordination or gait, slurred speech',
+      'f19_0.perceptual':
+        'Perceptual changes or hallucinations with psychoactive substances',
+      'f19_0.exclude_other_cause':
+        'The symptoms are not better explained by a physical illness, a delirium or another mental disorder',
+    },
+  },
+  multiple_substances_harmful_use: {
+    name: 'Harmful use of multiple substances and other psychoactive substances',
+    differentials: [
+      'Dependence syndrome (F19.2)',
+      'Acute intoxication (F19.0)',
+      'Low-risk use without identifiable harm',
+    ],
+    groups: {
+      'f19_1.harm': 'Consumption with damage to health',
+      'f19_1.exclusions': 'Exclusions',
+    },
+    criteria: {
+      'f19_1.actual_use':
+        'Actual consumption of multiple substances or other psychoactive substances is documented',
+      'f19_1.health_damage':
+        'Demonstrable damage to physical or mental health as a consequence of consumption',
+      'f19_1.exclude_dependence':
+        'The criteria for a dependence syndrome (F19.2) are not met',
+    },
+  },
+  multiple_substances_dependence: {
+    name: 'Dependence syndrome due to multiple drug use and other psychoactive substances',
+    differentials: [
+      'Harmful use of multiple substances (F19.1) without dependence',
+      'Acute intoxication (F19.0)',
+      'Substance-induced mood or psychotic disorder',
+    ],
+    groups: {
+      'f19_2.dependence': 'Features of dependence (at least 3 within a 12-month period)',
+    },
+    criteria: {
+      'f19_2.craving':
+        'A strong desire or sense of compulsion to consume multiple substances or other psychoactive substances (craving)',
+      'f19_2.impaired_control':
+        'Impaired capacity to control the onset, cessation and amount of consumption',
+      'f19_2.withdrawal':
+        'A physical withdrawal state on reducing or stopping consumption, or consumption to relieve withdrawal symptoms',
+      'f19_2.tolerance':
+        'Development of tolerance, requiring increased doses to achieve the original effect',
+      'f19_2.neglect':
+        'Progressive neglect of other interests and increased time spent obtaining, using and recovering from the substance',
+      'f19_2.persistence_harm':
+        'Continued consumption despite demonstrably harmful physical, psychological or social consequences',
+    },
+  },
+  multiple_substances_withdrawal: {
+    name: 'Withdrawal state due to multiple drug use and other psychoactive substances',
+    differentials: [
+      'Acute intoxication (F19.0)',
+      'Withdrawal state with delirium (F19.4)',
+      'Anxiety or mood disorder',
+      'Physical illness with autonomic symptoms',
+    ],
+    groups: {
+      'f19_3.context': 'Withdrawal context',
+      'f19_3.symptoms': 'Withdrawal symptoms (at least 1)',
+      'f19_3.exclusions': 'Exclusions',
+    },
+    criteria: {
+      'f19_3.cessation':
+        'Cessation or reduction of multiple substances or other psychoactive substances after repeated, usually sustained and/or high-dose consumption',
+      'f19_3.withdrawal_syndrome': 'A withdrawal state typical of the substance is present',
+      'f19_3.mixed_withdrawal':
+        'Withdrawal symptoms matching the substances involved (e.g. tremor, autonomic overactivity, dysphoria, sleep disturbance)',
+      'f19_3.craving': 'Strong craving for one or more substances',
+      'f19_3.anxiety_agitation': 'Anxiety, restlessness or agitation',
+      'f19_3.autonomic': 'Autonomic withdrawal symptoms (sweating, tachycardia, tremor)',
+      'f19_3.insomnia': 'Sleep disturbance',
+      'f19_3.dysphoria': 'Dysphoric or depressed mood',
+      'f19_3.exclude_other_cause':
+        'The symptoms are not better explained by another physical or mental disorder',
+    },
+  },
+  multiple_substances_withdrawal_delirium: {
+    name: 'Withdrawal state with delirium due to multiple drug use and other psychoactive substances',
+    differentials: [
+      'Withdrawal state without delirium (F19.3)',
+      'Delirium of another (physical) cause (F05)',
+      'Substance-induced psychotic disorder',
+      'Wernicke encephalopathy (in alcohol use)',
+    ],
+    groups: {
+      'f19_4.context': 'Withdrawal with disturbance of consciousness',
+      'f19_4.features': 'Accompanying delirious features (at least 1)',
+      'f19_4.exclusions': 'Exclusions',
+    },
+    criteria: {
+      'f19_4.withdrawal_context':
+        'Cessation or reduction of multiple substances or other psychoactive substances in the context of pre-existing dependence',
+      'f19_4.clouding':
+        'Clouding of consciousness with impaired alertness and attention (delirious state)',
+      'f19_4.disorientation': 'Disorientation and global impairment of cognitive function',
+      'f19_4.hallucinations':
+        'Vivid (frequently visual or scenic) hallucinations or illusions',
+      'f19_4.psychomotor': 'Marked psychomotor restlessness or agitation',
+      'f19_4.autonomic':
+        'Marked autonomic overactivity (e.g. tachycardia, sweating, hypertension, coarse tremor); seizures possible',
+      'f19_4.exclude_other_cause':
+        'The delirium is not better explained by an independent physical illness',
+    },
+  },
+  multiple_substances_psychotic_disorder: {
+    name: 'Psychotic disorder due to multiple drug use and other psychoactive substances',
+    differentials: [
+      'Schizophrenia or persistent delusional disorder',
+      'Acute intoxication (F19.0) with psychotic phenomena',
+      'Withdrawal state with delirium (F19.4)',
+      'Mood disorder with psychotic symptoms',
+    ],
+    groups: {
+      'f19_5.symptoms': 'Psychotic symptoms (at least 1)',
+      'f19_5.context': 'Temporal relationship with consumption',
+      'f19_5.exclusions': 'Exclusions',
+    },
+    criteria: {
+      'f19_5.hallucinations':
+        'Hallucinations (frequently auditory or visual) that are not solely an expression of simple intoxication',
+      'f19_5.delusions': 'Delusional ideas, frequently persecutory or referential delusions',
+      'f19_5.temporal_relation':
+        'Onset of the psychotic symptoms during or shortly after (usually within two weeks of) consumption of multiple substances or other psychoactive substances',
+      'f19_5.partial_remission':
+        'The symptoms typically remit at least partially within a limited period (on the order of weeks to a few months)',
+      'f19_5.exclude_primary_psychosis':
+        'The presentation is not better explained by a primary psychotic disorder and does not occur exclusively in the context of intoxication or withdrawal delirium',
+    },
+  },
 }
 
 /** EN translations — ICD-10 F1 block + generated ICD-11 (6C4x) fragments. */
@@ -955,6 +1113,7 @@ export const enSubstanceUse: DisorderTranslationMap = withIcd11SubstanceTranslat
     stimulants_dependence: 'other stimulants including caffeine',
     nicotine_dependence: 'tobacco/nicotine',
     volatile_solvents_dependence: 'volatile solvents',
+    multiple_substances_dependence: 'multiple substances and other psychoactive substances',
     opioids_harmful_use: 'opioids',
     cannabinoids_harmful_use: 'cannabinoids',
     sedatives_harmful_use: 'sedatives or hypnotics',
@@ -963,6 +1122,7 @@ export const enSubstanceUse: DisorderTranslationMap = withIcd11SubstanceTranslat
     hallucinogens_harmful_use: 'hallucinogens',
     nicotine_harmful_use: 'tobacco/nicotine',
     volatile_solvents_harmful_use: 'volatile solvents',
+    multiple_substances_harmful_use: 'multiple substances and other psychoactive substances',
   },
   depGroupLabel:
     'ICD-11 features of dependence (at least 2 of 3, over ≥ 12 months — or ≥ 1 month with continuous use)',
