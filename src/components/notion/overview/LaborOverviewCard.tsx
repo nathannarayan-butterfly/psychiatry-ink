@@ -1,7 +1,10 @@
+import { useTranslation } from '../../../context/TranslationContext'
 import { OverviewCard, OverviewEmpty } from './OverviewCard'
 import { Sparkline } from './Sparkline'
 import type { RecentLabResultItem } from '../../../utils/overview/recentLabResults'
-import type { LaborOverviewData, LabDueItem, MedicationMonitoringGroup } from './types'
+import type { LaborOverviewData, LabDueItem } from './types'
+import type { ParameterMonitoringRow } from './types'
+import { ParameterMonitoringList } from '../../clinical/ParameterMonitoringList'
 
 interface LaborOverviewCardProps {
   data: LaborOverviewData
@@ -40,33 +43,19 @@ function LabRow({ item }: { item: LabDueItem }) {
 }
 
 function MonitoringSection({
-  groups,
+  rows,
   notDocumentedLabel,
+  subhead,
 }: {
-  groups: MedicationMonitoringGroup[]
+  rows: ParameterMonitoringRow[]
   notDocumentedLabel: string
+  subhead: string
 }) {
-  if (groups.length === 0) return null
+  if (rows.length === 0) return null
   return (
     <div className="ov-labor__monitoring">
-      <p className="ov-subhead">Überwachen</p>
-      {groups.map((group) => (
-        <div key={group.medicationId} className="ov-safety__med-group">
-          <div className="ov-safety__med-name">{group.medicationName}</div>
-          {group.parameters.map((param) => (
-            <div key={param.key} className="ov-safety__param-row">
-              <span className="ov-safety__param-label">{param.label}</span>
-              <span
-                className={`ov-safety__param-value${param.missing ? ' ov-safety__param-value--missing' : ''}`}
-              >
-                {param.missing
-                  ? notDocumentedLabel
-                  : [param.valueLabel, param.dateLabel].filter(Boolean).join(' · ')}
-              </span>
-            </div>
-          ))}
-        </div>
-      ))}
+      <p className="ov-subhead">{subhead}</p>
+      <ParameterMonitoringList rows={rows} notDocumentedLabel={notDocumentedLabel} />
     </div>
   )
 }
@@ -94,6 +83,7 @@ function RecentAbnormalList({ items }: { items: RecentLabResultItem[] }) {
 }
 
 export function LaborOverviewCard({ data, onOpenLabor }: LaborOverviewCardProps) {
+  const { t } = useTranslation()
   const badge =
     data.abnormal.length > 0 || data.recentAbnormal.length > 0
       ? {
@@ -133,7 +123,11 @@ export function LaborOverviewCard({ data, onOpenLabor }: LaborOverviewCardProps)
             </>
           ) : null}
 
-          <MonitoringSection groups={data.medicationMonitoring} notDocumentedLabel="nicht dokumentiert" />
+          <MonitoringSection
+            rows={data.medicationMonitoring}
+            notDocumentedLabel={t('overviewSafetyNotDocumented')}
+            subhead={t('overviewLaborMonitoring')}
+          />
 
           {watched.length > 0 ? (
             <>

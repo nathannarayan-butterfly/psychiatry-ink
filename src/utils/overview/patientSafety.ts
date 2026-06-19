@@ -1,3 +1,4 @@
+import type { LaborBefund } from '../laborArchive'
 import type { MedicationEntry } from '../../types/medicationPlan'
 import type { ClinicalImprintRecord } from '../../types/clinicalImprint'
 import {
@@ -8,6 +9,9 @@ import {
 } from '../medication/medicationInsights'
 import type { SemanticTone } from '../../components/notion/overview/OverviewCard'
 import type { SafetyAlert, SafetyData, SafetyRiskSignal } from '../../components/notion/overview/types'
+import type { PsychopathOverviewDomainKey } from '../../schemas/psychopath/extraction'
+import { isMeaningfulDetail } from './psychopathologyDomains'
+import { getParameterMonitoringRows } from './medicationMonitoring'
 
 export interface PatientSafetyInput {
   medications: MedicationEntry[]
@@ -18,6 +22,8 @@ export interface PatientSafetyInput {
   riskText?: string | null
   /** Free-text anamnesis covering allergies/intolerances. */
   allergyText?: string | null
+  /** Lab befunde for medication-driven parameter monitoring rows. */
+  befunde?: LaborBefund[]
 }
 
 const COMBINATION_LABELS: Record<CombinationRiskKind, string> = {
@@ -59,6 +65,35 @@ function trimRiskValue(value: string, max = 80): string {
   return trimmed.length > max ? `${trimmed.slice(0, max - 1)}…` : trimmed
 }
 
+const RISK_SIGNAL_DOMAIN: Record<SafetyRiskSignal['id'], PsychopathOverviewDomainKey> = {
+  suicidality: 'suicidality',
+  riskSelf: 'riskSelf',
+  riskOthers: 'riskOthers',
+}
+
+/** True when imprint / parsed risk text documents a clinically specific finding. */
+export function isMeaningfulRiskRawValue(
+  id: SafetyRiskSignal['id'],
+  rawValue: string | null | undefined,
+): boolean {
+  const trimmed = rawValue?.trim()
+  if (!trimmed || trimmed.length < 3) return false
+
+  const tone = riskToneFromText(trimmed)
+  if (tone === 'ok' || tone === 'low') return false
+
+  return isMeaningfulDetail(trimmed, RISK_SIGNAL_DOMAIN[id])
+}
+
+/** PPB safety strip: only elevated axes with clinically specific detail. */
+export function filterElevatedHarmSignals(signals: SafetyRiskSignal[]): SafetyRiskSignal[] {
+  return signals.filter(
+    (signal) =>
+      (signal.tone === 'high' || signal.tone === 'moderate') &&
+      isMeaningfulRiskRawValue(signal.id, signal.value ?? signal.label),
+  )
+}
+
 type HarmAxis = 'self' | 'other'
 
 function harmAxisForSignal(id: SafetyRiskSignal['id']): HarmAxis {
@@ -92,24 +127,33 @@ function composeRiskSignal(id: SafetyRiskSignal['id'], rawValue: string): Safety
   const tone = riskToneFromText(detail) ?? 'info'
   const axis = harmAxisForSignal(id)
 
-  if (tone === 'ok' || tone === 'low') {
+  if (tone === 'ok' || tone === 'low' || !isMeaningfulRiskRawValue(id, detail)) {
+    const calmLabel =
+      id === 'suicidality'
+        ? 'Keine Suizidalität'
+        : axis === 'self'
+          ? 'Keine akute Eigengefährdung'
+          : 'Keine akute Fremdgefährdung'
     return {
       id,
-      label:
-        axis === 'self' ? 'Keine akute Eigengefährdung' : 'Keine akute Fremdgefährdung',
+      label: calmLabel,
       tone,
       showPill: false,
     }
   }
 
   const primaryLabel =
-    tone === 'high'
-      ? axis === 'self'
-        ? 'Akute Eigengefährdung'
-        : 'Akute Fremdgefährdung'
-      : axis === 'self'
-        ? 'Eigengefährdung'
-        : 'Fremdgefährdung'
+    id === 'suicidality'
+      ? tone === 'high'
+        ? 'Akute Suizidalität'
+        : 'Suizidalität'
+      : tone === 'high'
+        ? axis === 'self'
+          ? 'Akute Eigengefährdung'
+          : 'Akute Fremdgefährdung'
+        : axis === 'self'
+          ? 'Eigengefährdung'
+          : 'Fremdgefährdung'
 
   const pillLabel = derivePillLabel(detail, tone)
   const showPill =
@@ -166,7 +210,24 @@ function parseRiskTextSignals(text: string): SafetyRiskSignal[] {
       trimmed
     signals.push(composeRiskSignal('riskSelf', trimRiskValue(value)))
   }
-  return signals
+  return dedupeRiskSignals(signals)
+}
+
+function normalizeRiskComparable(value: string): string {
+  return value.replace(/\s+/g, ' ').trim().toLowerCase()
+}
+
+function dedupeRiskSignals(signals: SafetyRiskSignal[]): SafetyRiskSignal[] {
+  const suicide = signals.find((signal) => signal.id === 'suicidality')
+  if (!suicide) return signals
+
+  const suicideText = normalizeRiskComparable(`${suicide.value ?? ''} ${suicide.label}`)
+  return signals.filter((signal) => {
+    if (signal.id !== 'riskSelf') return true
+    const selfText = normalizeRiskComparable(`${signal.value ?? ''} ${signal.label}`)
+    if (!selfText || !suicideText) return true
+    return selfText !== suicideText && !selfText.includes(suicideText) && !/suizid/i.test(selfText)
+  })
 }
 
 function buildRiskSignals(
@@ -175,10 +236,16 @@ function buildRiskSignals(
   riskOthers: string | null | undefined,
 ): SafetyRiskSignal[] {
   const signals: SafetyRiskSignal[] = []
-  if (suicidality) signals.push(composeRiskSignal('suicidality', suicidality))
-  if (riskSelf) signals.push(composeRiskSignal('riskSelf', riskSelf))
-  if (riskOthers) signals.push(composeRiskSignal('riskOthers', riskOthers))
-  return signals
+  if (suicidality && isMeaningfulRiskRawValue('suicidality', suicidality)) {
+    signals.push(composeRiskSignal('suicidality', suicidality))
+  }
+  if (riskSelf && isMeaningfulRiskRawValue('riskSelf', riskSelf)) {
+    signals.push(composeRiskSignal('riskSelf', riskSelf))
+  }
+  if (riskOthers && isMeaningfulRiskRawValue('riskOthers', riskOthers)) {
+    signals.push(composeRiskSignal('riskOthers', riskOthers))
+  }
+  return dedupeRiskSignals(signals)
 }
 
 function levelToTone(level: RiskLevel): SemanticTone {
@@ -308,7 +375,11 @@ export function buildPatientSafety(input: PatientSafetyInput): SafetyData {
   alerts.sort((a, b) => toneRank[b.tone] - toneRank[a.tone])
 
   const risk = buildRisk(input)
-  const hasAnySignal = risk !== null || alerts.length > 0
+  const medicationMonitoring = getParameterMonitoringRows({
+    medications: input.medications,
+    befunde: input.befunde ?? [],
+  })
+  const hasAnySignal = risk !== null || alerts.length > 0 || medicationMonitoring.length > 0
 
-  return { risk, alerts, medicationMonitoring: [], hasAnySignal }
+  return { risk, alerts, medicationMonitoring, hasAnySignal }
 }

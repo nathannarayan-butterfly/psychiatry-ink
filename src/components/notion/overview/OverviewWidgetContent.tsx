@@ -69,6 +69,7 @@ export interface OverviewWidgetRenderContext {
   ctSummary: DiagnosticExamSummary
   registeredTherapies: RegisteredTherapiesSummary
   compliance: ComplianceSummaryData
+  psychopathFindingRevision?: number
   onTabSelect: (tab: TopNavTabId) => void
   onOpenWorkspacePage?: (pageId: NotionPageId) => void
 }
@@ -104,8 +105,10 @@ export function renderOverviewWidget(
     case 'psychopathology':
       return (
         <SymptomSnapshotCard
+          caseId={ctx.caseId}
           data={ctx.symptomData}
           riskSignals={ctx.safetyData.risk?.signals}
+          revision={ctx.psychopathFindingRevision}
           onOpen={ctx.onOpenWorkspacePage ? () => ctx.onOpenWorkspacePage!('psychopath') : undefined}
         />
       )

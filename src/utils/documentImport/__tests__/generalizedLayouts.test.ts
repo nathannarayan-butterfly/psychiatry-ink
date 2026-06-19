@@ -197,6 +197,14 @@ describe('regression — aufnahme letter structure (de-identified)', () => {
       '2025-12-09',
       '2025-12-16',
     ])
+    if (verlauf[0]?.module === 'verlauf') {
+      expect(verlauf[0].data.sectionLabel).toBe('Visite')
+      expect(verlauf[0].data.subheading).toBe('Frau Paval')
+    }
+    if (verlauf[1]?.module === 'verlauf') {
+      expect(verlauf[1].data.sectionLabel).toBe('Visite')
+      expect(verlauf[1].data.subheading).toBe('Herrn Narayan')
+    }
   })
 })
 

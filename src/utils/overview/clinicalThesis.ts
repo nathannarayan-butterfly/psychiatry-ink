@@ -1,6 +1,8 @@
+import { getCaseMeta } from '../../hooks/useCaseRegistry'
 import { loadNotionDocumentSnapshot } from '../notionDocumentActions'
-import { loadVerlaufFeed } from '../verlaufFeed'
+import { resolvePsychopathologyText } from './psychopathSnapshot'
 import { loadClinicalImprintIndex } from '../clinicalImprint'
+import { loadDiagnosen, selectPrimaryCoding } from '../diagnosenArchive'
 import type { ClinicalImprintRecord, CourseDirection } from '../../types/clinicalImprint'
 
 function clamp(text: string, max: number): string {
@@ -85,17 +87,44 @@ function composeFromImprint(imprint: ClinicalImprintRecord): string | null {
   return null
 }
 
+function thesisFromPrimaryDiagnosis(caseId: string): string | null {
+  const primary = loadDiagnosen(caseId)[0]
+  if (!primary) return null
+  const selected = selectPrimaryCoding(primary)
+  if (!selected.coding.code.trim() && !selected.coding.label.trim()) return null
+  const label = selected.coding.label.trim()
+  const code = selected.coding.code.trim()
+  if (code && label) return clamp(`${code} — ${label}`, 220)
+  return clamp(code || label, 220)
+}
+
+function thesisFromAdmissionContext(caseId: string): string | null {
+  for (const docType of ['aufnahme', 'anamnese'] as const) {
+    const sections = loadNotionDocumentSnapshot(docType, caseId)?.sectionContents ?? {}
+    for (const key of ['aufnahmeanlass', 'aktuelle-beschwerden', 'aufnahmegrund', 'body']) {
+      const text = sections[key]?.trim()
+      if (text && text.length > 25) return clamp(text.split(/[.;]/)[0] ?? text, 220)
+    }
+  }
+  return null
+}
+
 /**
  * Derive a one-line clinical thesis for the Übersicht hero from real documentation.
  * Synthesizes from Verlauf sections, psychopathology imprints, and narrative fallbacks.
  */
 export function buildClinicalThesis(caseId: string): string | null {
+  const registrySubheading = getCaseMeta(caseId)?.localClinicalSubheading?.trim()
+  if (registrySubheading) return clamp(registrySubheading, 220)
+
   const verlaufSnap = loadNotionDocumentSnapshot('verlauf', caseId)
   const sections = verlaufSnap?.sectionContents ?? {}
   const therapieBody = loadNotionDocumentSnapshot('therapie-verlauf', caseId)?.sectionContents['body']?.trim()
+  const psychopathFromDocs =
+    sections['psychopathologie']?.trim() ?? resolvePsychopathologyText(caseId).text?.trim()
 
   const fromSections = composeThesisFromDocumentedSections(
-    sections['psychopathologie']?.trim(),
+    psychopathFromDocs,
     sections['compliance-krankheitseinsicht']?.trim(),
     therapieBody,
   )
@@ -112,21 +141,21 @@ export function buildClinicalThesis(caseId: string): string | null {
     if (fromImprint) return fromImprint
   }
 
-  const psychopath = loadNotionDocumentSnapshot('psychopath', caseId)
-  const free = psychopath?.sectionContents['free']?.trim()
-  if (free && free.length > 20) {
-    return clamp(free, 220)
-  }
-
-  const verlauf = loadVerlaufFeed(caseId)[0]
-  if (verlauf?.content?.trim()) {
-    return clamp(verlauf.content, 220)
+  const psychopathText = resolvePsychopathologyText(caseId).text?.trim()
+  if (psychopathText && psychopathText.length > 20) {
+    return clamp(psychopathText, 220)
   }
 
   const risiko = sections['risiko']?.trim()
   if (risiko && risiko.length > 20) {
     return clamp(risiko, 220)
   }
+
+  const fromDiagnosis = thesisFromPrimaryDiagnosis(caseId)
+  if (fromDiagnosis) return fromDiagnosis
+
+  const fromAdmission = thesisFromAdmissionContext(caseId)
+  if (fromAdmission) return fromAdmission
 
   return null
 }

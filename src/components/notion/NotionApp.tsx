@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 import { UnsavedChangesDialog } from './UnsavedChangesDialog'
-import { getCaseMeta, isListedPatientCase } from '../../hooks/useCaseRegistry'
+import { getCaseMeta, isListedPatientCase, ensureCaseRegistryHydrated } from '../../hooks/useCaseRegistry'
 import { flushSync } from 'react-dom'
 import { useTranslation } from '../../context/TranslationContext'
 import { useCaseRegistry } from '../../hooks/useCaseRegistry'
@@ -1170,12 +1170,29 @@ export function NotionApp({
       return (
         structuredName ||
         meta?.localName?.trim() ||
+        meta?.pageHeading?.trim() ||
         (isDemoCase(caseId) ? t('demoPatientDisplayName') : undefined)
       )
     },
     [caseId, patientMetaVersion, t],
   )
   const hasPatient = Boolean(currentPatientName)
+
+  const refreshCaseRegistry = caseRegistry.refresh
+
+  useEffect(() => {
+    let cancelled = false
+    void ensureCaseRegistryHydrated().then(() => {
+      if (cancelled) return
+      setPatientMetaVersion((v) => v + 1)
+      void refreshCaseRegistry()
+    })
+    return () => {
+      cancelled = true
+    }
+    // Depend on refreshCaseRegistry, not the whole caseRegistry object — the hook
+    // returns a new object every render; including it re-ran this effect in a loop.
+  }, [caseId, refreshCaseRegistry])
 
   const nextPatient = useMemo(() => {
     const listedPatients = caseRegistry.cases.filter(isListedPatientCase)
@@ -1648,11 +1665,25 @@ export function NotionApp({
           />
         ) : null}
 
+        {!showPatientRegistry && !hasPatient && caseId !== DEFAULT_CASE_ID ? (
+          <div className="case-orphan-recovery" role="status">
+            <p className="case-orphan-recovery__text">{t('patientCaseOrphanRecoveryHint')}</p>
+            <button
+              type="button"
+              className="btn-secondary case-orphan-recovery__action"
+              onClick={() => setShowCreatePatientDialog(true)}
+            >
+              {t('patientCaseAssignAction')}
+            </button>
+          </div>
+        ) : null}
+
         {!showPatientRegistry && activeTopTab === 'overview' ? (
           <PatientDashboardView
             caseId={caseId}
             metaVersion={patientMetaVersion}
             therapyCaseId={storageCaseId}
+            onClinicalSubheadingChange={() => setPatientMetaVersion((v) => v + 1)}
             onTabSelect={setActiveTopTab}
             onAddMedication={() => {
               setPendingMedicationAdd(true)
@@ -1721,6 +1752,7 @@ export function NotionApp({
             caseId={storageCaseId}
             onAfterDelete={handleAfterDeleteDokument}
             onEditDraft={handleEditDraft}
+            onImported={() => setPatientMetaVersion((v) => v + 1)}
           />
             </div>
           </div>

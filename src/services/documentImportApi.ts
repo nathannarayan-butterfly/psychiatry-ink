@@ -1,8 +1,11 @@
 import { clinicalApiFetch, parseClinicalApiError } from './clinicalApiFetch'
 import {
   ImportMappingResponseSchema,
+  ImportAnalyzeResponseSchema,
   type ImportMappingRequest,
   type ImportMappingSuggestion,
+  type ImportAnalyzeRequest,
+  type ImportAnalyzeResponse,
 } from '../schemas/documentImport/aiSuggestion'
 
 /**
@@ -26,4 +29,27 @@ export async function requestImportMappingSuggestions(
   const parsed = ImportMappingResponseSchema.safeParse(await response.json())
   if (!parsed.success) return []
   return parsed.data.suggestions
+}
+
+/**
+ * Post-parse analyze — mapping assist + Übersicht widget suggestions from
+ * de-identified parse metadata only.
+ */
+export async function requestImportAnalyze(
+  request: ImportAnalyzeRequest,
+): Promise<ImportAnalyzeResponse> {
+  const response = await clinicalApiFetch('/api/document-import/analyze', {
+    method: 'POST',
+    body: JSON.stringify(request),
+  })
+
+  if (!response.ok) {
+    await parseClinicalApiError(response, 'Document import analyze failed')
+  }
+
+  const parsed = ImportAnalyzeResponseSchema.safeParse(await response.json())
+  if (!parsed.success) {
+    return { mappingSuggestions: [], overviewWidgetSuggestions: [], patientSubheading: undefined }
+  }
+  return parsed.data
 }

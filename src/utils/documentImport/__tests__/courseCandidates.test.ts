@@ -87,6 +87,30 @@ describe('sectionize verlauf — left-column / leading-line date association', (
     }
   })
 
+  it('parses "Visite mit …" into canonical Visite label with doctor subheading', () => {
+    const candidates = verlaufCandidates([
+      'Verlauf',
+      '09.12.2025',
+      'Visite mit Frau Paval:',
+      'Visite durchgeführt, Patient stabil.',
+      '16.12.2025',
+      'Visite mit Herrn Narayan:',
+      'Schlaf verbessert.',
+    ].join('\n'))
+
+    expect(candidates).toHaveLength(2)
+    if (candidates[0]?.module === 'verlauf') {
+      expect(candidates[0].data.sectionLabel).toBe('Visite')
+      expect(candidates[0].data.subheading).toBe('Frau Paval')
+      expect(candidates[0].data.text).toBe('Visite durchgeführt, Patient stabil.')
+    }
+    if (candidates[1]?.module === 'verlauf') {
+      expect(candidates[1].data.sectionLabel).toBe('Visite')
+      expect(candidates[1].data.subheading).toBe('Herrn Narayan')
+      expect(candidates[1].data.text).toBe('Schlaf verbessert.')
+    }
+  })
+
   it('collapses excessive blank lines within a single Verlauf entry at parse time', () => {
     const candidates = verlaufCandidates([
       'Verlauf',

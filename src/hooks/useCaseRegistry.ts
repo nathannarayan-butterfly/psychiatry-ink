@@ -10,7 +10,9 @@ import {
 import { isAccountBackupUnlocked } from '../utils/accountBackupSession'
 import {
   hydrateCaseRegistryFromEncryptedLocal,
+  isRegistryShadowHydrated,
   loadRegistryMapFromStorage,
+  markRegistryShadowHydrated,
   saveRegistryMapToStorage,
 } from '../utils/caseRegistryStorage'
 import { createCaseId, DEFAULT_CASE_ID, shortCaseId } from '../utils/caseContext'
@@ -30,6 +32,8 @@ export interface LocalCaseMeta {
   localGeburtsdatum?: string
   localGeschlecht?: LocalGeschlecht
   localAge?: string
+  /** Clinician-accepted one-liner for the Übersicht hero subheading (e.g. from import AI). */
+  localClinicalSubheading?: string
   pageHeading?: string
   lastDocumentType?: string
   lastOpened: string
@@ -85,6 +89,7 @@ export function getRegistryMapSnapshot(): Record<string, LocalCaseMeta> {
 
 /** Replace in-memory + localStorage registry after cloud restore. */
 export function replaceRegistryMap(map: Record<string, LocalCaseMeta>): void {
+  markRegistryShadowHydrated()
   setCacheMap(map)
   registryHydrated = true
 }
@@ -168,6 +173,15 @@ export async function hydrateCaseRegistry(): Promise<void> {
   await hydratePromise
 }
 
+/** Await encrypted registry hydration — safe to call before upsertCaseMeta / touchCaseOpened. */
+export async function ensureCaseRegistryHydrated(): Promise<void> {
+  await hydrateCaseRegistry()
+}
+
+export function isCaseRegistryReady(): boolean {
+  return registryHydrated || isRegistryShadowHydrated()
+}
+
 export function ensureDefaultCase(): LocalCaseMeta {
   const map = readCacheMap()
   if (map[DEFAULT_CASE_ID]) {
@@ -188,25 +202,50 @@ export function ensureDefaultCase(): LocalCaseMeta {
   return meta
 }
 
-export function upsertCaseMeta(caseId: string, patch: Partial<LocalCaseMeta>): LocalCaseMeta {
-  const map = readCacheMap()
-  const existing = map[caseId]
-  const next: LocalCaseMeta = {
+function buildCaseMeta(
+  caseId: string,
+  existing: LocalCaseMeta | undefined,
+  patch: Partial<LocalCaseMeta>,
+): LocalCaseMeta {
+  return {
     ...existing,
     ...patch,
     caseId,
     createdAt: existing?.createdAt ?? patch.createdAt ?? new Date().toISOString(),
     lastOpened: patch.lastOpened ?? existing?.lastOpened ?? new Date().toISOString(),
   }
-  map[caseId] = next
+}
+
+function persistCaseMeta(next: LocalCaseMeta, patch: Partial<LocalCaseMeta>): LocalCaseMeta {
+  const map = readCacheMap()
+  map[next.caseId] = next
   setCacheMap(map)
-  if (patch.localName !== undefined || patch.localVorname !== undefined || patch.localNachname !== undefined || patch.localGeburtsdatum !== undefined) {
+  if (
+    patch.localName !== undefined ||
+    patch.localVorname !== undefined ||
+    patch.localNachname !== undefined ||
+    patch.localGeburtsdatum !== undefined
+  ) {
     void import('../utils/accountBackup').then((mod) => mod.scheduleAccountRegistryUpload())
   }
   void upsertPatientOnApi(next).catch((error) => {
-    console.warn('[case-registry] persist failed', caseId, error)
+    console.warn('[case-registry] persist failed', next.caseId, error)
   })
   return next
+}
+
+export function upsertCaseMeta(caseId: string, patch: Partial<LocalCaseMeta>): LocalCaseMeta {
+  if (!isCaseRegistryReady()) {
+    void hydrateCaseRegistry().then(() => {
+      upsertCaseMeta(caseId, patch)
+    })
+    return buildCaseMeta(caseId, readCacheMap()[caseId], patch)
+  }
+
+  const map = readCacheMap()
+  const existing = map[caseId]
+  const next = buildCaseMeta(caseId, existing, patch)
+  return persistCaseMeta(next, patch)
 }
 
 export function getCaseMeta(caseId: string): LocalCaseMeta | null {

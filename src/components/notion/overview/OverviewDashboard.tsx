@@ -33,8 +33,8 @@ import { loadNotionPageDate } from '../../../utils/notionPageDate'
 import { loadClinicalImprintIndex } from '../../../utils/clinicalImprint'
 import { buildPatientSafety } from '../../../utils/overview/patientSafety'
 import { buildLaborOverview } from '../../../utils/overview/labOverview'
-import { buildPsychopathologyStructuredCues, mergePsychopathologyProfiles } from '../../../utils/overview/psychopathologyDomains'
-import { getSymptomTrajectory } from '../../../utils/overview/symptomTrajectory'
+import { buildSymptomSnapshotData } from '../../../utils/overview/psychopathFindingOps'
+import { usePsychopathFindingRevision } from '../../../hooks/usePsychopathFindingRevision'
 import { formatDateDe, relativeDayDe } from '../../../utils/overview/dateLabels'
 import { getRecentVerlauf } from '../../../utils/overview/recentVerlauf'
 import { buildDokumentationSummary } from '../../../utils/overview/dokumentationSummary'
@@ -67,12 +67,14 @@ import {
   exportOverviewDashboardHtml,
   printOverviewDashboard,
 } from '../../../utils/overview/printOverview'
-import type { ClinicalImprintRecord, CourseDirection } from '../../../types/clinicalImprint'
 import type { MedicationStatus } from '../../../types/medicationPlan'
 
 interface OverviewDashboardProps {
   caseId: string
   therapyScopeId: string
+  /** Bump when local patient meta changes so the hero re-reads registry data. */
+  metaVersion?: number
+  onClinicalSubheadingChange?: () => void
   onTabSelect: (tab: TopNavTabId) => void
   onOpenWorkspacePage?: (pageId: NotionPageId) => void
 }
@@ -81,16 +83,6 @@ const MED_STATUS_LABEL: Partial<Record<MedicationStatus, string>> = {
   paused: 'pausiert',
   reduced: 'reduziert',
   increased: 'gesteigert',
-}
-
-const COURSE_LABEL: Record<CourseDirection, string> = {
-  new: 'neu',
-  improved: 'verbessert',
-  worsened: 'verschlechtert',
-  stable: 'stabil',
-  fluctuating: 'fluktuierend',
-  resolved: 'remittiert',
-  unclear: 'unklar',
 }
 
 /** Headline severity ranking + German label for the summary-strip risk metric. */
@@ -112,11 +104,6 @@ const TONE_LABEL: Record<SemanticTone, string> = {
   neutral: '—',
 }
 
-function clamp(text: string, max: number): string {
-  const t = text.replace(/\s+/g, ' ').trim()
-  return t.length > max ? `${t.slice(0, max - 1)}…` : t
-}
-
 /** Read the joined anamnesis text most likely to mention allergies. */
 function readAllergyText(caseId: string): string | null {
   const aufnahme = loadNotionDocumentSnapshot('aufnahme', caseId)
@@ -126,22 +113,6 @@ function readAllergyText(caseId: string): string | null {
     aufnahme.sectionContents['eigenanamnese'],
   ].filter(Boolean)
   return parts.length > 0 ? parts.join('\n') : null
-}
-
-function readPsychopathSnapshot(caseId: string): { text: string | null; savedAt: string | null } {
-  const snap = loadNotionDocumentSnapshot('psychopath', caseId)
-  if (!snap) return { text: null, savedAt: null }
-  const free = snap.sectionContents['free']?.trim()
-  const text = free && free.length > 0 ? free : Object.values(snap.sectionContents).filter(Boolean).join(' ')
-  return { text: text ? clamp(text, 320) : null, savedAt: snap.savedAt ?? null }
-}
-
-function latestPsychopathImprint(imprints: ClinicalImprintRecord[]): ClinicalImprintRecord | null {
-  return (
-    [...imprints]
-      .filter((i) => i.clinicalDomain === 'psychopathology')
-      .sort((a, b) => (b.sourceDate ?? '').localeCompare(a.sourceDate ?? ''))[0] ?? null
-  )
 }
 
 /**
@@ -154,12 +125,15 @@ function latestPsychopathImprint(imprints: ClinicalImprintRecord[]): ClinicalImp
 export function OverviewDashboard({
   caseId,
   therapyScopeId: _therapyScopeId,
+  metaVersion = 0,
+  onClinicalSubheadingChange,
   onTabSelect,
   onOpenWorkspacePage,
 }: OverviewDashboardProps) {
   const { language, t } = useTranslation()
   const { drugs: knowledgeBaseDrugs } = useKnowledgeBaseDrugs(DEFAULT_MEDICATIONS_COLLECTION_ID)
   const diagnosenRevision = useDiagnosenRevision(caseId)
+  const psychopathFindingRevision = usePsychopathFindingRevision(caseId)
   const { currentPlan } = useMedicationPlan(caseId)
   const appointments = useCaseAppointments(caseId)
   const collaboration = useOverviewCollaboration(caseId)
@@ -207,6 +181,8 @@ export function OverviewDashboard({
     }
   }, [medications, language, knowledgeBaseDrugs])
 
+  const befunde = useMemo(() => loadBefunde(caseId), [caseId])
+
   // ── Safety card ─────────────────────────────────────────────────────────
   const safetyData = useMemo(() => {
     const imprints = loadClinicalImprintIndex(caseId).imprints
@@ -217,8 +193,9 @@ export function OverviewDashboard({
       imprints,
       riskText,
       allergyText: readAllergyText(caseId),
+      befunde,
     })
-  }, [caseId, medications, language])
+  }, [caseId, medications, language, befunde])
 
   // ── Appointment orientation (summary strip) ───────────────────────────────
   const lastContact = useMemo(() => {
@@ -243,25 +220,10 @@ export function OverviewDashboard({
 
   // ── Symptom snapshot card ─────────────────────────────────────────────────
   const symptomData = useMemo<SymptomSnapshotData>(() => {
-    const { text, savedAt } = readPsychopathSnapshot(caseId)
-    const imprints = loadClinicalImprintIndex(caseId).imprints
-    const imprint = latestPsychopathImprint(imprints)
-    const icd10Codes = loadDiagnosen(caseId).map((d) => d.icd10.code)
-    const { contextLabel } = mergePsychopathologyProfiles(icd10Codes)
-    const structured = buildPsychopathologyStructuredCues(imprint, icd10Codes)
-    const courseLabel = imprint?.courseDirection ? COURSE_LABEL[imprint.courseDirection] : null
-    const asOf = savedAt ?? imprint?.sourceDate ?? null
-    return {
-      snapshotText: text,
-      structured,
-      contextLabel,
-      courseLabel,
-      asOfLabel: asOf ? formatDateDe(asOf) : null,
-      trajectory: getSymptomTrajectory(imprints),
-    }
-  }, [caseId])
+    void psychopathFindingRevision
+    return buildSymptomSnapshotData(caseId, language)
+  }, [caseId, language, psychopathFindingRevision, diagnosenRevision])
 
-  const befunde = useMemo(() => loadBefunde(caseId), [caseId])
   const hasLabData = befunde.length > 0
 
   const laborData = useMemo(() => {
@@ -285,7 +247,7 @@ export function OverviewDashboard({
   const zwangsmassnahme = useMemo(() => buildZwangsmassnahmeSummary(caseId), [caseId])
   const verlaufstendenz = useMemo(
     () => buildVerlaufstendenzSummary(loadClinicalImprintIndex(caseId).imprints),
-    [caseId],
+    [caseId, psychopathFindingRevision],
   )
   const ekgSummary = useMemo(() => buildEkgSummary(caseId), [caseId])
   const eegSummary = useMemo(() => buildEegSummary(caseId), [caseId])
@@ -417,6 +379,7 @@ export function OverviewDashboard({
       ctSummary,
       registeredTherapies,
       compliance,
+      psychopathFindingRevision,
       onTabSelect,
       onOpenWorkspacePage,
     }),
@@ -445,6 +408,7 @@ export function OverviewDashboard({
       ctSummary,
       registeredTherapies,
       compliance,
+      psychopathFindingRevision,
       onTabSelect,
       onOpenWorkspacePage,
     ],
@@ -492,7 +456,12 @@ export function OverviewDashboard({
         <ClinicalPageEyebrow label="Übersicht" />
         <OverviewActionToolbar onExport={handleExport} onPrint={handlePrint} />
       </div>
-      <OverviewHero data={heroData} caseId={caseId} />
+      <OverviewHero
+        data={heroData}
+        caseId={caseId}
+        metaVersion={metaVersion}
+        onClinicalSubheadingChange={onClinicalSubheadingChange}
+      />
       <OverviewWidgetGrid
         widgets={gridWidgets}
         editMode={editMode}

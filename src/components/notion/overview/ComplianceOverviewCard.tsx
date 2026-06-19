@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Plus, X } from 'lucide-react'
+import { useTranslation } from '../../../context/TranslationContext'
+import { useEnterpriseFeatures } from '../../../hooks/useEnterpriseFeatures'
 import type {
   ComplianceDayCell,
   ComplianceDayStatus,
@@ -13,6 +15,14 @@ import {
   setComplianceOverride,
   type ComplianceOverride,
 } from '../../../utils/overview/complianceOverrides'
+import {
+  aggregateStatusTone,
+  averageAggregateStatus,
+  loadComplianceAggregateOverrides,
+  resolveItemAggregateStatus,
+  setComplianceAggregateOverride,
+  type ComplianceAggregateStatus,
+} from '../../../utils/overview/complianceAggregate'
 import { OverviewCard, OverviewEmpty } from './OverviewCard'
 
 interface ComplianceOverviewCardProps {
@@ -452,7 +462,196 @@ function ComplianceAddForm({
   )
 }
 
-export function ComplianceOverviewCard({ data, caseId }: ComplianceOverviewCardProps) {
+const AGGREGATE_STATUS_OPTIONS: ComplianceAggregateStatus[] = ['yes', 'partial', 'no']
+
+function aggregateStatusLabel(
+  status: ComplianceAggregateStatus,
+  t: (key: 'overviewComplianceYes' | 'overviewCompliancePartial' | 'overviewComplianceNo') => string,
+): string {
+  if (status === 'yes') return t('overviewComplianceYes')
+  if (status === 'partial') return t('overviewCompliancePartial')
+  return t('overviewComplianceNo')
+}
+
+function ComplianceAggregateSelector({
+  itemKey,
+  itemLabel,
+  status,
+  overridden,
+  onSelect,
+}: {
+  itemKey: string
+  itemLabel: string
+  status: ComplianceAggregateStatus | null
+  overridden: boolean
+  onSelect: (itemKey: string, status: ComplianceAggregateStatus) => void
+}) {
+  const { t } = useTranslation()
+  const ariaLabel = t('overviewComplianceAggregateAria').replace('{item}', itemLabel)
+
+  return (
+    <div
+      className="ov-compliance__aggregate-toggle"
+      role="group"
+      aria-label={ariaLabel}
+      data-item-key={itemKey}
+    >
+      {AGGREGATE_STATUS_OPTIONS.map((option) => {
+        const isActive = status === option
+        return (
+          <button
+            key={option}
+            type="button"
+            className={`ov-compliance__aggregate-btn ov-compliance__aggregate-btn--${option}${
+              isActive ? ' ov-compliance__aggregate-btn--active' : ''
+            }${isActive && overridden ? ' ov-compliance__aggregate-btn--overridden' : ''}`}
+            aria-pressed={isActive}
+            onClick={() => onSelect(itemKey, option)}
+          >
+            {aggregateStatusLabel(option, t)}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function ComplianceAggregateItemRow({
+  item,
+  status,
+  overridden,
+  onSelect,
+}: {
+  item: ComplianceItemTimeline
+  status: ComplianceAggregateStatus | null
+  overridden: boolean
+  onSelect: (itemKey: string, status: ComplianceAggregateStatus) => void
+}) {
+  return (
+    <div className="ov-compliance__aggregate-row">
+      <div className="ov-compliance__item-name">
+        <span className="ov-compliance__item-label">{item.label}</span>
+        {item.sublabel ? (
+          <span className="ov-compliance__item-sub">{item.sublabel}</span>
+        ) : null}
+      </div>
+      <ComplianceAggregateSelector
+        itemKey={item.key}
+        itemLabel={item.label}
+        status={status}
+        overridden={overridden}
+        onSelect={onSelect}
+      />
+    </div>
+  )
+}
+
+function ComplianceAggregateGroup({
+  title,
+  items,
+  overrides,
+  onSelect,
+  emptyMessage,
+}: {
+  title: string
+  items: ComplianceItemTimeline[]
+  overrides: ReturnType<typeof loadComplianceAggregateOverrides>
+  onSelect: (itemKey: string, status: ComplianceAggregateStatus) => void
+  emptyMessage: string
+}) {
+  return (
+    <div className="ov-compliance__group">
+      <p className="ov-subhead">{title}</p>
+      {items.length > 0 ? (
+        <div className="ov-compliance__aggregate-rows">
+          {items.map((item) => {
+            const resolved = resolveItemAggregateStatus(
+              item.key,
+              item.timeline.percent,
+              overrides,
+            )
+            return (
+              <ComplianceAggregateItemRow
+                key={item.key}
+                item={item}
+                status={resolved.status}
+                overridden={resolved.overridden}
+                onSelect={onSelect}
+              />
+            )
+          })}
+        </div>
+      ) : (
+        <OverviewEmpty>{emptyMessage}</OverviewEmpty>
+      )}
+    </div>
+  )
+}
+
+function ComplianceOverviewCardStandard({ data, caseId }: ComplianceOverviewCardProps) {
+  const { t } = useTranslation()
+  const [aggregateOverrides, setAggregateOverrides] = useState(() =>
+    loadComplianceAggregateOverrides(caseId),
+  )
+
+  useEffect(() => {
+    setAggregateOverrides(loadComplianceAggregateOverrides(caseId))
+  }, [caseId])
+
+  const medicationItems = data.medicationItems
+  const therapyItems = data.therapyItems
+
+  const itemStatuses = useMemo(
+    () =>
+      [...medicationItems, ...therapyItems].map((item) =>
+        resolveItemAggregateStatus(item.key, item.timeline.percent, aggregateOverrides).status,
+      ),
+    [aggregateOverrides, medicationItems, therapyItems],
+  )
+
+  const overallStatus = useMemo(() => averageAggregateStatus(itemStatuses), [itemStatuses])
+
+  const handleAggregateSelect = useCallback(
+    (itemKey: string, status: ComplianceAggregateStatus) => {
+      setAggregateOverrides(setComplianceAggregateOverride(itemKey, status, caseId))
+    },
+    [caseId],
+  )
+
+  const badgeLabel =
+    overallStatus != null
+      ? aggregateStatusLabel(overallStatus, t)
+      : t('overviewComplianceUnknown')
+
+  return (
+    <OverviewCard
+      title={t('overviewWidgetCompliance')}
+      className="ov-col-6"
+      badge={{ label: badgeLabel, tone: aggregateStatusTone(overallStatus) }}
+    >
+      <div className="ov-compliance">
+        <ComplianceAggregateGroup
+          title={t('overviewComplianceMedicationGroup')}
+          items={medicationItems}
+          overrides={aggregateOverrides}
+          onSelect={handleAggregateSelect}
+          emptyMessage={t('overviewComplianceEmptyMedication')}
+        />
+        <ComplianceAggregateGroup
+          title={t('overviewComplianceTherapiesGroup')}
+          items={therapyItems}
+          overrides={aggregateOverrides}
+          onSelect={handleAggregateSelect}
+          emptyMessage={t('overviewComplianceEmptyTherapies')}
+        />
+      </div>
+    </OverviewCard>
+  )
+}
+
+/** Enterprise edition: full 14-day per-item compliance grids with manual day overrides. */
+function ComplianceOverviewCardEnterprise({ data, caseId }: ComplianceOverviewCardProps) {
+  const { t } = useTranslation()
   const [overrides, setOverrides] = useState<ComplianceOverride[]>(() =>
     loadComplianceOverrides(caseId),
   )
@@ -562,9 +761,12 @@ export function ComplianceOverviewCard({ data, caseId }: ComplianceOverviewCardP
 
   return (
     <OverviewCard
-      title="Compliance"
+      title={t('overviewWidgetCompliance')}
       className="ov-col-6"
       badge={{ label: badgeLabel, tone: overallTone(overallPercent) }}
+      headerExtra={
+        <span className="ov-compliance__enterprise-badge">{t('overviewComplianceEnterpriseBadge')}</span>
+      }
     >
       <div className="ov-compliance" ref={rootRef}>
         <div className="ov-compliance__toolbar">
@@ -625,4 +827,14 @@ export function ComplianceOverviewCard({ data, caseId }: ComplianceOverviewCardP
       </div>
     </OverviewCard>
   )
+}
+
+export function ComplianceOverviewCard({ data, caseId }: ComplianceOverviewCardProps) {
+  const { canAccessEnterpriseUi } = useEnterpriseFeatures()
+
+  if (canAccessEnterpriseUi) {
+    return <ComplianceOverviewCardEnterprise data={data} caseId={caseId} />
+  }
+
+  return <ComplianceOverviewCardStandard data={data} caseId={caseId} />
 }

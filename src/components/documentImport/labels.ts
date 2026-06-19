@@ -5,6 +5,7 @@ import type {
 } from '../../schemas/documentImport/envelope'
 import { isoToGermanDate } from '../../utils/documentImport/dateAssociation'
 import { complementaryTherapyDisplayName } from '../../utils/documentImport/complementaryTherapyMapping'
+import { formatVisiteDisplayLabel } from '../../utils/documentImport/visiteParsing'
 
 /** Modules selectable as remap targets in the review screen. */
 export const REMAP_MODULES: CandidateModule[] = [
@@ -90,6 +91,16 @@ export function candidateSummary(data: Record<string, unknown>, module?: string)
   if (Array.isArray(data.values)) {
     const panel = typeof data.panelLabel === 'string' ? data.panelLabel : 'Labor'
     return `${panel} (${data.values.length})`
+  }
+  if (module === 'verlauf') {
+    const visiteLabel = formatVisiteDisplayLabel({
+      sectionLabel: typeof data.sectionLabel === 'string' ? data.sectionLabel : undefined,
+      subheading: typeof data.subheading === 'string' ? data.subheading : undefined,
+    })
+    const preview = typeof data.text === 'string' ? data.text.slice(0, 60) : ''
+    if (visiteLabel) {
+      return `${visiteLabel}${dateSuffix}${preview ? ` — ${preview}` : ''}`
+    }
   }
   if (typeof data.title === 'string' && data.title) {
     if (

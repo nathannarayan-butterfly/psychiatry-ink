@@ -1,8 +1,9 @@
 import { useTranslation } from '../../../context/TranslationContext'
 import { ClinicalEyebrow } from '../../clinical/ClinicalEyebrow'
 import { ClinicalSection, ClinicalEmpty } from '../../clinical/ClinicalSection'
+import { ParameterMonitoringList } from '../../clinical/ParameterMonitoringList'
 import type {
-  MedicationMonitoringGroup,
+  ParameterMonitoringRow,
   SafetyAlert,
   SafetyData,
   SafetyRiskSignal,
@@ -64,32 +65,16 @@ function InteractionList({ alerts }: { alerts: SafetyAlert[] }) {
 }
 
 function MedicationMonitoringSection({
-  groups,
+  rows,
   notDocumentedLabel,
 }: {
-  groups: MedicationMonitoringGroup[]
+  rows: ParameterMonitoringRow[]
   notDocumentedLabel: string
 }) {
-  if (groups.length === 0) return null
+  if (rows.length === 0) return null
   return (
     <div className="ov-safety__monitoring">
-      {groups.map((group) => (
-        <div key={group.medicationId} className="ov-safety__med-group">
-          <div className="ov-safety__med-name">{group.medicationName}</div>
-          {group.parameters.map((param) => (
-            <div key={param.key} className="ov-safety__param-row">
-              <span className="ov-safety__param-label">{param.label}</span>
-              <span
-                className={`ov-safety__param-value${param.missing ? ' ov-safety__param-value--missing' : ''}`}
-              >
-                {param.missing
-                  ? notDocumentedLabel
-                  : [param.valueLabel, param.dateLabel].filter(Boolean).join(' · ')}
-              </span>
-            </div>
-          ))}
-        </div>
-      ))}
+      <ParameterMonitoringList rows={rows} notDocumentedLabel={notDocumentedLabel} />
     </div>
   )
 }
@@ -146,7 +131,7 @@ export function SafetyAlertsCard({ data }: SafetyAlertsCardProps) {
                 {t('overviewSafetyMonitoring')}
               </ClinicalEyebrow>
               <MedicationMonitoringSection
-                groups={data.medicationMonitoring}
+                rows={data.medicationMonitoring}
                 notDocumentedLabel={t('overviewSafetyNotDocumented')}
               />
             </div>

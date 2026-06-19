@@ -5,6 +5,7 @@ import { translateMedicationUi } from '../../data/medicationUiTranslations'
 import { DEFAULT_MEDICATIONS_COLLECTION_ID } from '../../types/knowledgeBase'
 import { useKnowledgeBaseDrugs } from '../../hooks/useKnowledgeBaseDrugs'
 import type { MedicationEntry } from '../../types/medicationPlan'
+import type { ParameterMonitoringRow } from '../notion/overview/types'
 import {
   computeMedicationInsights,
   interactionLevel,
@@ -25,11 +26,13 @@ import type { UiLanguage } from '../../types/settings'
 import type { MedicationSectionKey } from './MedicationLowerSections'
 import { CuratedTargetReceptors } from './CuratedTargetReceptors'
 import { ReceptorRadarChart } from './ReceptorRadarChart'
+import { ParameterMonitoringList } from '../clinical/ParameterMonitoringList'
 
 type MedicationUiKey = Parameters<typeof translateMedicationUi>[1]
 
 interface MedicationPlanDashboardProps {
   medications: MedicationEntry[]
+  parameterMonitoring: ParameterMonitoringRow[]
   curatedTargetReceptors: string[] | undefined
   onCuratedTargetReceptorsChange: (targets: string[]) => void
   disabled?: boolean
@@ -65,6 +68,7 @@ const SEVERITY_LABEL_KEY: Record<InteractionEntry['severity'], MedicationUiKey> 
  */
 export function MedicationPlanDashboard({
   medications,
+  parameterMonitoring,
   curatedTargetReceptors,
   onCuratedTargetReceptorsChange,
   disabled = false,
@@ -116,7 +120,7 @@ export function MedicationPlanDashboard({
   )
 
   const interactions = insights.crossInteractions.slice(0, MAX_INTERACTIONS)
-  const monitoring = insights.monitoringBurden.slice(0, MAX_MONITORING)
+  const monitoring = parameterMonitoring.slice(0, MAX_MONITORING)
   const hasReceptorData =
     combinedFingerprint !== null || zielrezeptoren.length > 0 || resolved.length > 0
   const hasKombi = insights.combinationRisks.length > 0 || interactions.length > 0
@@ -246,19 +250,11 @@ export function MedicationPlanDashboard({
             <DetailButton onClick={() => onOpenSection('monitoring')} language={language} />
           </header>
           {monitoring.length > 0 ? (
-            <ul className="medication-monitoring-burden">
-              {monitoring.map((item) => (
-                <li key={item.parameter} className="medication-monitoring-burden__row">
-                  <span className="medication-monitoring-burden__param">{item.parameter}</span>
-                  <span
-                    className="medication-monitoring-burden__drugs"
-                    title={item.drugs.join(', ')}
-                  >
-                    {item.drugs.join(', ')}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <ParameterMonitoringList
+              rows={monitoring}
+              notDocumentedLabel={translateMedicationUi(language, 'medLabMonitoringNotDocumented')}
+              className="medication-monitoring-burden"
+            />
           ) : (
             <p className="medication-dash-panel__empty">
               {translateMedicationUi(language, 'medDashMonitoringEmpty')}

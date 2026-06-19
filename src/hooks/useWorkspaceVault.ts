@@ -13,6 +13,7 @@ import { registerIsdmInputPersistHook } from '../utils/isdm/inputStorage'
 import { registerIsdmPersistHook } from '../utils/isdm/storage'
 import { registerMedicationPlanPersistHook } from '../utils/medication/storage'
 import { registerPsychotherapyPlanPersistHook } from '../utils/psychotherapy/storage'
+import { registerPsychopathFindingPersistHook } from '../utils/overview/psychopathFindingStorage'
 import { registerComplementaryTherapiesPersistHook } from '../utils/complementaryTherapy/storage'
 import { registerWeitereTherapiePersistHook } from '../utils/weitereTherapie/storage'
 import { registerAnforderungenPersistHook } from '../utils/anforderungen/storage'
@@ -249,6 +250,9 @@ export function useWorkspaceVault({
     registerPsychotherapyPlanPersistHook((persistCaseId) => {
       if (persistCaseId === caseId) scheduleSaveRef.current()
     })
+    registerPsychopathFindingPersistHook((persistCaseId) => {
+      if (persistCaseId === caseId) scheduleSaveRef.current()
+    })
     registerComplementaryTherapiesPersistHook((persistCaseId) => {
       if (persistCaseId === caseId) scheduleSaveRef.current()
     })
@@ -267,6 +271,7 @@ export function useWorkspaceVault({
       registerIsdmInputPersistHook(null)
       registerMedicationPlanPersistHook(null)
       registerPsychotherapyPlanPersistHook(null)
+      registerPsychopathFindingPersistHook(null)
       registerComplementaryTherapiesPersistHook(null)
       registerWeitereTherapiePersistHook(null)
       registerAnforderungenPersistHook(null)

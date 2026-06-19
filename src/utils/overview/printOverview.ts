@@ -57,13 +57,16 @@ function widgetBody(
     }
     case 'psychopathology': {
       const signals = (ctx.safetyData.risk?.signals ?? []).map((s) => `${s.label}${s.value ? `: ${s.value}` : ''}`)
-      const cues = ctx.symptomData.structured.map((c) => `${c.label}: ${c.value}`)
+      const cues = ctx.symptomData.structured
+        .filter((c) => c.value)
+        .map((c) => `${c.label}: ${c.value}`)
       return [signals.length ? `<p><strong>Eigengefährdung / Fremdgefährdung</strong></p>${listItems(signals)}` : '', listItems(cues), paragraph(ctx.symptomData.snapshotText)].join('')
     }
     case 'labs-due': {
       const abnormal = ctx.laborData.abnormal.map((a) => `${a.name}: ${a.valueLabel ?? '—'}`)
-      const monitoring = ctx.laborData.medicationMonitoring.flatMap((g) =>
-        g.parameters.map((p) => `${g.medicationName} · ${p.label}: ${p.valueLabel ?? '—'}`),
+      const monitoring = ctx.laborData.medicationMonitoring.map(
+        (row) =>
+          `${row.label} (${row.medications.join(', ')}): ${row.valueLabel ?? '—'}`,
       )
       return [abnormal.length ? `<p><strong>Auffällig</strong></p>${listItems(abnormal)}` : '', monitoring.length ? `<p><strong>Überwachen</strong></p>${listItems(monitoring)}` : ''].join('')
     }

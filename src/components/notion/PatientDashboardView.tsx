@@ -15,6 +15,7 @@ interface PatientDashboardViewProps {
   onOpenWorkspacePage?: (pageId: NotionPageId) => void
   onOpenTemplateFromPatient?: () => void
   onNavigateHome?: () => void
+  onClinicalSubheadingChange?: () => void
 }
 
 /**
@@ -25,13 +26,14 @@ interface PatientDashboardViewProps {
  */
 export function PatientDashboardView({
   caseId,
-  metaVersion: _metaVersion,
+  metaVersion = 0,
   therapyCaseId,
   onTabSelect,
   onAddMedication: _onAddMedication,
   onOpenWorkspacePage,
   onOpenTemplateFromPatient: _onOpenTemplateFromPatient,
   onNavigateHome: _onNavigateHome,
+  onClinicalSubheadingChange,
 }: PatientDashboardViewProps) {
   const therapyScopeId = therapyCaseId ?? caseId
 
@@ -47,6 +49,8 @@ export function PatientDashboardView({
             <OverviewDashboard
               caseId={caseId}
               therapyScopeId={therapyScopeId}
+              metaVersion={metaVersion}
+              onClinicalSubheadingChange={onClinicalSubheadingChange}
               onTabSelect={onTabSelect}
               onOpenWorkspacePage={onOpenWorkspacePage}
             />

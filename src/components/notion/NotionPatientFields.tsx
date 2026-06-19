@@ -1,5 +1,6 @@
 import { Cloud, Download, HardDrive, Upload } from 'lucide-react'
 import { useRef, type ChangeEvent } from 'react'
+import { GermanDateInput } from '../clinical/GermanDateInput'
 import { EncryptionDisclaimer } from '../EncryptionDisclaimer'
 import { useTranslation } from '../../context/TranslationContext'
 import type { usePatientMetadata } from '../../hooks/usePatientMetadata'
@@ -83,13 +84,11 @@ export function NotionPatientFields({
             </label>
             <label className="notion-patient-fields__field notion-patient-fields__field--dob">
               <span className="notion-patient-fields__label">{t('patientFieldGeburtsdatum')}</span>
-              <input
-                type="date"
+              <GermanDateInput
                 className="notion-patient-fields__input notion-patient-fields__input--date"
-                value={patient.geburtsdatum}
-                onChange={(event) => patient.setGeburtsdatum(event.target.value)}
+                isoValue={patient.geburtsdatum || undefined}
+                onIsoChange={(iso) => patient.setGeburtsdatum(iso ?? '')}
                 disabled={disabled}
-                autoComplete="off"
                 aria-label={t('patientFieldGeburtsdatum')}
               />
             </label>

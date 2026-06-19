@@ -33,5 +33,12 @@ describe('sample DOCX candidate counts', () => {
       true,
     )
     expect(verlauf.every((c) => c.module !== 'verlauf' || !/\n{3,}/.test(c.data.text))).toBe(true)
+    expect(
+      verlauf.every(
+        (c) =>
+          c.module !== 'verlauf' ||
+          !c.data.text.split('\n').some((line) => /^[\s\u00A0\u200B]*$/.test(line) && line.length > 0),
+      ),
+    ).toBe(true)
   })
 })

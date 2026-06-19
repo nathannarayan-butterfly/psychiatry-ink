@@ -24,6 +24,10 @@ import {
 } from './medicationExtraction'
 import { normalizeVerlaufText } from './normalizeVerlaufText'
 import {
+  extractVisiteFromEntryText,
+  parseVisiteMitHeading,
+} from './visiteParsing'
+import {
   findGermanDateInText,
   isDateOnlyLine,
   splitDatedEntries,
@@ -576,7 +580,12 @@ function buildCourseCandidates(
   baseLocation: ImportSourceLocation,
   dateLocation?: DateLocationHint,
   therapyTypeId?: string,
+  sectionSubheading?: string,
 ): ClinicalImportCandidate[] {
+  const visiteSection = heading ? parseVisiteMitHeading(heading) : null
+  const sectionLabel = visiteSection?.sectionLabel ?? (heading || undefined)
+  const inheritedSubheading = visiteSection?.subheading ?? sectionSubheading
+
   const entries = splitDatedEntries(body, { dateLocation }).filter((e) => e.text.trim().length > 0)
   const hasDates = entries.some((e) => e.raw)
   const sectionDate = heading ? findGermanDateInText(heading) : null
@@ -589,6 +598,10 @@ function buildCourseCandidates(
     clarifications: ImportClarification[],
   ): ClinicalImportCandidate => {
     const normalizedText = normalizeVerlaufText(text)
+    const visiteEntry = module === 'verlauf' ? extractVisiteFromEntryText(normalizedText) : null
+    const entryText = visiteEntry?.text ?? normalizedText
+    const entrySectionLabel = visiteEntry?.sectionLabel ?? sectionLabel
+    const entrySubheading = visiteEntry?.subheading ?? inheritedSubheading
     const confidence = date ? 'high' : 'medium'
     if (module === 'complementaryTherapy') {
       return makeCandidate({
@@ -597,7 +610,7 @@ function buildCourseCandidates(
         sourceLocation: location,
         rawText,
         clarifications,
-        data: { therapyTypeId: therapyTypeId ?? 'ergotherapie', text: normalizedText, date },
+        data: { therapyTypeId: therapyTypeId ?? 'ergotherapie', text: entryText, date },
       })
     }
     if (module === 'therapy') {
@@ -607,7 +620,7 @@ function buildCourseCandidates(
         sourceLocation: location,
         rawText,
         clarifications,
-        data: { title: heading || 'Therapie und Verlauf', text: normalizedText, date },
+        data: { title: heading || 'Therapie und Verlauf', text: entryText, date },
       })
     }
     return makeCandidate({
@@ -616,7 +629,12 @@ function buildCourseCandidates(
       sourceLocation: location,
       rawText,
       clarifications,
-      data: { text: normalizedText, sectionLabel: heading || undefined, date },
+      data: {
+        text: entryText,
+        sectionLabel: entrySectionLabel || undefined,
+        subheading: entrySubheading || undefined,
+        date,
+      },
     })
   }
 

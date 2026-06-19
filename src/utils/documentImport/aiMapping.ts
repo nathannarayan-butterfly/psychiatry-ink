@@ -15,8 +15,9 @@ import type {
 } from '../../schemas/documentImport/aiSuggestion'
 import type { UiLanguage } from '../../types/settings'
 import { isDocumentImportAiMappingEnabled } from '../featureFlags'
-import { requestImportMappingSuggestions } from '../../services/documentImportApi'
-import { deidentifyText } from './deidentify'
+import { requestImportAnalyze } from '../../services/documentImportApi'
+import { buildAnalyzeMetadata, buildMappingItems } from './buildAnalyzeMetadata'
+import { isEnterpriseOrgHierarchyEnabled } from '../featureFlags'
 
 export interface AiMappingOptions {
   language: UiLanguage
@@ -32,8 +33,9 @@ export interface AiMappingResult {
 
 /**
  * Build a PHI-safe structural hint for AI classification (headings / labels only).
+ * @deprecated Prefer buildAnalyzeMetadata — exported for tests.
  */
-function structuralHintForCandidate(
+export function structuralHintForCandidate(
   candidate: ClinicalImportEnvelope['candidates'][number],
 ): string {
   const data = candidate.data as Record<string, unknown>
@@ -62,22 +64,29 @@ export async function suggestMappings(
     return { enabled: false, suggestions: [] }
   }
 
-  const items: ImportMappingRequestItem[] = []
-  for (const candidate of envelope.candidates) {
-    if (candidate.confidence === 'high' && candidate.module !== 'document') continue
-    const structural = structuralHintForCandidate(candidate)
-    if (!structural.trim()) continue
-    const { text: deidentifiedText } = deidentifyText(structural, { patientNames: options.patientNames })
-    items.push({ candidateId: candidate.id, deidentifiedText, currentModule: candidate.module })
-  }
+  const candidates = envelope.candidates
+  const metadata = buildAnalyzeMetadata(envelope, candidates, {
+    patientNames: options.patientNames,
+  })
+  const mappingItems = buildMappingItems(candidates, { patientNames: options.patientNames })
 
-  if (items.length === 0) return { enabled: true, suggestions: [] }
+  if (mappingItems.length === 0 && metadata.candidates.every((c) => !c.needsMappingAssist)) {
+    return { enabled: true, suggestions: [] }
+  }
 
   const requestFn =
     options.requestFn ??
-    ((reqItems, language) => requestImportMappingSuggestions({ language, items: reqItems }))
+    (async (items, language) => {
+      const result = await requestImportAnalyze({
+        language,
+        metadata,
+        mappingItems: items,
+        edition: isEnterpriseOrgHierarchyEnabled() ? 'enterprise' : 'standard',
+      })
+      return result.mappingSuggestions
+    })
 
-  const suggestions = await requestFn(items, options.language)
+  const suggestions = await requestFn(mappingItems, options.language)
   return { enabled: true, suggestions }
 }
 

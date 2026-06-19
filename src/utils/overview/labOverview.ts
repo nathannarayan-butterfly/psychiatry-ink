@@ -1,14 +1,13 @@
 import type { MedicationEntry } from '../../types/medicationPlan'
 import type { LaborBefund } from '../laborArchive'
-import type { LabsDueData } from '../../components/notion/overview/types'
-import type { MedicationMonitoringGroup } from '../../components/notion/overview/types'
+import type { LabsDueData, ParameterMonitoringRow } from '../../components/notion/overview/types'
 import type { RecentLabResultItem } from './recentLabResults'
 import { buildLabsDue } from './labsDue'
-import { getMedicationMonitoringGroups } from './medicationMonitoring'
+import { getParameterMonitoringRows } from './medicationMonitoring'
 import { buildRecentLabResults } from './recentLabResults'
 
 export interface LaborOverviewData extends LabsDueData {
-  medicationMonitoring: MedicationMonitoringGroup[]
+  medicationMonitoring: ParameterMonitoringRow[]
   /** Auffällige Werte aus dem jüngsten Laborbefund (nicht nur medikationsrelevant). */
   recentAbnormal: RecentLabResultItem[]
 }
@@ -22,7 +21,7 @@ export function buildLaborOverview(input: {
     befunde: input.befunde,
     activeSubstances: input.activeSubstances,
   })
-  const medicationMonitoring = getMedicationMonitoringGroups({
+  const medicationMonitoring = getParameterMonitoringRows({
     medications: input.medications,
     befunde: input.befunde,
   })

@@ -1,7 +1,7 @@
 import { getCaseMeta } from '../../hooks/useCaseRegistry'
 import { isDemoCase } from '../../demo'
 import type { UiTranslationKey } from '../../data/uiTranslations'
-import { DEFAULT_CASE_ID } from '../caseContext'
+import { DEFAULT_CASE_ID, shortCaseId } from '../caseContext'
 import { loadNotionPageDate } from '../notionPageDate'
 import { formatDateDe } from './dateLabels'
 
@@ -11,19 +11,24 @@ type TranslateFn = (key: UiTranslationKey) => string
 export function buildClinicalHeroMeta(
   caseId: string,
   t: TranslateFn,
-): { name: string; metaLine: string | null } {
+): { name: string; metaLine: string | null; isAssigned: boolean } {
   const meta = getCaseMeta(caseId)
   const structuredName = [meta?.localVorname?.trim(), meta?.localNachname?.trim()]
     .filter(Boolean)
     .join(' ')
-  const displayName =
+  const assignedName =
     structuredName ||
     meta?.localName?.trim() ||
+    meta?.pageHeading?.trim() ||
+    undefined
+  const isAssigned = Boolean(assignedName)
+  const displayName =
+    assignedName ||
     (caseId === DEFAULT_CASE_ID
       ? t('topNavWorkspaceFall')
       : isDemoCase(caseId)
         ? t('demoPatientDisplayName')
-        : t('patientNavFallback'))
+        : t('patientCaseUnassigned').replace('{id}', shortCaseId(caseId)))
 
   const geschlecht = meta?.localGeschlecht
   const genderLabel =
@@ -35,15 +40,16 @@ export function buildClinicalHeroMeta(
           ? t('patientGeschlechtDivers')
           : null
 
+  const dobLabel = formatDateDe(meta?.localGeburtsdatum?.trim())
   const ageLabel = meta?.localAge?.trim() ? `${meta.localAge} J` : null
   const admissionIso = loadNotionPageDate('aufnahme', caseId)
   const admissionLabel = admissionIso ? formatDateDe(admissionIso) : null
 
   const parts = [
-    ageLabel,
+    dobLabel || ageLabel,
     genderLabel,
     admissionLabel ? t('overviewHeroAdmission').replace('{date}', admissionLabel) : null,
   ].filter(Boolean)
 
-  return { name: displayName, metaLine: parts.length > 0 ? parts.join(' · ') : null }
+  return { name: displayName, metaLine: parts.length > 0 ? parts.join(' · ') : null, isAssigned }
 }

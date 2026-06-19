@@ -82,6 +82,7 @@ describe('caseRegistryStorage — encrypted at rest', () => {
   })
 
   it('persists the registry (patient identifiers) as ciphertext, never plaintext', async () => {
+    await hydrateCaseRegistryFromEncryptedLocal()
     const map = { 'case-1': makeMeta('case-1', 'Mustermann') }
     saveRegistryMapToStorage(map)
 

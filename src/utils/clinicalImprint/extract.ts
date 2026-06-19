@@ -36,6 +36,37 @@ function matchPatterns(text: string, patterns: RegExp[]): string | null {
   return null
 }
 
+function extractSuicidalityPhrase(text: string): string | null {
+  const negated =
+    text.match(
+      /\bkeine?\s+(?:aktuellen?\s+)?(?:suizid\w*\s+)?(?:gedanken|äußerungen|absichten|pläne|symptome|hinweise|anzeichen)[^.;\n]*/i,
+    )?.[0] ?? text.match(/\bkeine?\s+suizid\w*[^.;\n]*/i)?.[0]
+  if (negated) return normalizeWhitespace(negated)
+
+  const positive =
+    text.match(/\b(suizid(?:gedanken|absicht|plan|versuch|androhung)\w*[^.;\n]{0,80})/i)?.[0] ??
+    text.match(/\b(selbstmord(?:gedanken|absicht)\w*[^.;\n]{0,80})/i)?.[0]
+  return positive ? normalizeWhitespace(positive) : null
+}
+
+function extractRiskSelfPhrase(text: string): string | null {
+  const negated = text.match(/\bkeine?\s+(?:akute?\s+)?(?:selbst|eigen)gefährd\w*[^.;\n]*/i)?.[0]
+  if (negated) return normalizeWhitespace(negated)
+
+  const positive = text.match(/\b((?:selbst|eigen)gefährd\w*[^.;\n]{0,80})/i)?.[0]
+  if (positive && !/^keine?\b/i.test(positive)) return normalizeWhitespace(positive)
+  return null
+}
+
+function extractRiskOthersPhrase(text: string): string | null {
+  const negated = text.match(/\bkeine?\s+(?:akute?\s+)?fremdgefährd\w*[^.;\n]*/i)?.[0]
+  if (negated) return normalizeWhitespace(negated)
+
+  const positive = text.match(/\b(fremdgefährd\w*[^.;\n]{0,80})/i)?.[0]
+  if (positive && !/^keine?\b/i.test(positive)) return normalizeWhitespace(positive)
+  return null
+}
+
 function matchAllLabels(text: string, patterns: RegExp[]): string[] {
   const hits = new Set<string>()
   for (const pattern of patterns) {
@@ -152,24 +183,26 @@ function extractFieldHits(text: string): Partial<StructuredClinicalMetadata> {
     symptoms,
     medicationMentioned,
     diagnosisHints,
-    suicidality: matchPatterns(text, [
-      /suizid\w*/i,
-      /selbstmord\w*/i,
-      /suizidal\w*/i,
-    ]),
-    riskSelf: matchPatterns(text, [/selbstgefährd\w*/i, /suizid\w*/i]),
-    riskOthers: matchPatterns(text, [/fremdgefährd\w*/i]),
+    suicidality: extractSuicidalityPhrase(text),
+    riskSelf: extractRiskSelfPhrase(text),
+    riskOthers: extractRiskOthersPhrase(text),
     aggression: matchPatterns(text, [/aggressiv\w*/i, /aggression\w*/i]),
     affect: matchPatterns(text, [/affekt\s+\w+/i, /affektiv\w*/i, /gedrückt\w*/i, /euphor\w*/i]),
     drive: matchPatterns(text, [/antrieb\w*/i, /antriebslos\w*/i]),
     thoughtContent: matchPatterns(text, [/wahn\w*/i, /überwachungs\w*/i]),
-    thoughtForm: matchPatterns(text, [/gedanken\w*/i, /grübeln\w*/i]),
+    thoughtForm: matchPatterns(text, [
+      /\b(gedämpft\w*|gehemmt\w*|verlangsamt\w*|umständlich\w*|zerfahren\w*|verarmt\w*|grübelnd\w*)\b/i,
+      /(?:formaler\s+denkablauf|denkablauf)\s*[:–-]\s*[^.;\n]+/i,
+    ]),
     perception: matchPatterns(text, [/halluzin\w*/i, /stimmen\w*/i]),
     sleep: matchPatterns(text, [/schlaf\w*/i, /insomn\w*/i]),
     cooperation: matchPatterns(text, [/kooperativ\w*/i, /mitarbeit\w*/i]),
     insight: matchPatterns(text, [/krankheitseinsicht\w*/i, /einsicht\w*/i]),
     functioning: matchPatterns(text, [/funktionsfähig\w*/i, /alltag\w*/i, /arbeit\w*/i]),
-    socialInteraction: matchPatterns(text, [/sozial\w*/i, /kontakt\w*/i]),
+    socialInteraction: matchPatterns(text, [
+      /\b(zurückgezogen\w*|isoliert\w*|distanzlos\w*|distanziert\w*|kontaktarm\w*|kontaktscheu\w*)\b/i,
+      /(?:sozialverhalten|soziales\s+verhalten)\s*[:–-]\s*[^.;\n]+/i,
+    ]),
     hygieneSelfCare: matchPatterns(text, [/hygiene\w*/i, /selbstfürsorge\w*/i]),
     sideEffects: matchPatterns(text, [/nebenwirk\w*/i, /sedier\w*/i, /gewichtszunahme/i]),
     adherence: matchPatterns(text, [/adhärenz\w*/i, /compliance\w*/i, /einnahme\w*/i]),

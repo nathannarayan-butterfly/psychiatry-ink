@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { GermanDateInput } from '../clinical/GermanDateInput'
 import { useTranslation } from '../../context/TranslationContext'
 import type { LocalGeschlecht } from '../../hooks/useCaseRegistry'
 
@@ -99,12 +100,12 @@ export function NewPatientDialog({
             <label htmlFor="npd-geburtsdatum" className="new-patient-dialog__label">
               {t('patientFieldGeburtsdatum')}
             </label>
-            <input
+            <GermanDateInput
               id="npd-geburtsdatum"
-              type="date"
               className="new-patient-dialog__input"
-              value={geburtsdatum}
-              onChange={(e) => setGeburtsdatum(e.target.value)}
+              isoValue={geburtsdatum || undefined}
+              onIsoChange={(iso) => setGeburtsdatum(iso ?? '')}
+              aria-label={t('patientFieldGeburtsdatum')}
             />
           </div>
 

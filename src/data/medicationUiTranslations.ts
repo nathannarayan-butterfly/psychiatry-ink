@@ -836,16 +836,28 @@ export const medicationUiTranslations = {
     es: 'No se detectaron riesgos aditivos ni interacciones en la referencia.',
   },
   medDashMonitoringTitle: {
-    de: 'Monitoring-Bedarf',
-    en: 'Monitoring required',
-    fr: 'Surveillance requise',
-    es: 'Monitorización requerida',
+    de: 'Labor überwachen',
+    en: 'Lab monitoring',
+    fr: 'Surveillance biologique',
+    es: 'Monitorización de laboratorio',
   },
   medDashMonitoringEmpty: {
-    de: 'Kein spezifisches Monitoring aus der Referenz ableitbar.',
-    en: 'No specific monitoring derivable from the reference.',
-    fr: 'Aucune surveillance spécifique dérivable de la référence.',
-    es: 'No se puede derivar monitorización específica de la referencia.',
+    de: 'Kein spezifisches Labor-Monitoring aus der Referenz ableitbar.',
+    en: 'No specific lab monitoring derivable from the reference.',
+    fr: 'Aucune surveillance biologique spécifique dérivable de la référence.',
+    es: 'No se puede derivar monitorización de laboratorio específica de la referencia.',
+  },
+  medLabMonitoringTitle: {
+    de: 'Labor überwachen',
+    en: 'Lab monitoring',
+    fr: 'Surveillance biologique',
+    es: 'Monitorización de laboratorio',
+  },
+  medLabMonitoringNotDocumented: {
+    de: 'nicht dokumentiert',
+    en: 'not documented',
+    fr: 'non documenté',
+    es: 'no documentado',
   },
 
   // ── Curated target receptors (Zielrezeptoren) ───────────────────────────

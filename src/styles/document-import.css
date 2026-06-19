@@ -671,3 +671,120 @@
   font-size: var(--text-xs);
   color: var(--text-main);
 }
+
+/* Overview widget suggestions (post-parse AI) */
+.doc-import-overview-suggestions {
+  margin: 0.75rem 0 1rem;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--border-soft));
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--accent) 4%, var(--surface));
+}
+
+.doc-import-overview-suggestions__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.doc-import-overview-suggestions__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.doc-import-overview-suggestions__icon {
+  width: 0.9rem;
+  height: 0.9rem;
+  color: var(--accent);
+}
+
+.doc-import-overview-suggestions__hint {
+  margin: 0 0 0.625rem;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.doc-import-overview-suggestions__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.doc-import-overview-suggestions__item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--border-soft);
+}
+
+.doc-import-overview-suggestions__item:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.doc-import-overview-suggestions__widget {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--accent);
+  margin-bottom: 0.15rem;
+}
+
+.doc-import-overview-suggestions__summary {
+  display: block;
+  font-size: var(--text-sm);
+  color: var(--text-main);
+}
+
+.doc-import-overview-suggestions__rationale {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.doc-import-overview-suggestions__actions {
+  display: flex;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.doc-import-overview-suggestions__pending {
+  margin: 0.5rem 0 0;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.doc-import-chip {
+  font-size: 0.6875rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-soft);
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.doc-import-chip--accepted {
+  border-color: color-mix(in srgb, #2f8a5b 45%, transparent);
+  color: #2f6b4b;
+  background: color-mix(in srgb, #2f8a5b 8%, var(--surface));
+}
+
+.doc-import-chip--rejected {
+  opacity: 0.65;
+}

@@ -35,6 +35,8 @@ import {
 import type { MedicationFormulation, MedicationStatus, MedicationChangeType, DoseSchedule } from '../../types/medicationPlan'
 import { createEmptyDoseSchedule } from '../../types/medicationPlan'
 import { appendProvenance } from './provenanceLedger'
+import { AUFNAHME_PSYCHOPATH_SECTION_ID } from '../overview/psychopathSnapshot'
+import { seedPsychopathFindingFromImport } from '../overview/psychopathFindingOps'
 
 export interface PersistParams {
   caseId: string
@@ -220,6 +222,12 @@ function persistOne(
             : undefined,
         importProvenanceId: provenanceId,
       })
+      const importedPsyText =
+        sectionContents?.[AUFNAHME_PSYCHOPATH_SECTION_ID] ??
+        (sectionId === AUFNAHME_PSYCHOPATH_SECTION_ID ? text : undefined)
+      if (importedPsyText?.trim()) {
+        seedPsychopathFindingFromImport(caseId, importedPsyText, now)
+      }
       return entry.id
     }
     case 'verlauf': {
@@ -228,6 +236,7 @@ function persistOne(
         content: candidate.data.text,
         pageType: 'verlauf',
         sectionLabel: candidate.data.sectionLabel,
+        subheading: candidate.data.subheading,
         source: 'manual',
       })
       return entry.id

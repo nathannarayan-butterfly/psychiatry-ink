@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { UserPlus, Users } from 'lucide-react'
+import { GermanDateInput } from '../clinical/GermanDateInput'
 import { useTranslation } from '../../context/TranslationContext'
 import type { ExtractedPatientIdentity } from '../../schemas/documentImport/envelope'
 
@@ -126,11 +127,10 @@ export function PatientIdentityPanel({
           </label>
           <label className="doc-import-field">
             <span className="doc-import-field__label">{t('patientFieldGeburtsdatum')}</span>
-            <input
-              type="date"
+            <GermanDateInput
               className="doc-import-input"
-              value={geburtsdatum}
-              onChange={(e) => setGeburtsdatum(e.target.value)}
+              isoValue={geburtsdatum || undefined}
+              onIsoChange={(iso) => setGeburtsdatum(iso ?? '')}
             />
           </label>
           {identity?.geburtsdatumRaw && !identity.geburtsdatum && (

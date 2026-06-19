@@ -1,10 +1,21 @@
 import { describe, expect, it } from 'vitest'
 import type { ClinicalImprintRecord } from '../../../types/clinicalImprint'
 import {
+  amdpOverviewDomainCount,
+  buildAmdpOverviewGrid,
+  buildAmdpOverviewGridWithMeta,
   buildPsychopathologyStructuredCues,
+  dedupeRiskDomainAssessments,
+  inferTriStateFromText,
+  isMeaningfulDetail,
   mergePsychopathologyProfiles,
   resolvePsychopathologyGroup,
+  sanitizePsychopathDomainAssessment,
 } from '../psychopathologyDomains'
+import {
+  PSYCHOPATH_EXTRACT_FIELD_LABELS,
+  PSYCHOPATH_OVERVIEW_DOMAIN_ORDER,
+} from '../../../schemas/psychopath/extraction'
 
 function makeImprint(overrides: Partial<ClinicalImprintRecord> = {}): ClinicalImprintRecord {
   return {
@@ -53,6 +64,117 @@ function makeImprint(overrides: Partial<ClinicalImprintRecord> = {}): ClinicalIm
   }
 }
 
+describe('inferTriStateFromText', () => {
+  it('maps unremarkable phrases to negative', () => {
+    expect(inferTriStateFromText('unauffällig')).toBe('negative')
+    expect(inferTriStateFromText('keine Suizidalität')).toBe('negative')
+  })
+
+  it('maps ambiguous phrases to unclear', () => {
+    expect(inferTriStateFromText('unklar')).toBe('unclear')
+  })
+
+  it('maps documented findings to positive', () => {
+    expect(inferTriStateFromText('gedrückt')).toBe('positive')
+  })
+})
+
+describe('isMeaningfulDetail', () => {
+  it('rejects domain label echoes and generic keyword fragments', () => {
+    expect(isMeaningfulDetail('Gedanken', 'thoughtForm')).toBe(false)
+    expect(isMeaningfulDetail('Antrieb', 'drive')).toBe(false)
+    expect(isMeaningfulDetail('Suizidale', 'suicidality')).toBe(false)
+    expect(isMeaningfulDetail('Kontakt', 'socialInteraction')).toBe(false)
+    expect(isMeaningfulDetail('Krankheitseinsicht', 'insight')).toBe(false)
+  })
+
+  it('accepts concise clinical qualifiers', () => {
+    expect(isMeaningfulDetail('gedämpft', 'thoughtForm')).toBe(true)
+    expect(isMeaningfulDetail('reduziert', 'drive')).toBe(true)
+    expect(isMeaningfulDetail('Suizidgedanken', 'suicidality')).toBe(true)
+    expect(isMeaningfulDetail('zurückgezogen', 'socialInteraction')).toBe(true)
+    expect(isMeaningfulDetail('fehlend', 'insight')).toBe(true)
+  })
+})
+
+describe('sanitizePsychopathDomainAssessment', () => {
+  it('downgrades label-echo positives to negative', () => {
+    const sanitized = sanitizePsychopathDomainAssessment({
+      domainKey: 'drive',
+      status: 'positive',
+      detail: 'Antrieb',
+    })
+    expect(sanitized.status).toBe('negative')
+    expect(sanitized.detail).toBeNull()
+  })
+
+  it('downgrades tri-state status words used as detail', () => {
+    for (const detail of ['unklar', 'positiv', 'negativ', 'positive', 'negative']) {
+      const sanitized = sanitizePsychopathDomainAssessment({
+        domainKey: 'affect',
+        status: 'positive',
+        detail,
+      })
+      expect(sanitized.status).toBe('negative')
+      expect(sanitized.detail).toBeNull()
+    }
+  })
+})
+
+describe('buildAmdpOverviewGrid detail validation', () => {
+  it('never emits positive rows whose detail echoes the domain label', () => {
+    const imprint = makeImprint({
+      thoughtForm: 'Gedanken',
+      drive: 'Antrieb',
+      suicidality: 'Suizidale',
+      socialInteraction: 'Kontakt',
+      insight: 'Krankheitseinsicht',
+    })
+    const cues = buildAmdpOverviewGrid({ imprint, showAllDomains: true })
+    const positiveCues = cues.filter((cue) => cue.status === 'positive')
+
+    for (const cue of positiveCues) {
+      const detail = cue.value?.trim() ?? ''
+      expect(detail.length).toBeGreaterThanOrEqual(3)
+      const label = PSYCHOPATH_EXTRACT_FIELD_LABELS[cue.domainKey!].toLowerCase()
+      expect(detail.toLowerCase()).not.toBe(label)
+      expect(label.includes(detail.toLowerCase())).toBe(false)
+    }
+
+    expect(positiveCues).toHaveLength(0)
+  })
+
+  it('keeps clinically meaningful imprint findings', () => {
+    const imprint = makeImprint({
+      thoughtForm: 'gedämpft',
+      drive: 'reduziert',
+      affect: 'gedrückt',
+    })
+    const cues = buildAmdpOverviewGrid({ imprint })
+    expect(cues.map((c) => c.domainKey)).toEqual(['thoughtForm', 'affect', 'drive'])
+    expect(cues.every((c) => isMeaningfulDetail(c.value ?? null, c.domainKey!))).toBe(true)
+  })
+})
+
+describe('dedupeRiskDomainAssessments', () => {
+  it('drops overlapping riskSelf when suicidality carries the same phrase', () => {
+    const deduped = dedupeRiskDomainAssessments([
+      { domainKey: 'suicidality', status: 'negative', detail: 'keine Suizidalität' },
+      { domainKey: 'riskSelf', status: 'negative', detail: 'keine Suizidalität' },
+      { domainKey: 'affect', status: 'positive', detail: 'gedrückt' },
+    ])
+    expect(deduped.find((d) => d.domainKey === 'riskSelf')?.status).toBe('negative')
+    expect(deduped.find((d) => d.domainKey === 'riskSelf')?.detail).toBeNull()
+  })
+})
+
+describe('amdpOverviewDomainCount', () => {
+  it('covers the complete AMDP overview domain set', () => {
+    expect(amdpOverviewDomainCount()).toBe(PSYCHOPATH_OVERVIEW_DOMAIN_ORDER.length)
+    expect(amdpOverviewDomainCount()).toBe(23)
+  })
+})
+
 describe('resolvePsychopathologyGroup', () => {
   it('maps ICD-10 prefixes to disorder groups', () => {
     expect(resolvePsychopathologyGroup('F20.0')).toBe('psychotic')
@@ -88,79 +210,80 @@ describe('mergePsychopathologyProfiles', () => {
       'affect',
     ])
   })
-
-  it('caps merged slots at maxSlots', () => {
-    const merged = mergePsychopathologyProfiles(['F20.0'], 4)
-    expect(merged.slots).toHaveLength(4)
-  })
-
-  it('orders mood before anxiety when mood is primary', () => {
-    const merged = mergePsychopathologyProfiles(['F32.1', 'F41.1'], 6)
-    expect(merged.contextLabel).toBe('affektive Störung')
-    expect(merged.groups).toEqual(['mood', 'anxiety_ocd'])
-    expect(merged.slots[0]).toEqual({ field: 'affect', label: 'Affekt' })
-  })
 })
 
-describe('buildPsychopathologyStructuredCues', () => {
-  it('uses generic documented four when no diagnosis mapping applies', () => {
+describe('buildAmdpOverviewGrid', () => {
+  it('returns only positive or unclear domains by default', () => {
     const imprint = makeImprint({
       affect: 'gedrückt',
       drive: 'vermindert',
       thoughtContent: 'unauffällig',
     })
-    const cues = buildPsychopathologyStructuredCues(imprint, [])
-    expect(cues).toEqual([
-      { label: 'Affekt', value: 'gedrückt' },
-      { label: 'Antrieb', value: 'vermindert' },
-      { label: 'Denkinhalt', value: 'unauffällig' },
-    ])
+    const cues = buildAmdpOverviewGrid({ imprint })
+    expect(cues.map((c) => c.domainKey)).toEqual(['affect', 'drive'])
+    expect(cues.every((c) => c.status !== 'negative')).toBe(true)
   })
 
-  it('surfaces psychosis-priority fields for F20 with nicht dokumentiert gaps', () => {
-    const imprint = makeImprint({
-      thoughtContent: 'wahnhaft-paranoid',
-      thoughtForm: 'umständlich',
-      insight: 'gering',
+  it('shows all AMDP subheadings when showAllDomains is true', () => {
+    const imprint = makeImprint({ affect: 'gedrückt' })
+    const cues = buildAmdpOverviewGrid({ imprint, showAllDomains: true })
+    expect(cues).toHaveLength(20)
+    expect(cues.filter((c) => c.status === 'positive')).toHaveLength(1)
+    expect(cues.find((c) => c.domainKey === 'affect')?.value).toBe('gedrückt')
+    expect(cues.find((c) => c.domainKey === 'drive')?.status).toBe('negative')
+  })
+
+  it('merges legacy cognition into attention and prefers AI field values', () => {
+    const imprint = makeImprint({ cognition: 'konzentriert' })
+    const cues = buildAmdpOverviewGrid({
+      imprint,
+      aiFields: { memory: 'Kurzzeit gestört', consciousness: 'wach' },
     })
-    const cues = buildPsychopathologyStructuredCues(imprint, ['F20.0'])
-    expect(cues).toEqual([
-      { label: 'Denkinhalt', value: 'wahnhaft-paranoid' },
-      { label: 'Wahrnehmung', value: 'nicht dokumentiert' },
-      { label: 'Ich-Störungen', value: 'nicht dokumentiert' },
-      { label: 'Formaler Denkablauf', value: 'umständlich' },
-      { label: 'Krankheitseinsicht', value: 'gering' },
-    ])
+    expect(cues.find((c) => c.domainKey === 'consciousness')?.value).toBe('wach')
+    expect(cues.find((c) => c.domainKey === 'attention')?.value).toBe('konzentriert')
+    expect(cues.find((c) => c.domainKey === 'memory')?.value).toBe('Kurzzeit gestört')
   })
 
-  it('falls back to generic documented cues when profile fields are all empty', () => {
-    const imprint = makeImprint({
-      thoughtContent: 'wahnhaft',
-      cognition: 'orientiert',
+  it('never emits nicht dokumentiert placeholders', () => {
+    const cues = buildAmdpOverviewGrid({
+      imprint: makeImprint({ thoughtContent: 'wahnhaft' }),
+      showAllDomains: true,
     })
-    const cues = buildPsychopathologyStructuredCues(imprint, ['F32.1'])
-    expect(cues).toEqual([{ label: 'Denkinhalt', value: 'wahnhaft' }])
+    expect(cues.some((c) => c.value === 'nicht dokumentiert')).toBe(false)
   })
 
-  it('shows mood-priority slots when mood fields are documented', () => {
-    const imprint = makeImprint({
-      affect: 'gedrückt',
-      drive: 'vermindert',
-      sleep: 'Ein- und Durchschlafstörung',
-      suicidality: 'passiv',
-      insight: 'vorhanden',
+  it('flags unremarkable domains for summary sentence', () => {
+    const meta = buildAmdpOverviewGridWithMeta({
+      imprint: makeImprint({ affect: 'gedrückt', thoughtContent: 'unauffällig' }),
     })
-    const cues = buildPsychopathologyStructuredCues(imprint, ['F32.1'])
-    expect(cues.map((c) => c.label)).toEqual([
-      'Affekt',
-      'Antrieb',
-      'Schlaf',
-      'Suizidalität',
-      'Krankheitseinsicht',
-    ])
+    expect(meta.cues).toHaveLength(1)
+    expect(meta.hasUnremarkableDomains).toBe(true)
   })
 
-  it('returns empty array when imprint is null', () => {
+  it('excludes risk domains from the compact overview grid', () => {
+    const meta = buildAmdpOverviewGridWithMeta({
+      imprint: makeImprint({
+        affect: 'gedrückt',
+        suicidality: 'Suizidgedanken passiv',
+        riskSelf: 'keine akute Selbstgefährdung',
+      }),
+      showAllDomains: true,
+    })
+    expect(meta.cues.some((c) => c.domainKey === 'suicidality')).toBe(false)
+    expect(meta.cues.some((c) => c.domainKey === 'riskSelf')).toBe(false)
+    expect(meta.cues.find((c) => c.domainKey === 'affect')?.value).toBe('gedrückt')
+  })
+})
+
+describe('buildPsychopathologyStructuredCues', () => {
+  it('delegates to the AMDP grid builder', () => {
+    const imprint = makeImprint({ affect: 'labil', insight: 'vorhanden' })
+    const cues = buildPsychopathologyStructuredCues(imprint, ['F32.1'], null, { showAllDomains: true })
+    expect(cues).toHaveLength(20)
+    expect(cues.find((c) => c.domainKey === 'affect')?.value).toBe('labil')
+  })
+
+  it('returns empty array when imprint is null and no AI fields', () => {
     expect(buildPsychopathologyStructuredCues(null, ['F20.0'])).toEqual([])
   })
 })

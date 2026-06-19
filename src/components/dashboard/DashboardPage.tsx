@@ -449,6 +449,7 @@ export function DashboardPage({
 
   return (
     <div className="dashboard-page text-ink">
+      <div className="dashboard-page__inner">
       {showIdentifierOnboarding ? (
         <IdentifierStorageOnboarding
           initialMode={privacy.identifierStorage}
@@ -469,6 +470,57 @@ export function DashboardPage({
             {greeting.trim()}
           </h1>
         </div>
+      </section>
+
+      <section className="dashboard-kpi-grid stagger-children" aria-label={t('dashboardSectionUsage')}>
+        <article className="dashboard-kpi clinical-card">
+          <Users className="dashboard-kpi__icon" strokeWidth={1.5} aria-hidden />
+          <span className="dashboard-kpi__value">{activePatients.length}</span>
+          <span className="dashboard-kpi__label">{t('dashboardStatPatients')}</span>
+        </article>
+
+        <article className="dashboard-kpi clinical-card">
+          <Clock className="dashboard-kpi__icon" strokeWidth={1.5} aria-hidden />
+          <span className="dashboard-kpi__value">{todayTotalLabel}</span>
+          <span className="dashboard-kpi__label">{t('dashboardUsageDocumentation')}</span>
+          <UsageBar value={todayTotalSeconds} max={DOCUMENTATION_DAY_GOAL_SECONDS} />
+        </article>
+
+        <article className="dashboard-kpi clinical-card">
+          <Sparkles className="dashboard-kpi__icon" strokeWidth={1.75} aria-hidden />
+          {creditsLoading ? (
+            <span className="dashboard-kpi__value">…</span>
+          ) : (
+            <button
+              type="button"
+              className="dashboard-kpi__value dashboard-kpi__value--btn"
+              onClick={() => setCreditsDialogOpen(true)}
+            >
+              {creditBalance}
+            </button>
+          )}
+          <span className="dashboard-kpi__label">{t('dashboardUsageCredits')}</span>
+          <UsageBar value={creditBalance} max={CREDITS_DEFAULT_MAX} />
+        </article>
+
+        <article className="dashboard-kpi clinical-card">
+          <Download className="dashboard-kpi__icon" strokeWidth={1.5} aria-hidden />
+          <span
+            className={[
+              'dashboard-kpi__value',
+              'dashboard-kpi__value--status',
+              workspaceVault.showBackupReminder ? 'dashboard-kpi__value--warn' : '',
+            ].join(' ').trim()}
+          >
+            {workspaceVault.showBackupReminder ? t('dashboardBackupNeeded') : t('dashboardBackupOk')}
+          </span>
+          <span className="dashboard-kpi__label">{t('dashboardBackupStatus')}</span>
+          {workspaceVault.lastExportAt ? (
+            <span className="dashboard-kpi__hint">
+              {formatSiteLocaleDate(workspaceVault.lastExportAt, language)}
+            </span>
+          ) : null}
+        </article>
       </section>
 
       <section className="dashboard-section" aria-labelledby="dashboard-quick-actions">
@@ -541,58 +593,7 @@ export function DashboardPage({
         </div>
       </section>
 
-      <section className="dashboard-kpi-grid stagger-children" aria-label={t('dashboardSectionUsage')}>
-        <article className="dashboard-kpi clinical-card">
-          <Users className="dashboard-kpi__icon" strokeWidth={1.5} aria-hidden />
-          <span className="dashboard-kpi__value">{activePatients.length}</span>
-          <span className="dashboard-kpi__label">{t('dashboardStatPatients')}</span>
-        </article>
-
-        <article className="dashboard-kpi clinical-card">
-          <Clock className="dashboard-kpi__icon" strokeWidth={1.5} aria-hidden />
-          <span className="dashboard-kpi__value">{todayTotalLabel}</span>
-          <span className="dashboard-kpi__label">{t('dashboardUsageDocumentation')}</span>
-          <UsageBar value={todayTotalSeconds} max={DOCUMENTATION_DAY_GOAL_SECONDS} />
-        </article>
-
-        <article className="dashboard-kpi clinical-card">
-          <Sparkles className="dashboard-kpi__icon" strokeWidth={1.75} aria-hidden />
-          {creditsLoading ? (
-            <span className="dashboard-kpi__value">…</span>
-          ) : (
-            <button
-              type="button"
-              className="dashboard-kpi__value dashboard-kpi__value--btn"
-              onClick={() => setCreditsDialogOpen(true)}
-            >
-              {creditBalance}
-            </button>
-          )}
-          <span className="dashboard-kpi__label">{t('dashboardUsageCredits')}</span>
-          <UsageBar value={creditBalance} max={CREDITS_DEFAULT_MAX} />
-        </article>
-
-        <article className="dashboard-kpi clinical-card">
-          <Download className="dashboard-kpi__icon" strokeWidth={1.5} aria-hidden />
-          <span
-            className={[
-              'dashboard-kpi__value',
-              'dashboard-kpi__value--status',
-              workspaceVault.showBackupReminder ? 'dashboard-kpi__value--warn' : '',
-            ].join(' ').trim()}
-          >
-            {workspaceVault.showBackupReminder ? t('dashboardBackupNeeded') : t('dashboardBackupOk')}
-          </span>
-          <span className="dashboard-kpi__label">{t('dashboardBackupStatus')}</span>
-          {workspaceVault.lastExportAt ? (
-            <span className="dashboard-kpi__hint">
-              {formatSiteLocaleDate(workspaceVault.lastExportAt, language)}
-            </span>
-          ) : null}
-        </article>
-      </section>
-
-      <section className="dashboard-section" aria-label={t('dashboardNavCards')}>
+      <section className="dashboard-section dashboard-section--nav-cards" aria-label={t('dashboardNavCards')}>
         <div className="dashboard-nav-cards">
           {onOpenCalendar ? (
             <button type="button" className="dashboard-nav-card dashboard-nav-card--calendar clinical-card clinical-card--interactive" onClick={onOpenCalendar}>
@@ -921,6 +922,19 @@ export function DashboardPage({
         ) : null}
       </section>
 
+      <footer className="dashboard-footer">
+        <span className="dashboard-footer__name">Psychiatry Ink Ltd</span>
+        <span className="dashboard-footer__sep">·</span>
+        <span className="dashboard-footer__address">
+          71-75 Shelton Street, Covent Garden, London, WC2H 9JQ, United Kingdom
+        </span>
+        <span className="dashboard-footer__sep">·</span>
+        <span className="dashboard-footer__copy">
+          © {new Date().getFullYear()} Psychiatry Ink Ltd. All rights reserved.
+        </span>
+      </footer>
+      </div>
+
       {showNewPatientDialog ? (
         <NewPatientDialog
           onSubmit={handleNewPatientCreated}
@@ -963,18 +977,6 @@ export function DashboardPage({
           }}
         />
       ) : null}
-
-      <footer className="dashboard-footer">
-        <span className="dashboard-footer__name">Psychiatry Ink Ltd</span>
-        <span className="dashboard-footer__sep">·</span>
-        <span className="dashboard-footer__address">
-          71-75 Shelton Street, Covent Garden, London, WC2H 9JQ, United Kingdom
-        </span>
-        <span className="dashboard-footer__sep">·</span>
-        <span className="dashboard-footer__copy">
-          © {new Date().getFullYear()} Psychiatry Ink Ltd. All rights reserved.
-        </span>
-      </footer>
     </div>
   )
 }

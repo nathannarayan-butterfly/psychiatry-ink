@@ -46,6 +46,8 @@ export interface VerlaufFeedEntry {
   content: string
   pageType: string   // documentTypeId, e.g. 'verlauf', 'therapie-verlauf'
   sectionLabel?: string
+  /** Visit context such as doctor name from "Visite mit …". */
+  subheading?: string
   /** Provenance: 'manual' = physician-typed, 'ai-accepted' = physician explicitly accepted AI output */
   source?: 'manual' | 'ai-accepted'
   /** Therapist attribution when created by allied therapist role. */

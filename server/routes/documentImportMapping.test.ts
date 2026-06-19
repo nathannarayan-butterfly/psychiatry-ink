@@ -26,8 +26,16 @@ afterEach(() => {
   delete process.env.DEEPSEEK_API_KEY
 })
 
-async function post(body: unknown) {
+async function postMapping(body: unknown) {
   return fetch(`${baseUrl}/api/document-import/suggest-mapping`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+}
+
+async function postAnalyze(body: unknown) {
+  return fetch(`${baseUrl}/api/document-import/analyze`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
@@ -36,13 +44,13 @@ async function post(body: unknown) {
 
 describe('POST /api/document-import/suggest-mapping', () => {
   it('returns 404 when the flag is disabled (default)', async () => {
-    const res = await post({ language: 'de', items: [{ candidateId: 'c1', deidentifiedText: 'x', currentModule: 'document' }] })
+    const res = await postMapping({ language: 'de', items: [{ candidateId: 'c1', deidentifiedText: 'x', currentModule: 'document' }] })
     expect(res.status).toBe(404)
   })
 
   it('returns deterministic mock suggestions when enabled without API keys', async () => {
     process.env.ENABLE_DOCUMENT_IMPORT_AI = 'true'
-    const res = await post({
+    const res = await postMapping({
       language: 'de',
       items: [
         { candidateId: 'c1', deidentifiedText: 'F32.1 Depression', currentModule: 'document' },
@@ -58,7 +66,61 @@ describe('POST /api/document-import/suggest-mapping', () => {
 
   it('rejects malformed requests with 400', async () => {
     process.env.ENABLE_DOCUMENT_IMPORT_AI = 'true'
-    const res = await post({ items: [] })
+    const res = await postMapping({ items: [] })
     expect(res.status).toBe(400)
+  })
+})
+
+describe('POST /api/document-import/analyze', () => {
+  it('returns 404 when the flag is disabled (default)', async () => {
+    const res = await postAnalyze({
+      language: 'de',
+      metadata: {
+        detectedFormat: 'docx',
+        parsingMode: 'structured',
+        moduleCounts: { medication: 1 },
+        noticeCodes: [],
+        candidates: [],
+      },
+      mappingItems: [],
+    })
+    expect(res.status).toBe(404)
+  })
+
+  it('returns mock mapping + overview suggestions when enabled without API keys', async () => {
+    process.env.ENABLE_DOCUMENT_IMPORT_AI = 'true'
+    const res = await postAnalyze({
+      language: 'de',
+      metadata: {
+        detectedFormat: 'csv',
+        parsingMode: 'structured',
+        moduleCounts: { medication: 2, therapy: 1, risk: 1 },
+        noticeCodes: ['mapping_uncertain'],
+        candidates: [
+          {
+            candidateId: 'c1',
+            module: 'document',
+            confidence: 'low',
+            structuralHint: 'Abschnitt: Medikation',
+            needsMappingAssist: true,
+          },
+        ],
+      },
+      mappingItems: [
+        { candidateId: 'c1', deidentifiedText: 'Abschnitt: Medikation', currentModule: 'document' },
+      ],
+    })
+    expect(res.status).toBe(200)
+    const data = (await res.json()) as {
+      mock?: boolean
+      mappingSuggestions: { suggestedModule: string }[]
+      overviewWidgetSuggestions: { widget: string }[]
+      patientSubheading?: string
+    }
+    expect(data.mock).toBe(true)
+    expect(data.mappingSuggestions[0]?.suggestedModule).toBe('medication')
+    expect(data.overviewWidgetSuggestions.some((s) => s.widget === 'compliance')).toBe(true)
+    expect(data.overviewWidgetSuggestions.some((s) => s.widget === 'angemeldete-therapien')).toBe(true)
+    expect(data.patientSubheading).toMatch(/Mock:/)
   })
 })

@@ -265,13 +265,37 @@ function CandidateFields({
   }
 
   // Text-based modules: anamnese / verlauf / investigation / therapy / risk / document
-  const data = candidate.data as { title?: string; text?: string; date?: string }
+  const data = candidate.data as {
+    title?: string
+    text?: string
+    date?: string
+    sectionLabel?: string
+    subheading?: string
+  }
   const hasDate =
     candidate.module === 'verlauf' ||
     candidate.module === 'therapy' ||
     candidate.module === 'complementaryTherapy'
   return (
     <div className="doc-import-row__fields">
+      {candidate.module === 'verlauf' && (
+        <>
+          <Field label={t('documentImportFieldSectionLabel')}>
+            <input
+              className="doc-import-input"
+              value={data.sectionLabel ?? ''}
+              onChange={(e) => onChange({ sectionLabel: e.target.value })}
+            />
+          </Field>
+          <Field label={t('documentImportFieldSubheading')}>
+            <input
+              className="doc-import-input"
+              value={data.subheading ?? ''}
+              onChange={(e) => onChange({ subheading: e.target.value })}
+            />
+          </Field>
+        </>
+      )}
       {'title' in candidate.data && (
         <Field label={t('documentImportFieldTitle')}>
           <input

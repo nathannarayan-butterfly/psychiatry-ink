@@ -53,3 +53,18 @@ export function isInlineAiEditEnabled(): boolean {
 export function isDocumentImportAiMappingEnabled(): boolean {
   return import.meta.env.VITE_ENABLE_DOCUMENT_IMPORT_AI === 'true'
 }
+
+/**
+ * Übersicht — AI-assisted psychopathology structured extraction from PPB narrative.
+ *
+ * OFF BY DEFAULT. Deterministic regex/heuristic display remains the fallback.
+ * When enabled, de-identified PPB text may be sent for domain extraction; results
+ * are cached locally and shown for clinician review (never auto-committed as chart text).
+ *
+ * Enable locally in `.env.local`:
+ *   VITE_ENABLE_PSYCHOPATH_EXTRACT_AI=true
+ * (Server: ENABLE_PSYCHOPATH_EXTRACT_AI=true)
+ */
+export function isPsychopathExtractAiEnabled(): boolean {
+  return import.meta.env.VITE_ENABLE_PSYCHOPATH_EXTRACT_AI === 'true'
+}

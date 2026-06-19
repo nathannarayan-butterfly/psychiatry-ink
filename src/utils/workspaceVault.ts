@@ -70,7 +70,12 @@ import {
   applyPsychotherapyPlan,
   loadPsychotherapyPlan,
 } from './psychotherapy/storage'
+import {
+  applyPsychopathFindingState,
+  loadPsychopathFindingState,
+} from './overview/psychopathFindingStorage'
 import type { PsychotherapyPlan } from '../types/psychotherapy'
+import type { PsychopathFindingState } from '../types/psychopathFinding'
 import {
   applyComplementaryTherapies,
   loadComplementaryTherapies,
@@ -152,6 +157,8 @@ export interface ClinicalWorkspacePayload {
   medicationPlanState?: MedicationPlanState
   /** Layer 2c — psychotherapy plan & session documentation (v8+; defaults absent on older payloads). */
   psychotherapyPlan?: PsychotherapyPlan
+  /** Overview psychopathological finding — current + history (v10+). */
+  psychopathFindings?: PsychopathFindingState
   /** Layer 2d — complementary therapies (additive; absent on older payloads, falls back to localStorage). */
   complementaryTherapies?: ComplementaryTherapy[]
   /** Layer 2e — weitere Therapieverfahren / neurostimulation (additive; absent on older payloads). */
@@ -295,6 +302,7 @@ export function collectClinicalPayload(
   const clinicalQuestionNotes = Object.keys(questionNoteState).length ? questionNoteState : undefined
   const medicationPlanState = loadMedicationPlanState(storageCaseId) ?? undefined
   const psychotherapyPlan = loadPsychotherapyPlan(storageCaseId) ?? undefined
+  const psychopathFindings = loadPsychopathFindingState(storageCaseId)
   const complementaryTherapies = loadComplementaryTherapies(storageCaseId)
   const weitereTherapie = loadWeitereTherapie(storageCaseId)
   const anforderungen = loadAnforderungen(storageCaseId)
@@ -320,6 +328,10 @@ export function collectClinicalPayload(
     clinicalQuestionNotes,
     medicationPlanState,
     psychotherapyPlan,
+    psychopathFindings:
+      psychopathFindings.current || psychopathFindings.history.length > 0
+        ? psychopathFindings
+        : undefined,
     complementaryTherapies: complementaryTherapies.length ? complementaryTherapies : undefined,
     weitereTherapie: weitereTherapie.length ? weitereTherapie : undefined,
     anforderungen: anforderungen.length ? anforderungen : undefined,
@@ -401,6 +413,10 @@ export function applyClinicalPayload(
     applyPsychotherapyPlan(normalized.psychotherapyPlan, storageCaseId)
   }
 
+  if (normalized.psychopathFindings) {
+    applyPsychopathFindingState(normalized.psychopathFindings, storageCaseId)
+  }
+
   if (normalized.complementaryTherapies) {
     applyComplementaryTherapies(normalized.complementaryTherapies, storageCaseId)
   }
@@ -476,6 +492,7 @@ export async function decryptWorkspaceBlob(blob: EncryptedVaultBlob): Promise<Cl
     butterflyAttestations: payload.butterflyAttestations,
     medicationPlanState: payload.medicationPlanState,
     psychotherapyPlan: payload.psychotherapyPlan,
+    psychopathFindings: payload.psychopathFindings,
     complementaryTherapies: payload.complementaryTherapies,
     weitereTherapie: payload.weitereTherapie,
     anforderungen: payload.anforderungen,

@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest'
 
 import type { MedicationEntry } from '../../../types/medicationPlan'
 import type { LaborBefund } from '../../laborArchive'
-import { getMedicationMonitoringGroups } from '../medicationMonitoring'
+import {
+  formatParameterMonitoringLabel,
+  getParameterMonitoringRows,
+} from '../medicationMonitoring'
 
 function med(substance: string, id = substance): MedicationEntry {
   return {
@@ -27,7 +30,7 @@ function med(substance: string, id = substance): MedicationEntry {
   }
 }
 
-function befund(date: string, values: { name: string; numericValue: number; unit: string }[]): LaborBefund {
+function befund(date: string, values: { name: string; numericValue: number; unit: string; refMin?: number; refMax?: number }[]): LaborBefund {
   return {
     id: `befund-${date}`,
     caseId: 'case-1',
@@ -43,6 +46,8 @@ function befund(date: string, values: { name: string; numericValue: number; unit
           value: String(v.numericValue),
           numericValue: v.numericValue,
           unit: v.unit,
+          refMin: v.refMin,
+          refMax: v.refMax,
         })),
       },
     ],
@@ -50,7 +55,7 @@ function befund(date: string, values: { name: string; numericValue: number; unit
   }
 }
 
-describe('getMedicationMonitoringGroups', () => {
+describe('getParameterMonitoringRows', () => {
   it('groups Aripiprazol metabolic parameters with latest lab values', () => {
     const medications = [med('Aripiprazol', 'med-arip')]
     const befunde = [
@@ -60,24 +65,47 @@ describe('getMedicationMonitoringGroups', () => {
       befund('2026-06-20', [{ name: 'HbA1c', numericValue: 5.8, unit: '%' }]),
     ]
 
-    const groups = getMedicationMonitoringGroups({ medications, befunde })
-    expect(groups).toHaveLength(1)
-    expect(groups[0].medicationName).toBe('Aripiprazol')
+    const rows = getParameterMonitoringRows({ medications, befunde })
+    expect(rows.length).toBeGreaterThan(0)
 
-    const byLabel = Object.fromEntries(groups[0].parameters.map((p) => [p.label, p]))
+    const byLabel = Object.fromEntries(rows.map((p) => [p.label, p]))
     expect(byLabel['Glukose'].valueLabel).toBe('98 mg/dl')
     expect(byLabel['Glukose'].dateLabel).toBe('12.06.2026')
+    expect(byLabel['Glukose'].medications).toEqual(['Aripiprazol'])
     expect(byLabel['BMI'].valueLabel).toBe('26.4 kg/m²')
     expect(byLabel['BMI'].dateLabel).toBe('10.06.2026')
     expect(byLabel['HbA1c'].valueLabel).toBe('5.8 %')
     expect(byLabel['HbA1c'].dateLabel).toBe('20.06.2026')
   })
 
+  it('merges Lipide across multiple antipsychotics into one row with all meds in brackets', () => {
+    const medications = [
+      med('Risperidon', 'med-ris'),
+      med('Olanzapin', 'med-ola'),
+      med('Aripiprazol', 'med-ari'),
+    ]
+    const befunde = [
+      befund('2026-06-15', [
+        { name: 'Triglyceride', numericValue: 198, unit: 'mg/dl', refMin: 50, refMax: 150 },
+      ]),
+    ]
+
+    const rows = getParameterMonitoringRows({ medications, befunde })
+    const lipids = rows.find((r) => r.label === 'Lipide')
+    expect(lipids).toBeDefined()
+    expect(lipids!.medications).toEqual(['Aripiprazol', 'Olanzapin', 'Risperidon'])
+    expect(lipids!.valueLabel).toBe('198 mg/dl')
+    expect(lipids!.refLabel).toBe('50–150 mg/dl')
+    expect(formatParameterMonitoringLabel(lipids!)).toBe(
+      'Lipide (Aripiprazol, Olanzapin, Risperidon)',
+    )
+  })
+
   it('marks parameters without lab data as missing', () => {
     const medications = [med('Lithium', 'med-li')]
-    const groups = getMedicationMonitoringGroups({ medications, befunde: [] })
-    expect(groups).toHaveLength(1)
-    expect(groups[0].parameters.every((p) => p.missing)).toBe(true)
+    const rows = getParameterMonitoringRows({ medications, befunde: [] })
+    expect(rows.length).toBeGreaterThan(0)
+    expect(rows.every((p) => p.missing)).toBe(true)
   })
 
   it('computes BMI from weight and height when BMI not stored directly', () => {
@@ -88,8 +116,8 @@ describe('getMedicationMonitoringGroups', () => {
         { name: 'Körpergröße', numericValue: 176, unit: 'cm' },
       ]),
     ]
-    const groups = getMedicationMonitoringGroups({ medications, befunde })
-    const bmi = groups[0].parameters.find((p) => p.label === 'BMI')
+    const rows = getParameterMonitoringRows({ medications, befunde })
+    const bmi = rows.find((p) => p.label === 'BMI')
     expect(bmi?.valueLabel).toBe('26.5 kg/m²')
     expect(bmi?.missing).toBe(false)
   })
@@ -98,7 +126,7 @@ describe('getMedicationMonitoringGroups', () => {
     const medications: MedicationEntry[] = [
       { ...med('Aripiprazol'), status: 'paused' },
     ]
-    const groups = getMedicationMonitoringGroups({ medications, befunde: [] })
-    expect(groups).toHaveLength(0)
+    const rows = getParameterMonitoringRows({ medications, befunde: [] })
+    expect(rows).toHaveLength(0)
   })
 })

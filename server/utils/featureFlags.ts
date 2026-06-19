@@ -15,3 +15,11 @@ export function isEnterpriseTier(tier: string | null | undefined): boolean {
 export function isDocumentImportAiEnabled(): boolean {
   return process.env.ENABLE_DOCUMENT_IMPORT_AI === 'true'
 }
+
+/**
+ * Psychopathology structured extraction for the Übersicht PPB widget. OFF by default.
+ * Only de-identified text reaches this endpoint; results require clinician acceptance.
+ */
+export function isPsychopathExtractAiEnabled(): boolean {
+  return process.env.ENABLE_PSYCHOPATH_EXTRACT_AI?.trim() === 'true'
+}

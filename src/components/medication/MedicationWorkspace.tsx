@@ -11,6 +11,8 @@ import {
   derivePlanTimeline,
   visibleMedications,
 } from '../../utils/medication/planOps'
+import { loadBefunde } from '../../utils/laborArchive'
+import { getParameterMonitoringRows } from '../../utils/overview/medicationMonitoring'
 import { FONT_SANS } from '../../styles/typographyTokens'
 import { MedicationDeleteDialog } from './MedicationDeleteDialog'
 import { MedicationEditDialog } from './MedicationEditDialog'
@@ -87,6 +89,14 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
   )
   const hasPlanHistory =
     planTimeline.length > 1 || (planTimeline.length > 0 && hasNonActiveMedications)
+  const parameterMonitoring = useMemo(
+    () =>
+      getParameterMonitoringRows({
+        medications: activePlanMedications,
+        befunde: loadBefunde(caseId),
+      }),
+    [caseId, activePlanMedications],
+  )
   const selectedEntry = useMemo(
     () => activePlanMedications.find((item) => item.id === selectedId) ?? null,
     [activePlanMedications, selectedId],
@@ -240,6 +250,7 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
           {hasActiveMedications ? (
             <MedicationPlanDashboard
               medications={activePlanMedications}
+              parameterMonitoring={parameterMonitoring}
               curatedTargetReceptors={med.state.curatedTargetReceptors}
               onCuratedTargetReceptorsChange={med.updateCuratedTargetReceptors}
               disabled={disabled}

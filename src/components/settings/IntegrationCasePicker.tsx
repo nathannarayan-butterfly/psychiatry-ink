@@ -2,6 +2,7 @@ import { Search } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { DashboardCase } from '../../hooks/useCaseRegistry'
 import { formatCaseRef, matchesCaseSearch } from '../../utils/caseSearch'
+import { formatClinicalDate } from '../../utils/clinicalDate'
 
 interface IntegrationCasePickerProps {
   cases: DashboardCase[]
@@ -103,7 +104,7 @@ export function IntegrationCasePicker({
                     {item.localName || item.localVorname || item.localNachname
                       ? [item.localVorname, item.localNachname].filter(Boolean).join(' ') || item.localName
                       : null}
-                    {item.localGeburtsdatum ? ` · ${item.localGeburtsdatum}` : ''}
+                    {item.localGeburtsdatum ? ` · ${formatClinicalDate(item.localGeburtsdatum)}` : ''}
                     {' · '}
                     {item.caseId.slice(0, 8)}…
                   </span>

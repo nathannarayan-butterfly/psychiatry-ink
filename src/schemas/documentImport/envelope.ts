@@ -78,6 +78,8 @@ export const VerlaufCandidateDataSchema = z.object({
   /** ISO date; defaults to import time when omitted. */
   date: z.string().optional(),
   sectionLabel: z.string().optional(),
+  /** Clinician or visit context, e.g. doctor name from "Visite mit …". */
+  subheading: z.string().optional(),
   text: z.string().min(1),
 })
 

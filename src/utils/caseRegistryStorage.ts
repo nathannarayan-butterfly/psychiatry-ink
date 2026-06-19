@@ -12,6 +12,18 @@ export const REGISTRY_KEY = 'psychiatry-ink:case-registry'
  * "not yet hydrated" so callers never read a falsely-empty map and overwrite it.
  */
 let registryShadow: Record<string, LocalCaseMeta> | null = null
+/** False until the encrypted (or legacy plaintext) registry has been read at least once. */
+let registryShadowHydrated = false
+
+/** Whether the synchronous shadow has been populated from encrypted local storage. */
+export function isRegistryShadowHydrated(): boolean {
+  return registryShadowHydrated
+}
+
+/** Mark shadow ready so subsequent saves persist ciphertext (e.g. after cloud restore). */
+export function markRegistryShadowHydrated(): void {
+  registryShadowHydrated = true
+}
 
 export function loadRegistryMapFromStorage(): Record<string, LocalCaseMeta> {
   return registryShadow ? { ...registryShadow } : {}
@@ -19,7 +31,9 @@ export function loadRegistryMapFromStorage(): Record<string, LocalCaseMeta> {
 
 export function saveRegistryMapToStorage(map: Record<string, LocalCaseMeta>): void {
   registryShadow = { ...map }
-  // Persist the registry encrypted-at-rest (async, best-effort).
+  // Never overwrite ciphertext until hydration has read the on-disk registry — otherwise a
+  // pre-hydration upsert would persist a falsely-empty map and wipe patient identifiers.
+  if (!registryShadowHydrated) return
   void writeEncryptedJson(REGISTRY_KEY, map)
 }
 
@@ -38,5 +52,7 @@ export async function hydrateCaseRegistryFromEncryptedLocal(): Promise<void> {
     }
   } catch {
     if (registryShadow === null) registryShadow = {}
+  } finally {
+    registryShadowHydrated = true
   }
 }

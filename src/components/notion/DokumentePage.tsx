@@ -297,6 +297,8 @@ interface DokumentePageProps {
   caseId: string
   /** Called after a document is hard-deleted so callers can sync other stores (e.g. savedDocs). */
   onAfterDelete?: (pageType: string) => void
+  /** Called after import persisted (e.g. to refresh patient header meta). */
+  onImported?: (caseId: string) => void
   /**
    * Called when the user clicks "Entwurf bearbeiten" on a draft card.
    * The parent should navigate to the appropriate workspace page and inject the draft content.
@@ -304,7 +306,7 @@ interface DokumentePageProps {
   onEditDraft?: (entry: DokumentEntry) => void
 }
 
-export function DokumentePage({ caseId, onAfterDelete, onEditDraft }: DokumentePageProps) {
+export function DokumentePage({ caseId, onAfterDelete, onImported, onEditDraft }: DokumentePageProps) {
   const { t } = useTranslation()
   const nav = useDokumenteSectionNavOptional()
   const [entries, setEntries] = useState<DokumentEntry[]>(() => loadDokumente(caseId))
@@ -470,7 +472,10 @@ export function DokumentePage({ caseId, onAfterDelete, onEditDraft }: DokumenteP
         patientNachname={getCaseMeta(caseId)?.localNachname}
         open={importOpen}
         onClose={() => setImportOpen(false)}
-        onImported={() => setEntries(loadDokumente(caseId))}
+        onImported={(importedCaseId) => {
+          setEntries(loadDokumente(caseId))
+          onImported?.(importedCaseId)
+        }}
       />
 
       {templateHostOpen ? (

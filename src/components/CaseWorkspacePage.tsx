@@ -11,7 +11,7 @@ import { useWorkspaceSettings } from '../hooks/useWorkspaceSettings'
 import { useWorkspaceState } from '../hooks/useWorkspaceState'
 import { useWorkspaceVault } from '../hooks/useWorkspaceVault'
 import { useWorkspaceTabs, type WorkspaceTab } from '../hooks/useWorkspaceTabs'
-import { touchCaseOpened, upsertCaseMeta } from '../hooks/useCaseRegistry'
+import { touchCaseOpened, upsertCaseMeta, ensureCaseRegistryHydrated } from '../hooks/useCaseRegistry'
 import { recordAuditEvent } from '../services/auditApi'
 import { NOTION_PAGES, resolveNotionPageFromDocumentType, type NotionPageId } from './notion/notionPages'
 import { loadNotionPageDate } from '../utils/notionPageDate'
@@ -129,7 +129,9 @@ function WorkspaceInner({
 
   useEffect(() => {
     setActiveCaseId(workspaceStorageId)
-    touchCaseOpened(caseId)
+    void ensureCaseRegistryHydrated().then(() => {
+      touchCaseOpened(caseId)
+    })
     void recordAuditEvent('case_opened', { caseId })
   }, [caseId, workspaceStorageId])
 

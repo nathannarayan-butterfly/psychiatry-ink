@@ -901,9 +901,11 @@ const EntryCard = memo(function EntryCard({
           {formatIsoTimestampDate(entry.date)}
         </time>
         <span className="verlauf-entry__time">{formatIsoTimestampTime(entry.date)}</span>
-        {entry.sectionLabel && (
-          <span className="verlauf-entry__section">{entry.sectionLabel}</span>
-        )}
+        {entry.sectionLabel || entry.subheading ? (
+          <span className="verlauf-entry__section">
+            {[entry.sectionLabel, entry.subheading].filter(Boolean).join(' — ')}
+          </span>
+        ) : null}
         {entry.source === 'ai-accepted' && (
           <span className="verlauf-entry__ai-badge" title="KI-generierter Text, vom Arzt akzeptiert">
             KI

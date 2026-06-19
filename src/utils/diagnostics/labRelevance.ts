@@ -134,6 +134,11 @@ const ANALYTE_PRIORITY: Record<AnalyteKey, number> = {
   urea: 22,
 }
 
+/** Lower = higher clinical priority for monitoring display ordering. */
+export function analytePriority(key: AnalyteKey): number {
+  return ANALYTE_PRIORITY[key] ?? 99
+}
+
 /** Match a raw lab parameter name onto a canonical analyte key, or null. */
 export function matchAnalyteKey(name: string): AnalyteKey | null {
   const trimmed = name.trim()

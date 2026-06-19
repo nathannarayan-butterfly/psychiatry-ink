@@ -11,18 +11,27 @@ import type { HeroSummaryData } from './types'
 interface OverviewHeroProps {
   data: HeroSummaryData
   caseId: string
+  /** Bump when local patient meta changes so the hero re-reads registry data. */
+  metaVersion?: number
+  onClinicalSubheadingChange?: () => void
 }
 
 /**
  * Übersicht hero — typographic patient strip with clinical thesis.
  * Supplementary orientation facts render as quiet meta below the hairline.
  */
-export function OverviewHero({ data, caseId }: OverviewHeroProps) {
+export function OverviewHero({ data, caseId, metaVersion = 0, onClinicalSubheadingChange }: OverviewHeroProps) {
   const { t, language } = useTranslation()
 
-  const { name, metaLine } = useMemo(() => buildClinicalHeroMeta(caseId, t), [caseId, t])
+  const { name, metaLine, isAssigned } = useMemo(() => {
+    void metaVersion
+    return buildClinicalHeroMeta(caseId, t)
+  }, [caseId, metaVersion, t])
 
-  const thesis = useMemo(() => buildClinicalThesis(caseId), [caseId])
+  const thesis = useMemo(() => {
+    void metaVersion
+    return buildClinicalThesis(caseId)
+  }, [caseId, metaVersion])
 
   const orientationTail = useMemo(() => {
     const parts: string[] = []
@@ -53,8 +62,10 @@ export function OverviewHero({ data, caseId }: OverviewHeroProps) {
       <ClinicalHeroStrip
         name={name}
         metaLine={metaLine}
-        caseId={caseId !== DEFAULT_CASE_ID ? caseId : undefined}
+        caseId={isAssigned && caseId !== DEFAULT_CASE_ID ? caseId : undefined}
         thesis={thesis}
+        thesisEditable
+        onThesisChange={onClinicalSubheadingChange}
       />
       {showOrientation ? (
         <p className="ov-hero-widget__orientation" aria-label="Orientierung">

@@ -7,13 +7,16 @@ import type { UiLanguage } from '../../types/settings'
 // Fixed week checkpoints on the X-axis
 const WEEK_CHECKPOINTS = [1, 2, 4, 8, 13, 26, 39, 52]
 
-// Muted hue palette — one slot per drug (up to 5)
-const DRUG_COLORS = [
+// Muted hue palette — one slot per parameter row (up to 8)
+const PARAM_COLORS = [
   'hsl(210 45% 52%)',
   'hsl(152 38% 44%)',
   'hsl(27  55% 52%)',
   'hsl(280 35% 52%)',
   'hsl(355 40% 50%)',
+  'hsl(195 42% 48%)',
+  'hsl(45  50% 48%)',
+  'hsl(330 38% 50%)',
 ]
 
 /** Map a frequency string to the subset of WEEK_CHECKPOINTS where a check falls. */
@@ -90,7 +93,6 @@ function frequencyToWeeks(freq: string | undefined): number[] {
     return [1]
   }
 
-  // Try to parse an interval in weeks/months
   const weekMatch = f.match(/alle\s+(\d+)\s+(?:woche|week)/)
   if (weekMatch) {
     const interval = parseInt(weekMatch[1]!, 10)
@@ -104,13 +106,16 @@ function frequencyToWeeks(freq: string | undefined): number[] {
     return WEEK_CHECKPOINTS.filter((w) => w >= weekInterval && w % weekInterval === 0)
   }
 
-  // Fallback: quarterly
   return [13, 26, 39, 52]
 }
 
+function unionWeeks(existing: number[], next: number[]): number[] {
+  return [...new Set([...existing, ...next])].sort((a, b) => a - b)
+}
+
 interface TimelineRow {
-  substanceName: string
   parameter: string
+  label: string
   weeks: number[]
   color: string
   noteDe: string
@@ -129,36 +134,61 @@ export function MonitoringTimeline({ medications, language }: MonitoringTimeline
     (med) => med.status === 'active' || med.status === 'reduced' || med.status === 'increased',
   )
 
-  const rows: TimelineRow[] = []
+  const paramMap = new Map<
+    string,
+    { parameter: string; medications: string[]; weeks: number[]; noteDe: string; noteEn: string }
+  >()
 
-  activeMeds.slice(0, 5).forEach((med, idx) => {
+  activeMeds.forEach((med) => {
     const drugs = getDrugsForSubstance(med.substance)
-    const color = DRUG_COLORS[idx % DRUG_COLORS.length]!
-
     drugs.forEach((drug) => {
       drug.monitoringRules.forEach((rule) => {
-        rows.push({
-          substanceName: med.substance,
-          parameter: rule.parameter,
-          weeks: frequencyToWeeks(rule.frequency),
-          color,
-          noteDe: rule.noteDe,
-          noteEn: rule.noteEn,
-        })
+        const parameter = rule.parameter.trim()
+        if (!parameter) return
+        const key = parameter.toLowerCase()
+        const existing = paramMap.get(key)
+        const weeks = frequencyToWeeks(rule.frequency)
+        if (existing) {
+          if (!existing.medications.includes(med.substance)) {
+            existing.medications.push(med.substance)
+          }
+          existing.weeks = unionWeeks(existing.weeks, weeks)
+        } else {
+          paramMap.set(key, {
+            parameter,
+            medications: [med.substance],
+            weeks,
+            noteDe: rule.noteDe,
+            noteEn: rule.noteEn,
+          })
+        }
       })
     })
   })
 
+  const rows: TimelineRow[] = [...paramMap.values()]
+    .sort((a, b) => b.medications.length - a.medications.length || a.parameter.localeCompare(b.parameter, 'de'))
+    .slice(0, 8)
+    .map((entry, idx) => ({
+      parameter: entry.parameter,
+      label:
+        entry.medications.length > 0
+          ? `${entry.parameter} (${entry.medications.join(', ')})`
+          : entry.parameter,
+      weeks: entry.weeks,
+      color: PARAM_COLORS[idx % PARAM_COLORS.length]!,
+      noteDe: entry.noteDe,
+      noteEn: entry.noteEn,
+    }))
+
   if (rows.length === 0) return null
 
-  // SVG layout constants
   const ROW_H = 28
-  const DRUG_COL_W = 72
-  const PARAM_COL_W = 152
+  const PARAM_COL_W = 240
   const COL_W = 40
   const PAD_TOP = 26
   const PAD_BOTTOM = 6
-  const svgW = DRUG_COL_W + PARAM_COL_W + WEEK_CHECKPOINTS.length * COL_W
+  const svgW = PARAM_COL_W + WEEK_CHECKPOINTS.length * COL_W
   const svgH = PAD_TOP + rows.length * ROW_H + PAD_BOTTOM
 
   return (
@@ -171,11 +201,10 @@ export function MonitoringTimeline({ medications, language }: MonitoringTimeline
             className="monitoring-timeline__svg"
             aria-label={translateMedicationUi(language, 'medSectionMonitoringTimeline')}
           >
-            {/* Column headers */}
             {WEEK_CHECKPOINTS.map((week, ci) => (
               <text
                 key={week}
-                x={DRUG_COL_W + PARAM_COL_W + ci * COL_W + COL_W / 2}
+                x={PARAM_COL_W + ci * COL_W + COL_W / 2}
                 y={PAD_TOP - 10}
                 textAnchor="middle"
                 className="monitoring-timeline__axis-label"
@@ -184,13 +213,12 @@ export function MonitoringTimeline({ medications, language }: MonitoringTimeline
               </text>
             ))}
 
-            {/* Vertical grid lines */}
             {WEEK_CHECKPOINTS.map((_, ci) => (
               <line
                 key={ci}
-                x1={DRUG_COL_W + PARAM_COL_W + ci * COL_W + COL_W / 2}
+                x1={PARAM_COL_W + ci * COL_W + COL_W / 2}
                 y1={PAD_TOP - 4}
-                x2={DRUG_COL_W + PARAM_COL_W + ci * COL_W + COL_W / 2}
+                x2={PARAM_COL_W + ci * COL_W + COL_W / 2}
                 y2={svgH - PAD_BOTTOM}
                 className="monitoring-timeline__grid-line"
               />
@@ -201,8 +229,7 @@ export function MonitoringTimeline({ medications, language }: MonitoringTimeline
               const note = language === 'de' ? row.noteDe : row.noteEn
 
               return (
-                <g key={`${row.substanceName}-${row.parameter}-${ri}`}>
-                  {/* Alternating row tint */}
+                <g key={`${row.parameter}-${ri}`}>
                   {ri % 2 === 1 ? (
                     <rect
                       x={0}
@@ -213,41 +240,20 @@ export function MonitoringTimeline({ medications, language }: MonitoringTimeline
                     />
                   ) : null}
 
-                  {/* Drug name */}
                   <text
-                    x={DRUG_COL_W - 6}
-                    y={cy + 4}
-                    textAnchor="end"
-                    className="monitoring-timeline__drug-label"
-                    style={{ fill: row.color }}
-                  >
-                    {row.substanceName}
-                  </text>
-
-                  {/* Separator */}
-                  <line
-                    x1={DRUG_COL_W}
-                    y1={PAD_TOP + ri * ROW_H + 4}
-                    x2={DRUG_COL_W}
-                    y2={PAD_TOP + ri * ROW_H + ROW_H - 4}
-                    className="monitoring-timeline__sep-line"
-                  />
-
-                  {/* Parameter label */}
-                  <text
-                    x={DRUG_COL_W + 6}
+                    x={8}
                     y={cy + 4}
                     textAnchor="start"
                     className="monitoring-timeline__param-label"
+                    style={{ fill: row.color }}
                   >
-                    {row.parameter}
+                    {row.label}
                   </text>
 
-                  {/* Dot markers */}
                   {row.weeks.map((week) => {
                     const ci = WEEK_CHECKPOINTS.indexOf(week)
                     if (ci < 0) return null
-                    const cx = DRUG_COL_W + PARAM_COL_W + ci * COL_W + COL_W / 2
+                    const cx = PARAM_COL_W + ci * COL_W + COL_W / 2
                     return (
                       <circle
                         key={week}

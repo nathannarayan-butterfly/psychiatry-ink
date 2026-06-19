@@ -1,6 +1,11 @@
 import type { SemanticTone } from './OverviewCard'
 import type { RecentLabResultItem } from '../../../utils/overview/recentLabResults'
 
+import type {
+  PsychopathDomainStatus,
+  PsychopathOverviewDomainKey,
+} from '../../../schemas/psychopath/extraction'
+
 // ---------------------------------------------------------------------------
 // Shared presentational data contracts for the Übersicht dashboard cards.
 // All values are DERIVED from real patient/demo data by the data layer
@@ -43,24 +48,22 @@ export interface SafetyData {
     signals?: SafetyRiskSignal[]
   } | null
   alerts: SafetyAlert[]
-  /** Per-medication monitoring parameters with latest lab values. */
-  medicationMonitoring: MedicationMonitoringGroup[]
+  /** Medication-driven lab parameters grouped by analyte with latest values. */
+  medicationMonitoring: ParameterMonitoringRow[]
   /** True when no risk + no alerts could be derived at all (hide / "all clear"). */
   hasAnySignal: boolean
 }
 
-export interface MedicationMonitoringParameter {
+/** One monitored lab parameter with contributing medications and latest value. */
+export interface ParameterMonitoringRow {
   key: string
   label: string
+  /** Active substances that require monitoring of this parameter. */
+  medications: string[]
   valueLabel: string | null
   dateLabel: string | null
+  refLabel: string | null
   missing: boolean
-}
-
-export interface MedicationMonitoringGroup {
-  medicationId: string
-  medicationName: string
-  parameters: MedicationMonitoringParameter[]
 }
 
 export interface StatusEntry {
@@ -101,8 +104,12 @@ export interface MedicationOverviewData {
 }
 
 export interface SymptomStructuredCue {
+  /** AMDP domain key for i18n lookup in the overview grid. */
+  domainKey?: PsychopathOverviewDomainKey
   label: string
-  value: string
+  value?: string
+  /** Tri-state assessment — only positive/unclear shown in compact Übersicht. */
+  status?: PsychopathDomainStatus
 }
 
 /** One recorded course assessment, ordinal-encoded for the trajectory sparkline. */
@@ -114,15 +121,37 @@ export interface SymptomTrajectoryPoint {
   label: string
 }
 
+export interface PsychopathHistoryItem {
+  id: string
+  dateLabel: string
+  text: string
+  sourceLabel: string
+  courseLabel: string | null
+}
+
 export interface SymptomSnapshotData {
   snapshotText: string | null
+  /** Full narrative for inline editing (unclamped). */
+  fullText: string | null
+  /** True when a psychopathological finding is on file. */
+  assessed: boolean
   structured: SymptomStructuredCue[]
-  /** Optional diagnosis-context subtitle, e.g. "schizophrenes Spektrum". */
+  /** Diagnosis-aware context label (e.g. "affektive Störung"). */
   contextLabel: string | null
   courseLabel: string | null
   asOfLabel: string | null
   /** Real course-direction history (≥2 points) → mini trend chart. */
   trajectory: SymptomTrajectoryPoint[]
+  /** Prior overview-saved findings, newest first. */
+  history: PsychopathHistoryItem[]
+  /** True when structured cues come from AI extraction (vs regex imprint). */
+  structuredFromAi?: boolean
+  /** AI extraction confidence when structuredFromAi is true. */
+  aiConfidence?: 'high' | 'medium' | 'low'
+  /** Hide clamped narrative when structured grid is populated. */
+  collapseNarrative?: boolean
+  /** Summary when compact grid omits unremarkable AMDP domains. */
+  unremarkableSummary?: string | null
 }
 
 export interface RecentVerlaufItem {
@@ -155,7 +184,7 @@ export interface LabsDueData {
 }
 
 export interface LaborOverviewData extends LabsDueData {
-  medicationMonitoring: MedicationMonitoringGroup[]
+  medicationMonitoring: ParameterMonitoringRow[]
   recentAbnormal: RecentLabResultItem[]
 }
 

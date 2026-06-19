@@ -12,7 +12,9 @@ import { tabularToCandidates, type ColumnMapping } from '../../utils/documentImp
 import { persistAcceptedCandidates } from '../../utils/documentImport/persistCandidates'
 import { deleteImportedFile } from '../../utils/documentImport/importedFileStore'
 import { redactPatientName } from '../../utils/documentImport/deidentify'
+import { analyzeImport } from '../../utils/documentImport/importAnalyze'
 import { suggestMappings } from '../../utils/documentImport/aiMapping'
+import { applyAcceptedOverviewSuggestions } from '../../utils/documentImport/applyOverviewSuggestions'
 import { remapCandidate } from '../../utils/documentImport/remap'
 import { candidateIsAutoAcceptable, candidateNeedsReview } from '../../utils/documentImport/reviewHelpers'
 import { isDocumentImportAiMappingEnabled } from '../../utils/featureFlags'
@@ -25,6 +27,13 @@ import {
   type CreatedPatientInput,
   type ExistingPatientOption,
 } from './PatientIdentityPanel'
+import {
+  OverviewSuggestionsPanel,
+  type OverviewSuggestionStatus,
+} from './OverviewSuggestionsPanel'
+import { PatientSubheadingPanel } from './PatientSubheadingPanel'
+import type { OverviewWidgetSuggestion } from '../../schemas/documentImport/aiSuggestion'
+import { getCaseMeta, upsertCaseMeta } from '../../hooks/useCaseRegistry'
 
 interface PatientName {
   vorname?: string
@@ -52,7 +61,7 @@ interface DocumentImportModalProps {
   existingPatients?: ExistingPatientOption[]
 }
 
-type Phase = 'upload' | 'parsing' | 'identity' | 'review'
+type Phase = 'upload' | 'parsing' | 'analyzing' | 'identity' | 'review'
 
 /** Scrub the known patient's name from a candidate's narrative fields. */
 function redactCandidate(
@@ -110,6 +119,10 @@ export function DocumentImportModal({
   const [effectiveCaseId, setEffectiveCaseId] = useState<string | null>(caseId ?? null)
   const [redactionCount, setRedactionCount] = useState(0)
   const [showReviewOnly, setShowReviewOnly] = useState(false)
+  const [overviewSuggestions, setOverviewSuggestions] = useState<OverviewWidgetSuggestion[]>([])
+  const [overviewStatuses, setOverviewStatuses] = useState<Record<number, OverviewSuggestionStatus>>({})
+  const [patientSubheading, setPatientSubheading] = useState<string | null>(null)
+  const [patientSubheadingStatus, setPatientSubheadingStatus] = useState<OverviewSuggestionStatus>('pending')
 
   const reset = useCallback(() => {
     setPhase('upload')
@@ -123,6 +136,10 @@ export function DocumentImportModal({
     setEffectiveCaseId(caseId ?? null)
     setRedactionCount(0)
     setShowReviewOnly(false)
+    setOverviewSuggestions([])
+    setOverviewStatuses({})
+    setPatientSubheading(null)
+    setPatientSubheadingStatus('pending')
   }, [caseId])
 
   // Delete stored attachments that were never accepted (avoids orphan blobs).
@@ -156,20 +173,89 @@ export function DocumentImportModal({
   }, [])
 
   /** Apply patient-name de-identification across candidates and enter review. */
+  const applyMappingSuggestions = useCallback(
+    (cands: ClinicalImportCandidate[], suggestions: { candidateId: string; suggestedModule: ClinicalImportCandidate['module'] }[]) => {
+      if (suggestions.length === 0) return cands
+      return cands.map((candidate) => {
+        const suggestion = suggestions.find((s) => s.candidateId === candidate.id)
+        if (!suggestion || suggestion.suggestedModule === candidate.module) return candidate
+        return { ...remapCandidate(candidate, suggestion.suggestedModule), aiSuggested: true }
+      })
+    },
+    [],
+  )
+
+  const patientNamesForDeid = useCallback(
+    (name: PatientName): string[] => {
+      const names: string[] = []
+      if (name.vorname) names.push(name.vorname)
+      if (name.nachname) names.push(name.nachname)
+      if (name.vorname && name.nachname) names.push(`${name.vorname} ${name.nachname}`)
+      return names
+    },
+    [],
+  )
+
+  const runPostParseAnalyze = useCallback(
+    async (
+      env: ClinicalImportEnvelope,
+      scrubbed: ClinicalImportCandidate[],
+      name: PatientName,
+      tabularColumns?: string[],
+    ) => {
+      if (!isDocumentImportAiMappingEnabled()) {
+        setCandidates(scrubbed)
+        initStatuses(scrubbed)
+        setPhase('review')
+        return
+      }
+
+      setPhase('analyzing')
+      try {
+        const { mappingSuggestions, overviewWidgetSuggestions, patientSubheading: subheading, ran } = await analyzeImport(env, scrubbed, {
+          language,
+          patientNames: patientNamesForDeid(name),
+          columns: tabularColumns,
+        })
+        const withMappings = applyMappingSuggestions(scrubbed, mappingSuggestions)
+        setCandidates(withMappings)
+        initStatuses(withMappings)
+        setOverviewSuggestions(overviewWidgetSuggestions)
+        setPatientSubheading(subheading?.trim() || null)
+        setPatientSubheadingStatus('pending')
+        const overviewInit: Record<number, OverviewSuggestionStatus> = {}
+        overviewWidgetSuggestions.forEach((_, i) => {
+          overviewInit[i] = 'pending'
+        })
+        setOverviewStatuses(overviewInit)
+        if (ran && mappingSuggestions.length > 0) {
+          showNotionToast(
+            t('documentImportAiSuggestApplied').replace('{count}', String(mappingSuggestions.length)),
+          )
+        }
+      } catch {
+        setCandidates(scrubbed)
+        initStatuses(scrubbed)
+        showNotionToast(t('documentImportAnalyzeFailed'))
+      } finally {
+        setPhase('review')
+      }
+    },
+    [applyMappingSuggestions, initStatuses, language, patientNamesForDeid, t],
+  )
+
   const enterReview = useCallback(
-    (cands: ClinicalImportCandidate[], name: PatientName) => {
+    async (env: ClinicalImportEnvelope, cands: ClinicalImportCandidate[], name: PatientName, tabularColumns?: string[]) => {
       let total = 0
       const scrubbed = cands.map((candidate) => {
         const { candidate: next, redactions } = redactCandidate(candidate, name)
         total += redactions
         return next
       })
-      setCandidates(scrubbed)
-      initStatuses(scrubbed)
       setRedactionCount(total)
-      setPhase('review')
+      await runPostParseAnalyze(env, scrubbed, name, tabularColumns)
     },
-    [initStatuses],
+    [runPostParseAnalyze],
   )
 
   const handleFile = useCallback(
@@ -187,10 +273,10 @@ export function DocumentImportModal({
         // Case mode: patient already known → de-identify with their name and review.
         if (caseId) {
           setEffectiveCaseId(caseId)
-          enterReview(result.envelope.candidates, {
+          void enterReview(result.envelope, result.envelope.candidates, {
             vorname: patientVorname,
             nachname: patientNachname,
-          })
+          }, result.tabular?.table.headers)
           return
         }
 
@@ -202,7 +288,7 @@ export function DocumentImportModal({
         }
 
         // No case + no creation allowed: review without de-identification.
-        enterReview(result.envelope.candidates, {})
+        void enterReview(result.envelope, result.envelope.candidates, {}, result.tabular?.table.headers)
       } catch {
         showNotionToast(t('documentImportUnsupported'))
         setPhase('upload')
@@ -219,17 +305,17 @@ export function DocumentImportModal({
         return
       }
       setEffectiveCaseId(newCaseId)
-      enterReview(candidates, { vorname: input.vorname, nachname: input.nachname })
+      void enterReview(envelope!, candidates, { vorname: input.vorname, nachname: input.nachname })
     },
-    [candidates, enterReview, onCreatePatient, t],
+    [candidates, envelope, enterReview, onCreatePatient, t],
   )
 
   const handleSelectExisting = useCallback(
     (option: ExistingPatientOption) => {
       setEffectiveCaseId(option.caseId)
-      enterReview(candidates, { vorname: option.vorname, nachname: option.nachname })
+      void enterReview(envelope!, candidates, { vorname: option.vorname, nachname: option.nachname })
     },
-    [candidates, enterReview],
+    [candidates, envelope, enterReview],
   )
 
   const handleMappingChange = useCallback(
@@ -348,6 +434,28 @@ export function DocumentImportModal({
     }
   }, [candidates, envelope, language, t])
 
+  const setOverviewStatus = useCallback((index: number, status: OverviewSuggestionStatus) => {
+    setOverviewStatuses((prev) => ({ ...prev, [index]: prev[index] === status ? 'pending' : status }))
+  }, [])
+
+  const acceptAllOverviewSuggestions = useCallback(() => {
+    setOverviewStatuses(() => {
+      const next: Record<number, OverviewSuggestionStatus> = {}
+      overviewSuggestions.forEach((_, i) => {
+        next[i] = 'accepted'
+      })
+      return next
+    })
+  }, [overviewSuggestions])
+
+  const acceptedOverviewIndices = useMemo(() => {
+    const indices = new Set<number>()
+    overviewSuggestions.forEach((_, i) => {
+      if (overviewStatuses[i] === 'accepted') indices.add(i)
+    })
+    return indices
+  }, [overviewSuggestions, overviewStatuses])
+
   const handleSave = useCallback(() => {
     if (!envelope || !effectiveCaseId) return
     const accepted = candidates.filter((c) => statuses[c.id] === 'accepted')
@@ -362,6 +470,36 @@ export function DocumentImportModal({
     })
     pruneAttachments(candidates, new Set(accepted.map((c) => c.id)))
 
+    if (acceptedOverviewIndices.size > 0) {
+      const overviewResult = applyAcceptedOverviewSuggestions({
+        caseId: effectiveCaseId,
+        suggestions: overviewSuggestions,
+        acceptedIndices: acceptedOverviewIndices,
+        persistResult: result,
+      })
+      if (overviewResult.applied > 0) {
+        showNotionToast(
+          t('documentImportOverviewAppliedToast').replace('{count}', String(overviewResult.applied)),
+        )
+      }
+    }
+
+    const metaPatch: Parameters<typeof upsertCaseMeta>[1] = {}
+    if (patientSubheadingStatus === 'accepted' && patientSubheading?.trim()) {
+      metaPatch.localClinicalSubheading = patientSubheading.trim()
+    }
+    const parsedDob = identity?.geburtsdatum?.trim()
+    const existingMeta = getCaseMeta(effectiveCaseId)
+    if (parsedDob && !existingMeta?.localGeburtsdatum?.trim()) {
+      metaPatch.localGeburtsdatum = parsedDob
+    }
+    if (Object.keys(metaPatch).length > 0) {
+      upsertCaseMeta(effectiveCaseId, metaPatch)
+      if (metaPatch.localClinicalSubheading) {
+        showNotionToast(t('documentImportPatientSubheadingAppliedToast'))
+      }
+    }
+
     showNotionToast(t('documentImportSavedToast').replace('{count}', String(result.persisted.length)))
     if (result.errors.length > 0) {
       showNotionToast(t('documentImportSaveErrorToast').replace('{count}', String(result.errors.length)))
@@ -369,7 +507,7 @@ export function DocumentImportModal({
     if (result.persisted.length > 0) onImported?.(effectiveCaseId)
     reset()
     onClose()
-  }, [acceptedBy, candidates, effectiveCaseId, envelope, language, onClose, onImported, pruneAttachments, reset, statuses, t])
+  }, [acceptedOverviewIndices, acceptedBy, candidates, effectiveCaseId, envelope, identity, language, onClose, onImported, overviewSuggestions, patientSubheading, patientSubheadingStatus, pruneAttachments, reset, statuses, t])
 
   if (!open) return null
 
@@ -405,6 +543,8 @@ export function DocumentImportModal({
           {phase === 'upload' && <ImportDropzone onFile={handleFile} />}
 
           {phase === 'parsing' && <p className="doc-import-status">{t('documentImportParsing')}</p>}
+
+          {phase === 'analyzing' && <p className="doc-import-status">{t('documentImportAnalyzing')}</p>}
 
           {phase === 'identity' && (
             <PatientIdentityPanel
@@ -444,6 +584,23 @@ export function DocumentImportModal({
                   table={tabular.table}
                   mapping={tabular.mapping}
                   onChange={handleMappingChange}
+                />
+              )}
+
+              {patientSubheading ? (
+                <PatientSubheadingPanel
+                  subheading={patientSubheading}
+                  status={patientSubheadingStatus}
+                  onToggle={setPatientSubheadingStatus}
+                />
+              ) : null}
+
+              {overviewSuggestions.length > 0 && (
+                <OverviewSuggestionsPanel
+                  suggestions={overviewSuggestions}
+                  statuses={overviewStatuses}
+                  onToggle={setOverviewStatus}
+                  onAcceptAll={acceptAllOverviewSuggestions}
                 />
               )}
 

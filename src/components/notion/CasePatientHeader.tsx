@@ -13,6 +13,7 @@ interface CasePatientHeaderProps {
   showThesis?: boolean
   /** Minimal layout — typographic strip without boxed chrome. */
   variant?: 'default' | 'minimal'
+  onClinicalSubheadingChange?: () => void
 }
 
 /** Patient name and demographics at the top of each case tab content area. */
@@ -21,10 +22,11 @@ export function CasePatientHeader({
   metaVersion = 0,
   showThesis = false,
   variant = 'minimal',
+  onClinicalSubheadingChange,
 }: CasePatientHeaderProps) {
   const { t, language } = useTranslation()
 
-  const { name, metaLine, thesis } = useMemo(() => {
+  const { name, metaLine, thesis, isAssigned } = useMemo(() => {
     void metaVersion
     void language
     const hero = buildClinicalHeroMeta(caseId, t)
@@ -44,8 +46,10 @@ export function CasePatientHeader({
       <ClinicalHeroStrip
         name={name}
         metaLine={metaLine}
-        caseId={caseId !== DEFAULT_CASE_ID ? caseId : undefined}
+        caseId={isAssigned && caseId !== DEFAULT_CASE_ID ? caseId : undefined}
         thesis={thesis}
+        thesisEditable={showThesis}
+        onThesisChange={onClinicalSubheadingChange}
       />
     </div>
   )

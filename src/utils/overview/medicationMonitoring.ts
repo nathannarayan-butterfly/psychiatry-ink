@@ -2,16 +2,14 @@ import type { MedicationEntry } from '../../types/medicationPlan'
 import type { LaborBefund, LaborValue } from '../laborArchive'
 import {
   analyteLabel,
+  analytePriority,
   getMonitoringAnalytesForSubstance,
   isSpiegelAnalyte,
   matchAnalyteKey,
   type AnalyteKey,
 } from '../diagnostics/labRelevance'
 import { formatDateDe } from './dateLabels'
-import type {
-  MedicationMonitoringGroup,
-  MedicationMonitoringParameter,
-} from '../../components/notion/overview/types'
+import type { ParameterMonitoringRow } from '../../components/notion/overview/types'
 
 export interface MedicationMonitoringInput {
   medications: MedicationEntry[]
@@ -42,6 +40,15 @@ function valueLabel(v: LaborValue): string {
   return v.unit ? `${base} ${v.unit}` : base
 }
 
+function refLabel(v: LaborValue): string | null {
+  const unit = v.unit ? ` ${v.unit}` : ''
+  if (v.refText) return `${v.refText}${unit}`
+  if (v.refMin !== undefined && v.refMax !== undefined) return `${v.refMin}–${v.refMax}${unit}`
+  if (v.refMin !== undefined) return `≥ ${v.refMin}${unit}`
+  if (v.refMax !== undefined) return `≤ ${v.refMax}${unit}`
+  return null
+}
+
 const HEIGHT_PATTERNS = [/größe/i, /groesse/i, /\bheight\b/i, /körpergröße/i, /korpergrosse/i, /statur/i]
 const WEIGHT_ONLY_PATTERNS = [/gewicht/i, /körpergewicht/i, /korpergewicht/i, /body\s?mass/i, /k[oö]rpergewicht/i]
 
@@ -58,7 +65,6 @@ function matchesWeightOnly(name: string): boolean {
 function parseHeightMeters(v: LaborValue): number | null {
   if (v.numericValue === undefined) return null
   const val = v.numericValue
-  // cm → m when value looks like stature in cm (typical 140–220).
   if (val > 3) return val / 100
   return val
 }
@@ -111,12 +117,13 @@ function buildLabIndex(befunde: LaborBefund[]) {
 function resolveParameterValue(
   key: AnalyteKey,
   index: ReturnType<typeof buildLabIndex>,
-): { valueLabel: string | null; dateLabel: string | null; missing: boolean } {
+): { valueLabel: string | null; dateLabel: string | null; refLabel: string | null; missing: boolean } {
   if (key === 'weight') {
     if (index.latestBmi) {
       return {
         valueLabel: valueLabel(index.latestBmi.value),
         dateLabel: formatDateDe(index.latestBmi.date),
+        refLabel: refLabel(index.latestBmi.value),
         missing: false,
       }
     }
@@ -130,6 +137,7 @@ function resolveParameterValue(
         return {
           valueLabel: `${bmi} kg/m²`,
           dateLabel: formatDateDe(date),
+          refLabel: null,
           missing: false,
         }
       }
@@ -138,6 +146,7 @@ function resolveParameterValue(
       return {
         valueLabel: valueLabel(weight.value),
         dateLabel: formatDateDe(weight.date),
+        refLabel: refLabel(weight.value),
         missing: false,
       }
     }
@@ -146,37 +155,46 @@ function resolveParameterValue(
       return {
         valueLabel: valueLabel(fromKey.value),
         dateLabel: formatDateDe(fromKey.date),
+        refLabel: refLabel(fromKey.value),
         missing: false,
       }
     }
-    return { valueLabel: null, dateLabel: null, missing: true }
+    return { valueLabel: null, dateLabel: null, refLabel: null, missing: true }
   }
 
   const latest = index.latestByKey.get(key)
   if (!latest) {
-    return { valueLabel: null, dateLabel: null, missing: true }
+    return { valueLabel: null, dateLabel: null, refLabel: null, missing: true }
   }
   return {
     valueLabel: valueLabel(latest.value),
     dateLabel: formatDateDe(latest.date),
+    refLabel: refLabel(latest.value),
     missing: false,
   }
 }
 
 const ACTIVE_STATUSES = new Set(['active', 'reduced', 'increased'])
 
+/** Format `Parameter (Med1, Med2)` for display. */
+export function formatParameterMonitoringLabel(row: ParameterMonitoringRow): string {
+  if (row.medications.length === 0) return row.label
+  return `${row.label} (${row.medications.join(', ')})`
+}
+
 /**
- * Group medication-driven monitoring parameters under each active medication,
- * with the latest matching lab value per parameter (from befunde / anthropometry).
+ * Group medication-driven monitoring by **parameter** (not by medication).
+ * Each row lists all contributing active substances in brackets and the latest
+ * matching lab value when available.
  *
  * Mapping source: {@link DRUG_LAB_RULES} + psychopharmacology class fallback
  * in `labRelevance.ts` (not hardcoded per demo patient).
  */
-export function getMedicationMonitoringGroups(
+export function getParameterMonitoringRows(
   input: MedicationMonitoringInput,
-): MedicationMonitoringGroup[] {
+): ParameterMonitoringRow[] {
   const labIndex = buildLabIndex(input.befunde)
-  const groups: MedicationMonitoringGroup[] = []
+  const paramMeds = new Map<AnalyteKey, string[]>()
   const seenMedIds = new Set<string>()
 
   for (const med of input.medications) {
@@ -187,31 +205,40 @@ export function getMedicationMonitoringGroups(
     const analyteRules = getMonitoringAnalytesForSubstance(med.substance)
     if (analyteRules.length === 0) continue
 
+    const medName = med.substance.trim()
     const seenKeys = new Set<AnalyteKey>()
-    const parameters: MedicationMonitoringParameter[] = []
-
     for (const rule of analyteRules) {
       if (seenKeys.has(rule.key)) continue
       seenKeys.add(rule.key)
 
-      const resolved = resolveParameterValue(rule.key, labIndex)
-      parameters.push({
-        key: rule.key,
-        label: displayLabel(rule.key),
-        valueLabel: resolved.valueLabel,
-        dateLabel: resolved.dateLabel,
-        missing: resolved.missing,
-      })
-    }
-
-    if (parameters.length > 0) {
-      groups.push({
-        medicationId: med.id,
-        medicationName: med.substance.trim(),
-        parameters,
-      })
+      const list = paramMeds.get(rule.key) ?? []
+      if (!list.includes(medName)) list.push(medName)
+      paramMeds.set(rule.key, list)
     }
   }
 
-  return groups
+  const rows: ParameterMonitoringRow[] = []
+  for (const [key, medications] of paramMeds) {
+    const resolved = resolveParameterValue(key, labIndex)
+    rows.push({
+      key,
+      label: displayLabel(key),
+      medications: [...medications].sort((a, b) => a.localeCompare(b, 'de')),
+      valueLabel: resolved.valueLabel,
+      dateLabel: resolved.dateLabel,
+      refLabel: resolved.refLabel,
+      missing: resolved.missing,
+    })
+  }
+
+  rows.sort(
+    (a, b) =>
+      analytePriority(a.key as AnalyteKey) - analytePriority(b.key as AnalyteKey) ||
+      a.label.localeCompare(b.label, 'de'),
+  )
+
+  return rows
 }
+
+/** @deprecated Use {@link getParameterMonitoringRows}. */
+export const getMedicationMonitoringGroups = getParameterMonitoringRows

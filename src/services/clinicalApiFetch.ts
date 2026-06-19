@@ -73,6 +73,9 @@ const ERROR_DE: Record<string, string> = {
   'Combination check failed': 'Kombinationscheck fehlgeschlagen',
   'Lab medication correlation failed': 'Korrelationsprüfung fehlgeschlagen',
   'Prep AI check failed': 'Verfügbarkeitsprüfung fehlgeschlagen',
+  'Not found': 'Nicht gefunden',
+  'Server KI deaktiviert — ENABLE_PSYCHOPATH_EXTRACT_AI auf API-Server setzen und neu starten':
+    'Server KI deaktiviert — ENABLE_PSYCHOPATH_EXTRACT_AI auf API-Server setzen und neu starten',
   'Generation failed': 'KI-Generierung fehlgeschlagen',
 }
 

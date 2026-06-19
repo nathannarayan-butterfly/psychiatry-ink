@@ -36,7 +36,10 @@ import { ReceptorProfileSection } from './ReceptorProfileSection'
 import { ReceptorRadarChart } from './ReceptorRadarChart'
 import { GlobalSideEffectForm } from './SideEffectDialog'
 import { MonitoringTimeline } from './MonitoringTimeline'
+import { ParameterMonitoringList } from '../clinical/ParameterMonitoringList'
 import { ClinicalLoading } from '../ui/ClinicalLoading'
+import { loadBefunde } from '../../utils/laborArchive'
+import { getParameterMonitoringRows } from '../../utils/overview/medicationMonitoring'
 
 /** Ordered medication sub-sections for sidebar navigation → detail panel. */
 export const MEDICATION_SECTIONS = [
@@ -379,14 +382,31 @@ export function MedicationLowerSections({
     </div>
   )
 
-  const renderMonitoring = () => (
-    <>
-      <MonitoringTimeline medications={medications} language={language} />
-      <p className="medication-lower-section__disclaimer">
-        {translateMedicationUi(language, 'medReferenceDisclaimer')}
-      </p>
-    </>
-  )
+  const renderMonitoring = () => {
+    const parameterMonitoring = getParameterMonitoringRows({
+      medications,
+      befunde: loadBefunde(caseId),
+    })
+    return (
+      <>
+        {parameterMonitoring.length > 0 ? (
+          <div className="medication-lab-monitoring">
+            <p className="medication-lower-section__subhead">
+              {translateMedicationUi(language, 'medLabMonitoringTitle')}
+            </p>
+            <ParameterMonitoringList
+              rows={parameterMonitoring}
+              notDocumentedLabel={translateMedicationUi(language, 'medLabMonitoringNotDocumented')}
+            />
+          </div>
+        ) : null}
+        <MonitoringTimeline medications={medications} language={language} />
+        <p className="medication-lower-section__disclaimer">
+          {translateMedicationUi(language, 'medReferenceDisclaimer')}
+        </p>
+      </>
+    )
+  }
 
   const renderLab = () => (
     <LabMedicationCorrelationPanel
