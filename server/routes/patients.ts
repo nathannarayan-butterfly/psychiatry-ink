@@ -119,7 +119,12 @@ patientsRouter.delete('/:caseId', async (req: Request, res: Response) => {
       return
     }
 
-    await prisma.patientCase.delete({ where: { caseId } })
+    // Case ids are globally unique; drop any encrypted workspace snapshot for this case
+    // (userId may be the Supabase account id or a legacy device id in local dev).
+    await prisma.$transaction([
+      prisma.encryptedWorkspaceSnapshot.deleteMany({ where: { caseId } }),
+      prisma.patientCase.delete({ where: { caseId } }),
+    ])
     res.status(204).send()
   } catch (error) {
     console.error('[patients] delete failed', error)

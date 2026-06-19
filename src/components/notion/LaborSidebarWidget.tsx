@@ -11,6 +11,7 @@ import {
   setDiagnosticsSectionPref,
 } from '../../utils/befundArchive'
 import { formatBefundDate, getBefundTypeLabel } from '../../utils/befundRender'
+import { formatClinicalDate, formatClinicalDateShort } from '../../utils/clinicalDate'
 
 interface LaborSidebarWidgetProps {
   caseId: string
@@ -37,26 +38,12 @@ function saveHidden(caseId: string, hidden: boolean): void {
 }
 
 function shortDate(iso: string): string {
-  try {
-    const d = new Date(iso)
-    const dd = String(d.getDate()).padStart(2, '0')
-    const mm = String(d.getMonth() + 1).padStart(2, '0')
-    return `${dd}.${mm}`
-  } catch {
-    return iso.slice(5, 10)
-  }
+  const short = formatClinicalDateShort(iso)
+  return short.endsWith('.') ? short.slice(0, -1) : short || iso.slice(5, 10)
 }
 
 function formatDate(iso: string): string {
-  try {
-    const d = new Date(iso)
-    const dd = String(d.getDate()).padStart(2, '0')
-    const mm = String(d.getMonth() + 1).padStart(2, '0')
-    const yyyy = d.getFullYear()
-    return `${dd}.${mm}.${yyyy}`
-  } catch {
-    return iso.slice(0, 10)
-  }
+  return formatClinicalDate(iso) || iso.slice(0, 10)
 }
 
 function buildSparkData(widget: PinnedLaborWidget, befunde: LaborBefund[]) {

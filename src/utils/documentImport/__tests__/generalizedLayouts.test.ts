@@ -133,6 +133,72 @@ describe('generalization — robustness against false headings', () => {
   })
 })
 
+describe('regression — aufnahme letter structure (de-identified)', () => {
+  const AUFNAHME_LETTER = [
+    'Aufnahmeanlass und -umstände:',
+    'Überstellung zur Optimierung der Therapie.',
+    '',
+    'Aktuelle Anamnese:',
+    'Patient wortkarg, monoton im Kontakt.',
+    '',
+    'Psychiatrische Anamnese:',
+    'Paranoide Schizophrenie vordiagnostiziert.',
+    '',
+    'Suchtmittelanamnese:',
+    'Kein aktueller Substanzkonsum.',
+    '',
+    'Vorerkrankungen:',
+    'Keine somatischen Vorerkrankungen bekannt.',
+    '',
+    'Körperlich-vegetative Anamnese:',
+    'Schlaf und Appetit unauffällig.',
+    '',
+    'Familienanamnese:',
+    'Keine Belastung in der Vorgeschichte.',
+    '',
+    'Sozialanamnese:',
+    'Lebt seit Jahren in Deutschland.',
+    '',
+    'Forensische Anamnese:',
+    'Wiederholte Inhaftierungen.',
+    '',
+    'Psychischer Befund:',
+    'Wach, orientiert, affektiv verflacht.',
+    '',
+    'Neurologischer Befund:',
+    'Keine fokal-neurologischen Defizite.',
+    '',
+    'Procedere:',
+    'Medikation optimieren, Tagesstruktur fördern.',
+    '',
+    '09.12.2025',
+    'Visite mit Frau Paval:',
+    'Visite durchgeführt, Patient stabil.',
+    '',
+    '16.12.2025',
+    'Visite mit Herrn Narayan:',
+    'Schlaf verbessert, keine Nebenwirkungen.',
+  ].join('\n')
+
+  it('maps aufnahme sub-sections and visit notes with leading dates', () => {
+    const all = candidatesFor(AUFNAHME_LETTER)
+    const anamnese = all.filter((c) => c.module === 'anamnese')
+    expect(anamnese.length).toBeGreaterThanOrEqual(10)
+    const sectionIds = anamnese.map((c) => (c.module === 'anamnese' ? c.data.sectionId : undefined))
+    expect(sectionIds).toContain('aufnahmeanlass')
+    expect(sectionIds).toContain('aktuelle-krankheitsanamnese')
+    expect(sectionIds).toContain('psychiatrische-vorgeschichte')
+    expect(sectionIds).toContain('somatischer-befund')
+
+    const verlauf = all.filter((c) => c.module === 'verlauf')
+    expect(verlauf).toHaveLength(2)
+    expect(verlauf.map((c) => (c.module === 'verlauf' ? c.data.date : undefined))).toEqual([
+      '2025-12-09',
+      '2025-12-16',
+    ])
+  })
+})
+
 describe('regression — synthetic "sample clinic" layout must not degrade', () => {
   const SAMPLE_ANAMNESE = [
     'Aufnahmeanlass',

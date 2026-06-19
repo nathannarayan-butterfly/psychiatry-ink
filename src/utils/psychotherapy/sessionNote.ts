@@ -10,20 +10,10 @@ import {
   translateTherapyMethod,
   translateTherapyStage,
 } from '../../data/psychotherapyUiTranslations'
+import { formatClinicalDate } from '../clinicalDate'
 
-function formatDate(iso: string, language: UiLanguage): string {
-  if (!iso) return ''
-  try {
-    const d = new Date(iso)
-    if (Number.isNaN(d.getTime())) return iso
-    const dd = String(d.getDate()).padStart(2, '0')
-    const mm = String(d.getMonth() + 1).padStart(2, '0')
-    const yyyy = d.getFullYear()
-    if (language === 'en') return `${dd}/${mm}/${yyyy}`
-    return `${dd}.${mm}.${yyyy}`
-  } catch {
-    return iso
-  }
+function formatDate(iso: string, _language: UiLanguage): string {
+  return formatClinicalDate(iso) || iso
 }
 
 interface ParagraphPhrases {

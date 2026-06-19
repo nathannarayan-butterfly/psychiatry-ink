@@ -4,17 +4,7 @@ import { shortCaseId } from '../caseContext'
 import { loadDiagnosen } from '../diagnosenArchive'
 import { resolveDiagnosisLabelSync } from '../diagnosisDisplayRequests'
 import type { TemplateRenderContext } from '../../types/documentTemplate'
-
-function formatDate(iso?: string): string {
-  if (!iso) return ''
-  try {
-    const d = new Date(iso)
-    if (Number.isNaN(d.getTime())) return iso
-    return d.toLocaleDateString('de-DE')
-  } catch {
-    return iso
-  }
-}
+import { formatClinicalDate } from '../clinicalDate'
 
 function formatTime(): string {
   return new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
@@ -30,7 +20,7 @@ function genderLabel(g?: string): string {
 export async function buildTemplateRenderContext(caseId?: string): Promise<TemplateRenderContext> {
   const now = new Date()
   const system = {
-    date: now.toLocaleDateString('de-DE'),
+    date: formatClinicalDate(now),
     time: formatTime(),
     year: String(now.getFullYear()),
   }
@@ -44,7 +34,7 @@ export async function buildTemplateRenderContext(caseId?: string): Promise<Templ
     name: meta?.localName,
     vorname: meta?.localVorname,
     nachname: meta?.localNachname,
-    geburtsdatum: meta?.localGeburtsdatum ? formatDate(meta.localGeburtsdatum) : undefined,
+    geburtsdatum: meta?.localGeburtsdatum ? formatClinicalDate(meta.localGeburtsdatum) : undefined,
     geschlecht: meta?.localGeschlecht ? genderLabel(meta.localGeschlecht) : undefined,
     age: meta?.localAge,
   }
@@ -53,7 +43,7 @@ export async function buildTemplateRenderContext(caseId?: string): Promise<Templ
     const vault = await loadPatientMetadata(caseId)
     if (vault?.metadata.name) patient.name = vault.metadata.name
     if (vault?.metadata.geburtsdatum) {
-      patient.geburtsdatum = formatDate(vault.metadata.geburtsdatum)
+      patient.geburtsdatum = formatClinicalDate(vault.metadata.geburtsdatum)
     }
     if (vault?.migratedAge && !patient.age) patient.age = vault.migratedAge
   } catch {

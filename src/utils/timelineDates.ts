@@ -1,4 +1,5 @@
 import type { TimelineDateKind } from '../types/timeline'
+import { formatClinicalMonthYear } from './clinicalDate'
 
 export interface ParsedTimelineDate {
   sortKey: number
@@ -55,7 +56,7 @@ export function parseTimelineDate(kind: TimelineDateKind, raw: string): ParsedTi
     if (month < 1 || month > 12 || year < 1900 || year > 2100) return null
     return {
       sortKey: toSortKey(year, month, 15),
-      displayDate: `${pad2(month)}/${year}`,
+      displayDate: formatClinicalMonthYear(month, year),
     }
   }
 

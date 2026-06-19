@@ -126,8 +126,25 @@ export function formatSiteLocaleDate(
   try {
     const date = new Date(iso)
     if (Number.isNaN(date.getTime())) return iso
-    return formatInSiteTimezone(date, locale, options)
+    const resolvedLocale = resolveClinicalDisplayLocale(locale)
+    return formatInSiteTimezone(date, resolvedLocale, options)
   } catch {
     return iso
+  }
+}
+
+/** Map UI language codes to day-first BCP47 locales for date display. */
+function resolveClinicalDisplayLocale(locale: string): string {
+  switch (locale) {
+    case 'en':
+      return 'en-GB'
+    case 'de':
+      return 'de-DE'
+    case 'fr':
+      return 'fr-FR'
+    case 'es':
+      return 'es-ES'
+    default:
+      return locale.includes('-') ? locale : 'de-DE'
   }
 }

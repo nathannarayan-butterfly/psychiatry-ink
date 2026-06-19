@@ -1067,6 +1067,93 @@
   gap: 0.35rem;
 }
 
+.day-schedule-panel__section-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.75rem 0 0.35rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--day-schedule-header) 72%, transparent);
+}
+
+.day-schedule-panel__section-label:first-of-type {
+  margin-top: 0.15rem;
+}
+
+.day-schedule-panel__section-label--todos {
+  color: color-mix(in srgb, var(--accent, #8a5a2b) 75%, var(--day-schedule-header));
+}
+
+.day-schedule-panel__section-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent, #8a5a2b) 14%, #fff);
+  color: var(--accent, #8a5a2b);
+  font-size: 0.625rem;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.day-schedule-list--todos {
+  margin-top: 0.15rem;
+}
+
+.day-schedule-row--todo {
+  border-left: 2px solid color-mix(in srgb, var(--accent, #8a5a2b) 35%, transparent);
+  background: color-mix(in srgb, var(--accent, #8a5a2b) 3%, #fff);
+}
+
+.day-schedule-row--todo-done {
+  opacity: 0.62;
+}
+
+.day-schedule-row--todo-overdue {
+  border-left-color: color-mix(in srgb, #b3261e 55%, transparent);
+  background: color-mix(in srgb, #b3261e 4%, #fff);
+}
+
+.day-schedule-todo-check {
+  flex-shrink: 0;
+  width: 1.1rem;
+  height: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid color-mix(in srgb, var(--day-schedule-header) 35%, transparent);
+  border-radius: 0.3rem;
+  background: #fff;
+  color: #fff;
+  cursor: pointer;
+}
+
+.day-schedule-todo-check--on {
+  background: var(--accent, #8a5a2b);
+  border-color: var(--accent, #8a5a2b);
+}
+
+.day-schedule-row__time--todo {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.day-schedule-row__todo-text {
+  font-weight: 500;
+}
+
+.day-schedule-row__badge--overdue {
+  color: #b3261e;
+  font-weight: 500;
+}
+
 /* Active appointment bar */
 .active-appointment-bar {
   display: flex;

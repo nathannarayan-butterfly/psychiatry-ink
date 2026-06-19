@@ -186,6 +186,16 @@
   height: 0.85rem;
 }
 
+.doc-import-review__filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
 .doc-import-review__list {
   display: flex;
   flex-direction: column;

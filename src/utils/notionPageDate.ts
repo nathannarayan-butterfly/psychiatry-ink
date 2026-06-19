@@ -1,5 +1,6 @@
 import type { NotionPageId } from '../components/notion/notionPages'
 import { caseStorageKey, DEFAULT_CASE_ID, getActiveCaseId } from './caseContext'
+import { formatClinicalDate } from './clinicalDate'
 import { todayIsoDateSite, yesterdayIsoDateSite } from './siteTimezone'
 
 const KEY_PREFIX = 'psychiatry-ink:notion-page-date'
@@ -101,19 +102,10 @@ export function formatNotionPageDateInput(iso: string): string {
   return `${pad2(day)}.${pad2(month)}.${year}`
 }
 
-/** Locale-aware display for the collapsed row when a date is set. */
-export function formatNotionPageDateDisplay(iso: string, locale: string): string {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso.trim())
-  if (!match) return iso
-  const year = Number(match[1])
-  const month = Number(match[2])
-  const day = Number(match[3])
-  if (!isValidCalendarDate(year, month, day)) return iso
-  return new Date(year, month - 1, day).toLocaleDateString(locale, {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
+/** Clinical display for the collapsed row when a date is set (`DD.MM.YYYY`). */
+export function formatNotionPageDateDisplay(iso: string, _locale?: string): string {
+  const formatted = formatClinicalDate(iso)
+  return formatted || iso
 }
 
 /** Parse DD.MM.YYYY, DD.MM.YY, or ISO YYYY-MM-DD. Returns '' to clear, null if invalid. */

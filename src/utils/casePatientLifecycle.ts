@@ -7,9 +7,11 @@ import {
   type LocalCaseMeta,
 } from '../hooks/useCaseRegistry'
 import { deletePatientOnApi } from '../services/patientRegistryApi'
+import { scheduleAccountRegistryUpload } from './accountBackup'
 import { loadRegistryMapFromStorage, saveRegistryMapToStorage } from './caseRegistryStorage'
 import { clearDemoCaseStorage } from '../demo/clearDemoCaseStorage'
 import { DEMO_CASE_ID } from '../demo/constants'
+import { deleteImportedFilesForCase } from './documentImport/importedFileStore'
 
 /** Stale test fall — short id prefix only; never matches DEMO-CASE-0001. */
 export const STALE_CASE_ID_PREFIX = '219918e0'
@@ -38,15 +40,17 @@ export async function deletePatientCasePermanently(caseId: string, userId: strin
   }
 
   await clearDemoCaseStorage(caseId)
+  await deleteImportedFilesForCase(caseId)
   const map = loadRegistryMapFromStorage()
   delete map[caseId]
   saveRegistryMapToStorage(map)
   replaceRegistryMap(map)
+  scheduleAccountRegistryUpload()
 
   try {
     await deletePatientOnApi(caseId)
   } catch {
-    // offline — local removal is enough for dashboard
+    // offline — local removal is enough for dashboard until the next successful sync
   }
 }
 

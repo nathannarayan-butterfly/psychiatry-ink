@@ -7,6 +7,7 @@ import {
   translateMedicationUi,
 } from '../../data/medicationUiTranslations'
 import type { MedicationEntry, MedicationStatus } from '../../types/medicationPlan'
+import { formatClinicalDate } from '../../utils/clinicalDate'
 import { ChangeTypeIcon } from './MedicationToolbar'
 
 /** Maps medication status onto the shared therapy status-pill palette. */
@@ -85,7 +86,7 @@ export function MedicationRow({
             </span>
             <span>
               {translateMedicationUi(language, 'medLastChange')}:{' '}
-              {entry.lastChangeAt ? new Date(entry.lastChangeAt).toLocaleDateString() : '—'}
+              {entry.lastChangeAt ? formatClinicalDate(entry.lastChangeAt) : '—'}
             </span>
           </div>
         </div>

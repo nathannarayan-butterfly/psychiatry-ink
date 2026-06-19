@@ -9,6 +9,7 @@ import {
 } from '../../data/medicationUiTranslations'
 import type { MedicationStatus } from '../../types/medicationPlan'
 import type { PlanTimelineEntry } from '../../utils/medication/planOps'
+import { localeForUiLanguage } from '../../utils/calendarLabels'
 import { ChangeTypeIcon } from './MedicationToolbar'
 
 /** Maps medication status onto the shared therapy status-pill palette (mirrors MedicationRow). */
@@ -33,7 +34,7 @@ interface MedicationPlanHistoryProps {
  */
 export function MedicationPlanHistory({ timeline, onBackToCurrent }: MedicationPlanHistoryProps) {
   const { language } = useTranslation()
-  const locale = language === 'de' ? 'de-DE' : language
+  const locale = localeForUiLanguage(language)
 
   // Most recent first — the newest snapshot equals the current live plan.
   const entries = [...timeline].reverse()

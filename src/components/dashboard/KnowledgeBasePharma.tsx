@@ -80,6 +80,7 @@ import {
   type UserHighlight,
 } from '../../types/knowledgeBaseAnnotations'
 import { formatSiteLocaleDate } from '../../utils/siteTimezone'
+import { formatClinicalDate } from '../../utils/clinicalDate'
 import { getDisplayReceptorProfile } from '../../utils/medication/receptorAffinity'
 import { sectionToFullText } from '../../utils/medication/structuredSectionText'
 import { HighlightedText, getTextSelectionOffsets } from './KnowledgeBaseHighlightedText'
@@ -981,8 +982,8 @@ function TextbookBox({
   )
 }
 
-function formatKbDate(value: string | undefined, language: string): string {
-  return value ? formatSiteLocaleDate(value, language as 'de' | 'en' | 'fr' | 'es') : '—'
+function formatKbDate(value: string | undefined, _language: string): string {
+  return value ? formatClinicalDate(value) || '—' : '—'
 }
 
 function formatAuditName(name: string | undefined): string {

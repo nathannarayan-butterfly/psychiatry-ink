@@ -74,12 +74,17 @@ function expandYear(yy: number): number {
   return yy <= 68 ? 2000 + yy : 1900 + yy
 }
 
+/** Normalize spaced separators (DD MM YYYY) to dotted form before parsing. */
+function normalizeGermanDateInput(raw: string): string {
+  return raw.trim().replace(/(\d{1,2})\s+(\d{1,2})\s+(\d{2,4})\b/g, '$1.$2.$3')
+}
+
 /**
  * Parse a single German/ISO date string to ISO `YYYY-MM-DD`. Returns null when
  * the string is not a recognisable, valid calendar date.
  */
 export function parseGermanDate(raw: string): string | null {
-  const value = raw.trim()
+  const value = normalizeGermanDateInput(raw)
 
   let m = ISO_DATE.exec(value)
   if (m) {
@@ -110,6 +115,21 @@ export function parseGermanDate(raw: string): string | null {
   }
 
   return null
+}
+
+import { formatClinicalDate } from '../clinicalDate'
+
+/** Display ISO `YYYY-MM-DD` as German clinical `DD.MM.YYYY`. */
+export function isoToGermanDate(iso: string | undefined): string {
+  if (!iso) return ''
+  return formatClinicalDate(iso) || iso
+}
+
+/** Parse clinician date input (`DD.MM.YYYY`, `DD MM YYYY`, or ISO) to ISO. */
+export function parseGermanDateInput(input: string): string | null {
+  const trimmed = input.trim()
+  if (!trimmed) return null
+  return parseGermanDate(trimmed)
 }
 
 const DATE_TOKEN_RE = /\b(\d{1,2}\.\d{1,2}\.\d{4}|\d{1,2}\.\d{1,2}\.\d{2}|\d{4}-\d{1,2}-\d{1,2})\b/

@@ -84,7 +84,15 @@ const HEADING_MAP: Record<string, HeadingMapping> = {
   aufnahmebefund: { module: 'anamnese' },
   'aufnahme befund': { module: 'anamnese' },
   aufnahmeanlass: { module: 'anamnese', sectionId: 'aufnahmeanlass' },
+  'aktuelle anamnese': { module: 'anamnese', sectionId: 'aktuelle-krankheitsanamnese' },
   'aktuelle beschwerden': { module: 'anamnese', sectionId: 'aktuelle-beschwerden' },
+  'psychiatrische anamnese': { module: 'anamnese', sectionId: 'psychiatrische-vorgeschichte' },
+  'korperlich vegetative anamnese': { module: 'anamnese', sectionId: 'somatische-anamnese' },
+  vorerkrankungen: { module: 'anamnese', sectionId: 'somatische-anamnese' },
+  'neurologischer befund': { module: 'anamnese', sectionId: 'somatischer-befund' },
+  'medikamenten bei der aufnahme': { module: 'medication' },
+  'vorlaufige behandlungsdiagnose': { module: 'diagnosis' },
+  procedere: { module: 'therapy' },
   eigenanamnese: { module: 'anamnese', sectionId: 'eigenanamnese' },
   'aktuelle krankheitsanamnese': { module: 'anamnese', sectionId: 'aktuelle-krankheitsanamnese' },
   'jetzige anamnese': { module: 'anamnese', sectionId: 'aktuelle-krankheitsanamnese' },
@@ -240,6 +248,13 @@ function buildAliasMap(aliases: HeadingAlias[] | undefined): Map<string, Heading
 function fuzzyHeading(stripped: string): HeadingMapping | null {
   if (/^aufnahmeanlass\b/.test(stripped)) return { module: 'anamnese', sectionId: 'aufnahmeanlass' }
   if (/^(aufnahme|aufnahmebefund|aufnahme befund)\b/.test(stripped)) return { module: 'anamnese' }
+  if (/\bvisite\b/.test(stripped)) return { module: 'verlauf' }
+  if (/\bprocedere\b/.test(stripped)) return { module: 'therapy' }
+  if (/\bvorerkrankung/.test(stripped)) return { module: 'anamnese', sectionId: 'somatische-anamnese' }
+  if (/\bneurologisch/.test(stripped) && /\bbefund\b/.test(stripped)) {
+    return { module: 'anamnese', sectionId: 'somatischer-befund' }
+  }
+  if (/\bsporttherapie\b/.test(stripped)) return { module: 'verlauf' }
   if (/\bsuchtmittelanamnese\b/.test(stripped)) return { module: 'anamnese', sectionId: 'suchtanamnese' }
   if (/\bfremdanamnese\b/.test(stripped)) return { module: 'anamnese', sectionId: 'fremdanamnese' }
   if (/\b[a-z]*anamnese\b/.test(stripped)) return { module: 'anamnese' }

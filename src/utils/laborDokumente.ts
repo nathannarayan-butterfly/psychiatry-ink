@@ -9,18 +9,11 @@
 
 import { loadBefunde, type LaborBefund } from './laborArchive'
 import { syncSourceDokumente } from './dokumenteArchive'
+import { formatClinicalDate } from './clinicalDate'
 
 /** DD.MM.YYYY — matches the format used throughout the Labor UI. */
 export function formatLaborDate(iso: string): string {
-  try {
-    const d = new Date(iso)
-    if (Number.isNaN(d.getTime())) return iso.slice(0, 10)
-    const dd = String(d.getDate()).padStart(2, '0')
-    const mm = String(d.getMonth() + 1).padStart(2, '0')
-    return `${dd}.${mm}.${d.getFullYear()}`
-  } catch {
-    return iso.slice(0, 10)
-  }
+  return formatClinicalDate(iso) || iso.slice(0, 10)
 }
 
 /** Build the document title from a befund and a `{date}` template (e.g. "Lab vom {date}"). */

@@ -113,3 +113,30 @@ export async function deleteImportedFile(storeId: string): Promise<void> {
     // best-effort
   }
 }
+
+/** Remove all imported attachments for a patient case (permanent delete). */
+export async function deleteImportedFilesForCase(caseId: string): Promise<void> {
+  try {
+    const db = await openDb()
+    await new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, 'readwrite')
+      const store = transaction.objectStore(STORE_NAME)
+      const request = store.openCursor()
+      request.onerror = () => reject(request.error ?? new Error('IndexedDB cursor failed'))
+      request.onsuccess = () => {
+        const cursor = request.result
+        if (!cursor) return
+        const record = cursor.value as StoredAttachmentRecord | undefined
+        if (record?.caseId === caseId) cursor.delete()
+        cursor.continue()
+      }
+      transaction.oncomplete = () => {
+        db.close()
+        resolve()
+      }
+      transaction.onerror = () => reject(transaction.error ?? new Error('IndexedDB delete failed'))
+    })
+  } catch {
+    // best-effort — IndexedDB may be unavailable in tests/SSR
+  }
+}

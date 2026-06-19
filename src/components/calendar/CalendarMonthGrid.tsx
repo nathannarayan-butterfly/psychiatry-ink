@@ -6,6 +6,7 @@ import {
   getMonthStart,
   isSameDay,
 } from '../../utils/calendarLabels'
+import { formatClinicalDateLocal } from '../../utils/clinicalDate'
 
 interface CalendarMonthGridProps {
   monthAnchor: Date
@@ -101,7 +102,7 @@ export function CalendarMonthGrid({
                 .join(' ')
                 .trim()}
               onClick={() => onSelectDay(day)}
-              aria-label={day.toLocaleDateString()}
+              aria-label={formatClinicalDateLocal(day)}
               aria-selected={isSelected}
               tabIndex={isSelected ? 0 : -1}
             >

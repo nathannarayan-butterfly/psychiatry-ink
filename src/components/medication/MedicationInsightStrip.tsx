@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import { translateMedicationUi } from '../../data/medicationUiTranslations'
+import { localeForUiLanguage } from '../../utils/calendarLabels'
 import { DEFAULT_MEDICATIONS_COLLECTION_ID } from '../../types/knowledgeBase'
 import { useKnowledgeBaseDrugs } from '../../hooks/useKnowledgeBaseDrugs'
 import type { MedicationEntry } from '../../types/medicationPlan'
@@ -47,7 +48,7 @@ export function MedicationInsightStrip({
 
   const lastModified = useMemo(() => {
     if (!insights.lastModifiedAt) return '—'
-    const locale = language === 'de' ? 'de-DE' : language
+    const locale = localeForUiLanguage(language)
     return new Date(insights.lastModifiedAt).toLocaleDateString(locale, {
       day: 'numeric',
       month: 'short',

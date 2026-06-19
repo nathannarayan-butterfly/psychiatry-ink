@@ -14,6 +14,7 @@ import { deleteImportedFile } from '../../utils/documentImport/importedFileStore
 import { redactPatientName } from '../../utils/documentImport/deidentify'
 import { suggestMappings } from '../../utils/documentImport/aiMapping'
 import { remapCandidate } from '../../utils/documentImport/remap'
+import { candidateIsAutoAcceptable, candidateNeedsReview } from '../../utils/documentImport/reviewHelpers'
 import { isDocumentImportAiMappingEnabled } from '../../utils/featureFlags'
 import { showNotionToast } from '../notion/NotionToast'
 import { ImportDropzone } from './ImportDropzone'
@@ -108,6 +109,7 @@ export function DocumentImportModal({
   const [identity, setIdentity] = useState<ExtractedPatientIdentity | null>(null)
   const [effectiveCaseId, setEffectiveCaseId] = useState<string | null>(caseId ?? null)
   const [redactionCount, setRedactionCount] = useState(0)
+  const [showReviewOnly, setShowReviewOnly] = useState(false)
 
   const reset = useCallback(() => {
     setPhase('upload')
@@ -120,6 +122,7 @@ export function DocumentImportModal({
     setIdentity(null)
     setEffectiveCaseId(caseId ?? null)
     setRedactionCount(0)
+    setShowReviewOnly(false)
   }, [caseId])
 
   // Delete stored attachments that were never accepted (avoids orphan blobs).
@@ -269,6 +272,45 @@ export function DocumentImportModal({
     [candidates],
   )
 
+  const acceptAllDetected = useCallback(() => {
+    setStatuses((prev) => {
+      const next = { ...prev }
+      for (const candidate of candidates) {
+        if (candidateIsAutoAcceptable(candidate)) next[candidate.id] = 'accepted'
+      }
+      return next
+    })
+    setShowReviewOnly(true)
+  }, [candidates])
+
+  const acceptAllAiSuggested = useCallback(() => {
+    setStatuses((prev) => {
+      const next = { ...prev }
+      for (const candidate of candidates) {
+        if (candidate.aiSuggested) next[candidate.id] = 'accepted'
+      }
+      return next
+    })
+    setShowReviewOnly(true)
+  }, [candidates])
+
+  const visibleCandidates = useMemo(() => {
+    if (!showReviewOnly) return candidates
+    return candidates.filter((candidate) =>
+      candidateNeedsReview(candidate, statuses[candidate.id] ?? 'pending'),
+    )
+  }, [candidates, showReviewOnly, statuses])
+
+  const reviewOnlyCount = useMemo(
+    () => candidates.filter((c) => candidateNeedsReview(c, statuses[c.id] ?? 'pending')).length,
+    [candidates, statuses],
+  )
+
+  const hasAiSuggestions = useMemo(
+    () => candidates.some((c) => c.aiSuggested && (statuses[c.id] ?? 'pending') === 'pending'),
+    [candidates, statuses],
+  )
+
   const acceptedCount = useMemo(
     () => candidates.filter((c) => statuses[c.id] === 'accepted').length,
     [candidates, statuses],
@@ -286,7 +328,7 @@ export function DocumentImportModal({
     if (!envelope) return
     setAiBusy(true)
     try {
-      const { suggestions } = await suggestMappings(envelope, { language })
+      const { suggestions } = await suggestMappings({ ...envelope, candidates }, { language })
       if (suggestions.length > 0) {
         setCandidates((prev) =>
           prev.map((candidate) => {
@@ -295,13 +337,16 @@ export function DocumentImportModal({
             return { ...remapCandidate(candidate, suggestion.suggestedModule), aiSuggested: true }
           }),
         )
+        showNotionToast(t('documentImportAiSuggestApplied').replace('{count}', String(suggestions.length)))
+      } else {
+        showNotionToast(t('documentImportAiSuggestEmpty'))
       }
     } catch {
-      // suggestions are advisory; ignore failures silently
+      showNotionToast(t('documentImportAiSuggestFailed'))
     } finally {
       setAiBusy(false)
     }
-  }, [envelope, language])
+  }, [candidates, envelope, language, t])
 
   const handleSave = useCallback(() => {
     if (!envelope || !effectiveCaseId) return
@@ -407,27 +452,53 @@ export function DocumentImportModal({
               ) : (
                 <>
                   <div className="doc-import-review__bulk">
+                    <button type="button" className="doc-import-textbtn" onClick={acceptAllDetected}>
+                      {t('documentImportAcceptAllDetected')}
+                    </button>
                     <button type="button" className="doc-import-textbtn" onClick={() => bulkStatus('accepted')}>
                       {t('documentImportSelectAll')}
                     </button>
                     <button type="button" className="doc-import-textbtn" onClick={() => bulkStatus('rejected')}>
                       {t('documentImportRejectAll')}
                     </button>
+                    <label className="doc-import-review__filter">
+                      <input
+                        type="checkbox"
+                        checked={showReviewOnly}
+                        onChange={(e) => setShowReviewOnly(e.target.checked)}
+                      />
+                      {t('documentImportShowReviewOnly')}
+                      {reviewOnlyCount > 0 ? ` (${reviewOnlyCount})` : ''}
+                    </label>
                     {isDocumentImportAiMappingEnabled() && (
-                      <button
-                        type="button"
-                        className="doc-import-textbtn doc-import-textbtn--ai"
-                        onClick={handleAiSuggest}
-                        disabled={aiBusy}
-                      >
-                        <Sparkles className="doc-import-textbtn__icon" aria-hidden strokeWidth={1.75} />
-                        {t('documentImportAiSuggestEnabled')}
-                      </button>
+                      <>
+                        <button
+                          type="button"
+                          className="doc-import-textbtn doc-import-textbtn--ai"
+                          onClick={handleAiSuggest}
+                          disabled={aiBusy}
+                        >
+                          <Sparkles className="doc-import-textbtn__icon" aria-hidden strokeWidth={1.75} />
+                          {t('documentImportAiSupport')}
+                        </button>
+                        {hasAiSuggestions && (
+                          <button
+                            type="button"
+                            className="doc-import-textbtn"
+                            onClick={acceptAllAiSuggested}
+                          >
+                            {t('documentImportAcceptAllAiSuggested')}
+                          </button>
+                        )}
+                      </>
                     )}
                   </div>
 
                   <div className="doc-import-review__list">
-                    {candidates.map((candidate) => (
+                    {visibleCandidates.length === 0 ? (
+                      <p className="doc-import-status">{t('documentImportReviewOnlyEmpty')}</p>
+                    ) : (
+                      visibleCandidates.map((candidate) => (
                       <CandidateReviewRow
                         key={candidate.id}
                         candidate={candidate}
@@ -436,7 +507,8 @@ export function DocumentImportModal({
                         onReject={() => setStatus(candidate.id, 'rejected')}
                         onChange={updateCandidate}
                       />
-                    ))}
+                    ))
+                    )}
                   </div>
                 </>
               )}

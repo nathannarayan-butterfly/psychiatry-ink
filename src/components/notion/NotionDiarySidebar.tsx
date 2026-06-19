@@ -8,6 +8,7 @@ import { PsychopathModeRail } from '../workspace/PsychopathModeRail'
 import { LaborSidebarWidget } from './LaborSidebarWidget'
 import type { SavedDoc } from '../../utils/savedDocs'
 import type { PsychopathSubMode } from '../../utils/psychopathMode'
+import { formatClinicalDate } from '../../utils/clinicalDate'
 
 interface NotionDiarySidebarProps {
   panelGraphicEnabled: boolean
@@ -31,15 +32,7 @@ interface NotionDiarySidebarProps {
 }
 
 function formatShortDate(iso: string): string {
-  try {
-    const d = new Date(iso)
-    const day = String(d.getDate()).padStart(2, '0')
-    const month = String(d.getMonth() + 1).padStart(2, '0')
-    const year = d.getFullYear()
-    return `${day}.${month}.${year}`
-  } catch {
-    return iso.slice(0, 10)
-  }
+  return formatClinicalDate(iso) || iso.slice(0, 10)
 }
 
 export function NotionDiarySidebar({

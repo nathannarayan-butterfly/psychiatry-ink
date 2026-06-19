@@ -1,6 +1,7 @@
 import { getBefundSchema } from '../data/befundSchemas'
 import type { BefundFieldDef } from '../data/befundSchemas/types'
 import type { BefundRecord } from '../types/befund'
+import { formatClinicalDate } from './clinicalDate'
 
 export interface BefundDisplayField {
   label: string
@@ -87,15 +88,7 @@ export function buildBefundTitle(record: BefundRecord): string {
 
 /** DD.MM.YYYY */
 export function formatBefundDate(iso: string): string {
-  try {
-    const d = new Date(iso)
-    if (Number.isNaN(d.getTime())) return iso.slice(0, 10)
-    const dd = String(d.getDate()).padStart(2, '0')
-    const mm = String(d.getMonth() + 1).padStart(2, '0')
-    return `${dd}.${mm}.${d.getFullYear()}`
-  } catch {
-    return iso.slice(0, 10)
-  }
+  return formatClinicalDate(iso) || iso.slice(0, 10)
 }
 
 export function getBefundTypeLabel(type: BefundRecord['type']): string {

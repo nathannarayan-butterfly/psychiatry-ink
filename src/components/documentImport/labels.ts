@@ -3,6 +3,7 @@ import type {
   CandidateModule,
   ImportConfidence,
 } from '../../schemas/documentImport/envelope'
+import { isoToGermanDate } from '../../utils/documentImport/dateAssociation'
 
 /** Modules selectable as remap targets in the review screen. */
 export const REMAP_MODULES: CandidateModule[] = [
@@ -52,7 +53,11 @@ export function confidenceLabelKey(confidence: ImportConfidence): UiTranslationK
 }
 
 /** Short, human-readable summary of a candidate's primary content. */
-export function candidateSummary(data: Record<string, unknown>): string {
+export function candidateSummary(data: Record<string, unknown>, module?: string): string {
+  const dateSuffix =
+    (module === 'verlauf' || module === 'therapy') && typeof data.date === 'string' && data.date
+      ? ` · ${isoToGermanDate(data.date)}`
+      : ''
   if (typeof data.label === 'string') {
     const code = typeof data.icd10Code === 'string' && data.icd10Code ? `${data.icd10Code} ` : ''
     return `${code}${data.label}`.trim()
@@ -66,7 +71,7 @@ export function candidateSummary(data: Record<string, unknown>): string {
     const panel = typeof data.panelLabel === 'string' ? data.panelLabel : 'Labor'
     return `${panel} (${data.values.length})`
   }
-  if (typeof data.title === 'string' && data.title) return data.title
-  if (typeof data.text === 'string') return data.text.slice(0, 80)
+  if (typeof data.title === 'string' && data.title) return `${data.title}${dateSuffix}`
+  if (typeof data.text === 'string') return `${data.text.slice(0, 80)}${dateSuffix}`
   return ''
 }

@@ -1,4 +1,5 @@
 import type { Todo, TodoWithLabels } from '../../types/todo'
+import { formatClinicalDate } from '../clinicalDate'
 
 export interface TodoPrintLabels {
   title: string
@@ -26,11 +27,9 @@ function escapeHtml(value: string): string {
     .replace(/'/g, '&#39;')
 }
 
-function formatDate(dueDate: string | null | undefined, locale: string): string {
+function formatDate(dueDate: string | null | undefined): string {
   if (!dueDate) return ''
-  const parsed = new Date(/^\d{4}-\d{2}-\d{2}$/.test(dueDate) ? `${dueDate}T00:00:00` : dueDate)
-  if (Number.isNaN(parsed.getTime())) return dueDate
-  return parsed.toLocaleDateString(locale)
+  return formatClinicalDate(dueDate) || dueDate
 }
 
 function priorityLabel(todo: Todo, labels: TodoPrintLabels): string {
@@ -46,9 +45,9 @@ function priorityLabel(todo: Todo, labels: TodoPrintLabels): string {
   }
 }
 
-function row(todo: TodoWithLabels, labels: TodoPrintLabels, locale: string): string {
+function row(todo: TodoWithLabels, labels: TodoPrintLabels): string {
   const meta: string[] = []
-  const due = formatDate(todo.dueDate, locale)
+  const due = formatDate(todo.dueDate)
   if (due) meta.push(`${escapeHtml(labels.dueDate)}: ${escapeHtml(due)}`)
   const prio = priorityLabel(todo, labels)
   if (prio) meta.push(`${escapeHtml(labels.priority)}: ${escapeHtml(prio)}`)
@@ -79,7 +78,7 @@ export function buildTodosPrintHtml(
   const body =
     todos.length === 0
       ? `<p class="todo-print__empty">${escapeHtml(labels.empty)}</p>`
-      : `<ul class="todo-print__list">${todos.map((t) => row(t, labels, locale)).join('')}</ul>`
+      : `<ul class="todo-print__list">${todos.map((t) => row(t, labels)).join('')}</ul>`
 
   return `<!DOCTYPE html>
 <html lang="de">

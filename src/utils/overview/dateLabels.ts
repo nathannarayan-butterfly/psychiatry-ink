@@ -1,19 +1,19 @@
+import { formatClinicalDate, formatClinicalDateShort } from '../clinicalDate'
+
 /** Date/label helpers shared across the Übersicht dashboard data layer. */
 
 /** "14.06.2026" from an ISO string; falls back to the raw input on parse failure. */
 export function formatDateDe(iso: string | undefined | null): string | null {
   if (!iso) return null
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return iso
-  return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`
+  const formatted = formatClinicalDate(iso)
+  return formatted || iso
 }
 
 /** "14.06." short form for compact chart-like labels. */
 export function formatShortDateDe(iso: string | undefined | null): string | null {
   if (!iso) return null
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return iso.slice(5, 10)
-  return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.`
+  const formatted = formatClinicalDateShort(iso)
+  return formatted || iso.slice(5, 10)
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000

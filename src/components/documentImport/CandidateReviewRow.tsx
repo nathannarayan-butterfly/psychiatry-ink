@@ -4,6 +4,7 @@ import { useTranslation } from '../../context/TranslationContext'
 import type { ClinicalImportCandidate, CandidateModule } from '../../schemas/documentImport/envelope'
 import { canRemap, remapCandidate } from '../../utils/documentImport/remap'
 import { candidateSummary, confidenceLabelKey, moduleLabelKey, REMAP_MODULES } from './labels'
+import { GermanDateInput } from './GermanDateInput'
 
 export type ReviewStatus = 'pending' | 'accepted' | 'rejected'
 
@@ -26,7 +27,7 @@ export function CandidateReviewRow({
   const [editing, setEditing] = useState(false)
 
   const data = candidate.data as Record<string, unknown>
-  const summary = candidateSummary(data)
+  const summary = candidateSummary(data, candidate.module)
   const location = formatLocation(candidate)
   const clarifications = candidate.clarifications ?? []
   const needsClarification = clarifications.length > 0
@@ -138,12 +139,11 @@ export function CandidateReviewRow({
           {(candidate.module === 'verlauf' || candidate.module === 'therapy') && (
             <label className="doc-import-field doc-import-row__clarify-field">
               <span className="doc-import-field__label">{t('documentImportFieldDate')}</span>
-              <input
-                type="date"
+              <GermanDateInput
                 className="doc-import-input"
-                value={(candidate.data as { date?: string }).date ?? ''}
-                onChange={(e) =>
-                  updateData({ date: e.target.value || undefined }, e.target.value ? ['date_uncertain', 'date_unparsed'] : [])
+                isoValue={(candidate.data as { date?: string }).date}
+                onIsoChange={(iso) =>
+                  updateData({ date: iso }, iso ? ['date_uncertain', 'date_unparsed'] : [])
                 }
               />
             </label>
@@ -278,12 +278,11 @@ function CandidateFields({
       )}
       {hasDate && (
         <Field label={t('documentImportFieldDate')}>
-          <input
-            type="date"
+          <GermanDateInput
             className="doc-import-input"
-            value={data.date ?? ''}
-            onChange={(e) =>
-              onChange({ date: e.target.value || undefined }, e.target.value ? ['date_uncertain', 'date_unparsed'] : [])
+            isoValue={data.date}
+            onIsoChange={(iso) =>
+              onChange({ date: iso }, iso ? ['date_uncertain', 'date_unparsed'] : [])
             }
           />
         </Field>

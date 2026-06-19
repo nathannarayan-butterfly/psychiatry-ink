@@ -34,6 +34,7 @@ import { EnterpriseSsoPlaceholder } from './components/enterprise/EnterpriseSsoP
 import { BudgetManagerPage } from './components/settings/BudgetManagerPage'
 import { IntegrationsPage } from './components/settings/IntegrationsPage'
 import { CalendarPage } from './components/calendar/CalendarPage'
+import { TodoPage } from './components/todos/TodoPage'
 
 const ENTERPRISE_ROUTES_ENABLED = isEnterpriseOrgHierarchyEnabled()
 
@@ -128,6 +129,7 @@ export default function App() {
   const showIntegrations = route.view === 'integrations'
   const showBudget = route.view === 'budget'
   const showCalendar = route.view === 'calendar'
+  const showTodos = route.view === 'todos'
   const showTeamInvite = route.view === 'team-invite'
   const showDiscussInvite = route.view === 'discuss-invite'
   const showConsultantInvite = route.view === 'consultant-invite'
@@ -251,6 +253,8 @@ export default function App() {
               navigate(url)
             }}
           />
+        ) : showTodos ? (
+          <TodoPage onBack={() => navigate('/dashboard')} />
         ) : showTeamInvite ? (
           <TeamInvitePage
             token={route.view === 'team-invite' ? route.token : ''}
@@ -270,6 +274,7 @@ export default function App() {
             onOpenIntegrations={() => navigate('/dashboard/integrations')}
             onOpenBudget={() => navigate('/dashboard/budget')}
             onOpenCalendar={() => navigate('/dashboard/calendar')}
+            onOpenTodos={() => navigate('/dashboard/todos')}
             onOpenEnterprise={
               ENTERPRISE_ROUTES_ENABLED ? () => navigate('/dashboard/enterprise') : undefined
             }

@@ -17,21 +17,14 @@ import {
   type TherapieEintrag,
 } from '../../utils/therapieArchive'
 import { therapyPageSectionDomId } from '../../data/therapyPageSections'
+import { formatClinicalDate } from '../../utils/clinicalDate'
 
 interface TherapiePageProps {
   caseId: string
 }
 
 function formatDate(iso: string): string {
-  try {
-    const d = new Date(iso)
-    const dd = String(d.getDate()).padStart(2, '0')
-    const mm = String(d.getMonth() + 1).padStart(2, '0')
-    const yyyy = d.getFullYear()
-    return `${dd}.${mm}.${yyyy}`
-  } catch {
-    return iso.slice(0, 10)
-  }
+  return formatClinicalDate(iso) || iso.slice(0, 10)
 }
 
 export function TherapiePage({ caseId }: TherapiePageProps) {
