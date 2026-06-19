@@ -3,7 +3,12 @@
  * column mapping, and produces candidates. Returns the table + mapping so the
  * review screen can offer column re-mapping.
  */
-import { parse } from 'csv-parse/sync'
+// Use the browser ESM build (self-contained, ships its own Buffer shim). The
+// default `csv-parse/sync` entry resolves to the Node build, which references the
+// Node `Buffer` global at module top-level and throws `ReferenceError: Buffer is
+// not defined` the moment it loads in the browser — crashing the whole app to a
+// blank page because this parser sits in the eager import graph.
+import { parse } from 'csv-parse/browser/esm/sync'
 import {
   autoDetectMapping,
   tabularToCandidates,
