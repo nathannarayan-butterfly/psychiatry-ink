@@ -12,6 +12,7 @@ import { parse } from 'csv-parse/browser/esm/sync'
 import {
   autoDetectMapping,
   tabularToCandidates,
+  type AutoDetectOptions,
   type ColumnMapping,
   type TabularTable,
 } from '../tabular'
@@ -33,7 +34,7 @@ function detectDelimiter(sample: string): string {
   return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0]
 }
 
-export function parseCsvText(text: string): TabularAdapterResult {
+export function parseCsvText(text: string, options: AutoDetectOptions = {}): TabularAdapterResult {
   const trimmed = text.replace(/^\uFEFF/, '')
   const emptyTable: TabularTable = { headers: [], rows: [] }
   if (!trimmed.trim()) {
@@ -84,7 +85,7 @@ export function parseCsvText(text: string): TabularAdapterResult {
   const headers = records[0].map((h) => h.trim())
   const rows = records.slice(1)
   const table: TabularTable = { headers, rows }
-  const mapping = autoDetectMapping(headers)
+  const mapping = autoDetectMapping(headers, options)
   const { candidates, notices } = tabularToCandidates(table, mapping)
 
   return {
@@ -98,6 +99,9 @@ export function parseCsvText(text: string): TabularAdapterResult {
   }
 }
 
-export async function parseCsvFile(file: File): Promise<TabularAdapterResult> {
-  return parseCsvText(await readText(file))
+export async function parseCsvFile(
+  file: File,
+  options: AutoDetectOptions = {},
+): Promise<TabularAdapterResult> {
+  return parseCsvText(await readText(file), options)
 }

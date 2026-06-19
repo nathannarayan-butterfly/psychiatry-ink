@@ -10,6 +10,7 @@ import * as XLSX from 'xlsx'
 import {
   autoDetectMapping,
   tabularToCandidates,
+  type AutoDetectOptions,
   type TabularTable,
 } from '../tabular'
 import { readArrayBuffer } from '../fileIo'
@@ -26,7 +27,7 @@ function sheetToMatrix(sheet: XLSX.WorkSheet): string[][] {
   return matrix.map((row) => (Array.isArray(row) ? row.map((c) => String(c ?? '').trim()) : []))
 }
 
-export function parseXlsxBuffer(buffer: ArrayBuffer): TabularAdapterResult {
+export function parseXlsxBuffer(buffer: ArrayBuffer, options: AutoDetectOptions = {}): TabularAdapterResult {
   const emptyTable: TabularTable = { headers: [], rows: [] }
   let workbook: XLSX.WorkBook
   try {
@@ -65,7 +66,7 @@ export function parseXlsxBuffer(buffer: ArrayBuffer): TabularAdapterResult {
     }
   }
 
-  const mapping = autoDetectMapping(table.headers)
+  const mapping = autoDetectMapping(table.headers, options)
   const { candidates, notices } = tabularToCandidates(table, mapping)
 
   return {
@@ -78,6 +79,9 @@ export function parseXlsxBuffer(buffer: ArrayBuffer): TabularAdapterResult {
   }
 }
 
-export async function parseXlsxFile(file: File): Promise<TabularAdapterResult> {
-  return parseXlsxBuffer(await readArrayBuffer(file))
+export async function parseXlsxFile(
+  file: File,
+  options: AutoDetectOptions = {},
+): Promise<TabularAdapterResult> {
+  return parseXlsxBuffer(await readArrayBuffer(file), options)
 }

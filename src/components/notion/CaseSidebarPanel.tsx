@@ -18,6 +18,9 @@ interface CaseSidebarPanelProps {
   children: ReactNode
   /** Accessible label for the sidebar landmark. */
   ariaLabel?: string
+  /** Active patient case id (real caseId) for patient-linked quick to-dos. */
+  todoCaseId?: string | null
+  todoPatientLabel?: string | null
 }
 
 /** Fixed dark left panel — logo, back link, clinical areas, tab content, user footer. */
@@ -32,6 +35,8 @@ export function CaseSidebarPanel({
   onOpenSettings,
   children,
   ariaLabel,
+  todoCaseId = null,
+  todoPatientLabel = null,
 }: CaseSidebarPanelProps) {
   return (
     <aside className="case-sidebar-panel" aria-label={ariaLabel}>
@@ -73,7 +78,12 @@ export function CaseSidebarPanel({
         <PanelDateCard layout="sidebar-footer" />
       </div>
 
-      <CaseSidebarUserFooter creditBalance={creditBalance} onOpenSettings={onOpenSettings} />
+      <CaseSidebarUserFooter
+        creditBalance={creditBalance}
+        onOpenSettings={onOpenSettings}
+        todoCaseId={todoCaseId}
+        todoPatientLabel={todoPatientLabel}
+      />
     </aside>
   )
 }

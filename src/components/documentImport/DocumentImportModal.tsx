@@ -7,6 +7,7 @@ import type {
   ExtractedPatientIdentity,
 } from '../../schemas/documentImport/envelope'
 import { parseFile, type TabularContext } from '../../utils/documentImport/parsers/index'
+import { useParserProfile } from '../../hooks/useParserProfile'
 import { tabularToCandidates, type ColumnMapping } from '../../utils/documentImport/tabular'
 import { persistAcceptedCandidates } from '../../utils/documentImport/persistCandidates'
 import { deleteImportedFile } from '../../utils/documentImport/importedFileStore'
@@ -61,6 +62,7 @@ function redactCandidate(
   const data = candidate.data as Record<string, unknown>
   let redactions = 0
   const next: Record<string, unknown> = { ...data }
+  let rawText = candidate.rawText
   for (const field of ['text', 'title', 'label']) {
     const value = data[field]
     if (typeof value === 'string' && value) {
@@ -71,8 +73,15 @@ function redactCandidate(
       }
     }
   }
+  if (rawText) {
+    const result = redactPatientName(rawText, { vorname: name.vorname, nachname: name.nachname })
+    if (result.redactions > 0) {
+      rawText = result.text
+      redactions += result.redactions
+    }
+  }
   if (redactions === 0) return { candidate, redactions: 0 }
-  return { candidate: { ...candidate, data: next } as ClinicalImportCandidate, redactions }
+  return { candidate: { ...candidate, rawText, data: next } as ClinicalImportCandidate, redactions }
 }
 
 export function DocumentImportModal({
@@ -88,6 +97,7 @@ export function DocumentImportModal({
   existingPatients = [],
 }: DocumentImportModalProps) {
   const { t, language } = useTranslation()
+  const { profile: parserProfile } = useParserProfile()
   const [phase, setPhase] = useState<Phase>('upload')
   const [envelope, setEnvelope] = useState<ClinicalImportEnvelope | null>(null)
   const [candidates, setCandidates] = useState<ClinicalImportCandidate[]>([])
@@ -163,7 +173,10 @@ export function DocumentImportModal({
     async (file: File) => {
       setPhase('parsing')
       try {
-        const result = await parseFile(file, { caseId: effectiveCaseId ?? caseId ?? 'pending-import' })
+        const result = await parseFile(file, {
+          caseId: effectiveCaseId ?? caseId ?? 'pending-import',
+          parserProfile,
+        })
         setEnvelope(result.envelope)
         setTabular(result.tabular ?? null)
         setIdentity(result.envelope.patientIdentity ?? null)
@@ -192,7 +205,7 @@ export function DocumentImportModal({
         setPhase('upload')
       }
     },
-    [allowPatientCreation, caseId, effectiveCaseId, enterReview, patientVorname, patientNachname, t],
+    [allowPatientCreation, caseId, effectiveCaseId, enterReview, parserProfile, patientVorname, patientNachname, t],
   )
 
   const handleCreatePatient = useCallback(

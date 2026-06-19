@@ -20,6 +20,7 @@ import { AiUsageTrackerPanel } from './AiUsageTrackerPanel'
 import type { useKiInstructions } from '../../hooks/useKiInstructions'
 import { PatientPrivacySection } from './PatientPrivacySection'
 import { LabImportSection } from './LabImportSection'
+import { ParserOptimizationSection } from './ParserOptimizationSection'
 import { OverviewWidgetsSettingsSection } from './OverviewWidgetsSettingsSection'
 import { KbAdminSection } from './KbAdminSection'
 import { SettingsSidebarPanel } from './SettingsSidebarPanel'
@@ -76,6 +77,7 @@ export function SettingsPage({
           { id: 'language', label: t('settingsLanguage') },
           { id: 'documentation', label: t('settingsDocumentation') },
           { id: 'lab', label: t('settingsLab') },
+          { id: 'parser-optimization', label: t('settingsParserOptimization') },
           { id: 'overview-widgets', label: t('settingsOverviewWidgets') },
           { id: 'kb-admin', label: 'KB Admin' },
         ],
@@ -150,6 +152,7 @@ export function SettingsPage({
           ) : null}
           {activeSection === 'documentation' ? <DocumentationSection /> : null}
           {activeSection === 'lab' ? <LabImportSection /> : null}
+          {activeSection === 'parser-optimization' ? <ParserOptimizationSection /> : null}
           {activeSection === 'overview-widgets' ? <OverviewWidgetsSettingsSection /> : null}
           {activeSection === 'kb-admin' ? <KbAdminSection /> : null}
           {activeSection === 'ai' ? (

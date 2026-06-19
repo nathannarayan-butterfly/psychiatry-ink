@@ -73,6 +73,98 @@ describe('docxTextToResult', () => {
     expect(modules).toContain('therapy')
   })
 
+  it('maps Anamnese parent subheadings to anamnese candidates', () => {
+    const result = docxTextToResult([
+      'Anamnese',
+      '',
+      'Psychopathologischer Befund',
+      'Wach, orientiert, affektiv niedergestimmt.',
+      '',
+      'Biografie',
+      'Aufgewachsen mit zwei Geschwistern.',
+    ].join('\n'))
+
+    const anamnese = result.candidates.filter((c) => c.module === 'anamnese')
+    expect(anamnese).toHaveLength(2)
+    expect(anamnese.map((c) => c.module === 'anamnese' ? c.data.sectionId : undefined)).toEqual([
+      'psychopathologischer-befund',
+      'biografische-anamnese',
+    ])
+  })
+
+  it('maps Aufnahmebefund parent subheadings and spelling variants to anamnese candidates', () => {
+    const result = docxTextToResult([
+      'Aufnahme Befund',
+      '',
+      'Psychopathalogischer Befund',
+      'Formalgedanklich geordnet, keine Wahnsymptomatik.',
+      '',
+      'Somatischer Befund',
+      'Kreislauf stabil, keine akuten Beschwerden.',
+    ].join('\n'))
+
+    const anamnese = result.candidates.filter((c) => c.module === 'anamnese')
+    expect(anamnese).toHaveLength(2)
+    expect(anamnese.every((c) => c.module === 'anamnese')).toBe(true)
+    expect(anamnese.map((c) => c.module === 'anamnese' ? c.data.sectionId : undefined)).toEqual([
+      'psychopathologischer-befund',
+      'somatischer-befund',
+    ])
+  })
+
+  it('maps compound anamnese and aufnahme headings from table-like exports', () => {
+    const result = docxTextToResult([
+      'Aufnahmeanlass und aktuelle Situation',
+      'Vorstellung zur stationaeren Aufnahme.',
+      '',
+      'Befund / Fremdanamnese',
+      'Fremdangaben liegen strukturiert vor.',
+      '',
+      'Suchtmittelanamnese',
+      'Kein aktueller Substanzkonsum berichtet.',
+    ].join('\n'))
+
+    const anamnese = result.candidates.filter((c) => c.module === 'anamnese')
+    expect(anamnese).toHaveLength(3)
+    expect(anamnese.map((c) => c.module === 'anamnese' ? c.data.sectionId : undefined)).toEqual([
+      'aufnahmeanlass',
+      'fremdanamnese',
+      'suchtanamnese',
+    ])
+  })
+
+  it('does not split a long narrative paragraph just because it contains Verlauf', () => {
+    const longNarrative = [
+      'Patient nimmt Bezug auf den bisherigen Verlauf und beschreibt mehrere alltagsnahe Situationen',
+      'ohne dass diese Zeile eine Ueberschrift sein soll.',
+      'Die Formulierung ist absichtlich lang, damit sie wie ein aus einer Tabellenzelle',
+      'extrahierter Fliesstext behandelt wird.',
+    ].join(' ')
+    const result = docxTextToResult([
+      'Psychischer Befund',
+      longNarrative,
+      '',
+      'Befund',
+      'Weiterer kurzer Befundtext.',
+    ].join('\n'))
+
+    const psych = result.candidates.find(
+      (c) => c.module === 'anamnese' && c.data.sectionId === 'psychopathologischer-befund',
+    )
+    expect(psych?.module).toBe('anamnese')
+    if (psych?.module === 'anamnese') expect(psych.data.text).toContain('bisherigen Verlauf')
+  })
+
+  it('maps diagnosis headings with additional wording', () => {
+    const result = docxTextToResult([
+      'Diagnostische Einschaetzung bei Aufnahme',
+      'F32.1 Mittelgradige depressive Episode',
+    ].join('\n'))
+
+    expect(result.candidates).toHaveLength(1)
+    expect(result.candidates[0].module).toBe('diagnosis')
+  })
+
   it('creates one candidate per diagnosis/medication line', () => {
     const result = docxTextToResult(CLINICAL_DOC)
     expect(result.candidates.filter((c) => c.module === 'diagnosis')).toHaveLength(2)

@@ -30,6 +30,7 @@ import { auditRouter } from './routes/audit'
 import { integrationRouter } from './routes/integration'
 import { enterpriseRouter } from './routes/enterprise'
 import { calendarRouter } from './routes/calendar'
+import { todosRouter } from './routes/todos'
 import { combinationCheckRouter } from './routes/combinationCheck'
 import { labMedicationCorrelationRouter } from './routes/labMedicationCorrelation'
 import { prepAiCheckRouter } from './routes/prepAiCheck'
@@ -85,6 +86,7 @@ app.use('/api/org', orgRouter)
 app.use('/api/audit', auditRouter)
 app.use('/api/integration', integrationRouter)
 app.use('/api/calendar', calendarRouter)
+app.use('/api/todos', todosRouter)
 app.use('/api/combination-check', combinationCheckRouter)
 app.use('/api/lab-med-correlation', labMedicationCorrelationRouter)
 app.use('/api/medication/prep-ai-check', prepAiCheckRouter)

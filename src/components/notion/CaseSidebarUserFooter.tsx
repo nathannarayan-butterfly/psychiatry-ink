@@ -1,16 +1,20 @@
-import { LogOut, Settings } from 'lucide-react'
+import { ListChecks, LogOut, Settings } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { useTranslation } from '../../context/TranslationContext'
 import { useAccountDisplayName } from '../../hooks/useAccountDisplayName'
 import type { SettingsSectionId } from '../../types/settings'
 import { NotificationBell } from '../NotificationBell'
+import { TodoQuickAdd } from '../todos/TodoQuickAdd'
 import { AskButterflyChatDialog } from './AskButterflyChatDialog'
 import { CreditsPurchaseDialog } from './CreditsPurchaseDialog'
 
 interface CaseSidebarUserFooterProps {
   creditBalance: number
   onOpenSettings: (section?: SettingsSectionId) => void
+  /** Active patient case id (real caseId) — enables patient-linked quick to-dos. */
+  todoCaseId?: string | null
+  todoPatientLabel?: string | null
 }
 
 const ACTION_BTN = 'case-sidebar-user-footer__action-btn'
@@ -40,12 +44,15 @@ function ButterflyIcon() {
 export function CaseSidebarUserFooter({
   creditBalance,
   onOpenSettings,
+  todoCaseId = null,
+  todoPatientLabel = null,
 }: CaseSidebarUserFooterProps) {
   const { t } = useTranslation()
   const { signOut, isConfigured } = useAuth()
   const displayName = useAccountDisplayName()
   const [creditsDialogOpen, setCreditsDialogOpen] = useState(false)
   const [askButterflyOpen, setAskButterflyOpen] = useState(false)
+  const [todoQuickAddOpen, setTodoQuickAddOpen] = useState(false)
 
   const creditsTooltip = t('creditsRemaining').replace('{balance}', String(creditBalance))
 
@@ -74,6 +81,16 @@ export function CaseSidebarUserFooter({
           <span className="case-sidebar-user-footer__euro-symbol" aria-hidden>
             €
           </span>
+        </button>
+
+        <button
+          type="button"
+          className={`${ACTION_BTN}${todoQuickAddOpen ? ` ${ACTION_BTN}--open` : ''}`}
+          onClick={() => setTodoQuickAddOpen(true)}
+          title={t('todoQuickAddOpen')}
+          aria-label={t('todoQuickAddOpen')}
+        >
+          <ListChecks strokeWidth={1.75} aria-hidden />
         </button>
 
         <NotificationBell
@@ -121,6 +138,14 @@ export function CaseSidebarUserFooter({
 
       {askButterflyOpen ? (
         <AskButterflyChatDialog onClose={() => setAskButterflyOpen(false)} />
+      ) : null}
+
+      {todoQuickAddOpen ? (
+        <TodoQuickAdd
+          caseId={todoCaseId}
+          patientLabel={todoPatientLabel}
+          onClose={() => setTodoQuickAddOpen(false)}
+        />
       ) : null}
     </footer>
   )

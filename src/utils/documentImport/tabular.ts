@@ -23,26 +23,29 @@ export interface TabularTable {
 }
 
 /** Target fields a column can be mapped to, per module. */
-export type TabularField =
+export const TABULAR_FIELDS = [
   // diagnosis
-  | 'label'
-  | 'icd10Code'
+  'label',
+  'icd10Code',
   // medication
-  | 'substance'
-  | 'strength'
-  | 'doseText'
-  | 'indication'
-  | 'status'
+  'substance',
+  'strength',
+  'doseText',
+  'indication',
+  'status',
   // lab
-  | 'name'
-  | 'value'
-  | 'unit'
-  | 'refText'
-  | 'date'
-  | 'panelLabel'
+  'name',
+  'value',
+  'unit',
+  'refText',
+  'date',
+  'panelLabel',
   // generic text
-  | 'title'
-  | 'text'
+  'title',
+  'text',
+] as const
+
+export type TabularField = (typeof TABULAR_FIELDS)[number]
 
 export interface ColumnMapping {
   module: CandidateModule
@@ -91,8 +94,15 @@ const HEADER_SYNONYMS: Record<string, { module: CandidateModule; field: TabularF
   date: { module: 'lab', field: 'date' },
   // verlauf / clinical course (date in a separate column from the note text)
   verlauf: { module: 'verlauf', field: 'text' },
+  verlaufsdokumentation: { module: 'verlauf', field: 'text' },
+  verlaufdocumentation: { module: 'verlauf', field: 'text' },
   verlaufseintrag: { module: 'verlauf', field: 'text' },
   eintrag: { module: 'verlauf', field: 'text' },
+  dokumentation: { module: 'verlauf', field: 'text' },
+  fortschritt: { module: 'verlauf', field: 'text' },
+  tagesverlauf: { module: 'verlauf', field: 'text' },
+  clinicalcourse: { module: 'verlauf', field: 'text' },
+  course: { module: 'verlauf', field: 'text' },
   notiz: { module: 'verlauf', field: 'text' },
   note: { module: 'verlauf', field: 'text' },
   verlaufsnotiz: { module: 'verlauf', field: 'text' },
@@ -113,13 +123,33 @@ function normHeader(h: string): string {
     .trim()
 }
 
+/** A per-user column-header alias: extends the base header synonym table. */
+export interface TabularColumnAlias {
+  header: string
+  module: CandidateModule
+  field: TabularField
+}
+
+export interface AutoDetectOptions {
+  /** Per-user column aliases applied ABOVE the base header synonyms. */
+  columnAliases?: TabularColumnAlias[]
+}
+
 /** Auto-detect the most likely module + per-field column mapping from headers. */
-export function autoDetectMapping(headers: string[]): ColumnMapping {
+export function autoDetectMapping(headers: string[], options: AutoDetectOptions = {}): ColumnMapping {
   const moduleVotes = new Map<CandidateModule, number>()
   const fieldHits: { index: number; module: CandidateModule; field: TabularField }[] = []
 
+  const aliasMap = new Map<string, { module: CandidateModule; field: TabularField }>()
+  for (const alias of options.columnAliases ?? []) {
+    const key = normHeader(alias.header)
+    if (key) aliasMap.set(key, { module: alias.module, field: alias.field })
+  }
+
   headers.forEach((header, index) => {
-    const hit = HEADER_SYNONYMS[normHeader(header)]
+    const key = normHeader(header)
+    // User aliases win over the base synonym table.
+    const hit = aliasMap.get(key) ?? HEADER_SYNONYMS[key]
     if (!hit) return
     fieldHits.push({ index, ...hit })
     moduleVotes.set(hit.module, (moduleVotes.get(hit.module) ?? 0) + 1)

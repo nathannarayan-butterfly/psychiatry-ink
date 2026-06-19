@@ -10,6 +10,7 @@ export type SettingsSectionId =
   | 'language'
   | 'documentation'
   | 'lab'
+  | 'parser-optimization'
   | 'overview-widgets'
   | 'ai'
   | 'account'

@@ -29,6 +29,65 @@ describe('sectionize verlauf — left-column / leading-line date association', (
     expect(dateless?.clarifications?.some((cl) => cl.code === 'date_uncertain')).toBe(true)
   })
 
+  it('recognizes Verlauf Documentation heading and splits left-column date rows', () => {
+    const candidates = verlaufCandidates([
+      'Verlauf Documentation',
+      '12.03.2024  Patient berichtet bessere Stimmung.',
+      '13.03.2024\tSchlaf verbessert, keine Nebenwirkungen.',
+    ].join('\n'))
+
+    expect(candidates).toHaveLength(2)
+    expect(candidates.map((c) => c.data.date)).toEqual(['2024-03-12', '2024-03-13'])
+    expect(candidates[0].data.text).toBe('Patient berichtet bessere Stimmung.')
+    expect(candidates[1].data.text).toBe('Schlaf verbessert, keine Nebenwirkungen.')
+  })
+
+  it('uses a section-level date from the heading for the whole Verlauf section', () => {
+    const candidates = verlaufCandidates([
+      'Clinical Course 14.03.2024',
+      'Visite: Patient stabil, Entlassungsperspektive besprochen.',
+    ].join('\n'))
+
+    expect(candidates).toHaveLength(1)
+    expect(candidates[0].data.date).toBe('2024-03-14')
+    expect(candidates[0].clarifications).toBeUndefined()
+  })
+
+  it('recognizes compound therapy-course headings with embedded dates', () => {
+    const candidates = verlaufCandidates([
+      'Ergotherapieverlauf 14.03.2024',
+      'Aktivierung und Tagesstruktur wurden besprochen.',
+    ].join('\n'))
+
+    expect(candidates).toHaveLength(1)
+    expect(candidates[0].data.date).toBe('2024-03-14')
+    expect(candidates[0].data.text).toContain('Tagesstruktur')
+  })
+
+  it('uses a section date for the first note and row dates for later notes', () => {
+    const candidates = verlaufCandidates([
+      'Verlauf Documentation 14.03.2024',
+      'Erster Eintrag ohne eigene Datumszeile.',
+      '15.03.2024\tZweiter Eintrag aus einer linken Datumsspalte.',
+    ].join('\n'))
+
+    expect(candidates).toHaveLength(2)
+    expect(candidates.map((c) => c.data.date)).toEqual(['2024-03-14', '2024-03-15'])
+    expect(candidates.every((c) => !c.clarifications?.length)).toBe(true)
+  })
+
+  it('associates a separate preceding date line with the following Verlauf heading', () => {
+    const candidates = verlaufCandidates([
+      '15.03.2024',
+      'Verlaufsdokumentation',
+      'Patient nimmt an Gruppentherapie teil.',
+    ].join('\n'))
+
+    expect(candidates).toHaveLength(1)
+    expect(candidates[0].data.date).toBe('2024-03-15')
+    expect(candidates[0].data.text).toBe('Patient nimmt an Gruppentherapie teil.')
+  })
+
   it('keeps a single undated candidate (no false flag) when the section has no dates', () => {
     const candidates = verlaufCandidates('Verlauf\nPatient durchgehend stabil, keine Auffälligkeiten.')
     expect(candidates).toHaveLength(1)
@@ -51,5 +110,10 @@ describe('tabular verlauf — date column association', () => {
     if (candidates[0].module === 'verlauf') expect(candidates[0].data.date).toBe('2024-03-12')
     expect(candidates[0].clarifications).toBeUndefined()
     expect(candidates[1].clarifications?.some((c) => c.code === 'date_uncertain')).toBe(true)
+  })
+
+  it('recognizes Verlauf Documentation and Clinical Course table headers', () => {
+    expect(autoDetectMapping(['Datum', 'Verlauf Documentation']).module).toBe('verlauf')
+    expect(autoDetectMapping(['Date', 'Clinical Course']).module).toBe('verlauf')
   })
 })

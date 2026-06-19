@@ -28,6 +28,8 @@ import { parseXlsxFile } from './xlsxParser'
 import { parseDocxFile, type DocxTextExtractor } from './docxParser'
 import { parseTxtFile } from './txtParser'
 import { parsePdfStoredOnly, type StoreAttachmentFn } from './pdfStoredOnlyParser'
+import type { ParserProfile } from '../../../schemas/documentImport/parserProfile'
+import { profileToParseOptions } from '../parserProfile'
 
 export interface ParseFileOptions {
   /** Case id — required for encrypting stored PDF attachments. */
@@ -36,6 +38,13 @@ export interface ParseFileOptions {
   docxExtractor?: DocxTextExtractor
   /** Override attachment persistence (tests). */
   storeAttachment?: StoreAttachmentFn
+  /**
+   * Optional per-user ParserProfile applied ABOVE the base parser as a detection
+   * bias (heading aliases, date-location hint, column aliases). Omitting it — or
+   * passing an empty/auto profile — leaves the base parser behaviour unchanged.
+   * The layer never bypasses the review/accept gate or provenance.
+   */
+  parserProfile?: ParserProfile | null
 }
 
 export interface TabularContext {
@@ -80,6 +89,7 @@ export async function parseFile(file: File, options: ParseFileOptions): Promise<
   }
 
   const format = detection.format
+  const profileOptions = profileToParseOptions(options.parserProfile)
 
   let adapter: AdapterResult
   let tabular: TabularContext | undefined
@@ -92,22 +102,22 @@ export async function parseFile(file: File, options: ParseFileOptions): Promise<
       adapter = await parseJsonlFile(file)
       break
     case 'csv': {
-      const result = await parseCsvFile(file)
+      const result = await parseCsvFile(file, profileOptions.autoDetect)
       adapter = result
       tabular = tabularContextFrom(result)
       break
     }
     case 'xlsx': {
-      const result = await parseXlsxFile(file)
+      const result = await parseXlsxFile(file, profileOptions.autoDetect)
       adapter = result
       tabular = tabularContextFrom(result)
       break
     }
     case 'docx':
-      adapter = await parseDocxFile(file, options.docxExtractor)
+      adapter = await parseDocxFile(file, options.docxExtractor, profileOptions.sectionize)
       break
     case 'txt':
-      adapter = await parseTxtFile(file)
+      adapter = await parseTxtFile(file, profileOptions.sectionize)
       break
     case 'pdf': {
       const store: StoreAttachmentFn =

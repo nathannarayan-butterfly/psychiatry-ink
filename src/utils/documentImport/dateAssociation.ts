@@ -17,7 +17,30 @@
  * Everything here is pure and deterministic — no network, no AI.
  */
 
-export type DateAssociation = 'inline' | 'leading-line' | 'left-column' | 'none'
+export type DateAssociation =
+  | 'inline'
+  | 'leading-line'
+  | 'left-column'
+  | 'right-column'
+  | 'following-line'
+  | 'section-header'
+  | 'none'
+
+/**
+ * Where a clinic typically records the date of a course entry. Drives a
+ * per-user ParserProfile bias for date association (see `parserProfile.ts`).
+ * `auto` keeps the deterministic multi-strategy default.
+ */
+export const DATE_LOCATION_HINTS = [
+  'auto',
+  'left-column',
+  'right-column',
+  'section-header',
+  'inline',
+  'following-line',
+] as const
+
+export type DateLocationHint = (typeof DATE_LOCATION_HINTS)[number]
 
 export interface DatedEntry {
   /** Note text for this entry (date stripped from the leading line). */
@@ -89,6 +112,15 @@ export function parseGermanDate(raw: string): string | null {
   return null
 }
 
+const DATE_TOKEN_RE = /\b(\d{1,2}\.\d{1,2}\.\d{4}|\d{1,2}\.\d{1,2}\.\d{2}|\d{4}-\d{1,2}-\d{1,2})\b/
+
+/** Find the first German/ISO date token inside free text such as a section heading. */
+export function findGermanDateInText(raw: string): { raw: string; iso?: string } | null {
+  const m = DATE_TOKEN_RE.exec(raw)
+  if (!m) return null
+  return { raw: m[1], iso: parseGermanDate(m[1]) ?? undefined }
+}
+
 /** A leading date at the very start of a line: returns the raw date + remainder. */
 const LEADING_DATE_RE =
   /^\s*(\d{1,2}\.\d{1,2}\.\d{2,4}|\d{4}-\d{1,2}-\d{1,2})\s*(.*)$/
@@ -124,6 +156,37 @@ export function isDateOnlyLine(line: string): boolean {
 }
 
 /**
+ * A date at the very END of a line: returns the note text + the trailing date.
+ * Used for right-column layouts ("Patient stabil.\t12.03.2024") that flatten to
+ * "<note><tab|2+ spaces><date>". A single space before the date is treated as
+ * narrative (e.g. "Nächster Termin am 20.03.2024") and is NOT split out, to
+ * avoid false positives in free text.
+ */
+const TRAILING_DATE_RE =
+  /^(.*?\S)(\t+| {2,})(\d{1,2}\.\d{1,2}\.\d{2,4}|\d{4}-\d{1,2}-\d{1,2})\s*$/
+
+interface TrailingMatch {
+  raw: string
+  rest: string
+  association: 'right-column'
+}
+
+function matchTrailingDate(line: string): TrailingMatch | null {
+  const m = TRAILING_DATE_RE.exec(line)
+  if (!m) return null
+  const rest = m[1].trim()
+  if (!rest) return null
+  // Don't treat a leading-date line as a trailing-date line.
+  if (matchLeadingDate(line)) return null
+  return { raw: m[3], rest, association: 'right-column' }
+}
+
+export interface SplitOptions {
+  /** Bias date detection toward a known layout; `auto` (default) tries all. */
+  dateLocation?: DateLocationHint
+}
+
+/**
  * Split a section body into dated entries.
  *
  * Strategy:
@@ -136,7 +199,8 @@ export function isDateOnlyLine(line: string): boolean {
  * entry with `association: 'none'` and no date (caller decides whether that is
  * expected or needs clarification).
  */
-export function splitDatedEntries(body: string): DatedEntry[] {
+export function splitDatedEntries(body: string, options: SplitOptions = {}): DatedEntry[] {
+  const hint = options.dateLocation ?? 'auto'
   const lines = body.replace(/\r\n/g, '\n').split('\n')
   const entries: DatedEntry[] = []
   let current: DatedEntry | null = null
@@ -148,8 +212,55 @@ export function splitDatedEntries(body: string): DatedEntry[] {
     current = null
   }
 
+  // Whether to attempt right-column (trailing-date) detection. Always on except
+  // when the user explicitly says dates live in the left column / header, where
+  // a trailing token is more likely to be narrative.
+  const allowTrailing = hint !== 'left-column' && hint !== 'section-header'
+  // Prefer trailing over leading only when the user says dates are right-column.
+  const trailingFirst = hint === 'right-column'
+
   lines.forEach((line, index) => {
     const leading = matchLeadingDate(line)
+    const trailing = allowTrailing ? matchTrailingDate(line) : null
+
+    // Following-line layout: a date alone on a line dates the PRECEDING entry.
+    if (
+      hint === 'following-line' &&
+      leading &&
+      leading.rest === '' &&
+      current &&
+      !current.raw
+    ) {
+      current.raw = leading.raw
+      current.iso = parseGermanDate(leading.raw) ?? undefined
+      current.association = 'following-line'
+      pushCurrent()
+      return
+    }
+
+    const useTrailing = trailing && (trailingFirst || !leading)
+    if (useTrailing && trailing) {
+      // A note whose own date sits at the end of its (last) line.
+      if (current && !current.raw) {
+        current.text += (current.text ? '\n' : '') + trailing.rest
+        current.raw = trailing.raw
+        current.iso = parseGermanDate(trailing.raw) ?? undefined
+        current.association = 'right-column'
+        pushCurrent()
+        return
+      }
+      pushCurrent()
+      current = {
+        text: trailing.rest,
+        raw: trailing.raw,
+        iso: parseGermanDate(trailing.raw) ?? undefined,
+        association: 'right-column',
+        lineOffset: index,
+      }
+      pushCurrent()
+      return
+    }
+
     if (leading) {
       pushCurrent()
       current = {

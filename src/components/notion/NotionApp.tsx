@@ -1562,6 +1562,8 @@ export function NotionApp({
           onCreatePatient={() => setShowCreatePatientDialog(true)}
           creditBalance={workspace.creditBalance}
           onOpenSettings={settingsPanel.openSettings}
+          todoCaseId={hasPatient ? caseId : null}
+          todoPatientLabel={currentPatientName ?? null}
         >
           <CaseSidebarContent
             activeTab={activeTopTab}

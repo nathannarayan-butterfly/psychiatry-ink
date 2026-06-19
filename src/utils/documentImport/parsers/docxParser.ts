@@ -8,7 +8,7 @@
  * tested without binary .docx fixtures (and so mammoth — a browser bundle — is
  * never loaded in Node test runs).
  */
-import { mapSectionToCandidates, sectionizeClinicalText } from '../sectionize'
+import { mapSectionToCandidates, sectionizeClinicalText, type SectionizeOptions } from '../sectionize'
 import { extractPatientIdentity } from '../patientIdentity'
 import { readArrayBuffer } from '../fileIo'
 import { buildPreview, notice, type AdapterResult } from './adapterResult'
@@ -25,14 +25,19 @@ export const defaultDocxExtractor: DocxTextExtractor = async (buffer) => {
   return result.value
 }
 
-/** Pure mapping step: sectionized text → candidates + notices. Exposed for tests. */
-export function docxTextToResult(text: string): AdapterResult {
-  const sections = sectionizeClinicalText(text)
+/**
+ * Pure mapping step: sectionized text → candidates + notices. Exposed for tests.
+ *
+ * `options` is the optional per-user ParserProfile augmentation layer (heading
+ * aliases + date-location bias). Omitting it reproduces the exact base behaviour.
+ */
+export function docxTextToResult(text: string, options: SectionizeOptions = {}): AdapterResult {
+  const sections = sectionizeClinicalText(text, options)
   const candidates: ClinicalImportCandidate[] = []
   const notices: ImportNotice[] = []
 
   for (const section of sections) {
-    candidates.push(...mapSectionToCandidates(section))
+    candidates.push(...mapSectionToCandidates(section, options))
   }
 
   if (candidates.length === 0) {
@@ -51,6 +56,7 @@ export function docxTextToResult(text: string): AdapterResult {
 export async function parseDocxFile(
   file: File,
   extractor: DocxTextExtractor = defaultDocxExtractor,
+  options: SectionizeOptions = {},
 ): Promise<AdapterResult> {
   let text: string
   try {
@@ -64,5 +70,5 @@ export async function parseDocxFile(
       parsingMode: 'structured',
     }
   }
-  return docxTextToResult(text)
+  return docxTextToResult(text, options)
 }
