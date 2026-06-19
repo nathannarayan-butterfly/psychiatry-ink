@@ -89,6 +89,18 @@ export const medicationUiTranslations = {
     fr: 'Ajoutez le premier médicament pour commencer le plan.',
     es: 'Añada el primer medicamento para iniciar el plan.',
   },
+  medEmptyNoActive: {
+    de: 'Keine aktiven Medikamente.',
+    en: 'No active medications.',
+    fr: 'Aucun médicament actif.',
+    es: 'Sin medicamentos activos.',
+  },
+  medEmptyNoActiveHint: {
+    de: 'Abgesetzte Medikamente finden Sie im Verlauf.',
+    en: 'Discontinued medications are available in plan history.',
+    fr: 'Les médicaments arrêtés sont disponibles dans l’historique du plan.',
+    es: 'Los medicamentos suspendidos están en el historial del plan.',
+  },
   medSubstance: { de: 'Substanz', en: 'Substance', fr: 'Substance', es: 'Sustancia' },
   medFormulation: { de: 'Darreichungsform', en: 'Formulation', fr: 'Forme galénique', es: 'Formulación' },
   medStrength: {
@@ -834,6 +846,44 @@ export const medicationUiTranslations = {
     en: 'No specific monitoring derivable from the reference.',
     fr: 'Aucune surveillance spécifique dérivable de la référence.',
     es: 'No se puede derivar monitorización específica de la referencia.',
+  },
+
+  // ── Curated target receptors (Zielrezeptoren) ───────────────────────────
+  medCuratedReceptorTitle: {
+    de: 'Zielrezeptoren',
+    en: 'Target receptors',
+    fr: 'Récepteurs cibles',
+    es: 'Receptores diana',
+  },
+  medCuratedReceptorEmpty: {
+    de: 'Keine Zielrezeptoren im Regime erkannt.',
+    en: 'No target receptors detected in the regimen.',
+    fr: 'Aucun récepteur cible détecté dans le régime.',
+    es: 'No se detectaron receptores diana en el régimen.',
+  },
+  medCuratedReceptorAdd: {
+    de: 'Zielrezeptor hinzufügen',
+    en: 'Add target receptor',
+    fr: 'Ajouter un récepteur cible',
+    es: 'Añadir receptor diana',
+  },
+  medCuratedReceptorRemove: {
+    de: '{label} entfernen',
+    en: 'Remove {label}',
+    fr: 'Supprimer {label}',
+    es: 'Eliminar {label}',
+  },
+  medCuratedReceptorPickerHint: {
+    de: 'Rezeptoren aus dem aktiven Regime',
+    en: 'Receptors from the active regimen',
+    fr: 'Récepteurs du régime actif',
+    es: 'Receptores del régimen activo',
+  },
+  medCuratedReceptorSuggestions: {
+    de: 'Vorschläge',
+    en: 'Suggestions',
+    fr: 'Suggestions',
+    es: 'Sugerencias',
   },
 
   // ── Combination risk labels (additive pharmacodynamics) ─────────────────

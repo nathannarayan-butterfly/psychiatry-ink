@@ -17,10 +17,10 @@ describe('wikimediaStructureImages', () => {
     expect(getStructureImageAttribution('Totally Unknown Drug XYZ')).toBeNull()
   })
 
-  it('upscales Commons thumb URLs at resolve time for sharper browse/detail renders', () => {
+  it('returns Commons pre-rendered thumb URLs from bundled data (no invalid upscaling)', () => {
     const attr = getStructureImageAttribution('Haloperidol')
-    expect(attr?.thumbUrl).toMatch(/\/320px-/)
-    expect(attr?.detailThumbUrl).toMatch(/\/640px-/)
+    expect(attr?.thumbUrl).toMatch(/\/120px-/)
+    expect(attr?.detailThumbUrl).toMatch(/\/500px-/)
   })
 
   it('rescales Commons thumb path segments', () => {

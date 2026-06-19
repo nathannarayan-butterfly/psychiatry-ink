@@ -31,7 +31,7 @@ import { CasePatientHeader } from './CasePatientHeader'
 import { WorkspaceTabBar } from './WorkspaceTabBar'
 import { MeinePatientenView } from './MeinePatientenView'
 import { PatientDashboardView } from './PatientDashboardView'
-import { VerlaufFeedPage } from './VerlaufFeedPage'
+import { VerlaufFeedPage, type VerlaufDerivedSource } from './VerlaufFeedPage'
 import { LaborPage } from './LaborPage'
 import { DokumentePage } from './DokumentePage'
 import { TherapiePage } from './TherapiePage'
@@ -85,6 +85,14 @@ import {
   resolveNotionPageFromDocumentType,
   type NotionPageId,
 } from './notionPages'
+import {
+  parseTherapyPlanningSubsectionId,
+  THERAPY_PLANNING_SECTIONS,
+  therapyPlanningSubsectionId,
+  type TherapyPlanningSectionKey,
+} from '../../data/therapyPageSections'
+import { translateSozialtherapieUi as tsSozial } from '../../data/sozialtherapieUiTranslations'
+import { translateWeitereTherapieUi as tsWeitere } from '../../data/weitereTherapieUiTranslations'
 import { documentTypes } from '../../data/documentTypes'
 import { resolveDocumentTypeWithVariant } from '../../utils/workspaceComponents'
 import type { AssessmentStandard } from '../../types/isdm'
@@ -100,6 +108,7 @@ import { TemplateWorkspaceHost } from '../templates/TemplateWorkspaceHost'
 import { usePermissionContext } from '../../contexts/PermissionContext'
 import { useAuth } from '../../context/AuthContext'
 import { buildTherapyAttribution } from '../../types/therapy'
+import type { AnforderungModalPreset } from '../../types/anforderung'
 import { isDemoCase, isDemoCaseReadOnly } from '../../demo'
 import '../../styles/demo-patient-dev.css'
 import '../../styles/anforderungen.css'
@@ -250,19 +259,23 @@ export function NotionApp({
   assessmentStandard,
   onSelectAssessmentStandard,
 }: NotionAppProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const { user } = useAuth()
   const { member, role } = usePermissionContext()
   const storageCaseIdForAccess = workspaceStorageId ?? caseId
   const caseAccessChecks = useCanAccessCase(storageCaseIdForAccess)
-  const [breakReminderActive, setBreakReminderActive] = useState(false)
   // Each workspace tab gets its own saved-docs list via a per-tab storage key.
   const savedDocsKey = savedDocsCaseId ?? caseId
   const [savedDocs, setSavedDocs] = useState<SavedDoc[]>(() => loadSavedDocs(savedDocsKey))
   const storageCaseId = workspaceStorageId ?? caseId
   const [pendingMedicationAdd, setPendingMedicationAdd] = useState(false)
   const [templateHostOpen, setTemplateHostOpen] = useState(false)
-  const [anforderungModalOpen, setAnforderungModalOpen] = useState(false)
+  const [therapieplanungInitialType, setTherapieplanungInitialType] =
+    useState<TherapyPlanningSectionKey | null>(null)
+  const [anforderungModal, setAnforderungModal] = useState<{
+    open: boolean
+    preset?: import('../../types/anforderung').AnforderungModalPreset | null
+  }>({ open: false })
 
   useEffect(() => {
     setSavedDocs(loadSavedDocs(savedDocsKey))
@@ -317,13 +330,8 @@ export function NotionApp({
     [assessmentStandard, onSelectAssessmentStandard, workspace],
   )
 
-  const handleBreakStart = useCallback(() => {
-    setBreakReminderActive(true)
-  }, [])
-
   const handleClosePanelGraphic = useCallback(() => {
     appearance.setShowPanelGraphic(false)
-    setBreakReminderActive(false)
   }, [appearance])
 
   const documentTypeLabel = useCallback(
@@ -845,6 +853,9 @@ export function NotionApp({
   const handlePageSelect = useCallback(
     (pageId: NotionPageId) => {
       setActivePage(pageId)
+      if (pageId !== 'therapieplanung') {
+        setTherapieplanungInitialType(null)
+      }
       const page = NOTION_PAGES.find((item) => item.id === pageId)
       if (page?.kind === 'document' && page.documentTypeId) {
         workspace.selectDocumentType(page.documentTypeId)
@@ -855,6 +866,14 @@ export function NotionApp({
 
   const handlePageSelectWithSection = useCallback(
     (pageId: NotionPageId, sectionId: string) => {
+      if (pageId === 'therapieplanung') {
+        const type = parseTherapyPlanningSubsectionId(sectionId)
+        setActivePage(pageId)
+        workspace.selectDocumentType('therapieplanung')
+        setTherapieplanungInitialType(type)
+        return
+      }
+      setTherapieplanungInitialType(null)
       setActivePage(pageId)
       const page = NOTION_PAGES.find((item) => item.id === pageId)
       if (page?.kind === 'document' && page.documentTypeId) {
@@ -862,6 +881,22 @@ export function NotionApp({
       }
     },
     [workspace],
+  )
+
+  const therapyPlanningLabel = useCallback(
+    (key: TherapyPlanningSectionKey): string => {
+      switch (key) {
+        case 'weitere':
+          return tsWeitere(language, 'wtSectionTitle')
+        case 'psychotherapie':
+          return t('therapieSectionPsychotherapie')
+        case 'komplementaer':
+          return t('complementaryTherapiesTitle')
+        case 'sozial':
+          return tsSozial(language, 'szSectionTitle')
+      }
+    },
+    [language, t],
   )
 
   const pageSubsections = useMemo(() => {
@@ -876,8 +911,12 @@ export function NotionApp({
         result[page.id] = resolvedType.sections.map((s) => ({ id: s.id, label: s.label }))
       }
     }
+    result.therapieplanung = THERAPY_PLANNING_SECTIONS.map((section) => ({
+      id: therapyPlanningSubsectionId(section.key),
+      label: therapyPlanningLabel(section.key),
+    }))
     return result
-  }, [workspace.activeVariantIds])
+  }, [therapyPlanningLabel, workspace.activeVariantIds])
 
   const runAiTool = useCallback(
     (tool: AiToolKey) => {
@@ -1292,6 +1331,20 @@ export function NotionApp({
 
   const workspaceReadOnly = !caseAccessChecks.canEdit || isDemoCaseReadOnly(storageCaseIdForAccess ?? caseId, user?.email)
   const showDemoBanner = isDemoCaseReadOnly(storageCaseIdForAccess ?? caseId, user?.email)
+  const canRequestAnforderungen =
+    hasPatient && storageCaseId !== DEFAULT_CASE_ID && !workspaceReadOnly
+
+  const openAnforderungModal = useCallback(
+    (preset?: AnforderungModalPreset | null) => {
+      if (!canRequestAnforderungen) return
+      setAnforderungModal({ open: true, preset: preset ?? null })
+    },
+    [canRequestAnforderungen],
+  )
+
+  const closeAnforderungModal = useCallback(() => {
+    setAnforderungModal({ open: false })
+  }, [])
   const [workspaceMenuRequest, setWorkspaceMenuRequest] = useState(0)
   const requestWorkspaceMenu = useCallback(() => {
     setWorkspaceMenuRequest((current) => current + 1)
@@ -1509,7 +1562,6 @@ export function NotionApp({
           onCreatePatient={() => setShowCreatePatientDialog(true)}
           creditBalance={workspace.creditBalance}
           onOpenSettings={settingsPanel.openSettings}
-          onBreakStart={handleBreakStart}
         >
           <CaseSidebarContent
             activeTab={activeTopTab}
@@ -1519,16 +1571,14 @@ export function NotionApp({
             }}
             onOpenTemplateFromPatient={() => setTemplateHostOpen(true)}
             onAddAnforderung={
-              workspaceReadOnly ? undefined : () => setAnforderungModalOpen(true)
+              canRequestAnforderungen ? () => openAnforderungModal() : undefined
             }
             workspaceSidebar={
               activeTopTab === 'workspace'
                 ? {
                     storageCaseId,
                     panelGraphicEnabled: appearance.settings.showPanelGraphic,
-                    breakReminderActive,
                     onClosePanelGraphic: handleClosePanelGraphic,
-                    onBreakStart: handleBreakStart,
                     onNavigateToLabor: () => setActiveTopTab('labor'),
                     savedDocs,
                     onViewSavedDoc: handleViewSavedDoc,
@@ -1537,9 +1587,9 @@ export function NotionApp({
                     onCloseDocument: workspace.selectedDocumentType
                       ? handleCloseWorkspacePage
                       : undefined,
-                    onAddAnforderung: workspaceReadOnly
-                      ? undefined
-                      : () => setAnforderungModalOpen(true),
+                    onAddAnforderung: canRequestAnforderungen
+                      ? () => openAnforderungModal()
+                      : undefined,
                     anforderungenReadOnly: workspaceReadOnly,
                   }
                 : undefined
@@ -1627,7 +1677,21 @@ export function NotionApp({
           <div className="case-tab-shell">
             <CasePatientHeader caseId={caseId} metaVersion={patientMetaVersion} />
             <div className="case-tab-shell__body case-tab-shell__body--full">
-              <VerlaufFeedPage caseId={storageCaseId} />
+              <VerlaufFeedPage
+                caseId={storageCaseId}
+                onNavigateToSource={(source: VerlaufDerivedSource) => {
+                  // Derived feed rows are projections of other modules; "edit" /
+                  // "delete" route the clinician to the owning section instead of
+                  // mutating the read-only projection.
+                  const tab =
+                    source === 'medikation'
+                      ? 'medikation'
+                      : source === 'aufnahmebefund'
+                        ? 'dokumente'
+                        : 'therapie'
+                  setActiveTopTab(tab)
+                }}
+              />
             </div>
           </div>
         ) : null}
@@ -1664,7 +1728,7 @@ export function NotionApp({
           <div className="case-tab-shell">
             <CasePatientHeader caseId={caseId} metaVersion={patientMetaVersion} />
             <div className="case-tab-shell__body case-tab-shell__body--full">
-              <LaborPage caseId={storageCaseId} hasPatient={hasPatient} useExternalSidebar />
+              <LaborPage caseId={storageCaseId} hasPatient={hasPatient} useExternalSidebar onRequestAnforderung={canRequestAnforderungen ? openAnforderungModal : undefined} />
             </div>
           </div>
         ) : null}
@@ -1757,12 +1821,10 @@ export function NotionApp({
               : undefined
           }
           anforderungAction={
-            hasPatient &&
-            storageCaseId !== DEFAULT_CASE_ID &&
-            !workspaceReadOnly
+            canRequestAnforderungen
               ? {
                   labelKey: 'anforderungAddTitle',
-                  onSelect: () => setAnforderungModalOpen(true),
+                  onSelect: () => openAnforderungModal(),
                 }
               : undefined
           }
@@ -1786,6 +1848,7 @@ export function NotionApp({
                 caseId={storageCaseId}
                 hasPatient={hasPatient}
                 onCreatePatient={() => setShowCreatePatientDialog(true)}
+                onRequestAnforderung={canRequestAnforderungen ? openAnforderungModal : undefined}
               />
             ) : (
               <>
@@ -1836,7 +1899,6 @@ export function NotionApp({
                 selectedAiTool={workspace.selectedAiTool}
                 aiCanGenerate={workspace.aiCanGenerate && caseAccessChecks.canUseAI}
                 panelGraphicEnabled={appearance.settings.showPanelGraphic}
-                breakReminderActive={breakReminderActive}
                 pageType={appearance.settings.pageType}
                 onEditorChange={workspace.setEditorContent}
                 onSectionContentChange={workspace.setSectionContent}
@@ -1865,7 +1927,6 @@ export function NotionApp({
                 onDiscardRecording={workspace.discardRecording}
                 onTranscribe={workspace.transcribeRecording}
                 onClosePanelGraphic={handleClosePanelGraphic}
-                onBreakStart={handleBreakStart}
                 privacy={privacy}
                 clinicalAge={clinicalAge}
                 onMigratedAge={onMigratedAge}
@@ -1887,6 +1948,8 @@ export function NotionApp({
                 accessReadOnly={workspaceReadOnly}
                 onOpenWorkspaceMenu={requestWorkspaceMenu}
                 useExternalSidebar={showCaseSidebar}
+                therapieplanungInitialType={therapieplanungInitialType}
+                onTherapieplanungInitialTypeConsumed={() => setTherapieplanungInitialType(null)}
               />
               </>
             )}
@@ -1957,8 +2020,9 @@ export function NotionApp({
 
       <AnforderungCreateModal
         caseId={storageCaseId}
-        open={anforderungModalOpen}
-        onClose={() => setAnforderungModalOpen(false)}
+        open={anforderungModal.open}
+        preset={anforderungModal.preset}
+        onClose={closeAnforderungModal}
       />
     </div>
   )

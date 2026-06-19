@@ -17,27 +17,17 @@ function randomWaitMs(): number {
 interface UsePanelGraphicScheduleOptions {
   /** Master toggle from appearance settings — random intervals only when true. */
   enabled: boolean
-  /** When true (e.g. pomodoro break), random appearances are suppressed. */
-  paused?: boolean
 }
 
-export function usePanelGraphicSchedule({
-  enabled,
-  paused = false,
-}: UsePanelGraphicScheduleOptions) {
+export function usePanelGraphicSchedule({ enabled }: UsePanelGraphicScheduleOptions) {
   const [visible, setVisible] = useState(false)
   const showTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const enabledRef = useRef(enabled)
-  const pausedRef = useRef(paused)
 
   useEffect(() => {
     enabledRef.current = enabled
   }, [enabled])
-
-  useEffect(() => {
-    pausedRef.current = paused
-  }, [paused])
 
   const clearTimers = useCallback(() => {
     if (showTimerRef.current !== null) {
@@ -51,12 +41,12 @@ export function usePanelGraphicSchedule({
   }, [])
 
   const scheduleNextAppearance = useCallback(() => {
-    if (!enabledRef.current || pausedRef.current) return
+    if (!enabledRef.current) return
     if (showTimerRef.current !== null) return
 
     showTimerRef.current = setTimeout(() => {
       showTimerRef.current = null
-      if (!enabledRef.current || pausedRef.current) return
+      if (!enabledRef.current) return
 
       setVisible(true)
       hideTimerRef.current = setTimeout(() => {
@@ -77,7 +67,7 @@ export function usePanelGraphicSchedule({
   }, [scheduleNextAppearance])
 
   useEffect(() => {
-    if (!enabled || paused) {
+    if (!enabled) {
       clearTimers()
       setVisible(false)
       return
@@ -85,7 +75,7 @@ export function usePanelGraphicSchedule({
 
     scheduleNextAppearance()
     return clearTimers
-  }, [enabled, paused, clearTimers, scheduleNextAppearance])
+  }, [enabled, clearTimers, scheduleNextAppearance])
 
   return { visible, dismiss }
 }

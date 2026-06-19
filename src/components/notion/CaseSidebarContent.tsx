@@ -18,9 +18,7 @@ interface CaseSidebarContentProps {
   workspaceSidebar?: {
     storageCaseId: string
     panelGraphicEnabled: boolean
-    breakReminderActive: boolean
     onClosePanelGraphic: () => void
-    onBreakStart?: () => void
     onNavigateToLabor?: () => void
     savedDocs?: SavedDoc[]
     onViewSavedDoc?: (doc: SavedDoc) => void
@@ -71,9 +69,7 @@ export function CaseSidebarContent({
         return (
           <NotionDiarySidebar
             panelGraphicEnabled={workspaceSidebar.panelGraphicEnabled}
-            breakReminderActive={workspaceSidebar.breakReminderActive}
             onClosePanelGraphic={workspaceSidebar.onClosePanelGraphic}
-            onBreakStart={workspaceSidebar.onBreakStart}
             caseId={workspaceSidebar.storageCaseId}
             onNavigateToLabor={workspaceSidebar.onNavigateToLabor}
             savedDocs={workspaceSidebar.savedDocs}

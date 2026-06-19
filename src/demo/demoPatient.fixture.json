@@ -1,30 +1,30 @@
 {
   "version": "1",
   "isDemoPatient": true,
-  "demoSeedVersion": "v2",
+  "demoSeedVersion": "v3",
   "demoPatientId": "DEMO-0001",
   "demoCaseId": "DEMO-CASE-0001",
   "patient": {
-    "vorname": "Max",
+    "vorname": "Anna",
     "nachname": "Demo",
-    "geburtsdatum": "1991-03-14",
-    "geschlecht": "maennlich",
-    "age": "34",
+    "geburtsdatum": "1992-08-12",
+    "geschlecht": "weiblich",
+    "age": "33",
     "admissionDate": "2026-06-02",
     "patientId": "DEMO-0001",
     "caseId": "DEMO-CASE-0001"
   },
   "workspace": {
-    "age": "34",
+    "age": "33",
     "selectedDocumentType": "aufnahme",
     "documents": {
       "aufnahme": {
         "documentTypeId": "aufnahme",
-        "pageHeading": "Aufnahme — Max Demo",
+        "pageHeading": "Aufnahme — Anna Demo",
         "sectionContents": {
           "aufnahmeanlass": "Elektive stationäre Aufnahme über die Notaufnahme nach akuter psychotischer Dekompensation mit paranoiden Inhalten, Schlafdefizit und zunehmender Substanzeinnahme. Zuweisung durch den Hausarzt nach telefonischer Rücksprache; keine akute Fremdgefährdung, jedoch eingeschränkte Krankheitseinsicht.",
           "aktuelle-beschwerden": "Seit ca. 10–14 Tagen zunehmende innere Unruhe, Schlafdefizit (<3 h/Nacht), Misstrauen gegenüber Nachbarn („werden beobachtet\"), gehäufte Telefonate bei Polizei ohne belastbare Anhaltspunkte. Stimmung wechselhaft zwischen gereizt und ängstlich. Appetit reduziert.",
-          "eigenanamnese": "Herr Demo berichtet belastbare Eigenanamnese. Keine bekannte somatische Vorerkrankung von relevanter Bedeutung. Keine Allergien bekannt.",
+          "eigenanamnese": "Frau Demo berichtet belastbare Eigenanamnese. Keine bekannte somatische Vorerkrankung von relevanter Bedeutung. Keine Allergien bekannt.",
           "aktuelle-krankheitsanamnese": "Erste psychotische Episode mit 22 J. nach Cannabisabusus, damals kurzzeitige stationäre Behandlung. Seitdem mehrere ambulante Phasen mit unregelmäßiger Medikamenteneinnahme. Aktuell erneute Verschlechterung im Kontext von Schlafentzug, Amphetamin-Konsum („Speed\" am Wochenende) und beruflichem Stress.",
           "psychiatrische-vorgeschichte": "Mehrere vorstationäre Kontakte, zuletzt vor 8 Monaten ambulant wegen depressiver Symptomatik. Frühere Diagnosen: paranoider Schizophrenie-Verdacht (F20.0), episodisch schwere depressive Störung (unsicher). Keine Suizidversuche. Keine längere Zwangsunterbringung.",
           "somatische-anamnese": "Keine relevante internistische Vorerkrankung. Gelegentliche Kopfschmerzen bei Schlafmangel. Keine bekannten Medikamentenallergien.",
@@ -36,7 +36,7 @@
           "schul-und-berufsanamnese": "Berufliche Tätigkeit in IT bis zur Kündigung wegen Fehlzeiten. Keine aktuelle Erwerbstätigkeit.",
           "forensische-anamnese": "Keine relevante forensische Vorgeschichte. Keine laufenden Strafverfahren.",
           "traumaanamnese": "Kein eindeutiges Trauma berichtet. Belastungen im Jugendalter unscharf.",
-          "suizid-und-selbstgefaehrdungsanamnese": "Passives Todeswünschen gelegentlich („manchmal wäre Ruhe gut\"), jedoch keine konkreten Pläne, Absichten oder Vorbereitungen. Kein Suizidversuch in der Vorgeschichte. Schutzfaktoren: ambivalente Bindung an Schwester.",
+          "suizid-und-selbstgefaehrdungsanamnese": "Passives Todeswünschen gelegentlich („manchmal wäre Ruhe gut\"), jedoch keine konkreten Pläne, Absichten oder Vorbereitungen. Kein Suizidversuch in der Vorgeschichte. Schutzfaktoren: ambivalente Bindung an Schwester, therapeutische Beziehung langsam aufbauend. BRMS-Screening: niedriges akutes Risiko; Sicherheitsplan besprochen.",
           "fremdgefaehrdungsanamnese": "Keine Hinweise auf akute Fremdgefährdung. Keine Waffen. Gelegentlich lautstarkes Verhalten, Nachbarn beschwert.",
           "psychopathologischer-befund": "Wach, allseits orientiert. Kontakt mühevoll, misstrauisch. Affekt labil, teils gereizt. Denken formal leicht umständlich, inhaltlich wahnhaft-paranoid (Verfolgungs- und Beobachtungsideen ohne vollständige Einsicht). Keine Sinnestäuschungen zum Untersuchungszeitpunkt eindeutig. Antrieb reduziert. Schlafstörung. Krankheitseinsicht gering.",
           "somatischer-befund": "Vitalzeichen stabil. Herz-Lunge unauffällig. Neurologischer Kurzstatus ohne fokal-neurologische Defizite.",
@@ -94,7 +94,7 @@
       }
     },
     "pageHeadings": {
-      "aufnahme": "Aufnahme — Max Demo",
+      "aufnahme": "Aufnahme — Anna Demo",
       "verlauf": "Verlaufsdokumentation",
       "psychopath": "Psychopathologischer Befund",
       "therapie-verlauf": "Therapieverlauf",
@@ -979,9 +979,2053 @@
           "evidenceQuoteRange": null,
           "analysisEligible": true,
           "excludeReason": null
+        },
+        {
+          "imprintKey": "verlauf:demo-verlauf-09",
+          "patientId": "DEMO-0001",
+          "caseId": "DEMO-CASE-0001",
+          "sourceType": "verlauf",
+          "sourceId": "demo-verlauf-09",
+          "sourceDate": "2026-06-08",
+          "createdAt": "2026-06-08T10:30:00.000Z",
+          "readableClinicalSentence": "EKG ohne relevante Pathologie. Besprechung mit Sozialdienst wegen Wohn- und Arbeitssituation.",
+          "clinicalDomain": "psychopathology",
+          "symptoms": [
+            "Paranoia",
+            "Schlafstörung"
+          ],
+          "severity": "mittel",
+          "courseDirection": "improved",
+          "affect": "labil",
+          "drive": "reduziert",
+          "thoughtForm": "leicht umständlich",
+          "thoughtContent": "wahnhaft-paranoid",
+          "perception": null,
+          "selfDisturbance": null,
+          "cognition": "orientiert",
+          "sleep": "gestört",
+          "cooperation": "eingeschränkt",
+          "insight": "gering",
+          "riskSelf": "passiv",
+          "riskOthers": "nein",
+          "aggression": "nein",
+          "suicidality": "nein",
+          "functioning": "eingeschränkt",
+          "socialInteraction": "reduziert",
+          "hygieneSelfCare": "adäquat",
+          "medicationMentioned": [
+            "Risperidon",
+            "Aripiprazol"
+          ],
+          "medicationResponse": "teilweise",
+          "sideEffects": "Akathisie leicht",
+          "adherence": "verbessert",
+          "diagnosisHints": [
+            "F20.0"
+          ],
+          "differentialDiagnosisHints": [
+            "F12.2",
+            "substanzinduzierte Psychose"
+          ],
+          "uncertainty": "Diagnose weiterhin mit Unsicherheit",
+          "evidenceStrength": "direct_observation",
+          "evidenceText": "EKG ohne relevante Pathologie. Besprechung mit Sozialdienst wegen Wohn- und Arbeitssituation.",
+          "evidenceQuoteRange": null,
+          "analysisEligible": true,
+          "excludeReason": null
+        },
+        {
+          "imprintKey": "verlauf:demo-verlauf-10",
+          "patientId": "DEMO-0001",
+          "caseId": "DEMO-CASE-0001",
+          "sourceType": "verlauf",
+          "sourceId": "demo-verlauf-10",
+          "sourceDate": "2026-06-09",
+          "createdAt": "2026-06-09T09:00:00.000Z",
+          "readableClinicalSentence": "Wechsel auf Aripiprazol 10 mg begonnen (Risperidon ausgeschlichen) wegen Prolaktin-Anstieg und Antriebsminderung.",
+          "clinicalDomain": "psychopathology",
+          "symptoms": [
+            "Unruhe"
+          ],
+          "severity": "mittel",
+          "courseDirection": "improved",
+          "affect": "labil",
+          "drive": "reduziert",
+          "thoughtForm": "leicht umständlich",
+          "thoughtContent": "wahnhaft-paranoid",
+          "perception": null,
+          "selfDisturbance": null,
+          "cognition": "orientiert",
+          "sleep": "gestört",
+          "cooperation": "eingeschränkt",
+          "insight": "gering",
+          "riskSelf": "passiv",
+          "riskOthers": "nein",
+          "aggression": "nein",
+          "suicidality": "nein",
+          "functioning": "eingeschränkt",
+          "socialInteraction": "reduziert",
+          "hygieneSelfCare": "adäquat",
+          "medicationMentioned": [
+            "Risperidon",
+            "Aripiprazol"
+          ],
+          "medicationResponse": "teilweise",
+          "sideEffects": "Akathisie leicht",
+          "adherence": "verbessert",
+          "diagnosisHints": [
+            "F20.0"
+          ],
+          "differentialDiagnosisHints": [
+            "F12.2",
+            "substanzinduzierte Psychose"
+          ],
+          "uncertainty": "Diagnose weiterhin mit Unsicherheit",
+          "evidenceStrength": "direct_observation",
+          "evidenceText": "Wechsel auf Aripiprazol 10 mg begonnen (Risperidon ausgeschlichen) wegen Prolaktin-Anstieg und Antriebsminderung.",
+          "evidenceQuoteRange": null,
+          "analysisEligible": true,
+          "excludeReason": null
+        },
+        {
+          "imprintKey": "verlauf:demo-verlauf-11",
+          "patientId": "DEMO-0001",
+          "caseId": "DEMO-CASE-0001",
+          "sourceType": "verlauf",
+          "sourceId": "demo-verlauf-11",
+          "sourceDate": "2026-06-10",
+          "createdAt": "2026-06-10T14:00:00.000Z",
+          "readableClinicalSentence": "Sporttherapie zweimal teilgenommen. Stimmung etwas gebessert.",
+          "clinicalDomain": "psychopathology",
+          "symptoms": [
+            "Paranoia",
+            "Schlafstörung"
+          ],
+          "severity": "mittel",
+          "courseDirection": "improved",
+          "affect": "labil",
+          "drive": "reduziert",
+          "thoughtForm": "leicht umständlich",
+          "thoughtContent": "wahnhaft-paranoid",
+          "perception": null,
+          "selfDisturbance": null,
+          "cognition": "orientiert",
+          "sleep": "gestört",
+          "cooperation": "eingeschränkt",
+          "insight": "gering",
+          "riskSelf": "passiv",
+          "riskOthers": "nein",
+          "aggression": "nein",
+          "suicidality": "nein",
+          "functioning": "eingeschränkt",
+          "socialInteraction": "reduziert",
+          "hygieneSelfCare": "adäquat",
+          "medicationMentioned": [
+            "Risperidon",
+            "Aripiprazol"
+          ],
+          "medicationResponse": "teilweise",
+          "sideEffects": "Akathisie leicht",
+          "adherence": "verbessert",
+          "diagnosisHints": [
+            "F20.0"
+          ],
+          "differentialDiagnosisHints": [
+            "F12.2",
+            "substanzinduzierte Psychose"
+          ],
+          "uncertainty": "Diagnose weiterhin mit Unsicherheit",
+          "evidenceStrength": "direct_observation",
+          "evidenceText": "Sporttherapie zweimal teilgenommen. Stimmung etwas gebessert.",
+          "evidenceQuoteRange": null,
+          "analysisEligible": true,
+          "excludeReason": null
+        },
+        {
+          "imprintKey": "verlauf:demo-verlauf-12",
+          "patientId": "DEMO-0001",
+          "caseId": "DEMO-CASE-0001",
+          "sourceType": "verlauf",
+          "sourceId": "demo-verlauf-12",
+          "sourceDate": "2026-06-11",
+          "createdAt": "2026-06-11T09:30:00.000Z",
+          "readableClinicalSentence": "Keine akute Suizidalität. Krankheitseinsicht langsam zunehmend. Sicherheitsplan aktualisiert.",
+          "clinicalDomain": "psychopathology",
+          "symptoms": [
+            "Unruhe"
+          ],
+          "severity": "mittel",
+          "courseDirection": "improved",
+          "affect": "labil",
+          "drive": "reduziert",
+          "thoughtForm": "leicht umständlich",
+          "thoughtContent": "wahnhaft-paranoid",
+          "perception": null,
+          "selfDisturbance": null,
+          "cognition": "orientiert",
+          "sleep": "gestört",
+          "cooperation": "eingeschränkt",
+          "insight": "gering",
+          "riskSelf": "passiv",
+          "riskOthers": "nein",
+          "aggression": "nein",
+          "suicidality": "nein",
+          "functioning": "eingeschränkt",
+          "socialInteraction": "reduziert",
+          "hygieneSelfCare": "adäquat",
+          "medicationMentioned": [
+            "Risperidon",
+            "Aripiprazol"
+          ],
+          "medicationResponse": "teilweise",
+          "sideEffects": "Akathisie leicht",
+          "adherence": "verbessert",
+          "diagnosisHints": [
+            "F20.0"
+          ],
+          "differentialDiagnosisHints": [
+            "F12.2",
+            "substanzinduzierte Psychose"
+          ],
+          "uncertainty": "Diagnose weiterhin mit Unsicherheit",
+          "evidenceStrength": "direct_observation",
+          "evidenceText": "Keine akute Suizidalität. Krankheitseinsicht langsam zunehmend. Sicherheitsplan aktualisiert.",
+          "evidenceQuoteRange": null,
+          "analysisEligible": true,
+          "excludeReason": null
         }
       ]
     },
+    "isdmAnalysis": {
+      "caseId": "DEMO-CASE-0001",
+      "profileId": "international_structured_diagnostic_mapping",
+      "updatedAt": "2026-06-18T19:09:47.990Z",
+      "phenomenology": {
+        "appearance_behavior": [
+          {
+            "id": "appearance_behavior:verlauf:demo-verlauf-01:hygieneSelfCare",
+            "domain": "appearance_behavior",
+            "label": "adäquat",
+            "keywords": [
+              "adäquat"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-01",
+              "verlauf:demo-verlauf-02",
+              "verlauf:demo-verlauf-03",
+              "verlauf:demo-verlauf-04",
+              "verlauf:demo-verlauf-05",
+              "verlauf:demo-verlauf-06",
+              "verlauf:demo-verlauf-07",
+              "verlauf:demo-verlauf-08",
+              "verlauf:demo-verlauf-09",
+              "verlauf:demo-verlauf-10",
+              "verlauf:demo-verlauf-11",
+              "verlauf:demo-verlauf-12"
+            ],
+            "confidence": 2,
+            "polarity": "present"
+          },
+          {
+            "id": "appearance_behavior:isdm_input",
+            "domain": "appearance_behavior",
+            "label": "Misstrauische Grundhaltung, reduzierte Mimik",
+            "keywords": [
+              "appearance_behavior"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "manual_note:isdm_input:appearance_behavior"
+            ],
+            "confidence": 2,
+            "polarity": "present",
+            "notes": "Misstrauische Grundhaltung, reduzierte Mimik"
+          },
+          {
+            "id": "appearance_behavior:med-entry:demo-med-lorazepam",
+            "domain": "appearance_behavior",
+            "label": "Lorazepam 1 mg bei Bedarf (max. 2 mg/24 h)",
+            "keywords": [
+              "Lorazepam"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "medication:med-entry:demo-med-lorazepam"
+            ],
+            "confidence": 3,
+            "polarity": "present"
+          }
+        ],
+        "speech_language": [
+          {
+            "id": "speech_language:isdm_input",
+            "domain": "speech_language",
+            "label": "Antworten knapp, teils zögerlich",
+            "keywords": [
+              "speech_language"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "manual_note:isdm_input:speech_language"
+            ],
+            "confidence": 2,
+            "polarity": "present",
+            "notes": "Antworten knapp, teils zögerlich"
+          }
+        ],
+        "consciousness_orientation": [
+          {
+            "id": "consciousness_orientation:isdm_input",
+            "domain": "consciousness_orientation",
+            "label": "Wach, allseits orientiert",
+            "keywords": [
+              "consciousness_orientation"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "manual_note:isdm_input:consciousness_orientation"
+            ],
+            "confidence": 1,
+            "polarity": "present",
+            "notes": "Wach, allseits orientiert"
+          }
+        ],
+        "attention_concentration": [
+          {
+            "id": "attention_concentration:isdm_input",
+            "domain": "attention_concentration",
+            "label": "Aufmerksamkeit leicht ablenkbar",
+            "keywords": [
+              "attention_concentration"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "manual_note:isdm_input:attention_concentration"
+            ],
+            "confidence": 2,
+            "polarity": "present",
+            "notes": "Aufmerksamkeit leicht ablenkbar"
+          }
+        ],
+        "memory_cognition": [
+          {
+            "id": "memory_cognition:verlauf:demo-verlauf-01:cognition",
+            "domain": "memory_cognition",
+            "label": "orientiert",
+            "keywords": [
+              "orientiert"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-01",
+              "verlauf:demo-verlauf-02",
+              "verlauf:demo-verlauf-03",
+              "verlauf:demo-verlauf-04",
+              "verlauf:demo-verlauf-05",
+              "verlauf:demo-verlauf-06",
+              "verlauf:demo-verlauf-07",
+              "verlauf:demo-verlauf-08",
+              "verlauf:demo-verlauf-09",
+              "verlauf:demo-verlauf-10",
+              "verlauf:demo-verlauf-11",
+              "verlauf:demo-verlauf-12"
+            ],
+            "confidence": 2,
+            "polarity": "present"
+          },
+          {
+            "id": "memory_cognition:isdm_input",
+            "domain": "memory_cognition",
+            "label": "Kurzzeitgedächtnis eingeschränkt bei Unruhe",
+            "keywords": [
+              "memory_cognition"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "manual_note:isdm_input:memory_cognition"
+            ],
+            "confidence": 1,
+            "polarity": "present",
+            "notes": "Kurzzeitgedächtnis eingeschränkt bei Unruhe"
+          }
+        ],
+        "mood_affect": [
+          {
+            "id": "mood_affect:verlauf:demo-verlauf-01:affect",
+            "domain": "mood_affect",
+            "label": "labil",
+            "keywords": [
+              "labil"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-01",
+              "verlauf:demo-verlauf-02",
+              "verlauf:demo-verlauf-03",
+              "verlauf:demo-verlauf-04",
+              "verlauf:demo-verlauf-05",
+              "verlauf:demo-verlauf-06",
+              "verlauf:demo-verlauf-07",
+              "verlauf:demo-verlauf-08",
+              "verlauf:demo-verlauf-09",
+              "verlauf:demo-verlauf-10",
+              "verlauf:demo-verlauf-11",
+              "verlauf:demo-verlauf-12"
+            ],
+            "confidence": 2,
+            "polarity": "present"
+          },
+          {
+            "id": "mood_affect:verlauf:demo-verlauf-08:medicationResponse",
+            "domain": "mood_affect",
+            "label": "teilweise",
+            "keywords": [
+              "teilweise"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-08",
+              "verlauf:demo-verlauf-09",
+              "verlauf:demo-verlauf-10",
+              "verlauf:demo-verlauf-11",
+              "verlauf:demo-verlauf-12"
+            ],
+            "confidence": 2,
+            "polarity": "present"
+          },
+          {
+            "id": "mood_affect:verlauf:demo-verlauf-11",
+            "domain": "mood_affect",
+            "label": "Sporttherapie zweimal teilgenommen. Stimmung etwas gebessert.",
+            "keywords": [
+              "Paranoia",
+              "Schlafstörung"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-11"
+            ],
+            "confidence": 3,
+            "polarity": "present"
+          },
+          {
+            "id": "mood_affect:isdm_input",
+            "domain": "mood_affect",
+            "label": "Affekt labil zwischen ängstlich und gereizt",
+            "keywords": [
+              "mood_affect"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "manual_note:isdm_input:mood_affect"
+            ],
+            "confidence": 3,
+            "polarity": "present",
+            "notes": "Affekt labil zwischen ängstlich und gereizt"
+          },
+          {
+            "id": "mood_affect:verlauf:text",
+            "domain": "mood_affect",
+            "label": "Aufnahme auf Station. Patient misstrauisch, schläft kaum. Risperidon 2 mg fixiert, Lorazepam PRN verordnet.\nNachmittags ",
+            "keywords": [
+              "mood_affect"
+            ],
+            "evidenceStrength": "patient_report",
+            "sourceImprintKeys": [
+              "verlauf:combined"
+            ],
+            "confidence": 2,
+            "polarity": "present"
+          }
+        ],
+        "drive_psychomotor_activity": [
+          {
+            "id": "drive_psychomotor_activity:verlauf:demo-verlauf-01:drive",
+            "domain": "drive_psychomotor_activity",
+            "label": "reduziert",
+            "keywords": [
+              "reduziert"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-01",
+              "verlauf:demo-verlauf-02",
+              "verlauf:demo-verlauf-03",
+              "verlauf:demo-verlauf-04",
+              "verlauf:demo-verlauf-05",
+              "verlauf:demo-verlauf-06",
+              "verlauf:demo-verlauf-07",
+              "verlauf:demo-verlauf-08",
+              "verlauf:demo-verlauf-09",
+              "verlauf:demo-verlauf-10",
+              "verlauf:demo-verlauf-11",
+              "verlauf:demo-verlauf-12"
+            ],
+            "confidence": 2,
+            "polarity": "present"
+          },
+          {
+            "id": "drive_psychomotor_activity:verlauf:demo-verlauf-10",
+            "domain": "drive_psychomotor_activity",
+            "label": "Wechsel auf Aripiprazol 10 mg begonnen (Risperidon ausgeschlichen) wegen Prolaktin-Anstieg und Antriebsminderung.",
+            "keywords": [
+              "Unruhe"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-10"
+            ],
+            "confidence": 3,
+            "polarity": "present"
+          },
+          {
+            "id": "drive_psychomotor_activity:isdm_input",
+            "domain": "drive_psychomotor_activity",
+            "label": "Antrieb reduziert, innere Unruhe",
+            "keywords": [
+              "drive_psychomotor_activity"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "manual_note:isdm_input:drive_psychomotor_activity"
+            ],
+            "confidence": 2,
+            "polarity": "present",
+            "notes": "Antrieb reduziert, innere Unruhe"
+          },
+          {
+            "id": "drive_psychomotor_activity:med-entry:demo-med-lorazepam",
+            "domain": "drive_psychomotor_activity",
+            "label": "Lorazepam 1 mg bei Bedarf (max. 2 mg/24 h)",
+            "keywords": [
+              "Lorazepam"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "medication:med-entry:demo-med-lorazepam"
+            ],
+            "confidence": 3,
+            "polarity": "present"
+          },
+          {
+            "id": "drive_psychomotor_activity:verlauf:text",
+            "domain": "drive_psychomotor_activity",
+            "label": "Aufnahme auf Station. Patient misstrauisch, schläft kaum. Risperidon 2 mg fixiert, Lorazepam PRN verordnet.\nNachmittags ",
+            "keywords": [
+              "drive_psychomotor_activity"
+            ],
+            "evidenceStrength": "patient_report",
+            "sourceImprintKeys": [
+              "verlauf:combined"
+            ],
+            "confidence": 2,
+            "polarity": "present"
+          }
+        ],
+        "formal_thought_disorder": [
+          {
+            "id": "formal_thought_disorder:verlauf:demo-verlauf-01:thoughtForm",
+            "domain": "formal_thought_disorder",
+            "label": "leicht umständlich",
+            "keywords": [
+              "leicht umständlich"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-01",
+              "verlauf:demo-verlauf-02",
+              "verlauf:demo-verlauf-03",
+              "verlauf:demo-verlauf-04",
+              "verlauf:demo-verlauf-05",
+              "verlauf:demo-verlauf-06",
+              "verlauf:demo-verlauf-07",
+              "verlauf:demo-verlauf-08",
+              "verlauf:demo-verlauf-09",
+              "verlauf:demo-verlauf-10",
+              "verlauf:demo-verlauf-11",
+              "verlauf:demo-verlauf-12"
+            ],
+            "confidence": 2,
+            "polarity": "present"
+          },
+          {
+            "id": "formal_thought_disorder:isdm_input",
+            "domain": "formal_thought_disorder",
+            "label": "Leicht umständlich, teils sprunghaft",
+            "keywords": [
+              "formal_thought_disorder"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "manual_note:isdm_input:formal_thought_disorder"
+            ],
+            "confidence": 2,
+            "polarity": "present",
+            "notes": "Leicht umständlich, teils sprunghaft"
+          }
+        ],
+        "thought_content": [
+          {
+            "id": "thought_content:verlauf:demo-verlauf-01:thoughtContent",
+            "domain": "thought_content",
+            "label": "wahnhaft-paranoid",
+            "keywords": [
+              "wahnhaft-paranoid"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-01",
+              "verlauf:demo-verlauf-02",
+              "verlauf:demo-verlauf-03",
+              "verlauf:demo-verlauf-04",
+              "verlauf:demo-verlauf-05",
+              "verlauf:demo-verlauf-06",
+              "verlauf:demo-verlauf-07",
+              "verlauf:demo-verlauf-08",
+              "verlauf:demo-verlauf-09",
+              "verlauf:demo-verlauf-10",
+              "verlauf:demo-verlauf-11",
+              "verlauf:demo-verlauf-12"
+            ],
+            "confidence": 2,
+            "polarity": "present"
+          },
+          {
+            "id": "thought_content:isdm_input",
+            "domain": "thought_content",
+            "label": "Paranoide Interpretationen alltäglicher Ereignisse",
+            "keywords": [
+              "thought_content"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "manual_note:isdm_input:thought_content"
+            ],
+            "confidence": 3,
+            "polarity": "present",
+            "notes": "Paranoide Interpretationen alltäglicher Ereignisse"
+          }
+        ],
+        "delusions_overvalued_ideas": [
+          {
+            "id": "delusions_overvalued_ideas:verlauf:demo-verlauf-01",
+            "domain": "delusions_overvalued_ideas",
+            "label": "Aufnahme auf Station. Patient misstrauisch, schläft kaum. Risperidon 2 mg fixiert, Lorazepam PRN verordnet.",
+            "keywords": [
+              "Paranoia",
+              "Schlafstörung"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-01"
+            ],
+            "confidence": 3,
+            "polarity": "present"
+          },
+          {
+            "id": "delusions_overvalued_ideas:verlauf:demo-verlauf-03",
+            "domain": "delusions_overvalued_ideas",
+            "label": "Nacht 4 h Schlaf. Paranoide Inhalte weiter präsent, jedoch weniger agitiert.",
+            "keywords": [
+              "Paranoia",
+              "Schlafstörung"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-03"
+            ],
+            "confidence": 3,
+            "polarity": "present"
+          },
+          {
+            "id": "delusions_overvalued_ideas:verlauf:demo-verlauf-05",
+            "domain": "delusions_overvalued_ideas",
+            "label": "Aufnahmelabor (05.06.) — Prolaktin deutlich erhöht unter Risperidon 3 mg, sonst Routinepanel ohne relevante Pathologie.",
+            "keywords": [
+              "Paranoia",
+              "Schlafstörung"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-05"
+            ],
+            "confidence": 3,
+            "polarity": "present"
+          },
+          {
+            "id": "delusions_overvalued_ideas:verlauf:demo-verlauf-07",
+            "domain": "delusions_overvalued_ideas",
+            "label": "Einzelgespräch: Patient berichtet reduzierte „Beobachtungs\"-Erlebnisse, Schlaf 5–6 h.",
+            "keywords": [
+              "Paranoia",
+              "Schlafstörung"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-07"
+            ],
+            "confidence": 3,
+            "polarity": "present"
+          },
+          {
+            "id": "delusions_overvalued_ideas:verlauf:demo-verlauf-09",
+            "domain": "delusions_overvalued_ideas",
+            "label": "EKG ohne relevante Pathologie. Besprechung mit Sozialdienst wegen Wohn- und Arbeitssituation.",
+            "keywords": [
+              "Paranoia",
+              "Schlafstörung"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-09"
+            ],
+            "confidence": 3,
+            "polarity": "present"
+          },
+          {
+            "id": "delusions_overvalued_ideas:verlauf:demo-verlauf-11",
+            "domain": "delusions_overvalued_ideas",
+            "label": "Sporttherapie zweimal teilgenommen. Stimmung etwas gebessert.",
+            "keywords": [
+              "Paranoia",
+              "Schlafstörung"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-11"
+            ],
+            "confidence": 3,
+            "polarity": "present"
+          },
+          {
+            "id": "delusions_overvalued_ideas:isdm_input",
+            "domain": "delusions_overvalued_ideas",
+            "label": "Verfolgungs- und Beobachtungsideen ohne vollständige Einsicht",
+            "keywords": [
+              "delusions_overvalued_ideas"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "manual_note:isdm_input:delusions_overvalued_ideas"
+            ],
+            "confidence": 4,
+            "polarity": "present",
+            "notes": "Verfolgungs- und Beobachtungsideen ohne vollständige Einsicht"
+          },
+          {
+            "id": "delusions_overvalued_ideas:verlauf:text",
+            "domain": "delusions_overvalued_ideas",
+            "label": "Aufnahme auf Station. Patient misstrauisch, schläft kaum. Risperidon 2 mg fixiert, Lorazepam PRN verordnet.\nNachmittags ",
+            "keywords": [
+              "delusions_overvalued_ideas"
+            ],
+            "evidenceStrength": "patient_report",
+            "sourceImprintKeys": [
+              "verlauf:combined"
+            ],
+            "confidence": 2,
+            "polarity": "present"
+          }
+        ],
+        "perception_hallucinations": [
+          {
+            "id": "perception_hallucinations:isdm_input",
+            "domain": "perception_hallucinations",
+            "label": "Akustische Halluzinationen in Vorgeschichte, aktuell nicht eindeutig",
+            "keywords": [
+              "perception_hallucinations"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "manual_note:isdm_input:perception_hallucinations"
+            ],
+            "confidence": 2,
+            "polarity": "unclear",
+            "notes": "Akustische Halluzinationen in Vorgeschichte, aktuell nicht eindeutig"
+          }
+        ],
+        "self_experience_ego_disturbance": [
+          {
+            "id": "self_experience_ego_disturbance:isdm_input",
+            "domain": "self_experience_ego_disturbance",
+            "label": "Keine eindeutigen Ich-Störungen zum Untersuchungszeitpunkt",
+            "keywords": [
+              "self_experience_ego_disturbance"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "manual_note:isdm_input:self_experience_ego_disturbance"
+            ],
+            "confidence": 2,
+            "polarity": "absent",
+            "notes": "Keine eindeutigen Ich-Störungen zum Untersuchungszeitpunkt"
+          }
+        ],
+        "anxiety_panic_phobic_symptoms": [
+          {
+            "id": "anxiety_panic_phobic_symptoms:isdm_input",
+            "domain": "anxiety_panic_phobic_symptoms",
+            "label": "Situationsangst in öffentlichen Räumen",
+            "keywords": [
+              "anxiety_panic_phobic_symptoms"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "manual_note:isdm_input:anxiety_panic_phobic_symptoms"
+            ],
+            "confidence": 2,
+            "polarity": "present",
+            "notes": "Situationsangst in öffentlichen Räumen"
+          }
+        ],
+        "obsessions_compulsions": [
+          {
+            "id": "obsessions_compulsions:isdm_input",
+            "domain": "obsessions_compulsions",
+            "label": "obsessions compulsions (absent)",
+            "keywords": [
+              "obsessions_compulsions"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "manual_note:isdm_input:obsessions_compulsions"
+            ],
+            "confidence": 2,
+            "polarity": "absent"
+          }
+        ],
+        "trauma_intrusions_dissociation": [
+          {
+            "id": "trauma_intrusions_dissociation:isdm_input",
+            "domain": "trauma_intrusions_dissociation",
+            "label": "trauma intrusions dissociation (absent)",
+            "keywords": [
+              "trauma_intrusions_dissociation"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "manual_note:isdm_input:trauma_intrusions_dissociation"
+            ],
+            "confidence": 2,
+            "polarity": "absent"
+          }
+        ],
+        "somatic_preoccupation": [
+          {
+            "id": "somatic_preoccupation:verlauf:demo-verlauf-07:sideEffects",
+            "domain": "somatic_preoccupation",
+            "label": "Akathisie leicht",
+            "keywords": [
+              "Akathisie leicht"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-07",
+              "verlauf:demo-verlauf-08",
+              "verlauf:demo-verlauf-09",
+              "verlauf:demo-verlauf-10",
+              "verlauf:demo-verlauf-11",
+              "verlauf:demo-verlauf-12"
+            ],
+            "confidence": 2,
+            "polarity": "present"
+          },
+          {
+            "id": "somatic_preoccupation:isdm_input",
+            "domain": "somatic_preoccupation",
+            "label": "Gelegentliche somatische Beschwerden bei Stress",
+            "keywords": [
+              "somatic_preoccupation"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "manual_note:isdm_input:somatic_preoccupation"
+            ],
+            "confidence": 1,
+            "polarity": "present",
+            "notes": "Gelegentliche somatische Beschwerden bei Stress"
+          },
+          {
+            "id": "somatic_preoccupation:side-effect:demo-se-01",
+            "domain": "somatic_preoccupation",
+            "label": "Nebenwirkung: Akathisie",
+            "keywords": [
+              "Akathisie",
+              "Nebenwirkung"
+            ],
+            "evidenceStrength": "patient_report",
+            "sourceImprintKeys": [
+              "medication:side-effect:demo-se-01"
+            ],
+            "confidence": 2,
+            "polarity": "present"
+          }
+        ],
+        "sleep_appetite_vegetative": [
+          {
+            "id": "sleep_appetite_vegetative:verlauf:demo-verlauf-01",
+            "domain": "sleep_appetite_vegetative",
+            "label": "Aufnahme auf Station. Patient misstrauisch, schläft kaum. Risperidon 2 mg fixiert, Lorazepam PRN verordnet.",
+            "keywords": [
+              "Paranoia",
+              "Schlafstörung"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-01"
+            ],
+            "confidence": 3,
+            "polarity": "present"
+          },
+          {
+            "id": "sleep_appetite_vegetative:verlauf:demo-verlauf-01:sleep",
+            "domain": "sleep_appetite_vegetative",
+            "label": "gestört",
+            "keywords": [
+              "gestört"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-01",
+              "verlauf:demo-verlauf-02",
+              "verlauf:demo-verlauf-03",
+              "verlauf:demo-verlauf-04",
+              "verlauf:demo-verlauf-05",
+              "verlauf:demo-verlauf-06",
+              "verlauf:demo-verlauf-07",
+              "verlauf:demo-verlauf-08",
+              "verlauf:demo-verlauf-09",
+              "verlauf:demo-verlauf-10",
+              "verlauf:demo-verlauf-11",
+              "verlauf:demo-verlauf-12"
+            ],
+            "confidence": 2,
+            "polarity": "present"
+          },
+          {
+            "id": "sleep_appetite_vegetative:verlauf:demo-verlauf-03",
+            "domain": "sleep_appetite_vegetative",
+            "label": "Nacht 4 h Schlaf. Paranoide Inhalte weiter präsent, jedoch weniger agitiert.",
+            "keywords": [
+              "Paranoia",
+              "Schlafstörung"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-03"
+            ],
+            "confidence": 3,
+            "polarity": "present"
+          },
+          {
+            "id": "sleep_appetite_vegetative:verlauf:demo-verlauf-05",
+            "domain": "sleep_appetite_vegetative",
+            "label": "Aufnahmelabor (05.06.) — Prolaktin deutlich erhöht unter Risperidon 3 mg, sonst Routinepanel ohne relevante Pathologie.",
+            "keywords": [
+              "Paranoia",
+              "Schlafstörung"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-05"
+            ],
+            "confidence": 3,
+            "polarity": "present"
+          },
+          {
+            "id": "sleep_appetite_vegetative:verlauf:demo-verlauf-07",
+            "domain": "sleep_appetite_vegetative",
+            "label": "Einzelgespräch: Patient berichtet reduzierte „Beobachtungs\"-Erlebnisse, Schlaf 5–6 h.",
+            "keywords": [
+              "Paranoia",
+              "Schlafstörung"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-07"
+            ],
+            "confidence": 3,
+            "polarity": "present"
+          },
+          {
+            "id": "sleep_appetite_vegetative:verlauf:demo-verlauf-09",
+            "domain": "sleep_appetite_vegetative",
+            "label": "EKG ohne relevante Pathologie. Besprechung mit Sozialdienst wegen Wohn- und Arbeitssituation.",
+            "keywords": [
+              "Paranoia",
+              "Schlafstörung"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-09"
+            ],
+            "confidence": 3,
+            "polarity": "present"
+          },
+          {
+            "id": "sleep_appetite_vegetative:verlauf:demo-verlauf-11",
+            "domain": "sleep_appetite_vegetative",
+            "label": "Sporttherapie zweimal teilgenommen. Stimmung etwas gebessert.",
+            "keywords": [
+              "Paranoia",
+              "Schlafstörung"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-11"
+            ],
+            "confidence": 3,
+            "polarity": "present"
+          },
+          {
+            "id": "sleep_appetite_vegetative:isdm_input",
+            "domain": "sleep_appetite_vegetative",
+            "label": "Schlafdefizit, Appetit reduziert",
+            "keywords": [
+              "sleep_appetite_vegetative"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "manual_note:isdm_input:sleep_appetite_vegetative"
+            ],
+            "confidence": 3,
+            "polarity": "present",
+            "notes": "Schlafdefizit, Appetit reduziert"
+          },
+          {
+            "id": "sleep_appetite_vegetative:verlauf:text",
+            "domain": "sleep_appetite_vegetative",
+            "label": "Aufnahme auf Station. Patient misstrauisch, schläft kaum. Risperidon 2 mg fixiert, Lorazepam PRN verordnet.\nNachmittags ",
+            "keywords": [
+              "sleep_appetite_vegetative"
+            ],
+            "evidenceStrength": "patient_report",
+            "sourceImprintKeys": [
+              "verlauf:combined"
+            ],
+            "confidence": 2,
+            "polarity": "present"
+          }
+        ],
+        "substance_related_features": [
+          {
+            "id": "substance_related_features:isdm_input",
+            "domain": "substance_related_features",
+            "label": "Cannabis täglich, episodischer Amphetamin-Konsum",
+            "keywords": [
+              "substance_related_features"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "manual_note:isdm_input:substance_related_features"
+            ],
+            "confidence": 3,
+            "polarity": "present",
+            "notes": "Cannabis täglich, episodischer Amphetamin-Konsum"
+          },
+          {
+            "id": "substance_related_features:side-effect:demo-se-01",
+            "domain": "substance_related_features",
+            "label": "Akathisie",
+            "keywords": [
+              "Akathisie"
+            ],
+            "evidenceStrength": "patient_report",
+            "sourceImprintKeys": [
+              "medication:side-effect:demo-se-01"
+            ],
+            "confidence": 2,
+            "polarity": "present",
+            "notes": "AIMS/SAS dokumentiert — keine Dyskinesie"
+          },
+          {
+            "id": "substance_related_features:verlauf:text",
+            "domain": "substance_related_features",
+            "label": "Aufnahme auf Station. Patient misstrauisch, schläft kaum. Risperidon 2 mg fixiert, Lorazepam PRN verordnet.\nNachmittags ",
+            "keywords": [
+              "substance_related_features"
+            ],
+            "evidenceStrength": "patient_report",
+            "sourceImprintKeys": [
+              "verlauf:combined"
+            ],
+            "confidence": 2,
+            "polarity": "present"
+          }
+        ],
+        "personality_interpersonal_style": [
+          {
+            "id": "personality_interpersonal_style:verlauf:demo-verlauf-01:cooperation",
+            "domain": "personality_interpersonal_style",
+            "label": "eingeschränkt",
+            "keywords": [
+              "eingeschränkt"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-01",
+              "verlauf:demo-verlauf-02",
+              "verlauf:demo-verlauf-03",
+              "verlauf:demo-verlauf-04",
+              "verlauf:demo-verlauf-05",
+              "verlauf:demo-verlauf-06",
+              "verlauf:demo-verlauf-07",
+              "verlauf:demo-verlauf-08",
+              "verlauf:demo-verlauf-09",
+              "verlauf:demo-verlauf-10",
+              "verlauf:demo-verlauf-11",
+              "verlauf:demo-verlauf-12"
+            ],
+            "confidence": 2,
+            "polarity": "present"
+          },
+          {
+            "id": "personality_interpersonal_style:verlauf:demo-verlauf-01:socialInteraction",
+            "domain": "personality_interpersonal_style",
+            "label": "reduziert",
+            "keywords": [
+              "reduziert"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-01",
+              "verlauf:demo-verlauf-02",
+              "verlauf:demo-verlauf-03",
+              "verlauf:demo-verlauf-04",
+              "verlauf:demo-verlauf-05",
+              "verlauf:demo-verlauf-06",
+              "verlauf:demo-verlauf-07",
+              "verlauf:demo-verlauf-08",
+              "verlauf:demo-verlauf-09",
+              "verlauf:demo-verlauf-10",
+              "verlauf:demo-verlauf-11",
+              "verlauf:demo-verlauf-12"
+            ],
+            "confidence": 2,
+            "polarity": "present"
+          },
+          {
+            "id": "personality_interpersonal_style:isdm_input",
+            "domain": "personality_interpersonal_style",
+            "label": "Sozialer Rückzug, misstrauisch",
+            "keywords": [
+              "personality_interpersonal_style"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "manual_note:isdm_input:personality_interpersonal_style"
+            ],
+            "confidence": 2,
+            "polarity": "present",
+            "notes": "Sozialer Rückzug, misstrauisch"
+          }
+        ],
+        "insight_judgment": [
+          {
+            "id": "insight_judgment:verlauf:demo-verlauf-01:insight",
+            "domain": "insight_judgment",
+            "label": "gering",
+            "keywords": [
+              "gering"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-01",
+              "verlauf:demo-verlauf-02",
+              "verlauf:demo-verlauf-03",
+              "verlauf:demo-verlauf-04",
+              "verlauf:demo-verlauf-05",
+              "verlauf:demo-verlauf-06",
+              "verlauf:demo-verlauf-07",
+              "verlauf:demo-verlauf-08",
+              "verlauf:demo-verlauf-09",
+              "verlauf:demo-verlauf-10",
+              "verlauf:demo-verlauf-11",
+              "verlauf:demo-verlauf-12"
+            ],
+            "confidence": 2,
+            "polarity": "present"
+          },
+          {
+            "id": "insight_judgment:verlauf:demo-verlauf-01:adherence",
+            "domain": "insight_judgment",
+            "label": "verbessert",
+            "keywords": [
+              "verbessert"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-01",
+              "verlauf:demo-verlauf-02",
+              "verlauf:demo-verlauf-03",
+              "verlauf:demo-verlauf-04",
+              "verlauf:demo-verlauf-05",
+              "verlauf:demo-verlauf-06",
+              "verlauf:demo-verlauf-07",
+              "verlauf:demo-verlauf-08",
+              "verlauf:demo-verlauf-09",
+              "verlauf:demo-verlauf-10",
+              "verlauf:demo-verlauf-11",
+              "verlauf:demo-verlauf-12"
+            ],
+            "confidence": 2,
+            "polarity": "present"
+          },
+          {
+            "id": "insight_judgment:verlauf:demo-verlauf-12",
+            "domain": "insight_judgment",
+            "label": "Keine akute Suizidalität. Krankheitseinsicht langsam zunehmend. Sicherheitsplan aktualisiert.",
+            "keywords": [
+              "Unruhe"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-12"
+            ],
+            "confidence": 3,
+            "polarity": "present"
+          },
+          {
+            "id": "insight_judgment:isdm_input",
+            "domain": "insight_judgment",
+            "label": "Krankheitseinsicht gering, Urteilsfähigkeit eingeschränkt",
+            "keywords": [
+              "insight_judgment"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "manual_note:isdm_input:insight_judgment"
+            ],
+            "confidence": 3,
+            "polarity": "present",
+            "notes": "Krankheitseinsicht gering, Urteilsfähigkeit eingeschränkt"
+          },
+          {
+            "id": "insight_judgment:med-adherence:demo-med-aripiprazol",
+            "domain": "insight_judgment",
+            "label": "Einnahme morgens, aktuell regelmäßig",
+            "keywords": [
+              "Einnahme morgens, aktuell regelmäßig"
+            ],
+            "evidenceStrength": "patient_report",
+            "sourceImprintKeys": [
+              "medication:med-entry:demo-med-aripiprazol"
+            ],
+            "confidence": 2,
+            "polarity": "unclear"
+          },
+          {
+            "id": "insight_judgment:med-adherence:demo-med-lorazepam",
+            "domain": "insight_judgment",
+            "label": "Selten nachgefragt, zuletzt vor 3 Tagen",
+            "keywords": [
+              "Selten nachgefragt, zuletzt vor 3 Tagen"
+            ],
+            "evidenceStrength": "patient_report",
+            "sourceImprintKeys": [
+              "medication:med-entry:demo-med-lorazepam"
+            ],
+            "confidence": 2,
+            "polarity": "unclear"
+          },
+          {
+            "id": "insight_judgment:verlauf:text",
+            "domain": "insight_judgment",
+            "label": "Aufnahme auf Station. Patient misstrauisch, schläft kaum. Risperidon 2 mg fixiert, Lorazepam PRN verordnet.\nNachmittags ",
+            "keywords": [
+              "insight_judgment"
+            ],
+            "evidenceStrength": "patient_report",
+            "sourceImprintKeys": [
+              "verlauf:combined"
+            ],
+            "confidence": 2,
+            "polarity": "present"
+          }
+        ],
+        "risk_self": [
+          {
+            "id": "risk_self:verlauf:demo-verlauf-01:riskSelf",
+            "domain": "risk_self",
+            "label": "passiv",
+            "keywords": [
+              "passiv"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-01",
+              "verlauf:demo-verlauf-02",
+              "verlauf:demo-verlauf-03",
+              "verlauf:demo-verlauf-04",
+              "verlauf:demo-verlauf-05",
+              "verlauf:demo-verlauf-06",
+              "verlauf:demo-verlauf-07",
+              "verlauf:demo-verlauf-08",
+              "verlauf:demo-verlauf-09",
+              "verlauf:demo-verlauf-10",
+              "verlauf:demo-verlauf-11",
+              "verlauf:demo-verlauf-12"
+            ],
+            "confidence": 2,
+            "polarity": "present"
+          },
+          {
+            "id": "risk_self:verlauf:demo-verlauf-01:suicidality",
+            "domain": "risk_self",
+            "label": "nein",
+            "keywords": [
+              "nein"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-01",
+              "verlauf:demo-verlauf-02",
+              "verlauf:demo-verlauf-03",
+              "verlauf:demo-verlauf-04",
+              "verlauf:demo-verlauf-05",
+              "verlauf:demo-verlauf-06",
+              "verlauf:demo-verlauf-07",
+              "verlauf:demo-verlauf-08",
+              "verlauf:demo-verlauf-09",
+              "verlauf:demo-verlauf-10",
+              "verlauf:demo-verlauf-11",
+              "verlauf:demo-verlauf-12"
+            ],
+            "confidence": 2,
+            "polarity": "present"
+          },
+          {
+            "id": "risk_self:verlauf:demo-verlauf-12",
+            "domain": "risk_self",
+            "label": "Keine akute Suizidalität. Krankheitseinsicht langsam zunehmend. Sicherheitsplan aktualisiert.",
+            "keywords": [
+              "Unruhe"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-12"
+            ],
+            "confidence": 3,
+            "polarity": "present"
+          },
+          {
+            "id": "risk_self:isdm_input",
+            "domain": "risk_self",
+            "label": "Passives Todeswünschen ohne konkrete Pläne",
+            "keywords": [
+              "risk_self"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "manual_note:isdm_input:risk_self"
+            ],
+            "confidence": 2,
+            "polarity": "present",
+            "notes": "Passives Todeswünschen ohne konkrete Pläne"
+          },
+          {
+            "id": "risk_self:verlauf:text",
+            "domain": "risk_self",
+            "label": "Aufnahme auf Station. Patient misstrauisch, schläft kaum. Risperidon 2 mg fixiert, Lorazepam PRN verordnet.\nNachmittags ",
+            "keywords": [
+              "risk_self"
+            ],
+            "evidenceStrength": "patient_report",
+            "sourceImprintKeys": [
+              "verlauf:combined"
+            ],
+            "confidence": 2,
+            "polarity": "present"
+          }
+        ],
+        "risk_others": [
+          {
+            "id": "risk_others:verlauf:demo-verlauf-01:riskOthers",
+            "domain": "risk_others",
+            "label": "nein",
+            "keywords": [
+              "nein"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-01",
+              "verlauf:demo-verlauf-02",
+              "verlauf:demo-verlauf-03",
+              "verlauf:demo-verlauf-04",
+              "verlauf:demo-verlauf-05",
+              "verlauf:demo-verlauf-06",
+              "verlauf:demo-verlauf-07",
+              "verlauf:demo-verlauf-08",
+              "verlauf:demo-verlauf-09",
+              "verlauf:demo-verlauf-10",
+              "verlauf:demo-verlauf-11",
+              "verlauf:demo-verlauf-12"
+            ],
+            "confidence": 2,
+            "polarity": "present"
+          },
+          {
+            "id": "risk_others:isdm_input",
+            "domain": "risk_others",
+            "label": "Keine Hinweise auf Fremdgefährdung",
+            "keywords": [
+              "risk_others"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "manual_note:isdm_input:risk_others"
+            ],
+            "confidence": 2,
+            "polarity": "absent",
+            "notes": "Keine Hinweise auf Fremdgefährdung"
+          }
+        ],
+        "functional_impairment": [
+          {
+            "id": "functional_impairment:verlauf:demo-verlauf-01:functioning",
+            "domain": "functional_impairment",
+            "label": "eingeschränkt",
+            "keywords": [
+              "eingeschränkt"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-01",
+              "verlauf:demo-verlauf-02",
+              "verlauf:demo-verlauf-03",
+              "verlauf:demo-verlauf-04",
+              "verlauf:demo-verlauf-05",
+              "verlauf:demo-verlauf-06",
+              "verlauf:demo-verlauf-07",
+              "verlauf:demo-verlauf-08",
+              "verlauf:demo-verlauf-09",
+              "verlauf:demo-verlauf-10",
+              "verlauf:demo-verlauf-11",
+              "verlauf:demo-verlauf-12"
+            ],
+            "confidence": 2,
+            "polarity": "present"
+          },
+          {
+            "id": "functional_impairment:verlauf:demo-verlauf-09",
+            "domain": "functional_impairment",
+            "label": "EKG ohne relevante Pathologie. Besprechung mit Sozialdienst wegen Wohn- und Arbeitssituation.",
+            "keywords": [
+              "Paranoia",
+              "Schlafstörung"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "verlauf:demo-verlauf-09"
+            ],
+            "confidence": 3,
+            "polarity": "present"
+          },
+          {
+            "id": "functional_impairment:isdm_input",
+            "domain": "functional_impairment",
+            "label": "Berufliche und soziale Funktion deutlich beeinträchtigt",
+            "keywords": [
+              "functional_impairment"
+            ],
+            "evidenceStrength": "direct_observation",
+            "sourceImprintKeys": [
+              "manual_note:isdm_input:functional_impairment"
+            ],
+            "confidence": 3,
+            "polarity": "present",
+            "notes": "Berufliche und soziale Funktion deutlich beeinträchtigt"
+          },
+          {
+            "id": "functional_impairment:verlauf:text",
+            "domain": "functional_impairment",
+            "label": "Aufnahme auf Station. Patient misstrauisch, schläft kaum. Risperidon 2 mg fixiert, Lorazepam PRN verordnet.\nNachmittags ",
+            "keywords": [
+              "functional_impairment"
+            ],
+            "evidenceStrength": "patient_report",
+            "sourceImprintKeys": [
+              "verlauf:combined"
+            ],
+            "confidence": 2,
+            "polarity": "present"
+          }
+        ]
+      },
+      "coursePattern": {
+        "onset": "acute",
+        "duration": "days",
+        "episodicity": "unclear",
+        "trajectory": [
+          "worsened",
+          "improved"
+        ],
+        "contextualTriggers": [],
+        "precipitants": [
+          "nach"
+        ],
+        "summary": "Onset pattern: acute · Duration scale: days · Trajectory signals: worsened, improved"
+      },
+      "syndromeClusters": [
+        {
+          "id": "cluster:psychotic",
+          "clusterType": "psychotic",
+          "label": "Psychotic symptom pattern",
+          "supportingFindings": [
+            "delusions_overvalued_ideas:verlauf:demo-verlauf-01",
+            "delusions_overvalued_ideas:verlauf:demo-verlauf-03",
+            "delusions_overvalued_ideas:verlauf:demo-verlauf-05",
+            "delusions_overvalued_ideas:verlauf:demo-verlauf-07",
+            "delusions_overvalued_ideas:verlauf:demo-verlauf-09",
+            "delusions_overvalued_ideas:verlauf:demo-verlauf-11",
+            "delusions_overvalued_ideas:isdm_input",
+            "delusions_overvalued_ideas:verlauf:text",
+            "formal_thought_disorder:verlauf:demo-verlauf-01:thoughtForm",
+            "formal_thought_disorder:isdm_input"
+          ],
+          "opposingFindings": [],
+          "confidence": 4,
+          "rationale": "Delusional, perceptual or formal thought findings co-occur."
+        },
+        {
+          "id": "cluster:depressive",
+          "clusterType": "depressive",
+          "label": "Depressive symptom pattern",
+          "supportingFindings": [
+            "drive_psychomotor_activity:verlauf:demo-verlauf-10",
+            "drive_psychomotor_activity:isdm_input",
+            "sleep_appetite_vegetative:verlauf:demo-verlauf-03",
+            "sleep_appetite_vegetative:verlauf:demo-verlauf-07",
+            "sleep_appetite_vegetative:isdm_input"
+          ],
+          "opposingFindings": [],
+          "confidence": 4,
+          "rationale": "Mood, drive or vegetative findings suggest a depressive syndrome."
+        },
+        {
+          "id": "cluster:anxiety",
+          "clusterType": "anxiety",
+          "label": "Anxiety-related pattern",
+          "supportingFindings": [
+            "anxiety_panic_phobic_symptoms:isdm_input"
+          ],
+          "opposingFindings": [],
+          "confidence": 1,
+          "rationale": "Anxiety, panic or phobic symptoms documented."
+        },
+        {
+          "id": "cluster:substance",
+          "clusterType": "substance",
+          "label": "Substance-related pattern",
+          "supportingFindings": [
+            "substance_related_features:isdm_input",
+            "substance_related_features:side-effect:demo-se-01",
+            "substance_related_features:verlauf:text"
+          ],
+          "opposingFindings": [],
+          "confidence": 3,
+          "rationale": "Substance use or withdrawal features mentioned."
+        },
+        {
+          "id": "cluster:medication-adverse",
+          "clusterType": "mixed",
+          "label": "Medication adverse-effect pattern",
+          "supportingFindings": [
+            "somatic_preoccupation:side-effect:demo-se-01"
+          ],
+          "opposingFindings": [],
+          "confidence": 1,
+          "rationale": "Documented adverse effects potentially linked to psychiatric medication."
+        },
+        {
+          "id": "cluster:mixed",
+          "clusterType": "mixed",
+          "label": "Mixed syndromic pattern",
+          "supportingFindings": [
+            "delusions_overvalued_ideas:verlauf:demo-verlauf-01",
+            "delusions_overvalued_ideas:verlauf:demo-verlauf-03",
+            "delusions_overvalued_ideas:verlauf:demo-verlauf-05",
+            "delusions_overvalued_ideas:verlauf:demo-verlauf-07",
+            "delusions_overvalued_ideas:verlauf:demo-verlauf-09",
+            "delusions_overvalued_ideas:verlauf:demo-verlauf-11",
+            "delusions_overvalued_ideas:isdm_input",
+            "delusions_overvalued_ideas:verlauf:text",
+            "formal_thought_disorder:verlauf:demo-verlauf-01:thoughtForm",
+            "formal_thought_disorder:isdm_input",
+            "drive_psychomotor_activity:verlauf:demo-verlauf-10",
+            "drive_psychomotor_activity:isdm_input",
+            "sleep_appetite_vegetative:verlauf:demo-verlauf-03",
+            "sleep_appetite_vegetative:verlauf:demo-verlauf-07",
+            "sleep_appetite_vegetative:isdm_input",
+            "anxiety_panic_phobic_symptoms:isdm_input",
+            "substance_related_features:isdm_input",
+            "substance_related_features:side-effect:demo-se-01",
+            "substance_related_features:verlauf:text",
+            "somatic_preoccupation:side-effect:demo-se-01"
+          ],
+          "opposingFindings": [],
+          "confidence": 2,
+          "rationale": "Multiple syndromic patterns overlap — differential review advised."
+        }
+      ],
+      "diagnosticMappings": [
+        {
+          "id": "dx:demo-dx-01",
+          "label": "Paranoide Schizophrenie",
+          "codingSystems": {
+            "icd10": {
+              "code": "F20.0",
+              "label": "Paranoide Schizophrenie"
+            },
+            "icd11": {
+              "code": "6A20.0",
+              "label": "Schizophrenie, erste Episode"
+            },
+            "dsm5tr": {
+              "code": "295.30",
+              "label": "Schizophrenia, paranoid type"
+            }
+          },
+          "confidence": 1,
+          "criteriaMet": [
+            "Anhaltender, kulturell unangemessener und völlig unrealistischer (bizarrer) Wahn",
+            "Gedankenabreißen oder Einschiebungen in den Gedankenfluss mit Zerfahrenheit, Danebenreden oder Neologismen",
+            "Die charakteristischen Symptome bestehen die meiste Zeit während eines Zeitraums von mindestens einem Monat"
+          ],
+          "criteriaMissing": [
+            "Ich-Störungen: Gedankenlautwerden, Gedankeneingebung, -entzug oder -ausbreitung sowie Kontroll- bzw. Beeinflussungserleben oder Gefühl des Gemachten (Passivitätserleben)",
+            "Kommentierende oder dialogische (über die Person sprechende) Stimmen bzw. andere anhaltende Stimmen aus einem Körperteil"
+          ],
+          "exclusions": [
+            "Bei gleichzeitig ausgeprägter manischer oder depressiver Symptomatik gingen die schizophrenen Symptome der affektiven Störung voraus (kein vorrangiges affektives Zustandsbild)"
+          ],
+          "differentials": [
+            "Schizoaffektive Störung",
+            "Affektive Störung mit psychotischen Symptomen",
+            "Akute vorübergehende psychotische Störung",
+            "Substanzinduzierte oder organische Psychose"
+          ],
+          "supportingClusters": [
+            "cluster:psychotic"
+          ],
+          "clinicianReviewRequired": true
+        },
+        {
+          "id": "dx:demo-dx-02",
+          "label": "Psychische und Verhaltensstörungen durch Cannabinoide : Abhängigkeitssyndrom",
+          "codingSystems": {
+            "icd10": {
+              "code": "F12.2",
+              "label": "Psychische und Verhaltensstörungen durch Cannabinoide : Abhängigkeitssyndrom"
+            },
+            "icd11": {
+              "code": "6C41.2",
+              "label": "Cannabisabhängigkeit"
+            },
+            "dsm5tr": {
+              "code": "304.30",
+              "label": "Cannabisgebrauchsstörung, schwer"
+            }
+          },
+          "confidence": 2,
+          "criteriaMet": [],
+          "criteriaMissing": [
+            "Starkes Verlangen oder eine Art Zwang, Cannabinoide zu konsumieren (Craving)",
+            "Verminderte Kontrolle über Beginn, Beendigung und Menge des Konsums",
+            "Körperliches Entzugssyndrom bei Reduktion oder Beendigung des Konsums oder Konsum zur Linderung von Entzugssymptomen",
+            "Toleranzentwicklung mit erforderlicher Dosissteigerung für die ursprüngliche Wirkung",
+            "Zunehmende Vernachlässigung anderer Interessen und erhöhter Zeitaufwand für Beschaffung, Konsum und Erholung",
+            "Anhaltender Konsum trotz nachweislich schädlicher körperlicher, psychischer oder sozialer Folgen"
+          ],
+          "exclusions": [],
+          "differentials": [
+            "Schädlicher Gebrauch von Cannabinoiden (F12.1) ohne Abhängigkeit",
+            "Akute Intoxikation (F12.0)",
+            "Substanzinduzierte affektive oder psychotische Störung"
+          ],
+          "supportingClusters": [],
+          "clinicianReviewRequired": true
+        },
+        {
+          "id": "dx:demo-dx-03",
+          "label": "Psychische und Verhaltensstörungen durch andere Stimulanzien, einschließlich Koffein : Abhängigkeitssyndrom",
+          "codingSystems": {
+            "icd10": {
+              "code": "F15.2",
+              "label": "Psychische und Verhaltensstörungen durch andere Stimulanzien, einschließlich Koffein : Abhängigkeitssyndrom"
+            },
+            "icd11": {
+              "code": "6C45.2",
+              "label": "Störungen durch Amphetamin oder ähnlich wirkende Substanzen, Abhängigkeitssyndrom"
+            },
+            "dsm5tr": {
+              "code": "304.40",
+              "label": "Stimulanziengebrauchsstörung, schwer"
+            }
+          },
+          "confidence": 2,
+          "criteriaMet": [],
+          "criteriaMissing": [
+            "Starkes Verlangen oder eine Art Zwang, Kokain zu konsumieren (Craving)",
+            "Verminderte Kontrolle über Beginn, Beendigung und Menge des Konsums",
+            "Körperliches Entzugssyndrom bei Reduktion oder Beendigung des Konsums oder Konsum zur Linderung von Entzugssymptomen",
+            "Toleranzentwicklung mit erforderlicher Dosissteigerung für die ursprüngliche Wirkung",
+            "Zunehmende Vernachlässigung anderer Interessen und erhöhter Zeitaufwand für Beschaffung, Konsum und Erholung",
+            "Anhaltender Konsum trotz nachweislich schädlicher körperlicher, psychischer oder sozialer Folgen"
+          ],
+          "exclusions": [],
+          "differentials": [
+            "Schädlicher Gebrauch von Kokain (F14.1) ohne Abhängigkeit",
+            "Akute Intoxikation (F14.0)",
+            "Substanzinduzierte affektive oder psychotische Störung"
+          ],
+          "supportingClusters": [],
+          "clinicianReviewRequired": true
+        },
+        {
+          "id": "hyp:elevated-risk",
+          "label": "Erhöhtes klinisches Risiko (Hinweis)",
+          "codingSystems": {},
+          "confidence": 2,
+          "criteriaMet": [
+            "Hinweise auf Eigen- oder Fremdgefährdung dokumentiert"
+          ],
+          "criteriaMissing": [
+            "Risikoeinschätzung und Schutzfaktoren noch unvollständig"
+          ],
+          "exclusions": [],
+          "differentials": [],
+          "supportingClusters": [],
+          "clinicianReviewRequired": true
+        }
+      ],
+      "interviewGaps": [
+        {
+          "id": "gap:course",
+          "domain": "course",
+          "priority": "medium",
+          "question": "When did symptoms begin, how have they evolved, and were there clear triggers or remissions?",
+          "rationale": "Course pattern remains insufficiently documented for syndromic mapping."
+        }
+      ],
+      "overallUncertainty": "moderate"
+    },
+    "isdmInput": {
+      "version": 1,
+      "updatedAt": "2026-06-14T10:00:00.000Z",
+      "domains": {
+        "appearance_behavior": {
+          "presence": "present",
+          "severity": 2,
+          "notes": "Misstrauische Grundhaltung, reduzierte Mimik"
+        },
+        "speech_language": {
+          "presence": "present",
+          "severity": 2,
+          "notes": "Antworten knapp, teils zögerlich"
+        },
+        "consciousness_orientation": {
+          "presence": "present",
+          "severity": 1,
+          "notes": "Wach, allseits orientiert"
+        },
+        "attention_concentration": {
+          "presence": "present",
+          "severity": 2,
+          "notes": "Aufmerksamkeit leicht ablenkbar"
+        },
+        "memory_cognition": {
+          "presence": "present",
+          "severity": 1,
+          "notes": "Kurzzeitgedächtnis eingeschränkt bei Unruhe"
+        },
+        "mood_affect": {
+          "presence": "present",
+          "severity": 3,
+          "notes": "Affekt labil zwischen ängstlich und gereizt"
+        },
+        "drive_psychomotor_activity": {
+          "presence": "present",
+          "severity": 2,
+          "notes": "Antrieb reduziert, innere Unruhe"
+        },
+        "formal_thought_disorder": {
+          "presence": "present",
+          "severity": 2,
+          "notes": "Leicht umständlich, teils sprunghaft"
+        },
+        "thought_content": {
+          "presence": "present",
+          "severity": 3,
+          "notes": "Paranoide Interpretationen alltäglicher Ereignisse"
+        },
+        "delusions_overvalued_ideas": {
+          "presence": "present",
+          "severity": 4,
+          "notes": "Verfolgungs- und Beobachtungsideen ohne vollständige Einsicht"
+        },
+        "perception_hallucinations": {
+          "presence": "unclear",
+          "severity": 1,
+          "notes": "Akustische Halluzinationen in Vorgeschichte, aktuell nicht eindeutig"
+        },
+        "self_experience_ego_disturbance": {
+          "presence": "absent",
+          "notes": "Keine eindeutigen Ich-Störungen zum Untersuchungszeitpunkt"
+        },
+        "anxiety_panic_phobic_symptoms": {
+          "presence": "present",
+          "severity": 2,
+          "notes": "Situationsangst in öffentlichen Räumen"
+        },
+        "obsessions_compulsions": {
+          "presence": "absent"
+        },
+        "trauma_intrusions_dissociation": {
+          "presence": "absent"
+        },
+        "somatic_preoccupation": {
+          "presence": "present",
+          "severity": 1,
+          "notes": "Gelegentliche somatische Beschwerden bei Stress"
+        },
+        "sleep_appetite_vegetative": {
+          "presence": "present",
+          "severity": 3,
+          "notes": "Schlafdefizit, Appetit reduziert"
+        },
+        "substance_related_features": {
+          "presence": "present",
+          "severity": 3,
+          "notes": "Cannabis täglich, episodischer Amphetamin-Konsum"
+        },
+        "personality_interpersonal_style": {
+          "presence": "present",
+          "severity": 2,
+          "notes": "Sozialer Rückzug, misstrauisch"
+        },
+        "insight_judgment": {
+          "presence": "present",
+          "severity": 3,
+          "notes": "Krankheitseinsicht gering, Urteilsfähigkeit eingeschränkt"
+        },
+        "risk_self": {
+          "presence": "present",
+          "severity": 2,
+          "notes": "Passives Todeswünschen ohne konkrete Pläne"
+        },
+        "risk_others": {
+          "presence": "absent",
+          "notes": "Keine Hinweise auf Fremdgefährdung"
+        },
+        "functional_impairment": {
+          "presence": "present",
+          "severity": 3,
+          "notes": "Berufliche und soziale Funktion deutlich beeinträchtigt"
+        }
+      }
+    },
+    "butterflyAttestations": {
+      "f20.delusions": {
+        "value": "met",
+        "attestedAt": "2026-06-13T15:00:00.000Z"
+      },
+      "f20.formal_thought_disorder": {
+        "value": "met",
+        "attestedAt": "2026-06-13T15:00:00.000Z"
+      },
+      "f20.duration_one_month": {
+        "value": "met",
+        "attestedAt": "2026-06-13T15:00:00.000Z"
+      },
+      "f20.auditory_hallucinations": {
+        "value": "not_met",
+        "attestedAt": "2026-06-13T15:00:00.000Z"
+      },
+      "f20.ego_disturbance": {
+        "value": "not_met",
+        "attestedAt": "2026-06-13T15:00:00.000Z"
+      },
+      "f20.exclude_mood_primary": {
+        "value": "met",
+        "attestedAt": "2026-06-13T15:00:00.000Z"
+      },
+      "f20.exclude_organic_substance": {
+        "value": "not_met",
+        "attestedAt": "2026-06-13T15:00:00.000Z"
+      },
+      "6a20.persistent_delusions": {
+        "value": "met",
+        "attestedAt": "2026-06-13T15:00:00.000Z"
+      },
+      "6a20.disorganised_thinking": {
+        "value": "met",
+        "attestedAt": "2026-06-13T15:00:00.000Z"
+      },
+      "6a20.negative_symptoms": {
+        "value": "met",
+        "attestedAt": "2026-06-13T15:00:00.000Z"
+      },
+      "6a20.persistent_hallucinations": {
+        "value": "not_met",
+        "attestedAt": "2026-06-13T15:00:00.000Z"
+      },
+      "6a20.passivity": {
+        "value": "not_met",
+        "attestedAt": "2026-06-13T15:00:00.000Z"
+      }
+    },
+    "clinicalQuestionNotes": {
+      "diagnosis_criteria:f20.delusions": {
+        "questionId": "diagnosis_criteria:f20.delusions",
+        "sectionId": "diagnosis_criteria",
+        "targetId": "f20.delusions",
+        "note": "Patientin berichtet seit Wochen, Nachbarn würden sie über Kameras beobachten; Polizeikontakte ohne belastbare Beweise.",
+        "updatedAt": "2026-06-14T10:00:00.000Z"
+      },
+      "diagnosis_criteria:f20.duration_one_month": {
+        "questionId": "diagnosis_criteria:f20.duration_one_month",
+        "sectionId": "diagnosis_criteria",
+        "targetId": "f20.duration_one_month",
+        "note": "Paranoide Symptomatik und Schlafdefizit seit ca. 5 Wochen, zunehmend in den letzten 14 Tagen.",
+        "updatedAt": "2026-06-14T10:00:00.000Z"
+      },
+      "diagnosis_criteria:f20.exclude_organic_substance": {
+        "questionId": "diagnosis_criteria:f20.exclude_organic_substance",
+        "sectionId": "diagnosis_criteria",
+        "targetId": "f20.exclude_organic_substance",
+        "note": "Cannabis- und Amphetaminkonsum dokumentiert, jedoch zeitlicher Verlauf und Symptomatik über reine Intoxikation hinaus.",
+        "updatedAt": "2026-06-14T10:00:00.000Z"
+      },
+      "diagnosis_criteria:6a20.persistent_delusions": {
+        "questionId": "diagnosis_criteria:6a20.persistent_delusions",
+        "sectionId": "diagnosis_criteria",
+        "targetId": "6a20.persistent_delusions",
+        "note": "Anhaltende Verfolgungsideen trotz fehlender externer Bestätigung; teilweise Einsicht im Gespräch.",
+        "updatedAt": "2026-06-14T10:00:00.000Z"
+      }
+    },
+    "anforderungen": [
+      {
+        "caseId": "DEMO-CASE-0001",
+        "catalogId": "lab-metabolisches-basis",
+        "category": "labor",
+        "label": "Metabolisches Basislabor",
+        "note": "Aufnahmelabor inkl. Elektrolyte, Nierenwerte, Glukose",
+        "urgency": "urgent",
+        "requestedDate": "2026-06-05",
+        "status": "accepted",
+        "createdAt": "2026-06-02T10:00:00.000Z",
+        "updatedAt": "2026-06-05T14:00:00.000Z",
+        "createdByDisplayName": "Oberarzt Demo",
+        "reviewedAt": "2026-06-05T14:00:00.000Z",
+        "reviewedByDisplayName": "Labor",
+        "id": "demo-anf-01"
+      },
+      {
+        "caseId": "DEMO-CASE-0001",
+        "catalogId": "lab-prolaktin",
+        "category": "labor",
+        "label": "Prolaktin",
+        "note": "Unter Risperidon — Verlaufskontrolle nach Umstellung",
+        "urgency": "soon",
+        "requestedDate": "2026-06-20",
+        "status": "accepted",
+        "createdAt": "2026-06-05T09:00:00.000Z",
+        "updatedAt": "2026-06-20T11:00:00.000Z",
+        "createdByDisplayName": "Oberarzt Demo",
+        "reviewedAt": "2026-06-20T11:00:00.000Z",
+        "id": "demo-anf-02"
+      },
+      {
+        "caseId": "DEMO-CASE-0001",
+        "catalogId": "lab-aripiprazol",
+        "category": "labor",
+        "label": "Aripiprazolspiegel",
+        "note": "Talspiegel nach Umstellung — therapeutischen Bereich prüfen",
+        "urgency": "routine",
+        "requestedDate": "2026-06-20",
+        "status": "accepted",
+        "createdAt": "2026-06-09T09:30:00.000Z",
+        "updatedAt": "2026-06-20T11:00:00.000Z",
+        "createdByDisplayName": "Oberarzt Demo",
+        "id": "demo-anf-03"
+      },
+      {
+        "caseId": "DEMO-CASE-0001",
+        "catalogId": "lab-hba1c",
+        "category": "labor",
+        "label": "HbA1c",
+        "note": "Metabolisches Monitoring unter Antipsychotika",
+        "urgency": "routine",
+        "requestedDate": "2026-06-20",
+        "status": "pending",
+        "createdAt": "2026-06-12T10:00:00.000Z",
+        "updatedAt": "2026-06-12T10:00:00.000Z",
+        "createdByDisplayName": "Assistenz Demo",
+        "id": "demo-anf-04"
+      },
+      {
+        "caseId": "DEMO-CASE-0001",
+        "catalogId": "befund-ekg",
+        "category": "befunde",
+        "label": "EKG (12-Kanal-Ruhe)",
+        "note": "Vor Antipsychotika-Therapie und bei QT-relevanten Medikamenten",
+        "urgency": "soon",
+        "requestedDate": "2026-06-08",
+        "status": "accepted",
+        "createdAt": "2026-06-06T11:00:00.000Z",
+        "updatedAt": "2026-06-08T10:30:00.000Z",
+        "createdByDisplayName": "Oberarzt Demo",
+        "reviewedAt": "2026-06-08T10:30:00.000Z",
+        "id": "demo-anf-05"
+      },
+      {
+        "caseId": "DEMO-CASE-0001",
+        "catalogId": "befund-eeg-ruhe",
+        "category": "befunde",
+        "label": "EEG (Ruhe)",
+        "note": "Abklärung bei psychotischer Symptomatik und Kopfschmerzen",
+        "urgency": "routine",
+        "requestedDate": "2026-06-11",
+        "status": "accepted",
+        "createdAt": "2026-06-09T14:00:00.000Z",
+        "updatedAt": "2026-06-11T16:00:00.000Z",
+        "createdByDisplayName": "Oberarzt Demo",
+        "reviewedAt": "2026-06-11T16:00:00.000Z",
+        "id": "demo-anf-06"
+      },
+      {
+        "caseId": "DEMO-CASE-0001",
+        "catalogId": "therapie-sport",
+        "category": "therapien",
+        "label": "Sporttherapie / Bewegungstherapie",
+        "note": "Antrieb und Schlafregulation — 2×/Woche",
+        "urgency": "routine",
+        "requestedDate": "2026-06-04",
+        "status": "accepted",
+        "createdAt": "2026-06-03T09:00:00.000Z",
+        "updatedAt": "2026-06-04T10:00:00.000Z",
+        "createdByDisplayName": "Therapieleitung Demo",
+        "reviewedAt": "2026-06-04T10:00:00.000Z",
+        "id": "demo-anf-07"
+      },
+      {
+        "caseId": "DEMO-CASE-0001",
+        "catalogId": "therapie-sozialdienst",
+        "category": "therapien",
+        "label": "Sozialdienst / Case Management",
+        "note": "Entlassungsvorbereitung, Vermieterkontakt",
+        "urgency": "soon",
+        "requestedDate": "2026-06-10",
+        "status": "pending",
+        "createdAt": "2026-06-08T10:00:00.000Z",
+        "updatedAt": "2026-06-08T10:00:00.000Z",
+        "createdByDisplayName": "Pflege Demo",
+        "id": "demo-anf-08"
+      }
+    ],
     "medicationPlanState": {
       "version": 1,
       "updatedAt": "2026-06-14T10:00:00.000Z",
@@ -1343,13 +3387,21 @@
     {
       "id": "demo-verlauf-12",
       "date": "2026-06-11T09:30:00.000Z",
-      "content": "Keine akute Suizidalität. Krankheitseinsicht langsam zunehmend.",
+      "content": "Keine akute Suizidalität. Krankheitseinsicht langsam zunehmend. Sicherheitsplan aktualisiert.",
       "pageType": "verlauf",
       "sectionLabel": "Verlaufsnotiz",
       "source": "manual"
     },
     {
       "id": "demo-verlauf-13",
+      "date": "2026-06-11T16:00:00.000Z",
+      "content": "Ruhe-EEG (11.06.): leichte diffuse Verlangsamung, keine epileptiformen Entladungen.",
+      "pageType": "verlauf",
+      "sectionLabel": "Verlaufsnotiz",
+      "source": "manual"
+    },
+    {
+      "id": "demo-verlauf-14",
       "date": "2026-06-12T10:00:00.000Z",
       "content": "AIMS-Kontrolle: leichte Akathisie, keine Dyskinesie. SAS 1/1/0.",
       "pageType": "verlauf",
@@ -1357,7 +3409,7 @@
       "source": "manual"
     },
     {
-      "id": "demo-verlauf-14",
+      "id": "demo-verlauf-15",
       "date": "2026-06-20T11:00:00.000Z",
       "content": "Verlaufslabor (20.06.) — Prolaktin normalisiert nach Umstellung auf Aripiprazol; Aripiprazol-Spiegel im therapeutischen Bereich. Triglyceride und HbA1c grenzwertig — metabolisches Monitoring fortsetzen.",
       "pageType": "verlauf",
@@ -1365,7 +3417,7 @@
       "source": "manual"
     },
     {
-      "id": "demo-verlauf-15",
+      "id": "demo-verlauf-16",
       "date": "2026-06-13T11:00:00.000Z",
       "content": "Konsil Neurologie angefragt (Demo-Beispiel) — kein akuter Handlungsbedarf.",
       "pageType": "verlauf",
@@ -1373,7 +3425,7 @@
       "source": "manual"
     },
     {
-      "id": "demo-verlauf-16",
+      "id": "demo-verlauf-17",
       "date": "2026-06-14T09:00:00.000Z",
       "content": "Entlassungsplanung: ambulante Weiterbehandlung, Wohnungsbestätigung ausstehend, Medikation stabilisiert auf Aripiprazol 10 mg + Lorazepam PRN.",
       "pageType": "verlauf",
@@ -1660,7 +3712,7 @@
       "caseId": "DEMO-CASE-0001",
       "date": "2026-06-20",
       "label": "Verlaufskontrolle — Aripiprazol 10 mg",
-      "rawText": "Laborbefund vom 2026-06-20 — Verlaufskontrolle — Aripiprazol 10 mg\n\n[Blutbild]\nHämoglobin: 14,3 g/dl (13.5–17.5)\nLeukozyten: 6,9 G/l (4–10)\nThrombozyten: 251 G/l (150–400)\n\n[Leberwerte]\nGOT (AST): 22 U/l (0–35)\nGPT (ALT): 29 U/l (0–45)\nGGT: 36 U/l (0–55)\nBilirubin gesamt: 0,6 mg/dl (0.1–1.2)\n\n[Nierenwerte]\nKreatinin: 0,86 mg/dl (0.7–1.2)\neGFR (CKD-EPI): 98 ml/min/1,73m² (≥ 90)\nHarnstoff: 32 mg/dl (17–43)\n\n[Elektrolyte]\nNatrium: 142 mmol/l (136–145)\nKalium: 4,0 mmol/l (3.5–5.1)\nChlorid: 104 mmol/l (98–106)\n\n[Entzündung]\nCRP: 1,8 mg/l (0–5)\n\n[Stoffwechsel / Lipide]\nGlukose (nüchtern): 96 mg/dl (70–100)\nHbA1c: 5,7 % (4–6) !\nCholesterin gesamt: 192 mg/dl (< 200)\nLDL-Cholesterin: 114 mg/dl (< 116)\nHDL-Cholesterin: 46 mg/dl (> 40)\nTriglyceride: 178 mg/dl (< 150) !\n\n[Hormone]\nProlaktin: 12 ng/ml (4–15)\n\n[Medikamentenspiegel]\nAripiprazol (Talspiegel): 218 ng/ml (150–300 (therapeutisch))",
+      "rawText": "Laborbefund vom 2026-06-20 — Verlaufskontrolle — Aripiprazol 10 mg\n\n[Blutbild]\nHämoglobin: 14,3 g/dl (13.5–17.5)\nLeukozyten: 6,9 G/l (4–10)\nThrombozyten: 251 G/l (150–400)\n\n[Leberwerte]\nGOT (AST): 22 U/l (0–35)\nGPT (ALT): 29 U/l (0–45)\nGGT: 36 U/l (0–55)\nBilirubin gesamt: 0,6 mg/dl (0.1–1.2)\n\n[Nierenwerte]\nKreatinin: 0,86 mg/dl (0.7–1.2)\neGFR (CKD-EPI): 98 ml/min/1,73m² (≥ 90)\nHarnstoff: 32 mg/dl (17–43)\n\n[Elektrolyte]\nNatrium: 142 mmol/l (136–145)\nKalium: 4,0 mmol/l (3.5–5.1)\nChlorid: 104 mmol/l (98–106)\n\n[Entzündung]\nCRP: 1,8 mg/l (0–5)\n\n[Stoffwechsel / Lipide]\nGlukose (nüchtern): 96 mg/dl (70–100)\nHbA1c: 5,8 % (4–6) !\nCholesterin gesamt: 192 mg/dl (< 200)\nLDL-Cholesterin: 114 mg/dl (< 116)\nHDL-Cholesterin: 46 mg/dl (> 40)\nTriglyceride: 178 mg/dl (< 150) !\n\n[Hormone]\nProlaktin: 12 ng/ml (4–15)\n\n[Medikamentenspiegel]\nAripiprazol (Talspiegel): 218 ng/ml (150–300 (therapeutisch))",
       "categories": [
         {
           "id": "blutbild",
@@ -1847,8 +3899,8 @@
             },
             {
               "name": "HbA1c",
-              "value": "5,7",
-              "numericValue": 5.7,
+              "value": "5,8",
+              "numericValue": 5.8,
               "unit": "%",
               "refMin": 4,
               "refMax": 6,
@@ -1927,6 +3979,72 @@
         }
       ],
       "createdAt": "2026-06-20T08:15:00.000Z"
+    },
+    {
+      "id": "demo-labor-befund-anthro",
+      "caseId": "DEMO-CASE-0001",
+      "date": "2026-06-10",
+      "label": "Anthropometrie — Verlauf",
+      "rawText": "Laborbefund vom 2026-06-10 — Anthropometrie — Verlauf\n\n[Anthropometrie]\nBMI: 26,4 kg/m² (18.5–24.9) !\nGewicht: 82 kg\nKörpergröße: 176 cm",
+      "categories": [
+        {
+          "id": "anthropometrie",
+          "label": "Anthropometrie",
+          "values": [
+            {
+              "name": "BMI",
+              "value": "26,4",
+              "numericValue": 26.4,
+              "unit": "kg/m²",
+              "refMin": 18.5,
+              "refMax": 24.9,
+              "refText": "18.5–24.9",
+              "isAbnormal": true
+            },
+            {
+              "name": "Gewicht",
+              "value": "82",
+              "numericValue": 82,
+              "unit": "kg",
+              "isAbnormal": false
+            },
+            {
+              "name": "Körpergröße",
+              "value": "176",
+              "numericValue": 176,
+              "unit": "cm",
+              "isAbnormal": false
+            }
+          ]
+        }
+      ],
+      "createdAt": "2026-06-10T10:00:00.000Z"
+    },
+    {
+      "id": "demo-labor-befund-glucose",
+      "caseId": "DEMO-CASE-0001",
+      "date": "2026-06-12",
+      "label": "Nüchternglukose — Zwischenkontrolle",
+      "rawText": "Laborbefund vom 2026-06-12 — Nüchternglukose — Zwischenkontrolle\n\n[Stoffwechsel]\nGlukose (nüchtern): 98 mg/dl (70–100)",
+      "categories": [
+        {
+          "id": "stoffwechsel",
+          "label": "Stoffwechsel",
+          "values": [
+            {
+              "name": "Glukose (nüchtern)",
+              "value": "98",
+              "numericValue": 98,
+              "unit": "mg/dl",
+              "refMin": 70,
+              "refMax": 100,
+              "refText": "70–100",
+              "isAbnormal": false
+            }
+          ]
+        }
+      ],
+      "createdAt": "2026-06-12T08:30:00.000Z"
     }
   ],
   "befundRecords": [
@@ -1958,6 +4076,41 @@
       "createdAt": "2026-06-08T10:00:00.000Z",
       "updatedAt": "2026-06-08T10:30:00.000Z",
       "vidertAt": "2026-06-08T10:30:00.000Z"
+    },
+    {
+      "id": "demo-befund-eeg-01",
+      "caseId": "DEMO-CASE-0001",
+      "type": "eeg",
+      "schemaVersion": 1,
+      "fieldValues": {
+        "background": [
+          "alpha_dominant",
+          "theta"
+        ],
+        "reactivity": "normal",
+        "focal": [
+          "none"
+        ],
+        "focal_slowing": false,
+        "epileptiform": [
+          "none"
+        ],
+        "sleep": [
+          "wake"
+        ],
+        "activation": [
+          "hv"
+        ],
+        "conclusion_preset": [
+          "mild_slow"
+        ],
+        "conclusion_free": "Leichte diffuse Verlangsamung ohne epileptiforme Entladungen. Kein Anhalt für fokale strukturelle Pathologie."
+      },
+      "status": "vidert",
+      "examDate": "2026-06-11",
+      "createdAt": "2026-06-11T15:00:00.000Z",
+      "updatedAt": "2026-06-11T16:00:00.000Z",
+      "vidertAt": "2026-06-11T16:00:00.000Z"
     }
   ],
   "sozialtherapie": [
@@ -1995,7 +4148,7 @@
       "sectionContents": {
         "aufnahmeanlass": "Elektive stationäre Aufnahme über die Notaufnahme nach akuter psychotischer Dekompensation mit paranoiden Inhalten, Schlafdefizit und zunehmender Substanzeinnahme. Zuweisung durch den Hausarzt nach telefonischer Rücksprache; keine akute Fremdgefährdung, jedoch eingeschränkte Krankheitseinsicht.",
         "aktuelle-beschwerden": "Seit ca. 10–14 Tagen zunehmende innere Unruhe, Schlafdefizit (<3 h/Nacht), Misstrauen gegenüber Nachbarn („werden beobachtet\"), gehäufte Telefonate bei Polizei ohne belastbare Anhaltspunkte. Stimmung wechselhaft zwischen gereizt und ängstlich. Appetit reduziert.",
-        "eigenanamnese": "Herr Demo berichtet belastbare Eigenanamnese. Keine bekannte somatische Vorerkrankung von relevanter Bedeutung. Keine Allergien bekannt.",
+        "eigenanamnese": "Frau Demo berichtet belastbare Eigenanamnese. Keine bekannte somatische Vorerkrankung von relevanter Bedeutung. Keine Allergien bekannt.",
         "aktuelle-krankheitsanamnese": "Erste psychotische Episode mit 22 J. nach Cannabisabusus, damals kurzzeitige stationäre Behandlung. Seitdem mehrere ambulante Phasen mit unregelmäßiger Medikamenteneinnahme. Aktuell erneute Verschlechterung im Kontext von Schlafentzug, Amphetamin-Konsum („Speed\" am Wochenende) und beruflichem Stress.",
         "psychiatrische-vorgeschichte": "Mehrere vorstationäre Kontakte, zuletzt vor 8 Monaten ambulant wegen depressiver Symptomatik. Frühere Diagnosen: paranoider Schizophrenie-Verdacht (F20.0), episodisch schwere depressive Störung (unsicher). Keine Suizidversuche. Keine längere Zwangsunterbringung.",
         "somatische-anamnese": "Keine relevante internistische Vorerkrankung. Gelegentliche Kopfschmerzen bei Schlafmangel. Keine bekannten Medikamentenallergien.",
@@ -2007,7 +4160,7 @@
         "schul-und-berufsanamnese": "Berufliche Tätigkeit in IT bis zur Kündigung wegen Fehlzeiten. Keine aktuelle Erwerbstätigkeit.",
         "forensische-anamnese": "Keine relevante forensische Vorgeschichte. Keine laufenden Strafverfahren.",
         "traumaanamnese": "Kein eindeutiges Trauma berichtet. Belastungen im Jugendalter unscharf.",
-        "suizid-und-selbstgefaehrdungsanamnese": "Passives Todeswünschen gelegentlich („manchmal wäre Ruhe gut\"), jedoch keine konkreten Pläne, Absichten oder Vorbereitungen. Kein Suizidversuch in der Vorgeschichte. Schutzfaktoren: ambivalente Bindung an Schwester.",
+        "suizid-und-selbstgefaehrdungsanamnese": "Passives Todeswünschen gelegentlich („manchmal wäre Ruhe gut\"), jedoch keine konkreten Pläne, Absichten oder Vorbereitungen. Kein Suizidversuch in der Vorgeschichte. Schutzfaktoren: ambivalente Bindung an Schwester, therapeutische Beziehung langsam aufbauend. BRMS-Screening: niedriges akutes Risiko; Sicherheitsplan besprochen.",
         "fremdgefaehrdungsanamnese": "Keine Hinweise auf akute Fremdgefährdung. Keine Waffen. Gelegentlich lautstarkes Verhalten, Nachbarn beschwert.",
         "psychopathologischer-befund": "Wach, allseits orientiert. Kontakt mühevoll, misstrauisch. Affekt labil, teils gereizt. Denken formal leicht umständlich, inhaltlich wahnhaft-paranoid (Verfolgungs- und Beobachtungsideen ohne vollständige Einsicht). Keine Sinnestäuschungen zum Untersuchungszeitpunkt eindeutig. Antrieb reduziert. Schlafstörung. Krankheitseinsicht gering.",
         "somatischer-befund": "Vitalzeichen stabil. Herz-Lunge unauffällig. Neurologischer Kurzstatus ohne fokal-neurologische Defizite.",
@@ -2020,7 +4173,7 @@
       "caseId": "DEMO-CASE-0001",
       "category": "arztbrief",
       "title": "Verlaufszusammenfassung",
-      "content": "Aufnahme auf Station. Patient misstrauisch, schläft kaum. Risperidon 2 mg fixiert, Lorazepam PRN verordnet.\n\nNachmittags zunehmende Unruhe, Lorazepam 1 mg einmalig. Kontakt weiterhin angespannt.\n\nNacht 4 h Schlaf. Paranoide Inhalte weiter präsent, jedoch weniger agitiert.\n\nPsychoedukation Gruppe besucht, passive Teilnahme.\n\nAufnahmelabor (05.06.) — Prolaktin deutlich erhöht unter Risperidon 3 mg, sonst Routinepanel ohne relevante Pathologie.\n\nRisperidon auf 3 mg erhöht wegen persistierender Positivsymptomatik.\n\nEinzelgespräch: Patient berichtet reduzierte „Beobachtungs\"-Erlebnisse, Schlaf 5–6 h.\n\nStationsverhalten ruhiger. Motivation für Entlassungsplanung noch gering.\n\nEKG ohne relevante Pathologie. Besprechung mit Sozialdienst wegen Wohn- und Arbeitssituation.\n\nWechsel auf Aripiprazol 10 mg begonnen (Risperidon ausgeschlichen) wegen Prolaktin-Anstieg und Antriebsminderung.\n\nSporttherapie zweimal teilgenommen. Stimmung etwas gebessert.\n\nKeine akute Suizidalität. Krankheitseinsicht langsam zunehmend.\n\nAIMS-Kontrolle: leichte Akathisie, keine Dyskinesie. SAS 1/1/0.\n\nVerlaufslabor (20.06.) — Prolaktin normalisiert nach Umstellung auf Aripiprazol; Aripiprazol-Spiegel im therapeutischen Bereich. Triglyceride und HbA1c grenzwertig — metabolisches Monitoring fortsetzen.\n\nKonsil Neurologie angefragt (Demo-Beispiel) — kein akuter Handlungsbedarf.\n\nEntlassungsplanung: ambulante Weiterbehandlung, Wohnungsbestätigung ausstehend, Medikation stabilisiert auf Aripiprazol 10 mg + Lorazepam PRN.",
+      "content": "Aufnahme auf Station. Patient misstrauisch, schläft kaum. Risperidon 2 mg fixiert, Lorazepam PRN verordnet.\n\nNachmittags zunehmende Unruhe, Lorazepam 1 mg einmalig. Kontakt weiterhin angespannt.\n\nNacht 4 h Schlaf. Paranoide Inhalte weiter präsent, jedoch weniger agitiert.\n\nPsychoedukation Gruppe besucht, passive Teilnahme.\n\nAufnahmelabor (05.06.) — Prolaktin deutlich erhöht unter Risperidon 3 mg, sonst Routinepanel ohne relevante Pathologie.\n\nRisperidon auf 3 mg erhöht wegen persistierender Positivsymptomatik.\n\nEinzelgespräch: Patient berichtet reduzierte „Beobachtungs\"-Erlebnisse, Schlaf 5–6 h.\n\nStationsverhalten ruhiger. Motivation für Entlassungsplanung noch gering.\n\nEKG ohne relevante Pathologie. Besprechung mit Sozialdienst wegen Wohn- und Arbeitssituation.\n\nWechsel auf Aripiprazol 10 mg begonnen (Risperidon ausgeschlichen) wegen Prolaktin-Anstieg und Antriebsminderung.\n\nSporttherapie zweimal teilgenommen. Stimmung etwas gebessert.\n\nKeine akute Suizidalität. Krankheitseinsicht langsam zunehmend. Sicherheitsplan aktualisiert.\n\nRuhe-EEG (11.06.): leichte diffuse Verlangsamung, keine epileptiformen Entladungen.\n\nAIMS-Kontrolle: leichte Akathisie, keine Dyskinesie. SAS 1/1/0.\n\nVerlaufslabor (20.06.) — Prolaktin normalisiert nach Umstellung auf Aripiprazol; Aripiprazol-Spiegel im therapeutischen Bereich. Triglyceride und HbA1c grenzwertig — metabolisches Monitoring fortsetzen.\n\nKonsil Neurologie angefragt (Demo-Beispiel) — kein akuter Handlungsbedarf.\n\nEntlassungsplanung: ambulante Weiterbehandlung, Wohnungsbestätigung ausstehend, Medikation stabilisiert auf Aripiprazol 10 mg + Lorazepam PRN.",
       "date": "2026-06-14T08:00:00.000Z",
       "source": "manual",
       "pageType": "verlauf"
@@ -2061,11 +4214,33 @@
       "caseId": "DEMO-CASE-0001",
       "category": "laborbefunde",
       "title": "Lab vom 20.06.2026 — Verlaufskontrolle — Aripiprazol 10 mg",
-      "content": "Laborbefund vom 2026-06-20 — Verlaufskontrolle — Aripiprazol 10 mg\n\n[Blutbild]\nHämoglobin: 14,3 g/dl (13.5–17.5)\nLeukozyten: 6,9 G/l (4–10)\nThrombozyten: 251 G/l (150–400)\n\n[Leberwerte]\nGOT (AST): 22 U/l (0–35)\nGPT (ALT): 29 U/l (0–45)\nGGT: 36 U/l (0–55)\nBilirubin gesamt: 0,6 mg/dl (0.1–1.2)\n\n[Nierenwerte]\nKreatinin: 0,86 mg/dl (0.7–1.2)\neGFR (CKD-EPI): 98 ml/min/1,73m² (≥ 90)\nHarnstoff: 32 mg/dl (17–43)\n\n[Elektrolyte]\nNatrium: 142 mmol/l (136–145)\nKalium: 4,0 mmol/l (3.5–5.1)\nChlorid: 104 mmol/l (98–106)\n\n[Entzündung]\nCRP: 1,8 mg/l (0–5)\n\n[Stoffwechsel / Lipide]\nGlukose (nüchtern): 96 mg/dl (70–100)\nHbA1c: 5,7 % (4–6) !\nCholesterin gesamt: 192 mg/dl (< 200)\nLDL-Cholesterin: 114 mg/dl (< 116)\nHDL-Cholesterin: 46 mg/dl (> 40)\nTriglyceride: 178 mg/dl (< 150) !\n\n[Hormone]\nProlaktin: 12 ng/ml (4–15)\n\n[Medikamentenspiegel]\nAripiprazol (Talspiegel): 218 ng/ml (150–300 (therapeutisch))",
+      "content": "Laborbefund vom 2026-06-20 — Verlaufskontrolle — Aripiprazol 10 mg\n\n[Blutbild]\nHämoglobin: 14,3 g/dl (13.5–17.5)\nLeukozyten: 6,9 G/l (4–10)\nThrombozyten: 251 G/l (150–400)\n\n[Leberwerte]\nGOT (AST): 22 U/l (0–35)\nGPT (ALT): 29 U/l (0–45)\nGGT: 36 U/l (0–55)\nBilirubin gesamt: 0,6 mg/dl (0.1–1.2)\n\n[Nierenwerte]\nKreatinin: 0,86 mg/dl (0.7–1.2)\neGFR (CKD-EPI): 98 ml/min/1,73m² (≥ 90)\nHarnstoff: 32 mg/dl (17–43)\n\n[Elektrolyte]\nNatrium: 142 mmol/l (136–145)\nKalium: 4,0 mmol/l (3.5–5.1)\nChlorid: 104 mmol/l (98–106)\n\n[Entzündung]\nCRP: 1,8 mg/l (0–5)\n\n[Stoffwechsel / Lipide]\nGlukose (nüchtern): 96 mg/dl (70–100)\nHbA1c: 5,8 % (4–6) !\nCholesterin gesamt: 192 mg/dl (< 200)\nLDL-Cholesterin: 114 mg/dl (< 116)\nHDL-Cholesterin: 46 mg/dl (> 40)\nTriglyceride: 178 mg/dl (< 150) !\n\n[Hormone]\nProlaktin: 12 ng/ml (4–15)\n\n[Medikamentenspiegel]\nAripiprazol (Talspiegel): 218 ng/ml (150–300 (therapeutisch))",
       "date": "2026-06-20T09:00:00.000Z",
       "source": "manual",
       "pageType": "labor",
       "sourceRefId": "demo-labor-befund-02"
+    },
+    {
+      "id": "demo-doc-demo-labor-befund-anthro",
+      "caseId": "DEMO-CASE-0001",
+      "category": "laborbefunde",
+      "title": "Lab vom 10.06.2026 — Anthropometrie — Verlauf",
+      "content": "Laborbefund vom 2026-06-10 — Anthropometrie — Verlauf\n\n[Anthropometrie]\nBMI: 26,4 kg/m² (18.5–24.9) !\nGewicht: 82 kg\nKörpergröße: 176 cm",
+      "date": "2026-06-10T09:00:00.000Z",
+      "source": "manual",
+      "pageType": "labor",
+      "sourceRefId": "demo-labor-befund-anthro"
+    },
+    {
+      "id": "demo-doc-demo-labor-befund-glucose",
+      "caseId": "DEMO-CASE-0001",
+      "category": "laborbefunde",
+      "title": "Lab vom 12.06.2026 — Nüchternglukose — Zwischenkontrolle",
+      "content": "Laborbefund vom 2026-06-12 — Nüchternglukose — Zwischenkontrolle\n\n[Stoffwechsel]\nGlukose (nüchtern): 98 mg/dl (70–100)",
+      "date": "2026-06-12T09:00:00.000Z",
+      "source": "manual",
+      "pageType": "labor",
+      "sourceRefId": "demo-labor-befund-glucose"
     }
   ],
   "generatedDocuments": [
@@ -2075,14 +4250,14 @@
       "templateVersion": 1,
       "caseId": "DEMO-CASE-0001",
       "patientId": "DEMO-0001",
-      "title": "Entlassungsplan Max Demo",
+      "title": "Entlassungsplan Anna Demo",
       "status": "draft",
       "fieldValues": {
-        "patient_name": "Max Demo",
+        "patient_name": "Anna Demo",
         "admission_date": "2026-06-02",
         "discharge_plan": "Ambulante Weiterbehandlung, Medikation Aripiprazol 10 mg"
       },
-      "renderedText": "Entlassungsplan für Max Demo — Demo-Dokument.",
+      "renderedText": "Entlassungsplan für Anna Demo — Demo-Dokument.",
       "createdAt": "2026-06-14T10:00:00.000Z",
       "updatedAt": "2026-06-14T10:00:00.000Z"
     }
@@ -2091,7 +4266,7 @@
     {
       "id": "demo-cal-01",
       "type": "consultation",
-      "title": "Visite — Max Demo",
+      "title": "Visite — Anna Demo",
       "patientId": "DEMO-0001",
       "caseId": "DEMO-CASE-0001",
       "startTime": "2026-06-14T09:00:00.000Z",
@@ -2110,6 +4285,31 @@
       "startTime": "2026-06-15T10:00:00.000Z",
       "endTime": "2026-06-15T10:30:00.000Z",
       "status": "scheduled",
+      "createdBy": "demo-user",
+      "createdAt": "2026-06-14T10:00:00.000Z",
+      "updatedAt": "2026-06-14T10:00:00.000Z"
+    },
+    {
+      "id": "demo-cal-03",
+      "type": "other",
+      "title": "Psychoedukation Gruppe",
+      "caseId": "DEMO-CASE-0001",
+      "startTime": "2026-06-16T14:00:00.000Z",
+      "endTime": "2026-06-16T15:00:00.000Z",
+      "status": "scheduled",
+      "createdBy": "demo-user",
+      "createdAt": "2026-06-14T10:00:00.000Z",
+      "updatedAt": "2026-06-14T10:00:00.000Z"
+    },
+    {
+      "id": "demo-cal-04",
+      "type": "consultation",
+      "title": "Entlassungsgespräch mit Sozialdienst",
+      "caseId": "DEMO-CASE-0001",
+      "startTime": "2026-06-17T11:00:00.000Z",
+      "endTime": "2026-06-17T11:45:00.000Z",
+      "status": "scheduled",
+      "priority": "high",
       "createdBy": "demo-user",
       "createdAt": "2026-06-14T10:00:00.000Z",
       "updatedAt": "2026-06-14T10:00:00.000Z"

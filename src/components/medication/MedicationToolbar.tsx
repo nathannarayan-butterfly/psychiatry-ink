@@ -69,8 +69,7 @@ export function MedicationToolbar({
 
   const showHistoryToggle = hasPlanHistory && !!onToggleHistory
 
-  // When the add trigger has been promoted to the section header, the toolbar
-  // only holds secondary utility actions; render nothing if there are none.
+  // Hide the toolbar when there are no utility actions and no add trigger.
   if (!showAdd && !hasMedications && !showHistoryToggle) {
     return null
   }
@@ -83,72 +82,74 @@ export function MedicationToolbar({
 
   return (
     <div className={`medication-toolbar${hasMedications ? '' : ' medication-toolbar--empty'}`}>
+      <div className="medication-toolbar__actions">
+        {showHistoryToggle ? (
+          <button
+            type="button"
+            className={`icon-action-btn icon-action-btn--bordered${historyMode ? ' icon-action-btn--success' : ''}`}
+            onClick={onToggleHistory}
+            aria-pressed={historyMode}
+            title={historyLabel}
+            aria-label={historyLabel}
+          >
+            <History strokeWidth={1.75} aria-hidden />
+          </button>
+        ) : null}
+        {hasMedications ? (
+          <>
+            <button
+              type="button"
+              className="icon-action-btn icon-action-btn--bordered"
+              disabled={disabled || editDisabled}
+              onClick={onEdit}
+              title={editLabel}
+              aria-label={editLabel}
+            >
+              <Pencil strokeWidth={1.75} aria-hidden />
+            </button>
+            <button
+              type="button"
+              className="icon-action-btn icon-action-btn--bordered"
+              disabled={disabled}
+              onClick={onExport}
+              title={exportLabel}
+              aria-label={exportLabel}
+            >
+              <Download strokeWidth={1.75} aria-hidden />
+            </button>
+            <button
+              type="button"
+              className="icon-action-btn icon-action-btn--bordered"
+              disabled={disabled}
+              onClick={onPrint}
+              title={printLabel}
+              aria-label={printLabel}
+            >
+              <Printer strokeWidth={1.75} aria-hidden />
+            </button>
+            <button
+              type="button"
+              className={`icon-action-btn icon-action-btn--bordered${copied ? ' icon-action-btn--success' : ''}`}
+              disabled={disabled}
+              onClick={handleCopyPlan}
+              title={copyLabel}
+              aria-label={copyLabel}
+            >
+              {copied ? <Check strokeWidth={1.75} aria-hidden /> : <Copy strokeWidth={1.75} aria-hidden />}
+            </button>
+          </>
+        ) : null}
+      </div>
       {showAdd ? (
         <button
           type="button"
-          className="therapy-add-btn"
+          className="medication-plan__add"
           disabled={disabled}
           onClick={onAdd}
         >
-          <Plus size={14} aria-hidden />
-          {translateMedicationUi(language, 'medAdd')}
+          <Plus size={15} strokeWidth={2.2} aria-hidden />
+          {translateMedicationUi(language, 'medAddMedication')}
         </button>
-      ) : null}
-      {showHistoryToggle ? (
-        <button
-          type="button"
-          className={`icon-action-btn icon-action-btn--bordered${historyMode ? ' icon-action-btn--success' : ''}`}
-          onClick={onToggleHistory}
-          aria-pressed={historyMode}
-          title={historyLabel}
-          aria-label={historyLabel}
-        >
-          <History strokeWidth={1.75} aria-hidden />
-        </button>
-      ) : null}
-      {hasMedications ? (
-        <>
-          <button
-            type="button"
-            className="icon-action-btn icon-action-btn--bordered"
-            disabled={disabled || editDisabled}
-            onClick={onEdit}
-            title={editLabel}
-            aria-label={editLabel}
-          >
-            <Pencil strokeWidth={1.75} aria-hidden />
-          </button>
-          <button
-            type="button"
-            className="icon-action-btn icon-action-btn--bordered"
-            disabled={disabled}
-            onClick={onExport}
-            title={exportLabel}
-            aria-label={exportLabel}
-          >
-            <Download strokeWidth={1.75} aria-hidden />
-          </button>
-          <button
-            type="button"
-            className="icon-action-btn icon-action-btn--bordered"
-            disabled={disabled}
-            onClick={onPrint}
-            title={printLabel}
-            aria-label={printLabel}
-          >
-            <Printer strokeWidth={1.75} aria-hidden />
-          </button>
-          <button
-            type="button"
-            className={`icon-action-btn icon-action-btn--bordered${copied ? ' icon-action-btn--success' : ''}`}
-            disabled={disabled}
-            onClick={handleCopyPlan}
-            title={copyLabel}
-            aria-label={copyLabel}
-          >
-            {copied ? <Check strokeWidth={1.75} aria-hidden /> : <Copy strokeWidth={1.75} aria-hidden />}
-          </button>
-        </>
       ) : null}
     </div>
   )

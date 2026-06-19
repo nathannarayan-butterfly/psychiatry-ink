@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import { therapyPageSectionDomId } from '../../data/therapyPageSections'
 import { useSozialtherapie } from '../../hooks/useSozialtherapie'
@@ -19,6 +19,8 @@ import {
 
 interface SozialtherapieSectionProps {
   caseId: string
+  workspacePlanning?: boolean
+  onWorkspacePlanningClose?: () => void
 }
 
 /** Maps sozialtherapie status onto the shared therapy status-pill palette. */
@@ -30,12 +32,34 @@ const STATUS_TONE: Record<SozialtherapieStatus, string> = {
   'not-relevant': 'gray',
 }
 
-export function SozialtherapieSection({ caseId }: SozialtherapieSectionProps) {
+export function SozialtherapieSection({
+  caseId,
+  workspacePlanning = false,
+  onWorkspacePlanningClose,
+}: SozialtherapieSectionProps) {
   const { language } = useTranslation()
   const { targets, addTarget, updateTarget, removeTarget } = useSozialtherapie(caseId)
   const [openId, setOpenId] = useState<string | null>(null)
-  const [picker, setPicker] = useState(false)
+  const [picker, setPicker] = useState(workspacePlanning)
   const [customName, setCustomName] = useState('')
+
+  useEffect(() => {
+    if (workspacePlanning) setPicker(true)
+  }, [workspacePlanning])
+
+  const closeWorkspacePlanning = useCallback(() => {
+    onWorkspacePlanningClose?.()
+  }, [onWorkspacePlanningClose])
+
+  const closePicker = useCallback(() => {
+    setPicker(false)
+    if (workspacePlanning) closeWorkspacePlanning()
+  }, [workspacePlanning, closeWorkspacePlanning])
+
+  const closeDetail = useCallback(() => {
+    setOpenId(null)
+    if (workspacePlanning) closeWorkspacePlanning()
+  }, [workspacePlanning, closeWorkspacePlanning])
 
   const usedAreas = useMemo(() => new Set(targets.map((t) => t.area)), [targets])
   const availablePredefined = DEFAULT_SOZIALTHERAPIE_AREAS.filter((area) => !usedAreas.has(area))
@@ -63,6 +87,107 @@ export function SozialtherapieSection({ caseId }: SozialtherapieSectionProps) {
   const handleAddCustom = () => {
     if (!customName.trim()) return
     handleAdd(customName.trim())
+  }
+
+  const detailModal = openTarget ? (
+    <div
+      className="therapy-modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      onClick={closeDetail}
+    >
+      <div className="therapy-modal therapy-modal--wide" onClick={(e) => e.stopPropagation()}>
+        <SozialtherapieDetail
+          target={openTarget}
+          language={language}
+          onUpdate={(patch) => updateTarget(openTarget.id, patch)}
+          onClose={closeDetail}
+          onDelete={() => {
+            if (window.confirm(ts(language, 'szConfirmDelete'))) {
+              closeDetail()
+              removeTarget(openTarget.id)
+            }
+          }}
+        />
+      </div>
+    </div>
+  ) : null
+
+  const pickerModal = picker ? (
+    <div
+      className="therapy-modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      onClick={closePicker}
+    >
+      <div
+        className="therapy-modal therapy-modal--narrow"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="therapy-modal__head">
+          <div className="therapy-modal__heading">
+            <h4 className="therapy-modal__title">{ts(language, 'szPickerTitle')}</h4>
+          </div>
+          <button
+            type="button"
+            className="therapy-modal__close"
+            onClick={closePicker}
+            aria-label={ts(language, 'szClose')}
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="therapy-modal__body">
+          <div className="therapy-picker">
+            {availablePredefined.length > 0 && (
+              <div className="therapy-picker__chips">
+                {availablePredefined.map((area) => (
+                  <button
+                    key={area}
+                    type="button"
+                    className="therapy-chip"
+                    onClick={() => handleAdd(area)}
+                  >
+                    {translateSozialtherapieArea(language, area)}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="therapy-picker__custom">
+              <input
+                type="text"
+                className="therapy-input"
+                value={customName}
+                placeholder={ts(language, 'szCustomAreaPlaceholder')}
+                onChange={(e) => setCustomName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleAddCustom()
+                }}
+                autoFocus
+              />
+              <button
+                type="button"
+                className="therapy-btn therapy-btn--primary"
+                onClick={handleAddCustom}
+                disabled={!customName.trim()}
+              >
+                {ts(language, 'szAdd')}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  ) : null
+
+  if (workspacePlanning) {
+    return (
+      <>
+        {detailModal}
+        {pickerModal}
+      </>
+    )
   }
 
   return (
@@ -100,97 +225,8 @@ export function SozialtherapieSection({ caseId }: SozialtherapieSectionProps) {
         )}
       </div>
 
-      {openTarget && (
-        <div
-          className="therapy-modal-overlay"
-          role="dialog"
-          aria-modal="true"
-          onClick={() => setOpenId(null)}
-        >
-          <div className="therapy-modal therapy-modal--wide" onClick={(e) => e.stopPropagation()}>
-            <SozialtherapieDetail
-              target={openTarget}
-              language={language}
-              onUpdate={(patch) => updateTarget(openTarget.id, patch)}
-              onClose={() => setOpenId(null)}
-              onDelete={() => {
-                if (window.confirm(ts(language, 'szConfirmDelete'))) {
-                  setOpenId(null)
-                  removeTarget(openTarget.id)
-                }
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      {picker && (
-        <div
-          className="therapy-modal-overlay"
-          role="dialog"
-          aria-modal="true"
-          onClick={() => setPicker(false)}
-        >
-          <div
-            className="therapy-modal therapy-modal--narrow"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="therapy-modal__head">
-              <div className="therapy-modal__heading">
-                <h4 className="therapy-modal__title">{ts(language, 'szPickerTitle')}</h4>
-              </div>
-              <button
-                type="button"
-                className="therapy-modal__close"
-                onClick={() => setPicker(false)}
-                aria-label={ts(language, 'szClose')}
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="therapy-modal__body">
-              <div className="therapy-picker">
-                {availablePredefined.length > 0 && (
-                  <div className="therapy-picker__chips">
-                    {availablePredefined.map((area) => (
-                      <button
-                        key={area}
-                        type="button"
-                        className="therapy-chip"
-                        onClick={() => handleAdd(area)}
-                      >
-                        {translateSozialtherapieArea(language, area)}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                <div className="therapy-picker__custom">
-                  <input
-                    type="text"
-                    className="therapy-input"
-                    value={customName}
-                    placeholder={ts(language, 'szCustomAreaPlaceholder')}
-                    onChange={(e) => setCustomName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleAddCustom()
-                    }}
-                    autoFocus
-                  />
-                  <button
-                    type="button"
-                    className="therapy-btn therapy-btn--primary"
-                    onClick={handleAddCustom}
-                    disabled={!customName.trim()}
-                  >
-                    {ts(language, 'szAdd')}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {detailModal}
+      {pickerModal}
     </section>
   )
 }

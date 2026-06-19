@@ -5,6 +5,7 @@ import type {
   KbDosageGuidance,
   KbInteractionNote,
   KbMonitoringRecommendation,
+  KbPharmacokinetics,
   KbReceptorAffinity,
   KbSideEffect,
   KbSource,
@@ -13,6 +14,7 @@ import type {
   KbSubstanceTradeName,
 } from '../../src/types/kbNormalized'
 import { writeAiSeedProvenance } from './kbProvenance'
+import { pharmacokineticsRowFromDraft } from './kbPharmacokinetics'
 import { getKbSupabaseAdmin } from './kbSupabaseAdmin'
 
 function mapSubstance(row: Record<string, unknown>): KbSubstance {
@@ -88,13 +90,14 @@ export async function getKbSubstanceById(id: string): Promise<KbSubstanceDetail 
   if (error) throw error
   if (!substance) return null
 
-  const [tradeNames, affinities, sideEffects, monitoring, dosage, interactions, sources, countryPreparations, generations] =
+  const [tradeNames, affinities, sideEffects, monitoring, dosage, pharmacokinetics, interactions, sources, countryPreparations, generations] =
     await Promise.all([
       supabase.from('kb_substance_trade_names').select('*').eq('substance_id', id),
       supabase.from('kb_receptor_affinities').select('*').eq('substance_id', id).order('sort_order'),
       supabase.from('kb_side_effects').select('*').eq('substance_id', id).order('sort_order'),
       supabase.from('kb_monitoring_recommendations').select('*').eq('substance_id', id).order('sort_order'),
       supabase.from('kb_dosage_guidance').select('*').eq('substance_id', id).order('sort_order'),
+      supabase.from('kb_pharmacokinetics').select('*').eq('substance_id', id).maybeSingle(),
       supabase.from('kb_interaction_notes').select('*').eq('substance_id', id).order('sort_order'),
       supabase.from('kb_sources').select('*').eq('substance_id', id).order('created_at'),
       supabase.from('kb_country_preparations').select('*').eq('substance_id', id).order('strength_value'),
@@ -178,6 +181,51 @@ export async function getKbSubstanceById(id: string): Promise<KbSubstanceDetail 
         administrationNotesDe: r.administration_notes_de ? String(r.administration_notes_de) : null,
       }),
     ),
+    pharmacokinetics: pharmacokinetics.data
+      ? ({
+          id: String(pharmacokinetics.data.id),
+          substanceId: String(pharmacokinetics.data.substance_id),
+          summary: pharmacokinetics.data.summary ? String(pharmacokinetics.data.summary) : null,
+          summaryDe: pharmacokinetics.data.summary_de ? String(pharmacokinetics.data.summary_de) : null,
+          halfLifeHours:
+            pharmacokinetics.data.half_life_hours != null
+              ? Number(pharmacokinetics.data.half_life_hours)
+              : null,
+          halfLifeNote: pharmacokinetics.data.half_life_note
+            ? String(pharmacokinetics.data.half_life_note)
+            : null,
+          halfLifeNoteDe: pharmacokinetics.data.half_life_note_de
+            ? String(pharmacokinetics.data.half_life_note_de)
+            : null,
+          tmaxHours:
+            pharmacokinetics.data.tmax_hours != null ? Number(pharmacokinetics.data.tmax_hours) : null,
+          timeToSteadyStateDays:
+            pharmacokinetics.data.time_to_steady_state_days != null
+              ? Number(pharmacokinetics.data.time_to_steady_state_days)
+              : null,
+          bioavailabilityPercent:
+            pharmacokinetics.data.bioavailability_percent != null
+              ? Number(pharmacokinetics.data.bioavailability_percent)
+              : null,
+          proteinBindingPercent:
+            pharmacokinetics.data.protein_binding_percent != null
+              ? Number(pharmacokinetics.data.protein_binding_percent)
+              : null,
+          tdmLow:
+            pharmacokinetics.data.tdm_low != null ? Number(pharmacokinetics.data.tdm_low) : null,
+          tdmHigh:
+            pharmacokinetics.data.tdm_high != null ? Number(pharmacokinetics.data.tdm_high) : null,
+          tdmUnit: pharmacokinetics.data.tdm_unit ? String(pharmacokinetics.data.tdm_unit) : null,
+          tdmNote: pharmacokinetics.data.tdm_note ? String(pharmacokinetics.data.tdm_note) : null,
+          tdmNoteDe: pharmacokinetics.data.tdm_note_de
+            ? String(pharmacokinetics.data.tdm_note_de)
+            : null,
+          isEstimated: Boolean(pharmacokinetics.data.is_estimated ?? true),
+          sourceNote: pharmacokinetics.data.source_note
+            ? String(pharmacokinetics.data.source_note)
+            : null,
+        } satisfies KbPharmacokinetics)
+      : null,
     interactions: (interactions.data ?? []).map(
       (r): KbInteractionNote => ({
         id: String(r.id),
@@ -291,6 +339,7 @@ export async function insertNormalizedProfile(params: {
     supabase.from('kb_side_effects').delete().eq('substance_id', sid),
     supabase.from('kb_monitoring_recommendations').delete().eq('substance_id', sid),
     supabase.from('kb_dosage_guidance').delete().eq('substance_id', sid),
+    supabase.from('kb_pharmacokinetics').delete().eq('substance_id', sid),
     supabase.from('kb_interaction_notes').delete().eq('substance_id', sid),
     supabase.from('kb_sources').delete().eq('substance_id', sid),
     supabase.from('kb_country_preparations').delete().eq('substance_id', sid),
@@ -426,6 +475,15 @@ export async function insertNormalizedProfile(params: {
         notes: p.notes ?? null,
       })),
     )
+    if (error) throw error
+  }
+
+  if (draft.pharmacokinetics) {
+    const { error } = await supabase
+      .from('kb_pharmacokinetics')
+      .upsert(pharmacokineticsRowFromDraft(sid, draft.pharmacokinetics), {
+        onConflict: 'substance_id',
+      })
     if (error) throw error
   }
 

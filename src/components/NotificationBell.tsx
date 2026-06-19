@@ -17,8 +17,6 @@ function notifIcon(type: string): string {
   switch (type) {
     case 'credits-low':
       return '€'
-    case 'pomodoro-done':
-      return '🍅'
     case 'warning':
       return '⚠️'
     default:

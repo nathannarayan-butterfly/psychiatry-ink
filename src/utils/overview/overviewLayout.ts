@@ -1,6 +1,6 @@
 import { safeGetItem, safeSetItem } from '../safeStorage'
 
-export const OVERVIEW_LAYOUT_VERSION = 1 as const
+export const OVERVIEW_LAYOUT_VERSION = 2 as const
 export const OVERVIEW_LAYOUT_STORAGE_BASE = 'psychiatry-ink:overview-layout'
 
 export type OverviewWidgetId =
@@ -21,8 +21,24 @@ export type OverviewWidgetId =
   | 'collaboration'
   | 'lab-results'
   | 'butterfly-criteria'
+  | 'zwangsmassnahme'
+  | 'verlaufstendenz'
+  | 'ekg-summary'
+  | 'eeg-summary'
+  | 'ct-summary'
+  | 'angemeldete-therapien'
+  | 'compliance'
 
 export type OverviewWidgetWidth = 'half' | 'full'
+
+/** Relative vertical footprint used when packing half-width widgets into columns. */
+export type OverviewWidgetSizeHint = 'compact' | 'standard' | 'tall'
+
+export const OVERVIEW_WIDGET_SIZE_WEIGHT: Record<OverviewWidgetSizeHint, number> = {
+  compact: 1,
+  standard: 2,
+  tall: 3,
+}
 
 export interface OverviewLayoutItem {
   instanceId: string
@@ -53,6 +69,13 @@ export const OVERVIEW_WIDGET_IDS: readonly OverviewWidgetId[] = [
   'collaboration',
   'lab-results',
   'butterfly-criteria',
+  'zwangsmassnahme',
+  'verlaufstendenz',
+  'ekg-summary',
+  'eeg-summary',
+  'ct-summary',
+  'angemeldete-therapien',
+  'compliance',
 ] as const
 
 const VALID_WIDGET_IDS = new Set<string>(OVERVIEW_WIDGET_IDS)
@@ -85,14 +108,19 @@ export function getDefaultOverviewLayout(): OverviewLayout {
   return {
     version: OVERVIEW_LAYOUT_VERSION,
     widgets: [
-      { instanceId: 'default-safety', widgetId: 'safety', width: 'half' },
-      { instanceId: 'default-medication', widgetId: 'medication', width: 'half' },
       { instanceId: 'default-diagnoses', widgetId: 'diagnoses', width: 'half' },
-      { instanceId: 'default-psychopathology', widgetId: 'psychopathology', width: 'half' },
-      { instanceId: 'default-labs', widgetId: 'labs-due', width: 'half' },
-      { instanceId: 'default-prior', widgetId: 'prior-therapies', width: 'half' },
+      { instanceId: 'default-medication', widgetId: 'medication', width: 'half' },
       { instanceId: 'default-spiegel-latest', widgetId: 'spiegel-latest', width: 'half' },
-      { instanceId: 'default-spiegel-all', widgetId: 'spiegel-all', width: 'full' },
+      { instanceId: 'default-psychopathology', widgetId: 'psychopathology', width: 'half' },
+      { instanceId: 'default-zwangsmassnahme', widgetId: 'zwangsmassnahme', width: 'half' },
+      { instanceId: 'default-verlaufstendenz', widgetId: 'verlaufstendenz', width: 'half' },
+      { instanceId: 'default-labs', widgetId: 'labs-due', width: 'half' },
+      { instanceId: 'default-ekg', widgetId: 'ekg-summary', width: 'half' },
+      { instanceId: 'default-eeg', widgetId: 'eeg-summary', width: 'half' },
+      { instanceId: 'default-ct', widgetId: 'ct-summary', width: 'half' },
+      { instanceId: 'default-prior', widgetId: 'prior-therapies', width: 'half' },
+      { instanceId: 'default-angemeldete', widgetId: 'angemeldete-therapien', width: 'half' },
+      { instanceId: 'default-compliance', widgetId: 'compliance', width: 'half' },
     ],
   }
 }
@@ -199,6 +227,8 @@ export type OverviewWidgetVisibility =
   | 'hasIsdm'
   | 'hasLabData'
   | 'hasButterfly'
+  | 'hasEeg'
+  | 'hasZwangsmassnahme'
 
 export interface OverviewWidgetVisibilityContext {
   hasSpiegel: boolean
@@ -207,6 +237,61 @@ export interface OverviewWidgetVisibilityContext {
   hasIsdm: boolean
   hasLabData: boolean
   hasButterfly: boolean
+  hasEeg: boolean
+  hasZwangsmassnahme: boolean
+}
+
+export interface OverviewWidgetPlacement {
+  item: OverviewLayoutItem
+  index: number
+}
+
+export type OverviewPackSegment =
+  | { type: 'full'; placement: OverviewWidgetPlacement }
+  | { type: 'columns'; left: OverviewWidgetPlacement[]; right: OverviewWidgetPlacement[] }
+
+/**
+ * Pack half-width widgets into the shorter column (masonry-style) while preserving
+ * user order. Full-width widgets flush the current column pair and span the row.
+ */
+export function packOverviewWidgets(
+  placements: OverviewWidgetPlacement[],
+  sizeWeight: (widgetId: OverviewWidgetId) => number,
+): OverviewPackSegment[] {
+  const segments: OverviewPackSegment[] = []
+  let left: OverviewWidgetPlacement[] = []
+  let right: OverviewWidgetPlacement[] = []
+  let leftHeight = 0
+  let rightHeight = 0
+
+  const flushColumns = () => {
+    if (left.length === 0 && right.length === 0) return
+    segments.push({ type: 'columns', left: [...left], right: [...right] })
+    left = []
+    right = []
+    leftHeight = 0
+    rightHeight = 0
+  }
+
+  for (const placement of placements) {
+    if (placement.item.width === 'full') {
+      flushColumns()
+      segments.push({ type: 'full', placement })
+      continue
+    }
+
+    const weight = sizeWeight(placement.item.widgetId)
+    if (leftHeight <= rightHeight) {
+      left.push(placement)
+      leftHeight += weight
+    } else {
+      right.push(placement)
+      rightHeight += weight
+    }
+  }
+
+  flushColumns()
+  return segments
 }
 
 export function isOverviewWidgetVisible(
@@ -220,5 +305,7 @@ export function isOverviewWidgetVisible(
   if (visibility === 'hasIsdm') return ctx.hasIsdm
   if (visibility === 'hasLabData') return ctx.hasLabData
   if (visibility === 'hasButterfly') return ctx.hasButterfly
+  if (visibility === 'hasEeg') return ctx.hasEeg
+  if (visibility === 'hasZwangsmassnahme') return ctx.hasZwangsmassnahme
   return true
 }

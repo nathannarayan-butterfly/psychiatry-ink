@@ -1,10 +1,13 @@
 import {
   DEFAULT_RECEPTOR_AXES,
   getDrugColor,
+  getReceptorDisplayLabel,
   normalizeReceptorTarget,
 } from '../../data/receptorProfile'
 import type { KnowledgeBaseDrug, ReceptorAffinityEntry } from '../../types/knowledgeBase'
 import { getDisplayReceptorProfile } from './receptorAffinity'
+
+export { normalizeReceptorTarget }
 
 /**
  * Receptor-affinity resolution utilities (v2 relative-affinity model).
@@ -202,4 +205,216 @@ export function computeCombinedBurden(
     const total = Math.min(AFFINITY_MAX, rawTotal)
     return { target, rawTotal, total, level: burdenLevel(total), contributors }
   })
+}
+
+/** Per-axis max relative affinity (0–100) across active drugs — dashboard combined radar. */
+export interface CombinedReceptorFingerprint {
+  targets: { target: string; percent: number }[]
+  contributorCount: number
+}
+
+/**
+ * Relative affinity index (0–100) at/above which a receptor counts as a clinical
+ * "target". Matches legacy qualitative score ≥ 3 (moderate+) via
+ * {@link legacyScoreToAffinityPercent}.
+ */
+export const TARGET_AFFINITY_PERCENT = 55
+
+/** Receptor meaningfully engaged (≥ moderate affinity) across the active regimen. */
+export interface TargetedReceptor {
+  /** Normalized receptor symbol (e.g. "D2", "5-HT2A"). */
+  target: string
+  label: string
+  /** How many active medications meaningfully engage this receptor. */
+  count: number
+  /** Strongest relative affinity index across the active regimen (0–100). */
+  maxPercent: number
+  /** Active substances meaningfully engaging this receptor. */
+  drugs: string[]
+}
+
+/**
+ * Combined receptor fingerprint for the active regimen: per target, the strongest
+ * relative-affinity index across resolved drugs. Uses the same v2 KB resolution
+ * path as {@link ReceptorProfileSection} so the dashboard radar matches detail view.
+ */
+export function computeCombinedReceptorFingerprint(
+  resolved: ResolvedDrugProfile[],
+): CombinedReceptorFingerprint | null {
+  if (resolved.length === 0) return null
+  const activeTargets = getActiveReceptorTargets(resolved)
+  const targets = activeTargets
+    .map((target) => {
+      let max = 0
+      for (const drug of resolved) {
+        const pct = getAffinityPercent(drug, target) ?? 0
+        if (pct > max) max = pct
+      }
+      return { target, percent: max }
+    })
+    .filter((entry) => entry.percent > 0)
+  if (targets.length === 0) return null
+  return { targets, contributorCount: resolved.length }
+}
+
+/**
+ * Regimen-level targeted receptors: axes where ≥ one active drug has relative
+ * affinity ≥ {@link TARGET_AFFINITY_PERCENT}. Uses the same v2 KB resolution
+ * path as {@link computeCombinedReceptorFingerprint} so dashboard chips / bars
+ * match the combined radar.
+ */
+export function computeTargetedReceptors(
+  resolved: ResolvedDrugProfile[],
+  language: string,
+): TargetedReceptor[] {
+  if (resolved.length === 0) return []
+
+  const agg = new Map<string, { count: number; maxPercent: number; drugs: string[] }>()
+  for (const drug of resolved) {
+    const seenForDrug = new Set<string>()
+    for (const entry of drug.entries) {
+      const pct = entry.affinityPercent ?? 0
+      if (pct < TARGET_AFFINITY_PERCENT) continue
+      const norm = normalizeReceptorTarget(entry.target)
+      if (seenForDrug.has(norm)) continue
+      seenForDrug.add(norm)
+      const prev = agg.get(norm) ?? { count: 0, maxPercent: 0, drugs: [] }
+      prev.count += 1
+      prev.maxPercent = Math.max(prev.maxPercent, pct)
+      prev.drugs.push(drug.medName)
+      agg.set(norm, prev)
+    }
+  }
+
+  return [...agg.entries()]
+    .map(([target, data]) => ({
+      target,
+      label: getReceptorDisplayLabel(target),
+      count: data.count,
+      maxPercent: data.maxPercent,
+      drugs: data.drugs,
+    }))
+    .sort((a, b) => b.count - a.count || b.maxPercent - a.maxPercent || a.label.localeCompare(b.label, language))
+}
+
+/** Enrich a single receptor target with regimen affinity data for display. */
+export function enrichTargetReceptor(
+  target: string,
+  resolved: ResolvedDrugProfile[],
+): TargetedReceptor {
+  const norm = normalizeReceptorTarget(target)
+  const drugs: string[] = []
+  let maxPercent = 0
+  let count = 0
+  for (const drug of resolved) {
+    const pct = getAffinityPercent(drug, norm) ?? 0
+    if (pct <= 0) continue
+    drugs.push(drug.medName)
+    maxPercent = Math.max(maxPercent, pct)
+    if (pct >= TARGET_AFFINITY_PERCENT) count += 1
+  }
+  return {
+    target: norm,
+    label: getReceptorDisplayLabel(norm),
+    count,
+    maxPercent,
+    drugs: [...new Set(drugs)],
+  }
+}
+
+/**
+ * Enrich an explicit list of receptor targets with regimen affinity data.
+ * Used once the clinician has customized the Zielrezeptoren whitelist.
+ */
+export function resolveCuratedTargetReceptors(
+  curatedTargets: string[] | undefined,
+  resolved: ResolvedDrugProfile[],
+): TargetedReceptor[] {
+  if (!curatedTargets?.length) return []
+  const seen = new Set<string>()
+  const result: TargetedReceptor[] = []
+  for (const raw of curatedTargets) {
+    const norm = normalizeReceptorTarget(raw)
+    if (seen.has(norm)) continue
+    seen.add(norm)
+    result.push(enrichTargetReceptor(norm, resolved))
+  }
+  return result
+}
+
+/**
+ * Baseline Zielrezeptoren whitelist: KB-derived moderate+ targets until the
+ * clinician customizes; thereafter the persisted list (which may be empty).
+ */
+export function resolveZielrezeptorenBaseline(
+  curatedTargets: string[] | undefined,
+  resolved: ResolvedDrugProfile[],
+  language: string,
+): string[] {
+  if (curatedTargets !== undefined) {
+    return curatedTargets.map((t) => normalizeReceptorTarget(t))
+  }
+  return computeTargetedReceptors(resolved, language).map((r) =>
+    normalizeReceptorTarget(r.target),
+  )
+}
+
+/**
+ * Zielrezeptoren shown in the dashboard panel above Nebenwirkungen.
+ * Auto-populates from {@link computeTargetedReceptors} until customized.
+ */
+export function resolveZielrezeptorenDisplay(
+  curatedTargets: string[] | undefined,
+  resolved: ResolvedDrugProfile[],
+  language: string,
+): TargetedReceptor[] {
+  if (curatedTargets !== undefined) {
+    return resolveCuratedTargetReceptors(curatedTargets, resolved)
+  }
+  return computeTargetedReceptors(resolved, language)
+}
+
+/**
+ * Regimen receptors not currently shown in Zielrezeptoren — used for the add picker.
+ */
+export function computeZielrezeptorPickable(
+  curatedTargets: string[] | undefined,
+  resolved: ResolvedDrugProfile[],
+  language: string,
+): TargetedReceptor[] {
+  const visible = new Set(
+    resolveZielrezeptorenBaseline(curatedTargets, resolved, language),
+  )
+  return getActiveReceptorTargets(resolved)
+    .filter((target) => !visible.has(normalizeReceptorTarget(target)))
+    .map((target) => enrichTargetReceptor(target, resolved))
+    .sort(
+      (a, b) =>
+        b.maxPercent - a.maxPercent ||
+        b.count - a.count ||
+        a.label.localeCompare(b.label, language),
+    )
+}
+
+/** @deprecated Use {@link computeZielrezeptorPickable} for the Zielrezeptoren panel. */
+export function computePickableReceptorTargets(
+  curatedTargets: string[] | undefined,
+  resolved: ResolvedDrugProfile[],
+  language: string,
+): TargetedReceptor[] {
+  return computeZielrezeptorPickable(curatedTargets, resolved, language)
+}
+
+/** @deprecated Suggestions are no longer shown once Zielrezeptoren auto-populate. */
+export function computeSuggestedTargetReceptors(
+  curatedTargets: string[] | undefined,
+  resolved: ResolvedDrugProfile[],
+  language: string,
+): TargetedReceptor[] {
+  const visible = new Set(
+    resolveZielrezeptorenBaseline(curatedTargets, resolved, language),
+  )
+  return computeTargetedReceptors(resolved, language).filter(
+    (r) => !visible.has(normalizeReceptorTarget(r.target)),
+  )
 }

@@ -52,6 +52,8 @@ import {
 import { DIAGNOSTICS_SECTIONS, type DiagnosticsSectionId } from '../../data/diagnosticsSections'
 import { useLaborBefundeList } from '../../hooks/useLaborBefundeList'
 import { useDiagnosticsSectionNavOptional } from '../../contexts/DiagnosticsSectionNavContext'
+import { ANFORDERUNG_PRESET_LABOR } from '../../data/anforderungenCatalog'
+import type { AnforderungModalPreset } from '../../types/anforderung'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -2544,9 +2546,17 @@ interface LaborPageProps {
   hasPatient?: boolean
   /** When true, section nav and befund lists live in the global case sidebar. */
   useExternalSidebar?: boolean
+  /** Opens the clinical orders modal, optionally pre-filtered for the diagnostics context. */
+  onRequestAnforderung?: (preset?: AnforderungModalPreset | null) => void
 }
 
-export function LaborPage({ caseId, onCreatePatient, hasPatient = false, useExternalSidebar = false }: LaborPageProps) {
+export function LaborPage({
+  caseId,
+  onCreatePatient,
+  hasPatient = false,
+  useExternalSidebar = false,
+  onRequestAnforderung,
+}: LaborPageProps) {
   const { t } = useTranslation()
   const externalNav = useDiagnosticsSectionNavOptional()
   const isExternal = useExternalSidebar && externalNav != null
@@ -2926,6 +2936,15 @@ export function LaborPage({ caseId, onCreatePatient, hasPatient = false, useExte
       <aside className="labor-page__sidebar">
         {diagnosticsSection === 'labor' ? (
           <>
+            {onRequestAnforderung ? (
+              <button
+                type="button"
+                className="labor-page__request-btn"
+                onClick={() => onRequestAnforderung(ANFORDERUNG_PRESET_LABOR)}
+              >
+                {t('laborRequestOrder')}
+              </button>
+            ) : null}
             <button
               type="button"
               className={[
@@ -3048,6 +3067,7 @@ export function LaborPage({ caseId, onCreatePatient, hasPatient = false, useExte
             selectedId={diagnostikBefunde.selectedId}
             onSelect={diagnostikBefunde.setSelectedId}
             onRecordsChange={diagnostikBefunde.refresh}
+            onRequestAnforderung={onRequestAnforderung}
           />
         ) : diagnosticsSection !== 'labor' ? (
           <div className="labor-page__empty">

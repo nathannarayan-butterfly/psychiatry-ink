@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Check, X } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
 import { useAuth } from '../../context/AuthContext'
@@ -15,6 +15,7 @@ import {
 import type {
   Anforderung,
   AnforderungCategory,
+  AnforderungModalPreset,
   AnforderungUrgency,
 } from '../../types/anforderung'
 import { catalogItemLabel } from '../../types/anforderung'
@@ -30,6 +31,7 @@ interface AnforderungCreateModalProps {
   open: boolean
   onClose: () => void
   onCreated?: () => void
+  preset?: AnforderungModalPreset | null
 }
 
 export function AnforderungCreateModal({
@@ -37,6 +39,7 @@ export function AnforderungCreateModal({
   open,
   onClose,
   onCreated,
+  preset = null,
 }: AnforderungCreateModalProps) {
   const { t, language } = useTranslation()
   const { user } = useAuth()
@@ -51,7 +54,13 @@ export function AnforderungCreateModal({
   const [requestedDate, setRequestedDate] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  const groups = useMemo(() => listCatalogGroups(category), [category])
+  const groups = useMemo(() => {
+    const all = listCatalogGroups(category)
+    if (preset?.groupKey && category === preset.category) {
+      return all.filter((group) => group === preset.groupKey)
+    }
+    return all
+  }, [category, preset])
   const itemsByGroup = useMemo(() => {
     const items = listCatalogByCategory(category)
     const map = new Map<string, typeof items>()
@@ -81,6 +90,29 @@ export function AnforderungCreateModal({
     setUrgency('routine')
     setRequestedDate('')
   }, [])
+
+  const applyPreset = useCallback((nextPreset: AnforderungModalPreset | null) => {
+    if (!nextPreset) {
+      resetForm()
+      return
+    }
+    setCategory(nextPreset.category)
+    const ids = nextPreset.selectedCatalogIds ?? []
+    setSelectedIds(new Set(ids))
+    if (ids.length > 0) {
+      const first = ANFORDERUNGEN_CATALOG.find((item) => item.id === ids[0])
+      setUrgency(first?.defaultUrgency ?? 'routine')
+    } else {
+      setUrgency('routine')
+    }
+    setNote('')
+    setRequestedDate('')
+  }, [resetForm])
+
+  useEffect(() => {
+    if (!open) return
+    applyPreset(preset)
+  }, [open, preset, applyPreset])
 
   const handleClose = useCallback(() => {
     resetForm()

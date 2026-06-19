@@ -333,10 +333,10 @@
   min-width: 0;
 }
 .ov-widget-slot--half {
-  grid-column: auto;
+  width: 100%;
 }
 .ov-widget-slot--full {
-  grid-column: 1 / -1;
+  width: 100%;
 }
 .ov-widget-slot--hero .ov-widget-slot__content > .ov-summary {
   margin-bottom: 0;
@@ -442,18 +442,12 @@
 }
 
 @media (max-width: 1100px) {
-  .ov-widget-slot--half {
-    grid-column: auto;
-  }
+  .ov-widget-slot--half,
   .ov-widget-slot--full {
-    grid-column: 1 / -1;
+    width: 100%;
   }
 }
 @media (max-width: 720px) {
-  .ov-widget-slot--half,
-  .ov-widget-slot--full {
-    grid-column: 1 / -1;
-  }
   .ov-layout-toolbar {
     flex-direction: column;
     align-items: stretch;
@@ -463,44 +457,64 @@
   }
 }
 
-/* ── Grid — asymmetric calm 2-column layout ─────────────────────────────── */
+/* ── Masonry-style packed 2-column layout ─────────────────────────────────── */
 
 .ov-grid {
-  display: grid;
-  grid-template-columns: 1.55fr 1fr;
-  gap: var(--cm-col-gap, 3rem) var(--cm-col-gap, 3rem);
-  row-gap: var(--cm-section-gap, 2.75rem);
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: var(--cm-section-gap, 2.75rem);
+  align-items: stretch;
   width: 100%;
 }
+
+.ov-grid__row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cm-col-gap, 3rem);
+  width: 100%;
+  min-width: 0;
+}
+
+.ov-grid__col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--cm-section-gap, 2.75rem);
+}
+
+.ov-grid__row > .ov-grid__col:first-child {
+  flex: 1.55;
+}
+
+.ov-grid--single {
+  gap: var(--cm-section-gap, 2.75rem);
+}
+
 .ov-grid > * {
   min-width: 0;
 }
+
 .ov-col-6 {
-  grid-column: auto;
+  width: 100%;
 }
 .ov-col-12 {
-  grid-column: 1 / -1;
-}
-
-.ov-widget-slot--full {
-  grid-column: 1 / -1;
-}
-.ov-widget-slot--half {
-  grid-column: auto;
+  width: 100%;
 }
 
 @media (max-width: 1100px) {
-  .ov-grid {
-    grid-template-columns: 1fr;
+  .ov-grid__row {
+    flex-direction: column;
+    gap: var(--cm-section-gap, 2.75rem);
   }
-  .ov-widget-slot--half,
-  .ov-widget-slot--full {
-    grid-column: 1 / -1;
+  .ov-grid__row > .ov-grid__col:first-child {
+    flex: 1;
   }
 }
 @media (max-width: 720px) {
-  .ov-grid {
+  .ov-grid,
+  .ov-grid--single,
+  .ov-grid__col {
     gap: var(--space-4, 1rem);
   }
 }
@@ -1438,5 +1452,582 @@
   }
   .ov-widget-slot--dragging {
     opacity: 0.75;
+  }
+}
+
+/* ── Dashboard header toolbar (export / print) ─────────────────────────────── */
+
+.ov-dashboard__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3, 0.75rem);
+  margin-bottom: var(--space-2, 0.5rem);
+}
+
+.ov-dashboard__header .cm-page-eyebrow {
+  flex: 1;
+  min-width: 0;
+}
+
+.ov-action-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  padding-top: 0.1rem;
+}
+
+/* ── PPB safety subsection ───────────────────────────────────────────────── */
+
+.ov-ppb__safety {
+  margin-bottom: var(--space-3, 0.75rem);
+}
+
+.ov-ppb__safety .ov-safety__subhead {
+  margin-bottom: 0.45rem;
+}
+
+/* ── Stub / placeholder widgets ──────────────────────────────────────────── */
+
+.ov-stub__message {
+  margin: 0 0 0.35rem;
+  font-size: var(--text-sm, 0.8125rem);
+  color: var(--text-secondary, #5c5650);
+}
+
+.ov-stub__detail {
+  margin: 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-muted, #91887e);
+}
+
+/* ── Angemeldete Therapien compact lines ─────────────────────────────────── */
+
+.ov-therapy-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.ov-therapy-line__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  align-items: baseline;
+}
+
+.ov-therapy-line__kind {
+  font-size: var(--text-xs, 0.75rem);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #91887e);
+}
+
+.ov-therapy-line__label {
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: 500;
+  color: var(--text-primary, #1f1c1a);
+}
+
+.ov-therapy-line__goal,
+.ov-therapy-line__next {
+  margin: 0.15rem 0 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-secondary, #5c5650);
+  line-height: 1.4;
+}
+
+/* ── Compliance widget ───────────────────────────────────────────────────── */
+
+.ov-compliance {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 0.75rem);
+}
+
+.ov-compliance__group + .ov-compliance__group {
+  margin-top: 0.1rem;
+}
+
+.ov-compliance__group .ov-subhead {
+  margin-bottom: 0.4rem;
+}
+
+.ov-compliance__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ov-compliance__item-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.18rem;
+}
+
+.ov-compliance__item-name {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.ov-compliance__item-label {
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: 500;
+  color: var(--text-primary, #1f1c1a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ov-compliance__item-sub {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-muted, #91887e);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ov-compliance__grid {
+  display: grid;
+  grid-template-columns: repeat(14, minmax(0, 1fr));
+  gap: 0.15rem;
+}
+
+.ov-compliance__grid--compact {
+  gap: 0.12rem;
+}
+
+/* Shared date axis above each group's rows (weekday + day-of-month). */
+.ov-compliance__axis {
+  display: grid;
+  grid-template-columns: repeat(14, minmax(0, 1fr));
+  gap: 0.12rem;
+  margin-bottom: 0.1rem;
+}
+
+.ov-compliance__axis-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.05;
+  color: var(--text-muted, #91887e);
+}
+
+.ov-compliance__day-weekday {
+  font-size: 0.5625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.ov-compliance__day-label {
+  font-size: 0.625rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary, #5c5650);
+}
+
+.ov-compliance__cell-wrap {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.ov-compliance__cell {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  max-height: 0.85rem;
+  padding: 0;
+  border: 1px solid var(--border, #e8e4df);
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--text-muted, #91887e) 8%, var(--surface, #fff));
+  cursor: pointer;
+  appearance: none;
+  transition: outline-color 0.12s ease;
+}
+
+.ov-compliance__cell:hover {
+  outline: 1.5px solid color-mix(in srgb, var(--text-primary, #1f1c1a) 40%, transparent);
+  outline-offset: 0;
+}
+
+.ov-compliance__cell:focus-visible {
+  outline: 1.5px solid var(--text-primary, #1f1c1a);
+  outline-offset: 1px;
+}
+
+.ov-compliance__cell--open {
+  outline: 1.5px solid var(--text-primary, #1f1c1a);
+  outline-offset: 1px;
+}
+
+/* Manual override marker: a small inset dot in the corner of the cell. */
+.ov-compliance__cell--overridden {
+  position: relative;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-primary, #1f1c1a) 45%, transparent);
+}
+
+.ov-compliance__cell--overridden::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--text-primary, #1f1c1a);
+}
+
+/* Toolbar (date range + add trigger). */
+.ov-compliance__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 1.4rem;
+}
+
+.ov-compliance__range {
+  font-size: var(--text-xs, 0.75rem);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted, #91887e);
+}
+
+.ov-compliance__add-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid var(--border, #e8e4df);
+  border-radius: 6px;
+  background: var(--surface, #fff);
+  color: var(--text-secondary, #5c5650);
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.ov-compliance__add-trigger:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--text-primary, #1f1c1a) 30%, var(--border, #e8e4df));
+  color: var(--text-primary, #1f1c1a);
+}
+
+.ov-compliance__add-trigger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Inline add-entry form. */
+.ov-compliance__add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.6rem;
+  border: 1px solid var(--border, #e8e4df);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--text-muted, #91887e) 4%, var(--surface, #fff));
+}
+
+.ov-compliance__add-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.4rem;
+}
+
+.ov-compliance__add-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.ov-compliance__add-label {
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted, #91887e);
+}
+
+.ov-compliance__add-select {
+  width: 100%;
+  padding: 0.25rem 0.35rem;
+  border: 1px solid var(--border, #e8e4df);
+  border-radius: 5px;
+  background: var(--surface, #fff);
+  color: var(--text-primary, #1f1c1a);
+  font-size: var(--text-xs, 0.75rem);
+}
+
+.ov-compliance__add-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.ov-compliance__add-btn {
+  padding: 0.25rem 0.7rem;
+  border: 1px solid var(--border, #e8e4df);
+  border-radius: 6px;
+  background: var(--surface, #fff);
+  color: var(--text-secondary, #5c5650);
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.ov-compliance__add-btn:hover:not(:disabled) {
+  color: var(--text-primary, #1f1c1a);
+}
+
+.ov-compliance__add-btn--primary {
+  border-color: var(--text-primary, #1f1c1a);
+  background: var(--text-primary, #1f1c1a);
+  color: var(--surface, #fff);
+}
+
+.ov-compliance__add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Per-cell editor popover. */
+.ov-compliance__popover {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  width: max-content;
+  min-width: 11rem;
+  max-width: 14rem;
+  padding: 0.5rem;
+  border: 1px solid var(--border, #e8e4df);
+  border-radius: 8px;
+  background: var(--surface, #fff);
+  box-shadow: 0 8px 24px rgba(31, 28, 26, 0.16);
+}
+
+.ov-compliance__popover-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+
+.ov-compliance__popover-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  min-width: 0;
+}
+
+.ov-compliance__popover-item {
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 600;
+  color: var(--text-primary, #1f1c1a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ov-compliance__popover-date {
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted, #91887e);
+}
+
+.ov-compliance__popover-close {
+  flex-shrink: 0;
+  display: inline-flex;
+  padding: 0.1rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted, #91887e);
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.ov-compliance__popover-close:hover {
+  color: var(--text-primary, #1f1c1a);
+  background: color-mix(in srgb, var(--text-muted, #91887e) 12%, transparent);
+}
+
+.ov-compliance__popover-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.ov-compliance__popover-option {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.3rem 0.4rem;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-secondary, #5c5650);
+  font-size: var(--text-xs, 0.75rem);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ov-compliance__popover-option:hover {
+  background: color-mix(in srgb, var(--text-muted, #91887e) 10%, transparent);
+  color: var(--text-primary, #1f1c1a);
+}
+
+.ov-compliance__popover-option--active {
+  border-color: color-mix(in srgb, var(--text-primary, #1f1c1a) 25%, var(--border, #e8e4df));
+  background: color-mix(in srgb, var(--text-muted, #91887e) 8%, transparent);
+  color: var(--text-primary, #1f1c1a);
+  font-weight: 500;
+}
+
+.ov-compliance__popover-clear {
+  margin-top: 0.4rem;
+  width: 100%;
+  padding: 0.3rem 0.4rem;
+  border: 1px solid var(--border, #e8e4df);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--accent, #c45c4a);
+  font-size: var(--text-xs, 0.75rem);
+  cursor: pointer;
+}
+
+.ov-compliance__popover-clear:hover {
+  background: color-mix(in srgb, var(--accent, #c45c4a) 10%, transparent);
+}
+
+.ov-compliance__day-box {
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid var(--border, #e8e4df);
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--text-muted, #91887e) 8%, var(--surface, #fff));
+}
+
+/* Semantic hues via --ov-* (fixed, not accent-derived) per dashboard theme contract. */
+.ov-compliance__cell.ov-compliance__day-box--participated,
+.ov-compliance__legend-swatch.ov-compliance__day-box--participated {
+  border-color: color-mix(in srgb, var(--ov-ok) 42%, var(--border-soft, #e8e4df));
+  background: color-mix(in srgb, var(--ov-ok) 28%, var(--surface, #fff));
+}
+
+.ov-compliance__cell.ov-compliance__day-box--refused,
+.ov-compliance__legend-swatch.ov-compliance__day-box--refused {
+  border-color: color-mix(in srgb, var(--ov-danger) 48%, var(--border-soft, #e8e4df));
+  background: color-mix(in srgb, var(--ov-danger) 26%, var(--surface, #fff));
+}
+
+.ov-compliance__cell.ov-compliance__day-box--excused,
+.ov-compliance__legend-swatch.ov-compliance__day-box--excused {
+  border-color: color-mix(in srgb, var(--ov-warn) 42%, var(--border-soft, #e8e4df));
+  background: color-mix(in srgb, var(--ov-warn) 26%, var(--surface, #fff));
+}
+
+.ov-compliance__cell.ov-compliance__day-box--unknown,
+.ov-compliance__legend-swatch.ov-compliance__day-box--unknown {
+  border-color: var(--border-soft, #e8e4df);
+  background: color-mix(in srgb, var(--text-muted, #91887e) 12%, var(--surface, #fff));
+}
+
+.ov-compliance__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin: var(--space-3, 0.75rem) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ov-compliance__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-secondary, #5c5650);
+}
+
+.ov-compliance__legend-swatch {
+  width: 0.65rem;
+  height: 0.65rem;
+  flex-shrink: 0;
+}
+
+.ov-compliance__value {
+  margin: 0.15rem 0 0;
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: 500;
+}
+
+.ov-compliance__detail {
+  margin: 0.35rem 0 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-secondary, #5c5650);
+  line-height: 1.45;
+}
+
+.ov-compliance__hint {
+  margin: 0.35rem 0 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-muted, #91887e);
+  line-height: 1.4;
+}
+
+.ov-compliance__therapy-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: var(--text-sm, 0.8125rem);
+}
+
+.ov-compliance__percent {
+  margin: 0;
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary, #1f1c1a);
+}
+
+@media (max-width: 720px) {
+  .ov-compliance__grid {
+    gap: 0.1rem;
+  }
+
+  .ov-compliance__day-weekday {
+    font-size: 0.5rem;
+  }
+
+  .ov-compliance__day-label {
+    font-size: 0.5625rem;
+  }
+}
+
+@media print {
+  .ov-action-toolbar,
+  .ov-layout-footer,
+  .ov-layout-toolbar,
+  .ov-widget-edit-bar {
+    display: none !important;
+  }
+
+  .ov-dashboard {
+    break-inside: avoid;
+  }
+
+  .ov-widget-slot {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 }

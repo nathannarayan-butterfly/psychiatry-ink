@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { useTranslation } from '../../context/TranslationContext'
 import { usePermissionContext } from '../../contexts/PermissionContext'
@@ -18,6 +18,8 @@ import { useComplementaryTherapies } from '../../hooks/useComplementaryTherapies
 
 interface ComplementaryTherapiesSectionProps {
   caseId: string
+  workspacePlanning?: boolean
+  onWorkspacePlanningClose?: () => void
 }
 
 const DEFAULT_TYPE_LABEL_KEYS: Record<DefaultComplementaryTherapyType, UiTranslationKey> = {
@@ -62,7 +64,11 @@ function formatDate(iso: string): string {
   }
 }
 
-export function ComplementaryTherapiesSection({ caseId }: ComplementaryTherapiesSectionProps) {
+export function ComplementaryTherapiesSection({
+  caseId,
+  workspacePlanning = false,
+  onWorkspacePlanningClose,
+}: ComplementaryTherapiesSectionProps) {
   const { t } = useTranslation()
   const { user } = useAuth()
   const { member, role } = usePermissionContext()
@@ -72,11 +78,29 @@ export function ComplementaryTherapiesSection({ caseId }: ComplementaryTherapies
   const { therapies, addTherapy, updateTherapy, removeTherapy, addSession, removeSession } =
     useComplementaryTherapies(caseId)
 
-  const [pickerOpen, setPickerOpen] = useState(false)
+  const [pickerOpen, setPickerOpen] = useState(workspacePlanning)
   const [customName, setCustomName] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [sessionDate, setSessionDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [sessionNote, setSessionNote] = useState('')
+
+  useEffect(() => {
+    if (workspacePlanning) setPickerOpen(true)
+  }, [workspacePlanning])
+
+  const closeWorkspacePlanning = useCallback(() => {
+    onWorkspacePlanningClose?.()
+  }, [onWorkspacePlanningClose])
+
+  const closePicker = useCallback(() => {
+    setPickerOpen(false)
+    if (workspacePlanning) closeWorkspacePlanning()
+  }, [workspacePlanning, closeWorkspacePlanning])
+
+  const closeDetail = useCallback(() => {
+    setSelectedId(null)
+    if (workspacePlanning) closeWorkspacePlanning()
+  }, [workspacePlanning, closeWorkspacePlanning])
 
   const selected = useMemo(
     () => therapies.find((tp) => tp.id === selectedId) ?? null,
@@ -119,78 +143,15 @@ export function ComplementaryTherapiesSection({ caseId }: ComplementaryTherapies
   const handleDelete = (therapy: ComplementaryTherapy) => {
     if (!window.confirm(t('ctDeleteConfirm'))) return
     removeTherapy(therapy.id)
-    if (selectedId === therapy.id) setSelectedId(null)
+    if (selectedId === therapy.id) closeDetail()
   }
 
-  return (
-    <section className="therapy-section" id={therapyPageSectionDomId('komplementaer')}>
-      <header className="therapy-section__header">
-        <div className="therapy-section__heading">
-          <h3 className="therapy-section__title">{t('complementaryTherapiesTitle')}</h3>
-        </div>
-        <div className="therapy-section__actions">
-          {canEditComplementary ? (
-            <button
-              type="button"
-              className="therapy-add-btn"
-              onClick={() => setPickerOpen(true)}
-            >
-              ＋ {t('ctAddTherapy')}
-            </button>
-          ) : null}
-        </div>
-      </header>
-
-      <div className="therapy-section__body">
-        {therapies.length === 0 ? (
-          <p className="therapy-empty">{t('ctEmpty')}</p>
-        ) : (
-          <div className="therapy-card-grid">
-            {therapies.map((tp) => (
-              <button
-                key={tp.id}
-                type="button"
-                className={`therapy-card${selectedId === tp.id ? ' is-selected' : ''}`}
-                onClick={() => setSelectedId(tp.id)}
-              >
-                <div className="therapy-card__head">
-                  <span className="therapy-card__title">{tp.name}</span>
-                  <span className={`therapy-status therapy-status--${STATUS_TONE[tp.status]}`}>
-                    {t(STATUS_LABEL_KEYS[tp.status])}
-                  </span>
-                </div>
-                <div className="therapy-card__meta">
-                  {tp.frequency ? (
-                    <div className="therapy-card__row">
-                      <span className="therapy-meta-label">{t('ctFieldFrequency')}</span>
-                      <span className="therapy-meta-value">{tp.frequency}</span>
-                    </div>
-                  ) : null}
-                  {tp.mainGoal ? (
-                    <div className="therapy-card__row">
-                      <span className="therapy-meta-label">{t('ctFieldMainGoal')}</span>
-                      <span className="therapy-meta-value">{tp.mainGoal}</span>
-                    </div>
-                  ) : null}
-                  {tp.participationStatus ? (
-                    <div className="therapy-card__row">
-                      <span className="therapy-meta-label">{t('ctFieldParticipation')}</span>
-                      <span className="therapy-meta-value">{tp.participationStatus}</span>
-                    </div>
-                  ) : null}
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {selected && (
+  const detailModal = selected ? (
         <div
           className="therapy-modal-overlay"
           role="dialog"
           aria-modal="true"
-          onClick={() => setSelectedId(null)}
+      onClick={closeDetail}
         >
           <div className="therapy-modal therapy-modal--wide" onClick={(e) => e.stopPropagation()}>
             <div className="therapy-detail-panel">
@@ -204,7 +165,7 @@ export function ComplementaryTherapiesSection({ caseId }: ComplementaryTherapies
                 <button
                   type="button"
                   className="therapy-detail-panel__close"
-                  onClick={() => setSelectedId(null)}
+              onClick={closeDetail}
                   aria-label={t('ctClose')}
                 >
                   ×
@@ -390,7 +351,7 @@ export function ComplementaryTherapiesSection({ caseId }: ComplementaryTherapies
                 <button
                   type="button"
                   className="therapy-btn therapy-btn--primary"
-                  onClick={() => setSelectedId(null)}
+              onClick={closeDetail}
                 >
                   {t('ctClose')}
                 </button>
@@ -398,73 +359,148 @@ export function ComplementaryTherapiesSection({ caseId }: ComplementaryTherapies
             </div>
           </div>
         </div>
-      )}
+  ) : null
 
-      {pickerOpen && (
-        <div
-          className="therapy-modal-overlay"
-          role="dialog"
-          aria-modal="true"
-          onClick={() => setPickerOpen(false)}
-        >
-          <div
-            className="therapy-modal therapy-modal--narrow"
-            onClick={(e) => e.stopPropagation()}
+  const pickerModal = pickerOpen ? (
+    <div
+      className="therapy-modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      onClick={closePicker}
+    >
+      <div
+        className="therapy-modal therapy-modal--narrow"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="therapy-modal__head">
+          <div className="therapy-modal__heading">
+            <h4 className="therapy-modal__title">{t('ctPickerTitle')}</h4>
+          </div>
+          <button
+            type="button"
+            className="therapy-modal__close"
+            onClick={closePicker}
+            aria-label={t('ctClose')}
           >
-            <div className="therapy-modal__head">
-              <div className="therapy-modal__heading">
-                <h4 className="therapy-modal__title">{t('ctPickerTitle')}</h4>
-              </div>
+            ×
+          </button>
+        </div>
+
+        <div className="therapy-modal__body">
+          <div className="therapy-picker">
+            <div className="therapy-picker__chips">
+              {DEFAULT_COMPLEMENTARY_THERAPY_TYPES.map((typeId) => (
+                <button
+                  key={typeId}
+                  type="button"
+                  className="therapy-chip"
+                  onClick={() => handleAdd(t(DEFAULT_TYPE_LABEL_KEYS[typeId]))}
+                >
+                  {t(DEFAULT_TYPE_LABEL_KEYS[typeId])}
+                </button>
+              ))}
+            </div>
+            <div className="therapy-picker__custom">
+              <input
+                type="text"
+                className="therapy-input"
+                value={customName}
+                onChange={(e) => setCustomName(e.target.value)}
+                placeholder={t('ctPickerCustomPlaceholder')}
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && customName.trim()) handleAdd(customName)
+                }}
+              />
               <button
                 type="button"
-                className="therapy-modal__close"
-                onClick={() => setPickerOpen(false)}
-                aria-label={t('ctClose')}
+                className="therapy-btn therapy-btn--primary"
+                onClick={() => handleAdd(customName)}
+                disabled={!customName.trim()}
               >
-                ×
+                {t('ctPickerAdd')}
               </button>
-            </div>
-
-            <div className="therapy-modal__body">
-              <div className="therapy-picker">
-                <div className="therapy-picker__chips">
-                  {DEFAULT_COMPLEMENTARY_THERAPY_TYPES.map((typeId) => (
-                    <button
-                      key={typeId}
-                      type="button"
-                      className="therapy-chip"
-                      onClick={() => handleAdd(t(DEFAULT_TYPE_LABEL_KEYS[typeId]))}
-                    >
-                      {t(DEFAULT_TYPE_LABEL_KEYS[typeId])}
-                    </button>
-                  ))}
-                </div>
-                <div className="therapy-picker__custom">
-                  <input
-                    type="text"
-                    className="therapy-input"
-                    value={customName}
-                    onChange={(e) => setCustomName(e.target.value)}
-                    placeholder={t('ctPickerCustomPlaceholder')}
-                    autoFocus
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && customName.trim()) handleAdd(customName)
-                    }}
-                  />
-                  <button
-                    type="button"
-                    className="therapy-btn therapy-btn--primary"
-                    onClick={() => handleAdd(customName)}
-                    disabled={!customName.trim()}
-                  >
-                    {t('ctPickerAdd')}
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
         </div>
-      )}
+      </div>
+    </div>
+  ) : null
+
+  if (workspacePlanning) {
+    return (
+      <>
+        {detailModal}
+        {pickerModal}
+      </>
+    )
+  }
+
+  return (
+    <section className="therapy-section" id={therapyPageSectionDomId('komplementaer')}>
+      <header className="therapy-section__header">
+        <div className="therapy-section__heading">
+          <h3 className="therapy-section__title">{t('complementaryTherapiesTitle')}</h3>
+        </div>
+        <div className="therapy-section__actions">
+          {canEditComplementary ? (
+            <button
+              type="button"
+              className="therapy-add-btn"
+              onClick={() => setPickerOpen(true)}
+            >
+              ＋ {t('ctAddTherapy')}
+            </button>
+          ) : null}
+        </div>
+      </header>
+
+      <div className="therapy-section__body">
+        {therapies.length === 0 ? (
+          <p className="therapy-empty">{t('ctEmpty')}</p>
+        ) : (
+          <div className="therapy-card-grid">
+            {therapies.map((tp) => (
+              <button
+                key={tp.id}
+                type="button"
+                className={`therapy-card${selectedId === tp.id ? ' is-selected' : ''}`}
+                onClick={() => setSelectedId(tp.id)}
+              >
+                <div className="therapy-card__head">
+                  <span className="therapy-card__title">{tp.name}</span>
+                  <span className={`therapy-status therapy-status--${STATUS_TONE[tp.status]}`}>
+                    {t(STATUS_LABEL_KEYS[tp.status])}
+                  </span>
+                </div>
+                <div className="therapy-card__meta">
+                  {tp.frequency ? (
+                    <div className="therapy-card__row">
+                      <span className="therapy-meta-label">{t('ctFieldFrequency')}</span>
+                      <span className="therapy-meta-value">{tp.frequency}</span>
+                    </div>
+                  ) : null}
+                  {tp.mainGoal ? (
+                    <div className="therapy-card__row">
+                      <span className="therapy-meta-label">{t('ctFieldMainGoal')}</span>
+                      <span className="therapy-meta-value">{tp.mainGoal}</span>
+                    </div>
+                  ) : null}
+                  {tp.participationStatus ? (
+                    <div className="therapy-card__row">
+                      <span className="therapy-meta-label">{t('ctFieldParticipation')}</span>
+                      <span className="therapy-meta-value">{tp.participationStatus}</span>
+                    </div>
+                  ) : null}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {detailModal}
+      {pickerModal}
     </section>
   )
 }

@@ -17,5 +17,6 @@ prisma/data/sources/bfarm-icd10gm/
 prisma/data/sources/*.tgz
 prisma/data/sources/CodeSystem-icd10gm-*.json
 prisma/data/sources/diagnostic_codes.db
+prisma/data/sources/.load-diagnostic-db.py
 
 *.tsbuildinfo

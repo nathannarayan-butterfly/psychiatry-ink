@@ -38,7 +38,7 @@ describe('resolveDiagnosisDisplayTitle', () => {
     ).toBe('F12.2')
   })
 
-  it('uses clinician-entered label when overridden', () => {
+  it('uses clinician-entered label when overridden and materially custom', () => {
     expect(
       resolveDiagnosisDisplayTitle({
         apiTitle: FULL_F12_2,
@@ -47,6 +47,17 @@ describe('resolveDiagnosisDisplayTitle', () => {
         overridden: true,
       }),
     ).toBe('Eigene Beschreibung')
+  })
+
+  it('prefers official title over stale shorthand stored as override', () => {
+    expect(
+      resolveDiagnosisDisplayTitle({
+        criteriaLabel: FULL_F12_2,
+        enteredLabel: 'Cannabisabhängigkeit',
+        code: 'F12.2',
+        overridden: true,
+      }),
+    ).toBe(FULL_F12_2)
   })
 
   it('falls back to code only as last resort', () => {

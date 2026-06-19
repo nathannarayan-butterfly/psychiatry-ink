@@ -97,6 +97,13 @@ export function useMedicationPlan(caseId: string) {
     [persist, state],
   )
 
+  const updateCuratedTargetReceptors = useCallback(
+    (targets: string[]) => {
+      persist({ ...state, curatedTargetReceptors: targets })
+    },
+    [persist, state],
+  )
+
   return {
     state,
     currentPlan,
@@ -107,6 +114,7 @@ export function useMedicationPlan(caseId: string) {
     copyPlan,
     selectPlan,
     updateLabNotes,
+    updateCuratedTargetReceptors,
     createDefaultMedicationDraft,
   }
 }

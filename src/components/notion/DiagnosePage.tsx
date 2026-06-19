@@ -11,7 +11,7 @@ interface DiagnosePageProps {
   onJumpToSection?: (pageId: NotionPageId) => void
 }
 
-/** Dedicated clinical-area page listing the patient's coded diagnoses (ICD-10/11, DSM). */
+/** Dedicated clinical-area page listing the patient's coded diagnoses (ICD-10/11). */
 export function DiagnosePage({ caseId, onDiagnosesChanged, onJumpToSection }: DiagnosePageProps) {
   const [diagnosesVersion, setDiagnosesVersion] = useState(0)
 

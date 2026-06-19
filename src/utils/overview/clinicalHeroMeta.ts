@@ -1,6 +1,7 @@
 import { getCaseMeta } from '../../hooks/useCaseRegistry'
 import { isDemoCase } from '../../demo'
 import type { UiTranslationKey } from '../../data/uiTranslations'
+import { DEFAULT_CASE_ID } from '../caseContext'
 import { loadNotionPageDate } from '../notionPageDate'
 import { formatDateDe } from './dateLabels'
 
@@ -18,7 +19,11 @@ export function buildClinicalHeroMeta(
   const displayName =
     structuredName ||
     meta?.localName?.trim() ||
-    (isDemoCase(caseId) ? t('demoPatientDisplayName') : t('patientNavFallback'))
+    (caseId === DEFAULT_CASE_ID
+      ? t('topNavWorkspaceFall')
+      : isDemoCase(caseId)
+        ? t('demoPatientDisplayName')
+        : t('patientNavFallback'))
 
   const geschlecht = meta?.localGeschlecht
   const genderLabel =

@@ -8,6 +8,12 @@
 
 import { caseStorageKey } from './caseContext'
 import { scheduleVerlaufFeedImprint } from './clinicalImprint'
+import {
+  normalizeVerlaufAnnotation,
+  type VerlaufCommentVisibility,
+} from './verlaufAnnotationHelpers'
+
+export type { VerlaufCommentVisibility }
 
 const VERLAUF_FEED_KEY = 'psychiatry-ink:verlaufFeed'
 const VERLAUF_ANNOTATIONS_KEY = 'psychiatry-ink:verlaufAnnotations'
@@ -49,6 +55,7 @@ export interface VerlaufFeedEntry {
 export type AnnotationType = 'bold' | 'italic' | 'underline' | 'highlight' | 'comment'
 
 export interface VerlaufAnnotation {
+  id: string
   entryId: string
   startOffset: number
   endOffset: number
@@ -56,6 +63,12 @@ export interface VerlaufAnnotation {
   color?: string     // for highlight
   comment?: string   // for comment annotations
   rangeText: string
+  /** Who may see a comment annotation. Defaults to private when omitted. */
+  visibility?: VerlaufCommentVisibility
+  /** Required when visibility is `person`. */
+  sharedWithUserId?: string
+  authorUserId?: string
+  createdAt?: string
 }
 
 function feedKey(caseId?: string): string {
@@ -110,7 +123,7 @@ export function loadVerlaufAnnotations(caseId?: string): VerlaufAnnotation[] {
     if (!raw) return []
     const parsed = JSON.parse(raw) as VerlaufAnnotation[]
     if (!Array.isArray(parsed)) return []
-    return parsed
+    return parsed.map(normalizeVerlaufAnnotation)
   } catch {
     return []
   }
@@ -125,11 +138,30 @@ export function saveVerlaufAnnotations(annotations: VerlaufAnnotation[], caseId?
 }
 
 export function addVerlaufAnnotation(
-  annotation: VerlaufAnnotation,
+  annotation: Omit<VerlaufAnnotation, 'id'> & { id?: string },
   caseId?: string,
 ): VerlaufAnnotation[] {
   const existing = loadVerlaufAnnotations(caseId)
-  const next = [...existing, annotation]
+  const next = [...existing, normalizeVerlaufAnnotation(annotation as VerlaufAnnotation)]
+  saveVerlaufAnnotations(next, caseId)
+  return next
+}
+
+export function removeVerlaufAnnotation(id: string, caseId?: string): VerlaufAnnotation[] {
+  const existing = loadVerlaufAnnotations(caseId)
+  const next = existing.filter((ann) => ann.id !== id)
+  saveVerlaufAnnotations(next, caseId)
+  return next
+}
+
+export function removeVerlaufAnnotations(
+  ids: string[],
+  caseId?: string,
+): VerlaufAnnotation[] {
+  if (ids.length === 0) return loadVerlaufAnnotations(caseId)
+  const idSet = new Set(ids)
+  const existing = loadVerlaufAnnotations(caseId)
+  const next = existing.filter((ann) => !idSet.has(ann.id))
   saveVerlaufAnnotations(next, caseId)
   return next
 }

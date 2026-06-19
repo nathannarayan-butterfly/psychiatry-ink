@@ -52,6 +52,30 @@ export const CountryPreparationDraftSchema = z.object({
   notes: z.string().optional(),
 })
 
+export const PharmacokineticTdmDraftSchema = z.object({
+  lowNgMl: z.number().positive().nullable().optional(),
+  highNgMl: z.number().positive().nullable().optional(),
+  unit: z.string().optional(),
+  note: z.string().optional(),
+})
+
+export const PharmacokineticDraftSchema = z.object({
+  /** German narrative (primary display in Psychiatry.Ink). */
+  summaryDe: z.string().min(1),
+  /** Optional English source narrative. */
+  summary: z.string().optional(),
+  halfLifeHours: z.number().positive().nullable().optional(),
+  halfLifeNote: z.string().optional(),
+  halfLifeNoteDe: z.string().optional(),
+  tmaxHours: z.number().positive().nullable().optional(),
+  timeToSteadyStateDays: z.number().positive().nullable().optional(),
+  bioavailabilityPercent: z.number().min(0).max(100).nullable().optional(),
+  proteinBindingPercent: z.number().min(0).max(100).nullable().optional(),
+  tdm: PharmacokineticTdmDraftSchema.nullish(),
+  isEstimated: z.boolean().optional(),
+  sourceNote: z.string().optional(),
+})
+
 export const SubstanceProfileDraftSchema = z.object({
   genericName: z.string().min(1),
   normalizedGenericName: z.string().min(1),
@@ -61,6 +85,7 @@ export const SubstanceProfileDraftSchema = z.object({
   mechanismSummary: z.string().optional(),
   receptorAffinityProfile: z.array(ReceptorAffinityDraftSchema).default([]),
   pharmacodynamicProfile: z.string().optional(),
+  pharmacokinetics: PharmacokineticDraftSchema.optional(),
   commonDosageGuidance: z.array(DosageGuidanceDraftSchema).default([]),
   importantSideEffects: z.array(SideEffectDraftSchema).default([]),
   severeRisks: z.array(z.string()).default([]),
@@ -94,5 +119,6 @@ export type SideEffectDraft = z.infer<typeof SideEffectDraftSchema>
 export type MonitoringDraft = z.infer<typeof MonitoringDraftSchema>
 export type DosageGuidanceDraft = z.infer<typeof DosageGuidanceDraftSchema>
 export type InteractionDraft = z.infer<typeof InteractionDraftSchema>
+export type PharmacokineticDraft = z.infer<typeof PharmacokineticDraftSchema>
 export type SubstanceProfileDraft = z.infer<typeof SubstanceProfileDraftSchema>
 export type AiGenerationRecord = z.infer<typeof AiGenerationRecordSchema>

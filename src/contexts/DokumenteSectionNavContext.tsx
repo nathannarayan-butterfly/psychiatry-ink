@@ -8,6 +8,10 @@ interface DokumenteSectionNavContextValue {
   requestNewTemplate: () => void
   /** Registered by the Dokumente page so the sidebar nav can trigger the template host. */
   setNewTemplateHandler: (handler: (() => void) | null) => void
+  /** Invoked by the sidebar nav to open the Document Import workflow. */
+  requestImport: () => void
+  /** Registered by the Dokumente page so the sidebar nav can open the import modal. */
+  setImportHandler: (handler: (() => void) | null) => void
 }
 
 const DokumenteSectionNavContext = createContext<DokumenteSectionNavContextValue | null>(null)
@@ -15,6 +19,7 @@ const DokumenteSectionNavContext = createContext<DokumenteSectionNavContextValue
 export function DokumenteSectionNavProvider({ children }: { children: ReactNode }) {
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all')
   const handlerRef = useRef<(() => void) | null>(null)
+  const importHandlerRef = useRef<(() => void) | null>(null)
 
   const setNewTemplateHandler = useCallback((handler: (() => void) | null) => {
     handlerRef.current = handler
@@ -24,14 +29,24 @@ export function DokumenteSectionNavProvider({ children }: { children: ReactNode 
     handlerRef.current?.()
   }, [])
 
+  const setImportHandler = useCallback((handler: (() => void) | null) => {
+    importHandlerRef.current = handler
+  }, [])
+
+  const requestImport = useCallback(() => {
+    importHandlerRef.current?.()
+  }, [])
+
   const value = useMemo(
     () => ({
       activeCategory,
       setActiveCategory,
       requestNewTemplate,
       setNewTemplateHandler,
+      requestImport,
+      setImportHandler,
     }),
-    [activeCategory, requestNewTemplate, setNewTemplateHandler],
+    [activeCategory, requestNewTemplate, setNewTemplateHandler, requestImport, setImportHandler],
   )
 
   return (

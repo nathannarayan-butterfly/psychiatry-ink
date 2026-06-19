@@ -1,5 +1,8 @@
+import { bundledDiagnosisTitle } from '../data/bundledDiagnosisTitles'
+import { lookupCatalogLabel } from '../data/diagnosisCatalog'
 import type { DiagnosisSearchHit } from '../services/diagnosisReferenceApi'
 import { fetchCrosswalkByIcd10 } from '../services/diagnosisReferenceApi'
+import type { IcdTitleVersion } from '../../shared/icdTitle'
 import { scheduleDiagnosisImprints } from './clinicalImprint'
 import { readOrMigrateEncryptedJson, writeEncryptedJson } from './encryptedLocalStore'
 
@@ -32,6 +35,61 @@ function storageKey(caseId: string): string {
  * Filled by `hydrateDiagnosenFromEncryptedLocal` (vault mount) and by `saveDiagnosen`.
  */
 const localShadow = new Map<string, DiagnoseEntry[]>()
+const diagnosenRevisions = new Map<string, number>()
+const diagnosenListeners = new Map<string, Set<() => void>>()
+
+function bumpDiagnosenRevision(caseId: string): void {
+  diagnosenRevisions.set(caseId, (diagnosenRevisions.get(caseId) ?? 0) + 1)
+  diagnosenListeners.get(caseId)?.forEach((listener) => listener())
+}
+
+/** Subscribe to diagnosis list changes for a case (save, hydrate, vault apply). */
+export function subscribeDiagnosenChange(caseId: string, listener: () => void): () => void {
+  if (!diagnosenListeners.has(caseId)) diagnosenListeners.set(caseId, new Set())
+  diagnosenListeners.get(caseId)!.add(listener)
+  return () => {
+    diagnosenListeners.get(caseId)?.delete(listener)
+  }
+}
+
+export function getDiagnosenRevision(caseId: string): number {
+  return diagnosenRevisions.get(caseId) ?? 0
+}
+
+function bundledLabel(code: string, version: IcdTitleVersion): string | null {
+  return lookupCatalogLabel(code, version) || bundledDiagnosisTitle(code, version)
+}
+
+/** Demote legacy/migration `overridden` flags that only cached stale shorthand labels. */
+function demoteStaleOverride(coding: CodingValue, version: IcdTitleVersion): CodingValue {
+  if (!coding.overridden) return coding
+
+  const code = coding.code.trim()
+  const stored = coding.label.trim()
+  if (!code) return coding
+
+  const official = bundledLabel(code, version)
+  if (!official) return coding
+
+  if (!stored || stored === code || stored === official) {
+    return { ...coding, overridden: false }
+  }
+
+  if (official.length > stored.length * 1.5) {
+    return { ...coding, overridden: false }
+  }
+
+  return coding
+}
+
+export function sanitizeDiagnoseEntry(entry: DiagnoseEntry): DiagnoseEntry {
+  return {
+    ...entry,
+    icd10: demoteStaleOverride(entry.icd10, 'icd10'),
+    icd11: demoteStaleOverride(entry.icd11, 'icd11'),
+    dsm: demoteStaleOverride(entry.dsm, 'dsm'),
+  }
+}
 
 function emptyCoding(): CodingValue {
   return { code: '', label: '', overridden: false }
@@ -124,7 +182,7 @@ export function selectPrimaryCoding(
 
 function migrateLegacyEntry(raw: Record<string, unknown>): DiagnoseEntry | null {
   if (raw.icd10 && raw.icd11 && raw.dsm) {
-    return raw as unknown as DiagnoseEntry
+    return sanitizeDiagnoseEntry(raw as unknown as DiagnoseEntry)
   }
 
   const icdCode = typeof raw.icdCode === 'string' ? raw.icdCode : ''
@@ -133,22 +191,35 @@ function migrateLegacyEntry(raw: Record<string, unknown>): DiagnoseEntry | null 
 
   const now =
     typeof raw.createdAt === 'string' ? raw.createdAt : new Date().toISOString()
-  return {
+  const hasCode = Boolean(icdCode.trim())
+  const hasDescription = Boolean(description.trim())
+
+  return sanitizeDiagnoseEntry({
     id: typeof raw.id === 'string' ? raw.id : generateId(),
-    icd10: { code: icdCode, label: description || icdCode, overridden: true },
+    icd10: {
+      code: icdCode,
+      label: description || icdCode,
+      // Only free-text-without-code is a true clinician override; coded legacy rows
+      // kept shorthand in `description` and must not block WHO/bundled resolution.
+      overridden: !hasCode && hasDescription,
+    },
     icd11: emptyCoding(),
     dsm: emptyCoding(),
     createdAt: now,
     updatedAt: now,
-  }
+  })
 }
 
 /** Normalize a parsed array, migrating any legacy diagnosis shapes. */
-function normalizeEntries(parsed: unknown): DiagnoseEntry[] {
+export function normalizeDiagnoseEntries(parsed: unknown): DiagnoseEntry[] {
   if (!Array.isArray(parsed)) return []
   return parsed
     .map((item) => migrateLegacyEntry(item as Record<string, unknown>))
     .filter((e): e is DiagnoseEntry => e !== null)
+}
+
+function normalizeEntries(parsed: unknown): DiagnoseEntry[] {
+  return normalizeDiagnoseEntries(parsed)
 }
 
 export function loadDiagnosen(caseId: string): DiagnoseEntry[] {
@@ -156,10 +227,12 @@ export function loadDiagnosen(caseId: string): DiagnoseEntry[] {
 }
 
 export function saveDiagnosen(caseId: string, entries: DiagnoseEntry[]): void {
-  localShadow.set(caseId, entries)
+  const normalized = normalizeEntries(entries)
+  localShadow.set(caseId, normalized)
+  bumpDiagnosenRevision(caseId)
   // Persist the durability copy encrypted-at-rest (async, best-effort).
-  void writeEncryptedJson(storageKey(caseId), entries)
-  scheduleDiagnosisImprints(caseId, entries)
+  void writeEncryptedJson(storageKey(caseId), normalized)
+  scheduleDiagnosisImprints(caseId, normalized)
   void import('./isdm').then(({ scheduleIsdmRebuild }) => {
     scheduleIsdmRebuild(caseId, 'diagnosis')
   })
@@ -174,7 +247,10 @@ export async function hydrateDiagnosenFromEncryptedLocal(caseId: string): Promis
   try {
     const persisted = await readOrMigrateEncryptedJson<unknown[]>(storageKey(caseId))
     if (persisted === null) return
-    if (!localShadow.has(caseId)) localShadow.set(caseId, normalizeEntries(persisted))
+    if (!localShadow.has(caseId)) {
+      localShadow.set(caseId, normalizeEntries(persisted))
+      bumpDiagnosenRevision(caseId)
+    }
   } catch {
     // Hydration is best-effort; the vault remains the authoritative source.
   }

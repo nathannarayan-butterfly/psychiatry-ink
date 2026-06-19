@@ -2,6 +2,7 @@ import {
   memo,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -27,13 +28,24 @@ import {
   loadVerlaufAnnotations,
   loadVerlaufFeed,
   loadVerlaufSortOrder,
+  removeVerlaufAnnotations,
   saveVerlaufSortOrder,
   updateVerlaufEntry,
   type AnnotationType,
   type VerlaufAnnotation,
+  type VerlaufCommentVisibility,
   type VerlaufFeedEntry,
   type VerlaufSortOrder,
 } from '../../utils/verlaufFeed'
+import {
+  canViewAnnotation,
+  derivedFeedEntryText,
+  findOverlappingAnnotations,
+  isFormatAnnotation,
+} from '../../utils/verlaufAnnotationHelpers'
+import { fetchTeamSnapshot, type TeamMemberProfile } from '../../services/orgApi'
+import { VerlaufAnnotationPanel } from './VerlaufAnnotationPanel'
+import { VerlaufAnnotationConnector } from './VerlaufAnnotationConnector'
 import {
   getActiveTimelineId,
   loadTimelinesList,
@@ -80,6 +92,7 @@ interface BubbleState {
   endOffset: number
   entryId: string
   readonly: boolean
+  overlappingAnnotations: VerlaufAnnotation[]
 }
 
 interface ContainedSelection {
@@ -140,11 +153,10 @@ interface CommentPopoverState {
   rangeText: string
 }
 
-interface CommentViewState {
-  visible: boolean
-  x: number
-  y: number
-  text: string
+interface CommentSavePayload {
+  comment: string
+  visibility: VerlaufCommentVisibility
+  sharedWithUserId?: string
 }
 
 interface AufnahmeSection {
@@ -243,7 +255,7 @@ function escapeHtml(str: string): string {
 
 function wrapAnnotation(snippet: string, ann: VerlaufAnnotation): string {
   const styles: string[] = []
-  const attrs: string[] = []
+  const attrs: string[] = [`data-verlauf-annotation-id="${escapeHtml(ann.id)}"`]
 
   if (ann.type === 'bold') styles.push('font-weight: 700')
   if (ann.type === 'italic') styles.push('font-style: italic')
@@ -251,6 +263,7 @@ function wrapAnnotation(snippet: string, ann: VerlaufAnnotation): string {
   if (ann.type === 'highlight') {
     const color = HIGHLIGHT_COLORS.find((c) => c.value === ann.color)?.bg ?? '#ffe066'
     styles.push(`background: ${color}; border-radius: 2px; padding: 0 2px`)
+    attrs.push('data-verlauf-annot-type="highlight"')
   }
   if (ann.type === 'comment' && ann.comment) {
     styles.push(
@@ -258,10 +271,80 @@ function wrapAnnotation(snippet: string, ann: VerlaufAnnotation): string {
     )
     attrs.push(`title="${escapeHtml(ann.comment)}"`)
     attrs.push(`data-comment="${escapeHtml(ann.comment)}"`)
+    attrs.push('data-verlauf-annot-type="comment"')
   }
 
   const attrStr = attrs.length ? ` ${attrs.join(' ')}` : ''
-  return `<span style="${styles.join('; ')}"${attrStr}>${snippet}</span>`
+  return `<span class="verlauf-annot" style="${styles.join('; ')}"${attrStr}>${snippet}</span>`
+}
+
+// ---------------------------------------------------------------------------
+// Popover placement — keep floating compose boxes inside the viewport
+// ---------------------------------------------------------------------------
+
+interface PopoverPlacement {
+  ref: React.RefObject<HTMLDivElement | null>
+  top: number
+  left: number
+  ready: boolean
+}
+
+/**
+ * Anchors a fixed-position popover near a selection point (`anchorX`/`anchorY`
+ * are viewport coordinates) while guaranteeing it never renders off-screen.
+ *
+ * The popover is centered horizontally on the anchor and placed just below it;
+ * if it would overflow the bottom/right/top edge it is shifted back inside the
+ * viewport with a small margin. We measure the real element (via a layout
+ * effect + ResizeObserver) so the clamp stays correct as the content grows
+ * (e.g. the comment composer revealing the "share with person" select).
+ */
+function usePopoverPlacement(
+  open: boolean,
+  anchorX: number,
+  anchorY: number,
+): PopoverPlacement {
+  const ref = useRef<HTMLDivElement>(null)
+  const [placement, setPlacement] = useState({ top: anchorY, left: anchorX, ready: false })
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setPlacement((prev) => (prev.ready ? { ...prev, ready: false } : prev))
+      return
+    }
+    const el = ref.current
+    if (!el) return
+
+    const place = () => {
+      const node = ref.current
+      if (!node) return
+      const margin = 12
+      const { width, height } = node.getBoundingClientRect()
+      const vw = window.innerWidth
+      const vh = window.innerHeight
+
+      let left = anchorX - width / 2
+      left = Math.max(margin, Math.min(left, vw - width - margin))
+
+      let top = anchorY
+      if (top + height > vh - margin) top = vh - height - margin
+      if (top < margin) top = margin
+
+      setPlacement({ top, left, ready: true })
+    }
+
+    place()
+    window.addEventListener('resize', place)
+    const observer =
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(place) : null
+    observer?.observe(el)
+    return () => {
+      window.removeEventListener('resize', place)
+      observer?.disconnect()
+    }
+  }, [open, anchorX, anchorY])
+
+  return { ref, top: placement.top, left: placement.left, ready: placement.ready }
 }
 
 // ---------------------------------------------------------------------------
@@ -274,12 +357,22 @@ interface BubbleToolbarProps {
   onComment: () => void
   onCopy: () => void
   onCreateTimeline: () => void
+  onRemoveMarkierung: () => void
   onClose: () => void
   /** When provided, renders the voice-driven "Ask AI to edit selection" trigger. */
   onAiEdit?: () => void
 }
 
-function BubbleToolbar({ state, onFormat, onComment, onCopy, onCreateTimeline, onClose, onAiEdit }: BubbleToolbarProps) {
+function BubbleToolbar({
+  state,
+  onFormat,
+  onComment,
+  onCopy,
+  onCreateTimeline,
+  onRemoveMarkierung,
+  onClose,
+  onAiEdit,
+}: BubbleToolbarProps) {
   const ref = useRef<HTMLDivElement>(null)
   const { t, language } = useTranslation()
 
@@ -303,6 +396,8 @@ function BubbleToolbar({ state, onFormat, onComment, onCopy, onCreateTimeline, o
 
   if (!state.visible || state.readonly) return null
 
+  const canRemoveMarkierung = state.overlappingAnnotations.some((ann) => isFormatAnnotation(ann.type))
+
   return (
     <div
       ref={ref}
@@ -310,6 +405,19 @@ function BubbleToolbar({ state, onFormat, onComment, onCopy, onCreateTimeline, o
       style={{ top: state.y, left: state.x }}
       onMouseDown={(e) => e.preventDefault()}
     >
+      {canRemoveMarkierung ? (
+        <>
+          <button
+            type="button"
+            className="verlauf-bubble__btn verlauf-bubble__btn--remove"
+            title={t('verlaufRemoveMarkierung')}
+            onClick={onRemoveMarkierung}
+          >
+            ✕
+          </button>
+          <span className="verlauf-bubble__divider" />
+        </>
+      ) : null}
       {onAiEdit ? (
         <>
           <button
@@ -399,7 +507,7 @@ function TimelinePopover({ state, caseId, onClose, timelineAddedLabel }: Timelin
   const [title, setTitle] = useState(state.selectedText.slice(0, 120))
   const [date, setDate] = useState(state.entryDate.slice(0, 10))
   const [note, setNote] = useState('')
-  const ref = useRef<HTMLDivElement>(null)
+  const { ref, top, left, ready } = usePopoverPlacement(state.visible, state.x, state.y)
 
   useEffect(() => {
     setTitle(state.selectedText.slice(0, 120))
@@ -408,14 +516,22 @@ function TimelinePopover({ state, caseId, onClose, timelineAddedLabel }: Timelin
   }, [state.selectedText, state.entryDate])
 
   useEffect(() => {
+    if (!state.visible) return
     function handleClick(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         onClose()
       }
     }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
     document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [onClose])
+    document.addEventListener('keydown', handleKey)
+    return () => {
+      document.removeEventListener('mousedown', handleClick)
+      document.removeEventListener('keydown', handleKey)
+    }
+  }, [onClose, ref, state.visible])
 
   const handleAdd = useCallback(() => {
     if (!title.trim()) return
@@ -478,7 +594,7 @@ function TimelinePopover({ state, caseId, onClose, timelineAddedLabel }: Timelin
     <div
       ref={ref}
       className="verlauf-popover"
-      style={{ top: state.y, left: state.x }}
+      style={{ top, left, visibility: ready ? undefined : 'hidden' }}
     >
       <p className="verlauf-popover__title">Timeline-Eintrag erstellen</p>
       <label className="verlauf-popover__label">
@@ -528,71 +644,32 @@ function TimelinePopover({ state, caseId, onClose, timelineAddedLabel }: Timelin
 
 interface CommentPopoverProps {
   state: CommentPopoverState
-  onSave: (comment: string) => void
+  teamMembers: TeamMemberProfile[]
+  currentUserId: string | undefined
+  onSave: (payload: CommentSavePayload) => void
   onClose: () => void
 }
 
-function CommentPopover({ state, onSave, onClose }: CommentPopoverProps) {
+function CommentPopover({ state, teamMembers, currentUserId, onSave, onClose }: CommentPopoverProps) {
+  const { t } = useTranslation()
   const [comment, setComment] = useState('')
-  const ref = useRef<HTMLDivElement>(null)
+  const [visibility, setVisibility] = useState<VerlaufCommentVisibility>('private')
+  const [sharedWithUserId, setSharedWithUserId] = useState('')
+  const { ref, top, left, ready } = usePopoverPlacement(state.visible, state.x, state.y)
+
+  const shareableMembers = useMemo(
+    () => teamMembers.filter((m) => m.userId !== currentUserId && m.status === 'active'),
+    [currentUserId, teamMembers],
+  )
 
   useEffect(() => {
     setComment('')
+    setVisibility('private')
+    setSharedWithUserId('')
   }, [state.entryId, state.startOffset])
 
   useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        onClose()
-      }
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [onClose])
-
-  if (!state.visible) return null
-
-  return (
-    <div
-      ref={ref}
-      className="verlauf-popover"
-      style={{ top: state.y, left: state.x }}
-    >
-      <p className="verlauf-popover__title">Kommentar</p>
-      <textarea
-        className="verlauf-popover__textarea"
-        value={comment}
-        onChange={(e) => setComment(e.target.value)}
-        rows={3}
-        placeholder="Kommentar eingeben…"
-        autoFocus
-      />
-      <div className="verlauf-popover__actions">
-        <button type="button" className="verlauf-popover__cancel" onClick={onClose}>
-          Abbrechen
-        </button>
-        <button
-          type="button"
-          className="verlauf-popover__add"
-          onClick={() => { if (comment.trim()) onSave(comment.trim()) }}
-          disabled={!comment.trim()}
-        >
-          Speichern
-        </button>
-      </div>
-    </div>
-  )
-}
-
-interface CommentViewPopoverProps {
-  state: CommentViewState
-  onClose: () => void
-}
-
-function CommentViewPopover({ state, onClose }: CommentViewPopoverProps) {
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
+    if (!state.visible) return
     function handleClick(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         onClose()
@@ -607,18 +684,96 @@ function CommentViewPopover({ state, onClose }: CommentViewPopoverProps) {
       document.removeEventListener('mousedown', handleClick)
       document.removeEventListener('keydown', handleKey)
     }
-  }, [onClose])
+  }, [onClose, ref, state.visible])
+
+  const canSave =
+    comment.trim().length > 0 &&
+    (visibility !== 'person' || sharedWithUserId.trim().length > 0)
 
   if (!state.visible) return null
 
   return (
     <div
       ref={ref}
-      className="verlauf-popover verlauf-popover--comment-view"
-      style={{ top: state.y, left: state.x }}
+      className="verlauf-popover verlauf-popover--comment-compose"
+      style={{ top, left, visibility: ready ? undefined : 'hidden' }}
     >
-      <p className="verlauf-popover__title">Kommentar</p>
-      <p className="verlauf-popover__comment-text">{state.text}</p>
+      <p className="verlauf-popover__title">{t('verlaufAnnotationComment')}</p>
+      <textarea
+        className="verlauf-popover__textarea"
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        rows={3}
+        placeholder={t('verlaufCommentPlaceholder')}
+        autoFocus
+      />
+      <fieldset className="verlauf-popover__visibility">
+        <legend className="verlauf-popover__visibility-legend">{t('verlaufCommentVisibilityLabel')}</legend>
+        <label className="verlauf-popover__visibility-option">
+          <input
+            type="radio"
+            name="verlauf-comment-visibility"
+            checked={visibility === 'private'}
+            onChange={() => setVisibility('private')}
+          />
+          {t('verlaufCommentVisibilityPrivate')}
+        </label>
+        <label className="verlauf-popover__visibility-option">
+          <input
+            type="radio"
+            name="verlauf-comment-visibility"
+            checked={visibility === 'team'}
+            onChange={() => setVisibility('team')}
+          />
+          {t('verlaufCommentVisibilityTeam')}
+        </label>
+        <label className="verlauf-popover__visibility-option">
+          <input
+            type="radio"
+            name="verlauf-comment-visibility"
+            checked={visibility === 'person'}
+            onChange={() => setVisibility('person')}
+          />
+          {t('verlaufCommentVisibilityPerson')}
+        </label>
+      </fieldset>
+      {visibility === 'person' ? (
+        <label className="verlauf-popover__label">
+          {t('verlaufCommentShareWith')}
+          <select
+            className="verlauf-popover__input"
+            value={sharedWithUserId}
+            onChange={(e) => setSharedWithUserId(e.target.value)}
+          >
+            <option value="">{t('verlaufCommentShareWithPlaceholder')}</option>
+            {shareableMembers.map((member) => (
+              <option key={member.userId} value={member.userId}>
+                {member.displayName?.trim() || member.email?.trim() || member.userId}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
+      <div className="verlauf-popover__actions">
+        <button type="button" className="verlauf-popover__cancel" onClick={onClose}>
+          {t('verlaufEntryCancel')}
+        </button>
+        <button
+          type="button"
+          className="verlauf-popover__add"
+          onClick={() => {
+            if (!canSave) return
+            onSave({
+              comment: comment.trim(),
+              visibility,
+              sharedWithUserId: visibility === 'person' ? sharedWithUserId : undefined,
+            })
+          }}
+          disabled={!canSave}
+        >
+          {t('verlaufEntrySave')}
+        </button>
+      </div>
     </div>
   )
 }
@@ -638,7 +793,7 @@ interface EntryCardProps {
     rect: DOMRect,
     readonly: boolean,
   ) => void
-  onCommentView: (text: string, rect: DOMRect) => void
+  onCommentSelect: (annotationId: string) => void
   onEdit: (id: string, content: string) => void
   onDelete: (id: string) => void
 }
@@ -647,7 +802,7 @@ const EntryCard = memo(function EntryCard({
   entry,
   annotations,
   onSelection,
-  onCommentView,
+  onCommentSelect,
   onEdit,
   onDelete,
 }: EntryCardProps) {
@@ -688,11 +843,13 @@ const EntryCard = memo(function EntryCard({
   }
 
   function handleBodyClick(e: React.MouseEvent) {
-    const target = (e.target as HTMLElement).closest('[data-comment]')
+    const target = (e.target as HTMLElement).closest('[data-verlauf-annotation-id]')
     if (!target) return
-    const text = target.getAttribute('data-comment') ?? ''
-    if (!text) return
-    onCommentView(text, target.getBoundingClientRect())
+    const annotationId = target.getAttribute('data-verlauf-annotation-id')
+    if (!annotationId) return
+    if (target.getAttribute('data-verlauf-annot-type') === 'comment') {
+      onCommentSelect(annotationId)
+    }
   }
 
   function handleCopyEntry(e: React.MouseEvent) {
@@ -862,8 +1019,11 @@ const EntryCard = memo(function EntryCard({
 
 interface DerivedEntryCardProps {
   event: DerivedFeedEvent
+  annotations: VerlaufAnnotation[]
   readonlyLabel: string
   copyLabel: string
+  editLabel: string
+  deleteLabel: string
   onSelection: (
     text: string,
     startOffset: number,
@@ -872,19 +1032,47 @@ interface DerivedEntryCardProps {
     rect: DOMRect,
     readonly: boolean,
   ) => void
+  onCommentSelect: (annotationId: string) => void
+  /** Derived rows mirror another module — manage routes there, never in place. */
+  onNavigateToSource?: (source: DerivedFeedEvent['source']) => void
+  annotatable: boolean
 }
 
 const DerivedEntryCard = memo(function DerivedEntryCard({
   event,
+  annotations,
   readonlyLabel,
   copyLabel,
+  editLabel,
+  deleteLabel,
   onSelection,
+  onCommentSelect,
+  onNavigateToSource,
+  annotatable,
 }: DerivedEntryCardProps) {
   const bodyRef = useRef<HTMLDivElement>(null)
 
+  const entryText = useMemo(
+    () => derivedFeedEntryText(event.title, event.body),
+    [event.title, event.body],
+  )
+  const entryAnnotations = useMemo(
+    () => annotations.filter((a) => a.entryId === event.id),
+    [annotations, event.id],
+  )
+  const htmlContent = useMemo(
+    () => applyAnnotations(entryText, entryAnnotations),
+    [entryText, entryAnnotations],
+  )
+
   function handleCopy(e: React.MouseEvent) {
     e.stopPropagation()
-    void navigator.clipboard.writeText(`${event.title}: ${event.body}`)
+    void navigator.clipboard.writeText(entryText)
+  }
+
+  function handleNavigateToSource(e: React.MouseEvent) {
+    e.stopPropagation()
+    onNavigateToSource?.(event.source)
   }
 
   function handleMouseUp() {
@@ -899,9 +1087,19 @@ const DerivedEntryCard = memo(function DerivedEntryCard({
         selection.endOffset,
         event.id,
         selection.rect,
-        true,
+        !annotatable,
       )
     })
+  }
+
+  function handleBodyClick(e: React.MouseEvent) {
+    const target = (e.target as HTMLElement).closest('[data-verlauf-annotation-id]')
+    if (!target) return
+    const annotationId = target.getAttribute('data-verlauf-annotation-id')
+    if (!annotationId) return
+    if (target.getAttribute('data-verlauf-annot-type') === 'comment') {
+      onCommentSelect(annotationId)
+    }
   }
 
   return (
@@ -928,18 +1126,46 @@ const DerivedEntryCard = memo(function DerivedEntryCard({
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
             </svg>
           </button>
+          {onNavigateToSource ? (
+            <>
+              <button
+                type="button"
+                className="verlauf-entry__action-btn"
+                title={editLabel}
+                onClick={handleNavigateToSource}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+              <button
+                type="button"
+                className="verlauf-entry__action-btn verlauf-entry__action-btn--delete"
+                title={deleteLabel}
+                onClick={handleNavigateToSource}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                  <path d="M10 11v6M14 11v6"/>
+                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                </svg>
+              </button>
+            </>
+          ) : null}
         </span>
       </header>
       <div
         ref={bodyRef}
         className="verlauf-entry__body verlauf-entry__body--derived"
         data-verlauf-entry-id={event.id}
-        data-verlauf-selection-mode="copy-only"
+        data-verlauf-selection-mode={annotatable ? 'full' : 'copy-only'}
+        // biome-ignore lint/security/noDangerouslySetInnerHtml
+        dangerouslySetInnerHTML={{ __html: htmlContent }}
         onMouseUp={handleMouseUp}
-      >
-        <span className="verlauf-derived__title">{event.title}: </span>
-        {event.body}
-      </div>
+        onClick={handleBodyClick}
+      />
     </article>
   )
 })
@@ -954,7 +1180,8 @@ interface AufnahmeEntryCardProps {
   readonlyLabel: string
   copyLabel: string
   onSelection: EntryCardProps['onSelection']
-  onCommentView: EntryCardProps['onCommentView']
+  onCommentSelect: EntryCardProps['onCommentSelect']
+  onNavigateToSource?: (source: DerivedFeedEvent['source']) => void
 }
 
 const AufnahmeEntryCard = memo(function AufnahmeEntryCard({
@@ -963,7 +1190,8 @@ const AufnahmeEntryCard = memo(function AufnahmeEntryCard({
   readonlyLabel,
   copyLabel,
   onSelection,
-  onCommentView,
+  onCommentSelect,
+  onNavigateToSource,
 }: AufnahmeEntryCardProps) {
   const { t } = useTranslation()
   const sectionRefs = useRef<Map<string, HTMLDivElement>>(new Map())
@@ -971,6 +1199,11 @@ const AufnahmeEntryCard = memo(function AufnahmeEntryCard({
   function handleCopy(e: React.MouseEvent) {
     e.stopPropagation()
     void navigator.clipboard.writeText(event.body)
+  }
+
+  function handleNavigateToSource(e: React.MouseEvent) {
+    e.stopPropagation()
+    onNavigateToSource?.(event.source)
   }
 
   function handleSectionMouseUp(sectionId: string) {
@@ -991,11 +1224,13 @@ const AufnahmeEntryCard = memo(function AufnahmeEntryCard({
   }
 
   function handleBodyClick(e: React.MouseEvent) {
-    const target = (e.target as HTMLElement).closest('[data-comment]')
+    const target = (e.target as HTMLElement).closest('[data-verlauf-annotation-id]')
     if (!target) return
-    const text = target.getAttribute('data-comment') ?? ''
-    if (!text) return
-    onCommentView(text, target.getBoundingClientRect())
+    const annotationId = target.getAttribute('data-verlauf-annotation-id')
+    if (!annotationId) return
+    if (target.getAttribute('data-verlauf-annot-type') === 'comment') {
+      onCommentSelect(annotationId)
+    }
   }
 
   return (
@@ -1022,6 +1257,34 @@ const AufnahmeEntryCard = memo(function AufnahmeEntryCard({
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
             </svg>
           </button>
+          {onNavigateToSource ? (
+            <>
+              <button
+                type="button"
+                className="verlauf-entry__action-btn"
+                title={t('verlaufEditInSource')}
+                onClick={handleNavigateToSource}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+              <button
+                type="button"
+                className="verlauf-entry__action-btn verlauf-entry__action-btn--delete"
+                title={t('verlaufDeleteInSource')}
+                onClick={handleNavigateToSource}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                  <path d="M10 11v6M14 11v6"/>
+                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                </svg>
+              </button>
+            </>
+          ) : null}
         </span>
       </header>
 
@@ -1152,14 +1415,23 @@ function buildAufnahmeFeedEvent(
 // Main page
 // ---------------------------------------------------------------------------
 
+/** Source modules a derived feed item can be edited/managed in. */
+export type VerlaufDerivedSource = Exclude<FeedSource, 'manuell'>
+
 interface VerlaufFeedPageProps {
   caseId: string
+  /**
+   * Routes a derived (projected) entry's edit/delete to its source module.
+   * Derived cards mirror data owned by another section, so they are never
+   * mutated in place — the clinician manages the underlying record at source.
+   */
+  onNavigateToSource?: (source: VerlaufDerivedSource) => void
 }
 
-export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
+export function VerlaufFeedPage({ caseId, onNavigateToSource }: VerlaufFeedPageProps) {
   const { t, language } = useTranslation()
   const { user } = useAuth()
-  const { member, role } = usePermissionContext()
+  const { member, role, organisation } = usePermissionContext()
   const { readOnly: demoReadOnly } = useDemoPatient(caseId)
 
   const aiEditEnabled = isInlineAiEditEnabled()
@@ -1183,6 +1455,15 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
   const [annotations, setAnnotations] = useState<VerlaufAnnotation[]>(() =>
     loadVerlaufAnnotations(caseId),
   )
+  const [activeAnnotationId, setActiveAnnotationId] = useState<string | null>(null)
+  const [hoveredCommentId, setHoveredCommentId] = useState<string | null>(null)
+  const [teamMembers, setTeamMembers] = useState<TeamMemberProfile[]>([])
+
+  // The connector + source-text highlight follow the pinned (clicked) comment,
+  // falling back to whichever comment is currently hovered — mirroring how MS
+  // Word draws a leader line to the active comment in the review margin.
+  const connectorId = activeAnnotationId ?? hoveredCommentId
+  const listRef = useRef<HTMLDivElement>(null)
 
   const [bubble, setBubble] = useState<BubbleState>({
     visible: false,
@@ -1193,6 +1474,7 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
     endOffset: 0,
     entryId: '',
     readonly: false,
+    overlappingAnnotations: [],
   })
 
   const [timelinePopover, setTimelinePopover] = useState<TimelinePopoverState>({
@@ -1214,18 +1496,28 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
     rangeText: '',
   })
 
-  const [commentView, setCommentView] = useState<CommentViewState>({
-    visible: false,
-    x: 0,
-    y: 0,
-    text: '',
-  })
+  const currentUserId = user?.id ?? member?.userId
 
   // Reload when caseId changes
   useEffect(() => {
     setEntries(loadVerlaufFeed(caseId))
     setAnnotations(loadVerlaufAnnotations(caseId))
+    setActiveAnnotationId(null)
   }, [caseId])
+
+  useEffect(() => {
+    let cancelled = false
+    void fetchTeamSnapshot(organisation?.id)
+      .then((team) => {
+        if (!cancelled) setTeamMembers(team.members.filter((m) => m.status === 'active'))
+      })
+      .catch(() => {
+        if (!cancelled) setTeamMembers([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [organisation?.id])
 
   useEffect(() => {
     function handleArchiveChanged(e: Event) {
@@ -1258,6 +1550,50 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
     }
   }, [filterMenuOpen])
 
+  // Persistent Word-like link: tint the commented text span(s) of the pinned /
+  // hovered comment so the relationship between margin card and source text is
+  // obvious even before the leader line is noticed.
+  useEffect(() => {
+    const cls = 'verlauf-annot--linked'
+    const previous = document.querySelectorAll<HTMLElement>(`.${cls}`)
+    previous.forEach((el) => el.classList.remove(cls))
+    if (!connectorId) return
+    const linked = document.querySelectorAll<HTMLElement>(
+      `[data-verlauf-annotation-id="${connectorId}"][data-verlauf-annot-type="comment"]`,
+    )
+    linked.forEach((el) => el.classList.add(cls))
+    return () => {
+      linked.forEach((el) => el.classList.remove(cls))
+    }
+  }, [connectorId, annotations, entries, derivedEvents])
+
+  // Hovering commented text in the feed previews its margin card link (the
+  // connector + highlight), matching the reverse direction of panel hovers.
+  useEffect(() => {
+    const container = listRef.current
+    if (!container) return
+    function resolveCommentId(target: EventTarget | null): string | null {
+      const el = (target as HTMLElement | null)?.closest?.(
+        '[data-verlauf-annot-type="comment"]',
+      )
+      return el?.getAttribute('data-verlauf-annotation-id') ?? null
+    }
+    function handleOver(e: Event) {
+      const id = resolveCommentId(e.target)
+      if (id) setHoveredCommentId(id)
+    }
+    function handleOut(e: Event) {
+      const id = resolveCommentId(e.target)
+      if (id) setHoveredCommentId((current) => (current === id ? null : current))
+    }
+    container.addEventListener('mouseover', handleOver)
+    container.addEventListener('mouseout', handleOut)
+    return () => {
+      container.removeEventListener('mouseover', handleOver)
+      container.removeEventListener('mouseout', handleOut)
+    }
+  }, [])
+
   const closeBubble = useCallback(() => {
     setBubble((b) => ({ ...b, visible: false }))
   }, [])
@@ -1270,18 +1606,37 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
     setCommentPopover((p) => ({ ...p, visible: false }))
   }, [])
 
-  const closeCommentView = useCallback(() => {
-    setCommentView((p) => ({ ...p, visible: false }))
-  }, [])
+  const visibleComments = useMemo(
+    () =>
+      annotations.filter(
+        (ann): ann is VerlaufAnnotation & { type: 'comment'; comment: string } =>
+          ann.type === 'comment' &&
+          Boolean(ann.comment) &&
+          canViewAnnotation(ann, currentUserId),
+      ),
+    [annotations, currentUserId],
+  )
 
-  const handleCommentView = useCallback((text: string, rect: DOMRect) => {
-    setCommentView({
-      visible: true,
-      x: Math.min(Math.max(rect.left, 12), window.innerWidth - 280),
-      y: rect.bottom + 8,
-      text,
+  const handleCommentSelect = useCallback((annotationId: string) => {
+    setActiveAnnotationId(annotationId)
+    setCommentPopover((p) => ({ ...p, visible: false }))
+    closeBubble()
+    requestAnimationFrame(() => {
+      const anchor = document.querySelector<HTMLElement>(
+        `[data-verlauf-annotation-id="${annotationId}"]`,
+      )
+      anchor?.scrollIntoView({ block: 'center', behavior: 'smooth' })
     })
-  }, [])
+  }, [closeBubble])
+
+  const handleRemoveComment = useCallback(
+    (annotationId: string) => {
+      const next = removeVerlaufAnnotations([annotationId], caseId)
+      setAnnotations(next)
+      setActiveAnnotationId((current) => (current === annotationId ? null : current))
+    },
+    [caseId],
+  )
 
   const handleSelection = useCallback(
     (
@@ -1293,6 +1648,12 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
       readonly: boolean,
     ) => {
       const { x, y } = selectionBubblePosition(rect)
+      const overlapping = findOverlappingAnnotations(
+        annotations,
+        entryId,
+        startOffset,
+        endOffset,
+      )
       setBubble({
         visible: true,
         x,
@@ -1302,12 +1663,12 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
         endOffset,
         entryId,
         readonly: readonly || demoReadOnly,
+        overlappingAnnotations: overlapping,
       })
       setTimelinePopover((p) => ({ ...p, visible: false }))
       setCommentPopover((p) => ({ ...p, visible: false }))
-      setCommentView((p) => ({ ...p, visible: false }))
     },
-    [demoReadOnly],
+    [annotations, demoReadOnly],
   )
 
   const handleFormat = useCallback(
@@ -1316,7 +1677,7 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
       const { entryId, startOffset, endOffset, selectedText } = bubble
       if (!entryId) return
 
-      const annotation: VerlaufAnnotation = {
+      const annotation = {
         entryId,
         startOffset,
         endOffset,
@@ -1348,22 +1709,39 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
   }, [bubble, closeBubble])
 
   const handleSaveComment = useCallback(
-    (comment: string) => {
+    (payload: CommentSavePayload) => {
       const { entryId, startOffset, endOffset, rangeText } = commentPopover
-      const annotation: VerlaufAnnotation = {
+      const annotation = {
         entryId,
         startOffset,
         endOffset,
-        type: 'comment',
-        comment,
+        type: 'comment' as const,
+        comment: payload.comment,
         rangeText,
+        visibility: payload.visibility,
+        sharedWithUserId: payload.sharedWithUserId,
+        authorUserId: currentUserId,
+        createdAt: new Date().toISOString(),
       }
       const next = addVerlaufAnnotation(annotation, caseId)
+      const saved = next[next.length - 1]
       setAnnotations(next)
       closeCommentPopover()
+      if (saved?.id) setActiveAnnotationId(saved.id)
     },
-    [caseId, closeCommentPopover, commentPopover],
+    [caseId, closeCommentPopover, commentPopover, currentUserId],
   )
+
+  const handleRemoveMarkierung = useCallback(() => {
+    if (bubble.readonly) return
+    const ids = bubble.overlappingAnnotations
+      .filter((ann) => isFormatAnnotation(ann.type))
+      .map((ann) => ann.id)
+    if (ids.length === 0) return
+    const next = removeVerlaufAnnotations(ids, caseId)
+    setAnnotations(next)
+    closeBubble()
+  }, [bubble, caseId, closeBubble])
 
   const handleBubbleCopy = useCallback(() => {
     if (bubble.selectedText) {
@@ -1599,8 +1977,11 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
   const derivedReadonlyLabel = t('verlaufDerivedReadonly')
   const aufnahmeReadonlyLabel = t('verlaufAufnahmeReadonly' as Parameters<typeof t>[0])
   const copyLabel = t('verlaufEntryCopy')
+  const editInSourceLabel = t('verlaufEditInSource')
+  const deleteInSourceLabel = t('verlaufDeleteInSource')
 
   return (
+    <div className="verlauf-feed-layout">
     <div className="verlauf-feed-page">
       <header className="verlauf-feed-page__header">
         <h2 className="verlauf-feed-page__title">{t('verlaufFeedTitle')}</h2>
@@ -1778,7 +2159,7 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
           <p className="clinical-empty-state-card__text">{t('verlaufFeedEmpty')}</p>
         </div>
       ) : isEmpty ? null : (
-        <div className="verlauf-feed-page__list">
+        <div className="verlauf-feed-page__list" ref={listRef}>
           {visibleItems.map((item, index) => (
             <div key={item.id}>
               {item.kind === 'manual' ? (
@@ -1786,7 +2167,7 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
                   entry={item.entry}
                   annotations={annotations}
                   onSelection={handleSelection}
-                  onCommentView={handleCommentView}
+                  onCommentSelect={handleCommentSelect}
                   onEdit={handleEntryEdit}
                   onDelete={handleEntryDelete}
                 />
@@ -1797,18 +2178,25 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
                   readonlyLabel={aufnahmeReadonlyLabel}
                   copyLabel={copyLabel}
                   onSelection={handleSelection}
-                  onCommentView={handleCommentView}
+                  onCommentSelect={handleCommentSelect}
+                  onNavigateToSource={onNavigateToSource}
                 />
               ) : (
                 <DerivedEntryCard
                   event={item.event}
+                  annotations={annotations}
                   readonlyLabel={
                     item.event.source === 'aufnahmebefund'
                       ? aufnahmeReadonlyLabel
                       : derivedReadonlyLabel
                   }
                   copyLabel={copyLabel}
+                  editLabel={editInSourceLabel}
+                  deleteLabel={deleteInSourceLabel}
                   onSelection={handleSelection}
+                  onCommentSelect={handleCommentSelect}
+                  onNavigateToSource={onNavigateToSource}
+                  annotatable={!demoReadOnly}
                 />
               )}
               {index < visibleItems.length - 1 && <div className="verlauf-entry__divider" />}
@@ -1825,6 +2213,7 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
             onComment={handleComment}
             onCopy={handleBubbleCopy}
             onCreateTimeline={handleCreateTimeline}
+            onRemoveMarkierung={handleRemoveMarkierung}
             onClose={closeBubble}
             onAiEdit={aiEditTarget ? handleAiEdit : undefined}
           />
@@ -1845,16 +2234,30 @@ export function VerlaufFeedPage({ caseId }: VerlaufFeedPageProps) {
 
           <CommentPopover
             state={commentPopover}
+            teamMembers={teamMembers}
+            currentUserId={currentUserId}
             onSave={handleSaveComment}
             onClose={closeCommentPopover}
           />
 
-          <CommentViewPopover state={commentView} onClose={closeCommentView} />
+          <VerlaufAnnotationConnector activeId={connectorId} />
 
           {inlineEdit.popup}
         </>,
         document.body,
       )}
+    </div>
+
+    <VerlaufAnnotationPanel
+      comments={visibleComments}
+      activeId={activeAnnotationId}
+      linkedId={connectorId}
+      teamMembers={teamMembers}
+      currentUserId={currentUserId}
+      onSelect={handleCommentSelect}
+      onRemove={handleRemoveComment}
+      onHover={setHoveredCommentId}
+    />
     </div>
   )
 }

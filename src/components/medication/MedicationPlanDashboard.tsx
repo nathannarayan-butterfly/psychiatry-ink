@@ -1,7 +1,9 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { ArrowRight } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
 import { translateMedicationUi } from '../../data/medicationUiTranslations'
+import { DEFAULT_MEDICATIONS_COLLECTION_ID } from '../../types/knowledgeBase'
+import { useKnowledgeBaseDrugs } from '../../hooks/useKnowledgeBaseDrugs'
 import type { MedicationEntry } from '../../types/medicationPlan'
 import {
   computeMedicationInsights,
@@ -9,19 +11,31 @@ import {
   type CombinationRiskKind,
   type RiskLevel,
 } from '../../utils/medication/medicationInsights'
+import { activeMedications } from '../../utils/medication/planOps'
+import {
+  computeCombinedReceptorFingerprint,
+  computeZielrezeptorPickable,
+  normalizeReceptorTarget,
+  resolveReceptorProfiles,
+  resolveZielrezeptorenBaseline,
+  resolveZielrezeptorenDisplay,
+} from '../../utils/medication/receptorBurden'
 import type { InteractionEntry } from '../../data/psychDrugReference/schema'
 import type { UiLanguage } from '../../types/settings'
 import type { MedicationSectionKey } from './MedicationLowerSections'
+import { CuratedTargetReceptors } from './CuratedTargetReceptors'
 import { ReceptorRadarChart } from './ReceptorRadarChart'
 
 type MedicationUiKey = Parameters<typeof translateMedicationUi>[1]
 
 interface MedicationPlanDashboardProps {
   medications: MedicationEntry[]
+  curatedTargetReceptors: string[] | undefined
+  onCuratedTargetReceptorsChange: (targets: string[]) => void
+  disabled?: boolean
   onOpenSection: (key: MedicationSectionKey) => void
 }
 
-const MAX_RECEPTOR_ROWS = 5
 const MAX_INTERACTIONS = 4
 const MAX_MONITORING = 6
 
@@ -49,17 +63,62 @@ const SEVERITY_LABEL_KEY: Record<InteractionEntry['severity'], MedicationUiKey> 
  * are derived from real plan + reference data (see `computeMedicationInsights`),
  * with graceful empty states; deep dives stay one click away via the sections.
  */
-export function MedicationPlanDashboard({ medications, onOpenSection }: MedicationPlanDashboardProps) {
+export function MedicationPlanDashboard({
+  medications,
+  curatedTargetReceptors,
+  onCuratedTargetReceptorsChange,
+  disabled = false,
+  onOpenSection,
+}: MedicationPlanDashboardProps) {
   const { language } = useTranslation()
+  const { drugs: knowledgeBaseDrugs } = useKnowledgeBaseDrugs(DEFAULT_MEDICATIONS_COLLECTION_ID)
   const insights = useMemo(
     () => computeMedicationInsights(medications, language),
     [medications, language],
   )
 
-  const receptors = insights.targetedReceptors.slice(0, MAX_RECEPTOR_ROWS)
+  const { combinedFingerprint, resolved, zielrezeptoren, pickable } = useMemo(() => {
+    const activeMeds = activeMedications(medications)
+    const resolvedProfiles = resolveReceptorProfiles(
+      activeMeds.map((med) => ({ id: med.id, substance: med.substance })),
+      knowledgeBaseDrugs,
+    )
+    return {
+      // Full regimen fingerprint — never filtered by curated Zielrezeptoren whitelist.
+      combinedFingerprint: computeCombinedReceptorFingerprint(resolvedProfiles),
+      resolved: resolvedProfiles,
+      zielrezeptoren: resolveZielrezeptorenDisplay(
+        curatedTargetReceptors,
+        resolvedProfiles,
+        language,
+      ),
+      pickable: computeZielrezeptorPickable(curatedTargetReceptors, resolvedProfiles, language),
+    }
+  }, [medications, knowledgeBaseDrugs, language, curatedTargetReceptors])
+
+  const addCurated = useCallback(
+    (target: string) => {
+      const norm = normalizeReceptorTarget(target)
+      const baseline = resolveZielrezeptorenBaseline(curatedTargetReceptors, resolved, language)
+      if (baseline.some((t) => t === norm)) return
+      onCuratedTargetReceptorsChange([...baseline, norm])
+    },
+    [curatedTargetReceptors, onCuratedTargetReceptorsChange, resolved, language],
+  )
+
+  const removeCurated = useCallback(
+    (target: string) => {
+      const norm = normalizeReceptorTarget(target)
+      const baseline = resolveZielrezeptorenBaseline(curatedTargetReceptors, resolved, language)
+      onCuratedTargetReceptorsChange(baseline.filter((t) => t !== norm))
+    },
+    [curatedTargetReceptors, onCuratedTargetReceptorsChange, resolved, language],
+  )
+
   const interactions = insights.crossInteractions.slice(0, MAX_INTERACTIONS)
   const monitoring = insights.monitoringBurden.slice(0, MAX_MONITORING)
-  const hasReceptorData = insights.combinedReceptorProfile !== null || receptors.length > 0
+  const hasReceptorData =
+    combinedFingerprint !== null || zielrezeptoren.length > 0 || resolved.length > 0
   const hasKombi = insights.combinationRisks.length > 0 || interactions.length > 0
 
   return (
@@ -81,32 +140,27 @@ export function MedicationPlanDashboard({ medications, onOpenSection }: Medicati
           </header>
           {hasReceptorData ? (
             <div className="medication-dash-panel__receptor-body">
-              {insights.combinedReceptorProfile ? (
-                <ReceptorRadarChart
-                  profile={insights.combinedReceptorProfile}
-                  substanceName={translateMedicationUi(language, 'medDashReceptorTitle')}
+              {combinedFingerprint && combinedFingerprint.targets.length >= 3 ? (
+                <div className="medication-dash-panel__receptor-combined">
+                  <ReceptorRadarChart
+                    affinityTargets={combinedFingerprint.targets}
+                    substanceName={translateMedicationUi(language, 'medDashReceptorTitle')}
+                    language={language}
+                    variant="inline"
+                  />
+                </div>
+              ) : null}
+              <div className="medication-dash-panel__receptor-targets">
+                <CuratedTargetReceptors
+                  receptors={zielrezeptoren}
+                  pickable={pickable}
+                  onAdd={addCurated}
+                  onRemove={removeCurated}
+                  disabled={disabled}
+                  variant="rows"
                   language={language}
-                  variant="inline"
                 />
-              ) : null}
-              {receptors.length > 0 ? (
-                <ul className="medication-receptor-burden">
-                  {receptors.map((receptor) => (
-                    <li key={receptor.key} className="medication-receptor-burden__row">
-                      <span className="medication-receptor-burden__label">{receptor.label}</span>
-                      <span className="medication-receptor-burden__bar" aria-hidden="true">
-                        <span
-                          className="medication-receptor-burden__fill"
-                          style={{ width: `${(receptor.maxScore / 4) * 100}%` }}
-                        />
-                      </span>
-                      <span className="medication-receptor-burden__drugs" title={receptor.drugs.join(', ')}>
-                        {receptor.drugs.join(', ')}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
+              </div>
             </div>
           ) : (
             <p className="medication-dash-panel__empty">

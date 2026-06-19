@@ -134,6 +134,12 @@ export interface MedicationPlanState {
   currentPlanId: string | null
   plans: MedicationPlan[]
   sideEffectReports: SideEffectReport[]
+  /**
+   * Clinician-customized Zielrezeptoren whitelist (normalized symbols, e.g. "D2",
+   * "5-HT2A"). When absent, the dashboard auto-populates from KB moderate+ affinity;
+   * once set (including `[]`), only these targets are shown until edited again.
+   */
+  curatedTargetReceptors?: string[]
   labCorrelationNotes?: string
   combinationCheckPlaceholder?: string
 }

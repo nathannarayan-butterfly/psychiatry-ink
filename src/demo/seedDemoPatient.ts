@@ -63,6 +63,11 @@ function countSeed(fixture: ReturnType<typeof loadDemoFixture>): DemoSeedCounts 
     psychotherapySessions: ws.psychotherapyPlan?.sessions.length ?? 0,
     complementaryTherapies: ws.complementaryTherapies?.length ?? 0,
     sozialtherapieTargets: fixture.sozialtherapie.length,
+    anforderungen: ws.anforderungen?.length ?? 0,
+    isdmDomains: ws.isdmInput ? Object.keys(ws.isdmInput.domains).length : 0,
+    butterflyAttestations: ws.butterflyAttestations
+      ? Object.keys(ws.butterflyAttestations).length
+      : 0,
   }
 }
 
@@ -153,6 +158,11 @@ export async function seedDemoPatient(options: SeedDemoPatientOptions): Promise<
     activeLabGraphId: fixture.workspace.activeLabGraphId,
     diagnoses: fixture.workspace.diagnoses,
     clinicalImprints: fixture.workspace.clinicalImprints,
+    isdmAnalysis: fixture.workspace.isdmAnalysis,
+    isdmInput: fixture.workspace.isdmInput,
+    butterflyAttestations: fixture.workspace.butterflyAttestations,
+    clinicalQuestionNotes: fixture.workspace.clinicalQuestionNotes,
+    anforderungen: fixture.workspace.anforderungen,
     medicationPlanState: fixture.workspace.medicationPlanState,
     psychotherapyPlan: fixture.workspace.psychotherapyPlan,
     complementaryTherapies: fixture.workspace.complementaryTherapies,

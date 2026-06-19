@@ -29,6 +29,8 @@ import { compileChecklistText } from '../../utils/checklist'
 import { NotionEditorHints } from './NotionEditorHints'
 import { NotionVariantLinks, type NotionVariantOption } from './NotionVariantLinks'
 import { MedicationWorkspace } from '../medication/MedicationWorkspace'
+import { TherapieplanungWorkspace } from '../therapy/TherapieplanungWorkspace'
+import type { TherapyPlanningSectionKey } from '../../data/therapyPageSections'
 import { IsdmPsychopathWorkspace } from '../workspace/IsdmInputPanel'
 import {
   isPsychopathSubMode,
@@ -89,7 +91,6 @@ interface NotionPaperProps {
   kiExtraInstruction: string
   aiCanGenerate: boolean
   panelGraphicEnabled: boolean
-  breakReminderActive: boolean
   pageType: PageType
   privacy: ReturnType<typeof usePrivacySettings>
   clinicalAge: {
@@ -125,7 +126,6 @@ interface NotionPaperProps {
   onDiscardRecording: () => void
   onTranscribe: () => void
   onClosePanelGraphic: () => void
-  onBreakStart?: () => void
   onSaveWorkspaceVault?: (payload?: SavedWorkspaceDocumentPayload) => void | Promise<void>
   onStartDictation?: () => void
   onSwitchToWrite?: () => void
@@ -143,6 +143,9 @@ interface NotionPaperProps {
   onOpenWorkspaceMenu?: () => void
   /** Diary sidebar is rendered in the global case sidebar panel instead. */
   useExternalSidebar?: boolean
+  /** Pre-selected therapy type when opening Therapieplanung from context menu. */
+  therapieplanungInitialType?: TherapyPlanningSectionKey | null
+  onTherapieplanungInitialTypeConsumed?: () => void
 }
 
 export interface PendingPaste {
@@ -189,7 +192,6 @@ export function NotionPaper({
   kiExtraInstruction,
   aiCanGenerate,
   panelGraphicEnabled,
-  breakReminderActive,
   pageType: _pageType,
   privacy,
   clinicalAge,
@@ -220,7 +222,6 @@ export function NotionPaper({
   onDiscardRecording,
   onTranscribe,
   onClosePanelGraphic,
-  onBreakStart,
   onSaveWorkspaceVault,
   onStartDictation,
   onSwitchToWrite,
@@ -234,6 +235,8 @@ export function NotionPaper({
   accessReadOnly = false,
   onOpenWorkspaceMenu,
   useExternalSidebar = false,
+  therapieplanungInitialType = null,
+  onTherapieplanungInitialTypeConsumed,
 }: NotionPaperProps) {
   const { t } = useTranslation()
   const storageCaseId = workspaceStorageId ?? caseId
@@ -247,6 +250,7 @@ export function NotionPaper({
   const editorLocked = isDictationActive || isGenerating || accessReadOnly
   const isPsychopathDocument = documentTypeId === 'psychopath'
   const isMedicationDocument = documentTypeId === 'medikation'
+  const isTherapieplanungDocument = documentTypeId === 'therapieplanung'
   const psychopathActiveMode: PsychopathSubMode =
     isPsychopathDocument && activeVariantId && isPsychopathSubMode(activeVariantId)
       ? activeVariantId
@@ -259,7 +263,8 @@ export function NotionPaper({
   )
   const showIsdmPanel = isPsychopathDocument && psychopathActiveMode === 'isdm'
   const showMedicationPanel = isMedicationDocument
-  const showStructuredToolPanel = showMedicationPanel || showIsdmPanel
+  const showTherapieplanungPanel = isTherapieplanungDocument
+  const showStructuredToolPanel = showMedicationPanel || showIsdmPanel || showTherapieplanungPanel
   const showKompilierenButton = Boolean(
     documentMode === 'checklist' && showMultistageSections,
   )
@@ -322,6 +327,7 @@ export function NotionPaper({
     !showMultistageSections &&
     !showIsdmPanel &&
     !showMedicationPanel &&
+    !showTherapieplanungPanel &&
     documentEmpty &&
     !documentEditingStarted &&
     !editorLocked
@@ -621,10 +627,8 @@ export function NotionPaper({
           <div className="notion-paper__sidebar-anchor">
             <NotionDiarySidebar
               panelGraphicEnabled={panelGraphicEnabled}
-              breakReminderActive={breakReminderActive}
               onClosePanelGraphic={onClosePanelGraphic}
               collapsed={sidebarCollapsed}
-              onBreakStart={onBreakStart}
               caseId={storageCaseId}
               onNavigateToLabor={onNavigateToLabor}
               savedDocs={savedDocs}
@@ -812,11 +816,11 @@ export function NotionPaper({
             />
           ) : null}
 
-          {showDocumentBlankState && !showMedicationPanel ? (
+          {showDocumentBlankState && !showMedicationPanel && !showTherapieplanungPanel ? (
             <NotionEditorHints showStructuredFeatures={false} />
           ) : null}
 
-          {showDocumentBlankState && !showIsdmPanel && !showMedicationPanel ? (
+          {showDocumentBlankState && !showIsdmPanel && !showMedicationPanel && !showTherapieplanungPanel ? (
             <NotionEmptyState
               disabled={editorLocked}
               onType={handleBlankType}
@@ -825,6 +829,13 @@ export function NotionPaper({
             />
           ) : showMedicationPanel ? (
             <MedicationWorkspace caseId={storageCaseId ?? caseId} disabled={editorLocked} />
+          ) : showTherapieplanungPanel ? (
+            <TherapieplanungWorkspace
+              caseId={storageCaseId ?? caseId}
+              disabled={editorLocked}
+              initialType={therapieplanungInitialType}
+              onInitialTypeConsumed={onTherapieplanungInitialTypeConsumed}
+            />
           ) : showIsdmPanel ? (
             <IsdmPsychopathWorkspace caseId={storageCaseId} disabled={editorLocked} />
           ) : showMultistageSections && !amdpKompiliert ? (

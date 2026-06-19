@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import { therapyPageSectionDomId } from '../../data/therapyPageSections'
 import { useWeitereTherapie } from '../../hooks/useWeitereTherapie'
@@ -20,6 +20,8 @@ import type { WeitereTherapiePatch } from '../../hooks/useWeitereTherapie'
 
 interface WeitereTherapieSectionProps {
   caseId: string
+  workspacePlanning?: boolean
+  onWorkspacePlanningClose?: () => void
 }
 
 type Language = ReturnType<typeof useTranslation>['language']
@@ -34,12 +36,34 @@ const STATUS_TONE: Record<WeitereTherapieStatus, string> = {
   contraindicated: 'amber',
 }
 
-export function WeitereTherapieSection({ caseId }: WeitereTherapieSectionProps) {
+export function WeitereTherapieSection({
+  caseId,
+  workspacePlanning = false,
+  onWorkspacePlanningClose,
+}: WeitereTherapieSectionProps) {
   const { language } = useTranslation()
   const { entries, addTherapie, updateTherapie, removeTherapie } = useWeitereTherapie(caseId)
-  const [pickerOpen, setPickerOpen] = useState(false)
+  const [pickerOpen, setPickerOpen] = useState(workspacePlanning)
   const [customName, setCustomName] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (workspacePlanning) setPickerOpen(true)
+  }, [workspacePlanning])
+
+  const closeWorkspacePlanning = useCallback(() => {
+    onWorkspacePlanningClose?.()
+  }, [onWorkspacePlanningClose])
+
+  const closePicker = useCallback(() => {
+    setPickerOpen(false)
+    if (workspacePlanning) closeWorkspacePlanning()
+  }, [workspacePlanning, closeWorkspacePlanning])
+
+  const closeDetail = useCallback(() => {
+    setSelectedId(null)
+    if (workspacePlanning) closeWorkspacePlanning()
+  }, [workspacePlanning, closeWorkspacePlanning])
 
   const selected = useMemo(
     () => entries.find((entry) => entry.id === selectedId) ?? null,
@@ -65,6 +89,102 @@ export function WeitereTherapieSection({ caseId }: WeitereTherapieSectionProps) 
   const handleAddCustom = () => {
     if (!customName.trim()) return
     handleAdd(customName.trim())
+  }
+
+  const pickerModal = pickerOpen ? (
+    <div
+      className="therapy-modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      onClick={closePicker}
+    >
+      <div className="therapy-modal therapy-modal--narrow" onClick={(e) => e.stopPropagation()}>
+        <div className="therapy-modal__head">
+          <div className="therapy-modal__heading">
+            <h4 className="therapy-modal__title">{ts(language, 'wtPickerTitle')}</h4>
+          </div>
+          <button
+            type="button"
+            className="therapy-modal__close"
+            onClick={closePicker}
+            aria-label={ts(language, 'wtClose')}
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="therapy-modal__body">
+          <div className="therapy-picker">
+            <div className="therapy-picker__chips">
+              {DEFAULT_WEITERE_THERAPIE_TYPES.map((typeId) => (
+                <button
+                  key={typeId}
+                  type="button"
+                  className="therapy-chip"
+                  onClick={() => handleAdd(typeId)}
+                >
+                  {translateWeitereTherapieType(language, typeId)}
+                </button>
+              ))}
+            </div>
+            <div className="therapy-picker__custom">
+              <input
+                type="text"
+                className="therapy-input"
+                value={customName}
+                placeholder={ts(language, 'wtCustomPlaceholder')}
+                onChange={(e) => setCustomName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleAddCustom()
+                }}
+                autoFocus
+              />
+              <button
+                type="button"
+                className="therapy-btn therapy-btn--primary"
+                onClick={handleAddCustom}
+                disabled={!customName.trim()}
+              >
+                {ts(language, 'wtAdd')}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  ) : null
+
+  const detailModal = selected ? (
+    <div
+      className="therapy-modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      onClick={closeDetail}
+    >
+      <div className="therapy-modal therapy-modal--wide" onClick={(e) => e.stopPropagation()}>
+        <WeitereTherapieDetail
+          entry={selected}
+          language={language}
+          onUpdate={(patch) => updateTherapie(selected.id, patch)}
+          onClose={closeDetail}
+          onDelete={() => {
+            if (window.confirm(ts(language, 'wtConfirmDelete'))) {
+              closeDetail()
+              removeTherapie(selected.id)
+            }
+          }}
+        />
+      </div>
+    </div>
+  ) : null
+
+  if (workspacePlanning) {
+    return (
+      <>
+        {detailModal}
+        {pickerModal}
+      </>
+    )
   }
 
   return (
@@ -98,92 +218,9 @@ export function WeitereTherapieSection({ caseId }: WeitereTherapieSectionProps) 
         )}
       </div>
 
-      {selected && (
-        <div
-          className="therapy-modal-overlay"
-          role="dialog"
-          aria-modal="true"
-          onClick={() => setSelectedId(null)}
-        >
-          <div className="therapy-modal therapy-modal--wide" onClick={(e) => e.stopPropagation()}>
-            <WeitereTherapieDetail
-              entry={selected}
-              language={language}
-              onUpdate={(patch) => updateTherapie(selected.id, patch)}
-              onClose={() => setSelectedId(null)}
-              onDelete={() => {
-                if (window.confirm(ts(language, 'wtConfirmDelete'))) {
-                  setSelectedId(null)
-                  removeTherapie(selected.id)
-                }
-              }}
-            />
-          </div>
-        </div>
-      )}
+      {detailModal}
 
-      {pickerOpen && (
-        <div
-          className="therapy-modal-overlay"
-          role="dialog"
-          aria-modal="true"
-          onClick={() => setPickerOpen(false)}
-        >
-          <div className="therapy-modal therapy-modal--narrow" onClick={(e) => e.stopPropagation()}>
-            <div className="therapy-modal__head">
-              <div className="therapy-modal__heading">
-                <h4 className="therapy-modal__title">{ts(language, 'wtPickerTitle')}</h4>
-              </div>
-              <button
-                type="button"
-                className="therapy-modal__close"
-                onClick={() => setPickerOpen(false)}
-                aria-label={ts(language, 'wtClose')}
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="therapy-modal__body">
-              <div className="therapy-picker">
-                <div className="therapy-picker__chips">
-                  {DEFAULT_WEITERE_THERAPIE_TYPES.map((typeId) => (
-                    <button
-                      key={typeId}
-                      type="button"
-                      className="therapy-chip"
-                      onClick={() => handleAdd(typeId)}
-                    >
-                      {translateWeitereTherapieType(language, typeId)}
-                    </button>
-                  ))}
-                </div>
-                <div className="therapy-picker__custom">
-                  <input
-                    type="text"
-                    className="therapy-input"
-                    value={customName}
-                    placeholder={ts(language, 'wtCustomPlaceholder')}
-                    onChange={(e) => setCustomName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleAddCustom()
-                    }}
-                    autoFocus
-                  />
-                  <button
-                    type="button"
-                    className="therapy-btn therapy-btn--primary"
-                    onClick={handleAddCustom}
-                    disabled={!customName.trim()}
-                  >
-                    {ts(language, 'wtAdd')}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {pickerModal}
     </section>
   )
 }

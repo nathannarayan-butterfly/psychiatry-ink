@@ -26,7 +26,7 @@ import {
 import { useCanAccessCase } from '../../hooks/permissions/useCanAccessCase'
 import { useCanAccessModule } from '../../hooks/permissions/useCanAccessModule'
 import type { MedicationEntry, MedicationPlanState, SideEffectReport } from '../../types/medicationPlan'
-import { isMedicationVisible } from '../../utils/medication/planOps'
+import { activeMedications } from '../../utils/medication/planOps'
 import { medicationSectionDomId } from '../../contexts/MedicationSectionNavContext'
 import { MEDICATION_SECTION_META } from './medicationSectionMeta'
 import { CombinationCheckPanel } from '../therapy/CombinationCheckPanel'
@@ -122,11 +122,7 @@ export function MedicationLowerSections({
     failedCount: number
   }>({ active: false, current: 0, total: 0, currentMedId: null, failedCount: 0 })
 
-  const activeMeds = medications.filter(
-    (med) =>
-      isMedicationVisible(med) &&
-      (med.status === 'active' || med.status === 'reduced' || med.status === 'increased'),
-  )
+  const activeMeds = activeMedications(medications)
 
   const registerPrepRunCheck = useCallback((medId: string, run: () => Promise<boolean>) => {
     prepRunHandlersRef.current.set(medId, run)
@@ -404,11 +400,11 @@ export function MedicationLowerSections({
   )
 
   const renderIntelligence = () =>
-    medications.length === 0 ? (
-      <p className="medication-lower-section__hint">{translateMedicationUi(language, 'medEmpty')}</p>
+    activeMeds.length === 0 ? (
+      <p className="medication-lower-section__hint">{translateMedicationUi(language, 'medEmptyNoActive')}</p>
     ) : (
       <ul className="medication-intelligence-list">
-        {medications.map((med) => {
+        {activeMeds.map((med) => {
           const refDrugs = getDrugsForSubstance(med.substance)
           if (refDrugs.length > 0) {
             const drug = refDrugs[0]!

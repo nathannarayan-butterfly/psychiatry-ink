@@ -15,6 +15,11 @@ import { loadNotionDocumentSnapshot } from '../utils/notionDocumentActions'
 import { loadCombinationCheckStore } from '../utils/combinationCheck/storage'
 import { loadLabMedCorrelationStore } from '../utils/labMedicationCorrelation/storage'
 import { loadPrepAiCheckCache } from '../utils/prepAiCheck/storage'
+import { loadAnforderungen } from '../utils/anforderungen/storage'
+import { loadAttestationState } from '../utils/butterfly/attestationStorage'
+import { loadIsdmInput } from '../utils/isdm/inputStorage'
+import { loadIsdmAnalysis } from '../utils/isdm/storage'
+import { loadClinicalQuestionNoteState } from '../utils/clinicalQuestions/answerNotes'
 import { getCaseMeta } from '../hooks/useCaseRegistry'
 import { DEMO_CASE_ID } from './constants'
 import { loadDemoFixture } from './loadDemoFixture'
@@ -182,6 +187,49 @@ export function runDemoQaChecklist(caseId: string = DEMO_CASE_ID, userId?: strin
     status: statusFrom((imprints?.imprints.length ?? 0) >= 5),
     message: `${imprints?.imprints.length ?? 0} imprints`,
     count: imprints?.imprints.length,
+  })
+
+  const isdmInput = loadIsdmInput(caseId)
+  const assessedDomains = isdmInput
+    ? Object.values(isdmInput.domains).filter((d) => d.presence !== 'not_assessed').length
+    : 0
+  results.push({
+    module: 'ISDM input',
+    status: statusFrom(assessedDomains >= 15),
+    message: `${assessedDomains} assessed phenomenology domains`,
+    count: assessedDomains,
+  })
+
+  const isdmAnalysis = loadIsdmAnalysis(caseId)
+  results.push({
+    module: 'ISDM analysis',
+    status: statusFrom((isdmAnalysis?.diagnosticMappings.length ?? 0) >= 1),
+    message: `${isdmAnalysis?.diagnosticMappings.length ?? 0} diagnostic mappings`,
+    count: isdmAnalysis?.diagnosticMappings.length,
+  })
+
+  const attestations = loadAttestationState(caseId)
+  results.push({
+    module: 'Butterfly attestations',
+    status: statusFrom(Object.keys(attestations).length >= 5),
+    message: `${Object.keys(attestations).length} criterion attestations`,
+    count: Object.keys(attestations).length,
+  })
+
+  const questionNotes = loadClinicalQuestionNoteState(caseId)
+  results.push({
+    module: 'Clinical question notes',
+    status: statusFrom(Object.keys(questionNotes).length >= 2, true),
+    message: `${Object.keys(questionNotes).length} finding notes`,
+    count: Object.keys(questionNotes).length,
+  })
+
+  const anforderungen = loadAnforderungen(caseId)
+  results.push({
+    module: 'Anforderungen',
+    status: statusFrom(anforderungen.length >= 5),
+    message: `${anforderungen.length} orders (Labor/Befunde/Therapie)`,
+    count: anforderungen.length,
   })
 
   results.push({

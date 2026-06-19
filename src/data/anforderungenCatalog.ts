@@ -1,6 +1,7 @@
 import type {
   AnforderungCatalogItem,
   AnforderungCategory,
+  AnforderungModalPreset,
   AnforderungUrgency,
 } from '../types/anforderung'
 
@@ -315,4 +316,18 @@ export function listCatalogGroups(category: AnforderungCategory): string[] {
     if (item.category === category) groups.add(item.groupKey)
   }
   return [...groups]
+}
+
+export const ANFORDERUNG_PRESET_LABOR: AnforderungModalPreset = { category: 'labor' }
+
+export const ANFORDERUNG_PRESET_EKG: AnforderungModalPreset = {
+  category: 'befunde',
+  groupKey: 'befunde_kardio',
+  selectedCatalogIds: ['befund-ekg'],
+}
+
+export const ANFORDERUNG_PRESET_EEG: AnforderungModalPreset = {
+  category: 'befunde',
+  groupKey: 'befunde_neurophys',
+  selectedCatalogIds: ['befund-eeg-ruhe'],
 }

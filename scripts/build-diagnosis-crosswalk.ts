@@ -17,7 +17,6 @@
 import dotenv from 'dotenv'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { execSync } from 'node:child_process'
-import { DatabaseSync } from 'node:sqlite'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -46,8 +45,14 @@ type WhoRow = {
   icd10Code: string
   icd10Chapter: string
   icd10Title: string
+  icd11ReleaseUri: string
   icd11Code: string
   icd11Title: string
+}
+
+type Icd11Tabulation = {
+  codeToTitle: Map<string, string>
+  releaseUriToCode: Map<string, string>
 }
 
 function ensureSourcesDir(): void {
@@ -99,6 +104,7 @@ function parseWhoMapping(zipPath: string): WhoRow[] {
       icd10Code: cols[2]?.trim() ?? '',
       icd10Chapter: cols[3]?.trim() ?? '',
       icd10Title: cols[4]?.trim() ?? '',
+      icd11ReleaseUri: cols[8]?.trim() ?? '',
       icd11Code: normalizeIcd11Code(cols[9]?.trim() ?? ''),
       icd11Title: cleanIcd11Title(cols[11]?.trim() ?? ''),
     })
@@ -107,24 +113,41 @@ function parseWhoMapping(zipPath: string): WhoRow[] {
   return rows
 }
 
-function parseIcd11Tabulation(zipPath: string): Map<string, string> {
+function parseIcd11Tabulation(zipPath: string): Icd11Tabulation {
   const text = readZipEntry(zipPath, 'SimpleTabulation-ICD-11-MMS-en.txt')
   const lines = text.split(/\r?\n/)
-  const map = new Map<string, string>()
+  const codeToTitle = new Map<string, string>()
+  const releaseUriToCode = new Map<string, string>()
 
   for (let i = 1; i < lines.length; i += 1) {
     const line = lines[i]
     if (!line.trim()) continue
     const cols = line.split('\t')
+    const releaseUri = cols[1]?.trim()
     const code = cols[2]?.trim()
     const title = cleanIcd11Title(cols[4]?.trim() ?? '')
+    if (releaseUri && code) {
+      releaseUriToCode.set(releaseUri, normalizeIcd11Code(code))
+    }
     if (code && title) {
-      map.set(code, title)
-      map.set(normalizeIcd11Code(code), title)
+      codeToTitle.set(code, title)
+      codeToTitle.set(normalizeIcd11Code(code), title)
     }
   }
 
-  return map
+  return { codeToTitle, releaseUriToCode }
+}
+
+function resolveWhoIcd11Code(row: WhoRow, tabulation: Icd11Tabulation): string {
+  if (row.icd11Code) return row.icd11Code
+  const fromUri = tabulation.releaseUriToCode.get(row.icd11ReleaseUri)
+  if (fromUri) return fromUri
+  const entityId = row.icd11ReleaseUri.match(/\/mms\/(\d+)/)?.[1]
+  if (!entityId) return ''
+  for (const [uri, code] of tabulation.releaseUriToCode) {
+    if (uri.includes(`/mms/${entityId}`)) return code
+  }
+  return ''
 }
 
 function loadOverrides(): Map<string, CrosswalkEntry> {
@@ -137,36 +160,91 @@ function loadOverrides(): Map<string, CrosswalkEntry> {
   return map
 }
 
-function loadDiagnosticSupplement(dbPath: string): {
+type DiagnosticSupplement = {
   icd10De: Map<string, string>
   icd11De: Map<string, string>
   dsmLabelByIcd10: Map<string, string>
-} {
-  const icd10De = new Map<string, string>()
-  const icd11De = new Map<string, string>()
-  const dsmLabelByIcd10 = new Map<string, string>()
+}
 
-  if (!existsSync(dbPath)) return { icd10De, icd11De, dsmLabelByIcd10 }
-
-  const db = new DatabaseSync(dbPath)
-  for (const row of db.prepare('SELECT code, title_de FROM icd11').all() as Array<{
-    code: string
-    title_de: string
-  }>) {
-    icd11De.set(row.code, row.title_de)
-    icd11De.set(normalizeIcd11Code(row.code), row.title_de)
+function emptyDiagnosticSupplement(): DiagnosticSupplement {
+  return {
+    icd10De: new Map(),
+    icd11De: new Map(),
+    dsmLabelByIcd10: new Map(),
   }
+}
 
-  for (const row of db.prepare('SELECT icd10cm_code, title_de FROM dsm5').all() as Array<{
-    icd10cm_code: string
-    title_de: string
-  }>) {
-    const code = row.icd10cm_code.toUpperCase()
-    icd10De.set(code, row.title_de)
-    dsmLabelByIcd10.set(code, row.title_de)
+function loadDiagnosticSupplementViaPython(dbPath: string): DiagnosticSupplement | null {
+  try {
+    const scriptPath = join(sourcesDir, '.load-diagnostic-db.py')
+    writeFileSync(
+      scriptPath,
+      [
+        'import json, sqlite3, sys',
+        'db = sqlite3.connect(sys.argv[1])',
+        "icd11 = db.execute('SELECT code, title_de FROM icd11').fetchall()",
+        "dsm5 = db.execute('SELECT icd10cm_code, title_de FROM dsm5').fetchall()",
+        "print(json.dumps({'icd11': icd11, 'dsm5': dsm5}))",
+      ].join('\n'),
+    )
+    const raw = execSync(`python3 ${JSON.stringify(scriptPath)} ${JSON.stringify(dbPath)}`, {
+      encoding: 'utf8',
+      maxBuffer: 8 * 1024 * 1024,
+    })
+    const parsed = JSON.parse(raw) as {
+      icd11: Array<[string, string]>
+      dsm5: Array<[string, string]>
+    }
+    const supplement = emptyDiagnosticSupplement()
+    for (const [code, titleDe] of parsed.icd11) {
+      supplement.icd11De.set(code, titleDe)
+      supplement.icd11De.set(normalizeIcd11Code(code), titleDe)
+    }
+    for (const [icd10cmCode, titleDe] of parsed.dsm5) {
+      const code = icd10cmCode.toUpperCase()
+      supplement.icd10De.set(code, titleDe)
+      supplement.dsmLabelByIcd10.set(code, titleDe)
+    }
+    return supplement
+  } catch {
+    return null
   }
+}
 
-  return { icd10De, icd11De, dsmLabelByIcd10 }
+async function loadDiagnosticSupplement(dbPath: string): Promise<DiagnosticSupplement> {
+  if (!existsSync(dbPath)) return emptyDiagnosticSupplement()
+
+  try {
+    const { DatabaseSync } = await import('node:sqlite')
+    const db = new DatabaseSync(dbPath)
+    const supplement = emptyDiagnosticSupplement()
+    for (const row of db.prepare('SELECT code, title_de FROM icd11').all() as Array<{
+      code: string
+      title_de: string
+    }>) {
+      supplement.icd11De.set(row.code, row.title_de)
+      supplement.icd11De.set(normalizeIcd11Code(row.code), row.title_de)
+    }
+    for (const row of db.prepare('SELECT icd10cm_code, title_de FROM dsm5').all() as Array<{
+      icd10cm_code: string
+      title_de: string
+    }>) {
+      const code = row.icd10cm_code.toUpperCase()
+      supplement.icd10De.set(code, row.title_de)
+      supplement.dsmLabelByIcd10.set(code, row.title_de)
+    }
+    return supplement
+  } catch {
+    const viaPython = loadDiagnosticSupplementViaPython(dbPath)
+    if (viaPython) {
+      console.log('[build-diagnoses] diagnostic_codes.db supplement loaded via python3 fallback')
+      return viaPython
+    }
+    console.warn(
+      '[build-diagnoses] Could not read diagnostic_codes.db (node:sqlite unavailable and python3 fallback failed)',
+    )
+    return emptyDiagnosticSupplement()
+  }
 }
 
 function findBfarmCodeSystemJson(): string | null {
@@ -272,7 +350,7 @@ function resolveIcd10Label(
 function resolveIcd11Label(
   code: string,
   whoTitle: string,
-  tabulation: Map<string, string>,
+  tabulation: Icd11Tabulation,
   icd11De: Map<string, string>,
   override?: CrosswalkEntry,
 ): string {
@@ -281,8 +359,8 @@ function resolveIcd11Label(
   return (
     icd11De.get(code) ||
     icd11De.get(normalizeIcd11Code(code)) ||
-    tabulation.get(code) ||
-    tabulation.get(normalizeIcd11Code(code)) ||
+    tabulation.codeToTitle.get(code) ||
+    tabulation.codeToTitle.get(normalizeIcd11Code(code)) ||
     cleanIcd11Title(whoTitle)
   )
 }
@@ -322,7 +400,7 @@ async function main() {
   const whoRows = parseWhoMapping(mappingZip)
   const icd11Tabulation = parseIcd11Tabulation(icd11Zip)
   const overrides = loadOverrides()
-  const supplement = loadDiagnosticSupplement(diagnosticDb)
+  const supplement = await loadDiagnosticSupplement(diagnosticDb)
 
   const bfarmPath = findBfarmCodeSystemJson()
   const bfarmLabels = bfarmPath ? loadBfarmIcd10Labels(bfarmPath) : new Map<string, string>()
@@ -341,7 +419,8 @@ async function main() {
 
     const icd10Upper = row.icd10Code.toUpperCase()
     const override = overrides.get(icd10Upper)
-    const icd11Code = override?.icd11.code || row.icd11Code
+    const icd11Code =
+      override?.icd11.code || resolveWhoIcd11Code(row, icd11Tabulation)
     const icd10Label = resolveIcd10Label(
       row.icd10Code,
       row.icd10Title,
@@ -376,12 +455,25 @@ async function main() {
     a.icd10.code.localeCompare(b.icd10.code, 'de'),
   )
 
+  const missingIcd11 = entries.filter((e) => !e.icd11.code.trim())
+  const missingIcd11Label = entries.filter((e) => e.icd11.code.trim() && !e.icd11.label.trim())
+  if (missingIcd11.length > 0) {
+    console.warn(
+      `[build-diagnoses] ${missingIcd11.length} entries missing ICD-11 code: ${missingIcd11.map((e) => e.icd10.code).join(', ')}`,
+    )
+  }
+  if (missingIcd11Label.length > 0) {
+    console.warn(
+      `[build-diagnoses] ${missingIcd11Label.length} entries missing ICD-11 label: ${missingIcd11Label.map((e) => e.icd10.code).join(', ')}`,
+    )
+  }
+
   writeFileSync(outputPath, `${JSON.stringify(entries, null, 2)}\n`)
   console.log(
     `[build-diagnoses] wrote ${entries.length} crosswalks → ${outputPath} (chapters=${chapters.join(',')})`,
   )
   console.log(
-    `[build-diagnoses] overrides applied: ${overrides.size}, with DSM label: ${entries.filter((e) => e.dsm5tr.label).length}`,
+    `[build-diagnoses] ICD-11 populated: ${entries.filter((e) => e.icd11.code && e.icd11.label).length}/${entries.length}, overrides: ${overrides.size}, with DSM label: ${entries.filter((e) => e.dsm5tr.label).length}`,
   )
 }
 

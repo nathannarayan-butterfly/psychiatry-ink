@@ -1,4 +1,5 @@
 import type { SemanticTone } from './OverviewCard'
+import type { RecentLabResultItem } from '../../../utils/overview/recentLabResults'
 
 // ---------------------------------------------------------------------------
 // Shared presentational data contracts for the Übersicht dashboard cards.
@@ -151,6 +152,11 @@ export interface LabsDueData {
   /** Monitoring parameters required by the regimen with NO matching lab on file. */
   missingMonitoring: { parameter: string; drugs: string[] }[]
   hasLabData: boolean
+}
+
+export interface LaborOverviewData extends LabsDueData {
+  medicationMonitoring: MedicationMonitoringGroup[]
+  recentAbnormal: RecentLabResultItem[]
 }
 
 export interface KonsilCardItem {

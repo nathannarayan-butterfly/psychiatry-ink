@@ -3,6 +3,7 @@ import { ClinicalHeroStrip } from '../../clinical/ClinicalHeroStrip'
 import { DiagnosisDisplayLabel } from '../../diagnosis/DiagnosisDisplayLabel'
 import { buildClinicalThesis } from '../../../utils/overview/clinicalThesis'
 import { buildClinicalHeroMeta } from '../../../utils/overview/clinicalHeroMeta'
+import { DEFAULT_CASE_ID } from '../../../utils/caseContext'
 import { resolveDisplayCriteriaLabel } from '../../../utils/diagnosisDisplayRequests'
 import { useTranslation } from '../../../context/TranslationContext'
 import type { HeroSummaryData } from './types'
@@ -49,7 +50,12 @@ export function OverviewHero({ data, caseId }: OverviewHeroProps) {
 
   return (
     <div className="ov-hero-widget">
-      <ClinicalHeroStrip name={name} metaLine={metaLine} caseId={caseId} thesis={thesis} />
+      <ClinicalHeroStrip
+        name={name}
+        metaLine={metaLine}
+        caseId={caseId !== DEFAULT_CASE_ID ? caseId : undefined}
+        thesis={thesis}
+      />
       {showOrientation ? (
         <p className="ov-hero-widget__orientation" aria-label="Orientierung">
           {primaryDiagnosis?.code ? (

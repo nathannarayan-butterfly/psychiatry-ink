@@ -17,6 +17,7 @@ import type { KbSubstanceDetail } from '../../src/types/kbNormalized'
 import type { KbRelease } from '../../src/types/kbReleases'
 import type { MedicationMarketAvailability, PrescribingCountryCode } from '../../src/types/knowledgeBase'
 import { normalizeGenericName } from '../../src/utils/kb/normalizeGenericName'
+import { kbPharmacokineticsToStructuredData } from './kbPharmacokinetics'
 import { getKbSubstanceById } from './kbNormalizedStore'
 import { getCurrentKbRelease } from './kbReleases'
 import { getKbSupabaseAdmin } from './kbSupabaseAdmin'
@@ -286,10 +287,15 @@ function buildSectionOverrides(detail: KbSubstanceDetail): Partial<Record<DrugSe
     geriatricCaution ? `Geriatrie: ${geriatricCaution}` : null,
   ].filter(Boolean)
 
+  const pkSummary = detail.pharmacokinetics
+    ? de(detail.pharmacokinetics.summaryDe, detail.pharmacokinetics.summary)
+    : null
+
   return {
     kurzprofil: kurzParts.join('. ').slice(0, 600),
     wirkmechanismus: [mechanismSummary, pharmacodynamicProfile].filter(Boolean).join('\n\n'),
     rezeptorprofil: formatReceptorSummary(detail),
+    pharmakokinetik: pkSummary ?? '',
     indikationen: uses.join(', '),
     dosierung: formatDosageGuidance(detail),
     nebenwirkungen: detail.sideEffects.length
@@ -330,14 +336,30 @@ function buildStructuredOverrides(detail: KbSubstanceDetail): SectionStructuredO
     .slice(0, 4)
     .map((r) => r.receptor)
 
+  const pkStructured = detail.pharmacokinetics
+    ? kbPharmacokineticsToStructuredData(detail.pharmacokinetics)
+    : undefined
+  const halfLifeSummary =
+    pkStructured?.halfLifeHours != null
+      ? `${pkStructured.halfLifeHours} h${pkStructured.halfLifeNote ? ` (${pkStructured.halfLifeNote})` : ''}`
+      : undefined
+
   return {
     steckbrief: {
       glance: {
         drugClass: de(detail.substanceClassDe, detail.substanceClass) ?? undefined,
+        halfLifeSummary,
         primaryTargets: primaryTargets.length ? primaryTargets : undefined,
         isEstimated: detail.sourceQuality.startsWith('ai_'),
       },
     },
+    ...(pkStructured
+      ? {
+          pharmakokinetik: {
+            pk: pkStructured,
+          },
+        }
+      : {}),
     nebenwirkungen: sideEffects.length ? { sideEffects } : undefined,
     wechselwirkungen: interactions.length
       ? {
@@ -483,6 +505,89 @@ const LEGACY_CURATED_GERMAN_DUPLICATES = new Set<string>([
   'sertraline',
 ])
 
+/** Hand-curated German seed rows keyed by normalized English INN. */
+const LEGACY_CURATED_DRUG_IDS: Record<string, string> = {
+  olanzapine: 'seed-olanzapine-003',
+  risperidone: 'seed-risperidone-002',
+  aripiprazole: 'seed-aripiprazole-004',
+  sertraline: 'seed-sertraline-005',
+}
+
+function applyPharmacokineticsToDrug(
+  drug: KnowledgeBaseDrug,
+  detail: KbSubstanceDetail,
+): KnowledgeBaseDrug {
+  if (!detail.pharmacokinetics) return drug
+  const pkText = de(detail.pharmacokinetics.summaryDe, detail.pharmacokinetics.summary) ?? ''
+  const pkStructured = kbPharmacokineticsToStructuredData(detail.pharmacokinetics)
+  const now = new Date().toISOString()
+  const sections = drug.sections.map((section) => {
+    if (section.key === 'pharmakokinetik') {
+      return { ...section, kind: 'pk' as const, content: pkText, pk: pkStructured }
+    }
+    if (section.key === 'steckbrief' && pkStructured.halfLifeHours != null) {
+      const halfLifeSummary = `${pkStructured.halfLifeHours} h${
+        pkStructured.halfLifeNote ? ` (${pkStructured.halfLifeNote})` : ''
+      }`
+      return {
+        ...section,
+        glance: { ...(section.glance ?? {}), halfLifeSummary },
+      }
+    }
+    return section
+  })
+  return {
+    ...drug,
+    sections,
+    updatedAt: now,
+    lastModifiedAt: now,
+  }
+}
+
+export async function mergePharmacokineticsIntoKnowledgeBaseDrug(
+  drugId: string,
+  detail: KbSubstanceDetail,
+): Promise<void> {
+  if (!detail.pharmacokinetics) return
+  const supabase = getKbSupabaseAdmin()
+  const { data, error } = await supabase.from('knowledge_base_drugs').select('data').eq('id', drugId).single()
+  if (error) throw error
+  if (!data?.data) throw new Error(`Drug not found: ${drugId}`)
+  const updated = applyPharmacokineticsToDrug(data.data as KnowledgeBaseDrug, detail)
+  const { error: upsertError } = await supabase.from('knowledge_base_drugs').upsert(
+    {
+      id: drugId,
+      data: updated,
+      collection_id: updated.collectionId ?? null,
+      generic_name: updated.genericName,
+      updated_at: updated.updatedAt,
+    },
+    { onConflict: 'id' },
+  )
+  if (upsertError) throw upsertError
+}
+
+/** Patch hand-curated German legacy drugs with PK from normalized substances. */
+export async function syncLegacyCuratedPharmacokinetics(): Promise<string[]> {
+  const patched: string[] = []
+  for (const inn of LEGACY_CURATED_GERMAN_DUPLICATES) {
+    const legacyId = LEGACY_CURATED_DRUG_IDS[inn]
+    if (!legacyId) continue
+    const supabase = getKbSupabaseAdmin()
+    const { data: substance } = await supabase
+      .from('kb_substances')
+      .select('id')
+      .eq('normalized_generic_name', inn)
+      .maybeSingle()
+    if (!substance?.id) continue
+    const detail = await getKbSubstanceById(String(substance.id))
+    if (!detail?.pharmacokinetics) continue
+    await mergePharmacokineticsIntoKnowledgeBaseDrug(legacyId, detail)
+    patched.push(legacyId)
+  }
+  return patched
+}
+
 /** Upsert projected drug into knowledge_base_drugs (service role). Returns drug id. */
 export async function projectAndUpsertKnowledgeBaseDrug(substanceId: string): Promise<string> {
   const detail = await getKbSubstanceById(substanceId)
@@ -493,9 +598,28 @@ export async function projectAndUpsertKnowledgeBaseDrug(substanceId: string): Pr
 
   // L-003: a curated German entry already exists for this substance — keep it
   // canonical instead of projecting a duplicate English-named row.
-  if (LEGACY_CURATED_GERMAN_DUPLICATES.has(normalizeGenericName(detail.genericName))) {
-    const curatedId = await findExistingDrugId(detail)
-    return curatedId ?? `kb-norm-${detail.id}`
+  const inn = normalizeGenericName(detail.genericName)
+  if (LEGACY_CURATED_GERMAN_DUPLICATES.has(inn)) {
+    const legacyId = LEGACY_CURATED_DRUG_IDS[inn]
+    if (legacyId && detail.pharmacokinetics) {
+      await mergePharmacokineticsIntoKnowledgeBaseDrug(legacyId, detail)
+    }
+    const normId = `kb-norm-${detail.id}`
+    const release = await getCurrentKbRelease()
+    const projected = projectKbSubstanceDetailToDrug(detail, normId, release)
+    const supabase = getKbSupabaseAdmin()
+    const { error: normError } = await supabase.from('knowledge_base_drugs').upsert(
+      {
+        id: projected.id,
+        data: projected,
+        collection_id: projected.collectionId ?? null,
+        generic_name: projected.genericName,
+        updated_at: projected.updatedAt,
+      },
+      { onConflict: 'id' },
+    )
+    if (normError) throw normError
+    return legacyId ?? normId
   }
 
   const existingId = await findExistingDrugId(detail)

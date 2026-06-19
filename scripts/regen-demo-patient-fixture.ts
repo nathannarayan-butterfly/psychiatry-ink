@@ -20,8 +20,9 @@ async function tryDeepSeekRegen(): Promise<DemoPatientFixture | null> {
   if (!apiKey) return null
 
   const prompt = `Return ONLY valid JSON matching DemoPatientFixture for a synthetic German psychiatry demo patient.
-Markers: isDemoPatient true, demoSeedVersion "v1", demoPatientId "DEMO-0001", demoCaseId "DEMO-CASE-0001".
-Patient: Max Demo, DOB 14.03.1991, admission 02.06.2026. Fictional only — no real PHI.
+Markers: isDemoPatient true, demoSeedVersion "v3", demoPatientId "DEMO-0001", demoCaseId "DEMO-CASE-0001".
+Patient: Anna Demo, female, DOB 12.08.1992, admission 02.06.2026. Fictional only — no real PHI.
+Include workspace.isdmInput, isdmAnalysis, butterflyAttestations, clinicalQuestionNotes, anforderungen.
 Use clinically realistic German text with diagnostic uncertainty (F20.0, F12.2, F15.2).`
 
   try {

@@ -5,6 +5,7 @@ import {
   DIAGNOSEN_CODING_SYSTEM_EVENT,
   dispatchDiagnosenCodingSystemChange,
   loadDiagnosenCodingSystem,
+  normalizeVisibleCodingSystem,
   saveDiagnosenCodingSystem,
 } from '../utils/diagnosenCodingSystem'
 
@@ -31,9 +32,10 @@ export function useDiagnosenCodingSystem(caseId: string) {
 
   const setActiveSystem = useCallback(
     (system: CodingSystem) => {
-      setActiveSystemState(system)
-      saveDiagnosenCodingSystem(caseId, system)
-      dispatchDiagnosenCodingSystemChange(caseId, system)
+      const visible = normalizeVisibleCodingSystem(system)
+      setActiveSystemState(visible)
+      saveDiagnosenCodingSystem(caseId, visible)
+      dispatchDiagnosenCodingSystemChange(caseId, visible)
     },
     [caseId],
   )

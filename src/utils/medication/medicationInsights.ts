@@ -1,7 +1,7 @@
 import { getDrugsForSubstance } from '../../data/psychDrugReference/index'
 import type { DrugReference, InteractionEntry, ReceptorProfile } from '../../data/psychDrugReference/schema'
 import type { MedicationEntry } from '../../types/medicationPlan'
-import { isMedicationVisible } from './planOps'
+import { activeMedications, isMedicationVisible } from './planOps'
 import {
   affinityScore,
   RECEPTOR_AXES,
@@ -111,8 +111,6 @@ export interface MedicationInsights {
   hasReferenceData: boolean
 }
 
-const ACTIVE_STATUSES = new Set(['active', 'reduced', 'increased'])
-
 /** Affinity score at/above which a receptor counts as a clinical "target". */
 const TARGET_THRESHOLD = 3
 
@@ -144,7 +142,7 @@ export function computeMedicationInsights(
   language: string,
 ): MedicationInsights {
   const visible = medications.filter(isMedicationVisible)
-  const active = visible.filter((med) => ACTIVE_STATUSES.has(med.status))
+  const active = activeMedications(visible)
 
   // Resolve each active drug to its reference entry once.
   const activeDrugs: ActiveDrug[] = []

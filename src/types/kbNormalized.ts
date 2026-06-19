@@ -109,6 +109,27 @@ export interface KbDosageGuidance {
   administrationNotesDe: string | null
 }
 
+export interface KbPharmacokinetics {
+  id: string
+  substanceId: string
+  summary: string | null
+  summaryDe: string | null
+  halfLifeHours: number | null
+  halfLifeNote: string | null
+  halfLifeNoteDe: string | null
+  tmaxHours: number | null
+  timeToSteadyStateDays: number | null
+  bioavailabilityPercent: number | null
+  proteinBindingPercent: number | null
+  tdmLow: number | null
+  tdmHigh: number | null
+  tdmUnit: string | null
+  tdmNote: string | null
+  tdmNoteDe: string | null
+  isEstimated: boolean
+  sourceNote: string | null
+}
+
 export interface KbInteractionNote {
   id: string
   substanceId: string
@@ -163,6 +184,7 @@ export interface KbSubstanceDetail extends KbSubstance {
   sideEffects: KbSideEffect[]
   monitoring: KbMonitoringRecommendation[]
   dosageGuidance: KbDosageGuidance[]
+  pharmacokinetics: KbPharmacokinetics | null
   interactions: KbInteractionNote[]
   sources: KbSource[]
   countryPreparations: KbCountryPreparation[]

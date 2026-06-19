@@ -30,5 +30,5 @@ export function demoCaseLabel(): string {
 }
 
 export function demoPatientDisplayName(): string {
-  return 'Max Demo'
+  return 'Anna Demo'
 }

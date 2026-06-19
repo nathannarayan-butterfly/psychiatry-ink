@@ -8,7 +8,7 @@ export function DokumenteSectionNav() {
   const nav = useDokumenteSectionNavOptional()
   if (!nav) return null
 
-  const { activeCategory, setActiveCategory, requestNewTemplate } = nav
+  const { activeCategory, setActiveCategory, requestNewTemplate, requestImport } = nav
 
   const showExterneUpload = activeCategory === 'all' || activeCategory === 'externe-befunde'
   const showTemplateActions = activeCategory === 'all' || activeCategory === 'formulare'
@@ -58,11 +58,11 @@ export function DokumenteSectionNav() {
           {showExterneUpload && (
             <button
               type="button"
-              className="dokumente-section-nav__action dokumente-section-nav__action--disabled"
-              disabled
-              title={t('dokumenteUpload')}
+              className="dokumente-section-nav__action"
+              onClick={requestImport}
+              title={t('documentImportTitle')}
             >
-              {t('dokumenteUpload')}
+              {t('documentImportTitle')}
             </button>
           )}
           {showTemplateActions && (

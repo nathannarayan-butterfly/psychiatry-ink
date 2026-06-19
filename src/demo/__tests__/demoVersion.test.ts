@@ -27,7 +27,7 @@ describe('demo version helpers', () => {
 
   it('bumps seed versions', () => {
     expect(nextDemoSeedVersion('v2')).toBe('v3')
-    expect(nextDemoSeedVersion(null)).toBe('v3')
+    expect(nextDemoSeedVersion(null)).toBe('v4')
   })
 
   it('uses canonical version when set', () => {

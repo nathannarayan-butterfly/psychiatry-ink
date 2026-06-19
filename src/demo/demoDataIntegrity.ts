@@ -6,6 +6,9 @@ import { loadNotionDocumentSnapshot } from '../utils/notionDocumentActions'
 import { loadCombinationCheckStore } from '../utils/combinationCheck/storage'
 import { loadLabMedCorrelationStore } from '../utils/labMedicationCorrelation/storage'
 import { loadPrepAiCheckCache } from '../utils/prepAiCheck/storage'
+import { loadAnforderungen } from '../utils/anforderungen/storage'
+import { loadAttestationState } from '../utils/butterfly/attestationStorage'
+import { loadIsdmInput } from '../utils/isdm/inputStorage'
 import { DEMO_CASE_ID } from './constants'
 import { getEffectiveDemoSeedVersion } from './demoVersion'
 
@@ -42,6 +45,15 @@ export function isDemoSeedDataComplete(caseId: string = DEMO_CASE_ID): boolean {
 
   const laborBefunde = loadBefunde(caseId)
   if (laborBefunde.length < 2) return false
+
+  const isdm = loadIsdmInput(caseId)
+  if (!isdm || Object.values(isdm.domains).every((d) => d.presence === 'not_assessed')) return false
+
+  const attestations = loadAttestationState(caseId)
+  if (Object.keys(attestations).length < 3) return false
+
+  const orders = loadAnforderungen(caseId)
+  if (orders.length < 3) return false
 
   return true
 }

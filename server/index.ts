@@ -21,6 +21,8 @@ import { transcribeRouter } from './routes/transcribe'
 import { inlineEditRouter } from './routes/inlineEdit'
 import { discussCaseRouter } from './routes/discussCase'
 import { butterflyRouter } from './routes/butterfly'
+import { askButterflyRouter } from './routes/askButterfly'
+import { documentImportMappingRouter } from './routes/documentImportMapping'
 import { clinicalMetadataRouter } from './routes/clinicalMetadata'
 import { consultationRouter } from './routes/consultation'
 import { orgRouter } from './routes/org'
@@ -75,6 +77,8 @@ app.use('/api/kb-admin', kbAdminRouter)
 app.use('/api/kb-contributions', kbContributionsRouter)
 app.use('/api/discuss-case', discussCaseRouter)
 app.use('/api/butterfly', butterflyRouter)
+app.use('/api/ask-butterfly', askButterflyRouter)
+app.use('/api/document-import', documentImportMappingRouter)
 app.use('/api/clinical-metadata', clinicalMetadataRouter)
 app.use('/api/consultation', consultationRouter)
 app.use('/api/org', orgRouter)

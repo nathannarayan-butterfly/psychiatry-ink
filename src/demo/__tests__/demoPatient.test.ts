@@ -28,11 +28,17 @@ describe('demo fixture', () => {
     expect(fixture.workspace.diagnoses.length).toBe(3)
     expect(fixture.workspace.diagnoses.some((d) => d.icd10.code.startsWith('F25'))).toBe(false)
     expect(fixture.workspace.medicationPlanState?.plans[0]?.medications.length).toBeGreaterThanOrEqual(2)
-    expect(fixture.befundRecords.length).toBeGreaterThanOrEqual(1)
+    expect(fixture.befundRecords.length).toBeGreaterThanOrEqual(2)
     expect(fixture.laborBefunde.length).toBeGreaterThanOrEqual(2)
     expect(fixture.aiTherapyDemo?.combinationCheck.findings.length).toBeGreaterThanOrEqual(2)
     expect(fixture.aiTherapyDemo?.labMedCorrelation.findings.length).toBeGreaterThanOrEqual(2)
     expect(fixture.aiTherapyDemo?.prepAiCheck.entries.length).toBeGreaterThanOrEqual(1)
+    expect(fixture.workspace.isdmInput?.domains).toBeDefined()
+    expect(fixture.workspace.isdmAnalysis?.diagnosticMappings.length).toBeGreaterThanOrEqual(1)
+    expect(Object.keys(fixture.workspace.butterflyAttestations ?? {}).length).toBeGreaterThanOrEqual(5)
+    expect(fixture.workspace.anforderungen?.length).toBeGreaterThanOrEqual(5)
+    expect(fixture.patient.vorname).toBe('Anna')
+    expect(fixture.patient.geschlecht).toBe('weiblich')
   })
 
   it('rejects fixture with wrong patient id', () => {

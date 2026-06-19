@@ -172,6 +172,21 @@ export function visibleMedications(medications: MedicationEntry[]): MedicationEn
   return medications.filter(isMedicationVisible)
 }
 
+/** Statuses that count as part of the current active regimen (excludes paused / discontinued). */
+export const ACTIVE_MEDICATION_STATUSES: readonly MedicationStatus[] = [
+  'active',
+  'reduced',
+  'increased',
+]
+
+export function isActiveMedication(entry: MedicationEntry): boolean {
+  return isMedicationVisible(entry) && ACTIVE_MEDICATION_STATUSES.includes(entry.status)
+}
+
+export function activeMedications(medications: MedicationEntry[]): MedicationEntry[] {
+  return medications.filter(isActiveMedication)
+}
+
 export interface MedicationDeleteInput {
   reasonCode: MedicationDeleteReasonCode
   reasonText?: string
@@ -430,6 +445,7 @@ export function ensureMedicationPlanState(
     updatedAt: raw.updatedAt ?? new Date().toISOString(),
     currentPlanId: raw.currentPlanId ?? raw.plans[0]?.id ?? null,
     sideEffectReports: raw.sideEffectReports ?? [],
+    curatedTargetReceptors: raw.curatedTargetReceptors,
     plans: raw.plans.map((plan) => ({
       ...plan,
       medications: (plan.medications ?? []).map((med) => ({

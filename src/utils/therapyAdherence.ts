@@ -153,7 +153,7 @@ const PARTICIPATION_REGEXES: RegExp[] = [
   /\b(?:attended|completed)\s+([\p{L}][\p{L}\s/-]{2,48}?)\b/giu,
 ]
 
-function scanTextForEvents(
+export function scanTextForEvents(
   text: string,
   therapies: OrderedTherapy[],
 ): ParsedEvent[] {
@@ -184,7 +184,7 @@ function scanTextForEvents(
   return events
 }
 
-function isRefusalNote(note: string): boolean {
+export function isRefusalNote(note: string): boolean {
   const lower = note.toLowerCase()
   return (
     /\bverweigert/.test(lower) ||

@@ -1,32 +1,71 @@
+import { useTranslation } from '../../../context/TranslationContext'
+import { ClinicalEyebrow } from '../../clinical/ClinicalEyebrow'
 import { OverviewCard, OverviewEmpty } from './OverviewCard'
-import { SymptomTrajectoryChart } from './SymptomTrajectoryChart'
-import type { SymptomSnapshotData } from './types'
+import type { SafetyRiskSignal, SymptomSnapshotData } from './types'
 
 interface SymptomSnapshotCardProps {
   data: SymptomSnapshotData
+  riskSignals?: SafetyRiskSignal[]
   onOpen?: () => void
 }
 
+function SafetyAxisStrip({ signal }: { signal: SafetyRiskSignal }) {
+  const classes = [
+    'cm-quiet-strip',
+    'cm-quiet-strip--axis',
+    `cm-quiet-strip--tone-${signal.tone}`,
+  ].join(' ')
+
+  return (
+    <div className={classes}>
+      <p className="cm-quiet-strip__headline">{signal.label}</p>
+      {signal.value ? <p className="cm-quiet-strip__detail">{signal.value}</p> : null}
+      {signal.showPill && signal.pillLabel ? (
+        <span className="ov-safety__severity">{signal.pillLabel}</span>
+      ) : null}
+    </div>
+  )
+}
+
 /**
- * Psychopathology section — structured cues + thin trajectory chart, flat layout.
+ * Psychopathologischer Befund (PPB) — structured cues with prominent
+ * Eigengefährdung / Fremdgefährdung safety subsection.
  */
-export function SymptomSnapshotCard({ data, onOpen }: SymptomSnapshotCardProps) {
+export function SymptomSnapshotCard({ data, riskSignals = [], onOpen }: SymptomSnapshotCardProps) {
+  const { t } = useTranslation()
+  const harmSignals = riskSignals.filter(
+    (s) => s.id === 'riskSelf' || s.id === 'riskOthers' || s.id === 'suicidality',
+  )
   const hasContent =
-    Boolean(data.snapshotText) || data.structured.length > 0 || Boolean(data.courseLabel)
-  const title = data.contextLabel ? `Psychopathologie (${data.contextLabel})` : 'Psychopathologie'
+    Boolean(data.snapshotText) ||
+    data.structured.length > 0 ||
+    Boolean(data.courseLabel) ||
+    harmSignals.length > 0
   const meta =
-    [data.courseLabel, data.asOfLabel ? `Stand ${data.asOfLabel}` : null].filter(Boolean).join(' · ') ||
-    null
+    [data.contextLabel, data.courseLabel, data.asOfLabel ? `Stand ${data.asOfLabel}` : null]
+      .filter(Boolean)
+      .join(' · ') || null
 
   return (
     <OverviewCard
-      title={title}
+      title={t('notionPagePsychopath')}
       className="ov-col-6"
       meta={meta}
       action={onOpen ? { label: 'Befund öffnen', onClick: onOpen } : undefined}
     >
       {!hasContent ? (
         <OverviewEmpty>Kein psychopathologischer Befund hinterlegt.</OverviewEmpty>
+      ) : null}
+
+      {harmSignals.length > 0 ? (
+        <div className="ov-ppb__safety">
+          <ClinicalEyebrow className="ov-safety__subhead">Eigengefährdung / Fremdgefährdung</ClinicalEyebrow>
+          <div className="ov-safety__axes">
+            {harmSignals.map((signal) => (
+              <SafetyAxisStrip key={signal.id} signal={signal} />
+            ))}
+          </div>
+        </div>
       ) : null}
 
       {data.structured.length > 0 ? (
@@ -49,16 +88,6 @@ export function SymptomSnapshotCard({ data, onOpen }: SymptomSnapshotCardProps) 
       ) : null}
 
       {data.snapshotText ? <p className="ov-snapshot__text">{data.snapshotText}</p> : null}
-
-      {data.trajectory.length >= 2 ? (
-        <div className="ov-snapshot__trend ov-snapshot__trend--flat">
-          <p className="cm-chart-title">Verlaufstendenz</p>
-          <p className="cm-chart-axis">
-            Y-Achse: Verlaufsrichtung · X-Achse: Zeit · niedrigere Werte = weniger Symptomlast
-          </p>
-          <SymptomTrajectoryChart points={data.trajectory} />
-        </div>
-      ) : null}
     </OverviewCard>
   )
 }

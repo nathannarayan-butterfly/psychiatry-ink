@@ -1,14 +1,48 @@
-import { useCallback, useMemo, useState, type DragEvent, type ReactNode } from 'react'
+import {
+  useCallback,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+  type DragEvent,
+  type ReactNode,
+} from 'react'
 import { ChevronDown, ChevronUp, GripVertical, Maximize2, Minimize2, X } from 'lucide-react'
 import { useTranslation } from '../../../context/TranslationContext'
 import {
   isOverviewWidgetVisible,
+  packOverviewWidgets,
   type OverviewLayoutItem,
+  type OverviewWidgetPlacement,
   type OverviewWidgetVisibilityContext,
   type OverviewWidgetWidth,
 } from '../../../utils/overview/overviewLayout'
-import { OVERVIEW_WIDGET_REGISTRY } from './overviewWidgetRegistry'
+import { getOverviewWidgetSizeWeight, OVERVIEW_WIDGET_REGISTRY } from './overviewWidgetRegistry'
 import { renderOverviewWidget, type OverviewWidgetRenderContext } from './OverviewWidgetContent'
+
+const OVERVIEW_GRID_SINGLE_COLUMN_MAX_WIDTH = 1100
+
+function subscribeMaxWidthQuery(onStoreChange: () => void): () => void {
+  const query = `(max-width: ${OVERVIEW_GRID_SINGLE_COLUMN_MAX_WIDTH}px)`
+  const media = window.matchMedia(query)
+  media.addEventListener('change', onStoreChange)
+  return () => media.removeEventListener('change', onStoreChange)
+}
+
+function getMaxWidthQuerySnapshot(): boolean {
+  return window.matchMedia(`(max-width: ${OVERVIEW_GRID_SINGLE_COLUMN_MAX_WIDTH}px)`).matches
+}
+
+function getMaxWidthQueryServerSnapshot(): boolean {
+  return false
+}
+
+function useOverviewGridSingleColumn(): boolean {
+  return useSyncExternalStore(
+    subscribeMaxWidthQuery,
+    getMaxWidthQuerySnapshot,
+    getMaxWidthQueryServerSnapshot,
+  )
+}
 
 export interface OverviewWidgetGridProps {
   widgets: OverviewLayoutItem[]
@@ -32,6 +66,7 @@ export function OverviewWidgetGrid({
   const { t } = useTranslation()
   const [dragIndex, setDragIndex] = useState<number | null>(null)
   const [dropIndex, setDropIndex] = useState<number | null>(null)
+  const singleColumn = useOverviewGridSingleColumn()
 
   const visibleWidgets = useMemo(
     () =>
@@ -42,6 +77,16 @@ export function OverviewWidgetGrid({
           return isOverviewWidgetVisible(item.widgetId, def.visibility, visibilityContext)
         }),
     [widgets, visibilityContext],
+  )
+
+  const placements = useMemo<OverviewWidgetPlacement[]>(
+    () => visibleWidgets.map(({ item, index }) => ({ item, index })),
+    [visibleWidgets],
+  )
+
+  const packedSegments = useMemo(
+    () => packOverviewWidgets(placements, getOverviewWidgetSizeWeight),
+    [placements],
   )
 
   const handleDragStart = useCallback((index: number, event: DragEvent<HTMLDivElement>) => {
@@ -75,34 +120,82 @@ export function OverviewWidgetGrid({
     setDropIndex(null)
   }, [])
 
+  const renderSlot = useCallback(
+    ({ item, index }: OverviewWidgetPlacement, visibleIndex: number) => (
+      <OverviewWidgetSlot
+        key={item.instanceId}
+        item={item}
+        index={index}
+        visibleIndex={visibleIndex}
+        visibleCount={visibleWidgets.length}
+        editMode={editMode}
+        isDragging={dragIndex === index}
+        isDropTarget={dropIndex === index && dragIndex !== index}
+        title={t(OVERVIEW_WIDGET_REGISTRY[item.widgetId].titleKey)}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        onDragEnd={handleDragEnd}
+        onMoveUp={() => onMove(index, index - 1)}
+        onMoveDown={() => onMove(index, index + 1)}
+        onRemove={() => onRemove(item.instanceId)}
+        onResize={(width) => onResize(item.instanceId, width)}
+      >
+        {renderOverviewWidget(item.widgetId, renderContext)}
+      </OverviewWidgetSlot>
+    ),
+    [
+      visibleWidgets.length,
+      editMode,
+      dragIndex,
+      dropIndex,
+      t,
+      handleDragStart,
+      handleDragOver,
+      handleDrop,
+      handleDragEnd,
+      onMove,
+      onRemove,
+      onResize,
+      renderContext,
+    ],
+  )
+
+  const gridClassName = `ov-grid${editMode ? ' ov-grid--edit' : ''}${singleColumn ? ' ov-grid--single' : ''}`
+
+  if (singleColumn) {
+    return (
+      <div className={gridClassName} aria-live={editMode ? 'polite' : undefined}>
+        {visibleWidgets.map(({ item, index }, visibleIdx) => renderSlot({ item, index }, visibleIdx))}
+      </div>
+    )
+  }
+
   return (
-    <div
-      className={`ov-grid${editMode ? ' ov-grid--edit' : ''}`}
-      aria-live={editMode ? 'polite' : undefined}
-    >
-      {visibleWidgets.map(({ item, index }, visibleIdx) => (
-        <OverviewWidgetSlot
-          key={item.instanceId}
-          item={item}
-          index={index}
-          visibleIndex={visibleIdx}
-          visibleCount={visibleWidgets.length}
-          editMode={editMode}
-          isDragging={dragIndex === index}
-          isDropTarget={dropIndex === index && dragIndex !== index}
-          title={t(OVERVIEW_WIDGET_REGISTRY[item.widgetId].titleKey)}
-          onDragStart={handleDragStart}
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
-          onDragEnd={handleDragEnd}
-          onMoveUp={() => onMove(index, index - 1)}
-          onMoveDown={() => onMove(index, index + 1)}
-          onRemove={() => onRemove(item.instanceId)}
-          onResize={(width) => onResize(item.instanceId, width)}
-        >
-          {renderOverviewWidget(item.widgetId, renderContext)}
-        </OverviewWidgetSlot>
-      ))}
+    <div className={gridClassName} aria-live={editMode ? 'polite' : undefined}>
+      {packedSegments.map((segment, segmentIdx) => {
+        if (segment.type === 'full') {
+          const visibleIdx = visibleWidgets.findIndex(({ index }) => index === segment.placement.index)
+          return renderSlot(segment.placement, visibleIdx)
+        }
+
+        return (
+          <div key={`columns-${segmentIdx}`} className="ov-grid__row">
+            <div className="ov-grid__col">
+              {segment.left.map((placement) => {
+                const visibleIdx = visibleWidgets.findIndex(({ index }) => index === placement.index)
+                return renderSlot(placement, visibleIdx)
+              })}
+            </div>
+            <div className="ov-grid__col">
+              {segment.right.map((placement) => {
+                const visibleIdx = visibleWidgets.findIndex(({ index }) => index === placement.index)
+                return renderSlot(placement, visibleIdx)
+              })}
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }

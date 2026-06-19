@@ -823,14 +823,6 @@
   fill: color-mix(in srgb, var(--accent) 55%, white 45%);
 }
 
-.case-sidebar-panel .pomodoro-sidebar-lines {
-  color: var(--case-sidebar-muted);
-}
-
-.case-sidebar-panel .pomodoro-sidebar-lines__countdown:hover {
-  color: #fff;
-}
-
 .case-sidebar-panel .panel-date-card__ink-date {
   color: #fff;
 }

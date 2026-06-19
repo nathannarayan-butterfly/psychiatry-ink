@@ -11,10 +11,8 @@ import type { PsychopathSubMode } from '../../utils/psychopathMode'
 
 interface NotionDiarySidebarProps {
   panelGraphicEnabled: boolean
-  breakReminderActive: boolean
   onClosePanelGraphic: () => void
   collapsed?: boolean
-  onBreakStart?: () => void
   caseId?: string
   onNavigateToLabor?: () => void
   savedDocs?: SavedDoc[]
@@ -46,10 +44,8 @@ function formatShortDate(iso: string): string {
 
 export function NotionDiarySidebar({
   panelGraphicEnabled,
-  breakReminderActive,
   onClosePanelGraphic,
   collapsed = false,
-  onBreakStart: _onBreakStart,
   caseId,
   onNavigateToLabor,
   savedDocs,
@@ -67,9 +63,8 @@ export function NotionDiarySidebar({
   const { t } = useTranslation()
   const { visible: graphicVisible, dismiss: dismissGraphic } = usePanelGraphicSchedule({
     enabled: panelGraphicEnabled,
-    paused: breakReminderActive,
   })
-  const showPanelGraphic = breakReminderActive || graphicVisible
+  const showPanelGraphic = graphicVisible
 
   const handleClosePanelGraphic = useCallback(() => {
     dismissGraphic()

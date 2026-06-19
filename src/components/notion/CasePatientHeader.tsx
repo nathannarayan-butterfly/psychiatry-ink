@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { ClinicalHeroStrip } from '../clinical/ClinicalHeroStrip'
 import { buildClinicalThesis } from '../../utils/overview/clinicalThesis'
 import { buildClinicalHeroMeta } from '../../utils/overview/clinicalHeroMeta'
+import { DEFAULT_CASE_ID } from '../../utils/caseContext'
 import { useTranslation } from '../../context/TranslationContext'
 
 interface CasePatientHeaderProps {
@@ -43,7 +44,7 @@ export function CasePatientHeader({
       <ClinicalHeroStrip
         name={name}
         metaLine={metaLine}
-        caseId={caseId}
+        caseId={caseId !== DEFAULT_CASE_ID ? caseId : undefined}
         thesis={thesis}
       />
     </div>

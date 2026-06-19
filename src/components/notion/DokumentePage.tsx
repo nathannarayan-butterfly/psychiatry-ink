@@ -15,6 +15,9 @@ import { defaultAufnahmeSections } from '../../data/aufnahmeSections'
 import { formatIsoTimestampDate } from '../../utils/siteTimezone'
 import type { UiLanguage } from '../../types/settings'
 import { TemplateWorkspaceHost } from '../templates/TemplateWorkspaceHost'
+import { DocumentImportModal } from '../documentImport/DocumentImportModal'
+import { ImportedAttachmentPreview } from '../documentImport/ImportedAttachmentPreview'
+import { getCaseMeta } from '../../hooks/useCaseRegistry'
 import { useDokumenteSectionNavOptional } from '../../contexts/DokumenteSectionNavContext'
 import {
   CATEGORY_ORDER,
@@ -133,7 +136,9 @@ function DocumentDetail({ entry, categoryLabel, showBack, onBack, onEdit }: Docu
       </header>
 
       <div className="dokumente-detail__content">
-        {sectionEntries.length > 0 ? (
+        {entry.attachment ? (
+          <ImportedAttachmentPreview attachment={entry.attachment} />
+        ) : sectionEntries.length > 0 ? (
           <>
             <p className="dokumente-detail__hint">{t('dokumenteAutoCategorizedHint')}</p>
             <h3 className="dokumente-detail__sections-heading">{t('dokumenteSectionsHeading')}</h3>
@@ -308,6 +313,7 @@ export function DokumentePage({ caseId, onAfterDelete, onEditDraft }: DokumenteP
   const [expandedEntry, setExpandedEntry] = useState<DokumentEntry | null>(null)
   const [templateHostOpen, setTemplateHostOpen] = useState(false)
   const [templateDocId, setTemplateDocId] = useState<string | undefined>()
+  const [importOpen, setImportOpen] = useState(false)
   const mainRef = useRef<HTMLElement>(null)
   const savedScrollRef = useRef(0)
 
@@ -322,6 +328,15 @@ export function DokumentePage({ caseId, onAfterDelete, onEditDraft }: DokumenteP
     nav.setNewTemplateHandler(handleNewTemplate)
     return () => nav.setNewTemplateHandler(null)
   }, [nav, handleNewTemplate])
+
+  // Expose the "Dokument hochladen" (Document Import) action to the sidebar nav.
+  const handleOpenImport = useCallback(() => setImportOpen(true), [])
+
+  useEffect(() => {
+    if (!nav) return
+    nav.setImportHandler(handleOpenImport)
+    return () => nav.setImportHandler(null)
+  }, [nav, handleOpenImport])
 
   // Backfill: mirror any lab befunde that predate the Dokumente wiring, then load.
   // Idempotent — re-running never creates duplicates.
@@ -448,6 +463,15 @@ export function DokumentePage({ caseId, onAfterDelete, onEditDraft }: DokumenteP
             ))
         )}
       </main>
+
+      <DocumentImportModal
+        caseId={caseId}
+        patientVorname={getCaseMeta(caseId)?.localVorname}
+        patientNachname={getCaseMeta(caseId)?.localNachname}
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImported={() => setEntries(loadDokumente(caseId))}
+      />
 
       {templateHostOpen ? (
         <TemplateWorkspaceHost

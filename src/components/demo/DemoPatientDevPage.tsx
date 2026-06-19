@@ -161,7 +161,7 @@ export function DemoPatientDevPage({ onBack }: DemoPatientDevPageProps) {
         <div>
           <h1>Demo Patient — Pre-Butterfly QA</h1>
           <p className="demo-dev-page__subtitle">
-            Synthetic case <code>{DEMO_CASE_ID}</code> · Max Demo · read-only in workspace
+            Synthetic case <code>{DEMO_CASE_ID}</code> · Anna Demo · read-only in workspace
           </p>
         </div>
         {onBack ? (

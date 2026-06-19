@@ -1,15 +1,23 @@
 import { useMemo } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import { translateMedicationUi } from '../../data/medicationUiTranslations'
+import { DEFAULT_MEDICATIONS_COLLECTION_ID } from '../../types/knowledgeBase'
+import { useKnowledgeBaseDrugs } from '../../hooks/useKnowledgeBaseDrugs'
 import type { MedicationEntry } from '../../types/medicationPlan'
 import { computeMedicationInsights } from '../../utils/medication/medicationInsights'
+import { activeMedications } from '../../utils/medication/planOps'
+import {
+  resolveReceptorProfiles,
+  resolveZielrezeptorenDisplay,
+} from '../../utils/medication/receptorBurden'
 
 interface MedicationInsightStripProps {
   medications: MedicationEntry[]
+  curatedTargetReceptors: string[] | undefined
 }
 
-const MAX_RECEPTORS = 6
 const MAX_SIDE_EFFECTS = 5
+const MAX_RECEPTOR_CHIPS = 8
 
 /**
  * Intelligent clinical-analysis summary shown at the top of the Medikation
@@ -17,12 +25,25 @@ const MAX_SIDE_EFFECTS = 5
  * patient's plan/history and the local psychopharmacology reference — no
  * fabricated clinical facts; unavailable insights degrade to an em dash.
  */
-export function MedicationInsightStrip({ medications }: MedicationInsightStripProps) {
+export function MedicationInsightStrip({
+  medications,
+  curatedTargetReceptors,
+}: MedicationInsightStripProps) {
   const { language } = useTranslation()
+  const { drugs: knowledgeBaseDrugs } = useKnowledgeBaseDrugs(DEFAULT_MEDICATIONS_COLLECTION_ID)
   const insights = useMemo(
     () => computeMedicationInsights(medications, language),
     [medications, language],
   )
+
+  const targetedReceptors = useMemo(() => {
+    const activeMeds = activeMedications(medications)
+    const resolved = resolveReceptorProfiles(
+      activeMeds.map((med) => ({ id: med.id, substance: med.substance })),
+      knowledgeBaseDrugs,
+    )
+    return resolveZielrezeptorenDisplay(curatedTargetReceptors, resolved, language)
+  }, [medications, knowledgeBaseDrugs, language, curatedTargetReceptors])
 
   const lastModified = useMemo(() => {
     if (!insights.lastModifiedAt) return '—'
@@ -39,8 +60,8 @@ export function MedicationInsightStrip({ medications }: MedicationInsightStripPr
       ? insights.activeClasses.map((c) => (c.count > 1 ? `${c.count}× ${c.label}` : c.label)).join(' · ')
       : '—'
 
-  const receptors = insights.targetedReceptors.slice(0, MAX_RECEPTORS)
   const sideEffects = insights.keySideEffects.slice(0, MAX_SIDE_EFFECTS)
+  const receptorChips = targetedReceptors.slice(0, MAX_RECEPTOR_CHIPS)
 
   return (
     <section
@@ -93,13 +114,19 @@ export function MedicationInsightStrip({ medications }: MedicationInsightStripPr
         <span className="medication-insight__label">
           {translateMedicationUi(language, 'medInsightReceptors')}
         </span>
-        {receptors.length > 0 ? (
+        {receptorChips.length > 0 ? (
           <div className="medication-insight__chips">
-            {receptors.map((receptor) => (
+            {receptorChips.map((receptor) => (
               <span
-                key={receptor.key}
-                className={`medication-insight__chip${receptor.maxScore >= 4 ? ' medication-insight__chip--strong' : ''}`}
-                title={`${receptor.label} · ${receptor.count}`}
+                key={receptor.target}
+                className={`medication-insight__chip${
+                  receptor.maxPercent >= 75 ? ' medication-insight__chip--strong' : ''
+                }`}
+                title={
+                  receptor.drugs.length > 0
+                    ? `${receptor.label} · ${receptor.drugs.join(', ')}`
+                    : receptor.label
+                }
               >
                 {receptor.label}
                 {receptor.count > 1 ? <em> ×{receptor.count}</em> : null}

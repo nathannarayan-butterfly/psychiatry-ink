@@ -23,14 +23,14 @@ import {
   type CodingSystem,
   type DiagnoseEntry,
 } from '../../utils/diagnosenArchive'
+import { VISIBLE_CODING_SYSTEMS, type VisibleCodingSystem } from '../../utils/diagnosenCodingSystem'
 
-const CODING_SYSTEMS: CodingSystem[] = ['icd10', 'icd11', 'dsm']
+const CODING_SYSTEMS = VISIBLE_CODING_SYSTEMS
 
-const SYSTEM_LABEL_KEYS = {
+const SYSTEM_LABEL_KEYS: Record<VisibleCodingSystem, 'diagnosenSystemIcd10' | 'diagnosenSystemIcd11'> = {
   icd10: 'diagnosenSystemIcd10',
   icd11: 'diagnosenSystemIcd11',
-  dsm: 'diagnosenSystemDsm',
-} as const
+}
 
 interface DiagnoseRowProps {
   index: number

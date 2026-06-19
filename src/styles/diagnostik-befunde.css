@@ -45,6 +45,13 @@
   gap: 0.4rem;
 }
 
+.diagnostik-befunde__action-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 .diagnostik-befunde__action-btn {
   padding: 0.3rem 0.7rem;
   font-size: 0.78rem;
@@ -83,6 +90,18 @@
 .diagnostik-befunde__action-btn--add:hover:not(:disabled) {
   border-color: var(--accent, #4a7c59);
   background: color-mix(in srgb, var(--accent, #4a7c59) 14%, #fff);
+}
+
+.diagnostik-befunde__action-btn--request {
+  font-weight: 600;
+  color: var(--ink, #1a1a18);
+  border-color: var(--border-soft, #e8e8e4);
+  background: #fff;
+}
+
+.diagnostik-befunde__action-btn--request:hover:not(:disabled) {
+  border-color: var(--accent, #4a7c59);
+  background: color-mix(in srgb, var(--accent, #4a7c59) 6%, #fff);
 }
 
 /* EKG structured card */

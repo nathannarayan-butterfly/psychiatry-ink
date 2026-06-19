@@ -1,6 +1,6 @@
 import { useEffect, useReducer } from 'react'
 
-export type NotificationType = 'credits-low' | 'pomodoro-done' | 'info' | 'warning'
+export type NotificationType = 'credits-low' | 'info' | 'warning'
 
 export interface AppNotification {
   id: string

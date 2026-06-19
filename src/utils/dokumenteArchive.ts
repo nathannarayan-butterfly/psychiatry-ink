@@ -42,6 +42,21 @@ export interface DokumentEntry {
   sourceRefId?: string
   /** Soft-delete flag — entries are never hard-deleted */
   deleted?: boolean
+  /**
+   * Binary attachment for imported PDFs / scans. Bytes live encrypted in the
+   * imported-files IndexedDB store (`importedFileStore`); only metadata is kept
+   * here. Present only for stored-only document imports.
+   */
+  attachment?: {
+    storeId: string
+    mimeType: string
+    originalFileName: string
+    sizeBytes: number
+  }
+  /** `stored_only` for imported PDFs/scans that were not parsed/OCR'd. */
+  parsingMode?: 'stored_only'
+  /** Links this entry to its Document Import provenance ledger record. */
+  importProvenanceId?: string
 }
 
 function archiveKey(caseId: string): string {

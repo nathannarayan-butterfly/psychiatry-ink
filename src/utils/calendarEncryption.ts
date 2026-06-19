@@ -169,8 +169,12 @@ export async function decryptWireCalendarItem(
 ): Promise<CalendarItem> {
   const envelope = parseEnvelope(wire.encryptedPayload)
   if (envelope) {
-    const sensitive = await decryptCalendarPayload(key, envelope)
-    return mergeWireCalendarItem(wire, sensitive)
+    try {
+      const sensitive = await decryptCalendarPayload(key, envelope)
+      return mergeWireCalendarItem(wire, sensitive)
+    } catch (error) {
+      throw new OrgCalendarKeySetupError(formatCalendarCryptoError(error, 'decrypt'))
+    }
   }
   const legacy = legacySensitiveFromWire(wire)
   if (legacy) return mergeWireCalendarItem(wire, legacy)
@@ -246,16 +250,39 @@ export function splitCalendarUpdate(input: UpdateCalendarItemInput): {
   }
 }
 
-async function loadCalendarKeyFromServer(organisationId: string): Promise<CryptoKey> {
+async function loadCalendarKeyFromServer(
+  organisationId: string,
+  currentUserId?: string,
+): Promise<CryptoKey> {
   const cached = calendarKeyCache.get(cacheKey(organisationId))
   if (cached) return cached
 
-  const { wrappedKey } = await fetchCalendarEncryptionKey(organisationId)
-  const material = await ensureKeyMaterial()
-  const privateKey = await importRsaPrivateKey(material.privateKeyJwk)
-  const calendarKey = await unwrapCalendarKey(wrappedKey, privateKey)
-  calendarKeyCache.set(cacheKey(organisationId), calendarKey)
-  return calendarKey
+  try {
+    const { wrappedKey } = await fetchCalendarEncryptionKey(organisationId)
+    const material = await ensureKeyMaterial()
+    const privateKey = await importRsaPrivateKey(material.privateKeyJwk)
+    const calendarKey = await unwrapCalendarKey(wrappedKey, privateKey)
+    calendarKeyCache.set(cacheKey(organisationId), calendarKey)
+    return calendarKey
+  } catch (error) {
+    const localBackup = await tryLoadCalendarKeyFromLocalBackup(organisationId)
+    if (localBackup) {
+      if (currentUserId) {
+        try {
+          await reuploadWrappedCalendarKeyForCurrentDevice(
+            organisationId,
+            currentUserId,
+            localBackup,
+          )
+        } catch {
+          /* non-fatal — local key still unlocks this session */
+        }
+      }
+      return localBackup
+    }
+
+    throw new OrgCalendarKeySetupError(formatCalendarCryptoError(error, 'unwrap'))
+  }
 }
 
 async function wrapKeyForAllMembers(
@@ -286,6 +313,74 @@ export class OrgCalendarKeySetupError extends Error {
     super(message)
     this.name = 'OrgCalendarKeySetupError'
   }
+}
+
+const CRYPTO_OPERATION_ERROR_MARKERS = [
+  'operation-specific reason',
+  'The operation failed',
+  'OperationError',
+] as const
+
+export function isCalendarCryptoOperationError(error: unknown): boolean {
+  if (error instanceof DOMException) {
+    return error.name === 'OperationError' || error.name === 'InvalidAccessError'
+  }
+  if (error instanceof Error) {
+    if (error.name === 'OperationError' || error.name === 'InvalidAccessError') return true
+    const message = error.message
+    return CRYPTO_OPERATION_ERROR_MARKERS.some((marker) => message.includes(marker))
+  }
+  return false
+}
+
+export function formatCalendarCryptoError(
+  error: unknown,
+  phase: 'unwrap' | 'decrypt',
+): string {
+  if (error instanceof OrgCalendarKeySetupError) return error.message
+  if (error instanceof Error && !isCalendarCryptoOperationError(error) && error.message.trim()) {
+    return error.message
+  }
+
+  if (phase === 'unwrap') {
+    return (
+      'Kalender-Verschlüsselungsschlüssel konnte auf diesem Gerät nicht entsperrt werden. ' +
+      'Mögliche Ursachen: neues Gerät oder zurückgesetzte Geräteschlüssel. ' +
+      'Bitte melden Sie sich auf dem ursprünglichen Gerät an oder wenden Sie sich an den Praxisinhaber, ' +
+      'damit Ihr Kalender-Schlüssel neu eingerichtet wird.'
+    )
+  }
+
+  return (
+    'Kalender-Einträge konnten nicht entschlüsselt werden. ' +
+    'Der Verschlüsselungsschlüssel passt nicht zu den gespeicherten Terminen ' +
+    '(z. B. nach Schlüssel-Neuinitialisierung oder beschädigten Daten). ' +
+    'Bitte wenden Sie sich an den Praxisinhaber.'
+  )
+}
+
+async function tryLoadCalendarKeyFromLocalBackup(organisationId: string): Promise<CryptoKey | null> {
+  const stored = localStorage.getItem(calendarKeyStorageId(organisationId))
+  if (!stored?.trim()) return null
+
+  try {
+    const calendarKey = await importKeyFromBase64Url(stored)
+    calendarKeyCache.set(cacheKey(organisationId), calendarKey)
+    return calendarKey
+  } catch {
+    return null
+  }
+}
+
+async function reuploadWrappedCalendarKeyForCurrentDevice(
+  organisationId: string,
+  userId: string,
+  calendarKey: CryptoKey,
+): Promise<void> {
+  const material = await ensureKeyMaterial()
+  const selfPublic = await importRsaPublicKey(material.publicKeyJwk)
+  const selfWrapped = await wrapCalendarKeyForPublicKey(calendarKey, selfPublic)
+  await uploadCalendarEncryptionKeyForMember(organisationId, userId, selfWrapped)
 }
 
 /**
@@ -323,24 +418,31 @@ export async function bootstrapOrgCalendarKey(
 
   if (!status.hasWrappedKey) {
     if (isOwner) {
-      const stored = localStorage.getItem(calendarKeyStorageId(organisationId))
-      let calendarKey: CryptoKey
-      if (stored) {
-        calendarKey = await importKeyFromBase64Url(stored)
-      } else {
-        calendarKey = await generatePackageKey()
+      const localBackup = await tryLoadCalendarKeyFromLocalBackup(organisationId)
+      if (localBackup) {
+        try {
+          await reuploadWrappedCalendarKeyForCurrentDevice(
+            organisationId,
+            currentUserId,
+            localBackup,
+          )
+        } catch (error) {
+          throw new OrgCalendarKeySetupError(formatCalendarCryptoError(error, 'unwrap'))
+        }
+        return localBackup
       }
-      calendarKeyCache.set(cacheKey(organisationId), calendarKey)
-      const material = await ensureKeyMaterial()
-      const selfPublic = await importRsaPublicKey(material.publicKeyJwk)
-      const selfWrapped = await wrapCalendarKeyForPublicKey(calendarKey, selfPublic)
-      await uploadCalendarEncryptionKeyForMember(organisationId, currentUserId, selfWrapped)
-      return calendarKey
+
+      throw new OrgCalendarKeySetupError(
+        'Kalender-Verschlüsselungsschlüssel fehlt auf diesem Gerät. ' +
+          'Bitte öffnen Sie den Kalender auf dem Gerät, auf dem er eingerichtet wurde, ' +
+          'oder stellen Sie den Schlüssel aus einem Backup wieder her. ' +
+          'Ein neuer Schlüssel würde bestehende Termine unlesbar machen.',
+      )
     }
     throw new OrgCalendarKeySetupError(
       'Kalender-Verschlüsselungsschlüssel fehlt. Bitte wenden Sie sich an den Praxisinhaber.',
     )
   }
 
-  return loadCalendarKeyFromServer(organisationId)
+  return loadCalendarKeyFromServer(organisationId, currentUserId)
 }

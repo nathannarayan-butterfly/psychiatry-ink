@@ -1,4 +1,3 @@
-import { Plus } from 'lucide-react'
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import { useMedicationSectionNavOptional } from '../../contexts/MedicationSectionNavContext'
@@ -7,7 +6,11 @@ import { useKnowledgeBaseUserId } from '../../hooks/useKnowledgeBaseUserId'
 import { useMedicationPlan } from '../../hooks/useMedicationPlan'
 import type { MedicationEntry } from '../../types/medicationPlan'
 import type { MedicationDraft } from '../../utils/medication/planOps'
-import { derivePlanTimeline, visibleMedications } from '../../utils/medication/planOps'
+import {
+  activeMedications,
+  derivePlanTimeline,
+  visibleMedications,
+} from '../../utils/medication/planOps'
 import { FONT_SANS } from '../../styles/typographyTokens'
 import { MedicationDeleteDialog } from './MedicationDeleteDialog'
 import { MedicationEditDialog } from './MedicationEditDialog'
@@ -28,7 +31,7 @@ import { MedicationToolbar } from './MedicationToolbar'
 interface MedicationWorkspaceProps {
   caseId: string
   disabled?: boolean
-  /** Hide the hero's primary "add" button (e.g. when a parent owns the trigger). */
+  /** Hide the plan-list "add" button (e.g. when a parent owns the trigger). */
   showToolbarAdd?: boolean
 }
 
@@ -64,20 +67,29 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
     [sectionNav],
   )
 
-  const medications = useMemo(
+  const allVisibleMedications = useMemo(
     () => visibleMedications(med.currentPlan?.medications ?? []),
     [med.currentPlan?.medications],
   )
-  const hasMedications = medications.length > 0
+  const activePlanMedications = useMemo(
+    () => activeMedications(allVisibleMedications),
+    [allVisibleMedications],
+  )
+  const hasActiveMedications = activePlanMedications.length > 0
+  const hasAnyVisibleMedications = allVisibleMedications.length > 0
   const planTimeline = useMemo(
     () => derivePlanTimeline(med.currentPlan?.medications ?? []),
     [med.currentPlan?.medications],
   )
-  // Only meaningful once there is at least one prior plan state to look back at.
-  const hasPlanHistory = planTimeline.length > 1
+  // Meaningful when there is a prior plan state, or when non-active meds exist only in history.
+  const hasNonActiveMedications = allVisibleMedications.some(
+    (med) => med.status === 'discontinued' || med.status === 'paused',
+  )
+  const hasPlanHistory =
+    planTimeline.length > 1 || (planTimeline.length > 0 && hasNonActiveMedications)
   const selectedEntry = useMemo(
-    () => medications.find((item) => item.id === selectedId) ?? null,
-    [medications, selectedId],
+    () => activePlanMedications.find((item) => item.id === selectedId) ?? null,
+    [activePlanMedications, selectedId],
   )
 
   const openAdd = useCallback(() => {
@@ -167,23 +179,13 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
           <h2 className="medication-hero__title">{translateMedicationUi(language, 'medPageTitle')}</h2>
           <p className="medication-hero__desc">{translateMedicationUi(language, 'medDescPlan')}</p>
         </div>
-        <div className="medication-hero__actions">
-          {showToolbarAdd ? (
-            <button
-              type="button"
-              className="medication-hero__add"
-              disabled={disabled}
-              onClick={openAdd}
-            >
-              <Plus size={15} strokeWidth={2.2} aria-hidden />
-              {translateMedicationUi(language, 'medAddMedication')}
-            </button>
-          ) : null}
-        </div>
       </header>
 
-      {!historyMode && hasMedications ? (
-        <MedicationInsightStrip medications={medications} />
+      {!historyMode && hasActiveMedications ? (
+        <MedicationInsightStrip
+          medications={activePlanMedications}
+          curatedTargetReceptors={med.state.curatedTargetReceptors}
+        />
       ) : null}
 
       {historyMode ? (
@@ -192,8 +194,8 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
         <>
           <MedicationToolbar
             disabled={disabled}
-            hasMedications={hasMedications}
-            showAdd={false}
+            hasMedications={hasAnyVisibleMedications}
+            showAdd={showToolbarAdd}
             onAdd={openAdd}
             onEdit={() => selectedEntry && openEdit(selectedEntry)}
             editDisabled={!selectedEntry}
@@ -206,28 +208,21 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
           />
 
           <div className="medication-plan__list" ref={printRef}>
-            {!hasMedications ? (
+            {!hasActiveMedications ? (
               <div className="medication-workspace__empty">
                 <p className="medication-workspace__empty-text">
-                  {translateMedicationUi(language, 'medEmpty')}
+                  {hasAnyVisibleMedications
+                    ? translateMedicationUi(language, 'medEmptyNoActive')
+                    : translateMedicationUi(language, 'medEmpty')}
                 </p>
                 <p className="medication-workspace__empty-hint">
-                  {translateMedicationUi(language, 'medEmptyHint')}
+                  {hasAnyVisibleMedications
+                    ? translateMedicationUi(language, 'medEmptyNoActiveHint')
+                    : translateMedicationUi(language, 'medEmptyHint')}
                 </p>
-                {showToolbarAdd ? (
-                  <button
-                    type="button"
-                    className="medication-hero__add"
-                    disabled={disabled}
-                    onClick={openAdd}
-                  >
-                    <Plus size={15} strokeWidth={2.2} aria-hidden />
-                    {translateMedicationUi(language, 'medAddMedication')}
-                  </button>
-                ) : null}
               </div>
             ) : (
-              medications.map((entry) => (
+              activePlanMedications.map((entry) => (
                 <MedicationRow
                   key={entry.id}
                   entry={entry}
@@ -242,14 +237,20 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
             )}
           </div>
 
-          {hasMedications ? (
-            <MedicationPlanDashboard medications={medications} onOpenSection={selectSection} />
+          {hasActiveMedications ? (
+            <MedicationPlanDashboard
+              medications={activePlanMedications}
+              curatedTargetReceptors={med.state.curatedTargetReceptors}
+              onCuratedTargetReceptorsChange={med.updateCuratedTargetReceptors}
+              disabled={disabled}
+              onOpenSection={selectSection}
+            />
           ) : null}
 
-          <PriorTherapiesPanel caseId={caseId} medications={medications} />
+          <PriorTherapiesPanel caseId={caseId} medications={allVisibleMedications} />
 
 
-          {hasMedications ? (
+          {hasActiveMedications ? (
             <section className="medication-explore" aria-label={translateMedicationUi(language, 'medExploreSections')}>
               <p className="medication-explore__label">
                 {translateMedicationUi(language, 'medExploreSections')}
@@ -322,7 +323,7 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
         <MedicationLowerSections
           caseId={caseId}
           state={med.state}
-          medications={medications}
+          medications={allVisibleMedications}
           disabled={disabled}
           onReportSideEffect={med.reportSideEffect}
           onLabNotesChange={med.updateLabNotes}

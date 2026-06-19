@@ -9,7 +9,11 @@ import type { CombinationCheckStore } from '../types/combinationCheck'
 import type { LabMedicationCorrelationStore } from '../types/labMedicationCorrelation'
 import type { MedicationPlanState } from '../types/medicationPlan'
 import type { PrepAiCheckCache } from '../utils/prepAiCheck/storage'
+import type { Anforderung } from '../types/anforderung'
 import type { ClinicalImprintIndex } from '../types/clinicalImprint'
+import type { IsdmClinicalAnalysis, IsdmInputState } from '../types/isdm'
+import type { ClinicianAttestationState } from '../utils/butterfly/attestationStorage'
+import type { ClinicalQuestionNoteState } from '../utils/clinicalQuestions/answerNotes'
 import type { DiagnoseEntry } from '../utils/diagnosenArchive'
 import type { DokumentEntry } from '../utils/dokumenteArchive'
 import type { NotionDocumentSnapshot } from '../utils/notionDocumentActions'
@@ -79,6 +83,11 @@ export interface DemoPatientFixture {
     activeLabGraphId: string | null
     diagnoses: DiagnoseEntry[]
     clinicalImprints?: ClinicalImprintIndex
+    isdmAnalysis?: IsdmClinicalAnalysis
+    isdmInput?: IsdmInputState
+    butterflyAttestations?: ClinicianAttestationState
+    clinicalQuestionNotes?: ClinicalQuestionNoteState
+    anforderungen?: Anforderung[]
     medicationPlanState?: MedicationPlanState
     psychotherapyPlan?: PsychotherapyPlan
     complementaryTherapies?: ComplementaryTherapy[]
@@ -138,6 +147,9 @@ export interface DemoSeedCounts {
   psychotherapySessions: number
   complementaryTherapies: number
   sozialtherapieTargets: number
+  anforderungen?: number
+  isdmDomains?: number
+  butterflyAttestations?: number
 }
 
 export const DEMO_FIXTURE_META = {

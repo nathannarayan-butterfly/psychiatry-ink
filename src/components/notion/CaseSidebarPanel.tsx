@@ -3,7 +3,6 @@ import { AppLogo } from '../AppLogo'
 import { PanelDateCard } from '../PanelDateCard'
 import { CaseClinicalAreasNav } from './CaseClinicalAreasNav'
 import { CaseSidebarUserFooter } from './CaseSidebarUserFooter'
-import { PomodoroWidget } from './PomodoroWidget'
 import type { TopNavTabId } from './CaseTopNav'
 import type { SettingsSectionId } from '../../types/settings'
 
@@ -16,7 +15,6 @@ interface CaseSidebarPanelProps {
   onCreatePatient?: () => void
   creditBalance: number
   onOpenSettings: (section?: SettingsSectionId) => void
-  onBreakStart?: () => void
   children: ReactNode
   /** Accessible label for the sidebar landmark. */
   ariaLabel?: string
@@ -32,7 +30,6 @@ export function CaseSidebarPanel({
   onCreatePatient,
   creditBalance,
   onOpenSettings,
-  onBreakStart,
   children,
   ariaLabel,
 }: CaseSidebarPanelProps) {
@@ -74,7 +71,6 @@ export function CaseSidebarPanel({
 
       <div className="case-sidebar-panel__widgets">
         <PanelDateCard layout="sidebar-footer" />
-        <PomodoroWidget onBreakStart={onBreakStart ?? (() => {})} variant="sidebar" />
       </div>
 
       <CaseSidebarUserFooter creditBalance={creditBalance} onOpenSettings={onOpenSettings} />

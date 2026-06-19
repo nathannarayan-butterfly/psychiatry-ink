@@ -37,3 +37,19 @@ export function isCmeaConsumerReadEnabled(): boolean {
 export function isInlineAiEditEnabled(): boolean {
   return import.meta.env.VITE_DISABLE_INLINE_AI_EDIT !== 'true'
 }
+
+/**
+ * Document Import — AI-assisted candidate mapping.
+ *
+ * OFF BY DEFAULT. Deterministic parsing is always the primary path and never
+ * sends any uploaded content anywhere. When this flag is enabled, the review
+ * screen may request AI *suggestions* for ambiguous content — but only after
+ * de-identification, and suggestions ALWAYS require explicit clinician acceptance
+ * (they are never auto-committed into the chart).
+ *
+ * Enable locally in `.env.local`:
+ *   VITE_ENABLE_DOCUMENT_IMPORT_AI=true
+ */
+export function isDocumentImportAiMappingEnabled(): boolean {
+  return import.meta.env.VITE_ENABLE_DOCUMENT_IMPORT_AI === 'true'
+}

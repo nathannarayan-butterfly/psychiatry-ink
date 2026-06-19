@@ -1,0 +1,992 @@
+/*
+ * Medikation — clinical-minimal alignment layer
+ * --------------------------------------------------------------------------
+ * Overrides the flagship medication surfaces in notion-preview.css (rounded
+ * cards, gradients, pill badges, multi-hue semantic coloring) to match the
+ * flat typographic workspace language in clinical-minimal.css and Übersicht.
+ *
+ * Scoped under `.medication-workspace` / `.medication-page` so dialogs, print,
+ * and KB surfaces keep their existing chrome.
+ */
+
+.medication-page {
+  padding: var(--cm-page-pad-y, 1.5rem) var(--cm-page-pad-x, 1.75rem) 3rem;
+  /* Full workspace cap (~10% wider than prior 0.9 factor) */
+  max-width: min(100%, var(--workspace-max, 76rem));
+}
+
+.medication-workspace--flagship {
+  gap: var(--cm-block-gap, 1rem);
+  max-width: min(100%, var(--workspace-max, 76rem));
+}
+
+/* ── Section tabs — flat underline, not pills ─────────────────────────── */
+
+.medication-workspace .medication-tabs {
+  gap: 0;
+  padding-bottom: 0;
+  border-bottom: 1px solid var(--cm-hairline);
+}
+
+.medication-workspace .medication-tabs__tab {
+  padding: 0.5rem 0.85rem;
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: 500;
+  color: var(--text-muted, #91887e);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  margin-bottom: -1px;
+  transition: color var(--duration-fast, 150ms) ease, border-color var(--duration-fast, 150ms) ease;
+}
+
+.medication-workspace .medication-tabs__tab:hover {
+  color: var(--ink, #24211e);
+  border-bottom-color: color-mix(in srgb, var(--area-accent, var(--accent)) 35%, transparent);
+}
+
+.medication-workspace .medication-tabs__tab--active {
+  color: var(--ink, #24211e);
+  background: transparent;
+  border-bottom-color: var(--area-accent, var(--accent, #8a5a2b));
+}
+
+/* ── Plan hero — typographic strip, no gradient card ──────────────────── */
+
+/* Even vertical rhythm between the stacked plan sections (hero → insights →
+ * list → dashboard → prior therapies → explore). Tighter than the global
+ * 2.75rem section gap because this view stacks many hairline-bordered blocks;
+ * a single uniform rhythm keeps them visually connected rather than airy. */
+.medication-workspace .medication-plan {
+  gap: 1.75rem;
+}
+
+.medication-workspace .medication-hero {
+  align-items: flex-start;
+  padding: 0 0 1.75rem;
+  border: none;
+  border-bottom: 1px solid var(--cm-hairline);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.medication-workspace .medication-hero__eyebrow {
+  font-size: var(--cm-eyebrow-size, 0.6875rem);
+  font-weight: var(--cm-label-weight, 500);
+  letter-spacing: var(--cm-label-tracking, 0.08em);
+  color: var(--text-muted, #91887e);
+}
+
+.medication-workspace .medication-hero__title {
+  font-size: var(--cm-hero-name-size, 1.5rem);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+}
+
+.medication-workspace .medication-hero__desc {
+  font-size: var(--text-sm, 0.8125rem);
+  line-height: 1.5;
+  max-width: var(--cm-prose-max, 42em);
+}
+
+.medication-workspace .medication-hero__add,
+.medication-workspace .medication-plan__add {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: 500;
+  color: var(--accent, #8a5a2b);
+  background: transparent;
+  border: 1px solid var(--cm-quiet-border);
+  border-radius: var(--radius-control, 0.4375rem);
+  box-shadow: none;
+  transition: background var(--duration-fast, 150ms) ease, color var(--duration-fast, 150ms) ease;
+}
+
+.medication-workspace .medication-hero__add:hover:not(:disabled),
+.medication-workspace .medication-plan__add:hover:not(:disabled) {
+  color: var(--accent-hover, #6f4722);
+  background: var(--surface-hover, #f5f3f0);
+  box-shadow: none;
+  transform: none;
+}
+
+.medication-workspace .medication-hero__add:active:not(:disabled),
+.medication-workspace .medication-plan__add:active:not(:disabled) {
+  transform: none;
+}
+
+/* ── Plan toolbar — utility icons left, add right ───────────────────── */
+
+.medication-workspace .medication-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0 0 0.6rem;
+}
+
+.medication-workspace .medication-toolbar--empty {
+  padding-bottom: 0;
+}
+
+.medication-workspace .medication-toolbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.medication-workspace .medication-toolbar .medication-plan__add {
+  margin-left: auto;
+}
+
+/* ── Insight strip — flat summary grid ────────────────────────────────── */
+
+/* Balanced 6-column grid: three metric cells (span 2) on the first row, two
+ * chip cells (span 3) on the second. Hairline dividers come from a 1px grid
+ * gap revealing the container background — no dangling per-cell borders. */
+.medication-workspace .medication-insights {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 1px;
+  border: 1px solid var(--cm-quiet-border);
+  border-radius: 0;
+  background: var(--cm-hairline);
+  overflow: hidden;
+}
+
+.medication-workspace .medication-insight {
+  padding: 0.8rem 1rem;
+  gap: 0.25rem;
+  border: none;
+  border-radius: 0;
+  background: var(--surface, #fff);
+  box-shadow: none;
+}
+
+.medication-workspace .medication-insight--metric {
+  grid-column: span 2;
+}
+
+.medication-workspace .medication-insight--chips {
+  grid-column: span 3;
+}
+
+.medication-workspace .medication-insight__label {
+  font-size: var(--cm-label-size, 0.6875rem);
+  font-weight: var(--cm-label-weight, 500);
+  letter-spacing: var(--cm-label-tracking, 0.08em);
+  color: var(--text-muted, #91887e);
+}
+
+.medication-workspace .medication-insight__value {
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.medication-workspace .medication-insight__value--date {
+  font-size: 0.9375rem;
+  font-family: var(--cm-font-mono);
+  letter-spacing: 0.02em;
+}
+
+.medication-workspace .medication-insight__detail {
+  font-size: var(--text-xs, 0.75rem);
+  line-height: 1.4;
+}
+
+.medication-workspace .medication-insight__chip {
+  padding: 0.1rem 0.35rem;
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 500;
+  border-radius: var(--radius-control, 0.4375rem);
+  background: transparent;
+  border: 1px solid var(--cm-quiet-border);
+  color: var(--text-main, #24211e);
+}
+
+.medication-workspace .medication-insight__chip--strong {
+  font-weight: 600;
+  border-color: color-mix(in srgb, var(--area-accent, var(--accent)) 40%, var(--cm-quiet-border));
+}
+
+.medication-workspace .medication-insight__chip--shared {
+  border-color: color-mix(in srgb, #b45309 35%, var(--cm-quiet-border));
+  background: transparent;
+}
+
+/* Quiet unified accent — overrides medication-color multi-hue strip */
+.medication-workspace .medication-insight:nth-child(n) {
+  --area-accent: var(--area-medikation, var(--accent));
+}
+
+.medication-workspace .medication-insight:nth-child(n) .medication-insight__label {
+  color: var(--text-muted, #91887e);
+}
+
+/* ── Plan dashboard — flat sections, no cards ─────────────────────────── */
+
+.medication-workspace .medication-dashboard {
+  gap: 0.65rem;
+}
+
+.medication-workspace .medication-dashboard__heading {
+  font-size: var(--cm-eyebrow-size, 0.6875rem);
+  font-weight: var(--cm-label-weight, 500);
+  letter-spacing: var(--cm-label-tracking, 0.08em);
+  color: var(--text-muted, #91887e);
+  gap: 0;
+}
+
+.medication-workspace .medication-dashboard__heading::before {
+  display: none;
+}
+
+/* Flat full-width stack — every panel is its own hairline-separated row
+ * (overrides the base 2-column card grid) for a single consistent rhythm. */
+.medication-workspace .medication-dashboard__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  border-top: 1px solid var(--cm-hairline);
+}
+
+.medication-workspace .medication-dash-panel {
+  padding: 1.25rem 0;
+  gap: 0.85rem;
+  border: none;
+  border-bottom: 1px solid var(--cm-hairline);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  border-left-width: 0;
+}
+
+.medication-workspace .medication-dash-panel:last-child {
+  border-bottom: none;
+}
+
+.medication-workspace .medication-dash-panel--receptor {
+  background: transparent;
+}
+
+.medication-workspace .medication-dash-panel__head {
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--cm-hairline);
+}
+
+.medication-workspace .medication-dash-panel__title-row .medication-dash-panel__title::before,
+.medication-workspace .medication-dash-panel__head > div > .medication-dash-panel__title::before,
+.medication-workspace .medication-dash-panel--monitoring .medication-dash-panel__head > .medication-dash-panel__title::before {
+  display: none;
+}
+
+.medication-workspace .medication-dash-panel__title {
+  font-size: var(--cm-section-title-size, 0.8125rem);
+  font-weight: 600;
+}
+
+.medication-workspace .medication-dash-panel__hint {
+  font-size: var(--text-xs, 0.75rem);
+  line-height: 1.4;
+}
+
+.medication-workspace .medication-dash-panel__subhead {
+  font-size: var(--cm-label-size, 0.6875rem);
+  font-weight: var(--cm-label-weight, 500);
+  letter-spacing: var(--cm-label-tracking, 0.08em);
+  color: var(--text-muted, #91887e);
+}
+
+.medication-workspace .medication-dash-panel__detail {
+  padding: 0;
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 500;
+  color: var(--accent, #8a5a2b);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+
+.medication-workspace .medication-dash-panel__detail:hover {
+  color: var(--accent-hover, #6f4722);
+  background: transparent;
+}
+
+/* Unified panel accent */
+.medication-workspace .medication-dash-panel--receptor,
+.medication-workspace .medication-dash-panel--kombi,
+.medication-workspace .medication-dash-panel--monitoring {
+  --area-accent: var(--area-medikation, var(--accent));
+}
+
+/* ── Medication list rows — feed rows, not cards ──────────────────────── */
+
+.medication-workspace .medication-plan__list {
+  gap: 0;
+  border-top: 1px solid var(--cm-hairline);
+}
+
+.medication-workspace .medication-row {
+  padding: 0.65rem 0 0.65rem 0.5rem;
+  border: none;
+  border-bottom: 1px solid var(--cm-hairline);
+  border-left: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  transition: border-color var(--duration-fast, 150ms) ease, background var(--duration-fast, 150ms) ease;
+}
+
+.medication-workspace .medication-row:hover {
+  border-color: transparent;
+  border-bottom-color: var(--cm-hairline);
+  border-left-color: color-mix(in srgb, var(--area-accent, var(--accent)) 35%, transparent);
+  background: transparent;
+  box-shadow: none;
+}
+
+.medication-workspace .medication-row--selected {
+  border-left-color: var(--area-accent, var(--accent));
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 4%, transparent);
+  box-shadow: none;
+}
+
+.medication-workspace .medication-row__substance {
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: 600;
+}
+
+.medication-workspace .medication-row__dose {
+  margin-top: 0.1rem;
+  font-family: var(--cm-font-mono);
+  font-size: 0.9375rem;
+  letter-spacing: 0.04em;
+  color: var(--text-main, #24211e);
+}
+
+.medication-workspace .medication-row .therapy-status {
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 0.12rem 0.4rem;
+  border-radius: var(--radius-control, 0.4375rem);
+  background: transparent;
+  border: 1px solid var(--cm-quiet-border);
+}
+
+.medication-workspace .medication-row .therapy-status--green,
+.medication-workspace .medication-row .therapy-status--blue,
+.medication-workspace .medication-row .therapy-status--violet,
+.medication-workspace .medication-row .therapy-status--amber,
+.medication-workspace .medication-row .therapy-status--gray {
+  color: var(--text-muted, #91887e);
+  background: transparent;
+  border-color: var(--cm-quiet-border);
+}
+
+/* ── Receptor burden + risk rows ──────────────────────────────────────── */
+
+.medication-workspace .medication-receptor-burden__bar {
+  height: 4px;
+  border-radius: 0;
+  background: var(--cm-hairline);
+}
+
+.medication-workspace .medication-receptor-burden__fill {
+  border-radius: 0;
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 72%, var(--text-muted));
+}
+
+/* ── Curated Zielrezeptoren (+ / X) ───────────────────────────────────── */
+
+.medication-workspace .medication-zielrezeptor--rows {
+  min-width: 0;
+}
+
+.medication-workspace .medication-zielrezeptor__rows-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.medication-workspace .medication-zielrezeptor__rows-head .medication-dash-panel__subhead {
+  margin: 0;
+}
+
+.medication-workspace .medication-zielrezeptor__row {
+  grid-template-columns: 3.2rem auto 1fr;
+  grid-template-areas: 'label remove drugs' 'bar bar bar';
+}
+
+.medication-workspace .medication-zielrezeptor__icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem;
+  border: none;
+  border-radius: var(--radius-control, 0.4375rem);
+  background: transparent;
+  color: var(--text-muted, #91887e);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.medication-workspace .medication-zielrezeptor__icon-btn:hover:not(:disabled) {
+  color: var(--text-main, #24211e);
+  background: var(--cm-hairline, rgba(0, 0, 0, 0.04));
+}
+
+.medication-workspace .medication-zielrezeptor__icon-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.medication-workspace .medication-zielrezeptor__icon-btn--remove {
+  grid-area: remove;
+}
+
+.medication-workspace .medication-zielrezeptor__add-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.medication-workspace .medication-zielrezeptor__picker {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  right: 0;
+  z-index: 20;
+  min-width: 10rem;
+  max-width: 16rem;
+  padding: 0.25rem;
+  border: 1px solid var(--cm-quiet-border);
+  border-radius: var(--radius-control, 0.4375rem);
+  background: var(--surface, #fff);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.medication-workspace .medication-zielrezeptor__picker-hint {
+  margin: 0 0.35rem 0.25rem;
+  font-size: 0.65rem;
+  color: var(--text-muted, #91887e);
+}
+
+.medication-workspace .medication-zielrezeptor__picker-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.35rem 0.45rem;
+  border: none;
+  border-radius: calc(var(--radius-control, 0.4375rem) - 2px);
+  background: transparent;
+  font-size: 0.76rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.medication-workspace .medication-zielrezeptor__picker-item:hover {
+  background: var(--cm-hairline, rgba(0, 0, 0, 0.04));
+}
+
+.medication-workspace .medication-zielrezeptor__picker-meta {
+  font-size: 0.68rem;
+  color: var(--text-muted, #91887e);
+}
+
+.medication-workspace .medication-zielrezeptor__empty,
+.medication-workspace .medication-zielrezeptor__suggestions-hint {
+  font-size: 0.72rem;
+  color: var(--text-muted, #91887e);
+  margin: 0.15rem 0 0;
+}
+
+.medication-workspace .medication-zielrezeptor--chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.medication-workspace .medication-zielrezeptor__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.medication-workspace .medication-zielrezeptor__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.medication-workspace .medication-zielrezeptor__chip-remove {
+  display: inline-flex;
+  padding: 0;
+  margin-left: 0.1rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+  opacity: 0.55;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.medication-workspace .medication-zielrezeptor__chip-remove:hover {
+  opacity: 1;
+}
+
+.medication-workspace .medication-insight--zielrezeptor .medication-insight__label {
+  margin-bottom: 0.25rem;
+}
+
+.medication-workspace .medication-risk {
+  padding: 0.35rem 0;
+  border-radius: 0;
+  border-left-width: 2px;
+  background: transparent;
+}
+
+.medication-workspace .medication-risk__dot {
+  display: none;
+}
+
+.medication-workspace .medication-risk--high {
+  border-left-color: #c0392b;
+}
+.medication-workspace .medication-risk--moderate {
+  border-left-color: #b45309;
+}
+.medication-workspace .medication-risk--info {
+  border-left-color: var(--cm-quiet-border);
+}
+
+.medication-workspace .medication-risk--high .medication-risk__label {
+  color: var(--text-main, #24211e);
+}
+
+.medication-workspace .medication-interaction-row {
+  padding: 0.35rem 0 0.35rem 0.5rem;
+  border: none;
+  border-left: 2px solid var(--cm-quiet-border);
+  border-radius: 0;
+  background: transparent;
+}
+
+.medication-workspace .medication-interaction-row--high {
+  border-left-color: #c0392b;
+  background: transparent;
+}
+.medication-workspace .medication-interaction-row--moderate {
+  border-left-color: #b45309;
+  background: transparent;
+}
+.medication-workspace .medication-interaction-row--info {
+  border-left-color: var(--cm-quiet-border);
+  background: transparent;
+}
+
+.medication-workspace .medication-risk-badge {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.1rem 0.35rem;
+  border-radius: var(--radius-control, 0.4375rem);
+  background: transparent;
+  border: 1px solid var(--cm-quiet-border);
+}
+
+.medication-workspace .medication-risk-badge--high {
+  color: #c0392b;
+  border-color: color-mix(in srgb, #c0392b 35%, var(--cm-quiet-border));
+  background: transparent;
+}
+.medication-workspace .medication-risk-badge--moderate {
+  color: #b45309;
+  border-color: color-mix(in srgb, #b45309 35%, var(--cm-quiet-border));
+  background: transparent;
+}
+.medication-workspace .medication-risk-badge--info {
+  color: var(--text-muted, #91887e);
+  background: transparent;
+}
+
+/* ── Explore quick-jump — flat link list ──────────────────────────────── */
+
+.medication-workspace .medication-explore {
+  gap: 0.5rem;
+  padding-top: 0;
+}
+
+.medication-workspace .medication-explore__label {
+  font-size: var(--cm-eyebrow-size, 0.6875rem);
+  font-weight: var(--cm-label-weight, 500);
+  letter-spacing: var(--cm-label-tracking, 0.08em);
+  color: var(--text-muted, #91887e);
+}
+
+.medication-workspace .medication-explore__grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-top: 1px solid var(--cm-hairline);
+}
+
+.medication-workspace .medication-explore__card {
+  padding: 0.6rem 0;
+  gap: 0.55rem;
+  border: none;
+  border-bottom: 1px solid var(--cm-hairline);
+  border-radius: 0;
+  background: transparent;
+  transition: color var(--duration-fast, 150ms) ease;
+}
+
+.medication-workspace .medication-explore__card:hover {
+  border-color: transparent;
+  border-bottom-color: var(--cm-hairline);
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+
+.medication-workspace .medication-explore__icon {
+  width: auto;
+  height: auto;
+  padding: 0;
+  border-radius: 0;
+  color: var(--text-muted, #91887e);
+  background: transparent;
+}
+
+.medication-workspace .medication-explore__title {
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: 600;
+}
+
+.medication-workspace .medication-explore__desc {
+  font-size: var(--text-xs, 0.75rem);
+}
+
+.medication-workspace .medication-explore__card[data-section] {
+  --area-accent: var(--area-medikation, var(--accent));
+}
+
+/* ── Section detail (lower sections) ──────────────────────────────────── */
+
+.medication-workspace .medication-section-detail__back {
+  padding: 0;
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 500;
+  border: none;
+  border-radius: 0;
+  color: var(--text-muted, #91887e);
+}
+
+.medication-workspace .medication-section-detail__back:hover {
+  color: var(--accent, #8a5a2b);
+  background: transparent;
+}
+
+.medication-workspace .medication-section-detail__title-row {
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--cm-hairline);
+}
+
+.medication-workspace .medication-section-detail__icon {
+  width: auto;
+  height: auto;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  color: var(--text-muted, #91887e);
+  background: transparent;
+}
+
+.medication-workspace .medication-section-detail__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.medication-workspace .medication-section-detail__desc {
+  font-size: var(--text-sm, 0.8125rem);
+}
+
+.medication-workspace .medication-regimen-bar {
+  padding: 0.65rem 0;
+  border: none;
+  border-top: 1px solid var(--cm-hairline);
+  border-bottom: 1px solid var(--cm-hairline);
+  border-radius: 0;
+  background: transparent;
+}
+
+.medication-workspace .medication-regimen-bar__label {
+  font-size: var(--cm-label-size, 0.6875rem);
+  font-weight: var(--cm-label-weight, 500);
+  letter-spacing: var(--cm-label-tracking, 0.08em);
+}
+
+.medication-workspace .medication-regimen-chip {
+  padding: 0.15rem 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  font-size: var(--text-sm, 0.8125rem);
+}
+
+.medication-workspace .medication-regimen-chip__dose {
+  font-family: var(--cm-font-mono);
+  letter-spacing: 0.03em;
+}
+
+.medication-workspace .medication-lower-section__subhead {
+  font-size: var(--cm-label-size, 0.6875rem);
+  font-weight: var(--cm-label-weight, 500);
+  letter-spacing: var(--cm-label-tracking, 0.08em);
+  color: var(--text-muted, #91887e);
+}
+
+.medication-workspace .medication-se-recorded__chip {
+  padding: 0.1rem 0.35rem;
+  font-size: var(--text-xs, 0.75rem);
+  border-radius: var(--radius-control, 0.4375rem);
+  background: transparent;
+  border: 1px solid var(--cm-quiet-border);
+}
+
+.medication-workspace .medication-se-report {
+  padding: 0.5rem 0;
+  border: none;
+  border-bottom: 1px solid var(--cm-hairline);
+  border-radius: 0;
+  background: transparent;
+}
+
+.medication-workspace .medication-se-report__severity,
+.medication-workspace .medication-se-report__attribution {
+  font-size: 0.625rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: var(--radius-control, 0.4375rem);
+  background: transparent;
+  border: 1px solid var(--cm-quiet-border);
+}
+
+.medication-workspace .medication-intelligence-card {
+  padding: 0.85rem 0;
+  gap: 0.65rem;
+  border: none;
+  border-bottom: 1px solid var(--cm-hairline);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  border-left-width: 0;
+}
+
+.medication-workspace .medication-intelligence-card__head {
+  border-bottom: 1px solid var(--cm-hairline);
+}
+
+.medication-workspace .medication-intelligence-card__substance {
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: 600;
+}
+
+.medication-workspace .medication-intelligence__chip {
+  padding: 0.1rem 0.35rem;
+  font-size: var(--text-xs, 0.75rem);
+  border-radius: var(--radius-control, 0.4375rem);
+  background: transparent;
+}
+
+.medication-workspace .medication-interaction__severity {
+  font-size: 0.625rem;
+  font-weight: 600;
+  padding: 0.1rem 0.35rem;
+  border-radius: var(--radius-control, 0.4375rem);
+  background: transparent;
+}
+
+.medication-workspace .medication-section-detail[data-section] {
+  --area-accent: var(--area-medikation, var(--accent));
+}
+
+/* ── Plan history ─────────────────────────────────────────────────────── */
+
+.medication-workspace .medication-history__back {
+  padding: 0;
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 500;
+  color: var(--text-muted, #91887e);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+
+.medication-workspace .medication-history__back:hover {
+  color: var(--accent, #8a5a2b);
+  background: transparent;
+}
+
+.medication-workspace .medication-history__title {
+  font-size: var(--cm-section-title-size, 0.8125rem);
+  font-weight: 600;
+}
+
+.medication-workspace .medication-history__entry {
+  padding: 0.35rem 0;
+  border: none;
+  border-radius: 0;
+}
+
+.medication-workspace .medication-history__entry--active {
+  border-left: 2px solid var(--area-accent, var(--accent));
+  padding-left: 0.5rem;
+  background: transparent;
+  border-color: transparent;
+  border-left-color: var(--area-accent, var(--accent));
+}
+
+.medication-workspace .medication-history__badge {
+  padding: 0.1rem 0.35rem;
+  font-size: 0.625rem;
+  border-radius: var(--radius-control, 0.4375rem);
+  background: transparent;
+  border: 1px solid var(--cm-quiet-border);
+  color: var(--text-muted, #91887e);
+}
+
+.medication-workspace .medication-history__snapshot {
+  border: none;
+  border-top: 1px solid var(--cm-hairline);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.medication-workspace .medication-history {
+  --area-accent: var(--area-medikation, var(--accent));
+}
+
+/* ── Receptor profile + dashboard radar width ─────────────────────────── */
+
+/* Radar keeps its intrinsic size on the left; the Zielrezeptoren list fills
+ * the remaining width so there is no dead gap between the two. */
+.medication-workspace .medication-dash-panel__receptor-body {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 2rem;
+  max-width: 100%;
+}
+
+.medication-workspace .medication-dash-panel__receptor-combined {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.medication-workspace .medication-dash-panel__receptor-targets {
+  flex: 1 1 auto;
+  max-width: none;
+  min-width: 0;
+}
+
+.medication-workspace .medication-dash-panel--receptor {
+  max-width: 100%;
+}
+
+.medication-workspace .receptor-radar--inline {
+  flex-shrink: 0;
+}
+
+.medication-workspace .receptor-radar--inline .receptor-radar__svg {
+  width: 208px;
+  height: 208px;
+  max-width: 100%;
+}
+
+.medication-workspace .medication-dash-panel__receptor-targets .medication-zielrezeptor--rows {
+  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.medication-workspace .medication-dash-panel__receptor-targets .medication-zielrezeptor__row {
+  grid-template-columns: 3.2rem auto 1fr;
+  font-size: var(--text-xs, 0.75rem);
+}
+
+.medication-workspace .receptor-profile {
+  width: 100%;
+}
+
+.medication-workspace .receptor-radar-chart {
+  width: 100%;
+  max-width: 28rem;
+}
+
+.medication-workspace .receptor-profile__view .interaction-matrix {
+  width: 100%;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────── */
+
+/* Mid widths: keep the three metric columns but drop the chip cells to their
+ * own full-width rows so they never get cramped beside one another. */
+@media (max-width: 960px) {
+  .medication-workspace .medication-insight--chips {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 767px) {
+  .medication-workspace .medication-dash-panel__receptor-body {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .medication-workspace .medication-dash-panel__receptor-targets {
+    flex: 1 1 auto;
+    max-width: 100%;
+  }
+
+  .medication-workspace .medication-dash-panel__receptor-targets .medication-zielrezeptor__row {
+    grid-template-columns: 3.2rem auto 1fr;
+    font-size: inherit;
+  }
+}
+
+@media (max-width: 720px) {
+  .medication-page {
+    padding: 1.1rem 1.1rem 2.5rem;
+    max-width: none;
+  }
+
+  .medication-workspace--flagship {
+    max-width: none;
+  }
+
+  .medication-workspace .medication-insights {
+    grid-template-columns: 1fr;
+  }
+
+  .medication-workspace .medication-insight--metric,
+  .medication-workspace .medication-insight--chips {
+    grid-column: 1 / -1;
+  }
+}

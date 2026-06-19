@@ -9,26 +9,17 @@ import { normalizeGenericName } from './normalizeGenericName'
  * moved; onError fallback shows a placeholder. Regenerate mappings via
  * `npx tsx scripts/fetch-wikimedia-structure-images.ts`.
  *
- * Stored data uses small list thumbs (120px); browse/detail views upscale at resolve
- * time via {@link rescaleCommonsThumbUrl} so we avoid regenerating the data file.
+ * Stored data includes 120px browse thumbs and 500px detail thumbs from the fetch
+ * script. Commons only serves pre-rendered thumb widths — arbitrary sizes (e.g.
+ * 320px, 640px) return HTTP 400, so we use the stored URLs as-is.
  */
-const BROWSE_THUMB_WIDTH = 320
-const DETAIL_THUMB_WIDTH = 640
 
-/** Rewrite a Commons `/thumb/.../{N}px-...` URL to a larger width (no-op if unmatched). */
+/**
+ * Rewrite a Commons `/thumb/.../{N}px-...` URL to another width.
+ * Only use widths that Commons actually renders (typically 120, 250, 500 for SVG→PNG).
+ */
 export function rescaleCommonsThumbUrl(url: string, width: number): string {
   return url.replace(/\/(\d+)px-([^/?#]+)(?=$|[?#])/, `/${width}px-$2`)
-}
-
-function withDisplayThumbSizes(attribution: StructureImageAttribution): StructureImageAttribution {
-  return {
-    ...attribution,
-    thumbUrl: rescaleCommonsThumbUrl(attribution.thumbUrl, BROWSE_THUMB_WIDTH),
-    detailThumbUrl: rescaleCommonsThumbUrl(
-      attribution.detailThumbUrl ?? attribution.thumbUrl,
-      DETAIL_THUMB_WIDTH,
-    ),
-  }
 }
 
 export interface StructureImageAttribution {
@@ -70,8 +61,7 @@ export function getStructureImageAttribution(genericName: string): StructureImag
   const normalized = normalizeGenericName(genericName)
   if (!normalized) return null
   const key = lookupKey(normalized)
-  const attribution = key ? (STRUCTURE_LOOKUP.get(key) ?? null) : null
-  return attribution ? withDisplayThumbSizes(attribution) : null
+  return key ? (STRUCTURE_LOOKUP.get(key) ?? null) : null
 }
 
 /** Larger detail image URL when mapped, otherwise null. */

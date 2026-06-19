@@ -1,15 +1,19 @@
 import type { UiTranslationKey } from '../../../data/uiTranslations'
 import type {
   OverviewWidgetId,
+  OverviewWidgetSizeHint,
   OverviewWidgetVisibility,
   OverviewWidgetWidth,
 } from '../../../utils/overview/overviewLayout'
+import { OVERVIEW_WIDGET_SIZE_WEIGHT } from '../../../utils/overview/overviewLayout'
 
 export interface OverviewWidgetDefinition {
   id: OverviewWidgetId
   titleKey: UiTranslationKey
   descriptionKey: UiTranslationKey
   defaultWidth: OverviewWidgetWidth
+  /** Relative vertical footprint for column packing (compact one-liners vs tall cards). */
+  sizeHint: OverviewWidgetSizeHint
   /** Widget can only appear once in the layout. */
   singleton: boolean
   visibility: OverviewWidgetVisibility
@@ -21,6 +25,7 @@ export const OVERVIEW_WIDGET_REGISTRY: Record<OverviewWidgetId, OverviewWidgetDe
     titleKey: 'overviewWidgetHeroSummary',
     descriptionKey: 'overviewWidgetDescHeroSummary',
     defaultWidth: 'full',
+    sizeHint: 'compact',
     singleton: true,
     visibility: 'always',
   },
@@ -29,6 +34,7 @@ export const OVERVIEW_WIDGET_REGISTRY: Record<OverviewWidgetId, OverviewWidgetDe
     titleKey: 'overviewWidgetSafety',
     descriptionKey: 'overviewWidgetDescSafety',
     defaultWidth: 'half',
+    sizeHint: 'tall',
     singleton: true,
     visibility: 'always',
   },
@@ -37,6 +43,7 @@ export const OVERVIEW_WIDGET_REGISTRY: Record<OverviewWidgetId, OverviewWidgetDe
     titleKey: 'overviewWidgetMedication',
     descriptionKey: 'overviewWidgetDescMedication',
     defaultWidth: 'half',
+    sizeHint: 'tall',
     singleton: true,
     visibility: 'always',
   },
@@ -45,6 +52,7 @@ export const OVERVIEW_WIDGET_REGISTRY: Record<OverviewWidgetId, OverviewWidgetDe
     titleKey: 'overviewWidgetSpiegelLatest',
     descriptionKey: 'overviewWidgetDescSpiegelLatest',
     defaultWidth: 'half',
+    sizeHint: 'standard',
     singleton: true,
     visibility: 'hasSpiegel',
   },
@@ -53,6 +61,7 @@ export const OVERVIEW_WIDGET_REGISTRY: Record<OverviewWidgetId, OverviewWidgetDe
     titleKey: 'overviewWidgetDiagnoses',
     descriptionKey: 'overviewWidgetDescDiagnoses',
     defaultWidth: 'half',
+    sizeHint: 'standard',
     singleton: true,
     visibility: 'always',
   },
@@ -61,6 +70,7 @@ export const OVERVIEW_WIDGET_REGISTRY: Record<OverviewWidgetId, OverviewWidgetDe
     titleKey: 'overviewWidgetPsychopathology',
     descriptionKey: 'overviewWidgetDescPsychopathology',
     defaultWidth: 'half',
+    sizeHint: 'tall',
     singleton: true,
     visibility: 'always',
   },
@@ -69,6 +79,7 @@ export const OVERVIEW_WIDGET_REGISTRY: Record<OverviewWidgetId, OverviewWidgetDe
     titleKey: 'overviewWidgetLabsDue',
     descriptionKey: 'overviewWidgetDescLabsDue',
     defaultWidth: 'half',
+    sizeHint: 'tall',
     singleton: true,
     visibility: 'always',
   },
@@ -77,6 +88,7 @@ export const OVERVIEW_WIDGET_REGISTRY: Record<OverviewWidgetId, OverviewWidgetDe
     titleKey: 'overviewWidgetPriorTherapies',
     descriptionKey: 'overviewWidgetDescPriorTherapies',
     defaultWidth: 'half',
+    sizeHint: 'standard',
     singleton: true,
     visibility: 'always',
   },
@@ -85,6 +97,7 @@ export const OVERVIEW_WIDGET_REGISTRY: Record<OverviewWidgetId, OverviewWidgetDe
     titleKey: 'overviewWidgetSpiegelAll',
     descriptionKey: 'overviewWidgetDescSpiegelAll',
     defaultWidth: 'full',
+    sizeHint: 'tall',
     singleton: true,
     visibility: 'hasAdditionalSpiegel',
   },
@@ -93,6 +106,7 @@ export const OVERVIEW_WIDGET_REGISTRY: Record<OverviewWidgetId, OverviewWidgetDe
     titleKey: 'overviewWidgetRecentVerlauf',
     descriptionKey: 'overviewWidgetDescRecentVerlauf',
     defaultWidth: 'half',
+    sizeHint: 'standard',
     singleton: true,
     visibility: 'always',
   },
@@ -101,6 +115,7 @@ export const OVERVIEW_WIDGET_REGISTRY: Record<OverviewWidgetId, OverviewWidgetDe
     titleKey: 'overviewWidgetAppointments',
     descriptionKey: 'overviewWidgetDescAppointments',
     defaultWidth: 'half',
+    sizeHint: 'standard',
     singleton: true,
     visibility: 'always',
   },
@@ -109,6 +124,7 @@ export const OVERVIEW_WIDGET_REGISTRY: Record<OverviewWidgetId, OverviewWidgetDe
     titleKey: 'overviewWidgetDokumentation',
     descriptionKey: 'overviewWidgetDescDokumentation',
     defaultWidth: 'half',
+    sizeHint: 'standard',
     singleton: true,
     visibility: 'always',
   },
@@ -117,6 +133,7 @@ export const OVERVIEW_WIDGET_REGISTRY: Record<OverviewWidgetId, OverviewWidgetDe
     titleKey: 'overviewWidgetPsychotherapy',
     descriptionKey: 'overviewWidgetDescPsychotherapy',
     defaultWidth: 'half',
+    sizeHint: 'standard',
     singleton: true,
     visibility: 'hasPsychotherapy',
   },
@@ -125,6 +142,7 @@ export const OVERVIEW_WIDGET_REGISTRY: Record<OverviewWidgetId, OverviewWidgetDe
     titleKey: 'overviewWidgetIsdmSummary',
     descriptionKey: 'overviewWidgetDescIsdmSummary',
     defaultWidth: 'half',
+    sizeHint: 'standard',
     singleton: true,
     visibility: 'hasIsdm',
   },
@@ -133,6 +151,7 @@ export const OVERVIEW_WIDGET_REGISTRY: Record<OverviewWidgetId, OverviewWidgetDe
     titleKey: 'overviewWidgetCollaboration',
     descriptionKey: 'overviewWidgetDescCollaboration',
     defaultWidth: 'half',
+    sizeHint: 'standard',
     singleton: true,
     visibility: 'always',
   },
@@ -141,6 +160,7 @@ export const OVERVIEW_WIDGET_REGISTRY: Record<OverviewWidgetId, OverviewWidgetDe
     titleKey: 'overviewWidgetLabResults',
     descriptionKey: 'overviewWidgetDescLabResults',
     defaultWidth: 'half',
+    sizeHint: 'standard',
     singleton: true,
     visibility: 'hasLabData',
   },
@@ -149,9 +169,77 @@ export const OVERVIEW_WIDGET_REGISTRY: Record<OverviewWidgetId, OverviewWidgetDe
     titleKey: 'overviewWidgetButterflyCriteria',
     descriptionKey: 'overviewWidgetDescButterflyCriteria',
     defaultWidth: 'half',
+    sizeHint: 'standard',
     singleton: true,
     visibility: 'hasButterfly',
+  },
+  zwangsmassnahme: {
+    id: 'zwangsmassnahme',
+    titleKey: 'overviewWidgetZwangsmassnahme',
+    descriptionKey: 'overviewWidgetDescZwangsmassnahme',
+    defaultWidth: 'half',
+    sizeHint: 'compact',
+    singleton: true,
+    visibility: 'hasZwangsmassnahme',
+  },
+  verlaufstendenz: {
+    id: 'verlaufstendenz',
+    titleKey: 'overviewWidgetVerlaufstendenz',
+    descriptionKey: 'overviewWidgetDescVerlaufstendenz',
+    defaultWidth: 'half',
+    sizeHint: 'compact',
+    singleton: true,
+    visibility: 'always',
+  },
+  'ekg-summary': {
+    id: 'ekg-summary',
+    titleKey: 'overviewWidgetEkgSummary',
+    descriptionKey: 'overviewWidgetDescEkgSummary',
+    defaultWidth: 'half',
+    sizeHint: 'compact',
+    singleton: true,
+    visibility: 'always',
+  },
+  'eeg-summary': {
+    id: 'eeg-summary',
+    titleKey: 'overviewWidgetEegSummary',
+    descriptionKey: 'overviewWidgetDescEegSummary',
+    defaultWidth: 'half',
+    sizeHint: 'compact',
+    singleton: true,
+    visibility: 'hasEeg',
+  },
+  'ct-summary': {
+    id: 'ct-summary',
+    titleKey: 'overviewWidgetCtSummary',
+    descriptionKey: 'overviewWidgetDescCtSummary',
+    defaultWidth: 'half',
+    sizeHint: 'compact',
+    singleton: true,
+    visibility: 'always',
+  },
+  'angemeldete-therapien': {
+    id: 'angemeldete-therapien',
+    titleKey: 'overviewWidgetAngemeldeteTherapien',
+    descriptionKey: 'overviewWidgetDescAngemeldeteTherapien',
+    defaultWidth: 'half',
+    sizeHint: 'standard',
+    singleton: true,
+    visibility: 'always',
+  },
+  compliance: {
+    id: 'compliance',
+    titleKey: 'overviewWidgetCompliance',
+    descriptionKey: 'overviewWidgetDescCompliance',
+    defaultWidth: 'half',
+    sizeHint: 'compact',
+    singleton: true,
+    visibility: 'always',
   },
 }
 
 export const OVERVIEW_WIDGET_LIST = Object.values(OVERVIEW_WIDGET_REGISTRY)
+
+export function getOverviewWidgetSizeWeight(widgetId: OverviewWidgetId): number {
+  return OVERVIEW_WIDGET_SIZE_WEIGHT[OVERVIEW_WIDGET_REGISTRY[widgetId].sizeHint]
+}

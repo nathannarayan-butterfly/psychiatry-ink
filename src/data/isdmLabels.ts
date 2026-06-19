@@ -10,7 +10,7 @@ export const localizedProfileLabels: Record<
   international_structured_diagnostic_mapping: {
     de: 'Internationale strukturierte diagnostische Zuordnung V.1',
     en: 'International Structured Diagnostic Mapping V.1',
-    en_US: 'International Structured Diagnostic Mapping V.1 with DSM-5-TR support',
+    en_US: 'International Structured Diagnostic Mapping V.1',
     fr: 'Cartographie diagnostique structurée internationale V.1',
     es: 'Mapeo diagnóstico estructurado internacional V.1',
   },

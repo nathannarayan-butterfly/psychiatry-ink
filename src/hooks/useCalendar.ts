@@ -15,7 +15,20 @@ import {
   updateCalendarItemApi,
 } from '../services/calendarApi'
 import { CALENDAR_CHANGED_EVENT } from '../utils/calendarStore'
+import {
+  formatCalendarCryptoError,
+  isCalendarCryptoOperationError,
+  OrgCalendarKeySetupError,
+} from '../utils/calendarEncryption'
 import { useCalendarScope } from './useCalendarScope'
+
+function formatCalendarLoadError(error: unknown): string {
+  if (error instanceof OrgCalendarKeySetupError) return error.message
+  if (isCalendarCryptoOperationError(error)) {
+    return formatCalendarCryptoError(error, 'decrypt')
+  }
+  return error instanceof Error ? error.message : 'Kalender konnte nicht geladen werden'
+}
 
 export function useCalendar(filters: CalendarListFilters) {
   const scope = useCalendarScope()
@@ -30,7 +43,7 @@ export function useCalendar(filters: CalendarListFilters) {
       const list = await listCalendarItemsApi(scope, filters)
       setItems(list)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Kalender konnte nicht geladen werden')
+      setError(formatCalendarLoadError(err))
     } finally {
       setLoading(false)
     }

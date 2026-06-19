@@ -122,6 +122,22 @@ export function validateDemoFixture(
     pushWarn(warnings, 'imprints', 'Keine Clinical Imprints — werden beim Seed ggf. reindexiert')
   }
 
+  if (!fixture.workspace.isdmInput) {
+    pushWarn(warnings, 'isdm_input', 'ISDM-Eingabe fehlt — Phänomenologie-Panel leer')
+  }
+  if (!fixture.workspace.isdmAnalysis) {
+    pushWarn(warnings, 'isdm_analysis', 'ISDM-Analyse fehlt — wird ggf. beim Öffnen neu berechnet')
+  }
+  if (!fixture.workspace.butterflyAttestations || Object.keys(fixture.workspace.butterflyAttestations).length < 5) {
+    pushWarn(warnings, 'butterfly_attestations', 'Wenige Butterfly-Attestierungen — Kriterienprüfung eingeschränkt')
+  }
+  if (!fixture.workspace.anforderungen || fixture.workspace.anforderungen.length < 5) {
+    pushWarn(warnings, 'anforderungen', 'Wenige Anforderungen — Workflow-Demo eingeschränkt')
+  }
+  if (fixture.befundRecords.length < 2) {
+    pushWarn(warnings, 'befund_records', 'EKG und EEG empfohlen für Befunde-Workflow')
+  }
+
   for (const entry of fixture.verlaufFeed) {
     scanTextForPhi(entry.content, `verlaufFeed.${entry.id}`, errors, warnings)
   }

@@ -18,6 +18,7 @@ import {
   Plug,
   Users,
   CalendarDays,
+  Upload,
 } from 'lucide-react'
 import { useCallback, useMemo, useState, type ChangeEvent } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
@@ -64,6 +65,11 @@ import {
 import { useEnterpriseFeatures } from '../../hooks/useEnterpriseFeatures'
 import { NewPatientDialog } from './NewPatientDialog'
 import type { NewPatientData } from './NewPatientDialog'
+import { DocumentImportModal } from '../documentImport/DocumentImportModal'
+import type {
+  CreatedPatientInput,
+  ExistingPatientOption,
+} from '../documentImport/PatientIdentityPanel'
 import { NewCaseWorkflowDialog } from './NewCaseWorkflowDialog'
 import { PatientCaseCard } from './PatientCaseCard'
 import { DaySchedulePanel } from '../calendar/DaySchedulePanel'
@@ -178,6 +184,7 @@ export function DashboardPage({
   const { todayTotalLabel, todayTotalSeconds } = useWorkspaceSession()
   const [creditsDialogOpen, setCreditsDialogOpen] = useState(false)
   const [showNewPatientDialog, setShowNewPatientDialog] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
   const [editingCaseId, setEditingCaseId] = useState<string | null>(null)
   const [workflowCaseId, setWorkflowCaseId] = useState<string | null>(null)
   const [patientSearch, setPatientSearch] = useState('')
@@ -292,6 +299,41 @@ export function DashboardPage({
   const archivedPatients = useMemo(
     () => listedCases.filter((caseItem) => isPatientCaseArchived(caseItem.caseId, userId)),
     [listedCases, userId],
+  )
+
+  const importExistingPatients = useMemo<ExistingPatientOption[]>(
+    () =>
+      activePatients.map((caseItem) => ({
+        caseId: caseItem.caseId,
+        label: caseItem.displayTitle,
+        vorname: caseItem.localVorname,
+        nachname: caseItem.localNachname,
+      })),
+    [activePatients],
+  )
+
+  const handleImportCreatePatient = useCallback(
+    (input: CreatedPatientInput): string => {
+      const newCaseId = registry.addCase()
+      const fullName = [input.vorname, input.nachname].filter(Boolean).join(' ').trim()
+      registry.upsertCaseMeta(newCaseId, {
+        localName: fullName || undefined,
+        localVorname: input.vorname || undefined,
+        localNachname: input.nachname || undefined,
+        localGeburtsdatum: input.geburtsdatum || undefined,
+      })
+      return newCaseId
+    },
+    [registry],
+  )
+
+  const handleImported = useCallback(
+    (importedCaseId: string) => {
+      void registry.refresh()
+      setShowImportModal(false)
+      onOpenCase(importedCaseId, undefined, true)
+    },
+    [registry, onOpenCase],
   )
 
   const handleArchivePatient = useCallback(
@@ -477,6 +519,20 @@ export function DashboardPage({
             <span className="dashboard-quick-action__text">
               <span className="dashboard-quick-action__label">{t('dashboardNewPatient')}</span>
               <span className="dashboard-quick-action__subtitle">{t('dashboardNewPatientSubtitle')}</span>
+            </span>
+          </button>
+
+          <button
+            type="button"
+            className="dashboard-quick-action clinical-card clinical-card--interactive"
+            onClick={() => setShowImportModal(true)}
+          >
+            <span className="dashboard-quick-action__icon-wrap" aria-hidden>
+              <Upload className="h-4 w-4" strokeWidth={1.75} />
+            </span>
+            <span className="dashboard-quick-action__text">
+              <span className="dashboard-quick-action__label">{t('documentImportTitle')}</span>
+              <span className="dashboard-quick-action__subtitle">{t('documentImportDashboardSubtitle')}</span>
             </span>
           </button>
         </div>
@@ -866,6 +922,15 @@ export function DashboardPage({
           onCancel={() => setShowNewPatientDialog(false)}
         />
       ) : null}
+
+      <DocumentImportModal
+        open={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        allowPatientCreation
+        onCreatePatient={handleImportCreatePatient}
+        existingPatients={importExistingPatients}
+        onImported={handleImported}
+      />
 
       {editingCaseId && editingPatientData ? (
         <NewPatientDialog

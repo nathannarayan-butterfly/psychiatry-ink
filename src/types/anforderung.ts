@@ -4,6 +4,13 @@ export const ANFORDERUNG_VERSION = 1
 
 export type AnforderungCategory = 'labor' | 'befunde' | 'therapien' | 'sonstiges'
 
+/** Opens the create-order modal with a category, optional group filter, and pre-selected items. */
+export interface AnforderungModalPreset {
+  category: AnforderungCategory
+  groupKey?: string
+  selectedCatalogIds?: string[]
+}
+
 export type AnforderungUrgency = 'routine' | 'soon' | 'urgent'
 
 export type AnforderungStatus = 'pending' | 'accepted' | 'rejected' | 'cancelled'

@@ -2,7 +2,7 @@
 
 export const DEMO_PATIENT_ID = 'DEMO-0001'
 export const DEMO_CASE_ID = 'DEMO-CASE-0001'
-export const DEMO_SEED_VERSION = 'v2'
+export const DEMO_SEED_VERSION = 'v3'
 
 export const DEMO_FIXTURE_VERSION = '1'
 

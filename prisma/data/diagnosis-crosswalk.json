@@ -1276,85 +1276,85 @@
   {
     "icd10": {
       "code": "F30",
-      "label": "Manic episode"
+      "label": "Manische Episode"
     },
     "icd11": {
-      "code": "6A8Z",
-      "label": "Mood disorders, unspecified"
+      "code": "6A60",
+      "label": "Bipolare Störung I"
     },
     "dsm5tr": {
-      "code": "",
-      "label": ""
+      "code": "296.0x",
+      "label": "Bipolare I-Störung, manische/hypomane Episode"
     }
   },
   {
     "icd10": {
       "code": "F30.0",
-      "label": "Hypomania"
+      "label": "Hypomanie"
     },
     "icd11": {
-      "code": "",
-      "label": ""
+      "code": "6A60.2",
+      "label": "Bipolare Störung I, hypomane Episode"
     },
     "dsm5tr": {
-      "code": "",
-      "label": ""
+      "code": "296.40",
+      "label": "Bipolare I-Störung, hypomane Episode"
     }
   },
   {
     "icd10": {
       "code": "F30.1",
-      "label": "Mania without psychotic symptoms"
+      "label": "Manie ohne psychotische Symptome"
     },
     "icd11": {
-      "code": "6A8Z",
-      "label": "Mood disorders, unspecified"
+      "code": "6A60.0",
+      "label": "Bipolare Störung I, manische Episode ohne psychotische Symptome"
     },
     "dsm5tr": {
-      "code": "",
-      "label": ""
+      "code": "296.41",
+      "label": "Bipolare I-Störung, manische Episode"
     }
   },
   {
     "icd10": {
       "code": "F30.2",
-      "label": "Mania with psychotic symptoms"
+      "label": "Manie mit psychotischen Symptomen"
     },
     "icd11": {
-      "code": "6A8Z",
-      "label": "Mood disorders, unspecified"
+      "code": "6A60.1",
+      "label": "Bipolare Störung I, manische Episode mit psychotischen Symptomen"
     },
     "dsm5tr": {
-      "code": "",
-      "label": ""
+      "code": "296.44",
+      "label": "Bipolare I-Störung, manische Episode, schwer"
     }
   },
   {
     "icd10": {
       "code": "F30.8",
-      "label": "Other manic episodes"
+      "label": "Sonstige manische Episoden"
     },
     "icd11": {
-      "code": "6A8Z",
-      "label": "Mood disorders, unspecified"
+      "code": "6A60.Y",
+      "label": "Sonstige näher bezeichnete bipolare Störung Typ I"
     },
     "dsm5tr": {
-      "code": "",
-      "label": ""
+      "code": "296.89",
+      "label": "Sonstige näher bezeichnete bipolare Störung"
     }
   },
   {
     "icd10": {
       "code": "F30.9",
-      "label": "Manic episode, unspecified"
+      "label": "Manische Episode, nicht näher bezeichnet"
     },
     "icd11": {
-      "code": "6A8Z",
-      "label": "Mood disorders, unspecified"
+      "code": "6A60",
+      "label": "Bipolare Störung I"
     },
     "dsm5tr": {
-      "code": "",
-      "label": ""
+      "code": "296.80",
+      "label": "Bipolare I-Störung"
     }
   },
   {
@@ -1724,15 +1724,15 @@
   {
     "icd10": {
       "code": "F34",
-      "label": "Persistent mood [affective] disorders"
+      "label": "Anhaltende affektive Störungen"
     },
     "icd11": {
-      "code": "6A8Z",
-      "label": "Mood disorders, unspecified"
+      "code": "6A6Z",
+      "label": "Bipolare oder verwandte Störungen, nicht näher bezeichnet"
     },
     "dsm5tr": {
-      "code": "",
-      "label": ""
+      "code": "296.90",
+      "label": "Nicht näher bezeichnete Stimmungsstörung"
     }
   },
   {
@@ -1752,113 +1752,113 @@
   {
     "icd10": {
       "code": "F34.1",
-      "label": "Persistierende depressive Stoerung (Dysthymie)"
+      "label": "Dysthymie"
     },
     "icd11": {
       "code": "6A72",
-      "label": "Dysthyme Stoerung"
+      "label": "Dysthyme Störung"
     },
     "dsm5tr": {
-      "code": "",
-      "label": "Persistierende depressive Stoerung (Dysthymie)"
+      "code": "300.4",
+      "label": "Dysthymische Störung"
     }
   },
   {
     "icd10": {
       "code": "F34.8",
-      "label": "Other persistent mood [affective] disorders"
+      "label": "Sonstige anhaltende affektive Störungen"
     },
     "icd11": {
-      "code": "6A8Z",
-      "label": "Mood disorders, unspecified"
+      "code": "6A6Y",
+      "label": "Sonstige näher bezeichnete bipolare oder verwandte Störungen"
     },
     "dsm5tr": {
-      "code": "",
-      "label": ""
+      "code": "296.89",
+      "label": "Sonstige näher bezeichnete bipolare Störung"
     }
   },
   {
     "icd10": {
       "code": "F34.9",
-      "label": "Persistent mood [affective] disorder, unspecified"
+      "label": "Anhaltende affektive Störung, nicht näher bezeichnet"
     },
     "icd11": {
-      "code": "6A8Z",
-      "label": "Mood disorders, unspecified"
+      "code": "6A6Z",
+      "label": "Bipolare oder verwandte Störungen, nicht näher bezeichnet"
     },
     "dsm5tr": {
-      "code": "",
-      "label": ""
+      "code": "296.90",
+      "label": "Nicht näher bezeichnete Stimmungsstörung"
     }
   },
   {
     "icd10": {
       "code": "F38",
-      "label": "Other mood [affective] disorders"
+      "label": "Sonstige affektive Störungen"
     },
     "icd11": {
-      "code": "6A8Z",
-      "label": "Mood disorders, unspecified"
+      "code": "6A7Y",
+      "label": "Sonstige näher bezeichnete Stimmungsstörungen"
     },
     "dsm5tr": {
-      "code": "",
-      "label": ""
+      "code": "296.99",
+      "label": "Sonstige näher bezeichnete bipolare oder depressive Störung"
     }
   },
   {
     "icd10": {
       "code": "F38.0",
-      "label": "Other single mood [affective] disorders"
+      "label": "Gemischte affektive Episode"
     },
     "icd11": {
-      "code": "6A8Z",
-      "label": "Mood disorders, unspecified"
+      "code": "6A60.9",
+      "label": "Bipolare Störung I, gemischte Episode ohne psychotische Symptome"
     },
     "dsm5tr": {
-      "code": "",
-      "label": ""
+      "code": "296.x",
+      "label": "Affektive Episode mit gemischten Merkmalen"
     }
   },
   {
     "icd10": {
       "code": "F38.1",
-      "label": "Other recurrent mood [affective] disorders"
+      "label": "Sonstige rezidivierende affektive Störungen"
     },
     "icd11": {
-      "code": "6A8Z",
-      "label": "Mood disorders, unspecified"
+      "code": "6A7Y",
+      "label": "Sonstige näher bezeichnete Stimmungsstörungen"
     },
     "dsm5tr": {
-      "code": "",
-      "label": ""
+      "code": "296.99",
+      "label": "Sonstige näher bezeichnete bipolare oder depressive Störung"
     }
   },
   {
     "icd10": {
       "code": "F38.8",
-      "label": "Other specified mood [affective] disorders"
+      "label": "Sonstige näher bezeichnete affektive Störungen"
     },
     "icd11": {
-      "code": "6A8Z",
-      "label": "Mood disorders, unspecified"
+      "code": "6A7Y",
+      "label": "Sonstige näher bezeichnete Stimmungsstörungen"
     },
     "dsm5tr": {
-      "code": "",
-      "label": ""
+      "code": "296.99",
+      "label": "Sonstige näher bezeichnete bipolare oder depressive Störung"
     }
   },
   {
     "icd10": {
       "code": "F39",
-      "label": "Unspecified mood [affective] disorder"
+      "label": "Nicht näher bezeichnete affektive Störung"
     },
     "icd11": {
-      "code": "6A8Z",
-      "label": "Mood disorders, unspecified"
+      "code": "6A7Z",
+      "label": "Stimmungsstörungen, nicht näher bezeichnet"
     },
     "dsm5tr": {
-      "code": "",
-      "label": ""
+      "code": "296.90",
+      "label": "Nicht näher bezeichnete Stimmungsstörung"
     }
   },
   {

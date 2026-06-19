@@ -52,30 +52,38 @@ function crosswalkRows(entry: CrosswalkSeed) {
         entry.dsm5tr.label,
       ]),
     },
-    {
-      system: 'icd11',
-      code: entry.icd11.code,
-      labelDe: entry.icd11.label,
-      ...base,
-      searchText: buildSearchText([
-        entry.icd11.code,
-        entry.icd11.label,
-        entry.icd10.code,
-        entry.icd10.label,
-      ]),
-    },
-    {
-      system: 'dsm5tr',
-      code: entry.dsm5tr.code,
-      labelDe: entry.dsm5tr.label,
-      ...base,
-      searchText: buildSearchText([
-        entry.dsm5tr.code,
-        entry.dsm5tr.label,
-        entry.icd10.code,
-        entry.icd10.label,
-      ]),
-    },
+    ...(entry.icd11.code.trim()
+      ? [
+          {
+            system: 'icd11' as const,
+            code: entry.icd11.code,
+            labelDe: entry.icd11.label,
+            ...base,
+            searchText: buildSearchText([
+              entry.icd11.code,
+              entry.icd11.label,
+              entry.icd10.code,
+              entry.icd10.label,
+            ]),
+          },
+        ]
+      : []),
+    ...(entry.dsm5tr.code.trim()
+      ? [
+          {
+            system: 'dsm5tr' as const,
+            code: entry.dsm5tr.code,
+            labelDe: entry.dsm5tr.label,
+            ...base,
+            searchText: buildSearchText([
+              entry.dsm5tr.code,
+              entry.dsm5tr.label,
+              entry.icd10.code,
+              entry.icd10.label,
+            ]),
+          },
+        ]
+      : []),
   ]
 }
 

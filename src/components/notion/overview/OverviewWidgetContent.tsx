@@ -9,7 +9,7 @@ import { SafetyAlertsCard } from './SafetyAlertsCard'
 import { MedicationOverviewCard } from './MedicationOverviewCard'
 import { PriorTherapiesOverviewCard } from './PriorTherapiesOverviewCard'
 import { SymptomSnapshotCard } from './SymptomSnapshotCard'
-import { LabsDueCard } from './LabsDueCard'
+import { LaborOverviewCard } from './LaborOverviewCard'
 import { RecentVerlaufCard } from './RecentVerlaufCard'
 import { AppointmentsCard } from './AppointmentsCard'
 import { DokumentationCard } from './DokumentationCard'
@@ -18,12 +18,17 @@ import { IsdmSummaryWidget } from './IsdmSummaryWidget'
 import { CollaborationCard } from './CollaborationCard'
 import { RecentLabResultsCard } from './RecentLabResultsCard'
 import { ButterflyCriteriaCard } from './ButterflyCriteriaCard'
+import { ZwangsmassnahmeCard } from './ZwangsmassnahmeCard'
+import { VerlaufstendenzCard } from './VerlaufstendenzCard'
+import { DiagnosticSummaryCard } from './DiagnosticSummaryCard'
+import { RegisteredTherapiesCard } from './RegisteredTherapiesCard'
+import { ComplianceOverviewCard } from './ComplianceOverviewCard'
 import type {
   HeroSummaryData,
   MedicationOverviewData,
   SymptomSnapshotData,
   SafetyData,
-  LabsDueData,
+  LaborOverviewData,
   RecentVerlaufItem,
   KonsileTasksData,
 } from './types'
@@ -35,6 +40,11 @@ import type { PsychotherapySummary } from '../../../types/psychotherapy'
 import type { IsdmClinicalAnalysis } from '../../../types/isdm'
 import type { RecentLabResultItem } from '../../../utils/overview/recentLabResults'
 import type { ButterflySummaryItem } from '../../../utils/overview/butterflySummary'
+import type { DiagnosticExamSummary } from '../../../utils/overview/diagnosticSummaries'
+import type { ZwangsmassnahmeSummary } from '../../../utils/overview/zwangsmassnahmeSummary'
+import type { VerlaufstendenzSummary } from '../../../utils/overview/verlaufstendenzSummary'
+import type { RegisteredTherapiesSummary } from '../../../utils/overview/registeredTherapiesSummary'
+import type { ComplianceSummaryData } from '../../../utils/overview/complianceSummary'
 
 export interface OverviewWidgetRenderContext {
   caseId: string
@@ -42,7 +52,7 @@ export interface OverviewWidgetRenderContext {
   safetyData: SafetyData
   medicationData: MedicationOverviewData
   symptomData: SymptomSnapshotData
-  labsData: LabsDueData
+  laborData: LaborOverviewData
   medications: MedicationEntry[]
   recentVerlauf: RecentVerlaufItem[]
   appointments: { upcoming: CalendarItem[]; loading: boolean }
@@ -52,6 +62,13 @@ export interface OverviewWidgetRenderContext {
   collaboration: KonsileTasksData
   recentLabResults: RecentLabResultItem[]
   butterflySummary: ButterflySummaryItem[]
+  zwangsmassnahme: ZwangsmassnahmeSummary
+  verlaufstendenz: VerlaufstendenzSummary
+  ekgSummary: DiagnosticExamSummary
+  eegSummary: DiagnosticExamSummary
+  ctSummary: DiagnosticExamSummary
+  registeredTherapies: RegisteredTherapiesSummary
+  compliance: ComplianceSummaryData
   onTabSelect: (tab: TopNavTabId) => void
   onOpenWorkspacePage?: (pageId: NotionPageId) => void
 }
@@ -88,11 +105,12 @@ export function renderOverviewWidget(
       return (
         <SymptomSnapshotCard
           data={ctx.symptomData}
+          riskSignals={ctx.safetyData.risk?.signals}
           onOpen={ctx.onOpenWorkspacePage ? () => ctx.onOpenWorkspacePage!('psychopath') : undefined}
         />
       )
     case 'labs-due':
-      return <LabsDueCard data={ctx.labsData} onOpenLabor={() => ctx.onTabSelect('labor')} />
+      return <LaborOverviewCard data={ctx.laborData} onOpenLabor={() => ctx.onTabSelect('labor')} />
     case 'prior-therapies':
       return (
         <PriorTherapiesOverviewCard
@@ -162,6 +180,44 @@ export function renderOverviewWidget(
           onOpenDiagnose={() => ctx.onTabSelect('diagnose')}
         />
       )
+    case 'zwangsmassnahme':
+      return <ZwangsmassnahmeCard data={ctx.zwangsmassnahme} />
+    case 'verlaufstendenz':
+      return <VerlaufstendenzCard data={ctx.verlaufstendenz} />
+    case 'ekg-summary':
+      return (
+        <DiagnosticSummaryCard
+          title="Letztes EKG"
+          data={ctx.ekgSummary}
+          onOpen={() => ctx.onTabSelect('labor')}
+          actionLabel="Zu Diagnostik"
+        />
+      )
+    case 'eeg-summary':
+      return (
+        <DiagnosticSummaryCard
+          title="EEG"
+          data={ctx.eegSummary}
+          onOpen={() => ctx.onTabSelect('labor')}
+          actionLabel="Zu Diagnostik"
+        />
+      )
+    case 'ct-summary':
+      return (
+        <DiagnosticSummaryCard
+          title="Letztes CT"
+          data={ctx.ctSummary}
+        />
+      )
+    case 'angemeldete-therapien':
+      return (
+        <RegisteredTherapiesCard
+          data={ctx.registeredTherapies}
+          onOpenTherapie={() => ctx.onTabSelect('therapie')}
+        />
+      )
+    case 'compliance':
+      return <ComplianceOverviewCard data={ctx.compliance} caseId={ctx.caseId} />
     default:
       return null
   }

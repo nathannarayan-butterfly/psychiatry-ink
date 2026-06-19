@@ -18,6 +18,11 @@ import {
 } from '../../utils/befundRender'
 import { BefundPopup } from './BefundPopup'
 import { EcgBefundCard } from './EcgBefundCard'
+import {
+  ANFORDERUNG_PRESET_EEG,
+  ANFORDERUNG_PRESET_EKG,
+} from '../../data/anforderungenCatalog'
+import type { AnforderungModalPreset } from '../../types/anforderung'
 
 export interface DiagnostikBefundeSidebarProps {
   caseId: string
@@ -72,12 +77,23 @@ const BEFUND_ADD_LABEL_KEY: Record<BefundType, UiTranslationKey> = {
   eeg: 'befundAddEeg',
 }
 
+const BEFUND_REQUEST_LABEL_KEY: Record<BefundType, UiTranslationKey> = {
+  ecg: 'befundRequestEcg',
+  eeg: 'befundRequestEeg',
+}
+
+const BEFUND_REQUEST_PRESET: Record<BefundType, AnforderungModalPreset> = {
+  ecg: ANFORDERUNG_PRESET_EKG,
+  eeg: ANFORDERUNG_PRESET_EEG,
+}
+
 interface DiagnostikBefundeMainProps {
   caseId: string
   records: BefundRecord[]
   selectedId: string | null
   onSelect: (id: string | null) => void
   onRecordsChange: () => void
+  onRequestAnforderung?: (preset?: AnforderungModalPreset | null) => void
 }
 
 function copyBefundToClipboard(record: BefundRecord): void {
@@ -100,6 +116,7 @@ export function DiagnostikBefundeMain({
   selectedId,
   onSelect,
   onRecordsChange,
+  onRequestAnforderung,
 }: DiagnostikBefundeMainProps) {
   const { t } = useTranslation()
   const { readOnly } = useDemoPatient(caseId)
@@ -144,18 +161,32 @@ export function DiagnostikBefundeMain({
           <div className="diagnostik-befunde__action-row">
             {BEFUND_TYPES.map((type) => {
               const addLabel = t(BEFUND_ADD_LABEL_KEY[type])
+              const requestLabel = t(BEFUND_REQUEST_LABEL_KEY[type])
               return (
-                <button
-                  key={type}
-                  type="button"
-                  className="diagnostik-befunde__action-btn diagnostik-befunde__action-btn--add"
-                  disabled={readOnly}
-                  onClick={() => openNew(type)}
-                  title={addLabel}
-                  aria-label={addLabel}
-                >
-                  <span aria-hidden="true">+ {getBefundSchema(type).shortLabel}</span>
-                </button>
+                <div key={type} className="diagnostik-befunde__action-group">
+                  {onRequestAnforderung ? (
+                    <button
+                      type="button"
+                      className="diagnostik-befunde__action-btn diagnostik-befunde__action-btn--request"
+                      disabled={readOnly}
+                      onClick={() => onRequestAnforderung(BEFUND_REQUEST_PRESET[type])}
+                      title={requestLabel}
+                      aria-label={requestLabel}
+                    >
+                      {requestLabel}
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="diagnostik-befunde__action-btn diagnostik-befunde__action-btn--add"
+                    disabled={readOnly}
+                    onClick={() => openNew(type)}
+                    title={addLabel}
+                    aria-label={addLabel}
+                  >
+                    <span aria-hidden="true">+ {getBefundSchema(type).shortLabel}</span>
+                  </button>
+                </div>
               )
             })}
           </div>

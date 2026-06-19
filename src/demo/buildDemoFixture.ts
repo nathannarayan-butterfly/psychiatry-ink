@@ -25,6 +25,14 @@ import {
 } from './constants'
 import type { LaborBefund, LaborCategory, LaborValue } from '../utils/laborArchive'
 import type { DemoPatientFixture } from './types'
+import {
+  buildDemoAnforderungen,
+  buildDemoButterflyAttestations,
+  buildDemoClinicalQuestionNotes,
+  buildDemoEegBefund,
+  buildDemoIsdmAnalysis,
+  buildDemoIsdmInput,
+} from './buildDemoExtendedModules'
 
 const LAB_BEFUND_1_DATE = '2026-06-05'
 const LAB_BEFUND_2_DATE = '2026-06-20'
@@ -114,7 +122,9 @@ const AUFNAHME_SECTION_IDS = [
 
 const NOW = '2026-06-14T10:00:00.000Z'
 const ADMISSION = '2026-06-02'
-const DEMO_DOB = '1991-03-14'
+const DEMO_DOB = '1992-08-12'
+const DEMO_VORNAME = 'Anna'
+const DEMO_NACHNAME = 'Demo'
 
 function sectionMap(
   entries: Record<string, string>,
@@ -133,7 +143,7 @@ function buildAufnahmeSections(): Record<string, string> {
     'aktuelle-beschwerden':
       'Seit ca. 10–14 Tagen zunehmende innere Unruhe, Schlafdefizit (<3 h/Nacht), Misstrauen gegenüber Nachbarn („werden beobachtet"), gehäufte Telefonate bei Polizei ohne belastbare Anhaltspunkte. Stimmung wechselhaft zwischen gereizt und ängstlich. Appetit reduziert.',
     eigenanamnese:
-      'Herr Demo berichtet belastbare Eigenanamnese. Keine bekannte somatische Vorerkrankung von relevanter Bedeutung. Keine Allergien bekannt.',
+      'Frau Demo berichtet belastbare Eigenanamnese. Keine bekannte somatische Vorerkrankung von relevanter Bedeutung. Keine Allergien bekannt.',
     'aktuelle-krankheitsanamnese':
       'Erste psychotische Episode mit 22 J. nach Cannabisabusus, damals kurzzeitige stationäre Behandlung. Seitdem mehrere ambulante Phasen mit unregelmäßiger Medikamenteneinnahme. Aktuell erneute Verschlechterung im Kontext von Schlafentzug, Amphetamin-Konsum („Speed" am Wochenende) und beruflichem Stress.',
     'psychiatrische-vorgeschichte':
@@ -157,7 +167,7 @@ function buildAufnahmeSections(): Record<string, string> {
     traumaanamnese:
       'Kein eindeutiges Trauma berichtet. Belastungen im Jugendalter unscharf.',
     'suizid-und-selbstgefaehrdungsanamnese':
-      'Passives Todeswünschen gelegentlich („manchmal wäre Ruhe gut"), jedoch keine konkreten Pläne, Absichten oder Vorbereitungen. Kein Suizidversuch in der Vorgeschichte. Schutzfaktoren: ambivalente Bindung an Schwester.',
+      'Passives Todeswünschen gelegentlich („manchmal wäre Ruhe gut"), jedoch keine konkreten Pläne, Absichten oder Vorbereitungen. Kein Suizidversuch in der Vorgeschichte. Schutzfaktoren: ambivalente Bindung an Schwester, therapeutische Beziehung langsam aufbauend. BRMS-Screening: niedriges akutes Risiko; Sicherheitsplan besprochen.',
     fremdgefaehrdungsanamnese:
       'Keine Hinweise auf akute Fremdgefährdung. Keine Waffen. Gelegentlich lautstarkes Verhalten, Nachbarn beschwert.',
     'psychopathologischer-befund':
@@ -184,7 +194,8 @@ function buildVerlaufFeed() {
     { date: '2026-06-08T10:30:00.000Z', content: 'EKG ohne relevante Pathologie. Besprechung mit Sozialdienst wegen Wohn- und Arbeitssituation.' },
     { date: '2026-06-09T09:00:00.000Z', content: 'Wechsel auf Aripiprazol 10 mg begonnen (Risperidon ausgeschlichen) wegen Prolaktin-Anstieg und Antriebsminderung.' },
     { date: '2026-06-10T14:00:00.000Z', content: 'Sporttherapie zweimal teilgenommen. Stimmung etwas gebessert.' },
-    { date: '2026-06-11T09:30:00.000Z', content: 'Keine akute Suizidalität. Krankheitseinsicht langsam zunehmend.' },
+    { date: '2026-06-11T09:30:00.000Z', content: 'Keine akute Suizidalität. Krankheitseinsicht langsam zunehmend. Sicherheitsplan aktualisiert.' },
+    { date: '2026-06-11T16:00:00.000Z', content: 'Ruhe-EEG (11.06.): leichte diffuse Verlangsamung, keine epileptiformen Entladungen.' },
     { date: '2026-06-12T10:00:00.000Z', content: 'AIMS-Kontrolle: leichte Akathisie, keine Dyskinesie. SAS 1/1/0.' },
     { date: '2026-06-20T11:00:00.000Z', content: 'Verlaufslabor (20.06.) — Prolaktin normalisiert nach Umstellung auf Aripiprazol; Aripiprazol-Spiegel im therapeutischen Bereich. Triglyceride und HbA1c grenzwertig — metabolisches Monitoring fortsetzen.' },
     { date: '2026-06-13T11:00:00.000Z', content: 'Konsil Neurologie angefragt (Demo-Beispiel) — kein akuter Handlungsbedarf.' },
@@ -990,7 +1001,7 @@ export function buildDemoPatientFixture(): DemoPatientFixture {
   const clinicalImprints = {
     version: 1,
     updatedAt: NOW,
-    imprints: verlaufFeed.slice(0, 8).map((entry, i) => ({
+    imprints: verlaufFeed.slice(0, 12).map((entry, i) => ({
       imprintKey: `verlauf:${entry.id}`,
       patientId: DEMO_PATIENT_ID,
       caseId: DEMO_CASE_ID,
@@ -1035,6 +1046,19 @@ export function buildDemoPatientFixture(): DemoPatientFixture {
     })),
   }
 
+  const isdmInput = buildDemoIsdmInput()
+  const butterflyAttestations = buildDemoButterflyAttestations()
+  const clinicalQuestionNotes = buildDemoClinicalQuestionNotes()
+  const anforderungen = buildDemoAnforderungen(ADMISSION)
+  const isdmAnalysis = buildDemoIsdmAnalysis({
+    diagnoses,
+    clinicalImprints,
+    medicationPlanState,
+    verlaufFeed,
+    isdmInput,
+    butterflyAttestations,
+  })
+
   return {
     version: DEMO_FIXTURE_VERSION,
     isDemoPatient: true,
@@ -1042,22 +1066,22 @@ export function buildDemoPatientFixture(): DemoPatientFixture {
     demoPatientId: DEMO_PATIENT_ID,
     demoCaseId: DEMO_CASE_ID,
     patient: {
-      vorname: 'Max',
-      nachname: 'Demo',
+      vorname: DEMO_VORNAME,
+      nachname: DEMO_NACHNAME,
       geburtsdatum: DEMO_DOB,
-      geschlecht: 'maennlich',
-      age: '34',
+      geschlecht: 'weiblich',
+      age: '33',
       admissionDate: ADMISSION,
       patientId: DEMO_PATIENT_ID,
       caseId: DEMO_CASE_ID,
     },
     workspace: {
-      age: '34',
+      age: '33',
       selectedDocumentType: 'aufnahme',
       documents: {
         aufnahme: {
           documentTypeId: 'aufnahme',
-          pageHeading: 'Aufnahme — Max Demo',
+          pageHeading: `Aufnahme — ${DEMO_VORNAME} ${DEMO_NACHNAME}`,
           sectionContents: aufnahmeSections,
           savedAt: NOW,
         },
@@ -1108,7 +1132,7 @@ export function buildDemoPatientFixture(): DemoPatientFixture {
         },
       },
       pageHeadings: {
-        aufnahme: 'Aufnahme — Max Demo',
+        aufnahme: `Aufnahme — ${DEMO_VORNAME} ${DEMO_NACHNAME}`,
         verlauf: 'Verlaufsdokumentation',
         psychopath: 'Psychopathologischer Befund',
         'therapie-verlauf': 'Therapieverlauf',
@@ -1138,6 +1162,11 @@ export function buildDemoPatientFixture(): DemoPatientFixture {
       activeLabGraphId,
       diagnoses,
       clinicalImprints,
+      isdmAnalysis,
+      isdmInput,
+      butterflyAttestations,
+      clinicalQuestionNotes,
+      anforderungen,
       medicationPlanState,
       psychotherapyPlan: {
         version: PSYCHOTHERAPY_PLAN_VERSION,
@@ -1257,6 +1286,7 @@ export function buildDemoPatientFixture(): DemoPatientFixture {
         updatedAt: '2026-06-08T10:30:00.000Z',
         vidertAt: '2026-06-08T10:30:00.000Z',
       },
+      buildDemoEegBefund(),
     ],
     sozialtherapie: [
       {
@@ -1344,14 +1374,14 @@ export function buildDemoPatientFixture(): DemoPatientFixture {
         templateVersion: 1,
         caseId: DEMO_CASE_ID,
         patientId: DEMO_PATIENT_ID,
-        title: 'Entlassungsplan Max Demo',
+        title: `Entlassungsplan ${DEMO_VORNAME} ${DEMO_NACHNAME}`,
         status: 'draft',
         fieldValues: {
-          patient_name: 'Max Demo',
+          patient_name: `${DEMO_VORNAME} ${DEMO_NACHNAME}`,
           admission_date: ADMISSION,
           discharge_plan: 'Ambulante Weiterbehandlung, Medikation Aripiprazol 10 mg',
         },
-        renderedText: 'Entlassungsplan für Max Demo — Demo-Dokument.',
+        renderedText: `Entlassungsplan für ${DEMO_VORNAME} ${DEMO_NACHNAME} — Demo-Dokument.`,
         createdAt: NOW,
         updatedAt: NOW,
       },
@@ -1360,7 +1390,7 @@ export function buildDemoPatientFixture(): DemoPatientFixture {
       {
         id: 'demo-cal-01',
         type: 'consultation',
-        title: 'Visite — Max Demo',
+        title: `Visite — ${DEMO_VORNAME} ${DEMO_NACHNAME}`,
         patientId: DEMO_PATIENT_ID,
         caseId: DEMO_CASE_ID,
         startTime: '2026-06-14T09:00:00.000Z',
@@ -1379,6 +1409,31 @@ export function buildDemoPatientFixture(): DemoPatientFixture {
         startTime: '2026-06-15T10:00:00.000Z',
         endTime: '2026-06-15T10:30:00.000Z',
         status: 'scheduled',
+        createdBy: 'demo-user',
+        createdAt: NOW,
+        updatedAt: NOW,
+      },
+      {
+        id: 'demo-cal-03',
+        type: 'other',
+        title: 'Psychoedukation Gruppe',
+        caseId: DEMO_CASE_ID,
+        startTime: '2026-06-16T14:00:00.000Z',
+        endTime: '2026-06-16T15:00:00.000Z',
+        status: 'scheduled',
+        createdBy: 'demo-user',
+        createdAt: NOW,
+        updatedAt: NOW,
+      },
+      {
+        id: 'demo-cal-04',
+        type: 'consultation',
+        title: 'Entlassungsgespräch mit Sozialdienst',
+        caseId: DEMO_CASE_ID,
+        startTime: '2026-06-17T11:00:00.000Z',
+        endTime: '2026-06-17T11:45:00.000Z',
+        status: 'scheduled',
+        priority: 'high',
         createdBy: 'demo-user',
         createdAt: NOW,
         updatedAt: NOW,

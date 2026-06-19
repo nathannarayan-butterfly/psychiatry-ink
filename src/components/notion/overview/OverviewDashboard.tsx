@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useCallback } from 'react'
 import { useTranslation } from '../../../context/TranslationContext'
 import type { TopNavTabId } from '../CaseTopNav'
 import type { NotionPageId } from '../notionPages'
@@ -6,6 +6,7 @@ import { extractSpiegelwerte, pickLatestSpiegelSeries, spiegelGraphId } from '..
 import { useOverviewLayout } from '../../../hooks/useOverviewLayout'
 import { ClinicalPageEyebrow } from '../../clinical/ClinicalPageEyebrow'
 import { OverviewLayoutToolbar } from './OverviewLayoutToolbar'
+import { OverviewActionToolbar } from './OverviewActionToolbar'
 import { OverviewWidgetGrid } from './OverviewWidgetGrid'
 import { OverviewHero } from './OverviewHero'
 import type { OverviewWidgetRenderContext } from './OverviewWidgetContent'
@@ -21,14 +22,17 @@ import { useCaseAppointments } from '../../../hooks/useCaseAppointments'
 import { isMedicationVisible } from '../../../utils/medication/planOps'
 import { formatMedicationOverviewDoseGerman } from '../../../utils/medication/doseLine'
 import { computeMedicationInsights } from '../../../utils/medication/medicationInsights'
+import { activeMedications } from '../../../utils/medication/planOps'
+import { computeTargetedReceptors, resolveReceptorProfiles } from '../../../utils/medication/receptorBurden'
+import { DEFAULT_MEDICATIONS_COLLECTION_ID } from '../../../types/knowledgeBase'
+import { useKnowledgeBaseDrugs } from '../../../hooks/useKnowledgeBaseDrugs'
 import { loadBefunde } from '../../../utils/laborArchive'
 import { loadVerlaufFeed } from '../../../utils/verlaufFeed'
 import { loadNotionDocumentSnapshot } from '../../../utils/notionDocumentActions'
 import { loadNotionPageDate } from '../../../utils/notionPageDate'
 import { loadClinicalImprintIndex } from '../../../utils/clinicalImprint'
 import { buildPatientSafety } from '../../../utils/overview/patientSafety'
-import { getMedicationMonitoringGroups } from '../../../utils/overview/medicationMonitoring'
-import { buildLabsDue } from '../../../utils/overview/labsDue'
+import { buildLaborOverview } from '../../../utils/overview/labOverview'
 import { buildPsychopathologyStructuredCues, mergePsychopathologyProfiles } from '../../../utils/overview/psychopathologyDomains'
 import { getSymptomTrajectory } from '../../../utils/overview/symptomTrajectory'
 import { formatDateDe, relativeDayDe } from '../../../utils/overview/dateLabels'
@@ -39,9 +43,30 @@ import { buildButterflySummary, hasButterflyCriteriaSupport } from '../../../uti
 import { loadIsdmAnalysis } from '../../../utils/isdm/storage'
 import { loadDiagnosen, selectPrimaryCoding } from '../../../utils/diagnosenArchive'
 import { resolveDiagnosisLabelSync } from '../../../utils/diagnosisDisplayRequests'
+import { useDiagnosenRevision } from '../../../hooks/useDiagnosenRevision'
 import { useOverviewHiddenGraphs } from '../../../hooks/useOverviewHiddenGraphs'
 import { useOverviewCollaboration } from '../../../hooks/useOverviewCollaboration'
 import { usePsychotherapyPlan } from '../../../hooks/usePsychotherapyPlan'
+import { loadComplementaryTherapies } from '../../../utils/complementaryTherapy/storage'
+import { loadWeitereTherapie } from '../../../utils/weitereTherapie/storage'
+import { loadSozialtherapie } from '../../../utils/sozialtherapie/storage'
+import {
+  buildEkgSummary,
+  buildEegSummary,
+  buildCtSummary,
+  hasConductedEeg,
+} from '../../../utils/overview/diagnosticSummaries'
+import {
+  buildZwangsmassnahmeSummary,
+  hasZwangsmassnahmeSignal,
+} from '../../../utils/overview/zwangsmassnahmeSummary'
+import { buildVerlaufstendenzSummary } from '../../../utils/overview/verlaufstendenzSummary'
+import { buildRegisteredTherapiesSummary } from '../../../utils/overview/registeredTherapiesSummary'
+import { buildComplianceSummary } from '../../../utils/overview/complianceSummary'
+import {
+  exportOverviewDashboardHtml,
+  printOverviewDashboard,
+} from '../../../utils/overview/printOverview'
 import type { ClinicalImprintRecord, CourseDirection } from '../../../types/clinicalImprint'
 import type { MedicationStatus } from '../../../types/medicationPlan'
 
@@ -132,11 +157,14 @@ export function OverviewDashboard({
   onTabSelect,
   onOpenWorkspacePage,
 }: OverviewDashboardProps) {
-  const { language } = useTranslation()
+  const { language, t } = useTranslation()
+  const { drugs: knowledgeBaseDrugs } = useKnowledgeBaseDrugs(DEFAULT_MEDICATIONS_COLLECTION_ID)
+  const diagnosenRevision = useDiagnosenRevision(caseId)
   const { currentPlan } = useMedicationPlan(caseId)
   const appointments = useCaseAppointments(caseId)
   const collaboration = useOverviewCollaboration(caseId)
-  const { summary: psychotherapySummary, hasPlan: hasPsychotherapyPlan } = usePsychotherapyPlan(caseId)
+  const { summary: psychotherapySummary, hasPlan: hasPsychotherapyPlan, plan: psychotherapyPlan } =
+    usePsychotherapyPlan(caseId)
   const { isHidden } = useOverviewHiddenGraphs(caseId)
 
   const medications = useMemo(() => currentPlan?.medications ?? [], [currentPlan])
@@ -144,6 +172,12 @@ export function OverviewDashboard({
   // ── Medication card ───────────────────────────────────────────────────────
   const medicationData = useMemo<MedicationOverviewData>(() => {
     const insights = computeMedicationInsights(medications, language)
+    const activeMeds = activeMedications(medications)
+    const resolved = resolveReceptorProfiles(
+      activeMeds.map((med) => ({ id: med.id, substance: med.substance })),
+      knowledgeBaseDrugs,
+    )
+    const targetedReceptors = computeTargetedReceptors(resolved, language)
     const meds: MedRegimenItem[] = medications
       .filter((med) => isMedicationVisible(med) && med.status !== 'discontinued')
       .map((med) => {
@@ -168,27 +202,22 @@ export function OverviewDashboard({
           }
         : null,
       monitoringFlags: insights.monitoringBurden.map((m) => m.parameter),
-      topReceptors: insights.targetedReceptors.map((r) => ({ label: r.label, count: r.count })),
-      hasReferenceData: insights.hasReferenceData,
+      topReceptors: targetedReceptors.map((r) => ({ label: r.label, count: r.count })),
+      hasReferenceData: insights.hasReferenceData || resolved.length > 0,
     }
-  }, [medications, language])
+  }, [medications, language, knowledgeBaseDrugs])
 
   // ── Safety card ─────────────────────────────────────────────────────────
   const safetyData = useMemo(() => {
     const imprints = loadClinicalImprintIndex(caseId).imprints
     const riskText = loadNotionDocumentSnapshot('verlauf', caseId)?.sectionContents['risiko'] ?? null
-    const base = buildPatientSafety({
+    return buildPatientSafety({
       medications,
       language,
       imprints,
       riskText,
       allergyText: readAllergyText(caseId),
     })
-    const medicationMonitoring = getMedicationMonitoringGroups({
-      medications,
-      befunde: loadBefunde(caseId),
-    })
-    return { ...base, medicationMonitoring }
   }, [caseId, medications, language])
 
   // ── Appointment orientation (summary strip) ───────────────────────────────
@@ -232,16 +261,15 @@ export function OverviewDashboard({
     }
   }, [caseId])
 
-  // ── Labs / monitoring card ────────────────────────────────────────────────
-  const labsData = useMemo(() => {
+  const befunde = useMemo(() => loadBefunde(caseId), [caseId])
+  const hasLabData = befunde.length > 0
+
+  const laborData = useMemo(() => {
     const activeSubstances = medications
       .filter((m) => m.status === 'active' || m.status === 'reduced' || m.status === 'increased')
       .map((m) => m.substance)
-    return buildLabsDue({ befunde: loadBefunde(caseId), activeSubstances })
-  }, [caseId, medications])
-
-  const befunde = useMemo(() => loadBefunde(caseId), [caseId])
-  const hasLabData = befunde.length > 0
+    return buildLaborOverview({ befunde, medications, activeSubstances })
+  }, [caseId, medications, befunde])
   const recentLabResults = useMemo(() => buildRecentLabResults(befunde), [befunde])
   const recentVerlauf = useMemo(() => getRecentVerlauf(caseId, language), [caseId, language])
   const dokumentation = useMemo(() => buildDokumentationSummary(caseId), [caseId])
@@ -249,6 +277,61 @@ export function OverviewDashboard({
   const hasIsdm = isdmAnalysis !== null
   const butterflySummary = useMemo(() => buildButterflySummary(caseId, language), [caseId, language])
   const hasButterfly = useMemo(() => hasButterflyCriteriaSupport(caseId), [caseId])
+
+  const complementaryTherapies = useMemo(() => loadComplementaryTherapies(caseId), [caseId])
+  const weitereTherapie = useMemo(() => loadWeitereTherapie(caseId), [caseId])
+  const sozialTargets = useMemo(() => loadSozialtherapie(caseId), [caseId])
+
+  const zwangsmassnahme = useMemo(() => buildZwangsmassnahmeSummary(caseId), [caseId])
+  const verlaufstendenz = useMemo(
+    () => buildVerlaufstendenzSummary(loadClinicalImprintIndex(caseId).imprints),
+    [caseId],
+  )
+  const ekgSummary = useMemo(() => buildEkgSummary(caseId), [caseId])
+  const eegSummary = useMemo(() => buildEegSummary(caseId), [caseId])
+  const ctSummary = useMemo(() => buildCtSummary(caseId), [caseId])
+  const hasEeg = useMemo(() => hasConductedEeg(caseId), [caseId])
+  const hasZwangsmassnahme = useMemo(() => hasZwangsmassnahmeSignal(zwangsmassnahme), [zwangsmassnahme])
+
+  const registeredTherapies = useMemo(
+    () =>
+      buildRegisteredTherapiesSummary({
+        language,
+        psychotherapy: { summary: psychotherapySummary, hasPlan: hasPsychotherapyPlan },
+        complementaryTherapies,
+        weitereEntries: weitereTherapie,
+        sozialTargets,
+      }),
+    [
+      language,
+      psychotherapySummary,
+      hasPsychotherapyPlan,
+      complementaryTherapies,
+      weitereTherapie,
+      sozialTargets,
+    ],
+  )
+
+  const compliance = useMemo(
+    () =>
+      buildComplianceSummary(caseId, {
+        medications,
+        psychotherapyPlan: psychotherapyPlan,
+        complementaryTherapies,
+        weitereEntries: weitereTherapie,
+        sozialTargets,
+        language,
+      }),
+    [
+      caseId,
+      medications,
+      psychotherapyPlan,
+      complementaryTherapies,
+      weitereTherapie,
+      sozialTargets,
+      language,
+    ],
+  )
 
   // ── Spiegel availability (preserve "≥1 value ⇒ show graph" rule) ──────────
   const spiegelSeries = useMemo(() => extractSpiegelwerte(befunde), [befunde])
@@ -297,7 +380,7 @@ export function OverviewDashboard({
       lastContact,
       nextAppointment,
     }
-  }, [caseId, safetyData, medicationData, lastContact, nextAppointment])
+  }, [caseId, diagnosenRevision, safetyData, medicationData, lastContact, nextAppointment])
 
   const {
     layout,
@@ -317,7 +400,7 @@ export function OverviewDashboard({
       safetyData,
       medicationData,
       symptomData,
-      labsData,
+      laborData,
       medications,
       recentVerlauf,
       appointments: { upcoming: appointments.upcoming, loading: appointments.loading },
@@ -327,6 +410,13 @@ export function OverviewDashboard({
       collaboration,
       recentLabResults,
       butterflySummary,
+      zwangsmassnahme,
+      verlaufstendenz,
+      ekgSummary,
+      eegSummary,
+      ctSummary,
+      registeredTherapies,
+      compliance,
       onTabSelect,
       onOpenWorkspacePage,
     }),
@@ -336,7 +426,7 @@ export function OverviewDashboard({
       safetyData,
       medicationData,
       symptomData,
-      labsData,
+      laborData,
       medications,
       recentVerlauf,
       appointments.upcoming,
@@ -348,6 +438,13 @@ export function OverviewDashboard({
       collaboration,
       recentLabResults,
       butterflySummary,
+      zwangsmassnahme,
+      verlaufstendenz,
+      ekgSummary,
+      eegSummary,
+      ctSummary,
+      registeredTherapies,
+      compliance,
       onTabSelect,
       onOpenWorkspacePage,
     ],
@@ -361,8 +458,19 @@ export function OverviewDashboard({
       hasIsdm,
       hasLabData,
       hasButterfly,
+      hasEeg,
+      hasZwangsmassnahme,
     }),
-    [hasSpiegel, hasAdditionalSpiegel, hasPsychotherapyPlan, hasIsdm, hasLabData, hasButterfly],
+    [
+      hasSpiegel,
+      hasAdditionalSpiegel,
+      hasPsychotherapyPlan,
+      hasIsdm,
+      hasLabData,
+      hasButterfly,
+      hasEeg,
+      hasZwangsmassnahme,
+    ],
   )
 
   const gridWidgets = useMemo(
@@ -370,9 +478,20 @@ export function OverviewDashboard({
     [layout.widgets],
   )
 
+  const handleExport = useCallback(() => {
+    exportOverviewDashboardHtml(gridWidgets, widgetContext, visibilityContext, t, caseId)
+  }, [gridWidgets, widgetContext, visibilityContext, t, caseId])
+
+  const handlePrint = useCallback(() => {
+    printOverviewDashboard(gridWidgets, widgetContext, visibilityContext, t)
+  }, [gridWidgets, widgetContext, visibilityContext, t])
+
   return (
     <div className={`ov-dashboard cm-workspace cm-workspace--flush${editMode ? ' ov-dashboard--edit-mode' : ''}`}>
-      <ClinicalPageEyebrow label="Übersicht" />
+      <div className="ov-dashboard__header">
+        <ClinicalPageEyebrow label="Übersicht" />
+        <OverviewActionToolbar onExport={handleExport} onPrint={handlePrint} />
+      </div>
       <OverviewHero data={heroData} caseId={caseId} />
       <OverviewWidgetGrid
         widgets={gridWidgets}

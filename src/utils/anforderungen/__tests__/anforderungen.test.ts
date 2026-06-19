@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ANFORDERUNGEN_CATALOG, listCatalogByCategory } from '../../../data/anforderungenCatalog'
+import { ANFORDERUNGEN_CATALOG, ANFORDERUNG_PRESET_EEG, ANFORDERUNG_PRESET_EKG, ANFORDERUNG_PRESET_LABOR, listCatalogByCategory } from '../../../data/anforderungenCatalog'
 import type { Anforderung } from '../../../types/anforderung'
 import {
   canAcceptAnforderung,
@@ -20,6 +20,20 @@ describe('anforderungenCatalog', () => {
   it('has unique catalog ids', () => {
     const ids = ANFORDERUNGEN_CATALOG.map((item) => item.id)
     expect(new Set(ids).size).toBe(ids.length)
+  })
+
+  it('exposes diagnostics request presets for labor, EKG, and EEG', () => {
+    expect(ANFORDERUNG_PRESET_LABOR.category).toBe('labor')
+    expect(ANFORDERUNG_PRESET_EKG).toMatchObject({
+      category: 'befunde',
+      groupKey: 'befunde_kardio',
+      selectedCatalogIds: ['befund-ekg'],
+    })
+    expect(ANFORDERUNG_PRESET_EEG).toMatchObject({
+      category: 'befunde',
+      groupKey: 'befunde_neurophys',
+      selectedCatalogIds: ['befund-eeg-ruhe'],
+    })
   })
 })
 
