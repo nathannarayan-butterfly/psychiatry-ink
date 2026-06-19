@@ -14,6 +14,7 @@ import type {
 } from '../../schemas/documentImport/envelope'
 import { makeCandidate } from './candidateFactory'
 import { parseGermanDate } from './dateAssociation'
+import { normalizeVerlaufText } from './normalizeVerlaufText'
 import { notice } from './parsers/adapterResult'
 
 export interface TabularTable {
@@ -245,6 +246,7 @@ export function tabularToCandidates(
             .filter(Boolean)
             .join(' — ')
         if (!text) return
+        const normalizedText = normalizeVerlaufText(text)
         const rawDate = cell(row, mapping.columns.date)
         const iso = rawDate ? parseGermanDate(rawDate) : null
         const clarifications: ImportClarification[] = []
@@ -268,7 +270,7 @@ export function tabularToCandidates(
             sourceLocation: loc,
             rawText: row.join(' | '),
             clarifications,
-            data: { text, date: iso ?? undefined, sectionLabel: sheet },
+            data: { text: normalizedText, date: iso ?? undefined, sectionLabel: sheet },
           }),
         )
         break

@@ -18,6 +18,12 @@ import type {
 } from '../../schemas/documentImport/envelope'
 import { makeCandidate } from './candidateFactory'
 import {
+  parseMedicationLine as parseMedicationLineFromExtraction,
+  parsedMedicationToCandidate,
+  type ParsedMedicationLine,
+} from './medicationExtraction'
+import { normalizeVerlaufText } from './normalizeVerlaufText'
+import {
   findGermanDateInText,
   isDateOnlyLine,
   splitDatedEntries,
@@ -55,6 +61,8 @@ interface HeadingMapping {
   module: CandidateModule
   /** Aufnahme section id when the heading maps to a specific anamnese section. */
   sectionId?: string
+  /** Complementary therapy type id when module is `complementaryTherapy`. */
+  therapyTypeId?: string
 }
 
 /** A per-user heading override: normalized alias → target module/section. */
@@ -199,6 +207,20 @@ const HEADING_MAP: Record<string, HeadingMapping> = {
   'progress notes': { module: 'verlauf' },
   'progress note': { module: 'verlauf' },
 
+  // --- Complementary therapy progress notes (specialty Verlauf, not ward course) ---
+  ergotherapieverlauf: { module: 'complementaryTherapy', therapyTypeId: 'ergotherapie' },
+  'ergotherapie verlauf': { module: 'complementaryTherapy', therapyTypeId: 'ergotherapie' },
+  sporttherapieverlauf: { module: 'complementaryTherapy', therapyTypeId: 'sporttherapie' },
+  'sporttherapie verlauf': { module: 'complementaryTherapy', therapyTypeId: 'sporttherapie' },
+  musiktherapieverlauf: { module: 'complementaryTherapy', therapyTypeId: 'musiktherapie' },
+  'musiktherapie verlauf': { module: 'complementaryTherapy', therapyTypeId: 'musiktherapie' },
+  kunsttherapieverlauf: { module: 'complementaryTherapy', therapyTypeId: 'kunsttherapie' },
+  'kunsttherapie verlauf': { module: 'complementaryTherapy', therapyTypeId: 'kunsttherapie' },
+  arbeitstherapieverlauf: { module: 'complementaryTherapy', therapyTypeId: 'arbeitstherapie' },
+  'arbeitstherapie verlauf': { module: 'complementaryTherapy', therapyTypeId: 'arbeitstherapie' },
+  physiotherapieverlauf: { module: 'complementaryTherapy', therapyTypeId: 'physiotherapie' },
+  'physiotherapie verlauf': { module: 'complementaryTherapy', therapyTypeId: 'physiotherapie' },
+
   // --- Risk / safety ---
   risiko: { module: 'risk' },
   risikobewertung: { module: 'risk' },
@@ -244,12 +266,40 @@ function buildAliasMap(aliases: HeadingAlias[] | undefined): Map<string, Heading
   return map
 }
 
+/** Prefix before "verlauf" in a heading → complementary therapy type id. */
+const THERAPY_VERLAUF_PREFIXES: Record<string, string> = {
+  ergotherapie: 'ergotherapie',
+  sporttherapie: 'sporttherapie',
+  sport: 'sporttherapie',
+  musiktherapie: 'musiktherapie',
+  musik: 'musiktherapie',
+  kunsttherapie: 'kunsttherapie',
+  kunst: 'kunsttherapie',
+  arbeitstherapie: 'arbeitstherapie',
+  arbeit: 'arbeitstherapie',
+  physiotherapie: 'physiotherapie',
+}
+
+const EXCLUDED_THERAPY_VERLAUF_PREFIXES = new Set(['therapie', 'behandlung', 'behandlungs', 'psych'])
+
+function matchComplementaryTherapyVerlauf(stripped: string): HeadingMapping | null {
+  const m = stripped.match(/^([a-z]+)(?:\s+)?verlauf\b/)
+  if (!m) return null
+  const prefix = m[1]
+  if (EXCLUDED_THERAPY_VERLAUF_PREFIXES.has(prefix)) return null
+  const therapyTypeId = THERAPY_VERLAUF_PREFIXES[prefix]
+  if (!therapyTypeId) return null
+  return { module: 'complementaryTherapy', therapyTypeId }
+}
+
 /** Fuzzy word-family fallback. Returns null when no clinical family is recognised. */
 function fuzzyHeading(stripped: string): HeadingMapping | null {
   if (/^aufnahmeanlass\b/.test(stripped)) return { module: 'anamnese', sectionId: 'aufnahmeanlass' }
   if (/^(aufnahme|aufnahmebefund|aufnahme befund)\b/.test(stripped)) return { module: 'anamnese' }
   if (/\bvisite\b/.test(stripped)) return { module: 'verlauf' }
   if (/\bprocedere\b/.test(stripped)) return { module: 'therapy' }
+  const complementaryVerlauf = matchComplementaryTherapyVerlauf(stripped)
+  if (complementaryVerlauf) return complementaryVerlauf
   if (/\bvorerkrankung/.test(stripped)) return { module: 'anamnese', sectionId: 'somatische-anamnese' }
   if (/\bneurologisch/.test(stripped) && /\bbefund\b/.test(stripped)) {
     return { module: 'anamnese', sectionId: 'somatischer-befund' }
@@ -319,6 +369,56 @@ function lookupHeading(raw: string, aliasMap?: Map<string, HeadingMapping>): Hea
   return classifyHeading(raw, aliasMap)?.mapping ?? null
 }
 
+/** True when a line is a content label inside an ongoing Verlauf block, not a new section. */
+function isNestedContentInVerlauf(line: string, parentModule: CandidateModule | null): boolean {
+  if (parentModule !== 'verlauf') return false
+
+  const trimmed = line.trim()
+  const norm = normalizeHeading(trimmed).replace(/^\d+\s*[).-]?\s*/, '')
+
+  if (
+    /^(procedere|sporttherapie|diagnose|diagnosen|therapie|medikation|medikamente|befund|plan|beurteilung|risiko|somatik)\b/.test(
+      norm,
+    )
+  ) {
+    return true
+  }
+
+  const classification = classifyHeading(trimmed)
+  if (classification) {
+    if (
+      classification.mapping.module === 'therapy' ||
+      classification.mapping.module === 'diagnosis' ||
+      classification.mapping.module === 'medication'
+    ) {
+      return true
+    }
+    if (/\b(visite|tagesbericht|ward round)\b/.test(norm)) return true
+  }
+
+  if (trimmed.endsWith(':') && trimmed.split(/\s+/).length <= 4) {
+    if (/^(procedere|sporttherapie|diagnose|diagnosen|therapie|medikation|befund|plan)\b/.test(norm)) {
+      return true
+    }
+  }
+
+  return false
+}
+
+function shouldStartNewSection(
+  line: string,
+  parentModule: CandidateModule | null,
+  aliasMap?: Map<string, HeadingMapping>,
+): boolean {
+  if (!isHeadingLine(line, aliasMap)) return false
+  if (isNestedContentInVerlauf(line, parentModule)) return false
+  return true
+}
+
+function sectionHeadingModule(raw: string, aliasMap?: Map<string, HeadingMapping>): CandidateModule | null {
+  return lookupHeading(raw, aliasMap)?.module ?? null
+}
+
 /**
  * True when a line is likely a heading (known clinical heading or short
  * colon/markdown label).
@@ -369,17 +469,18 @@ export function sectionizeClinicalText(text: string, options: SectionizeOptions 
   let current: TextSection | null = null
   let preamble: string[] = []
   let pendingDateLine: string | null = null
+  let parentModule: CandidateModule | null = null
 
   const nextMeaningfulLineIsHeading = (fromIndex: number): boolean => {
     for (let i = fromIndex + 1; i < lines.length; i += 1) {
       if (!lines[i].trim()) continue
-      return isHeadingLine(lines[i], aliasMap)
+      return shouldStartNewSection(lines[i], parentModule, aliasMap)
     }
     return false
   }
 
   lines.forEach((line, index) => {
-    if (isHeadingLine(line, aliasMap)) {
+    if (shouldStartNewSection(line, parentModule, aliasMap)) {
       if (current) {
         current.body = current.body.replace(/\s+$/, '')
         sections.push(current)
@@ -387,8 +488,10 @@ export function sectionizeClinicalText(text: string, options: SectionizeOptions 
         sections.push({ heading: '', body: preamble.join('\n').trim(), lineNumber: 1 })
       }
       preamble = []
+      const heading = line.replace(/^#+\s*/, '').replace(/:\s*$/, '').trim()
+      parentModule = sectionHeadingModule(heading, aliasMap)
       current = {
-        heading: line.replace(/^#+\s*/, '').replace(/:\s*$/, '').trim(),
+        heading,
         body: pendingDateLine ?? '',
         lineNumber: index + 1,
       }
@@ -446,24 +549,8 @@ export function parseLabLine(
   }
 }
 
-const DOSE_RE = /\b(\d+(?:[.,]\d+)?(?:\s*[-–]\s*\d+(?:[.,]\d+)?){1,3})\b/
-const STRENGTH_RE = /\b(\d+(?:[.,]\d+)?)\s*(mg|µg|mcg|g|ml|mmol|ie|i\.e\.)\b/i
-
-export function parseMedicationLine(
-  line: string,
-): { substance: string; strength?: string; doseText?: string } | null {
-  const trimmed = line.replace(/^[-*•\d.)\s]+/, '').trim()
-  if (!trimmed) return null
-  const strengthMatch = STRENGTH_RE.exec(trimmed)
-  const doseMatch = DOSE_RE.exec(trimmed)
-  // Substance = text up to the first numeric token.
-  const firstNum = trimmed.search(/\d/)
-  const substance = (firstNum > 0 ? trimmed.slice(0, firstNum) : trimmed).trim() || trimmed
-  return {
-    substance,
-    strength: strengthMatch ? `${strengthMatch[1]} ${strengthMatch[2]}` : undefined,
-    doseText: doseMatch ? doseMatch[1].replace(/\s/g, '') : undefined,
-  }
+export function parseMedicationLine(line: string): ParsedMedicationLine | null {
+  return parseMedicationLineFromExtraction(line)
 }
 
 function nonEmptyLines(body: string): { text: string; offset: number }[] {
@@ -482,12 +569,13 @@ function nonEmptyLines(body: string): { text: string; offset: number }[] {
  * entries are flagged for clinician clarification.
  */
 function buildCourseCandidates(
-  module: 'verlauf' | 'therapy',
+  module: 'verlauf' | 'therapy' | 'complementaryTherapy',
   heading: string,
   section: TextSection,
   body: string,
   baseLocation: ImportSourceLocation,
   dateLocation?: DateLocationHint,
+  therapyTypeId?: string,
 ): ClinicalImportCandidate[] {
   const entries = splitDatedEntries(body, { dateLocation }).filter((e) => e.text.trim().length > 0)
   const hasDates = entries.some((e) => e.raw)
@@ -500,7 +588,18 @@ function buildCourseCandidates(
     date: string | undefined,
     clarifications: ImportClarification[],
   ): ClinicalImportCandidate => {
+    const normalizedText = normalizeVerlaufText(text)
     const confidence = date ? 'high' : 'medium'
+    if (module === 'complementaryTherapy') {
+      return makeCandidate({
+        module: 'complementaryTherapy',
+        confidence,
+        sourceLocation: location,
+        rawText,
+        clarifications,
+        data: { therapyTypeId: therapyTypeId ?? 'ergotherapie', text: normalizedText, date },
+      })
+    }
     if (module === 'therapy') {
       return makeCandidate({
         module: 'therapy',
@@ -508,7 +607,7 @@ function buildCourseCandidates(
         sourceLocation: location,
         rawText,
         clarifications,
-        data: { title: heading || 'Therapie und Verlauf', text, date },
+        data: { title: heading || 'Therapie und Verlauf', text: normalizedText, date },
       })
     }
     return makeCandidate({
@@ -517,7 +616,7 @@ function buildCourseCandidates(
       sourceLocation: location,
       rawText,
       clarifications,
-      data: { text, sectionLabel: heading || undefined, date },
+      data: { text: normalizedText, sectionLabel: heading || undefined, date },
     })
   }
 
@@ -612,17 +711,7 @@ export function mapSectionToCandidates(
         .filter((x): x is { parsed: NonNullable<ReturnType<typeof parseMedicationLine>>; raw: string } => x.parsed !== null)
       if (meds.length === 0) break
       return meds.map((mLine) =>
-        makeCandidate({
-          module: 'medication',
-          confidence: mLine.parsed.strength || mLine.parsed.doseText ? 'high' : 'medium',
-          sourceLocation: baseLocation,
-          rawText: mLine.raw,
-          data: {
-            substance: mLine.parsed.substance,
-            strength: mLine.parsed.strength,
-            doseText: mLine.parsed.doseText,
-          },
-        }),
+        parsedMedicationToCandidate(mLine.parsed, mLine.raw, baseLocation),
       )
     }
     case 'lab': {
@@ -663,6 +752,16 @@ export function mapSectionToCandidates(
       ]
     case 'therapy':
       return buildCourseCandidates('therapy', heading, section, body, baseLocation, options.dateLocation)
+    case 'complementaryTherapy':
+      return buildCourseCandidates(
+        'complementaryTherapy',
+        heading,
+        section,
+        body,
+        baseLocation,
+        options.dateLocation,
+        mapping.therapyTypeId,
+      )
     case 'verlauf':
       return buildCourseCandidates('verlauf', heading, section, body, baseLocation, options.dateLocation)
     case 'risk':

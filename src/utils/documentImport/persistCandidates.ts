@@ -18,6 +18,12 @@ import type {
 } from '../../schemas/documentImport/envelope'
 import { appendDokument, type DokumentEntry } from '../dokumenteArchive'
 import { appendVerlaufEntry } from '../verlaufFeed'
+import {
+  loadComplementaryTherapies,
+  saveComplementaryTherapies,
+} from '../complementaryTherapy/storage'
+import { createComplementaryTherapy } from '../../types/complementaryTherapy'
+import { complementaryTherapyDisplayName } from './complementaryTherapyMapping'
 import { loadDiagnosen, saveDiagnosen, type DiagnoseEntry } from '../diagnosenArchive'
 import { addBefund, type LaborBefund, type LaborValue } from '../laborArchive'
 import { getOrCreateMedicationPlanState, saveMedicationPlanState } from '../medication/storage'
@@ -26,7 +32,8 @@ import {
   createDefaultMedicationDraft,
   type MedicationDraft,
 } from '../medication/planOps'
-import type { MedicationFormulation, MedicationStatus } from '../../types/medicationPlan'
+import type { MedicationFormulation, MedicationStatus, MedicationChangeType, DoseSchedule } from '../../types/medicationPlan'
+import { createEmptyDoseSchedule } from '../../types/medicationPlan'
 import { appendProvenance } from './provenanceLedger'
 
 export interface PersistParams {
@@ -87,6 +94,64 @@ function mapStatus(value?: string): MedicationStatus {
   return (STATUS_VALUES as string[]).includes(v ?? '') ? (v as MedicationStatus) : 'active'
 }
 
+function mapChangeType(status: MedicationStatus): MedicationChangeType {
+  switch (status) {
+    case 'increased':
+      return 'increase'
+    case 'reduced':
+      return 'decrease'
+    case 'paused':
+      return 'pause'
+    case 'discontinued':
+      return 'discontinue'
+    default:
+      return 'start'
+  }
+}
+
+function doseScheduleFromDoseText(doseText?: string, strength?: string): DoseSchedule {
+  const schedule = createEmptyDoseSchedule()
+  const trimmed = doseText?.trim() ?? ''
+  const scheduleMatch = /^(\d+(?:[.,]\d+)?)\s*[-–]\s*(\d+(?:[.,]\d+)?)\s*[-–]\s*(\d+(?:[.,]\d+)?)(?:\s*[-–]\s*(\d+(?:[.,]\d+)?))?$/.exec(
+    trimmed.replace(/\s/g, ''),
+  )
+  if (scheduleMatch) {
+    schedule.morning = scheduleMatch[1].replace(',', '.')
+    schedule.noon = scheduleMatch[2].replace(',', '.')
+    schedule.evening = scheduleMatch[3].replace(',', '.')
+    if (scheduleMatch[4]) schedule.night = scheduleMatch[4].replace(',', '.')
+  }
+  if (/\bmg\b/i.test(strength ?? '')) schedule.unit = 'mg'
+  return schedule
+}
+
+function buildMedicationDraft(
+  data: Extract<ClinicalImportCandidate, { module: 'medication' }>['data'],
+  statusMapper: (v?: string) => MedicationStatus,
+): MedicationDraft {
+  const isDepot = data.isDepot === true
+  const status = statusMapper(data.status)
+  const doseSchedule = doseScheduleFromDoseText(data.doseText, data.strength)
+  if (data.isPrn) doseSchedule.prn = true
+
+  return {
+    ...createDefaultMedicationDraft(),
+    substance: data.substance,
+    displayBrandName: data.displayBrandName,
+    strength: data.strength ?? '',
+    formulation: isDepot ? 'depot' : mapFormulation(data.formulation),
+    indication: data.indication ?? '',
+    status,
+    changeType: mapChangeType(status),
+    startDate: data.startDate || createDefaultMedicationDraft().startDate,
+    depotInterval: data.depotInterval ?? (isDepot ? data.doseText ?? '' : ''),
+    freeTextLine: data.doseText ?? '',
+    prn: data.isPrn === true,
+    reasonForChange: data.changeContext ?? '',
+    doseSchedule,
+  }
+}
+
 function toLaborValue(v: { name: string; value: string; unit?: string; refText?: string }): LaborValue {
   const numeric = Number.parseFloat(v.value.replace(',', '.'))
   return {
@@ -138,15 +203,21 @@ function persistOne(
 
   switch (candidate.module) {
     case 'anamnese': {
-      const { sectionId, title, text } = candidate.data
+      const { sectionId, title, text, sectionContents } = candidate.data
+      const mergedAufnahme =
+        sectionContents !== undefined && Object.keys(sectionContents).length > 0
       const entry = appendDokument(caseId, {
         category: 'anamnese',
-        title,
+        title: mergedAufnahme ? title || 'Aufnahmebefund' : title,
         content: text,
         date: now,
         source: 'manual',
-        pageType: sectionId ? `import-anamnese:${sectionId}` : 'aufnahme',
-        sectionContents: sectionId ? { [sectionId]: text } : undefined,
+        pageType: mergedAufnahme || !sectionId ? 'aufnahme' : `import-anamnese:${sectionId}`,
+        sectionContents: mergedAufnahme
+          ? sectionContents
+          : sectionId
+            ? { [sectionId]: text }
+            : undefined,
         importProvenanceId: provenanceId,
       })
       return entry.id
@@ -184,6 +255,28 @@ function persistOne(
       })
       return entry.id
     }
+    case 'complementaryTherapy': {
+      const displayName = complementaryTherapyDisplayName(candidate.data.therapyTypeId, language)
+      const therapies = loadComplementaryTherapies(caseId)
+      const normalizedName = displayName.trim().toLowerCase()
+      let therapy = therapies.find((t) => t.name.trim().toLowerCase() === normalizedName)
+      if (!therapy) {
+        therapy = createComplementaryTherapy(displayName)
+        therapy.status = 'active'
+        therapies.push(therapy)
+      } else if (therapy.status !== 'active') {
+        therapy.status = 'active'
+      }
+      const sessionId = genId()
+      const sessionDate = candidate.data.date ?? now.slice(0, 10)
+      therapy.sessions = [
+        { id: sessionId, date: sessionDate, note: candidate.data.text },
+        ...(therapy.sessions ?? []),
+      ]
+      therapy.updatedAt = now
+      saveComplementaryTherapies(therapies, caseId)
+      return `${therapy.id}:${sessionId}`
+    }
     case 'investigation': {
       const entry = appendDokument(caseId, {
         category: 'untersuchungsbefunde',
@@ -218,16 +311,7 @@ function persistOne(
       const planId = state.currentPlanId ?? state.plans[0]?.id
       if (!planId) throw new Error('Kein aktiver Medikationsplan')
       const beforeIds = new Set(planMedicationIds(state, planId))
-      const draft: MedicationDraft = {
-        ...createDefaultMedicationDraft(),
-        substance: candidate.data.substance,
-        strength: candidate.data.strength ?? '',
-        formulation: mapFormulation(candidate.data.formulation),
-        indication: candidate.data.indication ?? '',
-        status: statusMapper(candidate.data.status),
-        startDate: candidate.data.startDate || createDefaultMedicationDraft().startDate,
-        freeTextLine: candidate.data.doseText ?? '',
-      }
+      const draft = buildMedicationDraft(candidate.data, statusMapper)
       const nextState = addMedicationToPlan(state, planId, draft, language)
       saveMedicationPlanState(nextState, caseId)
       const addedId = planMedicationIds(nextState, planId).find((id) => !beforeIds.has(id))

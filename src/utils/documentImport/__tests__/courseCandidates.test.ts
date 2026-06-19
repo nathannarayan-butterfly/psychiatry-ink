@@ -8,6 +8,12 @@ function verlaufCandidates(text: string) {
     .filter((c) => c.module === 'verlauf')
 }
 
+function complementaryTherapyCandidates(text: string) {
+  return sectionizeClinicalText(text)
+    .flatMap((section) => mapSectionToCandidates(section))
+    .filter((c) => c.module === 'complementaryTherapy')
+}
+
 describe('sectionize verlauf — left-column / leading-line date association', () => {
   it('associates dates from separate lines and flags dateless entries', () => {
     const text = [
@@ -53,15 +59,50 @@ describe('sectionize verlauf — left-column / leading-line date association', (
     expect(candidates[0].clarifications).toBeUndefined()
   })
 
-  it('recognizes compound therapy-course headings with embedded dates', () => {
-    const candidates = verlaufCandidates([
+  it('maps Ergotherapieverlauf headings to complementary therapy, not ward Verlauf', () => {
+    const candidates = complementaryTherapyCandidates([
       'Ergotherapieverlauf 14.03.2024',
       'Aktivierung und Tagesstruktur wurden besprochen.',
     ].join('\n'))
 
     expect(candidates).toHaveLength(1)
-    expect(candidates[0].data.date).toBe('2024-03-14')
-    expect(candidates[0].data.text).toContain('Tagesstruktur')
+    expect(candidates[0].module).toBe('complementaryTherapy')
+    if (candidates[0].module === 'complementaryTherapy') {
+      expect(candidates[0].data.therapyTypeId).toBe('ergotherapie')
+      expect(candidates[0].data.date).toBe('2024-03-14')
+      expect(candidates[0].data.text).toContain('Tagesstruktur')
+    }
+    expect(verlaufCandidates('Ergotherapieverlauf 14.03.2024\nNote.').length).toBe(0)
+  })
+
+  it('extracts Std:DD.MM.YY dates from Ergotherapieverlauf headings', () => {
+    const candidates = complementaryTherapyCandidates([
+      'Ergotherapieverlauf Std:09.12.25',
+      'Feinmotorik geübt, gute Mitarbeit.',
+    ].join('\n'))
+
+    expect(candidates).toHaveLength(1)
+    if (candidates[0].module === 'complementaryTherapy') {
+      expect(candidates[0].data.date).toBe('2025-12-09')
+    }
+  })
+
+  it('collapses excessive blank lines within a single Verlauf entry at parse time', () => {
+    const candidates = verlaufCandidates([
+      'Verlauf',
+      '12.03.2024',
+      'Erster Satz.',
+      '',
+      '',
+      '',
+      'Zweiter Satz.',
+    ].join('\n'))
+
+    const dated = candidates.find((c) => c.module === 'verlauf' && c.data.date === '2024-03-12')
+    expect(dated?.module).toBe('verlauf')
+    if (dated?.module === 'verlauf') {
+      expect(dated.data.text).toBe(['Erster Satz.', '', 'Zweiter Satz.'].join('\n'))
+    }
   })
 
   it('uses a section date for the first note and row dates for later notes', () => {

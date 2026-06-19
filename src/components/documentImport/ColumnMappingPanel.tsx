@@ -33,6 +33,10 @@ const FIELDS_BY_MODULE: Record<CandidateModule, { field: TabularField; labelKey:
   anamnese: [],
   investigation: [],
   therapy: [],
+  complementaryTherapy: [
+    { field: 'date', labelKey: 'documentImportFieldDate' },
+    { field: 'text', labelKey: 'documentImportFieldText' },
+  ],
   risk: [],
 }
 

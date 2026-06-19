@@ -8,6 +8,7 @@
  * tested without binary .docx fixtures (and so mammoth — a browser bundle — is
  * never loaded in Node test runs).
  */
+import { consolidateImportCandidates } from '../consolidateCandidates'
 import { mapSectionToCandidates, sectionizeClinicalText, type SectionizeOptions } from '../sectionize'
 import { extractPatientIdentity } from '../patientIdentity'
 import { readArrayBuffer } from '../fileIo'
@@ -40,12 +41,14 @@ export function docxTextToResult(text: string, options: SectionizeOptions = {}):
     candidates.push(...mapSectionToCandidates(section, options))
   }
 
-  if (candidates.length === 0) {
+  const consolidated = consolidateImportCandidates(candidates)
+
+  if (consolidated.length === 0) {
     notices.push(notice('warning', 'docx_no_candidates', 'Keine Abschnitte im Dokument erkannt.'))
   }
 
   return {
-    candidates,
+    candidates: consolidated,
     notices,
     parsingMode: 'structured',
     rawPreview: buildPreview(text.trim()),

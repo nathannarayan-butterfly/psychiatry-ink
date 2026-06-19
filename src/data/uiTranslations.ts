@@ -9317,6 +9317,12 @@ export const uiTranslations = {
     fr: 'Thérapie',
     es: 'Terapia',
   },
+  documentImportModuleComplementaryTherapy: {
+    de: 'Ergotherapie & ergänzende Therapien',
+    en: 'Complementary therapies',
+    fr: 'Thérapies complémentaires',
+    es: 'Terapias complementarias',
+  },
   documentImportModuleRisk: {
     de: 'Risiko/Sicherheit',
     en: 'Risk/safety',

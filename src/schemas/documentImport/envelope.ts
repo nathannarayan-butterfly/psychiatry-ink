@@ -29,6 +29,7 @@ export const CANDIDATE_MODULES = [
   'lab',
   'investigation',
   'therapy',
+  'complementaryTherapy',
   'risk',
   'document',
 ] as const
@@ -69,6 +70,8 @@ export const AnamneseCandidateDataSchema = z.object({
   sectionId: z.string().optional(),
   title: z.string().min(1),
   text: z.string().min(1),
+  /** Merged Aufnahmebefund sections keyed by workspace section id. */
+  sectionContents: z.record(z.string(), z.string()).optional(),
 })
 
 export const VerlaufCandidateDataSchema = z.object({
@@ -91,6 +94,20 @@ export const MedicationCandidateDataSchema = z.object({
   /** Free-text dose line, e.g. "1-0-1" or "5 mg morgens". */
   doseText: z.string().optional(),
   formulation: z.string().optional(),
+  /** Route shorthand when detected (po, im, iv, sc). */
+  route: z.string().optional(),
+  /** Human-readable frequency, e.g. "täglich", "morgens", "bedarfsweise". */
+  frequency: z.string().optional(),
+  /** True when PRN / bedarfsweise pattern matched. */
+  isPrn: z.boolean().optional(),
+  /** Trade/brand name when parsed from a compound line (e.g. OKEDI). */
+  displayBrandName: z.string().optional(),
+  /** True when depot/LAI heuristics matched (i.m., alle N Tage, …). */
+  isDepot: z.boolean().optional(),
+  /** Human-readable depot interval, e.g. "alle 28 Tage". */
+  depotInterval: z.string().optional(),
+  /** Verbatim change snippet from a narrative adjustment sentence. */
+  changeContext: z.string().optional(),
   indication: z.string().optional(),
   status: z.string().optional(),
   startDate: z.string().optional(),
@@ -119,6 +136,14 @@ export const TherapyCandidateDataSchema = z.object({
   title: z.string().min(1),
   text: z.string().min(1),
   date: z.string().optional(),
+})
+
+export const ComplementaryTherapyCandidateDataSchema = z.object({
+  /** Default list id (e.g. `ergotherapie`) or custom therapy slug. */
+  therapyTypeId: z.string().min(1),
+  /** ISO date; defaults to import time when omitted. */
+  date: z.string().optional(),
+  text: z.string().min(1),
 })
 
 export const RiskCandidateDataSchema = z.object({
@@ -181,6 +206,11 @@ export const ClinicalImportCandidateSchema = z.discriminatedUnion('module', [
   z.object({ ...CandidateBase, module: z.literal('lab'), data: LabCandidateDataSchema }),
   z.object({ ...CandidateBase, module: z.literal('investigation'), data: InvestigationCandidateDataSchema }),
   z.object({ ...CandidateBase, module: z.literal('therapy'), data: TherapyCandidateDataSchema }),
+  z.object({
+    ...CandidateBase,
+    module: z.literal('complementaryTherapy'),
+    data: ComplementaryTherapyCandidateDataSchema,
+  }),
   z.object({ ...CandidateBase, module: z.literal('risk'), data: RiskCandidateDataSchema }),
   z.object({ ...CandidateBase, module: z.literal('document'), data: DocumentCandidateDataSchema }),
 ])

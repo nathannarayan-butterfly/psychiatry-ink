@@ -62,6 +62,12 @@ export function remapCandidate(
       return { ...common, module: 'investigation', data: { title, text } }
     case 'therapy':
       return { ...common, module: 'therapy', data: { title, text } }
+    case 'complementaryTherapy':
+      return {
+        ...common,
+        module: 'complementaryTherapy',
+        data: { therapyTypeId: 'ergotherapie', text },
+      }
     case 'risk':
       return { ...common, module: 'risk', data: { text } }
     case 'document':

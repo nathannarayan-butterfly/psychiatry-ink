@@ -201,6 +201,7 @@ function defaultTitle(module: CandidateModule): string {
     lab: 'Labor',
     investigation: 'Befund',
     therapy: 'Therapie',
+    complementaryTherapy: 'Ergotherapie',
     risk: 'Risiko',
     document: 'Dokument',
   }

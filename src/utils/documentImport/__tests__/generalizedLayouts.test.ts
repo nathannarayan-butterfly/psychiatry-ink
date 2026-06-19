@@ -10,10 +10,10 @@
  * and ~23 dated verlauf entries from a flattened left-column table).
  */
 import { describe, expect, it } from 'vitest'
-import { mapSectionToCandidates, sectionizeClinicalText } from '../sectionize'
+import { docxTextToResult } from '../parsers/docxParser'
 
 function candidatesFor(text: string) {
-  return sectionizeClinicalText(text).flatMap((section) => mapSectionToCandidates(section))
+  return docxTextToResult(text).candidates
 }
 
 function modulesFor(text: string, module: string) {
@@ -21,7 +21,7 @@ function modulesFor(text: string, module: string) {
 }
 
 describe('generalization — single-column narrative (no tables)', () => {
-  it('splits a German narrative letter into the right anamnese sub-sections', () => {
+  it('splits a German narrative letter into one merged Aufnahmebefund', () => {
     const text = [
       'Anamnese',
       'Vorstellung zur stationären Behandlung.',
@@ -34,10 +34,10 @@ describe('generalization — single-column narrative (no tables)', () => {
     ].join('\n')
 
     const anamnese = modulesFor(text, 'anamnese')
-    expect(anamnese).toHaveLength(3)
-    const sectionIds = anamnese.map((c) => (c.module === 'anamnese' ? c.data.sectionId : undefined))
-    expect(sectionIds).toContain('psychopathologischer-befund')
-    expect(sectionIds).toContain('sozialanamnese')
+    expect(anamnese).toHaveLength(1)
+    if (anamnese[0]?.module !== 'anamnese') return
+    expect(anamnese[0].data.sectionContents?.['psychopathologischer-befund']).toContain('niedergedrückt')
+    expect(anamnese[0].data.sectionContents?.['sozialanamnese']).toContain('allein')
   })
 
   it('keeps an undated single-column verlauf as one candidate with leading-line dates', () => {
@@ -88,10 +88,10 @@ describe('generalization — English headings', () => {
     ].join('\n')
 
     const anamnese = modulesFor(text, 'anamnese')
-    expect(anamnese.map((c) => (c.module === 'anamnese' ? c.data.sectionId : undefined))).toEqual([
-      'aktuelle-krankheitsanamnese',
-      'psychopathologischer-befund',
-    ])
+    expect(anamnese).toHaveLength(1)
+    if (anamnese[0]?.module !== 'anamnese') return
+    expect(anamnese[0].data.sectionContents?.['aktuelle-krankheitsanamnese']).toBeTruthy()
+    expect(anamnese[0].data.sectionContents?.['psychopathologischer-befund']).toBeTruthy()
     expect(modulesFor(text, 'verlauf')).toHaveLength(1)
   })
 })
@@ -180,11 +180,12 @@ describe('regression — aufnahme letter structure (de-identified)', () => {
     'Schlaf verbessert, keine Nebenwirkungen.',
   ].join('\n')
 
-  it('maps aufnahme sub-sections and visit notes with leading dates', () => {
-    const all = candidatesFor(AUFNAHME_LETTER)
+  it('maps aufnahme sub-sections into one Aufnahmebefund and visit notes with leading dates', () => {
+    const all = docxTextToResult(AUFNAHME_LETTER).candidates
     const anamnese = all.filter((c) => c.module === 'anamnese')
-    expect(anamnese.length).toBeGreaterThanOrEqual(10)
-    const sectionIds = anamnese.map((c) => (c.module === 'anamnese' ? c.data.sectionId : undefined))
+    expect(anamnese).toHaveLength(1)
+    if (anamnese[0]?.module !== 'anamnese') return
+    const sectionIds = Object.keys(anamnese[0].data.sectionContents ?? {})
     expect(sectionIds).toContain('aufnahmeanlass')
     expect(sectionIds).toContain('aktuelle-krankheitsanamnese')
     expect(sectionIds).toContain('psychiatrische-vorgeschichte')
@@ -232,10 +233,12 @@ describe('regression — synthetic "sample clinic" layout must not degrade', () 
     'Wach, orientiert, deutlich depressiv.',
   ].join('\n')
 
-  it('keeps 10 anamnese sub-sections including psychopathologischer-befund', () => {
-    const anamnese = modulesFor(SAMPLE_ANAMNESE, 'anamnese')
-    expect(anamnese).toHaveLength(10)
-    const ids = anamnese.map((c) => (c.module === 'anamnese' ? c.data.sectionId : undefined))
+  it('keeps 10 aufnahme sub-sections in one merged Aufnahmebefund', () => {
+    const anamnese = docxTextToResult(SAMPLE_ANAMNESE).candidates.filter((c) => c.module === 'anamnese')
+    expect(anamnese).toHaveLength(1)
+    if (anamnese[0]?.module !== 'anamnese') return
+    const ids = Object.keys(anamnese[0].data.sectionContents ?? {})
+    expect(ids).toHaveLength(10)
     expect(ids).toContain('psychopathologischer-befund')
   })
 

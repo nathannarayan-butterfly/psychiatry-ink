@@ -136,7 +136,9 @@ export function CandidateReviewRow({
               <li key={`${c.code}-${i}`}>{c.message}</li>
             ))}
           </ul>
-          {(candidate.module === 'verlauf' || candidate.module === 'therapy') && (
+          {(candidate.module === 'verlauf' ||
+            candidate.module === 'therapy' ||
+            candidate.module === 'complementaryTherapy') && (
             <label className="doc-import-field doc-import-row__clarify-field">
               <span className="doc-import-field__label">{t('documentImportFieldDate')}</span>
               <GermanDateInput
@@ -264,7 +266,10 @@ function CandidateFields({
 
   // Text-based modules: anamnese / verlauf / investigation / therapy / risk / document
   const data = candidate.data as { title?: string; text?: string; date?: string }
-  const hasDate = candidate.module === 'verlauf' || candidate.module === 'therapy'
+  const hasDate =
+    candidate.module === 'verlauf' ||
+    candidate.module === 'therapy' ||
+    candidate.module === 'complementaryTherapy'
   return (
     <div className="doc-import-row__fields">
       {'title' in candidate.data && (
