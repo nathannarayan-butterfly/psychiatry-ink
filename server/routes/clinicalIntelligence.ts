@@ -26,9 +26,15 @@ import {
 import { runClinicalIntelligenceServer } from '../services/clinicalIntelligence/run'
 import { parseLlmModelRequest } from '../ai/parseLlmModelRequest'
 import { resolveAccountId } from '../middleware/auth'
-import { callLlm, llmResultModel } from '../services/llmProvider'
+import {
+  SafeLlmEgressError,
+  llmResultModel,
+  sanitizeLlmPayload,
+  sanitizeText,
+} from '../services/safeLlmEgress'
 import { resolveUsageContextFromRequest } from '../ai/usage/resolveUsageContext'
 import { assertAiGenerationAllowed, recordAiGenerationUsed } from '../utils/caseAiAccessGuard'
+import { runAiFeature, InsufficientCreditsError } from '../ai/runAiFeature'
 import {
   clinicalLanguagePromptInstruction,
   requireClinicalLanguage,
@@ -223,8 +229,39 @@ clinicalIntelligenceRouter.post('/discuss', async (req: Request, res: Response) 
   try {
     const llmModel = parseLlmModelRequest(body as unknown as Record<string, unknown>, 'standard')
     const tier = llmModel.tier ?? 'standard'
-    const systemPrompt = buildDiscussSystemPrompt(language, body.context)
-    const userPrompt = buildDiscussUserPrompt(body.messages)
+
+    // Egress PHI guard — re-scrub the compact-evidence package and every
+    // discussion message server-side. The schema only permits short summaries
+    // and short clinician comments, but any of those can still leak names /
+    // dates / contact details if the client missed them.
+    const patientHints = body.patientHints
+      ? {
+          patientName: body.patientHints.patientName,
+          patientDob: body.patientHints.patientDob,
+        }
+      : undefined
+    let scrubbedContext: typeof body.context
+    let scrubbedMessages: typeof body.messages
+    try {
+      scrubbedContext = sanitizeLlmPayload(body.context, { patientHints })
+      scrubbedMessages = body.messages.map((message) => ({
+        role: message.role,
+        content: sanitizeText(message.content, { patientHints }),
+      }))
+    } catch (guardError) {
+      if (guardError instanceof SafeLlmEgressError) {
+        console.error('[clinical-intelligence] discuss PHI guard blocked request:', guardError.message)
+        res.status(422).json({
+          error:
+            'PHI guard could not sanitize discuss payload; refusing to forward to LLM provider.',
+        })
+        return
+      }
+      throw guardError
+    }
+
+    const systemPrompt = buildDiscussSystemPrompt(language, scrubbedContext)
+    const userPrompt = buildDiscussUserPrompt(scrubbedMessages)
 
     const userId = resolveAccountId(req)
     const usageContext =
@@ -240,13 +277,31 @@ clinicalIntelligenceRouter.post('/discuss', async (req: Request, res: Response) 
           })
         : undefined
 
-    const result = await callLlm({
-      tier,
-      model: llmModel.model,
-      systemPrompt,
-      userPrompt,
-      usageContext,
-    })
+    let result
+    try {
+      result = await runAiFeature({
+        featureKey: 'clinical_intelligence_discuss',
+        tier,
+        model: llmModel.model,
+        systemPrompt,
+        userPrompt,
+        usageContext,
+      })
+    } catch (guardError) {
+      if (guardError instanceof InsufficientCreditsError) {
+        res.status(402).json({ error: (guardError as Error).message })
+        return
+      }
+      if (guardError instanceof SafeLlmEgressError) {
+        console.error('[clinical-intelligence] discuss outbound prompt blocked:', guardError.message)
+        res.status(422).json({
+          error:
+            'PHI guard could not sanitize prompt; refusing to forward to LLM provider.',
+        })
+        return
+      }
+      throw guardError
+    }
 
     if (userId && userId !== 'default') {
       void recordAiGenerationUsed(req, userId, {

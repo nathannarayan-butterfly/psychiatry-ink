@@ -1,10 +1,17 @@
 /**
  * LLM helper for KB seed script — low temperature, strict JSON.
+ *
+ * SCOPE: this helper is invoked only by the KB seed batch script with
+ * publicly-sourced drug reference data (substance names, mechanisms, FDA / EMA
+ * label content). No patient-level data ever reaches this path. We still
+ * apply the central PHI guard at the network boundary as defence-in-depth so
+ * a future caller cannot accidentally smuggle clinical text through here.
  */
 import type { AiModelSpec } from '../modelTierMapping'
 import type { AiUsageContext, LlmCallResult } from '../ai/types'
 import { normalizeAiUsage } from '../ai/usage/normalizeUsage'
 import { recordAiUsageLog } from '../ai/usage/recordAiUsageLog'
+import { assertSafeLlmPayload, sanitizeText } from './safeLlmEgress'
 
 const DEEPSEEK_MODEL = process.env.DEEPSEEK_FAST_MODEL ?? 'deepseek-v4-flash'
 
@@ -21,6 +28,12 @@ async function postChat(params: {
   maxTokens: number
   temperature: number
 }): Promise<{ text: string; rawUsage: unknown; requestId: string | null }> {
+  // Egress PHI guard — KB seed prompts are public pharma reference data, but
+  // we re-scrub + assert at the egress boundary as defence-in-depth.
+  const safeSystemPrompt = sanitizeText(params.systemPrompt)
+  const safeUserPrompt = sanitizeText(params.userPrompt)
+  assertSafeLlmPayload({ system: safeSystemPrompt, user: safeUserPrompt })
+
   const response = await fetch(`${params.baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
@@ -30,8 +43,8 @@ async function postChat(params: {
     body: JSON.stringify({
       model: params.model,
       messages: [
-        { role: 'system', content: params.systemPrompt },
-        { role: 'user', content: params.userPrompt },
+        { role: 'system', content: safeSystemPrompt },
+        { role: 'user', content: safeUserPrompt },
       ],
       temperature: params.temperature,
       max_tokens: params.maxTokens,

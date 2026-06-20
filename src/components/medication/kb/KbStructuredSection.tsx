@@ -6,6 +6,7 @@ import {
   getSectionKind,
   getSideEffects,
   getTitrationSchedule,
+  pickKbLocalizedText,
   type CypProfile,
   type DepotOption,
   type DrugSection,
@@ -41,6 +42,15 @@ function NarrativeText({ content }: { content: string }) {
   return <p className="kb-structured__text">{content}</p>
 }
 
+/**
+ * Resolve the canonical (German) {@link DrugSection.content} or its English
+ * variant ({@link DrugSection.contentEn}) based on the active UI locale.
+ * Centralized so every reading-mode branch in this file picks the same field.
+ */
+function getSectionContent(section: DrugSection, language: string): string {
+  return pickKbLocalizedText(section.content, section.contentEn, language)
+}
+
 function PkStrip({ pk, language }: { pk: PharmacokineticData; language: string }) {
   const items: { label: string; value: string }[] = []
   if (pk.halfLifeHours != null)
@@ -73,7 +83,7 @@ function PkStrip({ pk, language }: { pk: PharmacokineticData; language: string }
 }
 
 function TitrationTable({ schedule, language }: { schedule: TitrationSchedule; language: string }) {
-  const unit = schedule.unit ?? 'mg'
+  const unit = pickKbLocalizedText(schedule.unit, schedule.unitEn, language) || 'mg'
   return (
     <table className="kb-mini-table">
       <thead>
@@ -87,14 +97,18 @@ function TitrationTable({ schedule, language }: { schedule: TitrationSchedule; l
       <tbody>
         {[...schedule.steps]
           .sort((a, b) => a.startDay - b.startDay)
-          .map((s, i) => (
-            <tr key={i}>
-              <td>{s.startDay}</td>
-              <td>{s.label ?? '—'}</td>
-              <td>{s.doseMg == null ? kbT(language, 'titrationStop') : `${s.doseMg} ${unit}`}</td>
-              <td>{s.note ?? ''}</td>
-            </tr>
-          ))}
+          .map((s, i) => {
+            const stepLabel = pickKbLocalizedText(s.label, s.labelEn, language)
+            const stepNote = pickKbLocalizedText(s.note, s.noteEn, language)
+            return (
+              <tr key={i}>
+                <td>{s.startDay}</td>
+                <td>{stepLabel || '—'}</td>
+                <td>{s.doseMg == null ? kbT(language, 'titrationStop') : `${s.doseMg} ${unit}`}</td>
+                <td>{stepNote}</td>
+              </tr>
+            )
+          })}
       </tbody>
     </table>
   )
@@ -111,13 +125,17 @@ function CypView({ cyp, language }: { cyp: CypProfile; language: string }) {
     <div className="kb-cyp">
       {cyp.enzymes.length > 0 ? (
         <div className="kb-cyp__chips">
-          {cyp.enzymes.map((en, i) => (
-            <span key={i} className={`kb-cyp__chip kb-cyp__chip--${en.role}`} title={en.note ?? ''}>
-              <span className="kb-cyp__enzyme">{en.enzyme}</span>
-              <span className="kb-cyp__role">{roleLabel(en.role)}</span>
-              {en.strength ? <span className="kb-cyp__strength">{en.strength}</span> : null}
-            </span>
-          ))}
+          {cyp.enzymes.map((en, i) => {
+            const enzymeNote = pickKbLocalizedText(en.note, en.noteEn, language)
+            const enzymeStrength = pickKbLocalizedText(en.strength, en.strengthEn, language)
+            return (
+              <span key={i} className={`kb-cyp__chip kb-cyp__chip--${en.role}`} title={enzymeNote || undefined}>
+                <span className="kb-cyp__enzyme">{en.enzyme}</span>
+                <span className="kb-cyp__role">{roleLabel(en.role)}</span>
+                {enzymeStrength ? <span className="kb-cyp__strength">{enzymeStrength}</span> : null}
+              </span>
+            )
+          })}
         </div>
       ) : null}
       {cyp.interactions && cyp.interactions.length > 0 ? (
@@ -125,8 +143,8 @@ function CypView({ cyp, language }: { cyp: CypProfile; language: string }) {
           {cyp.interactions.map((ix, i) => (
             <li key={i} className={`kb-cyp__interaction kb-cyp__interaction--${ix.severity}`}>
               <span className="kb-cyp__ix-sev" aria-hidden />
-              <span className="kb-cyp__ix-drug">{ix.withDrugOrClass}</span>
-              <span className="kb-cyp__ix-effect">{ix.effect}</span>
+              <span className="kb-cyp__ix-drug">{pickKbLocalizedText(ix.withDrugOrClass, ix.withDrugOrClassEn, language)}</span>
+              <span className="kb-cyp__ix-effect">{pickKbLocalizedText(ix.effect, ix.effectEn, language)}</span>
             </li>
           ))}
         </ul>
@@ -151,7 +169,15 @@ function DepotAccordion({ options, language }: { options: DepotOption[]; languag
     <div className="kb-depot-accordion">
       {options.map((opt, i) => {
         const open = openIdx === i
-        const name = opt.brandName ? `${opt.name} · ${opt.brandName}` : opt.name
+        const localizedName = pickKbLocalizedText(opt.name, opt.nameEn, language) || opt.name
+        const name = opt.brandName ? `${localizedName} · ${opt.brandName}` : localizedName
+        const localizedDoseEquivalence = pickKbLocalizedText(opt.doseEquivalence, opt.doseEquivalenceEn, language)
+        const localizedPostInjectionMonitoring = pickKbLocalizedText(
+          opt.postInjectionMonitoring,
+          opt.postInjectionMonitoringEn,
+          language,
+        )
+        const localizedSourceNote = pickKbLocalizedText(opt.sourceNote, opt.sourceNoteEn, language)
         return (
           <div key={i} className={`kb-depot-accordion__item${open ? ' kb-depot-accordion__item--open' : ''}`}>
             <button
@@ -172,9 +198,9 @@ function DepotAccordion({ options, language }: { options: DepotOption[]; languag
                 ) : null}
                 <DepotTimeline option={opt} language={language} />
                 <ul className="kb-depot-facts">
-                  {opt.doseEquivalence ? (
+                  {localizedDoseEquivalence ? (
                     <li>
-                      <strong>{kbT(language, 'depotEquivalence')}:</strong> {opt.doseEquivalence}
+                      <strong>{kbT(language, 'depotEquivalence')}:</strong> {localizedDoseEquivalence}
                     </li>
                   ) : null}
                   <li>
@@ -201,13 +227,13 @@ function DepotAccordion({ options, language }: { options: DepotOption[]; languag
                       {kbT(language, 'days')}
                     </li>
                   ) : null}
-                  {opt.postInjectionMonitoring ? (
+                  {localizedPostInjectionMonitoring ? (
                     <li className="kb-depot-facts__monitoring">
-                      <strong>{kbT(language, 'depotMonitoring')}:</strong> {opt.postInjectionMonitoring}
+                      <strong>{kbT(language, 'depotMonitoring')}:</strong> {localizedPostInjectionMonitoring}
                     </li>
                   ) : null}
-                  {opt.sourceNote ? (
-                    <li className="kb-depot-facts__source">{opt.sourceNote}</li>
+                  {localizedSourceNote ? (
+                    <li className="kb-depot-facts__source">{localizedSourceNote}</li>
                   ) : null}
                 </ul>
                 {opt.isEstimated ? (
@@ -237,15 +263,16 @@ export function KbStructuredSection({ section, drug, language }: KbStructuredSec
 
     case 'pk': {
       const pk = getPharmacokinetics(section)
+      const content = getSectionContent(section, language)
       if (!pk) return <NarrativeFallback section={section} language={language} />
       return (
         <div className="kb-structured">
           <PkStrip pk={pk} language={language} />
           <PkCurve pk={pk} language={language} />
           {pk.isEstimated ? <p className="kb-chart__note">{kbT(language, 'estimatedNote')}</p> : null}
-          {section.content.trim() ? (
+          {content.trim() ? (
             <Details language={language}>
-              <NarrativeText content={section.content} />
+              <NarrativeText content={content} />
             </Details>
           ) : null}
         </div>
@@ -255,13 +282,14 @@ export function KbStructuredSection({ section, drug, language }: KbStructuredSec
     case 'titration':
     case 'taper': {
       const schedule = getTitrationSchedule(section)
+      const content = getSectionContent(section, language)
       if (!schedule) return <NarrativeFallback section={section} language={language} />
       return (
         <div className="kb-structured">
           <TitrationChart schedule={schedule} isTaper={kind === 'taper'} language={language} />
           <Details language={language}>
             <TitrationTable schedule={schedule} language={language} />
-            <NarrativeText content={section.content} />
+            <NarrativeText content={content} />
           </Details>
         </div>
       )
@@ -269,11 +297,12 @@ export function KbStructuredSection({ section, drug, language }: KbStructuredSec
 
     case 'depot': {
       const options = getDepotOptions(section)
+      const content = getSectionContent(section, language)
       if (options.length === 0) return <NarrativeFallback section={section} language={language} />
       return (
         <div className="kb-structured">
-          {section.content.trim() ? (
-            <p className="kb-callout">{section.content}</p>
+          {content.trim() ? (
+            <p className="kb-callout">{content}</p>
           ) : null}
           <DepotAccordion options={options} language={language} />
         </div>
@@ -282,13 +311,14 @@ export function KbStructuredSection({ section, drug, language }: KbStructuredSec
 
     case 'sideEffects': {
       const entries = getSideEffects(section)
+      const content = getSectionContent(section, language)
       if (entries.length === 0) return <NarrativeFallback section={section} language={language} />
       return (
         <div className="kb-structured">
           <SideEffectHeatmap entries={entries} language={language} />
-          {section.content.trim() ? (
+          {content.trim() ? (
             <Details language={language}>
-              <NarrativeText content={section.content} />
+              <NarrativeText content={content} />
             </Details>
           ) : null}
         </div>
@@ -297,13 +327,14 @@ export function KbStructuredSection({ section, drug, language }: KbStructuredSec
 
     case 'cyp': {
       const cyp = getCypProfile(section)
+      const content = getSectionContent(section, language)
       if (!cyp) return <NarrativeFallback section={section} language={language} />
       return (
         <div className="kb-structured">
           <CypView cyp={cyp} language={language} />
-          {section.content.trim() ? (
+          {content.trim() ? (
             <Details language={language}>
-              <NarrativeText content={section.content} />
+              <NarrativeText content={content} />
             </Details>
           ) : null}
         </div>
@@ -317,8 +348,9 @@ export function KbStructuredSection({ section, drug, language }: KbStructuredSec
 
 /** Plain text fallback when a structured section has no payload yet. */
 function NarrativeFallback({ section, language }: { section: DrugSection; language: string }) {
-  if (!section.content.trim()) {
+  const content = getSectionContent(section, language)
+  if (!content.trim()) {
     return <p className="kb-structured__empty">{kbT(language, 'noData')}</p>
   }
-  return <NarrativeText content={section.content} />
+  return <NarrativeText content={content} />
 }

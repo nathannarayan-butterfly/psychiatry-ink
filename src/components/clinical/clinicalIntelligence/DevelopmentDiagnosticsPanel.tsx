@@ -6,6 +6,14 @@ import type {
   CompactEvidencePayload,
 } from '../../../types/clinicalIntelligence'
 
+/**
+ * Defence-in-depth: this panel exposes evidence ids, provider/model, raw
+ * response snippets, and full dimensional/mechanism JSON. Even if a deploy
+ * misconfigures `VITE_CLINICAL_INTELLIGENCE_DEBUG_MODE`, the panel must never
+ * render in a production build. `import.meta.env.DEV` is `false` in any Vite
+ * production bundle, so the entire body below tree-shakes out at build time.
+ */
+
 interface DevelopmentDiagnosticsPanelProps {
   evidence: CompactEvidencePayload | null
   evidenceErrorCode: string | null
@@ -85,6 +93,8 @@ export function DevelopmentDiagnosticsPanel({
   runError,
 }: DevelopmentDiagnosticsPanelProps) {
   const { t } = useTranslation()
+
+  if (!import.meta.env.DEV) return null
 
   const itemCount = evidence?.items.length ?? 0
   const totalChars = evidence?.items.reduce((sum, it) => sum + (it.text?.length ?? 0), 0) ?? 0

@@ -19,10 +19,13 @@ import { DEMO_CASE_ID } from './constants'
 import { getEffectiveDemoSeedVersion } from './demoVersion'
 import { isDemoSeedDataComplete } from './demoDataIntegrity'
 import { loadDemoFixture } from './loadDemoFixture'
-import { patchDemoUserState } from './demoUserState'
+import { type DemoLocale, normalizeDemoLocale, uiLanguageToDemoLocale } from './demoLocale'
+import { loadStoredUiLanguage } from '../utils/clinicalLanguage'
+import { patchDemoUserState, loadDemoUserState } from './demoUserState'
 import { validateDemoFixture } from './validateDemoFixture'
 import type { DemoSeedCounts } from './types'
 import { WORKSPACE_PAYLOAD_VERSION } from '../utils/workspaceVault'
+import { saveClinicalIntelligenceState } from '../utils/clinicalIntelligence/storage'
 
 function replaceDokumenteArchive(caseId: string, entries: DokumentEntry[]): void {
   try {
@@ -37,6 +40,8 @@ export interface SeedDemoPatientOptions {
   calendarScope?: CalendarStorageScope
   skipValidation?: boolean
   force?: boolean
+  /** UI language for synthetic clinical copy; defaults to stored UI language. */
+  locale?: DemoLocale
 }
 
 export interface SeedDemoPatientResult {
@@ -88,8 +93,14 @@ async function persistCalendarDemoItems(
   safeSetItem(calendarStorageKey(scope), JSON.stringify(blob))
 }
 
+function resolveDemoLocale(options: SeedDemoPatientOptions): DemoLocale {
+  if (options.locale) return options.locale
+  return uiLanguageToDemoLocale(loadStoredUiLanguage())
+}
+
 export async function seedDemoPatient(options: SeedDemoPatientOptions): Promise<SeedDemoPatientResult> {
-  const fixture = loadDemoFixture()
+  const locale = resolveDemoLocale(options)
+  const fixture = loadDemoFixture(locale)
   const seedVersion = getEffectiveDemoSeedVersion()
   const validation = validateDemoFixture(fixture, { expectedSeedVersion: seedVersion })
   if (!options.skipValidation && !validation.ok) {
@@ -103,12 +114,15 @@ export async function seedDemoPatient(options: SeedDemoPatientOptions): Promise<
 
   const caseId = DEMO_CASE_ID
   const existing = getCaseMeta(caseId)
+  const userState = loadDemoUserState(options.userId)
+  const localeMatches = normalizeDemoLocale(userState.locale, locale) === locale
   const dataComplete = isDemoSeedDataComplete(caseId)
-  if (existing?.isDemoPatient && !options.force && dataComplete) {
+  if (existing?.isDemoPatient && !options.force && dataComplete && localeMatches) {
     const counts = countSeed(fixture)
     patchDemoUserState(options.userId, {
       status: 'installed',
       seedVersion,
+      locale,
       installedAt: existing.createdAt,
     })
     return { ok: true, caseId, counts }
@@ -193,9 +207,14 @@ export async function seedDemoPatient(options: SeedDemoPatientOptions): Promise<
     applyPrepAiCheckCache(fixture.aiTherapyDemo.prepAiCheck, caseId)
   }
 
+  if (fixture.clinicalIntelligence) {
+    saveClinicalIntelligenceState(fixture.clinicalIntelligence)
+  }
+
   patchDemoUserState(options.userId, {
     status: 'installed',
     seedVersion,
+    locale,
     installedAt: now,
     archivedAt: undefined,
     removedAt: undefined,

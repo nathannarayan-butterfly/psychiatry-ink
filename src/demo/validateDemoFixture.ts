@@ -128,6 +128,9 @@ export function validateDemoFixture(
   if (!fixture.workspace.isdmAnalysis) {
     pushWarn(warnings, 'isdm_analysis', 'ISDM-Analyse fehlt — wird ggf. beim Öffnen neu berechnet')
   }
+  if (!fixture.clinicalIntelligence?.latestRun?.dimensional.activeDimensions.length) {
+    pushWarn(warnings, 'clinical_intelligence', 'Pre-baked Clinical Intelligence run recommended for demo')
+  }
   if (!fixture.workspace.butterflyAttestations || Object.keys(fixture.workspace.butterflyAttestations).length < 5) {
     pushWarn(warnings, 'butterfly_attestations', 'Wenige Butterfly-Attestierungen — Kriterienprüfung eingeschränkt')
   }

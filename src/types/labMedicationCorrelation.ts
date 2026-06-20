@@ -25,14 +25,46 @@ export interface MedicationLabCorrelationKnowledge {
   substanceName: string
   labParameter: string
   labParameterLabelDe: string
+  /** English clinical label for the lab parameter (UI lang === 'en'). */
+  labParameterLabelEn?: string
   correlationStrength: LabCorrelationStrength
   zusammenhang: string
+  /** English translation of `zusammenhang` (UI lang === 'en'). */
+  zusammenhangEn?: string
   mechanism?: string
+  /** English translation of `mechanism` (UI lang === 'en'). */
+  mechanismEn?: string
   recommendation: string
+  /** English translation of `recommendation` (UI lang === 'en'). */
+  recommendationEn?: string
   monitoring?: string
+  /** English translation of `monitoring` (UI lang === 'en'). */
+  monitoringEn?: string
   alternatives?: string
+  /** English translation of `alternatives` (UI lang === 'en'). */
+  alternativesEn?: string
   source: 'knowledge_base'
   kbRuleId?: string
+}
+
+/**
+ * Pick the English variant of a KB rule field when UI language is 'en'; falls
+ * back to the German baseline so existing consumers always get a value.
+ */
+export function localizeKbCorrelationRule(
+  rule: MedicationLabCorrelationKnowledge,
+  language: UiLanguage | undefined,
+): MedicationLabCorrelationKnowledge {
+  if (language !== 'en') return rule
+  return {
+    ...rule,
+    labParameterLabelDe: rule.labParameterLabelEn || rule.labParameterLabelDe,
+    zusammenhang: rule.zusammenhangEn || rule.zusammenhang,
+    mechanism: rule.mechanismEn ?? rule.mechanism,
+    recommendation: rule.recommendationEn || rule.recommendation,
+    monitoring: rule.monitoringEn ?? rule.monitoring,
+    alternatives: rule.alternativesEn ?? rule.alternatives,
+  }
 }
 
 export interface LabCorrelationAIResult {

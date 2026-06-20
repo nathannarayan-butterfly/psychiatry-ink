@@ -31,6 +31,8 @@ export {
   archiveDemoPatient,
   restoreDemoPatient,
 } from './ensureDemoPatient'
+export { uiLanguageToDemoLocale, type DemoLocale, DEMO_LOCALES } from './demoLocale'
+export { getDemoContent } from './demoContent'
 export {
   isDemoCase,
   isDemoCaseReadOnly,
@@ -47,3 +49,4 @@ export {
   shouldAutoInstallDemo,
 } from './demoUserState'
 export { clearDemoCaseStorage } from './clearDemoCaseStorage'
+export { isClinicalIntelligenceAvailableForCase } from './demoFeatureFlags'

@@ -58,7 +58,7 @@ function buildSparkData(widget: PinnedLaborWidget, befunde: LaborBefund[]) {
 }
 
 export function LaborSidebarWidget({ caseId, onNavigateToLabor }: LaborSidebarWidgetProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const [tick, setTick] = useState(0)
   const [hidden, setHidden] = useState<boolean>(() => loadHidden(caseId))
 
@@ -127,7 +127,7 @@ export function LaborSidebarWidget({ caseId, onNavigateToLabor }: LaborSidebarWi
             onClick={navigateToBefunde}
           >
             <span className="labor-sidebar-widget__param-name">
-              {getBefundTypeLabel(record.type)} {formatBefundDate(record.examDate)}
+              {getBefundTypeLabel(record.type, language)} {formatBefundDate(record.examDate)}
             </span>
             <span className="labor-sidebar-widget__exam-status">
               {record.status === 'vidert' ? t('befundStatusVidert') : t('befundStatusDraft')}
@@ -165,7 +165,7 @@ export function LaborSidebarWidget({ caseId, onNavigateToLabor }: LaborSidebarWi
                 onClick={navigateToBefunde}
               >
                 <span className="labor-sidebar-widget__param-name">
-                  {getBefundTypeLabel(record.type)} {formatBefundDate(record.examDate)}
+                  {getBefundTypeLabel(record.type, language)} {formatBefundDate(record.examDate)}
                 </span>
               </button>
             ))}
@@ -231,7 +231,7 @@ export function LaborSidebarWidget({ caseId, onNavigateToLabor }: LaborSidebarWi
               onClick={navigateToBefunde}
             >
               <span className="labor-sidebar-widget__param-name">
-                {getBefundTypeLabel(record.type)} {formatBefundDate(record.examDate)}
+                {getBefundTypeLabel(record.type, language)} {formatBefundDate(record.examDate)}
               </span>
             </button>
           ))}

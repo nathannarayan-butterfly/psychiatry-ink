@@ -371,18 +371,23 @@
 .landing-footer__company {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.35rem;
+  text-align: left;
 }
 
-.landing-footer__name {
-  font-weight: 600;
-  color: var(--text-secondary);
+.landing-footer__company-name {
+  display: block;
+  margin: 0;
   font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
-.landing-footer__address,
-.landing-footer__copy {
+.landing-footer__line {
+  display: block;
+  margin: 0;
   font-size: 0.75rem;
+  font-weight: 400;
   color: var(--text-muted);
 }
 

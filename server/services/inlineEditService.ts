@@ -19,7 +19,7 @@
  *    service passes NO clinical text in `metadata` and never console.logs it.
  */
 
-import { callLlm } from './llmProvider'
+import { runAiFeature } from '../ai/runAiFeature'
 import type { AiModelTier } from '../modelTierMapping'
 import type { AiUsageContext } from '../ai/types'
 import { clinicalLanguagePromptInstruction, type ClinicalLanguage } from '../utils/resolveClinicalLanguage'
@@ -137,12 +137,15 @@ export async function runInlineEdit(params: InlineEditParams): Promise<InlineEdi
     instruction: params.instruction,
   })
 
-  const result = await callLlm({
+  // runAiFeature → callLlmSafely → callLlm: PHI guard is preserved inside
+  // runAiFeature. The route handler pre-scrubs; callLlmSafely re-asserts at
+  // the egress boundary; no double-scrub regression is possible.
+  const result = await runAiFeature({
+    featureKey: 'inline_text_edit',
     tier: params.tier,
     model: params.model,
     systemPrompt,
     userPrompt,
-    // Roughly bound output to the selection size plus headroom.
     maxTokens: 1_200,
     usageContext: params.usageContext,
   })

@@ -3,7 +3,8 @@ import { Router as createRouter } from 'express'
 import type { AiModelTier } from '../modelTierMapping'
 import { resolveAccountId } from '../middleware/auth'
 import { recordUserAuditLog } from '../services/auditLog'
-import { callLlm, llmResultModel } from '../services/llmProvider'
+import { llmResultModel } from '../services/safeLlmEgress'
+import { runAiFeature } from '../ai/runAiFeature'
 import { resolveUsageContextFromRequest } from '../ai/usage/resolveUsageContext'
 import { assertAiQuota, recordAiGenerationUsed } from '../utils/caseAiAccessGuard'
 import {
@@ -633,7 +634,13 @@ discussCaseRouter.post('/:id/ask-ai', async (req: Request, res: Response) => {
       metadata: { route: 'discuss-case-ask-ai', tier, discussionId: session.discussion.id },
     })
 
-    const result = await callLlm({ tier, systemPrompt, userPrompt, usageContext })
+    const result = await runAiFeature({
+      featureKey: 'discuss_case_ai',
+      tier,
+      systemPrompt,
+      userPrompt,
+      usageContext,
+    })
 
     await recordAiRequest({
       discussionId: session.discussion.id,

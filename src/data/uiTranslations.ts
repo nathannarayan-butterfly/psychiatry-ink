@@ -140,6 +140,12 @@ export const uiTranslations = {
     fr: 'Échec de la transcription.',
     es: 'Error en la transcripción.',
   },
+  dictationConsentNotice: {
+    de: 'Aufzeichnung und Transkription nur mit Einwilligung der Patientin / des Patienten.',
+    en: 'Recording and transcription only with patient consent.',
+    fr: 'Enregistrement et transcription uniquement avec le consentement du patient / de la patiente.',
+    es: 'Grabación y transcripción solo con el consentimiento del paciente.',
+  },
   copy: {
     de: 'Kopieren',
     en: 'Copy',

@@ -14,7 +14,7 @@
  * derived from the criterion text, so dev + tests work fully offline.
  */
 
-import { callLlm } from './llmProvider'
+import { runAiFeature } from '../ai/runAiFeature'
 import type { AiModelTier } from '../modelTierMapping'
 import type { AiUsageContext } from '../ai/types'
 import { parseStructuredJson } from '../utils/parseStructuredJson'
@@ -209,7 +209,8 @@ export async function generateInterviewQuestions(
     criteria: params.criteria,
   })
 
-  const llm = await callLlm({
+  const llm = await runAiFeature({
+    featureKey: 'clinical_intelligence_dimensional',
     tier: params.tier ?? 'fast',
     systemPrompt,
     userPrompt,

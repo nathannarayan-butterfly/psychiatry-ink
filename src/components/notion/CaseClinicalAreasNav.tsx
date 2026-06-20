@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { UiTranslationKey } from '../../data/uiTranslations'
-import { isClinicalIntelligenceV1Enabled } from '../../utils/featureFlags'
+import { isClinicalIntelligenceAvailableForCase } from '../../demo/demoFeatureFlags'
 import type { TopNavTabId } from './CaseTopNav'
 
 /**
@@ -38,6 +38,7 @@ interface CaseClinicalAreasNavProps {
   activeTab: TopNavTabId
   onTabSelect: (tab: TopNavTabId) => void
   hasPatient?: boolean
+  caseId?: string
 }
 
 /** Primary clinical-area navigation — always first in the case sidebar. */
@@ -45,9 +46,10 @@ export function CaseClinicalAreasNav({
   activeTab,
   onTabSelect,
   hasPatient = true,
+  caseId,
 }: CaseClinicalAreasNavProps) {
   const { t } = useTranslation()
-  const ciEnabled = isClinicalIntelligenceV1Enabled()
+  const ciEnabled = isClinicalIntelligenceAvailableForCase(caseId)
   const flagEnabled = useMemo(
     () => ({ clinicalIntelligenceV1: ciEnabled }),
     [ciEnabled],

@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
-import type {
-  SideEffectEntry,
-  SideEffectFrequency,
-  SideEffectSeverity,
+import {
+  pickKbLocalizedText,
+  type SideEffectEntry,
+  type SideEffectFrequency,
+  type SideEffectSeverity,
 } from '../../../../types/knowledgeBase'
 import { kbT, type KbStringKey } from '../kbStrings'
 
@@ -49,7 +50,7 @@ export function SideEffectHeatmap({ entries, language }: SideEffectHeatmapProps)
   const grouped = useMemo(() => {
     const map = new Map<string, SideEffectEntry[]>()
     for (const e of entries) {
-      const sys = e.system?.trim() || '—'
+      const sys = pickKbLocalizedText(e.system, e.systemEn, language).trim() || '—'
       const list = map.get(sys) ?? []
       list.push(e)
       map.set(sys, list)
@@ -60,7 +61,7 @@ export function SideEffectHeatmap({ entries, language }: SideEffectHeatmapProps)
       )
     }
     return [...map.entries()]
-  }, [entries])
+  }, [entries, language])
 
   if (entries.length === 0) return null
 
@@ -72,29 +73,33 @@ export function SideEffectHeatmap({ entries, language }: SideEffectHeatmapProps)
           <div key={system} className="kb-se__group">
             <span className="kb-se__group-label">{system}</span>
             <div className="kb-se__cells">
-              {list.map((e, i) => (
-                <span
-                  key={`${e.effect}-${i}`}
-                  className="kb-se__cell"
-                  style={{
-                    background: `color-mix(in srgb, ${SEVERITY_VAR[e.severity]} ${Math.round(
-                      FREQUENCY_ALPHA[e.frequency] * 100,
-                    )}%, transparent)`,
-                    borderColor: `color-mix(in srgb, ${SEVERITY_VAR[e.severity]} 38%, transparent)`,
-                  }}
-                  title={`${e.effect} — ${kbT(language, FREQUENCY_KEY[e.frequency])}, ${kbT(
-                    language,
-                    SEVERITY_KEY[e.severity],
-                  )}${e.note ? ` · ${e.note}` : ''}`}
-                >
-                  {e.severity === 'dangerous' ? (
-                    <span className="kb-se__warn" aria-hidden>
-                      ⚠{' '}
-                    </span>
-                  ) : null}
-                  {e.effect}
-                </span>
-              ))}
+              {list.map((e, i) => {
+                const localizedEffect = pickKbLocalizedText(e.effect, e.effectEn, language) || e.effect
+                const localizedNote = pickKbLocalizedText(e.note, e.noteEn, language)
+                return (
+                  <span
+                    key={`${localizedEffect}-${i}`}
+                    className="kb-se__cell"
+                    style={{
+                      background: `color-mix(in srgb, ${SEVERITY_VAR[e.severity]} ${Math.round(
+                        FREQUENCY_ALPHA[e.frequency] * 100,
+                      )}%, transparent)`,
+                      borderColor: `color-mix(in srgb, ${SEVERITY_VAR[e.severity]} 38%, transparent)`,
+                    }}
+                    title={`${localizedEffect} — ${kbT(language, FREQUENCY_KEY[e.frequency])}, ${kbT(
+                      language,
+                      SEVERITY_KEY[e.severity],
+                    )}${localizedNote ? ` · ${localizedNote}` : ''}`}
+                  >
+                    {e.severity === 'dangerous' ? (
+                      <span className="kb-se__warn" aria-hidden>
+                        ⚠{' '}
+                      </span>
+                    ) : null}
+                    {localizedEffect}
+                  </span>
+                )
+              })}
             </div>
           </div>
         ))}

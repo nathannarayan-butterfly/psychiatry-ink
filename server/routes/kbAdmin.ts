@@ -125,9 +125,18 @@ async function requireKbEditor(req: Request, res: Response): Promise<string | nu
   return userId
 }
 
+// Status MUST also fail closed when the API is disabled, so an outsider
+// cannot probe for the existence of the admin surface. When enabled the route
+// is unauthenticated by design (it is the bootstrap probe used by the admin
+// UI), but it must never reveal "I exist" to a Beta instance that has the
+// flag intentionally unset.
 kbAdminRouter.get('/status', (_req, res) => {
+  if (!kbAdminEnabled()) {
+    res.status(404).json({ error: 'Not found' })
+    return
+  }
   res.json({
-    enabled: kbAdminEnabled(),
+    enabled: true,
     supabaseConfigured: isKbAdminConfigured(),
   })
 })

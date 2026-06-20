@@ -40,7 +40,7 @@ import { DiagnosePage } from './DiagnosePage'
 import { DiscussCasePage } from '../discuss-case/DiscussCasePage'
 import { ConsultationCasePage } from '../consultation/ConsultationCasePage'
 import { ClinicalIntelligencePanel } from '../clinical/clinicalIntelligence/ClinicalIntelligencePanel'
-import { isClinicalIntelligenceV1Enabled } from '../../utils/featureFlags'
+import { isClinicalIntelligenceAvailableForCase } from '../../demo/demoFeatureFlags'
 import { useCaseSidebarCollapsed } from '../../hooks/useCaseSidebarCollapsed'
 import { MedicationSectionNavProvider } from '../../contexts/MedicationSectionNavContext'
 import { TherapySectionNavProvider } from '../../contexts/TherapySectionNavContext'
@@ -1842,7 +1842,7 @@ function NotionAppInner({
 
         {!showPatientRegistry &&
         activeTopTab === 'ci' &&
-        isClinicalIntelligenceV1Enabled() ? (
+        isClinicalIntelligenceAvailableForCase(storageCaseId) ? (
           <div className="case-tab-shell">
             <CasePatientHeader caseId={caseId} metaVersion={patientMetaVersion} />
             <div className="case-tab-shell__body case-tab-shell__body--full">

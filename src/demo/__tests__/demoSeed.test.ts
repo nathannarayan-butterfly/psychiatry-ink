@@ -3,7 +3,7 @@ import { buildDemoPatientFixture } from '../buildDemoFixture'
 import { seedDemoPatient } from '../seedDemoPatient'
 import { resetDemoPatient } from '../ensureDemoPatient'
 import { DEMO_CASE_ID } from '../constants'
-import { getCaseMeta } from '../../hooks/useCaseRegistry'
+import { ensureCaseRegistryHydrated, getCaseMeta } from '../../hooks/useCaseRegistry'
 
 const storage = new Map<string, string>()
 
@@ -82,12 +82,21 @@ vi.mock('../../services/patientRegistryApi', () => ({
   upsertPatientOnApi: vi.fn().mockResolvedValue({}),
 }))
 
-vi.mock('../../demo/demoUserState', () => ({
-  patchDemoUserState: vi.fn(),
-}))
+vi.mock('../../demo/demoUserState', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../demo/demoUserState')>()
+  return {
+    ...actual,
+    patchDemoUserState: vi.fn(),
+  }
+})
 
 vi.mock('../../utils/cryptoVault', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../utils/cryptoVault')>()
+  // Round-trip stubs: encrypt/decrypt stash the value in `ciphertext` so that
+  // `writeEncryptedJson` → `readEncryptedJson` can round-trip in tests without
+  // real Web Crypto. Without the matching `decryptJsonPayload` mock, the
+  // case-registry blob written by `upsertCaseMeta` could not be read back and
+  // assertions on `getCaseMeta(...)` would see `undefined`.
   return {
     ...actual,
     savePatientMetadata: vi.fn().mockResolvedValue({}),
@@ -96,26 +105,34 @@ vi.mock('../../utils/cryptoVault', async (importOriginal) => {
       privateKeyJwk: {},
       deviceId: 'dev',
     }),
-    encryptJsonPayload: vi.fn().mockResolvedValue({
+    encryptJsonPayload: vi.fn(async (value: unknown) => ({
       version: 1,
-      ciphertext: 'x',
+      ciphertext: JSON.stringify(value),
       iv: 'y',
       wrappedKey: 'z',
-    }),
+    })),
+    decryptJsonPayload: vi.fn(async (blob: { ciphertext: string }) =>
+      JSON.parse(blob.ciphertext),
+    ),
     saveWorkspaceVaultBlob: vi.fn().mockResolvedValue(undefined),
   }
 })
 
 describe('seedDemoPatient', () => {
   it('creates demo registry entry with markers', async () => {
+    // `upsertCaseMeta` triggers an async case-registry hydrate when the
+    // synchronous shadow has not been populated yet. Awaiting here makes the
+    // post-seed `getCaseMeta` read deterministic across test runs.
+    await ensureCaseRegistryHydrated()
+
     const result = await seedDemoPatient({ userId: 'user-1', skipValidation: false, force: true })
     expect(result.ok).toBe(true)
     expect(result.caseId).toBe(DEMO_CASE_ID)
+    expect(result.counts.verlaufEntries).toBeGreaterThanOrEqual(12)
 
     const meta = getCaseMeta(DEMO_CASE_ID)
     expect(meta?.isDemoPatient).toBe(true)
     expect(meta?.localNachname).toBe('Demo')
-    expect(result.counts.verlaufEntries).toBeGreaterThanOrEqual(12)
   })
 })
 

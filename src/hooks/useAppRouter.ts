@@ -21,6 +21,7 @@ function parseViewParam(search: string): 'overview' | undefined {
 
 export type AppRoute =
   | { view: 'landing' }
+  | { view: 'ai-credits' }
   | { view: 'login' }
   | { view: 'signup' }
   | { view: 'dashboard' }
@@ -45,7 +46,12 @@ export type AppRoute =
   | { view: 'enterprise-sso' }
 
 export function isPublicRoute(route: AppRoute): boolean {
-  return route.view === 'landing' || route.view === 'login' || route.view === 'signup'
+  return (
+    route.view === 'landing' ||
+    route.view === 'ai-credits' ||
+    route.view === 'login' ||
+    route.view === 'signup'
+  )
 }
 
 export function isAppRoute(route: AppRoute): boolean {
@@ -77,6 +83,7 @@ export function isAppRoute(route: AppRoute): boolean {
 function parsePathname(pathname: string, search = ''): AppRoute {
   const path = pathname.replace(/\/+$/, '') || '/'
   if (path === '/') return { view: 'landing' }
+  if (path === '/ai-credits') return { view: 'ai-credits' }
   if (path === '/login') return { view: 'login' }
   if (path === '/signup') return { view: 'signup' }
   if (path === '/dashboard' || path === '/app') return { view: 'dashboard' }
@@ -141,6 +148,7 @@ function parsePathname(pathname: string, search = ''): AppRoute {
 
 export function routeToPath(route: AppRoute): string {
   if (route.view === 'landing') return '/'
+  if (route.view === 'ai-credits') return '/ai-credits'
   if (route.view === 'login') return '/login'
   if (route.view === 'signup') return '/signup'
   if (route.view === 'dashboard') return '/dashboard'

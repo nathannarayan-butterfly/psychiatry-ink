@@ -165,7 +165,7 @@ export function PreparationDrugBlock({
           </p>
           <ul className="medication-prep-compact-list">
             {kbPreparations.slice(0, 12).map((prep) => (
-              <li key={prep.id}>{formatPreparationLine(prep)}</li>
+              <li key={prep.id}>{formatPreparationLine(prep, language)}</li>
             ))}
           </ul>
         </div>

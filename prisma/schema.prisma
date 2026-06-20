@@ -206,6 +206,65 @@ model DiagnosisSynonym {
 }
 
 /// Optional link from catalogue entry to authored criterion tree (badge only).
+
+// ---------------------------------------------------------------------------
+// AI Credit System (added: central server-side credit accounting)
+// ---------------------------------------------------------------------------
+
+/// Per-user or per-organisation credit account.
+/// monthlyCredits reset each billing period; purchasedCredits never expire.
+model AiCreditAccount {
+  id               String   @id @default(cuid())
+  userId           String?  @unique
+  organisationId   String?  @unique
+  monthlyCredits   Int      @default(500)
+  purchasedCredits Int      @default(0)
+  monthlyResetAt   DateTime
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  ledger           AiCreditLedger[]
+}
+
+/// Append-only ledger for all credit movements.
+/// Positive credits = grant/purchase/refund. Negative = debit.
+model AiCreditLedger {
+  id         String          @id @default(cuid())
+  accountId  String
+  account    AiCreditAccount @relation(fields: [accountId], references: [id])
+  type       String          // 'monthly_grant' | 'purchase' | 'debit' | 'refund' | 'admin_adjustment'
+  credits    Int             // positive = credit, negative = debit
+  featureKey String?
+  usageLogId String?
+  note       String?
+  createdAt  DateTime        @default(now())
+
+  @@index([accountId, createdAt])
+}
+
+/// Metadata-only AI call log (no patient text, no raw prompts — only usage metadata).
+model AiUsageLog {
+  id               String   @id @default(cuid())
+  organisationId   String?
+  userId           String?
+  caseRef          String?  // de-identified case reference only
+  featureKey       String
+  mode             String   // economic | standard | gruendlich
+  provider         String
+  model            String
+  inputTokens      Int      @default(0)
+  outputTokens     Int      @default(0)
+  totalTokens      Int      @default(0)
+  creditsCharged   Int      @default(0)
+  durationMs       Int?
+  success          Boolean  @default(true)
+  errorCode        String?
+  rawProviderUsage String?  // JSON string; no PHI
+  createdAt        DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([featureKey, createdAt])
+}
+
 model DiagnosisCriteriaLink {
   id               String   @id @default(cuid())
   diagnosisEntryId String

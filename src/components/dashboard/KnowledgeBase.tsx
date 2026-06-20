@@ -25,6 +25,8 @@ import type { KbCategory, KnowledgeEntry } from '../../data/knowledgeBaseSeedDat
 import {
   DEFAULT_MEDICATIONS_COLLECTION_ID,
   DEFAULT_NOTES_COLLECTION_ID,
+  pickKbLocalizedList,
+  pickKbLocalizedText,
   type KnowledgeCollection,
   type KnowledgeCollectionType,
 } from '../../types/knowledgeBase'
@@ -122,12 +124,17 @@ function generateId(): string {
 function matchesSearch(entry: KnowledgeEntry, query: string): boolean {
   const q = query.trim().toLowerCase()
   if (!q) return true
-  return (
-    entry.title.toLowerCase().includes(q) ||
-    entry.content.toLowerCase().includes(q) ||
-    entry.category.toLowerCase().includes(q) ||
-    entry.tags.some((tag) => tag.toLowerCase().includes(q))
-  )
+  const haystack: string[] = [
+    entry.title,
+    entry.titleEn ?? '',
+    entry.content,
+    entry.contentEn ?? '',
+    entry.category,
+    entry.categoryEn ?? '',
+    ...entry.tags,
+    ...(entry.tagsEn ?? []),
+  ]
+  return haystack.some((value) => value.toLowerCase().includes(q))
 }
 
 /** Count notes / drugs per collection for the home tiles (read-only snapshot). */
@@ -317,13 +324,19 @@ interface EntryCardProps {
 }
 
 function EntryCard({ entry, onDelete }: EntryCardProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const [expanded, setExpanded] = useState(false)
   const PREVIEW_LENGTH = 200
 
-  const previewContent = entry.content.length > PREVIEW_LENGTH && !expanded
-    ? entry.content.slice(0, PREVIEW_LENGTH) + '…'
-    : entry.content
+  const localizedTitle = pickKbLocalizedText(entry.title, entry.titleEn, language) || entry.title
+  const localizedContent = pickKbLocalizedText(entry.content, entry.contentEn, language) || entry.content
+  const localizedCategory =
+    pickKbLocalizedText(entry.category, entry.categoryEn, language) || entry.category
+  const localizedTags = pickKbLocalizedList(entry.tags, entry.tagsEn, language)
+
+  const previewContent = localizedContent.length > PREVIEW_LENGTH && !expanded
+    ? localizedContent.slice(0, PREVIEW_LENGTH) + '…'
+    : localizedContent
 
   const badgeClass = CATEGORY_COLORS[entry.category as KbCategory] ?? 'kb-badge--sonstiges'
 
@@ -331,13 +344,13 @@ function EntryCard({ entry, onDelete }: EntryCardProps) {
     <article className={`kb-entry ${expanded ? 'kb-entry--expanded' : ''}`}>
       <div className="kb-entry__header">
         <div className="kb-entry__meta">
-          <span className={`kb-badge ${badgeClass}`}>{entry.category}</span>
+          <span className={`kb-badge ${badgeClass}`}>{localizedCategory}</span>
         </div>
-        <h3 className="kb-entry__title">{entry.title}</h3>
-        {entry.tags.length > 0 ? (
+        <h3 className="kb-entry__title">{localizedTitle}</h3>
+        {localizedTags.length > 0 ? (
           <div className="kb-entry__tags">
             <Tag className="kb-entry__tags-icon h-3 w-3" aria-hidden />
-            {entry.tags.map((tag) => (
+            {localizedTags.map((tag) => (
               <span key={tag} className="kb-entry__tag">{tag}</span>
             ))}
           </div>

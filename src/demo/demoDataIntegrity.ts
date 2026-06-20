@@ -7,6 +7,7 @@ import { loadCombinationCheckStore } from '../utils/combinationCheck/storage'
 import { loadLabMedCorrelationStore } from '../utils/labMedicationCorrelation/storage'
 import { loadPrepAiCheckCache } from '../utils/prepAiCheck/storage'
 import { loadAnforderungen } from '../utils/anforderungen/storage'
+import { loadClinicalIntelligenceState } from '../utils/clinicalIntelligence/storage'
 import { loadAttestationState } from '../utils/butterfly/attestationStorage'
 import { loadIsdmInput } from '../utils/isdm/inputStorage'
 import { DEMO_CASE_ID } from './constants'
@@ -54,6 +55,9 @@ export function isDemoSeedDataComplete(caseId: string = DEMO_CASE_ID): boolean {
 
   const orders = loadAnforderungen(caseId)
   if (orders.length < 3) return false
+
+  const ci = loadClinicalIntelligenceState(caseId)
+  if (!ci.latestRun?.dimensional.activeDimensions.length) return false
 
   return true
 }

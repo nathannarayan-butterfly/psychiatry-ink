@@ -3,13 +3,35 @@ import type { UiLanguage } from '../types/settings'
 
 export const LANGUAGE_STORAGE_KEY = 'psychiatry-ink-language'
 
+/**
+ * UI languages that were once user-selectable in pre-Beta builds but are
+ * not currently exposed in Settings → Language. If we encounter one of
+ * these in localStorage from an older session, we transparently migrate
+ * to English rather than to the German default — the user actively chose
+ * a non-German UI, and English is the closest still-supported option.
+ *
+ * Translation data for these locales is intentionally retained on disk
+ * (`content.fr.ts`, `content.es.ts`, `uiTranslations` FR/ES keys) so that
+ * re-enabling them in `languageOptions` is a one-line change.
+ */
+const LEGACY_BETA_HIDDEN_UI_LANGUAGES = new Set<string>(['fr', 'es'])
+
 /** Active UI language from Settings (localStorage), same source as useLanguageSettings. */
 export function loadStoredUiLanguage(): UiLanguage {
   try {
     const raw = localStorage.getItem(LANGUAGE_STORAGE_KEY)
     if (!raw) return defaultLanguage
     const match = languageOptions.find((option) => option.value === raw)
-    return match ? match.value : defaultLanguage
+    if (match) return match.value
+    if (LEGACY_BETA_HIDDEN_UI_LANGUAGES.has(raw)) {
+      try {
+        localStorage.setItem(LANGUAGE_STORAGE_KEY, 'en')
+      } catch {
+        // ignore — migration is best-effort; the in-memory value still routes to 'en'
+      }
+      return 'en'
+    }
+    return defaultLanguage
   } catch {
     return defaultLanguage
   }

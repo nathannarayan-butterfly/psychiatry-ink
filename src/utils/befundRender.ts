@@ -1,6 +1,7 @@
 import { getBefundSchema } from '../data/befundSchemas'
 import type { BefundFieldDef } from '../data/befundSchemas/types'
 import type { BefundRecord } from '../types/befund'
+import type { UiLanguage } from '../types/settings'
 import { formatClinicalDate } from './clinicalDate'
 
 export interface BefundDisplayField {
@@ -34,9 +35,9 @@ function formatFieldValue(field: BefundFieldDef, raw: string | string[] | boolea
   return ''
 }
 
-/** Render a structured befund record as readable German plain text. */
-export function renderBefundContent(record: BefundRecord): string {
-  const schema = getBefundSchema(record.type)
+/** Render a structured befund record as readable plain text in the given UI language. */
+export function renderBefundContent(record: BefundRecord, language?: UiLanguage): string {
+  const schema = getBefundSchema(record.type, language)
   const lines: string[] = []
 
   for (const section of schema.sections) {
@@ -60,8 +61,11 @@ export function renderBefundContent(record: BefundRecord): string {
 }
 
 /** Structured sections for card-style befund display. */
-export function getBefundDisplaySections(record: BefundRecord): BefundDisplaySection[] {
-  const schema = getBefundSchema(record.type)
+export function getBefundDisplaySections(
+  record: BefundRecord,
+  language?: UiLanguage,
+): BefundDisplaySection[] {
+  const schema = getBefundSchema(record.type, language)
 
   return schema.sections
     .map((section) => {
@@ -79,10 +83,11 @@ export function getBefundDisplaySections(record: BefundRecord): BefundDisplaySec
     .filter((section) => section.fields.length > 0)
 }
 
-export function buildBefundTitle(record: BefundRecord): string {
-  const schema = getBefundSchema(record.type)
+export function buildBefundTitle(record: BefundRecord, language?: UiLanguage): string {
+  const schema = getBefundSchema(record.type, language)
   const date = formatBefundDate(record.examDate)
-  const statusSuffix = record.status === 'draft' ? ' (Entwurf)' : ''
+  const draftSuffix = language === 'en' ? ' (draft)' : ' (Entwurf)'
+  const statusSuffix = record.status === 'draft' ? draftSuffix : ''
   return `${schema.shortLabel} ${date}${statusSuffix}`
 }
 
@@ -91,6 +96,6 @@ export function formatBefundDate(iso: string): string {
   return formatClinicalDate(iso) || iso.slice(0, 10)
 }
 
-export function getBefundTypeLabel(type: BefundRecord['type']): string {
-  return getBefundSchema(type).shortLabel
+export function getBefundTypeLabel(type: BefundRecord['type'], language?: UiLanguage): string {
+  return getBefundSchema(type, language).shortLabel
 }

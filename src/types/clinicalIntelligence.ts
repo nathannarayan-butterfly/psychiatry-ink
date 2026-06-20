@@ -371,12 +371,25 @@ export type ClinicalIntelligenceDiscussContext = z.infer<
   typeof ClinicalIntelligenceDiscussContextSchema
 >
 
+/**
+ * Optional patient hints — when provided the server-side egress guard scrubs
+ * the patient name and DOB in addition to the unconditional pattern set. The
+ * client never has to send them; they help the server be more aggressive
+ * about residual PHI that may have leaked into a clinician comment.
+ */
+export const ClinicalIntelligencePatientHintsSchema = z.object({
+  patientName: z.string().max(160).optional(),
+  patientDob: z.string().max(40).optional(),
+})
+
 export const ClinicalIntelligenceDiscussRequestSchema = z.object({
   messages: z.array(CiDiscussMessageSchema).min(1).max(40),
   context: ClinicalIntelligenceDiscussContextSchema,
   tier: z.enum(['fast', 'standard', 'thorough']).optional(),
   model: ClinicalIntelligenceLayerModelSchema.optional(),
   language: z.enum(['de', 'en', 'fr', 'es']).optional(),
+  /** Optional hints used by the server-side egress guard to scrub residual PHI. */
+  patientHints: ClinicalIntelligencePatientHintsSchema.optional(),
 })
 
 export type ClinicalIntelligenceDiscussRequest = z.infer<

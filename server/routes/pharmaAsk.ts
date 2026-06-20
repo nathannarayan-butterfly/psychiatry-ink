@@ -2,9 +2,14 @@ import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
 import type { AiModelTier } from '../modelTierMapping'
 import { resolveAccountId } from '../middleware/auth'
-import { callLlm, llmResultModel } from '../services/llmProvider'
+import {
+  SafeLlmEgressError,
+  llmResultModel,
+  sanitizeText,
+} from '../services/safeLlmEgress'
 import { resolveUsageContextFromRequest } from '../ai/usage/resolveUsageContext'
 import { assertAiGenerationAllowed, recordAiGenerationUsed } from '../utils/caseAiAccessGuard'
+import { runAiFeature, InsufficientCreditsError } from '../ai/runAiFeature'
 
 export interface PharmaAskRequestBody {
   medicationName: string
@@ -14,6 +19,8 @@ export interface PharmaAskRequestBody {
   language?: 'de' | 'en' | 'fr' | 'es'
   tier?: AiModelTier
   caseId?: string
+  /** Optional hints — server-side egress guard scrubs name/DOB if present. */
+  patientHints?: { patientName?: string; patientDob?: string }
 }
 
 export interface PharmaAskResponseBody {
@@ -64,19 +71,56 @@ pharmaAskRouter.post('/', async (req: Request, res: Response) => {
 
     if (!(await assertAiGenerationAllowed(req, res, body.caseId))) return
 
+    // Pharma-Ask is a generic pharmacology surface — patient context should
+    // never appear in the prompt. We re-scrub every prompt-bound field server
+    // side, regardless of what the client claims, and strip patient-context
+    // keys from any structured payload field.
+    const patientHints =
+      body.patientHints && typeof body.patientHints === 'object'
+        ? {
+            patientName:
+              typeof body.patientHints.patientName === 'string'
+                ? body.patientHints.patientName
+                : undefined,
+            patientDob:
+              typeof body.patientHints.patientDob === 'string'
+                ? body.patientHints.patientDob
+                : undefined,
+          }
+        : undefined
+    let scrubbedMedicationName: string
+    let scrubbedQuestion: string
+    let scrubbedSectionData: string
+    try {
+      scrubbedMedicationName = sanitizeText(medicationName, { patientHints })
+      scrubbedQuestion = sanitizeText(question, { patientHints })
+      scrubbedSectionData = sectionData ? sanitizeText(sectionData, { patientHints }) : ''
+    } catch (guardError) {
+      if (guardError instanceof SafeLlmEgressError) {
+        console.error('[pharma-ask] PHI guard blocked request:', guardError.message)
+        res.status(422).json({
+          error:
+            'PHI guard could not sanitize prompt; refusing to forward to LLM provider.',
+        })
+        return
+      }
+      throw guardError
+    }
+
     const systemPrompt = [
       'You are a clinical pharmacology assistant helping psychiatrists study medication monographs.',
       'Answer concisely and accurately based on the provided section context.',
+      'This route MUST NOT receive patient context — treat any patient-specific identifiers as a sanitization error and ignore them.',
       'If the context is insufficient, say so and give general guidance without inventing precise numbers.',
       `Respond in ${languageName}.`,
     ].join(' ')
 
     const userPrompt = [
-      `Medication: ${medicationName}`,
+      `Medication: ${scrubbedMedicationName}`,
       sectionId ? `Section: ${sectionId}` : '',
-      sectionData ? `Section content:\n${sectionData}` : 'Section content: (not provided)',
+      scrubbedSectionData ? `Section content:\n${scrubbedSectionData}` : 'Section content: (not provided)',
       '',
-      `Question: ${question}`,
+      `Question: ${scrubbedQuestion}`,
     ]
       .filter(Boolean)
       .join('\n')
@@ -87,16 +131,40 @@ pharmaAskRouter.post('/', async (req: Request, res: Response) => {
         ? await resolveUsageContextFromRequest(req, userId, {
             caseId: typeof body.caseId === 'string' ? body.caseId.trim() || null : null,
             featureKey: 'pharma_ask',
-            metadata: { route: 'pharma-ask', tier, medicationName },
+            metadata: { route: 'pharma-ask', tier, medicationName: scrubbedMedicationName },
           })
         : undefined
 
-    const result = await callLlm({ tier, systemPrompt, userPrompt, usageContext })
+    let result
+    try {
+      result = await runAiFeature({
+        featureKey: 'pharma_ask',
+        tier,
+        systemPrompt,
+        userPrompt,
+        usageContext,
+        sanitizeOpts: { stripPatientContext: true },
+      })
+    } catch (guardError) {
+      if (guardError instanceof InsufficientCreditsError) {
+        res.status(402).json({ error: guardError.message })
+        return
+      }
+      if (guardError instanceof SafeLlmEgressError) {
+        console.error('[pharma-ask] PHI guard blocked outbound prompt:', guardError.message)
+        res.status(422).json({
+          error:
+            'PHI guard could not sanitize prompt; refusing to forward to LLM provider.',
+        })
+        return
+      }
+      throw guardError
+    }
 
     if (userId && userId !== 'default') {
       void recordAiGenerationUsed(req, userId, {
         caseId: typeof body.caseId === 'string' ? body.caseId.trim() || null : null,
-        metadata: { route: 'pharma-ask', tier, medicationName },
+        metadata: { route: 'pharma-ask', tier, medicationName: scrubbedMedicationName },
       })
     }
 

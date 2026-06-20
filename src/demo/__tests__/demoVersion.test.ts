@@ -27,7 +27,10 @@ describe('demo version helpers', () => {
 
   it('bumps seed versions', () => {
     expect(nextDemoSeedVersion('v2')).toBe('v3')
-    expect(nextDemoSeedVersion(null)).toBe('v4')
+    // `nextDemoSeedVersion(null)` bumps the bundled DEMO_SEED_VERSION; assert
+    // against the current constant so this test does not go stale every time
+    // we publish a new fixture.
+    expect(nextDemoSeedVersion(null)).toBe(nextDemoSeedVersion(DEMO_SEED_VERSION))
   })
 
   it('uses canonical version when set', () => {
@@ -41,9 +44,9 @@ describe('demo version helpers', () => {
   })
 
   it('detects outdated local versions', () => {
-    setCanonicalDemoFixture(buildDemoPatientFixture(), 'v4')
-    expect(isDemoSeedVersionOutdated('v3')).toBe(true)
-    expect(isDemoSeedVersionOutdated('v4')).toBe(false)
+    setCanonicalDemoFixture(buildDemoPatientFixture(), 'v5')
+    expect(isDemoSeedVersionOutdated('v4')).toBe(true)
+    expect(isDemoSeedVersionOutdated('v5')).toBe(false)
     expect(isDemoSeedVersionOutdated(undefined)).toBe(true)
   })
 })

@@ -89,6 +89,7 @@ export function CaseSidebarPanel({
           activeTab={activeTab}
           onTabSelect={onTabSelect}
           hasPatient={hasPatient}
+          caseId={todoCaseId ?? undefined}
         />
         {!hasPatient && onCreatePatient ? (
           <div className="case-sidebar-assign">

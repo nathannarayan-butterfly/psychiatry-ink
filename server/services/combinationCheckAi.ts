@@ -3,7 +3,8 @@ import {
   clinicalLanguagePromptInstruction,
   type ClinicalLanguage,
 } from '../utils/resolveClinicalLanguage'
-import { callLlm, llmResultModel } from './llmProvider'
+import { llmResultModel } from './safeLlmEgress'
+import { runAiFeature } from '../ai/runAiFeature'
 import { deidentifyText } from './discussCaseDeidentify'
 import { parseStructuredJson } from '../utils/parseStructuredJson'
 import type { AiUsageContext } from '../ai/types'
@@ -176,7 +177,8 @@ export async function assessCombinationWithAi(params: {
     language,
   })
 
-  const llm = await callLlm({
+  const llm = await runAiFeature({
+    featureKey: 'medication_combination_check',
     tier,
     systemPrompt,
     userPrompt,

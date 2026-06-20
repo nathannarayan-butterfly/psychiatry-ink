@@ -4,6 +4,7 @@ import type { Server } from 'node:http'
 
 vi.mock('../services/llmProvider', () => ({
   callLlm: vi.fn(),
+  llmResultModel: vi.fn(),
 }))
 
 import { callLlm } from '../services/llmProvider'
@@ -212,5 +213,130 @@ describe('POST /api/psychopath/extract', () => {
     expect(data.domains?.find((d) => d.domainKey === 'affect')?.detail).toBe('gedrückt')
     expect(data.domains?.find((d) => d.domainKey === 'suicidality')?.status).toBe('negative')
     expect(mockedCallLlm).toHaveBeenCalledOnce()
+  })
+})
+
+/**
+ * P1-1 (round 2) — server-side re-scrub of client-asserted deidentifiedText.
+ *
+ * The client claims the text is scrubbed. We never trust that. The server
+ * re-runs the authoritative PHI scrubber and the central egress guard before
+ * any LLM call. The provider call is mocked so we directly inspect the
+ * sanitized payload.
+ */
+describe('POST /api/psychopath/extract — server re-scrubs client deidentifiedText', () => {
+  it('redacts patient name / DOB / email / phone from forwarded prompt', async () => {
+    process.env.ENABLE_PSYCHOPATH_EXTRACT_AI = 'true'
+    process.env.OPENAI_API_KEY = 'test-key'
+    mockedCallLlm.mockResolvedValue({
+      text: JSON.stringify({ domains: [], courseDirection: null, confidence: 'low' }),
+      provider: 'openai',
+      model: 'gpt-4o-mini',
+      usage: {
+        inputTokens: 10,
+        cachedInputTokens: 0,
+        cacheMissInputTokens: 10,
+        outputTokens: 5,
+        totalTokens: 15,
+        audioMinutes: null,
+        usageSource: 'provider_reported',
+        rawUsageJson: null,
+      },
+      requestId: 'req-test',
+      latencyMs: 1,
+      truncated: false,
+    })
+
+    const dirtyText =
+      'Patient: Erika Musterfrau, geb. 12.04.1978, Tel 030-123 4567, ' +
+      'Mail patient@example.com. ' +
+      SAMPLE_PPB
+    const res = await postExtract({
+      language: 'de',
+      deidentifiedText: dirtyText,
+      sourceTextHash: 'dirty1',
+      patientHints: { patientName: 'Erika Musterfrau', patientDob: '12.04.1978' },
+    })
+    expect(res.status).toBe(200)
+    expect(mockedCallLlm).toHaveBeenCalledTimes(1)
+    const args = mockedCallLlm.mock.calls[0]![0]!
+    expect(args.userPrompt).not.toMatch(/Erika/)
+    expect(args.userPrompt).not.toMatch(/Musterfrau/)
+    expect(args.userPrompt).not.toContain('12.04.1978')
+    expect(args.userPrompt).not.toContain('030-123 4567')
+    expect(args.userPrompt).not.toContain('patient@example.com')
+    expect(args.userPrompt).toContain('[REDACTED]')
+  })
+
+  it('still redacts unconditional PHI (DOB / email / phone) without patientHints', async () => {
+    process.env.ENABLE_PSYCHOPATH_EXTRACT_AI = 'true'
+    process.env.OPENAI_API_KEY = 'test-key'
+    mockedCallLlm.mockResolvedValue({
+      text: JSON.stringify({ domains: [], courseDirection: null, confidence: 'low' }),
+      provider: 'openai',
+      model: 'gpt-4o-mini',
+      usage: {
+        inputTokens: 10,
+        cachedInputTokens: 0,
+        cacheMissInputTokens: 10,
+        outputTokens: 5,
+        totalTokens: 15,
+        audioMinutes: null,
+        usageSource: 'provider_reported',
+        rawUsageJson: null,
+      },
+      requestId: 'req-test',
+      latencyMs: 1,
+      truncated: false,
+    })
+
+    const dirtyText =
+      'DOB 12.04.1978, Tel 030-123 4567, Mail patient@example.com. ' + SAMPLE_PPB
+    const res = await postExtract({
+      language: 'de',
+      deidentifiedText: dirtyText,
+      sourceTextHash: 'unconditional1',
+    })
+    expect(res.status).toBe(200)
+    const args = mockedCallLlm.mock.calls[0]![0]!
+    expect(args.userPrompt).not.toContain('12.04.1978')
+    expect(args.userPrompt).not.toContain('030-123 4567')
+    expect(args.userPrompt).not.toContain('patient@example.com')
+    expect(args.userPrompt).toContain('[REDACTED]')
+  })
+
+  it('redacts ISO and slash DOB formats unconditionally', async () => {
+    process.env.ENABLE_PSYCHOPATH_EXTRACT_AI = 'true'
+    process.env.OPENAI_API_KEY = 'test-key'
+    mockedCallLlm.mockResolvedValue({
+      text: JSON.stringify({ domains: [], courseDirection: null, confidence: 'low' }),
+      provider: 'openai',
+      model: 'gpt-4o-mini',
+      usage: {
+        inputTokens: 10,
+        cachedInputTokens: 0,
+        cacheMissInputTokens: 10,
+        outputTokens: 5,
+        totalTokens: 15,
+        audioMinutes: null,
+        usageSource: 'provider_reported',
+        rawUsageJson: null,
+      },
+      requestId: 'req-test',
+      latencyMs: 1,
+      truncated: false,
+    })
+
+    const res = await postExtract({
+      language: 'de',
+      deidentifiedText: `DOB 1978-04-12 / 12/04/1978 / 12-04-1978 / 12.04.1978. ${SAMPLE_PPB}`,
+      sourceTextHash: 'iso1',
+    })
+    expect(res.status).toBe(200)
+    const args = mockedCallLlm.mock.calls[0]![0]!
+    expect(args.userPrompt).not.toContain('1978-04-12')
+    expect(args.userPrompt).not.toContain('12/04/1978')
+    expect(args.userPrompt).not.toContain('12-04-1978')
+    expect(args.userPrompt).not.toContain('12.04.1978')
   })
 })

@@ -1,4 +1,5 @@
 import { ArrowRight, FileText, Mic, Shield, Sparkles } from 'lucide-react'
+import { homepageFooter } from '../../data/homepageContent'
 import { PLAN_DEFINITIONS } from '../../data/subscriptionPlans'
 import { AppLogo } from '../AppLogo'
 
@@ -179,13 +180,13 @@ export function LandingPage({ onLogin, onSignup, onEnterApp, showDevEntry }: Lan
 
       <footer className="landing-footer">
         <div className="landing-footer__company">
-          <span className="landing-footer__name">Psychiatry Ink Ltd, Company Nr: 17275704</span>
-          <span className="landing-footer__address">
-            71-75 Shelton Street, Covent Garden, London, WC2H 9JQ, United Kingdom
-          </span>
-          <span className="landing-footer__copy">
-            © {new Date().getFullYear()} Psychiatry Ink Ltd. All rights reserved.
-          </span>
+          <p className="landing-footer__company-name">{homepageFooter.companyName}</p>
+          <p className="landing-footer__line">{homepageFooter.companyRegistration}</p>
+          <p className="landing-footer__line">{homepageFooter.companyNumber}</p>
+          <p className="landing-footer__line">{homepageFooter.address}</p>
+          <p className="landing-footer__line">
+            © {new Date().getFullYear()} {homepageFooter.companyName}. All rights reserved.
+          </p>
         </div>
         <button type="button" className="landing-footer__link" onClick={onLogin}>
           Anmelden

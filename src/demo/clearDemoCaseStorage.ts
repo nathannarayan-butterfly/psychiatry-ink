@@ -44,6 +44,8 @@ const CASE_SCOPED_PREFIXES = [
   'psychiatry-ink:prep-ai-cache',
 ]
 
+const CASE_EXACT_KEYS = ['psychiatry-ink:clinical-intelligence:case']
+
 function removeLocalStorageKeysForCase(caseId: string): void {
   const suffix = `::${caseId}`
   const keysToRemove: string[] = []
@@ -53,6 +55,9 @@ function removeLocalStorageKeysForCase(caseId: string): void {
     if (key.endsWith(suffix)) keysToRemove.push(key)
     for (const prefix of CASE_SCOPED_PREFIXES) {
       if (key === caseStorageKey(prefix, caseId)) keysToRemove.push(key)
+    }
+    for (const prefix of CASE_EXACT_KEYS) {
+      if (key === `${prefix}:${caseId}`) keysToRemove.push(key)
     }
   }
   for (const key of new Set(keysToRemove)) {

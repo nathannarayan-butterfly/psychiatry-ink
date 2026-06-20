@@ -6,9 +6,13 @@
  */
 import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
-import { callLlm } from '../services/llmProvider'
 import { parseLlmModelRequest } from '../ai/parseLlmModelRequest'
 import { isPsychopathExtractAiEnabled } from '../utils/featureFlags'
+import {
+  SafeLlmEgressError,
+  sanitizeText,
+} from '../services/safeLlmEgress'
+import { runAiFeature, InsufficientCreditsError } from '../ai/runAiFeature'
 import {
   PSYCHOPATH_EXTRACT_FIELD_KEYS,
   PSYCHOPATH_OVERVIEW_DOMAIN_ORDER,
@@ -338,10 +342,29 @@ psychopathExtractRouter.post('/extract', async (req: Request, res: Response) => 
     return
   }
 
-  const { deidentifiedText, language, domainHeadings } = parsed.data
+  const { deidentifiedText, language, domainHeadings, patientHints } = parsed.data
+
+  // Egress PHI guard — the client provides `deidentifiedText` and asserts it
+  // is scrubbed. We DO NOT TRUST that. Re-run the authoritative server-side
+  // scrubber, and if a high-confidence PHI residual remains after sanitization,
+  // fail closed with HTTP 422.
+  let safeText: string
+  try {
+    safeText = sanitizeText(deidentifiedText, { patientHints })
+  } catch (guardError) {
+    if (guardError instanceof SafeLlmEgressError) {
+      console.error('[psychopath] PHI guard blocked request:', guardError.message)
+      res.status(422).json({
+        error:
+          'PHI guard could not sanitize psychopathology payload; refusing to forward to LLM provider.',
+      })
+      return
+    }
+    throw guardError
+  }
 
   if (isLlmMockMode()) {
-    res.json(mockExtractFromText(deidentifiedText))
+    res.json(mockExtractFromText(safeText))
     return
   }
 
@@ -367,18 +390,31 @@ psychopathExtractRouter.post('/extract', async (req: Request, res: Response) => 
 
   try {
     const llmModel = parseLlmModelRequest((req.body ?? {}) as Record<string, unknown>, 'fast')
-    const result = await callLlm({
+    const result = await runAiFeature({
+      featureKey: 'psychopathology_extraction',
       tier: llmModel.tier,
       model: llmModel.model,
       systemPrompt,
-      userPrompt: deidentifiedText,
+      userPrompt: safeText,
       jsonResponse: true,
     })
-    const response = parseLlmResponse(result.text, deidentifiedText)
+    const response = parseLlmResponse(result.text, safeText)
     res.json(response)
   } catch (error) {
+    if (error instanceof InsufficientCreditsError) {
+      res.status(402).json({ error: (error as Error).message })
+      return
+    }
+    if (error instanceof SafeLlmEgressError) {
+      console.error('[psychopath] outbound prompt blocked:', error.message)
+      res.status(422).json({
+        error:
+          'PHI guard could not sanitize prompt; refusing to forward to LLM provider.',
+      })
+      return
+    }
     const message = error instanceof Error ? error.message : String(error)
     console.warn('[psychopath] extract LLM failed, using heuristic fallback:', message)
-    res.json(heuristicFallbackFromText(deidentifiedText))
+    res.json(heuristicFallbackFromText(safeText))
   }
 })

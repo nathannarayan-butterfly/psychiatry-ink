@@ -21,6 +21,7 @@ import type { VerlaufFeedEntry } from '../utils/verlaufFeed'
 import type { SavedLabGraph } from '../types/lab'
 import type { SavedTimeline } from '../types/timeline'
 import type { LaborBefund } from '../utils/laborArchive'
+import type { ClinicalIntelligenceCaseState } from '../types/clinicalIntelligence'
 import {
   DEMO_CASE_ID,
   DEMO_PATIENT_ID,
@@ -33,6 +34,8 @@ export type DemoUserStatus = 'none' | 'installed' | 'archived' | 'removed'
 export interface DemoUserState {
   status: DemoUserStatus
   seedVersion: string
+  /** Locale of synthetic clinical copy last seeded for this user. */
+  locale?: import('./demoLocale').DemoLocale
   installedAt?: string
   archivedAt?: string
   removedAt?: string
@@ -108,6 +111,8 @@ export interface DemoPatientFixture {
     labMedCorrelation: LabMedicationCorrelationStore
     prepAiCheck: PrepAiCheckCache
   }
+  /** Pre-baked Clinical Intelligence run — no live API on demo open. */
+  clinicalIntelligence?: ClinicalIntelligenceCaseState
 }
 
 export interface DemoValidationIssue {

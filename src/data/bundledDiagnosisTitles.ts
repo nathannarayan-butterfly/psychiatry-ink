@@ -19,11 +19,19 @@
  *
  * Catalog entries win on exact-code collisions (they carry the most specific
  * sub-code wording). Lookups are case-insensitive and whitespace-tolerant.
+ *
+ * Localization: a parallel English (and EN-by-default future-language) index
+ * is built lazily on first access. The catalog supplies its `label_en` per
+ * coding system; the criteria pack pulls the localized disorder display name
+ * from the i18n registry (`diagnosisCriteria/i18n`) so we never have to
+ * duplicate translations alongside the German source.
  */
 
 import type { IcdTitleVersion } from '../../shared/icdTitle'
-import { DIAGNOSIS_CATALOG } from './diagnosisCatalog'
+import type { UiLanguage } from '../types/settings'
+import { DIAGNOSIS_CATALOG, pickCatalogLabel } from './diagnosisCatalog'
 import { DISORDER_CRITERIA } from './diagnosisCriteria/index'
+import { getDisorderTranslationMap } from './diagnosisCriteria/i18n'
 
 function normCode(code: string): string {
   return code.trim().toUpperCase().replace(/\s+/g, '')
@@ -52,7 +60,7 @@ interface BundledIndex {
   stem: Map<string, string>
 }
 
-let cached: BundledIndex | null = null
+const cache = new Map<UiLanguage, BundledIndex>()
 
 function setExact(
   map: Map<string, string>,
@@ -82,39 +90,54 @@ function setStem(
   if (!map.has(key)) map.set(key, title)
 }
 
-function buildIndex(): BundledIndex {
+function buildIndex(lang: UiLanguage): BundledIndex {
   const exact = new Map<string, string>()
   const stem = new Map<string, string>()
+
+  // For non-source languages, look up the disorder's localized display name in
+  // the i18n registry. The German source (`name_de` / `label_de`) is always the
+  // safety-net fallback.
+  const translations = lang === 'de' ? undefined : getDisorderTranslationMap(lang)
 
   // 1. Criteria pack first (coarser / comprehensive). Catalog overwrites the
   //    exact entries below so precise sub-code wording wins on collisions.
   for (const disorder of DISORDER_CRITERIA) {
     const cs = disorder.codingSystems
-    setExact(exact, 'icd10', cs.icd10?.code, cs.icd10?.label_de)
-    setExact(exact, 'icd11', cs.icd11?.code, cs.icd11?.label_de)
-    setExact(exact, 'dsm', cs.dsm5tr?.code, cs.dsm5tr?.label_de)
+    const localizedName = translations?.[disorder.id]?.name?.trim() || disorder.name_de
+
+    // For criteria-pack codes the per-system `label_de` is typically the
+    // disorder display name (which the i18n registry translates per disorder
+    // id). Use the localized disorder name for non-source languages and fall
+    // back to the German source per code if missing.
+    setExact(exact, 'icd10', cs.icd10?.code, lang === 'de' ? cs.icd10?.label_de : localizedName)
+    setExact(exact, 'icd11', cs.icd11?.code, lang === 'de' ? cs.icd11?.label_de : localizedName)
+    setExact(exact, 'dsm', cs.dsm5tr?.code, lang === 'de' ? cs.dsm5tr?.label_de : localizedName)
 
     // Coarse stem fallback from the disorder's display name (e.g. F20 →
     // "Schizophrenie"), so an unlisted sub-code still resolves to a sensible
     // title instead of a bare code.
-    setStem(stem, 'icd10', disorder.code, disorder.name_de)
-    setStem(stem, 'icd10', disorder.crosswalkKey, disorder.name_de)
-    if (cs.icd10?.code) setStem(stem, 'icd10', cs.icd10.code, disorder.name_de)
-    if (cs.icd11?.code) setStem(stem, 'icd11', cs.icd11.code, disorder.name_de)
+    setStem(stem, 'icd10', disorder.code, localizedName)
+    setStem(stem, 'icd10', disorder.crosswalkKey, localizedName)
+    if (cs.icd10?.code) setStem(stem, 'icd10', cs.icd10.code, localizedName)
+    if (cs.icd11?.code) setStem(stem, 'icd11', cs.icd11.code, localizedName)
   }
 
   // 2. Curated catalog wins on exact-code collisions (most specific wording).
   for (const entry of DIAGNOSIS_CATALOG) {
-    setExact(exact, 'icd10', entry.icd10.code, entry.icd10.label)
-    setExact(exact, 'icd11', entry.icd11.code, entry.icd11.label)
-    setExact(exact, 'dsm', entry.dsm.code, entry.dsm.label)
+    setExact(exact, 'icd10', entry.icd10.code, pickCatalogLabel(entry.icd10, lang))
+    setExact(exact, 'icd11', entry.icd11.code, pickCatalogLabel(entry.icd11, lang))
+    setExact(exact, 'dsm', entry.dsm.code, pickCatalogLabel(entry.dsm, lang))
   }
 
   return { exact, stem }
 }
 
-function getIndex(): BundledIndex {
-  if (!cached) cached = buildIndex()
+function getIndex(lang: UiLanguage): BundledIndex {
+  let cached = cache.get(lang)
+  if (!cached) {
+    cached = buildIndex(lang)
+    cache.set(lang, cached)
+  }
   return cached
 }
 
@@ -122,22 +145,45 @@ function getIndex(): BundledIndex {
  * Resolve a full, human-readable diagnosis title from bundled in-app data only.
  * Returns `null` for truly unknown codes (the caller then falls back to the
  * bare code). Pure & synchronous — never touches the network or database.
+ *
+ * Pass `lang` to select the localized title; defaults to `'de'` (the source
+ * language) for backwards compatibility. When the requested language has no
+ * entry for a given code, the resolver falls back to the German source title
+ * before giving up — so EN UI never shows a bare code just because we lack a
+ * translation for one obscure record.
  */
 export function bundledDiagnosisTitle(
   code: string,
   version: IcdTitleVersion,
+  lang: UiLanguage = 'de',
 ): string | null {
   const trimmed = code.trim()
   if (!trimmed) return null
 
-  const { exact, stem } = getIndex()
+  const primary = lookupInIndex(trimmed, version, getIndex(lang))
+  if (primary) return primary
 
-  const direct = exact.get(indexKey(version, trimmed))
+  // Per-code fallback to the German source so a missing translation never
+  // demotes the UI back to the bare ICD code.
+  if (lang !== 'de') {
+    const sourceFallback = lookupInIndex(trimmed, version, getIndex('de'))
+    if (sourceFallback) return sourceFallback
+  }
+
+  return null
+}
+
+function lookupInIndex(
+  code: string,
+  version: IcdTitleVersion,
+  { exact, stem }: BundledIndex,
+): string | null {
+  const direct = exact.get(indexKey(version, code))
   if (direct) return direct
 
   // Coarse stem fallback for ICD sub-codes not explicitly listed.
   if (version === 'icd10' || version === 'icd11') {
-    const coarse = stem.get(indexKey(version, codeStem(trimmed)))
+    const coarse = stem.get(indexKey(version, codeStem(code)))
     if (coarse) return coarse
   }
 
@@ -145,10 +191,10 @@ export function bundledDiagnosisTitle(
 }
 
 /** Test/diagnostics helper — number of exact + stem bundled entries. */
-export function bundledDiagnosisTitleCoverage(): {
+export function bundledDiagnosisTitleCoverage(lang: UiLanguage = 'de'): {
   exact: number
   stem: number
 } {
-  const { exact, stem } = getIndex()
+  const { exact, stem } = getIndex(lang)
   return { exact: exact.size, stem: stem.size }
 }

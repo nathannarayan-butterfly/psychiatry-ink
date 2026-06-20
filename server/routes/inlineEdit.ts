@@ -13,6 +13,7 @@ import {
   type InlineEditContext,
 } from '../services/inlineEditService'
 import { transcribeAudioBuffer } from '../services/transcriptionProvider'
+import { SafeLlmEgressError, sanitizeText } from '../services/safeLlmEgress'
 
 export const inlineEditRouter: Router = createRouter()
 
@@ -50,11 +51,41 @@ inlineEditRouter.post('/', async (req: Request, res: Response) => {
     const llmModel = parseLlmModelRequest(body, 'fast')
     const tier = llmModel.tier ?? 'fast'
 
-    const context: InlineEditContext = {
-      selectedText,
-      contextBefore: str(body.contextBefore, MAX_CONTEXT_CHARS),
-      contextAfter: str(body.contextAfter, MAX_CONTEXT_CHARS),
+    // Egress PHI guard — never trust the client. Re-scrub every prompt-bound
+    // field server-side. Even though the inline edit needs to preserve clinical
+    // meaning, names / DOB / case codes / emails / phone numbers must NEVER
+    // reach the LLM provider. The `[REDACTED]` placeholders are stable and the
+    // model preserves them through the rewrite.
+    const patientHints = (() => {
+      const raw = (body.patientHints ?? {}) as Record<string, unknown>
+      return {
+        patientName: typeof raw.patientName === 'string' ? raw.patientName : undefined,
+        patientDob: typeof raw.patientDob === 'string' ? raw.patientDob : undefined,
+      }
+    })()
+
+    let scrubbedContext: InlineEditContext
+    let scrubbedInstruction: string
+    try {
+      scrubbedContext = {
+        selectedText: sanitizeText(selectedText, { patientHints }),
+        contextBefore: sanitizeText(str(body.contextBefore, MAX_CONTEXT_CHARS), { patientHints }),
+        contextAfter: sanitizeText(str(body.contextAfter, MAX_CONTEXT_CHARS), { patientHints }),
+      }
+      scrubbedInstruction = sanitizeText(instruction, { patientHints })
+    } catch (guardError) {
+      if (guardError instanceof SafeLlmEgressError) {
+        console.error('[inline-edit] PHI guard blocked request:', guardError.message)
+        res.status(422).json({
+          error:
+            'PHI guard could not sanitize prompt; refusing to forward to LLM provider. Re-submit with valid input.',
+        })
+        return
+      }
+      throw guardError
     }
+
+    const context: InlineEditContext = scrubbedContext
 
     const userId = resolveAccountId(req)
     // metadata carries NO clinical text — only sizes/flags (PHI never logged).
@@ -71,7 +102,7 @@ inlineEditRouter.post('/', async (req: Request, res: Response) => {
 
     const result = await runInlineEdit({
       context,
-      instruction,
+      instruction: scrubbedInstruction,
       tier,
       model: llmModel.model,
       language,

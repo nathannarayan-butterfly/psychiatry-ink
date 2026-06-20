@@ -6,6 +6,7 @@ import { TranslationProvider } from '../../../context/TranslationContext'
 import { OrganisationProvider } from '../../../contexts/PermissionContext'
 import { WorkspaceSessionProvider } from '../../../context/WorkspaceSessionContext'
 import { AuthProvider } from '../../../context/AuthContext'
+import { AskButterflyProvider } from '../../../contexts/AskButterflyContext'
 import { languageOptions } from '../../../data/languages'
 import { DashboardPage } from '../DashboardPage'
 
@@ -51,12 +52,16 @@ describe('DashboardPage smoke', () => {
               { language: 'de', englishVariant: 'uk', children: createElement(
                 WorkspaceSessionProvider,
                 null,
-                createElement(DashboardPage, {
-                  privacy: mockPrivacy(),
-                  languageSettings: mockLanguageSettings(),
-                  plan: 'free',
-                  onOpenCase,
-                }),
+                createElement(
+                  AskButterflyProvider,
+                  null,
+                  createElement(DashboardPage, {
+                    privacy: mockPrivacy(),
+                    languageSettings: mockLanguageSettings(),
+                    plan: 'free',
+                    onOpenCase,
+                  }),
+                ),
               ) },
             ),
           ),

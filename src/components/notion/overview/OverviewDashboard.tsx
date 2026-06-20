@@ -1,6 +1,6 @@
 import { useMemo, useCallback } from 'react'
 import { useTranslation } from '../../../context/TranslationContext'
-import { isClinicalIntelligenceV1Enabled } from '../../../utils/featureFlags'
+import { isClinicalIntelligenceAvailableForCase } from '../../../demo/demoFeatureFlags'
 import type { TopNavTabId } from '../CaseTopNav'
 import type { NotionPageId } from '../notionPages'
 import { extractSpiegelwerte, pickLatestSpiegelSeries, spiegelGraphId } from '../SpiegelwerteSection'
@@ -249,9 +249,9 @@ export function OverviewDashboard({
   const sozialTargets = useMemo(() => loadSozialtherapie(caseId), [caseId])
 
   const zwangsmassnahme = useMemo(() => buildZwangsmassnahmeSummary(caseId), [caseId])
-  const ekgSummary = useMemo(() => buildEkgSummary(caseId), [caseId])
-  const eegSummary = useMemo(() => buildEegSummary(caseId), [caseId])
-  const ctSummary = useMemo(() => buildCtSummary(caseId), [caseId])
+  const ekgSummary = useMemo(() => buildEkgSummary(caseId, language), [caseId, language])
+  const eegSummary = useMemo(() => buildEegSummary(caseId, language), [caseId, language])
+  const ctSummary = useMemo(() => buildCtSummary(caseId, language), [caseId, language])
   const hasEkg = ekgSummary.conducted
   const hasEeg = useMemo(() => hasConductedEeg(caseId), [caseId])
   const hasCt = ctSummary.conducted
@@ -449,7 +449,7 @@ export function OverviewDashboard({
       hasEeg,
       hasCt,
       hasZwangsmassnahme,
-      clinicalIntelligenceEnabled: isClinicalIntelligenceV1Enabled(),
+      clinicalIntelligenceEnabled: isClinicalIntelligenceAvailableForCase(caseId),
     }),
     [
       hasSpiegel,

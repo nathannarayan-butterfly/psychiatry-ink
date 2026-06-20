@@ -15,6 +15,7 @@ export function loadDemoUserState(userId: string): DemoUserState {
     return {
       status: parsed.status ?? 'none',
       seedVersion: parsed.seedVersion ?? '',
+      locale: parsed.locale,
       installedAt: parsed.installedAt,
       archivedAt: parsed.archivedAt,
       removedAt: parsed.removedAt,

@@ -2,7 +2,8 @@ import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
 import type { AiModelTier } from '../modelTierMapping'
 import { resolveAccountId } from '../middleware/auth'
-import { callLlm, llmResultModel } from '../services/llmProvider'
+import { llmResultModel } from '../services/safeLlmEgress'
+import { runAiFeature } from '../ai/runAiFeature'
 import { resolveUsageContextFromRequest } from '../ai/usage/resolveUsageContext'
 import { assertAiGenerationAllowed, recordAiGenerationUsed } from '../utils/caseAiAccessGuard'
 
@@ -62,48 +63,109 @@ const PSYCH_CLASSES = [
 ] as const
 type PsychClass = (typeof PSYCH_CLASSES)[number]
 
-/** Human-readable hints used to steer the model per section. */
-const SECTION_GUIDE: Record<SectionKey, string> = {
-  kurzprofil:
-    'Kurzprofil/Overview: 1 kompakter Einordnungsabsatz plus 3–5 klinische Kernpunkte (Nutzenprofil, Hauptindikation, Differenzierung zu Alternativen, wichtigste Sicherheits-/Monitoring-Ampel).',
-  steckbrief:
-    'Steckbrief/At-a-glance: dichtes Snapshot-Format mit Klasse, primären Targets, Halbwertszeit/aktiven Metaboliten, Dosisrahmen, QTc-/metabolischem/EPS-/Sedierungsrisiko und Depotstatus, aber ohne lange Prosa.',
-  wirkmechanismus:
-    'Wirkmechanismus: 2–4 substantielle Absätze zum primären Mechanismus, relevanten Downstream-Effekten, Zeitverlauf der Wirkung und klinischer Übersetzung; nicht nur Wirkstoffklasse wiederholen.',
-  rezeptorprofil:
-    'Rezeptorprofil: Interpretationsabsatz plus target-by-target Implikationen (Wirksamkeit, EPS/Prolaktin, Sedierung/Gewicht, Orthostase, anticholinerge Last, serotonerge/noradrenerge Effekte). Keine 1–5 Scores.',
-  pharmakokinetik:
-    'Pharmakokinetik: 2–5 Absätze/Bullet-Cluster zu Resorption, Tmax, Halbwertszeit, Steady State, aktiven Metaboliten, Proteinbindung, CYP/Transportern, TDM und klinischen Konsequenzen; präzise Zahlen zusätzlich im strukturierten "pk"-Block.',
-  indikationen:
-    'Indikationen: zugelassene Indikationen, relevante Off-Label-Kontexte, Patientenselektion, Symptomdimensionen, Wirklatenz und Grenzen der Evidenz in klinisch brauchbaren Bullet-Clustern.',
-  dosierung:
-    'Dosierung: Startdosis, üblicher Ziel-/Erhaltungsbereich, Maximaldosis, Titrationstempo, Einnahmezeitpunkt, Formulierungen sowie ältere Patient:innen, somatische Komorbidität und Nieren-/Leberhinweise; Schema im strukturierten "titration"-Block.',
-  nebenwirkungen:
-    'Nebenwirkungen: häufige vs. schwerwiegende UAW, frühe vs. späte Risiken, Warnzeichen, Risikofaktoren, Prävention/Mitigation und Monitoring; strukturiert priorisiert im "sideEffects"-Block.',
-  kontraindikationen:
-    'Kontraindikationen: absolute und relative Kontraindikationen mit klinischer Nuance, Risikokonstellationen, Vorsichtssituationen und praktischen Alternativ-/Monitoring-Hinweisen.',
-  wechselwirkungen:
-    'Wechselwirkungen & CYP450: CYP-Substrat/Inhibition/Induktion, relevante Wirkstoffklassen, QTc-/Sedierungs-/EPS-/Serotonin-/Blutungs-/Krampfschwellen-Additionen, Rauchen/Alkohol und Management; strukturiert im "cyp"-Block.',
-  qtc:
-    'QTc/EKG: Risikostufe, Dosis-/Spiegelbezug, typische EKG-Situationen (Baseline/Folgekontrollen), Elektrolyte, additive QTc-Arzneien, Schwellen für Vorsicht und Handlungsprinzipien.',
-  kontrollen:
-    'Kontrollen: Baseline- und Verlaufsmonitoring mit konkreten Intervallen soweit etabliert (Labor, Gewicht/BMI/Taille, Blutdruck/Puls, EKG, Spiegel, Bewegungsstörungen, Skalen, Adhärenz, Substanzkonsum).',
-  besonderheiten:
-    'Besonderheiten: praxisnahe klinische Fallstricke, Differenzialindikationen, Komorbiditäten, Formulierungsdetails, Adhärenz-/Depotfragen, Patientenedukation und Entscheidungsperlen.',
-  umstellung:
-    'Umstellung & Depot: praktische Switch-Prinzipien, Cross-Taper, Washout-/Überlappungslogik, Depot/LAI-Optionen, Loading/Oral-Overlap, Äquivalenz-Unsicherheit und typische Fehler; Depot-Details im strukturierten "depotOptions"-Block.',
-  schwangerschaft:
-    'Schwangerschaft/Stillzeit: Nutzen-Risiko-Abwägung, Trimester-/peripartale Aspekte, neonatale Anpassungssymptome, Stillen, Monitoring und wann Spezialberatung/Fachinformation nötig ist.',
-  niereLeber:
-    'Niere/Leber: Elimination, Dosisanpassung/Vorsicht nach Schweregrad, Dialyse-/Zirrhose-Aspekte sofern bekannt, relevante Monitoringparameter und qualitative Empfehlung, wenn Zahlen unsicher sind.',
-  ueberdosierung:
-    'Überdosierung/Toxizität: Leitsymptome, zeitlicher Verlauf, gefährliche Komplikationen, Basismaßnahmen, Monitoring (EKG/Vitalparameter/Labor), Antidot/Supportivtherapie und Intoxikationsfallen.',
-  absetzen:
-    'Absetzen/Taper: Absetzsyndrom-/Relapse-Risiko, Tempo nach Expositionsdauer/Dosis, Hochrisikogruppen, Rebound-Phänomene, Switching-Caveats und Stufenplan im strukturierten "taper"-Block.',
-  merksaetze:
-    'Merksätze/Clinical Pearls: 4–7 prägnante, klinisch verwertbare Pearls mit konkretem Handlungsbezug; keine generischen Merksätze.',
-  quellen:
-    'Quellen/References: source-aware Kurzabschnitt mit Fachinformation/SmPC, Leitlinien und Standardwerken; keine erfundenen exakten Zitate, DOI, Seitenzahlen oder Jahreszahlen, wenn unsicher.',
+type SectionGuideLanguage = 'de' | 'en'
+
+/**
+ * Human-readable hints used to steer the model per section. Keyed by section
+ * and UI language so the LLM produces the right sections and clinical
+ * register in either German or English. Faithful clinical translations: the
+ * EN variant must yield the same structure, headings and depth as the DE
+ * baseline. Note that for non-DE/EN UI languages we fall back to English (the
+ * model is then told to translate output via the language directive in the
+ * prompt) — German remains the source of truth for the original wording.
+ */
+const SECTION_GUIDE: Record<SectionKey, Record<SectionGuideLanguage, string>> = {
+  kurzprofil: {
+    de: 'Kurzprofil/Overview: 1 kompakter Einordnungsabsatz plus 3–5 klinische Kernpunkte (Nutzenprofil, Hauptindikation, Differenzierung zu Alternativen, wichtigste Sicherheits-/Monitoring-Ampel).',
+    en: 'Brief profile / overview: one compact framing paragraph plus 3–5 clinical key points (benefit profile, main indication, differentiation from alternatives, most important safety/monitoring traffic-light).',
+  },
+  steckbrief: {
+    de: 'Steckbrief/At-a-glance: dichtes Snapshot-Format mit Klasse, primären Targets, Halbwertszeit/aktiven Metaboliten, Dosisrahmen, QTc-/metabolischem/EPS-/Sedierungsrisiko und Depotstatus, aber ohne lange Prosa.',
+    en: 'At-a-glance summary: dense snapshot covering class, primary targets, half-life and active metabolites, dose range, QTc / metabolic / EPS / sedation risk and depot status — keep it tight, no long prose.',
+  },
+  wirkmechanismus: {
+    de: 'Wirkmechanismus: 2–4 substantielle Absätze zum primären Mechanismus, relevanten Downstream-Effekten, Zeitverlauf der Wirkung und klinischer Übersetzung; nicht nur Wirkstoffklasse wiederholen.',
+    en: 'Mechanism of action: 2–4 substantive paragraphs on the primary mechanism, relevant downstream effects, time course of action and clinical translation — do not simply restate the drug class.',
+  },
+  rezeptorprofil: {
+    de: 'Rezeptorprofil: Interpretationsabsatz plus target-by-target Implikationen (Wirksamkeit, EPS/Prolaktin, Sedierung/Gewicht, Orthostase, anticholinerge Last, serotonerge/noradrenerge Effekte). Keine 1–5 Scores.',
+    en: 'Receptor profile: an interpretive paragraph plus target-by-target clinical implications (efficacy, EPS/prolactin, sedation/weight, orthostasis, anticholinergic burden, serotonergic/noradrenergic effects). Do NOT use 1–5 scores.',
+  },
+  pharmakokinetik: {
+    de: 'Pharmakokinetik: 2–5 Absätze/Bullet-Cluster zu Resorption, Tmax, Halbwertszeit, Steady State, aktiven Metaboliten, Proteinbindung, CYP/Transportern, TDM und klinischen Konsequenzen; präzise Zahlen zusätzlich im strukturierten "pk"-Block.',
+    en: 'Pharmacokinetics: 2–5 paragraphs or bullet clusters covering absorption, Tmax, half-life, steady state, active metabolites, protein binding, CYP enzymes/transporters, therapeutic drug monitoring and clinical consequences; precise numbers go additionally into the structured "pk" block.',
+  },
+  indikationen: {
+    de: 'Indikationen: zugelassene Indikationen, relevante Off-Label-Kontexte, Patientenselektion, Symptomdimensionen, Wirklatenz und Grenzen der Evidenz in klinisch brauchbaren Bullet-Clustern.',
+    en: 'Indications: licensed indications, relevant off-label contexts, patient selection, symptom dimensions, latency to effect and limits of the evidence — in clinically useful bullet clusters.',
+  },
+  dosierung: {
+    de: 'Dosierung: Startdosis, üblicher Ziel-/Erhaltungsbereich, Maximaldosis, Titrationstempo, Einnahmezeitpunkt, Formulierungen sowie ältere Patient:innen, somatische Komorbidität und Nieren-/Leberhinweise; Schema im strukturierten "titration"-Block.',
+    en: 'Dosing: starting dose, usual target/maintenance range, maximum dose, titration speed, time of administration and formulations, plus considerations for older patients, somatic comorbidity and renal/hepatic adjustments; the schedule belongs in the structured "titration" block.',
+  },
+  nebenwirkungen: {
+    de: 'Nebenwirkungen: häufige vs. schwerwiegende UAW, frühe vs. späte Risiken, Warnzeichen, Risikofaktoren, Prävention/Mitigation und Monitoring; strukturiert priorisiert im "sideEffects"-Block.',
+    en: 'Adverse effects: common versus serious adverse drug reactions, early versus late risks, warning signs, risk factors, prevention/mitigation and monitoring; prioritised in structured form in the "sideEffects" block.',
+  },
+  kontraindikationen: {
+    de: 'Kontraindikationen: absolute und relative Kontraindikationen mit klinischer Nuance, Risikokonstellationen, Vorsichtssituationen und praktischen Alternativ-/Monitoring-Hinweisen.',
+    en: 'Contraindications: absolute and relative contraindications with clinical nuance, risk constellations, situations requiring caution and practical alternative or monitoring guidance.',
+  },
+  wechselwirkungen: {
+    de: 'Wechselwirkungen & CYP450: CYP-Substrat/Inhibition/Induktion, relevante Wirkstoffklassen, QTc-/Sedierungs-/EPS-/Serotonin-/Blutungs-/Krampfschwellen-Additionen, Rauchen/Alkohol und Management; strukturiert im "cyp"-Block.',
+    en: 'Drug interactions & CYP450: CYP substrate/inhibitor/inducer status, relevant drug classes, additive QTc, sedation, EPS, serotonergic, bleeding and seizure-threshold effects, smoking and alcohol and how to manage them; structured detail belongs in the "cyp" block.',
+  },
+  qtc: {
+    de: 'QTc/EKG: Risikostufe, Dosis-/Spiegelbezug, typische EKG-Situationen (Baseline/Folgekontrollen), Elektrolyte, additive QTc-Arzneien, Schwellen für Vorsicht und Handlungsprinzipien.',
+    en: 'QTc / ECG: risk level, dose- and level-relationship, typical ECG situations (baseline and follow-up monitoring), electrolytes, additive QTc-prolonging agents, thresholds requiring caution and management principles.',
+  },
+  kontrollen: {
+    de: 'Kontrollen: Baseline- und Verlaufsmonitoring mit konkreten Intervallen soweit etabliert (Labor, Gewicht/BMI/Taille, Blutdruck/Puls, EKG, Spiegel, Bewegungsstörungen, Skalen, Adhärenz, Substanzkonsum).',
+    en: 'Monitoring: baseline and follow-up monitoring with concrete intervals where established (laboratory tests, weight/BMI/waist circumference, blood pressure/pulse, ECG, drug levels, movement disorders, rating scales, adherence and substance use).',
+  },
+  besonderheiten: {
+    de: 'Besonderheiten: praxisnahe klinische Fallstricke, Differenzialindikationen, Komorbiditäten, Formulierungsdetails, Adhärenz-/Depotfragen, Patientenedukation und Entscheidungsperlen.',
+    en: 'Special considerations: practical clinical pitfalls, differential indications, comorbidities, formulation details, adherence and depot questions, patient education and decision pearls.',
+  },
+  umstellung: {
+    de: 'Umstellung & Depot: praktische Switch-Prinzipien, Cross-Taper, Washout-/Überlappungslogik, Depot/LAI-Optionen, Loading/Oral-Overlap, Äquivalenz-Unsicherheit und typische Fehler; Depot-Details im strukturierten "depotOptions"-Block.',
+    en: 'Switching & depot: practical switching principles, cross-tapering, washout and overlap logic, depot/LAI options, loading and oral-overlap, equivalence uncertainty and common mistakes; depot detail belongs in the structured "depotOptions" block.',
+  },
+  schwangerschaft: {
+    de: 'Schwangerschaft/Stillzeit: Nutzen-Risiko-Abwägung, Trimester-/peripartale Aspekte, neonatale Anpassungssymptome, Stillen, Monitoring und wann Spezialberatung/Fachinformation nötig ist.',
+    en: 'Pregnancy & breastfeeding: benefit–risk balance, trimester-specific and peripartum aspects, neonatal adaptation symptoms, breastfeeding, monitoring and when to seek specialist input or consult the SmPC.',
+  },
+  niereLeber: {
+    de: 'Niere/Leber: Elimination, Dosisanpassung/Vorsicht nach Schweregrad, Dialyse-/Zirrhose-Aspekte sofern bekannt, relevante Monitoringparameter und qualitative Empfehlung, wenn Zahlen unsicher sind.',
+    en: 'Renal & hepatic impairment: route of elimination, dose adjustment or caution by severity, dialysis and cirrhosis considerations where known, relevant monitoring parameters and qualitative guidance when precise figures are uncertain.',
+  },
+  ueberdosierung: {
+    de: 'Überdosierung/Toxizität: Leitsymptome, zeitlicher Verlauf, gefährliche Komplikationen, Basismaßnahmen, Monitoring (EKG/Vitalparameter/Labor), Antidot/Supportivtherapie und Intoxikationsfallen.',
+    en: 'Overdose & toxicity: cardinal symptoms, time course, dangerous complications, basic management, monitoring (ECG/vital signs/laboratory), antidotes and supportive therapy, and common toxicology pitfalls.',
+  },
+  absetzen: {
+    de: 'Absetzen/Taper: Absetzsyndrom-/Relapse-Risiko, Tempo nach Expositionsdauer/Dosis, Hochrisikogruppen, Rebound-Phänomene, Switching-Caveats und Stufenplan im strukturierten "taper"-Block.',
+    en: 'Discontinuation & taper: discontinuation-syndrome and relapse risk, taper speed by exposure duration and dose, high-risk groups, rebound phenomena, switching caveats and the step plan in the structured "taper" block.',
+  },
+  merksaetze: {
+    de: 'Merksätze/Clinical Pearls: 4–7 prägnante, klinisch verwertbare Pearls mit konkretem Handlungsbezug; keine generischen Merksätze.',
+    en: 'Clinical pearls: 4–7 concise, clinically actionable pearls with concrete management implications — no generic textbook lines.',
+  },
+  quellen: {
+    de: 'Quellen/References: source-aware Kurzabschnitt mit Fachinformation/SmPC, Leitlinien und Standardwerken; keine erfundenen exakten Zitate, DOI, Seitenzahlen oder Jahreszahlen, wenn unsicher.',
+    en: 'References: a source-aware short section citing the SmPC (Fachinformation), clinical guidelines and standard psychopharmacology references; do not invent precise quotations, DOIs, page numbers or years when uncertain.',
+  },
+}
+
+function sectionGuideLanguage(language: PharmaGenerateRequestBody['language']): SectionGuideLanguage {
+  // Default to German for legacy callers that omit `language`; only switch to
+  // English when the request explicitly asks for a non-German language.
+  if (language === 'en' || language === 'fr' || language === 'es') return 'en'
+  return 'de'
+}
+
+function getSectionGuide(key: SectionKey, language: PharmaGenerateRequestBody['language']): string {
+  return SECTION_GUIDE[key][sectionGuideLanguage(language)]
 }
 
 const WHOLE_DRUG_MAX_TOKENS = 16_000
@@ -260,12 +322,16 @@ function resolveLanguageName(lang: string | undefined): string {
   }
 }
 
-function buildSystemPrompt(): string {
+function buildSystemPrompt(language: PharmaGenerateRequestBody['language']): string {
+  const isGerman = sectionGuideLanguage(language) === 'de'
+  const uncertaintyExample = isGerman
+    ? '"unsicher" / "ggf. prüfen"'
+    : '"uncertain" / "verify against SmPC"'
   return [
     'You are a clinical pharmacology expert assistant. You generate accurate psychiatric drug monographs for clinician reference.',
     'Audience: psychiatrists and clinical staff. Output should read like a dense clinical pharmacology textbook chapter: clinically useful, section-specific, source-aware, and practical at the point of care.',
     'Write in concise paragraphs and structured bullet clusters, but do not be short. Avoid one-line generic statements. Each requested section must contain enough depth to be useful on its own.',
-    'Be accurate and conservative. If you are uncertain about a fact, explicitly mark it as uncertain (e.g. "unsicher" / "ggf. prüfen") rather than inventing specifics.',
+    `Be accurate and conservative. If you are uncertain about a fact, explicitly mark it as uncertain (e.g. ${uncertaintyExample}) rather than inventing specifics.`,
     'Never invent precise numeric values (doses, levels, Ki/IC50) you are not confident about; prefer estimates clearly flagged as such.',
     'When numeric evidence is uncertain, set structured numeric fields to null or mark isEstimated/sourceNote, while still giving qualitative clinical explanation in prose.',
     'Receptor data uses a RELATIVE AFFINITY INDEX (0–100), NOT a 1–5 score, NOT receptor occupancy, NOT clinical blockade. Never output a 1–5 receptor scale.',
@@ -280,10 +346,23 @@ function buildUserPrompt(
   includeMarketAvailability: boolean,
 ): string {
   const languageName = resolveLanguageName(body.language)
+  // Default to German when no explicit language is supplied (legacy callers).
+  const isGerman = sectionGuideLanguage(body.language) === 'de'
   const brands = (body.brandNames ?? []).join(', ')
+  const noSectionsLine = isGerman
+    ? '- Keine Textabschnitte angefordert; fülle "sections": {}.'
+    : '- No text sections requested; return "sections": {}.'
   const sectionLines = targetSections.length
-    ? targetSections.map((key) => `- "${key}": ${SECTION_GUIDE[key]}`).join('\n')
-    : '- Keine Textabschnitte angefordert; fülle "sections": {}.'
+    ? targetSections.map((key) => `- "${key}": ${getSectionGuide(key, body.language)}`).join('\n')
+    : noSectionsLine
+  // dosageForm guidance: when generating in German, ask for German textbook
+  // wording; when generating in English (or another non-DE language) ask for
+  // human-readable wording in the target language so the preparation list
+  // matches the rest of the monograph.
+  const dosageFormGuidance = isGerman
+    ? 'dosageForm must be human-readable German text suitable for a textbook list (Tabletten, Filmtabletten, Lösung zum Einnehmen, Depot-Injektion) — not English enum codes like "tablet".'
+    : `dosageForm must be human-readable ${languageName} text suitable for a textbook list (e.g. "tablets", "film-coated tablets", "oral solution", "depot injection") — not English enum codes like "tablet" alone.`
+  const sourceCheckPhrase = isGerman ? 'Fachinformation/AMIce prüfen' : 'Verify against SmPC / national medicine directory'
   const marketAvailabilityInstructions = includeMarketAvailability
     ? [
         '',
@@ -293,11 +372,11 @@ function buildUserPrompt(
         'This array is separate from the pharmacology profile and will be stored as unverified KB preparation data linked to this substance.',
         'Every entry MUST be marked verificationStatus "ai_draft" or "unverified" — NEVER "manually_verified" or "imported_verified".',
         'Keep entries COMPACT — one display line per preparation: strengthValue + strengthUnit + dosageForm (e.g. "50 mg Tabletten").',
-        'dosageForm must be human-readable German text suitable for a textbook list (Tabletten, Filmtabletten, Lösung zum Einnehmen, Depot-Injektion) — not English enum codes like "tablet".',
+        dosageFormGuidance,
         'tradeName is optional; omit or leave empty when the line is generic-only. Include tradeName only for distinct branded products (e.g. "Risperdal Consta").',
         'We only need identity and route/form fields: countryCode, tradeName, genericName, strengthValue, strengthUnit, dosageForm, route, verificationStatus, plus sourceName/sourceReference if known.',
         'Do NOT write long source prose, package descriptions, clinical notes, dosing narratives, or availability essays. sourceReference and notes must be short labels only (max one short phrase).',
-        'If market precision is uncertain, set marketStatus:"needs_verification" and use a short sourceName/sourceReference such as "Fachinformation/AMIce prüfen".',
+        `If market precision is uncertain, set marketStatus:"needs_verification" and use a short sourceName/sourceReference such as "${sourceCheckPhrase}".`,
         'Required entry fields: countryCode, tradeName, genericName, strengthValue, strengthUnit, dosageForm, route, verificationStatus.',
         'Optional compact fields only: marketStatus, sourceName, sourceReference, notes. Avoid packageSize/product identifiers unless confidently known and very short.',
       ].join('\n')
@@ -319,7 +398,9 @@ function buildUserPrompt(
     '- Single-section regeneration: generate the same depth for that one section; do not answer with only a short paragraph.',
     '- Use line breaks and "•" bullets where helpful for readability. Avoid filler, disclaimers, and generic textbook boilerplate.',
     '- Include concrete clinical details where known: dosing ranges, titration caveats, half-life/active metabolite, monitoring intervals, contraindication nuance, CYP/QTc risks, depot/oral overlap, adverse-effect prioritization, switching/taper caveats, evidence/source notes.',
-    '- If a precise value is uncertain, do not invent it. Use qualitative phrasing such as "je nach Fachinformation prüfen" and keep structured numeric fields null or estimated.',
+    isGerman
+      ? '- If a precise value is uncertain, do not invent it. Use qualitative phrasing such as "je nach Fachinformation prüfen" and keep structured numeric fields null or estimated.'
+      : '- If a precise value is uncertain, do not invent it. Use qualitative phrasing such as "verify against the SmPC" and keep structured numeric fields null or estimated.',
     '',
     'Fill the following sections:',
     sectionLines,
@@ -363,11 +444,17 @@ function buildUserPrompt(
     '    { "target": "D2", "action": "antagonist", "affinityPercent": 92, "rawKiNm": 1.2, "rawIc50Nm": null, "pKi": 8.9, "evidenceQuality": "high", "clinicalRelevance": "high", "isEstimated": false, "sourceNote": "…" }',
     '  ],',
     '  "structured": {',
-    '    "pk": { "halfLifeHours": 24, "halfLifeNote": "aktiver Metabolit …", "tmaxHours": 4, "timeToSteadyStateDays": 7, "bioavailabilityPercent": 70, "proteinBindingPercent": 90, "tdm": { "lowNgMl": 20, "highNgMl": 60, "unit": "ng/ml", "note": "…" }, "isEstimated": false, "sourceNote": "Fachinformation" },',
+    isGerman
+      ? '    "pk": { "halfLifeHours": 24, "halfLifeNote": "aktiver Metabolit …", "tmaxHours": 4, "timeToSteadyStateDays": 7, "bioavailabilityPercent": 70, "proteinBindingPercent": 90, "tdm": { "lowNgMl": 20, "highNgMl": 60, "unit": "ng/ml", "note": "…" }, "isEstimated": false, "sourceNote": "Fachinformation" },'
+      : '    "pk": { "halfLifeHours": 24, "halfLifeNote": "active metabolite …", "tmaxHours": 4, "timeToSteadyStateDays": 7, "bioavailabilityPercent": 70, "proteinBindingPercent": 90, "tdm": { "lowNgMl": 20, "highNgMl": 60, "unit": "ng/ml", "note": "…" }, "isEstimated": false, "sourceNote": "SmPC" },',
     '    "titration": { "unit": "mg", "steps": [ { "label": "Start", "startDay": 0, "doseMg": 2, "note": "…" } ], "targetDoseMg": 6, "maxDoseMg": 16, "isEstimated": false },',
-    '    "taper": { "unit": "mg", "steps": [ { "label": "Ausgangsdosis", "startDay": 0, "doseMg": 100 }, { "startDay": 14, "doseMg": 50 }, { "startDay": 28, "doseMg": 25 }, { "label": "Absetzen", "startDay": 42, "doseMg": null } ], "isEstimated": true },',
+    isGerman
+      ? '    "taper": { "unit": "mg", "steps": [ { "label": "Ausgangsdosis", "startDay": 0, "doseMg": 100 }, { "startDay": 14, "doseMg": 50 }, { "startDay": 28, "doseMg": 25 }, { "label": "Absetzen", "startDay": 42, "doseMg": null } ], "isEstimated": true },'
+      : '    "taper": { "unit": "mg", "steps": [ { "label": "Starting dose", "startDay": 0, "doseMg": 100 }, { "startDay": 14, "doseMg": 50 }, { "startDay": 28, "doseMg": 25 }, { "label": "Stop", "startDay": 42, "doseMg": null } ], "isEstimated": true },',
     '    "depotOptions": [ { "name": "…", "brandName": "…", "injectionIntervalDays": 28, "loadingRegimen": [ { "day": 1, "doseLabel": "150 mg eq.", "route": "deltoid" } ], "oralOverlapDays": 0, "doseEquivalence": "…", "timeToSteadyStateWeeks": 26, "firstMaintenanceDay": 35, "flexWindowDays": 7, "postInjectionMonitoring": "…", "isShortActingNotDepot": false, "isEstimated": false, "sourceNote": "SmPC" } ],',
-    '    "sideEffects": [ { "effect": "…", "system": "metabolisch", "frequency": "common", "severity": "moderate", "note": "…" } ],',
+    isGerman
+      ? '    "sideEffects": [ { "effect": "…", "system": "metabolisch", "frequency": "common", "severity": "moderate", "note": "…" } ],'
+      : '    "sideEffects": [ { "effect": "…", "system": "metabolic", "frequency": "common", "severity": "moderate", "note": "…" } ],',
     '    "cyp": { "enzymes": [ { "enzyme": "CYP2D6", "role": "substrate", "strength": "major", "note": "…" } ], "interactions": [ { "withDrugOrClass": "…", "severity": "major", "effect": "…" } ], "qtcRisk": "moderate", "isEstimated": false }',
     '  },',
     '  "references": ["<citation>", ...],',
@@ -927,9 +1014,10 @@ pharmaGenerateRouter.post('/', async (req: Request, res: Response) => {
           })
         : undefined
 
-    const result = await callLlm({
+    const result = await runAiFeature({
+      featureKey: 'pharma_generate',
       tier,
-      systemPrompt: buildSystemPrompt(),
+      systemPrompt: buildSystemPrompt(normalizedBody.language),
       userPrompt: buildUserPrompt(normalizedBody, effectiveSections, includeMarketAvailability || marketAvailabilityOnly),
       maxTokens: effectiveSections.length === 1 || marketAvailabilityOnly ? SINGLE_SECTION_MAX_TOKENS : WHOLE_DRUG_MAX_TOKENS,
       jsonResponse: true,

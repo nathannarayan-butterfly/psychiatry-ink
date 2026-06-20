@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { callLlm } from './llmProvider.ts'
+import { runAiFeature } from '../ai/runAiFeature'
 import {
   buildCriteriaDraftSystemPrompt,
   buildCriteriaDraftUserPrompt,
@@ -82,7 +82,9 @@ export async function generateCriteriaDraftForTarget(
     }
   }
 
-  const llm = await callLlm({
+  const llm = await runAiFeature({
+    featureKey: 'criteria_draft_generate',
+    skipCreditAccounting: true,
     tier: 'fast',
     systemPrompt,
     userPrompt,

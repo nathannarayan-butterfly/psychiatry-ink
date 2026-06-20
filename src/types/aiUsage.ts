@@ -1,5 +1,6 @@
 /** Feature keys for AI usage tracking — no PHI in logs. */
 export type AiFeatureKey =
+  // legacy route-level keys
   | 'anamnesis_generation'
   | 'verlauf_generation'
   | 'arztbrief_generation'
@@ -25,7 +26,33 @@ export type AiFeatureKey =
   | 'clinical_intelligence_dimensional'
   | 'clinical_intelligence_mechanism'
   | 'clinical_intelligence_discuss'
+  // credit-system granular keys
+  | 'simple_rewrite'
+  | 'short_verlauf'
+  | 'psychopathological_befund'
+  | 'somatic_befund'
+  | 'lab_formatting'
+  | 'anamnesis_structuring'
+  | 'diagnosis_formulation'
+  | 'medication_summary'
+  | 'therapy_plan'
+  | 'arztbrief_section'
+  | 'full_arztbrief'
+  | 'full_case_summary'
+  | 'forensic_risk_formulation'
+  | 'medication_interaction_check'
+  | 'lab_medication_correlation_check'
+  | 'full_patient_build'
+  | 'document_import_mapping'
+  | 'psychopathology_extraction'
+  | 'clinical_intelligence_discussion'
   | 'unknown'
+
+/**
+ * AI generation mode — user-visible quality tiers.
+ * Maps to internal model tiers: economic→fast, standard→standard, gruendlich→thorough.
+ */
+export type AiMode = 'economic' | 'standard' | 'gruendlich'
 
 export type AiUsageSource = 'provider_reported' | 'estimated_from_chars'
 

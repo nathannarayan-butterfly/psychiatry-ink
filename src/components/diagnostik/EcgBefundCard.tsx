@@ -24,9 +24,9 @@ export function EcgBefundCard({
   onCopy,
   onDelete,
 }: EcgBefundCardProps) {
-  const { t } = useTranslation()
-  const schema = getBefundSchema('ecg')
-  const sections = getBefundDisplaySections(record)
+  const { t, language } = useTranslation()
+  const schema = getBefundSchema('ecg', language)
+  const sections = getBefundDisplaySections(record, language)
   const summarySections = sections.filter((section) => SUMMARY_SECTION_IDS.has(section.id))
   const detailSections = sections.filter((section) => !SUMMARY_SECTION_IDS.has(section.id))
 

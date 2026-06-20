@@ -1,5 +1,7 @@
+import type { AiFeatureKey } from '../../src/types/aiUsage'
+import type { AiModelTier } from '../modelTierMapping'
 import type { AiUsageContext } from '../ai/types'
-import { recordAiUsageLog } from '../ai/usage/recordAiUsageLog'
+import { InsufficientCreditsError, runAiFeature } from '../ai/runAiFeature'
 import {
   clinicalLanguagePromptInstruction,
   type ClinicalLanguage,
@@ -34,17 +36,6 @@ const VALID_TEMPORAL: LabTemporalPlausibility[] = [
   'highly_plausible',
 ]
 
-const DEEPSEEK_MODEL = process.env.DEEPSEEK_FAST_MODEL ?? 'deepseek-v4-flash'
-const OPENAI_MODEL = process.env.OPENAI_THOROUGH_MODEL ?? 'gpt-4.1'
-
-function deepseekBaseUrl(): string {
-  return process.env.DEEPSEEK_BASE_URL?.replace(/\/$/, '') ?? 'https://api.deepseek.com/v1'
-}
-
-function openaiBaseUrl(): string {
-  return process.env.OPENAI_BASE_URL?.replace(/\/$/, '') ?? 'https://api.openai.com/v1'
-}
-
 function coerceStrength(value: unknown): LabCorrelationStrength {
   const s = String(value ?? '').trim() as LabCorrelationStrength
   return VALID_STRENGTHS.includes(s) ? s : 'possible'
@@ -59,6 +50,18 @@ function coerceString(value: unknown, fallback = ''): string {
   return typeof value === 'string' ? value.trim() : fallback
 }
 
+/**
+ * Route the DeepSeek primary / OpenAI second-opinion calls through
+ * {@link runAiFeature} so credit accounting (`checkBalance` →
+ * `deductCreditsTransactionally`), the central PHI guard
+ * (`callLlmSafely` re-sanitizes + asserts before egress), and metadata-only
+ * `AiUsageLog` writes all run uniformly for this service. No direct provider
+ * `fetch` from this file — the LLM egress audit enforces this.
+ *
+ * Feature key routing:
+ *  - `provider === 'deepseek'` → `lab_medication_correlation` (primary path).
+ *  - `provider === 'openai'`   → `lab_medication_correlation_check` (second-opinion).
+ */
 async function callProviderLlm(params: {
   provider: LabCorrelationAiProvider
   systemPrompt: string
@@ -66,110 +69,37 @@ async function callProviderLlm(params: {
   maxTokens?: number
   usageContext?: AiUsageContext
 }): Promise<{ text: string; model: { provider: LabCorrelationAiProvider; modelId: string; label: string } }> {
-  const maxTokens = params.maxTokens ?? 1800
-  const inputText = `${params.systemPrompt}\n${params.userPrompt}`
-  const started = Date.now()
+  const isSecondOpinion = params.provider === 'openai'
+  const billingFeatureKey: AiFeatureKey = isSecondOpinion
+    ? 'lab_medication_correlation_check'
+    : 'lab_medication_correlation'
+  const tier: AiModelTier = isSecondOpinion ? 'thorough' : 'standard'
 
-  if (params.provider === 'deepseek') {
-    const apiKey = process.env.DEEPSEEK_API_KEY?.trim()
-    if (!apiKey) throw new Error('DEEPSEEK_API_KEY missing')
-    const response = await fetch(`${deepseekBaseUrl()}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: DEEPSEEK_MODEL,
-        messages: [
-          { role: 'system', content: params.systemPrompt },
-          { role: 'user', content: params.userPrompt },
-        ],
-        temperature: 0.25,
-        max_tokens: maxTokens,
-        response_format: { type: 'json_object' },
-      }),
-    })
-    if (!response.ok) {
-      const detail = await response.text().catch(() => '')
-      throw new Error(`DeepSeek failed (${response.status}): ${detail.slice(0, 280)}`)
-    }
-    const data = (await response.json()) as {
-      id?: string
-      usage?: unknown
-      choices?: Array<{ message?: { content?: string } }>
-    }
-    const text = data.choices?.[0]?.message?.content?.trim()
-    if (!text) throw new Error('DeepSeek returned empty JSON response')
-    const latencyMs = Date.now() - started
-    if (params.usageContext) {
-      void recordAiUsageLog({
-        ...params.usageContext,
-        provider: 'deepseek',
-        model: DEEPSEEK_MODEL,
-        rawUsage: data.usage,
-        inputText,
-        outputText: text,
-        requestId: data.id ?? null,
-        latencyMs,
-        success: true,
-      })
-    }
-
-    return {
-      text,
-      model: { provider: 'deepseek', modelId: DEEPSEEK_MODEL, label: `DeepSeek (${DEEPSEEK_MODEL})` },
-    }
-  }
-
-  const apiKey = process.env.OPENAI_API_KEY?.trim()
-  if (!apiKey) throw new Error('OPENAI_API_KEY missing')
-  const response = await fetch(`${openaiBaseUrl()}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: OPENAI_MODEL,
-      messages: [
-        { role: 'system', content: params.systemPrompt },
-        { role: 'user', content: params.userPrompt },
-      ],
-      temperature: 0.2,
-      max_tokens: maxTokens,
-      response_format: { type: 'json_object' },
-    }),
-  })
-  if (!response.ok) {
-    const detail = await response.text().catch(() => '')
-    throw new Error(`OpenAI failed (${response.status}): ${detail.slice(0, 280)}`)
-  }
-  const data = (await response.json()) as {
-    id?: string
-    usage?: unknown
-    choices?: Array<{ message?: { content?: string } }>
-  }
-  const text = data.choices?.[0]?.message?.content?.trim()
-  if (!text) throw new Error('OpenAI returned empty JSON response')
-  const latencyMs = Date.now() - started
-  if (params.usageContext) {
-    void recordAiUsageLog({
+  const result = await runAiFeature({
+    featureKey: billingFeatureKey,
+    tier,
+    systemPrompt: params.systemPrompt,
+    userPrompt: params.userPrompt,
+    maxTokens: params.maxTokens ?? 1800,
+    jsonResponse: true,
+    usageContext: {
+      featureKey: 'lab_medication_correlation',
       ...params.usageContext,
-      provider: 'openai',
-      model: OPENAI_MODEL,
-      rawUsage: data.usage,
-      inputText,
-      outputText: text,
-      requestId: data.id ?? null,
-      latencyMs,
-      success: true,
-      metadata: { ...params.usageContext.metadata, openaiFallback: true },
-    })
-  }
+      metadata: {
+        ...params.usageContext?.metadata,
+        provider: params.provider,
+        ...(isSecondOpinion ? { openaiSecondOpinion: true } : {}),
+      },
+    },
+  })
+
+  const label = isSecondOpinion
+    ? `OpenAI (${result.model})`
+    : `DeepSeek (${result.model})`
+
   return {
-    text,
-    model: { provider: 'openai', modelId: OPENAI_MODEL, label: `OpenAI (${OPENAI_MODEL})` },
+    text: result.text,
+    model: { provider: params.provider, modelId: result.model, label },
   }
 }
 
@@ -448,6 +378,9 @@ export async function assessLabCorrelationsBatchWithAi(params: {
 
     return { results, parseFailed: false }
   } catch (error) {
+    // InsufficientCredits must surface to the route handler so it can return
+    // 402 — never swallow it as a generic parse failure.
+    if (error instanceof InsufficientCreditsError) throw error
     console.error('[lab-med-correlation/batch-ai] failed:', error)
     return { results: [], parseFailed: true }
   }
@@ -492,6 +425,9 @@ export async function assessLabCorrelationWithAi(params: {
     const parsed = parseStructuredJson(text)
     return parseAiResult(parsed, params.substanceId, params.med.substance, params.lab.normalizedParameter)
   } catch (error) {
+    // InsufficientCredits must surface to the route handler so it can return
+    // 402 — never swallow it as a generic parse failure.
+    if (error instanceof InsufficientCreditsError) throw error
     console.error('[lab-med-correlation/single-ai] failed:', error)
     return null
   }

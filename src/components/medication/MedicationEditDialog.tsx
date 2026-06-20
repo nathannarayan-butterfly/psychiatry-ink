@@ -290,7 +290,7 @@ export function MedicationEditDialog({
               </p>
               <ul className="medication-prep-compact-list">
                 {kbPreparationOptions.verifiedPreparations.map((prep) => (
-                  <li key={prep.id}>{formatPreparationLine(prep)}</li>
+                  <li key={prep.id}>{formatPreparationLine(prep, language)}</li>
                 ))}
               </ul>
               <p className="medication-edit-dialog__preparations-source">

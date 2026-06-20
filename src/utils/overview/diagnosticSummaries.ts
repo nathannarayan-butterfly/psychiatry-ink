@@ -1,11 +1,71 @@
 import { getBefundSchema } from '../../data/befundSchemas'
 import type { BefundFieldDef } from '../../data/befundSchemas/types'
 import type { BefundRecord } from '../../types/befund'
+import type { UiLanguage } from '../../types/settings'
 import { loadDiagnostikBefunde } from '../befundArchive'
 import { loadAnforderungen } from '../anforderungen/storage'
 import { loadVerlaufFeed } from '../verlaufFeed'
 import { loadDokumente } from '../dokumenteArchive'
 import { formatDateDe } from './dateLabels'
+
+const DIAGNOSTIC_SUMMARY_LABELS: Record<
+  UiLanguage,
+  {
+    normal: string
+    abnormal: string
+    documented: string
+    pending: string
+    findingShort: string
+    noEkg: string
+    noEeg: string
+    noCt: string
+  }
+> = {
+  de: {
+    normal: 'Normal',
+    abnormal: 'Auffällig',
+    documented: 'Dokumentiert',
+    pending: 'Ausstehend',
+    findingShort: 'Befund',
+    noEkg: 'Kein EKG dokumentiert',
+    noEeg: 'Kein EEG dokumentiert',
+    noCt: 'Kein CT dokumentiert',
+  },
+  en: {
+    normal: 'Normal',
+    abnormal: 'Abnormal',
+    documented: 'Documented',
+    pending: 'Pending',
+    findingShort: 'Finding',
+    noEkg: 'No ECG documented',
+    noEeg: 'No EEG documented',
+    noCt: 'No CT documented',
+  },
+  fr: {
+    normal: 'Normal',
+    abnormal: 'Anormal',
+    documented: 'Documenté',
+    pending: 'En attente',
+    findingShort: 'Constatation',
+    noEkg: 'Aucun ECG documenté',
+    noEeg: 'Aucun EEG documenté',
+    noCt: 'Aucune TDM documentée',
+  },
+  es: {
+    normal: 'Normal',
+    abnormal: 'Anormal',
+    documented: 'Documentado',
+    pending: 'Pendiente',
+    findingShort: 'Hallazgo',
+    noEkg: 'Sin ECG documentado',
+    noEeg: 'Sin EEG documentado',
+    noCt: 'Sin TC documentada',
+  },
+}
+
+function diagnosticLabels(language?: UiLanguage) {
+  return DIAGNOSTIC_SUMMARY_LABELS[language ?? 'de']
+}
 
 export type DiagnosticExamStatus = 'normal' | 'abnormal' | 'unknown'
 
@@ -65,8 +125,8 @@ function presetValues(record: BefundRecord, fieldId: string): string[] {
   return Array.isArray(raw) ? raw.map(String) : typeof raw === 'string' ? [raw] : []
 }
 
-function conclusionBrief(record: BefundRecord): string | null {
-  const schema = getBefundSchema(record.type)
+function conclusionBrief(record: BefundRecord, language?: UiLanguage): string | null {
+  const schema = getBefundSchema(record.type, language)
   const conclusionSection = schema.sections.find((s) => s.id === 'conclusion')
   if (!conclusionSection) return null
 
@@ -91,6 +151,7 @@ function buildFromBefund(
   normalLabel: string,
   abnormalLabel: string,
   notConductedLabel: string,
+  language?: UiLanguage,
 ): DiagnosticExamSummary {
   if (!record) {
     return {
@@ -116,27 +177,31 @@ function buildFromBefund(
     dateLabel: formatDateDe(record.examDate),
     status: abnormal ? 'abnormal' : presets.includes('unremarkable') || presets.includes('normal') ? 'normal' : 'unknown',
     statusLabel: abnormal ? abnormalLabel : normalLabel,
-    briefFinding: abnormal ? conclusionBrief(record) : null,
+    briefFinding: abnormal ? conclusionBrief(record, language) : null,
   }
 }
 
-export function buildEkgSummary(caseId: string): DiagnosticExamSummary {
+export function buildEkgSummary(caseId: string, language?: UiLanguage): DiagnosticExamSummary {
+  const labels = diagnosticLabels(language)
   return buildFromBefund(
     latestBefund(caseId, 'ecg'),
     ECG_ABNORMAL_PRESETS,
-    'Normal',
-    'Auffällig',
-    'Kein EKG dokumentiert',
+    labels.normal,
+    labels.abnormal,
+    labels.noEkg,
+    language,
   )
 }
 
-export function buildEegSummary(caseId: string): DiagnosticExamSummary {
+export function buildEegSummary(caseId: string, language?: UiLanguage): DiagnosticExamSummary {
+  const labels = diagnosticLabels(language)
   return buildFromBefund(
     latestBefund(caseId, 'eeg'),
     EEG_ABNORMAL_PRESETS,
-    'Normal',
-    'Auffällig',
-    'Kein EEG dokumentiert',
+    labels.normal,
+    labels.abnormal,
+    labels.noEeg,
+    language,
   )
 }
 
@@ -152,7 +217,8 @@ function extractCtSnippet(text: string): string | null {
 }
 
 /** Latest CT Kurzbefund from orders, Verlauf, or Dokumente — no dedicated CT module yet. */
-export function buildCtSummary(caseId: string): DiagnosticExamSummary {
+export function buildCtSummary(caseId: string, language?: UiLanguage): DiagnosticExamSummary {
+  const labels = diagnosticLabels(language)
   const acceptedCtOrders = loadAnforderungen(caseId).filter(
     (o) =>
       (o.status === 'accepted' || o.status === 'pending') &&
@@ -168,7 +234,7 @@ export function buildCtSummary(caseId: string): DiagnosticExamSummary {
       conducted: latest.status === 'accepted',
       dateLabel: formatDateDe(latest.reviewedAt ?? latest.requestedDate ?? latest.createdAt),
       status: 'unknown',
-      statusLabel: latest.status === 'accepted' ? 'Dokumentiert' : 'Ausstehend',
+      statusLabel: latest.status === 'accepted' ? labels.documented : labels.pending,
       briefFinding: brief,
     }
   }
@@ -180,7 +246,7 @@ export function buildCtSummary(caseId: string): DiagnosticExamSummary {
         conducted: true,
         dateLabel: formatDateDe(entry.date),
         status: /unauff|ohne patholog|kein anhalt|normal/i.test(snippet) ? 'normal' : 'abnormal',
-        statusLabel: /unauff|ohne patholog|kein anhalt|normal/i.test(snippet) ? 'Normal' : 'Befund',
+        statusLabel: /unauff|ohne patholog|kein anhalt|normal/i.test(snippet) ? labels.normal : labels.findingShort,
         briefFinding: snippet,
       }
     }
@@ -194,7 +260,7 @@ export function buildCtSummary(caseId: string): DiagnosticExamSummary {
         conducted: true,
         dateLabel: formatDateDe(doc.date),
         status: /unauff|ohne patholog|kein anhalt|normal/i.test(snippet) ? 'normal' : 'abnormal',
-        statusLabel: /unauff|ohne patholog|kein anhalt|normal/i.test(snippet) ? 'Normal' : 'Befund',
+        statusLabel: /unauff|ohne patholog|kein anhalt|normal/i.test(snippet) ? labels.normal : labels.findingShort,
         briefFinding: snippet,
       }
     }
@@ -204,7 +270,7 @@ export function buildCtSummary(caseId: string): DiagnosticExamSummary {
     conducted: false,
     dateLabel: null,
     status: 'unknown',
-    statusLabel: 'Kein CT dokumentiert',
+    statusLabel: labels.noCt,
     briefFinding: null,
   }
 }

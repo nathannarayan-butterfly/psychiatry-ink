@@ -18,7 +18,7 @@
  *    (Pass A, client-side) always stands. Nothing is ever fabricated.
  */
 
-import { callLlm } from './llmProvider'
+import { runAiFeature } from '../ai/runAiFeature'
 import { deidentifyPackageContent } from './discussCaseDeidentify'
 import type { DiscussPackageContent, DiscussPackageSection } from '../../src/types/discussCase'
 import type { AiModelTier } from '../modelTierMapping'
@@ -466,7 +466,8 @@ export async function runClinicalMetadataExtraction(
   const systemPrompt = buildCmeaSystemPrompt(params.language)
   const userPrompt = buildCmeaUserPrompt(contextText)
 
-  const result = await callLlm({
+  const result = await runAiFeature({
+    featureKey: 'clinical_metadata_extraction',
     tier: params.tier,
     model: params.model,
     systemPrompt,

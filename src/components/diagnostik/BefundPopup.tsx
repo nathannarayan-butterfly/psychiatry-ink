@@ -21,8 +21,8 @@ interface BefundPopupProps {
 }
 
 export function BefundPopup({ caseId, type, recordId, onClose, onSaved }: BefundPopupProps) {
-  const { t } = useTranslation()
-  const schema = getBefundSchema(type)
+  const { t, language } = useTranslation()
+  const schema = getBefundSchema(type, language)
 
   const existing = recordId ? getDiagnostikBefund(caseId, recordId) : null
 
@@ -67,13 +67,13 @@ export function BefundPopup({ caseId, type, recordId, onClose, onSaved }: Befund
       }
 
       upsertDiagnostikBefund(caseId, record)
-      syncBefundDokument(record)
+      syncBefundDokument(record, language)
       showNotionToast(status === 'vidert' ? t('befundSavedVidert') : t('befundSavedDraft'))
       onSaved(record)
       setSaving(false)
       onClose()
     },
-    [caseId, existing, examDate, fieldValues, onClose, onSaved, schema.version, t, type],
+    [caseId, existing, examDate, fieldValues, language, onClose, onSaved, schema.version, t, type],
   )
 
   return (

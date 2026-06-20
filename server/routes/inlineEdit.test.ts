@@ -97,6 +97,53 @@ describe('POST /api/inline-edit', () => {
   })
 })
 
+/**
+ * P1-1 (round 2) — PHI egress guard on /api/inline-edit.
+ *
+ * `selectedText`, `contextBefore`, `contextAfter`, `instruction` MUST be
+ * scrubbed before the prompt reaches the provider. The mock provider (no API
+ * key) echoes the SELECTION back via `editedText` after stripping the suffix,
+ * so the post-scrub selection is directly observable.
+ */
+describe('POST /api/inline-edit — PHI egress guard', () => {
+  it('scrubs patient name and DOB in selectedText / instruction', async () => {
+    const res = await postEdit({
+      caseId: 'case-1',
+      selectedText: 'Erika Musterfrau, geboren am 12.04.1978, berichtet über Schlafstörungen.',
+      contextBefore: 'Patient: Erika Musterfrau.',
+      contextAfter: 'Email: patient@example.com',
+      instruction: 'Erika klinischer formulieren.',
+      patientHints: { patientName: 'Erika Musterfrau', patientDob: '12.04.1978' },
+      language: 'de',
+    })
+    expect(res.status).toBe(200)
+    const data = (await res.json()) as { editedText: string; mock: boolean }
+    expect(data.mock).toBe(true)
+    // Mock echoes the SELECTION back. After the route's PHI scrub, neither
+    // the patient name nor DOB nor email may appear.
+    expect(data.editedText).not.toMatch(/Erika/)
+    expect(data.editedText).not.toMatch(/Musterfrau/)
+    expect(data.editedText).not.toContain('12.04.1978')
+    expect(data.editedText).not.toContain('patient@example.com')
+    expect(data.editedText).toContain('[REDACTED]')
+  })
+
+  it('scrubs ISO / hyphen DOB formats without patientHints', async () => {
+    const res = await postEdit({
+      caseId: 'case-1',
+      selectedText: 'DOB 1978-04-12, Tel 030-123 4567.',
+      contextBefore: '',
+      contextAfter: '',
+      instruction: 'In klinischen Stil umformulieren.',
+      language: 'de',
+    })
+    expect(res.status).toBe(200)
+    const data = (await res.json()) as { editedText: string }
+    expect(data.editedText).not.toContain('1978-04-12')
+    expect(data.editedText).not.toContain('030-123 4567')
+  })
+})
+
 describe('POST /api/inline-edit/transcribe', () => {
   it('returns mock mode when no provider key is configured', async () => {
     const res = await postTranscribe({ caseId: 'case-1', audioBase64: 'AAAA', mimeType: 'audio/webm' })

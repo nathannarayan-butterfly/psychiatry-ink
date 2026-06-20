@@ -3,18 +3,83 @@ import { Router as createRouter } from 'express'
 import type { AiModelTier } from '../modelTierMapping'
 import { parseLlmModelRequest } from '../ai/parseLlmModelRequest'
 import { resolveAccountId } from '../middleware/auth'
-import { callLlm, llmResultModel } from '../services/llmProvider'
+import {
+  SafeLlmEgressError,
+  llmResultModel,
+} from '../services/safeLlmEgress'
 import { resolveUsageContextFromRequest } from '../ai/usage/resolveUsageContext'
 import type { AiFeatureKey } from '../../src/types/aiUsage'
 import { assertAiGenerationAllowed, recordAiGenerationUsed } from '../utils/caseAiAccessGuard'
+import { deidentifyText } from '../services/discussCaseDeidentify'
+import { runAiFeature, InsufficientCreditsError } from '../ai/runAiFeature'
+import { parseMode } from '../ai/aiRouter'
 
 export interface GenerateRequestBody {
   tier: AiModelTier
+  mode?: string
   model?: { provider: string; modelId: string }
   systemPrompt: string
   userPrompt: string
   caseId?: string
   featureKey?: AiFeatureKey
+  /**
+   * Optional patient identifier hints used by the server-side PHI guard. The
+   * server NEVER trusts the client to have de-identified the prompt — these
+   * hints are used to scrub names from the prompt before forwarding to the LLM
+   * provider. Dates, case codes, phone numbers and email are scrubbed
+   * unconditionally regardless of whether hints are provided.
+   */
+  patientHints?: {
+    patientName?: string
+    patientDob?: string
+  }
+}
+
+/**
+ * Direct, demographic identifiers that must NEVER reach the LLM provider in
+ * plaintext. Patterns are intentionally conservative — false positives are
+ * preferable to PHI leakage.
+ */
+const DEMO_OR_UUID_RE = /\bDEMO[-_][A-Z0-9-]+\b|\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi
+
+/**
+ * Server-side PHI guard for `/api/generate` and other freeform LLM routes.
+ *
+ * Re-applies authoritative de-identification to system + user prompts before
+ * forwarding to OpenAI/DeepSeek. The client may have run client-side
+ * pseudonymization (`src/services/aiGeneration.ts`) but the toggle can be
+ * turned off and the caller may forget to pass `patientHints`. This server
+ * guard makes the floor explicit:
+ *
+ *  - Always scrubs dates, case/insurance numbers, phone numbers, emails
+ *    (via `deidentifyText`).
+ *  - When hints are provided, also scrubs the patient name and DOB.
+ *  - Always scrubs DEMO-* and UUID case identifiers from prompts.
+ *
+ * Returns the sanitized prompts ready to forward.
+ */
+export function applyServerPhiGuard(input: {
+  systemPrompt: string
+  userPrompt: string
+  patientHints?: { patientName?: string; patientDob?: string }
+}): { systemPrompt: string; userPrompt: string } {
+  const name = input.patientHints?.patientName?.trim() || undefined
+  const dob = input.patientHints?.patientDob?.trim() || undefined
+
+  const scrub = (text: string): string => {
+    let result = deidentifyText(text, name)
+    if (dob) {
+      const escaped = dob.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      result = result.replace(new RegExp(escaped, 'g'), '[REDACTED]')
+    }
+    result = result.replace(DEMO_OR_UUID_RE, '[REDACTED]')
+    return result
+  }
+
+  return {
+    systemPrompt: scrub(input.systemPrompt),
+    userPrompt: scrub(input.userPrompt),
+  }
 }
 
 export const generateRouter: Router = createRouter()
@@ -49,23 +114,64 @@ generateRouter.post('/', async (req: Request, res: Response) => {
 
     if (!(await assertAiGenerationAllowed(req, res, body.caseId))) return
 
+    let sanitized: { systemPrompt: string; userPrompt: string }
+    try {
+      sanitized = applyServerPhiGuard({
+        systemPrompt: body.systemPrompt,
+        userPrompt: body.userPrompt,
+        patientHints: body.patientHints,
+      })
+    } catch (guardError) {
+      // Fail closed: refuse to forward when the PHI guard cannot run cleanly.
+      console.error('[generate] PHI guard failed, refusing to forward:', guardError)
+      res.status(422).json({
+        error:
+          'PHI guard could not sanitize prompt; refusing to forward to LLM provider. Re-submit with valid input.',
+      })
+      return
+    }
+
     const userId = resolveAccountId(req)
+    const featureKey = body.featureKey ?? 'document_generation'
+    const mode = parseMode(body.mode ?? null)
     const usageContext =
       userId && userId !== 'default'
         ? await resolveUsageContextFromRequest(req, userId, {
             caseId: typeof body.caseId === 'string' ? body.caseId.trim() || null : null,
-            featureKey: body.featureKey ?? 'document_generation',
+            featureKey,
             metadata: { route: 'generate', tier: body.tier },
           })
         : undefined
 
-    const result = await callLlm({
-      tier: llmModel.tier,
-      model: llmModel.model,
-      systemPrompt: body.systemPrompt,
-      userPrompt: body.userPrompt,
-      usageContext,
-    })
+    let result
+    try {
+      result = await runAiFeature({
+        featureKey,
+        mode,
+        tier: llmModel.tier,
+        model: llmModel.model,
+        systemPrompt: sanitized.systemPrompt,
+        userPrompt: sanitized.userPrompt,
+        usageContext,
+        sanitizeOpts: {
+          patientHints: body.patientHints,
+        },
+      })
+    } catch (egressError) {
+      if (egressError instanceof InsufficientCreditsError) {
+        res.status(402).json({ error: egressError.message })
+        return
+      }
+      if (egressError instanceof SafeLlmEgressError) {
+        console.error('[generate] egress guard blocked outbound prompt:', egressError.message)
+        res.status(422).json({
+          error:
+            'PHI guard could not sanitize prompt; refusing to forward to LLM provider. Re-submit with valid input.',
+        })
+        return
+      }
+      throw egressError
+    }
 
     if (userId && userId !== 'default') {
       void recordAiGenerationUsed(req, userId, {

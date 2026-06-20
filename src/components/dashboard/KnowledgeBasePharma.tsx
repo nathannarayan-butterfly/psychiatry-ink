@@ -52,6 +52,7 @@ import {
   normalizePsychClass,
   PSYCH_CLASS_TO_CATEGORY,
   PSYCHOPHARMACA_CLASSES,
+  pickKbLocalizedText,
   sectionHasStructuredData,
   type DrugSection,
   type DrugSectionKey,
@@ -538,8 +539,16 @@ function SectionItem({
   const editMode = mode === 'editing'
   const sectionKind = getSectionKind(section)
   const isStructured = sectionKind !== 'text'
+  // Reading-mode renders the locale-appropriate variant of the section's text
+  // content (German is canonical; the English translation comes from the seed
+  // `contentEn` field). Editing always edits the German source so the canonical
+  // entry never drifts to an English-only state.
+  const readingContent =
+    pickKbLocalizedText(section.content, section.contentEn, language) || section.content
+  const localizedLabel =
+    pickKbLocalizedText(section.label, section.labelEn, language) || section.label
   const isEmptyReadingSection =
-    !editMode && !section.content.trim() && !sectionHasStructuredData(section)
+    !editMode && !readingContent.trim() && !sectionHasStructuredData(section)
 
   const closeSelectionToolbar = useCallback(() => {
     setSelectionToolbar(null)
@@ -589,7 +598,7 @@ function SectionItem({
     requestAnimationFrame(() => {
       const container = contentRef.current
       if (!container) return
-      const offsets = getTextSelectionOffsets(container, section.content)
+      const offsets = getTextSelectionOffsets(container, readingContent)
       if (!offsets) {
         closeSelectionToolbar()
         return
@@ -755,7 +764,7 @@ function SectionItem({
           <div className="kbp-section__header-view">
             <span className="kbp-section__title-wrap">
               <span className="kbp-section__label">
-                <span className="kbp-section__title">{displayTitle ?? section.label}</span>
+                <span className="kbp-section__title">{displayTitle ?? localizedLabel}</span>
               </span>
             </span>
             <div className="kbp-section__header-right">
@@ -821,9 +830,9 @@ function SectionItem({
               className="kbp-section__reading-content"
               onMouseUp={handleContentMouseUp}
             >
-              {section.content ? (
+              {readingContent ? (
                 <HighlightedText
-                  content={section.content}
+                  content={readingContent}
                   highlights={highlights}
                   onRemoveHighlight={onRemoveHighlight}
                 />
@@ -1311,11 +1320,11 @@ function CountryPreparationsSection({
         ) : mode === 'reading' ? (
           <div className="kb-prep-reading-list">
             <p className="kbp-section__text kbp-prep-list-intro">
-              {drug.genericName} — verfügbare Zubereitungen in {PRESCRIBING_COUNTRY_NATIVE_LABELS[country]}:
+              {pickKbLocalizedText(drug.genericName, drug.genericNameEn, language) || drug.genericName} — verfügbare Zubereitungen in {PRESCRIBING_COUNTRY_NATIVE_LABELS[country]}:
             </p>
             <ul className="kb-prep-compact-list">
               {entries.map((entry) => (
-                <li key={entry.id}>{formatPreparationLine(entry)}</li>
+                <li key={entry.id}>{formatPreparationLine(entry, language)}</li>
               ))}
             </ul>
           </div>
@@ -1333,11 +1342,19 @@ function CountryPreparationsSection({
                 </tr>
               </thead>
               <tbody>
-                {entries.map((entry) => (
+                {entries.map((entry) => {
+                  const localizedDosageForm = pickKbLocalizedText(entry.dosageForm, entry.dosageFormEn, language) || entry.dosageForm
+                  const localizedGenericName = pickKbLocalizedText(entry.genericName, entry.genericNameEn, language) || entry.genericName
+                  const localizedSource = pickKbLocalizedText(
+                    entry.sourceName || entry.sourceReference,
+                    entry.sourceNameEn || entry.sourceReferenceEn,
+                    language,
+                  )
+                  return (
                   <tr key={entry.id}>
                     <td>
                       <strong>{entry.tradeName}</strong>
-                      <span className="kb-prep-table__meta">{entry.genericName}</span>
+                      <span className="kb-prep-table__meta">{localizedGenericName}</span>
                       {mode === 'editing' ? (
                         <span className="kb-prep-table__meta">
                           {formatAuditLine('Erstellt von', entry.createdByDisplayName, entry.createdAt, language)}
@@ -1347,8 +1364,8 @@ function CountryPreparationsSection({
                       ) : null}
                     </td>
                     <td>{formatPreparationStrength(entry)}</td>
-                    <td>{entry.dosageForm} · {entry.route}</td>
-                    <td>{compactText(entry.sourceName || entry.sourceReference, 80) || '—'}</td>
+                    <td>{localizedDosageForm} · {entry.route}</td>
+                    <td>{compactText(localizedSource, 80) || '—'}</td>
                     <td>{entry.verificationStatus} · {formatKbDate(entry.lastVerifiedAt, language)}</td>
                     {mode === 'editing' ? (
                       <td>
@@ -1363,7 +1380,8 @@ function CountryPreparationsSection({
                       </td>
                     ) : null}
                   </tr>
-                ))}
+                  )
+                })}
                 {pendingEntries.map((entry, index) => (
                   <tr key={`pending-${entry.countryCode}-${entry.tradeName}-${entry.strengthValue}-${index}`} className="kb-prep-table__row--pending">
                     <td>

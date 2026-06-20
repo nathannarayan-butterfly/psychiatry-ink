@@ -20,6 +20,7 @@ import {
 import { requireRouteAuth } from '../utils/requireRouteAuth'
 import { requireClinicalLanguage } from '../utils/resolveClinicalLanguage'
 import { resolveUsageContextFromRequest } from '../ai/usage/resolveUsageContext'
+import { InsufficientCreditsError } from '../ai/runAiFeature'
 import type {
   LabBefundSnapshotInput,
   LabCorrelationAIResult,
@@ -30,8 +31,10 @@ import type {
   LabObservationInput,
   PatientMedicationLabCorrelationFinding,
 } from '../../src/types/labMedicationCorrelation'
+import { localizeKbCorrelationRule } from '../../src/types/labMedicationCorrelation'
 import { buildCorrelationKey } from '../../src/utils/labMedicationCorrelation/correlationKey'
 import { labParameterLabelDe } from '../../src/utils/labMedicationCorrelation/parameterNormalize'
+import type { ClinicalLanguage } from '../utils/resolveClinicalLanguage'
 
 export const labMedicationCorrelationRouter: Router = createRouter()
 
@@ -100,15 +103,20 @@ function kbFinding(
   lab: LabObservationInput,
   kb: NonNullable<ReturnType<typeof lookupMedicationLabCorrelation>>,
   substanceId: string,
+  language: ClinicalLanguage,
 ): PatientMedicationLabCorrelationFinding {
   const now = new Date().toISOString()
   const correlationKey = buildCorrelationKey(substanceId, lab.normalizedParameter)
+  // Pick EN sibling fields when UI language is English; fall back to the
+  // German baseline so French/Spanish (no rule translations yet) keep working.
+  const localized = localizeKbCorrelationRule(kb, language)
+  const provenance = language === 'en' ? 'Internal knowledge base' : 'Interne Wissensdatenbank'
   return {
     id: crypto.randomUUID(),
     caseId,
     correlationKey,
     labParameter: lab.normalizedParameter,
-    labParameterLabel: kb.labParameterLabelDe || labParameterLabelDe(lab.normalizedParameter),
+    labParameterLabel: localized.labParameterLabelDe || labParameterLabelDe(lab.normalizedParameter),
     labValue: lab.value,
     labUnit: lab.unit,
     refRange: formatRefRange(lab),
@@ -121,16 +129,16 @@ function kbFinding(
     medStartDate: med.startDate,
     lastDoseChangeDate: med.lastChangeAt,
     temporalPlausibility: compareTemporalPlausibility(med.startDate, med.lastChangeAt, lab.labDate),
-    zusammenhang: kb.zusammenhang,
-    mechanism: kb.mechanism,
-    recommendation: kb.recommendation,
-    monitoring: kb.monitoring,
-    alternatives: kb.alternatives,
-    correlationStrength: kb.correlationStrength,
+    zusammenhang: localized.zusammenhang,
+    mechanism: localized.mechanism,
+    recommendation: localized.recommendation,
+    monitoring: localized.monitoring,
+    alternatives: localized.alternatives,
+    correlationStrength: localized.correlationStrength,
     source: 'knowledge_base',
     status: 'verified_kb',
-    kbResult: kb,
-    provenance: 'Interne Wissensdatenbank',
+    kbResult: localized,
+    provenance,
     createdAt: now,
     updatedAt: now,
   }
@@ -262,7 +270,7 @@ labMedicationCorrelationRouter.post('/run', async (req: Request, res: Response) 
 
         if (kbHit && kbHit.correlationStrength !== 'none') {
           anyKbHit = true
-          findings.push(kbFinding(caseId, med, lab, kbHit, substanceId))
+          findings.push(kbFinding(caseId, med, lab, kbHit, substanceId, language))
         }
 
         if (kbIncomplete) needsAi = true
@@ -359,7 +367,7 @@ labMedicationCorrelationRouter.post('/run', async (req: Request, res: Response) 
         aiRuns.push(run)
 
         if (hasConflict && pair.kbHit) {
-          findings.push(kbFinding(caseId, pair.med, pair.lab, pair.kbHit, pair.substanceId))
+          findings.push(kbFinding(caseId, pair.med, pair.lab, pair.kbHit, pair.substanceId, language))
         }
         findings.push(finding)
 
@@ -392,6 +400,10 @@ labMedicationCorrelationRouter.post('/run', async (req: Request, res: Response) 
       ...(aiWarning ? { aiWarning } : {}),
     } satisfies LabMedicationCorrelationRunResponse)
   } catch (error) {
+    if (error instanceof InsufficientCreditsError) {
+      res.status(402).json({ error: error.message })
+      return
+    }
     console.error('[lab-med-correlation/run] failed:', error)
     res.status(500).json({ error: 'Korrelationsprüfung fehlgeschlagen' })
   }
@@ -601,17 +613,26 @@ labMedicationCorrelationRouter.post('/:findingId/openai-second-opinion', async (
     featureKey: 'lab_medication_correlation',
     metadata: { route: 'lab-med-correlation', provider: 'openai', secondOpinion: true },
   })
-  const aiResult = await assessLabCorrelationWithAi({
-    med,
-    lab,
-    kbHint: finding.kbResult ?? null,
-    provider: 'openai',
-    priorAiResult: priorAi,
-    substanceId: finding.substanceId,
-    clinicalNotes: typeof snapshot?.clinicalNotes === 'string' ? snapshot.clinicalNotes : undefined,
-    language,
-    usageContext,
-  })
+  let aiResult: LabCorrelationAIResult | null
+  try {
+    aiResult = await assessLabCorrelationWithAi({
+      med,
+      lab,
+      kbHint: finding.kbResult ?? null,
+      provider: 'openai',
+      priorAiResult: priorAi,
+      substanceId: finding.substanceId,
+      clinicalNotes: typeof snapshot?.clinicalNotes === 'string' ? snapshot.clinicalNotes : undefined,
+      language,
+      usageContext,
+    })
+  } catch (error) {
+    if (error instanceof InsufficientCreditsError) {
+      res.status(402).json({ error: error.message })
+      return
+    }
+    throw error
+  }
 
   if (!aiResult) {
     res.status(502).json({ error: 'OpenAI-Zweitprüfung fehlgeschlagen' })

@@ -23,8 +23,8 @@ import { useClinicalIntelligence } from '../../../hooks/useClinicalIntelligence'
 import { ClinicalSection } from '../ClinicalSection'
 import {
   isClinicalIntelligenceDebugMode,
-  isClinicalIntelligenceV1Enabled,
 } from '../../../utils/featureFlags'
+import { isClinicalIntelligenceAvailableForCase } from '../../../demo/demoFeatureFlags'
 import { CiAccordion } from './CiAccordion'
 import { CiHypothesisBanner } from './CiHypothesisBanner'
 import { ClinicianReviewCard } from './ClinicianReviewCard'
@@ -72,7 +72,7 @@ export function ClinicalIntelligencePanel({
   const ci = useClinicalIntelligence(caseId)
 
   const debugMode = isClinicalIntelligenceDebugMode()
-  const enabled = isClinicalIntelligenceV1Enabled()
+  const enabled = isClinicalIntelligenceAvailableForCase(caseId)
 
   const run = ci.latestRun
   const dimensional = run?.dimensional ?? null
@@ -486,7 +486,7 @@ export function ClinicalIntelligencePanel({
         </>
       )}
 
-      {debugMode ? (
+      {debugMode && import.meta.env.DEV ? (
         <DevelopmentDiagnosticsPanel
           evidence={ci.evidence}
           evidenceErrorCode={ci.evidenceError?.code ?? null}

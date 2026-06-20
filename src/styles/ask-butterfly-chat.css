@@ -143,6 +143,24 @@
   min-width: 0;
   width: 100%;
   overflow: hidden;
+  transition: margin-right 200ms ease;
+}
+
+/*
+ * Docked Butterfly chat → reserve a gutter on the right so the page content
+ * shrinks instead of being covered by the fixed dock panel. The variable
+ * --ask-butterfly-dock-width is set on .app-shell by AskButterflyShell and
+ * tracks the user-resized panel width. Floating mode leaves margin-right at 0
+ * so the chat truly overlays the page.
+ */
+.app-shell--butterfly-docked .app-shell__content {
+  margin-right: var(--ask-butterfly-dock-width, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell__content {
+    transition: none;
+  }
 }
 
 /* Standalone pages and the case workspace must fill the shell — not 100dvh twice. */
@@ -592,6 +610,15 @@
 
   .ask-butterfly-dialog__messages {
     min-height: 12rem;
+  }
+
+  /*
+   * On mobile the dock panel becomes a bottom sheet that overlays content
+   * (see .ask-butterfly-dock-panel overrides below). Cancel the right-gutter
+   * shrink so the page stays full width underneath the sheet.
+   */
+  .app-shell--butterfly-docked .app-shell__content {
+    margin-right: 0;
   }
 
   .ask-butterfly-dock-panel {

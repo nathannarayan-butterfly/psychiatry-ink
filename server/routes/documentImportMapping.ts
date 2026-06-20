@@ -7,9 +7,13 @@
  */
 import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
-import { callLlm } from '../services/llmProvider'
 import { parseLlmModelRequest } from '../ai/parseLlmModelRequest'
 import { isDocumentImportAiEnabled } from '../utils/featureFlags'
+import {
+  SafeLlmEgressError,
+  sanitizeText,
+} from '../services/safeLlmEgress'
+import { runAiFeature, InsufficientCreditsError } from '../ai/runAiFeature'
 import {
   CANDIDATE_MODULES,
   type CandidateModule,
@@ -55,13 +59,35 @@ documentImportMappingRouter.post('/suggest-mapping', async (req: Request, res: R
     res.status(400).json({ error: 'Invalid request', details: parsed.error.flatten() })
     return
   }
-  const { items, language } = parsed.data
+  const { items, language, patientHints } = parsed.data
+
+  // Egress PHI guard — the client provides `deidentifiedText` and asserts it
+  // is scrubbed. We DO NOT TRUST that. Re-run the authoritative server-side
+  // scrubber on every item; if a high-confidence PHI residual remains after
+  // sanitization, fail closed with HTTP 422.
+  let safeItems: typeof items
+  try {
+    safeItems = items.map((item) => ({
+      ...item,
+      deidentifiedText: sanitizeText(item.deidentifiedText, { patientHints }),
+    }))
+  } catch (guardError) {
+    if (guardError instanceof SafeLlmEgressError) {
+      console.error('[document-import] mapping PHI guard blocked request:', guardError.message)
+      res.status(422).json({
+        error:
+          'PHI guard could not sanitize document-import payload; refusing to forward to LLM provider.',
+      })
+      return
+    }
+    throw guardError
+  }
 
   // Mock mode: deterministic echo so the path is exercisable without API keys.
   if (isLlmMockMode()) {
     const response: ImportMappingResponse = {
       mock: true,
-      suggestions: items.map((item) => ({
+      suggestions: safeItems.map((item) => ({
         candidateId: item.candidateId,
         suggestedModule: item.currentModule,
         confidence: 'low',
@@ -81,12 +107,13 @@ documentImportMappingRouter.post('/suggest-mapping', async (req: Request, res: R
   ].join(' ')
 
   const userPrompt = JSON.stringify(
-    items.map((item) => ({ candidateId: item.candidateId, currentModule: item.currentModule, text: item.deidentifiedText })),
+    safeItems.map((item) => ({ candidateId: item.candidateId, currentModule: item.currentModule, text: item.deidentifiedText })),
   )
 
   try {
     const llmModel = parseLlmModelRequest((req.body ?? {}) as Record<string, unknown>, 'fast')
-    const result = await callLlm({
+    const result = await runAiFeature({
+      featureKey: 'document_import_mapping',
       tier: llmModel.tier,
       model: llmModel.model,
       systemPrompt,
@@ -97,6 +124,18 @@ documentImportMappingRouter.post('/suggest-mapping', async (req: Request, res: R
     const response: ImportMappingResponse = { suggestions }
     res.json(response)
   } catch (error) {
+    if (error instanceof InsufficientCreditsError) {
+      res.status(402).json({ error: (error as Error).message })
+      return
+    }
+    if (error instanceof SafeLlmEgressError) {
+      console.error('[document-import] mapping outbound prompt blocked:', error.message)
+      res.status(422).json({
+        error:
+          'PHI guard could not sanitize prompt; refusing to forward to LLM provider.',
+      })
+      return
+    }
     console.error('[document-import] mapping failed:', error)
     res.status(500).json({ error: 'Mapping failed' })
   }
@@ -142,12 +181,32 @@ documentImportMappingRouter.post('/analyze', async (req: Request, res: Response)
     res.status(400).json({ error: 'Invalid request', details: parsed.error.flatten() })
     return
   }
-  const { metadata, mappingItems, language } = parsed.data
+  const { metadata, mappingItems, language, patientHints } = parsed.data
+
+  // Re-scrub every client-asserted `deidentifiedText` server-side. If the
+  // high-confidence residual check fires we block with HTTP 422 below.
+  let safeMappingItems: typeof mappingItems
+  try {
+    safeMappingItems = mappingItems.map((item) => ({
+      ...item,
+      deidentifiedText: sanitizeText(item.deidentifiedText, { patientHints }),
+    }))
+  } catch (guardError) {
+    if (guardError instanceof SafeLlmEgressError) {
+      console.error('[document-import] analyze PHI guard blocked request:', guardError.message)
+      res.status(422).json({
+        error:
+          'PHI guard could not sanitize document-import payload; refusing to forward to LLM provider.',
+      })
+      return
+    }
+    throw guardError
+  }
 
   if (isLlmMockMode()) {
     const response: ImportAnalyzeResponse = {
       mock: true,
-      mappingSuggestions: mappingItems.map((item) => ({
+      mappingSuggestions: safeMappingItems.map((item) => ({
         candidateId: item.candidateId,
         suggestedModule: mockModuleFromHint(item.deidentifiedText, item.currentModule),
         confidence: 'low',
@@ -180,7 +239,7 @@ documentImportMappingRouter.post('/analyze', async (req: Request, res: Response)
 
   const userPrompt = JSON.stringify({
     metadata,
-    mappingItems: mappingItems.map((item) => ({
+    mappingItems: safeMappingItems.map((item) => ({
       candidateId: item.candidateId,
       currentModule: item.currentModule,
       text: item.deidentifiedText,
@@ -189,16 +248,29 @@ documentImportMappingRouter.post('/analyze', async (req: Request, res: Response)
 
   try {
     const llmModel = parseLlmModelRequest((req.body ?? {}) as Record<string, unknown>, 'fast')
-    const result = await callLlm({
+    const result = await runAiFeature({
+      featureKey: 'document_import_mapping',
       tier: llmModel.tier,
       model: llmModel.model,
       systemPrompt,
       userPrompt,
       jsonResponse: true,
     })
-    const analyze = extractAnalyzeResponse(result.text, mappingItems, metadata)
+    const analyze = extractAnalyzeResponse(result.text, safeMappingItems, metadata)
     res.json(analyze)
   } catch (error) {
+    if (error instanceof InsufficientCreditsError) {
+      res.status(402).json({ error: (error as Error).message })
+      return
+    }
+    if (error instanceof SafeLlmEgressError) {
+      console.error('[document-import] analyze outbound prompt blocked:', error.message)
+      res.status(422).json({
+        error:
+          'PHI guard could not sanitize prompt; refusing to forward to LLM provider.',
+      })
+      return
+    }
     console.error('[document-import] analyze failed:', error)
     res.status(500).json({ error: 'Analyze failed' })
   }

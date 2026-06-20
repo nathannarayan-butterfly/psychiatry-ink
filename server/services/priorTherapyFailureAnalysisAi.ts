@@ -3,7 +3,8 @@ import {
   clinicalLanguagePromptInstruction,
   type ClinicalLanguage,
 } from '../utils/resolveClinicalLanguage'
-import { callLlm, llmResultModel } from './llmProvider'
+import { llmResultModel } from './safeLlmEgress'
+import { runAiFeature } from '../ai/runAiFeature'
 import type { AiUsageContext } from '../ai/types'
 import { parseStructuredJson } from '../utils/parseStructuredJson'
 import { isLlmMockMode } from './priorTherapiesAi'
@@ -152,7 +153,8 @@ export async function extractFailureAnalyses(params: {
     language: params.language,
   })
 
-  const llm = await callLlm({
+  const llm = await runAiFeature({
+    featureKey: 'prior_therapies',
     tier: params.tier ?? 'standard',
     systemPrompt,
     userPrompt,

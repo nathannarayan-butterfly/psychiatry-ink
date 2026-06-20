@@ -139,6 +139,12 @@ export function DictationControls({
 
   return (
     <div className="dictation-controls flex min-w-0 flex-1 flex-wrap items-center gap-1.5 sm:gap-2">
+      <p
+        className="dictation-consent-notice basis-full text-[11px] leading-snug text-muted sm:text-[12px]"
+        role="note"
+      >
+        {t('dictationConsentNotice')}
+      </p>
       <span
         className="dictation-timer shrink-0 font-mono text-xs tabular-nums text-ink"
         aria-live="polite"

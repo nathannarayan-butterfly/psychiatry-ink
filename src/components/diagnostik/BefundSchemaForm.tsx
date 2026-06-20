@@ -1,3 +1,4 @@
+import { useTranslation } from '../../context/TranslationContext'
 import type { BefundFieldDef } from '../../data/befundSchemas/types'
 import type { BefundSchema } from '../../data/befundSchemas/types'
 
@@ -7,6 +8,13 @@ interface BefundSchemaFormProps {
   onChange: (fieldId: string, value: string | string[] | boolean) => void
   examDate: string
   onExamDateChange: (date: string) => void
+}
+
+const EXAM_DATE_LABELS: Record<string, string> = {
+  de: 'Untersuchungsdatum',
+  en: 'Examination date',
+  fr: "Date d'examen",
+  es: 'Fecha de la exploración',
 }
 
 function RadioGroupField({
@@ -79,11 +87,13 @@ export function BefundSchemaForm({
   examDate,
   onExamDateChange,
 }: BefundSchemaFormProps) {
+  const { language } = useTranslation()
+  const examDateLabel = EXAM_DATE_LABELS[language] ?? EXAM_DATE_LABELS.de
   return (
     <div className="befund-form">
       <div className="befund-form__meta">
         <label className="befund-form__date-label">
-          <span>Untersuchungsdatum</span>
+          <span>{examDateLabel}</span>
           <input
             type="date"
             className="befund-form__date-input"

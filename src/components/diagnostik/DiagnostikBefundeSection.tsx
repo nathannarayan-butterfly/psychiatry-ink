@@ -5,6 +5,7 @@ import { useDemoPatient } from '../../hooks/useDemoPatient'
 import { BEFUND_TYPES, getBefundSchema } from '../../data/befundSchemas'
 import type { UiTranslationKey } from '../../data/uiTranslations'
 import type { BefundRecord, BefundType } from '../../types/befund'
+import type { UiLanguage } from '../../types/settings'
 import {
   BEFUND_ARCHIVE_CHANGED_EVENT,
   deleteDiagnostikBefund,
@@ -36,7 +37,7 @@ export function DiagnostikBefundeSidebar({
   selectedId,
   onSelect,
 }: DiagnostikBefundeSidebarProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
 
   if (records.length === 0) {
     return <p className="labor-page__sidebar-empty">{t('befundSidebarEmpty')}</p>
@@ -58,7 +59,7 @@ export function DiagnostikBefundeSidebar({
           >
             <span className="labor-page__befund-date">{formatBefundDate(record.examDate)}</span>
             <span className="labor-page__befund-label">
-              {getBefundTypeLabel(record.type)}
+              {getBefundTypeLabel(record.type, language)}
               {record.status === 'draft' ? (
                 <span className="befund-status-badge befund-status-badge--draft"> {t('befundStatusDraft')}</span>
               ) : (
@@ -96,9 +97,9 @@ interface DiagnostikBefundeMainProps {
   onRequestAnforderung?: (preset?: AnforderungModalPreset | null) => void
 }
 
-function copyBefundToClipboard(record: BefundRecord): void {
-  const text = renderBefundContent(record)
-  const header = `${getBefundSchema(record.type).title} — ${formatBefundDate(record.examDate)}`
+function copyBefundToClipboard(record: BefundRecord, language: UiLanguage): void {
+  const text = renderBefundContent(record, language)
+  const header = `${getBefundSchema(record.type, language).title} — ${formatBefundDate(record.examDate)}`
   const payload = `${header}\n\n${text}`
   navigator.clipboard.writeText(payload).catch(() => {
     const ta = document.createElement('textarea')
@@ -118,7 +119,7 @@ export function DiagnostikBefundeMain({
   onRecordsChange,
   onRequestAnforderung,
 }: DiagnostikBefundeMainProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const { readOnly } = useDemoPatient(caseId)
   const [popupType, setPopupType] = useState<BefundType | null>(null)
   const [editRecordId, setEditRecordId] = useState<string | undefined>()
@@ -150,8 +151,8 @@ export function DiagnostikBefundeMain({
   }, [caseId, onRecordsChange, onSelect, readOnly, t])
 
   const handleCopy = useCallback((record: BefundRecord) => {
-    copyBefundToClipboard(record)
-  }, [])
+    copyBefundToClipboard(record, language)
+  }, [language])
 
   return (
     <>
@@ -184,7 +185,7 @@ export function DiagnostikBefundeMain({
                     title={addLabel}
                     aria-label={addLabel}
                   >
-                    <span aria-hidden="true">+ {getBefundSchema(type).shortLabel}</span>
+                    <span aria-hidden="true">+ {getBefundSchema(type, language).shortLabel}</span>
                   </button>
                 </div>
               )
@@ -207,7 +208,7 @@ export function DiagnostikBefundeMain({
                 <header className="labor-befund-header">
                   <div className="labor-befund-header__left">
                     <h2 className="labor-befund-header__date">
-                      {getBefundSchema(selected.type).title} — {formatBefundDate(selected.examDate)}
+                      {getBefundSchema(selected.type, language).title} — {formatBefundDate(selected.examDate)}
                     </h2>
                     <span
                       className={[
@@ -250,7 +251,7 @@ export function DiagnostikBefundeMain({
                     </button>
                   </div>
                 </header>
-                <pre className="diagnostik-befunde__content">{renderBefundContent(selected)}</pre>
+                <pre className="diagnostik-befunde__content">{renderBefundContent(selected, language)}</pre>
               </>
             )}
           </div>

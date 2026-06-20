@@ -5,9 +5,9 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 import { AuthProvider } from './context/AuthContext'
 import { OrganisationProvider } from './contexts/PermissionContext'
 import { ActiveAppointmentProvider } from './contexts/ActiveAppointmentContext'
-import { defaultLanguage, languageOptions } from './data/languages'
+import { defaultLanguage } from './data/languages'
 import { registerClinicalLanguageResolver } from './services/clinicalApiFetch'
-import { loadStoredUiLanguage, LANGUAGE_STORAGE_KEY } from './utils/clinicalLanguage'
+import { loadStoredUiLanguage } from './utils/clinicalLanguage'
 import { reapplyDevicePreferences } from './utils/devicePreferences'
 import './styles/globals.css'
 import './styles/action-buttons.css'
@@ -15,6 +15,7 @@ import './styles/notion-preview.css'
 import './styles/case-sidebar.css'
 import './styles/clinical-ui.css'
 import './styles/landing.css'
+import './styles/homepage.css'
 import './styles/kb-admin.css'
 import './styles/discuss-case.css'
 import './styles/consultation.css'
@@ -49,9 +50,7 @@ registerClinicalLanguageResolver(loadStoredUiLanguage)
 reapplyDevicePreferences()
 
 try {
-  const savedLang = localStorage.getItem(LANGUAGE_STORAGE_KEY)
-  const match = languageOptions.find((option) => option.value === savedLang)
-  document.documentElement.lang = match?.value ?? defaultLanguage
+  document.documentElement.lang = loadStoredUiLanguage()
 } catch {
   document.documentElement.lang = defaultLanguage
 }

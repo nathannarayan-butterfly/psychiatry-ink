@@ -9,6 +9,18 @@
 import { z } from 'zod'
 import { CandidateModuleSchema } from './envelope'
 
+/**
+ * Optional patient hints — when provided the server-side egress guard scrubs
+ * the patient name and DOB in addition to the unconditional pattern set. The
+ * client never has to send them; they help the server scrub clinician-pasted
+ * residuals that survived client-side de-identification.
+ */
+export const PatientHintsSchema = z.object({
+  patientName: z.string().max(160).optional(),
+  patientDob: z.string().max(40).optional(),
+})
+export type PatientHints = z.infer<typeof PatientHintsSchema>
+
 export const ImportMappingRequestItemSchema = z.object({
   candidateId: z.string().min(1),
   /** De-identified snippet (see `deidentifyText`). */
@@ -20,6 +32,8 @@ export type ImportMappingRequestItem = z.infer<typeof ImportMappingRequestItemSc
 export const ImportMappingRequestSchema = z.object({
   language: z.enum(['de', 'en', 'fr', 'es']).default('de'),
   items: z.array(ImportMappingRequestItemSchema).min(1).max(50),
+  /** Optional hints used by the server-side egress guard to scrub residual PHI. */
+  patientHints: PatientHintsSchema.optional(),
 })
 export type ImportMappingRequest = z.infer<typeof ImportMappingRequestSchema>
 
@@ -132,6 +146,8 @@ export const ImportAnalyzeRequestSchema = z.object({
   mappingItems: z.array(ImportMappingRequestItemSchema).max(50).default([]),
   /** Standard vs enterprise — compliance widget shape differs. */
   edition: z.enum(['standard', 'enterprise']).default('standard'),
+  /** Optional hints used by the server-side egress guard to scrub residual PHI. */
+  patientHints: PatientHintsSchema.optional(),
 })
 export type ImportAnalyzeRequest = z.infer<typeof ImportAnalyzeRequestSchema>
 

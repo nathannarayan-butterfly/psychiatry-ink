@@ -10,16 +10,27 @@ afterEach(() => {
   for (const key of Object.keys(import.meta.env)) {
     if (
       key === 'VITE_CLINICAL_INTELLIGENCE_V1_ENABLED' ||
-      key === 'VITE_CLINICAL_INTELLIGENCE_DEBUG_MODE'
+      key === 'VITE_CLINICAL_INTELLIGENCE_DEBUG_MODE' ||
+      key === 'DEV' ||
+      key === 'PROD' ||
+      key === 'MODE'
     ) {
       ;(import.meta.env as Record<string, unknown>)[key] = ORIGINAL_ENV[key]
     }
   }
 })
 
+/** Force `import.meta.env.DEV` for the test (bypasses vi.stubEnv string coercion). */
+function setDev(value: boolean): void {
+  ;(import.meta.env as Record<string, unknown>).DEV = value
+  ;(import.meta.env as Record<string, unknown>).PROD = !value
+  ;(import.meta.env as Record<string, unknown>).MODE = value ? 'development' : 'production'
+}
+
 describe('clinical intelligence feature flags', () => {
   beforeEach(() => {
     vi.unstubAllEnvs()
+    setDev(true)
   })
 
   it('is disabled by default in Normal Mode', () => {
@@ -46,5 +57,17 @@ describe('clinical intelligence feature flags', () => {
     vi.stubEnv('VITE_CLINICAL_INTELLIGENCE_DEBUG_MODE', 'true')
     expect(isClinicalIntelligenceV1Enabled()).toBe(false)
     expect(isClinicalIntelligenceDebugMode()).toBe(true)
+  })
+
+  it('debug mode fails closed in production even with the env flag set true (P0-1)', () => {
+    setDev(false)
+    vi.stubEnv('VITE_CLINICAL_INTELLIGENCE_DEBUG_MODE', 'true')
+    expect(isClinicalIntelligenceDebugMode()).toBe(false)
+  })
+
+  it('debug mode stays disabled in production when env flag is unset (P0-1)', () => {
+    setDev(false)
+    vi.stubEnv('VITE_CLINICAL_INTELLIGENCE_DEBUG_MODE', '')
+    expect(isClinicalIntelligenceDebugMode()).toBe(false)
   })
 })

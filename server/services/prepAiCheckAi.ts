@@ -3,7 +3,8 @@ import {
   clinicalLanguagePromptInstruction,
   type ClinicalLanguage,
 } from '../utils/resolveClinicalLanguage'
-import { callLlm, llmResultModel } from './llmProvider'
+import { llmResultModel } from './safeLlmEgress'
+import { runAiFeature } from '../ai/runAiFeature'
 import { parseStructuredJson } from '../utils/parseStructuredJson'
 import type { AiUsageContext } from '../ai/types'
 import type { PrepAiCheckPreparation } from '../../src/types/prepAiCheck'
@@ -111,7 +112,8 @@ export async function assessPreparationAvailabilityWithAi(params: {
     .filter(Boolean)
     .join('\n')
 
-  const result = await callLlm({
+  const result = await runAiFeature({
+    featureKey: 'prep_ai_check',
     tier: params.tier ?? 'standard',
     systemPrompt,
     userPrompt,

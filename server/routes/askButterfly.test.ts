@@ -78,3 +78,70 @@ describe('POST /api/ask-butterfly', () => {
     expect(res.status).toBe(401)
   })
 })
+
+/**
+ * PHI egress guard — Beta hardening round 2.
+ *
+ * Ask Butterfly is a generic chat surface that the prompt template explicitly
+ * tells the model has no access to patient records. We must therefore re-scrub
+ * every clinician-supplied message server-side. The mock provider (no API key)
+ * echoes the assembled user prompt back as `answer`, so we can directly
+ * inspect what reached the LLM trust boundary.
+ */
+describe('POST /api/ask-butterfly — PHI egress guard', () => {
+  it('scrubs patient name (via patientHints) / DOB / case codes / email from forwarded messages', async () => {
+    const res = await postChat({
+      language: 'de',
+      patientHints: { patientName: 'Erika Musterfrau', patientDob: '12.04.1978' },
+      messages: [
+        {
+          role: 'user',
+          content:
+            'Erika Musterfrau, geboren am 12.04.1978, Email patient@example.com. Fall AB-12345. Zusammenfassen?',
+        },
+      ],
+    })
+    expect(res.status).toBe(200)
+    const data = (await res.json()) as { answer: string }
+    // Mock provider echoes the (sanitized) user prompt — verify obvious PHI
+    // never reached the egress boundary.
+    expect(data.answer).not.toContain('Erika')
+    expect(data.answer).not.toContain('Musterfrau')
+    expect(data.answer).not.toContain('12.04.1978')
+    expect(data.answer).not.toContain('patient@example.com')
+    expect(data.answer).not.toContain('AB-12345')
+    expect(data.answer).toContain('[REDACTED]')
+  })
+
+  it('still redacts unconditional PHI (DOB / email / case codes) when patientHints are missing', async () => {
+    const res = await postChat({
+      language: 'de',
+      messages: [
+        {
+          role: 'user',
+          content:
+            'DOB 12.04.1978, Email patient@example.com, Fall AB-12345 — bitte einschätzen.',
+        },
+      ],
+    })
+    expect(res.status).toBe(200)
+    const data = (await res.json()) as { answer: string }
+    expect(data.answer).not.toContain('12.04.1978')
+    expect(data.answer).not.toContain('patient@example.com')
+    expect(data.answer).not.toContain('AB-12345')
+    expect(data.answer).toContain('[REDACTED]')
+  })
+
+  it('scrubs DOB across DD.MM.YYYY, YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY formats', async () => {
+    const dobFormats = ['1978-04-12', '12/04/1978', '12-04-1978', '12.04.1978', '12.04.78']
+    for (const dob of dobFormats) {
+      const res = await postChat({
+        language: 'de',
+        messages: [{ role: 'user', content: `DOB ${dob} bitte interpretieren.` }],
+      })
+      expect(res.status).toBe(200)
+      const data = (await res.json()) as { answer: string }
+      expect(data.answer, `format ${dob}`).not.toContain(dob)
+    }
+  })
+})

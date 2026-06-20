@@ -71,6 +71,19 @@ describe('KB Admin API gating (P0-2)', () => {
     expect(res.status).toBe(404)
   })
 
+  it('returns 404 for /status when disabled — does not leak existence (P1-5)', async () => {
+    const res = await fetch(`${baseUrl}/api/kb-admin/status`)
+    expect(res.status).toBe(404)
+  })
+
+  it('returns 200 for /status when explicitly enabled', async () => {
+    process.env.ENABLE_KB_ADMIN_API = 'true'
+    const res = await fetch(`${baseUrl}/api/kb-admin/status`)
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as { enabled: boolean }
+    expect(body.enabled).toBe(true)
+  })
+
   it('legacy KB_ADMIN_API_ENABLED=true alias still enables the API', async () => {
     process.env.KB_ADMIN_API_ENABLED = 'true'
     process.env.KB_ADMIN_USER_IDS = 'admin-1'

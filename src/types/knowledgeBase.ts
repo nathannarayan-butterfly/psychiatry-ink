@@ -46,6 +46,8 @@ export interface PharmacokineticData {
   halfLifeHours?: number | null
   /** Free-text qualifier, e.g. "aktiver Metabolit 9-OH 24 h". */
   halfLifeNote?: string
+  /** English variant of {@link halfLifeNote} for `en` UI locale. */
+  halfLifeNoteEn?: string
   tmaxHours?: number | null
   timeToSteadyStateDays?: number | null
   bioavailabilityPercent?: number | null
@@ -56,25 +58,35 @@ export interface PharmacokineticData {
     highNgMl?: number | null
     unit?: string
     note?: string
+    /** English variant of {@link note} for `en` UI locale. */
+    noteEn?: string
   }
   /** True when values are estimated rather than from SmPC / a reference. */
   isEstimated?: boolean
   sourceNote?: string
+  /** English variant of {@link sourceNote} for `en` UI locale. */
+  sourceNoteEn?: string
 }
 
 /** A single dosing step on a titration / taper schedule. */
 export interface TitrationStep {
   label?: string
+  /** English variant of {@link label} for `en` UI locale. */
+  labelEn?: string
   /** Day offset from start (day 0 = first dose). */
   startDay: number
   /** Target daily dose at this step; null marks a stop / unknown. */
   doseMg: number | null
   note?: string
+  /** English variant of {@link note} for `en` UI locale. */
+  noteEn?: string
 }
 
 /** An ordered titration (up) or taper (down) schedule (kind: 'titration'|'taper'). */
 export interface TitrationSchedule {
   unit?: string
+  /** English variant of {@link unit} for `en` UI locale (defaults to {@link unit}). */
+  unitEn?: string
   steps: TitrationStep[]
   targetDoseMg?: number | null
   maxDoseMg?: number | null
@@ -86,29 +98,43 @@ export interface DepotLoadingDose {
   /** Day offset from depot initiation (day 0 = first injection). */
   day: number
   doseLabel: string
+  /** English variant of {@link doseLabel} for `en` UI locale. */
+  doseLabelEn?: string
   route?: string
+  /** English variant of {@link route} for `en` UI locale. */
+  routeEn?: string
   note?: string
+  /** English variant of {@link note} for `en` UI locale. */
+  noteEn?: string
 }
 
 /** A long-acting injectable (LAI / depot) switching option (kind: 'depot'). */
 export interface DepotOption {
   name: string
+  /** English variant of {@link name} for `en` UI locale. */
+  nameEn?: string
   brandName?: string
   injectionIntervalDays: number
   loadingRegimen: DepotLoadingDose[]
   /** Days of oral antipsychotic overlap required (0 ⇒ "kein orales Overlap"). */
   oralOverlapDays: number
   doseEquivalence?: string
+  /** English variant of {@link doseEquivalence} for `en` UI locale. */
+  doseEquivalenceEn?: string
   timeToSteadyStateWeeks?: number | null
   /** Day the first regular maintenance injection is due. */
   firstMaintenanceDay?: number | null
   /** Allowed +/- window (days) for a maintenance injection. */
   flexWindowDays?: number | null
   postInjectionMonitoring?: string
+  /** English variant of {@link postInjectionMonitoring} for `en` UI locale. */
+  postInjectionMonitoringEn?: string
   /** Short-acting acetate (e.g. Acuphase) — NOT a maintenance depot. */
   isShortActingNotDepot?: boolean
   isEstimated?: boolean
   sourceNote?: string
+  /** English variant of {@link sourceNote} for `en` UI locale. */
+  sourceNoteEn?: string
 }
 
 export type SideEffectFrequency =
@@ -123,11 +149,17 @@ export type SideEffectSeverity = 'mild' | 'moderate' | 'severe' | 'dangerous'
 /** A single adverse-effect row (kind: 'sideEffects'). */
 export interface SideEffectEntry {
   effect: string
+  /** English variant of {@link effect} for `en` UI locale. */
+  effectEn?: string
   /** Organ system / grouping, e.g. "metabolisch", "EPS", "kardial". */
   system?: string
+  /** English variant of {@link system} for `en` UI locale. */
+  systemEn?: string
   frequency: SideEffectFrequency
   severity: SideEffectSeverity
   note?: string
+  /** English variant of {@link note} for `en` UI locale. */
+  noteEn?: string
 }
 
 export type CypRole = 'substrate' | 'inhibitor' | 'inducer'
@@ -137,13 +169,21 @@ export interface CypEnzymeInvolvement {
   role: CypRole
   /** Qualitative strength, e.g. "stark" / "schwach" / "major". */
   strength?: string
+  /** English variant of {@link strength} for `en` UI locale. */
+  strengthEn?: string
   note?: string
+  /** English variant of {@link note} for `en` UI locale. */
+  noteEn?: string
 }
 
 export interface CypInteraction {
   withDrugOrClass: string
+  /** English variant of {@link withDrugOrClass} for `en` UI locale. */
+  withDrugOrClassEn?: string
   severity: 'major' | 'moderate' | 'minor'
   effect: string
+  /** English variant of {@link effect} for `en` UI locale. */
+  effectEn?: string
 }
 
 /** CYP450 / interaction profile (kind: 'cyp'). */
@@ -157,11 +197,19 @@ export interface CypProfile {
 /** At-a-glance KPI strip payload (kind: 'glance'). All fields optional/derived. */
 export interface GlanceData {
   drugClass?: string
+  /** English variant of {@link drugClass} for `en` UI locale. */
+  drugClassEn?: string
   halfLifeSummary?: string
+  /** English variant of {@link halfLifeSummary} for `en` UI locale. */
+  halfLifeSummaryEn?: string
   primaryTargets?: string[]
   qtcRisk?: 'low' | 'moderate' | 'high'
   pregnancy?: string
+  /** English variant of {@link pregnancy} for `en` UI locale. */
+  pregnancyEn?: string
   lactation?: string
+  /** English variant of {@link lactation} for `en` UI locale. */
+  lactationEn?: string
   depotAvailable?: boolean
   isEstimated?: boolean
 }
@@ -170,7 +218,11 @@ export interface DrugSection {
   id: string
   key: DrugSectionKey
   label: string
+  /** English variant of {@link label} for `en` UI locale (e.g. "Overview"). */
+  labelEn?: string
   content: string
+  /** English variant of {@link content} for `en` UI locale. */
+  contentEn?: string
   isDefault: boolean
   isCollapsedByDefault: boolean
   order: number
@@ -347,6 +399,8 @@ export interface ReceptorProfileDetail {
   score: number
   action?: LegacyReceptorAction
   clinicalMeaning?: string
+  /** English variant of {@link clinicalMeaning} for `en` UI locale. */
+  clinicalMeaningEn?: string
   confidence?: ReceptorConfidence
 }
 
@@ -400,6 +454,8 @@ export interface ReceptorAffinityEntry {
   clinicalRelevance?: ReceptorClinicalRelevance
   evidenceQuality: EvidenceQuality
   sourceNote?: string
+  /** English variant of {@link sourceNote} for `en` UI locale. */
+  sourceNoteEn?: string
   /** True when affinityPercent is an estimate rather than derived from raw data. */
   isEstimated?: boolean
 }
@@ -450,22 +506,43 @@ export interface MedicationMarketAvailability extends KnowledgeBaseAuditFields {
   substanceId: string
   countryCode: PrescribingCountryCode
   tradeName: string
+  /** English variant of {@link tradeName}. Brand names are usually language-neutral but EU/US trade names may diverge. */
+  tradeNameEn?: string
   genericName: string
+  /**
+   * English (INN) spelling of {@link genericName}. The canonical German
+   * spelling stays in {@link genericName}; consumers render this when the UI
+   * locale is `en` (e.g. "Risperidone" instead of "Risperidon").
+   */
+  genericNameEn?: string
   strengthValue: string
   strengthUnit: string
   dosageForm: string
+  /**
+   * English variant of {@link dosageForm} (e.g. "Tablets" instead of
+   * "Tabletten"). Falls back to {@link dosageForm} when absent.
+   */
+  dosageFormEn?: string
   route: string
   packageSize?: string
   productIdentifierType?: 'PZN' | 'AMIceId' | 'nationalProductCode' | string
   productIdentifier?: string
   prescriptionStatus?: string
+  /** English variant of {@link prescriptionStatus} (e.g. "Prescription-only"). */
+  prescriptionStatusEn?: string
   marketStatus?: string
   sourceName?: string
+  /** English variant of {@link sourceName}. */
+  sourceNameEn?: string
   sourceUrl?: string
   sourceReference?: string
+  /** English variant of {@link sourceReference}. */
+  sourceReferenceEn?: string
   lastVerifiedAt?: string
   verificationStatus: PreparationVerificationStatus
   notes?: string
+  /** English variant of {@link notes}. */
+  notesEn?: string
   createdAt: string
 }
 
@@ -479,9 +556,18 @@ export interface KnowledgeBaseDrug {
    */
   dataModelVersion?: DataModelVersion
   genericName: string
+  /**
+   * English (INN) spelling of {@link genericName} (e.g. "Risperidone" instead
+   * of "Risperidon"). Falls back to {@link genericName} when absent.
+   */
+  genericNameEn?: string
   brandNames: string[]
   drugClass: string
+  /** English variant of {@link drugClass} (e.g. "Atypical antipsychotic (SGA)"). */
+  drugClassEn?: string
   category: string
+  /** English variant of {@link category} (e.g. "Antipsychotics"). */
+  categoryEn?: string
   /**
    * Default psychopharmacology classification (defined enum, German clinical
    * taxonomy). Absent ⇒ {@link DEFAULT_PSYCH_CLASS} ('unspecified'); resolve via
@@ -497,6 +583,11 @@ export interface KnowledgeBaseDrug {
   nbn?: string
   atcCode?: string
   tags?: string[]
+  /**
+   * English variants of {@link tags}, index-aligned with the German list when
+   * present. Falls back to {@link tags} when absent.
+   */
+  tagsEn?: string[]
   /**
    * @deprecated Active/inactive status is no longer surfaced in the UI. Kept
    * optional for backward compatibility with existing stored data and seeds.
@@ -595,30 +686,32 @@ export const DEFAULT_KNOWLEDGE_COLLECTIONS: KnowledgeCollection[] = [
 export const DEFAULT_SECTION_TEMPLATES: {
   key: DrugSectionKey
   label: string
+  /** English-only label used when the UI locale is `en`. */
+  labelEn: string
   isCollapsedByDefault: boolean
   order: number
   kind: DrugSectionKind
 }[] = [
-  { key: 'kurzprofil', label: 'Kurzprofil / Overview', isCollapsedByDefault: false, order: 0, kind: 'text' },
-  { key: 'steckbrief', label: 'Steckbrief / At a Glance', isCollapsedByDefault: false, order: 1, kind: 'glance' },
-  { key: 'wirkmechanismus', label: 'Wirkmechanismus / Mechanism of Action', isCollapsedByDefault: false, order: 2, kind: 'text' },
-  { key: 'rezeptorprofil', label: 'Rezeptorprofil / Receptor Profile', isCollapsedByDefault: true, order: 3, kind: 'text' },
-  { key: 'pharmakokinetik', label: 'Pharmakokinetik / Pharmacokinetics', isCollapsedByDefault: true, order: 4, kind: 'pk' },
-  { key: 'indikationen', label: 'Indikationen / Indications', isCollapsedByDefault: false, order: 5, kind: 'text' },
-  { key: 'dosierung', label: 'Dosierung & Titration / Dosing', isCollapsedByDefault: false, order: 6, kind: 'titration' },
-  { key: 'umstellung', label: 'Umstellung & Depot / Switching & LAI', isCollapsedByDefault: true, order: 7, kind: 'depot' },
-  { key: 'nebenwirkungen', label: 'Nebenwirkungen / Side Effects', isCollapsedByDefault: false, order: 8, kind: 'sideEffects' },
-  { key: 'kontraindikationen', label: 'Kontraindikationen / Contraindications', isCollapsedByDefault: true, order: 9, kind: 'text' },
-  { key: 'wechselwirkungen', label: 'Wechselwirkungen & CYP450 / Interactions', isCollapsedByDefault: true, order: 10, kind: 'cyp' },
-  { key: 'qtc', label: 'QTc / EKG', isCollapsedByDefault: true, order: 11, kind: 'text' },
-  { key: 'kontrollen', label: 'Kontrollen / Monitoring', isCollapsedByDefault: true, order: 12, kind: 'text' },
-  { key: 'schwangerschaft', label: 'Schwangerschaft / Stillzeit', isCollapsedByDefault: true, order: 13, kind: 'text' },
-  { key: 'niereLeber', label: 'Niere / Leber-Anpassung', isCollapsedByDefault: true, order: 14, kind: 'text' },
-  { key: 'ueberdosierung', label: 'Überdosierung / Toxizität', isCollapsedByDefault: true, order: 15, kind: 'text' },
-  { key: 'absetzen', label: 'Absetzen / Taper', isCollapsedByDefault: true, order: 16, kind: 'taper' },
-  { key: 'besonderheiten', label: 'Besonderheiten / Special Clinical Notes', isCollapsedByDefault: false, order: 17, kind: 'text' },
-  { key: 'merksaetze', label: 'Merksätze / Clinical Pearls', isCollapsedByDefault: true, order: 18, kind: 'text' },
-  { key: 'quellen', label: 'Quellen / References', isCollapsedByDefault: true, order: 19, kind: 'text' },
+  { key: 'kurzprofil', label: 'Kurzprofil / Overview', labelEn: 'Overview', isCollapsedByDefault: false, order: 0, kind: 'text' },
+  { key: 'steckbrief', label: 'Steckbrief / At a Glance', labelEn: 'At a Glance', isCollapsedByDefault: false, order: 1, kind: 'glance' },
+  { key: 'wirkmechanismus', label: 'Wirkmechanismus / Mechanism of Action', labelEn: 'Mechanism of Action', isCollapsedByDefault: false, order: 2, kind: 'text' },
+  { key: 'rezeptorprofil', label: 'Rezeptorprofil / Receptor Profile', labelEn: 'Receptor Profile', isCollapsedByDefault: true, order: 3, kind: 'text' },
+  { key: 'pharmakokinetik', label: 'Pharmakokinetik / Pharmacokinetics', labelEn: 'Pharmacokinetics', isCollapsedByDefault: true, order: 4, kind: 'pk' },
+  { key: 'indikationen', label: 'Indikationen / Indications', labelEn: 'Indications', isCollapsedByDefault: false, order: 5, kind: 'text' },
+  { key: 'dosierung', label: 'Dosierung & Titration / Dosing', labelEn: 'Dosing & Titration', isCollapsedByDefault: false, order: 6, kind: 'titration' },
+  { key: 'umstellung', label: 'Umstellung & Depot / Switching & LAI', labelEn: 'Switching & LAI', isCollapsedByDefault: true, order: 7, kind: 'depot' },
+  { key: 'nebenwirkungen', label: 'Nebenwirkungen / Side Effects', labelEn: 'Side Effects', isCollapsedByDefault: false, order: 8, kind: 'sideEffects' },
+  { key: 'kontraindikationen', label: 'Kontraindikationen / Contraindications', labelEn: 'Contraindications', isCollapsedByDefault: true, order: 9, kind: 'text' },
+  { key: 'wechselwirkungen', label: 'Wechselwirkungen & CYP450 / Interactions', labelEn: 'Interactions & CYP450', isCollapsedByDefault: true, order: 10, kind: 'cyp' },
+  { key: 'qtc', label: 'QTc / EKG', labelEn: 'QTc / ECG', isCollapsedByDefault: true, order: 11, kind: 'text' },
+  { key: 'kontrollen', label: 'Kontrollen / Monitoring', labelEn: 'Monitoring', isCollapsedByDefault: true, order: 12, kind: 'text' },
+  { key: 'schwangerschaft', label: 'Schwangerschaft / Stillzeit', labelEn: 'Pregnancy & Lactation', isCollapsedByDefault: true, order: 13, kind: 'text' },
+  { key: 'niereLeber', label: 'Niere / Leber-Anpassung', labelEn: 'Renal & Hepatic Adjustment', isCollapsedByDefault: true, order: 14, kind: 'text' },
+  { key: 'ueberdosierung', label: 'Überdosierung / Toxizität', labelEn: 'Overdose & Toxicity', isCollapsedByDefault: true, order: 15, kind: 'text' },
+  { key: 'absetzen', label: 'Absetzen / Taper', labelEn: 'Discontinuation & Taper', isCollapsedByDefault: true, order: 16, kind: 'taper' },
+  { key: 'besonderheiten', label: 'Besonderheiten / Special Clinical Notes', labelEn: 'Special Clinical Notes', isCollapsedByDefault: false, order: 17, kind: 'text' },
+  { key: 'merksaetze', label: 'Merksätze / Clinical Pearls', labelEn: 'Clinical Pearls', isCollapsedByDefault: true, order: 18, kind: 'text' },
+  { key: 'quellen', label: 'Quellen / References', labelEn: 'References', isCollapsedByDefault: true, order: 19, kind: 'text' },
 ]
 
 /** Structured payloads that can be attached to default sections at creation. */
@@ -632,12 +725,15 @@ export type SectionStructuredOverrides = Partial<
 export function createDefaultSections(
   overrides: Partial<Record<DrugSectionKey, string>> = {},
   structured: SectionStructuredOverrides = {},
+  overridesEn: Partial<Record<DrugSectionKey, string>> = {},
 ): DrugSection[] {
   return DEFAULT_SECTION_TEMPLATES.map((template) => ({
     id: `${template.key}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     key: template.key,
     label: template.label,
+    labelEn: template.labelEn,
     content: overrides[template.key] ?? '',
+    contentEn: overridesEn[template.key],
     isDefault: true,
     isCollapsedByDefault: template.isCollapsedByDefault,
     order: template.order,
@@ -645,6 +741,65 @@ export function createDefaultSections(
     kind: template.kind,
     ...(structured[template.key] ?? {}),
   }))
+}
+
+// ── Locale-aware accessors ───────────────────────────────────────────────────
+// The seed data carries the canonical German string in the unsuffixed field
+// (e.g. `content`) and the English translation in the parallel `*En` field
+// (e.g. `contentEn`). These helpers return the right variant for the active UI
+// language, falling back to the other variant when the requested one is empty
+// so legacy entries (German-only) still render. All comparisons are
+// case-insensitive on the language string ("en", "en-GB", "EN" all map to EN).
+
+/**
+ * True when the active UI language is English. Accepts `undefined` so callers
+ * can pass whichever `language` prop they have without an extra guard.
+ */
+export function isEnglishKbLanguage(language: string | undefined | null): boolean {
+  if (!language) return false
+  const head = language.split('-')[0]?.toLowerCase()
+  return head === 'en'
+}
+
+/**
+ * Pick the language-appropriate variant of a KB text field. When the UI is
+ * English and an English translation is present (non-empty), return it;
+ * otherwise return the German source. The fallback is symmetric so an
+ * English-only field still renders for German UI when the German variant is
+ * missing.
+ */
+export function pickKbLocalizedText(
+  de: string | undefined | null,
+  en: string | undefined | null,
+  language: string | undefined | null,
+): string {
+  if (isEnglishKbLanguage(language)) {
+    const enTrimmed = (en ?? '').trim()
+    if (enTrimmed) return en as string
+    return de ?? ''
+  }
+  const deTrimmed = (de ?? '').trim()
+  if (deTrimmed) return de as string
+  return en ?? ''
+}
+
+/**
+ * Pick the language-appropriate variant of a KB string array. Returns the
+ * English list when (a) UI is English AND (b) the English list is present
+ * and non-empty; otherwise returns the German source list (or [] when both
+ * are absent).
+ */
+export function pickKbLocalizedList(
+  de: readonly string[] | undefined | null,
+  en: readonly string[] | undefined | null,
+  language: string | undefined | null,
+): string[] {
+  if (isEnglishKbLanguage(language) && Array.isArray(en) && en.length > 0) {
+    return [...en]
+  }
+  if (Array.isArray(de) && de.length > 0) return [...de]
+  if (Array.isArray(en) && en.length > 0) return [...en]
+  return []
 }
 
 // ── Safe section accessors ────────────────────────────────────────────────────

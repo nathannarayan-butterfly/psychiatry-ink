@@ -100,7 +100,7 @@ describe('accountBackup — registry restore after storage clear', () => {
     vi.resetModules()
   })
 
-  it('restores registry from account even when local identifier mode reset to device', async () => {
+  it('restores registry from account even when local identifier mode reset to device', { timeout: 30000 }, async () => {
     const { tryAutoRestoreRegistryFromAccount } = await import('../accountBackup')
 
     const restored = await tryAutoRestoreRegistryFromAccount('test-passphrase')

@@ -91,10 +91,17 @@ export function isClinicalIntelligenceV1Enabled(): boolean {
  * Reveals raw JSON, evidence ids, provider/model, tokens, validation, raw
  * response and errors in the CI panel. OFF by default.
  *
+ * Fail-closed in production: even if a misconfigured deploy ships
+ * `VITE_CLINICAL_INTELLIGENCE_DEBUG_MODE=true`, this returns `false` unless
+ * the bundle was built with `import.meta.env.DEV === true`. The literal
+ * `import.meta.env.DEV` constant is replaced at build time so production
+ * tree-shakes the diagnostics surface entirely.
+ *
  * Enable locally in `.env.local`:
  *   VITE_CLINICAL_INTELLIGENCE_DEBUG_MODE=true
  *   CLINICAL_INTELLIGENCE_DEBUG_MODE=true  # server-side
  */
 export function isClinicalIntelligenceDebugMode(): boolean {
+  if (!import.meta.env.DEV) return false
   return import.meta.env.VITE_CLINICAL_INTELLIGENCE_DEBUG_MODE === 'true'
 }

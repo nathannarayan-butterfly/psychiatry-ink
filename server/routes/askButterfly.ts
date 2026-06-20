@@ -3,9 +3,14 @@ import { Router as createRouter } from 'express'
 import type { AiModelTier } from '../modelTierMapping'
 import { parseLlmModelRequest } from '../ai/parseLlmModelRequest'
 import { resolveAccountId } from '../middleware/auth'
-import { callLlm, llmResultModel } from '../services/llmProvider'
+import {
+  SafeLlmEgressError,
+  llmResultModel,
+  sanitizeText,
+} from '../services/safeLlmEgress'
 import { resolveUsageContextFromRequest } from '../ai/usage/resolveUsageContext'
 import { assertAiGenerationAllowed, recordAiGenerationUsed } from '../utils/caseAiAccessGuard'
+import { runAiFeature, InsufficientCreditsError } from '../ai/runAiFeature'
 import {
   clinicalLanguagePromptInstruction,
   requireClinicalLanguage,
@@ -22,6 +27,8 @@ export interface AskButterflyRequestBody {
   tier?: AiModelTier
   model?: { provider: string; modelId: string }
   language?: 'de' | 'en' | 'fr' | 'es'
+  /** Optional hints — server-side egress guard scrubs name/DOB if present. */
+  patientHints?: { patientName?: string; patientDob?: string }
 }
 
 export interface AskButterflyResponseBody {
@@ -96,6 +103,41 @@ askButterflyRouter.post('/', async (req: Request, res: Response) => {
     const llmModel = parseLlmModelRequest(body as unknown as Record<string, unknown>, 'standard')
     const tier = llmModel.tier ?? 'standard'
 
+    // Egress PHI guard — Ask Butterfly is a "general-purpose chat" surface;
+    // the assistant is explicitly told it has no access to patient records.
+    // Re-scrub every message content server-side so anything the clinician
+    // pastes (deliberately or by mistake) cannot leak to the LLM provider.
+    const patientHints =
+      body.patientHints && typeof body.patientHints === 'object'
+        ? {
+            patientName:
+              typeof body.patientHints.patientName === 'string'
+                ? body.patientHints.patientName
+                : undefined,
+            patientDob:
+              typeof body.patientHints.patientDob === 'string'
+                ? body.patientHints.patientDob
+                : undefined,
+          }
+        : undefined
+    let scrubbedMessages: AskButterflyMessage[]
+    try {
+      scrubbedMessages = messages.map((message) => ({
+        role: message.role,
+        content: sanitizeText(message.content, { patientHints }),
+      }))
+    } catch (guardError) {
+      if (guardError instanceof SafeLlmEgressError) {
+        console.error('[ask-butterfly] PHI guard blocked request:', guardError.message)
+        res.status(422).json({
+          error:
+            'PHI guard could not sanitize message; refusing to forward to LLM provider.',
+        })
+        return
+      }
+      throw guardError
+    }
+
     const languageName = resolveLanguageName(language)
     const systemPrompt = [
       'You are Butterfly, a helpful AI assistant for psychiatrists using Psychiatry.Ink.',
@@ -108,7 +150,7 @@ askButterflyRouter.post('/', async (req: Request, res: Response) => {
 
     let userPrompt: string
     try {
-      userPrompt = buildConversationPrompt(messages)
+      userPrompt = buildConversationPrompt(scrubbedMessages)
     } catch {
       res.status(413).json({ error: 'Conversation too long' })
       return
@@ -124,7 +166,31 @@ askButterflyRouter.post('/', async (req: Request, res: Response) => {
           })
         : undefined
 
-    const result = await callLlm({ tier, model: llmModel.model, systemPrompt, userPrompt, usageContext })
+    let result
+    try {
+      result = await runAiFeature({
+        featureKey: 'ask_butterfly',
+        tier,
+        model: llmModel.model,
+        systemPrompt,
+        userPrompt,
+        usageContext,
+      })
+    } catch (guardError) {
+      if (guardError instanceof InsufficientCreditsError) {
+        res.status(402).json({ error: (guardError as Error).message })
+        return
+      }
+      if (guardError instanceof SafeLlmEgressError) {
+        console.error('[ask-butterfly] PHI guard blocked outbound prompt:', guardError.message)
+        res.status(422).json({
+          error:
+            'PHI guard could not sanitize prompt; refusing to forward to LLM provider.',
+        })
+        return
+      }
+      throw guardError
+    }
 
     if (userId && userId !== 'default') {
       void recordAiGenerationUsed(req, userId, {

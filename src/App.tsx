@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from 'react'
 import { AuthPage } from './components/auth/AuthPage'
-import { LandingPage } from './components/landing/LandingPage'
+import { AiCreditsHinweisePage } from './components/homepage/AiCreditsHinweisePage'
+import { HomepagePage } from './components/homepage/HomepagePage'
 import { TranslationProvider } from './context/TranslationContext'
 import { WorkspaceSessionProvider } from './context/WorkspaceSessionContext'
 import { useAuth } from './context/AuthContext'
@@ -15,6 +16,7 @@ import { AuditDebugPage } from './components/audit/AuditDebugPage'
 import { DemoPatientDevPage } from './components/demo/DemoPatientDevPage'
 import { useAuditDebugAccess } from './hooks/useAuditDebugAccess'
 import { ensureDemoPatientExists } from './demo'
+import { uiLanguageToDemoLocale } from './demo/demoLocale'
 import { useKbAdminAccess } from './hooks/useKbAdminAccess'
 import { DiscussCaseInvitePage } from './components/discuss-case/DiscussCaseInvitePage'
 import { ConsultantDashboard } from './components/consultation/ConsultantDashboard'
@@ -25,6 +27,7 @@ import { TeamInvitePage } from './components/settings/TeamInvitePage'
 import { useConsultationRole } from './hooks/useConsultationRole'
 import { useEnterpriseFeatures } from './hooks/useEnterpriseFeatures'
 import { isEnterpriseOrgHierarchyEnabled } from './utils/featureFlags'
+import { translateUi } from './data/uiTranslations'
 import { ensureDefaultCase, hydrateCaseRegistry } from './hooks/useCaseRegistry'
 import { inferAccountIdentifierStorageFromServer } from './utils/accountBackup'
 import { EnterpriseDashboard } from './components/enterprise/EnterpriseDashboard'
@@ -76,8 +79,9 @@ export default function App() {
     void ensureDemoPatientExists({
       userId: user.id,
       calendarScope: { userId: user.id, orgId: null },
+      locale: uiLanguageToDemoLocale(languageSettings.language),
     })
-  }, [user?.id])
+  }, [user?.id, languageSettings.language])
 
   useEffect(() => {
     if (authLoading) return
@@ -163,18 +167,35 @@ export default function App() {
     navigate('/dashboard')
   }, [navigate, route.view])
 
+  const publicPageProps = {
+    onLogin: () => navigate('/login'),
+    onNavigate: navigate,
+    isAuthenticated: Boolean(user),
+    showDevEntry: !isConfigured,
+    onEnterApp: !isConfigured ? () => navigate('/dashboard') : undefined,
+  }
+
   if (route.view === 'landing') {
     return (
       <TranslationProvider
         language={languageSettings.language}
         englishVariant={languageSettings.englishVariant}
       >
-        <LandingPage
-          onLogin={() => navigate('/login')}
+        <HomepagePage
+          {...publicPageProps}
           onSignup={() => navigate('/signup')}
-          showDevEntry={!isConfigured}
-          onEnterApp={!isConfigured ? () => navigate('/dashboard') : undefined}
         />
+      </TranslationProvider>
+    )
+  }
+
+  if (route.view === 'ai-credits') {
+    return (
+      <TranslationProvider
+        language={languageSettings.language}
+        englishVariant={languageSettings.englishVariant}
+      >
+        <AiCreditsHinweisePage {...publicPageProps} />
       </TranslationProvider>
     )
   }
@@ -202,7 +223,7 @@ export default function App() {
   if (authLoading && isConfigured) {
     return (
       <div className="flex min-h-dvh items-center justify-center text-secondary text-sm">
-        Laden…
+        {translateUi(languageSettings.language, 'aiUsageTrackerLoading')}
       </div>
     )
   }

@@ -87,6 +87,18 @@ export const PsychopathDomainHeadingSchema = z.object({
   label: z.string().min(1),
 })
 
+/**
+ * Optional patient hints — when provided the server-side egress guard scrubs
+ * the patient name and DOB in addition to the unconditional pattern set. The
+ * client never has to send them; they help the server be more aggressive when
+ * it does receive a clinician-pasted name that survived client-side scrubbing.
+ */
+export const PatientHintsSchema = z.object({
+  patientName: z.string().max(160).optional(),
+  patientDob: z.string().max(40).optional(),
+})
+export type PatientHints = z.infer<typeof PatientHintsSchema>
+
 export const PsychopathExtractRequestSchema = z.object({
   /** De-identified PPB narrative — PHI must be scrubbed client-side before send. */
   deidentifiedText: z.string().min(20).max(20_000),
@@ -96,6 +108,8 @@ export const PsychopathExtractRequestSchema = z.object({
   icd10Codes: z.array(z.string()).max(20).optional(),
   /** AMDP domain headings shown to the model (all 23 overview domains). */
   domainHeadings: z.array(PsychopathDomainHeadingSchema).min(1).max(30).optional(),
+  /** Optional hints used by the server-side egress guard to scrub residual PHI. */
+  patientHints: PatientHintsSchema.optional(),
 })
 
 export type PsychopathExtractRequest = z.infer<typeof PsychopathExtractRequestSchema>

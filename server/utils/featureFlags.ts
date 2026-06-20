@@ -40,7 +40,13 @@ export function isClinicalIntelligenceV1Enabled(): boolean {
  *
  * When enabled, the run response includes additional diagnostics for the
  * client's Development Mode panel. OFF by default.
+ *
+ * Fail-closed in production: returns `false` whenever
+ * `process.env.NODE_ENV === 'production'`, so a misconfigured deploy that
+ * ships `CLINICAL_INTELLIGENCE_DEBUG_MODE=true` cannot leak diagnostics to
+ * end users. The flag is honored only outside production.
  */
 export function isClinicalIntelligenceDebugMode(): boolean {
+  if (process.env.NODE_ENV === 'production') return false
   return process.env.CLINICAL_INTELLIGENCE_DEBUG_MODE?.trim() === 'true'
 }

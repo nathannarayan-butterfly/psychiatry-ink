@@ -11,7 +11,7 @@
  * accepted dimensions.
  */
 
-import { callLlm } from '../llmProvider'
+import { runAiFeature } from '../../ai/runAiFeature'
 import { deidentifyText } from '../discussCaseDeidentify'
 import {
   buildDimensionalSystemPrompt,
@@ -121,7 +121,8 @@ export async function runClinicalIntelligenceServer(
     let tier = params.dimensionalCall?.tier ?? 'thorough'
 
     try {
-      result = await callLlm({
+      result = await runAiFeature({
+        featureKey: 'clinical_intelligence_dimensional',
         tier: params.dimensionalCall?.tier ?? 'thorough',
         model: params.dimensionalCall?.model,
         systemPrompt,
@@ -199,7 +200,8 @@ export async function runClinicalIntelligenceServer(
     let tier = params.mechanismCall?.tier ?? 'thorough'
 
     try {
-      const result = await callLlm({
+      const result = await runAiFeature({
+        featureKey: 'clinical_intelligence_mechanism',
         tier: params.mechanismCall?.tier ?? 'thorough',
         model: params.mechanismCall?.model,
         systemPrompt,

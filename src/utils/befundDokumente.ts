@@ -3,6 +3,7 @@
  */
 
 import type { BefundRecord } from '../types/befund'
+import type { UiLanguage } from '../types/settings'
 import { loadDiagnostikBefunde } from './befundArchive'
 import { buildBefundTitle, renderBefundContent } from './befundRender'
 import {
@@ -44,26 +45,34 @@ function saveRawArchive(caseId: string, entries: DokumentEntry[]): void {
   }
 }
 
-function toDokumentEntry(record: BefundRecord): Omit<DokumentEntry, 'id'> {
+function toDokumentEntry(
+  record: BefundRecord,
+  language?: UiLanguage,
+): Omit<DokumentEntry, 'id'> {
+  const draftLabel = language === 'en' ? 'Draft' : 'Entwurf'
+  const verifiedLabel = language === 'en' ? 'Verified' : 'Vidert'
   return {
     caseId: record.caseId,
     category: 'untersuchungsbefunde',
-    title: buildBefundTitle(record),
-    content: renderBefundContent(record),
+    title: buildBefundTitle(record, language),
+    content: renderBefundContent(record, language),
     date: record.updatedAt,
     source: record.status === 'vidert' ? 'manual' : 'draft',
     pageType: `befund-${record.type}`,
     sourceRefId: record.id,
-    sectionLabel: record.status === 'vidert' ? 'Vidert' : 'Entwurf',
+    sectionLabel: record.status === 'vidert' ? verifiedLabel : draftLabel,
   }
 }
 
 /** Upsert a single befund into Dokumente by sourceRefId. */
-export function syncBefundDokument(record: BefundRecord): DokumentEntry {
+export function syncBefundDokument(
+  record: BefundRecord,
+  language?: UiLanguage,
+): DokumentEntry {
   const caseId = record.caseId
   const existing = loadRawArchive(caseId)
   const idx = existing.findIndex((e) => e.sourceRefId === record.id)
-  const payload = toDokumentEntry(record)
+  const payload = toDokumentEntry(record, language)
 
   if (idx >= 0) {
     const updated: DokumentEntry = {
@@ -87,13 +96,13 @@ export function syncBefundDokument(record: BefundRecord): DokumentEntry {
 }
 
 /** Backfill all diagnostik befunde into Dokumente (idempotent). */
-export function syncAllBefundDokumente(caseId: string): number {
+export function syncAllBefundDokumente(caseId: string, language?: UiLanguage): number {
   const records = loadDiagnostikBefunde(caseId)
   let created = 0
   for (const record of records) {
     const existing = loadRawArchive(caseId)
     if (!existing.some((e) => e.sourceRefId === record.id)) {
-      syncBefundDokument(record)
+      syncBefundDokument(record, language)
       created += 1
     }
   }

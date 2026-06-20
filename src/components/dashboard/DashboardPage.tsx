@@ -23,6 +23,7 @@ import {
 import { useCallback, useMemo, useState, type ChangeEvent } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import { useWorkspaceSession } from '../../context/WorkspaceSessionContext'
+import { useHomepageContent } from '../../hooks/useHomepageContent'
 import { NOTION_PAGES } from '../notion/notionPages'
 import type { NotionPageId } from '../notion/notionPages'
 import { useAssessmentStandardSettings } from '../../hooks/useAssessmentStandardSettings'
@@ -160,6 +161,7 @@ export function DashboardPage({
   onOpenEnterprise,
 }: DashboardPageProps) {
   const { t, language } = useTranslation()
+  const { footer: homepageFooter } = useHomepageContent()
   const displayName = useAccountDisplayName()
   const { organisation, refresh: refreshOrganisation } = useCurrentOrganisation()
   const { canAccessEnterpriseUi } = useEnterpriseFeatures()
@@ -937,15 +939,15 @@ export function DashboardPage({
       </section>
 
       <footer className="dashboard-footer">
-        <span className="dashboard-footer__name">Psychiatry Ink Ltd, Company Nr: 17275704</span>
-        <span className="dashboard-footer__sep">·</span>
-        <span className="dashboard-footer__address">
-          71-75 Shelton Street, Covent Garden, London, WC2H 9JQ, United Kingdom
-        </span>
-        <span className="dashboard-footer__sep">·</span>
-        <span className="dashboard-footer__copy">
-          © {new Date().getFullYear()} Psychiatry Ink Ltd. All rights reserved.
-        </span>
+        <div className="dashboard-footer__company">
+          <p className="dashboard-footer__company-name">{homepageFooter.companyName}</p>
+          <p className="dashboard-footer__line">{homepageFooter.companyRegistration}</p>
+          <p className="dashboard-footer__line">{homepageFooter.companyNumber}</p>
+          <p className="dashboard-footer__line">{homepageFooter.address}</p>
+          <p className="dashboard-footer__line">
+            © {new Date().getFullYear()} {homepageFooter.companyName}. {homepageFooter.allRightsReserved}
+          </p>
+        </div>
       </footer>
       </div>
 

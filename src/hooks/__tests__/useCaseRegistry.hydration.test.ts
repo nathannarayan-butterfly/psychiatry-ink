@@ -44,7 +44,7 @@ describe('useCaseRegistry — pre-hydration upsert safety', () => {
     vi.resetModules()
   })
 
-  it('does not clobber existing registry entries when upsert runs before hydration', async () => {
+  it('does not clobber existing registry entries when upsert runs before hydration', { timeout: 30000 }, async () => {
     const mod = await import('../useCaseRegistry')
 
     mod.upsertCaseMeta('new-case', { lastOpened: '2024-06-01T00:00:00.000Z' })

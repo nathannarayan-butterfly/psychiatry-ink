@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "hooks": {
+    "postToolUse": [
+      {
+        "command": "python3 .cursor/hooks/scan_edit.py",
+        "matcher": "Write|Edit|MultiEdit",
+        "timeout": 15
+      }
+    ],
+    "beforeShellExecution": [
+      {
+        "type": "prompt",
+        "prompt": "You are the commit-time security gate (Layer 3) for the psychiatry.ink repository, a production clinical platform handling PHI.\n\nA shell command is about to run. Here is the hook input:\n$ARGUMENTS\n\nDecision rules — respond with ONLY a JSON object using the beforeShellExecution fields (permission, user_message, agent_message):\n\n1. If the command is NOT a real `git commit` (e.g. it is `git commit --help`, `git config`, a different command, or has nothing to do with committing), respond: {\"permission\": \"allow\"}.\n\n2. If it IS a git commit, you cannot read the staged diff yourself, so DELEGATE the review to the main agent. Respond with permission \"ask\" and an agent_message that instructs the agent to perform a security review BEFORE committing. Use exactly this shape:\n{\n  \"permission\": \"ask\",\n  \"user_message\": \"Security-guidance: review staged changes before this commit.\",\n  \"agent_message\": \"Before running this commit, perform a security review of the staged changes. Run `git diff --cached` and trace data flow across files for: IDOR / broken object-level authz, authentication or ownership bypass, SSRF, injection (SQL/command/template), unsafe deserialization, path traversal, and hardcoded secrets. Apply the project-specific rules in .cursor/hooks/security-guidance.md (PHI routes must require real auth and never fall back to a 'default' account; LLM-bound PHI must be de-identified server-side; no plaintext PHI at rest or in logs). For each HIGH/CRITICAL finding, fix it or state explicitly why it is not exploitable here, then re-run the commit. This is advisory: if the staged diff is clean or contains no security-relevant changes, proceed with the commit.\"\n}\n\nFail open: if you are unsure, prefer {\"permission\": \"ask\"} with the agent_message above rather than blocking. Never return \"deny\".",
+        "matcher": "git commit",
+        "timeout": 30
+      }
+    ],
+    "stop": [
+      {
+        "type": "prompt",
+        "prompt": "You are the end-of-turn security reviewer (Layer 2) for the psychiatry.ink repository, a production clinical platform handling PHI.\n\nThe agent just finished a turn. Here is the hook input:\n$ARGUMENTS\n\nYou cannot read the working-tree diff yourself, so produce a short instruction that hands the concrete review to the tool-capable agent. Return ONLY a JSON object. Prefer a follow-up that asks the agent to self-review the changes it just made:\n{\n  \"followup_message\": \"Security-guidance end-of-turn review: inspect the changes you made this turn with `git diff` (and `git diff --cached`). Look for HIGH/CRITICAL issues you may have just introduced — injection, XSS, SSRF, IDOR/broken authz, auth bypass, unsafe deserialization, path traversal, and hardcoded secrets — and apply the project rules in .cursor/hooks/security-guidance.md (PHI routes need real auth, LLM-bound PHI must be de-identified server-side, no plaintext PHI at rest/in logs). If you find a high-severity issue, surface it to the user and offer to fix it. If there are no security-relevant changes, say nothing further. This is supplementary to your previous response, not a replacement.\"\n}\n\nFail open: if there is clearly nothing code-related to review, return {} (an empty object). Never block.",
+        "timeout": 30,
+        "loop_limit": 1
+      }
+    ]
+  }
+}

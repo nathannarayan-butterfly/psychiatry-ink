@@ -4920,28 +4920,31 @@
   }
 
   .dashboard-footer {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.35rem 0.6rem;
     padding: 1.5rem 0 1rem;
     border-top: 1px solid var(--border-soft);
-    font-size: 0.72rem;
-    color: var(--text-muted);
     margin-top: auto;
   }
 
-  .dashboard-footer__name {
-    font-weight: 600;
+  .dashboard-footer__company {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    text-align: left;
+  }
+
+  .dashboard-footer__company-name {
+    display: block;
+    margin: 0;
+    font-size: 0.8125rem;
+    font-weight: 500;
     color: var(--text-secondary);
   }
 
-  .dashboard-footer__sep {
-    opacity: 0.4;
-  }
-
-  .dashboard-footer__address,
-  .dashboard-footer__copy {
+  .dashboard-footer__line {
+    display: block;
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 400;
     color: var(--text-muted);
   }
 

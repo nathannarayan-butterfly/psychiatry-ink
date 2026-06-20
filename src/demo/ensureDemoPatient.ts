@@ -7,6 +7,8 @@ import { fetchAndApplyCanonicalDemoFixture } from './syncCanonicalDemoFixture'
 import { seedDemoPatient, type SeedDemoPatientOptions } from './seedDemoPatient'
 import { getCaseMeta, replaceRegistryMap } from '../hooks/useCaseRegistry'
 import { loadRegistryMapFromStorage, saveRegistryMapToStorage } from '../utils/caseRegistryStorage'
+import { normalizeDemoLocale, uiLanguageToDemoLocale } from './demoLocale'
+import { loadStoredUiLanguage } from '../utils/clinicalLanguage'
 
 export interface ResetDemoPatientOptions extends SeedDemoPatientOptions {}
 
@@ -66,6 +68,8 @@ export async function ensureDemoPatientExists(
   const meta = getCaseMeta(DEMO_CASE_ID)
   const localVersion = state.seedVersion || meta?.demoSeedVersion || ''
   const outdated = isDemoSeedVersionOutdated(localVersion)
+  const targetLocale = options.locale ?? uiLanguageToDemoLocale(loadStoredUiLanguage())
+  const localeOutdated = normalizeDemoLocale(state.locale, targetLocale) !== targetLocale
 
   // The demo's diagnoses + document snapshots are encrypted-at-rest; decrypt them into their
   // synchronous shadows before the completeness check so a previously-seeded demo is not
@@ -74,7 +78,13 @@ export async function ensureDemoPatientExists(
   await hydrateLocalClinicalCaches(DEMO_CASE_ID)
   const incomplete = !isDemoSeedDataComplete(DEMO_CASE_ID)
 
-  if (meta?.isDemoPatient && state.status === 'installed' && !outdated && !incomplete) {
+  if (
+    meta?.isDemoPatient &&
+    state.status === 'installed' &&
+    !outdated &&
+    !incomplete &&
+    !localeOutdated
+  ) {
     return { seeded: false, skippedReason: 'already_installed' }
   }
 
@@ -82,14 +92,16 @@ export async function ensureDemoPatientExists(
     !shouldAutoInstallDemo(options.userId) &&
     meta?.isDemoPatient &&
     !outdated &&
-    !incomplete
+    !incomplete &&
+    !localeOutdated
   ) {
     return { seeded: false, skippedReason: 'already_present' }
   }
 
   const result = await seedDemoPatient({
     ...options,
-    force: outdated || incomplete || !meta?.isDemoPatient,
+    locale: targetLocale,
+    force: outdated || incomplete || localeOutdated || !meta?.isDemoPatient,
   })
   return { seeded: result.ok }
 }

@@ -17,7 +17,7 @@
  * diagnosis — the client stores it as a pending, clinician-reviewable suggestion.
  */
 
-import { callLlm } from './llmProvider'
+import { runAiFeature } from '../ai/runAiFeature'
 import { deidentifyPackageContent } from './discussCaseDeidentify'
 import type { DiscussPackageContent } from '../../src/types/discussCase'
 import type { AiModelTier } from '../modelTierMapping'
@@ -188,7 +188,8 @@ export async function runButterflyExtraction(
     contextText,
   })
 
-  const result = await callLlm({
+  const result = await runAiFeature({
+    featureKey: 'butterfly',
     tier: params.tier,
     systemPrompt,
     userPrompt,

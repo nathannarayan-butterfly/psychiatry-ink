@@ -14,6 +14,17 @@ describe('demo fixture', () => {
     expect(fixture.patient.nachname).toBe('Demo')
   })
 
+  it('validates successfully for all demo locales', () => {
+    // Demo content is intentionally limited to de + en — fr/es UI languages
+    // route to the English demo via `uiLanguageToDemoLocale` to keep clinical
+    // wording natural rather than machine-translated.
+    for (const locale of ['de', 'en'] as const) {
+      const fixture = buildDemoPatientFixture(locale)
+      const result = validateDemoFixture(fixture)
+      expect(result.ok, `${locale}: ${result.errors.map((e) => e.message).join('; ')}`).toBe(true)
+    }
+  })
+
   it('validates successfully', () => {
     const fixture = buildDemoPatientFixture()
     const result = validateDemoFixture(fixture)
@@ -21,8 +32,18 @@ describe('demo fixture', () => {
     expect(result.errors).toHaveLength(0)
   })
 
+  it('uses locale-specific admission copy', () => {
+    const de = buildDemoPatientFixture('de')
+    const en = buildDemoPatientFixture('en')
+    expect(de.workspace.documents.aufnahme?.sectionContents.aufnahmeanlass).not.toBe(
+      en.workspace.documents.aufnahme?.sectionContents.aufnahmeanlass,
+    )
+    expect(de.workspace.documents.aufnahme?.sectionContents.aufnahmeanlass).toMatch(/stationär|Aufnahme|Notaufnahme/i)
+    expect(en.workspace.documents.aufnahme?.sectionContents.aufnahmeanlass).toMatch(/admission|inpatient/i)
+  })
+
   it('includes major module data counts', () => {
-    const fixture = buildDemoPatientFixture()
+    const fixture = buildDemoPatientFixture('en')
     expect(Object.keys(fixture.workspace.documents).length).toBeGreaterThanOrEqual(6)
     expect(fixture.verlaufFeed.length).toBeGreaterThanOrEqual(12)
     expect(fixture.workspace.diagnoses.length).toBe(3)
@@ -37,6 +58,7 @@ describe('demo fixture', () => {
     expect(fixture.workspace.isdmAnalysis?.diagnosticMappings.length).toBeGreaterThanOrEqual(1)
     expect(Object.keys(fixture.workspace.butterflyAttestations ?? {}).length).toBeGreaterThanOrEqual(5)
     expect(fixture.workspace.anforderungen?.length).toBeGreaterThanOrEqual(5)
+    expect(fixture.clinicalIntelligence?.latestRun?.dimensional.activeDimensions.length).toBeGreaterThanOrEqual(5)
     expect(fixture.patient.vorname).toBe('Anna')
     expect(fixture.patient.geschlecht).toBe('weiblich')
   })

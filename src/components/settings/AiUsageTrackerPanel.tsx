@@ -7,15 +7,52 @@ interface AiUsageTrackerPanelProps {
   collapsed?: boolean
 }
 
+interface CreditSummary {
+  monthlyCredits: number
+  purchasedCredits: number
+  totalAvailable: number
+  monthlyResetAt: string
+}
+
+interface UsageSummary {
+  callCount: number
+  totalTokens: number
+  totalCredits: number
+  successCount: number
+  failureCount: number
+}
+
 function formatCost(eur: number | null): string {
   if (eur == null) return '—'
   return `€${eur.toFixed(4)}`
+}
+
+async function fetchCreditSummary(): Promise<CreditSummary | null> {
+  try {
+    const res = await fetch('/api/ai-credits', { credentials: 'include' })
+    if (!res.ok) return null
+    return (await res.json()) as CreditSummary
+  } catch {
+    return null
+  }
+}
+
+async function fetchUsageSummary(): Promise<UsageSummary | null> {
+  try {
+    const res = await fetch('/api/ai-credits/usage', { credentials: 'include' })
+    if (!res.ok) return null
+    return (await res.json()) as UsageSummary
+  } catch {
+    return null
+  }
 }
 
 export function AiUsageTrackerPanel({ collapsed: initialCollapsed = true }: AiUsageTrackerPanelProps) {
   const { t } = useTranslation()
   const [collapsed, setCollapsed] = useState(initialCollapsed)
   const [logs, setLogs] = useState<AiUsageLogEntry[]>([])
+  const [credits, setCredits] = useState<CreditSummary | null>(null)
+  const [usage, setUsage] = useState<UsageSummary | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -23,8 +60,14 @@ export function AiUsageTrackerPanel({ collapsed: initialCollapsed = true }: AiUs
     setLoading(true)
     setError(null)
     try {
-      const data = await fetchRecentAiUsage()
-      setLogs(data.logs)
+      const [logsData, creditData, usageData] = await Promise.all([
+        fetchRecentAiUsage(),
+        fetchCreditSummary(),
+        fetchUsageSummary(),
+      ])
+      setLogs(logsData.logs)
+      setCredits(creditData)
+      setUsage(usageData)
     } catch (err) {
       setError(err instanceof Error ? err.message : t('aiUsageTrackerLoadFailed'))
     } finally {
@@ -55,6 +98,39 @@ export function AiUsageTrackerPanel({ collapsed: initialCollapsed = true }: AiUs
               {t('aiUsageTrackerRefresh')}
             </button>
           </div>
+
+          {/* Credit balance summary */}
+          {credits ? (
+            <div className="ai-usage-tracker__credit-summary">
+              <div className="ai-usage-tracker__credit-row">
+                <span>Monatliche Credits</span>
+                <strong>{credits.monthlyCredits}</strong>
+              </div>
+              <div className="ai-usage-tracker__credit-row">
+                <span>Gekaufte Credits</span>
+                <strong>{credits.purchasedCredits}</strong>
+              </div>
+              <div className="ai-usage-tracker__credit-row ai-usage-tracker__credit-row--total">
+                <span>Gesamt verfügbar</span>
+                <strong>{credits.totalAvailable}</strong>
+              </div>
+              {usage ? (
+                <div className="ai-usage-tracker__credit-row">
+                  <span>Diesen Monat verbraucht</span>
+                  <strong>{usage.totalCredits} Credits ({usage.callCount} Aufrufe)</strong>
+                </div>
+              ) : null}
+              <div className="ai-usage-tracker__credit-row ai-usage-tracker__credit-row--reset">
+                <span>Monatlicher Reset</span>
+                <span>
+                  {new Date(credits.monthlyResetAt).toLocaleDateString('de-DE', {
+                    day: '2-digit', month: '2-digit', year: 'numeric',
+                  })}
+                </span>
+              </div>
+            </div>
+          ) : null}
+
           {error ? <p className="team-settings-error">{error}</p> : null}
           {loading ? <p className="ai-usage-tracker__loading">{t('aiUsageTrackerLoading')}</p> : null}
           <div className="ai-usage-tracker__table-wrap">
