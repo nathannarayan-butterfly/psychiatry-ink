@@ -3,11 +3,14 @@
  *
  * Privacy guarantee: this module NEVER stores raw prompts, patient text, or
  * any field that could contain PHI. Only token counts, feature key, mode,
- * provider/model metadata, de-identified case reference, and status are stored.
+ * provider/model metadata, de-identified case reference, status, and the
+ * estimated provider USD cost are stored. The provider USD cost is the
+ * input the margin analytics rolls up — see `routes/adminAiAnalytics.ts`.
  */
 
 import { prisma } from '../db'
 import type { AiMode } from '../../src/types/aiUsage'
+import type { Prisma } from '@prisma/client'
 
 export interface LogAiUsageParams {
   userId?: string | null
@@ -22,6 +25,17 @@ export interface LogAiUsageParams {
   outputTokens: number
   totalTokens: number
   creditsCharged: number
+  /**
+   * Real provider USD cost computed from per-1M-token rates in
+   * {@link ../ai/providerCosts}. Null when the model is unknown.
+   */
+  estimatedCostUsd?: number | null
+  /**
+   * True when the call landed on a non-primary provider for its mode (e.g.
+   * gruendlich primary is OpenAI; if OpenAI errored and the call fell back
+   * to DeepSeek, fallback=true). See {@link ../ai/providerCosts.isPrimaryProviderForMode}.
+   */
+  fallback?: boolean
   durationMs?: number | null
   success: boolean
   errorCode?: string | null
@@ -37,6 +51,14 @@ export interface LogAiUsageParams {
  */
 export async function logAiUsage(params: LogAiUsageParams): Promise<string | null> {
   try {
+    // Prisma's Decimal column accepts number | string | Decimal. We pass the
+    // string form to avoid any floating-point drift between JS and the SQLite
+    // NUMERIC affinity.
+    const cost: Prisma.AiUsageLogCreateInput['estimatedCostUsd'] =
+      params.estimatedCostUsd == null
+        ? null
+        : params.estimatedCostUsd.toFixed(6)
+
     const row = await prisma.aiUsageLog.create({
       data: {
         userId: params.userId ?? null,
@@ -50,6 +72,8 @@ export async function logAiUsage(params: LogAiUsageParams): Promise<string | nul
         outputTokens: params.outputTokens,
         totalTokens: params.totalTokens,
         creditsCharged: params.creditsCharged,
+        estimatedCostUsd: cost,
+        fallback: params.fallback ?? false,
         durationMs: params.durationMs ?? null,
         success: params.success,
         errorCode: params.errorCode ?? null,

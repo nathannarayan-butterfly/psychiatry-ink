@@ -13,13 +13,17 @@
  *                  concurrent first-call-of-the-month requests can't double-
  *                  grant, and a `monthly_grant` row is appended to the ledger.
  *
- * deductCreditsTransactionally — atomically decrements the account balance and
- *                  appends a debit ledger entry inside a single Prisma
- *                  transaction. Uses a conditional `updateMany` with `gte`
- *                  guards on both purchasedCredits and monthlyCredits so two
- *                  concurrent debits can never drive either bucket negative;
- *                  the loser of the race observes `result.count === 0` and
- *                  returns `{ ok: false }` without writing a ledger row.
+ * deductCreditsTransactionally — atomically decrements the account balance
+ *                  inside a single Prisma transaction. **Bucket order: monthly
+ *                  → purchased**: the free monthly grant is consumed first so
+ *                  the user's paid-for purchased credits (which never expire)
+ *                  outlive the monthly grant.  When a single debit spans both
+ *                  buckets, two ledger rows are emitted (one per bucket) so
+ *                  analytics can split monthly vs purchased consumption.
+ *                  Uses a conditional `updateMany` with `gte` guards on both
+ *                  buckets so two concurrent debits can never drive either
+ *                  bucket negative; the loser observes `result.count === 0`
+ *                  and returns `{ ok: false }` without writing ledger rows.
  *
  * refundCredits  — appends a refund ledger entry (for failed calls where no
  *                  usable output was returned).
@@ -112,6 +116,7 @@ export async function ensureCreditAccount(userId: string): Promise<{
         accountId: existing.id,
         type: 'monthly_grant',
         credits: MONTHLY_CREDIT_GRANT,
+        bucket: 'monthly',
         featureKey: null,
         usageLogId: null,
         note: `monthly_reset:${nextResetAt.toISOString()}`,
@@ -185,19 +190,21 @@ export async function deductCreditsTransactionally(params: {
     const cur = await tx.aiCreditAccount.findUnique({ where: { id: account.id } })
     if (!cur) return { ok: false as const }
 
-    // Spend purchased credits first (they never expire), then monthly.
-    const fromPurchased = Math.min(cur.purchasedCredits, params.credits)
-    const fromMonthly = params.credits - fromPurchased
+    // Monthly first (free grant, expires each period), purchased second
+    // (non-expiring, paid for). Concretely: a debit of 70 against an account
+    // with 50 monthly + 30 purchased drains 50 monthly + 20 purchased.
+    const fromMonthly = Math.min(cur.monthlyCredits, params.credits)
+    const fromPurchased = params.credits - fromMonthly
 
     const result = await tx.aiCreditAccount.updateMany({
       where: {
         id: account.id,
-        purchasedCredits: { gte: fromPurchased },
         monthlyCredits: { gte: fromMonthly },
+        purchasedCredits: { gte: fromPurchased },
       },
       data: {
-        purchasedCredits: { decrement: fromPurchased },
         monthlyCredits: { decrement: fromMonthly },
+        purchasedCredits: { decrement: fromPurchased },
       },
     })
 
@@ -207,16 +214,36 @@ export async function deductCreditsTransactionally(params: {
       return { ok: false as const }
     }
 
-    await tx.aiCreditLedger.create({
-      data: {
-        accountId: account.id,
-        type: 'debit',
-        credits: -params.credits,
-        featureKey: params.featureKey,
-        usageLogId: params.usageLogId ?? null,
-        note: params.mode ? `mode=${params.mode}` : null,
-      },
-    })
+    // Emit one ledger row per bucket that was actually touched. Both rows
+    // share the same featureKey and usageLogId so a UI/CSV joining on those
+    // can reconstruct the per-call total.
+    const note = params.mode ? `mode=${params.mode}` : null
+    if (fromMonthly > 0) {
+      await tx.aiCreditLedger.create({
+        data: {
+          accountId: account.id,
+          type: 'debit',
+          credits: -fromMonthly,
+          bucket: 'monthly',
+          featureKey: params.featureKey,
+          usageLogId: params.usageLogId ?? null,
+          note,
+        },
+      })
+    }
+    if (fromPurchased > 0) {
+      await tx.aiCreditLedger.create({
+        data: {
+          accountId: account.id,
+          type: 'debit',
+          credits: -fromPurchased,
+          bucket: 'purchased',
+          featureKey: params.featureKey,
+          usageLogId: params.usageLogId ?? null,
+          note,
+        },
+      })
+    }
 
     return { ok: true as const }
   })
@@ -249,11 +276,56 @@ export async function refundCredits(params: {
         accountId: account.id,
         type: 'refund',
         credits: params.credits,
+        bucket: 'monthly',
         featureKey: params.featureKey,
         usageLogId: params.usageLogId ?? null,
         note: params.note ?? 'ai_call_failed_refund',
       },
     })
+  })
+}
+
+/**
+ * Credit an account with non-expiring purchased credits (called by the
+ * Stripe webhook when a bundle purchase is confirmed paid). Idempotent at
+ * the ledger level: callers must pass a unique `note` (e.g.
+ * `bundle_purchase:<purchaseId>`) so a replayed webhook is a no-op.
+ *
+ * Append-only: increments AiCreditAccount.purchasedCredits and writes a
+ * `purchase`-typed ledger row, atomically.
+ */
+export async function creditPurchasedCredits(params: {
+  userId: string
+  credits: number
+  purchaseId: string
+  note?: string
+}): Promise<{ ok: true } | { ok: false; reason: 'duplicate' | 'invalid' }> {
+  if (params.credits <= 0) return { ok: false, reason: 'invalid' }
+
+  const account = await ensureCreditAccount(params.userId)
+
+  return prisma.$transaction(async (tx) => {
+    const existing = await tx.aiCreditLedger.findFirst({
+      where: { accountId: account.id, note: `bundle_purchase:${params.purchaseId}` },
+    })
+    if (existing) return { ok: false as const, reason: 'duplicate' as const }
+
+    await tx.aiCreditAccount.update({
+      where: { id: account.id },
+      data: { purchasedCredits: { increment: params.credits } },
+    })
+    await tx.aiCreditLedger.create({
+      data: {
+        accountId: account.id,
+        type: 'purchase',
+        credits: params.credits,
+        bucket: 'purchased',
+        featureKey: null,
+        usageLogId: null,
+        note: params.note ?? `bundle_purchase:${params.purchaseId}`,
+      },
+    })
+    return { ok: true as const }
   })
 }
 

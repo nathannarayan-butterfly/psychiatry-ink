@@ -43,6 +43,7 @@ import {
 } from './creditGuard'
 import { logAiUsage } from './usageLogger'
 import { getFeatureCreditRule } from './featureCreditRules'
+import { computeEstimatedCostUsd, isPrimaryProviderForMode } from './providerCosts'
 
 export { InsufficientCreditsError, CreditInfrastructureError }
 
@@ -155,19 +156,27 @@ export async function runAiFeature(params: RunAiFeatureParams): Promise<LlmCallR
     const durationMs = Date.now() - started
     errorCode = error instanceof Error ? error.constructor.name : 'unknown_error'
 
-    // Log failure (no credits deducted).
+    // Log failure (no credits deducted). The "expected" provider for the
+    // mode is recorded so analytics can attribute the failed-call cost to
+    // the right routing path. estimatedCostUsd is 0 here — most providers
+    // do not bill an early HTTP error. If a provider DID bill (e.g. partial
+    // token streaming before failure) the cost would have to be recovered
+    // from rawUsage; that is a future enhancement.
+    const failureProvider = resolvedTier === 'thorough' ? 'openai' : 'deepseek'
     void logAiUsage({
       userId,
       organisationId,
       caseRef: caseRef ?? null,
       featureKey,
       mode,
-      provider: resolvedTier === 'thorough' ? 'openai' : 'deepseek',
+      provider: failureProvider,
       model: 'unknown',
       inputTokens: 0,
       outputTokens: 0,
       totalTokens: 0,
       creditsCharged: 0,
+      estimatedCostUsd: 0,
+      fallback: !isPrimaryProviderForMode(failureProvider, mode),
       durationMs,
       success: false,
       errorCode,
@@ -179,7 +188,24 @@ export async function runAiFeature(params: RunAiFeatureParams): Promise<LlmCallR
   const durationMs = Date.now() - started
 
   // ── 4. Calculate final credits from actual usage ──────────────────────────
-  const finalCredits = calculateFinalCredits(featureKey, mode, result.usage)
+  // Bill against the model that was actually used (which may differ from the
+  // mode's primary when a fallback fired). The provider-cost factor in
+  // calculateFinalCredits ensures an OpenAI fallback on a Standard call
+  // consumes more credits than a DeepSeek primary on the same call.
+  const finalCredits = calculateFinalCredits(featureKey, mode, result.usage, {
+    modelId: result.model,
+  })
+
+  // Real provider USD cost — fed into margin analytics. Null when the model
+  // is unknown to providerCosts (caller should add a row in that case).
+  const estimatedCostUsd = computeEstimatedCostUsd({
+    modelId: result.model,
+    inputTokens: result.usage.inputTokens,
+    outputTokens: result.usage.outputTokens,
+  })
+
+  // Fallback marker — analytics splits primary vs fallback cost on this flag.
+  const fallback = !isPrimaryProviderForMode(result.provider, mode)
 
   // ── 5. Deduct credits + write ledger ─────────────────────────────────────
   let usageLogId: string | null = null
@@ -228,6 +254,8 @@ export async function runAiFeature(params: RunAiFeatureParams): Promise<LlmCallR
     outputTokens: result.usage.outputTokens,
     totalTokens: result.usage.totalTokens,
     creditsCharged: success ? finalCredits : 0,
+    estimatedCostUsd: success ? estimatedCostUsd : 0,
+    fallback,
     durationMs,
     success,
     errorCode,

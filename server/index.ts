@@ -42,6 +42,7 @@ import { medicationPriorTherapiesRouter } from './routes/medicationPriorTherapie
 import { demoPatientRouter } from './routes/demoPatient'
 import { aiBudgetRouter, aiUsageRouter } from './routes/aiUsage'
 import { aiCreditsRouter } from './routes/aiCredits'
+import { adminAiAnalyticsRouter } from './routes/adminAiAnalytics'
 import { liveKitMissingEnvVars } from './services/livekitVoice'
 import {
   isClinicalIntelligenceV1Enabled,
@@ -108,6 +109,7 @@ app.use('/api/demo-patient', demoPatientRouter)
 app.use('/api/ai-usage', aiUsageRouter)
 app.use('/api/ai-budget', aiBudgetRouter)
 app.use('/api/ai-credits', aiCreditsRouter)
+app.use('/api/admin/ai-analytics', adminAiAnalyticsRouter)
 if (isEnterpriseOrgHierarchyEnabled()) {
   app.use('/api/enterprise', enterpriseRouter)
 }

@@ -123,33 +123,40 @@ function mockTransaction() {
 // ── creditCalculator tests ───────────────────────────────────────────────────
 
 describe('creditCalculator.estimateCredits', () => {
+  // economic mode defaults route to the baseline provider (DeepSeek-v4-flash,
+  // factor=1.0), so the documented mode multiplier holds 1:1 here. gruendlich
+  // defaults to OpenAI gpt-4.1 (factor ~10×) — see the provider-cost test
+  // group below for the cross-provider assertions.
   it('returns base × multiplier for tokens within included limit', () => {
-    // inline_text_edit: base=1, maxIncluded=2000, multiplier(economic)=1
+    // inline_text_edit: base=1, maxIncluded=2000, multiplier(economic)=1, factor=1
     const cost = estimateCredits('inline_text_edit', 'economic', 1000)
-    expect(cost).toBe(1) // 1 × 1 = 1
+    expect(cost).toBe(1)
 
-    // standard multiplier = 2
+    // standard multiplier = 2, factor=1 (DeepSeek primary)
     const cost2 = estimateCredits('inline_text_edit', 'standard', 1000)
-    expect(cost2).toBe(2) // 1 × 2 = 2
+    expect(cost2).toBe(2)
   })
 
-  it('applies Gründlich multiplier (4×)', () => {
-    const cost = estimateCredits('inline_text_edit', 'gruendlich', 1000)
-    expect(cost).toBe(4) // 1 × 4 = 4
+  it('applies Gründlich multiplier (4×) when billed against the DeepSeek baseline', () => {
+    // Force the DeepSeek baseline model so the provider-cost factor is 1.0
+    // and the pure mode multiplier is observable here.
+    const cost = estimateCredits('inline_text_edit', 'gruendlich', 1000, {
+      modelId: 'deepseek-v4-flash',
+    })
+    expect(cost).toBe(4) // 1 × 4 × 1.0 = 4
   })
 
   it('bills overflow tokens in blocks when totalTokens > maxIncluded', () => {
     // inline_text_edit: base=1, maxIncluded=2000, blockSize=1000, overflowCreditsPerBlock=1
-    // With 4000 tokens at economic (1×): overflow = 4000-2000 = 2000 → 2 blocks → 2 extra credits
+    // With 4000 tokens at economic (1×, factor=1): overflow = 4000-2000 = 2000 → 2 blocks → 2 extra credits
     // total = 1 (base) + 2 (overflow) = 3
     const cost = estimateCredits('inline_text_edit', 'economic', 4000)
     expect(cost).toBe(3)
   })
 
   it('overflow billing is also multiplied by mode', () => {
-    // At standard (2×) with same overflow: (1 + 2) × 2 = 6... wait let me re-check the formula
-    // Formula: base × modeMultiplier + overflowBlocks × overflowCreditsPerBlock × modeMultiplier
-    // = (1 × 2) + (2 × 1 × 2) = 2 + 4 = 6
+    // At standard (2×, factor=1) with same overflow:
+    //   base + overflow = (1 × 2) + (2 × 1 × 2) = 6
     const cost = estimateCredits('inline_text_edit', 'standard', 4000)
     expect(cost).toBe(6)
   })
@@ -168,8 +175,23 @@ describe('creditCalculator.estimateCredits', () => {
 describe('creditCalculator.calculateFinalCredits', () => {
   it('uses actual total tokens from provider usage', () => {
     const cost = calculateFinalCredits('inline_text_edit', 'economic', { totalTokens: 3000 })
-    // 3000 tokens: overflow = 1000 → 1 block → total = 1 + 1 = 2
+    // 3000 tokens: overflow = 1000 → 1 block → total = 1 + 1 = 2 (factor=1)
     expect(cost).toBe(2)
+  })
+
+  it('scales final credits up when the actual model is more expensive than the baseline', () => {
+    // economic mode normally costs 1 credit for inline_text_edit @ 1000 tokens.
+    // If a call ends up on gpt-4.1 instead of DeepSeek, the provider-cost
+    // factor must lift the credit cost above 1 — even though the mode is
+    // economic. This is the "OpenAI must not consume credits at the same
+    // rate as DeepSeek" guarantee in the spec.
+    const cost = calculateFinalCredits(
+      'inline_text_edit',
+      'economic',
+      { totalTokens: 1000 },
+      { modelId: 'gpt-4.1' },
+    )
+    expect(cost).toBeGreaterThan(1)
   })
 })
 

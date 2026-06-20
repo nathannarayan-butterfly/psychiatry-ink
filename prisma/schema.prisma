@@ -227,21 +227,31 @@ model AiCreditAccount {
 
 /// Append-only ledger for all credit movements.
 /// Positive credits = grant/purchase/refund. Negative = debit.
+/// `bucket` records which bucket the entry hit ('monthly' | 'purchased').
+/// A single user-visible debit that spans both buckets emits TWO ledger rows
+/// (one per bucket) so analytics can split monthly vs purchased consumption.
 model AiCreditLedger {
   id         String          @id @default(cuid())
   accountId  String
   account    AiCreditAccount @relation(fields: [accountId], references: [id])
   type       String          // 'monthly_grant' | 'purchase' | 'debit' | 'refund' | 'admin_adjustment'
   credits    Int             // positive = credit, negative = debit
+  bucket     String          @default("monthly") // 'monthly' | 'purchased'
   featureKey String?
   usageLogId String?
   note       String?
   createdAt  DateTime        @default(now())
 
   @@index([accountId, createdAt])
+  @@index([accountId, bucket, createdAt])
 }
 
 /// Metadata-only AI call log (no patient text, no raw prompts — only usage metadata).
+///
+/// `estimatedCostUsd` records the real provider USD cost (input+output tokens
+/// priced per `providerCosts.ts`). Used for margin analytics — never billed
+/// directly. `fallback=true` when the call landed on a non-primary provider
+/// for its mode (e.g. gruendlich fell back from OpenAI to DeepSeek).
 model AiUsageLog {
   id               String   @id @default(cuid())
   organisationId   String?
@@ -255,6 +265,8 @@ model AiUsageLog {
   outputTokens     Int      @default(0)
   totalTokens      Int      @default(0)
   creditsCharged   Int      @default(0)
+  estimatedCostUsd Decimal? // real provider USD cost; up to 6 decimal places
+  fallback         Boolean  @default(false)
   durationMs       Int?
   success          Boolean  @default(true)
   errorCode        String?
@@ -263,6 +275,47 @@ model AiUsageLog {
 
   @@index([userId, createdAt])
   @@index([featureKey, createdAt])
+  @@index([provider, model, createdAt])
+  @@index([success, createdAt])
+  @@index([fallback, createdAt])
+}
+
+/// SKU catalogue for non-expiring extra-credit bundles (purchased on top of
+/// the monthly grant). Prices are stored in GBP — the user-facing checkout
+/// currency for Beta. Inactive rows remain readable for historical purchase
+/// references but are not offered for purchase.
+model AiCreditBundle {
+  id          String   @id @default(cuid())
+  sku         String   @unique // 'credits-100' | 'credits-250' | 'credits-500' | 'credits-1000' | 'credits-2500'
+  credits     Int      // 100 | 250 | 500 | 1000 | 2500
+  priceGbp    Decimal  // GBP price; 2 decimal places enforced in app layer
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  purchases   AiCreditPurchase[]
+}
+
+/// Record of a clinician's purchase intent for a credit bundle.
+/// Beta deploys this as a stub: `status='pending'` is written when the user
+/// clicks Purchase; Stripe checkout completion (out of scope) later moves the
+/// row to `status='paid'` and emits a corresponding `AiCreditLedger` row +
+/// `AiCreditAccount.purchasedCredits` increment.
+model AiCreditPurchase {
+  id          String    @id @default(cuid())
+  userId      String
+  bundleId    String
+  credits     Int       // snapshot of bundle.credits at purchase time
+  priceGbp    Decimal   // GBP price snapshot at purchase time
+  status      String    // 'pending' | 'paid' | 'failed' | 'refunded'
+  externalRef String?   // Stripe checkout session id (future)
+  createdAt   DateTime  @default(now())
+  paidAt      DateTime?
+
+  bundle      AiCreditBundle @relation(fields: [bundleId], references: [id])
+
+  @@index([userId, status])
+  @@index([createdAt])
+  @@index([status, createdAt])
 }
 
 model DiagnosisCriteriaLink {
