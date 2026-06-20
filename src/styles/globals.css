@@ -3524,8 +3524,9 @@
   }
 
   .dashboard-hinweise-stack {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
     gap: 0.625rem;
     margin-bottom: 1rem;
     width: 100%;
@@ -3583,19 +3584,14 @@
     margin-top: 0.5rem;
   }
 
-  @media (max-width: 68.75rem) {
-    .dashboard-hinweise-stack {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-
   @media (max-width: 37.5rem) {
     .dashboard-hinweise-stack {
-      grid-template-columns: minmax(0, 1fr);
+      flex-direction: column;
     }
   }
 
   .dashboard-hinweis-panel {
+    flex: 1 1 0;
     min-width: 0;
     height: 100%;
     padding: 0.75rem 0.875rem;
