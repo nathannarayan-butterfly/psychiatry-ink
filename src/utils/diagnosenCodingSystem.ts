@@ -5,8 +5,13 @@ export const DEFAULT_DIAGNOSEN_CODING_SYSTEM: CodingSystem = 'icd10'
 
 export type VisibleCodingSystem = 'icd10' | 'icd11'
 
+/** Search filter — one catalogue per tab (no combined "all" tab). */
+export type DiagnosisSearchFilter = VisibleCodingSystem
+
 /** Coding systems exposed in Diagnosen UI (DSM-5-TR deferred). */
 export const VISIBLE_CODING_SYSTEMS: readonly VisibleCodingSystem[] = ['icd10', 'icd11']
+
+export const DIAGNOSIS_SEARCH_FILTERS: readonly DiagnosisSearchFilter[] = ['icd10', 'icd11']
 
 const VISIBLE_SYSTEM_SET = new Set<CodingSystem>(VISIBLE_CODING_SYSTEMS)
 

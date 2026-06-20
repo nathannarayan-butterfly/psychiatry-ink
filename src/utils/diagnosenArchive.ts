@@ -1,7 +1,7 @@
 import { bundledDiagnosisTitle } from '../data/bundledDiagnosisTitles'
 import { lookupCatalogLabel } from '../data/diagnosisCatalog'
 import type { DiagnosisSearchHit } from '../services/diagnosisReferenceApi'
-import { fetchCrosswalkByIcd10 } from '../services/diagnosisReferenceApi'
+import type { CatalogueSystem, DiagnosisRole, DiagnosisStatus } from '../types/diagnosisCatalogue'
 import type { IcdTitleVersion } from '../../shared/icdTitle'
 import { scheduleDiagnosisImprints } from './clinicalImprint'
 import { readOrMigrateEncryptedJson, writeEncryptedJson } from './encryptedLocalStore'
@@ -17,6 +17,17 @@ export interface CodingValue {
 
 export interface DiagnoseEntry {
   id: string
+  /** Catalogue entry id when selected from diagnosis catalogue. */
+  diagnosisEntryId?: string
+  /** Primary coding system for this case diagnosis. */
+  codingSystem?: CatalogueSystem
+  catalogueVersion?: string
+  displayLabel?: string
+  diagnosisStatus?: DiagnosisStatus
+  diagnosisRole?: DiagnosisRole
+  clinicianId?: string
+  /** Whether an authored criteria tree is linked (catalogue metadata). */
+  criteriaAvailable?: boolean
   icd10: CodingValue
   icd11: CodingValue
   dsm: CodingValue
@@ -99,39 +110,73 @@ function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
 
-/** Create a diagnosis from a database search hit (full crosswalk). */
-export function createDiagnoseFromHit(hit: DiagnosisSearchHit): DiagnoseEntry {
-  const now = new Date().toISOString()
-  return {
-    id: generateId(),
-    icd10: { code: hit.icd10Code, label: hit.icd10Label, overridden: false },
-    icd11: { code: hit.icd11Code, label: hit.icd11Label, overridden: false },
-    dsm: { code: hit.dsmCode, label: hit.dsmLabel, overridden: false },
-    createdAt: now,
-    updatedAt: now,
-  }
+/** Map catalogue system to legacy coding slot. */
+export function catalogueSystemToCodingSlot(system: CatalogueSystem): CodingSystem {
+  if (system === 'ICD11MMS') return 'icd11'
+  if (system === 'DSM5TR') return 'dsm'
+  return 'icd10'
 }
 
-/** Free-text diagnosis — ICD-10 label only; clinician fills or maps later. */
-export async function createDiagnoseFreeText(text: string, code = ''): Promise<DiagnoseEntry> {
+/** Create a diagnosis from a catalogue search hit — independent coding, no crosswalk sync. */
+export function createDiagnoseFromHit(
+  hit: DiagnosisSearchHit,
+  activeSystem?: CodingSystem,
+): DiagnoseEntry {
   const now = new Date().toISOString()
-  const trimmed = text.trim()
-  const catalog = code ? await fetchCrosswalkByIcd10(code) : null
+  const slot = activeSystem ?? catalogueSystemToCodingSlot(hit.system)
 
-  if (catalog) return createDiagnoseFromHit(catalog)
-
-  return {
+  const entry: DiagnoseEntry = {
     id: generateId(),
-    icd10: { code: code.trim(), label: trimmed, overridden: true },
+    diagnosisEntryId: hit.diagnosisEntryId,
+    codingSystem: hit.system,
+    catalogueVersion: hit.catalogueVersion,
+    displayLabel: hit.title,
+    diagnosisStatus: 'confirmed',
+    diagnosisRole: 'main',
+    criteriaAvailable: hit.criteriaAvailable,
+    icd10: emptyCoding(),
     icd11: emptyCoding(),
     dsm: emptyCoding(),
     createdAt: now,
     updatedAt: now,
   }
+
+  entry[slot] = { code: hit.code, label: hit.title, overridden: false }
+  return sanitizeDiagnoseEntry(entry)
 }
 
-/** Re-sync ICD-11 and DSM from database crosswalk when not overridden. */
+/** Free-text diagnosis — label only; no forced crosswalk mapping. */
+export async function createDiagnoseFreeText(
+  text: string,
+  code = '',
+  system: CodingSystem = 'icd10',
+): Promise<DiagnoseEntry> {
+  const now = new Date().toISOString()
+  const trimmed = text.trim()
+  const coding: CodingValue = { code: code.trim(), label: trimmed, overridden: true }
+
+  const entry: DiagnoseEntry = {
+    id: generateId(),
+    codingSystem: system === 'icd11' ? 'ICD11MMS' : system === 'dsm' ? 'DSM5TR' : 'ICD10GM',
+    displayLabel: trimmed,
+    diagnosisStatus: 'confirmed',
+    diagnosisRole: 'main',
+    icd10: emptyCoding(),
+    icd11: emptyCoding(),
+    dsm: emptyCoding(),
+    createdAt: now,
+    updatedAt: now,
+  }
+  entry[system] = coding
+  return sanitizeDiagnoseEntry(entry)
+}
+
+/** Re-sync ICD-11 and DSM from crosswalk only for legacy entries without independent coding. */
 export async function syncDerivedCodingsAsync(entry: DiagnoseEntry): Promise<DiagnoseEntry> {
+  if (entry.codingSystem === 'ICD11MMS' || entry.codingSystem === 'DSM5TR') return entry
+  if (!entry.icd10.code.trim()) return entry
+
+  const { fetchCrosswalkByIcd10 } = await import('../services/diagnosisReferenceApi')
   const crosswalk = await fetchCrosswalkByIcd10(entry.icd10.code)
   if (!crosswalk) return entry
 
@@ -141,10 +186,8 @@ export async function syncDerivedCodingsAsync(entry: DiagnoseEntry): Promise<Dia
     updatedAt: now,
     icd11: entry.icd11.overridden
       ? entry.icd11
-      : { code: crosswalk.icd11Code, label: crosswalk.icd11Label, overridden: false },
-    dsm: entry.dsm.overridden
-      ? entry.dsm
-      : { code: crosswalk.dsmCode, label: crosswalk.dsmLabel, overridden: false },
+      : { code: '', label: '', overridden: false },
+    dsm: entry.dsm.overridden ? entry.dsm : { code: '', label: '', overridden: false },
   }
 }
 
@@ -154,7 +197,16 @@ export function syncDerivedCodings(entry: DiagnoseEntry): DiagnoseEntry {
 }
 
 export function getActiveCoding(entry: DiagnoseEntry, system: CodingSystem): CodingValue {
+  if (entry.codingSystem) {
+    const primary = catalogueSystemToCodingSlot(entry.codingSystem)
+    if (system === primary) return entry[system]
+  }
   return entry[system]
+}
+
+/** Whether this entry was coded independently (no forced ICD-10↔ICD-11 mapping). */
+export function isIndependentCatalogueEntry(entry: DiagnoseEntry): boolean {
+  return Boolean(entry.codingSystem && entry.codingSystem !== 'LOCAL')
 }
 
 /** True when a coding carries any clinician-entered content (code or label). */
@@ -175,6 +227,10 @@ export function hasAnyCodingContent(entry: DiagnoseEntry): boolean {
 export function selectPrimaryCoding(
   entry: DiagnoseEntry,
 ): { coding: CodingValue; version: CodingSystem } {
+  if (entry.codingSystem) {
+    const slot = catalogueSystemToCodingSlot(entry.codingSystem)
+    if (codingHasContent(entry[slot])) return { coding: entry[slot], version: slot }
+  }
   if (codingHasContent(entry.icd10)) return { coding: entry.icd10, version: 'icd10' }
   if (codingHasContent(entry.icd11)) return { coding: entry.icd11, version: 'icd11' }
   return { coding: entry.dsm, version: 'dsm' }

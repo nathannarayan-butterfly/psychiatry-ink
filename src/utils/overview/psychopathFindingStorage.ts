@@ -103,6 +103,15 @@ export async function hydratePsychopathFindingFromEncryptedLocal(caseId?: string
   }
 }
 
+/** Whether psychopath finding state has content worth vault persistence. */
+export function shouldPersistPsychopathFindingState(state: PsychopathFindingState): boolean {
+  return Boolean(
+    state.current?.text?.trim() ||
+      state.history.length > 0 ||
+      state.aiStructured?.sourceTextHash,
+  )
+}
+
 export function loadPsychopathFindingState(caseId?: string): PsychopathFindingState {
   const resolved = resolveCaseId(caseId)
   const cached = findingCache.get(resolved)

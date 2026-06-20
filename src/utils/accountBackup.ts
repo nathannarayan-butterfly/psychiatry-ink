@@ -1,5 +1,6 @@
 import { API_BASE } from '../services/apiClient'
 import {
+  fetchAccountBackupStatus,
   fetchKeyBackupFromServer,
   fetchRegistryBackupFromServer,
   uploadKeyBackupToServer,
@@ -133,6 +134,32 @@ function normalizeIdentifierPayload(raw: unknown): AccountIdentifierBackupPayloa
   }
 }
 
+export function registryMapHasIdentifierFields(map: Record<string, LocalCaseMeta>): boolean {
+  return Object.values(map).some(
+    (meta) =>
+      Boolean(meta.localName?.trim()) ||
+      Boolean(meta.localVorname?.trim()) ||
+      Boolean(meta.localNachname?.trim()) ||
+      Boolean(meta.localGeburtsdatum?.trim()),
+  )
+}
+
+function payloadHasIdentifierFields(payload: AccountIdentifierBackupPayload): boolean {
+  return Object.values(payload.identifiers ?? {}).some(
+    (record) =>
+      Boolean(record.localName?.trim()) ||
+      Boolean(record.localVorname?.trim()) ||
+      Boolean(record.localNachname?.trim()) ||
+      Boolean(record.localGeburtsdatum?.trim()),
+  )
+}
+
+async function shouldSyncIdentifierBackupToAccount(): Promise<boolean> {
+  if (usesAccountIdentifierSync()) return true
+  const status = await fetchAccountBackupStatus()
+  return Boolean(status?.hasRegistryBackup)
+}
+
 async function applyIdentifierBackupPayload(payload: AccountIdentifierBackupPayload): Promise<void> {
   const { replaceRegistryMap } = await import('../hooks/useCaseRegistry')
   const current = loadRegistryMapFromStorage()
@@ -171,9 +198,14 @@ async function resolveKeyBackup(): Promise<PassphraseKeyBackup> {
 }
 
 async function uploadIdentifierBackupIfEnabled(passphrase: string): Promise<void> {
-  if (!usesAccountIdentifierSync()) return
+  if (!(await shouldSyncIdentifierBackupToAccount())) return
 
   const payload = await collectIdentifierBackupPayload()
+  if (!payloadHasIdentifierFields(payload)) {
+    const status = await fetchAccountBackupStatus()
+    if (status?.hasRegistryBackup) return
+  }
+
   const encrypted = await encryptJsonWithPassphrase(passphrase, payload)
   await uploadRegistryBackupToServer(encrypted)
 }
@@ -194,6 +226,7 @@ export async function setupAccountCloudBackup(passphrase: string): Promise<Passp
   await uploadKeyBackupToServer(backup)
   await uploadIdentifierBackupIfEnabled(passphrase)
   setAccountBackupUnlocked(passphrase)
+  await tryAutoRestoreRegistryFromAccount(passphrase)
   return backup
 }
 
@@ -267,9 +300,54 @@ export interface AccountCloudRestoreResult {
 }
 
 /**
+ * Restore encrypted patient identifiers from the account registry backup when local
+ * names/DOB are missing (e.g. after clearing browser storage). Also re-applies the
+ * account identifier storage preference from server state.
+ */
+export async function tryAutoRestoreRegistryFromAccount(passphrase: string): Promise<number> {
+  const status = await fetchAccountBackupStatus()
+  if (!status?.hasRegistryBackup) return 0
+
+  const { ensureCaseRegistryHydrated } = await import('../hooks/useCaseRegistry')
+  await ensureCaseRegistryHydrated()
+  if (registryMapHasIdentifierFields(loadRegistryMapFromStorage())) return 0
+
+  const registryBlob = await fetchRegistryBackupFromServer()
+  if (!registryBlob) return 0
+
+  const raw = await decryptJsonWithPassphrase<unknown>(passphrase, registryBlob)
+  const payload = normalizeIdentifierPayload(raw)
+  await applyIdentifierBackupPayload(payload)
+
+  const { syncPrivacyIdentifierStorage } = await import('../hooks/usePrivacySettings')
+  syncPrivacyIdentifierStorage('account')
+
+  return Object.keys(payload.identifiers ?? {}).length
+}
+
+/** When the account has a registry backup, prefer account identifier storage locally. */
+export async function inferAccountIdentifierStorageFromServer(): Promise<void> {
+  const status = await fetchAccountBackupStatus()
+  if (!status?.hasRegistryBackup) return
+  const { syncPrivacyIdentifierStorage } = await import('../hooks/usePrivacySettings')
+  syncPrivacyIdentifierStorage('account')
+}
+
+/** True when server holds an identifier backup but this browser lacks decrypted names/DOB. */
+export async function isAccountRegistryRestoreNeeded(): Promise<boolean> {
+  const status = await fetchAccountBackupStatus()
+  if (!status?.hasRegistryBackup) return false
+
+  const { ensureCaseRegistryHydrated } = await import('../hooks/useCaseRegistry')
+  await ensureCaseRegistryHydrated()
+  return !registryMapHasIdentifierFields(loadRegistryMapFromStorage())
+}
+
+/**
  * Passphrase unlock: restore key + clinical case files from account.
- * Name/DOB from account only when identifier storage mode is "account";
- * in "device" mode import patient vault files manually.
+ * Patient identifiers are restored from the account registry backup whenever one exists,
+ * regardless of the local identifier storage preference (which may reset after clearing
+ * browser storage).
  */
 export async function restoreAccountCloudBackup(
   passphrase: string,
@@ -279,18 +357,9 @@ export async function restoreAccountCloudBackup(
   await restorePrivateKeyFromPassphrase(passphrase, keyBackup)
   setAccountBackupUnlocked(passphrase)
 
-  let identifierCases = 0
-  const identifiersFromAccount = usesAccountIdentifierSync()
-
-  if (identifiersFromAccount) {
-    const registryBlob = await fetchRegistryBackupFromServer()
-    if (registryBlob) {
-      const raw = await decryptJsonWithPassphrase<unknown>(passphrase, registryBlob)
-      const payload = normalizeIdentifierPayload(raw)
-      await applyIdentifierBackupPayload(payload)
-      identifierCases = Object.keys(payload.identifiers ?? {}).length
-    }
-  }
+  const identifierCases = await tryAutoRestoreRegistryFromAccount(passphrase)
+  const status = await fetchAccountBackupStatus()
+  const identifiersFromAccount = identifierCases > 0 || Boolean(status?.hasRegistryBackup)
 
   const workspaceCases = await pullWorkspaceSnapshotsFromCloud(countryCode)
   return {
@@ -302,15 +371,16 @@ export async function restoreAccountCloudBackup(
 
 /** Debounced identifier re-upload (name/DOB only) when account mode + active passphrase session. */
 export function scheduleAccountRegistryUpload(): void {
-  if (!usesAccountIdentifierSync()) return
-
   const passphrase = getAccountBackupPassphrase()
   if (!passphrase) return
 
   if (identifierUploadTimer !== null) window.clearTimeout(identifierUploadTimer)
   identifierUploadTimer = window.setTimeout(() => {
     identifierUploadTimer = null
-    void uploadIdentifierBackupIfEnabled(passphrase).catch((error) => {
+    void (async () => {
+      if (!(await shouldSyncIdentifierBackupToAccount())) return
+      await uploadIdentifierBackupIfEnabled(passphrase)
+    })().catch((error) => {
       console.warn('[account-backup] identifier upload failed', error)
     })
   }, 2000)

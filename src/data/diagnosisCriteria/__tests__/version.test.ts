@@ -15,6 +15,7 @@ import {
 } from '../version'
 import type { Disorder } from '../schema'
 import { alcoholDependence } from '../alcoholDependence'
+import { getDisorderById } from '../index'
 
 /** A minimal ICD-10-only disorder (no distinct ICD-11 set), for fallback checks. */
 const icd10OnlyDisorder: Disorder = {
@@ -112,6 +113,28 @@ describe('resolveDisorderForCodingSystem', () => {
     // The ICD-10 tree is untouched (6 features, threshold 3).
     expect(alcoholDependence.groups[0].threshold).toBe(3)
     expect(alcoholDependence.groups[0].criteria).toHaveLength(6)
+  })
+
+  it('alcohol harmful use: ICD-11 adds harm-to-others criterion vs ICD-10', () => {
+    const harmful = getDisorderById('alcohol_harmful_use')
+    expect(harmful).toBeDefined()
+    expect(hasDistinctIcd11(harmful!)).toBe(true)
+    const v11 = resolveDisorderForCodingSystem(harmful!, 'icd11')
+    expect(v11.code).toBe('6C40.1')
+    const harmGroup = v11.groups.find((g) => g.id === '6c40_1.harm')
+    expect(harmGroup?.criteria.map((c) => c.id)).toEqual(['6c40_1.harm_self', '6c40_1.harm_others'])
+    const v10HarmIds = harmful!.groups.flatMap((g) => g.criteria.map((c) => c.id))
+    expect(v10HarmIds).not.toContain('6c40_1.harm_others')
+  })
+
+  it('mixed developmental disorder: ICD-11 uses 2-of-4 domain threshold', () => {
+    const mixed = getDisorderById('mixed_specific_developmental_disorder')
+    expect(mixed).toBeDefined()
+    expect(hasDistinctIcd11(mixed!)).toBe(true)
+    const v11 = resolveDisorderForCodingSystem(mixed!, 'icd11')
+    const domainGroup = v11.groups.find((g) => g.id === '6a0z.domains')
+    expect(domainGroup?.threshold).toBe(2)
+    expect(domainGroup?.criteria).toHaveLength(4)
   })
 })
 

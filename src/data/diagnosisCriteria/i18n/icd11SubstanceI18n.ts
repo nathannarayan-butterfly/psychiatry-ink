@@ -31,10 +31,17 @@ export const ICD11_DEPENDENCE_DISORDERS: ReadonlyArray<{ disorderId: string; icd
   { disorderId: 'nicotine_dependence', icd11Stem: '6C4A' },
   { disorderId: 'volatile_solvents_dependence', icd11Stem: '6C4B' },
   { disorderId: 'multiple_substances_dependence', icd11Stem: '6C4E' },
+  { disorderId: 'caffeine_dependence', icd11Stem: '6C48' },
+  { disorderId: 'synthetic_cathinones_dependence', icd11Stem: '6C47' },
+  { disorderId: 'mdma_related_dependence', icd11Stem: '6C4C' },
+  { disorderId: 'dissociative_drugs_dependence', icd11Stem: '6C4D' },
+  { disorderId: 'multiple_specified_psychoactive_dependence', icd11Stem: '6C4F' },
+  { disorderId: 'unknown_psychoactive_dependence', icd11Stem: '6C4G' },
 ]
 
 /** Disorders carrying a distinct ICD-11 harmful-pattern set (6C4x.1). */
 export const ICD11_HARMFUL_USE_DISORDERS: ReadonlyArray<{ disorderId: string; icd11Stem: string }> = [
+  { disorderId: 'alcohol_harmful_use', icd11Stem: '6C40' },
   { disorderId: 'opioids_harmful_use', icd11Stem: '6C43' },
   { disorderId: 'cannabinoids_harmful_use', icd11Stem: '6C41' },
   { disorderId: 'sedatives_harmful_use', icd11Stem: '6C44' },
@@ -44,6 +51,12 @@ export const ICD11_HARMFUL_USE_DISORDERS: ReadonlyArray<{ disorderId: string; ic
   { disorderId: 'nicotine_harmful_use', icd11Stem: '6C4A' },
   { disorderId: 'volatile_solvents_harmful_use', icd11Stem: '6C4B' },
   { disorderId: 'multiple_substances_harmful_use', icd11Stem: '6C4E' },
+  { disorderId: 'caffeine_harmful_use', icd11Stem: '6C48' },
+  { disorderId: 'synthetic_cathinones_harmful_use', icd11Stem: '6C47' },
+  { disorderId: 'mdma_related_harmful_use', icd11Stem: '6C4C' },
+  { disorderId: 'dissociative_drugs_harmful_use', icd11Stem: '6C4D' },
+  { disorderId: 'multiple_specified_psychoactive_harmful_use', icd11Stem: '6C4F' },
+  { disorderId: 'unknown_psychoactive_harmful_use', icd11Stem: '6C4G' },
 ]
 
 /** Language-specific text pack for the (structurally identical) ICD-11 fragments. */

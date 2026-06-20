@@ -12,6 +12,7 @@ import {
   type CombinationRiskKind,
   type RiskLevel,
 } from '../../utils/medication/medicationInsights'
+import { resolveCombinationRisksForDisplay } from '../../utils/combinationCheck/combinationRiskDisplay'
 import { activeMedications } from '../../utils/medication/planOps'
 import {
   computeCombinedReceptorFingerprint,
@@ -31,6 +32,7 @@ import { ParameterMonitoringList } from '../clinical/ParameterMonitoringList'
 type MedicationUiKey = Parameters<typeof translateMedicationUi>[1]
 
 interface MedicationPlanDashboardProps {
+  caseId: string
   medications: MedicationEntry[]
   parameterMonitoring: ParameterMonitoringRow[]
   curatedTargetReceptors: string[] | undefined
@@ -67,6 +69,7 @@ const SEVERITY_LABEL_KEY: Record<InteractionEntry['severity'], MedicationUiKey> 
  * with graceful empty states; deep dives stay one click away via the sections.
  */
 export function MedicationPlanDashboard({
+  caseId,
   medications,
   parameterMonitoring,
   curatedTargetReceptors,
@@ -79,6 +82,10 @@ export function MedicationPlanDashboard({
   const insights = useMemo(
     () => computeMedicationInsights(medications, language),
     [medications, language],
+  )
+  const groupedCombinationRisks = useMemo(
+    () => resolveCombinationRisksForDisplay(insights.combinationRisks, caseId),
+    [insights.combinationRisks, caseId],
   )
 
   const { combinedFingerprint, resolved, zielrezeptoren, pickable } = useMemo(() => {
@@ -123,7 +130,7 @@ export function MedicationPlanDashboard({
   const monitoring = parameterMonitoring.slice(0, MAX_MONITORING)
   const hasReceptorData =
     combinedFingerprint !== null || zielrezeptoren.length > 0 || resolved.length > 0
-  const hasKombi = insights.combinationRisks.length > 0 || interactions.length > 0
+  const hasKombi = groupedCombinationRisks.length > 0 || interactions.length > 0
 
   return (
     <section className="medication-dashboard" aria-label={translateMedicationUi(language, 'medDashHeading')}>
@@ -188,21 +195,29 @@ export function MedicationPlanDashboard({
           </header>
           {hasKombi ? (
             <>
-              {insights.combinationRisks.length > 0 ? (
+              {groupedCombinationRisks.length > 0 ? (
                 <ul className="medication-risk-list">
-                  {insights.combinationRisks.map((risk) => (
+                  {groupedCombinationRisks.map((group) => (
                     <li
-                      key={`${risk.kind}-${risk.detail ?? ''}`}
-                      className={`medication-risk medication-risk--${risk.level}`}
+                      key={group.drugSetKey}
+                      className={`medication-risk medication-risk--${group.level}`}
                     >
                       <span className="medication-risk__dot" aria-hidden="true" />
-                      <span className="medication-risk__label">
-                        {translateMedicationUi(language, RISK_LABEL_KEY[risk.kind])}
-                        {risk.kind === 'duplicateClass' && risk.detail ? ` · ${risk.detail}` : ''}
-                      </span>
-                      <span className="medication-risk__drugs" title={risk.drugs.join(', ')}>
-                        {risk.drugs.join(' + ')}
-                      </span>
+                      <div className="medication-risk__body">
+                        <ul className="medication-risk__labels">
+                          {group.risks.map((risk) => (
+                            <li key={risk.kind} className="medication-risk__label-line">
+                              <span className="medication-risk__label">
+                                {translateMedicationUi(language, RISK_LABEL_KEY[risk.kind])}
+                                {risk.kind === 'duplicateClass' && risk.detail ? ` · ${risk.detail}` : ''}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                        <span className="medication-risk__drugs" title={group.drugs.join(', ')}>
+                          {group.drugs.join(' + ')}
+                        </span>
+                      </div>
                     </li>
                   ))}
                 </ul>

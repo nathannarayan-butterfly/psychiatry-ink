@@ -4,6 +4,7 @@
  */
 
 import type { Disorder } from '../schema'
+import { domainSignal } from '../predicateHelpers'
 import {
   paraphiliaDisorder,
   specificCodeDisorder,
@@ -541,8 +542,8 @@ const f6GapDisorders: Disorder[] = [
 // F8 — neurodevelopmental gaps
 // ---------------------------------------------------------------------------
 
-const f8GapDisorders: Disorder[] = [
-  specificCodeDisorder({
+const mixedSpecificDevelopmentalDisorder: Disorder = {
+  ...specificCodeDisorder({
     id: 'mixed_specific_developmental_disorder',
     code: 'F83',
     name_de: 'Gemischte spezifische Entwicklungsstörungen',
@@ -554,11 +555,124 @@ const f8GapDisorders: Disorder[] = [
       dsm5tr: { code: '315.9', label_de: 'Specific Learning Disorder with Mixed Features (Crosswalk)' },
     },
     differentials_de: ['Legasthenie (F81.0)', 'Rechenstörung (F81.2)', 'Intellektuelle Entwicklungsstörung (F70–F79)'],
-    coreSymptomText_de: 'Kombinierte, spezifische Entwicklungsstörungen in mindestens zwei Bereichen (z. B. Sprache und motorische Koordination oder Lesen und Rechnen), die nicht allein durch eine allgemeine intellektuelle Entwicklungsstörung erklärbar sind',
+    coreSymptomText_de:
+      'Kombinierte, spezifische Entwicklungsstörungen in mindestens zwei Bereichen (z. B. Sprache und motorische Koordination oder Lesen und Rechnen), die nicht allein durch eine allgemeine intellektuelle Entwicklungsstörung erklärbar sind',
     domain: 'memory_cognition',
     presentMatch: /gemischt.*entwicklung|mehrere.*entwicklungsst[öo]r|kombiniert.*lern/i,
-    exclusionText_de: 'Der Leistungsrückstand ist nicht allein durch eine intellektuelle Entwicklungsstörung oder soziale Deprivation erklärbar',
+    exclusionText_de:
+      'Der Leistungsrückstand ist nicht allein durch eine intellektuelle Entwicklungsstörung oder soziale Deprivation erklärbar',
   }),
+  // ICD-11 reorganisiert neurodevelopmentale Störungen in getrennte Domänen (6A01
+  // Sprech/Sprache, 6A03 Lernen, 6A04 Motorik u. a.). Gemischte Präsentationen
+  // werden als gleichzeitige Defizite in ≥ 2 Domänen operationalisiert — im
+  // Gegensatz zu ICD-10 F83, das eine undifferenzierte Sammelkategorie bildet.
+  icd11: {
+    sourceRef: 'operationalisiert nach ICD-11 6A0Z (gemischte neurodevelopmentale Präsentation)',
+    groups: [
+      {
+        id: '6a0z.domains',
+        label_de: 'Defizite in mindestens zwei neurodevelopmentalen Domänen',
+        logic: 'at_least_n_of',
+        threshold: 2,
+        groupType: 'inclusion',
+        criteria: [
+          {
+            id: '6a0z.speech_language',
+            text_de:
+              'Entwicklungsbedingtes Defizit im Bereich Sprechen oder Sprache (z. B. Artikulation, Sprachverständnis, Wortschatz, Pragmatik)',
+            citation: [{ classification: 'icd11', code: '6A01' }],
+            mappingHints: [{ kind: 'isdm_domain', ref: 'speech_language', deepLinkPageId: 'psychopathologie' }],
+            allowClinicianAttest: true,
+            operationalRule: domainSignal(
+              'speech_language',
+              /sprech|sprache|artikulation|wortschatz|sprachverst[äa]ndnis|redefluss|stottern/i,
+              /altersgerecht|unauff[äa]llig/i,
+            ),
+          },
+          {
+            id: '6a0z.learning',
+            text_de:
+              'Entwicklungsbedingtes Defizit im Bereich Lernen (z. B. Lesen, Schreiben oder Rechnen), deutlich unter dem für Alter und Bildung erwarteten Niveau',
+            citation: [{ classification: 'icd11', code: '6A03' }],
+            mappingHints: [{ kind: 'isdm_domain', ref: 'memory_cognition' }],
+            allowClinicianAttest: true,
+            operationalRule: domainSignal(
+              'memory_cognition',
+              /lesen|schreiben|rechnen|legasthen|dyskalkul|lernschw[äa]ch|leistungsr[üu]ckstand/i,
+            ),
+          },
+          {
+            id: '6a0z.motor',
+            text_de:
+              'Entwicklungsbedingtes Defizit der motorischen Koordination (z. B. Grob- oder Feinmotorik, Gleichgewicht, graphomotorische Schwierigkeiten)',
+            citation: [{ classification: 'icd11', code: '6A04' }],
+            mappingHints: [{ kind: 'isdm_domain', ref: 'appearance_behavior' }],
+            allowClinicianAttest: true,
+            operationalRule: domainSignal(
+              'appearance_behavior',
+              /motorik|koordination|graphomotor|clumsy|ungeschick|balance|feinmotor/i,
+            ),
+          },
+          {
+            id: '6a0z.attention',
+            text_de:
+              'Entwicklungsbedingtes Defizit der Aufmerksamkeit, Impulskontrolle oder Aktivitätsregulation im Sinne einer ADHS-Präsentation',
+            citation: [{ classification: 'icd11', code: '6A05' }],
+            mappingHints: [{ kind: 'isdm_domain', ref: 'attention_concentration' }],
+            allowClinicianAttest: true,
+            operationalRule: domainSignal(
+              'attention_concentration',
+              /unaufmerksam|hyperaktiv|impulsiv|konzentration.*schw[äa]ch|adhs/i,
+            ),
+          },
+        ],
+      },
+      {
+        id: '6a0z.conditions',
+        label_de: 'Diagnostische Bedingungen',
+        logic: 'all_of',
+        groupType: 'inclusion',
+        criteria: [
+          {
+            id: '6a0z.developmental_onset',
+            text_de: 'Beginn in der Entwicklungsperiode; die Defizite sind nicht erst im Erwachsenenalter durch Erkrankung oder Verletzung erworben',
+            citation: [{ classification: 'icd11', code: '6A0Z', ref: 'onset' }],
+            mappingHints: [{ kind: 'course', ref: 'onset' }],
+            allowClinicianAttest: true,
+          },
+          {
+            id: '6a0z.functional_impact',
+            text_de:
+              'Die kombinierten Defizite beeinträchtigen schulische Leistungen, Alltagsfunktionen oder soziale Teilhabe deutlich',
+            citation: [{ classification: 'icd11', code: '6A0Z', ref: 'impairment' }],
+            mappingHints: [{ kind: 'isdm_domain', ref: 'functional_impairment' }],
+            allowClinicianAttest: true,
+            operationalRule: domainSignal('functional_impairment', /beeintr[äa]chtig|einschr[äa]nk|schul|alltag|teilhabe/i),
+          },
+        ],
+      },
+      {
+        id: '6a0z.exclusions',
+        label_de: 'Ausschlüsse',
+        logic: 'none_of',
+        groupType: 'exclusion',
+        criteria: [
+          {
+            id: '6a0z.exclude_id_alone',
+            text_de:
+              'Der Leistungsrückstand ist nicht allein durch eine intellektuelle Entwicklungsstörung oder durch soziale Deprivation erklärbar',
+            citation: [{ classification: 'icd11', code: '6A0Z' }],
+            mappingHints: [],
+            allowClinicianAttest: true,
+          },
+        ],
+      },
+    ],
+  },
+}
+
+const f8GapDisorders: Disorder[] = [
+  mixedSpecificDevelopmentalDisorder,
 
   specificCodeDisorder({
     id: 'other_psychological_development_disorder',

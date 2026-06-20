@@ -213,7 +213,7 @@ export interface RunPsychopathAiExtractOptions {
   language: UiLanguage
   patientNames?: string[]
   autoAccept?: boolean
-  /** Bypass accepted cache — used for manual "Strukturieren (KI)" clicks. */
+  /** Bypass accepted cache — for tests or explicit re-extract flows. */
   force?: boolean
 }
 
@@ -244,7 +244,8 @@ export async function runPsychopathAiExtract(
     !options.force &&
     state.aiStructured &&
     state.aiStructured.sourceTextHash === sourceTextHash &&
-    state.aiStructured.status === 'accepted'
+    (state.aiStructured.status === 'accepted' || state.aiStructured.status === 'pending') &&
+    snapshotHasStructuredOutput(state.aiStructured)
   ) {
     return state.aiStructured
   }

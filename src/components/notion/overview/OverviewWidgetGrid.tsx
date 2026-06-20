@@ -10,14 +10,26 @@ import { ChevronDown, ChevronUp, GripVertical, Maximize2, Minimize2, X } from 'l
 import { useTranslation } from '../../../context/TranslationContext'
 import {
   isOverviewWidgetVisible,
+  OVERVIEW_WIDGET_BAND,
   packOverviewWidgets,
   type OverviewLayoutItem,
+  type OverviewWidgetBand,
   type OverviewWidgetPlacement,
   type OverviewWidgetVisibilityContext,
   type OverviewWidgetWidth,
 } from '../../../utils/overview/overviewLayout'
-import { getOverviewWidgetSizeWeight, OVERVIEW_WIDGET_REGISTRY } from './overviewWidgetRegistry'
+import { OVERVIEW_WIDGET_REGISTRY } from './overviewWidgetRegistry'
 import { renderOverviewWidget, type OverviewWidgetRenderContext } from './OverviewWidgetContent'
+import { ClinicalEyebrow } from '../../clinical/ClinicalEyebrow'
+import type { UiTranslationKey } from '../../../data/uiTranslations'
+
+const OVERVIEW_BAND_TITLE_KEY: Record<OverviewWidgetBand, UiTranslationKey> = {
+  'diagnosis-medication': 'overviewBandDiagnosisMedication',
+  'safety-verlauf': 'overviewBandSafetyVerlauf',
+  'clinical-status': 'overviewBandClinicalStatus',
+  monitoring: 'overviewBandMonitoring',
+  therapy: 'overviewBandTherapy',
+}
 
 const OVERVIEW_GRID_SINGLE_COLUMN_MAX_WIDTH = 1100
 
@@ -84,10 +96,51 @@ export function OverviewWidgetGrid({
     [visibleWidgets],
   )
 
-  const packedSegments = useMemo(
-    () => packOverviewWidgets(placements, getOverviewWidgetSizeWeight),
-    [placements],
-  )
+  const packedSegments = useMemo(() => packOverviewWidgets(placements), [placements])
+
+  const renderPlan = useMemo(() => {
+    type PlanItem =
+      | { kind: 'band-header'; band: OverviewWidgetBand }
+      | { kind: 'segment'; segment: ReturnType<typeof packOverviewWidgets>[number]; segmentIdx: number }
+      | { kind: 'widget'; placement: OverviewWidgetPlacement; visibleIdx: number }
+
+    const plan: PlanItem[] = []
+    let lastBand: OverviewWidgetBand | null = null
+
+    const bandForPlacement = (placement: OverviewWidgetPlacement): OverviewWidgetBand | null =>
+      OVERVIEW_WIDGET_BAND[placement.item.widgetId] ?? null
+
+    const maybeBandHeader = (placement: OverviewWidgetPlacement) => {
+      const band = bandForPlacement(placement)
+      if (band && band !== lastBand) {
+        plan.push({ kind: 'band-header', band })
+        lastBand = band
+      }
+    }
+
+    if (singleColumn) {
+      for (const { item, index } of visibleWidgets) {
+        const placement = { item, index }
+        maybeBandHeader(placement)
+        plan.push({
+          kind: 'widget',
+          placement,
+          visibleIdx: visibleWidgets.findIndex(({ index: i }) => i === index),
+        })
+      }
+      return plan
+    }
+
+    for (let segmentIdx = 0; segmentIdx < packedSegments.length; segmentIdx++) {
+      const segment = packedSegments[segmentIdx]!
+      const firstPlacement =
+        segment.type === 'full' ? segment.placement : (segment.left[0] ?? segment.right[0])
+      if (firstPlacement) maybeBandHeader(firstPlacement)
+      plan.push({ kind: 'segment', segment, segmentIdx })
+    }
+
+    return plan
+  }, [singleColumn, visibleWidgets, packedSegments])
 
   const handleDragStart = useCallback((index: number, event: DragEvent<HTMLDivElement>) => {
     setDragIndex(index)
@@ -163,17 +216,22 @@ export function OverviewWidgetGrid({
 
   const gridClassName = `ov-grid${editMode ? ' ov-grid--edit' : ''}${singleColumn ? ' ov-grid--single' : ''}`
 
-  if (singleColumn) {
-    return (
-      <div className={gridClassName} aria-live={editMode ? 'polite' : undefined}>
-        {visibleWidgets.map(({ item, index }, visibleIdx) => renderSlot({ item, index }, visibleIdx))}
-      </div>
-    )
-  }
-
   return (
     <div className={gridClassName} aria-live={editMode ? 'polite' : undefined}>
-      {packedSegments.map((segment, segmentIdx) => {
+      {renderPlan.map((entry, planIdx) => {
+        if (entry.kind === 'band-header') {
+          return (
+            <div key={`band-${entry.band}-${planIdx}`} className="ov-grid__band">
+              <ClinicalEyebrow>{t(OVERVIEW_BAND_TITLE_KEY[entry.band])}</ClinicalEyebrow>
+            </div>
+          )
+        }
+
+        if (entry.kind === 'widget') {
+          return renderSlot(entry.placement, entry.visibleIdx)
+        }
+
+        const { segment, segmentIdx } = entry
         if (segment.type === 'full') {
           const visibleIdx = visibleWidgets.findIndex(({ index }) => index === segment.placement.index)
           return renderSlot(segment.placement, visibleIdx)

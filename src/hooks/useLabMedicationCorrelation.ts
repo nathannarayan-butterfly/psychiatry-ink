@@ -18,6 +18,7 @@ import {
 } from '../utils/labMedicationCorrelation/collectLabContext'
 import type { UiLanguage } from '../types/settings'
 import {
+  filterVisibleLabMedCorrelationFindings,
   loadLabMedCorrelationStore,
   mergeLabMedCorrelationRunResult,
   saveLabMedCorrelationStore,
@@ -60,13 +61,10 @@ export function useLabMedicationCorrelation(
   const lastTwoLabSnapshots = useMemo(() => collectLastTwoLabSnapshots(caseId), [caseId])
   const labObservations = useMemo(() => collectLabObservations(caseId), [caseId])
 
-  const visibleFindings = useMemo(() => {
-    return store.findings.filter(
-      (f) =>
-        (f.status !== 'rejected' && f.status !== 'not_relevant') ||
-        (f.status === 'rejected' && f.deepseekRejected && !f.openaiRunId),
-    )
-  }, [store.findings])
+  const visibleFindings = useMemo(
+    () => filterVisibleLabMedCorrelationFindings(store.findings),
+    [store.findings],
+  )
 
   const pendingAiRuns = useMemo(
     () => store.aiRuns.filter((r) => r.status === 'pending_clinician_review'),

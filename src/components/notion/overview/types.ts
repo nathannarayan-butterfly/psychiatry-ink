@@ -152,6 +152,8 @@ export interface SymptomSnapshotData {
   collapseNarrative?: boolean
   /** Summary when compact grid omits unremarkable AMDP domains. */
   unremarkableSummary?: string | null
+  /** Suizidalität / Eigengefährdung / Fremdgefährdung — always shown when assessed. */
+  harmSignals?: SafetyRiskSignal[]
 }
 
 export interface RecentVerlaufItem {

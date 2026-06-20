@@ -120,26 +120,31 @@ export function TodoPage({ onBack }: TodoPageProps) {
           Dashboard
         </button>
         <div className="cm-page-eyebrow todo-page__eyebrow">
+          <span className="todo-page__title-icon" aria-hidden>
+            <ListTodo strokeWidth={1.75} />
+          </span>
           <h1 className="cm-page-eyebrow__label">{t('todoSectionTitle')}</h1>
           <hr className="cm-page-eyebrow__rule" />
         </div>
       </header>
 
       <div className="todo-page__stats" aria-label={t('todoPageStatsLabel')}>
-        <div className="todo-stat-pill">
+        <div className="todo-stat-pill todo-stat-pill--open">
           <span className="todo-stat-pill__value">{openCount}</span>
           <span className="todo-stat-pill__label">{t('todoViewOpen')}</span>
         </div>
-        <div className="todo-stat-pill todo-stat-pill--accent">
+        <div className="todo-stat-pill todo-stat-pill--today">
           <span className="todo-stat-pill__value">{todayCount}</span>
           <span className="todo-stat-pill__label">{t('todoViewDay')}</span>
         </div>
-        {overdueCount > 0 ? (
-          <div className="todo-stat-pill todo-stat-pill--warn">
-            <span className="todo-stat-pill__value">{overdueCount}</span>
-            <span className="todo-stat-pill__label">{t('todoOverdue')}</span>
-          </div>
-        ) : null}
+        <div
+          className={`todo-stat-pill todo-stat-pill--overdue${
+            overdueCount > 0 ? ' todo-stat-pill--overdue-active' : ''
+          }`}
+        >
+          <span className="todo-stat-pill__value">{overdueCount}</span>
+          <span className="todo-stat-pill__label">{t('todoOverdue')}</span>
+        </div>
       </div>
 
       <div className="todo-toolbar">
@@ -223,8 +228,11 @@ export function TodoPage({ onBack }: TodoPageProps) {
 
       {!loading && visibleTodos.length === 0 ? (
         <div className="todo-page__empty">
-          <ListTodo className="todo-page__empty-icon" strokeWidth={1.25} aria-hidden />
-          <p>{t('todoEmpty')}</p>
+          <span className="todo-page__empty-icon-wrap" aria-hidden>
+            <ListTodo className="todo-page__empty-icon" strokeWidth={1.5} />
+          </span>
+          <p className="todo-page__empty-title">{t('todoEmpty')}</p>
+          <p className="todo-page__empty-hint">{t('todoAddPlaceholder')}</p>
         </div>
       ) : null}
 

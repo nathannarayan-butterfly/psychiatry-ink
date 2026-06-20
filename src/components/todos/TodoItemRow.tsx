@@ -76,8 +76,18 @@ export function TodoItemRow({
     )
   }
 
+  const itemClassName = [
+    'todo-item',
+    todo.done && 'todo-item--done',
+    !todo.done && overdue && 'todo-item--overdue',
+    !todo.done && !overdue && todo.priority === 'high' && 'todo-item--prio-high',
+    !todo.done && todo.priority === 'low' && 'todo-item--prio-low',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
-    <li className={`todo-item${todo.done ? ' todo-item--done' : ''}`}>
+    <li className={itemClassName}>
       <button
         type="button"
         className={`todo-item__check${todo.done ? ' todo-item__check--on' : ''}`}

@@ -1,9 +1,41 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+const mockLoadState = vi.hoisted(() => vi.fn())
+const mockSaveState = vi.hoisted(() => vi.fn())
+const mockRequestExtract = vi.hoisted(() => vi.fn())
+
+vi.mock('../psychopathFindingStorage', () => ({
+  loadPsychopathFindingState: mockLoadState,
+  savePsychopathFindingState: mockSaveState,
+}))
+
+vi.mock('../featureFlags', () => ({
+  isPsychopathExtractAiEnabled: vi.fn(() => true),
+}))
+
+vi.mock('../documentImport/deidentify', () => ({
+  deidentifyText: vi.fn((text: string) => ({ text, redactions: [] })),
+}))
+
+vi.mock('../../diagnosenArchive', () => ({
+  loadDiagnosen: vi.fn(() => []),
+}))
+
+vi.mock('../../services/psychopathExtractApi', () => ({
+  requestPsychopathExtract: mockRequestExtract,
+}))
+
+vi.mock('../clinicalImprint/storage', () => ({
+  upsertClinicalImprint: vi.fn(),
+  imprintKeyFor: vi.fn((sourceType: string, sourceId: string) => `${sourceType}:${sourceId}`),
+}))
+
 import {
   buildStructuredCuesFromAiDomains,
   buildStructuredCuesFromAiFields,
   hashPsychopathSourceText,
   isPsychopathAiStructuredStale,
+  runPsychopathAiExtract,
 } from '../psychopathAiExtract'
 
 describe('hashPsychopathSourceText', () => {
@@ -92,5 +124,80 @@ describe('buildStructuredCuesFromAiDomains', () => {
     expect(cues.map((c) => c.domainKey)).toEqual(['affect', 'sleep'])
     expect(cues[0]?.status).toBe('positive')
     expect(cues[1]?.status).toBe('unclear')
+  })
+})
+
+describe('runPsychopathAiExtract', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockLoadState.mockReturnValue({
+      version: 1,
+      updatedAt: '2026-06-01T00:00:00.000Z',
+      current: null,
+      history: [],
+      aiStructured: null,
+    })
+  })
+
+  it('reuses accepted aiStructured when source hash matches', async () => {
+    const text = 'Affekt gedrückt, Antrieb reduziert und stabil.'
+    const hash = hashPsychopathSourceText(text)
+    const cached = {
+      version: 1 as const,
+      sourceTextHash: hash,
+      extractedAt: '2026-06-01T00:00:00.000Z',
+      status: 'accepted' as const,
+      fields: { affect: 'gedrückt' },
+      courseDirection: 'stable' as const,
+      confidence: 'medium' as const,
+    }
+    mockLoadState.mockReturnValue({
+      version: 1,
+      updatedAt: '2026-06-01T00:00:00.000Z',
+      current: null,
+      history: [],
+      aiStructured: cached,
+    })
+
+    const result = await runPsychopathAiExtract({
+      caseId: 'case-1',
+      sourceText: text,
+      language: 'de',
+    })
+
+    expect(result).toEqual(cached)
+    expect(mockRequestExtract).not.toHaveBeenCalled()
+    expect(mockSaveState).not.toHaveBeenCalled()
+  })
+
+  it('reuses pending aiStructured when source hash matches', async () => {
+    const text = 'Affekt gedrückt, Antrieb reduziert und stabil.'
+    const hash = hashPsychopathSourceText(text)
+    const cached = {
+      version: 1 as const,
+      sourceTextHash: hash,
+      extractedAt: '2026-06-01T00:00:00.000Z',
+      status: 'pending' as const,
+      domains: [{ domainKey: 'affect' as const, status: 'positive' as const, detail: 'gedrückt' }],
+      fields: { affect: 'gedrückt' },
+      courseDirection: 'stable' as const,
+      confidence: 'medium' as const,
+    }
+    mockLoadState.mockReturnValue({
+      version: 1,
+      updatedAt: '2026-06-01T00:00:00.000Z',
+      current: null,
+      history: [],
+      aiStructured: cached,
+    })
+
+    const result = await runPsychopathAiExtract({
+      caseId: 'case-1',
+      sourceText: text,
+      language: 'de',
+    })
+
+    expect(result).toEqual(cached)
+    expect(mockRequestExtract).not.toHaveBeenCalled()
   })
 })

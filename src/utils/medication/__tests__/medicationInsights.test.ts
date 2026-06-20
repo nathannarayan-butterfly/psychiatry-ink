@@ -90,6 +90,23 @@ describe('computeMedicationInsights', () => {
     expect(insights.combinationRiskLevel).toBe('high')
   })
 
+  it('flags duplicate-class and QTc risks for Benperidol + Olanzapin', () => {
+    const meds = [
+      makeEntry({ substance: 'Benperidol', status: 'active' }),
+      makeEntry({ substance: 'Olanzapin', status: 'active' }),
+    ]
+    const insights = computeMedicationInsights(meds, 'de')
+
+    const kinds = insights.combinationRisks.map((risk) => risk.kind)
+    expect(kinds).toContain('duplicateClass')
+    expect(kinds).toContain('qtc')
+    expect(
+      insights.combinationRisks.every((risk) =>
+        risk.drugs.includes('Benperidol') && risk.drugs.includes('Olanzapin'),
+      ),
+    ).toBe(true)
+  })
+
   it('aggregates a monitoring burden from the active regimen', () => {
     const meds = [makeEntry({ substance: 'Haloperidol', status: 'active' })]
     const insights = computeMedicationInsights(meds, 'de')

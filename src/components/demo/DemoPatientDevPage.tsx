@@ -120,6 +120,17 @@ export function DemoPatientDevPage({ onBack }: DemoPatientDevPageProps) {
       await removeDemoPatient(userId)
     }, 'Demo patient removed.')
 
+  const handlePurgeNonDemo = () =>
+    void runAction(async () => {
+      const { purgeNonDemoPatientCases } = await import('../../utils/casePatientLifecycle')
+      const removed = await purgeNonDemoPatientCases(userId)
+      setMessage(
+        removed.length > 0
+          ? `Removed ${removed.length} non-demo case(s): ${removed.join(', ')}`
+          : 'No non-demo cases in local registry.',
+      )
+    }, 'Non-demo patients purged from local registry.')
+
   const handleArchive = () =>
     void runAction(async () => {
       archiveDemoPatient(userId)
@@ -226,6 +237,9 @@ export function DemoPatientDevPage({ onBack }: DemoPatientDevPageProps) {
           <button type="button" disabled={busy} onClick={handleArchive}>Archive (user)</button>
           <button type="button" disabled={busy} onClick={handleRestore}>Restore archived</button>
           <button type="button" className="demo-dev-actions__danger" disabled={busy} onClick={handleRemove}>Remove demo</button>
+          <button type="button" className="demo-dev-actions__danger" disabled={busy} onClick={handlePurgeNonDemo}>
+            Purge non-demo patients
+          </button>
         </div>
         {message ? <p className="demo-dev-msg demo-dev-msg--ok">{message}</p> : null}
         {error ? <p className="demo-dev-msg demo-dev-msg--err">{error}</p> : null}

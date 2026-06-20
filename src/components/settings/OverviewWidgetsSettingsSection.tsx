@@ -17,7 +17,9 @@ export function OverviewWidgetsSettingsSection() {
       hasIsdm: true,
       hasLabData: true,
       hasButterfly: true,
+      hasEkg: true,
       hasEeg: true,
+      hasCt: true,
       hasZwangsmassnahme: true,
     }),
   )

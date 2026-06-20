@@ -26,6 +26,7 @@ import { useConsultationRole } from './hooks/useConsultationRole'
 import { useEnterpriseFeatures } from './hooks/useEnterpriseFeatures'
 import { isEnterpriseOrgHierarchyEnabled } from './utils/featureFlags'
 import { ensureDefaultCase, hydrateCaseRegistry } from './hooks/useCaseRegistry'
+import { inferAccountIdentifierStorageFromServer } from './utils/accountBackup'
 import { EnterpriseDashboard } from './components/enterprise/EnterpriseDashboard'
 import { EnterpriseSitesPage } from './components/enterprise/EnterpriseSitesPage'
 import { EnterpriseCompliancePage } from './components/enterprise/EnterpriseCompliancePage'
@@ -62,6 +63,11 @@ export default function App() {
     // (not-yet-hydrated) map and overwrite the stored ciphertext with just the default case.
     void hydrateCaseRegistry().finally(() => ensureDefaultCase())
   }, [])
+
+  useEffect(() => {
+    if (!user?.id) return
+    void inferAccountIdentifierStorageFromServer()
+  }, [user?.id])
 
   useEffect(() => {
     if (!user?.id) return

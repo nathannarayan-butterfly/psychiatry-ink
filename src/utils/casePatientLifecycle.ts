@@ -54,6 +54,29 @@ export async function deletePatientCasePermanently(caseId: string, userId: strin
   }
 }
 
+/** True when a case should survive a non-demo purge (synthetic demo only). */
+export function isProtectedDemoCaseId(caseId: string): boolean {
+  return caseId === DEMO_CASE_ID || isDemoCase(caseId)
+}
+
+/**
+ * Remove every local patient case except the synthetic demo case (DEMO-CASE-0001).
+ * Clears registry metadata, case-scoped localStorage, IndexedDB vault keys, and
+ * attempts server-side PatientCase deletion via API.
+ */
+export async function purgeNonDemoPatientCases(userId: string): Promise<string[]> {
+  const removed: string[] = []
+  const map = loadRegistryMapFromStorage()
+
+  for (const caseId of Object.keys(map)) {
+    if (isProtectedDemoCaseId(caseId)) continue
+    await deletePatientCasePermanently(caseId, userId)
+    removed.push(caseId)
+  }
+
+  return removed
+}
+
 /** One-time-safe removal of the stale 219918e0 test fall from local registry + storage. */
 export async function removeStaleCasesFromRegistry(): Promise<string[]> {
   const removed: string[] = []

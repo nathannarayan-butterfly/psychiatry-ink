@@ -12,6 +12,7 @@ import { pharmaGenerateRouter } from './routes/pharmaGenerate'
 import { pharmaAskRouter } from './routes/pharmaAsk'
 import { generationLogRouter } from './routes/generationLog'
 import { diagnosisCodesRouter } from './routes/diagnosisCodes'
+import { diagnosesRouter } from './routes/diagnoses'
 import { icdTitleRouter } from './routes/icdTitle'
 import { accountBackupRouter } from './routes/accountBackup'
 import { kbAdminRouter } from './routes/kbAdmin'
@@ -33,6 +34,7 @@ import { enterpriseRouter } from './routes/enterprise'
 import { calendarRouter } from './routes/calendar'
 import { todosRouter } from './routes/todos'
 import { combinationCheckRouter } from './routes/combinationCheck'
+import { criteriaGenerateDraftRouter } from './routes/criteriaGenerateDraft'
 import { labMedicationCorrelationRouter } from './routes/labMedicationCorrelation'
 import { prepAiCheckRouter } from './routes/prepAiCheck'
 import { medicationPriorTherapiesRouter } from './routes/medicationPriorTherapies'
@@ -76,6 +78,8 @@ app.use('/api/workspace', workspaceVaultRouter)
 app.use('/api/patients', patientsRouter)
 app.use('/api/account-backup', accountBackupRouter)
 app.use('/api/diagnosis-codes', diagnosisCodesRouter)
+app.use('/api/diagnoses', diagnosesRouter)
+app.use('/api/criteria', criteriaGenerateDraftRouter)
 app.use('/api/icd', icdTitleRouter)
 app.use('/api/generation-logs', generationLogRouter)
 app.use('/api/kb-admin', kbAdminRouter)

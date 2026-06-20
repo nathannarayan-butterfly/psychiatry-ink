@@ -753,18 +753,25 @@ export const gapES: DisorderTranslationMap = {
     }
   },
   "non_dependence_substance_abuse": {
-    "name": "Abuse of non-dependence-producing substances",
+    "name": "Abuso de sustancias que no producen dependencia",
     "differentials": [
       "Substanzabhängigkeit (F1x.2)",
       "Essstörung mit Laxanzien-/Diuretikamissbrauch"
     ],
     "groups": {
       "f55.core": "Criterios principales",
-      "f55.exclusions": "Exclusiones"
+      "f55.exclusions": "Exclusiones",
+      "6c4h_1.pattern": "Patrón de consumo persistente (episódico o continuo, normalmente durante ≥ 12 meses — o ≥ 1 mes si es continuo)",
+      "6c4h_1.harm": "Daño demostrable (al menos uno de los siguientes ámbitos)",
+      "6c4h_1.exclusions": "Exclusiones"
     },
     "criteria": {
       "f55.core_symptoms": "Wiederholter Konsum nichtabhängigkeitserzeugender Substanzen (z. B. Laxanzien, Analgetika, Vitamine, pflanzliche Präparate) mit psychischen oder körperlichen Schäden, ohne Erfüllung der Abhängigkeitskriterien",
-      "f55.exclude_other": "Die Kriterien einer Substanzabhängigkeit sind nicht erfüllt"
+      "f55.exclude_other": "Die Kriterien einer Substanzabhängigkeit sind nicht erfüllt",
+      "6c4h_1.use_pattern": "Se documenta un patrón de consumo repetido o persistente de sustancias no psicoactivas",
+      "6c4h_1.harm_self": "Daño clínicamente significativo a la salud física o mental de la persona como consecuencia del consumo",
+      "6c4h_1.harm_others": "Daño a la salud de terceros derivado del comportamiento relacionado con el consumo o la intoxicación — extensión específica de la CIE-11",
+      "6c4h_1.exclude_dependence": "No se cumplen los criterios de dependencia (6C4H.2)"
     }
   },
   "unspecified_behavioural_syndrome": {
@@ -1275,7 +1282,7 @@ export const gapES: DisorderTranslationMap = {
     }
   },
   "mixed_specific_developmental_disorder": {
-    "name": "Mixed specific developmental trastornos",
+    "name": "Trastornos específicos mixtos del desarrollo",
     "differentials": [
       "Legasthenie (F81.0)",
       "Rechenstörung (F81.2)",
@@ -1283,11 +1290,21 @@ export const gapES: DisorderTranslationMap = {
     ],
     "groups": {
       "f83.core": "Criterios principales",
-      "f83.exclusions": "Exclusiones"
+      "f83.exclusions": "Exclusiones",
+      "6a0z.domains": "Déficits en al menos dos dominios del neurodesarrollo",
+      "6a0z.conditions": "Condiciones diagnósticas",
+      "6a0z.exclusions": "Exclusiones"
     },
     "criteria": {
       "f83.core_symptoms": "Kombinierte, spezifische Entwicklungsstörungen in mindestens zwei Bereichen (z. B. Sprache und motorische Koordination oder Lesen und Rechnen), die nicht allein durch eine allgemeine intellektuelle Entwicklungsstörung erklärbar sind",
-      "f83.exclude_other": "Der Leistungsrückstand ist nicht allein durch eine intellektuelle Entwicklungsstörung oder soziale Deprivation erklärbar"
+      "f83.exclude_other": "Der Leistungsrückstand ist nicht allein durch eine intellektuelle Entwicklungsstörung oder soziale Deprivation erklärbar",
+      "6a0z.speech_language": "Déficit del desarrollo en el habla o el lenguaje (p. ej. articulación, comprensión, vocabulario, pragmática)",
+      "6a0z.learning": "Déficit del desarrollo en el aprendizaje (p. ej. lectura, escritura o cálculo), claramente por debajo del nivel esperado para la edad y la escolaridad",
+      "6a0z.motor": "Déficit del desarrollo en la coordinación motora (p. ej. motricidad gruesa o fina, equilibrio, dificultades graphomotoras)",
+      "6a0z.attention": "Déficit del desarrollo en atención, control de impulsos o regulación de la actividad compatible con una presentación de TDAH",
+      "6a0z.developmental_onset": "Inicio en el periodo del desarrollo; los déficits no se adquieren solo en la edad adulta por enfermedad o lesión",
+      "6a0z.functional_impact": "Los déficits combinados deterioran significativamente el rendimiento escolar, el funcionamiento cotidiano o la participación social",
+      "6a0z.exclude_id_alone": "El retraso del rendimiento no se explica solo por trastorno del desarrollo intelectual o privación social"
     }
   },
   "other_psychological_development_disorder": {

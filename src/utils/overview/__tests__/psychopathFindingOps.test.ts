@@ -251,6 +251,10 @@ describe('buildSymptomSnapshotData', () => {
     }
     expect(data.collapseNarrative).toBe(true)
     expect(data.unremarkableSummary).toBeTruthy()
+    expect(data.harmSignals).toHaveLength(1)
+    expect(data.harmSignals?.[0]?.label).toBe(
+      'keine Suizidalität, keine Eigen- oder Fremdgefährdung',
+    )
   })
 })
 

@@ -1,6 +1,7 @@
 import type { Disorder } from '../schema'
 import { UNKNOWN, met } from '../schema'
 import { domainSignal } from '../predicateHelpers'
+import { attachGapIcd11Tree } from '../factories/icd11GapFactories'
 
 /**
  * Butterfly criteria block F9 — Verhaltens- und emotionale Störungen mit Beginn
@@ -1370,7 +1371,7 @@ const stereotypedMovementDisorder: Disorder = {
 
 export const childhoodOnsetDisorders: Disorder[] = [
   hyperkineticDisorder,
-  conductDisorder,
+  attachGapIcd11Tree(conductDisorder),
   mixedConductEmotions,
   separationAnxietyDisorder,
   selectiveMutism,

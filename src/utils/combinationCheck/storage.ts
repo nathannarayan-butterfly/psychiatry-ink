@@ -1,5 +1,75 @@
-import type { CombinationCheckStore } from '../../types/combinationCheck'
+import type {
+  CombinationCheckStore,
+  CombinationFindingStatus,
+  PatientCombinationCheckFinding,
+} from '../../types/combinationCheck'
 import { COMBINATION_CHECK_STORE_VERSION } from '../../types/combinationCheck'
+
+const CLINICIAN_LOCKED_STATUSES = new Set<CombinationFindingStatus>([
+  'accepted',
+  'not_relevant',
+  'pending_clinician_review',
+])
+
+/** Findings the clinician has resolved or annotated must survive automated re-runs. */
+export function shouldPreserveCombinationFinding(
+  existing: PatientCombinationCheckFinding,
+): boolean {
+  if (CLINICIAN_LOCKED_STATUSES.has(existing.status)) return true
+  if (existing.source === 'clinician_accepted') return true
+  if (existing.clinicianNote?.trim()) return true
+  return false
+}
+
+/** One run may return both a KB hit and an AI pending row for the same pair — keep the review row. */
+export function dedupeIncomingCombinationFindings(
+  findings: PatientCombinationCheckFinding[],
+): PatientCombinationCheckFinding[] {
+  const byKey = new Map<string, PatientCombinationCheckFinding>()
+  for (const finding of findings) {
+    const key = finding.combinationKey
+    const prev = byKey.get(key)
+    if (!prev) {
+      byKey.set(key, finding)
+      continue
+    }
+    if (finding.status === 'pending_clinician_review' && prev.status === 'verified_kb') {
+      byKey.set(key, finding)
+      continue
+    }
+    if (prev.status === 'pending_clinician_review' && finding.status === 'verified_kb') {
+      continue
+    }
+    if (finding.updatedAt >= prev.updatedAt) {
+      byKey.set(key, finding)
+    }
+  }
+  return [...byKey.values()]
+}
+
+export function mergeCombinationFindingPair(
+  existing: PatientCombinationCheckFinding,
+  incoming: PatientCombinationCheckFinding,
+): PatientCombinationCheckFinding {
+  const carryNote = incoming.clinicianNote?.trim() ? incoming.clinicianNote : existing.clinicianNote
+
+  if (existing.source === 'clinician_accepted' || existing.status === 'accepted') {
+    return {
+      ...existing,
+      clinicianNote: carryNote,
+      isRelevant: incoming.isRelevant ?? existing.isRelevant,
+      updatedAt: incoming.updatedAt,
+    }
+  }
+
+  return {
+    ...incoming,
+    id: existing.id,
+    createdAt: existing.createdAt,
+    clinicianNote: carryNote,
+    isRelevant: incoming.isRelevant ?? existing.isRelevant,
+  }
+}
 
 const LS_PREFIX = 'psychiatry-ink:combination-findings:'
 
@@ -67,11 +137,29 @@ export function mergeCombinationCheckRunResult(
 ): CombinationCheckStore {
   const store = loadCombinationCheckStore(caseId)
   const findingByKey = new Map(store.findings.map((f) => [f.combinationKey, f]))
-  for (const finding of findings) {
-    const existing = findingByKey.get(finding.combinationKey)
-    if (!existing || finding.updatedAt >= existing.updatedAt) {
-      findingByKey.set(finding.combinationKey, finding)
+  const thoroughKeys = new Set(
+    aiRuns.filter((run) => run.thorough).map((run) => run.combinationKey),
+  )
+
+  for (const incoming of dedupeIncomingCombinationFindings(findings)) {
+    const existing = findingByKey.get(incoming.combinationKey)
+    if (!existing) {
+      findingByKey.set(incoming.combinationKey, incoming)
+      continue
     }
+    if (shouldPreserveCombinationFinding(existing)) {
+      if (
+        existing.status === 'pending_clinician_review' &&
+        thoroughKeys.has(incoming.combinationKey)
+      ) {
+        findingByKey.set(
+          incoming.combinationKey,
+          mergeCombinationFindingPair(existing, incoming),
+        )
+      }
+      continue
+    }
+    findingByKey.set(incoming.combinationKey, mergeCombinationFindingPair(existing, incoming))
   }
 
   const runById = new Map(store.aiRuns.map((r) => [r.id, r]))

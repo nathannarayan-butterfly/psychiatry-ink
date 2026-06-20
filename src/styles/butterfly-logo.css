@@ -1,0 +1,9 @@
+/* Shared Butterfly product mark (transparent icon-only PNG) */
+
+.butterfly-logo {
+  display: block;
+  flex-shrink: 0;
+  background: transparent;
+  object-fit: contain;
+  object-position: center;
+}

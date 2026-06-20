@@ -93,7 +93,7 @@ export function renderOverviewWidget(
     case 'spiegel-latest':
       return (
         <OverviewCardShell>
-          <SpiegelwerteSection caseId={ctx.caseId} mode="latest" />
+          <SpiegelwerteSection caseId={ctx.caseId} />
         </OverviewCardShell>
       )
     case 'diagnoses':
@@ -107,8 +107,6 @@ export function renderOverviewWidget(
         <SymptomSnapshotCard
           caseId={ctx.caseId}
           data={ctx.symptomData}
-          riskSignals={ctx.safetyData.risk?.signals}
-          revision={ctx.psychopathFindingRevision}
           onOpen={ctx.onOpenWorkspacePage ? () => ctx.onOpenWorkspacePage!('psychopath') : undefined}
         />
       )
@@ -125,7 +123,7 @@ export function renderOverviewWidget(
     case 'spiegel-all':
       return (
         <OverviewCardShell>
-          <SpiegelwerteSection caseId={ctx.caseId} skipLatest />
+          <SpiegelwerteSection caseId={ctx.caseId} />
         </OverviewCardShell>
       )
     case 'recent-verlauf':
@@ -186,7 +184,7 @@ export function renderOverviewWidget(
     case 'zwangsmassnahme':
       return <ZwangsmassnahmeCard data={ctx.zwangsmassnahme} />
     case 'verlaufstendenz':
-      return <VerlaufstendenzCard data={ctx.verlaufstendenz} />
+      return <VerlaufstendenzCard caseId={ctx.caseId} data={ctx.verlaufstendenz} />
     case 'ekg-summary':
       return (
         <DiagnosticSummaryCard

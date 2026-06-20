@@ -43,6 +43,16 @@ function idp(code: string): string {
   return code.toLowerCase().replace(/\./g, '_')
 }
 
+/** Globally-unique criterion prefix; disambiguates specs that share an ICD-10 code. */
+function criteriaPrefix(spec: SubstanceSpec, code: string): string {
+  if (spec.criteriaIdPrefix) {
+    const icd = idp(code)
+    const syndrome = icd.includes('_') ? icd.split('_').slice(1).join('_') : icd
+    return `${spec.criteriaIdPrefix}_${syndrome}`
+  }
+  return idp(code)
+}
+
 /** A discrete clinical sign for an intoxication/withdrawal/psychotic picture. */
 interface SyndromeFeature {
   key: string
@@ -51,13 +61,18 @@ interface SyndromeFeature {
   hint?: IsdmPhenomenologyDomain
 }
 
-interface SubstanceSpec {
+export interface SubstanceSpec {
   /** Stable snake_case key (e.g. "opioids"). */
   key: string
   /** ICD-10 block stem (e.g. "F11"). */
   icd10: string
   /** ICD-11 block stem (e.g. "6C43"). */
   icd11: string
+  /**
+   * Optional criterion-id prefix when multiple specs share the same ICD-10 syndrome
+   * code (e.g. F15.1 for both stimulants and caffeine). Defaults to idp(code).
+   */
+  criteriaIdPrefix?: string
   /** Display name (German), used in accusative/nominative as "… durch {name_de}". */
   name_de: string
   /** Dative form for "von {dativeName}" / "Konsum von …" contexts. */
@@ -106,8 +121,8 @@ function substanceHint(domain: IsdmPhenomenologyDomain = SUBSTANCE_DOMAIN) {
 }
 
 /** Render a feature list into attestation-only criteria under a disorder code. */
-function featureCriteria(code: string, features: SyndromeFeature[]): Criterion[] {
-  const prefix = idp(code)
+function featureCriteria(spec: SubstanceSpec, code: string, features: SyndromeFeature[]): Criterion[] {
+  const prefix = criteriaPrefix(spec, code)
   return features.map((feature) => ({
     id: `${prefix}.${feature.key}`,
     text_de: feature.text_de,
@@ -130,7 +145,7 @@ function featureCriteria(code: string, features: SyndromeFeature[]): Criterion[]
  *   2. increasing salience/priority over other activities, persistence despite harm,
  *   3. physiological features (tolerance, withdrawal, use to relieve/avoid withdrawal).
  */
-function icd11DependenceSet(spec: SubstanceSpec): Icd11CriteriaSet {
+export function icd11DependenceSet(spec: SubstanceSpec): Icd11CriteriaSet {
   const code = `${spec.icd11}${ICD11_SUFFIX.dependence}`
   const prefix = idp(code)
   return {
@@ -190,7 +205,7 @@ function icd11DependenceSet(spec: SubstanceSpec): Icd11CriteriaSet {
  * include harm to the health of OTHERS resulting from the person's intoxicated
  * behaviour (e.g. injuries to third parties) — a dimension ICD-10 F1x.1 lacks.
  */
-function icd11HarmfulPatternSet(spec: SubstanceSpec): Icd11CriteriaSet {
+export function icd11HarmfulPatternSet(spec: SubstanceSpec): Icd11CriteriaSet {
   const code = `${spec.icd11}${ICD11_SUFFIX.harmfulUse}`
   const dependenceCode = `${spec.icd11}${ICD11_SUFFIX.dependence}`
   const prefix = idp(code)
@@ -257,13 +272,324 @@ function icd11HarmfulPatternSet(spec: SubstanceSpec): Icd11CriteriaSet {
   }
 }
 
+function icd11FeatureCriteria(
+  spec: SubstanceSpec,
+  code: string,
+  features: SyndromeFeature[],
+  prefix: string,
+): Criterion[] {
+  if (features.length === 0) {
+    return [
+      {
+        id: `${prefix}.clinical_signs`,
+        text_de: `Klinisch erkennbare akute Wirkung von ${spec.dativeName} im zeitlichen Zusammenhang mit dem Konsum`,
+        citation: [{ classification: 'icd11', code }],
+        mappingHints: substanceHint(),
+        allowClinicianAttest: true,
+      },
+    ]
+  }
+  return features.map((feature) => ({
+    id: `${prefix}.${feature.key}`,
+    text_de: feature.text_de,
+    citation: [{ classification: 'icd11', code }],
+    mappingHints: substanceHint(feature.hint ?? SUBSTANCE_DOMAIN),
+    allowClinicianAttest: true,
+  }))
+}
+
+/**
+ * ICD-11 intoxication (6C4x.3) — distinct operational tree with ICD-11 citations.
+ * Mirrors the ICD-10 syndrome structure (recent use + temporal link + characteristic
+ * signs + exclusions) while keeping substance-specific sign checklists.
+ */
+export function icd11IntoxicationSet(spec: SubstanceSpec): Icd11CriteriaSet {
+  const code = `${spec.icd11}${ICD11_SUFFIX.intoxication}`
+  const prefix = idp(code)
+  return {
+    sourceRef: `operationalisiert nach ICD-11 ${code}`,
+    groups: [
+      {
+        id: `${prefix}.use`,
+        label_de: 'Akuter Konsum und zeitlicher Zusammenhang',
+        logic: 'all_of',
+        groupType: 'inclusion',
+        criteria: [
+          {
+            id: `${prefix}.recent_use`,
+            text_de: `Kurz zurückliegender Konsum von ${spec.dativeName} in einer Dosis, die die akute Symptomatik erklären kann`,
+            citation: [{ classification: 'icd11', code, ref: 'A' }],
+            mappingHints: substanceHint(),
+            allowClinicianAttest: true,
+            operationalRule: domainSignal(SUBSTANCE_DOMAIN, spec.useMatch),
+          },
+          {
+            id: `${prefix}.temporal_relation`,
+            text_de: 'Die Symptome treten während oder unmittelbar nach der akuten Substanzwirkung auf und sind vorübergehend',
+            citation: [{ classification: 'icd11', code, ref: 'B' }],
+            mappingHints: substanceHint(),
+            allowClinicianAttest: true,
+          },
+        ],
+      },
+      {
+        id: `${prefix}.signs`,
+        label_de: 'Substanztypische Intoxikationszeichen (mindestens 1)',
+        logic: 'any_of',
+        groupType: 'inclusion',
+        criteria: icd11FeatureCriteria(spec, code, spec.intox, prefix),
+      },
+      {
+        id: `${prefix}.exclusions`,
+        label_de: 'Ausschlüsse',
+        logic: 'none_of',
+        groupType: 'exclusion',
+        criteria: [
+          {
+            id: `${prefix}.exclude_other_cause`,
+            text_de: 'Die Symptome sind nicht besser durch eine somatische Erkrankung, ein Delir oder eine primäre psychotische Störung erklärbar',
+            citation: [{ classification: 'icd11', code }],
+            mappingHints: substanceHint(),
+            allowClinicianAttest: true,
+          },
+        ],
+      },
+    ],
+  }
+}
+
+/** ICD-11 withdrawal (6C4x.4) — cessation/reduction context + characteristic withdrawal signs. */
+export function icd11WithdrawalSet(spec: SubstanceSpec): Icd11CriteriaSet {
+  const code = `${spec.icd11}${ICD11_SUFFIX.withdrawal}`
+  const prefix = idp(code)
+  return {
+    sourceRef: `operationalisiert nach ICD-11 ${code}`,
+    groups: [
+      {
+        id: `${prefix}.context`,
+        label_de: 'Entzugskontext',
+        logic: 'all_of',
+        groupType: 'inclusion',
+        criteria: [
+          {
+            id: `${prefix}.cessation`,
+            text_de: `Absetzen oder deutliche Reduktion von ${spec.dativeName} nach wiederholtem, meist anhaltendem und/oder hochdosiertem Konsum`,
+            citation: [{ classification: 'icd11', code, ref: 'A' }],
+            mappingHints: substanceHint(),
+            allowClinicianAttest: true,
+          },
+          {
+            id: `${prefix}.withdrawal_syndrome`,
+            text_de: 'Es liegt ein substanztypisches Entzugssyndrom vor',
+            citation: [{ classification: 'icd11', code, ref: 'B' }],
+            mappingHints: substanceHint(),
+            allowClinicianAttest: true,
+            operationalRule: domainSignal(SUBSTANCE_DOMAIN, /entzug|withdrawal|entzugssymptom|absetz/i),
+          },
+        ],
+      },
+      {
+        id: `${prefix}.symptoms`,
+        label_de: 'Entzugssymptome (mindestens 1)',
+        logic: 'any_of',
+        groupType: 'inclusion',
+        criteria: icd11FeatureCriteria(spec, code, spec.withdrawal, prefix),
+      },
+      {
+        id: `${prefix}.exclusions`,
+        label_de: 'Ausschlüsse',
+        logic: 'none_of',
+        groupType: 'exclusion',
+        criteria: [
+          {
+            id: `${prefix}.exclude_other_cause`,
+            text_de: 'Die Symptome sind nicht besser durch eine andere somatische oder psychische Störung erklärbar',
+            citation: [{ classification: 'icd11', code }],
+            mappingHints: substanceHint(),
+            allowClinicianAttest: true,
+          },
+        ],
+      },
+    ],
+  }
+}
+
+/** ICD-11 substance-induced delirium (6C4x.5) — withdrawal/delirium overlap with awareness/attention disturbance. */
+export function icd11WithdrawalDeliriumSet(spec: SubstanceSpec): Icd11CriteriaSet {
+  const code = `${spec.icd11}${ICD11_SUFFIX.withdrawalDelirium}`
+  const prefix = idp(code)
+  return {
+    sourceRef: `operationalisiert nach ICD-11 ${code}`,
+    groups: [
+      {
+        id: `${prefix}.context`,
+        label_de: 'Substanzbezogener Entzug mit Bewusstseinsstörung',
+        logic: 'all_of',
+        groupType: 'inclusion',
+        criteria: [
+          {
+            id: `${prefix}.withdrawal_context`,
+            text_de: `Absetzen oder Reduktion von ${spec.dativeName} bei vorbestehendem schädlichem Konsum oder Abhängigkeitssyndrom`,
+            citation: [{ classification: 'icd11', code, ref: 'A' }],
+            mappingHints: substanceHint(),
+            allowClinicianAttest: true,
+          },
+          {
+            id: `${prefix}.awareness_attention`,
+            text_de: 'Störung von Bewusstsein und/oder Aufmerksamkeit mit reduzierter Orientierung gegenüber der Umwelt (deliranter Zustand)',
+            citation: [{ classification: 'icd11', code, ref: 'B' }],
+            mappingHints: substanceHint('consciousness_orientation'),
+            allowClinicianAttest: true,
+            operationalRule: domainSignal(
+              'consciousness_orientation',
+              /bewusstsein.*(getr[üu]bt|tr[üu]b|st[öo]r)|somnolen|vigilanzminder|delir|benommen/i,
+            ),
+          },
+        ],
+      },
+      {
+        id: `${prefix}.features`,
+        label_de: 'Delirante Begleitsymptome (mindestens 1)',
+        logic: 'any_of',
+        groupType: 'inclusion',
+        criteria: [
+          {
+            id: `${prefix}.disorientation`,
+            text_de: 'Desorientierung und globale Störung kognitiver Funktionen',
+            citation: [{ classification: 'icd11', code }],
+            mappingHints: substanceHint('consciousness_orientation'),
+            allowClinicianAttest: true,
+          },
+          {
+            id: `${prefix}.hallucinations`,
+            text_de: 'Lebhafte (häufig optische oder szenische) Halluzinationen oder Illusionen',
+            citation: [{ classification: 'icd11', code }],
+            mappingHints: substanceHint('perception_hallucinations'),
+            allowClinicianAttest: true,
+          },
+          {
+            id: `${prefix}.psychomotor`,
+            text_de: 'Ausgeprägte psychomotorische Unruhe oder Agitation',
+            citation: [{ classification: 'icd11', code }],
+            mappingHints: substanceHint('drive_psychomotor_activity'),
+            allowClinicianAttest: true,
+          },
+          {
+            id: `${prefix}.autonomic`,
+            text_de: 'Ausgeprägte vegetative Übererregung (z. B. Tachykardie, Schwitzen, Tremor); Krampfanfälle möglich',
+            citation: [{ classification: 'icd11', code }],
+            mappingHints: substanceHint('somatic_preoccupation'),
+            allowClinicianAttest: true,
+          },
+        ],
+      },
+      {
+        id: `${prefix}.exclusions`,
+        label_de: 'Ausschlüsse',
+        logic: 'none_of',
+        groupType: 'exclusion',
+        criteria: [
+          {
+            id: `${prefix}.exclude_other_cause`,
+            text_de: 'Das Delir ist nicht besser durch eine eigenständige somatische Erkrankung erklärbar',
+            citation: [{ classification: 'icd11', code }],
+            mappingHints: substanceHint(),
+            allowClinicianAttest: true,
+          },
+        ],
+      },
+    ],
+  }
+}
+
+/** ICD-11 substance-induced psychotic disorder (6C4x.6). */
+export function icd11PsychoticSet(spec: SubstanceSpec): Icd11CriteriaSet {
+  const code = `${spec.icd11}${ICD11_SUFFIX.psychotic}`
+  const prefix = idp(code)
+  return {
+    sourceRef: `operationalisiert nach ICD-11 ${code}`,
+    groups: [
+      {
+        id: `${prefix}.symptoms`,
+        label_de: 'Psychotische Symptome (mindestens 1)',
+        logic: 'any_of',
+        groupType: 'inclusion',
+        criteria: [
+          {
+            id: `${prefix}.hallucinations`,
+            text_de: 'Halluzinationen (häufig akustisch oder optisch), die nicht ausschließlich Ausdruck einer einfachen Intoxikation sind',
+            citation: [{ classification: 'icd11', code, ref: '1' }],
+            mappingHints: substanceHint('perception_hallucinations'),
+            allowClinicianAttest: true,
+            operationalRule: domainSignal(
+              'perception_hallucinations',
+              /halluzin|stimmen|optisch|akustisch|trugwahrnehmung/i,
+              /keine\s+halluzinationen/i,
+            ),
+          },
+          {
+            id: `${prefix}.delusions`,
+            text_de: 'Wahngedanken, häufig Verfolgungs- oder Beziehungswahn',
+            citation: [{ classification: 'icd11', code, ref: '2' }],
+            mappingHints: substanceHint('delusions_overvalued_ideas'),
+            allowClinicianAttest: true,
+            operationalRule: domainSignal(
+              'delusions_overvalued_ideas',
+              /wahn|verfolgung|beziehungs|paranoid|gr[öo][ßs]en/i,
+              /kein\s+wahn/i,
+            ),
+          },
+        ],
+      },
+      {
+        id: `${prefix}.context`,
+        label_de: 'Zeitlicher Zusammenhang mit dem Konsum',
+        logic: 'all_of',
+        groupType: 'inclusion',
+        criteria: [
+          {
+            id: `${prefix}.temporal_relation`,
+            text_de: `Beginn der psychotischen Symptome während oder kurz (in der Regel innerhalb von zwei Wochen) nach dem Konsum von ${spec.dativeName}`,
+            citation: [{ classification: 'icd11', code, ref: 'A' }],
+            mappingHints: substanceHint(),
+            allowClinicianAttest: true,
+            operationalRule: domainSignal(SUBSTANCE_DOMAIN, spec.useMatch),
+          },
+          {
+            id: `${prefix}.partial_remission`,
+            text_de: 'Die Symptome bilden sich typischerweise innerhalb eines begrenzten Zeitraums (Größenordnung Wochen bis wenige Monate) zumindest teilweise zurück',
+            citation: [{ classification: 'icd11', code }],
+            mappingHints: substanceHint(),
+            allowClinicianAttest: true,
+          },
+        ],
+      },
+      {
+        id: `${prefix}.exclusions`,
+        label_de: 'Ausschlüsse',
+        logic: 'none_of',
+        groupType: 'exclusion',
+        criteria: [
+          {
+            id: `${prefix}.exclude_primary_psychosis`,
+            text_de: 'Die Symptomatik ist nicht besser durch eine primäre psychotische Störung erklärbar und tritt nicht ausschließlich im Rahmen von Intoxikation oder Entzugsdelir auf',
+            citation: [{ classification: 'icd11', code }],
+            mappingHints: substanceHint(),
+            allowClinicianAttest: true,
+          },
+        ],
+      },
+    ],
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Syndrome factories
 // ---------------------------------------------------------------------------
 
-function dependenceSyndrome(spec: SubstanceSpec): Disorder {
+export function dependenceSyndrome(spec: SubstanceSpec): Disorder {
   const code = `${spec.icd10}.2`
-  const prefix = idp(code)
+  const prefix = criteriaPrefix(spec, code)
   return {
     id: `${spec.key}_dependence`,
     classification: 'icd10',
@@ -347,9 +673,9 @@ function dependenceSyndrome(spec: SubstanceSpec): Disorder {
   }
 }
 
-function harmfulUse(spec: SubstanceSpec): Disorder {
+export function harmfulUse(spec: SubstanceSpec): Disorder {
   const code = `${spec.icd10}.1`
-  const prefix = idp(code)
+  const prefix = criteriaPrefix(spec, code)
   return {
     id: `${spec.key}_harmful_use`,
     classification: 'icd10',
@@ -413,18 +739,12 @@ function harmfulUse(spec: SubstanceSpec): Disorder {
   }
 }
 
-// ICD-11 mapping note for the remaining F1 syndromes (acute intoxication .0/6C4x.3,
-// withdrawal .3/6C4x.4, withdrawal with delirium .4/6C4x.5, substance-induced
-// psychotic disorder .5/6C4x.6): at the operationalization granularity this app
-// encodes (substance use + characteristic transient signs + temporal relation +
-// exclusions), the ICD-11 requirements are clinically EQUIVALENT to the ICD-10
-// structure. These syndromes therefore DELIBERATELY reuse the ICD-10 tree via the
-// resolver's fallback (no separate `icd11` set) — an intentional icd10==icd11
-// mapping, not an omission.
+// ICD-11 6C4x.3–6 — native trees attached via icd11IntoxicationSet / icd11WithdrawalSet /
+// icd11WithdrawalDeliriumSet / icd11PsychoticSet (Phase B factories).
 
 function acuteIntoxication(spec: SubstanceSpec): Disorder {
   const code = `${spec.icd10}.0`
-  const prefix = idp(code)
+  const prefix = criteriaPrefix(spec, code)
   return {
     id: `${spec.key}_acute_intoxication`,
     classification: 'icd10',
@@ -474,7 +794,7 @@ function acuteIntoxication(spec: SubstanceSpec): Disorder {
         label_de: 'Substanztypische Intoxikationszeichen (mindestens 1)',
         logic: 'any_of',
         groupType: 'inclusion',
-        criteria: featureCriteria(code, spec.intox),
+        criteria: featureCriteria(spec, code, spec.intox),
       },
       {
         id: `${prefix}.exclusions`,
@@ -492,12 +812,13 @@ function acuteIntoxication(spec: SubstanceSpec): Disorder {
         ],
       },
     ],
+    icd11: icd11IntoxicationSet(spec),
   }
 }
 
 function withdrawalState(spec: SubstanceSpec): Disorder {
   const code = `${spec.icd10}.3`
-  const prefix = idp(code)
+  const prefix = criteriaPrefix(spec, code)
   return {
     id: `${spec.key}_withdrawal`,
     classification: 'icd10',
@@ -547,7 +868,7 @@ function withdrawalState(spec: SubstanceSpec): Disorder {
         label_de: 'Entzugssymptome (mindestens 1)',
         logic: 'any_of',
         groupType: 'inclusion',
-        criteria: featureCriteria(code, spec.withdrawal),
+        criteria: featureCriteria(spec, code, spec.withdrawal),
       },
       {
         id: `${prefix}.exclusions`,
@@ -565,12 +886,13 @@ function withdrawalState(spec: SubstanceSpec): Disorder {
         ],
       },
     ],
+    icd11: icd11WithdrawalSet(spec),
   }
 }
 
 function withdrawalDelirium(spec: SubstanceSpec): Disorder {
   const code = `${spec.icd10}.4`
-  const prefix = idp(code)
+  const prefix = criteriaPrefix(spec, code)
   return {
     id: `${spec.key}_withdrawal_delirium`,
     classification: 'icd10',
@@ -670,12 +992,13 @@ function withdrawalDelirium(spec: SubstanceSpec): Disorder {
         ],
       },
     ],
+    icd11: icd11WithdrawalDeliriumSet(spec),
   }
 }
 
 function psychoticDisorder(spec: SubstanceSpec): Disorder {
   const code = `${spec.icd10}.5`
-  const prefix = idp(code)
+  const prefix = criteriaPrefix(spec, code)
   return {
     id: `${spec.key}_psychotic_disorder`,
     classification: 'icd10',
@@ -760,6 +1083,7 @@ function psychoticDisorder(spec: SubstanceSpec): Disorder {
         ],
       },
     ],
+    icd11: icd11PsychoticSet(spec),
   }
 }
 
@@ -1032,12 +1356,166 @@ const multipleSubstances: SubstanceSpec = {
   ],
 }
 
+/** ICD-11 6C48 — Koffein (eigenständiger Block, getrennt von 6C46 Amphetamin-Typ-Stimulanzien). */
+const caffeine: SubstanceSpec = {
+  key: 'caffeine',
+  icd10: 'F15',
+  icd11: '6C48',
+  criteriaIdPrefix: 'caffeine',
+  name_de: 'Koffein',
+  dativeName: 'Koffein',
+  dsmLabel: 'Caffeine',
+  useMatch: /koffein|kaffee|energydrink|mate|teein/i,
+  intox: [
+    { key: 'restlessness', text_de: 'Innere Unruhe, Nervosität oder leichte Agitiertheit', hint: 'drive_psychomotor_activity' },
+    { key: 'insomnia', text_de: 'Schlaflosigkeit oder vermindertes Schlafbedürfnis', hint: 'sleep_appetite_vegetative' },
+    { key: 'tachycardia', text_de: 'Tachykardie, Herzklopfen oder leichte Tremor', hint: 'somatic_preoccupation' },
+    { key: 'gi_upset', text_de: 'Übelkeit, Magenbeschwerden oder gesteigerter Harndrang', hint: 'somatic_preoccupation' },
+    { key: 'anxiety', text_de: 'Ängstlichkeit oder Anspannung bei höherer Dosis', hint: 'anxiety_panic_phobic_symptoms' },
+  ],
+  withdrawal: [
+    { key: 'headache', text_de: 'Kopfschmerzen', hint: 'somatic_preoccupation' },
+    { key: 'fatigue', text_de: 'Müdigkeit oder Erschöpfung', hint: 'drive_psychomotor_activity' },
+    { key: 'dysphoria', text_de: 'Gedrückte Stimmung, Reizbarkeit oder Konzentrationsschwierigkeiten', hint: 'mood_affect' },
+    { key: 'flu_like', text_de: 'Grippale Beschwerden oder Muskelschmerzen', hint: 'somatic_preoccupation' },
+    { key: 'craving', text_de: 'Starkes Verlangen nach koffeinhaltigen Getränken (Craving)' },
+  ],
+}
+
+/** ICD-11 6C47 — Synthetische Cathinone (z. B. „Bath Salts“, Mephedron-Analoge). */
+const syntheticCathinones: SubstanceSpec = {
+  key: 'synthetic_cathinones',
+  icd10: 'F15',
+  icd11: '6C47',
+  criteriaIdPrefix: 'synthetic_cathinones',
+  name_de: 'synthetische Cathinone',
+  dativeName: 'synthetischen Cathinonen',
+  dsmLabel: 'Synthetic Cathinone (Stimulant)',
+  useMatch: /cathinon|mephedron|bath\s*salt|alpha-?pvp|flakka|synthetisch.*stimulan/i,
+  intox: [
+    { key: 'euphoria_agitation', text_de: 'Euphorie, gesteigerte Wachheit und ausgeprägte Agitiertheit', hint: 'mood_affect' },
+    { key: 'autonomic', text_de: 'Tachykardie, Blutdruckanstieg, Schwitzen und Pupillenerweiterung; Hyperthermie möglich' },
+    { key: 'paranoia', text_de: 'Misstrauen, paranoide Gedanken oder aggressive Impulsivität', hint: 'thought_content' },
+    { key: 'psychomotor', text_de: 'Psychomotorische Unruhe, Stereotypien oder repetitive Bewegungen', hint: 'drive_psychomotor_activity' },
+  ],
+  withdrawal: [
+    { key: 'dysphoria', text_de: 'Dysphorische, gedrückte Stimmung und Anhedonie', hint: 'mood_affect' },
+    { key: 'fatigue', text_de: 'Ausgeprägte Müdigkeit und Antriebsminderung', hint: 'drive_psychomotor_activity' },
+    { key: 'sleep', text_de: 'Vermehrtes Schlafbedürfnis oder Schlaflosigkeit mit lebhaften Träumen', hint: 'sleep_appetite_vegetative' },
+    { key: 'craving', text_de: 'Starkes Substanzverlangen (Craving)' },
+  ],
+}
+
+/** ICD-11 6C4C — MDMA/MDA und verwandte Empathogene (eigenständiger Block neben 6C46). */
+const mdmaRelated: SubstanceSpec = {
+  key: 'mdma_related',
+  icd10: 'F15',
+  icd11: '6C4C',
+  criteriaIdPrefix: 'mdma_related',
+  name_de: 'MDMA oder verwandte Empathogene (einschließlich MDA)',
+  dativeName: 'MDMA oder verwandten Empathogenen (einschließlich MDA)',
+  dsmLabel: 'MDMA/Empathogen',
+  useMatch: /mdma|ecstasy|xtc|mda|mdea|empathogen|xtasy/i,
+  intox: [
+    { key: 'euphoria_empathy', text_de: 'Euphorie, gesteigerte Empathie und emotionaler Offenheit', hint: 'mood_affect' },
+    { key: 'sensory', text_de: 'Gesteigerte sensorische Wahrnehmung und gesteigerte Geselligkeit', hint: 'perception_hallucinations' },
+    { key: 'autonomic', text_de: 'Tachykardie, Blutdruckanstieg, Schwitzen und Kieferpressen (Bruxismus)' },
+    { key: 'hyperthermia', text_de: 'Hyperthermie und gesteigerte körperliche Aktivität möglich', hint: 'somatic_preoccupation' },
+  ],
+  withdrawal: [
+    { key: 'dysphoria', text_de: 'Gedrückte Stimmung, Reizbarkeit und Anhedonie („Midweek Blues“)', hint: 'mood_affect' },
+    { key: 'fatigue', text_de: 'Erschöpfung und Konzentrationsschwierigkeiten', hint: 'attention_concentration' },
+    { key: 'sleep', text_de: 'Schlafstörung oder vermehrtes Schlafbedürfnis', hint: 'sleep_appetite_vegetative' },
+    { key: 'craving', text_de: 'Starkes Verlangen (Craving)' },
+  ],
+}
+
+/** ICD-11 6C4D — Dissoziative Substanzen (Ketamin, PCP u. a.). */
+const dissociativeDrugs: SubstanceSpec = {
+  key: 'dissociative_drugs',
+  icd10: 'F19',
+  icd11: '6C4D',
+  criteriaIdPrefix: 'dissociative_drugs',
+  name_de: 'dissoziative Substanzen einschließlich Ketamin und PCP',
+  dativeName: 'dissoziativen Substanzen einschließlich Ketamin und PCP',
+  dsmLabel: 'Dissociative Drug',
+  useMatch: /ketamin|pcp|phencyclidin|dissoziat|n2o|lachgas|dxm|dextromethorphan/i,
+  intox: [
+    { key: 'dissociation', text_de: 'Depersonalisations- oder Derealisationserleben, Trance- oder „Out-of-Body“-Zustände', hint: 'self_experience_ego_disturbance' },
+    { key: 'perceptual', text_de: 'Veränderte Wahrnehmung, Illusionen oder Halluzinationen bei teils erhaltener Realitätsprüfung', hint: 'perception_hallucinations' },
+    { key: 'motor', text_de: 'Koordinationsstörung, Gangunsicherheit oder rigide Haltung', hint: 'appearance_behavior' },
+    { key: 'autonomic', text_de: 'Tachykardie, Blutdruckanstieg oder Nystagmus' },
+  ],
+  withdrawal: [
+    { key: 'dysphoria', text_de: 'Dysphorische Stimmung, Angst oder innere Unruhe', hint: 'mood_affect' },
+    { key: 'craving', text_de: 'Starkes Substanzverlangen (Craving)' },
+    { key: 'cognitive', text_de: 'Konzentrations- oder Gedächtnisstörungen', hint: 'attention_concentration' },
+  ],
+}
+
+/** ICD-11 6C4F — multiple spezifizierte psychoaktive Substanzen (einschließlich Medikamente). */
+const multipleSpecifiedPsychoactive: SubstanceSpec = {
+  key: 'multiple_specified_psychoactive',
+  icd10: 'F19',
+  icd11: '6C4F',
+  criteriaIdPrefix: 'multiple_specified_psychoactive',
+  name_de: 'multiple spezifizierte psychoaktive Substanzen einschließlich Medikamente',
+  dativeName: 'multiplen spezifizierten psychoaktiven Substanzen einschließlich Medikamente',
+  dsmLabel: 'Polysubstance (Specified Psychoactive)',
+  useMatch: /mehrere\s+spezif|multiplen\s+spezif|polysubstanz|kombination.*substanz|medikament.*missbrauch/i,
+  intox: [
+    { key: 'mixed_signs', text_de: 'Variabler Intoxikationsbefund im Muster der involvierten Substanzen', hint: 'substance_related_features' },
+    { key: 'disinhibition', text_de: 'Enthemmung oder Stimmungslabilität', hint: 'mood_affect' },
+    { key: 'consciousness', text_de: 'Beeinträchtigtes Bewusstsein je nach beteiligter Substanz', hint: 'consciousness_orientation' },
+  ],
+  withdrawal: [
+    { key: 'mixed_withdrawal', text_de: 'Entzugssymptome im Muster der beteiligten Substanzen' },
+    { key: 'craving', text_de: 'Starkes Verlangen (Craving) nach einer oder mehreren Substanzen' },
+    { key: 'dysphoria', text_de: 'Dysphorische Stimmung, Angst oder Schlafstörung', hint: 'mood_affect' },
+  ],
+}
+
+/** ICD-11 6C4G — unbekannte oder nicht näher bezeichnete psychoaktive Substanzen. */
+const unknownPsychoactive: SubstanceSpec = {
+  key: 'unknown_psychoactive',
+  icd10: 'F19',
+  icd11: '6C4G',
+  criteriaIdPrefix: 'unknown_psychoactive',
+  name_de: 'unbekannte oder nicht näher bezeichnete psychoaktive Substanzen',
+  dativeName: 'unbekannten oder nicht näher bezeichneten psychoaktiven Substanzen',
+  dsmLabel: 'Unknown Psychoactive Substance',
+  useMatch: /unbekannt.*substanz|designer.*droge|neue\s+psychoaktiv|nps|research\s+chemical/i,
+  intox: [
+    { key: 'unknown_intox', text_de: 'Akute psychische oder vegetative Symptome im zeitlichen Zusammenhang mit dem Konsum einer nicht näher bezeichneten psychoaktiven Substanz', hint: 'substance_related_features' },
+    { key: 'perceptual', text_de: 'Wahrnehmungsveränderungen oder Bewusstseinsstörung möglich', hint: 'perception_hallucinations' },
+  ],
+  withdrawal: [
+    { key: 'unknown_withdrawal', text_de: 'Entzugssymptome nach Reduktion oder Beendigung des Konsums' },
+    { key: 'craving', text_de: 'Starkes Verlangen (Craving)' },
+  ],
+}
+
+/** ICD-11 6C4H — nicht-psychoaktive Substanzen (Laxanzien, Analgetika u. a.). */
+export const nonPsychoactiveSubstance: SubstanceSpec = {
+  key: 'non_psychoactive',
+  icd10: 'F55',
+  icd11: '6C4H',
+  criteriaIdPrefix: 'non_psychoactive',
+  name_de: 'nicht-psychoaktive Substanzen',
+  dativeName: 'nicht-psychoaktiven Substanzen',
+  dsmLabel: 'Non-Psychoactive Substance',
+  useMatch: /laxanz|analgetik|vitamin|pflanzlich|nicht.?psychoaktiv|diuretik|abführ|schmerzmittel.*missbrauch/i,
+  intox: [],
+  withdrawal: [],
+}
+
 // ---------------------------------------------------------------------------
 // Generated matrix — only the cells a psychiatrist routinely diagnoses.
 // ---------------------------------------------------------------------------
 
 export const substanceUseDisorders: Disorder[] = [
   // Alcohol (F10): dependence F10.2 lives in the existing template; add the rest.
+  harmfulUse(alcohol),
   acuteIntoxication(alcohol),
   withdrawalState(alcohol),
   withdrawalDelirium(alcohol),
@@ -1099,4 +1577,34 @@ export const substanceUseDisorders: Disorder[] = [
   withdrawalState(multipleSubstances),
   withdrawalDelirium(multipleSubstances),
   psychoticDisorder(multipleSubstances),
+
+  // Caffeine (ICD-11 6C48; ICD-10-Näherung F15)
+  harmfulUse(caffeine),
+  dependenceSyndrome(caffeine),
+  withdrawalState(caffeine),
+
+  // Synthetic cathinones (ICD-11 6C47; ICD-10-Näherung F15)
+  harmfulUse(syntheticCathinones),
+  dependenceSyndrome(syntheticCathinones),
+  acuteIntoxication(syntheticCathinones),
+  psychoticDisorder(syntheticCathinones),
+
+  // MDMA / MDA empathogens (ICD-11 6C4C; ICD-10-Näherung F15)
+  harmfulUse(mdmaRelated),
+  dependenceSyndrome(mdmaRelated),
+  acuteIntoxication(mdmaRelated),
+
+  // Dissociative drugs incl. ketamine / PCP (ICD-11 6C4D; ICD-10-Näherung F19)
+  harmfulUse(dissociativeDrugs),
+  dependenceSyndrome(dissociativeDrugs),
+  acuteIntoxication(dissociativeDrugs),
+  psychoticDisorder(dissociativeDrugs),
+
+  // Multiple specified psychoactive substances incl. medications (ICD-11 6C4F)
+  harmfulUse(multipleSpecifiedPsychoactive),
+  dependenceSyndrome(multipleSpecifiedPsychoactive),
+
+  // Unknown / unspecified psychoactive substances (ICD-11 6C4G)
+  harmfulUse(unknownPsychoactive),
+  dependenceSyndrome(unknownPsychoactive),
 ]

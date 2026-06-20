@@ -1,0 +1,457 @@
+/*
+ * Diagnose page — clinical-minimal alignment layer
+ * --------------------------------------------------------------------------
+ * Flattens the dedicated Diagnose workspace (coded diagnoses + Butterfly
+ * criteria) to match Übersicht / Medikation: typographic eyebrows, hairline
+ * dividers, no nested card chrome. Scoped under `.diagnose-page` only.
+ */
+
+.diagnose-page {
+  padding: var(--cm-page-pad-y, 1.5rem) var(--cm-page-pad-x, 1.75rem) 3rem;
+  max-width: min(100%, var(--workspace-max, 76rem));
+  display: flex;
+  flex-direction: column;
+  gap: var(--cm-section-gap, 2.75rem);
+}
+
+.diagnose-page .cm-page-eyebrow {
+  margin-bottom: 0;
+}
+
+/* ── Diagnosen widget — flat section ───────────────────────────────────── */
+
+.diagnose-page .diagnosen-widget,
+.diagnose-page .diagnosen-widget--panel {
+  margin: 0;
+  max-width: none;
+  width: 100%;
+  min-width: 0;
+  padding-top: 0;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+.diagnose-page .diagnosen-widget__header--flat {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.diagnose-page .diagnosen-widget__header--flat .cm-eyebrow {
+  margin-bottom: 0;
+}
+
+.diagnose-page .diagnosen-widget__add-btn--flat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: auto;
+  height: auto;
+  padding: 0.35rem 0.65rem;
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 500;
+  color: var(--accent, #8a5a2b);
+  background: transparent;
+  border: 1px solid var(--cm-quiet-border);
+  border-radius: var(--radius-control, 0.4375rem);
+  transition:
+    color var(--duration-fast, 150ms) ease,
+    background var(--duration-fast, 150ms) ease;
+}
+
+.diagnose-page .diagnosen-widget__add-btn--flat:hover {
+  color: var(--accent-hover, #6f4722);
+  background: var(--surface-hover, #f5f3f0);
+  border-color: var(--cm-quiet-border);
+}
+
+.diagnose-page .diagnosen-widget__add-label {
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.diagnose-page .diagnosen-widget__body {
+  max-height: none;
+  gap: 0.75rem;
+}
+
+/* ICD tabs — flat underline control */
+.diagnose-page .diagnosen-widget__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  padding-bottom: 0;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid var(--cm-hairline);
+}
+
+.diagnose-page .diagnosen-widget__tab {
+  padding: 0.45rem 0.85rem;
+  margin-bottom: -1px;
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: 500;
+  color: var(--text-muted, #91887e);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  transition:
+    color var(--duration-fast, 150ms) ease,
+    border-color var(--duration-fast, 150ms) ease;
+}
+
+.diagnose-page .diagnosen-widget__tab:hover {
+  color: var(--ink, #24211e);
+  border-bottom-color: color-mix(in srgb, var(--area-accent, var(--accent)) 35%, transparent);
+}
+
+.diagnose-page .diagnosen-widget__tab--active {
+  color: var(--ink, #24211e);
+  font-weight: 600;
+  border-bottom-color: var(--area-accent, var(--accent, #8a5a2b));
+}
+
+/* Search — inline field, flat results */
+.diagnose-page .diagnosen-widget__search {
+  gap: 0.35rem;
+  margin-bottom: 0.25rem;
+}
+
+.diagnose-page .diagnosen-widget__search-input {
+  padding: 0.45rem 0;
+  font-size: var(--text-sm, 0.8125rem);
+  border: none;
+  border-bottom: 1px solid var(--cm-hairline);
+  border-radius: 0;
+  background: transparent;
+}
+
+.diagnose-page .diagnosen-widget__search-input:focus {
+  outline: none;
+  border-bottom-color: var(--area-accent, var(--accent, #8a5a2b));
+}
+
+.diagnose-page .diagnosen-widget__search-results {
+  max-height: 14rem;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.diagnose-page .diagnosen-widget__search-item {
+  padding: 0.55rem 0;
+  font-size: var(--text-sm, 0.8125rem);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--cm-hairline);
+}
+
+.diagnose-page .diagnosen-widget__search-item:hover {
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 5%, transparent);
+}
+
+.diagnose-page .diagnosen-widget__search-hint {
+  padding: 0.55rem 0;
+  font-size: var(--text-xs, 0.75rem);
+  font-style: italic;
+}
+
+.diagnose-page .diagnosen-widget__empty {
+  margin: 0;
+  padding: 0.25rem 0;
+  font-size: var(--text-sm, 0.8125rem);
+  font-style: italic;
+}
+
+/* Diagnosis list — flat feed rows */
+.diagnose-page .diagnosen-widget__list {
+  gap: 0;
+}
+
+.diagnose-page .diagnosen-widget__row {
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--cm-hairline);
+}
+
+.diagnose-page .diagnosen-widget__row:last-child {
+  border-bottom: none;
+}
+
+.diagnose-page .diagnosen-widget__row--editing {
+  align-items: stretch;
+  padding: 0.75rem 0;
+}
+
+.diagnose-page .diagnosen-widget__display {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.65rem;
+}
+
+.diagnose-page .diagnosen-widget__system-badge {
+  font-size: var(--text-2xs, 0.6875rem);
+  font-weight: 500;
+  letter-spacing: var(--cm-label-tracking, 0.08em);
+  text-transform: uppercase;
+  color: var(--text-muted, #91887e);
+  background: none;
+  padding: 0;
+}
+
+.diagnose-page .diagnosen-widget__save-btn,
+.diagnose-page .diagnosen-widget__cancel-btn {
+  font-size: var(--text-xs, 0.75rem);
+  padding: 0.3rem 0.6rem;
+}
+
+/* ── Butterfly panel — flat section ─────────────────────────────────────── */
+
+.diagnose-page .butterfly-panel {
+  margin-top: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  gap: 1rem;
+}
+
+.diagnose-page .butterfly-panel--idle {
+  background: transparent;
+  border: none;
+}
+
+.diagnose-page .butterfly-panel__idle-card {
+  align-items: flex-start;
+  text-align: left;
+  padding: 0;
+  gap: 0.35rem;
+}
+
+.diagnose-page .butterfly-panel__idle-mark {
+  display: none;
+}
+
+.diagnose-page .butterfly-panel__header--flat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.25rem;
+}
+
+.diagnose-page .butterfly-panel__header--flat .cm-eyebrow {
+  margin-bottom: 0;
+}
+
+.diagnose-page .butterfly-panel__subtitle,
+.diagnose-page .butterfly-panel__updated {
+  margin: 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-muted, #91887e);
+  line-height: 1.45;
+}
+
+.diagnose-page .butterfly-panel__disclaimer {
+  margin: 0;
+  padding: 0.55rem 0 0.55rem 0.65rem;
+  font-size: var(--text-xs, 0.75rem);
+  line-height: 1.45;
+  color: var(--text-muted, #91887e);
+  background: transparent;
+  border: none;
+  border-left: 2px solid var(--cm-quiet-border);
+  border-radius: 0;
+}
+
+.diagnose-page .butterfly-panel__draft-notice {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-muted, #91887e);
+}
+
+.diagnose-page .butterfly-panel__section {
+  gap: 0.75rem;
+  padding-top: 0.25rem;
+}
+
+.diagnose-page .butterfly-panel__section-title {
+  font-size: var(--cm-eyebrow-size, 0.6875rem);
+  font-weight: var(--cm-label-weight, 500);
+  letter-spacing: var(--cm-label-tracking, 0.08em);
+  text-transform: uppercase;
+  color: var(--text-muted, #91887e);
+}
+
+.diagnose-page .butterfly-panel__section-title .butterfly-collapsible-toggle span {
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+}
+
+.diagnose-page .butterfly-panel__review-note {
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 500;
+  color: var(--text-muted, #91887e);
+}
+
+/* Recommendation rows — flat, left accent only */
+.diagnose-page .butterfly-card-list {
+  gap: 0;
+}
+
+.diagnose-page .butterfly-card {
+  padding: 0.85rem 0;
+  border: none;
+  border-bottom: 1px solid var(--cm-hairline);
+  border-left: 2px solid var(--bf-card-accent, var(--text-muted));
+  border-radius: 0;
+  background: transparent;
+  padding-left: 0.65rem;
+}
+
+.diagnose-page .butterfly-card:last-child {
+  border-bottom: none;
+}
+
+.diagnose-page .butterfly-card--unavailable {
+  background: transparent;
+}
+
+.diagnose-page .butterfly-card__toggle {
+  padding: 0;
+}
+
+.diagnose-page .butterfly-card__name {
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: 600;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.diagnose-page .butterfly-card__code {
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 600;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  color: var(--text-muted, #91887e);
+  background: none;
+  padding: 0;
+  border-radius: 0;
+}
+
+.diagnose-page .butterfly-verdict {
+  font-size: var(--text-2xs, 0.6875rem);
+  font-weight: 600;
+  letter-spacing: var(--cm-label-tracking, 0.08em);
+  text-transform: uppercase;
+  padding: 0;
+  border-radius: 0;
+  color: var(--bf-card-accent, var(--text-muted));
+  background: none;
+}
+
+.diagnose-page .butterfly-card__advice {
+  font-size: var(--text-sm, 0.8125rem);
+}
+
+.diagnose-page .butterfly-card__group-label {
+  font-size: var(--text-2xs, 0.6875rem);
+  letter-spacing: var(--cm-label-tracking, 0.08em);
+}
+
+.diagnose-page .butterfly-criteria-list {
+  gap: 0;
+}
+
+.diagnose-page .butterfly-criterion {
+  padding: 0.55rem 0;
+  border: none;
+  border-bottom: 1px solid var(--cm-hairline);
+  border-radius: 0;
+  background: transparent;
+}
+
+.diagnose-page .butterfly-criterion:last-child {
+  border-bottom: none;
+}
+
+.diagnose-page .butterfly-criterion--open {
+  background: transparent;
+}
+
+.diagnose-page .butterfly-criterion--ai {
+  border-color: transparent;
+}
+
+.diagnose-page .butterfly-suggestion {
+  padding: 0.5rem 0 0.5rem 0.55rem;
+  border: none;
+  border-left: 2px solid color-mix(in srgb, var(--accent, #8a5a2b) 40%, transparent);
+  border-radius: 0;
+  background: transparent;
+}
+
+.diagnose-page .butterfly-ai-check {
+  font-size: var(--text-xs, 0.75rem);
+  padding: 0.25rem 0.55rem;
+  background: transparent;
+}
+
+/* Suggested questions — flat rows */
+.diagnose-page .butterfly-gap-diagnosis-list {
+  gap: 1rem;
+}
+
+.diagnose-page .butterfly-gap {
+  padding: 0.5rem 0;
+  border: none;
+  border-bottom: 1px solid var(--cm-hairline);
+  border-left: 2px solid var(--cm-quiet-border);
+  border-radius: 0;
+  background: transparent;
+  padding-left: 0.55rem;
+}
+
+.diagnose-page .butterfly-gap--high {
+  border-left-color: color-mix(in srgb, var(--bf-not-met) 55%, var(--cm-quiet-border));
+  background: transparent;
+}
+
+.diagnose-page .butterfly-gap--medium {
+  border-left-color: color-mix(in srgb, var(--accent, #8a5a2b) 45%, var(--cm-quiet-border));
+}
+
+.diagnose-page .butterfly-gap-list__hint {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-muted, #91887e);
+}
+
+@media (max-width: 768px) {
+  .diagnose-page {
+    padding: 1.1rem 1.1rem 2.5rem;
+    gap: 2rem;
+  }
+
+  .diagnose-page .diagnosen-widget__display {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .diagnose-page .butterfly-card__toggle {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+}

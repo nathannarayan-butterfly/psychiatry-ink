@@ -1,5 +1,33 @@
-import type { LabMedicationCorrelationStore } from '../../types/labMedicationCorrelation'
+import type {
+  LabCorrelationFindingStatus,
+  LabMedicationCorrelationStore,
+  PatientMedicationLabCorrelationFinding,
+} from '../../types/labMedicationCorrelation'
 import { LAB_MED_CORRELATION_STORE_VERSION } from '../../types/labMedicationCorrelation'
+
+const CLINICIAN_LOCKED_STATUSES = new Set<LabCorrelationFindingStatus>([
+  'accepted',
+  'rejected',
+  'not_relevant',
+  'pending_clinician_review',
+])
+
+/** Findings the clinician has resolved must survive automated re-runs. */
+export function shouldPreserveLabMedCorrelationFinding(
+  existing: PatientMedicationLabCorrelationFinding,
+): boolean {
+  if (CLINICIAN_LOCKED_STATUSES.has(existing.status)) return true
+  if (existing.source === 'clinician_accepted') return true
+  if (existing.clinicianNote?.trim()) return true
+  return false
+}
+
+/** Befunde, die in der Labor-Medikament-Korrelation angezeigt werden. */
+export function filterVisibleLabMedCorrelationFindings(
+  findings: PatientMedicationLabCorrelationFinding[],
+): PatientMedicationLabCorrelationFinding[] {
+  return findings.filter((f) => f.status !== 'rejected' && f.status !== 'not_relevant')
+}
 
 const LS_PREFIX = 'psychiatry-ink:lab-med-correlations:'
 
@@ -67,10 +95,17 @@ export function mergeLabMedCorrelationRunResult(
 ): LabMedicationCorrelationStore {
   const store = loadLabMedCorrelationStore(caseId)
   const findingByKey = new Map(store.findings.map((f) => [f.correlationKey, f]))
-  for (const finding of findings) {
-    const existing = findingByKey.get(finding.correlationKey)
-    if (!existing || finding.updatedAt >= existing.updatedAt) {
-      findingByKey.set(finding.correlationKey, finding)
+  for (const incoming of findings) {
+    const existing = findingByKey.get(incoming.correlationKey)
+    if (!existing) {
+      findingByKey.set(incoming.correlationKey, incoming)
+      continue
+    }
+    if (shouldPreserveLabMedCorrelationFinding(existing)) {
+      continue
+    }
+    if (incoming.updatedAt >= existing.updatedAt) {
+      findingByKey.set(incoming.correlationKey, incoming)
     }
   }
 

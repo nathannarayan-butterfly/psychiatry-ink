@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Sparkles } from 'lucide-react'
+import { ButterflyLogo } from '../../ButterflyLogo'
 import { useTranslation } from '../../../context/TranslationContext'
 import { useDiagnosisDisplayTitles } from '../../../hooks/useDiagnosisDisplayTitles'
 import { buildDiagnosisTitleRequest } from '../../../utils/diagnosisDisplayRequests'
@@ -45,7 +45,7 @@ export function ButterflyCriteriaCard({ items, onOpenDiagnose }: ButterflyCriter
   return (
     <OverviewCard
       title="Butterfly-Kriterien"
-      icon={<Sparkles size={15} />}
+      icon={<ButterflyLogo variant="grey" size={20} />}
       className="ov-col-6"
       badge={badge}
       action={{ label: 'Zur Diagnose', onClick: onOpenDiagnose }}

@@ -1,6 +1,6 @@
 import { safeGetItem, safeSetItem } from '../safeStorage'
 
-export const OVERVIEW_LAYOUT_VERSION = 2 as const
+export const OVERVIEW_LAYOUT_VERSION = 4 as const
 export const OVERVIEW_LAYOUT_STORAGE_BASE = 'psychiatry-ink:overview-layout'
 
 export type OverviewWidgetId =
@@ -103,6 +103,40 @@ function normalizeItem(raw: unknown, fallbackWidth: OverviewWidgetWidth): Overvi
   }
 }
 
+/** Priority band for section headers in the Übersicht grid. */
+export type OverviewWidgetBand =
+  | 'diagnosis-medication'
+  | 'safety-verlauf'
+  | 'clinical-status'
+  | 'monitoring'
+  | 'therapy'
+
+export const OVERVIEW_WIDGET_BAND: Partial<Record<OverviewWidgetId, OverviewWidgetBand>> = {
+  diagnoses: 'diagnosis-medication',
+  medication: 'diagnosis-medication',
+  safety: 'safety-verlauf',
+  verlaufstendenz: 'safety-verlauf',
+  'recent-verlauf': 'safety-verlauf',
+  psychopathology: 'clinical-status',
+  'labs-due': 'monitoring',
+  'spiegel-latest': 'monitoring',
+  'spiegel-all': 'monitoring',
+  'lab-results': 'monitoring',
+  'ekg-summary': 'monitoring',
+  'eeg-summary': 'monitoring',
+  'ct-summary': 'monitoring',
+  'angemeldete-therapien': 'therapy',
+  compliance: 'therapy',
+  'prior-therapies': 'therapy',
+  psychotherapy: 'therapy',
+  collaboration: 'therapy',
+  'isdm-summary': 'therapy',
+  dokumentation: 'therapy',
+  appointments: 'therapy',
+  'butterfly-criteria': 'monitoring',
+  zwangsmassnahme: 'safety-verlauf',
+}
+
 /** Default layout — hero is fixed above the grid; cards only here. */
 export function getDefaultOverviewLayout(): OverviewLayout {
   return {
@@ -110,15 +144,11 @@ export function getDefaultOverviewLayout(): OverviewLayout {
     widgets: [
       { instanceId: 'default-diagnoses', widgetId: 'diagnoses', width: 'half' },
       { instanceId: 'default-medication', widgetId: 'medication', width: 'half' },
-      { instanceId: 'default-spiegel-latest', widgetId: 'spiegel-latest', width: 'half' },
-      { instanceId: 'default-psychopathology', widgetId: 'psychopathology', width: 'half' },
-      { instanceId: 'default-zwangsmassnahme', widgetId: 'zwangsmassnahme', width: 'half' },
-      { instanceId: 'default-verlaufstendenz', widgetId: 'verlaufstendenz', width: 'half' },
+      { instanceId: 'default-safety', widgetId: 'safety', width: 'full' },
+      { instanceId: 'default-verlaufstendenz', widgetId: 'verlaufstendenz', width: 'full' },
+      { instanceId: 'default-psychopathology', widgetId: 'psychopathology', width: 'full' },
       { instanceId: 'default-labs', widgetId: 'labs-due', width: 'half' },
-      { instanceId: 'default-ekg', widgetId: 'ekg-summary', width: 'half' },
-      { instanceId: 'default-eeg', widgetId: 'eeg-summary', width: 'half' },
-      { instanceId: 'default-ct', widgetId: 'ct-summary', width: 'half' },
-      { instanceId: 'default-prior', widgetId: 'prior-therapies', width: 'half' },
+      { instanceId: 'default-spiegel-latest', widgetId: 'spiegel-latest', width: 'half' },
       { instanceId: 'default-angemeldete', widgetId: 'angemeldete-therapien', width: 'half' },
       { instanceId: 'default-compliance', widgetId: 'compliance', width: 'half' },
     ],
@@ -227,7 +257,9 @@ export type OverviewWidgetVisibility =
   | 'hasIsdm'
   | 'hasLabData'
   | 'hasButterfly'
+  | 'hasEkg'
   | 'hasEeg'
+  | 'hasCt'
   | 'hasZwangsmassnahme'
 
 export interface OverviewWidgetVisibilityContext {
@@ -237,7 +269,9 @@ export interface OverviewWidgetVisibilityContext {
   hasIsdm: boolean
   hasLabData: boolean
   hasButterfly: boolean
+  hasEkg: boolean
   hasEeg: boolean
+  hasCt: boolean
   hasZwangsmassnahme: boolean
 }
 
@@ -251,46 +285,35 @@ export type OverviewPackSegment =
   | { type: 'columns'; left: OverviewWidgetPlacement[]; right: OverviewWidgetPlacement[] }
 
 /**
- * Pack half-width widgets into the shorter column (masonry-style) while preserving
- * user order. Full-width widgets flush the current column pair and span the row.
+ * Pack half-width widgets into fixed left/right pairs in layout order.
+ * Full-width widgets flush any pending half and span the row alone.
  */
-export function packOverviewWidgets(
-  placements: OverviewWidgetPlacement[],
-  sizeWeight: (widgetId: OverviewWidgetId) => number,
-): OverviewPackSegment[] {
+export function packOverviewWidgets(placements: OverviewWidgetPlacement[]): OverviewPackSegment[] {
   const segments: OverviewPackSegment[] = []
-  let left: OverviewWidgetPlacement[] = []
-  let right: OverviewWidgetPlacement[] = []
-  let leftHeight = 0
-  let rightHeight = 0
+  let pendingHalf: OverviewWidgetPlacement | null = null
 
-  const flushColumns = () => {
-    if (left.length === 0 && right.length === 0) return
-    segments.push({ type: 'columns', left: [...left], right: [...right] })
-    left = []
-    right = []
-    leftHeight = 0
-    rightHeight = 0
+  const flushPendingHalf = () => {
+    if (!pendingHalf) return
+    segments.push({ type: 'columns', left: [pendingHalf], right: [] })
+    pendingHalf = null
   }
 
   for (const placement of placements) {
     if (placement.item.width === 'full') {
-      flushColumns()
+      flushPendingHalf()
       segments.push({ type: 'full', placement })
       continue
     }
 
-    const weight = sizeWeight(placement.item.widgetId)
-    if (leftHeight <= rightHeight) {
-      left.push(placement)
-      leftHeight += weight
+    if (!pendingHalf) {
+      pendingHalf = placement
     } else {
-      right.push(placement)
-      rightHeight += weight
+      segments.push({ type: 'columns', left: [pendingHalf], right: [placement] })
+      pendingHalf = null
     }
   }
 
-  flushColumns()
+  flushPendingHalf()
   return segments
 }
 
@@ -305,7 +328,9 @@ export function isOverviewWidgetVisible(
   if (visibility === 'hasIsdm') return ctx.hasIsdm
   if (visibility === 'hasLabData') return ctx.hasLabData
   if (visibility === 'hasButterfly') return ctx.hasButterfly
+  if (visibility === 'hasEkg') return ctx.hasEkg
   if (visibility === 'hasEeg') return ctx.hasEeg
+  if (visibility === 'hasCt') return ctx.hasCt
   if (visibility === 'hasZwangsmassnahme') return ctx.hasZwangsmassnahme
   return true
 }

@@ -70,6 +70,8 @@ const ERROR_DE: Record<string, string> = {
   'Keine Berechtigung für Medikations- oder Labordaten': 'Keine Berechtigung für Medikations- oder Labordaten',
   'Ihr monatliches KI-Kontingent ist aufgebraucht. Bitte wenden Sie sich an die Praxisleitung.':
     'Ihr monatliches KI-Kontingent ist aufgebraucht. Bitte wenden Sie sich an die Praxisleitung.',
+  'Das monatliche KI-Budget der Organisation ist erreicht. Bitte wenden Sie sich an die Praxisleitung.':
+    'Das monatliche KI-Budget der Organisation ist erreicht. Bitte wenden Sie sich an die Praxisleitung.',
   'Combination check failed': 'Kombinationscheck fehlgeschlagen',
   'Lab medication correlation failed': 'Korrelationsprüfung fehlgeschlagen',
   'Prep AI check failed': 'Verfügbarkeitsprüfung fehlgeschlagen',
@@ -77,6 +79,9 @@ const ERROR_DE: Record<string, string> = {
   'Server KI deaktiviert — ENABLE_PSYCHOPATH_EXTRACT_AI auf API-Server setzen und neu starten':
     'Server KI deaktiviert — ENABLE_PSYCHOPATH_EXTRACT_AI auf API-Server setzen und neu starten',
   'Generation failed': 'KI-Generierung fehlgeschlagen',
+  'Prompt too large': 'Eingabe zu lang für die KI-Analyse',
+  'Missing tier, systemPrompt, or userPrompt': 'KI-Anfrage unvollständig',
+  'Invalid tier': 'Ungültiges KI-Modell',
 }
 
 function localizeClinicalApiError(message: string): string {

@@ -66,14 +66,12 @@ function AiReviewBlock({
   onAccept,
   onReject,
   onEditAccept,
-  onOpenAiSecondOpinion,
 }: {
   finding: PatientMedicationLabCorrelationFinding
   disabled?: boolean
   onAccept: (note?: string) => void
   onReject: (note?: string) => void
   onEditAccept: (edited: LabCorrelationAIResult, note?: string) => void
-  onOpenAiSecondOpinion?: () => void
 }) {
   const [note, setNote] = useState(finding.clinicianNote ?? '')
   const [editing, setEditing] = useState(false)
@@ -161,11 +159,6 @@ function AiReviewBlock({
         >
           {editing ? 'Bearbeitung speichern & akzeptieren' : 'Bearbeiten & Akzeptieren'}
         </button>
-        {finding.deepseekRejected && !finding.openaiRunId && onOpenAiSecondOpinion ? (
-          <button type="button" disabled={disabled} onClick={() => onOpenAiSecondOpinion()}>
-            OpenAI-Zweitprüfung starten
-          </button>
-        ) : null}
       </div>
       <label className="combination-check__note-field">
         Anmerkung hinzufügen
@@ -189,7 +182,6 @@ function FindingRow({
   onAccept,
   onReject,
   onEditAccept,
-  onOpenAiSecondOpinion,
 }: {
   finding: PatientMedicationLabCorrelationFinding
   disabled?: boolean
@@ -198,7 +190,6 @@ function FindingRow({
   onAccept: (note?: string) => void
   onReject: (note?: string) => void
   onEditAccept: (edited: LabCorrelationAIResult, note?: string) => void
-  onOpenAiSecondOpinion?: () => void
 }) {
   const [noteDraft, setNoteDraft] = useState(finding.clinicianNote ?? '')
 
@@ -271,15 +262,7 @@ function FindingRow({
             onAccept={onAccept}
             onReject={onReject}
             onEditAccept={onEditAccept}
-            onOpenAiSecondOpinion={onOpenAiSecondOpinion}
           />
-        ) : finding.status === 'rejected' && finding.deepseekRejected && !finding.openaiRunId ? (
-          <div className="lab-med-correlation__second-opinion">
-            <p>DeepSeek-Vorschlag verworfen — optional OpenAI-Zweitprüfung anfordern.</p>
-            <button type="button" disabled={disabled} onClick={() => onOpenAiSecondOpinion?.()}>
-              OpenAI-Zweitprüfung starten
-            </button>
-          </div>
         ) : (
           <div className="combination-check__kb-actions">
             <label className="combination-check__note-field">
@@ -529,7 +512,6 @@ export function LabMedicationCorrelationPanel({
               onEditAccept={(edited, note) =>
                 void correlation.acceptFinding(finding.id, { clinicianNote: note, editedResult: edited })
               }
-              onOpenAiSecondOpinion={() => void correlation.startOpenAiSecondOpinion(finding.id)}
             />
           ))}
         </div>

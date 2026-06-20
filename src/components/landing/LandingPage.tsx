@@ -179,7 +179,7 @@ export function LandingPage({ onLogin, onSignup, onEnterApp, showDevEntry }: Lan
 
       <footer className="landing-footer">
         <div className="landing-footer__company">
-          <span className="landing-footer__name">Psychiatry Ink Ltd</span>
+          <span className="landing-footer__name">Psychiatry Ink Ltd, Company Nr: 17275704</span>
           <span className="landing-footer__address">
             71-75 Shelton Street, Covent Garden, London, WC2H 9JQ, United Kingdom
           </span>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { MedicationEntry, MedicationPlanState } from '../../types/medicationPlan'
 import type {
   CombinationCheckAIResult,
@@ -93,6 +93,15 @@ function AiReviewCard({
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState<CombinationCheckAIResult | null>(finding.aiResult ?? null)
 
+  useEffect(() => {
+    setNote(finding.clinicianNote ?? '')
+  }, [finding.id, finding.clinicianNote])
+
+  useEffect(() => {
+    setDraft(finding.aiResult ?? null)
+    setEditing(false)
+  }, [finding.id, finding.aiResult])
+
   if (!finding.aiResult || !finding.aiRunId) return null
 
   return (
@@ -103,11 +112,6 @@ function AiReviewCard({
       {finding.hasConflict ? (
         <p className="combination-check__conflict">
           Konflikt zwischen Wissensdatenbank und KI — KB-Eintrag wird bevorzugt.
-        </p>
-      ) : null}
-      {finding.mainRisk ? (
-        <p className="combination-check__ai-risk">
-          <strong>Hauptrisiko:</strong> {finding.mainRisk}
         </p>
       ) : null}
       {editing && draft ? (
@@ -194,6 +198,10 @@ function FindingRow({
   onEditAccept: (edited: CombinationCheckAIResult, note?: string) => void
 }) {
   const [noteDraft, setNoteDraft] = useState(finding.clinicianNote ?? '')
+
+  useEffect(() => {
+    setNoteDraft(finding.clinicianNote ?? '')
+  }, [finding.id, finding.clinicianNote])
 
   return (
     <details className="combination-check__row" open={finding.status === 'pending_clinician_review'}>

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildPatientSafety,
+  buildPpbHarmSignals,
   filterElevatedHarmSignals,
   isMeaningfulRiskRawValue,
 } from '../patientSafety'
@@ -79,6 +80,37 @@ describe('filterElevatedHarmSignals', () => {
     ]
     expect(filterElevatedHarmSignals(signals)).toHaveLength(1)
     expect(filterElevatedHarmSignals(signals)[0]?.id).toBe('riskSelf')
+  })
+})
+
+describe('buildPpbHarmSignals', () => {
+  it('combines all-negative axes into one calm line', () => {
+    const signals = buildPpbHarmSignals({
+      language: 'de',
+      text: 'Keine Suizidalität. Keine Eigengefährdung. Keine Fremdgefährdung.',
+    })
+    expect(signals).toHaveLength(1)
+    expect(signals[0]?.label).toBe('keine Suizidalität, keine Eigen- oder Fremdgefährdung')
+    expect(signals[0]?.tone).toBe('ok')
+  })
+
+  it('shows individual axes with clinical detail when elevated', () => {
+    const signals = buildPpbHarmSignals({
+      language: 'de',
+      suicidality: 'passive Suizidgedanken',
+      riskSelf: 'keine',
+      riskOthers: 'keine',
+    })
+    expect(signals.length).toBeGreaterThanOrEqual(2)
+    const suicide = signals.find((s) => s.id === 'suicidality')
+    expect(suicide?.value).toMatch(/suizidgedanken/i)
+    expect(signals.some((s) => s.label === 'keine Eigengefährdung')).toBe(true)
+  })
+
+  it('defaults missing documentation to negative axes', () => {
+    const signals = buildPpbHarmSignals({ language: 'de', text: 'Affekt gedrückt, Antrieb reduziert.' })
+    expect(signals).toHaveLength(1)
+    expect(signals[0]?.label).toBe('keine Suizidalität, keine Eigen- oder Fremdgefährdung')
   })
 })
 

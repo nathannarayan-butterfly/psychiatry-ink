@@ -14,6 +14,7 @@ import {
   specificCodeDisorder,
   stemAnchorDisorder,
 } from '../factories/gapFactories'
+import { icd11HarmfulPatternSet, nonPsychoactiveSubstance } from './substanceUse'
 import { crosswalkGapDisordersF6F8F9 } from './gapCoverageF6F8F9'
 
 // ---------------------------------------------------------------------------
@@ -690,6 +691,28 @@ const f4GapDisorders: Disorder[] = [
 // F5 — behavioural syndromes gaps
 // ---------------------------------------------------------------------------
 
+const nonDependenceSubstanceAbuse: Disorder = {
+  ...specificCodeDisorder({
+    id: 'non_dependence_substance_abuse',
+    code: 'F55',
+    name_de: 'Missbrauch nichtabhängigkeitserzeugender Substanzen',
+    crosswalkKey: 'F55',
+    sourceRef: 'operationalisiert nach ICD-10 F55 / ICD-11 6C4H.1Z',
+    codingSystems: {
+      icd10: { code: 'F55', label_de: 'Missbrauch nichtabhängigkeitserzeugender Substanzen' },
+      icd11: { code: '6C4H.1Z', label_de: 'Schädliches Konsummuster nicht-psychoaktiver Substanzen, nicht näher bezeichnet' },
+      dsm5tr: { code: '292.9', label_de: 'Other Substance-Related Disorder (Crosswalk)' },
+    },
+    differentials_de: ['Substanzabhängigkeit (F1x.2)', 'Essstörung mit Laxanzien-/Diuretikamissbrauch'],
+    coreSymptomText_de:
+      'Wiederholter Konsum nichtabhängigkeitserzeugender Substanzen (z. B. Laxanzien, Analgetika, Vitamine, pflanzliche Präparate) mit psychischen oder körperlichen Schäden, ohne Erfüllung der Abhängigkeitskriterien',
+    domain: 'substance_related_features',
+    presentMatch: /laxanz|analgetik|vitamin|pflanzlich|nichtabh[äa]ngigkeit|missbrauch.*substanz/i,
+    exclusionText_de: 'Die Kriterien einer Substanzabhängigkeit sind nicht erfüllt',
+  }),
+  icd11: icd11HarmfulPatternSet(nonPsychoactiveSubstance),
+}
+
 const f5GapDisorders: Disorder[] = [
   stemAnchorDisorder({
     id: 'eating_disorders_stem',
@@ -873,23 +896,7 @@ const f5GapDisorders: Disorder[] = [
     exclusionText_de: 'Die somatische Erkrankung ist nicht allein durch die psychologischen Faktoren verursacht',
   }),
 
-  specificCodeDisorder({
-    id: 'non_dependence_substance_abuse',
-    code: 'F55',
-    name_de: 'Missbrauch nichtabhängigkeitserzeugender Substanzen',
-    crosswalkKey: 'F55',
-    sourceRef: 'operationalisiert nach ICD-10 F55 / ICD-11 6C4H.1Z',
-    codingSystems: {
-      icd10: { code: 'F55', label_de: 'Missbrauch nichtabhängigkeitserzeugender Substanzen' },
-      icd11: { code: '6C4H.1Z', label_de: 'Schädliches Konsummuster nicht-psychoaktiver Substanzen, nicht näher bezeichnet' },
-      dsm5tr: { code: '292.9', label_de: 'Other Substance-Related Disorder (Crosswalk)' },
-    },
-    differentials_de: ['Substanzabhängigkeit (F1x.2)', 'Essstörung mit Laxanzien-/Diuretikamissbrauch'],
-    coreSymptomText_de: 'Wiederholter Konsum nichtabhängigkeitserzeugender Substanzen (z. B. Laxanzien, Analgetika, Vitamine, pflanzliche Präparate) mit psychischen oder körperlichen Schäden, ohne Erfüllung der Abhängigkeitskriterien',
-    domain: 'substance_related_features',
-    presentMatch: /laxanz|analgetik|vitamin|pflanzlich|nichtabh[äa]ngigkeit|missbrauch.*substanz/i,
-    exclusionText_de: 'Die Kriterien einer Substanzabhängigkeit sind nicht erfüllt',
-  }),
+  nonDependenceSubstanceAbuse,
 
   stemAnchorDisorder({
     id: 'unspecified_behavioural_syndrome',

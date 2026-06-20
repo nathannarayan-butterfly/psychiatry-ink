@@ -212,3 +212,11 @@ export function buildCtSummary(caseId: string): DiagnosticExamSummary {
 export function hasConductedEeg(caseId: string): boolean {
   return loadDiagnostikBefunde(caseId).some((r) => r.type === 'eeg')
 }
+
+export function hasConductedEkg(caseId: string): boolean {
+  return loadDiagnostikBefunde(caseId).some((r) => r.type === 'ecg')
+}
+
+export function hasConductedCt(caseId: string): boolean {
+  return buildCtSummary(caseId).conducted
+}

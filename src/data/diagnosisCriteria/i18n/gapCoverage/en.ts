@@ -760,11 +760,18 @@ export const gapEN: DisorderTranslationMap = {
     ],
     "groups": {
       "f55.core": "Core criteria",
-      "f55.exclusions": "Exclusions"
+      "f55.exclusions": "Exclusions",
+      "6c4h_1.pattern": "Sustained pattern of use (episodic or continuous, typically over ≥ 12 months — or ≥ 1 month if continuous)",
+      "6c4h_1.harm": "Demonstrable harm (at least one of the following areas)",
+      "6c4h_1.exclusions": "Exclusions"
     },
     "criteria": {
       "f55.core_symptoms": "Wiederholter Konsum nichtabhängigkeitserzeugender Substanzen (z. B. Laxanzien, Analgetika, Vitamine, pflanzliche Präparate) mit psychischen oder körperlichen Schäden, ohne Erfüllung der Abhängigkeitskriterien",
-      "f55.exclude_other": "Die Kriterien einer Substanzabhängigkeit sind nicht erfüllt"
+      "f55.exclude_other": "Die Kriterien einer Substanzabhängigkeit sind nicht erfüllt",
+      "6c4h_1.use_pattern": "A repeated or sustained pattern of non-psychoactive substance use is documented",
+      "6c4h_1.harm_self": "Clinically significant damage to the physical or mental health of the person as a result of use (including use- or intoxication-related behaviour)",
+      "6c4h_1.harm_others": "Harm to the health of others resulting from the person's use- or intoxication-related behaviour (e.g. injuries to third parties, harm in traffic) — an ICD-11-specific extension",
+      "6c4h_1.exclude_dependence": "The criteria for dependence (6C4H.2) are not met"
     }
   },
   "unspecified_behavioural_syndrome": {
@@ -1283,11 +1290,21 @@ export const gapEN: DisorderTranslationMap = {
     ],
     "groups": {
       "f83.core": "Core criteria",
-      "f83.exclusions": "Exclusions"
+      "f83.exclusions": "Exclusions",
+      "6a0z.domains": "Deficits in at least two neurodevelopmental domains",
+      "6a0z.conditions": "Diagnostic conditions",
+      "6a0z.exclusions": "Exclusions"
     },
     "criteria": {
       "f83.core_symptoms": "Kombinierte, spezifische Entwicklungsstörungen in mindestens zwei Bereichen (z. B. Sprache und motorische Koordination oder Lesen und Rechnen), die nicht allein durch eine allgemeine intellektuelle Entwicklungsstörung erklärbar sind",
-      "f83.exclude_other": "Der Leistungsrückstand ist nicht allein durch eine intellektuelle Entwicklungsstörung oder soziale Deprivation erklärbar"
+      "f83.exclude_other": "Der Leistungsrückstand ist nicht allein durch eine intellektuelle Entwicklungsstörung oder soziale Deprivation erklärbar",
+      "6a0z.speech_language": "Developmental deficit in speech or language (e.g. articulation, language comprehension, vocabulary, pragmatics)",
+      "6a0z.learning": "Developmental deficit in learning (e.g. reading, writing or arithmetic), clearly below age- and education-expected level",
+      "6a0z.motor": "Developmental deficit in motor coordination (e.g. gross or fine motor skills, balance, graphomotor difficulties)",
+      "6a0z.attention": "Developmental deficit in attention, impulse control or activity regulation consistent with an ADHD presentation",
+      "6a0z.developmental_onset": "Onset in the developmental period; deficits are not acquired only in adulthood through illness or injury",
+      "6a0z.functional_impact": "The combined deficits significantly impair school performance, everyday functioning or social participation",
+      "6a0z.exclude_id_alone": "The performance deficit is not explained by intellectual developmental disorder or social deprivation alone"
     }
   },
   "other_psychological_development_disorder": {

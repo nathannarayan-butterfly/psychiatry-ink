@@ -48,7 +48,7 @@ export function DiscussCaseView({ discussionId, onSaveDraftToCase, onArchived, o
   const [permissions, setPermissions] = useState<DiscussCasePermission[]>([])
   const [messages, setMessages] = useState<DiscussCaseMessage[]>([])
   const [annotations, setAnnotations] = useState<DiscussCaseAnnotation[]>([])
-  const [quoteDraft, setQuoteDraft] = useState<DiscussQuoteExcerpt | null>(null)
+  const [pendingQuote, setPendingQuote] = useState<DiscussQuoteExcerpt | null>(null)
   const [archiving, setArchiving] = useState(false)
   const [participants, setParticipants] = useState<DiscussCaseParticipant[]>([])
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined)
@@ -160,9 +160,13 @@ export function DiscussCaseView({ discussionId, onSaveDraftToCase, onArchived, o
     [annotations, discussionId, permissions],
   )
 
-  const handleQuoteToChat = useCallback((quote: DiscussQuoteExcerpt) => {
-    setQuoteDraft(quote)
-  }, [])
+  const handleQuoteToComposer = useCallback(
+    (quote: DiscussQuoteExcerpt) => {
+      if (!permissions.includes('send_message')) return
+      setPendingQuote(quote)
+    },
+    [permissions],
+  )
 
   if (loading) {
     return (
@@ -282,8 +286,8 @@ export function DiscussCaseView({ discussionId, onSaveDraftToCase, onArchived, o
             permissions={permissions}
             messages={messages}
             onMessagesChange={setMessages}
-            quoteDraft={quoteDraft}
-            onQuoteConsumed={() => setQuoteDraft(null)}
+            pendingQuote={pendingQuote}
+            onPendingQuoteChange={setPendingQuote}
             onSaveDraftToCase={onSaveDraftToCase}
             participants={participants}
             currentUserId={currentUserId}
@@ -303,7 +307,7 @@ export function DiscussCaseView({ discussionId, onSaveDraftToCase, onArchived, o
               canCopy={permissions.includes('copy_text')}
               canQuote={permissions.includes('send_message')}
               onHighlight={(input) => void handleHighlight(input)}
-              onQuoteToChat={handleQuoteToChat}
+              onQuoteToChat={handleQuoteToComposer}
             />
           </aside>
         ) : rightPanel === 'participants' ? (

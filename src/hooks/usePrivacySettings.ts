@@ -87,6 +87,15 @@ if (typeof window !== 'undefined') {
   })
 }
 
+/** Sync identifier storage from server-side state (e.g. account registry backup exists). */
+export function syncPrivacyIdentifierStorage(mode: IdentifierStorageMode): void {
+  setPrivacySettings((current) => {
+    if (current.identifierStorage === mode) return current
+    return { ...current, identifierStorage: mode }
+  })
+  markIdentifierStorageAcknowledged()
+}
+
 export function usePrivacySettings() {
   const settings = useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
 

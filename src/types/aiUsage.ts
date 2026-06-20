@@ -17,6 +17,7 @@ export type AiFeatureKey =
   | 'discuss_case_ai'
   | 'document_generation'
   | 'butterfly'
+  | 'criteria_draft_generate'
   | 'ask_butterfly'
   | 'prior_therapies'
   | 'clinical_metadata_extraction'

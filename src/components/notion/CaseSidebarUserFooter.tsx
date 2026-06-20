@@ -6,6 +6,7 @@ import { useAccountDisplayName } from '../../hooks/useAccountDisplayName'
 import type { SettingsSectionId } from '../../types/settings'
 import { NotificationBell } from '../NotificationBell'
 import { TodoQuickAdd } from '../todos/TodoQuickAdd'
+import { ButterflyLogo } from '../ButterflyLogo'
 import { AskButterflyChatDialog } from './AskButterflyChatDialog'
 import { CreditsPurchaseDialog } from './CreditsPurchaseDialog'
 
@@ -18,27 +19,6 @@ interface CaseSidebarUserFooterProps {
 }
 
 const ACTION_BTN = 'case-sidebar-user-footer__action-btn'
-
-function ButterflyIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.75}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M12 4v16" />
-      <path d="M12 9.5C9 6 5 6.5 4 10c-1 3.5 3.5 6 8 5.5" />
-      <path d="M12 9.5c3-3.5 7-3 8 .5 1 3.5-3.5 6-8 5.5" />
-      <path d="M12 14.5c-3 3.5-7 3-8-.5-1-3.5 3.5-6 8-5.5" />
-      <path d="M12 14.5c3 3.5 7 3 8-.5 1-3.5-3.5-6-8-5.5" />
-    </svg>
-  )
-}
 
 /** User name and account actions pinned to the bottom of the case sidebar. */
 export function CaseSidebarUserFooter({
@@ -68,7 +48,7 @@ export function CaseSidebarUserFooter({
           title={t('askButterflyOpen')}
           aria-label={t('askButterflyOpen')}
         >
-          <ButterflyIcon />
+          <ButterflyLogo variant="grey" size={22} />
         </button>
 
         <button

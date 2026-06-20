@@ -10,12 +10,16 @@ import {
 import type { SemanticTone } from '../../components/notion/overview/OverviewCard'
 import type { SafetyAlert, SafetyData, SafetyRiskSignal } from '../../components/notion/overview/types'
 import type { PsychopathOverviewDomainKey } from '../../schemas/psychopath/extraction'
+import type { UiLanguage } from '../../types/settings'
+import { translateUi } from '../../data/uiTranslations'
 import { isMeaningfulDetail } from './psychopathologyDomains'
 import { getParameterMonitoringRows } from './medicationMonitoring'
+import { filterCombinationRisksByClinicianDecisions } from '../combinationCheck/combinationRiskDisplay'
 
 export interface PatientSafetyInput {
   medications: MedicationEntry[]
   language: string
+  caseId?: string
   /** Latest-first clinical imprints (structured risk fields), may be empty. */
   imprints: ClinicalImprintRecord[]
   /** Free-text risk section (e.g. Verlauf → "risiko"), fallback when no imprint. */
@@ -130,10 +134,10 @@ function composeRiskSignal(id: SafetyRiskSignal['id'], rawValue: string): Safety
   if (tone === 'ok' || tone === 'low' || !isMeaningfulRiskRawValue(id, detail)) {
     const calmLabel =
       id === 'suicidality'
-        ? 'Keine Suizidalität'
+        ? 'keine Suizidalität'
         : axis === 'self'
-          ? 'Keine akute Eigengefährdung'
-          : 'Keine akute Fremdgefährdung'
+          ? 'keine Eigengefährdung'
+          : 'keine Fremdgefährdung'
     return {
       id,
       label: calmLabel,
@@ -248,6 +252,66 @@ function buildRiskSignals(
   return dedupeRiskSignals(signals)
 }
 
+function resolveRiskRawValue(
+  explicit: string | null | undefined,
+  id: SafetyRiskSignal['id'],
+  parsedSignals: SafetyRiskSignal[],
+): string {
+  const trimmed = explicit?.trim()
+  if (trimmed) return trimmed
+  const parsed = parsedSignals.find((signal) => signal.id === id)
+  if (parsed?.value?.trim()) return parsed.value.trim()
+  if (parsed?.label?.trim() && !/^keine /i.test(parsed.label)) return parsed.label.trim()
+  return 'keine'
+}
+
+function isCalmHarmSignal(signal: SafetyRiskSignal): boolean {
+  return signal.tone === 'ok' || signal.tone === 'low'
+}
+
+export interface BuildPpbHarmSignalsOptions {
+  language: UiLanguage
+  text?: string | null
+  suicidality?: string | null
+  riskSelf?: string | null
+  riskOthers?: string | null
+}
+
+/**
+ * PPB widget safety strip: always documents Suizidalität, Eigengefährdung, and
+ * Fremdgefährdung. When all three are unremarkable, one combined calm line is shown.
+ */
+export function buildPpbHarmSignals(options: BuildPpbHarmSignalsOptions): SafetyRiskSignal[] {
+  const parsedSignals = options.text?.trim() ? parseRiskTextSignals(options.text) : []
+  const signals = dedupeRiskSignals([
+    composeRiskSignal(
+      'suicidality',
+      resolveRiskRawValue(options.suicidality, 'suicidality', parsedSignals),
+    ),
+    composeRiskSignal(
+      'riskSelf',
+      resolveRiskRawValue(options.riskSelf, 'riskSelf', parsedSignals),
+    ),
+    composeRiskSignal(
+      'riskOthers',
+      resolveRiskRawValue(options.riskOthers, 'riskOthers', parsedSignals),
+    ),
+  ])
+
+  if (signals.every(isCalmHarmSignal)) {
+    return [
+      {
+        id: 'suicidality',
+        label: translateUi(options.language, 'overviewPsySafetyAllNegative'),
+        tone: 'ok',
+        showPill: false,
+      },
+    ]
+  }
+
+  return signals
+}
+
 function levelToTone(level: RiskLevel): SemanticTone {
   return level === 'high' ? 'high' : level === 'moderate' ? 'moderate' : 'info'
 }
@@ -349,7 +413,10 @@ export function buildPatientSafety(input: PatientSafetyInput): SafetyData {
   }
 
   // Additive / cumulative pharmacodynamic risks.
-  for (const risk of insights.combinationRisks) {
+  for (const risk of filterCombinationRisksByClinicianDecisions(
+    insights.combinationRisks,
+    input.caseId,
+  )) {
     const label = COMBINATION_LABELS[risk.kind] ?? risk.kind
     const title = risk.detail ? `${label} (${risk.detail})` : label
     alerts.push({

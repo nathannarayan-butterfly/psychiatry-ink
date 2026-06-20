@@ -46,6 +46,7 @@ import { CreditsPurchaseDialog } from '../notion/CreditsPurchaseDialog'
 import { IdentifierStorageOnboarding } from '../privacy/IdentifierStorageOnboarding'
 import { needsIdentifierStorageOnboarding } from '../../utils/identifierStorage'
 import { DashboardHinweise } from './DashboardHinweise'
+import { AccountRegistryRestoreBanner } from './AccountRegistryRestoreBanner'
 import { DashboardTopBar } from './DashboardTopBar'
 import { KnowledgeBaseTile } from './KnowledgeBase'
 import { isKbAdminApiEnabled } from '../../services/kbAdminApi'
@@ -463,6 +464,10 @@ export function DashboardPage({
       />
 
       <section className="dashboard-hero" aria-labelledby="dashboard-hero-title">
+        <AccountRegistryRestoreBanner
+          countryCode={privacy.countryCode}
+          onRestored={() => void registry.refresh()}
+        />
         <DashboardHinweise identifierStorage={privacy.identifierStorage} />
         <div className="dashboard-hero__copy fade-in-up">
           <p className="dashboard-hero__date">{todayLabel}</p>
@@ -531,7 +536,7 @@ export function DashboardPage({
           {lastPatient ? (
             <button
               type="button"
-              className="dashboard-quick-action dashboard-quick-action--primary clinical-card clinical-card--interactive"
+              className="dashboard-quick-action dashboard-quick-action--continue clinical-card clinical-card--interactive"
               onClick={() => onOpenCase(lastPatient.caseId, undefined, true)}
             >
               <span className="dashboard-quick-action__icon-wrap" aria-hidden>
@@ -551,7 +556,7 @@ export function DashboardPage({
           {/* Allgemeine Dokumentation ohne Patient → /workspace (blank canvas); not patient case, not Vorlage Builder */}
           <button
             type="button"
-            className="dashboard-quick-action clinical-card clinical-card--interactive"
+            className="dashboard-quick-action dashboard-quick-action--workspace clinical-card clinical-card--interactive"
             onClick={() => onOpenWorkspace?.()}
           >
             <span className="dashboard-quick-action__icon-wrap" aria-hidden>
@@ -565,7 +570,7 @@ export function DashboardPage({
 
           <button
             type="button"
-            className="dashboard-quick-action clinical-card clinical-card--interactive"
+            className="dashboard-quick-action dashboard-quick-action--new-patient clinical-card clinical-card--interactive"
             onClick={() => setShowNewPatientDialog(true)}
           >
             <span className="dashboard-quick-action__icon-wrap" aria-hidden>
@@ -579,7 +584,7 @@ export function DashboardPage({
 
           <button
             type="button"
-            className="dashboard-quick-action clinical-card clinical-card--interactive"
+            className="dashboard-quick-action dashboard-quick-action--import clinical-card clinical-card--interactive"
             onClick={() => setShowImportModal(true)}
           >
             <span className="dashboard-quick-action__icon-wrap" aria-hidden>
@@ -923,7 +928,7 @@ export function DashboardPage({
       </section>
 
       <footer className="dashboard-footer">
-        <span className="dashboard-footer__name">Psychiatry Ink Ltd</span>
+        <span className="dashboard-footer__name">Psychiatry Ink Ltd, Company Nr: 17275704</span>
         <span className="dashboard-footer__sep">·</span>
         <span className="dashboard-footer__address">
           71-75 Shelton Street, Covent Garden, London, WC2H 9JQ, United Kingdom

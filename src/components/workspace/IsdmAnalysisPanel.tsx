@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ChevronDown } from 'lucide-react'
+import { ButterflyLogo } from '../ButterflyLogo'
+import { ClinicalEyebrow } from '../clinical/ClinicalEyebrow'
 import { useTranslation } from '../../context/TranslationContext'
 import { getIsdmSafetyDisclaimer } from '../../data/isdmLabels'
 import type { EnglishVariant, UiLanguage } from '../../types/settings'
@@ -87,6 +89,8 @@ interface IsdmAnalysisPanelProps {
   diagnosesVersion?: number
   /** Jump to a workspace documentation page so the clinician can add a finding. */
   onJumpToSection?: (pageId: NotionPageId) => void
+  /** Flat clinical-minimal layout (Diagnose page) — no card chrome. */
+  flat?: boolean
 }
 
 function formatUpdatedAt(iso: string, language: UiLanguage): string {
@@ -167,7 +171,12 @@ function CollapsibleSection({
   )
 }
 
-export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }: IsdmAnalysisPanelProps) {
+export function IsdmAnalysisPanel({
+  caseId,
+  diagnosesVersion,
+  onJumpToSection,
+  flat = false,
+}: IsdmAnalysisPanelProps) {
   const { t, language, englishVariant } = useTranslation()
   const [analysis, setAnalysis] = useState<IsdmClinicalAnalysis | null>(() => loadIsdmAnalysis(caseId))
   const [attestations, setAttestations] = useState(() => loadAttestations(caseId))
@@ -574,13 +583,25 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
 
   const disclaimer = getIsdmSafetyDisclaimer(language, englishVariant as EnglishVariant)
 
+  const panelClassName = [
+    'butterfly-panel',
+    flat ? 'butterfly-panel--flat' : '',
+  ].filter(Boolean).join(' ')
+
   if (!hasDiagnoses) {
     return (
-      <div className="butterfly-panel butterfly-panel--idle" role="region" aria-label={t('butterflyTitle')}>
+      <div className={`${panelClassName} butterfly-panel--idle`} role="region" aria-label={t('butterflyTitle')}>
+        {flat ? (
+          <header className="butterfly-panel__header butterfly-panel__header--flat">
+            <ClinicalEyebrow inline>{t('butterflyTitle')}</ClinicalEyebrow>
+          </header>
+        ) : null}
         <div className="butterfly-panel__idle-card">
-          <span className="butterfly-panel__idle-mark" aria-hidden>
-            🦋
-          </span>
+          {!flat ? (
+            <span className="butterfly-panel__idle-mark">
+              <ButterflyLogo variant="grey" size={28} />
+            </span>
+          ) : null}
           <p className="butterfly-panel__idle-title">{t('butterflyIdleNoDiagnosis')}</p>
           <p className="butterfly-panel__idle-hint">{t('butterflyNoDiagnosisHint')}</p>
         </div>
@@ -590,11 +611,18 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
 
   if (!analysis) {
     return (
-      <div className="butterfly-panel butterfly-panel--idle" role="region" aria-label={t('butterflyTitle')}>
+      <div className={`${panelClassName} butterfly-panel--idle`} role="region" aria-label={t('butterflyTitle')}>
+        {flat ? (
+          <header className="butterfly-panel__header butterfly-panel__header--flat">
+            <ClinicalEyebrow inline>{t('butterflyTitle')}</ClinicalEyebrow>
+          </header>
+        ) : null}
         <div className="butterfly-panel__idle-card">
-          <span className="butterfly-panel__idle-mark" aria-hidden>
-            🦋
-          </span>
+          {!flat ? (
+            <span className="butterfly-panel__idle-mark">
+              <ButterflyLogo variant="grey" size={28} />
+            </span>
+          ) : null}
           <p className="butterfly-panel__idle-title">{t('butterflyIdle')}</p>
           <p className="butterfly-panel__idle-hint">{t('butterflyIdleHint')}</p>
         </div>
@@ -603,24 +631,37 @@ export function IsdmAnalysisPanel({ caseId, diagnosesVersion, onJumpToSection }:
   }
 
   return (
-    <div className="butterfly-panel" role="region" aria-label={t('butterflyTitle')}>
-      <header className="butterfly-panel__header">
-        <div className="butterfly-panel__title-row">
-          <span className="butterfly-panel__mark" aria-hidden>
-            🦋
-          </span>
-          <div>
-            <h2 className="butterfly-panel__title">{t('butterflyTitle')}</h2>
-            <p className="butterfly-panel__subtitle">{t('butterflySubtitle')}</p>
+    <div className={panelClassName} role="region" aria-label={t('butterflyTitle')}>
+      {flat ? (
+        <header className="butterfly-panel__header butterfly-panel__header--flat">
+          <ClinicalEyebrow inline>{t('butterflyTitle')}</ClinicalEyebrow>
+          <p className="butterfly-panel__subtitle">{t('butterflySubtitle')}</p>
+          {analysis.updatedAt ? (
+            <p className="butterfly-panel__updated">
+              {t('isdmPanelLastUpdated')} {formatUpdatedAt(analysis.updatedAt, language)}
+              {refreshing ? ` · ${t('isdmPanelRefreshing')}` : ''}
+            </p>
+          ) : null}
+        </header>
+      ) : (
+        <header className="butterfly-panel__header">
+          <div className="butterfly-panel__title-row">
+            <span className="butterfly-panel__mark">
+              <ButterflyLogo variant="color" size={28} />
+            </span>
+            <div>
+              <h2 className="butterfly-panel__title">{t('butterflyTitle')}</h2>
+              <p className="butterfly-panel__subtitle">{t('butterflySubtitle')}</p>
+            </div>
           </div>
-        </div>
-        {analysis.updatedAt ? (
-          <p className="butterfly-panel__updated">
-            {t('isdmPanelLastUpdated')} {formatUpdatedAt(analysis.updatedAt, language)}
-            {refreshing ? ` · ${t('isdmPanelRefreshing')}` : ''}
-          </p>
-        ) : null}
-      </header>
+          {analysis.updatedAt ? (
+            <p className="butterfly-panel__updated">
+              {t('isdmPanelLastUpdated')} {formatUpdatedAt(analysis.updatedAt, language)}
+              {refreshing ? ` · ${t('isdmPanelRefreshing')}` : ''}
+            </p>
+          ) : null}
+        </header>
+      )}
 
       <p className="butterfly-panel__disclaimer" role="note">
         {disclaimer}

@@ -1,5 +1,6 @@
 import type { DisorderTranslationMap } from '../types'
 import { withIcd11SubstanceTranslations } from '../icd11SubstanceI18n'
+import { buildFrPhaseBSubstance } from '../substancePhaseBI18n'
 
 /** FR translations — ICD-10 F1 block (base; ICD-11 fragments merged below). */
 const frSubstanceUseBase: DisorderTranslationMap = {
@@ -1168,9 +1169,12 @@ const frSubstanceUseBase: DisorderTranslationMap = {
 }
 
 /** FR translations — bloc CIM-10 F1 + fragments CIM-11 (6C4x) générés. */
-export const frSubstanceUse: DisorderTranslationMap = withIcd11SubstanceTranslations(frSubstanceUseBase, {
+export const frSubstanceUse: DisorderTranslationMap = withIcd11SubstanceTranslations(
+  { ...frSubstanceUseBase, ...buildFrPhaseBSubstance() },
+  {
   substanceNames: {
     alcohol_dependence: "d’alcool",
+    alcohol_harmful_use: "d’alcool",
     opioids_dependence: "d’opioïdes",
     cannabinoids_dependence: 'de cannabinoïdes',
     sedatives_dependence: 'de sédatifs ou hypnotiques',
@@ -1179,6 +1183,12 @@ export const frSubstanceUse: DisorderTranslationMap = withIcd11SubstanceTranslat
     nicotine_dependence: 'de tabac/nicotine',
     volatile_solvents_dependence: 'de solvants volatils',
     multiple_substances_dependence: 'de substances multiples et d’autres substances psychotropes',
+    caffeine_dependence: 'de caféine',
+    synthetic_cathinones_dependence: 'de cathinones synthétiques',
+    mdma_related_dependence: "de MDMA ou d’empathogènes apparentés",
+    dissociative_drugs_dependence: 'de substances dissociatives dont la kétamine et le PCP',
+    multiple_specified_psychoactive_dependence: 'de substances psychotropes multiples spécifiées, y compris des médicaments',
+    unknown_psychoactive_dependence: 'de substances psychotropes inconnues ou non précisées',
     opioids_harmful_use: "d’opioïdes",
     cannabinoids_harmful_use: 'de cannabinoïdes',
     sedatives_harmful_use: 'de sédatifs ou hypnotiques',
@@ -1188,6 +1198,12 @@ export const frSubstanceUse: DisorderTranslationMap = withIcd11SubstanceTranslat
     nicotine_harmful_use: 'de tabac/nicotine',
     volatile_solvents_harmful_use: 'de solvants volatils',
     multiple_substances_harmful_use: 'de substances multiples et d’autres substances psychotropes',
+    caffeine_harmful_use: 'de caféine',
+    synthetic_cathinones_harmful_use: 'de cathinones synthétiques',
+    mdma_related_harmful_use: "de MDMA ou d’empathogènes apparentés",
+    dissociative_drugs_harmful_use: 'de substances dissociatives dont la kétamine et le PCP',
+    multiple_specified_psychoactive_harmful_use: 'de substances psychotropes multiples spécifiées, y compris des médicaments',
+    unknown_psychoactive_harmful_use: 'de substances psychotropes inconnues ou non précisées',
   },
   depGroupLabel:
     'Caractéristiques de dépendance selon la CIM-11 (au moins 2 sur 3, sur ≥ 12 mois — ou ≥ 1 mois en cas de consommation continue)',
@@ -1207,4 +1223,5 @@ export const frSubstanceUse: DisorderTranslationMap = withIcd11SubstanceTranslat
   harmOthers:
     'Atteinte à la santé d’autrui résultant du comportement de la personne lié à la consommation ou à l’intoxication (p. ex. blessures de tiers, préjudice dans la circulation) — extension spécifique à la CIM-11',
   excludeDependence: (depCode) => `Les critères d’une dépendance (${depCode}) ne sont pas remplis`,
-})
+  },
+)

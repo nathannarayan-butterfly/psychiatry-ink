@@ -73,6 +73,7 @@ import {
 import {
   applyPsychopathFindingState,
   loadPsychopathFindingState,
+  shouldPersistPsychopathFindingState,
 } from './overview/psychopathFindingStorage'
 import type { PsychotherapyPlan } from '../types/psychotherapy'
 import type { PsychopathFindingState } from '../types/psychopathFinding'
@@ -91,6 +92,12 @@ import {
   applyAnforderungen,
   loadAnforderungen,
 } from './anforderungen/storage'
+import {
+  applyVerlaufstendenzState,
+  loadVerlaufstendenzState,
+  shouldPersistVerlaufstendenzState,
+} from './verlaufstendenz/storage'
+import type { VerlaufstendenzState } from '../types/verlaufstendenz'
 
 export const WORKSPACE_PAYLOAD_VERSION = 10
 
@@ -159,6 +166,8 @@ export interface ClinicalWorkspacePayload {
   psychotherapyPlan?: PsychotherapyPlan
   /** Overview psychopathological finding — current + history (v10+). */
   psychopathFindings?: PsychopathFindingState
+  /** Overview Verlaufstendenz — draft + clinician-approved override (v10+). */
+  verlaufstendenz?: VerlaufstendenzState
   /** Layer 2d — complementary therapies (additive; absent on older payloads, falls back to localStorage). */
   complementaryTherapies?: ComplementaryTherapy[]
   /** Layer 2e — weitere Therapieverfahren / neurostimulation (additive; absent on older payloads). */
@@ -303,6 +312,7 @@ export function collectClinicalPayload(
   const medicationPlanState = loadMedicationPlanState(storageCaseId) ?? undefined
   const psychotherapyPlan = loadPsychotherapyPlan(storageCaseId) ?? undefined
   const psychopathFindings = loadPsychopathFindingState(storageCaseId)
+  const verlaufstendenz = loadVerlaufstendenzState(storageCaseId)
   const complementaryTherapies = loadComplementaryTherapies(storageCaseId)
   const weitereTherapie = loadWeitereTherapie(storageCaseId)
   const anforderungen = loadAnforderungen(storageCaseId)
@@ -328,10 +338,10 @@ export function collectClinicalPayload(
     clinicalQuestionNotes,
     medicationPlanState,
     psychotherapyPlan,
-    psychopathFindings:
-      psychopathFindings.current || psychopathFindings.history.length > 0
-        ? psychopathFindings
-        : undefined,
+    psychopathFindings: shouldPersistPsychopathFindingState(psychopathFindings)
+      ? psychopathFindings
+      : undefined,
+    verlaufstendenz: shouldPersistVerlaufstendenzState(verlaufstendenz) ? verlaufstendenz : undefined,
     complementaryTherapies: complementaryTherapies.length ? complementaryTherapies : undefined,
     weitereTherapie: weitereTherapie.length ? weitereTherapie : undefined,
     anforderungen: anforderungen.length ? anforderungen : undefined,
@@ -417,6 +427,10 @@ export function applyClinicalPayload(
     applyPsychopathFindingState(normalized.psychopathFindings, storageCaseId)
   }
 
+  if (normalized.verlaufstendenz) {
+    applyVerlaufstendenzState(normalized.verlaufstendenz, storageCaseId)
+  }
+
   if (normalized.complementaryTherapies) {
     applyComplementaryTherapies(normalized.complementaryTherapies, storageCaseId)
   }
@@ -493,6 +507,7 @@ export async function decryptWorkspaceBlob(blob: EncryptedVaultBlob): Promise<Cl
     medicationPlanState: payload.medicationPlanState,
     psychotherapyPlan: payload.psychotherapyPlan,
     psychopathFindings: payload.psychopathFindings,
+    verlaufstendenz: payload.verlaufstendenz,
     complementaryTherapies: payload.complementaryTherapies,
     weitereTherapie: payload.weitereTherapie,
     anforderungen: payload.anforderungen,

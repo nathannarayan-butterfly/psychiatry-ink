@@ -76,6 +76,17 @@ generateRouter.post('/', async (req: Request, res: Response) => {
     })
   } catch (error) {
     console.error('[generate] failed:', error)
+    const message = error instanceof Error ? error.message : 'Generation failed'
+    if (/network\/transport|ECONNREFUSED|fetch failed/i.test(message)) {
+      res.status(502).json({
+        error: 'KI-Anbieter nicht erreichbar. Prüfen Sie OPENAI_API_KEY / DEEPSEEK_API_KEY und starten Sie den API-Server neu.',
+      })
+      return
+    }
+    if (/LLM request failed|LLM returned empty/i.test(message)) {
+      res.status(502).json({ error: message })
+      return
+    }
     res.status(500).json({ error: 'Generation failed' })
   }
 })

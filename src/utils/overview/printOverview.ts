@@ -70,8 +70,17 @@ function widgetBody(
       )
       return [abnormal.length ? `<p><strong>Auffällig</strong></p>${listItems(abnormal)}` : '', monitoring.length ? `<p><strong>Überwachen</strong></p>${listItems(monitoring)}` : ''].join('')
     }
-    case 'verlaufstendenz':
-      return [paragraph(ctx.verlaufstendenz.stubMessage), paragraph(ctx.verlaufstendenz.courseLabel ? `Letzte Richtung: ${ctx.verlaufstendenz.courseLabel}` : null)].join('')
+    case 'verlaufstendenz': {
+      const trend = ctx.verlaufstendenz.trend
+      const body = [
+        paragraph(ctx.verlaufstendenz.rationaleSentence),
+        paragraph(`${t('verlaufstendenzDomainColumn')}: ${ctx.verlaufstendenz.domains
+          .filter((d) => d.direction !== 'nicht_beurteilbar')
+          .map((d) => `${d.domain} → ${d.direction}`)
+          .join('; ')}`),
+      ].join('')
+      return body || paragraph(trend)
+    }
     case 'zwangsmassnahme':
       return paragraph(ctx.zwangsmassnahme.statusLabel ? `Status: ${ctx.zwangsmassnahme.statusLabel} (Workflow folgt)` : null)
     case 'ekg-summary':

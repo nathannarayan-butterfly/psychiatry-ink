@@ -13,18 +13,14 @@ import {
   inferCourseDirection,
   savePsychopathFindingEdit,
 } from '../../../utils/overview/psychopathFindingOps'
-import { filterElevatedHarmSignals } from '../../../utils/overview/patientSafety'
 import { usePsychopathAiExtract } from '../../../hooks/usePsychopathAiExtract'
 import { showNotionToast } from '../NotionToast'
 
 interface SymptomSnapshotCardProps {
   caseId: string
   data: SymptomSnapshotData
-  riskSignals?: SafetyRiskSignal[]
   onOpen?: () => void
   onSaved?: () => void
-  /** Bump when overview psychopathology store changes. */
-  revision?: number
 }
 
 const COURSE_OPTIONS: { value: CourseDirection; labelKey: 'overviewPsyCourseStable' | 'overviewPsyCourseImproved' | 'overviewPsyCourseWorsened' | 'overviewPsyCourseFluctuating' | 'overviewPsyCourseUnclear' }[] = [
@@ -72,16 +68,14 @@ function SafetyAxisStrip({ signal }: { signal: SafetyRiskSignal }) {
 }
 
 /**
- * Psychopathologischer Befund (PPB) — structured domain grid with optional KI
+ * Psychopathologischer Befund (PPB) — structured domain grid with persisted KI
  * extraction, editable narrative, and history.
  */
 export function SymptomSnapshotCard({
   caseId,
   data,
-  riskSignals = [],
   onOpen,
   onSaved,
-  revision = 0,
 }: SymptomSnapshotCardProps) {
   const { t, language } = useTranslation()
   const [editing, setEditing] = useState(false)
@@ -91,13 +85,10 @@ export function SymptomSnapshotCard({
   const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null)
   const [narrativeOpen, setNarrativeOpen] = useState(false)
 
-  const { status: aiStatus, error: aiError, isStale, isEnabled: aiEnabled, extract } =
-    usePsychopathAiExtract({
-      caseId,
-      language,
-      revision,
-      autoRun: true,
-    })
+  const { status: aiStatus, error: aiError, isEnabled: aiEnabled } = usePsychopathAiExtract({
+    caseId,
+    language,
+  })
   const lastToastedErrorRef = useRef<string | null>(null)
 
   useEffect(() => {
@@ -106,11 +97,7 @@ export function SymptomSnapshotCard({
     showNotionToast(aiError)
   }, [aiError, aiStatus])
 
-  const harmSignals = filterElevatedHarmSignals(
-    riskSignals.filter(
-      (s) => s.id === 'riskSelf' || s.id === 'riskOthers' || s.id === 'suicidality',
-    ),
-  )
+  const harmSignals = data.harmSignals ?? []
   const hasPsychopathText =
     Boolean(data.fullText?.trim()) || Boolean(data.snapshotText?.trim())
   const hasContent =
@@ -119,7 +106,6 @@ export function SymptomSnapshotCard({
     data.structured.length > 0 ||
     Boolean(data.courseLabel) ||
     harmSignals.length > 0
-  const canExtractWithAi = aiEnabled && hasContent
 
   const showNarrative =
     !editing &&
@@ -159,10 +145,6 @@ export function SymptomSnapshotCard({
     onSaved?.()
   }, [caseId, courseDirection, draft, onSaved])
 
-  const handleExtract = useCallback(() => {
-    void extract({ force: true })
-  }, [extract])
-
   return (
     <OverviewCard
       title={t('notionPagePsychopath')}
@@ -178,17 +160,6 @@ export function SymptomSnapshotCard({
       headerExtra={
         editing ? null : (
           <div className="ov-ppb__header-actions ov-card__head-actions">
-            {canExtractWithAi ? (
-              <button
-                type="button"
-                className="cm-section__action ov-ppb__extract"
-                onClick={handleExtract}
-                disabled={aiStatus === 'loading'}
-                title={t('overviewPsyExtractHint')}
-              >
-                {aiStatus === 'loading' ? t('overviewPsyExtracting') : t('overviewPsyExtract')}
-              </button>
-            ) : null}
             {!aiEnabled && import.meta.env.DEV && hasContent ? (
               <span
                 className="ov-ppb__extract-dev-hint"
@@ -212,10 +183,6 @@ export function SymptomSnapshotCard({
         <p className="ov-ppb__loading" role="status">
           {t('overviewPsyExtracting')}
         </p>
-      ) : null}
-
-      {aiEnabled && isStale && aiStatus !== 'loading' && hasPsychopathText && !data.structured.length && !data.structuredFromAi ? (
-        <p className="ov-ppb__stale-hint">{t('overviewPsyStaleHint')}</p>
       ) : null}
 
       {aiEnabled && aiStatus === 'error' && aiError ? (
@@ -262,7 +229,7 @@ export function SymptomSnapshotCard({
         </div>
       ) : null}
 
-      {harmSignals.length > 0 ? (
+      {data.assessed && harmSignals.length > 0 ? (
         <div className="ov-ppb__safety">
           <ClinicalEyebrow className="ov-safety__subhead">
             {t('overviewPsySafetySubhead')}

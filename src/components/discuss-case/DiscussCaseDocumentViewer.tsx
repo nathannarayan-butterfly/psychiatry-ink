@@ -265,6 +265,7 @@ export function DiscussCaseDocumentViewer({
               section.id === currentSection?.id ? 'discuss-case-doc__nav-item--active' : '',
             ].join(' ').trim()}
             onClick={() => selectSection(section.id)}
+            aria-current={section.id === currentSection?.id ? 'page' : undefined}
           >
             {section.label}
           </button>

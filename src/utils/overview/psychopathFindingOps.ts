@@ -18,6 +18,8 @@ import { loadClinicalImprintIndex } from '../clinicalImprint'
 import type { ClinicalImprintRecord } from '../../types/clinicalImprint'
 import type { UiLanguage } from '../../types/settings'
 import { translateUi } from '../../data/uiTranslations'
+import type { PsychopathDomainAssessment } from '../../schemas/psychopath/extraction'
+import { buildPpbHarmSignals } from './patientSafety'
 import {
   loadPsychopathFindingState,
   savePsychopathFindingState,
@@ -72,6 +74,30 @@ function latestPsychopathImprint(imprints: ClinicalImprintRecord[]): ClinicalImp
       .filter((i) => i.clinicalDomain === 'psychopathology')
       .sort((a, b) => (b.sourceDate ?? '').localeCompare(a.sourceDate ?? ''))[0] ?? null
   )
+}
+
+function riskRawFromDomain(
+  domains: PsychopathDomainAssessment[] | null | undefined,
+  domainKey: 'suicidality' | 'riskSelf' | 'riskOthers',
+): string | null {
+  const assessment = domains?.find((domain) => domain.domainKey === domainKey)
+  if (!assessment) return null
+  if (assessment.status === 'negative') return 'keine'
+  if (assessment.status === 'unclear') return assessment.detail?.trim() ?? 'unklar'
+  return assessment.detail?.trim() ?? null
+}
+
+function resolvePpbRiskSource(
+  imprint: ClinicalImprintRecord | null,
+  domains: PsychopathDomainAssessment[] | null,
+  field: 'suicidality' | 'riskSelf' | 'riskOthers',
+  preferDomains: boolean,
+): string | null {
+  const fromDomain = riskRawFromDomain(domains, field)
+  if (preferDomains && fromDomain) return fromDomain
+  const fromImprint = imprint?.[field]?.trim()
+  if (fromImprint) return fromImprint
+  return fromDomain
 }
 
 function syncOverviewImprint(
@@ -239,9 +265,11 @@ export function buildSymptomSnapshotData(
 
   const aiSnapshot = state.aiStructured
   const aiFresh =
-    aiSnapshot &&
-    !isPsychopathAiStructuredStale(text, aiSnapshot) &&
-    (aiSnapshot.status === 'accepted' || aiSnapshot.status === 'pending')
+    Boolean(
+      aiSnapshot &&
+        !isPsychopathAiStructuredStale(text, aiSnapshot) &&
+        (aiSnapshot.status === 'accepted' || aiSnapshot.status === 'pending'),
+    )
 
   const aiFields = aiFresh && aiSnapshot ? aiSnapshot.fields : null
   const aiDomains =
@@ -280,6 +308,16 @@ export function buildSymptomSnapshotData(
       ? translateUi(language, 'overviewPsyUnremarkableSummary')
       : null
 
+  const harmSignals = assessed
+    ? buildPpbHarmSignals({
+        language,
+        text,
+        suicidality: resolvePpbRiskSource(imprint, aiDomains, 'suicidality', Boolean(aiFresh)),
+        riskSelf: resolvePpbRiskSource(imprint, aiDomains, 'riskSelf', Boolean(aiFresh)),
+        riskOthers: resolvePpbRiskSource(imprint, aiDomains, 'riskOthers', Boolean(aiFresh)),
+      })
+    : []
+
   const courseLabel =
     (aiFresh && aiSnapshot?.courseDirection
       ? COURSE_LABEL[aiSnapshot.courseDirection]
@@ -307,6 +345,7 @@ export function buildSymptomSnapshotData(
     aiConfidence,
     collapseNarrative,
     unremarkableSummary,
+    harmSignals,
   }
 }
 

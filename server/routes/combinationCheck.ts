@@ -185,15 +185,15 @@ combinationCheckRouter.post('/run', async (req: Request, res: Response) => {
         internalByKey.get(key) ??
         internalByNames.get(buildCombinationKeyFromNames(medA.substance, medB.substance))
 
-      if (kbHit && kbHit.severity !== 'none') {
-        findings.push(kbFinding(caseId, kbHit))
-      }
-
       const kbIncomplete =
         !kbHit ||
         kbHit.severity === 'none' ||
         !kbHit.mechanism ||
         !kbHit.clinicalManagement
+
+      if (kbHit && kbHit.severity !== 'none' && !kbIncomplete && !body.thorough) {
+        findings.push(kbFinding(caseId, kbHit))
+      }
 
       if (kbIncomplete || body.thorough) {
         needsAi = true

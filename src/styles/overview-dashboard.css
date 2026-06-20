@@ -78,6 +78,18 @@
   overflow: hidden;
 }
 
+@media (max-width: 68.75rem) {
+  .ov-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 37.5rem) {
+  .ov-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .ov-summary__item {
   display: flex;
   align-items: center;
@@ -124,9 +136,9 @@
   font-weight: var(--weight-semibold, 600);
   line-height: var(--leading-tight, 1.2);
   color: var(--text-main, #24211e);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .ov-summary__value--muted {
   color: var(--text-muted, #91887e);
@@ -135,10 +147,14 @@
 .ov-summary__sub {
   font-size: var(--text-xs, 0.75rem);
   color: var(--text-secondary, #6d655c);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.35;
   max-width: 100%;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* Risk segment carries semantic tone (never the area hue). */
@@ -457,14 +473,22 @@
   }
 }
 
-/* ── Masonry-style packed 2-column layout ─────────────────────────────────── */
+/* ── Fixed-pair two-column layout ─────────────────────────────────────────── */
 
 .ov-grid {
   display: flex;
   flex-direction: column;
-  gap: var(--cm-section-gap, 2.75rem);
+  gap: var(--ov-grid-gap, 2.25rem);
   align-items: stretch;
   width: 100%;
+}
+
+.ov-grid__band {
+  margin-bottom: calc(var(--ov-grid-gap, 2.25rem) * -0.35);
+}
+
+.ov-grid__band .cm-eyebrow {
+  display: block;
 }
 
 .ov-grid__row {
@@ -480,7 +504,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--cm-section-gap, 2.75rem);
+  gap: var(--ov-grid-gap, 2.25rem);
 }
 
 .ov-grid__row > .ov-grid__col:first-child {
@@ -488,7 +512,7 @@
 }
 
 .ov-grid--single {
-  gap: var(--cm-section-gap, 2.75rem);
+  gap: var(--ov-grid-gap, 2.25rem);
 }
 
 .ov-grid > * {
@@ -505,7 +529,7 @@
 @media (max-width: 1100px) {
   .ov-grid__row {
     flex-direction: column;
-    gap: var(--cm-section-gap, 2.75rem);
+    gap: var(--ov-grid-gap, 2.25rem);
   }
   .ov-grid__row > .ov-grid__col:first-child {
     flex: 1;
@@ -578,9 +602,14 @@
   letter-spacing: 0.055em;
   text-transform: uppercase;
   color: var(--text-secondary, #6d655c);
-  white-space: nowrap;
+  line-height: 1.35;
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .ov-card__head-actions {
   display: flex;
@@ -2343,6 +2372,216 @@
   .ov-compliance__day-label {
     font-size: 0.5625rem;
   }
+}
+
+
+/* Verlaufstendenz overview card */
+.ov-vt {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.ov-vt__expand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted, #91887e);
+  cursor: pointer;
+}
+
+.ov-vt__expand:hover {
+  color: var(--text-primary, #2c2825);
+}
+
+.ov-vt__headline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.ov-vt__headline--high { color: var(--tone-high, #b42318); }
+.ov-vt__headline--moderate { color: var(--tone-moderate, #b54708); }
+.ov-vt__headline--ok { color: var(--tone-ok, #027a48); }
+.ov-vt__headline--info { color: var(--text-primary, #2c2825); }
+.ov-vt__headline--neutral { color: var(--text-muted, #91887e); }
+
+.ov-vt__icon {
+  display: inline-flex;
+}
+
+.ov-vt__trend-label {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.ov-vt__confidence {
+  margin-left: auto;
+  font-size: 0.6875rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-muted, #91887e);
+}
+
+.ov-vt__rationale {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--text-secondary, #5c5650);
+}
+
+.ov-vt__expanded {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-top: 0.35rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-subtle, rgba(44, 40, 37, 0.08));
+}
+
+.ov-vt__subhead {
+  margin: 0 0 0.35rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted, #91887e);
+}
+
+.ov-vt__window-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.ov-vt__window-btn {
+  padding: 0.25rem 0.55rem;
+  border: 1px solid var(--border-subtle, rgba(44, 40, 37, 0.12));
+  border-radius: 999px;
+  background: transparent;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.ov-vt__window-btn--active {
+  border-color: var(--accent, #5c4d3c);
+  background: rgba(92, 77, 60, 0.08);
+}
+
+.ov-vt__domain-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.ov-vt__domain-table th,
+.ov-vt__domain-table td {
+  padding: 0.35rem 0.25rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-subtle, rgba(44, 40, 37, 0.06));
+}
+
+.ov-vt__domain-table th {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-muted, #91887e);
+}
+
+.ov-vt__evidence-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.ov-vt__evidence-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.8125rem;
+}
+
+.ov-vt__evidence-source {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-muted, #91887e);
+}
+
+.ov-vt__evidence-snippet {
+  color: var(--text-secondary, #5c5650);
+}
+
+.ov-vt__source-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.8125rem;
+}
+
+.ov-vt__source-meta {
+  font-size: 0.6875rem;
+  color: var(--text-muted, #91887e);
+}
+
+.ov-vt__source-text {
+  color: var(--text-secondary, #5c5650);
+}
+
+.ov-vt__actions,
+.ov-vt__edit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.ov-vt__btn {
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--border-subtle, rgba(44, 40, 37, 0.14));
+  border-radius: 6px;
+  background: transparent;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.ov-vt__btn--primary {
+  border-color: var(--accent, #5c4d3c);
+  background: rgba(92, 77, 60, 0.08);
+}
+
+.ov-vt__btn--ghost {
+  border-color: transparent;
+  color: var(--text-muted, #91887e);
+}
+
+.ov-vt__edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ov-vt__edit-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-muted, #91887e);
+}
+
+.ov-vt__select,
+.ov-vt__textarea {
+  width: 100%;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--border-subtle, rgba(44, 40, 37, 0.14));
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.8125rem;
+  resize: vertical;
 }
 
 @media print {

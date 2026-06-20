@@ -184,6 +184,13 @@
   font-weight: var(--cm-label-weight, 500);
   letter-spacing: var(--cm-label-tracking, 0.08em);
   color: var(--text-muted, #91887e);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .medication-workspace .medication-insight__value {
@@ -292,11 +299,25 @@
 .medication-workspace .medication-dash-panel__title {
   font-size: var(--cm-section-title-size, 0.8125rem);
   font-weight: 600;
+  line-height: 1.35;
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .medication-workspace .medication-dash-panel__hint {
   font-size: var(--text-xs, 0.75rem);
   line-height: 1.4;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .medication-workspace .medication-dash-panel__subhead {
@@ -944,6 +965,21 @@
 }
 
 /* ── Responsive ───────────────────────────────────────────────────────── */
+
+/* Mid widths: two metric columns; chip rows span full width. */
+@media (max-width: 68.75rem) {
+  .medication-workspace .medication-insights {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .medication-workspace .medication-insight--metric {
+    grid-column: span 1;
+  }
+
+  .medication-workspace .medication-insight--chips {
+    grid-column: 1 / -1;
+  }
+}
 
 /* Mid widths: keep the three metric columns but drop the chip cells to their
  * own full-width rows so they never get cramped beside one another. */

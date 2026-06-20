@@ -117,6 +117,7 @@ model PatientCase {
 }
 
 /// Reference diagnosis codes (ICD-10, ICD-11, DSM-5-TR) for autocomplete — not patient data.
+/// @deprecated Prefer DiagnosisCatalogue / DiagnosisEntry — kept for legacy crosswalk search.
 model DiagnosisCode {
   system      String
   code        String
@@ -132,4 +133,90 @@ model DiagnosisCode {
   @@id([system, code])
   @@index([system, searchText])
   @@index([icd10Code])
+}
+
+/// Diagnosis catalogue metadata (ICD-10-GM, ICD-11 MMS, …) — independent of criterion trees.
+model DiagnosisCatalogue {
+  id           String   @id @default(cuid())
+  system       String
+  version      String
+  language     String   @default("de")
+  source       String
+  active       Boolean  @default(true)
+  importedAt   DateTime @default(now())
+  metadataJson String   @default("{}")
+
+  entries DiagnosisEntry[]
+
+  @@unique([system, version, language])
+  @@index([active, system])
+}
+
+/// Searchable diagnosis code within a catalogue.
+model DiagnosisEntry {
+  id                 String   @id @default(cuid())
+  catalogueId        String
+  code               String
+  codeNormalized     String
+  title              String
+  shortTitle         String?
+  description        String?
+  chapterCode        String?
+  chapterTitle       String?
+  blockCode          String?
+  blockTitle         String?
+  parentCode         String?
+  hierarchyLevel     Int      @default(0)
+  isCategory         Boolean  @default(false)
+  isSelectable       Boolean  @default(true)
+  isResidualCategory Boolean  @default(false)
+  isPsychiatric      Boolean  @default(false)
+  isSomatic          Boolean  @default(false)
+  searchText         String
+  sourceUri          String?
+  sourceVersion      String?
+  metadataJson       String   @default("{}")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  catalogue     DiagnosisCatalogue      @relation(fields: [catalogueId], references: [id], onDelete: Cascade)
+  synonyms      DiagnosisSynonym[]
+  criteriaLinks DiagnosisCriteriaLink[]
+
+  @@unique([catalogueId, codeNormalized])
+  @@index([catalogueId])
+  @@index([catalogueId, searchText])
+  @@index([catalogueId, codeNormalized])
+  @@index([catalogueId, isPsychiatric, isSelectable])
+}
+
+model DiagnosisSynonym {
+  id               String   @id @default(cuid())
+  diagnosisEntryId String
+  term             String
+  normalizedTerm   String
+  language         String   @default("de")
+  source           String   @default("import")
+  createdAt        DateTime @default(now())
+
+  entry DiagnosisEntry @relation(fields: [diagnosisEntryId], references: [id], onDelete: Cascade)
+
+  @@index([diagnosisEntryId])
+  @@index([normalizedTerm])
+}
+
+/// Optional link from catalogue entry to authored criterion tree (badge only).
+model DiagnosisCriteriaLink {
+  id               String   @id @default(cuid())
+  diagnosisEntryId String
+  criteriaTreeId   String
+  criteriaSystem   String
+  supportStatus    String   @default("native")
+  createdAt        DateTime @default(now())
+
+  entry DiagnosisEntry @relation(fields: [diagnosisEntryId], references: [id], onDelete: Cascade)
+
+  @@unique([diagnosisEntryId, criteriaTreeId, criteriaSystem])
+  @@index([diagnosisEntryId])
+  @@index([criteriaTreeId])
 }

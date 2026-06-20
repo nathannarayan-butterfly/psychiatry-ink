@@ -2,6 +2,7 @@ import { Loader2, Mic, Send, Square, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import { useCompactDictation } from '../../hooks/useCompactDictation'
+import { ButterflyLogo } from '../ButterflyLogo'
 import { askButterflyChat, type AskButterflyChatMessage } from '../../services/askButterflyApi'
 
 interface AskButterflyChatDialogProps {
@@ -85,8 +86,8 @@ export function AskButterflyChatDialog({ onClose }: AskButterflyChatDialogProps)
       >
         <header className="ask-butterfly-dialog__header">
           <div className="ask-butterfly-dialog__title-wrap">
-            <span className="ask-butterfly-dialog__mark" aria-hidden>
-              🦋
+            <span className="ask-butterfly-dialog__mark">
+              <ButterflyLogo variant="color" size={28} />
             </span>
             <div>
               <h2 id="ask-butterfly-title" className="ask-butterfly-dialog__title">

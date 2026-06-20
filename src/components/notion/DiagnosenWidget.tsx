@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Pencil, Plus, X } from 'lucide-react'
+import { ClinicalEyebrow } from '../clinical/ClinicalEyebrow'
 import { useTranslation } from '../../context/TranslationContext'
 import { useDiagnosenCodingSystem } from '../../hooks/useDiagnosenCodingSystem'
 import { useDiagnosisDisplayTitles } from '../../hooks/useDiagnosisDisplayTitles'
@@ -17,19 +18,31 @@ import {
   createDiagnoseFreeText,
   createDiagnoseFromHit,
   getActiveCoding,
+  isIndependentCatalogueEntry,
   loadDiagnosenAsync,
   saveDiagnosen,
   syncDerivedCodingsAsync,
+  codingHasContent,
   type CodingSystem,
   type DiagnoseEntry,
 } from '../../utils/diagnosenArchive'
-import { VISIBLE_CODING_SYSTEMS, type VisibleCodingSystem } from '../../utils/diagnosenCodingSystem'
+import {
+  DIAGNOSIS_SEARCH_FILTERS,
+  normalizeVisibleCodingSystem,
+  type DiagnosisSearchFilter,
+} from '../../utils/diagnosenCodingSystem'
+import { catalogueSystemToClient } from '../../services/diagnosisReferenceApi'
 
-const CODING_SYSTEMS = VISIBLE_CODING_SYSTEMS
+const SEARCH_FILTERS = DIAGNOSIS_SEARCH_FILTERS
 
-const SYSTEM_LABEL_KEYS: Record<VisibleCodingSystem, 'diagnosenSystemIcd10' | 'diagnosenSystemIcd11'> = {
+const SYSTEM_LABEL_KEYS: Record<DiagnosisSearchFilter, 'diagnosenSystemIcd10' | 'diagnosenSystemIcd11'> = {
   icd10: 'diagnosenSystemIcd10',
   icd11: 'diagnosenSystemIcd11',
+}
+
+const SYSTEM_HINT_KEYS: Record<DiagnosisSearchFilter, 'diagnosenSystemIcd10Hint' | 'diagnosenSystemIcd11Hint'> = {
+  icd10: 'diagnosenSystemIcd10Hint',
+  icd11: 'diagnosenSystemIcd11Hint',
 }
 
 interface DiagnoseRowProps {
@@ -124,6 +137,15 @@ function DiagnoseRow({
             ✎
           </span>
         ) : null}
+        {entry.codingSystem === 'ICD11MMS' ? (
+          <span className="diagnosen-widget__system-badge" title={t('diagnosenIcd11Selected')}>
+            {t('diagnosenSystemIcd11')}
+          </span>
+        ) : entry.codingSystem === 'ICD10GM' || (codingHasContent(entry.icd10) && !codingHasContent(entry.icd11)) ? (
+          <span className="diagnosen-widget__system-badge" title={t('diagnosenIcd10Selected')}>
+            {t('diagnosenSystemIcd10')}
+          </span>
+        ) : null}
       </div>
       <div className="diagnosen-widget__row-actions">
         <button
@@ -153,14 +175,24 @@ interface DiagnosenWidgetProps {
   caseId: string
   /** Sidebar uses compact height; panel (dashboard) expands. */
   variant?: 'sidebar' | 'panel'
+  /** Flat clinical-minimal layout (Diagnose page) — no collapse chrome. */
+  flat?: boolean
   /** Persist diagnoses into encrypted clinical case file (workspace vault). */
   onDiagnosesChanged?: () => void
 }
 
-export function DiagnosenWidget({ caseId, variant = 'sidebar', onDiagnosesChanged }: DiagnosenWidgetProps) {
+export function DiagnosenWidget({
+  caseId,
+  variant = 'sidebar',
+  flat = false,
+  onDiagnosesChanged,
+}: DiagnosenWidgetProps) {
   const { t, language } = useTranslation()
   const { activeSystem, setActiveSystem } = useDiagnosenCodingSystem(caseId)
   const showSystemTabs = variant === 'panel'
+  const [searchFilter, setSearchFilter] = useState<DiagnosisSearchFilter>(
+    () => normalizeVisibleCodingSystem(activeSystem),
+  )
   const [entries, setEntries] = useState<DiagnoseEntry[]>([])
   const [loadingDiagnoses, setLoadingDiagnoses] = useState(true)
   const [hydrated, setHydrated] = useState(false)
@@ -198,6 +230,10 @@ export function DiagnosenWidget({ caseId, variant = 'sidebar', onDiagnosesChange
   }, [caseId])
 
   useEffect(() => {
+    setSearchFilter(normalizeVisibleCodingSystem(activeSystem))
+  }, [activeSystem])
+
+  useEffect(() => {
     if (!hydrated) return
     saveDiagnosen(caseId, entries)
     onDiagnosesChanged?.()
@@ -218,7 +254,7 @@ export function DiagnosenWidget({ caseId, variant = 'sidebar', onDiagnosesChange
     let cancelled = false
     const timer = window.setTimeout(() => {
       setSearching(true)
-      void searchDiagnosisCodes(q, activeSystem)
+      void searchDiagnosisCodes(q, searchFilter)
         .then((results) => {
           if (!cancelled) setSearchResults(results)
         })
@@ -234,10 +270,11 @@ export function DiagnosenWidget({ caseId, variant = 'sidebar', onDiagnosesChange
       cancelled = true
       window.clearTimeout(timer)
     }
-  }, [searchQuery, activeSystem])
+  }, [searchQuery, searchFilter])
 
   const handleAddFromHit = useCallback((hit: DiagnosisSearchHit) => {
-    setEntries((prev) => [...prev, createDiagnoseFromHit(hit)])
+    const slot = catalogueSystemToClient(hit.system)
+    setEntries((prev) => [...prev, createDiagnoseFromHit(hit, slot)])
     setAdding(false)
     setSearchQuery('')
     setCollapsed(false)
@@ -246,7 +283,7 @@ export function DiagnosenWidget({ caseId, variant = 'sidebar', onDiagnosesChange
   const handleAddFreeText = useCallback(() => {
     const text = searchQuery.trim()
     if (!text) return
-    void createDiagnoseFreeText(text).then((entry) => {
+    void createDiagnoseFreeText(text, '', activeSystem).then((entry) => {
       setEntries((prev) => [...prev, entry])
       setAdding(false)
       setSearchQuery('')
@@ -267,7 +304,7 @@ export function DiagnosenWidget({ caseId, variant = 'sidebar', onDiagnosesChange
           [system]: { code, label, overridden: true },
         }
 
-        if (system === 'icd10') {
+        if (system === 'icd10' && !isIndependentCatalogueEntry(target)) {
           void syncDerivedCodingsAsync(updated).then((synced) => {
             setEntries((current) => current.map((entry) => (entry.id === id ? synced : entry)))
             setEditingId(null)
@@ -304,14 +341,12 @@ export function DiagnosenWidget({ caseId, variant = 'sidebar', onDiagnosesChange
   const searchTitleRequests = useMemo(
     () =>
       searchResults.map((result) => {
-        const version = codingSystemToTitleVersion(
-          result.system === 'dsm5tr' ? 'dsm' : result.system,
-        )
+        const version = codingSystemToTitleVersion(catalogueSystemToClient(result.system))
         return buildDiagnosisTitleRequest({
           key: `${result.system}-${result.code}`,
-          coding: { code: result.code, label: result.label, overridden: false },
+          coding: { code: result.code, label: result.title, overridden: false },
           version,
-          disorderCriteriaLabel: result.label,
+          disorderCriteriaLabel: result.title,
         })
       }),
     [searchResults],
@@ -323,40 +358,63 @@ export function DiagnosenWidget({ caseId, variant = 'sidebar', onDiagnosesChange
     adding && searchTitleRequests.length > 0,
   )
 
+  const showBody = flat || !collapsed
+
   return (
     <section
       className={[
         'diagnosen-widget',
         variant === 'panel' ? 'diagnosen-widget--panel' : '',
+        flat ? 'diagnosen-widget--flat' : '',
       ].join(' ').trim()}
     >
-      <div className="diagnosen-widget__header">
-        <button
-          type="button"
-          className="diagnosen-widget__title-btn"
-          onClick={() => setCollapsed((c) => !c)}
-          aria-expanded={!collapsed}
-        >
-          <span className="diagnosen-widget__title">{t('diagnosenTitle')}</span>
-          <span className="diagnosen-widget__collapse-icon" aria-hidden>
-            {collapsed ? '›' : '‹'}
-          </span>
-        </button>
-        <button
-          type="button"
-          className="diagnosen-widget__add-btn"
-          onClick={() => {
-            setAdding((a) => !a)
-            setCollapsed(false)
-          }}
-          aria-label={t('diagnosenAddEntry')}
-          title={t('diagnosenAddEntry')}
-        >
-          <Plus className="h-3 w-3" strokeWidth={2.5} aria-hidden />
-        </button>
-      </div>
+      {flat ? (
+        <header className="diagnosen-widget__header diagnosen-widget__header--flat">
+          <ClinicalEyebrow inline>{t('diagnosenTitle')}</ClinicalEyebrow>
+          <span className="cm-section__head-spacer" aria-hidden />
+          <button
+            type="button"
+            className="diagnosen-widget__add-btn diagnosen-widget__add-btn--flat"
+            onClick={() => {
+              setAdding((a) => !a)
+              setCollapsed(false)
+            }}
+            aria-label={t('diagnosenAddEntry')}
+            title={t('diagnosenAddEntry')}
+          >
+            <Plus className="h-3 w-3" strokeWidth={2.5} aria-hidden />
+            <span className="diagnosen-widget__add-label">{t('diagnosenAddEntry')}</span>
+          </button>
+        </header>
+      ) : (
+        <div className="diagnosen-widget__header">
+          <button
+            type="button"
+            className="diagnosen-widget__title-btn"
+            onClick={() => setCollapsed((c) => !c)}
+            aria-expanded={!collapsed}
+          >
+            <span className="diagnosen-widget__title">{t('diagnosenTitle')}</span>
+            <span className="diagnosen-widget__collapse-icon" aria-hidden>
+              {collapsed ? '›' : '‹'}
+            </span>
+          </button>
+          <button
+            type="button"
+            className="diagnosen-widget__add-btn"
+            onClick={() => {
+              setAdding((a) => !a)
+              setCollapsed(false)
+            }}
+            aria-label={t('diagnosenAddEntry')}
+            title={t('diagnosenAddEntry')}
+          >
+            <Plus className="h-3 w-3" strokeWidth={2.5} aria-hidden />
+          </button>
+        </div>
+      )}
 
-      {!collapsed ? (
+      {showBody ? (
         <div className="diagnosen-widget__body">
           {showSystemTabs ? (
             <div
@@ -364,26 +422,28 @@ export function DiagnosenWidget({ caseId, variant = 'sidebar', onDiagnosesChange
               role="tablist"
               aria-label={t('diagnosenSystemToggle')}
             >
-              {CODING_SYSTEMS.map((system) => {
-                const isActive = activeSystem === system
+              {SEARCH_FILTERS.map((filter) => {
+                const isActive = searchFilter === filter
                 return (
                   <button
-                    key={system}
+                    key={filter}
                     type="button"
                     role="tab"
                     aria-selected={isActive}
-                    aria-controls={`diagnosen-panel-${system}`}
-                    id={`diagnosen-tab-${system}`}
+                    aria-controls={`diagnosen-panel-${filter}`}
+                    id={`diagnosen-tab-${filter}`}
                     className={[
                       'diagnosen-widget__tab',
                       isActive ? 'diagnosen-widget__tab--active' : '',
                     ].join(' ').trim()}
                     onClick={() => {
-                      setActiveSystem(system)
+                      setSearchFilter(filter)
+                      setActiveSystem(filter)
                       setEditingId(null)
                     }}
+                    title={t(SYSTEM_HINT_KEYS[filter])}
                   >
-                    {t(SYSTEM_LABEL_KEYS[system])}
+                    {t(SYSTEM_LABEL_KEYS[filter])}
                   </button>
                 )
               })}
@@ -420,11 +480,9 @@ export function DiagnosenWidget({ caseId, variant = 'sidebar', onDiagnosesChange
                         <span className="diagnosen-widget__search-label">
                           {searchDisplayTitles.get(`${result.system}-${result.code}`)
                             ?? resolveDiagnosisLabelSync(
-                              { code: result.code, label: result.label, overridden: false },
-                              codingSystemToTitleVersion(
-                                result.system === 'dsm5tr' ? 'dsm' : result.system,
-                              ),
-                              result.label,
+                              { code: result.code, label: result.title, overridden: false },
+                              codingSystemToTitleVersion(catalogueSystemToClient(result.system)),
+                              result.title,
                             )}
                         </span>
                       </button>

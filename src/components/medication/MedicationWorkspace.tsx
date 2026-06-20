@@ -24,6 +24,7 @@ import {
 import { MEDICATION_SECTION_META } from './medicationSectionMeta'
 import { MedicationEntryHistoryDialog } from './MedicationEntryHistoryDialog'
 import { MedicationInsightStrip } from './MedicationInsightStrip'
+import { SpiegelwerteSection } from '../notion/SpiegelwerteSection'
 import { MedicationPlanDashboard } from './MedicationPlanDashboard'
 import { MedicationPlanHistory } from './MedicationPlanHistory'
 import { PriorTherapiesPanel } from './PriorTherapiesPanel'
@@ -249,6 +250,7 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
 
           {hasActiveMedications ? (
             <MedicationPlanDashboard
+              caseId={caseId}
               medications={activePlanMedications}
               parameterMonitoring={parameterMonitoring}
               curatedTargetReceptors={med.state.curatedTargetReceptors}
@@ -257,6 +259,8 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
               onOpenSection={selectSection}
             />
           ) : null}
+
+          <SpiegelwerteSection caseId={caseId} />
 
           <PriorTherapiesPanel caseId={caseId} medications={allVisibleMedications} />
 

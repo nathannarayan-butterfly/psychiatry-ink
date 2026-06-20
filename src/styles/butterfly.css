@@ -41,8 +41,15 @@
 }
 
 .butterfly-panel__idle-mark {
-  font-size: 1.5rem;
-  opacity: 0.7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.85;
+}
+
+.butterfly-panel__idle-mark .butterfly-logo {
+  width: 1.75rem;
+  height: 1.75rem;
 }
 
 .butterfly-panel__idle-title {
@@ -70,8 +77,15 @@
 }
 
 .butterfly-panel__mark {
-  font-size: 1.35rem;
-  line-height: var(--leading-snug);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.butterfly-panel__mark .butterfly-logo {
+  width: 1.75rem;
+  height: 1.75rem;
 }
 
 .butterfly-panel__title {

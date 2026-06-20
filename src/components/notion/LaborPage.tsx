@@ -28,7 +28,7 @@ import { syncLaborDokumente } from '../../utils/laborDokumente'
 import { appendDokument, deleteDokument } from '../../utils/dokumenteArchive'
 import { parseLabText } from '../../utils/laborParser'
 import { showNotionToast } from './NotionToast'
-import { API_BASE } from '../../services/apiClient'
+import { callGenerateApi } from '../../services/generateApi'
 import { useTranslation } from '../../context/TranslationContext'
 import { loadMedicationPlanState } from '../../utils/medication/storage'
 import { isMedicationVisible } from '../../utils/medication/planOps'
@@ -360,27 +360,22 @@ function parseAiCategories(text: string): LaborCategory[] {
   }))
 }
 
+function laborKiErrorMessage(err: unknown, fallback: string): string {
+  if (err instanceof Error && err.message.trim()) return err.message
+  return fallback
+}
+
 async function callAiGenerate(
   systemPrompt: string,
   userPrompt: string,
   caseId?: string,
 ): Promise<string> {
-  const response = await fetch(`${API_BASE}/api/generate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      tier: 'fast',
-      systemPrompt,
-      userPrompt,
-      ...(caseId?.trim() ? { caseId: caseId.trim() } : {}),
-    }),
+  return callGenerateApi({
+    tier: 'fast',
+    systemPrompt,
+    userPrompt,
+    caseId,
   })
-  if (!response.ok) {
-    const detail = await response.json().catch(() => null) as { error?: string } | null
-    throw new Error(detail?.error ?? `AI-Anfrage fehlgeschlagen (${response.status})`)
-  }
-  const data = await response.json() as { text: string }
-  return data.text
 }
 
 function LaborPasteZone({ caseId, onSave, onKiAnalysisAccept, textareaRef }: LaborPasteZoneProps) {
@@ -498,8 +493,8 @@ function LaborPasteZone({ caseId, onSave, onKiAnalysisAccept, textareaRef }: Lab
       if (total === 0) throw new Error('Keine Laborwerte erkannt')
       setParsed(cats)
       setStatus('success')
-    } catch {
-      setKiError('KI-Strukturierung fehlgeschlagen. Bitte versuche es erneut.')
+    } catch (err) {
+      setKiError(laborKiErrorMessage(err, 'KI-Strukturierung fehlgeschlagen. Bitte versuche es erneut.'))
     } finally {
       setIsKiStructuring(false)
     }
@@ -533,8 +528,8 @@ function LaborPasteZone({ caseId, onSave, onKiAnalysisAccept, textareaRef }: Lab
         : `LABORWERTE:\n${labSection}`
       const aiText = await callAiGenerate(KI_ANALYSE_SYSTEM_PROMPT, userPrompt, caseId)
       setKiAnalysisText(aiText.trim())
-    } catch {
-      setKiError('KI-Analyse fehlgeschlagen. Bitte versuche es erneut.')
+    } catch (err) {
+      setKiError(laborKiErrorMessage(err, 'KI-Analyse fehlgeschlagen. Bitte versuche es erneut.'))
     } finally {
       setIsKiAnalysing(false)
     }
@@ -1819,8 +1814,8 @@ function KumulativView({ befunde, normalwerteLabel, caseId }: KumulativViewProps
       const aiText = await callAiGenerate(KI_ANALYSE_SYSTEM_PROMPT, userPrompt, caseId)
       setKiText(aiText.trim())
       setKiStatus('done')
-    } catch {
-      setKiError('KI-Verlaufsanalyse fehlgeschlagen. Bitte versuche es erneut.')
+    } catch (err) {
+      setKiError(laborKiErrorMessage(err, 'KI-Verlaufsanalyse fehlgeschlagen. Bitte versuche es erneut.'))
       setKiStatus('error')
     }
   }, [kiStatus, sorted, formatCumulativeForPrompt, caseId])
@@ -2841,8 +2836,8 @@ export function LaborPage({
       const aiText = await callAiGenerate(KI_ANALYSE_SYSTEM_PROMPT, userPrompt, caseId)
       setKiReText(aiText.trim())
       setKiReStatus('done')
-    } catch {
-      setKiReError('KI-Analyse fehlgeschlagen. Bitte versuche es erneut.')
+    } catch (err) {
+      setKiReError(laborKiErrorMessage(err, 'KI-Analyse fehlgeschlagen. Bitte versuche es erneut.'))
       setKiReStatus('error')
     }
   }, [selectedBefund, kiReStatus, caseId])

@@ -469,7 +469,8 @@ export async function addMessage(input: {
   quoteExcerpt?: DiscussCaseMessage['quoteExcerpt']
 }): Promise<DiscussCaseMessage> {
   const body = input.body.trim()
-  if (!body) throw new Error('Message body required')
+  const quoteText = input.quoteExcerpt?.text?.trim()
+  if (!body && !quoteText) throw new Error('Message body required')
 
   const supabase = getKbSupabaseAdmin()
   const { data, error } = await supabase

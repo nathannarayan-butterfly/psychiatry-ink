@@ -61,6 +61,7 @@ import {
   hasZwangsmassnahmeSignal,
 } from '../../../utils/overview/zwangsmassnahmeSummary'
 import { buildVerlaufstendenzSummary } from '../../../utils/overview/verlaufstendenzSummary'
+import { useVerlaufstendenzRevision } from '../../../hooks/useVerlaufstendenzRevision'
 import { buildRegisteredTherapiesSummary } from '../../../utils/overview/registeredTherapiesSummary'
 import { buildComplianceSummary } from '../../../utils/overview/complianceSummary'
 import {
@@ -134,6 +135,7 @@ export function OverviewDashboard({
   const { drugs: knowledgeBaseDrugs } = useKnowledgeBaseDrugs(DEFAULT_MEDICATIONS_COLLECTION_ID)
   const diagnosenRevision = useDiagnosenRevision(caseId)
   const psychopathFindingRevision = usePsychopathFindingRevision(caseId)
+  const verlaufstendenzRevision = useVerlaufstendenzRevision(caseId)
   const { currentPlan } = useMedicationPlan(caseId)
   const appointments = useCaseAppointments(caseId)
   const collaboration = useOverviewCollaboration(caseId)
@@ -190,6 +192,7 @@ export function OverviewDashboard({
     return buildPatientSafety({
       medications,
       language,
+      caseId,
       imprints,
       riskText,
       allergyText: readAllergyText(caseId),
@@ -245,14 +248,12 @@ export function OverviewDashboard({
   const sozialTargets = useMemo(() => loadSozialtherapie(caseId), [caseId])
 
   const zwangsmassnahme = useMemo(() => buildZwangsmassnahmeSummary(caseId), [caseId])
-  const verlaufstendenz = useMemo(
-    () => buildVerlaufstendenzSummary(loadClinicalImprintIndex(caseId).imprints),
-    [caseId, psychopathFindingRevision],
-  )
   const ekgSummary = useMemo(() => buildEkgSummary(caseId), [caseId])
   const eegSummary = useMemo(() => buildEegSummary(caseId), [caseId])
   const ctSummary = useMemo(() => buildCtSummary(caseId), [caseId])
+  const hasEkg = ekgSummary.conducted
   const hasEeg = useMemo(() => hasConductedEeg(caseId), [caseId])
+  const hasCt = ctSummary.conducted
   const hasZwangsmassnahme = useMemo(() => hasZwangsmassnahmeSignal(zwangsmassnahme), [zwangsmassnahme])
 
   const registeredTherapies = useMemo(
@@ -294,6 +295,27 @@ export function OverviewDashboard({
       language,
     ],
   )
+
+  const verlaufstendenz = useMemo(() => {
+    void verlaufstendenzRevision
+    const imprints = loadClinicalImprintIndex(caseId).imprints
+    return buildVerlaufstendenzSummary({
+      caseId,
+      imprints,
+      verlaufEntries: loadVerlaufFeed(caseId),
+      harmSignals: safetyData.risk?.signals ?? [],
+      complianceOverallPercent: compliance.overallPercent,
+      abnormalLabCount: laborData.recentAbnormal.length,
+      admissionDateIso: loadNotionPageDate('aufnahme', caseId),
+    })
+  }, [
+    caseId,
+    psychopathFindingRevision,
+    verlaufstendenzRevision,
+    safetyData,
+    compliance.overallPercent,
+    laborData.recentAbnormal.length,
+  ])
 
   // ── Spiegel availability (preserve "≥1 value ⇒ show graph" rule) ──────────
   const spiegelSeries = useMemo(() => extractSpiegelwerte(befunde), [befunde])
@@ -422,7 +444,9 @@ export function OverviewDashboard({
       hasIsdm,
       hasLabData,
       hasButterfly,
+      hasEkg,
       hasEeg,
+      hasCt,
       hasZwangsmassnahme,
     }),
     [
@@ -432,7 +456,9 @@ export function OverviewDashboard({
       hasIsdm,
       hasLabData,
       hasButterfly,
+      hasEkg,
       hasEeg,
+      hasCt,
       hasZwangsmassnahme,
     ],
   )
