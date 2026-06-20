@@ -204,17 +204,7 @@ export function ParserOptimizationSection() {
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-ink">{t('parserOptimizationTitle')}</h2>
-      <p className="mt-1 text-sm text-muted">{t('parserOptimizationIntro')}</p>
-      <p className="mt-2 mb-6 rounded-sm border-2 border-border bg-surface px-3 py-2 text-xs leading-relaxed text-muted">
-        {t('parserOptimizationPhiNote')}
-      </p>
-
-      {/* Date placement */}
-      <SettingsField
-        label={t('parserOptimizationDateLocationLabel')}
-        description={t('parserOptimizationDateLocationDescription')}
-      >
+      <SettingsField label={t('parserOptimizationDateLocationLabel')}>
         <SettingsOptionGroup
           value={profile.dateLocation}
           options={dateOptions}
@@ -223,10 +213,7 @@ export function ParserOptimizationSection() {
       </SettingsField>
 
       {/* Heading aliases */}
-      <SettingsField
-        label={t('parserOptimizationHeadingAliasesLabel')}
-        description={t('parserOptimizationHeadingAliasesDescription')}
-      >
+      <SettingsField label={t('parserOptimizationHeadingAliasesLabel')}>
         {profile.headingAliases.length === 0 ? (
           <p className="text-xs text-muted">{t('parserOptimizationNoAliases')}</p>
         ) : (
@@ -302,10 +289,7 @@ export function ParserOptimizationSection() {
       </SettingsField>
 
       {/* Column mappings */}
-      <SettingsField
-        label={t('parserOptimizationColumnAliasesLabel')}
-        description={t('parserOptimizationColumnAliasesDescription')}
-      >
+      <SettingsField label={t('parserOptimizationColumnAliasesLabel')}>
         {profile.columnAliases.length === 0 ? (
           <p className="text-xs text-muted">{t('parserOptimizationNoColumnAliases')}</p>
         ) : (
@@ -377,11 +361,7 @@ export function ParserOptimizationSection() {
         </button>
       </SettingsField>
 
-      {/* Sample analysis */}
-      <SettingsField
-        label={t('parserOptimizationSampleLabel')}
-        description={t('parserOptimizationSampleDescription')}
-      >
+      <SettingsField label={t('parserOptimizationSampleLabel')}>
         <input
           ref={fileInputRef}
           type="file"
@@ -464,11 +444,10 @@ export function ParserOptimizationSection() {
         ) : null}
       </SettingsField>
 
-      <div className="mt-6 flex items-center justify-between gap-3">
-        <p className="text-xs text-muted">{t('parserOptimizationSavedNote')}</p>
+      <div className="settings-section-toolbar">
         <button
           type="button"
-          className="shrink-0 rounded-sm border-2 border-border px-3 py-1.5 text-xs text-ink hover:bg-surface-hover"
+          className="settings-section-toolbar__action"
           onClick={reset}
         >
           {t('parserOptimizationReset')}

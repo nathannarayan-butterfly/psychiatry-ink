@@ -45,6 +45,7 @@ export interface CmeaExtractionParams {
   sections: CmeaSectionInput[]
   patientName?: string
   tier: AiModelTier
+  model?: { provider: string; modelId: string }
   language: ClinicalLanguage
   usageContext?: AiUsageContext
 }
@@ -467,6 +468,7 @@ export async function runClinicalMetadataExtraction(
 
   const result = await callLlm({
     tier: params.tier,
+    model: params.model,
     systemPrompt,
     userPrompt,
     jsonResponse: true,

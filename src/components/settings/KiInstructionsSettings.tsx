@@ -37,10 +37,7 @@ export function KiInstructionsSettings({
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-ink">{t('settingsKiHeading')}</h2>
-      <p className="mt-1 mb-6 text-sm text-muted">{t('settingsKiDescription')}</p>
-
-      <SettingsField label={t('kiAutoMode')} description={t('kiAutoModeDescription')}>
+      <SettingsField label={t('kiAutoMode')}>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
@@ -71,10 +68,7 @@ export function KiInstructionsSettings({
         </div>
       </SettingsField>
 
-      <SettingsField
-        label={t('kiSettingsDefaultInstruction')}
-        description={t('kiSettingsDefaultInstructionDescription')}
-      >
+      <SettingsField label={t('kiSettingsDefaultInstruction')}>
         <div className="space-y-2">
           <div className="flex flex-wrap gap-1.5">
             {presetOptions.map((preset) => {
@@ -105,10 +99,7 @@ export function KiInstructionsSettings({
         </div>
       </SettingsField>
 
-      <SettingsField
-        label={t('kiSettingsDocumentOverrides')}
-        description={t('kiSettingsDocumentOverridesDescription')}
-      >
+      <SettingsField label={t('kiSettingsDocumentOverrides')}>
         <div className="space-y-3">
           {KI_DOCUMENT_TYPE_IDS.map((documentTypeId) => (
             <div key={documentTypeId} className="space-y-1">

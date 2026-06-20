@@ -6,7 +6,7 @@
   --dc-border: color-mix(in srgb, var(--text-main, #1a1a1a) 12%, transparent);
   --dc-surface: var(--notion-paper-bg, #fff);
   --dc-muted: color-mix(in srgb, var(--text-main, #1a1a1a) 55%, transparent);
-  --dc-accent: var(--area-accent, var(--accent, #4a6fa5));
+  --dc-accent: var(--accent);
   --dc-accent-soft: color-mix(in srgb, var(--dc-accent) 12%, var(--dc-surface));
   --dc-accent-ultrasoft: color-mix(in srgb, var(--dc-accent) 6%, var(--dc-surface));
   --dc-accent-border: color-mix(in srgb, var(--dc-accent) 28%, transparent);
@@ -26,7 +26,7 @@
   --dc-border: color-mix(in srgb, var(--text-main, #1a1a1a) 12%, transparent);
   --dc-surface: var(--notion-paper-bg, #fff);
   --dc-muted: color-mix(in srgb, var(--text-main, #1a1a1a) 55%, transparent);
-  --dc-accent: var(--area-accent, var(--accent, #4a6fa5));
+  --dc-accent: var(--accent);
   --dc-accent-soft: color-mix(in srgb, var(--dc-accent) 12%, var(--dc-surface));
   --dc-accent-ultrasoft: color-mix(in srgb, var(--dc-accent) 6%, var(--dc-surface));
   --dc-accent-border: color-mix(in srgb, var(--dc-accent) 28%, transparent);
@@ -340,7 +340,7 @@
 }
 
 .discuss-case-participants__badge--access {
-  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a6fa5)) 14%, transparent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
   color: var(--text-main, #1a1a1a);
 }
 
@@ -1836,8 +1836,8 @@
   padding: 0.5rem 0.75rem;
   border: 1px solid transparent;
   border-radius: 0.5rem;
-  background: color-mix(in srgb, white 16%, transparent);
-  color: #fff;
+  background: var(--accent);
+  color: var(--color-accent-foreground, #fff);
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
@@ -1845,7 +1845,7 @@
 }
 
 .discuss-section-nav__new:hover:not(:disabled) {
-  background: color-mix(in srgb, white 26%, transparent);
+  background: color-mix(in srgb, var(--accent) 88%, black);
 }
 
 .discuss-section-nav__new:disabled {

@@ -1,4 +1,5 @@
 import { clinicalApiFetch, parseClinicalApiError } from './clinicalApiFetch'
+import { resolveLlmRequestForTask } from '../utils/resolveAiModel'
 import {
   ImportMappingResponseSchema,
   ImportAnalyzeResponseSchema,
@@ -17,9 +18,10 @@ import {
 export async function requestImportMappingSuggestions(
   request: ImportMappingRequest,
 ): Promise<ImportMappingSuggestion[]> {
+  const llm = resolveLlmRequestForTask('document_import')
   const response = await clinicalApiFetch('/api/document-import/suggest-mapping', {
     method: 'POST',
-    body: JSON.stringify(request),
+    body: JSON.stringify({ ...request, ...llm }),
   })
 
   if (!response.ok) {
@@ -38,9 +40,10 @@ export async function requestImportMappingSuggestions(
 export async function requestImportAnalyze(
   request: ImportAnalyzeRequest,
 ): Promise<ImportAnalyzeResponse> {
+  const llm = resolveLlmRequestForTask('document_import')
   const response = await clinicalApiFetch('/api/document-import/analyze', {
     method: 'POST',
-    body: JSON.stringify(request),
+    body: JSON.stringify({ ...request, ...llm }),
   })
 
   if (!response.ok) {

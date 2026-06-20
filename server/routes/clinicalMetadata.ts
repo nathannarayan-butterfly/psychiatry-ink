@@ -1,6 +1,6 @@
 import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
-import type { AiModelTier } from '../modelTierMapping'
+import { parseLlmModelRequest } from '../ai/parseLlmModelRequest'
 import { resolveAccountId } from '../middleware/auth'
 import { assertAiGenerationAllowed, recordAiGenerationUsed } from '../utils/caseAiAccessGuard'
 import { requireClinicalLanguage } from '../utils/resolveClinicalLanguage'
@@ -13,7 +13,6 @@ import type { ClinicalSourceType } from '../../src/types/clinicalImprint'
 
 export const clinicalMetadataRouter: Router = createRouter()
 
-const VALID_TIERS: AiModelTier[] = ['fast', 'standard', 'thorough']
 const VALID_SOURCE_TYPES: ClinicalSourceType[] = [
   'anamnesis',
   'verlauf',
@@ -69,9 +68,8 @@ clinicalMetadataRouter.post('/extract', async (req: Request, res: Response) => {
     const language = requireClinicalLanguage(req, res, body.language)
     if (!language) return
 
-    const tier: AiModelTier = VALID_TIERS.includes(body.tier as AiModelTier)
-      ? (body.tier as AiModelTier)
-      : 'standard'
+    const llmModel = parseLlmModelRequest(body, 'standard')
+    const tier = llmModel.tier ?? 'standard'
     const patientName = typeof body.patientName === 'string' ? body.patientName : undefined
 
     const userId = resolveAccountId(req)
@@ -86,6 +84,7 @@ clinicalMetadataRouter.post('/extract', async (req: Request, res: Response) => {
       sections,
       patientName,
       tier,
+      model: llmModel.model,
       language,
       usageContext,
     })

@@ -36,6 +36,8 @@ import { BudgetManagerPage } from './components/settings/BudgetManagerPage'
 import { IntegrationsPage } from './components/settings/IntegrationsPage'
 import { CalendarPage } from './components/calendar/CalendarPage'
 import { TodoPage } from './components/todos/TodoPage'
+import { AskButterflyProvider } from './contexts/AskButterflyContext'
+import { AskButterflyShell } from './components/notion/AskButterflyShell'
 
 const ENTERPRISE_ROUTES_ENABLED = isEnterpriseOrgHierarchyEnabled()
 
@@ -211,6 +213,8 @@ export default function App() {
       englishVariant={languageSettings.englishVariant}
     >
       <WorkspaceSessionProvider>
+        <AskButterflyProvider>
+          <AskButterflyShell>
         {showDiscussInvite ? (
           <DiscussCaseInvitePage
             token={route.view === 'discuss-invite' ? route.token : ''}
@@ -319,6 +323,8 @@ export default function App() {
             }}
           />
         )}
+          </AskButterflyShell>
+        </AskButterflyProvider>
       </WorkspaceSessionProvider>
     </TranslationProvider>
   )

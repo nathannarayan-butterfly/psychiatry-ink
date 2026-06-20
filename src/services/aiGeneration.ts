@@ -17,6 +17,7 @@ import { showNotionToast } from '../components/notion/NotionToast'
 import { API_BASE } from './apiClient'
 import { getAuthHeaders } from './authHeaders'
 import { logGenerationUsage } from './generationLogClient'
+import { resolveLlmRequestForTaskOrTier } from '../utils/resolveAiModel'
 
 export const PSEUDONYMIZE_KEY = 'psychiatry-ink-pseudonymize'
 
@@ -114,6 +115,7 @@ async function callModel(
 ): Promise<{ text: string; model: AiResolvedCall['model'] }> {
   const userPrompt = buildChunkPrompt(request, resolved, chunkLabel, chunkContent)
   const authHeaders = await getAuthHeaders()
+  const llm = resolveLlmRequestForTaskOrTier('document_generation', request.tier)
 
   const response = await fetch(`${API_BASE}/api/generate`, {
     method: 'POST',
@@ -122,7 +124,8 @@ async function callModel(
       ...authHeaders,
     },
     body: JSON.stringify({
-      tier: request.tier,
+      tier: llm.tier,
+      model: llm.model,
       systemPrompt: resolved.systemPrompt,
       userPrompt,
       ...(request.caseId?.trim() ? { caseId: request.caseId.trim() } : {}),

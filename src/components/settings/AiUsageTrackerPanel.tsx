@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from '../../context/TranslationContext'
 import type { AiUsageLogEntry } from '../../types/aiUsage'
 import { fetchRecentAiUsage } from '../../services/aiUsageApi'
 
@@ -12,6 +13,7 @@ function formatCost(eur: number | null): string {
 }
 
 export function AiUsageTrackerPanel({ collapsed: initialCollapsed = true }: AiUsageTrackerPanelProps) {
+  const { t } = useTranslation()
   const [collapsed, setCollapsed] = useState(initialCollapsed)
   const [logs, setLogs] = useState<AiUsageLogEntry[]>([])
   const [loading, setLoading] = useState(false)
@@ -24,11 +26,11 @@ export function AiUsageTrackerPanel({ collapsed: initialCollapsed = true }: AiUs
       const data = await fetchRecentAiUsage()
       setLogs(data.logs)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Laden fehlgeschlagen')
+      setError(err instanceof Error ? err.message : t('aiUsageTrackerLoadFailed'))
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     if (!collapsed) void refresh()
@@ -42,7 +44,7 @@ export function AiUsageTrackerPanel({ collapsed: initialCollapsed = true }: AiUs
         onClick={() => setCollapsed((v) => !v)}
         aria-expanded={!collapsed}
       >
-        <span id="ai-usage-tracker-title">Token-Nutzung (letzte 20 Aufrufe)</span>
+        <span id="ai-usage-tracker-title">{t('aiUsageTrackerTitle')}</span>
         <span className="ai-usage-tracker__chevron">{collapsed ? '▸' : '▾'}</span>
       </button>
 
@@ -50,22 +52,22 @@ export function AiUsageTrackerPanel({ collapsed: initialCollapsed = true }: AiUs
         <div className="ai-usage-tracker__body">
           <div className="ai-usage-tracker__toolbar">
             <button type="button" className="team-settings-btn" onClick={() => void refresh()} disabled={loading}>
-              Aktualisieren
+              {t('aiUsageTrackerRefresh')}
             </button>
           </div>
           {error ? <p className="team-settings-error">{error}</p> : null}
-          {loading ? <p className="ai-usage-tracker__loading">Laden…</p> : null}
+          {loading ? <p className="ai-usage-tracker__loading">{t('aiUsageTrackerLoading')}</p> : null}
           <div className="ai-usage-tracker__table-wrap">
             <table className="ai-usage-tracker__table">
               <thead>
                 <tr>
-                  <th>Zeit</th>
-                  <th>Feature</th>
-                  <th>Modell</th>
-                  <th>Tokens</th>
-                  <th>Kosten</th>
-                  <th>Quelle</th>
-                  <th>Status</th>
+                  <th>{t('aiUsageTrackerColTime')}</th>
+                  <th>{t('aiUsageTrackerColFeature')}</th>
+                  <th>{t('aiUsageTrackerColModel')}</th>
+                  <th>{t('aiUsageTrackerColTokens')}</th>
+                  <th>{t('aiUsageTrackerColCost')}</th>
+                  <th>{t('aiUsageTrackerColSource')}</th>
+                  <th>{t('aiUsageTrackerColStatus')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -85,14 +87,18 @@ export function AiUsageTrackerPanel({ collapsed: initialCollapsed = true }: AiUs
                     </td>
                     <td className="ai-usage-tracker__mono">{log.totalTokens.toLocaleString('de-DE')}</td>
                     <td className="ai-usage-tracker__mono">{formatCost(log.estimatedCostEur)}</td>
-                    <td>{log.usageSource === 'provider_reported' ? 'Provider' : 'Schätzung'}</td>
-                    <td>{log.success ? 'OK' : log.errorCode ?? 'Fehler'}</td>
+                    <td>
+                      {log.usageSource === 'provider_reported'
+                        ? t('aiUsageTrackerSourceProvider')
+                        : t('aiUsageTrackerSourceEstimate')}
+                    </td>
+                    <td>{log.success ? t('aiUsageTrackerStatusOk') : log.errorCode ?? t('aiUsageTrackerStatusError')}</td>
                   </tr>
                 ))}
                 {logs.length === 0 && !loading ? (
                   <tr>
                     <td colSpan={7} className="ai-usage-tracker__empty">
-                      Keine Einträge in diesem Monat
+                      {t('aiUsageTrackerEmpty')}
                     </td>
                   </tr>
                 ) : null}

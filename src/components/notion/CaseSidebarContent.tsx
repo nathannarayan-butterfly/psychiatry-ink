@@ -53,6 +53,7 @@ export function CaseSidebarContent({
     case 'verlauf':
     case 'diagnose':
     case 'konsil':
+    case 'ci':
       return null
 
     case 'labor':

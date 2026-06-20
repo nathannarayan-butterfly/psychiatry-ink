@@ -23,6 +23,9 @@ import { VerlaufstendenzCard } from './VerlaufstendenzCard'
 import { DiagnosticSummaryCard } from './DiagnosticSummaryCard'
 import { RegisteredTherapiesCard } from './RegisteredTherapiesCard'
 import { ComplianceOverviewCard } from './ComplianceOverviewCard'
+import { DimensionalProfileWidget } from './widgets/DimensionalProfileWidget'
+import { MechanismHypothesesWidget } from './widgets/MechanismHypothesesWidget'
+import { ClinicalIntelligenceStatusWidget } from './widgets/ClinicalIntelligenceStatusWidget'
 import type {
   HeroSummaryData,
   MedicationOverviewData,
@@ -219,6 +222,27 @@ export function renderOverviewWidget(
       )
     case 'compliance':
       return <ComplianceOverviewCard data={ctx.compliance} caseId={ctx.caseId} />
+    case 'ci-dimensional':
+      return (
+        <DimensionalProfileWidget
+          caseId={ctx.caseId}
+          onOpenSection={() => ctx.onTabSelect('ci')}
+        />
+      )
+    case 'ci-mechanism':
+      return (
+        <MechanismHypothesesWidget
+          caseId={ctx.caseId}
+          onOpenSection={() => ctx.onTabSelect('ci')}
+        />
+      )
+    case 'ci-status':
+      return (
+        <ClinicalIntelligenceStatusWidget
+          caseId={ctx.caseId}
+          onOpenSection={() => ctx.onTabSelect('ci')}
+        />
+      )
     default:
       return null
   }

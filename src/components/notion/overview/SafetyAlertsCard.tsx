@@ -74,7 +74,11 @@ function MedicationMonitoringSection({
   if (rows.length === 0) return null
   return (
     <div className="ov-safety__monitoring">
-      <ParameterMonitoringList rows={rows} notDocumentedLabel={notDocumentedLabel} />
+      <ParameterMonitoringList
+        rows={rows}
+        notDocumentedLabel={notDocumentedLabel}
+        className="parameter-monitoring-list--compact"
+      />
     </div>
   )
 }

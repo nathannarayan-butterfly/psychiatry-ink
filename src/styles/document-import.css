@@ -27,6 +27,24 @@
   overflow: hidden;
 }
 
+/* Post-upload review: near full-screen so section editors show complete text. */
+.doc-import-dialog--review {
+  width: min(92vw, 1280px);
+  max-height: 94vh;
+}
+
+.doc-import-dialog--review .doc-import-dialog__body {
+  padding: 1.25rem 1.75rem 1.75rem;
+}
+
+.doc-import-dialog--review .doc-import-review__list {
+  gap: 0.875rem;
+}
+
+.doc-import-dialog--review .doc-import-preview__text {
+  max-height: 24rem;
+}
+
 .doc-import-dialog__header {
   display: flex;
   align-items: flex-start;
@@ -423,6 +441,11 @@
   line-height: 1.45;
 }
 
+.doc-import-textarea--section {
+  min-height: 14rem;
+  max-height: 32rem;
+}
+
 /* Column mapping */
 .doc-import-mapping {
   margin: 0.5rem 0 1rem;
@@ -787,4 +810,27 @@
 
 .doc-import-chip--rejected {
   opacity: 0.65;
+}
+
+@media (max-width: 640px) {
+  .doc-import-overlay {
+    padding: 0.75rem;
+    align-items: flex-end;
+  }
+
+  .doc-import-dialog--review {
+    width: 100%;
+    max-height: 96vh;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  .doc-import-dialog--review .doc-import-dialog__body {
+    padding: 1rem 1.125rem 1.25rem;
+  }
+
+  .doc-import-textarea--section {
+    min-height: 10rem;
+    max-height: 24rem;
+  }
 }

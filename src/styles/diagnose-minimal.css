@@ -412,7 +412,31 @@
 
 /* Suggested questions — flat rows */
 .diagnose-page .butterfly-gap-diagnosis-list {
-  gap: 1rem;
+  gap: 0;
+}
+
+.diagnose-page .butterfly-gap-diagnosis {
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--cm-hairline);
+  border-left: 2px solid var(--cm-quiet-border);
+  padding-left: 0.55rem;
+}
+
+.diagnose-page .butterfly-gap-diagnosis:last-child {
+  border-bottom: none;
+}
+
+.diagnose-page .butterfly-gap-diagnosis__head {
+  padding: 0;
+}
+
+.diagnose-page .butterfly-gap-diagnosis__name {
+  font-size: var(--text-sm, 0.8125rem);
+}
+
+.diagnose-page .butterfly-gap-diagnosis__count {
+  font-size: var(--text-2xs, 0.6875rem);
+  letter-spacing: var(--cm-label-tracking, 0.08em);
 }
 
 .diagnose-page .butterfly-gap {

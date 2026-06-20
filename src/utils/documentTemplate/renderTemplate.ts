@@ -2,6 +2,7 @@ import type { DocumentTemplate, GeneratedDocument, TemplateField, TemplateRender
 import { UNRESOLVED_PLACEHOLDER } from './constants'
 import { htmlToPlainLines, sanitizeRichHtml, escapeHtml } from './htmlUtils'
 import { resolveBinding } from './placeholderContext'
+import { resolveDynamicField } from './resolveDynamicField'
 import { resolvePageSettings } from './pageSettings'
 import { FONT_SANS } from '../../styles/typographyTokens'
 
@@ -58,6 +59,13 @@ function fieldValueToString(
     const resolved = resolveBinding(field.binding, context)
     if (resolved) return resolved
     return markUnresolved ? UNRESOLVED_PLACEHOLDER : ''
+  }
+  if (field.type === 'dynamic' && field.dynamicKey) {
+    const resolved = resolveDynamicField(field.dynamicKey, context, {
+      missingFallback: markUnresolved ? '—' : '',
+    })
+    if (resolved && resolved !== '—') return resolved
+    return markUnresolved ? '—' : ''
   }
   if (field.type === 'heading') {
     return (field.label ?? field.defaultValue as string ?? '').toUpperCase()
@@ -231,6 +239,8 @@ export function buildInitialFieldValues(
       values[field.id] = Array.isArray(field.defaultValue) ? [...field.defaultValue] : []
     } else if (isPlaceholderType(field.type)) {
       values[field.id] = resolveBinding(field.binding, context)
+    } else if (field.type === 'dynamic' && field.dynamicKey) {
+      values[field.id] = resolveDynamicField(field.dynamicKey, context)
     } else if (field.type === 'yes_no' || field.type === 'radio_group') {
       values[field.id] = typeof field.defaultValue === 'string' ? field.defaultValue : ''
     } else if (field.type === 'divider' || field.type === 'spacer' || field.type === 'heading') {

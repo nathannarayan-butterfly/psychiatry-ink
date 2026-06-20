@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { AppLogo } from '../AppLogo'
+import { useTranslation } from '../../context/TranslationContext'
 import { PanelDateCard } from '../PanelDateCard'
 import { CaseClinicalAreasNav } from './CaseClinicalAreasNav'
 import { CaseSidebarUserFooter } from './CaseSidebarUserFooter'
@@ -21,6 +23,10 @@ interface CaseSidebarPanelProps {
   /** Active patient case id (real caseId) for patient-linked quick to-dos. */
   todoCaseId?: string | null
   todoPatientLabel?: string | null
+  /** Whether the sidebar is collapsed to a slim icon rail. */
+  collapsed?: boolean
+  /** Toggles between full and collapsed (icon-only) sidebar widths. */
+  onToggleCollapsed?: () => void
 }
 
 /** Fixed dark left panel — logo, back link, clinical areas, tab content, user footer. */
@@ -37,13 +43,45 @@ export function CaseSidebarPanel({
   ariaLabel,
   todoCaseId = null,
   todoPatientLabel = null,
+  collapsed = false,
+  onToggleCollapsed,
 }: CaseSidebarPanelProps) {
+  const { t } = useTranslation()
+  const collapseLabel = collapsed
+    ? t('caseSidebarExpandTooltip')
+    : t('caseSidebarCollapseTooltip')
+
   return (
-    <aside className="case-sidebar-panel" aria-label={ariaLabel}>
+    <aside
+      className={[
+        'case-sidebar-panel',
+        collapsed ? 'case-sidebar-panel--collapsed' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      aria-label={ariaLabel}
+      data-collapsed={collapsed ? 'true' : 'false'}
+    >
       <div className="case-sidebar-panel__logo-row">
         <div className="case-sidebar-panel__logo">
           <AppLogo onClick={onNavigateHome} variant="light" />
         </div>
+        {onToggleCollapsed ? (
+          <button
+            type="button"
+            className="case-sidebar-panel__collapse-btn"
+            onClick={onToggleCollapsed}
+            aria-label={collapseLabel}
+            aria-expanded={!collapsed}
+            title={collapseLabel}
+          >
+            {collapsed ? (
+              <PanelLeftOpen aria-hidden strokeWidth={1.75} />
+            ) : (
+              <PanelLeftClose aria-hidden strokeWidth={1.75} />
+            )}
+          </button>
+        ) : null}
       </div>
 
       <div className="case-sidebar-panel__nav">

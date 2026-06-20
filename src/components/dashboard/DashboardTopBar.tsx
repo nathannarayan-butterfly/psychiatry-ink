@@ -4,6 +4,7 @@ import { useTranslation } from '../../context/TranslationContext'
 import { useAccountDisplayName } from '../../hooks/useAccountDisplayName'
 import type { SettingsSectionId } from '../../types/settings'
 import { AppLogo } from '../AppLogo'
+import { AskButterflyOpenButton } from '../notion/AskButterflyOpenButton'
 import { IconButton } from '../IconButton'
 import { NotificationBell } from '../NotificationBell'
 
@@ -25,6 +26,8 @@ export function DashboardTopBar({ onOpenSettings, onNavigateHome }: DashboardTop
 
       <div className="dashboard-topbar__actions">
         <span className="dashboard-topbar__user">{displayName}</span>
+
+        <AskButterflyOpenButton variant="topbar" />
 
         <NotificationBell />
 

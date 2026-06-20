@@ -34,6 +34,13 @@
   font-weight: 600;
 }
 
+.dt-dashboard__topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
 .dt-dashboard__layout {
   flex: 1;
   display: grid;
@@ -388,6 +395,91 @@
   margin: 0;
   font-size: 1rem;
   font-weight: 600;
+}
+
+.dt-modal__intro,
+.dt-modal__hint,
+.dt-modal__meta {
+  margin: 0;
+  padding: 0 1rem;
+  font-size: 0.8125rem;
+  color: var(--dt-muted);
+}
+
+.dt-modal__intro {
+  padding-top: 0.875rem;
+}
+
+.dt-modal__hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  padding-top: 0.5rem;
+}
+
+.dt-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem 1rem;
+  border-top: 1px solid var(--dt-border);
+  margin-top: auto;
+}
+
+.dt-modal--share,
+.dt-modal--import {
+  padding-bottom: 0;
+}
+
+.dt-modal--share .dt-field-label,
+.dt-modal--import .dt-import-trigger {
+  margin: 0.75rem 1rem 0;
+}
+
+.dt-import-input {
+  display: none;
+}
+
+.dt-import-preview {
+  margin: 0.75rem 1rem 0;
+  padding: 0.75rem;
+  border: 1px solid var(--dt-border);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--text-main, #1a1a1a) 3%, transparent);
+}
+
+.dt-import-preview__title {
+  margin: 0 0 0.35rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.dt-import-preview__desc {
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--dt-muted);
+}
+
+.dt-import-preview__meta {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+}
+
+.dt-import-preview__meta div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.8125rem;
+}
+
+.dt-import-preview__meta dt {
+  color: var(--dt-muted);
+}
+
+.dt-import-preview__meta dd {
+  margin: 0;
+  text-align: right;
 }
 
 .dt-picker-filters {
@@ -818,6 +910,34 @@
   font-family: var(--font-mono);
   font-size: 0.75rem;
   color: var(--dt-muted);
+}
+
+.dt-canvas-field--dynamic .dt-canvas-dynamic-token {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--dt-accent, #2563eb);
+  background: color-mix(in srgb, var(--dt-accent, #2563eb) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--dt-accent, #2563eb) 25%, transparent);
+  border-radius: 4px;
+  padding: 0.1rem 0.35rem;
+}
+
+.dt-context-menu__item--dynamic {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+}
+
+.dt-context-menu__item-token {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--dt-muted);
+}
+
+.dt-input--dynamic {
+  font-family: var(--font-mono);
 }
 
 .dt-canvas-hint {

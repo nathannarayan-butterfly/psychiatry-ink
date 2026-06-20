@@ -5,14 +5,14 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 import { AuthProvider } from './context/AuthContext'
 import { OrganisationProvider } from './contexts/PermissionContext'
 import { ActiveAppointmentProvider } from './contexts/ActiveAppointmentContext'
-import { applyAppearanceSettings } from './data/appearancePresets'
 import { defaultLanguage, languageOptions } from './data/languages'
 import { registerClinicalLanguageResolver } from './services/clinicalApiFetch'
 import { loadStoredUiLanguage, LANGUAGE_STORAGE_KEY } from './utils/clinicalLanguage'
-import { defaultAppearanceSettings } from './types/settings'
+import { reapplyDevicePreferences } from './utils/devicePreferences'
 import './styles/globals.css'
 import './styles/action-buttons.css'
 import './styles/notion-preview.css'
+import './styles/case-sidebar.css'
 import './styles/clinical-ui.css'
 import './styles/landing.css'
 import './styles/kb-admin.css'
@@ -42,19 +42,11 @@ import './styles/ask-butterfly-chat.css'
 import './styles/dokumente-inline.css'
 import './styles/document-import.css'
 import './styles/inline-ai-edit.css'
-
-const APPEARANCE_KEY = 'psychiatry-ink-appearance'
+import './styles/clinical-intelligence.css'
 
 registerClinicalLanguageResolver(loadStoredUiLanguage)
 
-try {
-  const saved = localStorage.getItem(APPEARANCE_KEY)
-  applyAppearanceSettings(
-    saved ? { ...defaultAppearanceSettings, ...JSON.parse(saved) } : defaultAppearanceSettings,
-  )
-} catch {
-  applyAppearanceSettings(defaultAppearanceSettings)
-}
+reapplyDevicePreferences()
 
 try {
   const savedLang = localStorage.getItem(LANGUAGE_STORAGE_KEY)

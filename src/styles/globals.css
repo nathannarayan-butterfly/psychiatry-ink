@@ -205,6 +205,7 @@
   --area-dokumente: color-mix(in srgb, var(--accent) var(--area-mix), #b8862f); /* ochre/gold */
   --area-discuss: color-mix(in srgb, var(--accent) var(--area-mix), #c46686); /* rose */
   --area-konsil: color-mix(in srgb, var(--accent) var(--area-mix), #5a6bc7); /* indigo */
+  --area-ci: color-mix(in srgb, var(--accent) var(--area-mix), #6f5ec0); /* periwinkle — cognition/AI reasoning */
 
   /*
    * Current area accent. Components consume `--area-accent` ("the current
@@ -327,6 +328,9 @@
 }
 [data-area='konsil'] {
   --area-accent: var(--area-konsil);
+}
+[data-area='ci'] {
+  --area-accent: var(--area-ci);
 }
 
 @layer base {
@@ -3259,8 +3263,7 @@
 
   .dashboard-page {
     width: 100%;
-    height: 100%;
-    min-height: 100dvh;
+    min-height: 0;
     overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -3855,6 +3858,17 @@
     flex-direction: column;
     gap: 0.25rem;
     padding: 0.875rem;
+  }
+
+  button.dashboard-kpi {
+    width: 100%;
+    margin: 0;
+    border: 1px solid var(--border-soft);
+    background: var(--surface);
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    appearance: none;
   }
 
   .dashboard-kpi__icon {
@@ -4939,7 +4953,8 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-    height: 100dvh;
+    min-height: 0;
+    height: 100%;
     overflow: hidden;
   }
 

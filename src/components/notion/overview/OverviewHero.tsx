@@ -23,7 +23,7 @@ interface OverviewHeroProps {
 export function OverviewHero({ data, caseId, metaVersion = 0, onClinicalSubheadingChange }: OverviewHeroProps) {
   const { t, language } = useTranslation()
 
-  const { name, metaLine, isAssigned } = useMemo(() => {
+  const { name, demographics, isAssigned } = useMemo(() => {
     void metaVersion
     return buildClinicalHeroMeta(caseId, t)
   }, [caseId, metaVersion, t])
@@ -61,7 +61,7 @@ export function OverviewHero({ data, caseId, metaVersion = 0, onClinicalSubheadi
     <div className="ov-hero-widget">
       <ClinicalHeroStrip
         name={name}
-        metaLine={metaLine}
+        demographics={demographics}
         caseId={isAssigned && caseId !== DEFAULT_CASE_ID ? caseId : undefined}
         thesis={thesis}
         thesisEditable

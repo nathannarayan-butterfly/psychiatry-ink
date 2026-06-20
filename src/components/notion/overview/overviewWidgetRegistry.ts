@@ -236,6 +236,33 @@ export const OVERVIEW_WIDGET_REGISTRY: Record<OverviewWidgetId, OverviewWidgetDe
     singleton: true,
     visibility: 'always',
   },
+  'ci-dimensional': {
+    id: 'ci-dimensional',
+    titleKey: 'overviewWidgetCiDimensional',
+    descriptionKey: 'overviewWidgetDescCiDimensional',
+    defaultWidth: 'half',
+    sizeHint: 'tall',
+    singleton: true,
+    visibility: 'clinicalIntelligenceEnabled',
+  },
+  'ci-mechanism': {
+    id: 'ci-mechanism',
+    titleKey: 'overviewWidgetCiMechanism',
+    descriptionKey: 'overviewWidgetDescCiMechanism',
+    defaultWidth: 'half',
+    sizeHint: 'tall',
+    singleton: true,
+    visibility: 'clinicalIntelligenceEnabled',
+  },
+  'ci-status': {
+    id: 'ci-status',
+    titleKey: 'overviewWidgetCiStatus',
+    descriptionKey: 'overviewWidgetDescCiStatus',
+    defaultWidth: 'half',
+    sizeHint: 'standard',
+    singleton: true,
+    visibility: 'clinicalIntelligenceEnabled',
+  },
 }
 
 export const OVERVIEW_WIDGET_LIST = Object.values(OVERVIEW_WIDGET_REGISTRY)

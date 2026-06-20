@@ -9,15 +9,11 @@ import type { EnglishVariant, SettingsSectionId, UiLanguage } from '../../types/
 import type { AssessmentStandard } from '../../types/isdm'
 import { AppearanceSection } from './AppearanceSection'
 import { WorkspaceSection } from './WorkspaceSection'
-import {
-  AboutSection,
-  AccountSection,
-  DocumentationSection,
-  LanguageSection,
-} from './PlaceholderSection'
+import { AboutSection, LanguageSection } from './PlaceholderSection'
 import { KiInstructionsSettings } from './KiInstructionsSettings'
-import { AiUsageTrackerPanel } from './AiUsageTrackerPanel'
+import { KiModelSettings } from './KiModelSettings'
 import type { useKiInstructions } from '../../hooks/useKiInstructions'
+import { useAiModelPreferences } from '../../hooks/useAiModelPreferences'
 import { PatientPrivacySection } from './PatientPrivacySection'
 import { LabImportSection } from './LabImportSection'
 import { ParserOptimizationSection } from './ParserOptimizationSection'
@@ -67,28 +63,33 @@ export function SettingsPage({
   workspaceVault,
 }: SettingsPageProps) {
   const { t } = useTranslation()
+  const modelPreferences = useAiModelPreferences()
 
   const sectionGroups: SettingsSectionGroup[] = useMemo(
     () => [
       {
         groupLabel: t('settingsNavGroupGeneral'),
         items: [
-          { id: 'workspace', label: t('settingsWorkspace') },
           { id: 'language', label: t('settingsLanguage') },
-          { id: 'documentation', label: t('settingsDocumentation') },
-          { id: 'lab', label: t('settingsLab') },
-          { id: 'parser-optimization', label: t('settingsParserOptimization') },
-          { id: 'overview-widgets', label: t('settingsOverviewWidgets') },
-          { id: 'kb-admin', label: 'KB Admin' },
+          { id: 'appearance', label: t('settingsAppearance') },
+          { id: 'workspace', label: t('settingsWorkspace') },
         ],
       },
       {
+        groupLabel: t('settingsNavGroupDocumentation'),
         items: [
-          { id: 'appearance', label: t('settingsAppearance') },
+          { id: 'lab', label: t('settingsLab') },
+          { id: 'parser-optimization', label: t('settingsParserOptimization') },
+          { id: 'overview-widgets', label: t('settingsOverviewWidgets') },
+        ],
+      },
+      {
+        groupLabel: t('settingsNavGroupSystem'),
+        items: [
           { id: 'ai', label: t('settingsAi') },
           { id: 'privacy', label: t('settingsPrivacy') },
-          { id: 'account', label: t('account') },
           { id: 'about', label: t('settingsAbout') },
+          { id: 'kb-admin', label: t('settingsKbAdmin') },
         ],
       },
     ],
@@ -121,7 +122,6 @@ export function SettingsPage({
         creditBalance={creditBalance}
       />
 
-      {/* Right content area */}
       <div className="settings-fullpage__content settings-sidebar-main">
         <div className="case-main-top-bar">
           <button
@@ -150,22 +150,20 @@ export function SettingsPage({
               onSelectAssessmentStandard={onSelectAssessmentStandard}
             />
           ) : null}
-          {activeSection === 'documentation' ? <DocumentationSection /> : null}
           {activeSection === 'lab' ? <LabImportSection /> : null}
           {activeSection === 'parser-optimization' ? <ParserOptimizationSection /> : null}
           {activeSection === 'overview-widgets' ? <OverviewWidgetsSettingsSection /> : null}
           {activeSection === 'kb-admin' ? <KbAdminSection /> : null}
           {activeSection === 'ai' ? (
             <>
+              <KiModelSettings modelPreferences={modelPreferences} />
               <KiInstructionsSettings
                 kiInstructions={kiInstructions}
                 aiAutoMode={aiAutoMode}
                 onToggleAiAuto={onToggleAiAuto}
               />
-              <AiUsageTrackerPanel />
             </>
           ) : null}
-          {activeSection === 'account' ? <AccountSection /> : null}
           {activeSection === 'privacy' ? (
             <PatientPrivacySection privacy={privacy} workspaceVault={workspaceVault} />
           ) : null}

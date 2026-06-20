@@ -6,8 +6,7 @@ import { useAccountDisplayName } from '../../hooks/useAccountDisplayName'
 import type { SettingsSectionId } from '../../types/settings'
 import { NotificationBell } from '../NotificationBell'
 import { TodoQuickAdd } from '../todos/TodoQuickAdd'
-import { ButterflyLogo } from '../ButterflyLogo'
-import { AskButterflyChatDialog } from './AskButterflyChatDialog'
+import { AskButterflyOpenButton } from './AskButterflyOpenButton'
 import { CreditsPurchaseDialog } from './CreditsPurchaseDialog'
 
 interface CaseSidebarUserFooterProps {
@@ -31,7 +30,6 @@ export function CaseSidebarUserFooter({
   const { signOut, isConfigured } = useAuth()
   const displayName = useAccountDisplayName()
   const [creditsDialogOpen, setCreditsDialogOpen] = useState(false)
-  const [askButterflyOpen, setAskButterflyOpen] = useState(false)
   const [todoQuickAddOpen, setTodoQuickAddOpen] = useState(false)
 
   const creditsTooltip = t('creditsRemaining').replace('{balance}', String(creditBalance))
@@ -41,15 +39,7 @@ export function CaseSidebarUserFooter({
       <span className="case-sidebar-user-footer__name">{displayName}</span>
 
       <div className="case-sidebar-user-footer__actions">
-        <button
-          type="button"
-          className={`${ACTION_BTN}${askButterflyOpen ? ` ${ACTION_BTN}--open` : ''}`}
-          onClick={() => setAskButterflyOpen(true)}
-          title={t('askButterflyOpen')}
-          aria-label={t('askButterflyOpen')}
-        >
-          <ButterflyLogo variant="grey" size={22} />
-        </button>
+        <AskButterflyOpenButton variant="sidebar" />
 
         <button
           type="button"
@@ -114,10 +104,6 @@ export function CaseSidebarUserFooter({
             window.location.href = '/#pricing'
           }}
         />
-      ) : null}
-
-      {askButterflyOpen ? (
-        <AskButterflyChatDialog onClose={() => setAskButterflyOpen(false)} />
       ) : null}
 
       {todoQuickAddOpen ? (

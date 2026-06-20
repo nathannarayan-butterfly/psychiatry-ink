@@ -25,6 +25,7 @@ import { butterflyRouter } from './routes/butterfly'
 import { askButterflyRouter } from './routes/askButterfly'
 import { documentImportMappingRouter } from './routes/documentImportMapping'
 import { psychopathExtractRouter } from './routes/psychopathExtract'
+import { clinicalIntelligenceRouter } from './routes/clinicalIntelligence'
 import { clinicalMetadataRouter } from './routes/clinicalMetadata'
 import { consultationRouter } from './routes/consultation'
 import { orgRouter } from './routes/org'
@@ -42,6 +43,7 @@ import { demoPatientRouter } from './routes/demoPatient'
 import { aiBudgetRouter, aiUsageRouter } from './routes/aiUsage'
 import { liveKitMissingEnvVars } from './services/livekitVoice'
 import {
+  isClinicalIntelligenceV1Enabled,
   isEnterpriseOrgHierarchyEnabled,
   isPsychopathExtractAiEnabled,
 } from './utils/featureFlags'
@@ -89,6 +91,7 @@ app.use('/api/butterfly', butterflyRouter)
 app.use('/api/ask-butterfly', askButterflyRouter)
 app.use('/api/document-import', documentImportMappingRouter)
 app.use('/api/psychopath', psychopathExtractRouter)
+app.use('/api/clinical-intelligence', clinicalIntelligenceRouter)
 app.use('/api/clinical-metadata', clinicalMetadataRouter)
 app.use('/api/consultation', consultationRouter)
 app.use('/api/org', orgRouter)
@@ -115,6 +118,7 @@ app.listen(port, () => {
   console.log(`[api] listening on http://127.0.0.1:${port}`)
   console.log(`[api] keys: OPENAI=${openai ? 'yes' : 'no'} DEEPSEEK=${deepseek ? 'yes' : 'no'} LIVEKIT=${livekit ? 'yes' : 'no'}`)
   console.log(`[api] psychopath extract AI: ${isPsychopathExtractAiEnabled() ? 'enabled' : 'disabled (set ENABLE_PSYCHOPATH_EXTRACT_AI=true in .env.local and restart api)'}`)
+  console.log(`[api] clinical intelligence V1: ${isClinicalIntelligenceV1Enabled() ? 'enabled' : 'disabled (set CLINICAL_INTELLIGENCE_V1_ENABLED=true in .env.local and restart api)'}`)
   if (livekit) {
     console.log('[api] LiveKit: configured')
   } else {

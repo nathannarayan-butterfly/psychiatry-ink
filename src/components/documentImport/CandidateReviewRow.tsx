@@ -318,8 +318,8 @@ function CandidateFields({
       )}
       <Field label={t('documentImportFieldText')}>
         <textarea
-          className="doc-import-textarea"
-          rows={4}
+          className="doc-import-textarea doc-import-textarea--section"
+          rows={sectionTextRows(data.text)}
           value={data.text ?? ''}
           onChange={(e) => onChange({ text: e.target.value })}
         />
@@ -335,6 +335,12 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       {children}
     </label>
   )
+}
+
+/** Size section editors so full imported text is visible without excessive scrolling. */
+function sectionTextRows(text: string | undefined): number {
+  const lines = (text ?? '').split('\n').length
+  return Math.max(10, Math.min(32, lines + 2))
 }
 
 function formatLocation(candidate: ClinicalImportCandidate): string {

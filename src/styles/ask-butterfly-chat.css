@@ -12,6 +12,16 @@
   backdrop-filter: blur(2px);
 }
 
+.ask-butterfly-overlay--floating {
+  pointer-events: none;
+  background: transparent;
+  backdrop-filter: none;
+}
+
+.ask-butterfly-overlay--floating .ask-butterfly-dialog--floating {
+  pointer-events: auto;
+}
+
 .ask-butterfly-dialog {
   display: flex;
   flex-direction: column;
@@ -24,6 +34,299 @@
     0 18px 48px color-mix(in srgb, #0f1419 18%, transparent),
     0 2px 8px color-mix(in srgb, #0f1419 8%, transparent);
   overflow: hidden;
+}
+
+.ask-butterfly-dialog--floating {
+  position: relative;
+  width: min(26rem, calc(100vw - 2rem));
+  max-height: min(72vh, calc(100vh - 2rem));
+  overflow: hidden;
+}
+
+.ask-butterfly-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.ask-butterfly-panel--floating {
+  min-height: 0;
+}
+
+.ask-butterfly-dialog--floating.ask-butterfly-dialog--dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.ask-butterfly-panel--docked {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  width: 100%;
+  max-height: none;
+}
+
+.ask-butterfly-panel--docked .ask-butterfly-dialog__messages {
+  min-height: 0;
+  flex: 1;
+}
+
+.ask-butterfly-dialog__header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.ask-butterfly-dialog__icon-btn,
+.ask-butterfly-dialog__drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 1px solid var(--cm-quiet-border, #ece8e3);
+  border-radius: 0.4rem;
+  background: transparent;
+  color: var(--text-muted, #6b7280);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.ask-butterfly-dialog__drag-handle {
+  cursor: grab;
+  touch-action: none;
+}
+
+.ask-butterfly-dialog__drag-handle:active {
+  cursor: grabbing;
+}
+
+.ask-butterfly-dialog__icon-btn:hover,
+.ask-butterfly-dialog__drag-handle:hover {
+  background: color-mix(in srgb, var(--text-primary, #1a1a1a) 5%, transparent);
+  color: var(--text-primary, #1a1a1a);
+}
+
+.ask-butterfly-dialog__icon-btn svg,
+.ask-butterfly-dialog__drag-handle svg {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+/* —— App shell (global dock margin) —— */
+
+.app-shell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100dvh;
+  min-height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  background: var(--app-bg);
+}
+
+.app-shell__content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Standalone pages and the case workspace must fill the shell — not 100dvh twice. */
+.app-shell__content > .notion-preview-app,
+.app-shell__content > .dashboard-page,
+.app-shell__content > .settings-fullpage-host {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.app-shell__content > .notion-preview-app {
+  height: 100%;
+  max-height: 100%;
+}
+
+.ask-butterfly-global-trigger {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 24;
+}
+
+.app-shell:has(.case-sidebar-user-footer) .ask-butterfly-global-trigger,
+.app-shell:has(.dashboard-topbar) .ask-butterfly-global-trigger {
+  display: none;
+}
+
+.ask-butterfly-open-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--cm-quiet-border, #ece8e3);
+  border-radius: 0.5rem;
+  background: var(--surface-elevated, #fff);
+  color: var(--text-muted, #6b7280);
+  cursor: pointer;
+  box-shadow: 0 4px 16px color-mix(in srgb, #0f1419 10%, transparent);
+}
+
+.ask-butterfly-open-btn .butterfly-logo {
+  object-fit: contain;
+}
+
+.ask-butterfly-open-btn:hover {
+  color: var(--text-primary, #1a1a1a);
+  border-color: var(--cm-hairline, #e8e4df);
+}
+
+.ask-butterfly-open-btn--global {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+}
+
+.ask-butterfly-open-btn--topbar {
+  width: 2rem;
+  height: 2rem;
+  box-shadow: none;
+}
+
+.ask-butterfly-open-btn--open,
+.case-sidebar-user-footer__action-btn--open {
+  color: var(--accent, #4a6fa5);
+  border-color: color-mix(in srgb, var(--accent, #4a6fa5) 35%, transparent);
+}
+
+.ask-butterfly-tier-segment {
+  display: flex;
+  flex-shrink: 0;
+  gap: 0.2rem;
+  margin: 0 0.75rem 0.65rem;
+  padding: 0.2rem;
+  border: 1px solid var(--cm-quiet-border, #ece8e3);
+  border-radius: 0.45rem;
+  background: color-mix(in srgb, var(--bg-primary, #faf9f7) 88%, transparent);
+}
+
+.ask-butterfly-tier-segment__btn {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-width: 0;
+  padding: 0.28rem 0.35rem;
+  border: none;
+  border-radius: 0.35rem;
+  background: transparent;
+  color: var(--text-muted, #6b7280);
+  font-size: 0.68rem;
+  font-weight: 500;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.ask-butterfly-tier-segment__btn:hover {
+  color: var(--text-primary, #1a1a1a);
+  background: color-mix(in srgb, var(--text-primary, #1a1a1a) 4%, transparent);
+}
+
+.ask-butterfly-tier-segment__btn--active {
+  color: var(--text-primary, #1a1a1a);
+  background: var(--surface-elevated, #fff);
+  box-shadow: 0 1px 3px color-mix(in srgb, #0f1419 8%, transparent);
+}
+
+.ask-butterfly-tier-segment__icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+.ask-butterfly-tier-segment__icon svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.ask-butterfly-tier-segment__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ask-butterfly-panel--docked .ask-butterfly-tier-segment__label {
+  display: none;
+}
+
+.ask-butterfly-panel--docked .ask-butterfly-tier-segment__btn {
+  padding-inline: 0.4rem;
+}
+
+/* —— Docked right panel —— */
+
+.ask-butterfly-dock-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--cm-hairline, #e8e4df);
+  background: var(--surface-elevated, #fff);
+  box-shadow: -4px 0 24px color-mix(in srgb, #0f1419 8%, transparent);
+  transform: translateX(100%);
+  transition: transform 0.2s ease;
+  pointer-events: none;
+}
+
+.ask-butterfly-dock-panel--open {
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ask-butterfly-dock-panel {
+    transition: none;
+  }
+}
+
+.ask-butterfly-dock-panel__resize-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -3px;
+  width: 6px;
+  cursor: col-resize;
+  touch-action: none;
+  z-index: 2;
+}
+
+.ask-butterfly-dock-panel__resize-handle:hover {
+  background: color-mix(in srgb, var(--accent, #4a6fa5) 18%, transparent);
+}
+
+.ask-butterfly-dock-panel__inner {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 .ask-butterfly-dialog__header {
@@ -52,6 +355,7 @@
 .ask-butterfly-dialog__mark .butterfly-logo {
   width: 1.75rem;
   height: 1.75rem;
+  object-fit: contain;
 }
 
 .ask-butterfly-dialog__title {
@@ -288,5 +592,24 @@
 
   .ask-butterfly-dialog__messages {
     min-height: 12rem;
+  }
+
+  .ask-butterfly-dock-panel {
+    top: auto;
+    left: 0;
+    width: 100% !important;
+    max-height: min(45vh, 28rem);
+    border-left: none;
+    border-top: 1px solid var(--cm-hairline, #e8e4df);
+    box-shadow: 0 -4px 24px color-mix(in srgb, #0f1419 8%, transparent);
+    transform: translateY(100%);
+  }
+
+  .ask-butterfly-dock-panel--open {
+    transform: translateY(0);
+  }
+
+  .ask-butterfly-dock-panel__resize-handle {
+    display: none;
   }
 }

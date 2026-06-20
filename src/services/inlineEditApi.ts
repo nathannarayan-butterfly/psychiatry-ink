@@ -1,4 +1,5 @@
 import { clinicalApiFetch, getClinicalApiLanguage, parseClinicalApiError } from './clinicalApiFetch'
+import { resolveLlmRequestForTask } from '../utils/resolveAiModel'
 
 export interface InlineEditRequest {
   caseId?: string
@@ -25,6 +26,7 @@ export interface TranscribeInstructionResponse {
 
 /** Ask the server to rewrite the selected passage per the instruction. */
 export async function requestInlineEdit(input: InlineEditRequest): Promise<InlineEditResponse> {
+  const llm = resolveLlmRequestForTask('inline_edit')
   const response = await clinicalApiFetch('/api/inline-edit', {
     method: 'POST',
     body: JSON.stringify({
@@ -33,7 +35,8 @@ export async function requestInlineEdit(input: InlineEditRequest): Promise<Inlin
       contextBefore: input.contextBefore,
       contextAfter: input.contextAfter,
       instruction: input.instruction,
-      tier: input.tier ?? 'fast',
+      tier: input.tier ?? llm.tier,
+      model: llm.model,
       language: input.language ?? getClinicalApiLanguage(),
     }),
   })

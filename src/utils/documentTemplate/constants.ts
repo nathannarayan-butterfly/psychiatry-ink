@@ -1,6 +1,6 @@
 import type { TemplateCategory, TemplateFieldType } from '../../types/documentTemplate'
 
-export type FieldMenuCategory = 'text' | 'form' | 'placeholders' | 'layout' | 'page'
+export type FieldMenuCategory = 'text' | 'form' | 'placeholders' | 'dynamic' | 'layout' | 'page'
 
 export interface FieldMenuItem {
   type: TemplateFieldType | 'page_settings'
@@ -43,11 +43,13 @@ export const FIELD_MENU_CATEGORIES: Array<{ id: FieldMenuCategory; labelDe: stri
   { id: 'text', labelDe: 'Text', labelEn: 'Text' },
   { id: 'form', labelDe: 'Formular', labelEn: 'Form' },
   { id: 'placeholders', labelDe: 'Platzhalter', labelEn: 'Placeholders' },
+  { id: 'dynamic', labelDe: 'Patientendaten', labelEn: 'Patient data' },
   { id: 'layout', labelDe: 'Layout', labelEn: 'Layout' },
   { id: 'page', labelDe: 'Seite', labelEn: 'Page' },
 ]
 
 export function fieldTypeLabel(type: TemplateFieldType, lang: 'de' | 'en'): string {
+  if (type === 'dynamic') return lang === 'de' ? 'Dynamisch' : 'Dynamic'
   const item = FIELD_MENU_ITEMS.find((i) => i.type === type)
   if (item) return lang === 'de' ? item.labelDe : item.labelEn
   return type.replace(/_/g, ' ')

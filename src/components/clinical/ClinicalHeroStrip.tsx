@@ -2,9 +2,15 @@ import { useEffect, useState } from 'react'
 import { Check, Pencil, X } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
 import { upsertCaseMeta } from '../../hooks/useCaseRegistry'
+import {
+  CLINICAL_HERO_MISSING,
+  type ClinicalHeroDemographics,
+} from '../../utils/overview/clinicalHeroMeta'
 
 interface ClinicalHeroStripProps {
   name: string
+  demographics: ClinicalHeroDemographics
+  /** @deprecated Use `demographics` — retained for legacy callers during migration. */
   metaLine?: string | null
   caseId?: string | null
   thesis?: string | null
@@ -15,10 +21,21 @@ interface ClinicalHeroStripProps {
   onThesisChange?: () => void
 }
 
+const DEMOGRAPHIC_FIELDS: Array<{
+  key: keyof ClinicalHeroDemographics
+  labelKey: 'patientFieldGeburtsdatum' | 'patientAgeLabel' | 'patientFieldGeschlecht' | 'patientFieldAufnahmedatum'
+}> = [
+  { key: 'dob', labelKey: 'patientFieldGeburtsdatum' },
+  { key: 'age', labelKey: 'patientAgeLabel' },
+  { key: 'sex', labelKey: 'patientFieldGeschlecht' },
+  { key: 'admission', labelKey: 'patientFieldAufnahmedatum' },
+]
+
 /** Typographic patient hero — name in theme accent, demographics inline, optional clinical thesis. */
 export function ClinicalHeroStrip({
   name,
-  metaLine,
+  demographics,
+  metaLine: _metaLine,
   caseId,
   thesis,
   className,
@@ -53,9 +70,16 @@ export function ClinicalHeroStrip({
     <header className={classes} aria-label="Patient">
       <div className="cm-hero__row">
         <h1 className="cm-hero__name">{name}</h1>
-        {metaLine ? <span className="cm-hero__meta">{metaLine}</span> : null}
         {caseId ? <span className="cm-hero__case-id">{caseId}</span> : null}
       </div>
+      <dl className="cm-hero__demographics">
+        {DEMOGRAPHIC_FIELDS.map(({ key, labelKey }) => (
+          <div key={key} className="cm-hero__fact">
+            <dt className="cm-hero__fact-label">{t(labelKey)}</dt>
+            <dd className="cm-hero__fact-value">{demographics[key] ?? CLINICAL_HERO_MISSING}</dd>
+          </div>
+        ))}
+      </dl>
       {canEdit || thesis ? (
         <div className="cm-hero__thesis-row">
           {editing ? (

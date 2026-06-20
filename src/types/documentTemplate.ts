@@ -1,3 +1,5 @@
+import type { PatientDynamicKey } from '../data/documentTemplate/dynamicFields'
+
 export type TemplateFieldType =
   | 'static_text'
   | 'short_text'
@@ -18,6 +20,7 @@ export type TemplateFieldType =
   | 'case_placeholder'
   | 'clinician_placeholder'
   | 'organization_placeholder'
+  | 'dynamic'
   | 'signature'
   | 'ai_assisted_text'
   | 'heading'
@@ -79,6 +82,8 @@ export interface TemplateField {
   options?: TemplateFieldOption[]
   /** Placeholder binding, e.g. patient.name, case.diagnosis, system.date */
   binding?: string
+  /** Dynamic patient/case token — resolved at document generation time. */
+  dynamicKey?: PatientDynamicKey
   helperText?: string
   /** Unit suffix for number_with_unit, e.g. EUR, mg */
   unit?: string
@@ -126,11 +131,20 @@ export interface TemplateRenderContext {
     geburtsdatum?: string
     geschlecht?: string
     age?: string
+    height?: string
+    weight?: string
+    bmi?: string
+    address?: string
+    kostentraeger?: string
   }
   case?: {
     diagnosis?: string
     ward?: string
     caseId?: string
+    aufnahmedatum?: string
+    entlassungsdatum?: string
+    aufenthaltsdauer?: string
+    medikationKurz?: string
   }
   clinician?: {
     name?: string
@@ -144,5 +158,6 @@ export interface TemplateRenderContext {
     date?: string
     time?: string
     year?: string
+    documentDate?: string
   }
 }

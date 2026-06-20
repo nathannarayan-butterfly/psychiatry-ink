@@ -8,6 +8,7 @@
 import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
 import { callLlm } from '../services/llmProvider'
+import { parseLlmModelRequest } from '../ai/parseLlmModelRequest'
 import { isDocumentImportAiEnabled } from '../utils/featureFlags'
 import {
   CANDIDATE_MODULES,
@@ -26,7 +27,11 @@ import {
 export const documentImportMappingRouter: Router = createRouter()
 
 function isLlmMockMode(): boolean {
-  return !process.env.OPENAI_API_KEY?.trim() && !process.env.DEEPSEEK_API_KEY?.trim()
+  return (
+    !process.env.OPENAI_API_KEY?.trim() &&
+    !process.env.DEEPSEEK_API_KEY?.trim() &&
+    !process.env.GOOGLE_API_KEY?.trim()
+  )
 }
 
 const MODULE_SET = new Set<string>(CANDIDATE_MODULES)
@@ -80,7 +85,14 @@ documentImportMappingRouter.post('/suggest-mapping', async (req: Request, res: R
   )
 
   try {
-    const result = await callLlm({ tier: 'fast', systemPrompt, userPrompt, jsonResponse: true })
+    const llmModel = parseLlmModelRequest((req.body ?? {}) as Record<string, unknown>, 'fast')
+    const result = await callLlm({
+      tier: llmModel.tier,
+      model: llmModel.model,
+      systemPrompt,
+      userPrompt,
+      jsonResponse: true,
+    })
     const suggestions = extractSuggestions(result.text, parsed.data.items)
     const response: ImportMappingResponse = { suggestions }
     res.json(response)
@@ -176,7 +188,14 @@ documentImportMappingRouter.post('/analyze', async (req: Request, res: Response)
   })
 
   try {
-    const result = await callLlm({ tier: 'fast', systemPrompt, userPrompt, jsonResponse: true })
+    const llmModel = parseLlmModelRequest((req.body ?? {}) as Record<string, unknown>, 'fast')
+    const result = await callLlm({
+      tier: llmModel.tier,
+      model: llmModel.model,
+      systemPrompt,
+      userPrompt,
+      jsonResponse: true,
+    })
     const analyze = extractAnalyzeResponse(result.text, mappingItems, metadata)
     res.json(analyze)
   } catch (error) {

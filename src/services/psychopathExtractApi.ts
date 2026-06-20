@@ -1,4 +1,5 @@
 import { clinicalApiFetch, parseClinicalApiError } from './clinicalApiFetch'
+import { resolveLlmRequestForTask } from '../utils/resolveAiModel'
 import {
   PsychopathExtractResponseSchema,
   type PsychopathExtractRequest,
@@ -13,9 +14,10 @@ import {
 export async function requestPsychopathExtract(
   request: PsychopathExtractRequest,
 ): Promise<PsychopathExtractResponse> {
+  const llm = resolveLlmRequestForTask('psychopath_extract')
   const response = await clinicalApiFetch('/api/psychopath/extract', {
     method: 'POST',
-    body: JSON.stringify(request),
+    body: JSON.stringify({ ...request, ...llm }),
   })
 
   if (!response.ok) {

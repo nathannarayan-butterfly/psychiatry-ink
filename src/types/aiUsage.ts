@@ -22,6 +22,9 @@ export type AiFeatureKey =
   | 'prior_therapies'
   | 'clinical_metadata_extraction'
   | 'inline_text_edit'
+  | 'clinical_intelligence_dimensional'
+  | 'clinical_intelligence_mechanism'
+  | 'clinical_intelligence_discuss'
   | 'unknown'
 
 export type AiUsageSource = 'provider_reported' | 'estimated_from_chars'

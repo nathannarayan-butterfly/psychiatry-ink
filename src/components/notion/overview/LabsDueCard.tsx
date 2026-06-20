@@ -21,9 +21,18 @@ function LabRow({ item }: { item: LabDueItem }) {
   const arrow = trendArrow(item.trend)
   return (
     <div className={`ov-lab ${abnormal ? 'ov-lab--abnormal' : ''}`.trim()}>
-      <div className="ov-lab__main">
-        <span className="ov-lab__name">{item.name}</span>
+      <div className="ov-lab__content">
+        <div className="ov-lab__reading">
+          <span className="ov-lab__name">{item.name}</span>
+          {item.valueLabel ? <span className="ov-lab__num">{item.valueLabel}</span> : null}
+        </div>
         {item.rationale ? <span className="ov-lab__rationale">{item.rationale}</span> : null}
+        {item.refLabel || item.dateLabel ? (
+          <div className="ov-lab__meta">
+            {item.refLabel ? <span className="ov-lab__ref">Ref: {item.refLabel}</span> : null}
+            {item.dateLabel ? <span className="ov-lab__date">{item.dateLabel}</span> : null}
+          </div>
+        ) : null}
       </div>
       {item.trend.length >= 2 ? (
         <div className="ov-lab__spark">
@@ -31,11 +40,6 @@ function LabRow({ item }: { item: LabDueItem }) {
           {arrow ? <span className="ov-lab__arrow" aria-hidden>{arrow}</span> : null}
         </div>
       ) : null}
-      <div className="ov-lab__value">
-        {item.valueLabel ? <span className="ov-lab__num">{item.valueLabel}</span> : null}
-        {item.refLabel ? <span className="ov-lab__ref">Ref: {item.refLabel}</span> : null}
-        {item.dateLabel ? <span className="ov-lab__date">{item.dateLabel}</span> : null}
-      </div>
     </div>
   )
 }

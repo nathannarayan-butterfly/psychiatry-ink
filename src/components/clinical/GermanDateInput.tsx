@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
-import { isoToGermanDate, parseGermanDateInput } from '../../utils/documentImport/dateAssociation'
+import {
+  isoToGermanDate,
+  parseGermanDateInput,
+  parseGermanDateInputDraft,
+} from '../../utils/documentImport/dateAssociation'
 
 interface GermanDateInputProps {
   isoValue?: string
@@ -11,6 +15,11 @@ interface GermanDateInputProps {
   disabled?: boolean
   autoComplete?: string
   'aria-label'?: string
+}
+
+/** True while the year segment has 1–3 digits (user still typing a 4-digit year). */
+function hasPartialYear(value: string): boolean {
+  return /^(\d{1,2})\.(\d{1,2})\.(\d{1,3})$/.test(value.trim())
 }
 
 /** Date field using German clinical DD.MM.YYYY display; stores ISO internally. */
@@ -39,6 +48,7 @@ export function GermanDateInput({
       setDraft('')
       return
     }
+    if (hasPartialYear(trimmed)) return
     const parsed = parseGermanDateInput(trimmed)
     if (parsed) {
       onIsoChange(parsed)
@@ -67,7 +77,7 @@ export function GermanDateInput({
           onIsoChange(undefined)
           return
         }
-        const parsed = parseGermanDateInput(trimmed)
+        const parsed = parseGermanDateInputDraft(trimmed)
         if (parsed) onIsoChange(parsed)
       }}
       onBlur={() => commitDraft(draft)}

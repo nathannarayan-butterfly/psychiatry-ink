@@ -5,8 +5,8 @@
  * candidates.
  *
  * The text extraction step is injectable so the section-mapping logic can be unit
- * tested without binary .docx fixtures (and so mammoth — a browser bundle — is
- * never loaded in Node test runs).
+ * never loaded in Node test runs). The mammoth dependency itself lives in
+ * `mammothClient.ts` and is code-split behind a dynamic import.
  */
 import { consolidateImportCandidates } from '../consolidateCandidates'
 import { mapSectionToCandidates, sectionizeClinicalText, type SectionizeOptions } from '../sectionize'
@@ -17,13 +17,10 @@ import type { ClinicalImportCandidate, ImportNotice } from '../../../schemas/doc
 
 export type DocxTextExtractor = (buffer: ArrayBuffer) => Promise<string>
 
-/** Default extractor — lazily loads mammoth (Vite serves its browser build). */
+/** Default extractor — lazily loads mammoth via a dedicated client chunk. */
 export const defaultDocxExtractor: DocxTextExtractor = async (buffer) => {
-  const mammoth = (await import('mammoth')).default as {
-    extractRawText: (input: { arrayBuffer: ArrayBuffer }) => Promise<{ value: string }>
-  }
-  const result = await mammoth.extractRawText({ arrayBuffer: buffer })
-  return result.value
+  const { extractDocxRawText } = await import('./mammothClient')
+  return extractDocxRawText(buffer)
 }
 
 /**

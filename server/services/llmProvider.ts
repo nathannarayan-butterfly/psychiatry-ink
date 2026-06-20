@@ -1,7 +1,7 @@
+import { resolveLlmCallModel } from '../ai/resolveLlmCallModel'
 import {
   maxOutputTokensFor,
   missingApiKeyMessage,
-  resolveModelWithFallback,
   type AiModelSpec,
   type AiModelTier,
 } from '../modelTierMapping'
@@ -99,12 +99,19 @@ function mockCompletion(userPrompt: string, tier: AiModelTier): string {
 function providerApiKey(provider: AiModelSpec['provider']): string | undefined {
   if (provider === 'openai') return process.env.OPENAI_API_KEY
   if (provider === 'deepseek') return process.env.DEEPSEEK_API_KEY
+  if (provider === 'google') return process.env.GOOGLE_API_KEY
   return undefined
 }
 
 function providerBaseUrl(provider: AiModelSpec['provider']): string {
   if (provider === 'deepseek') {
     return process.env.DEEPSEEK_BASE_URL?.replace(/\/$/, '') ?? 'https://api.deepseek.com/v1'
+  }
+  if (provider === 'google') {
+    return (
+      process.env.GOOGLE_BASE_URL?.replace(/\/$/, '') ??
+      'https://generativelanguage.googleapis.com/v1beta/openai'
+    )
   }
   return process.env.OPENAI_BASE_URL?.replace(/\/$/, '') ?? 'https://api.openai.com/v1'
 }
@@ -144,21 +151,23 @@ async function logUsage(params: {
 }
 
 export async function callLlm(params: {
-  tier: AiModelTier
+  tier?: AiModelTier
+  model?: { provider: string; modelId: string }
   systemPrompt: string
   userPrompt: string
   maxTokens?: number
   jsonResponse?: boolean
   usageContext?: AiUsageContext
 }): Promise<LlmCallResult> {
-  const model = resolveModelWithFallback(params.tier)
+  const tier = params.tier ?? 'standard'
+  const model = resolveLlmCallModel({ tier: params.tier, model: params.model })
   const apiKey = providerApiKey(model.provider)
   const started = Date.now()
 
   if (!apiKey) {
-    console.warn(`[generate] mock mode (${params.tier}): ${missingApiKeyMessage(params.tier)}`)
+    console.warn(`[generate] mock mode (${tier}): ${missingApiKeyMessage(tier)}`)
     await new Promise((resolve) => setTimeout(resolve, 400))
-    const text = mockCompletion(params.userPrompt, params.tier)
+    const text = mockCompletion(params.userPrompt, tier)
     const usage = normalizeAiUsage({
       provider: model.provider,
       model: model.modelId,

@@ -89,7 +89,7 @@ describe('overviewLayout', () => {
   })
 
   it('registry includes all known widget ids', () => {
-    expect(OVERVIEW_WIDGET_IDS.length).toBe(24)
+    expect(OVERVIEW_WIDGET_IDS.length).toBe(27)
   })
 
   it('persists per-user layout in localStorage', () => {

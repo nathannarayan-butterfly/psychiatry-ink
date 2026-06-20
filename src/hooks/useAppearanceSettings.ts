@@ -1,11 +1,9 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useSyncExternalStore } from 'react'
 import {
-  applyAppearanceSettings,
-  migrateFontFamily,
-  migratePageType,
-  migratePaperColor,
-  migratePreferredAccentColor,
-} from '../data/appearancePresets'
+  getAppearanceSettingsSnapshot,
+  setAppearanceSettings,
+  subscribeAppearanceSettings,
+} from '../utils/devicePreferences'
 import {
   defaultAppearanceSettings,
   type AppearanceSettings,
@@ -18,40 +16,16 @@ import {
   type PreferredAccentColor,
   type WorkspaceScale,
 } from '../types/settings'
-import { safeSetItem } from '../utils/safeStorage'
-
-const STORAGE_KEY = 'psychiatry-ink-appearance'
-
-type StoredAppearance = AppearanceSettings & { colorScheme?: string }
-
-function loadSettings(): AppearanceSettings {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return defaultAppearanceSettings
-    const parsed = { ...defaultAppearanceSettings, ...JSON.parse(raw) } as StoredAppearance
-    parsed.preferredAccentColor = migratePreferredAccentColor(
-      parsed.preferredAccentColor,
-      parsed.colorScheme,
-    )
-    parsed.fontFamily = migrateFontFamily(parsed.fontFamily)
-    parsed.pageType = migratePageType(parsed.pageType)
-    parsed.paperColor = migratePaperColor(parsed.paperColor)
-    return parsed
-  } catch {
-    return defaultAppearanceSettings
-  }
-}
 
 export function useAppearanceSettings() {
-  const [settings, setSettings] = useState<AppearanceSettings>(loadSettings)
-
-  useEffect(() => {
-    applyAppearanceSettings(settings)
-    safeSetItem(STORAGE_KEY, JSON.stringify(settings))
-  }, [settings])
+  const settings = useSyncExternalStore(
+    subscribeAppearanceSettings,
+    getAppearanceSettingsSnapshot,
+    getAppearanceSettingsSnapshot,
+  )
 
   const update = useCallback((patch: Partial<AppearanceSettings>) => {
-    setSettings((current) => ({ ...current, ...patch }))
+    setAppearanceSettings((current) => ({ ...current, ...patch }))
   }, [])
 
   const setPreferredAccentColor = useCallback(
@@ -77,7 +51,7 @@ export function useAppearanceSettings() {
   const setPaperColor = useCallback((_paperColor: PaperColor) => {}, [])
 
   const resetAppearance = useCallback(() => {
-    setSettings(defaultAppearanceSettings)
+    setAppearanceSettings(defaultAppearanceSettings)
   }, [])
 
   return {

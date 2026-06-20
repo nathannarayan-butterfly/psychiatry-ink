@@ -55,6 +55,7 @@ import {
   buildCriterionQuestions,
   groupCriterionQuestionsByDiagnosis,
   type ButterflyCriterionQuestion,
+  type ButterflyDiagnosisQuestionGroup,
   type InterviewQuestionResolver,
 } from '../../utils/butterfly/criterionPrompts'
 import {
@@ -139,7 +140,7 @@ function provenanceFor(
  */
 function CollapsibleSection({
   title,
-  defaultOpen = true,
+  defaultOpen = false,
   children,
 }: {
   title: ReactNode
@@ -668,9 +669,9 @@ export function IsdmAnalysisPanel({
       </p>
       <p className="butterfly-panel__draft-notice">{t('butterflyDraftNotice')}</p>
 
-      <CollapsibleSection title={t('butterflyRecommendations')} defaultOpen>
+      <CollapsibleSection title={t('butterflyRecommendations')}>
         <ul className="butterfly-card-list">
-          {results.map((result, index) => {
+          {results.map((result) => {
             const displayLabel = diagnosisDisplayTitles.get(result.key) ?? result.code
             if (!result.available || !result.disorder || !result.evaluation) {
               return (
@@ -689,7 +690,6 @@ export function IsdmAnalysisPanel({
               <ButterflyDiagnosisCard
                 key={result.key}
                 t={t}
-                defaultOpen={index === 0}
                 disorder={result.disorder}
                 evaluation={result.evaluation}
                 label={displayLabel}
@@ -713,33 +713,23 @@ export function IsdmAnalysisPanel({
       </CollapsibleSection>
 
       {questionGroups.length > 0 ? (
-        <CollapsibleSection title={t('butterflyQuestions')} defaultOpen>
+        <CollapsibleSection title={t('butterflyQuestions')}>
           {/* The "record the answer → criterion" instruction is shown ONCE here,
               never repeated per question/criterion. */}
           <p className="butterfly-gap-list__hint">{t('butterflyQuestionSectionHint')}</p>
           <ul className="butterfly-gap-diagnosis-list">
             {questionGroups.map((group) => (
-              <li key={group.disorderId} className="butterfly-gap-diagnosis">
-                <div className="butterfly-gap-diagnosis__head">
-                  <span className="butterfly-gap-diagnosis__name">{group.label}</span>
-                  {group.code ? <span className="butterfly-gap-diagnosis__code">{group.code}</span> : null}
-                </div>
-                <ul className="butterfly-gap-list">
-                  {group.questions.map((question) => (
-                    <ButterflyCriterionQuestionItem
-                      key={question.id}
-                      question={question}
-                      noteDraft={noteDrafts[question.id] ?? ''}
-                      onNoteChange={(value) =>
-                        setNoteDrafts((prev) => ({ ...prev, [question.id]: value }))
-                      }
-                      onAnswer={handleAnswerQuestion}
-                      onJumpToSection={onJumpToSection}
-                      t={t}
-                    />
-                  ))}
-                </ul>
-              </li>
+              <ButterflyQuestionDiagnosisGroup
+                key={group.disorderId}
+                group={group}
+                noteDrafts={noteDrafts}
+                onNoteDraftChange={(questionId, value) =>
+                  setNoteDrafts((prev) => ({ ...prev, [questionId]: value }))
+                }
+                onAnswer={handleAnswerQuestion}
+                onJumpToSection={onJumpToSection}
+                t={t}
+              />
             ))}
           </ul>
         </CollapsibleSection>
@@ -747,6 +737,60 @@ export function IsdmAnalysisPanel({
 
       <p className="butterfly-panel__review-note">{t('isdmPanelClinicianReview')}</p>
     </div>
+  )
+}
+
+interface ButterflyQuestionDiagnosisGroupProps {
+  t: Translate
+  group: ButterflyDiagnosisQuestionGroup
+  noteDrafts: Record<string, string>
+  onNoteDraftChange: (questionId: string, value: string) => void
+  onAnswer: (question: ButterflyCriterionQuestion, resolution: ClinicalQuestionResolution) => void
+  onJumpToSection?: (pageId: NotionPageId) => void
+}
+
+/** Per-diagnosis collapsible block inside "Vorgeschlagene Fragen". */
+function ButterflyQuestionDiagnosisGroup({
+  t,
+  group,
+  noteDrafts,
+  onNoteDraftChange,
+  onAnswer,
+  onJumpToSection,
+}: ButterflyQuestionDiagnosisGroupProps) {
+  const [open, setOpen] = useState(false)
+  const bodyId = useId()
+
+  return (
+    <li className="butterfly-gap-diagnosis">
+      <button
+        type="button"
+        className="butterfly-gap-diagnosis__head butterfly-gap-diagnosis__toggle"
+        aria-expanded={open}
+        aria-controls={bodyId}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <ChevronDown className="butterfly-collapsible__chevron" size={16} aria-hidden />
+        <span className="butterfly-gap-diagnosis__name">{group.label}</span>
+        {group.code ? <span className="butterfly-gap-diagnosis__code">{group.code}</span> : null}
+        <span className="butterfly-gap-diagnosis__count">{group.questions.length}</span>
+      </button>
+      {open ? (
+        <ul id={bodyId} className="butterfly-gap-list">
+          {group.questions.map((question) => (
+            <ButterflyCriterionQuestionItem
+              key={question.id}
+              question={question}
+              noteDraft={noteDrafts[question.id] ?? ''}
+              onNoteChange={(value) => onNoteDraftChange(question.id, value)}
+              onAnswer={onAnswer}
+              onJumpToSection={onJumpToSection}
+              t={t}
+            />
+          ))}
+        </ul>
+      ) : null}
+    </li>
   )
 }
 
@@ -837,8 +881,6 @@ function ButterflyCriterionQuestionItem({
 
 interface ButterflyDiagnosisCardProps {
   t: Translate
-  /** Whether the card body starts expanded (top recommendation defaults open). */
-  defaultOpen?: boolean
   disorder: Disorder
   evaluation: DisorderEvaluation
   label: string
@@ -859,7 +901,6 @@ interface ButterflyDiagnosisCardProps {
 
 function ButterflyDiagnosisCard({
   t,
-  defaultOpen = false,
   disorder,
   evaluation,
   label,
@@ -883,7 +924,7 @@ function ButterflyDiagnosisCard({
   )
   const criteria = evaluation.perCriterion.filter((result) => !exclusionGroupIds.has(result.groupId))
   const hasUnresolved = criteria.some((result) => result.status === 'unknown' && result.source !== 'attested')
-  const [open, setOpen] = useState(defaultOpen)
+  const [open, setOpen] = useState(false)
   const [groupOpen, setGroupOpen] = useState(true)
   const bodyId = useId()
   const groupBodyId = useId()

@@ -573,7 +573,10 @@ export function getLastVaultExportAt(caseId?: string): string | null {
 export function shouldShowBackupReminder(
   tierAllowsDb: boolean,
   hasDbSnapshot: boolean,
+  hasAccountKeyBackup = false,
 ): boolean {
+  if (hasAccountKeyBackup || hasDbSnapshot) return false
+
   const lastExport = getLastVaultExportAt()
   const exportStale =
     !lastExport || Date.now() - new Date(lastExport).getTime() > BACKUP_REMINDER_MS
@@ -581,7 +584,7 @@ export function shouldShowBackupReminder(
   if (!exportStale) return false
 
   if (!tierAllowsDb) return true
-  return !hasDbSnapshot
+  return true
 }
 
 /** Non-PHI hint for dashboard cards (document type label, not page heading). */

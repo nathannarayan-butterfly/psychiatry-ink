@@ -7,6 +7,7 @@
 import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
 import { callLlm } from '../services/llmProvider'
+import { parseLlmModelRequest } from '../ai/parseLlmModelRequest'
 import { isPsychopathExtractAiEnabled } from '../utils/featureFlags'
 import {
   PSYCHOPATH_EXTRACT_FIELD_KEYS,
@@ -24,7 +25,11 @@ import { inferTriStateFromText, sanitizePsychopathDomainAssessment } from '../..
 export const psychopathExtractRouter: Router = createRouter()
 
 function isLlmMockMode(): boolean {
-  return !process.env.OPENAI_API_KEY?.trim() && !process.env.DEEPSEEK_API_KEY?.trim()
+  return (
+    !process.env.OPENAI_API_KEY?.trim() &&
+    !process.env.DEEPSEEK_API_KEY?.trim() &&
+    !process.env.GOOGLE_API_KEY?.trim()
+  )
 }
 
 /** Label → field heuristics for mock / fallback parsing. */
@@ -361,8 +366,10 @@ psychopathExtractRouter.post('/extract', async (req: Request, res: Response) => 
   ].join(' ')
 
   try {
+    const llmModel = parseLlmModelRequest((req.body ?? {}) as Record<string, unknown>, 'fast')
     const result = await callLlm({
-      tier: 'fast',
+      tier: llmModel.tier,
+      model: llmModel.model,
       systemPrompt,
       userPrompt: deidentifiedText,
       jsonResponse: true,

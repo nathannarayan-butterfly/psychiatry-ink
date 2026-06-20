@@ -1,13 +1,8 @@
 /**
- * Butterfly product mark (criteria support, Ask Butterfly, overview widgets).
- * Transparent icon-only PNGs derived from `Butterfly logo.png`.
+ * Butterfly product mark (Ask Butterfly chat, criteria support, overview widgets).
+ * Source: `Butetrfly-logo-transparent.png` (alpha matte removed from brand icon).
  */
-const colorModules = import.meta.glob('../assets/brand/butterfly-icon.png', {
-  eager: true,
-  import: 'default',
-}) as Record<string, string>
-
-const greyModules = import.meta.glob('../assets/brand/butterfly-icon-grey.png', {
+const logoModules = import.meta.glob('../assets/brand/Butetrfly-logo-transparent.png', {
   eager: true,
   import: 'default',
 }) as Record<string, string>
@@ -17,6 +12,7 @@ function firstSrc(modules: Record<string, string>): string | null {
   return values.length > 0 ? values[0] : null
 }
 
-export const butterflyLogoSrc = firstSrc(colorModules)
-export const butterflyLogoGreySrc = firstSrc(greyModules)
+export const butterflyLogoSrc = firstSrc(logoModules)
+/** Monochrome mark — same asset as color (logo is neutral grey). */
+export const butterflyLogoGreySrc = butterflyLogoSrc
 export const hasButterflyLogo = butterflyLogoSrc !== null

@@ -1,6 +1,7 @@
 import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
 import type { AiModelTier } from '../modelTierMapping'
+import { parseLlmModelRequest } from '../ai/parseLlmModelRequest'
 import { resolveAccountId } from '../middleware/auth'
 import { callLlm, llmResultModel } from '../services/llmProvider'
 import { resolveUsageContextFromRequest } from '../ai/usage/resolveUsageContext'
@@ -19,6 +20,7 @@ export interface AskButterflyMessage {
 export interface AskButterflyRequestBody {
   messages: AskButterflyMessage[]
   tier?: AiModelTier
+  model?: { provider: string; modelId: string }
   language?: 'de' | 'en' | 'fr' | 'es'
 }
 
@@ -30,13 +32,16 @@ export interface AskButterflyResponseBody {
 
 export const askButterflyRouter: Router = createRouter()
 
-const VALID_TIERS: AiModelTier[] = ['fast', 'standard', 'thorough']
 const MAX_MESSAGES = 40
 const MAX_MESSAGE_CHARS = 4000
 const MAX_TOTAL_CHARS = 24000
 
 function isLlmMockMode(): boolean {
-  return !process.env.OPENAI_API_KEY?.trim() && !process.env.DEEPSEEK_API_KEY?.trim()
+  return (
+    !process.env.OPENAI_API_KEY?.trim() &&
+    !process.env.DEEPSEEK_API_KEY?.trim() &&
+    !process.env.GOOGLE_API_KEY?.trim()
+  )
 }
 
 function normalizeMessages(raw: unknown): AskButterflyMessage[] | null {
@@ -88,9 +93,8 @@ askButterflyRouter.post('/', async (req: Request, res: Response) => {
     const language = requireClinicalLanguage(req, res, body.language)
     if (!language) return
 
-    const tier: AiModelTier = VALID_TIERS.includes(body.tier as AiModelTier)
-      ? (body.tier as AiModelTier)
-      : 'fast'
+    const llmModel = parseLlmModelRequest(body as unknown as Record<string, unknown>, 'standard')
+    const tier = llmModel.tier ?? 'standard'
 
     const languageName = resolveLanguageName(language)
     const systemPrompt = [
@@ -120,7 +124,7 @@ askButterflyRouter.post('/', async (req: Request, res: Response) => {
           })
         : undefined
 
-    const result = await callLlm({ tier, systemPrompt, userPrompt, usageContext })
+    const result = await callLlm({ tier, model: llmModel.model, systemPrompt, userPrompt, usageContext })
 
     if (userId && userId !== 'default') {
       void recordAiGenerationUsed(req, userId, {

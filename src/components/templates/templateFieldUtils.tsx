@@ -1,8 +1,26 @@
 import type { ReactNode } from 'react'
+import {
+  DYNAMIC_FIELD_CATALOG,
+  getDynamicFieldDefinition,
+  type PatientDynamicKey,
+} from '../../data/documentTemplate/dynamicFields'
+import { translateUi } from '../../data/uiTranslations'
 import type { TemplateField, TemplateFieldType } from '../../types/documentTemplate'
 import { FIELD_MENU_ITEMS } from '../../utils/documentTemplate/constants'
 import { sanitizeRichHtml } from '../../utils/documentTemplate/htmlUtils'
 import { fieldTypeLabel } from '../../utils/documentTemplate/constants'
+
+export function createDynamicField(dynamicKey: PatientDynamicKey, order: number, lang: 'de' | 'en' = 'de'): TemplateField {
+  const def = getDynamicFieldDefinition(dynamicKey)
+  return {
+    id: crypto.randomUUID(),
+    type: 'dynamic',
+    dynamicKey,
+    label: def ? translateUi(lang, def.labelKey) : dynamicKey,
+    order,
+    required: false,
+  }
+}
 
 export function createFieldFromType(
   type: TemplateFieldType,
@@ -111,6 +129,15 @@ export function TemplateFieldPreview({ field, lang, selected, onSelect }: Templa
         <span className="dt-canvas-line">________________________</span>
       </div>
     )
+  } else if (field.type === 'dynamic') {
+    const def = field.dynamicKey ? getDynamicFieldDefinition(field.dynamicKey) : undefined
+    const token = def?.token ?? field.dynamicKey ?? '…'
+    preview = (
+      <div className="dt-canvas-field dt-canvas-field--dynamic">
+        <span className="dt-canvas-label">{field.label}</span>
+        <span className="dt-canvas-dynamic-token">{token}</span>
+      </div>
+    )
   } else if (field.type.includes('placeholder')) {
     preview = (
       <div className="dt-canvas-field dt-canvas-field--placeholder">
@@ -133,6 +160,7 @@ export function TemplateFieldPreview({ field, lang, selected, onSelect }: Templa
         'dt-canvas-block',
         selected ? 'dt-canvas-block--selected' : '',
         field.type === 'divider' || field.type === 'spacer' ? 'dt-canvas-block--layout' : '',
+        field.type === 'dynamic' ? 'dt-canvas-block--dynamic' : '',
       ].join(' ').trim()}
       onClick={(e) => {
         e.stopPropagation()
@@ -152,3 +180,5 @@ export function TemplateFieldPreview({ field, lang, selected, onSelect }: Templa
     </div>
   )
 }
+
+export { DYNAMIC_FIELD_CATALOG }

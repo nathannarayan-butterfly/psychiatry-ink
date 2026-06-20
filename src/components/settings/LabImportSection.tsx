@@ -32,45 +32,27 @@ export function LabImportSection() {
     label: t(methodLabelKeys[method]),
   }))
 
-  const selectedMethodHint = (() => {
-    if (isLabImportMethodFunctional(labImport.defaultImportMethod)) {
-      return t('labImportMethodPasteHint')
-    }
-    if (labImport.defaultImportMethod === 'hospital_feed') {
-      return t('labImportMethodHospitalRequiresSetup')
-    }
-    return t('labImportMethodComingSoon')
-  })()
+  const selectedMethodHint =
+    !isLabImportMethodFunctional(labImport.defaultImportMethod)
+      ? labImport.defaultImportMethod === 'hospital_feed'
+        ? t('labImportMethodHospitalRequiresSetup')
+        : t('labImportMethodComingSoon')
+      : null
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-ink">{t('settingsLab')}</h2>
-      <p className="mt-1 mb-6 text-sm text-muted">{t('labImportSectionIntro')}</p>
-
-      <SettingsField
-        label={t('labImportDefaultMethodLabel')}
-        description={t('labImportDefaultMethodDescription')}
-      >
+      <SettingsField label={t('labImportDefaultMethodLabel')}>
         <SettingsOptionGroup
           value={labImport.defaultImportMethod}
           options={importMethodOptions}
           onChange={labImport.setDefaultImportMethod}
         />
-        <p className="mt-2 text-xs leading-relaxed text-muted">{selectedMethodHint}</p>
+        {selectedMethodHint ? (
+          <p className="mt-2 text-xs text-muted">{selectedMethodHint}</p>
+        ) : null}
       </SettingsField>
 
-      <SettingsField label={t('labImportLaborPageLinkTitle')}>
-        <p className="text-xs leading-relaxed text-muted">{t('labImportLaborPageLink')}</p>
-      </SettingsField>
-
-      <SettingsField label={t('labImportZeroKnowledgeTitle')}>
-        <p className="text-xs leading-relaxed text-muted">{t('labImportZeroKnowledgeNote')}</p>
-      </SettingsField>
-
-      <SettingsField
-        label={t('labImportAutoMapLoincLabel')}
-        description={t('labImportAutoMapLoincDescription')}
-      >
+      <SettingsField label={t('labImportAutoMapLoincLabel')}>
         <label className="flex cursor-pointer items-center gap-2 text-sm text-ink">
           <input
             type="checkbox"
@@ -78,14 +60,11 @@ export function LabImportSection() {
             onChange={(event) => labImport.setAutoMapLoinc(event.target.checked)}
             className="h-4 w-4 rounded-sm border-2 border-border"
           />
-          {t('labImportPlaceholderToggle')}
+          {t('labImportAutoMapLoincToggle')}
         </label>
       </SettingsField>
 
-      <SettingsField
-        label={t('labImportMedCorrelationLabel')}
-        description={t('labImportMedCorrelationDescription')}
-      >
+      <SettingsField label={t('labImportMedCorrelationLabel')}>
         <label className="flex cursor-pointer items-center gap-2 text-sm text-ink">
           <input
             type="checkbox"
@@ -93,7 +72,7 @@ export function LabImportSection() {
             onChange={(event) => labImport.setShowMedLabCorrelationHints(event.target.checked)}
             className="h-4 w-4 rounded-sm border-2 border-border"
           />
-          {t('labImportPlaceholderToggle')}
+          {t('labImportMedCorrelationToggle')}
         </label>
       </SettingsField>
     </div>

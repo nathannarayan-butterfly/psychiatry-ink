@@ -1,5 +1,5 @@
 export type AiModelTier = 'fast' | 'standard' | 'thorough'
-export type AiProviderId = 'openai' | 'deepseek'
+export type AiProviderId = 'openai' | 'deepseek' | 'google'
 
 export interface AiModelSpec {
   provider: AiProviderId
@@ -81,6 +81,7 @@ export const MODEL_TIER_FALLBACK: Partial<Record<AiModelTier, AiModelSpec>> = {
 function hasProviderKey(provider: AiProviderId): boolean {
   if (provider === 'openai') return Boolean(process.env.OPENAI_API_KEY?.trim())
   if (provider === 'deepseek') return Boolean(process.env.DEEPSEEK_API_KEY?.trim())
+  if (provider === 'google') return Boolean(process.env.GOOGLE_API_KEY?.trim())
   return false
 }
 
@@ -101,10 +102,11 @@ export function resolveModelWithFallback(tier: AiModelTier): AiModelSpec {
 
 export function missingApiKeyMessage(tier: AiModelTier): string {
   const model = resolveModelForTier(tier)
-  const envName = model.provider === 'openai' ? 'OPENAI_API_KEY' : 'DEEPSEEK_API_KEY'
-  const alt =
+  const envName =
     model.provider === 'openai'
-      ? 'DEEPSEEK_API_KEY (auto-fallback when set)'
-      : 'OPENAI_API_KEY (auto-fallback when set)'
-  return `Set ${envName} in .env (or ${alt}). Restart dev:server after changes.`
+      ? 'OPENAI_API_KEY'
+      : model.provider === 'google'
+        ? 'GOOGLE_API_KEY'
+        : 'DEEPSEEK_API_KEY'
+  return `Set ${envName} in .env (or another provider key). Restart dev:server after changes.`
 }

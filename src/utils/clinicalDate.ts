@@ -78,3 +78,18 @@ export function formatClinicalMonthYear(month: number, year: number): string {
 export function formatClinicalDateLocal(date: Date): string {
   return formatParts(date.getDate(), date.getMonth() + 1, date.getFullYear())
 }
+
+/** Whole years between an ISO date-of-birth and a reference calendar day (site timezone). */
+export function calculateAgeFromIsoDate(
+  iso: string | undefined | null,
+  referenceDate: Date = new Date(),
+): number | null {
+  const dob = parseIsoDateOnly(iso?.trim() ?? '')
+  if (!dob) return null
+  const ref = partsFromDate(referenceDate)
+  let age = ref.year - dob.year
+  if (ref.month < dob.month || (ref.month === dob.month && ref.day < dob.day)) {
+    age -= 1
+  }
+  return age >= 0 ? age : null
+}

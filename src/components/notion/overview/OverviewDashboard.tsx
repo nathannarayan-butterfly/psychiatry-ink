@@ -1,5 +1,6 @@
 import { useMemo, useCallback } from 'react'
 import { useTranslation } from '../../../context/TranslationContext'
+import { isClinicalIntelligenceV1Enabled } from '../../../utils/featureFlags'
 import type { TopNavTabId } from '../CaseTopNav'
 import type { NotionPageId } from '../notionPages'
 import { extractSpiegelwerte, pickLatestSpiegelSeries, spiegelGraphId } from '../SpiegelwerteSection'
@@ -448,6 +449,7 @@ export function OverviewDashboard({
       hasEeg,
       hasCt,
       hasZwangsmassnahme,
+      clinicalIntelligenceEnabled: isClinicalIntelligenceV1Enabled(),
     }),
     [
       hasSpiegel,

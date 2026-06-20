@@ -2,6 +2,7 @@ import type { AiToolKey } from '../data/aiTools'
 import { estimateTokensFromText } from './estimateCredits'
 import type { WorkspaceAiConfig } from '../types/aiManager'
 import type { AiGenerationScope, AiModelTier, InputMode } from '../types'
+import { resolveAiModelForTask } from './resolveAiModel'
 
 export type ContentInputOrigin = 'typed' | 'pasted' | 'dictated'
 
@@ -64,7 +65,7 @@ function resolveAutoTier(ctx: AiAutoSelectionContext, tool: AiToolKey): AiModelT
   const pasted = isPastedInput(ctx)
   const tokens = estimateTokensFromText(ctx.sourceText ?? '')
 
-  let tier = ctx.mergedAi.autoDefaultTier ?? ctx.mergedAi.defaultTier
+  let tier = ctx.mergedAi.autoDefaultTier ?? resolveAiModelForTask('background').tier ?? ctx.mergedAi.defaultTier
 
   if (ctx.componentId === 'therapie-verlauf' && pasted && tool === 'summarize') {
     tier = 'fast'

@@ -34,7 +34,7 @@ interface WorkspaceVaultSectionProps {
 export function WorkspaceVaultSection({
   vault,
   countryCode,
-  identifierStorage,
+  identifierStorage: _identifierStorage,
   onCloudSyncComplete,
 }: WorkspaceVaultSectionProps) {
   const { t } = useTranslation()
@@ -143,9 +143,8 @@ export function WorkspaceVaultSection({
   if (!vault.enabled) return null
 
   return (
-    <div className="mt-8 border-t-2 border-border pt-6">
-      <h3 className="text-base font-semibold text-ink">{t('workspaceVaultTitle')}</h3>
-      <p className="mt-1 mb-4 text-sm text-muted">{t('workspaceVaultIntro')}</p>
+    <div className="settings-vault-section">
+      <h3 className="settings-vault-section__title">{t('workspaceVaultTitle')}</h3>
 
       <SettingsField label={t('workspaceVaultExportLabel')}>
         <div className="flex flex-wrap gap-2">
@@ -173,22 +172,15 @@ export function WorkspaceVaultSection({
             onChange={(event) => void handleImportFile(event)}
           />
         </div>
-        <p className="mt-2 text-xs text-muted">{t('workspaceVaultCaseFileNote')}</p>
-        {identifierStorage === 'device' ? (
-          <p className="identifier-storage-choice__warning mt-2">{t('identifierStorageDeviceExportNote')}</p>
-        ) : (
-          <p className="mt-1 text-xs text-muted">{t('identifierStorageAccountExportNote')}</p>
-        )}
         <EncryptionDisclaimer section="settings" bodyVariant="list" />
         {vault.dbSyncEnabled ? (
-          <p className="mt-1 text-xs text-muted">{t('workspaceVaultDbSync')}</p>
+          <p className="mt-2 text-xs text-muted">{t('workspaceVaultDbSync')}</p>
         ) : (
-          <p className="mt-1 text-xs text-muted">{t('workspaceVaultLocalOnly')}</p>
+          <p className="mt-2 text-xs text-muted">{t('workspaceVaultLocalOnly')}</p>
         )}
-        <p className="mt-1 text-xs text-muted">{t('identifierStoragePassphraseNote')}</p>
       </SettingsField>
 
-      <SettingsField label={t('workspacePassphraseTitle')} description={t('workspacePassphraseDescription')}>
+      <SettingsField label={t('workspacePassphraseTitle')}>
         <div className="space-y-2">
           <input
             type="password"
@@ -219,7 +211,6 @@ export function WorkspaceVaultSection({
             {hasBackup ? t('workspacePassphraseUpdate') : t('workspacePassphraseCreate')}
           </button>
         </div>
-        <p className="mt-2 text-xs text-muted">{t('workspacePassphraseLossWarning')}</p>
       </SettingsField>
 
       <SettingsField label={t('workspacePassphraseRestoreTitle')}>

@@ -6198,6 +6198,117 @@
   }
 }
 
+/* —— Settings: shared field layout —— */
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-soft) 75%, transparent);
+}
+
+.settings-field:last-child {
+  border-bottom: none;
+}
+
+@media (min-width: 640px) {
+  .settings-field {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+}
+
+.settings-field__label-col {
+  min-width: 0;
+}
+
+@media (min-width: 640px) {
+  .settings-field__label-col {
+    max-width: 11rem;
+    flex-shrink: 0;
+  }
+}
+
+.settings-field__label {
+  margin: 0;
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: var(--weight-medium, 500);
+  color: var(--ink, var(--text-main));
+}
+
+.settings-field__description {
+  margin: 0.25rem 0 0;
+  font-size: var(--text-xs, 0.75rem);
+  line-height: 1.45;
+  color: var(--muted, var(--text-secondary));
+}
+
+.settings-field__control {
+  min-width: 0;
+  flex: 1;
+}
+
+@media (min-width: 640px) {
+  .settings-field__control {
+    max-width: 28rem;
+  }
+}
+
+.settings-section-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.25rem;
+}
+
+.settings-section-toolbar--split {
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.settings-section-toolbar__action {
+  border: 1px solid color-mix(in srgb, var(--border-soft) 90%, transparent);
+  border-radius: var(--radius-sm, 0.25rem);
+  background: var(--surface);
+  padding: 0.375rem 0.75rem;
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--ink, var(--text-main));
+  transition: background var(--transition-fast, 120ms ease);
+}
+
+.settings-section-toolbar__action:hover:not(:disabled) {
+  background: var(--surface-hover, color-mix(in srgb, var(--surface) 92%, var(--ink)));
+}
+
+.settings-section-toolbar__action:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.settings-section-lead {
+  margin: 0 0 1rem;
+  font-size: var(--text-sm, 0.8125rem);
+  line-height: 1.5;
+  color: var(--muted, var(--text-secondary));
+}
+
+.settings-vault-section {
+  margin-top: 0.5rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid color-mix(in srgb, var(--border-soft) 75%, transparent);
+}
+
+.settings-vault-section__title {
+  margin: 0 0 0.25rem;
+  padding-top: 0.75rem;
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: var(--weight-semibold, 600);
+  color: var(--ink, var(--text-main));
+}
+
 /* —— Settings: Übersicht widget catalog —— */
 
 .overview-widgets-settings-list {
@@ -6206,14 +6317,16 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0;
 }
 
 .overview-widgets-settings-list__item {
-  padding: 0.85rem 1rem;
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-card, 0.6875rem);
-  background: var(--surface);
+  padding: 0.85rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-soft) 80%, transparent);
+}
+
+.overview-widgets-settings-list__item:last-child {
+  border-bottom: none;
 }
 
 .overview-widgets-settings-list__head {
@@ -6244,6 +6357,133 @@
   font-size: var(--text-sm, 0.8125rem);
   line-height: 1.45;
   color: var(--text-muted);
+}
+
+.overview-widgets-settings-hint {
+  margin: 0 0 0.75rem;
+  font-size: var(--text-sm, 0.8125rem);
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.overview-widgets-settings-empty,
+.overview-widgets-settings-note {
+  margin: 0;
+  font-size: var(--text-sm, 0.8125rem);
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.overview-widgets-settings-note {
+  margin-top: 0.75rem;
+}
+
+.overview-widgets-settings-add {
+  position: relative;
+}
+
+.overview-widgets-settings-palette {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  min-width: min(20rem, 100vw - 2rem);
+  max-height: 16rem;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md, 0.375rem);
+  background: var(--surface, #fff);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--ink, #000) 12%, transparent);
+}
+
+.overview-widgets-settings-palette__item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border: none;
+  border-radius: calc(var(--radius-md, 0.375rem) - 2px);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.overview-widgets-settings-palette__item:hover {
+  background: var(--surface-hover, color-mix(in srgb, var(--accent) 8%, transparent));
+}
+
+.overview-widgets-settings-palette__title {
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: var(--weight-semibold, 600);
+  color: var(--text-main);
+}
+
+.overview-widgets-settings-palette__desc {
+  font-size: var(--text-2xs, 0.6875rem);
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.overview-widgets-settings-list--editable .overview-widgets-settings-list__item--editable {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.overview-widgets-settings-list__grip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.1rem;
+  padding: 0.2rem;
+  border: none;
+  border-radius: var(--radius-sm, 0.25rem);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: grab;
+}
+
+.overview-widgets-settings-list__grip:active {
+  cursor: grabbing;
+}
+
+.overview-widgets-settings-list__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.overview-widgets-settings-list__remove {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.05rem;
+  padding: 0.35rem;
+  border: none;
+  border-radius: var(--radius-sm, 0.25rem);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.overview-widgets-settings-list__remove:hover {
+  color: var(--danger, #b42318);
+  background: color-mix(in srgb, var(--danger, #b42318) 8%, transparent);
+}
+
+.overview-widgets-settings-list__item--dragging {
+  opacity: 0.55;
+}
+
+.overview-widgets-settings-list__item--drop-target {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  border-radius: var(--radius-sm, 0.25rem);
 }
 
 /* —— Top bar: euro credits icon —— */

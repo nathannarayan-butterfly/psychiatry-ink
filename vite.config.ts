@@ -116,6 +116,11 @@ function supabaseEnvCheck(): Plugin {
 
 export default defineConfig({
   plugins: [supabaseEnvCheck(), react(), tailwindcss()],
+  optimizeDeps: {
+    // mammoth is CJS-only and only loaded for DOCX import; pre-bundle at dev
+    // startup so the first import does not race on-demand optimization.
+    include: ['mammoth'],
+  },
   server: {
     host: true,
     port: 5173,

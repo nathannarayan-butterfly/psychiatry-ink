@@ -1,4 +1,5 @@
 import { clinicalApiFetch, getClinicalApiLanguage, parseClinicalApiError } from './clinicalApiFetch'
+import { resolveLlmRequestForTask } from '../utils/resolveAiModel'
 import type { ClinicalFact } from '../types/clinicalMetadata'
 import type { ClinicalSourceType } from '../types/clinicalImprint'
 
@@ -37,13 +38,15 @@ export interface CmeaExtractResponse {
 export async function extractClinicalMetadata(
   input: CmeaExtractInput,
 ): Promise<CmeaExtractResponse> {
+  const llm = resolveLlmRequestForTask('clinical_metadata')
   const response = await clinicalApiFetch('/api/clinical-metadata/extract', {
     method: 'POST',
     body: JSON.stringify({
       caseId: input.caseId,
       sections: input.sections,
       patientName: input.patientName,
-      tier: input.tier ?? 'standard',
+      tier: input.tier ?? llm.tier,
+      model: llm.model,
       language: input.language ?? getClinicalApiLanguage(),
     }),
   })

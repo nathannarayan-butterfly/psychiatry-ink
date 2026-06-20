@@ -1,3 +1,5 @@
+import type { TemplateSharePayload } from '../schemas/documentTemplate/shareEnvelope'
+import { isPatientDynamicKey } from '../data/documentTemplate/dynamicFields'
 import { safeSetItem } from './safeStorage'
 import type { DocumentTemplate, TemplateAvailability, TemplateCategory, TemplateField, TemplateStatus } from '../types/documentTemplate'
 import { DEFAULT_PAGE_SETTINGS, migrateTemplate } from './documentTemplate/pageSettings'
@@ -145,4 +147,39 @@ export function filterTemplatesByAvailability(
   return templates.filter(
     (t) => t.status === 'active' && t.availability[context],
   )
+}
+
+function normalizeSharedField(field: TemplateSharePayload['template']['fields'][number], order: number): TemplateField {
+  const dynamicKey =
+    field.dynamicKey && isPatientDynamicKey(field.dynamicKey) ? field.dynamicKey : undefined
+  return {
+    ...field,
+    dynamicKey,
+    order,
+    id: crypto.randomUUID(),
+    options: field.options?.map((option) => ({
+      ...option,
+      id: crypto.randomUUID(),
+    })),
+  }
+}
+
+export function importDocumentTemplateFromShare(
+  payload: TemplateSharePayload,
+): DocumentTemplate {
+  const now = new Date().toISOString()
+  const creatorLabel = payload.creator?.name?.trim() || payload.creator?.email?.trim()
+  const template: DocumentTemplate = migrateTemplate({
+    ...payload.template,
+    id: crypto.randomUUID(),
+    status: 'draft',
+    version: 1,
+    fields: payload.template.fields.map((field, index) => normalizeSharedField(field, index)),
+    pageSettings: payload.template.pageSettings ?? { ...DEFAULT_PAGE_SETTINGS },
+    createdAt: now,
+    updatedAt: now,
+    createdBy: creatorLabel || undefined,
+  })
+  persist([template, ...loadRaw()])
+  return template
 }

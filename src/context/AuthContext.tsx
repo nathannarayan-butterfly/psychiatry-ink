@@ -18,6 +18,7 @@ import {
 import type { SubscriptionPlan } from '../data/subscriptionPlans'
 import { API_BASE } from '../services/apiClient'
 import { getAuthHeaders } from '../services/authHeaders'
+import { clearSessionOnLogout } from '../utils/devicePreferences'
 
 interface AuthContextValue {
   user: User | null
@@ -128,6 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     const supabase = getSupabase()
     if (supabase) await supabase.auth.signOut()
+    clearSessionOnLogout()
     setPlan('free')
   }, [])
 

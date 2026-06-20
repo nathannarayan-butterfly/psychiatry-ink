@@ -1,6 +1,7 @@
 import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
 import type { AiModelTier } from '../modelTierMapping'
+import { parseLlmModelRequest } from '../ai/parseLlmModelRequest'
 import { resolveAccountId } from '../middleware/auth'
 import { callLlm, llmResultModel } from '../services/llmProvider'
 import { resolveUsageContextFromRequest } from '../ai/usage/resolveUsageContext'
@@ -9,6 +10,7 @@ import { assertAiGenerationAllowed, recordAiGenerationUsed } from '../utils/case
 
 export interface GenerateRequestBody {
   tier: AiModelTier
+  model?: { provider: string; modelId: string }
   systemPrompt: string
   userPrompt: string
   caseId?: string
@@ -23,6 +25,7 @@ const MAX_PROMPT_CHARS = 100_000
 generateRouter.post('/', async (req: Request, res: Response) => {
   try {
     const body = req.body as GenerateRequestBody
+    const llmModel = parseLlmModelRequest(body as unknown as Record<string, unknown>, body.tier)
 
     if (!body.tier || !body.systemPrompt || !body.userPrompt) {
       res.status(400).json({ error: 'Missing tier, systemPrompt, or userPrompt' })
@@ -57,7 +60,8 @@ generateRouter.post('/', async (req: Request, res: Response) => {
         : undefined
 
     const result = await callLlm({
-      tier: body.tier,
+      tier: llmModel.tier,
+      model: llmModel.model,
       systemPrompt: body.systemPrompt,
       userPrompt: body.userPrompt,
       usageContext,

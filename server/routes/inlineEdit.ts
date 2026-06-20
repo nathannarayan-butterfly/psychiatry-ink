@@ -1,6 +1,6 @@
 import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
-import type { AiModelTier } from '../modelTierMapping'
+import { parseLlmModelRequest } from '../ai/parseLlmModelRequest'
 import { resolveAccountId } from '../middleware/auth'
 import { assertAiGenerationAllowed, recordAiGenerationUsed } from '../utils/caseAiAccessGuard'
 import { requireClinicalLanguage } from '../utils/resolveClinicalLanguage'
@@ -15,8 +15,6 @@ import {
 import { transcribeAudioBuffer } from '../services/transcriptionProvider'
 
 export const inlineEditRouter: Router = createRouter()
-
-const VALID_TIERS: AiModelTier[] = ['fast', 'standard', 'thorough']
 
 /** True when no provider key is configured → {@link callLlm} returns mock text. */
 function isLlmMockMode(): boolean {
@@ -49,9 +47,8 @@ inlineEditRouter.post('/', async (req: Request, res: Response) => {
     const language = requireClinicalLanguage(req, res, body.language)
     if (!language) return
 
-    const tier: AiModelTier = VALID_TIERS.includes(body.tier as AiModelTier)
-      ? (body.tier as AiModelTier)
-      : 'fast'
+    const llmModel = parseLlmModelRequest(body, 'fast')
+    const tier = llmModel.tier ?? 'fast'
 
     const context: InlineEditContext = {
       selectedText,
@@ -72,7 +69,14 @@ inlineEditRouter.post('/', async (req: Request, res: Response) => {
       },
     })
 
-    const result = await runInlineEdit({ context, instruction, tier, language, usageContext })
+    const result = await runInlineEdit({
+      context,
+      instruction,
+      tier,
+      model: llmModel.model,
+      language,
+      usageContext,
+    })
 
     if (userId && userId !== 'default') {
       void recordAiGenerationUsed(req, userId, {

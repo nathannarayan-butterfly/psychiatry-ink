@@ -68,3 +68,33 @@ export function isDocumentImportAiMappingEnabled(): boolean {
 export function isPsychopathExtractAiEnabled(): boolean {
   return import.meta.env.VITE_ENABLE_PSYCHOPATH_EXTRACT_AI === 'true'
 }
+
+/**
+ * Clinical Intelligence V1 — dimensional integration + mechanism inference.
+ *
+ * OFF BY DEFAULT. When enabled, the CI section, its overview widgets, and the
+ * AI run pipeline become available in the workspace. Only de-identified
+ * compact evidence is ever sent to CI APIs; raw clinical documents are
+ * rejected by `assertCompactEvidenceOnly` and by the server route.
+ *
+ * Enable locally in `.env.local`:
+ *   VITE_CLINICAL_INTELLIGENCE_V1_ENABLED=true
+ *   CLINICAL_INTELLIGENCE_V1_ENABLED=true  # server-side
+ */
+export function isClinicalIntelligenceV1Enabled(): boolean {
+  return import.meta.env.VITE_CLINICAL_INTELLIGENCE_V1_ENABLED === 'true'
+}
+
+/**
+ * Clinical Intelligence — developer diagnostics mode.
+ *
+ * Reveals raw JSON, evidence ids, provider/model, tokens, validation, raw
+ * response and errors in the CI panel. OFF by default.
+ *
+ * Enable locally in `.env.local`:
+ *   VITE_CLINICAL_INTELLIGENCE_DEBUG_MODE=true
+ *   CLINICAL_INTELLIGENCE_DEBUG_MODE=true  # server-side
+ */
+export function isClinicalIntelligenceDebugMode(): boolean {
+  return import.meta.env.VITE_CLINICAL_INTELLIGENCE_DEBUG_MODE === 'true'
+}

@@ -1,198 +1,134 @@
-import { Loader2, Mic, Send, Square, X } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { GripHorizontal, PanelRight, X } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
-import { useCompactDictation } from '../../hooks/useCompactDictation'
-import { ButterflyLogo } from '../ButterflyLogo'
-import { askButterflyChat, type AskButterflyChatMessage } from '../../services/askButterflyApi'
+import { useAskButterfly } from '../../contexts/AskButterflyContext'
+import { AskButterflyChatPanel } from './AskButterflyChatPanel'
 
-interface AskButterflyChatDialogProps {
-  onClose: () => void
-}
+const DOCK_EDGE_THRESHOLD_PX = 96
 
-export function AskButterflyChatDialog({ onClose }: AskButterflyChatDialogProps) {
+export function AskButterflyChatDialog() {
   const { t } = useTranslation()
-  const [messages, setMessages] = useState<AskButterflyChatMessage[]>([])
-  const [draft, setDraft] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const chatEndRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLTextAreaElement>(null)
-
-  const appendTranscription = useCallback((text: string) => {
-    const trimmed = text.trim()
-    if (!trimmed) return
-    setDraft((current) => (current.trim() ? `${current.trimEnd()} ${trimmed}` : trimmed))
-    inputRef.current?.focus()
-  }, [])
-
-  const { isRecording, isTranscribing, toggleRecording, error: voiceError } = useCompactDictation({
-    onTranscriptionComplete: appendTranscription,
-  })
-
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages.length, loading])
-
-  useEffect(() => {
-    inputRef.current?.focus()
-  }, [])
+  const { close, dock } = useAskButterfly()
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const dragOffsetRef = useRef({ x: 0, y: 0 })
+  const [position, setPosition] = useState<{ x: number; y: number } | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
+      if (event.key === 'Escape') close()
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [onClose])
+  }, [close])
 
-  const handleSend = useCallback(async () => {
-    const content = draft.trim()
-    if (!content || loading) return
+  const handleDragStart = useCallback((event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (event.button !== 0) return
+    const dialog = dialogRef.current
+    if (!dialog) return
 
-    const nextMessages: AskButterflyChatMessage[] = [...messages, { role: 'user', content }]
-    setMessages(nextMessages)
-    setDraft('')
-    setError(null)
-    setLoading(true)
-
-    try {
-      const result = await askButterflyChat(nextMessages)
-      setMessages((current) => [...current, { role: 'assistant', content: result.answer }])
-    } catch (cause) {
-      const message = cause instanceof Error ? cause.message : t('askButterflyError')
-      setError(message)
-      setMessages((current) => current.slice(0, -1))
-      setDraft(content)
-    } finally {
-      setLoading(false)
+    const rect = dialog.getBoundingClientRect()
+    dragOffsetRef.current = {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
     }
-  }, [draft, loading, messages, t])
+    setIsDragging(true)
+    event.currentTarget.setPointerCapture(event.pointerId)
+  }, [])
 
-  const voiceBusy = isRecording || isTranscribing
-  const canSend = draft.trim().length > 0 && !loading && !voiceBusy
+  const handleDragMove = useCallback(
+    (event: ReactPointerEvent<HTMLButtonElement>) => {
+      if (!isDragging) return
+      const dialog = dialogRef.current
+      if (!dialog) return
+
+      const width = dialog.offsetWidth
+      const height = dialog.offsetHeight
+      const maxX = Math.max(0, window.innerWidth - width - 16)
+      const maxY = Math.max(0, window.innerHeight - height - 16)
+      const nextX = Math.min(maxX, Math.max(16, event.clientX - dragOffsetRef.current.x))
+      const nextY = Math.min(maxY, Math.max(16, event.clientY - dragOffsetRef.current.y))
+      setPosition({ x: nextX, y: nextY })
+    },
+    [isDragging],
+  )
+
+  const handleDragEnd = useCallback(
+    (event: ReactPointerEvent<HTMLButtonElement>) => {
+      if (!isDragging) return
+      setIsDragging(false)
+      event.currentTarget.releasePointerCapture(event.pointerId)
+
+      const dialog = dialogRef.current
+      if (!dialog) return
+      const rect = dialog.getBoundingClientRect()
+      const nearRightEdge = window.innerWidth - rect.right <= DOCK_EDGE_THRESHOLD_PX
+      if (nearRightEdge) {
+        dock()
+        setPosition(null)
+      }
+    },
+    [dock, isDragging],
+  )
+
+  const dialogStyle =
+    position != null
+      ? {
+          position: 'fixed' as const,
+          left: position.x,
+          top: position.y,
+          margin: 0,
+          transform: 'none',
+        }
+      : undefined
 
   return (
-    <div
-      className="ask-butterfly-overlay"
-      onClick={onClose}
-      role="presentation"
-    >
+    <div className="ask-butterfly-overlay ask-butterfly-overlay--floating" role="presentation">
       <div
-        className="ask-butterfly-dialog"
+        ref={dialogRef}
+        className={`ask-butterfly-dialog ask-butterfly-dialog--floating${isDragging ? ' ask-butterfly-dialog--dragging' : ''}`}
+        style={dialogStyle}
         role="dialog"
-        aria-modal="true"
+        aria-modal="false"
         aria-labelledby="ask-butterfly-title"
         onClick={(event) => event.stopPropagation()}
       >
-        <header className="ask-butterfly-dialog__header">
-          <div className="ask-butterfly-dialog__title-wrap">
-            <span className="ask-butterfly-dialog__mark">
-              <ButterflyLogo variant="color" size={28} />
-            </span>
-            <div>
-              <h2 id="ask-butterfly-title" className="ask-butterfly-dialog__title">
-                {t('askButterflyTitle')}
-              </h2>
-              <p className="ask-butterfly-dialog__subtitle">{t('askButterflySubtitle')}</p>
-            </div>
-          </div>
-          <button
-            type="button"
-            className="ask-butterfly-dialog__close"
-            onClick={onClose}
-            aria-label={t('settingsClose')}
-          >
-            <X strokeWidth={1.75} aria-hidden />
-          </button>
-        </header>
-
-        <div className="ask-butterfly-dialog__body">
-          <div className="ask-butterfly-dialog__messages" aria-live="polite">
-            {messages.length === 0 ? (
-              <p className="ask-butterfly-dialog__empty">{t('askButterflyEmpty')}</p>
-            ) : (
-              messages.map((message, index) => (
-                <div
-                  key={`${message.role}-${index}`}
-                  className={`ask-butterfly-dialog__message ask-butterfly-dialog__message--${message.role}`}
-                >
-                  <p className="ask-butterfly-dialog__message-role">
-                    {message.role === 'user' ? t('askButterflyYou') : t('askButterflyAssistant')}
-                  </p>
-                  <p className="ask-butterfly-dialog__message-text">{message.content}</p>
-                </div>
-              ))
-            )}
-            {loading ? (
-              <div className="ask-butterfly-dialog__message ask-butterfly-dialog__message--assistant">
-                <p className="ask-butterfly-dialog__message-role">{t('askButterflyAssistant')}</p>
-                <p className="ask-butterfly-dialog__message-text ask-butterfly-dialog__message-text--pending">
-                  <Loader2 className="ask-butterfly-dialog__spinner" strokeWidth={1.75} aria-hidden />
-                  {t('askButterflyThinking')}
-                </p>
-              </div>
-            ) : null}
-            <div ref={chatEndRef} />
-          </div>
-
-          {error ? (
-            <p className="ask-butterfly-dialog__error" role="alert">
-              {error}
-            </p>
-          ) : null}
-          {voiceError ? (
-            <p className="ask-butterfly-dialog__error" role="alert">
-              {t('askButterflyVoiceError')}
-            </p>
-          ) : null}
-
-          <div className="ask-butterfly-dialog__composer">
-            <textarea
-              ref={inputRef}
-              className="ask-butterfly-dialog__input"
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              placeholder={t('askButterflyPlaceholder')}
-              rows={3}
-              disabled={loading || voiceBusy}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' && !event.shiftKey) {
-                  event.preventDefault()
-                  void handleSend()
-                }
-              }}
-            />
-            <div className="ask-butterfly-dialog__composer-actions">
+        <AskButterflyChatPanel
+          variant="floating"
+          headerActions={
+            <>
               <button
                 type="button"
-                className={`ask-butterfly-dialog__voice-btn${isRecording ? ' ask-butterfly-dialog__voice-btn--active' : ''}`}
-                onClick={() => toggleRecording()}
-                disabled={loading || isTranscribing}
-                title={isRecording ? t('askButterflyStopVoice') : t('askButterflyStartVoice')}
-                aria-label={isRecording ? t('askButterflyStopVoice') : t('askButterflyStartVoice')}
+                className="ask-butterfly-dialog__drag-handle"
+                onPointerDown={handleDragStart}
+                onPointerMove={handleDragMove}
+                onPointerUp={handleDragEnd}
+                onPointerCancel={handleDragEnd}
+                title={t('askButterflyDragHint')}
+                aria-label={t('askButterflyDragHint')}
               >
-                {isTranscribing ? (
-                  <Loader2 className="ask-butterfly-dialog__spinner" strokeWidth={1.75} aria-hidden />
-                ) : isRecording ? (
-                  <Square strokeWidth={1.75} aria-hidden />
-                ) : (
-                  <Mic strokeWidth={1.75} aria-hidden />
-                )}
+                <GripHorizontal strokeWidth={1.75} aria-hidden />
               </button>
               <button
                 type="button"
-                className="ask-butterfly-dialog__send-btn"
-                onClick={() => void handleSend()}
-                disabled={!canSend}
+                className="ask-butterfly-dialog__icon-btn"
+                onClick={dock}
+                title={t('askButterflyDock')}
+                aria-label={t('askButterflyDock')}
               >
-                <Send strokeWidth={1.75} aria-hidden />
-                {loading ? t('askButterflySending') : t('askButterflySend')}
+                <PanelRight strokeWidth={1.75} aria-hidden />
               </button>
-            </div>
-          </div>
-
-          <p className="ask-butterfly-dialog__disclaimer">{t('askButterflyDisclaimer')}</p>
-        </div>
+              <button
+                type="button"
+                className="ask-butterfly-dialog__close"
+                onClick={close}
+                aria-label={t('settingsClose')}
+              >
+                <X strokeWidth={1.75} aria-hidden />
+              </button>
+            </>
+          }
+        />
       </div>
     </div>
   )

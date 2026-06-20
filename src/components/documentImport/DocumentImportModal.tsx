@@ -516,7 +516,7 @@ export function DocumentImportModal({
   return (
     <div className="doc-import-overlay" role="presentation" onClick={handleClose}>
       <div
-        className="doc-import-dialog"
+        className={`doc-import-dialog${phase === 'review' ? ' doc-import-dialog--review' : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="doc-import-title"

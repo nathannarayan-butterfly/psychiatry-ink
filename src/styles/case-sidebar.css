@@ -5,23 +5,48 @@
 
 .notion-preview-app--case-sidebar {
   --case-sidebar-width: 15.5rem;
+  --case-sidebar-collapsed-width: 3rem;
+  /* Effective width — flips to the collapsed rail width via the
+     ...--case-sidebar-collapsed app-level modifier. Centralising it on this
+     custom property lets every dependent rule (main margin, top bar offset,
+     transitions) animate from a single source of truth. */
+  --case-sidebar-effective-width: var(--case-sidebar-width);
+  /* Visual gutter between the dark sidebar and the main content area. The
+     left padding of `.notion-preview-main` plus inner page padding adds up to
+     a comfortable breathing room, while the right padding stays at 0 so the
+     scrollbar/right edge still aligns with the chrome rail (no pale strip on
+     Therapien/Medikation/etc.). */
+  --case-content-gutter-x: 1.5rem;
+  /* Single source for where in-flow main content may begin: dark sidebar + gutter. */
+  --case-main-offset-left: calc(
+    var(--case-sidebar-effective-width) + var(--case-content-gutter-x)
+  );
   --case-panel-inset-top: 1.1rem;
   --case-content-inset-top: 0.9rem;
   /* Shared chrome rail — viewport top → horizontal divider under logo / patient header */
   --case-main-top-bar-block: 1.6rem;
-  --case-patient-header-block: 4.8rem;
+  --case-patient-header-block: 5.75rem;
   --case-chrome-rail-top: calc(
     var(--case-content-inset-top) + var(--case-main-top-bar-block) + var(--case-patient-header-block)
   );
   --case-sidebar-logo-padding-after: 1.25rem;
   --case-sidebar-logo-row-margin-after: 0.15rem;
+  /* Smooth animation timing for collapse/expand. Honoured by `width`,
+     `margin-left`, and content fade-out rules below. Falls back gracefully
+     under prefers-reduced-motion. */
+  --case-sidebar-collapse-timing: 0.18s ease;
+}
+
+.notion-preview-app--case-sidebar-collapsed {
+  --case-sidebar-effective-width: var(--case-sidebar-collapsed-width);
 }
 
 /* Right-side content only — not over the dark left column */
 .notion-preview-app--case-sidebar .workspace-tab-bar,
 .notion-preview-app--case-sidebar .active-appointment-bar,
 .notion-preview-app--case-sidebar .notion-preview-main {
-  margin-left: var(--case-sidebar-width);
+  margin-left: var(--case-sidebar-effective-width);
+  transition: margin-left var(--case-sidebar-collapse-timing);
 }
 
 .notion-preview-app--case-sidebar .demo-readonly-banner {
@@ -30,7 +55,12 @@
 }
 
 .notion-preview-main--case-sidebar {
-  padding: var(--case-content-inset-top) 1.25rem 1rem;
+  /* Asymmetric horizontal padding: the LEFT side gets the comfortable gutter
+     (~1.5rem) so content doesn't collide with the dark sidebar. The RIGHT
+     side stays at 0 so scrollbars and section edges stay flush with the
+     viewport — re-introducing right-padding here is what previously caused
+     the "pale vertical strip" regression on Therapien/Medikation. */
+  padding: var(--case-content-inset-top) 0 1rem var(--case-content-gutter-x);
   gap: 0;
 }
 
@@ -92,9 +122,9 @@
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
-  padding-bottom: 0.85rem;
-  margin-bottom: 0.35rem;
+  gap: 0.6rem;
+  padding-bottom: 0.65rem;
+  margin-bottom: 0.3rem;
   border-bottom: 1px solid var(--case-sidebar-border);
 }
 
@@ -345,7 +375,11 @@
 .case-sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  /* Tightened vertical rhythm so the new Klinische Intelligenz entry fits
+     without making the sidebar feel long. ~33% less than the previous 0.2rem
+     gap; touch-target height is preserved by the link's intrinsic 1.35
+     line-height + padding. */
+  gap: 0.06rem;
 }
 
 .case-sidebar-panel__content .case-sidebar-nav + .case-sidebar-nav,
@@ -356,7 +390,7 @@
 }
 
 .case-sidebar-nav__heading {
-  margin: 0 0 0.45rem;
+  margin: 0 0 0.35rem;
   font-size: 0.62rem;
   font-weight: 600;
   letter-spacing: 0.1em;
@@ -373,7 +407,11 @@
   background: none;
   border: none;
   border-radius: 0.35rem;
-  padding: 0.42rem 0.55rem;
+  /* Tightened vertical padding (0.42rem → 0.3rem) reclaims ~6 px per link.
+     Combined with the smaller `gap` between siblings this fits the new
+     Klinische Intelligenz row without crowding adjacent items, while keeping
+     a clinically-comfortable ≥30 px touch target (line-height + padding). */
+  padding: 0.3rem 0.55rem;
   text-align: left;
   font-size: 0.86rem;
   font-weight: var(--weight-regular, 400);
@@ -382,7 +420,7 @@
   cursor: pointer;
   transition: background 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
   font-family: inherit;
-  line-height: 1.35;
+  line-height: 1.3;
 }
 
 /* Left accent bar — collapsed by default, grows in on the active item.
@@ -506,6 +544,8 @@
   width: 1.375rem;
   height: 1.375rem;
   flex-shrink: 0;
+  border-radius: 0.25rem;
+  object-fit: contain;
 }
 
 .case-sidebar-user-footer__action-btn:focus-visible {
@@ -538,9 +578,9 @@
   flex-shrink: 0;
   box-sizing: border-box;
   min-height: var(--case-patient-header-block, 4.8rem);
-  padding: 0 1.25rem 1.25rem;
+  padding: 0 1.25rem 1.25rem var(--case-content-gutter-x);
   border-bottom: 1px solid var(--cm-hairline, color-mix(in srgb, var(--border-soft) 72%, transparent));
-  margin: 0 -1.25rem 1rem;
+  margin: 0 0 1rem 0;
 }
 
 /* Patient identity now renders through the shared <ClinicalHeroStrip> (.cm-hero*)
@@ -553,6 +593,24 @@
   flex: 1;
   min-height: 0;
   overflow: hidden;
+}
+
+/* Patient header + workspace doc bar: stay in the main content column. The
+   comfortable left gutter comes from `.notion-preview-main--case-sidebar`
+   padding — do not negative-margin bleed here; the fixed sidebar (z-index 20)
+   would cover header text. */
+.notion-preview-main--case-sidebar .case-patient-header,
+.notion-preview-main--case-sidebar .case-patient-header.case-patient-header--minimal {
+  margin-left: 0;
+  margin-right: 0;
+  width: auto;
+  padding-left: 0;
+}
+
+.notion-preview-main--case-sidebar .case-workspace-doc-bar {
+  margin-left: 0;
+  width: auto;
+  padding-left: 0;
 }
 
 .case-tab-shell__body {
@@ -1212,7 +1270,8 @@
   display: flex;
   flex-direction: column;
   gap: 1.75rem;
-  padding: 0 1.25rem 2rem;
+  /* Left gutter comes from `.notion-preview-main--case-sidebar` padding. */
+  padding: 0 1.25rem 2rem 0;
 }
 
 .patient-dashboard--case-sidebar .patient-dashboard__body {
@@ -1226,12 +1285,9 @@
 }
 
 .patient-dashboard--case-sidebar .case-patient-header {
-  /* Cancel the .patient-dashboard__content horizontal padding (1.25rem) so the
-     patient name lines up at the exact same x as on the other case tabs, where
-     the header lives in a zero-padding .case-tab-shell. Without this the name is
-     indented an extra 1.25rem on Übersicht. */
-  margin: 0 -1.25rem 0.25rem;
-  padding: 0 0 1.25rem;
+  /* Legacy: overview no longer renders this header; keep rule for any reuse. */
+  margin: 0 -1.25rem 0.25rem 0;
+  padding: 0 1.25rem 1.25rem var(--case-content-gutter-x);
   min-height: var(--case-patient-header-block, 4.8rem);
 }
 
@@ -1267,6 +1323,246 @@
   padding: 0 2rem;
   margin: 0;
   min-height: var(--case-main-top-bar-block, 1.6rem);
+}
+
+.settings-sidebar-layout .settings-section-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.75rem;
+}
+
+.settings-sidebar-layout .settings-section-toolbar__action {
+  border-radius: 0.25rem;
+  border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  background: var(--surface, #fff);
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  color: var(--ink);
+  transition: background 0.12s ease;
+}
+
+.settings-sidebar-layout .settings-section-toolbar__action:hover {
+  background: var(--surface-hover, #f5f5f5);
+}
+
+.settings-sidebar-layout .settings-fullpage__content-header {
+  flex-shrink: 0;
+  padding: 1rem 2rem 0.65rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 10%, var(--border-soft));
+}
+
+.settings-sidebar-layout .settings-fullpage__content-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.settings-sidebar-layout .settings-fullpage__content-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1.25rem 2rem 2.5rem;
+}
+
+.settings-sidebar-layout .settings-section-body > * {
+  max-width: 42rem;
+}
+
+/* —— Sidebar collapse / expand toggle —— */
+
+.case-sidebar-panel__collapse-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.6rem;
+  height: 1.6rem;
+  margin-top: 0.1rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 0.4rem;
+  background: transparent;
+  color: var(--case-sidebar-muted);
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.case-sidebar-panel__collapse-btn:hover {
+  background: var(--case-sidebar-bg-hover);
+  color: #fff;
+  border-color: var(--case-sidebar-border);
+}
+
+.case-sidebar-panel__collapse-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, white 70%, transparent);
+  outline-offset: 1px;
+}
+
+.case-sidebar-panel__collapse-btn svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* —— Collapsed (icon-rail) sidebar —— */
+
+.case-sidebar-panel {
+  /* Width animates between full and collapsed widths so the layout shift
+     reads as a deliberate toggle rather than a snap. The dependent
+     `notion-preview-main { margin-left: ... }` rule above transitions in
+     lock-step. */
+  transition:
+    width var(--case-sidebar-collapse-timing, 0.18s ease),
+    padding var(--case-sidebar-collapse-timing, 0.18s ease);
+}
+
+.case-sidebar-panel--collapsed {
+  width: var(--case-sidebar-collapsed-width, 3rem);
+  /* Tighten side padding so the toggle button + colored area dots stay
+     centered in the rail. The vertical padding is preserved so the toggle
+     button doesn't shift up/down between states. */
+  padding-left: 0.35rem;
+  padding-right: 0.35rem;
+}
+
+/* In collapsed mode the logo row keeps the toggle button visible and centred
+   while the wordmark/beta badge fade away — the mark itself stays as a
+   compact identity cue. */
+.case-sidebar-panel--collapsed .case-sidebar-panel__logo-row {
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  padding-bottom: 0.6rem;
+}
+
+.case-sidebar-panel--collapsed .case-sidebar-panel__logo {
+  width: 100%;
+  justify-content: center;
+}
+
+.case-sidebar-panel--collapsed .topbar-logo--light .topbar-logo__row {
+  justify-content: center;
+}
+
+.case-sidebar-panel--collapsed .topbar-logo--light .topbar-logo__stem,
+.case-sidebar-panel--collapsed .topbar-logo--light .topbar-logo__beta,
+.case-sidebar-panel--collapsed .topbar-logo--light .truncate {
+  display: none;
+}
+
+.case-sidebar-panel--collapsed .case-sidebar-panel__logo .topbar-logo__mark {
+  margin-left: 0;
+}
+
+/* Hide the workspace-context content, date widget, and user footer text
+   while collapsed. Footer action buttons keep working via icons; the date
+   widget folds to a single dot to indicate "today" without the long form. */
+.case-sidebar-panel--collapsed .case-sidebar-panel__content,
+.case-sidebar-panel--collapsed .case-sidebar-panel__widgets,
+.case-sidebar-panel--collapsed .case-sidebar-user-footer__name {
+  display: none;
+}
+
+.case-sidebar-panel--collapsed .case-sidebar-user-footer {
+  align-items: center;
+  padding-top: 0.5rem;
+}
+
+.case-sidebar-panel--collapsed .case-sidebar-user-footer__actions {
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+/* Nav links collapse to a centred colored dot + active indicator so users
+   still have a per-area visual context (the link's `data-area` accent
+   continues to drive the dot color via `--area-accent`). The label is
+   hidden but kept in the DOM as `title` text for hover/AT consumption. */
+.case-sidebar-panel--collapsed .case-sidebar-nav__heading {
+  display: none;
+}
+
+.case-sidebar-panel--collapsed .case-sidebar-panel__nav {
+  align-items: stretch;
+  gap: 0.35rem;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.case-sidebar-panel--collapsed .case-sidebar-nav {
+  gap: 0.18rem;
+  align-items: stretch;
+}
+
+.case-sidebar-panel--collapsed .case-sidebar-nav__link {
+  justify-content: center;
+  padding: 0.35rem 0;
+  border-radius: 0.4rem;
+}
+
+.case-sidebar-panel--collapsed .case-sidebar-nav__link-label {
+  /* Visually hidden but accessibility tree still sees the label. */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* The collapsed link itself becomes the visual dot — left accent bar from
+   the full mode stays for the active item, sized smaller to match the
+   reduced rail. */
+.case-sidebar-panel--collapsed .case-sidebar-nav__link::after {
+  content: '';
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--area-accent, white) 55%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, white 30%, transparent);
+  transition: background 0.16s ease, transform 0.16s ease;
+}
+
+.case-sidebar-panel--collapsed .case-sidebar-nav__link:hover::after {
+  background: color-mix(in srgb, var(--area-accent, white) 80%, white 12%);
+  transform: scale(1.06);
+}
+
+.case-sidebar-panel--collapsed .case-sidebar-nav__link--active {
+  background: color-mix(in srgb, var(--area-accent) 22%, color-mix(in srgb, white 10%, transparent));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--area-accent) 38%, transparent),
+    0 1px 8px -3px color-mix(in srgb, var(--area-accent) 50%, transparent);
+}
+
+.case-sidebar-panel--collapsed .case-sidebar-nav__link--active::after {
+  background: color-mix(in srgb, var(--area-accent) 75%, white 25%);
+  transform: scale(1.15);
+}
+
+/* Hide the original active accent bar in collapsed mode; the dot above is
+   the new visual cue. */
+.case-sidebar-panel--collapsed .case-sidebar-nav__link::before,
+.case-sidebar-panel--collapsed .case-sidebar-nav__link--active::before {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .case-sidebar-panel,
+  .notion-preview-app--case-sidebar .workspace-tab-bar,
+  .notion-preview-app--case-sidebar .active-appointment-bar,
+  .notion-preview-app--case-sidebar .notion-preview-main,
+  .case-sidebar-panel--collapsed .case-sidebar-nav__link::after {
+    transition: none;
+  }
 }
 
 @media (max-width: 600px) {

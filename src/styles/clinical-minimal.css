@@ -136,6 +136,40 @@
   line-height: 1.3;
 }
 
+.cm-hero__demographics {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.85rem;
+  margin: 0;
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 400;
+  color: var(--text-muted, #91887e);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.35;
+}
+
+.cm-hero__fact {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  margin: 0;
+}
+
+.cm-hero__fact-label,
+.cm-hero__fact-value {
+  margin: 0;
+}
+
+.cm-hero__fact-label {
+  font-weight: 500;
+  color: color-mix(in srgb, var(--text-muted, #91887e) 88%, var(--text-main, #24211e));
+}
+
+.cm-hero__fact-value {
+  font-weight: 400;
+}
+
 .cm-hero__case-id {
   margin: 0 0 0 auto;
   font-family: var(--font-mono, ui-monospace, monospace);

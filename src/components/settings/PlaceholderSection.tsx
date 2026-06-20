@@ -14,40 +14,14 @@ import {
 import { SettingsField } from './SettingsField'
 import { SettingsOptionGroup } from './SettingsOptionGroup'
 
-function PlaceholderOption({ label }: { label: string }) {
-  return (
-    <button
-      type="button"
-      disabled
-      className="rounded-sm border-2 border-border bg-surface-hover px-3 py-1.5 text-xs text-muted"
-    >
-      {label}
-    </button>
-  )
-}
-
 function PlaceholderInput({ value }: { value: string }) {
   return (
     <input
       type="text"
       disabled
       value={value}
-      className="w-full rounded-sm border-2 border-border bg-surface-hover px-3 py-2 text-sm text-muted"
+      className="w-full rounded-sm border border-border bg-surface-hover px-3 py-2 text-sm text-muted"
     />
-  )
-}
-
-function PlaceholderSelect({ value, options }: { value: string; options: string[] }) {
-  return (
-    <select
-      disabled
-      value={value}
-      className="w-full rounded-sm border-2 border-border bg-surface-hover px-3 py-2 text-sm text-muted"
-    >
-      {options.map((option) => (
-        <option key={option}>{option}</option>
-      ))}
-    </select>
   )
 }
 
@@ -73,14 +47,7 @@ export function LanguageSection({
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-ink">{t('settingsLanguage')}</h2>
-      <p className="mt-1 mb-6 text-sm text-muted">
-        {language === 'de'
-          ? 'Sprache der Benutzeroberfläche und Dokumentation.'
-          : t('settingsAssessmentStandardDescription')}
-      </p>
-
-      <SettingsField label="Oberflächensprache">
+      <SettingsField label={t('settingsUiLanguageLabel')}>
         <SettingsOptionGroup
           value={language}
           options={languageOptions}
@@ -89,10 +56,7 @@ export function LanguageSection({
       </SettingsField>
 
       {language === 'en' ? (
-        <SettingsField
-          label="Englische Variante"
-          description="Unterschiedliche Bezeichnungen für psychopathologische Befunde (MSE)."
-        >
+        <SettingsField label={t('settingsEnglishVariantLabel')}>
           <SettingsOptionGroup
             value={englishVariant}
             options={[
@@ -104,10 +68,7 @@ export function LanguageSection({
         </SettingsField>
       ) : null}
 
-      <SettingsField
-        label={t('settingsAssessmentStandard')}
-        description={t('settingsAssessmentStandardDescription')}
-      >
+      <SettingsField label={t('settingsAssessmentStandard')}>
         <SettingsOptionGroup
           value={assessmentStandard}
           options={[
@@ -122,18 +83,14 @@ export function LanguageSection({
           ]}
           onChange={onSelectAssessmentStandard}
         />
-        <div className="mt-2 flex flex-wrap gap-2">
-          <PlaceholderOption label={`Research-Grade (${t('assessmentStandardComingSoon')})`} />
-        </div>
       </SettingsField>
 
-      <SettingsField
-        label="Standard-Verordnungsland"
-        description="Wird für verfügbare Präparate in Wissensdatenbank und Medikation vorausgewählt."
-      >
+      <SettingsField label={t('settingsPrescribingCountryLabel')}>
         <select
           value={defaultPrescribingCountry}
-          onChange={(event) => setDefaultPrescribingCountry(event.target.value as typeof defaultPrescribingCountry)}
+          onChange={(event) =>
+            setDefaultPrescribingCountry(event.target.value as typeof defaultPrescribingCountry)
+          }
           className="w-full rounded-sm border-2 border-border bg-surface px-3 py-2 text-sm text-ink outline-none transition-colors focus:border-ink"
         >
           {PRESCRIBING_COUNTRIES.map((country) => (
@@ -143,104 +100,34 @@ export function LanguageSection({
           ))}
         </select>
       </SettingsField>
-
-      <SettingsField label="Dokumentationssprache" description="Sprache für generierte Texte.">
-        <PlaceholderSelect
-          value={languageOptions.find((option) => option.value === language)?.label ?? 'Deutsch'}
-          options={languageOptions.map((option) => option.label)}
-        />
-      </SettingsField>
-    </div>
-  )
-}
-
-export function DocumentationSection() {
-  return (
-    <div>
-      <h2 className="text-lg font-semibold text-ink">Dokumentation</h2>
-      <p className="mt-1 mb-6 text-sm text-muted">Standardwerte für neue Dokumente.</p>
-
-      <SettingsField label="Standard-Dokumenttyp">
-        <PlaceholderSelect
-          value="Aufnahme"
-          options={['Aufnahme', 'Verlauf', 'Psycho-pathologie', 'Therapie und Verlauf']}
-        />
-      </SettingsField>
-
-      <SettingsField label="Unterschrift" description="Standard-Unterschrift in Briefen.">
-        <PlaceholderInput value="Dr. med. — Psychiatrie" />
-      </SettingsField>
-
-      <SettingsField label="Klinik / Praxis">
-        <PlaceholderInput value="Psychiatrische Klinik" />
-      </SettingsField>
-    </div>
-  )
-}
-
-interface AiSectionProps {
-  aiAutoMode: boolean
-  onToggleAiAuto: () => void
-}
-
-export function AiSection({ aiAutoMode, onToggleAiAuto }: AiSectionProps) {
-  return (
-    <div>
-      <h2 className="text-lg font-semibold text-ink">KI-Einstellungen</h2>
-      <p className="mt-1 mb-6 text-sm text-muted">Verhalten der KI-gestützten Textgenerierung.</p>
-
-      <SettingsField label="KI Auto-Modus" description="Automatische Vorschläge während des Schreibens.">
-        <SettingsOptionGroup
-          value={aiAutoMode ? 'on' : 'off'}
-          options={[
-            { value: 'off', label: 'Aus' },
-            { value: 'on', label: 'Ein' },
-          ]}
-          onChange={(value) => {
-            if ((value === 'on') !== aiAutoMode) onToggleAiAuto()
-          }}
-        />
-      </SettingsField>
-
-      <SettingsField label="Schreibstil">
-        <PlaceholderSelect
-          value="Klinisch-neutral"
-          options={['Klinisch-neutral', 'Ausführlich', 'Kompakt']}
-        />
-      </SettingsField>
-
-      <SettingsField label="Modell">
-        <PlaceholderSelect value="Standard" options={['Standard', 'Erweitert']} />
-      </SettingsField>
     </div>
   )
 }
 
 export function AccountSection() {
+  const { t } = useTranslation()
+
   return (
     <div>
-      <h2 className="text-lg font-semibold text-ink">Konto</h2>
-      <p className="mt-1 mb-6 text-sm text-muted">Ihre Kontoinformationen und Zugangsdaten.</p>
-
-      <SettingsField label="Name">
+      <SettingsField label={t('settingsAccountNameLabel')}>
         <PlaceholderInput value="Dr. —" />
       </SettingsField>
 
-      <SettingsField label="E-Mail">
+      <SettingsField label={t('settingsAccountEmailLabel')}>
         <PlaceholderInput value="arzt@klinik.example" />
       </SettingsField>
 
-      <SettingsField label="Fachrichtung">
+      <SettingsField label={t('settingsAccountSpecialtyLabel')}>
         <PlaceholderInput value="Psychiatrie und Psychotherapie" />
       </SettingsField>
 
-      <SettingsField label="Passwort">
+      <SettingsField label={t('settingsAccountPasswordLabel')}>
         <button
           type="button"
           disabled
-          className="rounded-sm border-2 border-border bg-surface-hover px-3 py-2 text-xs text-muted"
+          className="rounded-sm border border-border bg-surface-hover px-3 py-2 text-xs text-muted"
         >
-          Passwort ändern
+          {t('settingsAccountPasswordChange')}
         </button>
       </SettingsField>
     </div>
@@ -248,60 +135,20 @@ export function AccountSection() {
 }
 
 export function AboutSection() {
+  const { t } = useTranslation()
+
   return (
     <div>
-      <h2 className="text-lg font-semibold text-ink">Über Psychiatry.ink</h2>
-      <p className="mt-1 mb-6 text-sm text-muted">Versionsinformationen und rechtliche Hinweise.</p>
-
-      <SettingsField label="Version">
+      <SettingsField label={t('settingsAboutVersionLabel')}>
         <p className="text-sm text-ink">Psychiatry.ink</p>
       </SettingsField>
 
-      <SettingsField label="Datenschutz" description="Informationen zur Datenspeicherung und -verarbeitung.">
-        <p className="text-xs text-muted">
-          Klinische Inhalte werden ausschließlich auf Ihrem Gerät entschlüsselt. Psychiatry.ink hat keinen Zugriff auf Ihre Patientendaten.
-        </p>
+      <SettingsField label={t('settingsAboutPrivacyLabel')}>
+        <p className="text-sm text-muted">{t('settingsAboutPrivacyBody')}</p>
       </SettingsField>
 
-      <SettingsField label="Support">
-        <p className="text-xs text-muted">Kontakt und Hilfe über die Psychiatry.ink-Website.</p>
-      </SettingsField>
-    </div>
-  )
-}
-
-export function PrivacySection() {
-  return (
-    <div>
-      <h2 className="text-lg font-semibold text-ink">Datenschutz</h2>
-      <p className="mt-1 mb-6 text-sm text-muted">Speicherung und Verarbeitung Ihrer Daten.</p>
-
-      <SettingsField
-        label="Lokale Speicherung"
-        description="Einstellungen werden im Browser gespeichert."
-      >
-        <p className="text-xs text-muted">Aktiv — Darstellungseinstellungen werden lokal gespeichert.</p>
-      </SettingsField>
-
-      <SettingsField label="Dokumentenverlauf">
-        <SettingsOptionGroup
-          value="session"
-          options={[
-            { value: 'session', label: 'Nur Sitzung' },
-            { value: 'saved', label: 'Gespeichert' },
-          ]}
-          onChange={() => undefined}
-        />
-      </SettingsField>
-
-      <SettingsField label="Daten exportieren">
-        <button
-          type="button"
-          disabled
-          className="rounded-sm border-2 border-border bg-surface-hover px-3 py-2 text-xs text-muted"
-        >
-          Export anfordern
-        </button>
+      <SettingsField label={t('settingsAboutSupportLabel')}>
+        <p className="text-sm text-muted">{t('settingsAboutSupportBody')}</p>
       </SettingsField>
     </div>
   )

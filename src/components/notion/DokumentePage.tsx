@@ -304,9 +304,19 @@ interface DokumentePageProps {
    * The parent should navigate to the appropriate workspace page and inject the draft content.
    */
   onEditDraft?: (entry: DokumentEntry) => void
+  /** When set, open this document in the detail view once it appears in the list. */
+  expandDocumentId?: string | null
+  onExpandDocumentHandled?: () => void
 }
 
-export function DokumentePage({ caseId, onAfterDelete, onImported, onEditDraft }: DokumentePageProps) {
+export function DokumentePage({
+  caseId,
+  onAfterDelete,
+  onImported,
+  onEditDraft,
+  expandDocumentId,
+  onExpandDocumentHandled,
+}: DokumentePageProps) {
   const { t } = useTranslation()
   const nav = useDokumenteSectionNavOptional()
   const [entries, setEntries] = useState<DokumentEntry[]>(() => loadDokumente(caseId))
@@ -362,6 +372,15 @@ export function DokumentePage({ caseId, onAfterDelete, onImported, onEditDraft }
       window.removeEventListener(DOKUMENTE_ARCHIVE_CHANGED_EVENT, handleArchiveChanged)
     }
   }, [caseId])
+
+  useEffect(() => {
+    if (!expandDocumentId) return
+    const entry = entries.find((item) => item.id === expandDocumentId)
+    if (!entry) return
+    savedScrollRef.current = mainRef.current?.scrollTop ?? 0
+    setExpandedEntry(entry)
+    onExpandDocumentHandled?.()
+  }, [entries, expandDocumentId, onExpandDocumentHandled])
 
   const filtered =
     activeCategory === 'all'

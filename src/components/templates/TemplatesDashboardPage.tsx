@@ -3,10 +3,12 @@ import {
   ArrowLeft,
   Copy,
   Eye,
+  FileUp,
   Plus,
   Save,
   Search,
   Settings2,
+  Share2,
   Trash2,
 } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
@@ -18,7 +20,6 @@ import type {
   DocumentTemplate,
   TemplateCategory,
   TemplateField,
-  TemplateFieldType,
 } from '../../types/documentTemplate'
 import {
   categoryLabel,
@@ -30,9 +31,11 @@ import { sanitizeRichHtml } from '../../utils/documentTemplate/htmlUtils'
 import { searchTemplates } from '../../utils/documentTemplateStore'
 import { countDocsUsingTemplateInCases } from '../../utils/generatedDocumentsVault'
 import { A4PageView } from './A4PageView'
-import { TemplateContextMenu, type ContextMenuState } from './TemplateContextMenu'
+import { TemplateContextMenu, type ContextMenuState, type TemplateFieldInsertSelection } from './TemplateContextMenu'
+import { TemplateImportDialog } from './TemplateImportDialog'
+import { TemplateShareDialog } from './TemplateShareDialog'
 import { TemplateFieldSettings, TemplatePageSettingsPanel } from './TemplateFieldSettings'
-import { TemplateFieldPreview, createFieldFromType } from './templateFieldUtils'
+import { TemplateFieldPreview, createDynamicField, createFieldFromType } from './templateFieldUtils'
 
 interface TemplatesDashboardPageProps {
   onBack: () => void
@@ -50,6 +53,8 @@ export function TemplatesDashboardPage({ onBack }: TemplatesDashboardPageProps) 
   const [showPageSettings, setShowPageSettings] = useState(false)
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [shareOpen, setShareOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
 
   const lang = language === 'de' ? 'de' : 'en'
 
@@ -120,22 +125,27 @@ export function TemplatesDashboardPage({ onBack }: TemplatesDashboardPageProps) 
   )
 
   const insertField = useCallback(
-    (type: TemplateFieldType | 'page_settings', insertAt: number) => {
+    (selection: TemplateFieldInsertSelection, insertAt: number) => {
       if (!selected) return
-      if (type === 'page_settings') {
+      if (selection.kind === 'page_settings') {
         setShowPageSettings(true)
         setSelectedFieldId(null)
         return
       }
       const sorted = [...selected.fields].sort((a, b) => a.order - b.order)
-      const field = createFieldFromType(type, insertAt, t('templateFieldDefaultLabel'))
+      let field: TemplateField
+      if (selection.kind === 'dynamic') {
+        field = createDynamicField(selection.dynamicKey, insertAt, lang)
+      } else {
+        field = createFieldFromType(selection.type, insertAt, t('templateFieldDefaultLabel'))
+      }
       const next = [...sorted]
       next.splice(insertAt, 0, field)
       patchSelected({ fields: next.map((f, i) => ({ ...f, order: i })) })
       setSelectedFieldId(field.id)
       setShowPageSettings(false)
     },
-    [selected, patchSelected, t],
+    [selected, patchSelected, t, lang],
   )
 
   const removeField = useCallback(
@@ -199,15 +209,26 @@ export function TemplatesDashboardPage({ onBack }: TemplatesDashboardPageProps) 
           {t('templateBackDashboard')}
         </button>
         <h1 className="dt-dashboard__title">{t('templateDashboardTitle')}</h1>
-        <button
-          type="button"
-          className="dt-btn dt-btn--primary"
-          onClick={handleCreate}
-          disabled={!canManageTemplates()}
-        >
-          <Plus className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
-          {t('templateCreate')}
-        </button>
+        <div className="dt-dashboard__topbar-actions">
+          <button
+            type="button"
+            className="dt-btn dt-btn--ghost"
+            onClick={() => setImportOpen(true)}
+            disabled={!canManageTemplates()}
+          >
+            <FileUp className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+            {t('templateImport')}
+          </button>
+          <button
+            type="button"
+            className="dt-btn dt-btn--primary"
+            onClick={handleCreate}
+            disabled={!canManageTemplates()}
+          >
+            <Plus className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+            {t('templateCreate')}
+          </button>
+        </div>
       </header>
 
       <div className="dt-dashboard__layout">
@@ -518,6 +539,10 @@ export function TemplatesDashboardPage({ onBack }: TemplatesDashboardPageProps) 
               <Copy className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
               {t('templateDuplicate')}
             </button>
+            <button type="button" className="dt-btn dt-btn--ghost" onClick={() => setShareOpen(true)}>
+              <Share2 className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+              {t('templateShare')}
+            </button>
             {selected.status !== 'archived' ? (
               <button type="button" className="dt-btn dt-btn--ghost" onClick={() => archive(selected.id)}>
                 <Archive className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
@@ -553,6 +578,22 @@ export function TemplatesDashboardPage({ onBack }: TemplatesDashboardPageProps) 
             </button>
           </div>
         </footer>
+      ) : null}
+
+      {shareOpen && selected ? (
+        <TemplateShareDialog template={selected} onClose={() => setShareOpen(false)} />
+      ) : null}
+
+      {importOpen ? (
+        <TemplateImportDialog
+          onClose={() => setImportOpen(false)}
+          onImported={(templateId) => {
+            setSelectedId(templateId)
+            setPreviewMode(false)
+            setSelectedFieldId(null)
+            setShowPageSettings(false)
+          }}
+        />
       ) : null}
     </div>
   )

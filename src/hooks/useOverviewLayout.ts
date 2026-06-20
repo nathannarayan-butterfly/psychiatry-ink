@@ -3,12 +3,15 @@ import { useKnowledgeBaseUserId } from './useKnowledgeBaseUserId'
 import {
   addOverviewWidget,
   getDefaultOverviewLayout,
+  layoutStorageKey,
   loadOverviewLayout,
   moveOverviewWidget,
+  OVERVIEW_LAYOUT_CHANGED_EVENT,
   removeOverviewWidget,
   saveOverviewLayout,
   setOverviewWidgetWidth,
   type OverviewLayout,
+  type OverviewLayoutChangedDetail,
   type OverviewWidgetId,
   type OverviewWidgetWidth,
 } from '../utils/overview/overviewLayout'
@@ -38,6 +41,29 @@ export function useOverviewLayout(): UseOverviewLayoutResult {
   useEffect(() => {
     setLayout(loadOverviewLayout(userId))
     setEditMode(false)
+  }, [userId])
+
+  useEffect(() => {
+    const reloadForUser = (targetUserId: string) => {
+      if (targetUserId !== userId) return
+      setLayout(loadOverviewLayout(userId))
+    }
+
+    const onLayoutChanged = (event: Event) => {
+      const detail = (event as CustomEvent<OverviewLayoutChangedDetail>).detail
+      if (detail?.userId) reloadForUser(detail.userId)
+    }
+
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === layoutStorageKey(userId)) reloadForUser(userId)
+    }
+
+    window.addEventListener(OVERVIEW_LAYOUT_CHANGED_EVENT, onLayoutChanged)
+    window.addEventListener('storage', onStorage)
+    return () => {
+      window.removeEventListener(OVERVIEW_LAYOUT_CHANGED_EVENT, onLayoutChanged)
+      window.removeEventListener('storage', onStorage)
+    }
   }, [userId])
 
   const commit = useCallback(

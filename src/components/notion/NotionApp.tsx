@@ -39,6 +39,9 @@ import { MedikationPage } from './MedikationPage'
 import { DiagnosePage } from './DiagnosePage'
 import { DiscussCasePage } from '../discuss-case/DiscussCasePage'
 import { ConsultationCasePage } from '../consultation/ConsultationCasePage'
+import { ClinicalIntelligencePanel } from '../clinical/clinicalIntelligence/ClinicalIntelligencePanel'
+import { isClinicalIntelligenceV1Enabled } from '../../utils/featureFlags'
+import { useCaseSidebarCollapsed } from '../../hooks/useCaseSidebarCollapsed'
 import { MedicationSectionNavProvider } from '../../contexts/MedicationSectionNavContext'
 import { TherapySectionNavProvider } from '../../contexts/TherapySectionNavContext'
 import { DiagnosticsSectionNavProvider } from '../../contexts/DiagnosticsSectionNavContext'
@@ -229,7 +232,11 @@ function CaseSectionNavProviders({
   return <>{children}</>
 }
 
-export function NotionApp({
+export function NotionApp(props: NotionAppProps) {
+  return <NotionAppInner {...props} />
+}
+
+function NotionAppInner({
   caseId,
   initialPage,
   initialShowPatientDashboard,
@@ -504,6 +511,7 @@ export function NotionApp({
     [caseRegistry.cases],
   )
   const [showPatientRegistry, setShowPatientRegistry] = useState(false)
+  const [expandDokumentId, setExpandDokumentId] = useState<string | null>(null)
   const initialPageAppliedRef = useRef(false)
   const [activePage, setActivePage] = useState<NotionPageId>(
     () => initialPage ?? resolveNotionPageFromDocumentType(workspace.selectedDocumentType),
@@ -566,6 +574,7 @@ export function NotionApp({
   }, [activePage, activeTopTab, documentLabel, t, workspace.selectedDocumentType])
 
   const showCaseSidebar = !showPatientRegistry
+  const sidebarCollapsed = useCaseSidebarCollapsed()
 
   type PendingNavAction =
     | { type: 'closeDocument' }
@@ -792,6 +801,11 @@ export function NotionApp({
     },
     [savedDocsKey],
   )
+
+  const handleOpenCiDocument = useCallback((documentId: string) => {
+    setExpandDokumentId(documentId)
+    setActiveTopTab('dokumente')
+  }, [])
 
   /**
    * Navigate to the workspace page for the given draft entry and inject its content
@@ -1421,6 +1435,9 @@ export function NotionApp({
       className={[
         'notion-preview-app text-ink',
         showCaseSidebar ? 'notion-preview-app--case-sidebar' : '',
+        showCaseSidebar && sidebarCollapsed.collapsed
+          ? 'notion-preview-app--case-sidebar-collapsed'
+          : '',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -1581,6 +1598,8 @@ export function NotionApp({
           onOpenSettings={settingsPanel.openSettings}
           todoCaseId={hasPatient ? caseId : null}
           todoPatientLabel={currentPatientName ?? null}
+          collapsed={sidebarCollapsed.collapsed}
+          onToggleCollapsed={sidebarCollapsed.toggle}
         >
           <CaseSidebarContent
             activeTab={activeTopTab}
@@ -1753,6 +1772,8 @@ export function NotionApp({
             onAfterDelete={handleAfterDeleteDokument}
             onEditDraft={handleEditDraft}
             onImported={() => setPatientMetaVersion((v) => v + 1)}
+            expandDocumentId={expandDokumentId}
+            onExpandDocumentHandled={() => setExpandDokumentId(null)}
           />
             </div>
           </div>
@@ -1814,6 +1835,20 @@ export function NotionApp({
                 requestId={initialKonsilId}
                 onNavigate={onNavigate}
                 onNavigateHome={onNavigateDashboard}
+              />
+            </div>
+          </div>
+        ) : null}
+
+        {!showPatientRegistry &&
+        activeTopTab === 'ci' &&
+        isClinicalIntelligenceV1Enabled() ? (
+          <div className="case-tab-shell">
+            <CasePatientHeader caseId={caseId} metaVersion={patientMetaVersion} />
+            <div className="case-tab-shell__body case-tab-shell__body--full">
+              <ClinicalIntelligencePanel
+                caseId={storageCaseId}
+                onOpenDocument={handleOpenCiDocument}
               />
             </div>
           </div>
@@ -2058,6 +2093,7 @@ export function NotionApp({
         preset={anforderungModal.preset}
         onClose={closeAnforderungModal}
       />
+
     </div>
   )
 }

@@ -45,6 +45,7 @@ import { hasAiAndDictationCredits } from '../utils/planGating'
 import { useCredits } from './useCredits'
 import { useDictation } from './useDictation'
 import { useKiInstructions } from './useKiInstructions'
+import { resolveAiModelForTask } from '../utils/resolveAiModel'
 
 const AI_MODEL_TIER_KEY = 'psychiatry-ink:ai-model-tier'
 const AI_AUTO_MODE_KEY = 'psychiatry-ink:ai-auto-mode'
@@ -52,7 +53,7 @@ const AI_AUTO_MODE_KEY = 'psychiatry-ink:ai-auto-mode'
 function readAiModelTier(): AiModelTier {
   const raw = localStorage.getItem(AI_MODEL_TIER_KEY)
   if (raw === 'fast' || raw === 'standard' || raw === 'thorough') return raw
-  return 'standard'
+  return resolveAiModelForTask('document_generation').tier
 }
 
 function readAiAutoMode(): boolean {

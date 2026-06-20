@@ -1,5 +1,10 @@
 import { useTranslation } from '../../context/TranslationContext'
 import type { DocumentTemplate, TemplateField } from '../../types/documentTemplate'
+import {
+  DYNAMIC_FIELD_CATALOG,
+  getDynamicFieldDefinition,
+  isPatientDynamicKey,
+} from '../../data/documentTemplate/dynamicFields'
 import { PLACEHOLDER_BINDINGS } from '../../utils/documentTemplate/constants'
 import { SimpleRichTextEditor } from './SimpleRichTextEditor'
 
@@ -87,6 +92,40 @@ export function TemplateFieldSettings({ field, lang, onPatch }: TemplateFieldSet
             ))}
           </select>
         </label>
+      ) : null}
+
+      {field.type === 'dynamic' ? (
+        <>
+          <label className="dt-field-label">
+            {t('templateDynamicFieldLabel')}
+            <select
+              className="dt-select"
+              value={field.dynamicKey ?? ''}
+              onChange={(e) => {
+                const nextKey = e.target.value
+                if (!isPatientDynamicKey(nextKey)) return
+                const def = getDynamicFieldDefinition(nextKey)
+                onPatch({
+                  dynamicKey: nextKey,
+                  label: def ? t(def.labelKey) : field.label,
+                })
+              }}
+            >
+              {DYNAMIC_FIELD_CATALOG.map((def) => (
+                <option key={def.key} value={def.key}>
+                  {t(def.labelKey)}
+                </option>
+              ))}
+            </select>
+          </label>
+          {field.dynamicKey ? (
+            <p className="dt-field-help">
+              {getDynamicFieldDefinition(field.dynamicKey)
+                ? t(getDynamicFieldDefinition(field.dynamicKey)!.descriptionKey)
+                : null}
+            </p>
+          ) : null}
+        </>
       ) : null}
 
       {(field.type === 'select' || field.type === 'multi_select' || field.type === 'radio_group') ? (

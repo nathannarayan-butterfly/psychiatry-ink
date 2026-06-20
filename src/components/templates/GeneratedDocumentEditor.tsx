@@ -208,6 +208,22 @@ function FieldInput({
     )
   }
 
+  if (field.type === 'dynamic') {
+    const text = typeof value === 'string' ? value : ''
+    const unresolved = !text.trim() || text === '—'
+    return (
+      <label className="dt-field-label">
+        {field.label}
+        <input
+          className={`dt-input dt-input--dynamic${unresolved ? ' dt-input--unresolved' : ''}`}
+          value={text}
+          readOnly
+          placeholder={t('templatePlaceholderUnresolved')}
+        />
+      </label>
+    )
+  }
+
   if (field.type === 'signature' || field.type === 'initials' || field.type === 'name_line') {
     return (
       <label className="dt-field-label">

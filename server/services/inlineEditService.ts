@@ -42,6 +42,7 @@ export interface InlineEditParams {
   context: InlineEditContext
   instruction: string
   tier: AiModelTier
+  model?: { provider: string; modelId: string }
   language: ClinicalLanguage
   usageContext?: AiUsageContext
 }
@@ -138,6 +139,7 @@ export async function runInlineEdit(params: InlineEditParams): Promise<InlineEdi
 
   const result = await callLlm({
     tier: params.tier,
+    model: params.model,
     systemPrompt,
     userPrompt,
     // Roughly bound output to the selection size plus headroom.

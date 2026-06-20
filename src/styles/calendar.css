@@ -1,10 +1,10 @@
 /* Calendar module — clinical minimal styling (left-aligned, flat, typographic) */
 
-.calendar-page {
+.calendar-page.cm-workspace {
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: var(--cm-page-pad-y, 1.75rem) var(--cm-page-pad-x, 2rem) 3rem;
+  padding: var(--cm-page-pad-y, 1.5rem) var(--cm-page-pad-x, 1.75rem) 3rem;
   box-sizing: border-box;
   text-align: left;
 }
@@ -845,9 +845,8 @@
     flex-direction: column;
   }
 
-  .calendar-page {
-    padding-left: 1.125rem;
-    padding-right: 1.125rem;
+  .calendar-page.cm-workspace {
+    padding: var(--cm-page-pad-y, 1.5rem) var(--cm-page-pad-x, 1.25rem) 2.75rem;
   }
 
   .calendar-toolbar {

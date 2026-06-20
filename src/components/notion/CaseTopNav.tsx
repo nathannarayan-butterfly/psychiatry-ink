@@ -3,7 +3,18 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { UiTranslationKey } from '../../data/uiTranslations'
 
-export type TopNavTabId = 'overview' | 'workspace' | 'verlauf' | 'diagnose' | 'labor' | 'medikation' | 'therapie' | 'dokumente' | 'discuss' | 'konsil'
+export type TopNavTabId =
+  | 'overview'
+  | 'workspace'
+  | 'verlauf'
+  | 'diagnose'
+  | 'labor'
+  | 'medikation'
+  | 'therapie'
+  | 'dokumente'
+  | 'discuss'
+  | 'konsil'
+  | 'ci'
 
 interface CaseTopNavProps {
   activeTab: TopNavTabId
@@ -39,6 +50,9 @@ interface TabConfig {
   labelKey: UiTranslationKey
 }
 
+// Top-nav fallback (used only when the case sidebar is hidden — e.g. on
+// secondary surfaces). Clinical Intelligence is intentionally **not** listed
+// here: its canonical entry point is the case left sidebar.
 const TABS: TabConfig[] = [
   { id: 'overview', labelKey: 'topNavOverview' },
   { id: 'workspace', labelKey: 'topNavWorkspaceFall' },
@@ -73,7 +87,9 @@ export function CaseTopNav({
 
   const nextName = nextPatientName?.trim()
   const prevName = prevPatientName?.trim()
-  const visibleTabs = hasPatient ? TABS : TABS.filter((tab) => tab.id === 'workspace')
+  const visibleTabs = hasPatient
+    ? TABS
+    : TABS.filter((tab) => tab.id === 'workspace')
 
   useEffect(() => {
     if (!zuordnenOpen) return

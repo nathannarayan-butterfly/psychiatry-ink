@@ -132,6 +132,35 @@ export function parseGermanDateInput(input: string): string | null {
   return parseGermanDate(trimmed)
 }
 
+/**
+ * Parse in-progress clinician date input without 2-digit year expansion.
+ * Use while the user is typing so partial years like `19` are not committed as `2019`.
+ */
+export function parseGermanDateInputDraft(input: string): string | null {
+  const value = normalizeGermanDateInput(input)
+  if (!value) return null
+
+  let m = ISO_DATE.exec(value)
+  if (m) {
+    const [, y, mo, d] = m
+    const year = Number(y)
+    const month = Number(mo)
+    const day = Number(d)
+    if (isValidYmd(year, month, day)) return `${year}-${pad(month)}-${pad(day)}`
+    return null
+  }
+
+  m = DE_DATE_FULL.exec(value)
+  if (m) {
+    const day = Number(m[1])
+    const month = Number(m[2])
+    const year = Number(m[3])
+    if (isValidYmd(year, month, day)) return `${year}-${pad(month)}-${pad(day)}`
+  }
+
+  return null
+}
+
 const DATE_TOKEN_RE = /\b(\d{1,2}\.\d{1,2}\.\d{4}|\d{1,2}\.\d{1,2}\.\d{2}|\d{4}-\d{1,2}-\d{1,2})\b/
 
 /** Find the first German/ISO date token inside free text such as a section heading. */

@@ -2,6 +2,12 @@ import { safeGetItem, safeSetItem } from '../safeStorage'
 
 export const OVERVIEW_LAYOUT_VERSION = 4 as const
 export const OVERVIEW_LAYOUT_STORAGE_BASE = 'psychiatry-ink:overview-layout'
+export const OVERVIEW_LAYOUT_CHANGED_EVENT = 'psychiatry-ink:overview-layout-changed'
+
+export interface OverviewLayoutChangedDetail {
+  userId: string
+  layout: OverviewLayout
+}
 
 export type OverviewWidgetId =
   | 'hero-summary'
@@ -28,6 +34,9 @@ export type OverviewWidgetId =
   | 'ct-summary'
   | 'angemeldete-therapien'
   | 'compliance'
+  | 'ci-dimensional'
+  | 'ci-mechanism'
+  | 'ci-status'
 
 export type OverviewWidgetWidth = 'half' | 'full'
 
@@ -76,6 +85,9 @@ export const OVERVIEW_WIDGET_IDS: readonly OverviewWidgetId[] = [
   'ct-summary',
   'angemeldete-therapien',
   'compliance',
+  'ci-dimensional',
+  'ci-mechanism',
+  'ci-status',
 ] as const
 
 const VALID_WIDGET_IDS = new Set<string>(OVERVIEW_WIDGET_IDS)
@@ -135,6 +147,9 @@ export const OVERVIEW_WIDGET_BAND: Partial<Record<OverviewWidgetId, OverviewWidg
   appointments: 'therapy',
   'butterfly-criteria': 'monitoring',
   zwangsmassnahme: 'safety-verlauf',
+  'ci-dimensional': 'clinical-status',
+  'ci-mechanism': 'clinical-status',
+  'ci-status': 'clinical-status',
 }
 
 /** Default layout — hero is fixed above the grid; cards only here. */
@@ -191,6 +206,13 @@ export function loadOverviewLayout(userId: string): OverviewLayout {
 
 export function saveOverviewLayout(userId: string, layout: OverviewLayout): void {
   safeSetItem(layoutStorageKey(userId), JSON.stringify(layout))
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent<OverviewLayoutChangedDetail>(OVERVIEW_LAYOUT_CHANGED_EVENT, {
+        detail: { userId, layout },
+      }),
+    )
+  }
 }
 
 export function moveOverviewWidget(
@@ -261,6 +283,7 @@ export type OverviewWidgetVisibility =
   | 'hasEeg'
   | 'hasCt'
   | 'hasZwangsmassnahme'
+  | 'clinicalIntelligenceEnabled'
 
 export interface OverviewWidgetVisibilityContext {
   hasSpiegel: boolean
@@ -273,6 +296,7 @@ export interface OverviewWidgetVisibilityContext {
   hasEeg: boolean
   hasCt: boolean
   hasZwangsmassnahme: boolean
+  clinicalIntelligenceEnabled: boolean
 }
 
 export interface OverviewWidgetPlacement {
@@ -332,5 +356,6 @@ export function isOverviewWidgetVisible(
   if (visibility === 'hasEeg') return ctx.hasEeg
   if (visibility === 'hasCt') return ctx.hasCt
   if (visibility === 'hasZwangsmassnahme') return ctx.hasZwangsmassnahme
+  if (visibility === 'clinicalIntelligenceEnabled') return ctx.clinicalIntelligenceEnabled
   return true
 }

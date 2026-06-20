@@ -1,10 +1,13 @@
 import { Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { useTranslation } from '../../context/TranslationContext'
 import { useKnowledgeBaseUserId } from '../../hooks/useKnowledgeBaseUserId'
 import { useKbAdminUsersSettings } from '../../hooks/useKbAdminUsersSettings'
+import { SettingsField } from './SettingsField'
 
 export function KbAdminSection() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const fallbackUserId = useKnowledgeBaseUserId()
   const { allowlist, addEntry, removeEntry } = useKbAdminUsersSettings()
@@ -15,72 +18,63 @@ export function KbAdminSection() {
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-ink">KB Batch Review — Admins</h2>
-      <p className="mt-1 mb-4 text-sm text-muted">
-        Grant KB admin access by user UUID or email. Stored locally in this browser (
-        <code>psychiatry-ink:kb-admin-users</code>). Server also accepts{' '}
-        <code>KB_ADMIN_USER_IDS</code> / <code>VITE_KB_ADMIN_USER_IDS</code> and Supabase{' '}
-        <code>app_metadata.kb_admin=true</code>.
-      </p>
+      <p className="settings-section-lead">{t('settingsKbAdminIntro')}</p>
 
-      <div className="mb-4 rounded-lg border border-border bg-surface p-3 text-sm">
-        <p>
-          <strong>Your id:</strong> <code>{currentId}</code>
-        </p>
+      <SettingsField label={t('settingsKbAdminYourId')}>
+        <code className="text-sm text-ink">{currentId}</code>
         {currentEmail ? (
-          <p className="mt-1">
-            <strong>Your email:</strong> <code>{currentEmail}</code>
+          <p className="mt-1 text-sm text-muted">
+            {t('settingsKbAdminYourEmail')}: <code>{currentEmail}</code>
           </p>
         ) : null}
-      </div>
+      </SettingsField>
 
-      <form
-        className="flex gap-2 mb-4"
-        onSubmit={(event) => {
-          event.preventDefault()
-          addEntry(draft)
-          setDraft('')
-        }}
-      >
-        <input
-          type="text"
-          className="flex-1 rounded-md border border-border px-3 py-2 text-sm"
-          placeholder="User UUID or email"
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-        />
-        <button
-          type="submit"
-          className="inline-flex items-center gap-1 rounded-md border border-border px-3 py-2 text-sm"
-          disabled={!draft.trim()}
+      <SettingsField label={t('settingsKbAdminAllowlist')}>
+        <form
+          className="flex gap-2"
+          onSubmit={(event) => {
+            event.preventDefault()
+            addEntry(draft)
+            setDraft('')
+          }}
         >
-          <Plus size={14} aria-hidden />
-          Add
-        </button>
-      </form>
+          <input
+            type="text"
+            className="flex-1 rounded-sm border-2 border-border bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-ink"
+            placeholder={t('settingsKbAdminPlaceholder')}
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+          />
+          <button
+            type="submit"
+            className="settings-section-toolbar__action inline-flex items-center gap-1"
+            disabled={!draft.trim()}
+          >
+            <Plus size={14} aria-hidden />
+            {t('settingsKbAdminAdd')}
+          </button>
+        </form>
 
-      {allowlist.length === 0 ? (
-        <p className="text-sm text-muted">No local admins configured.</p>
-      ) : (
-        <ul className="space-y-2">
-          {allowlist.map((entry) => (
-            <li
-              key={entry}
-              className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm"
-            >
-              <code>{entry}</code>
-              <button
-                type="button"
-                className="inline-flex items-center gap-1 text-muted hover:text-ink"
-                onClick={() => removeEntry(entry)}
-                aria-label={`Remove ${entry}`}
-              >
-                <Trash2 size={14} aria-hidden />
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+        {allowlist.length === 0 ? (
+          <p className="mt-3 text-sm text-muted">{t('settingsKbAdminEmpty')}</p>
+        ) : (
+          <ul className="mt-3 space-y-2">
+            {allowlist.map((entry) => (
+              <li key={entry} className="flex items-center justify-between gap-2 py-1 text-sm">
+                <code>{entry}</code>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 text-muted hover:text-ink"
+                  onClick={() => removeEntry(entry)}
+                  aria-label={t('settingsKbAdminRemove').replace('{entry}', entry)}
+                >
+                  <Trash2 size={14} aria-hidden />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </SettingsField>
     </div>
   )
 }

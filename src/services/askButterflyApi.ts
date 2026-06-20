@@ -1,4 +1,5 @@
 import { clinicalApiFetch, parseClinicalApiError } from './clinicalApiFetch'
+import { resolveLlmRequestForTask, type AiLlmRequestPayload } from '../utils/resolveAiModel'
 
 export interface AskButterflyChatMessage {
   role: 'user' | 'assistant'
@@ -13,11 +14,12 @@ export interface AskButterflyResult {
 
 export async function askButterflyChat(
   messages: AskButterflyChatMessage[],
-  tier: 'fast' | 'standard' | 'thorough' = 'fast',
+  llm?: AiLlmRequestPayload,
 ): Promise<AskButterflyResult> {
+  const payload = llm ?? resolveLlmRequestForTask('ask_butterfly')
   const response = await clinicalApiFetch('/api/ask-butterfly', {
     method: 'POST',
-    body: JSON.stringify({ messages, tier }),
+    body: JSON.stringify({ messages, ...payload }),
   })
 
   if (!response.ok) {

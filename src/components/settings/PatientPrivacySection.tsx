@@ -31,15 +31,6 @@ const tierLabelKeys: Record<PrivacyTier, 'privacyTierFull' | 'privacyTierLocalOn
   disabled: 'privacyTierDisabled',
 }
 
-const tierDescriptionKeys: Record<
-  PrivacyTier,
-  'privacyTierFullDescription' | 'privacyTierLocalOnlyDescription' | 'privacyTierDisabledDescription'
-> = {
-  full: 'privacyTierFullDescription',
-  local_only: 'privacyTierLocalOnlyDescription',
-  disabled: 'privacyTierDisabledDescription',
-}
-
 export function PatientPrivacySection({ privacy, workspaceVault }: PatientPrivacySectionProps) {
   const { t } = useTranslation()
   const { countryCode, identifierStorage, tier, setCountryCode, setIdentifierStorage } = privacy
@@ -84,13 +75,7 @@ export function PatientPrivacySection({ privacy, workspaceVault }: PatientPrivac
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-ink">{t('settingsPrivacy')}</h2>
-      <p className="mt-1 mb-6 text-sm text-muted">{t('privacySectionIntro')}</p>
-
-      <SettingsField
-        label={t('identifierStorageSettingsTitle')}
-        description={t('identifierStorageSettingsDescription')}
-      >
+      <SettingsField label={t('identifierStorageSettingsTitle')}>
         <IdentifierStorageChoice
           value={identifierStorage}
           onChange={handleIdentifierStorageChange}
@@ -99,7 +84,7 @@ export function PatientPrivacySection({ privacy, workspaceVault }: PatientPrivac
         />
       </SettingsField>
 
-      <SettingsField label={t('privacyCountryLabel')} description={t('privacyCountryDescription')}>
+      <SettingsField label={t('privacyCountryLabel')}>
         <input
           type="text"
           value={countryCode}
@@ -115,15 +100,9 @@ export function PatientPrivacySection({ privacy, workspaceVault }: PatientPrivac
         ) : null}
       </SettingsField>
 
-      <SettingsField label={t('privacyTierLabel')} description={t('privacyTierDescription')}>
-        <p className="rounded-sm border-2 border-border bg-surface px-3 py-2 text-sm font-medium text-ink">
-          {t(tierLabelKeys[tier])}
-        </p>
-        <p className="mt-2 text-xs leading-relaxed text-muted">{t(tierDescriptionKeys[tier])}</p>
-      </SettingsField>
-
-      <SettingsField label={t('privacyPatientFieldsLabel')}>
-        <ul className="list-inside list-disc space-y-1 text-xs text-muted">
+      <SettingsField label={t('privacyTierLabel')}>
+        <p className="text-sm font-medium text-ink">{t(tierLabelKeys[tier])}</p>
+        <ul className="mt-2 space-y-1 text-xs text-muted">
           <li>
             {allowsPatientMetadata(tier)
               ? t('privacyPatientFieldsEnabled')
@@ -134,26 +113,10 @@ export function PatientPrivacySection({ privacy, workspaceVault }: PatientPrivac
               ? t('privacyPublicKeyAllowed')
               : t('privacyPublicKeyBlocked')}
           </li>
-          <li
-            className={
-              identifierStorage === 'device' ? 'identifier-storage-choice__warning' : undefined
-            }
-          >
-            {identifierStorage === 'account'
-              ? t('privacyIdentifiersAccountMode')
-              : t('privacyIdentifiersDeviceMode')}
-          </li>
         </ul>
       </SettingsField>
 
-      <SettingsField label={t('privacyLocalStorageLabel')}>
-        <p className="text-xs text-muted">{t('privacyLocalStorageDescription')}</p>
-      </SettingsField>
-
-      <SettingsField
-        label={t('workflowDirectToDocLabel')}
-        description={t('workflowDirectToDocDescription')}
-      >
+      <SettingsField label={t('workflowDirectToDocLabel')}>
         <label className="flex cursor-pointer items-center gap-2 text-sm text-ink">
           <input
             type="checkbox"
@@ -167,10 +130,7 @@ export function PatientPrivacySection({ privacy, workspaceVault }: PatientPrivac
         </label>
       </SettingsField>
 
-      <SettingsField
-        label={t('pseudonymizationToggle')}
-        description={t('pseudonymizationHint')}
-      >
+      <SettingsField label={t('pseudonymizationToggle')}>
         <label className="flex cursor-pointer items-center gap-2 text-sm text-ink">
           <input
             type="checkbox"
@@ -178,7 +138,7 @@ export function PatientPrivacySection({ privacy, workspaceVault }: PatientPrivac
             onChange={(event) => handlePseudonymizationToggle(event.target.checked)}
             className="h-4 w-4 rounded-sm border-2 border-border"
           />
-          {pseudonymizationEnabled ? t('pseudonymizationToggle') : t('pseudonymizationDisabled')}
+          {pseudonymizationEnabled ? t('pseudonymizationActive') : t('pseudonymizationDisabled')}
         </label>
       </SettingsField>
 

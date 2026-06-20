@@ -5,6 +5,12 @@ import { DEMO_CASE_ID } from '../../../demo/constants'
 
 const t = (key: string) => {
   if (key === 'patientCaseUnassigned') return 'Patient nicht zugeordnet (Fall {id})'
+  if (key === 'patientGeschlechtMaennlich') return 'Männlich'
+  if (key === 'patientGeschlechtWeiblich') return 'Weiblich'
+  if (key === 'patientFieldGeburtsdatum') return 'Geburtsdatum'
+  if (key === 'patientAgeLabel') return 'Alter'
+  if (key === 'patientFieldGeschlecht') return 'Geschlecht'
+  if (key === 'patientFieldAufnahmedatum') return 'Aufnahmedatum'
   return key
 }
 
@@ -17,8 +23,10 @@ vi.mock('../../notionPageDate', () => ({
 }))
 
 import { getCaseMeta } from '../../../hooks/useCaseRegistry'
+import { loadNotionPageDate } from '../../notionPageDate'
 
 const mockGetCaseMeta = vi.mocked(getCaseMeta)
+const mockLoadNotionPageDate = vi.mocked(loadNotionPageDate)
 
 describe('buildClinicalHeroMeta', () => {
   it('uses workspace label for empty default case instead of patient list fallback', () => {
@@ -31,7 +39,13 @@ describe('buildClinicalHeroMeta', () => {
     const result = buildClinicalHeroMeta(DEFAULT_CASE_ID, t)
 
     expect(result.name).toBe('topNavWorkspaceFall')
-    expect(result.metaLine).toBeNull()
+    expect(result.demographics).toEqual({
+      dob: null,
+      age: null,
+      sex: null,
+      admission: null,
+    })
+    expect(result.metaLine).toContain('Geburtsdatum: —')
   })
 
   it('shows unassigned label with short case id for unnamed non-default cases', () => {
@@ -45,7 +59,7 @@ describe('buildClinicalHeroMeta', () => {
 
     expect(result.name).toBe('Patient nicht zugeordnet (Fall 6c5b69f3)')
     expect(result.isAssigned).toBe(false)
-    expect(result.metaLine).toBeNull()
+    expect(result.demographics.admission).toBeNull()
   })
 
   it('uses page heading when structured name is absent', () => {
@@ -89,7 +103,30 @@ describe('buildClinicalHeroMeta', () => {
     expect(result.name).toBe('Anna Beispiel')
   })
 
-  it('shows formatted Geburtsdatum in meta line when stored on case', () => {
+  it('always exposes all demographic fields with placeholders when data is missing', () => {
+    mockGetCaseMeta.mockReturnValue({
+      caseId: 'abc-123',
+      localVorname: 'Max',
+      localNachname: 'Mustermann',
+      createdAt: '2024-01-01T00:00:00.000Z',
+      lastOpened: '2024-01-01T00:00:00.000Z',
+    })
+
+    const result = buildClinicalHeroMeta('abc-123', t)
+
+    expect(result.name).toBe('Max Mustermann')
+    expect(result.demographics).toEqual({
+      dob: null,
+      age: null,
+      sex: null,
+      admission: null,
+    })
+    expect(result.metaLine).toBe(
+      'Geburtsdatum: — · Alter: — · Geschlecht: — · Aufnahmedatum: —',
+    )
+  })
+
+  it('shows formatted Geburtsdatum, age from DOB, sex, and admission date when present', () => {
     mockGetCaseMeta.mockReturnValue({
       caseId: 'abc-123',
       localVorname: 'Max',
@@ -99,14 +136,17 @@ describe('buildClinicalHeroMeta', () => {
       createdAt: '2024-01-01T00:00:00.000Z',
       lastOpened: '2024-01-01T00:00:00.000Z',
     })
+    mockLoadNotionPageDate.mockReturnValue('2026-06-02')
 
     const result = buildClinicalHeroMeta('abc-123', t)
 
-    expect(result.name).toBe('Max Mustermann')
-    expect(result.metaLine).toBe('01.02.1990 · patientGeschlechtMaennlich')
+    expect(result.demographics.dob).toBe('01.02.1990')
+    expect(result.demographics.age).toMatch(/^\d+ J\.$/)
+    expect(result.demographics.sex).toBe('Männlich')
+    expect(result.demographics.admission).toBe('02.06.2026')
   })
 
-  it('prefers Geburtsdatum over numeric age when both are present', () => {
+  it('calculates age from Geburtsdatum instead of stored localAge', () => {
     mockGetCaseMeta.mockReturnValue({
       caseId: 'abc-123',
       localGeburtsdatum: '1985-06-15',
@@ -117,10 +157,12 @@ describe('buildClinicalHeroMeta', () => {
 
     const result = buildClinicalHeroMeta('abc-123', t)
 
-    expect(result.metaLine).toBe('15.06.1985')
+    expect(result.demographics.dob).toBe('15.06.1985')
+    expect(result.demographics.age).toMatch(/^\d+ J\.$/)
+    expect(result.demographics.age).not.toBe('40 J.')
   })
 
-  it('falls back to age when Geburtsdatum is missing', () => {
+  it('falls back to stored age when Geburtsdatum is missing', () => {
     mockGetCaseMeta.mockReturnValue({
       caseId: 'abc-123',
       localAge: '34',
@@ -131,6 +173,8 @@ describe('buildClinicalHeroMeta', () => {
 
     const result = buildClinicalHeroMeta('abc-123', t)
 
-    expect(result.metaLine).toBe('34 J · patientGeschlechtWeiblich')
+    expect(result.demographics.dob).toBeNull()
+    expect(result.demographics.age).toBe('34 J.')
+    expect(result.demographics.sex).toBe('Weiblich')
   })
 })

@@ -11,6 +11,7 @@ import type { PreferredAccentColor } from '../../types/settings'
 import type { useAppearanceSettings } from '../../hooks/useAppearanceSettings'
 import { loadGoogleFont } from '../../utils/googleFonts'
 import { useEffect } from 'react'
+import { useTranslation } from '../../context/TranslationContext'
 import { SettingsField } from './SettingsField'
 import { SettingsOptionGroup } from './SettingsOptionGroup'
 
@@ -103,6 +104,7 @@ function FontFamilyCard({
 }
 
 export function AppearanceSection({ appearance }: AppearanceSectionProps) {
+  const { t } = useTranslation()
   const {
     settings,
     setPreferredAccentColor,
@@ -123,26 +125,17 @@ export function AppearanceSection({ appearance }: AppearanceSectionProps) {
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h2 className="text-lg font-semibold text-ink">Darstellung</h2>
-          <p className="mt-1 text-sm text-muted">
-            Weiße Arbeitsflächen. Akzentfarbe nur in der Dokument-Kopfzeile und für Auswahlrahmen.
-          </p>
-        </div>
+      <div className="settings-section-toolbar">
         <button
           type="button"
           onClick={resetAppearance}
-          className="shrink-0 self-start rounded-md border border-border/60 bg-surface px-3 py-1.5 text-xs text-ink transition-colors hover:bg-surface-hover"
+          className="settings-section-toolbar__action"
         >
-          Zurücksetzen
+          {t('settingsReset')}
         </button>
       </div>
 
-      <SettingsField
-        label="Akzentfarbe"
-        description="Färbt die Dokument-Kopfzeile (Titel und Fortschrittszeile) sowie Auswahlrahmen — nicht Abschnitts- oder Seitenleisten-Kopfzeilen."
-      >
+      <SettingsField label={t('settingsAccentColorLabel')}>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {(Object.keys(accentColorPresets) as PreferredAccentColor[]).map((key) => (
             <AccentColorCard
@@ -155,10 +148,7 @@ export function AppearanceSection({ appearance }: AppearanceSectionProps) {
         </div>
       </SettingsField>
 
-      <SettingsField
-        label="Schriftart"
-        description="Kostenlose Schriften (Google Fonts) für die gesamte Oberfläche."
-      >
+      <SettingsField label={t('settingsFontFamilyLabel')}>
         <div className="space-y-4">
           {fontFamilyGroups.map((group) => (
             <div key={group.label}>
@@ -180,7 +170,7 @@ export function AppearanceSection({ appearance }: AppearanceSectionProps) {
         </div>
       </SettingsField>
 
-      <SettingsField label="Schriftgröße" description="Größe des Textes im Dokumentbereich.">
+      <SettingsField label={t('settingsFontSizeLabel')}>
         <SettingsOptionGroup
           value={settings.fontSize}
           options={Object.entries(fontSizePresets).map(([value, preset]) => ({
@@ -191,10 +181,7 @@ export function AppearanceSection({ appearance }: AppearanceSectionProps) {
         />
       </SettingsField>
 
-      <SettingsField
-        label="Arbeitsbereich-Breite"
-        description="Wie breit der zentrale Dokumentbereich dargestellt wird."
-      >
+      <SettingsField label={t('settingsWorkspaceScaleLabel')}>
         <SettingsOptionGroup
           value={settings.workspaceScale}
           options={Object.entries(workspaceScalePresets).map(([value, preset]) => ({
@@ -205,7 +192,7 @@ export function AppearanceSection({ appearance }: AppearanceSectionProps) {
         />
       </SettingsField>
 
-      <SettingsField label="Zeilenabstand" description="Abstand zwischen den Textzeilen im Editor.">
+      <SettingsField label={t('settingsLineHeightLabel')}>
         <SettingsOptionGroup
           value={settings.lineHeight}
           options={Object.entries(lineHeightPresets).map(([value, preset]) => ({
@@ -216,7 +203,7 @@ export function AppearanceSection({ appearance }: AppearanceSectionProps) {
         />
       </SettingsField>
 
-      <SettingsField label="Rahmenstärke" description="Dicke der Rahmen um Arbeitsbereich und Panels.">
+      <SettingsField label={t('settingsBorderWeightLabel')}>
         <SettingsOptionGroup
           value={settings.borderWeight}
           options={Object.entries(borderWeightPresets).map(([value, preset]) => ({
@@ -227,10 +214,7 @@ export function AppearanceSection({ appearance }: AppearanceSectionProps) {
         />
       </SettingsField>
 
-      <SettingsField
-        label="Grafik im Bedienfeld"
-        description="Zeigt eine dezente Grafik rechts im unteren Bedienfeld."
-      >
+      <SettingsField label={t('settingsPanelGraphicLabel')}>
         <label className="inline-flex items-center gap-2 text-sm text-ink">
           <input
             type="checkbox"
@@ -238,7 +222,7 @@ export function AppearanceSection({ appearance }: AppearanceSectionProps) {
             onChange={(event) => setShowPanelGraphic(event.target.checked)}
             className="h-4 w-4 rounded-sm border-2 border-border accent-accent"
           />
-          Grafik anzeigen
+          {t('settingsPanelGraphicToggle')}
         </label>
       </SettingsField>
     </div>

@@ -5,6 +5,7 @@ import {
   type PrivacyTier,
 } from '../data/privacyRegions'
 import { API_BASE } from '../services/apiClient'
+import { fetchAccountBackupStatus } from '../services/accountBackupApi'
 import { getAuthHeaders } from '../services/authHeaders'
 import { isAccountBackupUnlocked } from '../utils/accountBackupSession'
 import { registerClinicalImprintPersistHook } from '../utils/clinicalImprint'
@@ -148,6 +149,8 @@ export function useWorkspaceVault({
   const [error, setError] = useState<string | null>(null)
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null)
   const [lastDbSnapshotAt, setLastDbSnapshotAt] = useState<string | null>(null)
+  const [hasCloudKeyBackup, setHasCloudKeyBackup] = useState(false)
+  const [cloudKeyUpdatedAt, setCloudKeyUpdatedAt] = useState<string | null>(null)
   const [isDirty, setIsDirty] = useState(false)
   const saveTimerRef = useRef<number | null>(null)
   const initRef = useRef<string | null>(null)
@@ -399,7 +402,30 @@ export function useWorkspaceVault({
     }
   }, [applyPayload, caseId, countryCode, dbSyncEnabled, enabled, orgVault, orgVaultEnabled])
 
-  const showBackupReminder = shouldShowBackupReminder(dbSyncEnabled, Boolean(lastDbSnapshotAt))
+  useEffect(() => {
+    let active = true
+    void fetchAccountBackupStatus()
+      .then((status) => {
+        if (!active) return
+        setHasCloudKeyBackup(Boolean(status?.hasKeyBackup))
+        setCloudKeyUpdatedAt(status?.keyUpdatedAt ?? null)
+      })
+      .catch(() => {
+        if (active) {
+          setHasCloudKeyBackup(false)
+          setCloudKeyUpdatedAt(null)
+        }
+      })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const showBackupReminder = shouldShowBackupReminder(
+    dbSyncEnabled,
+    Boolean(lastDbSnapshotAt),
+    hasCloudKeyBackup,
+  )
 
   const persistRef = useRef(persist)
   persistRef.current = persist
@@ -425,7 +451,7 @@ export function useWorkspaceVault({
     isDirty,
     lastSavedAt,
     lastDbSnapshotAt,
-    lastExportAt: getLastVaultExportAt(caseId),
+    lastExportAt: cloudKeyUpdatedAt ?? getLastVaultExportAt(caseId) ?? getLastVaultExportAt(),
     showBackupReminder,
     scheduleSave,
     saveNow,

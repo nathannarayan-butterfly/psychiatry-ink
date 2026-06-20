@@ -23,3 +23,24 @@ export function isDocumentImportAiEnabled(): boolean {
 export function isPsychopathExtractAiEnabled(): boolean {
   return process.env.ENABLE_PSYCHOPATH_EXTRACT_AI?.trim() === 'true'
 }
+
+/**
+ * Clinical Intelligence V1 — server-side feature flag.
+ *
+ * OFF BY DEFAULT. The route returns 404 unless
+ * CLINICAL_INTELLIGENCE_V1_ENABLED=true. Only de-identified compact evidence
+ * is accepted; raw documents are rejected by the route handler.
+ */
+export function isClinicalIntelligenceV1Enabled(): boolean {
+  return process.env.CLINICAL_INTELLIGENCE_V1_ENABLED?.trim() === 'true'
+}
+
+/**
+ * Clinical Intelligence — debug mode flag (server side).
+ *
+ * When enabled, the run response includes additional diagnostics for the
+ * client's Development Mode panel. OFF by default.
+ */
+export function isClinicalIntelligenceDebugMode(): boolean {
+  return process.env.CLINICAL_INTELLIGENCE_DEBUG_MODE?.trim() === 'true'
+}

@@ -356,11 +356,11 @@
 
 /* ----- dedicated page ----- */
 
-.todo-page {
+.todo-page.cm-workspace {
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: calc(var(--cm-page-pad-y, 1.5rem) + 0.5rem) var(--cm-page-pad-x, 1.75rem) 3.5rem;
+  padding: var(--cm-page-pad-y, 1.5rem) var(--cm-page-pad-x, 1.75rem) 3rem;
   box-sizing: border-box;
   text-align: left;
   background: var(--app-bg, var(--surface, #faf9f7));
@@ -620,9 +620,8 @@
 }
 
 @media (max-width: 48rem) {
-  .todo-page {
-    padding-top: var(--cm-page-pad-y, 1.5rem);
-    padding-bottom: 2.75rem;
+  .todo-page.cm-workspace {
+    padding: var(--cm-page-pad-y, 1.5rem) var(--cm-page-pad-x, 1.25rem) 2.75rem;
   }
 
   .todo-page__stats {

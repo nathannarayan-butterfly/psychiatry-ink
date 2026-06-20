@@ -2,16 +2,72 @@ import { getCaseMeta } from '../../hooks/useCaseRegistry'
 import { isDemoCase } from '../../demo'
 import type { UiTranslationKey } from '../../data/uiTranslations'
 import { DEFAULT_CASE_ID, shortCaseId } from '../caseContext'
+import { calculateAgeFromIsoDate } from '../clinicalDate'
 import { loadNotionPageDate } from '../notionPageDate'
 import { formatDateDe } from './dateLabels'
 
 type TranslateFn = (key: UiTranslationKey) => string
 
-/** Patient name + demographics line for the clinical hero strip. */
-export function buildClinicalHeroMeta(
-  caseId: string,
+export const CLINICAL_HERO_MISSING = '—'
+
+export interface ClinicalHeroDemographics {
+  dob: string | null
+  age: string | null
+  sex: string | null
+  admission: string | null
+}
+
+export interface ClinicalHeroMeta {
+  name: string
+  demographics: ClinicalHeroDemographics
+  /** @deprecated Prefer `demographics` — kept for compact print/export strings. */
+  metaLine: string
+  isAssigned: boolean
+}
+
+function formatAgeYears(age: number): string {
+  return `${age} J.`
+}
+
+function resolveAgeLabel(
+  geburtsdatum: string | undefined,
+  storedAge: string | undefined,
+): string | null {
+  const calculated = calculateAgeFromIsoDate(geburtsdatum)
+  if (calculated !== null) return formatAgeYears(calculated)
+
+  const trimmed = storedAge?.trim()
+  if (!trimmed) return null
+  const numeric = trimmed.replace(/[^\d]/g, '')
+  if (!numeric) return null
+  return formatAgeYears(Number(numeric))
+}
+
+function resolveSexLabel(
+  geschlecht: string | undefined,
   t: TranslateFn,
-): { name: string; metaLine: string | null; isAssigned: boolean } {
+): string | null {
+  if (geschlecht === 'maennlich') return t('patientGeschlechtMaennlich')
+  if (geschlecht === 'weiblich') return t('patientGeschlechtWeiblich')
+  if (geschlecht === 'divers') return t('patientGeschlechtDivers')
+  return null
+}
+
+export function formatClinicalHeroDemographicsLine(
+  demographics: ClinicalHeroDemographics,
+  t: TranslateFn,
+): string {
+  const missing = CLINICAL_HERO_MISSING
+  return [
+    `${t('patientFieldGeburtsdatum')}: ${demographics.dob ?? missing}`,
+    `${t('patientAgeLabel')}: ${demographics.age ?? missing}`,
+    `${t('patientFieldGeschlecht')}: ${demographics.sex ?? missing}`,
+    `${t('patientFieldAufnahmedatum')}: ${demographics.admission ?? missing}`,
+  ].join(' · ')
+}
+
+/** Patient name + demographics for the clinical hero strip. */
+export function buildClinicalHeroMeta(caseId: string, t: TranslateFn): ClinicalHeroMeta {
   const meta = getCaseMeta(caseId)
   const structuredName = [meta?.localVorname?.trim(), meta?.localNachname?.trim()]
     .filter(Boolean)
@@ -30,26 +86,17 @@ export function buildClinicalHeroMeta(
         ? t('demoPatientDisplayName')
         : t('patientCaseUnassigned').replace('{id}', shortCaseId(caseId)))
 
-  const geschlecht = meta?.localGeschlecht
-  const genderLabel =
-    geschlecht === 'maennlich'
-      ? t('patientGeschlechtMaennlich')
-      : geschlecht === 'weiblich'
-        ? t('patientGeschlechtWeiblich')
-        : geschlecht === 'divers'
-          ? t('patientGeschlechtDivers')
-          : null
+  const demographics: ClinicalHeroDemographics = {
+    dob: formatDateDe(meta?.localGeburtsdatum?.trim()),
+    age: resolveAgeLabel(meta?.localGeburtsdatum, meta?.localAge),
+    sex: resolveSexLabel(meta?.localGeschlecht, t),
+    admission: formatDateDe(loadNotionPageDate('aufnahme', caseId)),
+  }
 
-  const dobLabel = formatDateDe(meta?.localGeburtsdatum?.trim())
-  const ageLabel = meta?.localAge?.trim() ? `${meta.localAge} J` : null
-  const admissionIso = loadNotionPageDate('aufnahme', caseId)
-  const admissionLabel = admissionIso ? formatDateDe(admissionIso) : null
-
-  const parts = [
-    dobLabel || ageLabel,
-    genderLabel,
-    admissionLabel ? t('overviewHeroAdmission').replace('{date}', admissionLabel) : null,
-  ].filter(Boolean)
-
-  return { name: displayName, metaLine: parts.length > 0 ? parts.join(' · ') : null, isAssigned }
+  return {
+    name: displayName,
+    demographics,
+    metaLine: formatClinicalHeroDemographicsLine(demographics, t),
+    isAssigned,
+  }
 }

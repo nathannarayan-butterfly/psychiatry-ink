@@ -508,7 +508,16 @@ export function DashboardPage({
           <UsageBar value={creditBalance} max={CREDITS_DEFAULT_MAX} />
         </article>
 
-        <article className="dashboard-kpi clinical-card">
+        <button
+          type="button"
+          className="dashboard-kpi clinical-card clinical-card--interactive"
+          onClick={() => settingsPanel.openSettings('privacy')}
+          aria-label={
+            workspaceVault.showBackupReminder
+              ? t('dashboardBackupNeeded')
+              : t('dashboardBackupOk')
+          }
+        >
           <Download className="dashboard-kpi__icon" strokeWidth={1.5} aria-hidden />
           <span
             className={[
@@ -525,7 +534,7 @@ export function DashboardPage({
               {formatSiteLocaleDate(workspaceVault.lastExportAt, language)}
             </span>
           ) : null}
-        </article>
+        </button>
       </section>
 
       <section className="dashboard-section" aria-labelledby="dashboard-quick-actions">

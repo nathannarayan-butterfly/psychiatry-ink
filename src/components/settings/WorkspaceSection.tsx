@@ -1,5 +1,6 @@
 import { ChevronDown, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from '../../context/TranslationContext'
 import type { useWorkspaceSettings } from '../../hooks/useWorkspaceSettings'
 import type {
   WorkspaceChecklistItem,
@@ -201,25 +202,20 @@ function SectionsEditor({
 }
 
 export function WorkspaceSection({ workspace }: WorkspaceSectionProps) {
+  const { t } = useTranslation()
   const [expandedId, setExpandedId] = useState<string | null>(
     workspace.components[0]?.id ?? null,
   )
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h2 className="text-lg font-semibold text-ink">Arbeitsbereich</h2>
-          <p className="mt-1 text-sm text-muted">
-            Komponenten und Abschnitte der unteren Werkzeugleiste anpassen.
-          </p>
-        </div>
+      <div className="settings-section-toolbar">
         <button
           type="button"
           onClick={workspace.resetWorkspace}
-          className="shrink-0 self-start rounded-sm border-2 border-border px-3 py-1.5 text-xs text-ink transition-colors hover:bg-surface-hover"
+          className="settings-section-toolbar__action"
         >
-          Zurücksetzen
+          {t('settingsReset')}
         </button>
       </div>
 
@@ -263,33 +259,21 @@ export function WorkspaceSection({ workspace }: WorkspaceSectionProps) {
               {isExpanded ? (
                 <div className="space-y-4 border-t-2 border-border px-3 py-4">
                   {isLocked ? (
-                    <div className="rounded-sm border border-border/70 bg-surface-hover/40 px-3 py-3 text-sm text-muted">
-                      <p className="font-medium text-ink">Standardkomponente</p>
-                      <p className="mt-1 leading-relaxed">
-                        Struktur, Abschnitte und KI-Schema sind fest vorgegeben. Bearbeitung ist
-                        deaktiviert. Zusätzliche Komponenten können je nach Abonnement hinzugefügt
-                        werden.
-                      </p>
-                      <p className="mt-2 text-xs">{getComponentSummary(component)}</p>
-                    </div>
+                    <p className="rounded-sm border border-border/70 bg-surface-hover/40 px-3 py-2 text-xs text-muted">
+                      Standardkomponente — Struktur ist fest vorgegeben.
+                    </p>
                   ) : null}
 
                   {!isLocked ? (
                   <>
-                  <SettingsField
-                    label="Überschrift"
-                    description="Titel in der Kopfzeile des Arbeitsbereichs."
-                  >
+                  <SettingsField label="Überschrift">
                     <TextInput
                       value={component.label}
                       onChange={(value) => workspace.setComponentLabel(component.id, value)}
                     />
                   </SettingsField>
 
-                  <SettingsField
-                    label="Zweite Zeile"
-                    description="Optional für zweizeilige Tool-Box-Beschriftung."
-                  >
+                  <SettingsField label="Zweite Zeile">
                     <TextInput
                       value={secondToolLine}
                       placeholder="z. B. pathologie"
@@ -319,10 +303,7 @@ export function WorkspaceSection({ workspace }: WorkspaceSectionProps) {
                   </SettingsField>
 
                   {hasVariants ? (
-                    <SettingsField
-                      label="Dokumentationsformen"
-                      description="Unterschiedliche Formen derselben Komponente, z. B. Kurznotiz und Breiter Verlauf."
-                    >
+                    <SettingsField label="Dokumentationsformen">
                       <div className="space-y-3">
                         {component.variants?.map((variant) => {
                           const protectedVariantIds =
@@ -378,10 +359,7 @@ export function WorkspaceSection({ workspace }: WorkspaceSectionProps) {
                             </div>
 
                             {!variant.multistage ? (
-                              <SettingsField
-                                label="Vorlagentext"
-                                description="Wird beim Öffnen dieser Form eingefügt, wenn der Arbeitsbereich leer ist."
-                              >
+                              <SettingsField label="Vorlagentext">
                                 <TextArea
                                   value={variant.prefilledText ?? ''}
                                   placeholder="z. B. Visite / Kurzkontakt …"
@@ -395,11 +373,6 @@ export function WorkspaceSection({ workspace }: WorkspaceSectionProps) {
                             ) : (
                               <SettingsField
                                 label={variant.mode === 'checklist' ? 'Checklisten-Abschnitte' : 'Abschnitte'}
-                                description={
-                                  variant.mode === 'checklist'
-                                    ? 'Bereiche mit anklickbaren Befundoptionen.'
-                                    : 'Einzelne Bereiche für diese Dokumentationsform.'
-                                }
                               >
                                 <SectionsEditor
                                   sections={variant.sections}
@@ -450,10 +423,7 @@ export function WorkspaceSection({ workspace }: WorkspaceSectionProps) {
                     </SettingsField>
                   ) : (
                     <>
-                      <SettingsField
-                        label="Mehrstufig"
-                        description="Zeigt Abschnitte in der linken Spalte des Arbeitsbereichs."
-                      >
+                      <SettingsField label="Mehrstufig">
                         <label className="inline-flex items-center gap-2 text-sm text-ink">
                           <input
                             type="checkbox"
@@ -471,10 +441,7 @@ export function WorkspaceSection({ workspace }: WorkspaceSectionProps) {
                       </SettingsField>
 
                       {!component.multistage ? (
-                        <SettingsField
-                          label="Vorlagentext"
-                          description="Wird beim Öffnen der Komponente eingefügt, wenn der Arbeitsbereich leer ist."
-                        >
+                        <SettingsField label="Vorlagentext">
                           <TextArea
                             value={component.prefilledText ?? ''}
                             placeholder="z. B. unauffälliger neurologischer Befund …"
@@ -484,10 +451,7 @@ export function WorkspaceSection({ workspace }: WorkspaceSectionProps) {
                           />
                         </SettingsField>
                       ) : (
-                        <SettingsField
-                          label="Abschnitte"
-                          description="Einzelne Bereiche für dieses Dokument. Vorlagentexte füllen leere Abschnitte automatisch."
-                        >
+                        <SettingsField label="Abschnitte">
                           <SectionsEditor
                             sections={component.sections}
                             onUpdate={(sectionId, patch) =>
