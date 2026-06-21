@@ -26,6 +26,7 @@ export type AppRoute =
   | { view: 'signup' }
   | { view: 'dashboard' }
   | { view: 'kb-admin' }
+  | { view: 'ai-analytics' }
   | { view: 'audit-debug' }
   | { view: 'demo-patient' }
   | { view: 'templates' }
@@ -59,6 +60,7 @@ export function isAppRoute(route: AppRoute): boolean {
     route.view === 'dashboard' ||
     route.view === 'case' ||
     route.view === 'kb-admin' ||
+    route.view === 'ai-analytics' ||
     route.view === 'audit-debug' ||
     route.view === 'demo-patient' ||
     route.view === 'templates' ||
@@ -88,6 +90,7 @@ function parsePathname(pathname: string, search = ''): AppRoute {
   if (path === '/signup') return { view: 'signup' }
   if (path === '/dashboard' || path === '/app') return { view: 'dashboard' }
   if (path === '/dashboard/kb-admin') return { view: 'kb-admin' }
+  if (path === '/dashboard/ai-analytics' || path === '/admin/ai-analytics') return { view: 'ai-analytics' }
   if (path === '/dev/audit-logs' || path === '/dashboard/audit-debug') return { view: 'audit-debug' }
   if (path === '/dev/demo-patient') return { view: 'demo-patient' }
   if (path === '/dashboard/templates') return { view: 'templates' }
@@ -153,6 +156,7 @@ export function routeToPath(route: AppRoute): string {
   if (route.view === 'signup') return '/signup'
   if (route.view === 'dashboard') return '/dashboard'
   if (route.view === 'kb-admin') return '/dashboard/kb-admin'
+  if (route.view === 'ai-analytics') return '/dashboard/ai-analytics'
   if (route.view === 'audit-debug') return '/dev/audit-logs'
   if (route.view === 'demo-patient') return '/dev/demo-patient'
   if (route.view === 'templates') return '/dashboard/templates'

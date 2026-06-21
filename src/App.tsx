@@ -12,6 +12,7 @@ import { DEFAULT_CASE_ID } from './utils/caseContext'
 import { CaseWorkspacePage } from './components/CaseWorkspacePage'
 import { DashboardPage } from './components/dashboard/DashboardPage'
 import { KbAdminPage } from './components/kb-admin/KbAdminPage'
+import { AiAnalyticsPage } from './components/admin/AiAnalyticsPage'
 import { AuditDebugPage } from './components/audit/AuditDebugPage'
 import { DemoPatientDevPage } from './components/demo/DemoPatientDevPage'
 import { useAuditDebugAccess } from './hooks/useAuditDebugAccess'
@@ -110,6 +111,10 @@ export default function App() {
       navigate('/dashboard', true)
     }
 
+    if (user && route.view === 'ai-analytics' && !hasKbAdminAccess) {
+      navigate('/dashboard', true)
+    }
+
     if (user && isEnterpriseRoute && !canAccessEnterpriseUi) {
       navigate('/dashboard', true)
     }
@@ -134,6 +139,7 @@ export default function App() {
 
   const showDashboard = route.view === 'dashboard'
   const showKbAdmin = route.view === 'kb-admin'
+  const showAiAnalytics = route.view === 'ai-analytics'
   const showAuditDebug = route.view === 'audit-debug'
   const showDemoPatient = route.view === 'demo-patient'
   const showTemplates = route.view === 'templates'
@@ -267,6 +273,8 @@ export default function App() {
           <DemoPatientDevPage onBack={() => navigate('/dashboard')} />
         ) : showKbAdmin && hasKbAdminAccess ? (
           <KbAdminPage onBack={() => navigate('/dashboard')} />
+        ) : showAiAnalytics && hasKbAdminAccess ? (
+          <AiAnalyticsPage onBack={() => navigate('/dashboard')} />
         ) : showTemplates ? (
           <TemplatesDashboardPage onBack={() => navigate('/dashboard')} />
         ) : showTeamSettings ? (

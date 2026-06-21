@@ -20,6 +20,18 @@ export function KbAdminSection() {
     <div>
       <p className="settings-section-lead">{t('settingsKbAdminIntro')}</p>
 
+      <SettingsField label="AI Analytics">
+        <p className="mt-1 text-sm text-muted">
+          Margin, revenue, provider cost rollup. Requires KB-admin role.
+        </p>
+        <a
+          href="/dashboard/ai-analytics"
+          className="settings-section-toolbar__action mt-2 inline-flex items-center gap-1"
+        >
+          Open AI Analytics →
+        </a>
+      </SettingsField>
+
       <SettingsField label={t('settingsKbAdminYourId')}>
         <code className="text-sm text-ink">{currentId}</code>
         {currentEmail ? (
