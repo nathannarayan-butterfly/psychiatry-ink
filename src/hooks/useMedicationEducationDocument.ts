@@ -420,14 +420,20 @@ export function useMedicationEducationDocument(caseId: string) {
       setError(check.reasons.join('; '))
       return null
     }
-    const identity = await fetchMedicationEducationIdentity(caseId, doc.language)
-    const withIdentity = applyIdentityToDocument(doc, identity)
-    const text = assembleMedicationEducationText(withIdentity, sectionLabels)
-    let next = finalizeDocument(withIdentity, text)
-    next.review.reviewedAt = new Date().toISOString()
-    await persist(next)
-    syncAcceptedMedicationEducationToPatientFile(next)
-    return next
+    setError(null)
+    try {
+      const identity = await fetchMedicationEducationIdentity(caseId, doc.language)
+      const withIdentity = applyIdentityToDocument(doc, identity)
+      const text = assembleMedicationEducationText(withIdentity, sectionLabels)
+      let next = finalizeDocument(withIdentity, text)
+      next.review.reviewedAt = new Date().toISOString()
+      await persist(next)
+      syncAcceptedMedicationEducationToPatientFile(next)
+      return next
+    } catch (e) {
+      setError((e as Error).message)
+      return null
+    }
   }, [caseId, doc, persist, sectionLabels, uiLanguage])
 
   return {

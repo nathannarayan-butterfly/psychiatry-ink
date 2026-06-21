@@ -107,6 +107,8 @@ export interface MedicationEducationSectionState {
   versions: MedicationEducationSectionVersion[]
   sourcePreview?: string
   missingDataWarning?: string
+  /** Set when a clinician edits section content after AI generation or fetch. */
+  clinicianEditedAt?: string
 }
 
 export interface MedicationEducationAiUsageRecord {

@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
-import { Check, Loader2, Plus, Save, Sparkles } from 'lucide-react'
+import { ArrowLeft, Check, Loader2, Plus, Printer, Save, Sparkles, X } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
 import { useMedicationEducationDocument } from '../../hooks/useMedicationEducationDocument'
 import { getMedicationEducationSections } from '../../data/medicationEducationSections'
@@ -15,6 +15,7 @@ import {
 import { loadMedicationPlanState } from '../../utils/medication/storage'
 import { activeMedications } from '../../utils/medication/planOps'
 import { isClinicalIntelligenceDebugMode } from '../../utils/featureFlags'
+import { showNotionToast } from '../notion/NotionToast'
 import { MedicationEducationNewDialog } from './MedicationEducationNewDialog'
 import { MedicationEducationSectionCard } from './MedicationEducationSectionCard'
 import { MedicationEducationGenerationDialog } from './MedicationEducationGenerationDialog'
@@ -30,6 +31,12 @@ interface MedicationEducationWorkspaceProps {
   onClose?: () => void
 }
 
+function scopeLabelKey(scope: MedicationEducationScope): 'medEducationScopeFull' | 'medEducationScopeSelected' | 'medEducationScopeSingle' {
+  if (scope === 'single') return 'medEducationScopeSingle'
+  if (scope === 'selected') return 'medEducationScopeSelected'
+  return 'medEducationScopeFull'
+}
+
 export function MedicationEducationWorkspace({
   caseId,
   disabled = false,
@@ -40,6 +47,7 @@ export function MedicationEducationWorkspace({
   const { language } = useTranslation()
   const me = useMedicationEducationDocument(caseId)
   const [newOpen, setNewOpen] = useState(!me.doc)
+  const [saveConfirmation, setSaveConfirmation] = useState<string | null>(null)
   const debugMode = isClinicalIntelligenceDebugMode()
 
   const availableMedications = useMemo(() => {
@@ -114,6 +122,15 @@ export function MedicationEducationWorkspace({
     exportMedicationEducationPlainText(text, `${exportFilenameStem}.txt`)
   }, [exportFilenameStem, me.doc, me.sectionLabels])
 
+  const handleFinalize = useCallback(async () => {
+    const saved = await me.finalize()
+    if (!saved) return
+    const message = translateMedicationUi(language, 'medEducationSavedToPatientFile')
+    setSaveConfirmation(message)
+    showNotionToast(message)
+    window.setTimeout(() => setSaveConfirmation(null), 4000)
+  }, [language, me])
+
   const resolveMedicationIdsForScope = useCallback(
     (scope: MedicationEducationScope, singleMedicationId: string | null) => {
       if (scope === 'full_combination') {
@@ -129,19 +146,47 @@ export function MedicationEducationWorkspace({
     [availableMedications, initialMedicationIds],
   )
 
+  const activeScope = me.doc?.scope ?? initialScope
+  const scopeIndicator = translateMedicationUi(language, scopeLabelKey(activeScope))
+
   return (
     <div className="arztbrief-workspace workspace-panel medication-education-workspace">
-      <header className="arztbrief-workspace__header workspace-panel__header">
-        <div className="workspace-panel__title-block">
-          <h1 className="workspace-panel__title">
-            {translateMedicationUi(language, 'medEducationWorkspaceTitle')}
-          </h1>
-          <p className="workspace-panel__subtitle">
-            {translateMedicationUi(language, 'medEducationWorkspaceHint')}
-          </p>
+      <header className="arztbrief-workspace__header workspace-panel__header medication-education-workspace__header">
+        <div className="medication-education-workspace__header-top">
+          {onClose ? (
+            <button
+              type="button"
+              className="medication-education-workspace__back icon-action-btn"
+              onClick={onClose}
+              title={translateMedicationUi(language, 'medEducationBack')}
+              aria-label={translateMedicationUi(language, 'medEducationBack')}
+            >
+              <ArrowLeft size={16} strokeWidth={1.75} aria-hidden />
+            </button>
+          ) : null}
+          <div className="workspace-panel__title-block medication-education-workspace__title-block">
+            <h1 className="workspace-panel__title">
+              {translateMedicationUi(language, 'medEducationWorkspaceTitle')}
+            </h1>
+            <p className="workspace-panel__subtitle">
+              {translateMedicationUi(language, 'medEducationWorkspaceHint')}
+            </p>
+            <span className="medication-education-workspace__scope">{scopeIndicator}</span>
+          </div>
+          {onClose ? (
+            <button
+              type="button"
+              className="medication-education-workspace__close icon-action-btn icon-action-btn--bordered"
+              onClick={onClose}
+              title={translateMedicationUi(language, 'medEducationClose')}
+              aria-label={translateMedicationUi(language, 'medEducationClose')}
+            >
+              <X size={16} strokeWidth={1.75} aria-hidden />
+            </button>
+          ) : null}
         </div>
         <div
-          className="arztbrief-workspace__toolbar"
+          className="arztbrief-workspace__toolbar medication-education-workspace__toolbar"
           role="toolbar"
           aria-label={translateMedicationUi(language, 'medEducationToolbarLabel')}
         >
@@ -171,32 +216,47 @@ export function MedicationEducationWorkspace({
                   {translateMedicationUi(language, 'medEducationAcceptAll')}
                 </button>
               ) : null}
-              <MedicationEducationExportMenu
-                disabled={!me.doc}
-                onExportPdf={handleExportPdf}
-                onExportDocx={handleExportDocx}
-                onExportTxt={handleExportTxt}
-                onCopy={handleCopy}
-                onPrint={handlePrint}
-              />
+              <div className="medication-education-toolbar__secondary">
+                <button
+                  type="button"
+                  className="icon-action-btn icon-action-btn--bordered"
+                  disabled={disabled || !me.doc}
+                  onClick={handlePrint}
+                  title={translateMedicationUi(language, 'medEducationPrint')}
+                  aria-label={translateMedicationUi(language, 'medEducationPrint')}
+                >
+                  <Printer size={15} strokeWidth={1.75} aria-hidden />
+                </button>
+                <MedicationEducationExportMenu
+                  disabled={!me.doc}
+                  onExportPdf={handleExportPdf}
+                  onExportDocx={handleExportDocx}
+                  onExportTxt={handleExportTxt}
+                  onCopy={handleCopy}
+                />
+              </div>
               <button
                 type="button"
                 className="arztbrief-btn arztbrief-btn--primary"
                 disabled={disabled || !me.doc}
-                onClick={() => void me.finalize()}
+                onClick={() => void handleFinalize()}
+                title={translateMedicationUi(language, 'medEducationFinalize')}
+                aria-label={translateMedicationUi(language, 'medEducationFinalize')}
               >
                 <Save size={14} aria-hidden />
-                {translateMedicationUi(language, 'medEducationFinalize')}
+                {translateMedicationUi(language, 'medEducationSave')}
               </button>
             </>
           ) : null}
-          {onClose ? (
-            <button type="button" className="arztbrief-btn arztbrief-btn--ghost" onClick={onClose}>
-              {translateMedicationUi(language, 'medEducationClose')}
-            </button>
-          ) : null}
         </div>
       </header>
+
+      {saveConfirmation ? (
+        <p className="medication-education-save-confirmation" role="status">
+          <Check size={14} aria-hidden />
+          {saveConfirmation}
+        </p>
+      ) : null}
 
       {me.error ? <p className="arztbrief-workspace__error">{me.error}</p> : null}
 

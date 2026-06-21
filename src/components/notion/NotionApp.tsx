@@ -1796,6 +1796,7 @@ function NotionAppInner({
             <div className="case-tab-shell__body case-tab-shell__body--full">
               <VerlaufFeedPage
                 caseId={storageCaseId}
+                patientLabel={hasPatient ? currentPatientName : null}
                 onNavigateToSource={(source: VerlaufDerivedSource) => {
                   // Derived feed rows are projections of other modules; "edit" /
                   // "delete" route the clinician to the owning section instead of

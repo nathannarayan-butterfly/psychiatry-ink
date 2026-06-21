@@ -20,7 +20,7 @@ import {
 import { buildMedicationEducationEvidenceBundle, scrubEvidenceText } from '../evidenceBundle'
 import { assessKbTemplateCompleteness } from '../kbCompleteness'
 import { validateCombinationSynthesisFlag } from '../combinationSynthesis'
-import { createMedicationEducationDocument, isSectionIncludedInFinal, acceptAllSections, canFinalizeDocument } from '../draftOps'
+import { createMedicationEducationDocument, isSectionIncludedInFinal, acceptAllSections, canFinalizeDocument, updateSectionContent } from '../draftOps'
 import { assembleMedicationEducationText } from '../export'
 import { createEmptyKbTemplate } from '../kbTemplateStorage'
 
@@ -187,6 +187,25 @@ describe('export assembly', () => {
 })
 
 describe('section acceptance and finalize gates', () => {
+  it('updateSectionContent marks clinician edits with timestamp and manual version', () => {
+    const doc = createMedicationEducationDocument({
+      scope: 'single',
+      detailStyle: 'standard',
+      language: 'de',
+      aiMode: 'standard',
+      medicationIds: ['m1'],
+    })
+    doc.sections['kurze-zusammenfassung'].currentContent = 'KI-Text'
+    doc.sections['kurze-zusammenfassung'].status = 'ai_generated'
+
+    const edited = updateSectionContent(doc, 'kurze-zusammenfassung', 'Angepasster Text')
+    const section = edited.sections['kurze-zusammenfassung']
+    expect(section.status).toBe('clinician_edited')
+    expect(section.clinicianEditedAt).toBeTruthy()
+    expect(section.versions.at(-1)?.source).toBe('manual')
+    expect(section.currentContent).toBe('Angepasster Text')
+  })
+
   it('acceptAllSections clears KB validation gate once all content sections are reviewed', () => {
     const doc = createMedicationEducationDocument({
       scope: 'single',

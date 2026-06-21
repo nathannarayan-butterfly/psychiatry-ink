@@ -39,6 +39,9 @@ export function saveVerlaufSortOrder(order: VerlaufSortOrder): void {
 }
 
 import type { TherapyEntryAttribution } from '../types/therapy'
+import type { TodoPriority } from '../types/todo'
+
+export type { TodoPriority }
 
 export interface VerlaufFeedEntry {
   id: string
@@ -54,7 +57,7 @@ export interface VerlaufFeedEntry {
   attribution?: TherapyEntryAttribution
 }
 
-export type AnnotationType = 'bold' | 'italic' | 'underline' | 'highlight' | 'comment'
+export type AnnotationType = 'bold' | 'italic' | 'underline' | 'highlight' | 'comment' | 'todo'
 
 export interface VerlaufAnnotation {
   id: string
@@ -71,6 +74,20 @@ export interface VerlaufAnnotation {
   sharedWithUserId?: string
   authorUserId?: string
   createdAt?: string
+  // --- todo annotations -----------------------------------------------------
+  /** Task description for `todo` annotations (parallel to `comment`). */
+  todoText?: string
+  /** Priority for `todo` annotations. Defaults to `normal` when omitted. */
+  priority?: TodoPriority
+  /** Optional due date (YYYY-MM-DD). When set, the todo is mirrored into the central to-do list. */
+  dueDate?: string | null
+  /** Completion state for `todo` annotations. */
+  done?: boolean
+  /**
+   * Id of the mirrored entry in the central to-do store (set only when a due
+   * date is present). Used to keep both copies in sync on edit/delete.
+   */
+  linkedTodoId?: string | null
 }
 
 function feedKey(caseId?: string): string {
@@ -164,6 +181,50 @@ export function removeVerlaufAnnotations(
   const idSet = new Set(ids)
   const existing = loadVerlaufAnnotations(caseId)
   const next = existing.filter((ann) => !idSet.has(ann.id))
+  saveVerlaufAnnotations(next, caseId)
+  return next
+}
+
+export function updateVerlaufAnnotationComment(
+  id: string,
+  comment: string,
+  caseId?: string,
+): VerlaufAnnotation[] {
+  const existing = loadVerlaufAnnotations(caseId)
+  const next = existing.map((ann) =>
+    ann.id === id && ann.type === 'comment' ? { ...ann, comment } : ann,
+  )
+  saveVerlaufAnnotations(next, caseId)
+  return next
+}
+
+/** Fields of a `todo` annotation that can be edited after creation. */
+export interface VerlaufTodoPatch {
+  todoText?: string
+  priority?: TodoPriority
+  dueDate?: string | null
+  done?: boolean
+  linkedTodoId?: string | null
+}
+
+export function updateVerlaufTodo(
+  id: string,
+  patch: VerlaufTodoPatch,
+  caseId?: string,
+): VerlaufAnnotation[] {
+  const existing = loadVerlaufAnnotations(caseId)
+  const next = existing.map((ann) =>
+    ann.id === id && ann.type === 'todo'
+      ? {
+          ...ann,
+          ...(patch.todoText !== undefined ? { todoText: patch.todoText } : {}),
+          ...(patch.priority !== undefined ? { priority: patch.priority } : {}),
+          ...(patch.dueDate !== undefined ? { dueDate: patch.dueDate } : {}),
+          ...(patch.done !== undefined ? { done: patch.done } : {}),
+          ...(patch.linkedTodoId !== undefined ? { linkedTodoId: patch.linkedTodoId } : {}),
+        }
+      : ann,
+  )
   saveVerlaufAnnotations(next, caseId)
   return next
 }

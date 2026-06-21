@@ -1,4 +1,4 @@
-import { ChevronDown, Copy, FileDown, FileText, FileType, Printer } from 'lucide-react'
+import { ChevronDown, Copy, Download, FileDown, FileText, FileType } from 'lucide-react'
 import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import { translateMedicationUi } from '../../data/medicationUiTranslations'
@@ -9,12 +9,11 @@ interface MedicationEducationExportMenuProps {
   onExportDocx: () => void
   onExportTxt: () => void
   onCopy: () => void | Promise<void>
-  onPrint: () => void
 }
 
-type ExportAction = 'pdf' | 'docx' | 'txt' | 'copy' | 'print'
+type ExportAction = 'pdf' | 'docx' | 'txt' | 'copy'
 
-const EXPORT_ACTIONS: ExportAction[] = ['pdf', 'docx', 'txt', 'copy', 'print']
+const EXPORT_ACTIONS: ExportAction[] = ['pdf', 'docx', 'txt', 'copy']
 
 export function MedicationEducationExportMenu({
   disabled = false,
@@ -22,7 +21,6 @@ export function MedicationEducationExportMenu({
   onExportDocx,
   onExportTxt,
   onCopy,
-  onPrint,
 }: MedicationEducationExportMenuProps) {
   const { language } = useTranslation()
   const menuId = useId()
@@ -36,7 +34,6 @@ export function MedicationEducationExportMenu({
     docx: translateMedicationUi(language, 'medEducationExportDocx'),
     txt: translateMedicationUi(language, 'medEducationExportTxt'),
     copy: translateMedicationUi(language, 'medEducationCopy'),
-    print: translateMedicationUi(language, 'medEducationPrint'),
   }
 
   const icons: Record<ExportAction, typeof FileDown> = {
@@ -44,7 +41,6 @@ export function MedicationEducationExportMenu({
     docx: FileType,
     txt: FileText,
     copy: Copy,
-    print: Printer,
   }
 
   const runAction = useCallback(
@@ -62,13 +58,10 @@ export function MedicationEducationExportMenu({
         case 'copy':
           void onCopy()
           break
-        case 'print':
-          onPrint()
-          break
       }
       setOpen(false)
     },
-    [onCopy, onExportDocx, onExportPdf, onExportTxt, onPrint],
+    [onCopy, onExportDocx, onExportPdf, onExportTxt],
   )
 
   useEffect(() => {
@@ -128,21 +121,24 @@ export function MedicationEducationExportMenu({
     }
   }
 
+  const exportLabel = translateMedicationUi(language, 'medEducationExport')
+
   return (
     <div className="medication-education-export" ref={wrapperRef}>
       <button
         type="button"
-        className="arztbrief-btn medication-education-export__trigger"
+        className="icon-action-btn icon-action-btn--bordered medication-education-export__trigger"
         disabled={disabled}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
+        title={exportLabel}
+        aria-label={exportLabel}
         onClick={() => setOpen((prev) => !prev)}
         onKeyDown={handleTriggerKeyDown}
       >
-        <FileDown size={14} aria-hidden />
-        {translateMedicationUi(language, 'medEducationExport')}
-        <ChevronDown size={14} className="medication-education-export__chevron" aria-hidden />
+        <Download size={15} strokeWidth={1.75} aria-hidden />
+        <ChevronDown size={12} className="medication-education-export__chevron" aria-hidden />
       </button>
       {open ? (
         <div

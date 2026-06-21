@@ -4528,11 +4528,23 @@
 
 .verlauf-feed-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  /* Feed column is capped at the feed's own max-width (800px) so it hugs the
+     content instead of stretching; the panel then sits right after it. Any
+     leftover width is parked to the right (justify-content: start), so the
+     feed keeps its original left position while the panel slides toward it. */
+  grid-template-columns: minmax(0, 800px) minmax(248px, 288px);
+  justify-content: start;
   gap: 1.25rem;
   align-items: start;
   min-height: 100%;
   width: 100%;
+}
+
+/* Narrow model: the margin comment panel is removed (comments surface only as
+   hover/focus popups), so the feed reclaims the full width. */
+.verlauf-feed-layout--narrow {
+  grid-template-columns: 1fr;
+  gap: 0;
 }
 
 .verlauf-feed-page {
@@ -5402,14 +5414,16 @@
 
 .verlauf-annotation-panel {
   position: sticky;
-  top: 1.35rem;
+  top: 2.75rem;
   align-self: start;
-  max-height: calc(100vh - 2rem);
-  overflow: auto;
-  margin: 2.35rem 1.35rem 2rem -0.25rem;
-  padding: 0.85rem 0.9rem 1.1rem;
+  max-height: calc(100vh - 3.25rem);
+  overflow-y: auto;
+  /* No negative margins — the panel stays fully inside its grid column so it
+     never bleeds over the source text. */
+  margin: 2.75rem 0.25rem 2rem 0;
+  padding: 1.25rem 1.25rem 1.5rem;
   border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 18%, var(--border-soft));
-  border-radius: 10px;
+  border-radius: 12px;
   background: color-mix(in srgb, var(--surface, #fff) 92%, var(--area-accent, var(--accent)) 8%);
 }
 
@@ -5418,7 +5432,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  margin-bottom: 0.65rem;
+  margin-bottom: 0.9rem;
 }
 
 .verlauf-annotation-panel__title {
@@ -5446,22 +5460,23 @@
 .verlauf-annotation-panel__list {
   list-style: none;
   margin: 0;
-  padding: 0 0 0.65rem;
-  position: relative;
+  padding: 0 0 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
 }
 
 .verlauf-annotation-panel__item {
-  position: absolute;
-  left: 0;
-  right: 0;
+  position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0.85rem 0.95rem 0.95rem;
   border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 12%, var(--border-soft));
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--surface, #fff);
-  /* Subtle elevation so adjacent cards stay distinguishable when their anchors
-     sit close together and the absolute positions partially overlap. */
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  transition: border-color 0.12s ease, box-shadow 0.12s ease, top 0.15s ease;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
 }
 
 .verlauf-annotation-panel__item:hover {
@@ -5484,82 +5499,574 @@
   box-shadow: 0 0 0 1px rgba(197, 121, 0, 0.28), 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
+/* Card header: visibility meta on the left, edit/delete icon actions above
+   the comment body on the right. */
+.verlauf-annotation-panel__item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.verlauf-annotation-panel__item-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
+
+.verlauf-annotation-panel__visibility {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--text-muted, #888);
+}
+
+.verlauf-annotation-panel__shared-with {
+  font-weight: 500;
+  text-transform: none;
+}
+
 .verlauf-annotation-panel__item-btn {
   display: block;
   width: 100%;
   text-align: left;
   border: none;
   background: transparent;
-  padding: 0.55rem 0.6rem 0.4rem;
+  padding: 0;
   cursor: pointer;
   font-family: inherit;
 }
 
 .verlauf-annotation-panel__quote {
-  margin: 0 0 0.35rem;
-  padding-left: 0.45rem;
+  margin: 0 0 0.5rem;
+  padding-left: 0.6rem;
   border-left: 2px solid color-mix(in srgb, var(--area-accent, var(--accent)) 35%, transparent);
-  font-size: 0.72rem;
-  line-height: 1.4;
+  font-size: 0.74rem;
+  line-height: 1.45;
   color: var(--text-muted, #888);
 }
 
 .verlauf-annotation-panel__comment {
   margin: 0;
-  font-size: 0.8rem;
-  line-height: 1.45;
+  font-size: 0.82rem;
+  line-height: 1.5;
   color: var(--text-ink, #1a1a1a);
   white-space: pre-wrap;
   word-break: break-word;
 }
 
-.verlauf-annotation-panel__meta {
+/* Inline comment editor */
+.verlauf-annotation-panel__editor {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-top: 0.35rem;
-  font-size: 0.68rem;
-  color: var(--text-muted, #888);
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.verlauf-annotation-panel__visibility {
-  font-weight: 500;
-}
-
-.verlauf-annotation-panel__delete {
-  display: block;
+.verlauf-annotation-panel__editor-textarea {
   width: 100%;
-  margin: 0;
-  padding: 0.35rem 0.6rem 0.45rem;
-  border: none;
-  border-top: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 10%, var(--border-soft));
-  background: transparent;
+  box-sizing: border-box;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 30%, var(--border-soft));
+  border-radius: 8px;
+  background: var(--surface, #fff);
   font-family: inherit;
-  font-size: 0.68rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-ink, #1a1a1a);
+  resize: vertical;
+}
+
+.verlauf-annotation-panel__editor-textarea:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--area-accent, var(--accent)) 45%, transparent);
+  outline-offset: 1px;
+}
+
+.verlauf-annotation-panel__editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.2rem;
+}
+
+/* Hover-revealed comment bubble anchored to highlighted text in the feed. */
+.verlauf-comment-bubble {
+  z-index: 99991;
+  max-width: min(340px, calc(100vw - 24px));
+  padding: 0.85rem 0.95rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 22%, var(--border-soft));
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.14),
+    0 0 0 1px rgba(197, 121, 0, 0.12);
+}
+
+.verlauf-comment-bubble__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.verlauf-comment-bubble__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
+
+.verlauf-comment-bubble__quote {
+  margin: 0 0 0.5rem;
+  padding-left: 0.6rem;
+  border-left: 2px solid color-mix(in srgb, var(--area-accent, var(--accent)) 35%, transparent);
+  font-size: 0.74rem;
+  line-height: 1.45;
   color: var(--text-muted, #888);
-  text-align: left;
-  cursor: pointer;
-  transition: color 0.12s ease, background 0.12s ease;
+  font-style: italic;
 }
 
-.verlauf-annotation-panel__delete:hover {
-  color: #b04545;
-  background: rgba(176, 69, 69, 0.06);
+.verlauf-comment-bubble__text {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-ink, #1a1a1a);
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
-.verlauf-annotation-connector {
-  /* Leader line uses the same amber as the comment underline so the text →
-     margin-card relationship reads as one connected unit (MS Word style). */
-  color: #c57900;
+.verlauf-comment-bubble__visibility {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--text-muted, #888);
 }
 
-/* Persistent link highlight on the commented source text while its margin card
-   is pinned (clicked) or hovered — mirrors how Word shades the active comment's
-   anchor text. Inline span styles set background/border, so we override them. */
+.verlauf-comment-bubble__shared-with {
+  font-weight: 500;
+  text-transform: none;
+}
+
+.verlauf-comment-bubble__editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.verlauf-comment-bubble__editor-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 30%, var(--border-soft));
+  border-radius: 8px;
+  background: var(--surface, #fff);
+  font-family: inherit;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-ink, #1a1a1a);
+  resize: vertical;
+}
+
+.verlauf-comment-bubble__editor-textarea:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--area-accent, var(--accent)) 45%, transparent);
+  outline-offset: 1px;
+}
+
+.verlauf-comment-bubble__editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.2rem;
+}
+
+/* Persistent link highlight on the commented source text while its bubble
+   is revealed — mirrors how Word shades the active comment's anchor text.
+   Inline span styles set background/border, so we override them. */
 .verlauf-annot--linked {
   background: rgba(197, 121, 0, 0.2) !important;
   border-bottom-style: solid !important;
   box-shadow: 0 0 0 1px rgba(197, 121, 0, 0.32);
+  border-radius: 2px;
+}
+
+/* Subtle inline marker for commented text when the bubble is hidden. */
+.verlauf-annot[data-verlauf-annot-type='comment'] {
+  position: relative;
+}
+
+.verlauf-annot[data-verlauf-annot-type='comment']:focus-visible {
+  outline: 2px solid rgba(197, 121, 0, 0.55);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* =========================================================================
+   Verlauf To-do annotations — mirrors the Kommentare panel/bubble, with a
+   priority-driven accent colour (red = high, amber = medium, teal = low).
+   ========================================================================= */
+
+/* Side column wrapper stacking Kommentare above the To-do panel. */
+.verlauf-feed-aside {
+  position: sticky;
+  top: 2.75rem;
+  align-self: start;
+  max-height: calc(100vh - 3.25rem);
+  overflow-y: auto;
+  margin: 2.75rem 0.25rem 2rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Inner panels become static flow inside the shared sticky/scroll wrapper. */
+.verlauf-feed-aside .verlauf-annotation-panel {
+  position: static;
+  max-height: none;
+  overflow: visible;
+  margin: 0;
+}
+
+.verlauf-todo-panel {
+  padding: 1.25rem 1.25rem 1.5rem;
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 18%, var(--border-soft));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface, #fff) 92%, var(--area-accent, var(--accent)) 8%);
+}
+
+.verlauf-todo-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+}
+
+.verlauf-todo-panel__title {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-ink, #1a1a1a);
+}
+
+.verlauf-todo-panel__count {
+  font-size: 0.72rem;
+  color: var(--text-muted, #888);
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 8%, transparent);
+  border-radius: 999px;
+  padding: 0.15rem 0.45rem;
+}
+
+.verlauf-todo-panel__empty {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--text-muted, #888);
+}
+
+.verlauf-todo-panel__list {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.verlauf-todo-panel__item {
+  --verlauf-todo-accent: #b45309;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0.85rem 0.95rem 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 12%, var(--border-soft));
+  border-left: 3px solid var(--verlauf-todo-accent);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.verlauf-todo-panel__item:hover {
+  z-index: 4;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.verlauf-todo-panel__item--active {
+  z-index: 5;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--verlauf-todo-accent) 35%, transparent),
+    0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.verlauf-todo-panel__item--linked {
+  z-index: 4;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--verlauf-todo-accent) 30%, transparent),
+    0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.verlauf-todo-panel__item--done {
+  opacity: 0.7;
+}
+
+.verlauf-todo-panel__item--done .verlauf-todo-panel__text {
+  text-decoration: line-through;
+}
+
+.verlauf-todo-panel__item-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.verlauf-todo-panel__check {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  padding: 0;
+  border: 2px solid var(--verlauf-todo-accent, var(--accent));
+  border-radius: 5px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.verlauf-todo-panel__check svg {
+  width: 0.7rem;
+  height: 0.7rem;
+}
+
+.verlauf-todo-panel__check--on {
+  background: var(--verlauf-todo-accent, var(--accent));
+}
+
+.verlauf-todo-panel__check:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--verlauf-todo-accent) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.verlauf-todo-panel__priority {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.verlauf-todo-panel__item-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.verlauf-todo-panel__item-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.verlauf-todo-panel__quote {
+  margin: 0 0 0.5rem;
+  padding-left: 0.6rem;
+  border-left: 2px solid color-mix(in srgb, var(--verlauf-todo-accent) 45%, transparent);
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: var(--text-muted, #888);
+  font-style: italic;
+}
+
+.verlauf-todo-panel__text {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-ink, #1a1a1a);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.verlauf-todo-panel__due {
+  display: inline-block;
+  margin-top: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--verlauf-todo-accent) 78%, black);
+}
+
+.verlauf-todo-panel__editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.verlauf-todo-panel__editor-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 30%, var(--border-soft));
+  border-radius: 8px;
+  background: var(--surface, #fff);
+  font-family: inherit;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-ink, #1a1a1a);
+  resize: vertical;
+}
+
+.verlauf-todo-panel__editor-textarea:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--area-accent, var(--accent)) 45%, transparent);
+  outline-offset: 1px;
+}
+
+.verlauf-todo-panel__editor-fields {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.verlauf-todo-panel__editor-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1 1 0;
+  min-width: 0;
+  font-size: 0.7rem;
+  color: var(--text-muted, #888);
+  font-weight: 500;
+}
+
+.verlauf-todo-panel__editor-select,
+.verlauf-todo-panel__editor-date {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.3rem 0.4rem;
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 25%, var(--border-soft));
+  border-radius: 6px;
+  background: var(--surface, #fff);
+  font-family: inherit;
+  font-size: 0.76rem;
+  color: var(--text-ink, #1a1a1a);
+}
+
+.verlauf-todo-panel__editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.2rem;
+}
+
+/* Hover-revealed to-do bubble (narrow layout). */
+.verlauf-todo-bubble {
+  --verlauf-todo-accent: #b45309;
+  z-index: 99991;
+  max-width: min(340px, calc(100vw - 24px));
+  padding: 0.85rem 0.95rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 22%, var(--border-soft));
+  border-left: 3px solid var(--verlauf-todo-accent);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
+}
+
+.verlauf-todo-bubble--done {
+  opacity: 0.75;
+}
+
+.verlauf-todo-bubble__head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.verlauf-todo-bubble__priority {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.verlauf-todo-bubble__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.verlauf-todo-bubble__quote {
+  margin: 0 0 0.5rem;
+  padding-left: 0.6rem;
+  border-left: 2px solid color-mix(in srgb, var(--verlauf-todo-accent) 45%, transparent);
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: var(--text-muted, #888);
+  font-style: italic;
+}
+
+.verlauf-todo-bubble__text {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-ink, #1a1a1a);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.verlauf-todo-bubble--done .verlauf-todo-bubble__text {
+  text-decoration: line-through;
+}
+
+.verlauf-todo-bubble__due {
+  display: inline-block;
+  margin-top: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--verlauf-todo-accent) 78%, black);
+}
+
+/* To-do compose popover extras. */
+.verlauf-popover__quote {
+  margin: 0;
+  padding-left: 0.6rem;
+  border-left: 2px solid color-mix(in srgb, var(--verlauf-todo-accent, var(--accent)) 45%, transparent);
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: var(--text-muted, #888);
+  font-style: italic;
+}
+
+.verlauf-popover__hint {
+  margin: 0;
+  font-size: 0.7rem;
+  line-height: 1.4;
+  color: var(--text-muted, #888);
+}
+
+/* Persistent link highlight on a to-do's anchored chart text. Inline span
+   styles set background/border, so we override them. */
+.verlauf-todo-annot--linked {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 32%, transparent);
+  border-bottom-style: solid !important;
+  border-radius: 2px;
+}
+
+.verlauf-annot[data-verlauf-annot-type='todo']:focus-visible {
+  outline: 2px solid rgba(0, 0, 0, 0.35);
+  outline-offset: 2px;
   border-radius: 2px;
 }
 
@@ -5568,10 +6075,19 @@
     grid-template-columns: 1fr;
   }
 
-  .verlauf-annotation-panel {
+  .verlauf-annotation-panel,
+  .verlauf-todo-panel {
     position: static;
     max-height: none;
-    margin: 0 1.5rem 2rem;
+    margin: 0.5rem 1.5rem 2rem;
+    padding-bottom: 1.75rem;
+  }
+
+  .verlauf-feed-aside {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    margin: 0.5rem 0 2rem;
   }
 }
 

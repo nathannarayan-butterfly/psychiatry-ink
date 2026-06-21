@@ -1,137 +1,143 @@
 import { useEffect, useRef, useState } from 'react'
-import { VERLAUF_ANNOTATION_PANEL_LAYOUT_EVENT } from '../../utils/verlaufAnnotationHelpers'
+import { createPortal } from 'react-dom'
+import {
+  COMMENT_BUBBLE_VIEWPORT_MARGIN,
+  resolveConnectorGeometry,
+  type ConnectorGeometry,
+} from '../../utils/verlaufAnnotationHelpers'
 
 interface VerlaufAnnotationConnectorProps {
-  activeId: string | null
+  /** The revealed/linked annotation whose anchor → target line should be drawn. */
+  commentId: string | null
+  /** `panel` targets the side-panel card; `bubble` targets the hover popup. */
+  mode: 'panel' | 'bubble'
+  /** Annotation type to anchor against (`data-verlauf-annot-type`). */
+  annotType?: string
+  /** Attribute carrying the annotation id on the side-panel card. */
+  panelAttr?: string
+  /** Attribute carrying the annotation id on the hover bubble. */
+  bubbleAttr?: string
+  /** Leader line stroke colour. */
+  lineColor?: string
+  /** Anchor dot fill colour. */
+  dotColor?: string
 }
 
-interface LineCoords {
-  x1: number
-  y1: number
-  x2: number
-  y2: number
+interface ConnectorState extends ConnectorGeometry {
+  path: string
 }
 
-const VIEWPORT_MARGIN = 8
-/** How long (ms) to keep re-measuring so the line follows the panel slide. */
-const FOLLOW_DURATION = 420
-
-function resolveConnectorLine(activeId: string): LineCoords | null {
-  const anchor = document.querySelector<HTMLElement>(
-    `[data-verlauf-annotation-id="${activeId}"]`,
-  )
-  const panelCard = document.querySelector<HTMLElement>(
-    `.verlauf-annotation-panel [data-verlauf-panel-annotation-id="${activeId}"]`,
-  )
-  const panelItem = panelCard?.closest<HTMLElement>('.verlauf-annotation-panel__item')
-  if (!anchor || !panelCard || !panelItem?.style.top) return null
-
-  const anchorRect = anchor.getBoundingClientRect()
-  const cardRect = panelCard.getBoundingClientRect()
-  if (anchorRect.width === 0 || cardRect.width === 0) return null
-
-  // Stacked layout (panel rendered below the feed instead of beside it): a
-  // horizontal connector would be meaningless, so skip it entirely.
-  if (cardRect.left <= anchorRect.right) return null
-
-  const vh = window.innerHeight
-  // Anchor scrolled fully out of view → nothing meaningful to connect.
-  if (anchorRect.bottom < VIEWPORT_MARGIN || anchorRect.top > vh - VIEWPORT_MARGIN) {
-    return null
+function buildPath(geo: ConnectorGeometry): string {
+  const { startX, startY, endX, endY, orientation } = geo
+  if (orientation === 'horizontal') {
+    const cx = startX + (endX - startX) / 2
+    return `M ${startX} ${startY} C ${cx} ${startY}, ${cx} ${endY}, ${endX} ${endY}`
   }
-
-  const clampY = (y: number) => Math.max(VIEWPORT_MARGIN, Math.min(y, vh - VIEWPORT_MARGIN))
-
-  return {
-    x1: anchorRect.right,
-    y1: clampY(anchorRect.top + anchorRect.height / 2),
-    x2: cardRect.left,
-    y2: clampY(cardRect.top + cardRect.height / 2),
-  }
+  const cy = startY + (endY - startY) / 2
+  return `M ${startX} ${startY} C ${startX} ${cy}, ${endX} ${cy}, ${endX} ${endY}`
 }
 
-export function VerlaufAnnotationConnector({ activeId }: VerlaufAnnotationConnectorProps) {
-  const [line, setLine] = useState<LineCoords | null>(null)
-  const frameRef = useRef<number | null>(null)
-  const followRef = useRef<number | null>(null)
+function isOffScreen(rect: DOMRect, margin: number): boolean {
+  return (
+    rect.bottom < margin ||
+    rect.top > window.innerHeight - margin ||
+    rect.right < margin ||
+    rect.left > window.innerWidth - margin
+  )
+}
+
+function nearlyEqual(a: ConnectorState | null, b: ConnectorState): boolean {
+  if (!a) return false
+  return (
+    Math.abs(a.startX - b.startX) < 0.5 &&
+    Math.abs(a.startY - b.startY) < 0.5 &&
+    Math.abs(a.endX - b.endX) < 0.5 &&
+    Math.abs(a.endY - b.endY) < 0.5
+  )
+}
+
+/**
+ * A fixed, viewport-sized SVG overlay that draws a leader line from an
+ * annotated text span to its comment target. It tracks both elements every
+ * animation frame (so it stays correct while the page scrolls, the panel
+ * scrolls internally, the bubble repositions, or the window resizes) and hides
+ * itself when nothing is linked or the anchor scrolls off-screen.
+ */
+export function VerlaufAnnotationConnector({
+  commentId,
+  mode,
+  annotType = 'comment',
+  panelAttr = 'data-verlauf-panel-annotation-id',
+  bubbleAttr = 'data-verlauf-comment-bubble-id',
+  lineColor = 'rgba(197, 121, 0, 0.6)',
+  dotColor = 'rgba(197, 121, 0, 0.85)',
+}: VerlaufAnnotationConnectorProps) {
+  const [state, setState] = useState<ConnectorState | null>(null)
+  const stateRef = useRef<ConnectorState | null>(null)
 
   useEffect(() => {
-    if (!activeId) {
-      setLine(null)
+    stateRef.current = state
+  }, [state])
+
+  useEffect(() => {
+    if (!commentId) {
+      stateRef.current = null
+      setState(null)
       return
     }
 
-    let cancelled = false
+    let frame = 0
+    const margin = COMMENT_BUBBLE_VIEWPORT_MARGIN
+    const targetSelector =
+      mode === 'panel'
+        ? `[${panelAttr}="${commentId}"]`
+        : `[${bubbleAttr}="${commentId}"]`
 
-    const apply = () => {
-      if (cancelled) return
-      setLine(resolveConnectorLine(activeId))
-    }
-
-    // Coalesce bursty scroll/resize events into a single rAF measurement so we
-    // never thrash layout mid-scroll.
-    let scheduled = false
-    const schedule = () => {
-      if (scheduled) return
-      scheduled = true
-      frameRef.current = requestAnimationFrame(() => {
-        scheduled = false
-        apply()
-      })
-    }
-
-    // The panel card slides to its anchor with a CSS transition; follow it for a
-    // few frames so the line tracks the motion instead of snapping at the end.
-    const start =
-      typeof performance !== 'undefined' ? performance.now() : Date.now()
-    const follow = () => {
-      if (cancelled) return
-      apply()
-      const now = typeof performance !== 'undefined' ? performance.now() : Date.now()
-      if (now - start < FOLLOW_DURATION) {
-        followRef.current = requestAnimationFrame(follow)
+    const clear = () => {
+      if (stateRef.current !== null) {
+        stateRef.current = null
+        setState(null)
       }
     }
-    follow()
 
-    window.addEventListener('scroll', schedule, true)
-    window.addEventListener('resize', schedule)
-    window.addEventListener(VERLAUF_ANNOTATION_PANEL_LAYOUT_EVENT, schedule)
+    const tick = () => {
+      const anchor = document.querySelector<HTMLElement>(
+        `[data-verlauf-annotation-id="${commentId}"][data-verlauf-annot-type="${annotType}"]`,
+      )
+      const target = document.querySelector<HTMLElement>(targetSelector)
 
-    const anchor = document.querySelector<HTMLElement>(
-      `[data-verlauf-annotation-id="${activeId}"]`,
-    )
-    const panelCard = document.querySelector<HTMLElement>(
-      `.verlauf-annotation-panel [data-verlauf-panel-annotation-id="${activeId}"]`,
-    )
-    const panelItem = panelCard?.closest<HTMLElement>('.verlauf-annotation-panel__item')
-
-    const resizeObserver =
-      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(schedule) : null
-    if (resizeObserver) {
-      if (anchor) resizeObserver.observe(anchor)
-      if (panelCard) resizeObserver.observe(panelCard)
-      if (panelItem) resizeObserver.observe(panelItem)
+      if (!anchor || !target) {
+        clear()
+      } else {
+        const anchorRect = anchor.getBoundingClientRect()
+        // The bubble starts hidden (visibility:hidden) until placed — don't
+        // draw a line to its un-positioned origin.
+        const targetHidden = getComputedStyle(target).visibility === 'hidden'
+        if (targetHidden || isOffScreen(anchorRect, margin)) {
+          clear()
+        } else {
+          const geo = resolveConnectorGeometry(anchorRect, target.getBoundingClientRect())
+          const next: ConnectorState = { ...geo, path: buildPath(geo) }
+          if (!nearlyEqual(stateRef.current, next)) {
+            stateRef.current = next
+            setState(next)
+          }
+        }
+      }
+      frame = requestAnimationFrame(tick)
     }
 
-    return () => {
-      cancelled = true
-      if (frameRef.current !== null) cancelAnimationFrame(frameRef.current)
-      if (followRef.current !== null) cancelAnimationFrame(followRef.current)
-      window.removeEventListener('scroll', schedule, true)
-      window.removeEventListener('resize', schedule)
-      window.removeEventListener(VERLAUF_ANNOTATION_PANEL_LAYOUT_EVENT, schedule)
-      resizeObserver?.disconnect()
-    }
-  }, [activeId])
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [annotType, bubbleAttr, commentId, mode, panelAttr])
 
-  if (!activeId || !line) return null
+  if (!state) return null
 
-  const midX = (line.x1 + line.x2) / 2
-
-  return (
+  return createPortal(
     <svg
       className="verlauf-annotation-connector"
+      width="100%"
+      height="100%"
       aria-hidden
       style={{
         position: 'fixed',
@@ -140,18 +146,26 @@ export function VerlaufAnnotationConnector({ activeId }: VerlaufAnnotationConnec
         height: '100vh',
         pointerEvents: 'none',
         zIndex: 99990,
+        overflow: 'visible',
       }}
     >
       <path
-        d={`M ${line.x1} ${line.y1} C ${midX} ${line.y1}, ${midX} ${line.y2}, ${line.x2} ${line.y2}`}
+        className="verlauf-annotation-connector__line"
+        d={state.path}
         fill="none"
-        stroke="currentColor"
-        strokeWidth="1.25"
-        strokeDasharray="4 3"
-        opacity="0.45"
+        stroke={lineColor}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeDasharray="2 5"
       />
-      <circle cx={line.x1} cy={line.y1} r="3" fill="currentColor" opacity="0.55" />
-      <circle cx={line.x2} cy={line.y2} r="3" fill="currentColor" opacity="0.55" />
-    </svg>
+      <circle
+        className="verlauf-annotation-connector__dot"
+        cx={state.startX}
+        cy={state.startY}
+        r={3}
+        fill={dotColor}
+      />
+    </svg>,
+    document.body,
   )
 }

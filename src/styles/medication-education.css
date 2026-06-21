@@ -137,6 +137,61 @@
   border-bottom: 1px solid var(--border-subtle, #e8e4df);
 }
 
+.medication-education-workspace__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.medication-education-workspace__header-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+}
+
+.medication-education-workspace__title-block {
+  flex: 1;
+  min-width: 0;
+}
+
+.medication-education-workspace__back,
+.medication-education-workspace__close {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.medication-education-workspace__scope {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-top: 0.35rem;
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--area-medikation, #7c6b9e) 75%, #1a1a1a);
+  background: color-mix(in srgb, var(--area-medikation, #7c6b9e) 10%, #fff);
+  border: 1px solid color-mix(in srgb, var(--area-medikation, #7c6b9e) 20%, #e4e4e7);
+}
+
+.medication-education-workspace__toolbar {
+  flex-wrap: wrap;
+}
+
+.medication-education-save-confirmation {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.65rem 0 0;
+  padding: 0.45rem 0.7rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #166534;
+  background: #dcfce7;
+  border: 1px solid #bbf7d0;
+}
+
 .medication-education-toolbar__secondary {
   display: inline-flex;
   align-items: center;
@@ -167,6 +222,10 @@
   border-color: color-mix(in srgb, #15803d 22%, #e4e4e7);
 }
 
+.medication-education-section--edited {
+  border-color: color-mix(in srgb, #92400e 24%, #e4e4e7);
+}
+
 .medication-education-section--excluded {
   opacity: 0.58;
 }
@@ -186,6 +245,18 @@
   flex-direction: column;
   gap: 0.2rem;
   min-width: 0;
+}
+
+.medication-education-section__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.medication-education-section__edited-at {
+  font-size: 0.68rem;
+  color: #92400e;
 }
 
 .medication-education-section__title {
@@ -230,6 +301,12 @@
   flex-shrink: 0;
 }
 
+.medication-education-section__actions .icon-action-btn[aria-pressed='true'] {
+  color: var(--area-medikation, #6d28d9);
+  border-color: color-mix(in srgb, var(--area-medikation, #7c6b9e) 35%, #e4e4e7);
+  background: color-mix(in srgb, var(--area-medikation, #7c6b9e) 8%, #fff);
+}
+
 .medication-education-section__warning {
   display: flex;
   align-items: center;
@@ -246,9 +323,28 @@
   padding: 0.7rem 0.8rem 0.8rem;
 }
 
+.medication-education-section__content {
+  width: 100%;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--text-primary, #111827);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.medication-education-section__empty {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--text-muted, #6b7280);
+  font-style: italic;
+}
+
 .medication-education-section__textarea {
   width: 100%;
   min-height: 5.5rem;
+  max-height: none;
+  overflow: visible;
   font-family: inherit;
   font-size: 0.875rem;
   line-height: 1.55;
@@ -258,6 +354,7 @@
   resize: vertical;
   color: var(--text-primary, #111827);
   background: #fff;
+  field-sizing: content;
 }
 
 .medication-education-section__textarea:focus {
@@ -275,6 +372,10 @@
 .medication-education-export {
   position: relative;
   display: inline-flex;
+}
+
+.medication-education-export__trigger {
+  gap: 0.15rem;
 }
 
 .medication-education-export__trigger .medication-education-export__chevron {

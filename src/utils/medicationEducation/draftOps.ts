@@ -197,8 +197,17 @@ export function updateSectionContent(
   const next = structuredClone(doc)
   const section = next.sections[sectionId]
   if (!section) return doc
+  const changed = section.currentContent !== content
   section.currentContent = content
-  if (section.status !== 'accepted') section.status = 'clinician_edited'
+  if (changed && section.status !== 'accepted') {
+    section.status = 'clinician_edited'
+    section.clinicianEditedAt = new Date().toISOString()
+    section.versions.push({
+      content,
+      createdAt: section.clinicianEditedAt,
+      source: 'manual',
+    })
+  }
   next.updatedAt = new Date().toISOString()
   return next
 }
