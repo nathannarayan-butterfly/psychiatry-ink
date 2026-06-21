@@ -20,3 +20,8 @@ prisma/data/sources/diagnostic_codes.db
 prisma/data/sources/.load-diagnostic-db.py
 
 *.tsbuildinfo
+
+# Generated script scratch output (LLM drafts, KB backups, run reports)
+scripts/output/
+scripts/reports/
+scripts/.wikimedia-structure-fetch-report.json
