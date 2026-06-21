@@ -163,6 +163,91 @@ export async function fetchDiscussVoiceAudio(
   return response.blob()
 }
 
+export async function transcribeDiscussVoiceMessage(
+  discussionId: string,
+  messageId: string,
+  force = false,
+): Promise<DiscussCaseMessage> {
+  const response = await apiFetch(
+    `/api/discuss-case/${encodeURIComponent(discussionId)}/messages/${encodeURIComponent(messageId)}/transcribe`,
+    { method: 'POST', body: JSON.stringify({ force }) },
+  )
+  if (!response.ok) {
+    const detail = (await response.json().catch(() => null)) as { error?: string } | null
+    throw new Error(detail?.error ?? `Transkription fehlgeschlagen (${response.status})`)
+  }
+  const data = (await response.json()) as { message: DiscussCaseMessage }
+  return data.message
+}
+
+export async function editDiscussTranscript(
+  discussionId: string,
+  messageId: string,
+  text: string,
+): Promise<DiscussCaseMessage> {
+  const response = await apiFetch(
+    `/api/discuss-case/${encodeURIComponent(discussionId)}/messages/${encodeURIComponent(messageId)}/transcript`,
+    { method: 'PATCH', body: JSON.stringify({ text }) },
+  )
+  if (!response.ok) {
+    const detail = (await response.json().catch(() => null)) as { error?: string } | null
+    throw new Error(detail?.error ?? `Transkript konnte nicht gespeichert werden (${response.status})`)
+  }
+  const data = (await response.json()) as { message: DiscussCaseMessage }
+  return data.message
+}
+
+export async function setDiscussMessagePin(
+  discussionId: string,
+  messageId: string,
+  pinned: boolean,
+): Promise<DiscussCaseMessage> {
+  const response = await apiFetch(
+    `/api/discuss-case/${encodeURIComponent(discussionId)}/messages/${encodeURIComponent(messageId)}/pin`,
+    { method: 'POST', body: JSON.stringify({ pinned }) },
+  )
+  if (!response.ok) {
+    const detail = (await response.json().catch(() => null)) as { error?: string } | null
+    throw new Error(detail?.error ?? `Anpinnen fehlgeschlagen (${response.status})`)
+  }
+  const data = (await response.json()) as { message: DiscussCaseMessage }
+  return data.message
+}
+
+export async function setDiscussResolutionSummary(
+  discussionId: string,
+  text: string,
+): Promise<DiscussCaseDiscussion> {
+  const response = await apiFetch(
+    `/api/discuss-case/${encodeURIComponent(discussionId)}/resolution-summary`,
+    { method: 'PUT', body: JSON.stringify({ text }) },
+  )
+  if (!response.ok) {
+    const detail = (await response.json().catch(() => null)) as { error?: string } | null
+    throw new Error(detail?.error ?? `Zusammenfassung konnte nicht gespeichert werden (${response.status})`)
+  }
+  const data = (await response.json()) as { discussion: DiscussCaseDiscussion }
+  return data.discussion
+}
+
+export async function sendDiscussTyping(discussionId: string): Promise<void> {
+  try {
+    await apiFetch(`/api/discuss-case/${encodeURIComponent(discussionId)}/typing`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    })
+  } catch {
+    /* typing heartbeat is best-effort; ignore transient failures */
+  }
+}
+
+export async function fetchDiscussPresence(discussionId: string): Promise<string[]> {
+  const response = await apiFetch(`/api/discuss-case/${encodeURIComponent(discussionId)}/presence`)
+  if (!response.ok) return []
+  const data = (await response.json().catch(() => null)) as { typing?: string[] } | null
+  return data?.typing ?? []
+}
+
 export async function editDiscussMessage(
   discussionId: string,
   messageId: string,

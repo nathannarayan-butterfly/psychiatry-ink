@@ -1,5 +1,5 @@
-import { Check, ChevronDown, Copy, MessageSquare, Mic, Pencil, RefreshCw, Reply, Send, Smile, Square, Trash2, X } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
+import { Check, ChevronDown, Copy, FileText, MessageSquare, Mic, Pencil, Pin, PinOff, RefreshCw, Reply, Send, Smile, Square, Trash2, X } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
 import type {
   DiscussCaseMessage,
   DiscussCaseParticipant,
@@ -12,10 +12,20 @@ import {
   askDiscussAi,
   deleteDiscussMessage,
   editDiscussMessage,
+  editDiscussTranscript,
+  fetchDiscussPresence,
   sendDiscussMessage,
+  sendDiscussTyping,
   sendDiscussVoiceMessage,
+  setDiscussMessagePin,
   toggleDiscussMessageReaction,
+  transcribeDiscussVoiceMessage,
 } from '../../services/discussCaseApi'
+import {
+  discussChromeT,
+  fillTemplate,
+  type DiscussChromeLocale,
+} from '../../utils/discussCase/chromeI18n'
 import {
   getChatBubbleColors,
   getParticipantColor,
@@ -343,6 +353,11 @@ export function DiscussCaseChatPanel({
   const [actionsOpenId, setActionsOpenId] = useState<string | null>(null)
   const [pendingReply, setPendingReply] = useState<PendingReply | null>(null)
   const [showJumpToLatest, setShowJumpToLatest] = useState(false)
+  const [transcribingId, setTranscribingId] = useState<string | null>(null)
+  const [transcriptEditId, setTranscriptEditId] = useState<string | null>(null)
+  const [transcriptDraft, setTranscriptDraft] = useState('')
+  const [typingUserIds, setTypingUserIds] = useState<string[]>([])
+  const lastTypingPingRef = useRef(0)
   const [voiceNoticeDismissed, setVoiceNoticeDismissed] = useState(() => {
     try {
       return localStorage.getItem(VOICE_RETENTION_NOTICE_KEY) === '1'
@@ -367,6 +382,7 @@ export function DiscussCaseChatPanel({
   const canRecordVoice = canSend && isVoiceCaptureSupported()
   const canAskAi = permissions.includes('ask_ai')
   const canSaveToCase = permissions.includes('save_to_case')
+  const chromeLocale = locale as DiscussChromeLocale
 
   const scrollToLatest = useCallback((behavior: ScrollBehavior = 'smooth') => {
     isNearBottomRef.current = true
@@ -739,6 +755,121 @@ export function DiscussCaseChatPanel({
     [canReact, discussionId, locale, messages, onMessagesChange, reactionBusyId],
   )
 
+  const handleTranscribe = useCallback(
+    async (message: DiscussCaseMessage, force = false) => {
+      if (transcribingId) return
+      setTranscribingId(message.id)
+      setActionError(null)
+      try {
+        const updated = await transcribeDiscussVoiceMessage(discussionId, message.id, force)
+        onMessagesChange(messages.map((m) => (m.id === updated.id ? updated : m)))
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : discussChromeT(chromeLocale, 'transcriptFailed'))
+      } finally {
+        setTranscribingId(null)
+      }
+    },
+    [chromeLocale, discussionId, messages, onMessagesChange, transcribingId],
+  )
+
+  const beginTranscriptEdit = useCallback((message: DiscussCaseMessage) => {
+    setTranscriptEditId(message.id)
+    setTranscriptDraft(message.transcript?.text ?? '')
+    setActionError(null)
+  }, [])
+
+  const cancelTranscriptEdit = useCallback(() => {
+    setTranscriptEditId(null)
+    setTranscriptDraft('')
+  }, [])
+
+  const saveTranscriptEdit = useCallback(
+    async (message: DiscussCaseMessage) => {
+      const text = transcriptDraft.trim()
+      if (!text || actionBusyId) return
+      setActionBusyId(message.id)
+      setActionError(null)
+      try {
+        const updated = await editDiscussTranscript(discussionId, message.id, text)
+        onMessagesChange(messages.map((m) => (m.id === updated.id ? updated : m)))
+        setTranscriptEditId(null)
+        setTranscriptDraft('')
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : discussChromeT(chromeLocale, 'transcriptFailed'))
+      } finally {
+        setActionBusyId(null)
+      }
+    },
+    [actionBusyId, chromeLocale, discussionId, messages, onMessagesChange, transcriptDraft],
+  )
+
+  const handleTogglePin = useCallback(
+    async (message: DiscussCaseMessage) => {
+      if (actionBusyId) return
+      setActionBusyId(message.id)
+      setActionError(null)
+      try {
+        const updated = await setDiscussMessagePin(discussionId, message.id, !message.pinned)
+        onMessagesChange(messages.map((m) => (m.id === updated.id ? updated : m)))
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : discussChromeT(chromeLocale, 'pinFailed'))
+      } finally {
+        setActionBusyId(null)
+      }
+    },
+    [actionBusyId, chromeLocale, discussionId, messages, onMessagesChange],
+  )
+
+  // Best-effort typing heartbeat: ping the ephemeral presence endpoint at most
+  // once every 2.5s while the composer is being edited. The server keeps a
+  // short TTL so the indicator self-clears when typing stops.
+  const pingTyping = useCallback(() => {
+    if (!canSend) return
+    const now = Date.now()
+    if (now - lastTypingPingRef.current < 2_500) return
+    lastTypingPingRef.current = now
+    void sendDiscussTyping(discussionId)
+  }, [canSend, discussionId])
+
+  // Poll who else is typing on a short cadence so "X is typing…" feels live
+  // without a realtime socket. Independent of the 12s message poll in the view.
+  useEffect(() => {
+    let cancelled = false
+    const poll = async () => {
+      try {
+        const typing = await fetchDiscussPresence(discussionId)
+        if (!cancelled) setTypingUserIds(typing)
+      } catch {
+        /* ignore transient presence failures */
+      }
+    }
+    void poll()
+    const interval = window.setInterval(() => void poll(), 4_000)
+    return () => {
+      cancelled = true
+      window.clearInterval(interval)
+    }
+  }, [discussionId])
+
+  const typingIndicator = useMemo(() => {
+    if (typingUserIds.length === 0) return null
+    const names = typingUserIds.map((userId) => {
+      if (currentUserId && userId === currentUserId) return discussChromeT(chromeLocale, 'selfLabel')
+      const participant = participantByUserId.get(userId)
+      return participant?.userId.slice(0, 8) ?? discussChromeT(chromeLocale, 'someone')
+    })
+    if (names.length === 1) {
+      return fillTemplate(discussChromeT(chromeLocale, 'typingOne'), { name: names[0]! })
+    }
+    if (names.length === 2) {
+      return fillTemplate(discussChromeT(chromeLocale, 'typingTwo'), {
+        name: names[0]!,
+        name2: names[1]!,
+      })
+    }
+    return discussChromeT(chromeLocale, 'typingMany')
+  }, [chromeLocale, currentUserId, participantByUserId, typingUserIds])
+
   const clearLongPressTimer = useCallback(() => {
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current)
@@ -833,11 +964,12 @@ export function DiscussCaseChatPanel({
               !isAiMessage && ((isSelf && canSend) || (canManage && !isSelf))
             const canEditMessage = isSelf && canSend && !isVoiceMessage && !isAiMessage
             const canReplyMessage = canSend && !isAiMessage
+            const canPinMessage = canManage && !isAiMessage
             const isEditing = editingId === message.id && canEditMessage
             const busy = actionBusyId === message.id
             const hasBody = Boolean(message.body.trim())
             const hasMessageActions =
-              (canReplyMessage || canEditMessage || canDeleteMessage) && !isEditing
+              (canReplyMessage || canEditMessage || canDeleteMessage || canPinMessage) && !isEditing
             const reactionsOpen = reactionsOpenId === message.id
             const actionsOpen = actionsOpenId === message.id
             return (
@@ -915,9 +1047,15 @@ export function DiscussCaseChatPanel({
                         grouped ? 'discuss-case-chat__message-bubble--grouped' : '',
                         isSelf ? 'discuss-case-chat__message-bubble--own' : '',
                         bubbleColors ? 'discuss-case-chat__message-bubble--colored' : '',
+                        message.pinned ? 'discuss-case-chat__message-bubble--pinned' : '',
                       ].join(' ').trim()}
                       style={bubbleColors ? bubbleInlineStyle(bubbleColors) : undefined}
                     >
+                      {message.pinned ? (
+                        <span className="discuss-case-chat__pin-badge" title={discussChromeT(chromeLocale, 'pinnedHeading')}>
+                          <Pin className="h-3 w-3" strokeWidth={2} aria-hidden="true" />
+                        </span>
+                      ) : null}
                       {message.replyPreview ? (
                         isReplyTargetPresent(message.replyToMessageId, messages) ? (
                           <button
@@ -998,6 +1136,86 @@ export function DiscussCaseChatPanel({
                               locale={voiceLocale(locale)}
                             />
                           ) : null}
+                          {isVoiceMessage ? (
+                            <div className="discuss-case-chat__transcript">
+                              {message.transcript ? (
+                                transcriptEditId === message.id ? (
+                                  <div className="discuss-case-chat__transcript-edit">
+                                    <textarea
+                                      className="discuss-case-chat__input discuss-case-chat__transcript-input"
+                                      rows={3}
+                                      autoFocus
+                                      value={transcriptDraft}
+                                      disabled={busy}
+                                      onChange={(e) => setTranscriptDraft(e.target.value)}
+                                    />
+                                    <div className="discuss-case-chat__transcript-edit-actions">
+                                      <button
+                                        type="button"
+                                        className="discuss-case-chat__edit-cancel"
+                                        onClick={cancelTranscriptEdit}
+                                        disabled={busy}
+                                      >
+                                        <X className="h-3.5 w-3.5" strokeWidth={1.75} />
+                                        {discussChromeT(chromeLocale, 'transcriptCancel')}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="discuss-case-chat__edit-save"
+                                        onClick={() => void saveTranscriptEdit(message)}
+                                        disabled={busy || !transcriptDraft.trim()}
+                                      >
+                                        <Check className="h-3.5 w-3.5" strokeWidth={2} />
+                                        {discussChromeT(chromeLocale, 'transcriptSave')}
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <p className="discuss-case-chat__transcript-meta">
+                                      <FileText className="h-3 w-3" strokeWidth={1.75} aria-hidden="true" />
+                                      {discussChromeT(
+                                        chromeLocale,
+                                        message.transcript.status === 'edited'
+                                          ? 'transcriptEdited'
+                                          : 'transcriptMachine',
+                                      )}
+                                      {(isSelf || canManage) ? (
+                                        <button
+                                          type="button"
+                                          className="discuss-case-chat__transcript-edit-btn"
+                                          onClick={() => beginTranscriptEdit(message)}
+                                          disabled={busy}
+                                        >
+                                          {discussChromeT(chromeLocale, 'transcriptEditAction')}
+                                        </button>
+                                      ) : null}
+                                    </p>
+                                    <p className="discuss-case-chat__transcript-text">
+                                      {message.transcript.text}
+                                    </p>
+                                  </>
+                                )
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="discuss-case-chat__transcribe-btn"
+                                  onClick={() => void handleTranscribe(message)}
+                                  disabled={transcribingId === message.id}
+                                >
+                                  {transcribingId === message.id ? (
+                                    <span className="clinical-loading__spinner" aria-hidden="true" />
+                                  ) : (
+                                    <FileText className="h-3.5 w-3.5" strokeWidth={1.75} />
+                                  )}
+                                  {discussChromeT(
+                                    chromeLocale,
+                                    transcribingId === message.id ? 'transcribing' : 'transcribe',
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                          ) : null}
                           {hasBody ? (
                             <p className="discuss-case-chat__message-body">{message.body}</p>
                           ) : null}
@@ -1029,6 +1247,29 @@ export function DiscussCaseChatPanel({
                             title={chatT(locale, 'reply')}
                           >
                             <Reply className="h-3.5 w-3.5" strokeWidth={1.75} />
+                          </button>
+                        ) : null}
+                        {canPinMessage ? (
+                          <button
+                            type="button"
+                            className={[
+                              'icon-action-btn',
+                              message.pinned ? 'icon-action-btn--active' : '',
+                            ].join(' ').trim()}
+                            onClick={() => void handleTogglePin(message)}
+                            disabled={busy}
+                            aria-label={discussChromeT(
+                              chromeLocale,
+                              message.pinned ? 'unpin' : 'pin',
+                            )}
+                            title={discussChromeT(chromeLocale, message.pinned ? 'unpin' : 'pin')}
+                            aria-pressed={message.pinned}
+                          >
+                            {message.pinned ? (
+                              <PinOff className="h-3.5 w-3.5" strokeWidth={1.75} />
+                            ) : (
+                              <Pin className="h-3.5 w-3.5" strokeWidth={1.75} />
+                            )}
                           </button>
                         ) : null}
                         {canEditMessage ? (
@@ -1097,6 +1338,17 @@ export function DiscussCaseChatPanel({
         <p className="discuss-case-chat__action-error" role="alert">
           {actionError}
         </p>
+      ) : null}
+
+      {typingIndicator ? (
+        <div className="discuss-case-chat__typing" role="status" aria-live="polite">
+          <span className="discuss-case-chat__typing-dots" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </span>
+          {typingIndicator}
+        </div>
       ) : null}
 
       {canSend ? (
@@ -1215,7 +1467,10 @@ export function DiscussCaseChatPanel({
                   rows={3}
                   placeholder={chatT(locale, 'messagePlaceholder')}
                   value={messageDraft}
-                  onChange={(e) => setMessageDraft(e.target.value)}
+                  onChange={(e) => {
+                    setMessageDraft(e.target.value)
+                    pingTyping()
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                       e.preventDefault()

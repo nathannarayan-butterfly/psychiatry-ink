@@ -8,7 +8,9 @@ import type {
   DiscussCasePackage,
   DiscussCaseParticipant,
   DiscussCasePermission,
+  DiscussCaseResolutionSummary,
   DiscussPackageContent,
+  DiscussVoiceTranscript,
 } from '../../src/types/discussCase'
 import type { EncryptedEnvelope } from '../../src/utils/e2ee'
 import { getKbSupabaseAdmin } from './kbSupabaseAdmin'
@@ -43,6 +45,8 @@ function mapDiscussion(row: Record<string, unknown>): DiscussCaseDiscussion {
     title: String(row.title),
     status: row.status as DiscussCaseDiscussion['status'],
     expiresAt: row.expires_at ? String(row.expires_at) : null,
+    resolutionSummary:
+      (row.resolution_summary as DiscussCaseDiscussion['resolutionSummary']) ?? null,
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
   }
@@ -117,10 +121,14 @@ function mapMessage(row: Record<string, unknown>): DiscussCaseMessage {
     body: String(row.body ?? ''),
     messageKind,
     voiceAttachment,
+    transcript: (row.transcript as DiscussCaseMessage['transcript']) ?? null,
     quoteExcerpt: (row.quote_excerpt as DiscussCaseMessage['quoteExcerpt']) ?? null,
     replyToMessageId: row.reply_to_message_id ? String(row.reply_to_message_id) : null,
     replyPreview: (row.reply_preview as DiscussCaseMessage['replyPreview']) ?? null,
     reactions: Array.isArray(reactionsRaw) ? reactionsRaw : [],
+    pinned: Boolean(row.pinned),
+    pinnedAt: row.pinned_at ? String(row.pinned_at) : null,
+    pinnedBy: row.pinned_by ? String(row.pinned_by) : null,
     createdAt,
     editedAt: row.edited_at ? String(row.edited_at) : null,
   }
@@ -769,6 +777,101 @@ export async function toggleMessageReaction(input: {
   if (!data) throw new Error('Message not found')
 
   return mapMessage(data as Record<string, unknown>)
+}
+
+/**
+ * Persist a de-identified transcript on a voice message. `machine` transcripts
+ * are written by the transcription route; `edited` ones by a clinician
+ * correction. The text is assumed to already be redacted by the caller.
+ */
+export async function setMessageTranscript(input: {
+  messageId: string
+  discussionId: string
+  transcript: DiscussVoiceTranscript
+}): Promise<DiscussCaseMessage> {
+  const supabase = getKbSupabaseAdmin()
+  const { data, error } = await supabase
+    .from('dc_messages')
+    .update({ transcript: input.transcript })
+    .eq('id', input.messageId)
+    .eq('discussion_id', input.discussionId)
+    .eq('message_kind', 'voice')
+    .select('*')
+    .maybeSingle()
+  if (error) throw error
+  if (!data) throw new Error('Voice message not found')
+  return mapMessage(data as Record<string, unknown>)
+}
+
+/**
+ * Pin or unpin a message. Pinning is gated to moderators/owners at the route
+ * layer; this records who pinned it and when for the audit trail.
+ */
+export async function setMessagePinned(input: {
+  messageId: string
+  discussionId: string
+  actorUserId: string
+  pinned: boolean
+}): Promise<DiscussCaseMessage> {
+  const existing = await getMessage(input.discussionId, input.messageId)
+  if (!existing) throw new Error('Message not found')
+
+  const supabase = getKbSupabaseAdmin()
+  const { data, error } = await supabase
+    .from('dc_messages')
+    .update({
+      pinned: input.pinned,
+      pinned_at: input.pinned ? new Date().toISOString() : null,
+      pinned_by: input.pinned ? input.actorUserId : null,
+    })
+    .eq('id', input.messageId)
+    .eq('discussion_id', input.discussionId)
+    .select('*')
+    .maybeSingle()
+  if (error) throw error
+  if (!data) throw new Error('Message not found')
+
+  await writeAuditLog({
+    discussionId: input.discussionId,
+    actorUserId: input.actorUserId,
+    action: input.pinned ? 'message_pinned' : 'message_unpinned',
+    details: { messageId: input.messageId },
+  })
+
+  return mapMessage(data as Record<string, unknown>)
+}
+
+/**
+ * Set (or clear) the discussion-level resolution summary. Gated to
+ * moderators/owners at the route layer.
+ */
+export async function setResolutionSummary(input: {
+  discussionId: string
+  actorUserId: string
+  text: string
+}): Promise<DiscussCaseDiscussion> {
+  const text = input.text.trim()
+  const summary: DiscussCaseResolutionSummary | null = text
+    ? { text, updatedAt: new Date().toISOString(), updatedBy: input.actorUserId }
+    : null
+
+  const supabase = getKbSupabaseAdmin()
+  const { data, error } = await supabase
+    .from('dc_discussions')
+    .update({ resolution_summary: summary, updated_at: new Date().toISOString() })
+    .eq('id', input.discussionId)
+    .select('*')
+    .maybeSingle()
+  if (error) throw error
+  if (!data) throw new Error('Discussion not found')
+
+  await writeAuditLog({
+    discussionId: input.discussionId,
+    actorUserId: input.actorUserId,
+    action: summary ? 'resolution_summary_updated' : 'resolution_summary_cleared',
+  })
+
+  return mapDiscussion(data as Record<string, unknown>)
 }
 
 export async function listAnnotations(discussionId: string): Promise<DiscussCaseAnnotation[]> {

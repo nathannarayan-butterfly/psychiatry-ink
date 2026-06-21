@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, FileText, Users } from 'lucide-react'
+import { ArrowLeft, ClipboardList, Copy, FileText, Printer, Users } from 'lucide-react'
 import { ClinicalLoading } from '../ui/ClinicalLoading'
 import type {
   DiscussCaseAnnotation,
   DiscussCaseMessage,
   DiscussCaseParticipant,
   DiscussCasePermission,
+  DiscussCaseResolutionSummary,
   DiscussPackageContent,
   DiscussQuoteExcerpt,
 } from '../../types/discussCase'
@@ -18,9 +19,20 @@ import {
 } from '../../utils/e2ee'
 import { getParticipantColor } from '../../utils/discussCase/participantColors'
 import { loadStoredUiLanguage } from '../../utils/clinicalLanguage'
+import {
+  discussChromeT,
+  discussRoleLabel,
+  resolveDiscussChromeLocale,
+} from '../../utils/discussCase/chromeI18n'
+import {
+  copyDiscussThreadText,
+  printDiscussThread,
+  type DiscussThreadExportMessage,
+} from '../../utils/discussCase/exportThread'
 import { DiscussCaseDocumentViewer } from './DiscussCaseDocumentViewer'
 import { DiscussCaseParticipants } from './DiscussCaseParticipants'
 import { DiscussCaseChatPanel } from './DiscussCaseChatPanel'
+import { DiscussCaseSummaryPanel } from './DiscussCaseSummaryPanel'
 import { createHighlightAnnotation } from '../../utils/discussCase/createHighlightAnnotation'
 
 interface DiscussCaseViewProps {
@@ -30,7 +42,7 @@ interface DiscussCaseViewProps {
   onBack?: () => void
 }
 
-type RightPanel = 'document' | 'participants' | null
+type RightPanel = 'document' | 'participants' | 'summary' | null
 
 /** Window during which chat polls defer to a recent local message mutation. */
 const POLL_SUPPRESS_AFTER_LOCAL_EDIT_MS = 6_000
@@ -56,6 +68,7 @@ export function DiscussCaseView({ discussionId, onSaveDraftToCase, onArchived, o
   const [participants, setParticipants] = useState<DiscussCaseParticipant[]>([])
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined)
   const [voiceRetentionDays, setVoiceRetentionDays] = useState<number | undefined>(undefined)
+  const [resolutionSummary, setResolutionSummary] = useState<DiscussCaseResolutionSummary | null>(null)
   // The chat is the centerpiece — open as a clean single column. The shared
   // package document and participant roster are opt-in drawers via the header
   // toggles, so Discuss never stacks extra panels around the conversation.
@@ -65,6 +78,7 @@ export function DiscussCaseView({ discussionId, onSaveDraftToCase, onArchived, o
   // platform supports DE + EN; without this the chat fell back to German for
   // English users despite the panel carrying full translations.
   const chatLocale = loadStoredUiLanguage()
+  const chromeLocale = resolveDiscussChromeLocale(chatLocale)
 
   // Timestamp of the most recent *local* message mutation (send / edit / delete
   // / reaction / voice). The 12 s poll replaces the whole message list, which
@@ -84,20 +98,65 @@ export function DiscussCaseView({ discussionId, onSaveDraftToCase, onArchived, o
 
   const handleArchive = useCallback(async () => {
     if (archiving) return
-    const confirmed = window.confirm(
-      'Besprechung archivieren? Identifizierte Patientendaten werden anschließend aus der Datenbank gelöscht.',
-    )
+    const confirmed = window.confirm(discussChromeT(chromeLocale, 'archiveConfirm'))
     if (!confirmed) return
     setArchiving(true)
     try {
       await archiveDiscussion(discussionId, 'archived')
       onArchived?.()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Archivieren fehlgeschlagen')
+      setError(err instanceof Error ? err.message : discussChromeT(chromeLocale, 'archiveFailed'))
     } finally {
       setArchiving(false)
     }
-  }, [archiving, discussionId, onArchived])
+  }, [archiving, chromeLocale, discussionId, onArchived])
+
+  const buildExportMessages = useCallback((): DiscussThreadExportMessage[] => {
+    const participantByUserId = new Map(participants.map((p) => [p.userId, p]))
+    return messages.map((message) => {
+      const isSelf = currentUserId && message.authorUserId === currentUserId
+      const participant = participantByUserId.get(message.authorUserId)
+      const authorName = isSelf
+        ? discussChromeT(chromeLocale, 'selfLabel')
+        : message.authorDisplayName || message.authorUserId.slice(0, 8)
+      return {
+        authorName,
+        roleTag: participant ? discussRoleLabel(chromeLocale, participant.role) : null,
+        createdAt: message.createdAt,
+        pinned: message.pinned,
+        edited: Boolean(message.editedAt),
+        kind: message.messageKind,
+        body: message.body,
+        transcript: message.transcript?.text ?? null,
+      }
+    })
+  }, [chromeLocale, currentUserId, messages, participants])
+
+  const exportInput = useCallback(
+    () => ({
+      title: title || discussChromeT(chromeLocale, 'exportThreadTitle'),
+      generatedAt: new Date().toISOString(),
+      resolutionSummary: resolutionSummary?.text ?? null,
+      messages: buildExportMessages(),
+      labels: {
+        voiceMessage: discussChromeT(chromeLocale, 'exportVoiceMessage'),
+        transcriptLabel: discussChromeT(chromeLocale, 'exportTranscriptLabel'),
+        pinned: discussChromeT(chromeLocale, 'exportPinned'),
+        edited: discussChromeT(chromeLocale, 'exportEdited'),
+        generatedAt: discussChromeT(chromeLocale, 'exportGeneratedAt'),
+        resolution: discussChromeT(chromeLocale, 'exportResolution'),
+      },
+    }),
+    [buildExportMessages, chromeLocale, resolutionSummary, title],
+  )
+
+  const handlePrintThread = useCallback(() => {
+    printDiscussThread(exportInput())
+  }, [exportInput])
+
+  const handleCopyThread = useCallback(() => {
+    void copyDiscussThreadText(exportInput())
+  }, [exportInput])
 
   useEffect(() => {
     let cancelled = false
@@ -114,6 +173,7 @@ export function DiscussCaseView({ discussionId, onSaveDraftToCase, onArchived, o
         setParticipants(session.participants ?? [])
         setCurrentUserId(session.participant?.userId)
         setVoiceRetentionDays(session.voiceRetentionDays)
+        setResolutionSummary(session.discussion.resolutionSummary ?? null)
 
         const raw = session.package
         if (raw && isEncryptedEnvelope(raw)) {
@@ -122,9 +182,7 @@ export function DiscussCaseView({ discussionId, onSaveDraftToCase, onArchived, o
           const key = await resolveKey(discussKeyStorageId(discussionId))
           if (!key) {
             if (!cancelled) {
-              setError(
-                'Entschlüsselungs-Schlüssel fehlt. Bitte öffnen Sie die Besprechung erneut über den ursprünglichen Einladungslink.',
-              )
+              setError(discussChromeT(chromeLocale, 'keyMissing'))
             }
             return
           }
@@ -133,7 +191,7 @@ export function DiscussCaseView({ discussionId, onSaveDraftToCase, onArchived, o
             if (!cancelled) setPackageContent(decrypted)
           } catch {
             if (!cancelled) {
-              setError('Paket konnte nicht entschlüsselt werden (ungültiger Schlüssel).')
+              setError(discussChromeT(chromeLocale, 'decryptFailed'))
             }
             return
           }
@@ -141,7 +199,7 @@ export function DiscussCaseView({ discussionId, onSaveDraftToCase, onArchived, o
           setPackageContent(raw)
         }
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Laden fehlgeschlagen')
+        if (!cancelled) setError(err instanceof Error ? err.message : discussChromeT(chromeLocale, 'loadFailed'))
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -234,7 +292,8 @@ export function DiscussCaseView({ discussionId, onSaveDraftToCase, onArchived, o
               type="button"
               className="discuss-case-view__back icon-action-btn"
               onClick={onBack}
-              title="Zurück zur Übersicht"
+              title={discussChromeT(chromeLocale, 'backToOverview')}
+              aria-label={discussChromeT(chromeLocale, 'backToOverview')}
             >
               <ArrowLeft className="h-4 w-4" strokeWidth={1.75} />
             </button>
@@ -251,12 +310,12 @@ export function DiscussCaseView({ discussionId, onSaveDraftToCase, onArchived, o
             className="discuss-case-view__avatars"
             onClick={() => togglePanel('participants')}
             aria-pressed={rightPanel === 'participants'}
-            title="Teilnehmer"
+            title={discussChromeT(chromeLocale, 'participants')}
           >
             <span className="discuss-case-view__avatar-stack">
               {activeParticipants.slice(0, 4).map((participant) => {
                 const isSelf = currentUserId && participant.userId === currentUserId
-                const name = isSelf ? 'Sie' : participant.userId.slice(0, 12)
+                const name = isSelf ? discussChromeT(chromeLocale, 'selfLabel') : participant.userId.slice(0, 12)
                 const color = getParticipantColor(participant.userId)
                 return (
                   <span
@@ -290,7 +349,39 @@ export function DiscussCaseView({ discussionId, onSaveDraftToCase, onArchived, o
             aria-pressed={rightPanel === 'document'}
           >
             <FileText className="h-4 w-4" strokeWidth={1.75} />
-            Dokument
+            {discussChromeT(chromeLocale, 'document')}
+          </button>
+
+          <button
+            type="button"
+            className={`discuss-case-view__panel-toggle${
+              rightPanel === 'summary' ? ' discuss-case-view__panel-toggle--active' : ''
+            }`}
+            onClick={() => togglePanel('summary')}
+            aria-pressed={rightPanel === 'summary'}
+            title={discussChromeT(chromeLocale, 'resolutionHeading')}
+          >
+            <ClipboardList className="h-4 w-4" strokeWidth={1.75} />
+          </button>
+
+          <button
+            type="button"
+            className="discuss-case-view__export-btn icon-action-btn"
+            onClick={handlePrintThread}
+            title={discussChromeT(chromeLocale, 'exportPrint')}
+            aria-label={discussChromeT(chromeLocale, 'exportPrint')}
+          >
+            <Printer className="h-4 w-4" strokeWidth={1.75} />
+          </button>
+
+          <button
+            type="button"
+            className="discuss-case-view__export-btn icon-action-btn"
+            onClick={handleCopyThread}
+            title={discussChromeT(chromeLocale, 'exportCopy')}
+            aria-label={discussChromeT(chromeLocale, 'exportCopy')}
+          >
+            <Copy className="h-4 w-4" strokeWidth={1.75} />
           </button>
 
           {permissions.includes('manage_discussion') ? (
@@ -299,9 +390,11 @@ export function DiscussCaseView({ discussionId, onSaveDraftToCase, onArchived, o
               className="discuss-case-view__archive-btn"
               disabled={archiving}
               onClick={() => void handleArchive()}
-              title="Besprechung beenden und identifizierte Daten löschen"
+              title={discussChromeT(chromeLocale, 'archiveTitle')}
             >
-              {archiving ? 'Archivieren…' : 'Archivieren'}
+              {archiving
+                ? discussChromeT(chromeLocale, 'archiving')
+                : discussChromeT(chromeLocale, 'archive')}
             </button>
           ) : null}
         </div>
@@ -336,6 +429,7 @@ export function DiscussCaseView({ discussionId, onSaveDraftToCase, onArchived, o
               annotations={annotations}
               participants={participants}
               currentUserId={currentUserId}
+              locale={chromeLocale}
               canHighlight={permissions.includes('highlight')}
               canComment={permissions.includes('comment')}
               canCopy={permissions.includes('copy_text')}
@@ -350,10 +444,25 @@ export function DiscussCaseView({ discussionId, onSaveDraftToCase, onArchived, o
               discussionId={discussionId}
               participants={participants}
               currentUserId={currentUserId}
+              locale={chromeLocale}
               canManage={permissions.includes('manage_discussion')}
               canInvite={permissions.includes('invite_others')}
               onParticipantsChange={setParticipants}
               variant="tab"
+            />
+          </aside>
+        ) : rightPanel === 'summary' ? (
+          <aside className="discuss-case-view__aside discuss-case-view__aside--summary">
+            <DiscussCaseSummaryPanel
+              discussionId={discussionId}
+              messages={messages}
+              resolutionSummary={resolutionSummary}
+              canManage={permissions.includes('manage_discussion')}
+              locale={chromeLocale}
+              currentUserId={currentUserId}
+              participants={participants}
+              onMessagesChange={handleMessagesChange}
+              onResolutionChange={setResolutionSummary}
             />
           </aside>
         ) : null}

@@ -8,6 +8,11 @@ import type {
 import { buildHighlightSegments } from '../../utils/discussCase/buildHighlightSegments'
 import { getParticipantColor } from '../../utils/discussCase/participantColors'
 import {
+  discussChromeT,
+  discussRoleLabel,
+  type DiscussChromeLocale,
+} from '../../utils/discussCase/chromeI18n'
+import {
   SelectionActionBubble,
   selectionBubblePosition,
   type SelectionAction,
@@ -32,18 +37,13 @@ interface DiscussCaseDocumentViewerProps {
     text: string
   }) => void
   onQuoteToChat?: (quote: DiscussQuoteExcerpt) => void
+  locale?: DiscussChromeLocale
 }
 
 interface SelectionState {
   text: string
   startOffset: number
   endOffset: number
-}
-
-const ROLE_TAGS: Record<DiscussCaseParticipant['role'], string> = {
-  owner: 'Eigentümer',
-  internal: 'Intern',
-  external: 'Extern',
 }
 
 export function DiscussCaseDocumentViewer({
@@ -59,6 +59,7 @@ export function DiscussCaseDocumentViewer({
   canQuote,
   onHighlight,
   onQuoteToChat,
+  locale = 'de',
 }: DiscussCaseDocumentViewerProps) {
   const sections = packageContent?.sections ?? []
   const [internalSectionId, setInternalSectionId] = useState(sections[0]?.id ?? '')
@@ -100,9 +101,9 @@ export function DiscussCaseDocumentViewer({
       const participant = participantByUserId.get(annotation.authorUserId)
       const isSelf = currentUserId && annotation.authorUserId === currentUserId
       const label = isSelf
-        ? 'Sie'
+        ? discussChromeT(locale, 'selfLabel')
         : participant
-          ? `${annotation.authorUserId.slice(0, 8)} (${ROLE_TAGS[participant.role]})`
+          ? `${annotation.authorUserId.slice(0, 8)} (${discussRoleLabel(locale, participant.role)})`
           : annotation.authorUserId.slice(0, 8)
       const participantColor = getParticipantColor(annotation.authorUserId)
       entries.push({
@@ -113,7 +114,7 @@ export function DiscussCaseDocumentViewer({
       })
     }
     return entries
-  }, [currentUserId, participantByUserId, sectionAnnotations])
+  }, [currentUserId, locale, participantByUserId, sectionAnnotations])
 
   const selectSection = useCallback(
     (id: string) => {
@@ -224,13 +225,13 @@ export function DiscussCaseDocumentViewer({
   const bubbleActions = useMemo((): SelectionAction[] => {
     const actions: SelectionAction[] = []
     if (canHighlight && onHighlight) {
-      actions.push({ id: 'markieren', label: 'Markieren', onClick: handleMarkieren })
+      actions.push({ id: 'markieren', label: discussChromeT(locale, 'actionHighlight'), onClick: handleMarkieren })
     }
     if (canQuote && onQuoteToChat) {
-      actions.push({ id: 'zitieren', label: 'Zitieren', onClick: handleZitieren })
+      actions.push({ id: 'zitieren', label: discussChromeT(locale, 'actionQuote'), onClick: handleZitieren })
     }
     if (canCopy && selection?.text) {
-      actions.push({ id: 'kopieren', label: 'Kopieren', onClick: handleCopySelection })
+      actions.push({ id: 'kopieren', label: discussChromeT(locale, 'actionCopy'), onClick: handleCopySelection })
     }
     return actions
   }, [
@@ -240,6 +241,7 @@ export function DiscussCaseDocumentViewer({
     handleCopySelection,
     handleMarkieren,
     handleZitieren,
+    locale,
     onHighlight,
     onQuoteToChat,
     selection?.text,
@@ -248,14 +250,14 @@ export function DiscussCaseDocumentViewer({
   if (!packageContent || sections.length === 0) {
     return (
       <div className="discuss-case-doc discuss-case-doc--empty">
-        <p>Kein Paketinhalt verfügbar.</p>
+        <p>{discussChromeT(locale, 'noPackageContent')}</p>
       </div>
     )
   }
 
   return (
     <div className="discuss-case-doc" onClick={() => setActiveComment(null)}>
-      <nav className="discuss-case-doc__nav" aria-label="Abschnitte">
+      <nav className="discuss-case-doc__nav" aria-label={discussChromeT(locale, 'sectionsLabel')}>
         {sections.map((section) => (
           <button
             key={section.id}
@@ -306,7 +308,7 @@ export function DiscussCaseDocumentViewer({
             )}
           </pre>
           {legendEntries.length > 0 ? (
-            <div className="discuss-case-doc__legend" aria-label="Markierungsfarben">
+            <div className="discuss-case-doc__legend" aria-label={discussChromeT(locale, 'highlightColors')}>
               {legendEntries.map((entry) => (
                 <span key={entry.userId} className="discuss-case-doc__legend-item">
                   <span

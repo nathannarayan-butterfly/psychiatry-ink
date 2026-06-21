@@ -60,6 +60,8 @@ export interface DiscussCaseDiscussion {
   title: string
   status: DiscussCaseStatus
   expiresAt: string | null
+  /** Owner/moderator-editable outcome summary (null until first written). */
+  resolutionSummary: DiscussCaseResolutionSummary | null
   createdAt: string
   updatedAt: string
 }
@@ -137,6 +139,29 @@ export interface DiscussCaseReplyPreview {
   messageKind?: DiscussCaseMessageKind
 }
 
+/**
+ * De-identified transcript of a voice message. `machine` is the raw model
+ * output (already scrubbed server-side); `edited` means a clinician corrected
+ * it. Never contains identifiers — the text passes through the same redactor
+ * used for the safe LLM egress path.
+ */
+export interface DiscussVoiceTranscript {
+  text: string
+  status: 'machine' | 'edited'
+  model: string | null
+  language: string | null
+  createdAt: string
+  editedAt: string | null
+  editedBy: string | null
+}
+
+/** Owner/moderator-editable outcome summary for a discussion. */
+export interface DiscussCaseResolutionSummary {
+  text: string
+  updatedAt: string
+  updatedBy: string
+}
+
 export interface DiscussCaseMessage {
   id: string
   discussionId: string
@@ -145,10 +170,16 @@ export interface DiscussCaseMessage {
   body: string
   messageKind: DiscussCaseMessageKind
   voiceAttachment: DiscussVoiceAttachment | null
+  /** De-identified transcript for voice messages (null until transcribed). */
+  transcript: DiscussVoiceTranscript | null
   quoteExcerpt: DiscussQuoteExcerpt | null
   replyToMessageId: string | null
   replyPreview: DiscussCaseReplyPreview | null
   reactions: DiscussCaseMessageReaction[]
+  /** True when a moderator/owner flagged the message as pinned/important. */
+  pinned: boolean
+  pinnedAt: string | null
+  pinnedBy: string | null
   createdAt: string
   /** Set when the author has edited the message after posting. */
   editedAt: string | null
