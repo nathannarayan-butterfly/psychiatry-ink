@@ -13127,6 +13127,110 @@ export const uiTranslations = {
     fr: 'Aucune analyse Butterfly CIS — lancez d’abord l’analyse.',
     es: 'Sin análisis Butterfly CIS — ejecute primero el análisis.',
   },
+
+  // ── Credit bundles (post-Beta-v1 feature) ─────────────────────────────────
+  aiCreditsLabel: {
+    de: 'KI-Credits',
+    en: 'AI credits',
+    fr: 'Crédits IA',
+    es: 'Créditos de IA',
+  },
+  aiCreditsBundlesTitle: {
+    de: 'Zusätzliche Credits kaufen',
+    en: 'Buy extra AI credits',
+    fr: 'Acheter des crédits supplémentaires',
+    es: 'Comprar créditos adicionales',
+  },
+  aiCreditsBundlesSubtitle: {
+    de: 'Zusätzliche Credits laufen nicht ab und werden erst verbraucht, wenn das monatliche Kontingent aufgebraucht ist.',
+    en: 'Extra credits never expire and are only used after your monthly allowance runs out.',
+    fr: 'Les crédits supplémentaires n’expirent jamais et ne sont utilisés qu’une fois votre quota mensuel épuisé.',
+    es: 'Los créditos adicionales no caducan y solo se usan cuando se agota la asignación mensual.',
+  },
+  aiCreditsBundleCreditsLabel: {
+    de: 'Credits',
+    en: 'credits',
+    fr: 'crédits',
+    es: 'créditos',
+  },
+  aiCreditsBundleUnitPrice: {
+    de: 'pro Credit',
+    en: 'per credit',
+    fr: 'par crédit',
+    es: 'por crédito',
+  },
+  aiCreditsBundlePurchase: {
+    de: 'Kaufen',
+    en: 'Purchase',
+    fr: 'Acheter',
+    es: 'Comprar',
+  },
+  aiCreditsBundlePurchasing: {
+    de: 'Wird vorgemerkt …',
+    en: 'Reserving …',
+    fr: 'Réservation en cours …',
+    es: 'Reservando …',
+  },
+  aiCreditsBundlePurchaseQueued: {
+    de: 'Bestellung vorgemerkt. Stripe-Checkout folgt in Kürze.',
+    en: 'Purchase reserved. Stripe checkout will follow shortly.',
+    fr: 'Achat réservé. Le paiement Stripe suivra bientôt.',
+    es: 'Compra reservada. El pago con Stripe se habilitará en breve.',
+  },
+  aiCreditsBundlePurchaseError: {
+    de: 'Bestellung konnte nicht gespeichert werden — bitte erneut versuchen.',
+    en: 'Could not save the purchase — please retry.',
+    fr: 'Impossible d’enregistrer l’achat — veuillez réessayer.',
+    es: 'No se pudo guardar la compra — inténtelo de nuevo.',
+  },
+  aiCreditsBundleOutOfMonthly: {
+    de: 'Monatliche Credits aufgebraucht — gekaufte Credits halten Ihre Funktionen aktiv.',
+    en: 'Out of monthly credits — purchasing credits keeps your features running.',
+    fr: 'Crédits mensuels épuisés — l’achat de crédits maintient vos fonctions actives.',
+    es: 'Créditos mensuales agotados — comprar créditos mantiene activas sus funciones.',
+  },
+  aiCreditsBundleNonExpiring: {
+    de: 'läuft nicht ab',
+    en: 'never expires',
+    fr: 'n’expire jamais',
+    es: 'no caduca',
+  },
+  aiCreditsBundleBestValue: {
+    de: 'Bester Preis pro Credit',
+    en: 'Best value per credit',
+    fr: 'Meilleur prix par crédit',
+    es: 'Mejor precio por crédito',
+  },
+  aiCreditsBundleRecentTitle: {
+    de: 'Bisherige Bestellungen',
+    en: 'Recent orders',
+    fr: 'Commandes récentes',
+    es: 'Pedidos recientes',
+  },
+  aiCreditsBundleStatusPending: {
+    de: 'Ausstehend',
+    en: 'Pending',
+    fr: 'En attente',
+    es: 'Pendiente',
+  },
+  aiCreditsBundleStatusPaid: {
+    de: 'Bezahlt',
+    en: 'Paid',
+    fr: 'Payé',
+    es: 'Pagado',
+  },
+  aiCreditsBundleStatusFailed: {
+    de: 'Fehlgeschlagen',
+    en: 'Failed',
+    fr: 'Échoué',
+    es: 'Fallido',
+  },
+  aiCreditsBundleStatusRefunded: {
+    de: 'Erstattet',
+    en: 'Refunded',
+    fr: 'Remboursé',
+    es: 'Reembolsado',
+  },
 } as const satisfies Record<string, Record<UiLanguage, string>>
 
 export type UiTranslationKey = keyof typeof uiTranslations

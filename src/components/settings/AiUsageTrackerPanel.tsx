@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { AiUsageLogEntry } from '../../types/aiUsage'
 import { fetchRecentAiUsage } from '../../services/aiUsageApi'
+import { AiCreditsBundlePanel } from './AiCreditsBundlePanel'
 
 interface AiUsageTrackerPanelProps {
   collapsed?: boolean
@@ -130,6 +131,14 @@ export function AiUsageTrackerPanel({ collapsed: initialCollapsed = true }: AiUs
               </div>
             </div>
           ) : null}
+
+          {/* Extra credit bundle purchase — Beta v2 scope. Stripe checkout
+              wires later; for now POST /api/ai-credits/purchase records
+              the pending purchase row. */}
+          <AiCreditsBundlePanel
+            monthlyCreditsExhausted={credits != null && credits.monthlyCredits <= 0}
+          />
+
 
           {error ? <p className="team-settings-error">{error}</p> : null}
           {loading ? <p className="ai-usage-tracker__loading">{t('aiUsageTrackerLoading')}</p> : null}
