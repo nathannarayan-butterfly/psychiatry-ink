@@ -34,6 +34,14 @@ export interface KnowledgeEntry {
    */
   tagsEn?: string[]
   createdAt: string
+  /**
+   * Provenance of the English (`*En`) fields — `'machine'` for unreviewed
+   * DeepSeek machine translation, `'human'` for curated English. Absent ⇒
+   * legacy / unknown.
+   */
+  enContentSource?: 'machine' | 'human'
+  /** ISO timestamp of the last machine English-translation pass. */
+  enTranslatedAt?: string
 }
 
 export const KNOWLEDGE_BASE_SEED: KnowledgeEntry[] = [

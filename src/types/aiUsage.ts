@@ -8,6 +8,7 @@ export type AiFeatureKey =
   | 'kb_seed'
   | 'kb_pharmacokinetics'
   | 'kb_translation_de'
+  | 'kb_translation_en'
   | 'medication_combination_check'
   | 'lab_medication_correlation'
   | 'prep_ai_check'

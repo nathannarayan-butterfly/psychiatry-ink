@@ -482,6 +482,16 @@ export type KnowledgeBaseVerificationStatus =
   | 'verified'
   | 'deprecated'
 
+/**
+ * Provenance of the English (`*En`) localized fields on a KB record.
+ *
+ * - `'machine'` — produced by automated machine translation (DeepSeek) and
+ *   published immediately, unreviewed. The canonical German content and its
+ *   {@link KnowledgeBaseVerificationStatus} are unaffected.
+ * - `'human'` — curated or human-reviewed English.
+ */
+export type KbEnglishContentSource = 'machine' | 'human'
+
 export type PrescribingCountryCode = 'DE' | 'CH' | 'AT' | 'UK'
 
 export type PreparationVerificationStatus =
@@ -544,6 +554,13 @@ export interface MedicationMarketAvailability extends KnowledgeBaseAuditFields {
   /** English variant of {@link notes}. */
   notesEn?: string
   createdAt: string
+  /**
+   * Provenance of the English (`*En`) fields — `'machine'` for unreviewed
+   * DeepSeek machine translation. Does not affect {@link verificationStatus}.
+   */
+  enContentSource?: KbEnglishContentSource
+  /** ISO timestamp of the last machine English-translation pass. */
+  enTranslatedAt?: string
 }
 
 export interface KnowledgeBaseDrug {
@@ -632,6 +649,16 @@ export interface KnowledgeBaseDrug {
   kbReleaseVersion?: string
   /** ISO timestamp of the KB release sync consumed by Psychiatry.ink. */
   kbReleaseSyncedAt?: string
+  /**
+   * Provenance of the English (`*En`) fields. `'machine'` ⇒ the English content
+   * was produced by automated (DeepSeek) machine translation and is published
+   * unreviewed; `'human'` ⇒ curated/reviewed English. Absent ⇒ unknown / legacy.
+   * This NEVER changes {@link verificationStatus}, which continues to describe the
+   * clinical sign-off of the canonical (German) content.
+   */
+  enContentSource?: KbEnglishContentSource
+  /** ISO timestamp of the last machine English-translation pass over the `*En` fields. */
+  enTranslatedAt?: string
 }
 
 // ── Knowledge Collections ────────────────────────────────────────────────────
