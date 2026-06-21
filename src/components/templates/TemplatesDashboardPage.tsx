@@ -35,7 +35,8 @@ import { TemplateContextMenu, type ContextMenuState, type TemplateFieldInsertSel
 import { TemplateImportDialog } from './TemplateImportDialog'
 import { TemplateShareDialog } from './TemplateShareDialog'
 import { TemplateFieldSettings, TemplatePageSettingsPanel } from './TemplateFieldSettings'
-import { TemplateFieldPreview, createDynamicField, createFieldFromType } from './templateFieldUtils'
+import { createDynamicField, createFieldFromType } from './templateFieldUtils'
+import { TemplateCanvas } from './TemplateCanvas'
 
 interface TemplatesDashboardPageProps {
   onBack: () => void
@@ -170,6 +171,27 @@ export function TemplatesDashboardPage({ onBack }: TemplatesDashboardPageProps) 
       if (idx < 0 || target < 0 || target >= sorted.length) return
       const next = [...sorted]
       ;[next[idx], next[target]] = [next[target], next[idx]]
+      patchSelected({ fields: next.map((f, i) => ({ ...f, order: i })) })
+    },
+    [selected, patchSelected],
+  )
+
+  const reorderField = useCallback(
+    (fromIndex: number, toIndex: number) => {
+      if (!selected) return
+      const sorted = [...selected.fields].sort((a, b) => a.order - b.order)
+      if (
+        fromIndex < 0 ||
+        toIndex < 0 ||
+        fromIndex >= sorted.length ||
+        toIndex >= sorted.length ||
+        fromIndex === toIndex
+      ) {
+        return
+      }
+      const next = [...sorted]
+      const [moved] = next.splice(fromIndex, 1)
+      next.splice(toIndex, 0, moved!)
       patchSelected({ fields: next.map((f, i) => ({ ...f, order: i })) })
     },
     [selected, patchSelected],
@@ -425,50 +447,18 @@ export function TemplatesDashboardPage({ onBack }: TemplatesDashboardPageProps) 
                     ) : null}
 
                     <div className="dt-a4-body">
-                      {sortedFields.length === 0 ? (
-                        <button
-                          type="button"
-                          className="dt-canvas-empty"
-                          onContextMenu={(e) => openContextMenu(e, 0)}
-                          onClick={(e) => openContextMenu(e, 0)}
-                        >
-                          {t('templateCanvasEmpty')}
-                        </button>
-                      ) : (
-                        sortedFields.map((field, idx) => (
-                          <div key={field.id} className="dt-canvas-slot">
-                            <button
-                              type="button"
-                              className="dt-canvas-insert"
-                              aria-label={t('templateAddFieldHere')}
-                              onContextMenu={(e) => openContextMenu(e, idx)}
-                              onClick={(e) => openContextMenu(e, idx)}
-                            >
-                              +
-                            </button>
-                            <TemplateFieldPreview
-                              field={field}
-                              lang={lang}
-                              selected={selectedFieldId === field.id}
-                              onSelect={() => {
-                                setSelectedFieldId(field.id)
-                                setShowPageSettings(false)
-                              }}
-                            />
-                          </div>
-                        ))
-                      )}
-                      {sortedFields.length > 0 ? (
-                        <button
-                          type="button"
-                          className="dt-canvas-insert dt-canvas-insert--end"
-                          aria-label={t('templateAddFieldHere')}
-                          onContextMenu={(e) => openContextMenu(e, sortedFields.length)}
-                          onClick={(e) => openContextMenu(e, sortedFields.length)}
-                        >
-                          + {t('templateAddField')}
-                        </button>
-                      ) : null}
+                      <TemplateCanvas
+                        fields={sortedFields}
+                        lang={lang}
+                        selectedFieldId={selectedFieldId}
+                        onSelectField={(fieldId) => {
+                          setSelectedFieldId(fieldId)
+                          if (fieldId) setShowPageSettings(false)
+                        }}
+                        onMoveField={reorderField}
+                        onPatchField={patchField}
+                        onOpenInsertMenu={openContextMenu}
+                      />
                     </div>
 
                     {footerPreview || pageSettings?.footer?.heightMm ? (

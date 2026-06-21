@@ -672,6 +672,8 @@ export type KnowledgeCollectionType = 'notes' | 'medications'
 export interface KnowledgeCollection {
   id: string
   name: string
+  /** English display name for default collections when UI locale is `en`. */
+  nameEn?: string
   type: KnowledgeCollectionType
   icon?: string
   color?: string
@@ -691,6 +693,7 @@ export const DEFAULT_KNOWLEDGE_COLLECTIONS: KnowledgeCollection[] = [
   {
     id: DEFAULT_MEDICATIONS_COLLECTION_ID,
     name: 'Psychopharmakologie',
+    nameEn: 'Psychopharmacology',
     type: 'medications',
     icon: 'flask',
     color: '#7c3aed',
@@ -701,6 +704,7 @@ export const DEFAULT_KNOWLEDGE_COLLECTIONS: KnowledgeCollection[] = [
   {
     id: DEFAULT_NOTES_COLLECTION_ID,
     name: 'Klinisches Wissen',
+    nameEn: 'Clinical Knowledge',
     type: 'notes',
     icon: 'book',
     color: '#2563eb',
@@ -827,6 +831,14 @@ export function pickKbLocalizedList(
   if (Array.isArray(de) && de.length > 0) return [...de]
   if (Array.isArray(en) && en.length > 0) return [...en]
   return []
+}
+
+/** Localized collection tile / header title. */
+export function pickKbLocalizedCollectionName(
+  collection: Pick<KnowledgeCollection, 'name' | 'nameEn'>,
+  language: string | undefined | null,
+): string {
+  return pickKbLocalizedText(collection.name, collection.nameEn, language) || collection.name
 }
 
 // ── Safe section accessors ────────────────────────────────────────────────────

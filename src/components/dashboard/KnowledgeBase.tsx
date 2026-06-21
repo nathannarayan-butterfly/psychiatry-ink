@@ -32,6 +32,9 @@ import {
 } from '../../types/knowledgeBase'
 import { useKnowledgeCollections } from '../../hooks/useKnowledgeCollections'
 import { KnowledgeBasePharma } from './KnowledgeBasePharma'
+import { KnowledgeBaseClinical } from './KnowledgeBaseClinical'
+import { countClinicalEntriesByCollection } from '../../hooks/useKnowledgeBaseClinical'
+import { pickKbLocalizedCollectionName } from '../../types/knowledgeBase'
 
 const STORAGE_KEY = 'psychiatry-ink:knowledgeBase'
 const DRUGS_STORAGE_KEY = 'psychiatry-ink:knowledgeBaseDrugs'
@@ -139,16 +142,7 @@ function matchesSearch(entry: KnowledgeEntry, query: string): boolean {
 
 /** Count notes / drugs per collection for the home tiles (read-only snapshot). */
 function countEntriesByCollection(): Record<string, number> {
-  const counts: Record<string, number> = {}
-  try {
-    const entries = loadEntries()
-    for (const entry of entries) {
-      const id = entry.collectionId ?? DEFAULT_NOTES_COLLECTION_ID
-      counts[id] = (counts[id] ?? 0) + 1
-    }
-  } catch {
-    // ignore
-  }
+  const counts = countClinicalEntriesByCollection()
   try {
     const raw = localStorage.getItem(DRUGS_STORAGE_KEY)
     if (raw) {
@@ -696,7 +690,7 @@ interface CollectionsHomeProps {
 }
 
 function CollectionsHome({ collections, counts, onOpen, onCreate, onEdit }: CollectionsHomeProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
 
   return (
     <div className="kb-collections">
@@ -730,7 +724,9 @@ function CollectionsHome({ collections, counts, onOpen, onCreate, onEdit }: Coll
                   <CollectionIcon icon={collection.icon} className="h-5 w-5" />
                 </span>
                 <span className="kb-collection-tile__body">
-                  <span className="kb-collection-tile__title">{collection.name}</span>
+                  <span className="kb-collection-tile__title">
+                    {pickKbLocalizedCollectionName(collection, language)}
+                  </span>
                   <span className="kb-collection-tile__subtitle">{subtitle}</span>
                 </span>
                 <ArrowRight className="kb-collection-tile__arrow h-4 w-4" strokeWidth={1.75} aria-hidden />
@@ -755,7 +751,7 @@ function CollectionsHome({ collections, counts, onOpen, onCreate, onEdit }: Coll
 // ── Knowledge Base Tile (entry point + navigation orchestrator) ───────────────
 
 export function KnowledgeBaseTile() {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const { collections, addCollection, updateCollection, deleteCollection } = useKnowledgeCollections()
 
   const [open, setOpen] = useState(false)
@@ -796,33 +792,16 @@ export function KnowledgeBaseTile() {
       )
     }
 
-    // ── Notes collection inner view ──
+    // ── Clinical knowledge (notes) collection inner view ──
     if (activeCollection && activeCollection.type === 'notes') {
       return (
-        <div className="kb-overlay" role="dialog" aria-modal="true" aria-label={activeCollection.name}>
-          <div className="kb-overlay__topbar">
-            <button
-              type="button"
-              className="kb-overlay__back-btn"
-              onClick={goHome}
-              aria-label={t('kbBack')}
-            >
-              <ChevronLeft className="h-4 w-4" aria-hidden />
-              {t('kbTitle')}
-            </button>
-            <span className="kb-overlay__title">{activeCollection.name}</span>
-            <button
-              type="button"
-              className="kb-overlay__close-btn"
-              onClick={closeOverlay}
-              aria-label={t('kbCloseOverlay')}
-            >
-              <X className="h-4 w-4" aria-hidden />
-            </button>
-          </div>
-          <div className="kb-overlay__body">
-            <KnowledgeBase collectionId={activeCollection.id} collectionName={activeCollection.name} />
-          </div>
+        <div className="kb-overlay" role="dialog" aria-modal="true" aria-label={pickKbLocalizedCollectionName(activeCollection, language)}>
+          <KnowledgeBaseClinical
+            collectionId={activeCollection.id}
+            collectionName={pickKbLocalizedCollectionName(activeCollection, language)}
+            onClose={goHome}
+            onCloseAll={closeOverlay}
+          />
         </div>
       )
     }

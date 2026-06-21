@@ -19305,7 +19305,50 @@ details[open].receptor-radar .receptor-radar__summary::before {
   background: var(--surface);
 }
 
-/* ── KB Classified Preview (dev layout mock) ───────────────────────────────── */
+.kb-classified-drug--clinical .kb-classified-drug__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.85rem 1rem;
+}
+
+.kb-classified-drug--clinical .kb-badge {
+  align-self: flex-start;
+}
+
+.kbp-clinical-section-labels {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.kbp-clinical-section-labels .kbp-section__label-input--en {
+  opacity: 0.85;
+}
+
+.kbp-clinical-tags {
+  margin-top: 0.35rem;
+}
+
+.kbp-machine-translation-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  background: color-mix(in srgb, var(--ink-muted) 12%, transparent);
+}
+
+.kbp-list-toolbar__chips {
+  margin-bottom: 0.75rem;
+}
+
 
 .kb-classified-preview {
   display: grid;

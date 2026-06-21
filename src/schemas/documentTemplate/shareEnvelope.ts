@@ -74,6 +74,12 @@ export const SharedTemplateFieldSchema = z.object({
   helperText: z.string().optional(),
   unit: z.string().optional(),
   order: z.number().int().nonnegative(),
+  layout: z
+    .object({
+      colSpan: z.union([z.literal(4), z.literal(6), z.literal(8), z.literal(12)]).optional(),
+      minHeightMm: z.number().optional(),
+    })
+    .optional(),
 })
 
 export const SharedTemplateBodySchema = z.object({

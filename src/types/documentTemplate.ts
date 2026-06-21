@@ -72,6 +72,17 @@ export interface TemplatePageSettings {
   headerFooterFirstPageOnly?: boolean
 }
 
+/** Canvas / document grid span out of 12 columns. */
+export type TemplateFieldColSpan = 4 | 6 | 8 | 12
+
+export type TemplateFieldWidth = 'full' | 'half' | 'third' | 'two-thirds'
+
+export interface TemplateFieldLayout {
+  colSpan?: TemplateFieldColSpan
+  /** Minimum block height in mm (builder + rendered document). */
+  minHeightMm?: number
+}
+
 export interface TemplateField {
   id: string
   type: TemplateFieldType
@@ -88,6 +99,7 @@ export interface TemplateField {
   /** Unit suffix for number_with_unit, e.g. EUR, mg */
   unit?: string
   order: number
+  layout?: TemplateFieldLayout
 }
 
 export interface DocumentTemplate {

@@ -15,7 +15,7 @@ import { getGeneratedDocument, saveGeneratedDocument } from '../../utils/generat
 import { recordAuditEvent } from '../../services/auditApi'
 import { appendDokument } from '../../utils/dokumenteArchive'
 import { A4PageView } from './A4PageView'
-import { SimpleRichTextEditor } from './SimpleRichTextEditor'
+import { RichTextField } from './RichTextField'
 
 interface GeneratedDocumentEditorProps {
   template: DocumentTemplate
@@ -175,12 +175,28 @@ function FieldInput({
     return (
       <label className="dt-field-label">
         {field.label}
-        <SimpleRichTextEditor
+        <RichTextField
           value={typeof value === 'string' ? value : ''}
           onChange={(html) => onChange(html)}
           readOnly={readOnly}
           minHeight="5rem"
           resizable
+          ariaLabel={field.label}
+        />
+      </label>
+    )
+  }
+
+  if (field.type === 'short_text') {
+    return (
+      <label className="dt-field-label">
+        {field.label}
+        <RichTextField
+          value={typeof value === 'string' ? value : ''}
+          onChange={(html) => onChange(html)}
+          readOnly={readOnly}
+          minHeight="2.5rem"
+          ariaLabel={field.label}
         />
       </label>
     )
@@ -273,7 +289,6 @@ function FieldInput({
   if (
     field.type === 'date' ||
     field.type === 'time' ||
-    field.type === 'short_text' ||
     field.type === 'number' ||
     field.type === 'email' ||
     field.type === 'phone'
