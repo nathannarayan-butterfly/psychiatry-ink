@@ -25,6 +25,7 @@ import { ConsultationInvitePage } from './components/consultation/ConsultationIn
 import { TemplatesDashboardPage } from './components/templates/TemplatesDashboardPage'
 import { TeamSettingsPage } from './components/settings/TeamSettingsPage'
 import { TeamInvitePage } from './components/settings/TeamInvitePage'
+import { AiCreditsSettingsPage } from './components/settings/AiCreditsSettingsPage'
 import { useConsultationRole } from './hooks/useConsultationRole'
 import { useEnterpriseFeatures } from './hooks/useEnterpriseFeatures'
 import { isEnterpriseOrgHierarchyEnabled } from './utils/featureFlags'
@@ -144,6 +145,7 @@ export default function App() {
   const showDemoPatient = route.view === 'demo-patient'
   const showTemplates = route.view === 'templates'
   const showTeamSettings = route.view === 'team-settings'
+  const showAiCreditsSettings = route.view === 'ai-credits-settings'
   const showIntegrations = route.view === 'integrations'
   const showBudget = route.view === 'budget'
   const showCalendar = route.view === 'calendar'
@@ -279,6 +281,8 @@ export default function App() {
           <TemplatesDashboardPage onBack={() => navigate('/dashboard')} />
         ) : showTeamSettings ? (
           <TeamSettingsPage onBack={() => navigate('/dashboard')} />
+        ) : showAiCreditsSettings ? (
+          <AiCreditsSettingsPage onBack={() => navigate('/dashboard')} />
         ) : showIntegrations ? (
           <IntegrationsPage onBack={() => navigate('/dashboard')} />
         ) : showBudget ? (

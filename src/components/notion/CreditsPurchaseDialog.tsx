@@ -1,6 +1,7 @@
 import { X } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
 import { PLAN_DEFINITIONS } from '../../data/subscriptionPlans'
+import { BuyCreditsButton } from '../credits/BuyCreditsButton'
 
 interface CreditsPurchaseDialogProps {
   onClose: () => void
@@ -15,6 +16,13 @@ export function CreditsPurchaseDialog({
 }: CreditsPurchaseDialogProps) {
   const { t } = useTranslation()
   const pro = PLAN_DEFINITIONS.pro
+
+  const openBuyCredits = () => {
+    onClose()
+    if (typeof window !== 'undefined') {
+      window.location.assign('/settings/ai-credits')
+    }
+  }
 
   return (
     <div
@@ -48,15 +56,23 @@ export function CreditsPurchaseDialog({
             : t('creditsPurchaseBody')}
         </p>
 
+        <BuyCreditsButton
+          variant="primary"
+          size="md"
+          fullWidth
+          source="sidebar-credits-dialog"
+          onOpenSettings={openBuyCredits}
+        />
+
         {onUpgrade ? (
-          <button type="button" className="credits-purchase-dialog__action" onClick={onUpgrade}>
+          <button
+            type="button"
+            className="credits-purchase-dialog__action credits-purchase-dialog__action--ghost"
+            onClick={onUpgrade}
+          >
             {t('creditsUpgradeCta')}
           </button>
-        ) : (
-          <button type="button" className="credits-purchase-dialog__action" onClick={onClose}>
-            {t('creditsPurchaseAdd')}
-          </button>
-        )}
+        ) : null}
       </div>
     </div>
   )

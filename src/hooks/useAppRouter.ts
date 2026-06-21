@@ -22,6 +22,7 @@ function parseViewParam(search: string): 'overview' | undefined {
 export type AppRoute =
   | { view: 'landing' }
   | { view: 'ai-credits' }
+  | { view: 'ai-credits-settings' }
   | { view: 'login' }
   | { view: 'signup' }
   | { view: 'dashboard' }
@@ -65,6 +66,7 @@ export function isAppRoute(route: AppRoute): boolean {
     route.view === 'demo-patient' ||
     route.view === 'templates' ||
     route.view === 'team-settings' ||
+    route.view === 'ai-credits-settings' ||
     route.view === 'integrations' ||
     route.view === 'budget' ||
     route.view === 'calendar' ||
@@ -95,6 +97,9 @@ function parsePathname(pathname: string, search = ''): AppRoute {
   if (path === '/dev/demo-patient') return { view: 'demo-patient' }
   if (path === '/dashboard/templates') return { view: 'templates' }
   if (path === '/dashboard/team' || path === '/settings/team') return { view: 'team-settings' }
+  if (path === '/settings/ai-credits' || path === '/dashboard/ai-credits') {
+    return { view: 'ai-credits-settings' }
+  }
   if (path === '/dashboard/integrations') return { view: 'integrations' }
   if (path === '/dashboard/budget' || path === '/settings/budget') return { view: 'budget' }
   if (path === '/dashboard/calendar') return { view: 'calendar' }
@@ -161,6 +166,7 @@ export function routeToPath(route: AppRoute): string {
   if (route.view === 'demo-patient') return '/dev/demo-patient'
   if (route.view === 'templates') return '/dashboard/templates'
   if (route.view === 'team-settings') return '/dashboard/team'
+  if (route.view === 'ai-credits-settings') return '/settings/ai-credits'
   if (route.view === 'integrations') return '/dashboard/integrations'
   if (route.view === 'budget') return '/dashboard/budget'
   if (route.view === 'calendar') return '/dashboard/calendar'

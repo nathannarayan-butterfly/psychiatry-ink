@@ -414,3 +414,276 @@
 .ai-analytics-margin-neg {
   color: #7a1a1a;
 }
+
+/* ── <BuyCreditsButton> — shared CTA across all credit entry points ─────── */
+
+.buy-credits-btn-wrap {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.buy-credits-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background-color 80ms linear, border-color 80ms linear;
+}
+
+.buy-credits-btn--sm {
+  font-size: 0.78rem;
+  padding: 0.3rem 0.6rem;
+}
+
+.buy-credits-btn--md {
+  font-size: 0.88rem;
+  padding: 0.45rem 0.85rem;
+}
+
+.buy-credits-btn--primary {
+  background: var(--accent, #8a5a2b);
+  color: #fff;
+}
+
+.buy-credits-btn--primary:hover:not(:disabled) {
+  background: var(--accent-hover, #6d4621);
+}
+
+.buy-credits-btn--ghost {
+  background: transparent;
+  color: var(--text-main, #24211e);
+  border-color: var(--border-soft, #e8e4df);
+}
+
+.buy-credits-btn--ghost:hover:not(:disabled) {
+  background: var(--surface-hover, #f5f5f5);
+}
+
+.buy-credits-btn--inline {
+  background: transparent;
+  color: var(--accent, #8a5a2b);
+  padding: 0.2rem 0.4rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.buy-credits-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.buy-credits-btn--full {
+  width: 100%;
+  justify-content: center;
+}
+
+.buy-credits-btn__icon {
+  width: 0.95rem;
+  height: 0.95rem;
+  flex-shrink: 0;
+}
+
+.buy-credits-btn__error {
+  color: #7a1a1a;
+  font-size: 0.7rem;
+}
+
+/* ── AiCreditsSettingsPage ──────────────────────────────────────────────── */
+
+.ai-credits-settings-page {
+  min-height: 100dvh;
+  background: var(--surface-muted, #faf8f5);
+}
+
+.ai-credits-settings-page__inner {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 1.5rem 1.5rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.ai-credits-settings-page__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ai-credits-settings-page__title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-main, #24211e);
+}
+
+.ai-credits-settings-page__subtitle {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #6d655c);
+  margin: 0;
+}
+
+.ai-credits-settings-page__banner {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid;
+  font-size: 0.85rem;
+}
+
+.ai-credits-settings-page__banner p {
+  margin: 0;
+}
+
+.ai-credits-settings-page__banner--ok {
+  background: color-mix(in srgb, #2b7a3a 12%, white);
+  border-color: color-mix(in srgb, #2b7a3a 35%, white);
+  color: #1a4a26;
+}
+
+.ai-credits-settings-page__banner--neutral {
+  background: var(--surface, #fff);
+  border-color: var(--border-soft, #e8e4df);
+  color: var(--text-main, #24211e);
+}
+
+.ai-credits-settings-page__banner-close {
+  background: transparent;
+  border: none;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.6;
+}
+
+.ai-credits-settings-page__banner-close:hover {
+  opacity: 1;
+}
+
+.ai-credits-settings-page__balance {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border-soft, #e8e4df);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ai-credits-settings-page__balance-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ai-credits-settings-page__section-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.ai-credits-settings-page__refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  padding: 0.3rem 0.55rem;
+  background: var(--surface-hover, #f5f5f5);
+  border: 1px solid var(--border-soft, #e8e4df);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-secondary, #6d655c);
+}
+
+.ai-credits-settings-page__refresh:hover:not(:disabled) {
+  background: var(--surface, #fff);
+}
+
+.ai-credits-settings-page__refresh:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ai-credits-settings-page__balance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.5rem 1rem;
+  margin: 0;
+}
+
+.ai-credits-settings-page__balance-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.ai-credits-settings-page__balance-grid dt {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #6d655c);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ai-credits-settings-page__balance-grid dd {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-main, #24211e);
+  font-variant-numeric: tabular-nums;
+}
+
+.ai-credits-settings-page__balance-total dd {
+  color: var(--accent, #8a5a2b);
+}
+
+.ai-credits-settings-page__balance-loading {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #6d655c);
+  margin: 0;
+}
+
+/* ── Hinweise (info) page CTA block ─────────────────────────────────────── */
+
+.hp-hinweise__buy {
+  margin-top: 2rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--accent-ultrasoft, color-mix(in srgb, #8a5a2b 7%, #fff));
+  border: 1px solid color-mix(in srgb, #8a5a2b 30%, #fff);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.hp-hinweise__buy-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.2rem;
+}
+
+.hp-hinweise__buy-lead {
+  font-size: 0.85rem;
+  margin: 0;
+  color: var(--text-secondary, #6d655c);
+}
+
+/* ── InputMethodPanel "out of credits" + buy CTA inline row ─────────────── */
+
+.insufficient-credits-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}

@@ -1,14 +1,16 @@
 import { useState } from 'react'
 import type { HomepageSingleUseTier } from '../../data/homepage'
 import { useHomepageContent } from '../../hooks/useHomepageContent'
+import { BuyCreditsButton } from '../credits/BuyCreditsButton'
 import { PricingToggle, type BillingPeriod } from './PricingToggle'
 
 interface SingleUseTierCardProps {
   content: HomepageSingleUseTier
   onCta: () => void
+  onBuyCredits: () => void
 }
 
-export function SingleUseTierCard({ content, onCta }: SingleUseTierCardProps) {
+export function SingleUseTierCard({ content, onCta, onBuyCredits }: SingleUseTierCardProps) {
   const { ui } = useHomepageContent()
   const [period, setPeriod] = useState<BillingPeriod>('monthly')
   const billing = period === 'monthly' ? content.billing.monthly : content.billing.yearly
@@ -68,6 +70,16 @@ export function SingleUseTierCard({ content, onCta }: SingleUseTierCardProps) {
       <button type="button" className="hp-btn hp-btn--primary hp-tier__cta" onClick={onCta}>
         {content.cta}
       </button>
+
+      <div className="hp-tier__extra-cta">
+        <BuyCreditsButton
+          variant="ghost"
+          size="md"
+          fullWidth
+          source="homepage-pricing-tier"
+          onOpenSettings={onBuyCredits}
+        />
+      </div>
     </article>
   )
 }

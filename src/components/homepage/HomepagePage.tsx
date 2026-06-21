@@ -54,6 +54,14 @@ export function HomepagePage({
     onNavigate(`/login?redirect=${encodeURIComponent(DEMO_PATIENT_PATH)}`)
   }
 
+  const openBuyCredits = () => {
+    if (isAuthenticated) {
+      onNavigate('/settings/ai-credits')
+      return
+    }
+    onNavigate(`/login?redirect=${encodeURIComponent('/settings/ai-credits')}`)
+  }
+
   return (
     <div className="hp-page">
       <HomepageNav onOpenWorkspace={openWorkspace} />
@@ -170,7 +178,11 @@ export function HomepagePage({
           </header>
           <div className="hp-pricing">
             <div className="hp-pricing__stack">
-              <SingleUseTierCard content={tiers.singleUse} onCta={openWorkspace} />
+              <SingleUseTierCard
+                content={tiers.singleUse}
+                onCta={openWorkspace}
+                onBuyCredits={openBuyCredits}
+              />
               <p className="hp-pricing__coming-soon">{tiers.comingSoonNote}</p>
             </div>
           </div>

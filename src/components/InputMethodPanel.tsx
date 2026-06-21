@@ -20,6 +20,7 @@ import { useTranslation } from '../context/TranslationContext'
 import type { DictationPhase } from '../types/dictation'
 import type { AiGenerationScope, DocumentSection, InputMode } from '../types'
 import type { ResolvedAiContext } from '../types/aiManager'
+import { BuyCreditsButton } from './credits/BuyCreditsButton'
 import { DictationControls } from './DictationControls'
 import { IconButton } from './IconButton'
 import { PrimaryButton } from './PrimaryButton'
@@ -331,7 +332,14 @@ export function InputMethodPanel({
 
       {insufficientCredits && !generationPendingReview ? (
         <StatusBanner variant="warning" icon={<Coins className="h-3.5 w-3.5 text-recording" strokeWidth={1.5} />} role="alert">
-          {t('insufficientCredits')}
+          <span className="insufficient-credits-row">
+            <span>{t('insufficientCredits')}</span>
+            <BuyCreditsButton
+              variant="inline"
+              size="sm"
+              source="insufficient-credits-banner"
+            />
+          </span>
         </StatusBanner>
       ) : null}
 

@@ -13231,6 +13231,96 @@ export const uiTranslations = {
     fr: 'Remboursé',
     es: 'Reembolsado',
   },
+  aiCreditsBundleBuyCta: {
+    de: 'Credits kaufen',
+    en: 'Buy AI credits',
+    fr: 'Acheter des crédits',
+    es: 'Comprar créditos',
+  },
+  aiCreditsBundleBuyMoreCta: {
+    de: 'Mehr Credits kaufen',
+    en: 'Buy more credits',
+    fr: 'Acheter plus de crédits',
+    es: 'Comprar más créditos',
+  },
+  aiCreditsRedirectError: {
+    de: 'Stripe-Checkout konnte nicht geöffnet werden — bitte erneut versuchen.',
+    en: 'Could not open Stripe Checkout — please retry.',
+    fr: 'Impossible d’ouvrir le paiement Stripe — veuillez réessayer.',
+    es: 'No se pudo abrir el pago de Stripe — inténtelo de nuevo.',
+  },
+  aiCreditsRedirectingToStripe: {
+    de: 'Weiterleitung zu Stripe …',
+    en: 'Redirecting to Stripe…',
+    fr: 'Redirection vers Stripe…',
+    es: 'Redirigiendo a Stripe…',
+  },
+  aiCreditsPurchaseRequiresLogin: {
+    de: 'Bitte anmelden, um Credits zu kaufen.',
+    en: 'Please sign in to buy AI credits.',
+    fr: 'Veuillez vous connecter pour acheter des crédits.',
+    es: 'Inicie sesión para comprar créditos.',
+  },
+  aiCreditsSettingsPageTitle: {
+    de: 'KI-Credits',
+    en: 'AI credits',
+    fr: 'Crédits IA',
+    es: 'Créditos de IA',
+  },
+  aiCreditsSettingsPageSubtitle: {
+    de: 'Guthaben aufladen und Bestellungen einsehen.',
+    en: 'Top up your AI credit balance and review past purchases.',
+    fr: 'Rechargez vos crédits IA et consultez vos achats précédents.',
+    es: 'Recargue su saldo de créditos de IA y consulte sus compras anteriores.',
+  },
+  aiCreditsPurchaseSuccessBanner: {
+    de: 'Zahlung erfolgreich. Credits werden gutgeschrieben, sobald Stripe die Zahlung bestätigt — meist innerhalb weniger Sekunden. Aktualisieren Sie die Seite, um den neuen Stand zu sehen.',
+    en: 'Payment successful. Credits are added once Stripe confirms — usually within a few seconds. Refresh to see your updated balance.',
+    fr: 'Paiement réussi. Les crédits seront ajoutés dès la confirmation par Stripe — en général en quelques secondes. Actualisez pour voir votre solde mis à jour.',
+    es: 'Pago realizado. Los créditos se añaden cuando Stripe confirma — normalmente en unos segundos. Actualice para ver el saldo actualizado.',
+  },
+  aiCreditsPurchaseCancelledBanner: {
+    de: 'Zahlung abgebrochen. Es wurden keine Credits berechnet.',
+    en: 'Payment cancelled. No credits were charged.',
+    fr: 'Paiement annulé. Aucun crédit n’a été facturé.',
+    es: 'Pago cancelado. No se ha cobrado ningún crédito.',
+  },
+  aiCreditsRefreshBalance: {
+    de: 'Guthaben aktualisieren',
+    en: 'Refresh balance',
+    fr: 'Actualiser le solde',
+    es: 'Actualizar saldo',
+  },
+  aiCreditsBalanceMonthly: {
+    de: 'Monatliche Credits',
+    en: 'Monthly credits',
+    fr: 'Crédits mensuels',
+    es: 'Créditos mensuales',
+  },
+  aiCreditsBalancePurchased: {
+    de: 'Gekaufte Credits',
+    en: 'Purchased credits',
+    fr: 'Crédits achetés',
+    es: 'Créditos comprados',
+  },
+  aiCreditsBalanceTotal: {
+    de: 'Gesamt verfügbar',
+    en: 'Total available',
+    fr: 'Total disponible',
+    es: 'Total disponible',
+  },
+  aiCreditsHinweiseBuySection: {
+    de: 'Credits jetzt kaufen',
+    en: 'Buy credits now',
+    fr: 'Acheter des crédits maintenant',
+    es: 'Comprar créditos ahora',
+  },
+  aiCreditsHinweiseBuyLead: {
+    de: 'Zusätzliche Credits laufen nicht ab. Sie werden erst nach Aufbrauch der monatlichen Credits verwendet.',
+    en: 'Extra credits never expire — they are used only after your monthly allowance runs out.',
+    fr: 'Les crédits supplémentaires n’expirent jamais et ne sont utilisés qu’une fois votre quota mensuel épuisé.',
+    es: 'Los créditos adicionales no caducan — solo se usan cuando se agota la asignación mensual.',
+  },
 } as const satisfies Record<string, Record<UiLanguage, string>>
 
 export type UiTranslationKey = keyof typeof uiTranslations

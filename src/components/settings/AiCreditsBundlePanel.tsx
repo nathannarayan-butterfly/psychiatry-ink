@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
+import { useBuyAiCredits } from '../../hooks/useBuyAiCredits'
 
 interface BundleSummary {
   sku: string
@@ -27,11 +28,6 @@ interface PurchasesResponse {
   purchases: PurchaseSummary[]
 }
 
-interface PurchaseResponse {
-  purchase: PurchaseSummary
-  checkout: { url: string | null }
-}
-
 async function fetchBundles(): Promise<BundleSummary[]> {
   const res = await fetch('/api/ai-credits/bundles', { credentials: 'include' })
   if (!res.ok) throw new Error(`bundles ${res.status}`)
@@ -44,20 +40,6 @@ async function fetchPurchases(): Promise<PurchaseSummary[]> {
   if (!res.ok) return []
   const body = (await res.json()) as PurchasesResponse
   return Array.isArray(body.purchases) ? body.purchases : []
-}
-
-async function postPurchase(sku: string): Promise<PurchaseResponse> {
-  const res = await fetch('/api/ai-credits/purchase', {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ bundleId: sku }),
-  })
-  if (!res.ok) {
-    const text = await res.text().catch(() => '')
-    throw new Error(text || `purchase ${res.status}`)
-  }
-  return (await res.json()) as PurchaseResponse
 }
 
 function formatGbp(value: number): string {
@@ -93,8 +75,8 @@ export function AiCreditsBundlePanel({
   const [bundles, setBundles] = useState<BundleSummary[]>([])
   const [purchases, setPurchases] = useState<PurchaseSummary[]>([])
   const [loading, setLoading] = useState(false)
-  const [pendingSku, setPendingSku] = useState<string | null>(null)
   const [toast, setToast] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null)
+  const { purchase: triggerPurchase, pendingSku } = useBuyAiCredits()
 
   const refresh = useCallback(async () => {
     setLoading(true)
@@ -122,19 +104,19 @@ export function AiCreditsBundlePanel({
 
   const handlePurchase = useCallback(
     async (sku: string) => {
-      setPendingSku(sku)
       setToast(null)
-      try {
-        await postPurchase(sku)
-        setToast({ kind: 'ok', text: t('aiCreditsBundlePurchaseQueued') })
-        await refresh()
-      } catch {
-        setToast({ kind: 'err', text: t('aiCreditsBundlePurchaseError') })
-      } finally {
-        setPendingSku(null)
+      const result = await triggerPurchase(sku)
+      if (!result.ok) {
+        setToast({ kind: 'err', text: result.errorMessage ?? t('aiCreditsBundlePurchaseError') })
+        return
       }
+      // On success the hook hard-redirects to Stripe — the user will land
+      // back at /settings/ai-credits?purchase=success on return, where the
+      // success banner + balance refetch live. Show a transient
+      // "Redirecting…" toast in case the browser is slow to navigate.
+      setToast({ kind: 'ok', text: t('aiCreditsRedirectingToStripe') })
     },
-    [refresh, t],
+    [triggerPurchase, t],
   )
 
   return (

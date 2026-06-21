@@ -1,4 +1,6 @@
 import { useAiCreditsHinweiseContent } from '../../hooks/useHomepageContent'
+import { useTranslation } from '../../context/TranslationContext'
+import { BuyCreditsButton } from '../credits/BuyCreditsButton'
 import { HomepageFooter } from './HomepageFooter'
 import { HomepageNav } from './HomepageNav'
 
@@ -18,6 +20,15 @@ export function AiCreditsHinweisePage({
   onEnterApp,
 }: AiCreditsHinweisePageProps) {
   const content = useAiCreditsHinweiseContent()
+  const { t } = useTranslation()
+
+  const openBuyCredits = () => {
+    if (isAuthenticated) {
+      onNavigate('/settings/ai-credits')
+      return
+    }
+    onNavigate(`/login?redirect=${encodeURIComponent('/settings/ai-credits')}`)
+  }
 
   const openWorkspace = () => {
     if (isAuthenticated) {
@@ -85,6 +96,24 @@ export function AiCreditsHinweisePage({
                 </tbody>
               </table>
             </div>
+          </section>
+
+          <section
+            className="hp-hinweise__buy"
+            aria-labelledby="hp-hinweise-buy-title"
+          >
+            <div>
+              <p id="hp-hinweise-buy-title" className="hp-hinweise__buy-title">
+                {t('aiCreditsHinweiseBuySection')}
+              </p>
+              <p className="hp-hinweise__buy-lead">{t('aiCreditsHinweiseBuyLead')}</p>
+            </div>
+            <BuyCreditsButton
+              variant="primary"
+              size="md"
+              source="hinweise-page"
+              onOpenSettings={openBuyCredits}
+            />
           </section>
 
           <section className="hp-hinweise__section" aria-labelledby="hp-hinweise-capacity">
