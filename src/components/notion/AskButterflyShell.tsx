@@ -5,6 +5,8 @@ import { AskButterflyOpenButton } from './AskButterflyOpenButton'
 
 interface AskButterflyShellProps {
   children: ReactNode
+  /** Hide fixed bottom-right open button (e.g. credits dashboard). */
+  hideGlobalTrigger?: boolean
 }
 
 /**
@@ -15,7 +17,7 @@ interface AskButterflyShellProps {
  *   The reserved space is suppressed below the mobile breakpoint, where the
  *   dock panel becomes a bottom sheet (see ask-butterfly-chat.css).
  */
-export function AskButterflyShell({ children }: AskButterflyShellProps) {
+export function AskButterflyShell({ children, hideGlobalTrigger = false }: AskButterflyShellProps) {
   const { isOpen, mode, panelWidth } = useAskButterfly()
 
   const isDockedOpen = isOpen && mode === 'docked'
@@ -29,7 +31,7 @@ export function AskButterflyShell({ children }: AskButterflyShellProps) {
   return (
     <div className={shellClassName} style={shellStyle}>
       <div className="app-shell__content">{children}</div>
-      {!isOpen ? (
+      {!isOpen && !hideGlobalTrigger ? (
         <div className="ask-butterfly-global-trigger">
           <AskButterflyOpenButton variant="global" />
         </div>

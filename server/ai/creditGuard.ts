@@ -28,6 +28,7 @@
 import { prisma } from '../db'
 import type { AiMode } from '../../src/types/aiUsage'
 import { MONTHLY_CREDIT_GRANT } from './aiPricingConfig'
+import { migrateLegacyCreditsIfNeeded } from '../services/creditMigration'
 
 export class InsufficientCreditsError extends Error {
   readonly available: number
@@ -139,6 +140,7 @@ export async function checkBalance(
 ): Promise<void> {
   if (estimatedCredits <= 0) return
 
+  await migrateLegacyCreditsIfNeeded(userId)
   const account = await ensureCreditAccount(userId)
   const available = totalCredits(account)
 
@@ -264,6 +266,7 @@ export async function getCreditSummary(userId: string): Promise<{
   totalAvailable: number
   monthlyResetAt: Date
 }> {
+  await migrateLegacyCreditsIfNeeded(userId)
   const account = await ensureCreditAccount(userId)
   const full = await prisma.aiCreditAccount.findUnique({ where: { id: account.id } })
   const resetAt = full?.monthlyResetAt ?? nextMonthlyReset()
@@ -273,4 +276,109 @@ export async function getCreditSummary(userId: string): Promise<{
     totalAvailable: totalCredits(account),
     monthlyResetAt: resetAt,
   }
+}
+
+/** Credit a purchased or admin-granted balance increase with a ledger row. */
+export async function addPurchasedCredits(params: {
+  userId: string
+  credits: number
+  note?: string
+  featureKey?: string | null
+}): Promise<{ totalAvailable: number }> {
+  if (params.credits <= 0) {
+    const summary = await getCreditSummary(params.userId)
+    return { totalAvailable: summary.totalAvailable }
+  }
+
+  const account = await ensureCreditAccount(params.userId)
+  const ledgerType = params.note?.startsWith('stripe:') ? 'purchase' : 'admin_adjustment'
+
+  await prisma.$transaction(async (tx) => {
+    await tx.aiCreditAccount.update({
+      where: { id: account.id },
+      data: { purchasedCredits: { increment: params.credits } },
+    })
+
+    await tx.aiCreditLedger.create({
+      data: {
+        accountId: account.id,
+        type: ledgerType,
+        credits: params.credits,
+        featureKey: params.featureKey ?? null,
+        usageLogId: null,
+        note: params.note ?? 'admin_adjustment',
+      },
+    })
+  })
+
+  const summary = await getCreditSummary(params.userId)
+  return { totalAvailable: summary.totalAvailable }
+}
+
+export interface CreditLedgerEntry {
+  id: string
+  type: string
+  credits: number
+  featureKey: string | null
+  note: string | null
+  createdAt: Date
+}
+
+/** Recent ledger movements for a user account. */
+export async function getCreditLedgerForUser(
+  userId: string,
+  limit = 50,
+): Promise<CreditLedgerEntry[]> {
+  const account = await ensureCreditAccount(userId)
+  const rows = await prisma.aiCreditLedger.findMany({
+    where: { accountId: account.id },
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+    select: {
+      id: true,
+      type: true,
+      credits: true,
+      featureKey: true,
+      note: true,
+      createdAt: true,
+    },
+  })
+  return rows
+}
+
+export interface AiUsageLogRow {
+  id: string
+  featureKey: string
+  mode: string
+  provider: string
+  model: string
+  totalTokens: number
+  creditsCharged: number
+  success: boolean
+  errorCode: string | null
+  createdAt: Date
+}
+
+/** Recent AI usage rows from the local AiUsageLog table. */
+export async function getRecentAiUsageForUser(
+  userId: string,
+  limit = 50,
+): Promise<AiUsageLogRow[]> {
+  return prisma.aiUsageLog.findMany({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+    select: {
+      id: true,
+      featureKey: true,
+      mode: true,
+      provider: true,
+      model: true,
+      totalTokens: true,
+      creditsCharged: true,
+      success: true,
+      errorCode: true,
+      createdAt: true,
+    },
+  })
 }

@@ -260,7 +260,8 @@
 }
 
 .app-shell:has(.case-sidebar-user-footer) .ask-butterfly-global-trigger,
-.app-shell:has(.dashboard-topbar) .ask-butterfly-global-trigger {
+.app-shell:has(.dashboard-topbar) .ask-butterfly-global-trigger,
+.app-shell:has(.credits-page) .ask-butterfly-global-trigger {
   display: none;
 }
 

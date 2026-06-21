@@ -45,6 +45,7 @@ import { medicationPriorTherapiesRouter } from './routes/medicationPriorTherapie
 import { demoPatientRouter } from './routes/demoPatient'
 import { aiBudgetRouter, aiUsageRouter } from './routes/aiUsage'
 import { aiCreditsRouter } from './routes/aiCredits'
+import { stripeWebhookRouter } from './routes/stripeWebhook'
 import {
   isClinicalIntelligenceV1Enabled,
   isEnterpriseOrgHierarchyEnabled,
@@ -56,6 +57,7 @@ const port = Number(process.env.API_PORT ?? 3001)
 
 app.use(cors({ origin: true }))
 app.use(optionalAuth)
+app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhookRouter)
 app.use('/api/transcribe', express.json({ limit: '25mb' }), transcribeRouter)
 // Inline AI edit: the /transcribe sub-route carries base64 audio, so it needs a
 // larger JSON limit than the global parser.

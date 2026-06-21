@@ -5,16 +5,27 @@ import { PLAN_DEFINITIONS } from '../../data/subscriptionPlans'
 interface CreditsPurchaseDialogProps {
   onClose: () => void
   onUpgrade?: () => void
+  onOpenCreditsPage?: () => void
   creditsExhausted?: boolean
 }
 
 export function CreditsPurchaseDialog({
   onClose,
   onUpgrade,
+  onOpenCreditsPage,
   creditsExhausted = false,
 }: CreditsPurchaseDialogProps) {
   const { t } = useTranslation()
   const pro = PLAN_DEFINITIONS.pro
+
+  const openCreditsPage = () => {
+    if (onOpenCreditsPage) {
+      onOpenCreditsPage()
+      onClose()
+      return
+    }
+    window.location.href = '/dashboard/credits'
+  }
 
   return (
     <div
@@ -44,8 +55,8 @@ export function CreditsPurchaseDialog({
 
         <p className="credits-purchase-dialog__body">
           {creditsExhausted
-            ? `${t('creditsPurchaseBody')} Pro: ${pro.priceEurMonthly} €/Monat, ${pro.monthlyCredits} Credits.`
-            : t('creditsPurchaseBody')}
+            ? `${t('creditsPurchaseBodyActive')} Pro: ${pro.priceEurMonthly} €/Monat, ${pro.monthlyCredits} Credits.`
+            : t('creditsPurchaseBodyActive')}
         </p>
 
         {onUpgrade ? (
@@ -53,7 +64,7 @@ export function CreditsPurchaseDialog({
             {t('creditsUpgradeCta')}
           </button>
         ) : (
-          <button type="button" className="credits-purchase-dialog__action" onClick={onClose}>
+          <button type="button" className="credits-purchase-dialog__action" onClick={openCreditsPage}>
             {t('creditsPurchaseAdd')}
           </button>
         )}

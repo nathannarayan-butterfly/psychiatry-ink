@@ -1,24 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { FREE_SIGNUP_CREDITS } from '../data/subscriptionPlans'
-import { API_BASE } from '../services/apiClient'
-import { getAuthHeaders } from '../services/authHeaders'
+import { fetchAiCreditSummary } from '../services/aiCreditsApi'
 
-const DEFAULT_BALANCE = FREE_SIGNUP_CREDITS
+const DEFAULT_BALANCE = 0
 
-async function fetchBalance(): Promise<number | null> {
-  try {
-    const headers = await getAuthHeaders()
-    const response = await fetch(`${API_BASE}/api/credits`, { headers })
-    if (!response.ok) return null
-    const data = (await response.json()) as { balance?: number }
-    return typeof data.balance === 'number' ? data.balance : null
-  } catch {
-    return null
-  }
+export interface CreditBalanceState {
+  totalAvailable: number
+  monthlyCredits: number
+  purchasedCredits: number
+  monthlyResetAt: string | null
 }
 
 export function useCredits() {
   const [balance, setBalance] = useState(DEFAULT_BALANCE)
+  const [details, setDetails] = useState<CreditBalanceState | null>(null)
   const [loading, setLoading] = useState(true)
   const mountedRef = useRef(true)
 
@@ -30,10 +24,21 @@ export function useCredits() {
   }, [])
 
   const refreshBalance = useCallback(async () => {
-    const next = await fetchBalance()
-    if (!mountedRef.current) return
-    if (next != null) setBalance(next)
-    setLoading(false)
+    try {
+      const summary = await fetchAiCreditSummary()
+      if (!mountedRef.current) return
+      setBalance(summary.totalAvailable)
+      setDetails({
+        totalAvailable: summary.totalAvailable,
+        monthlyCredits: summary.monthlyCredits,
+        purchasedCredits: summary.purchasedCredits,
+        monthlyResetAt: summary.monthlyResetAt,
+      })
+    } catch {
+      if (!mountedRef.current) return
+    } finally {
+      if (mountedRef.current) setLoading(false)
+    }
   }, [])
 
   useEffect(() => {
@@ -42,6 +47,16 @@ export function useCredits() {
 
   const setBalanceFromServer = useCallback((next: number) => {
     setBalance(Math.max(0, next))
+    setDetails((previous) =>
+      previous
+        ? { ...previous, totalAvailable: Math.max(0, next) }
+        : {
+            totalAvailable: Math.max(0, next),
+            monthlyCredits: 0,
+            purchasedCredits: Math.max(0, next),
+            monthlyResetAt: null,
+          },
+    )
   }, [])
 
   const hasEnoughCredits = useCallback(
@@ -51,6 +66,7 @@ export function useCredits() {
 
   return {
     balance,
+    details,
     loading,
     refreshBalance,
     setBalanceFromServer,

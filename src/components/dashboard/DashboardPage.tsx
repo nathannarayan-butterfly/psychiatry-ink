@@ -111,6 +111,7 @@ interface DashboardPageProps {
   onOpenTeamSettings?: () => void
   onOpenIntegrations?: () => void
   onOpenBudget?: () => void
+  onOpenCredits?: () => void
   onOpenCalendar?: () => void
   onOpenTodos?: () => void
   onOpenEnterprise?: () => void
@@ -156,6 +157,7 @@ export function DashboardPage({
   onOpenTeamSettings,
   onOpenIntegrations,
   onOpenBudget,
+  onOpenCredits,
   onOpenCalendar,
   onOpenTodos,
   onOpenEnterprise,
@@ -501,7 +503,7 @@ export function DashboardPage({
             <button
               type="button"
               className="dashboard-kpi__value dashboard-kpi__value--btn"
-              onClick={() => setCreditsDialogOpen(true)}
+              onClick={() => (onOpenCredits ? onOpenCredits() : setCreditsDialogOpen(true))}
             >
               {creditBalance}
             </button>
@@ -879,6 +881,12 @@ export function DashboardPage({
             >
               <Plug className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
               Integrationen
+            </button>
+          ) : null}
+          {onOpenCredits ? (
+            <button type="button" className="dashboard-settings-chip" onClick={onOpenCredits}>
+              <Sparkles className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
+              {t('dashboardUsageCredits')}
             </button>
           ) : null}
           {onOpenBudget ? (

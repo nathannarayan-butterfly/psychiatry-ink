@@ -36,6 +36,7 @@ import { EnterpriseCompliancePage } from './components/enterprise/EnterpriseComp
 import { EnterpriseIntegrationsPage } from './components/enterprise/EnterpriseIntegrationsPage'
 import { EnterpriseSsoPlaceholder } from './components/enterprise/EnterpriseSsoPlaceholder'
 import { BudgetManagerPage } from './components/settings/BudgetManagerPage'
+import { CreditsDashboardPage } from './components/settings/CreditsDashboardPage'
 import { IntegrationsPage } from './components/settings/IntegrationsPage'
 import { CalendarPage } from './components/calendar/CalendarPage'
 import { TodoPage } from './components/todos/TodoPage'
@@ -140,6 +141,7 @@ export default function App() {
   const showTeamSettings = route.view === 'team-settings'
   const showIntegrations = route.view === 'integrations'
   const showBudget = route.view === 'budget'
+  const showCredits = route.view === 'credits'
   const showCalendar = route.view === 'calendar'
   const showTodos = route.view === 'todos'
   const showTeamInvite = route.view === 'team-invite'
@@ -235,7 +237,7 @@ export default function App() {
     >
       <WorkspaceSessionProvider>
         <AskButterflyProvider>
-          <AskButterflyShell>
+          <AskButterflyShell hideGlobalTrigger={showCredits}>
         {showDiscussInvite ? (
           <DiscussCaseInvitePage
             token={route.view === 'discuss-invite' ? route.token : ''}
@@ -275,6 +277,8 @@ export default function App() {
           <IntegrationsPage onBack={() => navigate('/dashboard')} />
         ) : showBudget ? (
           <BudgetManagerPage onBack={() => navigate('/dashboard')} />
+        ) : showCredits ? (
+          <CreditsDashboardPage onBack={() => navigate('/dashboard')} />
         ) : showCalendar ? (
           <CalendarPage
             onBack={() => navigate('/dashboard')}
@@ -304,6 +308,7 @@ export default function App() {
             onOpenTeamSettings={() => navigate('/dashboard/team')}
             onOpenIntegrations={() => navigate('/dashboard/integrations')}
             onOpenBudget={() => navigate('/dashboard/budget')}
+            onOpenCredits={() => navigate('/dashboard/credits')}
             onOpenCalendar={() => navigate('/dashboard/calendar')}
             onOpenTodos={() => navigate('/dashboard/todos')}
             onOpenEnterprise={

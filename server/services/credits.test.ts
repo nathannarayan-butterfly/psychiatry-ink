@@ -1,90 +1,95 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-/**
- * Priority 3 — atomic credit reservation.
- *
- * `reserveCredits` must perform the affordability check and the decrement as a
- * SINGLE conditional SQL UPDATE (`updateMany WHERE balance >= amount`) so two
- * concurrent generations can never both pass a check-then-deduct and overspend.
- */
+const deductCreditsTransactionally = vi.fn()
+const getCreditSummary = vi.fn()
+const refundAiCredits = vi.fn()
+const migrateLegacyCreditsIfNeeded = vi.fn()
 
-const updateMany = vi.fn()
-const findUnique = vi.fn()
-const upsert = vi.fn()
-const update = vi.fn()
+vi.mock('../ai/creditGuard', () => ({
+  deductCreditsTransactionally: (...args: unknown[]) => deductCreditsTransactionally(...args),
+  getCreditSummary: (...args: unknown[]) => getCreditSummary(...args),
+  refundCredits: (...args: unknown[]) => refundAiCredits(...args),
+}))
+
+vi.mock('./creditMigration', () => ({
+  migrateLegacyCreditsIfNeeded: (...args: unknown[]) => migrateLegacyCreditsIfNeeded(...args),
+  accountIdFromUserId: (userId?: string) => userId?.trim() || 'default',
+}))
 
 vi.mock('../db', () => ({
   prisma: {
     creditBalance: {
-      updateMany: (...args: unknown[]) => updateMany(...args),
-      findUnique: (...args: unknown[]) => findUnique(...args),
-      upsert: (...args: unknown[]) => upsert(...args),
-      update: (...args: unknown[]) => update(...args),
+      updateMany: vi.fn(),
+      findUnique: vi.fn(),
+      upsert: vi.fn(),
+      update: vi.fn(),
     },
-    $transaction: async (fn: (tx: unknown) => unknown) =>
-      fn({
-        creditBalance: {
-          updateMany: (...args: unknown[]) => updateMany(...args),
-          findUnique: (...args: unknown[]) => findUnique(...args),
-          update: (...args: unknown[]) => update(...args),
-        },
-      }),
   },
 }))
 
 import { refundCredits, reserveCredits } from './credits'
 
 beforeEach(() => {
-  updateMany.mockReset()
-  findUnique.mockReset()
-  upsert.mockReset()
-  update.mockReset()
-  upsert.mockResolvedValue({ id: 'user-1', balance: 100, plan: 'free' })
+  deductCreditsTransactionally.mockReset()
+  getCreditSummary.mockReset()
+  refundAiCredits.mockReset()
+  migrateLegacyCreditsIfNeeded.mockReset()
+  migrateLegacyCreditsIfNeeded.mockResolvedValue(undefined)
+  getCreditSummary.mockResolvedValue({
+    monthlyCredits: 90,
+    purchasedCredits: 0,
+    totalAvailable: 90,
+    monthlyResetAt: new Date(),
+  })
 })
 
-describe('reserveCredits (atomic)', () => {
-  it('decrements via a single conditional updateMany guarded by balance >= amount', async () => {
-    updateMany.mockResolvedValue({ count: 1 })
-    findUnique.mockResolvedValue({ id: 'user-1', balance: 90 })
+describe('reserveCredits (AiCreditAccount)', () => {
+  it('delegates to deductCreditsTransactionally for authenticated users', async () => {
+    deductCreditsTransactionally.mockResolvedValue({ ok: true })
 
     const result = await reserveCredits(10, 'user-1')
 
-    expect(result).toEqual({ ok: true, balance: 90 })
-    expect(updateMany).toHaveBeenCalledTimes(1)
-    const arg = updateMany.mock.calls[0]![0] as {
-      where: { id: string; balance: { gte: number } }
-      data: { balance: { decrement: number } }
-    }
-    expect(arg.where.id).toBe('user-1')
-    expect(arg.where.balance).toEqual({ gte: 10 })
-    expect(arg.data.balance).toEqual({ decrement: 10 })
+    expect(result.ok).toBe(true)
+    expect(deductCreditsTransactionally).toHaveBeenCalledWith({
+      userId: 'user-1',
+      credits: 10,
+      featureKey: 'generation_log_reserve',
+    })
   })
 
-  it('fails (ok=false) without decrementing when the balance is insufficient', async () => {
-    // The conditional UPDATE matches no row → count 0 → reservation rejected.
-    updateMany.mockResolvedValue({ count: 0 })
-    findUnique.mockResolvedValue({ id: 'user-1', balance: 5 })
+  it('returns ok=false when the debit transaction fails', async () => {
+    deductCreditsTransactionally.mockResolvedValue({ ok: false })
+    getCreditSummary.mockResolvedValue({
+      monthlyCredits: 5,
+      purchasedCredits: 0,
+      totalAvailable: 5,
+      monthlyResetAt: new Date(),
+    })
 
     const result = await reserveCredits(10, 'user-1')
 
     expect(result.ok).toBe(false)
     expect(result.balance).toBe(5)
   })
-
-  it('short-circuits non-positive amounts without an UPDATE', async () => {
-    findUnique.mockResolvedValue({ id: 'user-1', balance: 100 })
-    const result = await reserveCredits(0, 'user-1')
-    expect(result).toEqual({ ok: true, balance: 100 })
-    expect(updateMany).not.toHaveBeenCalled()
-  })
 })
 
 describe('refundCredits', () => {
-  it('increments the balance back when a generation fails', async () => {
-    update.mockResolvedValue({ id: 'user-1', balance: 110 })
+  it('delegates to the AI credit refund path', async () => {
+    getCreditSummary.mockResolvedValue({
+      monthlyCredits: 110,
+      purchasedCredits: 0,
+      totalAvailable: 110,
+      monthlyResetAt: new Date(),
+    })
+
     const balance = await refundCredits(10, 'user-1')
+
+    expect(refundAiCredits).toHaveBeenCalledWith({
+      userId: 'user-1',
+      credits: 10,
+      featureKey: 'generation_log_reserve',
+      note: 'generation_log_refund',
+    })
     expect(balance).toBe(110)
-    const arg = update.mock.calls[0]![0] as { data: { balance: { increment: number } } }
-    expect(arg.data.balance).toEqual({ increment: 10 })
   })
 })
