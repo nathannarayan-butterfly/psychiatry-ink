@@ -46,7 +46,8 @@
     "kb:rollback-en": "tsx scripts/rollback-kb-en-translation.ts",
     "kb:fetch-structure-images": "tsx scripts/fetch-wikimedia-structure-images.ts",
     "postinstall": "prisma generate",
-    "dev:stop": "bash scripts/stop-dev.sh"
+    "dev:stop": "bash scripts/stop-dev.sh",
+    "discuss-case:purge-voice": "tsx scripts/purge-discuss-case-voice.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
@@ -64,8 +65,6 @@
     "express": "^5.1.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
-    "livekit-client": "^2.19.2",
-    "livekit-server-sdk": "^2.15.4",
     "lucide-react": "^0.511.0",
     "mammoth": "^1.12.0",
     "pdf-lib": "^1.17.1",

@@ -23,6 +23,7 @@ import {
   acceptInvite,
   addAnnotation,
   addMessage,
+  addVoiceMessage,
   archiveDiscussion,
   createDiscussion,
   createInvite,
@@ -30,6 +31,7 @@ import {
   deleteMessage,
   getDiscussion,
   getLatestPackages,
+  getMessage,
   getParticipant,
   listAnnotations,
   listAuditLogs,
@@ -42,14 +44,17 @@ import {
   resolveAnnotation,
   revokeInvite,
   revokeParticipant,
+  toggleMessageReaction,
   updateMessage,
   writeAuditLog,
 } from '../services/discussCaseStore'
 import type { StoredPackageContent } from '../services/discussCaseStore'
+import { downloadDiscussVoiceMessage } from '../services/discussCaseVoiceStorage'
 import {
-  isLiveKitConfigured,
-  mintDiscussCaseVoiceToken,
-} from '../services/livekitVoice'
+  isVoiceAttachmentExpired,
+  resolveDiscussCaseVoiceRetentionDays,
+  resolveVoiceAttachmentExpiresAt,
+} from '../services/discussCaseVoiceRetention'
 import type {
   DiscussCasePermission,
   DiscussPackageContent,
@@ -271,10 +276,7 @@ discussCaseRouter.get('/:id/session', async (req: Request, res: Response) => {
       permissions: session.permissions,
       messages,
       annotations,
-      voice: {
-        configured: isLiveKitConfigured(),
-        canJoin: hasPermission(session.permissions, 'join_voice'),
-      },
+      voiceRetentionDays: resolveDiscussCaseVoiceRetentionDays(),
     })
   } catch (error) {
     console.error('[discuss-case] session failed:', error)
@@ -337,6 +339,8 @@ discussCaseRouter.post('/:id/messages', async (req: Request, res: Response) => {
     const body = typeof req.body?.body === 'string' ? req.body.body : ''
     const quoteExcerpt = req.body?.quoteExcerpt ?? null
     const displayName = typeof req.body?.authorDisplayName === 'string' ? req.body.authorDisplayName : null
+    const replyToMessageId =
+      typeof req.body?.replyToMessageId === 'string' ? req.body.replyToMessageId.trim() : null
 
     const message = await addMessage({
       discussionId: session.discussion.id,
@@ -344,16 +348,164 @@ discussCaseRouter.post('/:id/messages', async (req: Request, res: Response) => {
       authorDisplayName: displayName,
       body,
       quoteExcerpt,
+      replyToMessageId,
     })
 
     res.status(201).json({ message })
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Failed'
-    const status = msg.startsWith('Missing permission') ? 403 : 500
+    const status = msg.startsWith('Missing permission')
+      ? 403
+      : msg.includes('Reply target not found')
+        ? 400
+        : 500
     console.error('[discuss-case] message failed:', error)
     res.status(status).json({ error: msg })
   }
 })
+
+// POST /api/discuss-case/:id/messages/voice — async voice note attachment
+discussCaseRouter.post('/:id/messages/voice', async (req: Request, res: Response) => {
+  try {
+    const session = await loadSession(req, res, pathParam(req, 'id'))
+    if (!session) return
+
+    assertPermission(session.permissions, 'send_message')
+
+    const audioBase64 = typeof req.body?.audioBase64 === 'string' ? req.body.audioBase64.trim() : ''
+    const mimeType = typeof req.body?.mimeType === 'string' ? req.body.mimeType.trim() : 'audio/webm'
+    const durationMs =
+      typeof req.body?.durationMs === 'number' && Number.isFinite(req.body.durationMs)
+        ? req.body.durationMs
+        : 0
+    const replyToMessageId =
+      typeof req.body?.replyToMessageId === 'string' ? req.body.replyToMessageId.trim() : null
+
+    if (!audioBase64) {
+      res.status(400).json({ error: 'audioBase64 required' })
+      return
+    }
+
+    const audioBuffer = Buffer.from(audioBase64, 'base64')
+    const message = await addVoiceMessage({
+      discussionId: session.discussion.id,
+      authorUserId: session.userId,
+      audioBuffer,
+      mimeType,
+      durationMs,
+      replyToMessageId,
+    })
+
+    await writeAuditLog({
+      discussionId: session.discussion.id,
+      actorUserId: session.userId,
+      action: 'voice_message_sent',
+      details: { messageId: message.id, durationMs: message.voiceAttachment?.durationMs ?? 0 },
+    })
+
+    res.status(201).json({ message })
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Failed'
+    const status = msg.startsWith('Missing permission')
+      ? 403
+      : msg.includes('too long') || msg.includes('Empty') || msg.includes('Unsupported') || msg.includes('Reply target not found')
+        ? 400
+        : 500
+    console.error('[discuss-case] voice message failed:', error)
+    res.status(status).json({ error: msg })
+  }
+})
+
+// GET /api/discuss-case/:id/messages/:messageId/voice — stream voice attachment
+discussCaseRouter.get('/:id/messages/:messageId/voice', async (req: Request, res: Response) => {
+  try {
+    const session = await loadSession(req, res, pathParam(req, 'id'))
+    if (!session) return
+
+    assertPermission(session.permissions, 'view_package')
+
+    const message = await getMessage(session.discussion.id, pathParam(req, 'messageId'))
+    if (!message || message.messageKind !== 'voice' || !message.voiceAttachment?.storagePath) {
+      res.status(404).json({ error: 'Voice message not found' })
+      return
+    }
+
+    const expiresAt = resolveVoiceAttachmentExpiresAt(
+      message.voiceAttachment,
+      message.createdAt,
+      resolveDiscussCaseVoiceRetentionDays(),
+    )
+    if (isVoiceAttachmentExpired(expiresAt)) {
+      res.status(410).json({ error: 'Voice message expired' })
+      return
+    }
+
+    const { buffer, mimeType } = await downloadDiscussVoiceMessage(message.voiceAttachment.storagePath)
+    res.setHeader('Content-Type', mimeType)
+    res.setHeader('Cache-Control', 'private, no-store')
+    res.send(buffer)
+  } catch (error) {
+    console.error('[discuss-case] voice download failed:', error)
+    res.status(500).json({ error: 'Failed to load voice message' })
+  }
+})
+
+// GET /api/discuss-case/:id/messages — lightweight poll for chat sync
+discussCaseRouter.get('/:id/messages', async (req: Request, res: Response) => {
+  try {
+    const session = await loadSession(req, res, pathParam(req, 'id'))
+    if (!session) return
+
+    assertPermission(session.permissions, 'view_package')
+
+    const messages = await listMessages(session.discussion.id)
+    res.json({ messages })
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Failed'
+    const status = msg.startsWith('Missing permission') ? 403 : 500
+    console.error('[discuss-case] list messages failed:', error)
+    res.status(status).json({ error: msg })
+  }
+})
+
+// POST /api/discuss-case/:id/messages/:messageId/reactions — toggle emoji reaction
+discussCaseRouter.post(
+  '/:id/messages/:messageId/reactions',
+  async (req: Request, res: Response) => {
+    try {
+      const session = await loadSession(req, res, pathParam(req, 'id'))
+      if (!session) return
+
+      assertPermission(session.permissions, 'comment')
+
+      const emoji = typeof req.body?.emoji === 'string' ? req.body.emoji.trim() : ''
+      if (!emoji) {
+        res.status(400).json({ error: 'emoji required' })
+        return
+      }
+
+      const message = await toggleMessageReaction({
+        messageId: pathParam(req, 'messageId'),
+        discussionId: session.discussion.id,
+        userId: session.userId,
+        emoji,
+      })
+
+      res.json({ message })
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Failed'
+      const status = msg.startsWith('Missing permission')
+        ? 403
+        : msg.includes('not found')
+          ? 404
+          : msg.includes('Invalid emoji')
+            ? 400
+            : 500
+      console.error('[discuss-case] reaction failed:', error)
+      res.status(status).json({ error: msg })
+    }
+  },
+)
 
 // PATCH /api/discuss-case/:id/messages/:messageId — edit own message
 discussCaseRouter.patch('/:id/messages/:messageId', async (req: Request, res: Response) => {
@@ -400,7 +552,8 @@ discussCaseRouter.delete('/:id/messages/:messageId', async (req: Request, res: R
     await deleteMessage({
       messageId: pathParam(req, 'messageId'),
       discussionId: session.discussion.id,
-      authorUserId: session.userId,
+      actorUserId: session.userId,
+      canManageDiscussion: hasPermission(session.permissions, 'manage_discussion'),
     })
 
     res.json({ ok: true })
@@ -688,53 +841,6 @@ discussCaseRouter.post('/:id/archive', async (req: Request, res: Response) => {
     const msg = error instanceof Error ? error.message : 'Failed'
     const status = msg.startsWith('Missing permission') ? 403 : 500
     console.error('[discuss-case] archive failed:', error)
-    res.status(status).json({ error: msg })
-  }
-})
-
-// POST /api/discuss-case/:id/voice-token — mint LiveKit room token (ephemeral audio)
-discussCaseRouter.post('/:id/voice-token', async (req: Request, res: Response) => {
-  try {
-    const session = await loadSession(req, res, pathParam(req, 'id'))
-    if (!session) return
-
-    if (!isLiveKitConfigured()) {
-      res.status(503).json({ error: 'Sprachchat nicht konfiguriert' })
-      return
-    }
-
-    assertPermission(session.permissions, 'join_voice')
-
-    if (session.participant.status !== 'active') {
-      res.status(403).json({ error: 'Participant access revoked' })
-      return
-    }
-
-    const displayName =
-      typeof req.body?.displayName === 'string' ? req.body.displayName.trim() : null
-
-    const voice = await mintDiscussCaseVoiceToken({
-      discussionId: session.discussion.id,
-      userId: session.userId,
-      displayName,
-    })
-
-    await writeAuditLog({
-      discussionId: session.discussion.id,
-      actorUserId: session.userId,
-      action: 'voice_joined',
-      details: { roomName: voice.roomName },
-    })
-
-    res.json(voice)
-  } catch (error) {
-    const msg = error instanceof Error ? error.message : 'Failed'
-    const status = msg.startsWith('Missing permission')
-      ? 403
-      : msg.includes('not configured')
-        ? 503
-        : 500
-    console.error('[discuss-case] voice-token failed:', error)
     res.status(status).json({ error: msg })
   }
 })

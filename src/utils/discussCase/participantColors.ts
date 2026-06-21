@@ -36,3 +36,37 @@ export function getParticipantColor(userId: string, index?: number): Participant
     index !== undefined ? index % PARTICIPANT_PALETTE.length : hashUserId(userId) % PARTICIPANT_PALETTE.length
   return PARTICIPANT_PALETTE[paletteIndex]
 }
+
+/** Bubble fill/border/text for chat — per userId, readable on pastel backgrounds. */
+export interface ChatBubbleColors {
+  bg: string
+  border: string
+  text: string
+}
+
+/** Other participants: stable pastel bubble from the shared palette. */
+export function getOtherBubbleColors(userId: string, index?: number): ChatBubbleColors {
+  const { bg, border, text } = getParticipantColor(userId, index)
+  return { bg, border, text }
+}
+
+/**
+ * Own messages: saturated pastel from the shared palette with a light accent wash
+ * so “sent” bubbles stay distinct per clinician (not flat grey).
+ */
+export function getOwnBubbleColors(userId: string, index?: number): ChatBubbleColors {
+  const { bg, border, text } = getParticipantColor(userId, index)
+  return {
+    bg: `color-mix(in srgb, ${bg} 88%, var(--area-discuss, var(--dc-accent, #2563eb)) 12%)`,
+    border: `color-mix(in srgb, ${border} 78%, var(--area-discuss, var(--dc-accent, #2563eb)) 22%)`,
+    text,
+  }
+}
+
+export function getChatBubbleColors(
+  userId: string,
+  isSelf: boolean,
+  index?: number,
+): ChatBubbleColors {
+  return isSelf ? getOwnBubbleColors(userId, index) : getOtherBubbleColors(userId, index)
+}

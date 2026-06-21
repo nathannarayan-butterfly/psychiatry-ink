@@ -79,10 +79,8 @@ export interface DiscussSession {
   permissions: DiscussCasePermission[]
   messages: DiscussCaseMessage[]
   annotations: DiscussCaseAnnotation[]
-  voice?: {
-    configured: boolean
-    canJoin: boolean
-  }
+  /** Configured voice attachment retention (days). */
+  voiceRetentionDays?: number
 }
 
 export async function loadDiscussSession(discussionId: string): Promise<DiscussSession> {
@@ -99,10 +97,11 @@ export async function sendDiscussMessage(
   body: string,
   quoteExcerpt?: DiscussQuoteExcerpt | null,
   authorDisplayName?: string,
+  replyToMessageId?: string | null,
 ): Promise<DiscussCaseMessage> {
   const response = await apiFetch(`/api/discuss-case/${encodeURIComponent(discussionId)}/messages`, {
     method: 'POST',
-    body: JSON.stringify({ body, quoteExcerpt, authorDisplayName }),
+    body: JSON.stringify({ body, quoteExcerpt, authorDisplayName, replyToMessageId }),
   })
   if (!response.ok) {
     const detail = (await response.json().catch(() => null)) as { error?: string } | null
@@ -110,6 +109,58 @@ export async function sendDiscussMessage(
   }
   const data = (await response.json()) as { message: DiscussCaseMessage }
   return data.message
+}
+
+export async function sendDiscussVoiceMessage(
+  discussionId: string,
+  audio: Blob,
+  durationMs: number,
+  replyToMessageId?: string | null,
+): Promise<DiscussCaseMessage> {
+  const arrayBuffer = await audio.arrayBuffer()
+  const bytes = new Uint8Array(arrayBuffer)
+  let binary = ''
+  for (let i = 0; i < bytes.length; i += 1) {
+    binary += String.fromCharCode(bytes[i]!)
+  }
+  const audioBase64 = btoa(binary)
+
+  const response = await apiFetch(
+    `/api/discuss-case/${encodeURIComponent(discussionId)}/messages/voice`,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        audioBase64,
+        mimeType: audio.type || 'audio/webm',
+        durationMs,
+        replyToMessageId,
+      }),
+    },
+  )
+  if (!response.ok) {
+    const detail = (await response.json().catch(() => null)) as { error?: string } | null
+    throw new Error(detail?.error ?? `Sprachnachricht fehlgeschlagen (${response.status})`)
+  }
+  const data = (await response.json()) as { message: DiscussCaseMessage }
+  return data.message
+}
+
+export async function fetchDiscussVoiceAudio(
+  discussionId: string,
+  messageId: string,
+): Promise<Blob> {
+  const authHeaders = await getAuthHeaders()
+  const response = await fetch(
+    `${API_BASE}/api/discuss-case/${encodeURIComponent(discussionId)}/messages/${encodeURIComponent(messageId)}/voice`,
+    { headers: authHeaders },
+  )
+  if (!response.ok) {
+    const detail = (await response.json().catch(() => null)) as { error?: string } | null
+    const error = new Error(detail?.error ?? `Sprachnachricht laden fehlgeschlagen (${response.status})`)
+    ;(error as Error & { status?: number }).status = response.status
+    throw error
+  }
+  return response.blob()
 }
 
 export async function editDiscussMessage(
@@ -144,6 +195,36 @@ export async function deleteDiscussMessage(
     const detail = (await response.json().catch(() => null)) as { error?: string } | null
     throw new Error(detail?.error ?? `Nachricht konnte nicht gelöscht werden (${response.status})`)
   }
+}
+
+export async function fetchDiscussMessages(discussionId: string): Promise<DiscussCaseMessage[]> {
+  const response = await apiFetch(`/api/discuss-case/${encodeURIComponent(discussionId)}/messages`)
+  if (!response.ok) {
+    const detail = (await response.json().catch(() => null)) as { error?: string } | null
+    throw new Error(detail?.error ?? `Nachrichten konnten nicht geladen werden (${response.status})`)
+  }
+  const data = (await response.json()) as { messages: DiscussCaseMessage[] }
+  return data.messages ?? []
+}
+
+export async function toggleDiscussMessageReaction(
+  discussionId: string,
+  messageId: string,
+  emoji: string,
+): Promise<DiscussCaseMessage> {
+  const response = await apiFetch(
+    `/api/discuss-case/${encodeURIComponent(discussionId)}/messages/${encodeURIComponent(messageId)}/reactions`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ emoji }),
+    },
+  )
+  if (!response.ok) {
+    const detail = (await response.json().catch(() => null)) as { error?: string } | null
+    throw new Error(detail?.error ?? `Reaktion fehlgeschlagen (${response.status})`)
+  }
+  const data = (await response.json()) as { message: DiscussCaseMessage }
+  return data.message
 }
 
 export async function addDiscussAnnotation(
@@ -338,28 +419,4 @@ export async function listDiscussAuditLogs(discussionId: string): Promise<Discus
   }
   const data = (await response.json()) as { logs: DiscussCaseAuditLog[] }
   return data.logs ?? []
-}
-
-export interface DiscussVoiceToken {
-  token: string
-  url: string
-  roomName: string
-}
-
-export async function fetchDiscussVoiceToken(
-  discussionId: string,
-  displayName?: string,
-): Promise<DiscussVoiceToken> {
-  const response = await apiFetch(
-    `/api/discuss-case/${encodeURIComponent(discussionId)}/voice-token`,
-    {
-      method: 'POST',
-      body: JSON.stringify({ displayName }),
-    },
-  )
-  if (!response.ok) {
-    const detail = (await response.json().catch(() => null)) as { error?: string } | null
-    throw new Error(detail?.error ?? `Sprachchat-Token fehlgeschlagen (${response.status})`)
-  }
-  return (await response.json()) as DiscussVoiceToken
 }

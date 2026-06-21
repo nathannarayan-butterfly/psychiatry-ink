@@ -758,6 +758,279 @@
   background: color-mix(in srgb, var(--area-accent, var(--accent)) 4%, var(--surface, #fff));
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   Fallbesprechung (DiscussCase)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Landing — recent discussion cards */
+[data-area='discuss'] .discuss-case-cards {
+  gap: 0.75rem;
+}
+
+[data-area='discuss'] .discuss-case-card {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) var(--patient-bordered-accent-mix),
+    var(--patient-bordered-neutral)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix),
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: var(--patient-bordered-radius);
+  background: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) var(--patient-bordered-bg-mix),
+    var(--surface, #fff)
+  );
+  box-shadow: var(--patient-bordered-shadow);
+}
+
+[data-area='discuss'] .discuss-case-card:hover {
+  border-color: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) calc(var(--patient-bordered-border-mix) + 12%),
+    var(--border-soft, #e8e4df)
+  );
+  border-left-color: var(--patient-bordered-accent);
+}
+
+[data-area='discuss'] .clinical-empty-state.discuss-case-hero__empty {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) var(--patient-bordered-accent-mix),
+    var(--patient-bordered-neutral)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix),
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: var(--patient-bordered-radius);
+  padding: var(--patient-bordered-padding-y) var(--patient-bordered-padding-x);
+  background: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) var(--patient-bordered-bg-mix),
+    var(--surface, #fff)
+  );
+  box-shadow: var(--patient-bordered-shadow);
+}
+
+/* Standalone list rows */
+[data-area='discuss'] .discuss-case-page__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem 1rem;
+}
+
+[data-area='discuss'] .discuss-case-page__list-row {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) var(--patient-bordered-accent-mix),
+    var(--patient-bordered-neutral)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix),
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: var(--patient-bordered-radius);
+  background: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) var(--patient-bordered-bg-mix),
+    var(--surface, #fff)
+  );
+  box-shadow: var(--patient-bordered-shadow);
+  border-bottom: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix),
+      var(--border-soft, #e8e4df)
+    );
+}
+
+[data-area='discuss'] .discuss-case-page__list-item {
+  padding-left: 1rem;
+}
+
+/* Active discussion — chat column + optional aside */
+[data-area='discuss'] .discuss-case-view__split {
+  gap: 0.75rem;
+  padding: 0.75rem;
+  box-sizing: border-box;
+}
+
+[data-area='discuss'] .discuss-case-view__chat-column {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) var(--patient-bordered-accent-mix),
+    var(--patient-bordered-neutral)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix),
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: var(--patient-bordered-radius);
+  background: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) var(--patient-bordered-bg-mix),
+    var(--surface, #fff)
+  );
+  box-shadow: var(--patient-bordered-shadow);
+  overflow: hidden;
+}
+
+[data-area='discuss'] .discuss-case-view__aside {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) 42%,
+    var(--patient-bordered-neutral)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix),
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: var(--patient-bordered-radius);
+  background: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) var(--patient-bordered-bg-mix),
+    var(--surface, #fff)
+  );
+  box-shadow: var(--patient-bordered-shadow);
+  overflow: hidden;
+}
+
+[data-area='discuss'] .discuss-case-view__aside--document {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) 38%,
+    var(--patient-bordered-neutral)
+  );
+}
+
+[data-area='discuss'] .discuss-case-view__aside--participants {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) 45%,
+    var(--patient-bordered-neutral)
+  );
+}
+
+[data-area='discuss'] .discuss-case-chat__composer,
+[data-area='discuss'] .discuss-case-chat__ai {
+  padding-left: 1rem;
+}
+
+[data-area='discuss'] .discuss-case-chat--embedded .discuss-case-chat__messages {
+  padding-left: 1rem;
+  padding-right: 1.5rem;
+}
+
+[data-area='discuss'] .discuss-case-view__split--with-aside .discuss-case-chat__messages {
+  padding-right: 1.75rem;
+}
+
+[data-area='discuss'] .discuss-case-chat__ai-draft {
+  margin-left: 1rem;
+  margin-right: 1rem;
+  border: 1px dashed
+    color-mix(
+      in srgb,
+      var(--area-accent, var(--accent)) 28%,
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--area-accent, var(--accent));
+  border-radius: calc(var(--patient-bordered-radius) - 2px);
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 4%, var(--surface, #fff));
+}
+
+/* Package builder — form + preview panes */
+[data-area='discuss'] .discuss-case-builder__form,
+[data-area='discuss'] .discuss-case-builder__preview-pane {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) var(--patient-bordered-accent-mix),
+    var(--patient-bordered-neutral)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix),
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: var(--patient-bordered-radius);
+  padding-left: 1rem;
+  background: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) var(--patient-bordered-bg-mix),
+    var(--surface, #fff)
+  );
+  box-shadow: var(--patient-bordered-shadow);
+}
+
+[data-area='discuss'] .discuss-case-builder__form {
+  border-right: none;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  margin: 0.75rem 0 0.75rem 0.75rem;
+}
+
+[data-area='discuss'] .discuss-case-builder__preview-pane {
+  margin: 0.75rem 0.75rem 0.75rem 0;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+[data-area='discuss'] .discuss-case-builder__body--preview .discuss-case-builder__preview-pane {
+  margin: 0 0.75rem 0.75rem;
+  border-top-left-radius: var(--patient-bordered-radius);
+  border-top-right-radius: var(--patient-bordered-radius);
+  border-bottom-left-radius: var(--patient-bordered-radius);
+  border-bottom-right-radius: var(--patient-bordered-radius);
+  border-left: 3px solid var(--patient-bordered-accent);
+  box-shadow: var(--patient-bordered-shadow);
+}
+
+[data-area='discuss'] .discuss-case-builder__invite {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) var(--patient-bordered-accent-mix),
+    var(--patient-bordered-neutral)
+  );
+  margin: 0.75rem 1.5rem 1.5rem;
+  padding: var(--patient-bordered-padding-y) var(--patient-bordered-padding-x);
+  padding-left: 1rem;
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix),
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: var(--patient-bordered-radius);
+  background: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) var(--patient-bordered-bg-mix),
+    var(--surface, #fff)
+  );
+  box-shadow: var(--patient-bordered-shadow);
+}
+
 /* ── Print ────────────────────────────────────────────────────────────────── */
 
 @media print {
@@ -771,7 +1044,12 @@
   [data-area='ci'] .ci-panel__main > .ci-accordion,
   [data-area='medikation'] .medication-workspace .medication-plan__list,
   [data-area='medikation'] .medication-workspace .medication-dash-panel,
-  [data-area='therapie'] .therapy-page .therapy-section {
+  [data-area='therapie'] .therapy-page .therapy-section,
+  [data-area='discuss'] .discuss-case-card,
+  [data-area='discuss'] .discuss-case-view__chat-column,
+  [data-area='discuss'] .discuss-case-view__aside,
+  [data-area='discuss'] .discuss-case-builder__form,
+  [data-area='discuss'] .discuss-case-builder__preview-pane {
     box-shadow: none;
   }
 }

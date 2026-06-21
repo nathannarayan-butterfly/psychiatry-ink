@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, FileText, Users } from 'lucide-react'
 import { ClinicalLoading } from '../ui/ClinicalLoading'
 import type {
@@ -9,7 +9,7 @@ import type {
   DiscussPackageContent,
   DiscussQuoteExcerpt,
 } from '../../types/discussCase'
-import { archiveDiscussion, loadDiscussSession } from '../../services/discussCaseApi'
+import { archiveDiscussion, fetchDiscussMessages, loadDiscussSession } from '../../services/discussCaseApi'
 import {
   decryptJson,
   discussKeyStorageId,
@@ -17,9 +17,9 @@ import {
   resolveKey,
 } from '../../utils/e2ee'
 import { getParticipantColor } from '../../utils/discussCase/participantColors'
+import { loadStoredUiLanguage } from '../../utils/clinicalLanguage'
 import { DiscussCaseDocumentViewer } from './DiscussCaseDocumentViewer'
 import { DiscussCaseParticipants } from './DiscussCaseParticipants'
-import { DiscussCaseVoicePanel } from './DiscussCaseVoicePanel'
 import { DiscussCaseChatPanel } from './DiscussCaseChatPanel'
 import { createHighlightAnnotation } from '../../utils/discussCase/createHighlightAnnotation'
 
@@ -31,6 +31,9 @@ interface DiscussCaseViewProps {
 }
 
 type RightPanel = 'document' | 'participants' | null
+
+/** Window during which chat polls defer to a recent local message mutation. */
+const POLL_SUPPRESS_AFTER_LOCAL_EDIT_MS = 6_000
 
 function participantInitials(name: string): string {
   const trimmed = name.trim()
@@ -52,12 +55,27 @@ export function DiscussCaseView({ discussionId, onSaveDraftToCase, onArchived, o
   const [archiving, setArchiving] = useState(false)
   const [participants, setParticipants] = useState<DiscussCaseParticipant[]>([])
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined)
-  const [voiceConfigured, setVoiceConfigured] = useState(false)
-  const [canJoinVoice, setCanJoinVoice] = useState(false)
+  const [voiceRetentionDays, setVoiceRetentionDays] = useState<number | undefined>(undefined)
   // The chat is the centerpiece — open as a clean single column. The shared
   // package document and participant roster are opt-in drawers via the header
   // toggles, so Discuss never stacks extra panels around the conversation.
   const [rightPanel, setRightPanel] = useState<RightPanel>(null)
+
+  // UI language for the chat surface (voice / reactions / reply strings). The
+  // platform supports DE + EN; without this the chat fell back to German for
+  // English users despite the panel carrying full translations.
+  const chatLocale = loadStoredUiLanguage()
+
+  // Timestamp of the most recent *local* message mutation (send / edit / delete
+  // / reaction / voice). The 12 s poll replaces the whole message list, which
+  // can clobber an optimistic local change while a stale poll request that was
+  // already in flight resolves. We skip applying poll results for a short
+  // window after a local change so the user's own action never flickers away.
+  const localEditRef = useRef(0)
+  const handleMessagesChange = useCallback((next: DiscussCaseMessage[]) => {
+    localEditRef.current = Date.now()
+    setMessages(next)
+  }, [])
 
   const activeParticipants = useMemo(
     () => participants.filter((p) => p.status !== 'revoked'),
@@ -95,10 +113,7 @@ export function DiscussCaseView({ discussionId, onSaveDraftToCase, onArchived, o
         setAnnotations(session.annotations)
         setParticipants(session.participants ?? [])
         setCurrentUserId(session.participant?.userId)
-        setVoiceConfigured(session.voice?.configured ?? false)
-        setCanJoinVoice(
-          session.voice?.canJoin ?? session.permissions.includes('join_voice'),
-        )
+        setVoiceRetentionDays(session.voiceRetentionDays)
 
         const raw = session.package
         if (raw && isEncryptedEnvelope(raw)) {
@@ -135,6 +150,29 @@ export function DiscussCaseView({ discussionId, onSaveDraftToCase, onArchived, o
       cancelled = true
     }
   }, [discussionId])
+
+  useEffect(() => {
+    if (loading || error) return
+    let cancelled = false
+    const poll = async () => {
+      try {
+        const fresh = await fetchDiscussMessages(discussionId)
+        if (cancelled) return
+        // Don't overwrite a just-made local change with a poll response that
+        // was generated before it (would drop a sent message or revert a
+        // reaction/edit until the next cycle).
+        if (Date.now() - localEditRef.current < POLL_SUPPRESS_AFTER_LOCAL_EDIT_MS) return
+        setMessages(fresh)
+      } catch {
+        /* ignore transient poll failures */
+      }
+    }
+    const interval = window.setInterval(() => void poll(), 12_000)
+    return () => {
+      cancelled = true
+      window.clearInterval(interval)
+    }
+  }, [discussionId, error, loading])
 
   const handleHighlight = useCallback(
     async (input: {
@@ -275,23 +313,19 @@ export function DiscussCaseView({ discussionId, onSaveDraftToCase, onArchived, o
         }`}
       >
         <section className="discuss-case-view__chat-column">
-          <DiscussCaseVoicePanel
-            discussionId={discussionId}
-            canJoinVoice={canJoinVoice}
-            voiceConfigured={voiceConfigured}
-            currentUserId={currentUserId}
-          />
           <DiscussCaseChatPanel
             discussionId={discussionId}
             permissions={permissions}
             messages={messages}
-            onMessagesChange={setMessages}
+            onMessagesChange={handleMessagesChange}
             pendingQuote={pendingQuote}
             onPendingQuoteChange={setPendingQuote}
             onSaveDraftToCase={onSaveDraftToCase}
             participants={participants}
             currentUserId={currentUserId}
             embedded
+            locale={chatLocale}
+            voiceRetentionDays={voiceRetentionDays}
           />
         </section>
 

@@ -15,7 +15,6 @@ export type DiscussCasePermission =
   | 'save_to_case'
   | 'invite_others'
   | 'manage_discussion'
-  | 'join_voice'
 
 export type DiscussCaseStatus = 'draft' | 'active' | 'archived' | 'revoked'
 export type DiscussInviteType = 'internal' | 'external'
@@ -113,13 +112,43 @@ export interface DiscussCaseInvite {
   inviteToken?: string
 }
 
+export type DiscussCaseMessageKind = 'text' | 'voice'
+
+export interface DiscussVoiceAttachment {
+  storagePath: string
+  mimeType: string
+  durationMs: number
+  sizeBytes: number
+  /** ISO8601 — server purges attachment and message after this time. */
+  expiresAt: string
+}
+
+/** Emoji reaction on a chat message — one active emoji per user. */
+export interface DiscussCaseMessageReaction {
+  userId: string
+  emoji: string
+  createdAt: string
+}
+
+/** Denormalized snapshot for reply-to-message quote UI. */
+export interface DiscussCaseReplyPreview {
+  senderDisplayName: string
+  bodySnippet: string
+  messageKind?: DiscussCaseMessageKind
+}
+
 export interface DiscussCaseMessage {
   id: string
   discussionId: string
   authorUserId: string
   authorDisplayName: string | null
   body: string
+  messageKind: DiscussCaseMessageKind
+  voiceAttachment: DiscussVoiceAttachment | null
   quoteExcerpt: DiscussQuoteExcerpt | null
+  replyToMessageId: string | null
+  replyPreview: DiscussCaseReplyPreview | null
+  reactions: DiscussCaseMessageReaction[]
   createdAt: string
   /** Set when the author has edited the message after posting. */
   editedAt: string | null
@@ -208,7 +237,6 @@ export const INTERNAL_DEFAULT_PERMISSIONS: DiscussCasePermission[] = [
   'download_package',
   'export_summary',
   'invite_others',
-  'join_voice',
 ]
 
 export const EXTERNAL_DEFAULT_PERMISSIONS: DiscussCasePermission[] = [
@@ -233,7 +261,6 @@ export const OWNER_PERMISSIONS: DiscussCasePermission[] = [
   'save_to_case',
   'invite_others',
   'manage_discussion',
-  'join_voice',
 ]
 
 export const DISCUSS_PACKAGE_SECTION_LABELS: Record<DiscussPackageSectionKey, string> = {

@@ -45,7 +45,6 @@ import { medicationPriorTherapiesRouter } from './routes/medicationPriorTherapie
 import { demoPatientRouter } from './routes/demoPatient'
 import { aiBudgetRouter, aiUsageRouter } from './routes/aiUsage'
 import { aiCreditsRouter } from './routes/aiCredits'
-import { liveKitMissingEnvVars } from './services/livekitVoice'
 import {
   isClinicalIntelligenceV1Enabled,
   isEnterpriseOrgHierarchyEnabled,
@@ -61,18 +60,13 @@ app.use('/api/transcribe', express.json({ limit: '25mb' }), transcribeRouter)
 // Inline AI edit: the /transcribe sub-route carries base64 audio, so it needs a
 // larger JSON limit than the global parser.
 app.use('/api/inline-edit', express.json({ limit: '25mb' }), inlineEditRouter)
+// Voice message uploads carry base64 audio — needs a larger JSON limit than the global parser.
+app.use('/api/discuss-case', express.json({ limit: '15mb' }), discussCaseRouter)
 app.use(express.json({ limit: '2mb' }))
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true })
 })
-
-if (process.env.NODE_ENV !== 'production') {
-  app.get('/api/health/voice', (_req, res) => {
-    const missing = liveKitMissingEnvVars()
-    res.json({ configured: missing.length === 0, missing })
-  })
-}
 
 app.use('/api/generate', generateRouter)
 app.use('/api/pharma-generate', pharmaGenerateRouter)
@@ -90,7 +84,6 @@ app.use('/api/icd', icdTitleRouter)
 app.use('/api/generation-logs', generationLogRouter)
 app.use('/api/kb-admin', kbAdminRouter)
 app.use('/api/kb-contributions', kbContributionsRouter)
-app.use('/api/discuss-case', discussCaseRouter)
 app.use('/api/butterfly', butterflyRouter)
 app.use('/api/ask-butterfly', askButterflyRouter)
 app.use('/api/document-import', documentImportMappingRouter)
@@ -121,17 +114,10 @@ if (isEnterpriseOrgHierarchyEnabled()) {
 app.listen(port, () => {
   const openai = Boolean(process.env.OPENAI_API_KEY?.trim())
   const deepseek = Boolean(process.env.DEEPSEEK_API_KEY?.trim())
-  const livekitMissing = liveKitMissingEnvVars()
-  const livekit = livekitMissing.length === 0
   console.log(`[api] listening on http://127.0.0.1:${port}`)
-  console.log(`[api] keys: OPENAI=${openai ? 'yes' : 'no'} DEEPSEEK=${deepseek ? 'yes' : 'no'} LIVEKIT=${livekit ? 'yes' : 'no'}`)
+  console.log(`[api] keys: OPENAI=${openai ? 'yes' : 'no'} DEEPSEEK=${deepseek ? 'yes' : 'no'}`)
   console.log(`[api] psychopath extract AI: ${isPsychopathExtractAiEnabled() ? 'enabled' : 'disabled (set ENABLE_PSYCHOPATH_EXTRACT_AI=true in .env.local and restart api)'}`)
   console.log(`[api] clinical intelligence V1: ${isClinicalIntelligenceV1Enabled() ? 'enabled' : 'disabled (set CLINICAL_INTELLIGENCE_V1_ENABLED=true in .env.local and restart api)'}`)
-  if (livekit) {
-    console.log('[api] LiveKit: configured')
-  } else {
-    console.log(`[api] LiveKit: missing ${livekitMissing.join(', ')}`)
-  }
 
   // Diagnosis-code self-check: an empty crosswalk table is the silent failure
   // mode behind "Diagnosen widget shows a short/wrong label" — WHO ICD-10 German
