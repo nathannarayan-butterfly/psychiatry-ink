@@ -7322,6 +7322,18 @@ export const uiTranslations = {
     fr: 'Assigner le patient',
     es: 'Asignar paciente',
   },
+  patientAssignSectionHeading: {
+    de: 'Patienten zuordnen',
+    en: 'Assign patient',
+    fr: 'Attribuer un patient',
+    es: 'Asignar paciente',
+  },
+  patientAssignSelectFromDashboard: {
+    de: 'Wählen Sie einen Patienten aus dem Dashboard',
+    en: 'Select a patient from the dashboard',
+    fr: 'Sélectionnez un patient depuis le tableau de bord',
+    es: 'Seleccione un paciente desde el panel',
+  },
   patientRegistryViewToggle: {
     de: 'Ansicht wechseln',
     en: 'Switch view',
@@ -7777,6 +7789,12 @@ export const uiTranslations = {
     en: 'Assign',
     fr: 'Attribuer',
     es: 'Asignar',
+  },
+  topNavExistingPatient: {
+    de: 'Vorhandener Patient',
+    en: 'Existing patient',
+    fr: 'Patient existant',
+    es: 'Paciente existente',
   },
   verlaufNewEntry: {
     de: 'Neuer Eintrag',

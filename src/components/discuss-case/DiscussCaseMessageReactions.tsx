@@ -1,5 +1,5 @@
 import { Plus, Smile } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import type { DiscussCaseMessageReaction } from '../../types/discussCase'
 import { DISCUSS_REACTION_EMOJIS } from '../../utils/discussCase/chatEmojis'
 import { DiscussCaseEmojiPicker } from './DiscussCaseEmojiPicker'
@@ -76,7 +76,9 @@ export function DiscussCaseMessageReactions({
   onToggle,
 }: DiscussCaseMessageReactionsProps) {
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [quickReactionsShift, setQuickReactionsShift] = useState(0)
   const wrapRef = useRef<HTMLDivElement>(null)
+  const quickReactionsRef = useRef<HTMLDivElement>(null)
   const t = REACTIONS_I18N[locale]
   const groups = useMemo(
     () => groupReactions(reactions, currentUserId),
@@ -110,6 +112,36 @@ export function DiscussCaseMessageReactions({
       document.removeEventListener('keydown', handleKeyDown)
     }
   }, [onOpenChange, open])
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setQuickReactionsShift(0)
+      return
+    }
+
+    const adjust = () => {
+      const el = quickReactionsRef.current
+      if (!el) return
+      const rect = el.getBoundingClientRect()
+      const margin = 8
+      let shift = 0
+      if (rect.right > window.innerWidth - margin) {
+        shift += window.innerWidth - margin - rect.right
+      }
+      if (rect.left + shift < margin) {
+        shift += margin - (rect.left + shift)
+      }
+      setQuickReactionsShift(shift)
+    }
+
+    adjust()
+    window.addEventListener('resize', adjust)
+    window.addEventListener('scroll', adjust, true)
+    return () => {
+      window.removeEventListener('resize', adjust)
+      window.removeEventListener('scroll', adjust, true)
+    }
+  }, [open, pickerOpen, groups.length])
 
   const handleToggleOpen = () => {
     onOpenChange?.(!open)
@@ -151,6 +183,7 @@ export function DiscussCaseMessageReactions({
             <Smile className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
           </button>
           <div
+            ref={quickReactionsRef}
             className={[
               'discuss-case-chat__quick-reactions',
               align === 'right' ? 'discuss-case-chat__quick-reactions--right' : '',
@@ -159,6 +192,11 @@ export function DiscussCaseMessageReactions({
             role="toolbar"
             aria-label={t.quickReact}
             hidden={!open}
+            style={
+              quickReactionsShift
+                ? ({ '--dc-quick-reactions-shift': `${quickReactionsShift}px` } as CSSProperties)
+                : undefined
+            }
           >
           {DISCUSS_REACTION_EMOJIS.map((emoji) => (
             <button

@@ -34,6 +34,26 @@ function estimateCredits(scope: MedicationEducationScope, sectionCount: number, 
   return base + sectionCount * perSection
 }
 
+const GRUENDLICH_REASON_TEXT = {
+  polypharmacy: {
+    de: 'Polypharmazie (≥4 Medikamente)',
+    en: 'Polypharmacy (≥4 medications)',
+  },
+  complex: { de: 'Komplexes Medikament/Risiko', en: 'Complex medication/risk' },
+  depot: { de: 'Depot', en: 'Depot' },
+  adherence: { de: 'Adhärenzprobleme', en: 'Adherence concerns' },
+  combinationRisks: { de: 'Relevante Kombinationsrisiken', en: 'Relevant combination risks' },
+} as const
+
+function gruendlichReason(
+  language: MedicationEducationLanguage,
+  key: keyof typeof GRUENDLICH_REASON_TEXT,
+  substance?: string,
+): string {
+  const label = GRUENDLICH_REASON_TEXT[key][language]
+  return substance ? `${label}: ${substance}` : label
+}
+
 export async function buildPreGenerationPanel(params: {
   caseId: string
   scope: MedicationEducationScope
@@ -72,22 +92,24 @@ export async function buildPreGenerationPanel(params: {
     .map((r) => `${r.substances}: ${r.mainRisk}`)
 
   const gruendlichReasons: string[] = []
-  if (selected.length >= 4) gruendlichReasons.push('Polypharmazie (≥4 Medikamente)')
+  if (selected.length >= 4) gruendlichReasons.push(gruendlichReason(params.language, 'polypharmacy'))
   for (const m of selected) {
     const lower = `${m.substance} ${m.formulation} ${m.indication}`.toLowerCase()
     for (const trigger of GRUENDLICH_TRIGGERS) {
       if (lower.includes(trigger)) {
-        gruendlichReasons.push(`Komplexes Medikament/Risiko: ${m.substance}`)
+        gruendlichReasons.push(gruendlichReason(params.language, 'complex', m.substance))
         break
       }
     }
-    if (m.formulation === 'depot') gruendlichReasons.push(`Depot: ${m.substance}`)
+    if (m.formulation === 'depot') gruendlichReasons.push(gruendlichReason(params.language, 'depot', m.substance))
     if (!m.adherenceNote?.trim()) continue
     if (/schlecht|gering|vergess|non-adherence|poor/i.test(m.adherenceNote)) {
-      gruendlichReasons.push(`Adhärenzprobleme: ${m.substance}`)
+      gruendlichReasons.push(gruendlichReason(params.language, 'adherence', m.substance))
     }
   }
-  if (combinationWarnings.length > 0) gruendlichReasons.push('Relevante Kombinationsrisiken')
+  if (combinationWarnings.length > 0) {
+    gruendlichReasons.push(gruendlichReason(params.language, 'combinationRisks'))
+  }
 
   const recommendGruendlich = gruendlichReasons.length > 0 || params.scope !== 'single'
 
@@ -107,13 +129,20 @@ export async function buildPreGenerationPanel(params: {
   }
 }
 
-export async function fetchMedicationEducationIdentity(caseId: string): Promise<MedicationEducationIdentityBlock> {
+export async function fetchMedicationEducationIdentity(
+  caseId: string,
+  language: MedicationEducationLanguage = 'de',
+): Promise<MedicationEducationIdentityBlock> {
   const meta = await loadPatientMetadata(caseId)
+  const placeholders =
+    language === 'en'
+      ? { patient: '[Patient]', clinic: '[Clinic]', clinician: '[Treating clinician]' }
+      : { patient: '[Patient]', clinic: '[Klinik]', clinician: '[Behandelnde/r Arzt/Ärztin]' }
   return {
-    patientName: meta?.metadata.name ?? '[Patient]',
+    patientName: meta?.metadata.name ?? placeholders.patient,
     patientDob: meta?.metadata.geburtsdatum ?? '',
-    clinicName: '[Klinik]',
-    clinicianName: '[Behandelnde/r Arzt/Ärztin]',
+    clinicName: placeholders.clinic,
+    clinicianName: placeholders.clinician,
   }
 }
 

@@ -98,14 +98,14 @@ export function CaseSidebarPanel({
               className="case-sidebar-nav__link"
               onClick={onCreatePatient}
             >
-              + Zuordnen
+              + {t('topNavCreatePatient')}
             </button>
             <button
               type="button"
               className="case-sidebar-nav__link"
               onClick={onBackToPatients}
             >
-              Vorhandener Patient
+              {t('topNavExistingPatient')}
             </button>
           </div>
         ) : null}

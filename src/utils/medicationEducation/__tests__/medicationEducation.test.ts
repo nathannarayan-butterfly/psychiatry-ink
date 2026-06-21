@@ -20,7 +20,7 @@ import {
 import { buildMedicationEducationEvidenceBundle, scrubEvidenceText } from '../evidenceBundle'
 import { assessKbTemplateCompleteness } from '../kbCompleteness'
 import { validateCombinationSynthesisFlag } from '../combinationSynthesis'
-import { createMedicationEducationDocument, isSectionIncludedInFinal } from '../draftOps'
+import { createMedicationEducationDocument, isSectionIncludedInFinal, acceptAllSections, canFinalizeDocument } from '../draftOps'
 import { assembleMedicationEducationText } from '../export'
 import { createEmptyKbTemplate } from '../kbTemplateStorage'
 
@@ -183,5 +183,42 @@ describe('export assembly', () => {
     expect(isSectionIncludedInFinal(doc.sections['wie-wirkt'])).toBe(false)
     const text2 = assembleMedicationEducationText(doc, labels)
     expect(text2).not.toContain('Wirkung')
+  })
+})
+
+describe('section acceptance and finalize gates', () => {
+  it('acceptAllSections clears KB validation gate once all content sections are reviewed', () => {
+    const doc = createMedicationEducationDocument({
+      scope: 'single',
+      detailStyle: 'standard',
+      language: 'de',
+      aiMode: 'standard',
+      medicationIds: ['m1'],
+    })
+    doc.requiresKbValidation = true
+    doc.sections['kurze-zusammenfassung'].currentContent = 'Kurzfassung'
+    doc.sections['kurze-zusammenfassung'].status = 'ai_generated'
+
+    const accepted = acceptAllSections(doc)
+    expect(accepted.sections['kurze-zusammenfassung'].status).toBe('accepted')
+    expect(accepted.requiresKbValidation).toBe(false)
+    expect(canFinalizeDocument(accepted).ok).toBe(true)
+  })
+
+  it('canFinalizeDocument still blocks KB validation when AI sections remain pending', () => {
+    const doc = createMedicationEducationDocument({
+      scope: 'single',
+      detailStyle: 'standard',
+      language: 'de',
+      aiMode: 'standard',
+      medicationIds: ['m1'],
+    })
+    doc.requiresKbValidation = true
+    doc.sections['kurze-zusammenfassung'].currentContent = 'Kurzfassung'
+    doc.sections['kurze-zusammenfassung'].status = 'ai_generated'
+
+    const check = canFinalizeDocument(doc)
+    expect(check.ok).toBe(false)
+    expect(check.reasons).toContain('KB-Inhalte erfordern klinische Validierung')
   })
 })

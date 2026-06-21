@@ -46,6 +46,7 @@ export function CasePatientHeader({
       <ClinicalHeroStrip
         name={name}
         demographics={demographics}
+        showDemographics={isAssigned}
         caseId={isAssigned && caseId !== DEFAULT_CASE_ID ? caseId : undefined}
         thesis={thesis}
         thesisEditable={showThesis}

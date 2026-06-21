@@ -738,6 +738,7 @@ interface PatientsZuordnenProps {
 }
 
 function PatientsZuordnen({ onCreatePatient }: PatientsZuordnenProps) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [showVorhandener, setShowVorhandener] = useState(false)
 
@@ -750,7 +751,7 @@ function PatientsZuordnen({ onCreatePatient }: PatientsZuordnenProps) {
         aria-expanded={open}
       >
         <span className="labor-section-collapse__chevron">{open ? '▾' : '▶'}</span>
-        Patienten zuordnen
+        {t('patientAssignSectionHeading')}
       </button>
       {open && (
         <div className="labor-section-collapse__body">
@@ -765,18 +766,18 @@ function PatientsZuordnen({ onCreatePatient }: PatientsZuordnenProps) {
               }
             }}
           >
-            Neuer Patient
+            {t('notionNewPatient')}
           </button>
           <button
             type="button"
             className="labor-section-collapse__option-btn"
             onClick={() => setShowVorhandener((v) => !v)}
           >
-            Vorhandener Patient
+            {t('topNavExistingPatient')}
           </button>
           {showVorhandener && (
             <p className="labor-section-collapse__placeholder">
-              Wählen Sie einen Patienten aus dem Dashboard
+              {t('patientAssignSelectFromDashboard')}
             </p>
           )}
         </div>

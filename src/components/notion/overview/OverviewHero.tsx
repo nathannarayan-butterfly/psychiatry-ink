@@ -62,6 +62,7 @@ export function OverviewHero({ data, caseId, metaVersion = 0, onClinicalSubheadi
       <ClinicalHeroStrip
         name={name}
         demographics={demographics}
+        showDemographics={isAssigned}
         caseId={isAssigned && caseId !== DEFAULT_CASE_ID ? caseId : undefined}
         thesis={thesis}
         thesisEditable

@@ -100,8 +100,8 @@ import {
 } from '../../data/therapyPageSections'
 import { translateSozialtherapieUi as tsSozial } from '../../data/sozialtherapieUiTranslations'
 import { translateWeitereTherapieUi as tsWeitere } from '../../data/weitereTherapieUiTranslations'
-import { documentTypes } from '../../data/documentTypes'
 import { resolveDocumentTypeWithVariant } from '../../utils/workspaceComponents'
+import type { DocumentType } from '../../types'
 import type { AssessmentStandard } from '../../types/isdm'
 import {
   resolveAssessmentStandardForSubMode,
@@ -186,6 +186,7 @@ interface NotionAppProps {
   isIsdmActive?: boolean
   assessmentStandard: AssessmentStandard
   onSelectAssessmentStandard: (standard: AssessmentStandard) => void
+  documentTypes: DocumentType[]
 }
 
 /** Maps a detected ContentCategory to the workspace page to navigate to. */
@@ -277,6 +278,7 @@ function NotionAppInner({
   isIsdmActive: _isIsdmActive = false,
   assessmentStandard,
   onSelectAssessmentStandard,
+  documentTypes,
 }: NotionAppProps) {
   const { t, language } = useTranslation()
   const { user } = useAuth()
@@ -961,7 +963,7 @@ function NotionAppInner({
       label: getBefundSchema(type, language).shortLabel,
     }))
     return result
-  }, [language, therapyPlanningLabel, workspace.activeVariantIds])
+  }, [documentTypes, language, therapyPlanningLabel, workspace.activeVariantIds])
 
   const runAiTool = useCallback(
     (tool: AiToolKey) => {

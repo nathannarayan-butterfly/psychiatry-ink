@@ -19,6 +19,8 @@ interface ClinicalHeroStripProps {
   thesisEditable?: boolean
   /** Called after the clinician saves an edited subheading. */
   onThesisChange?: () => void
+  /** When false, hide the demographics row (empty/free workspace with no linked patient). */
+  showDemographics?: boolean
 }
 
 const DEMOGRAPHIC_FIELDS: Array<{
@@ -41,6 +43,7 @@ export function ClinicalHeroStrip({
   className,
   thesisEditable = false,
   onThesisChange,
+  showDemographics = true,
 }: ClinicalHeroStripProps) {
   const { t } = useTranslation()
   const [editing, setEditing] = useState(false)
@@ -72,14 +75,16 @@ export function ClinicalHeroStrip({
         <h1 className="cm-hero__name">{name}</h1>
         {caseId ? <span className="cm-hero__case-id">{caseId}</span> : null}
       </div>
-      <dl className="cm-hero__demographics">
-        {DEMOGRAPHIC_FIELDS.map(({ key, labelKey }) => (
-          <div key={key} className="cm-hero__fact">
-            <dt className="cm-hero__fact-label">{t(labelKey)}</dt>
-            <dd className="cm-hero__fact-value">{demographics[key] ?? CLINICAL_HERO_MISSING}</dd>
-          </div>
-        ))}
-      </dl>
+      {showDemographics ? (
+        <dl className="cm-hero__demographics">
+          {DEMOGRAPHIC_FIELDS.map(({ key, labelKey }) => (
+            <div key={key} className="cm-hero__fact">
+              <dt className="cm-hero__fact-label">{t(labelKey)}</dt>
+              <dd className="cm-hero__fact-value">{demographics[key] ?? CLINICAL_HERO_MISSING}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
       {canEdit || thesis ? (
         <div className="cm-hero__thesis-row">
           {editing ? (

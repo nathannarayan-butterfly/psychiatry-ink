@@ -127,6 +127,15 @@ export interface MedicationEducationWarning {
   severity: 'info' | 'warning' | 'critical'
 }
 
+/** AI-suggested source citation — workspace-only, excluded from patient exports. */
+export interface MedicationEducationReference {
+  title: string
+  url?: string
+  source?: string
+  /** Section that cited this reference during generation */
+  sectionId?: string
+}
+
 export interface MedicationEducationSourceSnapshot {
   medicationPlanVersionId?: string
   medicationPlanUpdatedAt?: string
@@ -172,6 +181,8 @@ export interface PatientMedicationEducationDocument {
   sourceCombinationCheckId?: string
   sourceSnapshot: MedicationEducationSourceSnapshot
   warnings: MedicationEducationWarning[]
+  /** Clinician-facing citations from AI generation — not included in exports or patient file */
+  references: MedicationEducationReference[]
   review: MedicationEducationReviewRecord
   includeMedTable: boolean
   includeMonitoringPlan: boolean
@@ -282,6 +293,7 @@ export interface MedicationEducationGenerateSectionRequest {
 
 export interface MedicationEducationGenerateSectionResponse {
   content: string
+  references: MedicationEducationReference[]
   provider: string
   model: string
   usage: { inputTokens: number; outputTokens: number; totalTokens: number }

@@ -2,6 +2,7 @@ import type { AiMode } from '../../types/aiUsage'
 import type {
   MedicationEducationDetailStyle,
   MedicationEducationLanguage,
+  MedicationEducationReference,
   MedicationEducationScope,
   MedicationEducationSectionState,
   MedicationEducationSourceSnapshot,
@@ -47,12 +48,21 @@ export function createMedicationEducationDocument(params: {
     sections[def.id] = createEmptyMedicationEducationSection(def.id)
   }
 
-  const title =
-    params.scope === 'single'
-      ? 'Patientenaufklärung Medikation'
-      : params.scope === 'selected'
-        ? 'Patientenaufklärung — ausgewählte Medikamente'
-        : 'Patientenaufklärung — gesamte Medikation'
+  const titleByScope: Record<MedicationEducationScope, { de: string; en: string }> = {
+    single: {
+      de: 'Patientenaufklärung Medikation',
+      en: 'Patient medication education',
+    },
+    selected: {
+      de: 'Patientenaufklärung — ausgewählte Medikamente',
+      en: 'Patient education — selected medications',
+    },
+    full_combination: {
+      de: 'Patientenaufklärung — gesamte Medikation',
+      en: 'Patient education — full medication plan',
+    },
+  }
+  const title = titleByScope[params.scope][params.language === 'en' ? 'en' : 'de']
 
   return {
     id: crypto.randomUUID(),
@@ -77,6 +87,7 @@ export function createMedicationEducationDocument(params: {
       ...params.sourceSnapshot,
     },
     warnings: [],
+    references: [],
     review: {},
     includeMedTable: params.includeMedTable ?? true,
     includeMonitoringPlan: params.includeMonitoringPlan ?? true,
@@ -93,6 +104,23 @@ export function isSectionIncludedInFinal(section: MedicationEducationSectionStat
   return section.status === 'accepted' || section.status === 'clinician_edited' || section.status === 'auto_fetched'
 }
 
+export function mergeMedicationEducationReferences(
+  existing: MedicationEducationReference[],
+  incoming: MedicationEducationReference[],
+): MedicationEducationReference[] {
+  const merged = [...existing]
+  const seen = new Set(existing.map((r) => r.title.trim().toLowerCase()))
+  for (const ref of incoming) {
+    const title = ref.title.trim()
+    if (!title) continue
+    const key = title.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    merged.push({ ...ref, title })
+  }
+  return merged
+}
+
 export function applyAiGeneratedSection(
   doc: PatientMedicationEducationDocument,
   sectionId: string,
@@ -104,6 +132,7 @@ export function applyAiGeneratedSection(
     inputTokens: number
     outputTokens: number
     creditsCharged: number
+    references?: MedicationEducationReference[]
   },
 ): PatientMedicationEducationDocument {
   const next = structuredClone(doc)
@@ -131,6 +160,9 @@ export function applyAiGeneratedSection(
     sectionId,
     generatedAt: new Date().toISOString(),
   })
+  if (meta.references?.length) {
+    next.references = mergeMedicationEducationReferences(next.references ?? [], meta.references)
+  }
   next.status = 'needs_clinician_review'
   next.updatedAt = new Date().toISOString()
   return next
@@ -171,6 +203,15 @@ export function updateSectionContent(
   return next
 }
 
+function markKbClinicallyValidatedIfReviewed(
+  doc: PatientMedicationEducationDocument,
+): PatientMedicationEducationDocument {
+  if (!doc.requiresKbValidation || !allSectionsReviewed(doc)) return doc
+  doc.requiresKbValidation = false
+  doc.review.reviewedAt = doc.review.reviewedAt ?? new Date().toISOString()
+  return doc
+}
+
 export function acceptSection(
   doc: PatientMedicationEducationDocument,
   sectionId: string,
@@ -180,16 +221,19 @@ export function acceptSection(
   if (!section) return doc
   section.status = 'accepted'
   next.updatedAt = new Date().toISOString()
-  return next
+  return markKbClinicallyValidatedIfReviewed(next)
 }
 
 export function acceptAllSections(doc: PatientMedicationEducationDocument): PatientMedicationEducationDocument {
   const next = structuredClone(doc)
   for (const section of Object.values(next.sections)) {
-    if (section.currentContent.trim()) section.status = 'accepted'
+    if (!section.currentContent.trim()) continue
+    if (section.status === 'ai_generated' || section.status === 'clinician_edited') {
+      section.status = 'accepted'
+    }
   }
   next.updatedAt = new Date().toISOString()
-  return next
+  return markKbClinicallyValidatedIfReviewed(next)
 }
 
 export function revertSection(
@@ -229,24 +273,44 @@ export function finalizeDocument(
   return next
 }
 
-export function canFinalizeDocument(doc: PatientMedicationEducationDocument): {
+const FINALIZE_REASON_TEXT = {
+  unreviewedSections: {
+    de: 'Nicht alle Abschnitte wurden vom Behandlungsteam geprüft',
+    en: 'Not all sections have been reviewed by the care team',
+  },
+  kbValidation: {
+    de: 'KB-Inhalte erfordern klinische Validierung',
+    en: 'KB content requires clinical validation',
+  },
+  empty: { de: 'Dokument ist leer', en: 'Document is empty' },
+  noPlanLink: {
+    de: 'Keine Verknüpfung zum Medikationsplan',
+    en: 'No link to the medication plan',
+  },
+} as const
+
+export function canFinalizeDocument(
+  doc: PatientMedicationEducationDocument,
+  language: MedicationEducationLanguage = 'de',
+): {
   ok: boolean
   reasons: string[]
 } {
+  const lang: 'de' | 'en' = language === 'en' ? 'en' : 'de'
   const reasons: string[] = []
   const aiSections = Object.values(doc.sections).filter((s) => s.status === 'ai_generated')
   if (aiSections.length > 0) {
-    reasons.push('Nicht alle Abschnitte wurden vom Behandlungsteam geprüft')
+    reasons.push(FINALIZE_REASON_TEXT.unreviewedSections[lang])
   }
-  if (doc.requiresKbValidation) {
-    reasons.push('KB-Inhalte erfordern klinische Validierung')
+  if (doc.requiresKbValidation && !allSectionsReviewed(doc)) {
+    reasons.push(FINALIZE_REASON_TEXT.kbValidation[lang])
   }
   const hasContent = Object.values(doc.sections).some(
     (s) => s.included && s.currentContent.trim().length > 0,
   )
-  if (!hasContent) reasons.push('Dokument ist leer')
+  if (!hasContent) reasons.push(FINALIZE_REASON_TEXT.empty[lang])
   if (!doc.medicationPlanVersionId && doc.scope !== 'single') {
-    reasons.push('Keine Verknüpfung zum Medikationsplan')
+    reasons.push(FINALIZE_REASON_TEXT.noPlanLink[lang])
   }
   return { ok: reasons.length === 0, reasons }
 }

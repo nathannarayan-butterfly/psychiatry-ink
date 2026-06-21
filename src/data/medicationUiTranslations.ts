@@ -1029,11 +1029,35 @@ export const medicationUiTranslations = {
     fr: 'Afficher la dernière information',
     es: 'Ver última educación',
   },
+  medEducationExport: {
+    de: 'Exportieren',
+    en: 'Export',
+    fr: 'Exporter',
+    es: 'Exportar',
+  },
+  medEducationExportMenuLabel: {
+    de: 'Export- und Teilen-Optionen',
+    en: 'Export and share options',
+    fr: 'Options d\'export et de partage',
+    es: 'Opciones de exportación y compartir',
+  },
   medEducationExportPdf: {
     de: 'Als PDF exportieren',
     en: 'Export as PDF',
     fr: 'Exporter en PDF',
     es: 'Exportar PDF',
+  },
+  medEducationToolbarLabel: {
+    de: 'Patientenaufklärung — Aktionen',
+    en: 'Patient education — actions',
+    fr: 'Information patient — actions',
+    es: 'Educación al paciente — acciones',
+  },
+  medEducationToolbarExportActions: {
+    de: 'Weitere Export- und Teilen-Aktionen',
+    en: 'Additional export and share actions',
+    fr: 'Autres actions d\'export et de partage',
+    es: 'Acciones adicionales de exportación y compartir',
   },
   medEducationRowAction: {
     de: 'Patientenaufklärung',
@@ -1078,7 +1102,40 @@ export const medicationUiTranslations = {
   medEducationCreate: { de: 'Erstellen', en: 'Create', fr: 'Créer', es: 'Crear' },
   medEducationGenerate: { de: 'Generieren', en: 'Generate', fr: 'Générer', es: 'Generar' },
   medEducationGenerateAll: { de: 'Alle Abschnitte generieren', en: 'Generate all sections', fr: 'Générer tout', es: 'Generar todo' },
+  medEducationGenerating: { de: 'Wird generiert…', en: 'Generating…', fr: 'Génération…', es: 'Generando…' },
+  medEducationGeneratingSubtitle: {
+    de: 'Abschnitt {completed} von {total}',
+    en: 'Section {completed} of {total}',
+    fr: 'Section {completed} sur {total}',
+    es: 'Sección {completed} de {total}',
+  },
+  medEducationGenerationComplete: {
+    de: 'Generierung abgeschlossen',
+    en: 'Generation complete',
+    fr: 'Génération terminée',
+    es: 'Generación completada',
+  },
+  medEducationAcceptAll: { de: 'Alle Abschnitte freigeben', en: 'Accept all sections', fr: 'Tout valider', es: 'Aceptar todo' },
+  medEducationSelectMedication: {
+    de: 'Medikament auswählen',
+    en: 'Select medication',
+    fr: 'Choisir le médicament',
+    es: 'Seleccionar medicamento',
+  },
+  medEducationExportDocx: { de: 'Als Word exportieren', en: 'Export Word', fr: 'Exporter Word', es: 'Exportar Word' },
   medEducationAccept: { de: 'Abschnitt freigeben', en: 'Accept section', fr: 'Valider', es: 'Aceptar' },
+  medEducationSectionPlaceholder: {
+    de: 'Inhalt bearbeiten oder KI generieren…',
+    en: 'Edit content or generate with AI…',
+    fr: 'Modifier ou générer avec l\'IA…',
+    es: 'Editar o generar con IA…',
+  },
+  medEducationSource: {
+    de: 'Quelle',
+    en: 'Source',
+    fr: 'Source',
+    es: 'Fuente',
+  },
   medEducationRevert: { de: 'Zurücksetzen', en: 'Revert', fr: 'Rétablir', es: 'Revertir' },
   medEducationToggleInclude: { de: 'Ein-/Ausblenden', en: 'Include/exclude', fr: 'Inclure/exclure', es: 'Incluir/excluir' },
   medEducationCopy: { de: 'Text kopieren', en: 'Copy text', fr: 'Copier', es: 'Copiar' },
@@ -1135,6 +1192,30 @@ export const medicationUiTranslations = {
   medEducationStatus_accepted: { de: 'Freigegeben', en: 'Accepted', fr: 'Validé', es: 'Aceptado' },
   medEducationStatus_missing_source: { de: 'Quelle fehlt', en: 'Missing source', fr: 'Source manquante', es: 'Fuente faltante' },
   medEducationStatus_excluded: { de: 'Ausgeschlossen', en: 'Excluded', fr: 'Exclu', es: 'Excluido' },
+  medEducationReferencesTitle: {
+    de: 'Quellen & Referenzen',
+    en: 'Sources & references',
+    fr: 'Sources et références',
+    es: 'Fuentes y referencias',
+  },
+  medEducationReferencesHint: {
+    de: 'KI-vorgeschlagene Quellen zur klinischen Prüfung — nicht Teil des Patientenexports.',
+    en: 'AI-suggested sources for clinical review — not included in patient exports.',
+    fr: 'Sources suggérées par l’IA — non incluses dans l’export patient.',
+    es: 'Fuentes sugeridas por IA — no incluidas en la exportación al paciente.',
+  },
+  medEducationReferencesEmpty: {
+    de: 'Noch keine Referenzen — werden bei KI-Generierung ergänzt.',
+    en: 'No references yet — added when sections are AI-generated.',
+    fr: 'Pas encore de références.',
+    es: 'Sin referencias todavía.',
+  },
+  medEducationReferencesCount: {
+    de: '{count} Referenz(en)',
+    en: '{count} reference(s)',
+    fr: '{count} référence(s)',
+    es: '{count} referencia(s)',
+  },
 } as const satisfies Record<string, LocaleMap>
 
 export type MedicationUiKey = keyof typeof medicationUiTranslations

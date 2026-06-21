@@ -1064,10 +1064,10 @@
   border-radius: 1.125rem;
   background: var(
     --dc-bubble-bg,
-    var(--dc-bubble-other-bg, color-mix(in srgb, var(--text-main, #1a1a1a) 4%, var(--dc-surface)))
+    var(--dc-bubble-other-bg, color-mix(in srgb, var(--text-main, #1a1a1a) 2%, transparent))
   );
   color: var(--dc-bubble-text, var(--text-main, #1a1a1a));
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--text-main, #1a1a1a) 5%, transparent);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--text-main, #1a1a1a) 4%, transparent);
   max-width: 100%;
   overflow: visible;
 }
@@ -1102,14 +1102,14 @@
     --dc-bubble-bg,
     var(
       --dc-bubble-own-bg,
-      color-mix(in srgb, var(--area-discuss, var(--dc-accent)) 16%, var(--dc-surface))
+      color-mix(in srgb, var(--area-discuss, var(--dc-accent)) 10%, transparent)
     )
   );
   border-color: var(
     --dc-bubble-border,
     var(
       --dc-bubble-own-border,
-      color-mix(in srgb, var(--area-discuss, var(--dc-accent)) 24%, transparent)
+      color-mix(in srgb, var(--area-discuss, var(--dc-accent)) 18%, transparent)
     )
   );
   border-top-right-radius: 0.375rem;
@@ -1155,6 +1155,30 @@
   white-space: pre-wrap;
   word-break: break-word;
   color: inherit;
+}
+
+.discuss-case-chat__message-body--emoji-only {
+  font-size: 2.75rem;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.discuss-case-chat__message-bubble--emoji-only {
+  padding: 0.3125rem 0.5rem 0.1875rem;
+  min-width: 2.75rem;
+  background: color-mix(in srgb, var(--dc-bubble-bg, transparent) 55%, transparent) !important;
+  border-color: color-mix(in srgb, var(--dc-bubble-border, var(--dc-border)) 35%, transparent) !important;
+  box-shadow: none;
+}
+
+.discuss-case-chat__message--other:not(.discuss-case-chat__message--grouped)
+  .discuss-case-chat__message-bubble--emoji-only::after,
+.discuss-case-chat__message--ai:not(.discuss-case-chat__message--grouped)
+  .discuss-case-chat__message-bubble--emoji-only::after,
+.discuss-case-chat__message--self:not(.discuss-case-chat__message--grouped)
+  .discuss-case-chat__message-bubble--emoji-only::after {
+  opacity: 0.45;
 }
 
 @media (min-width: 480px) {
@@ -2299,7 +2323,7 @@
   flex-wrap: nowrap;
   align-items: center;
   gap: 0.125rem;
-  max-width: min(calc(100vw - 3rem), 22rem);
+  max-width: min(calc(100vw - 1rem), 22rem);
   padding: 0.3125rem 0.4375rem;
   border: 1px solid var(--dc-border);
   border-radius: 999px;
@@ -2310,7 +2334,7 @@
   scrollbar-width: none;
   opacity: 0;
   pointer-events: none;
-  transform: translateY(6px);
+  transform: translateX(var(--dc-quick-reactions-shift, 0)) translateY(6px);
   transition: opacity 0.14s ease, transform 0.14s ease;
   z-index: 4;
 }
@@ -2318,12 +2342,12 @@
 .discuss-case-chat__quick-reactions--open {
   opacity: 1;
   pointer-events: auto;
-  transform: translateY(0);
+  transform: translateX(var(--dc-quick-reactions-shift, 0)) translateY(0);
 }
 
 .discuss-case-chat__quick-reactions--right {
-  right: auto;
-  left: 0;
+  right: 0;
+  left: auto;
 }
 
 .discuss-case-chat__quick-reactions::-webkit-scrollbar {
@@ -2440,7 +2464,8 @@
   bottom: calc(100% + 0.375rem);
   left: 0;
   z-index: 20;
-  width: min(16.5rem, calc(100vw - 2rem));
+  width: min(16.5rem, calc(100vw - 1rem));
+  max-width: calc(100vw - 1rem);
   padding: 0.5rem;
   border: 1px solid var(--dc-border);
   border-radius: 0.75rem;

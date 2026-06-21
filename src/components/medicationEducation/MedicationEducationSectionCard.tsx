@@ -1,7 +1,5 @@
 import {
   Check,
-  ChevronDown,
-  ChevronUp,
   Loader2,
   Sparkles,
   Eye,
@@ -20,8 +18,6 @@ const REVIEWABLE = ['ai_generated'] as const
 interface MedicationEducationSectionCardProps {
   scope: MedicationEducationScope
   section: MedicationEducationSectionState
-  expanded: boolean
-  onToggleExpand: () => void
   onChange: (content: string) => void
   onGenerate: () => void
   onAccept: () => void
@@ -33,8 +29,6 @@ interface MedicationEducationSectionCardProps {
 export function MedicationEducationSectionCard({
   scope,
   section,
-  expanded,
-  onToggleExpand,
   onChange,
   onGenerate,
   onAccept,
@@ -47,74 +41,98 @@ export function MedicationEducationSectionCard({
   const label = language === 'en' ? def?.labelEn ?? section.id : def?.labelDe ?? section.id
   const aiCapable = def?.aiCapable ?? false
   const needsReview = REVIEWABLE.includes(section.status as (typeof REVIEWABLE)[number])
+  const hasContent = section.currentContent.trim().length > 0
+  const showAccept = needsReview && hasContent
+  const isAccepted = section.status === 'accepted'
 
   const statusLabel = translateMedicationUi(language, `medEducationStatus_${section.status}` as never)
 
   return (
     <article
-      className={`arztbrief-section${needsReview ? ' arztbrief-section--ai-pending' : ''}${section.status === 'excluded' ? ' arztbrief-section--excluded' : ''}`}
+      className={`medication-education-section${needsReview ? ' medication-education-section--pending' : ''}${isAccepted ? ' medication-education-section--accepted' : ''}${!section.included ? ' medication-education-section--excluded' : ''}`}
     >
-      <header className="arztbrief-section__header">
-        <button type="button" className="arztbrief-section__title-btn" onClick={onToggleExpand}>
-          {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          <span>{label}</span>
-          <span className="arztbrief-section__status">{statusLabel}</span>
-        </button>
-        <div className="arztbrief-section__actions">
+      <header className="medication-education-section__header">
+        <div className="medication-education-section__title-block">
+          <h3 className="medication-education-section__title">{label}</h3>
+          <span
+            className={`medication-education-section__status medication-education-section__status--${section.status}`}
+          >
+            {statusLabel}
+          </span>
+        </div>
+        <div className="medication-education-section__actions">
           <button
             type="button"
-            className="arztbrief-btn arztbrief-btn--ghost"
+            className="icon-action-btn icon-action-btn--bordered"
             onClick={onToggleIncluded}
             title={translateMedicationUi(language, 'medEducationToggleInclude')}
+            aria-label={translateMedicationUi(language, 'medEducationToggleInclude')}
           >
-            {section.included ? <Eye size={14} /> : <EyeOff size={14} />}
+            {section.included ? <Eye size={15} strokeWidth={1.75} aria-hidden /> : <EyeOff size={15} strokeWidth={1.75} aria-hidden />}
           </button>
           {aiCapable ? (
             <button
               type="button"
-              className="arztbrief-btn arztbrief-btn--primary"
+              className="icon-action-btn icon-action-btn--bordered"
               disabled={generating}
               onClick={onGenerate}
+              title={translateMedicationUi(language, 'medEducationGenerate')}
+              aria-label={translateMedicationUi(language, 'medEducationGenerate')}
             >
-              {generating ? <Loader2 size={14} className="spin" /> : <Sparkles size={14} />}
-              {translateMedicationUi(language, 'medEducationGenerate')}
+              {generating ? (
+                <Loader2 size={15} className="spin" aria-hidden />
+              ) : (
+                <Sparkles size={15} strokeWidth={1.75} aria-hidden />
+              )}
+            </button>
+          ) : null}
+          {section.previousContent ? (
+            <button
+              type="button"
+              className="icon-action-btn icon-action-btn--bordered"
+              onClick={onRevert}
+              title={translateMedicationUi(language, 'medEducationRevert')}
+              aria-label={translateMedicationUi(language, 'medEducationRevert')}
+            >
+              <RotateCcw size={15} strokeWidth={1.75} aria-hidden />
+            </button>
+          ) : null}
+          {showAccept ? (
+            <button
+              type="button"
+              className="icon-action-btn icon-action-btn--bordered icon-action-btn--success"
+              onClick={onAccept}
+              title={translateMedicationUi(language, 'medEducationAccept')}
+              aria-label={translateMedicationUi(language, 'medEducationAccept')}
+            >
+              <Check size={15} strokeWidth={1.75} aria-hidden />
             </button>
           ) : null}
         </div>
       </header>
 
       {section.missingDataWarning ? (
-        <p className="arztbrief-section__warning">
+        <p className="medication-education-section__warning">
           <AlertTriangle size={14} aria-hidden />
           {section.missingDataWarning}
         </p>
       ) : null}
 
-      {expanded ? (
-        <div className="arztbrief-section__body">
-          <textarea
-            className="arztbrief-section__textarea"
-            value={section.currentContent}
-            onChange={(e) => onChange(e.target.value)}
-            rows={Math.min(16, Math.max(4, section.currentContent.split('\n').length + 1))}
-          />
-          <div className="arztbrief-section__footer">
-            <button type="button" className="arztbrief-btn arztbrief-btn--ghost" onClick={onAccept}>
-              <Check size={14} />
-              {translateMedicationUi(language, 'medEducationAccept')}
-            </button>
-            <button
-              type="button"
-              className="arztbrief-btn arztbrief-btn--ghost"
-              disabled={!section.previousContent}
-              onClick={onRevert}
-            >
-              <RotateCcw size={14} />
-              {translateMedicationUi(language, 'medEducationRevert')}
-            </button>
-          </div>
-        </div>
-      ) : null}
+      <div className="medication-education-section__body">
+        <textarea
+          className="medication-education-section__textarea"
+          value={section.currentContent}
+          onChange={(e) => onChange(e.target.value)}
+          rows={Math.min(14, Math.max(3, section.currentContent.split('\n').length + 1))}
+          placeholder={translateMedicationUi(language, 'medEducationSectionPlaceholder')}
+          aria-label={label}
+        />
+        {section.sourcePreview ? (
+          <p className="medication-education-section__source">
+            {translateMedicationUi(language, 'medEducationSource')}: {section.sourcePreview}
+          </p>
+        ) : null}
+      </div>
     </article>
   )
 }

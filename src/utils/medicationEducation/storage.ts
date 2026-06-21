@@ -80,7 +80,11 @@ export async function loadMedicationEducationDocuments(
   if (!blob) return []
   try {
     const docs = await decryptJsonPayload<PatientMedicationEducationDocument[]>(blob)
-    return Array.isArray(docs) ? docs : []
+    if (!Array.isArray(docs)) return []
+    return docs.map((doc) => ({
+      ...doc,
+      references: doc.references ?? [],
+    }))
   } catch {
     return []
   }

@@ -10,9 +10,9 @@ import {
   resolveMedicationEducationScopeId,
 } from '../../utils/medicationEducation/storage'
 import {
-  assembleMedicationEducationText,
   buildMedicationEducationPrintHtml,
   exportMedicationEducationPdf,
+  previewMedicationEducation,
 } from '../../utils/medicationEducation/export'
 import { getMedicationEducationSections } from '../../data/medicationEducationSections'
 import { MedicationEducationWorkspace } from './MedicationEducationWorkspace'
@@ -65,8 +65,8 @@ export function MedicationEducationPanel({
       const defs = getMedicationEducationSections(latest.scope, { includePregnancy: true })
       const labels: Record<string, string> = {}
       for (const d of defs) labels[d.id] = language === 'en' ? d.labelEn : d.labelDe
-      const text = latest.finalText ?? assembleMedicationEducationText(latest, labels)
-      alert(text.slice(0, 4000) + (text.length > 4000 ? '…' : ''))
+      const html = buildMedicationEducationPrintHtml(latest, labels, latest.title)
+      previewMedicationEducation(html)
     } finally {
       setLoading(false)
     }

@@ -366,13 +366,18 @@
   background: var(--app-bg, var(--surface, #faf9f7));
 }
 
+.todo-page__inner {
+  width: 100%;
+  max-width: 52rem;
+  margin: 0 auto;
+}
+
 .todo-page__header {
   display: grid;
   grid-template-columns: 1fr;
   grid-template-rows: auto auto;
   row-gap: 1rem;
   margin-bottom: var(--cm-block-gap, 1rem);
-  max-width: 52rem;
 }
 
 .todo-page__eyebrow {
@@ -412,7 +417,6 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.75rem;
   margin-bottom: var(--cm-block-gap, 1rem);
-  max-width: 52rem;
 }
 
 .todo-stat-pill {
@@ -492,7 +496,6 @@
   border-radius: var(--radius-control, 0.5rem);
   background: color-mix(in srgb, var(--accent, #8a5a2b) 5%, var(--surface, #fff));
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--accent, #8a5a2b) 8%, transparent);
-  max-width: 52rem;
 }
 
 .todo-toolbar__view-hint {
@@ -511,7 +514,6 @@
   border-left: 3px solid color-mix(in srgb, var(--accent, #8a5a2b) 55%, var(--border, #e6e0d8));
   border-radius: var(--radius-control, 0.5rem);
   background: var(--surface, #fff);
-  max-width: 52rem;
 }
 
 .todo-page__composer-panel .todo-composer {
@@ -528,7 +530,6 @@
   border-radius: var(--radius-control, 0.5rem);
   background: color-mix(in srgb, var(--accent, #8a5a2b) 4%, var(--surface, #fff));
   text-align: center;
-  max-width: 52rem;
 }
 
 .todo-page__empty-icon-wrap {
@@ -566,7 +567,6 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  max-width: 52rem;
   padding: 0;
   border: none;
   background: transparent;

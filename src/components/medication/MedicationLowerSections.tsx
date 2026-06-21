@@ -51,6 +51,7 @@ export const MEDICATION_SECTIONS = [
   { key: 'sideEffects', labelKey: 'medSectionSideEffects' },
   { key: 'lab', labelKey: 'medSectionLab' },
   { key: 'intelligence', labelKey: 'medSectionIntelligence' },
+  { key: 'education', labelKey: 'medEducationPanelTitle' },
 ] as const
 
 export type MedicationSectionKey = (typeof MEDICATION_SECTIONS)[number]['key']

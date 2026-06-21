@@ -1,6 +1,10 @@
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import { ArrowLeft } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
-import { useMedicationSectionNavOptional } from '../../contexts/MedicationSectionNavContext'
+import {
+  medicationSectionDomId,
+  useMedicationSectionNavOptional,
+} from '../../contexts/MedicationSectionNavContext'
 import { translateMedicationUi } from '../../data/medicationUiTranslations'
 import { useKnowledgeBaseUserId } from '../../hooks/useKnowledgeBaseUserId'
 import { useMedicationPlan } from '../../hooks/useMedicationPlan'
@@ -183,6 +187,9 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
   }, [language])
 
   const isPlan = selectedSection === 'plan'
+  const isEducation = selectedSection === 'education'
+  const educationMeta = MEDICATION_SECTION_META.education
+  const EducationIcon = educationMeta.Icon
 
   const planHero = (
     <div className="medication-plan" id="med-section-plan">
@@ -378,6 +385,44 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
 
       {isPlan ? (
         planHero
+      ) : isEducation ? (
+        <section
+          className="medication-section-detail"
+          data-section="education"
+          id={medicationSectionDomId('education')}
+        >
+          <header className="medication-section-detail__head">
+            <button
+              type="button"
+              className="medication-section-detail__back"
+              onClick={() => selectSection('plan')}
+            >
+              <ArrowLeft size={14} aria-hidden />
+              {translateMedicationUi(language, 'medBackToPlan')}
+            </button>
+            <div className="medication-section-detail__title-row">
+              <span className="medication-section-detail__icon" aria-hidden="true">
+                <EducationIcon size={20} strokeWidth={1.85} />
+              </span>
+              <div className="medication-section-detail__heading">
+                <h2 className="medication-section-detail__title">
+                  {translateMedicationUi(language, educationMeta.labelKey)}
+                </h2>
+                <p className="medication-section-detail__desc">
+                  {translateMedicationUi(language, educationMeta.descKey)}
+                </p>
+              </div>
+            </div>
+          </header>
+          <div className="medication-section-detail__body medication-lower-section__body">
+            <MedicationEducationPanel
+              caseId={caseId}
+              activeMedications={activePlanMedications}
+              selectedMedicationId={selectedId}
+              disabled={disabled}
+            />
+          </div>
+        </section>
       ) : (
         <MedicationLowerSections
           caseId={caseId}

@@ -26,6 +26,7 @@ import {
   fillTemplate,
   type DiscussChromeLocale,
 } from '../../utils/discussCase/chromeI18n'
+import { isEmojiOnlyMessage } from '../../utils/discussCase/chatEmojis'
 import {
   getChatBubbleColors,
   getParticipantColor,
@@ -968,6 +969,12 @@ export function DiscussCaseChatPanel({
             const isEditing = editingId === message.id && canEditMessage
             const busy = actionBusyId === message.id
             const hasBody = Boolean(message.body.trim())
+            const emojiOnlyBody =
+              hasBody &&
+              !isVoiceMessage &&
+              !message.quoteExcerpt &&
+              !message.replyPreview &&
+              isEmojiOnlyMessage(message.body)
             const hasMessageActions =
               (canReplyMessage || canEditMessage || canDeleteMessage || canPinMessage) && !isEditing
             const reactionsOpen = reactionsOpenId === message.id
@@ -1047,6 +1054,7 @@ export function DiscussCaseChatPanel({
                         grouped ? 'discuss-case-chat__message-bubble--grouped' : '',
                         isSelf ? 'discuss-case-chat__message-bubble--own' : '',
                         bubbleColors ? 'discuss-case-chat__message-bubble--colored' : '',
+                        emojiOnlyBody ? 'discuss-case-chat__message-bubble--emoji-only' : '',
                         message.pinned ? 'discuss-case-chat__message-bubble--pinned' : '',
                       ].join(' ').trim()}
                       style={bubbleColors ? bubbleInlineStyle(bubbleColors) : undefined}
@@ -1217,7 +1225,14 @@ export function DiscussCaseChatPanel({
                             </div>
                           ) : null}
                           {hasBody ? (
-                            <p className="discuss-case-chat__message-body">{message.body}</p>
+                            <p
+                              className={[
+                                'discuss-case-chat__message-body',
+                                emojiOnlyBody ? 'discuss-case-chat__message-body--emoji-only' : '',
+                              ].join(' ').trim()}
+                            >
+                              {message.body.trim()}
+                            </p>
                           ) : null}
                           <span className="discuss-case-chat__message-footer">
                             {message.editedAt ? (

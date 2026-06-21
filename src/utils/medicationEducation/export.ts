@@ -18,6 +18,7 @@ function escapeHtml(value: string): string {
     .replace(/"/g, '&quot;')
 }
 
+/** Patient-facing export assembly — intentionally excludes doc.references (clinician-only). */
 export function assembleMedicationEducationText(
   doc: PatientMedicationEducationDocument,
   sectionLabels: Record<string, string>,
@@ -48,13 +49,14 @@ export function assembleMedicationEducationText(
 export function mergeIdentityIntoTitle(
   template: string,
   identity: MedicationEducationIdentityBlock,
+  language: 'de' | 'en' = 'de',
 ): string {
   return template
     .replace(/\{patientName\}/g, identity.patientName)
     .replace(/\{dob\}/g, identity.patientDob)
     .replace(/\{clinicName\}/g, identity.clinicName)
     .replace(/\{clinicianName\}/g, identity.clinicianName)
-    .replace(/\{date\}/g, new Date().toLocaleDateString('de-DE'))
+    .replace(/\{date\}/g, new Date().toLocaleDateString(language === 'en' ? 'en-GB' : 'de-DE'))
 }
 
 export function applyIdentityToDocument(
@@ -62,12 +64,15 @@ export function applyIdentityToDocument(
   identity: MedicationEducationIdentityBlock,
 ): PatientMedicationEducationDocument {
   const next = structuredClone(doc)
+  const lang: 'de' | 'en' = doc.language === 'en' ? 'en' : 'de'
   const titleSection = next.sections.titel
   if (titleSection) {
-    const base =
-      titleSection.currentContent.trim() ||
-      `Patientenaufklärung Medikation — {patientName}\n{date}`
-    titleSection.currentContent = mergeIdentityIntoTitle(base, identity)
+    const defaultTitle =
+      lang === 'en'
+        ? 'Patient medication education — {patientName}\n{date}'
+        : 'Patientenaufklärung Medikation — {patientName}\n{date}'
+    const base = titleSection.currentContent.trim() || defaultTitle
+    titleSection.currentContent = mergeIdentityIntoTitle(base, identity, lang)
     titleSection.status = titleSection.status === 'empty' ? 'auto_fetched' : titleSection.status
   }
 
@@ -77,17 +82,28 @@ export function applyIdentityToDocument(
       : 'dokumentation-gespraech'
   const confirmSection = next.sections[confirmId]
   if (confirmSection && doc.includeSignatureArea) {
-    const sigBlock = [
-      'Besprochen mit: {patientName}',
-      'Datum: {date}',
-      'Behandelnde/r Arzt/Ärztin: {clinicianName}',
-      'Einrichtung: {clinicName}',
-      '',
-      'Unterschrift Patient/in: _______________________',
-      'Unterschrift Behandlungsteam: _______________________',
-    ].join('\n')
+    const sigBlock =
+      lang === 'en'
+        ? [
+            'Discussed with: {patientName}',
+            'Date: {date}',
+            'Treating clinician: {clinicianName}',
+            'Institution: {clinicName}',
+            '',
+            'Patient signature: _______________________',
+            'Care team signature: _______________________',
+          ].join('\n')
+        : [
+            'Besprochen mit: {patientName}',
+            'Datum: {date}',
+            'Behandelnde/r Arzt/Ärztin: {clinicianName}',
+            'Einrichtung: {clinicName}',
+            '',
+            'Unterschrift Patient/in: _______________________',
+            'Unterschrift Behandlungsteam: _______________________',
+          ].join('\n')
     if (!confirmSection.currentContent.trim()) {
-      confirmSection.currentContent = mergeIdentityIntoTitle(sigBlock, identity)
+      confirmSection.currentContent = mergeIdentityIntoTitle(sigBlock, identity, lang)
       confirmSection.status = 'auto_fetched'
     }
   }
@@ -100,6 +116,7 @@ export function buildMedicationEducationPrintHtml(
   sectionLabels: Record<string, string>,
   title: string,
 ): string {
+  // References are clinician-facing only — not included in print/PDF/Word output.
   const defs = getMedicationEducationSections(doc.scope, { includePregnancy: true })
   const bodyParts: string[] = []
 
@@ -147,7 +164,7 @@ export async function copyMedicationEducationText(text: string): Promise<void> {
 }
 
 export function printMedicationEducation(html: string): void {
-  const w = window.open('', '_blank', 'width=800,height=600')
+  const w = window.open('', '_blank', 'noopener,noreferrer')
   if (!w) return
   w.document.write(html)
   w.document.close()
@@ -155,8 +172,57 @@ export function printMedicationEducation(html: string): void {
   w.print()
 }
 
+/** Opens a formatted, scrollable preview in a new window (no auto-print). */
+export function previewMedicationEducation(html: string): boolean {
+  const w = window.open('', '_blank', 'noopener,noreferrer')
+  if (!w) return false
+  w.document.write(html)
+  w.document.close()
+  w.focus()
+  return true
+}
+
 export function exportMedicationEducationPdf(html: string): void {
   printMedicationEducation(html)
+}
+
+function downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+export function printMedicationEducationDocument(
+  doc: PatientMedicationEducationDocument,
+  sectionLabels: Record<string, string>,
+  title?: string,
+): void {
+  const html = buildMedicationEducationPrintHtml(doc, sectionLabels, title ?? doc.title)
+  printMedicationEducation(html)
+}
+
+export function exportMedicationEducationPdfDocument(
+  doc: PatientMedicationEducationDocument,
+  sectionLabels: Record<string, string>,
+  title?: string,
+): void {
+  printMedicationEducationDocument(doc, sectionLabels, title)
+}
+
+export function exportMedicationEducationDocxDocument(
+  doc: PatientMedicationEducationDocument,
+  sectionLabels: Record<string, string>,
+  title?: string,
+): void {
+  const html = buildMedicationEducationPrintHtml(doc, sectionLabels, title ?? doc.title)
+  const blob = new Blob(['\ufeff', html], {
+    type: 'application/msword;charset=utf-8',
+  })
+  const stem = (title ?? doc.title).replace(/[^\wäöüß\-]+/gi, '_').slice(0, 60)
+  downloadBlob(blob, `${stem}.doc`)
 }
 
 export function exportMedicationEducationPlainText(text: string, filename: string): void {
@@ -170,7 +236,7 @@ export function exportMedicationEducationPlainText(text: string, filename: strin
 }
 
 export function exportMedicationEducationDocx(html: string, filename: string): void {
-  const blob = new Blob([html], { type: 'application/msword' })
+  const blob = new Blob(['\ufeff', html], { type: 'application/msword;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url

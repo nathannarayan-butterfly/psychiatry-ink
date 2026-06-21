@@ -62,8 +62,8 @@ export function buildMedicationEducationSystemPrompt(params: {
     combo,
     detail,
     params.language === 'en'
-      ? 'Output only the section body text — no heading, no markdown.'
-      : 'Geben Sie nur den Abschnittstext aus — keine Überschrift, kein Markdown.',
+      ? 'Respond with valid JSON only (no markdown fences): {"content":"<section body>","references":[{"title":"...","url":"...","source":"..."}]}. Include 1–4 references (guidelines, SmPC/Fachinfo, textbooks, or authoritative clinical sources) that support the section. URLs optional; use null when unknown.'
+      : 'Antworten Sie nur mit validem JSON (keine Markdown-Fences): {"content":"<Abschnittstext>","references":[{"title":"...","url":"...","source":"..."}]}. Nennen Sie 1–4 Referenzen (Leitlinien, Fachinformation, Lehrbücher oder verlässliche klinische Quellen). URLs optional; null wenn unbekannt.',
   ]
     .filter(Boolean)
     .join('\n\n')
@@ -88,9 +88,13 @@ export function buildMedicationEducationUserPrompt(params: {
 }
 
 export function buildCombinationSideEffectsSystemPrompt(language: 'de' | 'en'): string {
+  const jsonRule =
+    language === 'en'
+      ? 'Respond with valid JSON only: {"content":"<section body>","references":[{"title":"...","url":"...","source":"..."}]}. Include 1–4 supporting references.'
+      : 'Antworten Sie nur mit validem JSON: {"content":"<Abschnittstext>","references":[{"title":"...","url":"...","source":"..."}]}. Nennen Sie 1–4 belegende Referenzen.'
   return language === 'en'
-    ? `${COMBINATION_SYNTHESIS_RULES_EN}\n\n${PATIENT_LANGUAGE_RULES_EN}\n\nSynthesize common side effects of the medication combination. Do not list each drug separately.`
-    : `${COMBINATION_SYNTHESIS_RULES_DE}\n\n${PATIENT_LANGUAGE_RULES_DE}\n\nSynthetisieren Sie häufige Nebenwirkungen der Medikamentenkombination. Listen Sie nicht jedes Medikament einzeln auf.`
+    ? `${COMBINATION_SYNTHESIS_RULES_EN}\n\n${PATIENT_LANGUAGE_RULES_EN}\n\nSynthesize common side effects of the medication combination. Do not list each drug separately.\n\n${jsonRule}`
+    : `${COMBINATION_SYNTHESIS_RULES_DE}\n\n${PATIENT_LANGUAGE_RULES_DE}\n\nSynthetisieren Sie häufige Nebenwirkungen der Medikamentenkombination. Listen Sie nicht jedes Medikament einzeln auf.\n\n${jsonRule}`
 }
 
 export function buildCombinationSideEffectsUserPrompt(evidenceText: string, language: 'de' | 'en'): string {

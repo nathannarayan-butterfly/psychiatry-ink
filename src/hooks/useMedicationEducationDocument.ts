@@ -14,6 +14,7 @@ import { loadMedicationPlanState } from '../utils/medication/storage'
 import { activeMedications } from '../utils/medication/planOps'
 import {
   acceptSection,
+  acceptAllSections,
   applyAiGeneratedSection,
   applyFetchedSection,
   canFinalizeDocument,
@@ -57,6 +58,22 @@ function estimateSectionCredits(scope: MedicationEducationScope, mode: AiMode, e
   return base
 }
 
+export type MedicationEducationGenerationProgress = {
+  active: boolean
+  sectionIds: string[]
+  completedIds: string[]
+  currentId: string | null
+  errorSectionId: string | null
+}
+
+const EMPTY_GENERATION_PROGRESS: MedicationEducationGenerationProgress = {
+  active: false,
+  sectionIds: [],
+  completedIds: [],
+  currentId: null,
+  errorSectionId: null,
+}
+
 function buildMedTable(medications: MedicationEntry[]): string {
   const header = 'Medikament | Dosis | Einnahme | Indikation'
   const rows = medications.map(
@@ -74,6 +91,9 @@ export function useMedicationEducationDocument(caseId: string) {
   const [docs, setDocs] = useState<PatientMedicationEducationDocument[]>([])
   const [loading, setLoading] = useState(false)
   const [generatingSectionId, setGeneratingSectionId] = useState<string | null>(null)
+  const [generationProgress, setGenerationProgress] = useState<MedicationEducationGenerationProgress>(
+    EMPTY_GENERATION_PROGRESS,
+  )
   const [error, setError] = useState<string | null>(null)
   const [lastDebug, setLastDebug] = useState<Record<string, unknown> | null>(null)
 
@@ -206,7 +226,7 @@ export function useMedicationEducationDocument(caseId: string) {
           next = applyFetchedSection(next, 'aktuelle-medikation-tabelle', buildMedTable(selected))
         }
 
-        const identity = await fetchMedicationEducationIdentity(caseId)
+        const identity = await fetchMedicationEducationIdentity(caseId, docLanguage)
         next = applyIdentityToDocument(next, identity)
 
         await persist(next)
@@ -238,11 +258,22 @@ export function useMedicationEducationDocument(caseId: string) {
     async (
       baseDoc: PatientMedicationEducationDocument,
       sectionId: string,
+      options?: { batch?: boolean },
     ): Promise<PatientMedicationEducationDocument | null> => {
       const def = getMedicationEducationSections(baseDoc.scope, { includePregnancy: true }).find(
         (s) => s.id === sectionId,
       )
       if (!def?.aiCapable) return baseDoc
+
+      if (!options?.batch) {
+        setGenerationProgress({
+          active: true,
+          sectionIds: [sectionId],
+          completedIds: [],
+          currentId: sectionId,
+          errorSectionId: null,
+        })
+      }
 
       setGeneratingSectionId(sectionId)
       setError(null)
@@ -294,10 +325,30 @@ export function useMedicationEducationDocument(caseId: string) {
           inputTokens: result.usage.inputTokens,
           outputTokens: result.usage.outputTokens,
           creditsCharged: credits,
+          references: result.references,
         })
-        return await persist(next)
+        const saved = await persist(next)
+
+        if (!options?.batch) {
+          setGenerationProgress({
+            active: false,
+            sectionIds: [sectionId],
+            completedIds: [sectionId],
+            currentId: null,
+            errorSectionId: null,
+          })
+        }
+
+        return saved
       } catch (e) {
         setError((e as Error).message)
+        if (!options?.batch) {
+          setGenerationProgress((prev) => ({
+            ...prev,
+            active: false,
+            errorSectionId: sectionId,
+          }))
+        }
         return null
       } finally {
         setGeneratingSectionId(null)
@@ -321,22 +372,55 @@ export function useMedicationEducationDocument(caseId: string) {
       const aiSections = getMedicationEducationSections(current.scope, {
         includePregnancy: true,
       }).filter((s) => s.aiCapable)
+      const sectionIds = aiSections.map((s) => s.id)
+
+      setGenerationProgress({
+        active: true,
+        sectionIds,
+        completedIds: [],
+        currentId: sectionIds[0] ?? null,
+        errorSectionId: null,
+      })
+
       for (const s of aiSections) {
-        const updated = await generateSectionFor(current, s.id)
-        if (updated) current = updated
+        setGenerationProgress((prev) => ({
+          ...prev,
+          currentId: s.id,
+        }))
+        const updated = await generateSectionFor(current, s.id, { batch: true })
+        if (updated) {
+          current = updated
+          setGenerationProgress((prev) => ({
+            ...prev,
+            completedIds: [...prev.completedIds, s.id],
+          }))
+        } else {
+          setGenerationProgress((prev) => ({
+            ...prev,
+            active: false,
+            errorSectionId: s.id,
+          }))
+          return
+        }
       }
+
+      setGenerationProgress((prev) => ({
+        ...prev,
+        active: false,
+        currentId: null,
+      }))
     },
     [doc, generateSectionFor],
   )
 
   const finalize = useCallback(async () => {
     if (!doc) return null
-    const check = canFinalizeDocument(doc)
+    const check = canFinalizeDocument(doc, uiLanguage)
     if (!check.ok) {
       setError(check.reasons.join('; '))
       return null
     }
-    const identity = await fetchMedicationEducationIdentity(caseId)
+    const identity = await fetchMedicationEducationIdentity(caseId, doc.language)
     const withIdentity = applyIdentityToDocument(doc, identity)
     const text = assembleMedicationEducationText(withIdentity, sectionLabels)
     let next = finalizeDocument(withIdentity, text)
@@ -344,7 +428,7 @@ export function useMedicationEducationDocument(caseId: string) {
     await persist(next)
     syncAcceptedMedicationEducationToPatientFile(next)
     return next
-  }, [caseId, doc, persist, sectionLabels])
+  }, [caseId, doc, persist, sectionLabels, uiLanguage])
 
   return {
     doc,
@@ -353,6 +437,7 @@ export function useMedicationEducationDocument(caseId: string) {
     loading,
     error,
     generatingSectionId,
+    generationProgress,
     lastDebug,
     sectionLabels,
     refreshDocs,
@@ -361,7 +446,16 @@ export function useMedicationEducationDocument(caseId: string) {
     persist,
     updateSection: (sectionId: string, content: string) =>
       doc ? persist(updateSectionContent(doc, sectionId, content)) : undefined,
-    accept: (sectionId: string) => (doc ? persist(acceptSection(doc, sectionId)) : undefined),
+    accept: async (sectionId: string) => {
+      if (!doc) return undefined
+      setError(null)
+      return persist(acceptSection(doc, sectionId))
+    },
+    acceptAll: async () => {
+      if (!doc) return undefined
+      setError(null)
+      return persist(acceptAllSections(doc))
+    },
     revert: (sectionId: string) => (doc ? persist(revertSection(doc, sectionId)) : undefined),
     toggleIncluded: (sectionId: string) =>
       doc ? persist(toggleSectionIncluded(doc, sectionId)) : undefined,

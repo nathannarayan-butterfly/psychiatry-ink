@@ -376,6 +376,7 @@ function WorkspaceInner({
       isIsdmActive={assessmentStandardSettings.isIsdmActive}
       assessmentStandard={assessmentStandardSettings.assessmentStandard}
       onSelectAssessmentStandard={assessmentStandardSettings.selectAssessmentStandard}
+      documentTypes={documentTypes}
     />
   )
 }

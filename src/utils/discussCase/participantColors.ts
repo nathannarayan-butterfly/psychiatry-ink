@@ -44,10 +44,22 @@ export interface ChatBubbleColors {
   text: string
 }
 
+/** Bubble tint strength — low enough to read page behind, text stays fully opaque. */
+const BUBBLE_BG_OPACITY = 32
+const BUBBLE_BORDER_OPACITY = 44
+
+function translucentBubbleColor(color: string, opacityPercent: number): string {
+  return `color-mix(in srgb, ${color} ${opacityPercent}%, transparent)`
+}
+
 /** Other participants: stable pastel bubble from the shared palette. */
 export function getOtherBubbleColors(userId: string, index?: number): ChatBubbleColors {
   const { bg, border, text } = getParticipantColor(userId, index)
-  return { bg, border, text }
+  return {
+    bg: translucentBubbleColor(bg, BUBBLE_BG_OPACITY),
+    border: translucentBubbleColor(border, BUBBLE_BORDER_OPACITY),
+    text,
+  }
 }
 
 /**
@@ -56,9 +68,11 @@ export function getOtherBubbleColors(userId: string, index?: number): ChatBubble
  */
 export function getOwnBubbleColors(userId: string, index?: number): ChatBubbleColors {
   const { bg, border, text } = getParticipantColor(userId, index)
+  const tintedBg = `color-mix(in srgb, ${bg} 88%, var(--area-discuss, var(--dc-accent, #2563eb)) 12%)`
+  const tintedBorder = `color-mix(in srgb, ${border} 78%, var(--area-discuss, var(--dc-accent, #2563eb)) 22%)`
   return {
-    bg: `color-mix(in srgb, ${bg} 88%, var(--area-discuss, var(--dc-accent, #2563eb)) 12%)`,
-    border: `color-mix(in srgb, ${border} 78%, var(--area-discuss, var(--dc-accent, #2563eb)) 22%)`,
+    bg: translucentBubbleColor(tintedBg, BUBBLE_BG_OPACITY),
+    border: translucentBubbleColor(tintedBorder, BUBBLE_BORDER_OPACITY),
     text,
   }
 }

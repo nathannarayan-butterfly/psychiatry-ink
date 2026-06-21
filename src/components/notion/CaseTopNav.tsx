@@ -186,11 +186,11 @@ export function CaseTopNav({
               type="button"
               className="case-topnav__create-patient-btn"
               onClick={() => setZuordnenOpen((o) => !o)}
-              title="Zuordnen"
+              title={t('topNavCreatePatient')}
               aria-expanded={zuordnenOpen}
               aria-haspopup="listbox"
             >
-              + Zuordnen
+              + {t('topNavCreatePatient')}
             </button>
             {zuordnenOpen && (
               <div className="labor-zuordnen-dropdown__menu" role="listbox">
@@ -204,7 +204,7 @@ export function CaseTopNav({
                     onCreatePatient?.()
                   }}
                 >
-                  Neuer Patient
+                  {t('notionNewPatient')}
                 </button>
                 <button
                   type="button"
@@ -216,7 +216,7 @@ export function CaseTopNav({
                     onRegistryClick?.()
                   }}
                 >
-                  Vorhandener Patient
+                  {t('topNavExistingPatient')}
                 </button>
               </div>
             )}

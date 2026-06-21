@@ -2,6 +2,7 @@ import type { AiMode } from '../../../src/types/aiUsage'
 import type {
   MedicationEducationDetailStyle,
   MedicationEducationEvidenceBundle,
+  MedicationEducationReference,
   MedicationEducationScope,
 } from '../../../src/types/medicationEducation'
 import {
@@ -15,6 +16,7 @@ import { runAiFeature } from '../../ai/runAiFeature'
 import { parseMode } from '../../ai/aiRouter'
 import type { AiUsageContext } from '../../ai/types'
 import { deidentifyText } from '../discussCaseDeidentify'
+import { parseStructuredJson } from '../../utils/parseStructuredJson'
 
 export interface GenerateMedicationEducationSectionParams {
   sectionId: string
@@ -32,6 +34,7 @@ export interface GenerateMedicationEducationSectionParams {
 
 export interface GenerateMedicationEducationSectionResult {
   content: string
+  references: MedicationEducationReference[]
   provider: string
   model: string
   usage: { inputTokens: number; outputTokens: number; totalTokens: number }
@@ -62,6 +65,37 @@ function scrubEvidence(bundle: MedicationEducationEvidenceBundle, patientName?: 
 
 function featureKeyForScope(scope: MedicationEducationScope): string {
   return scope === 'single' ? 'medication_education_single_section' : 'medication_education_combination_section'
+}
+
+function parseAiSectionResponse(raw: string, sectionId: string): {
+  content: string
+  references: MedicationEducationReference[]
+} {
+  const parsed = parseStructuredJson(raw) as {
+    content?: string
+    references?: Array<{ title?: string; url?: string | null; source?: string | null }>
+  } | null
+
+  if (!parsed || typeof parsed.content !== 'string') {
+    return { content: raw.trim(), references: [] }
+  }
+
+  const references: MedicationEducationReference[] = []
+  const seen = new Set<string>()
+  if (Array.isArray(parsed.references)) {
+    for (const item of parsed.references) {
+      const title = typeof item?.title === 'string' ? item.title.trim() : ''
+      if (!title) continue
+      const key = title.toLowerCase()
+      if (seen.has(key)) continue
+      seen.add(key)
+      const url = typeof item.url === 'string' && item.url.trim() ? item.url.trim() : undefined
+      const source = typeof item.source === 'string' && item.source.trim() ? item.source.trim() : undefined
+      references.push({ title, url, source, sectionId })
+    }
+  }
+
+  return { content: parsed.content.trim(), references }
 }
 
 export async function generateMedicationEducationSection(
@@ -102,7 +136,7 @@ export async function generateMedicationEducationSection(
     mode: parseMode(params.mode),
     systemPrompt,
     userPrompt,
-    maxTokens: params.detailStyle === 'ausfuehrlich' ? 2000 : 1200,
+    maxTokens: params.detailStyle === 'ausfuehrlich' ? 2400 : 1400,
     usageContext: params.usageContext,
     caseRef: params.caseRef,
     sanitizeOpts: params.patientHints
@@ -115,10 +149,11 @@ export async function generateMedicationEducationSection(
       : undefined,
   })
 
-  const content = result.text.trim()
+  const { content, references } = parseAiSectionResponse(result.text, params.sectionId)
 
   const response: GenerateMedicationEducationSectionResult = {
     content,
+    references,
     provider: result.provider,
     model: result.model,
     usage: {
