@@ -76,8 +76,18 @@ const DRY_RUN = hasFlag('dry-run')
 const FORCE = hasFlag('force')
 const SEED_ONLY = hasFlag('seed-only')
 const SKIP_LIVE = hasFlag('skip-live')
+/**
+ * Stage mode: translate everything (DeepSeek + snapshot) but DO NOT write to the
+ * live tables — instead write the fully-translated rows to a staging file. This
+ * is the reversibility-first path for unattended runs where autonomous
+ * production writes are gated; the live publish is then a single, reviewed
+ * `npm run kb:apply-en -- --file=<staged>` step.
+ */
+const STAGE = hasFlag('stage')
 const LIMIT = parseArg('limit') ? Number(parseArg('limit')) : undefined
 const ONLY = parseArg('only')
+/** Resume a prior staged JSONL: rows already present are skipped + carried forward. */
+const RESUME = parseArg('resume')
 const CONCURRENCY = parseArg('concurrency') ? Math.max(1, Number(parseArg('concurrency'))) : 4
 const DELAY_MS = parseArg('delay') ? Number(parseArg('delay')) : 200
 
@@ -325,8 +335,36 @@ async function main(): Promise<void> {
   const tally = createUsageTally()
   const translateBatch = createDeepSeekTranslateBatch({ tally })
 
+  // Incremental staging file (JSONL): each translated row is appended as it
+  // completes, so a killed run loses nothing and can be resumed via --resume.
+  const stageJsonl = STAGE
+    ? `/tmp/kb-en-staged-${RUN_STARTED.replace(/[:.]/g, '-')}.jsonl`
+    : ''
+
+  // Resume: ids already staged in a prior JSONL are skipped + carried forward.
+  const resumedDrugs: KnowledgeBaseDrug[] = []
+  const resumedPreps: MedicationMarketAvailability[] = []
+  const doneIds = new Set<string>()
+  if (RESUME) {
+    const lines = readFileSync(RESUME, 'utf8').split('\n').filter((l) => l.trim())
+    for (const line of lines) {
+      const entry = JSON.parse(line) as { type: string; data: Record<string, unknown> }
+      doneIds.add(String(entry.data.id))
+      if (STAGE) appendFileSync(stageJsonl, `${line}\n`)
+      if (entry.type === 'drug') resumedDrugs.push(entry.data as unknown as KnowledgeBaseDrug)
+      else resumedPreps.push(entry.data as unknown as MedicationMarketAvailability)
+    }
+    logProgress(`resume: loaded ${doneIds.size} already-staged rows from ${RESUME}`)
+  }
+
+  const appendStage = (type: 'drug' | 'prep', data: Record<string, unknown>): void => {
+    appendFileSync(stageJsonl, `${JSON.stringify({ type, data })}\n`)
+  }
+
   // 5) Translate live drugs.
-  const drugItems = drugRows.map((r) => r.data as unknown as Record<string, unknown>)
+  const drugItems = drugRows
+    .map((r) => r.data as unknown as Record<string, unknown>)
+    .filter((d) => !doneIds.has(String(d.id)))
   const drugResults = SKIP_LIVE
     ? []
     : await processCollection({
@@ -334,13 +372,16 @@ async function main(): Promise<void> {
         items: drugItems,
         nameOf: (d) => String(d.genericName ?? d.id),
         persist: async (d) => {
-          await adminUpsertKnowledgeBaseDrugs([d as unknown as KnowledgeBaseDrug])
+          if (STAGE) appendStage('drug', d)
+          else await adminUpsertKnowledgeBaseDrugs([d as unknown as KnowledgeBaseDrug])
         },
         translateBatch,
       })
 
   // 6) Translate live preparations.
-  const prepItems = prepRows.map((r) => r.data as unknown as Record<string, unknown>)
+  const prepItems = prepRows
+    .map((r) => r.data as unknown as Record<string, unknown>)
+    .filter((p) => !doneIds.has(String(p.id)))
   const prepResults = SKIP_LIVE
     ? []
     : await processCollection({
@@ -348,10 +389,46 @@ async function main(): Promise<void> {
         items: prepItems,
         nameOf: (p) => `${String(p.genericName ?? p.id)} ${String(p.strengthValue ?? '')}${String(p.strengthUnit ?? '')}`,
         persist: async (p) => {
-          await adminUpsertPreparations([p as unknown as MedicationMarketAvailability])
+          if (STAGE) appendStage('prep', p)
+          else await adminUpsertPreparations([p as unknown as MedicationMarketAvailability])
         },
         translateBatch,
       })
+
+  if (STAGE) {
+    // Consolidate the JSONL into the .json the apply step consumes.
+    const allDrugs: KnowledgeBaseDrug[] = [...resumedDrugs]
+    const allPreps: MedicationMarketAvailability[] = [...resumedPreps]
+    const lines = readFileSync(stageJsonl, 'utf8').split('\n').filter((l) => l.trim())
+    const seen = new Set<string>()
+    for (const line of lines) {
+      const entry = JSON.parse(line) as { type: string; data: Record<string, unknown> }
+      const key = `${entry.type}:${String(entry.data.id)}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      if (entry.type === 'drug') allDrugs.push(entry.data as unknown as KnowledgeBaseDrug)
+      else allPreps.push(entry.data as unknown as MedicationMarketAvailability)
+    }
+    // De-dup carried-forward vs freshly staged (freshly staged wins, already merged via seen).
+    const dedup = <T extends { id: string }>(rows: T[]): T[] => {
+      const m = new Map<string, T>()
+      for (const r of rows) m.set(r.id, r)
+      return [...m.values()]
+    }
+    const finalDrugs = dedup(allDrugs)
+    const finalPreps = dedup(allPreps)
+    const stageFile = `/tmp/kb-en-staged-${RUN_STARTED.replace(/[:.]/g, '-')}.json`
+    writeFileSync(
+      stageFile,
+      JSON.stringify({ createdAt: RUN_STARTED, drugs: finalDrugs, preparations: finalPreps }, null, 2),
+    )
+    report.stageFile = stageFile
+    report.stageJsonl = stageJsonl
+    report.stageMode = true
+    logProgress(
+      `STAGED ${finalDrugs.length} drugs + ${finalPreps.length} preparations -> ${stageFile} (no live writes; jsonl=${stageJsonl})`,
+    )
+  }
 
   // 7) Summaries + provider assertion.
   const summarize = (rows: ItemResult[]) => ({

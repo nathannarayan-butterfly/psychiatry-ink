@@ -56,10 +56,9 @@ export function createDeepSeekTranslateBatch(opts: {
   const maxAttempts = opts.maxAttempts ?? 3
   const maxTokens = opts.maxTokens ?? 16_000
 
-  return async (inputs: Record<string, string>): Promise<Record<string, string>> => {
+  /** One DeepSeek call for a subset of inputs; asserts provider; returns parsed strings. */
+  const callOnce = async (inputs: Record<string, string>): Promise<Record<string, string>> => {
     const keys = Object.keys(inputs)
-    if (keys.length === 0) return {}
-
     const userPrompt =
       'Translate the values of this JSON object from German to clinical English ' +
       `following the rules. Respond with the same keys only:\n${JSON.stringify(inputs)}`
@@ -94,8 +93,7 @@ export function createDeepSeekTranslateBatch(opts: {
           tally.inputTokens += result.usage.inputTokens
           tally.outputTokens += result.usage.outputTokens
           tally.totalTokens += result.usage.totalTokens
-          tally.providerCounts[result.provider] =
-            (tally.providerCounts[result.provider] ?? 0) + 1
+          tally.providerCounts[result.provider] = (tally.providerCounts[result.provider] ?? 0) + 1
         }
 
         const parsed = JSON.parse(result.text) as Record<string, unknown>
@@ -115,5 +113,24 @@ export function createDeepSeekTranslateBatch(opts: {
       }
     }
     throw lastError instanceof Error ? lastError : new Error(String(lastError))
+  }
+
+  return async (inputs: Record<string, string>): Promise<Record<string, string>> => {
+    const keys = Object.keys(inputs)
+    if (keys.length === 0) return {}
+
+    const out = await callOnce(inputs)
+
+    // One supplementary DeepSeek pass for any keys the model dropped, to honour
+    // the complete-set requirement. Still DeepSeek-only.
+    const missing = keys.filter((k) => out[k] == null)
+    if (missing.length > 0) {
+      const retryInputs: Record<string, string> = {}
+      for (const k of missing) retryInputs[k] = inputs[k]
+      const filled = await callOnce(retryInputs)
+      Object.assign(out, filled)
+    }
+
+    return out
   }
 }

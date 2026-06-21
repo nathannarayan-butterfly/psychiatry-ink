@@ -222,18 +222,19 @@ export function applyKbTranslations(
     } else {
       const existing = slot.obj[slot.enKey]
       if (!force && Array.isArray(existing) && existing.length === slot.items.length) continue
-      let wroteAny = false
+      let appliedHere = 0
       const result = slot.items.map((item, index) => {
         const value = translated[`${slot.id}.${index}`]
         if (typeof value === 'string' && value.trim()) {
-          wroteAny = true
+          appliedHere += 1
           return value.trim()
         }
         return item
       })
-      if (wroteAny) {
+      if (appliedHere > 0) {
         slot.obj[slot.enKey] = result
-        applied += 1
+        // Count per element so `applied` matches the per-element `requested`.
+        applied += appliedHere
       }
     }
   }
