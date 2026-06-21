@@ -5,7 +5,12 @@
  *  - Unauthenticated requests are rejected (401).
  *  - Missing bundleId → 400.
  *  - Unknown SKU → 400.
- *  - Happy path → 201, AiCreditPurchase row with status='pending'.
+ *  - No Stripe key configured → 503.
+ *  - Missing Stripe Price ID for the SKU → 503.
+ *  - Happy path → 201, AiCreditPurchase row with status='pending',
+ *    Stripe Checkout Session created with the right line_items / urls /
+ *    client_reference_id / metadata, externalRef written back to row.
+ *  - Stripe SDK throwing → 502 with generic message, row rolled back to failed.
  *  - GET /bundles returns the 5 Beta SKUs.
  */
 
@@ -24,15 +29,35 @@ vi.mock('../../db', () => ({
     aiCreditPurchase: {
       create: vi.fn(),
       findMany: vi.fn(),
+      update: vi.fn(),
+      updateMany: vi.fn(),
     },
   },
+}))
+
+const checkoutSessionsCreate = vi.fn()
+
+vi.mock('../../services/stripeClient', () => ({
+  getStripe: vi.fn(),
+  getStripeWebhookSecret: vi.fn(() => 'whsec_test'),
+  isStripeCheckoutConfigured: vi.fn(() => true),
+  resolvePriceIdForSku: vi.fn((sku: string) => `price_test_${sku.replace(/^credits-/, '')}`),
+  resolvePublicAppOrigin: vi.fn(() => 'https://app.example.com'),
 }))
 
 import { prisma } from '../../db'
 import { aiCreditsRouter } from '../aiCredits'
 import { CREDIT_BUNDLE_SKUS } from '../../ai/aiPricingConfig'
+import {
+  getStripe,
+  isStripeCheckoutConfigured,
+  resolvePriceIdForSku,
+} from '../../services/stripeClient'
 
 const mockedPrisma = vi.mocked(prisma, true)
+const mockedGetStripe = vi.mocked(getStripe)
+const mockedIsStripeConfigured = vi.mocked(isStripeCheckoutConfigured)
+const mockedResolvePrice = vi.mocked(resolvePriceIdForSku)
 
 let server: Server
 let baseUrl: string
@@ -67,11 +92,23 @@ afterAll(() => {
 beforeEach(() => {
   vi.clearAllMocks()
   for (const key of ENV_KEYS) delete process.env[key]
-  // Configure Supabase so requireRouteAuth doesn't auto-bypass to 'default'.
   process.env.SUPABASE_URL = 'https://testproj.supabase.co'
   process.env.SUPABASE_ANON_KEY = 'sb_publishable_testanonkey'
 
-  // Default bundle catalogue available in DB.
+  // Stripe defaults: configured, with a real session create.
+  checkoutSessionsCreate.mockResolvedValue({
+    id: 'cs_test_session_1',
+    url: 'https://checkout.stripe.com/c/pay/cs_test_session_1',
+  })
+  mockedIsStripeConfigured.mockReturnValue(true)
+  mockedGetStripe.mockReturnValue({
+    checkout: { sessions: { create: checkoutSessionsCreate } },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any)
+  mockedResolvePrice.mockImplementation((sku: string) =>
+    sku.startsWith('credits-') ? `price_test_${sku.replace(/^credits-/, '')}` : null,
+  )
+
   mockedPrisma.aiCreditBundle.findMany.mockResolvedValue(
     CREDIT_BUNDLE_SKUS.map((b, idx) => ({
       id: `b-${idx}`,
@@ -111,6 +148,8 @@ beforeEach(() => {
     createdAt: new Date('2026-06-21T00:00:00Z'),
     paidAt: null,
   } as never)
+  mockedPrisma.aiCreditPurchase.update.mockResolvedValue({} as never)
+  mockedPrisma.aiCreditPurchase.updateMany.mockResolvedValue({ count: 1 } as never)
   mockedPrisma.aiCreditPurchase.findMany.mockResolvedValue([] as never)
 })
 
@@ -145,6 +184,7 @@ describe('POST /api/ai-credits/purchase', () => {
     })
     expect(res.status).toBe(401)
     expect(mockedPrisma.aiCreditPurchase.create).not.toHaveBeenCalled()
+    expect(checkoutSessionsCreate).not.toHaveBeenCalled()
   })
 
   it('rejects missing bundleId with 400', async () => {
@@ -173,12 +213,36 @@ describe('POST /api/ai-credits/purchase', () => {
     expect(mockedPrisma.aiCreditPurchase.create).not.toHaveBeenCalled()
   })
 
-  it('records a pending purchase and returns the bundle metadata', async () => {
+  it('returns 503 when Stripe is not configured', async () => {
+    mockedIsStripeConfigured.mockReturnValue(false)
+    const res = await fetch(`${baseUrl}/api/ai-credits/purchase`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-test-user': 'user-1' },
+      body: JSON.stringify({ bundleId: 'credits-250' }),
+    })
+    expect(res.status).toBe(503)
+    expect(mockedPrisma.aiCreditPurchase.create).not.toHaveBeenCalled()
+    expect(checkoutSessionsCreate).not.toHaveBeenCalled()
+  })
+
+  it('returns 503 when no Price ID is configured for the SKU', async () => {
+    mockedResolvePrice.mockReturnValue(null)
+    const res = await fetch(`${baseUrl}/api/ai-credits/purchase`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-test-user': 'user-1' },
+      body: JSON.stringify({ bundleId: 'credits-250' }),
+    })
+    expect(res.status).toBe(503)
+    expect(checkoutSessionsCreate).not.toHaveBeenCalled()
+  })
+
+  it('creates a Stripe Checkout Session with the right line_items, urls, metadata and persists externalRef', async () => {
     const res = await fetch(`${baseUrl}/api/ai-credits/purchase`, {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
         'x-test-user': 'user-1',
+        origin: 'https://app.example.com',
       },
       body: JSON.stringify({ bundleId: 'credits-250' }),
     })
@@ -186,16 +250,66 @@ describe('POST /api/ai-credits/purchase', () => {
     const body = await res.json()
     expect(body.purchase.sku).toBe('credits-250')
     expect(body.purchase.credits).toBe(250)
-    expect(body.purchase.priceGbp).toBe(9.99)
-    expect(body.purchase.status).toBe('pending')
-    expect(body.checkout.url).toBeNull()
+    expect(body.checkout.url).toBe('https://checkout.stripe.com/c/pay/cs_test_session_1')
+    expect(body.checkout.sessionId).toBe('cs_test_session_1')
 
+    // Inserted the pending purchase row.
     expect(mockedPrisma.aiCreditPurchase.create).toHaveBeenCalledOnce()
-    const args = mockedPrisma.aiCreditPurchase.create.mock.calls[0][0]
-    expect(args.data.userId).toBe('user-1')
-    expect(args.data.status).toBe('pending')
-    expect(args.data.priceGbp).toBe('9.99')
-    expect(args.data.credits).toBe(250)
+    const createArgs = mockedPrisma.aiCreditPurchase.create.mock.calls[0][0]
+    expect(createArgs.data.userId).toBe('user-1')
+    expect(createArgs.data.status).toBe('pending')
+
+    // Called Stripe with the resolved Price ID + return URLs + client_reference_id.
+    expect(checkoutSessionsCreate).toHaveBeenCalledOnce()
+    const stripeArgs = checkoutSessionsCreate.mock.calls[0][0]
+    expect(stripeArgs.mode).toBe('payment')
+    expect(stripeArgs.line_items).toEqual([
+      { price: 'price_test_250', quantity: 1 },
+    ])
+    expect(stripeArgs.success_url).toBe(
+      'https://app.example.com/settings/ai-credits?purchase=success&session_id={CHECKOUT_SESSION_ID}',
+    )
+    expect(stripeArgs.cancel_url).toBe(
+      'https://app.example.com/settings/ai-credits?purchase=cancelled',
+    )
+    expect(stripeArgs.client_reference_id).toBe('pp-1')
+    expect(stripeArgs.metadata).toMatchObject({
+      purchaseId: 'pp-1',
+      userId: 'user-1',
+      bundleSku: 'credits-250',
+      credits: '250',
+    })
+    // Dynamic payment methods: explicitly do NOT pass payment_method_types.
+    expect('payment_method_types' in stripeArgs).toBe(false)
+
+    // Externalref persisted so the webhook can dedupe by session id too.
+    expect(mockedPrisma.aiCreditPurchase.update).toHaveBeenCalledOnce()
+    const updateArgs = mockedPrisma.aiCreditPurchase.update.mock.calls[0][0]
+    expect(updateArgs.where).toEqual({ id: 'pp-1' })
+    expect(updateArgs.data).toEqual({ externalRef: 'cs_test_session_1' })
+  })
+
+  it('returns 502 and marks the purchase failed when Stripe throws', async () => {
+    checkoutSessionsCreate.mockRejectedValueOnce(new Error('stripe down'))
+    const res = await fetch(`${baseUrl}/api/ai-credits/purchase`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-test-user': 'user-1',
+        origin: 'https://app.example.com',
+      },
+      body: JSON.stringify({ bundleId: 'credits-100' }),
+    })
+    expect(res.status).toBe(502)
+    const body = await res.json()
+    expect(body.error).not.toContain('stripe down')
+
+    // Pending purchase was inserted but then rolled back to failed.
+    expect(mockedPrisma.aiCreditPurchase.create).toHaveBeenCalledOnce()
+    expect(mockedPrisma.aiCreditPurchase.updateMany).toHaveBeenCalled()
+    const rollback = mockedPrisma.aiCreditPurchase.updateMany.mock.calls[0][0]
+    expect(rollback.where).toMatchObject({ id: 'pp-1', status: 'pending' })
+    expect(rollback.data).toEqual({ status: 'failed' })
   })
 
   it('accepts the `sku` field as an alias for `bundleId`', async () => {
@@ -204,11 +318,13 @@ describe('POST /api/ai-credits/purchase', () => {
       headers: {
         'content-type': 'application/json',
         'x-test-user': 'user-1',
+        origin: 'https://app.example.com',
       },
       body: JSON.stringify({ sku: 'credits-100' }),
     })
     expect(res.status).toBe(201)
     const body = await res.json()
     expect(body.purchase.sku).toBe('credits-100')
+    expect(checkoutSessionsCreate).toHaveBeenCalledOnce()
   })
 })
