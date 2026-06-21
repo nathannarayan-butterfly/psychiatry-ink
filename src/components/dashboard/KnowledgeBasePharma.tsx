@@ -102,6 +102,10 @@ import { kbT } from '../medication/kb/kbStrings'
 import { derivePsychClass, getPsychClassLabel } from '../../utils/medication/psychClass'
 import { extractKbSubstanceId } from '../../utils/kbSubstanceId'
 import { useKbContributors } from '../../hooks/useKbContributors'
+import { MedicationEducationKbTab } from '../medicationEducation/MedicationEducationKbTab'
+import { translateMedicationUi } from '../../data/medicationUiTranslations'
+
+const MEDICATION_EDUCATION_KB_SECTION_ID = 'medication-education-kb'
 
 interface KnowledgeBasePharmaProps {
   onClose: () => void
@@ -1853,12 +1857,19 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
     return section.sectionKey ? (sectionByKey(activeDrug, section.sectionKey)?.id ?? `canonical-${section.id}`) : `canonical-${section.id}`
   }
 
-  const navItems: KbNavItem[] = canonicalSections.map((section) => ({
-    id: canonicalAnchorId(section),
-    label: section.title,
-    number: canonicalSectionNumber(section),
-    group: section.group,
-  }))
+  const navItems: KbNavItem[] = [
+    ...canonicalSections.map((section) => ({
+      id: canonicalAnchorId(section),
+      label: section.title,
+      number: canonicalSectionNumber(section),
+      group: section.group,
+    })),
+    {
+      id: MEDICATION_EDUCATION_KB_SECTION_ID,
+      label: translateMedicationUi(language as 'de' | 'en' | 'fr' | 'es', 'medEducationKbTabTitle'),
+      group: 'weitere' as const,
+    },
+  ]
 
   const activeSection =
     visibleSections.find((s) => s.id === activeSectionId) ??
@@ -2398,6 +2409,10 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
           ) : null}
 
           <div className="kbp-sections">
+            {!editMode && activeSectionId === MEDICATION_EDUCATION_KB_SECTION_ID ? (
+              <MedicationEducationKbTab drug={activeDrug} canEdit={permissions.canEdit} />
+            ) : null}
+
             {editMode && (
               <div className="kbp-edit-toolbar">
                 <button type="button" className="kbp-btn kbp-btn--sm" onClick={resetSectionOrder}>
@@ -2407,7 +2422,7 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
               </div>
             )}
 
-            {!editMode && canonicalSections.map((canonicalSection, idx) => {
+            {!editMode && activeSectionId !== MEDICATION_EDUCATION_KB_SECTION_ID && canonicalSections.map((canonicalSection, idx) => {
               const anchorId = canonicalAnchorId(canonicalSection)
 
               if (canonicalSection.id === 'rezeptorprofil') {

@@ -146,6 +146,8 @@ interface NotionPaperProps {
   /** Pre-selected therapy type when opening Therapieplanung from context menu. */
   therapieplanungInitialType?: TherapyPlanningSectionKey | null
   onTherapieplanungInitialTypeConsumed?: () => void
+  /** Standalone workspace medication copy and panels. */
+  medicationContext?: 'patient' | 'standalone'
 }
 
 export interface PendingPaste {
@@ -237,6 +239,7 @@ export function NotionPaper({
   useExternalSidebar = false,
   therapieplanungInitialType = null,
   onTherapieplanungInitialTypeConsumed,
+  medicationContext = 'patient',
 }: NotionPaperProps) {
   const { t } = useTranslation()
   const storageCaseId = workspaceStorageId ?? caseId
@@ -828,7 +831,11 @@ export function NotionPaper({
               onDictate={handleBlankDictate}
             />
           ) : showMedicationPanel ? (
-            <MedicationWorkspace caseId={storageCaseId ?? caseId} disabled={editorLocked} />
+            <MedicationWorkspace
+              caseId={storageCaseId ?? caseId}
+              disabled={editorLocked}
+              context={medicationContext}
+            />
           ) : showTherapieplanungPanel ? (
             <TherapieplanungWorkspace
               caseId={storageCaseId ?? caseId}

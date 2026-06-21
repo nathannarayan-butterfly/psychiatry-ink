@@ -1,0 +1,246 @@
+.arztbrief-workspace {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+.arztbrief-workspace__header {
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.arztbrief-workspace__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.arztbrief-workspace__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem 1.5rem;
+  overflow: auto;
+}
+
+.arztbrief-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.8125rem;
+  border: 1px solid var(--border, #d4d4d8);
+  border-radius: 6px;
+  background: var(--surface, #fff);
+  color: inherit;
+  cursor: pointer;
+}
+
+.arztbrief-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.arztbrief-btn--primary {
+  background: var(--primary, #1e3a5f);
+  color: #fff;
+  border-color: transparent;
+}
+
+.arztbrief-btn--ghost {
+  background: transparent;
+}
+
+.arztbrief-section {
+  border: 1px solid var(--border, #e4e4e7);
+  border-radius: 8px;
+  background: var(--surface, #fff);
+}
+
+.arztbrief-section--ai-pending {
+  border-color: #c4b5fd;
+  background: #faf5ff;
+}
+
+.arztbrief-section--excluded {
+  opacity: 0.55;
+}
+
+.arztbrief-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.arztbrief-section__title-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: none;
+  border: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  color: inherit;
+  text-align: left;
+}
+
+.arztbrief-section__status {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--muted, #71717a);
+}
+
+.arztbrief-section__actions {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.arztbrief-section__body {
+  padding: 0 0.75rem 0.75rem;
+}
+
+.arztbrief-section__textarea {
+  width: 100%;
+  min-height: 6rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  border: 1px solid var(--border, #e4e4e7);
+  border-radius: 6px;
+  padding: 0.5rem;
+  resize: vertical;
+}
+
+.arztbrief-section__footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.arztbrief-section__source {
+  font-size: 0.75rem;
+  color: var(--muted, #71717a);
+}
+
+.arztbrief-section__warning {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8125rem;
+  color: #92400e;
+  background: #fffbeb;
+}
+
+.arztbrief-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.arztbrief-dialog {
+  background: var(--surface, #fff);
+  border-radius: 10px;
+  padding: 1.25rem;
+  width: min(480px, 92vw);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.arztbrief-dialog__title {
+  margin: 0 0 1rem;
+  font-size: 1.125rem;
+}
+
+.arztbrief-dialog__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.arztbrief-dialog__field select {
+  padding: 0.4rem;
+  border-radius: 6px;
+  border: 1px solid var(--border, #d4d4d8);
+}
+
+.arztbrief-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.arztbrief-coverage ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.25rem 0;
+  font-size: 0.8125rem;
+}
+
+.arztbrief-coverage li.ok::before {
+  content: '✓ ';
+  color: #16a34a;
+}
+
+.arztbrief-coverage li.missing::before {
+  content: '○ ';
+  color: #a1a1aa;
+}
+
+.arztbrief-coverage__missing {
+  font-size: 0.8125rem;
+  color: #92400e;
+}
+
+.arztbrief-empty {
+  padding: 2rem;
+  text-align: center;
+}
+
+.arztbrief-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.arztbrief-error {
+  color: #b91c1c;
+  padding: 0.5rem 1rem;
+}
+
+.arztbrief-debug {
+  margin-top: 1rem;
+  font-size: 0.75rem;
+}
+
+.arztbrief-debug pre {
+  max-height: 200px;
+  overflow: auto;
+  background: #f4f4f5;
+  padding: 0.5rem;
+}
+
+.spin {
+  animation: arztbrief-spin 0.8s linear infinite;
+}
+
+@keyframes arztbrief-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

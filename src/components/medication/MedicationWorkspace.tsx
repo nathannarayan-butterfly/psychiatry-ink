@@ -30,12 +30,15 @@ import { MedicationPlanHistory } from './MedicationPlanHistory'
 import { PriorTherapiesPanel } from './PriorTherapiesPanel'
 import { MedicationRow } from './MedicationRow'
 import { MedicationToolbar } from './MedicationToolbar'
+import { MedicationEducationPanel } from '../medicationEducation/MedicationEducationPanel'
 
 interface MedicationWorkspaceProps {
   caseId: string
   disabled?: boolean
   /** Hide the plan-list "add" button (e.g. when a parent owns the trigger). */
   showToolbarAdd?: boolean
+  /** Standalone workspace (no patient chart) — alternate copy and slimmer panels. */
+  context?: 'patient' | 'standalone'
 }
 
 /** Imperative handle so a parent (e.g. a cross-tab trigger) can open the add dialog. */
@@ -44,7 +47,8 @@ export interface MedicationWorkspaceHandle {
 }
 
 export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, MedicationWorkspaceProps>(
-  function MedicationWorkspace({ caseId, disabled = false, showToolbarAdd = true }, ref) {
+  function MedicationWorkspace({ caseId, disabled = false, showToolbarAdd = true, context = 'patient' }, ref) {
+  const isStandalone = context === 'standalone'
   const { language } = useTranslation()
   const sectionNav = useMedicationSectionNavOptional()
   const [localSection, setLocalSection] = useState<MedicationSectionKey>('plan')
@@ -185,10 +189,20 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
       <header className="medication-hero">
         <div className="medication-hero__intro">
           <span className="medication-hero__eyebrow">
-            {translateMedicationUi(language, 'medHeroEyebrow')}
+            {translateMedicationUi(
+              language,
+              isStandalone ? 'medStandaloneHeroEyebrow' : 'medHeroEyebrow',
+            )}
           </span>
-          <h2 className="medication-hero__title">{translateMedicationUi(language, 'medPageTitle')}</h2>
-          <p className="medication-hero__desc">{translateMedicationUi(language, 'medDescPlan')}</p>
+          <h2 className="medication-hero__title">
+            {translateMedicationUi(
+              language,
+              isStandalone ? 'medStandalonePageTitle' : 'medPageTitle',
+            )}
+          </h2>
+          <p className="medication-hero__desc">
+            {translateMedicationUi(language, isStandalone ? 'medStandaloneDescPlan' : 'medDescPlan')}
+          </p>
         </div>
       </header>
 
@@ -223,13 +237,25 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
               <div className="medication-workspace__empty">
                 <p className="medication-workspace__empty-text">
                   {hasAnyVisibleMedications
-                    ? translateMedicationUi(language, 'medEmptyNoActive')
-                    : translateMedicationUi(language, 'medEmpty')}
+                    ? translateMedicationUi(
+                        language,
+                        isStandalone ? 'medStandaloneEmptyNoActive' : 'medEmptyNoActive',
+                      )
+                    : translateMedicationUi(
+                        language,
+                        isStandalone ? 'medStandaloneEmpty' : 'medEmpty',
+                      )}
                 </p>
                 <p className="medication-workspace__empty-hint">
                   {hasAnyVisibleMedications
-                    ? translateMedicationUi(language, 'medEmptyNoActiveHint')
-                    : translateMedicationUi(language, 'medEmptyHint')}
+                    ? translateMedicationUi(
+                        language,
+                        isStandalone ? 'medStandaloneEmptyNoActiveHint' : 'medEmptyNoActiveHint',
+                      )
+                    : translateMedicationUi(
+                        language,
+                        isStandalone ? 'medStandaloneEmptyHint' : 'medEmptyHint',
+                      )}
                 </p>
               </div>
             ) : (
@@ -237,6 +263,7 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
                 <MedicationRow
                   key={entry.id}
                   entry={entry}
+                  caseId={isStandalone ? undefined : caseId}
                   disabled={disabled}
                   selected={selectedId === entry.id}
                   onSelect={() => setSelectedId(entry.id)}
@@ -252,7 +279,7 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
             <MedicationPlanDashboard
               caseId={caseId}
               medications={activePlanMedications}
-              parameterMonitoring={parameterMonitoring}
+              parameterMonitoring={isStandalone ? [] : parameterMonitoring}
               curatedTargetReceptors={med.state.curatedTargetReceptors}
               onCuratedTargetReceptorsChange={med.updateCuratedTargetReceptors}
               disabled={disabled}
@@ -260,10 +287,20 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
             />
           ) : null}
 
-          <SpiegelwerteSection caseId={caseId} />
+          {!isStandalone ? <SpiegelwerteSection caseId={caseId} /> : null}
 
-          <PriorTherapiesPanel caseId={caseId} medications={allVisibleMedications} />
+          {!isStandalone ? (
+            <PriorTherapiesPanel caseId={caseId} medications={allVisibleMedications} />
+          ) : null}
 
+          {!isStandalone && hasActiveMedications ? (
+            <MedicationEducationPanel
+              caseId={caseId}
+              activeMedications={activePlanMedications}
+              selectedMedicationId={selectedId}
+              disabled={disabled}
+            />
+          ) : null}
 
           {hasActiveMedications ? (
             <section className="medication-explore" aria-label={translateMedicationUi(language, 'medExploreSections')}>
@@ -309,7 +346,14 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
   )
 
   return (
-    <div className="medication-workspace medication-workspace--flagship">
+    <div
+      className={[
+        'medication-workspace medication-workspace--flagship',
+        isStandalone ? 'medication-workspace--standalone' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       {!sectionNav ? (
         <nav className="medication-tabs" aria-label={translateMedicationUi(language, 'medSectionsLabel')}>
           {MEDICATION_SECTIONS.map((section) => {

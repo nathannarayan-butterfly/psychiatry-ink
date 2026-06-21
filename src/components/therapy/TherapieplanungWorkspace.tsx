@@ -66,6 +66,7 @@ export function TherapieplanungWorkspace({
     return (
       <PsychotherapiePlanungPage
         caseId={caseId}
+        inline
         onClose={handlePlanningClose}
       />
     )
@@ -76,6 +77,7 @@ export function TherapieplanungWorkspace({
       <WeitereTherapieSection
         caseId={caseId}
         workspacePlanning
+        inlineWorkspace
         onWorkspacePlanningClose={handlePlanningClose}
       />
     )
@@ -86,6 +88,7 @@ export function TherapieplanungWorkspace({
       <ComplementaryTherapiesSection
         caseId={caseId}
         workspacePlanning
+        inlineWorkspace
         onWorkspacePlanningClose={handlePlanningClose}
       />
     )
@@ -96,6 +99,7 @@ export function TherapieplanungWorkspace({
       <SozialtherapieSection
         caseId={caseId}
         workspacePlanning
+        inlineWorkspace
         onWorkspacePlanningClose={handlePlanningClose}
       />
     )

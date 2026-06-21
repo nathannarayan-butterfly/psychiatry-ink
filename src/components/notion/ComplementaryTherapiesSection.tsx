@@ -20,6 +20,7 @@ import { formatClinicalDate } from '../../utils/clinicalDate'
 interface ComplementaryTherapiesSectionProps {
   caseId: string
   workspacePlanning?: boolean
+  inlineWorkspace?: boolean
   onWorkspacePlanningClose?: () => void
 }
 
@@ -60,6 +61,7 @@ function formatDate(iso: string): string {
 export function ComplementaryTherapiesSection({
   caseId,
   workspacePlanning = false,
+  inlineWorkspace = false,
   onWorkspacePlanningClose,
 }: ComplementaryTherapiesSectionProps) {
   const { t } = useTranslation()
@@ -71,15 +73,15 @@ export function ComplementaryTherapiesSection({
   const { therapies, addTherapy, updateTherapy, removeTherapy, addSession, removeSession } =
     useComplementaryTherapies(caseId)
 
-  const [pickerOpen, setPickerOpen] = useState(workspacePlanning)
+  const [pickerOpen, setPickerOpen] = useState(workspacePlanning && !inlineWorkspace)
   const [customName, setCustomName] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [sessionDate, setSessionDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [sessionNote, setSessionNote] = useState('')
 
   useEffect(() => {
-    if (workspacePlanning) setPickerOpen(true)
-  }, [workspacePlanning])
+    if (workspacePlanning && !inlineWorkspace) setPickerOpen(true)
+  }, [workspacePlanning, inlineWorkspace])
 
   const closeWorkspacePlanning = useCallback(() => {
     onWorkspacePlanningClose?.()
@@ -419,6 +421,53 @@ export function ComplementaryTherapiesSection({
       </div>
     </div>
   ) : null
+
+  if (workspacePlanning && inlineWorkspace) {
+    return (
+      <div className="workspace-therapy-inline">
+        <header className="workspace-therapy-inline__head">
+          <h2 className="workspace-therapy-inline__title">{t('complementaryTherapiesTitle')}</h2>
+          <button type="button" className="pt-btn pt-btn--ghost" onClick={closeWorkspacePlanning}>
+            {t('ctClose')}
+          </button>
+        </header>
+        {detailModal ?? pickerModal ?? (
+          <>
+            {canEditComplementary ? (
+              <div className="therapy-section__actions" style={{ marginBottom: '0.75rem' }}>
+                <button type="button" className="therapy-add-btn" onClick={() => setPickerOpen(true)}>
+                  ＋ {t('ctAddTherapy')}
+                </button>
+              </div>
+            ) : null}
+            <div className="therapy-section__body">
+              {therapies.length === 0 ? (
+                <p className="therapy-empty">{t('ctEmpty')}</p>
+              ) : (
+                <div className="therapy-card-grid">
+                  {therapies.map((tp) => (
+                    <button
+                      key={tp.id}
+                      type="button"
+                      className={`therapy-card${selectedId === tp.id ? ' is-selected' : ''}`}
+                      onClick={() => setSelectedId(tp.id)}
+                    >
+                      <div className="therapy-card__head">
+                        <span className="therapy-card__title">{tp.name}</span>
+                        <span className={`therapy-status therapy-status--${STATUS_TONE[tp.status]}`}>
+                          {t(STATUS_LABEL_KEYS[tp.status])}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    )
+  }
 
   if (workspacePlanning) {
     return (

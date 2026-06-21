@@ -1,5 +1,64 @@
 /* Ask Butterfly — general-purpose sidebar chat (clinical-minimal) */
 
+/*
+ * Border tokens — mirror patient-panel-bordered (muted frame + accent stripe).
+ * `--ask-butterfly-area-accent` follows the active clinical tab when the case
+ * shell is open; otherwise falls back to the global brand `--accent`.
+ */
+:root {
+  --ask-butterfly-accent-mix: 48%;
+  --ask-butterfly-border-mix: 28%;
+  --ask-butterfly-bg-mix: 4%;
+}
+
+.app-shell:has([data-area='overview']) {
+  --ask-butterfly-area-accent: var(--area-overview);
+}
+.app-shell:has([data-area='workspace']) {
+  --ask-butterfly-area-accent: var(--area-workspace);
+}
+.app-shell:has([data-area='verlauf']) {
+  --ask-butterfly-area-accent: var(--area-verlauf);
+}
+.app-shell:has([data-area='diagnose']) {
+  --ask-butterfly-area-accent: var(--area-diagnose);
+}
+.app-shell:has([data-area='labor']) {
+  --ask-butterfly-area-accent: var(--area-labor);
+}
+.app-shell:has([data-area='medikation']) {
+  --ask-butterfly-area-accent: var(--area-medikation);
+}
+.app-shell:has([data-area='therapie']) {
+  --ask-butterfly-area-accent: var(--area-therapie);
+}
+.app-shell:has([data-area='dokumente']) {
+  --ask-butterfly-area-accent: var(--area-dokumente);
+}
+.app-shell:has([data-area='discuss']) {
+  --ask-butterfly-area-accent: var(--area-discuss);
+}
+.app-shell:has([data-area='konsil']) {
+  --ask-butterfly-area-accent: var(--area-konsil);
+}
+.app-shell:has([data-area='ci']) {
+  --ask-butterfly-area-accent: var(--area-ci);
+}
+
+.ask-butterfly-dock-panel,
+.ask-butterfly-dialog--floating {
+  --ask-butterfly-accent: color-mix(
+    in srgb,
+    var(--ask-butterfly-area-accent, var(--accent, #8a5a2b)) var(--ask-butterfly-accent-mix),
+    var(--patient-bordered-neutral, #8a8278)
+  );
+  --ask-butterfly-frame: color-mix(
+    in srgb,
+    var(--ask-butterfly-accent) var(--ask-butterfly-border-mix),
+    var(--border-soft, #e8e4df)
+  );
+}
+
 .ask-butterfly-overlay {
   position: fixed;
   inset: 0;
@@ -41,6 +100,18 @@
   width: min(26rem, calc(100vw - 2rem));
   max-height: min(72vh, calc(100vh - 2rem));
   overflow: hidden;
+  /* Complete frame — all sides, consistent with patient/workspace panels */
+  border: 1px solid var(--ask-butterfly-frame, var(--cm-hairline, #e8e4df));
+  border-left: 3px solid var(--ask-butterfly-accent, var(--accent, #8a5a2b));
+  background: color-mix(
+    in srgb,
+    var(--ask-butterfly-accent, var(--accent, #8a5a2b)) var(--ask-butterfly-bg-mix),
+    var(--surface-elevated, #fff)
+  );
+  box-shadow:
+    0 18px 48px color-mix(in srgb, #0f1419 18%, transparent),
+    0 2px 8px color-mix(in srgb, #0f1419 8%, transparent),
+    var(--patient-bordered-shadow, 0 1px 2px rgba(0, 0, 0, 0.04));
 }
 
 .ask-butterfly-panel {
@@ -133,6 +204,7 @@
   max-height: 100dvh;
   overflow: hidden;
   background: var(--app-bg);
+  --ask-butterfly-area-accent: var(--accent, #8a5a2b);
 }
 
 .app-shell__content {
@@ -154,7 +226,11 @@
  * so the chat truly overlays the page.
  */
 .app-shell--butterfly-docked .app-shell__content {
-  margin-right: var(--ask-butterfly-dock-width, 0);
+  /* Shrink the content column instead of margin-right + width:100%, which
+     overflows the shell (overflow:hidden) and lets the fixed dock overlap. */
+  box-sizing: border-box;
+  width: calc(100% - var(--ask-butterfly-dock-width, 0px));
+  margin-right: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -306,8 +382,14 @@
   z-index: 50;
   display: flex;
   flex-direction: column;
-  border-left: 1px solid var(--cm-hairline, #e8e4df);
-  background: var(--surface-elevated, #fff);
+  /* Theme accent stripe on the content-facing edge + muted frame on other sides */
+  border: 1px solid var(--ask-butterfly-frame, var(--cm-hairline, #e8e4df));
+  border-left: 3px solid var(--ask-butterfly-accent, var(--accent, #8a5a2b));
+  background: color-mix(
+    in srgb,
+    var(--ask-butterfly-accent, var(--accent, #8a5a2b)) var(--ask-butterfly-bg-mix),
+    var(--surface-elevated, #fff)
+  );
   box-shadow: -4px 0 24px color-mix(in srgb, #0f1419 8%, transparent);
   transform: translateX(100%);
   transition: transform 0.2s ease;
@@ -618,6 +700,7 @@
    * shrink so the page stays full width underneath the sheet.
    */
   .app-shell--butterfly-docked .app-shell__content {
+    width: 100%;
     margin-right: 0;
   }
 
@@ -626,8 +709,10 @@
     left: 0;
     width: 100% !important;
     max-height: min(45vh, 28rem);
-    border-left: none;
-    border-top: 1px solid var(--cm-hairline, #e8e4df);
+    /* Bottom sheet: accent stripe on top edge instead of left */
+    border: 1px solid var(--ask-butterfly-frame, var(--cm-hairline, #e8e4df));
+    border-left: 1px solid var(--ask-butterfly-frame, var(--cm-hairline, #e8e4df));
+    border-top: 3px solid var(--ask-butterfly-accent, var(--accent, #8a5a2b));
     box-shadow: 0 -4px 24px color-mix(in srgb, #0f1419 8%, transparent);
     transform: translateY(100%);
   }

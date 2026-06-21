@@ -1,4 +1,4 @@
-import { ChevronDown, FlaskConical, GitBranch, LineChart, Mic, Pencil } from 'lucide-react'
+import { ChevronDown, FlaskConical, GitBranch, LineChart, Mic, Pencil, ScrollText } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { DictationPhase } from '../../types/dictation'
@@ -24,6 +24,7 @@ const TOOL_PAGES = NOTION_PAGES.filter((page) => page.kind === 'lab')
 const toolPageIcons: Partial<Record<NotionPageId, typeof FlaskConical>> = {
   labor: FlaskConical,
   visualisation: LineChart,
+  arztbrief: ScrollText,
   timeline: GitBranch,
 }
 

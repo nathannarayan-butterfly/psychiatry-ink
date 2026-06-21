@@ -9,6 +9,14 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import { Sparkles } from 'lucide-react'
+import { VerlaufActionToolbar } from './VerlaufActionToolbar'
+import { copyTextToClipboard } from '../../utils/notionDocumentActions'
+import {
+  buildVerlaufPlainText,
+  exportVerlaufText,
+  printVerlauf,
+  type VerlaufExportItem,
+} from '../../utils/verlauf/exportVerlauf'
 import { useTranslation } from '../../context/TranslationContext'
 import { useAuth } from '../../context/AuthContext'
 import { usePermissionContext } from '../../contexts/PermissionContext'
@@ -1982,20 +1990,75 @@ export function VerlaufFeedPage({ caseId, onNavigateToSource }: VerlaufFeedPageP
   const editInSourceLabel = t('verlaufEditInSource')
   const deleteInSourceLabel = t('verlaufDeleteInSource')
 
+  const exportItems = useMemo((): VerlaufExportItem[] => {
+    return allItems.map((item) => {
+      if (item.kind === 'manual') {
+        return {
+          kind: 'manual',
+          date: item.entry.date,
+          sectionLabel: item.entry.sectionLabel,
+          subheading: item.entry.subheading,
+          content: item.entry.content,
+        }
+      }
+      if (isAufnahmeFeedEvent(item.event) && item.event.sections.length > 0) {
+        return {
+          kind: 'derived',
+          date: item.event.date,
+          sourceLabel: item.event.sourceLabel,
+          title: item.event.title,
+          body: item.event.body,
+          sections: item.event.sections,
+        }
+      }
+      return {
+        kind: 'derived',
+        date: item.event.date,
+        sourceLabel: item.event.sourceLabel,
+        title: item.event.title,
+        body: item.event.body,
+      }
+    })
+  }, [allItems])
+
+  const handleCopyAll = useCallback(async () => {
+    const text = buildVerlaufPlainText(exportItems, t('verlaufFeedTitle'))
+    const copied = await copyTextToClipboard(text)
+    if (copied) showNotionToast(t('notionCopied'))
+  }, [exportItems, t])
+
+  const handleExportAll = useCallback(() => {
+    const text = buildVerlaufPlainText(exportItems, t('verlaufFeedTitle'))
+    exportVerlaufText(`${caseId}-verlauf`, text)
+  }, [caseId, exportItems, t])
+
+  const handlePrintAll = useCallback(() => {
+    printVerlauf(exportItems, t('verlaufFeedTitle'))
+  }, [exportItems, t])
+
   return (
     <div className="verlauf-feed-layout">
     <div className="verlauf-feed-page">
       <header className="verlauf-feed-page__header">
         <h2 className="verlauf-feed-page__title">{t('verlaufFeedTitle')}</h2>
-        {!composerOpen && (
-          <button
-            type="button"
-            className="verlauf-feed-page__new-btn"
-            onClick={(e) => { e.stopPropagation(); setComposerOpen(true) }}
-          >
-            ＋ {t('verlaufNewEntry')}
-          </button>
-        )}
+        <div className="verlauf-feed-page__header-actions">
+          {!isEmpty ? (
+            <VerlaufActionToolbar
+              onCopy={() => void handleCopyAll()}
+              onExport={handleExportAll}
+              onPrint={handlePrintAll}
+            />
+          ) : null}
+          {!composerOpen ? (
+            <button
+              type="button"
+              className="verlauf-feed-page__new-btn"
+              onClick={(e) => { e.stopPropagation(); setComposerOpen(true) }}
+            >
+              ＋ {t('verlaufNewEntry')}
+            </button>
+          ) : null}
+        </div>
       </header>
 
       {composerOpen && (

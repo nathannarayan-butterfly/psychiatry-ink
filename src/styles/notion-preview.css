@@ -5402,12 +5402,12 @@
 
 .verlauf-annotation-panel {
   position: sticky;
-  top: 1rem;
+  top: 1.35rem;
   align-self: start;
   max-height: calc(100vh - 2rem);
   overflow: auto;
-  margin: 2rem 1rem 2rem 0;
-  padding: 0.85rem 0.9rem;
+  margin: 2.35rem 1.35rem 2rem -0.25rem;
+  padding: 0.85rem 0.9rem 1.1rem;
   border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 18%, var(--border-soft));
   border-radius: 10px;
   background: color-mix(in srgb, var(--surface, #fff) 92%, var(--area-accent, var(--accent)) 8%);
@@ -5446,7 +5446,7 @@
 .verlauf-annotation-panel__list {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 0 0.65rem;
   position: relative;
 }
 
@@ -8634,6 +8634,20 @@
   margin-bottom: 1rem;
   border-bottom: 1px solid color-mix(in srgb, var(--accent) 15%, var(--border-soft));
   padding-bottom: 0.75rem;
+}
+
+.verlauf-feed-page__header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.verlauf-action-toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .verlauf-feed-page__new-btn {
@@ -16672,20 +16686,29 @@ details[open].receptor-radar .receptor-radar__summary::before {
 
 /* Highlight color swatch picker (revealed by the highlighter button). */
 .kbp-selection-toolbar__hl {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 0.125rem;
 }
 
 .kbp-swatches {
+  position: absolute;
+  top: calc(100% + 0.3rem);
+  left: 50%;
+  z-index: 2;
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.2rem;
-  max-width: 6.6rem;
-  padding: 0 0.15rem 0 0.25rem;
-  margin-left: 0.05rem;
-  border-left: 1px solid var(--border-soft);
+  gap: 0.25rem;
+  width: max-content;
+  max-width: 7.5rem;
+  padding: 0.35rem 0.4rem;
+  transform: translateX(-50%);
+  border: 1px solid var(--border-soft);
+  border-radius: 0.4rem;
+  background: var(--surface);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.14);
 }
 
 .kbp-swatch {

@@ -26,6 +26,9 @@ import { askButterflyRouter } from './routes/askButterfly'
 import { documentImportMappingRouter } from './routes/documentImportMapping'
 import { psychopathExtractRouter } from './routes/psychopathExtract'
 import { clinicalIntelligenceRouter } from './routes/clinicalIntelligence'
+import { arztbriefRouter } from './routes/arztbrief'
+import { dischargeSummaryRouter } from './routes/dischargeSummary'
+import { medicationEducationRouter } from './routes/medicationEducation'
 import { clinicalMetadataRouter } from './routes/clinicalMetadata'
 import { consultationRouter } from './routes/consultation'
 import { orgRouter } from './routes/org'
@@ -93,6 +96,9 @@ app.use('/api/ask-butterfly', askButterflyRouter)
 app.use('/api/document-import', documentImportMappingRouter)
 app.use('/api/psychopath', psychopathExtractRouter)
 app.use('/api/clinical-intelligence', clinicalIntelligenceRouter)
+app.use('/api/arztbrief', arztbriefRouter)
+app.use('/api/discharge-summary', dischargeSummaryRouter)
+app.use('/api/medication-education', medicationEducationRouter)
 app.use('/api/clinical-metadata', clinicalMetadataRouter)
 app.use('/api/consultation', consultationRouter)
 app.use('/api/org', orgRouter)

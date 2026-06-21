@@ -2530,6 +2530,8 @@ interface LaborPageProps {
   useExternalSidebar?: boolean
   /** Opens the clinical orders modal, optionally pre-filtered for the diagnostics context. */
   onRequestAnforderung?: (preset?: AnforderungModalPreset | null) => void
+  /** Empty-workspace Diagnostik flow: lab entry only (no Befunde/Imaging tabs). */
+  workspaceDiagnostik?: boolean
 }
 
 export function LaborPage({
@@ -2538,6 +2540,7 @@ export function LaborPage({
   hasPatient = false,
   useExternalSidebar = false,
   onRequestAnforderung,
+  workspaceDiagnostik = false,
 }: LaborPageProps) {
   const { t } = useTranslation()
   const externalNav = useDiagnosticsSectionNavOptional()
@@ -2552,8 +2555,16 @@ export function LaborPage({
   const localLabor = useLaborBefundeList(caseId)
   const localDiagnostikBefunde = useDiagnostikBefunde(caseId)
 
-  const diagnosticsSection = isExternal ? externalNav.diagnosticsSection : localDiagnosticsSection
-  const setDiagnosticsSection = isExternal ? externalNav.setDiagnosticsSection : setLocalDiagnosticsSection
+  const diagnosticsSection = workspaceDiagnostik
+    ? 'labor'
+    : isExternal && externalNav
+      ? externalNav.diagnosticsSection
+      : localDiagnosticsSection
+  const setDiagnosticsSection = workspaceDiagnostik
+    ? () => {}
+    : isExternal && externalNav
+      ? externalNav.setDiagnosticsSection
+      : setLocalDiagnosticsSection
   const viewMode = isExternal ? externalNav.viewMode : localViewMode
   const setViewMode = isExternal ? externalNav.setViewMode : setLocalViewMode
   const pasteZoneOpen = isExternal ? externalNav.pasteZoneOpen : localPasteZoneOpen
@@ -2914,7 +2925,14 @@ export function LaborPage({
   }, [caseId, kiReSavedId])
 
   return (
-    <div className="labor-page">
+    <div
+      className={[
+        'labor-page',
+        workspaceDiagnostik ? 'labor-page--workspace-diagnostik' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <aside className="labor-page__sidebar">
         {diagnosticsSection === 'labor' ? (
           <>
@@ -3014,8 +3032,13 @@ export function LaborPage({
         <header className="labor-page__diagnostics-header">
           <div>
             <h1 className="labor-page__diagnostics-title">{t('diagnosticsPageTitle')}</h1>
-            <p className="labor-page__diagnostics-subtitle">{t('diagnosticsPageSubtitle')}</p>
+            <p className="labor-page__diagnostics-subtitle">
+              {workspaceDiagnostik
+                ? t('workspaceDiagnostikSubtitle')
+                : t('diagnosticsPageSubtitle')}
+            </p>
           </div>
+          {!workspaceDiagnostik ? (
           <nav className="labor-page__diagnostics-nav" aria-label={t('diagnosticsPageTitle')}>
             {DIAGNOSTICS_SECTIONS.map((section) => (
               <button
@@ -3039,6 +3062,7 @@ export function LaborPage({
               </button>
             ))}
           </nav>
+          ) : null}
         </header>
         ) : null}
 

@@ -313,6 +313,7 @@ function OverviewWidgetSlot({
       ]
         .filter(Boolean)
         .join(' ')}
+      data-widget-id={item.widgetId}
       draggable={editMode}
       onDragStart={editMode ? (event) => onDragStart(index, event) : undefined}
       onDragOver={editMode ? (event) => onDragOver(index, event) : undefined}

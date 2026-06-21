@@ -231,17 +231,16 @@ export function ClinicalIntelligencePanel({
 
   return (
     <div className={classes} data-language={language}>
-      <div className="ci-panel-layout">
-        <div className="ci-panel__main">
-      <header className="ci-panel__head">
-        <div className="ci-panel__title">
-          <Brain className="ci-panel__icon" aria-hidden strokeWidth={2} />
-          <div>
-            <h2 className="ci-panel__h">{t('ciSectionTitle')}</h2>
-            <p className="ci-panel__sub">{t('ciSectionSubtitle')}</p>
+      <div className="ci-panel__intro">
+        <header className="ci-panel__head">
+          <div className="ci-panel__title">
+            <Brain className="ci-panel__icon" aria-hidden strokeWidth={2} />
+            <div>
+              <h2 className="ci-panel__h">{t('ciSectionTitle')}</h2>
+              <p className="ci-panel__sub">{t('ciSectionSubtitle')}</p>
+            </div>
           </div>
-        </div>
-        <div className="ci-panel__head-actions">
+          <div className="ci-panel__head-actions">
           {run && totalPending > 0 ? (
             <button
               type="button"
@@ -303,12 +302,14 @@ export function ClinicalIntelligencePanel({
                 ? t('ciRerunButton')
                 : t('ciRunButton')}
           </button>
-        </div>
-      </header>
+          </div>
+        </header>
+        <CiHypothesisBanner />
+      </div>
 
-      <CiHypothesisBanner />
-
-      {showEvidenceMissing ? (
+      <div className="ci-panel-layout">
+        <div className="ci-panel__main">
+          {showEvidenceMissing ? (
         <ClinicalSection eyebrow={t('ciEvidenceMissingTitle')}>
           <p>{t('ciEvidenceMissingBody')}</p>
         </ClinicalSection>

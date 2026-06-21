@@ -44,6 +44,10 @@ import './styles/dokumente-inline.css'
 import './styles/document-import.css'
 import './styles/inline-ai-edit.css'
 import './styles/clinical-intelligence.css'
+import './styles/patient-panel-bordered.css'
+import './styles/workspace-panel-bordered.css'
+import './styles/arztbrief.css'
+import './styles/medication-education.css'
 
 registerClinicalLanguageResolver(loadStoredUiLanguage)
 

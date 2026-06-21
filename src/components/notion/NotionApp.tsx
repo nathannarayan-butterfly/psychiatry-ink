@@ -70,6 +70,10 @@ import { WorkspaceContextMenu } from './WorkspaceContextMenu'
 import { NotionPaper, type SavedWorkspaceDocumentPayload } from './NotionPaper'
 import { NotionInputBar } from './NotionInputBar'
 import { NotionTimelineCanvas } from './NotionTimelineCanvas'
+import { NotionLabCanvas } from './NotionLabCanvas'
+import { BefundungWorkspace } from '../workspace/BefundungWorkspace'
+import { ArztbriefWorkspace } from '../arztbrief/ArztbriefWorkspace'
+import { DischargeSummaryWorkspace } from '../dischargeSummary/DischargeSummaryWorkspace'
 import { NotionGenerationReview } from './NotionGenerationReview'
 import { NotionToastHost } from './NotionToast'
 import { PasteDetectionChip } from './PasteDetectionChip'
@@ -108,6 +112,14 @@ import { loadNotionPageHeading } from '../../utils/notionPageHeading'
 import { DEFAULT_CASE_ID } from '../../utils/caseContext'
 import { recordAuditEvent } from '../../services/auditApi'
 import { TemplateWorkspaceHost } from '../templates/TemplateWorkspaceHost'
+import { useDocumentTemplates } from '../../hooks/useDocumentTemplates'
+import { filterTemplatesByAvailability } from '../../utils/documentTemplateStore'
+import {
+  befundungSubsectionId,
+  parseBefundungSubsectionId,
+} from '../../utils/befundungSubsections'
+import { getBefundSchema } from '../../data/befundSchemas'
+import type { BefundType } from '../../types/befund'
 import { usePermissionContext } from '../../contexts/PermissionContext'
 import { useAuth } from '../../context/AuthContext'
 import { buildTherapyAttribution } from '../../types/therapy'
@@ -277,8 +289,11 @@ function NotionAppInner({
   const storageCaseId = workspaceStorageId ?? caseId
   const [pendingMedicationAdd, setPendingMedicationAdd] = useState(false)
   const [templateHostOpen, setTemplateHostOpen] = useState(false)
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
   const [therapieplanungInitialType, setTherapieplanungInitialType] =
     useState<TherapyPlanningSectionKey | null>(null)
+  const [befundungInitialType, setBefundungInitialType] = useState<BefundType | null>(null)
+  const { templates: documentTemplates } = useDocumentTemplates()
   const [anforderungModal, setAnforderungModal] = useState<{
     open: boolean
     preset?: import('../../types/anforderung').AnforderungModalPreset | null
@@ -870,6 +885,9 @@ function NotionAppInner({
       if (pageId !== 'therapieplanung') {
         setTherapieplanungInitialType(null)
       }
+      if (pageId !== 'befundung') {
+        setBefundungInitialType(null)
+      }
       const page = NOTION_PAGES.find((item) => item.id === pageId)
       if (page?.kind === 'document' && page.documentTypeId) {
         workspace.selectDocumentType(page.documentTypeId)
@@ -885,9 +903,18 @@ function NotionAppInner({
         setActivePage(pageId)
         workspace.selectDocumentType('therapieplanung')
         setTherapieplanungInitialType(type)
+        setBefundungInitialType(null)
+        return
+      }
+      if (pageId === 'befundung') {
+        const type = parseBefundungSubsectionId(sectionId)
+        setActivePage(pageId)
+        setTherapieplanungInitialType(null)
+        setBefundungInitialType(type)
         return
       }
       setTherapieplanungInitialType(null)
+      setBefundungInitialType(null)
       setActivePage(pageId)
       const page = NOTION_PAGES.find((item) => item.id === pageId)
       if (page?.kind === 'document' && page.documentTypeId) {
@@ -929,8 +956,12 @@ function NotionAppInner({
       id: therapyPlanningSubsectionId(section.key),
       label: therapyPlanningLabel(section.key),
     }))
+    result.befundung = (['ecg', 'eeg'] as const).map((type) => ({
+      id: befundungSubsectionId(type),
+      label: getBefundSchema(type, language).shortLabel,
+    }))
     return result
-  }, [therapyPlanningLabel, workspace.activeVariantIds])
+  }, [language, therapyPlanningLabel, workspace.activeVariantIds])
 
   const runAiTool = useCallback(
     (tool: AiToolKey) => {
@@ -1168,6 +1199,38 @@ function NotionAppInner({
       }
     },
     [appendTextToEditor, handlePageSelect, lab, runAiTool, t],
+  )
+
+  const templateContext =
+    storageCaseId === DEFAULT_CASE_ID ? 'emptyWorkspace' : 'patientWorkspace'
+
+  const availableTemplates = useMemo(
+    () =>
+      filterTemplatesByAvailability(documentTemplates, templateContext).filter(
+        (item) => item.status === 'active',
+      ),
+    [documentTemplates, templateContext],
+  )
+
+  const templateSubmenuItems = useMemo(
+    () =>
+      availableTemplates.map((item) => ({
+        id: item.id,
+        label: item.title,
+      })),
+    [availableTemplates],
+  )
+
+  const openTemplateHost = useCallback((templateId?: string) => {
+    setSelectedTemplateId(templateId ?? null)
+    setTemplateHostOpen(true)
+  }, [])
+
+  const handleSelectTemplateFromMenu = useCallback(
+    (templateId: string) => {
+      openTemplateHost(templateId)
+    },
+    [openTemplateHost],
   )
 
   const showToolCanvas = isToolPage(activePage)
@@ -1897,41 +1960,64 @@ function NotionAppInner({
                 }
               : undefined
           }
-          templateAction={{
-            labelKey:
-              storageCaseId === DEFAULT_CASE_ID
-                ? 'templateOpenEmpty'
-                : 'templateCreateFromPatient',
-            onSelect: () => setTemplateHostOpen(true),
-          }}
+          templateAction={
+            templateSubmenuItems.length === 0
+              ? {
+                  labelKey:
+                    storageCaseId === DEFAULT_CASE_ID
+                      ? 'templateOpenEmpty'
+                      : 'templateCreateFromPatient',
+                  onSelect: () => openTemplateHost(),
+                }
+              : undefined
+          }
+          templateSubmenu={
+            templateSubmenuItems.length > 0
+              ? {
+                  labelKey: 'workspaceVorlagenSubmenu',
+                  items: templateSubmenuItems,
+                  onSelectTemplate: handleSelectTemplateFromMenu,
+                  onOpenPicker: () => openTemplateHost(),
+                }
+              : undefined
+          }
         >
-          <div className="notion-preview-canvas">
+          <div className="notion-preview-canvas notion-preview-canvas--workspace">
             {activePage === 'timeline' ? (
               <NotionTimelineCanvas
                 caseId={storageCaseId}
                 timeline={timeline}
                 onVaultSave={handleVaultSaveWithArchive}
               />
-            ) : activePage === 'labor' || activePage === 'visualisation' ? (
+            ) : activePage === 'visualisation' ? (
+              <NotionLabCanvas
+                caseId={storageCaseId}
+                pageId="visualisation"
+                lab={lab}
+                pageLabel={t('notionPageVisualisation')}
+                onVaultSave={handleVaultSaveWithArchive}
+              />
+            ) : activePage === 'labor' ? (
               <LaborPage
                 caseId={storageCaseId}
                 hasPatient={hasPatient}
+                workspaceDiagnostik
                 onCreatePatient={() => setShowCreatePatientDialog(true)}
                 onRequestAnforderung={canRequestAnforderungen ? openAnforderungModal : undefined}
               />
+            ) : activePage === 'befundung' ? (
+              <BefundungWorkspace
+                caseId={storageCaseId}
+                disabled={workspaceReadOnly}
+                initialType={befundungInitialType}
+                onInitialTypeConsumed={() => setBefundungInitialType(null)}
+              />
+            ) : activePage === 'arztbrief' ? (
+              <ArztbriefWorkspace caseId={storageCaseId} disabled={workspaceReadOnly} />
+            ) : activePage === 'discharge-summary' ? (
+              <DischargeSummaryWorkspace caseId={storageCaseId} disabled={workspaceReadOnly} />
             ) : (
               <>
-                {storageCaseId === DEFAULT_CASE_ID ? (
-                  <div className="notion-template-toolbar">
-                    <button
-                      type="button"
-                      className="dt-entry-btn"
-                      onClick={() => setTemplateHostOpen(true)}
-                    >
-                      {t('templateOpenEmpty')}
-                    </button>
-                  </div>
-                ) : null}
                 {hasDraftOnlyBanner && workspace.selectedDocumentType && (
                   <div className="workspace-draft-banner" role="status">
                     {t('anamneseDraftWarning')}
@@ -2019,6 +2105,9 @@ function NotionAppInner({
                 useExternalSidebar={showCaseSidebar}
                 therapieplanungInitialType={therapieplanungInitialType}
                 onTherapieplanungInitialTypeConsumed={() => setTherapieplanungInitialType(null)}
+                medicationContext={
+                  storageCaseId === DEFAULT_CASE_ID ? 'standalone' : 'patient'
+                }
               />
               </>
             )}
@@ -2083,7 +2172,11 @@ function NotionAppInner({
           caseId={storageCaseId !== DEFAULT_CASE_ID ? storageCaseId : undefined}
           context={storageCaseId !== DEFAULT_CASE_ID ? 'patientWorkspace' : 'emptyWorkspace'}
           saveToPatientDocuments={false}
-          onClose={() => setTemplateHostOpen(false)}
+          initialTemplateId={selectedTemplateId ?? undefined}
+          onClose={() => {
+            setTemplateHostOpen(false)
+            setSelectedTemplateId(null)
+          }}
         />
       ) : null}
 

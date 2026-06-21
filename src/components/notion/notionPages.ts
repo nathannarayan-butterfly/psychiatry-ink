@@ -7,6 +7,9 @@ export type NotionPageId =
   | 'therapieplanung'
   | 'labor'
   | 'visualisation'
+  | 'befundung'
+  | 'arztbrief'
+  | 'discharge-summary'
   | 'timeline'
 
 export type NotionPageKind = 'document' | 'lab'
@@ -22,6 +25,9 @@ export interface NotionPageConfig {
     | 'notionPageTherapieplanung'
     | 'notionPageLabor'
     | 'notionPageVisualisation'
+    | 'notionPageBefundung'
+    | 'notionPageArztbrief'
+    | 'notionPageDischargeSummary'
     | 'notionPageTimeline'
   kind: NotionPageKind
   documentTypeId?: string
@@ -56,6 +62,9 @@ export const NOTION_PAGES: NotionPageConfig[] = [
   },
   { id: 'labor', labelKey: 'notionPageLabor', kind: 'lab' },
   { id: 'visualisation', labelKey: 'notionPageVisualisation', kind: 'lab' },
+  { id: 'befundung', labelKey: 'notionPageBefundung', kind: 'lab' },
+  { id: 'arztbrief', labelKey: 'notionPageArztbrief', kind: 'lab' },
+  { id: 'discharge-summary', labelKey: 'notionPageDischargeSummary', kind: 'lab' },
   { id: 'timeline', labelKey: 'notionPageTimeline', kind: 'lab' },
 ]
 
@@ -93,7 +102,14 @@ export function isVerlaufDocumentType(
 }
 
 export function isToolPage(pageId: NotionPageId): boolean {
-  return pageId === 'labor' || pageId === 'visualisation' || pageId === 'timeline'
+  return (
+    pageId === 'labor' ||
+    pageId === 'visualisation' ||
+    pageId === 'befundung' ||
+    pageId === 'arztbrief' ||
+    pageId === 'discharge-summary' ||
+    pageId === 'timeline'
+  )
 }
 
 /** @deprecated Use isToolPage */

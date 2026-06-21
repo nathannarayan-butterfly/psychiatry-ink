@@ -1,8 +1,9 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { DocumentTemplate } from '../../types/documentTemplate'
 import { TemplatePickerDialog } from './TemplatePickerDialog'
 import { GeneratedDocumentEditor, GeneratedDocumentEditorLoader } from './GeneratedDocumentEditor'
 import type { TemplateAvailability } from '../../types/documentTemplate'
+import { useDocumentTemplates } from '../../hooks/useDocumentTemplates'
 
 interface TemplateWorkspaceHostProps {
   caseId?: string
@@ -13,6 +14,8 @@ interface TemplateWorkspaceHostProps {
   onClose: () => void
   /** Optional: open existing generated doc */
   existingDocId?: string
+  /** Skip picker and open this template directly */
+  initialTemplateId?: string
 }
 
 export function TemplateWorkspaceHost({
@@ -22,9 +25,25 @@ export function TemplateWorkspaceHost({
   autoOpen = true,
   onClose,
   existingDocId,
+  initialTemplateId,
 }: TemplateWorkspaceHostProps) {
-  const [pickerOpen, setPickerOpen] = useState(autoOpen && !existingDocId)
-  const [selectedTemplate, setSelectedTemplate] = useState<DocumentTemplate | null>(null)
+  const { templates } = useDocumentTemplates()
+  const presetTemplate = useMemo(
+    () =>
+      initialTemplateId
+        ? templates.find((item) => item.id === initialTemplateId) ?? null
+        : null,
+    [initialTemplateId, templates],
+  )
+  const [pickerOpen, setPickerOpen] = useState(autoOpen && !existingDocId && !presetTemplate)
+  const [selectedTemplate, setSelectedTemplate] = useState<DocumentTemplate | null>(presetTemplate)
+
+  useEffect(() => {
+    if (presetTemplate) {
+      setSelectedTemplate(presetTemplate)
+      setPickerOpen(false)
+    }
+  }, [presetTemplate])
 
   const handleSelect = useCallback((template: DocumentTemplate) => {
     setSelectedTemplate(template)

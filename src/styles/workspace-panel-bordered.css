@@ -1,0 +1,281 @@
+/*
+ * Empty workspace panel treatment — muted colored borders + inner padding
+ * Mirrors patient-panel-bordered.css for standalone documentation workspace.
+ */
+
+:root {
+  --workspace-panel-padding-y: var(--space-3, 0.75rem);
+  --workspace-panel-padding-x: var(--space-4, 1rem);
+  --workspace-panel-inset-left: 0.85rem;
+}
+
+[data-area='workspace'] .notion-preview-canvas,
+.notion-preview-canvas--workspace {
+  padding-left: var(--workspace-panel-inset-left);
+}
+
+.workspace-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+  width: 100%;
+  padding: var(--workspace-panel-padding-y) var(--workspace-panel-padding-x);
+  gap: 0.85rem;
+}
+
+.workspace-panel__header {
+  flex-shrink: 0;
+}
+
+.workspace-panel__title-block {
+  padding-left: 0.15rem;
+}
+
+.workspace-panel__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ink, #1a1a18);
+}
+
+.workspace-panel__subtitle {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text-muted, #8a8a80);
+  max-width: 42rem;
+}
+
+.workspace-panel__body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  gap: 0.85rem;
+}
+
+.workspace-panel__sidebar {
+  flex: 0 0 clamp(9rem, 20vw, 12rem);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.workspace-panel__main {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.workspace-panel__card {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) var(--patient-bordered-accent-mix, 48%),
+    var(--patient-bordered-neutral, #8a8278)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix, 28%),
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: var(--patient-bordered-radius, 0.6875rem);
+  padding: var(--workspace-panel-padding-y) var(--workspace-panel-padding-x);
+  background: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) var(--patient-bordered-bg-mix, 4.5%),
+    var(--surface, #fff)
+  );
+  box-shadow: var(--patient-bordered-shadow, 0 1px 2px rgba(0, 0, 0, 0.04));
+}
+
+.workspace-panel__card-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin-bottom: 0.85rem;
+}
+
+.workspace-panel__card-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: var(--ink, #1a1a18);
+}
+
+.workspace-panel__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.35rem 0.2rem 0;
+  border: none;
+  background: transparent;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-muted, #8a8a80);
+  cursor: pointer;
+}
+
+.workspace-panel__back:hover {
+  color: var(--ink, #1a1a18);
+}
+
+.workspace-panel__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  min-height: 12rem;
+}
+
+.workspace-panel__empty-title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ink, #1a1a18);
+}
+
+.workspace-panel__empty-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--text-muted, #8a8a80);
+  max-width: 28rem;
+}
+
+.befundung-workspace__sidebar-label {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted, #8a8a80);
+}
+
+.befundung-workspace__type-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.befundung-workspace__type-row--center {
+  margin-top: 0.35rem;
+}
+
+.befundung-workspace__type-btn {
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 22%, var(--border-soft, #e8e4df));
+  border-left: 2px solid var(--area-accent, var(--accent));
+  border-radius: calc(var(--patient-bordered-radius, 0.6875rem) - 2px);
+  padding: 0.4rem 0.65rem;
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 4%, var(--surface, #fff));
+  font-size: 0.78rem;
+  font-weight: 550;
+  color: var(--ink, #1a1a18);
+  cursor: pointer;
+}
+
+.befund-inline-form__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-soft, #e8e4df);
+}
+
+.befund-inline-form__footer-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.therapieplanung-workspace {
+  padding: var(--workspace-panel-padding-y) var(--workspace-panel-padding-x);
+  padding-left: calc(var(--workspace-panel-inset-left) + var(--workspace-panel-padding-x));
+}
+
+.pt-planung--inline {
+  width: 100%;
+  max-height: none;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+  padding: var(--workspace-panel-padding-y) var(--workspace-panel-padding-x);
+  padding-left: calc(var(--workspace-panel-inset-left) + var(--workspace-panel-padding-x));
+}
+
+.pt-planung--inline .pt-planung__header {
+  border-bottom: 1px solid var(--border-soft, #e8e4df);
+  padding: 0 0 0.85rem;
+}
+
+.pt-planung--inline .pt-planung__scroll {
+  padding: 0.75rem 0 1rem;
+}
+
+.workspace-therapy-inline {
+  padding: var(--workspace-panel-padding-y) var(--workspace-panel-padding-x);
+  padding-left: calc(var(--workspace-panel-inset-left) + var(--workspace-panel-padding-x));
+}
+
+.workspace-therapy-inline__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid var(--border-soft, #e8e4df);
+}
+
+.workspace-therapy-inline__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.workspace-therapy-inline__panel {
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--area-accent, var(--accent)) var(--patient-bordered-border-mix, 28%),
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid
+    color-mix(in srgb, var(--area-accent, var(--accent)) 48%, var(--patient-bordered-neutral, #8a8278));
+  border-radius: var(--patient-bordered-radius, 0.6875rem);
+  padding: var(--workspace-panel-padding-y) var(--workspace-panel-padding-x);
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 4%, var(--surface, #fff));
+}
+
+[data-area='workspace'] .notion-lab-canvas {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) 48%,
+    var(--patient-bordered-neutral, #8a8278)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) 28%,
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: var(--patient-bordered-radius, 0.6875rem);
+  margin: var(--workspace-panel-padding-y) var(--workspace-panel-padding-x);
+  margin-left: calc(var(--workspace-panel-inset-left) + var(--workspace-panel-padding-x));
+  background: color-mix(in srgb, var(--patient-bordered-accent) 4.5%, var(--surface, #fff));
+  box-shadow: var(--patient-bordered-shadow, 0 1px 2px rgba(0, 0, 0, 0.04));
+  overflow: hidden;
+}
+
+[data-area='workspace'] .labor-page--workspace-diagnostik {
+  padding-left: var(--workspace-panel-inset-left);
+}

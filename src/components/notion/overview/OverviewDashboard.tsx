@@ -479,7 +479,16 @@ export function OverviewDashboard({
   }, [gridWidgets, widgetContext, visibilityContext, t])
 
   return (
-    <div className={`ov-dashboard cm-workspace cm-workspace--flush${editMode ? ' ov-dashboard--edit-mode' : ''}`}>
+    <div
+      className={[
+        'ov-dashboard',
+        'cm-workspace',
+        'cm-workspace--flush',
+        editMode ? 'ov-dashboard--edit-mode' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <div className="ov-dashboard__header">
         <ClinicalPageEyebrow label="Übersicht" />
         <OverviewActionToolbar onExport={handleExport} onPrint={handlePrint} />

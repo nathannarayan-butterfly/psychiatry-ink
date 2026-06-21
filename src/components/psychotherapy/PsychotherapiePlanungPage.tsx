@@ -30,6 +30,8 @@ interface PsychotherapiePlanungPageProps {
   caseId: string
   onClose: () => void
   focusNewSession?: boolean
+  /** Render inside the workspace panel instead of a modal overlay. */
+  inline?: boolean
 }
 
 const PT_STATUSES: PsychotherapyStatus[] = ['not-started', 'active', 'paused', 'completed']
@@ -64,6 +66,7 @@ export function PsychotherapiePlanungPage({
   caseId,
   onClose,
   focusNewSession = false,
+  inline = false,
 }: PsychotherapiePlanungPageProps) {
   const { language } = useTranslation()
   const { plan, update } = usePsychotherapyPlan(caseId)
@@ -246,7 +249,11 @@ export function PsychotherapiePlanungPage({
   )
 
   return (
-    <div className="pt-planung-overlay" role="dialog" aria-modal="true">
+    <div
+      className={inline ? 'pt-planung--inline' : 'pt-planung-overlay'}
+      role={inline ? undefined : 'dialog'}
+      aria-modal={inline ? undefined : true}
+    >
       <div className="pt-planung">
         <header className="pt-planung__header">
           <h2 className="pt-planung__title">{tp(language, 'ptPlanTitle')}</h2>
