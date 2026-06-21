@@ -1,5 +1,5 @@
 import type { KnowledgeEntry, KnowledgeEntrySection } from '../../data/knowledgeBaseSeedData'
-import { pickKbLocalizedText } from '../../types/knowledgeBase'
+import { isEnglishKbLanguage, pickKbLocalizedText } from '../../types/knowledgeBase'
 
 const HEADING_RE = /^\*\*(.+?)\*\*\s*:?\s*$/
 
@@ -125,9 +125,23 @@ export function entrySectionNavLabel(section: KnowledgeEntrySection, language: s
   return label || (language.startsWith('en') ? 'Section' : 'Abschnitt')
 }
 
-export function createEmptyKnowledgeEntrySection(entryId: string, order: number): KnowledgeEntrySection {
+export function createEmptyKnowledgeEntrySection(
+  entryId: string,
+  order: number,
+  language?: string | null,
+): KnowledgeEntrySection {
+  const id = `${entryId}-section-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
+  if (isEnglishKbLanguage(language)) {
+    return {
+      id,
+      label: '',
+      labelEn: 'New section',
+      content: '',
+      order,
+    }
+  }
   return {
-    id: `${entryId}-section-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    id,
     label: 'Neuer Abschnitt',
     content: '',
     order,

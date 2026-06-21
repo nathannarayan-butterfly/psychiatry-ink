@@ -24,7 +24,7 @@ import { useKnowledgeBaseAnnotations } from '../../hooks/useKnowledgeBaseAnnotat
 import { useKnowledgeBaseClinical } from '../../hooks/useKnowledgeBaseClinical'
 import { useKnowledgeBasePermissions } from '../../hooks/useKnowledgeBasePermissions'
 import { useKnowledgeBaseAiTier } from '../../hooks/useKnowledgeBaseAiTier'
-import { pickKbLocalizedList, pickKbLocalizedText } from '../../types/knowledgeBase'
+import { isEnglishKbLanguage, pickKbLocalizedList, pickKbLocalizedText } from '../../types/knowledgeBase'
 import {
   HIGHLIGHT_COLORS,
   type HighlightColor,
@@ -92,7 +92,7 @@ function FinalizeConfirmDialog({
   onCancel: () => void
 }) {
   const { t } = useTranslation()
-  return (
+  return createPortal(
     <div className="kbp-overlay" role="dialog" aria-modal>
       <div className="kbp-dialog kbp-dialog--sm">
         <h2 className="kbp-dialog__title">{t('kbFinalizeTitle')}</h2>
@@ -109,7 +109,8 @@ function FinalizeConfirmDialog({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
@@ -123,7 +124,7 @@ function DeleteConfirmDialog({
   onCancel: () => void
 }) {
   const { t } = useTranslation()
-  return (
+  return createPortal(
     <div className="kbp-overlay" role="dialog" aria-modal>
       <div className="kbp-dialog kbp-dialog--sm">
         <p className="kbp-dialog__delete-text">
@@ -140,7 +141,8 @@ function DeleteConfirmDialog({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
@@ -198,10 +200,16 @@ function ClinicalSectionItem({
 }: ClinicalSectionItemProps) {
   const { t } = useTranslation()
   const editMode = mode === 'editing'
+  const editEnglish = isEnglishKbLanguage(language)
   const readingContent = localizedSectionContent(section, language)
   const localizedLabel = localizedSectionLabel(section, language)
-  const [labelDraft, setLabelDraft] = useState(section.label)
-  const [labelEnDraft, setLabelEnDraft] = useState(section.labelEn ?? '')
+  const [labelDraft, setLabelDraft] = useState(
+    () => (editEnglish ? (section.labelEn ?? section.label) : section.label),
+  )
+
+  useEffect(() => {
+    setLabelDraft(editEnglish ? (section.labelEn ?? section.label) : section.label)
+  }, [section.id, section.label, section.labelEn, editEnglish])
   const [selectionToolbar, setSelectionToolbar] = useState<{ top: number; left: number } | null>(null)
   const [pendingSelection, setPendingSelection] = useState<{ startOffset: number; endOffset: number; text: string } | null>(null)
   const [showHighlightColors, setShowHighlightColors] = useState(false)
@@ -301,25 +309,18 @@ function ClinicalSectionItem({
                 <ChevronDown className="h-3.5 w-3.5" strokeWidth={2} />
               </button>
             </div>
-            <div className="kbp-clinical-section-labels">
-              <input
-                className="kbp-section__label-input"
-                value={labelDraft}
-                onChange={(e) => setLabelDraft(e.target.value)}
-                onBlur={() => {
-                  const trimmed = labelDraft.trim()
-                  if (trimmed) onLabelChange(trimmed)
-                }}
-                placeholder={t('kbFieldTitle')}
-              />
-              <input
-                className="kbp-section__label-input kbp-section__label-input--en"
-                value={labelEnDraft}
-                onChange={(e) => setLabelEnDraft(e.target.value)}
-                onBlur={() => onLabelEnChange(labelEnDraft.trim())}
-                placeholder={t('kbClinicalSectionHeadingEn')}
-              />
-            </div>
+            <input
+              className="kbp-section__label-input"
+              value={labelDraft}
+              onChange={(e) => setLabelDraft(e.target.value)}
+              onBlur={() => {
+                const trimmed = labelDraft.trim()
+                if (!trimmed) return
+                if (editEnglish) onLabelEnChange(trimmed)
+                else onLabelChange(trimmed)
+              }}
+              placeholder={t('kbPharmaSectionLabelPlaceholder')}
+            />
             <button type="button" className="kbp-icon-btn kbp-icon-btn--xs kbp-icon-btn--danger" onClick={onDelete} title={t('kbPharmaSectionDelete')}>
               <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
             </button>
@@ -687,7 +688,7 @@ function ClinicalEntryDetailView({
                       ...prev,
                       sections: [
                         ...(prev.sections ?? []),
-                        createEmptyKnowledgeEntrySection(prev.id, (prev.sections ?? []).length),
+                        createEmptyKnowledgeEntrySection(prev.id, (prev.sections ?? []).length, language),
                       ],
                     }))
                   }

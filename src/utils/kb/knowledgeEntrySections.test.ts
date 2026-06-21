@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { KNOWLEDGE_BASE_SEED } from '../../data/knowledgeBaseSeedData'
 import {
   buildSectionsFromLegacyContent,
+  createEmptyKnowledgeEntrySection,
   ensureKnowledgeEntrySections,
   parseMarkdownSections,
 } from './knowledgeEntrySections'
@@ -20,6 +21,20 @@ describe('parseMarkdownSections', () => {
     expect(sections[0].content).toContain('Intro paragraph')
     expect(sections[1].label).toBe('Kernsymptome')
     expect(sections[2].label).toBe('Management')
+  })
+})
+
+describe('createEmptyKnowledgeEntrySection', () => {
+  it('defaults to German labels for German UI', () => {
+    const section = createEmptyKnowledgeEntrySection('entry-1', 0, 'de')
+    expect(section.label).toBe('Neuer Abschnitt')
+    expect(section.labelEn).toBeUndefined()
+  })
+
+  it('defaults to English labels for English UI', () => {
+    const section = createEmptyKnowledgeEntrySection('entry-1', 1, 'en')
+    expect(section.labelEn).toBe('New section')
+    expect(section.label).toBe('')
   })
 })
 
