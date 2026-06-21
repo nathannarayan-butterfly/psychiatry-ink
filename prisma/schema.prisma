@@ -318,6 +318,21 @@ model AiCreditPurchase {
   @@index([status, createdAt])
 }
 
+/// Idempotency log for processed Stripe webhook events.
+///
+/// Stripe may deliver the same event multiple times (e.g. at-least-once with
+/// retries when the receiver returns a non-2xx). The webhook handler records
+/// every event.id it has finished processing so a replay is a no-op and the
+/// credit ledger never double-counts.
+model ProcessedWebhookEvent {
+  eventId    String   @id
+  source     String   @default("stripe")
+  eventType  String
+  receivedAt DateTime @default(now())
+
+  @@index([source, receivedAt])
+}
+
 model DiagnosisCriteriaLink {
   id               String   @id @default(cuid())
   diagnosisEntryId String

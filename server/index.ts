@@ -42,6 +42,7 @@ import { medicationPriorTherapiesRouter } from './routes/medicationPriorTherapie
 import { demoPatientRouter } from './routes/demoPatient'
 import { aiBudgetRouter, aiUsageRouter } from './routes/aiUsage'
 import { aiCreditsRouter } from './routes/aiCredits'
+import { aiCreditsWebhookRouter } from './routes/aiCreditsWebhook'
 import { adminAiAnalyticsRouter } from './routes/adminAiAnalytics'
 import { liveKitMissingEnvVars } from './services/livekitVoice'
 import {
@@ -55,6 +56,15 @@ const port = Number(process.env.API_PORT ?? 3001)
 
 app.use(cors({ origin: true }))
 app.use(optionalAuth)
+// Stripe webhook MUST receive the EXACT raw payload bytes — its HMAC-SHA256
+// signature is computed over the unparsed body. Mount the raw-body parser
+// for this path BEFORE the global JSON parser; the route handler below
+// converts the Buffer into a Stripe.Event via stripe.webhooks.constructEvent.
+app.use(
+  '/api/ai-credits/webhook',
+  express.raw({ type: 'application/json', limit: '1mb' }),
+  aiCreditsWebhookRouter,
+)
 app.use('/api/transcribe', express.json({ limit: '25mb' }), transcribeRouter)
 // Inline AI edit: the /transcribe sub-route carries base64 audio, so it needs a
 // larger JSON limit than the global parser.

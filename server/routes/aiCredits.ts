@@ -4,7 +4,8 @@
  * GET  /api/ai-credits           — Returns credit summary for the current user.
  * GET  /api/ai-credits/usage     — Returns usage summary for the current month.
  * GET  /api/ai-credits/bundles   — List active credit bundles (SKU, credits, GBP).
- * POST /api/ai-credits/purchase  — Record a pending bundle purchase (Stripe wiring deferred).
+ * POST /api/ai-credits/purchase  — Create a Stripe Checkout Session for a bundle.
+ * GET  /api/ai-credits/purchases — List the current user's purchase history.
  */
 
 import type { Request, Response, Router } from 'express'
@@ -13,7 +14,18 @@ import { requireRouteAuth } from '../utils/requireRouteAuth'
 import { getCreditSummary } from '../ai/creditGuard'
 import { getUsageSummaryForUser } from '../ai/usageLogger'
 import { CREDIT_BUNDLE_SKUS, findBundleBySku } from '../ai/aiPricingConfig'
-import { ensureBundlesSeeded, recordPendingPurchase } from '../ai/bundleStore'
+import {
+  attachExternalRef,
+  ensureBundlesSeeded,
+  markPurchaseFailed,
+  recordPendingPurchase,
+} from '../ai/bundleStore'
+import {
+  getStripe,
+  isStripeCheckoutConfigured,
+  resolvePriceIdForSku,
+  resolvePublicAppOrigin,
+} from '../services/stripeClient'
 
 export const aiCreditsRouter: Router = createRouter()
 
@@ -72,6 +84,7 @@ aiCreditsRouter.get('/bundles', async (_req: Request, res: Response) => {
 })
 
 aiCreditsRouter.post('/purchase', async (req: Request, res: Response) => {
+  let purchaseRowId: string | null = null
   try {
     const userId = requireRouteAuth(req, res)
     if (!userId) return
@@ -95,16 +108,106 @@ aiCreditsRouter.post('/purchase', async (req: Request, res: Response) => {
       return
     }
 
-    // TODO(beta): wire Stripe checkout. For Beta we record the purchase
-    // intent as `status='pending'` and return the new row id; a future
-    // Stripe webhook moves the row to 'paid' and credits the account via
-    // `creditPurchasedCredits` (see server/ai/creditGuard.ts).
+    // Stripe configured?
+    if (!isStripeCheckoutConfigured()) {
+      res.status(503).json({ error: 'Payments are not configured. Contact your administrator.' })
+      return
+    }
+
+    const priceId = resolvePriceIdForSku(bundle.sku)
+    if (!priceId) {
+      console.error(
+        `[ai-credits] missing Stripe price for SKU ${bundle.sku} — set STRIPE_PRICE_CREDITS_${bundle.sku.replace(/^credits-/, '')} in .env.local.`,
+      )
+      res
+        .status(503)
+        .json({ error: 'This bundle is not available for purchase right now.' })
+      return
+    }
+
+    // 1) Record the pending purchase so the webhook can join on
+    //    `client_reference_id`. Snapshot credits + price at intent time.
     const purchase = await recordPendingPurchase({
       userId,
       sku: bundle.sku,
       credits: bundle.credits,
       priceGbp: bundle.priceGbp,
     })
+    purchaseRowId = purchase.id
+
+    // 2) Create the Stripe Checkout Session.
+    const stripe = getStripe()
+    if (!stripe) {
+      // Cannot happen — isStripeCheckoutConfigured() above guards this, but
+      // satisfies the type narrowing and protects against a future refactor
+      // where the two are decoupled.
+      await markPurchaseFailed(purchase.id)
+      res.status(503).json({ error: 'Payments are not configured. Contact your administrator.' })
+      return
+    }
+
+    const origin = resolvePublicAppOrigin(req.headers.origin as string | undefined)
+    const successUrl = `${origin}/settings/ai-credits?purchase=success&session_id={CHECKOUT_SESSION_ID}`
+    const cancelUrl = `${origin}/settings/ai-credits?purchase=cancelled`
+
+    let session
+    try {
+      session = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        // NOTE: per Stripe best practices we deliberately omit
+        // `payment_method_types` so dynamic payment methods (cards, wallets,
+        // SEPA, …) configured in the Stripe dashboard apply. See
+        // https://docs.stripe.com/payments/payment-method-configurations.
+        line_items: [{ price: priceId, quantity: 1 }],
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+        client_reference_id: purchase.id,
+        metadata: {
+          purchaseId: purchase.id,
+          userId,
+          bundleSku: bundle.sku,
+          credits: String(bundle.credits),
+        },
+        // Carry the bundle metadata onto the PaymentIntent so a Stripe
+        // dashboard inspector sees the SKU even when navigating from the
+        // Payment view (Sessions are short-lived).
+        payment_intent_data: {
+          metadata: {
+            purchaseId: purchase.id,
+            userId,
+            bundleSku: bundle.sku,
+            credits: String(bundle.credits),
+          },
+        },
+      })
+    } catch (stripeError) {
+      console.error('[ai-credits] Stripe checkout creation failed:', stripeError)
+      await markPurchaseFailed(purchase.id).catch((rollbackError) => {
+        console.error('[ai-credits] rollback failed:', rollbackError)
+      })
+      // Never expose internal Stripe error details to the client.
+      res
+        .status(502)
+        .json({ error: 'Payment provider unavailable. Please try again in a moment.' })
+      return
+    }
+
+    // 3) Persist the session id so the webhook can dedupe by externalRef
+    //    if `client_reference_id` is ever scrubbed by Stripe (it shouldn't).
+    if (session.id) {
+      await attachExternalRef(purchase.id, session.id).catch((linkError) => {
+        // Non-fatal — webhook still finds the row via client_reference_id.
+        console.warn('[ai-credits] failed to persist externalRef:', linkError)
+      })
+    }
+
+    if (!session.url) {
+      // Stripe returned a session without a hosted URL — extremely rare for
+      // mode=payment but treat as a soft failure.
+      await markPurchaseFailed(purchase.id).catch(() => undefined)
+      res.status(502).json({ error: 'Could not start checkout. Please try again.' })
+      return
+    }
 
     res.status(201).json({
       purchase: {
@@ -116,14 +219,15 @@ aiCreditsRouter.post('/purchase', async (req: Request, res: Response) => {
         createdAt: purchase.createdAt,
       },
       checkout: {
-        // Stripe redirect URL will be populated when wiring lands. Returning
-        // null lets the UI render a "payment provider not configured yet"
-        // notice instead of failing hard.
-        url: null,
+        url: session.url,
+        sessionId: session.id,
       },
     })
   } catch (error) {
     console.error('[ai-credits] purchase failed:', error)
+    if (purchaseRowId) {
+      await markPurchaseFailed(purchaseRowId).catch(() => undefined)
+    }
     res.status(500).json({ error: 'Failed to record bundle purchase' })
   }
 })

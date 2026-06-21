@@ -113,6 +113,33 @@ export async function recordPendingPurchase(params: {
   return { id: created.id, status: created.status, createdAt: created.createdAt }
 }
 
+/**
+ * Attach the Stripe Checkout Session id (`cs_test_…`) to a pending purchase
+ * so the webhook can look the purchase up by `client_reference_id` AND so
+ * support staff can join the Stripe dashboard to a local purchase row.
+ */
+export async function attachExternalRef(
+  purchaseId: string,
+  externalRef: string,
+): Promise<void> {
+  await prisma.aiCreditPurchase.update({
+    where: { id: purchaseId },
+    data: { externalRef },
+  })
+}
+
+/**
+ * Mark a pending purchase as failed (used when Stripe Checkout creation
+ * itself rejects). Idempotent: a purchase already moved to `paid` or
+ * `refunded` is left alone.
+ */
+export async function markPurchaseFailed(purchaseId: string): Promise<void> {
+  await prisma.aiCreditPurchase.updateMany({
+    where: { id: purchaseId, status: 'pending' },
+    data: { status: 'failed' },
+  })
+}
+
 export interface UserPurchaseSummary {
   id: string
   sku: string
