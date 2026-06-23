@@ -24,8 +24,10 @@ export function SingleUseTierCard({ content, onCta }: SingleUseTierCardProps) {
           {content.yearlyConfirmation}
         </p>
       )}
-      <span className="hp-tier__badge hp-tier__badge--available">{ui.availableNow}</span>
-      <h3 className="hp-tier__name">{content.name}</h3>
+      <div className="hp-tier__header">
+        <h3 className="hp-tier__name">{content.name}</h3>
+        <span className="hp-tier__badge hp-tier__badge--available">{ui.availableNow}</span>
+      </div>
 
       <div className="hp-tier__trial">
         <p className="hp-tier__trial-price">{content.trial.price}</p>

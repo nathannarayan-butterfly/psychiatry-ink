@@ -116,6 +116,7 @@ function normalizeItem(raw: unknown, fallbackWidth: OverviewWidgetWidth): Overvi
 /** Priority band for section headers in the Übersicht grid. */
 export type OverviewWidgetBand =
   | 'diagnosis-medication'
+  | 'clinical-intelligence'
   | 'safety-verlauf'
   | 'clinical-status'
   | 'monitoring'
@@ -144,9 +145,9 @@ export const OVERVIEW_WIDGET_BAND: Partial<Record<OverviewWidgetId, OverviewWidg
   appointments: 'therapy',
   'butterfly-criteria': 'monitoring',
   zwangsmassnahme: 'safety-verlauf',
-  'ci-dimensional': 'diagnosis-medication',
-  'ci-mechanism': 'diagnosis-medication',
-  'ci-status': 'clinical-status',
+  'ci-dimensional': 'clinical-intelligence',
+  'ci-mechanism': 'clinical-intelligence',
+  'ci-status': 'clinical-intelligence',
 }
 
 /** Default layout — hero is fixed above the grid; cards only here. */

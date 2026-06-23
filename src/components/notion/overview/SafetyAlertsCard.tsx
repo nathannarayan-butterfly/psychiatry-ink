@@ -1,4 +1,5 @@
 import { useTranslation } from '../../../context/TranslationContext'
+import type { UiTranslationKey } from '../../../data/uiTranslations'
 import { ClinicalEyebrow } from '../../clinical/ClinicalEyebrow'
 import { ClinicalSection, ClinicalEmpty } from '../../clinical/ClinicalSection'
 import { ParameterMonitoringList } from '../../clinical/ParameterMonitoringList'
@@ -8,9 +9,51 @@ import type {
   SafetyData,
   SafetyRiskSignal,
 } from './types'
+import type { SemanticTone } from './OverviewCard'
 
 interface SafetyAlertsCardProps {
   data: SafetyData
+}
+
+const RISK_TONE_I18N: Record<SemanticTone, UiTranslationKey> = {
+  high: 'overviewRiskToneHigh',
+  moderate: 'overviewRiskToneModerate',
+  ok: 'overviewRiskToneOk',
+  low: 'overviewRiskToneLow',
+  info: 'overviewRiskToneInfo',
+  neutral: 'overviewRiskToneNeutral',
+}
+
+/** Compact risk gauge — tone at a glance, no redundant text label. */
+function SafetyRiskRing({ tone }: { tone: SemanticTone }) {
+  const { t } = useTranslation()
+  const radius = 14
+  const circumference = 2 * Math.PI * radius
+  const fraction =
+    tone === 'high' ? 1 : tone === 'moderate' ? 0.68 : tone === 'info' ? 0.5 : 0.25
+  const offset = circumference * (1 - fraction)
+
+  return (
+    <span
+      className={`ov-safety__ring ov-safety__ring--tone-${tone}`}
+      role="img"
+      aria-label={t(RISK_TONE_I18N[tone])}
+    >
+      <svg viewBox="0 0 36 36" fill="none">
+        <circle className="ov-safety__ring-track" cx="18" cy="18" r={radius} strokeWidth="4" fill="none" />
+        <circle
+          className="ov-safety__ring-prog"
+          cx="18"
+          cy="18"
+          r={radius}
+          strokeWidth="4"
+          fill="none"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+        />
+      </svg>
+    </span>
+  )
 }
 
 function SafetyAxisStrip({ signal }: { signal: SafetyRiskSignal }) {
@@ -83,18 +126,47 @@ function MedicationMonitoringSection({
   )
 }
 
+function RiskSection({ risk }: { risk: NonNullable<SafetyData['risk']> }) {
+  const acuteSignals = risk.signals ?? []
+
+  if (acuteSignals.length > 0) {
+    return (
+      <div className="ov-safety__risk-band">
+        <SafetyRiskRing tone={risk.tone} />
+        <div className="ov-safety__axes">
+          {acuteSignals.map((signal) => (
+            <SafetyAxisStrip key={signal.id} signal={signal} />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (risk.detail) {
+    return (
+      <div className="ov-safety__risk-head">
+        <SafetyRiskRing tone={risk.tone} />
+        <p className="ov-safety__risk-detail">{risk.detail}</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="ov-safety__risk-head ov-safety__risk-head--ring-only">
+      <SafetyRiskRing tone={risk.tone} />
+    </div>
+  )
+}
+
 export function SafetyAlertsCard({ data }: SafetyAlertsCardProps) {
   const { t } = useTranslation()
 
-  const acuteSignals = data.risk?.signals ?? []
   const allergyAlerts = data.alerts.filter((alert) => alert.category === 'allergy')
   const interactionAlerts = data.alerts.filter((alert) => alert.category === 'interaction')
   const hasMonitoring = data.medicationMonitoring.length > 0
 
-  const hasAcute =
-    acuteSignals.length > 0 || (data.risk !== null && !data.risk.signals?.length)
   const hasContent =
-    hasAcute ||
+    data.risk !== null ||
     allergyAlerts.length > 0 ||
     interactionAlerts.length > 0 ||
     hasMonitoring ||
@@ -110,24 +182,7 @@ export function SafetyAlertsCard({ data }: SafetyAlertsCardProps) {
         <ClinicalEmpty>{t('overviewSafetyNoSignals')}</ClinicalEmpty>
       ) : (
         <>
-          {acuteSignals.length > 0 ? (
-            <div className="ov-safety__axes">
-              {acuteSignals.map((signal) => (
-                <SafetyAxisStrip key={signal.id} signal={signal} />
-              ))}
-            </div>
-          ) : data.risk ? (
-            <div className="ov-safety__axes">
-              <SafetyAxisStrip
-                signal={{
-                  id: 'riskSelf',
-                  label: data.risk.label,
-                  value: data.risk.detail,
-                  tone: data.risk.tone,
-                }}
-              />
-            </div>
-          ) : null}
+          {data.risk ? <RiskSection risk={data.risk} /> : null}
 
           {hasMonitoring ? (
             <div className="ov-safety__block">

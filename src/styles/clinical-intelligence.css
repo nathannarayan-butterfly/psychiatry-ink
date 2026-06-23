@@ -10,6 +10,12 @@
   gap: 18px;
   max-width: none;
   position: relative;
+  /* Shared overview/clinical tokens — align CI with Übersicht + clinical-minimal */
+  --ov-teal: #2a6b6b;
+  --ov-teal-soft: color-mix(in srgb, var(--ov-teal) 9%, transparent);
+  --ov-ai-blue: #4a6280;
+  --ov-ai-blue-soft: color-mix(in srgb, var(--ov-ai-blue) 9%, transparent);
+  --ov-hairline: var(--cm-hairline, color-mix(in srgb, var(--border-soft, #e8e4df) 72%, transparent));
 }
 
 .ci-panel-layout {
@@ -33,7 +39,36 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
-  max-width: 52rem;
+  width: 100%;
+}
+
+/* —— Side-by-side dimensional + mechanism graphs (full CI page) —— */
+
+.ci-graphs-row {
+  display: flex;
+  align-items: stretch;
+  gap: var(--cm-col-gap, 1.25rem);
+  width: 100%;
+  min-width: 0;
+}
+
+.ci-graphs-row > .ci-graph-section {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ci-graphs-row > .ci-graph-section .cm-section__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.ci-graphs-row .ci-graph {
+  --ci-graph-bar-width: 120px;
+  --ci-graph-meta-width: 4.75rem;
+  --ci-graph-row-template: 14px minmax(0, 1fr) var(--ci-graph-bar-width) var(--ci-graph-meta-width);
+  max-width: none;
 }
 
 /* —— Right rail —— */
@@ -284,6 +319,14 @@
   color: var(--text-primary, var(--text, #1f2937));
   white-space: pre-wrap;
   overflow-wrap: break-word;
+}
+
+.ci-discuss-entry__text code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.92em;
+  padding: 0.05em 0.3em;
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, var(--text-muted, #6b7280) 12%, transparent);
 }
 
 .ci-discuss-entry__text--pending {
@@ -612,7 +655,7 @@
 .ci-panel__icon {
   width: 22px;
   height: 22px;
-  color: var(--accent, #5b6cff);
+  color: var(--ov-ai-blue, #4a6280);
   margin-top: 2px;
 }
 
@@ -685,9 +728,10 @@
 
 /* ── Graph (Dimensional + Mechanism) ───────────────────────── */
 .ci-graph {
-  --ci-graph-bar-width: 220px;
-  --ci-graph-name-max: 240px;
-  --ci-graph-row-template: 14px minmax(100px, var(--ci-graph-name-max)) var(--ci-graph-bar-width) auto;
+  --ci-graph-bar-width: 180px;
+  --ci-graph-meta-width: 5rem;
+  /* Fixed bar + meta columns keep bars vertically aligned when rows are full width. */
+  --ci-graph-row-template: 14px minmax(0, 1fr) var(--ci-graph-bar-width) var(--ci-graph-meta-width);
   /* Fixed semantic severity ramp — theme-independent, clinically intuitive. */
   --ci-severity-0: #e5e7eb;
   --ci-severity-1: #22c55e;
@@ -702,7 +746,8 @@
   flex-direction: column;
   gap: 10px;
   margin-top: 8px;
-  max-width: 52rem;
+  max-width: 100%;
+  width: 100%;
 }
 
 .ci-graph__hint {
@@ -716,8 +761,7 @@
   grid-template-columns: var(--ci-graph-row-template);
   gap: 6px 8px;
   align-items: center;
-  width: max-content;
-  max-width: 100%;
+  width: 100%;
 }
 
 .ci-graph__axis {
@@ -764,11 +808,11 @@
 }
 
 .ci-graph-row:hover {
-  background: rgba(0, 0, 0, 0.025);
+  background: var(--ov-teal-soft, rgba(42, 107, 107, 0.06));
 }
 
 .ci-graph-row--expanded {
-  background: rgba(0, 0, 0, 0.03);
+  background: color-mix(in srgb, var(--ov-teal) 6%, var(--surface, #fff));
 }
 
 .ci-graph-row--accepted .ci-graph-row__bar-fill {
@@ -781,13 +825,25 @@
   stroke-width: 1;
 }
 
+.ci-graph-row--mech:hover {
+  background: var(--ov-ai-blue-soft, rgba(74, 98, 128, 0.06));
+}
+
+.ci-graph-row--mech.ci-graph-row--expanded {
+  background: color-mix(in srgb, var(--ov-ai-blue, #4a6280) 6%, var(--surface, #fff));
+}
+
+.ci-graph-row--mech .ci-graph-row__trigger:hover {
+  background: color-mix(in srgb, var(--ov-ai-blue, #4a6280) 5%, transparent);
+}
+
 .ci-graph-row--rejected {
   opacity: 0.5;
 }
 
 .ci-graph-row__trigger {
   display: grid;
-  /* Compact row: fixed bar width; meta follows bar (no viewport-edge stretch). */
+  /* Name column grows; bar stays fixed width; meta follows bar. */
   grid-template-columns: var(--ci-graph-row-template);
   align-items: center;
   gap: 6px 8px;
@@ -796,14 +852,13 @@
   border: none;
   cursor: pointer;
   text-align: left;
-  width: max-content;
-  max-width: 100%;
+  width: 100%;
   font: inherit;
   color: inherit;
 }
 
 .ci-graph-row__trigger:hover {
-  background: rgba(0, 0, 0, 0.03);
+  background: color-mix(in srgb, var(--ov-teal) 5%, transparent);
 }
 
 .ci-graph-row__trigger:focus-visible {
@@ -824,10 +879,21 @@
   line-height: 1.35;
   min-width: 0;
   overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
   overflow: hidden;
+}
+
+.ci-graph-row--expanded .ci-graph-row__name {
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+  overflow: visible;
+  display: block;
+  font-weight: 600;
 }
 
 .ci-graph-row__bar {
@@ -841,8 +907,11 @@
 .ci-graph-row__meta {
   display: inline-flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.25rem;
   flex-shrink: 0;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .ci-graph-row__bar-track {
@@ -992,17 +1061,17 @@
 }
 
 .ci-graph-row__conf-dot--low {
-  background: rgba(91, 108, 255, 0.35);
-  outline: 1px solid rgba(91, 108, 255, 0.45);
+  background: color-mix(in srgb, var(--ov-ai-blue, #4a6280) 35%, transparent);
+  outline: 1px solid color-mix(in srgb, var(--ov-ai-blue, #4a6280) 45%, transparent);
   outline-offset: -1px;
 }
 
 .ci-graph-row__conf-dot--moderate {
-  background: rgba(91, 108, 255, 0.65);
+  background: color-mix(in srgb, var(--ov-ai-blue, #4a6280) 65%, transparent);
 }
 
 .ci-graph-row__conf-dot--high {
-  background: var(--accent, #5b6cff);
+  background: var(--ov-ai-blue, #4a6280);
 }
 
 .ci-graph-row__linked-count {
@@ -1051,8 +1120,19 @@
   gap: 6px;
   padding: 8px 14px 12px 30px;
   margin-top: 2px;
-  border-left: 2px solid rgba(91, 108, 255, 0.18);
+  border-left: 2px solid color-mix(in srgb, var(--ov-ai-blue, #4a6280) 28%, transparent);
   margin-left: 8px;
+}
+
+.ci-graph-row__detail-title {
+  margin: 0 0 2px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--text-primary, var(--text, #1f2937));
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .ci-graph-row__chips {
@@ -1069,8 +1149,8 @@
   align-items: center;
   padding: 1px 6px;
   border-radius: 999px;
-  background: rgba(91, 108, 255, 0.1);
-  color: rgba(67, 56, 202, 0.95);
+  background: var(--ov-ai-blue-soft, rgba(74, 98, 128, 0.09));
+  color: color-mix(in srgb, var(--ov-ai-blue, #4a6280) 88%, var(--text-primary, #1f2937));
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 10.5px;
 }
@@ -1212,10 +1292,56 @@
 
 .ci-row--missing {
   background: rgba(99, 102, 241, 0.04);
+  padding: 11px 13px;
+  gap: 7px;
+}
+
+/* Missing information — secondary tier below treatment implications. */
+.ci-row--missing .ci-row__title {
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--text, #374151);
+}
+
+.ci-row--missing .ci-row__meta {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--text-muted, #4b5563);
+}
+
+.ci-row--missing .ci-row__meta-label {
+  font-size: 0.8125rem;
+  color: var(--text-muted, #6b7280);
 }
 
 .ci-row--treatment {
   background: rgba(14, 165, 233, 0.04);
+  padding: 12px 14px;
+  gap: 8px;
+}
+
+/* Treatment implications — clinically weighted body text (full CI page only). */
+.ci-row--treatment .ci-row__title {
+  font-size: var(--cm-hero-thesis-size, 0.9375rem);
+  line-height: 1.4;
+  color: var(--text-primary, var(--text, #1f2937));
+}
+
+.ci-row--treatment .ci-row__summary {
+  font-size: 1rem;
+  line-height: 1.55;
+  font-weight: 500;
+  color: var(--text-primary, var(--text, #1f2937));
+}
+
+.ci-row--treatment .ci-row__meta {
+  font-size: var(--cm-hero-thesis-size, 0.9375rem);
+  line-height: 1.5;
+  color: var(--text, #374151);
+}
+
+.ci-row--treatment .ci-row__meta-label {
+  color: var(--text-primary, var(--text, #1f2937));
 }
 
 .ci-row__head {
@@ -1659,10 +1785,9 @@
   font-weight: 600;
 }
 
-/* Compact bar chart inside the CI Übersicht widgets — text on the left,
-   a narrow fixed-width bar column packed to the right so bars form a clean
-   vertical band. Shared identically by both CI widgets. */
-.ci-barchart {
+/* Compact bar chart inside the CI Übersicht widgets only — scoped away from
+   `.ci-graph .ci-graph-row` so the full CI page keeps its fixed bar column. */
+.ci-widget .ci-barchart {
   /* The Übersicht widgets mount this chart outside the `.ci-graph` scope, so
      redeclare the semantic colour tokens here to keep the chart self-contained.
      Mirrors the `.ci-graph` ramp exactly so widget and full graph stay in sync.
@@ -1684,43 +1809,34 @@
   gap: 9px;
 }
 
-.ci-barchart__row {
+.ci-widget .ci-barchart__row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
 }
 
-.ci-barchart__text {
-  flex: 1 1 auto;
+.ci-widget .ci-barchart__name {
+  flex: 0 1 48%;
   min-width: 0;
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.ci-barchart__name {
-  flex: 1 1 auto;
-  min-width: 0;
+  max-width: 48%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   font-size: 13px;
   font-weight: 600;
+  line-height: 1.35;
   color: var(--text-main, #1f2937);
 }
 
-.ci-barchart__value {
-  flex: 0 0 auto;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-secondary, #4b5563);
-  font-variant-numeric: tabular-nums;
-}
-
-.ci-barchart__track {
-  flex: 0 0 72px;
-  width: 72px;
+.ci-widget .ci-barchart__track {
+  flex: 1 1 0;
+  min-width: 0;
   height: 10px;
+  margin-top: 3px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--text-main, #1f2937) 8%, transparent);
   overflow: hidden;
@@ -1728,7 +1844,7 @@
   -webkit-print-color-adjust: exact;
 }
 
-.ci-barchart__fill {
+.ci-widget .ci-barchart__fill {
   height: 100%;
   min-width: 6px;
   border-radius: 999px;
@@ -1739,13 +1855,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ci-barchart__fill {
+  .ci-widget .ci-barchart__fill {
     transition: none;
   }
 }
 
 @media print {
-  .ci-barchart__fill {
+  .ci-widget .ci-barchart__fill {
     transition: none;
   }
 }
@@ -1800,7 +1916,7 @@
   align-self: flex-start;
   margin-top: 4px;
   font-size: 11.5px;
-  color: var(--accent, #5b6cff);
+  color: var(--ov-teal, #2a6b6b);
   background: none;
   border: none;
   padding: 0;
@@ -1813,7 +1929,7 @@
 
 @media (max-width: 520px) {
   .ci-graph {
-    --ci-graph-name-max: min(100%, 280px);
+    --ci-graph-bar-width: min(140px, 36%);
   }
 
   .ci-graph__axis-row,
@@ -1833,7 +1949,13 @@
   .ci-graph-row__name {
     grid-column: 2 / -1;
     grid-row: 1;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+  }
+
+  .ci-graph-row--expanded .ci-graph-row__name {
+    -webkit-line-clamp: unset;
+    line-clamp: unset;
   }
 
   .ci-graph-row__bar,
@@ -1855,6 +1977,15 @@
 }
 
 @media (max-width: 960px) {
+  .ci-graphs-row {
+    flex-direction: column;
+  }
+
+  .ci-graphs-row .ci-graph {
+    --ci-graph-bar-width: 180px;
+    --ci-graph-meta-width: 5rem;
+  }
+
   .ci-panel-layout {
     flex-direction: column;
   }

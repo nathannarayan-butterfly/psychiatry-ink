@@ -80,7 +80,6 @@ export function ConsultantDashboard({ requestId, onNavigate }: ConsultantDashboa
             ← Dashboard
           </button>
           <h1 className="consultation-page__title">Externer Konsiliarzugang</h1>
-          <p className="consultation-page__subtitle">Konsilanfragen — eingeschränkter Zugriff</p>
         </div>
       </header>
 

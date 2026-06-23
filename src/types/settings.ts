@@ -14,6 +14,7 @@ export type SettingsSectionId =
   | 'ai'
   | 'privacy'
   | 'account'
+  | 'credits'
   | 'about'
   | 'kb-admin'
 

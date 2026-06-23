@@ -11,7 +11,7 @@
  * fixed semantic ramp (grey → green → yellow → orange → red). Confidence is a
  * secondary signal (conf dot only).
  */
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { ChevronDown, ChevronRight, Check, Pencil, Trash2, X } from 'lucide-react'
 import { useTranslation } from '../../../context/TranslationContext'
 import {
@@ -22,11 +22,15 @@ import {
 import { sortDimensionalFindings } from '../../../services/clinicalIntelligence/dimensionalIntegration'
 import type {
   ClinicalIntelligenceDimensionId,
+  CompactEvidenceItem,
   DimensionalFinding,
   DimensionalIntegrationResult,
 } from '../../../types/clinicalIntelligence'
 import type { UiTranslationKey } from '../../../data/uiTranslations'
-import { getCiDimensionLabel } from '../../../data/clinicalIntelligenceTranslations'
+import {
+  formatCiEvidenceSourceList,
+  getCiDimensionLabel,
+} from '../../../data/clinicalIntelligenceTranslations'
 import { CiSeverityLegend } from './CiSeverityLegend'
 import {
   severityBarFillClass,
@@ -35,6 +39,7 @@ import {
 
 interface DimensionalProfileGraphProps {
   result: DimensionalIntegrationResult
+  evidenceItems?: readonly CompactEvidenceItem[]
   expandedId: ClinicalIntelligenceDimensionId | null
   onToggle: (id: ClinicalIntelligenceDimensionId) => void
   onAccept: (id: ClinicalIntelligenceDimensionId) => void
@@ -104,6 +109,7 @@ function groupByBand(findings: DimensionalFinding[]): DimensionRowGroup[] {
   const byBand = new Map<Band, DimensionalFinding[]>()
   for (const finding of findings) {
     const meta = getClinicalIntelligenceDimension(finding.dimensionId)
+    if (!meta) continue
     const list = byBand.get(meta.band) ?? []
     list.push(finding)
     byBand.set(meta.band, list)
@@ -142,11 +148,13 @@ export function computeDimensionalBars(
 
 function DimensionDetail({
   finding,
+  evidenceItems,
   onAccept,
   onReject,
   onEdit,
 }: {
   finding: DimensionalFinding
+  evidenceItems?: readonly CompactEvidenceItem[]
   onAccept: (id: ClinicalIntelligenceDimensionId) => void
   onReject: (id: ClinicalIntelligenceDimensionId) => void
   onEdit: (
@@ -159,18 +167,34 @@ function DimensionDetail({
     >,
   ) => void
 }) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
+  const dimensionLabel = getCiDimensionLabel(finding.dimensionId, language)
   const [editing, setEditing] = useState(false)
   const [summary, setSummary] = useState(finding.clinicalSummary)
   const [longitudinal, setLongitudinal] = useState(finding.longitudinalPattern)
   const [uncertainty, setUncertainty] = useState(finding.uncertainty)
 
-  const supporting = finding.supportingEvidenceIds.join(', ')
-  const contradicting = finding.contradictingEvidenceIds.join(', ')
+  const supporting = formatCiEvidenceSourceList(
+    finding.supportingEvidenceIds,
+    language,
+    evidenceItems,
+  )
+  const contradicting = formatCiEvidenceSourceList(
+    finding.contradictingEvidenceIds,
+    language,
+    evidenceItems,
+  )
+
+  useEffect(() => {
+    setSummary(finding.clinicalSummary)
+    setLongitudinal(finding.longitudinalPattern)
+    setUncertainty(finding.uncertainty)
+  }, [finding.clinicalSummary, finding.longitudinalPattern, finding.uncertainty])
 
   if (editing) {
     return (
       <div className="ci-graph-row__edit">
+        <h3 className="ci-graph-row__detail-title">{dimensionLabel}</h3>
         <label className="ci-row__label">
           {t('ciClinicalSummary')}
           <textarea
@@ -232,6 +256,7 @@ function DimensionDetail({
 
   return (
     <div className="ci-graph-row__detail">
+      <h3 className="ci-graph-row__detail-title">{dimensionLabel}</h3>
       <p className="ci-row__summary">{finding.clinicalSummary}</p>
       {finding.longitudinalPattern ? (
         <p className="ci-row__meta">
@@ -291,6 +316,7 @@ function DimensionDetail({
 
 export function DimensionalProfileGraph({
   result,
+  evidenceItems,
   expandedId,
   onToggle,
   onAccept,
@@ -338,9 +364,9 @@ export function DimensionalProfileGraph({
           <ul className="ci-graph__rows">
             {sortDimensionalFindings(group.rows).map((finding) => {
               const expanded = expandedId === finding.dimensionId
-              const dim = getClinicalIntelligenceDimension(finding.dimensionId)
               const fraction = Math.max(0, Math.min(1, finding.severity / SEVERITY_MAX))
               const barW = Math.max(2, fraction * BAR_WIDTH)
+              const dimensionLabel = getCiDimensionLabel(finding.dimensionId, language)
               return (
                 <li
                   key={finding.dimensionId}
@@ -364,8 +390,8 @@ export function DimensionalProfileGraph({
                     ) : (
                       <ChevronRight className="ci-graph-row__chev" aria-hidden strokeWidth={2} />
                     )}
-                    <span className="ci-graph-row__name" title={dim.descriptionDe}>
-                      {getCiDimensionLabel(finding.dimensionId, language)}
+                    <span className="ci-graph-row__name" title={dimensionLabel}>
+                      {dimensionLabel}
                     </span>
                     <svg
                       className="ci-graph-row__bar"
@@ -422,6 +448,7 @@ export function DimensionalProfileGraph({
                   {expanded ? (
                     <DimensionDetail
                       finding={finding}
+                      evidenceItems={evidenceItems}
                       onAccept={onAccept}
                       onReject={onReject}
                       onEdit={onEdit}

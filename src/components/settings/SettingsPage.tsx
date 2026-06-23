@@ -19,6 +19,7 @@ import { LabImportSection } from './LabImportSection'
 import { ParserOptimizationSection } from './ParserOptimizationSection'
 import { OverviewWidgetsSettingsSection } from './OverviewWidgetsSettingsSection'
 import { KbAdminSection } from './KbAdminSection'
+import { CreditsSettingsSection } from './CreditsSettingsSection'
 import { SettingsSidebarPanel } from './SettingsSidebarPanel'
 import type { SettingsSectionGroup } from './SettingsSectionNav'
 import '../../styles/case-sidebar.css'
@@ -27,6 +28,7 @@ interface SettingsPageProps {
   activeSection: SettingsSectionId
   onSectionChange: (section: SettingsSectionId) => void
   onClose: () => void
+  onOpenCredits: () => void
   creditBalance: number
   appearance: ReturnType<typeof useAppearanceSettings>
   privacy: ReturnType<typeof usePrivacySettings>
@@ -47,6 +49,7 @@ export function SettingsPage({
   activeSection,
   onSectionChange,
   onClose,
+  onOpenCredits,
   creditBalance,
   appearance,
   privacy,
@@ -94,7 +97,10 @@ export function SettingsPage({
       },
       {
         groupLabel: t('settingsNavGroupAccount'),
-        items: [{ id: 'account', label: t('settingsAccount') }],
+        items: [
+          { id: 'credits', label: t('settingsCredits') },
+          { id: 'account', label: t('settingsAccount') },
+        ],
       },
     ],
     [t],
@@ -123,6 +129,7 @@ export function SettingsPage({
         activeSection={activeSection}
         onSectionChange={onSectionChange}
         onClose={onClose}
+        onOpenCredits={onOpenCredits}
         creditBalance={creditBalance}
       />
 
@@ -172,6 +179,9 @@ export function SettingsPage({
             <PatientPrivacySection privacy={privacy} workspaceVault={workspaceVault} />
           ) : null}
           {activeSection === 'account' ? <AccountSection /> : null}
+          {activeSection === 'credits' ? (
+            <CreditsSettingsSection onOpenCredits={onOpenCredits} />
+          ) : null}
           {activeSection === 'about' ? <AboutSection /> : null}
         </div>
       </div>

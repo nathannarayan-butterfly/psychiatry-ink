@@ -24,8 +24,6 @@ interface CaseSidebarContentProps {
     onRemoveSavedDoc?: (id: string) => void
     openDocumentLabel?: string
     onCloseDocument?: () => void
-    onAddAnforderung?: () => void
-    anforderungenReadOnly?: boolean
   }
 }
 
@@ -76,8 +74,6 @@ export function CaseSidebarContent({
             onRemoveSavedDoc={workspaceSidebar.onRemoveSavedDoc}
             openDocumentLabel={workspaceSidebar.openDocumentLabel}
             onCloseDocument={workspaceSidebar.onCloseDocument}
-            onAddAnforderung={workspaceSidebar.onAddAnforderung}
-            anforderungenReadOnly={workspaceSidebar.anforderungenReadOnly}
           />
         )
       }

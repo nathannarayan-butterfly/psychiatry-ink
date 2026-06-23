@@ -918,13 +918,16 @@
 }
 
 .case-sidebar-panel .diagnosen-widget__add-btn,
-.case-sidebar-panel .diagnosen-widget__edit-btn {
+.case-sidebar-panel .diagnosen-widget__edit-btn,
+.case-sidebar-panel .diagnosen-widget__delete-btn {
   color: var(--case-sidebar-muted);
   border-color: var(--case-sidebar-border);
+  background: color-mix(in srgb, white 8%, transparent);
 }
 
 .case-sidebar-panel .diagnosen-widget__add-btn:hover,
-.case-sidebar-panel .diagnosen-widget__edit-btn:hover {
+.case-sidebar-panel .diagnosen-widget__edit-btn:hover,
+.case-sidebar-panel .diagnosen-widget__delete-btn:hover {
   color: #fff;
   background: var(--case-sidebar-bg-hover);
 }

@@ -10,6 +10,7 @@ import { assertAiQuota, recordAiGenerationUsed } from '../utils/caseAiAccessGuar
 import {
   clinicalLanguagePromptInstruction,
   requireClinicalLanguage,
+  resolveClinicalLanguage,
 } from '../utils/resolveClinicalLanguage'
 import { canAccessCase, getCurrentOrganisation, ORG_HEADER } from '../services/orgPermissions'
 import { isKbAdminConfigured } from '../services/kbSupabaseAdmin'
@@ -508,10 +509,12 @@ discussCaseRouter.post(
       )
 
       const org = await getCurrentOrganisation(session.userId, req.headers[ORG_HEADER])
+      const language = resolveClinicalLanguage(req, req.body?.language) ?? 'de'
       const result = await transcribeAudioBuffer(buffer, mimeType, {
         userId: session.userId,
         organisationId: org?.id ?? null,
         caseId: session.discussion.caseId,
+        language,
       })
 
       // SECURITY: scrub identifiers the model may have surfaced from speech

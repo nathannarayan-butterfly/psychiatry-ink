@@ -173,7 +173,6 @@ export function DiscussCasePackageBuilder({
           {discussChromeT(locale, 'builderBack')}
         </button>
         <h1 className="discuss-case-builder__title">{discussChromeT(locale, 'builderTitle')}</h1>
-        <p className="discuss-case-builder__subtitle">{discussChromeT(locale, 'builderSubtitle')}</p>
       </header>
 
       {error ? <p className="discuss-case-builder__error">{error}</p> : null}

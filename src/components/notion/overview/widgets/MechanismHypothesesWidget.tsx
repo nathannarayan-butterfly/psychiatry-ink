@@ -1,12 +1,10 @@
 import { useTranslation } from '../../../../context/TranslationContext'
 import { useClinicalIntelligence } from '../../../../hooks/useClinicalIntelligence'
 import { summarizeMechanisms } from '../../../../services/clinicalIntelligence/mechanismInference'
-import { summarizeDimensional } from '../../../../services/clinicalIntelligence/dimensionalIntegration'
 import { getCiMechanismLabel } from '../../../../data/clinicalIntelligenceTranslations'
-import { OverviewCardShell } from '../OverviewCard'
-import { ClinicalEyebrow } from '../../../clinical/ClinicalEyebrow'
-import { CiHypothesisBanner } from '../../../clinical/clinicalIntelligence/CiHypothesisBanner'
 import { CiStatusCountRow } from '../../../clinical/clinicalIntelligence/CiStatusCountRow'
+import { OverviewCardShell } from '../OverviewCard'
+import { OverviewWidgetHeader } from '../OverviewWidgetHeader'
 import { CiBarChart } from './CiBarChart'
 
 /** Bar length per confidence tier — mirrors the full Mechanism graph. */
@@ -31,19 +29,16 @@ export function MechanismHypothesesWidget({
     ci.latestRun?.mechanism ?? null,
     ci.state.rejectedMechanismIds.length,
   )
-  const dimStats = summarizeDimensional(ci.latestRun?.dimensional ?? null)
-  const dominantIds = new Set(dimStats.topDimensions.map((d) => d.dimensionId))
 
   return (
     <OverviewCardShell>
-      <ClinicalEyebrow inline>{t('overviewWidgetCiMechanism')}</ClinicalEyebrow>
-      <CiHypothesisBanner compact />
+      <OverviewWidgetHeader title={t('overviewWidgetCiMechanism')} />
       {!ci.latestRun ? (
         <p className="ci-widget__empty">{t('ciNoRunYet')}</p>
       ) : (
         <div className="ci-widget">
           <p className="ci-widget__meta">
-            {t('ciWidgetActiveCount')}: <strong>{stats.activeCount}</strong> · {' '}
+            {t('ciWidgetActiveCount')}: <strong>{stats.activeCount}</strong> ·{' '}
             {t('ciConfidenceHigh')}: <strong>{stats.confidenceCounts.high}</strong>
           </p>
           {stats.topMechanisms.length === 0 ? (
@@ -51,25 +46,18 @@ export function MechanismHypothesesWidget({
           ) : (
             <CiBarChart
               ariaLabel={t('overviewWidgetCiMechanism')}
-              items={stats.topMechanisms.map((m) => {
-                const linkedDominant = m.linkedDimensions.filter((id) => dominantIds.has(id))
-                const confidenceLabel =
+              items={stats.topMechanisms.map((m) => ({
+                id: m.mechanismId,
+                label: getCiMechanismLabel(m.mechanismId, language),
+                ariaDescription:
                   m.confidence === 'low'
                     ? t('ciConfidenceLow')
                     : m.confidence === 'moderate'
                       ? t('ciConfidenceModerate')
-                      : t('ciConfidenceHigh')
-                return {
-                  id: m.mechanismId,
-                  label: getCiMechanismLabel(m.mechanismId, language),
-                  valueLabel:
-                    linkedDominant.length > 0
-                      ? `${confidenceLabel} · ↳${linkedDominant.length}`
-                      : confidenceLabel,
-                  fraction: CONFIDENCE_FRACTION[m.confidence],
-                  fillColor: `var(--ci-confidence-${m.confidence})`,
-                }
-              })}
+                      : t('ciConfidenceHigh'),
+                fraction: CONFIDENCE_FRACTION[m.confidence],
+                fillColor: `var(--ci-confidence-${m.confidence})`,
+              }))}
             />
           )}
           {stats.hasOnlyExploratory ? (

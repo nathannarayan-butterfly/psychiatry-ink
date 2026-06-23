@@ -29,11 +29,14 @@ import {
   type ClinicalIntelligenceDimension,
 } from './clinicalIntelligence/dimensions'
 import { getClinicalIntelligenceMechanism } from './clinicalIntelligence/mechanisms'
+import { discussSectionLabel } from '../utils/discussCase/chromeI18n'
+import type { DiscussPackageSectionKey } from '../types/discussCase'
 import type { UiLanguage } from '../types/settings'
 import type {
   CiAuditAction,
   ClinicalIntelligenceDimensionId,
   ClinicalIntelligenceMechanismId,
+  CompactEvidenceItem,
 } from '../types/clinicalIntelligence'
 
 type LocaleMap = Record<UiLanguage, string>
@@ -188,4 +191,76 @@ export function getCiAuditActionLabel(
   language: UiLanguage,
 ): string {
   return translateClinicalIntelligence(action, language)
+}
+
+const DISCUSS_PACKAGE_SECTION_KEYS = new Set<DiscussPackageSectionKey>([
+  'diagnosis',
+  'anamnesis',
+  'therapie-verlauf',
+  'investigations',
+  'current-therapy',
+  'medication',
+  'side-effects',
+  'risk',
+  'documents',
+])
+
+/** Notion document types referenced as compact-evidence ids in demo CI data. */
+const DOCUMENT_EVIDENCE_LABEL_KEYS: Record<string, UiTranslationKey> = {
+  aufnahme: 'notionPageAufnahme',
+  verlauf: 'notionPageVerlauf',
+  medikation: 'notionPageMedikation',
+  labor: 'notionPageLabor',
+}
+
+function isDiscussPackageSectionKey(id: string): id is DiscussPackageSectionKey {
+  return DISCUSS_PACKAGE_SECTION_KEYS.has(id as DiscussPackageSectionKey)
+}
+
+/**
+ * Localized label for a compact-evidence item id referenced in CI findings.
+ * Resolves discuss-package section keys and common document-type ids; falls back
+ * to the evidence item label or the raw id.
+ */
+export function getCiEvidenceSourceLabel(
+  evidenceId: string,
+  language: UiLanguage,
+  evidenceItems?: readonly CompactEvidenceItem[],
+): string {
+  const trimmed = evidenceId.trim()
+  if (!trimmed) return ''
+
+  if (isDiscussPackageSectionKey(trimmed)) {
+    return discussSectionLabel(language, trimmed)
+  }
+
+  const documentKey = DOCUMENT_EVIDENCE_LABEL_KEYS[trimmed]
+  if (documentKey) {
+    return translateUi(language, documentKey)
+  }
+
+  const baseId = trimmed.split(':')[0] ?? trimmed
+  if (baseId !== trimmed) {
+    const compoundLabel = getCiEvidenceSourceLabel(baseId, language, evidenceItems)
+    if (compoundLabel !== baseId) return compoundLabel
+  }
+
+  const item = evidenceItems?.find((entry) => entry.id === trimmed)
+  if (item?.label?.trim()) {
+    return item.label.trim()
+  }
+
+  return trimmed
+}
+
+/** Comma-separated localized evidence source labels for display lists. */
+export function formatCiEvidenceSourceList(
+  evidenceIds: readonly string[],
+  language: UiLanguage,
+  evidenceItems?: readonly CompactEvidenceItem[],
+): string {
+  return evidenceIds
+    .map((id) => getCiEvidenceSourceLabel(id, language, evidenceItems))
+    .filter(Boolean)
+    .join(', ')
 }

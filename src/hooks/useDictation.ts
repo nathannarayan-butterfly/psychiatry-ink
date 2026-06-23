@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { DictationPhase } from '../types/dictation'
+import type { UiLanguage } from '../types/settings'
 import { transcribeAudio } from '../services/transcriptionClient'
 
 function pickRecorderMimeType(): string | undefined {
@@ -10,11 +11,14 @@ function pickRecorderMimeType(): string | undefined {
 interface UseDictationOptions {
   onTranscriptionComplete: (text: string) => void
   onSessionEnd: () => void
+  /** Active UI language — forwarded to `/api/transcribe` as an OpenAI language hint. */
+  language?: UiLanguage
 }
 
 export function useDictation({
   onTranscriptionComplete,
   onSessionEnd,
+  language,
 }: UseDictationOptions) {
   const [phase, setPhase] = useState<DictationPhase>('idle')
   const [durationMs, setDurationMs] = useState(0)
@@ -213,7 +217,7 @@ export function useDictation({
     setPhase('transcribing')
 
     try {
-      const text = await transcribeAudio(audioBlobRef.current)
+      const text = await transcribeAudio(audioBlobRef.current, language)
       onTranscriptionComplete(text)
       reset()
     } catch (error) {
@@ -221,7 +225,7 @@ export function useDictation({
       setDictationError(message)
       setPhase('review')
     }
-  }, [durationMs, onTranscriptionComplete, reset])
+  }, [durationMs, language, onTranscriptionComplete, reset])
 
   useEffect(() => {
     if (phase !== 'recording') return

@@ -4,6 +4,7 @@ import { isDemoSeedDataComplete } from './demoDataIntegrity'
 import { isDemoSeedVersionOutdated } from './demoVersion'
 import { patchDemoUserState } from './demoUserState'
 import { fetchAndApplyCanonicalDemoFixture } from './syncCanonicalDemoFixture'
+import { ensureDemoClinicalIntelligenceForCase } from './ensureDemoClinicalIntelligence'
 import { seedDemoPatient, type SeedDemoPatientOptions } from './seedDemoPatient'
 import { getCaseMeta, replaceRegistryMap } from '../hooks/useCaseRegistry'
 import { loadRegistryMapFromStorage, saveRegistryMapToStorage } from '../utils/caseRegistryStorage'
@@ -76,6 +77,7 @@ export async function ensureDemoPatientExists(
   // falsely seen as incomplete (which would trigger an unnecessary reseed on every load).
   const { hydrateLocalClinicalCaches } = await import('../utils/clinicalCacheHydration')
   await hydrateLocalClinicalCaches(DEMO_CASE_ID)
+  ensureDemoClinicalIntelligenceForCase(DEMO_CASE_ID)
   const incomplete = !isDemoSeedDataComplete(DEMO_CASE_ID)
 
   if (

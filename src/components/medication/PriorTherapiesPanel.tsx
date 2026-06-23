@@ -99,9 +99,6 @@ export function PriorTherapiesPanel({ caseId, medications, patientName }: PriorT
 
   const de = language === 'de'
   const heading = de ? 'Bisher versuchte Medikamente' : 'Previously tried medications'
-  const subtitle = de
-    ? 'Vortherapien aus Plan, Aufnahme und Verlauf — mit Grund/Ansprechen.'
-    : 'Prior trials from plan, admission and progress notes — with reason/response.'
 
   const evaluating = llmStatus === 'loading'
 
@@ -115,7 +112,6 @@ export function PriorTherapiesPanel({ caseId, medications, patientName }: PriorT
             </span>
             <div>
               <h3 className="prior-therapies__title">{heading}</h3>
-              <p className="prior-therapies__subtitle">{subtitle}</p>
             </div>
           </div>
         </header>
@@ -137,7 +133,6 @@ export function PriorTherapiesPanel({ caseId, medications, patientName }: PriorT
           </span>
           <div>
             <h3 className="prior-therapies__title">{heading}</h3>
-            <p className="prior-therapies__subtitle">{subtitle}</p>
           </div>
         </div>
         {evaluating ? (

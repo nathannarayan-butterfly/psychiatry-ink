@@ -18,8 +18,8 @@ export const homepageContentEn: HomepageContent = {
     mainNavAriaLabel: 'Main navigation',
   },
   hero: {
-    eyebrow: 'Psychiatric clinical workspace',
-    headline: 'Psychiatry.Ink — the clinical workspace for modern psychiatry.',
+    eyebrow: 'Intelligent workspace for psychiatry',
+    headline: 'Psychiatry.Ink — the intelligent workspace for psychiatry.',
     subtitle:
       'Psychiatry.Ink is a secure psychiatric workspace for documentation, case discussion, psychopharmacology reference, treatment planning, clinical tools, and AI-assisted clinical intelligence. AI supports structuring, review, and reasoning — clinician acceptance is always required.',
     primaryCta: 'Open Workspace',
@@ -259,20 +259,20 @@ export const homepageContentEn: HomepageContent = {
         monthly: 'Monthly',
         yearly: 'Yearly',
       },
-      yearlyRecommendation: 'Recommended: Save 20% with yearly billing — £191.90/year',
+      yearlyRecommendation: 'Recommended: Save 20% with yearly billing — £239.90/year',
       yearlyConfirmation: 'Yearly billing — 20% savings applied',
       billing: {
         monthly: {
-          price: '£19.99',
+          price: '£24.99',
           period: '/month',
           credits: '500 AI credits included',
           savings: null,
         },
         yearly: {
-          price: '£191.90',
+          price: '£239.90',
           period: '/year',
           credits: '500 AI credits included each month',
-          savings: 'Save £47.98/year — 20% off vs £239.88/year',
+          savings: 'Save £59.98/year — 20% off vs £299.88/year',
         },
       },
       description:

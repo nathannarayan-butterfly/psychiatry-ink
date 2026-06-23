@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react'
 import { Pencil, Plus, X } from 'lucide-react'
 import { ClinicalEyebrow } from '../clinical/ClinicalEyebrow'
 import { useTranslation } from '../../context/TranslationContext'
@@ -15,14 +15,31 @@ import {
   resolveDiagnosisLabelSync,
 } from '../../utils/diagnosisDisplayRequests'
 import {
+  applyClinicianCategoryChange,
+  applyClinicianConfirmationChange,
+  inferDefaultCategoryForNewEntry,
+  inferDefaultConfirmationForCategory,
+  isMutedDiagnosisCategory,
+  isProvisionalDiagnosisCategory,
+  resolveClinicalCategory,
+  sortDiagnosesForDisplay,
+  syncLegacyClassificationFields,
+} from '../../utils/diagnosisClassification'
+import type { DiagnosisClinicalCategory, DiagnosisConfirmationStatus } from '../../types/diagnosisCatalogue'
+import {
+  DiagnosisClassificationChips,
+  DiagnosisClassificationEditor,
+  DiagnosisClassificationEditorFromEntry,
+} from '../diagnosis/DiagnosisClassificationChips'
+import {
   createDiagnoseFreeText,
   createDiagnoseFromHit,
   getActiveCoding,
   isIndependentCatalogueEntry,
+  catalogueSystemToCodingSlot,
   loadDiagnosenAsync,
   saveDiagnosen,
   syncDerivedCodingsAsync,
-  codingHasContent,
   type CodingSystem,
   type DiagnoseEntry,
 } from '../../utils/diagnosenArchive'
@@ -46,27 +63,41 @@ const SYSTEM_HINT_KEYS: Record<DiagnosisSearchFilter, 'diagnosenSystemIcd10Hint'
 }
 
 interface DiagnoseRowProps {
-  index: number
   entry: DiagnoseEntry
   system: CodingSystem
   displayLabel: string
   editing: boolean
+  readOnly?: boolean
+  onNavigate?: () => void
   onStartEdit: () => void
   onCancelEdit: () => void
   onSaveEdit: (code: string, label: string) => void
   onDelete: () => void
+  onCategoryChange: (category: DiagnosisClinicalCategory) => void
+  onConfirmationChange: (status: DiagnosisConfirmationStatus) => void
+}
+
+function rowToneClass(entry: DiagnoseEntry): string {
+  const category = resolveClinicalCategory(entry)
+  if (category === 'primary') return 'diagnosen-table__row--primary'
+  if (isMutedDiagnosisCategory(category)) return 'diagnosen-table__row--muted'
+  if (isProvisionalDiagnosisCategory(category)) return 'diagnosen-table__row--provisional'
+  return ''
 }
 
 function DiagnoseRow({
-  index,
   entry,
   system,
   displayLabel,
   editing,
+  readOnly,
+  onNavigate,
   onStartEdit,
   onCancelEdit,
   onSaveEdit,
   onDelete,
+  onCategoryChange,
+  onConfirmationChange,
 }: DiagnoseRowProps) {
   const { t } = useTranslation()
   const coding = getActiveCoding(entry, system)
@@ -80,94 +111,144 @@ function DiagnoseRow({
     }
   }, [editing, coding.code, coding.label])
 
-  if (editing) {
+  if (editing && !readOnly) {
     return (
-      <li className="diagnosen-widget__row diagnosen-widget__row--editing">
-        <span className="diagnosen-widget__index" aria-hidden>{index}.</span>
-        <div className="diagnosen-widget__edit-fields">
-          <input
-            type="text"
-            className="diagnosen-widget__icd-input"
-            value={editCode}
-            onChange={(e) => setEditCode(e.target.value)}
-            placeholder={t('diagnosenCodePlaceholder')}
-            spellCheck={false}
-          />
-          <input
-            type="text"
-            className="diagnosen-widget__desc-input"
-            value={editLabel}
-            onChange={(e) => setEditLabel(e.target.value)}
-            placeholder={t('diagnosenDescription')}
-          />
-          <div className="diagnosen-widget__edit-actions">
-            <button
-              type="button"
-              className="diagnosen-widget__save-btn"
-              onClick={() => onSaveEdit(editCode.trim(), editLabel.trim())}
-            >
-              {t('diagnosenSave')}
-            </button>
-            <button
-              type="button"
-              className="diagnosen-widget__cancel-btn"
-              onClick={onCancelEdit}
-            >
-              {t('diagnosenCancel')}
-            </button>
+      <tr className={`diagnosen-table__row diagnosen-table__row--editing ${rowToneClass(entry)}`}>
+        <td colSpan={4}>
+          <div className="diagnosen-widget__edit-fields">
+            <input
+              type="text"
+              className="diagnosen-widget__icd-input"
+              value={editCode}
+              onChange={(e) => setEditCode(e.target.value)}
+              placeholder={t('diagnosenCodePlaceholder')}
+              spellCheck={false}
+            />
+            <input
+              type="text"
+              className="diagnosen-widget__desc-input"
+              value={editLabel}
+              onChange={(e) => setEditLabel(e.target.value)}
+              placeholder={t('diagnosenDescription')}
+            />
+            <DiagnosisClassificationEditorFromEntry
+              entry={entry}
+              onCategoryChange={onCategoryChange}
+              onConfirmationChange={onConfirmationChange}
+            />
+            {resolveClinicalCategory(entry) !== 'differential' ? (
+              <button
+                type="button"
+                className="diagnosen-widget__quick-dd-btn"
+                onClick={() => onCategoryChange('differential')}
+                title={t('diagnosisSetAsDifferential')}
+                aria-label={t('diagnosisSetAsDifferential')}
+              >
+                {t('diagnosisQuickDdLabel')}
+              </button>
+            ) : null}
+            <div className="diagnosen-widget__edit-actions">
+              <button
+                type="button"
+                className="diagnosen-widget__save-btn"
+                onClick={() => onSaveEdit(editCode.trim(), editLabel.trim())}
+              >
+                {t('diagnosenSave')}
+              </button>
+              <button
+                type="button"
+                className="diagnosen-widget__cancel-btn"
+                onClick={onCancelEdit}
+              >
+                {t('diagnosenCancel')}
+              </button>
+            </div>
           </div>
-        </div>
-      </li>
+        </td>
+      </tr>
     )
   }
 
+  const handleRowNavigate = readOnly && onNavigate
+    ? (event: MouseEvent | KeyboardEvent) => {
+        if ('key' in event && event.key !== 'Enter' && event.key !== ' ') return
+        if ('key' in event) event.preventDefault()
+        onNavigate()
+      }
+    : undefined
+
   const displayCode = coding.code || '—'
-  // `displayLabel` already comes from the shared resolver (override → bundled →
-  // code); never reach back into the raw stored label here.
   const labelText = displayLabel || coding.code || t('diagnosenNoLabel')
+  const entrySystem = entry.codingSystem ? catalogueSystemToCodingSlot(entry.codingSystem) : null
+  const systemLabel =
+    entrySystem && entrySystem !== system
+      ? entry.codingSystem === 'ICD11MMS'
+        ? t('diagnosenSystemIcd11')
+        : entry.codingSystem === 'ICD10GM'
+          ? t('diagnosenSystemIcd10')
+          : entry.codingSystem === 'DSM5TR'
+            ? t('diagnosenSystemDsm')
+            : null
+      : null
 
   return (
-    <li className="diagnosen-widget__row">
-      <span className="diagnosen-widget__index" aria-hidden>{index}.</span>
-      <div className="diagnosen-widget__display">
+    <tr
+      className={[
+        'diagnosen-table__row',
+        rowToneClass(entry),
+        readOnly && onNavigate ? 'diagnosen-table__row--navigable' : '',
+      ].join(' ').trim()}
+      onClick={handleRowNavigate}
+      onKeyDown={handleRowNavigate}
+      role={readOnly && onNavigate ? 'button' : undefined}
+      tabIndex={readOnly && onNavigate ? 0 : undefined}
+    >
+      <td className="diagnosen-table__cell diagnosen-table__cell--code">
         <span className="diagnosen-widget__code">{displayCode}</span>
+        {systemLabel ? (
+          <span className="diagnosen-widget__system-badge" title={systemLabel}>
+            {systemLabel}
+          </span>
+        ) : null}
+      </td>
+      <td className="diagnosen-table__cell diagnosen-table__cell--label">
         <span className="diagnosen-widget__label">{labelText}</span>
         {coding.overridden ? (
           <span className="diagnosen-widget__override-badge" title={t('diagnosenOverriddenHint')}>
             ✎
           </span>
         ) : null}
-        {entry.codingSystem === 'ICD11MMS' ? (
-          <span className="diagnosen-widget__system-badge" title={t('diagnosenIcd11Selected')}>
-            {t('diagnosenSystemIcd11')}
-          </span>
-        ) : entry.codingSystem === 'ICD10GM' || (codingHasContent(entry.icd10) && !codingHasContent(entry.icd11)) ? (
-          <span className="diagnosen-widget__system-badge" title={t('diagnosenIcd10Selected')}>
-            {t('diagnosenSystemIcd10')}
-          </span>
-        ) : null}
-      </div>
-      <div className="diagnosen-widget__row-actions">
-        <button
-          type="button"
-          className="diagnosen-widget__edit-btn"
-          onClick={onStartEdit}
-          aria-label={t('diagnosenEditEntry')}
-          title={t('diagnosenEditEntry')}
-        >
-          <Pencil className="h-3 w-3" strokeWidth={2} aria-hidden />
-        </button>
-        <button
-          type="button"
-          className="diagnosen-widget__delete-btn"
-          onClick={onDelete}
-          aria-label={t('diagnosenDeleteEntry')}
-          title={t('diagnosenDeleteEntry')}
-        >
-          <X className="h-3 w-3" strokeWidth={2} aria-hidden />
-        </button>
-      </div>
-    </li>
+      </td>
+      <td className="diagnosen-table__cell diagnosen-table__cell--status">
+        <div className="diagnosen-widget__status-cell">
+          <DiagnosisClassificationChips entry={entry} compact />
+        </div>
+      </td>
+      {readOnly ? null : (
+        <td className="diagnosen-table__cell diagnosen-table__cell--actions">
+          <div className="diagnosen-widget__row-actions">
+            <button
+              type="button"
+              className="diagnosen-widget__edit-btn"
+              onClick={onStartEdit}
+              aria-label={t('diagnosenEditEntry')}
+              title={t('diagnosenEditEntry')}
+            >
+              <Pencil className="diagnosen-widget__action-icon" strokeWidth={2} aria-hidden />
+            </button>
+            <button
+              type="button"
+              className="diagnosen-widget__delete-btn"
+              onClick={onDelete}
+              aria-label={t('diagnosenDeleteEntry')}
+              title={t('diagnosenDeleteEntry')}
+            >
+              <X className="diagnosen-widget__action-icon" strokeWidth={2} aria-hidden />
+            </button>
+          </div>
+        </td>
+      )}
+    </tr>
   )
 }
 
@@ -177,6 +258,10 @@ interface DiagnosenWidgetProps {
   variant?: 'sidebar' | 'panel'
   /** Flat clinical-minimal layout (Diagnose page) — no collapse chrome. */
   flat?: boolean
+  /** Overview card: read-only compact table (no inline editing). */
+  compact?: boolean
+  /** Navigate to full Diagnose page when an overview row is activated. */
+  onOpenDiagnose?: () => void
   /** Persist diagnoses into encrypted clinical case file (workspace vault). */
   onDiagnosesChanged?: () => void
 }
@@ -185,8 +270,11 @@ export function DiagnosenWidget({
   caseId,
   variant = 'sidebar',
   flat = false,
+  compact = false,
+  onOpenDiagnose,
   onDiagnosesChanged,
 }: DiagnosenWidgetProps) {
+  const readOnly = compact
   const { t, language } = useTranslation()
   const { activeSystem, setActiveSystem } = useDiagnosenCodingSystem(caseId)
   const showSystemTabs = variant === 'panel'
@@ -202,7 +290,16 @@ export function DiagnosenWidget({
   const [searchResults, setSearchResults] = useState<DiagnosisSearchHit[]>([])
   const [searching, setSearching] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [newEntryCategory, setNewEntryCategory] = useState<DiagnosisClinicalCategory>('secondary')
+  const [newEntryConfirmation, setNewEntryConfirmation] =
+    useState<DiagnosisConfirmationStatus>('confirmed')
   const searchRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const category = inferDefaultCategoryForNewEntry(entries)
+    setNewEntryCategory(category)
+    setNewEntryConfirmation(inferDefaultConfirmationForCategory(category))
+  }, [entries])
 
   useEffect(() => {
     let active = true
@@ -272,24 +369,50 @@ export function DiagnosenWidget({
     }
   }, [searchQuery, searchFilter])
 
+  const applyNewEntryClassification = useCallback((entry: DiagnoseEntry): DiagnoseEntry => {
+    const now = new Date().toISOString()
+    return syncLegacyClassificationFields(
+      {
+        ...entry,
+        updatedAt: now,
+        statusClinicianSetAt: now,
+      },
+      newEntryCategory,
+      newEntryConfirmation,
+    )
+  }, [newEntryCategory, newEntryConfirmation])
+
   const handleAddFromHit = useCallback((hit: DiagnosisSearchHit) => {
     const slot = catalogueSystemToClient(hit.system)
-    setEntries((prev) => [...prev, createDiagnoseFromHit(hit, slot)])
+    setEntries((prev) => [...prev, applyNewEntryClassification(createDiagnoseFromHit(hit, slot, prev))])
     setAdding(false)
     setSearchQuery('')
     setCollapsed(false)
-  }, [])
+  }, [applyNewEntryClassification])
 
   const handleAddFreeText = useCallback(() => {
     const text = searchQuery.trim()
     if (!text) return
-    void createDiagnoseFreeText(text, '', activeSystem).then((entry) => {
-      setEntries((prev) => [...prev, entry])
+    void createDiagnoseFreeText(text, '', activeSystem, entries).then((entry) => {
+      setEntries((prev) => [...prev, applyNewEntryClassification(entry)])
       setAdding(false)
       setSearchQuery('')
       setCollapsed(false)
     })
-  }, [searchQuery])
+  }, [searchQuery, activeSystem, entries, applyNewEntryClassification])
+
+  const handleNewCategoryChange = useCallback((category: DiagnosisClinicalCategory) => {
+    setNewEntryCategory(category)
+    setNewEntryConfirmation((current) => {
+      if (category === 'differential' || category === 'suspected' || category === 'rule_out') {
+        return 'under_review'
+      }
+      if (category === 'historical') return 'anamnesis_only'
+      if (category === 'remitted') return 'active'
+      if (current === 'anamnesis_only' || current === 'under_review') return 'confirmed'
+      return current
+    })
+  }, [])
 
   const handleSaveEdit = useCallback(
     (id: string, system: CodingSystem, code: string, label: string) => {
@@ -324,12 +447,33 @@ export function DiagnosenWidget({
     setEditingId(null)
   }, [])
 
+  const handleCategoryChange = useCallback((id: string, category: DiagnosisClinicalCategory) => {
+    setEntries((prev) =>
+      prev.map((entry) =>
+        entry.id === id ? applyClinicianCategoryChange(entry, category) : entry,
+      ),
+    )
+  }, [])
+
+  const handleConfirmationChange = useCallback(
+    (id: string, status: DiagnosisConfirmationStatus) => {
+      setEntries((prev) =>
+        prev.map((entry) =>
+          entry.id === id ? applyClinicianConfirmationChange(entry, status) : entry,
+        ),
+      )
+    },
+    [],
+  )
+
+  const sortedEntries = useMemo(() => sortDiagnosesForDisplay(entries), [entries])
+
   const trimmedQuery = searchQuery.trim()
   const showFreeTextOption = trimmedQuery.length > 0
 
   const entryTitleRequests = useMemo(
-    () => entries.map((entry) => buildDiagnosisTitleRequestFromEntry(entry, activeSystem)),
-    [entries, activeSystem],
+    () => entries.map((entry) => buildDiagnosisTitleRequestFromEntry(entry, activeSystem, undefined, language)),
+    [entries, activeSystem, language],
   )
 
   const { titlesByKey: entryDisplayTitles } = useDiagnosisDisplayTitles(
@@ -347,9 +491,10 @@ export function DiagnosenWidget({
           coding: { code: result.code, label: result.title, overridden: false },
           version,
           disorderCriteriaLabel: result.title,
+          lang: language,
         })
       }),
-    [searchResults],
+    [searchResults, language],
   )
 
   const { titlesByKey: searchDisplayTitles } = useDiagnosisDisplayTitles(
@@ -372,19 +517,21 @@ export function DiagnosenWidget({
         <header className="diagnosen-widget__header diagnosen-widget__header--flat">
           <ClinicalEyebrow inline>{t('diagnosenTitle')}</ClinicalEyebrow>
           <span className="cm-section__head-spacer" aria-hidden />
-          <button
-            type="button"
-            className="diagnosen-widget__add-btn diagnosen-widget__add-btn--flat"
-            onClick={() => {
-              setAdding((a) => !a)
-              setCollapsed(false)
-            }}
-            aria-label={t('diagnosenAddEntry')}
-            title={t('diagnosenAddEntry')}
-          >
-            <Plus className="h-3 w-3" strokeWidth={2.5} aria-hidden />
-            <span className="diagnosen-widget__add-label">{t('diagnosenAddEntry')}</span>
-          </button>
+          {!readOnly ? (
+            <button
+              type="button"
+              className="diagnosen-widget__add-btn diagnosen-widget__add-btn--flat"
+              onClick={() => {
+                setAdding((a) => !a)
+                setCollapsed(false)
+              }}
+              aria-label={t('diagnosenAddEntry')}
+              title={t('diagnosenAddEntry')}
+            >
+              <Plus className="h-3 w-3" strokeWidth={2.5} aria-hidden />
+              <span className="diagnosen-widget__add-label">{t('diagnosenAddEntry')}</span>
+            </button>
+          ) : null}
         </header>
       ) : (
         <div className="diagnosen-widget__header">
@@ -399,18 +546,20 @@ export function DiagnosenWidget({
               {collapsed ? '›' : '‹'}
             </span>
           </button>
-          <button
-            type="button"
-            className="diagnosen-widget__add-btn"
-            onClick={() => {
-              setAdding((a) => !a)
-              setCollapsed(false)
-            }}
-            aria-label={t('diagnosenAddEntry')}
-            title={t('diagnosenAddEntry')}
-          >
-            <Plus className="h-3 w-3" strokeWidth={2.5} aria-hidden />
-          </button>
+          {!readOnly ? (
+            <button
+              type="button"
+              className="diagnosen-widget__add-btn"
+              onClick={() => {
+                setAdding((a) => !a)
+                setCollapsed(false)
+              }}
+              aria-label={t('diagnosenAddEntry')}
+              title={t('diagnosenAddEntry')}
+            >
+              <Plus className="h-3 w-3" strokeWidth={2.5} aria-hidden />
+            </button>
+          ) : null}
         </div>
       )}
 
@@ -456,8 +605,17 @@ export function DiagnosenWidget({
             id={`diagnosen-panel-${activeSystem}`}
             aria-labelledby={showSystemTabs ? `diagnosen-tab-${activeSystem}` : undefined}
           >
-            {adding ? (
+            {adding && !readOnly ? (
               <div className="diagnosen-widget__search">
+                <div className="diagnosen-widget__add-classification">
+                  <p className="diagnosen-widget__add-hint">{t('diagnosisClassificationAddHint')}</p>
+                  <DiagnosisClassificationEditor
+                    category={newEntryCategory}
+                    confirmation={newEntryConfirmation}
+                    onCategoryChange={handleNewCategoryChange}
+                    onConfirmationChange={setNewEntryConfirmation}
+                  />
+                </div>
                 <input
                   ref={searchRef}
                   type="search"
@@ -483,6 +641,7 @@ export function DiagnosenWidget({
                               { code: result.code, label: result.title, overridden: false },
                               codingSystemToTitleVersion(catalogueSystemToClient(result.system)),
                               result.title,
+                              language,
                             )}
                         </span>
                       </button>
@@ -518,28 +677,57 @@ export function DiagnosenWidget({
             ) : entries.length === 0 ? (
               <p className="diagnosen-widget__empty">{t('diagnosenEmpty')}</p>
             ) : (
-              <ol className="diagnosen-widget__list" aria-label={t('diagnosenTitle')}>
-                {entries.map((entry, index) => {
-                  const coding = getActiveCoding(entry, activeSystem)
-                  const displayLabel =
-                    entryDisplayTitles.get(entry.id)
-                    ?? resolveDiagnosisLabelSync(coding, codingSystemToTitleVersion(activeSystem))
-                  return (
-                    <DiagnoseRow
-                      key={entry.id}
-                      index={index + 1}
-                      entry={entry}
-                      system={activeSystem}
-                      displayLabel={displayLabel}
-                      editing={editingId === entry.id}
-                      onStartEdit={() => setEditingId(entry.id)}
-                      onCancelEdit={() => setEditingId(null)}
-                      onSaveEdit={(code, label) => handleSaveEdit(entry.id, activeSystem, code, label)}
-                      onDelete={() => handleDelete(entry.id)}
-                    />
-                  )
-                })}
-              </ol>
+              <table
+                className={[
+                  'diagnosen-table',
+                  compact ? 'diagnosen-table--compact' : '',
+                  readOnly && onOpenDiagnose ? 'diagnosen-table--navigable' : '',
+                ].join(' ').trim()}
+              >
+                <caption className="visually-hidden">{t('diagnosenTitle')}</caption>
+                <thead className="diagnosen-table__head">
+                  <tr>
+                    <th scope="col">{t('diagnosisTableColCode')}</th>
+                    <th scope="col">{t('diagnosisTableColName')}</th>
+                    <th scope="col">{t('diagnosisTableColStatus')}</th>
+                    {readOnly ? null : (
+                      <th scope="col" className="diagnosen-table__head-actions">
+                        <span className="visually-hidden">{t('diagnosenEditEntry')}</span>
+                      </th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedEntries.map((entry) => {
+                    const coding = getActiveCoding(entry, activeSystem)
+                    const displayLabel =
+                      entryDisplayTitles.get(entry.id)
+                      ?? resolveDiagnosisLabelSync(
+                        coding,
+                        codingSystemToTitleVersion(activeSystem),
+                        undefined,
+                        language,
+                      )
+                    return (
+                      <DiagnoseRow
+                        key={entry.id}
+                        entry={entry}
+                        system={activeSystem}
+                        displayLabel={displayLabel}
+                        editing={editingId === entry.id}
+                        readOnly={readOnly}
+                        onNavigate={onOpenDiagnose}
+                        onStartEdit={() => setEditingId(entry.id)}
+                        onCancelEdit={() => setEditingId(null)}
+                        onSaveEdit={(code, label) => handleSaveEdit(entry.id, activeSystem, code, label)}
+                        onDelete={() => handleDelete(entry.id)}
+                        onCategoryChange={(category) => handleCategoryChange(entry.id, category)}
+                        onConfirmationChange={(status) => handleConfirmationChange(entry.id, status)}
+                      />
+                    )
+                  })}
+                </tbody>
+              </table>
             )}
           </div>
         </div>

@@ -25,6 +25,7 @@ import { patchDemoUserState, loadDemoUserState } from './demoUserState'
 import { validateDemoFixture } from './validateDemoFixture'
 import type { DemoSeedCounts } from './types'
 import { WORKSPACE_PAYLOAD_VERSION } from '../utils/workspaceVault'
+import { ensureDemoClinicalIntelligenceForCase } from './ensureDemoClinicalIntelligence'
 import { saveClinicalIntelligenceState } from '../utils/clinicalIntelligence/storage'
 
 function replaceDokumenteArchive(caseId: string, entries: DokumentEntry[]): void {
@@ -118,6 +119,7 @@ export async function seedDemoPatient(options: SeedDemoPatientOptions): Promise<
   const localeMatches = normalizeDemoLocale(userState.locale, locale) === locale
   const dataComplete = isDemoSeedDataComplete(caseId)
   if (existing?.isDemoPatient && !options.force && dataComplete && localeMatches) {
+    ensureDemoClinicalIntelligenceForCase(caseId)
     const counts = countSeed(fixture)
     patchDemoUserState(options.userId, {
       status: 'installed',

@@ -1651,6 +1651,10 @@ interface VerlaufFeedPageProps {
   caseId: string
   /** Human-readable patient label for to-dos mirrored into the central list. */
   patientLabel?: string | null
+  /** When true on mount, opens the inline composer (Übersicht quick action). */
+  autoOpenComposer?: boolean
+  /** Called once the auto-open request has been consumed. */
+  onAutoOpenComposerHandled?: () => void
   /**
    * Routes a derived (projected) entry's edit/delete to its source module.
    * Derived cards mirror data owned by another section, so they are never
@@ -1662,6 +1666,8 @@ interface VerlaufFeedPageProps {
 export function VerlaufFeedPage({
   caseId,
   patientLabel = null,
+  autoOpenComposer = false,
+  onAutoOpenComposerHandled,
   onNavigateToSource,
 }: VerlaufFeedPageProps) {
   const { t, language } = useTranslation()
@@ -2330,6 +2336,12 @@ export function VerlaufFeedPage({
   const [composerDate, setComposerDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [composerType, setComposerType] = useState<VerlaufDocumentType>('verlauf')
 
+  useEffect(() => {
+    if (!autoOpenComposer) return
+    setComposerOpen(true)
+    onAutoOpenComposerHandled?.()
+  }, [autoOpenComposer, onAutoOpenComposerHandled])
+
   const handleComposerSave = useCallback(() => {
     if (!composerText.trim()) return
     const typeOption =
@@ -2580,6 +2592,7 @@ export function VerlaufFeedPage({
       }`}
     >
     <div className="verlauf-feed-page">
+      <div className="verlauf-feed-chrome">
       <header className="verlauf-feed-page__header">
         <h2 className="verlauf-feed-page__title">{t('verlaufFeedTitle')}</h2>
         <div className="verlauf-feed-page__header-actions">
@@ -2759,6 +2772,7 @@ export function VerlaufFeedPage({
           )}
         </div>
       )}
+      </div>
 
       {isEmpty && !composerOpen ? (
         <div className="clinical-empty-state-card verlauf-feed-page__empty-card">

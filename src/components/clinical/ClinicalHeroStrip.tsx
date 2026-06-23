@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Check, Pencil, X } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
 import { upsertCaseMeta } from '../../hooks/useCaseRegistry'
@@ -12,6 +12,8 @@ interface ClinicalHeroStripProps {
   demographics: ClinicalHeroDemographics
   /** @deprecated Use `demographics` — retained for legacy callers during migration. */
   metaLine?: string | null
+  /** Extra compact facts (diagnosis line, admission day, …) appended after core demographics. */
+  supplementFacts?: Array<{ label: string; value: ReactNode }>
   caseId?: string | null
   thesis?: string | null
   className?: string
@@ -38,6 +40,7 @@ export function ClinicalHeroStrip({
   name,
   demographics,
   metaLine: _metaLine,
+  supplementFacts = [],
   caseId,
   thesis,
   className,
@@ -83,6 +86,12 @@ export function ClinicalHeroStrip({
               <dd className="cm-hero__fact-value">{demographics[key] ?? CLINICAL_HERO_MISSING}</dd>
             </div>
           ))}
+          {supplementFacts.map((fact) => (
+            <div key={fact.label} className="cm-hero__fact">
+              <dt className="cm-hero__fact-label">{fact.label}</dt>
+              <dd className="cm-hero__fact-value">{fact.value}</dd>
+            </div>
+          ))}
         </dl>
       ) : null}
       {canEdit || thesis ? (
@@ -91,7 +100,7 @@ export function ClinicalHeroStrip({
             <div className="cm-hero__thesis-editor">
               <textarea
                 className="cm-hero__thesis-input"
-                rows={2}
+                rows={1}
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
                 placeholder={t('clinicalSubheadingPlaceholder')}
@@ -117,7 +126,7 @@ export function ClinicalHeroStrip({
               </div>
             </div>
           ) : (
-            <>
+            <div className="cm-hero__thesis-display">
               {thesis ? <p className="cm-hero__thesis">{thesis}</p> : null}
               {canEdit ? (
                 <button
@@ -127,10 +136,10 @@ export function ClinicalHeroStrip({
                   title={t('clinicalSubheadingEdit')}
                   aria-label={t('clinicalSubheadingEdit')}
                 >
-                  <Pencil strokeWidth={1.75} aria-hidden />
+                  <Pencil strokeWidth={2} aria-hidden />
                 </button>
               ) : null}
-            </>
+            </div>
           )}
         </div>
       ) : null}

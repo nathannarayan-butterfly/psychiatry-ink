@@ -5,11 +5,10 @@
  *  - Header with run + global "Alle akzeptieren" actions.
  *  - Section-level AI-hypothesis disclaimer banner (still required).
  *  - Two summary graphs at the top — Dimensional Profile and Mechanism
- *    Hypotheses — each with its own "Alle akzeptieren" button and inline
- *    expandable detail rows (accordion).
- *  - Collapsible sections below: Treatment Implications, Missing Info,
- *    Exploratory, Clinician Review. Each is closed by default to keep the
- *    surface minimal; details remain one click away.
+ *    Hypotheses — side by side on wide screens, each with its own
+ *    "Alle akzeptieren" button and inline expandable detail rows.
+ *  - Collapsible sections below: Treatment Implications, Missing Info.
+ *    Each is closed by default to keep the surface minimal.
  *  - The Development Diagnostics panel still renders at the bottom in Debug
  *    Mode unchanged.
  *
@@ -27,18 +26,18 @@ import {
 import { isClinicalIntelligenceAvailableForCase } from '../../../demo/demoFeatureFlags'
 import { CiAccordion } from './CiAccordion'
 import { CiHypothesisBanner } from './CiHypothesisBanner'
-import { ClinicianReviewCard } from './ClinicianReviewCard'
 import { DevelopmentDiagnosticsPanel } from './DevelopmentDiagnosticsPanel'
+import { ClinicalIntelligenceDiscussPanel } from './ClinicalIntelligenceDiscussPanel'
 import { DimensionalProfileGraph } from './DimensionalProfileGraph'
 import { MechanismHypothesesGraph } from './MechanismHypothesesGraph'
 import { MissingInfoCard } from './MissingInfoCard'
 import { TreatmentImplicationsCard } from './TreatmentImplicationsCard'
-import { ClinicalIntelligenceRightPanel } from './ClinicalIntelligenceRightPanel'
 import { ClinicalIntelligenceNotesSection } from './ClinicalIntelligenceNotesSection'
 import { CiStatusCountRow } from './CiStatusCountRow'
 import { showNotionToast } from '../../notion/NotionToast'
 import { saveCiAcceptedToDokumente } from '../../../utils/clinicalIntelligence/saveAcceptedToDokumente'
 import { computeCiReviewCounts } from '../../../utils/clinicalIntelligence/reviewCounts'
+import { localizeClinicalIntelligenceRunForDisplay } from '../../../utils/clinicalIntelligence/localizeRunForDisplay'
 import type {
   ClinicalIntelligenceDimensionId,
   ClinicalIntelligenceMechanismId,
@@ -66,7 +65,6 @@ function countPendingMechanisms(result: MechanismInferenceResult | null): number
 export function ClinicalIntelligencePanel({
   caseId,
   className,
-  onOpenDocument,
 }: ClinicalIntelligencePanelProps) {
   const { t, language } = useTranslation()
   const ci = useClinicalIntelligence(caseId)
@@ -75,8 +73,13 @@ export function ClinicalIntelligencePanel({
   const enabled = isClinicalIntelligenceAvailableForCase(caseId)
 
   const run = ci.latestRun
-  const dimensional = run?.dimensional ?? null
-  const mechanism = run?.mechanism ?? null
+  const displayRun = useMemo(
+    () => (run ? localizeClinicalIntelligenceRunForDisplay(run, language) : null),
+    [run, language],
+  )
+  const dimensional = displayRun?.dimensional ?? null
+  const mechanism = displayRun?.mechanism ?? null
+  const evidenceItems = ci.evidence?.items
 
   const [expandedDim, setExpandedDim] = useState<
     ClinicalIntelligenceDimensionId | null
@@ -87,7 +90,6 @@ export function ClinicalIntelligencePanel({
   const [commentOpen, setCommentOpen] = useState(false)
   const [commentDraft, setCommentDraft] = useState('')
   const [discussOpen, setDiscussOpen] = useState(false)
-  const [lastSavedDocumentId, setLastSavedDocumentId] = useState<string | null>(null)
 
   const documentLabels = useMemo(
     () => ({
@@ -171,29 +173,23 @@ export function ClinicalIntelligencePanel({
   }, [confirmAndAccept, pendingMech])
 
   const saveAcceptedToDocuments = useCallback(() => {
-    if (!run) return
+    if (!displayRun) return
     const savedAt = new Date().toISOString()
-    const entry = saveCiAcceptedToDokumente({
+    saveCiAcceptedToDokumente({
       caseId,
-      run,
+      run: displayRun,
       clinicianComment: ci.state.clinicianComment,
       savedAt,
       labels: documentLabels,
       locale: language,
     })
     ci.saveAcceptedFindings(savedAt)
-    setLastSavedDocumentId(entry.id)
     showNotionToast(t('ciSaveDocumentToast'))
-  }, [caseId, ci, documentLabels, language, run, t])
+  }, [caseId, ci, displayRun, documentLabels, language, t])
 
   const onSaveAccepted = useCallback(() => {
     saveAcceptedToDocuments()
   }, [saveAcceptedToDocuments])
-
-  const onOpenSavedDocument = useCallback(() => {
-    if (!lastSavedDocumentId) return
-    onOpenDocument?.(lastSavedDocumentId)
-  }, [lastSavedDocumentId, onOpenDocument])
 
   const onSaveComment = useCallback(() => {
     ci.saveClinicianComment(commentDraft)
@@ -225,10 +221,6 @@ export function ClinicalIntelligencePanel({
   const showEvidenceMissing = !ci.hasEvidenceBase
   const totalPending = pendingDim + pendingMech
 
-  const exploratoryDimItems = dimensional?.exploratoryInsufficientEvidence ?? []
-  const exploratoryMechItems = mechanism?.exploratoryInsufficientEvidence ?? []
-  const exploratoryCount = exploratoryDimItems.length + exploratoryMechItems.length
-
   return (
     <div className={classes} data-language={language}>
       <div className="ci-panel__intro">
@@ -237,7 +229,6 @@ export function ClinicalIntelligencePanel({
             <Brain className="ci-panel__icon" aria-hidden strokeWidth={2} />
             <div>
               <h2 className="ci-panel__h">{t('ciSectionTitle')}</h2>
-              <p className="ci-panel__sub">{t('ciSectionSubtitle')}</p>
             </div>
           </div>
           <div className="ci-panel__head-actions">
@@ -307,8 +298,7 @@ export function ClinicalIntelligencePanel({
         <CiHypothesisBanner />
       </div>
 
-      <div className="ci-panel-layout">
-        <div className="ci-panel__main">
+      <div className="ci-panel__main">
           {showEvidenceMissing ? (
         <ClinicalSection eyebrow={t('ciEvidenceMissingTitle')}>
           <p>{t('ciEvidenceMissingBody')}</p>
@@ -329,74 +319,80 @@ export function ClinicalIntelligencePanel({
         </ClinicalSection>
       ) : (
         <>
-          {dimensional ? (
-            <ClinicalSection
-              className="ci-graph-section"
-              eyebrow={t('ciCardDimensional')}
-              meta={`${dimensional.activeDimensions.length} ${t('ciActiveLabel')}`}
-              headerExtra={
-                pendingDim > 0 ? (
-                  <button
-                    type="button"
-                    className="ci-btn ci-section-accept-all"
-                    onClick={onAcceptAllDimensions}
-                  >
-                    <CheckCheck className="ci-btn__icon" aria-hidden strokeWidth={2} />
-                    {t('ciAcceptAllButton')} ({pendingDim})
-                  </button>
-                ) : null
-              }
-            >
-              <CiStatusCountRow
-                accepted={reviewCounts.dimensional.accepted}
-                pending={reviewCounts.dimensional.pending}
-                rejected={reviewCounts.dimensional.rejected}
-                className="ci-graph-section__status"
-              />
-              <DimensionalProfileGraph
-                result={dimensional}
-                expandedId={expandedDim}
-                onToggle={onToggleDim}
-                onAccept={ci.acceptDimension}
-                onReject={ci.rejectDimension}
-                onEdit={ci.editDimension}
-              />
-            </ClinicalSection>
-          ) : null}
+          {(dimensional || mechanism) ? (
+            <div className="ci-graphs-row">
+              {dimensional ? (
+                <ClinicalSection
+                  className="ci-graph-section"
+                  eyebrow={t('ciCardDimensional')}
+                  meta={`${dimensional.activeDimensions.length} ${t('ciActiveLabel')}`}
+                  headerExtra={
+                    pendingDim > 0 ? (
+                      <button
+                        type="button"
+                        className="ci-btn ci-section-accept-all"
+                        onClick={onAcceptAllDimensions}
+                      >
+                        <CheckCheck className="ci-btn__icon" aria-hidden strokeWidth={2} />
+                        {t('ciAcceptAllButton')} ({pendingDim})
+                      </button>
+                    ) : null
+                  }
+                >
+                  <CiStatusCountRow
+                    accepted={reviewCounts.dimensional.accepted}
+                    pending={reviewCounts.dimensional.pending}
+                    rejected={reviewCounts.dimensional.rejected}
+                    className="ci-graph-section__status"
+                  />
+                  <DimensionalProfileGraph
+                    result={dimensional}
+                    evidenceItems={evidenceItems}
+                    expandedId={expandedDim}
+                    onToggle={onToggleDim}
+                    onAccept={ci.acceptDimension}
+                    onReject={ci.rejectDimension}
+                    onEdit={ci.editDimension}
+                  />
+                </ClinicalSection>
+              ) : null}
 
-          {mechanism ? (
-            <ClinicalSection
-              className="ci-graph-section"
-              eyebrow={t('ciCardMechanism')}
-              meta={`${mechanism.activeMechanisms.length} ${t('ciActiveLabel')}`}
-              headerExtra={
-                pendingMech > 0 ? (
-                  <button
-                    type="button"
-                    className="ci-btn ci-section-accept-all"
-                    onClick={onAcceptAllMechanisms}
-                  >
-                    <CheckCheck className="ci-btn__icon" aria-hidden strokeWidth={2} />
-                    {t('ciAcceptAllButton')} ({pendingMech})
-                  </button>
-                ) : null
-              }
-            >
-              <CiStatusCountRow
-                accepted={reviewCounts.mechanism.accepted}
-                pending={reviewCounts.mechanism.pending}
-                rejected={reviewCounts.mechanism.rejected}
-                className="ci-graph-section__status"
-              />
-              <MechanismHypothesesGraph
-                result={mechanism}
-                expandedId={expandedMech}
-                onToggle={onToggleMech}
-                onAccept={ci.acceptMechanism}
-                onReject={ci.rejectMechanism}
-                onEdit={ci.editMechanism}
-              />
-            </ClinicalSection>
+              {mechanism ? (
+                <ClinicalSection
+                  className="ci-graph-section"
+                  eyebrow={t('ciCardMechanism')}
+                  meta={`${mechanism.activeMechanisms.length} ${t('ciActiveLabel')}`}
+                  headerExtra={
+                    pendingMech > 0 ? (
+                      <button
+                        type="button"
+                        className="ci-btn ci-section-accept-all"
+                        onClick={onAcceptAllMechanisms}
+                      >
+                        <CheckCheck className="ci-btn__icon" aria-hidden strokeWidth={2} />
+                        {t('ciAcceptAllButton')} ({pendingMech})
+                      </button>
+                    ) : null
+                  }
+                >
+                  <CiStatusCountRow
+                    accepted={reviewCounts.mechanism.accepted}
+                    pending={reviewCounts.mechanism.pending}
+                    rejected={reviewCounts.mechanism.rejected}
+                    className="ci-graph-section__status"
+                  />
+                  <MechanismHypothesesGraph
+                    result={mechanism}
+                    evidenceItems={evidenceItems}
+                    expandedId={expandedMech}
+                    onToggle={onToggleMech}
+                    onAccept={ci.acceptMechanism}
+                    onReject={ci.rejectMechanism}
+                    onEdit={ci.editMechanism}
+                  />
+                </ClinicalSection>
+              ) : null}
+            </div>
           ) : null}
 
           {mechanism ? (
@@ -415,7 +411,10 @@ export function ClinicalIntelligencePanel({
                   : null
               }
             >
-              <TreatmentImplicationsCard mechanismResult={mechanism} />
+              <TreatmentImplicationsCard
+                mechanismResult={mechanism}
+                evidenceItems={evidenceItems}
+              />
             </CiAccordion>
           ) : null}
 
@@ -427,55 +426,6 @@ export function ClinicalIntelligencePanel({
               />
             </CiAccordion>
           ) : null}
-
-          {exploratoryCount > 0 ? (
-            <CiAccordion
-              eyebrow={t('ciExploratoryHeading')}
-              meta={String(exploratoryCount)}
-            >
-              <p className="ci-row__meta">{t('ciExploratoryNotAccepted')}</p>
-              {exploratoryDimItems.length > 0 ? (
-                <div className="ci-exploratory">
-                  <p className="ci-eyebrow">{t('ciCardDimensional')}</p>
-                  <ul className="ci-list ci-list--exploratory">
-                    {exploratoryDimItems.map((entry) => (
-                      <li
-                        key={`dim-${entry.topic}-${entry.rationale.slice(0, 30)}`}
-                        className="ci-exploratory-item"
-                      >
-                        <span className="ci-exploratory-item__topic">{entry.topic}</span>
-                        <span className="ci-exploratory-item__rationale">
-                          {entry.rationale}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-              {exploratoryMechItems.length > 0 ? (
-                <div className="ci-exploratory">
-                  <p className="ci-eyebrow">{t('ciCardMechanism')}</p>
-                  <ul className="ci-list ci-list--exploratory">
-                    {exploratoryMechItems.map((entry) => (
-                      <li
-                        key={`mech-${entry.topic}-${entry.rationale.slice(0, 30)}`}
-                        className="ci-exploratory-item"
-                      >
-                        <span className="ci-exploratory-item__topic">{entry.topic}</span>
-                        <span className="ci-exploratory-item__rationale">
-                          {entry.rationale}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-            </CiAccordion>
-          ) : null}
-
-          <CiAccordion eyebrow={t('ciCardReview')}>
-            <ClinicianReviewCard state={ci.state} onSaveAccepted={saveAcceptedToDocuments} />
-          </CiAccordion>
 
           <ClinicalIntelligenceNotesSection
             ci={ci}
@@ -496,17 +446,16 @@ export function ClinicalIntelligencePanel({
           runError={ci.error}
         />
       ) : null}
-        </div>
-
-        <ClinicalIntelligenceRightPanel
-          ci={ci}
-          discussOpen={discussOpen}
-          onCloseDiscuss={() => setDiscussOpen(false)}
-          savedAt={ci.state.savedAcceptedAt}
-          savedDocumentId={lastSavedDocumentId}
-          onOpenSavedDocument={onOpenSavedDocument}
-        />
       </div>
+
+      {discussOpen ? (
+        <ClinicalIntelligenceDiscussPanel
+          ci={ci}
+          open={discussOpen}
+          onClose={() => setDiscussOpen(false)}
+          placement="dock"
+        />
+      ) : null}
     </div>
   )
 }

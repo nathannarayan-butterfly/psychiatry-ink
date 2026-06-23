@@ -213,6 +213,54 @@
   padding: 0.3rem 0.6rem;
 }
 
+/* Diagnosis table — flat clinical rows */
+.diagnose-page .diagnosen-table__head th {
+  font-size: var(--text-2xs, 0.6875rem);
+  font-weight: 500;
+  letter-spacing: var(--cm-label-tracking, 0.08em);
+  text-transform: uppercase;
+  color: var(--text-muted, #91887e);
+  border-bottom: 1px solid var(--cm-hairline);
+}
+
+.diagnose-page .diagnosen-table__cell {
+  padding: 0.65rem 0.35rem 0.65rem 0;
+  border-bottom: 1px solid var(--cm-hairline);
+  vertical-align: middle;
+}
+
+.diagnose-page .diagnosen-table__row:last-child .diagnosen-table__cell {
+  border-bottom: none;
+}
+
+.diagnose-page .diagnosen-widget__row-actions {
+  opacity: 1;
+}
+
+.diagnose-page .diagnosen-widget__edit-btn,
+.diagnose-page .diagnosen-widget__delete-btn {
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 6%, transparent);
+  color: var(--ink, #24211e);
+}
+
+.diagnose-page .diagnosen-widget__edit-btn:hover {
+  color: var(--area-accent, var(--accent, #8a5a2b));
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 12%, transparent);
+}
+
+.diagnose-page .diagnosen-widget__delete-btn:hover {
+  color: var(--error, #c0392b);
+  background: color-mix(in srgb, var(--error, #c0392b) 10%, transparent);
+}
+
+.diagnose-page .diagnosen-widget__add-classification {
+  border-bottom-color: var(--cm-hairline);
+}
+
+.diagnose-page .diagnosen-widget__add-hint {
+  font-size: var(--text-xs, 0.75rem);
+}
+
 /* ── Butterfly panel — flat section ─────────────────────────────────────── */
 
 .diagnose-page .butterfly-panel {

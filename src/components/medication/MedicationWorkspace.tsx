@@ -48,6 +48,7 @@ interface MedicationWorkspaceProps {
 /** Imperative handle so a parent (e.g. a cross-tab trigger) can open the add dialog. */
 export interface MedicationWorkspaceHandle {
   openAdd: () => void
+  openSideEffectsSection: () => void
 }
 
 export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, MedicationWorkspaceProps>(
@@ -116,7 +117,15 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
     setEditOpen(true)
   }, [])
 
-  useImperativeHandle(ref, () => ({ openAdd }), [openAdd])
+  const openSideEffectsSection = useCallback(() => {
+    selectSection('sideEffects')
+    requestAnimationFrame(() => {
+      const target = document.getElementById(medicationSectionDomId('sideEffects'))
+      target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }, [selectSection])
+
+  useImperativeHandle(ref, () => ({ openAdd, openSideEffectsSection }), [openAdd, openSideEffectsSection])
 
   const openEdit = useCallback((entry: MedicationEntry) => {
     setEditingEntry(entry)
@@ -207,9 +216,6 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
               isStandalone ? 'medStandalonePageTitle' : 'medPageTitle',
             )}
           </h2>
-          <p className="medication-hero__desc">
-            {translateMedicationUi(language, isStandalone ? 'medStandaloneDescPlan' : 'medDescPlan')}
-          </p>
         </div>
       </header>
 
@@ -333,9 +339,6 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
                         <span className="medication-explore__title">
                           {translateMedicationUi(language, meta.labelKey)}
                         </span>
-                        <span className="medication-explore__desc">
-                          {translateMedicationUi(language, meta.descKey)}
-                        </span>
                       </span>
                     </button>
                   )
@@ -343,10 +346,6 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
               </div>
             </section>
           ) : null}
-
-          <p className="medication-workspace__disclaimer-note">
-            {translateMedicationUi(language, 'medDisclaimerDemo')}
-          </p>
         </>
       )}
     </div>
@@ -408,9 +407,6 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
                 <h2 className="medication-section-detail__title">
                   {translateMedicationUi(language, educationMeta.labelKey)}
                 </h2>
-                <p className="medication-section-detail__desc">
-                  {translateMedicationUi(language, educationMeta.descKey)}
-                </p>
               </div>
             </div>
           </header>

@@ -491,7 +491,8 @@
 }
 
 [data-area='ci'] .ci-panel__main > .cm-section,
-[data-area='ci'] .ci-panel__main > .ci-accordion {
+[data-area='ci'] .ci-panel__main > .ci-accordion,
+[data-area='ci'] .ci-graphs-row > .ci-graph-section {
   --patient-bordered-accent: color-mix(
     in srgb,
     var(--area-accent, var(--accent)) var(--patient-bordered-accent-mix),
@@ -517,18 +518,28 @@
   padding-top: var(--patient-bordered-padding-y);
 }
 
+[data-area='ci'] .ci-graphs-row > .ci-graph-section:first-child {
+  --patient-bordered-accent: var(--ov-teal, #2a6b6b);
+}
+
+[data-area='ci'] .ci-graphs-row > .ci-graph-section:last-child {
+  --patient-bordered-accent: var(--ov-ai-blue, #4a6280);
+}
+
 [data-area='ci'] .ci-panel__main > .cm-section .cm-section__head,
-[data-area='ci'] .ci-panel__main > .ci-accordion .ci-accordion__head {
+[data-area='ci'] .ci-panel__main > .ci-accordion .ci-accordion__head,
+[data-area='ci'] .ci-graphs-row > .ci-graph-section .cm-section__head {
   margin-bottom: 0.75rem;
 }
 
 [data-area='ci'] .ci-panel__main > .cm-section .cm-section__body,
-[data-area='ci'] .ci-panel__main > .ci-accordion .ci-accordion__body {
+[data-area='ci'] .ci-panel__main > .ci-accordion .ci-accordion__body,
+[data-area='ci'] .ci-graphs-row > .ci-graph-section .cm-section__body {
   padding-top: 0.15rem;
 }
 
-[data-area='ci'] .ci-graph-section {
-  --patient-bordered-accent: #6b7a9e;
+[data-area='ci'] .ci-graphs-row {
+  gap: var(--cm-col-gap, 1.25rem);
 }
 
 [data-area='ci'] .ci-accordion:nth-of-type(1) {

@@ -49,8 +49,9 @@ export function useDiagnosisDisplayTitle(params: UseDiagnosisDisplayTitleParams)
         enteredLabel,
         code,
         overridden,
+        version,
       }),
-    [effectiveCriteriaLabel, enteredLabel, code, overridden],
+    [effectiveCriteriaLabel, enteredLabel, code, overridden, version],
   )
 
   const [apiTitle, setApiTitle] = useState<string | null>(null)
@@ -90,6 +91,7 @@ export function useDiagnosisDisplayTitle(params: UseDiagnosisDisplayTitleParams)
     enteredLabel,
     code,
     overridden,
+    version,
   })
 
   return { title, fallback, loading, apiTitle }

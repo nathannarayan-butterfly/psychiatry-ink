@@ -11,6 +11,8 @@ export interface OverviewCardAction {
 
 export interface OverviewCardProps {
   title: string
+  /** Optional supporting line beneath the section title. */
+  subtitle?: string | null
   /** Optional right-aligned meta line in the section header. */
   meta?: string | null
   /** Small leading glyph (lucide icon element). Ignored in flat minimal layout. */
@@ -42,6 +44,7 @@ function badgeMeta(badge?: { label: string; tone?: SemanticTone }): string | nul
  */
 export function OverviewCard({
   title,
+  subtitle,
   meta,
   variant: _variant = 'default',
   action,
@@ -59,6 +62,7 @@ export function OverviewCard({
   return (
     <ClinicalSection
       eyebrow={title}
+      subtitle={subtitle}
       meta={headerMeta}
       action={sectionAction}
       headerExtra={headerExtra}

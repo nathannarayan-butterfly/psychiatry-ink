@@ -3,7 +3,7 @@ import { Router as createRouter } from 'express'
 import { parseLlmModelRequest } from '../ai/parseLlmModelRequest'
 import { resolveAccountId } from '../middleware/auth'
 import { assertAiGenerationAllowed, recordAiGenerationUsed } from '../utils/caseAiAccessGuard'
-import { requireClinicalLanguage } from '../utils/resolveClinicalLanguage'
+import { requireClinicalLanguage, resolveClinicalLanguage } from '../utils/resolveClinicalLanguage'
 import { resolveUsageContextFromRequest } from '../ai/usage/resolveUsageContext'
 import {
   MAX_CONTEXT_CHARS,
@@ -173,6 +173,7 @@ inlineEditRouter.post('/transcribe', async (req: Request, res: Response) => {
       userId: usageContext.userId,
       organisationId: usageContext.organisationId,
       caseId: usageContext.caseId,
+      language: resolveClinicalLanguage(req, body.language) ?? 'de',
     })
 
     if (userId && userId !== 'default') {

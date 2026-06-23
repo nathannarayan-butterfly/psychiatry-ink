@@ -3,8 +3,8 @@ import type { CSSProperties } from 'react'
 export interface CiBarChartItem {
   id: string
   label: string
-  /** Short value shown at the end of the row, e.g. "3/4" or "Hoch". */
-  valueLabel: string
+  /** Screen-reader description of bar meaning (severity/confidence); not shown visually. */
+  ariaDescription?: string
   /** 0..1 normalised bar length. */
   fraction: number
   /**
@@ -22,11 +22,9 @@ interface CiBarChartProps {
 
 /**
  * Compact bar chart used identically by the Dimensional / Mechanism Übersicht
- * widgets. Each row is `[ name + value (left) ][ narrow bar (right) ]`; the
- * bar column is fixed-width so bars line up as a clean vertical band on the
- * right. HTML/CSS bars (not SVG) use the exact CI severity/confidence semantic
- * colours. Print-safe (print-color-adjust: exact via CSS); the grow transition
- * is disabled under prefers-reduced-motion.
+ * widgets. Each row is `[ name (left, up to 2 lines, ~48% max) ][ bar track
+ * (flex-grow, fills remaining card width) ]`; severity and confidence are
+ * encoded in bar colour only — no visible value labels.
  */
 export function CiBarChart({ items, ariaLabel }: CiBarChartProps) {
   return (
@@ -36,18 +34,18 @@ export function CiBarChart({ items, ariaLabel }: CiBarChartProps) {
           width: `${Math.max(8, Math.min(1, item.fraction) * 100)}%`,
           background: item.fillColor,
         }
+        const ariaValue = item.ariaDescription ?? ''
         return (
           <li key={item.id} className="ci-barchart__row">
-            <div className="ci-barchart__text">
-              <span className="ci-barchart__name">{item.label}</span>
-              <span className="ci-barchart__value">{item.valueLabel}</span>
-            </div>
+            <span className="ci-barchart__name" title={item.label}>
+              {item.label}
+            </span>
             <div className="ci-barchart__track">
               <div
                 className="ci-barchart__fill"
                 style={fillStyle}
                 role="img"
-                aria-label={`${item.label}: ${item.valueLabel}`}
+                aria-label={ariaValue ? `${item.label}: ${ariaValue}` : item.label}
               />
             </div>
           </li>

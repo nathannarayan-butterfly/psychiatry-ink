@@ -145,7 +145,6 @@ export function ConsultationCasePage({
             </button>
           ) : null}
           <h1 className="consultation-page__title">Konsile</h1>
-          <p className="consultation-page__subtitle">Externe Konsiliarberichte — formal, strukturiert</p>
         </div>
         <div className="consultation-page__header-actions">
           <button

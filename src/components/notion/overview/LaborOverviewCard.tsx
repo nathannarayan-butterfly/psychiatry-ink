@@ -1,7 +1,6 @@
 import { OverviewCard, OverviewEmpty } from './OverviewCard'
 import { Sparkline } from './Sparkline'
 import { useTranslation } from '../../../context/TranslationContext'
-import type { RecentLabResultItem } from '../../../utils/overview/recentLabResults'
 import type { DiagnosticExamSummary } from '../../../utils/overview/diagnosticSummaries'
 import type { LaborOverviewData, LabDueItem } from './types'
 
@@ -45,28 +44,6 @@ function LabRow({ item }: { item: LabDueItem }) {
   )
 }
 
-function RecentAbnormalList({ items }: { items: RecentLabResultItem[] }) {
-  if (items.length === 0) return null
-  return (
-    <div className="ov-labor__recent-abnormal">
-      <p className="ov-subhead">Auffällig (jüngstes Labor)</p>
-      <ul className="ov-feed">
-        {items.slice(0, 4).map((item) => (
-          <li key={item.id} className="ov-feed__item ov-feed__item--abnormal">
-            <div className="ov-feed__head">
-              <span className="ov-feed__date">{item.dateLabel}</span>
-              <span className="ov-feed__tag ov-feed__tag--warn">auffällig</span>
-            </div>
-            <p className="ov-feed__text">
-              <strong>{item.name}</strong> {item.valueLabel}
-            </p>
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
-}
-
 function DiagnosticMini({ title, data }: { title: string; data: DiagnosticExamSummary }) {
   return (
     <div className={`ov-diag ov-diag--${data.status}`}>
@@ -93,20 +70,12 @@ function DiagnosticMini({ title, data }: { title: string; data: DiagnosticExamSu
 export function LaborOverviewCard({ data, onOpenLabor, ekg, eeg, imaging }: LaborOverviewCardProps) {
   const { t } = useTranslation()
   const badge =
-    data.abnormal.length > 0 || data.recentAbnormal.length > 0
-      ? {
-          label: `${data.abnormal.length + data.recentAbnormal.length} auffällig`,
-          tone: 'high' as const,
-        }
+    data.abnormal.length > 0
+      ? { label: `${data.abnormal.length} auffällig`, tone: 'high' as const }
       : undefined
 
-  const watched = data.watched.slice(0, 4)
   const missing = data.missingMonitoring.slice(0, 4)
-  const hasGroups =
-    data.abnormal.length > 0 ||
-    data.watched.length > 0 ||
-    data.missingMonitoring.length > 0 ||
-    data.recentAbnormal.length > 0
+  const hasGroups = data.abnormal.length > 0 || data.missingMonitoring.length > 0
 
   return (
     <OverviewCard
@@ -131,17 +100,6 @@ export function LaborOverviewCard({ data, onOpenLabor, ekg, eeg, imaging }: Labo
                   ))}
                 </>
               ) : null}
-
-              {watched.length > 0 ? (
-                <>
-                  <p className="ov-subhead">Überwacht</p>
-                  {watched.map((item) => (
-                    <LabRow key={item.id} item={item} />
-                  ))}
-                </>
-              ) : null}
-
-              <RecentAbnormalList items={data.recentAbnormal} />
 
               {missing.length > 0 ? (
                 <>

@@ -119,7 +119,6 @@ export function BefundungWorkspace({
       <header className="befundung-workspace__header workspace-panel__header">
         <div className="workspace-panel__title-block">
           <h1 className="workspace-panel__title">{t('workspaceBefundungTitle')}</h1>
-          <p className="workspace-panel__subtitle">{t('workspaceBefundungHint')}</p>
         </div>
       </header>
 

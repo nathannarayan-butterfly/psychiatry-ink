@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNod
 import { ChevronDown } from 'lucide-react'
 import { ButterflyLogo } from '../ButterflyLogo'
 import { ClinicalEyebrow } from '../clinical/ClinicalEyebrow'
+import { OverviewAiBadge } from '../notion/overview/OverviewAiBadge'
 import { useTranslation } from '../../context/TranslationContext'
 import type { UiLanguage } from '../../types/settings'
 import type { IsdmClinicalAnalysis } from '../../types/isdm'
@@ -633,7 +634,7 @@ export function IsdmAnalysisPanel({
       {flat ? (
         <header className="butterfly-panel__header butterfly-panel__header--flat">
           <ClinicalEyebrow inline>{t('butterflyTitle')}</ClinicalEyebrow>
-          <p className="butterfly-panel__subtitle">{t('butterflySubtitle')}</p>
+          <OverviewAiBadge />
           {analysis.updatedAt ? (
             <p className="butterfly-panel__updated">
               {t('isdmPanelLastUpdated')} {formatUpdatedAt(analysis.updatedAt, language)}
@@ -649,7 +650,7 @@ export function IsdmAnalysisPanel({
             </span>
             <div>
               <h2 className="butterfly-panel__title">{t('butterflyTitle')}</h2>
-              <p className="butterfly-panel__subtitle">{t('butterflySubtitle')}</p>
+              <OverviewAiBadge />
             </div>
           </div>
           {analysis.updatedAt ? (

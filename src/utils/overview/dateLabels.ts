@@ -30,6 +30,14 @@ function dayDelta(iso: string): number | null {
   return Math.round((startOf(d.getTime()) - startOf(Date.now())) / DAY_MS)
 }
 
+/** Whole calendar days elapsed since `iso` (positive = past). Null when unparseable. */
+export function daysSinceIso(iso: string | undefined | null): number | null {
+  if (!iso) return null
+  const delta = dayDelta(iso)
+  if (delta === null) return null
+  return Math.max(0, -delta)
+}
+
 /** German relative-day phrasing: "heute", "morgen", "in 3 Tagen", "vor 2 Tagen". */
 export function relativeDayDe(iso: string | undefined | null): string | null {
   if (!iso) return null

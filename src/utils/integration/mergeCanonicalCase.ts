@@ -8,6 +8,12 @@ import type { MedicationEntry, MedicationPlanState } from '../../types/medicatio
 import { createEmptyMedicationPlanState } from '../../types/medicationPlan'
 import type { DiagnoseEntry } from '../diagnosenArchive'
 import { saveDiagnosen } from '../diagnosenArchive'
+import {
+  inferDefaultCategoryForNewEntry,
+  inferDefaultConfirmationForCategory,
+  mergeDiagnosisClassificationFromExternal,
+  syncLegacyClassificationFields,
+} from '../diagnosisClassification'
 import { saveLabGraphsList } from '../labPersistence'
 import type { IntegrationMergeScope } from './canonicalScope'
 import { filterSnapshotForMerge } from './canonicalScope'
@@ -23,9 +29,11 @@ function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
 
-function mapDiagnosisToEntry(dx: DiagnosisItem): DiagnoseEntry {
+function mapDiagnosisToEntry(dx: DiagnosisItem, existingEntries: DiagnoseEntry[]): DiagnoseEntry {
   const now = new Date().toISOString()
-  return {
+  const category = inferDefaultCategoryForNewEntry(existingEntries)
+  const confirmation = inferDefaultConfirmationForCategory(category)
+  const base: DiagnoseEntry = {
     id: dx.id || generateId(),
     icd10: {
       code: dx.icd10Code ?? '',
@@ -45,16 +53,28 @@ function mapDiagnosisToEntry(dx: DiagnosisItem): DiagnoseEntry {
     createdAt: now,
     updatedAt: now,
   }
+  return syncLegacyClassificationFields(base, category, confirmation)
 }
 
 function mergeDiagnoses(existing: DiagnoseEntry[], incoming: DiagnosisItem[]): DiagnoseEntry[] {
   const byCode = new Map(existing.map((entry) => [entry.icd10.code || entry.id, entry]))
+  const merged = [...existing]
   for (const dx of incoming) {
     const key = dx.icd10Code || dx.id
-    if (byCode.has(key)) continue
-    byCode.set(key, mapDiagnosisToEntry(dx))
+    const match = byCode.get(key)
+    if (match) {
+      const updated = mergeDiagnosisClassificationFromExternal(match, {})
+      if (updated !== match) {
+        const idx = merged.findIndex((e) => e.id === match.id)
+        if (idx >= 0) merged[idx] = updated
+      }
+      continue
+    }
+    const entry = mapDiagnosisToEntry(dx, merged)
+    byCode.set(key, entry)
+    merged.push(entry)
   }
-  return Array.from(byCode.values())
+  return merged
 }
 
 function parseReferenceRange(range?: string): { low: number | null; high: number | null } {

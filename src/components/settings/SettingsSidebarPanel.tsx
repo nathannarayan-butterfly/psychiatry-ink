@@ -10,6 +10,7 @@ interface SettingsSidebarPanelProps {
   onSectionChange: (section: SettingsSectionId) => void
   /** Leave the settings view and return to the app. */
   onClose: () => void
+  onOpenCredits: () => void
   creditBalance: number
 }
 
@@ -19,6 +20,7 @@ export function SettingsSidebarPanel({
   activeSection,
   onSectionChange,
   onClose,
+  onOpenCredits,
   creditBalance,
 }: SettingsSidebarPanelProps) {
   const { t } = useTranslation()
@@ -44,6 +46,7 @@ export function SettingsSidebarPanel({
 
       <CaseSidebarUserFooter
         creditBalance={creditBalance}
+        onOpenCredits={onOpenCredits}
         onOpenSettings={(section) => onSectionChange(section ?? 'appearance')}
       />
     </aside>

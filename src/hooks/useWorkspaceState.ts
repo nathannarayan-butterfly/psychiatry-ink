@@ -275,6 +275,7 @@ export function useWorkspaceState(
   } = useDictation({
     onTranscriptionComplete: applyTranscription,
     onSessionEnd: endDictationSession,
+    language,
   })
 
   const currentDocumentType = useMemo(

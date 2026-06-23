@@ -264,31 +264,48 @@ export function WorkspaceLauncher({ onLaunch }: WorkspaceLauncherProps) {
   }, [])
 
   // Voice input reuses the app's existing compact dictation flow (record →
-  // billed `/api/transcribe`) — the same hook the case-discuss panel uses. It
-  // records once and transcribes in a single awaited pass (no review-phase
-  // retry loop), surfacing permission / credit / server errors via `error`.
+  // billed `/api/transcribe`) — the same hook Ask Butterfly uses. After
+  // transcription we fuzzy-match the spoken intent and launch the top hit when
+  // it is confident enough; otherwise the transcript stays in the search box.
   const [emptyTranscript, setEmptyTranscript] = useState(false)
-  const applyTranscription = useCallback((text: string) => {
-    const trimmed = text.trim()
-    if (!trimmed) {
-      // Recorded + transcribed, but nothing intelligible came back.
-      setEmptyTranscript(true)
+  const applyTranscription = useCallback(
+    (text: string) => {
+      const trimmed = text.trim()
+      if (!trimmed) {
+        // Recorded + transcribed, but nothing intelligible came back.
+        setEmptyTranscript(true)
+        inputRef.current?.focus()
+        return
+      }
+      setEmptyTranscript(false)
+
+      const matches = searchLauncher(LAUNCHER_TASKS, trimmed, {
+        localize: t,
+        isModeEnabled,
+        limit: 1,
+      })
+      const top = matches[0]
+      // Spoken phrases are usually ≥4 chars; skip auto-launch for tiny fragments.
+      if (top && trimmed.length >= 4) {
+        if (top.type === 'task') openTask(top.task)
+        else launchMode(top.task, top.mode)
+        return
+      }
+
+      setQuery(trimmed)
+      setView('home')
+      setSelectedTaskId(null)
       inputRef.current?.focus()
-      return
-    }
-    setEmptyTranscript(false)
-    setQuery(trimmed)
-    setView('home')
-    setSelectedTaskId(null)
-    inputRef.current?.focus()
-  }, [])
+    },
+    [t, isModeEnabled, openTask, launchMode],
+  )
 
   const {
     isRecording,
     isTranscribing,
     toggleRecording,
     error: dictationError,
-  } = useCompactDictation({ onTranscriptionComplete: applyTranscription })
+  } = useCompactDictation({ onTranscriptionComplete: applyTranscription, language })
 
   const handleMicClick = useCallback(() => {
     setEmptyTranscript(false)
@@ -300,7 +317,14 @@ export function WorkspaceLauncher({ onLaunch }: WorkspaceLauncherProps) {
       if (dictationError === 'microphone_unavailable' || dictationError === 'microphone_denied') {
         return t('launcherVoiceErrorMic')
       }
+      if (dictationError === 'empty_recording') return t('launcherVoiceErrorEmpty')
       if (/credit/i.test(dictationError)) return t('launcherVoiceErrorCredits')
+      if (/anmeldung|401|unauthorized|authentication/i.test(dictationError)) {
+        return t('launcherVoiceErrorAuth')
+      }
+      if (/failed to fetch|network|ECONNREFUSED|502|503|504/i.test(dictationError)) {
+        return t('launcherVoiceErrorServer')
+      }
       return t('launcherVoiceErrorGeneric')
     }
     if (emptyTranscript) return t('launcherVoiceErrorEmpty')

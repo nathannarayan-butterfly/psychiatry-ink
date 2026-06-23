@@ -18,8 +18,8 @@ export const homepageContentDe: HomepageContent = {
     mainNavAriaLabel: 'Hauptnavigation',
   },
   hero: {
-    eyebrow: 'Klinischer Arbeitsbereich für die Psychiatrie',
-    headline: 'Psychiatry.Ink — der klinische Arbeitsbereich für die moderne Psychiatrie.',
+    eyebrow: 'Intelligenter Arbeitsbereich für die Psychiatrie',
+    headline: 'Psychiatry.Ink — der intelligente Arbeitsbereich für die Psychiatrie.',
     subtitle:
       'Psychiatry.Ink bündelt Dokumentation, Fallbesprechung, psychopharmakologische Referenz, Therapieplanung, klinische Tools und KI-gestützte Clinical Intelligence in einem sicheren Arbeitsbereich. Die KI unterstützt beim Strukturieren, Prüfen und klinischen Reasoning — die ärztliche Freigabe bleibt immer erforderlich.',
     primaryCta: 'Arbeitsbereich öffnen',
@@ -259,20 +259,20 @@ export const homepageContentDe: HomepageContent = {
         monthly: 'Monatlich',
         yearly: 'Jährlich',
       },
-      yearlyRecommendation: 'Empfohlen: 20 % sparen mit jährlicher Abrechnung — £191,90/Jahr',
+      yearlyRecommendation: 'Empfohlen: 20 % sparen mit jährlicher Abrechnung — £239,90/Jahr',
       yearlyConfirmation: 'Jährliche Abrechnung — 20 % Ersparnis aktiviert',
       billing: {
         monthly: {
-          price: '£19,99',
+          price: '£24,99',
           period: '/Monat',
           credits: '500 KI-Credits inklusive',
           savings: null,
         },
         yearly: {
-          price: '£191,90',
+          price: '£239,90',
           period: '/Jahr',
           credits: '500 KI-Credits pro Monat inklusive',
-          savings: '£47,98/Jahr sparen — 20 % gegenüber £239,88/Jahr',
+          savings: '£59,98/Jahr sparen — 20 % gegenüber £299,88/Jahr',
         },
       },
       description:

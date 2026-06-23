@@ -152,6 +152,9 @@ export const LAUNCHER_TASKS: LauncherTask[] = [
       'notiz',
       'progress',
       'follow-up note',
+      'verlauf dokumentieren',
+      'verlauf documentieren',
+      'verlauf eintragen',
     ],
     modes: [
       {

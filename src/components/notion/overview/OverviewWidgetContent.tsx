@@ -97,7 +97,12 @@ export function renderOverviewWidget(
     case 'diagnoses':
       return (
         <OverviewCardShell>
-          <DiagnosenWidget caseId={ctx.caseId} variant="panel" />
+          <DiagnosenWidget
+            caseId={ctx.caseId}
+            variant="panel"
+            compact
+            onOpenDiagnose={() => ctx.onTabSelect('diagnose')}
+          />
         </OverviewCardShell>
       )
     case 'psychopathology':

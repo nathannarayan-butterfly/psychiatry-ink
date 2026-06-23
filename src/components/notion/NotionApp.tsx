@@ -69,6 +69,8 @@ import { NotionTopBar } from './NotionTopBar'
 import { WorkspaceContextMenu } from './WorkspaceContextMenu'
 import { WorkspaceLauncher } from './workspaceLauncher/WorkspaceLauncher'
 import type { LauncherTarget } from '../../data/workspaceLauncher/launcherTasks'
+import type { OverviewQuickActionId } from '../../utils/overview/overviewQuickActions'
+import { TodoQuickAdd } from '../todos/TodoQuickAdd'
 import { NotionPaper, type SavedWorkspaceDocumentPayload } from './NotionPaper'
 import { NotionInputBar } from './NotionInputBar'
 import { NotionTimelineCanvas } from './NotionTimelineCanvas'
@@ -293,6 +295,10 @@ function NotionAppInner({
   const [savedDocs, setSavedDocs] = useState<SavedDoc[]>(() => loadSavedDocs(savedDocsKey))
   const storageCaseId = workspaceStorageId ?? caseId
   const [pendingMedicationAdd, setPendingMedicationAdd] = useState(false)
+  const [pendingVerlaufComposer, setPendingVerlaufComposer] = useState(false)
+  const [pendingMedicationSideEffects, setPendingMedicationSideEffects] = useState(false)
+  const [pendingLaborAbnormalReview, setPendingLaborAbnormalReview] = useState(false)
+  const [todoQuickAddOpen, setTodoQuickAddOpen] = useState(false)
   const [templateHostOpen, setTemplateHostOpen] = useState(false)
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
   const [therapieplanungInitialType, setTherapieplanungInitialType] =
@@ -1559,6 +1565,118 @@ function NotionAppInner({
     ],
   )
 
+  const handleOverviewQuickAction = useCallback(
+    (action: OverviewQuickActionId) => {
+      switch (action) {
+        case 'newVerlaufNote':
+          setPendingVerlaufComposer(true)
+          handleTopTabSelect('verlauf')
+          return
+        case 'dictateVisitNote':
+          handleLauncherLaunch({
+            kind: 'workspacePage',
+            pageId: 'verlauf',
+            variantId: 'short',
+            dictation: true,
+          })
+          return
+        case 'psychopathFinding':
+          handleLauncherLaunch({
+            kind: 'workspacePage',
+            pageId: 'psychopath',
+            variantId: 'checklist',
+          })
+          return
+        case 'saveForArztbrief':
+          handleLauncherLaunch({ kind: 'workspacePage', pageId: 'arztbrief' })
+          return
+        case 'riskUpdate':
+          setShowPatientRegistry(false)
+          setActiveTopTab('workspace')
+          setActivePage('verlauf')
+          flushSync(() => {
+            workspace.selectDocumentType('verlauf', 'broad')
+          })
+          workspace.selectSection('risiko')
+          return
+        case 'medicationChange':
+          setPendingMedicationAdd(true)
+          handleTopTabSelect('medikation')
+          return
+        case 'sideEffectEntry':
+          setPendingMedicationSideEffects(true)
+          handleTopTabSelect('medikation')
+          return
+        case 'diagnosisStatusUpdate':
+          handleTopTabSelect('diagnose')
+          return
+        case 'labRequest':
+        case 'addAnforderung':
+          handleLauncherLaunch({ kind: 'anforderung' })
+          return
+        case 'ekgRequest':
+          handleLauncherLaunch({
+            kind: 'workspacePage',
+            pageId: 'befundung',
+            sectionId: 'befund-ecg',
+          })
+          return
+        case 'drugLevelRequest':
+          handleLauncherLaunch({ kind: 'anforderung' })
+          return
+        case 'consultRequest':
+          handleTopTabSelect('konsil')
+          return
+        case 'therapySozialRequest':
+          handleLauncherLaunch({
+            kind: 'workspacePage',
+            pageId: 'therapieplanung',
+            sectionId: 'therapy-sozial',
+          })
+          return
+        case 'addTodo':
+          setTodoQuickAddOpen(true)
+          return
+        case 'scheduleFollowUp':
+          setCalendarPrefill({ type: 'follow_up', caseId, title: 'Folgetermin' })
+          setCalendarModalOpen(true)
+          return
+        case 'addReminder':
+          setCalendarPrefill({ type: 'document_task', caseId, title: 'Erinnerung' })
+          setCalendarModalOpen(true)
+          return
+        case 'reviewAbnormalLabs':
+          setPendingLaborAbnormalReview(true)
+          handleTopTabSelect('labor')
+          return
+        case 'reviewSafetyAlert':
+          return
+        case 'reviewOpenCriteria':
+        case 'reviewDiagnosisCriteria':
+          handleTopTabSelect('diagnose')
+          return
+        case 'reviewAiHypotheses':
+        case 'openAiPendingReview':
+          if (isClinicalIntelligenceAvailableForCase(storageCaseId)) {
+            handleTopTabSelect('ci')
+          } else {
+            handleTopTabSelect('workspace')
+          }
+          return
+        case 'medicationReview':
+          handleTopTabSelect('medikation')
+          return
+      }
+    },
+    [
+      caseId,
+      handleLauncherLaunch,
+      handleTopTabSelect,
+      storageCaseId,
+      workspace,
+    ],
+  )
+
   if (storageCaseIdForAccess && caseAccessChecks.isLoading) {
     return (
       <div className="notion-preview-app text-ink case-access-state" aria-busy="true">
@@ -1633,6 +1751,7 @@ function NotionAppInner({
           activeSection={settingsPanel.activeSection}
           onSectionChange={settingsPanel.setActiveSection}
           onClose={settingsPanel.closeSettings}
+          onOpenCredits={() => onNavigate?.('/dashboard/credits')}
           creditBalance={workspace.creditBalance}
           appearance={appearance}
           privacy={privacy}
@@ -1748,6 +1867,7 @@ function NotionAppInner({
           onCreatePatient={() => setShowCreatePatientDialog(true)}
           creditBalance={workspace.creditBalance}
           onOpenSettings={settingsPanel.openSettings}
+          onOpenCredits={() => onNavigate?.('/dashboard/credits')}
           todoCaseId={hasPatient ? caseId : null}
           todoPatientLabel={currentPatientName ?? null}
           collapsed={sidebarCollapsed.collapsed}
@@ -1774,10 +1894,6 @@ function NotionAppInner({
                     onCloseDocument: workspace.selectedDocumentType
                       ? handleCloseWorkspacePage
                       : undefined,
-                    onAddAnforderung: canRequestAnforderungen
-                      ? () => openAnforderungModal()
-                      : undefined,
-                    anforderungenReadOnly: workspaceReadOnly,
                   }
                 : undefined
             }
@@ -1871,6 +1987,7 @@ function NotionAppInner({
                     })
                 : undefined
             }
+            onQuickAction={handleOverviewQuickAction}
           />
         ) : null}
 
@@ -1881,6 +1998,8 @@ function NotionAppInner({
               <VerlaufFeedPage
                 caseId={storageCaseId}
                 patientLabel={hasPatient ? currentPatientName : null}
+                autoOpenComposer={pendingVerlaufComposer}
+                onAutoOpenComposerHandled={() => setPendingVerlaufComposer(false)}
                 onNavigateToSource={(source: VerlaufDerivedSource) => {
                   // Derived feed rows are projections of other modules; "edit" /
                   // "delete" route the clinician to the owning section instead of
@@ -1933,7 +2052,14 @@ function NotionAppInner({
           <div className="case-tab-shell">
             <CasePatientHeader caseId={caseId} metaVersion={patientMetaVersion} />
             <div className="case-tab-shell__body case-tab-shell__body--full">
-              <LaborPage caseId={storageCaseId} hasPatient={hasPatient} useExternalSidebar onRequestAnforderung={canRequestAnforderungen ? openAnforderungModal : undefined} />
+              <LaborPage
+                caseId={storageCaseId}
+                hasPatient={hasPatient}
+                useExternalSidebar
+                onRequestAnforderung={canRequestAnforderungen ? openAnforderungModal : undefined}
+                autoFocusAbnormalLabs={pendingLaborAbnormalReview}
+                onAutoFocusAbnormalLabsHandled={() => setPendingLaborAbnormalReview(false)}
+              />
             </div>
           </div>
         ) : null}
@@ -1946,6 +2072,8 @@ function NotionAppInner({
                 caseId={storageCaseId}
                 autoOpenMedicationAdd={pendingMedicationAdd}
                 onAutoOpenMedicationAddHandled={() => setPendingMedicationAdd(false)}
+                autoOpenSideEffectsSection={pendingMedicationSideEffects}
+                onAutoOpenSideEffectsSectionHandled={() => setPendingMedicationSideEffects(false)}
               />
             </div>
           </div>
@@ -2276,6 +2404,14 @@ function NotionAppInner({
         preset={anforderungModal.preset}
         onClose={closeAnforderungModal}
       />
+
+      {todoQuickAddOpen ? (
+        <TodoQuickAdd
+          caseId={hasPatient ? caseId : null}
+          patientLabel={hasPatient ? currentPatientName : null}
+          onClose={() => setTodoQuickAddOpen(false)}
+        />
+      ) : null}
 
     </div>
   )

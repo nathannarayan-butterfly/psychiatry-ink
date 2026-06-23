@@ -109,7 +109,6 @@ export function TherapieplanungWorkspace({
     <div className="therapieplanung-workspace">
       <header className="therapieplanung-workspace__header">
         <h2 className="therapieplanung-workspace__title">{t('therapieplanungWorkspaceTitle')}</h2>
-        <p className="therapieplanung-workspace__hint">{t('therapieplanungWorkspaceHint')}</p>
       </header>
       <nav className="therapieplanung-workspace__nav" aria-label={t('therapieplanungWorkspaceNav')}>
         <ul className="therapieplanung-workspace__list">

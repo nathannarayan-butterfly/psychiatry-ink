@@ -3,6 +3,7 @@ import { recordAuditEvent } from '../../services/auditApi'
 import type { TopNavTabId } from './CaseTopNav'
 import type { NotionPageId } from './notionPages'
 import { OverviewDashboard } from './overview/OverviewDashboard'
+import type { OverviewQuickActionId } from '../../utils/overview/overviewQuickActions'
 
 interface PatientDashboardViewProps {
   caseId: string
@@ -16,6 +17,7 @@ interface PatientDashboardViewProps {
   onOpenTemplateFromPatient?: () => void
   onNavigateHome?: () => void
   onClinicalSubheadingChange?: () => void
+  onQuickAction?: (action: OverviewQuickActionId) => void
 }
 
 /**
@@ -34,6 +36,7 @@ export function PatientDashboardView({
   onOpenTemplateFromPatient: _onOpenTemplateFromPatient,
   onNavigateHome: _onNavigateHome,
   onClinicalSubheadingChange,
+  onQuickAction,
 }: PatientDashboardViewProps) {
   const therapyScopeId = therapyCaseId ?? caseId
 
@@ -53,6 +56,7 @@ export function PatientDashboardView({
               onClinicalSubheadingChange={onClinicalSubheadingChange}
               onTabSelect={onTabSelect}
               onOpenWorkspacePage={onOpenWorkspacePage}
+              onQuickAction={onQuickAction}
             />
           </main>
         </div>

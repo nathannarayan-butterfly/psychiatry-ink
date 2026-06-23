@@ -55,6 +55,14 @@ describe('searchLauncher', () => {
     expect(results[0]?.task.id).toBe('arztbrief')
   })
 
+  it('maps spoken "Verlauf documentieren" to the Verlauf task', () => {
+    const results = searchLauncher(LAUNCHER_TASKS, 'Verlauf documentieren', {
+      localize: localizeDe,
+    })
+    expect(results.length).toBeGreaterThan(0)
+    expect(results[0]?.task.id).toBe('verlauf')
+  })
+
   it('maps a spoken multi-word phrase to psychopath findings', () => {
     const results = searchLauncher(LAUNCHER_TASKS, 'psychopathologischer Befund erheben', {
       localize: localizeDe,

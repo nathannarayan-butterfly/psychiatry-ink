@@ -7,11 +7,11 @@ import type { SettingsSectionId } from '../../types/settings'
 import { NotificationBell } from '../NotificationBell'
 import { TodoQuickAdd } from '../todos/TodoQuickAdd'
 import { AskButterflyOpenButton } from './AskButterflyOpenButton'
-import { CreditsPurchaseDialog } from './CreditsPurchaseDialog'
 
 interface CaseSidebarUserFooterProps {
   creditBalance: number
   onOpenSettings: (section?: SettingsSectionId) => void
+  onOpenCredits?: () => void
   /** Active patient case id (real caseId) — enables patient-linked quick to-dos. */
   todoCaseId?: string | null
   todoPatientLabel?: string | null
@@ -19,17 +19,25 @@ interface CaseSidebarUserFooterProps {
 
 const ACTION_BTN = 'case-sidebar-user-footer__action-btn'
 
+function openCreditsPage(onOpenCredits?: () => void) {
+  if (onOpenCredits) {
+    onOpenCredits()
+    return
+  }
+  window.location.href = '/dashboard/credits'
+}
+
 /** User name and account actions pinned to the bottom of the case sidebar. */
 export function CaseSidebarUserFooter({
   creditBalance,
   onOpenSettings,
+  onOpenCredits,
   todoCaseId = null,
   todoPatientLabel = null,
 }: CaseSidebarUserFooterProps) {
   const { t } = useTranslation()
   const { signOut, isConfigured } = useAuth()
   const displayName = useAccountDisplayName()
-  const [creditsDialogOpen, setCreditsDialogOpen] = useState(false)
   const [todoQuickAddOpen, setTodoQuickAddOpen] = useState(false)
 
   const creditsTooltip = t('creditsRemaining').replace('{balance}', String(creditBalance))
@@ -40,18 +48,6 @@ export function CaseSidebarUserFooter({
 
       <div className="case-sidebar-user-footer__actions">
         <AskButterflyOpenButton variant="sidebar" />
-
-        <button
-          type="button"
-          className={ACTION_BTN}
-          onClick={() => setCreditsDialogOpen(true)}
-          title={creditsTooltip}
-          aria-label={creditsTooltip}
-        >
-          <span className="case-sidebar-user-footer__euro-symbol" aria-hidden>
-            €
-          </span>
-        </button>
 
         <button
           type="button"
@@ -69,6 +65,18 @@ export function CaseSidebarUserFooter({
           wrapClassName="case-sidebar-user-footer__notif-wrap"
           openClassName={`${ACTION_BTN}--open`}
         />
+
+        <button
+          type="button"
+          className={ACTION_BTN}
+          onClick={() => openCreditsPage(onOpenCredits)}
+          title={creditsTooltip}
+          aria-label={creditsTooltip}
+        >
+          <span className="case-sidebar-user-footer__euro-symbol" aria-hidden>
+            €
+          </span>
+        </button>
 
         <button
           type="button"
@@ -95,16 +103,6 @@ export function CaseSidebarUserFooter({
           <LogOut strokeWidth={1.75} aria-hidden />
         </button>
       </div>
-
-      {creditsDialogOpen ? (
-        <CreditsPurchaseDialog
-          onClose={() => setCreditsDialogOpen(false)}
-          creditsExhausted={creditBalance <= 0}
-          onUpgrade={() => {
-            window.location.href = '/#pricing'
-          }}
-        />
-      ) : null}
 
       {todoQuickAddOpen ? (
         <TodoQuickAdd

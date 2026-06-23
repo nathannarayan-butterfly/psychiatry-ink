@@ -2,10 +2,9 @@ import { useTranslation } from '../../../../context/TranslationContext'
 import { useClinicalIntelligence } from '../../../../hooks/useClinicalIntelligence'
 import { summarizeDimensional } from '../../../../services/clinicalIntelligence/dimensionalIntegration'
 import { getCiDimensionLabel } from '../../../../data/clinicalIntelligenceTranslations'
-import { OverviewCardShell } from '../OverviewCard'
-import { ClinicalEyebrow } from '../../../clinical/ClinicalEyebrow'
-import { CiHypothesisBanner } from '../../../clinical/clinicalIntelligence/CiHypothesisBanner'
 import { CiStatusCountRow } from '../../../clinical/clinicalIntelligence/CiStatusCountRow'
+import { OverviewCardShell } from '../OverviewCard'
+import { OverviewWidgetHeader } from '../OverviewWidgetHeader'
 import { CiBarChart } from './CiBarChart'
 
 interface DimensionalProfileWidgetProps {
@@ -23,14 +22,13 @@ export function DimensionalProfileWidget({
 
   return (
     <OverviewCardShell>
-      <ClinicalEyebrow inline>{t('overviewWidgetCiDimensional')}</ClinicalEyebrow>
-      <CiHypothesisBanner compact />
+      <OverviewWidgetHeader title={t('overviewWidgetCiDimensional')} />
       {!ci.latestRun ? (
         <p className="ci-widget__empty">{t('ciNoRunYet')}</p>
       ) : (
         <div className="ci-widget">
           <p className="ci-widget__meta">
-            {t('ciWidgetActiveCount')}: <strong>{stats.activeCount}</strong> · {' '}
+            {t('ciWidgetActiveCount')}: <strong>{stats.activeCount}</strong> ·{' '}
             {t('ciWidgetMaxSeverity')}: <strong>{stats.maxSeverity}/4</strong>
           </p>
           {stats.topDimensions.length > 0 ? (
@@ -39,7 +37,7 @@ export function DimensionalProfileWidget({
               items={stats.topDimensions.map((dim) => ({
                 id: dim.dimensionId,
                 label: getCiDimensionLabel(dim.dimensionId, language),
-                valueLabel: `${dim.severity}/4`,
+                ariaDescription: `${dim.severity}/4`,
                 fraction: dim.severity / 4,
                 fillColor: `var(--ci-severity-${dim.severity})`,
               }))}

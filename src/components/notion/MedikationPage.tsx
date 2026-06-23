@@ -10,12 +10,18 @@ interface MedikationPageProps {
   autoOpenMedicationAdd?: boolean
   /** Called once the auto-open request has been consumed, so the parent can reset its flag. */
   onAutoOpenMedicationAddHandled?: () => void
+  /** When true on mount, jumps to the side-effect entry section (Übersicht quick action). */
+  autoOpenSideEffectsSection?: boolean
+  /** Called once the side-effect jump request has been consumed. */
+  onAutoOpenSideEffectsSectionHandled?: () => void
 }
 
 export function MedikationPage({
   caseId,
   autoOpenMedicationAdd = false,
   onAutoOpenMedicationAddHandled,
+  autoOpenSideEffectsSection = false,
+  onAutoOpenSideEffectsSectionHandled,
 }: MedikationPageProps) {
   const medicationRef = useRef<MedicationWorkspaceHandle>(null)
 
@@ -24,6 +30,12 @@ export function MedikationPage({
     medicationRef.current?.openAdd()
     onAutoOpenMedicationAddHandled?.()
   }, [autoOpenMedicationAdd, onAutoOpenMedicationAddHandled])
+
+  useEffect(() => {
+    if (!autoOpenSideEffectsSection) return
+    medicationRef.current?.openSideEffectsSection()
+    onAutoOpenSideEffectsSectionHandled?.()
+  }, [autoOpenSideEffectsSection, onAutoOpenSideEffectsSectionHandled])
 
   return (
     <div className="medication-page cm-workspace">

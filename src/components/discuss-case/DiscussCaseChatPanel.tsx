@@ -27,6 +27,7 @@ import {
   type DiscussChromeLocale,
 } from '../../utils/discussCase/chromeI18n'
 import { isEmojiOnlyMessage } from '../../utils/discussCase/chatEmojis'
+import { ChatMarkdownText } from '../../utils/chat/ChatMarkdownText'
 import {
   getChatBubbleColors,
   getParticipantColor,
@@ -1231,7 +1232,11 @@ export function DiscussCaseChatPanel({
                                 emojiOnlyBody ? 'discuss-case-chat__message-body--emoji-only' : '',
                               ].join(' ').trim()}
                             >
-                              {message.body.trim()}
+                              {isAiMessage && !emojiOnlyBody ? (
+                                <ChatMarkdownText text={message.body.trim()} />
+                              ) : (
+                                message.body.trim()
+                              )}
                             </p>
                           ) : null}
                           <span className="discuss-case-chat__message-footer">
@@ -1586,7 +1591,9 @@ export function DiscussCaseChatPanel({
           {aiDraft ? (
             <div className="discuss-case-chat__ai-draft">
               <p className="discuss-case-chat__ai-draft-label">{chatT(locale, 'aiDraftLabel')}</p>
-              <pre className="discuss-case-chat__ai-draft-text">{aiDraft}</pre>
+              <p className="discuss-case-chat__ai-draft-text">
+                <ChatMarkdownText text={aiDraft} />
+              </p>
               <div className="discuss-case-chat__ai-actions">
                 <button type="button" onClick={() => void navigator.clipboard.writeText(aiDraft)}>
                   <Copy className="h-3.5 w-3.5" strokeWidth={1.75} /> {chatT(locale, 'aiCopy')}

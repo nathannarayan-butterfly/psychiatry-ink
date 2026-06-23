@@ -433,6 +433,13 @@ export function DashboardPage({
           activeSection={settingsPanel.activeSection}
           onSectionChange={settingsPanel.setActiveSection}
           onClose={settingsPanel.closeSettings}
+          onOpenCredits={() => {
+            if (onOpenCredits) {
+              onOpenCredits()
+              return
+            }
+            window.location.href = '/dashboard/credits'
+          }}
           creditBalance={creditBalance}
           appearance={appearance}
           privacy={privacy}

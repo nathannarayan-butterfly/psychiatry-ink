@@ -2317,8 +2317,16 @@ interface ClassifiedSeries {
   rationaleCaption: string
 }
 
-function LaborVerlaufOverview({ befunde, caseId }: { befunde: LaborBefund[]; caseId: string }) {
-  const [onlyAbnormal, setOnlyAbnormal] = useState(false)
+function LaborVerlaufOverview({
+  befunde,
+  caseId,
+  initialOnlyAbnormal = false,
+}: {
+  befunde: LaborBefund[]
+  caseId: string
+  initialOnlyAbnormal?: boolean
+}) {
+  const [onlyAbnormal, setOnlyAbnormal] = useState(initialOnlyAbnormal)
   const [showAll, setShowAll] = useState(false)
   const accent = useAccentColor()
 
@@ -2533,6 +2541,10 @@ interface LaborPageProps {
   onRequestAnforderung?: (preset?: AnforderungModalPreset | null) => void
   /** Empty-workspace Diagnostik flow: lab entry only (no Befunde/Imaging tabs). */
   workspaceDiagnostik?: boolean
+  /** When true on mount, opens Laborverlauf filtered to abnormal values (Übersicht quick action). */
+  autoFocusAbnormalLabs?: boolean
+  /** Called once the abnormal-labs focus request has been consumed. */
+  onAutoFocusAbnormalLabsHandled?: () => void
 }
 
 export function LaborPage({
@@ -2542,6 +2554,8 @@ export function LaborPage({
   useExternalSidebar = false,
   onRequestAnforderung,
   workspaceDiagnostik = false,
+  autoFocusAbnormalLabs = false,
+  onAutoFocusAbnormalLabsHandled,
 }: LaborPageProps) {
   const { t } = useTranslation()
   const externalNav = useDiagnosticsSectionNavOptional()
@@ -2592,6 +2606,14 @@ export function LaborPage({
   const [kiReSavedId, setKiReSavedId] = useState<string | null>(null)
   const [kiReSavedText, setKiReSavedText] = useState<string | null>(null)
   const [kiReSavedOpen, setKiReSavedOpen] = useState(false)
+  const [laborVerlaufOnlyAbnormal, setLaborVerlaufOnlyAbnormal] = useState(false)
+
+  useEffect(() => {
+    if (!autoFocusAbnormalLabs) return
+    setViewMode('verlauf')
+    setLaborVerlaufOnlyAbnormal(true)
+    onAutoFocusAbnormalLabsHandled?.()
+  }, [autoFocusAbnormalLabs, onAutoFocusAbnormalLabsHandled, setViewMode])
 
   useEffect(() => {
     if (!pasteZoneOpen) return
@@ -3033,11 +3055,6 @@ export function LaborPage({
         <header className="labor-page__diagnostics-header">
           <div>
             <h1 className="labor-page__diagnostics-title">{t('diagnosticsPageTitle')}</h1>
-            <p className="labor-page__diagnostics-subtitle">
-              {workspaceDiagnostik
-                ? t('workspaceDiagnostikSubtitle')
-                : t('diagnosticsPageSubtitle')}
-            </p>
           </div>
           {!workspaceDiagnostik ? (
           <nav className="labor-page__diagnostics-nav" aria-label={t('diagnosticsPageTitle')}>
@@ -3110,7 +3127,11 @@ export function LaborPage({
 
         {/* Verlauf view — medication-driven trend graphs (relevant subset + always-on Spiegel) */}
         {diagnosticsSection === 'labor' && viewMode === 'verlauf' && (
-          <LaborVerlaufOverview befunde={befunde} caseId={caseId} />
+          <LaborVerlaufOverview
+            befunde={befunde}
+            caseId={caseId}
+            initialOnlyAbnormal={laborVerlaufOnlyAbnormal}
+          />
         )}
 
         {diagnosticsSection === 'labor' && viewMode === 'einzeln' && selectedBefund ? (

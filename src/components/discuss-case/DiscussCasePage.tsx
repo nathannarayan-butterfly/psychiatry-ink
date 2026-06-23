@@ -176,7 +176,6 @@ export function DiscussCasePage({
             DiscussCase
           </span>
           <h1 className="discuss-case-hero__title">{discussChromeT(locale, 'heroTitle')}</h1>
-          <p className="discuss-case-hero__subtitle">{discussChromeT(locale, 'heroSubtitle')}</p>
           <button
             type="button"
             className="discuss-case-hero__cta"
@@ -259,7 +258,6 @@ export function DiscussCasePage({
             <MessageSquare className="h-5 w-5" strokeWidth={1.75} />
             DiscussCase
           </h1>
-          <p className="discuss-case-page__subtitle">{discussChromeT(locale, 'pageSubtitle')}</p>
         </div>
         <button
           type="button"

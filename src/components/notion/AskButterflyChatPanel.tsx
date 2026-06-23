@@ -6,6 +6,7 @@ import { useCompactDictation } from '../../hooks/useCompactDictation'
 import { ButterflyLogo } from '../ButterflyLogo'
 import { askButterflyChat, type AskButterflyChatMessage } from '../../services/askButterflyApi'
 import { resolveLlmRequestForTaskOrTier } from '../../utils/resolveAiModel'
+import { ChatMarkdownText } from '../../utils/chat/ChatMarkdownText'
 import { AskButterflyTierSelector } from './AskButterflyTierSelector'
 
 interface AskButterflyChatPanelProps {
@@ -19,7 +20,7 @@ export function AskButterflyChatPanel({
   headerActions,
   titleId = 'ask-butterfly-title',
 }: AskButterflyChatPanelProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const { messages, setMessages, tier } = useAskButterfly()
   const [draft, setDraft] = useState('')
   const [loading, setLoading] = useState(false)
@@ -36,6 +37,7 @@ export function AskButterflyChatPanel({
 
   const { isRecording, isTranscribing, toggleRecording, error: voiceError } = useCompactDictation({
     onTranscriptionComplete: appendTranscription,
+    language,
   })
 
   useEffect(() => {
@@ -89,7 +91,6 @@ export function AskButterflyChatPanel({
             <h2 id={titleId} className="ask-butterfly-dialog__title">
               {t('askButterflyTitle')}
             </h2>
-            <p className="ask-butterfly-dialog__subtitle">{t('askButterflySubtitle')}</p>
           </div>
         </div>
         <div className="ask-butterfly-dialog__header-actions">{headerActions}</div>
@@ -115,7 +116,13 @@ export function AskButterflyChatPanel({
                 <p className="ask-butterfly-dialog__message-role">
                   {message.role === 'user' ? t('askButterflyYou') : t('askButterflyAssistant')}
                 </p>
-                <p className="ask-butterfly-dialog__message-text">{message.content}</p>
+                <p className="ask-butterfly-dialog__message-text">
+                  {message.role === 'assistant' ? (
+                    <ChatMarkdownText text={message.content} />
+                  ) : (
+                    message.content
+                  )}
+                </p>
               </div>
             ))
           )}

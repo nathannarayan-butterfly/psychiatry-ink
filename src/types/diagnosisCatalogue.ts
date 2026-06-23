@@ -11,6 +11,25 @@ export type DiagnosisStatus =
   | 'rule_out'
   | 'historical'
   | 'differential'
+  | 'remitted'
+
+/** Clinical category for case-file diagnoses (display + sorting). */
+export type DiagnosisClinicalCategory =
+  | 'primary'
+  | 'secondary'
+  | 'differential'
+  | 'suspected'
+  | 'rule_out'
+  | 'historical'
+  | 'remitted'
+  | 'comorbidity'
+
+/** Clinical certainty / lifecycle — orthogonal to category where applicable. */
+export type DiagnosisConfirmationStatus =
+  | 'confirmed'
+  | 'active'
+  | 'under_review'
+  | 'anamnesis_only'
 
 export type DiagnosisRole =
   | 'main'

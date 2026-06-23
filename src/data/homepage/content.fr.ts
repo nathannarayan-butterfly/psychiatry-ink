@@ -18,8 +18,8 @@ export const homepageContentFr: HomepageContent = {
     mainNavAriaLabel: 'Navigation principale',
   },
   hero: {
-    eyebrow: 'Espace de travail clinique pour la psychiatrie',
-    headline: 'Psychiatry.Ink — l\'espace de travail clinique de la psychiatrie moderne.',
+    eyebrow: 'Espace de travail intelligent pour la psychiatrie',
+    headline: 'Psychiatry.Ink — l\'espace de travail intelligent pour la psychiatrie.',
     subtitle:
       'Psychiatry.Ink réunit dans un espace sécurisé la documentation, la discussion de cas, la référence psychopharmacologique, la planification thérapeutique, les outils cliniques et l\'aide au raisonnement clinique assistée par IA. L\'IA accompagne la structuration, la relecture et le raisonnement — la validation par le clinicien reste toujours requise.',
     primaryCta: 'Ouvrir l\'espace de travail',
@@ -259,20 +259,20 @@ export const homepageContentFr: HomepageContent = {
         monthly: 'Mensuel',
         yearly: 'Annuel',
       },
-      yearlyRecommendation: 'Recommandé : économisez 20 % avec l\'abonnement annuel — £191,90/an',
+      yearlyRecommendation: 'Recommandé : économisez 20 % avec l\'abonnement annuel — £239,90/an',
       yearlyConfirmation: 'Abonnement annuel — 20 % d\'économie appliqués',
       billing: {
         monthly: {
-          price: '£19,99',
+          price: '£24,99',
           period: '/mois',
           credits: '500 crédits IA inclus',
           savings: null,
         },
         yearly: {
-          price: '£191,90',
+          price: '£239,90',
           period: '/an',
           credits: '500 crédits IA inclus chaque mois',
-          savings: 'Économisez £47,98/an — 20 % de réduction par rapport à £239,88/an',
+          savings: 'Économisez £59,98/an — 20 % de réduction par rapport à £299,88/an',
         },
       },
       description:

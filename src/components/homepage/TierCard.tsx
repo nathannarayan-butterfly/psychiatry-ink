@@ -21,7 +21,7 @@ export function TierCard({
 }: TierCardProps) {
   return (
     <article className={`hp-tier${featured ? ' hp-tier--featured' : ''}`}>
-      {featured ? <span className="hp-tier__badge">Recommended</span> : null}
+      {featured ? <span className="hp-tier__badge hp-tier__badge--floating">Recommended</span> : null}
       <h3 className="hp-tier__name">{name}</h3>
       <p className="hp-tier__price">{price}</p>
       <p className="hp-tier__description">{description}</p>
