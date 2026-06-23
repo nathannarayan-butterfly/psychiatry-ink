@@ -121,6 +121,11 @@ describe('computeVerlaufstendenz', () => {
   it('returns schwankend when domains point in opposite directions', () => {
     const result = computeVerlaufstendenz({
       ...emptyInput,
+      // Anchor the rolling 14d window to a fixed end date so both entries stay
+      // inside it regardless of the current clock; otherwise the earlier
+      // (improving) entry drifts out of the window over time and only the
+      // worsening entry remains.
+      customWindowEnd: '2026-06-12T00:00:00.000Z',
       verlaufEntries: [
         {
           id: 'v1',

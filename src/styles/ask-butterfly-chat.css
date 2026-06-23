@@ -493,21 +493,16 @@
      (it can't clip — its resize handle sits outside the box). */
   border-top-left-radius: var(--radius-card, 0.6875rem);
   border-top-right-radius: var(--radius-card, 0.6875rem);
-  /* Semi-dark command-deck surface built ENTIRELY on the shared --aura-* tokens
-     (same radial deep→raised gradient the Übersicht hero family uses), topped by
-     the area-aware aura glow, so the Butterfly chat reads as the same cinematic
-     theme family rather than a flat light bar. */
-  background:
-    radial-gradient(
-      130% 96% at 50% -10%,
-      color-mix(in srgb, var(--aura-glow, var(--aura-glow-primary)) 24%, transparent),
-      transparent 70%
-    ),
-    radial-gradient(
-      140% 120% at 18% -10%,
-      var(--aura-surface-raised, #15171f) 0%,
-      var(--aura-surface-deep, #0a0c12) 64%
-    );
+  /* App-theme surface — the SAME accent-derived colour the left case-sidebar uses
+     (accent 82% + black), topped with the shared, accent-locked warm aura glow, so
+     the chat header reads as the same surface family as the left navigation panel
+     rather than a near-black command-deck bar. */
+  background-color: color-mix(in srgb, var(--accent, #8a5a2b) 82%, black);
+  background-image: radial-gradient(
+    130% 90% at 50% -10%,
+    color-mix(in srgb, var(--aura-glow-warm) 20%, transparent),
+    transparent 72%
+  );
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset;
 }
 
@@ -561,14 +556,13 @@
   width: 1.4rem;
   height: 1.4rem;
   object-fit: contain;
-  /* Seat the full-colour mark on the dark glass tile so it stays crisp/lifted. */
-  filter: drop-shadow(0 1px 3px color-mix(in srgb, #0a0c12 55%, transparent));
 }
 
-/* Brighten the breathing halo so the coloured Butterfly reads vivid + glowing
-   against the semi-dark command-deck header. */
+/* White breathing halo for the silver brand mark, so the Butterfly glows like the
+   left case-sidebar's white logo treatment on the accent surface. (The silver
+   tone's own white-shine filter applies via `.butterfly-logo--silver`.) */
 .ask-butterfly-dialog__mark .butterfly-logo-orb {
-  --bf-breathe-glow: color-mix(in srgb, #6cc0ff 70%, transparent);
+  --bf-breathe-glow: color-mix(in srgb, white 62%, transparent);
 }
 
 .ask-butterfly-dialog__title {

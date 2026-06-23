@@ -83,7 +83,7 @@ export function AskButterflyChatPanel({
       <header className="ask-butterfly-dialog__header">
         <div className="ask-butterfly-dialog__title-wrap">
           <span className="ask-butterfly-dialog__mark">
-            <ButterflyLogo variant="color" breathing size={variant === 'docked' ? 24 : 28} />
+            <ButterflyLogo tone="silver" breathing size={variant === 'docked' ? 24 : 28} />
           </span>
           <div>
             <h2 id={titleId} className="ask-butterfly-dialog__title">

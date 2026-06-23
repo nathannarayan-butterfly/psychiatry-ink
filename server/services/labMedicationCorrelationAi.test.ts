@@ -17,6 +17,12 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 
 vi.mock('../db', () => ({
   prisma: {
+    // checkBalance → migrateLegacyCreditsIfNeeded reads the legacy creditBalance
+    // model; default vi.fn() resolves undefined so the migration no-ops.
+    creditBalance: {
+      findUnique: vi.fn(),
+      update: vi.fn(),
+    },
     aiCreditAccount: {
       findUnique: vi.fn(),
       create: vi.fn(),
@@ -25,6 +31,7 @@ vi.mock('../db', () => ({
     },
     aiCreditLedger: {
       create: vi.fn(),
+      findFirst: vi.fn(),
     },
     aiUsageLog: {
       create: vi.fn(),
