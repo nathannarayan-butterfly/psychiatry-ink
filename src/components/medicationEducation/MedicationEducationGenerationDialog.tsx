@@ -25,7 +25,7 @@ export function MedicationEducationGenerationDialog({
       <div className="arztbrief-dialog medication-education-generation-dialog">
         <header className="medication-education-generation-dialog__header">
           <span className="medication-education-generation-dialog__mark" aria-hidden>
-            <ButterflyLogo variant="color" size={28} />
+            <ButterflyLogo variant="color" breathing size={28} />
           </span>
           <div>
             <h2 className="medication-education-generation-dialog__title">

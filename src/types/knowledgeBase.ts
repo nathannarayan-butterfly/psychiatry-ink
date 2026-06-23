@@ -492,7 +492,63 @@ export type KnowledgeBaseVerificationStatus =
  */
 export type KbEnglishContentSource = 'machine' | 'human'
 
-export type PrescribingCountryCode = 'DE' | 'CH' | 'AT' | 'UK'
+/**
+ * Complete ISO 3166-1 alpha-2 code set (officially assigned codes incl.
+ * territories). This is the source of truth for every country selector
+ * (prescription country + privacy region) so a clinician can choose any market
+ * worldwide. Localized names are derived at runtime via `Intl.DisplayNames`
+ * (see `src/data/countryNames.ts`) rather than hand-maintained per code.
+ */
+export const ISO_ALPHA2_CODES = [
+  'AD', 'AE', 'AF', 'AG', 'AI', 'AL', 'AM', 'AO', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AW', 'AX', 'AZ',
+  'BA', 'BB', 'BD', 'BE', 'BF', 'BG', 'BH', 'BI', 'BJ', 'BL', 'BM', 'BN', 'BO', 'BQ', 'BR', 'BS',
+  'BT', 'BV', 'BW', 'BY', 'BZ',
+  'CA', 'CC', 'CD', 'CF', 'CG', 'CH', 'CI', 'CK', 'CL', 'CM', 'CN', 'CO', 'CR', 'CU', 'CV', 'CW',
+  'CX', 'CY', 'CZ',
+  'DE', 'DJ', 'DK', 'DM', 'DO', 'DZ',
+  'EC', 'EE', 'EG', 'EH', 'ER', 'ES', 'ET',
+  'FI', 'FJ', 'FK', 'FM', 'FO', 'FR',
+  'GA', 'GB', 'GD', 'GE', 'GF', 'GG', 'GH', 'GI', 'GL', 'GM', 'GN', 'GP', 'GQ', 'GR', 'GS', 'GT',
+  'GU', 'GW', 'GY',
+  'HK', 'HM', 'HN', 'HR', 'HT', 'HU',
+  'ID', 'IE', 'IL', 'IM', 'IN', 'IO', 'IQ', 'IR', 'IS', 'IT',
+  'JE', 'JM', 'JO', 'JP',
+  'KE', 'KG', 'KH', 'KI', 'KM', 'KN', 'KP', 'KR', 'KW', 'KY', 'KZ',
+  'LA', 'LB', 'LC', 'LI', 'LK', 'LR', 'LS', 'LT', 'LU', 'LV', 'LY',
+  'MA', 'MC', 'MD', 'ME', 'MF', 'MG', 'MH', 'MK', 'ML', 'MM', 'MN', 'MO', 'MP', 'MQ', 'MR', 'MS',
+  'MT', 'MU', 'MV', 'MW', 'MX', 'MY', 'MZ',
+  'NA', 'NC', 'NE', 'NF', 'NG', 'NI', 'NL', 'NO', 'NP', 'NR', 'NU', 'NZ',
+  'OM',
+  'PA', 'PE', 'PF', 'PG', 'PH', 'PK', 'PL', 'PM', 'PN', 'PR', 'PS', 'PT', 'PW', 'PY',
+  'QA',
+  'RE', 'RO', 'RS', 'RU', 'RW',
+  'SA', 'SB', 'SC', 'SD', 'SE', 'SG', 'SH', 'SI', 'SJ', 'SK', 'SL', 'SM', 'SN', 'SO', 'SR', 'SS',
+  'ST', 'SV', 'SX', 'SY', 'SZ',
+  'TC', 'TD', 'TF', 'TG', 'TH', 'TJ', 'TK', 'TL', 'TM', 'TN', 'TO', 'TR', 'TT', 'TV', 'TW', 'TZ',
+  'UA', 'UG', 'UM', 'US', 'UY', 'UZ',
+  'VA', 'VC', 'VE', 'VG', 'VI', 'VN', 'VU',
+  'WF', 'WS',
+  'YE', 'YT',
+  'ZA', 'ZM', 'ZW',
+] as const
+
+export type IsoAlpha2Code = (typeof ISO_ALPHA2_CODES)[number]
+
+/**
+ * Prescription-country code: any ISO alpha-2 code, plus the legacy `'UK'` alias
+ * (ISO uses `'GB'`). `UK` is preserved for backward compatibility with existing
+ * persisted preferences and KB market-availability rows; the privacy "Land"
+ * field maps it back to ISO `'GB'`.
+ */
+export type PrescribingCountryCode = IsoAlpha2Code | 'UK'
+
+/**
+ * Runtime list of selectable prescription countries: every ISO alpha-2 code,
+ * with `GB` replaced by the legacy `UK` code.
+ */
+export const PRESCRIBING_COUNTRY_CODES: readonly PrescribingCountryCode[] = ISO_ALPHA2_CODES.map(
+  (code) => (code === 'GB' ? 'UK' : code),
+)
 
 export type PreparationVerificationStatus =
   | 'unverified'

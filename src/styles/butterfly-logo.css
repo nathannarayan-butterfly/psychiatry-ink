@@ -7,3 +7,101 @@
   object-fit: contain;
   object-position: center;
 }
+
+/*
+ * Silver/metallic variant for dark surfaces (inline SVG wrapper). The recoloured
+ * brushed-metal gradient already reads bright; the layered drop-shadows add a
+ * soft white "shine" plus a faint dark seat so the mark lifts off dark panels.
+ */
+.butterfly-logo--silver {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  filter:
+    drop-shadow(0 0 3px color-mix(in srgb, #ffffff 55%, transparent))
+    drop-shadow(0 1px 2px color-mix(in srgb, #0b1220 35%, transparent));
+}
+
+.butterfly-logo--silver svg {
+  width: 100%;
+  height: 100%;
+}
+
+/*
+ * Breathing / living variant (opt-in via the `breathing` prop). The mark sits
+ * in a positioned wrapper whose ::before is a soft radial halo that slowly
+ * pulses (opacity + scale) while the mark itself gently breathes. GPU-only
+ * (transform + opacity), so it stays cheap at every placement. Retint the halo
+ * per-surface by setting `--bf-breathe-glow` on the wrapper.
+ */
+.butterfly-logo-orb {
+  --bf-breathe-glow: color-mix(in srgb, #6cc0ff 55%, transparent);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  isolation: isolate;
+}
+
+/* Dark-surface (silver) placements get a brighter, whiter halo. */
+.butterfly-logo-orb--silver {
+  --bf-breathe-glow: color-mix(in srgb, #ffffff 58%, transparent);
+}
+
+.butterfly-logo-orb::before {
+  content: '';
+  position: absolute;
+  inset: -34%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--bf-breathe-glow), transparent 66%);
+  opacity: 0.4;
+  pointer-events: none;
+  animation: butterfly-breathe-glow 4.6s ease-in-out infinite;
+}
+
+.butterfly-logo-orb > .butterfly-logo {
+  transform-origin: center;
+  animation: butterfly-breathe-scale 4.6s ease-in-out infinite;
+}
+
+@keyframes butterfly-breathe-scale {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+@keyframes butterfly-breathe-glow {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(1.14);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .butterfly-logo-orb::before,
+  .butterfly-logo-orb > .butterfly-logo {
+    animation: none;
+  }
+}
+
+@media print {
+  .butterfly-logo-orb::before {
+    animation: none;
+    display: none;
+  }
+  .butterfly-logo-orb > .butterfly-logo {
+    animation: none;
+  }
+}

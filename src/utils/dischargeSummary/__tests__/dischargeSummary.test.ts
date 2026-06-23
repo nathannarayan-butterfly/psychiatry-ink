@@ -7,6 +7,10 @@ import { buildDischargeSummaryEvidenceBundle } from '../evidenceBundle'
 import { createDischargeSummaryDraft, isSectionIncludedInFinal } from '../draftOps'
 import { assembleDischargeSummaryText } from '../export'
 import { applyRegionSpelling } from '../regionSpelling'
+import {
+  getVisibleNotionPages,
+  isPageAvailableForLanguage,
+} from '../../../components/notion/notionPages'
 
 describe('discharge summary section ordering', () => {
   it('short discharge summary has 16 sections in spec order', () => {
@@ -39,6 +43,31 @@ describe('evidence bundle de-id', () => {
     expect(bundle.isDeidentified).toBe(true)
     expect(bundle.summaryText).toContain('[DATE]')
     expect(bundle.summaryText).not.toContain('12/03/2024')
+  })
+})
+
+describe('discharge summary language gating', () => {
+  it('is only available when the app language is English', () => {
+    expect(isPageAvailableForLanguage('discharge-summary', 'en')).toBe(true)
+    expect(isPageAvailableForLanguage('discharge-summary', 'de')).toBe(false)
+    expect(isPageAvailableForLanguage('discharge-summary', 'fr')).toBe(false)
+    expect(isPageAvailableForLanguage('discharge-summary', 'es')).toBe(false)
+  })
+
+  it('keeps the German Arztbrief available in every language', () => {
+    for (const language of ['de', 'en', 'fr', 'es'] as const) {
+      expect(isPageAvailableForLanguage('arztbrief', language)).toBe(true)
+    }
+  })
+
+  it('hides only the discharge summary from the visible page list for non-English', () => {
+    const en = getVisibleNotionPages('en').map((page) => page.id)
+    const de = getVisibleNotionPages('de').map((page) => page.id)
+    expect(en).toContain('discharge-summary')
+    expect(de).not.toContain('discharge-summary')
+    expect(de).toContain('arztbrief')
+    // Nothing else is dropped for German users.
+    expect(de).toEqual(en.filter((id) => id !== 'discharge-summary'))
   })
 })
 

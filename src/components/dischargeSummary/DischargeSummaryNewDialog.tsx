@@ -4,7 +4,22 @@ import type {
   DischargeSummaryDocumentType,
   DischargeSummaryRegion,
 } from '../../types/dischargeSummary'
+import type { EnglishVariant, UiLanguage } from '../../types/settings'
 import { useTranslation } from '../../context/TranslationContext'
+
+/**
+ * The discharge summary is an English-language document. The UK/US/international
+ * spelling variant is only a meaningful choice for English app users, so the
+ * picker is hidden for other languages and defaults to neutral international
+ * English. English users default to the variant they picked in Settings.
+ */
+function defaultRegionFor(
+  language: UiLanguage,
+  englishVariant: EnglishVariant,
+): DischargeSummaryRegion {
+  if (language !== 'en') return 'international'
+  return englishVariant === 'us' ? 'US' : 'UK'
+}
 
 interface DischargeSummaryNewDialogProps {
   open: boolean
@@ -27,14 +42,19 @@ export function DischargeSummaryNewDialog({
   coverage = [],
   missingSummary = [],
 }: DischargeSummaryNewDialogProps) {
-  const { t } = useTranslation()
+  const { t, language, englishVariant } = useTranslation()
   const [documentType, setDocumentType] = useState<DischargeSummaryDocumentType>(initialDocumentType)
-  const [region, setRegion] = useState<DischargeSummaryRegion>('international')
+  const [region, setRegion] = useState<DischargeSummaryRegion>(() =>
+    defaultRegionFor(language, englishVariant),
+  )
   const [mode, setMode] = useState<AiMode>('standard')
 
   useEffect(() => {
-    if (open) setDocumentType(initialDocumentType)
-  }, [open, initialDocumentType])
+    if (open) {
+      setDocumentType(initialDocumentType)
+      setRegion(defaultRegionFor(language, englishVariant))
+    }
+  }, [open, initialDocumentType, language, englishVariant])
 
   if (!open) return null
 
@@ -54,17 +74,19 @@ export function DischargeSummaryNewDialog({
           </select>
         </label>
 
-        <label className="arztbrief-dialog__field">
-          <span>{t('dischargeSummaryRegion')}</span>
-          <select
-            value={region}
-            onChange={(e) => setRegion(e.target.value as DischargeSummaryRegion)}
-          >
-            <option value="UK">{t('dischargeSummaryRegionUk')}</option>
-            <option value="US">{t('dischargeSummaryRegionUs')}</option>
-            <option value="international">{t('dischargeSummaryRegionIntl')}</option>
-          </select>
-        </label>
+        {language === 'en' ? (
+          <label className="arztbrief-dialog__field">
+            <span>{t('dischargeSummaryRegion')}</span>
+            <select
+              value={region}
+              onChange={(e) => setRegion(e.target.value as DischargeSummaryRegion)}
+            >
+              <option value="UK">{t('dischargeSummaryRegionUk')}</option>
+              <option value="US">{t('dischargeSummaryRegionUs')}</option>
+              <option value="international">{t('dischargeSummaryRegionIntl')}</option>
+            </select>
+          </label>
+        ) : null}
 
         <label className="arztbrief-dialog__field">
           <span>{t('dischargeSummaryAiMode')}</span>

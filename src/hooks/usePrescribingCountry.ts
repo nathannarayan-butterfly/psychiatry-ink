@@ -1,25 +1,28 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { PrescribingCountryCode } from '../types/knowledgeBase'
+import { PRESCRIBING_COUNTRY_CODES, type PrescribingCountryCode } from '../types/knowledgeBase'
+import { countryName } from '../data/countryNames'
 
 const STORAGE_KEY = 'psychiatry-ink:defaultPrescribingCountry'
 const FALLBACK_COUNTRY: PrescribingCountryCode = 'DE'
 
-export const PRESCRIBING_COUNTRIES: PrescribingCountryCode[] = ['DE', 'CH', 'AT', 'UK']
+export const PRESCRIBING_COUNTRIES: readonly PrescribingCountryCode[] = PRESCRIBING_COUNTRY_CODES
 
-export const PRESCRIBING_COUNTRY_LABELS: Record<PrescribingCountryCode, string> = {
-  DE: 'Germany',
-  CH: 'Switzerland',
-  AT: 'Austria',
-  UK: 'United Kingdom',
+function buildLabelMap(language: 'de' | 'en'): Record<PrescribingCountryCode, string> {
+  return PRESCRIBING_COUNTRY_CODES.reduce(
+    (acc, code) => {
+      acc[code] = countryName(code, language)
+      return acc
+    },
+    {} as Record<PrescribingCountryCode, string>,
+  )
 }
 
-/** Native country names for German UI copy (e.g. preparation list headings). */
-export const PRESCRIBING_COUNTRY_NATIVE_LABELS: Record<PrescribingCountryCode, string> = {
-  DE: 'Deutschland',
-  CH: 'Schweiz',
-  AT: 'Österreich',
-  UK: 'Vereinigtes Königreich',
-}
+/** English country names (e.g. `Germany`). */
+export const PRESCRIBING_COUNTRY_LABELS: Record<PrescribingCountryCode, string> = buildLabelMap('en')
+
+/** Native German country names for UI copy (e.g. preparation list headings). */
+export const PRESCRIBING_COUNTRY_NATIVE_LABELS: Record<PrescribingCountryCode, string> =
+  buildLabelMap('de')
 
 function readDefaultCountry(): PrescribingCountryCode {
   try {

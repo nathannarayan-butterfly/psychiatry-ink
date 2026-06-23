@@ -1,23 +1,22 @@
 import type { MouseEvent } from 'react'
 import { useTranslation } from '../context/TranslationContext'
-import { hasLogoInkMark, logoInkRawSvg, logoInkSrc } from '../data/brandLogo'
+import { hasLogoInkMark, logoInkBwRawSvg, logoInkSrc } from '../data/brandLogo'
 import { logoStemByLanguage, logoTextByLanguage } from '../data/languages'
 
 interface AppLogoProps {
   onClick?: () => void
-  /** White text/mark for dark backgrounds (e.g. overview sidebar prototype). */
+  /** White text/mark for dark backgrounds (e.g. dark case sidebar). */
   variant?: 'default' | 'light'
 }
 
 /**
- * For the dark-sidebar (light) variant we inline the SVG so its two groups
- * (#black-artwork / #white-details) can be recolored independently via CSS,
- * giving a two-tone white-silhouette + dark-engraving look instead of a flat
- * inverted blob. The class is injected so existing `.topbar-logo__mark` sizing
- * rules keep applying to the <svg> element itself.
+ * For the dark-sidebar (light) variant we inline the white `Ink_logo_BW` SVG
+ * (backing rectangle already stripped in `brandLogo`) so it renders as a crisp
+ * transparent white silhouette on the dark panel. The class is injected so the
+ * existing `.topbar-logo__mark` sizing rules apply to the <svg> element itself.
  */
 const lightMarkSvg =
-  logoInkRawSvg
+  logoInkBwRawSvg
     ?.replace(/<\?xml[^>]*\?>\s*/, '')
     .replace(
       /<svg\b/,

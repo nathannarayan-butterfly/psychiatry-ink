@@ -1,6 +1,6 @@
 import { safeGetItem, safeSetItem } from '../safeStorage'
 
-export const OVERVIEW_LAYOUT_VERSION = 4 as const
+export const OVERVIEW_LAYOUT_VERSION = 7 as const
 export const OVERVIEW_LAYOUT_STORAGE_BASE = 'psychiatry-ink:overview-layout'
 export const OVERVIEW_LAYOUT_CHANGED_EVENT = 'psychiatry-ink:overview-layout-changed'
 
@@ -13,7 +13,6 @@ export type OverviewWidgetId =
   | 'hero-summary'
   | 'safety'
   | 'medication'
-  | 'spiegel-latest'
   | 'diagnoses'
   | 'psychopathology'
   | 'labs-due'
@@ -64,7 +63,6 @@ export const OVERVIEW_WIDGET_IDS: readonly OverviewWidgetId[] = [
   'hero-summary',
   'safety',
   'medication',
-  'spiegel-latest',
   'diagnoses',
   'psychopathology',
   'labs-due',
@@ -131,7 +129,6 @@ export const OVERVIEW_WIDGET_BAND: Partial<Record<OverviewWidgetId, OverviewWidg
   'recent-verlauf': 'safety-verlauf',
   psychopathology: 'clinical-status',
   'labs-due': 'monitoring',
-  'spiegel-latest': 'monitoring',
   'spiegel-all': 'monitoring',
   'lab-results': 'monitoring',
   'ekg-summary': 'monitoring',
@@ -147,8 +144,8 @@ export const OVERVIEW_WIDGET_BAND: Partial<Record<OverviewWidgetId, OverviewWidg
   appointments: 'therapy',
   'butterfly-criteria': 'monitoring',
   zwangsmassnahme: 'safety-verlauf',
-  'ci-dimensional': 'clinical-status',
-  'ci-mechanism': 'clinical-status',
+  'ci-dimensional': 'diagnosis-medication',
+  'ci-mechanism': 'diagnosis-medication',
   'ci-status': 'clinical-status',
 }
 
@@ -159,11 +156,12 @@ export function getDefaultOverviewLayout(): OverviewLayout {
     widgets: [
       { instanceId: 'default-diagnoses', widgetId: 'diagnoses', width: 'half' },
       { instanceId: 'default-medication', widgetId: 'medication', width: 'half' },
+      { instanceId: 'default-ci-dimensional', widgetId: 'ci-dimensional', width: 'half' },
+      { instanceId: 'default-ci-mechanism', widgetId: 'ci-mechanism', width: 'half' },
       { instanceId: 'default-safety', widgetId: 'safety', width: 'full' },
       { instanceId: 'default-verlaufstendenz', widgetId: 'verlaufstendenz', width: 'full' },
       { instanceId: 'default-psychopathology', widgetId: 'psychopathology', width: 'full' },
-      { instanceId: 'default-labs', widgetId: 'labs-due', width: 'half' },
-      { instanceId: 'default-spiegel-latest', widgetId: 'spiegel-latest', width: 'half' },
+      { instanceId: 'default-labs', widgetId: 'labs-due', width: 'full' },
       { instanceId: 'default-angemeldete', widgetId: 'angemeldete-therapien', width: 'half' },
       { instanceId: 'default-compliance', widgetId: 'compliance', width: 'half' },
     ],

@@ -339,11 +339,19 @@
   display: flex;
   flex-shrink: 0;
   gap: 0.2rem;
-  margin: 0 0.75rem 0.65rem;
-  padding: 0.2rem;
-  border: 1px solid var(--cm-quiet-border, #ece8e3);
-  border-radius: 0.45rem;
-  background: color-mix(in srgb, var(--bg-primary, #faf9f7) 88%, transparent);
+  margin: 0.7rem 0.75rem 0.65rem;
+  padding: 0.22rem;
+  border: 1px solid color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 18%, var(--cm-quiet-border, #ece8e3));
+  border-radius: 0.5rem;
+  /* Tinted base + soft accent sheen — the same aura-card recipe used across the
+     Übersicht, so the quick-action chips read as an elevated control group. */
+  background-color: color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 4%, var(--surface-elevated, #fff));
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 6%, transparent),
+    transparent 60%
+  );
+  box-shadow: var(--shadow-elevated-sm, 0 1px 2px rgba(0, 0, 0, 0.04));
 }
 
 .ask-butterfly-tier-segment__btn {
@@ -416,6 +424,9 @@
   /* Theme accent stripe on the content-facing edge + muted frame on other sides */
   border: 1px solid var(--ask-butterfly-frame, var(--cm-hairline, #e8e4df));
   border-left: 3px solid var(--ask-butterfly-accent, var(--accent, #8a5a2b));
+  /* Round only the content-facing top corner; the screen-edge corners stay flush
+     so the rounded header cap looks intentional, not detached from the edge. */
+  border-top-left-radius: var(--radius-card, 0.6875rem);
   background: color-mix(
     in srgb,
     var(--ask-butterfly-accent, var(--accent, #8a5a2b)) var(--ask-butterfly-bg-mix),
@@ -425,6 +436,12 @@
   transform: translateX(100%);
   transition: transform 0.2s ease;
   pointer-events: none;
+}
+
+/* Desktop dock sits against the right viewport edge, so the header's top-right
+   corner stays square (only the content-facing top-left follows the radius). */
+.ask-butterfly-dock-panel .ask-butterfly-dialog__header {
+  border-top-right-radius: 0;
 }
 
 .ask-butterfly-dock-panel--open {
@@ -461,17 +478,56 @@
 }
 
 .ask-butterfly-dialog__header {
+  position: relative;
+  isolation: isolate;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.7rem 0.85rem;
-  border-bottom: 1px solid var(--cm-hairline, #e8e4df);
-  background: color-mix(
-    in srgb,
-    var(--ask-butterfly-accent, var(--accent, #8a5a2b)) 4%,
-    var(--surface-elevated, #fff)
-  );
+  padding: 0.8rem 0.9rem;
+  color: var(--aura-ink, #f2efe8);
+  border-bottom: 1px solid var(--aura-hairline, color-mix(in srgb, white 14%, transparent));
+  /* Round the top corners to follow the chat window's radius so the dark header
+     reads as the window's rounded cap, not a square bar. The floating dialog
+     also clips via overflow:hidden; the docked panel relies on these radii
+     (it can't clip — its resize handle sits outside the box). */
+  border-top-left-radius: var(--radius-card, 0.6875rem);
+  border-top-right-radius: var(--radius-card, 0.6875rem);
+  /* Semi-dark command-deck surface built ENTIRELY on the shared --aura-* tokens
+     (same radial deep→raised gradient the Übersicht hero family uses), topped by
+     the area-aware aura glow, so the Butterfly chat reads as the same cinematic
+     theme family rather than a flat light bar. */
+  background:
+    radial-gradient(
+      130% 96% at 50% -10%,
+      color-mix(in srgb, var(--aura-glow, var(--aura-glow-primary)) 24%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      140% 120% at 18% -10%,
+      var(--aura-surface-raised, #15171f) 0%,
+      var(--aura-surface-deep, #0a0c12) 64%
+    );
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset;
+}
+
+/* Header controls (drag / dock / undock / close) sit on the dark command-deck
+   surface, so recolour them to the light aura ink ramp for accessible contrast. */
+.ask-butterfly-dialog__header .ask-butterfly-dialog__icon-btn,
+.ask-butterfly-dialog__header .ask-butterfly-dialog__drag-handle,
+.ask-butterfly-dialog__header .ask-butterfly-dialog__close {
+  color: var(--aura-ink-soft, color-mix(in srgb, #f2efe8 76%, transparent));
+}
+
+.ask-butterfly-dialog__header .ask-butterfly-dialog__icon-btn:hover,
+.ask-butterfly-dialog__header .ask-butterfly-dialog__drag-handle:hover {
+  background: var(--aura-glass, rgba(255, 255, 255, 0.06));
+  color: var(--aura-ink, #f2efe8);
+}
+
+.ask-butterfly-dialog__header .ask-butterfly-dialog__close:hover {
+  background: color-mix(in srgb, #f97066 24%, transparent);
+  color: #fff;
 }
 
 .ask-butterfly-dialog__title-wrap {
@@ -490,15 +546,29 @@
   height: 2.15rem;
   line-height: 0;
   border-radius: var(--radius-control, 0.4375rem);
-  border: 1px solid var(--ask-butterfly-frame, var(--cm-quiet-border, #ece8e3));
-  background: var(--surface-elevated, #fff);
-  box-shadow: var(--shadow-elevated-sm, 0 1px 2px rgba(0, 0, 0, 0.04));
+  /* Glass tile seated on the dark header — reuses the aura glass recipe so the
+     silver breathing Butterfly lifts off the command-deck surface and glows. */
+  border: 1px solid var(--aura-hairline-strong, color-mix(in srgb, white 22%, transparent));
+  background: var(--aura-glass, rgba(255, 255, 255, 0.06));
+  backdrop-filter: blur(9px) saturate(125%);
+  -webkit-backdrop-filter: blur(9px) saturate(125%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 2px 10px color-mix(in srgb, #0a0c12 45%, transparent);
 }
 
 .ask-butterfly-dialog__mark .butterfly-logo {
   width: 1.4rem;
   height: 1.4rem;
   object-fit: contain;
+  /* Seat the full-colour mark on the dark glass tile so it stays crisp/lifted. */
+  filter: drop-shadow(0 1px 3px color-mix(in srgb, #0a0c12 55%, transparent));
+}
+
+/* Brighten the breathing halo so the coloured Butterfly reads vivid + glowing
+   against the semi-dark command-deck header. */
+.ask-butterfly-dialog__mark .butterfly-logo-orb {
+  --bf-breathe-glow: color-mix(in srgb, #6cc0ff 70%, transparent);
 }
 
 .ask-butterfly-dialog__title {
@@ -507,7 +577,7 @@
   font-weight: 600;
   letter-spacing: -0.005em;
   line-height: 1.25;
-  color: var(--text-primary, #1a1a1a);
+  color: var(--aura-ink, #f2efe8);
 }
 
 .ask-butterfly-dialog__title-wrap > div {
@@ -518,7 +588,7 @@
   margin: 0.1rem 0 0;
   font-size: 0.7rem;
   line-height: 1.3;
-  color: var(--text-muted, #6b7280);
+  color: var(--aura-ink-soft, color-mix(in srgb, #f2efe8 76%, transparent));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -571,14 +641,49 @@
 }
 
 .ask-butterfly-dialog__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
   margin: auto 0;
   text-align: center;
-  font-size: 0.8rem;
-  line-height: 1.5;
-  color: var(--text-muted, #6b7280);
   max-width: 22rem;
   align-self: center;
   padding: 1.5rem 0.5rem;
+}
+
+/* Light disc seating the shared breathing ButterflyLogo — reuses the same
+   reduced-motion-aware `.butterfly-logo-orb` glow as the Übersicht hero, retinted
+   to the active area accent so the empty chat reads alive, not dull. */
+.ask-butterfly-dialog__empty-orb {
+  position: relative;
+  flex-shrink: 0;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(
+      circle at 32% 26%,
+      var(--surface-elevated, #fff),
+      color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 8%, var(--surface-elevated, #fff)) 70%
+    );
+  border: 1px solid color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 22%, var(--cm-quiet-border, #ece8e3));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 6px 16px -8px color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 45%, transparent);
+}
+
+.ask-butterfly-dialog__empty-orb .butterfly-logo-orb {
+  --bf-breathe-glow: color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 42%, transparent);
+}
+
+.ask-butterfly-dialog__empty-text {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text-muted, #6b7280);
 }
 
 .ask-butterfly-dialog__message {
@@ -618,8 +723,18 @@
 .ask-butterfly-dialog__message--assistant {
   align-self: flex-start;
   border-bottom-left-radius: 0.35rem;
-  background: var(--surface-elevated, #fff);
-  border-color: var(--cm-quiet-border, #ece8e3);
+  /* Soft accent sheen + accent-tinted elevation (aura-card recipe) so the
+     assistant turns read as elevated surfaces cohesive with the Übersicht. */
+  background-color: color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 3%, var(--surface-elevated, #fff));
+  background-image: radial-gradient(
+    120% 100% at 0% 0%,
+    color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 7%, transparent),
+    transparent 60%
+  );
+  border-color: color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 14%, var(--cm-quiet-border, #ece8e3));
+  box-shadow:
+    var(--shadow-elevated-sm, 0 1px 2px rgba(0, 0, 0, 0.04)),
+    0 8px 20px -16px color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 55%, transparent);
 }
 
 .ask-butterfly-dialog__message-role {
@@ -675,10 +790,19 @@
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  border: 1px solid var(--cm-quiet-border, #ece8e3);
+  border: 1px solid color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 16%, var(--cm-quiet-border, #ece8e3));
   border-radius: var(--radius-card, 0.6875rem);
-  background: var(--surface-elevated, #fff);
-  box-shadow: var(--shadow-elevated-sm, 0 1px 2px rgba(0, 0, 0, 0.04));
+  /* Tinted base + soft accent sheen + accent-tinted elevation glow (aura-card
+     recipe) so the composer reads as a polished, lifted input surface. */
+  background-color: color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 3.5%, var(--surface-elevated, #fff));
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 6%, transparent),
+    transparent 55%
+  );
+  box-shadow:
+    var(--shadow-elevated-sm, 0 1px 2px rgba(0, 0, 0, 0.04)),
+    0 12px 26px -18px color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 60%, transparent);
   transition:
     border-color var(--duration-fast, 150ms) var(--ease-standard, ease),
     box-shadow var(--duration-fast, 150ms) var(--ease-standard, ease);
@@ -831,8 +955,17 @@
     border: 1px solid var(--ask-butterfly-frame, var(--cm-hairline, #e8e4df));
     border-left: 1px solid var(--ask-butterfly-frame, var(--cm-hairline, #e8e4df));
     border-top: 3px solid var(--ask-butterfly-accent, var(--accent, #8a5a2b));
+    /* Bottom sheet spans full width, so round both top corners. */
+    border-top-left-radius: var(--radius-card, 0.6875rem);
+    border-top-right-radius: var(--radius-card, 0.6875rem);
     box-shadow: 0 -4px 24px color-mix(in srgb, #0f1419 8%, transparent);
     transform: translateY(100%);
+  }
+
+  /* Both top corners round on the bottom sheet — restore the header's top-right
+     radius that the desktop dock squares off. */
+  .ask-butterfly-dock-panel .ask-butterfly-dialog__header {
+    border-top-right-radius: var(--radius-card, 0.6875rem);
   }
 
   .ask-butterfly-dock-panel--open {
@@ -841,5 +974,29 @@
 
   .ask-butterfly-dock-panel__resize-handle {
     display: none;
+  }
+}
+
+@media print {
+  /* Flatten the semi-dark command-deck header to a light, ink-saving bar with
+     legible dark text (the dark surface + light aura ink only make sense on
+     screen). */
+  .ask-butterfly-dialog__header {
+    background: var(--surface-elevated, #fff);
+    border-bottom-color: var(--cm-hairline, #e8e4df);
+    box-shadow: none;
+  }
+  .ask-butterfly-dialog__header .ask-butterfly-dialog__title {
+    color: var(--text-primary, #1a1a1a);
+  }
+  .ask-butterfly-dialog__header .ask-butterfly-dialog__subtitle {
+    color: var(--text-muted, #6b7280);
+  }
+  .ask-butterfly-dialog__mark {
+    background: var(--surface-elevated, #fff);
+    border-color: var(--cm-quiet-border, #ece8e3);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
   }
 }

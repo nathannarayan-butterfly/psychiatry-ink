@@ -83,7 +83,7 @@ export function AskButterflyChatPanel({
       <header className="ask-butterfly-dialog__header">
         <div className="ask-butterfly-dialog__title-wrap">
           <span className="ask-butterfly-dialog__mark">
-            <ButterflyLogo variant="color" size={variant === 'docked' ? 24 : 28} />
+            <ButterflyLogo variant="color" breathing size={variant === 'docked' ? 24 : 28} />
           </span>
           <div>
             <h2 id={titleId} className="ask-butterfly-dialog__title">
@@ -100,7 +100,12 @@ export function AskButterflyChatPanel({
 
         <div className="ask-butterfly-dialog__messages" aria-live="polite">
           {messages.length === 0 ? (
-            <p className="ask-butterfly-dialog__empty">{t('askButterflyEmpty')}</p>
+            <div className="ask-butterfly-dialog__empty">
+              <span className="ask-butterfly-dialog__empty-orb" aria-hidden>
+                <ButterflyLogo breathing size={34} />
+              </span>
+              <p className="ask-butterfly-dialog__empty-text">{t('askButterflyEmpty')}</p>
+            </div>
           ) : (
             messages.map((message, index) => (
               <div

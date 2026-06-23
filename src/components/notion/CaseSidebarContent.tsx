@@ -13,7 +13,6 @@ interface CaseSidebarContentProps {
   activeTab: TopNavTabId
   onOpenWorkspacePage?: (pageId: NotionPageId) => void
   onOpenTemplateFromPatient?: () => void
-  onAddAnforderung?: () => void
   /** Workspace tab — diary sidebar widgets (date, timers, recent docs, etc.). */
   workspaceSidebar?: {
     storageCaseId: string
@@ -35,7 +34,6 @@ export function CaseSidebarContent({
   activeTab,
   onOpenWorkspacePage,
   onOpenTemplateFromPatient,
-  onAddAnforderung,
   workspaceSidebar,
 }: CaseSidebarContentProps) {
   switch (activeTab) {
@@ -87,7 +85,6 @@ export function CaseSidebarContent({
         <CaseSidebarQuickNav
           onOpenWorkspacePage={onOpenWorkspacePage}
           onOpenTemplateFromPatient={onOpenTemplateFromPatient}
-          onAddAnforderung={onAddAnforderung}
         />
       )
 
@@ -96,7 +93,6 @@ export function CaseSidebarContent({
         <CaseSidebarQuickNav
           onOpenWorkspacePage={onOpenWorkspacePage}
           onOpenTemplateFromPatient={onOpenTemplateFromPatient}
-          onAddAnforderung={onAddAnforderung}
         />
       )
   }

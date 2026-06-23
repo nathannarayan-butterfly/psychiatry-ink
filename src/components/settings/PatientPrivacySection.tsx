@@ -3,9 +3,11 @@ import { useTranslation } from '../../context/TranslationContext'
 import {
   allowsPatientMetadata,
   allowsPublicKeyRegistration,
-  COUNTRY_TIER_OVERRIDES,
   type PrivacyTier,
 } from '../../data/privacyRegions'
+import { toIsoCountryCode } from '../../data/countryNames'
+import { ISO_ALPHA2_CODES } from '../../types/knowledgeBase'
+import { CountryCombobox } from './CountryCombobox'
 import { useDashboardSettings } from '../../hooks/useDashboardSettings'
 import type { usePrivacySettings } from '../../hooks/usePrivacySettings'
 import type { useWorkspaceVault } from '../../hooks/useWorkspaceVault'
@@ -31,8 +33,11 @@ const tierLabelKeys: Record<PrivacyTier, 'privacyTierFull' | 'privacyTierLocalOn
   disabled: 'privacyTierDisabled',
 }
 
+/** German-speaking + UK markets pinned to the top of the privacy country list. */
+const PRIVACY_PRIORITY_CODES = ['DE', 'AT', 'CH', 'LI', 'GB'] as const
+
 export function PatientPrivacySection({ privacy, workspaceVault }: PatientPrivacySectionProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const { countryCode, identifierStorage, tier, setCountryCode, setIdentifierStorage } = privacy
   const dashboardSettings = useDashboardSettings()
   const [pseudonymizationEnabled, setPseudonymizationEnabled] = useState(
@@ -71,7 +76,15 @@ export function PatientPrivacySection({ privacy, workspaceVault }: PatientPrivac
     setPseudonymizationEnabled(checked)
   }
 
-  const knownCountries = Object.keys(COUNTRY_TIER_OVERRIDES).sort()
+  // Full ISO country set (same source as the prescription-country selector,
+  // expressed in ISO codes — `UK` → `GB`). Countries without an explicit
+  // privacy-tier override resolve to the safe default tier via
+  // `resolvePrivacyTier`. The currently stored value is always included so a
+  // detected/legacy code stays selectable.
+  const currentIso = toIsoCountryCode(countryCode)
+  const countryOptions = Array.from(
+    new Set([...ISO_ALPHA2_CODES, ...(currentIso ? [currentIso] : [])]),
+  )
 
   return (
     <div>
@@ -85,19 +98,17 @@ export function PatientPrivacySection({ privacy, workspaceVault }: PatientPrivac
       </SettingsField>
 
       <SettingsField label={t('privacyCountryLabel')}>
-        <input
-          type="text"
-          value={countryCode}
-          onChange={(event) => setCountryCode(event.target.value)}
-          className="w-full max-w-[8rem] rounded-sm border-2 border-border bg-surface px-3 py-2 text-sm uppercase text-ink"
-          maxLength={2}
-          aria-label={t('privacyCountryLabel')}
+        <CountryCombobox
+          value={currentIso}
+          onChange={(code) => setCountryCode(code)}
+          codes={countryOptions}
+          language={language}
+          ariaLabel={t('privacyCountryLabel')}
+          placeholder={t('countrySearchPlaceholder')}
+          noResultsLabel={t('countrySearchNoResults')}
+          priorityCodes={PRIVACY_PRIORITY_CODES}
+          id="settings-privacy-country"
         />
-        {knownCountries.length > 0 ? (
-          <p className="mt-2 text-xs text-muted">
-            {t('privacyConfiguredCountries')}: {knownCountries.join(', ')}
-          </p>
-        ) : null}
       </SettingsField>
 
       <SettingsField label={t('privacyTierLabel')}>

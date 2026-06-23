@@ -67,6 +67,8 @@ import {
 } from '../../utils/savedDocs'
 import { NotionTopBar } from './NotionTopBar'
 import { WorkspaceContextMenu } from './WorkspaceContextMenu'
+import { WorkspaceLauncher } from './workspaceLauncher/WorkspaceLauncher'
+import type { LauncherTarget } from '../../data/workspaceLauncher/launcherTasks'
 import { NotionPaper, type SavedWorkspaceDocumentPayload } from './NotionPaper'
 import { NotionInputBar } from './NotionInputBar'
 import { NotionTimelineCanvas } from './NotionTimelineCanvas'
@@ -85,6 +87,7 @@ import type { SlashCommandId } from './SlashCommandMenu'
 import { slashCommandToAiTool } from './SlashCommandMenu'
 import { parseAnamneseSections } from '../../utils/anamnese/parseSections'
 import {
+  isPageAvailableForLanguage,
   isToolPage,
   isVerlaufDocumentType,
   isWorkspacePageOpen,
@@ -559,6 +562,18 @@ function NotionAppInner({
       setActivePage(resolveNotionPageFromDocumentType(workspace.selectedDocumentType))
     }
   }, [workspace.selectedDocumentType, activePage])
+
+  // The English Discharge Summary tool is hidden for non-English app languages.
+  // If the user has it open (or it was restored from a deep link / saved route)
+  // and then switches the app to a non-English language, route cleanly back to
+  // the relevant document page instead of leaving a now-hidden tool on screen.
+  // Saved discharge drafts stay in their own storage and remain reachable once
+  // the language is switched back to English.
+  useEffect(() => {
+    if (activePage === 'discharge-summary' && !isPageAvailableForLanguage(activePage, language)) {
+      setActivePage(resolveNotionPageFromDocumentType(workspace.selectedDocumentType))
+    }
+  }, [activePage, language, workspace.selectedDocumentType])
 
   useEffect(() => {
     if (activeTopTab !== 'workspace') return
@@ -1238,6 +1253,16 @@ function NotionAppInner({
   const showToolCanvas = isToolPage(activePage)
   const showDocumentCanvas = !showToolCanvas
 
+  // The Workspace Launcher replaces the empty-workspace home: shown only when the
+  // workspace tab is active with no document open and no tool page selected. It
+  // is a starting point for clinical tasks and never interferes with the
+  // text-selection / right-click context actions that edit existing content.
+  const showWorkspaceLauncher =
+    activeTopTab === 'workspace' &&
+    !showPatientRegistry &&
+    !workspace.selectedDocumentType &&
+    !isToolPage(activePage)
+
   // Patient name and linked state — read from local case registry (client-side only)
   const [patientMetaVersion, setPatientMetaVersion] = useState(0)
   const currentPatientName = useMemo(
@@ -1472,6 +1497,68 @@ function NotionAppInner({
     [activeTopTab, archiveActiveDocumentIfNeeded, onNavigate, storageCaseId, workspace.selectedDocumentType],
   )
 
+  // Route a Workspace Launcher selection into the EXISTING workspace system.
+  // The launcher only emits a navigation intent; all routing is done here with
+  // the same handlers the rest of the workspace uses (no forked routing).
+  const handleLauncherLaunch = useCallback(
+    (target: LauncherTarget) => {
+      if (target.kind === 'topTab') {
+        if (target.medicationAdd) setPendingMedicationAdd(true)
+        handleTopTabSelect(target.tab)
+        return
+      }
+      if (target.kind === 'template') {
+        setShowPatientRegistry(false)
+        setActiveTopTab('workspace')
+        openTemplateHost()
+        return
+      }
+      if (target.kind === 'anforderung') {
+        if (canRequestAnforderungen) {
+          openAnforderungModal()
+        } else {
+          // No linked patient (or read-only): fall back to the Labor tool.
+          handleTopTabSelect('labor')
+        }
+        return
+      }
+      // workspacePage
+      setShowPatientRegistry(false)
+      setActiveTopTab('workspace')
+      if (target.sectionId) {
+        handlePageSelectWithSection(target.pageId, target.sectionId)
+      } else if (target.variantId && target.pageId === 'psychopath') {
+        setActivePage('psychopath')
+        flushSync(() => {
+          workspace.selectDocumentType('psychopath', target.variantId)
+        })
+        onSelectAssessmentStandard(
+          resolveAssessmentStandardForSubMode(target.variantId as PsychopathSubMode),
+        )
+      } else if (target.variantId) {
+        setActivePage(target.pageId)
+        flushSync(() => {
+          workspace.selectDocumentType(target.pageId, target.variantId)
+        })
+      } else {
+        handlePageSelect(target.pageId)
+      }
+      if (target.dictation) {
+        workspace.startDictation()
+      }
+    },
+    [
+      canRequestAnforderungen,
+      handlePageSelect,
+      handlePageSelectWithSection,
+      handleTopTabSelect,
+      onSelectAssessmentStandard,
+      openAnforderungModal,
+      openTemplateHost,
+      workspace,
+    ],
+  )
+
   if (storageCaseIdForAccess && caseAccessChecks.isLoading) {
     return (
       <div className="notion-preview-app text-ink case-access-state" aria-busy="true">
@@ -1673,9 +1760,6 @@ function NotionAppInner({
               handlePageSelect(pageId)
             }}
             onOpenTemplateFromPatient={() => setTemplateHostOpen(true)}
-            onAddAnforderung={
-              canRequestAnforderungen ? () => openAnforderungModal() : undefined
-            }
             workspaceSidebar={
               activeTopTab === 'workspace'
                 ? {
@@ -2017,8 +2101,11 @@ function NotionAppInner({
               />
             ) : activePage === 'arztbrief' ? (
               <ArztbriefWorkspace caseId={storageCaseId} disabled={workspaceReadOnly} />
-            ) : activePage === 'discharge-summary' ? (
+            ) : activePage === 'discharge-summary' &&
+              isPageAvailableForLanguage('discharge-summary', language) ? (
               <DischargeSummaryWorkspace caseId={storageCaseId} disabled={workspaceReadOnly} />
+            ) : showWorkspaceLauncher ? (
+              <WorkspaceLauncher onLaunch={handleLauncherLaunch} />
             ) : (
               <>
                 {hasDraftOnlyBanner && workspace.selectedDocumentType && (
@@ -2119,7 +2206,7 @@ function NotionAppInner({
           </div>
         </div>
 
-        {showDocumentCanvas ? (
+        {showDocumentCanvas && !showWorkspaceLauncher ? (
           <>
             {workspace.generationPendingReview ? (
               <NotionGenerationReview

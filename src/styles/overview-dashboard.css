@@ -40,30 +40,493 @@
   container: overview-dashboard / inline-size;
 }
 
-/* ── Hero widget (typographic strip) ─────────────────────────────────────── */
+/* ── Hero header card (light, minimal) ───────────────────────────────────────
+ * A refined LIGHT "header card" that reads as the same family as the bento
+ * dashboard cards: the surface (tinted base, soft accent sheen, accent hairline
+ * + left rail, gentle elevation) comes from the shared `.aura-card` class on the
+ * same element, so it adapts to the overview gold accent automatically. The hero
+ * only adds patient identity + the editable clinical thesis, a calm at-a-glance
+ * briefing beside a gently breathing Butterfly, and a row of metric tiles. No
+ * dark command-deck, no aurora mesh, no tilt/spotlight — just clean, legible
+ * clinical data. The only motion is the restrained count-up / ring fill and the
+ * opt-in Butterfly breathe, both gated by prefers-reduced-motion. Hero-local
+ * colours (--ovh-*) map onto the global light tokens so the palette stays
+ * cohesive with the rest of the app.
+ * ────────────────────────────────────────────────────────────────────────── */
 
-.ov-hero-widget {
-  margin-bottom: 0;
+.ov-hero {
+  /* Overview gold accent for hero-local decoration (matches the card family;
+     --aura-card on the same element resolves the same accent for the surface). */
+  --ovh-accent: var(--area-accent, var(--accent));
+  /* Light ink + hairlines from the global tokens. */
+  --ovh-ink: var(--text-main, #24211e);
+  --ovh-ink-soft: var(--text-secondary, #6d655c);
+  --ovh-ink-mute: var(--text-muted, #91887e);
+  --ovh-line: var(--ov-hairline);
+  /* Clinical semantic tones reuse the light dashboard palette. */
+  --ovh-danger: var(--ov-danger);
+  --ovh-warn: var(--ov-warn);
+  --ovh-info: var(--ov-info);
+  --ovh-ok: var(--ov-ok);
+
+  /* Surface (tinted background, accent sheen, hairline + left rail, elevation)
+     comes from the shared `.aura-card` class on the same element. The hero only
+     adds rhythm here so the card look stays the single source of truth. */
+  position: relative;
   width: 100%;
+  margin-bottom: var(--space-5, 1.25rem);
+  padding: clamp(1.1rem, 2.4vw, 1.65rem) clamp(1.1rem, 2.4vw, 1.65rem);
   text-align: left;
 }
 
-.ov-dashboard > .ov-hero-widget {
-  margin-bottom: var(--space-4, 1rem);
+/* ── Content layout ──────────────────────────────────────────────────────── */
+
+.ov-hero__content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.05rem;
 }
 
-.ov-hero-widget .cm-hero {
-  padding-bottom: 1.75rem;
+/* Top bar: page title (eyebrow) on the left, print/export actions on the right. */
+.ov-hero__topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3, 0.75rem);
+}
+.ov-hero__topbar .cm-page-eyebrow {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+.ov-hero__topbar .ov-action-toolbar {
+  flex-shrink: 0;
+  padding-top: 0.1rem;
 }
 
-.ov-hero-widget__orientation {
-  margin: -0.75rem 0 0;
-  padding-bottom: 1.25rem;
-  border-bottom: 1px solid var(--ov-hairline);
-  font-size: var(--text-xs, 0.75rem);
+.ov-hero__identity {
+  position: relative;
+}
+
+/* The shared identity strip + thesis editor render in their normal light theme
+   colours here (no dark overrides) — just a slightly larger name and a calm
+   hairline divider so the header reads as a refined card. */
+.ov-hero .cm-hero {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--ovh-line);
+}
+.ov-hero .cm-hero__name {
+  font-size: clamp(1.5rem, 2.8vw, 1.95rem);
+}
+
+/* ── Butterfly + at-a-glance briefing ────────────────────────────────────── */
+
+.ov-hero__briefing {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+/* Light disc that seats the shared breathing ButterflyLogo. The breathe glow +
+   scale come from the reusable `.butterfly-logo-orb` variant (single source of
+   truth); the disc just provides a calm light seat and retints the shared halo
+   to the overview gold via --bf-breathe-glow so it stays visible on light. */
+.ov-hero__orb {
+  position: relative;
+  flex-shrink: 0;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 32% 26%, #fff, color-mix(in srgb, var(--ovh-accent) 7%, #fff) 70%),
+    var(--surface, #fff);
+  border: 1px solid color-mix(in srgb, var(--ovh-accent) 22%, var(--border-soft, #e8e4df));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 4px 12px -6px color-mix(in srgb, var(--ovh-accent) 40%, transparent);
+}
+
+.ov-hero__orb .butterfly-logo-orb {
+  --bf-breathe-glow: color-mix(in srgb, var(--ovh-accent) 38%, transparent);
+}
+
+.ov-hero__briefing-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.ov-hero__briefing-eyebrow {
+  font-size: var(--cm-label-size, 0.6875rem);
+  font-weight: var(--weight-semibold, 600);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ovh-accent) 70%, var(--ovh-ink-mute));
+}
+
+.ov-hero__briefing-text {
+  margin: 0;
+  font-size: var(--text-md, 1rem);
+  font-weight: var(--weight-medium, 500);
   line-height: 1.45;
-  color: var(--text-muted, #91887e);
+  color: var(--ovh-ink-soft);
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
+
+/* ── At-a-glance metric tiles (light) ────────────────────────────────────── */
+
+.ov-hero__tiles {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11.5rem, 1fr));
+  gap: 0.6rem;
+}
+
+.ov-hero__tile {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--ovh-line);
+  border-radius: var(--radius-control, 0.4375rem);
+  background: color-mix(in srgb, var(--ovh-accent) 4%, var(--surface, #fff));
+  transition:
+    border-color var(--ov-transition),
+    background var(--ov-transition),
+    transform var(--ov-transition),
+    box-shadow var(--ov-transition);
+}
+
+.ov-hero__tile:hover {
+  border-color: color-mix(in srgb, var(--ovh-accent) 30%, var(--border-soft, #e8e4df));
+  background: color-mix(in srgb, var(--ovh-accent) 7%, var(--surface, #fff));
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px -16px color-mix(in srgb, var(--ovh-accent) 55%, transparent);
+}
+
+.ov-hero__tile-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.95rem;
+  height: 1.95rem;
+  border-radius: 0.5rem;
+  color: color-mix(in srgb, var(--ovh-accent) 88%, var(--text-main, #24211e));
+  background: color-mix(in srgb, var(--ovh-accent) 11%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ovh-accent) 18%, transparent);
+}
+
+.ov-hero__tile-icon svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.ov-hero__tile-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+  min-width: 0;
+}
+
+.ov-hero__tile-label {
+  font-size: var(--text-2xs, 0.6875rem);
+  font-weight: var(--weight-semibold, 600);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ovh-ink-mute);
+}
+
+.ov-hero__tile-value {
+  font-size: var(--text-base, 0.9375rem);
+  font-weight: var(--weight-semibold, 600);
+  line-height: var(--leading-snug, 1.35);
+  color: var(--ovh-ink);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.ov-hero__tile-dx {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 0.4rem;
+}
+
+.ov-hero__tile-code {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: var(--weight-bold, 700);
+  letter-spacing: 0.01em;
+  color: color-mix(in srgb, var(--ovh-accent) 88%, var(--text-main, #24211e));
+}
+
+.ov-hero__tile-num {
+  font-size: var(--text-xl, 1.375rem);
+  font-weight: var(--weight-bold, 700);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  color: var(--ovh-ink);
+}
+
+.ov-hero__tile-unit {
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: var(--weight-medium, 500);
+  color: var(--ovh-ink-soft);
+}
+
+.ov-hero__tile-sub {
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: var(--weight-regular, 400);
+  color: var(--ovh-ink-mute);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Semantic tones (risk / alerts) — light dashboard palette, never the accent. */
+.ov-hero__tile--tone-high {
+  border-color: color-mix(in srgb, var(--ovh-danger) 30%, var(--border-soft, #e8e4df));
+  background: var(--ov-danger-soft);
+}
+.ov-hero__tile--tone-high .ov-hero__tile-value {
+  color: var(--ovh-danger);
+}
+.ov-hero__tile--tone-high .ov-hero__tile-icon {
+  color: var(--ovh-danger);
+  background: var(--ov-danger-soft);
+  border-color: color-mix(in srgb, var(--ovh-danger) 26%, transparent);
+}
+.ov-hero__tile--tone-moderate {
+  border-color: color-mix(in srgb, var(--ovh-warn) 30%, var(--border-soft, #e8e4df));
+  background: var(--ov-warn-soft);
+}
+.ov-hero__tile--tone-moderate .ov-hero__tile-value {
+  color: var(--ovh-warn);
+}
+.ov-hero__tile--tone-moderate .ov-hero__tile-icon {
+  color: var(--ovh-warn);
+  background: var(--ov-warn-soft);
+  border-color: color-mix(in srgb, var(--ovh-warn) 26%, transparent);
+}
+.ov-hero__tile--tone-info .ov-hero__tile-value {
+  color: var(--ovh-info);
+}
+.ov-hero__tile--tone-ok .ov-hero__tile-value,
+.ov-hero__tile--tone-low .ov-hero__tile-value {
+  color: var(--ovh-ok);
+}
+
+/* ── Risk gauge ring ─────────────────────────────────────────────────────── */
+
+.ov-hero__tile--risk {
+  gap: 0.7rem;
+}
+
+.ov-hero__ring {
+  position: relative;
+  flex-shrink: 0;
+  width: 2.9rem;
+  height: 2.9rem;
+}
+
+.ov-hero__ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ov-hero__ring-track {
+  fill: none;
+  stroke: color-mix(in srgb, var(--text-muted, #91887e) 22%, transparent);
+}
+
+.ov-hero__ring-prog {
+  fill: none;
+  stroke-linecap: round;
+  stroke: var(--ovh-ok);
+}
+.ov-hero__ring--tone-high .ov-hero__ring-prog {
+  stroke: var(--ovh-danger);
+}
+.ov-hero__ring--tone-moderate .ov-hero__ring-prog {
+  stroke: var(--ovh-warn);
+}
+.ov-hero__ring--tone-info .ov-hero__ring-prog {
+  stroke: var(--ovh-info);
+}
+.ov-hero__ring--tone-ok .ov-hero__ring-prog,
+.ov-hero__ring--tone-low .ov-hero__ring-prog {
+  stroke: var(--ovh-ok);
+}
+.ov-hero__ring--tone-neutral .ov-hero__ring-prog {
+  stroke: color-mix(in srgb, var(--text-muted, #91887e) 55%, transparent);
+}
+
+.ov-hero__empty {
+  margin: 0;
+  padding: 0.9rem 1rem;
+  border: 1px dashed color-mix(in srgb, var(--ovh-accent) 28%, var(--border-soft, #e8e4df));
+  border-radius: var(--radius-control, 0.4375rem);
+  background: color-mix(in srgb, var(--ovh-accent) 4%, var(--surface, #fff));
+  font-size: var(--text-sm, 0.8125rem);
+  line-height: 1.5;
+  color: var(--ovh-ink-soft);
+}
+
+/* ── Entrance keyframe ───────────────────────────────────────────────────── */
+
+@keyframes ov-hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── Dashboard grid rhythm + card interactions ───────────────────────────── */
+
+/* Tighten the magazine gaps so the bordered cards read as one cohesive
+   dashboard rather than far-apart panels. Scoped to overview only. */
+.ov-dashboard {
+  --ov-grid-gap: 1.25rem;
+  --cm-col-gap: 1.5rem;
+}
+
+/* The bordered slot frame (patient-panel-bordered.css) gains a smooth hover
+   lift + keyboard focus ring so the grid feels alive, not static. */
+[data-area='overview'] .ov-widget-slot {
+  transition:
+    transform var(--duration-medium, 280ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    box-shadow var(--duration-medium, 280ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    border-color var(--duration-fast, 150ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+[data-area='overview'] .ov-widget-slot:not(.ov-widget-slot--editable):hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-elevated-lg, 0 2px 6px rgba(0, 0, 0, 0.06), 0 8px 20px rgba(0, 0, 0, 0.07));
+  border-color: color-mix(in srgb, var(--patient-bordered-accent, var(--area-accent)) 42%, var(--border-soft));
+}
+
+[data-area='overview'] .ov-widget-slot:focus-within {
+  border-color: color-mix(in srgb, var(--patient-bordered-accent, var(--area-accent)) 48%, var(--border-soft));
+}
+
+/* ── Cohesive card aura (calm) ───────────────────────────────────────────────
+ * Each bento card keeps its own per-widget --patient-bordered-accent identity
+ * but gains a soft top-left accent SHEEN + an accent-tinted ELEVATION glow, so
+ * the whole grid belongs to the same command-deck system as the hero — just far
+ * calmer (no motion behind text, contrast untouched). The sheen is layered as
+ * background-IMAGE over the existing tinted background-color from
+ * patient-panel-bordered.css; the `.ov-dashboard` in the selector raises
+ * specificity above that file (which loads later) so these win cleanly.
+ * ────────────────────────────────────────────────────────────────────────── */
+[data-area='overview'] .ov-dashboard .ov-widget-slot {
+  background-image:
+    radial-gradient(
+      120% 86% at 0% 0%,
+      color-mix(in srgb, var(--patient-bordered-accent) 10%, transparent),
+      transparent 58%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--patient-bordered-accent) 5%, transparent),
+      transparent 42%
+    );
+  box-shadow:
+    var(--shadow-elevated-sm, 0 1px 2px rgba(0, 0, 0, 0.04)),
+    0 10px 24px -16px color-mix(in srgb, var(--patient-bordered-accent) 55%, transparent);
+}
+
+[data-area='overview'] .ov-dashboard .ov-widget-slot:not(.ov-widget-slot--editable):hover {
+  box-shadow:
+    var(--shadow-elevated-lg, 0 2px 6px rgba(0, 0, 0, 0.06), 0 8px 20px rgba(0, 0, 0, 0.07)),
+    0 16px 34px -18px color-mix(in srgb, var(--patient-bordered-accent) 70%, transparent);
+}
+
+/* Editable (drag) mode stays flat + dashed — no sheen competing with controls. */
+[data-area='overview'] .ov-dashboard .ov-widget-slot--editable {
+  background-image: none;
+}
+
+/* Band dividers carry the area accent voice. */
+.ov-dashboard .ov-grid__band .cm-eyebrow {
+  color: color-mix(in srgb, var(--area-accent, var(--accent)) 58%, var(--text-muted));
+  font-weight: var(--weight-semibold, 600);
+}
+.ov-dashboard .ov-grid__band:not(:first-child) {
+  margin-top: 0.45rem;
+}
+
+/* ── Entrance motion (staggered rise) ────────────────────────────────────── */
+
+@keyframes ov-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* `backwards` (not `forwards`) so the finished animation reverts to base styles
+   and never locks the hover transform on cards. */
+.ov-dashboard .ov-hero {
+  animation: ov-hero-in var(--duration-slow, 400ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) backwards;
+}
+
+/* Hero content reveals after the band lands, in a quick staggered choreography.
+   Tiles animate per-item (below) rather than as a block to avoid double-fade. */
+.ov-hero__content > .ov-hero__topbar,
+.ov-hero__content > .ov-hero__identity,
+.ov-hero__content > .ov-hero__briefing,
+.ov-hero__content > .ov-hero__empty {
+  animation: ov-rise var(--duration-medium, 280ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) backwards;
+}
+.ov-hero__content > .ov-hero__topbar { animation-delay: 90ms; }
+.ov-hero__content > .ov-hero__identity { animation-delay: 140ms; }
+.ov-hero__content > .ov-hero__briefing { animation-delay: 240ms; }
+.ov-hero__content > .ov-hero__empty { animation-delay: 340ms; }
+.ov-hero__tiles > .ov-hero__tile { animation: ov-rise var(--duration-medium, 280ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) backwards; }
+.ov-hero__tiles > .ov-hero__tile:nth-child(1) { animation-delay: 360ms; }
+.ov-hero__tiles > .ov-hero__tile:nth-child(2) { animation-delay: 410ms; }
+.ov-hero__tiles > .ov-hero__tile:nth-child(3) { animation-delay: 460ms; }
+.ov-hero__tiles > .ov-hero__tile:nth-child(4) { animation-delay: 510ms; }
+.ov-hero__tiles > .ov-hero__tile:nth-child(5) { animation-delay: 560ms; }
+.ov-hero__tiles > .ov-hero__tile:nth-child(n + 6) { animation-delay: 610ms; }
+
+.ov-grid > .ov-grid__band,
+.ov-grid > .ov-grid__row,
+.ov-grid > .ov-widget-slot {
+  animation: ov-rise var(--duration-medium, 280ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) backwards;
+}
+.ov-grid > :nth-child(1) { animation-delay: 40ms; }
+.ov-grid > :nth-child(2) { animation-delay: 80ms; }
+.ov-grid > :nth-child(3) { animation-delay: 120ms; }
+.ov-grid > :nth-child(4) { animation-delay: 160ms; }
+.ov-grid > :nth-child(5) { animation-delay: 200ms; }
+.ov-grid > :nth-child(n + 6) { animation-delay: 240ms; }
 
 /* ── Summary strip (legacy — kept for settings preview compatibility) ─────── */
 
@@ -493,10 +956,18 @@
 
 .ov-grid__row {
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   gap: var(--cm-col-gap, 3rem);
   width: 100%;
   min-width: 0;
+}
+
+/* Paired half-width cards in a row match heights: the columns stretch to the
+   tallest, and the single card in each column fills its column. Keeps the
+   bento pairs (Diagnose ⟷ Medikation, Angemeldete Therapie ⟷ Compliance)
+   visually balanced without breaking drag/resize. */
+.ov-grid__row > .ov-grid__col > .ov-widget-slot {
+  flex: 1 1 auto;
 }
 
 .ov-grid__col {
@@ -1192,6 +1663,93 @@
   color: var(--ov-danger);
 }
 
+/* ── Labor two-column split: labs (left) / other diagnostics (right) ───────── */
+.ov-labor__split {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 1.1rem;
+  align-items: start;
+}
+.ov-labor__col {
+  min-width: 0;
+}
+.ov-labor__col--diagnostics {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding-left: 1.1rem;
+  border-left: 1px solid var(--aura-hairline, var(--border-soft, rgba(0, 0, 0, 0.08)));
+}
+@media (max-width: 760px) {
+  .ov-labor__split {
+    grid-template-columns: 1fr;
+  }
+  .ov-labor__col--diagnostics {
+    padding-left: 0;
+    padding-top: 0.8rem;
+    border-left: none;
+    border-top: 1px solid var(--aura-hairline, var(--border-soft, rgba(0, 0, 0, 0.08)));
+  }
+}
+
+.ov-diag {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--radius-md, 0.5rem);
+  border: 1px solid var(--border-soft, rgba(0, 0, 0, 0.07));
+  border-left: 2px solid var(--text-muted, #91887e);
+  background: color-mix(in srgb, var(--text-main, #24211e) 3%, transparent);
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+.ov-diag--abnormal {
+  border-left-color: var(--ov-danger);
+  background: var(--ov-danger-soft);
+}
+.ov-diag--normal {
+  border-left-color: var(--ov-ok, #3f8f5f);
+}
+.ov-diag__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+.ov-diag__title {
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: var(--weight-bold, 700);
+  color: var(--text-main, #24211e);
+}
+.ov-diag__status {
+  font-size: var(--text-2xs, 0.6875rem);
+  font-weight: var(--weight-semibold, 600);
+  color: var(--text-secondary, #6d655c);
+  white-space: nowrap;
+}
+.ov-diag__status--abnormal {
+  color: var(--ov-danger);
+}
+.ov-diag__status--normal {
+  color: var(--ov-ok, #3f8f5f);
+}
+.ov-diag__date {
+  font-size: var(--text-2xs, 0.6875rem);
+  color: var(--text-muted, #91887e);
+}
+.ov-diag__finding {
+  margin: 0.15rem 0 0;
+  font-size: var(--text-xs, 0.75rem);
+  line-height: 1.35;
+  color: var(--text-secondary, #6d655c);
+}
+.ov-diag__empty {
+  margin: 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-muted, #91887e);
+}
+
 .ov-spark {
   display: block;
 }
@@ -1639,7 +2197,9 @@
   .ov-layout-toolbar__toggle,
   .ov-layout-toolbar__add-btn,
   .ov-layout-toolbar__reset,
-  .ov-widget-edit-btn {
+  .ov-widget-edit-btn,
+  .ov-hero__tile,
+  [data-area='overview'] .ov-widget-slot {
     transition: none;
   }
   .ov-card__action:hover > span[aria-hidden] {
@@ -1647,6 +2207,24 @@
   }
   .ov-widget-slot--dragging {
     opacity: 0.75;
+  }
+  /* Freeze the hero + grid entrance to a tasteful static state. */
+  .ov-dashboard .ov-hero,
+  .ov-hero__content > .ov-hero__topbar,
+  .ov-hero__content > .ov-hero__identity,
+  .ov-hero__content > .ov-hero__briefing,
+  .ov-hero__content > .ov-hero__tiles,
+  .ov-hero__content > .ov-hero__empty,
+  .ov-hero__tiles > .ov-hero__tile,
+  .ov-grid > .ov-grid__band,
+  .ov-grid > .ov-grid__row,
+  .ov-grid > .ov-widget-slot {
+    animation: none !important;
+  }
+  /* No hover lift on cards or tiles. */
+  [data-area='overview'] .ov-widget-slot:not(.ov-widget-slot--editable):hover,
+  .ov-hero__tile:hover {
+    transform: none;
   }
 }
 
@@ -1671,6 +2249,55 @@
   gap: 0.35rem;
   flex-shrink: 0;
   padding-top: 0.1rem;
+}
+
+.ov-export-menu {
+  position: relative;
+  display: inline-flex;
+}
+
+.ov-export-menu__dropdown {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  z-index: 40;
+  min-width: 12rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.3rem;
+  background: var(--surface, #fff);
+  border: 1px solid var(--aura-hairline, var(--border-soft, #e8e8e4));
+  border-radius: 0.6rem;
+  box-shadow: var(--shadow-md, 0 8px 28px rgba(20, 18, 14, 0.14));
+}
+
+.ov-export-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.45rem 0.55rem;
+  border: 0;
+  border-radius: 0.45rem;
+  background: transparent;
+  color: var(--text-main, #24211e);
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ov-export-menu__item > svg {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  color: var(--text-secondary, #6b6b6b);
+}
+
+.ov-export-menu__item:hover,
+.ov-export-menu__item:focus-visible {
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 10%, var(--surface, #fff));
+  outline: none;
 }
 
 /* ── PPB safety subsection ───────────────────────────────────────────────── */
@@ -2634,5 +3261,33 @@
   .ov-widget-slot {
     break-inside: avoid;
     page-break-inside: avoid;
+  }
+
+  /* Drop the card aura sheen + glow for ink-saving, high-contrast print. */
+  [data-area='overview'] .ov-dashboard .ov-widget-slot {
+    background-image: none;
+    box-shadow: none;
+  }
+
+  /* Flatten the light header card for ink-saving, high-contrast print. */
+  .ov-hero {
+    background: var(--surface, #fff);
+    background-image: none;
+    border-color: var(--border-soft, #e8e4df);
+    box-shadow: none;
+    break-inside: avoid;
+  }
+  .ov-hero__tile,
+  .ov-hero__empty {
+    background: var(--surface, #fff);
+    border-color: var(--border-soft, #e8e4df);
+  }
+  .ov-dashboard .ov-hero,
+  .ov-hero__content > *,
+  .ov-hero__tiles > .ov-hero__tile,
+  .ov-grid > .ov-grid__band,
+  .ov-grid > .ov-grid__row,
+  .ov-grid > .ov-widget-slot {
+    animation: none;
   }
 }

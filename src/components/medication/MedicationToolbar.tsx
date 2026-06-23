@@ -18,6 +18,12 @@ import { useTranslation } from '../../context/TranslationContext'
 import { translateMedicationUi } from '../../data/medicationUiTranslations'
 import type { MedicationChangeType } from '../../types/medicationPlan'
 
+// TODO re-enable: the medication-plan "Export" action downloads a JSON snapshot
+// of the plan state. JSON file export is hidden from users for now (only PDF +
+// Word are exposed across the app); the `onExport` handler remains wired so it
+// can be surfaced again by flipping this flag to `true`.
+const MEDICATION_JSON_EXPORT_ENABLED = false
+
 interface MedicationToolbarProps {
   disabled?: boolean
   hasMedications?: boolean
@@ -107,16 +113,18 @@ export function MedicationToolbar({
             >
               <Pencil strokeWidth={1.75} aria-hidden />
             </button>
-            <button
-              type="button"
-              className="icon-action-btn icon-action-btn--bordered"
-              disabled={disabled}
-              onClick={onExport}
-              title={exportLabel}
-              aria-label={exportLabel}
-            >
-              <Download strokeWidth={1.75} aria-hidden />
-            </button>
+            {MEDICATION_JSON_EXPORT_ENABLED ? (
+              <button
+                type="button"
+                className="icon-action-btn icon-action-btn--bordered"
+                disabled={disabled}
+                onClick={onExport}
+                title={exportLabel}
+                aria-label={exportLabel}
+              >
+                <Download strokeWidth={1.75} aria-hidden />
+              </button>
+            ) : null}
             <button
               type="button"
               className="icon-action-btn icon-action-btn--bordered"

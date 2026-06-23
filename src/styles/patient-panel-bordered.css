@@ -159,7 +159,6 @@
 [data-area='overview'] .ov-widget-slot[data-widget-id='labs-due'] {
   --patient-bordered-accent: #6b8f6e;
 }
-[data-area='overview'] .ov-widget-slot[data-widget-id='spiegel-latest'],
 [data-area='overview'] .ov-widget-slot[data-widget-id='spiegel-all'] {
   --patient-bordered-accent: #5a9aaa;
 }

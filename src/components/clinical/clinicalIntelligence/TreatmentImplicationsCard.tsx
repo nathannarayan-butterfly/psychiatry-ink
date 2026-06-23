@@ -1,5 +1,6 @@
 import { useTranslation } from '../../../context/TranslationContext'
 import { ClinicalEmpty } from '../ClinicalSection'
+import { getCiMechanismLabel } from '../../../data/clinicalIntelligenceTranslations'
 import type { MechanismInferenceResult } from '../../../types/clinicalIntelligence'
 
 interface TreatmentImplicationsCardProps {
@@ -10,7 +11,7 @@ interface TreatmentImplicationsCardProps {
  *  Body-only — section chrome (header + collapse) is provided by the parent panel.
  */
 export function TreatmentImplicationsCard({ mechanismResult }: TreatmentImplicationsCardProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const relevant = mechanismResult.activeMechanisms
     .filter((m) => m.reviewStatus !== 'rejected')
     .filter((m) => m.treatmentRelevance.trim().length > 0)
@@ -23,7 +24,7 @@ export function TreatmentImplicationsCard({ mechanismResult }: TreatmentImplicat
     <ul className="ci-list">
       {relevant.map((mechanism) => (
         <li key={mechanism.mechanismId} className="ci-row ci-row--treatment">
-          <p className="ci-row__title">{mechanism.label}</p>
+          <p className="ci-row__title">{getCiMechanismLabel(mechanism.mechanismId, language)}</p>
           <p className="ci-row__summary">{mechanism.treatmentRelevance}</p>
           <p className="ci-row__meta">
             <span className="ci-row__meta-label">{t('ciClinicalImplication')}:</span>{' '}

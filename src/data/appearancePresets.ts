@@ -24,7 +24,8 @@ export const accentColorPresets: Record<PreferredAccentColor, AccentColorPreset>
   terracotta: {
     label: 'Terrakotta',
     description: 'Warmer Ton, erdig — Standard',
-    hex: '#A0573F',
+    // Darkened from #A0573F for stronger contrast.
+    hex: '#874632',
   },
   blue: {
     label: 'Klinisches Blau',
@@ -34,12 +35,14 @@ export const accentColorPresets: Record<PreferredAccentColor, AccentColorPreset>
   green: {
     label: 'Tiefgrün',
     description: 'Natürlich-klinisch',
-    hex: '#3F7A5F',
+    // Darkened from #3F7A5F.
+    hex: '#2F5E48',
   },
   teal: {
     label: 'Petrol',
     description: 'Kühles Blaugrün, klar',
-    hex: '#2F7474',
+    // Darkened from #2F7474.
+    hex: '#225A5A',
   },
   indigo: {
     label: 'Indigo',
@@ -60,6 +63,26 @@ export const accentColorPresets: Record<PreferredAccentColor, AccentColorPreset>
     label: 'Schiefer',
     description: 'Ruhiges Stahlgrau',
     hex: '#556373',
+  },
+  plum: {
+    label: 'Pflaume',
+    description: 'Gedämpftes Pflaumenviolett',
+    hex: '#6A3D5F',
+  },
+  navy: {
+    label: 'Marineblau',
+    description: 'Tiefes, ruhiges Nachtblau',
+    hex: '#28395E',
+  },
+  forest: {
+    label: 'Tannengrün',
+    description: 'Sattes, dunkles Waldgrün',
+    hex: '#245C3A',
+  },
+  graphite: {
+    label: 'Graphit',
+    description: 'Tiefes, neutrales Anthrazit',
+    hex: '#383D44',
   },
 }
 
@@ -102,16 +125,22 @@ export function migratePreferredAccentColor(
   return defaultAppearanceSettings.preferredAccentColor
 }
 
-export const fontSizePresets: Record<FontSize, { label: string; size: string }> = {
-  sm: { label: 'Klein', size: '14px' },
-  md: { label: 'Mittel', size: '15px' },
-  lg: { label: 'Groß', size: '17px' },
-}
+/**
+ * `size` drives the editor textarea (px, absolute). `rootScale` drives the
+ * document root font-size (%) so all rem-based UI typography scales with the
+ * setting — `md` matches the stylesheet baseline of 106.25% (≈17px).
+ */
+export const fontSizePresets: Record<FontSize, { label: string; size: string; rootScale: string }> =
+  {
+    sm: { label: 'Klein', size: '14px', rootScale: '100%' },
+    md: { label: 'Mittel', size: '15px', rootScale: '106.25%' },
+    lg: { label: 'Groß', size: '17px', rootScale: '115%' },
+  }
 
 export interface FontFamilyPreset {
   label: string
   description: string
-  category: 'sans' | 'serif'
+  category: 'sans' | 'serif' | 'handwriting'
   googleFont: string | null
   cssFamily: string
 }
@@ -187,6 +216,20 @@ export const fontFamilyPresets: Record<FontFamily, FontFamilyPreset> = {
     googleFont: 'Lora',
     cssFamily: '"Lora", Georgia, serif',
   },
+  caveat: {
+    label: 'Caveat',
+    description: 'Lockere Handschrift',
+    category: 'handwriting',
+    googleFont: 'Caveat',
+    cssFamily: '"Caveat", "Segoe Script", "Bradley Hand", cursive',
+  },
+  dancingScript: {
+    label: 'Dancing Script',
+    description: 'Schwungvolle Schreibschrift',
+    category: 'handwriting',
+    googleFont: 'Dancing Script',
+    cssFamily: '"Dancing Script", "Apple Chancery", "Snell Roundhand", cursive',
+  },
 }
 
 export const fontFamilyGroups: { label: string; fonts: FontFamily[] }[] = [
@@ -197,6 +240,10 @@ export const fontFamilyGroups: { label: string; fonts: FontFamily[] }[] = [
   {
     label: 'Serif',
     fonts: ['literata', 'merriweather', 'lora'],
+  },
+  {
+    label: 'Handschrift',
+    fonts: ['caveat', 'dancingScript'],
   },
 ]
 
@@ -340,6 +387,11 @@ export function applyAppearanceSettings(settings: AppearanceSettings) {
   root.style.setProperty('--font-display', fontFamily.cssFamily)
   root.style.setProperty('--font-ui', fontFamily.cssFamily)
   root.style.setProperty('--editor-font-size', font.size)
+  // Scale all rem-based UI typography app-wide (overrides the stylesheet's
+  // `html { font-size }` baseline) so the Schriftgröße setting is visible
+  // everywhere, not just inside the editor textarea.
+  root.style.fontSize = font.rootScale
+  root.style.setProperty('--app-line-height', lineHeight.value)
   root.style.setProperty('--editor-line-height', lineHeight.value)
   root.style.setProperty('--border-width', border.width)
 

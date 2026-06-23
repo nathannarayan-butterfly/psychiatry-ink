@@ -1554,7 +1554,7 @@ export function DiscussCaseChatPanel({
       {canAskAi ? (
         <section className="discuss-case-chat__ai">
           <header className="discuss-case-chat__ai-header">
-            <ButterflyLogo variant="color" size={16} />
+            <ButterflyLogo variant="color" breathing size={16} />
             <span>{chatT(locale, 'askButterfly')}</span>
           </header>
           <div className="discuss-case-chat__ai-composer">

@@ -26,6 +26,7 @@ import type {
   DimensionalIntegrationResult,
 } from '../../../types/clinicalIntelligence'
 import type { UiTranslationKey } from '../../../data/uiTranslations'
+import { getCiDimensionLabel } from '../../../data/clinicalIntelligenceTranslations'
 import { CiSeverityLegend } from './CiSeverityLegend'
 import {
   severityBarFillClass,
@@ -296,7 +297,7 @@ export function DimensionalProfileGraph({
   onReject,
   onEdit,
 }: DimensionalProfileGraphProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const groups = useMemo(
     () => groupByBand(result.activeDimensions),
     [result.activeDimensions],
@@ -364,7 +365,7 @@ export function DimensionalProfileGraph({
                       <ChevronRight className="ci-graph-row__chev" aria-hidden strokeWidth={2} />
                     )}
                     <span className="ci-graph-row__name" title={dim.descriptionDe}>
-                      {finding.dimensionName || dim.nameDe}
+                      {getCiDimensionLabel(finding.dimensionId, language)}
                     </span>
                     <svg
                       className="ci-graph-row__bar"
@@ -439,7 +440,7 @@ export function DimensionalProfileGraph({
         <ol className="ci-catalog-list">
           {CLINICAL_INTELLIGENCE_DIMENSIONS.map((dim) => (
             <li key={dim.id} className="ci-catalog-list__item">
-              <code>{dim.id}</code> — {dim.nameDe}
+              <code>{dim.id}</code> — {getCiDimensionLabel(dim.id, language)}
             </li>
           ))}
         </ol>

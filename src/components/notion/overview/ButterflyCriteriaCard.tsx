@@ -45,7 +45,7 @@ export function ButterflyCriteriaCard({ items, onOpenDiagnose }: ButterflyCriter
   return (
     <OverviewCard
       title="Butterfly-Kriterien"
-      icon={<ButterflyLogo variant="grey" size={20} />}
+      icon={<ButterflyLogo variant="grey" breathing size={20} />}
       className="ov-col-6"
       badge={badge}
       action={{ label: 'Zur Diagnose', onClick: onOpenDiagnose }}

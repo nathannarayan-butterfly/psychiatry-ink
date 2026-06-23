@@ -654,3 +654,103 @@
   background: var(--surface-raised, #f4f4f5);
   align-self: flex-start;
 }
+
+/* ── Generic patient education (standalone, knowledge base) ───────────────── */
+
+.patient-education-generic-dialog__phi-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  margin: 0 0 0.85rem;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--text-muted, #6b7280);
+  background: var(--surface-raised, #f4f4f5);
+  border: 1px solid var(--border-subtle, #e5e7eb);
+  border-radius: 8px;
+}
+
+.patient-education-generic-dialog__phi-hint svg {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.patient-education-generic-dialog__error {
+  margin: -0.35rem 0 0.6rem;
+  font-size: 0.78rem;
+  color: var(--danger, #dc2626);
+}
+
+.patient-education-generic-empty__hint {
+  margin: 0 0 0.9rem;
+  font-size: 0.85rem;
+  color: var(--text-muted, #6b7280);
+  max-width: 30rem;
+}
+
+.patient-education-generic-drafts {
+  margin-top: 1.75rem;
+  width: 100%;
+  max-width: 36rem;
+  text-align: left;
+}
+
+.patient-education-generic-drafts__label {
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #6b7280);
+}
+
+.patient-education-generic-drafts__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.patient-education-generic-drafts__item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.patient-education-generic-drafts__open {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.55rem 0.75rem;
+  text-align: left;
+  background: var(--surface-raised, #fafafa);
+  border: 1px solid var(--border-subtle, #e5e7eb);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.patient-education-generic-drafts__open:hover {
+  border-color: var(--area-medikation, #0d9488);
+  background: var(--surface, #fff);
+}
+
+.patient-education-generic-drafts__title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary, #111827);
+}
+
+.patient-education-generic-drafts__meta {
+  font-size: 0.76rem;
+  color: var(--text-muted, #6b7280);
+}
+
+.kb-collection-tile--feature {
+  border-color: #0d948855;
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.08), rgba(13, 148, 136, 0.02));
+}

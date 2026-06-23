@@ -1,0 +1,158 @@
+/* ============================================================================
+ * Aurora / Command-Deck — the app's SINGLE cohesive theme layer.
+ *
+ * This is a thin design-system layer built ENTIRELY on the centralized
+ * --aura-* tokens (see globals.css). It is exactly one theme with two faces, so
+ * the whole product reads as one designed system without making every screen
+ * dark:
+ *   • .aura-surface*  — cinematic DARK command-deck surfaces (the Übersicht
+ *                       hero and any other "hero/command" panel on dark).
+ *   • .aura-card*     — CALM light data cards: a soft accent sheen + gentle
+ *                       elevation + accent hairline, legible for clinical text.
+ * plus small composable utilities (.aura-glow, .aura-hairline*, .aura-elevated,
+ * .aura-glass).
+ *
+ * Everything ADAPTS to the current --area-accent / --patient-bordered-accent /
+ * --accent, so switching the theme accent or moving between clinical areas
+ * keeps the family cohesive. Clinical legibility comes first (sheens stay faint,
+ * no motion behind text), and every effect degrades under prefers-reduced-motion
+ * and flattens for print.
+ *
+ * Imported once (main.tsx) so it is the single source of truth — components
+ * consume these classes/tokens instead of re-deriving the look.
+ * ========================================================================== */
+
+/* ── Dark command-deck surface ───────────────────────────────────────────── */
+.aura-surface {
+  position: relative;
+  isolation: isolate;
+  color: var(--aura-ink);
+  border: 1px solid var(--aura-hairline);
+  border-radius: var(--radius-card, 0.6875rem);
+  background: radial-gradient(
+    140% 120% at 18% -10%,
+    var(--aura-surface-raised) 0%,
+    var(--aura-surface-deep) 62%
+  );
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    var(--shadow-elevated-xl, 0 3px 8px rgba(0, 0, 0, 0.07), 0 12px 28px rgba(0, 0, 0, 0.08));
+}
+
+/* ── Calm light data card ────────────────────────────────────────────────── */
+.aura-card {
+  --aura-card-accent: var(--patient-bordered-accent, var(--area-accent, var(--accent)));
+  position: relative;
+  border: 1px solid color-mix(in srgb, var(--aura-card-accent) 28%, var(--border-soft, #e8e4df));
+  border-left: 3px solid var(--aura-card-accent);
+  border-radius: var(--radius-card, 0.6875rem);
+  /* Tinted base COLOR + a soft top-left accent sheen layered as IMAGE, so the
+     card keeps its own accent identity while gaining cohesive depth. */
+  background-color: color-mix(in srgb, var(--aura-card-accent) 4.5%, var(--surface, #fff));
+  background-image:
+    radial-gradient(
+      120% 86% at 0% 0%,
+      color-mix(in srgb, var(--aura-card-accent) 10%, transparent),
+      transparent 58%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--aura-card-accent) 5%, transparent),
+      transparent 42%
+    );
+  box-shadow:
+    var(--shadow-elevated-sm, 0 1px 2px rgba(0, 0, 0, 0.04)),
+    0 10px 24px -16px color-mix(in srgb, var(--aura-card-accent) 55%, transparent);
+}
+
+/* Opt-in calm interactivity: a gentle hover lift + accent focus ring. */
+.aura-card--interactive {
+  transition:
+    transform var(--duration-medium, 280ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    box-shadow var(--duration-medium, 280ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    border-color var(--duration-fast, 150ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+}
+.aura-card--interactive:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--aura-card-accent) 42%, var(--border-soft, #e8e4df));
+  box-shadow:
+    var(--shadow-elevated-lg, 0 2px 6px rgba(0, 0, 0, 0.06), 0 8px 20px rgba(0, 0, 0, 0.07)),
+    0 16px 34px -18px color-mix(in srgb, var(--aura-card-accent) 70%, transparent);
+}
+.aura-card--interactive:focus-within {
+  border-color: color-mix(in srgb, var(--aura-card-accent) 48%, var(--border-soft, #e8e4df));
+}
+
+/* ── Utilities ───────────────────────────────────────────────────────────── */
+
+/* Soft top accent glow on any surface — sits above the element's own background
+   but below its text (z-index:-1 inside an isolated stacking context), so it
+   never reduces content contrast. Retint via --aura-glow (defaults to the
+   current area's signature hue). */
+.aura-glow {
+  position: relative;
+  isolation: isolate;
+}
+.aura-glow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(
+    125% 60% at 50% 0%,
+    color-mix(in srgb, var(--aura-glow, var(--aura-glow-primary)) 15%, transparent),
+    transparent 70%
+  );
+}
+
+.aura-hairline {
+  border: 1px solid var(--aura-hairline);
+}
+.aura-hairline-strong {
+  border: 1px solid var(--aura-hairline-strong);
+}
+
+.aura-elevated {
+  box-shadow: var(--shadow-elevated-md, 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.06));
+}
+
+/* Glass elevation for tiles/controls placed on a dark aura surface. */
+.aura-glass {
+  background: var(--aura-glass, rgba(255, 255, 255, 0.06));
+  backdrop-filter: blur(9px) saturate(125%);
+  -webkit-backdrop-filter: blur(9px) saturate(125%);
+  border: 1px solid var(--aura-hairline);
+}
+
+/* ── Fallbacks ───────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .aura-card--interactive {
+    transition: none;
+  }
+  .aura-card--interactive:hover {
+    transform: none;
+  }
+}
+
+@media print {
+  .aura-surface {
+    color: var(--text-main, #24211e);
+    background: var(--surface, #fff);
+    border-color: var(--border-soft, #e8e4df);
+    box-shadow: none;
+  }
+  .aura-card {
+    background-image: none;
+    box-shadow: none;
+  }
+  .aura-glass {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .aura-glow::before {
+    display: none;
+  }
+}

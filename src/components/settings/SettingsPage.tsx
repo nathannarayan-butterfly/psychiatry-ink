@@ -9,7 +9,7 @@ import type { EnglishVariant, SettingsSectionId, UiLanguage } from '../../types/
 import type { AssessmentStandard } from '../../types/isdm'
 import { AppearanceSection } from './AppearanceSection'
 import { WorkspaceSection } from './WorkspaceSection'
-import { AboutSection, LanguageSection } from './PlaceholderSection'
+import { AboutSection, AccountSection, LanguageSection } from './PlaceholderSection'
 import { KiInstructionsSettings } from './KiInstructionsSettings'
 import { KiModelSettings } from './KiModelSettings'
 import type { useKiInstructions } from '../../hooks/useKiInstructions'
@@ -92,6 +92,10 @@ export function SettingsPage({
           { id: 'kb-admin', label: t('settingsKbAdmin') },
         ],
       },
+      {
+        groupLabel: t('settingsNavGroupAccount'),
+        items: [{ id: 'account', label: t('settingsAccount') }],
+      },
     ],
     [t],
   )
@@ -167,6 +171,7 @@ export function SettingsPage({
           {activeSection === 'privacy' ? (
             <PatientPrivacySection privacy={privacy} workspaceVault={workspaceVault} />
           ) : null}
+          {activeSection === 'account' ? <AccountSection /> : null}
           {activeSection === 'about' ? <AboutSection /> : null}
         </div>
       </div>

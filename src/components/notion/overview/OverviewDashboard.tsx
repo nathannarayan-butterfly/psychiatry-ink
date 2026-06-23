@@ -5,9 +5,7 @@ import type { TopNavTabId } from '../CaseTopNav'
 import type { NotionPageId } from '../notionPages'
 import { extractSpiegelwerte, pickLatestSpiegelSeries, spiegelGraphId } from '../SpiegelwerteSection'
 import { useOverviewLayout } from '../../../hooks/useOverviewLayout'
-import { ClinicalPageEyebrow } from '../../clinical/ClinicalPageEyebrow'
 import { OverviewLayoutToolbar } from './OverviewLayoutToolbar'
-import { OverviewActionToolbar } from './OverviewActionToolbar'
 import { OverviewWidgetGrid } from './OverviewWidgetGrid'
 import { OverviewHero } from './OverviewHero'
 import type { OverviewWidgetRenderContext } from './OverviewWidgetContent'
@@ -66,7 +64,8 @@ import { useVerlaufstendenzRevision } from '../../../hooks/useVerlaufstendenzRev
 import { buildRegisteredTherapiesSummary } from '../../../utils/overview/registeredTherapiesSummary'
 import { buildComplianceSummary } from '../../../utils/overview/complianceSummary'
 import {
-  exportOverviewDashboardHtml,
+  exportOverviewDashboardPdf,
+  exportOverviewDashboardWord,
   printOverviewDashboard,
 } from '../../../utils/overview/printOverview'
 import type { MedicationStatus } from '../../../types/medicationPlan'
@@ -470,8 +469,12 @@ export function OverviewDashboard({
     [layout.widgets],
   )
 
-  const handleExport = useCallback(() => {
-    exportOverviewDashboardHtml(gridWidgets, widgetContext, visibilityContext, t, caseId)
+  const handleExportPdf = useCallback(() => {
+    exportOverviewDashboardPdf(gridWidgets, widgetContext, visibilityContext, t)
+  }, [gridWidgets, widgetContext, visibilityContext, t])
+
+  const handleExportWord = useCallback(() => {
+    exportOverviewDashboardWord(gridWidgets, widgetContext, visibilityContext, t, caseId)
   }, [gridWidgets, widgetContext, visibilityContext, t, caseId])
 
   const handlePrint = useCallback(() => {
@@ -489,14 +492,14 @@ export function OverviewDashboard({
         .filter(Boolean)
         .join(' ')}
     >
-      <div className="ov-dashboard__header">
-        <ClinicalPageEyebrow label="Übersicht" />
-        <OverviewActionToolbar onExport={handleExport} onPrint={handlePrint} />
-      </div>
       <OverviewHero
         data={heroData}
         caseId={caseId}
         metaVersion={metaVersion}
+        title={t('overviewPageTitle')}
+        onExportPdf={handleExportPdf}
+        onExportWord={handleExportWord}
+        onPrint={handlePrint}
         onClinicalSubheadingChange={onClinicalSubheadingChange}
       />
       <OverviewWidgetGrid

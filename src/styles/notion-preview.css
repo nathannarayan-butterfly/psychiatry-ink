@@ -247,9 +247,14 @@
   }
 }
 
+.notion-topbar .topbar-logo__row {
+  gap: 0.1rem;
+}
+
 .notion-topbar .topbar-logo__mark {
-  height: 3.5em;
-  max-width: 5em;
+  height: 7.5em;
+  max-width: 9.5em;
+  margin-left: -0.65rem;
 }
 
 .notion-topbar__left {
@@ -6716,6 +6721,12 @@
 
 /* —— Settings: shared field layout —— */
 
+/* Shared label-column width so every control across the Settings page lines up
+   on one vertical axis. */
+:root {
+  --settings-label-col: 12rem;
+}
+
 .settings-field {
   display: flex;
   flex-direction: column;
@@ -6729,10 +6740,21 @@
 }
 
 @media (min-width: 640px) {
+  /* Two-column grid: fixed label column + flexible control column. The fixed
+     first track guarantees all inputs/controls align on the same vertical
+     line regardless of label length. */
   .settings-field {
-    flex-direction: row;
-    align-items: flex-start;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: var(--settings-label-col) minmax(0, 1fr);
+    align-items: start;
+    column-gap: 1.5rem;
+  }
+
+  /* Appearance section: full-row controls (label stacked above). */
+  .settings-field--stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
   }
 }
 
@@ -6740,18 +6762,18 @@
   min-width: 0;
 }
 
-@media (min-width: 640px) {
-  .settings-field__label-col {
-    max-width: 11rem;
-    flex-shrink: 0;
-  }
-}
-
 .settings-field__label {
   margin: 0;
   font-size: var(--text-sm, 0.8125rem);
   font-weight: var(--weight-medium, 500);
   color: var(--ink, var(--text-main));
+  /* Long labels wrap but never exceed two lines. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
 }
 
 .settings-field__description {
@@ -6763,12 +6785,18 @@
 
 .settings-field__control {
   min-width: 0;
-  flex: 1;
 }
 
 @media (min-width: 640px) {
-  .settings-field__control {
+  /* Cap typical inputs/selects for readability while keeping their left edge
+     aligned to the shared axis; stacked (Appearance) controls span full width. */
+  .settings-field:not(.settings-field--stack) .settings-field__control {
     max-width: 28rem;
+  }
+
+  .settings-field--stack .settings-field__control {
+    width: 100%;
+    max-width: none;
   }
 }
 

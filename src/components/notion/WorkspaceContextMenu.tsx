@@ -10,16 +10,16 @@ import {
   Stethoscope,
   Activity,
 } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from '../../context/TranslationContext'
 import type { UiTranslationKey } from '../../data/uiTranslations'
 import { isCommandMenuShortcut } from '../../utils/notionKeyboardShortcuts'
-import { NOTION_PAGES, type NotionPageId } from './notionPages'
-
-const DOCUMENT_PAGES = NOTION_PAGES.filter((page) => page.kind === 'document')
-const TOOL_PAGES = NOTION_PAGES.filter((page) => page.kind === 'lab')
-const ALL_PAGES = [...DOCUMENT_PAGES, ...TOOL_PAGES]
+import {
+  getVisibleNotionPages,
+  type NotionPageConfig,
+  type NotionPageId,
+} from './notionPages'
 
 const TOOL_ICONS: Partial<Record<NotionPageId, typeof FlaskConical>> = {
   labor: FlaskConical,
@@ -88,7 +88,13 @@ export function WorkspaceContextMenu({
   openMenuRequest = 0,
   children,
 }: WorkspaceContextMenuProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
+  const { documentPages, toolPages, allPages } = useMemo(() => {
+    const visible = getVisibleNotionPages(language)
+    const documents = visible.filter((page) => page.kind === 'document')
+    const tools = visible.filter((page) => page.kind === 'lab')
+    return { documentPages: documents, toolPages: tools, allPages: [...documents, ...tools] }
+  }, [language])
   const [menu, setMenu] = useState<MenuPosition | null>(null)
   const [focusedIndex, setFocusedIndex] = useState(0)
   const [openSubmenu, setOpenSubmenu] = useState<SubmenuState | null>(null)
@@ -124,10 +130,10 @@ export function WorkspaceContextMenu({
       const y = Math.max(8, Math.min(clientY, window.innerHeight - MENU_HEIGHT - 8))
       setMenu({ x, y })
       setOpenSubmenu(null)
-      const activeIdx = ALL_PAGES.findIndex((p) => p.id === activePage)
+      const activeIdx = allPages.findIndex((p) => p.id === activePage)
       setFocusedIndex(activeIdx >= 0 ? activeIdx : 0)
     },
-    [activePage, extraItemsHeight],
+    [activePage, allPages, extraItemsHeight],
   )
 
   const openMenuAtCenter = useCallback(() => {
@@ -208,15 +214,15 @@ export function WorkspaceContextMenu({
     close()
   }
 
-  // Index layout: [...ALL_PAGES, konsilAction?, anforderungAction?, templateAction?]
-  const konsilIndex = konsilAction ? ALL_PAGES.length : -1
+  // Index layout: [...allPages, konsilAction?, anforderungAction?, templateAction?]
+  const konsilIndex = konsilAction ? allPages.length : -1
   const anforderungIndex = anforderungAction
-    ? ALL_PAGES.length + (konsilAction ? 1 : 0)
+    ? allPages.length + (konsilAction ? 1 : 0)
     : -1
   const templateIndex =
-    templateAction || templateSubmenu ? ALL_PAGES.length + clinicalAreaCount : -1
+    templateAction || templateSubmenu ? allPages.length + clinicalAreaCount : -1
   const menuItemCount =
-    ALL_PAGES.length + clinicalAreaCount + (templateAction || templateSubmenu ? 1 : 0)
+    allPages.length + clinicalAreaCount + (templateAction || templateSubmenu ? 1 : 0)
 
   const triggerSubmenuAt = (itemEl: HTMLButtonElement, state: SubmenuState) => {
     clearHoverTimer()
@@ -338,7 +344,7 @@ export function WorkspaceContextMenu({
           break
         case 'ArrowRight': {
           event.preventDefault()
-          const page = ALL_PAGES[focusedIndex]
+          const page = allPages[focusedIndex]
           if (page && pageSubsections?.[page.id]?.length) {
             const items =
               menuRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')
@@ -366,7 +372,7 @@ export function WorkspaceContextMenu({
           } else if (templateAction && focusedIndex === templateIndex) {
             handleTemplateSelect()
           } else {
-            const page = ALL_PAGES[focusedIndex]
+            const page = allPages[focusedIndex]
             if (page) handleSelect(page.id)
           }
           break
@@ -418,7 +424,7 @@ export function WorkspaceContextMenu({
         ? (pageSubsections?.[openSubmenu.pageId] ?? [])
         : []
 
-  const renderItem = (page: (typeof ALL_PAGES)[number], globalIndex: number) => {
+  const renderItem = (page: NotionPageConfig, globalIndex: number) => {
     const Icon = TOOL_ICONS[page.id]
     const subsections = pageSubsections?.[page.id]
     const hasSub = Boolean(subsections?.length)
@@ -486,14 +492,14 @@ export function WorkspaceContextMenu({
                 <p className="workspace-context-menu__heading">
                   {t('notionContextMenuDocuments')}
                 </p>
-                {DOCUMENT_PAGES.map((page, index) => renderItem(page, index))}
+                {documentPages.map((page, index) => renderItem(page, index))}
 
                 <div className="workspace-context-menu__sep" role="separator" />
 
                 <p className="workspace-context-menu__heading">
                   {t('notionContextMenuTools')}
                 </p>
-                {TOOL_PAGES.map((page, index) => renderItem(page, DOCUMENT_PAGES.length + index))}
+                {toolPages.map((page, index) => renderItem(page, documentPages.length + index))}
 
                 {clinicalAreaCount > 0 ? (
                   <>

@@ -399,6 +399,19 @@
   gap: 0.75rem;
   padding: 0.85rem 0.9rem 0.75rem;
   border-bottom: 1px solid var(--cm-hairline, #e8e4df);
+  /* Soft top accent glow from the shared aura token — cohesive with the hero
+     and the Ask-Butterfly chat. Image-only so positioning is untouched. */
+  background-image: radial-gradient(
+    125% 70% at 50% 0%,
+    color-mix(in srgb, var(--aura-glow-primary) 11%, transparent),
+    transparent 72%
+  );
+}
+
+@media print {
+  .ci-discuss-dock__header {
+    background-image: none;
+  }
 }
 
 .ci-discuss-dock__title-wrap {
@@ -1644,6 +1657,97 @@
 
 .ci-widget__row--top {
   font-weight: 600;
+}
+
+/* Compact bar chart inside the CI Übersicht widgets — text on the left,
+   a narrow fixed-width bar column packed to the right so bars form a clean
+   vertical band. Shared identically by both CI widgets. */
+.ci-barchart {
+  /* The Übersicht widgets mount this chart outside the `.ci-graph` scope, so
+     redeclare the semantic colour tokens here to keep the chart self-contained.
+     Mirrors the `.ci-graph` ramp exactly so widget and full graph stay in sync.
+     Without these, the inline `var(--ci-severity-*/--ci-confidence-*)` bar fills
+     resolve to nothing and the bars render invisible. */
+  --ci-severity-0: #e5e7eb;
+  --ci-severity-1: #22c55e;
+  --ci-severity-2: #eab308;
+  --ci-severity-3: #f97316;
+  --ci-severity-4: #ef4444;
+  --ci-confidence-low: #94a3b8;
+  --ci-confidence-moderate: #eab308;
+  --ci-confidence-high: #ea580c;
+  list-style: none;
+  margin: 2px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.ci-barchart__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ci-barchart__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.ci-barchart__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main, #1f2937);
+}
+
+.ci-barchart__value {
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary, #4b5563);
+  font-variant-numeric: tabular-nums;
+}
+
+.ci-barchart__track {
+  flex: 0 0 72px;
+  width: 72px;
+  height: 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text-main, #1f2937) 8%, transparent);
+  overflow: hidden;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+.ci-barchart__fill {
+  height: 100%;
+  min-width: 6px;
+  border-radius: 999px;
+  box-shadow: inset 0 -1px 2px rgba(0, 0, 0, 0.12);
+  transition: width 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ci-barchart__fill {
+    transition: none;
+  }
+}
+
+@media print {
+  .ci-barchart__fill {
+    transition: none;
+  }
 }
 
 .ci-widget__pill {

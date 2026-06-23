@@ -1,9 +1,12 @@
 import { OverviewCard, OverviewEmpty } from './OverviewCard'
+import { SpiegelwerteSection } from '../SpiegelwerteSection'
 import type { MedicationOverviewData } from './types'
 
 interface MedicationOverviewCardProps {
   data: MedicationOverviewData
   onOpenMedikation: () => void
+  /** Case id — enables the embedded drug-level Spiegelwerte charts. */
+  caseId?: string
   className?: string
 }
 
@@ -13,6 +16,7 @@ interface MedicationOverviewCardProps {
 export function MedicationOverviewCard({
   data,
   onOpenMedikation,
+  caseId,
   className = 'ov-col-6',
 }: MedicationOverviewCardProps) {
   const hasMeds = data.meds.length > 0
@@ -47,6 +51,12 @@ export function MedicationOverviewCard({
           ) : null}
         </>
       )}
+
+      {caseId ? (
+        <div className="ov-med__spiegel">
+          <SpiegelwerteSection caseId={caseId} mode="all" />
+        </div>
+      ) : null}
     </OverviewCard>
   )
 }

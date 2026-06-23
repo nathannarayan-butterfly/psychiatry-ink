@@ -18,6 +18,7 @@ import type {
   MechanismHypothesis,
   MechanismInferenceResult,
 } from '../../../types/clinicalIntelligence'
+import { getCiMechanismLabel } from '../../../data/clinicalIntelligenceTranslations'
 import { CiConfidenceLegend } from './CiConfidenceLegend'
 import {
   confidenceBarFillClass,
@@ -233,7 +234,7 @@ export function MechanismHypothesesGraph({
   onReject,
   onEdit,
 }: MechanismHypothesesGraphProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const sorted = useMemo(
     () => sortMechanismHypotheses(result.activeMechanisms),
     [result.activeMechanisms],
@@ -288,7 +289,7 @@ export function MechanismHypothesesGraph({
                   <ChevronRight className="ci-graph-row__chev" aria-hidden strokeWidth={2} />
                 )}
                 <span className="ci-graph-row__name" title={mech.descriptionDe}>
-                  {hypothesis.label}
+                  {getCiMechanismLabel(hypothesis.mechanismId, language)}
                 </span>
                 <svg
                   className="ci-graph-row__bar"
@@ -365,7 +366,7 @@ export function MechanismHypothesesGraph({
         <ol className="ci-catalog-list">
           {CLINICAL_INTELLIGENCE_MECHANISMS.map((mech) => (
             <li key={mech.id} className="ci-catalog-list__item">
-              <code>{mech.id}</code> — {mech.labelDe}
+              <code>{mech.id}</code> — {getCiMechanismLabel(mech.id, language)}
             </li>
           ))}
         </ol>

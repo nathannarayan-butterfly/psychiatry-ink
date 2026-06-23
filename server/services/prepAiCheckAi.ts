@@ -8,9 +8,12 @@ import { runAiFeature } from '../ai/runAiFeature'
 import { parseStructuredJson } from '../utils/parseStructuredJson'
 import type { AiUsageContext } from '../ai/types'
 import type { PrepAiCheckPreparation } from '../../src/types/prepAiCheck'
-import type { PrescribingCountryCode } from '../../src/types/knowledgeBase'
+import {
+  PRESCRIBING_COUNTRY_CODES,
+  type PrescribingCountryCode,
+} from '../../src/types/knowledgeBase'
 
-const VALID_COUNTRIES: PrescribingCountryCode[] = ['DE', 'CH', 'AT', 'UK']
+const VALID_COUNTRIES: readonly PrescribingCountryCode[] = PRESCRIBING_COUNTRY_CODES
 
 const DEFAULT_DISCLAIMER_DE =
   'KI-generierte Marktübersicht — nicht Echtzeit-Gelbe-Liste. Klinisch verifizieren.'
@@ -38,17 +41,71 @@ function sanitizePreparations(raw: unknown): PrepAiCheckPreparation[] {
     .slice(0, 24)
 }
 
-function countryResources(country: PrescribingCountryCode): string {
-  switch (country) {
-    case 'CH':
-      return 'Swissmedic, Compendium.ch, Hausapotheke — keine Live-API'
-    case 'AT':
-      return 'Basg.gv.at, Pharmazentralnummer — keine Live-API'
-    case 'UK':
-      return 'BNF, MHRA, emc — keine Live-API'
-    default:
-      return 'Gelbe Liste, Fachinformation (SmPC), ABDA/IFA — keine Live-API'
+/**
+ * National medicines-agency / formulary hints per country, used to ground the
+ * AI market-overview prompt in country-appropriate sources. None are live APIs.
+ * Countries without a specific entry fall back to the national authority + EMA
+ * (EU central register) so newly-added markets are never silently treated as
+ * Germany.
+ */
+const COUNTRY_RESOURCES: Partial<Record<PrescribingCountryCode, string>> = {
+  DE: 'Gelbe Liste, Fachinformation (SmPC), ABDA/IFA, BfArM — keine Live-API',
+  AT: 'BASG/AGES, Austria-Codex, Pharmazentralnummer — keine Live-API',
+  CH: 'Swissmedic, Compendium.ch, Hausapotheke — keine Live-API',
+  LI: 'Swissmedic / Compendium.ch (Schweizer Markt via Zollvertrag) — keine Live-API',
+  BE: 'AFMPS/FAGG, CBIP/BCFI — keine Live-API',
+  BG: 'Bulgarian Drug Agency (BDA) — keine Live-API',
+  HR: 'HALMED — keine Live-API',
+  CY: 'Pharmaceutical Services (MoH Cyprus), EMA — keine Live-API',
+  CZ: 'SÚKL — keine Live-API',
+  DK: 'Lægemiddelstyrelsen (DKMA), pro.medicin.dk — keine Live-API',
+  EE: 'Ravimiamet (State Agency of Medicines) — keine Live-API',
+  FI: 'Fimea, Pharmaca Fennica — keine Live-API',
+  FR: 'ANSM, base de données publique des médicaments, Vidal — keine Live-API',
+  GR: 'EOF (National Organization for Medicines) — keine Live-API',
+  HU: 'OGYÉI — keine Live-API',
+  IS: 'Lyfjastofnun (Icelandic Medicines Agency) — keine Live-API',
+  IE: 'HPRA, MIMS Ireland — keine Live-API',
+  IT: 'AIFA, banca dati farmaci — keine Live-API',
+  LV: 'State Agency of Medicines (Zāļu valsts aģentūra) — keine Live-API',
+  LT: 'State Medicines Control Agency (VVKT) — keine Live-API',
+  LU: 'Ministère de la Santé; BE/FR/DE-Markt, EMA — keine Live-API',
+  MT: 'Medicines Authority Malta, EMA — keine Live-API',
+  NL: 'CBG-MEB, Farmacotherapeutisch Kompas — keine Live-API',
+  NO: 'DMP (Norwegian Medical Products Agency), Felleskatalogen — keine Live-API',
+  PL: 'URPL, Rejestr Produktów Leczniczych — keine Live-API',
+  PT: 'INFARMED, Prontuário Terapêutico — keine Live-API',
+  RO: 'ANMDMR — keine Live-API',
+  SK: 'ŠÚKL — keine Live-API',
+  SI: 'JAZMP — keine Live-API',
+  ES: 'AEMPS, CIMA — keine Live-API',
+  SE: 'Läkemedelsverket, FASS — keine Live-API',
+  UK: 'BNF, MHRA, emc — keine Live-API',
+  US: 'FDA, DailyMed, Orange Book — keine Live-API',
+  CA: 'Health Canada Drug Product Database, CPS — keine Live-API',
+  AU: 'TGA, Australian Medicines Handbook (AMH) — keine Live-API',
+  NZ: 'Medsafe, New Zealand Formulary (NZF) — keine Live-API',
+}
+
+/** English country name for prompts (Node ships `Intl.DisplayNames`). */
+function countryDisplayName(country: PrescribingCountryCode): string {
+  const iso = country === 'UK' ? 'GB' : country
+  try {
+    const name = new Intl.DisplayNames(['en'], { type: 'region' }).of(iso)
+    if (name && name !== iso) return name
+  } catch {
+    // fall through to the raw code
   }
+  return iso
+}
+
+function countryResources(country: PrescribingCountryCode): string {
+  const mapped = COUNTRY_RESOURCES[country]
+  if (mapped) return mapped
+  // Arbitrary market without a hand-mapped agency: ground the model in that
+  // country's own regulator plus EMA/WHO references — never default to Germany.
+  const name = countryDisplayName(country)
+  return `the national medicines regulatory authority of ${name}, plus EMA (EU) and WHO references — no live API`
 }
 
 export async function assessPreparationAvailabilityWithAi(params: {
@@ -70,6 +127,7 @@ export async function assessPreparationAvailabilityWithAi(params: {
   const language = params.language
   const generic = (params.genericName ?? params.substance).trim()
   const resources = countryResources(country)
+  const countryLabel = `${countryDisplayName(country)} (${country})`
 
   const kbBlock =
     params.kbPreparations && params.kbPreparations.length > 0
@@ -86,7 +144,7 @@ export async function assessPreparationAvailabilityWithAi(params: {
 
   const systemPrompt = [
     'Du bist ein klinisch-pharmakologischer Assistent für Psychiatrie.',
-    `Erstelle eine kompakte Übersicht marktgängiger Fertigarzneimittel für ${country}.`,
+    `Erstelle eine kompakte Übersicht marktgängiger Fertigarzneimittel für ${countryLabel}.`,
     `Nutze typisches Fachwissen zu ${resources}.`,
     'Du hast KEINEN Live-Zugriff auf Gelbe Liste oder andere Register — kennzeichne Unsicherheit.',
     clinicalLanguagePromptInstruction(language),
@@ -102,7 +160,7 @@ export async function assessPreparationAvailabilityWithAi(params: {
   const userPrompt = [
     `Wirkstoff/Substanz: ${params.substance.trim()}`,
     generic !== params.substance.trim() ? `Generischer Name: ${generic}` : '',
-    `Land: ${country}`,
+    `Land: ${countryLabel}`,
     planBlock,
     kbBlock,
     '',

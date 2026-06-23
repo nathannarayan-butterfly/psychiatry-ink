@@ -214,6 +214,43 @@ export const FEATURE_CREDIT_RULES: Record<string, FeatureCreditRule> = {
     allowedModes: ALL_MODES,
     defaultMode: 'standard',
   },
+  template_ai_generate: {
+    baseCredits: 4,
+    maxIncludedTokens: 5000,
+    overflowTokenBlockSize: 1000,
+    overflowCreditsPerBlock: 1,
+    allowedModes: ALL_MODES,
+    defaultMode: 'standard',
+  },
+  template_block_fill: {
+    baseCredits: 2,
+    maxIncludedTokens: 4000,
+    overflowTokenBlockSize: 1000,
+    overflowCreditsPerBlock: 1,
+    allowedModes: ALL_MODES,
+    defaultMode: 'standard',
+  },
+  // Analyse an uploaded document and map it to a clinical template. Larger
+  // context window than template_ai_generate (the whole document is sent),
+  // billed like a generation with token overflow for long documents.
+  template_from_document: {
+    baseCredits: 4,
+    maxIncludedTokens: 8000,
+    overflowTokenBlockSize: 1000,
+    overflowCreditsPerBlock: 1,
+    allowedModes: ALL_MODES,
+    defaultMode: 'standard',
+  },
+  // Standalone, generic patient-education generation in the knowledge base.
+  // Per-section call, billed like a single medication-education section.
+  patient_education_generic: {
+    baseCredits: 2,
+    maxIncludedTokens: 4000,
+    overflowTokenBlockSize: 1000,
+    overflowCreditsPerBlock: 1,
+    allowedModes: ['standard', 'gruendlich'],
+    defaultMode: 'standard',
+  },
 
   // ─── Legacy route-level keys (mapped to closest credit rule equivalent) ─
   inline_text_edit: {

@@ -141,7 +141,7 @@ export function ClinicalIntelligenceDiscussPanel({
         <header className="ci-discuss-dock__header">
           <div className="ci-discuss-dock__title-wrap">
             <span className="ci-discuss-dock__mark">
-              <ButterflyLogo variant="color" size={24} />
+              <ButterflyLogo variant="color" breathing size={24} />
             </span>
             <div>
               <h2 className="ci-discuss-dock__title">{t('ciDiscussTitle')}</h2>

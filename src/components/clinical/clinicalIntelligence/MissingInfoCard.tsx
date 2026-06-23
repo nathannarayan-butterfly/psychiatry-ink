@@ -1,5 +1,9 @@
 import { useTranslation } from '../../../context/TranslationContext'
 import { ClinicalEmpty } from '../ClinicalSection'
+import {
+  getCiDimensionLabel,
+  getCiMechanismLabel,
+} from '../../../data/clinicalIntelligenceTranslations'
 import type {
   DimensionalIntegrationResult,
   MechanismInferenceResult,
@@ -23,7 +27,7 @@ interface MissingItem {
  * the parent panel.
  */
 export function MissingInfoCard({ dimensionalResult, mechanismResult }: MissingInfoCardProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
 
   const items: MissingItem[] = []
 
@@ -31,7 +35,7 @@ export function MissingInfoCard({ dimensionalResult, mechanismResult }: MissingI
     if (f.missingData.trim()) {
       items.push({
         key: `dim-md-${f.dimensionId}`,
-        scope: f.dimensionName,
+        scope: getCiDimensionLabel(f.dimensionId, language),
         title: t('ciMissingDataLabel'),
         detail: f.missingData,
       })
@@ -39,7 +43,7 @@ export function MissingInfoCard({ dimensionalResult, mechanismResult }: MissingI
     if (f.uncertainty.trim()) {
       items.push({
         key: `dim-un-${f.dimensionId}`,
-        scope: f.dimensionName,
+        scope: getCiDimensionLabel(f.dimensionId, language),
         title: t('ciUncertaintyLabel'),
         detail: f.uncertainty,
       })
@@ -50,7 +54,7 @@ export function MissingInfoCard({ dimensionalResult, mechanismResult }: MissingI
     if (m.uncertainty.trim()) {
       items.push({
         key: `mech-un-${m.mechanismId}`,
-        scope: m.label,
+        scope: getCiMechanismLabel(m.mechanismId, language),
         title: t('ciUncertaintyLabel'),
         detail: m.uncertainty,
       })

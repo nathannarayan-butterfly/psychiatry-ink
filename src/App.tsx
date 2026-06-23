@@ -21,7 +21,7 @@ import { useKbAdminAccess } from './hooks/useKbAdminAccess'
 import { DiscussCaseInvitePage } from './components/discuss-case/DiscussCaseInvitePage'
 import { ConsultantDashboard } from './components/consultation/ConsultantDashboard'
 import { ConsultationInvitePage } from './components/consultation/ConsultationInvitePage'
-import { TemplatesDashboardPage } from './components/templates/TemplatesDashboardPage'
+import { ClinicalVorlageBuilderPage } from './components/templates/clinical/ClinicalVorlageBuilderPage'
 import { TeamSettingsPage } from './components/settings/TeamSettingsPage'
 import { TeamInvitePage } from './components/settings/TeamInvitePage'
 import { useConsultationRole } from './hooks/useConsultationRole'
@@ -270,7 +270,7 @@ export default function App() {
         ) : showKbAdmin && hasKbAdminAccess ? (
           <KbAdminPage onBack={() => navigate('/dashboard')} />
         ) : showTemplates ? (
-          <TemplatesDashboardPage onBack={() => navigate('/dashboard')} />
+          <ClinicalVorlageBuilderPage onBack={() => navigate('/dashboard')} />
         ) : showTeamSettings ? (
           <TeamSettingsPage onBack={() => navigate('/dashboard')} />
         ) : showIntegrations ? (

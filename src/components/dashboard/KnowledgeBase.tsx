@@ -35,6 +35,8 @@ import { KnowledgeBasePharma } from './KnowledgeBasePharma'
 import { KnowledgeBaseClinical } from './KnowledgeBaseClinical'
 import { countClinicalEntriesByCollection } from '../../hooks/useKnowledgeBaseClinical'
 import { pickKbLocalizedCollectionName } from '../../types/knowledgeBase'
+import { PatientEducationGenericWorkspace } from '../patientEducationGeneric/PatientEducationGenericWorkspace'
+import { translateMedicationUi } from '../../data/medicationUiTranslations'
 
 const STORAGE_KEY = 'psychiatry-ink:knowledgeBase'
 const DRUGS_STORAGE_KEY = 'psychiatry-ink:knowledgeBaseDrugs'
@@ -687,9 +689,17 @@ interface CollectionsHomeProps {
   onOpen: (collection: KnowledgeCollection) => void
   onCreate: () => void
   onEdit: (collection: KnowledgeCollection) => void
+  onOpenGenericEducation: () => void
 }
 
-function CollectionsHome({ collections, counts, onOpen, onCreate, onEdit }: CollectionsHomeProps) {
+function CollectionsHome({
+  collections,
+  counts,
+  onOpen,
+  onCreate,
+  onEdit,
+  onOpenGenericEducation,
+}: CollectionsHomeProps) {
   const { t, language } = useTranslation()
 
   return (
@@ -703,6 +713,26 @@ function CollectionsHome({ collections, counts, onOpen, onCreate, onEdit }: Coll
       </div>
 
       <div className="kb-collections__grid">
+        <div className="kb-collection-tile kb-collection-tile--feature">
+          <button
+            type="button"
+            className="kb-collection-tile__main"
+            onClick={onOpenGenericEducation}
+          >
+            <span className="kb-collection-tile__icon" style={{ color: '#0d9488' }} aria-hidden>
+              <HeartPulse className="h-5 w-5" strokeWidth={1.75} />
+            </span>
+            <span className="kb-collection-tile__body">
+              <span className="kb-collection-tile__title">
+                {translateMedicationUi(language, 'pegenTitle')}
+              </span>
+              <span className="kb-collection-tile__subtitle">
+                {translateMedicationUi(language, 'pegenTileSubtitle')}
+              </span>
+            </span>
+            <ArrowRight className="kb-collection-tile__arrow h-4 w-4" strokeWidth={1.75} aria-hidden />
+          </button>
+        </div>
         {collections.map((collection) => {
           const count = counts[collection.id] ?? 0
           const subtitle =
@@ -758,6 +788,7 @@ export function KnowledgeBaseTile() {
   const [activeCollectionId, setActiveCollectionId] = useState<string | null>(null)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [editingCollection, setEditingCollection] = useState<KnowledgeCollection | null>(null)
+  const [genericEducationOpen, setGenericEducationOpen] = useState(false)
 
   const activeCollection = activeCollectionId
     ? collections.find((c) => c.id === activeCollectionId) ?? null
@@ -767,6 +798,7 @@ export function KnowledgeBaseTile() {
   const closeOverlay = useCallback(() => {
     setOpen(false)
     setActiveCollectionId(null)
+    setGenericEducationOpen(false)
   }, [])
 
   // Recompute tile counts whenever the overlay opens, the active collection
@@ -778,6 +810,20 @@ export function KnowledgeBaseTile() {
   )
 
   if (open) {
+    // ── Generic patient education (standalone AI generator) ──
+    if (genericEducationOpen) {
+      return (
+        <div
+          className="kb-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label={translateMedicationUi(language, 'pegenTitle')}
+        >
+          <PatientEducationGenericWorkspace onClose={() => setGenericEducationOpen(false)} />
+        </div>
+      )
+    }
+
     // ── Drug (medications) collection inner view ──
     if (activeCollection && activeCollection.type === 'medications') {
       return (
@@ -836,6 +882,7 @@ export function KnowledgeBaseTile() {
             onOpen={(collection) => setActiveCollectionId(collection.id)}
             onCreate={() => setShowCreateDialog(true)}
             onEdit={(collection) => setEditingCollection(collection)}
+            onOpenGenericEducation={() => setGenericEducationOpen(true)}
           />
         </div>
 

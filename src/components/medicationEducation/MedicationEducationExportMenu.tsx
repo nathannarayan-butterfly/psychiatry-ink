@@ -13,7 +13,11 @@ interface MedicationEducationExportMenuProps {
 
 type ExportAction = 'pdf' | 'docx' | 'txt' | 'copy'
 
-const EXPORT_ACTIONS: ExportAction[] = ['pdf', 'docx', 'txt', 'copy']
+// TODO re-enable: only PDF + Word (Docx) file exports are exposed to users for
+// now, plus Copy. The plain-text (TXT) export remains fully wired below
+// (`onExportTxt`, `runAction`'s `txt` case, labels/icons) but is intentionally
+// hidden from the menu — add `'txt'` back to this list to surface it again.
+const EXPORT_ACTIONS: ExportAction[] = ['pdf', 'docx', 'copy']
 
 export function MedicationEducationExportMenu({
   disabled = false,

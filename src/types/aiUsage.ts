@@ -50,6 +50,10 @@ export type AiFeatureKey =
   | 'document_import_mapping'
   | 'psychopathology_extraction'
   | 'clinical_intelligence_discussion'
+  | 'template_ai_generate'
+  | 'template_block_fill'
+  | 'template_from_document'
+  | 'patient_education_generic'
   | 'unknown'
 
 /**

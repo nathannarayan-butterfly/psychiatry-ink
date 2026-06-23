@@ -9,6 +9,7 @@ import {
   Printer,
 } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
+import type { UiTranslationKey } from '../../data/uiTranslations'
 import { DEFAULT_CASE_ID } from '../../utils/caseContext'
 import { getDischargeSummarySections } from '../../data/dischargeSummarySections'
 import { useDischargeSummaryDocument } from '../../hooks/useDischargeSummaryDocument'
@@ -31,6 +32,12 @@ import { DischargeSummarySectionCard } from './DischargeSummarySectionCard'
 interface DischargeSummaryWorkspaceProps {
   caseId: string
   disabled?: boolean
+}
+
+const REGION_LABEL_KEYS: Record<DischargeSummaryRegion, UiTranslationKey> = {
+  UK: 'dischargeSummaryRegionUk',
+  US: 'dischargeSummaryRegionUs',
+  international: 'dischargeSummaryRegionIntl',
 }
 
 export function DischargeSummaryWorkspace({
@@ -214,7 +221,7 @@ export function DischargeSummaryWorkspace({
           <div className="arztbrief-meta">
             <strong>{ds.draft.title}</strong>
             <span>{t(`dischargeSummaryStatus_${ds.draft.status}`)}</span>
-            <span>{ds.draft.region}</span>
+            <span>{t(REGION_LABEL_KEYS[ds.draft.region])}</span>
             <button
               type="button"
               className="arztbrief-btn arztbrief-btn--ghost"

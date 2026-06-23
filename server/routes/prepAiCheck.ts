@@ -12,12 +12,15 @@ import { requireRouteAuth } from '../utils/requireRouteAuth'
 import { requireClinicalLanguage } from '../utils/resolveClinicalLanguage'
 import { resolveUsageContextFromRequest } from '../ai/usage/resolveUsageContext'
 import type { PrepAiCheckRequest, PrepAiCheckResponse } from '../../src/types/prepAiCheck'
-import type { PrescribingCountryCode } from '../../src/types/knowledgeBase'
+import {
+  PRESCRIBING_COUNTRY_CODES,
+  type PrescribingCountryCode,
+} from '../../src/types/knowledgeBase'
 
 export const prepAiCheckRouter: Router = createRouter()
 
 const VALID_TIERS: AiModelTier[] = ['fast', 'standard', 'thorough']
-const VALID_COUNTRIES: PrescribingCountryCode[] = ['DE', 'CH', 'AT', 'UK']
+const VALID_COUNTRIES: readonly PrescribingCountryCode[] = PRESCRIBING_COUNTRY_CODES
 
 async function assertPrepAiAccess(
   req: Request,

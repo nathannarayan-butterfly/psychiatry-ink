@@ -1,3 +1,5 @@
+import type { UiLanguage } from '../../types/settings'
+
 export type NotionPageId =
   | 'aufnahme'
   | 'verlauf'
@@ -99,6 +101,26 @@ export function isVerlaufDocumentType(
   documentTypeId: string,
 ): documentTypeId is VerlaufDocumentType {
   return (VERLAUF_DOCUMENT_TYPES as readonly string[]).includes(documentTypeId)
+}
+
+/**
+ * The English Discharge Summary tool produces an English-language discharge
+ * letter and is only useful to clinicians working in English. German (and other
+ * non-English) users get their discharge letters from the Arztbrief tool
+ * instead, so the Discharge Summary entry is hidden everywhere unless the app
+ * language is English.
+ */
+export function isPageAvailableForLanguage(
+  pageId: NotionPageId,
+  language: UiLanguage,
+): boolean {
+  if (pageId === 'discharge-summary') return language === 'en'
+  return true
+}
+
+/** NOTION_PAGES filtered to the pages that should be surfaced for `language`. */
+export function getVisibleNotionPages(language: UiLanguage): NotionPageConfig[] {
+  return NOTION_PAGES.filter((page) => isPageAvailableForLanguage(page.id, language))
 }
 
 export function isToolPage(pageId: NotionPageId): boolean {

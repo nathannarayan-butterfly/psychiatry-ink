@@ -1,15 +1,18 @@
 /**
- * Brand mark (includes “.ink”). Drop files here — first match wins:
- *   logo-ink.svg   ← preferred (~5 KB, scales cleanly)
- *   logo-ink.png   ← fallback (~10 KB, 128×96)
- *   logo-ink.webp
+ * Primary brand mark — the inkwell + fountain pen “.ink” logo.
+ *
+ *   Ink_logo.svg      ← preferred for light backgrounds (black artwork)
+ *   Ink_logo.png      ← raster fallback (4500×4500, transparent)
+ *
+ * The monochrome/white mark (`Ink_logo_BW.*`) is used on dark surfaces — see
+ * `logoInkBwRawSvg` / `logoInkBwSrc` below.
  */
-const logoModules = import.meta.glob('../assets/brand/logo-ink.{svg,png,webp}', {
+const logoModules = import.meta.glob('../assets/brand/Ink_logo.{svg,png,webp}', {
   eager: true,
   import: 'default',
 }) as Record<string, string>
 
-const LOGO_PRIORITY = ['logo-ink.svg', 'logo-ink.png', 'logo-ink.webp'] as const
+const LOGO_PRIORITY = ['Ink_logo.svg', 'Ink_logo.png', 'Ink_logo.webp'] as const
 
 function resolveLogoInkSrc(): string | null {
   for (const name of LOGO_PRIORITY) {
@@ -24,21 +27,47 @@ export const logoInkSrc = resolveLogoInkSrc()
 export const hasLogoInkMark = logoInkSrc !== null
 
 /**
- * Raw SVG source (only the .svg variant). Inlined so the dark-sidebar (light)
- * variant can recolor the two artwork groups independently for a two-tone look
- * instead of a flat invert filter that white-washes the mark.
+ * White/monochrome mark for dark backgrounds (dark sidebar, dark surfaces).
+ * Exposed both as a plain image source and as inlined SVG (the artwork is
+ * recolored white in-asset) so the dark-sidebar lockup can render it as a
+ * crisp transparent silhouette instead of a flat inverted blob.
  */
-const logoRawModules = import.meta.glob('../assets/brand/logo-ink.svg', {
+const logoBwModules = import.meta.glob('../assets/brand/Ink_logo_BW.{svg,png,webp}', {
+  eager: true,
+  import: 'default',
+}) as Record<string, string>
+
+const LOGO_BW_PRIORITY = ['Ink_logo_BW.svg', 'Ink_logo_BW.png', 'Ink_logo_BW.webp'] as const
+
+function resolveLogoInkBwSrc(): string | null {
+  for (const name of LOGO_BW_PRIORITY) {
+    const entry = Object.entries(logoBwModules).find(([path]) => path.endsWith(`/${name}`))
+    if (entry) return entry[1]
+  }
+  return null
+}
+
+export const logoInkBwSrc = resolveLogoInkBwSrc()
+
+/**
+ * Raw SVG source for the white mark. The exported asset paints the artwork
+ * white on an opaque black backing rectangle; for inline UI use we strip that
+ * backing `<rect>` so the white silhouette sits transparently on whatever dark
+ * surface hosts it.
+ */
+const logoBwRawModules = import.meta.glob('../assets/brand/Ink_logo_BW.svg', {
   eager: true,
   query: '?raw',
   import: 'default',
 }) as Record<string, string>
 
-function resolveLogoInkRawSvg(): string | null {
-  const entry = Object.entries(logoRawModules).find(([path]) =>
-    path.endsWith('/logo-ink.svg'),
+function resolveLogoInkBwRawSvg(): string | null {
+  const entry = Object.entries(logoBwRawModules).find(([path]) =>
+    path.endsWith('/Ink_logo_BW.svg'),
   )
-  return entry ? entry[1] : null
+  if (!entry) return null
+  // Drop the opaque backing rectangle so the mark is transparent on dark UI.
+  return entry[1].replace(/<rect\b[^>]*\/>\s*/i, '')
 }
 
-export const logoInkRawSvg = resolveLogoInkRawSvg()
+export const logoInkBwRawSvg = resolveLogoInkBwRawSvg()

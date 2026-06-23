@@ -17,11 +17,12 @@ import {
 const EXPECTED_DEFAULT_ORDER: string[] = [
   'diagnoses',
   'medication',
+  'ci-dimensional',
+  'ci-mechanism',
   'safety',
   'verlaufstendenz',
   'psychopathology',
   'labs-due',
-  'spiegel-latest',
   'angemeldete-therapien',
   'compliance',
 ]
@@ -33,7 +34,7 @@ describe('overviewLayout', () => {
 
   it('returns the redesigned default layout in clinical priority order', () => {
     const layout = getDefaultOverviewLayout()
-    expect(layout.version).toBe(4)
+    expect(layout.version).toBe(7)
     expect(layout.widgets.map((w) => w.widgetId)).toEqual(EXPECTED_DEFAULT_ORDER)
     expect(layout.widgets[0]?.widgetId).toBe('diagnoses')
     expect(layout.widgets.some((w) => w.widgetId !== 'hero-summary')).toBe(true)
@@ -44,6 +45,9 @@ describe('overviewLayout', () => {
     expect(normalizeOverviewLayout({ version: 1, widgets: [] })).toEqual(getDefaultOverviewLayout())
     expect(normalizeOverviewLayout({ version: 2, widgets: [] })).toEqual(getDefaultOverviewLayout())
     expect(normalizeOverviewLayout({ version: 3, widgets: [] })).toEqual(getDefaultOverviewLayout())
+    expect(normalizeOverviewLayout({ version: 4, widgets: [] })).toEqual(getDefaultOverviewLayout())
+    expect(normalizeOverviewLayout({ version: 5, widgets: [] })).toEqual(getDefaultOverviewLayout())
+    expect(normalizeOverviewLayout({ version: 6, widgets: [] })).toEqual(getDefaultOverviewLayout())
     expect(
       normalizeOverviewLayout({
         version: 1,
@@ -54,7 +58,7 @@ describe('overviewLayout', () => {
 
   it('keeps valid widgets and drops unknown ids', () => {
     const normalized = normalizeOverviewLayout({
-      version: 4,
+      version: 7,
       widgets: [
         { instanceId: 'a', widgetId: 'diagnoses', width: 'half' },
         { instanceId: 'b', widgetId: 'bogus', width: 'full' },
@@ -89,7 +93,7 @@ describe('overviewLayout', () => {
   })
 
   it('registry includes all known widget ids', () => {
-    expect(OVERVIEW_WIDGET_IDS.length).toBe(27)
+    expect(OVERVIEW_WIDGET_IDS.length).toBe(26)
   })
 
   it('persists per-user layout in localStorage', () => {
@@ -144,10 +148,11 @@ describe('overviewLayout', () => {
 
     expect(packed.map((segment) => segment.type)).toEqual([
       'columns',
-      'full',
-      'full',
-      'full',
       'columns',
+      'full',
+      'full',
+      'full',
+      'full',
       'columns',
     ])
 
@@ -158,8 +163,8 @@ describe('overviewLayout', () => {
       expect(pairSegments[0].right[0]?.item.widgetId).toBe('medication')
     }
     if (pairSegments[1]?.type === 'columns') {
-      expect(pairSegments[1].left[0]?.item.widgetId).toBe('labs-due')
-      expect(pairSegments[1].right[0]?.item.widgetId).toBe('spiegel-latest')
+      expect(pairSegments[1].left[0]?.item.widgetId).toBe('ci-dimensional')
+      expect(pairSegments[1].right[0]?.item.widgetId).toBe('ci-mechanism')
     }
     if (pairSegments[2]?.type === 'columns') {
       expect(pairSegments[2].left[0]?.item.widgetId).toBe('angemeldete-therapien')

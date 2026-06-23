@@ -90,14 +90,9 @@ export function renderOverviewWidget(
       return (
         <MedicationOverviewCard
           data={ctx.medicationData}
+          caseId={ctx.caseId}
           onOpenMedikation={() => ctx.onTabSelect('medikation')}
         />
-      )
-    case 'spiegel-latest':
-      return (
-        <OverviewCardShell>
-          <SpiegelwerteSection caseId={ctx.caseId} />
-        </OverviewCardShell>
       )
     case 'diagnoses':
       return (
@@ -114,7 +109,15 @@ export function renderOverviewWidget(
         />
       )
     case 'labs-due':
-      return <LaborOverviewCard data={ctx.laborData} onOpenLabor={() => ctx.onTabSelect('labor')} />
+      return (
+        <LaborOverviewCard
+          data={ctx.laborData}
+          onOpenLabor={() => ctx.onTabSelect('labor')}
+          ekg={ctx.ekgSummary}
+          eeg={ctx.eegSummary}
+          imaging={ctx.ctSummary}
+        />
+      )
     case 'prior-therapies':
       return (
         <PriorTherapiesOverviewCard

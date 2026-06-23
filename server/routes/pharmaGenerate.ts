@@ -6,6 +6,10 @@ import { llmResultModel } from '../services/safeLlmEgress'
 import { runAiFeature } from '../ai/runAiFeature'
 import { resolveUsageContextFromRequest } from '../ai/usage/resolveUsageContext'
 import { assertAiGenerationAllowed, recordAiGenerationUsed } from '../utils/caseAiAccessGuard'
+import {
+  PRESCRIBING_COUNTRY_CODES,
+  type PrescribingCountryCode,
+} from '../../src/types/knowledgeBase'
 
 /**
  * Canonical drug-monograph section keys. Mirrors `DrugSectionKey` on the client
@@ -686,8 +690,8 @@ interface StructuredBundleV2 {
   cyp?: Record<string, unknown>
 }
 
-const COUNTRY_CODES = ['DE', 'CH', 'AT', 'UK'] as const
-type PrescribingCountryCodeV2 = (typeof COUNTRY_CODES)[number]
+const COUNTRY_CODES = PRESCRIBING_COUNTRY_CODES
+type PrescribingCountryCodeV2 = PrescribingCountryCode
 
 interface MarketAvailabilityEntryV2 {
   countryCode: PrescribingCountryCodeV2

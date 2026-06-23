@@ -217,6 +217,33 @@
   --area-accent: var(--accent);
 
   /* ──────────────────────────────────────────────────────────────────────
+   * Aura system — shared "command-deck" dark surface + glow tokens.
+   *
+   * Single source of truth for the cinematic Übersicht hero, the dark case
+   * sidebar, and the subtle bento-card sheen, so all three read as ONE designed
+   * system rather than unrelated surfaces. Everything derives from --accent /
+   * --area-accent: switching the theme accent (or the per-area signature hue)
+   * shifts the whole aura family in lock-step, and the glow stays inside our
+   * brand colour world (no free neon).
+   *   --aura-surface-deep / -raised  dark command surfaces (accent + near-black)
+   *   --aura-ink / -soft / -mute     light ink ramp for dark aura surfaces
+   *   --aura-hairline / -strong      shared hairline borders on dark surfaces
+   *   --aura-glow-primary            current-area signature glow (overview=gold)
+   *   --aura-glow-warm / -cool       theme-locked warm + slate counter-glows
+   * ────────────────────────────────────────────────────────────────────── */
+  --aura-surface-deep: color-mix(in srgb, var(--accent) 30%, #0a0c12);
+  --aura-surface-raised: color-mix(in srgb, var(--accent) 48%, #15171f);
+  --aura-ink: #f2efe8;
+  --aura-ink-soft: color-mix(in srgb, var(--aura-ink) 76%, transparent);
+  --aura-ink-mute: color-mix(in srgb, var(--aura-ink) 52%, transparent);
+  --aura-hairline: color-mix(in srgb, white 14%, transparent);
+  --aura-hairline-strong: color-mix(in srgb, white 22%, transparent);
+  --aura-glass: rgba(255, 255, 255, 0.06);
+  --aura-glow-primary: var(--area-accent);
+  --aura-glow-warm: color-mix(in srgb, var(--accent) 68%, #e8c187);
+  --aura-glow-cool: color-mix(in srgb, var(--accent) 45%, #5b7595);
+
+  /* ──────────────────────────────────────────────────────────────────────
    * Spacing rhythm — a single 4px-based scale so padding/margins/gaps share
    * one rhythm across pages instead of ad-hoc rem values. Additive: existing
    * literals keep working; new/refined chrome consumes these.
@@ -355,6 +382,9 @@
   body {
     margin: 0;
     font-family: var(--font-sans);
+    /* Line-spacing setting (Zeilenabstand) applies app-wide, not just in the
+       editor textarea. */
+    line-height: var(--app-line-height, 1.65);
     background: var(--app-bg);
     color: var(--text-main);
     -webkit-font-smoothing: antialiased;
@@ -523,8 +553,8 @@
 
   .topbar-logo__mark {
     width: auto;
-    height: 3em;
-    max-width: 4.25em;
+    height: 3.85em;
+    max-width: 5em;
     translate: 0 0.02em;
     margin-left: -0.25rem;
   }
