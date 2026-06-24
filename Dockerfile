@@ -39,14 +39,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-cert
 COPY package.json package-lock.json ./
 COPY prisma ./prisma
 
-# Production deps plus tsx (start script) and prisma CLI (optional migrate deploy).
+# Production deps include tsx (start script) and the prisma CLI (entrypoint
+# `migrate deploy`) — both are real `dependencies`, so `npm ci --omit=dev`
+# installs them. (`npm install --omit=dev tsx prisma` does NOT install dev-listed
+# packages, which previously left tsx absent and broke `npm run start`.)
 RUN npm ci --omit=dev \
-    && npm install --omit=dev tsx prisma \
     && npx prisma generate
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/server ./server
 COPY --from=builder /app/shared ./shared
+# `tsx server/index.ts` resolves TS at runtime, and server modules import VALUES
+# (not just types) from src/ (e.g. src/types/auditLog AUDIT_ACTIONS, zod schemas,
+# src/data/org/*) and from scripts/lib/criteriaDraftGaps. Those trees MUST ship in
+# the runtime image or `npm run start` throws ERR_MODULE_NOT_FOUND before binding.
+COPY --from=builder /app/src ./src
+COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/tsconfig*.json ./
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
 

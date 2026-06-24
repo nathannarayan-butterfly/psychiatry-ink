@@ -135,6 +135,8 @@ app.listen(port, host, () => {
   const deepseek = Boolean(process.env.DEEPSEEK_API_KEY?.trim())
   const livekitMissing = liveKitMissingEnvVars()
   const livekit = livekitMissing.length === 0
+  // Exact phrase Cloud Run / deploy checks grep for to confirm the bind.
+  console.log(`Psychiatry.Ink server listening on ${host}:${port}`)
   console.log(`[api] listening on http://${host}:${port}`)
   console.log(
     `[api] client build: ${servingClient ? `served from ${distDir}` : 'not served (dist/ absent — split deploy or dev)'}`,

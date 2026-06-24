@@ -40,6 +40,12 @@ playwright-report
 test-results
 .tmp
 
+# Generated script artifacts — not needed at runtime; keep the image lean.
+# (scripts/lib IS required at runtime via server/routes/criteriaGenerateDraft.)
+scripts/output
+scripts/reports
+scripts/.wikimedia-structure-fetch-report.json
+
 # Local databases.
 *.db
 *.db-journal
