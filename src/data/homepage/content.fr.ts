@@ -259,20 +259,20 @@ export const homepageContentFr: HomepageContent = {
         monthly: 'Mensuel',
         yearly: 'Annuel',
       },
-      yearlyRecommendation: 'Recommandé : économisez 20 % avec l\'abonnement annuel — £143,90/an',
+      yearlyRecommendation: 'Recommandé : économisez 20 % avec l\'abonnement annuel — £239,90/an',
       yearlyConfirmation: 'Abonnement annuel — 20 % d\'économie appliqués',
       billing: {
         monthly: {
-          price: '£14,99',
+          price: '£24,99',
           period: '/mois',
           credits: '500 crédits IA inclus',
           savings: null,
         },
         yearly: {
-          price: '£143,90',
+          price: '£239,90',
           period: '/an',
           credits: '500 crédits IA inclus chaque mois',
-          savings: 'Économisez £35,98/an — 20 % de réduction par rapport à £179,88/an',
+          savings: 'Économisez £59,98/an — 20 % de réduction par rapport à £299,88/an',
         },
       },
       description:

@@ -259,20 +259,20 @@ export const homepageContentEn: HomepageContent = {
         monthly: 'Monthly',
         yearly: 'Yearly',
       },
-      yearlyRecommendation: 'Recommended: Save 20% with yearly billing — £143.90/year',
+      yearlyRecommendation: 'Recommended: Save 20% with yearly billing — £239.90/year',
       yearlyConfirmation: 'Yearly billing — 20% savings applied',
       billing: {
         monthly: {
-          price: '£14.99',
+          price: '£24.99',
           period: '/month',
           credits: '500 AI credits included',
           savings: null,
         },
         yearly: {
-          price: '£143.90',
+          price: '£239.90',
           period: '/year',
           credits: '500 AI credits included each month',
-          savings: 'Save £35.98/year — 20% off vs £179.88/year',
+          savings: 'Save £59.98/year — 20% off vs £299.88/year',
         },
       },
       description:
