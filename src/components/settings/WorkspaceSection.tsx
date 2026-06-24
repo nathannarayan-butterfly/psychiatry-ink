@@ -1,6 +1,11 @@
 import { ChevronDown, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
+import type { UiLanguage } from '../../types/settings'
+import {
+  translateSettingsWorkspaceUi,
+  type SettingsWorkspaceUiKey,
+} from '../../data/settingsWorkspaceUiTranslations'
 import type { useWorkspaceSettings } from '../../hooks/useWorkspaceSettings'
 import type {
   WorkspaceChecklistItem,
@@ -11,15 +16,15 @@ import type {
 import { AiManagerSettings } from './AiManagerSettings'
 import { SettingsField } from './SettingsField'
 
-const iconOptions: Array<{ value: WorkspaceComponentIcon; label: string }> = [
-  { value: 'clipboard', label: 'Klemmbrett' },
-  { value: 'file-text', label: 'Dokument' },
-  { value: 'brain', label: 'Gehirn' },
-  { value: 'flask', label: 'Labor' },
-  { value: 'activity', label: 'Verlauf' },
-  { value: 'mail', label: 'Brief' },
-  { value: 'pill', label: 'Medikation' },
-  { value: 'message-square', label: 'Nachricht' },
+const iconOptions: Array<{ value: WorkspaceComponentIcon; labelKey: SettingsWorkspaceUiKey }> = [
+  { value: 'clipboard', labelKey: 'wsIconClipboard' },
+  { value: 'file-text', labelKey: 'wsIconDocument' },
+  { value: 'brain', labelKey: 'wsIconBrain' },
+  { value: 'flask', labelKey: 'wsIconLab' },
+  { value: 'activity', labelKey: 'wsIconHistory' },
+  { value: 'mail', labelKey: 'wsIconLetter' },
+  { value: 'pill', labelKey: 'wsIconMedication' },
+  { value: 'message-square', labelKey: 'wsIconMessage' },
 ]
 
 interface WorkspaceSectionProps {
@@ -68,39 +73,44 @@ function TextArea({
   )
 }
 
-function getComponentSummary(component: WorkspaceComponentTemplate): string {
+function getComponentSummary(component: WorkspaceComponentTemplate, language: UiLanguage): string {
+  const sectionsWord = translateSettingsWorkspaceUi(language, 'wsSectionsCount')
   if (component.variants?.length) {
     return component.variants
       .map((variant) =>
         variant.multistage
-          ? `${variant.label} (${variant.sections.length} Abschnitte)`
+          ? `${variant.label} (${variant.sections.length} ${sectionsWord})`
           : variant.label,
       )
       .join(' · ')
   }
 
   if (component.multistage) {
-    return `${component.sections.length} Abschnitte`
+    return `${component.sections.length} ${sectionsWord}`
   }
 
-  return 'Einzelnes Dokument'
+  return translateSettingsWorkspaceUi(language, 'wsSingleDocument')
 }
 
 function ChecklistItemsEditor({
   items,
+  language,
   onChange,
 }: {
   items: WorkspaceChecklistItem[]
+  language: UiLanguage
   onChange: (items: WorkspaceChecklistItem[]) => void
 }) {
   return (
     <div className="space-y-2 rounded-sm border border-border/70 bg-surface/80 p-2">
-      <p className="text-[12px] font-medium uppercase tracking-wide text-muted">Checklistenpunkte</p>
+      <p className="text-[12px] font-medium uppercase tracking-wide text-muted">
+        {translateSettingsWorkspaceUi(language, 'wsChecklistItems')}
+      </p>
       {items.map((item, index) => (
         <div key={item.id} className="space-y-1.5 border-t border-border/50 pt-2 first:border-t-0 first:pt-0">
           <TextInput
             value={item.label}
-            placeholder="Checkbox-Label"
+            placeholder={translateSettingsWorkspaceUi(language, 'wsCheckboxLabelPlaceholder')}
             onChange={(value) =>
               onChange(
                 items.map((current, currentIndex) =>
@@ -111,7 +121,7 @@ function ChecklistItemsEditor({
           />
           <TextInput
             value={item.text}
-            placeholder="Eingefügter Befundtext"
+            placeholder={translateSettingsWorkspaceUi(language, 'wsInsertedFindingPlaceholder')}
             onChange={(value) =>
               onChange(
                 items.map((current, currentIndex) =>
@@ -128,12 +138,14 @@ function ChecklistItemsEditor({
 
 function SectionsEditor({
   sections,
+  language,
   showChecklistItems = false,
   onUpdate,
   onRemove,
   onAdd,
 }: {
   sections: WorkspaceSectionTemplate[]
+  language: UiLanguage
   showChecklistItems?: boolean
   onUpdate: (sectionId: string, patch: Partial<WorkspaceSectionTemplate>) => void
   onRemove: (sectionId: string) => void
@@ -149,12 +161,12 @@ function SectionsEditor({
           <div className="min-w-0 flex-1 space-y-2">
             <TextInput
               value={section.label}
-              placeholder="Abschnittsname"
+              placeholder={translateSettingsWorkspaceUi(language, 'wsSectionNamePlaceholder')}
               onChange={(value) => onUpdate(section.id, { label: value })}
             />
             <TextInput
               value={section.description ?? ''}
-              placeholder="Kurzinfo (optional)"
+              placeholder={translateSettingsWorkspaceUi(language, 'wsShortInfoPlaceholder')}
               onChange={(value) =>
                 onUpdate(section.id, { description: value.trim() || undefined })
               }
@@ -162,7 +174,7 @@ function SectionsEditor({
             {!showChecklistItems ? (
               <TextArea
                 value={section.prefilledText ?? ''}
-                placeholder="Vorlagentext für diesen Abschnitt …"
+                placeholder={translateSettingsWorkspaceUi(language, 'wsSectionTemplatePlaceholder')}
                 rows={4}
                 onChange={(value) =>
                   onUpdate(section.id, { prefilledText: value.trim() || undefined })
@@ -172,6 +184,7 @@ function SectionsEditor({
             {showChecklistItems && section.checklistItems?.length ? (
               <ChecklistItemsEditor
                 items={section.checklistItems}
+                language={language}
                 onChange={(items) => onUpdate(section.id, { checklistItems: items })}
               />
             ) : null}
@@ -180,8 +193,8 @@ function SectionsEditor({
             type="button"
             onClick={() => onRemove(section.id)}
             disabled={sections.length <= 1}
-            aria-label="Abschnitt entfernen"
-            title="Abschnitt entfernen"
+            aria-label={translateSettingsWorkspaceUi(language, 'wsRemoveSection')}
+            title={translateSettingsWorkspaceUi(language, 'wsRemoveSection')}
             className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border-2 border-border text-ink transition-colors hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden />
@@ -195,14 +208,14 @@ function SectionsEditor({
         className="inline-flex items-center gap-1.5 rounded-sm border-2 border-border px-3 py-1.5 text-xs text-ink transition-colors hover:bg-surface-hover"
       >
         <Plus className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden />
-        Abschnitt hinzufügen
+        {translateSettingsWorkspaceUi(language, 'wsAddSection')}
       </button>
     </div>
   )
 }
 
 export function WorkspaceSection({ workspace }: WorkspaceSectionProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const [expandedId, setExpandedId] = useState<string | null>(
     workspace.components[0]?.id ?? null,
   )
@@ -241,11 +254,11 @@ export function WorkspaceSection({ workspace }: WorkspaceSectionProps) {
                     {component.label}
                     {isLocked ? (
                       <span className="ml-2 rounded-sm bg-surface-hover px-1.5 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted">
-                        Standard
+                        {translateSettingsWorkspaceUi(language, 'wsStandardBadge')}
                       </span>
                     ) : null}
                   </p>
-                  <p className="truncate text-xs text-muted">{getComponentSummary(component)}</p>
+                  <p className="truncate text-xs text-muted">{getComponentSummary(component, language)}</p>
                 </div>
                 <ChevronDown
                   className={`h-4 w-4 shrink-0 text-muted transition-transform ${
@@ -260,30 +273,30 @@ export function WorkspaceSection({ workspace }: WorkspaceSectionProps) {
                 <div className="space-y-4 border-t-2 border-border px-3 py-4">
                   {isLocked ? (
                     <p className="rounded-sm border border-border/70 bg-surface-hover/40 px-3 py-2 text-xs text-muted">
-                      Standardkomponente — Struktur ist fest vorgegeben.
+                      {translateSettingsWorkspaceUi(language, 'wsDefaultComponentNote')}
                     </p>
                   ) : null}
 
                   {!isLocked ? (
                   <>
-                  <SettingsField label="Überschrift">
+                  <SettingsField label={translateSettingsWorkspaceUi(language, 'wsFieldHeading')}>
                     <TextInput
                       value={component.label}
                       onChange={(value) => workspace.setComponentLabel(component.id, value)}
                     />
                   </SettingsField>
 
-                  <SettingsField label="Zweite Zeile">
+                  <SettingsField label={translateSettingsWorkspaceUi(language, 'wsFieldSecondLine')}>
                     <TextInput
                       value={secondToolLine}
-                      placeholder="z. B. pathologie"
+                      placeholder={translateSettingsWorkspaceUi(language, 'wsSecondLinePlaceholder')}
                       onChange={(value) =>
                         workspace.setComponentToolSecondLine(component.id, value)
                       }
                     />
                   </SettingsField>
 
-                  <SettingsField label="Symbol">
+                  <SettingsField label={translateSettingsWorkspaceUi(language, 'wsFieldIcon')}>
                     <select
                       value={component.icon}
                       onChange={(event) =>
@@ -296,14 +309,14 @@ export function WorkspaceSection({ workspace }: WorkspaceSectionProps) {
                     >
                       {iconOptions.map((option) => (
                         <option key={option.value} value={option.value}>
-                          {option.label}
+                          {translateSettingsWorkspaceUi(language, option.labelKey)}
                         </option>
                       ))}
                     </select>
                   </SettingsField>
 
                   {hasVariants ? (
-                    <SettingsField label="Dokumentationsformen">
+                    <SettingsField label={translateSettingsWorkspaceUi(language, 'wsFieldDocForms')}>
                       <div className="space-y-3">
                         {component.variants?.map((variant) => {
                           const protectedVariantIds =
@@ -325,16 +338,16 @@ export function WorkspaceSection({ workspace }: WorkspaceSectionProps) {
                               <div className="min-w-0 flex-1">
                               <p className="text-xs font-medium uppercase tracking-wide text-muted">
                                 {variant.mode === 'free'
-                                  ? 'Freitext'
+                                  ? translateSettingsWorkspaceUi(language, 'wsModeFreeText')
                                   : variant.mode === 'checklist'
-                                    ? 'AMDP-Checkliste'
+                                    ? translateSettingsWorkspaceUi(language, 'wsModeAmdpChecklist')
                                     : variant.mode === 'sections'
-                                      ? 'Abschnitte'
-                                      : 'Form'}
+                                      ? translateSettingsWorkspaceUi(language, 'wsSections')
+                                      : translateSettingsWorkspaceUi(language, 'wsModeForm')}
                               </p>
                               <TextInput
                                 value={variant.label}
-                                placeholder="Formbezeichnung"
+                                placeholder={translateSettingsWorkspaceUi(language, 'wsFormLabelPlaceholder')}
                                 onChange={(value) =>
                                   workspace.updateVariant(component.id, variant.id, {
                                     label: value,
@@ -349,8 +362,8 @@ export function WorkspaceSection({ workspace }: WorkspaceSectionProps) {
                                   onClick={() =>
                                     workspace.removeComponentVariant(component.id, variant.id)
                                   }
-                                  aria-label="Form entfernen"
-                                  title="Form entfernen"
+                                  aria-label={translateSettingsWorkspaceUi(language, 'wsRemoveForm')}
+                                  title={translateSettingsWorkspaceUi(language, 'wsRemoveForm')}
                                   className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border-2 border-border text-ink transition-colors hover:bg-surface-hover"
                                 >
                                   <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden />
@@ -359,10 +372,10 @@ export function WorkspaceSection({ workspace }: WorkspaceSectionProps) {
                             </div>
 
                             {!variant.multistage ? (
-                              <SettingsField label="Vorlagentext">
+                              <SettingsField label={translateSettingsWorkspaceUi(language, 'wsFieldTemplateText')}>
                                 <TextArea
                                   value={variant.prefilledText ?? ''}
-                                  placeholder="z. B. Visite / Kurzkontakt …"
+                                  placeholder={translateSettingsWorkspaceUi(language, 'wsVariantTemplatePlaceholder')}
                                   onChange={(value) =>
                                     workspace.updateVariant(component.id, variant.id, {
                                       prefilledText: value.trim() || undefined,
@@ -372,10 +385,15 @@ export function WorkspaceSection({ workspace }: WorkspaceSectionProps) {
                               </SettingsField>
                             ) : (
                               <SettingsField
-                                label={variant.mode === 'checklist' ? 'Checklisten-Abschnitte' : 'Abschnitte'}
+                                label={
+                                  variant.mode === 'checklist'
+                                    ? translateSettingsWorkspaceUi(language, 'wsFieldChecklistSections')
+                                    : translateSettingsWorkspaceUi(language, 'wsSections')
+                                }
                               >
                                 <SectionsEditor
                                   sections={variant.sections}
+                                  language={language}
                                   showChecklistItems={variant.mode === 'checklist'}
                                   onUpdate={(sectionId, patch) =>
                                     workspace.updateVariantSection(
@@ -416,14 +434,14 @@ export function WorkspaceSection({ workspace }: WorkspaceSectionProps) {
                             className="inline-flex items-center gap-1.5 rounded-sm border-2 border-border px-3 py-1.5 text-xs text-ink transition-colors hover:bg-surface-hover"
                           >
                             <Plus className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden />
-                            Abschnitte-Form hinzufügen
+                            {translateSettingsWorkspaceUi(language, 'wsAddSectionsForm')}
                           </button>
                         ) : null}
                       </div>
                     </SettingsField>
                   ) : (
                     <>
-                      <SettingsField label="Mehrstufig">
+                      <SettingsField label={translateSettingsWorkspaceUi(language, 'wsFieldMultistage')}>
                         <label className="inline-flex items-center gap-2 text-sm text-ink">
                           <input
                             type="checkbox"
@@ -436,24 +454,25 @@ export function WorkspaceSection({ workspace }: WorkspaceSectionProps) {
                             }
                             className="h-4 w-4 rounded-sm border-2 border-border"
                           />
-                          Abschnitte verwenden
+                          {translateSettingsWorkspaceUi(language, 'wsUseSections')}
                         </label>
                       </SettingsField>
 
                       {!component.multistage ? (
-                        <SettingsField label="Vorlagentext">
+                        <SettingsField label={translateSettingsWorkspaceUi(language, 'wsFieldTemplateText')}>
                           <TextArea
                             value={component.prefilledText ?? ''}
-                            placeholder="z. B. unauffälliger neurologischer Befund …"
+                            placeholder={translateSettingsWorkspaceUi(language, 'wsComponentTemplatePlaceholder')}
                             onChange={(value) =>
                               workspace.setComponentPrefilledText(component.id, value)
                             }
                           />
                         </SettingsField>
                       ) : (
-                        <SettingsField label="Abschnitte">
+                        <SettingsField label={translateSettingsWorkspaceUi(language, 'wsSections')}>
                           <SectionsEditor
                             sections={component.sections}
+                            language={language}
                             onUpdate={(sectionId, patch) =>
                               workspace.updateSection(component.id, sectionId, patch)
                             }
@@ -482,7 +501,7 @@ export function WorkspaceSection({ workspace }: WorkspaceSectionProps) {
                       className="inline-flex items-center gap-1.5 rounded-sm border-2 border-border px-3 py-1.5 text-xs text-recording transition-colors hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden />
-                      Komponente entfernen
+                      {translateSettingsWorkspaceUi(language, 'wsRemoveComponent')}
                     </button>
                   </div>
                   </>
@@ -500,7 +519,7 @@ export function WorkspaceSection({ workspace }: WorkspaceSectionProps) {
         className="mt-4 inline-flex items-center gap-1.5 rounded-sm border-2 border-ink bg-ink px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-[#2a2a2a]"
       >
         <Plus className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden />
-        Komponente hinzufügen
+        {translateSettingsWorkspaceUi(language, 'wsAddComponent')}
       </button>
     </div>
   )

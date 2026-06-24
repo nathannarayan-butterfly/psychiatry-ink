@@ -25,6 +25,7 @@
  *                  usable output was returned).
  */
 
+import type { Prisma } from '@prisma/client'
 import { prisma } from '../db'
 import type { AiMode } from '../../src/types/aiUsage'
 import { MONTHLY_CREDIT_GRANT } from './aiPricingConfig'
@@ -313,6 +314,38 @@ export async function addPurchasedCredits(params: {
 
   const summary = await getCreditSummary(params.userId)
   return { totalAvailable: summary.totalAvailable }
+}
+
+/**
+ * Increment purchased credits and append a ledger row INSIDE an existing
+ * transaction. Used by the Stripe webhook handler so the idempotency marker and
+ * the credit grant commit (or roll back) as one atomic unit — a crash or retry
+ * can never grant credits without also persisting the "event processed" marker,
+ * and vice versa.
+ *
+ * The caller is responsible for the idempotency check and for running this in a
+ * Serializable transaction.
+ */
+export async function grantPurchasedCreditsWithinTx(
+  tx: Prisma.TransactionClient,
+  params: { accountId: string; credits: number; note?: string; featureKey?: string | null },
+): Promise<void> {
+  if (params.credits <= 0) return
+  const ledgerType = params.note?.startsWith('stripe:') ? 'purchase' : 'admin_adjustment'
+  await tx.aiCreditAccount.update({
+    where: { id: params.accountId },
+    data: { purchasedCredits: { increment: params.credits } },
+  })
+  await tx.aiCreditLedger.create({
+    data: {
+      accountId: params.accountId,
+      type: ledgerType,
+      credits: params.credits,
+      featureKey: params.featureKey ?? null,
+      usageLogId: null,
+      note: params.note ?? 'admin_adjustment',
+    },
+  })
 }
 
 export interface CreditLedgerEntry {

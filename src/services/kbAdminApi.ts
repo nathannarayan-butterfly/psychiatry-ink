@@ -2,20 +2,16 @@ import { API_BASE } from './apiClient'
 import { getAuthHeaders } from './authHeaders'
 import type { KbSubstance, KbSubstanceDetail } from '../types/kbNormalized'
 
-/** Whether KB admin API calls are allowed from this build (still requires user allowlist). */
-export function isKbAdminApiEnabled(): boolean {
-  if (import.meta.env.DEV) return true
-  if (import.meta.env.VITE_KB_ADMIN_ENABLED === 'false') return false
-  return import.meta.env.VITE_KB_ADMIN_ENABLED === 'true'
-}
-
-async function kbAdminFetch<T>(path: string, userId: string, init?: RequestInit): Promise<T> {
+// NOTE: `userId` is retained in these signatures for call-site ergonomics, but it
+// is NEVER sent to the server. The KB review console enforces the System Admin
+// role server-side from the verified Supabase token (`req.authUserId`); a
+// client-supplied identity header would be spoofable and is intentionally gone.
+async function kbAdminFetch<T>(path: string, _userId: string, init?: RequestInit): Promise<T> {
   const auth = await getAuthHeaders()
   const res = await fetch(`${API_BASE}/api/kb-admin${path}`, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
-      'X-KB-User-Id': userId,
       ...auth,
       ...(init?.headers ?? {}),
     },

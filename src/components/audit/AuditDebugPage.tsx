@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react'
 import { ClipboardList } from 'lucide-react'
 import { useAuditDebugAccess } from '../../hooks/useAuditDebugAccess'
 import { useAuditLogs } from '../../hooks/useAuditLogs'
+import { useTranslation } from '../../context/TranslationContext'
+import { translateAdminUi } from '../../data/adminUiTranslations'
 import type { AuditAction } from '../../types/auditLog'
 import '../../styles/clinical-ui.css'
 import '../../styles/audit-debug.css'
@@ -24,6 +26,7 @@ interface AuditDebugPageProps {
 }
 
 export function AuditDebugPage({ onBack }: AuditDebugPageProps) {
+  const { language } = useTranslation()
   const canAccess = useAuditDebugAccess()
   const [actionFilter, setActionFilter] = useState<AuditAction | ''>('')
   const [caseIdFilter, setCaseIdFilter] = useState('')
@@ -43,11 +46,11 @@ export function AuditDebugPage({ onBack }: AuditDebugPageProps) {
       <div className="audit-debug-page">
         <header className="audit-debug-header">
           <button type="button" className="audit-debug-back" onClick={onBack}>
-            ← Dashboard
+            ← {translateAdminUi(language, 'adminBackDashboard')}
           </button>
-          <h1>Audit Logs</h1>
+          <h1>{translateAdminUi(language, 'auditTitle')}</h1>
         </header>
-        <p className="audit-debug-denied">Access denied — requires dev mode, KB admin, or audit.view permission.</p>
+        <p className="audit-debug-denied">{translateAdminUi(language, 'auditAccessDenied')}</p>
       </div>
     )
   }
@@ -56,25 +59,25 @@ export function AuditDebugPage({ onBack }: AuditDebugPageProps) {
     <div className="audit-debug-page">
       <header className="audit-debug-header">
         <button type="button" className="audit-debug-back" onClick={onBack}>
-          ← Dashboard
+          ← {translateAdminUi(language, 'adminBackDashboard')}
         </button>
         <div>
           <h1>
             <ClipboardList className="audit-debug-header__icon" strokeWidth={1.5} aria-hidden />
-            Audit Logs
+            {translateAdminUi(language, 'auditTitle')}
           </h1>
-          <p className="audit-debug-sub">Development view — org audit trail (not production UI)</p>
+          <p className="audit-debug-sub">{translateAdminUi(language, 'auditSubtitle')}</p>
         </div>
       </header>
 
       <div className="audit-debug-filters">
         <label>
-          Action
+          {translateAdminUi(language, 'auditAction')}
           <select
             value={actionFilter}
             onChange={(e) => setActionFilter(e.target.value as AuditAction | '')}
           >
-            <option value="">All actions</option>
+            <option value="">{translateAdminUi(language, 'auditAllActions')}</option>
             {actions.map((action) => (
               <option key={action} value={action}>
                 {action}
@@ -83,32 +86,32 @@ export function AuditDebugPage({ onBack }: AuditDebugPageProps) {
           </select>
         </label>
         <label>
-          Case ID
+          {translateAdminUi(language, 'auditCaseId')}
           <input
             type="text"
             value={caseIdFilter}
             onChange={(e) => setCaseIdFilter(e.target.value)}
-            placeholder="Filter by case…"
+            placeholder={translateAdminUi(language, 'auditCaseFilterPlaceholder')}
           />
         </label>
         <button type="button" className="audit-debug-refresh" onClick={() => void refresh()}>
-          Refresh
+          {translateAdminUi(language, 'adminRefresh')}
         </button>
       </div>
 
       {error ? <div className="audit-debug-alert audit-debug-alert--error">{error}</div> : null}
-      {loading ? <p className="audit-debug-loading">Loading…</p> : null}
+      {loading ? <p className="audit-debug-loading">{translateAdminUi(language, 'adminLoading')}</p> : null}
 
       <div className="audit-debug-table-wrap">
         <table className="audit-debug-table">
           <thead>
             <tr>
-              <th>Timestamp</th>
-              <th>Action</th>
-              <th>User</th>
-              <th>Case</th>
-              <th>Document</th>
-              <th>Metadata</th>
+              <th>{translateAdminUi(language, 'auditColTimestamp')}</th>
+              <th>{translateAdminUi(language, 'auditAction')}</th>
+              <th>{translateAdminUi(language, 'auditColUser')}</th>
+              <th>{translateAdminUi(language, 'auditColCase')}</th>
+              <th>{translateAdminUi(language, 'auditColDocument')}</th>
+              <th>{translateAdminUi(language, 'auditColMetadata')}</th>
             </tr>
           </thead>
           <tbody>
@@ -135,7 +138,7 @@ export function AuditDebugPage({ onBack }: AuditDebugPageProps) {
             {!loading && logs.length === 0 ? (
               <tr>
                 <td colSpan={6} className="audit-debug-empty">
-                  No audit logs yet.
+                  {translateAdminUi(language, 'auditEmpty')}
                 </td>
               </tr>
             ) : null}

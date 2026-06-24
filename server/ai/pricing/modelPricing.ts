@@ -61,6 +61,18 @@ export const MODEL_PRICING: Record<string, ModelPricing> = {
     inputUsdPerUnit: 0.006,
     outputUsdPerUnit: 0,
   },
+  'mistral-large-latest': {
+    provider: 'mistral',
+    unit: 'per_1m_tokens',
+    inputUsdPerUnit: 2.0,
+    outputUsdPerUnit: 6.0,
+  },
+  'mistral-small-latest': {
+    provider: 'mistral',
+    unit: 'per_1m_tokens',
+    inputUsdPerUnit: 0.1,
+    outputUsdPerUnit: 0.3,
+  },
 }
 
 export function listModelsWithMissingPricing(usedModels: string[]): string[] {

@@ -14,6 +14,7 @@ const CONTRIBUTION_TYPES: KbContributionType[] = [
   'add_monitoring',
   'add_preparation',
   'add_source',
+  'report_issue',
 ]
 
 const VALID_SOURCE_TYPES = [
@@ -44,9 +45,20 @@ kbContributionsRouter.post('/', async (req: Request, res: Response) => {
       res.status(400).json({ error: 'payload is required' })
       return
     }
-    if (body.licenseAccepted !== true) {
+    // Reporting an issue does not republish copyrighted content, so it is not
+    // gated on the community-content license; every other contribution type is.
+    if (body.contributionType !== 'report_issue' && body.licenseAccepted !== true) {
       res.status(400).json({ error: 'licenseAccepted must be true' })
       return
+    }
+
+    if (body.contributionType === 'report_issue') {
+      const description =
+        typeof body.payload.description === 'string' ? body.payload.description.trim() : ''
+      if (!description) {
+        res.status(400).json({ error: 'description is required' })
+        return
+      }
     }
 
     if (body.contributionType === 'edit_field') {
@@ -110,7 +122,7 @@ kbContributionsRouter.post('/', async (req: Request, res: Response) => {
       payload: body.payload,
       submitterUserId: body.submitterUserId ?? null,
       submitterDisplayName: body.submitterDisplayName ?? null,
-      licenseAccepted: true,
+      licenseAccepted: body.contributionType === 'report_issue' ? body.licenseAccepted === true : true,
     })
 
     res.status(201).json({ contribution })

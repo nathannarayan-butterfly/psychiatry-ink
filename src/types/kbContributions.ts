@@ -6,6 +6,7 @@ export type KbContributionType =
   | 'add_monitoring'
   | 'add_preparation'
   | 'add_source'
+  | 'report_issue'
 
 export type KbContributionStatus = 'pending' | 'accepted' | 'rejected' | 'modified'
 

@@ -1,4 +1,5 @@
 import type { ClinicalLanguage } from '../utils/resolveClinicalLanguage'
+import { fetchWithTimeout } from '../utils/httpTimeout'
 
 const OPENAI_TRANSCRIBE_MODEL =
   process.env.OPENAI_TRANSCRIBE_MODEL ?? 'gpt-4o-transcribe'
@@ -54,12 +55,14 @@ export async function transcribeAudioBuffer(
     formData.append('language', language)
   }
 
-  const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+  const response = await fetchWithTimeout('https://api.openai.com/v1/audio/transcriptions', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${apiKey}`,
     },
     body: formData,
+    timeoutMs: Number(process.env.TRANSCRIBE_TIMEOUT_MS ?? 60_000),
+    label: 'OpenAI transcription',
   })
 
   if (!response.ok) {

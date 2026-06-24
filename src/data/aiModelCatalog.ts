@@ -64,6 +64,20 @@ export const AI_MODEL_CATALOG: AiModelCatalogEntry[] = [
     labelKey: 'aiModelOptionGemini25Pro',
     groupKey: 'aiModelGroupGoogle',
   },
+  {
+    id: 'mistral-small-latest',
+    provider: 'mistral',
+    modelId: 'mistral-small-latest',
+    labelKey: 'aiModelOptionMistralSmall',
+    groupKey: 'aiModelGroupMistral',
+  },
+  {
+    id: 'mistral-large-latest',
+    provider: 'mistral',
+    modelId: 'mistral-large-latest',
+    labelKey: 'aiModelOptionMistralLarge',
+    groupKey: 'aiModelGroupMistral',
+  },
 ]
 
 export const AI_TASK_DEFINITIONS: AiTaskDefinition[] = [
@@ -162,4 +176,4 @@ export function getModelCatalogEntry(id: AiModelOptionId): AiModelCatalogEntry {
   return entry
 }
 
-export const AI_MODEL_GROUP_ORDER = ['psyink', 'openai', 'deepseek', 'google'] as const
+export const AI_MODEL_GROUP_ORDER = ['psyink', 'openai', 'deepseek', 'google', 'mistral'] as const

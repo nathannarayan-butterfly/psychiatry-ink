@@ -21,6 +21,7 @@ function trendArrow(trend: number[]): string | null {
 }
 
 function LabRow({ item }: { item: LabDueItem }) {
+  const { t } = useTranslation()
   const abnormal = item.status === 'abnormal'
   const arrow = trendArrow(item.trend)
   return (
@@ -37,7 +38,7 @@ function LabRow({ item }: { item: LabDueItem }) {
       ) : null}
       <div className="ov-lab__value">
         {item.valueLabel ? <span className="ov-lab__num">{item.valueLabel}</span> : null}
-        {item.refLabel ? <span className="ov-lab__ref">Ref: {item.refLabel}</span> : null}
+        {item.refLabel ? <span className="ov-lab__ref">{t('overviewLaborRefLabel')} {item.refLabel}</span> : null}
         {item.dateLabel ? <span className="ov-lab__date">{item.dateLabel}</span> : null}
       </div>
     </div>
@@ -71,7 +72,7 @@ export function LaborOverviewCard({ data, onOpenLabor, ekg, eeg, imaging }: Labo
   const { t } = useTranslation()
   const badge =
     data.abnormal.length > 0
-      ? { label: `${data.abnormal.length} auffällig`, tone: 'high' as const }
+      ? { label: `${data.abnormal.length} ${t('overviewLaborAbnormalBadge')}`, tone: 'high' as const }
       : undefined
 
   const missing = data.missingMonitoring.slice(0, 4)
@@ -79,22 +80,22 @@ export function LaborOverviewCard({ data, onOpenLabor, ekg, eeg, imaging }: Labo
 
   return (
     <OverviewCard
-      title="Labor"
+      title={t('overviewLaborTitle')}
       className="ov-col-12"
       badge={badge}
-      action={{ label: 'Zum Labor', onClick: onOpenLabor }}
+      action={{ label: t('overviewLaborToLabor'), onClick: onOpenLabor }}
     >
       <div className="ov-labor__split">
         <div className="ov-labor__col ov-labor__col--labs">
           {!data.hasLabData ? (
-            <OverviewEmpty>Keine Laborbefunde vorhanden.</OverviewEmpty>
+            <OverviewEmpty>{t('overviewLaborEmptyNoData')}</OverviewEmpty>
           ) : !hasGroups ? (
-            <OverviewEmpty>Keine medikationsrelevanten Laborwerte.</OverviewEmpty>
+            <OverviewEmpty>{t('overviewLaborEmptyNoRelevant')}</OverviewEmpty>
           ) : (
             <>
               {data.abnormal.length > 0 ? (
                 <>
-                  <p className="ov-subhead">Auffällig</p>
+                  <p className="ov-subhead">{t('overviewLaborAbnormalSubhead')}</p>
                   {data.abnormal.map((item) => (
                     <LabRow key={item.id} item={item} />
                   ))}
@@ -103,7 +104,7 @@ export function LaborOverviewCard({ data, onOpenLabor, ekg, eeg, imaging }: Labo
 
               {missing.length > 0 ? (
                 <>
-                  <p className="ov-subhead">Ausstehendes Monitoring</p>
+                  <p className="ov-subhead">{t('overviewLaborPendingMonitoring')}</p>
                   <ul className="ov-list">
                     {missing.map((m) => (
                       <li key={m.parameter} className="ov-task">

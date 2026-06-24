@@ -21,6 +21,7 @@ import {
 import { getUsageSummaryForUser } from '../ai/usageLogger'
 import { createCreditCheckoutSession, isStripeCreditsConfigured } from '../services/stripeCredits'
 import { findCreditPack } from '../../src/data/creditPacks'
+import { isCreditGrantAdmin } from '../utils/adminAllowlist'
 
 export const aiCreditsRouter: Router = createRouter()
 
@@ -94,13 +95,17 @@ aiCreditsRouter.get('/history', async (req: Request, res: Response) => {
 
 aiCreditsRouter.post('/grant', async (req: Request, res: Response) => {
   try {
-    if (process.env.NODE_ENV === 'production' && process.env.ALLOW_DEV_CREDIT_GRANT !== 'true') {
-      res.status(403).json({ error: 'Credit grants are disabled in production' })
-      return
-    }
-
     const userId = requireRouteAuth(req, res)
     if (!userId) return
+
+    // Credit grants are an admin operation: require an explicit operator
+    // allowlist (CREDIT_ADMIN_USER_IDS). NODE_ENV alone is NOT sufficient — in
+    // production an empty allowlist denies everyone; in dev the legacy
+    // ALLOW_DEV_CREDIT_GRANT flag still works for local testing.
+    if (!isCreditGrantAdmin(userId)) {
+      res.status(403).json({ error: 'Credit grants require an admin operator (CREDIT_ADMIN_USER_IDS).' })
+      return
+    }
 
     const credits = Number(req.body?.credits ?? 0)
     if (!Number.isFinite(credits) || credits <= 0 || credits > 100_000) {

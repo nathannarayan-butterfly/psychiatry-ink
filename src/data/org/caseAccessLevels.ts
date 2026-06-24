@@ -1,4 +1,5 @@
 import type { OrganisationRole, Permission } from '../../types/organisation'
+import type { UiTranslationKey } from '../uiTranslations'
 
 /** Per-case access level stored in org_case_access.granted_permissions.level */
 export type CaseAccessLevel =
@@ -27,12 +28,21 @@ export const CASE_ACCESS_GRANT_LEVELS: readonly CaseAccessLevel[] = [
   'full_access',
 ] as const
 
+/** @deprecated DE-only — use CASE_ACCESS_LABEL_KEYS + translateUi for localized labels. */
 export const CASE_ACCESS_LABELS_DE: Record<CaseAccessLevel, string> = {
   no_access: 'Kein Zugriff',
   admin_only: 'Nur Verwaltung',
   read_only: 'Nur Lesen',
   clinical_edit: 'Klinisch bearbeiten',
   full_access: 'Vollzugriff',
+}
+
+export const CASE_ACCESS_LABEL_KEYS: Record<CaseAccessLevel, UiTranslationKey> = {
+  no_access: 'caseAccessLevelNoAccess',
+  admin_only: 'caseAccessLevelAdminOnly',
+  read_only: 'caseAccessLevelReadOnly',
+  clinical_edit: 'caseAccessLevelClinicalEdit',
+  full_access: 'caseAccessLevelFullAccess',
 }
 
 /** Permission bundles per access level — enforced server-side when rows exist. */

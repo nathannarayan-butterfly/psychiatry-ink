@@ -7,10 +7,6 @@ import type {
 import { useLabMedicationCorrelation } from '../../hooks/useLabMedicationCorrelation'
 import type { UiLanguage } from '../../types/settings'
 import {
-  ABNORMALITY_LABELS,
-  SOURCE_LABELS,
-  STATUS_LABELS,
-  STRENGTH_LABELS,
   formatValueRef,
   strengthClass,
 } from '../../utils/labMedicationCorrelation/labMedCorrelationLabels'
@@ -18,6 +14,43 @@ import {
   exportLabMedCorrelationCsv,
   printLabMedCorrelation,
 } from '../../utils/labMedicationCorrelation/printLabMedCorrelation'
+import { useTranslation } from '../../context/TranslationContext'
+import type { UiTranslationKey } from '../../data/uiTranslations'
+import type {
+  LabCorrelationFindingSource,
+  LabCorrelationStrength,
+} from '../../types/labMedicationCorrelation'
+
+const STRENGTH_KEYS: Record<LabCorrelationStrength, UiTranslationKey> = {
+  none: 'labMedCorrStrengthNone',
+  possible: 'labMedCorrStrengthPossible',
+  plausible: 'labMedCorrStrengthPlausible',
+  monitoring_required: 'labMedCorrStrengthMonitoring',
+  concerning: 'labMedCorrStrengthConcerning',
+}
+
+const SOURCE_KEYS: Record<LabCorrelationFindingSource, UiTranslationKey> = {
+  knowledge_base: 'clinSourceKnowledgeBase',
+  ai_suggestion: 'clinSourceAiSuggestion',
+  clinician_accepted: 'clinSourceClinicianAccepted',
+}
+
+const STATUS_KEYS: Record<PatientMedicationLabCorrelationFinding['status'], UiTranslationKey> = {
+  verified_kb: 'labMedCorrStatusVerifiedKb',
+  pending_clinician_review: 'labMedCorrStatusPending',
+  accepted: 'labMedCorrStatusAccepted',
+  rejected: 'labMedCorrStatusRejected',
+  not_relevant: 'labMedCorrStatusNotRelevant',
+}
+
+const ABNORMALITY_KEYS: Record<PatientMedicationLabCorrelationFinding['abnormality'], UiTranslationKey> = {
+  high: 'labMedCorrAbnHigh',
+  low: 'labMedCorrAbnLow',
+  critical: 'labMedCorrAbnCritical',
+  normal: 'labMedCorrAbnNormal',
+  normal_but_changed: 'labMedCorrAbnChanged',
+  unknown: 'labMedCorrAbnUnknown',
+}
 
 interface LabMedicationCorrelationPanelProps {
   caseId: string
@@ -37,6 +70,7 @@ function TruncatedText({
   maxLength?: number
   className?: string
 }) {
+  const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
   if (!text) return null
   if (text.length <= maxLength) {
@@ -54,7 +88,7 @@ function TruncatedText({
           setExpanded((v) => !v)
         }}
       >
-        {expanded ? 'weniger' : 'mehr'}
+        {expanded ? t('labMedCorrLess') : t('labMedCorrMore')}
       </button>
     </span>
   )
@@ -73,6 +107,7 @@ function AiReviewBlock({
   onReject: (note?: string) => void
   onEditAccept: (edited: LabCorrelationAIResult, note?: string) => void
 }) {
+  const { t } = useTranslation()
   const [note, setNote] = useState(finding.clinicianNote ?? '')
   const [editing, setEditing] = useState(false)
   const pendingResult = finding.openaiResult ?? finding.aiResult
@@ -85,28 +120,25 @@ function AiReviewBlock({
   return (
     <div className="combination-check__ai-review lab-med-correlation__ai-review">
       <p className="combination-check__ai-warning">
-        Dieser Befund wurde KI-generiert und ist nicht Teil der geprüften Wissensdatenbank. Bitte
-        klinisch prüfen, bevor er als verifiziert gilt. Formulierungen wie „möglich“ oder „zeitlich
-        plausibel“ ersetzen keine klinische Beurteilung — Kausalität ist nicht gesichert.
+        {t('labMedCorrAiWarning')}
       </p>
       {finding.hasConflict ? (
         <p className="combination-check__conflict">
-          Konflikt zwischen Wissensdatenbank und KI — bei Widerspruch wird der verifizierte KB-Eintrag
-          bevorzugt.
+          {t('labMedCorrConflict')}
         </p>
       ) : null}
 
       {showComparison ? (
         <div className="lab-med-correlation__comparison">
           <div className="lab-med-correlation__comparison-col">
-            <h6>DeepSeek (verworfen)</h6>
+            <h6>{t('labMedCorrDeepseekRejected')}</h6>
             <p>{finding.aiResult?.zusammenhang}</p>
             <p>
               <em>{finding.aiResult?.recommendation}</em>
             </p>
           </div>
           <div className="lab-med-correlation__comparison-col lab-med-correlation__comparison-col--pending">
-            <h6>OpenAI-Zweitprüfung (ausstehend)</h6>
+            <h6>{t('labMedCorrOpenaiPending')}</h6>
             <p>{finding.openaiResult?.zusammenhang}</p>
             <p>
               <em>{finding.openaiResult?.recommendation}</em>
@@ -118,7 +150,7 @@ function AiReviewBlock({
       {editing && draft ? (
         <div className="combination-check__edit">
           <label>
-            Zusammenhang
+            {t('labMedCorrCorrelationLabel')}
             <textarea
               value={draft.zusammenhang}
               onChange={(e) => setDraft({ ...draft, zusammenhang: e.target.value })}
@@ -127,7 +159,7 @@ function AiReviewBlock({
             />
           </label>
           <label>
-            Empfehlung
+            {t('labMedCorrRecommendationLabel')}
             <textarea
               value={draft.recommendation}
               onChange={(e) => setDraft({ ...draft, recommendation: e.target.value })}
@@ -140,10 +172,10 @@ function AiReviewBlock({
 
       <div className="combination-check__actions">
         <button type="button" disabled={disabled} onClick={() => onAccept(note || undefined)}>
-          Akzeptieren
+          {t('clinReviewAccept')}
         </button>
         <button type="button" disabled={disabled} onClick={() => onReject(note || undefined)}>
-          Verwerfen
+          {t('clinReviewReject')}
         </button>
         <button
           type="button"
@@ -157,17 +189,17 @@ function AiReviewBlock({
             }
           }}
         >
-          {editing ? 'Bearbeitung speichern & akzeptieren' : 'Bearbeiten & Akzeptieren'}
+          {editing ? t('clinReviewSaveEditAccept') : t('clinReviewEditAccept')}
         </button>
       </div>
       <label className="combination-check__note-field">
-        Anmerkung hinzufügen
+        {t('clinReviewNoteAdd')}
         <textarea
           value={note}
           onChange={(e) => setNote(e.target.value)}
           rows={2}
           disabled={disabled}
-          placeholder="Klinische Anmerkung…"
+          placeholder={t('clinReviewNotePlaceholder')}
         />
       </label>
     </div>
@@ -191,6 +223,7 @@ function FindingRow({
   onReject: (note?: string) => void
   onEditAccept: (edited: LabCorrelationAIResult, note?: string) => void
 }) {
+  const { t } = useTranslation()
   const [noteDraft, setNoteDraft] = useState(finding.clinicianNote ?? '')
 
   return (
@@ -201,57 +234,57 @@ function FindingRow({
           <span className="lab-med-correlation__value-ref">{formatValueRef(finding)}</span>
         </span>
         <span className={`lab-med-correlation__strength ${strengthClass(finding.correlationStrength)}`}>
-          {STRENGTH_LABELS[finding.correlationStrength]}
+          {t(STRENGTH_KEYS[finding.correlationStrength])}
         </span>
-        <span className="combination-check__source">{SOURCE_LABELS[finding.source]}</span>
+        <span className="combination-check__source">{t(SOURCE_KEYS[finding.source])}</span>
         <span className="combination-check__expand-hint" aria-hidden="true">
           ▾
         </span>
       </summary>
       <div className="combination-check__details">
         <p>
-          <strong>Auffälligkeit:</strong> {ABNORMALITY_LABELS[finding.abnormality]}
+          <strong>{t('labMedCorrAbnormalityInline')}</strong> {t(ABNORMALITY_KEYS[finding.abnormality])}
           {' · '}
-          <strong>Medikament:</strong> {finding.substanceName}
+          <strong>{t('labMedCorrMedicationInline')}</strong> {finding.substanceName}
           {' · '}
-          <strong>Status:</strong> {STATUS_LABELS[finding.status]}
+          <strong>{t('labMedCorrStatusInline')}</strong> {t(STATUS_KEYS[finding.status])}
         </p>
         <p>
-          <strong>Zusammenhang:</strong>{' '}
+          <strong>{t('labMedCorrCorrelationInline')}</strong>{' '}
           <TruncatedText text={finding.zusammenhang} maxLength={140} />
         </p>
         <p>
-          <strong>Empfehlung:</strong>{' '}
+          <strong>{t('labMedCorrRecommendationInline')}</strong>{' '}
           <TruncatedText text={finding.recommendation} maxLength={100} />
         </p>
 
         {finding.mechanism ? (
           <p>
-            <strong>Mechanismus:</strong> {finding.mechanism}
+            <strong>{t('clinLabelMechanism')}</strong> {finding.mechanism}
           </p>
         ) : null}
         {finding.monitoring ? (
           <p>
-            <strong>Monitoring:</strong> {finding.monitoring}
+            <strong>{t('clinLabelMonitoring')}</strong> {finding.monitoring}
           </p>
         ) : null}
         {finding.alternatives ? (
           <p>
-            <strong>Alternativen:</strong> {finding.alternatives}
+            <strong>{t('labMedCorrAlternativesInline')}</strong> {finding.alternatives}
           </p>
         ) : null}
         {finding.temporalPlausibility ? (
           <p>
-            <strong>Zeitlicher Bezug:</strong> {finding.temporalPlausibility}
-            {finding.medStartDate ? ` · Therapiebeginn ${finding.medStartDate}` : ''}
-            {finding.lastDoseChangeDate ? ` · Letzte Änderung ${finding.lastDoseChangeDate}` : ''}
-            {finding.labDate ? ` · Labor ${finding.labDate}` : ''}
-            {finding.trend ? ` · Trend ${finding.trend}` : ''}
+            <strong>{t('labMedCorrTemporalInline')}</strong> {finding.temporalPlausibility}
+            {finding.medStartDate ? ` · ${t('labMedCorrTherapyStart')} ${finding.medStartDate}` : ''}
+            {finding.lastDoseChangeDate ? ` · ${t('labMedCorrLastChange')} ${finding.lastDoseChangeDate}` : ''}
+            {finding.labDate ? ` · ${t('labMedCorrLab')} ${finding.labDate}` : ''}
+            {finding.trend ? ` · ${t('labMedCorrTrend')} ${finding.trend}` : ''}
           </p>
         ) : null}
         {finding.provenance ? (
           <p>
-            <strong>Provenienz:</strong> {finding.provenance}
+            <strong>{t('labMedCorrProvenanceInline')}</strong> {finding.provenance}
           </p>
         ) : null}
 
@@ -266,7 +299,7 @@ function FindingRow({
         ) : (
           <div className="combination-check__kb-actions">
             <label className="combination-check__note-field">
-              Anmerkung
+              {t('clinReviewNote')}
               <textarea
                 value={noteDraft}
                 onChange={(e) => setNoteDraft(e.target.value)}
@@ -277,10 +310,10 @@ function FindingRow({
             </label>
             <div className="combination-check__relevance">
               <button type="button" disabled={disabled} onClick={() => onRelevance(true)}>
-                Relevant
+                {t('clinReviewRelevant')}
               </button>
               <button type="button" disabled={disabled} onClick={() => onRelevance(false)}>
-                Nicht relevant
+                {t('clinReviewNotRelevant')}
               </button>
             </div>
           </div>
@@ -301,6 +334,7 @@ function FullViewModal({
   onPrint: () => void
   onExport: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <div
       className="therapy-modal-overlay"
@@ -313,10 +347,10 @@ function FullViewModal({
         <div className="therapy-modal__head">
           <div className="therapy-modal__heading">
             <h4 className="therapy-modal__title" id="lab-med-fullview-title">
-              Labor-Medikament-Korrelation — Vollansicht
+              {t('labMedCorrFullViewTitle')}
             </h4>
           </div>
-          <button type="button" className="therapy-modal__close" onClick={onClose} aria-label="Schließen">
+          <button type="button" className="therapy-modal__close" onClick={onClose} aria-label={t('labMedCorrClose')}>
             ×
           </button>
         </div>
@@ -325,15 +359,15 @@ function FullViewModal({
             <table className="lab-med-correlation__full-table">
               <thead>
                 <tr>
-                  <th>Laborparameter</th>
-                  <th>Wert/Referenz</th>
-                  <th>Auffälligkeit</th>
-                  <th>Medikament</th>
-                  <th>Stärke</th>
-                  <th>Zusammenhang</th>
-                  <th>Empfehlung</th>
-                  <th>Quelle</th>
-                  <th>Status</th>
+                  <th>{t('labMedCorrColLabParam')}</th>
+                  <th>{t('labMedCorrColValueRef')}</th>
+                  <th>{t('labMedCorrColAbnormality')}</th>
+                  <th>{t('labMedCorrColMedication')}</th>
+                  <th>{t('labMedCorrColStrength')}</th>
+                  <th>{t('labMedCorrColCorrelation')}</th>
+                  <th>{t('labMedCorrColRecommendation')}</th>
+                  <th>{t('labMedCorrColSource')}</th>
+                  <th>{t('labMedCorrColStatus')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -341,17 +375,17 @@ function FullViewModal({
                   <tr key={finding.id}>
                     <td>{finding.labParameterLabel}</td>
                     <td>{formatValueRef(finding)}</td>
-                    <td>{ABNORMALITY_LABELS[finding.abnormality]}</td>
+                    <td>{t(ABNORMALITY_KEYS[finding.abnormality])}</td>
                     <td>{finding.substanceName}</td>
                     <td>
                       <span className={`lab-med-correlation__strength ${strengthClass(finding.correlationStrength)}`}>
-                        {STRENGTH_LABELS[finding.correlationStrength]}
+                        {t(STRENGTH_KEYS[finding.correlationStrength])}
                       </span>
                     </td>
                     <td>{finding.zusammenhang}</td>
                     <td>{finding.recommendation}</td>
-                    <td>{SOURCE_LABELS[finding.source]}</td>
-                    <td>{STATUS_LABELS[finding.status]}</td>
+                    <td>{t(SOURCE_KEYS[finding.source])}</td>
+                    <td>{t(STATUS_KEYS[finding.status])}</td>
                   </tr>
                 ))}
               </tbody>
@@ -359,16 +393,16 @@ function FullViewModal({
           </div>
         </div>
         <div className="therapy-modal__footer lab-med-correlation__modal-footer">
-          <span className="lab-med-correlation__modal-count">{findings.length} Befunde</span>
+          <span className="lab-med-correlation__modal-count">{findings.length} {t('labMedCorrFindingsCount')}</span>
           <div className="lab-med-correlation__modal-actions">
             <button type="button" className="lab-med-correlation__action-btn" onClick={onExport}>
-              Exportieren (CSV)
+              {t('labMedCorrExportCsv')}
             </button>
             <button type="button" className="lab-med-correlation__action-btn" onClick={onPrint}>
-              Drucken
+              {t('labMedCorrPrint')}
             </button>
             <button type="button" className="lab-med-correlation__action-btn" onClick={onClose}>
-              Schließen
+              {t('labMedCorrClose')}
             </button>
           </div>
         </div>
@@ -385,6 +419,7 @@ export function LabMedicationCorrelationPanel({
   onLabNotesChange,
   language,
 }: LabMedicationCorrelationPanelProps) {
+  const { t } = useTranslation()
   const correlation = useLabMedicationCorrelation(caseId, medications, state, language)
   const [fullViewOpen, setFullViewOpen] = useState(false)
 
@@ -411,7 +446,7 @@ export function LabMedicationCorrelationPanel({
           disabled={disabled || !correlation.canRun || correlation.running}
           onClick={() => void correlation.runCorrelation()}
         >
-          {correlation.running ? 'Korrelation wird erstellt…' : 'Korrelation prüfen'}
+          {correlation.running ? t('labMedCorrRunning') : t('labMedCorrRun')}
         </button>
         {hasFindings ? (
           <div className="lab-med-correlation__header-actions">
@@ -419,58 +454,61 @@ export function LabMedicationCorrelationPanel({
               type="button"
               className="lab-med-correlation__action-btn"
               onClick={() => setFullViewOpen(true)}
-              title="Alle Befunde in breiter Ansicht"
+              title={t('labMedCorrFullViewBtnTitle')}
             >
-              Vollansicht
+              {t('labMedCorrFullViewBtn')}
             </button>
             <button
               type="button"
               className="lab-med-correlation__action-btn"
               onClick={handleExport}
-              title="Als CSV exportieren"
+              title={t('labMedCorrExportTitle')}
             >
-              Export
+              {t('labMedCorrExport')}
             </button>
             <button
               type="button"
               className="lab-med-correlation__action-btn"
               onClick={handlePrint}
-              title="Drucken"
+              title={t('labMedCorrPrintTitle')}
             >
-              Drucken
+              {t('labMedCorrPrint')}
             </button>
           </div>
         ) : null}
         {!correlation.canRun ? (
           <p className="combination-check__hint">
-            Mindestens ein aktives Medikament und Laborbefunde erforderlich.
+            {t('labMedCorrNeedData')}
           </p>
         ) : (
           <p className="combination-check__hint">
-            {correlation.lastTwoLabSnapshots.length} Laborresultat
-            {correlation.lastTwoLabSnapshots.length === 1 ? '' : 'e'} ·{' '}
-            {correlation.labObservations.length} auffällige Parameter ·{' '}
+            {correlation.lastTwoLabSnapshots.length}{' '}
+            {correlation.lastTwoLabSnapshots.length === 1
+              ? t('labMedCorrHintResultSingular')
+              : t('labMedCorrHintResultPlural')}{' '}
+            ·{' '}
+            {correlation.labObservations.length} {t('labMedCorrHintAbnormalParams')} ·{' '}
             {medications.filter((m) => m.status === 'active' || m.status === 'reduced' || m.status === 'increased').length}{' '}
-            aktive Medikamente
+            {t('labMedCorrHintActiveMeds')}
           </p>
         )}
       </div>
 
       {onLabNotesChange ? (
         <label className="lab-med-correlation__notes-field">
-          Klinische Notizen (optional)
+          {t('labMedCorrNotesLabel')}
           <textarea
             className="therapy-textarea"
             value={state.labCorrelationNotes ?? ''}
             onChange={(e) => onLabNotesChange(e.target.value)}
-            placeholder="z. B. Nierenfunktion bei Lithium, Leberwerte bei Valproat…"
+            placeholder={t('labMedCorrNotesPlaceholder')}
             disabled={disabled}
             rows={2}
           />
         </label>
       ) : state.labCorrelationNotes ? (
         <p className="lab-med-correlation__notes">
-          <strong>Klinische Notizen:</strong> {state.labCorrelationNotes}
+          <strong>{t('labMedCorrNotesInline')}</strong> {state.labCorrelationNotes}
         </p>
       ) : null}
 
@@ -483,21 +521,21 @@ export function LabMedicationCorrelationPanel({
       {correlation.visibleFindings.length === 0 && !correlation.running ? (
         <p className="combination-check__empty">
           {correlation.canRun
-            ? 'Noch keine Labor-Medikament-Korrelation durchgeführt.'
-            : 'Keine Daten für die Korrelationsprüfung.'}
+            ? t('labMedCorrEmptyCanRun')
+            : t('labMedCorrEmptyNoData')}
         </p>
       ) : null}
 
       {correlation.pendingAiRuns.length > 0 ? (
-        <p className="combination-check__status">KI-Vorschlag vorhanden — bitte prüfen.</p>
+        <p className="combination-check__status">{t('clinReviewAiSuggestionPending')}</p>
       ) : null}
 
       {hasFindings ? (
         <div className="lab-med-correlation__compact-list">
           <div className="lab-med-correlation__compact-header" aria-hidden="true">
-            <span>Laborparameter</span>
-            <span>Stärke</span>
-            <span>Quelle</span>
+            <span>{t('labMedCorrColLabParam')}</span>
+            <span>{t('labMedCorrColStrengthCompact')}</span>
+            <span>{t('labMedCorrColSource')}</span>
             <span />
           </div>
           {correlation.visibleFindings.map((finding) => (
@@ -527,10 +565,7 @@ export function LabMedicationCorrelationPanel({
       ) : null}
 
       <p className="combination-check__disclaimer">
-        Labor-Medikament-Korrelation (MVP): paarweise Prüfung auffälliger Laborwerte gegen aktive
-        Medikamente. KI-Befunde erst nach expliziter Akzeptanz klinisch verbindlich. Keine automatische
-        Änderung des Medikamentenplans oder Arztbriefs. Longitudinale Trends, Kumulativlast und
-        Auto-Trigger — geplant, nicht enthalten.
+        {t('labMedCorrDisclaimer')}
       </p>
     </div>
   )

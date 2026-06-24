@@ -101,6 +101,74 @@ const STRINGS = {
     es: 'Se requiere aceptar la licencia',
   },
 
+  // ── Report an issue (any authenticated user) ──
+  reportIssueButton: {
+    de: 'Problem melden',
+    en: 'Report an issue',
+    fr: 'Signaler un problème',
+    es: 'Reportar un problema',
+  },
+  reportIssueButtonTitle: {
+    de: 'Ein Problem mit diesem Eintrag melden',
+    en: 'Report a problem with this entry',
+    fr: 'Signaler un problème avec cette entrée',
+    es: 'Reportar un problema con esta entrada',
+  },
+  reportIssueDialogTitle: {
+    de: 'Problem melden',
+    en: 'Report an issue',
+    fr: 'Signaler un problème',
+    es: 'Reportar un problema',
+  },
+  reportIssueDialogSubtitle: {
+    de: 'Beschreiben Sie das Problem mit diesem Eintrag',
+    en: 'Describe the problem with this entry',
+    fr: 'Décrivez le problème avec cette entrée',
+    es: 'Describa el problema con esta entrada',
+  },
+  reportIssueDescriptionLabel: {
+    de: 'Beschreibung',
+    en: 'Description',
+    fr: 'Description',
+    es: 'Descripción',
+  },
+  reportIssuePlaceholder: {
+    de: 'Was ist falsch, fehlt oder irreführend? Bitte so genau wie möglich …',
+    en: 'What is wrong, missing, or misleading? Please be as specific as possible …',
+    fr: "Qu'est-ce qui est erroné, manquant ou trompeur ? Soyez aussi précis que possible …",
+    es: '¿Qué es incorrecto, falta o es engañoso? Sea lo más específico posible …',
+  },
+  reportIssueSubmit: {
+    de: 'Meldung senden',
+    en: 'Send report',
+    fr: 'Envoyer le signalement',
+    es: 'Enviar reporte',
+  },
+  reportIssueSubmitting: {
+    de: 'Wird gesendet …',
+    en: 'Sending …',
+    fr: 'Envoi …',
+    es: 'Enviando …',
+  },
+  reportIssueSuccess: {
+    de: 'Meldung zur Prüfung eingereicht',
+    en: 'Report submitted for review',
+    fr: 'Signalement soumis pour examen',
+    es: 'Reporte enviado para revisión',
+  },
+  reportIssueError: {
+    de: 'Meldung konnte nicht gesendet werden.',
+    en: 'Could not submit the report.',
+    fr: 'Impossible de soumettre le signalement.',
+    es: 'No se pudo enviar el reporte.',
+  },
+  reportIssueDescriptionRequired: {
+    de: 'Bitte beschreiben Sie das Problem',
+    en: 'Please describe the problem',
+    fr: 'Veuillez décrire le problème',
+    es: 'Por favor describa el problema',
+  },
+
   contributionPreparationSection: {
     de: 'Verfügbare Präparate',
     en: 'Available preparations',

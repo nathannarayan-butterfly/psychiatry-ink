@@ -1,8 +1,20 @@
 import './loadEnv'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import cors from 'cors'
 import express from 'express'
 import { prisma } from './db'
 import { optionalAuth } from './middleware/auth'
+import { requestId } from './middleware/requestContext'
+import { apiNotFound, errorHandler } from './middleware/errorHandler'
+import {
+  buildCorsOptions,
+  buildGlobalLimiter,
+  buildHelmet,
+  buildSensitiveLimiter,
+} from './config/security'
+import { configureClientServing } from './serveClient'
+import { installGracefulShutdown, installProcessGuards } from './lifecycle'
 import { accountRouter } from './routes/account'
 import { creditsRouter } from './routes/credits'
 import { cryptoRouter } from './routes/crypto'
@@ -56,9 +68,75 @@ import {
 
 const app = express()
 const port = Number(process.env.API_PORT ?? 3001)
+const host = process.env.API_HOST ?? '0.0.0.0'
 
-app.use(cors({ origin: true }))
+// Behind a load balancer / reverse proxy in cloud deploys: trust the first proxy
+// hop so req.ip / X-Forwarded-* (used by rate limiting) reflect the real client.
+app.set('trust proxy', Number(process.env.TRUST_PROXY ?? 1))
+
+// Correlation id first so even early failures are traceable.
+app.use(requestId)
+// Security headers (CSP suited to the served SPA).
+app.use(buildHelmet())
+// Env-driven CORS allowlist (replaces the previous reflect-any-origin config).
+app.use(cors(buildCorsOptions()))
 app.use(optionalAuth)
+
+// ── Health checks (registered BEFORE rate limiting so probes are never throttled).
+// Liveness: cheap, no I/O — "is the process up?".
+app.get('/api/health', (req, res) => {
+  res.json({ ok: true, requestId: req.requestId })
+})
+// Readiness: pings the database so orchestrators only route traffic when the API
+// can actually serve it.
+app.get('/api/health/ready', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`
+    res.json({ ok: true, db: 'up', requestId: req.requestId })
+  } catch (error) {
+    console.error(`[health] readiness check failed (req ${req.requestId})`, error)
+    res.status(503).json({ ok: false, db: 'down', requestId: req.requestId })
+  }
+})
+
+// Global coarse rate limit on the API surface.
+app.use('/api', buildGlobalLimiter())
+
+// Tight rate limit on expensive / abuse-prone routes (AI, transcription, and
+// auth-bearing credit mutations). Single insertion keyed by path prefix.
+const sensitiveLimiter = buildSensitiveLimiter()
+const SENSITIVE_PREFIXES = [
+  '/api/generate',
+  '/api/pharma-generate',
+  '/api/pharma-ask',
+  '/api/transcribe',
+  '/api/inline-edit',
+  '/api/discuss-case',
+  '/api/ask-butterfly',
+  '/api/butterfly',
+  '/api/psychopath',
+  '/api/clinical-intelligence',
+  '/api/arztbrief',
+  '/api/discharge-summary',
+  '/api/medication-education',
+  '/api/template-ai',
+  '/api/patient-education-generic',
+  '/api/clinical-metadata',
+  '/api/combination-check',
+  '/api/lab-med-correlation',
+  '/api/medication/prep-ai-check',
+  '/api/medication/prior-therapies',
+  '/api/criteria',
+  '/api/ai-credits',
+]
+app.use((req, res, next) => {
+  if (SENSITIVE_PREFIXES.some((prefix) => req.path.startsWith(prefix))) {
+    sensitiveLimiter(req, res, next)
+    return
+  }
+  next()
+})
+
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhookRouter)
 app.use('/api/transcribe', express.json({ limit: '25mb' }), transcribeRouter)
 // Inline AI edit: the /transcribe sub-route carries base64 audio, so it needs a
@@ -67,10 +145,6 @@ app.use('/api/inline-edit', express.json({ limit: '25mb' }), inlineEditRouter)
 // Voice message uploads carry base64 audio — needs a larger JSON limit than the global parser.
 app.use('/api/discuss-case', express.json({ limit: '15mb' }), discussCaseRouter)
 app.use(express.json({ limit: '2mb' }))
-
-app.get('/api/health', (_req, res) => {
-  res.json({ ok: true })
-})
 
 app.use('/api/generate', generateRouter)
 app.use('/api/pharma-generate', pharmaGenerateRouter)
@@ -117,10 +191,24 @@ if (isEnterpriseOrgHierarchyEnabled()) {
   app.use('/api/enterprise', enterpriseRouter)
 }
 
-app.listen(port, () => {
+// 404 for any unmatched /api route (before the SPA fallback claims everything).
+app.use('/api', apiNotFound)
+
+// Single-service topology: serve the built client with SPA fallback so
+// same-origin /api/* works in production. No-op when dist/ is absent (split deploy).
+const distDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist')
+const servingClient = configureClientServing(app, distDir)
+
+// Global error handler — MUST be last.
+app.use(errorHandler)
+
+installProcessGuards()
+
+const server = app.listen(port, host, () => {
   const openai = Boolean(process.env.OPENAI_API_KEY?.trim())
   const deepseek = Boolean(process.env.DEEPSEEK_API_KEY?.trim())
-  console.log(`[api] listening on http://127.0.0.1:${port}`)
+  console.log(`[api] listening on http://${host}:${port}`)
+  console.log(`[api] client build: ${servingClient ? `served from ${distDir}` : 'not served (split deploy / dev)'}`)
   console.log(`[api] keys: OPENAI=${openai ? 'yes' : 'no'} DEEPSEEK=${deepseek ? 'yes' : 'no'}`)
   console.log(`[api] psychopath extract AI: ${isPsychopathExtractAiEnabled() ? 'enabled' : 'disabled (set ENABLE_PSYCHOPATH_EXTRACT_AI=true in .env.local and restart api)'}`)
   console.log(`[api] clinical intelligence V1: ${isClinicalIntelligenceV1Enabled() ? 'enabled' : 'disabled (set CLINICAL_INTELLIGENCE_V1_ENABLED=true in .env.local and restart api)'}`)
@@ -146,3 +234,5 @@ app.listen(port, () => {
       console.warn('[api] diagnosisCode self-check skipped (DB unreachable)', error)
     })
 })
+
+installGracefulShutdown(server)

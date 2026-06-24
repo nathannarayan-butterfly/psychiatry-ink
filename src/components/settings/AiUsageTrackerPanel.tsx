@@ -103,25 +103,25 @@ export function AiUsageTrackerPanel({ collapsed: initialCollapsed = true }: AiUs
           {credits ? (
             <div className="ai-usage-tracker__credit-summary">
               <div className="ai-usage-tracker__credit-row">
-                <span>Monatliche Credits</span>
+                <span>{t('aiUsageTrackerMonthlyCredits')}</span>
                 <strong>{credits.monthlyCredits}</strong>
               </div>
               <div className="ai-usage-tracker__credit-row">
-                <span>Gekaufte Credits</span>
+                <span>{t('aiUsageTrackerPurchasedCredits')}</span>
                 <strong>{credits.purchasedCredits}</strong>
               </div>
               <div className="ai-usage-tracker__credit-row ai-usage-tracker__credit-row--total">
-                <span>Gesamt verfügbar</span>
+                <span>{t('aiUsageTrackerTotalAvailable')}</span>
                 <strong>{credits.totalAvailable}</strong>
               </div>
               {usage ? (
                 <div className="ai-usage-tracker__credit-row">
-                  <span>Diesen Monat verbraucht</span>
-                  <strong>{usage.totalCredits} Credits ({usage.callCount} Aufrufe)</strong>
+                  <span>{t('aiUsageTrackerConsumedThisMonth')}</span>
+                  <strong>{usage.totalCredits} {t('aiUsageTrackerCreditsUnit')} ({usage.callCount} {t('aiUsageTrackerCallsUnit')})</strong>
                 </div>
               ) : null}
               <div className="ai-usage-tracker__credit-row ai-usage-tracker__credit-row--reset">
-                <span>Monatlicher Reset</span>
+                <span>{t('aiUsageTrackerMonthlyReset')}</span>
                 <span>
                   {new Date(credits.monthlyResetAt).toLocaleDateString('de-DE', {
                     day: '2-digit', month: '2-digit', year: 'numeric',

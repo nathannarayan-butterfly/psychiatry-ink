@@ -50,8 +50,7 @@ import { DashboardHinweise } from './DashboardHinweise'
 import { AccountRegistryRestoreBanner } from './AccountRegistryRestoreBanner'
 import { DashboardTopBar } from './DashboardTopBar'
 import { KnowledgeBaseTile } from './KnowledgeBase'
-import { isKbAdminApiEnabled } from '../../services/kbAdminApi'
-import { useKbAdminAccess } from '../../hooks/useKbAdminAccess'
+import { useSystemAdminAccess } from '../../hooks/useSystemAdminAccess'
 import { useCurrentOrganisation } from '../../hooks/permissions'
 import { setDevOrganisationTier } from '../../services/orgApi'
 import { useAuditDebugAccess } from '../../hooks/useAuditDebugAccess'
@@ -168,7 +167,7 @@ export function DashboardPage({
   const { organisation, refresh: refreshOrganisation } = useCurrentOrganisation()
   const { canAccessEnterpriseUi } = useEnterpriseFeatures()
   const settingsPanel = useSettingsPanel()
-  const hasKbAdminAccess = useKbAdminAccess()
+  const hasSystemAdminAccess = useSystemAdminAccess()
   const hasAuditDebugAccess = useAuditDebugAccess()
   const { user } = useAuth()
   const userId = user?.id ?? 'anonymous'
@@ -902,7 +901,7 @@ export function DashboardPage({
               KI-Budget
             </button>
           ) : null}
-          {hasKbAdminAccess && isKbAdminApiEnabled() && onOpenKbAdmin ? (
+          {hasSystemAdminAccess && onOpenKbAdmin ? (
             <button type="button" className="dashboard-settings-chip" onClick={onOpenKbAdmin}>
               <FlaskConical className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
               KB Batch Review (Admin)

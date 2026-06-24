@@ -10,6 +10,8 @@ import {
   persistKeyBase64Url,
   readKeyFromFragment,
 } from '../../utils/e2ee'
+import { useTranslation } from '../../context/TranslationContext'
+import { translateConsultationUi } from '../../data/consultationUiTranslations'
 
 interface ConsultationInvitePageProps {
   token: string
@@ -17,6 +19,7 @@ interface ConsultationInvitePageProps {
 }
 
 export function ConsultationInvitePage({ token, onNavigate }: ConsultationInvitePageProps) {
+  const { language } = useTranslation()
   const { user, loading: authLoading, isConfigured } = useAuth()
   const [preview, setPreview] = useState<{ specialty: string; title: string; inviteeEmail: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -25,8 +28,8 @@ export function ConsultationInvitePage({ token, onNavigate }: ConsultationInvite
   useEffect(() => {
     void previewConsultationInvite(token)
       .then(setPreview)
-      .catch((err) => setError(err instanceof Error ? err.message : 'Ungültige Einladung'))
-  }, [token])
+      .catch((err) => setError(err instanceof Error ? err.message : translateConsultationUi(language, 'errInvalidInvite')))
+  }, [token, language])
 
   const handleAccept = useCallback(async () => {
     setAccepting(true)
@@ -41,16 +44,16 @@ export function ConsultationInvitePage({ token, onNavigate }: ConsultationInvite
       }
       onNavigate(`/consultant/requests/${encodeURIComponent(result.request.id)}`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Annahme fehlgeschlagen')
+      setError(err instanceof Error ? err.message : translateConsultationUi(language, 'errAcceptFailed'))
     } finally {
       setAccepting(false)
     }
-  }, [token, onNavigate])
+  }, [token, onNavigate, language])
 
   if (!isConfigured) {
     return (
       <div className="consultation-invite">
-        <p>Supabase-Authentifizierung erforderlich.</p>
+        <p>{translateConsultationUi(language, 'supabaseAuthRequired')}</p>
       </div>
     )
   }
@@ -68,14 +71,14 @@ export function ConsultationInvitePage({ token, onNavigate }: ConsultationInvite
     return (
       <div className="consultation-invite">
         <div className="consultation-invite__card">
-          <h1 className="consultation-invite__title">Konsil-Einladung</h1>
-          <p className="consultation-invite__meta">Bitte anmelden, um die Einladung anzunehmen.</p>
+          <h1 className="consultation-invite__title">{translateConsultationUi(language, 'inviteTitle')}</h1>
+          <p className="consultation-invite__meta">{translateConsultationUi(language, 'inviteLoginPrompt')}</p>
           <button
             type="button"
             className="consultation-page__create-btn"
             onClick={() => onNavigate(`/login?redirect=${redirect}`)}
           >
-            Anmelden
+            {translateConsultationUi(language, 'signIn')}
           </button>
         </div>
       </div>
@@ -85,13 +88,13 @@ export function ConsultationInvitePage({ token, onNavigate }: ConsultationInvite
   return (
     <div className="consultation-invite">
       <div className="consultation-invite__card">
-        <h1 className="consultation-invite__title">Konsil-Einladung</h1>
+        <h1 className="consultation-invite__title">{translateConsultationUi(language, 'inviteTitle')}</h1>
         {preview ? (
           <>
             <p className="consultation-invite__meta">
               {preview.specialty} — {preview.title}
             </p>
-            <p className="consultation-invite__meta">Für: {preview.inviteeEmail}</p>
+            <p className="consultation-invite__meta">{translateConsultationUi(language, 'inviteFor')}: {preview.inviteeEmail}</p>
           </>
         ) : error ? (
           <p className="consultation-page__error">{error}</p>
@@ -107,7 +110,7 @@ export function ConsultationInvitePage({ token, onNavigate }: ConsultationInvite
               style={{ marginBottom: '0.75rem' }}
               onClick={() => onNavigate('/dashboard')}
             >
-              Abbrechen
+              {translateConsultationUi(language, 'cancel')}
             </button>
             <button
               type="button"
@@ -118,7 +121,7 @@ export function ConsultationInvitePage({ token, onNavigate }: ConsultationInvite
               {accepting ? (
                 <span className="clinical-loading__spinner" aria-hidden="true" />
               ) : (
-                'Einladung annehmen'
+                translateConsultationUi(language, 'acceptInvite')
               )}
             </button>
           </>

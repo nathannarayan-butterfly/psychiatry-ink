@@ -1,0 +1,37 @@
+node_modules
+dist
+build
+coverage
+.git
+.gitignore
+.github
+.vscode
+.idea
+.cursor
+*.log
+npm-debug.log*
+
+# Local env / secrets — never bake into the image.
+.env
+.env.*
+!.env.example
+
+# Local databases / Prisma shadow db.
+*.db
+*.db-journal
+prisma/dev.db
+prisma/shadow.db
+shadow.db
+
+# Test / tooling artifacts.
+**/__tests__
+**/*.test.ts
+**/*.test.tsx
+playwright-report
+test-results
+.tmp
+
+# Docs and design assets not needed at runtime.
+docs
+*.md
+!README.md

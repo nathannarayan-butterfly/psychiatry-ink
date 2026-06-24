@@ -5,12 +5,17 @@
  * Uses Checkout Sessions (hosted) — no payment_method_types (dynamic methods).
  */
 
+import { Prisma } from '@prisma/client'
 import Stripe from 'stripe'
 import type { CreditPack } from '../../src/data/creditPacks'
-import { addPurchasedCredits } from '../ai/creditGuard'
+import { ensureCreditAccount, grantPurchasedCreditsWithinTx } from '../ai/creditGuard'
 import { prisma } from '../db'
 
 let stripeClient: Stripe | null = null
+
+/** Bounded Stripe network behaviour — see security hardening #6. */
+const STRIPE_TIMEOUT_MS = Number(process.env.STRIPE_TIMEOUT_MS ?? 30_000)
+const STRIPE_MAX_NETWORK_RETRIES = Number(process.env.STRIPE_MAX_NETWORK_RETRIES ?? 1)
 
 function getStripe(): Stripe {
   const key = process.env.STRIPE_SECRET_KEY?.trim()
@@ -18,7 +23,11 @@ function getStripe(): Stripe {
     throw new Error('STRIPE_SECRET_KEY is not configured')
   }
   if (!stripeClient) {
-    stripeClient = new Stripe(key)
+    stripeClient = new Stripe(key, {
+      // Per-request timeout + one bounded retry for idempotent API calls.
+      timeout: STRIPE_TIMEOUT_MS,
+      maxNetworkRetries: STRIPE_MAX_NETWORK_RETRIES,
+    })
   }
   return stripeClient
 }
@@ -61,17 +70,19 @@ export async function createCreditCheckoutSession(params: {
   })
 }
 
-async function hasProcessedStripeEvent(eventId: string): Promise<boolean> {
-  const row = await prisma.appSetting.findUnique({ where: { key: `stripe:event:${eventId}` } })
-  return Boolean(row)
-}
-
-async function markStripeEventProcessed(eventId: string): Promise<void> {
-  await prisma.appSetting.upsert({
-    where: { key: `stripe:event:${eventId}` },
-    update: { value: new Date().toISOString() },
-    create: { key: `stripe:event:${eventId}`, value: new Date().toISOString() },
-  })
+/** Resolve the credit grant implied by a paid checkout session (if any). */
+function resolveCheckoutGrant(
+  session: Stripe.Checkout.Session,
+): { userId: string; credits: number; note: string } | null {
+  if (session.payment_status !== 'paid') return null
+  const userId = session.metadata?.userId ?? session.client_reference_id ?? undefined
+  const credits = Number(session.metadata?.credits ?? 0)
+  const packId = session.metadata?.packId ?? 'unknown'
+  if (!userId || !Number.isFinite(credits) || credits <= 0) {
+    console.warn('[stripe] checkout.session.completed missing userId/credits metadata', session.id)
+    return null
+  }
+  return { userId, credits, note: `stripe:checkout:${session.id}:${packId}` }
 }
 
 export async function handleStripeWebhook(
@@ -88,30 +99,50 @@ export async function handleStripeWebhook(
 
   const stripe = getStripe()
   const event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret)
+  const markerKey = `stripe:event:${event.id}`
 
-  if (await hasProcessedStripeEvent(event.id)) {
-    return { received: true }
-  }
+  // Resolve the (idempotent) credit grant BEFORE opening the transaction so the
+  // account row is created outside the critical section. Creating the account is
+  // itself idempotent and is NOT the part that must be atomic.
+  const grant =
+    event.type === 'checkout.session.completed'
+      ? resolveCheckoutGrant(event.data.object as Stripe.Checkout.Session)
+      : null
+  const accountId = grant ? (await ensureCreditAccount(grant.userId)).id : null
 
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object as Stripe.Checkout.Session
-    if (session.payment_status === 'paid') {
-      const userId = session.metadata?.userId ?? session.client_reference_id
-      const credits = Number(session.metadata?.credits ?? 0)
-      const packId = session.metadata?.packId ?? 'unknown'
-
-      if (userId && Number.isFinite(credits) && credits > 0) {
-        await addPurchasedCredits({
-          userId,
-          credits,
-          note: `stripe:checkout:${session.id}:${packId}`,
+  // Atomic idempotency + grant: the "event processed" marker row and the credit
+  // grant commit together or not at all. Serializable isolation + the unique
+  // AppSetting key make concurrent duplicate deliveries impossible to double-grant
+  // — the second delivery's marker insert raises P2002 (or a serialization
+  // failure) and the whole transaction rolls back without granting again.
+  try {
+    await prisma.$transaction(
+      async (tx) => {
+        await tx.appSetting.create({
+          data: { key: markerKey, value: new Date().toISOString() },
         })
-      } else {
-        console.warn('[stripe] checkout.session.completed missing userId/credits metadata', session.id)
-      }
+        if (grant && accountId) {
+          await grantPurchasedCreditsWithinTx(tx, {
+            accountId,
+            credits: grant.credits,
+            note: grant.note,
+          })
+        }
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    )
+  } catch (error) {
+    // Duplicate delivery (marker already exists) — already processed, succeed
+    // idempotently. Serialization conflicts from concurrent duplicates surface
+    // as P2034 and are equally safe to treat as "already handled".
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      (error.code === 'P2002' || error.code === 'P2034')
+    ) {
+      return { received: true }
     }
+    throw error
   }
 
-  await markStripeEventProcessed(event.id)
   return { received: true }
 }

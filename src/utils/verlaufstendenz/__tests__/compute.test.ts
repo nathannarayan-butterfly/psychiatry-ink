@@ -147,6 +147,9 @@ describe('computeVerlaufstendenz', () => {
   it('uses Verlauf text for domain-specific worsening signals', () => {
     const result = computeVerlaufstendenz({
       ...emptyInput,
+      // Anchor the rolling 14d window so the entry stays inside it regardless of the
+      // current clock; otherwise it drifts out of the window and yields no signal.
+      customWindowEnd: '2026-06-12T00:00:00.000Z',
       verlaufEntries: [
         {
           id: 'v1',

@@ -17,7 +17,7 @@ import { DemoPatientDevPage } from './components/demo/DemoPatientDevPage'
 import { useAuditDebugAccess } from './hooks/useAuditDebugAccess'
 import { ensureDemoPatientExists } from './demo'
 import { uiLanguageToDemoLocale } from './demo/demoLocale'
-import { useKbAdminAccess } from './hooks/useKbAdminAccess'
+import { useSystemAdminAccess } from './hooks/useSystemAdminAccess'
 import { DiscussCaseInvitePage } from './components/discuss-case/DiscussCaseInvitePage'
 import { ConsultantDashboard } from './components/consultation/ConsultantDashboard'
 import { ConsultationInvitePage } from './components/consultation/ConsultationInvitePage'
@@ -50,7 +50,7 @@ export default function App() {
   const privacy = usePrivacySettings()
   const { route, navigate } = useAppRouter()
   const { user, loading: authLoading, isConfigured, plan } = useAuth()
-  const hasKbAdminAccess = useKbAdminAccess()
+  const hasSystemAdminAccess = useSystemAdminAccess()
   const hasAuditDebugAccess = useAuditDebugAccess()
   const { isRestrictedConsultant } = useConsultationRole()
   const { canAccessEnterpriseUi } = useEnterpriseFeatures()
@@ -107,7 +107,7 @@ export default function App() {
       navigate('/dashboard', true)
     }
 
-    if (user && route.view === 'kb-admin' && !hasKbAdminAccess) {
+    if (user && route.view === 'kb-admin' && !hasSystemAdminAccess) {
       navigate('/dashboard', true)
     }
 
@@ -131,7 +131,7 @@ export default function App() {
       const redirect = params.get('redirect')
       navigate(redirect && redirect.startsWith('/') ? redirect : '/dashboard', true)
     }
-  }, [authLoading, canAccessEnterpriseUi, hasAuditDebugAccess, hasKbAdminAccess, isConfigured, isEnterpriseRoute, isRestrictedConsultant, navigate, route, user])
+  }, [authLoading, canAccessEnterpriseUi, hasAuditDebugAccess, hasSystemAdminAccess, isConfigured, isEnterpriseRoute, isRestrictedConsultant, navigate, route, user])
 
   const showDashboard = route.view === 'dashboard'
   const showKbAdmin = route.view === 'kb-admin'
@@ -267,7 +267,7 @@ export default function App() {
           <AuditDebugPage onBack={() => navigate('/dashboard')} />
         ) : showDemoPatient && hasAuditDebugAccess ? (
           <DemoPatientDevPage onBack={() => navigate('/dashboard')} />
-        ) : showKbAdmin && hasKbAdminAccess ? (
+        ) : showKbAdmin && hasSystemAdminAccess ? (
           <KbAdminPage onBack={() => navigate('/dashboard')} />
         ) : showTemplates ? (
           <ClinicalVorlageBuilderPage onBack={() => navigate('/dashboard')} />

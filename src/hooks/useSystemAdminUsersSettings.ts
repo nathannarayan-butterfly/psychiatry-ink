@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
-  KB_ADMIN_USERS_STORAGE_KEY,
-  readLocalKbAdminAllowlist,
-  writeLocalKbAdminAllowlist,
-} from '../utils/kbAdminAccess'
+  SYSTEM_ADMIN_USERS_STORAGE_KEY,
+  readLocalSystemAdminAllowlist,
+  writeLocalSystemAdminAllowlist,
+} from '../utils/systemAdminAccess'
 
-export function useKbAdminUsersSettings() {
-  const [allowlist, setAllowlist] = useState<string[]>(() => readLocalKbAdminAllowlist())
+export function useSystemAdminUsersSettings() {
+  const [allowlist, setAllowlist] = useState<string[]>(() => readLocalSystemAdminAllowlist())
 
   useEffect(() => {
     const onStorage = (event: StorageEvent) => {
-      if (event.key === KB_ADMIN_USERS_STORAGE_KEY) {
-        setAllowlist(readLocalKbAdminAllowlist())
+      if (event.key === SYSTEM_ADMIN_USERS_STORAGE_KEY) {
+        setAllowlist(readLocalSystemAdminAllowlist())
       }
     }
     window.addEventListener('storage', onStorage)
@@ -19,8 +19,8 @@ export function useKbAdminUsersSettings() {
   }, [])
 
   const setAllowlistEntries = useCallback((entries: string[]) => {
-    writeLocalKbAdminAllowlist(entries)
-    setAllowlist(readLocalKbAdminAllowlist())
+    writeLocalSystemAdminAllowlist(entries)
+    setAllowlist(readLocalSystemAdminAllowlist())
   }, [])
 
   const addEntry = useCallback(

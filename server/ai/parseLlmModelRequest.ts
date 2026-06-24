@@ -2,7 +2,7 @@ import type { AiModelTier } from '../modelTierMapping'
 import type { LlmModelRequest } from './resolveLlmCallModel'
 
 const VALID_TIERS: AiModelTier[] = ['fast', 'standard', 'thorough']
-const KNOWN_PROVIDERS = new Set(['openai', 'deepseek', 'google'])
+const KNOWN_PROVIDERS = new Set(['openai', 'deepseek', 'google', 'mistral'])
 
 export function parseLlmModelRequest(
   body: Record<string, unknown>,

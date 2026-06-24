@@ -1,7 +1,20 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import ws from 'ws'
+import { fetchWithTimeout } from '../utils/httpTimeout'
 
 let adminClient: SupabaseClient | null = null
+
+const SUPABASE_ADMIN_TIMEOUT_MS = Number(process.env.SUPABASE_ADMIN_TIMEOUT_MS ?? 30_000)
+
+/** Bounded fetch so a hung Supabase REST/Storage call cannot pin a handler. */
+function boundedFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
+  return fetchWithTimeout(url, {
+    ...(init ?? {}),
+    timeoutMs: SUPABASE_ADMIN_TIMEOUT_MS,
+    label: 'Supabase admin',
+  })
+}
 
 export function getKbSupabaseAdmin(): SupabaseClient {
   if (adminClient) return adminClient
@@ -18,6 +31,7 @@ export function getKbSupabaseAdmin(): SupabaseClient {
 
   adminClient = createClient(url, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
+    global: { fetch: boundedFetch },
     realtime: {
       // The `ws` package's WebSocket constructor is the documented Node transport for
       // supabase-js realtime and is structurally compatible at runtime; the mismatch is a

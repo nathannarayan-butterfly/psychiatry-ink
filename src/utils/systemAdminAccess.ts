@@ -1,6 +1,6 @@
-const KB_ADMIN_USERS_STORAGE_KEY = 'psychiatry-ink:kb-admin-users'
+const SYSTEM_ADMIN_USERS_STORAGE_KEY = 'psychiatry-ink:system-admin-users'
 
-export { KB_ADMIN_USERS_STORAGE_KEY }
+export { SYSTEM_ADMIN_USERS_STORAGE_KEY }
 
 function parseIdList(raw: string | undefined): string[] {
   if (!raw?.trim()) return []
@@ -12,7 +12,7 @@ function parseIdList(raw: string | undefined): string[] {
 
 function readLocalAllowlist(): string[] {
   try {
-    const raw = localStorage.getItem(KB_ADMIN_USERS_STORAGE_KEY)
+    const raw = localStorage.getItem(SYSTEM_ADMIN_USERS_STORAGE_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw) as unknown
     if (!Array.isArray(parsed)) return []
@@ -25,31 +25,36 @@ function readLocalAllowlist(): string[] {
   }
 }
 
-export function writeLocalKbAdminAllowlist(entries: string[]): void {
+export function writeLocalSystemAdminAllowlist(entries: string[]): void {
   const normalized = entries.map((entry) => entry.trim()).filter(Boolean)
-  localStorage.setItem(KB_ADMIN_USERS_STORAGE_KEY, JSON.stringify(normalized))
+  localStorage.setItem(SYSTEM_ADMIN_USERS_STORAGE_KEY, JSON.stringify(normalized))
 }
 
-export function readLocalKbAdminAllowlist(): string[] {
+export function readLocalSystemAdminAllowlist(): string[] {
   return readLocalAllowlist()
 }
 
-export interface KbAdminAccessInput {
+export interface SystemAdminAccessInput {
   userId: string | null | undefined
   userEmail?: string | null
-  appMetadataKbAdmin?: boolean
+  appMetadataSystemAdmin?: boolean
 }
 
-/** Client-side KB admin gate: env list, Supabase app_metadata, or local allowlist. */
-export function isKbAdminUser(input: KbAdminAccessInput): boolean {
-  if (input.appMetadataKbAdmin === true) return true
+/**
+ * Client-side **System Admin** gate — the only elevated role over the global
+ * Knowledge Base. This is a UX hint that decides whether to surface the KB
+ * review console; the authoritative check is always enforced server-side via
+ * the `SYSTEM_ADMIN_USER_IDS` allowlist (never a client-trusted value).
+ */
+export function isSystemAdminUser(input: SystemAdminAccessInput): boolean {
+  if (input.appMetadataSystemAdmin === true) return true
 
-  const envIds = parseIdList(import.meta.env.VITE_KB_ADMIN_USER_IDS as string | undefined)
+  const envIds = parseIdList(import.meta.env.VITE_SYSTEM_ADMIN_USER_IDS as string | undefined)
   const localIds = readLocalAllowlist()
   const allowlist = new Set([...envIds, ...localIds])
 
   if (allowlist.size === 0) {
-    // Dev fallback: no allowlist configured → keep admin UI reachable locally.
+    // Dev fallback: no allowlist configured → keep the console reachable locally.
     return import.meta.env.DEV
   }
 

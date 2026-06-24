@@ -24,6 +24,7 @@ import {
   type ComplianceAggregateStatus,
 } from '../../../utils/overview/complianceAggregate'
 import { OverviewCard, OverviewEmpty } from './OverviewCard'
+import type { UiTranslationKey } from '../../../data/uiTranslations'
 
 interface ComplianceOverviewCardProps {
   data: ComplianceSummaryData
@@ -32,11 +33,11 @@ interface ComplianceOverviewCardProps {
 
 type ComplianceGroupKind = 'medication' | 'therapy'
 
-const THERAPY_STATUS_LABEL: Record<ComplianceDayStatus, string> = {
-  participated: 'Teilgenommen',
-  refused: 'Verweigert',
-  excused: 'Entschuldigt / krank',
-  unknown: 'Keine Angabe',
+const THERAPY_STATUS_KEYS: Record<ComplianceDayStatus, UiTranslationKey> = {
+  participated: 'complianceStatusParticipated',
+  refused: 'complianceStatusRefused',
+  excused: 'complianceStatusExcused',
+  unknown: 'complianceStatusUnknown',
 }
 
 const MEDICATION_EDITABLE_STATUSES: ComplianceDayStatus[] = ['participated', 'refused']
@@ -52,12 +53,12 @@ function editableStatusesFor(group: ComplianceGroupKind): ComplianceDayStatus[] 
   return group === 'medication' ? MEDICATION_EDITABLE_STATUSES : THERAPY_EDITABLE_STATUSES
 }
 
-function statusLabelFor(status: ComplianceDayStatus, group: ComplianceGroupKind): string {
+function statusKeyFor(status: ComplianceDayStatus, group: ComplianceGroupKind): UiTranslationKey {
   if (group === 'medication') {
-    if (status === 'participated') return 'Eingenommen'
-    if (status === 'refused') return 'Verweigert'
+    if (status === 'participated') return 'complianceStatusTaken'
+    if (status === 'refused') return 'complianceStatusRefused'
   }
-  return THERAPY_STATUS_LABEL[status]
+  return THERAPY_STATUS_KEYS[status]
 }
 
 interface DayAxisEntry {
@@ -82,8 +83,8 @@ function overallTone(percent: number | null): 'ok' | 'moderate' | 'high' | 'neut
   return 'high'
 }
 
-function formatPercent(percent: number | null): string {
-  if (percent == null) return 'k. A.'
+function formatPercent(percent: number | null, naLabel: string): string {
+  if (percent == null) return naLabel
   return `${percent}%`
 }
 
@@ -135,9 +136,10 @@ function CellEditorPopover({
   onClear: () => void
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   const editableStatuses = editableStatusesFor(group)
   return (
-    <div className="ov-compliance__popover" role="dialog" aria-label="Compliance-Eintrag bearbeiten">
+    <div className="ov-compliance__popover" role="dialog" aria-label={t('complianceEditAria')}>
       <div className="ov-compliance__popover-head">
         <div className="ov-compliance__popover-title">
           <span className="ov-compliance__popover-item">{itemLabel}</span>
@@ -148,7 +150,7 @@ function CellEditorPopover({
         <button
           type="button"
           className="ov-compliance__popover-close"
-          aria-label="Schließen"
+          aria-label={t('complianceClose')}
           onClick={onClose}
         >
           <X size={13} strokeWidth={2} aria-hidden />
@@ -167,13 +169,13 @@ function CellEditorPopover({
             onClick={() => onSelect(status)}
           >
             <span className={`ov-compliance__legend-swatch ov-compliance__day-box--${status}`} aria-hidden />
-            <span>{statusLabelFor(status, group)}</span>
+            <span>{t(statusKeyFor(status, group))}</span>
           </button>
         ))}
       </div>
       {day.overridden ? (
         <button type="button" className="ov-compliance__popover-clear" onClick={onClear}>
-          Manuellen Eintrag entfernen
+          {t('complianceRemoveManual')}
         </button>
       ) : null}
     </div>
@@ -197,17 +199,18 @@ function ComplianceDayGrid({
   onClear: () => void
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <div
       className="ov-compliance__grid ov-compliance__grid--compact"
       role="list"
-      aria-label={`Compliance ${item.label}, letzte 14 Tage`}
+      aria-label={t('complianceGridAria').replace('{item}', item.label)}
     >
       {item.timeline.days.map((day) => {
         const isOpen = openCell?.itemKey === item.key && openCell?.dateIso === day.dateIso
-        const label = statusLabelFor(day.status, group)
+        const label = t(statusKeyFor(day.status, group))
         const tooltip = `${formatGermanDate(day.dateIso)}: ${label}${
-          day.overridden ? ' (manuell)' : ''
+          day.overridden ? t('complianceManualSuffix') : ''
         }`
         return (
           <span key={day.dateIso} className="ov-compliance__cell-wrap" role="listitem">
@@ -218,8 +221,8 @@ function ComplianceDayGrid({
               }${isOpen ? ' ov-compliance__cell--open' : ''}`}
               title={tooltip}
               aria-label={`${formatGermanDate(day.dateIso)}, ${label}${
-                day.overridden ? ', manuell gesetzt' : ''
-              }. Zum Bearbeiten öffnen.`}
+                day.overridden ? t('complianceManualSet') : ''
+              }. ${t('complianceOpenToEdit')}`}
               aria-haspopup="dialog"
               aria-expanded={isOpen}
               onClick={() => onOpenCell({ itemKey: item.key, dateIso: day.dateIso })}
@@ -258,6 +261,7 @@ function ComplianceItemRow({
   onClear: () => void
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="ov-compliance__item">
       <div className="ov-compliance__item-head">
@@ -267,7 +271,7 @@ function ComplianceItemRow({
             <span className="ov-compliance__item-sub">{item.sublabel}</span>
           ) : null}
         </div>
-        <span className="ov-compliance__percent">{formatPercent(item.timeline.percent)}</span>
+        <span className="ov-compliance__percent">{formatPercent(item.timeline.percent, t('complianceNotAvailable'))}</span>
       </div>
       <ComplianceDayGrid
         item={item}
@@ -283,13 +287,14 @@ function ComplianceItemRow({
 }
 
 function ComplianceLegend({ group }: { group: ComplianceGroupKind }) {
+  const { t } = useTranslation()
   const statuses = editableStatusesFor(group)
   return (
-    <ul className="ov-compliance__legend" aria-label="Legende">
+    <ul className="ov-compliance__legend" aria-label={t('complianceLegendAria')}>
       {statuses.map((status) => (
         <li key={status} className="ov-compliance__legend-item">
           <span className={`ov-compliance__legend-swatch ov-compliance__day-box--${status}`} aria-hidden />
-          <span>{statusLabelFor(status, group)}</span>
+          <span>{t(statusKeyFor(status, group))}</span>
         </li>
       ))}
     </ul>
@@ -359,6 +364,7 @@ function ComplianceAddForm({
   onSubmit: (itemKey: string, dateIso: string, status: ComplianceDayStatus) => void
   onCancel: () => void
 }) {
+  const { t } = useTranslation()
   const [itemKey, setItemKey] = useState(items[0]?.key ?? '')
   const [dateIso, setDateIso] = useState(axis[axis.length - 1]?.dateIso ?? '')
   const [status, setStatus] = useState<ComplianceDayStatus>('participated')
@@ -391,14 +397,14 @@ function ComplianceAddForm({
     >
       <div className="ov-compliance__add-row">
         <label className="ov-compliance__add-field">
-          <span className="ov-compliance__add-label">Eintrag</span>
+          <span className="ov-compliance__add-label">{t('complianceEntry')}</span>
           <select
             className="ov-compliance__add-select"
             value={itemKey}
             onChange={(event) => handleItemChange(event.target.value)}
           >
             {medicationOptions.length > 0 ? (
-              <optgroup label="Medikation">
+              <optgroup label={t('complianceMedication')}>
                 {medicationOptions.map((item) => (
                   <option key={item.key} value={item.key}>
                     {item.label}
@@ -407,7 +413,7 @@ function ComplianceAddForm({
               </optgroup>
             ) : null}
             {therapyOptions.length > 0 ? (
-              <optgroup label="Therapien">
+              <optgroup label={t('complianceTherapies')}>
                 {therapyOptions.map((item) => (
                   <option key={item.key} value={item.key}>
                     {item.label}
@@ -418,7 +424,7 @@ function ComplianceAddForm({
           </select>
         </label>
         <label className="ov-compliance__add-field">
-          <span className="ov-compliance__add-label">Datum</span>
+          <span className="ov-compliance__add-label">{t('complianceDate')}</span>
           <select
             className="ov-compliance__add-select"
             value={dateIso}
@@ -432,7 +438,7 @@ function ComplianceAddForm({
           </select>
         </label>
         <label className="ov-compliance__add-field">
-          <span className="ov-compliance__add-label">Status</span>
+          <span className="ov-compliance__add-label">{t('complianceStatus')}</span>
           <select
             className="ov-compliance__add-select"
             value={status}
@@ -440,7 +446,7 @@ function ComplianceAddForm({
           >
             {statusOptions.map((value) => (
               <option key={value} value={value}>
-                {statusLabelFor(value, selectedGroup)}
+                {t(statusKeyFor(value, selectedGroup))}
               </option>
             ))}
           </select>
@@ -448,14 +454,14 @@ function ComplianceAddForm({
       </div>
       <div className="ov-compliance__add-actions">
         <button type="button" className="ov-compliance__add-btn" onClick={onCancel}>
-          Abbrechen
+          {t('complianceCancel')}
         </button>
         <button
           type="submit"
           className="ov-compliance__add-btn ov-compliance__add-btn--primary"
           disabled={!itemKey || !dateIso}
         >
-          Speichern
+          {t('complianceSave')}
         </button>
       </div>
     </form>
@@ -754,8 +760,8 @@ function ComplianceOverviewCardEnterprise({ data, caseId }: ComplianceOverviewCa
 
   const badgeLabel =
     overallPercent != null
-      ? `${overallPercent}% (${data.windowDays} Tage)`
-      : `${data.windowDays} Tage`
+      ? `${overallPercent}% (${data.windowDays} ${t('complianceDays')})`
+      : `${data.windowDays} ${t('complianceDays')}`
 
   const canAdd = allItems.length > 0
 
@@ -786,7 +792,7 @@ function ComplianceOverviewCardEnterprise({ data, caseId }: ComplianceOverviewCa
             aria-expanded={addOpen}
           >
             <Plus size={13} strokeWidth={2} aria-hidden />
-            <span>Eintrag</span>
+            <span>{t('complianceEntry')}</span>
           </button>
         </div>
 
@@ -800,7 +806,7 @@ function ComplianceOverviewCardEnterprise({ data, caseId }: ComplianceOverviewCa
         ) : null}
 
         <ComplianceGroup
-          title="Medikation"
+          title={t('complianceMedication')}
           group="medication"
           items={medicationItems}
           axis={axis}
@@ -809,11 +815,11 @@ function ComplianceOverviewCardEnterprise({ data, caseId }: ComplianceOverviewCa
           onSelect={handleSelect}
           onClear={handleClear}
           onClose={() => setOpenCell(null)}
-          emptyMessage="Keine aktive Medikation."
+          emptyMessage={t('complianceEmptyMedication')}
         />
 
         <ComplianceGroup
-          title="Therapien"
+          title={t('complianceTherapies')}
           group="therapy"
           items={therapyItems}
           axis={axis}
@@ -822,7 +828,7 @@ function ComplianceOverviewCardEnterprise({ data, caseId }: ComplianceOverviewCa
           onSelect={handleSelect}
           onClear={handleClear}
           onClose={() => setOpenCell(null)}
-          emptyMessage="Keine aktiven Therapien."
+          emptyMessage={t('complianceEmptyTherapies')}
         />
       </div>
     </OverviewCard>

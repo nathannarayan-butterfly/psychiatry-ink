@@ -28,7 +28,9 @@ export function KiModelSettings({ modelPreferences }: KiModelSettingsProps) {
             ? 'aiModelGroupOpenAi'
             : group === 'deepseek'
               ? 'aiModelGroupDeepseek'
-              : 'aiModelGroupGoogle',
+              : group === 'google'
+                ? 'aiModelGroupGoogle'
+                : 'aiModelGroupMistral',
       ),
       options: AI_MODEL_CATALOG.filter((entry) => entry.provider === group),
     })).filter((group) => group.options.length > 0)

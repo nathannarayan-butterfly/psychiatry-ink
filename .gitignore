@@ -7,9 +7,13 @@ dist
 .env.*
 !.env.example
 
-# Prisma SQLite
+# Prisma local databases + shadow db (never commit; ephemeral / local-only)
 prisma/*.db
 prisma/*.db-journal
+shadow.db
+dev.db
+*.db
+*.db-journal
 
 # Official terminology downloads (re-fetch via npm run db:build-diagnoses)
 prisma/data/sources/*.zip

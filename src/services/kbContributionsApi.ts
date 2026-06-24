@@ -21,11 +21,12 @@ export async function submitKbContribution(
   return data.contribution
 }
 
-export async function fetchKbAdminContributions(userId: string, status = 'pending'): Promise<KbContribution[]> {
+export async function fetchKbAdminContributions(_userId: string, status = 'pending'): Promise<KbContribution[]> {
+  // Identity is taken from the verified Supabase token server-side; the legacy
+  // client-supplied `X-KB-User-Id` header is no longer trusted or sent.
   const auth = await getAuthHeaders()
   const res = await fetch(`${API_BASE}/api/kb-admin/contributions?status=${encodeURIComponent(status)}`, {
     headers: {
-      'X-KB-User-Id': userId,
       ...auth,
     },
   })

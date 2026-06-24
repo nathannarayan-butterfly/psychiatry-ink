@@ -1,5 +1,33 @@
 import type { CalendarItemType, CalendarItemStatus, CalendarPriority } from '../types/calendar'
+import type { UiTranslationKey } from '../data/uiTranslations'
 
+export const CALENDAR_TYPE_LABEL_KEYS: Record<CalendarItemType, UiTranslationKey> = {
+  consultation: 'calTypeConsultation',
+  follow_up: 'calTypeFollowUp',
+  lab_test: 'calTypeLabTest',
+  phone_call: 'calTypePhoneCall',
+  video_call: 'calTypeVideoCall',
+  medication_review: 'calTypeMedicationReview',
+  document_task: 'calTypeDocumentTask',
+  external_consultation: 'calTypeExternalConsultation',
+  other: 'calTypeOther',
+}
+
+export const CALENDAR_STATUS_LABEL_KEYS: Record<CalendarItemStatus, UiTranslationKey> = {
+  scheduled: 'calStatusScheduled',
+  in_progress: 'calStatusInProgress',
+  completed: 'calStatusCompleted',
+  cancelled: 'calStatusCancelled',
+  no_show: 'calStatusNoShow',
+}
+
+export const CALENDAR_PRIORITY_LABEL_KEYS: Record<CalendarPriority, UiTranslationKey> = {
+  low: 'calPriorityLow',
+  normal: 'calPriorityNormal',
+  high: 'calPriorityHigh',
+}
+
+/** @deprecated DE-only — use CALENDAR_TYPE_LABEL_KEYS + translateUi for localized labels. */
 export const CALENDAR_TYPE_LABELS: Record<CalendarItemType, string> = {
   consultation: 'Konsultation',
   follow_up: 'Folgetermin',

@@ -1,5 +1,6 @@
 import { Users } from 'lucide-react'
 import { OverviewCard, OverviewEmpty } from './OverviewCard'
+import { useTranslation } from '../../../context/TranslationContext'
 import type { KonsileTasksData } from './types'
 import type { SemanticTone } from './OverviewCard'
 
@@ -29,32 +30,33 @@ function CollabRow({
 }
 
 export function CollaborationCard({ data, onOpenDiscuss, onOpenKonsil }: CollaborationCardProps) {
+  const { t } = useTranslation()
   const hasDiscuss = data.discussions.length > 0
   const hasKonsil = data.konsile.length > 0
   const hasAny = hasDiscuss || hasKonsil
 
   return (
     <OverviewCard
-      title="Discuss & Konsil"
+      title={t('collabCardTitle')}
       icon={<Users size={15} />}
       className="ov-col-6"
       action={
         hasDiscuss
-          ? { label: 'Zu Discuss', onClick: onOpenDiscuss }
+          ? { label: t('collabToDiscuss'), onClick: onOpenDiscuss }
           : hasKonsil
-            ? { label: 'Zu Konsil', onClick: onOpenKonsil }
+            ? { label: t('collabToKonsil'), onClick: onOpenKonsil }
             : undefined
       }
     >
       {data.loading ? (
-        <OverviewEmpty>Wird geladen…</OverviewEmpty>
+        <OverviewEmpty>{t('collabLoading')}</OverviewEmpty>
       ) : !hasAny ? (
-        <OverviewEmpty>Keine Besprechungen oder Konsile.</OverviewEmpty>
+        <OverviewEmpty>{t('collabEmpty')}</OverviewEmpty>
       ) : (
         <>
           {hasDiscuss ? (
             <>
-              <p className="ov-subhead">Discuss</p>
+              <p className="ov-subhead">{t('collabDiscussSubhead')}</p>
               <ul className="ov-feed">
                 {data.discussions.map((item) => (
                   <CollabRow key={item.id} title={item.title} statusLabel={item.statusLabel} tone={item.tone} />
@@ -64,7 +66,7 @@ export function CollaborationCard({ data, onOpenDiscuss, onOpenKonsil }: Collabo
           ) : null}
           {hasKonsil ? (
             <>
-              <p className="ov-subhead">Konsil</p>
+              <p className="ov-subhead">{t('collabKonsilSubhead')}</p>
               <ul className="ov-feed">
                 {data.konsile.map((item) => (
                   <CollabRow key={item.id} title={item.title} statusLabel={item.statusLabel} tone={item.tone} />

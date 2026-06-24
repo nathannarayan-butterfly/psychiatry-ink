@@ -118,7 +118,18 @@ describe('diagnosenArchive — encrypted at rest', () => {
 
     await hydrateDiagnosenFromEncryptedLocal(caseId)
 
-    expect(loadDiagnosen(caseId)).toEqual(legacy)
+    // Hydration normalizes legacy rows through the diagnosis-classification migration,
+    // which preserves all original fields and back-fills the unified classification
+    // defaults (first entry → primary / confirmed, with synced legacy role/status).
+    expect(loadDiagnosen(caseId)).toEqual(
+      legacy.map((entry) => ({
+        ...entry,
+        clinicalCategory: 'primary',
+        confirmationStatus: 'confirmed',
+        diagnosisRole: 'main',
+        diagnosisStatus: 'confirmed',
+      })),
+    )
 
     const raw = localStorage.getItem(`diagnosen:${caseId}`)
     expect(raw!.startsWith(ENCRYPTED_STORE_PREFIX)).toBe(true)

@@ -1,14 +1,16 @@
 import { Trash2, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { useTranslation } from '../../context/TranslationContext'
 import { usePermissionContext } from '../../contexts/PermissionContext'
 import {
   CASE_ACCESS_GRANT_LEVELS,
-  CASE_ACCESS_LABELS_DE,
+  CASE_ACCESS_LABEL_KEYS,
   isGrantLevelAllowed,
   type CaseAccessLevel,
 } from '../../data/org/caseAccessLevels'
-import { teamRoleLabelDe } from '../../data/org/teamRoles'
+import { teamRoleLabelKey } from '../../data/org/teamRoles'
+import type { OrganisationRole } from '../../types/organisation'
 import { useCaseAccessSnapshot } from '../../hooks/useCaseAccessSnapshot'
 import {
   claimCaseOwner,
@@ -21,6 +23,10 @@ import {
   setupVaultKeyForMember,
 } from '../../utils/orgCaseVault'
 import { ClinicalLoading } from '../ui/ClinicalLoading'
+import {
+  formatSettingsExtraUi,
+  translateSettingsExtraUi,
+} from '../../data/settingsExtraUiTranslations'
 import '../../styles/case-access-panel.css'
 
 interface CaseAccessPanelProps {
@@ -37,6 +43,11 @@ function memberLabel(member: TeamMemberProfile): string {
 
 export function CaseAccessPanel({ caseId, caseTitle, onClose }: CaseAccessPanelProps) {
   const { user } = useAuth()
+  const { t, language } = useTranslation()
+  const roleLabel = (role: OrganisationRole): string => {
+    const key = teamRoleLabelKey(role)
+    return key ? t(key) : role
+  }
   const { organisation, role } = usePermissionContext()
   const { snapshot, isLoading, error, refresh } = useCaseAccessSnapshot(caseId)
 
@@ -108,7 +119,7 @@ export function CaseAccessPanel({ caseId, caseTitle, onClose }: CaseAccessPanelP
     if (!organisation?.id) return
     try {
       await setupVaultKeyForMember(organisation.id, caseId, targetUserId)
-      setVaultSetupMessage('Verschlüsselung für Mitglied eingerichtet.')
+      setVaultSetupMessage(translateSettingsExtraUi(language, 'caseVaultSetupDone'))
     } catch (err) {
       if (err instanceof OrgVaultKeySetupError) {
         setActionError(err.message)
@@ -116,7 +127,7 @@ export function CaseAccessPanel({ caseId, caseTitle, onClose }: CaseAccessPanelP
         setActionError(
           err instanceof Error
             ? err.message
-            : 'Verschlüsselung konnte nicht eingerichtet werden.',
+            : translateSettingsExtraUi(language, 'caseVaultSetupFailed'),
         )
       }
     }
@@ -134,7 +145,7 @@ export function CaseAccessPanel({ caseId, caseTitle, onClose }: CaseAccessPanelP
       setSelectedUserId('')
       setSelectedLevel('read_only')
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Speichern fehlgeschlagen')
+      setActionError(err instanceof Error ? err.message : translateSettingsExtraUi(language, 'commonSaveFailed'))
     } finally {
       setSaving(false)
     }
@@ -147,7 +158,7 @@ export function CaseAccessPanel({ caseId, caseTitle, onClose }: CaseAccessPanelP
       await setCaseAccessForCase(caseId, targetUserId, 'no_access')
       await refresh()
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Entfernen fehlgeschlagen')
+      setActionError(err instanceof Error ? err.message : translateSettingsExtraUi(language, 'caseRemoveFailed'))
     } finally {
       setSaving(false)
     }
@@ -162,7 +173,7 @@ export function CaseAccessPanel({ caseId, caseTitle, onClose }: CaseAccessPanelP
       await setupVaultEncryption(targetUserId, level)
       await refresh()
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Speichern fehlgeschlagen')
+      setActionError(err instanceof Error ? err.message : translateSettingsExtraUi(language, 'commonSaveFailed'))
     } finally {
       setSaving(false)
     }
@@ -183,7 +194,7 @@ export function CaseAccessPanel({ caseId, caseTitle, onClose }: CaseAccessPanelP
         <header className="case-access-panel__header">
           <div>
             <h2 id="case-access-panel-title" className="case-access-panel__title">
-              Fallfreigabe
+              {translateSettingsExtraUi(language, 'caseAccessTitle')}
             </h2>
             {caseTitle ? (
               <p className="case-access-panel__subtitle">{caseTitle}</p>
@@ -193,24 +204,24 @@ export function CaseAccessPanel({ caseId, caseTitle, onClose }: CaseAccessPanelP
             type="button"
             className="case-access-panel__close"
             onClick={onClose}
-            aria-label="Schließen"
+            aria-label={translateSettingsExtraUi(language, 'commonClose')}
           >
             <X className="h-4 w-4" strokeWidth={2} aria-hidden />
           </button>
         </header>
 
         {loading ? (
-          <ClinicalLoading label="Zugriffe werden geladen…" />
+          <ClinicalLoading label={translateSettingsExtraUi(language, 'caseAccessLoading')} />
         ) : error ? (
           <p className="clinical-empty-state">{error}</p>
         ) : !canManage ? (
           <p className="clinical-empty-state">
-            Sie haben keine Berechtigung, die Fallfreigabe zu verwalten.
+            {translateSettingsExtraUi(language, 'caseNoPermission')}
           </p>
         ) : (
           <div className="case-access-panel__body">
             <p className="case-access-panel__intro">
-              Legen Sie fest, welche Teammitglieder Zugriff auf diesen Fall erhalten.
+              {translateSettingsExtraUi(language, 'caseAccessIntro')}
             </p>
 
             {actionError ? (
@@ -227,12 +238,12 @@ export function CaseAccessPanel({ caseId, caseTitle, onClose }: CaseAccessPanelP
 
             <section className="case-access-panel__section" aria-labelledby="case-access-grants">
               <h3 id="case-access-grants" className="case-access-panel__section-heading">
-                Aktuelle Freigaben
+                {translateSettingsExtraUi(language, 'caseCurrentGrants')}
               </h3>
               {snapshot?.grants.filter((g) => !g.isOwner || snapshot.grants.length > 1).length ===
               0 ? (
                 <p className="clinical-empty-state clinical-empty-state--compact">
-                  Noch keine Freigaben für andere Mitglieder.
+                  {translateSettingsExtraUi(language, 'caseNoGrants')}
                 </p>
               ) : (
                 <ul className="case-access-panel__grant-list">
@@ -246,18 +257,18 @@ export function CaseAccessPanel({ caseId, caseTitle, onClose }: CaseAccessPanelP
                           <span className="case-access-panel__grant-name">
                             {grant.displayName ?? grant.email ?? grant.userId.slice(0, 8)}
                             {grant.isOwner ? (
-                              <span className="case-access-panel__owner-badge">Fallinhaber</span>
+                              <span className="case-access-panel__owner-badge">{translateSettingsExtraUi(language, 'caseOwnerBadge')}</span>
                             ) : null}
                           </span>
                           {targetRole ? (
                             <span className="case-access-panel__grant-role">
-                              {teamRoleLabelDe(targetRole)}
+                              {roleLabel(targetRole)}
                             </span>
                           ) : null}
                         </div>
                         {grant.userId === user?.id ? (
                           <span className="case-access-panel__grant-level-static">
-                            {CASE_ACCESS_LABELS_DE[grant.level]}
+                            {t(CASE_ACCESS_LABEL_KEYS[grant.level])}
                           </span>
                         ) : (
                           <div className="case-access-panel__grant-actions">
@@ -271,11 +282,13 @@ export function CaseAccessPanel({ caseId, caseTitle, onClose }: CaseAccessPanelP
                                   e.target.value as CaseAccessLevel,
                                 )
                               }
-                              aria-label={`Zugriffsstufe für ${grant.displayName ?? grant.userId}`}
+                              aria-label={formatSettingsExtraUi(language, 'caseAccessLevelForAria', {
+                                name: grant.displayName ?? grant.userId,
+                              })}
                             >
                               {options.map((opt) => (
                                 <option key={opt} value={opt}>
-                                  {CASE_ACCESS_LABELS_DE[opt]}
+                                  {t(CASE_ACCESS_LABEL_KEYS[opt])}
                                 </option>
                               ))}
                             </select>
@@ -285,8 +298,8 @@ export function CaseAccessPanel({ caseId, caseTitle, onClose }: CaseAccessPanelP
                                 className="case-access-panel__remove"
                                 disabled={saving}
                                 onClick={() => void handleRemoveGrant(grant.userId)}
-                                aria-label="Zugriff entfernen"
-                                title="Zugriff entfernen"
+                                aria-label={translateSettingsExtraUi(language, 'caseRemoveAccess')}
+                                title={translateSettingsExtraUi(language, 'caseRemoveAccess')}
                               >
                                 <Trash2 className="h-3.5 w-3.5" aria-hidden />
                               </button>
@@ -303,7 +316,7 @@ export function CaseAccessPanel({ caseId, caseTitle, onClose }: CaseAccessPanelP
             {grantableMembers.length > 0 ? (
               <section className="case-access-panel__section" aria-labelledby="case-access-add">
                 <h3 id="case-access-add" className="case-access-panel__section-heading">
-                  Freigabe hinzufügen
+                  {translateSettingsExtraUi(language, 'caseAddGrant')}
                 </h3>
                 <div className="case-access-panel__add-form">
                   <select
@@ -320,16 +333,16 @@ export function CaseAccessPanel({ caseId, caseTitle, onClose }: CaseAccessPanelP
                         }
                       }
                     }}
-                    aria-label="Teammitglied"
+                    aria-label={translateSettingsExtraUi(language, 'caseTeamMemberAria')}
                   >
-                    <option value="">Mitglied wählen…</option>
+                    <option value="">{translateSettingsExtraUi(language, 'caseSelectMember')}</option>
                     {grantableMembers
                       .filter(
                         (m) => !snapshot?.grants.some((g) => g.userId === m.userId && !g.isOwner),
                       )
                       .map((member) => (
                         <option key={member.userId} value={member.userId}>
-                          {memberLabel(member)} ({teamRoleLabelDe(member.role)})
+                          {memberLabel(member)} ({roleLabel(member.role)})
                         </option>
                       ))}
                   </select>
@@ -338,7 +351,7 @@ export function CaseAccessPanel({ caseId, caseTitle, onClose }: CaseAccessPanelP
                     value={selectedLevel}
                     onChange={(e) => setSelectedLevel(e.target.value as CaseAccessLevel)}
                     disabled={!selectedUserId}
-                    aria-label="Zugriffsstufe"
+                    aria-label={translateSettingsExtraUi(language, 'caseAccessLevelAria')}
                   >
                     {(selectedUserId
                       ? levelOptionsForTarget(
@@ -348,7 +361,7 @@ export function CaseAccessPanel({ caseId, caseTitle, onClose }: CaseAccessPanelP
                       : CASE_ACCESS_GRANT_LEVELS
                     ).map((opt) => (
                       <option key={opt} value={opt}>
-                        {CASE_ACCESS_LABELS_DE[opt]}
+                        {t(CASE_ACCESS_LABEL_KEYS[opt])}
                       </option>
                     ))}
                   </select>
@@ -358,7 +371,7 @@ export function CaseAccessPanel({ caseId, caseTitle, onClose }: CaseAccessPanelP
                     disabled={!selectedUserId || saving}
                     onClick={() => void handleSaveGrant()}
                   >
-                    Speichern
+                    {translateSettingsExtraUi(language, 'commonSave')}
                   </button>
                 </div>
               </section>
@@ -366,8 +379,7 @@ export function CaseAccessPanel({ caseId, caseTitle, onClose }: CaseAccessPanelP
 
             {organisation?.tier === 'small_praxis' ? (
               <p className="case-access-panel__hint">
-                Mitglieder ohne explizite Freigabe sehen diesen Fall nicht, sobald Freigaben
-                konfiguriert sind.
+                {translateSettingsExtraUi(language, 'caseSmallPraxisHint')}
               </p>
             ) : null}
           </div>

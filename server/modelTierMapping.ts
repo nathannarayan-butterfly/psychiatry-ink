@@ -1,5 +1,5 @@
 export type AiModelTier = 'fast' | 'standard' | 'thorough'
-export type AiProviderId = 'openai' | 'deepseek' | 'google'
+export type AiProviderId = 'openai' | 'deepseek' | 'google' | 'mistral'
 
 export interface AiModelSpec {
   provider: AiProviderId
@@ -26,6 +26,17 @@ const OPENAI_THOROUGH = process.env.OPENAI_THOROUGH_MODEL ?? 'gpt-4.1'
  * `max_tokens` clamp is no longer required (see `llmProvider.ts`).
  */
 const DEEPSEEK_FAST = process.env.DEEPSEEK_FAST_MODEL ?? 'deepseek-v4-flash'
+
+/**
+ * Mistral AI (la Plateforme, https://api.mistral.ai/v1) is a French/EU provider
+ * exposing an OpenAI-compatible ChatCompletions API, so it reuses the same call
+ * path as OpenAI/DeepSeek. It counts as an EU-residency provider (see
+ * `providerResidency.ts`), making it a compliant fallback under `LLM_RESIDENCY=eu`.
+ * `mistral-small-latest` covers the fast/standard tiers; `mistral-large-latest`
+ * the thorough tier. Both are overridable via env.
+ */
+const MISTRAL_SMALL = process.env.MISTRAL_SMALL_MODEL ?? 'mistral-small-latest'
+const MISTRAL_LARGE = process.env.MISTRAL_LARGE_MODEL ?? 'mistral-large-latest'
 
 /** Legacy DeepSeek models capped at 8K output tokens (retired 2026-07-24). */
 const DEEPSEEK_LEGACY_8K_MODELS = new Set(['deepseek-chat', 'deepseek-reasoner'])
@@ -78,10 +89,24 @@ export const MODEL_TIER_FALLBACK: Partial<Record<AiModelTier, AiModelSpec>> = {
   },
 }
 
-function hasProviderKey(provider: AiProviderId): boolean {
+/**
+ * EU-residency Mistral spec for a tier. Used as a residency-compliant fallback
+ * (see `resolveLlmCallModel.ts`) and for explicit user selection.
+ */
+export function mistralSpecForTier(tier: AiModelTier): AiModelSpec {
+  const modelId = tier === 'thorough' ? MISTRAL_LARGE : MISTRAL_SMALL
+  return {
+    provider: 'mistral',
+    modelId,
+    label: `Mistral AI (${modelId})`,
+  }
+}
+
+export function hasProviderKey(provider: AiProviderId): boolean {
   if (provider === 'openai') return Boolean(process.env.OPENAI_API_KEY?.trim())
   if (provider === 'deepseek') return Boolean(process.env.DEEPSEEK_API_KEY?.trim())
   if (provider === 'google') return Boolean(process.env.GOOGLE_API_KEY?.trim())
+  if (provider === 'mistral') return Boolean(process.env.MISTRAL_API_KEY?.trim())
   return false
 }
 
