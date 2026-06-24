@@ -1,7 +1,10 @@
 import './loadEnv'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import cors from 'cors'
 import express from 'express'
 import { prisma } from './db'
+import { configureClientServing } from './serveClient'
 import { optionalAuth } from './middleware/auth'
 import { accountRouter } from './routes/account'
 import { creditsRouter } from './routes/credits'
@@ -52,6 +55,14 @@ import {
 const app = express()
 const port = Number(process.env.PORT ?? process.env.API_PORT ?? 8080)
 const host = process.env.API_HOST ?? '0.0.0.0'
+
+// Log the boot environment immediately so Cloud Run logs show what PORT/host the
+// process will bind to even if something later in startup is slow. Cloud Run
+// only injects PORT (+ whatever env you configure); there is no .env.local in
+// prod, so every other var is intentionally optional at boot.
+console.log(
+  `[api] boot: PORT=${process.env.PORT ?? '(unset)'} -> binding ${host}:${port} (NODE_ENV=${process.env.NODE_ENV ?? 'undefined'})`,
+)
 
 app.use(cors({ origin: true }))
 app.use(optionalAuth)
@@ -113,12 +124,21 @@ if (isEnterpriseOrgHierarchyEnabled()) {
   app.use('/api/enterprise', enterpriseRouter)
 }
 
+// Serve the built Vite client (dist/) from the same service with SPA fallback so
+// same-origin /api/* works in the single-service Cloud Run topology. Registered
+// after all /api routers. No-op (never throws) when dist/ is absent.
+const distDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist')
+const servingClient = configureClientServing(app, distDir)
+
 app.listen(port, host, () => {
   const openai = Boolean(process.env.OPENAI_API_KEY?.trim())
   const deepseek = Boolean(process.env.DEEPSEEK_API_KEY?.trim())
   const livekitMissing = liveKitMissingEnvVars()
   const livekit = livekitMissing.length === 0
   console.log(`[api] listening on http://${host}:${port}`)
+  console.log(
+    `[api] client build: ${servingClient ? `served from ${distDir}` : 'not served (dist/ absent — split deploy or dev)'}`,
+  )
   console.log(`[api] keys: OPENAI=${openai ? 'yes' : 'no'} DEEPSEEK=${deepseek ? 'yes' : 'no'} LIVEKIT=${livekit ? 'yes' : 'no'}`)
   console.log(`[api] psychopath extract AI: ${isPsychopathExtractAiEnabled() ? 'enabled' : 'disabled (set ENABLE_PSYCHOPATH_EXTRACT_AI=true in .env.local and restart api)'}`)
   console.log(`[api] clinical intelligence V1: ${isClinicalIntelligenceV1Enabled() ? 'enabled' : 'disabled (set CLINICAL_INTELLIGENCE_V1_ENABLED=true in .env.local and restart api)'}`)
