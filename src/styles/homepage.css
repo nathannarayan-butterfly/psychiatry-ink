@@ -63,6 +63,15 @@ body:has(.auth-page) {
 /* —— Page shell —— */
 
 .hp-page {
+  /* Marketing brand accent — professional medical blue, scoped to public
+   * homepage/marketing surfaces only. The clinical workspace keeps the global
+   * --accent (brown) from globals.css. --accent-hover/-soft/-ultrasoft are
+   * declared in globals.css relative to var(--accent), so they recompute to
+   * blue automatically for everything under .hp-page (nav, hero, pricing,
+   * features, CTAs, footer, demo frames). */
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+
   min-height: 100dvh;
   background: var(--app-bg, #ffffff);
   color: var(--text-main);
