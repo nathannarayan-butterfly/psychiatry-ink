@@ -19,7 +19,7 @@ export const homepageContentEn: HomepageContent = {
   },
   hero: {
     eyebrow: 'Psychiatric clinical workspace',
-    headline: 'Psychiatry.Ink — the clinical workspace for modern psychiatry.',
+    headline: 'Psychiatry.Ink — the intelligent workspace for modern psychiatry.',
     subtitle:
       'Psychiatry.Ink is a secure psychiatric workspace for documentation, case discussion, psychopharmacology reference, treatment planning, clinical tools, and AI-assisted clinical intelligence. AI supports structuring, review, and reasoning — clinician acceptance is always required.',
     primaryCta: 'Open Workspace',

@@ -19,7 +19,7 @@ export const homepageContentEs: HomepageContent = {
   },
   hero: {
     eyebrow: 'Espacio de trabajo clínico para psiquiatría',
-    headline: 'Psychiatry.Ink — el espacio de trabajo clínico para la psiquiatría moderna.',
+    headline: 'Psychiatry.Ink — el espacio de trabajo inteligente para la psiquiatría moderna.',
     subtitle:
       'Psychiatry.Ink reúne en un espacio seguro la documentación, la sesión clínica, la referencia psicofarmacológica, la planificación terapéutica, las herramientas clínicas y el apoyo al razonamiento clínico asistido por IA. La IA acompaña la estructuración, la revisión y el razonamiento — la validación del clínico siempre es necesaria.',
     primaryCta: 'Abrir el espacio de trabajo',

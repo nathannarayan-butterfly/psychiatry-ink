@@ -19,7 +19,7 @@ export const homepageContentFr: HomepageContent = {
   },
   hero: {
     eyebrow: 'Espace de travail clinique pour la psychiatrie',
-    headline: 'Psychiatry.Ink — l\'espace de travail clinique de la psychiatrie moderne.',
+    headline: 'Psychiatry.Ink — l\'espace de travail intelligent de la psychiatrie moderne.',
     subtitle:
       'Psychiatry.Ink réunit dans un espace sécurisé la documentation, la discussion de cas, la référence psychopharmacologique, la planification thérapeutique, les outils cliniques et l\'aide au raisonnement clinique assistée par IA. L\'IA accompagne la structuration, la relecture et le raisonnement — la validation par le clinicien reste toujours requise.',
     primaryCta: 'Ouvrir l\'espace de travail',

@@ -19,7 +19,7 @@ export const homepageContentDe: HomepageContent = {
   },
   hero: {
     eyebrow: 'Klinischer Arbeitsbereich für die Psychiatrie',
-    headline: 'Psychiatry.Ink — der klinische Arbeitsbereich für die moderne Psychiatrie.',
+    headline: 'Psychiatry.Ink — der intelligente Arbeitsbereich für die moderne Psychiatrie.',
     subtitle:
       'Psychiatry.Ink bündelt Dokumentation, Fallbesprechung, psychopharmakologische Referenz, Therapieplanung, klinische Tools und KI-gestützte Clinical Intelligence in einem sicheren Arbeitsbereich. Die KI unterstützt beim Strukturieren, Prüfen und klinischen Reasoning — die ärztliche Freigabe bleibt immer erforderlich.',
     primaryCta: 'Arbeitsbereich öffnen',
