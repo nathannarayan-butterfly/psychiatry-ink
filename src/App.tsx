@@ -62,6 +62,14 @@ export default function App() {
       route.view === 'enterprise-integrations' ||
       route.view === 'enterprise-sso')
 
+  // Local-dev convenience ONLY: skip the Supabase login when running an unconfigured
+  // `vite dev` server. `import.meta.env.DEV` is statically `false` in a production
+  // (`vite build`) bundle, so this whole branch is tree-shaken out of the shipped app.
+  // Gating on DEV — not merely on `!isConfigured` — guarantees a production build can
+  // NEVER drop a visitor into an authenticated account without a real Supabase session,
+  // even if it was built/deployed without the VITE_SUPABASE_* env vars.
+  const allowDevNoAuthEntry = import.meta.env.DEV && !isConfigured
+
   useEffect(() => {
     // The registry is encrypted-at-rest, so it must be decrypted asynchronously before the
     // default case is ensured — a synchronous `ensureDefaultCase()` here would read an empty
@@ -85,7 +93,10 @@ export default function App() {
 
   useEffect(() => {
     if (authLoading) return
-    if (!isConfigured) return
+    // In a dev no-auth build the guard is intentionally skipped. In every production
+    // build (configured OR not) the guard runs, so an unauthenticated visitor on an app
+    // route is always bounced to /login instead of reaching authenticated UI.
+    if (allowDevNoAuthEntry) return
 
     const onAppRoute = isAppRoute(route)
     const onAuthPage = route.view === 'login' || route.view === 'signup'
@@ -130,7 +141,7 @@ export default function App() {
       const redirect = params.get('redirect')
       navigate(redirect && redirect.startsWith('/') ? redirect : '/dashboard', true)
     }
-  }, [authLoading, canAccessEnterpriseUi, hasAuditDebugAccess, hasKbAdminAccess, isConfigured, isEnterpriseRoute, isRestrictedConsultant, navigate, route, user])
+  }, [allowDevNoAuthEntry, authLoading, canAccessEnterpriseUi, hasAuditDebugAccess, hasKbAdminAccess, isEnterpriseRoute, isRestrictedConsultant, navigate, route, user])
 
   const showDashboard = route.view === 'dashboard'
   const showKbAdmin = route.view === 'kb-admin'
@@ -171,8 +182,8 @@ export default function App() {
     onLogin: () => navigate('/login'),
     onNavigate: navigate,
     isAuthenticated: Boolean(user),
-    showDevEntry: !isConfigured,
-    onEnterApp: !isConfigured ? () => navigate('/dashboard') : undefined,
+    showDevEntry: allowDevNoAuthEntry,
+    onEnterApp: allowDevNoAuthEntry ? () => navigate('/dashboard') : undefined,
   }
 
   if (route.view === 'landing') {
@@ -226,6 +237,14 @@ export default function App() {
         {translateUi(languageSettings.language, 'aiUsageTrackerLoading')}
       </div>
     )
+  }
+
+  // Fail closed: an app route with no authenticated user must never render the
+  // authenticated UI. The guard effect above redirects to /login; render nothing in
+  // the meantime so no dashboard/case content flashes. The only exception is the
+  // dev-only no-auth entry (compile-time false in production).
+  if (isAppRoute(route) && !user && !allowDevNoAuthEntry) {
+    return null
   }
 
   return (

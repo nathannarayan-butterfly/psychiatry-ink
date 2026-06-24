@@ -24,6 +24,21 @@ RUN npm ci
 # ---- Stage 2: build ------------------------------------------------------------
 FROM deps AS builder
 
+# Vite INLINES VITE_* vars at `vite build` time — they must be present in THIS stage,
+# not merely at Cloud Run runtime. If they are missing the client bundle ships with an
+# unconfigured Supabase client; the app then shows the login page (never an
+# authenticated account — the dev no-auth entry is compile-time disabled in prod).
+# The anon/publishable key is a public client credential and is safe to inline in the
+# browser bundle. NEVER pass the service_role / secret key as a VITE_* build arg.
+ARG VITE_SUPABASE_URL=""
+ARG VITE_SUPABASE_ANON_KEY=""
+ARG VITE_SUPABASE_PUBLISHABLE_KEY=""
+ARG VITE_API_BASE_URL=""
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
+ENV VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
 COPY . .
 RUN npx prisma generate
 RUN npm run build

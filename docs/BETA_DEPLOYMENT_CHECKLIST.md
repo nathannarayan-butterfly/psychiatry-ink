@@ -117,6 +117,58 @@ flag. Disable again the moment the admin operator stands down.
 
 ---
 
+## 4.1 Pass the public Supabase config as Docker BUILD ARGS (critical)
+
+Vite **inlines** every `VITE_*` variable into the client bundle at `vite build`
+time. The Dockerfile runs `npm run build` in the `builder` stage, so the
+`VITE_SUPABASE_*` values MUST be present **as build args at image-build time** —
+setting them only as Cloud Run runtime env vars is too late and leaves the
+shipped bundle with an unconfigured Supabase client.
+
+The Dockerfile declares these builder-stage `ARG`s:
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY` (or the alias `VITE_SUPABASE_PUBLISHABLE_KEY`)
+- `VITE_API_BASE_URL` (optional; same-origin `/api` if empty)
+
+Build the image passing the **public** Supabase URL + anon/publishable key
+(never the service role / secret key):
+
+```bash
+docker build \
+  --build-arg VITE_SUPABASE_URL="https://<beta-project>.supabase.co" \
+  --build-arg VITE_SUPABASE_ANON_KEY="<beta-anon-or-publishable-key>" \
+  -t <region>-docker.pkg.dev/<project>/<repo>/psychiatry-ink:latest \
+  .
+```
+
+With Cloud Build, pass the same values via `--substitutions` mapped to
+`--build-arg` in the build step, e.g.:
+
+```bash
+gcloud builds submit \
+  --substitutions=_VITE_SUPABASE_URL="https://<beta-project>.supabase.co",_VITE_SUPABASE_ANON_KEY="<beta-anon-key>" \
+  --config=cloudbuild.yaml .
+# where the docker build step passes:
+#   --build-arg VITE_SUPABASE_URL=$_VITE_SUPABASE_URL
+#   --build-arg VITE_SUPABASE_ANON_KEY=$_VITE_SUPABASE_ANON_KEY
+```
+
+Defence in depth: even if these args are omitted, the production bundle now
+shows the login page (the dev no-auth entry is compile-time disabled in a
+`vite build`) — it will NEVER drop a visitor into an authenticated account.
+But auth cannot function without them, so a correct deploy must pass them.
+
+> Verify after build: `grep -ro "<beta-project>.supabase.co" dist/` returns
+> matches (Supabase config inlined). The dev no-auth entry is compile-time
+> disabled — confirm the homepage passes no enter-app handler in prod:
+> `grep -o "onEnterApp:void 0" dist/assets/*.js` returns a match (the
+> `import.meta.env.DEV` branch was tree-shaken, so the "enter without sign-in"
+> button can never render). Note: the German label string itself stays in the
+> bundle as inert homepage copy — grepping for it is NOT a valid check.
+
+---
+
 ## 5. Pre-deploy verification (run from a clean checkout)
 
 ```bash
