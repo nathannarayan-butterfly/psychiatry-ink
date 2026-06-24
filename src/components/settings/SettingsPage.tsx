@@ -14,6 +14,7 @@ import { KiInstructionsSettings } from './KiInstructionsSettings'
 import { KiModelSettings } from './KiModelSettings'
 import type { useKiInstructions } from '../../hooks/useKiInstructions'
 import { useAiModelPreferences } from '../../hooks/useAiModelPreferences'
+import { useSystemAdminAccess } from '../../hooks/useSystemAdminAccess'
 import { PatientPrivacySection } from './PatientPrivacySection'
 import { LabImportSection } from './LabImportSection'
 import { ParserOptimizationSection } from './ParserOptimizationSection'
@@ -67,6 +68,9 @@ export function SettingsPage({
 }: SettingsPageProps) {
   const { t } = useTranslation()
   const modelPreferences = useAiModelPreferences()
+  const hasSystemAdminAccess = useSystemAdminAccess()
+  // KB Admin is a privileged console; never surface its chrome to normal production users.
+  const showKbAdmin = hasSystemAdminAccess || import.meta.env.DEV
 
   const sectionGroups: SettingsSectionGroup[] = useMemo(
     () => [
@@ -92,7 +96,9 @@ export function SettingsPage({
           { id: 'ai', label: t('settingsAi') },
           { id: 'privacy', label: t('settingsPrivacy') },
           { id: 'about', label: t('settingsAbout') },
-          { id: 'kb-admin', label: t('settingsKbAdmin') },
+          ...(showKbAdmin
+            ? [{ id: 'kb-admin' as const, label: t('settingsKbAdmin') }]
+            : []),
         ],
       },
       {
@@ -103,7 +109,7 @@ export function SettingsPage({
         ],
       },
     ],
-    [t],
+    [t, showKbAdmin],
   )
 
   useEffect(() => {
@@ -164,7 +170,7 @@ export function SettingsPage({
           {activeSection === 'lab' ? <LabImportSection /> : null}
           {activeSection === 'parser-optimization' ? <ParserOptimizationSection /> : null}
           {activeSection === 'overview-widgets' ? <OverviewWidgetsSettingsSection /> : null}
-          {activeSection === 'kb-admin' ? <KbAdminSection /> : null}
+          {showKbAdmin && activeSection === 'kb-admin' ? <KbAdminSection /> : null}
           {activeSection === 'ai' ? (
             <>
               <KiModelSettings modelPreferences={modelPreferences} />

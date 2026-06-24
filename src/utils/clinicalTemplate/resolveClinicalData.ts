@@ -33,6 +33,7 @@ import type {
 } from './clinicalData'
 import { EMPTY_CLINICAL_DATA } from './clinicalData'
 import type { VerlaufWindowPreset } from '../../types/clinicalTemplate'
+import { resolveAnamneseSections } from './resolveAnamnese'
 
 function genderLabel(g?: string): string | undefined {
   if (g === 'maennlich') return 'männlich'
@@ -313,6 +314,7 @@ export async function resolveClinicalData(
       admission: resolveVerlauf(caseId, 'admission'),
       all: resolveVerlauf(caseId, 'all'),
     },
+    anamnese: { sections: resolveAnamneseSections(caseId) },
     psychopathology: resolvePsychopathology(caseId),
     risk: resolveRisk(caseId),
     therapy: resolveTherapy(caseId),

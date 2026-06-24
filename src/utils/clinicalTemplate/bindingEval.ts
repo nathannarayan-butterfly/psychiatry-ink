@@ -28,6 +28,8 @@ export function bindingToText(binding: ClinicalBinding | 'all', data: ResolvedCl
         .join('; ')
     case 'verlauf.selectedRange':
       return data.verlauf.entries.map((e) => [e.date, e.text].filter(Boolean).join(': ')).join('\n')
+    case 'anamnese.current':
+      return data.anamnese.sections.map((s) => [s.label, s.text].filter(Boolean).join('\n')).join('\n\n')
     case 'psychopathology.latest':
       return data.psychopathology?.text ?? ''
     case 'risk.current':
@@ -45,6 +47,7 @@ export function bindingToText(binding: ClinicalBinding | 'all', data: ResolvedCl
           ['Medikation', bindingToText('medication.current', data)],
           ['Labor', bindingToText('labs.latest', data)],
           ['Verlauf', bindingToText('verlauf.selectedRange', data)],
+          ['Anamnese', bindingToText('anamnese.current', data)],
           ['Psychopathologie', bindingToText('psychopathology.latest', data)],
           ['Risiko', bindingToText('risk.current', data)],
           ['Therapie', bindingToText('therapy.current', data)],

@@ -56,7 +56,6 @@ import { criteriaGenerateDraftRouter } from './routes/criteriaGenerateDraft'
 import { labMedicationCorrelationRouter } from './routes/labMedicationCorrelation'
 import { prepAiCheckRouter } from './routes/prepAiCheck'
 import { medicationPriorTherapiesRouter } from './routes/medicationPriorTherapies'
-import { demoPatientRouter } from './routes/demoPatient'
 import { aiBudgetRouter, aiUsageRouter } from './routes/aiUsage'
 import { aiCreditsRouter } from './routes/aiCredits'
 import { stripeWebhookRouter } from './routes/stripeWebhook'
@@ -183,7 +182,6 @@ app.use('/api/combination-check', combinationCheckRouter)
 app.use('/api/lab-med-correlation', labMedicationCorrelationRouter)
 app.use('/api/medication/prep-ai-check', prepAiCheckRouter)
 app.use('/api/medication/prior-therapies', medicationPriorTherapiesRouter)
-app.use('/api/demo-patient', demoPatientRouter)
 app.use('/api/ai-usage', aiUsageRouter)
 app.use('/api/ai-budget', aiBudgetRouter)
 app.use('/api/ai-credits', aiCreditsRouter)

@@ -1,5 +1,7 @@
 import type { DocumentTemplate, GeneratedDocument, TemplateField, TemplateRenderContext } from '../../types/documentTemplate'
 import { UNRESOLVED_PLACEHOLDER } from './constants'
+import { evaluateCondition } from './evaluateCondition'
+import { normalizeFieldType } from './fieldTypeNormalize'
 import { htmlToPlainLines, sanitizeRichHtml, escapeHtml } from './htmlUtils'
 import { resolveBinding } from './placeholderContext'
 import { resolveDynamicField } from './resolveDynamicField'
@@ -8,17 +10,31 @@ import { renderFieldGridCellStyle, resolveFieldColSpan, resolveFieldMinHeightMm 
 import { ensureRichHtml } from './richText'
 import { FONT_SANS } from '../../styles/typographyTokens'
 
+function effectiveFieldType(field: TemplateField): TemplateField['type'] {
+  return normalizeFieldType(field.type)
+}
+
+function isFieldVisibleInDocument(
+  field: TemplateField,
+  fieldValues: Record<string, string | boolean | string[]>,
+): boolean {
+  if (field.type === 'conditional_section') return false
+  return evaluateCondition(field.showWhen, fieldValues)
+}
+
 function isPlaceholderType(type: TemplateField['type']): boolean {
+  const t = normalizeFieldType(type)
   return (
-    type === 'patient_placeholder' ||
-    type === 'case_placeholder' ||
-    type === 'clinician_placeholder' ||
-    type === 'organization_placeholder'
+    t === 'patient_placeholder' ||
+    t === 'case_placeholder' ||
+    t === 'clinician_placeholder' ||
+    t === 'organization_placeholder'
   )
 }
 
 function isMultiSelectType(type: TemplateField['type']): boolean {
-  return type === 'checkbox_group' || type === 'multi_select'
+  const t = normalizeFieldType(type)
+  return t === 'checkbox_group' || t === 'multi_select'
 }
 
 function fieldValueToString(
@@ -27,7 +43,7 @@ function fieldValueToString(
   context: TemplateRenderContext,
   markUnresolved: boolean,
 ): string {
-  if (field.type === 'checkbox') {
+  if (field.type === 'checkbox' || field.type === 'legal_checkbox') {
     return value === true ? '☑' : '☐'
   }
   if (isMultiSelectType(field.type)) {
@@ -240,7 +256,8 @@ export function buildInitialFieldValues(
 ): Record<string, string | boolean | string[]> {
   const values: Record<string, string | boolean | string[]> = {}
   for (const field of template.fields) {
-    if (field.type === 'checkbox') {
+    const type = effectiveFieldType(field)
+    if (field.type === 'checkbox' || field.type === 'legal_checkbox') {
       values[field.id] = field.defaultValue === true
     } else if (isMultiSelectType(field.type)) {
       values[field.id] = Array.isArray(field.defaultValue) ? [...field.defaultValue] : []
@@ -248,14 +265,30 @@ export function buildInitialFieldValues(
       values[field.id] = resolveBinding(field.binding, context)
     } else if (field.type === 'dynamic' && field.dynamicKey) {
       values[field.id] = resolveDynamicField(field.dynamicKey, context)
+    } else if (
+      field.type === 'medication_selector' ||
+      field.type === 'diagnosis_selector' ||
+      field.type === 'risk_selector'
+    ) {
+      if (field.type === 'medication_selector') {
+        values[field.id] = context.case?.medikationKurz ?? ''
+      } else if (field.type === 'diagnosis_selector') {
+        values[field.id] = context.case?.diagnosis ?? ''
+      } else {
+        values[field.id] = ''
+      }
+    } else if (field.type === 'repeatable_list') {
+      values[field.id] = Array.isArray(field.defaultValue) ? [...field.defaultValue] : []
     } else if (field.type === 'yes_no' || field.type === 'radio_group') {
       values[field.id] = typeof field.defaultValue === 'string' ? field.defaultValue : ''
+    } else if (field.type === 'date' && !field.defaultValue) {
+      values[field.id] = context.system?.date ?? ''
     } else if (field.type === 'divider' || field.type === 'spacer' || field.type === 'heading') {
       values[field.id] = ''
     } else if (field.defaultValue != null) {
       values[field.id] = String(field.defaultValue)
     } else {
-      values[field.id] = ''
+      values[field.id] = type === 'long_text' || type === 'short_text' ? '' : ''
     }
   }
   return values
@@ -269,7 +302,9 @@ export function renderTemplate(
 ): string {
   const mode = options?.mode ?? 'document'
   const markUnresolved = options?.markUnresolved ?? true
-  const sorted = [...template.fields].sort((a, b) => a.order - b.order)
+  const sorted = [...template.fields]
+    .sort((a, b) => a.order - b.order)
+    .filter((field) => isFieldVisibleInDocument(field, fieldValues))
   return sorted
     .map((field) => renderFieldBlock(field, fieldValues, context, mode, markUnresolved))
     .filter((block) => block.trim().length > 0)
@@ -292,7 +327,9 @@ export function renderTemplateBodyHtml(
   options?: { markUnresolved?: boolean },
 ): string {
   const markUnresolved = options?.markUnresolved ?? true
-  const sorted = [...template.fields].sort((a, b) => a.order - b.order)
+  const sorted = [...template.fields]
+    .sort((a, b) => a.order - b.order)
+    .filter((field) => isFieldVisibleInDocument(field, fieldValues))
 
   const blocks = sorted
     .map((field) => ({

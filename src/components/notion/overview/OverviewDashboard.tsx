@@ -1,6 +1,6 @@
 import { useMemo, useCallback } from 'react'
 import { useTranslation } from '../../../context/TranslationContext'
-import { isClinicalIntelligenceAvailableForCase } from '../../../demo/demoFeatureFlags'
+import { isClinicalIntelligenceAvailableForCase } from '../../../utils/featureFlags'
 import type { TopNavTabId } from '../CaseTopNav'
 import type { NotionPageId } from '../notionPages'
 import { extractSpiegelwerte, pickLatestSpiegelSeries, spiegelGraphId } from '../SpiegelwerteSection'
@@ -17,6 +17,7 @@ import type {
   StatusRibbonItem,
 } from './types'
 import type { SemanticTone } from './OverviewCard'
+import { useOverviewClinicalRefresh } from '../../../hooks/useOverviewClinicalRefresh'
 import { useMedicationPlan } from '../../../hooks/useMedicationPlan'
 import { useCaseAppointments } from '../../../hooks/useCaseAppointments'
 import { isMedicationVisible } from '../../../utils/medication/planOps'
@@ -179,6 +180,7 @@ export function OverviewDashboard({
   const { drugs: knowledgeBaseDrugs } = useKnowledgeBaseDrugs(DEFAULT_MEDICATIONS_COLLECTION_ID)
   const diagnosenRevision = useDiagnosenRevision(caseId)
   const psychopathFindingRevision = usePsychopathFindingRevision(caseId)
+  const clinicalRefreshRevision = useOverviewClinicalRefresh(caseId)
   const verlaufstendenzRevision = useVerlaufstendenzRevision(caseId)
   const { currentPlan } = useMedicationPlan(caseId)
   const appointments = useCaseAppointments(caseId)
@@ -231,6 +233,10 @@ export function OverviewDashboard({
   }, [medications, language, knowledgeBaseDrugs, t])
 
   const befunde = useMemo(() => loadBefunde(caseId), [caseId])
+  const verlaufFeed = useMemo(() => {
+    void clinicalRefreshRevision
+    return loadVerlaufFeed(caseId)
+  }, [caseId, clinicalRefreshRevision])
 
   // ── Safety card ─────────────────────────────────────────────────────────
   const safetyData = useMemo(() => {
@@ -244,8 +250,9 @@ export function OverviewDashboard({
       riskText,
       allergyText: readAllergyText(caseId),
       befunde,
+      verlaufEntries: verlaufFeed,
     })
-  }, [caseId, medications, language, befunde])
+  }, [caseId, medications, language, befunde, verlaufFeed, clinicalRefreshRevision])
 
   // ── Appointment orientation (summary strip) ───────────────────────────────
   const lastContact = useMemo(() => {
@@ -280,10 +287,13 @@ export function OverviewDashboard({
     const activeSubstances = medications
       .filter((m) => m.status === 'active' || m.status === 'reduced' || m.status === 'increased')
       .map((m) => m.substance)
-    return buildLaborOverview({ befunde, medications, activeSubstances })
-  }, [caseId, medications, befunde])
+    return buildLaborOverview({ befunde, medications, activeSubstances, verlaufEntries: verlaufFeed })
+  }, [caseId, medications, befunde, verlaufFeed])
   const recentLabResults = useMemo(() => buildRecentLabResults(befunde), [befunde])
-  const recentVerlauf = useMemo(() => getRecentVerlauf(caseId, language), [caseId, language])
+  const recentVerlauf = useMemo(() => {
+    void clinicalRefreshRevision
+    return getRecentVerlauf(caseId, language)
+  }, [caseId, language, clinicalRefreshRevision])
   const dokumentation = useMemo(() => buildDokumentationSummary(caseId), [caseId])
   const isdmAnalysis = useMemo(() => loadIsdmAnalysis(caseId), [caseId])
   const hasIsdm = isdmAnalysis !== null

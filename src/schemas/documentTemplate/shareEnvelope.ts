@@ -25,6 +25,8 @@ const TEMPLATE_FIELD_TYPES = [
   'static_text',
   'short_text',
   'long_text',
+  'text',
+  'textarea',
   'checkbox',
   'checkbox_group',
   'multi_select',
@@ -42,6 +44,12 @@ const TEMPLATE_FIELD_TYPES = [
   'clinician_placeholder',
   'organization_placeholder',
   'dynamic',
+  'medication_selector',
+  'diagnosis_selector',
+  'risk_selector',
+  'legal_checkbox',
+  'conditional_section',
+  'repeatable_list',
   'signature',
   'ai_assisted_text',
   'heading',
@@ -61,6 +69,13 @@ export const SharedTemplateFieldOptionSchema = z.object({
   label: z.string(),
 })
 
+const TemplateConditionSchema = z.object({
+  id: z.string().min(1),
+  fieldId: z.string().min(1),
+  operator: z.enum(['equals', 'not_equals', 'checked', 'unchecked', 'contains', 'in']),
+  value: z.union([z.string(), z.boolean(), z.array(z.string())]).optional(),
+})
+
 export const SharedTemplateFieldSchema = z.object({
   id: z.string().min(1),
   type: z.enum(TEMPLATE_FIELD_TYPES),
@@ -74,12 +89,25 @@ export const SharedTemplateFieldSchema = z.object({
   helperText: z.string().optional(),
   unit: z.string().optional(),
   order: z.number().int().nonnegative(),
+  sectionId: z.string().optional(),
+  showWhen: TemplateConditionSchema.optional(),
+  childFieldIds: z.array(z.string()).optional(),
+  repeatItemLabel: z.string().optional(),
+  legalText: z.string().optional(),
   layout: z
     .object({
       colSpan: z.union([z.literal(4), z.literal(6), z.literal(8), z.literal(12)]).optional(),
       minHeightMm: z.number().optional(),
     })
     .optional(),
+})
+
+const SharedTemplateSectionSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1),
+  description: z.string().optional(),
+  fieldIds: z.array(z.string()),
+  order: z.number().int().nonnegative(),
 })
 
 export const SharedTemplateBodySchema = z.object({
@@ -95,6 +123,7 @@ export const SharedTemplateBodySchema = z.object({
     patientDocuments: z.boolean(),
   }),
   fields: z.array(SharedTemplateFieldSchema),
+  sections: z.array(SharedTemplateSectionSchema).optional(),
   pageSettings: z
     .object({
       format: z.literal('a4'),

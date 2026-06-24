@@ -73,6 +73,12 @@ export interface ResolvedSocialTherapyItem {
   measure?: string
 }
 
+export interface ResolvedAnamneseSection {
+  sectionId: string
+  label: string
+  text: string
+}
+
 export interface ResolvedClinicalData {
   source: ClinicalDataSource
   demographics: ResolvedDemographics
@@ -83,6 +89,7 @@ export interface ResolvedClinicalData {
   verlauf: ResolvedVerlaufWindow
   /** Verlauf resolved per window preset so blocks can pick their own range. */
   verlaufByPreset?: Partial<Record<VerlaufWindowKey, ResolvedVerlaufWindow>>
+  anamnese: { sections: ResolvedAnamneseSection[] }
   psychopathology?: { text: string; date?: string }
   risk?: { text: string }
   therapy: ResolvedTherapyItem[]
@@ -106,6 +113,7 @@ export const EMPTY_CLINICAL_DATA: ResolvedClinicalData = {
   medications: [],
   labs: { panels: [] },
   verlauf: { entries: [] },
+  anamnese: { sections: [] },
   therapy: [],
   socialTherapy: [],
   clinician: {},
@@ -201,6 +209,53 @@ export function createDemoClinicalData(lang: 'de' | 'en' = 'de'): ResolvedClinic
           { date: '20.06.2026', text: de ? 'Deutliche Stabilisierung unter Therapie.' : 'Marked stabilization under treatment.' },
         ],
       },
+    },
+    anamnese: {
+      sections: de
+        ? [
+            {
+              sectionId: 'aufnahmeanlass',
+              label: 'Aufnahmeanlass',
+              text: 'Notfallmäßige Aufnahme bei akuter depressiver Episode mit Suizidgedanken nach psychosozialer Belastungssituation.',
+            },
+            {
+              sectionId: 'aktuelle-krankheitsanamnese',
+              label: 'Aktuelle Krankheitsanamnese',
+              text: 'Seit ca. 6 Wochen zunehmende Antriebsarmut, Schlafstörung und Hoffnungslosigkeit. Kein Anhalt für Manie oder Psychose.',
+            },
+            {
+              sectionId: 'psychiatrische-vorgeschichte',
+              label: 'Psychiatrische Vorgeschichte',
+              text: '2019 stationäre Behandlung bei depressiver Episode, ambulante KVT, gut anschlussfähig.',
+            },
+            {
+              sectionId: 'medikamentenanamnese',
+              label: 'Medikamentenanamnese',
+              text: 'Sertralin 100 mg abends, Quetiapin 50 mg zur Nacht, Lorazepam bei Bedarf.',
+            },
+          ]
+        : [
+            {
+              sectionId: 'aufnahmeanlass',
+              label: 'Reason for admission',
+              text: 'Emergency admission for an acute depressive episode with suicidal ideation following a psychosocial crisis.',
+            },
+            {
+              sectionId: 'aktuelle-krankheitsanamnese',
+              label: 'Current illness history',
+              text: 'For approximately 6 weeks: increasing loss of drive, insomnia and hopelessness. No evidence of mania or psychosis.',
+            },
+            {
+              sectionId: 'psychiatrische-vorgeschichte',
+              label: 'Psychiatric history',
+              text: '2019 inpatient treatment for depressive episode, outpatient CBT, good engagement.',
+            },
+            {
+              sectionId: 'medikamentenanamnese',
+              label: 'Medication history',
+              text: 'Sertraline 100 mg at night, quetiapine 50 mg at night, lorazepam as needed.',
+            },
+          ],
     },
     psychopathology: {
       date: '20.06.2026',

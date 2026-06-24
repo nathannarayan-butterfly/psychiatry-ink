@@ -64,6 +64,31 @@ export function createFieldFromType(
   if (type === 'signature') {
     field.label = 'Unterschrift'
   }
+  if (type === 'legal_checkbox') {
+    field.label = label || 'Rechtliche Bestätigung'
+    field.legalText = 'Rechtstext gemäß Vorgabe…'
+  }
+  if (type === 'conditional_section') {
+    field.label = label || 'Bedingter Abschnitt'
+    field.childFieldIds = []
+    field.showWhen = {
+      id: crypto.randomUUID(),
+      fieldId: '',
+      operator: 'checked',
+    }
+  }
+  if (type === 'repeatable_list') {
+    field.repeatItemLabel = 'Eintrag'
+    field.defaultValue = []
+  }
+  if (type === 'medication_selector' || type === 'diagnosis_selector' || type === 'risk_selector') {
+    field.label =
+      type === 'medication_selector'
+        ? 'Medikation'
+        : type === 'diagnosis_selector'
+          ? 'Diagnose'
+          : 'Risiko'
+  }
   if (type === 'initials') {
     field.label = 'Paraphe'
   }

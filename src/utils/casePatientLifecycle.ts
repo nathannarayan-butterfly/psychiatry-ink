@@ -1,5 +1,3 @@
-import { archiveDemoPatient, isDemoCase, removeDemoPatient } from '../demo'
-import { isDemoArchivedForUser } from '../demo/demoUserState'
 import {
   getCaseMeta,
   replaceRegistryMap,
@@ -9,37 +7,26 @@ import {
 import { deletePatientOnApi } from '../services/patientRegistryApi'
 import { scheduleAccountRegistryUpload } from './accountBackup'
 import { loadRegistryMapFromStorage, saveRegistryMapToStorage } from './caseRegistryStorage'
-import { clearDemoCaseStorage } from '../demo/clearDemoCaseStorage'
-import { DEMO_CASE_ID } from '../demo/constants'
+import { clearCaseStorage } from './clearCaseStorage'
 import { deleteImportedFilesForCase } from './documentImport/importedFileStore'
 
-/** Stale test fall — short id prefix only; never matches DEMO-CASE-0001. */
+/** Stale test fall — short id prefix only. */
 export const STALE_CASE_ID_PREFIX = '219918e0'
 
 export function isStaleCaseId(caseId: string): boolean {
-  return caseId.startsWith(STALE_CASE_ID_PREFIX) && caseId !== DEMO_CASE_ID
+  return caseId.startsWith(STALE_CASE_ID_PREFIX)
 }
 
-export function isPatientCaseArchived(caseId: string, userId: string): boolean {
-  if (isDemoCase(caseId)) return isDemoArchivedForUser(userId)
+export function isPatientCaseArchived(caseId: string, _userId: string): boolean {
   return Boolean(getCaseMeta(caseId)?.archivedAt)
 }
 
-export function archivePatientCase(caseId: string, userId: string): void {
-  if (isDemoCase(caseId)) {
-    archiveDemoPatient(userId)
-    return
-  }
+export function archivePatientCase(caseId: string, _userId: string): void {
   upsertCaseMeta(caseId, { archivedAt: new Date().toISOString() })
 }
 
-export async function deletePatientCasePermanently(caseId: string, userId: string): Promise<void> {
-  if (isDemoCase(caseId)) {
-    await removeDemoPatient(userId)
-    return
-  }
-
-  await clearDemoCaseStorage(caseId)
+export async function deletePatientCasePermanently(caseId: string, _userId: string): Promise<void> {
+  await clearCaseStorage(caseId)
   await deleteImportedFilesForCase(caseId)
   const map = loadRegistryMapFromStorage()
   delete map[caseId]
@@ -54,22 +41,16 @@ export async function deletePatientCasePermanently(caseId: string, userId: strin
   }
 }
 
-/** True when a case should survive a non-demo purge (synthetic demo only). */
-export function isProtectedDemoCaseId(caseId: string): boolean {
-  return caseId === DEMO_CASE_ID || isDemoCase(caseId)
-}
-
 /**
- * Remove every local patient case except the synthetic demo case (DEMO-CASE-0001).
- * Clears registry metadata, case-scoped localStorage, IndexedDB vault keys, and
- * attempts server-side PatientCase deletion via API.
+ * Remove every local patient case. Clears registry metadata, case-scoped
+ * localStorage, IndexedDB vault keys, and attempts server-side PatientCase
+ * deletion via API.
  */
-export async function purgeNonDemoPatientCases(userId: string): Promise<string[]> {
+export async function purgeLocalPatientCases(userId: string): Promise<string[]> {
   const removed: string[] = []
   const map = loadRegistryMapFromStorage()
 
   for (const caseId of Object.keys(map)) {
-    if (isProtectedDemoCaseId(caseId)) continue
     await deletePatientCasePermanently(caseId, userId)
     removed.push(caseId)
   }
@@ -86,7 +67,7 @@ export async function removeStaleCasesFromRegistry(): Promise<string[]> {
     if (!isStaleCaseId(caseId)) continue
     delete map[caseId]
     removed.push(caseId)
-    await clearDemoCaseStorage(caseId)
+    await clearCaseStorage(caseId)
   }
 
   if (removed.length > 0) {

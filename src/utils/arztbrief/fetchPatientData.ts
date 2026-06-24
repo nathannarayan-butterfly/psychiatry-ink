@@ -236,8 +236,10 @@ export async function fetchArztbriefPatientData(
   }
 
   sections['neurologischer-befund'] = {
-    content: readAufnahmeSection(caseId, 'somatischer-befund'),
-    sourcePreview: 'Aufnahme — somatischer Befund',
+    content:
+      readAufnahmeSection(caseId, 'neurologischer-befund') ||
+      readAufnahmeSection(caseId, 'somatischer-befund'),
+    sourcePreview: 'Aufnahme — neurologischer Befund',
   }
   sections['allgemeinmedizinischer-befund'] = sections['neurologischer-befund']
   sections['koerperlich-vegetativ'] = {

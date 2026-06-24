@@ -3344,6 +3344,23 @@
     min-width: 0;
   }
 
+  /* Dashboard logo lockup — 20% larger than default `.topbar-logo` (mark scales via em). */
+  .dashboard-topbar__brand .topbar-logo {
+    font-size: 1.35rem;
+  }
+
+  @media (min-width: 40rem) {
+    .dashboard-topbar__brand .topbar-logo {
+      font-size: 1.5rem;
+    }
+  }
+
+  @media (max-width: 22.5rem) {
+    .dashboard-topbar__brand .topbar-logo {
+      font-size: 1.2rem;
+    }
+  }
+
   .dashboard-topbar__user {
     font-size: 0.8125rem;
     font-weight: 500;

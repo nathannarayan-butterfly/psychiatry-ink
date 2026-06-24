@@ -78,6 +78,33 @@ describe('formatDoseScheduleGerman', () => {
       ),
     ).toBe('1 mg b.B.')
   })
+
+  it('renders PRN schedule from structured Bedarf fields', () => {
+    expect(
+      formatDoseScheduleGerman(
+        {
+          morning: '',
+          noon: '',
+          evening: '',
+          night: '',
+          unit: 'mg',
+          prn: true,
+          prnBasisDose: '40',
+          prnMaxDailyDose: '120',
+        },
+        { formulation: 'tablet', strength: '40 mg' },
+      ),
+    ).toBe('40 mg bei Bedarf (max. 120 mg/24 h)')
+  })
+
+  it('renders PRN schedule from legacy morning free text', () => {
+    expect(
+      formatDoseScheduleGerman(
+        { morning: '40 mg bis zu 120 mg/24 h', noon: '', evening: '', night: '', unit: 'mg', prn: true },
+        { formulation: 'tablet', strength: '40 mg' },
+      ),
+    ).toBe('40 mg bis zu 120 mg/24 h')
+  })
 })
 
 describe('formatDoseLineGerman', () => {
@@ -128,6 +155,34 @@ describe('formatDoseLineGerman', () => {
         prn: true,
       }),
     ).toBe('Lorazepam 1 mg b.B.')
+  })
+
+  it('renders PRN entries with structured Bedarf dose fields', () => {
+    expect(
+      formatDoseLineGerman('Pipamperon', 'tablet', '40 mg', {
+        morning: '',
+        noon: '',
+        evening: '',
+        night: '',
+        unit: 'mg',
+        prn: true,
+        prnBasisDose: '40',
+        prnMaxDailyDose: '120',
+      }),
+    ).toBe('Pipamperon 40 mg bei Bedarf (max. 120 mg/24 h)')
+  })
+
+  it('renders PRN entries with legacy Bedarf dose line in morning', () => {
+    expect(
+      formatDoseLineGerman('Pipamperon', 'tablet', '40 mg', {
+        morning: '40 mg bis zu 120 mg/24 h',
+        noon: '',
+        evening: '',
+        night: '',
+        unit: 'mg',
+        prn: true,
+      }),
+    ).toBe('Pipamperon 40 mg bis zu 120 mg/24 h')
   })
 })
 

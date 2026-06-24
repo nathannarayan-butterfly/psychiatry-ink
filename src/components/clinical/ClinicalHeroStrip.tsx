@@ -27,12 +27,20 @@ interface ClinicalHeroStripProps {
 
 const DEMOGRAPHIC_FIELDS: Array<{
   key: keyof ClinicalHeroDemographics
-  labelKey: 'patientFieldGeburtsdatum' | 'patientAgeLabel' | 'patientFieldGeschlecht' | 'patientFieldAufnahmedatum'
+  labelKey:
+    | 'patientFieldGeburtsdatum'
+    | 'patientAgeLabel'
+    | 'patientFieldGeschlecht'
+    | 'patientFieldAufnahmedatum'
+    | 'patientFieldGroesse'
+    | 'patientFieldGewicht'
 }> = [
   { key: 'dob', labelKey: 'patientFieldGeburtsdatum' },
   { key: 'age', labelKey: 'patientAgeLabel' },
   { key: 'sex', labelKey: 'patientFieldGeschlecht' },
   { key: 'admission', labelKey: 'patientFieldAufnahmedatum' },
+  { key: 'height', labelKey: 'patientFieldGroesse' },
+  { key: 'weight', labelKey: 'patientFieldGewicht' },
 ]
 
 /** Typographic patient hero — name in theme accent, demographics inline, optional clinical thesis. */

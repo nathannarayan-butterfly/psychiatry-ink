@@ -38,6 +38,7 @@ export function saveVerlaufSortOrder(order: VerlaufSortOrder): void {
   }
 }
 
+import type { SomaticBefundPayload } from '../types/somaticBefund'
 import type { TherapyEntryAttribution } from '../types/therapy'
 import type { TodoPriority } from '../types/todo'
 
@@ -55,6 +56,8 @@ export interface VerlaufFeedEntry {
   source?: 'manual' | 'ai-accepted'
   /** Therapist attribution when created by allied therapist role. */
   attribution?: TherapyEntryAttribution
+  /** Structured basic somatic exam — present when `pageType` is `somatic-befund`. */
+  somaticBefund?: SomaticBefundPayload
 }
 
 export type AnnotationType = 'bold' | 'italic' | 'underline' | 'highlight' | 'comment' | 'todo'

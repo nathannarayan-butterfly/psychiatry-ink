@@ -98,6 +98,7 @@ import {
   shouldPersistVerlaufstendenzState,
 } from './verlaufstendenz/storage'
 import type { VerlaufstendenzState } from '../types/verlaufstendenz'
+import type { AufnahmeSectionMetadata } from '../types/anamneseBefund'
 
 export const WORKSPACE_PAYLOAD_VERSION = 10
 
@@ -111,6 +112,7 @@ export interface WorkspaceLivePatch {
   pageDate?: string
   pageTime?: string
   sectionContents: Record<string, string>
+  sectionMetadata?: Record<string, AufnahmeSectionMetadata>
   activeVariantIds?: Record<string, string>
   age?: string
   timelines?: SavedTimeline[]
@@ -262,6 +264,7 @@ export function collectClinicalPayload(
         documentTypeId,
         pageHeading: live.pageHeading,
         sectionContents: { ...live.sectionContents },
+        sectionMetadata: live.sectionMetadata ? { ...live.sectionMetadata } : undefined,
         savedAt: new Date().toISOString(),
       }
     } else if (stored) {

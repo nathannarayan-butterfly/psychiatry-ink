@@ -9580,6 +9580,97 @@
   background: color-mix(in srgb, var(--accent, #4a7c59) 10%, transparent);
 }
 
+.verlauf-feed-page__header-entry-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.verlauf-feed-page__new-btn--secondary {
+  color: var(--text-secondary, #5c5c58);
+  border-color: var(--border-soft, #d8d8d4);
+}
+
+.verlauf-feed-page__new-btn--secondary:hover {
+  background: var(--surface-muted, #f4f4f1);
+  color: var(--text-primary, #37352f);
+}
+
+.verlauf-entry--somatic-befund {
+  border-left: 3px solid color-mix(in srgb, #3d7ea6 55%, transparent);
+  background: color-mix(in srgb, #3d7ea6 4%, var(--notion-paper-bg, #fff));
+}
+
+.verlauf-entry__somatic-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: 0.35rem;
+  padding: 0.12rem 0.45rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #2f6280;
+  background: color-mix(in srgb, #3d7ea6 12%, transparent);
+  border-radius: 999px;
+}
+
+.verlauf-entry__somatic-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.verlauf-somatic-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.35rem 0 0.15rem;
+}
+
+.verlauf-somatic-summary__row {
+  display: grid;
+  grid-template-columns: minmax(6.5rem, 28%) 1fr;
+  gap: 0.65rem;
+  align-items: start;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.verlauf-somatic-summary__label {
+  color: var(--text-secondary, #787774);
+  font-weight: 500;
+}
+
+.verlauf-somatic-summary__value {
+  color: var(--text-primary, #37352f);
+  white-space: pre-wrap;
+}
+
+.verlauf-somatic-summary__footer {
+  margin-top: 0.35rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--border-soft, #ececea);
+}
+
+.verlauf-somatic-summary__link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.78rem;
+  color: var(--accent, #4a7c59);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.verlauf-somatic-summary__link:hover {
+  color: color-mix(in srgb, var(--accent, #4a7c59) 80%, #000);
+}
+
 .verlauf-composer {
   background: var(--notion-paper-bg, #fff);
   border: 1px solid var(--border-soft, #e8e8e4);
@@ -13240,6 +13331,25 @@
   .medication-edit-dialog__dose-grid {
     grid-template-columns: repeat(auto-fill, minmax(5rem, 1fr));
   }
+}
+
+.medication-edit-dialog__prn-dose-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+@media (max-width: 39.999rem) {
+  .medication-edit-dialog__prn-dose-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.medication-edit-dialog__validation-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--danger, #c0392b);
 }
 
 .medication-edit-dialog__checkbox {

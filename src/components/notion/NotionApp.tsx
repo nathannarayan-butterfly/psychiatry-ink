@@ -40,7 +40,7 @@ import { DiagnosePage } from './DiagnosePage'
 import { DiscussCasePage } from '../discuss-case/DiscussCasePage'
 import { ConsultationCasePage } from '../consultation/ConsultationCasePage'
 import { ClinicalIntelligencePanel } from '../clinical/clinicalIntelligence/ClinicalIntelligencePanel'
-import { isClinicalIntelligenceAvailableForCase } from '../../demo/demoFeatureFlags'
+import { isClinicalIntelligenceAvailableForCase } from '../../utils/featureFlags'
 import { useCaseSidebarCollapsed } from '../../hooks/useCaseSidebarCollapsed'
 import { MedicationSectionNavProvider } from '../../contexts/MedicationSectionNavContext'
 import { TherapySectionNavProvider } from '../../contexts/TherapySectionNavContext'
@@ -69,7 +69,16 @@ import { NotionTopBar } from './NotionTopBar'
 import { WorkspaceContextMenu } from './WorkspaceContextMenu'
 import { WorkspaceLauncher } from './workspaceLauncher/WorkspaceLauncher'
 import type { LauncherTarget } from '../../data/workspaceLauncher/launcherTasks'
+import {
+  GuidedEntryHost,
+  type GuidedEntryCompletionResult,
+} from '../guidedEntry/GuidedEntryHost'
+import type { GuidedEntryItemType } from '../../types/guidedEntry'
+import {
+  resolveGuidedItemTypeForWorkspace,
+} from '../../utils/guidedEntry/applyGuidedOutput'
 import type { OverviewQuickActionId } from '../../utils/overview/overviewQuickActions'
+import { OverviewQuickActionModalHost } from './overview/quickActions/OverviewQuickActionModalHost'
 import { TodoQuickAdd } from '../todos/TodoQuickAdd'
 import { NotionPaper, type SavedWorkspaceDocumentPayload } from './NotionPaper'
 import { NotionInputBar } from './NotionInputBar'
@@ -129,8 +138,6 @@ import { usePermissionContext } from '../../contexts/PermissionContext'
 import { useAuth } from '../../context/AuthContext'
 import { buildTherapyAttribution } from '../../types/therapy'
 import type { AnforderungModalPreset } from '../../types/anforderung'
-import { isDemoCase, isDemoCaseReadOnly } from '../../demo'
-import '../../styles/demo-patient-dev.css'
 import '../../styles/anforderungen.css'
 import { useCanAccessCase } from '../../hooks/permissions'
 import { ActiveAppointmentBar } from '../calendar/ActiveAppointmentBar'
@@ -296,9 +303,12 @@ function NotionAppInner({
   const storageCaseId = workspaceStorageId ?? caseId
   const [pendingMedicationAdd, setPendingMedicationAdd] = useState(false)
   const [pendingVerlaufComposer, setPendingVerlaufComposer] = useState(false)
+  const [guidedEntryItemType, setGuidedEntryItemType] = useState<GuidedEntryItemType | null>(null)
+  const pendingDirectEntryRef = useRef<(() => void) | null>(null)
   const [pendingMedicationSideEffects, setPendingMedicationSideEffects] = useState(false)
   const [pendingLaborAbnormalReview, setPendingLaborAbnormalReview] = useState(false)
   const [todoQuickAddOpen, setTodoQuickAddOpen] = useState(false)
+  const [overviewQuickAction, setOverviewQuickAction] = useState<OverviewQuickActionId | null>(null)
   const [templateHostOpen, setTemplateHostOpen] = useState(false)
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
   const [therapieplanungInitialType, setTherapieplanungInitialType] =
@@ -1281,10 +1291,10 @@ function NotionAppInner({
         structuredName ||
         meta?.localName?.trim() ||
         meta?.pageHeading?.trim() ||
-        (isDemoCase(caseId) ? t('demoPatientDisplayName') : undefined)
+        undefined
       )
     },
-    [caseId, patientMetaVersion, t],
+    [caseId, patientMetaVersion],
   )
   const hasPatient = Boolean(currentPatientName)
 
@@ -1456,8 +1466,7 @@ function NotionAppInner({
     [caseRegistry],
   )
 
-  const workspaceReadOnly = !caseAccessChecks.canEdit || isDemoCaseReadOnly(storageCaseIdForAccess ?? caseId, user?.email)
-  const showDemoBanner = isDemoCaseReadOnly(storageCaseIdForAccess ?? caseId, user?.email)
+  const workspaceReadOnly = !caseAccessChecks.canEdit
   const canRequestAnforderungen =
     hasPatient && storageCaseId !== DEFAULT_CASE_ID && !workspaceReadOnly
 
@@ -1506,29 +1515,8 @@ function NotionAppInner({
   // Route a Workspace Launcher selection into the EXISTING workspace system.
   // The launcher only emits a navigation intent; all routing is done here with
   // the same handlers the rest of the workspace uses (no forked routing).
-  const handleLauncherLaunch = useCallback(
-    (target: LauncherTarget) => {
-      if (target.kind === 'topTab') {
-        if (target.medicationAdd) setPendingMedicationAdd(true)
-        handleTopTabSelect(target.tab)
-        return
-      }
-      if (target.kind === 'template') {
-        setShowPatientRegistry(false)
-        setActiveTopTab('workspace')
-        openTemplateHost()
-        return
-      }
-      if (target.kind === 'anforderung') {
-        if (canRequestAnforderungen) {
-          openAnforderungModal()
-        } else {
-          // No linked patient (or read-only): fall back to the Labor tool.
-          handleTopTabSelect('labor')
-        }
-        return
-      }
-      // workspacePage
+  const executeWorkspacePageLaunch = useCallback(
+    (target: Extract<LauncherTarget, { kind: 'workspacePage' }>) => {
       setShowPatientRegistry(false)
       setActiveTopTab('workspace')
       if (target.sectionId) {
@@ -1554,58 +1542,127 @@ function NotionAppInner({
       }
     },
     [
-      canRequestAnforderungen,
       handlePageSelect,
       handlePageSelectWithSection,
-      handleTopTabSelect,
       onSelectAssessmentStandard,
-      openAnforderungModal,
-      openTemplateHost,
       workspace,
     ],
   )
+
+  const beginGuidedEntryFlow = useCallback(
+    (itemType: GuidedEntryItemType, directFallback: () => void) => {
+      pendingDirectEntryRef.current = directFallback
+      setGuidedEntryItemType(itemType)
+    },
+    [],
+  )
+
+  const handleGuidedEntryDirect = useCallback((_itemType: GuidedEntryItemType) => {
+    const run = pendingDirectEntryRef.current
+    pendingDirectEntryRef.current = null
+    run?.()
+  }, [])
+
+  const handleGuidedEntryComplete = useCallback(
+    (result: GuidedEntryCompletionResult) => {
+      pendingDirectEntryRef.current = null
+
+      if (result.navigate) {
+        setShowPatientRegistry(false)
+        setActiveTopTab('workspace')
+        setActivePage(result.navigate.pageId as NotionPageId)
+        if (result.navigate.variantId) {
+          flushSync(() => {
+            workspace.selectDocumentType(result.navigate!.pageId, result.navigate!.variantId)
+          })
+          if (result.navigate.pageId === 'psychopath') {
+            onSelectAssessmentStandard(
+              resolveAssessmentStandardForSubMode(result.navigate.variantId as PsychopathSubMode),
+            )
+          }
+        } else {
+          handlePageSelect(result.navigate.pageId as NotionPageId)
+        }
+        if (result.workspaceSectionContents) {
+          for (const [sectionId, content] of Object.entries(result.workspaceSectionContents)) {
+            workspace.setSectionContent(sectionId, content)
+          }
+          if (result.navigate.sectionId) {
+            workspace.selectSection(result.navigate.sectionId)
+          }
+        } else if (result.workspaceContent) {
+          workspace.setEditorContent(result.workspaceContent)
+        }
+      }
+
+      if (result.itemType === 'verlauf-short') {
+        handleTopTabSelect('verlauf')
+      }
+    },
+    [handlePageSelect, handleTopTabSelect, onSelectAssessmentStandard, workspace],
+  )
+
+  const handleLauncherLaunch = useCallback(
+    (target: LauncherTarget) => {
+      if (target.kind === 'topTab') {
+        if (target.medicationAdd) setPendingMedicationAdd(true)
+        handleTopTabSelect(target.tab)
+        return
+      }
+      if (target.kind === 'template') {
+        setShowPatientRegistry(false)
+        setActiveTopTab('workspace')
+        openTemplateHost()
+        return
+      }
+      if (target.kind === 'anforderung') {
+        if (canRequestAnforderungen) {
+          openAnforderungModal()
+        } else {
+          handleTopTabSelect('labor')
+        }
+        return
+      }
+      if (target.kind === 'workspacePage') {
+        const itemType = resolveGuidedItemTypeForWorkspace(
+          target.pageId,
+          target.variantId,
+          target.sectionId,
+        )
+        if (itemType) {
+          beginGuidedEntryFlow(itemType, () => executeWorkspacePageLaunch(target))
+          return
+        }
+        executeWorkspacePageLaunch(target)
+      }
+    },
+    [
+      beginGuidedEntryFlow,
+      canRequestAnforderungen,
+      executeWorkspacePageLaunch,
+      handleTopTabSelect,
+      openAnforderungModal,
+      openTemplateHost,
+    ],
+  )
+
+  const handleVerlaufNewEntryRequest = useCallback(() => {
+    beginGuidedEntryFlow('verlauf-short', () => setPendingVerlaufComposer(true))
+  }, [beginGuidedEntryFlow])
 
   const handleOverviewQuickAction = useCallback(
     (action: OverviewQuickActionId) => {
       switch (action) {
         case 'newVerlaufNote':
-          setPendingVerlaufComposer(true)
-          handleTopTabSelect('verlauf')
-          return
         case 'dictateVisitNote':
-          handleLauncherLaunch({
-            kind: 'workspacePage',
-            pageId: 'verlauf',
-            variantId: 'short',
-            dictation: true,
-          })
-          return
         case 'psychopathFinding':
-          handleLauncherLaunch({
-            kind: 'workspacePage',
-            pageId: 'psychopath',
-            variantId: 'checklist',
-          })
+        case 'riskUpdate':
+        case 'medicationChange':
+        case 'sideEffectEntry':
+          setOverviewQuickAction(action)
           return
         case 'saveForArztbrief':
           handleLauncherLaunch({ kind: 'workspacePage', pageId: 'arztbrief' })
-          return
-        case 'riskUpdate':
-          setShowPatientRegistry(false)
-          setActiveTopTab('workspace')
-          setActivePage('verlauf')
-          flushSync(() => {
-            workspace.selectDocumentType('verlauf', 'broad')
-          })
-          workspace.selectSection('risiko')
-          return
-        case 'medicationChange':
-          setPendingMedicationAdd(true)
-          handleTopTabSelect('medikation')
-          return
-        case 'sideEffectEntry':
-          setPendingMedicationSideEffects(true)
-          handleTopTabSelect('medikation')
           return
         case 'diagnosisStatusUpdate':
           handleTopTabSelect('diagnose')
@@ -1668,13 +1725,7 @@ function NotionAppInner({
           return
       }
     },
-    [
-      caseId,
-      handleLauncherLaunch,
-      handleTopTabSelect,
-      storageCaseId,
-      workspace,
-    ],
+    [caseId, handleLauncherLaunch, handleTopTabSelect, storageCaseId],
   )
 
   if (storageCaseIdForAccess && caseAccessChecks.isLoading) {
@@ -1713,11 +1764,6 @@ function NotionAppInner({
         .join(' ')}
       data-area={showCaseSidebar ? activeTopTab : undefined}
     >
-      {showDemoBanner ? (
-        <div className="demo-readonly-banner" role="status">
-          {t('demoReadOnlyBanner')}
-        </div>
-      ) : null}
       <WorkspaceActivitySync workspace={workspace} />
       <DocumentationTodayTotalSync isDocumentationPage={showDocumentCanvas} />
       {!showCaseSidebar && !settingsPanel.isOpen ? (
@@ -2000,6 +2046,7 @@ function NotionAppInner({
                 patientLabel={hasPatient ? currentPatientName : null}
                 autoOpenComposer={pendingVerlaufComposer}
                 onAutoOpenComposerHandled={() => setPendingVerlaufComposer(false)}
+                onNewEntryRequest={handleVerlaufNewEntryRequest}
                 onNavigateToSource={(source: VerlaufDerivedSource) => {
                   // Derived feed rows are projections of other modules; "edit" /
                   // "delete" route the clinician to the owning section instead of
@@ -2011,6 +2058,10 @@ function NotionAppInner({
                         ? 'dokumente'
                         : 'therapie'
                   setActiveTopTab(tab)
+                }}
+                onOpenFullBefund={() => {
+                  setActiveTopTab('workspace')
+                  setActivePage('befundung')
                 }}
               />
             </div>
@@ -2250,6 +2301,7 @@ function NotionAppInner({
                 sections={workspace.sections}
                 sectionConfigs={sectionConfigs}
                 sectionContents={workspace.sectionContents}
+                sectionMetadata={workspace.sectionMetadata}
                 checklistSelections={workspace.checklistSelections}
                 componentVariants={componentVariants}
                 activeVariantId={workspace.activeVariantId}
@@ -2275,6 +2327,8 @@ function NotionAppInner({
                 pageType={appearance.settings.pageType}
                 onEditorChange={workspace.setEditorContent}
                 onSectionContentChange={workspace.setSectionContent}
+                onSectionMetadataChange={workspace.updateSectionMetadata}
+                onBefundSectionManualEdit={workspace.markBefundSectionManuallyEdited}
                 onEditorPaste={workspace.onEditorPaste}
                 onDetectedPaste={handleDetectedPaste}
                 onSaveSection={workspace.saveSection}
@@ -2412,6 +2466,40 @@ function NotionAppInner({
           onClose={() => setTodoQuickAddOpen(false)}
         />
       ) : null}
+
+      <OverviewQuickActionModalHost
+        activeAction={overviewQuickAction}
+        caseId={storageCaseId}
+        userId={user?.id}
+        onClose={() => setOverviewQuickAction(null)}
+        onOpenWorkspacePage={(pageId, variantId) => {
+          setShowPatientRegistry(false)
+          setActiveTopTab('workspace')
+          handlePageSelect(pageId)
+          if (variantId) {
+            flushSync(() => {
+              workspace.selectDocumentType(pageId, variantId)
+            })
+            if (pageId === 'psychopath') {
+              onSelectAssessmentStandard(
+                resolveAssessmentStandardForSubMode(variantId as PsychopathSubMode),
+              )
+            }
+          }
+        }}
+      />
+
+      <GuidedEntryHost
+        caseId={storageCaseId}
+        userId={user?.id}
+        activeItemType={guidedEntryItemType}
+        onClose={() => {
+          setGuidedEntryItemType(null)
+          pendingDirectEntryRef.current = null
+        }}
+        onDirectEntry={handleGuidedEntryDirect}
+        onComplete={handleGuidedEntryComplete}
+      />
 
     </div>
   )

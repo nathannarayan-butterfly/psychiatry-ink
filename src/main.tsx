@@ -7,7 +7,7 @@ import { OrganisationProvider } from './contexts/PermissionContext'
 import { ActiveAppointmentProvider } from './contexts/ActiveAppointmentContext'
 import { defaultLanguage } from './data/languages'
 import { registerClinicalLanguageResolver } from './services/clinicalApiFetch'
-import { loadStoredUiLanguage } from './utils/clinicalLanguage'
+import { loadBootstrapUiLanguage } from './utils/clinicalLanguage'
 import { reapplyDevicePreferences } from './utils/devicePreferences'
 import './styles/globals.css'
 import './styles/aura-theme.css'
@@ -49,14 +49,16 @@ import './styles/clinical-intelligence.css'
 import './styles/patient-panel-bordered.css'
 import './styles/workspace-panel-bordered.css'
 import './styles/arztbrief.css'
+import './styles/guided-entry.css'
+import './styles/overview-quick-actions.css'
 import './styles/medication-education.css'
 
-registerClinicalLanguageResolver(loadStoredUiLanguage)
+registerClinicalLanguageResolver(loadBootstrapUiLanguage)
 
 reapplyDevicePreferences()
 
 try {
-  document.documentElement.lang = loadStoredUiLanguage()
+  document.documentElement.lang = loadBootstrapUiLanguage()
 } catch {
   document.documentElement.lang = defaultLanguage
 }

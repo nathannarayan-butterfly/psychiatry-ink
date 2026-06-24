@@ -189,6 +189,18 @@ export function TemplateFieldSettings({ field, lang, onPatch }: TemplateFieldSet
         </label>
       ) : null}
 
+      {field.type === 'legal_checkbox' ? (
+        <label className="dt-field-label">
+          {t('templateFieldLegalText')}
+          <textarea
+            className="dt-input"
+            rows={4}
+            value={field.legalText ?? ''}
+            onChange={(e) => onPatch({ legalText: e.target.value })}
+          />
+        </label>
+      ) : null}
+
       {field.type !== 'heading' ? (
         <label className="dt-field-label">
           {t('templateFieldWidth')}

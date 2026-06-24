@@ -33,9 +33,6 @@ export function mergeServerCaseWithLocal(api: ApiCaseRecord, local?: LocalCaseMe
     localGeschlecht: local?.localGeschlecht,
     localAge: local?.localAge,
     pageHeading: local?.pageHeading,
-    isDemoPatient: local?.isDemoPatient,
-    demoSeedVersion: local?.demoSeedVersion,
-    demoPatientId: local?.demoPatientId,
     archivedAt: local?.archivedAt,
   }
 }

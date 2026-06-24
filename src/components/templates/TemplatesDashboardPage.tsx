@@ -230,7 +230,10 @@ export function TemplatesDashboardPage({ onBack }: TemplatesDashboardPageProps) 
           <ArrowLeft className="h-4 w-4" strokeWidth={1.75} aria-hidden />
           {t('templateBackDashboard')}
         </button>
-        <h1 className="dt-dashboard__title">{t('templateDashboardTitle')}</h1>
+        <div className="dt-dashboard__title-block">
+          <h1 className="dt-dashboard__title">{t('templateBuilderTitle')}</h1>
+          <p className="dt-dashboard__subtitle">{t('templateBuilderSubtitle')}</p>
+        </div>
         <div className="dt-dashboard__topbar-actions">
           <button
             type="button"

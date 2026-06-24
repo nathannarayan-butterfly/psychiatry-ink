@@ -21,9 +21,9 @@ import { useTranslation } from '../../../context/TranslationContext'
 import { useClinicalIntelligence } from '../../../hooks/useClinicalIntelligence'
 import { ClinicalSection } from '../ClinicalSection'
 import {
+  isClinicalIntelligenceAvailableForCase,
   isClinicalIntelligenceDebugMode,
 } from '../../../utils/featureFlags'
-import { isClinicalIntelligenceAvailableForCase } from '../../../demo/demoFeatureFlags'
 import { CiAccordion } from './CiAccordion'
 import { CiHypothesisBanner } from './CiHypothesisBanner'
 import { DevelopmentDiagnosticsPanel } from './DevelopmentDiagnosticsPanel'
@@ -37,7 +37,6 @@ import { CiStatusCountRow } from './CiStatusCountRow'
 import { showNotionToast } from '../../notion/NotionToast'
 import { saveCiAcceptedToDokumente } from '../../../utils/clinicalIntelligence/saveAcceptedToDokumente'
 import { computeCiReviewCounts } from '../../../utils/clinicalIntelligence/reviewCounts'
-import { localizeClinicalIntelligenceRunForDisplay } from '../../../utils/clinicalIntelligence/localizeRunForDisplay'
 import type {
   ClinicalIntelligenceDimensionId,
   ClinicalIntelligenceMechanismId,
@@ -73,10 +72,7 @@ export function ClinicalIntelligencePanel({
   const enabled = isClinicalIntelligenceAvailableForCase(caseId)
 
   const run = ci.latestRun
-  const displayRun = useMemo(
-    () => (run ? localizeClinicalIntelligenceRunForDisplay(run, language) : null),
-    [run, language],
-  )
+  const displayRun = run
   const dimensional = displayRun?.dimensional ?? null
   const mechanism = displayRun?.mechanism ?? null
   const evidenceItems = ci.evidence?.items

@@ -1,5 +1,7 @@
+import { resolveDomainConfig } from '../config/domainConfig'
 import { defaultLanguage, languageOptions } from '../data/languages'
 import type { UiLanguage } from '../types/settings'
+import { getEffectiveHostname } from './resolveHostname'
 
 export const LANGUAGE_STORAGE_KEY = 'psychiatry-ink-language'
 
@@ -15,6 +17,25 @@ export const LANGUAGE_STORAGE_KEY = 'psychiatry-ink-language'
  * re-enabling them in `languageOptions` is a one-line change.
  */
 const LEGACY_BETA_HIDDEN_UI_LANGUAGES = new Set<string>(['fr', 'es'])
+
+export function hasStoredUiLanguage(): boolean {
+  try {
+    return localStorage.getItem(LANGUAGE_STORAGE_KEY) != null
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Locale for first paint: stored user preference wins; otherwise domain default
+ * (marketing hostname or dev override). Same source as useLanguageSettings init.
+ */
+export function loadBootstrapUiLanguage(): UiLanguage {
+  if (hasStoredUiLanguage()) {
+    return loadStoredUiLanguage()
+  }
+  return resolveDomainConfig(getEffectiveHostname()).defaultLocale
+}
 
 /** Active UI language from Settings (localStorage), same source as useLanguageSettings. */
 export function loadStoredUiLanguage(): UiLanguage {

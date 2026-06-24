@@ -29,6 +29,7 @@ const BINDINGS: ClinicalBinding[] = [
   'medication.current',
   'labs.latest',
   'verlauf.selectedRange',
+  'anamnese.current',
   'psychopathology.latest',
   'risk.current',
   'therapy.current',
@@ -213,6 +214,8 @@ export function BlockSettingsPanel({
             <BindingNote binding="verlauf.selectedRange" />
           </>
         )
+      case 'anamnese':
+        return (<>{labelField(block.label)}<BindingNote binding="anamnese.current" /></>)
       case 'therapy':
         return (<>{labelField(block.label)}<BindingNote binding="therapy.current" /></>)
       case 'social_therapy':

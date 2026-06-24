@@ -134,6 +134,12 @@ export function createBlock(paletteId: string, lang: Lang = 'de'): TemplateBlock
         label: pick(lang, 'Verlauf', 'Course'),
         windowPreset: '7d',
       }
+    case 'anamnese':
+      return {
+        id,
+        type: 'anamnese',
+        label: pick(lang, 'Anamnese', 'History'),
+      }
     case 'therapy':
       return { id, type: 'therapy', label: pick(lang, 'Therapie', 'Therapy') }
     case 'social_therapy':

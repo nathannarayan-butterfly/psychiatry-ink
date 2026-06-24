@@ -41,7 +41,6 @@ import {
   saveClinicalIntelligenceState,
   type ClinicalIntelligenceChangedDetail,
 } from '../utils/clinicalIntelligence/storage'
-import { ensureDemoClinicalIntelligenceForCase } from '../demo/ensureDemoClinicalIntelligence'
 import {
   buildCompactEvidenceForCase,
   ClinicalIntelligenceEvidenceMissingError,
@@ -114,7 +113,7 @@ export interface UseClinicalIntelligenceResult {
 export function useClinicalIntelligence(caseId: string): UseClinicalIntelligenceResult {
   const { language } = useTranslation()
   const [state, setState] = useState<ClinicalIntelligenceCaseState>(() =>
-    ensureDemoClinicalIntelligenceForCase(caseId, loadClinicalIntelligenceState(caseId)),
+    loadClinicalIntelligenceState(caseId),
   )
   const [status, setStatus] = useState<CiRunStatus>('idle')
   const [error, setError] = useState<{ code: string; message: string } | null>(null)
@@ -128,7 +127,7 @@ export function useClinicalIntelligence(caseId: string): UseClinicalIntelligence
   }, [])
 
   useEffect(() => {
-    setState(ensureDemoClinicalIntelligenceForCase(caseId, loadClinicalIntelligenceState(caseId)))
+    setState(loadClinicalIntelligenceState(caseId))
     setStatus('idle')
     setError(null)
   }, [caseId])

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { DiagnosenWidget } from '../DiagnosenWidget'
+import { DiagnosesOverviewCard } from './DiagnosesOverviewCard'
 import { SpiegelwerteSection } from '../SpiegelwerteSection'
 import type { TopNavTabId } from '../CaseTopNav'
 import type { NotionPageId } from '../notionPages'
@@ -96,14 +96,10 @@ export function renderOverviewWidget(
       )
     case 'diagnoses':
       return (
-        <OverviewCardShell>
-          <DiagnosenWidget
-            caseId={ctx.caseId}
-            variant="panel"
-            compact
-            onOpenDiagnose={() => ctx.onTabSelect('diagnose')}
-          />
-        </OverviewCardShell>
+        <DiagnosesOverviewCard
+          caseId={ctx.caseId}
+          onOpenDiagnose={() => ctx.onTabSelect('diagnose')}
+        />
       )
     case 'psychopathology':
       return (

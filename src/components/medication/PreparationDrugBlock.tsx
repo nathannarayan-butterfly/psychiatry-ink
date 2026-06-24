@@ -13,8 +13,6 @@ import { PRESCRIBING_COUNTRY_NATIVE_LABELS } from '../../hooks/usePrescribingCou
 import { formatPreparationLine } from '../../utils/kb/formatPreparationLine'
 import { formatPreparationStrength } from '../../hooks/useMedicationMarketAvailability'
 import { runPrepAiCheck } from '../../services/prepAiCheckApi'
-import { getPrepAiCheckCachedResponse } from '../../utils/prepAiCheck/storage'
-import { isDemoCase } from '../../demo/demoReadOnly'
 import { getClinicalApiLanguage } from '../../services/clinicalApiFetch'
 import { ClinicalLoading } from '../ui/ClinicalLoading'
 
@@ -75,16 +73,8 @@ export function PreparationDrugBlock({
 }: PreparationDrugBlockProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [aiResult, setAiResult] = useState<PrepAiCheckResponse | null>(() =>
-    isDemoCase(caseId) ? getPrepAiCheckCachedResponse(caseId, med.id) : null,
-  )
+  const [aiResult, setAiResult] = useState<PrepAiCheckResponse | null>(null)
   const [aiDetailsOpen, setAiDetailsOpen] = useState(false)
-
-  useEffect(() => {
-    if (!isDemoCase(caseId)) return
-    const cached = getPrepAiCheckCachedResponse(caseId, med.id)
-    if (cached) setAiResult(cached)
-  }, [caseId, med.id])
 
   const runCheck = useCallback(async (): Promise<boolean> => {
     setLoading(true)

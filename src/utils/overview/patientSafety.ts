@@ -1,4 +1,5 @@
 import type { LaborBefund } from '../laborArchive'
+import type { VerlaufFeedEntry } from '../verlaufFeed'
 import type { MedicationEntry } from '../../types/medicationPlan'
 import type { ClinicalImprintRecord } from '../../types/clinicalImprint'
 import {
@@ -28,6 +29,8 @@ export interface PatientSafetyInput {
   allergyText?: string | null
   /** Lab befunde for medication-driven parameter monitoring rows. */
   befunde?: LaborBefund[]
+  /** Verlauf feed — somatic Befund anthropometrics supplement labs. */
+  verlaufEntries?: VerlaufFeedEntry[]
 }
 
 const COMBINATION_LABELS: Record<CombinationRiskKind, string> = {
@@ -445,6 +448,7 @@ export function buildPatientSafety(input: PatientSafetyInput): SafetyData {
   const medicationMonitoring = getParameterMonitoringRows({
     medications: input.medications,
     befunde: input.befunde ?? [],
+    verlaufEntries: input.verlaufEntries,
   })
   const hasAnySignal = risk !== null || alerts.length > 0 || medicationMonitoring.length > 0
 

@@ -189,7 +189,7 @@ describe('regression — aufnahme letter structure (de-identified)', () => {
     expect(sectionIds).toContain('aufnahmeanlass')
     expect(sectionIds).toContain('aktuelle-krankheitsanamnese')
     expect(sectionIds).toContain('psychiatrische-vorgeschichte')
-    expect(sectionIds).toContain('somatischer-befund')
+    expect(sectionIds).toContain('neurologischer-befund')
 
     const verlauf = all.filter((c) => c.module === 'verlauf')
     expect(verlauf).toHaveLength(2)

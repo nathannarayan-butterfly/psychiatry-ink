@@ -7,10 +7,14 @@ import { FONT_SANS } from '../styles/typographyTokens'
 
 const SNAPSHOT_KEY_PREFIX = 'psychiatry-ink:notion-document'
 
+import type { AufnahmeSectionMetadata } from '../types/anamneseBefund'
+
 export interface NotionDocumentSnapshot {
   documentTypeId: string
   pageHeading: string
   sectionContents: Record<string, string>
+  /** Per-section capture metadata (Aufnahme Befund modes, structured answers). */
+  sectionMetadata?: Record<string, AufnahmeSectionMetadata>
   savedAt: string
 }
 

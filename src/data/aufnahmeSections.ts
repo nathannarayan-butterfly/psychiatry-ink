@@ -23,6 +23,7 @@ export const defaultAufnahmeSections: WorkspaceSectionTemplate[] = [
   { id: 'fremdgefaehrdungsanamnese', label: 'Fremdgefährdungsanamnese' },
   { id: 'psychopathologischer-befund', label: 'Psychopathologischer Befund' },
   { id: 'somatischer-befund', label: 'Somatischer Befund' },
+  { id: 'neurologischer-befund', label: 'Neurologischer Befund' },
   { id: 'diagnostische-einschaetzung', label: 'Diagnostische Einschätzung' },
   { id: 'therapieplanung-behandlungsplan', label: 'Therapieplanung / Behandlungsplan' },
 ]

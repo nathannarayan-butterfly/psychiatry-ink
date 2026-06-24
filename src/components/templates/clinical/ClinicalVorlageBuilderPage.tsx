@@ -381,14 +381,16 @@ export function ClinicalVorlageBuilderPage({ onBack }: ClinicalVorlageBuilderPag
           <button type="button" className="ct-btn ct-btn--ghost" onClick={handleExportWord}>
             <FileDown className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden /> {t('vorlageExportWord')}
           </button>
-          <button
-            type="button"
-            className={`ct-btn ct-btn--ghost${devMode ? ' ct-btn--active' : ''}`}
-            onClick={() => setDevMode((v) => !v)}
-            title={t('vorlageDevMode')}
-          >
-            <Wrench className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden /> {devMode ? t('vorlageDevModeOn') : t('vorlageDevModeOff')}
-          </button>
+          {import.meta.env.DEV ? (
+            <button
+              type="button"
+              className={`ct-btn ct-btn--ghost${devMode ? ' ct-btn--active' : ''}`}
+              onClick={() => setDevMode((v) => !v)}
+              title={t('vorlageDevMode')}
+            >
+              <Wrench className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden /> {devMode ? t('vorlageDevModeOn') : t('vorlageDevModeOff')}
+            </button>
+          ) : null}
         </div>
       </header>
 
@@ -446,7 +448,7 @@ export function ClinicalVorlageBuilderPage({ onBack }: ClinicalVorlageBuilderPag
             </div>
             <DocumentBandView position="footer" band={pageOneBands.footer} data={data} mode="render" />
           </div>
-          {devMode ? <DeveloperPanel template={selected} /> : null}
+          {import.meta.env.DEV && devMode ? <DeveloperPanel template={selected} /> : null}
         </div>
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -497,7 +499,7 @@ export function ClinicalVorlageBuilderPage({ onBack }: ClinicalVorlageBuilderPag
                   <p className="ct-settings__note">{t('vorlageBandEditHint')}</p>
                 </aside>
               )}
-              {devMode ? <DeveloperPanel template={selected} /> : null}
+              {import.meta.env.DEV && devMode ? <DeveloperPanel template={selected} /> : null}
             </div>
           </div>
         </DndContext>

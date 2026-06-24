@@ -25,6 +25,7 @@ const bindingEnum = z.enum([
   'medication.current',
   'labs.latest',
   'verlauf.selectedRange',
+  'anamnese.current',
   'psychopathology.latest',
   'risk.current',
   'therapy.current',
@@ -114,6 +115,13 @@ const verlaufSchema = z.object({
   type: z.literal('verlauf_summary'),
   label: z.string().optional(),
   windowPreset: z.enum(['7d', '14d', 'admission', 'all']),
+  ...layoutShape,
+})
+
+const anamneseSchema = z.object({
+  id: z.string(),
+  type: z.literal('anamnese'),
+  label: z.string().optional(),
   ...layoutShape,
 })
 
@@ -209,6 +217,7 @@ export const blockSchema: z.ZodType<TemplateBlock> = z.discriminatedUnion('type'
   psychopathologySchema,
   riskSchema,
   verlaufSchema,
+  anamneseSchema,
   therapySchema,
   socialTherapySchema,
   patientDataSchema,

@@ -144,6 +144,26 @@ function BlockView({
         </section>
       )
     }
+    case 'anamnese':
+      return (
+        <section className="ct-doc__section">
+          {block.label ? <h4 className="ct-doc__section-title">{block.label}</h4> : null}
+          {data.anamnese.sections.length === 0 ? (
+            empty
+          ) : (
+            data.anamnese.sections.map((section) => (
+              <div key={section.sectionId} className="ct-doc__anamnese-section">
+                <div className="ct-doc__lab-category">{section.label}</div>
+                <div className="ct-doc__text">
+                  {section.text.split(/\n{2,}/).map((para, i) => (
+                    <p key={i}>{para}</p>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+        </section>
+      )
     case 'therapy':
       return (
         <section className="ct-doc__section">

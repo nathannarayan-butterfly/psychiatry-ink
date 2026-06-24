@@ -15,6 +15,12 @@ import {
 } from '../../types/medicationPlan'
 import { formatDoseLineGerman } from './doseLine'
 import { buildReadableClinicalSentence } from './doseLine'
+import {
+  formatPrnScheduleGerman,
+  hasStructuredPrnFields,
+  normalizePrnScheduleForSave,
+  parseLegacyPrnDoseText,
+} from './prnDose'
 import type { UiLanguage } from '../../types/settings'
 
 export interface MedicationDraft {
@@ -56,7 +62,70 @@ export function createDefaultMedicationDraft(): MedicationDraft {
   }
 }
 
+function stripSubstancePrefix(line: string, substance: string): string {
+  const trimmed = line.trim()
+  if (!trimmed || !substance) return trimmed
+  if (trimmed.startsWith(substance)) return trimmed.slice(substance.length).trim()
+  return trimmed
+}
+
+/** Resolve PRN dose text for legacy single-field input or composed structured PRN line. */
+export function resolvePrnDoseInput(entry: Pick<MedicationEntry, 'substance' | 'doseSchedule' | 'doseLineGerman' | 'prn' | 'strength'>): string {
+  if (hasStructuredPrnFields(entry.doseSchedule)) {
+    return formatPrnScheduleGerman(entry.doseSchedule)
+  }
+
+  const fromMorning = entry.doseSchedule.morning.trim()
+  if (fromMorning) return fromMorning
+
+  const isPrn = entry.doseSchedule.prn || entry.prn
+  if (!isPrn) return ''
+
+  const stripped = stripSubstancePrefix(entry.doseLineGerman, entry.substance.trim())
+  if (!stripped) return ''
+
+  const fallback = entry.strength.trim()
+    ? `${entry.strength.trim()} b.B.`
+    : 'b.B.'
+  if (stripped === fallback) return ''
+
+  return stripped
+}
+
+function hydrateStructuredPrnFields(
+  doseSchedule: MedicationEntry['doseSchedule'],
+  legacyText: string,
+): MedicationEntry['doseSchedule'] {
+  if (hasStructuredPrnFields(doseSchedule)) return doseSchedule
+
+  const parsed = parseLegacyPrnDoseText(legacyText)
+  if (!parsed.prnBasisDose && !parsed.prnMaxSingleDose && !parsed.prnMaxDailyDose) {
+    return doseSchedule
+  }
+
+  return {
+    ...doseSchedule,
+    prnBasisDose: parsed.prnBasisDose,
+    prnMaxSingleDose: parsed.prnMaxSingleDose,
+    prnMaxDailyDose: parsed.prnMaxDailyDose,
+    morning: '',
+  }
+}
+
 export function medicationDraftFromEntry(entry: MedicationEntry): MedicationDraft {
+  const prn = entry.prn || Boolean(entry.doseSchedule.prn)
+  let doseSchedule = { ...entry.doseSchedule }
+  if (prn) {
+    const prnDose = resolvePrnDoseInput(entry)
+    doseSchedule = hydrateStructuredPrnFields(doseSchedule, prnDose)
+    if (!hasStructuredPrnFields(doseSchedule) && prnDose) {
+      doseSchedule.morning = prnDose
+    }
+    doseSchedule.noon = ''
+    doseSchedule.evening = ''
+    doseSchedule.night = ''
+  }
+
   return {
     substance: entry.substance,
     kbDrugId: entry.kbDrugId,
@@ -64,8 +133,8 @@ export function medicationDraftFromEntry(entry: MedicationEntry): MedicationDraf
     displayBrandName: entry.displayBrandName,
     formulation: entry.formulation,
     strength: entry.strength,
-    doseSchedule: { ...entry.doseSchedule },
-    prn: entry.prn,
+    doseSchedule,
+    prn,
     depotInterval: entry.depotInterval ?? '',
     startDate: entry.startDate,
     indication: entry.indication,
@@ -96,11 +165,14 @@ function buildEntryFromDraft(
   _language: UiLanguage,
 ): MedicationEntry {
   const now = new Date().toISOString()
-  const schedule = {
+  const schedule = normalizePrnScheduleForSave({
     ...draft.doseSchedule,
     prn: draft.prn,
     depotInterval: draft.depotInterval.trim() || undefined,
-  }
+    ...(draft.prn
+      ? { noon: '', evening: '', night: '' }
+      : {}),
+  })
   const doseLineGerman = formatDoseLineGerman(
     draft.substance,
     draft.formulation,

@@ -399,7 +399,7 @@ export function WorkspaceLauncher({ onLaunch }: WorkspaceLauncherProps) {
   )
 
   const devBadge = (text: string) =>
-    devMode ? <span className="wl-dev-badge">{text}</span> : null
+    import.meta.env.DEV && devMode ? <span className="wl-dev-badge">{text}</span> : null
 
   return (
     <div className="wl-root" role="region" aria-label={greeting}>
@@ -594,17 +594,19 @@ export function WorkspaceLauncher({ onLaunch }: WorkspaceLauncherProps) {
 
         <div className="wl-footer">
           <span className="wl-hint">{t('launcherHint')}</span>
-          <button
-            type="button"
-            className={`wl-dev-toggle${devMode ? ' wl-dev-toggle--on' : ''}`}
-            aria-pressed={devMode}
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={toggleDevMode}
-            title={t('launcherDevToggle')}
-          >
-            <Wrench className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
-            {t('launcherDevToggle')}
-          </button>
+          {import.meta.env.DEV ? (
+            <button
+              type="button"
+              className={`wl-dev-toggle${devMode ? ' wl-dev-toggle--on' : ''}`}
+              aria-pressed={devMode}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={toggleDevMode}
+              title={t('launcherDevToggle')}
+            >
+              <Wrench className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+              {t('launcherDevToggle')}
+            </button>
+          ) : null}
         </div>
       </div>
     </div>

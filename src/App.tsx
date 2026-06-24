@@ -13,10 +13,7 @@ import { CaseWorkspacePage } from './components/CaseWorkspacePage'
 import { DashboardPage } from './components/dashboard/DashboardPage'
 import { KbAdminPage } from './components/kb-admin/KbAdminPage'
 import { AuditDebugPage } from './components/audit/AuditDebugPage'
-import { DemoPatientDevPage } from './components/demo/DemoPatientDevPage'
 import { useAuditDebugAccess } from './hooks/useAuditDebugAccess'
-import { ensureDemoPatientExists } from './demo'
-import { uiLanguageToDemoLocale } from './demo/demoLocale'
 import { useSystemAdminAccess } from './hooks/useSystemAdminAccess'
 import { DiscussCaseInvitePage } from './components/discuss-case/DiscussCaseInvitePage'
 import { ConsultantDashboard } from './components/consultation/ConsultantDashboard'
@@ -42,6 +39,7 @@ import { CalendarPage } from './components/calendar/CalendarPage'
 import { TodoPage } from './components/todos/TodoPage'
 import { AskButterflyProvider } from './contexts/AskButterflyContext'
 import { AskButterflyShell } from './components/notion/AskButterflyShell'
+import { redirectToCanonicalAppIfNeeded } from './utils/canonicalAppRedirect'
 
 const ENTERPRISE_ROUTES_ENABLED = isEnterpriseOrgHierarchyEnabled()
 
@@ -76,15 +74,6 @@ export default function App() {
   }, [user?.id])
 
   useEffect(() => {
-    if (!user?.id) return
-    void ensureDemoPatientExists({
-      userId: user.id,
-      calendarScope: { userId: user.id, orgId: null },
-      locale: uiLanguageToDemoLocale(languageSettings.language),
-    })
-  }, [user?.id, languageSettings.language])
-
-  useEffect(() => {
     if (authLoading) return
     if (!isConfigured) return
 
@@ -100,10 +89,6 @@ export default function App() {
     }
 
     if (user && route.view === 'audit-debug' && !hasAuditDebugAccess) {
-      navigate('/dashboard', true)
-    }
-
-    if (user && route.view === 'demo-patient' && !hasAuditDebugAccess) {
       navigate('/dashboard', true)
     }
 
@@ -129,14 +114,15 @@ export default function App() {
     if (user && onAuthPage) {
       const params = new URLSearchParams(window.location.search)
       const redirect = params.get('redirect')
-      navigate(redirect && redirect.startsWith('/') ? redirect : '/dashboard', true)
+      const destination = redirect && redirect.startsWith('/') ? redirect : '/dashboard'
+      if (redirectToCanonicalAppIfNeeded(destination)) return
+      navigate(destination, true)
     }
   }, [authLoading, canAccessEnterpriseUi, hasAuditDebugAccess, hasSystemAdminAccess, isConfigured, isEnterpriseRoute, isRestrictedConsultant, navigate, route, user])
 
   const showDashboard = route.view === 'dashboard'
   const showKbAdmin = route.view === 'kb-admin'
   const showAuditDebug = route.view === 'audit-debug'
-  const showDemoPatient = route.view === 'demo-patient'
   const showTemplates = route.view === 'templates'
   const showTeamSettings = route.view === 'team-settings'
   const showIntegrations = route.view === 'integrations'
@@ -214,7 +200,9 @@ export default function App() {
           onSuccess={() => {
             const params = new URLSearchParams(window.location.search)
             const redirect = params.get('redirect')
-            navigate(redirect && redirect.startsWith('/') ? redirect : '/dashboard', true)
+            const destination = redirect && redirect.startsWith('/') ? redirect : '/dashboard'
+            if (redirectToCanonicalAppIfNeeded(destination)) return
+            navigate(destination, true)
           }}
           onSwitchMode={(mode) => navigate(mode === 'login' ? '/login' : '/signup')}
         />
@@ -265,8 +253,6 @@ export default function App() {
           <EnterpriseSsoPlaceholder onBack={() => navigate('/dashboard/enterprise')} />
         ) : showAuditDebug && hasAuditDebugAccess ? (
           <AuditDebugPage onBack={() => navigate('/dashboard')} />
-        ) : showDemoPatient && hasAuditDebugAccess ? (
-          <DemoPatientDevPage onBack={() => navigate('/dashboard')} />
         ) : showKbAdmin && hasSystemAdminAccess ? (
           <KbAdminPage onBack={() => navigate('/dashboard')} />
         ) : showTemplates ? (
@@ -303,7 +289,6 @@ export default function App() {
             onNavigateHome={handleNavigateHome}
             onOpenKbAdmin={() => navigate('/dashboard/kb-admin')}
             onOpenAuditDebug={() => navigate('/dev/audit-logs')}
-            onOpenDemoPatient={() => navigate('/dev/demo-patient')}
             onOpenTemplates={() => navigate('/dashboard/templates')}
             onOpenTeamSettings={() => navigate('/dashboard/team')}
             onOpenIntegrations={() => navigate('/dashboard/integrations')}

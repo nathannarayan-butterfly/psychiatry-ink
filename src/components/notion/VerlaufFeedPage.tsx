@@ -20,7 +20,6 @@ import {
 import { useTranslation } from '../../context/TranslationContext'
 import { useAuth } from '../../context/AuthContext'
 import { usePermissionContext } from '../../contexts/PermissionContext'
-import { useDemoPatient } from '../../hooks/useDemoPatient'
 import {
   SelectionActionBubble,
   selectionBubblePosition,
@@ -106,6 +105,9 @@ import {
 import { applyEdit } from '../../utils/inlineAiEdit/buildEditContext'
 import { resolveVerlaufAiEditTarget } from '../../utils/inlineAiEdit/verlaufInlineEdit'
 import { useInlineAiEdit } from './inlineAiEdit/useInlineAiEdit'
+import { SomaticBefundQuickModal } from './verlauf/SomaticBefundQuickModal'
+import { SomaticBefundEntryCard } from './verlauf/SomaticBefundEntryCard'
+import { isSomaticBefundEntry } from '../../utils/verlauf/somaticBefund'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -1655,12 +1657,16 @@ interface VerlaufFeedPageProps {
   autoOpenComposer?: boolean
   /** Called once the auto-open request has been consumed. */
   onAutoOpenComposerHandled?: () => void
+  /** Optional guided-entry gate — parent shows mode chooser / wizard instead of composer. */
+  onNewEntryRequest?: () => void
   /**
    * Routes a derived (projected) entry's edit/delete to its source module.
    * Derived cards mirror data owned by another section, so they are never
    * mutated in place — the clinician manages the underlying record at source.
    */
   onNavigateToSource?: (source: VerlaufDerivedSource) => void
+  /** Opens the Befundung workspace for structured ECG/EEG documentation. */
+  onOpenFullBefund?: () => void
 }
 
 export function VerlaufFeedPage({
@@ -1668,12 +1674,14 @@ export function VerlaufFeedPage({
   patientLabel = null,
   autoOpenComposer = false,
   onAutoOpenComposerHandled,
+  onNewEntryRequest,
   onNavigateToSource,
+  onOpenFullBefund,
 }: VerlaufFeedPageProps) {
   const { t, language } = useTranslation()
   const { user } = useAuth()
   const { member, role, organisation } = usePermissionContext()
-  const { readOnly: demoReadOnly } = useDemoPatient(caseId)
+  const demoReadOnly = false
   const todoScope = useTodoScope()
 
   const aiEditEnabled = isInlineAiEditEnabled()
@@ -2332,6 +2340,7 @@ export function VerlaufFeedPage({
   )
 
   const [composerOpen, setComposerOpen] = useState(false)
+  const [somaticModalOpen, setSomaticModalOpen] = useState(false)
   const [composerText, setComposerText] = useState('')
   const [composerDate, setComposerDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [composerType, setComposerType] = useState<VerlaufDocumentType>('verlauf')
@@ -2604,13 +2613,32 @@ export function VerlaufFeedPage({
             />
           ) : null}
           {!composerOpen ? (
-            <button
-              type="button"
-              className="verlauf-feed-page__new-btn"
-              onClick={(e) => { e.stopPropagation(); setComposerOpen(true) }}
-            >
-              ＋ {t('verlaufNewEntry')}
-            </button>
+            <div className="verlauf-feed-page__header-entry-actions">
+              <button
+                type="button"
+                className="verlauf-feed-page__new-btn verlauf-feed-page__new-btn--secondary"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setSomaticModalOpen(true)
+                }}
+              >
+                ＋ {t('verlaufSomaticBefundNew')}
+              </button>
+              <button
+                type="button"
+                className="verlauf-feed-page__new-btn"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (onNewEntryRequest) {
+                    onNewEntryRequest()
+                    return
+                  }
+                  setComposerOpen(true)
+                }}
+              >
+                ＋ {t('verlaufNewEntry')}
+              </button>
+            </div>
           ) : null}
         </div>
       </header>
@@ -2783,15 +2811,23 @@ export function VerlaufFeedPage({
           {visibleItems.map((item, index) => (
             <div key={item.id}>
               {item.kind === 'manual' ? (
-                <EntryCard
-                  entry={item.entry}
-                  annotations={annotations}
-                  onSelection={handleSelection}
-                  onCommentSelect={handleCommentSelect}
-                  onTodoSelect={handleTodoSelect}
-                  onEdit={handleEntryEdit}
-                  onDelete={handleEntryDelete}
-                />
+                isSomaticBefundEntry(item.entry) ? (
+                  <SomaticBefundEntryCard
+                    entry={item.entry}
+                    onDelete={handleEntryDelete}
+                    onOpenFullBefund={onOpenFullBefund}
+                  />
+                ) : (
+                  <EntryCard
+                    entry={item.entry}
+                    annotations={annotations}
+                    onSelection={handleSelection}
+                    onCommentSelect={handleCommentSelect}
+                    onTodoSelect={handleTodoSelect}
+                    onEdit={handleEntryEdit}
+                    onDelete={handleEntryDelete}
+                  />
+                )
               ) : isAufnahmeFeedEvent(item.event) && item.event.sections.length > 0 ? (
                 <AufnahmeEntryCard
                   event={item.event}
@@ -2975,6 +3011,18 @@ export function VerlaufFeedPage({
         />
       </div>
     ) : null}
+
+      <SomaticBefundQuickModal
+        open={somaticModalOpen}
+        caseId={caseId}
+        userId={user?.id}
+        onClose={() => setSomaticModalOpen(false)}
+        onSaved={() => {
+          setEntries(loadVerlaufFeed(caseId))
+          showNotionToast(t('verlaufSomaticBefundSaved'))
+        }}
+        onOpenFullBefund={onOpenFullBefund}
+      />
     </div>
   )
 }

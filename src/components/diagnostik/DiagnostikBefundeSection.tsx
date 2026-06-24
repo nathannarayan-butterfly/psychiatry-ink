@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Clipboard, Pencil, Trash2 } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
-import { useDemoPatient } from '../../hooks/useDemoPatient'
 import { BEFUND_TYPES, getBefundSchema } from '../../data/befundSchemas'
 import type { UiTranslationKey } from '../../data/uiTranslations'
 import type { BefundRecord, BefundType } from '../../types/befund'
@@ -120,7 +119,7 @@ export function DiagnostikBefundeMain({
   onRequestAnforderung,
 }: DiagnostikBefundeMainProps) {
   const { t, language } = useTranslation()
-  const { readOnly } = useDemoPatient(caseId)
+  const readOnly = false
   const [popupType, setPopupType] = useState<BefundType | null>(null)
   const [editRecordId, setEditRecordId] = useState<string | undefined>()
 

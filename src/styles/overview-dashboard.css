@@ -47,10 +47,64 @@
   --ov-hairline: var(--cm-hairline, color-mix(in srgb, var(--border-soft) 72%, transparent));
   --ov-spark: color-mix(in srgb, var(--area-accent, var(--accent)) 72%, var(--text-secondary));
 
+  /* Glassmorphism tuning — consumes shared workspace tokens (clinical-minimal.css) */
+  --ov-glass-blur: var(--workspace-glass-blur);
+  --ov-glass-bg: var(--workspace-glass-bg);
+  --ov-glass-bg-strong: var(--workspace-glass-bg-strong);
+  --ov-glass-bg-hero: var(--workspace-glass-bg-hero);
+  --ov-glass-border: var(--workspace-glass-border);
+  --ov-glass-border-teal: var(--workspace-glass-border-teal);
+  --ov-glass-shadow: var(--workspace-glass-shadow);
+  --ov-glass-shadow-hover: var(--workspace-glass-shadow-hover);
+  --ov-glass-shadow-semantic: var(--workspace-glass-shadow-semantic);
+  --ov-glass-scrim: var(--workspace-glass-scrim);
+  --ov-glass-scrim-strong: var(--workspace-glass-scrim-strong);
+  --ov-glass-ink-muted: var(--workspace-glass-ink-muted);
+
+  /* Subtle Übersicht type scale (~6.25%). Overrides global + clinical-minimal tokens
+   * for this subtree only; hardcoded rem/px literals use calc() with --ov-type-scale. */
+  --ov-type-scale: 1.0625;
+  --text-2xs: calc(0.6875rem * var(--ov-type-scale));
+  --text-xs: calc(0.75rem * var(--ov-type-scale));
+  --text-sm: calc(0.8125rem * var(--ov-type-scale));
+  --text-base: calc(0.9375rem * var(--ov-type-scale));
+  --text-md: calc(1rem * var(--ov-type-scale));
+  --text-lg: calc(1.125rem * var(--ov-type-scale));
+  --text-xl: calc(1.375rem * var(--ov-type-scale));
+  --text-2xl: calc(1.75rem * var(--ov-type-scale));
+  --text-3xl: calc(2.25rem * var(--ov-type-scale));
+  --cm-hero-name-size: calc(1.5rem * var(--ov-type-scale));
+  --cm-hero-thesis-size: calc(0.9375rem * var(--ov-type-scale));
+  --cm-section-title-size: calc(0.8125rem * var(--ov-type-scale));
+  --cm-eyebrow-size: calc(0.6875rem * var(--ov-type-scale));
+  --cm-label-size: calc(0.6875rem * var(--ov-type-scale));
+
   width: 100%;
   min-width: 0;
   margin-top: 0;
   container: overview-dashboard / inline-size;
+}
+
+/* CI overview widgets — scale px literals from clinical-intelligence.css */
+.ov-dashboard .ci-widget__row,
+.ov-dashboard .ci-widget .ci-barchart__name {
+  font-size: calc(13px * var(--ov-type-scale));
+}
+
+.ov-dashboard .ci-widget__meta,
+.ov-dashboard .ci-widget__warning,
+.ov-dashboard .ci-widget__empty {
+  font-size: calc(12px * var(--ov-type-scale));
+}
+
+.ov-dashboard .ci-widget__counts,
+.ov-dashboard .ci-widget__open,
+.ov-dashboard .ci-status-chip {
+  font-size: calc(11.5px * var(--ov-type-scale));
+}
+
+.ov-dashboard .ci-widget__pill {
+  font-size: calc(10.5px * var(--ov-type-scale));
 }
 
 /* ── Hero header card (light, minimal) ───────────────────────────────────────
@@ -107,6 +161,45 @@
     0 6px 18px -10px color-mix(in srgb, var(--ov-teal) 35%, transparent);
 }
 
+/* Hero glass — slightly more opaque than grid cards; keeps command-deck legibility. */
+[data-area='overview'] .ov-dashboard .ov-hero.aura-card {
+  background-color: color-mix(in srgb, var(--ov-teal) 5%, var(--ov-glass-bg-hero));
+  background-image:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--ov-teal) 7%, rgba(255, 255, 255, 0.28)) 0%,
+      color-mix(in srgb, var(--ov-teal) 3%, rgba(255, 255, 255, 0.15)) 42%,
+      transparent 100%
+    );
+  backdrop-filter: blur(var(--ov-glass-blur));
+  -webkit-backdrop-filter: blur(var(--ov-glass-blur));
+  border-color: var(--ov-glass-border-teal);
+  box-shadow: var(--ov-glass-shadow);
+}
+
+[data-area='overview'] .ov-dashboard .ov-hero__tile {
+  background-color: color-mix(in srgb, var(--ovh-accent) 5%, var(--ov-glass-bg));
+  backdrop-filter: blur(calc(var(--ov-glass-blur) * 0.85));
+  -webkit-backdrop-filter: blur(calc(var(--ov-glass-blur) * 0.85));
+  border-color: color-mix(in srgb, var(--ovh-accent) 16%, var(--ov-glass-border));
+}
+
+[data-area='overview'] .ov-dashboard .ov-hero__tile:hover {
+  background-color: color-mix(in srgb, var(--ovh-accent) 8%, var(--ov-glass-bg-strong));
+  border-color: color-mix(in srgb, var(--ovh-accent) 28%, var(--ov-glass-border));
+  box-shadow: var(--ov-glass-shadow-hover);
+}
+
+[data-area='overview'] .ov-dashboard .ov-hero__tile--tone-high {
+  background-color: color-mix(in srgb, var(--ov-danger) 14%, var(--ov-glass-bg-strong));
+  border-color: color-mix(in srgb, var(--ov-danger) 28%, var(--ov-glass-border));
+}
+
+[data-area='overview'] .ov-dashboard .ov-hero__tile--tone-moderate {
+  background-color: color-mix(in srgb, var(--ov-warn) 14%, var(--ov-glass-bg-strong));
+  border-color: color-mix(in srgb, var(--ov-warn) 28%, var(--ov-glass-border));
+}
+
 .ov-hero--visit-header {
   padding: clamp(0.85rem, 1.8vw, 1.2rem) clamp(0.95rem, 2vw, 1.35rem);
   margin-bottom: var(--space-4, 1rem);
@@ -140,12 +233,13 @@
 }
 
 .ov-hero--visit-header .cm-hero__name {
-  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+  font-size: clamp(calc(1.35rem * var(--ov-type-scale)), 2.4vw, calc(1.75rem * var(--ov-type-scale)));
   line-height: 1.12;
 }
 
 .ov-hero--visit-header .cm-hero__demographics {
   gap: 0.25rem 0.65rem;
+  color: var(--text-secondary, #6d655c);
 }
 
 .ov-hero--visit-header .cm-hero__thesis-row {
@@ -198,7 +292,7 @@
   min-width: 1.1rem;
   padding: 0 0.25rem;
   border-radius: 999px;
-  font-size: 0.625rem;
+  font-size: calc(0.625rem * var(--ov-type-scale));
   font-variant-numeric: tabular-nums;
 }
 
@@ -297,7 +391,7 @@
 .ov-visit-action__section {
   margin: 0;
   padding: 0.35rem 0.55rem 0.12rem;
-  font-size: 0.68rem;
+  font-size: calc(0.68rem * var(--ov-type-scale));
   font-weight: 650;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -312,7 +406,7 @@
   border-radius: 0.45rem;
   background: transparent;
   color: var(--text-main, #24211e);
-  font-size: 0.82rem;
+  font-size: calc(0.82rem * var(--ov-type-scale));
   font-weight: 500;
   line-height: 1.35;
   text-align: left;
@@ -404,7 +498,7 @@
   border-bottom: 1px solid var(--ovh-line);
 }
 .ov-hero .cm-hero__name {
-  font-size: clamp(1.5rem, 2.8vw, 1.95rem);
+  font-size: clamp(calc(1.5rem * var(--ov-type-scale)), 2.8vw, calc(1.95rem * var(--ov-type-scale)));
 }
 
 /* ── Butterfly + at-a-glance briefing ────────────────────────────────────── */
@@ -711,7 +805,7 @@
 
 [data-area='overview'] .ov-widget-slot:not(.ov-widget-slot--editable):hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-elevated-lg, 0 2px 6px rgba(0, 0, 0, 0.06), 0 8px 20px rgba(0, 0, 0, 0.07));
+  box-shadow: var(--ov-glass-shadow-hover);
   border-color: color-mix(in srgb, var(--patient-bordered-accent, var(--area-accent)) 42%, var(--border-soft));
 }
 
@@ -719,41 +813,134 @@
   border-color: color-mix(in srgb, var(--patient-bordered-accent, var(--area-accent)) 48%, var(--border-soft));
 }
 
-/* ── Cohesive card aura (calm) ───────────────────────────────────────────────
- * Each bento card keeps its own per-widget --patient-bordered-accent identity
- * but gains a soft top-left accent SHEEN + an accent-tinted ELEVATION glow, so
- * the whole grid belongs to the same command-deck system as the hero — just far
- * calmer (no motion behind text, contrast untouched). The sheen is layered as
- * background-IMAGE over the existing tinted background-color from
- * patient-panel-bordered.css; the `.ov-dashboard` in the selector raises
- * specificity above that file (which loads later) so these win cleanly.
+/* ── Glass widget cards (calm frosted bento) ───────────────────────────────
+ * Frosted panels over the scoped scene background. Per-widget accent stripes
+ * stay from patient-panel-bordered.css; glass fill + blur live here so the
+ * whole grid reads as one cohesive deck. Semantic widgets get a stronger fill
+ * so risk / lab / amber tones stay legible on busy backdrops.
  * ────────────────────────────────────────────────────────────────────────── */
 [data-area='overview'] .ov-dashboard .ov-widget-slot {
+  --ov-glass-fill: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) 6%,
+    var(--ov-glass-bg)
+  );
+  background-color: var(--ov-glass-fill);
   background-image:
     radial-gradient(
       120% 86% at 0% 0%,
-      color-mix(in srgb, var(--patient-bordered-accent) 10%, transparent),
+      color-mix(in srgb, var(--patient-bordered-accent) 7%, rgba(255, 255, 255, 0.28)),
       transparent 58%
     ),
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--patient-bordered-accent) 5%, transparent),
+      color-mix(in srgb, var(--patient-bordered-accent) 4%, rgba(255, 255, 255, 0.15)),
       transparent 42%
     );
-  box-shadow:
-    var(--shadow-elevated-sm, 0 1px 2px rgba(0, 0, 0, 0.04)),
-    0 10px 24px -16px color-mix(in srgb, var(--patient-bordered-accent) 55%, transparent);
+  backdrop-filter: blur(var(--ov-glass-blur));
+  -webkit-backdrop-filter: blur(var(--ov-glass-blur));
+  border-color: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) 20%,
+    var(--ov-glass-border)
+  );
+  box-shadow: var(--ov-glass-shadow);
 }
 
 [data-area='overview'] .ov-dashboard .ov-widget-slot:not(.ov-widget-slot--editable):hover {
-  box-shadow:
-    var(--shadow-elevated-lg, 0 2px 6px rgba(0, 0, 0, 0.06), 0 8px 20px rgba(0, 0, 0, 0.07)),
-    0 16px 34px -18px color-mix(in srgb, var(--patient-bordered-accent) 70%, transparent);
+  box-shadow: var(--ov-glass-shadow-hover);
 }
 
-/* Editable (drag) mode stays flat + dashed — no sheen competing with controls. */
+/* Semantic / alert-heavy widgets — higher-opacity fill + slightly deeper shadow */
+[data-area='overview'] .ov-dashboard .ov-widget-slot[data-widget-id='safety'] {
+  --ov-glass-fill: color-mix(in srgb, var(--ov-risk-red) 11%, var(--ov-glass-bg-strong));
+  box-shadow: var(--ov-glass-shadow-semantic);
+}
+
+[data-area='overview'] .ov-dashboard .ov-widget-slot[data-widget-id='labs-due'],
+[data-area='overview'] .ov-dashboard .ov-widget-slot[data-widget-id='lab-results'],
+[data-area='overview'] .ov-dashboard .ov-widget-slot[data-widget-id='zwangsmassnahme'] {
+  --ov-glass-fill: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) 13%,
+    var(--ov-glass-bg-strong)
+  );
+  box-shadow: var(--ov-glass-shadow-semantic);
+}
+
+[data-area='overview'] .ov-dashboard .ov-widget-slot[data-widget-id='recent-verlauf'] {
+  --ov-glass-fill: color-mix(in srgb, var(--ov-amber) 12%, var(--ov-glass-bg-strong));
+  box-shadow: var(--ov-glass-shadow-semantic);
+}
+
+[data-area='overview'] .ov-dashboard .ov-widget-slot[data-widget-id='safety']:not(.ov-widget-slot--editable):hover,
+[data-area='overview'] .ov-dashboard .ov-widget-slot[data-widget-id='labs-due']:not(.ov-widget-slot--editable):hover,
+[data-area='overview'] .ov-dashboard .ov-widget-slot[data-widget-id='lab-results']:not(.ov-widget-slot--editable):hover,
+[data-area='overview'] .ov-dashboard .ov-widget-slot[data-widget-id='zwangsmassnahme']:not(.ov-widget-slot--editable):hover,
+[data-area='overview'] .ov-dashboard .ov-widget-slot[data-widget-id='recent-verlauf']:not(.ov-widget-slot--editable):hover {
+  box-shadow: var(--ov-glass-shadow-hover);
+}
+
+/* Editable (drag) mode stays flat + dashed — no blur competing with controls. */
 [data-area='overview'] .ov-dashboard .ov-widget-slot--editable {
   background-image: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background-color: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) 7%,
+    var(--surface, #fff)
+  );
+}
+
+/* Widget section headers — hairline tuned for frosted surfaces */
+[data-area='overview'] .ov-dashboard .cm-section__head--widget {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--ov-teal) 12%, rgba(255, 255, 255, 0.42));
+}
+
+[data-area='overview'] .ov-dashboard .cm-section__head--widget .cm-eyebrow {
+  color: color-mix(in srgb, var(--ov-teal) 52%, var(--text-main, #24211e));
+}
+
+/* Muted labels — slightly stronger ink on glass */
+[data-area='overview'] .ov-dashboard .ov-meta,
+[data-area='overview'] .ov-dashboard .ov-subhead,
+[data-area='overview'] .ov-dashboard .ov-block-label,
+[data-area='overview'] .ov-dashboard .ov-safety__severity {
+  color: var(--ov-glass-ink-muted);
+}
+
+[data-area='overview'] .ov-dashboard .ov-ai-badge {
+  background: var(--ov-glass-scrim);
+  border-color: color-mix(in srgb, var(--text-main, #24211e) 12%, var(--ov-glass-border));
+}
+
+/* Semantic inner strips — scrim-backed so red/amber still reads on glass */
+[data-area='overview'] .ov-dashboard .ov-alert--high {
+  background: color-mix(in srgb, var(--ov-danger) 16%, var(--ov-glass-scrim-strong));
+}
+
+[data-area='overview'] .ov-dashboard .ov-alert--moderate {
+  background: color-mix(in srgb, var(--ov-warn) 16%, var(--ov-glass-scrim-strong));
+}
+
+[data-area='overview'] .ov-dashboard .ov-alert--info {
+  background: color-mix(in srgb, var(--ov-info) 14%, var(--ov-glass-scrim-strong));
+}
+
+[data-area='overview'] .ov-dashboard .ov-alert--ok,
+[data-area='overview'] .ov-dashboard .ov-alert--low {
+  background: color-mix(in srgb, var(--ov-ok) 14%, var(--ov-glass-scrim-strong));
+}
+
+[data-area='overview'] .ov-dashboard .ov-lab--abnormal {
+  background: color-mix(in srgb, var(--ov-danger) 15%, var(--ov-glass-scrim-strong));
+}
+
+[data-area='overview'] .ov-dashboard .ov-lab:not(.ov-lab--abnormal) {
+  background: color-mix(in srgb, var(--text-muted) 8%, var(--ov-glass-scrim));
 }
 
 /* Band dividers carry the area accent voice. */
@@ -778,7 +965,7 @@
   margin: 0 0 0.45rem;
   padding: 0.12rem 0.4rem;
   font-family: var(--font-sans, inherit);
-  font-size: 0.625rem;
+  font-size: calc(0.625rem * var(--ov-type-scale));
   font-weight: var(--weight-medium, 500);
   line-height: 1.35;
   letter-spacing: 0.015em;
@@ -1918,7 +2105,7 @@
 }
 .ov-allclear::before {
   content: '✓';
-  font-size: 0.95rem;
+  font-size: calc(0.95rem * var(--ov-type-scale));
   line-height: 1;
 }
 
@@ -1991,6 +2178,81 @@
   margin-top: 0.55rem;
   padding-top: 0.55rem;
   border-top: 1px solid var(--ov-hairline);
+}
+
+/* ── Diagnoses overview list ─────────────────────────────────────────────── */
+
+.ov-dx__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ov-dx__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  width: 100%;
+  min-width: 0;
+  padding: 0.42rem 0.55rem;
+  margin: 0 -0.55rem;
+  border: none;
+  border-bottom: 1px solid var(--ov-hairline);
+  border-radius: var(--ov-radius-row);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  transition: background var(--ov-transition);
+}
+
+.ov-dx__row:last-child {
+  border-bottom: none;
+}
+
+.ov-dx__row:hover {
+  background: var(--ov-tint);
+}
+
+.ov-dx__row:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--ov-teal) 45%, transparent);
+  outline-offset: 1px;
+}
+
+.ov-dx__code {
+  flex: 0 0 auto;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: var(--weight-semibold, 600);
+  color: color-mix(in srgb, var(--ov-teal) 72%, var(--text-main, #24211e));
+  font-variant-numeric: tabular-nums;
+}
+
+.ov-dx__name {
+  flex: 1 1 8rem;
+  min-width: 0;
+  font-size: var(--text-sm, 0.8125rem);
+  overflow-wrap: anywhere;
+}
+
+.ov-dx__chips {
+  flex: 0 1 auto;
+  margin-left: auto;
+}
+
+.ov-dx__row--muted .ov-dx__name {
+  color: var(--text-secondary, #6d655c);
+}
+
+.ov-dx__row--provisional .ov-dx__name {
+  font-style: italic;
+}
+
+[data-area='overview'] .ov-dashboard .ov-dx__row:hover {
+  background: color-mix(in srgb, var(--text-muted) 8%, var(--ov-glass-scrim));
 }
 
 /* ── Labs / monitoring ───────────────────────────────────────────────────── */
@@ -2348,12 +2610,12 @@
 }
 
 .ov-ppb__detail {
-  font-size: 0.8125rem;
+  font-size: calc(0.8125rem * var(--ov-type-scale));
 }
 
 .ov-ppb__unremarkable-summary {
   margin: 0.15rem 0 0;
-  font-size: 0.8125rem;
+  font-size: calc(0.8125rem * var(--ov-type-scale));
   color: var(--text-muted, #91887e);
   font-style: italic;
 }
@@ -2381,7 +2643,7 @@
 }
 
 .ov-ppb__extract-dev-hint {
-  font-size: 0.6875rem;
+  font-size: calc(0.6875rem * var(--ov-type-scale));
   font-weight: 500;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -2392,13 +2654,13 @@
 .ov-ppb__loading,
 .ov-ppb__stale-hint {
   margin: 0 0 0.5rem;
-  font-size: 0.8125rem;
+  font-size: calc(0.8125rem * var(--ov-type-scale));
   color: var(--text-muted, #91887e);
 }
 
 .ov-ppb__error {
   margin: 0 0 0.5rem;
-  font-size: 0.8125rem;
+  font-size: calc(0.8125rem * var(--ov-type-scale));
   color: var(--cm-danger-fg, #b42318);
 }
 
@@ -2410,7 +2672,7 @@
 }
 
 .ov-ppb__ai-badge {
-  font-size: 0.6875rem;
+  font-size: calc(0.6875rem * var(--ov-type-scale));
   font-weight: 500;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -2422,7 +2684,7 @@
   padding: 0;
   border: none;
   background: none;
-  font-size: 0.8125rem;
+  font-size: calc(0.8125rem * var(--ov-type-scale));
   color: var(--accent, #6b5b4f);
   cursor: pointer;
   text-decoration: underline;
@@ -2431,7 +2693,7 @@
 
 .ov-snapshot__text--secondary {
   margin-top: 0.35rem;
-  font-size: 0.8125rem;
+  font-size: calc(0.8125rem * var(--ov-type-scale));
   color: var(--text-muted, #91887e);
 }
 
@@ -2464,6 +2726,14 @@
   border-left-width: 2px;
   padding: 0.35rem 0 0.35rem 0.55rem;
   border-radius: 0;
+}
+
+/* Abnormal rows: restore inset padding + tinted fill (matches ov-alert). */
+.ov-lab--abnormal {
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--ov-radius-row);
+  background: var(--ov-danger-soft);
+  border-left-color: var(--ov-danger);
 }
 
 .ov-layout-footer {
@@ -2557,6 +2827,25 @@
 .ov-card__body .spiegelwerte-card .recharts-responsive-container {
   min-width: 0;
 }
+
+/* Spiegel card type — scale notion-preview rem literals inside Übersicht */
+.ov-dashboard .spiegelwerte-card__name {
+  font-size: calc(0.72rem * var(--ov-type-scale));
+}
+
+.ov-dashboard .spiegelwerte-card__trend,
+.ov-dashboard .spiegelwerte-card__unit {
+  font-size: calc(0.65rem * var(--ov-type-scale));
+}
+
+.ov-dashboard .spiegelwerte-card__value {
+  font-size: calc(1.05rem * var(--ov-type-scale));
+}
+
+.ov-dashboard .spiegelwerte-card__ref {
+  font-size: calc(0.62rem * var(--ov-type-scale));
+}
+
 /* Latest Spiegel sits beside meds — keep a single readable column when narrow. */
 .ov-med-spiegel .spiegelwerte-section__grid {
   grid-template-columns: 1fr;
@@ -2714,6 +3003,52 @@
   }
 }
 
+/* ── Glass fallbacks (reduced transparency / no backdrop-filter) ───────── */
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  [data-area='overview'] .ov-dashboard .ov-widget-slot,
+  [data-area='overview'] .ov-dashboard .ov-hero.aura-card,
+  [data-area='overview'] .ov-dashboard .ov-hero__tile {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background-color: color-mix(
+      in srgb,
+      var(--patient-bordered-accent, var(--ov-teal)) 5%,
+      var(--surface, #fff)
+    );
+    background-image: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  [data-area='overview'] .ov-dashboard .ov-widget-slot,
+  [data-area='overview'] .ov-dashboard .ov-hero.aura-card,
+  [data-area='overview'] .ov-dashboard .ov-hero__tile {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background-color: color-mix(
+      in srgb,
+      var(--patient-bordered-accent, var(--ov-teal)) 6%,
+      var(--surface, #fff)
+    );
+    background-image: none;
+    box-shadow: var(--shadow-elevated-sm, 0 1px 2px rgba(0, 0, 0, 0.04));
+  }
+
+  [data-area='overview'] .ov-dashboard .ov-widget-slot[data-widget-id='safety'] {
+    background-color: color-mix(in srgb, var(--ov-risk-red) 8%, var(--surface, #fff));
+  }
+
+  [data-area='overview'] .ov-dashboard .ov-alert--high,
+  [data-area='overview'] .ov-dashboard .ov-lab--abnormal {
+    background: var(--ov-danger-soft);
+  }
+
+  [data-area='overview'] .ov-dashboard .ov-alert--moderate {
+    background: var(--ov-warn-soft);
+  }
+}
+
 /* ── Dashboard header toolbar (export / print) ─────────────────────────────── */
 
 .ov-dashboard__header {
@@ -2777,7 +3112,7 @@
   border-radius: 0.45rem;
   background: transparent;
   color: var(--text-main, #24211e);
-  font-size: 0.85rem;
+  font-size: calc(0.85rem * var(--ov-type-scale));
   text-align: left;
   cursor: pointer;
 }
@@ -2809,7 +3144,7 @@
   border-radius: 0.55rem;
   background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 6%, var(--surface, #fff));
   color: var(--text-main, #24211e);
-  font-size: 0.82rem;
+  font-size: calc(0.82rem * var(--ov-type-scale));
   font-weight: 500;
   line-height: 1.2;
   cursor: pointer;
@@ -2854,7 +3189,7 @@
 .ov-quick-action-menu__subsection {
   margin: 0;
   padding: 0.35rem 0.55rem 0.15rem;
-  font-size: 0.68rem;
+  font-size: calc(0.68rem * var(--ov-type-scale));
   font-weight: 650;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -2863,7 +3198,7 @@
 
 .ov-quick-action-menu__subsection {
   padding-top: 0.15rem;
-  font-size: 0.72rem;
+  font-size: calc(0.72rem * var(--ov-type-scale));
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: none;
@@ -2878,7 +3213,7 @@
   border-radius: 0.45rem;
   background: transparent;
   color: var(--text-main, #24211e);
-  font-size: 0.85rem;
+  font-size: calc(0.85rem * var(--ov-type-scale));
   text-align: left;
   cursor: pointer;
 }
@@ -3153,13 +3488,13 @@
 }
 
 .ov-compliance__day-weekday {
-  font-size: 0.5625rem;
+  font-size: calc(0.5625rem * var(--ov-type-scale));
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
 
 .ov-compliance__day-label {
-  font-size: 0.625rem;
+  font-size: calc(0.625rem * var(--ov-type-scale));
   font-variant-numeric: tabular-nums;
   color: var(--text-secondary, #5c5650);
 }
@@ -3280,7 +3615,7 @@
 }
 
 .ov-compliance__add-label {
-  font-size: 0.625rem;
+  font-size: calc(0.625rem * var(--ov-type-scale));
   text-transform: uppercase;
   letter-spacing: 0.03em;
   color: var(--text-muted, #91887e);
@@ -3370,7 +3705,7 @@
 }
 
 .ov-compliance__popover-date {
-  font-size: 0.6875rem;
+  font-size: calc(0.6875rem * var(--ov-type-scale));
   font-variant-numeric: tabular-nums;
   color: var(--text-muted, #91887e);
 }
@@ -3537,7 +3872,7 @@
   padding: 0.1rem 0.4rem;
   border: 1px solid var(--border, #e8e4df);
   border-radius: 4px;
-  font-size: 0.625rem;
+  font-size: calc(0.625rem * var(--ov-type-scale));
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -3617,11 +3952,11 @@
   }
 
   .ov-compliance__day-weekday {
-    font-size: 0.5rem;
+    font-size: calc(0.5rem * var(--ov-type-scale));
   }
 
   .ov-compliance__day-label {
-    font-size: 0.5625rem;
+    font-size: calc(0.5625rem * var(--ov-type-scale));
   }
 }
 
@@ -3666,13 +4001,13 @@
 }
 
 .ov-vt__trend-label {
-  font-size: 0.9375rem;
+  font-size: calc(0.9375rem * var(--ov-type-scale));
   font-weight: 600;
 }
 
 .ov-vt__confidence {
   margin-left: auto;
-  font-size: 0.6875rem;
+  font-size: calc(0.6875rem * var(--ov-type-scale));
   letter-spacing: 0.02em;
   text-transform: uppercase;
   color: var(--text-muted, #91887e);
@@ -3680,7 +4015,7 @@
 
 .ov-vt__rationale {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: calc(0.8125rem * var(--ov-type-scale));
   line-height: 1.45;
   color: var(--text-secondary, #5c5650);
 }
@@ -3696,7 +4031,7 @@
 
 .ov-vt__subhead {
   margin: 0 0 0.35rem;
-  font-size: 0.6875rem;
+  font-size: calc(0.6875rem * var(--ov-type-scale));
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -3714,7 +4049,7 @@
   border: 1px solid var(--border-subtle, rgba(44, 40, 37, 0.12));
   border-radius: 999px;
   background: transparent;
-  font-size: 0.75rem;
+  font-size: calc(0.75rem * var(--ov-type-scale));
   cursor: pointer;
 }
 
@@ -3726,7 +4061,7 @@
 .ov-vt__domain-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.8125rem;
+  font-size: calc(0.8125rem * var(--ov-type-scale));
 }
 
 .ov-vt__domain-table th,
@@ -3737,7 +4072,7 @@
 }
 
 .ov-vt__domain-table th {
-  font-size: 0.6875rem;
+  font-size: calc(0.6875rem * var(--ov-type-scale));
   font-weight: 600;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -3757,11 +4092,11 @@
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
-  font-size: 0.8125rem;
+  font-size: calc(0.8125rem * var(--ov-type-scale));
 }
 
 .ov-vt__evidence-source {
-  font-size: 0.6875rem;
+  font-size: calc(0.6875rem * var(--ov-type-scale));
   font-weight: 600;
   color: var(--text-muted, #91887e);
 }
@@ -3774,11 +4109,11 @@
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
-  font-size: 0.8125rem;
+  font-size: calc(0.8125rem * var(--ov-type-scale));
 }
 
 .ov-vt__source-meta {
-  font-size: 0.6875rem;
+  font-size: calc(0.6875rem * var(--ov-type-scale));
   color: var(--text-muted, #91887e);
 }
 
@@ -3798,7 +4133,7 @@
   border: 1px solid var(--border-subtle, rgba(44, 40, 37, 0.14));
   border-radius: 6px;
   background: transparent;
-  font-size: 0.75rem;
+  font-size: calc(0.75rem * var(--ov-type-scale));
   cursor: pointer;
 }
 
@@ -3819,7 +4154,7 @@
 }
 
 .ov-vt__edit-label {
-  font-size: 0.6875rem;
+  font-size: calc(0.6875rem * var(--ov-type-scale));
   font-weight: 600;
   color: var(--text-muted, #91887e);
 }
@@ -3831,7 +4166,7 @@
   border: 1px solid var(--border-subtle, rgba(44, 40, 37, 0.14));
   border-radius: 6px;
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: calc(0.8125rem * var(--ov-type-scale));
   resize: vertical;
 }
 
@@ -3852,14 +4187,23 @@
     page-break-inside: avoid;
   }
 
-  /* Drop the card aura sheen + glow for ink-saving, high-contrast print. */
+  /* Drop glass + sheen for ink-saving, high-contrast print. */
   [data-area='overview'] .ov-dashboard .ov-widget-slot {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background-color: color-mix(
+      in srgb,
+      var(--patient-bordered-accent, var(--ov-teal)) 5%,
+      var(--surface, #fff)
+    );
     background-image: none;
     box-shadow: none;
   }
 
   /* Flatten the light header card for ink-saving, high-contrast print. */
   .ov-hero {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     background: var(--surface, #fff);
     background-image: none;
     border-color: var(--border-soft, #e8e4df);
@@ -3868,6 +4212,8 @@
   }
   .ov-hero__tile,
   .ov-hero__empty {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     background: var(--surface, #fff);
     border-color: var(--border-soft, #e8e4df);
   }

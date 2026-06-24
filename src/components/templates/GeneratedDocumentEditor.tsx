@@ -22,6 +22,12 @@ interface GeneratedDocumentEditorProps {
   caseId?: string
   existingDoc?: GeneratedDocument
   saveToPatientDocuments?: boolean
+  initialFieldValues?: Record<string, string | boolean | string[]>
+  wizardMetadata?: {
+    instanceId: string
+    structuredAnswers: GeneratedDocument['structuredAnswers']
+    auditTrail: GeneratedDocument['auditTrail']
+  }
   onClose: () => void
   onSaved?: (doc: GeneratedDocument) => void
 }
@@ -315,6 +321,8 @@ export function GeneratedDocumentEditor({
   caseId,
   existingDoc,
   saveToPatientDocuments = false,
+  initialFieldValues,
+  wizardMetadata,
   onClose,
   onSaved,
 }: GeneratedDocumentEditorProps) {
@@ -331,11 +339,13 @@ export function GeneratedDocumentEditor({
       setContext(ctx)
       if (existingDoc) {
         setFieldValues(existingDoc.fieldValues)
+      } else if (initialFieldValues) {
+        setFieldValues(initialFieldValues)
       } else {
         setFieldValues(buildInitialFieldValues(template, ctx))
       }
     })
-  }, [caseId, template, existingDoc])
+  }, [caseId, template, existingDoc, initialFieldValues])
 
   const sortedFields = useMemo(
     () => [...template.fields].sort((a, b) => a.order - b.order),
@@ -370,8 +380,19 @@ export function GeneratedDocumentEditor({
       status,
       createdAt: existingDoc?.createdAt ?? now,
       updatedAt: now,
+      instanceId: wizardMetadata?.instanceId ?? existingDoc?.instanceId,
+      structuredAnswers: wizardMetadata?.structuredAnswers ?? existingDoc?.structuredAnswers,
+      auditTrail: wizardMetadata?.auditTrail ?? existingDoc?.auditTrail,
+      provenance: wizardMetadata
+        ? {
+            generatedAt: now,
+            wizardCompletedAt: now,
+            templateTitle: template.title,
+            instanceId: wizardMetadata.instanceId,
+          }
+        : existingDoc?.provenance,
     }
-  }, [docId, template, caseId, fieldValues, renderedText, status, existingDoc])
+  }, [docId, template, caseId, fieldValues, renderedText, status, existingDoc, wizardMetadata])
 
   const persist = useCallback(
     async (nextStatus: GeneratedDocument['status']) => {

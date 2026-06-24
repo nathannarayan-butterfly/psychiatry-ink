@@ -7,6 +7,7 @@ import { OverviewClinicalSignalChips } from './OverviewClinicalSignalChips'
 import { buildClinicalThesis } from '../../../utils/overview/clinicalThesis'
 import { buildClinicalHeroMeta } from '../../../utils/overview/clinicalHeroMeta'
 import { DEFAULT_CASE_ID } from '../../../utils/caseContext'
+import { useOverviewClinicalRefresh } from '../../../hooks/useOverviewClinicalRefresh'
 import { useTranslation } from '../../../context/TranslationContext'
 import type { OverviewQuickActionId } from '../../../utils/overview/overviewQuickActions'
 import type { ClinicalSignalChip } from '../../../utils/overview/overviewClinicalSignals'
@@ -44,11 +45,13 @@ export function OverviewHero({
   onSignalChipClick,
 }: OverviewHeroProps) {
   const { language, t } = useTranslation()
+  const clinicalRefreshRevision = useOverviewClinicalRefresh(caseId)
 
-  const { name, demographics, isAssigned } = useMemo(() => {
+  const { name, demographics } = useMemo(() => {
     void metaVersion
+    void clinicalRefreshRevision
     return buildClinicalHeroMeta(caseId, t)
-  }, [caseId, metaVersion, t])
+  }, [caseId, metaVersion, clinicalRefreshRevision, t])
 
   const thesis = useMemo(() => {
     void metaVersion
@@ -93,6 +96,8 @@ export function OverviewHero({
     onVisitAction || (onExportPdf && onExportWord && onPrint),
   )
 
+  const showPatientIdentity = caseId !== DEFAULT_CASE_ID
+
   return (
     <section
       className="ov-hero ov-hero--command ov-hero--visit-header aura-card"
@@ -119,8 +124,8 @@ export function OverviewHero({
             name={name}
             demographics={demographics}
             supplementFacts={supplementFacts}
-            showDemographics={isAssigned}
-            caseId={isAssigned && caseId !== DEFAULT_CASE_ID ? caseId : undefined}
+            showDemographics={showPatientIdentity}
+            caseId={showPatientIdentity ? caseId : undefined}
             thesis={thesis}
             thesisEditable
             onThesisChange={onClinicalSubheadingChange}

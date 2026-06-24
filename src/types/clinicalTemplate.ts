@@ -35,6 +35,7 @@ export type BlockType =
   | 'psychopathology'
   | 'risk'
   | 'verlauf_summary'
+  | 'anamnese'
   | 'therapy'
   | 'social_therapy'
   | 'patient_data'
@@ -55,6 +56,7 @@ export type ClinicalBinding =
   | 'medication.current'
   | 'labs.latest'
   | 'verlauf.selectedRange'
+  | 'anamnese.current'
   | 'psychopathology.latest'
   | 'risk.current'
   | 'therapy.current'
@@ -182,6 +184,11 @@ export interface VerlaufSummaryBlock extends BlockBase {
   windowPreset: VerlaufWindowPreset
 }
 
+export interface AnamneseBlock extends BlockBase {
+  type: 'anamnese'
+  label?: string
+}
+
 export interface TherapyBlock extends BlockBase {
   type: 'therapy'
   label?: string
@@ -274,6 +281,7 @@ export type TemplateBlock =
   | PsychopathologyBlock
   | RiskBlock
   | VerlaufSummaryBlock
+  | AnamneseBlock
   | TherapyBlock
   | SocialTherapyBlock
   | PatientDataBlock

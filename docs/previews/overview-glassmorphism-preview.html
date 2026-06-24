@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Psychiatry.Ink — Übersicht Glassmorphism Preview</title>
+  <style>
+    /* ==========================================================================
+     * Psychiatry.Ink — Standalone Übersicht glassmorphism preview
+     * NOT linked to production CSS. Tokens mirror overview-dashboard.css +
+     * clinical-minimal.css for visual fidelity only.
+     *
+     * DESIGN NOTES (glass tokens):
+     *   --glass-blur: 14px          backdrop-filter blur radius
+     *   --glass-bg: rgba(255,255,255,0.68)   card fill (~68% white)
+     *   --glass-bg-strong: rgba(255,255,255,0.78)  safety / emphasis panels
+     *   --glass-border: rgba(255,255,255,0.72)     1px hairline highlight
+     *   --glass-border-teal: color-mix teal 18%     subtle clinical rim
+     *   --glass-shadow: layered soft depth (see .glass-card)
+     *
+     * ACCESSIBILITY CAVEAT:
+     *   Frosted panels reduce perceived contrast vs flat white. Body text stays
+     *   at #24211e on ≥68% white — approx. 12:1 on solid white, ~8:1 over the
+     *   preview background. Muted labels (#6d655c / #91887e) may drop below WCAG
+     *   AA on busy backgrounds; production would need solid scrim under text or
+     *   higher opacity (≥0.82) for small/muted type. Test with real imagery.
+     * ========================================================================== */
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    :root {
+      /* Overview palette (from overview-dashboard.css) */
+      --ov-teal: #2a6b6b;
+      --ov-teal-soft: color-mix(in srgb, #2a6b6b 9%, transparent);
+      --ov-risk-red: #c0392b;
+      --ov-risk-red-soft: color-mix(in srgb, #c0392b 10%, transparent);
+      --ov-amber: #b45309;
+      --ov-amber-soft: color-mix(in srgb, #b45309 11%, transparent);
+      --ov-green: #2f8a5b;
+      --ov-green-soft: color-mix(in srgb, #2f8a5b 10%, transparent);
+      --ov-info: #3a6f9c;
+      --ov-info-soft: color-mix(in srgb, #3a6f9c 10%, transparent);
+
+      /* Clinical-minimal / globals */
+      --surface: #ffffff;
+      --text-main: #24211e;
+      --text-secondary: #6d655c;
+      --text-muted: #91887e;
+      --accent: #2a6b6b; /* overview area uses teal, not gold accent */
+      --accent-hover: #1f5252;
+      --cm-hairline: color-mix(in srgb, #e8e4df 72%, transparent);
+      --cm-quiet-border: color-mix(in srgb, #e8e4df 88%, transparent);
+      --cm-section-gap: 1.25rem;
+      --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      --font-mono: ui-monospace, "Cascadia Code", "SF Mono", Menlo, monospace;
+
+      /* Glass tokens */
+      --glass-blur: 14px;
+      --glass-bg: rgba(255, 255, 255, 0.68);
+      --glass-bg-strong: rgba(255, 255, 255, 0.78);
+      --glass-border: rgba(255, 255, 255, 0.72);
+      --glass-border-teal: color-mix(in srgb, var(--ov-teal) 18%, rgba(255, 255, 255, 0.5));
+      --glass-shadow:
+        0 1px 2px rgba(42, 107, 107, 0.06),
+        0 4px 16px -4px rgba(42, 107, 107, 0.12),
+        0 12px 32px -12px rgba(36, 33, 30, 0.08);
+      --glass-shadow-hover:
+        0 2px 4px rgba(42, 107, 107, 0.08),
+        0 8px 24px -6px rgba(42, 107, 107, 0.16),
+        0 16px 40px -12px rgba(36, 33, 30, 0.1);
+    }
+
+    html { font-size: 16px; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font-sans);
+      color: var(--text-main);
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Preview chrome ── */
+    .preview-chrome {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem 1.5rem;
+      padding: 0.85rem 1.5rem;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--cm-hairline);
+    }
+
+    .preview-chrome__title {
+      margin: 0;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .preview-chrome__title strong {
+      color: var(--ov-teal);
+      font-weight: 700;
+    }
+
+    .view-toggle {
+      display: flex;
+      gap: 0.25rem;
+      padding: 0.2rem;
+      background: color-mix(in srgb, var(--ov-teal) 6%, #f5f3f0);
+      border-radius: 0.5rem;
+      border: 1px solid var(--cm-hairline);
+    }
+
+    .view-toggle button {
+      padding: 0.4rem 0.85rem;
+      border: none;
+      border-radius: 0.375rem;
+      background: transparent;
+      font-family: inherit;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background 150ms, color 150ms, box-shadow 150ms;
+    }
+
+    .view-toggle button[aria-pressed="true"] {
+      background: var(--surface);
+      color: var(--ov-teal);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    .preview-legend {
+      flex: 1 1 100%;
+      margin: 0;
+      padding: 0.5rem 0 0;
+      font-size: 0.6875rem;
+      line-height: 1.5;
+      color: var(--text-muted);
+      border-top: 1px solid var(--cm-hairline);
+    }
+
+    .preview-legend code {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      padding: 0.1rem 0.3rem;
+      background: color-mix(in srgb, var(--ov-teal) 8%, white);
+      border-radius: 3px;
+    }
+
+    /* ── Scene background (shows why glass matters) ── */
+    .preview-scene {
+      position: relative;
+      min-height: calc(100vh - 5rem);
+      padding: 1.75rem clamp(1rem, 3vw, 2.5rem) 3rem;
+      overflow: hidden;
+    }
+
+    .preview-scene__bg {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background:
+        radial-gradient(ellipse 80% 60% at 15% 20%, color-mix(in srgb, var(--ov-teal) 22%, transparent), transparent 55%),
+        radial-gradient(ellipse 70% 50% at 85% 75%, color-mix(in srgb, var(--ov-info) 14%, transparent), transparent 50%),
+        radial-gradient(ellipse 50% 40% at 60% 10%, color-mix(in srgb, var(--ov-green) 10%, transparent), transparent 45%),
+        linear-gradient(165deg, #e8f0f0 0%, #f4f1ec 35%, #ebe6df 70%, #dde8e8 100%);
+    }
+
+    /* Subtle clinical grid + waveform pattern */
+    .preview-scene__bg::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0.35;
+      background-image:
+        linear-gradient(color-mix(in srgb, var(--ov-teal) 8%, transparent) 1px, transparent 1px),
+        linear-gradient(90deg, color-mix(in srgb, var(--ov-teal) 8%, transparent) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+
+    .preview-scene__bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0.12;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 400'%3E%3Cpath fill='none' stroke='%232a6b6b' stroke-width='1.5' d='M0 200 Q150 120 300 200 T600 200 T900 180 T1200 200'/%3E%3Cpath fill='none' stroke='%232a6b6b' stroke-width='1' opacity='0.6' d='M0 240 Q200 160 400 240 T800 220 T1200 250'/%3E%3C/svg%3E") center 60% / cover no-repeat;
+    }
+
+    /* ── Layout modes ── */
+    .comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .comparison[data-mode="flat"],
+    .comparison[data-mode="glass"] {
+      grid-template-columns: 1fr;
+      max-width: 720px;
+    }
+
+    .comparison[data-mode="flat"] .panel--glass,
+    .comparison[data-mode="glass"] .panel--flat {
+      display: none;
+    }
+
+    .panel-label {
+      margin: 0 0 1rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .panel-label span {
+      display: inline-block;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      background: color-mix(in srgb, var(--ov-teal) 10%, white);
+      color: var(--ov-teal);
+    }
+
+    /* ── Shared dashboard tokens ── */
+    .dashboard {
+      --ov-grid-gap: 1.25rem;
+    }
+
+    .page-eyebrow {
+      display: flex;
+      align-items: flex-end;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .page-eyebrow__label {
+      margin: 0;
+      font-size: 0.6875rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .page-eyebrow__rule {
+      flex: 1;
+      height: 1px;
+      background: var(--cm-hairline);
+      margin-bottom: 0.15rem;
+    }
+
+    /* Hero strip */
+    .hero {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--cm-hairline);
+    }
+
+    .hero__name {
+      margin: 0 0 0.25rem;
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: color-mix(in srgb, var(--ov-teal) 42%, var(--text-main));
+    }
+
+    .hero__meta {
+      margin: 0;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .hero__thesis {
+      margin: 0.5rem 0 0;
+      font-size: 0.9375rem;
+      line-height: 1.45;
+      color: var(--text-secondary);
+      max-width: 42em;
+    }
+
+    /* Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: var(--ov-grid-gap);
+    }
+
+    .col-6 { grid-column: span 6; }
+    .col-12 { grid-column: span 12; }
+
+    @media (max-width: 640px) {
+      .col-6 { grid-column: span 12; }
+      .comparison { grid-template-columns: 1fr; }
+    }
+
+    /* ── Flat variant (current production style) ── */
+    .panel--flat .widget {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      margin-bottom: 0;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+    }
+
+    .panel--flat .widget__head {
+      display: flex;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 0.5rem 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .panel--flat .widget__eyebrow {
+      margin: 0;
+      font-size: 0.6875rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .panel--flat .widget__meta {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .panel--flat .widget__spacer { flex: 1; }
+
+    .panel--flat .widget__action {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--accent);
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .panel--flat .widget__body {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    /* ── Glass variant ── */
+    .panel--glass .widget {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      padding: 1rem 1.1rem 1.15rem;
+      border-radius: 0.75rem;
+      background: var(--glass-bg);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+      transition: box-shadow 200ms ease, transform 200ms ease;
+    }
+
+    .panel--glass .widget:hover {
+      box-shadow: var(--glass-shadow-hover);
+    }
+
+    .panel--glass .widget--safety {
+      background: var(--glass-bg-strong);
+      border-left: 3px solid var(--ov-amber);
+      border-color: var(--glass-border);
+      border-left-color: var(--ov-amber);
+    }
+
+    .panel--glass .widget--wide {
+      grid-column: span 12;
+    }
+
+    .panel--glass .widget__head {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem 0.75rem;
+      margin-bottom: 0.85rem;
+      padding-bottom: 0.65rem;
+      border-bottom: 1px solid color-mix(in srgb, var(--ov-teal) 12%, rgba(255,255,255,0.4));
+    }
+
+    .panel--glass .widget__eyebrow {
+      margin: 0;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: color-mix(in srgb, var(--ov-teal) 55%, var(--text-main));
+    }
+
+    .panel--glass .widget__meta {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      padding: 0.15rem 0.45rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+    }
+
+    .panel--glass .widget__spacer { flex: 1; }
+
+    .panel--glass .widget__action {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--accent);
+      background: rgba(255, 255, 255, 0.45);
+      border: 1px solid color-mix(in srgb, var(--ov-teal) 15%, transparent);
+      padding: 0.25rem 0.55rem;
+      border-radius: 0.375rem;
+      cursor: pointer;
+    }
+
+    .panel--glass .widget__body {
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+
+    /* ── Shared widget content ── */
+    .quiet-strip {
+      padding-left: 0.65rem;
+      border-left: 2px solid var(--cm-quiet-border);
+    }
+
+    .quiet-strip--high { border-left-color: color-mix(in srgb, var(--ov-risk-red) 55%, var(--cm-quiet-border)); }
+    .quiet-strip--moderate { border-left-color: color-mix(in srgb, var(--ov-amber) 55%, var(--cm-quiet-border)); }
+    .quiet-strip--ok { border-left-color: color-mix(in srgb, var(--ov-green) 45%, var(--cm-quiet-border)); }
+
+    .quiet-strip__headline {
+      margin: 0 0 0.15rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .quiet-strip__detail {
+      margin: 0;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .quiet-strip + .quiet-strip { margin-top: 0.45rem; }
+
+    .risk-head {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.65rem;
+    }
+
+    .risk-ring {
+      width: 2.25rem;
+      height: 2.25rem;
+      flex-shrink: 0;
+    }
+
+    .risk-ring svg { width: 100%; height: 100%; }
+
+    .risk-ring__track { stroke: color-mix(in srgb, var(--ov-amber) 20%, #e8e4df); }
+    .risk-ring__prog { stroke: var(--ov-amber); stroke-linecap: round; transform: rotate(-90deg); transform-origin: center; }
+
+    .risk-summary {
+      margin: 0;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .risk-detail {
+      margin: 0.1rem 0 0;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      padding: 0.2rem 0.45rem;
+      border-radius: 999px;
+      line-height: 1;
+    }
+
+    .pill--high { background: var(--ov-risk-red-soft); color: var(--ov-risk-red); border: 1px solid color-mix(in srgb, var(--ov-risk-red) 25%, transparent); }
+    .pill--moderate { background: var(--ov-amber-soft); color: var(--ov-amber); border: 1px solid color-mix(in srgb, var(--ov-amber) 25%, transparent); }
+    .pill--info { background: var(--ov-info-soft); color: var(--ov-info); border: 1px solid color-mix(in srgb, var(--ov-info) 25%, transparent); }
+    .pill--ok { background: var(--ov-green-soft); color: var(--ov-green); border: 1px solid color-mix(in srgb, var(--ov-green) 25%, transparent); }
+    .pill--neutral { background: color-mix(in srgb, var(--text-muted) 12%, transparent); color: var(--text-secondary); }
+
+    .med-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.35rem 0.65rem;
+      padding: 0.35rem 0;
+      border-bottom: 1px solid var(--cm-hairline);
+    }
+
+    .med-row:last-child { border-bottom: none; }
+
+    .med-name {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .med-dose {
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      margin-left: auto;
+    }
+
+    .med-note {
+      margin: 0.35rem 0 0;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .lab-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.25rem 1rem;
+      padding: 0.45rem 0;
+      border-bottom: 1px solid var(--cm-hairline);
+    }
+
+    .lab-row--abnormal .lab-name { color: var(--ov-risk-red); font-weight: 600; }
+
+    .lab-name { font-size: 0.8125rem; }
+    .lab-value { font-family: var(--font-mono); font-size: 0.8125rem; text-align: right; }
+    .lab-ref { display: block; font-size: 0.6875rem; color: var(--text-muted); }
+    .lab-date { display: block; font-size: 0.6875rem; color: var(--text-muted); }
+
+    .subhead {
+      margin: 0.5rem 0 0.25rem;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .diag-mini {
+      padding: 0.5rem 0;
+      border-top: 1px solid var(--cm-hairline);
+    }
+
+    .diag-mini__head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.5rem;
+    }
+
+    .diag-mini__title { font-size: 0.75rem; font-weight: 600; }
+    .diag-mini__finding { margin: 0.25rem 0 0; font-size: 0.75rem; color: var(--text-secondary); line-height: 1.4; }
+
+    .dx-entry { margin-bottom: 0.85rem; }
+    .dx-entry:last-child { margin-bottom: 0; }
+
+    .dx-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.35rem 0.65rem;
+      margin-bottom: 0.2rem;
+    }
+
+    .dx-code {
+      font-family: var(--font-mono);
+      font-size: 0.8125rem;
+      font-weight: 600;
+    }
+
+    .dx-meta { font-size: 0.75rem; color: var(--text-muted); }
+
+    .dx-title {
+      margin: 0;
+      font-size: 0.8125rem;
+      line-height: 1.5;
+    }
+
+    .feed-item {
+      padding: 0.55rem 0;
+      border-bottom: 1px solid var(--cm-hairline);
+    }
+
+    .feed-item:last-child { border-bottom: none; }
+
+    .feed-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.35rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .feed-date {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .feed-text {
+      margin: 0;
+      font-size: 0.8125rem;
+      line-height: 1.45;
+      color: var(--text-secondary);
+    }
+
+    .ai-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.625rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ov-ai-blue, #4a6280);
+    }
+
+    .ai-badge::before {
+      content: '';
+      width: 0.4rem;
+      height: 0.4rem;
+      border-radius: 50%;
+      background: var(--ov-ai-blue, #4a6280);
+      opacity: 0.7;
+    }
+
+    .trend-banner {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.55rem 0.65rem;
+      border-radius: 0.5rem;
+      background: color-mix(in srgb, var(--ov-green) 8%, transparent);
+      border: 1px solid color-mix(in srgb, var(--ov-green) 18%, transparent);
+      margin-bottom: 0.5rem;
+    }
+
+    .panel--glass .trend-banner {
+      background: color-mix(in srgb, var(--ov-green) 10%, rgba(255,255,255,0.4));
+    }
+
+    .trend-banner__label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--ov-green);
+    }
+
+    .trend-banner__window {
+      margin-left: auto;
+      font-size: 0.6875rem;
+      color: var(--text-muted);
+    }
+
+    .domain-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0;
+      font-size: 0.8125rem;
+    }
+
+    .domain-row__arrow {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      width: 1rem;
+      text-align: center;
+    }
+
+    .domain-row__arrow--up { color: var(--ov-green); }
+    .domain-row__arrow--down { color: var(--ov-risk-red); }
+
+    .domain-row__name { flex: 1; }
+    .domain-row__trend { font-size: 0.75rem; color: var(--text-muted); }
+
+    .allergy-line {
+      margin: 0;
+      font-size: 0.8125rem;
+      line-height: 1.4;
+    }
+
+    .allergy-line strong { color: var(--ov-risk-red); }
+
+    .sparkline {
+      display: inline-block;
+      width: 48px;
+      height: 16px;
+      vertical-align: middle;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .panel--glass .widget { transition: none; }
+      .panel--glass .widget:hover { transform: none; }
+    }
+
+    @supports not (backdrop-filter: blur(1px)) {
+      .panel--glass .widget {
+        background: rgba(255, 255, 255, 0.94);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="preview-chrome">
+    <h1 class="preview-chrome__title"><strong>Psychiatry.Ink</strong> — Übersicht Glassmorphism Preview</h1>
+    <div class="view-toggle" role="group" aria-label="Ansicht umschalten">
+      <button type="button" data-mode="compare" aria-pressed="true">Vergleich</button>
+      <button type="button" data-mode="flat" aria-pressed="false">Aktuell (flat)</button>
+      <button type="button" data-mode="glass" aria-pressed="false">Glassmorphism</button>
+    </div>
+    <p class="preview-legend">
+      Design tokens — blur: <code>14px</code> · fill: <code>rgba(255,255,255,0.68)</code> (safety: <code>0.78</code>) · border: <code>1px rgba(255,255,255,0.72)</code> + teal rim · shadow: layered teal-tinted depth.
+      <strong>Barrierefreiheit:</strong> Gedämpfte Labels können auf belebten Hintergründen unter WCAG AA fallen; höhere Deckkraft oder Scrim unter Text empfohlen.
+    </p>
+  </header>
+
+  <div class="preview-scene">
+    <div class="preview-scene__bg" aria-hidden="true"></div>
+
+    <div class="comparison" id="comparison" data-mode="compare">
+      <!-- ── FLAT (current) ── -->
+      <section class="panel panel--flat" aria-label="Aktuelle flat Darstellung">
+        <h2 class="panel-label"><span>Aktuell</span> — Flat clinical-minimal</h2>
+        <div class="dashboard" id="flat-dashboard"></div>
+      </section>
+
+      <!-- ── GLASS ── -->
+      <section class="panel panel--glass" aria-label="Glassmorphism Vorschau">
+        <h2 class="panel-label"><span>Glass</span> — Frosted panels</h2>
+        <div class="dashboard" id="glass-dashboard"></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    /* Widget markup shared between both panels */
+    const WIDGETS_HTML = `
+      <div class="page-eyebrow">
+        <p class="page-eyebrow__label">Übersicht</p>
+        <hr class="page-eyebrow__rule" />
+      </div>
+
+      <header class="hero">
+        <h3 class="hero__name">M. Schneider</h3>
+        <p class="hero__meta">♀ · 34 J. · Fall 2024-0847 · Station 3B · Aufnahme 12.06.2024</p>
+        <p class="hero__thesis">Schizophrene Störung, akute Episode — stabilisierend unter Quetiapin, Lithium-Spiegel im Zielbereich; Suizidalität aktuell abgeklärt.</p>
+      </header>
+
+      <div class="grid">
+        <!-- Sicherheit -->
+        <article class="widget widget--safety col-6">
+          <header class="widget__head">
+            <h4 class="widget__eyebrow">Sicherheit</h4>
+            <span class="widget__meta">Moderates Risiko</span>
+            <span class="widget__spacer"></span>
+            <button type="button" class="widget__action">Details →</button>
+          </header>
+          <div class="widget__body">
+            <div class="risk-head">
+              <span class="risk-ring" aria-hidden="true">
+                <svg viewBox="0 0 36 36" fill="none">
+                  <circle class="risk-ring__track" cx="18" cy="18" r="14" stroke-width="4"/>
+                  <circle class="risk-ring__prog" cx="18" cy="18" r="14" stroke-width="4"
+                    stroke-dasharray="87.96" stroke-dasharray="87.96" stroke-dashoffset="28"/>
+                </svg>
+              </span>
+              <div>
+                <p class="risk-summary">Moderates Gesamtrisiko</p>
+                <p class="risk-detail">Letzte Beurteilung: heute 08:45 · Visite</p>
+              </div>
+            </div>
+            <div class="quiet-strip quiet-strip--moderate">
+              <p class="quiet-strip__headline">Suizidalität</p>
+              <p class="quiet-strip__detail">Passive Gedanken, kein Plan · C-SSRS Stufe 2</p>
+            </div>
+            <div class="quiet-strip quiet-strip--ok">
+              <p class="quiet-strip__headline">Aggression / Fremdgefährdung</p>
+              <p class="quiet-strip__detail">Niedrig · keine Vorfälle seit Aufnahme</p>
+            </div>
+            <p class="subhead" style="margin-top:0.75rem">Allergien</p>
+            <p class="allergy-line"><strong>Penicillin</strong> — Exanthem, Atemnot (2019)</p>
+          </div>
+        </article>
+
+        <!-- Medikation -->
+        <article class="widget col-6">
+          <header class="widget__head">
+            <h4 class="widget__eyebrow">Medikation</h4>
+            <span class="widget__meta">4 aktiv</span>
+            <span class="widget__spacer"></span>
+            <button type="button" class="widget__action">Medikation →</button>
+          </header>
+          <div class="widget__body">
+            <div class="med-row">
+              <span class="med-name">Quetiapin</span>
+              <span class="pill pill--neutral">fix</span>
+              <span class="med-dose">300 mg 0-0-1</span>
+            </div>
+            <div class="med-row">
+              <span class="med-name">Lithium</span>
+              <span class="pill pill--neutral">fix</span>
+              <span class="med-dose">825 mg 1-0-0</span>
+            </div>
+            <div class="med-row">
+              <span class="med-name">Lorazepam</span>
+              <span class="pill pill--neutral">b.B.</span>
+              <span class="med-dose">max. 2 mg/d</span>
+            </div>
+            <div class="med-row">
+              <span class="med-name">Propranolol</span>
+              <span class="med-dose">40 mg 1-0-1</span>
+            </div>
+            <p class="med-note">Letzte Änderung: 18.06. — Quetiapin 250→300 mg</p>
+          </div>
+        </article>
+
+        <!-- Labor -->
+        <article class="widget col-12">
+          <header class="widget__head">
+            <h4 class="widget__eyebrow">Labor &amp; Monitoring</h4>
+            <span class="widget__meta">1 auffällig</span>
+            <span class="widget__spacer"></span>
+            <button type="button" class="widget__action">Labor →</button>
+          </header>
+          <div class="widget__body">
+            <p class="subhead" style="margin-top:0">Auffällige Werte</p>
+            <div class="lab-row lab-row--abnormal">
+              <div>
+                <span class="lab-name">Lithium-Spiegel</span>
+                <svg class="sparkline" viewBox="0 0 48 16" aria-hidden="true">
+                  <polyline fill="none" stroke="#c0392b" stroke-width="1.5" points="0,12 12,10 24,8 36,6 48,4"/>
+                </svg>
+              </div>
+              <div class="lab-value">
+                1,1 mmol/l
+                <span class="lab-ref">Ref. 0,6–1,0</span>
+                <span class="lab-date">20.06.2024</span>
+              </div>
+            </div>
+            <p class="subhead">Diagnostik</p>
+            <div class="diag-mini">
+              <div class="diag-mini__head">
+                <span class="diag-mini__title">EKG</span>
+                <span class="pill pill--ok">unauffällig</span>
+              </div>
+              <p class="diag-mini__finding">Sinusrhythmus 72/min, QTc 412 ms — 15.06.2024</p>
+            </div>
+            <div class="diag-mini">
+              <div class="diag-mini__head">
+                <span class="diag-mini__title">EEG</span>
+                <span class="pill pill--info">durchgeführt</span>
+              </div>
+              <p class="diag-mini__finding">Mäßige Allgemeinverlangsamung, keine epileptiformen Potenziale — 10.06.2024</p>
+            </div>
+          </div>
+        </article>
+
+        <!-- Diagnose -->
+        <article class="widget col-6">
+          <header class="widget__head">
+            <h4 class="widget__eyebrow">Diagnosen</h4>
+            <span class="widget__spacer"></span>
+            <button type="button" class="widget__action">Diagnose →</button>
+          </header>
+          <div class="widget__body">
+            <div class="dx-entry">
+              <div class="dx-head">
+                <span class="dx-code">F20.0</span>
+                <span class="dx-meta">Hauptdiagnose · seit 06/2024</span>
+              </div>
+              <p class="dx-title">Paranoide Schizophrenie — akute Episode mit überwiegend positiven Symptomen</p>
+            </div>
+            <div class="dx-entry">
+              <div class="dx-head">
+                <span class="dx-code">F10.1</span>
+                <span class="dx-meta">Nebendiagnose</span>
+              </div>
+              <p class="dx-title">Schädlicher Gebrauch von Alkohol — in Remission unter stationärer Behandlung</p>
+            </div>
+          </div>
+        </article>
+
+        <!-- Butterfly CI -->
+        <article class="widget col-6">
+          <header class="widget__head">
+            <h4 class="widget__eyebrow">Butterfly — Kriterienprüfung</h4>
+            <span class="widget__meta">2 offen</span>
+            <span class="widget__spacer"></span>
+            <button type="button" class="widget__action">Diagnose →</button>
+          </header>
+          <div class="widget__body">
+            <span class="ai-badge">KI-gestützte Prüfung</span>
+            <div class="feed-item">
+              <div class="feed-head">
+                <span class="feed-date">F20.0 · Paranoide Schizophrenie</span>
+                <span class="pill pill--ok">Kriterien erfüllt</span>
+              </div>
+              <p class="feed-text">Halluzinationen und Wahnsymptomatik &gt;1 Monat dokumentiert; Ausschluss organischer Ursache.</p>
+            </div>
+            <div class="feed-item">
+              <div class="feed-head">
+                <span class="feed-date">F32.2 · Schwere depressive Episode</span>
+                <span class="pill pill--info">Daten unvollständig</span>
+              </div>
+              <p class="feed-text">Dauer der Symptomatik unklar — Verlaufseinträge der letzten 14 Tage ergänzen.</p>
+            </div>
+          </div>
+        </article>
+
+        <!-- Verlaufstendenz -->
+        <article class="widget col-12">
+          <header class="widget__head">
+            <h4 class="widget__eyebrow">Verlaufstendenz</h4>
+            <span class="widget__meta">14 Tage · hohe Konfidenz</span>
+            <span class="widget__spacer"></span>
+            <button type="button" class="widget__action">Verlauf →</button>
+          </header>
+          <div class="widget__body">
+            <div class="trend-banner">
+              <span class="trend-banner__label">↗ Leicht gebessert</span>
+              <span class="trend-banner__window">Fenster: 14 Tage</span>
+            </div>
+            <div class="domain-row">
+              <span class="domain-row__arrow domain-row__arrow--up">↑</span>
+              <span class="domain-row__name">Kernpsychopathologie</span>
+              <span class="domain-row__trend">Leicht gebessert</span>
+            </div>
+            <div class="domain-row">
+              <span class="domain-row__arrow">→</span>
+              <span class="domain-row__name">Sicherheit / Risiko</span>
+              <span class="domain-row__trend">Stabil</span>
+            </div>
+            <div class="domain-row">
+              <span class="domain-row__arrow domain-row__arrow--up">↑</span>
+              <span class="domain-row__name">Schlaf / Antrieb / Affekt</span>
+              <span class="domain-row__trend">Leicht gebessert</span>
+            </div>
+            <div class="domain-row">
+              <span class="domain-row__arrow domain-row__arrow--down">↓</span>
+              <span class="domain-row__name">Somatische NW / Monitoring</span>
+              <span class="domain-row__trend">Lithium leicht ↑</span>
+            </div>
+          </div>
+        </article>
+      </div>
+    `;
+
+    document.getElementById('flat-dashboard').innerHTML = WIDGETS_HTML;
+    document.getElementById('glass-dashboard').innerHTML = WIDGETS_HTML;
+
+    const comparison = document.getElementById('comparison');
+    const buttons = document.querySelectorAll('.view-toggle button');
+
+    buttons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const mode = btn.dataset.mode;
+        comparison.dataset.mode = mode;
+        buttons.forEach((b) => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'));
+      });
+    });
+  </script>
+</body>
+</html>

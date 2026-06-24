@@ -26,7 +26,7 @@ export function CasePatientHeader({
 }: CasePatientHeaderProps) {
   const { t, language } = useTranslation()
 
-  const { name, demographics, thesis, isAssigned } = useMemo(() => {
+  const { name, demographics, thesis } = useMemo(() => {
     void metaVersion
     void language
     const hero = buildClinicalHeroMeta(caseId, t)
@@ -41,13 +41,15 @@ export function CasePatientHeader({
       ? 'case-patient-header case-patient-header--minimal'
       : 'case-patient-header'
 
+  const showPatientIdentity = caseId !== DEFAULT_CASE_ID
+
   return (
     <div className={headerClass}>
       <ClinicalHeroStrip
         name={name}
         demographics={demographics}
-        showDemographics={isAssigned}
-        caseId={isAssigned && caseId !== DEFAULT_CASE_ID ? caseId : undefined}
+        showDemographics={showPatientIdentity}
+        caseId={showPatientIdentity ? caseId : undefined}
         thesis={thesis}
         thesisEditable={showThesis}
         onThesisChange={onClinicalSubheadingChange}

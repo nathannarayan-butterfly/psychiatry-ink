@@ -101,7 +101,7 @@ const HEADING_MAP: Record<string, HeadingMapping> = {
   'psychiatrische anamnese': { module: 'anamnese', sectionId: 'psychiatrische-vorgeschichte' },
   'korperlich vegetative anamnese': { module: 'anamnese', sectionId: 'somatische-anamnese' },
   vorerkrankungen: { module: 'anamnese', sectionId: 'somatische-anamnese' },
-  'neurologischer befund': { module: 'anamnese', sectionId: 'somatischer-befund' },
+  'neurologischer befund': { module: 'anamnese', sectionId: 'neurologischer-befund' },
   'medikamenten bei der aufnahme': { module: 'medication' },
   'vorlaufige behandlungsdiagnose': { module: 'diagnosis' },
   procedere: { module: 'therapy' },

@@ -300,6 +300,7 @@
 .ct-doc__table--lab td { border: none; border-bottom: 1px solid var(--ct-border); padding: 0.2rem 0.4rem; }
 .ct-doc__lab-panel { margin-bottom: 0.5rem; }
 .ct-doc__lab-category { font-weight: 600; font-size: 0.82rem; margin-bottom: 0.15rem; }
+.ct-doc__anamnese-section { margin-bottom: 0.35rem; }
 .ct-doc__lab-row--abnormal td { color: var(--color-recording, #b54548); font-weight: 600; }
 .ct-doc__signature { margin-top: 1.5rem; }
 .ct-doc__signature-place { font-size: 0.82rem; margin-bottom: 1.5rem; }

@@ -168,13 +168,13 @@
 
 .case-sidebar-panel__logo .topbar-logo {
   max-width: 100%;
-  font-size: 1.1rem;
+  font-size: 1.32rem; /* 1.1rem × 1.2 */
   line-height: 1;
 }
 
 @media (min-width: 40rem) {
   .case-sidebar-panel__logo .topbar-logo {
-    font-size: 1.26rem;
+    font-size: 1.512rem; /* 1.26rem × 1.2 */
   }
 }
 

@@ -39,6 +39,7 @@ export const PALETTE_ITEMS: PaletteItem[] = [
   { id: 'psychopathology', group: 'clinical', labelKey: 'vorlageBlockPsychopathology', descKey: 'vorlageBlockPsychopathologyDesc', binding: 'psychopathology.latest' },
   { id: 'risk', group: 'clinical', labelKey: 'vorlageBlockRisk', descKey: 'vorlageBlockRiskDesc', binding: 'risk.current' },
   { id: 'verlauf_summary', group: 'clinical', labelKey: 'vorlageBlockVerlauf', descKey: 'vorlageBlockVerlaufDesc', binding: 'verlauf.selectedRange' },
+  { id: 'anamnese', group: 'clinical', labelKey: 'vorlageBlockAnamnese', descKey: 'vorlageBlockAnamneseDesc', binding: 'anamnese.current' },
   { id: 'therapy', group: 'clinical', labelKey: 'vorlageBlockTherapy', descKey: 'vorlageBlockTherapyDesc', binding: 'therapy.current' },
   { id: 'social_therapy', group: 'clinical', labelKey: 'vorlageBlockSocialTherapy', descKey: 'vorlageBlockSocialTherapyDesc', binding: 'socialTherapy.current' },
 

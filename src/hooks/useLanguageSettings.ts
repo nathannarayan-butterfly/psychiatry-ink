@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { languageOptions } from '../data/languages'
 import type { EnglishVariant, UiLanguage } from '../types/settings'
-import { LANGUAGE_STORAGE_KEY, loadStoredUiLanguage } from '../utils/clinicalLanguage'
+import { LANGUAGE_STORAGE_KEY, loadBootstrapUiLanguage } from '../utils/clinicalLanguage'
 import { safeSetItem } from '../utils/safeStorage'
 
 const ENGLISH_VARIANT_KEY = 'psychiatry-ink-english-variant'
@@ -16,7 +16,7 @@ function loadEnglishVariant(): EnglishVariant {
 }
 
 export function useLanguageSettings() {
-  const [language, setLanguage] = useState<UiLanguage>(loadStoredUiLanguage)
+  const [language, setLanguage] = useState<UiLanguage>(loadBootstrapUiLanguage)
   const [englishVariant, setEnglishVariant] = useState<EnglishVariant>(loadEnglishVariant)
 
   useEffect(() => {

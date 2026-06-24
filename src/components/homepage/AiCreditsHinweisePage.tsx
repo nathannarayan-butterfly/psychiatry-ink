@@ -1,4 +1,5 @@
 import { useAiCreditsHinweiseContent } from '../../hooks/useHomepageContent'
+import { useMarketingSeo } from '../../hooks/useMarketingSeo'
 import { HomepageFooter } from './HomepageFooter'
 import { HomepageNav } from './HomepageNav'
 
@@ -18,6 +19,7 @@ export function AiCreditsHinweisePage({
   onEnterApp,
 }: AiCreditsHinweisePageProps) {
   const content = useAiCreditsHinweiseContent()
+  useMarketingSeo()
 
   const openWorkspace = () => {
     if (isAuthenticated) {

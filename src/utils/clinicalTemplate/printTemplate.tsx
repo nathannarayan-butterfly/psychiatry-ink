@@ -79,6 +79,8 @@ body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1c
 .ct-doc__table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
 .ct-doc__table th, .ct-doc__table td { border: 1px solid #d8d2c7; padding: 0.25rem 0.4rem; text-align: left; vertical-align: top; }
 .ct-doc__list, .ct-doc__diagnoses, .ct-doc__verlauf { margin: 0; padding-left: 1.2rem; }
+.ct-doc__lab-category { font-weight: 600; font-size: 0.9rem; margin: 0.45rem 0 0.15rem; }
+.ct-doc__anamnese-section { margin-bottom: 0.35rem; }
 .ct-doc__field { margin-bottom: 0.35rem; }
 .ct-doc__field--inline { display: flex; gap: 0.4rem; align-items: baseline; }
 .ct-doc__label { font-weight: 600; }

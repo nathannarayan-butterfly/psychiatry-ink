@@ -1,5 +1,5 @@
-import { DEMO_CASE_ID } from '../../demo/constants'
 import { useHomepageContent } from '../../hooks/useHomepageContent'
+import { useMarketingSeo } from '../../hooks/useMarketingSeo'
 import { CTASection } from './CTASection'
 import { FeatureCard } from './FeatureCard'
 import { HeroSection } from './HeroSection'
@@ -20,9 +20,6 @@ export interface HomepagePageProps {
   onEnterApp?: () => void
 }
 
-/** Demo case requires auth — redirect through login when unauthenticated. */
-export const DEMO_PATIENT_PATH = `/case/${encodeURIComponent(DEMO_CASE_ID)}?view=overview`
-
 export function HomepagePage({
   onLogin,
   onSignup: _onSignup,
@@ -32,6 +29,7 @@ export function HomepagePage({
   onEnterApp,
 }: HomepagePageProps) {
   const content = useHomepageContent()
+  useMarketingSeo()
   const { pillars, workflow, modules, security, tiers, demo, finalCta } = content
 
   const openWorkspace = () => {
@@ -46,12 +44,9 @@ export function HomepagePage({
     onNavigate('/login?redirect=/dashboard')
   }
 
-  const viewDemoPatient = () => {
-    if (isAuthenticated) {
-      onNavigate(DEMO_PATIENT_PATH)
-      return
-    }
-    onNavigate(`/login?redirect=${encodeURIComponent(DEMO_PATIENT_PATH)}`)
+  const viewDemo = () => {
+    if (typeof document === 'undefined') return
+    document.getElementById(demo.sectionId)?.scrollIntoView({ behavior: 'smooth' })
   }
 
   return (
@@ -61,7 +56,7 @@ export function HomepagePage({
       <main>
         <HeroSection
           onOpenWorkspace={openWorkspace}
-          onViewDemo={viewDemoPatient}
+          onViewDemo={viewDemo}
           showDevEntry={showDevEntry}
           onEnterApp={onEnterApp}
         />
@@ -201,7 +196,7 @@ export function HomepagePage({
           primaryCta={finalCta.primaryCta}
           secondaryCta={finalCta.secondaryCta}
           onPrimary={openWorkspace}
-          onSecondary={viewDemoPatient}
+          onSecondary={viewDemo}
         />
       </main>
 

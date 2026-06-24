@@ -1,4 +1,7 @@
 import { resolvePsychopathUiTranslation } from './psychopathTitles'
+import { psychopathGuidedUiLabels } from './guidedEntry/psychopathGuidedLabels'
+import { guidedEntryUiTranslations } from './guidedEntryUiTranslations'
+import { aufnahmeBefundUiTranslations } from './aufnahmeBefundUiTranslations'
 import type { EnglishVariant, UiLanguage } from '../types/settings'
 
 export const uiTranslations = {
@@ -4664,6 +4667,18 @@ export const uiTranslations = {
     fr: "Date d'admission",
     es: 'Fecha de ingreso',
   },
+  patientFieldGroesse: {
+    de: 'Größe',
+    en: 'Height',
+    fr: 'Taille',
+    es: 'Estatura',
+  },
+  patientFieldGewicht: {
+    de: 'Gewicht',
+    en: 'Weight',
+    fr: 'Poids',
+    es: 'Peso',
+  },
   patientFieldLocalOnly: {
     de: 'Nur lokal',
     en: 'Local only',
@@ -5588,30 +5603,6 @@ export const uiTranslations = {
     fr: 'Ouvrir le dossier : {title}',
     es: 'Abrir caso: {title}',
   },
-  demoCaseLabel: {
-    de: 'Synthetischer Demo-Fall',
-    en: 'Synthetic demo case',
-    fr: 'Cas démo synthétique',
-    es: 'Caso demo sintético',
-  },
-  demoPatientDisplayName: {
-    de: 'Anna Demo',
-    en: 'Anna Demo',
-    fr: 'Anna Demo',
-    es: 'Anna Demo',
-  },
-  demoReadOnlyBanner: {
-    de: 'Synthetischer Demo-Fall — schreibgeschützt (Anna Demo). Im Dashboard archivieren, um auszublenden.',
-    en: 'Synthetic demo case — read-only (Anna Demo). Archive from dashboard to hide.',
-    fr: 'Cas démo synthétique — lecture seule (Anna Demo). Archiver depuis le tableau de bord pour masquer.',
-    es: 'Caso demo sintético — solo lectura (Anna Demo). Archivar desde el panel para ocultar.',
-  },
-  demoArchiveAction: {
-    de: 'Demo archivieren',
-    en: 'Archive demo',
-    fr: 'Archiver la démo',
-    es: 'Archivar demo',
-  },
   patientArchiveAction: {
     de: 'Archivieren',
     en: 'Archive',
@@ -6355,6 +6346,96 @@ export const uiTranslations = {
     en: 'Save draft',
     fr: 'Enregistrer le brouillon',
     es: 'Guardar borrador',
+  },
+  templateYes: {
+    de: 'Ja',
+    en: 'Yes',
+    fr: 'Oui',
+    es: 'Sí',
+  },
+  templateNo: {
+    de: 'Nein',
+    en: 'No',
+    fr: 'Non',
+    es: 'No',
+  },
+  templateBuilderTitle: {
+    de: 'Vorlagen-Builder',
+    en: 'Template builder',
+    fr: 'Constructeur de modèles',
+    es: 'Constructor de plantillas',
+  },
+  templateBuilderSubtitle: {
+    de: 'Vorlagen definieren — nicht ausfüllen. Das Ausfüllen erfolgt im Assistenten beim Dokument erstellen.',
+    en: 'Define templates — do not fill them here. Completion happens in the wizard when creating a document.',
+    fr: 'Définir les modèles — ne pas les remplir ici. Le remplissage se fait dans l’assistant lors de la création.',
+    es: 'Definir plantillas — no rellenarlas aquí. El completado ocurre en el asistente al crear un documento.',
+  },
+  templateWizardStepProgress: {
+    de: 'Schritt {current} von {total}',
+    en: 'Step {current} of {total}',
+    fr: 'Étape {current} sur {total}',
+    es: 'Paso {current} de {total}',
+  },
+  templateWizardPrevious: {
+    de: 'Zurück',
+    en: 'Previous',
+    fr: 'Précédent',
+    es: 'Anterior',
+  },
+  templateWizardNext: {
+    de: 'Weiter',
+    en: 'Next',
+    fr: 'Suivant',
+    es: 'Siguiente',
+  },
+  templateWizardCancel: {
+    de: 'Abbrechen',
+    en: 'Cancel',
+    fr: 'Annuler',
+    es: 'Cancelar',
+  },
+  templateWizardGeneratePreview: {
+    de: 'Vorschau',
+    en: 'Preview',
+    fr: 'Aperçu',
+    es: 'Vista previa',
+  },
+  templateWizardGenerateDocument: {
+    de: 'Dokument erzeugen',
+    en: 'Generate document',
+    fr: 'Générer le document',
+    es: 'Generar documento',
+  },
+  templateWizardRequiredError: {
+    de: 'Pflichtfeld — bitte ausfüllen.',
+    en: 'Required field — please complete.',
+    fr: 'Champ obligatoire — veuillez le remplir.',
+    es: 'Campo obligatorio — complételo.',
+  },
+  templateWizardDeferredField: {
+    de: 'Erweiterter Feldtyp — vorerst als Textfeld bearbeitbar.',
+    en: 'Advanced field type — editable as text for now.',
+    fr: 'Type de champ avancé — modifiable en texte pour l’instant.',
+    es: 'Tipo de campo avanzado — editable como texto por ahora.',
+  },
+  templateFieldLegalText: {
+    de: 'Rechtstext',
+    en: 'Legal text',
+    fr: 'Texte juridique',
+    es: 'Texto legal',
+  },
+  templateFieldShowWhen: {
+    de: 'Anzeigebedingung',
+    en: 'Visibility condition',
+    fr: 'Condition d’affichage',
+    es: 'Condición de visibilidad',
+  },
+  templateFieldSection: {
+    de: 'Assistenten-Abschnitt',
+    en: 'Wizard section',
+    fr: 'Section de l’assistant',
+    es: 'Sección del asistente',
   },
   templateActivate: {
     de: 'Aktivieren',
@@ -8503,6 +8584,48 @@ export const uiTranslations = {
     en: 'New entry',
     fr: 'Nouvelle entrée',
     es: 'Nueva entrada',
+  },
+  verlaufSomaticBefundNew: {
+    de: 'Somatischer Befund',
+    en: 'Somatic findings',
+    fr: 'Examen somatique',
+    es: 'Hallazgos somáticos',
+  },
+  verlaufSomaticBefundEyebrow: {
+    de: 'Somatischer Befund',
+    en: 'Somatic findings',
+    fr: 'Examen somatique',
+    es: 'Hallazgos somáticos',
+  },
+  verlaufSomaticBefundModalTitle: {
+    de: 'Somatischer Befund',
+    en: 'Somatic findings',
+    fr: 'Examen somatique',
+    es: 'Hallazgos somáticos',
+  },
+  verlaufSomaticBefundModalDesc: {
+    de: 'Kurzer somatischer Status — Vitalzeichen und orientierende Systembefunde.',
+    en: 'Brief somatic status — vitals and focused system review.',
+    fr: 'Statut somatique bref — constantes et examen orienté par appareils.',
+    es: 'Estado somático breve — constantes y exploración por aparatos.',
+  },
+  verlaufSomaticBefundSaved: {
+    de: 'Somatischer Befund gespeichert',
+    en: 'Somatic findings saved',
+    fr: 'Examen somatique enregistré',
+    es: 'Hallazgos somáticos guardados',
+  },
+  verlaufSomaticBefundFullHint: {
+    de: 'Strukturierte EKG-/EEG-Befunde dokumentieren Sie im Bereich Befundung.',
+    en: 'Document structured ECG/EEG findings in the Befundung workspace.',
+    fr: 'Documentez les ECG/EEG structurés dans l’espace Befundung.',
+    es: 'Documente ECG/EEG estructurados en el espacio Befundung.',
+  },
+  verlaufSomaticBefundFullLink: {
+    de: 'Vollständiger Befund →',
+    en: 'Full examination →',
+    fr: 'Examen complet →',
+    es: 'Exploración completa →',
   },
   verlaufEntryType: {
     de: 'Eintragstyp',
@@ -15368,6 +15491,8 @@ export const uiTranslations = {
   vorlageBlockRiskDesc: { de: 'Risikoeinschätzung', en: 'Risk assessment', fr: 'Évaluation du risque', es: 'Evaluación de riesgo' },
   vorlageBlockVerlauf: { de: 'Verlauf', en: 'Course', fr: 'Évolution', es: 'Evolución' },
   vorlageBlockVerlaufDesc: { de: 'Verlaufszusammenfassung', en: 'Course summary', fr: 'Résumé d’évolution', es: 'Resumen de evolución' },
+  vorlageBlockAnamnese: { de: 'Anamnese', en: 'History', fr: 'Anamnèse', es: 'Anamnesis' },
+  vorlageBlockAnamneseDesc: { de: 'Gesamte Aufnahme-Anamnese', en: 'Full admission history', fr: 'Anamnèse d’admission complète', es: 'Anamnesis de ingreso completa' },
   vorlageBlockTherapy: { de: 'Therapie', en: 'Therapy', fr: 'Thérapie', es: 'Terapia' },
   vorlageBlockTherapyDesc: { de: 'Aktuelle Therapien', en: 'Current therapies', fr: 'Thérapies actuelles', es: 'Terapias actuales' },
   vorlageBlockSocialTherapy: { de: 'Sozialtherapie', en: 'Social therapy', fr: 'Thérapie sociale', es: 'Terapia social' },
@@ -16129,6 +16254,10 @@ export const uiTranslations = {
   calStatusCompleted: { de: 'Abgeschlossen', en: 'Completed', fr: 'Terminé', es: 'Completado' },
   calStatusCancelled: { de: 'Storniert', en: 'Cancelled', fr: 'Annulé', es: 'Cancelado' },
   calStatusNoShow: { de: 'Nicht erschienen', en: 'No-show', fr: 'Absence', es: 'No asistió' },
+
+  ...guidedEntryUiTranslations,
+  ...aufnahmeBefundUiTranslations,
+  ...psychopathGuidedUiLabels,
 
 } as const satisfies Record<string, Record<UiLanguage, string>>
 
