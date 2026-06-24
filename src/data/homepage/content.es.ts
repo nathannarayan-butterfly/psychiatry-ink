@@ -259,20 +259,20 @@ export const homepageContentEs: HomepageContent = {
         monthly: 'Mensual',
         yearly: 'Anual',
       },
-      yearlyRecommendation: 'Recomendado: ahorre un 20 % con la facturación anual — £191,90/año',
+      yearlyRecommendation: 'Recomendado: ahorre un 20 % con la facturación anual — £143,90/año',
       yearlyConfirmation: 'Facturación anual — 20 % de ahorro aplicado',
       billing: {
         monthly: {
-          price: '£19,99',
+          price: '£14,99',
           period: '/mes',
           credits: '500 créditos de IA incluidos',
           savings: null,
         },
         yearly: {
-          price: '£191,90',
+          price: '£143,90',
           period: '/año',
           credits: '500 créditos de IA incluidos cada mes',
-          savings: 'Ahorre £47,98/año — 20 % de descuento frente a £239,88/año',
+          savings: 'Ahorre £35,98/año — 20 % de descuento frente a £179,88/año',
         },
       },
       description:

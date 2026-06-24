@@ -259,20 +259,20 @@ export const homepageContentDe: HomepageContent = {
         monthly: 'Monatlich',
         yearly: 'Jährlich',
       },
-      yearlyRecommendation: 'Empfohlen: 20 % sparen mit jährlicher Abrechnung — £191,90/Jahr',
+      yearlyRecommendation: 'Empfohlen: 20 % sparen mit jährlicher Abrechnung — £143,90/Jahr',
       yearlyConfirmation: 'Jährliche Abrechnung — 20 % Ersparnis aktiviert',
       billing: {
         monthly: {
-          price: '£19,99',
+          price: '£14,99',
           period: '/Monat',
           credits: '500 KI-Credits inklusive',
           savings: null,
         },
         yearly: {
-          price: '£191,90',
+          price: '£143,90',
           period: '/Jahr',
           credits: '500 KI-Credits pro Monat inklusive',
-          savings: '£47,98/Jahr sparen — 20 % gegenüber £239,88/Jahr',
+          savings: '£35,98/Jahr sparen — 20 % gegenüber £179,88/Jahr',
         },
       },
       description:
