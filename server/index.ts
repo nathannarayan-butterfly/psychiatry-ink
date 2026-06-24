@@ -50,7 +50,8 @@ import {
 } from './utils/featureFlags'
 
 const app = express()
-const port = Number(process.env.API_PORT ?? 3001)
+const port = Number(process.env.PORT ?? process.env.API_PORT ?? 8080)
+const host = process.env.API_HOST ?? '0.0.0.0'
 
 app.use(cors({ origin: true }))
 app.use(optionalAuth)
@@ -112,12 +113,12 @@ if (isEnterpriseOrgHierarchyEnabled()) {
   app.use('/api/enterprise', enterpriseRouter)
 }
 
-app.listen(port, () => {
+app.listen(port, host, () => {
   const openai = Boolean(process.env.OPENAI_API_KEY?.trim())
   const deepseek = Boolean(process.env.DEEPSEEK_API_KEY?.trim())
   const livekitMissing = liveKitMissingEnvVars()
   const livekit = livekitMissing.length === 0
-  console.log(`[api] listening on http://127.0.0.1:${port}`)
+  console.log(`[api] listening on http://${host}:${port}`)
   console.log(`[api] keys: OPENAI=${openai ? 'yes' : 'no'} DEEPSEEK=${deepseek ? 'yes' : 'no'} LIVEKIT=${livekit ? 'yes' : 'no'}`)
   console.log(`[api] psychopath extract AI: ${isPsychopathExtractAiEnabled() ? 'enabled' : 'disabled (set ENABLE_PSYCHOPATH_EXTRACT_AI=true in .env.local and restart api)'}`)
   console.log(`[api] clinical intelligence V1: ${isClinicalIntelligenceV1Enabled() ? 'enabled' : 'disabled (set CLINICAL_INTELLIGENCE_V1_ENABLED=true in .env.local and restart api)'}`)
