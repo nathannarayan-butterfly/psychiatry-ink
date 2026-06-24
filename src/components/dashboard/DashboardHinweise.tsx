@@ -20,15 +20,17 @@ function panelCollapsedKey(id: HinweisPanelId): string {
 
 function readPanelCollapsed(id: HinweisPanelId): boolean {
   try {
-    return localStorage.getItem(panelCollapsedKey(id)) === 'true'
+    const stored = localStorage.getItem(panelCollapsedKey(id))
+    // Default to collapsed when no explicit preference has been stored yet.
+    return stored === null ? true : stored === 'true'
   } catch {
-    return false
+    return true
   }
 }
 
-function persistPanelCollapsed(id: HinweisPanelId): void {
+function persistPanelCollapsed(id: HinweisPanelId, collapsed: boolean): void {
   try {
-    localStorage.setItem(panelCollapsedKey(id), 'true')
+    localStorage.setItem(panelCollapsedKey(id), collapsed ? 'true' : 'false')
   } catch {
     // ignore storage errors
   }
@@ -45,13 +47,14 @@ function DashboardHinweisPanel({ id, titleKey, children }: DashboardHinweisPanel
   const [expanded, setExpanded] = useState(() => !readPanelCollapsed(id))
 
   const collapse = useCallback(() => {
-    persistPanelCollapsed(id)
+    persistPanelCollapsed(id, true)
     setExpanded(false)
   }, [id])
 
   const expand = useCallback(() => {
+    persistPanelCollapsed(id, false)
     setExpanded(true)
-  }, [])
+  }, [id])
 
   const title = t(titleKey)
 

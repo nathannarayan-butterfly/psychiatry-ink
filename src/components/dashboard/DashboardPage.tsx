@@ -562,7 +562,20 @@ export function DashboardPage({
               </span>
               <ArrowRight className="dashboard-quick-action__arrow h-4 w-4" strokeWidth={1.75} aria-hidden />
             </button>
-          ) : null}
+          ) : (
+            <div
+              className="dashboard-quick-action dashboard-quick-action--placeholder clinical-card"
+              aria-hidden
+            >
+              <span className="dashboard-quick-action__icon-wrap">
+                <Users className="h-4 w-4" strokeWidth={1.75} />
+              </span>
+              <span className="dashboard-quick-action__text">
+                <span className="dashboard-quick-action__label">{t('dashboardNoActivePatientTitle')}</span>
+                <span className="dashboard-quick-action__subtitle">{t('dashboardNoActivePatientSubtitle')}</span>
+              </span>
+            </div>
+          )}
 
           {/* Allgemeine Dokumentation ohne Patient → /workspace (blank canvas); not patient case, not Vorlage Builder */}
           <button

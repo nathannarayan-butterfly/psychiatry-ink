@@ -3775,6 +3775,27 @@
     --quick-action-accent: var(--status-warn);
   }
 
+  /* Non-interactive empty-state filler that keeps the 4-card row balanced
+     when there is no patient to continue. */
+  .dashboard-quick-action--placeholder {
+    --quick-action-accent: var(--border);
+    border-style: dashed;
+    border-left-width: 1px;
+    border-left-color: color-mix(in srgb, var(--border) 70%, transparent);
+    background: color-mix(in srgb, var(--surface) 60%, transparent);
+    cursor: default;
+  }
+
+  .dashboard-quick-action--placeholder .dashboard-quick-action__label,
+  .dashboard-quick-action--placeholder .dashboard-quick-action__subtitle {
+    color: var(--text-muted);
+  }
+
+  .dashboard-quick-action--placeholder .dashboard-quick-action__icon-wrap {
+    background: color-mix(in srgb, var(--text-muted) 12%, var(--surface));
+    color: var(--text-muted);
+  }
+
   .dashboard-quick-action__icon-wrap {
     display: flex;
     align-items: center;

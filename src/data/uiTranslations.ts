@@ -5906,6 +5906,18 @@ export const uiTranslations = {
     fr: 'Poursuivre la documentation',
     es: 'Continuar documentación',
   },
+  dashboardNoActivePatientTitle: {
+    de: 'Kein aktiver Patient',
+    en: 'No active patient',
+    fr: 'Aucun patient actif',
+    es: 'Sin paciente activo',
+  },
+  dashboardNoActivePatientSubtitle: {
+    de: 'Legen Sie Ihren ersten Patienten an',
+    en: 'Create your first patient to begin',
+    fr: 'Créez votre premier patient pour commencer',
+    es: 'Cree su primer paciente para empezar',
+  },
   dashboardNewPatientSubtitle: {
     de: 'Neuen Patientenfall anlegen',
     en: 'Create a new patient case',
