@@ -62,6 +62,7 @@ pattern (e.g. repo `…_integration_hub` ↔ remote `20260614101224`); the exist
 | 3 | `20260704000100_consolidation_patient_crypto_backup.sql` | `20260625184137` `consolidation_patient_crypto_backup` | ✅ |
 | 4 | `20260704000200_consolidation_diagnosis_codes.sql` | `20260625184150` `consolidation_diagnosis_codes` | ✅ |
 | 5 | (security follow-up, see §3.2) | `consolidation_credit_rpcs_lock_execute` | ✅ |
+| 6 | `20260704000300_consolidation_patient_case_delete_rpc.sql` (see §3.4) | `consolidation_patient_case_delete_rpc` | ✅ |
 
 ### 3.1 Verification (all via MCP after each apply)
 
@@ -101,6 +102,27 @@ execute … to service_role`. Re-verified: `anon_exec = false`,
 `auth_exec = false`, `service_exec = true` for every function. The source file
 `20260704000000_consolidation_credit_system.sql` was updated to revoke from
 `public, anon, authenticated` so the repo matches prod.
+
+### 3.4 Patient case atomic-delete RPC (execution phase — Stream B)
+
+Added during the Stream B call-site rewrite (not part of the original Phase-0
+apply). The `DELETE /api/patients/:caseId` flow previously ran a Prisma
+`$transaction([deleteMany snapshot, delete case])`. supabase-js has no
+multi-statement transaction primitive, so the atomic delete was moved into a
+SECURITY DEFINER RPC.
+
+| Item | Value |
+| --- | --- |
+| Repo file | `supabase/migrations/20260704000300_consolidation_patient_case_delete_rpc.sql` |
+| Applied via | Supabase MCP `apply_migration` (name `consolidation_patient_case_delete_rpc`) |
+| Function | `public.patient_case_delete_with_snapshots(p_case_id text) returns void` |
+| Body | `delete from public.encrypted_workspace_snapshots where case_id = p_case_id;` then `delete from public.patient_cases where case_id = p_case_id;` — single plpgsql function body ⇒ one transaction ⇒ atomic (both deletes commit or neither). |
+| Hardening | `security definer`, `set search_path = ''`, fully schema-qualified. Verified `anon_exec = false`, `auth_exec = false`, `service_exec = true` (lock pattern from `consolidation_credit_rpcs_lock_execute`). |
+| Ownership | Verified by the Express route (loads case, checks `account_id`) **before** calling the RPC — mirrors the prior pre-transaction ownership check; the RPC deletes purely by opaque `case_id`. |
+
+After applying, `server/types/database.ts` was regenerated via the MCP
+`generate_typescript_types` tool (added only the new RPC signature; no other
+type drift).
 
 ### 3.3 Remaining advisor notes (accepted / out of scope)
 

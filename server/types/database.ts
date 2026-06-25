@@ -3759,6 +3759,10 @@ export type Database = {
         Args: { p_name?: string; p_user_id: string }
         Returns: string
       }
+      patient_case_delete_with_snapshots: {
+        Args: { p_case_id: string }
+        Returns: undefined
+      }
       purge_abandoned_shared_material: { Args: never; Returns: undefined }
     }
     Enums: {

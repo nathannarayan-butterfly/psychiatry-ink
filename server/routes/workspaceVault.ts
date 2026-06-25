@@ -1,6 +1,6 @@
 import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
-import { prisma } from '../db'
+import { findSnapshot, listCaseSummariesByUser, upsertSnapshot } from '../data/snapshots'
 import { allowsWorkspaceDbSnapshot, resolvePrivacyTier } from '../privacyRegions'
 import { requireRouteAuth } from '../utils/requireRouteAuth'
 
@@ -69,29 +69,18 @@ workspaceVaultRouter.put('/snapshot', async (req: Request, res: Response) => {
     const caseId = body.caseId.trim()
     const userId = resolveUserId(req, deviceId)
 
-    const record = await prisma.encryptedWorkspaceSnapshot.upsert({
-      where: { userId_caseId: { userId, caseId } },
-      create: {
-        userId,
-        caseId,
-        deviceId,
-        ciphertext: body.ciphertext,
-        iv: body.iv,
-        wrappedKey: body.wrappedKey,
-        version: body.version ?? 1,
-        titleHint: body.titleHint?.trim() || null,
-      },
-      update: {
-        deviceId,
-        ciphertext: body.ciphertext,
-        iv: body.iv,
-        wrappedKey: body.wrappedKey,
-        version: body.version ?? 1,
-        titleHint: body.titleHint?.trim() || null,
-      },
+    const record = await upsertSnapshot({
+      userId,
+      caseId,
+      deviceId,
+      ciphertext: body.ciphertext,
+      iv: body.iv,
+      wrappedKey: body.wrappedKey,
+      version: body.version ?? 1,
+      titleHint: body.titleHint?.trim() || null,
     })
 
-    res.json({ ok: true, updatedAt: record.updatedAt.toISOString() })
+    res.json({ ok: true, updatedAt: new Date(record.updatedAt).toISOString() })
   } catch (error) {
     console.error('[workspace] snapshot save failed:', error)
     res.status(500).json({ error: 'Failed to save snapshot' })
@@ -126,9 +115,7 @@ workspaceVaultRouter.get('/snapshot', async (req: Request, res: Response) => {
     }
 
     const userId = resolveUserId(req, deviceId)
-    const record = await prisma.encryptedWorkspaceSnapshot.findUnique({
-      where: { userId_caseId: { userId, caseId } },
-    })
+    const record = await findSnapshot(userId, caseId)
 
     if (!record) {
       res.status(404).json({ error: 'Not found' })
@@ -142,7 +129,7 @@ workspaceVaultRouter.get('/snapshot', async (req: Request, res: Response) => {
       wrappedKey: record.wrappedKey,
       version: record.version,
       titleHint: record.titleHint,
-      updatedAt: record.updatedAt.toISOString(),
+      updatedAt: new Date(record.updatedAt).toISOString(),
     })
   } catch (error) {
     console.error('[workspace] snapshot read failed:', error)
@@ -178,23 +165,14 @@ workspaceVaultRouter.get('/cases', async (req: Request, res: Response) => {
     }
 
     const userId = resolveUserId(req, deviceId)
-    const records = await prisma.encryptedWorkspaceSnapshot.findMany({
-      where: { userId },
-      orderBy: { updatedAt: 'desc' },
-      select: {
-        caseId: true,
-        titleHint: true,
-        updatedAt: true,
-        createdAt: true,
-      },
-    })
+    const records = await listCaseSummariesByUser(userId)
 
     res.json({
       cases: records.map((record) => ({
         caseId: record.caseId,
         titleHint: record.titleHint,
-        updatedAt: record.updatedAt.toISOString(),
-        createdAt: record.createdAt.toISOString(),
+        updatedAt: new Date(record.updatedAt).toISOString(),
+        createdAt: new Date(record.createdAt).toISOString(),
       })),
     })
   } catch (error) {
