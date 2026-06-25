@@ -160,9 +160,11 @@ alter table public.diagnosis_entries enable row level security;
 alter table public.diagnosis_synonyms enable row level security;
 alter table public.diagnosis_criteria_links enable row level security;
 
+drop policy if exists diagnosis_catalogues_read on public.diagnosis_catalogues;
 create policy diagnosis_catalogues_read on public.diagnosis_catalogues
   for select to authenticated using (active = true);
 
+drop policy if exists diagnosis_entries_read on public.diagnosis_entries;
 create policy diagnosis_entries_read on public.diagnosis_entries
   for select to authenticated using (
     exists (
@@ -171,6 +173,7 @@ create policy diagnosis_entries_read on public.diagnosis_entries
     )
   );
 
+drop policy if exists diagnosis_synonyms_read on public.diagnosis_synonyms;
 create policy diagnosis_synonyms_read on public.diagnosis_synonyms
   for select to authenticated using (
     exists (
@@ -181,6 +184,7 @@ create policy diagnosis_synonyms_read on public.diagnosis_synonyms
     )
   );
 
+drop policy if exists diagnosis_criteria_links_read on public.diagnosis_criteria_links;
 create policy diagnosis_criteria_links_read on public.diagnosis_criteria_links
   for select to authenticated using (
     exists (

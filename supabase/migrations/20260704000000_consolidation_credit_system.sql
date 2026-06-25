@@ -44,7 +44,10 @@ begin
 end;
 $$;
 
-revoke all on function public.psy_set_updated_at() from public;
+-- Supabase default privileges grant EXECUTE on new public functions to anon +
+-- authenticated explicitly; `revoke ... from public` alone does NOT remove those.
+-- Revoke from anon + authenticated too so this trigger fn is never RPC-callable.
+revoke all on function public.psy_set_updated_at() from public, anon, authenticated;
 
 -- ---------------------------------------------------------------------------
 -- ai_credit_accounts  (Prisma model AiCreditAccount)
@@ -350,11 +353,15 @@ begin
 end;
 $$;
 
--- Lock down execution to the service role (Express API) only.
-revoke all on function public.ai_credit_ensure_account(text, integer, timestamptz) from public;
-revoke all on function public.ai_credit_debit(uuid, integer, text, text, text) from public;
-revoke all on function public.ai_credit_refund(uuid, integer, text, text, text) from public;
-revoke all on function public.ai_credit_grant_purchased(uuid, integer, text, text) from public;
+-- Lock down execution to the service role (Express API) only. Revoke from public
+-- AND anon/authenticated — Supabase default privileges grant EXECUTE on new public
+-- functions to anon + authenticated explicitly, and `revoke ... from public` does
+-- not remove those grants (these are SECURITY DEFINER, money-affecting functions,
+-- so a stray anon/authenticated EXECUTE would be a privilege-escalation hole).
+revoke all on function public.ai_credit_ensure_account(text, integer, timestamptz) from public, anon, authenticated;
+revoke all on function public.ai_credit_debit(uuid, integer, text, text, text) from public, anon, authenticated;
+revoke all on function public.ai_credit_refund(uuid, integer, text, text, text) from public, anon, authenticated;
+revoke all on function public.ai_credit_grant_purchased(uuid, integer, text, text) from public, anon, authenticated;
 
 grant execute on function public.ai_credit_ensure_account(text, integer, timestamptz) to service_role;
 grant execute on function public.ai_credit_debit(uuid, integer, text, text, text) to service_role;
