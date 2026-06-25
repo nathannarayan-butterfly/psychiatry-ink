@@ -1,18 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const prismaMock = {
-  diagnosisCatalogue: {
-    findMany: vi.fn(),
-    count: vi.fn(),
-  },
-  diagnosisEntry: {
-    findMany: vi.fn(),
-    count: vi.fn(),
-  },
-}
+const listActiveCatalogues = vi.fn()
+const searchCatalogueEntries = vi.fn()
 
-vi.mock('../../db', () => ({
-  prisma: prismaMock,
+vi.mock('../../data/diagnosis', () => ({
+  listActiveCatalogues: (...args: unknown[]) => listActiveCatalogues(...args),
+  searchCatalogueEntries: (...args: unknown[]) => searchCatalogueEntries(...args),
+  listActiveCataloguesOrdered: vi.fn(),
+  countCatalogueEntries: vi.fn(),
+  countCatalogueEntriesWithCriteriaLinks: vi.fn(),
+  isCatalogueSeeded: vi.fn(),
 }))
 
 describe('diagnosis catalogue search', () => {
@@ -21,16 +18,16 @@ describe('diagnosis catalogue search', () => {
   })
 
   it('does not import or query diagnosisCriteria', async () => {
-    prismaMock.diagnosisCatalogue.findMany.mockResolvedValue([
+    listActiveCatalogues.mockResolvedValue([
       { id: 'cat-1', system: 'ICD11MMS', version: '2024-01' },
     ])
-    prismaMock.diagnosisEntry.findMany.mockResolvedValue([
+    searchCatalogueEntries.mockResolvedValue([
       {
         id: 'e-1',
-        catalogueId: 'cat-1',
         code: '6A20',
         codeNormalized: '6A20',
         title: 'Schizophrenie',
+        searchText: '6a20 schizophrenie',
         shortTitle: null,
         chapterCode: '06',
         chapterTitle: 'Mental disorders',
@@ -38,9 +35,10 @@ describe('diagnosis catalogue search', () => {
         blockTitle: null,
         isCategory: false,
         isSelectable: true,
-        searchText: '6a20 schizophrenie',
-        catalogue: { system: 'ICD11MMS', version: '2024-01' },
-        criteriaLinks: [{ id: 'link-1' }],
+        system: 'ICD11MMS',
+        catalogueVersion: '2024-01',
+        catalogueId: 'cat-1',
+        criteriaAvailable: true,
       },
     ])
 
@@ -51,20 +49,20 @@ describe('diagnosis catalogue search', () => {
     expect(results[0]?.code).toBe('6A20')
     expect(results[0]?.system).toBe('ICD11MMS')
     expect(results[0]?.criteriaAvailable).toBe(true)
-    expect(prismaMock.diagnosisEntry.findMany).toHaveBeenCalled()
+    expect(searchCatalogueEntries).toHaveBeenCalled()
   })
 
   it('returns ICD-11 hits without ICD-10 crosswalk fields', async () => {
-    prismaMock.diagnosisCatalogue.findMany.mockResolvedValue([
+    listActiveCatalogues.mockResolvedValue([
       { id: 'cat-1', system: 'ICD11MMS', version: '2024-01' },
     ])
-    prismaMock.diagnosisEntry.findMany.mockResolvedValue([
+    searchCatalogueEntries.mockResolvedValue([
       {
         id: 'e-2',
-        catalogueId: 'cat-1',
         code: '6A20.0',
         codeNormalized: '6A20.0',
         title: 'Schizophrenie, erste Episode',
+        searchText: '6a20.0',
         shortTitle: null,
         chapterCode: '06',
         chapterTitle: null,
@@ -72,9 +70,10 @@ describe('diagnosis catalogue search', () => {
         blockTitle: null,
         isCategory: false,
         isSelectable: true,
-        searchText: '6a20.0',
-        catalogue: { system: 'ICD11MMS', version: '2024-01' },
-        criteriaLinks: [],
+        system: 'ICD11MMS',
+        catalogueVersion: '2024-01',
+        catalogueId: 'cat-1',
+        criteriaAvailable: false,
       },
     ])
 
