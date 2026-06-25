@@ -23,9 +23,22 @@
       Unsupported / legacy browser fallback. A modern Vite ES-module bundle cannot
       run in Internet Explorer (or other browsers without <script type="module">
       support), so #root would otherwise stay empty and show a blank white page.
-      The `nomodule` script runs ONLY in those legacy browsers (module-capable
-      browsers skip it), revealing this message instead of a blank screen. In
-      modern browsers this block is never shown and React replaces #root normally.
+
+      We detect legacy browsers with an AFFIRMATIVE, synchronous feature test:
+      `'noModule' in document.createElement('script')` is true in every browser
+      that can run ES modules (Chrome 61+, Firefox 60+, Edge 16+, Safari 11+ incl.
+      all current iOS Safari) and false in genuinely legacy ones (e.g. IE11). The
+      warning therefore only appears for real legacy browsers and stays hidden for
+      module-capable ones.
+
+      IMPORTANT: this MUST be a classic <script> (not type="module" / nomodule):
+      - `nomodule` is unreliable — Safari 10.1 / iOS 10.3 and some locked-down
+        browsers buggily execute nomodule scripts and wrongly show the warning.
+      - A `type="module"` re-hide would be bundled by Vite into the main app chunk
+        and would only run AFTER the whole (multi-MB) bundle downloads + executes,
+        leaving the warning visible until then on slow/mobile connections.
+      A classic inline script is left untouched by Vite and runs synchronously
+      during parse, so the decision is correct and immediate.
     -->
     <div
       id="legacy-browser-warning"
@@ -58,23 +71,15 @@
         </p>
       </div>
     </div>
-    <script nomodule>
+    <script>
       (function () {
+        // Show the legacy warning ONLY when the browser cannot run ES modules.
+        if ('noModule' in document.createElement('script')) return
         var warning = document.getElementById('legacy-browser-warning')
         if (warning) warning.hidden = false
         var root = document.getElementById('root')
         if (root) root.style.display = 'none'
       })()
-    </script>
-    <script type="module">
-      // Any browser that can run ES modules can run the app. Some module-capable
-      // browsers (notably Safari 10.1 / iOS 10.3, and certain locked-down work
-      // browsers) buggily execute the nomodule script above and wrongly reveal the
-      // warning. Re-hide it here so only genuinely module-incapable browsers see it.
-      var legacyWarning = document.getElementById('legacy-browser-warning')
-      if (legacyWarning) legacyWarning.hidden = true
-      var appRoot = document.getElementById('root')
-      if (appRoot) appRoot.style.display = ''
     </script>
     <noscript>
       <div
