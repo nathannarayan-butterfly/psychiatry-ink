@@ -240,6 +240,28 @@ export async function getUserIdByStripeCustomerId(customerId: string): Promise<s
   return data?.user_id ?? null
 }
 
+/**
+ * Whether a ledger entry of the given type + exact note already exists for an
+ * account. Used to make one-off ledger writes (e.g. the legacy-balance
+ * migration) idempotent without a transaction.
+ */
+export async function hasLedgerEntryWithNote(
+  accountId: string,
+  type: string,
+  note: string,
+): Promise<boolean> {
+  const { data, error } = await getSupabaseAdmin()
+    .from('ai_credit_ledger')
+    .select('id')
+    .eq('account_id', accountId)
+    .eq('type', type)
+    .eq('note', note)
+    .limit(1)
+    .maybeSingle()
+  if (error) throw new Error(`ai_credit_ledger lookup failed: ${error.message}`)
+  return data !== null
+}
+
 /** Read the most recent ledger entries for an account (newest first). */
 export async function listLedger(
   accountId: string,
@@ -261,6 +283,7 @@ export const creditsRepo = {
   refund,
   grantPurchased,
   getAccountByUserId,
+  hasLedgerEntryWithNote,
   listLedger,
   startTrial,
   applySubscription,

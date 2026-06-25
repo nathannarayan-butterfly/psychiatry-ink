@@ -81,6 +81,52 @@ export interface AiUsageSummaryRow {
   success: boolean
 }
 
+export interface AiUsageHistoryRow {
+  id: string
+  featureKey: string
+  mode: string
+  provider: string
+  model: string
+  totalTokens: number
+  creditsCharged: number
+  success: boolean
+  errorCode: string | null
+  createdAt: Date
+}
+
+/**
+ * Recent AI usage rows for a user (newest first), metadata only. Replaces the
+ * legacy Prisma `aiUsageLog.findMany` read used by the AI-credits history route.
+ * `mode` is nullable on the live table (org-centric rows have none); we coalesce
+ * to an empty string to match the legacy non-null model shape.
+ */
+export async function listRecentUsageForUser(
+  userId: string,
+  limit = 50,
+): Promise<AiUsageHistoryRow[]> {
+  const { data, error } = await getSupabaseAdmin()
+    .from('ai_usage_logs')
+    .select(
+      'id, feature_key, mode, provider, model, total_tokens, credits_charged, success, error_code, created_at',
+    )
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  if (error) throw new Error(`ai_usage_logs history read failed: ${error.message}`)
+  return (data ?? []).map((r) => ({
+    id: r.id,
+    featureKey: r.feature_key,
+    mode: r.mode ?? '',
+    provider: r.provider,
+    model: r.model,
+    totalTokens: r.total_tokens,
+    creditsCharged: r.credits_charged,
+    success: r.success,
+    errorCode: r.error_code,
+    createdAt: new Date(r.created_at),
+  }))
+}
+
 /** Usage rows for a user since `sinceIso` (used for monthly summaries). */
 export async function listUserUsageSince(
   userId: string,

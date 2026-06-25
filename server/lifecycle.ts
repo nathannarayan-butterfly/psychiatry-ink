@@ -1,5 +1,4 @@
 import type { Server } from 'node:http'
-import { prisma } from './db'
 
 /**
  * Last-resort process guards. Without these, an unhandled promise rejection or a
@@ -14,16 +13,15 @@ export function installProcessGuards(): void {
   process.on('uncaughtException', (error) => {
     console.error('[fatal] uncaughtException:', error)
     // Best practice: do not keep serving from a corrupted state.
-    void prisma
-      .$disconnect()
-      .catch(() => undefined)
-      .finally(() => process.exit(1))
+    process.exit(1)
   })
 }
 
 /**
- * Drain in-flight requests on SIGTERM/SIGINT, then disconnect Prisma. A hard
- * timeout forces exit if connections refuse to close (e.g. long-lived sockets).
+ * Drain in-flight requests on SIGTERM/SIGINT, then exit. The Supabase data layer
+ * is a stateless HTTPS client (no long-lived pool to drain), so there is nothing
+ * to disconnect; a hard timeout forces exit if connections refuse to close
+ * (e.g. long-lived sockets).
  */
 export function installGracefulShutdown(server: Server): void {
   let shuttingDown = false
@@ -41,13 +39,8 @@ export function installGracefulShutdown(server: Server): void {
 
     server.close((err) => {
       if (err) console.error('[api] error while closing server:', err)
-      void prisma
-        .$disconnect()
-        .catch((disconnectError) => console.error('[api] prisma disconnect failed:', disconnectError))
-        .finally(() => {
-          clearTimeout(force)
-          process.exit(err ? 1 : 0)
-        })
+      clearTimeout(force)
+      process.exit(err ? 1 : 0)
     })
   }
 

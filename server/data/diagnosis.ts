@@ -115,6 +115,15 @@ export async function findDiagnosisCodeByColumn(
   return data ? toCodeRecord(data) : null
 }
 
+/** Total number of crosswalk rows (legacy Prisma `diagnosisCode.count`). */
+export async function countDiagnosisCodes(): Promise<number> {
+  const { count, error } = await getSupabaseAdmin()
+    .from('diagnosis_codes')
+    .select('*', { count: 'exact', head: true })
+  if (error) throw new Error(`diagnosis_codes count failed: ${error.message}`)
+  return count ?? 0
+}
+
 /** Count crosswalk rows grouped by system (legacy Prisma `groupBy`). */
 export async function countDiagnosisCodesBySystem(): Promise<Array<{ system: string; count: number }>> {
   const { data, error } = await getSupabaseAdmin().from('diagnosis_codes').select('system')

@@ -1,35 +1,37 @@
 /**
- * Credit balance guard.
+ * Credit balance guard (supabase-js data layer).
  *
  * checkBalance   — throws InsufficientCreditsError when the account cannot cover
  *                  the estimated cost. Reads total available = monthlyCredits +
- *                  purchasedCredits from AiCreditAccount.
+ *                  purchasedCredits from ai_credit_accounts.
  *
- * ensureCreditAccount — upserts the AiCreditAccount row for a userId, creating
- *                  it with the default monthly allowance if missing. Also
- *                  performs an atomic monthly-grant reset when the existing
- *                  account's `monthlyResetAt` has elapsed: the row is updated
- *                  with `updateMany` keyed on the stale reset timestamp so
- *                  concurrent first-call-of-the-month requests can't double-
- *                  grant, and a `monthly_grant` row is appended to the ledger.
+ * ensureCreditAccount — self-healing upsert of the ai_credit_accounts row for a
+ *                  userId, creating it with the default monthly allowance when
+ *                  missing. Also performs an atomic monthly-grant reset when the
+ *                  existing account's `monthly_reset_at` has elapsed. Both the
+ *                  upsert and the conditional monthly grant happen inside the
+ *                  `ai_credit_ensure_account` SECURITY DEFINER RPC, so concurrent
+ *                  first-call-of-the-month requests can't double-grant (the
+ *                  conditional UPDATE keyed on the stale reset timestamp picks a
+ *                  single winner) — replacing the old Prisma `updateMany` guard.
  *
  * deductCreditsTransactionally — atomically decrements the account balance and
- *                  appends a debit ledger entry inside a single Prisma
- *                  transaction. Uses a conditional `updateMany` with `gte`
- *                  guards on both purchasedCredits and monthlyCredits so two
- *                  concurrent debits can never drive either bucket negative;
- *                  the loser of the race observes `result.count === 0` and
- *                  returns `{ ok: false }` without writing a ledger row.
+ *                  appends a debit ledger entry inside the `ai_credit_debit` RPC.
+ *                  The RPC spends purchased credits first, then monthly, with
+ *                  gte guards on both buckets in a single statement, so two
+ *                  concurrent debits can never drive either bucket negative; the
+ *                  loser of the race gets `false` and no ledger row is written.
+ *                  This replaces the old Prisma `$transaction` + `updateMany`.
  *
  * refundCredits  — appends a refund ledger entry (for failed calls where no
- *                  usable output was returned).
+ *                  usable output was returned) via the `ai_credit_refund` RPC.
  */
 
-import type { Prisma } from '@prisma/client'
-import { prisma } from '../db'
 import type { AiMode } from '../../src/types/aiUsage'
 import { MONTHLY_CREDIT_GRANT } from './aiPricingConfig'
 import { migrateLegacyCreditsIfNeeded } from '../services/creditMigration'
+import { creditsRepo } from '../data/credits'
+import { listRecentUsageForUser, type AiUsageHistoryRow } from '../data/aiUsage'
 
 export class InsufficientCreditsError extends Error {
   readonly available: number
@@ -47,7 +49,7 @@ export class InsufficientCreditsError extends Error {
 
 /**
  * Thrown when the AI credit infrastructure itself is unreachable (DB outage,
- * migration not applied, misconfigured DATABASE_URL, etc.). Distinct from
+ * migration not applied, misconfigured Supabase env, etc.). Distinct from
  * InsufficientCreditsError so the caller can fail closed in production
  * without conflating "user has no credits" with "we can't tell".
  */
@@ -69,66 +71,39 @@ function totalCredits(account: { monthlyCredits: number; purchasedCredits: numbe
   return account.monthlyCredits + account.purchasedCredits
 }
 
-/**
- * Upsert an AiCreditAccount for the given userId.
- *
- * - Creates the row with the configured monthly grant on first call.
- * - When the existing row's `monthlyResetAt` has elapsed, atomically replenishes
- *   `monthlyCredits` to {@link MONTHLY_CREDIT_GRANT}, advances `monthlyResetAt`
- *   to the next reset, and appends a `monthly_grant` ledger entry. The reset
- *   is keyed on the stale `monthlyResetAt` via `updateMany`, so concurrent
- *   first-call-of-the-period requests race exactly one winner and never
- *   double-grant.
- */
-export async function ensureCreditAccount(userId: string): Promise<{
+export interface EnsuredCreditAccount {
   id: string
   monthlyCredits: number
   purchasedCredits: number
-}> {
-  const existing = await prisma.aiCreditAccount.findUnique({ where: { userId } })
-  if (!existing) {
-    return prisma.aiCreditAccount.create({
-      data: {
-        userId,
-        monthlyCredits: MONTHLY_CREDIT_GRANT,
-        purchasedCredits: 0,
-        monthlyResetAt: nextMonthlyReset(),
-      },
-    })
+  monthlyResetAt: Date
+}
+
+/**
+ * Self-healing upsert of the ai_credit_accounts row for the given userId.
+ *
+ * - Creates the row with the configured monthly grant on first call.
+ * - When the existing row's `monthly_reset_at` has elapsed, atomically
+ *   replenishes `monthly_credits` to {@link MONTHLY_CREDIT_GRANT}, advances
+ *   `monthly_reset_at` to the next reset, and appends a `monthly_grant` ledger
+ *   entry — all inside the `ai_credit_ensure_account` RPC, which keys the reset
+ *   on the stale `monthly_reset_at` so concurrent first-call-of-the-period
+ *   requests race exactly one winner and never double-grant.
+ *
+ * `nextMonthlyReset()` is always passed as the next boundary; the RPC only
+ * applies it when creating the row or when the stored boundary has elapsed.
+ */
+export async function ensureCreditAccount(userId: string): Promise<EnsuredCreditAccount> {
+  const account = await creditsRepo.ensureAccount(
+    userId,
+    MONTHLY_CREDIT_GRANT,
+    nextMonthlyReset().toISOString(),
+  )
+  return {
+    id: account.id,
+    monthlyCredits: account.monthly_credits,
+    purchasedCredits: account.purchased_credits,
+    monthlyResetAt: new Date(account.monthly_reset_at),
   }
-
-  const now = new Date()
-  if (now < existing.monthlyResetAt) return existing
-
-  // Past the reset boundary. Try to grant atomically; only the request that
-  // matches the stale `monthlyResetAt` wins.
-  const nextResetAt = nextMonthlyReset()
-  const reset = await prisma.aiCreditAccount.updateMany({
-    where: { id: existing.id, monthlyResetAt: existing.monthlyResetAt },
-    data: { monthlyCredits: MONTHLY_CREDIT_GRANT, monthlyResetAt: nextResetAt },
-  })
-
-  if (reset.count === 1) {
-    await prisma.aiCreditLedger.create({
-      data: {
-        accountId: existing.id,
-        type: 'monthly_grant',
-        credits: MONTHLY_CREDIT_GRANT,
-        featureKey: null,
-        usageLogId: null,
-        note: `monthly_reset:${nextResetAt.toISOString()}`,
-      },
-    })
-    return {
-      id: existing.id,
-      monthlyCredits: MONTHLY_CREDIT_GRANT,
-      purchasedCredits: existing.purchasedCredits,
-    }
-  }
-
-  // Lost the race — another concurrent caller already granted. Re-read.
-  const fresh = await prisma.aiCreditAccount.findUnique({ where: { id: existing.id } })
-  return fresh ?? existing
 }
 
 /**
@@ -153,17 +128,16 @@ export async function checkBalance(
 /**
  * Atomically deduct `credits` from the account and append a debit ledger row.
  *
- * The deduction is performed inside a Prisma transaction using a single
- * conditional `updateMany` that requires
- *   `purchasedCredits >= fromPurchased AND monthlyCredits >= fromMonthly`.
- * When two debits race past the (advisory) pre-check, the database serializes
- * the conditional update — only one row update succeeds, the loser observes
- * `result.count === 0`, and no ledger entry is written for it. Concurrent
- * debits therefore can never drive either bucket negative.
+ * The deduction is performed inside the `ai_credit_debit` RPC using a single
+ * conditional UPDATE that requires
+ *   `purchased_credits >= fromPurchased AND monthly_credits >= fromMonthly`.
+ * When two debits race, the database serializes the conditional update — only
+ * one succeeds, the loser gets `false`, and no ledger entry is written for it.
+ * Concurrent debits therefore can never drive either bucket negative.
  *
  * Returns `{ ok: false }` when balance is insufficient (either at the advisory
- * pre-check or after losing the race inside the transaction); callers should
- * treat this as InsufficientCreditsError.
+ * pre-check or after losing the race inside the RPC); callers should treat this
+ * as InsufficientCreditsError.
  */
 export async function deductCreditsTransactionally(params: {
   userId: string
@@ -177,52 +151,19 @@ export async function deductCreditsTransactionally(params: {
   const account = await ensureCreditAccount(params.userId)
   const available = totalCredits(account)
 
-  // Fast-path advisory rejection. The conditional updateMany below is the
-  // authoritative gate — this avoids a transaction round-trip when the
-  // account is plainly underwater.
+  // Fast-path advisory rejection. The conditional UPDATE inside the RPC is the
+  // authoritative gate — this avoids an RPC round-trip when the account is
+  // plainly underwater.
   if (available < params.credits) {
     return { ok: false }
   }
 
-  return prisma.$transaction(async (tx) => {
-    const cur = await tx.aiCreditAccount.findUnique({ where: { id: account.id } })
-    if (!cur) return { ok: false as const }
-
-    // Spend purchased credits first (they never expire), then monthly.
-    const fromPurchased = Math.min(cur.purchasedCredits, params.credits)
-    const fromMonthly = params.credits - fromPurchased
-
-    const result = await tx.aiCreditAccount.updateMany({
-      where: {
-        id: account.id,
-        purchasedCredits: { gte: fromPurchased },
-        monthlyCredits: { gte: fromMonthly },
-      },
-      data: {
-        purchasedCredits: { decrement: fromPurchased },
-        monthlyCredits: { decrement: fromMonthly },
-      },
-    })
-
-    if (result.count === 0) {
-      // Lost the race — another concurrent debit consumed the credits we
-      // intended to spend. Balance unchanged, no ledger row written.
-      return { ok: false as const }
-    }
-
-    await tx.aiCreditLedger.create({
-      data: {
-        accountId: account.id,
-        type: 'debit',
-        credits: -params.credits,
-        featureKey: params.featureKey,
-        usageLogId: params.usageLogId ?? null,
-        note: params.mode ? `mode=${params.mode}` : null,
-      },
-    })
-
-    return { ok: true as const }
+  const ok = await creditsRepo.debit(account.id, params.credits, params.featureKey, {
+    usageLogId: params.usageLogId,
+    note: params.mode ? `mode=${params.mode}` : undefined,
   })
+
+  return { ok }
 }
 
 /**
@@ -240,23 +181,10 @@ export async function refundCredits(params: {
   if (params.credits <= 0) return
 
   const account = await ensureCreditAccount(params.userId)
-
-  await prisma.$transaction(async (tx) => {
-    await tx.aiCreditAccount.update({
-      where: { id: account.id },
-      data: { monthlyCredits: { increment: params.credits } },
-    })
-
-    await tx.aiCreditLedger.create({
-      data: {
-        accountId: account.id,
-        type: 'refund',
-        credits: params.credits,
-        featureKey: params.featureKey,
-        usageLogId: params.usageLogId ?? null,
-        note: params.note ?? 'ai_call_failed_refund',
-      },
-    })
+  await creditsRepo.refund(account.id, params.credits, params.featureKey, {
+    usageLogId: params.usageLogId,
+    // The RPC coalesces a null note to 'ai_call_failed_refund'.
+    note: params.note,
   })
 }
 
@@ -269,13 +197,11 @@ export async function getCreditSummary(userId: string): Promise<{
 }> {
   await migrateLegacyCreditsIfNeeded(userId)
   const account = await ensureCreditAccount(userId)
-  const full = await prisma.aiCreditAccount.findUnique({ where: { id: account.id } })
-  const resetAt = full?.monthlyResetAt ?? nextMonthlyReset()
   return {
     monthlyCredits: account.monthlyCredits,
     purchasedCredits: account.purchasedCredits,
     totalAvailable: totalCredits(account),
-    monthlyResetAt: resetAt,
+    monthlyResetAt: account.monthlyResetAt,
   }
 }
 
@@ -292,60 +218,15 @@ export async function addPurchasedCredits(params: {
   }
 
   const account = await ensureCreditAccount(params.userId)
-  const ledgerType = params.note?.startsWith('stripe:') ? 'purchase' : 'admin_adjustment'
-
-  await prisma.$transaction(async (tx) => {
-    await tx.aiCreditAccount.update({
-      where: { id: account.id },
-      data: { purchasedCredits: { increment: params.credits } },
-    })
-
-    await tx.aiCreditLedger.create({
-      data: {
-        accountId: account.id,
-        type: ledgerType,
-        credits: params.credits,
-        featureKey: params.featureKey ?? null,
-        usageLogId: null,
-        note: params.note ?? 'admin_adjustment',
-      },
-    })
+  // The RPC derives the ledger type from the note (`stripe:%` → 'purchase',
+  // else 'admin_adjustment'), preserving the previous behaviour.
+  await creditsRepo.grantPurchased(account.id, params.credits, {
+    note: params.note,
+    featureKey: params.featureKey ?? undefined,
   })
 
   const summary = await getCreditSummary(params.userId)
   return { totalAvailable: summary.totalAvailable }
-}
-
-/**
- * Increment purchased credits and append a ledger row INSIDE an existing
- * transaction. Used by the Stripe webhook handler so the idempotency marker and
- * the credit grant commit (or roll back) as one atomic unit — a crash or retry
- * can never grant credits without also persisting the "event processed" marker,
- * and vice versa.
- *
- * The caller is responsible for the idempotency check and for running this in a
- * Serializable transaction.
- */
-export async function grantPurchasedCreditsWithinTx(
-  tx: Prisma.TransactionClient,
-  params: { accountId: string; credits: number; note?: string; featureKey?: string | null },
-): Promise<void> {
-  if (params.credits <= 0) return
-  const ledgerType = params.note?.startsWith('stripe:') ? 'purchase' : 'admin_adjustment'
-  await tx.aiCreditAccount.update({
-    where: { id: params.accountId },
-    data: { purchasedCredits: { increment: params.credits } },
-  })
-  await tx.aiCreditLedger.create({
-    data: {
-      accountId: params.accountId,
-      type: ledgerType,
-      credits: params.credits,
-      featureKey: params.featureKey ?? null,
-      usageLogId: null,
-      note: params.note ?? 'admin_adjustment',
-    },
-  })
 }
 
 export interface CreditLedgerEntry {
@@ -363,55 +244,23 @@ export async function getCreditLedgerForUser(
   limit = 50,
 ): Promise<CreditLedgerEntry[]> {
   const account = await ensureCreditAccount(userId)
-  const rows = await prisma.aiCreditLedger.findMany({
-    where: { accountId: account.id },
-    orderBy: { createdAt: 'desc' },
-    take: limit,
-    select: {
-      id: true,
-      type: true,
-      credits: true,
-      featureKey: true,
-      note: true,
-      createdAt: true,
-    },
-  })
-  return rows
+  const rows = await creditsRepo.listLedger(account.id, limit)
+  return rows.map((row) => ({
+    id: row.id,
+    type: row.type,
+    credits: row.credits,
+    featureKey: row.feature_key,
+    note: row.note,
+    createdAt: new Date(row.created_at),
+  }))
 }
 
-export interface AiUsageLogRow {
-  id: string
-  featureKey: string
-  mode: string
-  provider: string
-  model: string
-  totalTokens: number
-  creditsCharged: number
-  success: boolean
-  errorCode: string | null
-  createdAt: Date
-}
+export type AiUsageLogRow = AiUsageHistoryRow
 
-/** Recent AI usage rows from the local AiUsageLog table. */
+/** Recent AI usage rows from the ai_usage_logs table. */
 export async function getRecentAiUsageForUser(
   userId: string,
   limit = 50,
 ): Promise<AiUsageLogRow[]> {
-  return prisma.aiUsageLog.findMany({
-    where: { userId },
-    orderBy: { createdAt: 'desc' },
-    take: limit,
-    select: {
-      id: true,
-      featureKey: true,
-      mode: true,
-      provider: true,
-      model: true,
-      totalTokens: true,
-      creditsCharged: true,
-      success: true,
-      errorCode: true,
-      createdAt: true,
-    },
-  })
+  return listRecentUsageForUser(userId, limit)
 }

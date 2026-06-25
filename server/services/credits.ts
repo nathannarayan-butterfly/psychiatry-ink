@@ -1,8 +1,11 @@
 /**
- * Unified credit facade — delegates to AiCreditAccount (creditGuard).
+ * Unified credit facade — delegates to ai_credit_accounts (creditGuard).
  *
- * The legacy CreditBalance table is kept only for plan storage and one-time
- * migration of any remaining balance into AiCreditAccount.
+ * The legacy `credit_balances` table is kept only for plan storage and the
+ * local-dev `'default'` singleton balance (one-time migrated into
+ * ai_credit_accounts for authenticated users). Authenticated users always
+ * resolve to the RPC-backed ai_credit_accounts path; the `'default'` path is
+ * local-dev only.
  */
 
 import {
@@ -11,7 +14,7 @@ import {
   refundCredits as refundAiCredits,
 } from '../ai/creditGuard'
 import { migrateLegacyCreditsIfNeeded, accountIdFromUserId } from './creditMigration'
-import { prisma } from '../db'
+import { creditBalancesRepo } from '../data/creditBalances'
 
 const LEGACY_ACCOUNT_ID = 'default'
 const LEGACY_DEFAULT_BALANCE = 500
@@ -20,20 +23,11 @@ export type UserPlan = 'free' | 'pro'
 
 export { accountIdFromUserId }
 
-/** Ensures plan metadata row exists (balance lives in AiCreditAccount). */
+/** Ensures plan metadata row exists (balance lives in ai_credit_accounts). */
 export async function ensureCreditAccountMeta(userId?: string) {
   const id = accountIdFromUserId(userId)
   const isLegacy = id === LEGACY_ACCOUNT_ID
-
-  return prisma.creditBalance.upsert({
-    where: { id },
-    update: {},
-    create: {
-      id,
-      balance: isLegacy ? LEGACY_DEFAULT_BALANCE : 0,
-      plan: 'free',
-    },
-  })
+  return creditBalancesRepo.ensureCreditBalance(id, isLegacy ? LEGACY_DEFAULT_BALANCE : 0)
 }
 
 /** @deprecated Use ensureCreditAccountMeta — kept for call-site compatibility. */
@@ -67,11 +61,8 @@ export async function deductCredits(amount: number, userId?: string): Promise<nu
 
   const id = accountIdFromUserId(userId)
   if (id === LEGACY_ACCOUNT_ID) {
-    await ensureCreditAccountMeta(userId)
-    const updated = await prisma.creditBalance.update({
-      where: { id },
-      data: { balance: { decrement: amount } },
-    })
+    const account = await ensureCreditAccountMeta(userId)
+    const updated = await creditBalancesRepo.setCreditBalance(id, account.balance - amount)
     return Math.max(0, updated.balance)
   }
 
@@ -93,17 +84,15 @@ export async function reserveCredits(
 ): Promise<{ ok: boolean; balance: number }> {
   const id = accountIdFromUserId(userId)
   if (id === LEGACY_ACCOUNT_ID) {
-    await ensureCreditAccountMeta(userId)
+    const account = await ensureCreditAccountMeta(userId)
     if (amount <= 0) {
-      const account = await prisma.creditBalance.findUnique({ where: { id } })
-      return { ok: true, balance: account?.balance ?? 0 }
+      return { ok: true, balance: account.balance }
     }
-    const result = await prisma.creditBalance.updateMany({
-      where: { id, balance: { gte: amount } },
-      data: { balance: { decrement: amount } },
-    })
-    const account = await prisma.creditBalance.findUnique({ where: { id } })
-    return { ok: result.count > 0, balance: account?.balance ?? 0 }
+    if (account.balance < amount) {
+      return { ok: false, balance: account.balance }
+    }
+    const updated = await creditBalancesRepo.setCreditBalance(id, account.balance - amount)
+    return { ok: true, balance: updated.balance }
   }
 
   await migrateLegacyCreditsIfNeeded(id)
@@ -126,11 +115,8 @@ export async function refundCredits(amount: number, userId?: string): Promise<nu
 
   const id = accountIdFromUserId(userId)
   if (id === LEGACY_ACCOUNT_ID) {
-    await ensureCreditAccountMeta(userId)
-    const updated = await prisma.creditBalance.update({
-      where: { id },
-      data: { balance: { increment: amount } },
-    })
+    const account = await ensureCreditAccountMeta(userId)
+    const updated = await creditBalancesRepo.setCreditBalance(id, account.balance + amount)
     return updated.balance
   }
 
@@ -146,9 +132,6 @@ export async function refundCredits(amount: number, userId?: string): Promise<nu
 /** Stripe billing stub — manual upgrade for development. */
 export async function setUserPlan(userId: string, plan: UserPlan): Promise<UserPlan> {
   await ensureCreditAccountMeta(userId)
-  const updated = await prisma.creditBalance.update({
-    where: { id: userId },
-    data: { plan },
-  })
+  const updated = await creditBalancesRepo.setCreditBalancePlan(userId, plan)
   return updated.plan === 'pro' ? 'pro' : 'free'
 }

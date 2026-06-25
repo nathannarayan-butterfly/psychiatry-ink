@@ -3,7 +3,8 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import cors from 'cors'
 import express from 'express'
-import { prisma } from './db'
+import { getSupabaseAdmin } from './services/supabaseAdmin'
+import { countDiagnosisCodes } from './data/diagnosis'
 import { configureClientServing } from './serveClient'
 import { optionalAuth } from './middleware/auth'
 import { requestId } from './middleware/requestContext'
@@ -98,7 +99,10 @@ app.get('/api/health', (req, res) => {
 // can actually serve it.
 app.get('/api/health/ready', async (req, res) => {
   try {
-    await prisma.$queryRaw`SELECT 1`
+    // Lightweight DB probe via the supabase-js seam — a single-row read confirms
+    // the service-role connection can actually serve before routing traffic.
+    const { error } = await getSupabaseAdmin().from('app_settings').select('key').limit(1)
+    if (error) throw new Error(error.message)
     res.json({ ok: true, db: 'up', requestId: req.requestId })
   } catch (error) {
     console.error(`[health] readiness check failed (req ${req.requestId})`, error)
@@ -229,8 +233,7 @@ const server = app.listen(port, host, () => {
   // is English-only on the API, so German titles depend on this seeded table.
   // Surface it loudly at startup with the exact remediation command instead of
   // failing invisibly at request time (resolver returns source:'none').
-  void prisma.diagnosisCode
-    .count()
+  void countDiagnosisCodes()
     .then((count) => {
       if (count === 0) {
         console.warn(

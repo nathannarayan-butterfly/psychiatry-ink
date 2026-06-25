@@ -5,13 +5,12 @@
  * Uses Checkout Sessions (hosted) — no payment_method_types (dynamic methods).
  */
 
-import { Prisma } from '@prisma/client'
 import Stripe from 'stripe'
 import type { CreditPack } from '../../src/data/creditPacks'
-import { ensureCreditAccount, grantPurchasedCreditsWithinTx } from '../ai/creditGuard'
+import { addPurchasedCredits } from '../ai/creditGuard'
 import { MONTHLY_CREDIT_GRANT } from '../ai/aiPricingConfig'
 import { creditsRepo } from '../data/credits'
-import { prisma } from '../db'
+import { claimEventMarker, releaseEventMarker } from '../data/appSettings'
 
 let stripeClient: Stripe | null = null
 
@@ -218,82 +217,56 @@ export async function handleStripeWebhook(
 }
 
 /**
- * One-time credit-bundle checkout (unchanged behaviour). The "event processed"
- * marker row and the credit grant commit together (Serializable) or not at all,
- * so concurrent duplicate deliveries can never double-grant.
+ * One-time credit-bundle checkout. Routed through the same per-event idempotency
+ * gate as the subscription handlers: the first delivery claims the
+ * `app_settings` marker and performs the grant; duplicate deliveries see the
+ * marker and no-op. If the grant throws, the marker is released so Stripe's
+ * retry reprocesses the event. `addPurchasedCredits` is itself a single atomic
+ * RPC (`ai_credit_grant_purchased`), so the grant is all-or-nothing.
  */
 async function handleOneTimeCheckout(
   eventId: string,
   session: Stripe.Checkout.Session,
 ): Promise<void> {
-  const markerKey = `stripe:event:${eventId}`
-  const grant = resolveCheckoutGrant(session)
-  const accountId = grant ? (await ensureCreditAccount(grant.userId)).id : null
-
-  try {
-    await prisma.$transaction(
-      async (tx) => {
-        await tx.appSetting.create({
-          data: { key: markerKey, value: new Date().toISOString() },
-        })
-        if (grant && accountId) {
-          await grantPurchasedCreditsWithinTx(tx, {
-            accountId,
-            credits: grant.credits,
-            note: grant.note,
-          })
-        }
-      },
-      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-    )
-  } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      (error.code === 'P2002' || error.code === 'P2034')
-    ) {
-      // Duplicate delivery — already processed, succeed idempotently.
-      return
-    }
-    throw error
-  }
+  await processStripeEventOnce(eventId, async () => {
+    const grant = resolveCheckoutGrant(session)
+    if (!grant) return
+    await addPurchasedCredits({
+      userId: grant.userId,
+      credits: grant.credits,
+      note: grant.note,
+    })
+  })
 }
 
 /**
- * Per-event idempotency for subscription/invoice handlers. The `app_settings`
- * marker (unique key) is the gate: the first delivery claims it and runs the
- * work; concurrent/duplicate deliveries see the marker and no-op. If the work
- * throws, the marker is rolled back so Stripe's retry reprocesses the event.
+ * Per-event idempotency for all webhook handlers. The `app_settings` marker
+ * (unique key) is the gate: the first delivery claims it and runs the work;
+ * concurrent/duplicate deliveries see the marker and no-op. If the work throws,
+ * the marker is released so Stripe's retry reprocesses the event.
  *
- * The subscription RPCs are themselves convergent (apply = upsert of state;
- * grant = reset of the period allotment, not an increment), so even in the rare
- * window where two deliveries race past the gate the financial state stays
- * correct — the marker simply suppresses duplicate ledger rows.
+ * The credit RPCs are themselves atomic/convergent (grant_purchased increments
+ * inside one statement; apply_subscription = upsert of state; the period grant
+ * = reset of the allotment, not an increment), so even in the rare window where
+ * two deliveries race past the gate the financial state stays correct — the
+ * marker simply suppresses duplicate ledger rows.
  */
 async function processStripeEventOnce(
   eventId: string,
   work: () => Promise<void>,
 ): Promise<void> {
   const markerKey = `stripe:event:${eventId}`
-  try {
-    await prisma.appSetting.create({
-      data: { key: markerKey, value: new Date().toISOString() },
-    })
-  } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      (error.code === 'P2002' || error.code === 'P2034')
-    ) {
-      // Already processed (or being processed) — succeed idempotently.
-      return
-    }
-    throw error
+  const claimed = await claimEventMarker(markerKey)
+  if (!claimed) {
+    // Already processed (or being processed) — succeed idempotently.
+    return
   }
 
   try {
     await work()
   } catch (error) {
     // Release the gate so Stripe's automatic retry can reprocess the event.
-    await prisma.appSetting.delete({ where: { key: markerKey } }).catch(() => {})
+    await releaseEventMarker(markerKey).catch(() => {})
     throw error
   }
 }
