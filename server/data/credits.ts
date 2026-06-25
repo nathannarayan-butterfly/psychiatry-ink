@@ -118,6 +118,128 @@ export async function getAccountByUserId(userId: string): Promise<AiCreditAccoun
   return data
 }
 
+/**
+ * Start (or back-fill) the app-managed free trial for a user. Idempotent: on a
+ * brand-new account this creates it with `trialCredits` monthly credits and a
+ * `trialDays`-long trial window; for a pre-existing account that never had a
+ * trial it back-fills the trial exactly once; an account that already has a
+ * trial is left untouched. Wraps `ai_credit_start_trial` (service-role only).
+ */
+export async function startTrial(
+  userId: string,
+  trialCredits: number,
+  trialDays: number,
+): Promise<AiCreditAccount> {
+  const { data, error } = await getSupabaseAdmin().rpc('ai_credit_start_trial', {
+    p_user_id: userId,
+    p_trial_credits: trialCredits,
+    p_trial_days: trialDays,
+  })
+  if (error) throw new Error(`ai_credit_start_trial failed: ${error.message}`)
+  if (!data) throw new Error('ai_credit_start_trial returned no account')
+  return data as AiCreditAccount
+}
+
+export interface SubscriptionState {
+  /** Mirror of the Stripe `subscription.status`. */
+  status: string
+  /** Product plan tag (e.g. `single_user`); null leaves the stored value. */
+  plan?: string | null
+  /** Billing interval (`month` | `year`); null leaves the stored value. */
+  interval?: string | null
+  /** Stripe customer id; null leaves the stored value. */
+  customerId?: string | null
+  /** Stripe subscription id; null leaves the stored value. */
+  subscriptionId?: string | null
+  /** Stripe price id; null leaves the stored value. */
+  priceId?: string | null
+  /** ISO timestamp of the current period end; null leaves the stored value. */
+  currentPeriodEnd?: string | null
+  /** Whether the subscription is set to cancel at period end. */
+  cancelAtPeriodEnd?: boolean | null
+}
+
+/**
+ * Upsert the Stripe subscription state onto a user's credit account (creating a
+ * minimal account if the event somehow arrives first). Clears the soft-lock when
+ * the status is `active`/`trialing`. Wraps `ai_credit_apply_subscription`.
+ */
+export async function applySubscription(
+  userId: string,
+  state: SubscriptionState,
+): Promise<AiCreditAccount> {
+  // The generated RPC arg types are non-nullable, but every nullable parameter
+  // is `coalesce(p_x, existing)` in SQL — passing JSON null (→ SQL NULL) keeps
+  // the stored value. Cast to satisfy the codegen's stricter param types.
+  const { data, error } = await getSupabaseAdmin().rpc('ai_credit_apply_subscription', {
+    p_user_id: userId,
+    p_status: state.status,
+    p_plan: state.plan ?? null,
+    p_interval: state.interval ?? null,
+    p_customer_id: state.customerId ?? null,
+    p_subscription_id: state.subscriptionId ?? null,
+    p_price_id: state.priceId ?? null,
+    p_current_period_end: state.currentPeriodEnd ?? null,
+    p_cancel_at_period_end: state.cancelAtPeriodEnd ?? null,
+  } as Database['public']['Functions']['ai_credit_apply_subscription']['Args'])
+  if (error) throw new Error(`ai_credit_apply_subscription failed: ${error.message}`)
+  if (!data) throw new Error('ai_credit_apply_subscription returned no account')
+  return data as AiCreditAccount
+}
+
+/**
+ * Grant a paid subscription period's monthly credit allotment (resets
+ * `monthly_credits` to `credits`), advance the period end and clear any
+ * soft-lock. Idempotency is the caller's responsibility (the `app_settings`
+ * per-event marker), per the Stripe-credits flow. Wraps
+ * `ai_credit_grant_subscription_period`.
+ */
+export async function grantSubscriptionPeriod(
+  userId: string,
+  credits: number,
+  currentPeriodEnd: string | null,
+  note?: string,
+): Promise<AiCreditAccount> {
+  const { data, error } = await getSupabaseAdmin().rpc('ai_credit_grant_subscription_period', {
+    p_user_id: userId,
+    p_credits: credits,
+    p_current_period_end: currentPeriodEnd,
+    p_note: note ?? 'subscription_renewal',
+  } as Database['public']['Functions']['ai_credit_grant_subscription_period']['Args'])
+  if (error) throw new Error(`ai_credit_grant_subscription_period failed: ${error.message}`)
+  if (!data) throw new Error('ai_credit_grant_subscription_period returned no account')
+  return data as AiCreditAccount
+}
+
+/**
+ * Set or clear the soft-lock audit timestamp for a user. Setting is idempotent
+ * (only stamps when not already locked); clearing always nulls it. Returns null
+ * when the account does not exist. Wraps `ai_credit_set_lock`.
+ */
+export async function setLock(userId: string, locked: boolean): Promise<AiCreditAccount | null> {
+  const { data, error } = await getSupabaseAdmin().rpc('ai_credit_set_lock', {
+    p_user_id: userId,
+    p_locked: locked,
+  })
+  if (error) throw new Error(`ai_credit_set_lock failed: ${error.message}`)
+  return (data as AiCreditAccount) ?? null
+}
+
+/**
+ * Resolve the app user id for a Stripe customer id (webhook → app user). Uses
+ * the partial `ai_credit_accounts_stripe_customer_idx`. Returns null when no
+ * account is mapped to the customer.
+ */
+export async function getUserIdByStripeCustomerId(customerId: string): Promise<string | null> {
+  const { data, error } = await getSupabaseAdmin()
+    .from('ai_credit_accounts')
+    .select('user_id')
+    .eq('stripe_customer_id', customerId)
+    .maybeSingle()
+  if (error) throw new Error(`ai_credit_accounts customer lookup failed: ${error.message}`)
+  return data?.user_id ?? null
+}
+
 /** Read the most recent ledger entries for an account (newest first). */
 export async function listLedger(
   accountId: string,
@@ -140,4 +262,9 @@ export const creditsRepo = {
   grantPurchased,
   getAccountByUserId,
   listLedger,
+  startTrial,
+  applySubscription,
+  grantSubscriptionPeriod,
+  setLock,
+  getUserIdByStripeCustomerId,
 }

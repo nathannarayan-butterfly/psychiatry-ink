@@ -43,6 +43,7 @@ import {
 } from './creditGuard'
 import { logAiUsage } from './usageLogger'
 import { getFeatureCreditRule } from './featureCreditRules'
+import { assertAccess } from '../services/subscriptionAccess'
 
 export { InsufficientCreditsError, CreditInfrastructureError }
 
@@ -117,6 +118,11 @@ export async function runAiFeature(params: RunAiFeatureParams): Promise<LlmCallR
   // the legacy fail-open so unit tests and local dev without a DB still work.
   if (!skipCreditAccounting && userId) {
     try {
+      // Soft-lock gate: a lapsed-trial account with no active subscription and
+      // no purchased credits is blocked here (AccessLockedError subclasses
+      // InsufficientCreditsError, so it surfaces as the usual 402). Accounts
+      // that never started a trial keep access — see subscriptionAccess.
+      await assertAccess(userId)
       await checkBalance(userId, estimatedCost)
     } catch (balanceError) {
       if (balanceError instanceof InsufficientCreditsError) throw balanceError
