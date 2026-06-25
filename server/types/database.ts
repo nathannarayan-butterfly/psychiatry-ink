@@ -185,30 +185,63 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          locked_at: string | null
           monthly_credits: number
           monthly_reset_at: string
           organisation_id: string | null
           purchased_credits: number
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_cancel_at_period_end: boolean
+          subscription_current_period_end: string | null
+          subscription_interval: string | null
+          subscription_plan: string | null
+          subscription_price_id: string | null
+          subscription_status: string | null
+          trial_ends_at: string | null
+          trial_started_at: string | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
           created_at?: string
           id?: string
+          locked_at?: string | null
           monthly_credits?: number
           monthly_reset_at: string
           organisation_id?: string | null
           purchased_credits?: number
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_cancel_at_period_end?: boolean
+          subscription_current_period_end?: string | null
+          subscription_interval?: string | null
+          subscription_plan?: string | null
+          subscription_price_id?: string | null
+          subscription_status?: string | null
+          trial_ends_at?: string | null
+          trial_started_at?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
           created_at?: string
           id?: string
+          locked_at?: string | null
           monthly_credits?: number
           monthly_reset_at?: string
           organisation_id?: string | null
           purchased_credits?: number
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_cancel_at_period_end?: boolean
+          subscription_current_period_end?: string | null
+          subscription_interval?: string | null
+          subscription_plan?: string | null
+          subscription_price_id?: string | null
+          subscription_status?: string | null
+          trial_ends_at?: string | null
+          trial_started_at?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -3726,6 +3759,46 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      ai_credit_apply_subscription: {
+        Args: {
+          p_user_id: string
+          p_status: string
+          p_plan: string
+          p_interval: string
+          p_customer_id: string
+          p_subscription_id: string
+          p_price_id: string
+          p_current_period_end: string
+          p_cancel_at_period_end: boolean
+        }
+        Returns: {
+          created_at: string
+          id: string
+          locked_at: string | null
+          monthly_credits: number
+          monthly_reset_at: string
+          organisation_id: string | null
+          purchased_credits: number
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_cancel_at_period_end: boolean
+          subscription_current_period_end: string | null
+          subscription_interval: string | null
+          subscription_plan: string | null
+          subscription_price_id: string | null
+          subscription_status: string | null
+          trial_ends_at: string | null
+          trial_started_at: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ai_credit_accounts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       ai_credit_grant_purchased: {
         Args: {
           p_account_id: string
@@ -3734,6 +3807,105 @@ export type Database = {
           p_note?: string
         }
         Returns: undefined
+      }
+      ai_credit_grant_subscription_period: {
+        Args: {
+          p_user_id: string
+          p_credits: number
+          p_current_period_end: string
+          p_note: string
+        }
+        Returns: {
+          created_at: string
+          id: string
+          locked_at: string | null
+          monthly_credits: number
+          monthly_reset_at: string
+          organisation_id: string | null
+          purchased_credits: number
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_cancel_at_period_end: boolean
+          subscription_current_period_end: string | null
+          subscription_interval: string | null
+          subscription_plan: string | null
+          subscription_price_id: string | null
+          subscription_status: string | null
+          trial_ends_at: string | null
+          trial_started_at: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ai_credit_accounts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      ai_credit_set_lock: {
+        Args: { p_user_id: string; p_locked: boolean }
+        Returns: {
+          created_at: string
+          id: string
+          locked_at: string | null
+          monthly_credits: number
+          monthly_reset_at: string
+          organisation_id: string | null
+          purchased_credits: number
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_cancel_at_period_end: boolean
+          subscription_current_period_end: string | null
+          subscription_interval: string | null
+          subscription_plan: string | null
+          subscription_price_id: string | null
+          subscription_status: string | null
+          trial_ends_at: string | null
+          trial_started_at: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ai_credit_accounts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      ai_credit_start_trial: {
+        Args: {
+          p_user_id: string
+          p_trial_credits: number
+          p_trial_days: number
+        }
+        Returns: {
+          created_at: string
+          id: string
+          locked_at: string | null
+          monthly_credits: number
+          monthly_reset_at: string
+          organisation_id: string | null
+          purchased_credits: number
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_cancel_at_period_end: boolean
+          subscription_current_period_end: string | null
+          subscription_interval: string | null
+          subscription_plan: string | null
+          subscription_price_id: string | null
+          subscription_status: string | null
+          trial_ends_at: string | null
+          trial_started_at: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ai_credit_accounts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       ai_credit_refund: {
         Args: {

@@ -124,6 +124,33 @@ After applying, `server/types/database.ts` was regenerated via the MCP
 `generate_typescript_types` tool (added only the new RPC signature; no other
 type drift).
 
+### 3.5 Trial + subscription / soft-lock (execution phase — `trial_sub`)
+
+Added during the trial → soft-lock → subscription billing workstream. Additive
+extension of `public.ai_credit_accounts` plus 4 SECURITY DEFINER RPCs.
+
+| Item | Value |
+| --- | --- |
+| Repo file | `supabase/migrations/20260704000400_consolidation_trial_subscription.sql` |
+| Applied via | Supabase MCP `apply_migration` (recorded remote version `20260625193817`, name `consolidation_trial_subscription`) |
+| Columns added (11) | `trial_started_at`, `trial_ends_at`, `subscription_status`, `subscription_plan`, `subscription_interval`, `stripe_customer_id`, `stripe_subscription_id`, `subscription_price_id`, `subscription_current_period_end`, `subscription_cancel_at_period_end` (NOT NULL default false), `locked_at` — all `ADD COLUMN IF NOT EXISTS`, no existing column altered/dropped |
+| Indexes added (2) | `ai_credit_accounts_stripe_customer_idx`, `ai_credit_accounts_stripe_subscription_idx` (partial, `where … is not null`) — webhook customer/subscription lookups |
+| RPCs added (4) | `ai_credit_start_trial(text,integer,integer)`, `ai_credit_apply_subscription(text,text,text,text,text,text,text,timestamptz,boolean)`, `ai_credit_grant_subscription_period(text,integer,timestamptz,text)`, `ai_credit_set_lock(text,boolean)` |
+| Hardening | every RPC `security definer`, `set search_path = ''`, fully schema-qualified; `revoke all … from public, anon, authenticated` then `grant execute … to service_role` — same lock pattern as §3.2 |
+
+**Verification (via MCP after apply):**
+
+- All 11 columns present on `public.ai_credit_accounts`
+  (`information_schema.columns`).
+- All 4 RPCs present (`pg_proc`).
+- EXECUTE privileges for every RPC: `anon_exec = false`, `auth_exec = false`,
+  `service_exec = true` (`has_function_privilege`) — matches the §3.2 lock
+  pattern, no privilege-escalation hole.
+
+After applying, `server/types/database.ts` was regenerated via the MCP
+`generate_typescript_types` tool — added the 11 new account columns (Row/Insert/
+Update) and the 4 new RPC signatures; no other type drift.
+
 ### 3.3 Remaining advisor notes (accepted / out of scope)
 
 - `rls_enabled_no_policy` (INFO) on `app_settings`, `user_public_keys`, and the
