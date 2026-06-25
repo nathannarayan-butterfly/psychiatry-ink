@@ -19,12 +19,25 @@
  * ========================================================================== */
 
 .ov-dashboard {
-  --ov-danger: #c0392b;
-  --ov-danger-soft: color-mix(in srgb, #c0392b 10%, transparent);
-  --ov-warn: #b45309;
-  --ov-warn-soft: color-mix(in srgb, #d39b00 12%, transparent);
-  --ov-ok: #2f8a5b;
-  --ov-ok-soft: color-mix(in srgb, #3a8a5a 10%, transparent);
+  /* ── Overview design tokens (clinical structure palette) ── */
+  --ov-teal: #2a6b6b;
+  --ov-teal-soft: color-mix(in srgb, var(--ov-teal) 9%, transparent);
+  --ov-ai-blue: #4a6280;
+  --ov-ai-blue-soft: color-mix(in srgb, var(--ov-ai-blue) 9%, transparent);
+  --ov-amber: #b45309;
+  --ov-amber-soft: color-mix(in srgb, var(--ov-amber) 11%, transparent);
+  --ov-green: #2f8a5b;
+  --ov-green-soft: color-mix(in srgb, var(--ov-green) 10%, transparent);
+  --ov-risk-red: #c0392b;
+  --ov-risk-red-soft: color-mix(in srgb, var(--ov-risk-red) 10%, transparent);
+
+  /* Legacy semantic aliases — map onto the overview token set */
+  --ov-danger: var(--ov-risk-red);
+  --ov-danger-soft: var(--ov-risk-red-soft);
+  --ov-warn: var(--ov-amber);
+  --ov-warn-soft: var(--ov-amber-soft);
+  --ov-ok: var(--ov-green);
+  --ov-ok-soft: var(--ov-green-soft);
   --ov-info: #3a6f9c;
   --ov-info-soft: color-mix(in srgb, #3a6f9c 10%, transparent);
 
@@ -34,36 +47,994 @@
   --ov-hairline: var(--cm-hairline, color-mix(in srgb, var(--border-soft) 72%, transparent));
   --ov-spark: color-mix(in srgb, var(--area-accent, var(--accent)) 72%, var(--text-secondary));
 
+  /* Glassmorphism tuning — consumes shared workspace tokens (clinical-minimal.css) */
+  --ov-glass-blur: var(--workspace-glass-blur);
+  --ov-glass-bg: var(--workspace-glass-bg);
+  --ov-glass-bg-strong: var(--workspace-glass-bg-strong);
+  --ov-glass-bg-hero: var(--workspace-glass-bg-hero);
+  --ov-glass-border: var(--workspace-glass-border);
+  --ov-glass-border-teal: var(--workspace-glass-border-teal);
+  --ov-glass-shadow: var(--workspace-glass-shadow);
+  --ov-glass-shadow-hover: var(--workspace-glass-shadow-hover);
+  --ov-glass-shadow-semantic: var(--workspace-glass-shadow-semantic);
+  --ov-glass-scrim: var(--workspace-glass-scrim);
+  --ov-glass-scrim-strong: var(--workspace-glass-scrim-strong);
+  --ov-glass-ink-muted: var(--workspace-glass-ink-muted);
+
+  /* Subtle Übersicht type scale (~6.25%). Overrides global + clinical-minimal tokens
+   * for this subtree only; hardcoded rem/px literals use calc() with --ov-type-scale. */
+  --ov-type-scale: 1.0625;
+  --text-2xs: calc(0.6875rem * var(--ov-type-scale));
+  --text-xs: calc(0.75rem * var(--ov-type-scale));
+  --text-sm: calc(0.8125rem * var(--ov-type-scale));
+  --text-base: calc(0.9375rem * var(--ov-type-scale));
+  --text-md: calc(1rem * var(--ov-type-scale));
+  --text-lg: calc(1.125rem * var(--ov-type-scale));
+  --text-xl: calc(1.375rem * var(--ov-type-scale));
+  --text-2xl: calc(1.75rem * var(--ov-type-scale));
+  --text-3xl: calc(2.25rem * var(--ov-type-scale));
+  --cm-hero-name-size: calc(1.5rem * var(--ov-type-scale));
+  --cm-hero-thesis-size: calc(0.9375rem * var(--ov-type-scale));
+  --cm-section-title-size: calc(0.8125rem * var(--ov-type-scale));
+  --cm-eyebrow-size: calc(0.6875rem * var(--ov-type-scale));
+  --cm-label-size: calc(0.6875rem * var(--ov-type-scale));
+
   width: 100%;
   min-width: 0;
   margin-top: 0;
   container: overview-dashboard / inline-size;
 }
 
-/* ── Hero widget (typographic strip) ─────────────────────────────────────── */
+/* CI overview widgets — scale px literals from clinical-intelligence.css */
+.ov-dashboard .ci-widget__row,
+.ov-dashboard .ci-widget .ci-barchart__name {
+  font-size: calc(13px * var(--ov-type-scale));
+}
 
-.ov-hero-widget {
-  margin-bottom: 0;
+.ov-dashboard .ci-widget__meta,
+.ov-dashboard .ci-widget__warning,
+.ov-dashboard .ci-widget__empty {
+  font-size: calc(12px * var(--ov-type-scale));
+}
+
+.ov-dashboard .ci-widget__counts,
+.ov-dashboard .ci-widget__open,
+.ov-dashboard .ci-status-chip {
+  font-size: calc(11.5px * var(--ov-type-scale));
+}
+
+.ov-dashboard .ci-widget__pill {
+  font-size: calc(10.5px * var(--ov-type-scale));
+}
+
+/* ── Hero header card (light, minimal) ───────────────────────────────────────
+ * A refined LIGHT "header card" that reads as the same family as the bento
+ * dashboard cards: the surface (tinted base, soft accent sheen, accent hairline
+ * + left rail, gentle elevation) comes from the shared `.aura-card` class on the
+ * same element, so it adapts to the overview gold accent automatically. The hero
+ * only adds patient identity + the editable clinical thesis, a calm at-a-glance
+ * briefing beside a gently breathing Butterfly, and a row of metric tiles. No
+ * dark command-deck, no aurora mesh, no tilt/spotlight — just clean, legible
+ * clinical data. The only motion is the restrained count-up / ring fill and the
+ * opt-in Butterfly breathe, both gated by prefers-reduced-motion. Hero-local
+ * colours (--ovh-*) map onto the global light tokens so the palette stays
+ * cohesive with the rest of the app.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+.ov-hero {
+  /* Overview gold accent for hero-local decoration (matches the card family;
+     --aura-card on the same element resolves the same accent for the surface). */
+  --ovh-accent: var(--ov-teal);
+  /* Light ink + hairlines from the global tokens. */
+  --ovh-ink: var(--text-main, #24211e);
+  --ovh-ink-soft: var(--text-secondary, #6d655c);
+  --ovh-ink-mute: var(--text-muted, #91887e);
+  --ovh-line: var(--ov-hairline);
+  /* Clinical semantic tones reuse the light dashboard palette. */
+  --ovh-danger: var(--ov-danger);
+  --ovh-warn: var(--ov-warn);
+  --ovh-info: var(--ov-info);
+  --ovh-ok: var(--ov-ok);
+
+  /* Surface (tinted background, accent sheen, hairline + left rail, elevation)
+     comes from the shared `.aura-card` class on the same element. The hero only
+     adds rhythm here so the card look stays the single source of truth. */
+  position: relative;
   width: 100%;
+  margin-bottom: var(--space-5, 1.25rem);
+  padding: clamp(1.1rem, 2.4vw, 1.65rem) clamp(1.1rem, 2.4vw, 1.65rem);
   text-align: left;
 }
 
-.ov-dashboard > .ov-hero-widget {
+/* Stronger clinical command card — tinted surface + deep-teal left rail */
+.ov-hero--command {
+  border-left: 4px solid var(--ov-teal);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--ov-teal) 8%, var(--surface, #fff)) 0%,
+      color-mix(in srgb, var(--ov-teal) 4%, var(--surface, #fff)) 38%,
+      var(--surface, #fff) 100%
+    );
+  box-shadow:
+    var(--shadow-elevated-sm, 0 1px 2px rgba(0, 0, 0, 0.05)),
+    0 6px 18px -10px color-mix(in srgb, var(--ov-teal) 35%, transparent);
+}
+
+/* Hero glass — slightly more opaque than grid cards; keeps command-deck legibility. */
+[data-area='overview'] .ov-dashboard .ov-hero.aura-card {
+  background-color: color-mix(in srgb, var(--ov-teal) 5%, var(--ov-glass-bg-hero));
+  background-image:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--ov-teal) 7%, rgba(255, 255, 255, 0.28)) 0%,
+      color-mix(in srgb, var(--ov-teal) 3%, rgba(255, 255, 255, 0.15)) 42%,
+      transparent 100%
+    );
+  backdrop-filter: blur(var(--ov-glass-blur));
+  -webkit-backdrop-filter: blur(var(--ov-glass-blur));
+  border-color: var(--ov-glass-border-teal);
+  box-shadow: var(--ov-glass-shadow);
+}
+
+[data-area='overview'] .ov-dashboard .ov-hero__tile {
+  background-color: color-mix(in srgb, var(--ovh-accent) 5%, var(--ov-glass-bg));
+  backdrop-filter: blur(calc(var(--ov-glass-blur) * 0.85));
+  -webkit-backdrop-filter: blur(calc(var(--ov-glass-blur) * 0.85));
+  border-color: color-mix(in srgb, var(--ovh-accent) 16%, var(--ov-glass-border));
+}
+
+[data-area='overview'] .ov-dashboard .ov-hero__tile:hover {
+  background-color: color-mix(in srgb, var(--ovh-accent) 8%, var(--ov-glass-bg-strong));
+  border-color: color-mix(in srgb, var(--ovh-accent) 28%, var(--ov-glass-border));
+  box-shadow: var(--ov-glass-shadow-hover);
+}
+
+[data-area='overview'] .ov-dashboard .ov-hero__tile--tone-high {
+  background-color: color-mix(in srgb, var(--ov-danger) 14%, var(--ov-glass-bg-strong));
+  border-color: color-mix(in srgb, var(--ov-danger) 28%, var(--ov-glass-border));
+}
+
+[data-area='overview'] .ov-dashboard .ov-hero__tile--tone-moderate {
+  background-color: color-mix(in srgb, var(--ov-warn) 14%, var(--ov-glass-bg-strong));
+  border-color: color-mix(in srgb, var(--ov-warn) 28%, var(--ov-glass-border));
+}
+
+.ov-hero--visit-header {
+  padding: clamp(0.85rem, 1.8vw, 1.2rem) clamp(0.95rem, 2vw, 1.35rem);
   margin-bottom: var(--space-4, 1rem);
 }
 
-.ov-hero-widget .cm-hero {
-  padding-bottom: 1.75rem;
+.ov-hero__command-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.75rem 1rem;
 }
 
-.ov-hero-widget__orientation {
-  margin: -0.75rem 0 0;
-  padding-bottom: 1.25rem;
-  border-bottom: 1px solid var(--ov-hairline);
-  font-size: var(--text-xs, 0.75rem);
-  line-height: 1.45;
-  color: var(--text-muted, #91887e);
+.ov-hero__zones-abc {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-width: 0;
 }
+
+.ov-hero__zone-d {
+  flex-shrink: 0;
+  align-self: start;
+  padding-top: 0.15rem;
+}
+
+.ov-hero__identity-strip.cm-hero {
+  padding-bottom: 0.35rem;
+  border-bottom: none;
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+.ov-hero--visit-header .cm-hero__name {
+  font-size: clamp(calc(1.35rem * var(--ov-type-scale)), 2.4vw, calc(1.75rem * var(--ov-type-scale)));
+  line-height: 1.12;
+}
+
+.ov-hero--visit-header .cm-hero__demographics {
+  gap: 0.25rem 0.65rem;
+  color: var(--text-secondary, #6d655c);
+}
+
+.ov-hero--visit-header .cm-hero__thesis-row {
+  margin-top: 0.15rem;
+}
+
+.ov-hero--visit-header .cm-hero__thesis-display,
+.ov-hero--visit-header .cm-hero__thesis-editor {
+  max-width: 100%;
+}
+
+/* Zone C — clickable clinical signal chips */
+.ov-hero__chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.ov-hero__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.55rem;
+  border-radius: var(--ov-radius-row);
+  border: 1px solid transparent;
+  font-size: var(--text-2xs, 0.6875rem);
+  font-weight: var(--weight-semibold, 600);
+  letter-spacing: 0.02em;
+  line-height: 1.25;
+  cursor: pointer;
+  transition:
+    background var(--ov-transition),
+    border-color var(--ov-transition),
+    transform var(--ov-transition);
+}
+
+.ov-hero__chip:hover,
+.ov-hero__chip:focus-visible {
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.ov-hero__chip-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.1rem;
+  padding: 0 0.25rem;
+  border-radius: 999px;
+  font-size: calc(0.625rem * var(--ov-type-scale));
+  font-variant-numeric: tabular-nums;
+}
+
+.ov-hero__chip--tone-red {
+  color: var(--ov-risk-red);
+  background: var(--ov-risk-red-soft);
+  border-color: color-mix(in srgb, var(--ov-risk-red) 22%, transparent);
+}
+.ov-hero__chip--tone-red .ov-hero__chip-count {
+  background: color-mix(in srgb, var(--ov-risk-red) 16%, transparent);
+}
+
+.ov-hero__chip--tone-amber {
+  color: var(--ov-amber);
+  background: var(--ov-amber-soft);
+  border-color: color-mix(in srgb, var(--ov-amber) 22%, transparent);
+}
+.ov-hero__chip--tone-amber .ov-hero__chip-count {
+  background: color-mix(in srgb, var(--ov-amber) 16%, transparent);
+}
+
+.ov-hero__chip--tone-blue {
+  color: var(--ov-ai-blue);
+  background: var(--ov-ai-blue-soft);
+  border-color: color-mix(in srgb, var(--ov-ai-blue) 22%, transparent);
+}
+.ov-hero__chip--tone-blue .ov-hero__chip-count {
+  background: color-mix(in srgb, var(--ov-ai-blue) 16%, transparent);
+}
+
+.ov-hero__chip--tone-green {
+  color: var(--ov-green);
+  background: var(--ov-green-soft);
+  border-color: color-mix(in srgb, var(--ov-green) 22%, transparent);
+}
+
+.ov-hero__chip--tone-grey {
+  color: var(--text-secondary, #6d655c);
+  background: color-mix(in srgb, var(--text-muted, #91887e) 10%, transparent);
+  border-color: color-mix(in srgb, var(--text-muted, #91887e) 18%, transparent);
+}
+
+/* Zone D — primary visit action popover */
+.ov-visit-action {
+  position: relative;
+  display: inline-flex;
+}
+
+.ov-visit-action__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--ov-teal) 28%, var(--border-soft, #e8e4df));
+  border-radius: var(--ov-radius-row);
+  background: color-mix(in srgb, var(--ov-teal) 10%, var(--surface, #fff));
+  color: color-mix(in srgb, var(--ov-teal) 82%, var(--text-main, #24211e));
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: var(--weight-semibold, 600);
+  line-height: 1.2;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 1px 0 color-mix(in srgb, #fff 80%, transparent) inset;
+}
+
+.ov-visit-action__trigger svg {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.ov-visit-action__trigger:hover,
+.ov-visit-action__trigger:focus-visible {
+  background: color-mix(in srgb, var(--ov-teal) 16%, var(--surface, #fff));
+  outline: none;
+}
+
+.ov-visit-action__popover {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  z-index: 50;
+  min-width: 16.5rem;
+  max-width: min(19rem, 92vw);
+  max-height: min(28rem, 70vh);
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  padding: 0.35rem;
+  background: var(--surface, #fff);
+  border: 1px solid var(--ov-hairline);
+  border-radius: 0.6rem;
+  box-shadow: var(--shadow-md, 0 8px 28px rgba(20, 18, 14, 0.14));
+}
+
+.ov-visit-action__section {
+  margin: 0;
+  padding: 0.35rem 0.55rem 0.12rem;
+  font-size: calc(0.68rem * var(--ov-type-scale));
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary, #6d655c);
+}
+
+.ov-visit-action__item {
+  display: block;
+  width: 100%;
+  padding: 0.45rem 0.55rem;
+  border: 0;
+  border-radius: 0.45rem;
+  background: transparent;
+  color: var(--text-main, #24211e);
+  font-size: calc(0.82rem * var(--ov-type-scale));
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ov-visit-action__item:hover,
+.ov-visit-action__item:focus-visible {
+  background: color-mix(in srgb, var(--ov-teal) 9%, var(--surface, #fff));
+  outline: none;
+}
+
+.ov-visit-action__item--priority {
+  background: color-mix(in srgb, var(--ov-amber) 10%, var(--surface, #fff));
+  font-weight: 600;
+}
+
+.ov-visit-action__item--priority:hover,
+.ov-visit-action__item--priority:focus-visible {
+  background: color-mix(in srgb, var(--ov-amber) 16%, var(--surface, #fff));
+}
+
+@media (max-width: 720px) {
+  .ov-hero__command-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ov-hero__zone-d {
+    justify-self: stretch;
+  }
+
+  .ov-visit-action {
+    width: 100%;
+  }
+
+  .ov-visit-action__trigger {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ov-visit-action__popover {
+    left: 0;
+    right: 0;
+    min-width: 0;
+  }
+}
+
+@media print {
+  .ov-visit-action,
+  .ov-hero__chips {
+    display: none !important;
+  }
+}
+
+/* ── Content layout ──────────────────────────────────────────────────────── */
+
+.ov-hero__content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.05rem;
+}
+
+/* Top bar: page title (eyebrow) on the left, print/export actions on the right. */
+.ov-hero__topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3, 0.75rem);
+}
+.ov-hero__topbar .cm-page-eyebrow {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+.ov-hero__topbar .ov-action-toolbar {
+  flex-shrink: 0;
+  padding-top: 0.1rem;
+}
+
+.ov-hero__identity {
+  position: relative;
+}
+
+/* The shared identity strip + thesis editor render in their normal light theme
+   colours here (no dark overrides) — just a slightly larger name and a calm
+   hairline divider so the header reads as a refined card. */
+.ov-hero .cm-hero {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--ovh-line);
+}
+.ov-hero .cm-hero__name {
+  font-size: clamp(calc(1.5rem * var(--ov-type-scale)), 2.8vw, calc(1.95rem * var(--ov-type-scale)));
+}
+
+/* ── Butterfly + at-a-glance briefing ────────────────────────────────────── */
+
+.ov-hero__briefing {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+/* Light disc that seats the shared breathing ButterflyLogo. The breathe glow +
+   scale come from the reusable `.butterfly-logo-orb` variant (single source of
+   truth); the disc just provides a calm light seat and retints the shared halo
+   to the overview gold via --bf-breathe-glow so it stays visible on light. */
+.ov-hero__orb {
+  position: relative;
+  flex-shrink: 0;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 32% 26%, #fff, color-mix(in srgb, var(--ovh-accent) 7%, #fff) 70%),
+    var(--surface, #fff);
+  border: 1px solid color-mix(in srgb, var(--ovh-accent) 22%, var(--border-soft, #e8e4df));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 4px 12px -6px color-mix(in srgb, var(--ovh-accent) 40%, transparent);
+}
+
+.ov-hero__orb .butterfly-logo-orb {
+  --bf-breathe-glow: color-mix(in srgb, var(--ovh-accent) 38%, transparent);
+}
+
+.ov-hero__briefing-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.ov-hero__briefing-eyebrow {
+  font-size: var(--cm-label-size, 0.6875rem);
+  font-weight: var(--weight-semibold, 600);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ovh-accent) 70%, var(--ovh-ink-mute));
+}
+
+.ov-hero__briefing-text {
+  margin: 0;
+  font-size: var(--text-md, 1rem);
+  font-weight: var(--weight-medium, 500);
+  line-height: 1.45;
+  color: var(--ovh-ink-soft);
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+/* ── At-a-glance metric tiles (light) ────────────────────────────────────── */
+
+.ov-hero__tiles {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11.5rem, 1fr));
+  gap: 0.6rem;
+}
+
+.ov-hero__tile {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--ovh-line);
+  border-radius: var(--radius-control, 0.4375rem);
+  background: color-mix(in srgb, var(--ovh-accent) 4%, var(--surface, #fff));
+  transition:
+    border-color var(--ov-transition),
+    background var(--ov-transition),
+    transform var(--ov-transition),
+    box-shadow var(--ov-transition);
+}
+
+.ov-hero__tile:hover {
+  border-color: color-mix(in srgb, var(--ovh-accent) 30%, var(--border-soft, #e8e4df));
+  background: color-mix(in srgb, var(--ovh-accent) 7%, var(--surface, #fff));
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px -16px color-mix(in srgb, var(--ovh-accent) 55%, transparent);
+}
+
+.ov-hero__tile-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.95rem;
+  height: 1.95rem;
+  border-radius: 0.5rem;
+  color: color-mix(in srgb, var(--ovh-accent) 88%, var(--text-main, #24211e));
+  background: color-mix(in srgb, var(--ovh-accent) 11%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ovh-accent) 18%, transparent);
+}
+
+.ov-hero__tile-icon svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.ov-hero__tile-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+  min-width: 0;
+}
+
+.ov-hero__tile-label {
+  font-size: var(--text-2xs, 0.6875rem);
+  font-weight: var(--weight-semibold, 600);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ovh-ink-mute);
+}
+
+.ov-hero__tile-value {
+  font-size: var(--text-base, 0.9375rem);
+  font-weight: var(--weight-semibold, 600);
+  line-height: var(--leading-snug, 1.35);
+  color: var(--ovh-ink);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.ov-hero__tile-dx {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 0.4rem;
+}
+
+.ov-hero__tile-code {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: var(--weight-bold, 700);
+  letter-spacing: 0.01em;
+  color: color-mix(in srgb, var(--ovh-accent) 88%, var(--text-main, #24211e));
+}
+
+.ov-hero__tile-num {
+  font-size: var(--text-xl, 1.375rem);
+  font-weight: var(--weight-bold, 700);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  color: var(--ovh-ink);
+}
+
+.ov-hero__tile-unit {
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: var(--weight-medium, 500);
+  color: var(--ovh-ink-soft);
+}
+
+.ov-hero__tile-sub {
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: var(--weight-regular, 400);
+  color: var(--ovh-ink-mute);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Semantic tones (risk / alerts) — light dashboard palette, never the accent. */
+.ov-hero__tile--tone-high {
+  border-color: color-mix(in srgb, var(--ovh-danger) 30%, var(--border-soft, #e8e4df));
+  background: var(--ov-danger-soft);
+}
+.ov-hero__tile--tone-high .ov-hero__tile-value {
+  color: var(--ovh-danger);
+}
+.ov-hero__tile--tone-high .ov-hero__tile-icon {
+  color: var(--ovh-danger);
+  background: var(--ov-danger-soft);
+  border-color: color-mix(in srgb, var(--ovh-danger) 26%, transparent);
+}
+.ov-hero__tile--tone-moderate {
+  border-color: color-mix(in srgb, var(--ovh-warn) 30%, var(--border-soft, #e8e4df));
+  background: var(--ov-warn-soft);
+}
+.ov-hero__tile--tone-moderate .ov-hero__tile-value {
+  color: var(--ovh-warn);
+}
+.ov-hero__tile--tone-moderate .ov-hero__tile-icon {
+  color: var(--ovh-warn);
+  background: var(--ov-warn-soft);
+  border-color: color-mix(in srgb, var(--ovh-warn) 26%, transparent);
+}
+.ov-hero__tile--tone-info .ov-hero__tile-value {
+  color: var(--ovh-info);
+}
+.ov-hero__tile--tone-ok .ov-hero__tile-value,
+.ov-hero__tile--tone-low .ov-hero__tile-value {
+  color: var(--ovh-ok);
+}
+
+/* ── Risk gauge ring ─────────────────────────────────────────────────────── */
+
+.ov-hero__tile--risk {
+  gap: 0.7rem;
+}
+
+.ov-hero__ring {
+  position: relative;
+  flex-shrink: 0;
+  width: 2.9rem;
+  height: 2.9rem;
+}
+
+.ov-hero__ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ov-hero__ring-track {
+  fill: none;
+  stroke: color-mix(in srgb, var(--text-muted, #91887e) 22%, transparent);
+}
+
+.ov-hero__ring-prog {
+  fill: none;
+  stroke-linecap: round;
+  stroke: var(--ovh-ok);
+}
+.ov-hero__ring--tone-high .ov-hero__ring-prog {
+  stroke: var(--ovh-danger);
+}
+.ov-hero__ring--tone-moderate .ov-hero__ring-prog {
+  stroke: var(--ovh-warn);
+}
+.ov-hero__ring--tone-info .ov-hero__ring-prog {
+  stroke: var(--ovh-info);
+}
+.ov-hero__ring--tone-ok .ov-hero__ring-prog,
+.ov-hero__ring--tone-low .ov-hero__ring-prog {
+  stroke: var(--ovh-ok);
+}
+.ov-hero__ring--tone-neutral .ov-hero__ring-prog {
+  stroke: color-mix(in srgb, var(--text-muted, #91887e) 55%, transparent);
+}
+
+.ov-hero__empty {
+  margin: 0;
+  padding: 0.9rem 1rem;
+  border: 1px dashed color-mix(in srgb, var(--ovh-accent) 28%, var(--border-soft, #e8e4df));
+  border-radius: var(--radius-control, 0.4375rem);
+  background: color-mix(in srgb, var(--ovh-accent) 4%, var(--surface, #fff));
+  font-size: var(--text-sm, 0.8125rem);
+  line-height: 1.5;
+  color: var(--ovh-ink-soft);
+}
+
+/* ── Entrance keyframe ───────────────────────────────────────────────────── */
+
+@keyframes ov-hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── Dashboard grid rhythm + card interactions ───────────────────────────── */
+
+/* Tighten the magazine gaps so the bordered cards read as one cohesive
+   dashboard rather than far-apart panels. Scoped to overview only. */
+.ov-dashboard {
+  --ov-grid-gap: 1.25rem;
+  --cm-col-gap: 1.5rem;
+}
+
+/* The bordered slot frame (patient-panel-bordered.css) gains a smooth hover
+   lift + keyboard focus ring so the grid feels alive, not static. */
+[data-area='overview'] .ov-widget-slot {
+  transition:
+    transform var(--duration-medium, 280ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    box-shadow var(--duration-medium, 280ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    border-color var(--duration-fast, 150ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+[data-area='overview'] .ov-widget-slot:not(.ov-widget-slot--editable):hover {
+  transform: translateY(-2px);
+  box-shadow: var(--ov-glass-shadow-hover);
+  border-color: color-mix(in srgb, var(--patient-bordered-accent, var(--area-accent)) 42%, var(--border-soft));
+}
+
+[data-area='overview'] .ov-widget-slot:focus-within {
+  border-color: color-mix(in srgb, var(--patient-bordered-accent, var(--area-accent)) 48%, var(--border-soft));
+}
+
+/* ── Glass widget cards (calm frosted bento) ───────────────────────────────
+ * Frosted panels over the scoped scene background. Per-widget accent stripes
+ * stay from patient-panel-bordered.css; glass fill + blur live here so the
+ * whole grid reads as one cohesive deck. Semantic widgets get a stronger fill
+ * so risk / lab / amber tones stay legible on busy backdrops.
+ * ────────────────────────────────────────────────────────────────────────── */
+[data-area='overview'] .ov-dashboard .ov-widget-slot {
+  --ov-glass-fill: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) 6%,
+    var(--ov-glass-bg)
+  );
+  background-color: var(--ov-glass-fill);
+  background-image:
+    radial-gradient(
+      120% 86% at 0% 0%,
+      color-mix(in srgb, var(--patient-bordered-accent) 7%, rgba(255, 255, 255, 0.28)),
+      transparent 58%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--patient-bordered-accent) 4%, rgba(255, 255, 255, 0.15)),
+      transparent 42%
+    );
+  backdrop-filter: blur(var(--ov-glass-blur));
+  -webkit-backdrop-filter: blur(var(--ov-glass-blur));
+  border-color: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) 20%,
+    var(--ov-glass-border)
+  );
+  box-shadow: var(--ov-glass-shadow);
+}
+
+[data-area='overview'] .ov-dashboard .ov-widget-slot:not(.ov-widget-slot--editable):hover {
+  box-shadow: var(--ov-glass-shadow-hover);
+}
+
+/* Semantic / alert-heavy widgets — higher-opacity fill + slightly deeper shadow */
+[data-area='overview'] .ov-dashboard .ov-widget-slot[data-widget-id='safety'] {
+  --ov-glass-fill: color-mix(in srgb, var(--ov-risk-red) 11%, var(--ov-glass-bg-strong));
+  box-shadow: var(--ov-glass-shadow-semantic);
+}
+
+[data-area='overview'] .ov-dashboard .ov-widget-slot[data-widget-id='labs-due'],
+[data-area='overview'] .ov-dashboard .ov-widget-slot[data-widget-id='lab-results'],
+[data-area='overview'] .ov-dashboard .ov-widget-slot[data-widget-id='zwangsmassnahme'] {
+  --ov-glass-fill: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) 13%,
+    var(--ov-glass-bg-strong)
+  );
+  box-shadow: var(--ov-glass-shadow-semantic);
+}
+
+[data-area='overview'] .ov-dashboard .ov-widget-slot[data-widget-id='recent-verlauf'] {
+  --ov-glass-fill: color-mix(in srgb, var(--ov-amber) 12%, var(--ov-glass-bg-strong));
+  box-shadow: var(--ov-glass-shadow-semantic);
+}
+
+[data-area='overview'] .ov-dashboard .ov-widget-slot[data-widget-id='safety']:not(.ov-widget-slot--editable):hover,
+[data-area='overview'] .ov-dashboard .ov-widget-slot[data-widget-id='labs-due']:not(.ov-widget-slot--editable):hover,
+[data-area='overview'] .ov-dashboard .ov-widget-slot[data-widget-id='lab-results']:not(.ov-widget-slot--editable):hover,
+[data-area='overview'] .ov-dashboard .ov-widget-slot[data-widget-id='zwangsmassnahme']:not(.ov-widget-slot--editable):hover,
+[data-area='overview'] .ov-dashboard .ov-widget-slot[data-widget-id='recent-verlauf']:not(.ov-widget-slot--editable):hover {
+  box-shadow: var(--ov-glass-shadow-hover);
+}
+
+/* Editable (drag) mode stays flat + dashed — no blur competing with controls. */
+[data-area='overview'] .ov-dashboard .ov-widget-slot--editable {
+  background-image: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background-color: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) 7%,
+    var(--surface, #fff)
+  );
+}
+
+/* Widget section headers — hairline tuned for frosted surfaces */
+[data-area='overview'] .ov-dashboard .cm-section__head--widget {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--ov-teal) 12%, rgba(255, 255, 255, 0.42));
+}
+
+[data-area='overview'] .ov-dashboard .cm-section__head--widget .cm-eyebrow {
+  color: color-mix(in srgb, var(--ov-teal) 52%, var(--text-main, #24211e));
+}
+
+/* Muted labels — slightly stronger ink on glass */
+[data-area='overview'] .ov-dashboard .ov-meta,
+[data-area='overview'] .ov-dashboard .ov-subhead,
+[data-area='overview'] .ov-dashboard .ov-block-label,
+[data-area='overview'] .ov-dashboard .ov-safety__severity {
+  color: var(--ov-glass-ink-muted);
+}
+
+[data-area='overview'] .ov-dashboard .ov-ai-badge {
+  background: var(--ov-glass-scrim);
+  border-color: color-mix(in srgb, var(--text-main, #24211e) 12%, var(--ov-glass-border));
+}
+
+/* Semantic inner strips — scrim-backed so red/amber still reads on glass */
+[data-area='overview'] .ov-dashboard .ov-alert--high {
+  background: color-mix(in srgb, var(--ov-danger) 16%, var(--ov-glass-scrim-strong));
+}
+
+[data-area='overview'] .ov-dashboard .ov-alert--moderate {
+  background: color-mix(in srgb, var(--ov-warn) 16%, var(--ov-glass-scrim-strong));
+}
+
+[data-area='overview'] .ov-dashboard .ov-alert--info {
+  background: color-mix(in srgb, var(--ov-info) 14%, var(--ov-glass-scrim-strong));
+}
+
+[data-area='overview'] .ov-dashboard .ov-alert--ok,
+[data-area='overview'] .ov-dashboard .ov-alert--low {
+  background: color-mix(in srgb, var(--ov-ok) 14%, var(--ov-glass-scrim-strong));
+}
+
+[data-area='overview'] .ov-dashboard .ov-lab--abnormal {
+  background: color-mix(in srgb, var(--ov-danger) 15%, var(--ov-glass-scrim-strong));
+}
+
+[data-area='overview'] .ov-dashboard .ov-lab:not(.ov-lab--abnormal) {
+  background: color-mix(in srgb, var(--text-muted) 8%, var(--ov-glass-scrim));
+}
+
+/* Band dividers carry the area accent voice. */
+.ov-dashboard .ov-grid__band .cm-eyebrow {
+  color: color-mix(in srgb, var(--area-accent, var(--accent)) 58%, var(--text-muted));
+  font-weight: var(--weight-semibold, 600);
+}
+
+/* Bento card / widget section titles — stronger clinical ink (not playful accent). */
+.ov-dashboard .cm-section .cm-section__head .cm-eyebrow,
+.ov-dashboard .cm-section--embedded .cm-section__head .cm-eyebrow {
+  color: var(--text-main, #24211e);
+  font-weight: var(--weight-semibold, 600);
+}
+
+/* Compact AI-hypothesis note — subtle badge, not a dominant banner. */
+.ov-ai-badge {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  max-width: 100%;
+  margin: 0 0 0.45rem;
+  padding: 0.12rem 0.4rem;
+  font-family: var(--font-sans, inherit);
+  font-size: calc(0.625rem * var(--ov-type-scale));
+  font-weight: var(--weight-medium, 500);
+  line-height: 1.35;
+  letter-spacing: 0.015em;
+  color: var(--text-secondary, #6d655c);
+  background: color-mix(in srgb, var(--text-main, #24211e) 4%, transparent);
+  border: 1px solid color-mix(in srgb, var(--text-main, #24211e) 9%, transparent);
+  border-radius: 999px;
+}
+
+@media print {
+  .ov-ai-badge {
+    background: transparent;
+    border-color: var(--border-soft, #e8e4df);
+  }
+}
+.ov-dashboard .ov-grid__band:not(:first-child) {
+  margin-top: 0.45rem;
+}
+
+/* ── Entrance motion (staggered rise) ────────────────────────────────────── */
+
+@keyframes ov-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* `backwards` (not `forwards`) so the finished animation reverts to base styles
+   and never locks the hover transform on cards. */
+.ov-dashboard .ov-hero {
+  animation: ov-hero-in var(--duration-slow, 400ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) backwards;
+}
+
+/* Hero content reveals after the band lands, in a quick staggered choreography.
+   Tiles animate per-item (below) rather than as a block to avoid double-fade. */
+.ov-hero__content > .ov-hero__topbar,
+.ov-hero__content > .ov-hero__identity,
+.ov-hero__content > .ov-hero__briefing,
+.ov-hero__content > .ov-hero__empty {
+  animation: ov-rise var(--duration-medium, 280ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) backwards;
+}
+.ov-hero__content > .ov-hero__topbar { animation-delay: 90ms; }
+.ov-hero__content > .ov-hero__identity { animation-delay: 140ms; }
+.ov-hero__content > .ov-hero__briefing { animation-delay: 240ms; }
+.ov-hero__content > .ov-hero__empty { animation-delay: 340ms; }
+.ov-hero__tiles > .ov-hero__tile { animation: ov-rise var(--duration-medium, 280ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) backwards; }
+.ov-hero__tiles > .ov-hero__tile:nth-child(1) { animation-delay: 360ms; }
+.ov-hero__tiles > .ov-hero__tile:nth-child(2) { animation-delay: 410ms; }
+.ov-hero__tiles > .ov-hero__tile:nth-child(3) { animation-delay: 460ms; }
+.ov-hero__tiles > .ov-hero__tile:nth-child(4) { animation-delay: 510ms; }
+.ov-hero__tiles > .ov-hero__tile:nth-child(5) { animation-delay: 560ms; }
+.ov-hero__tiles > .ov-hero__tile:nth-child(n + 6) { animation-delay: 610ms; }
+
+.ov-grid > .ov-grid__band,
+.ov-grid > .ov-grid__row,
+.ov-grid > .ov-widget-slot {
+  animation: ov-rise var(--duration-medium, 280ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) backwards;
+}
+.ov-grid > :nth-child(1) { animation-delay: 40ms; }
+.ov-grid > :nth-child(2) { animation-delay: 80ms; }
+.ov-grid > :nth-child(3) { animation-delay: 120ms; }
+.ov-grid > :nth-child(4) { animation-delay: 160ms; }
+.ov-grid > :nth-child(5) { animation-delay: 200ms; }
+.ov-grid > :nth-child(n + 6) { animation-delay: 240ms; }
 
 /* ── Summary strip (legacy — kept for settings preview compatibility) ─────── */
 
@@ -493,10 +1464,18 @@
 
 .ov-grid__row {
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   gap: var(--cm-col-gap, 3rem);
   width: 100%;
   min-width: 0;
+}
+
+/* Paired half-width cards in a row match heights: the columns stretch to the
+   tallest, and the single card in each column fills its column. Keeps the
+   bento pairs (Diagnose ⟷ Medikation, Angemeldete Therapie ⟷ Compliance)
+   visually balanced without breaking drag/resize. */
+.ov-grid__row > .ov-grid__col > .ov-widget-slot {
+  flex: 1 1 auto;
 }
 
 .ov-grid__col {
@@ -598,10 +1577,10 @@
   margin: 0;
   font-family: var(--font-sans, inherit);
   font-size: var(--text-xs, 0.75rem);
-  font-weight: var(--weight-bold, 700);
+  font-weight: var(--weight-semibold, 600);
   letter-spacing: 0.055em;
   text-transform: uppercase;
-  color: var(--text-secondary, #6d655c);
+  color: var(--text-main, #24211e);
   line-height: 1.35;
   min-width: 0;
   display: -webkit-box;
@@ -816,6 +1795,90 @@
 
 .ov-safety.cm-section {
   margin-bottom: 0;
+}
+
+.ov-safety__risk-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin-bottom: 0.75rem;
+}
+
+.ov-safety__risk-head--ring-only {
+  margin-bottom: 0.5rem;
+}
+
+.ov-safety__risk-band {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin-bottom: 0.75rem;
+}
+
+.ov-safety__risk-band .ov-safety__axes {
+  flex: 1;
+  min-width: 0;
+}
+
+.ov-safety__risk-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.ov-safety__risk-detail {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--text-sm, 0.8125rem);
+  line-height: 1.45;
+  color: var(--text-secondary, #6d655c);
+}
+
+.ov-safety__ring {
+  position: relative;
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.ov-safety__ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ov-safety__ring-track {
+  fill: none;
+  stroke: color-mix(in srgb, var(--text-muted, #91887e) 22%, transparent);
+}
+
+.ov-safety__ring-prog {
+  fill: none;
+  stroke-linecap: round;
+  stroke: var(--ov-ok);
+}
+
+.ov-safety__ring--tone-high .ov-safety__ring-prog {
+  stroke: var(--ov-danger);
+}
+
+.ov-safety__ring--tone-moderate .ov-safety__ring-prog {
+  stroke: var(--ov-warn);
+}
+
+.ov-safety__ring--tone-info .ov-safety__ring-prog {
+  stroke: var(--ov-info);
+}
+
+.ov-safety__ring--tone-ok .ov-safety__ring-prog,
+.ov-safety__ring--tone-low .ov-safety__ring-prog {
+  stroke: var(--ov-ok);
+}
+
+.ov-safety__ring--tone-neutral .ov-safety__ring-prog {
+  stroke: color-mix(in srgb, var(--text-muted, #91887e) 55%, transparent);
 }
 
 .ov-safety__axes {
@@ -1042,7 +2105,7 @@
 }
 .ov-allclear::before {
   content: '✓';
-  font-size: 0.95rem;
+  font-size: calc(0.95rem * var(--ov-type-scale));
   line-height: 1;
 }
 
@@ -1115,6 +2178,81 @@
   margin-top: 0.55rem;
   padding-top: 0.55rem;
   border-top: 1px solid var(--ov-hairline);
+}
+
+/* ── Diagnoses overview list ─────────────────────────────────────────────── */
+
+.ov-dx__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ov-dx__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  width: 100%;
+  min-width: 0;
+  padding: 0.42rem 0.55rem;
+  margin: 0 -0.55rem;
+  border: none;
+  border-bottom: 1px solid var(--ov-hairline);
+  border-radius: var(--ov-radius-row);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  transition: background var(--ov-transition);
+}
+
+.ov-dx__row:last-child {
+  border-bottom: none;
+}
+
+.ov-dx__row:hover {
+  background: var(--ov-tint);
+}
+
+.ov-dx__row:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--ov-teal) 45%, transparent);
+  outline-offset: 1px;
+}
+
+.ov-dx__code {
+  flex: 0 0 auto;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: var(--weight-semibold, 600);
+  color: color-mix(in srgb, var(--ov-teal) 72%, var(--text-main, #24211e));
+  font-variant-numeric: tabular-nums;
+}
+
+.ov-dx__name {
+  flex: 1 1 8rem;
+  min-width: 0;
+  font-size: var(--text-sm, 0.8125rem);
+  overflow-wrap: anywhere;
+}
+
+.ov-dx__chips {
+  flex: 0 1 auto;
+  margin-left: auto;
+}
+
+.ov-dx__row--muted .ov-dx__name {
+  color: var(--text-secondary, #6d655c);
+}
+
+.ov-dx__row--provisional .ov-dx__name {
+  font-style: italic;
+}
+
+[data-area='overview'] .ov-dashboard .ov-dx__row:hover {
+  background: color-mix(in srgb, var(--text-muted) 8%, var(--ov-glass-scrim));
 }
 
 /* ── Labs / monitoring ───────────────────────────────────────────────────── */
@@ -1192,6 +2330,93 @@
   color: var(--ov-danger);
 }
 
+/* ── Labor two-column split: labs (left) / other diagnostics (right) ───────── */
+.ov-labor__split {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 1.1rem;
+  align-items: start;
+}
+.ov-labor__col {
+  min-width: 0;
+}
+.ov-labor__col--diagnostics {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding-left: 1.1rem;
+  border-left: 1px solid var(--aura-hairline, var(--border-soft, rgba(0, 0, 0, 0.08)));
+}
+@media (max-width: 760px) {
+  .ov-labor__split {
+    grid-template-columns: 1fr;
+  }
+  .ov-labor__col--diagnostics {
+    padding-left: 0;
+    padding-top: 0.8rem;
+    border-left: none;
+    border-top: 1px solid var(--aura-hairline, var(--border-soft, rgba(0, 0, 0, 0.08)));
+  }
+}
+
+.ov-diag {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--radius-md, 0.5rem);
+  border: 1px solid var(--border-soft, rgba(0, 0, 0, 0.07));
+  border-left: 2px solid var(--text-muted, #91887e);
+  background: color-mix(in srgb, var(--text-main, #24211e) 3%, transparent);
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+.ov-diag--abnormal {
+  border-left-color: var(--ov-danger);
+  background: var(--ov-danger-soft);
+}
+.ov-diag--normal {
+  border-left-color: var(--ov-ok, #3f8f5f);
+}
+.ov-diag__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+.ov-diag__title {
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: var(--weight-bold, 700);
+  color: var(--text-main, #24211e);
+}
+.ov-diag__status {
+  font-size: var(--text-2xs, 0.6875rem);
+  font-weight: var(--weight-semibold, 600);
+  color: var(--text-secondary, #6d655c);
+  white-space: nowrap;
+}
+.ov-diag__status--abnormal {
+  color: var(--ov-danger);
+}
+.ov-diag__status--normal {
+  color: var(--ov-ok, #3f8f5f);
+}
+.ov-diag__date {
+  font-size: var(--text-2xs, 0.6875rem);
+  color: var(--text-muted, #91887e);
+}
+.ov-diag__finding {
+  margin: 0.15rem 0 0;
+  font-size: var(--text-xs, 0.75rem);
+  line-height: 1.35;
+  color: var(--text-secondary, #6d655c);
+}
+.ov-diag__empty {
+  margin: 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-muted, #91887e);
+}
+
 .ov-spark {
   display: block;
 }
@@ -1261,6 +2486,77 @@
   margin-top: 0;
 }
 
+/* Spiegelwerte + receptor radar — side by side when space allows. */
+.ov-med__analytics {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-4, 1rem);
+  margin-top: var(--space-3, 0.75rem);
+  padding: var(--space-3, 0.75rem) var(--space-3, 0.75rem) 0 0;
+  border-top: 1px solid var(--ov-hairline);
+  min-width: 0;
+}
+.ov-med__spiegel,
+.ov-med__receptor {
+  flex: 1 1 10rem;
+  min-width: 0;
+}
+.ov-med__receptor {
+  flex: 0 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+  padding-right: var(--space-2, 0.5rem);
+}
+.ov-med__receptor-head {
+  align-self: stretch;
+  min-width: 0;
+}
+/* Paired analytics subsection headers — Rezeptorprofil + Spiegelwerte. */
+.ov-med__subsection-title,
+.ov-med__receptor-title {
+  margin: 0 0 0.5rem;
+  font-size: var(--cm-section-title-size, 0.8125rem);
+  font-weight: var(--weight-semibold, 600);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-main, #24211e);
+  line-height: 1.35;
+}
+.ov-med__analytics .spiegelwerte-section {
+  margin-top: 0;
+}
+.ov-med__analytics .spiegelwerte-section__title {
+  margin: 0 0 0.5rem;
+  font-size: var(--cm-section-title-size, 0.8125rem);
+  font-weight: var(--weight-semibold, 600);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-main, #24211e);
+  line-height: 1.35;
+}
+.ov-med__receptor .receptor-radar--inline {
+  align-self: center;
+}
+.ov-card__body .ov-med__receptor .receptor-radar--inline .receptor-radar__svg {
+  width: 8.75rem;
+  height: 8.75rem;
+  max-width: 100%;
+}
+@media (min-width: 36rem) {
+  .ov-med__analytics {
+    flex-wrap: nowrap;
+    padding-right: var(--space-4, 1rem);
+  }
+  .ov-med__receptor {
+    flex: 0 0 auto;
+    max-width: 10.5rem;
+    padding-right: var(--space-3, 0.75rem);
+  }
+}
+
 .ov-med__footer-note {
   margin-top: 0.55rem;
   padding-top: 0.55rem;
@@ -1314,12 +2610,12 @@
 }
 
 .ov-ppb__detail {
-  font-size: 0.8125rem;
+  font-size: calc(0.8125rem * var(--ov-type-scale));
 }
 
 .ov-ppb__unremarkable-summary {
   margin: 0.15rem 0 0;
-  font-size: 0.8125rem;
+  font-size: calc(0.8125rem * var(--ov-type-scale));
   color: var(--text-muted, #91887e);
   font-style: italic;
 }
@@ -1347,7 +2643,7 @@
 }
 
 .ov-ppb__extract-dev-hint {
-  font-size: 0.6875rem;
+  font-size: calc(0.6875rem * var(--ov-type-scale));
   font-weight: 500;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -1358,13 +2654,13 @@
 .ov-ppb__loading,
 .ov-ppb__stale-hint {
   margin: 0 0 0.5rem;
-  font-size: 0.8125rem;
+  font-size: calc(0.8125rem * var(--ov-type-scale));
   color: var(--text-muted, #91887e);
 }
 
 .ov-ppb__error {
   margin: 0 0 0.5rem;
-  font-size: 0.8125rem;
+  font-size: calc(0.8125rem * var(--ov-type-scale));
   color: var(--cm-danger-fg, #b42318);
 }
 
@@ -1376,7 +2672,7 @@
 }
 
 .ov-ppb__ai-badge {
-  font-size: 0.6875rem;
+  font-size: calc(0.6875rem * var(--ov-type-scale));
   font-weight: 500;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -1388,7 +2684,7 @@
   padding: 0;
   border: none;
   background: none;
-  font-size: 0.8125rem;
+  font-size: calc(0.8125rem * var(--ov-type-scale));
   color: var(--accent, #6b5b4f);
   cursor: pointer;
   text-decoration: underline;
@@ -1397,7 +2693,7 @@
 
 .ov-snapshot__text--secondary {
   margin-top: 0.35rem;
-  font-size: 0.8125rem;
+  font-size: calc(0.8125rem * var(--ov-type-scale));
   color: var(--text-muted, #91887e);
 }
 
@@ -1430,6 +2726,14 @@
   border-left-width: 2px;
   padding: 0.35rem 0 0.35rem 0.55rem;
   border-radius: 0;
+}
+
+/* Abnormal rows: restore inset padding + tinted fill (matches ov-alert). */
+.ov-lab--abnormal {
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--ov-radius-row);
+  background: var(--ov-danger-soft);
+  border-left-color: var(--ov-danger);
 }
 
 .ov-layout-footer {
@@ -1470,6 +2774,15 @@
   background: transparent;
 }
 
+.cm-section--embedded .diagnosen-widget__row-actions {
+  opacity: 1;
+}
+
+.cm-section--embedded .diagnosen-table--compact .diagnosen-table__cell--actions,
+.cm-section--embedded .diagnosen-table--compact .diagnosen-table__head-actions {
+  display: none;
+}
+
 .cm-section--embedded .spiegelwerte-section__head {
   min-width: 0;
   border-bottom: none;
@@ -1477,11 +2790,12 @@
 }
 
 .cm-section--embedded .spiegelwerte-section__title {
-  font-size: 0.8125rem;
-  font-weight: 500;
+  font-size: var(--cm-section-title-size, 0.8125rem);
+  font-weight: var(--weight-semibold, 600);
   letter-spacing: 0;
   text-transform: none;
   color: var(--text-main, #24211e);
+  line-height: 1.35;
 }
 
 .cm-section--embedded .spiegelwerte-card {
@@ -1513,6 +2827,25 @@
 .ov-card__body .spiegelwerte-card .recharts-responsive-container {
   min-width: 0;
 }
+
+/* Spiegel card type — scale notion-preview rem literals inside Übersicht */
+.ov-dashboard .spiegelwerte-card__name {
+  font-size: calc(0.72rem * var(--ov-type-scale));
+}
+
+.ov-dashboard .spiegelwerte-card__trend,
+.ov-dashboard .spiegelwerte-card__unit {
+  font-size: calc(0.65rem * var(--ov-type-scale));
+}
+
+.ov-dashboard .spiegelwerte-card__value {
+  font-size: calc(1.05rem * var(--ov-type-scale));
+}
+
+.ov-dashboard .spiegelwerte-card__ref {
+  font-size: calc(0.62rem * var(--ov-type-scale));
+}
+
 /* Latest Spiegel sits beside meds — keep a single readable column when narrow. */
 .ov-med-spiegel .spiegelwerte-section__grid {
   grid-template-columns: 1fr;
@@ -1639,7 +2972,9 @@
   .ov-layout-toolbar__toggle,
   .ov-layout-toolbar__add-btn,
   .ov-layout-toolbar__reset,
-  .ov-widget-edit-btn {
+  .ov-widget-edit-btn,
+  .ov-hero__tile,
+  [data-area='overview'] .ov-widget-slot {
     transition: none;
   }
   .ov-card__action:hover > span[aria-hidden] {
@@ -1647,6 +2982,70 @@
   }
   .ov-widget-slot--dragging {
     opacity: 0.75;
+  }
+  /* Freeze the hero + grid entrance to a tasteful static state. */
+  .ov-dashboard .ov-hero,
+  .ov-hero__content > .ov-hero__topbar,
+  .ov-hero__content > .ov-hero__identity,
+  .ov-hero__content > .ov-hero__briefing,
+  .ov-hero__content > .ov-hero__tiles,
+  .ov-hero__content > .ov-hero__empty,
+  .ov-hero__tiles > .ov-hero__tile,
+  .ov-grid > .ov-grid__band,
+  .ov-grid > .ov-grid__row,
+  .ov-grid > .ov-widget-slot {
+    animation: none !important;
+  }
+  /* No hover lift on cards or tiles. */
+  [data-area='overview'] .ov-widget-slot:not(.ov-widget-slot--editable):hover,
+  .ov-hero__tile:hover {
+    transform: none;
+  }
+}
+
+/* ── Glass fallbacks (reduced transparency / no backdrop-filter) ───────── */
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  [data-area='overview'] .ov-dashboard .ov-widget-slot,
+  [data-area='overview'] .ov-dashboard .ov-hero.aura-card,
+  [data-area='overview'] .ov-dashboard .ov-hero__tile {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background-color: color-mix(
+      in srgb,
+      var(--patient-bordered-accent, var(--ov-teal)) 5%,
+      var(--surface, #fff)
+    );
+    background-image: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  [data-area='overview'] .ov-dashboard .ov-widget-slot,
+  [data-area='overview'] .ov-dashboard .ov-hero.aura-card,
+  [data-area='overview'] .ov-dashboard .ov-hero__tile {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background-color: color-mix(
+      in srgb,
+      var(--patient-bordered-accent, var(--ov-teal)) 6%,
+      var(--surface, #fff)
+    );
+    background-image: none;
+    box-shadow: var(--shadow-elevated-sm, 0 1px 2px rgba(0, 0, 0, 0.04));
+  }
+
+  [data-area='overview'] .ov-dashboard .ov-widget-slot[data-widget-id='safety'] {
+    background-color: color-mix(in srgb, var(--ov-risk-red) 8%, var(--surface, #fff));
+  }
+
+  [data-area='overview'] .ov-dashboard .ov-alert--high,
+  [data-area='overview'] .ov-dashboard .ov-lab--abnormal {
+    background: var(--ov-danger-soft);
+  }
+
+  [data-area='overview'] .ov-dashboard .ov-alert--moderate {
+    background: var(--ov-warn-soft);
   }
 }
 
@@ -1671,6 +3070,158 @@
   gap: 0.35rem;
   flex-shrink: 0;
   padding-top: 0.1rem;
+}
+
+.ov-action-toolbar .ov-visit-action {
+  width: auto;
+}
+
+.ov-action-toolbar .ov-visit-action__trigger {
+  width: auto;
+  padding: 0.4rem 0.65rem;
+}
+
+.ov-export-menu {
+  position: relative;
+  display: inline-flex;
+}
+
+.ov-export-menu__dropdown {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  z-index: 40;
+  min-width: 12rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.3rem;
+  background: var(--surface, #fff);
+  border: 1px solid var(--aura-hairline, var(--border-soft, #e8e8e4));
+  border-radius: 0.6rem;
+  box-shadow: var(--shadow-md, 0 8px 28px rgba(20, 18, 14, 0.14));
+}
+
+.ov-export-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.45rem 0.55rem;
+  border: 0;
+  border-radius: 0.45rem;
+  background: transparent;
+  color: var(--text-main, #24211e);
+  font-size: calc(0.85rem * var(--ov-type-scale));
+  text-align: left;
+  cursor: pointer;
+}
+
+.ov-export-menu__item > svg {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  color: var(--text-secondary, #6b6b6b);
+}
+
+.ov-export-menu__item:hover,
+.ov-export-menu__item:focus-visible {
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 10%, var(--surface, #fff));
+  outline: none;
+}
+
+.ov-quick-action-menu {
+  position: relative;
+  display: inline-flex;
+}
+
+.ov-quick-action-menu__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.38rem 0.65rem;
+  border: 1px solid var(--aura-hairline, var(--border-soft, #e8e8e4));
+  border-radius: 0.55rem;
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 6%, var(--surface, #fff));
+  color: var(--text-main, #24211e);
+  font-size: calc(0.82rem * var(--ov-type-scale));
+  font-weight: 500;
+  line-height: 1.2;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ov-quick-action-menu__trigger:hover,
+.ov-quick-action-menu__trigger:focus-visible {
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 12%, var(--surface, #fff));
+  outline: none;
+}
+
+.ov-quick-action-menu__trigger svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  color: var(--text-secondary, #6b6b6b);
+  transition: transform 0.15s ease;
+}
+
+.ov-quick-action-menu__trigger svg.is-open {
+  transform: rotate(180deg);
+}
+
+.ov-quick-action-menu__dropdown {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  z-index: 45;
+  min-width: 15.5rem;
+  max-width: min(18rem, 92vw);
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  padding: 0.35rem;
+  background: var(--surface, #fff);
+  border: 1px solid var(--aura-hairline, var(--border-soft, #e8e8e4));
+  border-radius: 0.6rem;
+  box-shadow: var(--shadow-md, 0 8px 28px rgba(20, 18, 14, 0.14));
+}
+
+.ov-quick-action-menu__section,
+.ov-quick-action-menu__subsection {
+  margin: 0;
+  padding: 0.35rem 0.55rem 0.15rem;
+  font-size: calc(0.68rem * var(--ov-type-scale));
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary, #6b6b6b);
+}
+
+.ov-quick-action-menu__subsection {
+  padding-top: 0.15rem;
+  font-size: calc(0.72rem * var(--ov-type-scale));
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--text-main, #24211e);
+}
+
+.ov-quick-action-menu__item {
+  display: block;
+  width: 100%;
+  padding: 0.45rem 0.55rem;
+  border: 0;
+  border-radius: 0.45rem;
+  background: transparent;
+  color: var(--text-main, #24211e);
+  font-size: calc(0.85rem * var(--ov-type-scale));
+  text-align: left;
+  cursor: pointer;
+}
+
+.ov-quick-action-menu__item:hover,
+.ov-quick-action-menu__item:focus-visible {
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 10%, var(--surface, #fff));
+  outline: none;
 }
 
 /* ── PPB safety subsection ───────────────────────────────────────────────── */
@@ -1937,13 +3488,13 @@
 }
 
 .ov-compliance__day-weekday {
-  font-size: 0.5625rem;
+  font-size: calc(0.5625rem * var(--ov-type-scale));
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
 
 .ov-compliance__day-label {
-  font-size: 0.625rem;
+  font-size: calc(0.625rem * var(--ov-type-scale));
   font-variant-numeric: tabular-nums;
   color: var(--text-secondary, #5c5650);
 }
@@ -2064,7 +3615,7 @@
 }
 
 .ov-compliance__add-label {
-  font-size: 0.625rem;
+  font-size: calc(0.625rem * var(--ov-type-scale));
   text-transform: uppercase;
   letter-spacing: 0.03em;
   color: var(--text-muted, #91887e);
@@ -2154,7 +3705,7 @@
 }
 
 .ov-compliance__popover-date {
-  font-size: 0.6875rem;
+  font-size: calc(0.6875rem * var(--ov-type-scale));
   font-variant-numeric: tabular-nums;
   color: var(--text-muted, #91887e);
 }
@@ -2321,7 +3872,7 @@
   padding: 0.1rem 0.4rem;
   border: 1px solid var(--border, #e8e4df);
   border-radius: 4px;
-  font-size: 0.625rem;
+  font-size: calc(0.625rem * var(--ov-type-scale));
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -2401,11 +3952,11 @@
   }
 
   .ov-compliance__day-weekday {
-    font-size: 0.5rem;
+    font-size: calc(0.5rem * var(--ov-type-scale));
   }
 
   .ov-compliance__day-label {
-    font-size: 0.5625rem;
+    font-size: calc(0.5625rem * var(--ov-type-scale));
   }
 }
 
@@ -2450,13 +4001,13 @@
 }
 
 .ov-vt__trend-label {
-  font-size: 0.9375rem;
+  font-size: calc(0.9375rem * var(--ov-type-scale));
   font-weight: 600;
 }
 
 .ov-vt__confidence {
   margin-left: auto;
-  font-size: 0.6875rem;
+  font-size: calc(0.6875rem * var(--ov-type-scale));
   letter-spacing: 0.02em;
   text-transform: uppercase;
   color: var(--text-muted, #91887e);
@@ -2464,7 +4015,7 @@
 
 .ov-vt__rationale {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: calc(0.8125rem * var(--ov-type-scale));
   line-height: 1.45;
   color: var(--text-secondary, #5c5650);
 }
@@ -2480,7 +4031,7 @@
 
 .ov-vt__subhead {
   margin: 0 0 0.35rem;
-  font-size: 0.6875rem;
+  font-size: calc(0.6875rem * var(--ov-type-scale));
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -2498,7 +4049,7 @@
   border: 1px solid var(--border-subtle, rgba(44, 40, 37, 0.12));
   border-radius: 999px;
   background: transparent;
-  font-size: 0.75rem;
+  font-size: calc(0.75rem * var(--ov-type-scale));
   cursor: pointer;
 }
 
@@ -2510,7 +4061,7 @@
 .ov-vt__domain-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.8125rem;
+  font-size: calc(0.8125rem * var(--ov-type-scale));
 }
 
 .ov-vt__domain-table th,
@@ -2521,7 +4072,7 @@
 }
 
 .ov-vt__domain-table th {
-  font-size: 0.6875rem;
+  font-size: calc(0.6875rem * var(--ov-type-scale));
   font-weight: 600;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -2541,11 +4092,11 @@
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
-  font-size: 0.8125rem;
+  font-size: calc(0.8125rem * var(--ov-type-scale));
 }
 
 .ov-vt__evidence-source {
-  font-size: 0.6875rem;
+  font-size: calc(0.6875rem * var(--ov-type-scale));
   font-weight: 600;
   color: var(--text-muted, #91887e);
 }
@@ -2558,11 +4109,11 @@
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
-  font-size: 0.8125rem;
+  font-size: calc(0.8125rem * var(--ov-type-scale));
 }
 
 .ov-vt__source-meta {
-  font-size: 0.6875rem;
+  font-size: calc(0.6875rem * var(--ov-type-scale));
   color: var(--text-muted, #91887e);
 }
 
@@ -2582,7 +4133,7 @@
   border: 1px solid var(--border-subtle, rgba(44, 40, 37, 0.14));
   border-radius: 6px;
   background: transparent;
-  font-size: 0.75rem;
+  font-size: calc(0.75rem * var(--ov-type-scale));
   cursor: pointer;
 }
 
@@ -2603,7 +4154,7 @@
 }
 
 .ov-vt__edit-label {
-  font-size: 0.6875rem;
+  font-size: calc(0.6875rem * var(--ov-type-scale));
   font-weight: 600;
   color: var(--text-muted, #91887e);
 }
@@ -2615,7 +4166,7 @@
   border: 1px solid var(--border-subtle, rgba(44, 40, 37, 0.14));
   border-radius: 6px;
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: calc(0.8125rem * var(--ov-type-scale));
   resize: vertical;
 }
 
@@ -2634,5 +4185,44 @@
   .ov-widget-slot {
     break-inside: avoid;
     page-break-inside: avoid;
+  }
+
+  /* Drop glass + sheen for ink-saving, high-contrast print. */
+  [data-area='overview'] .ov-dashboard .ov-widget-slot {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background-color: color-mix(
+      in srgb,
+      var(--patient-bordered-accent, var(--ov-teal)) 5%,
+      var(--surface, #fff)
+    );
+    background-image: none;
+    box-shadow: none;
+  }
+
+  /* Flatten the light header card for ink-saving, high-contrast print. */
+  .ov-hero {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--surface, #fff);
+    background-image: none;
+    border-color: var(--border-soft, #e8e4df);
+    box-shadow: none;
+    break-inside: avoid;
+  }
+  .ov-hero__tile,
+  .ov-hero__empty {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--surface, #fff);
+    border-color: var(--border-soft, #e8e4df);
+  }
+  .ov-dashboard .ov-hero,
+  .ov-hero__content > *,
+  .ov-hero__tiles > .ov-hero__tile,
+  .ov-grid > .ov-grid__band,
+  .ov-grid > .ov-grid__row,
+  .ov-grid > .ov-widget-slot {
+    animation: none;
   }
 }

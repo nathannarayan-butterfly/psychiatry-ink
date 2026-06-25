@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { DiagnosenWidget } from '../DiagnosenWidget'
+import { DiagnosesOverviewCard } from './DiagnosesOverviewCard'
 import { SpiegelwerteSection } from '../SpiegelwerteSection'
 import type { TopNavTabId } from '../CaseTopNav'
 import type { NotionPageId } from '../notionPages'
@@ -90,20 +90,16 @@ export function renderOverviewWidget(
       return (
         <MedicationOverviewCard
           data={ctx.medicationData}
+          caseId={ctx.caseId}
           onOpenMedikation={() => ctx.onTabSelect('medikation')}
         />
       )
-    case 'spiegel-latest':
-      return (
-        <OverviewCardShell>
-          <SpiegelwerteSection caseId={ctx.caseId} />
-        </OverviewCardShell>
-      )
     case 'diagnoses':
       return (
-        <OverviewCardShell>
-          <DiagnosenWidget caseId={ctx.caseId} variant="panel" />
-        </OverviewCardShell>
+        <DiagnosesOverviewCard
+          caseId={ctx.caseId}
+          onOpenDiagnose={() => ctx.onTabSelect('diagnose')}
+        />
       )
     case 'psychopathology':
       return (
@@ -114,7 +110,15 @@ export function renderOverviewWidget(
         />
       )
     case 'labs-due':
-      return <LaborOverviewCard data={ctx.laborData} onOpenLabor={() => ctx.onTabSelect('labor')} />
+      return (
+        <LaborOverviewCard
+          data={ctx.laborData}
+          onOpenLabor={() => ctx.onTabSelect('labor')}
+          ekg={ctx.ekgSummary}
+          eeg={ctx.eegSummary}
+          imaging={ctx.ctSummary}
+        />
+      )
     case 'prior-therapies':
       return (
         <PriorTherapiesOverviewCard

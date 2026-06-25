@@ -19,7 +19,24 @@ import { getAuthHeaders } from './authHeaders'
 import { logGenerationUsage } from './generationLogClient'
 import { resolveLlmRequestForTaskOrTier } from '../utils/resolveAiModel'
 
+import type { AiFeatureKey } from '../types/aiUsage'
+
 export const PSEUDONYMIZE_KEY = 'psychiatry-ink-pseudonymize'
+
+function resolveWorkspaceFeatureKey(componentId: string): AiFeatureKey {
+  switch (componentId) {
+    case 'therapie-verlauf':
+      return 'short_verlauf'
+    case 'verlauf':
+      return 'verlauf_generation'
+    case 'psychopath':
+      return 'psychopathological_befund'
+    case 'aufnahme':
+      return 'anamnesis_structuring'
+    default:
+      return 'document_generation'
+  }
+}
 
 export function isPseudonymizationEnabled(): boolean {
   try {
@@ -128,6 +145,7 @@ async function callModel(
       model: llm.model,
       systemPrompt: resolved.systemPrompt,
       userPrompt,
+      featureKey: resolveWorkspaceFeatureKey(request.componentId),
       ...(request.caseId?.trim() ? { caseId: request.caseId.trim() } : {}),
     }),
   })

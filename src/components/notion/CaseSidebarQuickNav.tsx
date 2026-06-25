@@ -6,14 +6,12 @@ const DOCUMENT_START_PAGES = NOTION_PAGES.filter((page) => page.kind === 'docume
 interface CaseSidebarQuickNavProps {
   onOpenWorkspacePage?: (pageId: NotionPageId) => void
   onOpenTemplateFromPatient?: () => void
-  onAddAnforderung?: () => void
 }
 
 /** New-document entry points below clinical areas in the case sidebar. */
 export function CaseSidebarQuickNav({
   onOpenWorkspacePage,
   onOpenTemplateFromPatient,
-  onAddAnforderung,
 }: CaseSidebarQuickNavProps) {
   const { t } = useTranslation()
 
@@ -27,15 +25,6 @@ export function CaseSidebarQuickNav({
           onClick={onOpenTemplateFromPatient}
         >
           {t('templateCreateFromPatient')}
-        </button>
-      ) : null}
-      {onAddAnforderung ? (
-        <button
-          type="button"
-          className="case-sidebar-nav__link"
-          onClick={onAddAnforderung}
-        >
-          {t('anforderungAddTitle')}
         </button>
       ) : null}
       {DOCUMENT_START_PAGES.map((page) => (

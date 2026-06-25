@@ -102,6 +102,39 @@ describe('documentTemplate shareFormat', () => {
     expect(parsed.error).toBe('malformed')
   })
 
+  it('round-trips rich-text (TipTap) field content with typography styles', async () => {
+    const richTemplate: DocumentTemplate = {
+      ...SAMPLE_TEMPLATE,
+      fields: [
+        {
+          id: 'rich-1',
+          type: 'static_text',
+          order: 0,
+          defaultValue:
+            '<p style="text-align: center"><span style="font-family: Georgia, serif; font-size: 18pt"><strong>Briefkopf</strong></span></p>',
+          layout: { colSpan: 12 },
+        },
+        {
+          id: 'rich-2',
+          type: 'long_text',
+          label: 'Verlauf',
+          order: 1,
+          layout: { colSpan: 6, minHeightMm: 30 },
+        },
+      ],
+    }
+
+    const file = await encodeTemplateShareFile(richTemplate)
+    const parsed = await parseTemplateShareFile(file)
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) return
+
+    const fields = parsed.payload.template.fields
+    expect(fields[0]?.defaultValue).toBe(richTemplate.fields[0]!.defaultValue)
+    expect(fields[0]?.layout?.colSpan).toBe(12)
+    expect(fields[1]?.layout?.minHeightMm).toBe(30)
+  })
+
   it('builds stable share filenames', () => {
     expect(buildTemplateShareFilename('Arztbrief / Entlassung')).toBe('Arztbrief-Entlassung.psychiatry-ink')
   })

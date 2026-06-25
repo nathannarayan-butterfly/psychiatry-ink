@@ -1,13 +1,11 @@
 import { useMemo, useCallback } from 'react'
 import { useTranslation } from '../../../context/TranslationContext'
-import { isClinicalIntelligenceAvailableForCase } from '../../../demo/demoFeatureFlags'
+import { isClinicalIntelligenceAvailableForCase } from '../../../utils/featureFlags'
 import type { TopNavTabId } from '../CaseTopNav'
 import type { NotionPageId } from '../notionPages'
 import { extractSpiegelwerte, pickLatestSpiegelSeries, spiegelGraphId } from '../SpiegelwerteSection'
 import { useOverviewLayout } from '../../../hooks/useOverviewLayout'
-import { ClinicalPageEyebrow } from '../../clinical/ClinicalPageEyebrow'
 import { OverviewLayoutToolbar } from './OverviewLayoutToolbar'
-import { OverviewActionToolbar } from './OverviewActionToolbar'
 import { OverviewWidgetGrid } from './OverviewWidgetGrid'
 import { OverviewHero } from './OverviewHero'
 import type { OverviewWidgetRenderContext } from './OverviewWidgetContent'
@@ -16,15 +14,21 @@ import type {
   MedicationOverviewData,
   MedRegimenItem,
   SymptomSnapshotData,
+  StatusRibbonItem,
 } from './types'
 import type { SemanticTone } from './OverviewCard'
+import { useOverviewClinicalRefresh } from '../../../hooks/useOverviewClinicalRefresh'
 import { useMedicationPlan } from '../../../hooks/useMedicationPlan'
 import { useCaseAppointments } from '../../../hooks/useCaseAppointments'
 import { isMedicationVisible } from '../../../utils/medication/planOps'
 import { formatMedicationOverviewDoseGerman } from '../../../utils/medication/doseLine'
 import { computeMedicationInsights } from '../../../utils/medication/medicationInsights'
 import { activeMedications } from '../../../utils/medication/planOps'
-import { computeTargetedReceptors, resolveReceptorProfiles } from '../../../utils/medication/receptorBurden'
+import {
+  computeCombinedReceptorFingerprint,
+  computeTargetedReceptors,
+  resolveReceptorProfiles,
+} from '../../../utils/medication/receptorBurden'
 import { DEFAULT_MEDICATIONS_COLLECTION_ID } from '../../../types/knowledgeBase'
 import { useKnowledgeBaseDrugs } from '../../../hooks/useKnowledgeBaseDrugs'
 import { loadBefunde } from '../../../utils/laborArchive'
@@ -36,13 +40,18 @@ import { buildPatientSafety } from '../../../utils/overview/patientSafety'
 import { buildLaborOverview } from '../../../utils/overview/labOverview'
 import { buildSymptomSnapshotData } from '../../../utils/overview/psychopathFindingOps'
 import { usePsychopathFindingRevision } from '../../../hooks/usePsychopathFindingRevision'
-import { formatDateDe, relativeDayDe } from '../../../utils/overview/dateLabels'
+import { daysSinceIso, formatDateDe, relativeDayDe } from '../../../utils/overview/dateLabels'
 import { getRecentVerlauf } from '../../../utils/overview/recentVerlauf'
 import { buildDokumentationSummary } from '../../../utils/overview/dokumentationSummary'
 import { buildRecentLabResults } from '../../../utils/overview/recentLabResults'
 import { buildButterflySummary, hasButterflyCriteriaSupport } from '../../../utils/overview/butterflySummary'
 import { loadIsdmAnalysis } from '../../../utils/isdm/storage'
 import { loadDiagnosen, selectPrimaryCoding } from '../../../utils/diagnosenArchive'
+import {
+  categoryTranslationKey,
+  resolveClinicalCategory,
+  sortDiagnosesForDisplay,
+} from '../../../utils/diagnosisClassification'
 import { resolveDiagnosisLabelSync } from '../../../utils/diagnosisDisplayRequests'
 import { useDiagnosenRevision } from '../../../hooks/useDiagnosenRevision'
 import { useOverviewHiddenGraphs } from '../../../hooks/useOverviewHiddenGraphs'
@@ -66,10 +75,18 @@ import { useVerlaufstendenzRevision } from '../../../hooks/useVerlaufstendenzRev
 import { buildRegisteredTherapiesSummary } from '../../../utils/overview/registeredTherapiesSummary'
 import { buildComplianceSummary } from '../../../utils/overview/complianceSummary'
 import {
-  exportOverviewDashboardHtml,
+  exportOverviewDashboardPdf,
+  exportOverviewDashboardWord,
   printOverviewDashboard,
 } from '../../../utils/overview/printOverview'
 import type { MedicationStatus } from '../../../types/medicationPlan'
+import type { UiTranslationKey } from '../../../data/uiTranslations'
+import type { OverviewQuickActionId } from '../../../utils/overview/overviewQuickActions'
+import { buildClinicalSignalChips } from '../../../utils/overview/overviewClinicalSignals'
+import type { ClinicalSignalChip } from '../../../utils/overview/overviewClinicalSignals'
+import type { OverviewWidgetId } from '../../../utils/overview/overviewLayout'
+import { useClinicalIntelligence } from '../../../hooks/useClinicalIntelligence'
+import type { ClinicalIntelligenceRunResponse } from '../../../types/clinicalIntelligence'
 
 interface OverviewDashboardProps {
   caseId: string
@@ -79,15 +96,23 @@ interface OverviewDashboardProps {
   onClinicalSubheadingChange?: () => void
   onTabSelect: (tab: TopNavTabId) => void
   onOpenWorkspacePage?: (pageId: NotionPageId) => void
+  onQuickAction?: (action: OverviewQuickActionId) => void
 }
 
-const MED_STATUS_LABEL: Partial<Record<MedicationStatus, string>> = {
-  paused: 'pausiert',
-  reduced: 'reduziert',
-  increased: 'gesteigert',
+function scrollToOverviewWidget(widgetId: OverviewWidgetId): boolean {
+  const el = document.querySelector(`[data-widget-id="${widgetId}"]`)
+  if (!el) return false
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  return true
 }
 
-/** Headline severity ranking + German label for the summary-strip risk metric. */
+const MED_STATUS_I18N: Partial<Record<MedicationStatus, UiTranslationKey>> = {
+  paused: 'overviewMedStatusPaused',
+  reduced: 'overviewMedStatusReduced',
+  increased: 'overviewMedStatusIncreased',
+}
+
+/** Headline severity ranking for the summary-strip risk metric. */
 const TONE_SEVERITY: Record<SemanticTone, number> = {
   high: 5,
   moderate: 4,
@@ -97,14 +122,32 @@ const TONE_SEVERITY: Record<SemanticTone, number> = {
   neutral: 0,
 }
 
-const TONE_LABEL: Record<SemanticTone, string> = {
-  high: 'akut',
-  moderate: 'erhöht',
-  ok: 'unauffällig',
-  low: 'gering',
-  info: 'beachten',
-  neutral: '—',
+const TONE_I18N: Record<SemanticTone, UiTranslationKey> = {
+  high: 'overviewRiskToneHigh',
+  moderate: 'overviewRiskToneModerate',
+  ok: 'overviewRiskToneOk',
+  low: 'overviewRiskToneLow',
+  info: 'overviewRiskToneInfo',
+  neutral: 'overviewRiskToneNeutral',
 }
+
+function riskToneLabel(t: (key: UiTranslationKey) => string, tone: SemanticTone): string {
+  return t(TONE_I18N[tone])
+}
+
+function countCiPendingReview(run: ClinicalIntelligenceRunResponse | null): number {
+  if (!run) return 0
+  let pending = 0
+  for (const dimension of run.dimensional.activeDimensions) {
+    if (dimension.reviewStatus === 'pending') pending += 1
+  }
+  for (const mechanism of run.mechanism.activeMechanisms) {
+    if (mechanism.reviewStatus === 'pending') pending += 1
+  }
+  return pending
+}
+
+const LAST_CONTACT_OVERDUE_DAYS = 7
 
 /** Read the joined anamnesis text most likely to mention allergies. */
 function readAllergyText(caseId: string): string | null {
@@ -131,11 +174,13 @@ export function OverviewDashboard({
   onClinicalSubheadingChange,
   onTabSelect,
   onOpenWorkspacePage,
+  onQuickAction,
 }: OverviewDashboardProps) {
   const { language, t } = useTranslation()
   const { drugs: knowledgeBaseDrugs } = useKnowledgeBaseDrugs(DEFAULT_MEDICATIONS_COLLECTION_ID)
   const diagnosenRevision = useDiagnosenRevision(caseId)
   const psychopathFindingRevision = usePsychopathFindingRevision(caseId)
+  const clinicalRefreshRevision = useOverviewClinicalRefresh(caseId)
   const verlaufstendenzRevision = useVerlaufstendenzRevision(caseId)
   const { currentPlan } = useMedicationPlan(caseId)
   const appointments = useCaseAppointments(caseId)
@@ -143,6 +188,8 @@ export function OverviewDashboard({
   const { summary: psychotherapySummary, hasPlan: hasPsychotherapyPlan, plan: psychotherapyPlan } =
     usePsychotherapyPlan(caseId)
   const { isHidden } = useOverviewHiddenGraphs(caseId)
+  const ci = useClinicalIntelligence(caseId)
+  const clinicalIntelligenceEnabled = isClinicalIntelligenceAvailableForCase(caseId)
 
   const medications = useMemo(() => currentPlan?.medications ?? [], [currentPlan])
 
@@ -165,7 +212,7 @@ export function OverviewDashboard({
           substance: med.substance,
           dose,
           status,
-          statusLabel: MED_STATUS_LABEL[med.status],
+          statusLabel: MED_STATUS_I18N[med.status] ? t(MED_STATUS_I18N[med.status]!) : undefined,
         }
       })
     return {
@@ -181,10 +228,15 @@ export function OverviewDashboard({
       monitoringFlags: insights.monitoringBurden.map((m) => m.parameter),
       topReceptors: targetedReceptors.map((r) => ({ label: r.label, count: r.count })),
       hasReferenceData: insights.hasReferenceData || resolved.length > 0,
+      receptorFingerprint: computeCombinedReceptorFingerprint(resolved),
     }
-  }, [medications, language, knowledgeBaseDrugs])
+  }, [medications, language, knowledgeBaseDrugs, t])
 
   const befunde = useMemo(() => loadBefunde(caseId), [caseId])
+  const verlaufFeed = useMemo(() => {
+    void clinicalRefreshRevision
+    return loadVerlaufFeed(caseId)
+  }, [caseId, clinicalRefreshRevision])
 
   // ── Safety card ─────────────────────────────────────────────────────────
   const safetyData = useMemo(() => {
@@ -198,8 +250,9 @@ export function OverviewDashboard({
       riskText,
       allergyText: readAllergyText(caseId),
       befunde,
+      verlaufEntries: verlaufFeed,
     })
-  }, [caseId, medications, language, befunde])
+  }, [caseId, medications, language, befunde, verlaufFeed, clinicalRefreshRevision])
 
   // ── Appointment orientation (summary strip) ───────────────────────────────
   const lastContact = useMemo(() => {
@@ -234,10 +287,13 @@ export function OverviewDashboard({
     const activeSubstances = medications
       .filter((m) => m.status === 'active' || m.status === 'reduced' || m.status === 'increased')
       .map((m) => m.substance)
-    return buildLaborOverview({ befunde, medications, activeSubstances })
-  }, [caseId, medications, befunde])
+    return buildLaborOverview({ befunde, medications, activeSubstances, verlaufEntries: verlaufFeed })
+  }, [caseId, medications, befunde, verlaufFeed])
   const recentLabResults = useMemo(() => buildRecentLabResults(befunde), [befunde])
-  const recentVerlauf = useMemo(() => getRecentVerlauf(caseId, language), [caseId, language])
+  const recentVerlauf = useMemo(() => {
+    void clinicalRefreshRevision
+    return getRecentVerlauf(caseId, language)
+  }, [caseId, language, clinicalRefreshRevision])
   const dokumentation = useMemo(() => buildDokumentationSummary(caseId), [caseId])
   const isdmAnalysis = useMemo(() => loadIsdmAnalysis(caseId), [caseId])
   const hasIsdm = isdmAnalysis !== null
@@ -330,13 +386,14 @@ export function OverviewDashboard({
 
   // ── Summary strip ─────────────────────────────────────────────────────────
   const heroData = useMemo<HeroSummaryData>(() => {
-    const diagnoses = loadDiagnosen(caseId)
-    const primary = diagnoses[0]
+    const diagnoses = sortDiagnosesForDisplay(loadDiagnosen(caseId))
+    const primary =
+      diagnoses.find((entry) => resolveClinicalCategory(entry) === 'primary') ?? diagnoses[0]
     const selected = primary ? selectPrimaryCoding(primary) : null
     const primaryDiagnosis = selected
       ? {
           code: selected.coding.code,
-          label: resolveDiagnosisLabelSync(selected.coding, selected.version),
+          label: resolveDiagnosisLabelSync(selected.coding, selected.version, undefined, language),
           version: selected.version,
           overridden: selected.coding.overridden,
         }
@@ -353,19 +410,167 @@ export function OverviewDashboard({
               (acc, t) => (TONE_SEVERITY[t] > TONE_SEVERITY[acc] ? t : acc),
               'ok',
             )
-            return { tone, label: TONE_LABEL[tone] }
+            return { tone, label: riskToneLabel(t, tone) }
           })()
         : null
 
+    const statusRibbon: StatusRibbonItem[] = []
+
+    if (risk && (risk.tone === 'high' || risk.tone === 'moderate')) {
+      statusRibbon.push({
+        id: 'risk',
+        label: t('overviewRibbonRisk'),
+        tone: risk.tone,
+        detail: risk.label,
+      })
+    }
+
+    if (safetyData.alerts.length > 0) {
+      const worstAlertTone = safetyData.alerts.reduce<SemanticTone>(
+        (acc, alert) => (TONE_SEVERITY[alert.tone] > TONE_SEVERITY[acc] ? alert.tone : acc),
+        'info',
+      )
+      statusRibbon.push({
+        id: 'safety-alerts',
+        label: t('overviewRibbonSafetyAlerts'),
+        tone: worstAlertTone,
+        detail: String(safetyData.alerts.length),
+      })
+    }
+
+    const abnormalCount = laborData.recentAbnormal.length
+    if (abnormalCount > 0) {
+      statusRibbon.push({
+        id: 'abnormal-labs',
+        label: t('overviewRibbonAbnormalLabs'),
+        tone: 'moderate',
+        detail: String(abnormalCount),
+      })
+    }
+
+    const butterflyOpen = butterflySummary.reduce((sum, item) => sum + item.openCriteriaCount, 0)
+    if (butterflyOpen > 0) {
+      statusRibbon.push({
+        id: 'butterfly-open',
+        label: t('overviewRibbonButterflyOpen'),
+        tone: 'info',
+        detail: String(butterflyOpen),
+      })
+    }
+
+    if (
+      verlaufstendenz.trend !== 'nicht_beurteilbar' &&
+      !verlaufstendenz.isClinicianApproved
+    ) {
+      statusRibbon.push({
+        id: 'verlauf-review',
+        label: t('overviewRibbonVerlaufReview'),
+        tone: 'info',
+      })
+    }
+
+    const verlaufNeedsReview =
+      verlaufstendenz.trend !== 'nicht_beurteilbar' && !verlaufstendenz.isClinicianApproved
+
+    const admissionIso = loadNotionPageDate('aufnahme', caseId)
+    const admissionDays = daysSinceIso(admissionIso)
+    const admissionDayLabel =
+      admissionDays !== null
+        ? t('overviewHeroAdmissionDayValue').replace('{n}', String(admissionDays + 1))
+        : null
+
+    const primaryCategory = primary ? resolveClinicalCategory(primary) : null
+    const caseTypeLabel = primaryCategory
+      ? t(categoryTranslationKey(primaryCategory) as UiTranslationKey)
+      : null
+
+    const diagnosisLine = primaryDiagnosis
+      ? primaryDiagnosis.label
+        ? `${primaryDiagnosis.code} · ${primaryDiagnosis.label}`
+        : primaryDiagnosis.code
+      : null
+
+    const lastContactIso =
+      appointments.lastContact?.endTime ??
+      loadVerlaufFeed(caseId)[0]?.date ??
+      loadNotionPageDate('verlauf', caseId)
+    const daysSinceLastContact = daysSinceIso(lastContactIso)
+    const lastContactOverdue =
+      daysSinceLastContact !== null && daysSinceLastContact > LAST_CONTACT_OVERDUE_DAYS
+
+    const aiReviewPendingCount = clinicalIntelligenceEnabled
+      ? countCiPendingReview(ci.latestRun)
+      : 0
+    const medicationReviewDue =
+      medicationData.monitoringFlags.length > 0 || laborData.missingMonitoring.length > 0
+
+    const visitActionContext = {
+      abnormalLabCount: abnormalCount,
+      safetyAlertCount: safetyData.alerts.length,
+      daysSinceLastContact,
+    }
+
+    const clinicalSignalChips = buildClinicalSignalChips({
+      hero: {
+        identityContext: {
+          diagnosisLine,
+          caseTypeLabel,
+          admissionDayLabel,
+        },
+        clinicalSignalChips: [],
+        visitActionContext,
+        primaryDiagnosis,
+        risk,
+        activeMedCount: medicationData.activeCount,
+        alertCount: safetyData.alerts.length,
+        lastContact,
+        nextAppointment,
+        statusRibbon,
+      },
+      safetyAlertCount: safetyData.alerts.length,
+      abnormalLabCount: abnormalCount,
+      butterflyOpenCount: butterflyOpen,
+      verlaufNeedsReview,
+      aiReviewPendingCount,
+      medicationReviewDue,
+      lastContactOverdue,
+      hasButterflyWidget: hasButterflyCriteriaSupport(caseId),
+      hasCiWidgets: clinicalIntelligenceEnabled,
+    })
+
     return {
+      identityContext: {
+        diagnosisLine,
+        caseTypeLabel,
+        admissionDayLabel,
+      },
+      clinicalSignalChips,
+      visitActionContext,
       primaryDiagnosis,
       risk,
       activeMedCount: medicationData.activeCount,
       alertCount: safetyData.alerts.length,
       lastContact,
       nextAppointment,
+      statusRibbon,
     }
-  }, [caseId, diagnosenRevision, safetyData, medicationData, lastContact, nextAppointment])
+  }, [
+    caseId,
+    diagnosenRevision,
+    safetyData,
+    medicationData,
+    lastContact,
+    nextAppointment,
+    laborData.recentAbnormal.length,
+    laborData.missingMonitoring.length,
+    butterflySummary,
+    verlaufstendenz,
+    appointments.lastContact?.endTime,
+    ci.latestRun,
+    clinicalIntelligenceEnabled,
+    language,
+    t,
+  ])
 
   const {
     layout,
@@ -470,24 +675,65 @@ export function OverviewDashboard({
     [layout.widgets],
   )
 
-  const handleExport = useCallback(() => {
-    exportOverviewDashboardHtml(gridWidgets, widgetContext, visibilityContext, t, caseId)
+  const handleExportPdf = useCallback(() => {
+    exportOverviewDashboardPdf(gridWidgets, widgetContext, visibilityContext, t)
+  }, [gridWidgets, widgetContext, visibilityContext, t])
+
+  const handleExportWord = useCallback(() => {
+    exportOverviewDashboardWord(gridWidgets, widgetContext, visibilityContext, t, caseId)
   }, [gridWidgets, widgetContext, visibilityContext, t, caseId])
 
   const handlePrint = useCallback(() => {
     printOverviewDashboard(gridWidgets, widgetContext, visibilityContext, t)
   }, [gridWidgets, widgetContext, visibilityContext, t])
 
+  const handleVisitAction = useCallback(
+    (action: OverviewQuickActionId) => {
+      const scrollFirst: Partial<Record<OverviewQuickActionId, OverviewWidgetId>> = {
+        reviewAbnormalLabs: 'labs-due',
+        reviewSafetyAlert: 'safety',
+        reviewOpenCriteria: 'butterfly-criteria',
+        reviewDiagnosisCriteria: 'butterfly-criteria',
+        reviewAiHypotheses: 'ci-status',
+        openAiPendingReview: 'ci-status',
+        medicationReview: 'medication',
+      }
+      const widgetId = scrollFirst[action]
+      if (widgetId && scrollToOverviewWidget(widgetId)) return
+      onQuickAction?.(action)
+    },
+    [onQuickAction],
+  )
+
+  const handleSignalChipClick = useCallback(
+    (chip: ClinicalSignalChip) => {
+      if (chip.widgetId && scrollToOverviewWidget(chip.widgetId)) return
+      if (chip.action) handleVisitAction(chip.action)
+    },
+    [handleVisitAction],
+  )
+
   return (
-    <div className={`ov-dashboard cm-workspace cm-workspace--flush${editMode ? ' ov-dashboard--edit-mode' : ''}`}>
-      <div className="ov-dashboard__header">
-        <ClinicalPageEyebrow label="Übersicht" />
-        <OverviewActionToolbar onExport={handleExport} onPrint={handlePrint} />
-      </div>
+    <div
+      className={[
+        'ov-dashboard',
+        'cm-workspace',
+        'cm-workspace--flush',
+        editMode ? 'ov-dashboard--edit-mode' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <OverviewHero
         data={heroData}
         caseId={caseId}
         metaVersion={metaVersion}
+        title={t('overviewPageTitle')}
+        onExportPdf={handleExportPdf}
+        onExportWord={handleExportWord}
+        onPrint={handlePrint}
+        onVisitAction={handleVisitAction}
+        onSignalChipClick={handleSignalChipClick}
         onClinicalSubheadingChange={onClinicalSubheadingChange}
       />
       <OverviewWidgetGrid

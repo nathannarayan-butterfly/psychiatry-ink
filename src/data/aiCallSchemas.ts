@@ -85,6 +85,7 @@ const aufnahmeSegments: AiCallSchemaDefinition[] = [
   }),
   seg('aufnahme', 'psychopathologischer-befund', 'AMDP-style mental state exam'),
   seg('aufnahme', 'somatischer-befund', 'vitals, somatic findings, consults'),
+  seg('aufnahme', 'neurologischer-befund', 'neurological exam, focal deficits, extrapyramidal signs'),
   seg('aufnahme', 'diagnostische-einschaetzung', 'syndrome, diagnoses, differential, risk', {
     aiRole: P,
     tierDefault: 'thorough',

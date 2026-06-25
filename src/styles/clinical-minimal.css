@@ -34,6 +34,58 @@
   --cm-quiet-border: color-mix(in srgb, var(--border-soft, #e8e4df) 88%, transparent);
   --cm-page-pad-x: 1.75rem;
   --cm-page-pad-y: 1.5rem;
+
+  /* —— Workspace glass scene + frosted-card tokens (case workspace) ——
+   * Barely-present clinical wash behind frosted cards — not a themed wallpaper. */
+  --workspace-glass-teal: #2a6b6b;
+  --workspace-glass-info: #3a6f9c;
+  --workspace-glass-warm: #ebe6df;
+  --workspace-glass-blur: 12px;
+  --workspace-glass-bg: rgba(255, 255, 255, 0.58);
+  --workspace-glass-bg-strong: rgba(255, 255, 255, 0.76);
+  --workspace-glass-bg-hero: rgba(255, 255, 255, 0.72);
+  --workspace-glass-border: rgba(255, 255, 255, 0.65);
+  --workspace-glass-border-teal: color-mix(
+    in srgb,
+    var(--workspace-glass-teal) 12%,
+    rgba(255, 255, 255, 0.45)
+  );
+  --workspace-glass-shadow:
+    0 1px 2px rgba(42, 107, 107, 0.06),
+    0 4px 16px -4px rgba(42, 107, 107, 0.1),
+    0 12px 32px -10px rgba(36, 33, 30, 0.08);
+  --workspace-glass-shadow-hover:
+    0 1px 3px rgba(42, 107, 107, 0.08),
+    0 6px 22px -6px rgba(42, 107, 107, 0.12),
+    0 16px 40px -12px rgba(36, 33, 30, 0.1);
+  --workspace-glass-shadow-semantic:
+    0 1px 3px rgba(42, 107, 107, 0.07),
+    0 5px 18px -4px rgba(42, 107, 107, 0.11),
+    0 14px 36px -10px rgba(36, 33, 30, 0.09);
+  --workspace-glass-scrim: rgba(255, 255, 255, 0.54);
+  --workspace-glass-scrim-strong: rgba(255, 255, 255, 0.68);
+  --workspace-glass-ink-muted: color-mix(
+    in srgb,
+    var(--text-muted, #91887e) 70%,
+    var(--text-main, #24211e)
+  );
+  --workspace-glass-scene-base: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--workspace-glass-teal) 2%, var(--surface, #fafaf8)) 0%,
+    var(--surface, #fafaf8) 42%,
+    color-mix(in srgb, var(--workspace-glass-warm) 2.5%, var(--surface, #fafaf8)) 100%
+  );
+  --workspace-glass-scene-radials:
+    radial-gradient(
+      ellipse 85% 55% at 12% 18%,
+      color-mix(in srgb, var(--workspace-glass-teal) 3.5%, transparent),
+      transparent 58%
+    ),
+    radial-gradient(
+      ellipse 70% 45% at 88% 78%,
+      color-mix(in srgb, var(--workspace-glass-info) 2.5%, transparent),
+      transparent 52%
+    );
 }
 
 /* —— Page shell —— */
@@ -189,18 +241,31 @@
 
 .cm-hero__thesis {
   margin: 0;
-  max-width: var(--cm-prose-max);
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: var(--cm-hero-thesis-size);
   font-weight: 500;
-  line-height: 1.55;
+  line-height: 1.35;
   color: var(--text-secondary, #6d655c);
 }
 
 .cm-hero__thesis-row {
   display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.35rem;
   margin-top: 0.35rem;
+  min-width: 0;
+}
+
+.cm-hero__thesis-display {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .cm-hero__thesis-edit {
@@ -208,14 +273,19 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  margin-top: 0.1rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
   border: none;
-  border-radius: 0.375rem;
+  border-radius: 0.25rem;
   background: transparent;
   color: var(--text-muted, #91887e);
   cursor: pointer;
+}
+
+.cm-hero__thesis-edit > svg {
+  width: 0.875rem;
+  height: 0.875rem;
 }
 
 .cm-hero__thesis-edit:hover {
@@ -226,42 +296,51 @@
 .cm-hero__thesis-editor {
   display: flex;
   flex: 1 1 auto;
-  align-items: flex-start;
-  gap: 0.5rem;
-  max-width: var(--cm-prose-max);
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
 }
 
 .cm-hero__thesis-input {
   flex: 1 1 auto;
-  min-height: 3rem;
-  padding: 0.5rem 0.625rem;
+  min-width: 0;
+  min-height: 0;
+  padding: 0.28rem 0.5rem;
   border: 1px solid var(--border-subtle, #e8e4df);
-  border-radius: 0.5rem;
+  border-radius: 0.375rem;
   font: inherit;
   font-size: var(--cm-hero-thesis-size);
-  line-height: 1.55;
+  line-height: 1.35;
   color: var(--text-secondary, #6d655c);
   background: var(--surface-elevated, #fff);
-  resize: vertical;
+  resize: none;
+  overflow: hidden;
 }
 
 .cm-hero__thesis-actions {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  flex-direction: row;
+  flex-shrink: 0;
+  gap: 0.2rem;
 }
 
 .cm-hero__thesis-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
   border: 1px solid var(--border-subtle, #e8e4df);
-  border-radius: 0.375rem;
+  border-radius: 0.25rem;
   background: var(--surface-elevated, #fff);
   color: var(--text-muted, #91887e);
   cursor: pointer;
+}
+
+.cm-hero__thesis-btn > svg {
+  width: 0.875rem;
+  height: 0.875rem;
 }
 
 .cm-hero__thesis-btn--save {
@@ -336,6 +415,26 @@
   flex-wrap: wrap;
   gap: 0.5rem 0.75rem;
   margin-bottom: 1rem;
+}
+
+.cm-section__title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.cm-section__subtitle {
+  margin: 0;
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: var(--weight-regular, 400);
+  line-height: 1.4;
+  color: var(--text-secondary, #6d655c);
+  max-width: 42rem;
+}
+
+.cm-section__head--widget {
+  margin-bottom: 0.65rem;
 }
 
 .cm-section__head .cm-eyebrow {
@@ -638,5 +737,85 @@
   .cm-section__action,
   .cm-layout-footer__btn {
     transition: none;
+  }
+}
+
+/* =============================================================================
+ * Workspace glass scene — subtle clinical wash on all case-workspace pages.
+ * Applied via `.notion-preview-app--case-sidebar` (Übersicht, Verlauf,
+ * Medikation, Labor, Diagnose, …) and in-case settings.
+ * ========================================================================== */
+
+.notion-preview-app--case-sidebar .notion-preview-main,
+.settings-sidebar-main {
+  position: relative;
+  isolation: isolate;
+  background: var(--workspace-glass-scene-radials), var(--workspace-glass-scene-base);
+}
+
+.notion-preview-app--case-sidebar .notion-preview-main::after,
+.settings-sidebar-main::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.06;
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--workspace-glass-teal) 3%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--workspace-glass-teal) 3%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 56px 56px;
+}
+
+.notion-preview-app--case-sidebar .case-main-top-bar,
+.notion-preview-app--case-sidebar .patient-dashboard,
+.notion-preview-app--case-sidebar .case-tab-shell,
+.notion-preview-app--case-sidebar .case-orphan-recovery,
+.notion-preview-app--case-sidebar .meine-patienten,
+.settings-sidebar-main > * {
+  position: relative;
+  z-index: 1;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .notion-preview-app--case-sidebar .notion-preview-main,
+  .settings-sidebar-main {
+    background: var(--surface, #fafaf8);
+  }
+
+  .notion-preview-app--case-sidebar .notion-preview-main::after,
+  .settings-sidebar-main::after {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .notion-preview-app--case-sidebar .notion-preview-main,
+  .settings-sidebar-main {
+    background: var(--surface, #fafaf8);
+  }
+
+  .notion-preview-app--case-sidebar .notion-preview-main::after,
+  .settings-sidebar-main::after {
+    display: none;
+  }
+}
+
+@media print {
+  .notion-preview-app--case-sidebar .notion-preview-main,
+  .settings-sidebar-main {
+    background: var(--surface, #fff);
+  }
+
+  .notion-preview-app--case-sidebar .notion-preview-main::after,
+  .settings-sidebar-main::after {
+    display: none;
   }
 }

@@ -20,6 +20,7 @@ import {
 interface SozialtherapieSectionProps {
   caseId: string
   workspacePlanning?: boolean
+  inlineWorkspace?: boolean
   onWorkspacePlanningClose?: () => void
 }
 
@@ -35,17 +36,18 @@ const STATUS_TONE: Record<SozialtherapieStatus, string> = {
 export function SozialtherapieSection({
   caseId,
   workspacePlanning = false,
+  inlineWorkspace = false,
   onWorkspacePlanningClose,
 }: SozialtherapieSectionProps) {
   const { language } = useTranslation()
   const { targets, addTarget, updateTarget, removeTarget } = useSozialtherapie(caseId)
   const [openId, setOpenId] = useState<string | null>(null)
-  const [picker, setPicker] = useState(workspacePlanning)
+  const [picker, setPicker] = useState(workspacePlanning && !inlineWorkspace)
   const [customName, setCustomName] = useState('')
 
   useEffect(() => {
-    if (workspacePlanning) setPicker(true)
-  }, [workspacePlanning])
+    if (workspacePlanning && !inlineWorkspace) setPicker(true)
+  }, [workspacePlanning, inlineWorkspace])
 
   const closeWorkspacePlanning = useCallback(() => {
     onWorkspacePlanningClose?.()
@@ -180,6 +182,45 @@ export function SozialtherapieSection({
       </div>
     </div>
   ) : null
+
+  if (workspacePlanning && inlineWorkspace) {
+    return (
+      <div className="workspace-therapy-inline">
+        <header className="workspace-therapy-inline__head">
+          <h2 className="workspace-therapy-inline__title">{ts(language, 'szSectionTitle')}</h2>
+          <button type="button" className="pt-btn pt-btn--ghost" onClick={closeWorkspacePlanning}>
+            {ts(language, 'szClose')}
+          </button>
+        </header>
+        {detailModal ?? pickerModal ?? (
+          <>
+            <div className="therapy-section__actions" style={{ marginBottom: '0.75rem' }}>
+              <button type="button" className="therapy-add-btn" onClick={() => setPicker(true)}>
+                {ts(language, 'szAddArea')}
+              </button>
+            </div>
+            <div className="therapy-section__body">
+              {targets.length === 0 ? (
+                <p className="therapy-empty">{ts(language, 'szEmpty')}</p>
+              ) : (
+                <div className="therapy-card-grid">
+                  {targets.map((target) => (
+                    <SozialtherapieCard
+                      key={target.id}
+                      target={target}
+                      language={language}
+                      selected={openId === target.id}
+                      onOpen={() => setOpenId(target.id)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    )
+  }
 
   if (workspacePlanning) {
     return (

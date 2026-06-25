@@ -143,6 +143,7 @@ export function buildOverviewPrintHtml(
 <meta charset="utf-8" />
 <title>${escapeHtml(name)} — ${escapeHtml(labels.patientOverview)}</title>
 <style>
+  @page { size: A4; margin: 1.2cm; }
   body { font-family: Georgia, 'Times New Roman', serif; color: #1a1a1a; margin: 1.2cm; font-size: 11pt; line-height: 1.45; }
   h1 { font-size: 16pt; font-weight: 600; margin: 0 0 0.25rem; }
   .ov-print__meta { font-size: 9pt; color: #555; margin-bottom: 1rem; }
@@ -196,8 +197,7 @@ function openPrintDocument(html: string): void {
   }, 250)
 }
 
-function downloadBlob(content: string, filename: string): void {
-  const blob = new Blob([content], { type: 'text/html' })
+function downloadFile(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
@@ -206,6 +206,10 @@ function downloadBlob(content: string, filename: string): void {
   link.click()
   document.body.removeChild(link)
   setTimeout(() => URL.revokeObjectURL(url), 0)
+}
+
+function downloadBlob(content: string, filename: string): void {
+  downloadFile(new Blob([content], { type: 'text/html' }), filename)
 }
 
 export function printOverviewDashboard(
@@ -230,6 +234,10 @@ export function printOverviewDashboard(
   openPrintDocument(html)
 }
 
+/**
+ * Internal HTML export. Kept for reuse (its HTML feeds both the print-to-PDF
+ * window and the Word/.doc export); NOT exposed as a user-facing download.
+ */
 export function exportOverviewDashboardHtml(
   widgets: OverviewLayoutItem[],
   ctx: OverviewWidgetRenderContext,
@@ -241,4 +249,36 @@ export function exportOverviewDashboardHtml(
     autoPrint: false,
   })
   downloadBlob(html, `${caseId}-uebersicht.html`)
+}
+
+/**
+ * User-facing PDF export: opens the print HTML in a print window so the
+ * clinician can "Save as PDF" — same print-to-PDF pattern as Arztbrief /
+ * discharge summary.
+ */
+export function exportOverviewDashboardPdf(
+  widgets: OverviewLayoutItem[],
+  ctx: OverviewWidgetRenderContext,
+  visibilityContext: OverviewWidgetVisibilityContext,
+  t: (key: UiTranslationKey) => string,
+): void {
+  printOverviewDashboard(widgets, ctx, visibilityContext, t)
+}
+
+/**
+ * User-facing Word export: writes the print HTML into an .doc (HTML-in-Word)
+ * blob — same HTML-in-.doc pattern as the discharge summary DOCX export.
+ */
+export function exportOverviewDashboardWord(
+  widgets: OverviewLayoutItem[],
+  ctx: OverviewWidgetRenderContext,
+  visibilityContext: OverviewWidgetVisibilityContext,
+  t: (key: UiTranslationKey) => string,
+  caseId: string,
+): void {
+  const html = buildOverviewPrintHtml(widgets, ctx, visibilityContext, t, DEFAULT_PRINT_LABELS, {
+    autoPrint: false,
+  })
+  const blob = new Blob(['\ufeff', html], { type: 'application/msword;charset=utf-8' })
+  downloadFile(blob, `${caseId}-uebersicht.doc`)
 }

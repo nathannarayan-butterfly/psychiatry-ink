@@ -14,6 +14,12 @@ import {
   loadKeyBase64Url,
 } from '../../utils/e2ee'
 import { getParticipantColor } from '../../utils/discussCase/participantColors'
+import {
+  discussChromeT,
+  discussRoleLabel,
+  fillTemplate,
+  type DiscussChromeLocale,
+} from '../../utils/discussCase/chromeI18n'
 
 interface DiscussCaseParticipantsProps {
   discussionId: string
@@ -23,22 +29,21 @@ interface DiscussCaseParticipantsProps {
   canInvite: boolean
   onParticipantsChange: (participants: DiscussCaseParticipant[]) => void
   variant?: 'standalone' | 'tab'
+  locale?: DiscussChromeLocale
 }
 
-const ROLE_LABELS: Record<DiscussCaseParticipant['role'], string> = {
-  owner: 'Eigentümer',
-  internal: 'Intern',
-  external: 'Extern',
-}
-
-function accessLabel(participant: DiscussCaseParticipant): string {
+function accessLabel(participant: DiscussCaseParticipant, locale: DiscussChromeLocale): string {
   return participant.permissions.includes('view_identified_data')
-    ? 'Identifiziert'
-    : 'De-identifiziert'
+    ? discussChromeT(locale, 'accessIdentified')
+    : discussChromeT(locale, 'accessDeidentified')
 }
 
-function displayName(participant: DiscussCaseParticipant, currentUserId?: string): string {
-  if (currentUserId && participant.userId === currentUserId) return 'Sie'
+function displayName(
+  participant: DiscussCaseParticipant,
+  locale: DiscussChromeLocale,
+  currentUserId?: string,
+): string {
+  if (currentUserId && participant.userId === currentUserId) return discussChromeT(locale, 'selfLabel')
   return participant.userId.slice(0, 12)
 }
 
@@ -50,6 +55,7 @@ export function DiscussCaseParticipants({
   canInvite,
   onParticipantsChange,
   variant = 'standalone',
+  locale = 'de',
 }: DiscussCaseParticipantsProps) {
   const [inviteOpen, setInviteOpen] = useState(false)
   const [inviteeEmail, setInviteeEmail] = useState('')
@@ -84,10 +90,7 @@ export function DiscussCaseParticipants({
             setInviteLink(`${base}${buildKeyFragment(keyB64)}`)
           } else {
             setInviteLink(base)
-            setNotice(
-              'Hinweis: Der Entschlüsselungs-Schlüssel ist auf diesem Gerät nicht verfügbar. ' +
-                'Die eingeladene Person kann nur de-identifizierte Inhalte sehen.',
-            )
+            setNotice(discussChromeT(locale, 'keyUnavailableNotice'))
           }
         } else {
           setInviteLink(base)
@@ -95,16 +98,18 @@ export function DiscussCaseParticipants({
       }
       setInviteeEmail('')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Einladung fehlgeschlagen')
+      setError(err instanceof Error ? err.message : discussChromeT(locale, 'inviteFailed'))
     } finally {
       setBusy(false)
     }
-  }, [busy, discussionId, inviteeEmail, inviteType])
+  }, [busy, discussionId, inviteeEmail, inviteType, locale])
 
   const handleRevoke = useCallback(
     async (participant: DiscussCaseParticipant) => {
       const confirmed = window.confirm(
-        `Zugriff von „${displayName(participant, currentUserId)}" entziehen?`,
+        fillTemplate(discussChromeT(locale, 'revokeConfirm'), {
+          name: displayName(participant, locale, currentUserId),
+        }),
       )
       if (!confirmed) return
       try {
@@ -113,10 +118,10 @@ export function DiscussCaseParticipants({
           participants.map((p) => (p.id === updated.id ? updated : p)),
         )
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Entziehen fehlgeschlagen')
+        setError(err instanceof Error ? err.message : discussChromeT(locale, 'revokeFailed'))
       }
     },
-    [currentUserId, discussionId, onParticipantsChange, participants],
+    [currentUserId, discussionId, locale, onParticipantsChange, participants],
   )
 
   return (
@@ -125,18 +130,18 @@ export function DiscussCaseParticipants({
         'discuss-case-participants',
         variant === 'tab' ? 'discuss-case-participants--tab' : '',
       ].join(' ').trim()}
-      aria-label="Teilnehmer"
+      aria-label={discussChromeT(locale, 'participants')}
     >
       <header className="discuss-case-participants__header">
         {variant === 'standalone' ? (
           <span className="discuss-case-participants__title">
             <Users className="h-4 w-4" strokeWidth={1.75} />
-            Teilnehmer
+            {discussChromeT(locale, 'participants')}
             <span className="discuss-case-participants__count">{activeParticipants.length}</span>
           </span>
         ) : (
           <span className="discuss-case-participants__tab-meta">
-            {activeParticipants.length} aktiv
+            {fillTemplate(discussChromeT(locale, 'activeCount'), { n: activeParticipants.length })}
           </span>
         )}
         {canInvite ? (
@@ -151,13 +156,13 @@ export function DiscussCaseParticipants({
             }}
           >
             <UserPlus className="h-3.5 w-3.5" strokeWidth={1.75} />
-            Einladen
+            {discussChromeT(locale, 'invite')}
           </button>
         ) : null}
       </header>
 
       {participants.length === 0 ? (
-        <p className="clinical-empty-state clinical-empty-state--compact discuss-case-participants__empty">Noch keine Teilnehmer.</p>
+        <p className="clinical-empty-state clinical-empty-state--compact discuss-case-participants__empty">{discussChromeT(locale, 'noParticipants')}</p>
       ) : (
         <ul className="discuss-case-participants__list">
           {participants.map((participant) => {
@@ -181,18 +186,18 @@ export function DiscussCaseParticipants({
                   className="discuss-case-participants__name"
                   style={{ color: color.text }}
                 >
-                  {displayName(participant, currentUserId)}
+                  {displayName(participant, locale, currentUserId)}
                 </span>
                 <span className="discuss-case-participants__badges">
                   <span className="discuss-case-participants__badge">
-                    {ROLE_LABELS[participant.role]}
+                    {discussRoleLabel(locale, participant.role)}
                   </span>
                   <span className="discuss-case-participants__badge discuss-case-participants__badge--access">
-                    {accessLabel(participant)}
+                    {accessLabel(participant, locale)}
                   </span>
                   {revoked ? (
                     <span className="discuss-case-participants__badge discuss-case-participants__badge--revoked">
-                      Zugriff entzogen
+                      {discussChromeT(locale, 'accessRevoked')}
                     </span>
                   ) : null}
                 </span>
@@ -203,7 +208,7 @@ export function DiscussCaseParticipants({
                   <button
                     type="button"
                     className="discuss-case-participants__revoke"
-                    title="Zugriff entziehen"
+                    title={discussChromeT(locale, 'revokeTitle')}
                     onClick={() => void handleRevoke(participant)}
                   >
                     <X className="h-3.5 w-3.5" strokeWidth={1.75} />
@@ -222,7 +227,7 @@ export function DiscussCaseParticipants({
             className="discuss-case-participants__invite-input"
             value={inviteeEmail}
             onChange={(e) => setInviteeEmail(e.target.value)}
-            placeholder="E-Mail / Benutzername"
+            placeholder={discussChromeT(locale, 'emailPlaceholder')}
           />
           <div className="discuss-case-participants__invite-type">
             <label>
@@ -232,7 +237,7 @@ export function DiscussCaseParticipants({
                 checked={inviteType === 'internal'}
                 onChange={() => setInviteType('internal')}
               />
-              Intern
+              {discussChromeT(locale, 'inviteInternal')}
             </label>
             <label>
               <input
@@ -241,7 +246,7 @@ export function DiscussCaseParticipants({
                 checked={inviteType === 'external'}
                 onChange={() => setInviteType('external')}
               />
-              Extern (de-identifiziert)
+              {discussChromeT(locale, 'inviteExternalDeid')}
             </label>
           </div>
           <button
@@ -251,7 +256,7 @@ export function DiscussCaseParticipants({
             onClick={() => void handleInvite()}
           >
             <Send className="h-3.5 w-3.5" strokeWidth={1.75} />
-            Einladung erstellen
+            {discussChromeT(locale, 'createInvite')}
           </button>
           {error ? <p className="discuss-case-participants__error">{error}</p> : null}
           {notice ? <p className="discuss-case-participants__notice">{notice}</p> : null}

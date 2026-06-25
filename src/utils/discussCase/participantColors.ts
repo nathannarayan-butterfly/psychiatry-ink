@@ -36,3 +36,51 @@ export function getParticipantColor(userId: string, index?: number): Participant
     index !== undefined ? index % PARTICIPANT_PALETTE.length : hashUserId(userId) % PARTICIPANT_PALETTE.length
   return PARTICIPANT_PALETTE[paletteIndex]
 }
+
+/** Bubble fill/border/text for chat — per userId, readable on pastel backgrounds. */
+export interface ChatBubbleColors {
+  bg: string
+  border: string
+  text: string
+}
+
+/** Bubble tint strength — low enough to read page behind, text stays fully opaque. */
+const BUBBLE_BG_OPACITY = 32
+const BUBBLE_BORDER_OPACITY = 44
+
+function translucentBubbleColor(color: string, opacityPercent: number): string {
+  return `color-mix(in srgb, ${color} ${opacityPercent}%, transparent)`
+}
+
+/** Other participants: stable pastel bubble from the shared palette. */
+export function getOtherBubbleColors(userId: string, index?: number): ChatBubbleColors {
+  const { bg, border, text } = getParticipantColor(userId, index)
+  return {
+    bg: translucentBubbleColor(bg, BUBBLE_BG_OPACITY),
+    border: translucentBubbleColor(border, BUBBLE_BORDER_OPACITY),
+    text,
+  }
+}
+
+/**
+ * Own messages: saturated pastel from the shared palette with a light accent wash
+ * so “sent” bubbles stay distinct per clinician (not flat grey).
+ */
+export function getOwnBubbleColors(userId: string, index?: number): ChatBubbleColors {
+  const { bg, border, text } = getParticipantColor(userId, index)
+  const tintedBg = `color-mix(in srgb, ${bg} 88%, var(--area-discuss, var(--dc-accent, #2563eb)) 12%)`
+  const tintedBorder = `color-mix(in srgb, ${border} 78%, var(--area-discuss, var(--dc-accent, #2563eb)) 22%)`
+  return {
+    bg: translucentBubbleColor(tintedBg, BUBBLE_BG_OPACITY),
+    border: translucentBubbleColor(tintedBorder, BUBBLE_BORDER_OPACITY),
+    text,
+  }
+}
+
+export function getChatBubbleColors(
+  userId: string,
+  isSelf: boolean,
+  index?: number,
+): ChatBubbleColors {
+  return isSelf ? getOwnBubbleColors(userId, index) : getOtherBubbleColors(userId, index)
+}

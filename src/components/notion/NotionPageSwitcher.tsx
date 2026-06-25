@@ -1,9 +1,14 @@
-import { ChevronDown, FlaskConical, GitBranch, LineChart, Mic, Pencil } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { ChevronDown, FlaskConical, GitBranch, LineChart, Mic, Pencil, ScrollText } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { DictationPhase } from '../../types/dictation'
 import type { InputMode } from '../../types'
-import { isToolPage, NOTION_PAGES, type NotionPageId } from './notionPages'
+import {
+  getVisibleNotionPages,
+  isToolPage,
+  NOTION_PAGES,
+  type NotionPageId,
+} from './notionPages'
 
 interface NotionPageSwitcherProps {
   activePage: NotionPageId
@@ -19,11 +24,11 @@ interface NotionPageSwitcherProps {
 }
 
 const DOCUMENT_PAGES = NOTION_PAGES.filter((page) => page.kind === 'document')
-const TOOL_PAGES = NOTION_PAGES.filter((page) => page.kind === 'lab')
 
 const toolPageIcons: Partial<Record<NotionPageId, typeof FlaskConical>> = {
   labor: FlaskConical,
   visualisation: LineChart,
+  arztbrief: ScrollText,
   timeline: GitBranch,
 }
 
@@ -39,10 +44,14 @@ export function NotionPageSwitcher({
   onDictate,
   dictationDisabled = false,
 }: NotionPageSwitcherProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const [toolsOpen, setToolsOpen] = useState(false)
   const toolsRef = useRef<HTMLDivElement>(null)
   const activeToolPage = isToolPage(activePage)
+  const toolPages = useMemo(
+    () => getVisibleNotionPages(language).filter((page) => page.kind === 'lab'),
+    [language],
+  )
 
   useEffect(() => {
     if (!toolsOpen) return
@@ -134,7 +143,7 @@ export function NotionPageSwitcher({
 
           {toolsOpen ? (
             <div className="notion-page-switcher__tools-menu" role="menu">
-              {TOOL_PAGES.map((page) => {
+              {toolPages.map((page) => {
                 const Icon = toolPageIcons[page.id]
                 return (
                   <button

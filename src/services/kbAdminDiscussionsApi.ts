@@ -6,17 +6,20 @@ import type {
   KbContributionVoteValue,
 } from '../types/kbContributions'
 
-async function kbAdminActorHeaders(userId: string): Promise<HeadersInit> {
+// `userId` is kept in the signatures for call-site ergonomics but is NEVER sent
+// to the server: the System Admin role is resolved server-side from the verified
+// Supabase token (`req.authUserId`). The legacy spoofable `X-KB-User-Id` header
+// is intentionally gone.
+async function kbAdminActorHeaders(): Promise<HeadersInit> {
   const auth = await getAuthHeaders()
   return {
     'Content-Type': 'application/json',
-    'X-KB-User-Id': userId,
     ...auth,
   }
 }
 
-async function kbAdminFetch<T>(path: string, userId: string, init?: RequestInit): Promise<T> {
-  const headers = await kbAdminActorHeaders(userId)
+async function kbAdminFetch<T>(path: string, _userId: string, init?: RequestInit): Promise<T> {
+  const headers = await kbAdminActorHeaders()
   const res = await fetch(`${API_BASE}/api/kb-admin${path}`, {
     ...init,
     headers: { ...headers, ...(init?.headers ?? {}) },

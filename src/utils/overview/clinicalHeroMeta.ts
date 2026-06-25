@@ -1,9 +1,11 @@
 import { getCaseMeta } from '../../hooks/useCaseRegistry'
-import { isDemoCase } from '../../demo'
 import type { UiTranslationKey } from '../../data/uiTranslations'
 import { DEFAULT_CASE_ID, shortCaseId } from '../caseContext'
 import { calculateAgeFromIsoDate } from '../clinicalDate'
+import { loadBefunde } from '../laborArchive'
 import { loadNotionPageDate } from '../notionPageDate'
+import { loadVerlaufFeed } from '../verlaufFeed'
+import { resolveCaseAnthropometry } from '../documentTemplate/anthropometryContext'
 import { formatDateDe } from './dateLabels'
 
 type TranslateFn = (key: UiTranslationKey) => string
@@ -15,6 +17,8 @@ export interface ClinicalHeroDemographics {
   age: string | null
   sex: string | null
   admission: string | null
+  height: string | null
+  weight: string | null
 }
 
 export interface ClinicalHeroMeta {
@@ -63,6 +67,8 @@ export function formatClinicalHeroDemographicsLine(
     `${t('patientAgeLabel')}: ${demographics.age ?? missing}`,
     `${t('patientFieldGeschlecht')}: ${demographics.sex ?? missing}`,
     `${t('patientFieldAufnahmedatum')}: ${demographics.admission ?? missing}`,
+    `${t('patientFieldGroesse')}: ${demographics.height ?? missing}`,
+    `${t('patientFieldGewicht')}: ${demographics.weight ?? missing}`,
   ].join(' · ')
 }
 
@@ -82,15 +88,21 @@ export function buildClinicalHeroMeta(caseId: string, t: TranslateFn): ClinicalH
     assignedName ||
     (caseId === DEFAULT_CASE_ID
       ? t('topNavWorkspaceFall')
-      : isDemoCase(caseId)
-        ? t('demoPatientDisplayName')
-        : t('patientCaseUnassigned').replace('{id}', shortCaseId(caseId)))
+      : t('patientCaseUnassigned').replace('{id}', shortCaseId(caseId)))
 
   const demographics: ClinicalHeroDemographics = {
     dob: formatDateDe(meta?.localGeburtsdatum?.trim()),
     age: resolveAgeLabel(meta?.localGeburtsdatum, meta?.localAge),
     sex: resolveSexLabel(meta?.localGeschlecht, t),
     admission: formatDateDe(loadNotionPageDate('aufnahme', caseId)),
+    height: null,
+    weight: null,
+  }
+
+  if (caseId !== DEFAULT_CASE_ID) {
+    const anthropometry = resolveCaseAnthropometry(loadBefunde(caseId), loadVerlaufFeed(caseId))
+    demographics.height = anthropometry.height ?? null
+    demographics.weight = anthropometry.weight ?? null
   }
 
   return {

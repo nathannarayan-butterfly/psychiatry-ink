@@ -2,9 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Printer } from 'lucide-react'
 import { ClinicalLoading } from '../ui/ClinicalLoading'
 import type { ConsultationRequest, ConsultationRequestStatus } from '../../types/consultation'
-import { CONSULTATION_STATUS_LABELS } from '../../types/consultation'
 import { listConsultationsForCase } from '../../services/consultationApi'
 import { printConsultationById } from '../../utils/consultation/printConsultation'
+import { useTranslation } from '../../context/TranslationContext'
+import {
+  translateConsultationStatus,
+  translateConsultationUi,
+} from '../../data/consultationUiTranslations'
 
 interface ConsultationCaseSectionProps {
   caseId: string
@@ -48,6 +52,7 @@ export function ConsultationCaseSection({
   onOpenRequest,
   onRequestConsultation,
 }: ConsultationCaseSectionProps) {
+  const { language } = useTranslation()
   const [requests, setRequests] = useState<ConsultationRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [printingId, setPrintingId] = useState<string | null>(null)
@@ -89,24 +94,24 @@ export function ConsultationCaseSection({
   }, [sortedRequests, handlePrint])
 
   return (
-    <section className="overview-konsile" aria-label="Konsile">
+    <section className="overview-konsile" aria-label={translateConsultationUi(language, 'konsileTitle')}>
       <div className="overview-konsile__header">
-        <h3 className="overview-konsile__title">Konsile</h3>
+        <h3 className="overview-konsile__title">{translateConsultationUi(language, 'konsileTitle')}</h3>
         <div className="overview-konsile__actions">
           <button
             type="button"
             className="overview-konsile__action"
             onClick={onRequestConsultation}
           >
-            Konsil anfordern
+            {translateConsultationUi(language, 'requestConsultation')}
           </button>
           <button
             type="button"
             className="icon-action-btn icon-action-btn--bordered"
             disabled={sortedRequests.length === 0 || printingId != null}
             onClick={() => void handlePrintLatest()}
-            title="Konsilanfrage drucken"
-            aria-label="Konsilanfrage drucken"
+            title={translateConsultationUi(language, 'printRequest')}
+            aria-label={translateConsultationUi(language, 'printRequest')}
           >
             <Printer size={14} aria-hidden />
           </button>
@@ -116,7 +121,7 @@ export function ConsultationCaseSection({
       {loading ? (
         <ClinicalLoading variant="inline" />
       ) : sortedRequests.length === 0 ? (
-        <p className="overview-konsile__empty">Noch keine Konsilanfragen</p>
+        <p className="overview-konsile__empty">{translateConsultationUi(language, 'noConsultationRequests')}</p>
       ) : (
         <ul className="overview-konsile__list">
           {sortedRequests.map((req) => (
@@ -129,12 +134,12 @@ export function ConsultationCaseSection({
                 <div className="overview-konsile__card-head">
                   <span className="overview-konsile__specialty">{req.specialty}</span>
                   <span className={statusBadgeClass(req.status)}>
-                    {CONSULTATION_STATUS_LABELS[req.status]}
+                    {translateConsultationStatus(language, req.status)}
                   </span>
                 </div>
                 <span className="overview-konsile__name">{req.title}</span>
                 {req.status === 'submitted' ? (
-                  <span className="overview-konsile__hint">Konsilbericht zur Prüfung öffnen</span>
+                  <span className="overview-konsile__hint">{translateConsultationUi(language, 'openReportForReview')}</span>
                 ) : null}
               </button>
               <button
@@ -145,8 +150,8 @@ export function ConsultationCaseSection({
                   event.stopPropagation()
                   void handlePrint(req.id)
                 }}
-                title="Konsilanfrage drucken"
-                aria-label="Konsilanfrage drucken"
+                title={translateConsultationUi(language, 'printRequest')}
+                aria-label={translateConsultationUi(language, 'printRequest')}
               >
                 <Printer size={13} aria-hidden />
               </button>

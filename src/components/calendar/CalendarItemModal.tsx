@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
+import { translateSettingsWorkspaceUi } from '../../data/settingsWorkspaceUiTranslations'
 import type { DashboardCase } from '../../hooks/useCaseRegistry'
 import { IntegrationCasePicker } from '../settings/IntegrationCasePicker'
 import { NewPatientDialog, type NewPatientData } from '../dashboard/NewPatientDialog'
@@ -10,7 +11,7 @@ import type {
   CreateCalendarItemInput,
 } from '../../types/calendar'
 import { CALENDAR_ITEM_TYPES } from '../../types/calendar'
-import { CALENDAR_PRIORITY_LABELS, CALENDAR_TYPE_LABELS, typeAccentClass } from '../../utils/calendarLabels'
+import { CALENDAR_PRIORITY_LABEL_KEYS, CALENDAR_TYPE_LABEL_KEYS, typeAccentClass } from '../../utils/calendarLabels'
 
 interface CalendarItemModalProps {
   open: boolean
@@ -42,7 +43,7 @@ export function CalendarItemModal({
   defaultStart,
   onCreatePatient,
 }: CalendarItemModalProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const startDefault = defaultStart ?? new Date()
   const [type, setType] = useState<CalendarItemType>('consultation')
   const [title, setTitle] = useState('')
@@ -92,17 +93,21 @@ export function CalendarItemModal({
         if (!title.trim() && label) setTitle(label)
         setShowNewPatientDialog(false)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Patient konnte nicht angelegt werden')
+        setError(
+          err instanceof Error
+            ? err.message
+            : translateSettingsWorkspaceUi(language, 'calPatientCreateFailed'),
+        )
       } finally {
         setCreatingPatient(false)
       }
     },
-    [onCreatePatient, title],
+    [onCreatePatient, title, language],
   )
 
   const handleSubmit = useCallback(async () => {
     if (!title.trim()) {
-      setError('Titel ist erforderlich')
+      setError(translateSettingsWorkspaceUi(language, 'calTitleRequired'))
       return
     }
     setSaving(true)
@@ -121,11 +126,13 @@ export function CalendarItemModal({
       })
       onClose()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Speichern fehlgeschlagen')
+      setError(
+        err instanceof Error ? err.message : translateSettingsWorkspaceUi(language, 'calSaveFailed'),
+      )
     } finally {
       setSaving(false)
     }
-  }, [type, title, caseId, startTime, endTime, priority, location, notes, reason, onSave, onClose])
+  }, [type, title, caseId, startTime, endTime, priority, location, notes, reason, onSave, onClose, language])
 
   const caseOptions = useMemo(() => cases.filter((c) => c.caseId), [cases])
 
@@ -141,28 +148,30 @@ export function CalendarItemModal({
         onClick={(e) => e.stopPropagation()}
       >
         <h2 id="calendar-modal-title" className="calendar-modal__title">
-          {initial?.id ? 'Termin bearbeiten' : 'Termin planen'}
+          {initial?.id
+            ? translateSettingsWorkspaceUi(language, 'calItemEdit')
+            : translateSettingsWorkspaceUi(language, 'calItemPlan')}
         </h2>
 
         <div className="calendar-modal__grid">
           <label className="calendar-field">
-            <span className="calendar-field__label">Typ</span>
+            <span className="calendar-field__label">{translateSettingsWorkspaceUi(language, 'calType')}</span>
             <select className="calendar-field__input" value={type} onChange={(e) => setType(e.target.value as CalendarItemType)}>
               {CALENDAR_ITEM_TYPES.map((entry) => (
                 <option key={entry} value={entry}>
-                  {CALENDAR_TYPE_LABELS[entry]}
+                  {t(CALENDAR_TYPE_LABEL_KEYS[entry])}
                 </option>
               ))}
             </select>
           </label>
 
           <label className="calendar-field calendar-field--full">
-            <span className="calendar-field__label">Titel</span>
+            <span className="calendar-field__label">{translateSettingsWorkspaceUi(language, 'calTitle')}</span>
             <input
               className="calendar-field__input"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Kurzbeschreibung"
+              placeholder={translateSettingsWorkspaceUi(language, 'calTitlePlaceholder')}
             />
           </label>
 
@@ -175,9 +184,9 @@ export function CalendarItemModal({
                   setCaseId(nextCaseId)
                   setLinkedPatientLabel(null)
                 }}
-                label="Patient / Fall"
-                searchPlaceholder="Patient suchen…"
-                noResultsLabel="Keine Treffer"
+                label={translateSettingsWorkspaceUi(language, 'calPatientCase')}
+                searchPlaceholder={translateSettingsWorkspaceUi(language, 'calPatientSearch')}
+                noResultsLabel={translateSettingsWorkspaceUi(language, 'calNoResults')}
                 id="calendar-case-picker"
               />
               {onCreatePatient ? (
@@ -199,7 +208,7 @@ export function CalendarItemModal({
           </div>
 
           <label className="calendar-field">
-            <span className="calendar-field__label">Beginn</span>
+            <span className="calendar-field__label">{translateSettingsWorkspaceUi(language, 'calStart')}</span>
             <input
               type="datetime-local"
               className="calendar-field__input"
@@ -209,7 +218,7 @@ export function CalendarItemModal({
           </label>
 
           <label className="calendar-field">
-            <span className="calendar-field__label">Ende</span>
+            <span className="calendar-field__label">{translateSettingsWorkspaceUi(language, 'calEnd')}</span>
             <input
               type="datetime-local"
               className="calendar-field__input"
@@ -219,32 +228,32 @@ export function CalendarItemModal({
           </label>
 
           <label className="calendar-field">
-            <span className="calendar-field__label">Priorität</span>
+            <span className="calendar-field__label">{translateSettingsWorkspaceUi(language, 'calPriority')}</span>
             <select
               className="calendar-field__input"
               value={priority}
               onChange={(e) => setPriority(e.target.value as CalendarPriority)}
             >
-              {(Object.keys(CALENDAR_PRIORITY_LABELS) as CalendarPriority[]).map((p) => (
+              {(Object.keys(CALENDAR_PRIORITY_LABEL_KEYS) as CalendarPriority[]).map((p) => (
                 <option key={p} value={p}>
-                  {CALENDAR_PRIORITY_LABELS[p]}
+                  {t(CALENDAR_PRIORITY_LABEL_KEYS[p])}
                 </option>
               ))}
             </select>
           </label>
 
           <label className="calendar-field">
-            <span className="calendar-field__label">Ort</span>
+            <span className="calendar-field__label">{translateSettingsWorkspaceUi(language, 'calLocation')}</span>
             <input
               className="calendar-field__input"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder="z. B. Sprechzimmer 2"
+              placeholder={translateSettingsWorkspaceUi(language, 'calLocationPlaceholder')}
             />
           </label>
 
           <label className="calendar-field calendar-field--full">
-            <span className="calendar-field__label">Grund / Anlass</span>
+            <span className="calendar-field__label">{translateSettingsWorkspaceUi(language, 'calReason')}</span>
             <input
               className="calendar-field__input"
               value={reason}
@@ -253,7 +262,7 @@ export function CalendarItemModal({
           </label>
 
           <label className="calendar-field calendar-field--full">
-            <span className="calendar-field__label">Notizen</span>
+            <span className="calendar-field__label">{translateSettingsWorkspaceUi(language, 'calNotes')}</span>
             <textarea
               className="calendar-field__textarea"
               value={notes}
@@ -271,10 +280,12 @@ export function CalendarItemModal({
 
         <div className="calendar-modal__actions">
           <button type="button" className="calendar-btn calendar-btn--ghost" onClick={onClose}>
-            Abbrechen
+            {translateSettingsWorkspaceUi(language, 'calCancel')}
           </button>
           <button type="button" className="calendar-btn calendar-btn--primary" disabled={saving} onClick={() => void handleSubmit()}>
-            {saving ? 'Speichern…' : 'Speichern'}
+            {saving
+              ? translateSettingsWorkspaceUi(language, 'calSaving')
+              : translateSettingsWorkspaceUi(language, 'calSave')}
           </button>
         </div>
       </div>
@@ -297,6 +308,7 @@ interface RescheduleModalProps {
 }
 
 export function CalendarRescheduleModal({ open, item, onClose, onReschedule }: RescheduleModalProps) {
+  const { language } = useTranslation()
   const [startTime, setStartTime] = useState('')
   const [endTime, setEndTime] = useState('')
   const [reason, setReason] = useState('')
@@ -314,21 +326,23 @@ export function CalendarRescheduleModal({ open, item, onClose, onReschedule }: R
   return (
     <div className="calendar-modal-backdrop" role="presentation" onClick={onClose}>
       <div className="calendar-modal calendar-modal--compact" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-        <h2 className="calendar-modal__title">Termin verschieben</h2>
+        <h2 className="calendar-modal__title">{translateSettingsWorkspaceUi(language, 'calReschedule')}</h2>
         <label className="calendar-field">
-          <span className="calendar-field__label">Neuer Beginn</span>
+          <span className="calendar-field__label">{translateSettingsWorkspaceUi(language, 'calNewStart')}</span>
           <input type="datetime-local" className="calendar-field__input" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
         </label>
         <label className="calendar-field">
-          <span className="calendar-field__label">Neues Ende</span>
+          <span className="calendar-field__label">{translateSettingsWorkspaceUi(language, 'calNewEnd')}</span>
           <input type="datetime-local" className="calendar-field__input" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
         </label>
         <label className="calendar-field">
-          <span className="calendar-field__label">Grund (optional)</span>
+          <span className="calendar-field__label">{translateSettingsWorkspaceUi(language, 'calReasonOptional')}</span>
           <input className="calendar-field__input" value={reason} onChange={(e) => setReason(e.target.value)} />
         </label>
         <div className="calendar-modal__actions">
-          <button type="button" className="calendar-btn calendar-btn--ghost" onClick={onClose}>Abbrechen</button>
+          <button type="button" className="calendar-btn calendar-btn--ghost" onClick={onClose}>
+            {translateSettingsWorkspaceUi(language, 'calCancel')}
+          </button>
           <button
             type="button"
             className="calendar-btn calendar-btn--primary"
@@ -340,7 +354,7 @@ export function CalendarRescheduleModal({ open, item, onClose, onReschedule }: R
                 .finally(() => setSaving(false))
             }}
           >
-            Verschieben
+            {translateSettingsWorkspaceUi(language, 'calRescheduleBtn')}
           </button>
         </div>
       </div>

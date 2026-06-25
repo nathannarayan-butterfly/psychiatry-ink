@@ -22,6 +22,10 @@ export function AskButterflyOpenButton({
         ? 'ask-butterfly-open-btn ask-butterfly-open-btn--topbar'
         : 'ask-butterfly-open-btn ask-butterfly-open-btn--global'
 
+  // The sidebar footer sits on the dark case-sidebar surface, so render the
+  // metallic/glowing mark there; the topbar and floating triggers are light.
+  const tone = variant === 'sidebar' ? 'silver' : 'color'
+
   return (
     <button
       type="button"
@@ -30,7 +34,7 @@ export function AskButterflyOpenButton({
       title={t('askButterflyOpen')}
       aria-label={t('askButterflyOpen')}
     >
-      <ButterflyLogo variant="grey" size={variant === 'global' ? 24 : 22} />
+      <ButterflyLogo variant="grey" tone={tone} breathing size={variant === 'global' ? 24 : 22} />
     </button>
   )
 }

@@ -71,7 +71,9 @@
   --case-sidebar-bg-hover: color-mix(in srgb, var(--accent) 70%, white 12%);
   --case-sidebar-widget-bg: color-mix(in srgb, var(--accent) 58%, white 22%);
   --case-sidebar-muted: color-mix(in srgb, white 62%, transparent);
-  --case-sidebar-border: color-mix(in srgb, white 14%, transparent);
+  /* Shared hairline token (= white 14%) so the sidebar borders match the
+     command-deck hero exactly — one source of truth for dark-surface lines. */
+  --case-sidebar-border: var(--aura-hairline, color-mix(in srgb, white 14%, transparent));
   --case-sidebar-accent-text: color-mix(in srgb, white 92%, var(--accent) 8%);
 
   position: fixed;
@@ -84,7 +86,17 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  background: var(--case-sidebar-bg);
+  /* Accent-derived dark surface (background-COLOR) + a subtle warm aura glow
+     anchored to the top edge (background-IMAGE), echoing the hero's top glow so
+     the dark sidebar + dark hero read as one system. The glow uses the shared,
+     accent-locked --aura-glow-warm, so it stays consistent across every clinical
+     area + settings that reuse this panel and never hurts text contrast. */
+  background-color: var(--case-sidebar-bg);
+  background-image: radial-gradient(
+    125% 38% at 50% 0%,
+    color-mix(in srgb, var(--aura-glow-warm) 18%, transparent),
+    transparent 70%
+  );
   color: #fff;
   /* Left inset respects a system safe area (e.g. a left dock/menu on Ubuntu)
      while keeping the existing 1.15rem internal padding as the floor. Width is
@@ -156,13 +168,13 @@
 
 .case-sidebar-panel__logo .topbar-logo {
   max-width: 100%;
-  font-size: 1.1rem;
+  font-size: 1.32rem; /* 1.1rem × 1.2 */
   line-height: 1;
 }
 
 @media (min-width: 40rem) {
   .case-sidebar-panel__logo .topbar-logo {
-    font-size: 1.26rem;
+    font-size: 1.512rem; /* 1.26rem × 1.2 */
   }
 }
 
@@ -192,18 +204,18 @@
 }
 
 .case-sidebar-panel__logo .topbar-logo__mark {
-  height: 2.42em;
+  height: 4.2em;
   max-width: none;
-  margin-left: -0.16rem;
+  margin-left: -0.4rem;
   translate: 0 0.02em;
 }
 
 /*
- * Two-tone mark for the dark sidebar. The mark is inlined as <svg> (see
- * AppLogo light variant) so its two groups recolor independently instead of a
- * flat invert that washed the whole thing white: #black-artwork becomes the
- * light silhouette, #white-details become dark engraved accents so the nib,
- * inkwell rim and interior lettering keep their depth on the dark panel.
+ * White mark for the dark sidebar. The inlined <svg> is the `Ink_logo_BW`
+ * artwork (white paths, backing rectangle stripped — see AppLogo light
+ * variant), so it sits as a crisp transparent white silhouette on the dark
+ * panel. We force the fill white here too so the mark stays correct even if
+ * the asset's embedded <style> is ever dropped during inlining.
  */
 .topbar-logo--light .topbar-logo__mark-host {
   display: inline-flex;
@@ -216,14 +228,8 @@
   filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.34));
 }
 
-.topbar-logo--light .topbar-logo__mark--inline #black-artwork,
-.topbar-logo--light .topbar-logo__mark--inline #black-artwork path {
-  fill: color-mix(in srgb, white 95%, var(--accent) 5%);
-}
-
-.topbar-logo--light .topbar-logo__mark--inline #white-details,
-.topbar-logo--light .topbar-logo__mark--inline #white-details path {
-  fill: color-mix(in srgb, black 80%, var(--accent) 20%);
+.topbar-logo--light .topbar-logo__mark--inline path {
+  fill: color-mix(in srgb, white 96%, var(--accent) 4%);
 }
 
 .case-sidebar-panel .topbar-logo--light .topbar-logo__beta {
@@ -912,13 +918,16 @@
 }
 
 .case-sidebar-panel .diagnosen-widget__add-btn,
-.case-sidebar-panel .diagnosen-widget__edit-btn {
+.case-sidebar-panel .diagnosen-widget__edit-btn,
+.case-sidebar-panel .diagnosen-widget__delete-btn {
   color: var(--case-sidebar-muted);
   border-color: var(--case-sidebar-border);
+  background: color-mix(in srgb, white 8%, transparent);
 }
 
 .case-sidebar-panel .diagnosen-widget__add-btn:hover,
-.case-sidebar-panel .diagnosen-widget__edit-btn:hover {
+.case-sidebar-panel .diagnosen-widget__edit-btn:hover,
+.case-sidebar-panel .diagnosen-widget__delete-btn:hover {
   color: #fff;
   background: var(--case-sidebar-bg-hover);
 }
@@ -1607,5 +1616,12 @@
 
   .patient-dashboard--case-sidebar .patient-dashboard__content {
     overflow-y: visible;
+  }
+}
+
+/* Drop the sidebar's aura glow for print (ink-saving, high-contrast). */
+@media print {
+  .case-sidebar-panel {
+    background-image: none;
   }
 }

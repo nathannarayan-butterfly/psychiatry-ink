@@ -2,7 +2,6 @@ import { Archive, Pencil, Trash2 } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { DashboardCase, LocalGeschlecht } from '../../hooks/useCaseRegistry'
 import { formatSiteLocaleDate } from '../../utils/siteTimezone'
-import { isDemoCase } from '../../demo'
 
 interface PatientCaseCardProps {
   caseItem: DashboardCase
@@ -39,7 +38,6 @@ export function PatientCaseCard({
   archived = false,
 }: PatientCaseCardProps) {
   const { t, language } = useTranslation()
-  const demo = isDemoCase(caseItem.caseId)
   const symbol = genderSymbol(caseItem.localGeschlecht)
   const genderLabel = genderAriaLabel(caseItem.localGeschlecht, t)
 
@@ -58,7 +56,6 @@ export function PatientCaseCard({
       >
         <h3 className="patient-case-card__title">
           {caseItem.displayTitle}
-          {demo ? <span className="demo-patient-chip">{t('demoCaseLabel')}</span> : null}
         </h3>
 
         <div className="patient-case-card__facts">

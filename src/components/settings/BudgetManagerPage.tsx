@@ -16,6 +16,11 @@ import {
   saveAiBudgetConfig,
 } from '../../services/aiUsageApi'
 import { ClinicalLoading } from '../ui/ClinicalLoading'
+import { useTranslation } from '../../context/TranslationContext'
+import {
+  formatSettingsExtraUi,
+  translateSettingsExtraUi,
+} from '../../data/settingsExtraUiTranslations'
 import '../../styles/budget-manager.css'
 
 interface BudgetManagerPageProps {
@@ -31,6 +36,7 @@ function formatTokens(value: number): string {
 }
 
 function BreakdownTable({ title, rows }: { title: string; rows: AiUsageBreakdownRow[] }) {
+  const { language } = useTranslation()
   return (
     <section className="budget-section" aria-labelledby={`budget-${title}`}>
       <h2 id={`budget-${title}`} className="budget-section__heading">
@@ -40,11 +46,11 @@ function BreakdownTable({ title, rows }: { title: string; rows: AiUsageBreakdown
         <table className="budget-table">
           <thead>
             <tr>
-              <th>Schlüssel</th>
+              <th>{translateSettingsExtraUi(language, 'budgetTableColKey')}</th>
               <th>Tokens</th>
-              <th>Kosten (EUR)</th>
-              <th>Aufrufe</th>
-              <th>Provider / Schätzung</th>
+              <th>{translateSettingsExtraUi(language, 'budgetCostEur')}</th>
+              <th>{translateSettingsExtraUi(language, 'budgetTableColCalls')}</th>
+              <th>{translateSettingsExtraUi(language, 'budgetProviderEstimate')}</th>
             </tr>
           </thead>
           <tbody>
@@ -62,7 +68,7 @@ function BreakdownTable({ title, rows }: { title: string; rows: AiUsageBreakdown
             {rows.length === 0 ? (
               <tr>
                 <td colSpan={5} className="budget-table__empty">
-                  Keine Daten
+                  {translateSettingsExtraUi(language, 'budgetNoData')}
                 </td>
               </tr>
             ) : null}
@@ -74,6 +80,7 @@ function BreakdownTable({ title, rows }: { title: string; rows: AiUsageBreakdown
 }
 
 export function BudgetManagerPage({ onBack }: BudgetManagerPageProps) {
+  const { language } = useTranslation()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [summary, setSummary] = useState<AiUsageMonthlySummary | null>(null)
@@ -130,11 +137,11 @@ export function BudgetManagerPage({ onBack }: BudgetManagerPageProps) {
         })
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Laden fehlgeschlagen')
+      setError(err instanceof Error ? err.message : translateSettingsExtraUi(language, 'budgetLoadFailed'))
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [language])
 
   useEffect(() => {
     void load()
@@ -155,10 +162,10 @@ export function BudgetManagerPage({ onBack }: BudgetManagerPageProps) {
       }
       const res = await saveAiBudgetConfig(payload)
       setConfig(res.config)
-      setSaveMessage('Gespeichert')
+      setSaveMessage(translateSettingsExtraUi(language, 'budgetSaved'))
       await load()
     } catch (err) {
-      setSaveMessage(err instanceof Error ? err.message : 'Speichern fehlgeschlagen')
+      setSaveMessage(err instanceof Error ? err.message : translateSettingsExtraUi(language, 'commonSaveFailed'))
     } finally {
       setSaving(false)
     }
@@ -167,7 +174,7 @@ export function BudgetManagerPage({ onBack }: BudgetManagerPageProps) {
   if (loading) {
     return (
       <div className="budget-page">
-        <ClinicalLoading label="Budget-Daten laden…" />
+        <ClinicalLoading label={translateSettingsExtraUi(language, 'budgetLoadingData')} />
       </div>
     )
   }
@@ -178,10 +185,10 @@ export function BudgetManagerPage({ onBack }: BudgetManagerPageProps) {
         <header className="budget-page__header">
           <button type="button" className="budget-back" onClick={onBack}>
             <ArrowLeft className="h-4 w-4" strokeWidth={1.5} aria-hidden />
-            Zurück
+            {translateSettingsExtraUi(language, 'commonBack')}
           </button>
-          <h1 className="budget-page__title">KI-Budget &amp; Token-Nutzung</h1>
-          <p className="budget-page__sub">Monatsübersicht — keine klinischen Inhalte in den Logs</p>
+          <h1 className="budget-page__title">{translateSettingsExtraUi(language, 'budgetPageTitle')}</h1>
+          <p className="budget-page__sub">{translateSettingsExtraUi(language, 'budgetPageSub')}</p>
         </header>
 
         {error ? <p className="team-settings-error">{error}</p> : null}
@@ -190,19 +197,19 @@ export function BudgetManagerPage({ onBack }: BudgetManagerPageProps) {
           <>
             <section className="budget-overview" aria-labelledby="budget-overview">
               <h2 id="budget-overview" className="budget-section__heading">
-                Aktueller Monat
+                {translateSettingsExtraUi(language, 'budgetCurrentMonth')}
               </h2>
               <div className="budget-overview__grid">
                 <div className="budget-stat">
-                  <span className="budget-stat__label">Kosten (EUR)</span>
+                  <span className="budget-stat__label">{translateSettingsExtraUi(language, 'budgetCostEur')}</span>
                   <span className="budget-stat__value">{formatEur(summary.totalCostEur)}</span>
                 </div>
                 <div className="budget-stat">
-                  <span className="budget-stat__label">Tokens gesamt</span>
+                  <span className="budget-stat__label">{translateSettingsExtraUi(language, 'budgetTotalTokens')}</span>
                   <span className="budget-stat__value">{formatTokens(summary.totalTokens)}</span>
                 </div>
                 <div className="budget-stat">
-                  <span className="budget-stat__label">Generierungen</span>
+                  <span className="budget-stat__label">{translateSettingsExtraUi(language, 'budgetGenerations')}</span>
                   <span className="budget-stat__value">{summary.generationCount}</span>
                 </div>
                 <div className="budget-stat">
@@ -212,14 +219,14 @@ export function BudgetManagerPage({ onBack }: BudgetManagerPageProps) {
                   </span>
                 </div>
                 <div className="budget-stat">
-                  <span className="budget-stat__label">Provider / Schätzung</span>
+                  <span className="budget-stat__label">{translateSettingsExtraUi(language, 'budgetProviderEstimate')}</span>
                   <span className="budget-stat__value">
                     {summary.providerReportedCount} / {summary.estimatedCount}
                   </span>
                 </div>
                 {summary.budgetPercent != null ? (
                   <div className="budget-stat">
-                    <span className="budget-stat__label">Budget-Auslastung</span>
+                    <span className="budget-stat__label">{translateSettingsExtraUi(language, 'budgetUtilization')}</span>
                     <span className="budget-stat__value">{summary.budgetPercent}%</span>
                   </div>
                 ) : null}
@@ -227,7 +234,7 @@ export function BudgetManagerPage({ onBack }: BudgetManagerPageProps) {
 
               {summary.topFeatures.length > 0 ? (
                 <div className="budget-top-features">
-                  <h3 className="budget-subheading">Top 5 Features</h3>
+                  <h3 className="budget-subheading">{translateSettingsExtraUi(language, 'budgetTopFeatures')}</h3>
                   <ul>
                     {summary.topFeatures.map((f) => (
                       <li key={f.featureKey}>
@@ -241,30 +248,33 @@ export function BudgetManagerPage({ onBack }: BudgetManagerPageProps) {
 
             {quotaUsage ? (
               <section className="budget-section">
-                <h2 className="budget-section__heading">KI-Kontingent (parallel)</h2>
+                <h2 className="budget-section__heading">{translateSettingsExtraUi(language, 'budgetQuotaTitle')}</h2>
                 <p className="budget-section__sub">
-                  Generierungen: {quotaUsage.generationCount} · Tokens: {formatTokens(quotaUsage.tokenCount)} ·
-                  Transkription: {quotaUsage.transcriptionMinutes.toFixed(1)} min
+                  {formatSettingsExtraUi(language, 'budgetQuotaLine', {
+                    gen: quotaUsage.generationCount,
+                    tokens: formatTokens(quotaUsage.tokenCount),
+                    min: quotaUsage.transcriptionMinutes.toFixed(1),
+                  })}
                 </p>
               </section>
             ) : null}
 
-            <BreakdownTable title="Provider" rows={providerRows} />
-            <BreakdownTable title="Modelle" rows={modelRows} />
-            <BreakdownTable title="Features" rows={featureRows} />
-            {userRows.length > 1 ? <BreakdownTable title="Benutzer" rows={userRows} /> : null}
+            <BreakdownTable title={translateSettingsExtraUi(language, 'budgetTableProvider')} rows={providerRows} />
+            <BreakdownTable title={translateSettingsExtraUi(language, 'budgetTableModels')} rows={modelRows} />
+            <BreakdownTable title={translateSettingsExtraUi(language, 'budgetTableFeatures')} rows={featureRows} />
+            {userRows.length > 1 ? <BreakdownTable title={translateSettingsExtraUi(language, 'budgetTableUsers')} rows={userRows} /> : null}
           </>
         ) : (
-          <p className="budget-section__sub">Keine Nutzungsdaten verfügbar (Supabase nicht konfiguriert).</p>
+          <p className="budget-section__sub">{translateSettingsExtraUi(language, 'budgetNoUsageData')}</p>
         )}
 
         <section className="budget-section" aria-labelledby="budget-settings">
           <h2 id="budget-settings" className="budget-section__heading">
-            Budget-Einstellungen
+            {translateSettingsExtraUi(language, 'budgetSettings')}
           </h2>
           <div className="budget-form">
             <label className="team-settings-label">
-              Monatsbudget EUR
+              {translateSettingsExtraUi(language, 'budgetMonthlyEur')}
               <input
                 className="team-settings-input"
                 value={form.monthlyBudgetEur}
@@ -273,7 +283,7 @@ export function BudgetManagerPage({ onBack }: BudgetManagerPageProps) {
               />
             </label>
             <label className="team-settings-label">
-              Monatsbudget USD
+              {translateSettingsExtraUi(language, 'budgetMonthlyUsd')}
               <input
                 className="team-settings-input"
                 value={form.monthlyBudgetUsd}
@@ -287,7 +297,7 @@ export function BudgetManagerPage({ onBack }: BudgetManagerPageProps) {
                 checked={form.warnAt50}
                 onChange={(e) => setForm((f) => ({ ...f, warnAt50: e.target.checked }))}
               />
-              Warnung bei 50%
+              {formatSettingsExtraUi(language, 'budgetWarnAtPercent', { percent: 50 })}
             </label>
             <label className="team-settings-permission-item">
               <input
@@ -295,7 +305,7 @@ export function BudgetManagerPage({ onBack }: BudgetManagerPageProps) {
                 checked={form.warnAt80}
                 onChange={(e) => setForm((f) => ({ ...f, warnAt80: e.target.checked }))}
               />
-              Warnung bei 80%
+              {formatSettingsExtraUi(language, 'budgetWarnAtPercent', { percent: 80 })}
             </label>
             <label className="team-settings-permission-item">
               <input
@@ -303,7 +313,7 @@ export function BudgetManagerPage({ onBack }: BudgetManagerPageProps) {
                 checked={form.warnAt100}
                 onChange={(e) => setForm((f) => ({ ...f, warnAt100: e.target.checked }))}
               />
-              Warnung bei 100%
+              {formatSettingsExtraUi(language, 'budgetWarnAtPercent', { percent: 100 })}
             </label>
             <label className="team-settings-permission-item">
               <input
@@ -311,10 +321,10 @@ export function BudgetManagerPage({ onBack }: BudgetManagerPageProps) {
                 checked={form.hardLimitEnabled}
                 onChange={(e) => setForm((f) => ({ ...f, hardLimitEnabled: e.target.checked }))}
               />
-              Hartes Limit aktiv (optional, blockiert nur KI-Generierung)
+              {translateSettingsExtraUi(language, 'budgetHardLimitEnabled')}
             </label>
             <label className="team-settings-label">
-              Hartes Limit EUR
+              {translateSettingsExtraUi(language, 'budgetHardLimitEur')}
               <input
                 className="team-settings-input"
                 value={form.hardLimitEur}
@@ -328,18 +338,22 @@ export function BudgetManagerPage({ onBack }: BudgetManagerPageProps) {
               onClick={() => void handleSave()}
               disabled={saving}
             >
-              Speichern
+              {translateSettingsExtraUi(language, 'commonSave')}
             </button>
             {saveMessage ? <p className="team-settings-success">{saveMessage}</p> : null}
             {config?.updatedAt ? (
-              <p className="budget-section__sub">Zuletzt aktualisiert: {new Date(config.updatedAt).toLocaleString('de-DE')}</p>
+              <p className="budget-section__sub">
+                {formatSettingsExtraUi(language, 'budgetLastUpdated', {
+                  date: new Date(config.updatedAt).toLocaleString('de-DE'),
+                })}
+              </p>
             ) : null}
           </div>
         </section>
 
         {warnings.length > 0 ? (
           <section className="budget-section">
-            <h2 className="budget-section__heading">Budget-Warnungen</h2>
+            <h2 className="budget-section__heading">{translateSettingsExtraUi(language, 'budgetWarnings')}</h2>
             <ul className="budget-warnings">
               {warnings.map((w) => (
                 <li key={w.id}>
@@ -351,7 +365,7 @@ export function BudgetManagerPage({ onBack }: BudgetManagerPageProps) {
         ) : null}
 
         <section className="budget-section">
-          <h2 className="budget-section__heading">Export</h2>
+          <h2 className="budget-section__heading">{translateSettingsExtraUi(language, 'budgetExport')}</h2>
           <div className="budget-export">
             <a className="team-settings-btn" href={aiUsageExportUrl('csv')} download>
               <Download className="h-4 w-4" strokeWidth={1.5} aria-hidden />

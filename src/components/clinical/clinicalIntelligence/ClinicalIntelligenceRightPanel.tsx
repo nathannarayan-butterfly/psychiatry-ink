@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { useTranslation } from '../../../context/TranslationContext'
 import type { UseClinicalIntelligenceResult } from '../../../hooks/useClinicalIntelligence'
-import { computeCiReviewCounts } from '../../../utils/clinicalIntelligence/reviewCounts'
 import { ClinicalIntelligenceDiscussPanel } from './ClinicalIntelligenceDiscussPanel'
 
 interface ClinicalIntelligenceRightPanelProps {
@@ -22,12 +21,6 @@ export function ClinicalIntelligenceRightPanel({
   onOpenSavedDocument,
 }: ClinicalIntelligenceRightPanelProps) {
   const { t, language } = useTranslation()
-  const run = ci.latestRun
-
-  const counts = useMemo(
-    () => computeCiReviewCounts(ci.state, run),
-    [ci.state, run],
-  )
 
   const savedLabel = useMemo(() => {
     if (!savedAt) return null
@@ -44,19 +37,11 @@ export function ClinicalIntelligenceRightPanel({
     }
   }, [language, savedAt])
 
-  const exploratoryTotal = counts.exploratoryDimensional + counts.exploratoryMechanism
-
   return (
     <aside className="ci-right-rail" aria-label={t('ciRightRailTitle')}>
       <div className="ci-right-rail__head">
         <h3 className="ci-right-rail__title">{t('ciRightRailTitle')}</h3>
       </div>
-
-      {exploratoryTotal > 0 ? (
-        <p className="ci-right-rail__exploratory">
-          {t('ciRightRailExploratory')}: {exploratoryTotal}
-        </p>
-      ) : null}
 
       {savedLabel ? (
         <p className="ci-right-rail__saved-meta">

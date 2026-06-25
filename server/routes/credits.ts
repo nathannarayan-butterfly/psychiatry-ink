@@ -10,7 +10,7 @@ creditsRouter.get('/', async (req: Request, res: Response) => {
     const userId = requireRouteAuth(req, res)
     if (!userId) return
     const balance = await getCreditBalance(userId)
-    res.json({ balance })
+    res.json({ balance, totalAvailable: balance })
   } catch (error) {
     console.error('[credits] read failed:', error)
     res.status(500).json({ error: 'Failed to read balance' })

@@ -2,11 +2,16 @@ import { useCallback, useMemo, useState } from 'react'
 import { ArrowLeft, Eye, Send, Users } from 'lucide-react'
 import type { ClinicalWorkspacePayload } from '../../utils/workspaceVault'
 import type { DiscussPackageContent, DiscussPackageSectionKey } from '../../types/discussCase'
-import { DISCUSS_PACKAGE_SECTION_LABELS } from '../../types/discussCase'
 import {
   ALL_PACKAGE_SECTION_KEYS,
   buildDiscussionPackage,
 } from '../../utils/discussCase/buildPackage'
+import { loadStoredUiLanguage } from '../../utils/clinicalLanguage'
+import {
+  discussChromeT,
+  discussSectionLabel,
+  resolveDiscussChromeLocale,
+} from '../../utils/discussCase/chromeI18n'
 import {
   createDiscussion,
   createDiscussInvite,
@@ -39,11 +44,12 @@ export function DiscussCasePackageBuilder({
   onBack,
   onCreated,
 }: DiscussCasePackageBuilderProps) {
+  const locale = resolveDiscussChromeLocale(loadStoredUiLanguage())
   const [step, setStep] = useState<BuilderStep>('select')
   const [selectedSections, setSelectedSections] = useState<Set<DiscussPackageSectionKey>>(
     () => new Set(['diagnosis', 'anamnesis', 'therapie-verlauf']),
   )
-  const [title, setTitle] = useState('Fallbesprechung')
+  const [title, setTitle] = useState(() => discussChromeT(locale, 'builderDefaultTitle'))
   const [previewAs, setPreviewAs] = useState<'internal' | 'external'>('internal')
   const [inviteeEmail, setInviteeEmail] = useState('')
   const [inviteType, setInviteType] = useState<'internal' | 'external'>('internal')
@@ -82,11 +88,11 @@ export function DiscussCasePackageBuilder({
   const handleCreateAndPreview = useCallback(async () => {
     setError(null)
     if (selectedSections.size === 0) {
-      setError('Mindestens einen Abschnitt auswählen.')
+      setError(discussChromeT(locale, 'builderSelectOne'))
       return
     }
     setStep('preview')
-  }, [selectedSections.size])
+  }, [locale, selectedSections.size])
 
   const handleCreateDiscussion = useCallback(async () => {
     setLoading(true)
@@ -112,11 +118,11 @@ export function DiscussCasePackageBuilder({
       setCreatedDiscussionId(result.discussion.id)
       setStep('invite')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erstellen fehlgeschlagen')
+      setError(err instanceof Error ? err.message : discussChromeT(locale, 'builderCreateFailed'))
     } finally {
       setLoading(false)
     }
-  }, [caseId, title, selectedSections, packages])
+  }, [caseId, locale, title, selectedSections, packages])
 
   const handleSendInvite = useCallback(async () => {
     if (!createdDiscussionId) return
@@ -140,11 +146,11 @@ export function DiscussCasePackageBuilder({
         setInviteLink(link)
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Einladung fehlgeschlagen')
+      setError(err instanceof Error ? err.message : discussChromeT(locale, 'builderInviteFailed'))
     } finally {
       setLoading(false)
     }
-  }, [createdDiscussionId, inviteeEmail, inviteType, packageKeyB64])
+  }, [createdDiscussionId, inviteeEmail, inviteType, locale, packageKeyB64])
 
   const handlePreviewAsInvited = useCallback(async () => {
     setPreviewAs((prev) => (prev === 'internal' ? 'external' : 'internal'))
@@ -164,12 +170,9 @@ export function DiscussCasePackageBuilder({
       <header className="discuss-case-builder__header">
         <button type="button" className="discuss-case-builder__back clinical-back-link" onClick={onBack}>
           <ArrowLeft className="h-4 w-4" strokeWidth={1.75} />
-          Zurück
+          {discussChromeT(locale, 'builderBack')}
         </button>
-        <h1 className="discuss-case-builder__title">DiscussCase — Paket erstellen</h1>
-        <p className="discuss-case-builder__subtitle">
-          Abschnitte auswählen, Vorschau prüfen, dann einladen.
-        </p>
+        <h1 className="discuss-case-builder__title">{discussChromeT(locale, 'builderTitle')}</h1>
       </header>
 
       {error ? <p className="discuss-case-builder__error">{error}</p> : null}
@@ -178,7 +181,7 @@ export function DiscussCasePackageBuilder({
         <div className="discuss-case-builder__body">
           <div className="discuss-case-builder__form">
             <label className="discuss-case-builder__label">
-              Titel
+              {discussChromeT(locale, 'builderTitleLabel')}
               <input
                 type="text"
                 className="discuss-case-builder__input"
@@ -188,7 +191,7 @@ export function DiscussCasePackageBuilder({
             </label>
 
             <fieldset className="discuss-case-builder__sections">
-              <legend className="discuss-case-builder__legend">Klinische Abschnitte</legend>
+              <legend className="discuss-case-builder__legend">{discussChromeT(locale, 'builderClinicalSections')}</legend>
               {ALL_PACKAGE_SECTION_KEYS.map((key) => (
                 <label key={key} className="discuss-case-builder__checkbox">
                   <input
@@ -196,7 +199,7 @@ export function DiscussCasePackageBuilder({
                     checked={selectedSections.has(key)}
                     onChange={() => toggleSection(key)}
                   />
-                  {DISCUSS_PACKAGE_SECTION_LABELS[key as DiscussPackageSectionKey]}
+                  {discussSectionLabel(locale, key as DiscussPackageSectionKey)}
                 </label>
               ))}
             </fieldset>
@@ -206,7 +209,7 @@ export function DiscussCasePackageBuilder({
               className="discuss-case-builder__primary"
               onClick={() => void handleCreateAndPreview()}
             >
-              Vorschau
+              {discussChromeT(locale, 'builderPreview')}
             </button>
           </div>
 
@@ -214,6 +217,7 @@ export function DiscussCasePackageBuilder({
             <DiscussCaseDocumentViewer
               packageContent={previewPackage}
               annotations={[]}
+              locale={locale}
               canHighlight={false}
               canComment={false}
               canCopy={false}
@@ -231,7 +235,7 @@ export function DiscussCasePackageBuilder({
               className="discuss-case-builder__secondary"
               onClick={() => setStep('select')}
             >
-              Abschnitte ändern
+              {discussChromeT(locale, 'builderChangeSections')}
             </button>
             <button
               type="button"
@@ -239,7 +243,9 @@ export function DiscussCasePackageBuilder({
               onClick={() => void handlePreviewAsInvited()}
             >
               <Eye className="h-4 w-4" strokeWidth={1.75} />
-              {previewAs === 'internal' ? 'Als externer Nutzer' : 'Als interner Nutzer'}
+              {previewAs === 'internal'
+                ? discussChromeT(locale, 'builderAsExternal')
+                : discussChromeT(locale, 'builderAsInternal')}
             </button>
             <button
               type="button"
@@ -247,13 +253,14 @@ export function DiscussCasePackageBuilder({
               disabled={loading}
               onClick={() => void handleCreateDiscussion()}
             >
-              Paket speichern &amp; einladen
+              {discussChromeT(locale, 'builderSavePackage')}
             </button>
           </div>
           <div className="discuss-case-builder__preview-pane">
             <DiscussCaseDocumentViewer
               packageContent={previewPackage}
               annotations={[]}
+              locale={locale}
               canHighlight={false}
               canComment={false}
               canCopy={previewAs === 'internal'}
@@ -267,17 +274,17 @@ export function DiscussCasePackageBuilder({
         <div className="discuss-case-builder__invite">
           <h2 className="discuss-case-builder__invite-title">
             <Users className="h-5 w-5" strokeWidth={1.75} />
-            Teilnehmer einladen
+            {discussChromeT(locale, 'builderInviteParticipants')}
           </h2>
 
           <label className="discuss-case-builder__label">
-            E-Mail / Benutzername
+            {discussChromeT(locale, 'builderEmailUsername')}
             <input
               type="text"
               className="discuss-case-builder__input"
               value={inviteeEmail}
               onChange={(e) => setInviteeEmail(e.target.value)}
-              placeholder="kollege@klinik.de"
+              placeholder={discussChromeT(locale, 'builderEmailPlaceholder')}
             />
           </label>
 
@@ -289,7 +296,7 @@ export function DiscussCasePackageBuilder({
                 checked={inviteType === 'internal'}
                 onChange={() => setInviteType('internal')}
               />
-              Intern (Org)
+              {discussChromeT(locale, 'builderInternalOrg')}
             </label>
             <label>
               <input
@@ -298,7 +305,7 @@ export function DiscussCasePackageBuilder({
                 checked={inviteType === 'external'}
                 onChange={() => setInviteType('external')}
               />
-              Extern (de-identifiziert)
+              {discussChromeT(locale, 'builderExternalDeid')}
             </label>
           </div>
 
@@ -310,20 +317,20 @@ export function DiscussCasePackageBuilder({
               onClick={() => void handleSendInvite()}
             >
               <Send className="h-4 w-4" strokeWidth={1.75} />
-              Einladung senden
+              {discussChromeT(locale, 'builderSendInvite')}
             </button>
             <button
               type="button"
               className="discuss-case-builder__secondary"
               onClick={() => onCreated(createdDiscussionId)}
             >
-              Zur Besprechung
+              {discussChromeT(locale, 'builderToDiscussion')}
             </button>
           </div>
 
           {inviteLink ? (
             <p className="discuss-case-builder__invite-link">
-              Einladungslink: <code>{inviteLink}</code>
+              {discussChromeT(locale, 'builderInviteLink')} <code>{inviteLink}</code>
             </p>
           ) : null}
         </div>

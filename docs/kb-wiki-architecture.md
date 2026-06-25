@@ -99,15 +99,19 @@ Section-level `fieldProvenance` hints (lightweight) may be embedded on projectio
 
 Client hook: `useKbCurrentRelease()` reads current release from Supabase.
 
-### KB admin access (MVP)
+### KB access model
 
-Admins are allowlisted — no role hierarchy yet:
+There is no per-user/per-org "KB admin" tier. Any authenticated user may **edit**
+KB content and **report** issues. The sole elevated role over the global KB is the
+platform **System Admin**, which gates destructive/global operations (publish,
+approve, archive, contribution review):
 
 | Layer | Mechanism |
 |-------|-----------|
-| Server API | `KB_ADMIN_USER_IDS` (comma UUIDs/emails) + `X-KB-User-Id` / Bearer user id |
-| Client UI | `VITE_KB_ADMIN_USER_IDS`, Supabase `app_metadata.kb_admin=true`, or Settings → **KB Admin** local allowlist (`psychiatry-ink:kb-admin-users`) |
-| Dev fallback | If no allowlist configured, dev builds permit all local users |
+| Edit / report (any user) | Verified Supabase identity (`req.authUserId`); contributions via `POST /api/kb-contributions` (incl. `report_issue`) |
+| System Admin (server API) | `SYSTEM_ADMIN_USER_IDS` (comma UUIDs/emails) matched against the verified `req.authUserId` — the legacy spoofable `X-KB-User-Id` header is never trusted |
+| Client UI hint | `VITE_SYSTEM_ADMIN_USER_IDS`, Supabase `app_metadata.system_admin=true`, or Settings → **System Admin** local allowlist (`psychiatry-ink:system-admin-users`) — UX only; access is enforced server-side |
+| Dev fallback | If no allowlist configured, non-prod permits local users (prod denies) |
 
 ### Voting
 

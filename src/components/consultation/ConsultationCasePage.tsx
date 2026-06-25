@@ -5,7 +5,11 @@ import { getCaseMeta } from '../../hooks/useCaseRegistry'
 import { collectClinicalPayload } from '../../utils/workspaceVault'
 import { listConsultationsForCase } from '../../services/consultationApi'
 import type { ConsultationRequest, ConsultationRequestStatus } from '../../types/consultation'
-import { CONSULTATION_STATUS_LABELS } from '../../types/consultation'
+import { useTranslation } from '../../context/TranslationContext'
+import {
+  translateConsultationStatus,
+  translateConsultationUi,
+} from '../../data/consultationUiTranslations'
 import { ClinicalFullPageLayout } from '../AppLogoHeader'
 import { ConsultationRequestBuilder } from './ConsultationRequestBuilder'
 import { ConsultationReportReview } from './ConsultationReportReview'
@@ -33,6 +37,7 @@ export function ConsultationCasePage({
   onNavigateHome,
   embedded = false,
 }: ConsultationCasePageProps) {
+  const { language } = useTranslation()
   const handleNavigateHome = onNavigateHome ?? (() => onNavigate('/dashboard'))
   const wrap = (content: ReactNode) =>
     embedded ? content : (
@@ -54,11 +59,11 @@ export function ConsultationCasePage({
       const items = await listConsultationsForCase(caseId)
       setRequests(items)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Laden fehlgeschlagen')
+      setError(err instanceof Error ? err.message : translateConsultationUi(language, 'loadFailed'))
     } finally {
       setLoading(false)
     }
-  }, [caseId])
+  }, [caseId, language])
 
   useEffect(() => {
     if (mode === 'list') void refreshList()
@@ -141,11 +146,10 @@ export function ConsultationCasePage({
               className="consultation-page__back clinical-back-link"
               onClick={() => onNavigate(`/case/${encodeURIComponent(caseId)}?view=overview`)}
             >
-              ← Fallübersicht
+              {translateConsultationUi(language, 'backToCaseOverview')}
             </button>
           ) : null}
-          <h1 className="consultation-page__title">Konsile</h1>
-          <p className="consultation-page__subtitle">Externe Konsiliarberichte — formal, strukturiert</p>
+          <h1 className="consultation-page__title">{translateConsultationUi(language, 'konsileTitle')}</h1>
         </div>
         <div className="consultation-page__header-actions">
           <button
@@ -156,9 +160,9 @@ export function ConsultationCasePage({
               const latest = printableRequests[0]
               if (latest) void handlePrint(latest.id)
             }}
-            title="Konsilanfrage drucken"
+            title={translateConsultationUi(language, 'printRequest')}
           >
-            Drucken
+            {translateConsultationUi(language, 'print')}
           </button>
           <button
             type="button"
@@ -166,7 +170,7 @@ export function ConsultationCasePage({
             onClick={() => setMode('create')}
             disabled={!payload}
           >
-            Konsil anfordern
+            {translateConsultationUi(language, 'requestConsultation')}
           </button>
         </div>
       </header>
@@ -176,7 +180,7 @@ export function ConsultationCasePage({
       {loading ? (
         <ClinicalLoading variant="compact" />
       ) : requests.length === 0 ? (
-        <p className="clinical-empty-state">Noch keine Konsilanfragen für diesen Fall.</p>
+        <p className="clinical-empty-state">{translateConsultationUi(language, 'noRequestsForCase')}</p>
       ) : (
         <ul className="consultation-page__list">
           {requests.map((req) => (
@@ -190,7 +194,7 @@ export function ConsultationCasePage({
                 <span className="consultation-page__list-meta">
                   {req.specialty} ·{' '}
                   <span className={statusBadgeClass(req.status)}>
-                    {CONSULTATION_STATUS_LABELS[req.status]}
+                    {translateConsultationStatus(language, req.status)}
                   </span>
                 </span>
               </button>
@@ -203,8 +207,8 @@ export function ConsultationCasePage({
                     event.stopPropagation()
                     void handlePrint(req.id)
                   }}
-                  title="Konsilanfrage drucken"
-                  aria-label="Konsilanfrage drucken"
+                  title={translateConsultationUi(language, 'printRequest')}
+                  aria-label={translateConsultationUi(language, 'printRequest')}
                 >
                   <Printer size={14} aria-hidden />
                 </button>

@@ -13,15 +13,12 @@ import { CaseWorkspacePage } from './components/CaseWorkspacePage'
 import { DashboardPage } from './components/dashboard/DashboardPage'
 import { KbAdminPage } from './components/kb-admin/KbAdminPage'
 import { AuditDebugPage } from './components/audit/AuditDebugPage'
-import { DemoPatientDevPage } from './components/demo/DemoPatientDevPage'
 import { useAuditDebugAccess } from './hooks/useAuditDebugAccess'
-import { ensureDemoPatientExists } from './demo'
-import { uiLanguageToDemoLocale } from './demo/demoLocale'
-import { useKbAdminAccess } from './hooks/useKbAdminAccess'
+import { useSystemAdminAccess } from './hooks/useSystemAdminAccess'
 import { DiscussCaseInvitePage } from './components/discuss-case/DiscussCaseInvitePage'
 import { ConsultantDashboard } from './components/consultation/ConsultantDashboard'
 import { ConsultationInvitePage } from './components/consultation/ConsultationInvitePage'
-import { TemplatesDashboardPage } from './components/templates/TemplatesDashboardPage'
+import { ClinicalVorlageBuilderPage } from './components/templates/clinical/ClinicalVorlageBuilderPage'
 import { TeamSettingsPage } from './components/settings/TeamSettingsPage'
 import { TeamInvitePage } from './components/settings/TeamInvitePage'
 import { useConsultationRole } from './hooks/useConsultationRole'
@@ -36,11 +33,13 @@ import { EnterpriseCompliancePage } from './components/enterprise/EnterpriseComp
 import { EnterpriseIntegrationsPage } from './components/enterprise/EnterpriseIntegrationsPage'
 import { EnterpriseSsoPlaceholder } from './components/enterprise/EnterpriseSsoPlaceholder'
 import { BudgetManagerPage } from './components/settings/BudgetManagerPage'
+import { CreditsDashboardPage } from './components/settings/CreditsDashboardPage'
 import { IntegrationsPage } from './components/settings/IntegrationsPage'
 import { CalendarPage } from './components/calendar/CalendarPage'
 import { TodoPage } from './components/todos/TodoPage'
 import { AskButterflyProvider } from './contexts/AskButterflyContext'
 import { AskButterflyShell } from './components/notion/AskButterflyShell'
+import { redirectToCanonicalAppIfNeeded } from './utils/canonicalAppRedirect'
 
 const ENTERPRISE_ROUTES_ENABLED = isEnterpriseOrgHierarchyEnabled()
 
@@ -49,7 +48,7 @@ export default function App() {
   const privacy = usePrivacySettings()
   const { route, navigate } = useAppRouter()
   const { user, loading: authLoading, isConfigured, plan } = useAuth()
-  const hasKbAdminAccess = useKbAdminAccess()
+  const hasSystemAdminAccess = useSystemAdminAccess()
   const hasAuditDebugAccess = useAuditDebugAccess()
   const { isRestrictedConsultant } = useConsultationRole()
   const { canAccessEnterpriseUi } = useEnterpriseFeatures()
@@ -83,15 +82,6 @@ export default function App() {
   }, [user?.id])
 
   useEffect(() => {
-    if (!user?.id) return
-    void ensureDemoPatientExists({
-      userId: user.id,
-      calendarScope: { userId: user.id, orgId: null },
-      locale: uiLanguageToDemoLocale(languageSettings.language),
-    })
-  }, [user?.id, languageSettings.language])
-
-  useEffect(() => {
     if (authLoading) return
     // In a dev no-auth build the guard is intentionally skipped. In every production
     // build (configured OR not) the guard runs, so an unauthenticated visitor on an app
@@ -113,11 +103,7 @@ export default function App() {
       navigate('/dashboard', true)
     }
 
-    if (user && route.view === 'demo-patient' && !hasAuditDebugAccess) {
-      navigate('/dashboard', true)
-    }
-
-    if (user && route.view === 'kb-admin' && !hasKbAdminAccess) {
+    if (user && route.view === 'kb-admin' && !hasSystemAdminAccess) {
       navigate('/dashboard', true)
     }
 
@@ -139,18 +125,20 @@ export default function App() {
     if (user && onAuthPage) {
       const params = new URLSearchParams(window.location.search)
       const redirect = params.get('redirect')
-      navigate(redirect && redirect.startsWith('/') ? redirect : '/dashboard', true)
+      const destination = redirect && redirect.startsWith('/') ? redirect : '/dashboard'
+      if (redirectToCanonicalAppIfNeeded(destination)) return
+      navigate(destination, true)
     }
-  }, [allowDevNoAuthEntry, authLoading, canAccessEnterpriseUi, hasAuditDebugAccess, hasKbAdminAccess, isEnterpriseRoute, isRestrictedConsultant, navigate, route, user])
+  }, [allowDevNoAuthEntry, authLoading, canAccessEnterpriseUi, hasAuditDebugAccess, hasSystemAdminAccess, isEnterpriseRoute, isRestrictedConsultant, navigate, route, user])
 
   const showDashboard = route.view === 'dashboard'
   const showKbAdmin = route.view === 'kb-admin'
   const showAuditDebug = route.view === 'audit-debug'
-  const showDemoPatient = route.view === 'demo-patient'
   const showTemplates = route.view === 'templates'
   const showTeamSettings = route.view === 'team-settings'
   const showIntegrations = route.view === 'integrations'
   const showBudget = route.view === 'budget'
+  const showCredits = route.view === 'credits'
   const showCalendar = route.view === 'calendar'
   const showTodos = route.view === 'todos'
   const showTeamInvite = route.view === 'team-invite'
@@ -223,7 +211,9 @@ export default function App() {
           onSuccess={() => {
             const params = new URLSearchParams(window.location.search)
             const redirect = params.get('redirect')
-            navigate(redirect && redirect.startsWith('/') ? redirect : '/dashboard', true)
+            const destination = redirect && redirect.startsWith('/') ? redirect : '/dashboard'
+            if (redirectToCanonicalAppIfNeeded(destination)) return
+            navigate(destination, true)
           }}
           onSwitchMode={(mode) => navigate(mode === 'login' ? '/login' : '/signup')}
         />
@@ -254,7 +244,7 @@ export default function App() {
     >
       <WorkspaceSessionProvider>
         <AskButterflyProvider>
-          <AskButterflyShell>
+          <AskButterflyShell hideGlobalTrigger={showCredits}>
         {showDiscussInvite ? (
           <DiscussCaseInvitePage
             token={route.view === 'discuss-invite' ? route.token : ''}
@@ -282,18 +272,18 @@ export default function App() {
           <EnterpriseSsoPlaceholder onBack={() => navigate('/dashboard/enterprise')} />
         ) : showAuditDebug && hasAuditDebugAccess ? (
           <AuditDebugPage onBack={() => navigate('/dashboard')} />
-        ) : showDemoPatient && hasAuditDebugAccess ? (
-          <DemoPatientDevPage onBack={() => navigate('/dashboard')} />
-        ) : showKbAdmin && hasKbAdminAccess ? (
+        ) : showKbAdmin && hasSystemAdminAccess ? (
           <KbAdminPage onBack={() => navigate('/dashboard')} />
         ) : showTemplates ? (
-          <TemplatesDashboardPage onBack={() => navigate('/dashboard')} />
+          <ClinicalVorlageBuilderPage onBack={() => navigate('/dashboard')} />
         ) : showTeamSettings ? (
           <TeamSettingsPage onBack={() => navigate('/dashboard')} />
         ) : showIntegrations ? (
           <IntegrationsPage onBack={() => navigate('/dashboard')} />
         ) : showBudget ? (
           <BudgetManagerPage onBack={() => navigate('/dashboard')} />
+        ) : showCredits ? (
+          <CreditsDashboardPage onBack={() => navigate('/dashboard')} />
         ) : showCalendar ? (
           <CalendarPage
             onBack={() => navigate('/dashboard')}
@@ -318,11 +308,11 @@ export default function App() {
             onNavigateHome={handleNavigateHome}
             onOpenKbAdmin={() => navigate('/dashboard/kb-admin')}
             onOpenAuditDebug={() => navigate('/dev/audit-logs')}
-            onOpenDemoPatient={() => navigate('/dev/demo-patient')}
             onOpenTemplates={() => navigate('/dashboard/templates')}
             onOpenTeamSettings={() => navigate('/dashboard/team')}
             onOpenIntegrations={() => navigate('/dashboard/integrations')}
             onOpenBudget={() => navigate('/dashboard/budget')}
+            onOpenCredits={() => navigate('/dashboard/credits')}
             onOpenCalendar={() => navigate('/dashboard/calendar')}
             onOpenTodos={() => navigate('/dashboard/todos')}
             onOpenEnterprise={

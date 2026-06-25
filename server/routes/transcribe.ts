@@ -4,6 +4,7 @@ import { transcribeAudioBuffer } from '../services/transcriptionProvider'
 import { canAfford, deductCredits } from '../services/credits'
 import { getCurrentOrganisation, ORG_HEADER } from '../services/orgPermissions'
 import { requireAuthenticatedUserOrDevBypass } from '../utils/requireAuthenticatedUserOrDevBypass'
+import { resolveClinicalLanguage } from '../utils/resolveClinicalLanguage'
 
 /** Matches src/data/subscriptionPlans.ts TRANSCRIBE_CREDITS */
 const TRANSCRIBE_CREDITS = 5
@@ -11,6 +12,7 @@ const TRANSCRIBE_CREDITS = 5
 export interface TranscribeRequestBody {
   audioBase64: string
   mimeType?: string
+  language?: string
 }
 
 export const transcribeRouter: Router = createRouter()
@@ -38,9 +40,11 @@ transcribeRouter.post('/', async (req: Request, res: Response) => {
     }
 
     const org = await getCurrentOrganisation(userId, req.headers[ORG_HEADER])
+    const language = resolveClinicalLanguage(req, body.language) ?? 'de'
     const result = await transcribeAudioBuffer(audioBuffer, body.mimeType ?? 'audio/webm', {
       userId,
       organisationId: org?.id ?? null,
+      language,
     })
     const balance = await deductCredits(TRANSCRIBE_CREDITS, userId)
 

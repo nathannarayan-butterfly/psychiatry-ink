@@ -1,0 +1,190 @@
+/* Aufnahme — embedded Somatischer / Neurologischer Befund modes */
+
+.aufnahme-befund-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.35rem 0 0.65rem;
+  padding: 0.35rem 0.45rem;
+  border-radius: 8px;
+  background: rgb(248 250 252 / 0.85);
+  border: 1px solid rgb(15 23 42 / 0.06);
+}
+
+.aufnahme-befund-toolbar__btn {
+  appearance: none;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary, #475569);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.2;
+  padding: 0.28rem 0.55rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.aufnahme-befund-toolbar__btn:hover:not(:disabled) {
+  background: rgb(255 255 255 / 0.9);
+  border-color: rgb(15 23 42 / 0.08);
+}
+
+.aufnahme-befund-toolbar__btn--active {
+  background: #fff;
+  border-color: rgb(59 130 246 / 0.35);
+  color: rgb(29 78 216);
+}
+
+.aufnahme-befund-toolbar__btn--danger {
+  color: rgb(185 28 28);
+}
+
+.aufnahme-befund-toolbar__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.aufnahme-befund-toolbar__sep {
+  width: 1px;
+  height: 1rem;
+  background: rgb(15 23 42 / 0.1);
+  margin: 0 0.15rem;
+}
+
+.aufnahme-befund-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgb(15 23 42 / 0.42);
+  backdrop-filter: blur(4px);
+}
+
+.aufnahme-befund-modal {
+  width: min(560px, 100%);
+  max-height: min(88vh, 760px);
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  background: var(--surface-elevated, #fff);
+  border: 1px solid var(--border-subtle, rgb(0 0 0 / 0.08));
+  box-shadow: 0 24px 48px rgb(15 23 42 / 0.16);
+}
+
+.aufnahme-befund-modal--wide {
+  width: min(720px, 100%);
+}
+
+.aufnahme-befund-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.15rem 1.15rem 0.65rem;
+}
+
+.aufnahme-befund-modal__title {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+.aufnahme-befund-modal__desc {
+  margin: 0.3rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted, #64748b);
+}
+
+.aufnahme-befund-modal__close {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--text-muted, #64748b);
+  padding: 0.25rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.aufnahme-befund-modal__body {
+  padding: 0 1.15rem 1rem;
+}
+
+.aufnahme-befund-modal__body--scroll {
+  overflow: auto;
+}
+
+.aufnahme-befund-modal__textarea {
+  width: 100%;
+  min-height: 8rem;
+  resize: vertical;
+  border: 1px solid rgb(15 23 42 / 0.12);
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+  font: inherit;
+  line-height: 1.5;
+}
+
+.aufnahme-befund-long-grid {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.aufnahme-befund-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.85rem 1.15rem 1.15rem;
+  border-top: 1px solid rgb(15 23 42 / 0.06);
+}
+
+.aufnahme-befund-btn {
+  appearance: none;
+  border: 1px solid rgb(15 23 42 / 0.12);
+  background: #fff;
+  color: var(--text-primary, #0f172a);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.aufnahme-befund-btn--ghost {
+  background: transparent;
+}
+
+.aufnahme-befund-btn--primary {
+  background: rgb(37 99 235);
+  border-color: rgb(37 99 235);
+  color: #fff;
+}
+
+.aufnahme-befund-confirm {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgb(15 23 42 / 0.5);
+}
+
+.aufnahme-befund-confirm__card {
+  width: min(420px, 100%);
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 16px 40px rgb(15 23 42 / 0.2);
+}
+
+.aufnahme-befund-confirm__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}

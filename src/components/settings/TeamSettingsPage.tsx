@@ -5,11 +5,17 @@ import { usePermissionContext } from '../../contexts/PermissionContext'
 import {
   resolveInviteRolesForOrg,
   resolveUiRolesForOrg,
-  teamRoleLabelDe,
+  teamRoleLabelKey,
 } from '../../data/org/teamRoles'
 import { THERAPY_DISCIPLINES, THERAPY_DISCIPLINE_LABEL_KEYS } from '../../data/org/therapyDiscipline'
 import type { TherapyDiscipline } from '../../types/organisation'
 import { useTranslation } from '../../context/TranslationContext'
+import type { UiLanguage } from '../../types/settings'
+import {
+  formatSettingsWorkspaceUi,
+  translateSettingsWorkspaceUi,
+  type SettingsWorkspaceUiKey,
+} from '../../data/settingsWorkspaceUiTranslations'
 import { usePermissions } from '../../hooks/permissions'
 import {
   createOrgInvite,
@@ -40,15 +46,18 @@ function memberDisplayName(
   return userId.slice(0, 8)
 }
 
-function statusLabelDe(status: string): string {
-  if (status === 'active') return 'Aktiv'
-  if (status === 'invited') return 'Eingeladen'
-  if (status === 'suspended') return 'Deaktiviert'
-  if (status === 'pending') return 'Ausstehend'
-  if (status === 'revoked') return 'Widerrufen'
-  if (status === 'expired') return 'Abgelaufen'
-  if (status === 'accepted') return 'Angenommen'
-  return status
+function statusLabel(status: string, language: UiLanguage): string {
+  const map: Record<string, SettingsWorkspaceUiKey> = {
+    active: 'teamStatusActive',
+    invited: 'teamStatusInvited',
+    suspended: 'teamStatusSuspended',
+    pending: 'teamStatusPending',
+    revoked: 'teamStatusRevoked',
+    expired: 'teamStatusExpired',
+    accepted: 'teamStatusAccepted',
+  }
+  const key = map[status]
+  return key ? translateSettingsWorkspaceUi(language, key) : status
 }
 
 function formatExpiryDe(expiresAt: string | null): string {
@@ -68,11 +77,13 @@ function InviteLinkPanel({
   url,
   copyKey,
   copiedKey,
+  language,
   onCopy,
 }: {
   url: string
   copyKey: string
   copiedKey: string | null
+  language: UiLanguage
   onCopy: (url: string, key: string) => void
 }) {
   if (!url) return null
@@ -81,7 +92,7 @@ function InviteLinkPanel({
 
   return (
     <div className="team-settings-invite-success">
-      <span className="team-settings-label">Einladungslink</span>
+      <span className="team-settings-label">{translateSettingsWorkspaceUi(language, 'teamInviteLink')}</span>
       <code className="team-settings-invite-link">{url}</code>
       <button
         type="button"
@@ -89,7 +100,9 @@ function InviteLinkPanel({
         onClick={() => onCopy(url, copyKey)}
       >
         <Copy className="h-3.5 w-3.5" aria-hidden />
-        {copied ? 'Kopiert' : 'Link kopieren'}
+        {copied
+          ? translateSettingsWorkspaceUi(language, 'teamCopied')
+          : translateSettingsWorkspaceUi(language, 'teamCopyLink')}
       </button>
     </div>
   )
@@ -97,7 +110,11 @@ function InviteLinkPanel({
 
 export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
   const { user } = useAuth()
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
+  const roleLabel = (role: OrganisationRole): string => {
+    const key = teamRoleLabelKey(role)
+    return key ? t(key) : role
+  }
   const { refresh: refreshPermissionContext } = usePermissionContext()
   const { hasPermission, canInviteUsers } = usePermissions()
 
@@ -153,12 +170,14 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
       setSnapshot(team)
       setOrgName(team.organisation.name)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Team-Einstellungen konnten nicht geladen werden')
+      setError(
+        err instanceof Error ? err.message : translateSettingsWorkspaceUi(language, 'teamLoadError'),
+      )
       setSnapshot(null)
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [language])
 
   useEffect(() => {
     void load()
@@ -176,10 +195,12 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
     try {
       const organisation = await updateOrganisationName(orgName)
       setSnapshot((prev) => (prev ? { ...prev, organisation } : prev))
-      setActionSuccess('Organisationsname gespeichert.')
+      setActionSuccess(translateSettingsWorkspaceUi(language, 'teamOrgNameSaved'))
       await refreshPermissionContext()
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Speichern fehlgeschlagen')
+      setActionError(
+        err instanceof Error ? err.message : translateSettingsWorkspaceUi(language, 'teamSaveFailed'),
+      )
     } finally {
       setSavingName(false)
     }
@@ -192,9 +213,11 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
       await upgradeToSmallPraxis(orgName.trim() || undefined)
       await refreshPermissionContext()
       await load()
-      setActionSuccess('Praxis-Modus aktiviert.')
+      setActionSuccess(translateSettingsWorkspaceUi(language, 'teamPraxisActivated'))
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Upgrade fehlgeschlagen')
+      setActionError(
+        err instanceof Error ? err.message : translateSettingsWorkspaceUi(language, 'teamUpgradeFailed'),
+      )
     } finally {
       setUpgrading(false)
     }
@@ -223,10 +246,14 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
       setLastInviteUrl(result.inviteUrl || null)
       setInviteEmail('')
       setInviteName('')
-      setActionSuccess(`Einladung an ${result.invitation.email} erstellt.`)
+      setActionSuccess(
+        formatSettingsWorkspaceUi(language, 'teamInviteCreated', { email: result.invitation.email }),
+      )
       await load()
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Einladung fehlgeschlagen')
+      setActionError(
+        err instanceof Error ? err.message : translateSettingsWorkspaceUi(language, 'teamInviteFailed'),
+      )
     } finally {
       setInviting(false)
     }
@@ -236,10 +263,12 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
     clearActionFeedback()
     try {
       await revokeOrgInvite(invitationId)
-      setActionSuccess('Einladung widerrufen.')
+      setActionSuccess(translateSettingsWorkspaceUi(language, 'teamInviteRevoked'))
       await load()
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Widerruf fehlgeschlagen')
+      setActionError(
+        err instanceof Error ? err.message : translateSettingsWorkspaceUi(language, 'teamRevokeFailed'),
+      )
     }
   }
 
@@ -250,12 +279,14 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
     clearActionFeedback()
     try {
       await updateOrgMember(memberId, payload)
-      setActionSuccess('Berechtigungen gespeichert.')
+      setActionSuccess(translateSettingsWorkspaceUi(language, 'teamPermissionsSaved'))
       setEditingMember(null)
       await load()
       await refreshPermissionContext()
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Speichern fehlgeschlagen')
+      setActionError(
+        err instanceof Error ? err.message : translateSettingsWorkspaceUi(language, 'teamSaveFailed'),
+      )
       throw err
     }
   }
@@ -265,10 +296,12 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
     clearActionFeedback()
     try {
       await deactivateOrgMember(memberId)
-      setActionSuccess('Mitglied deaktiviert.')
+      setActionSuccess(translateSettingsWorkspaceUi(language, 'teamMemberDeactivated'))
       await load()
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Deaktivierung fehlgeschlagen')
+      setActionError(
+        err instanceof Error ? err.message : translateSettingsWorkspaceUi(language, 'teamDeactivateFailed'),
+      )
     }
   }
 
@@ -281,7 +314,7 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
         setCopiedLinkKey((current) => (current === key ? null : current))
       }, 2000)
     } catch {
-      setActionError('Kopieren fehlgeschlagen')
+      setActionError(translateSettingsWorkspaceUi(language, 'teamCopyFailed'))
     }
   }
 
@@ -289,7 +322,7 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
     return (
       <div className="team-settings-page">
         <div className="team-settings-page__inner">
-          <ClinicalLoading label="Team-Einstellungen werden geladen…" />
+          <ClinicalLoading label={translateSettingsWorkspaceUi(language, 'teamLoading')} />
         </div>
       </div>
     )
@@ -301,9 +334,11 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
         <div className="team-settings-page__inner">
           <button type="button" className="clinical-back-link" onClick={onBack}>
             <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
-            Zurück
+            {translateSettingsWorkspaceUi(language, 'teamBack')}
           </button>
-          <p className="team-settings-error">{error ?? 'Keine Organisation gefunden'}</p>
+          <p className="team-settings-error">
+            {error ?? translateSettingsWorkspaceUi(language, 'teamNoOrg')}
+          </p>
         </div>
       </div>
     )
@@ -318,9 +353,11 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
         <header className="team-settings-page__header">
           <button type="button" className="clinical-back-link" onClick={onBack}>
             <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
-            Zurück
+            {translateSettingsWorkspaceUi(language, 'teamBack')}
           </button>
-          <h1 className="team-settings-page__title">Team-Einstellungen</h1>
+          <h1 className="team-settings-page__title">
+            {translateSettingsWorkspaceUi(language, 'teamTitle')}
+          </h1>
         </header>
 
         {actionError ? <p className="team-settings-error">{actionError}</p> : null}
@@ -330,23 +367,22 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
           <section className="team-settings-section" aria-labelledby="team-upgrade">
             <div className="team-settings-upgrade">
               <h2 id="team-upgrade" className="team-settings-upgrade__title">
-                Praxis-Modus aktivieren
+                {translateSettingsWorkspaceUi(language, 'teamActivatePraxis')}
               </h2>
               <p className="team-settings-upgrade__text">
-                Aktivieren Sie den Praxis-Modus, um bis zu vier Teammitglieder einzuladen.
-                Ihr persönlicher Arbeitsbereich bleibt erhalten.
+                {translateSettingsWorkspaceUi(language, 'teamUpgradeText')}
               </p>
               <div className="team-settings-inline-form">
                 <div className="team-settings-field team-settings-field--grow">
                   <label className="team-settings-label" htmlFor="upgrade-org-name">
-                    Praxisname (optional)
+                    {translateSettingsWorkspaceUi(language, 'teamPraxisNameOptional')}
                   </label>
                   <input
                     id="upgrade-org-name"
                     className="team-settings-input"
                     value={orgName}
                     onChange={(e) => setOrgName(e.target.value)}
-                    placeholder="Name der Praxis"
+                    placeholder={translateSettingsWorkspaceUi(language, 'teamPraxisNamePlaceholder')}
                   />
                 </div>
                 <button
@@ -355,7 +391,9 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
                   onClick={() => void handleUpgrade()}
                   disabled={upgrading}
                 >
-                  {upgrading ? 'Aktiviere…' : 'Praxis-Modus aktivieren'}
+                  {upgrading
+                    ? translateSettingsWorkspaceUi(language, 'teamActivating')
+                    : translateSettingsWorkspaceUi(language, 'teamActivatePraxis')}
                 </button>
               </div>
             </div>
@@ -366,12 +404,12 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
           <>
             <section className="team-settings-section" aria-labelledby="team-org">
               <h2 id="team-org" className="team-settings-section__heading">
-                Organisation
+                {translateSettingsWorkspaceUi(language, 'teamOrganisation')}
               </h2>
               <div className="team-settings-inline-form">
                 <div className="team-settings-field team-settings-field--grow">
                   <label className="team-settings-label" htmlFor="org-name">
-                    Name
+                    {translateSettingsWorkspaceUi(language, 'teamName')}
                   </label>
                   <input
                     id="org-name"
@@ -388,7 +426,9 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
                     onClick={() => void handleSaveName()}
                     disabled={savingName || !orgName.trim()}
                   >
-                    {savingName ? 'Speichern…' : 'Speichern'}
+                    {savingName
+                      ? translateSettingsWorkspaceUi(language, 'teamSaving')
+                      : translateSettingsWorkspaceUi(language, 'teamSave')}
                   </button>
                 ) : null}
               </div>
@@ -397,12 +437,15 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
             <section className="team-settings-section" aria-labelledby="team-members">
               <div className="team-settings-section__heading-row">
                 <h2 id="team-members" className="team-settings-section__heading">
-                  Mitglieder
+                  {translateSettingsWorkspaceUi(language, 'teamMembers')}
                 </h2>
                 <span
                   className={`team-settings-cap${slotsFull ? ' team-settings-cap--full' : ''}`}
                 >
-                  {snapshot.occupiedSlots} von {snapshot.maxMembers} Benutzern
+                  {formatSettingsWorkspaceUi(language, 'teamMembersCount', {
+                    occupied: snapshot.occupiedSlots,
+                    max: snapshot.maxMembers,
+                  })}
                 </span>
               </div>
 
@@ -410,9 +453,9 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
                 <table className="team-settings-table">
                   <thead>
                     <tr>
-                      <th>Benutzer</th>
-                      <th>Rolle</th>
-                      <th>Status</th>
+                      <th>{translateSettingsWorkspaceUi(language, 'teamColUser')}</th>
+                      <th>{translateSettingsWorkspaceUi(language, 'teamColRole')}</th>
+                      <th>{translateSettingsWorkspaceUi(language, 'teamColStatus')}</th>
                       {(canManageRoles || canRemoveUsers) && isSmallPraxis ? <th /> : null}
                     </tr>
                   </thead>
@@ -441,7 +484,7 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
                           </td>
                           <td>
                             <span className="team-settings-badge">
-                              {teamRoleLabelDe(member.role)}
+                              {roleLabel(member.role)}
                             </span>
                           </td>
                           <td>
@@ -450,7 +493,7 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
                                 member.status !== 'active' ? ' team-settings-badge--warn' : ''
                               }`}
                             >
-                              {statusLabelDe(member.status)}
+                              {statusLabel(member.status, language)}
                             </span>
                           </td>
                           {(canEditMember || canDeactivateRow) && isSmallPraxis ? (
@@ -461,7 +504,7 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
                                     type="button"
                                     className="team-settings-btn"
                                     onClick={() => setEditingMember(member)}
-                                    title="Berechtigungen bearbeiten"
+                                    title={translateSettingsWorkspaceUi(language, 'teamEditPermissions')}
                                   >
                                     <Pencil className="h-3.5 w-3.5" aria-hidden />
                                   </button>
@@ -471,7 +514,7 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
                                     type="button"
                                     className="team-settings-btn team-settings-btn--danger"
                                     onClick={() => void handleDeactivate(member.id)}
-                                    title="Deaktivieren"
+                                    title={translateSettingsWorkspaceUi(language, 'teamDeactivate')}
                                   >
                                     <Trash2 className="h-3.5 w-3.5" aria-hidden />
                                   </button>
@@ -490,13 +533,16 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
 
               {snapshot.invitations.length > 0 ? (
                 <div className="team-settings-table-wrap">
-                  <table className="team-settings-table" aria-label="Ausstehende Einladungen">
+                  <table
+                    className="team-settings-table"
+                    aria-label={translateSettingsWorkspaceUi(language, 'teamPendingInvites')}
+                  >
                     <thead>
                       <tr>
-                        <th>E-Mail</th>
-                        <th>Rolle</th>
-                        <th>Gültig bis</th>
-                        <th>Status</th>
+                        <th>{translateSettingsWorkspaceUi(language, 'teamColEmail')}</th>
+                        <th>{translateSettingsWorkspaceUi(language, 'teamColRole')}</th>
+                        <th>{translateSettingsWorkspaceUi(language, 'teamColValidUntil')}</th>
+                        <th>{translateSettingsWorkspaceUi(language, 'teamColStatus')}</th>
                         {canInviteUsers() ? <th /> : null}
                       </tr>
                     </thead>
@@ -511,13 +557,13 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
                           </td>
                           <td>
                             <span className="team-settings-badge">
-                              {teamRoleLabelDe(invite.role)}
+                              {roleLabel(invite.role)}
                             </span>
                           </td>
                           <td>{formatExpiryDe(invite.expiresAt)}</td>
                           <td>
                             <span className="team-settings-badge team-settings-badge--muted">
-                              {statusLabelDe(invite.status)}
+                              {statusLabel(invite.status, language)}
                             </span>
                           </td>
                           {canInviteUsers() ? (
@@ -527,16 +573,16 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
                                   type="button"
                                   className="team-settings-btn"
                                   disabled
-                                  title="E-Mail-Versand demnächst verfügbar"
+                                  title={translateSettingsWorkspaceUi(language, 'teamEmailSoonTitle')}
                                 >
-                                  Demnächst
+                                  {translateSettingsWorkspaceUi(language, 'teamSoon')}
                                 </button>
                                 <button
                                   type="button"
                                   className="team-settings-btn team-settings-btn--danger"
                                   onClick={() => void handleRevokeInvite(invite.id)}
                                 >
-                                  Widerrufen
+                                  {translateSettingsWorkspaceUi(language, 'teamRevoke')}
                                 </button>
                               </div>
                             </td>
@@ -546,7 +592,7 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
                     </tbody>
                   </table>
                   <p className="team-settings-section__sub">
-                    Der Einladungslink kann nur direkt nach dem Erstellen kopiert werden.
+                    {translateSettingsWorkspaceUi(language, 'teamInviteLinkHint')}
                   </p>
                 </div>
               ) : null}
@@ -555,16 +601,15 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
             {isSmallPraxis && canInviteUsers() ? (
               <section className="team-settings-section" aria-labelledby="team-invite">
                 <h2 id="team-invite" className="team-settings-section__heading">
-                  Einladen
+                  {translateSettingsWorkspaceUi(language, 'teamInvite')}
                 </h2>
                 <p className="team-settings-section__sub">
-                  Laden Sie Kolleginnen und Kollegen per E-Mail ein. Der Einladungslink kann kopiert
-                  werden, falls kein E-Mail-Versand konfiguriert ist.
+                  {translateSettingsWorkspaceUi(language, 'teamInviteSub')}
                 </p>
                 <div className="team-settings-inline-form">
                   <div className="team-settings-field team-settings-field--grow">
                     <label className="team-settings-label" htmlFor="invite-name">
-                      Name (optional)
+                      {translateSettingsWorkspaceUi(language, 'teamNameOptional')}
                     </label>
                     <input
                       id="invite-name"
@@ -573,12 +618,12 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
                       value={inviteName}
                       onChange={(e) => setInviteName(e.target.value)}
                       disabled={slotsFull}
-                      placeholder="Vor- und Nachname"
+                      placeholder={translateSettingsWorkspaceUi(language, 'teamFullNamePlaceholder')}
                     />
                   </div>
                   <div className="team-settings-field team-settings-field--grow">
                     <label className="team-settings-label" htmlFor="invite-email">
-                      E-Mail
+                      {translateSettingsWorkspaceUi(language, 'teamColEmail')}
                     </label>
                     <input
                       id="invite-email"
@@ -587,12 +632,12 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
                       value={inviteEmail}
                       onChange={(e) => setInviteEmail(e.target.value)}
                       disabled={slotsFull}
-                      placeholder="name@praxis.de"
+                      placeholder={translateSettingsWorkspaceUi(language, 'teamEmailPlaceholder')}
                     />
                   </div>
                   <div className="team-settings-field">
                     <label className="team-settings-label" htmlFor="invite-role">
-                      Rolle
+                      {translateSettingsWorkspaceUi(language, 'teamColRole')}
                     </label>
                     <select
                       id="invite-role"
@@ -603,7 +648,7 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
                     >
                       {inviteRoles.map((role) => (
                         <option key={role} value={role}>
-                          {teamRoleLabelDe(role)}
+                          {roleLabel(role)}
                         </option>
                       ))}
                     </select>
@@ -654,12 +699,16 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
                     disabled={inviting || slotsFull || !inviteEmail.trim()}
                   >
                     <UserPlus className="h-3.5 w-3.5" aria-hidden />
-                    {inviting ? 'Sende…' : 'Einladen'}
+                    {inviting
+                      ? translateSettingsWorkspaceUi(language, 'teamSending')
+                      : translateSettingsWorkspaceUi(language, 'teamInvite')}
                   </button>
                 </div>
                 {slotsFull ? (
                   <p className="team-settings-error">
-                    Maximum von {snapshot.maxMembers} Benutzern erreicht.
+                    {formatSettingsWorkspaceUi(language, 'teamMaxReached', {
+                      max: snapshot.maxMembers,
+                    })}
                   </p>
                 ) : null}
                 {lastInviteUrl ? (
@@ -667,6 +716,7 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
                     url={lastInviteUrl}
                     copyKey="last-invite"
                     copiedKey={copiedLinkKey}
+                    language={language}
                     onCopy={(url, key) => void copyInviteUrl(url, key)}
                   />
                 ) : null}
@@ -685,7 +735,9 @@ export function TeamSettingsPage({ onBack }: TeamSettingsPageProps) {
               try {
                 await handleMemberSave(editingMember.id, payload)
               } catch (err) {
-                throw err instanceof Error ? err : new Error('Speichern fehlgeschlagen')
+                throw err instanceof Error
+                  ? err
+                  : new Error(translateSettingsWorkspaceUi(language, 'teamSaveFailed'))
               }
             }}
           />

@@ -2,8 +2,8 @@ import { useMemo } from 'react'
 import { useTranslation } from '../../../../context/TranslationContext'
 import { useClinicalIntelligence } from '../../../../hooks/useClinicalIntelligence'
 import { OverviewCardShell } from '../OverviewCard'
-import { ClinicalEyebrow } from '../../../clinical/ClinicalEyebrow'
-import { CiHypothesisBanner } from '../../../clinical/clinicalIntelligence/CiHypothesisBanner'
+import { OverviewWidgetHeader } from '../OverviewWidgetHeader'
+import { OverviewAiBadge } from '../OverviewAiBadge'
 
 interface ClinicalIntelligenceStatusWidgetProps {
   caseId: string
@@ -53,8 +53,8 @@ export function ClinicalIntelligenceStatusWidget({
 
   return (
     <OverviewCardShell>
-      <ClinicalEyebrow inline>{t('overviewWidgetCiStatus')}</ClinicalEyebrow>
-      <CiHypothesisBanner compact />
+      <OverviewWidgetHeader title={t('overviewWidgetCiStatus')} />
+      <OverviewAiBadge />
       <div className="ci-widget">
         <p className="ci-widget__meta">
           {t('ciLastRunLabel')}:{' '}

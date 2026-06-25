@@ -8,6 +8,7 @@ export type AiFeatureKey =
   | 'kb_seed'
   | 'kb_pharmacokinetics'
   | 'kb_translation_de'
+  | 'kb_translation_en'
   | 'medication_combination_check'
   | 'lab_medication_correlation'
   | 'prep_ai_check'
@@ -37,6 +38,9 @@ export type AiFeatureKey =
   | 'medication_summary'
   | 'therapy_plan'
   | 'arztbrief_section'
+  | 'discharge_summary_section'
+  | 'medication_education_single_section'
+  | 'medication_education_combination_section'
   | 'full_arztbrief'
   | 'full_case_summary'
   | 'forensic_risk_formulation'
@@ -46,6 +50,10 @@ export type AiFeatureKey =
   | 'document_import_mapping'
   | 'psychopathology_extraction'
   | 'clinical_intelligence_discussion'
+  | 'template_ai_generate'
+  | 'template_block_fill'
+  | 'template_from_document'
+  | 'patient_education_generic'
   | 'unknown'
 
 /**

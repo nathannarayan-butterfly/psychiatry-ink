@@ -247,9 +247,14 @@
   }
 }
 
+.notion-topbar .topbar-logo__row {
+  gap: 0.1rem;
+}
+
 .notion-topbar .topbar-logo__mark {
-  height: 3.5em;
-  max-width: 5em;
+  height: 7.5em;
+  max-width: 9.5em;
+  margin-left: -0.65rem;
 }
 
 .notion-topbar__left {
@@ -875,28 +880,39 @@
 
 .diagnosen-widget__row-actions {
   display: flex;
-  gap: 0.12rem;
+  gap: 0.2rem;
   flex-shrink: 0;
-  opacity: 0;
-  transition: opacity 0.12s ease;
+  align-items: center;
+  opacity: 1;
+}
+
+.diagnosen-table__row .diagnosen-widget__row-actions {
+  opacity: 1;
 }
 
 .diagnosen-widget__row:hover .diagnosen-widget__row-actions {
   opacity: 1;
 }
 
+.diagnosen-widget__action-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+}
+
 .diagnosen-widget__edit-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1rem;
-  height: 1rem;
+  width: 1.35rem;
+  height: 1.35rem;
   border: none;
-  border-radius: 0.15rem;
-  background: transparent;
-  color: var(--text-muted);
+  border-radius: 0.2rem;
+  background: var(--surface-muted, #f3f4f6);
+  color: var(--text-ink, #374151);
   cursor: pointer;
   flex-shrink: 0;
+  transition: color 0.1s ease, background 0.1s ease;
 }
 
 .diagnosen-widget__edit-btn:hover {
@@ -989,15 +1005,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1rem;
-  height: 1rem;
+  width: 1.35rem;
+  height: 1.35rem;
   border: none;
-  background: transparent;
-  color: var(--text-muted);
+  background: var(--surface-muted, #f3f4f6);
+  color: var(--text-ink, #374151);
   cursor: pointer;
-  border-radius: 0.15rem;
+  border-radius: 0.2rem;
   flex-shrink: 0;
-  transition: color 0.1s ease;
+  transition: color 0.1s ease, background 0.1s ease;
 }
 
 .diagnosen-widget__row-actions .diagnosen-widget__delete-btn {
@@ -1006,6 +1022,260 @@
 
 .diagnosen-widget__delete-btn:hover {
   color: var(--error, #c0392b);
+}
+
+/* —— Diagnosis classification table —— */
+
+.diagnosen-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.diagnosen-table__head th {
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted, #6b7280);
+  border-bottom: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.08));
+}
+
+.diagnosen-table__cell {
+  padding: 0.45rem 0.5rem;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.06));
+}
+
+.diagnosen-table__cell--code {
+  white-space: nowrap;
+  width: 1%;
+}
+
+.diagnosen-table__cell--label {
+  min-width: 8rem;
+}
+
+.diagnosen-table__cell--status {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.diagnosen-widget__status-cell {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.diagnosen-widget__quick-dd-btn {
+  border: 1px dashed var(--warning-border, rgba(217, 119, 6, 0.35));
+  border-radius: 999px;
+  background: var(--warning-soft, rgba(217, 119, 6, 0.08));
+  color: var(--warning-ink, #b45309);
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 0.08rem 0.35rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.diagnosen-widget__quick-dd-btn:hover {
+  background: var(--warning-soft, rgba(217, 119, 6, 0.16));
+}
+
+.diagnosen-widget__add-classification {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.35rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.08));
+}
+
+.diagnosen-widget__add-hint {
+  margin: 0;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  color: var(--text-muted, #6b7280);
+}
+
+.diagnosen-table__head-actions {
+  width: 1%;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.diagnosen-table__cell--actions {
+  width: 1%;
+  text-align: right;
+}
+
+.diagnosen-table__row--primary .diagnosen-widget__code,
+.diagnosen-table__row--primary .diagnosen-widget__label {
+  font-weight: 600;
+}
+
+.diagnosen-table__row--muted {
+  opacity: 0.62;
+}
+
+.diagnosen-table__row--provisional .diagnosen-widget__label {
+  font-style: italic;
+}
+
+.diagnosen-table--compact .diagnosen-table__head th {
+  font-size: 0.625rem;
+  padding: 0.25rem 0.35rem;
+}
+
+.diagnosen-table--compact .diagnosen-table__cell {
+  padding: 0.3rem 0.35rem;
+}
+
+.diagnosen-table--navigable .diagnosen-table__row--navigable {
+  cursor: pointer;
+}
+
+.diagnosen-table--navigable .diagnosen-table__row--navigable:hover {
+  background: var(--surface-hover, rgba(36, 33, 30, 0.04));
+}
+
+.diagnosen-table--navigable .diagnosen-table__row--navigable:focus-visible {
+  outline: 2px solid var(--focus-ring, #4a7fd4);
+  outline-offset: -2px;
+}
+
+.dx-class-chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.dx-class-editor {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.dx-class-select {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--surface-muted, #f3f4f6);
+  color: inherit;
+  font: inherit;
+  font-size: 0.6875rem;
+  line-height: 1.2;
+  padding: 0.15rem 1.1rem 0.15rem 0.45rem;
+  max-width: 9rem;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath fill='%236b7280' d='M0 0l4 5 4-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.35rem center;
+  background-size: 0.45rem;
+}
+
+.dx-class-select--compact {
+  font-size: 0.625rem;
+  padding: 0.1rem 0.95rem 0.1rem 0.35rem;
+  max-width: 7.5rem;
+}
+
+.dx-class-select--primary {
+  background-color: var(--accent-soft, rgba(37, 99, 235, 0.12));
+  border-color: var(--accent-border, rgba(37, 99, 235, 0.25));
+  font-weight: 600;
+}
+
+.dx-class-select--provisional {
+  background-color: var(--warning-soft, rgba(217, 119, 6, 0.1));
+  border-color: var(--warning-border, rgba(217, 119, 6, 0.28));
+  font-style: italic;
+}
+
+.dx-class-select--muted {
+  background-color: var(--surface-muted, #f3f4f6);
+  color: var(--text-muted, #6b7280);
+  border-color: var(--border-subtle, rgba(0, 0, 0, 0.1));
+}
+
+.dx-class-select--neutral {
+  background-color: var(--surface-muted, #f3f4f6);
+  border-color: var(--border-subtle, rgba(0, 0, 0, 0.1));
+}
+
+.dx-class-select:focus-visible {
+  outline: 2px solid var(--focus-ring, #2563eb);
+  outline-offset: 1px;
+}
+
+.dx-class-chip {
+  display: inline-block;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  line-height: 1.2;
+  padding: 0.12rem 0.45rem;
+  border: 1px solid transparent;
+}
+
+.dx-class-chip--compact {
+  font-size: 0.625rem;
+  padding: 0.08rem 0.35rem;
+}
+
+.dx-class-chip--primary {
+  background: var(--accent-soft, rgba(37, 99, 235, 0.12));
+  border-color: var(--accent-border, rgba(37, 99, 235, 0.25));
+  font-weight: 600;
+}
+
+.dx-class-chip--provisional {
+  background: var(--warning-soft, rgba(217, 119, 6, 0.1));
+  border-color: var(--warning-border, rgba(217, 119, 6, 0.28));
+  font-style: italic;
+}
+
+.dx-class-chip--muted {
+  background: var(--surface-muted, #f3f4f6);
+  color: var(--text-muted, #6b7280);
+}
+
+.dx-class-chip--neutral {
+  background: var(--surface-muted, #f3f4f6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dx-class-select {
+    transition: none;
+  }
+}
+
+@media print {
+  .dx-class-select {
+    border: none;
+    background: transparent;
+    padding: 0;
+    appearance: auto;
+  }
+
+  .diagnosen-table__cell--actions {
+    display: none;
+  }
 }
 
 /* —— Placeholder view for top-nav tabs —— */
@@ -4527,22 +4797,52 @@
 /* ── Verlauf Feed Page ──────────────────────────────────────────────────── */
 
 .verlauf-feed-layout {
+  /* Page pad + header row sizing shared by chrome header. */
+  --verlauf-page-pad-top: 2rem;
+  --verlauf-header-row-min: 1.75rem;
+  --verlauf-header-rule-pb: 0.75rem;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  /* Row 1: title / composer / toolbar (feed chrome). Row 2: entry list + aside. */
+  grid-template-columns: minmax(0, 800px) minmax(248px, 288px);
+  grid-template-rows: auto auto;
+  justify-content: start;
   gap: 1.25rem;
   align-items: start;
   min-height: 100%;
   width: 100%;
 }
 
+/* Narrow model: the margin comment panel is removed (comments surface only as
+   hover/focus popups), so the feed reclaims the full width. */
+.verlauf-feed-layout--narrow {
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
 .verlauf-feed-page {
+  display: contents;
+}
+
+/* Header, composer, and sort/filter toolbar — grid row 1, feed column only. */
+.verlauf-feed-chrome {
+  grid-column: 1;
+  grid-row: 1;
   display: flex;
   flex-direction: column;
-  min-height: 100%;
-  padding: 2rem 1.5rem 4rem;
+  min-width: 0;
   max-width: 800px;
-  margin: 0;
   width: 100%;
+  padding: var(--verlauf-page-pad-top, 2rem) 1.5rem 0;
+}
+
+.verlauf-feed-page__list,
+.verlauf-feed-page__empty-card {
+  grid-column: 1;
+  grid-row: 2;
+  min-width: 0;
+  max-width: 800px;
+  width: 100%;
+  padding: 0 1.5rem 4rem;
 }
 
 .verlauf-feed-page__title {
@@ -5402,14 +5702,16 @@
 
 .verlauf-annotation-panel {
   position: sticky;
-  top: 1rem;
+  top: 2.75rem;
   align-self: start;
-  max-height: calc(100vh - 2rem);
-  overflow: auto;
-  margin: 2rem 1rem 2rem 0;
-  padding: 0.85rem 0.9rem;
+  max-height: calc(100vh - 3.25rem);
+  overflow-y: auto;
+  /* No negative margins — the panel stays fully inside its grid column so it
+     never bleeds over the source text. */
+  margin: 2.75rem 0.25rem 2rem 0;
+  padding: 1.25rem 1.25rem 1.5rem;
   border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 18%, var(--border-soft));
-  border-radius: 10px;
+  border-radius: 12px;
   background: color-mix(in srgb, var(--surface, #fff) 92%, var(--area-accent, var(--accent)) 8%);
 }
 
@@ -5418,7 +5720,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  margin-bottom: 0.65rem;
+  margin-bottom: 0.9rem;
 }
 
 .verlauf-annotation-panel__title {
@@ -5446,22 +5748,23 @@
 .verlauf-annotation-panel__list {
   list-style: none;
   margin: 0;
-  padding: 0;
-  position: relative;
+  padding: 0 0 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
 }
 
 .verlauf-annotation-panel__item {
-  position: absolute;
-  left: 0;
-  right: 0;
+  position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0.85rem 0.95rem 0.95rem;
   border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 12%, var(--border-soft));
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--surface, #fff);
-  /* Subtle elevation so adjacent cards stay distinguishable when their anchors
-     sit close together and the absolute positions partially overlap. */
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  transition: border-color 0.12s ease, box-shadow 0.12s ease, top 0.15s ease;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
 }
 
 .verlauf-annotation-panel__item:hover {
@@ -5484,78 +5787,193 @@
   box-shadow: 0 0 0 1px rgba(197, 121, 0, 0.28), 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
+/* Card header: visibility meta on the left, edit/delete icon actions above
+   the comment body on the right. */
+.verlauf-annotation-panel__item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.verlauf-annotation-panel__item-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
+
+.verlauf-annotation-panel__visibility {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--text-muted, #888);
+}
+
+.verlauf-annotation-panel__shared-with {
+  font-weight: 500;
+  text-transform: none;
+}
+
 .verlauf-annotation-panel__item-btn {
   display: block;
   width: 100%;
   text-align: left;
   border: none;
   background: transparent;
-  padding: 0.55rem 0.6rem 0.4rem;
+  padding: 0;
   cursor: pointer;
   font-family: inherit;
 }
 
 .verlauf-annotation-panel__quote {
-  margin: 0 0 0.35rem;
-  padding-left: 0.45rem;
+  margin: 0 0 0.5rem;
+  padding-left: 0.6rem;
   border-left: 2px solid color-mix(in srgb, var(--area-accent, var(--accent)) 35%, transparent);
-  font-size: 0.72rem;
-  line-height: 1.4;
+  font-size: 0.74rem;
+  line-height: 1.45;
   color: var(--text-muted, #888);
 }
 
 .verlauf-annotation-panel__comment {
   margin: 0;
-  font-size: 0.8rem;
-  line-height: 1.45;
+  font-size: 0.82rem;
+  line-height: 1.5;
   color: var(--text-ink, #1a1a1a);
   white-space: pre-wrap;
   word-break: break-word;
 }
 
-.verlauf-annotation-panel__meta {
+/* Inline comment editor */
+.verlauf-annotation-panel__editor {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-top: 0.35rem;
-  font-size: 0.68rem;
-  color: var(--text-muted, #888);
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.verlauf-annotation-panel__visibility {
-  font-weight: 500;
-}
-
-.verlauf-annotation-panel__delete {
-  display: block;
+.verlauf-annotation-panel__editor-textarea {
   width: 100%;
-  margin: 0;
-  padding: 0.35rem 0.6rem 0.45rem;
-  border: none;
-  border-top: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 10%, var(--border-soft));
-  background: transparent;
+  box-sizing: border-box;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 30%, var(--border-soft));
+  border-radius: 8px;
+  background: var(--surface, #fff);
   font-family: inherit;
-  font-size: 0.68rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-ink, #1a1a1a);
+  resize: vertical;
+}
+
+.verlauf-annotation-panel__editor-textarea:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--area-accent, var(--accent)) 45%, transparent);
+  outline-offset: 1px;
+}
+
+.verlauf-annotation-panel__editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.2rem;
+}
+
+/* Hover-revealed comment bubble anchored to highlighted text in the feed. */
+.verlauf-comment-bubble {
+  z-index: 99991;
+  max-width: min(340px, calc(100vw - 24px));
+  padding: 0.85rem 0.95rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 22%, var(--border-soft));
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.14),
+    0 0 0 1px rgba(197, 121, 0, 0.12);
+}
+
+.verlauf-comment-bubble__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.verlauf-comment-bubble__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
+
+.verlauf-comment-bubble__quote {
+  margin: 0 0 0.5rem;
+  padding-left: 0.6rem;
+  border-left: 2px solid color-mix(in srgb, var(--area-accent, var(--accent)) 35%, transparent);
+  font-size: 0.74rem;
+  line-height: 1.45;
   color: var(--text-muted, #888);
-  text-align: left;
-  cursor: pointer;
-  transition: color 0.12s ease, background 0.12s ease;
+  font-style: italic;
 }
 
-.verlauf-annotation-panel__delete:hover {
-  color: #b04545;
-  background: rgba(176, 69, 69, 0.06);
+.verlauf-comment-bubble__text {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-ink, #1a1a1a);
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
-.verlauf-annotation-connector {
-  /* Leader line uses the same amber as the comment underline so the text →
-     margin-card relationship reads as one connected unit (MS Word style). */
-  color: #c57900;
+.verlauf-comment-bubble__visibility {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--text-muted, #888);
 }
 
-/* Persistent link highlight on the commented source text while its margin card
-   is pinned (clicked) or hovered — mirrors how Word shades the active comment's
-   anchor text. Inline span styles set background/border, so we override them. */
+.verlauf-comment-bubble__shared-with {
+  font-weight: 500;
+  text-transform: none;
+}
+
+.verlauf-comment-bubble__editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.verlauf-comment-bubble__editor-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 30%, var(--border-soft));
+  border-radius: 8px;
+  background: var(--surface, #fff);
+  font-family: inherit;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-ink, #1a1a1a);
+  resize: vertical;
+}
+
+.verlauf-comment-bubble__editor-textarea:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--area-accent, var(--accent)) 45%, transparent);
+  outline-offset: 1px;
+}
+
+.verlauf-comment-bubble__editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.2rem;
+}
+
+/* Persistent link highlight on the commented source text while its bubble
+   is revealed — mirrors how Word shades the active comment's anchor text.
+   Inline span styles set background/border, so we override them. */
 .verlauf-annot--linked {
   background: rgba(197, 121, 0, 0.2) !important;
   border-bottom-style: solid !important;
@@ -5563,15 +5981,411 @@
   border-radius: 2px;
 }
 
+/* Subtle inline marker for commented text when the bubble is hidden. */
+.verlauf-annot[data-verlauf-annot-type='comment'] {
+  position: relative;
+}
+
+.verlauf-annot[data-verlauf-annot-type='comment']:focus-visible {
+  outline: 2px solid rgba(197, 121, 0, 0.55);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* =========================================================================
+   Verlauf To-do annotations — mirrors the Kommentare panel/bubble, with a
+   priority-driven accent colour (red = high, amber = medium, teal = low).
+   ========================================================================= */
+
+/* Side column wrapper stacking Kommentare above the To-do panel. */
+.verlauf-feed-aside {
+  grid-column: 2;
+  grid-row: 2;
+  position: sticky;
+  /* Viewport offset while scrolling (case chrome). */
+  top: 2.75rem;
+  align-self: start;
+  max-height: calc(100vh - 3.25rem);
+  overflow-y: auto;
+  margin: 0 0.25rem 2rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Inner panels become static flow inside the shared sticky/scroll wrapper. */
+.verlauf-feed-aside .verlauf-annotation-panel {
+  position: static;
+  max-height: none;
+  overflow: visible;
+  margin: 0;
+}
+
+.verlauf-todo-panel {
+  padding: 1.25rem 1.25rem 1.5rem;
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 18%, var(--border-soft));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface, #fff) 92%, var(--area-accent, var(--accent)) 8%);
+}
+
+.verlauf-todo-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+}
+
+.verlauf-todo-panel__title {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-ink, #1a1a1a);
+}
+
+.verlauf-todo-panel__count {
+  font-size: 0.72rem;
+  color: var(--text-muted, #888);
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 8%, transparent);
+  border-radius: 999px;
+  padding: 0.15rem 0.45rem;
+}
+
+.verlauf-todo-panel__empty {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--text-muted, #888);
+}
+
+.verlauf-todo-panel__list {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.verlauf-todo-panel__item {
+  --verlauf-todo-accent: #b45309;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0.85rem 0.95rem 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 12%, var(--border-soft));
+  border-left: 3px solid var(--verlauf-todo-accent);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.verlauf-todo-panel__item:hover {
+  z-index: 4;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.verlauf-todo-panel__item--active {
+  z-index: 5;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--verlauf-todo-accent) 35%, transparent),
+    0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.verlauf-todo-panel__item--linked {
+  z-index: 4;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--verlauf-todo-accent) 30%, transparent),
+    0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.verlauf-todo-panel__item--done {
+  opacity: 0.7;
+}
+
+.verlauf-todo-panel__item--done .verlauf-todo-panel__text {
+  text-decoration: line-through;
+}
+
+.verlauf-todo-panel__item-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.verlauf-todo-panel__check {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  padding: 0;
+  border: 2px solid var(--verlauf-todo-accent, var(--accent));
+  border-radius: 5px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.verlauf-todo-panel__check svg {
+  width: 0.7rem;
+  height: 0.7rem;
+}
+
+.verlauf-todo-panel__check--on {
+  background: var(--verlauf-todo-accent, var(--accent));
+}
+
+.verlauf-todo-panel__check:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--verlauf-todo-accent) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.verlauf-todo-panel__priority {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.verlauf-todo-panel__item-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.verlauf-todo-panel__item-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.verlauf-todo-panel__quote {
+  margin: 0 0 0.5rem;
+  padding-left: 0.6rem;
+  border-left: 2px solid color-mix(in srgb, var(--verlauf-todo-accent) 45%, transparent);
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: var(--text-muted, #888);
+  font-style: italic;
+}
+
+.verlauf-todo-panel__text {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-ink, #1a1a1a);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.verlauf-todo-panel__due {
+  display: inline-block;
+  margin-top: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--verlauf-todo-accent) 78%, black);
+}
+
+.verlauf-todo-panel__editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.verlauf-todo-panel__editor-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 30%, var(--border-soft));
+  border-radius: 8px;
+  background: var(--surface, #fff);
+  font-family: inherit;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-ink, #1a1a1a);
+  resize: vertical;
+}
+
+.verlauf-todo-panel__editor-textarea:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--area-accent, var(--accent)) 45%, transparent);
+  outline-offset: 1px;
+}
+
+.verlauf-todo-panel__editor-fields {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.verlauf-todo-panel__editor-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1 1 0;
+  min-width: 0;
+  font-size: 0.7rem;
+  color: var(--text-muted, #888);
+  font-weight: 500;
+}
+
+.verlauf-todo-panel__editor-select,
+.verlauf-todo-panel__editor-date {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.3rem 0.4rem;
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 25%, var(--border-soft));
+  border-radius: 6px;
+  background: var(--surface, #fff);
+  font-family: inherit;
+  font-size: 0.76rem;
+  color: var(--text-ink, #1a1a1a);
+}
+
+.verlauf-todo-panel__editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.2rem;
+}
+
+/* Hover-revealed to-do bubble (narrow layout). */
+.verlauf-todo-bubble {
+  --verlauf-todo-accent: #b45309;
+  z-index: 99991;
+  max-width: min(340px, calc(100vw - 24px));
+  padding: 0.85rem 0.95rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent)) 22%, var(--border-soft));
+  border-left: 3px solid var(--verlauf-todo-accent);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
+}
+
+.verlauf-todo-bubble--done {
+  opacity: 0.75;
+}
+
+.verlauf-todo-bubble__head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.verlauf-todo-bubble__priority {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.verlauf-todo-bubble__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.verlauf-todo-bubble__quote {
+  margin: 0 0 0.5rem;
+  padding-left: 0.6rem;
+  border-left: 2px solid color-mix(in srgb, var(--verlauf-todo-accent) 45%, transparent);
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: var(--text-muted, #888);
+  font-style: italic;
+}
+
+.verlauf-todo-bubble__text {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-ink, #1a1a1a);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.verlauf-todo-bubble--done .verlauf-todo-bubble__text {
+  text-decoration: line-through;
+}
+
+.verlauf-todo-bubble__due {
+  display: inline-block;
+  margin-top: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--verlauf-todo-accent) 78%, black);
+}
+
+/* To-do compose popover extras. */
+.verlauf-popover__quote {
+  margin: 0;
+  padding-left: 0.6rem;
+  border-left: 2px solid color-mix(in srgb, var(--verlauf-todo-accent, var(--accent)) 45%, transparent);
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: var(--text-muted, #888);
+  font-style: italic;
+}
+
+.verlauf-popover__hint {
+  margin: 0;
+  font-size: 0.7rem;
+  line-height: 1.4;
+  color: var(--text-muted, #888);
+}
+
+/* Persistent link highlight on a to-do's anchored chart text. Inline span
+   styles set background/border, so we override them. */
+.verlauf-todo-annot--linked {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 32%, transparent);
+  border-bottom-style: solid !important;
+  border-radius: 2px;
+}
+
+.verlauf-annot[data-verlauf-annot-type='todo']:focus-visible {
+  outline: 2px solid rgba(0, 0, 0, 0.35);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 @media (max-width: 1100px) {
   .verlauf-feed-layout {
     grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
   }
 
-  .verlauf-annotation-panel {
+  .verlauf-feed-chrome,
+  .verlauf-feed-page__list,
+  .verlauf-feed-page__empty-card {
+    grid-column: 1;
+  }
+
+  .verlauf-annotation-panel,
+  .verlauf-todo-panel {
     position: static;
     max-height: none;
-    margin: 0 1.5rem 2rem;
+    margin: 0.5rem 1.5rem 2rem;
+    padding-bottom: 1.75rem;
+  }
+
+  .verlauf-feed-aside {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    margin: 0.5rem 0 2rem;
   }
 }
 
@@ -6200,6 +7014,12 @@
 
 /* —— Settings: shared field layout —— */
 
+/* Shared label-column width so every control across the Settings page lines up
+   on one vertical axis. */
+:root {
+  --settings-label-col: 12rem;
+}
+
 .settings-field {
   display: flex;
   flex-direction: column;
@@ -6213,10 +7033,21 @@
 }
 
 @media (min-width: 640px) {
+  /* Two-column grid: fixed label column + flexible control column. The fixed
+     first track guarantees all inputs/controls align on the same vertical
+     line regardless of label length. */
   .settings-field {
-    flex-direction: row;
-    align-items: flex-start;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: var(--settings-label-col) minmax(0, 1fr);
+    align-items: start;
+    column-gap: 1.5rem;
+  }
+
+  /* Appearance section: full-row controls (label stacked above). */
+  .settings-field--stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
   }
 }
 
@@ -6224,18 +7055,18 @@
   min-width: 0;
 }
 
-@media (min-width: 640px) {
-  .settings-field__label-col {
-    max-width: 11rem;
-    flex-shrink: 0;
-  }
-}
-
 .settings-field__label {
   margin: 0;
   font-size: var(--text-sm, 0.8125rem);
   font-weight: var(--weight-medium, 500);
   color: var(--ink, var(--text-main));
+  /* Long labels wrap but never exceed two lines. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
 }
 
 .settings-field__description {
@@ -6247,13 +7078,89 @@
 
 .settings-field__control {
   min-width: 0;
-  flex: 1;
 }
 
 @media (min-width: 640px) {
-  .settings-field__control {
+  /* Cap typical inputs/selects for readability while keeping their left edge
+     aligned to the shared axis; stacked (Appearance) controls span full width. */
+  .settings-field:not(.settings-field--stack) .settings-field__control {
     max-width: 28rem;
   }
+
+  .settings-field--stack .settings-field__control {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.settings-credits__balance {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.settings-credits__balance-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  color: var(--accent, var(--ink));
+  align-self: center;
+}
+
+.settings-credits__balance-value {
+  font-size: 1.75rem;
+  font-weight: var(--weight-semibold, 600);
+  line-height: 1.1;
+  color: var(--ink, var(--text-main));
+  font-variant-numeric: tabular-nums;
+}
+
+.settings-credits__balance-unit {
+  font-size: var(--text-sm, 0.8125rem);
+  color: var(--muted, var(--text-secondary));
+}
+
+.settings-credits__breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: var(--text-sm, 0.8125rem);
+  color: var(--muted, var(--text-secondary));
+}
+
+.settings-credits__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 2px solid var(--ink, var(--text-main));
+  background: var(--ink, var(--text-main));
+  color: var(--surface, #fff);
+  border-radius: 0.125rem;
+  padding: 0.5rem 1rem;
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: var(--weight-medium, 500);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.settings-credits__cta:hover {
+  background: var(--surface, #fff);
+  color: var(--ink, var(--text-main));
+}
+
+.settings-credits__link {
+  border: none;
+  background: transparent;
+  padding: 0.5rem 0.25rem;
+  font-size: var(--text-sm, 0.8125rem);
+  color: var(--muted, var(--text-secondary));
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  cursor: pointer;
+}
+
+.settings-credits__link:hover {
+  color: var(--ink, var(--text-main));
 }
 
 .settings-section-toolbar {
@@ -8631,9 +9538,24 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  min-height: var(--verlauf-header-row-min, 1.75rem);
   margin-bottom: 1rem;
   border-bottom: 1px solid color-mix(in srgb, var(--accent) 15%, var(--border-soft));
-  padding-bottom: 0.75rem;
+  padding-bottom: var(--verlauf-header-rule-pb, 0.75rem);
+}
+
+.verlauf-feed-page__header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.verlauf-action-toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .verlauf-feed-page__new-btn {
@@ -8656,6 +9578,97 @@
 
 .verlauf-feed-page__new-btn:hover {
   background: color-mix(in srgb, var(--accent, #4a7c59) 10%, transparent);
+}
+
+.verlauf-feed-page__header-entry-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.verlauf-feed-page__new-btn--secondary {
+  color: var(--text-secondary, #5c5c58);
+  border-color: var(--border-soft, #d8d8d4);
+}
+
+.verlauf-feed-page__new-btn--secondary:hover {
+  background: var(--surface-muted, #f4f4f1);
+  color: var(--text-primary, #37352f);
+}
+
+.verlauf-entry--somatic-befund {
+  border-left: 3px solid color-mix(in srgb, #3d7ea6 55%, transparent);
+  background: color-mix(in srgb, #3d7ea6 4%, var(--notion-paper-bg, #fff));
+}
+
+.verlauf-entry__somatic-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: 0.35rem;
+  padding: 0.12rem 0.45rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #2f6280;
+  background: color-mix(in srgb, #3d7ea6 12%, transparent);
+  border-radius: 999px;
+}
+
+.verlauf-entry__somatic-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.verlauf-somatic-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.35rem 0 0.15rem;
+}
+
+.verlauf-somatic-summary__row {
+  display: grid;
+  grid-template-columns: minmax(6.5rem, 28%) 1fr;
+  gap: 0.65rem;
+  align-items: start;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.verlauf-somatic-summary__label {
+  color: var(--text-secondary, #787774);
+  font-weight: 500;
+}
+
+.verlauf-somatic-summary__value {
+  color: var(--text-primary, #37352f);
+  white-space: pre-wrap;
+}
+
+.verlauf-somatic-summary__footer {
+  margin-top: 0.35rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--border-soft, #ececea);
+}
+
+.verlauf-somatic-summary__link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.78rem;
+  color: var(--accent, #4a7c59);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.verlauf-somatic-summary__link:hover {
+  color: color-mix(in srgb, var(--accent, #4a7c59) 80%, #000);
 }
 
 .verlauf-composer {
@@ -12318,6 +13331,25 @@
   .medication-edit-dialog__dose-grid {
     grid-template-columns: repeat(auto-fill, minmax(5rem, 1fr));
   }
+}
+
+.medication-edit-dialog__prn-dose-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+@media (max-width: 39.999rem) {
+  .medication-edit-dialog__prn-dose-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.medication-edit-dialog__validation-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--danger, #c0392b);
 }
 
 .medication-edit-dialog__checkbox {
@@ -16672,20 +17704,29 @@ details[open].receptor-radar .receptor-radar__summary::before {
 
 /* Highlight color swatch picker (revealed by the highlighter button). */
 .kbp-selection-toolbar__hl {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 0.125rem;
 }
 
 .kbp-swatches {
+  position: absolute;
+  top: calc(100% + 0.3rem);
+  left: 50%;
+  z-index: 2;
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.2rem;
-  max-width: 6.6rem;
-  padding: 0 0.15rem 0 0.25rem;
-  margin-left: 0.05rem;
-  border-left: 1px solid var(--border-soft);
+  gap: 0.25rem;
+  width: max-content;
+  max-width: 7.5rem;
+  padding: 0.35rem 0.4rem;
+  transform: translateX(-50%);
+  border: 1px solid var(--border-soft);
+  border-radius: 0.4rem;
+  background: var(--surface);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.14);
 }
 
 .kbp-swatch {
@@ -16971,6 +18012,14 @@ details[open].receptor-radar .receptor-radar__summary::before {
   line-height: 1.5;
   color: var(--text-main);
   white-space: pre-wrap;
+}
+
+.kbp-reading-panel__chat-text code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.92em;
+  padding: 0.05em 0.3em;
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, var(--text-muted, #6b7280) 12%, transparent);
 }
 
 /* ── Right reading column: Studienbereich panel + per-user notes stacked ──
@@ -19305,7 +20354,50 @@ details[open].receptor-radar .receptor-radar__summary::before {
   background: var(--surface);
 }
 
-/* ── KB Classified Preview (dev layout mock) ───────────────────────────────── */
+.kb-classified-drug--clinical .kb-classified-drug__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.85rem 1rem;
+}
+
+.kb-classified-drug--clinical .kb-badge {
+  align-self: flex-start;
+}
+
+.kbp-clinical-section-labels {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.kbp-clinical-section-labels .kbp-section__label-input--en {
+  opacity: 0.85;
+}
+
+.kbp-clinical-tags {
+  margin-top: 0.35rem;
+}
+
+.kbp-machine-translation-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  background: color-mix(in srgb, var(--ink-muted) 12%, transparent);
+}
+
+.kbp-list-toolbar__chips {
+  margin-bottom: 0.75rem;
+}
+
 
 .kb-classified-preview {
   display: grid;

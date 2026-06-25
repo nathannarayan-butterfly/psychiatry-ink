@@ -23,7 +23,10 @@ function mapContributionRow(row: Record<string, unknown>): KbContribution {
 }
 
 export async function submitKbContribution(input: SubmitKbContributionInput): Promise<KbContribution> {
-  if (input.licenseAccepted !== true) {
+  // Reporting an issue does not republish copyrighted content, so the
+  // community-content license is not required for `report_issue`; it remains
+  // mandatory for every content-bearing contribution type.
+  if (input.contributionType !== 'report_issue' && input.licenseAccepted !== true) {
     throw new Error('Community contribution license must be accepted')
   }
 
@@ -37,7 +40,7 @@ export async function submitKbContribution(input: SubmitKbContributionInput): Pr
       payload: input.payload,
       submitter_user_id: input.submitterUserId ?? null,
       submitter_display_name: input.submitterDisplayName ?? null,
-      license_accepted: true,
+      license_accepted: input.licenseAccepted === true,
     })
     .select('*')
     .single()

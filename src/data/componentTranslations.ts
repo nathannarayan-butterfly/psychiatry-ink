@@ -179,6 +179,14 @@ export const componentTranslations: Record<string, ComponentTranslation> = {
           es: 'Hallazgos somáticos',
         },
       },
+      'neurologischer-befund': {
+        label: {
+          de: 'Neurologischer Befund',
+          en: 'Neurological exam',
+          fr: 'Examen neurologique',
+          es: 'Exploración neurológica',
+        },
+      },
       'diagnostische-einschaetzung': {
         label: {
           de: 'Diagnostische Einschätzung',

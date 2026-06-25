@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { buildClinicalHeroMeta } from '../clinicalHeroMeta'
 import { DEFAULT_CASE_ID } from '../../caseContext'
-import { DEMO_CASE_ID } from '../../../demo/constants'
 
 const t = (key: string) => {
   if (key === 'patientCaseUnassigned') return 'Patient nicht zugeordnet (Fall {id})'
@@ -11,6 +10,8 @@ const t = (key: string) => {
   if (key === 'patientAgeLabel') return 'Alter'
   if (key === 'patientFieldGeschlecht') return 'Geschlecht'
   if (key === 'patientFieldAufnahmedatum') return 'Aufnahmedatum'
+  if (key === 'patientFieldGroesse') return 'Größe'
+  if (key === 'patientFieldGewicht') return 'Gewicht'
   return key
 }
 
@@ -20,6 +21,14 @@ vi.mock('../../../hooks/useCaseRegistry', () => ({
 
 vi.mock('../../notionPageDate', () => ({
   loadNotionPageDate: vi.fn(() => null),
+}))
+
+vi.mock('../laborArchive', () => ({
+  loadBefunde: vi.fn(() => []),
+}))
+
+vi.mock('../verlaufFeed', () => ({
+  loadVerlaufFeed: vi.fn(() => []),
 }))
 
 import { getCaseMeta } from '../../../hooks/useCaseRegistry'
@@ -44,6 +53,8 @@ describe('buildClinicalHeroMeta', () => {
       age: null,
       sex: null,
       admission: null,
+      height: null,
+      weight: null,
     })
     expect(result.metaLine).toContain('Geburtsdatum: —')
   })
@@ -74,19 +85,6 @@ describe('buildClinicalHeroMeta', () => {
 
     expect(result.name).toBe('Araya')
     expect(result.isAssigned).toBe(true)
-  })
-
-  it('uses demo display name for unnamed demo case', () => {
-    mockGetCaseMeta.mockReturnValue({
-      caseId: DEMO_CASE_ID,
-      createdAt: '2024-01-01T00:00:00.000Z',
-      lastOpened: '2024-01-01T00:00:00.000Z',
-      isDemoPatient: true,
-    })
-
-    const result = buildClinicalHeroMeta(DEMO_CASE_ID, t)
-
-    expect(result.name).toBe('demoPatientDisplayName')
   })
 
   it('prefers structured patient name on default case when present', () => {
@@ -120,9 +118,11 @@ describe('buildClinicalHeroMeta', () => {
       age: null,
       sex: null,
       admission: null,
+      height: null,
+      weight: null,
     })
     expect(result.metaLine).toBe(
-      'Geburtsdatum: — · Alter: — · Geschlecht: — · Aufnahmedatum: —',
+      'Geburtsdatum: — · Alter: — · Geschlecht: — · Aufnahmedatum: — · Größe: — · Gewicht: —',
     )
   })
 

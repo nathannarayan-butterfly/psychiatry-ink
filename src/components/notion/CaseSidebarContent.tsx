@@ -13,7 +13,6 @@ interface CaseSidebarContentProps {
   activeTab: TopNavTabId
   onOpenWorkspacePage?: (pageId: NotionPageId) => void
   onOpenTemplateFromPatient?: () => void
-  onAddAnforderung?: () => void
   /** Workspace tab — diary sidebar widgets (date, timers, recent docs, etc.). */
   workspaceSidebar?: {
     storageCaseId: string
@@ -25,8 +24,6 @@ interface CaseSidebarContentProps {
     onRemoveSavedDoc?: (id: string) => void
     openDocumentLabel?: string
     onCloseDocument?: () => void
-    onAddAnforderung?: () => void
-    anforderungenReadOnly?: boolean
   }
 }
 
@@ -35,7 +32,6 @@ export function CaseSidebarContent({
   activeTab,
   onOpenWorkspacePage,
   onOpenTemplateFromPatient,
-  onAddAnforderung,
   workspaceSidebar,
 }: CaseSidebarContentProps) {
   switch (activeTab) {
@@ -78,8 +74,6 @@ export function CaseSidebarContent({
             onRemoveSavedDoc={workspaceSidebar.onRemoveSavedDoc}
             openDocumentLabel={workspaceSidebar.openDocumentLabel}
             onCloseDocument={workspaceSidebar.onCloseDocument}
-            onAddAnforderung={workspaceSidebar.onAddAnforderung}
-            anforderungenReadOnly={workspaceSidebar.anforderungenReadOnly}
           />
         )
       }
@@ -87,7 +81,6 @@ export function CaseSidebarContent({
         <CaseSidebarQuickNav
           onOpenWorkspacePage={onOpenWorkspacePage}
           onOpenTemplateFromPatient={onOpenTemplateFromPatient}
-          onAddAnforderung={onAddAnforderung}
         />
       )
 
@@ -96,7 +89,6 @@ export function CaseSidebarContent({
         <CaseSidebarQuickNav
           onOpenWorkspacePage={onOpenWorkspacePage}
           onOpenTemplateFromPatient={onOpenTemplateFromPatient}
-          onAddAnforderung={onAddAnforderung}
         />
       )
   }

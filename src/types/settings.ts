@@ -13,6 +13,8 @@ export type SettingsSectionId =
   | 'overview-widgets'
   | 'ai'
   | 'privacy'
+  | 'account'
+  | 'credits'
   | 'about'
   | 'kb-admin'
 
@@ -25,6 +27,10 @@ export type PreferredAccentColor =
   | 'burgundy'
   | 'amber'
   | 'slate'
+  | 'plum'
+  | 'navy'
+  | 'forest'
+  | 'graphite'
 
 export type FontSize = 'sm' | 'md' | 'lg'
 
@@ -39,6 +45,8 @@ export type FontFamily =
   | 'literata'
   | 'merriweather'
   | 'lora'
+  | 'caveat'
+  | 'dancingScript'
 
 export type WorkspaceScale = 'compact' | 'standard' | 'wide'
 
@@ -94,4 +102,8 @@ export const preferredAccentColorIds: PreferredAccentColor[] = [
   'burgundy',
   'amber',
   'slate',
+  'plum',
+  'navy',
+  'forest',
+  'graphite',
 ]

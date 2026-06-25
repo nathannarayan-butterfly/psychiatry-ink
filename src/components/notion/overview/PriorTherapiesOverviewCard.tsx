@@ -38,7 +38,7 @@ export function PriorTherapiesOverviewCard({
   onOpenMedikation,
 }: PriorTherapiesOverviewCardProps) {
   const { language } = useTranslation()
-  const { items, llmStatus, hasInferred } = useCasePriorTherapies(caseId, medications)
+  const { items, llmStatus } = useCasePriorTherapies(caseId, medications)
   const de = language === 'de'
   const evaluating = llmStatus === 'loading'
   const rows = items.slice(0, MAX_ROWS)
@@ -94,12 +94,6 @@ export function PriorTherapiesOverviewCard({
               )
             })}
           </ul>
-          {hasInferred ? (
-            <p className="ov-meta ov-prior__hint">
-              <Sparkles size={11} aria-hidden />{' '}
-              {de ? 'enthält KI-Hinweise (Quelle prüfen)' : 'includes AI hints (verify source)'}
-            </p>
-          ) : null}
         </>
       )}
     </OverviewCard>

@@ -7,10 +7,13 @@ import type {
   ConsultationUrgency,
   PatientIdentifierMode,
 } from '../../types/consultation'
+import { ALL_CONSULTATION_SECTION_KEYS } from '../../types/consultation'
+import { useTranslation } from '../../context/TranslationContext'
 import {
-  ALL_CONSULTATION_SECTION_KEYS,
-  CONSULTATION_SECTION_LABELS,
-} from '../../types/consultation'
+  translateConsultationSection,
+  translateConsultationSpecialty,
+  translateConsultationUi,
+} from '../../data/consultationUiTranslations'
 import { buildConsultationSharedItems } from '../../utils/consultation/buildPackage'
 import { createConsultation } from '../../services/consultationApi'
 import {
@@ -65,6 +68,7 @@ export function ConsultationRequestBuilder({
   onBack,
   onCreated,
 }: ConsultationRequestBuilderProps) {
+  const { language } = useTranslation()
   const [specialty, setSpecialty] = useState('Psychiatrie')
   const [customSpecialty, setCustomSpecialty] = useState('')
   const [consultantEmail, setConsultantEmail] = useState('')
@@ -117,7 +121,7 @@ export function ConsultationRequestBuilder({
     printConsultationDocument({
       caseRef: formatConsultationCaseRef(caseId),
       specialty: resolvedSpecialty || '—',
-      title: title.trim() || 'Konsilanfrage',
+      title: title.trim() || translateConsultationUi(language, 'consultationRequestTitle'),
       clinicalQuestion: clinicalQuestion.trim(),
       kurzanamnese: kurzanamnese.trim(),
       urgency,
@@ -137,25 +141,26 @@ export function ConsultationRequestBuilder({
     examinationRequested,
     legalConsentNote,
     sharedItems,
+    language,
   ])
 
   const handleSubmit = useCallback(
     async (saveAsDraft: boolean) => {
       setError(null)
       if (!resolvedSpecialty) {
-        setError('Fachrichtung angeben.')
+        setError(translateConsultationUi(language, 'errSpecialtyRequired'))
         return
       }
       if (!title.trim() || !clinicalQuestion.trim()) {
-        setError('Titel und Fragestellung sind erforderlich.')
+        setError(translateConsultationUi(language, 'errTitleQuestionRequired'))
         return
       }
       if (!saveAsDraft && !consultantEmail.trim() && !consultantUserId.trim()) {
-        setError('Konsiliar-E-Mail oder Benutzer-ID angeben.')
+        setError(translateConsultationUi(language, 'errConsultantContactRequired'))
         return
       }
       if (sharedItems.length === 0) {
-        setError('Mindestens einen Abschnitt freigeben.')
+        setError(translateConsultationUi(language, 'errAtLeastOneSection'))
         return
       }
 
@@ -207,7 +212,7 @@ export function ConsultationRequestBuilder({
           onCreated(result.request.id, result.inviteToken)
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Senden fehlgeschlagen')
+        setError(err instanceof Error ? err.message : translateConsultationUi(language, 'errSendFailed'))
       } finally {
         setLoading(false)
       }
@@ -228,6 +233,7 @@ export function ConsultationRequestBuilder({
       legalConsentNote,
       identifierMode,
       onCreated,
+      language,
     ],
   )
 
@@ -241,11 +247,11 @@ export function ConsultationRequestBuilder({
               className="consultation-builder__back clinical-back-link"
               onClick={() => onCreated(createdRequestId)}
             >
-              ← Zur Übersicht
+              {translateConsultationUi(language, 'backToOverview')}
             </button>
-            <h1 className="consultation-builder__title">Konsil gesendet</h1>
+            <h1 className="consultation-builder__title">{translateConsultationUi(language, 'consultationSent')}</h1>
             <p className="consultation-builder__subtitle">
-              Senden Sie diesen Link an den Konsiliar. Er ist nur einmal gültig.
+              {translateConsultationUi(language, 'consultationSentSubtitle')}
             </p>
           </div>
         </header>
@@ -257,8 +263,8 @@ export function ConsultationRequestBuilder({
                 type="button"
                 className="icon-action-btn icon-action-btn--bordered"
                 onClick={handlePrintPreview}
-                title="Drucken"
-                aria-label="Drucken"
+                title={translateConsultationUi(language, 'print')}
+                aria-label={translateConsultationUi(language, 'print')}
               >
                 <Printer strokeWidth={1.75} aria-hidden />
               </button>
@@ -270,8 +276,8 @@ export function ConsultationRequestBuilder({
                   setCopied(true)
                   setTimeout(() => setCopied(false), 2000)
                 }}
-                title={copied ? 'Kopiert' : 'Link kopieren'}
-                aria-label={copied ? 'Kopiert' : 'Link kopieren'}
+                title={copied ? translateConsultationUi(language, 'copied') : translateConsultationUi(language, 'copyLink')}
+                aria-label={copied ? translateConsultationUi(language, 'copied') : translateConsultationUi(language, 'copyLink')}
               >
                 {copied ? <Check strokeWidth={1.75} aria-hidden /> : <Clipboard strokeWidth={1.75} aria-hidden />}
               </button>
@@ -280,7 +286,7 @@ export function ConsultationRequestBuilder({
                 className="consultation-builder__primary"
                 onClick={() => onCreated(createdRequestId)}
               >
-                Zur Übersicht
+                {translateConsultationUi(language, 'toOverview')}
               </button>
             </div>
           </div>
@@ -294,10 +300,10 @@ export function ConsultationRequestBuilder({
       <header className="consultation-builder__header">
         <div>
           <button type="button" className="consultation-builder__back clinical-back-link" onClick={onBack}>
-            ← Zurück
+            {translateConsultationUi(language, 'back')}
           </button>
-          <h1 className="consultation-builder__title">Konsil anfordern</h1>
-          <p className="consultation-builder__subtitle">Konsilanfrage erstellen und Unterlagen freigeben</p>
+          <h1 className="consultation-builder__title">{translateConsultationUi(language, 'requestConsultation')}</h1>
+          <p className="consultation-builder__subtitle">{translateConsultationUi(language, 'builderSubtitle')}</p>
         </div>
       </header>
 
@@ -306,10 +312,10 @@ export function ConsultationRequestBuilder({
       <div className="consultation-builder__layout">
         <div className="consultation-builder__main">
         <section className="consultation-builder__section">
-          <h2 className="consultation-builder__section-title">Konsiliar & Fachrichtung</h2>
+          <h2 className="consultation-builder__section-title">{translateConsultationUi(language, 'sectionConsultantSpecialty')}</h2>
           <div className="consultation-builder__field">
             <label className="consultation-builder__label" htmlFor="ks-specialty">
-              Fachrichtung
+              {translateConsultationUi(language, 'specialty')}
             </label>
             <select
               id="ks-specialty"
@@ -319,7 +325,7 @@ export function ConsultationRequestBuilder({
             >
               {SPECIALTIES.map((s) => (
                 <option key={s} value={s}>
-                  {s}
+                  {translateConsultationSpecialty(language, s)}
                 </option>
               ))}
             </select>
@@ -327,7 +333,7 @@ export function ConsultationRequestBuilder({
           {specialty === 'Sonstige / Freitext' ? (
             <div className="consultation-builder__field">
               <label className="consultation-builder__label" htmlFor="ks-custom-specialty">
-                Eigene Fachrichtung
+                {translateConsultationUi(language, 'customSpecialty')}
               </label>
               <input
                 id="ks-custom-specialty"
@@ -339,7 +345,7 @@ export function ConsultationRequestBuilder({
           ) : null}
           <div className="consultation-builder__field">
             <label className="consultation-builder__label" htmlFor="ks-email">
-              Konsiliar E-Mail
+              {translateConsultationUi(language, 'consultantEmail')}
             </label>
             <input
               id="ks-email"
@@ -351,19 +357,19 @@ export function ConsultationRequestBuilder({
           </div>
           <div className="consultation-builder__field">
             <label className="consultation-builder__label" htmlFor="ks-user-id">
-              Konsiliar Benutzer-ID (für registrierte Nutzer)
+              {translateConsultationUi(language, 'consultantUserId')}
             </label>
             <input
               id="ks-user-id"
               className="consultation-builder__input"
               value={consultantUserId}
               onChange={(e) => setConsultantUserId(e.target.value)}
-              placeholder="UUID des Konsiliar-Benutzers"
+              placeholder={translateConsultationUi(language, 'consultantUserIdPlaceholder')}
             />
           </div>
           <div className="consultation-builder__field">
             <label className="consultation-builder__label" htmlFor="ks-access">
-              Zugriffsart
+              {translateConsultationUi(language, 'accessType')}
             </label>
             <select
               id="ks-access"
@@ -371,30 +377,30 @@ export function ConsultationRequestBuilder({
               value={accessType}
               onChange={(e) => setAccessType(e.target.value as ConsultationAccessType)}
             >
-              <option value="internal_consultant">Interner Konsiliar</option>
-              <option value="external_consultant">Externer Konsiliar</option>
-              <option value="one_time_external">Einmaliger externer Zugang</option>
+              <option value="internal_consultant">{translateConsultationUi(language, 'accessInternal')}</option>
+              <option value="external_consultant">{translateConsultationUi(language, 'accessExternal')}</option>
+              <option value="one_time_external">{translateConsultationUi(language, 'accessOneTime')}</option>
             </select>
           </div>
         </section>
 
         <section className="consultation-builder__section">
-          <h2 className="consultation-builder__section-title">Fragestellung</h2>
+          <h2 className="consultation-builder__section-title">{translateConsultationUi(language, 'sectionQuestion')}</h2>
           <div className="consultation-builder__field">
             <label className="consultation-builder__label" htmlFor="ks-title">
-              Titel
+              {translateConsultationUi(language, 'title')}
             </label>
             <input
               id="ks-title"
               className="consultation-builder__input"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Konsilanfrage"
+              placeholder={translateConsultationUi(language, 'consultationRequestTitle')}
             />
           </div>
           <div className="consultation-builder__field">
             <label className="consultation-builder__label" htmlFor="ks-urgency">
-              Dringlichkeit
+              {translateConsultationUi(language, 'urgency')}
             </label>
             <select
               id="ks-urgency"
@@ -402,14 +408,14 @@ export function ConsultationRequestBuilder({
               value={urgency}
               onChange={(e) => setUrgency(e.target.value as ConsultationUrgency)}
             >
-              <option value="routine">Routine</option>
-              <option value="urgent">Dringend</option>
-              <option value="emergency">Notfall</option>
+              <option value="routine">{translateConsultationUi(language, 'urgencyRoutine')}</option>
+              <option value="urgent">{translateConsultationUi(language, 'urgencyUrgent')}</option>
+              <option value="emergency">{translateConsultationUi(language, 'urgencyEmergency')}</option>
             </select>
           </div>
           <div className="consultation-builder__field">
             <label className="consultation-builder__label" htmlFor="ks-question">
-              Fragestellung
+              {translateConsultationUi(language, 'clinicalQuestion')}
             </label>
             <textarea
               id="ks-question"
@@ -421,7 +427,7 @@ export function ConsultationRequestBuilder({
           </div>
           <div className="consultation-builder__field">
             <label className="consultation-builder__label" htmlFor="ks-kurz">
-              Kurzanamnese
+              {translateConsultationUi(language, 'shortHistory')}
             </label>
             <textarea
               id="ks-kurz"
@@ -437,11 +443,11 @@ export function ConsultationRequestBuilder({
               checked={examinationRequested}
               onChange={(e) => setExaminationRequested(e.target.checked)}
             />
-            Direkte Patientenuntersuchung angefordert
+            {translateConsultationUi(language, 'examinationRequested')}
           </label>
           <div className="consultation-builder__field">
             <label className="consultation-builder__label" htmlFor="ks-deadline">
-              Frist (optional)
+              {translateConsultationUi(language, 'deadlineOptional')}
             </label>
             <input
               id="ks-deadline"
@@ -454,15 +460,15 @@ export function ConsultationRequestBuilder({
         </section>
 
         <section className="consultation-builder__section">
-          <h2 className="consultation-builder__section-title">Freigegebene Unterlagen</h2>
+          <h2 className="consultation-builder__section-title">{translateConsultationUi(language, 'sharedMaterial')}</h2>
           {accessType !== 'internal_consultant' ? (
             <p className="consultation-builder__warning">
-              Externer Konsiliarzugang: Patientenkennzeichen werden gemäß gewähltem Modus reduziert.
+              {translateConsultationUi(language, 'externalAccessWarning')}
             </p>
           ) : null}
           <div className="consultation-builder__field">
             <label className="consultation-builder__label" htmlFor="ks-id-mode">
-              Kennzeichnungsmodus
+              {translateConsultationUi(language, 'identifierMode')}
             </label>
             <select
               id="ks-id-mode"
@@ -470,9 +476,9 @@ export function ConsultationRequestBuilder({
               value={identifierMode}
               onChange={(e) => setIdentifierMode(e.target.value as PatientIdentifierMode)}
             >
-              <option value="deidentified">De-identifiziert</option>
-              <option value="pseudonymized">Pseudonymisiert</option>
-              <option value="full">Vollständig (nur intern)</option>
+              <option value="deidentified">{translateConsultationUi(language, 'identifierDeidentified')}</option>
+              <option value="pseudonymized">{translateConsultationUi(language, 'identifierPseudonymized')}</option>
+              <option value="full">{translateConsultationUi(language, 'identifierFull')}</option>
             </select>
           </div>
           <div className="consultation-builder__checkboxes">
@@ -483,7 +489,7 @@ export function ConsultationRequestBuilder({
                   checked={selectedSections.has(key)}
                   onChange={() => toggleSection(key)}
                 />
-                {CONSULTATION_SECTION_LABELS[key]}
+                {translateConsultationSection(language, key)}
               </label>
             ))}
             <label className="consultation-builder__checkbox">
@@ -492,7 +498,7 @@ export function ConsultationRequestBuilder({
                 checked={selectedSections.has('custom_text')}
                 onChange={() => toggleSection('custom_text')}
               />
-              {CONSULTATION_SECTION_LABELS.custom_text}
+              {translateConsultationSection(language, 'custom_text')}
             </label>
           </div>
           {selectedSections.has('custom_text') ? (
@@ -501,7 +507,7 @@ export function ConsultationRequestBuilder({
                 className="consultation-builder__textarea"
                 value={customText}
                 onChange={(e) => setCustomText(e.target.value)}
-                placeholder="Zusätzlicher Freitext…"
+                placeholder={translateConsultationUi(language, 'customTextPlaceholder')}
               />
             </div>
           ) : null}
@@ -510,7 +516,7 @@ export function ConsultationRequestBuilder({
         <section className="consultation-builder__section">
           <div className="consultation-builder__field">
             <label className="consultation-builder__label" htmlFor="ks-consent">
-              Rechtliches / Einwilligung (optional)
+              {translateConsultationUi(language, 'legalConsentOptional')}
             </label>
             <textarea
               id="ks-consent"
@@ -527,8 +533,8 @@ export function ConsultationRequestBuilder({
             className="icon-action-btn icon-action-btn--bordered"
             disabled={loading}
             onClick={handlePrintPreview}
-            title="Drucken"
-            aria-label="Drucken"
+            title={translateConsultationUi(language, 'print')}
+            aria-label={translateConsultationUi(language, 'print')}
           >
             <Printer strokeWidth={1.75} aria-hidden />
           </button>
@@ -538,7 +544,7 @@ export function ConsultationRequestBuilder({
             disabled={loading}
             onClick={() => void handleSubmit(true)}
           >
-            Entwurf speichern
+            {translateConsultationUi(language, 'saveDraft')}
           </button>
           <button
             type="button"
@@ -546,18 +552,18 @@ export function ConsultationRequestBuilder({
             disabled={loading}
             onClick={() => void handleSubmit(false)}
           >
-            {loading ? 'Senden…' : 'Konsil anfordern'}
+            {loading ? translateConsultationUi(language, 'sending') : translateConsultationUi(language, 'requestConsultation')}
           </button>
         </div>
         </div>
 
         <aside className="consultation-builder__preview">
-          <h2 className="consultation-builder__preview-title">Vorschau — Freigabe</h2>
+          <h2 className="consultation-builder__preview-title">{translateConsultationUi(language, 'previewTitle')}</h2>
           <p className="consultation-builder__preview-hint">
-            Diese Abschnitte werden dem Konsiliar übermittelt.
+            {translateConsultationUi(language, 'previewHint')}
           </p>
           {sharedItems.length === 0 ? (
-            <p className="clinical-empty-state">Noch keine Abschnitte ausgewählt.</p>
+            <p className="clinical-empty-state">{translateConsultationUi(language, 'previewEmpty')}</p>
           ) : (
             <ul className="consultation-builder__preview-list">
               {sharedItems.map((item, index) => (

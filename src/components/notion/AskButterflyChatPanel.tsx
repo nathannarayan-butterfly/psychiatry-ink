@@ -6,6 +6,7 @@ import { useCompactDictation } from '../../hooks/useCompactDictation'
 import { ButterflyLogo } from '../ButterflyLogo'
 import { askButterflyChat, type AskButterflyChatMessage } from '../../services/askButterflyApi'
 import { resolveLlmRequestForTaskOrTier } from '../../utils/resolveAiModel'
+import { ChatMarkdownText } from '../../utils/chat/ChatMarkdownText'
 import { AskButterflyTierSelector } from './AskButterflyTierSelector'
 
 interface AskButterflyChatPanelProps {
@@ -19,7 +20,7 @@ export function AskButterflyChatPanel({
   headerActions,
   titleId = 'ask-butterfly-title',
 }: AskButterflyChatPanelProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const { messages, setMessages, tier } = useAskButterfly()
   const [draft, setDraft] = useState('')
   const [loading, setLoading] = useState(false)
@@ -36,6 +37,7 @@ export function AskButterflyChatPanel({
 
   const { isRecording, isTranscribing, toggleRecording, error: voiceError } = useCompactDictation({
     onTranscriptionComplete: appendTranscription,
+    language,
   })
 
   useEffect(() => {
@@ -83,13 +85,12 @@ export function AskButterflyChatPanel({
       <header className="ask-butterfly-dialog__header">
         <div className="ask-butterfly-dialog__title-wrap">
           <span className="ask-butterfly-dialog__mark">
-            <ButterflyLogo variant="color" size={variant === 'docked' ? 24 : 28} />
+            <ButterflyLogo tone="silver" breathing size={variant === 'docked' ? 24 : 28} />
           </span>
           <div>
             <h2 id={titleId} className="ask-butterfly-dialog__title">
               {t('askButterflyTitle')}
             </h2>
-            <p className="ask-butterfly-dialog__subtitle">{t('askButterflySubtitle')}</p>
           </div>
         </div>
         <div className="ask-butterfly-dialog__header-actions">{headerActions}</div>
@@ -100,7 +101,12 @@ export function AskButterflyChatPanel({
 
         <div className="ask-butterfly-dialog__messages" aria-live="polite">
           {messages.length === 0 ? (
-            <p className="ask-butterfly-dialog__empty">{t('askButterflyEmpty')}</p>
+            <div className="ask-butterfly-dialog__empty">
+              <span className="ask-butterfly-dialog__empty-orb" aria-hidden>
+                <ButterflyLogo breathing size={34} />
+              </span>
+              <p className="ask-butterfly-dialog__empty-text">{t('askButterflyEmpty')}</p>
+            </div>
           ) : (
             messages.map((message, index) => (
               <div
@@ -110,7 +116,13 @@ export function AskButterflyChatPanel({
                 <p className="ask-butterfly-dialog__message-role">
                   {message.role === 'user' ? t('askButterflyYou') : t('askButterflyAssistant')}
                 </p>
-                <p className="ask-butterfly-dialog__message-text">{message.content}</p>
+                <p className="ask-butterfly-dialog__message-text">
+                  {message.role === 'assistant' ? (
+                    <ChatMarkdownText text={message.content} />
+                  ) : (
+                    message.content
+                  )}
+                </p>
               </div>
             ))
           )}

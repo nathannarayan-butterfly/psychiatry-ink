@@ -16,6 +16,9 @@ import {
 import { fetchKbAdminContributions } from '../../services/kbContributionsApi'
 import type { KbContribution } from '../../types/kbContributions'
 import type { KbSubstance, KbSubstanceDetail } from '../../types/kbNormalized'
+import { useTranslation } from '../../context/TranslationContext'
+import { formatAdminUiTemplate, translateAdminUi } from '../../data/adminUiTranslations'
+import type { UiLanguage } from '../../types/settings'
 import { KbAdminDiscussionsPanel } from './KbAdminDiscussionsPanel'
 
 interface KbAdminPageProps {
@@ -39,35 +42,44 @@ function KbBadge({ variant, label, title }: { variant: BadgeVariant; label: stri
   )
 }
 
-function substanceBadges(s: KbSubstance, detail?: KbSubstanceDetail | null) {
+function substanceBadges(language: UiLanguage, s: KbSubstance, detail?: KbSubstanceDetail | null) {
   const badges: Array<{ variant: BadgeVariant; label: string; title?: string }> = []
   if (s.status === 'ai_draft') {
-    badges.push({ variant: 'draft', label: 'AI draft', title: 'Not clinically reviewed' })
+    badges.push({
+      variant: 'draft',
+      label: translateAdminUi(language, 'kbBadgeAiDraft'),
+      title: translateAdminUi(language, 'kbBadgeNotReviewedTitle'),
+    })
   }
   if (s.reviewStatus === 'unreviewed') {
-    badges.push({ variant: 'unreviewed', label: 'Unreviewed' })
+    badges.push({ variant: 'unreviewed', label: translateAdminUi(language, 'kbBadgeUnreviewed') })
   }
   if (s.needsClinicalReview) {
-    badges.push({ variant: 'review', label: 'Needs clinical review' })
+    badges.push({ variant: 'review', label: translateAdminUi(language, 'kbBadgeNeedsReview') })
   }
   if (s.sourceQuality === 'ai_generated_unverified' || s.sourceQuality === 'ai_generated_partial') {
-    badges.push({ variant: 'source', label: 'Missing official source', title: `source_quality: ${s.sourceQuality}` })
+    badges.push({
+      variant: 'source',
+      label: translateAdminUi(language, 'kbBadgeMissingSource'),
+      title: `source_quality: ${s.sourceQuality}`,
+    })
   }
   if (detail) {
     if (!detail.receptorAffinities.length) {
-      badges.push({ variant: 'receptor', label: 'Missing receptor data' })
+      badges.push({ variant: 'receptor', label: translateAdminUi(language, 'kbBadgeMissingReceptor') })
     }
     if (!detail.monitoring.length) {
-      badges.push({ variant: 'monitoring', label: 'Missing monitoring data' })
+      badges.push({ variant: 'monitoring', label: translateAdminUi(language, 'kbBadgeMissingMonitoring') })
     }
     if (detail.latestGeneration?.status === 'failed_validation') {
-      badges.push({ variant: 'error', label: 'Validation errors' })
+      badges.push({ variant: 'error', label: translateAdminUi(language, 'kbValidationErrors') })
     }
   }
   return badges
 }
 
 export function KbAdminPage({ onBack }: KbAdminPageProps) {
+  const { language } = useTranslation()
   const { userId, displayName } = useKnowledgeBaseUserProfile()
   const [statusFilter, setStatusFilter] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
@@ -131,9 +143,7 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
   const handleApproveAll = useCallback(async () => {
     const count = approvableSubstances.length
     if (count === 0 || bulkRunning) return
-    const confirmed = window.confirm(
-      `Approve and publish ${count} profile${count === 1 ? '' : 's'} to Psychopharmacologie?`,
-    )
+    const confirmed = window.confirm(formatAdminUiTemplate(language, 'kbConfirmApproveAll', { count }))
     if (!confirmed) return
 
     setBulkRunning(true)
@@ -152,7 +162,7 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
     } finally {
       setBulkRunning(false)
     }
-  }, [approvableSubstances.length, bulkRunning, statusFilter, categoryFilter, loadList, loadDetail, selectedId, userId])
+  }, [approvableSubstances.length, bulkRunning, statusFilter, categoryFilter, loadList, loadDetail, selectedId, userId, language])
 
   const loadContributions = useCallback(async () => {
     setContributionsLoading(true)
@@ -193,28 +203,27 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
   const listBadgeCache = useMemo(() => {
     const map = new Map<string, ReturnType<typeof substanceBadges>>()
     for (const s of substances) {
-      map.set(s.id, substanceBadges(s))
+      map.set(s.id, substanceBadges(language, s))
     }
     return map
-  }, [substances])
+  }, [substances, language])
 
   return (
     <div className="kb-admin-page">
       <header className="kb-admin-header">
-        <button type="button" className="kb-admin-back" onClick={onBack}>← Dashboard</button>
+        <button type="button" className="kb-admin-back" onClick={onBack}>← {translateAdminUi(language, 'adminBackDashboard')}</button>
         <div>
-          <h1><FlaskConical size={22} aria-hidden /> Wissensdatenbank — Batch Review</h1>
+          <h1><FlaskConical size={22} aria-hidden /> {translateAdminUi(language, 'kbHeaderTitle')}</h1>
           <p className="kb-admin-sub">
-            Normalized KB (<code>kb_substances</code>) is the source of truth. Legacy JSONB tables are read-mostly projections.
-            AI drafts require clinical review before publication.
+            {translateAdminUi(language, 'kbHeaderIntroBeforeCode')}<code>kb_substances</code>{translateAdminUi(language, 'kbHeaderIntroAfterCode')}
           </p>
         </div>
       </header>
 
       {!apiReady && (
         <div className="kb-admin-alert">
-          Server API nicht bereit. Starten Sie <code>npm run dev:server</code> und setzen Sie
-          {' '}<code>SUPABASE_SERVICE_ROLE_KEY</code> in .env.local (server-only, never VITE_*).
+          {translateAdminUi(language, 'kbApiNotReadyBeforeCode')} <code>npm run dev:server</code> {translateAdminUi(language, 'kbApiNotReadyBetweenCode')}
+          {' '}<code>SUPABASE_SERVICE_ROLE_KEY</code> {translateAdminUi(language, 'kbApiNotReadyAfterCode')}
         </div>
       )}
 
@@ -230,7 +239,7 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
               setSelectedContributionId(null)
             }}
           >
-            Substances
+            {translateAdminUi(language, 'kbTabSubstances')}
           </button>
           <button
             type="button"
@@ -241,7 +250,7 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
               setDetail(null)
             }}
           >
-            Contributions
+            {translateAdminUi(language, 'kbTabContributions')}
             {contributions.length > 0 && (
               <span className="kb-admin-tab__count">{contributions.length}</span>
             )}
@@ -254,13 +263,13 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
               <>
                 <div className="kb-admin-filters">
                   <button type="button" onClick={() => void loadContributions()} disabled={contributionsLoading}>
-                    <RefreshCw size={14} /> Aktualisieren
+                    <RefreshCw size={14} /> {translateAdminUi(language, 'adminRefresh')}
                   </button>
                 </div>
                 {contributionsLoading ? (
-                  <p>Laden…</p>
+                  <p>{translateAdminUi(language, 'adminLoading')}</p>
                 ) : contributions.length === 0 ? (
-                  <p className="kb-admin-sub">No pending contributions.</p>
+                  <p className="kb-admin-sub">{translateAdminUi(language, 'kbNoPendingContributions')}</p>
                 ) : (
                   <ul className="kb-admin-list-items">
                     {contributions.map((c) => (
@@ -280,7 +289,7 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
                           }}
                         >
                           <strong>{c.contributionType}</strong>
-                          <span>{c.submitterDisplayName ?? 'Anonymous'}</span>
+                          <span>{c.submitterDisplayName ?? translateAdminUi(language, 'kbAnonymous')}</span>
                           <div className="kb-admin-badge-row">
                             <span className="kb-admin-badge kb-admin-badge--unreviewed">{c.status}</span>
                           </div>
@@ -294,9 +303,9 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
               <>
                 <div className="kb-admin-filters">
             <label>
-              Status
+              {translateAdminUi(language, 'kbStatus')}
               <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-                <option value="">alle (inkl. ai_draft)</option>
+                <option value="">{translateAdminUi(language, 'kbStatusAll')}</option>
                 <option value="ai_draft">ai_draft</option>
                 <option value="reviewed">reviewed</option>
                 <option value="published">published</option>
@@ -304,16 +313,16 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
               </select>
             </label>
             <label>
-              Kategorie
+              {translateAdminUi(language, 'kbCategory')}
               <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
-                <option value="">alle</option>
+                <option value="">{translateAdminUi(language, 'kbCategoryAll')}</option>
                 {PSYCHIATRIC_DRUG_CATEGORIES.map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
             </label>
             <button type="button" onClick={() => void loadList()} disabled={bulkRunning}>
-              <RefreshCw size={14} /> Aktualisieren
+              <RefreshCw size={14} /> {translateAdminUi(language, 'adminRefresh')}
             </button>
             {approvableSubstances.length > 0 && (
               <button
@@ -324,23 +333,23 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
               >
                 <CheckCircle size={14} />
                 {bulkRunning
-                  ? 'Publishing…'
-                  : `Approve all (${approvableSubstances.length})`}
+                  ? translateAdminUi(language, 'kbPublishing')
+                  : `${translateAdminUi(language, 'kbApproveAll')} (${approvableSubstances.length})`}
               </button>
             )}
           </div>
 
           {bulkSummary && (
             <div className="kb-admin-bulk-summary">
-              <strong>Bulk publish complete</strong>
+              <strong>{translateAdminUi(language, 'kbBulkComplete')}</strong>
               <ul>
-                <li>{bulkSummary.succeeded.length} published</li>
-                <li>{bulkSummary.skipped.length} skipped</li>
-                <li>{bulkSummary.failed.length} failed</li>
+                <li>{bulkSummary.succeeded.length} {translateAdminUi(language, 'kbBulkPublished')}</li>
+                <li>{bulkSummary.skipped.length} {translateAdminUi(language, 'kbBulkSkipped')}</li>
+                <li>{bulkSummary.failed.length} {translateAdminUi(language, 'kbBulkFailed')}</li>
               </ul>
               {bulkSummary.failed.length > 0 && (
                 <details>
-                  <summary>Failed profiles</summary>
+                  <summary>{translateAdminUi(language, 'kbFailedProfiles')}</summary>
                   <ul>
                     {bulkSummary.failed.map((f) => (
                       <li key={f.id}>{f.genericName}: {f.error}</li>
@@ -351,7 +360,7 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
             </div>
           )}
 
-          {loading ? <p>Laden…</p> : (
+          {loading ? <p>{translateAdminUi(language, 'adminLoading')}</p> : (
             <ul className="kb-admin-list-items">
               {substances.map((s) => (
                 <li key={s.id}>
@@ -373,7 +382,7 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
                   </button>
                 </li>
               ))}
-              {substances.length === 0 && <li className="kb-admin-empty">Keine Einträge</li>}
+              {substances.length === 0 && <li className="kb-admin-empty">{translateAdminUi(language, 'kbNoEntries')}</li>}
             </ul>
           )}
               </>
@@ -390,32 +399,32 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
                 </div>
               </div>
               <section className="kb-admin-section">
-                <h3>Submission</h3>
+                <h3>{translateAdminUi(language, 'kbSubmission')}</h3>
                 <dl className="kb-admin-dl">
-                  <dt>Submitter</dt>
+                  <dt>{translateAdminUi(language, 'kbSubmitter')}</dt>
                   <dd>{selectedContribution.submitterDisplayName ?? '—'}</dd>
-                  <dt>Created</dt>
+                  <dt>{translateAdminUi(language, 'kbCreated')}</dt>
                   <dd>{selectedContribution.createdAt}</dd>
-                  <dt>Substance</dt>
+                  <dt>{translateAdminUi(language, 'kbSubstance')}</dt>
                   <dd>{selectedContribution.substanceId ?? '—'}</dd>
                 </dl>
                 <pre className="kb-admin-payload">{JSON.stringify(selectedContribution.payload, null, 2)}</pre>
               </section>
             </>
           ) : !detail ? (
-            <p className="kb-admin-empty">Profil auswählen (AI draft öffnen)</p>
+            <p className="kb-admin-empty">{translateAdminUi(language, 'kbSelectProfile')}</p>
           ) : (
             <>
               <div className="kb-admin-detail-header">
                 <h2>{detail.genericName}</h2>
                 <div className="kb-admin-badge-row">
-                  {substanceBadges(detail, detail).map((b) => (
+                  {substanceBadges(language, detail, detail).map((b) => (
                     <KbBadge key={b.label} variant={b.variant} label={b.label} title={b.title} />
                   ))}
                 </div>
                 <div className="kb-admin-actions">
                   <button type="button" onClick={() => void approveKbSubstance(userId, detail.id).then(() => loadDetail(detail.id))}>
-                    <CheckCircle size={14} /> Approve
+                    <CheckCircle size={14} /> {translateAdminUi(language, 'kbApprove')}
                   </button>
                   <button
                     type="button"
@@ -423,33 +432,35 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
                       void publishKbSubstance(userId, detail.id)
                         .then((result) => {
                           setPublishNotice(
-                            `Published → Psychopharmacologie (knowledge_base_drugs id: ${result.projectedDrugId})`,
+                            formatAdminUiTemplate(language, 'kbPublishedNotice', {
+                              id: result.projectedDrugId,
+                            }),
                           )
                           return loadDetail(detail.id)
                         })
                         .catch((err) => setError(err instanceof Error ? err.message : String(err)))
                     }
                   >
-                    Publish
+                    {translateAdminUi(language, 'kbPublish')}
                   </button>
                   <button type="button" onClick={() => void archiveKbSubstance(userId, detail.id).then(() => loadDetail(detail.id))}>
-                    <Archive size={14} /> Archive
+                    <Archive size={14} /> {translateAdminUi(language, 'kbArchive')}
                   </button>
                   <button
                     type="button"
-                    title="Rerun enrichment via CLI (server-side)"
+                    title={translateAdminUi(language, 'kbRerunTitle')}
                     onClick={() => {
                       void navigator.clipboard.writeText(rerunCli)
                       setError(null)
                     }}
                   >
-                    <RotateCcw size={14} /> Rerun (copy CLI)
+                    <RotateCcw size={14} /> {translateAdminUi(language, 'kbRerunButton')}
                   </button>
                 </div>
               </div>
 
               <p className="kb-admin-cli-hint">
-                Rerun enrichment: <code>{rerunCli}</code>
+                {translateAdminUi(language, 'kbRerunHint')} <code>{rerunCli}</code>
               </p>
 
               {publishNotice && (
@@ -458,10 +469,10 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
                 </div>
               )}
 
-              {substanceBadges(detail, detail).some((b) => b.variant === 'receptor' || b.variant === 'monitoring' || b.variant === 'error') && (
+              {substanceBadges(language, detail, detail).some((b) => b.variant === 'receptor' || b.variant === 'monitoring' || b.variant === 'error') && (
                 <div className="kb-admin-gaps">
-                  <strong>Validation / data gaps:</strong>{' '}
-                  {substanceBadges(detail, detail)
+                  <strong>{translateAdminUi(language, 'kbDataGaps')}</strong>{' '}
+                  {substanceBadges(language, detail, detail)
                     .filter((b) => ['receptor', 'monitoring', 'error', 'source'].includes(b.variant))
                     .map((b) => b.label)
                     .join(' · ')}
@@ -469,24 +480,24 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
               )}
 
               <section className="kb-admin-section">
-                <h3>Normalized profile</h3>
+                <h3>{translateAdminUi(language, 'kbNormalizedProfile')}</h3>
                 <dl className="kb-admin-dl">
-                  <dt>Klasse</dt><dd>{detail.substanceClass ?? '—'}</dd>
-                  <dt>Status</dt><dd>{detail.status} / {detail.reviewStatus}</dd>
-                  <dt>Source quality</dt><dd>{detail.sourceQuality}</dd>
-                  <dt>Uses</dt><dd>{detail.primaryPsychiatricUses.join(', ') || '—'}</dd>
+                  <dt>{translateAdminUi(language, 'kbClass')}</dt><dd>{detail.substanceClass ?? '—'}</dd>
+                  <dt>{translateAdminUi(language, 'kbStatus')}</dt><dd>{detail.status} / {detail.reviewStatus}</dd>
+                  <dt>{translateAdminUi(language, 'kbSourceQuality')}</dt><dd>{detail.sourceQuality}</dd>
+                  <dt>{translateAdminUi(language, 'kbUses')}</dt><dd>{detail.primaryPsychiatricUses.join(', ') || '—'}</dd>
                 </dl>
               </section>
 
               {detail.tradeNames.length > 0 && (
                 <section className="kb-admin-section">
-                  <h3>Trade names ({detail.tradeNames.length})</h3>
+                  <h3>{translateAdminUi(language, 'kbTradeNames')} ({detail.tradeNames.length})</h3>
                   <ul className="kb-admin-chip-list">
                     {detail.tradeNames.map((t) => (
                       <li key={t.id}>
                         {t.tradeName}
                         {t.countryCode ? ` (${t.countryCode})` : ''}
-                        {t.isPrimary ? ' · primary' : ''}
+                        {t.isPrimary ? ` · ${translateAdminUi(language, 'kbPrimary')}` : ''}
                       </li>
                     ))}
                   </ul>
@@ -495,14 +506,14 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
 
               {detail.receptorAffinities.length > 0 && (
                 <section className="kb-admin-section">
-                  <h3>Rezeptorprofil ({detail.receptorAffinities.length})</h3>
+                  <h3>{translateAdminUi(language, 'kbReceptorProfile')} ({detail.receptorAffinities.length})</h3>
                   <table className="kb-admin-table">
                     <thead>
                       <tr>
-                        <th>Rezeptor</th>
-                        <th>Affinität %</th>
-                        <th>Effekt</th>
-                        <th>Konfidenz</th>
+                        <th>{translateAdminUi(language, 'kbReceptor')}</th>
+                        <th>{translateAdminUi(language, 'kbAffinityPercent')}</th>
+                        <th>{translateAdminUi(language, 'kbEffect')}</th>
+                        <th>{translateAdminUi(language, 'kbConfidence')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -521,14 +532,14 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
 
               {detail.sideEffects.length > 0 && (
                 <section className="kb-admin-section">
-                  <h3>Nebenwirkungen ({detail.sideEffects.length})</h3>
+                  <h3>{translateAdminUi(language, 'kbSideEffects')} ({detail.sideEffects.length})</h3>
                   <table className="kb-admin-table">
                     <thead>
                       <tr>
-                        <th>Effekt</th>
-                        <th>System</th>
-                        <th>Häufigkeit</th>
-                        <th>Schwere</th>
+                        <th>{translateAdminUi(language, 'kbEffect')}</th>
+                        <th>{translateAdminUi(language, 'kbSystem')}</th>
+                        <th>{translateAdminUi(language, 'kbFrequency')}</th>
+                        <th>{translateAdminUi(language, 'kbSeverity')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -547,15 +558,15 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
 
               {detail.dosageGuidance.length > 0 && (
                 <section className="kb-admin-section">
-                  <h3>Dosierung ({detail.dosageGuidance.length})</h3>
+                  <h3>{translateAdminUi(language, 'kbDosage')} ({detail.dosageGuidance.length})</h3>
                   <table className="kb-admin-table">
                     <thead>
                       <tr>
-                        <th>Population</th>
-                        <th>Start</th>
-                        <th>Ziel</th>
+                        <th>{translateAdminUi(language, 'kbPopulation')}</th>
+                        <th>{translateAdminUi(language, 'kbStartDose')}</th>
+                        <th>{translateAdminUi(language, 'kbTargetDose')}</th>
                         <th>Max</th>
-                        <th>Notizen</th>
+                        <th>{translateAdminUi(language, 'kbNotes')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -575,14 +586,14 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
 
               {detail.monitoring.length > 0 && (
                 <section className="kb-admin-section">
-                  <h3>Monitoring ({detail.monitoring.length})</h3>
+                  <h3>{translateAdminUi(language, 'kbMonitoring')} ({detail.monitoring.length})</h3>
                   <table className="kb-admin-table">
                     <thead>
                       <tr>
-                        <th>Parameter</th>
-                        <th>Intervall</th>
-                        <th>Priorität</th>
-                        <th>Rationale</th>
+                        <th>{translateAdminUi(language, 'kbParameter')}</th>
+                        <th>{translateAdminUi(language, 'kbInterval')}</th>
+                        <th>{translateAdminUi(language, 'kbPriority')}</th>
+                        <th>{translateAdminUi(language, 'kbRationale')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -601,14 +612,14 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
 
               {detail.interactions.length > 0 && (
                 <section className="kb-admin-section">
-                  <h3>Interaktionen ({detail.interactions.length})</h3>
+                  <h3>{translateAdminUi(language, 'kbInteractions')} ({detail.interactions.length})</h3>
                   <table className="kb-admin-table">
                     <thead>
                       <tr>
-                        <th>Mit</th>
-                        <th>Schwere</th>
-                        <th>Mechanismus</th>
-                        <th>Management</th>
+                        <th>{translateAdminUi(language, 'kbInteractsWith')}</th>
+                        <th>{translateAdminUi(language, 'kbSeverity')}</th>
+                        <th>{translateAdminUi(language, 'kbMechanism')}</th>
+                        <th>{translateAdminUi(language, 'kbManagement')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -626,7 +637,7 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
               )}
 
               <section className="kb-admin-section">
-                <h3>Quellen / Evidenz ({detail.sources.length})</h3>
+                <h3>{translateAdminUi(language, 'kbSourcesEvidence')} ({detail.sources.length})</h3>
                 {detail.sources.length > 0 ? (
                   <ul className="kb-admin-bullet-list">
                     {detail.sources.map((s) => (
@@ -642,16 +653,16 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
                     ))}
                   </ul>
                 ) : (
-                  <p className="kb-admin-empty">Keine Quellen hinterlegt</p>
+                  <p className="kb-admin-empty">{translateAdminUi(language, 'kbNoSources')}</p>
                 )}
               </section>
 
               {(detail.contraindications.length > 0 || detail.severeRisks.length > 0) && (
                 <section className="kb-admin-section">
-                  <h3>Kontraindikationen &amp; Risiken</h3>
+                  <h3>{translateAdminUi(language, 'kbContraAndRisks')}</h3>
                   {detail.contraindications.length > 0 && (
                     <>
-                      <h4 className="kb-admin-subheading">Kontraindikationen</h4>
+                      <h4 className="kb-admin-subheading">{translateAdminUi(language, 'kbContraindications')}</h4>
                       <ul className="kb-admin-bullet-list">
                         {detail.contraindications.map((c) => <li key={c}>{c}</li>)}
                       </ul>
@@ -659,7 +670,7 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
                   )}
                   {detail.severeRisks.length > 0 && (
                     <>
-                      <h4 className="kb-admin-subheading">Schwere Risiken</h4>
+                      <h4 className="kb-admin-subheading">{translateAdminUi(language, 'kbSevereRisks')}</h4>
                       <ul className="kb-admin-bullet-list">
                         {detail.severeRisks.map((r) => <li key={r}>{r}</li>)}
                       </ul>
@@ -670,16 +681,16 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
 
               {(detail.pregnancyLactationCaution || detail.geriatricCaution || detail.hepaticRenalCaution) && (
                 <section className="kb-admin-section">
-                  <h3>Vorsichten</h3>
+                  <h3>{translateAdminUi(language, 'kbCautions')}</h3>
                   <dl className="kb-admin-dl">
                     {detail.pregnancyLactationCaution && (
-                      <><dt>Schwangerschaft/Stillzeit</dt><dd>{detail.pregnancyLactationCaution}</dd></>
+                      <><dt>{translateAdminUi(language, 'kbPregnancyLactation')}</dt><dd>{detail.pregnancyLactationCaution}</dd></>
                     )}
                     {detail.geriatricCaution && (
-                      <><dt>Geriatrie</dt><dd>{detail.geriatricCaution}</dd></>
+                      <><dt>{translateAdminUi(language, 'kbGeriatric')}</dt><dd>{detail.geriatricCaution}</dd></>
                     )}
                     {detail.hepaticRenalCaution && (
-                      <><dt>Leber/Niere</dt><dd>{detail.hepaticRenalCaution}</dd></>
+                      <><dt>{translateAdminUi(language, 'kbHepaticRenal')}</dt><dd>{detail.hepaticRenalCaution}</dd></>
                     )}
                   </dl>
                 </section>
@@ -687,7 +698,7 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
 
               {(detail.mechanismSummary || detail.pharmacodynamicProfile) && (
                 <section className="kb-admin-section">
-                  <h3>Wirkmechanismus</h3>
+                  <h3>{translateAdminUi(language, 'kbMechanismOfAction')}</h3>
                   {detail.mechanismSummary && <p className="kb-admin-prose">{detail.mechanismSummary}</p>}
                   {detail.pharmacodynamicProfile && (
                     <p className="kb-admin-prose kb-admin-prose--muted">{detail.pharmacodynamicProfile}</p>
@@ -696,13 +707,13 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
               )}
 
               <section className="kb-admin-section">
-                <h3>Bearbeiten (normalized fields)</h3>
+                <h3>{translateAdminUi(language, 'kbEditFields')}</h3>
                 <label>
-                  Wirkmechanismus
+                  {translateAdminUi(language, 'kbMechanismOfAction')}
                   <textarea value={editMechanism} onChange={(e) => setEditMechanism(e.target.value)} rows={4} />
                 </label>
                 <label>
-                  Clinical pearls
+                  {translateAdminUi(language, 'kbClinicalPearls')}
                   <textarea value={editPearls} onChange={(e) => setEditPearls(e.target.value)} rows={3} />
                 </label>
                 <button
@@ -714,42 +725,44 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
                     }).then(() => loadDetail(detail.id))
                   }
                 >
-                  Speichern
+                  {translateAdminUi(language, 'kbSave')}
                 </button>
               </section>
 
               <section className="kb-admin-section">
                 <h3>
-                  Raw AI vs normalized
+                  {translateAdminUi(language, 'kbRawVsNormalized')}
                   <button type="button" className="kb-admin-toggle" onClick={() => setShowRawAi((v) => !v)}>
-                    {showRawAi ? 'Hide' : 'Show'} raw DeepSeek output
+                    {showRawAi
+                      ? translateAdminUi(language, 'kbHideRawOutput')
+                      : translateAdminUi(language, 'kbShowRawOutput')}
                   </button>
                 </h3>
                 {detail.latestGeneration ? (
                   <dl className="kb-admin-dl">
-                    <dt>Generation</dt>
+                    <dt>{translateAdminUi(language, 'kbGeneration')}</dt>
                     <dd>{detail.latestGeneration.provider} / {detail.latestGeneration.model} — {detail.latestGeneration.status}</dd>
-                    <dt>Created</dt>
+                    <dt>{translateAdminUi(language, 'kbCreated')}</dt>
                     <dd>{detail.latestGeneration.createdAt}</dd>
                   </dl>
                 ) : (
-                  <p className="kb-admin-empty">No AI generation record</p>
+                  <p className="kb-admin-empty">{translateAdminUi(language, 'kbNoGeneration')}</p>
                 )}
                 {showRawAi && (
                   <div className="kb-admin-compare">
                     <div>
-                      <h4>Raw AI response</h4>
+                      <h4>{translateAdminUi(language, 'kbRawAiResponse')}</h4>
                       <pre>{JSON.stringify(detail.latestGeneration?.rawResponse ?? null, null, 2)}</pre>
                     </div>
                     <div>
-                      <h4>Validated payload</h4>
+                      <h4>{translateAdminUi(language, 'kbValidatedPayload')}</h4>
                       <pre>{JSON.stringify(detail.latestGeneration?.validatedPayload ?? detail, null, 2)}</pre>
                     </div>
                   </div>
                 )}
                 {detail.latestGeneration?.validationErrors != null ? (
                   <div className="kb-admin-alert kb-admin-alert--error">
-                    <strong>Validation errors</strong>
+                    <strong>{translateAdminUi(language, 'kbValidationErrors')}</strong>
                     <pre>{JSON.stringify(detail.latestGeneration.validationErrors, null, 2)}</pre>
                   </div>
                 ) : null}

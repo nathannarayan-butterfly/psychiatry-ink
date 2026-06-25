@@ -1,5 +1,7 @@
+import type { UiLanguage } from '../types/settings'
 import { API_BASE, InsufficientCreditsError } from './apiClient'
 import { getAuthHeaders } from './authHeaders'
+import { getClinicalApiLanguage } from './clinicalApiFetch'
 
 function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -18,8 +20,12 @@ function blobToBase64(blob: Blob): Promise<string> {
   })
 }
 
-export async function transcribeAudio(blob: Blob): Promise<string> {
+export async function transcribeAudio(
+  blob: Blob,
+  language?: UiLanguage,
+): Promise<string> {
   const audioBase64 = await blobToBase64(blob)
+  const resolvedLanguage = language ?? getClinicalApiLanguage()
 
   const authHeaders = await getAuthHeaders()
   const response = await fetch(`${API_BASE}/api/transcribe`, {
@@ -28,6 +34,7 @@ export async function transcribeAudio(blob: Blob): Promise<string> {
     body: JSON.stringify({
       audioBase64,
       mimeType: blob.type || 'audio/webm',
+      language: resolvedLanguage,
     }),
   })
 

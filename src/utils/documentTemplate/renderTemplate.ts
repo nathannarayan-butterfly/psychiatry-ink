@@ -1,22 +1,40 @@
 import type { DocumentTemplate, GeneratedDocument, TemplateField, TemplateRenderContext } from '../../types/documentTemplate'
 import { UNRESOLVED_PLACEHOLDER } from './constants'
+import { evaluateCondition } from './evaluateCondition'
+import { normalizeFieldType } from './fieldTypeNormalize'
 import { htmlToPlainLines, sanitizeRichHtml, escapeHtml } from './htmlUtils'
 import { resolveBinding } from './placeholderContext'
 import { resolveDynamicField } from './resolveDynamicField'
 import { resolvePageSettings } from './pageSettings'
+import { renderFieldGridCellStyle, resolveFieldColSpan, resolveFieldMinHeightMm } from './fieldLayout'
+import { ensureRichHtml } from './richText'
 import { FONT_SANS } from '../../styles/typographyTokens'
 
+function effectiveFieldType(field: TemplateField): TemplateField['type'] {
+  return normalizeFieldType(field.type)
+}
+
+function isFieldVisibleInDocument(
+  field: TemplateField,
+  fieldValues: Record<string, string | boolean | string[]>,
+): boolean {
+  if (field.type === 'conditional_section') return false
+  return evaluateCondition(field.showWhen, fieldValues)
+}
+
 function isPlaceholderType(type: TemplateField['type']): boolean {
+  const t = normalizeFieldType(type)
   return (
-    type === 'patient_placeholder' ||
-    type === 'case_placeholder' ||
-    type === 'clinician_placeholder' ||
-    type === 'organization_placeholder'
+    t === 'patient_placeholder' ||
+    t === 'case_placeholder' ||
+    t === 'clinician_placeholder' ||
+    t === 'organization_placeholder'
   )
 }
 
 function isMultiSelectType(type: TemplateField['type']): boolean {
-  return type === 'checkbox_group' || type === 'multi_select'
+  const t = normalizeFieldType(type)
+  return t === 'checkbox_group' || t === 'multi_select'
 }
 
 function fieldValueToString(
@@ -25,7 +43,7 @@ function fieldValueToString(
   context: TemplateRenderContext,
   markUnresolved: boolean,
 ): string {
-  if (field.type === 'checkbox') {
+  if (field.type === 'checkbox' || field.type === 'legal_checkbox') {
     return value === true ? '☑' : '☐'
   }
   if (isMultiSelectType(field.type)) {
@@ -123,10 +141,14 @@ function renderFieldBlock(
   }
 
   if (mode === 'document') {
-    if (field.type === 'long_text' || field.type === 'ai_assisted_text') {
+    if (field.type === 'long_text' || field.type === 'ai_assisted_text' || field.type === 'short_text') {
       const label = field.label?.trim()
       const body = htmlToPlainLines(typeof value === 'string' ? value : text)
-      if (label) return `${label}:\n${body || UNRESOLVED_PLACEHOLDER}`
+      if (label) {
+        return field.type === 'short_text'
+          ? `${label}: ${body || UNRESOLVED_PLACEHOLDER}`
+          : `${label}:\n${body || UNRESOLVED_PLACEHOLDER}`
+      }
       return body
     }
     if (field.label?.trim()) {
@@ -148,7 +170,7 @@ function renderFieldBlockHtml(
   const text = fieldValueToString(field, value, context, markUnresolved)
 
   if (field.type === 'static_text') {
-    const raw = sanitizeRichHtml((field.defaultValue as string | undefined) ?? '')
+    const raw = sanitizeRichHtml(ensureRichHtml((field.defaultValue as string | undefined) ?? ''))
     return raw ? `<div class="dt-doc-static">${raw}</div>` : ''
   }
 
@@ -166,9 +188,10 @@ function renderFieldBlockHtml(
     return `<div class="dt-doc-spacer" style="height:${mm}mm"></div>`
   }
 
-  if (field.type === 'long_text' || field.type === 'ai_assisted_text') {
+  if (field.type === 'long_text' || field.type === 'ai_assisted_text' || field.type === 'short_text') {
     const label = field.label?.trim()
-    const body = sanitizeRichHtml(typeof value === 'string' ? value : text)
+    const raw = typeof value === 'string' ? value : text
+    const body = sanitizeRichHtml(ensureRichHtml(raw))
     if (label) {
       return `<div class="dt-doc-field"><span class="dt-doc-label">${escapeHtml(label)}:</span><div class="dt-doc-body">${body || escapeHtml(UNRESOLVED_PLACEHOLDER)}</div></div>`
     }
@@ -233,7 +256,8 @@ export function buildInitialFieldValues(
 ): Record<string, string | boolean | string[]> {
   const values: Record<string, string | boolean | string[]> = {}
   for (const field of template.fields) {
-    if (field.type === 'checkbox') {
+    const type = effectiveFieldType(field)
+    if (field.type === 'checkbox' || field.type === 'legal_checkbox') {
       values[field.id] = field.defaultValue === true
     } else if (isMultiSelectType(field.type)) {
       values[field.id] = Array.isArray(field.defaultValue) ? [...field.defaultValue] : []
@@ -241,14 +265,30 @@ export function buildInitialFieldValues(
       values[field.id] = resolveBinding(field.binding, context)
     } else if (field.type === 'dynamic' && field.dynamicKey) {
       values[field.id] = resolveDynamicField(field.dynamicKey, context)
+    } else if (
+      field.type === 'medication_selector' ||
+      field.type === 'diagnosis_selector' ||
+      field.type === 'risk_selector'
+    ) {
+      if (field.type === 'medication_selector') {
+        values[field.id] = context.case?.medikationKurz ?? ''
+      } else if (field.type === 'diagnosis_selector') {
+        values[field.id] = context.case?.diagnosis ?? ''
+      } else {
+        values[field.id] = ''
+      }
+    } else if (field.type === 'repeatable_list') {
+      values[field.id] = Array.isArray(field.defaultValue) ? [...field.defaultValue] : []
     } else if (field.type === 'yes_no' || field.type === 'radio_group') {
       values[field.id] = typeof field.defaultValue === 'string' ? field.defaultValue : ''
+    } else if (field.type === 'date' && !field.defaultValue) {
+      values[field.id] = context.system?.date ?? ''
     } else if (field.type === 'divider' || field.type === 'spacer' || field.type === 'heading') {
       values[field.id] = ''
     } else if (field.defaultValue != null) {
       values[field.id] = String(field.defaultValue)
     } else {
-      values[field.id] = ''
+      values[field.id] = type === 'long_text' || type === 'short_text' ? '' : ''
     }
   }
   return values
@@ -262,13 +302,24 @@ export function renderTemplate(
 ): string {
   const mode = options?.mode ?? 'document'
   const markUnresolved = options?.markUnresolved ?? true
-  const sorted = [...template.fields].sort((a, b) => a.order - b.order)
+  const sorted = [...template.fields]
+    .sort((a, b) => a.order - b.order)
+    .filter((field) => isFieldVisibleInDocument(field, fieldValues))
   return sorted
     .map((field) => renderFieldBlock(field, fieldValues, context, mode, markUnresolved))
     .filter((block) => block.trim().length > 0)
     .join('\n\n')
 }
 
+/**
+ * Build the document body as a flow of page-breakable rows.
+ *
+ * CSS grid/flex containers do not fragment reliably across printed pages, so
+ * full-width blocks are emitted as standalone block-level rows (their inner
+ * paragraphs paginate naturally), while consecutive partial-width fields are
+ * grouped into compact grid rows that are kept together (`break-inside: avoid`).
+ * This is what lets long text wrap AND flow onto the next A4 page.
+ */
 export function renderTemplateBodyHtml(
   template: DocumentTemplate,
   fieldValues: Record<string, string | boolean | string[]>,
@@ -276,11 +327,45 @@ export function renderTemplateBodyHtml(
   options?: { markUnresolved?: boolean },
 ): string {
   const markUnresolved = options?.markUnresolved ?? true
-  const sorted = [...template.fields].sort((a, b) => a.order - b.order)
-  return sorted
-    .map((field) => renderFieldBlockHtml(field, fieldValues, context, markUnresolved))
-    .filter((block) => block.trim().length > 0)
-    .join('')
+  const sorted = [...template.fields]
+    .sort((a, b) => a.order - b.order)
+    .filter((field) => isFieldVisibleInDocument(field, fieldValues))
+
+  const blocks = sorted
+    .map((field) => ({
+      field,
+      span: resolveFieldColSpan(field),
+      html: renderFieldBlockHtml(field, fieldValues, context, markUnresolved),
+    }))
+    .filter((b) => b.html.trim().length > 0)
+
+  const rows: string[] = []
+  let colBuffer: typeof blocks = []
+
+  const flushCols = () => {
+    if (colBuffer.length === 0) return
+    const cells = colBuffer
+      .map((b) => `<div class="dt-doc-grid-cell" style="${renderFieldGridCellStyle(b.field)}">${b.html}</div>`)
+      .join('')
+    rows.push(`<div class="dt-doc-row dt-doc-row--cols">${cells}</div>`)
+    colBuffer = []
+  }
+
+  for (const b of blocks) {
+    if (b.span >= 12) {
+      flushCols()
+      const minHeightMm = resolveFieldMinHeightMm(b.field)
+      const style = minHeightMm != null && minHeightMm > 0 ? ` style="min-height:${minHeightMm}mm"` : ''
+      rows.push(`<div class="dt-doc-row dt-doc-row--full"${style}>${b.html}</div>`)
+      continue
+    }
+    const sum = colBuffer.reduce((acc, x) => acc + x.span, 0)
+    if (sum + b.span > 12) flushCols()
+    colBuffer.push(b)
+  }
+  flushCols()
+
+  return rows.length ? `<div class="dt-doc-flow">${rows.join('')}</div>` : ''
 }
 
 export function renderTemplateDocumentHtml(
@@ -322,6 +407,7 @@ export function buildPrintHtmlDocument(
   context: TemplateRenderContext,
   options?: { markUnresolved?: boolean },
 ): string {
+  const margins = resolvePageSettings(template).margins!
   const article = renderTemplateDocumentHtml(template, fieldValues, context, options)
   return `<!DOCTYPE html>
 <html lang="de">
@@ -329,22 +415,30 @@ export function buildPrintHtmlDocument(
 <meta charset="utf-8" />
 <title>${escapeHtml(template.title)}</title>
 <style>
-@page { size: A4; margin: 0; }
+/* Native A4 pagination: content flows and the browser breaks it across pages. */
+@page { size: A4; margin: ${margins.top}mm ${margins.right}mm ${margins.bottom}mm ${margins.left}mm; }
 * { box-sizing: border-box; }
-body { margin: 0; padding: 0; font-family: ${FONT_SANS}; font-size: 11pt; line-height: 1.55; color: #1a1a1a; }
-.dt-doc-page { width: 210mm; min-height: 297mm; margin: 0 auto; padding: var(--dt-margin-top) var(--dt-margin-right) var(--dt-margin-bottom) var(--dt-margin-left); display: flex; flex-direction: column; }
-.dt-doc-header, .dt-doc-footer { font-size: 9pt; color: #444; }
-.dt-doc-header { border-bottom: 1px solid #ddd; margin-bottom: 4mm; padding-bottom: 2mm; }
-.dt-doc-footer { border-top: 1px solid #ddd; margin-top: auto; padding-top: 2mm; }
-.dt-doc-body-area { flex: 1; }
+html, body { margin: 0; padding: 0; }
+body { font-family: ${FONT_SANS}; font-size: 11pt; line-height: 1.55; color: #1a1a1a; }
+.dt-doc-page { display: block; padding: 0; }
+.dt-doc-header { font-size: 9pt; color: #444; border-bottom: 1px solid #ddd; margin-bottom: 4mm; padding-bottom: 2mm; }
+.dt-doc-footer { font-size: 9pt; color: #444; border-top: 1px solid #ddd; margin-top: 6mm; padding-top: 2mm; break-inside: avoid; }
+.dt-doc-body-area { display: block; }
+.dt-doc-flow { display: block; }
+.dt-doc-row { margin: 0 0 0.25rem; }
+.dt-doc-row--full { break-inside: auto; }
+.dt-doc-row--cols { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 0.35rem 0.75rem; align-items: start; break-inside: avoid; page-break-inside: avoid; }
+.dt-doc-grid-cell { min-width: 0; break-inside: avoid; }
 .dt-doc-heading { font-size: 12pt; font-weight: 700; letter-spacing: 0.04em; margin: 0.75rem 0 0.5rem; text-transform: uppercase; }
 .dt-doc-divider { border: none; border-top: 1px solid #bbb; margin: 0.75rem 0; }
 .dt-doc-field { margin-bottom: 0.5rem; }
 .dt-doc-label { font-weight: 600; }
+.dt-doc-body, .dt-doc-static { overflow-wrap: anywhere; word-break: break-word; white-space: normal; }
+.dt-doc-body p, .dt-doc-static p { margin: 0 0 0.35rem; }
+.dt-doc-body ul, .dt-doc-body ol, .dt-doc-static ul, .dt-doc-static ol { margin: 0.25rem 0; padding-left: 1.4rem; }
 .dt-doc-check { margin: 0.15rem 0; }
 .dt-doc-radio { margin-right: 0.75rem; }
 .dt-doc-line { letter-spacing: 0.1em; }
-.dt-doc-page--first-only-hf .dt-doc-header, .dt-doc-page--first-only-hf .dt-doc-footer { display: block; }
 @media print {
   body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }

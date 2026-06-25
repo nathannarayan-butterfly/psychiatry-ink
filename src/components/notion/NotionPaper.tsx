@@ -47,6 +47,7 @@ import {
 import { isDocumentEmpty } from '../../utils/isDocumentEmpty'
 import { showNotionToast } from './NotionToast'
 import type { InputMode } from '../../types'
+import type { AufnahmeSectionMetadata } from '../../types/anamneseBefund'
 import type { PageType } from '../../types/settings'
 import type { usePrivacySettings } from '../../hooks/usePrivacySettings'
 import { usePatientMetadata } from '../../hooks/usePatientMetadata'
@@ -68,6 +69,7 @@ interface NotionPaperProps {
   sections: DocumentSection[]
   sectionConfigs: DocumentSection[]
   sectionContents: Record<string, string>
+  sectionMetadata?: Record<string, AufnahmeSectionMetadata>
   checklistSelections: Record<string, Record<string, boolean>>
   componentVariants?: NotionVariantOption[]
   activeVariantId?: string
@@ -102,6 +104,8 @@ interface NotionPaperProps {
   onOpenPrivacySettings?: () => void
   onEditorChange: (value: string) => void
   onSectionContentChange: (sectionId: string, value: string) => void
+  onSectionMetadataChange?: (sectionId: string, metadata: AufnahmeSectionMetadata | undefined) => void
+  onBefundSectionManualEdit?: (sectionId: string) => void
   onEditorPaste: () => void
   onDetectedPaste?: (text: string, category: ContentCategory) => void
   onSaveSection: (sectionId?: string) => void
@@ -146,6 +150,8 @@ interface NotionPaperProps {
   /** Pre-selected therapy type when opening Therapieplanung from context menu. */
   therapieplanungInitialType?: TherapyPlanningSectionKey | null
   onTherapieplanungInitialTypeConsumed?: () => void
+  /** Standalone workspace medication copy and panels. */
+  medicationContext?: 'patient' | 'standalone'
 }
 
 export interface PendingPaste {
@@ -172,6 +178,7 @@ export function NotionPaper({
   sections,
   sectionConfigs,
   sectionContents,
+  sectionMetadata = {},
   checklistSelections,
   componentVariants,
   activeVariantId,
@@ -199,6 +206,8 @@ export function NotionPaper({
   onOpenPrivacySettings,
   onEditorChange,
   onSectionContentChange,
+  onSectionMetadataChange,
+  onBefundSectionManualEdit,
   onEditorPaste,
   onDetectedPaste,
   onSaveSection,
@@ -237,6 +246,7 @@ export function NotionPaper({
   useExternalSidebar = false,
   therapieplanungInitialType = null,
   onTherapieplanungInitialTypeConsumed,
+  medicationContext = 'patient',
 }: NotionPaperProps) {
   const { t } = useTranslation()
   const storageCaseId = workspaceStorageId ?? caseId
@@ -554,6 +564,7 @@ export function NotionPaper({
       documentTypeId,
       pageHeading,
       sectionContents: latestContents,
+      sectionMetadata: Object.keys(sectionMetadata).length > 0 ? sectionMetadata : undefined,
       savedAt,
     }
     const content = getNotionDocumentCopyText(sections, latestContents, {
@@ -571,6 +582,7 @@ export function NotionPaper({
     onSaveWorkspaceVault,
     pageHeading,
     sectionConfigs,
+    sectionMetadata,
     sections,
     storageCaseId,
     t,
@@ -828,7 +840,11 @@ export function NotionPaper({
               onDictate={handleBlankDictate}
             />
           ) : showMedicationPanel ? (
-            <MedicationWorkspace caseId={storageCaseId ?? caseId} disabled={editorLocked} />
+            <MedicationWorkspace
+              caseId={storageCaseId ?? caseId}
+              disabled={editorLocked}
+              context={medicationContext}
+            />
           ) : showTherapieplanungPanel ? (
             <TherapieplanungWorkspace
               caseId={storageCaseId ?? caseId}
@@ -844,6 +860,8 @@ export function NotionPaper({
                 sections={sections}
                 sectionConfigs={sectionConfigs}
                 sectionContents={sectionContents}
+                sectionMetadata={sectionMetadata}
+                documentTypeId={documentTypeId}
                 checklistSelections={checklistSelections}
                 documentMode={documentMode}
                 activeSectionId={activeSectionId}
@@ -855,6 +873,8 @@ export function NotionPaper({
                 isPlayingBack={isPlayingBack}
                 isGenerating={isGenerating}
                 onSectionContentChange={onSectionContentChange}
+                onSectionMetadataChange={onSectionMetadataChange}
+                onBefundSectionManualEdit={onBefundSectionManualEdit}
                 onSectionFocus={(sectionId) => onSectionFocus?.(sectionId)}
                 onSectionBlur={handleSectionBlur}
                 onToggleChecklistItem={handleSectionChecklistToggle}

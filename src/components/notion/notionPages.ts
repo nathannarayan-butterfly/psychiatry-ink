@@ -1,3 +1,5 @@
+import type { UiLanguage } from '../../types/settings'
+
 export type NotionPageId =
   | 'aufnahme'
   | 'verlauf'
@@ -7,6 +9,9 @@ export type NotionPageId =
   | 'therapieplanung'
   | 'labor'
   | 'visualisation'
+  | 'befundung'
+  | 'arztbrief'
+  | 'discharge-summary'
   | 'timeline'
 
 export type NotionPageKind = 'document' | 'lab'
@@ -22,6 +27,9 @@ export interface NotionPageConfig {
     | 'notionPageTherapieplanung'
     | 'notionPageLabor'
     | 'notionPageVisualisation'
+    | 'notionPageBefundung'
+    | 'notionPageArztbrief'
+    | 'notionPageDischargeSummary'
     | 'notionPageTimeline'
   kind: NotionPageKind
   documentTypeId?: string
@@ -56,6 +64,9 @@ export const NOTION_PAGES: NotionPageConfig[] = [
   },
   { id: 'labor', labelKey: 'notionPageLabor', kind: 'lab' },
   { id: 'visualisation', labelKey: 'notionPageVisualisation', kind: 'lab' },
+  { id: 'befundung', labelKey: 'notionPageBefundung', kind: 'lab' },
+  { id: 'arztbrief', labelKey: 'notionPageArztbrief', kind: 'lab' },
+  { id: 'discharge-summary', labelKey: 'notionPageDischargeSummary', kind: 'lab' },
   { id: 'timeline', labelKey: 'notionPageTimeline', kind: 'lab' },
 ]
 
@@ -92,8 +103,35 @@ export function isVerlaufDocumentType(
   return (VERLAUF_DOCUMENT_TYPES as readonly string[]).includes(documentTypeId)
 }
 
+/**
+ * The English Discharge Summary tool produces an English-language discharge
+ * letter and is only useful to clinicians working in English. German (and other
+ * non-English) users get their discharge letters from the Arztbrief tool
+ * instead, so the Discharge Summary entry is hidden everywhere unless the app
+ * language is English.
+ */
+export function isPageAvailableForLanguage(
+  pageId: NotionPageId,
+  language: UiLanguage,
+): boolean {
+  if (pageId === 'discharge-summary') return language === 'en'
+  return true
+}
+
+/** NOTION_PAGES filtered to the pages that should be surfaced for `language`. */
+export function getVisibleNotionPages(language: UiLanguage): NotionPageConfig[] {
+  return NOTION_PAGES.filter((page) => isPageAvailableForLanguage(page.id, language))
+}
+
 export function isToolPage(pageId: NotionPageId): boolean {
-  return pageId === 'labor' || pageId === 'visualisation' || pageId === 'timeline'
+  return (
+    pageId === 'labor' ||
+    pageId === 'visualisation' ||
+    pageId === 'befundung' ||
+    pageId === 'arztbrief' ||
+    pageId === 'discharge-summary' ||
+    pageId === 'timeline'
+  )
 }
 
 /** @deprecated Use isToolPage */

@@ -114,6 +114,7 @@ export function TodoPage({ onBack }: TodoPageProps) {
 
   return (
     <div className="todo-page cm-workspace text-ink">
+      <div className="todo-page__inner">
       <header className="todo-page__header">
         <button type="button" className="clinical-back-link" onClick={onBack}>
           <ArrowLeft className="h-4 w-4" aria-hidden />
@@ -251,6 +252,7 @@ export function TodoPage({ onBack }: TodoPageProps) {
           ))}
         </ul>
       ) : null}
+      </div>
     </div>
   )
 }

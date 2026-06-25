@@ -19,7 +19,6 @@ import { loadNotionPageTime } from '../utils/notionPageTime'
 import { loadNotionPageHeading } from '../utils/notionPageHeading'
 import type { ClinicalWorkspacePayload } from '../utils/workspaceVault'
 import { DEFAULT_CASE_ID, setActiveCaseId } from '../utils/caseContext'
-import { isDemoCaseReadOnly } from '../demo'
 import {
   applyHintTranslationsToComponents,
   ensureHintsTranslated,
@@ -122,10 +121,9 @@ function WorkspaceInner({
   workspaceStorageId,
 }: WorkspaceInnerProps) {
   const { t } = useTranslation()
-  const { user } = useAuth()
   const { organisation } = usePermissionContext()
   const storesCaseMeta = workspaceStorageId === caseId
-  const demoReadOnly = isDemoCaseReadOnly(caseId, user?.email)
+  const demoReadOnly = false
 
   useEffect(() => {
     setActiveCaseId(workspaceStorageId)
@@ -208,6 +206,7 @@ function WorkspaceInner({
       pageDate: loadNotionPageDate(pageId, workspaceStorageId),
       pageTime: loadNotionPageTime(pageId, workspaceStorageId),
       sectionContents: workspace.getLatestSectionContents(),
+      sectionMetadata: workspace.sectionMetadata,
       activeVariantIds: workspace.activeVariantIds,
       age: clinicalAge,
       timelines,
@@ -376,6 +375,7 @@ function WorkspaceInner({
       isIsdmActive={assessmentStandardSettings.isIsdmActive}
       assessmentStandard={assessmentStandardSettings.assessmentStandard}
       onSelectAssessmentStandard={assessmentStandardSettings.selectAssessmentStandard}
+      documentTypes={documentTypes}
     />
   )
 }

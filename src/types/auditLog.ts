@@ -7,6 +7,8 @@ export const AUDIT_ACTIONS = [
   'document_edited',
   'document_finalized',
   'document_exported',
+  'template_wizard_draft_saved',
+  'template_wizard_completed',
   'ai_generation_used',
   'user_invited',
   'invitation_accepted',

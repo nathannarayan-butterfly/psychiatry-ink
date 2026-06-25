@@ -11,6 +11,8 @@ import { InteractionMatrix } from '../medication/InteractionMatrix'
 import type { InteractionEntry } from '../../data/psychDrugReference/schema'
 import { getDrugsForSubstance } from '../../data/psychDrugReference/index'
 import type { UiLanguage } from '../../types/settings'
+import { useTranslation } from '../../context/TranslationContext'
+import type { UiTranslationKey } from '../../data/uiTranslations'
 
 interface CombinationCheckPanelProps {
   caseId: string
@@ -20,18 +22,18 @@ interface CombinationCheckPanelProps {
   language: UiLanguage
 }
 
-const SEVERITY_LABELS: Record<CombinationSeverity, string> = {
-  none: 'Keine',
-  low: 'Niedrig',
-  moderate: 'Moderat',
-  high: 'Hoch',
-  critical: 'Kritisch',
+const SEVERITY_KEYS: Record<CombinationSeverity, UiTranslationKey> = {
+  none: 'combiCheckSeverityNone',
+  low: 'combiCheckSeverityLow',
+  moderate: 'combiCheckSeverityModerate',
+  high: 'combiCheckSeverityHigh',
+  critical: 'combiCheckSeverityCritical',
 }
 
-const SOURCE_LABELS: Record<CombinationFindingSource, string> = {
-  knowledge_base: 'Wissensdatenbank',
-  ai_suggestion: 'KI-Vorschlag',
-  clinician_accepted: 'Ärztlich akzeptiert',
+const SOURCE_KEYS: Record<CombinationFindingSource, UiTranslationKey> = {
+  knowledge_base: 'clinSourceKnowledgeBase',
+  ai_suggestion: 'clinSourceAiSuggestion',
+  clinician_accepted: 'clinSourceClinicianAccepted',
 }
 
 function severityClass(severity: CombinationSeverity): string {
@@ -89,6 +91,7 @@ function AiReviewCard({
   onEditAccept: (edited: CombinationCheckAIResult, note?: string) => void
   disabled?: boolean
 }) {
+  const { t } = useTranslation()
   const [note, setNote] = useState(finding.clinicianNote ?? '')
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState<CombinationCheckAIResult | null>(finding.aiResult ?? null)
@@ -107,17 +110,17 @@ function AiReviewCard({
   return (
     <div className="combination-check__ai-review">
       <p className="combination-check__ai-warning">
-        KI-generiert — nicht in der Wissensdatenbank. Bitte klinisch prüfen.
+        {t('combiCheckAiWarning')}
       </p>
       {finding.hasConflict ? (
         <p className="combination-check__conflict">
-          Konflikt zwischen Wissensdatenbank und KI — KB-Eintrag wird bevorzugt.
+          {t('combiCheckConflict')}
         </p>
       ) : null}
       {editing && draft ? (
         <div className="combination-check__edit">
           <label>
-            Hauptrisiko
+            {t('combiCheckMainRiskLabel')}
             <textarea
               value={draft.mainRisk}
               onChange={(e) => setDraft({ ...draft, mainRisk: e.target.value })}
@@ -126,7 +129,7 @@ function AiReviewCard({
             />
           </label>
           <label>
-            Monitoring
+            {t('combiCheckMonitoringLabel')}
             <textarea
               value={draft.monitoring ?? ''}
               onChange={(e) => setDraft({ ...draft, monitoring: e.target.value })}
@@ -138,10 +141,10 @@ function AiReviewCard({
       ) : null}
       <div className="combination-check__actions">
         <button type="button" disabled={disabled} onClick={() => onAccept(note || undefined)}>
-          Akzeptieren
+          {t('clinReviewAccept')}
         </button>
         <button type="button" disabled={disabled} onClick={() => onReject(note || undefined)}>
-          Verwerfen
+          {t('clinReviewReject')}
         </button>
         <button
           type="button"
@@ -155,25 +158,25 @@ function AiReviewCard({
             }
           }}
         >
-          {editing ? 'Speichern & akzeptieren' : 'Bearbeiten & akzeptieren'}
+          {editing ? t('combiCheckSaveAccept') : t('combiCheckEditAccept')}
         </button>
         <button
           type="button"
           disabled={disabled}
           onClick={() => onReject(note || undefined, true)}
-          title="Nach Verwerfen erneut mit gründlicherer KI-Analyse"
+          title={t('combiCheckThoroughReviewTitle')}
         >
-          Gründlich prüfen
+          {t('combiCheckThoroughReview')}
         </button>
       </div>
       <label className="combination-check__note-field">
-        Anmerkung
+        {t('clinReviewNote')}
         <textarea
           value={note}
           onChange={(e) => setNote(e.target.value)}
           rows={2}
           disabled={disabled}
-          placeholder="Klinische Anmerkung…"
+          placeholder={t('clinReviewNotePlaceholder')}
         />
       </label>
     </div>
@@ -197,6 +200,7 @@ function FindingRow({
   onReject: (note?: string, thorough?: boolean) => void
   onEditAccept: (edited: CombinationCheckAIResult, note?: string) => void
 }) {
+  const { t } = useTranslation()
   const [noteDraft, setNoteDraft] = useState(finding.clinicianNote ?? '')
 
   useEffect(() => {
@@ -210,9 +214,9 @@ function FindingRow({
           {finding.substanceAName} + {finding.substanceBName}
         </span>
         <span className={`combination-check__severity ${severityClass(finding.severity)}`}>
-          {SEVERITY_LABELS[finding.severity]}
+          {t(SEVERITY_KEYS[finding.severity])}
         </span>
-        <span className="combination-check__source">{SOURCE_LABELS[finding.source]}</span>
+        <span className="combination-check__source">{t(SOURCE_KEYS[finding.source])}</span>
         <span className="combination-check__expand-hint" aria-hidden="true">
           ▾
         </span>
@@ -220,27 +224,27 @@ function FindingRow({
       <div className="combination-check__details">
         {finding.mainRisk ? (
           <p>
-            <strong>Hauptrisiko:</strong> {finding.mainRisk}
+            <strong>{t('combiCheckMainRiskInline')}</strong> {finding.mainRisk}
           </p>
         ) : null}
         {finding.mechanism ? (
           <p>
-            <strong>Mechanismus:</strong> {finding.mechanism}
+            <strong>{t('clinLabelMechanism')}</strong> {finding.mechanism}
           </p>
         ) : null}
         {finding.monitoring ? (
           <p>
-            <strong>Monitoring:</strong> {finding.monitoring}
+            <strong>{t('clinLabelMonitoring')}</strong> {finding.monitoring}
           </p>
         ) : null}
         {finding.clinicalManagement ? (
           <p>
-            <strong>Management:</strong> {finding.clinicalManagement}
+            <strong>{t('combiCheckManagementInline')}</strong> {finding.clinicalManagement}
           </p>
         ) : null}
         {finding.provenance ? (
           <p>
-            <strong>Quelle:</strong> {finding.provenance}
+            <strong>{t('combiCheckSourceInline')}</strong> {finding.provenance}
           </p>
         ) : null}
         {finding.status === 'pending_clinician_review' ? (
@@ -254,7 +258,7 @@ function FindingRow({
         ) : (
           <div className="combination-check__kb-actions">
             <label className="combination-check__note-field">
-              Anmerkung
+              {t('clinReviewNote')}
               <textarea
                 value={noteDraft}
                 onChange={(e) => setNoteDraft(e.target.value)}
@@ -265,10 +269,10 @@ function FindingRow({
             </label>
             <div className="combination-check__relevance">
               <button type="button" disabled={disabled} onClick={() => onRelevance(true)}>
-                Relevant
+                {t('clinReviewRelevant')}
               </button>
               <button type="button" disabled={disabled} onClick={() => onRelevance(false)}>
-                Nicht relevant
+                {t('clinReviewNotRelevant')}
               </button>
             </div>
           </div>
@@ -285,6 +289,7 @@ export function CombinationCheckPanel({
   disabled = false,
   language,
 }: CombinationCheckPanelProps) {
+  const { t } = useTranslation()
   const check = useCombinationCheck(caseId, medications, state, language)
   const activeMeds = medications.filter(
     (m) => m.status === 'active' || m.status === 'reduced' || m.status === 'increased',
@@ -303,10 +308,10 @@ export function CombinationCheckPanel({
           disabled={disabled || !check.canRun || check.running}
           onClick={() => void check.runCheck()}
         >
-          {check.running ? 'KI wird erstellt…' : 'Kombinationscheck starten'}
+          {check.running ? t('combiCheckRunning') : t('combiCheckRun')}
         </button>
         {!check.canRun ? (
-          <p className="combination-check__hint">Mindestens zwei aktive Medikamente erforderlich.</p>
+          <p className="combination-check__hint">{t('combiCheckNeedTwoMeds')}</p>
         ) : null}
       </div>
 
@@ -324,13 +329,13 @@ export function CombinationCheckPanel({
       {check.visibleFindings.length === 0 && !check.running ? (
         <p className="combination-check__empty">
           {check.canRun
-            ? 'Noch kein Kombinationscheck durchgeführt.'
-            : 'Keine aktiven Medikamentenpaare für den Check.'}
+            ? t('combiCheckEmptyCanRun')
+            : t('combiCheckEmptyNoPairs')}
         </p>
       ) : null}
 
       {check.pendingAiRuns.length > 0 ? (
-        <p className="combination-check__status">KI-Vorschlag vorhanden — bitte prüfen.</p>
+        <p className="combination-check__status">{t('clinReviewAiSuggestionPending')}</p>
       ) : null}
 
       {noneSummary ? <p className="combination-check__none-summary">{noneSummary}</p> : null}
@@ -338,9 +343,9 @@ export function CombinationCheckPanel({
       {hasSignificant ? (
         <div className="combination-check__compact-list">
           <div className="combination-check__compact-header" aria-hidden="true">
-            <span>Kombination</span>
-            <span>Schweregrad</span>
-            <span>Quelle</span>
+            <span>{t('combiCheckColCombination')}</span>
+            <span>{t('combiCheckColSeverity')}</span>
+            <span>{t('combiCheckColSource')}</span>
             <span />
           </div>
           {check.significantFindings.map((finding) => (
@@ -369,8 +374,7 @@ export function CombinationCheckPanel({
       ) : null}
 
       <p className="combination-check__disclaimer">
-        Kombinationscheck: paarweise Prüfung (MVP). KI-Befunde erst nach expliziter Akzeptanz klinisch
-        verbindlich. Triple-Kombinationen, Labor-Trigger und Rezeptor-Last — geplant, nicht enthalten.
+        {t('combiCheckDisclaimer')}
       </p>
     </div>
   )

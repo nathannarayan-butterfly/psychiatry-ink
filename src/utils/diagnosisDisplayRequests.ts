@@ -87,5 +87,6 @@ export function resolveDiagnosisLabelSync(
     enteredLabel: coding.overridden ? coding.label : null,
     code: coding.code,
     overridden: coding.overridden,
+    version,
   })
 }

@@ -1,12 +1,17 @@
 import { useTranslation } from '../../context/TranslationContext'
 import type { DocumentTemplate, TemplateField } from '../../types/documentTemplate'
 import {
+  colSpanToWidth,
+  resolveFieldColSpan,
+  widthToColSpan,
+} from '../../utils/documentTemplate/fieldLayout'
+import {
   DYNAMIC_FIELD_CATALOG,
   getDynamicFieldDefinition,
   isPatientDynamicKey,
 } from '../../data/documentTemplate/dynamicFields'
 import { PLACEHOLDER_BINDINGS } from '../../utils/documentTemplate/constants'
-import { SimpleRichTextEditor } from './SimpleRichTextEditor'
+import { RichTextField } from './RichTextField'
 
 interface TemplateFieldSettingsProps {
   field: TemplateField
@@ -69,10 +74,11 @@ export function TemplateFieldSettings({ field, lang, onPatch }: TemplateFieldSet
       {field.type === 'static_text' ? (
         <label className="dt-field-label">
           {t('templateStaticText')}
-          <SimpleRichTextEditor
+          <RichTextField
             value={(field.defaultValue as string | undefined) ?? ''}
             onChange={(html) => onPatch({ defaultValue: html })}
             minHeight="6rem"
+            ariaLabel={t('templateStaticText')}
           />
         </label>
       ) : null}
@@ -182,6 +188,41 @@ export function TemplateFieldSettings({ field, lang, onPatch }: TemplateFieldSet
           {t('templateFieldRequired')}
         </label>
       ) : null}
+
+      {field.type === 'legal_checkbox' ? (
+        <label className="dt-field-label">
+          {t('templateFieldLegalText')}
+          <textarea
+            className="dt-input"
+            rows={4}
+            value={field.legalText ?? ''}
+            onChange={(e) => onPatch({ legalText: e.target.value })}
+          />
+        </label>
+      ) : null}
+
+      {field.type !== 'heading' ? (
+        <label className="dt-field-label">
+          {t('templateFieldWidth')}
+          <select
+            className="dt-select"
+            value={colSpanToWidth(resolveFieldColSpan(field))}
+            onChange={(e) =>
+              onPatch({
+                layout: {
+                  ...field.layout,
+                  colSpan: widthToColSpan(e.target.value as 'full' | 'half' | 'third' | 'two-thirds'),
+                },
+              })
+            }
+          >
+            <option value="full">{t('templateFieldWidthFull')}</option>
+            <option value="half">{t('templateFieldWidthHalf')}</option>
+            <option value="two-thirds">{t('templateFieldWidthTwoThirds')}</option>
+            <option value="third">{t('templateFieldWidthThird')}</option>
+          </select>
+        </label>
+      ) : null}
     </div>
   )
 }
@@ -209,11 +250,12 @@ export function TemplatePageSettingsPanel({ template, onPatch }: TemplatePageSet
 
       <label className="dt-field-label">
         {t('templateHeaderLabel')}
-        <SimpleRichTextEditor
+        <RichTextField
           value={header.content ?? ''}
           onChange={(html) => patchPage({ header: { ...header, content: html } })}
           minHeight="3rem"
           placeholder={t('templateHeaderPlaceholder')}
+          ariaLabel={t('templateHeaderLabel')}
         />
       </label>
       {!header.content?.trim() ? (
@@ -234,11 +276,12 @@ export function TemplatePageSettingsPanel({ template, onPatch }: TemplatePageSet
 
       <label className="dt-field-label">
         {t('templateFooterLabel')}
-        <SimpleRichTextEditor
+        <RichTextField
           value={footer.content ?? ''}
           onChange={(html) => patchPage({ footer: { ...footer, content: html } })}
           minHeight="3rem"
           placeholder={t('templateFooterPlaceholder')}
+          ariaLabel={t('templateFooterLabel')}
         />
       </label>
       {!footer.content?.trim() ? (

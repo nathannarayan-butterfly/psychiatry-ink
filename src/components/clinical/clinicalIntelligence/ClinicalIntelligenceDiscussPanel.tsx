@@ -7,6 +7,7 @@ import { ButterflyLogo } from '../../ButterflyLogo'
 import { clinicalIntelligenceDiscussChat } from '../../../services/clinicalIntelligence/discussApi'
 import { buildClinicalIntelligenceDiscussContext } from '../../../services/clinicalIntelligence/discussContext'
 import type { CiDiscussMessage } from '../../../types/clinicalIntelligence'
+import { ChatMarkdownText } from '../../../utils/chat/ChatMarkdownText'
 import { resolveLlmRequestForTask } from '../../../utils/resolveAiModel'
 
 const DEFAULT_WIDTH = 360
@@ -47,6 +48,7 @@ export function ClinicalIntelligenceDiscussPanel({
 
   const { isRecording, isTranscribing, toggleRecording, error: voiceError } = useCompactDictation({
     onTranscriptionComplete: appendTranscription,
+    language,
   })
 
   useEffect(() => {
@@ -141,11 +143,10 @@ export function ClinicalIntelligenceDiscussPanel({
         <header className="ci-discuss-dock__header">
           <div className="ci-discuss-dock__title-wrap">
             <span className="ci-discuss-dock__mark">
-              <ButterflyLogo variant="color" size={24} />
+              <ButterflyLogo variant="color" breathing size={24} />
             </span>
             <div>
               <h2 className="ci-discuss-dock__title">{t('ciDiscussTitle')}</h2>
-              <p className="ci-discuss-dock__subtitle">{t('ciDiscussSubtitle')}</p>
             </div>
           </div>
           <button
@@ -172,7 +173,13 @@ export function ClinicalIntelligenceDiscussPanel({
                 <p className="ci-discuss-entry__role">
                   {message.role === 'user' ? t('askButterflyYou') : t('ciDiscussAssistant')}
                 </p>
-                <p className="ci-discuss-entry__text">{message.content}</p>
+                <p className="ci-discuss-entry__text">
+                  {message.role === 'assistant' ? (
+                    <ChatMarkdownText text={message.content} />
+                  ) : (
+                    message.content
+                  )}
+                </p>
               </article>
             ))
           )}

@@ -20,11 +20,13 @@ import {
 } from '../../../utils/overview/overviewLayout'
 import { OVERVIEW_WIDGET_REGISTRY } from './overviewWidgetRegistry'
 import { renderOverviewWidget, type OverviewWidgetRenderContext } from './OverviewWidgetContent'
+import { getOverviewCardVariant } from '../../../utils/overview/overviewCardVariants'
 import { ClinicalEyebrow } from '../../clinical/ClinicalEyebrow'
 import type { UiTranslationKey } from '../../../data/uiTranslations'
 
 const OVERVIEW_BAND_TITLE_KEY: Record<OverviewWidgetBand, UiTranslationKey> = {
   'diagnosis-medication': 'overviewBandDiagnosisMedication',
+  'clinical-intelligence': 'overviewBandButterflyClinicalIntelligence',
   'safety-verlauf': 'overviewBandSafetyVerlauf',
   'clinical-status': 'overviewBandClinicalStatus',
   monitoring: 'overviewBandMonitoring',
@@ -300,6 +302,7 @@ function OverviewWidgetSlot({
   const { t } = useTranslation()
   const widthClass = item.width === 'full' ? 'ov-widget-slot--full' : 'ov-widget-slot--half'
   const isHero = item.widgetId === 'hero-summary'
+  const cardVariant = getOverviewCardVariant(item.widgetId)
 
   return (
     <div
@@ -310,9 +313,12 @@ function OverviewWidgetSlot({
         editMode ? 'ov-widget-slot--editable' : '',
         isDragging ? 'ov-widget-slot--dragging' : '',
         isDropTarget ? 'ov-widget-slot--drop-target' : '',
+        cardVariant ? `ov-widget-slot--variant-${cardVariant}` : '',
       ]
         .filter(Boolean)
         .join(' ')}
+      data-widget-id={item.widgetId}
+      data-card-variant={cardVariant ?? undefined}
       draggable={editMode}
       onDragStart={editMode ? (event) => onDragStart(index, event) : undefined}
       onDragOver={editMode ? (event) => onDragOver(index, event) : undefined}

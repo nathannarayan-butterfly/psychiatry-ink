@@ -122,6 +122,36 @@ describe('getParameterMonitoringRows', () => {
     expect(bmi?.missing).toBe(false)
   })
 
+  it('prefers newer somatic Befund weight over older lab weight', () => {
+    const medications = [med('Aripiprazol')]
+    const befunde = [
+      befund('2026-06-01', [{ name: 'Gewicht', numericValue: 90, unit: 'kg' }]),
+    ]
+    const verlaufEntries = [
+      {
+        id: 'somatic-1',
+        date: '2026-06-20T12:00:00.000Z',
+        content: 'Somatischer Befund',
+        pageType: 'somatic-befund',
+        somaticBefund: {
+          examDate: '2026-06-20',
+          vitals: { weight: '82' },
+          heart: { finding: '' },
+          lungs: { finding: '' },
+          abdomen: { finding: '' },
+          extremities: { finding: '' },
+          skin: { finding: '' },
+          neurology: { finding: '' },
+        },
+      },
+    ] as import('../../verlaufFeed').VerlaufFeedEntry[]
+
+    const rows = getParameterMonitoringRows({ medications, befunde, verlaufEntries })
+    const bmi = rows.find((p) => p.label === 'BMI')
+    expect(bmi?.valueLabel).toBe('82 kg')
+    expect(bmi?.dateLabel).toBe('20.06.2026')
+  })
+
   it('skips paused medications', () => {
     const medications: MedicationEntry[] = [
       { ...med('Aripiprazol'), status: 'paused' },

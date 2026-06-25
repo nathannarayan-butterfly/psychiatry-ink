@@ -4,13 +4,14 @@ import { shortCaseId } from '../caseContext'
 import { loadDiagnosen } from '../diagnosenArchive'
 import { resolveDiagnosisLabelSync } from '../diagnosisDisplayRequests'
 import { loadBefunde } from '../laborArchive'
+import { loadVerlaufFeed } from '../verlaufFeed'
 import { loadNotionPageDate } from '../notionPageDate'
 import { formatMedicationOverviewDoseGerman } from '../medication/doseLine'
 import { isMedicationVisible } from '../medication/planOps'
 import { loadMedicationPlanState } from '../medication/storage'
 import type { TemplateRenderContext } from '../../types/documentTemplate'
 import { calculateAgeFromIsoDate, formatClinicalDate, parseIsoDateOnly } from '../clinicalDate'
-import { resolveAnthropometryFromBefunde } from './anthropometryContext'
+import { resolveCaseAnthropometry } from './anthropometryContext'
 import { todayIsoDateSite } from '../siteTimezone'
 
 function formatTime(): string {
@@ -144,7 +145,7 @@ export async function buildTemplateRenderContext(
     // ignore vault read errors
   }
 
-  const anthropometry = resolveAnthropometryFromBefunde(loadBefunde(caseId))
+  const anthropometry = resolveCaseAnthropometry(loadBefunde(caseId), loadVerlaufFeed(caseId))
   if (anthropometry.height) patient.height = anthropometry.height
   if (anthropometry.weight) patient.weight = anthropometry.weight
   if (anthropometry.bmi) patient.bmi = anthropometry.bmi

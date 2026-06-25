@@ -6,22 +6,27 @@ import {
   FlaskConical,
   GitBranch,
   LineChart,
+  ScrollText,
   Stethoscope,
+  Activity,
 } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from '../../context/TranslationContext'
 import type { UiTranslationKey } from '../../data/uiTranslations'
 import { isCommandMenuShortcut } from '../../utils/notionKeyboardShortcuts'
-import { NOTION_PAGES, type NotionPageId } from './notionPages'
-
-const DOCUMENT_PAGES = NOTION_PAGES.filter((page) => page.kind === 'document')
-const TOOL_PAGES = NOTION_PAGES.filter((page) => page.kind === 'lab')
-const ALL_PAGES = [...DOCUMENT_PAGES, ...TOOL_PAGES]
+import {
+  getVisibleNotionPages,
+  type NotionPageConfig,
+  type NotionPageId,
+} from './notionPages'
 
 const TOOL_ICONS: Partial<Record<NotionPageId, typeof FlaskConical>> = {
   labor: FlaskConical,
   visualisation: LineChart,
+  befundung: Activity,
+  arztbrief: ScrollText,
+  'discharge-summary': FileText,
   timeline: GitBranch,
 }
 
@@ -36,7 +41,8 @@ interface MenuPosition {
 }
 
 interface SubmenuState {
-  pageId: NotionPageId
+  kind: 'page' | 'templates'
+  pageId?: NotionPageId
   top: number
   left: number
 }
@@ -46,6 +52,13 @@ interface TemplateMenuAction {
   onSelect: () => void
 }
 
+interface TemplateSubmenuConfig {
+  labelKey: UiTranslationKey
+  items: SubsectionItem[]
+  onSelectTemplate: (templateId: string) => void
+  onOpenPicker: () => void
+}
+
 interface WorkspaceContextMenuProps {
   activePage: NotionPageId
   activeSectionId?: string | null
@@ -53,6 +66,7 @@ interface WorkspaceContextMenuProps {
   onSelect: (pageId: NotionPageId) => void
   onSelectWithSection?: (pageId: NotionPageId, sectionId: string) => void
   templateAction?: TemplateMenuAction
+  templateSubmenu?: TemplateSubmenuConfig
   /** Optional clinical-area actions (e.g. Konsil, Anforderung) exposed at the bottom of the menu. */
   konsilAction?: TemplateMenuAction
   anforderungAction?: TemplateMenuAction
@@ -68,12 +82,19 @@ export function WorkspaceContextMenu({
   onSelect,
   onSelectWithSection,
   templateAction,
+  templateSubmenu,
   konsilAction,
   anforderungAction,
   openMenuRequest = 0,
   children,
 }: WorkspaceContextMenuProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
+  const { documentPages, toolPages, allPages } = useMemo(() => {
+    const visible = getVisibleNotionPages(language)
+    const documents = visible.filter((page) => page.kind === 'document')
+    const tools = visible.filter((page) => page.kind === 'lab')
+    return { documentPages: documents, toolPages: tools, allPages: [...documents, ...tools] }
+  }, [language])
   const [menu, setMenu] = useState<MenuPosition | null>(null)
   const [focusedIndex, setFocusedIndex] = useState(0)
   const [openSubmenu, setOpenSubmenu] = useState<SubmenuState | null>(null)
@@ -98,7 +119,8 @@ export function WorkspaceContextMenu({
   const clinicalAreaCount = (konsilAction ? 1 : 0) + (anforderungAction ? 1 : 0)
   const clinicalAreasHeight =
     clinicalAreaCount > 0 ? 60 + Math.max(0, clinicalAreaCount - 1) * 40 : 0
-  const extraItemsHeight = (templateAction ? 60 : 0) + clinicalAreasHeight
+  const extraItemsHeight =
+    (templateAction || templateSubmenu ? 60 : 0) + clinicalAreasHeight
 
   const openMenuAt = useCallback(
     (clientX: number, clientY: number) => {
@@ -108,10 +130,10 @@ export function WorkspaceContextMenu({
       const y = Math.max(8, Math.min(clientY, window.innerHeight - MENU_HEIGHT - 8))
       setMenu({ x, y })
       setOpenSubmenu(null)
-      const activeIdx = ALL_PAGES.findIndex((p) => p.id === activePage)
+      const activeIdx = allPages.findIndex((p) => p.id === activePage)
       setFocusedIndex(activeIdx >= 0 ? activeIdx : 0)
     },
-    [activePage, extraItemsHeight],
+    [activePage, allPages, extraItemsHeight],
   )
 
   const openMenuAtCenter = useCallback(() => {
@@ -192,17 +214,17 @@ export function WorkspaceContextMenu({
     close()
   }
 
-  // Index layout: [...ALL_PAGES, konsilAction?, anforderungAction?, templateAction?]
-  const konsilIndex = konsilAction ? ALL_PAGES.length : -1
+  // Index layout: [...allPages, konsilAction?, anforderungAction?, templateAction?]
+  const konsilIndex = konsilAction ? allPages.length : -1
   const anforderungIndex = anforderungAction
-    ? ALL_PAGES.length + (konsilAction ? 1 : 0)
+    ? allPages.length + (konsilAction ? 1 : 0)
     : -1
-  const templateIndex = templateAction
-    ? ALL_PAGES.length + clinicalAreaCount
-    : -1
-  const menuItemCount = ALL_PAGES.length + clinicalAreaCount + (templateAction ? 1 : 0)
+  const templateIndex =
+    templateAction || templateSubmenu ? allPages.length + clinicalAreaCount : -1
+  const menuItemCount =
+    allPages.length + clinicalAreaCount + (templateAction || templateSubmenu ? 1 : 0)
 
-  const triggerSubmenu = (pageId: NotionPageId, itemEl: HTMLButtonElement) => {
+  const triggerSubmenuAt = (itemEl: HTMLButtonElement, state: SubmenuState) => {
     clearHoverTimer()
     hoverTimerRef.current = setTimeout(() => {
       const rect = itemEl.getBoundingClientRect()
@@ -214,9 +236,17 @@ export function WorkspaceContextMenu({
       const SUBMENU_APPROX_HEIGHT = 280
       const top = Math.min(rect.top, window.innerHeight - SUBMENU_APPROX_HEIGHT - 8)
 
-      setOpenSubmenu({ pageId, top: Math.max(8, top), left })
+      setOpenSubmenu({ ...state, top: Math.max(8, top), left })
       setSubmenuFocusedIndex(0)
     }, 100)
+  }
+
+  const triggerSubmenu = (pageId: NotionPageId, itemEl: HTMLButtonElement) => {
+    triggerSubmenuAt(itemEl, { kind: 'page', pageId, top: 0, left: 0 })
+  }
+
+  const triggerTemplateSubmenu = (itemEl: HTMLButtonElement) => {
+    triggerSubmenuAt(itemEl, { kind: 'templates', top: 0, left: 0 })
   }
 
   const handleItemMouseEnter = (
@@ -233,10 +263,12 @@ export function WorkspaceContextMenu({
   }
 
   const handleItemMouseLeave = (pageId: NotionPageId) => {
-    if (openSubmenu?.pageId === pageId) {
+    if (openSubmenu?.kind === 'page' && openSubmenu.pageId === pageId) {
       clearHoverTimer()
       hoverTimerRef.current = setTimeout(() => {
-        setOpenSubmenu((prev) => (prev?.pageId === pageId ? null : prev))
+        setOpenSubmenu((prev) =>
+          prev?.kind === 'page' && prev.pageId === pageId ? null : prev,
+        )
       }, 200)
     }
   }
@@ -247,7 +279,18 @@ export function WorkspaceContextMenu({
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (openSubmenu) {
-        const subsections = pageSubsections?.[openSubmenu.pageId] ?? []
+        const templateItems = templateSubmenu?.items ?? []
+        const pageSections =
+          openSubmenu.kind === 'page' && openSubmenu.pageId
+            ? (pageSubsections?.[openSubmenu.pageId] ?? [])
+            : []
+        const subsections =
+          openSubmenu.kind === 'templates'
+            ? [
+                ...templateItems,
+                { id: '__browse__', label: t('workspaceVorlagenBrowseAll') },
+              ]
+            : pageSections
         switch (event.key) {
           case 'Escape':
             setOpenSubmenu(null)
@@ -268,7 +311,17 @@ export function WorkspaceContextMenu({
           case ' ': {
             event.preventDefault()
             const section = subsections[submenuFocusedIndex]
-            if (section) handleSelectWithSection(openSubmenu.pageId, section.id)
+            if (!section) break
+            if (openSubmenu.kind === 'templates') {
+              if (section.id === '__browse__') {
+                templateSubmenu?.onOpenPicker()
+              } else {
+                templateSubmenu?.onSelectTemplate(section.id)
+              }
+              close()
+            } else if (openSubmenu.pageId) {
+              handleSelectWithSection(openSubmenu.pageId, section.id)
+            }
             break
           }
           default:
@@ -291,7 +344,7 @@ export function WorkspaceContextMenu({
           break
         case 'ArrowRight': {
           event.preventDefault()
-          const page = ALL_PAGES[focusedIndex]
+          const page = allPages[focusedIndex]
           if (page && pageSubsections?.[page.id]?.length) {
             const items =
               menuRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')
@@ -307,10 +360,19 @@ export function WorkspaceContextMenu({
             handleKonsilSelect()
           } else if (anforderungAction && focusedIndex === anforderungIndex) {
             handleAnforderungSelect()
+          } else if (templateSubmenu && focusedIndex === templateIndex) {
+            if (templateSubmenu.items.length > 0) {
+              const items =
+                menuRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')
+              const focusedEl = items?.[focusedIndex]
+              if (focusedEl) triggerTemplateSubmenu(focusedEl)
+            } else {
+              templateSubmenu.onOpenPicker()
+            }
           } else if (templateAction && focusedIndex === templateIndex) {
             handleTemplateSelect()
           } else {
-            const page = ALL_PAGES[focusedIndex]
+            const page = allPages[focusedIndex]
             if (page) handleSelect(page.id)
           }
           break
@@ -352,9 +414,17 @@ export function WorkspaceContextMenu({
     items?.[submenuFocusedIndex]?.focus()
   }, [openSubmenu, submenuFocusedIndex])
 
-  const openSubmenuSections = openSubmenu ? (pageSubsections?.[openSubmenu.pageId] ?? []) : []
+  const openSubmenuSections =
+    openSubmenu?.kind === 'templates'
+      ? [
+          ...(templateSubmenu?.items ?? []),
+          { id: '__browse__', label: t('workspaceVorlagenBrowseAll') },
+        ]
+      : openSubmenu?.kind === 'page' && openSubmenu.pageId
+        ? (pageSubsections?.[openSubmenu.pageId] ?? [])
+        : []
 
-  const renderItem = (page: (typeof ALL_PAGES)[number], globalIndex: number) => {
+  const renderItem = (page: NotionPageConfig, globalIndex: number) => {
     const Icon = TOOL_ICONS[page.id]
     const subsections = pageSubsections?.[page.id]
     const hasSub = Boolean(subsections?.length)
@@ -422,14 +492,14 @@ export function WorkspaceContextMenu({
                 <p className="workspace-context-menu__heading">
                   {t('notionContextMenuDocuments')}
                 </p>
-                {DOCUMENT_PAGES.map((page, index) => renderItem(page, index))}
+                {documentPages.map((page, index) => renderItem(page, index))}
 
                 <div className="workspace-context-menu__sep" role="separator" />
 
                 <p className="workspace-context-menu__heading">
                   {t('notionContextMenuTools')}
                 </p>
-                {TOOL_PAGES.map((page, index) => renderItem(page, DOCUMENT_PAGES.length + index))}
+                {toolPages.map((page, index) => renderItem(page, documentPages.length + index))}
 
                 {clinicalAreaCount > 0 ? (
                   <>
@@ -484,7 +554,67 @@ export function WorkspaceContextMenu({
                   </>
                 ) : null}
 
-                {templateAction ? (
+                {templateSubmenu ? (
+                  <>
+                    <div className="workspace-context-menu__sep" role="separator" />
+                    <p className="workspace-context-menu__heading">
+                      {t('dokumenteCategoryFormulare')}
+                    </p>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      tabIndex={focusedIndex === templateIndex ? 0 : -1}
+                      className={[
+                        'workspace-context-menu__item',
+                        templateSubmenu.items.length
+                          ? 'workspace-context-menu__item--has-sub'
+                          : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                      onClick={() => {
+                        if (templateSubmenu.items.length === 0) {
+                          templateSubmenu.onOpenPicker()
+                          close()
+                        }
+                      }}
+                      onMouseEnter={(e) => {
+                        setFocusedIndex(templateIndex)
+                        if (templateSubmenu.items.length) {
+                          triggerTemplateSubmenu(e.currentTarget)
+                        } else {
+                          setOpenSubmenu(null)
+                        }
+                      }}
+                      onMouseLeave={() => {
+                        if (openSubmenu?.kind === 'templates') {
+                          clearHoverTimer()
+                          hoverTimerRef.current = setTimeout(() => {
+                            setOpenSubmenu((prev) =>
+                              prev?.kind === 'templates' ? null : prev,
+                            )
+                          }, 200)
+                        }
+                      }}
+                    >
+                      <FileText
+                        className="workspace-context-menu__item-icon h-3.5 w-3.5"
+                        strokeWidth={1.75}
+                        aria-hidden
+                      />
+                      <span className="workspace-context-menu__item-label">
+                        {t(templateSubmenu.labelKey)}
+                      </span>
+                      {templateSubmenu.items.length ? (
+                        <ChevronRight
+                          className="workspace-context-menu__item-arrow h-3 w-3"
+                          strokeWidth={2}
+                          aria-hidden
+                        />
+                      ) : null}
+                    </button>
+                  </>
+                ) : templateAction ? (
                   <>
                     <div className="workspace-context-menu__sep" role="separator" />
                     <p className="workspace-context-menu__heading">
@@ -534,6 +664,7 @@ export function WorkspaceContextMenu({
                           tabIndex={submenuFocusedIndex === index ? 0 : -1}
                           className={[
                             'workspace-context-menu__item',
+                            openSubmenu.kind === 'page' &&
                             activePage === openSubmenu.pageId &&
                             activeSectionId === section.id
                               ? 'workspace-context-menu__item--active'
@@ -541,15 +672,27 @@ export function WorkspaceContextMenu({
                           ]
                             .filter(Boolean)
                             .join(' ')}
-                          onClick={() =>
-                            handleSelectWithSection(openSubmenu.pageId, section.id)
-                          }
+                          onClick={() => {
+                            if (openSubmenu.kind === 'templates') {
+                              if (section.id === '__browse__') {
+                                templateSubmenu?.onOpenPicker()
+                              } else {
+                                templateSubmenu?.onSelectTemplate(section.id)
+                              }
+                              close()
+                              return
+                            }
+                            if (openSubmenu.pageId) {
+                              handleSelectWithSection(openSubmenu.pageId, section.id)
+                            }
+                          }}
                           onMouseEnter={() => setSubmenuFocusedIndex(index)}
                         >
                           <span className="workspace-context-menu__item-label">
                             {section.label}
                           </span>
-                          {activePage === openSubmenu.pageId &&
+                          {openSubmenu.kind === 'page' &&
+                          activePage === openSubmenu.pageId &&
                           activeSectionId === section.id ? (
                             <Check
                               className="workspace-context-menu__item-check h-3 w-3"

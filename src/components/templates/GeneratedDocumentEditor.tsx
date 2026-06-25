@@ -15,13 +15,19 @@ import { getGeneratedDocument, saveGeneratedDocument } from '../../utils/generat
 import { recordAuditEvent } from '../../services/auditApi'
 import { appendDokument } from '../../utils/dokumenteArchive'
 import { A4PageView } from './A4PageView'
-import { SimpleRichTextEditor } from './SimpleRichTextEditor'
+import { RichTextField } from './RichTextField'
 
 interface GeneratedDocumentEditorProps {
   template: DocumentTemplate
   caseId?: string
   existingDoc?: GeneratedDocument
   saveToPatientDocuments?: boolean
+  initialFieldValues?: Record<string, string | boolean | string[]>
+  wizardMetadata?: {
+    instanceId: string
+    structuredAnswers: GeneratedDocument['structuredAnswers']
+    auditTrail: GeneratedDocument['auditTrail']
+  }
   onClose: () => void
   onSaved?: (doc: GeneratedDocument) => void
 }
@@ -175,12 +181,28 @@ function FieldInput({
     return (
       <label className="dt-field-label">
         {field.label}
-        <SimpleRichTextEditor
+        <RichTextField
           value={typeof value === 'string' ? value : ''}
           onChange={(html) => onChange(html)}
           readOnly={readOnly}
           minHeight="5rem"
           resizable
+          ariaLabel={field.label}
+        />
+      </label>
+    )
+  }
+
+  if (field.type === 'short_text') {
+    return (
+      <label className="dt-field-label">
+        {field.label}
+        <RichTextField
+          value={typeof value === 'string' ? value : ''}
+          onChange={(html) => onChange(html)}
+          readOnly={readOnly}
+          minHeight="2.5rem"
+          ariaLabel={field.label}
         />
       </label>
     )
@@ -273,7 +295,6 @@ function FieldInput({
   if (
     field.type === 'date' ||
     field.type === 'time' ||
-    field.type === 'short_text' ||
     field.type === 'number' ||
     field.type === 'email' ||
     field.type === 'phone'
@@ -300,6 +321,8 @@ export function GeneratedDocumentEditor({
   caseId,
   existingDoc,
   saveToPatientDocuments = false,
+  initialFieldValues,
+  wizardMetadata,
   onClose,
   onSaved,
 }: GeneratedDocumentEditorProps) {
@@ -316,11 +339,13 @@ export function GeneratedDocumentEditor({
       setContext(ctx)
       if (existingDoc) {
         setFieldValues(existingDoc.fieldValues)
+      } else if (initialFieldValues) {
+        setFieldValues(initialFieldValues)
       } else {
         setFieldValues(buildInitialFieldValues(template, ctx))
       }
     })
-  }, [caseId, template, existingDoc])
+  }, [caseId, template, existingDoc, initialFieldValues])
 
   const sortedFields = useMemo(
     () => [...template.fields].sort((a, b) => a.order - b.order),
@@ -355,8 +380,19 @@ export function GeneratedDocumentEditor({
       status,
       createdAt: existingDoc?.createdAt ?? now,
       updatedAt: now,
+      instanceId: wizardMetadata?.instanceId ?? existingDoc?.instanceId,
+      structuredAnswers: wizardMetadata?.structuredAnswers ?? existingDoc?.structuredAnswers,
+      auditTrail: wizardMetadata?.auditTrail ?? existingDoc?.auditTrail,
+      provenance: wizardMetadata
+        ? {
+            generatedAt: now,
+            wizardCompletedAt: now,
+            templateTitle: template.title,
+            instanceId: wizardMetadata.instanceId,
+          }
+        : existingDoc?.provenance,
     }
-  }, [docId, template, caseId, fieldValues, renderedText, status, existingDoc])
+  }, [docId, template, caseId, fieldValues, renderedText, status, existingDoc, wizardMetadata])
 
   const persist = useCallback(
     async (nextStatus: GeneratedDocument['status']) => {

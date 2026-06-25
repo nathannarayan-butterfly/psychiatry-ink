@@ -25,6 +25,11 @@ import {
 import { createComplementaryTherapy } from '../../types/complementaryTherapy'
 import { complementaryTherapyDisplayName } from './complementaryTherapyMapping'
 import { loadDiagnosen, saveDiagnosen, type DiagnoseEntry } from '../diagnosenArchive'
+import {
+  inferDefaultCategoryForNewEntry,
+  inferDefaultConfirmationForCategory,
+  syncLegacyClassificationFields,
+} from '../diagnosisClassification'
 import { addBefund, type LaborBefund, type LaborValue } from '../laborArchive'
 import { getOrCreateMedicationPlanState, saveMedicationPlanState } from '../medication/storage'
 import {
@@ -300,7 +305,9 @@ function persistOne(
     }
     case 'diagnosis': {
       const existing = loadDiagnosen(caseId)
-      const entry: DiagnoseEntry = {
+      const category = inferDefaultCategoryForNewEntry(existing)
+      const confirmation = inferDefaultConfirmationForCategory(category)
+      const base: DiagnoseEntry = {
         id: genId(),
         icd10: {
           code: candidate.data.icd10Code ?? '',
@@ -312,6 +319,7 @@ function persistOne(
         createdAt: now,
         updatedAt: now,
       }
+      const entry = syncLegacyClassificationFields(base, category, confirmation)
       saveDiagnosen(caseId, [...existing, entry])
       return entry.id
     }

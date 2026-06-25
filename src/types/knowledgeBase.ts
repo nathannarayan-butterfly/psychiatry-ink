@@ -482,7 +482,73 @@ export type KnowledgeBaseVerificationStatus =
   | 'verified'
   | 'deprecated'
 
-export type PrescribingCountryCode = 'DE' | 'CH' | 'AT' | 'UK'
+/**
+ * Provenance of the English (`*En`) localized fields on a KB record.
+ *
+ * - `'machine'` — produced by automated machine translation (DeepSeek) and
+ *   published immediately, unreviewed. The canonical German content and its
+ *   {@link KnowledgeBaseVerificationStatus} are unaffected.
+ * - `'human'` — curated or human-reviewed English.
+ */
+export type KbEnglishContentSource = 'machine' | 'human'
+
+/**
+ * Complete ISO 3166-1 alpha-2 code set (officially assigned codes incl.
+ * territories). This is the source of truth for every country selector
+ * (prescription country + privacy region) so a clinician can choose any market
+ * worldwide. Localized names are derived at runtime via `Intl.DisplayNames`
+ * (see `src/data/countryNames.ts`) rather than hand-maintained per code.
+ */
+export const ISO_ALPHA2_CODES = [
+  'AD', 'AE', 'AF', 'AG', 'AI', 'AL', 'AM', 'AO', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AW', 'AX', 'AZ',
+  'BA', 'BB', 'BD', 'BE', 'BF', 'BG', 'BH', 'BI', 'BJ', 'BL', 'BM', 'BN', 'BO', 'BQ', 'BR', 'BS',
+  'BT', 'BV', 'BW', 'BY', 'BZ',
+  'CA', 'CC', 'CD', 'CF', 'CG', 'CH', 'CI', 'CK', 'CL', 'CM', 'CN', 'CO', 'CR', 'CU', 'CV', 'CW',
+  'CX', 'CY', 'CZ',
+  'DE', 'DJ', 'DK', 'DM', 'DO', 'DZ',
+  'EC', 'EE', 'EG', 'EH', 'ER', 'ES', 'ET',
+  'FI', 'FJ', 'FK', 'FM', 'FO', 'FR',
+  'GA', 'GB', 'GD', 'GE', 'GF', 'GG', 'GH', 'GI', 'GL', 'GM', 'GN', 'GP', 'GQ', 'GR', 'GS', 'GT',
+  'GU', 'GW', 'GY',
+  'HK', 'HM', 'HN', 'HR', 'HT', 'HU',
+  'ID', 'IE', 'IL', 'IM', 'IN', 'IO', 'IQ', 'IR', 'IS', 'IT',
+  'JE', 'JM', 'JO', 'JP',
+  'KE', 'KG', 'KH', 'KI', 'KM', 'KN', 'KP', 'KR', 'KW', 'KY', 'KZ',
+  'LA', 'LB', 'LC', 'LI', 'LK', 'LR', 'LS', 'LT', 'LU', 'LV', 'LY',
+  'MA', 'MC', 'MD', 'ME', 'MF', 'MG', 'MH', 'MK', 'ML', 'MM', 'MN', 'MO', 'MP', 'MQ', 'MR', 'MS',
+  'MT', 'MU', 'MV', 'MW', 'MX', 'MY', 'MZ',
+  'NA', 'NC', 'NE', 'NF', 'NG', 'NI', 'NL', 'NO', 'NP', 'NR', 'NU', 'NZ',
+  'OM',
+  'PA', 'PE', 'PF', 'PG', 'PH', 'PK', 'PL', 'PM', 'PN', 'PR', 'PS', 'PT', 'PW', 'PY',
+  'QA',
+  'RE', 'RO', 'RS', 'RU', 'RW',
+  'SA', 'SB', 'SC', 'SD', 'SE', 'SG', 'SH', 'SI', 'SJ', 'SK', 'SL', 'SM', 'SN', 'SO', 'SR', 'SS',
+  'ST', 'SV', 'SX', 'SY', 'SZ',
+  'TC', 'TD', 'TF', 'TG', 'TH', 'TJ', 'TK', 'TL', 'TM', 'TN', 'TO', 'TR', 'TT', 'TV', 'TW', 'TZ',
+  'UA', 'UG', 'UM', 'US', 'UY', 'UZ',
+  'VA', 'VC', 'VE', 'VG', 'VI', 'VN', 'VU',
+  'WF', 'WS',
+  'YE', 'YT',
+  'ZA', 'ZM', 'ZW',
+] as const
+
+export type IsoAlpha2Code = (typeof ISO_ALPHA2_CODES)[number]
+
+/**
+ * Prescription-country code: any ISO alpha-2 code, plus the legacy `'UK'` alias
+ * (ISO uses `'GB'`). `UK` is preserved for backward compatibility with existing
+ * persisted preferences and KB market-availability rows; the privacy "Land"
+ * field maps it back to ISO `'GB'`.
+ */
+export type PrescribingCountryCode = IsoAlpha2Code | 'UK'
+
+/**
+ * Runtime list of selectable prescription countries: every ISO alpha-2 code,
+ * with `GB` replaced by the legacy `UK` code.
+ */
+export const PRESCRIBING_COUNTRY_CODES: readonly PrescribingCountryCode[] = ISO_ALPHA2_CODES.map(
+  (code) => (code === 'GB' ? 'UK' : code),
+)
 
 export type PreparationVerificationStatus =
   | 'unverified'
@@ -544,6 +610,13 @@ export interface MedicationMarketAvailability extends KnowledgeBaseAuditFields {
   /** English variant of {@link notes}. */
   notesEn?: string
   createdAt: string
+  /**
+   * Provenance of the English (`*En`) fields — `'machine'` for unreviewed
+   * DeepSeek machine translation. Does not affect {@link verificationStatus}.
+   */
+  enContentSource?: KbEnglishContentSource
+  /** ISO timestamp of the last machine English-translation pass. */
+  enTranslatedAt?: string
 }
 
 export interface KnowledgeBaseDrug {
@@ -632,6 +705,16 @@ export interface KnowledgeBaseDrug {
   kbReleaseVersion?: string
   /** ISO timestamp of the KB release sync consumed by Psychiatry.ink. */
   kbReleaseSyncedAt?: string
+  /**
+   * Provenance of the English (`*En`) fields. `'machine'` ⇒ the English content
+   * was produced by automated (DeepSeek) machine translation and is published
+   * unreviewed; `'human'` ⇒ curated/reviewed English. Absent ⇒ unknown / legacy.
+   * This NEVER changes {@link verificationStatus}, which continues to describe the
+   * clinical sign-off of the canonical (German) content.
+   */
+  enContentSource?: KbEnglishContentSource
+  /** ISO timestamp of the last machine English-translation pass over the `*En` fields. */
+  enTranslatedAt?: string
 }
 
 // ── Knowledge Collections ────────────────────────────────────────────────────
@@ -645,6 +728,8 @@ export type KnowledgeCollectionType = 'notes' | 'medications'
 export interface KnowledgeCollection {
   id: string
   name: string
+  /** English display name for default collections when UI locale is `en`. */
+  nameEn?: string
   type: KnowledgeCollectionType
   icon?: string
   color?: string
@@ -664,6 +749,7 @@ export const DEFAULT_KNOWLEDGE_COLLECTIONS: KnowledgeCollection[] = [
   {
     id: DEFAULT_MEDICATIONS_COLLECTION_ID,
     name: 'Psychopharmakologie',
+    nameEn: 'Psychopharmacology',
     type: 'medications',
     icon: 'flask',
     color: '#7c3aed',
@@ -674,6 +760,7 @@ export const DEFAULT_KNOWLEDGE_COLLECTIONS: KnowledgeCollection[] = [
   {
     id: DEFAULT_NOTES_COLLECTION_ID,
     name: 'Klinisches Wissen',
+    nameEn: 'Clinical Knowledge',
     type: 'notes',
     icon: 'book',
     color: '#2563eb',
@@ -800,6 +887,14 @@ export function pickKbLocalizedList(
   if (Array.isArray(de) && de.length > 0) return [...de]
   if (Array.isArray(en) && en.length > 0) return [...en]
   return []
+}
+
+/** Localized collection tile / header title. */
+export function pickKbLocalizedCollectionName(
+  collection: Pick<KnowledgeCollection, 'name' | 'nameEn'>,
+  language: string | undefined | null,
+): string {
+  return pickKbLocalizedText(collection.name, collection.nameEn, language) || collection.name
 }
 
 // ── Safe section accessors ────────────────────────────────────────────────────

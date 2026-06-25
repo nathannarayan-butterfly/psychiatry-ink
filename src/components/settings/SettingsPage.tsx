@@ -9,16 +9,18 @@ import type { EnglishVariant, SettingsSectionId, UiLanguage } from '../../types/
 import type { AssessmentStandard } from '../../types/isdm'
 import { AppearanceSection } from './AppearanceSection'
 import { WorkspaceSection } from './WorkspaceSection'
-import { AboutSection, LanguageSection } from './PlaceholderSection'
+import { AboutSection, AccountSection, LanguageSection } from './PlaceholderSection'
 import { KiInstructionsSettings } from './KiInstructionsSettings'
 import { KiModelSettings } from './KiModelSettings'
 import type { useKiInstructions } from '../../hooks/useKiInstructions'
 import { useAiModelPreferences } from '../../hooks/useAiModelPreferences'
+import { useSystemAdminAccess } from '../../hooks/useSystemAdminAccess'
 import { PatientPrivacySection } from './PatientPrivacySection'
 import { LabImportSection } from './LabImportSection'
 import { ParserOptimizationSection } from './ParserOptimizationSection'
 import { OverviewWidgetsSettingsSection } from './OverviewWidgetsSettingsSection'
 import { KbAdminSection } from './KbAdminSection'
+import { CreditsSettingsSection } from './CreditsSettingsSection'
 import { SettingsSidebarPanel } from './SettingsSidebarPanel'
 import type { SettingsSectionGroup } from './SettingsSectionNav'
 import '../../styles/case-sidebar.css'
@@ -27,6 +29,7 @@ interface SettingsPageProps {
   activeSection: SettingsSectionId
   onSectionChange: (section: SettingsSectionId) => void
   onClose: () => void
+  onOpenCredits: () => void
   creditBalance: number
   appearance: ReturnType<typeof useAppearanceSettings>
   privacy: ReturnType<typeof usePrivacySettings>
@@ -47,6 +50,7 @@ export function SettingsPage({
   activeSection,
   onSectionChange,
   onClose,
+  onOpenCredits,
   creditBalance,
   appearance,
   privacy,
@@ -64,6 +68,9 @@ export function SettingsPage({
 }: SettingsPageProps) {
   const { t } = useTranslation()
   const modelPreferences = useAiModelPreferences()
+  const hasSystemAdminAccess = useSystemAdminAccess()
+  // KB Admin is a privileged console; never surface its chrome to normal production users.
+  const showKbAdmin = hasSystemAdminAccess || import.meta.env.DEV
 
   const sectionGroups: SettingsSectionGroup[] = useMemo(
     () => [
@@ -89,11 +96,20 @@ export function SettingsPage({
           { id: 'ai', label: t('settingsAi') },
           { id: 'privacy', label: t('settingsPrivacy') },
           { id: 'about', label: t('settingsAbout') },
-          { id: 'kb-admin', label: t('settingsKbAdmin') },
+          ...(showKbAdmin
+            ? [{ id: 'kb-admin' as const, label: t('settingsKbAdmin') }]
+            : []),
+        ],
+      },
+      {
+        groupLabel: t('settingsNavGroupAccount'),
+        items: [
+          { id: 'credits', label: t('settingsCredits') },
+          { id: 'account', label: t('settingsAccount') },
         ],
       },
     ],
-    [t],
+    [t, showKbAdmin],
   )
 
   useEffect(() => {
@@ -119,6 +135,7 @@ export function SettingsPage({
         activeSection={activeSection}
         onSectionChange={onSectionChange}
         onClose={onClose}
+        onOpenCredits={onOpenCredits}
         creditBalance={creditBalance}
       />
 
@@ -153,7 +170,7 @@ export function SettingsPage({
           {activeSection === 'lab' ? <LabImportSection /> : null}
           {activeSection === 'parser-optimization' ? <ParserOptimizationSection /> : null}
           {activeSection === 'overview-widgets' ? <OverviewWidgetsSettingsSection /> : null}
-          {activeSection === 'kb-admin' ? <KbAdminSection /> : null}
+          {showKbAdmin && activeSection === 'kb-admin' ? <KbAdminSection /> : null}
           {activeSection === 'ai' ? (
             <>
               <KiModelSettings modelPreferences={modelPreferences} />
@@ -166,6 +183,10 @@ export function SettingsPage({
           ) : null}
           {activeSection === 'privacy' ? (
             <PatientPrivacySection privacy={privacy} workspaceVault={workspaceVault} />
+          ) : null}
+          {activeSection === 'account' ? <AccountSection /> : null}
+          {activeSection === 'credits' ? (
+            <CreditsSettingsSection onOpenCredits={onOpenCredits} />
           ) : null}
           {activeSection === 'about' ? <AboutSection /> : null}
         </div>

@@ -364,7 +364,7 @@ export const OLANZAPINE_SEED: KnowledgeBaseDrug = {
             nameEn: 'Olanzapine pamoate',
             brandName: 'Zypadhera®',
             injectionIntervalDays: 28,
-            loadingRegimen: [{ day: 0, doseLabel: '405 mg', route: 'gluteal', routeEn: 'gluteal' }],
+            loadingRegimen: [{ day: 0, doseLabel: '405 mg', doseLabelEn: '405 mg', route: 'gluteal', routeEn: 'gluteal' }],
             oralOverlapDays: 0,
             doseEquivalence: 'oral 10 mg/d ≈ 300 mg / 4 Wochen (nach Aufsättigung)',
             doseEquivalenceEn: 'oral 10 mg/day ≈ 300 mg every 4 weeks (after loading)',

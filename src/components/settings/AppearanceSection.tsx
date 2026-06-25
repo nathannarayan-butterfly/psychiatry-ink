@@ -7,16 +7,58 @@ import {
   lineHeightPresets,
   workspaceScalePresets,
 } from '../../data/appearancePresets'
-import type { PreferredAccentColor } from '../../types/settings'
+import type { FontFamily, PreferredAccentColor } from '../../types/settings'
 import type { useAppearanceSettings } from '../../hooks/useAppearanceSettings'
 import { loadGoogleFont } from '../../utils/googleFonts'
 import { useEffect } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
+import type { UiTranslationKey } from '../../data/uiTranslations'
 import { SettingsField } from './SettingsField'
 import { SettingsOptionGroup } from './SettingsOptionGroup'
 
 interface AppearanceSectionProps {
   appearance: ReturnType<typeof useAppearanceSettings>
+}
+
+/** i18n keys for each accent colour name + one-line description. */
+const accentColorI18n: Record<
+  PreferredAccentColor,
+  { label: UiTranslationKey; description: UiTranslationKey }
+> = {
+  terracotta: { label: 'accentTerracottaLabel', description: 'accentTerracottaDesc' },
+  blue: { label: 'accentBlueLabel', description: 'accentBlueDesc' },
+  green: { label: 'accentGreenLabel', description: 'accentGreenDesc' },
+  teal: { label: 'accentTealLabel', description: 'accentTealDesc' },
+  indigo: { label: 'accentIndigoLabel', description: 'accentIndigoDesc' },
+  burgundy: { label: 'accentBurgundyLabel', description: 'accentBurgundyDesc' },
+  amber: { label: 'accentAmberLabel', description: 'accentAmberDesc' },
+  slate: { label: 'accentSlateLabel', description: 'accentSlateDesc' },
+  plum: { label: 'accentPlumLabel', description: 'accentPlumDesc' },
+  navy: { label: 'accentNavyLabel', description: 'accentNavyDesc' },
+  forest: { label: 'accentForestLabel', description: 'accentForestDesc' },
+  graphite: { label: 'accentGraphiteLabel', description: 'accentGraphiteDesc' },
+}
+
+/** i18n keys for each font's one-line description (font name stays as brand). */
+const fontFamilyDescriptionI18n: Record<FontFamily, UiTranslationKey> = {
+  inter: 'fontInterDesc',
+  sourceSans: 'fontSourceSansDesc',
+  ibmPlex: 'fontIbmPlexDesc',
+  notoSans: 'fontNotoSansDesc',
+  publicSans: 'fontPublicSansDesc',
+  lato: 'fontLatoDesc',
+  atkinson: 'fontAtkinsonDesc',
+  literata: 'fontLiterataDesc',
+  merriweather: 'fontMerriweatherDesc',
+  lora: 'fontLoraDesc',
+  caveat: 'fontCaveatDesc',
+  dancingScript: 'fontDancingScriptDesc',
+}
+
+const fontGroupLabelI18n: Record<string, UiTranslationKey> = {
+  'Sans-serif': 'fontGroupSansSerif',
+  Serif: 'fontGroupSerif',
+  Handschrift: 'fontGroupHandwriting',
 }
 
 function AccentColorCard({
@@ -28,7 +70,9 @@ function AccentColorCard({
   active: boolean
   onSelect: () => void
 }) {
+  const { t } = useTranslation()
   const preset = accentColorPresets[accentKey]
+  const i18n = accentColorI18n[accentKey]
 
   return (
     <button
@@ -63,8 +107,8 @@ function AccentColorCard({
           />
         </div>
       <div>
-        <span className="text-xs font-medium text-ink">{preset.label}</span>
-        <span className="mt-0.5 block text-[12px] leading-snug text-muted">{preset.description}</span>
+        <span className="text-xs font-medium text-ink">{t(i18n.label)}</span>
+        <span className="mt-0.5 block text-[12px] leading-snug text-muted">{t(i18n.description)}</span>
       </div>
     </button>
   )
@@ -79,6 +123,7 @@ function FontFamilyCard({
   active: boolean
   onSelect: () => void
 }) {
+  const { t } = useTranslation()
   const preset = fontFamilyPresets[fontKey]
 
   return (
@@ -98,7 +143,7 @@ function FontFamilyCard({
         Psychiatrie Dokumentation
       </span>
       <span className="text-xs font-medium text-ink">{preset.label}</span>
-      <span className="text-[12px] leading-snug text-muted">{preset.description}</span>
+      <span className="text-[12px] leading-snug text-muted">{t(fontFamilyDescriptionI18n[fontKey])}</span>
     </button>
   )
 }
@@ -135,8 +180,8 @@ export function AppearanceSection({ appearance }: AppearanceSectionProps) {
         </button>
       </div>
 
-      <SettingsField label={t('settingsAccentColorLabel')}>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      <SettingsField label={t('settingsAccentColorLabel')} stack>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
           {(Object.keys(accentColorPresets) as PreferredAccentColor[]).map((key) => (
             <AccentColorCard
               key={key}
@@ -148,14 +193,14 @@ export function AppearanceSection({ appearance }: AppearanceSectionProps) {
         </div>
       </SettingsField>
 
-      <SettingsField label={t('settingsFontFamilyLabel')}>
+      <SettingsField label={t('settingsFontFamilyLabel')} stack>
         <div className="space-y-4">
           {fontFamilyGroups.map((group) => (
             <div key={group.label}>
               <p className="mb-2 text-[12px] font-semibold uppercase tracking-wider text-muted">
-                {group.label}
+                {fontGroupLabelI18n[group.label] ? t(fontGroupLabelI18n[group.label]) : group.label}
               </p>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {group.fonts.map((key) => (
                   <FontFamilyCard
                     key={key}
@@ -170,7 +215,7 @@ export function AppearanceSection({ appearance }: AppearanceSectionProps) {
         </div>
       </SettingsField>
 
-      <SettingsField label={t('settingsFontSizeLabel')}>
+      <SettingsField label={t('settingsFontSizeLabel')} stack>
         <SettingsOptionGroup
           value={settings.fontSize}
           options={Object.entries(fontSizePresets).map(([value, preset]) => ({
@@ -181,7 +226,7 @@ export function AppearanceSection({ appearance }: AppearanceSectionProps) {
         />
       </SettingsField>
 
-      <SettingsField label={t('settingsWorkspaceScaleLabel')}>
+      <SettingsField label={t('settingsWorkspaceScaleLabel')} stack>
         <SettingsOptionGroup
           value={settings.workspaceScale}
           options={Object.entries(workspaceScalePresets).map(([value, preset]) => ({
@@ -192,7 +237,7 @@ export function AppearanceSection({ appearance }: AppearanceSectionProps) {
         />
       </SettingsField>
 
-      <SettingsField label={t('settingsLineHeightLabel')}>
+      <SettingsField label={t('settingsLineHeightLabel')} stack>
         <SettingsOptionGroup
           value={settings.lineHeight}
           options={Object.entries(lineHeightPresets).map(([value, preset]) => ({
@@ -203,7 +248,7 @@ export function AppearanceSection({ appearance }: AppearanceSectionProps) {
         />
       </SettingsField>
 
-      <SettingsField label={t('settingsBorderWeightLabel')}>
+      <SettingsField label={t('settingsBorderWeightLabel')} stack>
         <SettingsOptionGroup
           value={settings.borderWeight}
           options={Object.entries(borderWeightPresets).map(([value, preset]) => ({
@@ -214,7 +259,7 @@ export function AppearanceSection({ appearance }: AppearanceSectionProps) {
         />
       </SettingsField>
 
-      <SettingsField label={t('settingsPanelGraphicLabel')}>
+      <SettingsField label={t('settingsPanelGraphicLabel')} stack>
         <label className="inline-flex items-center gap-2 text-sm text-ink">
           <input
             type="checkbox"

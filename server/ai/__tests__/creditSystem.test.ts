@@ -15,8 +15,15 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
 // ── Mock Prisma before importing any module that uses it ───────────────────
+// `checkBalance` runs `migrateLegacyCreditsIfNeeded`, which reads the legacy
+// `creditBalance` model before delegating to AiCreditAccount. The mock must
+// expose it (default vi.fn() resolves to undefined → migration no-ops).
 vi.mock('../../db', () => ({
   prisma: {
+    creditBalance: {
+      findUnique: vi.fn(),
+      update: vi.fn(),
+    },
     aiCreditAccount: {
       findUnique: vi.fn(),
       create: vi.fn(),
@@ -25,6 +32,7 @@ vi.mock('../../db', () => ({
     },
     aiCreditLedger: {
       create: vi.fn(),
+      findFirst: vi.fn(),
     },
     aiUsageLog: {
       create: vi.fn(),

@@ -3,14 +3,14 @@ import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { useTranslation } from '../../context/TranslationContext'
 import { useKnowledgeBaseUserId } from '../../hooks/useKnowledgeBaseUserId'
-import { useKbAdminUsersSettings } from '../../hooks/useKbAdminUsersSettings'
+import { useSystemAdminUsersSettings } from '../../hooks/useSystemAdminUsersSettings'
 import { SettingsField } from './SettingsField'
 
 export function KbAdminSection() {
   const { t } = useTranslation()
   const { user } = useAuth()
   const fallbackUserId = useKnowledgeBaseUserId()
-  const { allowlist, addEntry, removeEntry } = useKbAdminUsersSettings()
+  const { allowlist, addEntry, removeEntry } = useSystemAdminUsersSettings()
   const [draft, setDraft] = useState('')
 
   const currentId = user?.id ?? fallbackUserId

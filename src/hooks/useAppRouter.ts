@@ -27,11 +27,11 @@ export type AppRoute =
   | { view: 'dashboard' }
   | { view: 'kb-admin' }
   | { view: 'audit-debug' }
-  | { view: 'demo-patient' }
   | { view: 'templates' }
   | { view: 'team-settings' }
   | { view: 'integrations' }
   | { view: 'budget' }
+  | { view: 'credits' }
   | { view: 'calendar' }
   | { view: 'todos' }
   | { view: 'team-invite'; token: string }
@@ -60,11 +60,11 @@ export function isAppRoute(route: AppRoute): boolean {
     route.view === 'case' ||
     route.view === 'kb-admin' ||
     route.view === 'audit-debug' ||
-    route.view === 'demo-patient' ||
     route.view === 'templates' ||
     route.view === 'team-settings' ||
     route.view === 'integrations' ||
     route.view === 'budget' ||
+    route.view === 'credits' ||
     route.view === 'calendar' ||
     route.view === 'todos' ||
     route.view === 'team-invite' ||
@@ -89,11 +89,11 @@ function parsePathname(pathname: string, search = ''): AppRoute {
   if (path === '/dashboard' || path === '/app') return { view: 'dashboard' }
   if (path === '/dashboard/kb-admin') return { view: 'kb-admin' }
   if (path === '/dev/audit-logs' || path === '/dashboard/audit-debug') return { view: 'audit-debug' }
-  if (path === '/dev/demo-patient') return { view: 'demo-patient' }
   if (path === '/dashboard/templates') return { view: 'templates' }
   if (path === '/dashboard/team' || path === '/settings/team') return { view: 'team-settings' }
   if (path === '/dashboard/integrations') return { view: 'integrations' }
   if (path === '/dashboard/budget' || path === '/settings/budget') return { view: 'budget' }
+  if (path === '/dashboard/credits' || path === '/settings/credits') return { view: 'credits' }
   if (path === '/dashboard/calendar') return { view: 'calendar' }
   if (path === '/dashboard/todos') return { view: 'todos' }
   if (ENTERPRISE_ROUTES_ENABLED) {
@@ -154,11 +154,11 @@ export function routeToPath(route: AppRoute): string {
   if (route.view === 'dashboard') return '/dashboard'
   if (route.view === 'kb-admin') return '/dashboard/kb-admin'
   if (route.view === 'audit-debug') return '/dev/audit-logs'
-  if (route.view === 'demo-patient') return '/dev/demo-patient'
   if (route.view === 'templates') return '/dashboard/templates'
   if (route.view === 'team-settings') return '/dashboard/team'
   if (route.view === 'integrations') return '/dashboard/integrations'
   if (route.view === 'budget') return '/dashboard/budget'
+  if (route.view === 'credits') return '/dashboard/credits'
   if (route.view === 'calendar') return '/dashboard/calendar'
   if (route.view === 'todos') return '/dashboard/todos'
   if (ENTERPRISE_ROUTES_ENABLED) {

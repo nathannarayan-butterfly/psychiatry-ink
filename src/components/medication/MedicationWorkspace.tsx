@@ -1,6 +1,10 @@
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import { ArrowLeft } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
-import { useMedicationSectionNavOptional } from '../../contexts/MedicationSectionNavContext'
+import {
+  medicationSectionDomId,
+  useMedicationSectionNavOptional,
+} from '../../contexts/MedicationSectionNavContext'
 import { translateMedicationUi } from '../../data/medicationUiTranslations'
 import { useKnowledgeBaseUserId } from '../../hooks/useKnowledgeBaseUserId'
 import { useMedicationPlan } from '../../hooks/useMedicationPlan'
@@ -30,21 +34,26 @@ import { MedicationPlanHistory } from './MedicationPlanHistory'
 import { PriorTherapiesPanel } from './PriorTherapiesPanel'
 import { MedicationRow } from './MedicationRow'
 import { MedicationToolbar } from './MedicationToolbar'
+import { MedicationEducationPanel } from '../medicationEducation/MedicationEducationPanel'
 
 interface MedicationWorkspaceProps {
   caseId: string
   disabled?: boolean
   /** Hide the plan-list "add" button (e.g. when a parent owns the trigger). */
   showToolbarAdd?: boolean
+  /** Standalone workspace (no patient chart) — alternate copy and slimmer panels. */
+  context?: 'patient' | 'standalone'
 }
 
 /** Imperative handle so a parent (e.g. a cross-tab trigger) can open the add dialog. */
 export interface MedicationWorkspaceHandle {
   openAdd: () => void
+  openSideEffectsSection: () => void
 }
 
 export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, MedicationWorkspaceProps>(
-  function MedicationWorkspace({ caseId, disabled = false, showToolbarAdd = true }, ref) {
+  function MedicationWorkspace({ caseId, disabled = false, showToolbarAdd = true, context = 'patient' }, ref) {
+  const isStandalone = context === 'standalone'
   const { language } = useTranslation()
   const sectionNav = useMedicationSectionNavOptional()
   const [localSection, setLocalSection] = useState<MedicationSectionKey>('plan')
@@ -108,7 +117,15 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
     setEditOpen(true)
   }, [])
 
-  useImperativeHandle(ref, () => ({ openAdd }), [openAdd])
+  const openSideEffectsSection = useCallback(() => {
+    selectSection('sideEffects')
+    requestAnimationFrame(() => {
+      const target = document.getElementById(medicationSectionDomId('sideEffects'))
+      target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }, [selectSection])
+
+  useImperativeHandle(ref, () => ({ openAdd, openSideEffectsSection }), [openAdd, openSideEffectsSection])
 
   const openEdit = useCallback((entry: MedicationEntry) => {
     setEditingEntry(entry)
@@ -179,16 +196,26 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
   }, [language])
 
   const isPlan = selectedSection === 'plan'
+  const isEducation = selectedSection === 'education'
+  const educationMeta = MEDICATION_SECTION_META.education
+  const EducationIcon = educationMeta.Icon
 
   const planHero = (
     <div className="medication-plan" id="med-section-plan">
       <header className="medication-hero">
         <div className="medication-hero__intro">
           <span className="medication-hero__eyebrow">
-            {translateMedicationUi(language, 'medHeroEyebrow')}
+            {translateMedicationUi(
+              language,
+              isStandalone ? 'medStandaloneHeroEyebrow' : 'medHeroEyebrow',
+            )}
           </span>
-          <h2 className="medication-hero__title">{translateMedicationUi(language, 'medPageTitle')}</h2>
-          <p className="medication-hero__desc">{translateMedicationUi(language, 'medDescPlan')}</p>
+          <h2 className="medication-hero__title">
+            {translateMedicationUi(
+              language,
+              isStandalone ? 'medStandalonePageTitle' : 'medPageTitle',
+            )}
+          </h2>
         </div>
       </header>
 
@@ -223,13 +250,25 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
               <div className="medication-workspace__empty">
                 <p className="medication-workspace__empty-text">
                   {hasAnyVisibleMedications
-                    ? translateMedicationUi(language, 'medEmptyNoActive')
-                    : translateMedicationUi(language, 'medEmpty')}
+                    ? translateMedicationUi(
+                        language,
+                        isStandalone ? 'medStandaloneEmptyNoActive' : 'medEmptyNoActive',
+                      )
+                    : translateMedicationUi(
+                        language,
+                        isStandalone ? 'medStandaloneEmpty' : 'medEmpty',
+                      )}
                 </p>
                 <p className="medication-workspace__empty-hint">
                   {hasAnyVisibleMedications
-                    ? translateMedicationUi(language, 'medEmptyNoActiveHint')
-                    : translateMedicationUi(language, 'medEmptyHint')}
+                    ? translateMedicationUi(
+                        language,
+                        isStandalone ? 'medStandaloneEmptyNoActiveHint' : 'medEmptyNoActiveHint',
+                      )
+                    : translateMedicationUi(
+                        language,
+                        isStandalone ? 'medStandaloneEmptyHint' : 'medEmptyHint',
+                      )}
                 </p>
               </div>
             ) : (
@@ -237,6 +276,7 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
                 <MedicationRow
                   key={entry.id}
                   entry={entry}
+                  caseId={isStandalone ? undefined : caseId}
                   disabled={disabled}
                   selected={selectedId === entry.id}
                   onSelect={() => setSelectedId(entry.id)}
@@ -252,7 +292,7 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
             <MedicationPlanDashboard
               caseId={caseId}
               medications={activePlanMedications}
-              parameterMonitoring={parameterMonitoring}
+              parameterMonitoring={isStandalone ? [] : parameterMonitoring}
               curatedTargetReceptors={med.state.curatedTargetReceptors}
               onCuratedTargetReceptorsChange={med.updateCuratedTargetReceptors}
               disabled={disabled}
@@ -260,10 +300,20 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
             />
           ) : null}
 
-          <SpiegelwerteSection caseId={caseId} />
+          {!isStandalone ? <SpiegelwerteSection caseId={caseId} /> : null}
 
-          <PriorTherapiesPanel caseId={caseId} medications={allVisibleMedications} />
+          {!isStandalone ? (
+            <PriorTherapiesPanel caseId={caseId} medications={allVisibleMedications} />
+          ) : null}
 
+          {!isStandalone && hasActiveMedications ? (
+            <MedicationEducationPanel
+              caseId={caseId}
+              activeMedications={activePlanMedications}
+              selectedMedicationId={selectedId}
+              disabled={disabled}
+            />
+          ) : null}
 
           {hasActiveMedications ? (
             <section className="medication-explore" aria-label={translateMedicationUi(language, 'medExploreSections')}>
@@ -289,9 +339,6 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
                         <span className="medication-explore__title">
                           {translateMedicationUi(language, meta.labelKey)}
                         </span>
-                        <span className="medication-explore__desc">
-                          {translateMedicationUi(language, meta.descKey)}
-                        </span>
                       </span>
                     </button>
                   )
@@ -299,17 +346,20 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
               </div>
             </section>
           ) : null}
-
-          <p className="medication-workspace__disclaimer-note">
-            {translateMedicationUi(language, 'medDisclaimerDemo')}
-          </p>
         </>
       )}
     </div>
   )
 
   return (
-    <div className="medication-workspace medication-workspace--flagship">
+    <div
+      className={[
+        'medication-workspace medication-workspace--flagship',
+        isStandalone ? 'medication-workspace--standalone' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       {!sectionNav ? (
         <nav className="medication-tabs" aria-label={translateMedicationUi(language, 'medSectionsLabel')}>
           {MEDICATION_SECTIONS.map((section) => {
@@ -334,6 +384,41 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
 
       {isPlan ? (
         planHero
+      ) : isEducation ? (
+        <section
+          className="medication-section-detail"
+          data-section="education"
+          id={medicationSectionDomId('education')}
+        >
+          <header className="medication-section-detail__head">
+            <button
+              type="button"
+              className="medication-section-detail__back"
+              onClick={() => selectSection('plan')}
+            >
+              <ArrowLeft size={14} aria-hidden />
+              {translateMedicationUi(language, 'medBackToPlan')}
+            </button>
+            <div className="medication-section-detail__title-row">
+              <span className="medication-section-detail__icon" aria-hidden="true">
+                <EducationIcon size={20} strokeWidth={1.85} />
+              </span>
+              <div className="medication-section-detail__heading">
+                <h2 className="medication-section-detail__title">
+                  {translateMedicationUi(language, educationMeta.labelKey)}
+                </h2>
+              </div>
+            </div>
+          </header>
+          <div className="medication-section-detail__body medication-lower-section__body">
+            <MedicationEducationPanel
+              caseId={caseId}
+              activeMedications={activePlanMedications}
+              selectedMedicationId={selectedId}
+              disabled={disabled}
+            />
+          </div>
+        </section>
       ) : (
         <MedicationLowerSections
           caseId={caseId}

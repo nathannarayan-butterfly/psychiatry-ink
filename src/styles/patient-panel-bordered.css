@@ -1,0 +1,1065 @@
+/*
+ * Patient panel bordered treatment — shared clinical card frame
+ * --------------------------------------------------------------------------
+ * Muted 1px frame + 3px left accent stripe + light tinted background.
+ * Scoped by [data-area] on the case shell (NotionApp) so each clinical tab
+ * inherits its signature hue via --area-accent (see globals.css).
+ *
+ * Global tweaks:
+ *   --patient-bordered-radius     corner radius (default: --radius-card)
+ *   --patient-bordered-neutral    mixed into area accent for a muted stripe
+ *   --patient-bordered-accent-mix how much --area-accent vs neutral (default 48%)
+ *   --patient-bordered-bg-mix     tint strength on --surface (default 4.5%)
+ *   --patient-bordered-border-mix frame mix vs --border-soft (default 28%)
+ *
+ * Per-element accent override:
+ *   --patient-bordered-accent: #hex;   on the element or a scoped selector
+ *
+ * Utility class (optional direct use):
+ *   .patient-bordered
+ *   .patient-bordered--editable   dashed frame, solid left stripe (edit mode)
+ *   .patient-bordered--entry     tighter padding for list rows
+ */
+
+:root {
+  --patient-bordered-radius: var(--radius-card, 0.6875rem);
+  --patient-bordered-neutral: #8a8278;
+  --patient-bordered-accent-mix: 48%;
+  --patient-bordered-bg-mix: 4.5%;
+  --patient-bordered-border-mix: 28%;
+  --patient-bordered-shadow: var(--shadow-elevated-sm, 0 1px 2px rgba(0, 0, 0, 0.04));
+  --patient-bordered-padding-y: var(--space-3, 0.75rem);
+  --patient-bordered-padding-x: var(--space-4, 1rem);
+}
+
+/* ── Reusable utility ─────────────────────────────────────────────────────── */
+
+.patient-bordered {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) var(--patient-bordered-accent-mix),
+    var(--patient-bordered-neutral)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix),
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: var(--patient-bordered-radius);
+  padding: var(--patient-bordered-padding-y) var(--patient-bordered-padding-x);
+  background: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) var(--patient-bordered-bg-mix),
+    var(--surface, #fff)
+  );
+  box-shadow: var(--patient-bordered-shadow);
+}
+
+.patient-bordered--entry {
+  --patient-bordered-padding-y: 0.65rem;
+  --patient-bordered-padding-x: 0.85rem;
+}
+
+.patient-bordered--editable {
+  border-style: dashed;
+  border-left-style: solid;
+  --patient-bordered-bg-mix: 7%;
+}
+
+/* Shared mixin block — applied to selectors below via duplicated properties
+   so area rules stay grep-friendly without @apply. */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Übersicht (overview bento)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-area='overview'] .ov-hero-widget {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) 52%,
+    var(--patient-bordered-neutral)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix),
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: var(--patient-bordered-radius);
+  padding: var(--patient-bordered-padding-y) var(--patient-bordered-padding-x) 0;
+  background: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) 5%,
+    var(--surface, #fff)
+  );
+  box-shadow: var(--patient-bordered-shadow);
+}
+
+[data-area='overview'] .ov-hero-widget .cm-hero {
+  padding-bottom: 1.25rem;
+}
+
+[data-area='overview'] .ov-hero-widget__orientation {
+  margin-top: 0;
+  padding-bottom: var(--space-3, 0.75rem);
+}
+
+[data-area='overview'] .ov-grid__band {
+  padding-left: 0.55rem;
+  border-left: 2px solid color-mix(in srgb, var(--area-accent, var(--accent)) 32%, transparent);
+}
+
+[data-area='overview'] .ov-widget-slot {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) var(--patient-bordered-accent-mix),
+    var(--patient-bordered-neutral)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix),
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: var(--patient-bordered-radius);
+  padding: var(--patient-bordered-padding-y) var(--patient-bordered-padding-x);
+  background: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) var(--patient-bordered-bg-mix),
+    var(--surface, #fff)
+  );
+  box-shadow: var(--patient-bordered-shadow);
+}
+
+[data-area='overview'] .ov-widget-slot[data-widget-id='safety'] {
+  --patient-bordered-accent: #b86565;
+}
+[data-area='overview'] .ov-widget-slot[data-widget-id='medication'] {
+  --patient-bordered-accent: #4a8a8a;
+}
+[data-area='overview'] .ov-widget-slot[data-widget-id='diagnoses'] {
+  --patient-bordered-accent: #5b7fa8;
+}
+[data-area='overview'] .ov-widget-slot[data-widget-id='prior-therapies'] {
+  --patient-bordered-accent: #6b72a8;
+}
+[data-area='overview'] .ov-widget-slot[data-widget-id='recent-verlauf'] {
+  --patient-bordered-accent: #b8863a;
+}
+[data-area='overview'] .ov-widget-slot[data-widget-id='verlaufstendenz'] {
+  --patient-bordered-accent: #5a7a8a;
+}
+[data-area='overview'] .ov-widget-slot[data-widget-id='psychopathology'] {
+  --patient-bordered-accent: #7a6b9e;
+}
+[data-area='overview'] .ov-widget-slot[data-widget-id='labs-due'] {
+  --patient-bordered-accent: #6b8f6e;
+}
+[data-area='overview'] .ov-widget-slot[data-widget-id='spiegel-all'] {
+  --patient-bordered-accent: #5a9aaa;
+}
+[data-area='overview'] .ov-widget-slot[data-widget-id='lab-results'] {
+  --patient-bordered-accent: #5c8a7a;
+}
+[data-area='overview'] .ov-widget-slot[data-widget-id='ekg-summary'],
+[data-area='overview'] .ov-widget-slot[data-widget-id='eeg-summary'],
+[data-area='overview'] .ov-widget-slot[data-widget-id='ct-summary'] {
+  --patient-bordered-accent: #6d8290;
+}
+[data-area='overview'] .ov-widget-slot[data-widget-id='appointments'] {
+  --patient-bordered-accent: #7a8494;
+}
+[data-area='overview'] .ov-widget-slot[data-widget-id='dokumentation'] {
+  --patient-bordered-accent: #8a7d6b;
+}
+[data-area='overview'] .ov-widget-slot[data-widget-id='psychotherapy'] {
+  --patient-bordered-accent: #8b6b8f;
+}
+[data-area='overview'] .ov-widget-slot[data-widget-id='collaboration'] {
+  --patient-bordered-accent: #5c7a8a;
+}
+[data-area='overview'] .ov-widget-slot[data-widget-id='isdm-summary'] {
+  --patient-bordered-accent: #6a7a9a;
+}
+[data-area='overview'] .ov-widget-slot[data-widget-id='angemeldete-therapien'] {
+  --patient-bordered-accent: #7a7a9a;
+}
+[data-area='overview'] .ov-widget-slot[data-widget-id='compliance'] {
+  --patient-bordered-accent: #7a8f5c;
+}
+[data-area='overview'] .ov-widget-slot[data-widget-id='butterfly-criteria'] {
+  --patient-bordered-accent: #9a7ab8;
+}
+[data-area='overview'] .ov-widget-slot[data-widget-id='zwangsmassnahme'] {
+  --patient-bordered-accent: #a87070;
+}
+[data-area='overview'] .ov-widget-slot[data-widget-id='ci-dimensional'],
+[data-area='overview'] .ov-widget-slot[data-widget-id='ci-mechanism'],
+[data-area='overview'] .ov-widget-slot[data-widget-id='ci-status'] {
+  --patient-bordered-accent: #6b7a9e;
+}
+
+[data-area='overview'] .ov-widget-slot--editable {
+  border-style: dashed;
+  border-left-style: solid;
+  background: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) 7%,
+    var(--surface, #fff)
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Verlauf — each feed entry in its own frame
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-area='verlauf'] .verlauf-feed-page__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+[data-area='verlauf'] .verlauf-entry {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) var(--patient-bordered-accent-mix),
+    var(--patient-bordered-neutral)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix),
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: var(--patient-bordered-radius);
+  padding: var(--patient-bordered-padding-y) var(--patient-bordered-padding-x);
+  background: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) var(--patient-bordered-bg-mix),
+    var(--surface, #fff)
+  );
+  box-shadow: var(--patient-bordered-shadow);
+}
+
+[data-area='verlauf'] .verlauf-entry--derived {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) 38%,
+    var(--patient-bordered-neutral)
+  );
+}
+
+[data-area='verlauf'] .verlauf-entry--aufnahme {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) 42%,
+    #9a8a72
+  );
+}
+
+[data-area='verlauf'] .verlauf-entry__divider {
+  display: none;
+}
+
+[data-area='verlauf'] .verlauf-anamnese {
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent, var(--area-accent)) 18%,
+      var(--border-soft, #e8e4df)
+    );
+  border-radius: calc(var(--patient-bordered-radius) - 2px);
+  background: color-mix(in srgb, var(--surface, #fff) 92%, transparent);
+}
+
+[data-area='verlauf'] .clinical-empty-state-card.verlauf-feed-page__empty-card {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) var(--patient-bordered-accent-mix),
+    var(--patient-bordered-neutral)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix),
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: var(--patient-bordered-radius);
+  background: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) var(--patient-bordered-bg-mix),
+    var(--surface, #fff)
+  );
+  box-shadow: var(--patient-bordered-shadow);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Diagnose — coded diagnoses + Butterfly / ISDM panels
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-area='diagnose'] .diagnose-page .diagnosen-widget,
+[data-area='diagnose'] .diagnose-page .butterfly-panel {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) var(--patient-bordered-accent-mix),
+    var(--patient-bordered-neutral)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix),
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: var(--patient-bordered-radius);
+  padding: var(--patient-bordered-padding-y) var(--patient-bordered-padding-x);
+  background: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) var(--patient-bordered-bg-mix),
+    var(--surface, #fff)
+  );
+  box-shadow: var(--patient-bordered-shadow);
+}
+
+[data-area='diagnose'] .diagnose-page .diagnosen-widget__header--flat {
+  margin-bottom: 0.85rem;
+}
+
+[data-area='diagnose'] .diagnose-page .diagnosen-widget__list {
+  gap: 0.5rem;
+}
+
+[data-area='diagnose'] .diagnose-page .diagnosen-widget__row {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) 40%,
+    var(--patient-bordered-neutral)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) 22%,
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: calc(var(--patient-bordered-radius) - 2px);
+  padding: 0.65rem 0.85rem;
+  background: color-mix(in srgb, var(--patient-bordered-accent) 3%, var(--surface, #fff));
+  border-bottom: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) 22%,
+      var(--border-soft, #e8e4df)
+    );
+}
+
+[data-area='diagnose'] .diagnose-page .diagnosen-widget__row--editing {
+  --patient-bordered-bg-mix: 6%;
+  background: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) 6%,
+    var(--surface, #fff)
+  );
+}
+
+[data-area='diagnose'] .diagnose-page .butterfly-panel {
+  --patient-bordered-accent: #9a7ab8;
+}
+
+[data-area='diagnose'] .diagnose-page .butterfly-card-list {
+  gap: 0.5rem;
+}
+
+[data-area='diagnose'] .diagnose-page .butterfly-card {
+  --patient-bordered-accent: var(--bf-card-accent, #9a7ab8);
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) 22%,
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: calc(var(--patient-bordered-radius) - 2px);
+  padding: 0.75rem 0.85rem;
+  background: color-mix(in srgb, var(--patient-bordered-accent) 3.5%, var(--surface, #fff));
+  border-bottom: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) 22%,
+      var(--border-soft, #e8e4df)
+    );
+}
+
+[data-area='diagnose'] .diagnose-page .butterfly-criterion {
+  border: 1px solid var(--cm-hairline, #e8e4df);
+  border-left: 2px solid var(--cm-quiet-border, #d8d4cf);
+  border-radius: calc(var(--patient-bordered-radius) - 3px);
+  padding: 0.55rem 0.65rem;
+  background: color-mix(in srgb, var(--surface, #fff) 96%, transparent);
+}
+
+[data-area='diagnose'] .diagnose-page .butterfly-gap-diagnosis-list {
+  gap: 0.5rem;
+}
+
+[data-area='diagnose'] .diagnose-page .butterfly-gap-diagnosis {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) 40%,
+    var(--patient-bordered-neutral)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) 22%,
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: calc(var(--patient-bordered-radius) - 2px);
+  padding: 0.75rem 0.85rem;
+  background: color-mix(in srgb, var(--patient-bordered-accent) 3.5%, var(--surface, #fff));
+  box-shadow: var(--patient-bordered-shadow);
+  border-bottom: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) 22%,
+      var(--border-soft, #e8e4df)
+    );
+}
+
+[data-area='diagnose'] .diagnose-page .butterfly-gap-diagnosis__head {
+  padding: 0;
+}
+
+[data-area='diagnose'] .diagnose-page .butterfly-gap {
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent, var(--area-accent)) 16%,
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 2px solid var(--cm-quiet-border, #d8d4cf);
+  border-radius: calc(var(--patient-bordered-radius) - 3px);
+  padding: 0.55rem 0.65rem;
+  background: color-mix(in srgb, var(--surface, #fff) 96%, transparent);
+}
+
+[data-area='diagnose'] .diagnose-page .butterfly-gap--high {
+  border-left-color: color-mix(in srgb, var(--bf-not-met, #b86565) 55%, var(--cm-quiet-border, #d8d4cf));
+  background: color-mix(in srgb, var(--bf-not-met, #b86565) 4%, var(--surface, #fff));
+}
+
+[data-area='diagnose'] .diagnose-page .butterfly-gap--medium {
+  border-left-color: color-mix(in srgb, var(--area-accent, var(--accent)) 45%, var(--cm-quiet-border, #d8d4cf));
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Klinische Intelligenz
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-area='ci'] .ci-panel__intro {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) var(--patient-bordered-accent-mix),
+    var(--patient-bordered-neutral)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix),
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: var(--patient-bordered-radius);
+  padding: var(--patient-bordered-padding-y) var(--patient-bordered-padding-x);
+  background: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) var(--patient-bordered-bg-mix),
+    var(--surface, #fff)
+  );
+  box-shadow: var(--patient-bordered-shadow);
+}
+
+[data-area='ci'] .ci-panel__intro .ci-hypothesis-banner {
+  margin: 0;
+}
+
+[data-area='ci'] .ci-panel__main > .cm-section,
+[data-area='ci'] .ci-panel__main > .ci-accordion,
+[data-area='ci'] .ci-graphs-row > .ci-graph-section {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) var(--patient-bordered-accent-mix),
+    var(--patient-bordered-neutral)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix),
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: var(--patient-bordered-radius);
+  padding: var(--patient-bordered-padding-y) var(--patient-bordered-padding-x);
+  background: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) var(--patient-bordered-bg-mix),
+    var(--surface, #fff)
+  );
+  box-shadow: var(--patient-bordered-shadow);
+  margin-bottom: 0;
+  border-top: none;
+  padding-top: var(--patient-bordered-padding-y);
+}
+
+[data-area='ci'] .ci-graphs-row > .ci-graph-section:first-child {
+  --patient-bordered-accent: var(--ov-teal, #2a6b6b);
+}
+
+[data-area='ci'] .ci-graphs-row > .ci-graph-section:last-child {
+  --patient-bordered-accent: var(--ov-ai-blue, #4a6280);
+}
+
+[data-area='ci'] .ci-panel__main > .cm-section .cm-section__head,
+[data-area='ci'] .ci-panel__main > .ci-accordion .ci-accordion__head,
+[data-area='ci'] .ci-graphs-row > .ci-graph-section .cm-section__head {
+  margin-bottom: 0.75rem;
+}
+
+[data-area='ci'] .ci-panel__main > .cm-section .cm-section__body,
+[data-area='ci'] .ci-panel__main > .ci-accordion .ci-accordion__body,
+[data-area='ci'] .ci-graphs-row > .ci-graph-section .cm-section__body {
+  padding-top: 0.15rem;
+}
+
+[data-area='ci'] .ci-graphs-row {
+  gap: var(--cm-col-gap, 1.25rem);
+}
+
+[data-area='ci'] .ci-accordion:nth-of-type(1) {
+  --patient-bordered-accent: #5a8a9a;
+}
+
+[data-area='ci'] .ci-accordion:nth-of-type(2) {
+  --patient-bordered-accent: #7a6b9e;
+}
+
+[data-area='ci'] .ci-accordion:nth-of-type(3) {
+  --patient-bordered-accent: #8a8278;
+}
+
+[data-area='ci'] .ci-row {
+  border-radius: calc(var(--patient-bordered-radius) - 2px);
+  box-shadow: none;
+}
+
+[data-area='ci'] .ci-right-rail {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) 35%,
+    var(--patient-bordered-neutral)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) 22%,
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: var(--patient-bordered-radius);
+  padding: var(--patient-bordered-padding-y) var(--patient-bordered-padding-x);
+  background: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) 3%,
+    var(--surface, #fff)
+  );
+  box-shadow: var(--patient-bordered-shadow);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Medikation
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-area='medikation'] .medication-workspace .medication-plan__list {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) var(--patient-bordered-accent-mix),
+    var(--patient-bordered-neutral)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix),
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: var(--patient-bordered-radius);
+  padding: 0.35rem 0.65rem 0.35rem 0.85rem;
+  background: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) var(--patient-bordered-bg-mix),
+    var(--surface, #fff)
+  );
+  box-shadow: var(--patient-bordered-shadow);
+  border-top: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix),
+      var(--border-soft, #e8e4df)
+    );
+  gap: 0.35rem;
+}
+
+[data-area='medikation'] .medication-workspace .medication-row {
+  border: 1px solid transparent;
+  border-left: 3px solid transparent;
+  border-radius: calc(var(--patient-bordered-radius) - 3px);
+  padding: 0.65rem 0.75rem 0.65rem 0.85rem;
+  background: transparent;
+}
+
+[data-area='medikation'] .medication-workspace .medication-row:hover {
+  border-color: color-mix(in srgb, var(--area-accent, var(--accent)) 12%, var(--border-soft, #e8e4df));
+  border-left-color: color-mix(in srgb, var(--area-accent, var(--accent)) 35%, transparent);
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 3%, transparent);
+}
+
+[data-area='medikation'] .medication-workspace .medication-row--selected {
+  border-color: color-mix(in srgb, var(--area-accent, var(--accent)) 18%, var(--border-soft, #e8e4df));
+  border-left-color: var(--area-accent, var(--accent));
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 5%, var(--surface, #fff));
+}
+
+[data-area='medikation'] .medication-workspace .medication-dash-panel,
+[data-area='medikation'] .medication-workspace .medication-explore__card,
+[data-area='medikation'] .medication-workspace .medication-section-detail {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) var(--patient-bordered-accent-mix),
+    var(--patient-bordered-neutral)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix),
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: var(--patient-bordered-radius);
+  padding-left: var(--patient-bordered-padding-x);
+  padding-right: var(--patient-bordered-padding-x);
+  background: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) var(--patient-bordered-bg-mix),
+    var(--surface, #fff)
+  );
+  box-shadow: var(--patient-bordered-shadow);
+}
+
+[data-area='medikation'] .medication-workspace .medication-explore__card[data-section='receptor'] {
+  --patient-bordered-accent: #6b8290;
+}
+
+[data-area='medikation'] .medication-workspace .medication-explore__card[data-section='monitoring'],
+[data-area='medikation'] .medication-workspace .medication-explore__card[data-section='lab'] {
+  --patient-bordered-accent: #5c8a7a;
+}
+
+[data-area='medikation'] .medication-workspace .medication-explore__card[data-section='combination'],
+[data-area='medikation'] .medication-workspace .medication-explore__card[data-section='sideEffects'] {
+  --patient-bordered-accent: #7a8494;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Therapien
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-area='therapie'] .therapy-page .therapy-section {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) var(--patient-bordered-accent-mix),
+    var(--patient-bordered-neutral)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix),
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: var(--patient-bordered-radius);
+  padding: var(--patient-bordered-padding-y) var(--patient-bordered-padding-x);
+  background: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) var(--patient-bordered-bg-mix),
+    var(--surface, #fff)
+  );
+  box-shadow: var(--patient-bordered-shadow);
+  gap: 0.85rem;
+}
+
+[data-area='therapie'] .therapy-page .therapy-section__header {
+  border-bottom: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) 16%,
+      var(--border-soft, #e8e4df)
+    );
+  padding-bottom: 0.65rem;
+}
+
+[data-area='therapie'] .therapy-page .therapy-card {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) 42%,
+    var(--patient-bordered-neutral)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) 24%,
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: calc(var(--patient-bordered-radius) - 2px);
+  background: color-mix(in srgb, var(--patient-bordered-accent) 3%, var(--surface, #fff));
+  box-shadow: none;
+}
+
+[data-area='therapie'] .therapy-page .therapy-card.is-selected {
+  --patient-bordered-accent: var(--area-accent, var(--accent));
+  background: color-mix(in srgb, var(--patient-bordered-accent) 6%, var(--surface, #fff));
+}
+
+[data-area='therapie'] .therapy-page .therapy-entry {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) 40%,
+    var(--patient-bordered-neutral)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix),
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: calc(var(--patient-bordered-radius) - 2px);
+  background: color-mix(in srgb, var(--patient-bordered-accent) 3.5%, var(--surface, #fff));
+  box-shadow: none;
+}
+
+[data-area='therapie'] .therapy-page .therapy-composer {
+  border: 1px dashed
+    color-mix(
+      in srgb,
+      var(--area-accent, var(--accent)) 28%,
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--area-accent, var(--accent));
+  border-radius: var(--patient-bordered-radius);
+  padding: var(--patient-bordered-padding-y) var(--patient-bordered-padding-x);
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 4%, var(--surface, #fff));
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Fallbesprechung (DiscussCase)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Landing — recent discussion cards */
+[data-area='discuss'] .discuss-case-cards {
+  gap: 0.75rem;
+}
+
+[data-area='discuss'] .discuss-case-card {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) var(--patient-bordered-accent-mix),
+    var(--patient-bordered-neutral)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix),
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: var(--patient-bordered-radius);
+  background: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) var(--patient-bordered-bg-mix),
+    var(--surface, #fff)
+  );
+  box-shadow: var(--patient-bordered-shadow);
+}
+
+[data-area='discuss'] .discuss-case-card:hover {
+  border-color: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) calc(var(--patient-bordered-border-mix) + 12%),
+    var(--border-soft, #e8e4df)
+  );
+  border-left-color: var(--patient-bordered-accent);
+}
+
+[data-area='discuss'] .clinical-empty-state.discuss-case-hero__empty {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) var(--patient-bordered-accent-mix),
+    var(--patient-bordered-neutral)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix),
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: var(--patient-bordered-radius);
+  padding: var(--patient-bordered-padding-y) var(--patient-bordered-padding-x);
+  background: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) var(--patient-bordered-bg-mix),
+    var(--surface, #fff)
+  );
+  box-shadow: var(--patient-bordered-shadow);
+}
+
+/* Standalone list rows */
+[data-area='discuss'] .discuss-case-page__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem 1rem;
+}
+
+[data-area='discuss'] .discuss-case-page__list-row {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) var(--patient-bordered-accent-mix),
+    var(--patient-bordered-neutral)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix),
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: var(--patient-bordered-radius);
+  background: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) var(--patient-bordered-bg-mix),
+    var(--surface, #fff)
+  );
+  box-shadow: var(--patient-bordered-shadow);
+  border-bottom: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix),
+      var(--border-soft, #e8e4df)
+    );
+}
+
+[data-area='discuss'] .discuss-case-page__list-item {
+  padding-left: 1rem;
+}
+
+/* Active discussion — chat column + optional aside */
+[data-area='discuss'] .discuss-case-view__split {
+  gap: 0.75rem;
+  padding: 0.75rem;
+  box-sizing: border-box;
+}
+
+[data-area='discuss'] .discuss-case-view__chat-column {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) var(--patient-bordered-accent-mix),
+    var(--patient-bordered-neutral)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix),
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: var(--patient-bordered-radius);
+  background: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) var(--patient-bordered-bg-mix),
+    var(--surface, #fff)
+  );
+  box-shadow: var(--patient-bordered-shadow);
+  overflow: hidden;
+}
+
+[data-area='discuss'] .discuss-case-view__aside {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) 42%,
+    var(--patient-bordered-neutral)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix),
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: var(--patient-bordered-radius);
+  background: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) var(--patient-bordered-bg-mix),
+    var(--surface, #fff)
+  );
+  box-shadow: var(--patient-bordered-shadow);
+  overflow: hidden;
+}
+
+[data-area='discuss'] .discuss-case-view__aside--document {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) 38%,
+    var(--patient-bordered-neutral)
+  );
+}
+
+[data-area='discuss'] .discuss-case-view__aside--participants {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) 45%,
+    var(--patient-bordered-neutral)
+  );
+}
+
+[data-area='discuss'] .discuss-case-chat__composer,
+[data-area='discuss'] .discuss-case-chat__ai {
+  padding-left: 1rem;
+}
+
+[data-area='discuss'] .discuss-case-chat--embedded .discuss-case-chat__messages {
+  padding-left: 1rem;
+  padding-right: 1.5rem;
+}
+
+[data-area='discuss'] .discuss-case-view__split--with-aside .discuss-case-chat__messages {
+  padding-right: 1.75rem;
+}
+
+[data-area='discuss'] .discuss-case-chat__ai-draft {
+  margin-left: 1rem;
+  margin-right: 1rem;
+  border: 1px dashed
+    color-mix(
+      in srgb,
+      var(--area-accent, var(--accent)) 28%,
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--area-accent, var(--accent));
+  border-radius: calc(var(--patient-bordered-radius) - 2px);
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 4%, var(--surface, #fff));
+}
+
+/* Package builder — form + preview panes */
+[data-area='discuss'] .discuss-case-builder__form,
+[data-area='discuss'] .discuss-case-builder__preview-pane {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) var(--patient-bordered-accent-mix),
+    var(--patient-bordered-neutral)
+  );
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix),
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: var(--patient-bordered-radius);
+  padding-left: 1rem;
+  background: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) var(--patient-bordered-bg-mix),
+    var(--surface, #fff)
+  );
+  box-shadow: var(--patient-bordered-shadow);
+}
+
+[data-area='discuss'] .discuss-case-builder__form {
+  border-right: none;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  margin: 0.75rem 0 0.75rem 0.75rem;
+}
+
+[data-area='discuss'] .discuss-case-builder__preview-pane {
+  margin: 0.75rem 0.75rem 0.75rem 0;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+[data-area='discuss'] .discuss-case-builder__body--preview .discuss-case-builder__preview-pane {
+  margin: 0 0.75rem 0.75rem;
+  border-top-left-radius: var(--patient-bordered-radius);
+  border-top-right-radius: var(--patient-bordered-radius);
+  border-bottom-left-radius: var(--patient-bordered-radius);
+  border-bottom-right-radius: var(--patient-bordered-radius);
+  border-left: 3px solid var(--patient-bordered-accent);
+  box-shadow: var(--patient-bordered-shadow);
+}
+
+[data-area='discuss'] .discuss-case-builder__invite {
+  --patient-bordered-accent: color-mix(
+    in srgb,
+    var(--area-accent, var(--accent)) var(--patient-bordered-accent-mix),
+    var(--patient-bordered-neutral)
+  );
+  margin: 0.75rem 1.5rem 1.5rem;
+  padding: var(--patient-bordered-padding-y) var(--patient-bordered-padding-x);
+  padding-left: 1rem;
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--patient-bordered-accent) var(--patient-bordered-border-mix),
+      var(--border-soft, #e8e4df)
+    );
+  border-left: 3px solid var(--patient-bordered-accent);
+  border-radius: var(--patient-bordered-radius);
+  background: color-mix(
+    in srgb,
+    var(--patient-bordered-accent) var(--patient-bordered-bg-mix),
+    var(--surface, #fff)
+  );
+  box-shadow: var(--patient-bordered-shadow);
+}
+
+/* ── Print ────────────────────────────────────────────────────────────────── */
+
+@media print {
+  [data-area='overview'] .ov-hero-widget,
+  [data-area='overview'] .ov-widget-slot,
+  [data-area='verlauf'] .verlauf-entry,
+  [data-area='diagnose'] .diagnose-page .diagnosen-widget,
+  [data-area='diagnose'] .diagnose-page .butterfly-panel,
+  [data-area='ci'] .ci-panel__intro,
+  [data-area='ci'] .ci-panel__main > .cm-section,
+  [data-area='ci'] .ci-panel__main > .ci-accordion,
+  [data-area='medikation'] .medication-workspace .medication-plan__list,
+  [data-area='medikation'] .medication-workspace .medication-dash-panel,
+  [data-area='therapie'] .therapy-page .therapy-section,
+  [data-area='discuss'] .discuss-case-card,
+  [data-area='discuss'] .discuss-case-view__chat-column,
+  [data-area='discuss'] .discuss-case-view__aside,
+  [data-area='discuss'] .discuss-case-builder__form,
+  [data-area='discuss'] .discuss-case-builder__preview-pane {
+    box-shadow: none;
+  }
+}

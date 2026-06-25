@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { UiTranslationKey } from '../../data/uiTranslations'
-import { isClinicalIntelligenceAvailableForCase } from '../../demo/demoFeatureFlags'
+import { isClinicalIntelligenceAvailableForCase } from '../../utils/featureFlags'
 import type { TopNavTabId } from './CaseTopNav'
 
 /**

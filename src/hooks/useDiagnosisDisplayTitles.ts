@@ -90,6 +90,7 @@ export function useDiagnosisDisplayTitles(
           enteredLabel: item.enteredLabel,
           code: item.code,
           overridden: item.overridden,
+          version: item.version,
         }),
       )
     }

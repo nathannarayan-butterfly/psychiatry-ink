@@ -1,10 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ClinicalLoading } from '../ui/ClinicalLoading'
 import type { ConsultationRequest, ConsultationRequestStatus } from '../../types/consultation'
-import { CONSULTATION_STATUS_LABELS } from '../../types/consultation'
 import { listConsultantRequests } from '../../services/consultationApi'
 import { ClinicalFullPageLayout } from '../AppLogoHeader'
 import { ConsultantRequestWorkspace } from './ConsultantRequestWorkspace'
+import { useTranslation } from '../../context/TranslationContext'
+import {
+  translateConsultationStatus,
+  translateConsultationUi,
+  type ConsultationUiKey,
+} from '../../data/consultationUiTranslations'
 
 type FilterTab = 'all' | ConsultationRequestStatus
 
@@ -13,13 +18,13 @@ interface ConsultantDashboardProps {
   onNavigate: (path: string) => void
 }
 
-const FILTER_TABS: { id: FilterTab; label: string }[] = [
-  { id: 'all', label: 'Alle' },
-  { id: 'sent', label: 'Ausstehend' },
-  { id: 'in_progress', label: 'In Bearbeitung' },
-  { id: 'more_info_requested', label: 'Rückfrage offen' },
-  { id: 'submitted', label: 'Eingereicht' },
-  { id: 'archived', label: 'Archiviert' },
+const FILTER_TABS: { id: FilterTab; labelKey: ConsultationUiKey }[] = [
+  { id: 'all', labelKey: 'filterAll' },
+  { id: 'sent', labelKey: 'filterPending' },
+  { id: 'in_progress', labelKey: 'filterInProgress' },
+  { id: 'more_info_requested', labelKey: 'filterMoreInfo' },
+  { id: 'submitted', labelKey: 'filterSubmitted' },
+  { id: 'archived', labelKey: 'filterArchived' },
 ]
 
 function matchesFilter(req: ConsultationRequest, tab: FilterTab): boolean {
@@ -29,6 +34,7 @@ function matchesFilter(req: ConsultationRequest, tab: FilterTab): boolean {
 }
 
 export function ConsultantDashboard({ requestId, onNavigate }: ConsultantDashboardProps) {
+  const { language } = useTranslation()
   const [requests, setRequests] = useState<ConsultationRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -41,11 +47,11 @@ export function ConsultantDashboard({ requestId, onNavigate }: ConsultantDashboa
       const items = await listConsultantRequests()
       setRequests(items)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Laden fehlgeschlagen')
+      setError(err instanceof Error ? err.message : translateConsultationUi(language, 'loadFailed'))
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [language])
 
   useEffect(() => {
     void refresh()
@@ -77,10 +83,9 @@ export function ConsultantDashboard({ requestId, onNavigate }: ConsultantDashboa
             className="consultation-page__back clinical-back-link"
             onClick={() => onNavigate('/dashboard')}
           >
-            ← Dashboard
+            {translateConsultationUi(language, 'backToDashboard')}
           </button>
-          <h1 className="consultation-page__title">Externer Konsiliarzugang</h1>
-          <p className="consultation-page__subtitle">Konsilanfragen — eingeschränkter Zugriff</p>
+          <h1 className="consultation-page__title">{translateConsultationUi(language, 'externalConsultantAccess')}</h1>
         </div>
       </header>
 
@@ -92,7 +97,7 @@ export function ConsultantDashboard({ requestId, onNavigate }: ConsultantDashboa
             className={`consultation-consultant__tab${activeTab === tab.id ? ' consultation-consultant__tab--active' : ''}`}
             onClick={() => setActiveTab(tab.id)}
           >
-            {tab.label}
+            {translateConsultationUi(language, tab.labelKey)}
           </button>
         ))}
       </nav>
@@ -102,7 +107,7 @@ export function ConsultantDashboard({ requestId, onNavigate }: ConsultantDashboa
       {loading ? (
         <ClinicalLoading variant="compact" />
       ) : filtered.length === 0 ? (
-        <p className="clinical-empty-state">Keine Konsilanfragen in dieser Kategorie.</p>
+        <p className="clinical-empty-state">{translateConsultationUi(language, 'noRequestsInCategory')}</p>
       ) : (
         <ul className="consultation-page__list">
           {filtered.map((req) => (
@@ -114,7 +119,7 @@ export function ConsultantDashboard({ requestId, onNavigate }: ConsultantDashboa
               >
                 <span className="consultation-page__list-title">{req.title}</span>
                 <span className="consultation-page__list-meta">
-                  {req.specialty} · {CONSULTATION_STATUS_LABELS[req.status]}
+                  {req.specialty} · {translateConsultationStatus(language, req.status)}
                 </span>
               </button>
             </li>

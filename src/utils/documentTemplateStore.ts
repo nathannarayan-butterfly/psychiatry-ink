@@ -1,6 +1,7 @@
 import type { TemplateSharePayload } from '../schemas/documentTemplate/shareEnvelope'
 import { isPatientDynamicKey } from '../data/documentTemplate/dynamicFields'
 import { safeSetItem } from './safeStorage'
+import { ANHOERUNG_TEMPLATE_ID, buildAnhoerungTemplate } from '../data/documentTemplate/anhoerungTemplate'
 import type { DocumentTemplate, TemplateAvailability, TemplateCategory, TemplateField, TemplateStatus } from '../types/documentTemplate'
 import { DEFAULT_PAGE_SETTINGS, migrateTemplate } from './documentTemplate/pageSettings'
 
@@ -8,24 +9,32 @@ const STORAGE_KEY = 'psychiatry-ink:documentTemplates'
 
 export const TEMPLATES_CHANGED_EVENT = 'psychiatry-ink:document-templates:changed'
 
-function loadRaw(): DocumentTemplate[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return []
-    const parsed = JSON.parse(raw) as DocumentTemplate[]
-    if (!Array.isArray(parsed)) return []
-    return parsed.map((t) => migrateTemplate(t as DocumentTemplate))
-  } catch {
-    return []
-  }
-}
-
 function persist(templates: DocumentTemplate[]): void {
   safeSetItem(STORAGE_KEY, JSON.stringify(templates))
   try {
     window.dispatchEvent(new CustomEvent(TEMPLATES_CHANGED_EVENT))
   } catch {
     // ignore
+  }
+}
+
+function ensureSeedTemplates(templates: DocumentTemplate[]): DocumentTemplate[] {
+  if (templates.some((t) => t.id === ANHOERUNG_TEMPLATE_ID)) return templates
+  const seeded = buildAnhoerungTemplate()
+  persist([seeded, ...templates])
+  return [seeded, ...templates]
+}
+
+function loadRaw(): DocumentTemplate[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return ensureSeedTemplates([])
+    const parsed = JSON.parse(raw) as DocumentTemplate[]
+    if (!Array.isArray(parsed)) return ensureSeedTemplates([])
+    const migrated = parsed.map((t) => migrateTemplate(t as DocumentTemplate))
+    return ensureSeedTemplates(migrated)
+  } catch {
+    return ensureSeedTemplates([])
   }
 }
 

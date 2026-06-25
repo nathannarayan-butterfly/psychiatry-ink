@@ -1,5 +1,6 @@
 import {
   AlertTriangle,
+  BookOpen,
   FlaskConical,
   Layers,
   type LucideIcon,
@@ -35,4 +36,9 @@ export const MEDICATION_SECTION_META: Record<MedicationSectionKey, MedicationSec
   sideEffects: { Icon: AlertTriangle, labelKey: 'medSectionSideEffects', descKey: 'medDescSideEffects' },
   lab: { Icon: FlaskConical, labelKey: 'medSectionLab', descKey: 'medDescLab' },
   intelligence: { Icon: Sparkles, labelKey: 'medSectionIntelligence', descKey: 'medDescIntelligence' },
+  education: {
+    Icon: BookOpen,
+    labelKey: 'medEducationPanelTitle',
+    descKey: 'medEducationPanelDesc',
+  },
 }

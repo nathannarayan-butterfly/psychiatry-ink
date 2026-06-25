@@ -5,19 +5,24 @@
  * and fill colour both reflect confidence (low = 1/3, moderate = 2/3, high = full).
  * Each row is a clickable accordion trigger handled by the parent panel.
  */
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { ChevronDown, ChevronRight, Check, Pencil, Trash2, X } from 'lucide-react'
 import { useTranslation } from '../../../context/TranslationContext'
 import {
   CLINICAL_INTELLIGENCE_MECHANISMS,
-  getClinicalIntelligenceMechanism,
 } from '../../../data/clinicalIntelligence/mechanisms'
 import { sortMechanismHypotheses } from '../../../services/clinicalIntelligence/mechanismInference'
 import type {
   ClinicalIntelligenceMechanismId,
+  CompactEvidenceItem,
   MechanismHypothesis,
   MechanismInferenceResult,
 } from '../../../types/clinicalIntelligence'
+import {
+  formatCiEvidenceSourceList,
+  getCiDimensionLabel,
+  getCiMechanismLabel,
+} from '../../../data/clinicalIntelligenceTranslations'
 import { CiConfidenceLegend } from './CiConfidenceLegend'
 import {
   confidenceBarFillClass,
@@ -26,6 +31,7 @@ import {
 
 interface MechanismHypothesesGraphProps {
   result: MechanismInferenceResult
+  evidenceItems?: readonly CompactEvidenceItem[]
   expandedId: ClinicalIntelligenceMechanismId | null
   onToggle: (id: ClinicalIntelligenceMechanismId) => void
   onAccept: (id: ClinicalIntelligenceMechanismId) => void
@@ -87,11 +93,13 @@ export function computeMechanismBars(
 
 function MechanismDetail({
   hypothesis,
+  evidenceItems,
   onAccept,
   onReject,
   onEdit,
 }: {
   hypothesis: MechanismHypothesis
+  evidenceItems?: readonly CompactEvidenceItem[]
   onAccept: (id: ClinicalIntelligenceMechanismId) => void
   onReject: (id: ClinicalIntelligenceMechanismId) => void
   onEdit: (
@@ -101,15 +109,23 @@ function MechanismDetail({
     >,
   ) => void
 }) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
+  const mechanismLabel = getCiMechanismLabel(hypothesis.mechanismId, language)
   const [editing, setEditing] = useState(false)
   const [implication, setImplication] = useState(hypothesis.clinicalImplication)
   const [treatment, setTreatment] = useState(hypothesis.treatmentRelevance)
   const [uncertainty, setUncertainty] = useState(hypothesis.uncertainty)
 
+  useEffect(() => {
+    setImplication(hypothesis.clinicalImplication)
+    setTreatment(hypothesis.treatmentRelevance)
+    setUncertainty(hypothesis.uncertainty)
+  }, [hypothesis.clinicalImplication, hypothesis.treatmentRelevance, hypothesis.uncertainty])
+
   if (editing) {
     return (
       <div className="ci-graph-row__edit">
+        <h3 className="ci-graph-row__detail-title">{mechanismLabel}</h3>
         <label className="ci-row__label">
           {t('ciClinicalImplication')}
           <textarea
@@ -171,6 +187,7 @@ function MechanismDetail({
 
   return (
     <div className="ci-graph-row__detail">
+      <h3 className="ci-graph-row__detail-title">{mechanismLabel}</h3>
       <p className="ci-row__summary">{hypothesis.clinicalImplication}</p>
       <p className="ci-row__meta">
         <span className="ci-row__meta-label">{t('ciTreatmentRelevance')}:</span>{' '}
@@ -181,7 +198,7 @@ function MechanismDetail({
           <span className="ci-row__meta-label">{t('ciLinkedDimensions')}:</span>
           {hypothesis.linkedDimensions.map((id) => (
             <span key={id} className="ci-graph-row__chip">
-              {id}
+              {getCiDimensionLabel(id, language)}
             </span>
           ))}
         </div>
@@ -189,7 +206,11 @@ function MechanismDetail({
       {hypothesis.supportingEvidenceIds.length > 0 ? (
         <p className="ci-row__meta">
           <span className="ci-row__meta-label">{t('ciSupportingEvidence')}:</span>{' '}
-          {hypothesis.supportingEvidenceIds.join(', ')}
+          {formatCiEvidenceSourceList(
+            hypothesis.supportingEvidenceIds,
+            language,
+            evidenceItems,
+          )}
         </p>
       ) : null}
       {hypothesis.uncertainty ? (
@@ -227,13 +248,14 @@ function MechanismDetail({
 
 export function MechanismHypothesesGraph({
   result,
+  evidenceItems,
   expandedId,
   onToggle,
   onAccept,
   onReject,
   onEdit,
 }: MechanismHypothesesGraphProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const sorted = useMemo(
     () => sortMechanismHypotheses(result.activeMechanisms),
     [result.activeMechanisms],
@@ -259,10 +281,10 @@ export function MechanismHypothesesGraph({
       <ul className="ci-graph__rows">
         {sorted.map((hypothesis) => {
           const expanded = expandedId === hypothesis.mechanismId
-          const mech = getClinicalIntelligenceMechanism(hypothesis.mechanismId)
           const fraction = CONFIDENCE_FRACTION[hypothesis.confidence]
           const barW = Math.max(2, fraction * BAR_WIDTH)
           const fillClass = confidenceBarFillClass(hypothesis.confidence)
+          const mechanismLabel = getCiMechanismLabel(hypothesis.mechanismId, language)
           return (
             <li
               key={hypothesis.mechanismId}
@@ -287,8 +309,8 @@ export function MechanismHypothesesGraph({
                 ) : (
                   <ChevronRight className="ci-graph-row__chev" aria-hidden strokeWidth={2} />
                 )}
-                <span className="ci-graph-row__name" title={mech.descriptionDe}>
-                  {hypothesis.label}
+                <span className="ci-graph-row__name" title={mechanismLabel}>
+                  {mechanismLabel}
                 </span>
                 <svg
                   className="ci-graph-row__bar"
@@ -349,6 +371,7 @@ export function MechanismHypothesesGraph({
               {expanded ? (
                 <MechanismDetail
                   hypothesis={hypothesis}
+                  evidenceItems={evidenceItems}
                   onAccept={onAccept}
                   onReject={onReject}
                   onEdit={onEdit}
@@ -365,7 +388,7 @@ export function MechanismHypothesesGraph({
         <ol className="ci-catalog-list">
           {CLINICAL_INTELLIGENCE_MECHANISMS.map((mech) => (
             <li key={mech.id} className="ci-catalog-list__item">
-              <code>{mech.id}</code> — {mech.labelDe}
+              <code>{mech.id}</code> — {getCiMechanismLabel(mech.id, language)}
             </li>
           ))}
         </ol>

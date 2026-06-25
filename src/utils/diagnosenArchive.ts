@@ -1,9 +1,21 @@
 import { bundledDiagnosisTitle } from '../data/bundledDiagnosisTitles'
 import { lookupCatalogLabel } from '../data/diagnosisCatalog'
 import type { DiagnosisSearchHit } from '../services/diagnosisReferenceApi'
-import type { CatalogueSystem, DiagnosisRole, DiagnosisStatus } from '../types/diagnosisCatalogue'
+import type {
+  CatalogueSystem,
+  DiagnosisClinicalCategory,
+  DiagnosisConfirmationStatus,
+  DiagnosisRole,
+  DiagnosisStatus,
+} from '../types/diagnosisCatalogue'
 import type { IcdTitleVersion } from '../../shared/icdTitle'
 import { scheduleDiagnosisImprints } from './clinicalImprint'
+import {
+  inferDefaultCategoryForNewEntry,
+  inferDefaultConfirmationForCategory,
+  normalizeDiagnosisClassification,
+  syncLegacyClassificationFields,
+} from './diagnosisClassification'
 import { readOrMigrateEncryptedJson, writeEncryptedJson } from './encryptedLocalStore'
 
 export type CodingSystem = 'icd10' | 'icd11' | 'dsm'
@@ -23,8 +35,16 @@ export interface DiagnoseEntry {
   codingSystem?: CatalogueSystem
   catalogueVersion?: string
   displayLabel?: string
+  /** Unified clinical category (primary, DD, comorbidity, …). */
+  clinicalCategory?: DiagnosisClinicalCategory
+  /** Clinical certainty / lifecycle (confirmed, active, under review, …). */
+  confirmationStatus?: DiagnosisConfirmationStatus
+  /** Legacy — kept in sync with {@link clinicalCategory}. */
   diagnosisStatus?: DiagnosisStatus
+  /** Legacy — kept in sync with {@link clinicalCategory}. */
   diagnosisRole?: DiagnosisRole
+  /** When set, AI/import must not overwrite classification without clinician review. */
+  statusClinicianSetAt?: string
   clinicianId?: string
   /** Whether an authored criteria tree is linked (catalogue metadata). */
   criteriaAvailable?: boolean
@@ -121,9 +141,12 @@ export function catalogueSystemToCodingSlot(system: CatalogueSystem): CodingSyst
 export function createDiagnoseFromHit(
   hit: DiagnosisSearchHit,
   activeSystem?: CodingSystem,
+  existingEntries: DiagnoseEntry[] = [],
 ): DiagnoseEntry {
   const now = new Date().toISOString()
   const slot = activeSystem ?? catalogueSystemToCodingSlot(hit.system)
+  const category = inferDefaultCategoryForNewEntry(existingEntries)
+  const confirmation = inferDefaultConfirmationForCategory(category)
 
   const entry: DiagnoseEntry = {
     id: generateId(),
@@ -131,8 +154,6 @@ export function createDiagnoseFromHit(
     codingSystem: hit.system,
     catalogueVersion: hit.catalogueVersion,
     displayLabel: hit.title,
-    diagnosisStatus: 'confirmed',
-    diagnosisRole: 'main',
     criteriaAvailable: hit.criteriaAvailable,
     icd10: emptyCoding(),
     icd11: emptyCoding(),
@@ -142,7 +163,7 @@ export function createDiagnoseFromHit(
   }
 
   entry[slot] = { code: hit.code, label: hit.title, overridden: false }
-  return sanitizeDiagnoseEntry(entry)
+  return sanitizeDiagnoseEntry(syncLegacyClassificationFields(entry, category, confirmation))
 }
 
 /** Free-text diagnosis — label only; no forced crosswalk mapping. */
@@ -150,17 +171,18 @@ export async function createDiagnoseFreeText(
   text: string,
   code = '',
   system: CodingSystem = 'icd10',
+  existingEntries: DiagnoseEntry[] = [],
 ): Promise<DiagnoseEntry> {
   const now = new Date().toISOString()
   const trimmed = text.trim()
   const coding: CodingValue = { code: code.trim(), label: trimmed, overridden: true }
+  const category = inferDefaultCategoryForNewEntry(existingEntries)
+  const confirmation = inferDefaultConfirmationForCategory(category)
 
   const entry: DiagnoseEntry = {
     id: generateId(),
     codingSystem: system === 'icd11' ? 'ICD11MMS' : system === 'dsm' ? 'DSM5TR' : 'ICD10GM',
     displayLabel: trimmed,
-    diagnosisStatus: 'confirmed',
-    diagnosisRole: 'main',
     icd10: emptyCoding(),
     icd11: emptyCoding(),
     dsm: emptyCoding(),
@@ -168,7 +190,7 @@ export async function createDiagnoseFreeText(
     updatedAt: now,
   }
   entry[system] = coding
-  return sanitizeDiagnoseEntry(entry)
+  return sanitizeDiagnoseEntry(syncLegacyClassificationFields(entry, category, confirmation))
 }
 
 /** Re-sync ICD-11 and DSM from crosswalk only for legacy entries without independent coding. */
@@ -269,9 +291,11 @@ function migrateLegacyEntry(raw: Record<string, unknown>): DiagnoseEntry | null 
 /** Normalize a parsed array, migrating any legacy diagnosis shapes. */
 export function normalizeDiagnoseEntries(parsed: unknown): DiagnoseEntry[] {
   if (!Array.isArray(parsed)) return []
-  return parsed
+  const migrated = parsed
     .map((item) => migrateLegacyEntry(item as Record<string, unknown>))
     .filter((e): e is DiagnoseEntry => e !== null)
+    .map((entry) => sanitizeDiagnoseEntry(entry))
+  return migrated.map((entry, index) => normalizeDiagnosisClassification(entry, index, migrated))
 }
 
 function normalizeEntries(parsed: unknown): DiagnoseEntry[] {

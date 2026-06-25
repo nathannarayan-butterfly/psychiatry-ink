@@ -1,4 +1,5 @@
 import { resolveLlmCallModel } from '../ai/resolveLlmCallModel'
+import { fetchWithTimeout, withRetry, GatewayTimeoutError } from '../utils/httpTimeout'
 import {
   maxOutputTokensFor,
   missingApiKeyMessage,
@@ -37,23 +38,33 @@ async function callChatCompletions(
   messages: ChatMessage[],
   options: { maxTokens?: number; jsonResponse?: boolean } = {},
 ): Promise<ChatCompletionResult> {
+  const timeoutMs = Number(process.env.LLM_TIMEOUT_MS ?? 60_000)
+  const body = JSON.stringify({
+    model: modelId,
+    messages,
+    temperature: 0.3,
+    ...(options.maxTokens ? { max_tokens: options.maxTokens } : {}),
+    ...(options.jsonResponse ? { response_format: { type: 'json_object' } } : {}),
+  })
+
+  // Chat completions with the same deterministic temperature/body are safe to
+  // replay, so one bounded retry on a timeout/transport blip is acceptable.
   let response: Response
   try {
-    response = await fetch(`${baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: modelId,
-        messages,
-        temperature: 0.3,
-        ...(options.maxTokens ? { max_tokens: options.maxTokens } : {}),
-        ...(options.jsonResponse ? { response_format: { type: 'json_object' } } : {}),
+    response = await withRetry(() =>
+      fetchWithTimeout(`${baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body,
+        timeoutMs,
+        label: `LLM request to ${modelId}`,
       }),
-    })
+    )
   } catch (cause) {
+    if (cause instanceof GatewayTimeoutError) throw cause
     throw new Error(
       `LLM request to ${modelId} failed (network/transport): ${
         cause instanceof Error ? cause.message : String(cause)
@@ -100,6 +111,7 @@ function providerApiKey(provider: AiModelSpec['provider']): string | undefined {
   if (provider === 'openai') return process.env.OPENAI_API_KEY
   if (provider === 'deepseek') return process.env.DEEPSEEK_API_KEY
   if (provider === 'google') return process.env.GOOGLE_API_KEY
+  if (provider === 'mistral') return process.env.MISTRAL_API_KEY
   return undefined
 }
 
@@ -112,6 +124,10 @@ function providerBaseUrl(provider: AiModelSpec['provider']): string {
       process.env.GOOGLE_BASE_URL?.replace(/\/$/, '') ??
       'https://generativelanguage.googleapis.com/v1beta/openai'
     )
+  }
+  // Mistral la Plateforme — OpenAI-compatible chat/completions endpoint (EU).
+  if (provider === 'mistral') {
+    return process.env.MISTRAL_BASE_URL?.replace(/\/$/, '') ?? 'https://api.mistral.ai/v1'
   }
   return process.env.OPENAI_BASE_URL?.replace(/\/$/, '') ?? 'https://api.openai.com/v1'
 }

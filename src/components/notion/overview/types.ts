@@ -1,5 +1,8 @@
 import type { SemanticTone } from './OverviewCard'
 import type { RecentLabResultItem } from '../../../utils/overview/recentLabResults'
+import type { ClinicalSignalChip } from '../../../utils/overview/overviewClinicalSignals'
+import type { VisitActionPrioritizationContext } from '../../../utils/overview/overviewQuickActions'
+import type { CombinedReceptorFingerprint } from '../../../utils/medication/receptorBurden'
 
 import type {
   PsychopathDomainStatus,
@@ -101,6 +104,8 @@ export interface MedicationOverviewData {
   monitoringFlags: string[]
   topReceptors: { label: string; count: number }[]
   hasReferenceData: boolean
+  /** Combined v2 receptor fingerprint (max affinity per axis across active meds). */
+  receptorFingerprint: CombinedReceptorFingerprint | null
 }
 
 export interface SymptomStructuredCue {
@@ -210,12 +215,35 @@ export interface KonsileTasksData {
   loading: boolean
 }
 
+/** One compact clinical signal for the hero status ribbon. */
+export interface StatusRibbonItem {
+  id: string
+  label: string
+  tone: SemanticTone
+  detail?: string
+}
+
 /**
  * Executive-summary band data — the four headline facts a psychiatrist needs at
  * a glance. Every field is derived from real wired data; missing sources degrade
  * to a calm placeholder rather than a fabricated value.
  */
+export interface HeroIdentityContext {
+  /** Primary diagnosis code + short label for the identity strip. */
+  diagnosisLine: string | null
+  /** Localized clinical category (primary, secondary, …). */
+  caseTypeLabel: string | null
+  /** Admission day count label, e.g. "Tag 12". */
+  admissionDayLabel: string | null
+}
+
 export interface HeroSummaryData {
+  /** Compact case context rendered under the patient name. */
+  identityContext: HeroIdentityContext
+  /** Clickable clinical signal chips for the command header. */
+  clinicalSignalChips: ClinicalSignalChip[]
+  /** Context for adaptive visit-action prioritization in the popover. */
+  visitActionContext: VisitActionPrioritizationContext
   primaryDiagnosis: {
     code: string
     label: string
@@ -228,4 +256,6 @@ export interface HeroSummaryData {
   alertCount: number
   lastContact: { dateLabel: string; relativeLabel: string | null } | null
   nextAppointment: { dateLabel: string; relativeLabel: string | null; title: string } | null
+  /** Compact row of the most important current clinical signals (safety, labs, reviews). */
+  statusRibbon: StatusRibbonItem[]
 }

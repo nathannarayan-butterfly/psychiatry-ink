@@ -23,6 +23,12 @@ export interface DoseSchedule {
   unit: string
   prn?: boolean
   depotInterval?: string
+  /** PRN: basis / starting dose per administration (numeric amount; unit in `unit`). */
+  prnBasisDose?: string
+  /** PRN: maximum single dose per administration. */
+  prnMaxSingleDose?: string
+  /** PRN: maximum total dose per 24 hours. */
+  prnMaxDailyDose?: string
 }
 
 export type MedicationStatus =

@@ -17,6 +17,7 @@ interface CaseSidebarPanelProps {
   onCreatePatient?: () => void
   creditBalance: number
   onOpenSettings: (section?: SettingsSectionId) => void
+  onOpenCredits?: () => void
   children: ReactNode
   /** Accessible label for the sidebar landmark. */
   ariaLabel?: string
@@ -39,6 +40,7 @@ export function CaseSidebarPanel({
   onCreatePatient,
   creditBalance,
   onOpenSettings,
+  onOpenCredits,
   children,
   ariaLabel,
   todoCaseId = null,
@@ -98,14 +100,14 @@ export function CaseSidebarPanel({
               className="case-sidebar-nav__link"
               onClick={onCreatePatient}
             >
-              + Zuordnen
+              + {t('topNavCreatePatient')}
             </button>
             <button
               type="button"
               className="case-sidebar-nav__link"
               onClick={onBackToPatients}
             >
-              Vorhandener Patient
+              {t('topNavExistingPatient')}
             </button>
           </div>
         ) : null}
@@ -120,6 +122,7 @@ export function CaseSidebarPanel({
       <CaseSidebarUserFooter
         creditBalance={creditBalance}
         onOpenSettings={onOpenSettings}
+        onOpenCredits={onOpenCredits}
         todoCaseId={todoCaseId}
         todoPatientLabel={todoPatientLabel}
       />

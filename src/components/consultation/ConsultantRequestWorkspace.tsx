@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ClinicalLoading } from '../ui/ClinicalLoading'
 import type { PatientExamined, SaveReportInput } from '../../types/consultation'
-import { CONSULTATION_STATUS_LABELS } from '../../types/consultation'
 import {
   loadConsultationSession,
   requestConsultationMoreInfo,
   saveConsultationReportDraft,
   submitConsultationReport,
 } from '../../services/consultationApi'
+import { useTranslation } from '../../context/TranslationContext'
+import {
+  translateConsultationStatus,
+  translateConsultationUi,
+} from '../../data/consultationUiTranslations'
 import {
   decryptJson,
   isEncryptedEnvelope,
@@ -60,6 +64,7 @@ const EMPTY_REPORT: SaveReportInput = {
 }
 
 export function ConsultantRequestWorkspace({ requestId, onBack }: ConsultantRequestWorkspaceProps) {
+  const { language } = useTranslation()
   const [session, setSession] = useState<Awaited<ReturnType<typeof loadConsultationSession>> | null>(null)
   const [report, setReport] = useState<SaveReportInput>(EMPTY_REPORT)
   const [loading, setLoading] = useState(true)
@@ -99,11 +104,11 @@ export function ConsultantRequestWorkspace({ requestId, onBack }: ConsultantRequ
       setItemContents(contents)
       setKeyMissing(missing)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Laden fehlgeschlagen')
+      setError(err instanceof Error ? err.message : translateConsultationUi(language, 'loadFailed'))
     } finally {
       setLoading(false)
     }
-  }, [requestId])
+  }, [requestId, language])
 
   useEffect(() => {
     void refresh()
@@ -116,11 +121,11 @@ export function ConsultantRequestWorkspace({ requestId, onBack }: ConsultantRequ
       await saveConsultationReportDraft(requestId, report)
       await refresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Speichern fehlgeschlagen')
+      setError(err instanceof Error ? err.message : translateConsultationUi(language, 'errSaveFailed'))
     } finally {
       setSaving(false)
     }
-  }, [requestId, report, refresh])
+  }, [requestId, report, refresh, language])
 
   const handleSubmit = useCallback(async () => {
     setSaving(true)
@@ -129,11 +134,11 @@ export function ConsultantRequestWorkspace({ requestId, onBack }: ConsultantRequ
       await submitConsultationReport(requestId, report)
       await refresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Einreichen fehlgeschlagen')
+      setError(err instanceof Error ? err.message : translateConsultationUi(language, 'errSubmitFailed'))
     } finally {
       setSaving(false)
     }
-  }, [requestId, report, refresh])
+  }, [requestId, report, refresh, language])
 
   const handleMoreInfo = useCallback(async () => {
     if (!moreInfoText.trim()) return
@@ -143,14 +148,14 @@ export function ConsultantRequestWorkspace({ requestId, onBack }: ConsultantRequ
       setMoreInfoText('')
       await refresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Rückfrage fehlgeschlagen')
+      setError(err instanceof Error ? err.message : translateConsultationUi(language, 'errMoreInfoFailed'))
     } finally {
       setSaving(false)
     }
-  }, [requestId, moreInfoText, refresh])
+  }, [requestId, moreInfoText, refresh, language])
 
   if (loading) return <ClinicalLoading variant="compact" />
-  if (!session) return <p className="consultation-page__error">{error ?? 'Nicht gefunden'}</p>
+  if (!session) return <p className="consultation-page__error">{error ?? translateConsultationUi(language, 'notFound')}</p>
 
   const submitted = session.report?.status === 'submitted'
 
@@ -159,13 +164,13 @@ export function ConsultantRequestWorkspace({ requestId, onBack }: ConsultantRequ
       <header className="consultation-workspace__header">
         <div>
           <button type="button" className="consultation-page__back clinical-back-link" onClick={onBack}>
-            ← Anfragen
+            {translateConsultationUi(language, 'backToRequests')}
           </button>
           <h1 className="consultation-workspace__title">{session.request.title}</h1>
           <p className="consultation-page__subtitle">
             {session.request.specialty} ·{' '}
             <span className={`consultation-badge consultation-badge--${session.request.status}`}>
-              {CONSULTATION_STATUS_LABELS[session.request.status]}
+              {translateConsultationStatus(language, session.request.status)}
             </span>
           </p>
         </div>
@@ -175,23 +180,22 @@ export function ConsultantRequestWorkspace({ requestId, onBack }: ConsultantRequ
 
       <div className="consultation-workspace__columns">
         <div className="consultation-workspace__material">
-          <h2 className="consultation-workspace__panel-title">Freigegebene Unterlagen</h2>
+          <h2 className="consultation-workspace__panel-title">{translateConsultationUi(language, 'sharedMaterial')}</h2>
           <div className="consultation-workspace__question">
-            <strong>Fragestellung:</strong> {session.request.clinicalQuestion}
+            <strong>{translateConsultationUi(language, 'clinicalQuestion')}:</strong> {session.request.clinicalQuestion}
           </div>
           {session.request.kurzanamnese ? (
             <div className="consultation-workspace__question">
-              <strong>Kurzanamnese:</strong> {session.request.kurzanamnese}
+              <strong>{translateConsultationUi(language, 'shortHistory')}:</strong> {session.request.kurzanamnese}
             </div>
           ) : null}
           {keyMissing ? (
             <p className="consultation-builder__warning">
-              Verschlüsselte Unterlagen konnten nicht entschlüsselt werden. Bitte öffnen Sie die
-              Anfrage erneut über den ursprünglichen Einladungslink (enthält den Schlüssel).
+              {translateConsultationUi(language, 'decryptFailedWarning')}
             </p>
           ) : null}
           {session.sharedItems.length === 0 ? (
-            <p className="clinical-empty-state">Keine freigegebenen Unterlagen.</p>
+            <p className="clinical-empty-state">{translateConsultationUi(language, 'noSharedMaterial')}</p>
           ) : (
             session.sharedItems.map((item) => (
               <article key={item.id} className="consultation-workspace__item">
@@ -205,13 +209,13 @@ export function ConsultantRequestWorkspace({ requestId, onBack }: ConsultantRequ
         </div>
 
         <div className="consultation-workspace__report">
-          <h2 className="consultation-workspace__panel-title">Bericht schreiben</h2>
+          <h2 className="consultation-workspace__panel-title">{translateConsultationUi(language, 'writeReport')}</h2>
           {submitted ? (
-            <p className="clinical-empty-state">Bericht eingereicht — keine weiteren Änderungen (MVP).</p>
+            <p className="clinical-empty-state">{translateConsultationUi(language, 'reportSubmittedNotice')}</p>
           ) : (
             <>
               <div className="consultation-builder__field">
-                <label className="consultation-builder__label">Patient untersucht</label>
+                <label className="consultation-builder__label">{translateConsultationUi(language, 'patientExamined')}</label>
                 <select
                   className="consultation-builder__select"
                   value={report.patientExamined}
@@ -219,22 +223,22 @@ export function ConsultantRequestWorkspace({ requestId, onBack }: ConsultantRequ
                     setReport((r) => ({ ...r, patientExamined: e.target.value as PatientExamined }))
                   }
                 >
-                  <option value="not_applicable">Nicht zutreffend</option>
-                  <option value="yes">Ja</option>
-                  <option value="no">Nein</option>
+                  <option value="not_applicable">{translateConsultationUi(language, 'notApplicable')}</option>
+                  <option value="yes">{translateConsultationUi(language, 'yes')}</option>
+                  <option value="no">{translateConsultationUi(language, 'no')}</option>
                 </select>
               </div>
               {(
                 [
-                  ['findings', 'Befunde'],
-                  ['assessment', 'Beurteilung'],
-                  ['recommendations', 'Empfehlungen'],
-                  ['limitations', 'Limitationen'],
-                  ['followUp', 'Follow-up'],
+                  ['findings', 'findings'],
+                  ['assessment', 'assessment'],
+                  ['recommendations', 'recommendations'],
+                  ['limitations', 'limitations'],
+                  ['followUp', 'followUp'],
                 ] as const
-              ).map(([key, label]) => (
+              ).map(([key, labelKey]) => (
                 <div key={key} className="consultation-builder__field">
-                  <label className="consultation-builder__label">{label}</label>
+                  <label className="consultation-builder__label">{translateConsultationUi(language, labelKey)}</label>
                   <textarea
                     className="consultation-builder__textarea"
                     value={report[key]}
@@ -255,7 +259,7 @@ export function ConsultantRequestWorkspace({ requestId, onBack }: ConsultantRequ
             disabled={saving}
             onClick={() => void handleSaveDraft()}
           >
-            Entwurf speichern
+            {translateConsultationUi(language, 'saveDraft')}
           </button>
           <button
             type="button"
@@ -263,12 +267,12 @@ export function ConsultantRequestWorkspace({ requestId, onBack }: ConsultantRequ
             disabled={saving}
             onClick={() => void handleSubmit()}
           >
-            Bericht einreichen
+            {translateConsultationUi(language, 'submitReport')}
           </button>
           <input
             className="consultation-builder__input"
             style={{ flex: 1, minWidth: '12rem' }}
-            placeholder="Rückfrage an Kliniker…"
+            placeholder={translateConsultationUi(language, 'queryToClinicianPlaceholder')}
             value={moreInfoText}
             onChange={(e) => setMoreInfoText(e.target.value)}
           />
@@ -278,7 +282,7 @@ export function ConsultantRequestWorkspace({ requestId, onBack }: ConsultantRequ
             disabled={saving || !moreInfoText.trim()}
             onClick={() => void handleMoreInfo()}
           >
-            Rückfrage stellen
+            {translateConsultationUi(language, 'raiseQuery')}
           </button>
         </div>
       ) : null}

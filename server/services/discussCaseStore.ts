@@ -8,11 +8,27 @@ import type {
   DiscussCasePackage,
   DiscussCaseParticipant,
   DiscussCasePermission,
+  DiscussCaseResolutionSummary,
   DiscussPackageContent,
+  DiscussVoiceTranscript,
 } from '../../src/types/discussCase'
 import type { EncryptedEnvelope } from '../../src/utils/e2ee'
 import { getKbSupabaseAdmin } from './kbSupabaseAdmin'
 import { resolveDefaultPermissions } from './discussCasePermissions'
+import {
+  deleteDiscussVoiceMessage,
+  newVoiceMessageId,
+  uploadDiscussVoiceMessage,
+  DC_VOICE_MAX_DURATION_MS,
+  type DiscussVoiceAttachmentMeta,
+} from './discussCaseVoiceStorage'
+import {
+  computeVoiceAttachmentExpiresAt,
+  purgeExpiredDiscussVoiceMessages,
+  resolveDiscussCaseVoiceRetentionDays,
+  resolveVoiceAttachmentExpiresAt,
+} from './discussCaseVoiceRetention'
+import { buildReplyPreview } from '../../src/utils/discussCase/messageReply'
 
 /**
  * Identified package payloads are E2EE ciphertext (an EncryptedEnvelope); the
@@ -29,6 +45,8 @@ function mapDiscussion(row: Record<string, unknown>): DiscussCaseDiscussion {
     title: String(row.title),
     status: row.status as DiscussCaseDiscussion['status'],
     expiresAt: row.expires_at ? String(row.expires_at) : null,
+    resolutionSummary:
+      (row.resolution_summary as DiscussCaseDiscussion['resolutionSummary']) ?? null,
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
   }
@@ -80,15 +98,55 @@ function mapInvite(row: Record<string, unknown>): DiscussCaseInvite {
 }
 
 function mapMessage(row: Record<string, unknown>): DiscussCaseMessage {
+  const messageKind = (row.message_kind as DiscussCaseMessage['messageKind']) ?? 'text'
+  const createdAt = String(row.created_at)
+  const voiceRaw = row.voice_attachment as DiscussCaseMessage['voiceAttachment'] | null
+  const voiceAttachment =
+    voiceRaw && messageKind === 'voice'
+      ? {
+          ...voiceRaw,
+          expiresAt: resolveVoiceAttachmentExpiresAt(
+            voiceRaw,
+            createdAt,
+            resolveDiscussCaseVoiceRetentionDays(),
+          ),
+        }
+      : voiceRaw
+  const reactionsRaw = row.reactions as DiscussCaseMessage['reactions'] | null
   return {
     id: String(row.id),
     discussionId: String(row.discussion_id),
     authorUserId: String(row.author_user_id),
     authorDisplayName: row.author_display_name ? String(row.author_display_name) : null,
-    body: String(row.body),
+    body: String(row.body ?? ''),
+    messageKind,
+    voiceAttachment,
+    transcript: (row.transcript as DiscussCaseMessage['transcript']) ?? null,
     quoteExcerpt: (row.quote_excerpt as DiscussCaseMessage['quoteExcerpt']) ?? null,
-    createdAt: String(row.created_at),
+    replyToMessageId: row.reply_to_message_id ? String(row.reply_to_message_id) : null,
+    replyPreview: (row.reply_preview as DiscussCaseMessage['replyPreview']) ?? null,
+    reactions: Array.isArray(reactionsRaw) ? reactionsRaw : [],
+    pinned: Boolean(row.pinned),
+    pinnedAt: row.pinned_at ? String(row.pinned_at) : null,
+    pinnedBy: row.pinned_by ? String(row.pinned_by) : null,
+    createdAt,
     editedAt: row.edited_at ? String(row.edited_at) : null,
+  }
+}
+
+async function resolveReplyContext(input: {
+  discussionId: string
+  replyToMessageId?: string | null
+}): Promise<{ replyToMessageId: string; replyPreview: DiscussCaseMessage['replyPreview'] } | null> {
+  const replyToMessageId = input.replyToMessageId?.trim()
+  if (!replyToMessageId) return null
+
+  const target = await getMessage(input.discussionId, replyToMessageId)
+  if (!target) throw new Error('Reply target not found')
+
+  return {
+    replyToMessageId: target.id,
+    replyPreview: buildReplyPreview(target),
   }
 }
 
@@ -451,6 +509,10 @@ export async function acceptInvite(input: {
 }
 
 export async function listMessages(discussionId: string): Promise<DiscussCaseMessage[]> {
+  await purgeExpiredDiscussVoiceMessages({ discussionId }).catch((error) => {
+    console.warn('[discuss-case] voice purge on list failed:', error)
+  })
+
   const supabase = getKbSupabaseAdmin()
   const { data, error } = await supabase
     .from('dc_messages')
@@ -467,10 +529,16 @@ export async function addMessage(input: {
   authorDisplayName?: string | null
   body: string
   quoteExcerpt?: DiscussCaseMessage['quoteExcerpt']
+  replyToMessageId?: string | null
 }): Promise<DiscussCaseMessage> {
   const body = input.body.trim()
   const quoteText = input.quoteExcerpt?.text?.trim()
   if (!body && !quoteText) throw new Error('Message body required')
+
+  const replyContext = await resolveReplyContext({
+    discussionId: input.discussionId,
+    replyToMessageId: input.replyToMessageId,
+  })
 
   const supabase = getKbSupabaseAdmin()
   const { data, error } = await supabase
@@ -481,6 +549,8 @@ export async function addMessage(input: {
       author_display_name: input.authorDisplayName ?? null,
       body,
       quote_excerpt: input.quoteExcerpt ?? null,
+      reply_to_message_id: replyContext?.replyToMessageId ?? null,
+      reply_preview: replyContext?.replyPreview ?? null,
     })
     .select('*')
     .single()
@@ -494,6 +564,87 @@ export async function addMessage(input: {
   return mapMessage(data as Record<string, unknown>)
 }
 
+export async function addVoiceMessage(input: {
+  discussionId: string
+  authorUserId: string
+  authorDisplayName?: string | null
+  audioBuffer: Buffer
+  mimeType: string
+  durationMs: number
+  replyToMessageId?: string | null
+}): Promise<DiscussCaseMessage> {
+  if (input.audioBuffer.byteLength === 0) throw new Error('Empty audio')
+  const durationMs = Math.max(0, Math.round(input.durationMs))
+  if (durationMs > DC_VOICE_MAX_DURATION_MS) {
+    throw new Error('Voice message too long')
+  }
+
+  const messageId = newVoiceMessageId()
+  let attachment: DiscussVoiceAttachmentMeta
+  try {
+    attachment = await uploadDiscussVoiceMessage({
+      discussionId: input.discussionId,
+      messageId,
+      buffer: input.audioBuffer,
+      mimeType: input.mimeType,
+    })
+  } catch (error) {
+    throw error instanceof Error ? error : new Error('Voice upload failed')
+  }
+  attachment.durationMs = durationMs
+  attachment.expiresAt = computeVoiceAttachmentExpiresAt(new Date(), resolveDiscussCaseVoiceRetentionDays())
+
+  const replyContext = await resolveReplyContext({
+    discussionId: input.discussionId,
+    replyToMessageId: input.replyToMessageId,
+  })
+
+  const supabase = getKbSupabaseAdmin()
+  const { data, error } = await supabase
+    .from('dc_messages')
+    .insert({
+      id: messageId,
+      discussion_id: input.discussionId,
+      author_user_id: input.authorUserId,
+      author_display_name: input.authorDisplayName ?? null,
+      body: '',
+      message_kind: 'voice',
+      voice_attachment: attachment,
+      quote_excerpt: null,
+      reply_to_message_id: replyContext?.replyToMessageId ?? null,
+      reply_preview: replyContext?.replyPreview ?? null,
+    })
+    .select('*')
+    .single()
+
+  if (error) {
+    await deleteDiscussVoiceMessage(attachment.storagePath).catch(() => undefined)
+    throw error
+  }
+
+  await supabase
+    .from('dc_discussions')
+    .update({ updated_at: new Date().toISOString() })
+    .eq('id', input.discussionId)
+
+  return mapMessage(data as Record<string, unknown>)
+}
+
+export async function getMessage(
+  discussionId: string,
+  messageId: string,
+): Promise<DiscussCaseMessage | null> {
+  const supabase = getKbSupabaseAdmin()
+  const { data, error } = await supabase
+    .from('dc_messages')
+    .select('*')
+    .eq('discussion_id', discussionId)
+    .eq('id', messageId)
+    .maybeSingle()
+  if (error) throw error
+  return data ? mapMessage(data as Record<string, unknown>) : null
+}
+
 /**
  * Edit an existing message. Scoped to the original author: the update only
  * matches when both the discussion and the author id line up, so a participant
@@ -505,6 +656,12 @@ export async function updateMessage(input: {
   authorUserId: string
   body: string
 }): Promise<DiscussCaseMessage> {
+  const existing = await getMessage(input.discussionId, input.messageId)
+  if (!existing) throw new Error('Message not found')
+  if (existing.messageKind === 'voice') {
+    throw new Error('Voice messages cannot be edited')
+  }
+
   const body = input.body.trim()
   if (!body) throw new Error('Message body required')
 
@@ -515,6 +672,7 @@ export async function updateMessage(input: {
     .eq('id', input.messageId)
     .eq('discussion_id', input.discussionId)
     .eq('author_user_id', input.authorUserId)
+    .eq('message_kind', 'text')
     .select('*')
     .maybeSingle()
   if (error) throw error
@@ -530,18 +688,190 @@ export async function updateMessage(input: {
 export async function deleteMessage(input: {
   messageId: string
   discussionId: string
-  authorUserId: string
+  actorUserId: string
+  canManageDiscussion?: boolean
 }): Promise<void> {
+  const existing = await getMessage(input.discussionId, input.messageId)
+  if (!existing) throw new Error('Message not found')
+
+  const isAuthor = existing.authorUserId === input.actorUserId
+  const isModerator = Boolean(input.canManageDiscussion) && !isAuthor
+  if (!isAuthor && !isModerator) throw new Error('Message not found')
+
   const supabase = getKbSupabaseAdmin()
-  const { data, error } = await supabase
+  let deleteQuery = supabase
     .from('dc_messages')
     .delete()
     .eq('id', input.messageId)
     .eq('discussion_id', input.discussionId)
-    .eq('author_user_id', input.authorUserId)
-    .select('id')
+
+  if (isAuthor) {
+    deleteQuery = deleteQuery.eq('author_user_id', input.actorUserId)
+  }
+
+  const { error } = await deleteQuery
   if (error) throw error
-  if (!data || data.length === 0) throw new Error('Message not found')
+
+  if (existing.voiceAttachment?.storagePath) {
+    await deleteDiscussVoiceMessage(existing.voiceAttachment.storagePath).catch(() => undefined)
+  }
+
+  if (isModerator) {
+    await writeAuditLog({
+      discussionId: input.discussionId,
+      actorUserId: input.actorUserId,
+      action: 'message_deleted_by_moderator',
+      details: { messageId: input.messageId, authorUserId: existing.authorUserId },
+    })
+  }
+}
+
+function isValidReactionEmoji(emoji: string): boolean {
+  const trimmed = emoji.trim()
+  if (!trimmed || trimmed.length > 8) return false
+  return /\p{Extended_Pictographic}/u.test(trimmed)
+}
+
+/**
+ * Toggle an emoji reaction on a message. Each participant may have at most one
+ * reaction; clicking the same emoji again removes it, clicking a different one
+ * replaces the previous reaction.
+ */
+export async function toggleMessageReaction(input: {
+  messageId: string
+  discussionId: string
+  userId: string
+  emoji: string
+}): Promise<DiscussCaseMessage> {
+  const emoji = input.emoji.trim()
+  if (!isValidReactionEmoji(emoji)) throw new Error('Invalid emoji')
+
+  const existing = await getMessage(input.discussionId, input.messageId)
+  if (!existing) throw new Error('Message not found')
+
+  const reactions = [...(existing.reactions ?? [])]
+  const sameIdx = reactions.findIndex(
+    (r) => r.userId === input.userId && r.emoji === emoji,
+  )
+  if (sameIdx >= 0) {
+    reactions.splice(sameIdx, 1)
+  } else {
+    const userIdx = reactions.findIndex((r) => r.userId === input.userId)
+    if (userIdx >= 0) reactions.splice(userIdx, 1)
+    reactions.push({
+      userId: input.userId,
+      emoji,
+      createdAt: new Date().toISOString(),
+    })
+  }
+
+  const supabase = getKbSupabaseAdmin()
+  const { data, error } = await supabase
+    .from('dc_messages')
+    .update({ reactions })
+    .eq('id', input.messageId)
+    .eq('discussion_id', input.discussionId)
+    .select('*')
+    .maybeSingle()
+  if (error) throw error
+  if (!data) throw new Error('Message not found')
+
+  return mapMessage(data as Record<string, unknown>)
+}
+
+/**
+ * Persist a de-identified transcript on a voice message. `machine` transcripts
+ * are written by the transcription route; `edited` ones by a clinician
+ * correction. The text is assumed to already be redacted by the caller.
+ */
+export async function setMessageTranscript(input: {
+  messageId: string
+  discussionId: string
+  transcript: DiscussVoiceTranscript
+}): Promise<DiscussCaseMessage> {
+  const supabase = getKbSupabaseAdmin()
+  const { data, error } = await supabase
+    .from('dc_messages')
+    .update({ transcript: input.transcript })
+    .eq('id', input.messageId)
+    .eq('discussion_id', input.discussionId)
+    .eq('message_kind', 'voice')
+    .select('*')
+    .maybeSingle()
+  if (error) throw error
+  if (!data) throw new Error('Voice message not found')
+  return mapMessage(data as Record<string, unknown>)
+}
+
+/**
+ * Pin or unpin a message. Pinning is gated to moderators/owners at the route
+ * layer; this records who pinned it and when for the audit trail.
+ */
+export async function setMessagePinned(input: {
+  messageId: string
+  discussionId: string
+  actorUserId: string
+  pinned: boolean
+}): Promise<DiscussCaseMessage> {
+  const existing = await getMessage(input.discussionId, input.messageId)
+  if (!existing) throw new Error('Message not found')
+
+  const supabase = getKbSupabaseAdmin()
+  const { data, error } = await supabase
+    .from('dc_messages')
+    .update({
+      pinned: input.pinned,
+      pinned_at: input.pinned ? new Date().toISOString() : null,
+      pinned_by: input.pinned ? input.actorUserId : null,
+    })
+    .eq('id', input.messageId)
+    .eq('discussion_id', input.discussionId)
+    .select('*')
+    .maybeSingle()
+  if (error) throw error
+  if (!data) throw new Error('Message not found')
+
+  await writeAuditLog({
+    discussionId: input.discussionId,
+    actorUserId: input.actorUserId,
+    action: input.pinned ? 'message_pinned' : 'message_unpinned',
+    details: { messageId: input.messageId },
+  })
+
+  return mapMessage(data as Record<string, unknown>)
+}
+
+/**
+ * Set (or clear) the discussion-level resolution summary. Gated to
+ * moderators/owners at the route layer.
+ */
+export async function setResolutionSummary(input: {
+  discussionId: string
+  actorUserId: string
+  text: string
+}): Promise<DiscussCaseDiscussion> {
+  const text = input.text.trim()
+  const summary: DiscussCaseResolutionSummary | null = text
+    ? { text, updatedAt: new Date().toISOString(), updatedBy: input.actorUserId }
+    : null
+
+  const supabase = getKbSupabaseAdmin()
+  const { data, error } = await supabase
+    .from('dc_discussions')
+    .update({ resolution_summary: summary, updated_at: new Date().toISOString() })
+    .eq('id', input.discussionId)
+    .select('*')
+    .maybeSingle()
+  if (error) throw error
+  if (!data) throw new Error('Discussion not found')
+
+  await writeAuditLog({
+    discussionId: input.discussionId,
+    actorUserId: input.actorUserId,
+    action: summary ? 'resolution_summary_updated' : 'resolution_summary_cleared',
+  })
+
+  return mapDiscussion(data as Record<string, unknown>)
 }
 
 export async function listAnnotations(discussionId: string): Promise<DiscussCaseAnnotation[]> {

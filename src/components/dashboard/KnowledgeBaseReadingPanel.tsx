@@ -5,6 +5,7 @@ import { useKnowledgeBaseAnnotations } from '../../hooks/useKnowledgeBaseAnnotat
 import { askPharmaQuestion } from '../../services/pharmaAskApi'
 import type { UserComment } from '../../types/knowledgeBaseAnnotations'
 import { formatSiteLocaleDate } from '../../utils/siteTimezone'
+import { ChatMarkdownText } from '../../utils/chat/ChatMarkdownText'
 import { showNotionToast } from '../notion/NotionToast'
 
 export type PanelTab = 'comments' | 'askAi'
@@ -234,7 +235,13 @@ export function KnowledgeBaseReadingPanel({
                   <p className="kbp-reading-panel__chat-role">
                     {msg.role === 'user' ? t('kbReadingAskYou') : t('kbReadingAskAi')}
                   </p>
-                  <p className="kbp-reading-panel__chat-text">{msg.content}</p>
+                  <p className="kbp-reading-panel__chat-text">
+                    {msg.role === 'assistant' ? (
+                      <ChatMarkdownText text={msg.content} />
+                    ) : (
+                      msg.content
+                    )}
+                  </p>
                 </div>
               ))
             )}

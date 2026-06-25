@@ -9,6 +9,7 @@ import {
 import type { MedicationEntry, MedicationStatus } from '../../types/medicationPlan'
 import { formatClinicalDate } from '../../utils/clinicalDate'
 import { ChangeTypeIcon } from './MedicationToolbar'
+import { MedicationEducationRowMenu } from '../medicationEducation/MedicationEducationPanel'
 
 /** Maps medication status onto the shared therapy status-pill palette. */
 const MED_STATUS_TONE: Record<MedicationStatus, string> = {
@@ -21,6 +22,7 @@ const MED_STATUS_TONE: Record<MedicationStatus, string> = {
 
 interface MedicationRowProps {
   entry: MedicationEntry
+  caseId?: string
   disabled?: boolean
   selected?: boolean
   onSelect: () => void
@@ -31,6 +33,7 @@ interface MedicationRowProps {
 
 export function MedicationRow({
   entry,
+  caseId,
   disabled = false,
   selected = false,
   onSelect,
@@ -91,6 +94,7 @@ export function MedicationRow({
           </div>
         </div>
         <div className="medication-row__actions" onClick={(event) => event.stopPropagation()}>
+          {caseId ? <MedicationEducationRowMenu caseId={caseId} entry={entry} disabled={disabled} /> : null}
           <button
             type="button"
             className="icon-action-btn"

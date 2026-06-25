@@ -125,6 +125,15 @@ export default defineConfig({
     host: true,
     port: 5173,
     strictPort: true,
+    // Allow marketing-domain hosts when testing via /etc/hosts (see .env.example).
+    allowedHosts: [
+      'localhost',
+      'psychiatry.ink',
+      'psychiatrie.ink',
+      'fr.psychiatrie.ink',
+      'psiquiatria.ink',
+      'app.psychiatry.ink',
+    ],
     proxy: {
       '/api': 'http://127.0.0.1:3001',
     },

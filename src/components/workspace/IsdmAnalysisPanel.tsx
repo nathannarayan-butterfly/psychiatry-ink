@@ -2,9 +2,9 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNod
 import { ChevronDown } from 'lucide-react'
 import { ButterflyLogo } from '../ButterflyLogo'
 import { ClinicalEyebrow } from '../clinical/ClinicalEyebrow'
+import { OverviewAiBadge } from '../notion/overview/OverviewAiBadge'
 import { useTranslation } from '../../context/TranslationContext'
-import { getIsdmSafetyDisclaimer } from '../../data/isdmLabels'
-import type { EnglishVariant, UiLanguage } from '../../types/settings'
+import type { UiLanguage } from '../../types/settings'
 import type { IsdmClinicalAnalysis } from '../../types/isdm'
 import { loadIsdmAnalysis } from '../../utils/isdm/storage'
 import { scheduleIsdmRebuild } from '../../utils/isdm'
@@ -178,7 +178,7 @@ export function IsdmAnalysisPanel({
   onJumpToSection,
   flat = false,
 }: IsdmAnalysisPanelProps) {
-  const { t, language, englishVariant } = useTranslation()
+  const { t, language } = useTranslation()
   const [analysis, setAnalysis] = useState<IsdmClinicalAnalysis | null>(() => loadIsdmAnalysis(caseId))
   const [attestations, setAttestations] = useState(() => loadAttestations(caseId))
   const [aiSuggestions, setAiSuggestions] = useState<ButterflyAiSuggestionState>(() => loadAiSuggestions(caseId))
@@ -582,8 +582,6 @@ export function IsdmAnalysisPanel({
     }
   }, [results, caseId, language, icdVersion, interviewCache])
 
-  const disclaimer = getIsdmSafetyDisclaimer(language, englishVariant as EnglishVariant)
-
   const panelClassName = [
     'butterfly-panel',
     flat ? 'butterfly-panel--flat' : '',
@@ -600,7 +598,7 @@ export function IsdmAnalysisPanel({
         <div className="butterfly-panel__idle-card">
           {!flat ? (
             <span className="butterfly-panel__idle-mark">
-              <ButterflyLogo variant="grey" size={28} />
+              <ButterflyLogo variant="grey" breathing size={28} />
             </span>
           ) : null}
           <p className="butterfly-panel__idle-title">{t('butterflyIdleNoDiagnosis')}</p>
@@ -621,7 +619,7 @@ export function IsdmAnalysisPanel({
         <div className="butterfly-panel__idle-card">
           {!flat ? (
             <span className="butterfly-panel__idle-mark">
-              <ButterflyLogo variant="grey" size={28} />
+              <ButterflyLogo variant="grey" breathing size={28} />
             </span>
           ) : null}
           <p className="butterfly-panel__idle-title">{t('butterflyIdle')}</p>
@@ -636,7 +634,7 @@ export function IsdmAnalysisPanel({
       {flat ? (
         <header className="butterfly-panel__header butterfly-panel__header--flat">
           <ClinicalEyebrow inline>{t('butterflyTitle')}</ClinicalEyebrow>
-          <p className="butterfly-panel__subtitle">{t('butterflySubtitle')}</p>
+          <OverviewAiBadge />
           {analysis.updatedAt ? (
             <p className="butterfly-panel__updated">
               {t('isdmPanelLastUpdated')} {formatUpdatedAt(analysis.updatedAt, language)}
@@ -648,11 +646,11 @@ export function IsdmAnalysisPanel({
         <header className="butterfly-panel__header">
           <div className="butterfly-panel__title-row">
             <span className="butterfly-panel__mark">
-              <ButterflyLogo variant="color" size={28} />
+              <ButterflyLogo variant="color" breathing size={28} />
             </span>
             <div>
               <h2 className="butterfly-panel__title">{t('butterflyTitle')}</h2>
-              <p className="butterfly-panel__subtitle">{t('butterflySubtitle')}</p>
+              <OverviewAiBadge />
             </div>
           </div>
           {analysis.updatedAt ? (
@@ -663,11 +661,6 @@ export function IsdmAnalysisPanel({
           ) : null}
         </header>
       )}
-
-      <p className="butterfly-panel__disclaimer" role="note">
-        {disclaimer}
-      </p>
-      <p className="butterfly-panel__draft-notice">{t('butterflyDraftNotice')}</p>
 
       <CollapsibleSection title={t('butterflyRecommendations')}>
         <ul className="butterfly-card-list">
@@ -734,8 +727,6 @@ export function IsdmAnalysisPanel({
           </ul>
         </CollapsibleSection>
       ) : null}
-
-      <p className="butterfly-panel__review-note">{t('isdmPanelClinicianReview')}</p>
     </div>
   )
 }

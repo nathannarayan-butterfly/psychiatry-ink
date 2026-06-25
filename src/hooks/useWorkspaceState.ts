@@ -13,6 +13,9 @@ import type {
   InputMode,
 } from '../types'
 import type { EnglishVariant, UiLanguage } from '../types/settings'
+import type { AufnahmeSectionMetadata } from '../types/anamneseBefund'
+import { isAufnahmeBefundSection } from '../types/anamneseBefund'
+import { metadataForManualEdit } from '../utils/anamnese/befundMetadata'
 import {
   buildPsychopathNormalBefundText,
   buildPsychopathNormalChecklistSelections,
@@ -202,6 +205,7 @@ export function useWorkspaceState(
   const [sectionContents, setSectionContents] = useState<Record<string, string>>(
     initialWorkspace.sectionContents,
   )
+  const [sectionMetadata, setSectionMetadata] = useState<Record<string, AufnahmeSectionMetadata>>({})
   const [editorContent, setEditorContent] = useState(initialWorkspace.editorContent)
   const [generatedContent, setGeneratedContent] = useState(initialWorkspace.generatedContent)
   const [aiToolsExpanded, setAiToolsExpanded] = useState(false)
@@ -275,6 +279,7 @@ export function useWorkspaceState(
   } = useDictation({
     onTranscriptionComplete: applyTranscription,
     onSessionEnd: endDictationSession,
+    language,
   })
 
   const currentDocumentType = useMemo(
@@ -344,6 +349,7 @@ export function useWorkspaceState(
     setEditorContent('')
     setGeneratedContent('')
     setSectionContents({})
+    setSectionMetadata({})
     setChecklistSelections({})
     resetWorkspaceSession()
   }, [resetWorkspaceSession])
@@ -669,6 +675,29 @@ export function useWorkspaceState(
     },
     [activeSectionId],
   )
+
+  const updateSectionMetadata = useCallback(
+    (sectionId: string, metadata: AufnahmeSectionMetadata | undefined) => {
+      setSectionMetadata((current) => {
+        if (!metadata) {
+          const next = { ...current }
+          delete next[sectionId]
+          return next
+        }
+        return { ...current, [sectionId]: metadata }
+      })
+    },
+    [],
+  )
+
+  const markBefundSectionManuallyEdited = useCallback((sectionId: string) => {
+    if (!isAufnahmeBefundSection(sectionId)) return
+    setSectionMetadata((current) => {
+      const prev = current[sectionId]
+      const mode = prev?.inputMode ?? 'short'
+      return { ...current, [sectionId]: metadataForManualEdit(prev, mode) }
+    })
+  }, [])
 
   const focusSection = useCallback(
     (sectionId: string) => {
@@ -1347,6 +1376,7 @@ export function useWorkspaceState(
       resetWorkspaceSession()
       setChecklistSelections({})
       setSectionContents(snapshot.sectionContents)
+      setSectionMetadata(snapshot.sectionMetadata ?? {})
       const firstSection = snapshotSections[0]
       const firstId = firstSection?.id ?? null
       if (firstId) {
@@ -1431,6 +1461,7 @@ export function useWorkspaceState(
     activeSectionId,
     sections,
     sectionContents,
+    sectionMetadata,
     editorContent,
     generatedContent,
     aiToolsExpanded,
@@ -1480,6 +1511,8 @@ export function useWorkspaceState(
     goToNextSection,
     setEditorContent: handleEditorChange,
     setSectionContent,
+    updateSectionMetadata,
+    markBefundSectionManuallyEdited,
     onEditorPaste: handleEditorPaste,
     setInputMode: handleInputModeChange,
     setTherapieVerlaufSourceText,

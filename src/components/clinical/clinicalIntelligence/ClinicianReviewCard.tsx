@@ -2,31 +2,14 @@ import { useMemo } from 'react'
 import { CiStatusCountRow } from './CiStatusCountRow'
 import { useTranslation } from '../../../context/TranslationContext'
 import { ClinicalEmpty } from '../ClinicalSection'
+import { getCiAuditActionLabel } from '../../../data/clinicalIntelligenceTranslations'
 import type {
   ClinicalIntelligenceCaseState,
-  CiAuditAction,
 } from '../../../types/clinicalIntelligence'
 
 interface ClinicianReviewCardProps {
   state: ClinicalIntelligenceCaseState
   onSaveAccepted: () => void
-}
-
-const ACTION_LABEL: Record<CiAuditAction, string> = {
-  'run-started': 'Run started',
-  'run-completed': 'Run completed',
-  'run-failed': 'Run failed',
-  'dimension-accepted': 'Dimension accepted',
-  'dimension-edited': 'Dimension edited',
-  'dimension-rejected': 'Dimension rejected',
-  'dimension-bulk-accepted': 'Dimensions bulk-accepted',
-  'mechanism-accepted': 'Mechanism accepted',
-  'mechanism-edited': 'Mechanism edited',
-  'mechanism-rejected': 'Mechanism rejected',
-  'mechanism-bulk-accepted': 'Mechanisms bulk-accepted',
-  'evidence-base-missing': 'Evidence base missing',
-  'clinician-comment-saved': 'Clinician comment saved',
-  'accepted-findings-saved': 'Accepted findings saved',
 }
 
 /**
@@ -124,7 +107,7 @@ export function ClinicianReviewCard({ state, onSaveAccepted }: ClinicianReviewCa
               <time className="ci-audit__ts">
                 {dateFormatter.format(new Date(entry.timestamp))}
               </time>
-              <span className="ci-audit__type">{ACTION_LABEL[entry.action]}</span>
+              <span className="ci-audit__type">{getCiAuditActionLabel(entry.action, language)}</span>
               <span className="ci-audit__scope">{entry.targetKind}</span>
               {entry.targetId ? (
                 <code className="ci-audit__target">{entry.targetId}</code>

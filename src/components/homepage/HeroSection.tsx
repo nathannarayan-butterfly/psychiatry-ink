@@ -3,6 +3,7 @@ import { ArrowRight } from 'lucide-react'
 import { butterflyLogoSrc, hasButterflyLogo } from '../../data/butterflyLogo'
 import { logoInkSrc, hasLogoInkMark } from '../../data/brandLogo'
 import { useHomepageContent } from '../../hooks/useHomepageContent'
+import { useTranslation } from '../../context/TranslationContext'
 
 interface HeroSectionProps {
   onOpenWorkspace: () => void
@@ -18,6 +19,7 @@ export function HeroSection({
   onEnterApp,
 }: HeroSectionProps) {
   const { hero } = useHomepageContent()
+  const { t } = useTranslation()
 
   return (
     <section className="hp-hero" aria-labelledby="hp-hero-title">
@@ -79,7 +81,7 @@ export function HeroSection({
           {hasLogoInkMark && logoInkSrc ? (
             <img
               src={logoInkSrc}
-              alt=""
+              alt={t('brandLogoAlt')}
               className="hp-workspace-composition__ink"
               decoding="async"
             />
@@ -90,7 +92,7 @@ export function HeroSection({
           {hasButterflyLogo && butterflyLogoSrc ? (
             <img
               src={butterflyLogoSrc}
-              alt=""
+              alt={t('butterflyLogoAlt')}
               className="hp-workspace-composition__butterfly"
               decoding="async"
             />

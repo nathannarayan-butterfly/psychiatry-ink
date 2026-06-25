@@ -10,8 +10,11 @@
  * - WHO_ICD10_RELEASE (default 2016)
  */
 
+import { fetchWithTimeout, withRetry } from '../utils/httpTimeout'
+
 const TOKEN_ENDPOINT = 'https://icdaccessmanagement.who.int/connect/token'
 const API_BASE = 'https://id.who.int'
+const WHO_TIMEOUT_MS = Number(process.env.WHO_ICD_TIMEOUT_MS ?? 30_000)
 
 interface TokenCache {
   accessToken: string
@@ -77,7 +80,7 @@ async function getAccessToken(): Promise<string | null> {
   const clientId = process.env.WHO_ICD_CLIENT_ID!.trim()
   const clientSecret = process.env.WHO_ICD_CLIENT_SECRET!.trim()
 
-  const response = await fetch(TOKEN_ENDPOINT, {
+  const response = await fetchWithTimeout(TOKEN_ENDPOINT, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
@@ -86,6 +89,8 @@ async function getAccessToken(): Promise<string | null> {
       scope: 'icdapi_access',
       grant_type: 'client_credentials',
     }),
+    timeoutMs: WHO_TIMEOUT_MS,
+    label: 'WHO ICD token',
   })
 
   if (!response.ok) {
@@ -109,14 +114,19 @@ async function whoGet(path: string, language: string): Promise<unknown | null> {
   const token = await getAccessToken()
   if (!token) return null
 
-  const response = await fetch(`${API_BASE}${path}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: 'application/json',
-      'Accept-Language': language,
-      'API-Version': 'v2',
-    },
-  })
+  // Read-only lookup → safe to retry once on a timeout/transport blip.
+  const response = await withRetry(() =>
+    fetchWithTimeout(`${API_BASE}${path}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+        'Accept-Language': language,
+        'API-Version': 'v2',
+      },
+      timeoutMs: WHO_TIMEOUT_MS,
+      label: 'WHO ICD lookup',
+    }),
+  )
 
   if (!response.ok) {
     return null

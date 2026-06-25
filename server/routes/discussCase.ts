@@ -10,6 +10,7 @@ import { assertAiQuota, recordAiGenerationUsed } from '../utils/caseAiAccessGuar
 import {
   clinicalLanguagePromptInstruction,
   requireClinicalLanguage,
+  resolveClinicalLanguage,
 } from '../utils/resolveClinicalLanguage'
 import { canAccessCase, getCurrentOrganisation, ORG_HEADER } from '../services/orgPermissions'
 import { isKbAdminConfigured } from '../services/kbSupabaseAdmin'
@@ -23,6 +24,7 @@ import {
   acceptInvite,
   addAnnotation,
   addMessage,
+  addVoiceMessage,
   archiveDiscussion,
   createDiscussion,
   createInvite,
@@ -30,6 +32,7 @@ import {
   deleteMessage,
   getDiscussion,
   getLatestPackages,
+  getMessage,
   getParticipant,
   listAnnotations,
   listAuditLogs,
@@ -42,14 +45,27 @@ import {
   resolveAnnotation,
   revokeInvite,
   revokeParticipant,
+  setMessagePinned,
+  setMessageTranscript,
+  setResolutionSummary,
+  toggleMessageReaction,
   updateMessage,
   writeAuditLog,
 } from '../services/discussCaseStore'
 import type { StoredPackageContent } from '../services/discussCaseStore'
+import { downloadDiscussVoiceMessage } from '../services/discussCaseVoiceStorage'
+import { transcribeAudioBuffer } from '../services/transcriptionProvider'
+import { canAfford, deductCredits } from '../services/credits'
 import {
-  isLiveKitConfigured,
-  mintDiscussCaseVoiceToken,
-} from '../services/livekitVoice'
+  applyTranscriptCorrection,
+  buildMachineVoiceTranscript,
+} from '../services/discussCaseTranscription'
+import { markParticipantTyping, listTypingParticipants } from '../services/discussCasePresence'
+import {
+  isVoiceAttachmentExpired,
+  resolveDiscussCaseVoiceRetentionDays,
+  resolveVoiceAttachmentExpiresAt,
+} from '../services/discussCaseVoiceRetention'
 import type {
   DiscussCasePermission,
   DiscussPackageContent,
@@ -63,6 +79,9 @@ import {
 export const discussCaseRouter: Router = createRouter()
 
 const VALID_TIERS: AiModelTier[] = ['fast', 'standard', 'thorough']
+
+/** Credit cost for transcribing one voice message. Matches /api/transcribe. */
+const TRANSCRIBE_CREDITS = 5
 
 function requireAuth(req: Request, res: Response): string | null {
   const userId = resolveAccountId(req)
@@ -271,10 +290,7 @@ discussCaseRouter.get('/:id/session', async (req: Request, res: Response) => {
       permissions: session.permissions,
       messages,
       annotations,
-      voice: {
-        configured: isLiveKitConfigured(),
-        canJoin: hasPermission(session.permissions, 'join_voice'),
-      },
+      voiceRetentionDays: resolveDiscussCaseVoiceRetentionDays(),
     })
   } catch (error) {
     console.error('[discuss-case] session failed:', error)
@@ -337,6 +353,8 @@ discussCaseRouter.post('/:id/messages', async (req: Request, res: Response) => {
     const body = typeof req.body?.body === 'string' ? req.body.body : ''
     const quoteExcerpt = req.body?.quoteExcerpt ?? null
     const displayName = typeof req.body?.authorDisplayName === 'string' ? req.body.authorDisplayName : null
+    const replyToMessageId =
+      typeof req.body?.replyToMessageId === 'string' ? req.body.replyToMessageId.trim() : null
 
     const message = await addMessage({
       discussionId: session.discussion.id,
@@ -344,16 +362,405 @@ discussCaseRouter.post('/:id/messages', async (req: Request, res: Response) => {
       authorDisplayName: displayName,
       body,
       quoteExcerpt,
+      replyToMessageId,
     })
 
     res.status(201).json({ message })
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Failed'
-    const status = msg.startsWith('Missing permission') ? 403 : 500
+    const status = msg.startsWith('Missing permission')
+      ? 403
+      : msg.includes('Reply target not found')
+        ? 400
+        : 500
     console.error('[discuss-case] message failed:', error)
     res.status(status).json({ error: msg })
   }
 })
+
+// POST /api/discuss-case/:id/messages/voice — async voice note attachment
+discussCaseRouter.post('/:id/messages/voice', async (req: Request, res: Response) => {
+  try {
+    const session = await loadSession(req, res, pathParam(req, 'id'))
+    if (!session) return
+
+    assertPermission(session.permissions, 'send_message')
+
+    const audioBase64 = typeof req.body?.audioBase64 === 'string' ? req.body.audioBase64.trim() : ''
+    const mimeType = typeof req.body?.mimeType === 'string' ? req.body.mimeType.trim() : 'audio/webm'
+    const durationMs =
+      typeof req.body?.durationMs === 'number' && Number.isFinite(req.body.durationMs)
+        ? req.body.durationMs
+        : 0
+    const replyToMessageId =
+      typeof req.body?.replyToMessageId === 'string' ? req.body.replyToMessageId.trim() : null
+
+    if (!audioBase64) {
+      res.status(400).json({ error: 'audioBase64 required' })
+      return
+    }
+
+    const audioBuffer = Buffer.from(audioBase64, 'base64')
+    const message = await addVoiceMessage({
+      discussionId: session.discussion.id,
+      authorUserId: session.userId,
+      audioBuffer,
+      mimeType,
+      durationMs,
+      replyToMessageId,
+    })
+
+    await writeAuditLog({
+      discussionId: session.discussion.id,
+      actorUserId: session.userId,
+      action: 'voice_message_sent',
+      details: { messageId: message.id, durationMs: message.voiceAttachment?.durationMs ?? 0 },
+    })
+
+    res.status(201).json({ message })
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Failed'
+    const status = msg.startsWith('Missing permission')
+      ? 403
+      : msg.includes('too long') || msg.includes('Empty') || msg.includes('Unsupported') || msg.includes('Reply target not found')
+        ? 400
+        : 500
+    console.error('[discuss-case] voice message failed:', error)
+    res.status(status).json({ error: msg })
+  }
+})
+
+// GET /api/discuss-case/:id/messages/:messageId/voice — stream voice attachment
+discussCaseRouter.get('/:id/messages/:messageId/voice', async (req: Request, res: Response) => {
+  try {
+    const session = await loadSession(req, res, pathParam(req, 'id'))
+    if (!session) return
+
+    assertPermission(session.permissions, 'view_package')
+
+    const message = await getMessage(session.discussion.id, pathParam(req, 'messageId'))
+    if (!message || message.messageKind !== 'voice' || !message.voiceAttachment?.storagePath) {
+      res.status(404).json({ error: 'Voice message not found' })
+      return
+    }
+
+    const expiresAt = resolveVoiceAttachmentExpiresAt(
+      message.voiceAttachment,
+      message.createdAt,
+      resolveDiscussCaseVoiceRetentionDays(),
+    )
+    if (isVoiceAttachmentExpired(expiresAt)) {
+      res.status(410).json({ error: 'Voice message expired' })
+      return
+    }
+
+    const { buffer, mimeType } = await downloadDiscussVoiceMessage(message.voiceAttachment.storagePath)
+    res.setHeader('Content-Type', mimeType)
+    res.setHeader('Cache-Control', 'private, no-store')
+    res.send(buffer)
+  } catch (error) {
+    console.error('[discuss-case] voice download failed:', error)
+    res.status(500).json({ error: 'Failed to load voice message' })
+  }
+})
+
+// POST /api/discuss-case/:id/messages/:messageId/transcribe — de-identified transcript
+discussCaseRouter.post(
+  '/:id/messages/:messageId/transcribe',
+  async (req: Request, res: Response) => {
+    try {
+      const session = await loadSession(req, res, pathParam(req, 'id'))
+      if (!session) return
+
+      assertPermission(session.permissions, 'view_package')
+
+      const message = await getMessage(session.discussion.id, pathParam(req, 'messageId'))
+      if (!message || message.messageKind !== 'voice' || !message.voiceAttachment?.storagePath) {
+        res.status(404).json({ error: 'Voice message not found' })
+        return
+      }
+
+      // Idempotent: return the existing transcript unless the caller forces a
+      // re-run (e.g. to refresh a previous machine attempt). Editing is a
+      // separate PATCH that flips provenance to `edited`.
+      const force = req.body?.force === true
+      if (message.transcript && !force) {
+        res.json({ message })
+        return
+      }
+
+      const expiresAt = resolveVoiceAttachmentExpiresAt(
+        message.voiceAttachment,
+        message.createdAt,
+        resolveDiscussCaseVoiceRetentionDays(),
+      )
+      if (isVoiceAttachmentExpired(expiresAt)) {
+        res.status(410).json({ error: 'Voice message expired' })
+        return
+      }
+
+      if (!(await canAfford(TRANSCRIBE_CREDITS, session.userId))) {
+        res.status(402).json({ error: 'Insufficient credits' })
+        return
+      }
+
+      const { buffer, mimeType } = await downloadDiscussVoiceMessage(
+        message.voiceAttachment.storagePath,
+      )
+
+      const org = await getCurrentOrganisation(session.userId, req.headers[ORG_HEADER])
+      const language = resolveClinicalLanguage(req, req.body?.language) ?? 'de'
+      const result = await transcribeAudioBuffer(buffer, mimeType, {
+        userId: session.userId,
+        organisationId: org?.id ?? null,
+        caseId: session.discussion.caseId,
+        language,
+      })
+
+      // SECURITY: scrub identifiers the model may have surfaced from speech
+      // before anything is persisted or returned to the client.
+      const transcript = buildMachineVoiceTranscript({
+        rawText: result.text,
+        model: result.model,
+        language: null,
+      })
+
+      const updated = await setMessageTranscript({
+        messageId: message.id,
+        discussionId: session.discussion.id,
+        transcript,
+      })
+
+      const balance = await deductCredits(TRANSCRIBE_CREDITS, session.userId)
+
+      await writeAuditLog({
+        discussionId: session.discussion.id,
+        actorUserId: session.userId,
+        action: 'voice_message_transcribed',
+        details: { messageId: message.id, model: result.model },
+      })
+
+      res.json({ message: updated, balance, creditsCharged: TRANSCRIBE_CREDITS })
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Failed'
+      const status = msg.startsWith('Missing permission')
+        ? 403
+        : msg.includes('not found')
+          ? 404
+          : 500
+      console.error('[discuss-case] transcribe failed:', error)
+      res.status(status).json({ error: status === 500 ? 'Transcription failed' : msg })
+    }
+  },
+)
+
+// PATCH /api/discuss-case/:id/messages/:messageId/transcript — clinician correction
+discussCaseRouter.patch(
+  '/:id/messages/:messageId/transcript',
+  async (req: Request, res: Response) => {
+    try {
+      const session = await loadSession(req, res, pathParam(req, 'id'))
+      if (!session) return
+
+      assertPermission(session.permissions, 'send_message')
+
+      const message = await getMessage(session.discussion.id, pathParam(req, 'messageId'))
+      if (!message || message.messageKind !== 'voice') {
+        res.status(404).json({ error: 'Voice message not found' })
+        return
+      }
+
+      // A clinician may correct a transcript on their own voice message, or a
+      // moderator on any message. No IDOR: the message is already scoped to the
+      // discussion the participant belongs to.
+      const isAuthor = message.authorUserId === session.userId
+      const canModerate = hasPermission(session.permissions, 'manage_discussion')
+      if (!isAuthor && !canModerate) {
+        res.status(403).json({ error: 'Cannot edit this transcript' })
+        return
+      }
+
+      const text = typeof req.body?.text === 'string' ? req.body.text : ''
+      if (!text.trim()) {
+        res.status(400).json({ error: 'Transcript text required' })
+        return
+      }
+
+      const transcript = applyTranscriptCorrection({
+        existing: message.transcript,
+        text,
+        editedBy: session.userId,
+      })
+
+      const updated = await setMessageTranscript({
+        messageId: message.id,
+        discussionId: session.discussion.id,
+        transcript,
+      })
+
+      res.json({ message: updated })
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Failed'
+      const status = msg.startsWith('Missing permission')
+        ? 403
+        : msg.includes('not found')
+          ? 404
+          : 500
+      console.error('[discuss-case] transcript edit failed:', error)
+      res.status(status).json({ error: msg })
+    }
+  },
+)
+
+// POST /api/discuss-case/:id/messages/:messageId/pin — pin/unpin (moderator)
+discussCaseRouter.post('/:id/messages/:messageId/pin', async (req: Request, res: Response) => {
+  try {
+    const session = await loadSession(req, res, pathParam(req, 'id'))
+    if (!session) return
+
+    assertPermission(session.permissions, 'manage_discussion')
+
+    const pinned = req.body?.pinned !== false
+
+    const message = await setMessagePinned({
+      messageId: pathParam(req, 'messageId'),
+      discussionId: session.discussion.id,
+      actorUserId: session.userId,
+      pinned,
+    })
+
+    res.json({ message })
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Failed'
+    const status = msg.startsWith('Missing permission')
+      ? 403
+      : msg.includes('not found')
+        ? 404
+        : 500
+    console.error('[discuss-case] pin failed:', error)
+    res.status(status).json({ error: msg })
+  }
+})
+
+// PUT /api/discuss-case/:id/resolution-summary — owner/moderator outcome summary
+discussCaseRouter.put('/:id/resolution-summary', async (req: Request, res: Response) => {
+  try {
+    const session = await loadSession(req, res, pathParam(req, 'id'))
+    if (!session) return
+
+    assertPermission(session.permissions, 'manage_discussion')
+
+    const text = typeof req.body?.text === 'string' ? req.body.text : ''
+
+    const discussion = await setResolutionSummary({
+      discussionId: session.discussion.id,
+      actorUserId: session.userId,
+      text,
+    })
+
+    res.json({ discussion })
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Failed'
+    const status = msg.startsWith('Missing permission')
+      ? 403
+      : msg.includes('not found')
+        ? 404
+        : 500
+    console.error('[discuss-case] resolution summary failed:', error)
+    res.status(status).json({ error: msg })
+  }
+})
+
+// POST /api/discuss-case/:id/typing — ephemeral typing heartbeat
+discussCaseRouter.post('/:id/typing', async (req: Request, res: Response) => {
+  try {
+    const session = await loadSession(req, res, pathParam(req, 'id'))
+    if (!session) return
+
+    assertPermission(session.permissions, 'send_message')
+
+    markParticipantTyping(session.discussion.id, session.userId)
+    res.json({ ok: true })
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Failed'
+    const status = msg.startsWith('Missing permission') ? 403 : 500
+    res.status(status).json({ error: msg })
+  }
+})
+
+// GET /api/discuss-case/:id/presence — who is currently typing (excluding self)
+discussCaseRouter.get('/:id/presence', async (req: Request, res: Response) => {
+  try {
+    const session = await loadSession(req, res, pathParam(req, 'id'))
+    if (!session) return
+
+    assertPermission(session.permissions, 'view_package')
+
+    const typing = listTypingParticipants(session.discussion.id, session.userId)
+    res.json({ typing })
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Failed'
+    const status = msg.startsWith('Missing permission') ? 403 : 500
+    res.status(status).json({ error: msg })
+  }
+})
+
+// GET /api/discuss-case/:id/messages — lightweight poll for chat sync
+discussCaseRouter.get('/:id/messages', async (req: Request, res: Response) => {
+  try {
+    const session = await loadSession(req, res, pathParam(req, 'id'))
+    if (!session) return
+
+    assertPermission(session.permissions, 'view_package')
+
+    const messages = await listMessages(session.discussion.id)
+    res.json({ messages })
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Failed'
+    const status = msg.startsWith('Missing permission') ? 403 : 500
+    console.error('[discuss-case] list messages failed:', error)
+    res.status(status).json({ error: msg })
+  }
+})
+
+// POST /api/discuss-case/:id/messages/:messageId/reactions — toggle emoji reaction
+discussCaseRouter.post(
+  '/:id/messages/:messageId/reactions',
+  async (req: Request, res: Response) => {
+    try {
+      const session = await loadSession(req, res, pathParam(req, 'id'))
+      if (!session) return
+
+      assertPermission(session.permissions, 'comment')
+
+      const emoji = typeof req.body?.emoji === 'string' ? req.body.emoji.trim() : ''
+      if (!emoji) {
+        res.status(400).json({ error: 'emoji required' })
+        return
+      }
+
+      const message = await toggleMessageReaction({
+        messageId: pathParam(req, 'messageId'),
+        discussionId: session.discussion.id,
+        userId: session.userId,
+        emoji,
+      })
+
+      res.json({ message })
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Failed'
+      const status = msg.startsWith('Missing permission')
+        ? 403
+        : msg.includes('not found')
+          ? 404
+          : msg.includes('Invalid emoji')
+            ? 400
+            : 500
+      console.error('[discuss-case] reaction failed:', error)
+      res.status(status).json({ error: msg })
+    }
+  },
+)
 
 // PATCH /api/discuss-case/:id/messages/:messageId — edit own message
 discussCaseRouter.patch('/:id/messages/:messageId', async (req: Request, res: Response) => {
@@ -400,7 +807,8 @@ discussCaseRouter.delete('/:id/messages/:messageId', async (req: Request, res: R
     await deleteMessage({
       messageId: pathParam(req, 'messageId'),
       discussionId: session.discussion.id,
-      authorUserId: session.userId,
+      actorUserId: session.userId,
+      canManageDiscussion: hasPermission(session.permissions, 'manage_discussion'),
     })
 
     res.json({ ok: true })
@@ -688,53 +1096,6 @@ discussCaseRouter.post('/:id/archive', async (req: Request, res: Response) => {
     const msg = error instanceof Error ? error.message : 'Failed'
     const status = msg.startsWith('Missing permission') ? 403 : 500
     console.error('[discuss-case] archive failed:', error)
-    res.status(status).json({ error: msg })
-  }
-})
-
-// POST /api/discuss-case/:id/voice-token — mint LiveKit room token (ephemeral audio)
-discussCaseRouter.post('/:id/voice-token', async (req: Request, res: Response) => {
-  try {
-    const session = await loadSession(req, res, pathParam(req, 'id'))
-    if (!session) return
-
-    if (!isLiveKitConfigured()) {
-      res.status(503).json({ error: 'Sprachchat nicht konfiguriert' })
-      return
-    }
-
-    assertPermission(session.permissions, 'join_voice')
-
-    if (session.participant.status !== 'active') {
-      res.status(403).json({ error: 'Participant access revoked' })
-      return
-    }
-
-    const displayName =
-      typeof req.body?.displayName === 'string' ? req.body.displayName.trim() : null
-
-    const voice = await mintDiscussCaseVoiceToken({
-      discussionId: session.discussion.id,
-      userId: session.userId,
-      displayName,
-    })
-
-    await writeAuditLog({
-      discussionId: session.discussion.id,
-      actorUserId: session.userId,
-      action: 'voice_joined',
-      details: { roomName: voice.roomName },
-    })
-
-    res.json(voice)
-  } catch (error) {
-    const msg = error instanceof Error ? error.message : 'Failed'
-    const status = msg.startsWith('Missing permission')
-      ? 403
-      : msg.includes('not configured')
-        ? 503
-        : 500
-    console.error('[discuss-case] voice-token failed:', error)
     res.status(status).json({ error: msg })
   }
 })

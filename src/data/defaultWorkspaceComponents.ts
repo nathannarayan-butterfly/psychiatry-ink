@@ -108,8 +108,8 @@ export const defaultWorkspaceComponents: WorkspaceComponentTemplate[] = [
   },
   {
     id: 'therapie-verlauf',
-    label: 'Arztbrief',
-    railHeading: 'Arztbrief',
+    label: 'Therapie und Verlauf',
+    railHeading: 'Therapie und Verlauf',
     icon: 'activity',
     multistage: false,
     prefilledText: '',

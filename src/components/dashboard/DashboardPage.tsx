@@ -50,14 +50,11 @@ import { DashboardHinweise } from './DashboardHinweise'
 import { AccountRegistryRestoreBanner } from './AccountRegistryRestoreBanner'
 import { DashboardTopBar } from './DashboardTopBar'
 import { KnowledgeBaseTile } from './KnowledgeBase'
-import { isKbAdminApiEnabled } from '../../services/kbAdminApi'
-import { useKbAdminAccess } from '../../hooks/useKbAdminAccess'
+import { useSystemAdminAccess } from '../../hooks/useSystemAdminAccess'
 import { useCurrentOrganisation } from '../../hooks/permissions'
 import { setDevOrganisationTier } from '../../services/orgApi'
 import { useAuditDebugAccess } from '../../hooks/useAuditDebugAccess'
 import { useAuth } from '../../context/AuthContext'
-import { isCaseListedOnDashboard } from '../../hooks/useDemoPatient'
-import { isDemoCase } from '../../demo'
 import {
   archivePatientCase,
   deletePatientCasePermanently,
@@ -106,11 +103,11 @@ interface DashboardPageProps {
   onOpenSettings?: () => void
   onOpenKbAdmin?: () => void
   onOpenAuditDebug?: () => void
-  onOpenDemoPatient?: () => void
   onOpenTemplates?: () => void
   onOpenTeamSettings?: () => void
   onOpenIntegrations?: () => void
   onOpenBudget?: () => void
+  onOpenCredits?: () => void
   onOpenCalendar?: () => void
   onOpenTodos?: () => void
   onOpenEnterprise?: () => void
@@ -151,11 +148,11 @@ export function DashboardPage({
   onNavigateHome,
   onOpenKbAdmin,
   onOpenAuditDebug,
-  onOpenDemoPatient,
   onOpenTemplates,
   onOpenTeamSettings,
   onOpenIntegrations,
   onOpenBudget,
+  onOpenCredits,
   onOpenCalendar,
   onOpenTodos,
   onOpenEnterprise,
@@ -166,7 +163,7 @@ export function DashboardPage({
   const { organisation, refresh: refreshOrganisation } = useCurrentOrganisation()
   const { canAccessEnterpriseUi } = useEnterpriseFeatures()
   const settingsPanel = useSettingsPanel()
-  const hasKbAdminAccess = useKbAdminAccess()
+  const hasSystemAdminAccess = useSystemAdminAccess()
   const hasAuditDebugAccess = useAuditDebugAccess()
   const { user } = useAuth()
   const userId = user?.id ?? 'anonymous'
@@ -292,9 +289,8 @@ export function DashboardPage({
     () =>
       registry.cases
         .filter(isListedPatientCase)
-        .filter((caseItem) => isCaseListedOnDashboard(caseItem.caseId, userId))
         .sort((a, b) => new Date(b.lastEditedAt).getTime() - new Date(a.lastEditedAt).getTime()),
-    [registry.cases, userId],
+    [registry.cases],
   )
 
   const activePatients = useMemo(
@@ -431,6 +427,13 @@ export function DashboardPage({
           activeSection={settingsPanel.activeSection}
           onSectionChange={settingsPanel.setActiveSection}
           onClose={settingsPanel.closeSettings}
+          onOpenCredits={() => {
+            if (onOpenCredits) {
+              onOpenCredits()
+              return
+            }
+            window.location.href = '/dashboard/credits'
+          }}
           creditBalance={creditBalance}
           appearance={appearance}
           privacy={privacy}
@@ -501,7 +504,7 @@ export function DashboardPage({
             <button
               type="button"
               className="dashboard-kpi__value dashboard-kpi__value--btn"
-              onClick={() => setCreditsDialogOpen(true)}
+              onClick={() => (onOpenCredits ? onOpenCredits() : setCreditsDialogOpen(true))}
             >
               {creditBalance}
             </button>
@@ -758,9 +761,6 @@ export function DashboardPage({
                     <span className="dashboard-patients-list__main">
                       <span className="dashboard-patients-list__name">
                         {caseItem.displayTitle}
-                        {isDemoCase(caseItem.caseId) ? (
-                          <span className="demo-patient-chip">{t('demoCaseLabel')}</span>
-                        ) : null}
                       </span>
                       {details.length > 0 ? (
                         <span className="dashboard-patients-list__meta">{details.join(' · ')}</span>
@@ -894,13 +894,19 @@ export function DashboardPage({
               Integrationen
             </button>
           ) : null}
+          {onOpenCredits ? (
+            <button type="button" className="dashboard-settings-chip" onClick={onOpenCredits}>
+              <Sparkles className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
+              {t('dashboardUsageCredits')}
+            </button>
+          ) : null}
           {onOpenBudget ? (
             <button type="button" className="dashboard-settings-chip" onClick={onOpenBudget}>
               <Sparkles className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
               KI-Budget
             </button>
           ) : null}
-          {hasKbAdminAccess && isKbAdminApiEnabled() && onOpenKbAdmin ? (
+          {hasSystemAdminAccess && onOpenKbAdmin ? (
             <button type="button" className="dashboard-settings-chip" onClick={onOpenKbAdmin}>
               <FlaskConical className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
               KB Batch Review (Admin)
@@ -910,12 +916,6 @@ export function DashboardPage({
             <button type="button" className="dashboard-settings-chip" onClick={onOpenAuditDebug}>
               <ClipboardList className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
               Audit Logs (Dev)
-            </button>
-          ) : null}
-          {hasAuditDebugAccess && onOpenDemoPatient ? (
-            <button type="button" className="dashboard-settings-chip" onClick={onOpenDemoPatient}>
-              <FlaskConical className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
-              Demo Patient QA (Dev)
             </button>
           ) : null}
           {canAccessEnterpriseUi && onOpenEnterprise ? (

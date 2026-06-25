@@ -3,6 +3,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { AiToolKey } from '../../data/aiTools'
 import type { DocumentSection, DocumentVariantMode, InputMode } from '../../types'
+import type { AufnahmeSectionMetadata } from '../../types/anamneseBefund'
+import { isAufnahmeBefundSection } from '../../types/anamneseBefund'
 import type { DictationPhase } from '../../types/dictation'
 import {
   copyTextToClipboard,
@@ -17,6 +19,7 @@ import { WorkspaceEditorOverlay } from '../WorkspaceEditorOverlay'
 import { FloatingSelectionToolbar, type SelectionActionId } from './FloatingSelectionToolbar'
 import { useInlineAiEdit } from './inlineAiEdit/useInlineAiEdit'
 import { NotionSectionAiLinks } from './NotionSectionAiLinks'
+import { AufnahmeBefundSectionHost } from './anamnese/AufnahmeBefundSectionHost'
 import { showNotionToast } from './NotionToast'
 import { SlashCommandMenu, type SlashCommandId } from './SlashCommandMenu'
 import type { PendingPaste } from './NotionPaper'
@@ -25,6 +28,8 @@ interface NotionMultiSectionEditorProps {
   sections: DocumentSection[]
   sectionConfigs: DocumentSection[]
   sectionContents: Record<string, string>
+  sectionMetadata?: Record<string, AufnahmeSectionMetadata>
+  documentTypeId?: string
   checklistSelections: Record<string, Record<string, boolean>>
   documentMode?: DocumentVariantMode
   activeSectionId: string | null
@@ -36,6 +41,8 @@ interface NotionMultiSectionEditorProps {
   isPlayingBack: boolean
   isGenerating: boolean
   onSectionContentChange: (sectionId: string, value: string) => void
+  onSectionMetadataChange?: (sectionId: string, metadata: AufnahmeSectionMetadata | undefined) => void
+  onBefundSectionManualEdit?: (sectionId: string) => void
   onSectionFocus: (sectionId: string) => void
   onSectionBlur: (sectionId: string) => void
   onToggleChecklistItem?: (sectionId: string, itemId: string, checked: boolean) => void
@@ -65,6 +72,8 @@ export function NotionMultiSectionEditor({
   sections,
   sectionConfigs,
   sectionContents,
+  sectionMetadata = {},
+  documentTypeId,
   checklistSelections,
   documentMode,
   activeSectionId,
@@ -76,6 +85,8 @@ export function NotionMultiSectionEditor({
   isPlayingBack,
   isGenerating,
   onSectionContentChange,
+  onSectionMetadataChange,
+  onBefundSectionManualEdit,
   onSectionFocus,
   onSectionBlur,
   onToggleChecklistItem,
@@ -352,6 +363,23 @@ export function NotionMultiSectionEditor({
                 />
               </div>
             ) : null}
+            {documentTypeId === 'aufnahme' && isAufnahmeBefundSection(section.id) ? (
+              <AufnahmeBefundSectionHost
+                sectionId={section.id}
+                isActive={isActive}
+                readOnly={readOnly}
+                caseId={caseId}
+                content={content}
+                metadata={sectionMetadata[section.id]}
+                onContentChange={onSectionContentChange}
+                onMetadataChange={(id, meta) => onSectionMetadataChange?.(id, meta)}
+                onFocusEditor={(id) => {
+                  onSectionFocus(id)
+                  focusSectionTextarea(id, content.length)
+                }}
+                onAiGenerate={onSectionAiTool ? (id) => onSectionAiTool(id, 'structure') : undefined}
+              />
+            ) : null}
             <textarea
               ref={(node) => {
                 textareaRefs.current[section.id] = node
@@ -361,6 +389,9 @@ export function NotionMultiSectionEditor({
               value={content}
               onChange={(event) => {
                 onSectionContentChange(section.id, event.target.value)
+                if (documentTypeId === 'aufnahme' && isAufnahmeBefundSection(section.id)) {
+                  onBefundSectionManualEdit?.(section.id)
+                }
                 resizeTextarea(event.target)
               }}
               onFocus={() => {

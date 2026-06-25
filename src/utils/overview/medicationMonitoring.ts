@@ -1,5 +1,7 @@
 import type { MedicationEntry } from '../../types/medicationPlan'
 import type { LaborBefund, LaborValue } from '../laborArchive'
+import type { VerlaufFeedEntry } from '../verlaufFeed'
+import { resolveCaseAnthropometryNumeric } from '../documentTemplate/anthropometryContext'
 import {
   analyteLabel,
   analytePriority,
@@ -14,6 +16,8 @@ import type { ParameterMonitoringRow } from '../../components/notion/overview/ty
 export interface MedicationMonitoringInput {
   medications: MedicationEntry[]
   befunde: LaborBefund[]
+  /** Verlauf feed entries — somatic Befund vitals supplement lab anthropometry. */
+  verlaufEntries?: VerlaufFeedEntry[]
 }
 
 interface LatestLabValue {
@@ -114,6 +118,50 @@ function buildLabIndex(befunde: LaborBefund[]) {
   return { latestByKey, latestBmi, latestWeight, latestHeight }
 }
 
+function applyMergedAnthropometry(
+  index: ReturnType<typeof buildLabIndex>,
+  befunde: LaborBefund[],
+  verlaufEntries: VerlaufFeedEntry[],
+): void {
+  const merged = resolveCaseAnthropometryNumeric(befunde, verlaufEntries)
+
+  if (merged.bmi != null) {
+    index.latestBmi = {
+      value: {
+        name: 'BMI',
+        value: String(merged.bmi),
+        numericValue: merged.bmi,
+        unit: 'kg/m²',
+      },
+      date: merged.bmiDate ?? merged.weightDate ?? merged.heightDate ?? '',
+    }
+  }
+
+  if (merged.weightKg != null) {
+    index.latestWeight = {
+      value: {
+        name: 'Gewicht',
+        value: String(merged.weightKg),
+        numericValue: merged.weightKg,
+        unit: 'kg',
+      },
+      date: merged.weightDate ?? '',
+    }
+  }
+
+  if (merged.heightCm != null) {
+    index.latestHeight = {
+      value: {
+        name: 'Körpergröße',
+        value: String(merged.heightCm),
+        numericValue: merged.heightCm,
+        unit: 'cm',
+      },
+      date: merged.heightDate ?? '',
+    }
+  }
+}
+
 function resolveParameterValue(
   key: AnalyteKey,
   index: ReturnType<typeof buildLabIndex>,
@@ -194,6 +242,7 @@ export function getParameterMonitoringRows(
   input: MedicationMonitoringInput,
 ): ParameterMonitoringRow[] {
   const labIndex = buildLabIndex(input.befunde)
+  applyMergedAnthropometry(labIndex, input.befunde, input.verlaufEntries ?? [])
   const paramMeds = new Map<AnalyteKey, string[]>()
   const seenMedIds = new Set<string>()
 

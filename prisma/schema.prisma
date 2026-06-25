@@ -1,13 +1,24 @@
-// Psychiatry.ink — local SQLite via Prisma
+// Psychiatry.ink — PostgreSQL (Supabase) via Prisma
 // Server-side only (see server/db.ts).
+//
+// DATABASE_URL → pooled connection (PgBouncer, port 6543, `?pgbouncer=true`)
+//                used by the running API for normal queries.
+// DIRECT_URL   → direct connection (port 5432) used by `prisma migrate` /
+//                `prisma db push` only. Migrations cannot run over the
+//                transaction pooler, so Prisma needs the direct URL here.
+//
+// Local dev fallback: point DATABASE_URL + DIRECT_URL at a local Postgres
+// (e.g. `postgresql://postgres:postgres@localhost:5432/psychiatry_ink`) or at
+// the Supabase project directly. SQLite is no longer supported.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 /// Metadata-only AI generation usage log (no clinical text).

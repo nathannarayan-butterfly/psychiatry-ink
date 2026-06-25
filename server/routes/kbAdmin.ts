@@ -8,7 +8,7 @@ import {
 import { publishAllKbSubstances, publishKbSubstance } from '../services/kbPublish'
 import { listKbContributions } from '../services/kbContributionsStore'
 import { isKbAdminConfigured } from '../services/kbSupabaseAdmin'
-import { hasKbAdminRole } from '../services/kbAdminAuth'
+import { isKbSystemAdmin } from '../services/kbAdminAuth'
 import { requireRouteAuth } from '../utils/requireRouteAuth'
 import { recordKbAdminAudit } from '../services/auditLog'
 import {
@@ -54,66 +54,20 @@ function summarizeSubstance(substance: unknown): Record<string, unknown> | null 
 }
 
 /**
- * KB Admin API is DISABLED by default (secure-by-default). It is enabled only
- * when `ENABLE_KB_ADMIN_API=true` (preferred) or the legacy alias
- * `KB_ADMIN_API_ENABLED=true`. An explicit `…=false` on either flag wins.
- */
-export function kbAdminEnabled(): boolean {
-  const next = process.env.ENABLE_KB_ADMIN_API
-  const legacy = process.env.KB_ADMIN_API_ENABLED
-  if (next === 'false' || legacy === 'false') return false
-  return next === 'true' || legacy === 'true'
-}
-
-/**
- * Gate every KB admin endpoint. Ordering (defence in depth):
- *   1. env flag not enabled            → 404 (hide the admin surface)
- *   2. unauthenticated                 → 401
- *   3. authenticated but not admin     → 403
- *   4. service role key not configured → 503
- * Returns the resolved actor id, or null when a response was already sent.
- */
-async function requireKbAdmin(req: Request, res: Response): Promise<string | null> {
-  if (!kbAdminEnabled()) {
-    res.status(404).json({ error: 'Not found' })
-    return null
-  }
-  const userId = requireRouteAuth(req, res)
-  if (!userId) return null
-  const allowed = await hasKbAdminRole(req, userId)
-  if (!allowed) {
-    res.status(403).json({
-      error: 'KB admin access denied: requires owner/admin/kb_admin role.',
-    })
-    return null
-  }
-  if (!isKbAdminConfigured()) {
-    res.status(503).json({ error: 'SUPABASE_SERVICE_ROLE_KEY not configured on server.' })
-    return null
-  }
-  req.kbAdminActorId = userId
-  return userId
-}
-
-/**
- * Gate the legacy JSONB KB write endpoints (drugs / preparations).
- *
- * Unlike {@link requireKbAdmin}, this is NOT behind the `ENABLE_KB_ADMIN_API`
- * env flag: these endpoints back the everyday clinician KB editing UI, not the
- * admin console. They still enforce the SAME identity + permission model as the
- * RLS policy they stand in for (`is_kb_editor()`):
+ * Gate destructive / global KB operations (publish, approve, archive, delete,
+ * contribution review). These require the platform **System Admin** — the only
+ * elevated role over the global KB. Ordering (defence in depth):
  *   1. unauthenticated                 → 401
- *   2. authenticated but not KB editor → 403
+ *   2. authenticated but not sysadmin  → 403
  *   3. service role key not configured → 503
  * Returns the resolved actor id, or null when a response was already sent.
  */
-async function requireKbEditor(req: Request, res: Response): Promise<string | null> {
+function requireSystemAdmin(req: Request, res: Response): string | null {
   const userId = requireRouteAuth(req, res)
   if (!userId) return null
-  const allowed = await hasKbAdminRole(req, userId)
-  if (!allowed) {
+  if (!isKbSystemAdmin(userId)) {
     res.status(403).json({
-      error: 'KB write denied: requires KB editor (owner/admin/kb_admin) permission.',
+      error: 'KB admin access denied: requires the platform System Admin role.',
     })
     return null
   }
@@ -125,16 +79,32 @@ async function requireKbEditor(req: Request, res: Response): Promise<string | nu
   return userId
 }
 
-// Status MUST also fail closed when the API is disabled, so an outsider
-// cannot probe for the existence of the admin surface. When enabled the route
-// is unauthenticated by design (it is the bootstrap probe used by the admin
-// UI), but it must never reveal "I exist" to a Beta instance that has the
-// flag intentionally unset.
-kbAdminRouter.get('/status', (_req, res) => {
-  if (!kbAdminEnabled()) {
-    res.status(404).json({ error: 'Not found' })
-    return
+/**
+ * Gate the KB editing write endpoints (legacy JSONB drugs / preparations).
+ *
+ * Any authenticated user may edit KB content — there is no longer a KB-admin
+ * tier. These service-role writes stand in for the direct browser writes the
+ * secure RLS blocks for the anon client, so they still require a verified
+ * identity:
+ *   1. unauthenticated                 → 401
+ *   2. service role key not configured → 503
+ * Returns the resolved actor id, or null when a response was already sent.
+ */
+function requireKbEditor(req: Request, res: Response): string | null {
+  const userId = requireRouteAuth(req, res)
+  if (!userId) return null
+  if (!isKbAdminConfigured()) {
+    res.status(503).json({ error: 'SUPABASE_SERVICE_ROLE_KEY not configured on server.' })
+    return null
   }
+  req.kbAdminActorId = userId
+  return userId
+}
+
+// Bootstrap probe used by the System Admin console UI. Unauthenticated by
+// design — it only reveals whether the server-side service role is configured,
+// never any KB content.
+kbAdminRouter.get('/status', (_req, res) => {
   res.json({
     enabled: true,
     supabaseConfigured: isKbAdminConfigured(),
@@ -142,7 +112,7 @@ kbAdminRouter.get('/status', (_req, res) => {
 })
 
 kbAdminRouter.get('/substances', async (req, res) => {
-  if (!(await requireKbAdmin(req, res))) return
+  if (!requireSystemAdmin(req, res)) return
   try {
     const substances = await listKbSubstances({
       status: typeof req.query.status === 'string' ? req.query.status : undefined,
@@ -158,7 +128,7 @@ kbAdminRouter.get('/substances', async (req, res) => {
 })
 
 kbAdminRouter.post('/substances/approve-all', async (req, res) => {
-  const actorId = await requireKbAdmin(req, res)
+  const actorId = requireSystemAdmin(req, res)
   if (!actorId) return
   try {
     const status = typeof req.query.status === 'string' ? req.query.status : undefined
@@ -199,7 +169,7 @@ kbAdminRouter.post('/substances/approve-all', async (req, res) => {
 })
 
 kbAdminRouter.get('/contributions', async (req, res) => {
-  if (!(await requireKbAdmin(req, res))) return
+  if (!requireSystemAdmin(req, res)) return
   try {
     const status = typeof req.query.status === 'string' ? req.query.status : 'pending'
     const contributions = await listKbContributions({
@@ -214,7 +184,7 @@ kbAdminRouter.get('/contributions', async (req, res) => {
 })
 
 kbAdminRouter.get('/substances/:id', async (req, res) => {
-  if (!(await requireKbAdmin(req, res))) return
+  if (!requireSystemAdmin(req, res)) return
   try {
     const detail = await getKbSubstanceById(req.params.id)
     if (!detail) {
@@ -229,7 +199,7 @@ kbAdminRouter.get('/substances/:id', async (req, res) => {
 })
 
 kbAdminRouter.patch('/substances/:id', async (req, res) => {
-  const actorId = await requireKbAdmin(req, res)
+  const actorId = requireSystemAdmin(req, res)
   if (!actorId) return
   try {
     const before = await getKbSubstanceById(req.params.id)
@@ -254,7 +224,7 @@ kbAdminRouter.patch('/substances/:id', async (req, res) => {
 })
 
 kbAdminRouter.post('/substances/:id/publish', async (req, res) => {
-  const actorId = await requireKbAdmin(req, res)
+  const actorId = requireSystemAdmin(req, res)
   if (!actorId) return
   try {
     const detail = await getKbSubstanceById(req.params.id)
@@ -294,7 +264,7 @@ kbAdminRouter.post('/substances/:id/publish', async (req, res) => {
 })
 
 kbAdminRouter.post('/substances/:id/archive', async (req, res) => {
-  const actorId = await requireKbAdmin(req, res)
+  const actorId = requireSystemAdmin(req, res)
   if (!actorId) return
   try {
     await updateKbSubstance(req.params.id, { status: 'archived' }, 'archive')
@@ -316,7 +286,7 @@ kbAdminRouter.post('/substances/:id/archive', async (req, res) => {
 })
 
 kbAdminRouter.post('/substances/:id/approve', async (req, res) => {
-  const actorId = await requireKbAdmin(req, res)
+  const actorId = requireSystemAdmin(req, res)
   if (!actorId) return
   try {
     await updateKbSubstance(
@@ -342,33 +312,33 @@ kbAdminRouter.post('/substances/:id/approve', async (req, res) => {
 })
 
 kbAdminRouter.get('/config', async (req, res) => {
-  if (!(await requireKbAdmin(req, res))) return
+  if (!requireSystemAdmin(req, res)) return
   handleAdminConfig(req, res)
 })
 
 kbAdminRouter.get('/discussions', async (req, res) => {
-  if (!(await requireKbAdmin(req, res))) return
+  if (!requireSystemAdmin(req, res)) return
   await handleListDiscussions(req, res)
 })
 kbAdminRouter.post('/discussions', async (req, res) => {
-  if (!(await requireKbAdmin(req, res))) return
+  if (!requireSystemAdmin(req, res)) return
   await handleCreateDiscussion(req, res)
 })
 
 kbAdminRouter.get('/contributions/:contributionId/votes', async (req, res) => {
-  if (!(await requireKbAdmin(req, res))) return
+  if (!requireSystemAdmin(req, res)) return
   await handleGetVoteSummary(req, res)
 })
 kbAdminRouter.post('/contributions/:contributionId/votes', async (req, res) => {
-  if (!(await requireKbAdmin(req, res))) return
+  if (!requireSystemAdmin(req, res)) return
   await handleCastVote(req, res)
 })
 kbAdminRouter.post('/contributions/:contributionId/publish', async (req, res) => {
-  if (!(await requireKbAdmin(req, res))) return
+  if (!requireSystemAdmin(req, res)) return
   await handlePublishContribution(req, res)
 })
 kbAdminRouter.post('/contributions/:contributionId/reject', async (req, res) => {
-  if (!(await requireKbAdmin(req, res))) return
+  if (!requireSystemAdmin(req, res)) return
   await handleRejectContribution(req, res)
 })
 
@@ -377,7 +347,7 @@ kbAdminRouter.post('/contributions/:contributionId/reject', async (req, res) => 
 // blocks for non-editors. Reads stay public/direct from the browser anon client.
 
 kbAdminRouter.post('/drugs', async (req, res) => {
-  const actorId = await requireKbEditor(req, res)
+  const actorId = requireKbEditor(req, res)
   if (!actorId) return
   try {
     const body = req.body as { drugs?: unknown }
@@ -403,7 +373,7 @@ kbAdminRouter.post('/drugs', async (req, res) => {
 })
 
 kbAdminRouter.delete('/drugs/:id', async (req, res) => {
-  const actorId = await requireKbEditor(req, res)
+  const actorId = requireKbEditor(req, res)
   if (!actorId) return
   try {
     await adminDeleteKnowledgeBaseDrug(req.params.id)
@@ -423,7 +393,7 @@ kbAdminRouter.delete('/drugs/:id', async (req, res) => {
 })
 
 kbAdminRouter.post('/preparations', async (req, res) => {
-  const actorId = await requireKbEditor(req, res)
+  const actorId = requireKbEditor(req, res)
   if (!actorId) return
   try {
     const body = req.body as { preparations?: unknown }
@@ -459,7 +429,7 @@ kbAdminRouter.post('/preparations', async (req, res) => {
 })
 
 kbAdminRouter.delete('/preparations/:id', async (req, res) => {
-  const actorId = await requireKbEditor(req, res)
+  const actorId = requireKbEditor(req, res)
   if (!actorId) return
   try {
     await adminDeletePreparation(req.params.id)

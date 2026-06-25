@@ -9,10 +9,17 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import { Sparkles } from 'lucide-react'
+import { VerlaufActionToolbar } from './VerlaufActionToolbar'
+import { copyTextToClipboard } from '../../utils/notionDocumentActions'
+import {
+  buildVerlaufPlainText,
+  exportVerlaufText,
+  printVerlauf,
+  type VerlaufExportItem,
+} from '../../utils/verlauf/exportVerlauf'
 import { useTranslation } from '../../context/TranslationContext'
 import { useAuth } from '../../context/AuthContext'
 import { usePermissionContext } from '../../contexts/PermissionContext'
-import { useDemoPatient } from '../../hooks/useDemoPatient'
 import {
   SelectionActionBubble,
   selectionBubblePosition,
@@ -30,8 +37,11 @@ import {
   loadVerlaufSortOrder,
   removeVerlaufAnnotations,
   saveVerlaufSortOrder,
+  updateVerlaufAnnotationComment,
   updateVerlaufEntry,
+  updateVerlaufTodo,
   type AnnotationType,
+  type TodoPriority,
   type VerlaufAnnotation,
   type VerlaufCommentVisibility,
   type VerlaufFeedEntry,
@@ -42,10 +52,27 @@ import {
   derivedFeedEntryText,
   findOverlappingAnnotations,
   isFormatAnnotation,
+  resolveRevealedCommentId,
+  verlaufTodoPriorityColor,
 } from '../../utils/verlaufAnnotationHelpers'
 import { fetchTeamSnapshot, type TeamMemberProfile } from '../../services/orgApi'
 import { VerlaufAnnotationPanel } from './VerlaufAnnotationPanel'
+import { VerlaufCommentHoverBubble } from './VerlaufCommentHoverBubble'
 import { VerlaufAnnotationConnector } from './VerlaufAnnotationConnector'
+import {
+  VerlaufTodoPanel,
+  type VerlaufTodoEditPayload,
+  type VerlaufTodoItem,
+} from './VerlaufTodoPanel'
+import { VerlaufTodoHoverBubble } from './VerlaufTodoHoverBubble'
+import { useVerlaufAnnotationReveal } from '../../hooks/useVerlaufAnnotationReveal'
+import { useTodoScope } from '../../hooks/useTodoScope'
+import {
+  deleteCentralTodo,
+  reconcileCentralTodoLink,
+  setCentralTodoDone,
+  type CentralTodoFields,
+} from '../../utils/verlauf/verlaufTodoSync'
 import {
   getActiveTimelineId,
   loadTimelinesList,
@@ -78,6 +105,9 @@ import {
 import { applyEdit } from '../../utils/inlineAiEdit/buildEditContext'
 import { resolveVerlaufAiEditTarget } from '../../utils/inlineAiEdit/verlaufInlineEdit'
 import { useInlineAiEdit } from './inlineAiEdit/useInlineAiEdit'
+import { SomaticBefundQuickModal } from './verlauf/SomaticBefundQuickModal'
+import { SomaticBefundEntryCard } from './verlauf/SomaticBefundEntryCard'
+import { isSomaticBefundEntry } from '../../utils/verlauf/somaticBefund'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -253,6 +283,22 @@ function escapeHtml(str: string): string {
     .replace(/"/g, '&quot;')
 }
 
+function hexToRgba(hex: string, alpha: number): string {
+  const normalized = hex.replace('#', '')
+  const value =
+    normalized.length === 3
+      ? normalized
+          .split('')
+          .map((c) => c + c)
+          .join('')
+      : normalized
+  const r = parseInt(value.slice(0, 2), 16)
+  const g = parseInt(value.slice(2, 4), 16)
+  const b = parseInt(value.slice(4, 6), 16)
+  if ([r, g, b].some(Number.isNaN)) return hex
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
 function wrapAnnotation(snippet: string, ann: VerlaufAnnotation): string {
   const styles: string[] = []
   const attrs: string[] = [`data-verlauf-annotation-id="${escapeHtml(ann.id)}"`]
@@ -269,9 +315,24 @@ function wrapAnnotation(snippet: string, ann: VerlaufAnnotation): string {
     styles.push(
       'border-bottom: 2px dotted #c57900; background: rgba(197,121,0,0.08); cursor: pointer',
     )
-    attrs.push(`title="${escapeHtml(ann.comment)}"`)
     attrs.push(`data-comment="${escapeHtml(ann.comment)}"`)
     attrs.push('data-verlauf-annot-type="comment"')
+    attrs.push('tabindex="0"')
+    attrs.push('role="note"')
+    attrs.push(`aria-label="${escapeHtml(ann.comment)}"`)
+  }
+  if (ann.type === 'todo' && ann.todoText) {
+    const color = verlaufTodoPriorityColor(ann.priority)
+    const tint = hexToRgba(color, 0.1)
+    styles.push(`border-bottom: 2px dotted ${color}; background: ${tint}; cursor: pointer`)
+    if (ann.done) styles.push('text-decoration: line-through; opacity: 0.6')
+    attrs.push(`data-todo="${escapeHtml(ann.todoText)}"`)
+    attrs.push('data-verlauf-annot-type="todo"')
+    attrs.push(`data-verlauf-todo-priority="${escapeHtml(ann.priority ?? 'normal')}"`)
+    if (ann.done) attrs.push('data-verlauf-todo-done="true"')
+    attrs.push('tabindex="0"')
+    attrs.push('role="note"')
+    attrs.push(`aria-label="${escapeHtml(ann.todoText)}"`)
   }
 
   const attrStr = attrs.length ? ` ${attrs.join(' ')}` : ''
@@ -355,6 +416,7 @@ interface BubbleToolbarProps {
   state: BubbleState
   onFormat: (type: AnnotationType, color?: string) => void
   onComment: () => void
+  onTodo: () => void
   onCopy: () => void
   onCreateTimeline: () => void
   onRemoveMarkierung: () => void
@@ -367,6 +429,7 @@ function BubbleToolbar({
   state,
   onFormat,
   onComment,
+  onTodo,
   onCopy,
   onCreateTimeline,
   onRemoveMarkierung,
@@ -475,6 +538,15 @@ function BubbleToolbar({
         onClick={onComment}
       >
         💬
+      </button>
+      <button
+        type="button"
+        className="verlauf-bubble__btn"
+        title={t('verlaufTodoAdd')}
+        aria-label={t('verlaufTodoAdd')}
+        onClick={onTodo}
+      >
+        ☑
       </button>
       <button
         type="button"
@@ -779,6 +851,148 @@ function CommentPopover({ state, teamMembers, currentUserId, onSave, onClose }: 
 }
 
 // ---------------------------------------------------------------------------
+// To-do compose popover
+// ---------------------------------------------------------------------------
+
+interface TodoPopoverState {
+  visible: boolean
+  x: number
+  y: number
+  entryId: string
+  startOffset: number
+  endOffset: number
+  rangeText: string
+}
+
+interface TodoSavePayload {
+  todoText: string
+  priority: TodoPriority
+  dueDate: string | null
+}
+
+const TODO_PRIORITY_OPTIONS: {
+  value: TodoPriority
+  labelKey: 'verlaufTodoPriorityHigh' | 'verlaufTodoPriorityNormal' | 'verlaufTodoPriorityLow'
+}[] = [
+  { value: 'high', labelKey: 'verlaufTodoPriorityHigh' },
+  { value: 'normal', labelKey: 'verlaufTodoPriorityNormal' },
+  { value: 'low', labelKey: 'verlaufTodoPriorityLow' },
+]
+
+interface TodoComposePopoverProps {
+  state: TodoPopoverState
+  onSave: (payload: TodoSavePayload) => void
+  onClose: () => void
+}
+
+function TodoComposePopover({ state, onSave, onClose }: TodoComposePopoverProps) {
+  const { t } = useTranslation()
+  const [todoText, setTodoText] = useState('')
+  const [priority, setPriority] = useState<TodoPriority>('normal')
+  const [dueDate, setDueDate] = useState('')
+  const { ref, top, left, ready } = usePopoverPlacement(state.visible, state.x, state.y)
+
+  useEffect(() => {
+    setTodoText('')
+    setPriority('normal')
+    setDueDate('')
+  }, [state.entryId, state.startOffset])
+
+  useEffect(() => {
+    if (!state.visible) return
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        onClose()
+      }
+    }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('mousedown', handleClick)
+    document.addEventListener('keydown', handleKey)
+    return () => {
+      document.removeEventListener('mousedown', handleClick)
+      document.removeEventListener('keydown', handleKey)
+    }
+  }, [onClose, ref, state.visible])
+
+  const canSave = todoText.trim().length > 0
+  const accent = verlaufTodoPriorityColor(priority)
+
+  if (!state.visible) return null
+
+  return (
+    <div
+      ref={ref}
+      className="verlauf-popover verlauf-popover--todo-compose"
+      style={
+        {
+          top,
+          left,
+          visibility: ready ? undefined : 'hidden',
+          '--verlauf-todo-accent': accent,
+        } as React.CSSProperties
+      }
+    >
+      <p className="verlauf-popover__title">{t('verlaufTodoAdd')}</p>
+      <blockquote className="verlauf-popover__quote">{state.rangeText || '…'}</blockquote>
+      <textarea
+        className="verlauf-popover__textarea"
+        value={todoText}
+        onChange={(e) => setTodoText(e.target.value)}
+        rows={2}
+        placeholder={t('verlaufTodoPlaceholder')}
+        autoFocus
+      />
+      <label className="verlauf-popover__label">
+        {t('verlaufTodoPriority')}
+        <select
+          className="verlauf-popover__input"
+          value={priority}
+          onChange={(e) => setPriority(e.target.value as TodoPriority)}
+        >
+          {TODO_PRIORITY_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {t(option.labelKey)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="verlauf-popover__label">
+        {t('verlaufTodoDueDate')}
+        <input
+          type="date"
+          className="verlauf-popover__input"
+          value={dueDate}
+          onChange={(e) => setDueDate(e.target.value)}
+        />
+      </label>
+      <p className="verlauf-popover__hint">{t('verlaufTodoDueDateHint')}</p>
+      <div className="verlauf-popover__actions">
+        <button type="button" className="verlauf-popover__cancel" onClick={onClose}>
+          {t('verlaufEntryCancel')}
+        </button>
+        <button
+          type="button"
+          className="verlauf-popover__add"
+          onClick={() => {
+            if (!canSave) return
+            onSave({
+              todoText: todoText.trim(),
+              priority,
+              dueDate: dueDate.trim() || null,
+            })
+          }}
+          disabled={!canSave}
+        >
+          {t('verlaufEntrySave')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Entry card
 // ---------------------------------------------------------------------------
 
@@ -794,6 +1008,7 @@ interface EntryCardProps {
     readonly: boolean,
   ) => void
   onCommentSelect: (annotationId: string) => void
+  onTodoSelect: (annotationId: string) => void
   onEdit: (id: string, content: string) => void
   onDelete: (id: string) => void
 }
@@ -803,6 +1018,7 @@ const EntryCard = memo(function EntryCard({
   annotations,
   onSelection,
   onCommentSelect,
+  onTodoSelect,
   onEdit,
   onDelete,
 }: EntryCardProps) {
@@ -847,8 +1063,11 @@ const EntryCard = memo(function EntryCard({
     if (!target) return
     const annotationId = target.getAttribute('data-verlauf-annotation-id')
     if (!annotationId) return
-    if (target.getAttribute('data-verlauf-annot-type') === 'comment') {
+    const annotType = target.getAttribute('data-verlauf-annot-type')
+    if (annotType === 'comment') {
       onCommentSelect(annotationId)
+    } else if (annotType === 'todo') {
+      onTodoSelect(annotationId)
     }
   }
 
@@ -1035,6 +1254,7 @@ interface DerivedEntryCardProps {
     readonly: boolean,
   ) => void
   onCommentSelect: (annotationId: string) => void
+  onTodoSelect: (annotationId: string) => void
   /** Derived rows mirror another module — manage routes there, never in place. */
   onNavigateToSource?: (source: DerivedFeedEvent['source']) => void
   annotatable: boolean
@@ -1049,6 +1269,7 @@ const DerivedEntryCard = memo(function DerivedEntryCard({
   deleteLabel,
   onSelection,
   onCommentSelect,
+  onTodoSelect,
   onNavigateToSource,
   annotatable,
 }: DerivedEntryCardProps) {
@@ -1099,8 +1320,11 @@ const DerivedEntryCard = memo(function DerivedEntryCard({
     if (!target) return
     const annotationId = target.getAttribute('data-verlauf-annotation-id')
     if (!annotationId) return
-    if (target.getAttribute('data-verlauf-annot-type') === 'comment') {
+    const annotType = target.getAttribute('data-verlauf-annot-type')
+    if (annotType === 'comment') {
       onCommentSelect(annotationId)
+    } else if (annotType === 'todo') {
+      onTodoSelect(annotationId)
     }
   }
 
@@ -1183,6 +1407,7 @@ interface AufnahmeEntryCardProps {
   copyLabel: string
   onSelection: EntryCardProps['onSelection']
   onCommentSelect: EntryCardProps['onCommentSelect']
+  onTodoSelect: EntryCardProps['onTodoSelect']
   onNavigateToSource?: (source: DerivedFeedEvent['source']) => void
 }
 
@@ -1193,6 +1418,7 @@ const AufnahmeEntryCard = memo(function AufnahmeEntryCard({
   copyLabel,
   onSelection,
   onCommentSelect,
+  onTodoSelect,
   onNavigateToSource,
 }: AufnahmeEntryCardProps) {
   const { t } = useTranslation()
@@ -1230,8 +1456,11 @@ const AufnahmeEntryCard = memo(function AufnahmeEntryCard({
     if (!target) return
     const annotationId = target.getAttribute('data-verlauf-annotation-id')
     if (!annotationId) return
-    if (target.getAttribute('data-verlauf-annot-type') === 'comment') {
+    const annotType = target.getAttribute('data-verlauf-annot-type')
+    if (annotType === 'comment') {
       onCommentSelect(annotationId)
+    } else if (annotType === 'todo') {
+      onTodoSelect(annotationId)
     }
   }
 
@@ -1422,19 +1651,38 @@ export type VerlaufDerivedSource = Exclude<FeedSource, 'manuell'>
 
 interface VerlaufFeedPageProps {
   caseId: string
+  /** Human-readable patient label for to-dos mirrored into the central list. */
+  patientLabel?: string | null
+  /** When true on mount, opens the inline composer (Übersicht quick action). */
+  autoOpenComposer?: boolean
+  /** Called once the auto-open request has been consumed. */
+  onAutoOpenComposerHandled?: () => void
+  /** Optional guided-entry gate — parent shows mode chooser / wizard instead of composer. */
+  onNewEntryRequest?: () => void
   /**
    * Routes a derived (projected) entry's edit/delete to its source module.
    * Derived cards mirror data owned by another section, so they are never
    * mutated in place — the clinician manages the underlying record at source.
    */
   onNavigateToSource?: (source: VerlaufDerivedSource) => void
+  /** Opens the Befundung workspace for structured ECG/EEG documentation. */
+  onOpenFullBefund?: () => void
 }
 
-export function VerlaufFeedPage({ caseId, onNavigateToSource }: VerlaufFeedPageProps) {
+export function VerlaufFeedPage({
+  caseId,
+  patientLabel = null,
+  autoOpenComposer = false,
+  onAutoOpenComposerHandled,
+  onNewEntryRequest,
+  onNavigateToSource,
+  onOpenFullBefund,
+}: VerlaufFeedPageProps) {
   const { t, language } = useTranslation()
   const { user } = useAuth()
   const { member, role, organisation } = usePermissionContext()
-  const { readOnly: demoReadOnly } = useDemoPatient(caseId)
+  const demoReadOnly = false
+  const todoScope = useTodoScope()
 
   const aiEditEnabled = isInlineAiEditEnabled()
   const inlineEdit = useInlineAiEdit({ caseId })
@@ -1458,14 +1706,50 @@ export function VerlaufFeedPage({ caseId, onNavigateToSource }: VerlaufFeedPageP
     loadVerlaufAnnotations(caseId),
   )
   const [activeAnnotationId, setActiveAnnotationId] = useState<string | null>(null)
+  const [activeTodoId, setActiveTodoId] = useState<string | null>(null)
   const [hoveredCommentId, setHoveredCommentId] = useState<string | null>(null)
+  const [focusedCommentId, setFocusedCommentId] = useState<string | null>(null)
+  // Layout model: wide viewport shows the padded margin panel; narrow viewport
+  // hides it and reveals comments only as a hover/focus popup near the anchor.
+  // Kept in sync with the CSS `@media (max-width: 1100px)` breakpoint.
+  const [isNarrow, setIsNarrow] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(max-width: 1100px)').matches,
+  )
+  const hoverClearTimerRef = useRef<number | null>(null)
   const [teamMembers, setTeamMembers] = useState<TeamMemberProfile[]>([])
 
-  // The connector + source-text highlight follow the pinned (clicked) comment,
-  // falling back to whichever comment is currently hovered — mirroring how MS
-  // Word draws a leader line to the active comment in the review margin.
-  const connectorId = activeAnnotationId ?? hoveredCommentId
+  const revealedCommentId = resolveRevealedCommentId(hoveredCommentId, focusedCommentId)
+
+  const cancelHoverClear = useCallback(() => {
+    if (hoverClearTimerRef.current !== null) {
+      window.clearTimeout(hoverClearTimerRef.current)
+      hoverClearTimerRef.current = null
+    }
+  }, [])
+
+  const scheduleHoverClear = useCallback(() => {
+    cancelHoverClear()
+    hoverClearTimerRef.current = window.setTimeout(() => {
+      setHoveredCommentId(null)
+      hoverClearTimerRef.current = null
+    }, 120)
+  }, [cancelHoverClear])
+
+  // Source-text highlight tracks hover/focus on anchor or sidebar index entry.
+  const linkedCommentId = revealedCommentId ?? activeAnnotationId
   const listRef = useRef<HTMLDivElement>(null)
+
+  // Parallel hover/focus reveal model for to-do annotations (mirrors comments).
+  const todoReveal = useVerlaufAnnotationReveal({
+    listRef,
+    annotType: 'todo',
+    panelAttr: 'data-verlauf-todo-panel-id',
+    bubbleAttr: 'data-verlauf-todo-bubble-id',
+  })
+  const linkedTodoId = todoReveal.revealedId ?? activeTodoId
 
   const [bubble, setBubble] = useState<BubbleState>({
     visible: false,
@@ -1498,14 +1782,32 @@ export function VerlaufFeedPage({ caseId, onNavigateToSource }: VerlaufFeedPageP
     rangeText: '',
   })
 
+  const [todoPopover, setTodoPopover] = useState<TodoPopoverState>({
+    visible: false,
+    x: 0,
+    y: 0,
+    entryId: '',
+    startOffset: 0,
+    endOffset: 0,
+    rangeText: '',
+  })
+
   const currentUserId = user?.id ?? member?.userId
+  // Link the mirrored central to-do to the patient case only when a patient is
+  // present; otherwise it becomes a general (workspace) to-do.
+  const todoCentralContext = useMemo(
+    () => ({ caseId: patientLabel ? caseId : null, patientLabel }),
+    [caseId, patientLabel],
+  )
 
   // Reload when caseId changes
   useEffect(() => {
     setEntries(loadVerlaufFeed(caseId))
     setAnnotations(loadVerlaufAnnotations(caseId))
     setActiveAnnotationId(null)
-  }, [caseId])
+    setActiveTodoId(null)
+    todoReveal.reset()
+  }, [caseId, todoReveal.reset])
 
   useEffect(() => {
     let cancelled = false
@@ -1559,18 +1861,33 @@ export function VerlaufFeedPage({ caseId, onNavigateToSource }: VerlaufFeedPageP
     const cls = 'verlauf-annot--linked'
     const previous = document.querySelectorAll<HTMLElement>(`.${cls}`)
     previous.forEach((el) => el.classList.remove(cls))
-    if (!connectorId) return
+    if (!linkedCommentId) return
     const linked = document.querySelectorAll<HTMLElement>(
-      `[data-verlauf-annotation-id="${connectorId}"][data-verlauf-annot-type="comment"]`,
+      `[data-verlauf-annotation-id="${linkedCommentId}"][data-verlauf-annot-type="comment"]`,
     )
     linked.forEach((el) => el.classList.add(cls))
     return () => {
       linked.forEach((el) => el.classList.remove(cls))
     }
-  }, [connectorId, annotations, entries, derivedEvents])
+  }, [linkedCommentId, annotations, entries, derivedEvents])
 
-  // Hovering commented text in the feed previews its margin card link (the
-  // connector + highlight), matching the reverse direction of panel hovers.
+  // Same persistent link, for the pinned/hovered to-do's anchored chart text.
+  useEffect(() => {
+    const cls = 'verlauf-todo-annot--linked'
+    const previous = document.querySelectorAll<HTMLElement>(`.${cls}`)
+    previous.forEach((el) => el.classList.remove(cls))
+    if (!linkedTodoId) return
+    const linked = document.querySelectorAll<HTMLElement>(
+      `[data-verlauf-annotation-id="${linkedTodoId}"][data-verlauf-annot-type="todo"]`,
+    )
+    linked.forEach((el) => el.classList.add(cls))
+    return () => {
+      linked.forEach((el) => el.classList.remove(cls))
+    }
+  }, [linkedTodoId, annotations, entries, derivedEvents])
+
+  // Hovering commented text in the feed reveals its bubble; a short grace period
+  // lets the pointer travel from the anchor span to the bubble or sidebar index.
   useEffect(() => {
     const container = listRef.current
     if (!container) return
@@ -1580,21 +1897,88 @@ export function VerlaufFeedPage({ caseId, onNavigateToSource }: VerlaufFeedPageP
       )
       return el?.getAttribute('data-verlauf-annotation-id') ?? null
     }
+    function isRelatedCommentTarget(related: Node | null, id: string): boolean {
+      if (!related) return false
+      const el = related as HTMLElement
+      const bubbleId = el.closest?.('[data-verlauf-comment-bubble-id]')?.getAttribute(
+        'data-verlauf-comment-bubble-id',
+      )
+      if (bubbleId === id) return true
+      const panelItem = el.closest?.('.verlauf-annotation-panel__item')
+      if (panelItem) {
+        const panelId = panelItem
+          .querySelector('[data-verlauf-panel-annotation-id]')
+          ?.getAttribute('data-verlauf-panel-annotation-id')
+        if (panelId === id) return true
+      }
+      return false
+    }
     function handleOver(e: Event) {
       const id = resolveCommentId(e.target)
-      if (id) setHoveredCommentId(id)
+      if (!id) return
+      cancelHoverClear()
+      setHoveredCommentId(id)
     }
     function handleOut(e: Event) {
       const id = resolveCommentId(e.target)
-      if (id) setHoveredCommentId((current) => (current === id ? null : current))
+      if (!id) return
+      const related = (e as MouseEvent).relatedTarget as Node | null
+      if (isRelatedCommentTarget(related, id)) return
+      scheduleHoverClear()
+    }
+    function handleFocusIn(e: Event) {
+      const id = resolveCommentId(e.target)
+      if (id) setFocusedCommentId(id)
+    }
+    function handleFocusOut(e: Event) {
+      const id = resolveCommentId(e.target)
+      if (!id) return
+      const related = (e as FocusEvent).relatedTarget as Node | null
+      if (isRelatedCommentTarget(related, id)) return
+      setFocusedCommentId((current) => (current === id ? null : current))
     }
     container.addEventListener('mouseover', handleOver)
     container.addEventListener('mouseout', handleOut)
+    container.addEventListener('focusin', handleFocusIn)
+    container.addEventListener('focusout', handleFocusOut)
     return () => {
       container.removeEventListener('mouseover', handleOver)
       container.removeEventListener('mouseout', handleOut)
+      container.removeEventListener('focusin', handleFocusIn)
+      container.removeEventListener('focusout', handleFocusOut)
+      cancelHoverClear()
     }
-  }, [])
+  }, [cancelHoverClear, scheduleHoverClear])
+
+  // On resize, drop hover/focus-reveal so bubbles never stick visible off-anchor
+  // or overlap the source text mid-transition.
+  useEffect(() => {
+    function handleResize() {
+      cancelHoverClear()
+      setHoveredCommentId(null)
+      setFocusedCommentId(null)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [cancelHoverClear])
+
+  // Track the wide/narrow breakpoint. Switching modes also clears any revealed
+  // comment so a panel card and a hover bubble are never shown simultaneously.
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return
+    const mq = window.matchMedia('(max-width: 1100px)')
+    const apply = (matches: boolean) => {
+      setIsNarrow(matches)
+      cancelHoverClear()
+      setHoveredCommentId(null)
+      setFocusedCommentId(null)
+      todoReveal.reset()
+    }
+    apply(mq.matches)
+    const handler = (e: MediaQueryListEvent) => apply(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [cancelHoverClear, todoReveal.reset])
 
   const closeBubble = useCallback(() => {
     setBubble((b) => ({ ...b, visible: false }))
@@ -1608,6 +1992,10 @@ export function VerlaufFeedPage({ caseId, onNavigateToSource }: VerlaufFeedPageP
     setCommentPopover((p) => ({ ...p, visible: false }))
   }, [])
 
+  const closeTodoPopover = useCallback(() => {
+    setTodoPopover((p) => ({ ...p, visible: false }))
+  }, [])
+
   const visibleComments = useMemo(
     () =>
       annotations.filter(
@@ -1619,8 +2007,18 @@ export function VerlaufFeedPage({ caseId, onNavigateToSource }: VerlaufFeedPageP
     [annotations, currentUserId],
   )
 
+  const visibleTodos = useMemo<VerlaufTodoItem[]>(
+    () =>
+      annotations.filter(
+        (ann): ann is VerlaufTodoItem => ann.type === 'todo' && Boolean(ann.todoText),
+      ),
+    [annotations],
+  )
+
   const handleCommentSelect = useCallback((annotationId: string) => {
     setActiveAnnotationId(annotationId)
+    cancelHoverClear()
+    setHoveredCommentId(annotationId)
     setCommentPopover((p) => ({ ...p, visible: false }))
     closeBubble()
     requestAnimationFrame(() => {
@@ -1629,13 +2027,21 @@ export function VerlaufFeedPage({ caseId, onNavigateToSource }: VerlaufFeedPageP
       )
       anchor?.scrollIntoView({ block: 'center', behavior: 'smooth' })
     })
-  }, [closeBubble])
+  }, [cancelHoverClear, closeBubble])
 
   const handleRemoveComment = useCallback(
     (annotationId: string) => {
       const next = removeVerlaufAnnotations([annotationId], caseId)
       setAnnotations(next)
       setActiveAnnotationId((current) => (current === annotationId ? null : current))
+    },
+    [caseId],
+  )
+
+  const handleEditComment = useCallback(
+    (annotationId: string, comment: string) => {
+      const next = updateVerlaufAnnotationComment(annotationId, comment, caseId)
+      setAnnotations(next)
     },
     [caseId],
   )
@@ -1669,6 +2075,7 @@ export function VerlaufFeedPage({ caseId, onNavigateToSource }: VerlaufFeedPageP
       })
       setTimelinePopover((p) => ({ ...p, visible: false }))
       setCommentPopover((p) => ({ ...p, visible: false }))
+      setTodoPopover((p) => ({ ...p, visible: false }))
     },
     [annotations, demoReadOnly],
   )
@@ -1734,6 +2141,150 @@ export function VerlaufFeedPage({ caseId, onNavigateToSource }: VerlaufFeedPageP
     [caseId, closeCommentPopover, commentPopover, currentUserId],
   )
 
+  const handleTodo = useCallback(() => {
+    if (bubble.readonly) return
+    const { entryId, startOffset, endOffset, selectedText, x, y } = bubble
+    if (!entryId) return
+    setTodoPopover({
+      visible: true,
+      x,
+      y: y + 60,
+      entryId,
+      startOffset,
+      endOffset,
+      rangeText: selectedText,
+    })
+    closeBubble()
+  }, [bubble, closeBubble])
+
+  const handleTodoSelect = useCallback(
+    (annotationId: string) => {
+      setActiveTodoId(annotationId)
+      todoReveal.cancelHoverClear()
+      todoReveal.setHoveredId(annotationId)
+      setTodoPopover((p) => ({ ...p, visible: false }))
+      closeBubble()
+      requestAnimationFrame(() => {
+        const anchor = document.querySelector<HTMLElement>(
+          `[data-verlauf-annotation-id="${annotationId}"][data-verlauf-annot-type="todo"]`,
+        )
+        anchor?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      })
+    },
+    [closeBubble, todoReveal],
+  )
+
+  const handleSaveTodo = useCallback(
+    (payload: TodoSavePayload) => {
+      const { entryId, startOffset, endOffset, rangeText } = todoPopover
+      const annotation = {
+        entryId,
+        startOffset,
+        endOffset,
+        type: 'todo' as const,
+        todoText: payload.todoText,
+        rangeText,
+        priority: payload.priority,
+        dueDate: payload.dueDate,
+        done: false,
+        linkedTodoId: null,
+        authorUserId: currentUserId,
+        createdAt: new Date().toISOString(),
+      }
+      const next = addVerlaufAnnotation(annotation, caseId)
+      const saved = next[next.length - 1]
+      setAnnotations(next)
+      closeTodoPopover()
+      if (saved?.id) setActiveTodoId(saved.id)
+
+      if (payload.dueDate && saved?.id) {
+        const fields: CentralTodoFields = {
+          todoText: payload.todoText,
+          rangeText,
+          priority: payload.priority,
+          dueDate: payload.dueDate,
+          done: false,
+        }
+        void reconcileCentralTodoLink({
+          scope: todoScope,
+          ctx: todoCentralContext,
+          linkedTodoId: null,
+          fields,
+        })
+          .then((linkedId) => {
+            if (linkedId) {
+              setAnnotations(updateVerlaufTodo(saved.id, { linkedTodoId: linkedId }, caseId))
+            }
+          })
+          .catch(() => {
+            // Mirroring is best-effort; the Verlauf to-do itself is already saved.
+          })
+      }
+    },
+    [caseId, closeTodoPopover, currentUserId, todoCentralContext, todoPopover, todoScope],
+  )
+
+  const handleEditTodo = useCallback(
+    (annotationId: string, payload: VerlaufTodoEditPayload) => {
+      const existing = annotations.find((a) => a.id === annotationId)
+      const next = updateVerlaufTodo(
+        annotationId,
+        { todoText: payload.todoText, priority: payload.priority, dueDate: payload.dueDate },
+        caseId,
+      )
+      setAnnotations(next)
+
+      const fields: CentralTodoFields = {
+        todoText: payload.todoText,
+        rangeText: existing?.rangeText ?? '',
+        priority: payload.priority,
+        dueDate: payload.dueDate,
+        done: existing?.done ?? false,
+      }
+      void reconcileCentralTodoLink({
+        scope: todoScope,
+        ctx: todoCentralContext,
+        linkedTodoId: existing?.linkedTodoId ?? null,
+        fields,
+      })
+        .then((linkedId) => {
+          setAnnotations(updateVerlaufTodo(annotationId, { linkedTodoId: linkedId }, caseId))
+        })
+        .catch(() => {
+          // Best-effort sync.
+        })
+    },
+    [annotations, caseId, todoCentralContext, todoScope],
+  )
+
+  const handleToggleTodoDone = useCallback(
+    (annotationId: string, done: boolean) => {
+      const existing = annotations.find((a) => a.id === annotationId)
+      setAnnotations(updateVerlaufTodo(annotationId, { done }, caseId))
+      if (existing?.linkedTodoId) {
+        void setCentralTodoDone(todoScope, existing.linkedTodoId, done).catch(() => {
+          // Best-effort sync.
+        })
+      }
+    },
+    [annotations, caseId, todoScope],
+  )
+
+  const handleRemoveTodo = useCallback(
+    (annotationId: string) => {
+      const existing = annotations.find((a) => a.id === annotationId)
+      const next = removeVerlaufAnnotations([annotationId], caseId)
+      setAnnotations(next)
+      setActiveTodoId((current) => (current === annotationId ? null : current))
+      if (existing?.linkedTodoId) {
+        void deleteCentralTodo(todoScope, existing.linkedTodoId).catch(() => {
+          // Best-effort sync.
+        })
+      }
+    },
+    [annotations, caseId, todoScope],
+  )
+
   const handleRemoveMarkierung = useCallback(() => {
     if (bubble.readonly) return
     const ids = bubble.overlappingAnnotations
@@ -1773,17 +2324,32 @@ export function VerlaufFeedPage({ caseId, onNavigateToSource }: VerlaufFeedPageP
 
   const handleEntryDelete = useCallback(
     (id: string) => {
+      // Drop any central to-dos mirrored from this entry's todo annotations.
+      annotations
+        .filter((a) => a.entryId === id && a.type === 'todo' && a.linkedTodoId)
+        .forEach((a) => {
+          void deleteCentralTodo(todoScope, a.linkedTodoId as string).catch(() => {
+            // Best-effort sync.
+          })
+        })
       const next = deleteVerlaufEntry(id, caseId)
       setEntries(next)
       setAnnotations((prev) => prev.filter((a) => a.entryId !== id))
     },
-    [caseId],
+    [annotations, caseId, todoScope],
   )
 
   const [composerOpen, setComposerOpen] = useState(false)
+  const [somaticModalOpen, setSomaticModalOpen] = useState(false)
   const [composerText, setComposerText] = useState('')
   const [composerDate, setComposerDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [composerType, setComposerType] = useState<VerlaufDocumentType>('verlauf')
+
+  useEffect(() => {
+    if (!autoOpenComposer) return
+    setComposerOpen(true)
+    onAutoOpenComposerHandled?.()
+  }, [autoOpenComposer, onAutoOpenComposerHandled])
 
   const handleComposerSave = useCallback(() => {
     if (!composerText.trim()) return
@@ -1982,20 +2548,99 @@ export function VerlaufFeedPage({ caseId, onNavigateToSource }: VerlaufFeedPageP
   const editInSourceLabel = t('verlaufEditInSource')
   const deleteInSourceLabel = t('verlaufDeleteInSource')
 
+  const exportItems = useMemo((): VerlaufExportItem[] => {
+    return allItems.map((item) => {
+      if (item.kind === 'manual') {
+        return {
+          kind: 'manual',
+          date: item.entry.date,
+          sectionLabel: item.entry.sectionLabel,
+          subheading: item.entry.subheading,
+          content: item.entry.content,
+        }
+      }
+      if (isAufnahmeFeedEvent(item.event) && item.event.sections.length > 0) {
+        return {
+          kind: 'derived',
+          date: item.event.date,
+          sourceLabel: item.event.sourceLabel,
+          title: item.event.title,
+          body: item.event.body,
+          sections: item.event.sections,
+        }
+      }
+      return {
+        kind: 'derived',
+        date: item.event.date,
+        sourceLabel: item.event.sourceLabel,
+        title: item.event.title,
+        body: item.event.body,
+      }
+    })
+  }, [allItems])
+
+  const handleCopyAll = useCallback(async () => {
+    const text = buildVerlaufPlainText(exportItems, t('verlaufFeedTitle'))
+    const copied = await copyTextToClipboard(text)
+    if (copied) showNotionToast(t('notionCopied'))
+  }, [exportItems, t])
+
+  const handleExportAll = useCallback(() => {
+    const text = buildVerlaufPlainText(exportItems, t('verlaufFeedTitle'))
+    exportVerlaufText(`${caseId}-verlauf`, text)
+  }, [caseId, exportItems, t])
+
+  const handlePrintAll = useCallback(() => {
+    printVerlauf(exportItems, t('verlaufFeedTitle'))
+  }, [exportItems, t])
+
   return (
-    <div className="verlauf-feed-layout">
+    <div
+      className={`verlauf-feed-layout${
+        isNarrow ? ' verlauf-feed-layout--narrow' : ''
+      }`}
+    >
     <div className="verlauf-feed-page">
+      <div className="verlauf-feed-chrome">
       <header className="verlauf-feed-page__header">
         <h2 className="verlauf-feed-page__title">{t('verlaufFeedTitle')}</h2>
-        {!composerOpen && (
-          <button
-            type="button"
-            className="verlauf-feed-page__new-btn"
-            onClick={(e) => { e.stopPropagation(); setComposerOpen(true) }}
-          >
-            ＋ {t('verlaufNewEntry')}
-          </button>
-        )}
+        <div className="verlauf-feed-page__header-actions">
+          {!isEmpty ? (
+            <VerlaufActionToolbar
+              onCopy={() => void handleCopyAll()}
+              onExport={handleExportAll}
+              onPrint={handlePrintAll}
+            />
+          ) : null}
+          {!composerOpen ? (
+            <div className="verlauf-feed-page__header-entry-actions">
+              <button
+                type="button"
+                className="verlauf-feed-page__new-btn verlauf-feed-page__new-btn--secondary"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setSomaticModalOpen(true)
+                }}
+              >
+                ＋ {t('verlaufSomaticBefundNew')}
+              </button>
+              <button
+                type="button"
+                className="verlauf-feed-page__new-btn"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (onNewEntryRequest) {
+                    onNewEntryRequest()
+                    return
+                  }
+                  setComposerOpen(true)
+                }}
+              >
+                ＋ {t('verlaufNewEntry')}
+              </button>
+            </div>
+          ) : null}
+        </div>
       </header>
 
       {composerOpen && (
@@ -2155,6 +2800,7 @@ export function VerlaufFeedPage({ caseId, onNavigateToSource }: VerlaufFeedPageP
           )}
         </div>
       )}
+      </div>
 
       {isEmpty && !composerOpen ? (
         <div className="clinical-empty-state-card verlauf-feed-page__empty-card">
@@ -2165,14 +2811,23 @@ export function VerlaufFeedPage({ caseId, onNavigateToSource }: VerlaufFeedPageP
           {visibleItems.map((item, index) => (
             <div key={item.id}>
               {item.kind === 'manual' ? (
-                <EntryCard
-                  entry={item.entry}
-                  annotations={annotations}
-                  onSelection={handleSelection}
-                  onCommentSelect={handleCommentSelect}
-                  onEdit={handleEntryEdit}
-                  onDelete={handleEntryDelete}
-                />
+                isSomaticBefundEntry(item.entry) ? (
+                  <SomaticBefundEntryCard
+                    entry={item.entry}
+                    onDelete={handleEntryDelete}
+                    onOpenFullBefund={onOpenFullBefund}
+                  />
+                ) : (
+                  <EntryCard
+                    entry={item.entry}
+                    annotations={annotations}
+                    onSelection={handleSelection}
+                    onCommentSelect={handleCommentSelect}
+                    onTodoSelect={handleTodoSelect}
+                    onEdit={handleEntryEdit}
+                    onDelete={handleEntryDelete}
+                  />
+                )
               ) : isAufnahmeFeedEvent(item.event) && item.event.sections.length > 0 ? (
                 <AufnahmeEntryCard
                   event={item.event}
@@ -2181,6 +2836,7 @@ export function VerlaufFeedPage({ caseId, onNavigateToSource }: VerlaufFeedPageP
                   copyLabel={copyLabel}
                   onSelection={handleSelection}
                   onCommentSelect={handleCommentSelect}
+                  onTodoSelect={handleTodoSelect}
                   onNavigateToSource={onNavigateToSource}
                 />
               ) : (
@@ -2197,6 +2853,7 @@ export function VerlaufFeedPage({ caseId, onNavigateToSource }: VerlaufFeedPageP
                   deleteLabel={deleteInSourceLabel}
                   onSelection={handleSelection}
                   onCommentSelect={handleCommentSelect}
+                  onTodoSelect={handleTodoSelect}
                   onNavigateToSource={onNavigateToSource}
                   annotatable={!demoReadOnly}
                 />
@@ -2213,6 +2870,7 @@ export function VerlaufFeedPage({ caseId, onNavigateToSource }: VerlaufFeedPageP
             state={bubble}
             onFormat={handleFormat}
             onComment={handleComment}
+            onTodo={handleTodo}
             onCopy={handleBubbleCopy}
             onCreateTimeline={handleCreateTimeline}
             onRemoveMarkierung={handleRemoveMarkierung}
@@ -2242,7 +2900,71 @@ export function VerlaufFeedPage({ caseId, onNavigateToSource }: VerlaufFeedPageP
             onClose={closeCommentPopover}
           />
 
-          <VerlaufAnnotationConnector activeId={connectorId} />
+          <TodoComposePopover
+            state={todoPopover}
+            onSave={handleSaveTodo}
+            onClose={closeTodoPopover}
+          />
+
+          <VerlaufAnnotationConnector
+            commentId={linkedCommentId}
+            mode={isNarrow ? 'bubble' : 'panel'}
+          />
+
+          <VerlaufAnnotationConnector
+            commentId={linkedTodoId}
+            mode={isNarrow ? 'bubble' : 'panel'}
+            annotType="todo"
+            panelAttr="data-verlauf-todo-panel-id"
+            bubbleAttr="data-verlauf-todo-bubble-id"
+            lineColor={hexToRgba(verlaufTodoPriorityColor(
+              visibleTodos.find((todoItem) => todoItem.id === linkedTodoId)?.priority,
+            ), 0.6)}
+            dotColor={hexToRgba(verlaufTodoPriorityColor(
+              visibleTodos.find((todoItem) => todoItem.id === linkedTodoId)?.priority,
+            ), 0.85)}
+          />
+
+          {isNarrow ? (
+            <VerlaufCommentHoverBubble
+              commentId={revealedCommentId}
+              comment={visibleComments.find((c) => c.id === revealedCommentId)}
+              teamMembers={teamMembers}
+              currentUserId={currentUserId}
+              onRemove={handleRemoveComment}
+              onEdit={handleEditComment}
+              onHover={(id) => {
+                if (id) {
+                  cancelHoverClear()
+                  setHoveredCommentId(id)
+                } else {
+                  scheduleHoverClear()
+                }
+              }}
+              cancelHoverClear={cancelHoverClear}
+              scheduleHoverClear={scheduleHoverClear}
+            />
+          ) : null}
+
+          {isNarrow ? (
+            <VerlaufTodoHoverBubble
+              todoId={todoReveal.revealedId}
+              todo={visibleTodos.find((todoItem) => todoItem.id === todoReveal.revealedId)}
+              onToggleDone={handleToggleTodoDone}
+              onRemove={handleRemoveTodo}
+              onEdit={handleEditTodo}
+              onHover={(id) => {
+                if (id) {
+                  todoReveal.cancelHoverClear()
+                  todoReveal.setHoveredId(id)
+                } else {
+                  todoReveal.scheduleHoverClear()
+                }
+              }}
+              cancelHoverClear={todoReveal.cancelHoverClear}
+              scheduleHoverClear={todoReveal.scheduleHoverClear}
+            />
+          ) : null}
 
           {inlineEdit.popup}
         </>,
@@ -2250,16 +2972,57 @@ export function VerlaufFeedPage({ caseId, onNavigateToSource }: VerlaufFeedPageP
       )}
     </div>
 
-    <VerlaufAnnotationPanel
-      comments={visibleComments}
-      activeId={activeAnnotationId}
-      linkedId={connectorId}
-      teamMembers={teamMembers}
-      currentUserId={currentUserId}
-      onSelect={handleCommentSelect}
-      onRemove={handleRemoveComment}
-      onHover={setHoveredCommentId}
-    />
+    {!isNarrow ? (
+      <div className="verlauf-feed-aside">
+        <VerlaufAnnotationPanel
+          comments={visibleComments}
+          activeId={activeAnnotationId}
+          linkedId={linkedCommentId}
+          teamMembers={teamMembers}
+          currentUserId={currentUserId}
+          onSelect={handleCommentSelect}
+          onRemove={handleRemoveComment}
+          onEdit={handleEditComment}
+          onHover={(id) => {
+            if (id) {
+              cancelHoverClear()
+              setHoveredCommentId(id)
+            } else {
+              scheduleHoverClear()
+            }
+          }}
+        />
+        <VerlaufTodoPanel
+          todos={visibleTodos}
+          activeId={activeTodoId}
+          linkedId={linkedTodoId}
+          onSelect={handleTodoSelect}
+          onToggleDone={handleToggleTodoDone}
+          onRemove={handleRemoveTodo}
+          onEdit={handleEditTodo}
+          onHover={(id) => {
+            if (id) {
+              todoReveal.cancelHoverClear()
+              todoReveal.setHoveredId(id)
+            } else {
+              todoReveal.scheduleHoverClear()
+            }
+          }}
+        />
+      </div>
+    ) : null}
+
+      <SomaticBefundQuickModal
+        open={somaticModalOpen}
+        caseId={caseId}
+        userId={user?.id}
+        onClose={() => setSomaticModalOpen(false)}
+        onSaved={() => {
+          setEntries(loadVerlaufFeed(caseId))
+          showNotionToast(t('verlaufSomaticBefundSaved'))
+        }}
+        onOpenFullBefund={onOpenFullBefund}
+      />
     </div>
   )
 }

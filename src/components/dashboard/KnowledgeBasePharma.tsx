@@ -8,6 +8,7 @@ import {
   Copy,
   Eye,
   EyeOff,
+  Flag,
   Highlighter,
   MessageSquarePlus,
   Pencil,
@@ -91,6 +92,7 @@ import {
   KbSectionContributionDialog,
   type KbContributionSectionKey,
 } from './KbSectionContributionDialog'
+import { KbReportIssueDialog } from './KbReportIssueDialog'
 import { KnowledgeBaseReceptorEditor } from './KnowledgeBaseReceptorEditor'
 import { MedicationExportMenu } from './MedicationExportMenu'
 import { KeyFactsTable } from '../medication/kb/KeyFactsTable'
@@ -102,6 +104,15 @@ import { kbT } from '../medication/kb/kbStrings'
 import { derivePsychClass, getPsychClassLabel } from '../../utils/medication/psychClass'
 import { extractKbSubstanceId } from '../../utils/kbSubstanceId'
 import { useKbContributors } from '../../hooks/useKbContributors'
+import { MedicationEducationKbTab } from '../medicationEducation/MedicationEducationKbTab'
+import { translateMedicationUi } from '../../data/medicationUiTranslations'
+import {
+  formatSettingsWorkspaceUi,
+  translateSettingsWorkspaceUi,
+} from '../../data/settingsWorkspaceUiTranslations'
+import type { UiLanguage } from '../../types/settings'
+
+const MEDICATION_EDUCATION_KB_SECTION_ID = 'medication-education-kb'
 
 interface KnowledgeBasePharmaProps {
   onClose: () => void
@@ -1124,6 +1135,7 @@ function PreparationForm({
   onSubmit,
   onCancel,
   submitLabel,
+  language,
 }: {
   draft: PreparationDraft
   disabled?: boolean
@@ -1131,6 +1143,7 @@ function PreparationForm({
   onSubmit: () => void
   onCancel?: () => void
   submitLabel: string
+  language: UiLanguage
 }) {
   const setField = <K extends keyof PreparationDraft>(key: K, value: PreparationDraft[K]) => {
     onChange({ ...draft, [key]: value })
@@ -1139,31 +1152,31 @@ function PreparationForm({
     <div className="kb-prep-form">
       <div className="kb-prep-form__grid">
         <label className="kbp-field">
-          <span className="kbp-field__label">Handelsname</span>
+          <span className="kbp-field__label">{translateSettingsWorkspaceUi(language, 'kbpFieldTradeName')}</span>
           <input className="kbp-field__input" value={draft.tradeName} disabled={disabled} onChange={(e) => setField('tradeName', e.target.value)} />
         </label>
         <label className="kbp-field">
-          <span className="kbp-field__label">Stärke</span>
+          <span className="kbp-field__label">{translateSettingsWorkspaceUi(language, 'kbpFieldStrength')}</span>
           <input className="kbp-field__input" value={draft.strengthValue} disabled={disabled} onChange={(e) => setField('strengthValue', e.target.value)} />
         </label>
         <label className="kbp-field">
-          <span className="kbp-field__label">Einheit</span>
+          <span className="kbp-field__label">{translateSettingsWorkspaceUi(language, 'kbpFieldUnit')}</span>
           <input className="kbp-field__input" value={draft.strengthUnit} disabled={disabled} onChange={(e) => setField('strengthUnit', e.target.value)} />
         </label>
         <label className="kbp-field">
-          <span className="kbp-field__label">Darreichungsform</span>
+          <span className="kbp-field__label">{translateSettingsWorkspaceUi(language, 'kbpFieldDosageForm')}</span>
           <input className="kbp-field__input" value={draft.dosageForm} disabled={disabled} onChange={(e) => setField('dosageForm', e.target.value)} />
         </label>
         <label className="kbp-field">
-          <span className="kbp-field__label">Route</span>
+          <span className="kbp-field__label">{translateSettingsWorkspaceUi(language, 'kbpFieldRoute')}</span>
           <input className="kbp-field__input" value={draft.route} disabled={disabled} onChange={(e) => setField('route', e.target.value)} />
         </label>
         <label className="kbp-field">
-          <span className="kbp-field__label">Quelle</span>
+          <span className="kbp-field__label">{translateSettingsWorkspaceUi(language, 'kbpFieldSource')}</span>
           <input className="kbp-field__input" value={draft.sourceName ?? ''} disabled={disabled} onChange={(e) => setField('sourceName', e.target.value)} />
         </label>
         <label className="kbp-field">
-          <span className="kbp-field__label">Verifikation</span>
+          <span className="kbp-field__label">{translateSettingsWorkspaceUi(language, 'kbpFieldVerification')}</span>
           <select className="kbp-field__select" value={draft.verificationStatus} disabled={disabled} onChange={(e) => setField('verificationStatus', e.target.value as PreparationVerificationStatus)}>
             <option value="unverified">unverified</option>
             <option value="ai_draft">ai_draft</option>
@@ -1173,27 +1186,27 @@ function PreparationForm({
         </label>
       </div>
       <details className="kb-prep-form__details">
-        <summary>Weitere Felder</summary>
+        <summary>{translateSettingsWorkspaceUi(language, 'kbpMoreFields')}</summary>
         <div className="kb-prep-form__grid">
           <label className="kbp-field">
-            <span className="kbp-field__label">Wirkstoff</span>
+            <span className="kbp-field__label">{translateSettingsWorkspaceUi(language, 'kbpFieldActiveIngredient')}</span>
             <input className="kbp-field__input" value={draft.genericName} disabled={disabled} onChange={(e) => setField('genericName', e.target.value)} />
           </label>
           <label className="kbp-field">
-            <span className="kbp-field__label">Quellenreferenz</span>
+            <span className="kbp-field__label">{translateSettingsWorkspaceUi(language, 'kbpFieldSourceReference')}</span>
             <input className="kbp-field__input" value={draft.sourceReference ?? ''} disabled={disabled} onChange={(e) => setField('sourceReference', e.target.value)} />
           </label>
           <label className="kbp-field">
-            <span className="kbp-field__label">Packung</span>
+            <span className="kbp-field__label">{translateSettingsWorkspaceUi(language, 'kbpFieldPackage')}</span>
             <input className="kbp-field__input" value={draft.packageSize ?? ''} disabled={disabled} onChange={(e) => setField('packageSize', e.target.value)} />
           </label>
           <label className="kbp-field">
-            <span className="kbp-field__label">Produkt-ID</span>
+            <span className="kbp-field__label">{translateSettingsWorkspaceUi(language, 'kbpFieldProductId')}</span>
             <input className="kbp-field__input" value={draft.productIdentifier ?? ''} disabled={disabled} onChange={(e) => setField('productIdentifier', e.target.value)} />
           </label>
         </div>
         <label className="kbp-field">
-          <span className="kbp-field__label">Kurze Notiz</span>
+          <span className="kbp-field__label">{translateSettingsWorkspaceUi(language, 'kbpFieldShortNote')}</span>
           <textarea className="kbp-section__textarea" rows={2} value={draft.notes ?? ''} disabled={disabled} onChange={(e) => setField('notes', e.target.value)} />
         </label>
       </details>
@@ -1201,7 +1214,7 @@ function PreparationForm({
         <button type="button" className="kbp-btn kbp-btn--primary" disabled={disabled || !draft.tradeName.trim() || !draft.strengthValue.trim()} onClick={onSubmit}>
           {submitLabel}
         </button>
-        {onCancel ? <button type="button" className="kbp-btn" onClick={onCancel}>Abbrechen</button> : null}
+        {onCancel ? <button type="button" className="kbp-btn" onClick={onCancel}>{translateSettingsWorkspaceUi(language, 'kbpCancel')}</button> : null}
       </div>
     </div>
   )
@@ -1214,6 +1227,7 @@ function PreparationDialog({
   onSubmit,
   onCancel,
   submitLabel,
+  language,
 }: {
   title: string
   draft: PreparationDraft
@@ -1221,13 +1235,19 @@ function PreparationDialog({
   onSubmit: () => void
   onCancel: () => void
   submitLabel: string
+  language: UiLanguage
 }) {
   return createPortal(
     <div className="kbp-overlay" role="dialog" aria-modal>
       <div className="kbp-dialog kbp-dialog--prep">
         <div className="kbp-dialog__header">
           <h2 className="kbp-dialog__title">{title}</h2>
-          <button type="button" className="kbp-icon-btn" onClick={onCancel} aria-label="Schließen">
+          <button
+            type="button"
+            className="kbp-icon-btn"
+            onClick={onCancel}
+            aria-label={translateSettingsWorkspaceUi(language, 'kbpClose')}
+          >
             <X className="h-4 w-4" strokeWidth={1.75} />
           </button>
         </div>
@@ -1237,6 +1257,7 @@ function PreparationDialog({
           onSubmit={onSubmit}
           onCancel={onCancel}
           submitLabel={submitLabel}
+          language={language}
         />
       </div>
     </div>,
@@ -1280,7 +1301,8 @@ function CountryPreparationsSection({
   const hasVerified = allEntriesForCountry.some(isVerifiedPreparation)
   const editingEntry = editingId ? allEntriesForCountry.find((entry) => entry.id === editingId) : undefined
 
-  const title = 'Verfügbare Präparate'
+  const lang = language as UiLanguage
+  const title = translateSettingsWorkspaceUi(lang, 'kbpAvailablePreparations')
 
   return (
     <section data-kb-section="preparations" className="kbp-section kbp-preparations-section">
@@ -1301,11 +1323,13 @@ function CountryPreparationsSection({
                 className="kbp-btn kbp-btn--sm kbp-btn--ai"
                 disabled={regenerateLoading}
                 onClick={onRegenerate}
-                title="Mit KI anreichern"
-                aria-label="Verfügbare Präparate mit KI anreichern"
+                title={translateSettingsWorkspaceUi(lang, 'kbpEnrichWithAi')}
+                aria-label={translateSettingsWorkspaceUi(lang, 'kbpEnrichWithAiAria')}
               >
                 <Sparkles className={`h-3.5 w-3.5${regenerateLoading ? ' kbp-spin' : ''}`} strokeWidth={1.75} aria-hidden />
-                {regenerateLoading ? 'KI läuft …' : 'Mit KI anreichern'}
+                {regenerateLoading
+                  ? translateSettingsWorkspaceUi(lang, 'kbpAiRunning')
+                  : translateSettingsWorkspaceUi(lang, 'kbpEnrichWithAi')}
               </button>
             ) : null}
           </span>
@@ -1314,13 +1338,18 @@ function CountryPreparationsSection({
       <div className="kbp-section__body">
         {entries.length === 0 && pendingEntries.length === 0 ? (
           <p className="kbp-section__text kbp-section__text--empty">
-            Keine verifizierten Präparate für {PRESCRIBING_COUNTRY_LABELS[country]} hinterlegt.
-            {mode === 'editing' ? ' Manuell hinzufügen oder per KI als Entwurf anreichern.' : ''}
+            {formatSettingsWorkspaceUi(lang, 'kbpNoPrepsForCountry', {
+              country: PRESCRIBING_COUNTRY_LABELS[country],
+            })}
+            {mode === 'editing' ? translateSettingsWorkspaceUi(lang, 'kbpNoPrepsAddHint') : ''}
           </p>
         ) : mode === 'reading' ? (
           <div className="kb-prep-reading-list">
             <p className="kbp-section__text kbp-prep-list-intro">
-              {pickKbLocalizedText(drug.genericName, drug.genericNameEn, language) || drug.genericName} — verfügbare Zubereitungen in {PRESCRIBING_COUNTRY_NATIVE_LABELS[country]}:
+              {formatSettingsWorkspaceUi(lang, 'kbpPrepListIntro', {
+                drug: pickKbLocalizedText(drug.genericName, drug.genericNameEn, language) || drug.genericName,
+                country: PRESCRIBING_COUNTRY_NATIVE_LABELS[country],
+              })}
             </p>
             <ul className="kb-prep-compact-list">
               {entries.map((entry) => (
@@ -1333,12 +1362,12 @@ function CountryPreparationsSection({
             <table className="kb-prep-table">
               <thead>
                 <tr>
-                  <th>Präparat</th>
-                  <th>Stärke</th>
-                  <th>Form</th>
-                  <th>Quelle</th>
-                  <th>Verifiziert</th>
-                  {mode === 'editing' ? <th>Aktionen</th> : null}
+                  <th>{translateSettingsWorkspaceUi(lang, 'kbpColPreparation')}</th>
+                  <th>{translateSettingsWorkspaceUi(lang, 'kbpFieldStrength')}</th>
+                  <th>{translateSettingsWorkspaceUi(lang, 'kbpColForm')}</th>
+                  <th>{translateSettingsWorkspaceUi(lang, 'kbpFieldSource')}</th>
+                  <th>{translateSettingsWorkspaceUi(lang, 'kbpColVerified')}</th>
+                  {mode === 'editing' ? <th>{translateSettingsWorkspaceUi(lang, 'kbpColActions')}</th> : null}
                 </tr>
               </thead>
               <tbody>
@@ -1357,9 +1386,9 @@ function CountryPreparationsSection({
                       <span className="kb-prep-table__meta">{localizedGenericName}</span>
                       {mode === 'editing' ? (
                         <span className="kb-prep-table__meta">
-                          {formatAuditLine('Erstellt von', entry.createdByDisplayName, entry.createdAt, language)}
+                          {formatAuditLine(translateSettingsWorkspaceUi(lang, 'kbpAuditCreatedBy'), entry.createdByDisplayName, entry.createdAt, language)}
                           {' · '}
-                          {formatAuditLine('Geändert von', entry.lastModifiedByDisplayName, entry.lastModifiedAt, language)}
+                          {formatAuditLine(translateSettingsWorkspaceUi(lang, 'kbpAuditModifiedBy'), entry.lastModifiedByDisplayName, entry.lastModifiedAt, language)}
                         </span>
                       ) : null}
                     </td>
@@ -1370,10 +1399,10 @@ function CountryPreparationsSection({
                     {mode === 'editing' ? (
                       <td>
                         <div className="kb-prep-table__actions">
-                          <button type="button" className="kbp-icon-btn kbp-icon-btn--xs" onClick={() => setEditingId(entry.id)} title="Bearbeiten" aria-label="Bearbeiten">
+                          <button type="button" className="kbp-icon-btn kbp-icon-btn--xs" onClick={() => setEditingId(entry.id)} title={translateSettingsWorkspaceUi(lang, 'kbpEdit')} aria-label={translateSettingsWorkspaceUi(lang, 'kbpEdit')}>
                             <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} />
                           </button>
-                          <button type="button" className="kbp-icon-btn kbp-icon-btn--xs kbp-icon-btn--danger" onClick={() => deletePreparation(entry.id)} title="Löschen" aria-label="Löschen">
+                          <button type="button" className="kbp-icon-btn kbp-icon-btn--xs kbp-icon-btn--danger" onClick={() => deletePreparation(entry.id)} title={translateSettingsWorkspaceUi(lang, 'kbpDelete')} aria-label={translateSettingsWorkspaceUi(lang, 'kbpDelete')}>
                             <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
                           </button>
                         </div>
@@ -1387,15 +1416,15 @@ function CountryPreparationsSection({
                     <td>
                       <strong>{entry.tradeName}</strong>
                       <span className="kb-prep-table__meta">{entry.genericName}</span>
-                      <span className="kb-prep-table__meta">KI-Entwurf - noch nicht übernommen</span>
+                      <span className="kb-prep-table__meta">{translateSettingsWorkspaceUi(lang, 'kbpAiDraftNotAdopted')}</span>
                     </td>
                     <td>{`${entry.strengthValue} ${entry.strengthUnit}`.trim()}</td>
                     <td>{entry.dosageForm} · {entry.route}</td>
-                    <td>{compactText(entry.sourceName || entry.sourceReference, 80) || 'KI-Entwurf'}</td>
+                    <td>{compactText(entry.sourceName || entry.sourceReference, 80) || translateSettingsWorkspaceUi(lang, 'kbpAiDraft')}</td>
                     <td>{entry.verificationStatus} · —</td>
                     {mode === 'editing' ? (
                       <td>
-                        <span className="kb-prep-table__pending-action">Übernehmen/Verwerfen oben</span>
+                        <span className="kb-prep-table__pending-action">{translateSettingsWorkspaceUi(lang, 'kbpAdoptDiscardAbove')}</span>
                       </td>
                     ) : null}
                   </tr>
@@ -1406,37 +1435,41 @@ function CountryPreparationsSection({
         )}
         {mode === 'reading' && entries.length > 0 ? (
           <p className="kb-prep-source-note">
-            Quellenstand: {entries.map((entry) => compactText(entry.sourceName || entry.sourceReference, 60)).filter(Boolean).slice(0, 2).join(', ') || '—'}
+            {translateSettingsWorkspaceUi(lang, 'kbpSourceStatusLabel')}: {entries.map((entry) => compactText(entry.sourceName || entry.sourceReference, 60)).filter(Boolean).slice(0, 2).join(', ') || '—'}
           </p>
         ) : null}
         {mode === 'editing' ? (
           <div className="kb-prep-edit-panel">
             {!hasVerified ? (
               <p className="kbp-section__text kbp-section__text--empty">
-                Keine verifizierten Präparate für {PRESCRIBING_COUNTRY_LABELS[country]} hinterlegt. KI-Entwürfe müssen geprüft werden.
+                {formatSettingsWorkspaceUi(lang, 'kbpNoPrepsForCountry', {
+                  country: PRESCRIBING_COUNTRY_LABELS[country],
+                })}{' '}
+                {translateSettingsWorkspaceUi(lang, 'kbpDraftsMustReview')}
               </p>
             ) : null}
             <div className="kb-prep-edit-panel__actions">
               <button type="button" className="kbp-btn kbp-btn--sm" onClick={() => { setShowAdd((open) => !open); setNewDraft(emptyPreparationDraft(drug, country)) }}>
                 <Plus className="h-3.5 w-3.5" strokeWidth={2.25} aria-hidden />
-                Präparat hinzufügen
+                {translateSettingsWorkspaceUi(lang, 'kbpAddPreparation')}
               </button>
             </div>
           </div>
         ) : null}
         {mode === 'editing' && editingEntry ? (
           <PreparationDialog
-            title="Präparat bearbeiten"
+            title={translateSettingsWorkspaceUi(lang, 'kbpEditPreparation')}
             draft={editingEntry}
             onChange={(next) => updatePreparation(next as MedicationMarketAvailability)}
             onSubmit={() => setEditingId(null)}
             onCancel={() => setEditingId(null)}
-            submitLabel="Fertig"
+            submitLabel={translateSettingsWorkspaceUi(lang, 'kbpDone')}
+            language={lang}
           />
         ) : null}
         {mode === 'editing' && showAdd ? (
           <PreparationDialog
-            title="Präparat hinzufügen"
+            title={translateSettingsWorkspaceUi(lang, 'kbpAddPreparation')}
             draft={newDraft}
             onChange={(next) => setNewDraft(next as Omit<MedicationMarketAvailability, 'id' | 'createdAt'>)}
             onSubmit={() => {
@@ -1445,7 +1478,8 @@ function CountryPreparationsSection({
               setShowAdd(false)
             }}
             onCancel={() => setShowAdd(false)}
-            submitLabel="Präparat speichern"
+            submitLabel={translateSettingsWorkspaceUi(lang, 'kbpSavePreparation')}
+            language={lang}
           />
         ) : null}
       </div>
@@ -1461,32 +1495,39 @@ function targetMatches(entry: ReceptorAffinityEntry, aliases: string[]): boolean
   return aliases.some((alias) => normalized.includes(alias))
 }
 
-function interpretationLine(entry: ReceptorAffinityEntry, text: string): string {
-  const value = entry.affinityPercent == null ? 'unbekannter relativer Affinität' : `${entry.affinityPercent}% relativer Affinität`
-  return `${getReceptorDisplayLabel(entry.target)} (${value}): ${text}`
+function interpretationLine(
+  entry: ReceptorAffinityEntry,
+  language: UiLanguage,
+  textKey: 'kbpInterpD2' | 'kbpInterp5ht2a' | 'kbpInterpAlpha1' | 'kbpInterpH1' | 'kbpInterpAlpha2',
+): string {
+  const value =
+    entry.affinityPercent == null
+      ? translateSettingsWorkspaceUi(language, 'kbpAffinityUnknown')
+      : formatSettingsWorkspaceUi(language, 'kbpAffinityRelative', { percent: entry.affinityPercent })
+  return `${getReceptorDisplayLabel(entry.target)} (${value}): ${translateSettingsWorkspaceUi(language, textKey)}`
 }
 
-function buildClinicalInterpretation(entries: ReceptorAffinityEntry[]): string[] {
+function buildClinicalInterpretation(entries: ReceptorAffinityEntry[], language: UiLanguage): string[] {
   const items: string[] = []
   const d2 = entries.find((entry) => targetMatches(entry, ['d2']))
   if (d2) {
-    items.push(interpretationLine(d2, 'stützt antipsychotische Wirksamkeit; hohe Werte erhöhen die Relevanz von EPS und Prolaktin.'))
+    items.push(interpretationLine(d2, language, 'kbpInterpD2'))
   }
   const ht2a = entries.find((entry) => targetMatches(entry, ['5ht2a']))
   if (ht2a) {
-    items.push(interpretationLine(ht2a, 'kann EPS-Risiko und Negativsymptomatik günstig modulieren.'))
+    items.push(interpretationLine(ht2a, language, 'kbpInterp5ht2a'))
   }
   const alpha1 = entries.find((entry) => targetMatches(entry, ['alpha1', 'a1']))
   if (alpha1) {
-    items.push(interpretationLine(alpha1, 'spricht klinisch für Orthostase- und Sedierungsrisiko.'))
+    items.push(interpretationLine(alpha1, language, 'kbpInterpAlpha1'))
   }
   const h1 = entries.find((entry) => targetMatches(entry, ['h1']))
   if (h1) {
-    items.push(interpretationLine(h1, 'ist vor allem für Sedierung, Appetitsteigerung und Gewicht relevant.'))
+    items.push(interpretationLine(h1, language, 'kbpInterpH1'))
   }
   const alpha2 = entries.find((entry) => targetMatches(entry, ['alpha2', 'a2']))
   if (alpha2) {
-    items.push(interpretationLine(alpha2, 'weist auf noradrenerge Modulation mit potenzieller Wirkung auf Vigilanz und Affekt hin.'))
+    items.push(interpretationLine(alpha2, language, 'kbpInterpAlpha2'))
   }
   return items
 }
@@ -1514,7 +1555,7 @@ function ReceptorProfileChapterSection({
   const ranked = [...receptorDisplay.entries]
     .sort((a, b) => (b.affinityPercent ?? -1) - (a.affinityPercent ?? -1))
     .slice(0, 8)
-  const interpretation = buildClinicalInterpretation(ranked)
+  const interpretation = buildClinicalInterpretation(ranked, lang)
   const hasContent = prose.trim() || ranked.length > 0
 
   return (
@@ -1535,7 +1576,7 @@ function ReceptorProfileChapterSection({
       <div className="kbp-receptor-section__head">
         <div className="kbp-section__title-wrap">
           <h3 className="kbp-section__label kbp-section__label--heading">
-            <span className="kbp-section__title">Rezeptorprofil</span>
+            <span className="kbp-section__title">{translateSettingsWorkspaceUi(lang, 'kbpReceptorProfile')}</span>
           </h3>
         </div>
         <div className="kbp-receptor-section__head-meta">
@@ -1720,10 +1761,15 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
   >([])
   const [panelRequest, setPanelRequest] = useState<ReadingPanelRequest | null>(null)
   const [contributionDialogOpen, setContributionDialogOpen] = useState(false)
+  const [reportDialogOpen, setReportDialogOpen] = useState(false)
   const draftActionBarRef = useRef<HTMLDivElement>(null)
 
   const openContributionDialog = useCallback(() => {
     setContributionDialogOpen(true)
+  }, [])
+
+  const openReportDialog = useCallback(() => {
+    setReportDialogOpen(true)
   }, [])
 
   const handleCommentSelection = useCallback((sectionId: string, text: string) => {
@@ -1853,12 +1899,19 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
     return section.sectionKey ? (sectionByKey(activeDrug, section.sectionKey)?.id ?? `canonical-${section.id}`) : `canonical-${section.id}`
   }
 
-  const navItems: KbNavItem[] = canonicalSections.map((section) => ({
-    id: canonicalAnchorId(section),
-    label: section.title,
-    number: canonicalSectionNumber(section),
-    group: section.group,
-  }))
+  const navItems: KbNavItem[] = [
+    ...canonicalSections.map((section) => ({
+      id: canonicalAnchorId(section),
+      label: section.title,
+      number: canonicalSectionNumber(section),
+      group: section.group,
+    })),
+    {
+      id: MEDICATION_EDUCATION_KB_SECTION_ID,
+      label: translateMedicationUi(language as 'de' | 'en' | 'fr' | 'es', 'medEducationKbTabTitle'),
+      group: 'weitere' as const,
+    },
+  ]
 
   const activeSection =
     visibleSections.find((s) => s.id === activeSectionId) ??
@@ -1931,7 +1984,11 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
       setAiReferences(result.references)
       setAiNotice(true)
       if (prepDrafts.length > 0) {
-        showNotionToast(`KI-Entwurf erstellt: ${prepDrafts.length} Präparate`)
+        showNotionToast(
+          formatSettingsWorkspaceUi(language as UiLanguage, 'kbpAiDraftCreatedCount', {
+            count: prepDrafts.length,
+          }),
+        )
       }
       announceDraftNotice(t('kbDraftAiNotice'))
       showNotionToast(t('kbPharmaAiSuccess'))
@@ -2023,12 +2080,16 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
       setAiReferences(result.references)
       setAiNotice(true)
       if (prepDrafts.length === 0) {
-        setSectionRegenError('Keine neuen KI-Präparate zurückgegeben.')
+        setSectionRegenError(translateSettingsWorkspaceUi(language as UiLanguage, 'kbpNoNewAiPreps'))
         return
       }
       setPendingGeneratedPreparations(prepDrafts)
       announceDraftNotice(t('kbDraftAiNotice'))
-      showNotionToast(`KI-Entwurf erstellt: ${prepDrafts.length} Präparate`)
+      showNotionToast(
+        formatSettingsWorkspaceUi(language as UiLanguage, 'kbpAiDraftCreatedCount', {
+          count: prepDrafts.length,
+        }),
+      )
     } catch {
       setSectionRegenError(t('kbSectionRegenerateError'))
     } finally {
@@ -2398,6 +2459,10 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
           ) : null}
 
           <div className="kbp-sections">
+            {!editMode && activeSectionId === MEDICATION_EDUCATION_KB_SECTION_ID ? (
+              <MedicationEducationKbTab drug={activeDrug} canEdit={permissions.canEdit} />
+            ) : null}
+
             {editMode && (
               <div className="kbp-edit-toolbar">
                 <button type="button" className="kbp-btn kbp-btn--sm" onClick={resetSectionOrder}>
@@ -2407,7 +2472,7 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
               </div>
             )}
 
-            {!editMode && canonicalSections.map((canonicalSection, idx) => {
+            {!editMode && activeSectionId !== MEDICATION_EDUCATION_KB_SECTION_ID && canonicalSections.map((canonicalSection, idx) => {
               const anchorId = canonicalAnchorId(canonicalSection)
 
               if (canonicalSection.id === 'rezeptorprofil') {
@@ -2696,6 +2761,16 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
                 <Bookmark className="kbp-contribution-bookmark__icon" strokeWidth={1.75} aria-hidden />
                 <span className="kbp-contribution-bookmark__label">{kbT(language, 'contributionBookmark')}</span>
               </button>
+              <button
+                type="button"
+                className="kbp-contribution-bookmark"
+                onClick={openReportDialog}
+                title={kbT(language, 'reportIssueButtonTitle')}
+                aria-label={kbT(language, 'reportIssueButtonTitle')}
+              >
+                <Flag className="kbp-contribution-bookmark__icon" strokeWidth={1.75} aria-hidden />
+                <span className="kbp-contribution-bookmark__label">{kbT(language, 'reportIssueButton')}</span>
+              </button>
               {panelCollapsed ? (
                 <KnowledgeBaseReadingPanel
                   medicationId={drug.id}
@@ -2722,6 +2797,15 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
           language={language}
           initialSectionKey={contributionInitialSectionKey}
           onClose={() => setContributionDialogOpen(false)}
+        />
+      ) : null}
+
+      {reportDialogOpen ? (
+        <KbReportIssueDialog
+          substanceId={extractKbSubstanceId(drug)}
+          drugName={drug.genericName}
+          language={language}
+          onClose={() => setReportDialogOpen(false)}
         />
       ) : null}
     </div>
@@ -2783,7 +2867,9 @@ export function KnowledgeBasePharma({ onClose, onCloseAll, collectionId, collect
             const prepSummary = upsertGeneratedPreparations(prepDrafts)
             showNotionToast(
               prepSummary.created + prepSummary.updated > 0
-                ? `KI-Entwurf erstellt inkl. ${prepSummary.created + prepSummary.updated} Präparate`
+                ? formatSettingsWorkspaceUi(language as UiLanguage, 'kbpAiDraftCreatedInclCount', {
+                    count: prepSummary.created + prepSummary.updated,
+                  })
                 : t('kbPharmaAiSuccess'),
             )
           } catch {

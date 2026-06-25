@@ -15,7 +15,6 @@ export type DiscussCasePermission =
   | 'save_to_case'
   | 'invite_others'
   | 'manage_discussion'
-  | 'join_voice'
 
 export type DiscussCaseStatus = 'draft' | 'active' | 'archived' | 'revoked'
 export type DiscussInviteType = 'internal' | 'external'
@@ -61,6 +60,8 @@ export interface DiscussCaseDiscussion {
   title: string
   status: DiscussCaseStatus
   expiresAt: string | null
+  /** Owner/moderator-editable outcome summary (null until first written). */
+  resolutionSummary: DiscussCaseResolutionSummary | null
   createdAt: string
   updatedAt: string
 }
@@ -113,13 +114,72 @@ export interface DiscussCaseInvite {
   inviteToken?: string
 }
 
+export type DiscussCaseMessageKind = 'text' | 'voice'
+
+export interface DiscussVoiceAttachment {
+  storagePath: string
+  mimeType: string
+  durationMs: number
+  sizeBytes: number
+  /** ISO8601 — server purges attachment and message after this time. */
+  expiresAt: string
+}
+
+/** Emoji reaction on a chat message — one active emoji per user. */
+export interface DiscussCaseMessageReaction {
+  userId: string
+  emoji: string
+  createdAt: string
+}
+
+/** Denormalized snapshot for reply-to-message quote UI. */
+export interface DiscussCaseReplyPreview {
+  senderDisplayName: string
+  bodySnippet: string
+  messageKind?: DiscussCaseMessageKind
+}
+
+/**
+ * De-identified transcript of a voice message. `machine` is the raw model
+ * output (already scrubbed server-side); `edited` means a clinician corrected
+ * it. Never contains identifiers — the text passes through the same redactor
+ * used for the safe LLM egress path.
+ */
+export interface DiscussVoiceTranscript {
+  text: string
+  status: 'machine' | 'edited'
+  model: string | null
+  language: string | null
+  createdAt: string
+  editedAt: string | null
+  editedBy: string | null
+}
+
+/** Owner/moderator-editable outcome summary for a discussion. */
+export interface DiscussCaseResolutionSummary {
+  text: string
+  updatedAt: string
+  updatedBy: string
+}
+
 export interface DiscussCaseMessage {
   id: string
   discussionId: string
   authorUserId: string
   authorDisplayName: string | null
   body: string
+  messageKind: DiscussCaseMessageKind
+  voiceAttachment: DiscussVoiceAttachment | null
+  /** De-identified transcript for voice messages (null until transcribed). */
+  transcript: DiscussVoiceTranscript | null
   quoteExcerpt: DiscussQuoteExcerpt | null
+  replyToMessageId: string | null
+  replyPreview: DiscussCaseReplyPreview | null
+  reactions: DiscussCaseMessageReaction[]
+  /** True when a moderator/owner flagged the message as pinned/important. */
+  pinned: boolean
+  pinnedAt: string | null
+  pinnedBy: string | null
   createdAt: string
   /** Set when the author has edited the message after posting. */
   editedAt: string | null
@@ -208,7 +268,6 @@ export const INTERNAL_DEFAULT_PERMISSIONS: DiscussCasePermission[] = [
   'download_package',
   'export_summary',
   'invite_others',
-  'join_voice',
 ]
 
 export const EXTERNAL_DEFAULT_PERMISSIONS: DiscussCasePermission[] = [
@@ -233,7 +292,6 @@ export const OWNER_PERMISSIONS: DiscussCasePermission[] = [
   'save_to_case',
   'invite_others',
   'manage_discussion',
-  'join_voice',
 ]
 
 export const DISCUSS_PACKAGE_SECTION_LABELS: Record<DiscussPackageSectionKey, string> = {

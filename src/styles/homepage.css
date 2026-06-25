@@ -759,10 +759,21 @@ body:has(.auth-page) {
   border-bottom-color: var(--border-soft);
 }
 
+.hp-tier__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.hp-tier__header .hp-tier__name {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+}
+
 .hp-tier__badge {
-  position: absolute;
-  top: 0.85rem;
-  right: 0.85rem;
   font-size: 0.625rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -771,6 +782,19 @@ body:has(.auth-page) {
   border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
   border-radius: 999px;
   padding: 0.2rem 0.5rem;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.hp-tier__badge--available {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.hp-tier__badge--floating {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
 }
 
 .hp-tier__trial {

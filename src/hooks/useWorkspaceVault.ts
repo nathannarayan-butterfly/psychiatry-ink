@@ -177,6 +177,7 @@ export function useWorkspaceVault({
             documentTypeId: live.documentTypeId,
             pageHeading: live.pageHeading,
             sectionContents: { ...live.sectionContents },
+            sectionMetadata: live.sectionMetadata ? { ...live.sectionMetadata } : undefined,
             savedAt,
           },
           caseId,

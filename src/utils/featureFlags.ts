@@ -85,6 +85,13 @@ export function isClinicalIntelligenceV1Enabled(): boolean {
   return import.meta.env.VITE_CLINICAL_INTELLIGENCE_V1_ENABLED === 'true'
 }
 
+/** Whether the Clinical Intelligence surface is available for a given case. */
+export function isClinicalIntelligenceAvailableForCase(
+  _caseId: string | undefined | null,
+): boolean {
+  return isClinicalIntelligenceV1Enabled()
+}
+
 /**
  * Clinical Intelligence — developer diagnostics mode.
  *

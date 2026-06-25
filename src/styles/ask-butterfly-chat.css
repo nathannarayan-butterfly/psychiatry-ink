@@ -1,5 +1,64 @@
 /* Ask Butterfly — general-purpose sidebar chat (clinical-minimal) */
 
+/*
+ * Border tokens — mirror patient-panel-bordered (muted frame + accent stripe).
+ * `--ask-butterfly-area-accent` follows the active clinical tab when the case
+ * shell is open; otherwise falls back to the global brand `--accent`.
+ */
+:root {
+  --ask-butterfly-accent-mix: 48%;
+  --ask-butterfly-border-mix: 28%;
+  --ask-butterfly-bg-mix: 4%;
+}
+
+.app-shell:has([data-area='overview']) {
+  --ask-butterfly-area-accent: var(--area-overview);
+}
+.app-shell:has([data-area='workspace']) {
+  --ask-butterfly-area-accent: var(--area-workspace);
+}
+.app-shell:has([data-area='verlauf']) {
+  --ask-butterfly-area-accent: var(--area-verlauf);
+}
+.app-shell:has([data-area='diagnose']) {
+  --ask-butterfly-area-accent: var(--area-diagnose);
+}
+.app-shell:has([data-area='labor']) {
+  --ask-butterfly-area-accent: var(--area-labor);
+}
+.app-shell:has([data-area='medikation']) {
+  --ask-butterfly-area-accent: var(--area-medikation);
+}
+.app-shell:has([data-area='therapie']) {
+  --ask-butterfly-area-accent: var(--area-therapie);
+}
+.app-shell:has([data-area='dokumente']) {
+  --ask-butterfly-area-accent: var(--area-dokumente);
+}
+.app-shell:has([data-area='discuss']) {
+  --ask-butterfly-area-accent: var(--area-discuss);
+}
+.app-shell:has([data-area='konsil']) {
+  --ask-butterfly-area-accent: var(--area-konsil);
+}
+.app-shell:has([data-area='ci']) {
+  --ask-butterfly-area-accent: var(--area-ci);
+}
+
+.ask-butterfly-dock-panel,
+.ask-butterfly-dialog--floating {
+  --ask-butterfly-accent: color-mix(
+    in srgb,
+    var(--ask-butterfly-area-accent, var(--accent, #8a5a2b)) var(--ask-butterfly-accent-mix),
+    var(--patient-bordered-neutral, #8a8278)
+  );
+  --ask-butterfly-frame: color-mix(
+    in srgb,
+    var(--ask-butterfly-accent) var(--ask-butterfly-border-mix),
+    var(--border-soft, #e8e4df)
+  );
+}
+
 .ask-butterfly-overlay {
   position: fixed;
   inset: 0;
@@ -28,7 +87,7 @@
   width: min(45rem, calc(100vw - 2rem));
   max-height: min(70vh, calc(100vh - 3rem));
   border: 1px solid var(--cm-hairline, #e8e4df);
-  border-radius: 0.65rem;
+  border-radius: var(--radius-card, 0.6875rem);
   background: var(--surface-elevated, #fff);
   box-shadow:
     0 18px 48px color-mix(in srgb, #0f1419 18%, transparent),
@@ -41,6 +100,37 @@
   width: min(26rem, calc(100vw - 2rem));
   max-height: min(72vh, calc(100vh - 2rem));
   overflow: hidden;
+  border-radius: var(--radius-card, 0.6875rem);
+  /* Complete frame — all sides, consistent with patient/workspace panels */
+  border: 1px solid var(--ask-butterfly-frame, var(--cm-hairline, #e8e4df));
+  border-left: 3px solid var(--ask-butterfly-accent, var(--accent, #8a5a2b));
+  background: color-mix(
+    in srgb,
+    var(--ask-butterfly-accent, var(--accent, #8a5a2b)) var(--ask-butterfly-bg-mix),
+    var(--surface-elevated, #fff)
+  );
+  box-shadow:
+    0 24px 56px color-mix(in srgb, #0f1419 16%, transparent),
+    0 2px 8px color-mix(in srgb, #0f1419 8%, transparent),
+    var(--patient-bordered-shadow, 0 1px 2px rgba(0, 0, 0, 0.04));
+  animation: ask-butterfly-dialog-in var(--duration-medium, 280ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+@keyframes ask-butterfly-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ask-butterfly-dialog--floating {
+    animation: none;
+  }
 }
 
 .ask-butterfly-panel {
@@ -92,12 +182,16 @@
   width: 1.75rem;
   height: 1.75rem;
   padding: 0;
-  border: 1px solid var(--cm-quiet-border, #ece8e3);
-  border-radius: 0.4rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control, 0.4375rem);
   background: transparent;
   color: var(--text-muted, #6b7280);
   cursor: pointer;
   flex-shrink: 0;
+  transition:
+    background var(--duration-instant, 100ms) var(--ease-standard, ease),
+    color var(--duration-instant, 100ms) var(--ease-standard, ease),
+    border-color var(--duration-instant, 100ms) var(--ease-standard, ease);
 }
 
 .ask-butterfly-dialog__drag-handle {
@@ -111,8 +205,15 @@
 
 .ask-butterfly-dialog__icon-btn:hover,
 .ask-butterfly-dialog__drag-handle:hover {
-  background: color-mix(in srgb, var(--text-primary, #1a1a1a) 5%, transparent);
+  background: color-mix(in srgb, var(--text-primary, #1a1a1a) 6%, transparent);
   color: var(--text-primary, #1a1a1a);
+}
+
+.ask-butterfly-dialog__icon-btn:focus-visible,
+.ask-butterfly-dialog__drag-handle:focus-visible,
+.ask-butterfly-dialog__close:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, color-mix(in srgb, var(--accent) 52%, transparent));
+  outline-offset: var(--focus-ring-offset, 2px);
 }
 
 .ask-butterfly-dialog__icon-btn svg,
@@ -133,6 +234,7 @@
   max-height: 100dvh;
   overflow: hidden;
   background: var(--app-bg);
+  --ask-butterfly-area-accent: var(--accent, #8a5a2b);
 }
 
 .app-shell__content {
@@ -154,7 +256,11 @@
  * so the chat truly overlays the page.
  */
 .app-shell--butterfly-docked .app-shell__content {
-  margin-right: var(--ask-butterfly-dock-width, 0);
+  /* Shrink the content column instead of margin-right + width:100%, which
+     overflows the shell (overflow:hidden) and lets the fixed dock overlap. */
+  box-sizing: border-box;
+  width: calc(100% - var(--ask-butterfly-dock-width, 0px));
+  margin-right: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -184,7 +290,8 @@
 }
 
 .app-shell:has(.case-sidebar-user-footer) .ask-butterfly-global-trigger,
-.app-shell:has(.dashboard-topbar) .ask-butterfly-global-trigger {
+.app-shell:has(.dashboard-topbar) .ask-butterfly-global-trigger,
+.app-shell:has(.credits-page) .ask-butterfly-global-trigger {
   display: none;
 }
 
@@ -232,11 +339,19 @@
   display: flex;
   flex-shrink: 0;
   gap: 0.2rem;
-  margin: 0 0.75rem 0.65rem;
-  padding: 0.2rem;
-  border: 1px solid var(--cm-quiet-border, #ece8e3);
-  border-radius: 0.45rem;
-  background: color-mix(in srgb, var(--bg-primary, #faf9f7) 88%, transparent);
+  margin: 0.7rem 0.75rem 0.65rem;
+  padding: 0.22rem;
+  border: 1px solid color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 18%, var(--cm-quiet-border, #ece8e3));
+  border-radius: 0.5rem;
+  /* Tinted base + soft accent sheen — the same aura-card recipe used across the
+     Übersicht, so the quick-action chips read as an elevated control group. */
+  background-color: color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 4%, var(--surface-elevated, #fff));
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 6%, transparent),
+    transparent 60%
+  );
+  box-shadow: var(--shadow-elevated-sm, 0 1px 2px rgba(0, 0, 0, 0.04));
 }
 
 .ask-butterfly-tier-segment__btn {
@@ -306,12 +421,27 @@
   z-index: 50;
   display: flex;
   flex-direction: column;
-  border-left: 1px solid var(--cm-hairline, #e8e4df);
-  background: var(--surface-elevated, #fff);
+  /* Theme accent stripe on the content-facing edge + muted frame on other sides */
+  border: 1px solid var(--ask-butterfly-frame, var(--cm-hairline, #e8e4df));
+  border-left: 3px solid var(--ask-butterfly-accent, var(--accent, #8a5a2b));
+  /* Round only the content-facing top corner; the screen-edge corners stay flush
+     so the rounded header cap looks intentional, not detached from the edge. */
+  border-top-left-radius: var(--radius-card, 0.6875rem);
+  background: color-mix(
+    in srgb,
+    var(--ask-butterfly-accent, var(--accent, #8a5a2b)) var(--ask-butterfly-bg-mix),
+    var(--surface-elevated, #fff)
+  );
   box-shadow: -4px 0 24px color-mix(in srgb, #0f1419 8%, transparent);
   transform: translateX(100%);
   transition: transform 0.2s ease;
   pointer-events: none;
+}
+
+/* Desktop dock sits against the right viewport edge, so the header's top-right
+   corner stays square (only the content-facing top-left follows the radius). */
+.ask-butterfly-dock-panel .ask-butterfly-dialog__header {
+  border-top-right-radius: 0;
 }
 
 .ask-butterfly-dock-panel--open {
@@ -348,46 +478,114 @@
 }
 
 .ask-butterfly-dialog__header {
+  position: relative;
+  isolation: isolate;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.85rem 0.9rem 0.75rem;
-  border-bottom: 1px solid var(--cm-hairline, #e8e4df);
+  padding: 0.8rem 0.9rem;
+  color: var(--aura-ink, #f2efe8);
+  border-bottom: 1px solid var(--aura-hairline, color-mix(in srgb, white 14%, transparent));
+  /* Round the top corners to follow the chat window's radius so the dark header
+     reads as the window's rounded cap, not a square bar. The floating dialog
+     also clips via overflow:hidden; the docked panel relies on these radii
+     (it can't clip — its resize handle sits outside the box). */
+  border-top-left-radius: var(--radius-card, 0.6875rem);
+  border-top-right-radius: var(--radius-card, 0.6875rem);
+  /* App-theme surface — the SAME accent-derived colour the left case-sidebar uses
+     (accent 82% + black), topped with the shared, accent-locked warm aura glow, so
+     the chat header reads as the same surface family as the left navigation panel
+     rather than a near-black command-deck bar. */
+  background-color: color-mix(in srgb, var(--accent, #8a5a2b) 82%, black);
+  background-image: radial-gradient(
+    130% 90% at 50% -10%,
+    color-mix(in srgb, var(--aura-glow-warm) 20%, transparent),
+    transparent 72%
+  );
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset;
+}
+
+/* Header controls (drag / dock / undock / close) sit on the dark command-deck
+   surface, so recolour them to the light aura ink ramp for accessible contrast. */
+.ask-butterfly-dialog__header .ask-butterfly-dialog__icon-btn,
+.ask-butterfly-dialog__header .ask-butterfly-dialog__drag-handle,
+.ask-butterfly-dialog__header .ask-butterfly-dialog__close {
+  color: var(--aura-ink-soft, color-mix(in srgb, #f2efe8 76%, transparent));
+}
+
+.ask-butterfly-dialog__header .ask-butterfly-dialog__icon-btn:hover,
+.ask-butterfly-dialog__header .ask-butterfly-dialog__drag-handle:hover {
+  background: var(--aura-glass, rgba(255, 255, 255, 0.06));
+  color: var(--aura-ink, #f2efe8);
+}
+
+.ask-butterfly-dialog__header .ask-butterfly-dialog__close:hover {
+  background: color-mix(in srgb, #f97066 24%, transparent);
+  color: #fff;
 }
 
 .ask-butterfly-dialog__title-wrap {
   display: flex;
-  align-items: flex-start;
-  gap: 0.55rem;
+  align-items: center;
+  gap: 0.6rem;
   min-width: 0;
 }
 
 .ask-butterfly-dialog__mark {
   display: flex;
   align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  width: 2.15rem;
+  height: 2.15rem;
   line-height: 0;
+  border-radius: var(--radius-control, 0.4375rem);
+  /* Glass tile seated on the dark header — reuses the aura glass recipe so the
+     silver breathing Butterfly lifts off the command-deck surface and glows. */
+  border: 1px solid var(--aura-hairline-strong, color-mix(in srgb, white 22%, transparent));
+  background: var(--aura-glass, rgba(255, 255, 255, 0.06));
+  backdrop-filter: blur(9px) saturate(125%);
+  -webkit-backdrop-filter: blur(9px) saturate(125%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 2px 10px color-mix(in srgb, #0a0c12 45%, transparent);
 }
 
 .ask-butterfly-dialog__mark .butterfly-logo {
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 1.4rem;
+  height: 1.4rem;
   object-fit: contain;
+}
+
+/* White breathing halo for the silver brand mark, so the Butterfly glows like the
+   left case-sidebar's white logo treatment on the accent surface. (The silver
+   tone's own white-shine filter applies via `.butterfly-logo--silver`.) */
+.ask-butterfly-dialog__mark .butterfly-logo-orb {
+  --bf-breathe-glow: color-mix(in srgb, white 62%, transparent);
 }
 
 .ask-butterfly-dialog__title {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   font-weight: 600;
-  color: var(--text-primary, #1a1a1a);
+  letter-spacing: -0.005em;
+  line-height: 1.25;
+  color: var(--aura-ink, #f2efe8);
+}
+
+.ask-butterfly-dialog__title-wrap > div {
+  min-width: 0;
 }
 
 .ask-butterfly-dialog__subtitle {
-  margin: 0.15rem 0 0;
-  font-size: 0.72rem;
-  line-height: 1.35;
-  color: var(--text-muted, #6b7280);
+  margin: 0.1rem 0 0;
+  font-size: 0.7rem;
+  line-height: 1.3;
+  color: var(--aura-ink-soft, color-mix(in srgb, #f2efe8 76%, transparent));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ask-butterfly-dialog__close {
@@ -397,17 +595,20 @@
   width: 1.75rem;
   height: 1.75rem;
   padding: 0;
-  border: 1px solid var(--cm-quiet-border, #ece8e3);
-  border-radius: 0.4rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control, 0.4375rem);
   background: transparent;
   color: var(--text-muted, #6b7280);
   cursor: pointer;
   flex-shrink: 0;
+  transition:
+    background var(--duration-instant, 100ms) var(--ease-standard, ease),
+    color var(--duration-instant, 100ms) var(--ease-standard, ease);
 }
 
 .ask-butterfly-dialog__close:hover {
-  background: color-mix(in srgb, var(--text-primary, #1a1a1a) 5%, transparent);
-  color: var(--text-primary, #1a1a1a);
+  background: color-mix(in srgb, #b42318 10%, transparent);
+  color: #b42318;
 }
 
 .ask-butterfly-dialog__close svg {
@@ -426,53 +627,138 @@
   flex: 1;
   min-height: 16rem;
   overflow-y: auto;
-  padding: 0.85rem 0.9rem;
+  padding: 1rem 0.9rem;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.7rem;
+  scroll-behavior: smooth;
 }
 
 .ask-butterfly-dialog__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
   margin: auto 0;
   text-align: center;
-  font-size: 0.78rem;
-  line-height: 1.45;
+  max-width: 22rem;
+  align-self: center;
+  padding: 1.5rem 0.5rem;
+}
+
+/* Light disc seating the shared breathing ButterflyLogo — reuses the same
+   reduced-motion-aware `.butterfly-logo-orb` glow as the Übersicht hero, retinted
+   to the active area accent so the empty chat reads alive, not dull. */
+.ask-butterfly-dialog__empty-orb {
+  position: relative;
+  flex-shrink: 0;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(
+      circle at 32% 26%,
+      var(--surface-elevated, #fff),
+      color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 8%, var(--surface-elevated, #fff)) 70%
+    );
+  border: 1px solid color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 22%, var(--cm-quiet-border, #ece8e3));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 6px 16px -8px color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 45%, transparent);
+}
+
+.ask-butterfly-dialog__empty-orb .butterfly-logo-orb {
+  --bf-breathe-glow: color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 42%, transparent);
+}
+
+.ask-butterfly-dialog__empty-text {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
   color: var(--text-muted, #6b7280);
 }
 
 .ask-butterfly-dialog__message {
-  max-width: 92%;
-  padding: 0.55rem 0.65rem;
-  border-radius: 0.5rem;
+  position: relative;
+  max-width: 86%;
+  padding: 0.6rem 0.75rem;
+  border-radius: 1rem;
   border: 1px solid var(--cm-quiet-border, #ece8e3);
+  box-shadow: var(--shadow-elevated-sm, 0 1px 2px rgba(0, 0, 0, 0.04));
+  animation: ask-butterfly-message-in var(--duration-fast, 150ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+@keyframes ask-butterfly-message-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ask-butterfly-dialog__message {
+    animation: none;
+  }
 }
 
 .ask-butterfly-dialog__message--user {
   align-self: flex-end;
-  background: color-mix(in srgb, var(--accent, #4a6fa5) 8%, #fff);
-  border-color: color-mix(in srgb, var(--accent, #4a6fa5) 18%, transparent);
+  border-bottom-right-radius: 0.35rem;
+  background: color-mix(in srgb, var(--accent, #4a6fa5) 12%, var(--surface-elevated, #fff));
+  border-color: color-mix(in srgb, var(--accent, #4a6fa5) 22%, transparent);
 }
 
 .ask-butterfly-dialog__message--assistant {
   align-self: flex-start;
-  background: color-mix(in srgb, var(--text-primary, #1a1a1a) 3%, #fff);
+  border-bottom-left-radius: 0.35rem;
+  /* Soft accent sheen + accent-tinted elevation (aura-card recipe) so the
+     assistant turns read as elevated surfaces cohesive with the Übersicht. */
+  background-color: color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 3%, var(--surface-elevated, #fff));
+  background-image: radial-gradient(
+    120% 100% at 0% 0%,
+    color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 7%, transparent),
+    transparent 60%
+  );
+  border-color: color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 14%, var(--cm-quiet-border, #ece8e3));
+  box-shadow:
+    var(--shadow-elevated-sm, 0 1px 2px rgba(0, 0, 0, 0.04)),
+    0 8px 20px -16px color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 55%, transparent);
 }
 
 .ask-butterfly-dialog__message-role {
-  margin: 0 0 0.2rem;
-  font-size: 0.62rem;
-  font-weight: 500;
+  margin: 0 0 0.25rem;
+  font-size: 0.6rem;
+  font-weight: var(--cm-label-weight, 500);
   letter-spacing: var(--cm-label-tracking, 0.08em);
   text-transform: uppercase;
   color: var(--text-muted, #6b7280);
 }
 
+.ask-butterfly-dialog__message--user .ask-butterfly-dialog__message-role {
+  color: color-mix(in srgb, var(--accent, #4a6fa5) 70%, var(--text-muted, #6b7280));
+}
+
 .ask-butterfly-dialog__message-text {
   margin: 0;
-  font-size: 0.8rem;
-  line-height: 1.45;
+  font-size: 0.8125rem;
+  line-height: 1.55;
   color: var(--text-primary, #1a1a1a);
   white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.ask-butterfly-dialog__message-text code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.92em;
+  padding: 0.05em 0.3em;
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, var(--text-muted, #6b7280) 12%, transparent);
 }
 
 .ask-butterfly-dialog__message-text--pending {
@@ -501,29 +787,54 @@
 }
 
 .ask-butterfly-dialog__composer {
-  padding: 0 0.9rem 0.55rem;
+  margin: 0 0.9rem 0.6rem;
+  padding: 0.5rem 0.55rem 0.45rem;
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: 0.4rem;
+  border: 1px solid color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 16%, var(--cm-quiet-border, #ece8e3));
+  border-radius: var(--radius-card, 0.6875rem);
+  /* Tinted base + soft accent sheen + accent-tinted elevation glow (aura-card
+     recipe) so the composer reads as a polished, lifted input surface. */
+  background-color: color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 3.5%, var(--surface-elevated, #fff));
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 6%, transparent),
+    transparent 55%
+  );
+  box-shadow:
+    var(--shadow-elevated-sm, 0 1px 2px rgba(0, 0, 0, 0.04)),
+    0 12px 26px -18px color-mix(in srgb, var(--ask-butterfly-accent, var(--accent, #4a6fa5)) 60%, transparent);
+  transition:
+    border-color var(--duration-fast, 150ms) var(--ease-standard, ease),
+    box-shadow var(--duration-fast, 150ms) var(--ease-standard, ease);
+}
+
+.ask-butterfly-dialog__composer:focus-within {
+  border-color: color-mix(in srgb, var(--accent, #4a6fa5) 45%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #4a6fa5) 12%, transparent);
 }
 
 .ask-butterfly-dialog__input {
   width: 100%;
-  min-height: 3.25rem;
-  resize: vertical;
-  padding: 0.55rem 0.65rem;
-  border: 1px solid var(--cm-quiet-border, #ece8e3);
-  border-radius: 0.45rem;
+  min-height: 2.75rem;
+  resize: none;
+  padding: 0.3rem 0.35rem;
+  border: none;
+  border-radius: 0;
   font: inherit;
-  font-size: 0.8rem;
-  line-height: 1.4;
+  font-size: 0.8125rem;
+  line-height: 1.45;
   color: var(--text-primary, #1a1a1a);
-  background: #fff;
+  background: transparent;
+}
+
+.ask-butterfly-dialog__input::placeholder {
+  color: var(--text-muted, #6b7280);
 }
 
 .ask-butterfly-dialog__input:focus {
-  outline: 2px solid color-mix(in srgb, var(--accent, #4a6fa5) 35%, transparent);
-  outline-offset: 1px;
+  outline: none;
 }
 
 .ask-butterfly-dialog__composer-actions {
@@ -538,18 +849,28 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.35rem;
-  min-height: 2rem;
-  padding: 0 0.7rem;
-  border-radius: 0.4rem;
+  gap: 0.4rem;
+  min-height: 2.1rem;
+  padding: 0 0.85rem;
+  border-radius: 999px;
   font-size: 0.75rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+  transition:
+    background var(--duration-instant, 120ms) var(--ease-standard, ease),
+    border-color var(--duration-instant, 120ms) var(--ease-standard, ease),
+    color var(--duration-instant, 120ms) var(--ease-standard, ease),
+    transform var(--duration-instant, 120ms) var(--ease-standard, ease);
+}
+
+.ask-butterfly-dialog__voice-btn:focus-visible,
+.ask-butterfly-dialog__send-btn:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, color-mix(in srgb, var(--accent) 52%, transparent));
+  outline-offset: var(--focus-ring-offset, 2px);
 }
 
 .ask-butterfly-dialog__voice-btn {
-  width: 2rem;
+  width: 2.1rem;
   padding: 0;
   border: 1px solid var(--cm-quiet-border, #ece8e3);
   background: transparent;
@@ -560,7 +881,7 @@
 .ask-butterfly-dialog__voice-btn--active {
   border-color: color-mix(in srgb, var(--accent, #4a6fa5) 35%, transparent);
   color: var(--accent, #4a6fa5);
-  background: color-mix(in srgb, var(--accent, #4a6fa5) 8%, #fff);
+  background: color-mix(in srgb, var(--accent, #4a6fa5) 8%, var(--surface-elevated, #fff));
 }
 
 .ask-butterfly-dialog__voice-btn svg {
@@ -569,13 +890,18 @@
 }
 
 .ask-butterfly-dialog__send-btn {
-  border: 1px solid color-mix(in srgb, var(--accent, #4a6fa5) 45%, transparent);
-  background: color-mix(in srgb, var(--accent, #4a6fa5) 12%, #fff);
-  color: var(--accent, #4a6fa5);
+  border: 1px solid transparent;
+  background: var(--accent, #4a6fa5);
+  color: var(--color-accent-foreground, #fff);
+  box-shadow: var(--shadow-elevated-sm, 0 1px 2px rgba(0, 0, 0, 0.04));
 }
 
 .ask-butterfly-dialog__send-btn:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--accent, #4a6fa5) 18%, #fff);
+  background: var(--accent-hover, color-mix(in srgb, var(--accent, #4a6fa5) 85%, black));
+}
+
+.ask-butterfly-dialog__send-btn:active:not(:disabled) {
+  transform: translateY(0.5px);
 }
 
 .ask-butterfly-dialog__send-btn:disabled,
@@ -618,6 +944,7 @@
    * shrink so the page stays full width underneath the sheet.
    */
   .app-shell--butterfly-docked .app-shell__content {
+    width: 100%;
     margin-right: 0;
   }
 
@@ -626,10 +953,21 @@
     left: 0;
     width: 100% !important;
     max-height: min(45vh, 28rem);
-    border-left: none;
-    border-top: 1px solid var(--cm-hairline, #e8e4df);
+    /* Bottom sheet: accent stripe on top edge instead of left */
+    border: 1px solid var(--ask-butterfly-frame, var(--cm-hairline, #e8e4df));
+    border-left: 1px solid var(--ask-butterfly-frame, var(--cm-hairline, #e8e4df));
+    border-top: 3px solid var(--ask-butterfly-accent, var(--accent, #8a5a2b));
+    /* Bottom sheet spans full width, so round both top corners. */
+    border-top-left-radius: var(--radius-card, 0.6875rem);
+    border-top-right-radius: var(--radius-card, 0.6875rem);
     box-shadow: 0 -4px 24px color-mix(in srgb, #0f1419 8%, transparent);
     transform: translateY(100%);
+  }
+
+  /* Both top corners round on the bottom sheet — restore the header's top-right
+     radius that the desktop dock squares off. */
+  .ask-butterfly-dock-panel .ask-butterfly-dialog__header {
+    border-top-right-radius: var(--radius-card, 0.6875rem);
   }
 
   .ask-butterfly-dock-panel--open {
@@ -638,5 +976,29 @@
 
   .ask-butterfly-dock-panel__resize-handle {
     display: none;
+  }
+}
+
+@media print {
+  /* Flatten the semi-dark command-deck header to a light, ink-saving bar with
+     legible dark text (the dark surface + light aura ink only make sense on
+     screen). */
+  .ask-butterfly-dialog__header {
+    background: var(--surface-elevated, #fff);
+    border-bottom-color: var(--cm-hairline, #e8e4df);
+    box-shadow: none;
+  }
+  .ask-butterfly-dialog__header .ask-butterfly-dialog__title {
+    color: var(--text-primary, #1a1a1a);
+  }
+  .ask-butterfly-dialog__header .ask-butterfly-dialog__subtitle {
+    color: var(--text-muted, #6b7280);
+  }
+  .ask-butterfly-dialog__mark {
+    background: var(--surface-elevated, #fff);
+    border-color: var(--cm-quiet-border, #ece8e3);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
   }
 }

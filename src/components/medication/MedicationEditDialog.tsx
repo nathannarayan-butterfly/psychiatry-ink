@@ -17,8 +17,6 @@ import {
 import { formatDoseLineGerman } from '../../utils/medication/doseLine'
 import { useMedicationPreparationOptions } from '../../hooks/useMedicationPreparationOptions'
 import {
-  PRESCRIBING_COUNTRIES,
-  PRESCRIBING_COUNTRY_LABELS,
   PRESCRIBING_COUNTRY_NATIVE_LABELS,
   usePrescribingCountry,
 } from '../../hooks/usePrescribingCountry'
@@ -28,6 +26,7 @@ import {
   medicationDraftFromEntry,
   type MedicationDraft,
 } from '../../utils/medication/planOps'
+import { prnMaxSingleExceedsDaily } from '../../utils/medication/prnDose'
 import {
   getStrengthOptions,
   isCustomStrengthValue,
@@ -56,6 +55,34 @@ function getDoseInputMode(formulation: MedicationFormulation): DoseInputMode {
 
 function showPrnCheckbox(formulation: MedicationFormulation): boolean {
   return formulation !== 'depot' && formulation !== 'patch'
+}
+
+function applyPrnChange(current: MedicationDraft, prn: boolean): MedicationDraft {
+  if (prn) {
+    return {
+      ...current,
+      prn: true,
+      doseSchedule: {
+        ...current.doseSchedule,
+        noon: '',
+        evening: '',
+        night: '',
+      },
+    }
+  }
+
+  const basisFromPrn = current.doseSchedule.prnBasisDose?.trim()
+  return {
+    ...current,
+    prn: false,
+    doseSchedule: {
+      ...current.doseSchedule,
+      prnBasisDose: '',
+      prnMaxSingleDose: '',
+      prnMaxDailyDose: '',
+      morning: basisFromPrn || current.doseSchedule.morning,
+    },
+  }
 }
 
 function applyFormulationChange(
@@ -89,13 +116,11 @@ export function MedicationEditDialog({
   const { language, t } = useTranslation()
   const { defaultPrescribingCountry } = usePrescribingCountry()
   const [draft, setDraft] = useState<MedicationDraft>(() => createDefaultMedicationDraft())
-  const [selectedCountry, setSelectedCountry] = useState(defaultPrescribingCountry)
 
   useEffect(() => {
     if (!open) return
     setDraft(editingEntry ? medicationDraftFromEntry(editingEntry) : createDefaultMedicationDraft())
-    setSelectedCountry(defaultPrescribingCountry)
-  }, [open, editingEntry, defaultPrescribingCountry])
+  }, [open, editingEntry])
 
   const dosePreview = useMemo(() => {
     const schedule = {
@@ -121,7 +146,7 @@ export function MedicationEditDialog({
   const kbPreparationOptions = useMedicationPreparationOptions(
     draft.substance,
     draft.formulation,
-    selectedCountry,
+    defaultPrescribingCountry,
   )
 
   const fallbackStrengthOptions = useMemo(
@@ -144,6 +169,9 @@ export function MedicationEditDialog({
     strengthOptions.length === 0 || isCustomStrengthValue(draft.strength, strengthOptions)
 
   const strengthSelectValue = showCustomStrength ? STRENGTH_CUSTOM_VALUE : draft.strength
+  const prnValidationError = draft.prn && prnMaxSingleExceedsDaily(draft.doseSchedule)
+    ? translateMedicationUi(language, 'medPrnMaxSingleExceedsDaily')
+    : null
 
   if (!open) return null
 
@@ -187,7 +215,7 @@ export function MedicationEditDialog({
   }
 
   const handleSave = () => {
-    if (!draft.substance.trim()) return
+    if (!draft.substance.trim() || prnValidationError) return
     onSave({
       ...draft,
       changeType: editingEntry ? draft.changeType : 'start',
@@ -236,7 +264,7 @@ export function MedicationEditDialog({
           {hasReferenceData ? (
             <p className="medication-edit-dialog__reference-badge">
               {kbPreparationOptions.options.length > 0
-                ? `✓ KB-Präparate ${selectedCountry}: verifiziert`
+                ? `✓ KB-Präparate ${defaultPrescribingCountry}: verifiziert`
                 : translateMedicationUi(language, 'medReferenceDataAvailable')}
             </p>
           ) : suggestions.length > 0 ? (
@@ -267,26 +295,10 @@ export function MedicationEditDialog({
             </div>
           ) : null}
 
-          <label className="therapy-field">
-            <span>Land der Verordnung</span>
-            <select
-              value={selectedCountry}
-              disabled={disabled}
-              className="therapy-input"
-              onChange={(event) => setSelectedCountry(event.target.value as typeof selectedCountry)}
-            >
-              {PRESCRIBING_COUNTRIES.map((country) => (
-                <option key={country} value={country}>
-                  {country} · {PRESCRIBING_COUNTRY_LABELS[country]}
-                </option>
-              ))}
-            </select>
-          </label>
-
           {kbPreparationOptions.verifiedPreparations.length > 0 ? (
             <div className="medication-edit-dialog__preparations">
               <p className="medication-edit-dialog__preparations-label">
-                {`${draft.substance} — verfügbare Zubereitungen in ${PRESCRIBING_COUNTRY_NATIVE_LABELS[selectedCountry]}:`}
+                {`${draft.substance} — verfügbare Zubereitungen in ${PRESCRIBING_COUNTRY_NATIVE_LABELS[defaultPrescribingCountry]}:`}
               </p>
               <ul className="medication-prep-compact-list">
                 {kbPreparationOptions.verifiedPreparations.map((prep) => (
@@ -394,10 +406,26 @@ export function MedicationEditDialog({
           <p className="medication-edit-dialog__hint">
             {isDepot
               ? translateMedicationUi(language, 'medDepotDoseHint')
-              : doseInputMode === 'single'
-                ? translateMedicationUi(language, 'medSingleDoseHint')
-                : translateMedicationUi(language, 'medDoseExample')}
+              : draft.prn
+                ? translateMedicationUi(language, 'medPrnDoseHint')
+                : doseInputMode === 'single'
+                  ? translateMedicationUi(language, 'medSingleDoseHint')
+                  : translateMedicationUi(language, 'medDoseExample')}
           </p>
+
+          {showPrn ? (
+            <label className="medication-edit-dialog__checkbox">
+              <input
+                type="checkbox"
+                checked={draft.prn}
+                disabled={disabled}
+                onChange={(event) =>
+                  setDraft((current) => applyPrnChange(current, event.target.checked))
+                }
+              />
+              <span>{translateMedicationUi(language, 'medPrn')}</span>
+            </label>
+          ) : null}
 
           {doseInputMode === 'single' ? (
             <div className="therapy-field-grid">
@@ -435,6 +463,89 @@ export function MedicationEditDialog({
                   }
                 />
               </label>
+            </div>
+          ) : draft.prn ? (
+            <div className="medication-edit-dialog__prn-dose-grid">
+              <label className="therapy-field">
+                <span>{translateMedicationUi(language, 'medPrnBasisDose')}</span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={draft.doseSchedule.prnBasisDose ?? ''}
+                  disabled={disabled}
+                  className="therapy-input"
+                  placeholder={translateMedicationUi(language, 'medPrnBasisDosePlaceholder')}
+                  onChange={(event) =>
+                    setDraft((current) => ({
+                      ...current,
+                      doseSchedule: {
+                        ...current.doseSchedule,
+                        prnBasisDose: event.target.value,
+                      },
+                    }))
+                  }
+                />
+              </label>
+              <label className="therapy-field">
+                <span>{translateMedicationUi(language, 'medPrnMaxSingleDose')}</span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={draft.doseSchedule.prnMaxSingleDose ?? ''}
+                  disabled={disabled}
+                  className="therapy-input"
+                  placeholder={translateMedicationUi(language, 'medPrnMaxSingleDosePlaceholder')}
+                  onChange={(event) =>
+                    setDraft((current) => ({
+                      ...current,
+                      doseSchedule: {
+                        ...current.doseSchedule,
+                        prnMaxSingleDose: event.target.value,
+                      },
+                    }))
+                  }
+                />
+              </label>
+              <label className="therapy-field">
+                <span>{translateMedicationUi(language, 'medPrnMaxDailyDose')}</span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={draft.doseSchedule.prnMaxDailyDose ?? ''}
+                  disabled={disabled}
+                  className="therapy-input"
+                  placeholder={translateMedicationUi(language, 'medPrnMaxDailyDosePlaceholder')}
+                  onChange={(event) =>
+                    setDraft((current) => ({
+                      ...current,
+                      doseSchedule: {
+                        ...current.doseSchedule,
+                        prnMaxDailyDose: event.target.value,
+                      },
+                    }))
+                  }
+                />
+              </label>
+              <label className="therapy-field">
+                <span>{translateMedicationUi(language, 'medDoseUnit')}</span>
+                <input
+                  type="text"
+                  value={draft.doseSchedule.unit}
+                  disabled={disabled}
+                  className="therapy-input"
+                  onChange={(event) =>
+                    setDraft((current) => ({
+                      ...current,
+                      doseSchedule: { ...current.doseSchedule, unit: event.target.value },
+                    }))
+                  }
+                />
+              </label>
+              {prnValidationError ? (
+                <p className="medication-edit-dialog__validation-error" role="alert">
+                  {prnValidationError}
+                </p>
+              ) : null}
             </div>
           ) : (
             <div className="medication-edit-dialog__dose-grid">
@@ -479,18 +590,6 @@ export function MedicationEditDialog({
               </label>
             </div>
           )}
-
-          {showPrn ? (
-            <label className="medication-edit-dialog__checkbox">
-              <input
-                type="checkbox"
-                checked={draft.prn}
-                disabled={disabled}
-                onChange={(event) => setDraft((current) => ({ ...current, prn: event.target.checked }))}
-              />
-              <span>{translateMedicationUi(language, 'medPrn')}</span>
-            </label>
-          ) : null}
 
           {isDepot ? (
             <label className="therapy-field">
@@ -622,7 +721,7 @@ export function MedicationEditDialog({
           <button
             type="button"
             className="therapy-btn therapy-btn--primary"
-            disabled={disabled || !draft.substance.trim()}
+            disabled={disabled || !draft.substance.trim() || Boolean(prnValidationError)}
             onClick={handleSave}
           >
             {translateMedicationUi(language, 'medSave')}

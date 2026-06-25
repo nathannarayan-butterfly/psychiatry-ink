@@ -7,7 +7,7 @@ export type AiChunkStrategy = 'none' | 'by-section' | 'by-token'
 /** Writer = documentation specialist; psychiatrist = diagnostic/risk sections. */
 export type AiClinicalRole = 'writer' | 'psychiatrist'
 
-export type AiProviderId = 'openai' | 'deepseek' | 'google'
+export type AiProviderId = 'openai' | 'deepseek' | 'google' | 'mistral'
 
 export interface AiModelSpec {
   provider: AiProviderId

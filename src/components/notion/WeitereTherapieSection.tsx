@@ -21,6 +21,8 @@ import type { WeitereTherapiePatch } from '../../hooks/useWeitereTherapie'
 interface WeitereTherapieSectionProps {
   caseId: string
   workspacePlanning?: boolean
+  /** Inline workspace panel (no modal overlay). */
+  inlineWorkspace?: boolean
   onWorkspacePlanningClose?: () => void
 }
 
@@ -39,17 +41,18 @@ const STATUS_TONE: Record<WeitereTherapieStatus, string> = {
 export function WeitereTherapieSection({
   caseId,
   workspacePlanning = false,
+  inlineWorkspace = false,
   onWorkspacePlanningClose,
 }: WeitereTherapieSectionProps) {
   const { language } = useTranslation()
   const { entries, addTherapie, updateTherapie, removeTherapie } = useWeitereTherapie(caseId)
-  const [pickerOpen, setPickerOpen] = useState(workspacePlanning)
+  const [pickerOpen, setPickerOpen] = useState(workspacePlanning && !inlineWorkspace)
   const [customName, setCustomName] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
   useEffect(() => {
-    if (workspacePlanning) setPickerOpen(true)
-  }, [workspacePlanning])
+    if (workspacePlanning && !inlineWorkspace) setPickerOpen(true)
+  }, [workspacePlanning, inlineWorkspace])
 
   const closeWorkspacePlanning = useCallback(() => {
     onWorkspacePlanningClose?.()
@@ -92,6 +95,59 @@ export function WeitereTherapieSection({
   }
 
   const pickerModal = pickerOpen ? (
+    inlineWorkspace ? (
+      <div className="workspace-therapy-inline__panel">
+        <div className="therapy-modal__head">
+          <div className="therapy-modal__heading">
+            <h4 className="therapy-modal__title">{ts(language, 'wtPickerTitle')}</h4>
+          </div>
+          <button
+            type="button"
+            className="therapy-modal__close"
+            onClick={closePicker}
+            aria-label={ts(language, 'wtClose')}
+          >
+            ×
+          </button>
+        </div>
+        <div className="therapy-modal__body">
+          <div className="therapy-picker">
+            <div className="therapy-picker__chips">
+              {DEFAULT_WEITERE_THERAPIE_TYPES.map((typeId) => (
+                <button
+                  key={typeId}
+                  type="button"
+                  className="therapy-chip"
+                  onClick={() => handleAdd(typeId)}
+                >
+                  {translateWeitereTherapieType(language, typeId)}
+                </button>
+              ))}
+            </div>
+            <div className="therapy-picker__custom">
+              <input
+                type="text"
+                className="therapy-input"
+                value={customName}
+                placeholder={ts(language, 'wtCustomPlaceholder')}
+                onChange={(e) => setCustomName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleAddCustom()
+                }}
+              />
+              <button
+                type="button"
+                className="therapy-btn therapy-btn--primary"
+                onClick={handleAddCustom}
+                disabled={!customName.trim()}
+              >
+                {ts(language, 'wtAdd')}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    ) : (
     <div
       className="therapy-modal-overlay"
       role="dialog"
@@ -152,9 +208,26 @@ export function WeitereTherapieSection({
         </div>
       </div>
     </div>
+    )
   ) : null
 
   const detailModal = selected ? (
+    inlineWorkspace ? (
+      <div className="workspace-therapy-inline__panel">
+        <WeitereTherapieDetail
+          entry={selected}
+          language={language}
+          onUpdate={(patch) => updateTherapie(selected.id, patch)}
+          onClose={closeDetail}
+          onDelete={() => {
+            if (window.confirm(ts(language, 'wtConfirmDelete'))) {
+              closeDetail()
+              removeTherapie(selected.id)
+            }
+          }}
+        />
+      </div>
+    ) : (
     <div
       className="therapy-modal-overlay"
       role="dialog"
@@ -176,7 +249,47 @@ export function WeitereTherapieSection({
         />
       </div>
     </div>
+    )
   ) : null
+
+  if (workspacePlanning && inlineWorkspace) {
+    return (
+      <div className="workspace-therapy-inline">
+        <header className="workspace-therapy-inline__head">
+          <h2 className="workspace-therapy-inline__title">{ts(language, 'wtSectionTitle')}</h2>
+          <button type="button" className="pt-btn pt-btn--ghost" onClick={closeWorkspacePlanning}>
+            {ts(language, 'wtClose')}
+          </button>
+        </header>
+        {detailModal ?? pickerModal ?? (
+          <>
+            <div className="therapy-section__actions" style={{ marginBottom: '0.75rem' }}>
+              <button type="button" className="therapy-add-btn" onClick={() => setPickerOpen(true)}>
+                {ts(language, 'wtAddTherapy')}
+              </button>
+            </div>
+            <div className="therapy-section__body">
+              {entries.length === 0 ? (
+                <p className="therapy-empty">{ts(language, 'wtEmpty')}</p>
+              ) : (
+                <div className="therapy-card-grid">
+                  {entries.map((entry) => (
+                    <WeitereTherapieCard
+                      key={entry.id}
+                      entry={entry}
+                      language={language}
+                      selected={selectedId === entry.id}
+                      onOpen={() => setSelectedId(entry.id)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    )
+  }
 
   if (workspacePlanning) {
     return (

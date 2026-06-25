@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
-import { ButterflyLogo } from '../../ButterflyLogo'
 import { useTranslation } from '../../../context/TranslationContext'
+import { OverviewAiBadge } from './OverviewAiBadge'
 import { useDiagnosisDisplayTitles } from '../../../hooks/useDiagnosisDisplayTitles'
 import { buildDiagnosisTitleRequest } from '../../../utils/diagnosisDisplayRequests'
+import type { UiTranslationKey } from '../../../data/uiTranslations'
 import type { ButterflySummaryItem } from '../../../utils/overview/butterflySummary'
 import { OverviewCard, OverviewEmpty } from './OverviewCard'
 
@@ -11,18 +12,23 @@ interface ButterflyCriteriaCardProps {
   onOpenDiagnose: () => void
 }
 
-const VERDICT_LABEL: Record<ButterflySummaryItem['verdict'], string> = {
-  criteria_met: 'Kriterien erfüllt',
-  not_met: 'Kriterien nicht erfüllt',
-  insufficient_data: 'Daten unvollständig',
-  unavailable: 'Keine Kriterien',
+const VERDICT_I18N: Record<ButterflySummaryItem['verdict'], UiTranslationKey> = {
+  criteria_met: 'overviewButterflyVerdictCriteriaMet',
+  not_met: 'overviewButterflyVerdictNotMet',
+  insufficient_data: 'overviewButterflyVerdictInsufficientData',
+  unavailable: 'overviewButterflyVerdictUnavailable',
 }
 
 export function ButterflyCriteriaCard({ items, onOpenDiagnose }: ButterflyCriteriaCardProps) {
-  const { language } = useTranslation()
+  const { t, language } = useTranslation()
   const openCount = items.reduce((sum, item) => sum + item.openCriteriaCount, 0)
   const badge =
-    openCount > 0 ? { label: `${openCount} offen`, tone: 'info' as const } : undefined
+    openCount > 0
+      ? {
+          label: t('overviewButterflyOpenBadge').replace('{count}', String(openCount)),
+          tone: 'info' as const,
+        }
+      : undefined
 
   const titleRequests = useMemo(
     () =>
@@ -44,14 +50,14 @@ export function ButterflyCriteriaCard({ items, onOpenDiagnose }: ButterflyCriter
 
   return (
     <OverviewCard
-      title="Butterfly-Kriterien"
-      icon={<ButterflyLogo variant="grey" size={20} />}
+      title={t('overviewWidgetButterflyCriteria')}
       className="ov-col-6"
       badge={badge}
-      action={{ label: 'Zur Diagnose', onClick: onOpenDiagnose }}
+      action={{ label: t('overviewButterflyOpenDiagnose'), onClick: onOpenDiagnose }}
     >
+      <OverviewAiBadge />
       {items.length === 0 ? (
-        <OverviewEmpty>Keine Diagnosen mit Kriterienunterstützung.</OverviewEmpty>
+        <OverviewEmpty>{t('overviewButterflyEmpty')}</OverviewEmpty>
       ) : (
         <ul className="ov-feed">
           {items.map((item) => {
@@ -64,7 +70,7 @@ export function ButterflyCriteriaCard({ items, onOpenDiagnose }: ButterflyCriter
                     {displayLabel}
                   </span>
                   <span className={`ov-pill ov-pill--${item.tone}`}>
-                    {VERDICT_LABEL[item.verdict]}
+                    {t(VERDICT_I18N[item.verdict])}
                   </span>
                 </div>
                 {item.headline ? <p className="ov-feed__text">{item.headline}</p> : null}

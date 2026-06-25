@@ -8,6 +8,8 @@ export interface ClinicalSectionAction {
 
 interface ClinicalSectionProps {
   eyebrow: string
+  /** Optional supporting line beneath the eyebrow title. */
+  subtitle?: string | null
   meta?: string | null
   action?: ClinicalSectionAction
   headerExtra?: ReactNode
@@ -20,6 +22,7 @@ interface ClinicalSectionProps {
 /** Flat clinical section — eyebrow header, no card chrome. */
 export function ClinicalSection({
   eyebrow,
+  subtitle,
   meta,
   action,
   headerExtra,
@@ -33,7 +36,10 @@ export function ClinicalSection({
   return (
     <section className={classes} aria-label={ariaLabel ?? eyebrow}>
       <header className="cm-section__head">
-        <ClinicalEyebrow inline>{eyebrow}</ClinicalEyebrow>
+        <div className="cm-section__title-block">
+          <ClinicalEyebrow inline>{eyebrow}</ClinicalEyebrow>
+          {subtitle ? <p className="cm-section__subtitle">{subtitle}</p> : null}
+        </div>
         {meta ? <span className="cm-section__meta">{meta}</span> : null}
         <span className="cm-section__head-spacer" aria-hidden />
         {headerExtra}

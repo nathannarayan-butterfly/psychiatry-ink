@@ -11,6 +11,8 @@ export type AiModelOptionId =
   | 'deepseek-v4-flash'
   | 'google-gemini-2.0-flash'
   | 'google-gemini-2.5-pro'
+  | 'mistral-small-latest'
+  | 'mistral-large-latest'
 
 /** AI function keys — one row per task in Settings → KI. */
 export type AiTaskId =
@@ -34,7 +36,7 @@ export interface AiModelPreferences {
 
 export interface AiModelCatalogEntry {
   id: AiModelOptionId
-  provider: 'psyink' | 'openai' | 'deepseek' | 'google'
+  provider: 'psyink' | 'openai' | 'deepseek' | 'google' | 'mistral'
   modelId: string
   /** Psychiatry.Ink tier when this option is a bundled tier. */
   tier?: AiModelTier

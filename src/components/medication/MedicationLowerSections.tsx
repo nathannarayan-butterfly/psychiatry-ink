@@ -51,6 +51,7 @@ export const MEDICATION_SECTIONS = [
   { key: 'sideEffects', labelKey: 'medSectionSideEffects' },
   { key: 'lab', labelKey: 'medSectionLab' },
   { key: 'intelligence', labelKey: 'medSectionIntelligence' },
+  { key: 'education', labelKey: 'medEducationPanelTitle' },
 ] as const
 
 export type MedicationSectionKey = (typeof MEDICATION_SECTIONS)[number]['key']
@@ -423,6 +424,7 @@ export function MedicationLowerSections({
     activeMeds.length === 0 ? (
       <p className="medication-lower-section__hint">{translateMedicationUi(language, 'medEmptyNoActive')}</p>
     ) : (
+      <>
       <ul className="medication-intelligence-list">
         {activeMeds.map((med) => {
           const refDrugs = getDrugsForSubstance(med.substance)
@@ -557,9 +559,6 @@ export function MedicationLowerSections({
                   </div>
                 ) : null}
 
-                <p className="medication-intelligence__disclaimer">
-                  {translateMedicationUi(language, 'medReferenceDisclaimer')}
-                </p>
                 {drug.sources.length > 0 ? (
                   <p className="medication-intelligence__sources">
                     {translateMedicationUi(language, 'medKurzinfoSource')}
@@ -587,6 +586,10 @@ export function MedicationLowerSections({
           )
         })}
       </ul>
+      <p className="medication-intelligence__disclaimer medication-lower-section__disclaimer">
+        {translateMedicationUi(language, 'medReferenceDisclaimer')}
+      </p>
+      </>
     )
 
   const renderActiveBody = (key: MedicationSectionKey) => {
@@ -668,9 +671,6 @@ export function MedicationLowerSections({
             <h2 className="medication-section-detail__title">
               {translateMedicationUi(language, meta.labelKey)}
             </h2>
-            <p className="medication-section-detail__desc">
-              {translateMedicationUi(language, meta.descKey)}
-            </p>
           </div>
         </div>
       </header>

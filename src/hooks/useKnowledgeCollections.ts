@@ -13,10 +13,18 @@ function loadCollections(): KnowledgeCollection[] {
     if (raw) {
       const parsed = JSON.parse(raw) as KnowledgeCollection[]
       if (Array.isArray(parsed) && parsed.length > 0) {
-        // Ensure the two default collections always exist (in case of partial data).
-        const ids = new Set(parsed.map((c) => c.id))
+        const defaultsById = new Map(DEFAULT_KNOWLEDGE_COLLECTIONS.map((c) => [c.id, c]))
+        const merged = parsed.map((collection) => {
+          const def = defaultsById.get(collection.id)
+          if (!def) return collection
+          return {
+            ...collection,
+            nameEn: collection.nameEn ?? def.nameEn,
+          }
+        })
+        const ids = new Set(merged.map((c) => c.id))
         const missingDefaults = DEFAULT_KNOWLEDGE_COLLECTIONS.filter((d) => !ids.has(d.id))
-        return missingDefaults.length > 0 ? [...missingDefaults, ...parsed] : parsed
+        return missingDefaults.length > 0 ? [...missingDefaults, ...merged] : merged
       }
     }
   } catch {

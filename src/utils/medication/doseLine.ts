@@ -6,6 +6,7 @@ import type {
   SideEffectReport,
 } from '../../types/medicationPlan'
 import type { UiLanguage } from '../../types/settings'
+import { formatPrnScheduleGerman, hasStructuredPrnFields } from './prnDose'
 
 const formulationGerman: Record<MedicationFormulation, string> = {
   tablet: 'Tablette',
@@ -115,6 +116,11 @@ export function formatDoseScheduleGerman(
         : 'scheduleValues'
 
   if (mode === 'prn') {
+    if (hasStructuredPrnFields(schedule)) {
+      return formatPrnScheduleGerman(schedule)
+    }
+    const prnDose = schedule.morning.trim()
+    if (prnDose) return prnDose
     const strengthPart = strength.trim()
     return strengthPart ? `${strengthPart} b.B.` : 'b.B.'
   }

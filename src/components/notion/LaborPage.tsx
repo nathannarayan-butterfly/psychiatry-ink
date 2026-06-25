@@ -30,6 +30,10 @@ import { parseLabText } from '../../utils/laborParser'
 import { showNotionToast } from './NotionToast'
 import { callGenerateApi } from '../../services/generateApi'
 import { useTranslation } from '../../context/TranslationContext'
+import {
+  formatLaborExtraUi,
+  translateLaborExtraUi,
+} from '../../data/laborExtraUiTranslations'
 import { loadMedicationPlanState } from '../../utils/medication/storage'
 import { isMedicationVisible } from '../../utils/medication/planOps'
 import {
@@ -113,6 +117,7 @@ interface KiAnalyseModalProps {
 }
 
 function KiAnalyseModal({ text, title, onAccept, onReject, onCopy }: KiAnalyseModalProps) {
+  const { language } = useTranslation()
   const overlayRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -146,7 +151,7 @@ function KiAnalyseModal({ text, title, onAccept, onReject, onCopy }: KiAnalyseMo
             type="button"
             className="therapy-modal__close"
             onClick={onReject}
-            aria-label="Schließen"
+            aria-label={translateLaborExtraUi(language, 'close')}
           >
             ×
           </button>
@@ -161,7 +166,7 @@ function KiAnalyseModal({ text, title, onAccept, onReject, onCopy }: KiAnalyseMo
             onClick={onReject}
           >
             <XIcon size={15} />
-            Ablehnen
+            {translateLaborExtraUi(language, 'reject')}
           </button>
           {onCopy && (
             <button
@@ -170,7 +175,7 @@ function KiAnalyseModal({ text, title, onAccept, onReject, onCopy }: KiAnalyseMo
               onClick={onCopy}
             >
               <Clipboard size={15} />
-              Kopieren
+              {translateLaborExtraUi(language, 'copy')}
             </button>
           )}
           <button
@@ -179,7 +184,7 @@ function KiAnalyseModal({ text, title, onAccept, onReject, onCopy }: KiAnalyseMo
             onClick={onAccept}
           >
             <Check size={15} />
-            Annehmen
+            {translateLaborExtraUi(language, 'accept')}
           </button>
         </div>
       </div>
@@ -379,6 +384,7 @@ async function callAiGenerate(
 }
 
 function LaborPasteZone({ caseId, onSave, onKiAnalysisAccept, textareaRef }: LaborPasteZoneProps) {
+  const { language } = useTranslation()
   const today = new Date().toISOString().slice(0, 10)
   const [date, setDate] = useState(today)
   const [rawText, setRawText] = useState('')
@@ -490,15 +496,15 @@ function LaborPasteZone({ caseId, onSave, onKiAnalysisAccept, textareaRef }: Lab
       const aiText = await callAiGenerate(KI_STRUKTUR_SYSTEM_PROMPT, rawText, caseId)
       const cats = parseAiCategories(aiText)
       const total = cats.reduce((sum, c) => sum + c.values.length, 0)
-      if (total === 0) throw new Error('Keine Laborwerte erkannt')
+      if (total === 0) throw new Error(translateLaborExtraUi(language, 'noLabValuesDetected'))
       setParsed(cats)
       setStatus('success')
     } catch (err) {
-      setKiError(laborKiErrorMessage(err, 'KI-Strukturierung fehlgeschlagen. Bitte versuche es erneut.'))
+      setKiError(laborKiErrorMessage(err, translateLaborExtraUi(language, 'aiStructuringError')))
     } finally {
       setIsKiStructuring(false)
     }
-  }, [rawText, isKiStructuring])
+  }, [rawText, isKiStructuring, language])
 
   const handleKiAnalysieren = useCallback(async () => {
     if (isKiAnalysing) return
@@ -529,11 +535,11 @@ function LaborPasteZone({ caseId, onSave, onKiAnalysisAccept, textareaRef }: Lab
       const aiText = await callAiGenerate(KI_ANALYSE_SYSTEM_PROMPT, userPrompt, caseId)
       setKiAnalysisText(aiText.trim())
     } catch (err) {
-      setKiError(laborKiErrorMessage(err, 'KI-Analyse fehlgeschlagen. Bitte versuche es erneut.'))
+      setKiError(laborKiErrorMessage(err, translateLaborExtraUi(language, 'aiAnalysisError')))
     } finally {
       setIsKiAnalysing(false)
     }
-  }, [parsed, rawText, isKiAnalysing, caseId])
+  }, [parsed, rawText, isKiAnalysing, caseId, language])
 
   const kiLoading = isKiStructuring || isKiAnalysing
 
@@ -541,7 +547,7 @@ function LaborPasteZone({ caseId, onSave, onKiAnalysisAccept, textareaRef }: Lab
     <div className="labor-paste-zone">
       <div className="labor-paste-zone__meta-row">
         <label className="labor-paste-zone__meta-label">
-          <span>Datum</span>
+          <span>{translateLaborExtraUi(language, 'date')}</span>
           <input
             type="date"
             className="labor-paste-zone__meta-input"
@@ -550,11 +556,11 @@ function LaborPasteZone({ caseId, onSave, onKiAnalysisAccept, textareaRef }: Lab
           />
         </label>
         <label className="labor-paste-zone__meta-label">
-          <span>Bezeichnung (optional)</span>
+          <span>{translateLaborExtraUi(language, 'labelOptional')}</span>
           <input
             type="text"
             className="labor-paste-zone__meta-input"
-            placeholder="z. B. Aufnahmelabor"
+            placeholder={translateLaborExtraUi(language, 'labelPlaceholder')}
             value={label}
             onChange={(e) => setLabel(e.target.value)}
             maxLength={80}
@@ -565,17 +571,17 @@ function LaborPasteZone({ caseId, onSave, onKiAnalysisAccept, textareaRef }: Lab
       <textarea
         ref={resolvedRef}
         className="labor-paste-zone__textarea"
-        placeholder="Laborbefund hier einfügen (Strg+V) — wird automatisch strukturiert"
+        placeholder={translateLaborExtraUi(language, 'pastePlaceholder')}
         value={rawText}
         onPaste={handlePaste}
         onChange={handleChange}
         rows={6}
       />
       <div className="labor-paste-zone__features">
-        <span>📊 KI-Strukturierung</span>
-        <span>🔬 KI-Analyse</span>
-        <span>📈 Grafiken & Verläufe</span>
-        <span>📋 Kopieren · Drucken · PDF</span>
+        <span>{translateLaborExtraUi(language, 'featureStructuring')}</span>
+        <span>{translateLaborExtraUi(language, 'featureAnalysis')}</span>
+        <span>{translateLaborExtraUi(language, 'featureGraphs')}</span>
+        <span>{translateLaborExtraUi(language, 'featureCopyPrintPdf')}</span>
       </div>
 
       {status === 'idle' && rawText.trim() && (
@@ -585,20 +591,20 @@ function LaborPasteZone({ caseId, onSave, onKiAnalysisAccept, textareaRef }: Lab
             className="labor-paste-zone__btn labor-paste-zone__btn--primary"
             onClick={() => runParse(rawText)}
           >
-            Analysieren
+            {translateLaborExtraUi(language, 'analyze')}
           </button>
         </div>
       )}
 
       {status === 'analyzing' && (
         <p className="labor-paste-zone__status">
-          <span className="labor-paste-zone__dots">Wird strukturiert…</span>
+          <span className="labor-paste-zone__dots">{translateLaborExtraUi(language, 'structuring')}</span>
         </p>
       )}
 
       {isKiStructuring && (
         <p className="labor-paste-zone__status">
-          <span className="labor-paste-zone__dots">KI analysiert…</span>
+          <span className="labor-paste-zone__dots">{translateLaborExtraUi(language, 'aiAnalyzing')}</span>
         </p>
       )}
 
@@ -612,7 +618,10 @@ function LaborPasteZone({ caseId, onSave, onKiAnalysisAccept, textareaRef }: Lab
               </div>
             )}
             <p className="labor-paste-zone__preview-title">
-              {totalParams} Parameter in {parsed.length} Kategorien erkannt
+              {formatLaborExtraUi(language, 'previewDetected', {
+                count: totalParams,
+                cats: parsed.length,
+              })}
             </p>
             {parsed.map((cat) => (
               <div key={cat.id} className="labor-paste-zone__preview-cat">
@@ -622,10 +631,10 @@ function LaborPasteZone({ caseId, onSave, onKiAnalysisAccept, textareaRef }: Lab
                 <table className="labor-paste-zone__preview-table">
                   <thead>
                     <tr>
-                      <th>Parameter</th>
-                      <th>Wert</th>
-                      <th>Einheit</th>
-                      <th>Referenz</th>
+                      <th>{translateLaborExtraUi(language, 'colParameter')}</th>
+                      <th>{translateLaborExtraUi(language, 'colValue')}</th>
+                      <th>{translateLaborExtraUi(language, 'colUnit')}</th>
+                      <th>{translateLaborExtraUi(language, 'colReference')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -649,21 +658,21 @@ function LaborPasteZone({ caseId, onSave, onKiAnalysisAccept, textareaRef }: Lab
               onClick={handleSave}
               disabled={totalParams === 0}
             >
-              Übernehmen
+              {translateLaborExtraUi(language, 'apply')}
             </button>
             <button
               type="button"
               className="labor-paste-zone__btn labor-paste-zone__btn--reject"
               onClick={handleReject}
             >
-              Ablehnen
+              {translateLaborExtraUi(language, 'reject')}
             </button>
             <button
               type="button"
               className="labor-paste-zone__btn labor-paste-zone__btn--edit"
               onClick={handleEdit}
             >
-              Bearbeiten
+              {translateLaborExtraUi(language, 'edit')}
             </button>
           </div>
           <div className="labor-paste-zone__ai-row">
@@ -673,7 +682,9 @@ function LaborPasteZone({ caseId, onSave, onKiAnalysisAccept, textareaRef }: Lab
               onClick={handleKiAnalysieren}
               disabled={kiLoading}
             >
-              {isKiAnalysing ? 'KI analysiert…' : 'Mit KI analysieren'}
+              {isKiAnalysing
+                ? translateLaborExtraUi(language, 'aiAnalyzing')
+                : translateLaborExtraUi(language, 'analyzeWithAi')}
             </button>
           </div>
           {kiError && <p className="labor-paste-zone__ki-error">{kiError}</p>}
@@ -683,7 +694,7 @@ function LaborPasteZone({ caseId, onSave, onKiAnalysisAccept, textareaRef }: Lab
       {status === 'too-few' && !isKiStructuring && (
         <>
           <p className="labor-paste-zone__status labor-paste-zone__status--warn">
-            Automatische Strukturierung nicht möglich
+            {translateLaborExtraUi(language, 'autoStructuringFailed')}
           </p>
           <div className="labor-paste-zone__actions">
             <button
@@ -692,7 +703,7 @@ function LaborPasteZone({ caseId, onSave, onKiAnalysisAccept, textareaRef }: Lab
               onClick={handleKiStrukturieren}
               disabled={kiLoading}
             >
-              Mit KI strukturieren
+              {translateLaborExtraUi(language, 'structureWithAi')}
             </button>
             <button
               type="button"
@@ -700,7 +711,7 @@ function LaborPasteZone({ caseId, onSave, onKiAnalysisAccept, textareaRef }: Lab
               onClick={handleEdit}
               disabled={kiLoading}
             >
-              Bearbeiten
+              {translateLaborExtraUi(language, 'edit')}
             </button>
           </div>
           <div className="labor-paste-zone__ai-row">
@@ -710,7 +721,9 @@ function LaborPasteZone({ caseId, onSave, onKiAnalysisAccept, textareaRef }: Lab
               onClick={handleKiAnalysieren}
               disabled={kiLoading}
             >
-              {isKiAnalysing ? 'KI analysiert…' : 'Mit KI analysieren'}
+              {isKiAnalysing
+                ? translateLaborExtraUi(language, 'aiAnalyzing')
+                : translateLaborExtraUi(language, 'analyzeWithAi')}
             </button>
           </div>
           {kiError && <p className="labor-paste-zone__ki-error">{kiError}</p>}
@@ -720,7 +733,7 @@ function LaborPasteZone({ caseId, onSave, onKiAnalysisAccept, textareaRef }: Lab
       {kiAnalysisText && (
         <KiAnalyseModal
           text={kiAnalysisText}
-          title="KI-Analyse"
+          title={translateLaborExtraUi(language, 'kiAnalyseTitle')}
           onAccept={handleKiModalAccept}
           onReject={handleKiModalReject}
         />
@@ -738,6 +751,7 @@ interface PatientsZuordnenProps {
 }
 
 function PatientsZuordnen({ onCreatePatient }: PatientsZuordnenProps) {
+  const { t, language } = useTranslation()
   const [open, setOpen] = useState(false)
   const [showVorhandener, setShowVorhandener] = useState(false)
 
@@ -750,7 +764,7 @@ function PatientsZuordnen({ onCreatePatient }: PatientsZuordnenProps) {
         aria-expanded={open}
       >
         <span className="labor-section-collapse__chevron">{open ? '▾' : '▶'}</span>
-        Patienten zuordnen
+        {t('patientAssignSectionHeading')}
       </button>
       {open && (
         <div className="labor-section-collapse__body">
@@ -761,22 +775,22 @@ function PatientsZuordnen({ onCreatePatient }: PatientsZuordnenProps) {
               if (onCreatePatient) {
                 onCreatePatient()
               } else {
-                showNotionToast('Kommt bald')
+                showNotionToast(translateLaborExtraUi(language, 'comingSoon'))
               }
             }}
           >
-            Neuer Patient
+            {t('notionNewPatient')}
           </button>
           <button
             type="button"
             className="labor-section-collapse__option-btn"
             onClick={() => setShowVorhandener((v) => !v)}
           >
-            Vorhandener Patient
+            {t('topNavExistingPatient')}
           </button>
           {showVorhandener && (
             <p className="labor-section-collapse__placeholder">
-              Wählen Sie einen Patienten aus dem Dashboard
+              {t('patientAssignSelectFromDashboard')}
             </p>
           )}
         </div>
@@ -798,6 +812,7 @@ interface GraphModalProps {
 }
 
 function GraphModal({ category, befunde, selectedParams, onClose, onCloseAndPin }: GraphModalProps) {
+  const { language } = useTranslation()
   const overlayRef = useRef<HTMLDivElement>(null)
   const chartContainerRef = useRef<HTMLDivElement>(null)
   const [copyStatus, setCopyStatus] = useState<'idle' | 'busy' | 'done' | 'err'>('idle')
@@ -932,14 +947,14 @@ function GraphModal({ category, befunde, selectedParams, onClose, onCloseAndPin 
         <div className="labor-graph-modal__header">
           <h3 className="labor-graph-modal__title">
             {category.label}
-            {isSingleParam ? ` — ${selectedParams[0]}` : ''} — Verlauf
+            {isSingleParam ? ` — ${selectedParams[0]}` : ''} — {translateLaborExtraUi(language, 'courseSuffix')}
           </h3>
           <button
             type="button"
             className="labor-graph-modal__maximize"
             onClick={() => setIsMaximized((v) => !v)}
-            aria-label={isMaximized ? 'Verkleinern' : 'Maximieren'}
-            title={isMaximized ? 'Verkleinern' : 'Maximieren'}
+            aria-label={isMaximized ? translateLaborExtraUi(language, 'minimize') : translateLaborExtraUi(language, 'maximize')}
+            title={isMaximized ? translateLaborExtraUi(language, 'minimize') : translateLaborExtraUi(language, 'maximize')}
           >
             {isMaximized ? '⊡' : '⊞'}
           </button>
@@ -947,7 +962,7 @@ function GraphModal({ category, befunde, selectedParams, onClose, onCloseAndPin 
             type="button"
             className="labor-graph-modal__close"
             onClick={onClose}
-            aria-label="Schließen"
+            aria-label={translateLaborExtraUi(language, 'close')}
           >
             ×
           </button>
@@ -964,17 +979,21 @@ function GraphModal({ category, befunde, selectedParams, onClose, onCloseAndPin 
               ].join(' ').trim()}
               onClick={handleCopyImage}
               disabled={copyStatus === 'busy'}
-              title="Grafik als Bild in die Zwischenablage kopieren"
+              title={translateLaborExtraUi(language, 'graphCopyImageTitle')}
             >
-              {copyStatus === 'done' ? 'Kopiert!' : copyStatus === 'err' ? 'Fehler' : 'Kopieren'}
+              {copyStatus === 'done'
+                ? translateLaborExtraUi(language, 'copiedExcl')
+                : copyStatus === 'err'
+                  ? translateLaborExtraUi(language, 'error')
+                  : translateLaborExtraUi(language, 'copy')}
             </button>
             <button
               type="button"
               className="labor-graph-modal__tool-btn"
               onClick={handlePrint}
-              title="Grafik drucken"
+              title={translateLaborExtraUi(language, 'graphPrintTitle')}
             >
-              Drucken
+              {translateLaborExtraUi(language, 'print')}
             </button>
             <button
               type="button"
@@ -985,17 +1004,21 @@ function GraphModal({ category, befunde, selectedParams, onClose, onCloseAndPin 
               ].join(' ').trim()}
               onClick={handleExportPdf}
               disabled={pdfStatus === 'busy'}
-              title="Grafik als PDF exportieren"
+              title={translateLaborExtraUi(language, 'graphPdfTitle')}
             >
-              {pdfStatus === 'done' ? 'Gespeichert!' : pdfStatus === 'err' ? 'Fehler' : 'PDF'}
+              {pdfStatus === 'done'
+                ? translateLaborExtraUi(language, 'savedExcl')
+                : pdfStatus === 'err'
+                  ? translateLaborExtraUi(language, 'error')
+                  : translateLaborExtraUi(language, 'pdf')}
             </button>
             <button
               type="button"
               className="labor-graph-modal__tool-btn labor-graph-modal__tool-btn--close-pin"
               onClick={onCloseAndPin}
-              title="Grafik schließen und im linken Panel speichern"
+              title={translateLaborExtraUi(language, 'graphCloseSaveTitle')}
             >
-              ✕ Schließen
+              {translateLaborExtraUi(language, 'closeX')}
             </button>
           </div>
         )}
@@ -1003,7 +1026,7 @@ function GraphModal({ category, befunde, selectedParams, onClose, onCloseAndPin 
         <div className="labor-graph-modal__body">
           {!hasChart ? (
             <p className="labor-graph-modal__hint">
-              Mindestens 2 Befunde für Verlaufsgrafik erforderlich.
+              {translateLaborExtraUi(language, 'min2BefundeGraph')}
             </p>
           ) : (
             <div ref={chartContainerRef} className="labor-graph-modal__chart-wrap">
@@ -1211,6 +1234,7 @@ function LaborGraphParamDialog({
   onConfirm,
   onClose,
 }: LaborGraphParamDialogProps) {
+  const { language } = useTranslation()
   const overlayRef = useRef<HTMLDivElement>(null)
 
   const sortedBefunde = useMemo(
@@ -1274,19 +1298,19 @@ function LaborGraphParamDialog({
     <div className="labor-graph-modal-overlay" ref={overlayRef} onClick={handleOverlayClick}>
       <div className="labor-graph-modal labor-graph-param-dialog" role="dialog" aria-modal="true">
         <div className="labor-graph-modal__header">
-          <h3 className="labor-graph-modal__title">{category.label} — Parameter auswählen</h3>
+          <h3 className="labor-graph-modal__title">{category.label} — {translateLaborExtraUi(language, 'selectParams')}</h3>
           <button
             type="button"
             className="labor-graph-modal__close"
             onClick={onClose}
-            aria-label="Schließen"
+            aria-label={translateLaborExtraUi(language, 'close')}
           >
             ×
           </button>
         </div>
         <div className="labor-graph-modal__body">
           <p className="labor-graph-param-dialog__hint">
-            Wähle die Parameter für die Verlaufsgrafik aus:
+            {translateLaborExtraUi(language, 'selectParamsHint')}
           </p>
           <ul className="labor-graph-param-dialog__list">
             {params.map(({ name, latestValue }) => (
@@ -1328,14 +1352,14 @@ function LaborGraphParamDialog({
               onClick={handleConfirm}
               disabled={checked.size === 0}
             >
-              Grafik erstellen
+              {translateLaborExtraUi(language, 'createGraph')}
             </button>
             <button
               type="button"
               className="labor-paste-zone__btn labor-paste-zone__btn--reject"
               onClick={onClose}
             >
-              Abbrechen
+              {translateLaborExtraUi(language, 'cancel')}
             </button>
           </div>
         </div>
@@ -1365,6 +1389,7 @@ function CategorySection({
   onPinWidget,
   onShowGraph,
 }: CategorySectionProps) {
+  const { language } = useTranslation()
   const [open, setOpen] = useState(true)
   const pinnedWidgets = loadPinnedWidgets(caseId)
   const isPinned = (paramName: string) =>
@@ -1386,10 +1411,10 @@ function CategorySection({
             type="button"
             className="labor-category__graph-btn"
             onClick={(e) => { e.stopPropagation(); onShowGraph(category) }}
-            title={befundeCount < 2 ? 'Mindestens 2 Befunde erforderlich' : 'Grafik anzeigen'}
+            title={befundeCount < 2 ? translateLaborExtraUi(language, 'min2Befunde') : translateLaborExtraUi(language, 'showGraph')}
             disabled={befundeCount < 2}
           >
-            📈 Grafik
+            {translateLaborExtraUi(language, 'graphBtn')}
           </button>
         )}
       </button>
@@ -1399,12 +1424,12 @@ function CategorySection({
           <table className="labor-table">
             <thead>
               <tr className="labor-table__head-row">
-                <th className="labor-table__th">Parameter</th>
-                <th className="labor-table__th labor-table__th--num">Wert</th>
-                <th className="labor-table__th">Einheit</th>
-                <th className="labor-table__th">Referenz</th>
-                <th className="labor-table__th labor-table__th--trend">Trend</th>
-                <th className="labor-table__th labor-table__th--pin" aria-label="Pin" />
+                <th className="labor-table__th">{translateLaborExtraUi(language, 'colParameter')}</th>
+                <th className="labor-table__th labor-table__th--num">{translateLaborExtraUi(language, 'colValue')}</th>
+                <th className="labor-table__th">{translateLaborExtraUi(language, 'colUnit')}</th>
+                <th className="labor-table__th">{translateLaborExtraUi(language, 'colReference')}</th>
+                <th className="labor-table__th labor-table__th--trend">{translateLaborExtraUi(language, 'colTrend')}</th>
+                <th className="labor-table__th labor-table__th--pin" aria-label={translateLaborExtraUi(language, 'pinAria')} />
               </tr>
             </thead>
             <tbody>
@@ -1429,17 +1454,17 @@ function CategorySection({
                       {dir === 'none' ? (
                         <span className="labor-trend labor-trend--none">–</span>
                       ) : dir === 'up' ? (
-                        <span className={['labor-trend labor-trend--up', val.isAbnormal ? 'labor-trend--abnormal' : ''].join(' ').trim()} title={`Vorher: ${prevValue}`}>
+                        <span className={['labor-trend labor-trend--up', val.isAbnormal ? 'labor-trend--abnormal' : ''].join(' ').trim()} title={`${translateLaborExtraUi(language, 'previousPrefix')} ${prevValue}`}>
                           ↑
                           {prevValue !== undefined && <small className="labor-trend__prev"> {prevValue}</small>}
                         </span>
                       ) : dir === 'down' ? (
-                        <span className={['labor-trend labor-trend--down', val.isAbnormal ? 'labor-trend--abnormal' : ''].join(' ').trim()} title={`Vorher: ${prevValue}`}>
+                        <span className={['labor-trend labor-trend--down', val.isAbnormal ? 'labor-trend--abnormal' : ''].join(' ').trim()} title={`${translateLaborExtraUi(language, 'previousPrefix')} ${prevValue}`}>
                           ↓
                           {prevValue !== undefined && <small className="labor-trend__prev"> {prevValue}</small>}
                         </span>
                       ) : (
-                        <span className="labor-trend labor-trend--stable" title={`Vorher: ${prevValue}`}>
+                        <span className="labor-trend labor-trend--stable" title={`${translateLaborExtraUi(language, 'previousPrefix')} ${prevValue}`}>
                           →
                           {prevValue !== undefined && <small className="labor-trend__prev"> {prevValue}</small>}
                         </span>
@@ -1450,7 +1475,7 @@ function CategorySection({
                         type="button"
                         className={['labor-pin-btn', pinned ? 'labor-pin-btn--active' : ''].join(' ').trim()}
                         onClick={() => onPinWidget(val.name, category.label)}
-                        title={befundeCount < 2 ? 'Mindestens 2 Befunde erforderlich' : (pinned ? 'Widget entfernen' : 'Als Dashboard-Widget anheften')}
+                        title={befundeCount < 2 ? translateLaborExtraUi(language, 'min2Befunde') : (pinned ? translateLaborExtraUi(language, 'removeWidget') : translateLaborExtraUi(language, 'pinAsWidget'))}
                         aria-pressed={pinned}
                         disabled={befundeCount < 2}
                       >
@@ -1479,7 +1504,7 @@ interface KumulativViewProps {
 }
 
 function KumulativView({ befunde, normalwerteLabel, caseId }: KumulativViewProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const [copyStatus, setCopyStatus] = useState<'idle' | 'done'>('idle')
   const [kiStatus, setKiStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
   const [kiText, setKiText] = useState<string | null>(null)
@@ -1579,7 +1604,7 @@ function KumulativView({ befunde, normalwerteLabel, caseId }: KumulativViewProps
   // ── Copy as TSV ──────────────────────────────────────────────────────────
   const handleCopyTsv = useCallback(() => {
     const headerRow = [
-      'Parameter',
+      translateLaborExtraUi(language, 'colParameter'),
       ...sorted.map((b) => {
         const d = formatDate(b.date)
         return b.label ? `${d} ${b.label}` : d
@@ -1618,7 +1643,7 @@ function KumulativView({ befunde, normalwerteLabel, caseId }: KumulativViewProps
       setCopyStatus('done')
       setTimeout(() => setCopyStatus('idle'), 1500)
     })
-  }, [sorted, categoryGroups, matrix, unitTexts, refTexts, normalwerteLabel, t])
+  }, [sorted, categoryGroups, matrix, unitTexts, refTexts, normalwerteLabel, t, language])
 
   // ── Print preview ─────────────────────────────────────────────────────────
   const handlePrint = useCallback(() => {
@@ -1657,15 +1682,16 @@ function KumulativView({ befunde, normalwerteLabel, caseId }: KumulativViewProps
     const dateHeaders = sorted.map((b) => {
       const d = formatDate(b.date)
       const sub = b.label ? `<span class="th-sub">${b.label}</span>` : ''
-      const badge = b.id === sorted[sorted.length - 1]?.id ? ' <span class="badge-new">neu</span>' : ''
+      const badge = b.id === sorted[sorted.length - 1]?.id ? ` <span class="badge-new">${translateLaborExtraUi(language, 'newBadge')}</span>` : ''
       return `<th class="th-date">${d}${badge}${sub}</th>`
     }).join('')
 
+    const cumulativeTitle = translateLaborExtraUi(language, 'cumulativeLabReport')
     const html = `<!DOCTYPE html>
-<html lang="de">
+<html lang="${language}">
 <head>
 <meta charset="utf-8"/>
-<title>Kumulativer Laborbefund</title>
+<title>${cumulativeTitle}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: ${FONT_SANS}; font-size: 10pt; color: #1a1a18; background: #fff; }
@@ -1695,24 +1721,24 @@ function KumulativView({ befunde, normalwerteLabel, caseId }: KumulativViewProps
 <body>
 <div class="print-header">
   <div>
-    <div class="print-header__title">Kumulativer Laborbefund</div>
+    <div class="print-header__title">${cumulativeTitle}</div>
     ${patientLine ? `<div class="print-header__patient">${patientLine}</div>` : ''}
   </div>
-  <div class="print-header__date">Ausdruck: ${printDate}</div>
+  <div class="print-header__date">${translateLaborExtraUi(language, 'printedOn')} ${printDate}</div>
 </div>
 <table>
   <thead>
     <tr>
-      <th class="th-param">Parameter</th>
+      <th class="th-param">${translateLaborExtraUi(language, 'colParameter')}</th>
       ${dateHeaders}
-      <th class="th-unit">Einheit</th>
+      <th class="th-unit">${translateLaborExtraUi(language, 'colUnit')}</th>
       <th class="th-ref">${normalwerteLabel}</th>
     </tr>
   </thead>
   <tbody>${tbodyHtml}</tbody>
 </table>
 <div class="print-footer">
-  <span>psychiatry-ink — Kumulativer Laborbefund</span>
+  <span>psychiatry-ink — ${cumulativeTitle}</span>
   <span>${printDate}</span>
 </div>
 <script>
@@ -1727,7 +1753,7 @@ function KumulativView({ befunde, normalwerteLabel, caseId }: KumulativViewProps
     w.document.write(html)
     w.document.close()
     w.focus()
-  }, [sorted, categoryGroups, matrix, unitTexts, refTexts, normalwerteLabel, caseId])
+  }, [sorted, categoryGroups, matrix, unitTexts, refTexts, normalwerteLabel, caseId, language])
 
   // ── KI Verlaufsanalyse ────────────────────────────────────────────────────
 
@@ -1815,10 +1841,10 @@ function KumulativView({ befunde, normalwerteLabel, caseId }: KumulativViewProps
       setKiText(aiText.trim())
       setKiStatus('done')
     } catch (err) {
-      setKiError(laborKiErrorMessage(err, 'KI-Verlaufsanalyse fehlgeschlagen. Bitte versuche es erneut.'))
+      setKiError(laborKiErrorMessage(err, translateLaborExtraUi(language, 'aiVerlaufError')))
       setKiStatus('error')
     }
-  }, [kiStatus, sorted, formatCumulativeForPrompt, caseId])
+  }, [kiStatus, sorted, formatCumulativeForPrompt, caseId, language])
 
   const handleKiModalAccept = useCallback(() => {
     if (!kiText) return
@@ -1826,7 +1852,7 @@ function KumulativView({ befunde, normalwerteLabel, caseId }: KumulativViewProps
     const dd = String(today.getDate()).padStart(2, '0')
     const mm = String(today.getMonth() + 1).padStart(2, '0')
     const yyyy = today.getFullYear()
-    const title = `KI-Verlaufsanalyse: Labor ${dd}.${mm}.${yyyy}`
+    const title = `${translateLaborExtraUi(language, 'docTitleKiVerlaufPrefix')} ${dd}.${mm}.${yyyy}`
     const entry = appendDokument(caseId ?? '', {
       category: 'laborbefunde',
       title,
@@ -1834,15 +1860,15 @@ function KumulativView({ befunde, normalwerteLabel, caseId }: KumulativViewProps
       date: today.toISOString(),
       source: 'ai-accepted',
       pageType: 'labor-ki-verlauf',
-      sectionLabel: 'KI-Verlaufsanalyse',
+      sectionLabel: translateLaborExtraUi(language, 'kiVerlaufanalyseTitle'),
     })
-    showNotionToast('KI-Verlaufsanalyse in Dokumente gespeichert')
+    showNotionToast(translateLaborExtraUi(language, 'kiVerlaufSavedToast'))
     setKiSavedId(entry.id)
     setKiSavedText(kiText)
     setKiSavedOpen(false)
     setKiText(null)
     setKiStatus('idle')
-  }, [kiText, caseId])
+  }, [kiText, caseId, language])
 
   const handleKiModalReject = useCallback(() => {
     setKiText(null)
@@ -1852,7 +1878,7 @@ function KumulativView({ befunde, normalwerteLabel, caseId }: KumulativViewProps
   const handleKiSavedCopy = useCallback(() => {
     if (!kiSavedText) return
     navigator.clipboard.writeText(kiSavedText).then(() => {
-      showNotionToast('Verlaufsanalyse kopiert')
+      showNotionToast(translateLaborExtraUi(language, 'verlaufanalyseCopiedToast'))
     }).catch(() => {
       const ta = document.createElement('textarea')
       ta.value = kiSavedText
@@ -1860,24 +1886,24 @@ function KumulativView({ befunde, normalwerteLabel, caseId }: KumulativViewProps
       ta.select()
       document.execCommand('copy')
       document.body.removeChild(ta)
-      showNotionToast('Verlaufsanalyse kopiert')
+      showNotionToast(translateLaborExtraUi(language, 'verlaufanalyseCopiedToast'))
     })
-  }, [kiSavedText])
+  }, [kiSavedText, language])
 
   const handleKiSavedDelete = useCallback(() => {
     if (!kiSavedId) return
-    if (!window.confirm('KI-Verlaufsanalyse löschen?')) return
+    if (!window.confirm(translateLaborExtraUi(language, 'kiVerlaufDeleteConfirm'))) return
     deleteDokument(caseId ?? '', kiSavedId)
     setKiSavedId(null)
     setKiSavedText(null)
     setKiSavedOpen(false)
-    showNotionToast('KI-Verlaufsanalyse gelöscht')
-  }, [caseId, kiSavedId])
+    showNotionToast(translateLaborExtraUi(language, 'kiVerlaufDeletedToast'))
+  }, [caseId, kiSavedId, language])
 
   if (sorted.length === 0) {
     return (
       <p className="labor-page__empty-text" style={{ padding: '1.5rem' }}>
-        Kein Laborbefund vorhanden
+        {translateLaborExtraUi(language, 'noLabReport')}
       </p>
     )
   }
@@ -1917,10 +1943,10 @@ function KumulativView({ befunde, normalwerteLabel, caseId }: KumulativViewProps
           ].join(' ').trim()}
           onClick={handleKiVerlaufsanalyse}
           disabled={kiStatus === 'loading' || sorted.length < 2}
-          title={sorted.length < 2 ? 'Mindestens 2 Befunde für Verlaufsanalyse erforderlich' : 'Alle Befunde mit KI analysieren (Verlaufsanalyse)'}
+          title={sorted.length < 2 ? translateLaborExtraUi(language, 'min2BefundeVerlaufanalyse') : translateLaborExtraUi(language, 'analyzeAllAi')}
         >
           🤖
-          <span>{kiStatus === 'loading' ? 'KI analysiert…' : 'KI Verlaufsanalyse'}</span>
+          <span>{kiStatus === 'loading' ? translateLaborExtraUi(language, 'aiAnalyzing') : translateLaborExtraUi(language, 'kiVerlaufsanalyseShort')}</span>
         </button>
       </div>
 
@@ -1940,18 +1966,18 @@ function KumulativView({ befunde, normalwerteLabel, caseId }: KumulativViewProps
               aria-expanded={kiSavedOpen}
             >
               <span className="labor-ki-saved__chevron">{kiSavedOpen ? '▾' : '▶'}</span>
-              🤖 KI-Verlaufsanalyse
+              🤖 {translateLaborExtraUi(language, 'kiVerlaufanalyseTitle')}
             </button>
             <span className="labor-ki-saved__badge">
-              <Check size={12} /> In Dokumente gespeichert
+              <Check size={12} /> {translateLaborExtraUi(language, 'savedToDocuments')}
             </span>
             <div className="labor-ki-saved__actions">
               <button
                 type="button"
                 className="labor-ki-saved__icon-btn"
                 onClick={handleKiSavedCopy}
-                title="Verlaufsanalyse kopieren"
-                aria-label="Verlaufsanalyse kopieren"
+                title={translateLaborExtraUi(language, 'copyVerlaufanalyse')}
+                aria-label={translateLaborExtraUi(language, 'copyVerlaufanalyse')}
               >
                 <Clipboard size={14} />
               </button>
@@ -1959,8 +1985,8 @@ function KumulativView({ befunde, normalwerteLabel, caseId }: KumulativViewProps
                 type="button"
                 className="labor-ki-saved__icon-btn labor-ki-saved__icon-btn--delete"
                 onClick={handleKiSavedDelete}
-                title="Verlaufsanalyse löschen"
-                aria-label="Verlaufsanalyse löschen"
+                title={translateLaborExtraUi(language, 'deleteVerlaufanalyse')}
+                aria-label={translateLaborExtraUi(language, 'deleteVerlaufanalyse')}
               >
                 <Trash2 size={14} />
               </button>
@@ -1976,7 +2002,7 @@ function KumulativView({ befunde, normalwerteLabel, caseId }: KumulativViewProps
       {kiStatus === 'done' && kiText && (
         <KiAnalyseModal
           text={kiText}
-          title="KI-Verlaufsanalyse"
+          title={translateLaborExtraUi(language, 'kiVerlaufanalyseTitle')}
           onAccept={handleKiModalAccept}
           onReject={handleKiModalReject}
           onCopy={() => {
@@ -1988,7 +2014,7 @@ function KumulativView({ befunde, normalwerteLabel, caseId }: KumulativViewProps
               document.execCommand('copy')
               document.body.removeChild(ta)
             })
-            showNotionToast('Verlaufsanalyse kopiert')
+            showNotionToast(translateLaborExtraUi(language, 'verlaufanalyseCopiedToast'))
           }}
         />
       )}
@@ -1999,7 +2025,7 @@ function KumulativView({ befunde, normalwerteLabel, caseId }: KumulativViewProps
             <tr className="labor-kumulativ__head-row">
               {/* Sticky left: param name header */}
               <th className="labor-kumulativ__th labor-kumulativ__th--param labor-kumulativ__sticky-left">
-                Parameter
+                {translateLaborExtraUi(language, 'colParameter')}
               </th>
               {/* Date columns */}
               {sorted.map((b, i) => (
@@ -2009,7 +2035,7 @@ function KumulativView({ befunde, normalwerteLabel, caseId }: KumulativViewProps
                     <span className="labor-kumulativ__date-sublabel">{b.label}</span>
                   )}
                   {i === sorted.length - 1 && (
-                    <span className="labor-kumulativ__newest-badge">neu</span>
+                    <span className="labor-kumulativ__newest-badge">{translateLaborExtraUi(language, 'newBadge')}</span>
                   )}
                 </th>
               ))}
@@ -2189,6 +2215,7 @@ function VerlaufCard({
   rationale?: string
   isSpiegel?: boolean
 }) {
+  const { language } = useTranslation()
   const data = useMemo(
     () => series.points.map((p) => ({ date: p.shortDate, value: p.value, abn: p.isAbnormal })),
     [series],
@@ -2210,8 +2237,8 @@ function VerlaufCard({
         <div className="labor-verlauf-card__titles">
           <span className="labor-verlauf-card__name" title={series.name}>{series.name}</span>
           {isSpiegel ? (
-            <span className="labor-verlauf-card__badge" title="Medikamentenspiegel — immer angezeigt">
-              Spiegel
+            <span className="labor-verlauf-card__badge" title={translateLaborExtraUi(language, 'spiegelAlwaysShown')}>
+              {translateLaborExtraUi(language, 'spiegelBadge')}
             </span>
           ) : null}
           {series.unit ? <span className="labor-verlauf-card__unit">{series.unit}</span> : null}
@@ -2316,8 +2343,17 @@ interface ClassifiedSeries {
   rationaleCaption: string
 }
 
-function LaborVerlaufOverview({ befunde, caseId }: { befunde: LaborBefund[]; caseId: string }) {
-  const [onlyAbnormal, setOnlyAbnormal] = useState(false)
+function LaborVerlaufOverview({
+  befunde,
+  caseId,
+  initialOnlyAbnormal = false,
+}: {
+  befunde: LaborBefund[]
+  caseId: string
+  initialOnlyAbnormal?: boolean
+}) {
+  const { language } = useTranslation()
+  const [onlyAbnormal, setOnlyAbnormal] = useState(initialOnlyAbnormal)
   const [showAll, setShowAll] = useState(false)
   const accent = useAccentColor()
 
@@ -2336,11 +2372,11 @@ function LaborVerlaufOverview({ befunde, caseId }: { befunde: LaborBefund[]; cas
           isRelevant: c.isRelevant,
           priority: c.priority,
           rationaleCaption: c.isSpiegel
-            ? 'Medikamentenspiegel — immer angezeigt'
+            ? translateLaborExtraUi(language, 'spiegelAlwaysShown')
             : formatRationaleCaption(c.rationale),
         }
       }),
-    [allSeries, relevance],
+    [allSeries, relevance, language],
   )
 
   const classifiedByName = useMemo(() => {
@@ -2408,7 +2444,7 @@ function LaborVerlaufOverview({ befunde, caseId }: { befunde: LaborBefund[]; cas
     return (
       <div className="labor-page__empty">
         <p className="labor-page__empty-text">
-          Noch keine Laborbefunde — füge einen Befund hinzu, um Verlaufsgrafiken zu sehen.
+          {translateLaborExtraUi(language, 'verlaufEmptyNoBefunde')}
         </p>
       </div>
     )
@@ -2418,29 +2454,39 @@ function LaborVerlaufOverview({ befunde, caseId }: { befunde: LaborBefund[]; cas
     return (
       <div className="labor-page__empty">
         <p className="labor-page__empty-text">
-          Mindestens zwei Laborbefunde mit numerischen Werten sind nötig, um Verlaufsgrafiken zu erstellen.
-          {befundeCount === 1 ? ' Aktuell ist nur ein Befund vorhanden.' : ''}
+          {translateLaborExtraUi(language, 'verlaufNeedTwoNumeric')}
+          {befundeCount === 1 ? translateLaborExtraUi(language, 'verlaufOnlyOne') : ''}
         </p>
       </div>
     )
   }
 
   const subtitle = effectiveShowAll
-    ? `${allSeries.length} Parameter · ${befundeCount} Befunde · ${dateRange}`
-    : `${relevantList.length} relevante Parameter · ${befundeCount} Befunde · ${dateRange}`
+    ? formatLaborExtraUi(language, 'subtitleAll', {
+        count: allSeries.length,
+        befunde: befundeCount,
+        range: dateRange,
+      })
+    : formatLaborExtraUi(language, 'subtitleRelevant', {
+        count: relevantList.length,
+        befunde: befundeCount,
+        range: dateRange,
+      })
 
   const drugContext =
     relevance.recognizedDrugs.length > 0
-      ? `Kuratiert für aktuelle Medikation: ${relevance.recognizedDrugs.join(', ')}`
+      ? formatLaborExtraUi(language, 'curatedForMedication', {
+          drugs: relevance.recognizedDrugs.join(', '),
+        })
       : hasCuration
-        ? 'Medikamentenspiegel werden immer angezeigt.'
-        : 'Keine medikationsbasierte Relevanz erkannt — alle Parameter werden angezeigt.'
+        ? translateLaborExtraUi(language, 'spiegelAlwaysShownSentence')
+        : translateLaborExtraUi(language, 'noMedRelevance')
 
   return (
     <div className="labor-verlauf">
       <header className="labor-verlauf__header">
         <div className="labor-verlauf__heading">
-          <h2 className="labor-verlauf__title">Laborverlauf</h2>
+          <h2 className="labor-verlauf__title">{translateLaborExtraUi(language, 'laborverlaufTitle')}</h2>
           <p className="labor-verlauf__subtitle">{subtitle}</p>
           <p className="labor-verlauf__context">{drugContext}</p>
         </div>
@@ -2452,7 +2498,7 @@ function LaborVerlaufOverview({ befunde, caseId }: { befunde: LaborBefund[]; cas
                 checked={onlyAbnormal}
                 onChange={(e) => setOnlyAbnormal(e.target.checked)}
               />
-              <span>Nur auffällige ({abnormalCount})</span>
+              <span>{formatLaborExtraUi(language, 'onlyAbnormal', { count: abnormalCount })}</span>
             </label>
           ) : null}
           {hasCuration && allSeries.length > relevantList.length ? (
@@ -2462,7 +2508,9 @@ function LaborVerlaufOverview({ befunde, caseId }: { befunde: LaborBefund[]; cas
               onClick={() => setShowAll((v) => !v)}
               aria-pressed={showAll}
             >
-              {showAll ? 'Nur relevante anzeigen' : `Alle Werte anzeigen (${allSeries.length})`}
+              {showAll
+                ? translateLaborExtraUi(language, 'showRelevantOnly')
+                : formatLaborExtraUi(language, 'showAllValues', { count: allSeries.length })}
             </button>
           ) : null}
         </div>
@@ -2471,7 +2519,7 @@ function LaborVerlaufOverview({ befunde, caseId }: { befunde: LaborBefund[]; cas
       {effectiveShowAll ? (
         groups.length === 0 ? (
           <p className="labor-page__empty-text" style={{ padding: '1.5rem 0' }}>
-            Keine auffälligen Parameter im Verlauf.
+            {translateLaborExtraUi(language, 'noAbnormalInCourse')}
           </p>
         ) : (
           groups.map((g) => (
@@ -2496,7 +2544,7 @@ function LaborVerlaufOverview({ befunde, caseId }: { befunde: LaborBefund[]; cas
         )
       ) : relevantVisible.length === 0 ? (
         <p className="labor-page__empty-text" style={{ padding: '1.5rem 0' }}>
-          Keine auffälligen relevanten Parameter im Verlauf.
+          {translateLaborExtraUi(language, 'noAbnormalRelevantInCourse')}
         </p>
       ) : (
         <section className="labor-verlauf__group">
@@ -2530,6 +2578,12 @@ interface LaborPageProps {
   useExternalSidebar?: boolean
   /** Opens the clinical orders modal, optionally pre-filtered for the diagnostics context. */
   onRequestAnforderung?: (preset?: AnforderungModalPreset | null) => void
+  /** Empty-workspace Diagnostik flow: lab entry only (no Befunde/Imaging tabs). */
+  workspaceDiagnostik?: boolean
+  /** When true on mount, opens Laborverlauf filtered to abnormal values (Übersicht quick action). */
+  autoFocusAbnormalLabs?: boolean
+  /** Called once the abnormal-labs focus request has been consumed. */
+  onAutoFocusAbnormalLabsHandled?: () => void
 }
 
 export function LaborPage({
@@ -2538,8 +2592,11 @@ export function LaborPage({
   hasPatient = false,
   useExternalSidebar = false,
   onRequestAnforderung,
+  workspaceDiagnostik = false,
+  autoFocusAbnormalLabs = false,
+  onAutoFocusAbnormalLabsHandled,
 }: LaborPageProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const externalNav = useDiagnosticsSectionNavOptional()
   const isExternal = useExternalSidebar && externalNav != null
 
@@ -2552,8 +2609,16 @@ export function LaborPage({
   const localLabor = useLaborBefundeList(caseId)
   const localDiagnostikBefunde = useDiagnostikBefunde(caseId)
 
-  const diagnosticsSection = isExternal ? externalNav.diagnosticsSection : localDiagnosticsSection
-  const setDiagnosticsSection = isExternal ? externalNav.setDiagnosticsSection : setLocalDiagnosticsSection
+  const diagnosticsSection = workspaceDiagnostik
+    ? 'labor'
+    : isExternal && externalNav
+      ? externalNav.diagnosticsSection
+      : localDiagnosticsSection
+  const setDiagnosticsSection = workspaceDiagnostik
+    ? () => {}
+    : isExternal && externalNav
+      ? externalNav.setDiagnosticsSection
+      : setLocalDiagnosticsSection
   const viewMode = isExternal ? externalNav.viewMode : localViewMode
   const setViewMode = isExternal ? externalNav.setViewMode : setLocalViewMode
   const pasteZoneOpen = isExternal ? externalNav.pasteZoneOpen : localPasteZoneOpen
@@ -2580,6 +2645,14 @@ export function LaborPage({
   const [kiReSavedId, setKiReSavedId] = useState<string | null>(null)
   const [kiReSavedText, setKiReSavedText] = useState<string | null>(null)
   const [kiReSavedOpen, setKiReSavedOpen] = useState(false)
+  const [laborVerlaufOnlyAbnormal, setLaborVerlaufOnlyAbnormal] = useState(false)
+
+  useEffect(() => {
+    if (!autoFocusAbnormalLabs) return
+    setViewMode('verlauf')
+    setLaborVerlaufOnlyAbnormal(true)
+    onAutoFocusAbnormalLabsHandled?.()
+  }, [autoFocusAbnormalLabs, onAutoFocusAbnormalLabsHandled, setViewMode])
 
   useEffect(() => {
     if (!pasteZoneOpen) return
@@ -2628,25 +2701,25 @@ export function LaborPage({
       // Mirror the befund into the Dokumente archive (idempotent via befund id)
       syncLaborDokumente(caseId, t('laborDocumentTitle'))
 
-      showNotionToast('Laborbefund gespeichert')
+      showNotionToast(translateLaborExtraUi(language, 'labReportSaved'))
       setPasteZoneOpen(false)
     },
-    [caseId, t],
+    [caseId, t, language],
   )
 
   const handleDelete = useCallback(() => {
     if (!selectedId) return
-    if (!window.confirm('Laborbefund löschen?')) return
+    if (!window.confirm(translateLaborExtraUi(language, 'labReportDeleteConfirm'))) return
     deleteBefund(caseId, selectedId)
     const next = [...loadBefunde(caseId)].sort((a, b) => b.date.localeCompare(a.date))
     setBefunde(next)
     setSelectedId(next[0]?.id ?? null)
-  }, [caseId, selectedId])
+  }, [caseId, selectedId, language])
 
   const handleCopy = useCallback(() => {
     if (!selectedBefund) return
     const lines: string[] = [
-      `Laborbefund ${selectedBefund.date}${selectedBefund.label ? ' — ' + selectedBefund.label : ''}`,
+      `${translateLaborExtraUi(language, 'labReportWord')} ${selectedBefund.date}${selectedBefund.label ? ' — ' + selectedBefund.label : ''}`,
       '',
     ]
     for (const cat of selectedBefund.categories) {
@@ -2660,7 +2733,7 @@ export function LaborPage({
     }
     const text = lines.join('\n')
     navigator.clipboard.writeText(text).then(() => {
-      showNotionToast('Befund kopiert')
+      showNotionToast(translateLaborExtraUi(language, 'befundCopied'))
     }).catch(() => {
       const ta = document.createElement('textarea')
       ta.value = text
@@ -2668,9 +2741,9 @@ export function LaborPage({
       ta.select()
       document.execCommand('copy')
       document.body.removeChild(ta)
-      showNotionToast('Befund kopiert')
+      showNotionToast(translateLaborExtraUi(language, 'befundCopied'))
     })
-  }, [selectedBefund])
+  }, [selectedBefund, language])
 
   const handlePrint = useCallback(() => {
     if (!selectedBefund) return
@@ -2681,7 +2754,8 @@ export function LaborPage({
       day: '2-digit', month: '2-digit', year: 'numeric',
       hour: '2-digit', minute: '2-digit',
     })
-    const title = `Laborbefund ${selectedBefund.date}${selectedBefund.label ? ' — ' + selectedBefund.label : ''}`
+    const labReportWord = translateLaborExtraUi(language, 'labReportWord')
+    const title = `${labReportWord} ${selectedBefund.date}${selectedBefund.label ? ' — ' + selectedBefund.label : ''}`
 
     let tbodyHtml = ''
     for (const cat of selectedBefund.categories) {
@@ -2696,7 +2770,7 @@ export function LaborPage({
     }
 
     const html = `<!DOCTYPE html>
-<html lang="de">
+<html lang="${language}">
 <head>
 <meta charset="utf-8"/>
 <title>${title}</title>
@@ -2731,22 +2805,22 @@ export function LaborPage({
     <div class="print-header__title">${title}</div>
     ${patientLine ? `<div class="print-header__patient">${patientLine}</div>` : ''}
   </div>
-  <div class="print-header__date">Ausdruck: ${printDate}</div>
+  <div class="print-header__date">${translateLaborExtraUi(language, 'printedOn')} ${printDate}</div>
 </div>
 <table>
   <thead>
     <tr>
-      <th class="th-param">Parameter</th>
-      <th class="th-val">Wert</th>
-      <th class="th-unit">Einheit</th>
-      <th class="th-ref">Referenz</th>
+      <th class="th-param">${translateLaborExtraUi(language, 'colParameter')}</th>
+      <th class="th-val">${translateLaborExtraUi(language, 'colValue')}</th>
+      <th class="th-unit">${translateLaborExtraUi(language, 'colUnit')}</th>
+      <th class="th-ref">${translateLaborExtraUi(language, 'colReference')}</th>
       <th class="th-flag">⚑</th>
     </tr>
   </thead>
   <tbody>${tbodyHtml}</tbody>
 </table>
 <div class="print-footer">
-  <span>psychiatry-ink — Laborbefund</span>
+  <span>psychiatry-ink — ${labReportWord}</span>
   <span>${printDate}</span>
 </div>
 <script>
@@ -2761,7 +2835,7 @@ export function LaborPage({
     w.document.write(html)
     w.document.close()
     w.focus()
-  }, [selectedBefund, caseId])
+  }, [selectedBefund, caseId, language])
 
   const handleEditLabel = useCallback(() => {
     if (!selectedBefund) return
@@ -2791,7 +2865,7 @@ export function LaborPage({
           caseId,
           current.filter((w) => w.id !== existing.id),
         )
-        showNotionToast('Widget entfernt')
+        showNotionToast(translateLaborExtraUi(language, 'widgetRemoved'))
       } else {
         const widget: PinnedLaborWidget = {
           id: crypto.randomUUID(),
@@ -2801,11 +2875,11 @@ export function LaborPage({
           pinnedAt: new Date().toISOString(),
         }
         savePinnedWidgets(caseId, [...current, widget])
-        showNotionToast('Als Dashboard-Widget angeheftet')
+        showNotionToast(translateLaborExtraUi(language, 'widgetPinned'))
       }
       setBefunde((prev) => [...prev])
     },
-    [caseId],
+    [caseId, language],
   )
 
   const handleReAnalyze = useCallback(async () => {
@@ -2837,17 +2911,17 @@ export function LaborPage({
       setKiReText(aiText.trim())
       setKiReStatus('done')
     } catch (err) {
-      setKiReError(laborKiErrorMessage(err, 'KI-Analyse fehlgeschlagen. Bitte versuche es erneut.'))
+      setKiReError(laborKiErrorMessage(err, translateLaborExtraUi(language, 'aiAnalysisError')))
       setKiReStatus('error')
     }
-  }, [selectedBefund, kiReStatus, caseId])
+  }, [selectedBefund, kiReStatus, caseId, language])
 
   const saveKiAnalysisDokument = useCallback((text: string, befund: typeof selectedBefund) => {
     if (!befund) return null
     const befundTitle = befund.label
       ? `${befund.label} (${formatDate(befund.date)})`
       : formatDate(befund.date)
-    const title = `KI-Analyse: ${befundTitle}`
+    const title = `${translateLaborExtraUi(language, 'docTitleKiAnalysePrefix')} ${befundTitle}`
     const entry = appendDokument(caseId, {
       category: 'laborbefunde',
       title,
@@ -2855,11 +2929,11 @@ export function LaborPage({
       date: new Date().toISOString(),
       source: 'ai-accepted',
       pageType: 'labor-ki-analyse',
-      sectionLabel: 'KI-Analyse',
+      sectionLabel: translateLaborExtraUi(language, 'kiAnalyseTitle'),
     })
-    showNotionToast('KI-Analyse in Dokumente gespeichert')
+    showNotionToast(translateLaborExtraUi(language, 'kiAnalyseSavedToast'))
     return entry.id
-  }, [caseId])
+  }, [caseId, language])
 
   const handleReAnalyzeAccept = useCallback(() => {
     if (!kiReText) return
@@ -2891,7 +2965,7 @@ export function LaborPage({
   const handleKiSavedCopy = useCallback(() => {
     if (!kiReSavedText) return
     navigator.clipboard.writeText(kiReSavedText).then(() => {
-      showNotionToast('Analyse kopiert')
+      showNotionToast(translateLaborExtraUi(language, 'analyseCopied'))
     }).catch(() => {
       const ta = document.createElement('textarea')
       ta.value = kiReSavedText
@@ -2899,22 +2973,29 @@ export function LaborPage({
       ta.select()
       document.execCommand('copy')
       document.body.removeChild(ta)
-      showNotionToast('Analyse kopiert')
+      showNotionToast(translateLaborExtraUi(language, 'analyseCopied'))
     })
-  }, [kiReSavedText])
+  }, [kiReSavedText, language])
 
   const handleKiSavedDelete = useCallback(() => {
     if (!kiReSavedId) return
-    if (!window.confirm('KI-Analyse löschen?')) return
+    if (!window.confirm(translateLaborExtraUi(language, 'kiAnalyseDeleteConfirm'))) return
     deleteDokument(caseId, kiReSavedId)
     setKiReSavedId(null)
     setKiReSavedText(null)
     setKiReSavedOpen(false)
-    showNotionToast('KI-Analyse gelöscht')
-  }, [caseId, kiReSavedId])
+    showNotionToast(translateLaborExtraUi(language, 'kiAnalyseDeletedToast'))
+  }, [caseId, kiReSavedId, language])
 
   return (
-    <div className="labor-page">
+    <div
+      className={[
+        'labor-page',
+        workspaceDiagnostik ? 'labor-page--workspace-diagnostik' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <aside className="labor-page__sidebar">
         {diagnosticsSection === 'labor' ? (
           <>
@@ -2939,7 +3020,7 @@ export function LaborPage({
               {pasteZoneOpen ? '×' : '+'} {t('laborAddBefund')}
             </button>
 
-            <div className="labor-view-toggle" role="group" aria-label="Ansicht">
+            <div className="labor-view-toggle" role="group" aria-label={translateLaborExtraUi(language, 'viewAria')}>
               <button
                 type="button"
                 className={[
@@ -2973,9 +3054,9 @@ export function LaborPage({
             </div>
 
             {befunde.length === 0 ? (
-              <p className="labor-page__sidebar-empty">Kein Laborbefund vorhanden</p>
+              <p className="labor-page__sidebar-empty">{translateLaborExtraUi(language, 'noLabReport')}</p>
             ) : (
-              <ul className="labor-page__befund-list" role="listbox" aria-label="Laborbefunde">
+              <ul className="labor-page__befund-list" role="listbox" aria-label={translateLaborExtraUi(language, 'labReportsAria')}>
                 {befunde.map((b) => (
                   <li key={b.id}>
                     <button
@@ -3014,8 +3095,8 @@ export function LaborPage({
         <header className="labor-page__diagnostics-header">
           <div>
             <h1 className="labor-page__diagnostics-title">{t('diagnosticsPageTitle')}</h1>
-            <p className="labor-page__diagnostics-subtitle">{t('diagnosticsPageSubtitle')}</p>
           </div>
+          {!workspaceDiagnostik ? (
           <nav className="labor-page__diagnostics-nav" aria-label={t('diagnosticsPageTitle')}>
             {DIAGNOSTICS_SECTIONS.map((section) => (
               <button
@@ -3039,6 +3120,7 @@ export function LaborPage({
               </button>
             ))}
           </nav>
+          ) : null}
         </header>
         ) : null}
 
@@ -3085,7 +3167,11 @@ export function LaborPage({
 
         {/* Verlauf view — medication-driven trend graphs (relevant subset + always-on Spiegel) */}
         {diagnosticsSection === 'labor' && viewMode === 'verlauf' && (
-          <LaborVerlaufOverview befunde={befunde} caseId={caseId} />
+          <LaborVerlaufOverview
+            befunde={befunde}
+            caseId={caseId}
+            initialOnlyAbnormal={laborVerlaufOnlyAbnormal}
+          />
         )}
 
         {diagnosticsSection === 'labor' && viewMode === 'einzeln' && selectedBefund ? (
@@ -3106,7 +3192,7 @@ export function LaborPage({
                         if (e.key === 'Escape') setEditingLabel(false)
                       }}
                       maxLength={80}
-                      placeholder="Bezeichnung"
+                      placeholder={translateLaborExtraUi(language, 'labelPlaceholderShort')}
                     />
                     <button type="button" className="labor-befund-header__label-save" onClick={handleSaveLabel}>
                       ✓
@@ -3120,9 +3206,9 @@ export function LaborPage({
                     type="button"
                     className="labor-befund-header__label"
                     onClick={handleEditLabel}
-                    title="Bezeichnung bearbeiten"
+                    title={translateLaborExtraUi(language, 'editLabel')}
                   >
-                    {selectedBefund.label ?? '+ Bezeichnung'}
+                    {selectedBefund.label ?? translateLaborExtraUi(language, 'addLabel')}
                   </button>
                 )}
               </div>
@@ -3131,17 +3217,17 @@ export function LaborPage({
                   type="button"
                   className="labor-befund-header__action-btn"
                   onClick={handleCopy}
-                  title="Befund kopieren"
+                  title={translateLaborExtraUi(language, 'copyBefundTitle')}
                 >
-                  Kopieren
+                  {translateLaborExtraUi(language, 'copy')}
                 </button>
                 <button
                   type="button"
                   className="labor-befund-header__action-btn"
                   onClick={handlePrint}
-                  title="Befund drucken"
+                  title={translateLaborExtraUi(language, 'printBefundTitle')}
                 >
-                  Drucken
+                  {translateLaborExtraUi(language, 'print')}
                 </button>
                 <button
                   type="button"
@@ -3151,24 +3237,26 @@ export function LaborPage({
                   ].join(' ').trim()}
                   onClick={handleReAnalyze}
                   disabled={kiReStatus === 'loading'}
-                  title="Befund mit KI analysieren"
+                  title={translateLaborExtraUi(language, 'analyzeBefundAiTitle')}
                 >
-                  {kiReStatus === 'loading' ? '🤖 analysiert…' : '🤖 KI analysieren'}
+                  {kiReStatus === 'loading'
+                    ? `🤖 ${translateLaborExtraUi(language, 'aiAnalyzingShort')}`
+                    : `🤖 ${translateLaborExtraUi(language, 'aiAnalyzeBtn')}`}
                 </button>
                 <button
                   type="button"
                   className="labor-befund-header__delete-btn"
                   onClick={handleDelete}
-                  title="Befund löschen"
+                  title={translateLaborExtraUi(language, 'deleteBefundTitle')}
                 >
-                  Löschen
+                  {translateLaborExtraUi(language, 'delete')}
                 </button>
               </div>
             </header>
 
             {/* Categories */}
             {selectedBefund.categories.length === 0 ? (
-              <p className="labor-page__no-params">Keine Parameter erkannt.</p>
+              <p className="labor-page__no-params">{translateLaborExtraUi(language, 'noParamsDetected')}</p>
             ) : (
               <div className="labor-page__categories">
                 {selectedBefund.categories.map((cat) => (
@@ -3194,7 +3282,7 @@ export function LaborPage({
             {kiReStatus === 'done' && kiReText && (
               <KiAnalyseModal
                 text={kiReText}
-                title="KI-Analyse"
+                title={translateLaborExtraUi(language, 'kiAnalyseTitle')}
                 onAccept={handleReAnalyzeAccept}
                 onReject={handleReAnalyzeReject}
                 onCopy={() => {
@@ -3206,7 +3294,7 @@ export function LaborPage({
                     document.execCommand('copy')
                     document.body.removeChild(ta)
                   })
-                  showNotionToast('Analyse kopiert')
+                  showNotionToast(translateLaborExtraUi(language, 'analyseCopied'))
                 }}
               />
             )}
@@ -3222,18 +3310,18 @@ export function LaborPage({
                     aria-expanded={kiReSavedOpen}
                   >
                     <span className="labor-ki-saved__chevron">{kiReSavedOpen ? '▾' : '▶'}</span>
-                    🤖 KI-Analyse
+                    🤖 {translateLaborExtraUi(language, 'kiAnalyseTitle')}
                   </button>
                   <span className="labor-ki-saved__badge">
-                    <Check size={12} /> In Dokumente gespeichert
+                    <Check size={12} /> {translateLaborExtraUi(language, 'savedToDocuments')}
                   </span>
                   <div className="labor-ki-saved__actions">
                     <button
                       type="button"
                       className="labor-ki-saved__icon-btn"
                       onClick={handleKiSavedCopy}
-                      title="Analyse kopieren"
-                      aria-label="Analyse kopieren"
+                      title={translateLaborExtraUi(language, 'copyAnalyse')}
+                      aria-label={translateLaborExtraUi(language, 'copyAnalyse')}
                     >
                       <Clipboard size={14} />
                     </button>
@@ -3241,8 +3329,8 @@ export function LaborPage({
                       type="button"
                       className="labor-ki-saved__icon-btn labor-ki-saved__icon-btn--delete"
                       onClick={handleKiSavedDelete}
-                      title="Analyse löschen"
-                      aria-label="Analyse löschen"
+                      title={translateLaborExtraUi(language, 'deleteAnalyse')}
+                      aria-label={translateLaborExtraUi(language, 'deleteAnalyse')}
                     >
                       <Trash2 size={14} />
                     </button>
@@ -3260,7 +3348,7 @@ export function LaborPage({
         ) : diagnosticsSection === 'labor' && viewMode === 'einzeln' ? (
           <div className="labor-page__empty">
             <p className="labor-page__empty-text">
-              Laborbefund einfügen oder auswählen
+              {translateLaborExtraUi(language, 'pasteOrSelect')}
             </p>
             {befunde.length >= 2 && (
               <button
@@ -3268,7 +3356,7 @@ export function LaborPage({
                 className="labor-page__empty-cta"
                 onClick={() => setViewMode('verlauf')}
               >
-                📈 {t('laborViewVerlauf')} anzeigen
+                📈 {formatLaborExtraUi(language, 'showViewTemplate', { label: t('laborViewVerlauf') })}
               </button>
             )}
           </div>
@@ -3315,7 +3403,7 @@ export function LaborPage({
             }
             if (anyNew) savePinnedWidgets(caseId, current)
             setBefunde((prev) => [...prev])
-            showNotionToast('Grafik gespeichert')
+            showNotionToast(translateLaborExtraUi(language, 'graphSaved'))
             setGraphConfig(null)
           }}
         />
