@@ -1,4 +1,7 @@
-import type { PrismaClient } from '@prisma/client'
+import {
+  listIcd11PsychiatricEntryGapInfo,
+  listUnlinkedIcd11CatalogueEntries,
+} from '../../server/data/diagnosis.ts'
 import { DISORDER_CRITERIA } from '../../src/data/diagnosisCriteria/registry.ts'
 import type { Disorder } from '../../src/data/diagnosisCriteria/schema.ts'
 
@@ -102,22 +105,8 @@ export function buildDisorderTargets(priority: CriteriaDraftPriority): CriteriaD
   return targets.sort((a, b) => b.priority - a.priority || a.title.localeCompare(b.title, 'de'))
 }
 
-export async function buildUnlinkedCatalogueTargets(
-  prisma: PrismaClient,
-  limit = 500,
-): Promise<CriteriaDraftTarget[]> {
-  const entries = await prisma.diagnosisEntry.findMany({
-    where: {
-      isPsychiatric: true,
-      isSelectable: true,
-      catalogue: { system: 'ICD11MMS' },
-      criteriaLinks: { none: {} },
-      chapterCode: { startsWith: '06' },
-    },
-    include: { catalogue: true },
-    orderBy: { codeNormalized: 'asc' },
-    take: limit,
-  })
+export async function buildUnlinkedCatalogueTargets(limit = 500): Promise<CriteriaDraftTarget[]> {
+  const entries = await listUnlinkedIcd11CatalogueEntries(limit)
 
   return entries.map((entry, index) => ({
     key: `catalogue:${entry.id}`,
@@ -139,22 +128,18 @@ export async function buildUnlinkedCatalogueTargets(
 }
 
 export async function listCriteriaDraftTargets(
-  prisma: PrismaClient,
   priority: CriteriaDraftPriority,
   limit: number,
 ): Promise<CriteriaDraftTarget[]> {
   if (priority === 'unlinked') {
-    return (await buildUnlinkedCatalogueTargets(prisma, limit)).slice(0, limit)
+    return (await buildUnlinkedCatalogueTargets(limit)).slice(0, limit)
   }
 
   const disorderTargets = buildDisorderTargets(priority === 'all' ? 'all' : priority)
 
   const merged =
     priority === 'all'
-      ? [
-          ...disorderTargets,
-          ...(await buildUnlinkedCatalogueTargets(prisma, Math.max(limit, 100))),
-        ]
+      ? [...disorderTargets, ...(await buildUnlinkedCatalogueTargets(Math.max(limit, 100)))]
       : disorderTargets
 
   const deduped = new Map<string, CriteriaDraftTarget>()
@@ -167,7 +152,7 @@ export async function listCriteriaDraftTargets(
     .slice(0, limit)
 }
 
-export async function summarizeCriteriaGaps(prisma: PrismaClient): Promise<{
+export async function summarizeCriteriaGaps(): Promise<{
   totalDisorders: number
   nativeIcd11Trees: number
   withoutNativeIcd11: number
@@ -183,14 +168,11 @@ export async function summarizeCriteriaGaps(prisma: PrismaClient): Promise<{
   const gapNoTree = noNative.filter(isGapCoverageDisorder)
   const substanceNoTree = noNative.filter(isSubstanceSyndrome)
 
-  const icd11Entries = await prisma.diagnosisEntry.findMany({
-    where: { catalogue: { system: 'ICD11MMS' }, isPsychiatric: true },
-    include: { criteriaLinks: true },
-  })
+  const icd11Entries = await listIcd11PsychiatricEntryGapInfo()
   const selectableUnlinked = icd11Entries.filter(
-    (e) => e.isSelectable && e.criteriaLinks.length === 0,
+    (e) => e.isSelectable && e.criteriaLinkCount === 0,
   )
-  const withLinks = icd11Entries.filter((e) => e.criteriaLinks.length > 0)
+  const withLinks = icd11Entries.filter((e) => e.criteriaLinkCount > 0)
 
   return {
     totalDisorders: DISORDER_CRITERIA.length,

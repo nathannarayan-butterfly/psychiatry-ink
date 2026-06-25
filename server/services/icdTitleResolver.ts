@@ -1,5 +1,5 @@
 import type { IcdTitleLookupItem, IcdTitleResult, IcdTitleVersion } from '../../shared/icdTitle'
-import { prisma } from '../db'
+import { findDiagnosisCodeByColumn, findDiagnosisCodeBySystemCode } from '../data/diagnosis'
 import {
   getCachedIcdTitle,
   icdTitleCacheKey,
@@ -27,7 +27,7 @@ function normalizeCode(code: string, version: IcdTitleVersion): string {
   return version === 'icd11' ? trimmed : trimmed.toUpperCase()
 }
 
-function prismaSystem(version: IcdTitleVersion): 'icd10' | 'icd11' | 'dsm5tr' {
+function crosswalkSystem(version: IcdTitleVersion): 'icd10' | 'icd11' | 'dsm5tr' {
   if (version === 'icd11') return 'icd11'
   if (version === 'dsm') return 'dsm5tr'
   return 'icd10'
@@ -37,31 +37,23 @@ async function lookupCrosswalkTitle(code: string, version: IcdTitleVersion): Pro
   const normalized = normalizeCode(code, version)
   if (!normalized) return null
 
-  const system = prismaSystem(version)
-  const row = await prisma.diagnosisCode.findFirst({
-    where: { system, code: normalized },
-  })
+  const system = crosswalkSystem(version)
+  const row = await findDiagnosisCodeBySystemCode(system, normalized)
   if (row?.labelDe?.trim()) return row.labelDe.trim()
 
   if (version === 'icd10') {
-    const byAnchor = await prisma.diagnosisCode.findFirst({
-      where: { icd10Code: normalized },
-    })
+    const byAnchor = await findDiagnosisCodeByColumn('icd10_code', normalized)
     if (byAnchor?.icd10Label?.trim()) return byAnchor.icd10Label.trim()
     if (byAnchor?.labelDe?.trim()) return byAnchor.labelDe.trim()
   }
 
   if (version === 'icd11') {
-    const byAnchor = await prisma.diagnosisCode.findFirst({
-      where: { icd11Code: normalized },
-    })
+    const byAnchor = await findDiagnosisCodeByColumn('icd11_code', normalized)
     if (byAnchor?.icd11Label?.trim()) return byAnchor.icd11Label.trim()
   }
 
   if (version === 'dsm') {
-    const byAnchor = await prisma.diagnosisCode.findFirst({
-      where: { dsmCode: normalized },
-    })
+    const byAnchor = await findDiagnosisCodeByColumn('dsm_code', normalized)
     if (byAnchor?.dsmLabel?.trim()) return byAnchor.dsmLabel.trim()
   }
 

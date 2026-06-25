@@ -14,7 +14,6 @@
  *   npm run criteria:generate-drafts -- --report-gaps
  */
 import dotenv from 'dotenv'
-import { PrismaClient } from '@prisma/client'
 import {
   findTargetByCode,
   findTargetByDisorderId,
@@ -29,8 +28,6 @@ import {
 
 dotenv.config()
 dotenv.config({ path: '.env.local', override: true })
-
-const prisma = new PrismaClient()
 
 interface CliOptions {
   dryRun: boolean
@@ -91,12 +88,12 @@ async function main() {
   const opts = parseCli()
 
   if (opts.reportGaps) {
-    const gaps = await summarizeCriteriaGaps(prisma)
+    const gaps = await summarizeCriteriaGaps()
     console.log('[criteria-drafts] gap summary:', JSON.stringify(gaps, null, 2))
     return
   }
 
-  let targets = await listCriteriaDraftTargets(prisma, opts.priority, opts.limit)
+  let targets = await listCriteriaDraftTargets(opts.priority, opts.limit)
 
   if (opts.disorderId) {
     const single = findTargetByDisorderId(opts.disorderId)
@@ -167,11 +164,7 @@ async function main() {
   console.log(`[criteria-drafts] done: ${okCount}/${results.length} ok — manifest ${manifestPath}`)
 }
 
-main()
-  .catch((error) => {
-    console.error('[criteria-drafts] failed', error)
-    process.exit(1)
-  })
-  .finally(async () => {
-    await prisma.$disconnect()
-  })
+main().catch((error) => {
+  console.error('[criteria-drafts] failed', error)
+  process.exit(1)
+})

@@ -1,6 +1,5 @@
 import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
-import { PrismaClient } from '@prisma/client'
 import {
   findTargetByCode,
   findTargetByDisorderId,
@@ -8,8 +7,6 @@ import {
 import { generateCriteriaDraftForTarget } from '../services/criteriaDraftGenerate.ts'
 
 export const criteriaGenerateDraftRouter: Router = createRouter()
-
-const prisma = new PrismaClient()
 
 /** Dev/admin-only criteria draft generation (single disorder). */
 export function criteriaDraftApiEnabled(): boolean {
@@ -86,7 +83,7 @@ criteriaGenerateDraftRouter.get('/gaps', async (_req: Request, res: Response) =>
   }
   try {
     const { summarizeCriteriaGaps } = await import('../../scripts/lib/criteriaDraftGaps.ts')
-    const gaps = await summarizeCriteriaGaps(prisma)
+    const gaps = await summarizeCriteriaGaps()
     res.json(gaps)
   } catch (error) {
     console.error('[criteria] gaps failed', error)

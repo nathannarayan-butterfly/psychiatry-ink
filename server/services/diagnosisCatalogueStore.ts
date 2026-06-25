@@ -1,4 +1,12 @@
-import { prisma } from '../db'
+import {
+  countCatalogueEntries,
+  countCatalogueEntriesWithCriteriaLinks,
+  isCatalogueSeeded as repoIsCatalogueSeeded,
+  listActiveCatalogues,
+  listActiveCataloguesOrdered,
+  searchCatalogueEntries,
+  type CatalogueEntryCandidate,
+} from '../data/diagnosis'
 import type {
   CatalogueSearchScope,
   CatalogueSearchSystem,
@@ -29,19 +37,6 @@ function parseScope(raw: string | undefined): CatalogueSearchScope {
   if (value === 'somatic') return 'somatic'
   if (value === 'all') return 'all'
   return 'psychiatric'
-}
-
-function scopeFilter(scope: CatalogueSearchScope) {
-  if (scope === 'psychiatric') return { isPsychiatric: true }
-  if (scope === 'somatic') return { isSomatic: true }
-  return {}
-}
-
-function systemFilter(system: CatalogueSearchSystem): { system?: CatalogueSystem | { in: CatalogueSystem[] } } {
-  if (system === 'ALL') {
-    return { system: { in: ['ICD10GM', 'ICD11MMS'] } }
-  }
-  return { system }
 }
 
 function rankHit(
@@ -76,40 +71,20 @@ export async function searchDiagnosisCatalogue(params: {
   const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 30) : 12
   const qCode = normalizeCode(params.q)
 
-  const catalogues = await prisma.diagnosisCatalogue.findMany({
-    where: { active: true, ...systemFilter(system) },
-    select: { id: true, system: true, version: true },
-  })
+  const catalogues = await listActiveCatalogues(system)
   if (catalogues.length === 0) return []
 
   const catalogueIds = catalogues.map((c) => c.id)
   const catalogueById = new Map(catalogues.map((c) => [c.id, c]))
 
-  const entries = await prisma.diagnosisEntry.findMany({
-    where: {
-      catalogueId: { in: catalogueIds },
-      ...scopeFilter(scope),
-      OR: [
-        { searchText: { contains: q } },
-        { codeNormalized: { startsWith: qCode } },
-        { title: { contains: params.q.trim() } },
-        {
-          synonyms: {
-            some: {
-              OR: [
-                { normalizedTerm: { contains: q } },
-                { term: { contains: params.q.trim() } },
-              ],
-            },
-          },
-        },
-      ],
-    },
-    include: {
-      criteriaLinks: { select: { id: true }, take: 1 },
-      catalogue: { select: { system: true, version: true } },
-    },
-    take: limit * 4,
+  const entries = await searchCatalogueEntries({
+    q,
+    qCode,
+    rawTitle: params.q.trim(),
+    scope,
+    catalogueIds,
+    catalogueById,
+    poolSize: limit * 4,
   })
 
   const ranked = entries
@@ -126,31 +101,25 @@ export async function searchDiagnosisCatalogue(params: {
     })
     .slice(0, limit)
 
-  return ranked.map(({ entry }) => {
-    const cat = catalogueById.get(entry.catalogueId) ?? entry.catalogue
-    return {
-      diagnosisEntryId: entry.id,
-      system: cat.system as CatalogueSystem,
-      catalogueVersion: cat.version,
-      code: entry.code,
-      title: entry.title,
-      shortTitle: entry.shortTitle ?? undefined,
-      chapterCode: entry.chapterCode ?? undefined,
-      chapterTitle: entry.chapterTitle ?? undefined,
-      blockCode: entry.blockCode ?? undefined,
-      blockTitle: entry.blockTitle ?? undefined,
-      isCategory: entry.isCategory,
-      isSelectable: entry.isSelectable,
-      criteriaAvailable: entry.criteriaLinks.length > 0,
-    }
-  })
+  return ranked.map(({ entry }: { entry: CatalogueEntryCandidate }) => ({
+    diagnosisEntryId: entry.id,
+    system: entry.system,
+    catalogueVersion: entry.catalogueVersion,
+    code: entry.code,
+    title: entry.title,
+    shortTitle: entry.shortTitle ?? undefined,
+    chapterCode: entry.chapterCode ?? undefined,
+    chapterTitle: entry.chapterTitle ?? undefined,
+    blockCode: entry.blockCode ?? undefined,
+    blockTitle: entry.blockTitle ?? undefined,
+    isCategory: entry.isCategory,
+    isSelectable: entry.isSelectable,
+    criteriaAvailable: entry.criteriaAvailable,
+  }))
 }
 
 export async function getDiagnosisCatalogueCoverage(): Promise<DiagnosisCatalogueCoverage> {
-  const catalogues = await prisma.diagnosisCatalogue.findMany({
-    where: { active: true },
-    orderBy: [{ system: 'asc' }, { version: 'desc' }],
-  })
+  const catalogues = await listActiveCataloguesOrdered()
 
   const catalogueStats = []
   let totalPsychiatric = 0
@@ -160,21 +129,10 @@ export async function getDiagnosisCatalogueCoverage(): Promise<DiagnosisCatalogu
   let withoutLinks = 0
 
   for (const catalogue of catalogues) {
-    const entryCount = await prisma.diagnosisEntry.count({
-      where: { catalogueId: catalogue.id },
-    })
-    const psychiatricCount = await prisma.diagnosisEntry.count({
-      where: { catalogueId: catalogue.id, isPsychiatric: true },
-    })
-    const somaticCount = await prisma.diagnosisEntry.count({
-      where: { catalogueId: catalogue.id, isSomatic: true },
-    })
-    const withCriteriaLinks = await prisma.diagnosisEntry.count({
-      where: {
-        catalogueId: catalogue.id,
-        criteriaLinks: { some: {} },
-      },
-    })
+    const entryCount = await countCatalogueEntries(catalogue.id)
+    const psychiatricCount = await countCatalogueEntries(catalogue.id, 'is_psychiatric')
+    const somaticCount = await countCatalogueEntries(catalogue.id, 'is_somatic')
+    const withCriteriaLinks = await countCatalogueEntriesWithCriteriaLinks(catalogue.id)
     const withoutCriteriaLinks = entryCount - withCriteriaLinks
 
     totalPsychiatric += psychiatricCount
@@ -188,7 +146,7 @@ export async function getDiagnosisCatalogueCoverage(): Promise<DiagnosisCatalogu
       version: catalogue.version,
       language: catalogue.language,
       active: catalogue.active,
-      importedAt: catalogue.importedAt.toISOString(),
+      importedAt: new Date(catalogue.importedAt).toISOString(),
       entryCount,
       psychiatricCount,
       somaticCount,
@@ -210,6 +168,5 @@ export async function getDiagnosisCatalogueCoverage(): Promise<DiagnosisCatalogu
 }
 
 export async function isCatalogueSeeded(): Promise<boolean> {
-  const count = await prisma.diagnosisCatalogue.count({ where: { active: true } })
-  return count > 0
+  return repoIsCatalogueSeeded()
 }

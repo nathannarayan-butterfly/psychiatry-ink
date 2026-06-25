@@ -9,16 +9,13 @@ vi.mock('../services/whoIcdClient', () => ({
   fetchWhoIcdTitle: vi.fn(),
 }))
 
-vi.mock('../db', () => ({
-  prisma: {
-    diagnosisCode: {
-      findFirst: vi.fn(),
-    },
-  },
+vi.mock('../data/diagnosis', () => ({
+  findDiagnosisCodeBySystemCode: vi.fn(),
+  findDiagnosisCodeByColumn: vi.fn(),
 }))
 
 import { fetchWhoIcdTitle } from '../services/whoIcdClient'
-import { prisma } from '../db'
+import { findDiagnosisCodeBySystemCode, findDiagnosisCodeByColumn } from '../data/diagnosis'
 
 let server: Server
 let baseUrl: string
@@ -39,7 +36,8 @@ afterAll(() => {
 beforeEach(() => {
   clearIcdTitleCache()
   vi.mocked(fetchWhoIcdTitle).mockReset()
-  vi.mocked(prisma.diagnosisCode.findFirst).mockReset()
+  vi.mocked(findDiagnosisCodeBySystemCode).mockReset()
+  vi.mocked(findDiagnosisCodeByColumn).mockReset()
 })
 
 describe('GET /api/icd/title', () => {
@@ -58,7 +56,7 @@ describe('GET /api/icd/title', () => {
 
   it('falls back to crosswalk title when WHO lookup is empty', async () => {
     vi.mocked(fetchWhoIcdTitle).mockResolvedValue(null)
-    vi.mocked(prisma.diagnosisCode.findFirst).mockResolvedValue({
+    vi.mocked(findDiagnosisCodeBySystemCode).mockResolvedValue({
       system: 'icd10',
       code: 'F12.2',
       labelDe: 'Psychische und Verhaltensstörungen durch Cannabinoide : Abhängigkeitssyndrom',

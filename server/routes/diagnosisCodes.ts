@@ -1,6 +1,10 @@
 import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
-import { prisma } from '../db'
+import {
+  countDiagnosisCodesBySystem,
+  findDiagnosisCodeBySystemCode,
+  searchDiagnosisCodes,
+} from '../data/diagnosis'
 
 export const diagnosisCodesRouter: Router = createRouter()
 
@@ -66,17 +70,7 @@ diagnosisCodesRouter.get('/search', async (req: Request, res: Response) => {
       return
     }
 
-    const rows = await prisma.diagnosisCode.findMany({
-      where: {
-        system,
-        OR: [
-          { searchText: { contains: q } },
-          { code: { startsWith: q.toUpperCase() } },
-        ],
-      },
-      take: limit,
-      orderBy: [{ code: 'asc' }],
-    })
+    const rows = await searchDiagnosisCodes({ system, q, limit })
 
     res.json({ results: rows.map(toHit) })
   } catch (error) {
@@ -94,9 +88,7 @@ diagnosisCodesRouter.get('/crosswalk', async (req: Request, res: Response) => {
       return
     }
 
-    const row = await prisma.diagnosisCode.findFirst({
-      where: { system: 'icd10', code: icd10 },
-    })
+    const row = await findDiagnosisCodeBySystemCode('icd10', icd10)
 
     if (!row) {
       res.json({ crosswalk: null })
@@ -117,12 +109,9 @@ diagnosisCodesRouter.get('/stats', async (_req: Request, res: Response) => {
     return
   }
   try {
-    const counts = await prisma.diagnosisCode.groupBy({
-      by: ['system'],
-      _count: { code: true },
-    })
+    const counts = await countDiagnosisCodesBySystem()
     res.json({
-      systems: counts.map((item) => ({ system: item.system, count: item._count.code })),
+      systems: counts.map((item) => ({ system: item.system, count: item.count })),
     })
   } catch (error) {
     res.status(500).json({ error: 'Stats failed' })
