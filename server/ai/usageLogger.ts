@@ -1,12 +1,13 @@
 /**
- * AI usage logger — writes to the local AiUsageLog Prisma model.
+ * AI usage logger — writes to the live `ai_usage_logs` table via the typed
+ * supabase-js data layer (`server/data/aiUsage.ts`).
  *
  * Privacy guarantee: this module NEVER stores raw prompts, patient text, or
  * any field that could contain PHI. Only token counts, feature key, mode,
  * provider/model metadata, de-identified case reference, and status are stored.
  */
 
-import { prisma } from '../db'
+import { insertAiUsageLog, listUserUsageSince } from '../data/aiUsage'
 import type { AiMode } from '../../src/types/aiUsage'
 
 export interface LogAiUsageParams {
@@ -37,28 +38,23 @@ export interface LogAiUsageParams {
  */
 export async function logAiUsage(params: LogAiUsageParams): Promise<string | null> {
   try {
-    const row = await prisma.aiUsageLog.create({
-      data: {
-        userId: params.userId ?? null,
-        organisationId: params.organisationId ?? null,
-        caseRef: params.caseRef ?? null,
-        featureKey: params.featureKey,
-        mode: params.mode,
-        provider: params.provider,
-        model: params.model,
-        inputTokens: params.inputTokens,
-        outputTokens: params.outputTokens,
-        totalTokens: params.totalTokens,
-        creditsCharged: params.creditsCharged,
-        durationMs: params.durationMs ?? null,
-        success: params.success,
-        errorCode: params.errorCode ?? null,
-        rawProviderUsage: params.rawProviderUsage
-          ? JSON.stringify(params.rawProviderUsage)
-          : null,
-      },
+    return await insertAiUsageLog({
+      userId: params.userId ?? null,
+      organisationId: params.organisationId ?? null,
+      caseRef: params.caseRef ?? null,
+      featureKey: params.featureKey,
+      mode: params.mode,
+      provider: params.provider,
+      model: params.model,
+      inputTokens: params.inputTokens,
+      outputTokens: params.outputTokens,
+      totalTokens: params.totalTokens,
+      creditsCharged: params.creditsCharged,
+      durationMs: params.durationMs ?? null,
+      success: params.success,
+      errorCode: params.errorCode ?? null,
+      rawProviderUsage: params.rawProviderUsage ?? null,
     })
-    return row.id
   } catch (error) {
     console.error('[usageLogger] Failed to write AiUsageLog:', error)
     return null
@@ -77,17 +73,7 @@ export async function getUsageSummaryForUser(userId: string): Promise<{
     Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1),
   )
 
-  const rows = await prisma.aiUsageLog.findMany({
-    where: {
-      userId,
-      createdAt: { gte: periodStart },
-    },
-    select: {
-      totalTokens: true,
-      creditsCharged: true,
-      success: true,
-    },
-  })
+  const rows = await listUserUsageSince(userId, periodStart.toISOString())
 
   return {
     callCount: rows.length,
