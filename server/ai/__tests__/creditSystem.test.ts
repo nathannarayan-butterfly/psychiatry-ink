@@ -48,6 +48,13 @@ vi.mock('../../services/llmProvider', () => ({
   llmResultModel: vi.fn(),
 }))
 
+// The soft-lock gate in runAiFeature delegates to subscriptionAccess (which
+// reads the account via the Supabase seam). These credit-flow tests isolate the
+// credit logic; the access decision itself is covered by subscriptionAccess.test.ts.
+vi.mock('../../services/subscriptionAccess', () => ({
+  assertAccess: vi.fn().mockResolvedValue(undefined),
+}))
+
 import { prisma } from '../../db'
 import { callLlm } from '../../services/llmProvider'
 import {
