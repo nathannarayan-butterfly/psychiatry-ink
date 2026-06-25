@@ -40,6 +40,20 @@ export interface AiCreditHistoryEntry {
   createdAt: string
 }
 
+export interface AiCreditStatus {
+  trialEndsAt: string | null
+  daysRemaining: number | null
+  subscriptionStatus: string | null
+  plan: string | null
+  interval: string | null
+  locked: boolean
+  access: boolean
+  reason: string
+  stripeConfigured?: boolean
+}
+
+export type SubscriptionInterval = 'month' | 'year'
+
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = await getAuthHeaders()
   const response = await fetch(`${API_BASE}${path}`, {
@@ -78,6 +92,22 @@ export async function startCreditCheckout(packId: string): Promise<{ url: string
     method: 'POST',
     body: JSON.stringify({
       packId,
+      origin: window.location.origin,
+    }),
+  })
+}
+
+export async function fetchAiCreditStatus(): Promise<AiCreditStatus> {
+  return fetchJson('/api/ai-credits/status')
+}
+
+export async function startSubscriptionCheckout(
+  interval: SubscriptionInterval,
+): Promise<{ url: string | null; sessionId: string }> {
+  return fetchJson('/api/ai-credits/subscribe', {
+    method: 'POST',
+    body: JSON.stringify({
+      interval,
       origin: window.location.origin,
     }),
   })

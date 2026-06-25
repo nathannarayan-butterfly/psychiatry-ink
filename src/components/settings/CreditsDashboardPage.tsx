@@ -19,6 +19,7 @@ import {
   type AiCreditUsageSummary,
 } from '../../services/aiCreditsApi'
 import { ClinicalLoading } from '../ui/ClinicalLoading'
+import { SubscriptionBanner } from './SubscriptionBanner'
 import '../../styles/credits-dashboard.css'
 
 interface CreditsDashboardPageProps {
@@ -64,7 +65,7 @@ export function CreditsDashboardPage({ onBack }: CreditsDashboardPageProps) {
 
   const checkoutStatus = useMemo(() => {
     const params = new URLSearchParams(window.location.search)
-    return params.get('checkout')
+    return params.get('checkout') ?? params.get('subscription')
   }, [])
 
   const load = useCallback(async () => {
@@ -170,6 +171,14 @@ export function CreditsDashboardPage({ onBack }: CreditsDashboardPageProps) {
             {checkoutMessage}
           </p>
         ) : null}
+
+        <SubscriptionBanner
+          onRechargeClick={() =>
+            document
+              .getElementById('credits-purchase-heading')
+              ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }
+        />
 
         <section className="credits-panel credits-panel--hero" aria-labelledby="credits-balance-heading">
           <div className="credits-panel__header">
