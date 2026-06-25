@@ -107,6 +107,11 @@
   color: var(--ink, #1a1a18);
 }
 
+/* Minimal weiß: card title in the card's accent (same family as the left rail). */
+.workspace-panel__card .workspace-panel__card-title {
+  color: var(--cm-heading-accent, var(--ink, #1a1a18));
+}
+
 .workspace-panel__back {
   display: inline-flex;
   align-items: center;

@@ -43,29 +43,20 @@
 .aura-card {
   --aura-card-accent: var(--patient-bordered-accent, var(--area-accent, var(--accent)));
   position: relative;
-  border: 1px solid color-mix(in srgb, var(--aura-card-accent) 28%, var(--border-soft, #e8e4df));
+  /* "Minimal (weiß)": opaque WHITE surface, subtle NEUTRAL border + soft neutral
+     elevation, dark high-contrast text. Color survives ONLY as the slim left
+     accent rail (status / per-card category) — no tinted fill, no accent sheen. */
+  border: 1px solid var(--border-soft, #e8e4df);
   border-left: 3px solid var(--aura-card-accent);
   border-radius: var(--radius-card, 0.6875rem);
-  /* Tinted base COLOR + a soft top-left accent sheen layered as IMAGE, so the
-     card keeps its own accent identity while gaining cohesive depth. */
-  background-color: color-mix(in srgb, var(--aura-card-accent) 4.5%, var(--surface, #fff));
-  background-image:
-    radial-gradient(
-      120% 86% at 0% 0%,
-      color-mix(in srgb, var(--aura-card-accent) 10%, transparent),
-      transparent 58%
-    ),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--aura-card-accent) 5%, transparent),
-      transparent 42%
-    );
+  background-color: var(--surface, #fff);
+  background-image: none;
   box-shadow:
-    var(--shadow-elevated-sm, 0 1px 2px rgba(0, 0, 0, 0.04)),
-    0 10px 24px -16px color-mix(in srgb, var(--aura-card-accent) 55%, transparent);
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 6px 16px -10px rgba(0, 0, 0, 0.12);
 }
 
-/* Opt-in calm interactivity: a gentle hover lift + accent focus ring. */
+/* Opt-in calm interactivity: a gentle hover lift + neutral elevation. */
 .aura-card--interactive {
   transition:
     transform var(--duration-medium, 280ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
@@ -74,13 +65,13 @@
 }
 .aura-card--interactive:hover {
   transform: translateY(-2px);
-  border-color: color-mix(in srgb, var(--aura-card-accent) 42%, var(--border-soft, #e8e4df));
+  border-color: color-mix(in srgb, var(--aura-card-accent) 30%, var(--border-soft, #e8e4df));
   box-shadow:
-    var(--shadow-elevated-lg, 0 2px 6px rgba(0, 0, 0, 0.06), 0 8px 20px rgba(0, 0, 0, 0.07)),
-    0 16px 34px -18px color-mix(in srgb, var(--aura-card-accent) 70%, transparent);
+    0 2px 4px rgba(0, 0, 0, 0.05),
+    0 10px 24px -10px rgba(0, 0, 0, 0.16);
 }
 .aura-card--interactive:focus-within {
-  border-color: color-mix(in srgb, var(--aura-card-accent) 48%, var(--border-soft, #e8e4df));
+  border-color: color-mix(in srgb, var(--aura-card-accent) 38%, var(--border-soft, #e8e4df));
 }
 
 /* ── Utilities ───────────────────────────────────────────────────────────── */

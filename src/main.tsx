@@ -7,7 +7,8 @@ import { OrganisationProvider } from './contexts/PermissionContext'
 import { ActiveAppointmentProvider } from './contexts/ActiveAppointmentContext'
 import { defaultLanguage } from './data/languages'
 import { registerClinicalLanguageResolver } from './services/clinicalApiFetch'
-import { loadBootstrapUiLanguage } from './utils/clinicalLanguage'
+import { installChunkReloadGuard } from './utils/chunkReloadGuard'
+import { loadBootstrapUiLanguage, loadInitialDocumentLanguage } from './utils/clinicalLanguage'
 import { reapplyDevicePreferences } from './utils/devicePreferences'
 import './styles/globals.css'
 import './styles/aura-theme.css'
@@ -53,12 +54,14 @@ import './styles/guided-entry.css'
 import './styles/overview-quick-actions.css'
 import './styles/medication-education.css'
 
+installChunkReloadGuard()
+
 registerClinicalLanguageResolver(loadBootstrapUiLanguage)
 
 reapplyDevicePreferences()
 
 try {
-  document.documentElement.lang = loadBootstrapUiLanguage()
+  document.documentElement.lang = loadInitialDocumentLanguage()
 } catch {
   document.documentElement.lang = defaultLanguage
 }

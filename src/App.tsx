@@ -7,7 +7,9 @@ import { WorkspaceSessionProvider } from './context/WorkspaceSessionContext'
 import { useAuth } from './context/AuthContext'
 import { useLanguageSettings } from './hooks/useLanguageSettings'
 import { usePrivacySettings } from './hooks/usePrivacySettings'
-import { isAppRoute, useAppRouter } from './hooks/useAppRouter'
+import { isAppRoute, isPublicRoute, useAppRouter } from './hooks/useAppRouter'
+import { resolveLocaleFromHost } from './config/domainConfig'
+import { getEffectiveHostname } from './utils/resolveHostname'
 import { DEFAULT_CASE_ID } from './utils/caseContext'
 import { CaseWorkspacePage } from './components/CaseWorkspacePage'
 import { DashboardPage } from './components/dashboard/DashboardPage'
@@ -166,6 +168,29 @@ export default function App() {
     navigate('/dashboard')
   }, [navigate, route.view])
 
+  // Public/pre-auth pages (marketing homepage, AI-credits notice, login, signup)
+  // render in the locale of the request domain — psychiatry.ink → en,
+  // psychiatrie.ink → de — matching the server-rendered <html lang> shell so there
+  // is no German-then-English flash. This is deliberately decoupled from the
+  // persisted app UI-language pin (`languageSettings.language`): a stale or
+  // unrelated localStorage pin must never override the domain for a public visitor.
+  // The authenticated app below still honours the user's chosen language.
+  const activeUiLanguage = isPublicRoute(route)
+    ? resolveLocaleFromHost(getEffectiveHostname())
+    : languageSettings.language
+
+  // Keep <html lang> in sync with the language actually rendered. On public
+  // routes this is the domain locale (above), so a stale UI-language pin can
+  // never leave psychiatry.ink advertising lang="de" while showing English.
+  useEffect(() => {
+    document.documentElement.lang =
+      activeUiLanguage === 'en'
+        ? languageSettings.englishVariant === 'us'
+          ? 'en-US'
+          : 'en-GB'
+        : activeUiLanguage
+  }, [activeUiLanguage, languageSettings.englishVariant])
+
   const publicPageProps = {
     onLogin: () => navigate('/login'),
     onNavigate: navigate,
@@ -177,7 +202,7 @@ export default function App() {
   if (route.view === 'landing') {
     return (
       <TranslationProvider
-        language={languageSettings.language}
+        language={activeUiLanguage}
         englishVariant={languageSettings.englishVariant}
       >
         <HomepagePage
@@ -191,7 +216,7 @@ export default function App() {
   if (route.view === 'ai-credits') {
     return (
       <TranslationProvider
-        language={languageSettings.language}
+        language={activeUiLanguage}
         englishVariant={languageSettings.englishVariant}
       >
         <AiCreditsHinweisePage {...publicPageProps} />
@@ -202,7 +227,7 @@ export default function App() {
   if (route.view === 'login' || route.view === 'signup') {
     return (
       <TranslationProvider
-        language={languageSettings.language}
+        language={activeUiLanguage}
         englishVariant={languageSettings.englishVariant}
       >
         <AuthPage

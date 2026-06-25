@@ -18,6 +18,82 @@
   </head>
   <body>
     <div id="root"></div>
+
+    <!--
+      Unsupported / legacy browser fallback. A modern Vite ES-module bundle cannot
+      run in Internet Explorer (or other browsers without <script type="module">
+      support), so #root would otherwise stay empty and show a blank white page.
+      The `nomodule` script runs ONLY in those legacy browsers (module-capable
+      browsers skip it), revealing this message instead of a blank screen. In
+      modern browsers this block is never shown and React replaces #root normally.
+    -->
+    <div
+      id="legacy-browser-warning"
+      hidden
+      style="
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: #ffffff;
+        color: #24211e;
+        font-family: Arial, Helvetica, sans-serif;
+        text-align: center;
+        z-index: 2147483647;
+      "
+    >
+      <div style="max-width: 32rem;">
+        <h1 style="font-size: 20px; font-weight: 700; margin: 0 0 12px;">
+          Psychiatry.Ink
+        </h1>
+        <p style="font-size: 15px; line-height: 1.5; margin: 0 0 8px;">
+          Your browser is not supported. Please open Psychiatry.Ink in a current
+          version of Chrome, Edge, Firefox or Safari.
+        </p>
+        <p style="font-size: 15px; line-height: 1.5; margin: 0; color: #6d655c;">
+          Ihr Browser wird nicht unterstützt. Bitte öffnen Sie Psychiatry.Ink in
+          einer aktuellen Version von Chrome, Edge, Firefox oder Safari.
+        </p>
+      </div>
+    </div>
+    <script nomodule>
+      (function () {
+        var warning = document.getElementById('legacy-browser-warning')
+        if (warning) warning.hidden = false
+        var root = document.getElementById('root')
+        if (root) root.style.display = 'none'
+      })()
+    </script>
+    <noscript>
+      <div
+        style="
+          position: fixed;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 24px;
+          background: #ffffff;
+          color: #24211e;
+          font-family: Arial, Helvetica, sans-serif;
+          text-align: center;
+        "
+      >
+        <div style="max-width: 32rem;">
+          <p style="margin: 0 0 8px;">
+            JavaScript is required to use Psychiatry.Ink. Please enable JavaScript
+            and reload this page.
+          </p>
+          <p style="margin: 0; color: #6d655c;">
+            Psychiatry.Ink benötigt JavaScript. Bitte aktivieren Sie JavaScript
+            und laden Sie die Seite neu.
+          </p>
+        </div>
+      </div>
+    </noscript>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

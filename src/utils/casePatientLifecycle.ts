@@ -13,8 +13,17 @@ import { deleteImportedFilesForCase } from './documentImport/importedFileStore'
 /** Stale test fall — short id prefix only. */
 export const STALE_CASE_ID_PREFIX = '219918e0'
 
+/**
+ * Retired demo patient ("Anna Demo"). The demo seeding code was removed, but the
+ * case can still linger in a device's local registry (and, for org members, in the
+ * encrypted org case vault) from before removal. Treating it as stale auto-purges it
+ * on next load so it never reappears in the dashboard.
+ */
+export const RETIRED_DEMO_CASE_IDS = ['DEMO-CASE-0001'] as const
+
 export function isStaleCaseId(caseId: string): boolean {
-  return caseId.startsWith(STALE_CASE_ID_PREFIX)
+  if (caseId.startsWith(STALE_CASE_ID_PREFIX)) return true
+  return (RETIRED_DEMO_CASE_IDS as readonly string[]).includes(caseId)
 }
 
 export function isPatientCaseArchived(caseId: string, _userId: string): boolean {
@@ -58,7 +67,10 @@ export async function purgeLocalPatientCases(userId: string): Promise<string[]> 
   return removed
 }
 
-/** One-time-safe removal of the stale 219918e0 test fall from local registry + storage. */
+/**
+ * One-time-safe removal of retired cases (the 219918e0 test fall and the retired
+ * "Anna Demo" demo patient) from the local registry + case-scoped storage.
+ */
 export async function removeStaleCasesFromRegistry(): Promise<string[]> {
   const removed: string[] = []
   const map = loadRegistryMapFromStorage()

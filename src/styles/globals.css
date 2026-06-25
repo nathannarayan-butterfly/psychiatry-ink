@@ -11,9 +11,13 @@
   /* Accent tint: document title + progress subheader only (.workspace-header__title/sub) */
   --border-soft: #E8E4DF;
   --border-strong: #C8C4BE;
-  --text-main: #24211E;
-  --text-secondary: #6D655C;
-  --text-muted: #91887E;
+  /* Text ink ramp — darkened ~20% toward black (channels ×0.8) for a crisper,
+     higher-contrast read across all pages. Single source of truth: every alias
+     (--ink/--text-primary/--muted/--color-ink/…) resolves to these.
+     Previous: #24211E / #6D655C / #91887E. */
+  --text-main: #1D1A18;
+  --text-secondary: #57514A;
+  --text-muted: #746D65;
   --accent: #8A5A2B;
   --accent-hover: color-mix(in srgb, var(--accent) 85%, black);
   --accent-soft: color-mix(in srgb, var(--accent) 14%, white);
@@ -103,7 +107,7 @@
   --panel-graphic-btn-size-max: 2rem;
   --panel-graphic-icon-size-max: 1rem;
 
-  --editor-font-size: 16px;
+  --editor-font-size: 17.6px; /* 16px × 1.10 — global +10% (px-based; root bump doesn't reach it) */
   --editor-line-height: 1.65;
   --editor-paper-bg: #FAFAF8;
   --editor-paper-line-color: color-mix(in srgb, var(--border-soft) 50%, transparent);
@@ -368,8 +372,10 @@
   }
 
   html {
-    /* 16px → 17px: one step up for laptop readability; scales all rem-based typography */
-    font-size: 106.25%;
+    /* Root type scale: 106.25% × 1.10 = 116.875% (≈16px → ~18.7px). Global +10%
+       text size — cascades to every rem-based size (type-scale tokens + hardcoded
+       rem font-sizes). Single tunable lever; adjust this one value to retune. */
+    font-size: 116.875%;
   }
 
   html,
@@ -2186,7 +2192,7 @@
   @media (max-width: 22.5rem) {
     :root {
       --tool-box-width: 2.75rem;
-      --editor-font-size: 15px;
+      --editor-font-size: 16.5px; /* 15px × 1.10 — global +10% */
     }
 
     .topbar-logo {
@@ -3024,7 +3030,7 @@
   }
 
   .lab-chart__axis-label {
-    font-size: 10px;
+    font-size: 11px; /* 10px × 1.10 — SVG text (fill, no inheritance from root bump) */
     fill: var(--text-muted);
     font-variant-numeric: tabular-nums;
   }
@@ -3068,7 +3074,7 @@
   }
 
   .lab-chart__med-label {
-    font-size: 9px;
+    font-size: 10px; /* 9px × 1.10 — SVG text (fill, no inheritance from root bump) */
     fill: #7c3aed;
     font-weight: 500;
   }
@@ -3796,13 +3802,10 @@
     text-align: left;
     border-color: color-mix(in srgb, var(--quick-action-accent) 28%, var(--border));
     background: color-mix(in srgb, var(--quick-action-accent) 5%, var(--surface));
-    border-left-width: 3px;
-    border-left-color: color-mix(in srgb, var(--quick-action-accent) 55%, var(--border));
   }
 
   .dashboard-quick-action:hover {
     border-color: color-mix(in srgb, var(--quick-action-accent) 38%, var(--border));
-    border-left-color: color-mix(in srgb, var(--quick-action-accent) 72%, var(--border));
     background: color-mix(in srgb, var(--quick-action-accent) 7%, var(--surface));
   }
 
@@ -3827,8 +3830,6 @@
   .dashboard-quick-action--placeholder {
     --quick-action-accent: var(--border);
     border-style: dashed;
-    border-left-width: 1px;
-    border-left-color: color-mix(in srgb, var(--border) 70%, transparent);
     background: color-mix(in srgb, var(--surface) 60%, transparent);
     cursor: default;
   }

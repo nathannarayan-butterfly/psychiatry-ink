@@ -24,6 +24,19 @@
   --cm-label-weight: 500;
   --cm-label-tracking: 0.08em;
 
+  /* —— Colored widget/card heading (Minimal weiß) ——
+   * Card & widget TITLES render in the card's own accent (status / per-card
+   * category), matching the approved preview. The hue is the SAME family as the
+   * card's left rail (--patient-bordered-accent), deepened toward ink so small
+   * uppercase text stays WCAG-contrast-safe on white. Resolves the accent in the
+   * CONTEXT of the heading element, so each card colors its own title. Falls back
+   * to the area signature hue, then the global accent, on un-accented surfaces. */
+  --cm-heading-accent: color-mix(
+    in srgb,
+    var(--patient-bordered-accent, var(--area-accent, var(--accent, #8a5a2b))) 65%,
+    var(--text-main, #1d1a18)
+  );
+
   /* —— Vertical + horizontal rhythm —— */
   --cm-section-gap: 2.75rem;        /* space between flat sections / grid rows */
   --cm-block-gap: 1rem;             /* head → body within a section */
@@ -35,57 +48,40 @@
   --cm-page-pad-x: 1.75rem;
   --cm-page-pad-y: 1.5rem;
 
-  /* —— Workspace glass scene + frosted-card tokens (case workspace) ——
-   * Barely-present clinical wash behind frosted cards — not a themed wallpaper. */
+  /* —— Workspace surface tokens (case workspace) ——
+   * "Minimal (weiß)" direction: opaque WHITE cards, a subtle neutral border, a
+   * soft neutral elevation shadow, and a calm white page behind them. Color is
+   * NOT used on the card surface anymore — it lives ONLY in the per-widget left
+   * accent + the colored heading. The legacy glassmorphism (translucent fills,
+   * blur, teal scene gradient + grid) is intentionally neutralized here so the
+   * change cascades to every page that consumes these tokens. */
   --workspace-glass-teal: #2a6b6b;
   --workspace-glass-info: #3a6f9c;
   --workspace-glass-warm: #ebe6df;
-  --workspace-glass-blur: 12px;
-  --workspace-glass-bg: rgba(255, 255, 255, 0.58);
-  --workspace-glass-bg-strong: rgba(255, 255, 255, 0.76);
-  --workspace-glass-bg-hero: rgba(255, 255, 255, 0.72);
-  --workspace-glass-border: rgba(255, 255, 255, 0.65);
-  --workspace-glass-border-teal: color-mix(
-    in srgb,
-    var(--workspace-glass-teal) 12%,
-    rgba(255, 255, 255, 0.45)
-  );
+  --workspace-glass-blur: 0px;
+  --workspace-glass-bg: var(--surface, #ffffff);
+  --workspace-glass-bg-strong: var(--surface, #ffffff);
+  --workspace-glass-bg-hero: var(--surface, #ffffff);
+  --workspace-glass-border: var(--border-soft, #e8e4df);
+  --workspace-glass-border-teal: var(--border-soft, #e8e4df);
   --workspace-glass-shadow:
-    0 1px 2px rgba(42, 107, 107, 0.06),
-    0 4px 16px -4px rgba(42, 107, 107, 0.1),
-    0 12px 32px -10px rgba(36, 33, 30, 0.08);
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 6px 16px -10px rgba(0, 0, 0, 0.12);
   --workspace-glass-shadow-hover:
-    0 1px 3px rgba(42, 107, 107, 0.08),
-    0 6px 22px -6px rgba(42, 107, 107, 0.12),
-    0 16px 40px -12px rgba(36, 33, 30, 0.1);
+    0 2px 4px rgba(0, 0, 0, 0.05),
+    0 10px 24px -10px rgba(0, 0, 0, 0.16);
   --workspace-glass-shadow-semantic:
-    0 1px 3px rgba(42, 107, 107, 0.07),
-    0 5px 18px -4px rgba(42, 107, 107, 0.11),
-    0 14px 36px -10px rgba(36, 33, 30, 0.09);
-  --workspace-glass-scrim: rgba(255, 255, 255, 0.54);
-  --workspace-glass-scrim-strong: rgba(255, 255, 255, 0.68);
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 6px 16px -10px rgba(0, 0, 0, 0.12);
+  --workspace-glass-scrim: color-mix(in srgb, var(--text-muted, #746d65) 6%, var(--surface, #fff));
+  --workspace-glass-scrim-strong: var(--surface, #ffffff);
   --workspace-glass-ink-muted: color-mix(
     in srgb,
     var(--text-muted, #91887e) 70%,
     var(--text-main, #24211e)
   );
-  --workspace-glass-scene-base: linear-gradient(
-    165deg,
-    color-mix(in srgb, var(--workspace-glass-teal) 2%, var(--surface, #fafaf8)) 0%,
-    var(--surface, #fafaf8) 42%,
-    color-mix(in srgb, var(--workspace-glass-warm) 2.5%, var(--surface, #fafaf8)) 100%
-  );
-  --workspace-glass-scene-radials:
-    radial-gradient(
-      ellipse 85% 55% at 12% 18%,
-      color-mix(in srgb, var(--workspace-glass-teal) 3.5%, transparent),
-      transparent 58%
-    ),
-    radial-gradient(
-      ellipse 70% 45% at 88% 78%,
-      color-mix(in srgb, var(--workspace-glass-info) 2.5%, transparent),
-      transparent 52%
-    );
+  --workspace-glass-scene-base: var(--surface, #ffffff);
+  --workspace-glass-scene-radials: none;
 }
 
 /* —— Page shell —— */
@@ -441,6 +437,15 @@
   margin-bottom: 0;
 }
 
+/* Colored card/widget heading — shared across ALL in-app pages. The section-head
+   eyebrow IS the card title (ClinicalSection / OverviewWidgetHeader), so coloring
+   it here cascades everywhere a clinical card/widget is rendered. Only the title
+   is tinted; body text stays dark/high-contrast. */
+.cm-section__head .cm-eyebrow {
+  color: var(--cm-heading-accent);
+  font-weight: var(--weight-semibold, 600);
+}
+
 .cm-section__head-spacer {
   flex: 1;
   min-width: 0.5rem;
@@ -753,25 +758,11 @@
   background: var(--workspace-glass-scene-radials), var(--workspace-glass-scene-base);
 }
 
+/* Minimal (weiß): no decorative grid wash behind cards — the page stays calm
+   white so the white cards + colored left accents read cleanly. */
 .notion-preview-app--case-sidebar .notion-preview-main::after,
 .settings-sidebar-main::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.06;
-  background-image:
-    linear-gradient(
-      color-mix(in srgb, var(--workspace-glass-teal) 3%, transparent) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      90deg,
-      color-mix(in srgb, var(--workspace-glass-teal) 3%, transparent) 1px,
-      transparent 1px
-    );
-  background-size: 56px 56px;
+  content: none;
 }
 
 .notion-preview-app--case-sidebar .case-main-top-bar,

@@ -161,32 +161,27 @@
     0 6px 18px -10px color-mix(in srgb, var(--ov-teal) 35%, transparent);
 }
 
-/* Hero glass — slightly more opaque than grid cards; keeps command-deck legibility. */
+/* Hero — opaque white surface, neutral frame, teal category left rail. */
 [data-area='overview'] .ov-dashboard .ov-hero.aura-card {
-  background-color: color-mix(in srgb, var(--ov-teal) 5%, var(--ov-glass-bg-hero));
-  background-image:
-    linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--ov-teal) 7%, rgba(255, 255, 255, 0.28)) 0%,
-      color-mix(in srgb, var(--ov-teal) 3%, rgba(255, 255, 255, 0.15)) 42%,
-      transparent 100%
-    );
-  backdrop-filter: blur(var(--ov-glass-blur));
-  -webkit-backdrop-filter: blur(var(--ov-glass-blur));
-  border-color: var(--ov-glass-border-teal);
+  background-color: var(--surface, #fff);
+  background-image: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-color: var(--border-soft, #e8e4df);
+  border-left-color: var(--ov-teal);
   box-shadow: var(--ov-glass-shadow);
 }
 
 [data-area='overview'] .ov-dashboard .ov-hero__tile {
-  background-color: color-mix(in srgb, var(--ovh-accent) 5%, var(--ov-glass-bg));
-  backdrop-filter: blur(calc(var(--ov-glass-blur) * 0.85));
-  -webkit-backdrop-filter: blur(calc(var(--ov-glass-blur) * 0.85));
-  border-color: color-mix(in srgb, var(--ovh-accent) 16%, var(--ov-glass-border));
+  background-color: color-mix(in srgb, var(--text-muted, #746d65) 4%, var(--surface, #fff));
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-color: var(--border-soft, #e8e4df);
 }
 
 [data-area='overview'] .ov-dashboard .ov-hero__tile:hover {
-  background-color: color-mix(in srgb, var(--ovh-accent) 8%, var(--ov-glass-bg-strong));
-  border-color: color-mix(in srgb, var(--ovh-accent) 28%, var(--ov-glass-border));
+  background-color: color-mix(in srgb, var(--text-muted, #746d65) 7%, var(--surface, #fff));
+  border-color: color-mix(in srgb, var(--ovh-accent) 22%, var(--border-soft, #e8e4df));
   box-shadow: var(--ov-glass-shadow-hover);
 }
 
@@ -820,30 +815,15 @@
  * so risk / lab / amber tones stay legible on busy backdrops.
  * ────────────────────────────────────────────────────────────────────────── */
 [data-area='overview'] .ov-dashboard .ov-widget-slot {
-  --ov-glass-fill: color-mix(
-    in srgb,
-    var(--patient-bordered-accent) 6%,
-    var(--ov-glass-bg)
-  );
-  background-color: var(--ov-glass-fill);
-  background-image:
-    radial-gradient(
-      120% 86% at 0% 0%,
-      color-mix(in srgb, var(--patient-bordered-accent) 7%, rgba(255, 255, 255, 0.28)),
-      transparent 58%
-    ),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--patient-bordered-accent) 4%, rgba(255, 255, 255, 0.15)),
-      transparent 42%
-    );
-  backdrop-filter: blur(var(--ov-glass-blur));
-  -webkit-backdrop-filter: blur(var(--ov-glass-blur));
-  border-color: color-mix(
-    in srgb,
-    var(--patient-bordered-accent) 20%,
-    var(--ov-glass-border)
-  );
+  /* "Minimal (weiß)": opaque white widget surface, subtle neutral frame, soft
+     neutral elevation. Color is reserved for the 3px left accent rail (per-widget
+     category / status) + the colored heading. */
+  background-color: var(--surface, #fff);
+  background-image: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-color: var(--border-soft, #e8e4df);
+  border-left-color: var(--patient-bordered-accent);
   box-shadow: var(--ov-glass-shadow);
 }
 
@@ -901,7 +881,8 @@
 }
 
 [data-area='overview'] .ov-dashboard .cm-section__head--widget .cm-eyebrow {
-  color: color-mix(in srgb, var(--ov-teal) 52%, var(--text-main, #24211e));
+  color: var(--cm-heading-accent, color-mix(in srgb, var(--ov-teal) 52%, var(--text-main, #24211e)));
+  font-weight: var(--weight-semibold, 600);
 }
 
 /* Muted labels — slightly stronger ink on glass */
@@ -949,10 +930,12 @@
   font-weight: var(--weight-semibold, 600);
 }
 
-/* Bento card / widget section titles — stronger clinical ink (not playful accent). */
+/* Bento card / widget section titles — COLORED by the card's own accent
+   (category / status), matching the "Minimal (weiß)" preview. Body text stays
+   dark; only the heading carries the hue. */
 .ov-dashboard .cm-section .cm-section__head .cm-eyebrow,
 .ov-dashboard .cm-section--embedded .cm-section__head .cm-eyebrow {
-  color: var(--text-main, #24211e);
+  color: var(--cm-heading-accent, var(--text-main, #24211e));
   font-weight: var(--weight-semibold, 600);
 }
 

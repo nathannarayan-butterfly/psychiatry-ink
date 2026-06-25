@@ -117,7 +117,13 @@ const DOMAIN_CONFIG_BY_HOST: Readonly<Record<string, DomainConfig>> = Object.fro
 )
 
 export function normalizeHostname(hostname: string): string {
-  return hostname.trim().toLowerCase().replace(/^www\./, '')
+  return hostname
+    .trim()
+    .toLowerCase()
+    // Drop an explicit port (e.g. `psychiatry.ink:8080`, `localhost:5173`). A Host
+    // header can carry a port; `window.location.hostname` never does — strip either way.
+    .replace(/:\d+$/, '')
+    .replace(/^www\./, '')
 }
 
 /**
@@ -137,6 +143,18 @@ export function resolveDomainConfig(hostname: string): DomainConfig {
   if (direct) return direct
 
   return DOMAIN_CONFIG_FALLBACK
+}
+
+/**
+ * Resolve the marketing/app UI locale for a request hostname.
+ *
+ * Exact-hostname match (after stripping `www.` and any port) — never a loose
+ * substring test, so `psychiatry.ink` → `en` and `psychiatrie.ink` → `de` can
+ * never be confused for one another. Unknown hosts / localhost fall back to the
+ * English `psychiatry.ink` default.
+ */
+export function resolveLocaleFromHost(hostname: string): UiLanguage {
+  return resolveDomainConfig(hostname).defaultLocale
 }
 
 export function isMarketingDomain(hostname: string): boolean {

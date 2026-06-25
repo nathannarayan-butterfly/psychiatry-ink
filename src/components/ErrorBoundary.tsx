@@ -53,8 +53,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         }}
       >
         <h1 style={{ fontSize: '1.25rem', fontWeight: 600, margin: 0 }}>
-          Es ist ein Fehler aufgetreten
+          Something went wrong · Es ist ein Fehler aufgetreten
         </h1>
+        <p style={{ maxWidth: '32rem', color: '#6D655C', margin: 0 }}>
+          The application could not display this view. Your locally stored data is
+          safe — please reload the page.
+        </p>
         <p style={{ maxWidth: '32rem', color: '#6D655C', margin: 0 }}>
           Die Anwendung konnte diesen Bereich nicht anzeigen. Ihre lokal
           gespeicherten Daten bleiben erhalten. Bitte laden Sie die Seite neu.
@@ -85,7 +89,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             cursor: 'pointer',
           }}
         >
-          Seite neu laden
+          Reload page · Seite neu laden
         </button>
       </div>
     )

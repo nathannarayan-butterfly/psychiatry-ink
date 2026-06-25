@@ -25,9 +25,17 @@
   --patient-bordered-radius: var(--radius-card, 0.6875rem);
   --patient-bordered-neutral: #8a8278;
   --patient-bordered-accent-mix: 48%;
-  --patient-bordered-bg-mix: 4.5%;
-  --patient-bordered-border-mix: 28%;
-  --patient-bordered-shadow: var(--shadow-elevated-sm, 0 1px 2px rgba(0, 0, 0, 0.04));
+  /* "Minimal (weiß)": cards are opaque WHITE with a subtle NEUTRAL frame; the
+     only color is the 3px left accent rail (+ the colored heading). Flipping
+     these two mix tokens to 0 turns every panel that consumes the shared frame
+     (overview, verlauf, diagnose, ci, medikation, therapie, discuss, workspace)
+     white-on-neutral in one place, while the `border-left: 3px solid
+     var(--patient-bordered-accent)` rail stays fully colored. */
+  --patient-bordered-bg-mix: 0%;
+  --patient-bordered-border-mix: 0%;
+  --patient-bordered-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 6px 16px -10px rgba(0, 0, 0, 0.12);
   --patient-bordered-padding-y: var(--space-3, 0.75rem);
   --patient-bordered-padding-x: var(--space-4, 1rem);
 }
@@ -90,11 +98,7 @@
   border-left: 3px solid var(--patient-bordered-accent);
   border-radius: var(--patient-bordered-radius);
   padding: var(--patient-bordered-padding-y) var(--patient-bordered-padding-x) 0;
-  background: color-mix(
-    in srgb,
-    var(--patient-bordered-accent) 5%,
-    var(--surface, #fff)
-  );
+  background: var(--surface, #fff);
   box-shadow: var(--patient-bordered-shadow);
 }
 
@@ -1039,6 +1043,20 @@
     var(--surface, #fff)
   );
   box-shadow: var(--patient-bordered-shadow);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Colored card/panel TITLES (Minimal weiß)
+   Card titles that don't use the shared `.cm-eyebrow` heading still adopt their
+   card's accent (same family as the left rail), deepened for contrast via
+   --cm-heading-accent. Body text stays dark; only the title is tinted.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-area='medikation'] .medication-workspace .medication-dash-panel__title,
+[data-area='medikation'] .medication-workspace .medication-section-detail__title,
+[data-area='medikation'] .medication-workspace .medication-explore__title,
+[data-area='therapie'] .therapy-section__title {
+  color: var(--cm-heading-accent);
 }
 
 /* ── Print ────────────────────────────────────────────────────────────────── */

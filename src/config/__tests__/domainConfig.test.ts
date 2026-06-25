@@ -6,6 +6,7 @@ import {
   isMarketingDomain,
   normalizeHostname,
   resolveDomainConfig,
+  resolveLocaleFromHost,
 } from '../domainConfig'
 
 describe('domainConfig', () => {
@@ -70,6 +71,44 @@ describe('domainConfig', () => {
 
   it('normalizes hostname casing', () => {
     expect(normalizeHostname('  WWW.Psychiatry.INK ')).toBe('psychiatry.ink')
+  })
+
+  it('strips an explicit port before lookup', () => {
+    expect(normalizeHostname('psychiatry.ink:8080')).toBe('psychiatry.ink')
+    expect(normalizeHostname('localhost:5173')).toBe('localhost')
+    expect(resolveDomainConfig('psychiatrie.ink:443').defaultLocale).toBe('de')
+  })
+
+  describe('resolveLocaleFromHost', () => {
+    it('maps the English and German spelling domains to distinct locales', () => {
+      expect(resolveLocaleFromHost('psychiatry.ink')).toBe('en')
+      expect(resolveLocaleFromHost('psychiatrie.ink')).toBe('de')
+    })
+
+    it('matches on exact hostname, never a loose substring', () => {
+      // `psychiatrie.ink` must not be caught by an `psychiatry` rule (or vice-versa).
+      expect(resolveLocaleFromHost('psychiatry.ink')).not.toBe(
+        resolveLocaleFromHost('psychiatrie.ink'),
+      )
+    })
+
+    it('strips www. and ports before resolving', () => {
+      expect(resolveLocaleFromHost('www.psychiatry.ink')).toBe('en')
+      expect(resolveLocaleFromHost('www.psychiatrie.ink')).toBe('de')
+      expect(resolveLocaleFromHost('psychiatry.ink:8080')).toBe('en')
+    })
+
+    it('keeps the regional subdomain and Spanish domain locales intact', () => {
+      expect(resolveLocaleFromHost('fr.psychiatrie.ink')).toBe('fr')
+      expect(resolveLocaleFromHost('psiquiatria.ink')).toBe('es')
+    })
+
+    it('falls back to the English default for localhost and unknown hosts', () => {
+      expect(resolveLocaleFromHost('localhost')).toBe('en')
+      expect(resolveLocaleFromHost('127.0.0.1')).toBe('en')
+      expect(resolveLocaleFromHost('unknown.example.com')).toBe('en')
+      expect(resolveLocaleFromHost('localhost')).toBe(DOMAIN_CONFIG_FALLBACK.defaultLocale)
+    })
   })
 
   it('registers all configured marketing and app domains', () => {

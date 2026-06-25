@@ -1,4 +1,4 @@
-import { resolveDomainConfig } from '../config/domainConfig'
+import { isMarketingDomain, resolveDomainConfig } from '../config/domainConfig'
 import { defaultLanguage, languageOptions } from '../data/languages'
 import type { UiLanguage } from '../types/settings'
 import { getEffectiveHostname } from './resolveHostname'
@@ -35,6 +35,21 @@ export function loadBootstrapUiLanguage(): UiLanguage {
     return loadStoredUiLanguage()
   }
   return resolveDomainConfig(getEffectiveHostname()).defaultLocale
+}
+
+/**
+ * Locale for the very first paint (pre-React, in `main.tsx`). On public marketing
+ * domains the request domain wins — matching the server-rendered `<html lang>` shell
+ * — so a stale persisted UI-language pin can never flip psychiatry.ink to German
+ * before React mounts. On the authenticated app domain the stored user preference
+ * (or app default) wins, as before.
+ */
+export function loadInitialDocumentLanguage(): UiLanguage {
+  const host = getEffectiveHostname()
+  if (isMarketingDomain(host)) {
+    return resolveDomainConfig(host).defaultLocale
+  }
+  return loadBootstrapUiLanguage()
 }
 
 /** Active UI language from Settings (localStorage), same source as useLanguageSettings. */

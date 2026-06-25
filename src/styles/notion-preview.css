@@ -14159,7 +14159,7 @@
 }
 
 .monitoring-timeline__axis-label {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.03em;
   fill: var(--text-muted);
@@ -14176,7 +14176,7 @@
 }
 
 .monitoring-timeline__drug-label {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.01em;
 }
@@ -14187,7 +14187,7 @@
 }
 
 .monitoring-timeline__param-label {
-  font-size: 9.5px;
+  font-size: 10.5px;
   fill: var(--text-secondary);
 }
 
@@ -20083,12 +20083,12 @@ details[open].receptor-radar .receptor-radar__summary::before {
 
 .kb-depot-timeline__axis-label {
   fill: var(--text-muted);
-  font-size: 9px;
+  font-size: 9.9px;
 }
 
 .kb-depot-timeline__axis-title {
   fill: var(--text-muted);
-  font-size: 9px;
+  font-size: 9.9px;
   font-weight: 600;
 }
 
@@ -20098,7 +20098,7 @@ details[open].receptor-radar .receptor-radar__summary::before {
 
 .kb-depot-timeline__row-label {
   fill: var(--text-secondary);
-  font-size: 11px;
+  font-size: 12.1px;
   font-weight: 600;
 }
 
@@ -20108,7 +20108,7 @@ details[open].receptor-radar .receptor-radar__summary::before {
 
 .kb-depot-timeline__no-overlap {
   fill: var(--text-muted);
-  font-size: 10px;
+  font-size: 11px;
   font-style: italic;
 }
 
@@ -20120,7 +20120,7 @@ details[open].receptor-radar .receptor-radar__summary::before {
 
 .kb-depot-timeline__dose-label {
   fill: var(--text-secondary);
-  font-size: 9px;
+  font-size: 9.9px;
 }
 
 .kb-depot-timeline__maint-tick {
