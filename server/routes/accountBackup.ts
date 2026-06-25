@@ -1,6 +1,14 @@
 import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
-import { prisma } from '../db'
+import {
+  deleteRegistryBackup,
+  getKeyBackup,
+  getKeyBackupUpdatedAt,
+  getRegistryBackup,
+  getRegistryBackupUpdatedAt,
+  upsertKeyBackup,
+  upsertRegistryBackup,
+} from '../data/accountBackups'
 
 export const accountBackupRouter: Router = createRouter()
 
@@ -44,16 +52,16 @@ accountBackupRouter.get('/status', async (req: Request, res: Response) => {
   if (!userId) return
 
   try {
-    const [keyBackup, registryBackup] = await Promise.all([
-      prisma.accountKeyBackup.findUnique({ where: { userId }, select: { updatedAt: true } }),
-      prisma.accountRegistryBackup.findUnique({ where: { userId }, select: { updatedAt: true } }),
+    const [keyUpdatedAt, registryUpdatedAt] = await Promise.all([
+      getKeyBackupUpdatedAt(userId),
+      getRegistryBackupUpdatedAt(userId),
     ])
 
     res.json({
-      hasKeyBackup: Boolean(keyBackup),
-      hasRegistryBackup: Boolean(registryBackup),
-      keyUpdatedAt: keyBackup?.updatedAt.toISOString() ?? null,
-      registryUpdatedAt: registryBackup?.updatedAt.toISOString() ?? null,
+      hasKeyBackup: Boolean(keyUpdatedAt),
+      hasRegistryBackup: Boolean(registryUpdatedAt),
+      keyUpdatedAt: keyUpdatedAt ? new Date(keyUpdatedAt).toISOString() : null,
+      registryUpdatedAt: registryUpdatedAt ? new Date(registryUpdatedAt).toISOString() : null,
     })
   } catch (error) {
     console.error('[account-backup] status failed', error)
@@ -67,7 +75,7 @@ accountBackupRouter.get('/key', async (req: Request, res: Response) => {
   if (!userId) return
 
   try {
-    const record = await prisma.accountKeyBackup.findUnique({ where: { userId } })
+    const record = await getKeyBackup(userId)
     if (!record) {
       res.status(404).json({ error: 'Not found' })
       return
@@ -79,7 +87,7 @@ accountBackupRouter.get('/key', async (req: Request, res: Response) => {
       ciphertext: record.ciphertext,
       iterations: record.iterations,
       version: record.version,
-      updatedAt: record.updatedAt.toISOString(),
+      updatedAt: new Date(record.updatedAt).toISOString(),
     })
   } catch (error) {
     console.error('[account-backup] key read failed', error)
@@ -96,26 +104,15 @@ accountBackupRouter.put('/key', async (req: Request, res: Response) => {
   if (!body) return
 
   try {
-    const record = await prisma.accountKeyBackup.upsert({
-      where: { userId },
-      create: {
-        userId,
-        salt: body.salt!,
-        iv: body.iv!,
-        ciphertext: body.ciphertext!,
-        iterations: body.iterations ?? 310_000,
-        version: body.version ?? 1,
-      },
-      update: {
-        salt: body.salt!,
-        iv: body.iv!,
-        ciphertext: body.ciphertext!,
-        iterations: body.iterations ?? 310_000,
-        version: body.version ?? 1,
-      },
+    const record = await upsertKeyBackup(userId, {
+      salt: body.salt!,
+      iv: body.iv!,
+      ciphertext: body.ciphertext!,
+      iterations: body.iterations ?? 310_000,
+      version: body.version ?? 1,
     })
 
-    res.json({ ok: true, updatedAt: record.updatedAt.toISOString() })
+    res.json({ ok: true, updatedAt: new Date(record.updatedAt).toISOString() })
   } catch (error) {
     console.error('[account-backup] key write failed', error)
     res.status(500).json({ error: 'Failed to save key backup' })
@@ -128,7 +125,7 @@ accountBackupRouter.get('/registry', async (req: Request, res: Response) => {
   if (!userId) return
 
   try {
-    const record = await prisma.accountRegistryBackup.findUnique({ where: { userId } })
+    const record = await getRegistryBackup(userId)
     if (!record) {
       res.status(404).json({ error: 'Not found' })
       return
@@ -139,7 +136,7 @@ accountBackupRouter.get('/registry', async (req: Request, res: Response) => {
       iv: record.iv,
       ciphertext: record.ciphertext,
       version: record.version,
-      updatedAt: record.updatedAt.toISOString(),
+      updatedAt: new Date(record.updatedAt).toISOString(),
     })
   } catch (error) {
     console.error('[account-backup] registry read failed', error)
@@ -153,7 +150,7 @@ accountBackupRouter.delete('/registry', async (req: Request, res: Response) => {
   if (!userId) return
 
   try {
-    await prisma.accountRegistryBackup.deleteMany({ where: { userId } })
+    await deleteRegistryBackup(userId)
     res.json({ ok: true })
   } catch (error) {
     console.error('[account-backup] registry delete failed', error)
@@ -170,24 +167,14 @@ accountBackupRouter.put('/registry', async (req: Request, res: Response) => {
   if (!body) return
 
   try {
-    const record = await prisma.accountRegistryBackup.upsert({
-      where: { userId },
-      create: {
-        userId,
-        salt: body.salt!,
-        iv: body.iv!,
-        ciphertext: body.ciphertext!,
-        version: body.version ?? 1,
-      },
-      update: {
-        salt: body.salt!,
-        iv: body.iv!,
-        ciphertext: body.ciphertext!,
-        version: body.version ?? 1,
-      },
+    const record = await upsertRegistryBackup(userId, {
+      salt: body.salt!,
+      iv: body.iv!,
+      ciphertext: body.ciphertext!,
+      version: body.version ?? 1,
     })
 
-    res.json({ ok: true, updatedAt: record.updatedAt.toISOString() })
+    res.json({ ok: true, updatedAt: new Date(record.updatedAt).toISOString() })
   } catch (error) {
     console.error('[account-backup] registry write failed', error)
     res.status(500).json({ error: 'Failed to save registry backup' })
