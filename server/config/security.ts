@@ -9,7 +9,7 @@
  * docs/cloud-deployment.md.
  */
 
-import type { CorsOptions } from 'cors'
+import type { CorsOptions, CorsOptionsDelegate, CorsRequest } from 'cors'
 import rateLimit, { type RateLimitRequestHandler } from 'express-rate-limit'
 import helmet from 'helmet'
 import type { RequestHandler } from 'express'
@@ -42,36 +42,65 @@ export function isOriginAllowed(origin: string, allowlist: string[]): boolean {
 }
 
 /**
- * Env-driven CORS options. Replaces the previous `cors({ origin: true })` which
- * reflected any origin. Same-origin and non-browser (no Origin header) requests
- * are always allowed; cross-origin browser requests must match the allowlist.
+ * True when the browser `Origin` points at the request's own host — i.e. a
+ * same-origin request. Browsers send an `Origin` header on every non-GET/HEAD
+ * request (e.g. `fetch` POSTs) *even when it is same-origin*, so the presence of
+ * an `Origin` header alone does NOT make a request cross-origin. In the
+ * single-service Cloud Run topology the SPA and the `/api/*` routes share one
+ * origin, so these same-origin POSTs must be allowed regardless of the
+ * `CORS_ALLOWED_ORIGINS` allowlist (which only governs true cross-origin calls).
  */
-export function buildCorsOptions(): CorsOptions {
+export function isSameOriginRequest(origin: string, hostHeader: string | undefined): boolean {
+  if (!hostHeader) return false
+  // `Host` / `X-Forwarded-Host` may be a proxy-chained, comma-separated list.
+  const requestHost = hostHeader.split(',')[0]?.trim()
+  if (!requestHost) return false
+  try {
+    return new URL(origin).host === requestHost
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Env-driven CORS delegate. Replaces the previous `cors({ origin: true })` which
+ * reflected any origin. Requests are permitted when they are non-browser (no
+ * `Origin` header), same-origin (the single-service topology), or match the
+ * `CORS_ALLOWED_ORIGINS` allowlist (split deploys). All other cross-origin
+ * browser requests are rejected.
+ */
+export function buildCorsDelegate(): CorsOptionsDelegate<CorsRequest> {
   const allowlist = parseAllowedOrigins(process.env.CORS_ALLOWED_ORIGINS)
 
   if (allowlist.length === 0 && !isDevLike()) {
     console.warn(
       '[cors] CORS_ALLOWED_ORIGINS is empty in production — cross-origin browser ' +
-        'requests will be rejected. Set it to your web origin(s) for split deploys; ' +
-        'safe to leave empty for the single-service (same-origin) topology.',
+        'requests will be rejected. Same-origin requests (the single-service ' +
+        'topology) are still allowed. Set it to your web origin(s) for split deploys.',
     )
   }
 
-  return {
-    origin(origin, callback) {
-      // No Origin header → same-origin navigation, curl, server-to-server, health
-      // checks. These are not subject to the browser CORS allowlist.
-      if (!origin) {
-        callback(null, true)
-        return
-      }
-      if (isOriginAllowed(origin, allowlist)) {
-        callback(null, true)
-        return
-      }
-      callback(new Error(`Origin not allowed by CORS: ${origin}`))
-    },
-    credentials: true,
+  return (req, callback) => {
+    const origin = req.headers.origin
+    const base: CorsOptions = { credentials: true }
+
+    // No Origin header → same-origin navigation, curl, server-to-server, health
+    // checks. These are not subject to the browser CORS allowlist.
+    if (!origin) {
+      callback(null, { ...base, origin: true })
+      return
+    }
+
+    const forwardedHost = req.headers['x-forwarded-host']
+    const hostHeader =
+      (Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost) ?? req.headers.host
+
+    if (isSameOriginRequest(origin, hostHeader) || isOriginAllowed(origin, allowlist)) {
+      callback(null, { ...base, origin: true })
+      return
+    }
+
+    callback(new Error(`Origin not allowed by CORS: ${origin}`))
   }
 }
 

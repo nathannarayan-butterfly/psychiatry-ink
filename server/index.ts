@@ -9,7 +9,7 @@ import { optionalAuth } from './middleware/auth'
 import { requestId } from './middleware/requestContext'
 import { apiNotFound, errorHandler } from './middleware/errorHandler'
 import {
-  buildCorsOptions,
+  buildCorsDelegate,
   buildGlobalLimiter,
   buildHelmet,
   buildSensitiveLimiter,
@@ -86,7 +86,7 @@ app.use(requestId)
 // Security headers (CSP suited to the served SPA).
 app.use(buildHelmet())
 // Env-driven CORS allowlist (replaces the previous reflect-any-origin config).
-app.use(cors(buildCorsOptions()))
+app.use(cors(buildCorsDelegate()))
 app.use(optionalAuth)
 
 // ── Health checks (registered BEFORE rate limiting so probes are never throttled).
