@@ -19,9 +19,15 @@ import {
   getRecentAiUsageForUser,
 } from '../ai/creditGuard'
 import { getUsageSummaryForUser } from '../ai/usageLogger'
-import { createCreditCheckoutSession, isStripeCreditsConfigured } from '../services/stripeCredits'
+import {
+  createCreditCheckoutSession,
+  createSubscriptionCheckoutSession,
+  isStripeCreditsConfigured,
+  type SubscriptionInterval,
+} from '../services/stripeCredits'
 import { findCreditPack } from '../../src/data/creditPacks'
 import { isCreditGrantAdmin } from '../utils/adminAllowlist'
+import { getAccessForUser } from '../services/subscriptionAccess'
 
 export const aiCreditsRouter: Router = createRouter()
 
@@ -135,6 +141,33 @@ aiCreditsRouter.post('/grant', async (req: Request, res: Response) => {
   }
 })
 
+/**
+ * Subscription/access status for the current user. Drives the pre-lapse warning
+ * banner and the subscribe/recharge CTA in the frontend.
+ */
+aiCreditsRouter.get('/status', async (req: Request, res: Response) => {
+  try {
+    const userId = requireRouteAuth(req, res)
+    if (!userId) return
+
+    const access = await getAccessForUser(userId)
+    res.json({
+      trialEndsAt: access.trialEndsAt,
+      daysRemaining: access.daysRemaining,
+      subscriptionStatus: access.subscriptionStatus,
+      plan: access.plan,
+      interval: access.interval,
+      locked: access.locked,
+      access: access.access,
+      reason: access.reason,
+      stripeConfigured: isStripeCreditsConfigured(),
+    })
+  } catch (error) {
+    console.error('[ai-credits] status read failed:', error)
+    res.status(500).json({ error: 'Failed to read subscription status' })
+  }
+})
+
 aiCreditsRouter.post('/checkout', async (req: Request, res: Response) => {
   try {
     const userId = requireRouteAuth(req, res)
@@ -168,5 +201,48 @@ aiCreditsRouter.post('/checkout', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('[ai-credits] checkout failed:', error)
     res.status(500).json({ error: 'Failed to create checkout session' })
+  }
+})
+
+/** Create a subscription Checkout session (monthly £24.99 / yearly £239.90). */
+aiCreditsRouter.post('/subscribe', async (req: Request, res: Response) => {
+  try {
+    const userId = requireRouteAuth(req, res)
+    if (!userId) return
+
+    if (!isStripeCreditsConfigured()) {
+      res.status(503).json({ error: 'Stripe is not configured' })
+      return
+    }
+
+    const intervalRaw = typeof req.body?.interval === 'string' ? req.body.interval : 'month'
+    if (intervalRaw !== 'month' && intervalRaw !== 'year') {
+      res.status(400).json({ error: 'interval must be "month" or "year"' })
+      return
+    }
+    const interval: SubscriptionInterval = intervalRaw
+
+    const origin =
+      typeof req.body?.origin === 'string' && req.body.origin.startsWith('http')
+        ? req.body.origin
+        : `${req.protocol}://${req.get('host') ?? 'localhost:5173'}`
+
+    const customerEmail =
+      typeof req.body?.email === 'string' && req.body.email.includes('@')
+        ? req.body.email.trim()
+        : undefined
+
+    const session = await createSubscriptionCheckoutSession({
+      userId,
+      interval,
+      customerEmail,
+      successUrl: `${origin}/dashboard/credits?subscription=success`,
+      cancelUrl: `${origin}/dashboard/credits?subscription=cancelled`,
+    })
+
+    res.json({ url: session.url, sessionId: session.id })
+  } catch (error) {
+    console.error('[ai-credits] subscription checkout failed:', error)
+    res.status(500).json({ error: 'Failed to create subscription checkout session' })
   }
 })
