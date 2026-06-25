@@ -5,14 +5,21 @@
 --         `apply_migration` this file until the consolidation execution phase
 --         (see docs/supabase-consolidation/00-plan.md, "Migration apply
 --         strategy"). It is additive and idempotent-safe: it only CREATEs new
---         objects with `if not exists` / `create or replace` and never alters or
---         drops any existing table.
+--         objects with `if not exists` / `create or replace`. The one exception
+--         is an ADDITIVE `alter table ... add column if not exists` against the
+--         existing live `public.ai_usage_logs` table (OQ-1 convergence); no
+--         existing column is ever dropped or retyped.
 --
 -- Replaces the Prisma models AiCreditAccount, AiCreditLedger, CreditBalance and
 -- AppSetting (PascalCase models that were never applied to prod) with snake_case
 -- tables, and provides SECURITY DEFINER RPC functions so the supabase-js data
 -- layer can perform the atomic ledger operations that previously lived inside
--- Prisma `$transaction` blocks (server/ai/creditGuard.ts).
+-- Prisma `$transaction` blocks (server/ai/creditGuard.ts). It also converges the
+-- Prisma AiUsageLog model onto the live `ai_usage_logs` table via an additive
+-- ALTER (OQ-1) instead of creating a competing usage-log table.
+--
+-- Default credit balances/grants are 500 (OQ-5): ai_credit_accounts.monthly_credits
+-- and credit_balances.balance both default to 500.
 --
 -- ID convention: Prisma used client-side `cuid()` text ids. These tables were
 -- never applied to prod (no data to preserve), so we adopt the repo's newer
@@ -106,7 +113,7 @@ comment on table public.ai_credit_ledger is
 
 create table if not exists public.credit_balances (
   id          text primary key,
-  balance     integer not null default 200,
+  balance     integer not null default 500,
   plan        text not null default 'free',
   updated_at  timestamptz not null default now()
 );
@@ -138,6 +145,32 @@ create trigger app_settings_set_updated_at
 
 comment on table public.app_settings is
   'Key/value app settings + Stripe webhook idempotency markers. Server (service role) only.';
+
+-- ---------------------------------------------------------------------------
+-- ai_usage_logs convergence (OQ-1) — ADDITIVE ALTER, not a new table.
+--   The live prod table public.ai_usage_logs (uuid PK, org/cost-centric; created
+--   by the remote `ai_usage_budget_tracking` migration) is the single source of
+--   truth for AI usage. Rather than create a competing per-user table for the
+--   Prisma AiUsageLog model, we converge onto it by adding only the two columns
+--   the usage logger needs that are missing today: `mode` and `credits_charged`.
+--   Existing columns are never dropped or retyped. In particular
+--   `organisation_id` stays uuid in the live table (Prisma modelled it as text);
+--   that text↔uuid difference is accommodated in the data-access layer, NOT by
+--   altering the live column here.
+--   `mode` is nullable (existing org-centric rows have none); `credits_charged`
+--   carries a default of 0 so the ALTER is safe for existing rows.
+-- ---------------------------------------------------------------------------
+
+alter table public.ai_usage_logs
+  add column if not exists mode text;
+
+alter table public.ai_usage_logs
+  add column if not exists credits_charged integer not null default 0;
+
+comment on column public.ai_usage_logs.mode is
+  'AI mode for this call (e.g. fast/quality) — added for Prisma AiUsageLog convergence (OQ-1).';
+comment on column public.ai_usage_logs.credits_charged is
+  'Credits charged for this AI call — added for Prisma AiUsageLog convergence (OQ-1).';
 
 -- ===========================================================================
 -- Atomic credit RPCs — replace the Prisma `$transaction` logic in
