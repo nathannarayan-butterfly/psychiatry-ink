@@ -66,6 +66,16 @@
         if (root) root.style.display = 'none'
       })()
     </script>
+    <script type="module">
+      // Any browser that can run ES modules can run the app. Some module-capable
+      // browsers (notably Safari 10.1 / iOS 10.3, and certain locked-down work
+      // browsers) buggily execute the nomodule script above and wrongly reveal the
+      // warning. Re-hide it here so only genuinely module-incapable browsers see it.
+      var legacyWarning = document.getElementById('legacy-browser-warning')
+      if (legacyWarning) legacyWarning.hidden = true
+      var appRoot = document.getElementById('root')
+      if (appRoot) appRoot.style.display = ''
+    </script>
     <noscript>
       <div
         style="
