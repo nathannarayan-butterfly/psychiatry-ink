@@ -363,8 +363,8 @@ export async function listCatalogueIdsBySystem(system: CatalogueSystem): Promise
 
 /**
  * ICD-11 psychiatric entries with their criteria-link counts and selectable flag.
- * Mirrors `prisma.diagnosisEntry.findMany({ where: { catalogue.system ICD11MMS,
- * isPsychiatric }, include: { criteriaLinks } })` used by the gap summary.
+ * Mirrors the legacy Prisma `diagnosisEntry.findMany` (catalogue.system =
+ * ICD11MMS, isPsychiatric, include criteriaLinks) used by the gap summary.
  */
 export async function listIcd11PsychiatricEntryGapInfo(): Promise<Icd11EntryGapInfo[]> {
   const catalogueIds = await listCatalogueIdsBySystem('ICD11MMS')
