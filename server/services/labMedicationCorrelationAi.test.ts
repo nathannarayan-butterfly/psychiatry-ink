@@ -15,29 +15,44 @@
 
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
-vi.mock('../db', () => ({
-  prisma: {
-    // checkBalance → migrateLegacyCreditsIfNeeded reads the legacy creditBalance
-    // model; default vi.fn() resolves undefined so the migration no-ops.
-    creditBalance: {
-      findUnique: vi.fn(),
-      update: vi.fn(),
-    },
-    aiCreditAccount: {
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      updateMany: vi.fn(),
-    },
-    aiCreditLedger: {
-      create: vi.fn(),
-      findFirst: vi.fn(),
-    },
-    aiUsageLog: {
-      create: vi.fn(),
-    },
-    $transaction: vi.fn(),
+// ── Mock the supabase-js credit + usage data layer ──────────────────────────
+const ensureAccount = vi.fn()
+const debit = vi.fn()
+const insertAiUsageLog = vi.fn()
+
+vi.mock('../data/credits', () => ({
+  creditsRepo: {
+    ensureAccount: (...args: unknown[]) => ensureAccount(...args),
+    debit: (...args: unknown[]) => debit(...args),
+    refund: vi.fn(),
+    grantPurchased: vi.fn(),
+    listLedger: vi.fn(),
+    getAccountByUserId: vi.fn(),
+    hasLedgerEntryWithNote: vi.fn(),
+    startTrial: vi.fn(),
+    applySubscription: vi.fn(),
+    grantSubscriptionPeriod: vi.fn(),
+    setLock: vi.fn(),
+    getUserIdByStripeCustomerId: vi.fn(),
   },
+}))
+
+vi.mock('../data/aiUsage', () => ({
+  insertAiUsageLog: (...args: unknown[]) => insertAiUsageLog(...args),
+  listUserUsageSince: vi.fn().mockResolvedValue([]),
+  listRecentUsageForUser: vi.fn().mockResolvedValue([]),
+}))
+
+// checkBalance → migrateLegacyCreditsIfNeeded; the mock no-ops so the legacy
+// migration never runs in these unit tests.
+vi.mock('./creditMigration', () => ({
+  migrateLegacyCreditsIfNeeded: vi.fn().mockResolvedValue(undefined),
+  accountIdFromUserId: (userId?: string) => userId?.trim() || 'default',
+}))
+
+// Soft-lock gate isolated — covered by subscriptionAccess.test.ts.
+vi.mock('./subscriptionAccess', () => ({
+  assertAccess: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock('./llmProvider', () => ({
@@ -45,7 +60,6 @@ vi.mock('./llmProvider', () => ({
   llmResultModel: vi.fn(),
 }))
 
-import { prisma } from '../db'
 import { callLlm } from './llmProvider'
 import { InsufficientCreditsError } from '../ai/runAiFeature'
 import {
@@ -60,7 +74,6 @@ import type {
 import type { LlmCallResult } from '../ai/types'
 
 const mockedCallLlm = vi.mocked(callLlm)
-const mockedPrisma = vi.mocked(prisma, true)
 
 const med: LabCorrelationMedicationInput = {
   id: 'med-1',
@@ -140,36 +153,20 @@ function makeLlmResult(text: string, overrides: Partial<LlmCallResult> = {}): Ll
 function mockCreditAccount(overrides: { monthlyCredits?: number; purchasedCredits?: number } = {}) {
   const account = {
     id: 'acc-1',
-    userId: 'user-1',
-    organisationId: null,
-    monthlyCredits: overrides.monthlyCredits ?? 500,
-    purchasedCredits: overrides.purchasedCredits ?? 0,
-    monthlyResetAt: new Date(Date.now() + 30 * 86400 * 1000),
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    user_id: 'user-1',
+    organisation_id: null,
+    monthly_credits: overrides.monthlyCredits ?? 500,
+    purchased_credits: overrides.purchasedCredits ?? 0,
+    monthly_reset_at: new Date(Date.now() + 30 * 86400 * 1000).toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   }
-  mockedPrisma.aiCreditAccount.findUnique.mockResolvedValue(account)
-  mockedPrisma.aiCreditAccount.create.mockResolvedValue(account)
-  return account
-}
-
-function mockTransactionSucceeds() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  mockedPrisma.$transaction.mockImplementation(async (fn: any) => {
-    const txMock = {
-      aiCreditAccount: {
-        findUnique: mockedPrisma.aiCreditAccount.findUnique,
-        update: mockedPrisma.aiCreditAccount.update,
-        updateMany: mockedPrisma.aiCreditAccount.updateMany,
-      },
-      aiCreditLedger: { create: mockedPrisma.aiCreditLedger.create },
-    }
-    return fn(txMock)
-  })
-  mockedPrisma.aiCreditAccount.updateMany.mockResolvedValue({ count: 1 } as never)
-  mockedPrisma.aiCreditAccount.update.mockResolvedValue({} as never)
-  mockedPrisma.aiCreditLedger.create.mockResolvedValue({} as never)
-  mockedPrisma.aiUsageLog.create.mockResolvedValue({ id: 'log-1' } as never)
+  ensureAccount.mockResolvedValue(account as any)
+  // The atomic ai_credit_debit RPC succeeds, and usage logging returns an id.
+  debit.mockResolvedValue(true)
+  insertAiUsageLog.mockResolvedValue('log-1')
+  return account
 }
 
 describe('assessLabCorrelationsBatchWithAi — credit flow (P1-C)', () => {
@@ -177,7 +174,6 @@ describe('assessLabCorrelationsBatchWithAi — credit flow (P1-C)', () => {
 
   it('routes the DeepSeek batch call through runAiFeature: balance checked, credits deducted, AiUsageLog written under lab_medication_correlation', async () => {
     mockCreditAccount({ monthlyCredits: 500 })
-    mockTransactionSucceeds()
     mockedCallLlm.mockResolvedValue(makeLlmResult(batchPayloadJson()))
 
     const out = await assessLabCorrelationsBatchWithAi({
@@ -207,22 +203,20 @@ describe('assessLabCorrelationsBatchWithAi — credit flow (P1-C)', () => {
     expect(out.results).toHaveLength(1)
     expect(out.results[0]?.correlationStrength).toBe('possible')
 
-    // 1. Balance was checked BEFORE the LLM call.
-    expect(mockedPrisma.aiCreditAccount.findUnique).toHaveBeenCalled()
-    // 2. Credits were deducted transactionally on success.
-    expect(mockedPrisma.$transaction).toHaveBeenCalledOnce()
-    const ledgerArgs = mockedPrisma.aiCreditLedger.create.mock.calls[0][0]
-    expect(ledgerArgs.data).toMatchObject({
-      type: 'debit',
-      featureKey: 'lab_medication_correlation',
-    })
-    expect(ledgerArgs.data.credits).toBeLessThan(0)
-    // 3. AiUsageLog row was written with the credit feature key.
-    expect(mockedPrisma.aiUsageLog.create).toHaveBeenCalledOnce()
-    const logArgs = mockedPrisma.aiUsageLog.create.mock.calls[0][0]
-    expect(logArgs.data.featureKey).toBe('lab_medication_correlation')
-    expect(logArgs.data.success).toBe(true)
-    expect(logArgs.data.creditsCharged).toBeGreaterThan(0)
+    // 1. Balance was checked BEFORE the LLM call (account ensured).
+    expect(ensureAccount).toHaveBeenCalled()
+    // 2. Credits were deducted atomically via the ai_credit_debit RPC, under the
+    //    correct feature key and with a positive spend amount.
+    expect(debit).toHaveBeenCalledOnce()
+    const [, debitCredits, debitFeatureKey] = debit.mock.calls[0]
+    expect(debitFeatureKey).toBe('lab_medication_correlation')
+    expect(debitCredits).toBeGreaterThan(0)
+    // 3. ai_usage_logs row was written with the credit feature key.
+    expect(insertAiUsageLog).toHaveBeenCalledOnce()
+    const logArg = insertAiUsageLog.mock.calls[0][0]
+    expect(logArg.featureKey).toBe('lab_medication_correlation')
+    expect(logArg.success).toBe(true)
+    expect(logArg.creditsCharged).toBeGreaterThan(0)
   })
 
   it('blocks the call (no LLM, no deduction) when the user has zero credits', async () => {
@@ -257,7 +251,7 @@ describe('assessLabCorrelationsBatchWithAi — credit flow (P1-C)', () => {
     // LLM provider must NOT have been called.
     expect(mockedCallLlm).not.toHaveBeenCalled()
     // Credits must NOT have been deducted.
-    expect(mockedPrisma.$transaction).not.toHaveBeenCalled()
+    expect(debit).not.toHaveBeenCalled()
   })
 })
 
@@ -266,7 +260,6 @@ describe('assessLabCorrelationWithAi — credit flow (P1-C)', () => {
 
   it('routes the OpenAI second-opinion call through runAiFeature and bills lab_medication_correlation_check', async () => {
     mockCreditAccount({ monthlyCredits: 500 })
-    mockTransactionSucceeds()
     mockedCallLlm.mockResolvedValue(
       makeLlmResult(singlePayloadJson(), { provider: 'openai', model: 'gpt-4.1' }),
     )
@@ -289,16 +282,12 @@ describe('assessLabCorrelationWithAi — credit flow (P1-C)', () => {
     expect(out?.correlationStrength).toBe('possible')
 
     // Balance checked before egress.
-    expect(mockedPrisma.aiCreditAccount.findUnique).toHaveBeenCalled()
-    // Deducted under the second-opinion billing key.
-    expect(mockedPrisma.$transaction).toHaveBeenCalledOnce()
-    const ledgerArgs = mockedPrisma.aiCreditLedger.create.mock.calls[0][0]
-    expect(ledgerArgs.data).toMatchObject({
-      type: 'debit',
-      featureKey: 'lab_medication_correlation_check',
-    })
+    expect(ensureAccount).toHaveBeenCalled()
+    // Deducted under the second-opinion billing key via the atomic RPC.
+    expect(debit).toHaveBeenCalledOnce()
+    expect(debit.mock.calls[0][2]).toBe('lab_medication_correlation_check')
     // Usage log written under the second-opinion billing key.
-    const logArgs = mockedPrisma.aiUsageLog.create.mock.calls[0][0]
-    expect(logArgs.data.featureKey).toBe('lab_medication_correlation_check')
+    const logArg = insertAiUsageLog.mock.calls[0][0]
+    expect(logArg.featureKey).toBe('lab_medication_correlation_check')
   })
 })

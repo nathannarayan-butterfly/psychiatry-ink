@@ -16,14 +16,16 @@ vi.mock('./creditMigration', () => ({
   accountIdFromUserId: (userId?: string) => userId?.trim() || 'default',
 }))
 
-vi.mock('../db', () => ({
-  prisma: {
-    creditBalance: {
-      updateMany: vi.fn(),
-      findUnique: vi.fn(),
-      upsert: vi.fn(),
-      update: vi.fn(),
-    },
+// The legacy credit_balances seam is only touched by the local-dev 'default'
+// path; these tests exercise the authenticated 'user-1' path, which delegates
+// to the mocked creditGuard. Mock the repo so the module imports cleanly without
+// a live Supabase client.
+vi.mock('../data/creditBalances', () => ({
+  creditBalancesRepo: {
+    ensureCreditBalance: vi.fn(),
+    getCreditBalance: vi.fn(),
+    setCreditBalance: vi.fn(),
+    setCreditBalancePlan: vi.fn(),
   },
 }))
 

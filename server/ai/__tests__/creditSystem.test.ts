@@ -3,43 +3,59 @@
  *
  * Covers:
  *  - Credit estimation (base + overflow, mode multiplier)
- *  - Successful credit deduction flow
+ *  - Successful credit deduction flow (atomic ai_credit_debit RPC wrapper)
  *  - Failed AI call does NOT deduct credits
  *  - Insufficient credits blocks call before LLM is contacted
  *  - Standard / Gründlich mode multipliers
  *  - Overflow token billing
- *  - Ledger balance correctness
- *  - Provider usage normalization (creditCalculator uses token counts)
+ *  - Usage logging via the supabase-js ai_usage_logs seam
+ *
+ * The credit data layer is now supabase-js (server/data/credits.ts wrapping the
+ * atomic SECURITY DEFINER RPCs). Atomicity (purchased-first spend, no-overdraft
+ * gte guards, single-winner monthly grant) lives in Postgres and is exercised by
+ * the migration; these unit tests assert the JS seam delegates correctly and
+ * maps rows faithfully.
  */
 
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
-// ── Mock Prisma before importing any module that uses it ───────────────────
-// `checkBalance` runs `migrateLegacyCreditsIfNeeded`, which reads the legacy
-// `creditBalance` model before delegating to AiCreditAccount. The mock must
-// expose it (default vi.fn() resolves to undefined → migration no-ops).
-vi.mock('../../db', () => ({
-  prisma: {
-    creditBalance: {
-      findUnique: vi.fn(),
-      update: vi.fn(),
-    },
-    aiCreditAccount: {
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      updateMany: vi.fn(),
-    },
-    aiCreditLedger: {
-      create: vi.fn(),
-      findFirst: vi.fn(),
-    },
-    aiUsageLog: {
-      create: vi.fn(),
-      findMany: vi.fn(),
-    },
-    $transaction: vi.fn(),
+// ── Mock the supabase-js credit data layer ──────────────────────────────────
+const ensureAccount = vi.fn()
+const debit = vi.fn()
+const refund = vi.fn()
+const grantPurchased = vi.fn()
+const listLedger = vi.fn()
+
+vi.mock('../../data/credits', () => ({
+  creditsRepo: {
+    ensureAccount: (...args: unknown[]) => ensureAccount(...args),
+    debit: (...args: unknown[]) => debit(...args),
+    refund: (...args: unknown[]) => refund(...args),
+    grantPurchased: (...args: unknown[]) => grantPurchased(...args),
+    listLedger: (...args: unknown[]) => listLedger(...args),
+    getAccountByUserId: vi.fn(),
+    hasLedgerEntryWithNote: vi.fn(),
+    startTrial: vi.fn(),
+    applySubscription: vi.fn(),
+    grantSubscriptionPeriod: vi.fn(),
+    setLock: vi.fn(),
+    getUserIdByStripeCustomerId: vi.fn(),
   },
+}))
+
+// AI usage logging now writes to ai_usage_logs via the supabase-js seam.
+const insertAiUsageLog = vi.fn()
+vi.mock('../../data/aiUsage', () => ({
+  insertAiUsageLog: (...args: unknown[]) => insertAiUsageLog(...args),
+  listUserUsageSince: vi.fn().mockResolvedValue([]),
+  listRecentUsageForUser: vi.fn().mockResolvedValue([]),
+}))
+
+// checkBalance / getCreditSummary call migrateLegacyCreditsIfNeeded first; the
+// mock no-ops so the legacy migration never runs in these unit tests.
+vi.mock('../../services/creditMigration', () => ({
+  migrateLegacyCreditsIfNeeded: vi.fn().mockResolvedValue(undefined),
+  accountIdFromUserId: (userId?: string) => userId?.trim() || 'default',
 }))
 
 // Mock callLlm (raw) — safeLlmEgress delegates to it
@@ -55,7 +71,6 @@ vi.mock('../../services/subscriptionAccess', () => ({
   assertAccess: vi.fn().mockResolvedValue(undefined),
 }))
 
-import { prisma } from '../../db'
 import { callLlm } from '../../services/llmProvider'
 import {
   estimateCredits,
@@ -65,6 +80,7 @@ import {
 import {
   checkBalance,
   deductCreditsTransactionally,
+  ensureCreditAccount,
   InsufficientCreditsError,
 } from '../creditGuard'
 import { logAiUsage } from '../usageLogger'
@@ -75,7 +91,6 @@ import type { LlmCallResult } from '../types'
 // ── Test doubles ────────────────────────────────────────────────────────────
 
 const mockedCallLlm = vi.mocked(callLlm)
-const mockedPrisma = vi.mocked(prisma, true)
 
 function makeLlmResult(overrides: Partial<LlmCallResult> = {}): LlmCallResult {
   return {
@@ -99,40 +114,25 @@ function makeLlmResult(overrides: Partial<LlmCallResult> = {}): LlmCallResult {
   }
 }
 
-function mockCreditAccount(overrides: { monthlyCredits?: number; purchasedCredits?: number } = {}) {
+/** Build a snake_case ai_credit_accounts row and wire it onto ensureAccount. */
+function mockCreditAccount(
+  overrides: { monthlyCredits?: number; purchasedCredits?: number } = {},
+) {
   const account = {
     id: 'acc-1',
-    userId: 'user-1',
-    organisationId: null,
-    monthlyCredits: overrides.monthlyCredits ?? 500,
-    purchasedCredits: overrides.purchasedCredits ?? 0,
-    monthlyResetAt: new Date(Date.now() + 30 * 86400 * 1000),
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    user_id: 'user-1',
+    organisation_id: null,
+    monthly_credits: overrides.monthlyCredits ?? 500,
+    purchased_credits: overrides.purchasedCredits ?? 0,
+    monthly_reset_at: new Date(Date.now() + 30 * 86400 * 1000).toISOString(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   }
-  mockedPrisma.aiCreditAccount.findUnique.mockResolvedValue(account)
-  mockedPrisma.aiCreditAccount.create.mockResolvedValue(account)
-  return account
-}
-
-function mockTransaction() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  mockedPrisma.$transaction.mockImplementation(async (fn: any) => {
-    const txMock = {
-      aiCreditAccount: {
-        findUnique: mockedPrisma.aiCreditAccount.findUnique,
-        update: mockedPrisma.aiCreditAccount.update,
-        updateMany: mockedPrisma.aiCreditAccount.updateMany,
-      },
-      aiCreditLedger: {
-        create: mockedPrisma.aiCreditLedger.create,
-      },
-    }
-    return fn(txMock)
-  })
-  mockedPrisma.aiCreditAccount.update.mockResolvedValue({} as never)
-  mockedPrisma.aiCreditAccount.updateMany.mockResolvedValue({ count: 1 } as never)
-  mockedPrisma.aiCreditLedger.create.mockResolvedValue({} as never)
+  ensureAccount.mockResolvedValue(account as any)
+  // Default: the atomic debit succeeds unless a test overrides it.
+  debit.mockResolvedValue(true)
+  return account
 }
 
 // ── creditCalculator tests ───────────────────────────────────────────────────
@@ -162,7 +162,6 @@ describe('creditCalculator.estimateCredits', () => {
   })
 
   it('overflow billing is also multiplied by mode', () => {
-    // At standard (2×) with same overflow: (1 + 2) × 2 = 6... wait let me re-check the formula
     // Formula: base × modeMultiplier + overflowBlocks × overflowCreditsPerBlock × modeMultiplier
     // = (1 × 2) + (2 × 1 × 2) = 2 + 4 = 6
     const cost = estimateCredits('inline_text_edit', 'standard', 4000)
@@ -220,7 +219,7 @@ describe('creditGuard.checkBalance', () => {
 
   it('does nothing when estimated credits = 0', async () => {
     await expect(checkBalance('user-1', 0)).resolves.toBeUndefined()
-    expect(mockedPrisma.aiCreditAccount.findUnique).not.toHaveBeenCalled()
+    expect(ensureAccount).not.toHaveBeenCalled()
   })
 
   it('throws InsufficientCreditsError when balance is too low', async () => {
@@ -239,10 +238,37 @@ describe('creditGuard.checkBalance', () => {
   })
 })
 
+describe('creditGuard.ensureCreditAccount', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('delegates to the ai_credit_ensure_account RPC with the monthly grant + next reset, and maps the row', async () => {
+    const account = mockCreditAccount({ monthlyCredits: 500, purchasedCredits: 50 })
+
+    const mapped = await ensureCreditAccount('user-1')
+
+    // Monthly grant = MONTHLY_CREDIT_GRANT (500); the third arg is the next
+    // reset boundary (ISO string in the future). The RPC applies it only on
+    // create or when the stored boundary has elapsed (atomic, DB-side).
+    expect(ensureAccount).toHaveBeenCalledOnce()
+    const [userId, grant, nextResetIso] = ensureAccount.mock.calls[0]
+    expect(userId).toBe('user-1')
+    expect(grant).toBe(500)
+    expect(typeof nextResetIso).toBe('string')
+    expect(new Date(nextResetIso as string).getTime()).toBeGreaterThan(Date.now())
+
+    // snake_case row → camelCase mapping, purchased credits preserved.
+    expect(mapped.id).toBe('acc-1')
+    expect(mapped.monthlyCredits).toBe(500)
+    expect(mapped.purchasedCredits).toBe(50)
+    expect(mapped.monthlyResetAt).toBeInstanceOf(Date)
+    expect(mapped.monthlyResetAt.toISOString()).toBe(account.monthly_reset_at)
+  })
+})
+
 describe('creditGuard.deductCreditsTransactionally', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('returns ok=false when balance is insufficient at deduction time', async () => {
+  it('returns ok=false when balance is insufficient at the advisory pre-check', async () => {
     mockCreditAccount({ monthlyCredits: 2, purchasedCredits: 0 })
     const result = await deductCreditsTransactionally({
       userId: 'user-1',
@@ -250,230 +276,44 @@ describe('creditGuard.deductCreditsTransactionally', () => {
       featureKey: 'inline_text_edit',
     })
     expect(result.ok).toBe(false)
-    expect(mockedPrisma.$transaction).not.toHaveBeenCalled()
+    // The RPC is never invoked when the account is plainly underwater.
+    expect(debit).not.toHaveBeenCalled()
   })
 
-  it('runs a transaction and returns ok=true on success', async () => {
+  it('delegates to the atomic ai_credit_debit RPC and returns ok=true on success', async () => {
     mockCreditAccount({ monthlyCredits: 100, purchasedCredits: 0 })
-    mockTransaction()
+    debit.mockResolvedValue(true)
+
+    const result = await deductCreditsTransactionally({
+      userId: 'user-1',
+      credits: 5,
+      featureKey: 'inline_text_edit',
+      mode: 'standard',
+    })
+
+    expect(result.ok).toBe(true)
+    expect(debit).toHaveBeenCalledOnce()
+    const [accountId, credits, featureKey, opts] = debit.mock.calls[0]
+    expect(accountId).toBe('acc-1')
+    expect(credits).toBe(5)
+    expect(featureKey).toBe('inline_text_edit')
+    expect(opts).toMatchObject({ note: 'mode=standard' })
+  })
+
+  it('propagates a lost debit race (RPC returns false) as ok=false, no ledger row', async () => {
+    // Account has enough to pass the advisory check, but the atomic RPC reports
+    // the loser of a concurrent race — the seam must surface ok=false.
+    mockCreditAccount({ monthlyCredits: 5, purchasedCredits: 0 })
+    debit.mockResolvedValue(false)
+
     const result = await deductCreditsTransactionally({
       userId: 'user-1',
       credits: 5,
       featureKey: 'inline_text_edit',
     })
-    expect(result.ok).toBe(true)
-    expect(mockedPrisma.$transaction).toHaveBeenCalledOnce()
-  })
 
-  // ── P1-A: overdraft race regression ─────────────────────────────────────
-  //
-  // Two concurrent debits for an account with exactly enough credits for ONE
-  // of them must produce exactly one winner. The loser observes the
-  // conditional updateMany returning count=0 and returns { ok: false }
-  // without writing a ledger row. Balance can never go negative.
-  it('serializes concurrent debits via conditional updateMany (no overdraft)', async () => {
-    // Shared state behind the mocks — mimics the database row.
-    const balance = { monthlyCredits: 5, purchasedCredits: 0 }
-    const account = {
-      id: 'acc-1',
-      userId: 'user-1',
-      organisationId: null,
-      monthlyResetAt: new Date(Date.now() + 30 * 86400 * 1000),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(mockedPrisma.aiCreditAccount.findUnique as any).mockImplementation(
-      async () => ({
-        ...account,
-        monthlyCredits: balance.monthlyCredits,
-        purchasedCredits: balance.purchasedCredits,
-      }),
-    )
-
-    // Atomic conditional update: only decrements when both gte guards pass.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(mockedPrisma.aiCreditAccount.updateMany as any).mockImplementation(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      async (args: any) => {
-        const minPurchased = args.where?.purchasedCredits?.gte ?? 0
-        const minMonthly = args.where?.monthlyCredits?.gte ?? 0
-        if (
-          balance.purchasedCredits >= minPurchased &&
-          balance.monthlyCredits >= minMonthly
-        ) {
-          balance.purchasedCredits -= args.data?.purchasedCredits?.decrement ?? 0
-          balance.monthlyCredits -= args.data?.monthlyCredits?.decrement ?? 0
-          return { count: 1 }
-        }
-        return { count: 0 }
-      },
-    )
-
-    mockedPrisma.aiCreditLedger.create.mockResolvedValue({} as never)
-
-    // Sequence the transaction so both concurrent calls fully enter
-    // before either runs its conditional updateMany — this is the worst
-    // case for the race.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockedPrisma.$transaction.mockImplementation(async (fn: any) => {
-      const txMock = {
-        aiCreditAccount: {
-          findUnique: mockedPrisma.aiCreditAccount.findUnique,
-          updateMany: mockedPrisma.aiCreditAccount.updateMany,
-        },
-        aiCreditLedger: { create: mockedPrisma.aiCreditLedger.create },
-      }
-      return fn(txMock)
-    })
-
-    const [a, b] = await Promise.all([
-      deductCreditsTransactionally({
-        userId: 'user-1',
-        credits: 5,
-        featureKey: 'inline_text_edit',
-      }),
-      deductCreditsTransactionally({
-        userId: 'user-1',
-        credits: 5,
-        featureKey: 'inline_text_edit',
-      }),
-    ])
-
-    // Exactly one winner.
-    const winners = [a.ok, b.ok].filter(Boolean)
-    expect(winners).toHaveLength(1)
-    // Balance never goes negative — and the loser writes no ledger row.
-    expect(balance.monthlyCredits).toBeGreaterThanOrEqual(0)
-    expect(balance.purchasedCredits).toBeGreaterThanOrEqual(0)
-    expect(mockedPrisma.aiCreditLedger.create).toHaveBeenCalledOnce()
-  })
-})
-
-// ── P1-B: monthly reset / replenishment ────────────────────────────────────
-
-describe('creditGuard.ensureCreditAccount (monthly reset)', () => {
-  beforeEach(() => vi.clearAllMocks())
-
-  it('replenishes monthlyCredits and writes a monthly_grant ledger row when monthlyResetAt is in the past', async () => {
-    const pastReset = new Date(Date.now() - 86400 * 1000)
-    mockedPrisma.aiCreditAccount.findUnique.mockResolvedValueOnce({
-      id: 'acc-1',
-      userId: 'user-1',
-      organisationId: null,
-      monthlyCredits: 0,
-      purchasedCredits: 50,
-      monthlyResetAt: pastReset,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    } as never)
-    mockedPrisma.aiCreditAccount.updateMany.mockResolvedValueOnce({ count: 1 } as never)
-    mockedPrisma.aiCreditLedger.create.mockResolvedValue({} as never)
-
-    const { ensureCreditAccount } = await import('../creditGuard')
-    const account = await ensureCreditAccount('user-1')
-
-    expect(account.monthlyCredits).toBe(500)
-    // Purchased credits are preserved across the reset.
-    expect(account.purchasedCredits).toBe(50)
-
-    // updateMany was keyed on the stale monthlyResetAt for atomicity.
-    expect(mockedPrisma.aiCreditAccount.updateMany).toHaveBeenCalledOnce()
-    const updateArgs = mockedPrisma.aiCreditAccount.updateMany.mock.calls[0][0]
-    expect(updateArgs.where).toMatchObject({ id: 'acc-1', monthlyResetAt: pastReset })
-    expect(updateArgs.data.monthlyCredits).toBe(500)
-    expect(updateArgs.data.monthlyResetAt).toBeInstanceOf(Date)
-    expect((updateArgs.data.monthlyResetAt as Date).getTime()).toBeGreaterThan(Date.now())
-
-    // Ledger row recorded the grant.
-    expect(mockedPrisma.aiCreditLedger.create).toHaveBeenCalledOnce()
-    const ledgerArgs = mockedPrisma.aiCreditLedger.create.mock.calls[0][0]
-    expect(ledgerArgs.data).toMatchObject({
-      accountId: 'acc-1',
-      type: 'monthly_grant',
-      credits: 500,
-    })
-  })
-
-  it('does NOT replenish when monthlyResetAt is in the future', async () => {
-    const futureReset = new Date(Date.now() + 30 * 86400 * 1000)
-    mockedPrisma.aiCreditAccount.findUnique.mockResolvedValueOnce({
-      id: 'acc-1',
-      userId: 'user-1',
-      organisationId: null,
-      monthlyCredits: 12,
-      purchasedCredits: 5,
-      monthlyResetAt: futureReset,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    } as never)
-
-    const { ensureCreditAccount } = await import('../creditGuard')
-    const account = await ensureCreditAccount('user-1')
-
-    expect(account.monthlyCredits).toBe(12)
-    expect(account.purchasedCredits).toBe(5)
-    expect(mockedPrisma.aiCreditAccount.updateMany).not.toHaveBeenCalled()
-    expect(mockedPrisma.aiCreditLedger.create).not.toHaveBeenCalled()
-  })
-
-  it('two concurrent first-of-the-month calls grant exactly once (no double-grant)', async () => {
-    const pastReset = new Date(Date.now() - 86400 * 1000)
-    const initialRow = {
-      id: 'acc-1',
-      userId: 'user-1',
-      organisationId: null,
-      monthlyCredits: 0,
-      purchasedCredits: 0,
-      monthlyResetAt: pastReset,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }
-    let currentResetAt: Date = pastReset
-
-    // Both concurrent callers see the same stale row initially.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(mockedPrisma.aiCreditAccount.findUnique as any).mockImplementation(
-      async () => ({
-        ...initialRow,
-        monthlyResetAt: currentResetAt,
-        monthlyCredits: currentResetAt === pastReset ? 0 : 500,
-      }),
-    )
-
-    // updateMany succeeds ONLY when keyed on the still-stale reset timestamp;
-    // after the first winner advances `currentResetAt`, the second loses.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(mockedPrisma.aiCreditAccount.updateMany as any).mockImplementation(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      async (args: any) => {
-        const whereReset = args.where?.monthlyResetAt
-        if (whereReset && whereReset.getTime() === currentResetAt.getTime()) {
-          currentResetAt = args.data.monthlyResetAt as Date
-          return { count: 1 }
-        }
-        return { count: 0 }
-      },
-    )
-
-    mockedPrisma.aiCreditLedger.create.mockResolvedValue({} as never)
-
-    const { ensureCreditAccount } = await import('../creditGuard')
-    const [a, b] = await Promise.all([
-      ensureCreditAccount('user-1'),
-      ensureCreditAccount('user-1'),
-    ])
-
-    // Both calls return the granted balance (winner observes 500 directly;
-    // loser re-reads and observes the winner's update).
-    expect(a.monthlyCredits).toBe(500)
-    expect(b.monthlyCredits).toBe(500)
-    // Only ONE ledger row is written across both concurrent callers.
-    expect(mockedPrisma.aiCreditLedger.create).toHaveBeenCalledOnce()
-    expect(mockedPrisma.aiCreditLedger.create.mock.calls[0][0].data.type).toBe(
-      'monthly_grant',
-    )
+    expect(result.ok).toBe(false)
+    expect(debit).toHaveBeenCalledOnce()
   })
 })
 
@@ -482,8 +322,8 @@ describe('creditGuard.ensureCreditAccount (monthly reset)', () => {
 describe('usageLogger.logAiUsage', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('writes a row to AiUsageLog and returns the id', async () => {
-    mockedPrisma.aiUsageLog.create.mockResolvedValue({ id: 'log-123' } as never)
+  it('writes a row to ai_usage_logs and returns the id', async () => {
+    insertAiUsageLog.mockResolvedValue('log-123')
     const id = await logAiUsage({
       userId: 'user-1',
       organisationId: null,
@@ -499,17 +339,17 @@ describe('usageLogger.logAiUsage', () => {
       success: true,
     })
     expect(id).toBe('log-123')
-    expect(mockedPrisma.aiUsageLog.create).toHaveBeenCalledOnce()
-    const call = mockedPrisma.aiUsageLog.create.mock.calls[0][0]
+    expect(insertAiUsageLog).toHaveBeenCalledOnce()
+    const arg = insertAiUsageLog.mock.calls[0][0]
     // Verify no text/prompt fields are stored
-    expect(JSON.stringify(call.data)).not.toContain('systemPrompt')
-    expect(JSON.stringify(call.data)).not.toContain('userPrompt')
-    expect(JSON.stringify(call.data)).not.toContain('patient')
+    expect(JSON.stringify(arg)).not.toContain('systemPrompt')
+    expect(JSON.stringify(arg)).not.toContain('userPrompt')
+    expect(JSON.stringify(arg)).not.toContain('patient')
   })
 
   it('returns null and logs to console on error (never throws)', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    mockedPrisma.aiUsageLog.create.mockRejectedValue(new Error('DB down'))
+    insertAiUsageLog.mockRejectedValue(new Error('DB down'))
     const id = await logAiUsage({
       userId: 'user-1',
       organisationId: null,
@@ -534,12 +374,11 @@ describe('usageLogger.logAiUsage', () => {
 describe('runAiFeature', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockedPrisma.aiUsageLog.create.mockResolvedValue({ id: 'log-1' } as never)
+    insertAiUsageLog.mockResolvedValue('log-1')
   })
 
   it('calls callLlm and returns result when balance is sufficient', async () => {
     mockCreditAccount({ monthlyCredits: 100 })
-    mockTransaction()
     mockedCallLlm.mockResolvedValue(makeLlmResult())
 
     const result = await runAiFeature({
@@ -584,11 +423,11 @@ describe('runAiFeature', () => {
       }),
     ).rejects.toThrow('Provider error')
 
-    // Transaction (deduction) should NOT have run
-    expect(mockedPrisma.$transaction).not.toHaveBeenCalled()
+    // Deduction RPC should NOT have run
+    expect(debit).not.toHaveBeenCalled()
   })
 
-  it('logs failure to AiUsageLog even when callLlm throws', async () => {
+  it('logs failure to ai_usage_logs even when callLlm throws', async () => {
     mockCreditAccount({ monthlyCredits: 100 })
     mockedCallLlm.mockRejectedValue(new Error('Provider error'))
 
@@ -603,9 +442,9 @@ describe('runAiFeature', () => {
     ).rejects.toThrow()
 
     // Failure log should have been written
-    expect(mockedPrisma.aiUsageLog.create).toHaveBeenCalledOnce()
-    const logCall = mockedPrisma.aiUsageLog.create.mock.calls[0][0]
-    expect(logCall.data.success).toBe(false)
+    expect(insertAiUsageLog).toHaveBeenCalledOnce()
+    const arg = insertAiUsageLog.mock.calls[0][0]
+    expect(arg.success).toBe(false)
   })
 
   it('skips credit accounting when skipCreditAccounting=true', async () => {
@@ -619,13 +458,12 @@ describe('runAiFeature', () => {
     })
 
     expect(result.text).toBe('Generated text')
-    expect(mockedPrisma.aiCreditAccount.findUnique).not.toHaveBeenCalled()
-    expect(mockedPrisma.$transaction).not.toHaveBeenCalled()
+    expect(ensureAccount).not.toHaveBeenCalled()
+    expect(debit).not.toHaveBeenCalled()
   })
 
   it('applies Gründlich mode (4× multiplier) resulting in higher credit deduction', async () => {
     mockCreditAccount({ monthlyCredits: 100 })
-    mockTransaction()
     mockedCallLlm.mockResolvedValue(makeLlmResult({ usage: {
       inputTokens: 500, cachedInputTokens: 0, cacheMissInputTokens: 500,
       outputTokens: 500, totalTokens: 1000,
@@ -641,13 +479,12 @@ describe('runAiFeature', () => {
     })
 
     // inline_text_edit at gruendlich (4×): base=1×4=4 credits for 1000 tokens (within 2000 limit)
-    const ledgerCall = mockedPrisma.aiCreditLedger.create.mock.calls[0][0]
-    expect(Math.abs(ledgerCall.data.credits)).toBe(4)
+    expect(debit).toHaveBeenCalledOnce()
+    expect(debit.mock.calls[0][1]).toBe(4)
   })
 
   it('mode=standard uses tier standard (deepseek)', async () => {
     mockCreditAccount({ monthlyCredits: 100 })
-    mockTransaction()
     mockedCallLlm.mockResolvedValue(makeLlmResult())
 
     await runAiFeature({
