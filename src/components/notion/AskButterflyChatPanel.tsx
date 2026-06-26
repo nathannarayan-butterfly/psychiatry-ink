@@ -49,6 +49,19 @@ export function AskButterflyChatPanel({
     inputRef.current?.focus()
   }, [])
 
+  // Auto-grow the composer so long / pasted text stays readable instead of
+  // scrolling inside a fixed two-line box. The textarea expands with content up
+  // to a sensible cap (docked panels are shorter), after which it scrolls.
+  useEffect(() => {
+    const el = inputRef.current
+    if (!el) return
+    const maxHeight = variant === 'docked' ? 160 : 200
+    el.style.height = 'auto'
+    const next = Math.min(el.scrollHeight, maxHeight)
+    el.style.height = `${next}px`
+    el.style.overflowY = el.scrollHeight > maxHeight ? 'auto' : 'hidden'
+  }, [draft, variant])
+
   const handleSend = useCallback(async () => {
     const content = draft.trim()
     if (!content || loading) return
