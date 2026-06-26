@@ -96,6 +96,46 @@ export function subscriptionPriceId(interval: SubscriptionInterval): string {
 }
 
 /**
+ * Stripe Checkout requires `subscription_data.trial_end` to be at least ~48h in
+ * the future (the docs say "at least 2 days") and at most 5 years out. The free
+ * trial is app-managed in Supabase (`ai_credit_accounts.trial_ends_at`), not
+ * Stripe-managed, so we only defer Stripe's first billing date when it makes
+ * sense to.
+ */
+const STRIPE_MIN_TRIAL_LEAD_MS = 48 * 60 * 60 * 1000
+const STRIPE_MAX_TRIAL_LEAD_MS = 5 * 365 * 24 * 60 * 60 * 1000
+
+/**
+ * Resolve the Stripe `subscription_data.trial_end` (unix epoch seconds) for a
+ * user subscribing while still inside their app-managed free trial, so Stripe
+ * defers the first charge to the moment their existing free time runs out
+ * instead of double-charging them for time they already have.
+ *
+ * Returns `null` (→ bill immediately, the pre-existing behaviour) when:
+ *  - there is no recorded trial (`trial_ends_at` null/unparseable),
+ *  - the trial has already ended (lead ≤ 0), or
+ *  - the remaining trial is below Stripe's ~48h floor — falling back to
+ *    immediate billing rather than letting Stripe reject the request.
+ *
+ * Also guards Stripe's 5-year ceiling defensively (app trials are days long, so
+ * this never fires in practice) by falling back to immediate billing.
+ *
+ * `now` is injectable for deterministic tests.
+ */
+export function resolveSubscriptionTrialEnd(
+  trialEndsAt: string | null | undefined,
+  now: Date = new Date(),
+): number | null {
+  if (!trialEndsAt) return null
+  const trialEndMs = Date.parse(trialEndsAt)
+  if (!Number.isFinite(trialEndMs)) return null
+  const leadMs = trialEndMs - now.getTime()
+  if (leadMs < STRIPE_MIN_TRIAL_LEAD_MS) return null
+  if (leadMs > STRIPE_MAX_TRIAL_LEAD_MS) return null
+  return Math.floor(trialEndMs / 1000)
+}
+
+/**
  * Create a subscription-mode Checkout Session for the single-user plan. Reuses
  * the user's existing Stripe customer when one is already mapped on the account
  * (so a re-subscribe doesn't fork a duplicate customer); otherwise Stripe
@@ -125,6 +165,22 @@ export async function createSubscriptionCheckoutSession(params: {
       ? { customer_email: params.customerEmail }
       : {}
 
+  // Align Stripe's first billing date to the end of the user's app-managed free
+  // trial so they aren't charged for time they already have free. Falls back to
+  // immediate billing when there's no usable future trial (see helper).
+  const trialEnd = resolveSubscriptionTrialEnd(account?.trial_ends_at)
+
+  const subscriptionData: Stripe.Checkout.SessionCreateParams.SubscriptionData = {
+    metadata: {
+      userId: params.userId,
+      interval: params.interval,
+      plan: 'single_user',
+    },
+  }
+  if (trialEnd !== null) {
+    subscriptionData.trial_end = trialEnd
+  }
+
   return stripe.checkout.sessions.create({
     mode: 'subscription',
     line_items: [{ price: subscriptionPriceId(params.interval), quantity: 1 }],
@@ -135,13 +191,14 @@ export async function createSubscriptionCheckoutSession(params: {
       interval: params.interval,
       plan: 'single_user',
     },
-    subscription_data: {
-      metadata: {
-        userId: params.userId,
-        interval: params.interval,
-        plan: 'single_user',
-      },
-    },
+    subscription_data: subscriptionData,
+    // When deferring the first charge to the trial end, force card collection at
+    // checkout so the first real charge succeeds once the trial lapses. (Stripe
+    // collects a payment method during trials by default; we set it explicitly
+    // so the behaviour can't silently change.)
+    ...(trialEnd !== null
+      ? { payment_method_collection: 'always' as const }
+      : {}),
     success_url: params.successUrl,
     cancel_url: params.cancelUrl,
   })
@@ -405,6 +462,15 @@ async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
   // Only subscription invoices grant the period allotment; one-off invoices are
   // handled by the bundle checkout flow.
   if (!subscriptionId) return
+
+  // A subscription created while the user is still inside their app-managed free
+  // trial carries `trial_end`, which makes Stripe emit an immediate $0
+  // "trial-start" invoice that is marked paid. That is NOT a real payment, so it
+  // must not grant the paid-period credit allotment — the app trial credits
+  // stand until the first real charge fires invoice.paid at trial end. (Before
+  // trial alignment the live prices had no trial, so every invoice.paid was a
+  // real charge; this guard preserves that invariant.)
+  if ((invoice.amount_paid ?? 0) <= 0) return
 
   const customerId = customerIdOf(invoice.customer)
   let userId = await resolveAppUserId({ metadataUserId, customerId })
