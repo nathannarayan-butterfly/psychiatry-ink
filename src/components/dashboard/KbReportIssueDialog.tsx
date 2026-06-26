@@ -18,7 +18,7 @@ interface KbReportIssueDialogProps {
 /**
  * Minimal "report an issue" flow available to ANY authenticated user. Submits a
  * `report_issue` community contribution (no content license required) which a
- * System Admin reviews in the KB console.
+ * Knowledge Base admin reviews in the KB console.
  */
 export function KbReportIssueDialog({
   substanceId,

@@ -45,11 +45,20 @@ export interface SystemAdminAccessInput {
  * global Knowledge Base. This is a UX hint that decides whether to surface the KB
  * review console; the authoritative check is always enforced server-side via
  * the `KB_ADMIN_USER_IDS` allowlist (never a client-trusted value).
+ *
+ * BACKWARD COMPAT: reads the current `VITE_KB_ADMIN_USER_IDS` build var first and
+ * falls back to the deprecated `VITE_SYSTEM_ADMIN_USER_IDS` alias when unset, so
+ * the console stays reachable until build args / env are updated to the new name.
  */
-export function isSystemAdminUser(input: SystemAdminAccessInput): boolean {
+export function isKbAdminUser(input: SystemAdminAccessInput): boolean {
   if (input.appMetadataSystemAdmin === true) return true
 
-  const envIds = parseIdList(import.meta.env.VITE_SYSTEM_ADMIN_USER_IDS as string | undefined)
+  // `VITE_SYSTEM_ADMIN_USER_IDS` is a deprecated alias kept only for a smooth
+  // rename; drop it once build args use the new `VITE_KB_ADMIN_USER_IDS` name.
+  const rawEnvIds =
+    (import.meta.env.VITE_KB_ADMIN_USER_IDS as string | undefined) ??
+    (import.meta.env.VITE_SYSTEM_ADMIN_USER_IDS as string | undefined)
+  const envIds = parseIdList(rawEnvIds)
   const localIds = readLocalAllowlist()
   const allowlist = new Set([...envIds, ...localIds])
 

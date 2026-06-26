@@ -1,16 +1,16 @@
 import { useMemo } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useKnowledgeBaseUserId } from './useKnowledgeBaseUserId'
-import { isSystemAdminUser } from '../utils/systemAdminAccess'
+import { isKbAdminUser } from '../utils/kbAdminAccess'
 
-/** Whether the current browser user may access the KB review console (System Admin). */
+/** Whether the current browser user may access the KB review console (Knowledge Base admin). */
 export function useSystemAdminAccess(): boolean {
   const { user } = useAuth()
   const fallbackUserId = useKnowledgeBaseUserId()
 
   return useMemo(() => {
     const appMetadata = user?.app_metadata as Record<string, unknown> | undefined
-    return isSystemAdminUser({
+    return isKbAdminUser({
       userId: user?.id ?? fallbackUserId,
       userEmail: user?.email,
       appMetadataSystemAdmin: appMetadata?.system_admin === true,

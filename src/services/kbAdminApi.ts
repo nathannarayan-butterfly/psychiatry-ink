@@ -3,8 +3,8 @@ import { getAuthHeaders } from './authHeaders'
 import type { KbSubstance, KbSubstanceDetail } from '../types/kbNormalized'
 
 // NOTE: `userId` is retained in these signatures for call-site ergonomics, but it
-// is NEVER sent to the server. The KB review console enforces the System Admin
-// role server-side from the verified Supabase token (`req.authUserId`); a
+// is NEVER sent to the server. The KB review console enforces the Knowledge Base
+// admin role server-side from the verified Supabase token (`req.authUserId`); a
 // client-supplied identity header would be spoofable and is intentionally gone.
 async function kbAdminFetch<T>(path: string, _userId: string, init?: RequestInit): Promise<T> {
   const auth = await getAuthHeaders()

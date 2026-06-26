@@ -110,7 +110,7 @@ platform **Knowledge Base admin**, which gates destructive/global operations
 |-------|-----------|
 | Edit / report (any user) | Verified Supabase identity (`req.authUserId`); contributions via `POST /api/kb-contributions` (incl. `report_issue`) |
 | Knowledge Base admin (server API) | `KB_ADMIN_USER_IDS` (comma UUIDs/emails) matched against the verified `req.authUserId` — the legacy spoofable `X-KB-User-Id` header is never trusted. The deprecated `SYSTEM_ADMIN_USER_IDS` alias is still read as a fallback |
-| Client UI hint | `VITE_SYSTEM_ADMIN_USER_IDS`, Supabase `app_metadata.system_admin=true`, or Settings → **System Admin** local allowlist (`psychiatry-ink:system-admin-users`) — UX only; access is enforced server-side |
+| Client UI hint | `VITE_KB_ADMIN_USER_IDS` (deprecated alias `VITE_SYSTEM_ADMIN_USER_IDS` still read as a fallback), Supabase `app_metadata.system_admin=true`, or Settings → **Knowledge Base Admin** local allowlist (`psychiatry-ink:system-admin-users`) — UX only; access is enforced server-side |
 | Dev fallback | If no allowlist configured, non-prod permits local users (prod denies) |
 
 ### Voting
