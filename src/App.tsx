@@ -1,13 +1,13 @@
 import { useCallback, useEffect } from 'react'
 import { AuthPage } from './components/auth/AuthPage'
 import { AiCreditsHinweisePage } from './components/homepage/AiCreditsHinweisePage'
-import { HomepagePage } from './components/homepage/HomepagePage'
+import { PublicPage } from './public-site/PublicPage'
 import { TranslationProvider } from './context/TranslationContext'
 import { WorkspaceSessionProvider } from './context/WorkspaceSessionContext'
 import { useAuth } from './context/AuthContext'
 import { useLanguageSettings } from './hooks/useLanguageSettings'
 import { usePrivacySettings } from './hooks/usePrivacySettings'
-import { isAppRoute, isPublicRoute, useAppRouter } from './hooks/useAppRouter'
+import { isAppRoute, isPublicMarketingView, isPublicRoute, useAppRouter } from './hooks/useAppRouter'
 import { resolveLocaleFromHost } from './config/domainConfig'
 import { getEffectiveHostname } from './utils/resolveHostname'
 import { DEFAULT_CASE_ID } from './utils/caseContext'
@@ -197,17 +197,17 @@ export default function App() {
     onEnterApp: allowDevNoAuthEntry ? () => navigate('/dashboard') : undefined,
   }
 
-  if (route.view === 'landing') {
+  // Public marketing + legal site (landing, features, pricing, security, privacy,
+  // terms, Impressum). Rendered by the prerender-safe public-site module so the
+  // SPA and the prerendered no-JS HTML stay in sync. Brand + locale + content are
+  // resolved from the request domain inside PublicPage.
+  if (route.view === 'landing' || isPublicMarketingView(route.view)) {
     return (
-      <TranslationProvider
-        language={activeUiLanguage}
-        englishVariant={languageSettings.englishVariant}
-      >
-        <HomepagePage
-          {...publicPageProps}
-          onSignup={() => navigate('/signup')}
-        />
-      </TranslationProvider>
+      <PublicPage
+        pageKey={route.view}
+        hostname={getEffectiveHostname()}
+        onNavigate={(path) => navigate(path)}
+      />
     )
   }
 

@@ -1597,3 +1597,231 @@ body:has(.auth-page) {
   text-decoration: underline;
   outline: none;
 }
+
+/* =============================================================================
+ * Public marketing + legal site (src/public-site/*) — additive layer.
+ * Reuses the homepage design tokens + `hp-*` primitives; only adds the few
+ * `ps-*` structures the multi-page public site needs (brand wordmark, sub-page
+ * heroes, legal prose, static pricing options, login shell, skip link).
+ * ========================================================================== */
+
+.ps-skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  background: var(--accent);
+  color: #fff;
+  padding: 0.5rem 0.9rem;
+  border-radius: var(--radius-control, 0.4375rem);
+  font-size: 0.8125rem;
+}
+
+.ps-skip-link:focus {
+  left: 0.75rem;
+  top: 0.75rem;
+}
+
+/* —— Brand wordmark (domain-aware: Psychiatry.Ink / Psychiatrie.Ink) —— */
+
+.ps-brand-link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.ps-brand {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.1rem;
+  font-weight: 650;
+  font-size: 1.0625rem;
+  letter-spacing: -0.01em;
+  color: var(--text-main);
+}
+
+.ps-brand__ink {
+  color: var(--accent);
+}
+
+.ps-brand__beta {
+  margin-left: 0.4rem;
+  align-self: center;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  padding: 0.05rem 0.35rem;
+}
+
+/* —— Sub-page hero (features / pricing / security intros) —— */
+
+.ps-page-hero {
+  padding-top: clamp(2rem, 5vw, 3.5rem);
+}
+
+/* —— 2-column grid (security compliance / generic prose pairs) —— */
+
+.hp-grid--2 {
+  display: grid;
+  gap: var(--hp-grid-gap);
+  width: 100%;
+  grid-template-columns: 1fr;
+  align-items: stretch;
+}
+
+@media (min-width: 48rem) {
+  .hp-grid--2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.ps-card__action {
+  margin: 0.85rem 0 0;
+}
+
+/* —— Static pricing options (no-JS replacement for the monthly/yearly toggle) —— */
+
+.ps-price-options {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: 1fr;
+  margin-block: 0.5rem 1rem;
+}
+
+@media (min-width: 30rem) {
+  .ps-price-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.ps-price-option {
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-card, 0.6875rem);
+  padding: 0.85rem 1rem;
+  background: #fff;
+}
+
+/* —— Legal prose (privacy / terms / Impressum) —— */
+
+.ps-legal {
+  padding-block: clamp(2.5rem, 5vw, 4rem);
+}
+
+.ps-legal__container {
+  width: 100%;
+  max-width: 48rem;
+  margin-inline: auto;
+  padding-inline: var(--hp-container-px);
+}
+
+.ps-legal__header {
+  margin-bottom: 2rem;
+}
+
+.ps-legal__title {
+  font-size: clamp(1.5rem, 3.5vw, 2rem);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+  margin: 0 0 0.5rem;
+}
+
+.ps-legal__updated {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin: 0 0 0.85rem;
+}
+
+.ps-legal__lead {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.ps-legal__section {
+  margin-bottom: 1.75rem;
+}
+
+.ps-legal__heading {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0 0 0.6rem;
+}
+
+.ps-legal__subheading {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 1rem 0 0.35rem;
+}
+
+.ps-legal__paragraph {
+  font-size: 0.875rem;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  margin: 0 0 0.75rem;
+}
+
+.ps-legal__list {
+  margin: 0 0 0.75rem;
+  padding-left: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ps-legal__list li {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* —— Login shell (static, no-JS meaningful page) —— */
+
+.ps-login {
+  display: flex;
+  justify-content: center;
+  padding-block: clamp(3rem, 8vw, 6rem);
+}
+
+.ps-login__card {
+  width: 100%;
+  max-width: 26rem;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-card, 0.6875rem);
+  padding: 2rem;
+  background: #fff;
+  text-align: center;
+}
+
+.ps-login__brand {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 0 0 0.5rem;
+}
+
+.ps-login__title {
+  font-size: 1.375rem;
+  font-weight: 650;
+  color: var(--text-main);
+  margin: 0 0 0.5rem;
+}
+
+.ps-login__lead {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0 0 1rem;
+}
+
+.ps-login__hint {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
