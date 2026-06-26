@@ -1,9 +1,9 @@
 import type { Request } from 'express'
-import { isSystemAdmin } from '../utils/adminAllowlist'
+import { isKbAdmin } from '../utils/adminAllowlist'
 
 /**
- * Number of approve votes a community contribution needs before a System Admin
- * may publish it. Defaults to 2 in production, 1 elsewhere.
+ * Number of approve votes a community contribution needs before a Knowledge Base
+ * admin may publish it. Defaults to 2 in production, 1 elsewhere.
  */
 export function getKbAdminApprovalThreshold(): number {
   const raw = process.env.KB_ADMIN_APPROVAL_THRESHOLD?.trim()
@@ -25,10 +25,10 @@ export function resolveKbAdminActor(req: Request): string | null {
 }
 
 /**
- * Whether a verified user is the platform System Admin — the only elevated role
- * over the global KB. This wraps the server-only {@link isSystemAdmin}
+ * Whether a verified user is the platform Knowledge Base admin — the only
+ * elevated role over the global KB. This wraps the server-only {@link isKbAdmin}
  * allowlist; org role is never sufficient.
  */
 export function isKbSystemAdmin(userId: string | null | undefined): boolean {
-  return isSystemAdmin(userId)
+  return isKbAdmin(userId)
 }

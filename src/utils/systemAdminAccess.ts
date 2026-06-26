@@ -41,10 +41,10 @@ export interface SystemAdminAccessInput {
 }
 
 /**
- * Client-side **System Admin** gate — the only elevated role over the global
- * Knowledge Base. This is a UX hint that decides whether to surface the KB
+ * Client-side **Knowledge Base admin** gate — the only elevated role over the
+ * global Knowledge Base. This is a UX hint that decides whether to surface the KB
  * review console; the authoritative check is always enforced server-side via
- * the `SYSTEM_ADMIN_USER_IDS` allowlist (never a client-trusted value).
+ * the `KB_ADMIN_USER_IDS` allowlist (never a client-trusted value).
  */
 export function isSystemAdminUser(input: SystemAdminAccessInput): boolean {
   if (input.appMetadataSystemAdmin === true) return true

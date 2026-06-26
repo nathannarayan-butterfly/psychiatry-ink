@@ -39,7 +39,7 @@ See `.env.example` for the annotated, exhaustive list. Cloud-critical values:
 | `SUPABASE_SERVICE_ROLE_KEY` | KB write-through (bypasses RLS) | server-only |
 | `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` | Credit checkout + webhook | |
 | `OPENAI_API_KEY` / `DEEPSEEK_API_KEY` / `GOOGLE_API_KEY` / `MISTRAL_API_KEY` | LLM providers (`MISTRAL_API_KEY` = EU residency) | at least one |
-| `SYSTEM_ADMIN_USER_IDS` | Platform System Admin allowlist (sole elevated role over the KB: publish/approve/archive/review) | **required in prod**; server-only |
+| `KB_ADMIN_USER_IDS` | Platform Knowledge Base admin allowlist (sole elevated role over the KB: publish/approve/archive/review). Deprecated alias `SYSTEM_ADMIN_USER_IDS` still read as a fallback | **required in prod**; server-only |
 | `CREDIT_ADMIN_USER_IDS` | Manual credit-grant operators | required in prod for `/grant` |
 | `LLM_RESIDENCY` / `LLM_BLOCKED_PROVIDERS` | EU residency gating | see §6 |
 | `TRUST_PROXY` | Proxy hops to trust (rate limiting, client IP) | default `1` |
