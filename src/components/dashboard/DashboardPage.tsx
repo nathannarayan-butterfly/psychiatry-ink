@@ -20,7 +20,7 @@ import {
   CalendarDays,
   Upload,
 } from 'lucide-react'
-import { useCallback, useMemo, useState, type ChangeEvent } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import { useWorkspaceSession } from '../../context/WorkspaceSessionContext'
 import { useHomepageContent } from '../../hooks/useHomepageContent'
@@ -45,7 +45,11 @@ import { formatSiteLocaleDate } from '../../utils/siteTimezone'
 import { SettingsPage } from '../settings/SettingsPage'
 import { CreditsPurchaseDialog } from '../notion/CreditsPurchaseDialog'
 import { IdentifierStorageOnboarding } from '../privacy/IdentifierStorageOnboarding'
-import { needsIdentifierStorageOnboarding } from '../../utils/identifierStorage'
+import {
+  markIdentifierStorageAcknowledged,
+  needsIdentifierStorageOnboarding,
+} from '../../utils/identifierStorage'
+import { hasAccountOnboardingRecord } from '../../utils/accountBackup'
 import { DashboardHinweise } from './DashboardHinweise'
 import { AccountRegistryRestoreBanner } from './AccountRegistryRestoreBanner'
 import { DashboardTopBar } from './DashboardTopBar'
@@ -192,11 +196,37 @@ export function DashboardPage({
   const [workflowCaseId, setWorkflowCaseId] = useState<string | null>(null)
   const [patientSearch, setPatientSearch] = useState('')
   const [patientViewMode, setPatientViewMode] = useState<PatientViewMode>('cards')
-  const [showIdentifierOnboarding, setShowIdentifierOnboarding] = useState(
-    () => needsIdentifierStorageOnboarding(),
-  )
+  // Only prompt for the storage-location choice when the user has made no choice
+  // locally AND the account has no prior backup (key/registry) indicating they
+  // already onboarded on another device. This keeps the prompt from re-appearing
+  // on every login / on a fresh device. We start hidden and reveal after the
+  // async server check resolves, so an already-onboarded account never flashes it.
+  const [showIdentifierOnboarding, setShowIdentifierOnboarding] = useState(false)
   const [devTierSwitching, setDevTierSwitching] = useState(false)
   const [devTierNote, setDevTierNote] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!needsIdentifierStorageOnboarding()) return
+    let active = true
+    void hasAccountOnboardingRecord()
+      .then((alreadyOnboarded) => {
+        if (!active) return
+        if (alreadyOnboarded) {
+          // Choice was made on another device — record it locally so we stay quiet.
+          markIdentifierStorageAcknowledged()
+        } else {
+          setShowIdentifierOnboarding(true)
+        }
+      })
+      .catch(() => {
+        // Server unreachable: fall back to the local prompt (a non-destructive
+        // re-confirmation is the safe choice — we never lose or expose data).
+        if (active) setShowIdentifierOnboarding(true)
+      })
+    return () => {
+      active = false
+    }
+  }, [])
 
   const showDevTierSwitcher =
     import.meta.env.DEV && organisation != null && organisation.tier !== 'enterprise'

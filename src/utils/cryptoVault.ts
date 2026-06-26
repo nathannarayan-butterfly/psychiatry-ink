@@ -143,6 +143,47 @@ async function generateRsaKeyPair(): Promise<CryptoKeyPair> {
   )
 }
 
+/**
+ * True when this browser already holds an RSA key pair in IndexedDB.
+ *
+ * Unlike {@link ensureKeyMaterial} this NEVER generates a fresh pair — it is the
+ * read-only probe used to decide whether a new device needs to restore the
+ * account's real private key from a passphrase backup before any local
+ * auto-generated key silently shadows the account's encrypted data.
+ */
+export async function hasLocalKeyMaterial(): Promise<boolean> {
+  try {
+    const cached = await idbGet<StoredKeyMaterial>(KEYS_STORE, 'primary')
+    return Boolean(cached?.publicKeyJwk && cached?.privateKeyJwk)
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Reconstruct the matching RSA-OAEP public-key JWK from a private-key JWK.
+ *
+ * An RSA private JWK already carries the public modulus (`n`) and exponent (`e`),
+ * so the public key can be derived deterministically without the original
+ * key-generation context. This keeps the public/private pair consistent after a
+ * passphrase restore (the backup stores only the private key) — without it, a
+ * freshly generated, mismatched public key would silently corrupt every new
+ * ciphertext on the restoring device.
+ */
+export function derivePublicJwkFromPrivate(privateKeyJwk: JsonWebKey): JsonWebKey {
+  if (!privateKeyJwk.n || !privateKeyJwk.e) {
+    throw new Error('Private key JWK is missing RSA public components (n/e)')
+  }
+  return {
+    kty: 'RSA',
+    n: privateKeyJwk.n,
+    e: privateKeyJwk.e,
+    alg: privateKeyJwk.alg ?? 'RSA-OAEP-256',
+    ext: true,
+    key_ops: ['encrypt', 'wrapKey'],
+  }
+}
+
 /** Ensure RSA key pair exists in IndexedDB; returns JWK material + device id. */
 export async function ensureKeyMaterial(): Promise<StoredKeyMaterial> {
   const cached = await idbGet<StoredKeyMaterial>(KEYS_STORE, 'primary')

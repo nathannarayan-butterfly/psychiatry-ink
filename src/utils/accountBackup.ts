@@ -27,7 +27,11 @@ import {
   saveWorkspaceVaultBlob,
   type EncryptedVaultBlob,
 } from './cryptoVault'
-import { usesAccountIdentifierSync } from './identifierStorage'
+import { isAccountKeyLinked, markAccountKeyLinked } from './accountKeyLink'
+import {
+  markIdentifierStorageAcknowledged,
+  usesAccountIdentifierSync,
+} from './identifierStorage'
 import {
   createPassphraseBackup,
   getPassphraseBackup,
@@ -221,11 +225,16 @@ export async function uploadAccountCloudBackup(passphrase: string): Promise<void
 }
 
 /** Create passphrase backup and upload per user identifier storage choice. */
-export async function setupAccountCloudBackup(passphrase: string): Promise<PassphraseKeyBackup> {
+export async function setupAccountCloudBackup(
+  passphrase: string,
+  userId?: string | null,
+): Promise<PassphraseKeyBackup> {
   const backup = await createPassphraseBackup(passphrase)
   await uploadKeyBackupToServer(backup)
   await uploadIdentifierBackupIfEnabled(passphrase)
   setAccountBackupUnlocked(passphrase)
+  // This browser now holds the account's real private key.
+  markAccountKeyLinked(userId)
   await tryAutoRestoreRegistryFromAccount(passphrase)
   return backup
 }
@@ -325,12 +334,72 @@ export async function tryAutoRestoreRegistryFromAccount(passphrase: string): Pro
   return Object.keys(payload.identifiers ?? {}).length
 }
 
-/** When the account has a registry backup, prefer account identifier storage locally. */
+/**
+ * True when the account holds a passphrase key backup but THIS browser is not yet
+ * confirmed to hold the account's real private key. In that state the encrypted
+ * case files (and any account-synced identifiers) cannot be unlocked until the
+ * user enters their passphrase, so the unlock prompt must be shown.
+ *
+ * `userId` is the authenticated Supabase user id; without it we cannot tell which
+ * account this browser is linked to, so we conservatively report "not needed"
+ * (an unauthenticated session has nothing to restore anyway).
+ */
+export async function isKeyRestoreNeeded(userId: string | null | undefined): Promise<boolean> {
+  if (!userId) return false
+  // This browser has already created or restored the account key — nothing to do.
+  if (isAccountKeyLinked(userId)) return false
+
+  const status = await fetchAccountBackupStatus()
+  if (!status?.hasKeyBackup) return false
+
+  // Migration / same-device safeguard: a local passphrase backup means this
+  // browser already created the account key here (pre-dating the key-link marker).
+  // Treat it as linked so existing users are never falsely shown the new-device
+  // unlock prompt on the very device they set encryption up on.
+  const localBackup = await getPassphraseBackup()
+  if (localBackup) {
+    markAccountKeyLinked(userId)
+    return false
+  }
+
+  return true
+}
+
+/**
+ * Reconcile the local identifier-storage preference with server state on login.
+ *
+ * The choice itself is device-local (localStorage), so a fresh device / cleared
+ * browser has no record of it and would otherwise re-prompt the storage-location
+ * onboarding on every login. The account backup status is the account-level
+ * signal we can read on login without breaking zero-knowledge:
+ *  - a registry backup means the user picked account-mode identifiers → restore that
+ *    (this also marks the choice acknowledged via syncPrivacyIdentifierStorage).
+ *  - a key-only backup means the user completed encryption/storage onboarding on
+ *    some device in device-mode → acknowledge locally so we never re-prompt.
+ */
 export async function inferAccountIdentifierStorageFromServer(): Promise<void> {
   const status = await fetchAccountBackupStatus()
-  if (!status?.hasRegistryBackup) return
-  const { syncPrivacyIdentifierStorage } = await import('../hooks/usePrivacySettings')
-  syncPrivacyIdentifierStorage('account')
+  if (!status) return
+
+  if (status.hasRegistryBackup) {
+    const { syncPrivacyIdentifierStorage } = await import('../hooks/usePrivacySettings')
+    syncPrivacyIdentifierStorage('account')
+    return
+  }
+
+  if (status.hasKeyBackup) {
+    markIdentifierStorageAcknowledged()
+  }
+}
+
+/**
+ * True when this account already has an encrypted backup (key or registry), i.e.
+ * the user has already chosen a storage mode / completed onboarding on some
+ * device. Used to avoid re-prompting the storage-location choice on a new device.
+ */
+export async function hasAccountOnboardingRecord(): Promise<boolean> {
+  const status = await fetchAccountBackupStatus()
+  return Boolean(status?.hasKeyBackup || status?.hasRegistryBackup)
 }
 
 /** True when server holds an identifier backup but this browser lacks decrypted names/DOB. */
@@ -352,16 +421,30 @@ export async function isAccountRegistryRestoreNeeded(): Promise<boolean> {
 export async function restoreAccountCloudBackup(
   passphrase: string,
   countryCode: string,
+  userId?: string | null,
 ): Promise<AccountCloudRestoreResult> {
   const keyBackup = await resolveKeyBackup()
   await restorePrivateKeyFromPassphrase(passphrase, keyBackup)
   setAccountBackupUnlocked(passphrase)
+  // This browser now holds the account's real private key (restored from passphrase).
+  markAccountKeyLinked(userId)
 
   const identifierCases = await tryAutoRestoreRegistryFromAccount(passphrase)
   const status = await fetchAccountBackupStatus()
   const identifiersFromAccount = identifierCases > 0 || Boolean(status?.hasRegistryBackup)
 
   const workspaceCases = await pullWorkspaceSnapshotsFromCloud(countryCode)
+
+  // Account mode can only upload identifier changes while a passphrase session is
+  // active, and that session is in-memory (cleared on every page unload). Any
+  // name/DOB edits made on this device while it was locked are therefore saved
+  // locally but not yet backed up to the account. Now that the passphrase is
+  // unlocked, flush a catch-up upload so account-mode identifiers become
+  // eventually consistent across devices. No-op in device-only mode.
+  if (usesAccountIdentifierSync()) {
+    scheduleAccountRegistryUpload()
+  }
+
   return {
     identifierCases,
     workspaceCases,

@@ -5,7 +5,9 @@
  */
 
 import {
+  derivePublicJwkFromPrivate,
   ensureKeyMaterial,
+  getOrCreateDeviceId,
   type EncryptedVaultBlob,
   type StoredKeyMaterial,
 } from './cryptoVault'
@@ -142,12 +144,23 @@ export async function restorePrivateKeyFromPassphrase(
   )
   const privateKeyJwk = JSON.parse(new TextDecoder().decode(plaintext)) as JsonWebKey
 
-  const material = await ensureKeyMaterial()
+  // The backup stores only the private key. Derive the matching public key from
+  // it (RSA private JWK carries n/e) so the restored pair is internally
+  // consistent. Calling ensureKeyMaterial() here would generate a NEW, unrelated
+  // public key on a fresh device and keep it alongside the restored private key —
+  // every subsequently-encrypted blob would then be wrapped to a public key the
+  // restored private key can never unwrap, silently corrupting new data.
+  const publicKeyJwk = derivePublicJwkFromPrivate(privateKeyJwk)
   const restored: StoredKeyMaterial = {
-    ...material,
+    publicKeyJwk,
     privateKeyJwk,
+    deviceId: getOrCreateDeviceId(),
   }
   await idbSet('primary', restored)
+  // Persist the (already-encrypted) backup locally so this device is recognised as
+  // holding the account key on subsequent loads — otherwise the new-device unlock
+  // prompt would keep reappearing every login even after a successful restore.
+  await idbSet(RECOVERY_KEY, stored)
   return restored
 }
 

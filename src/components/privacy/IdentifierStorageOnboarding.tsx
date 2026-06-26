@@ -48,7 +48,7 @@ export function IdentifierStorageOnboarding({
         </header>
         <p className="identifier-onboarding-dialog__lead">{t('identifierStorageOnboardingLead')}</p>
 
-        <IdentifierStorageChoice value={mode} onChange={setMode} variant="signup" />
+        <IdentifierStorageChoice value={mode} onChange={setMode} variant="signup" detailsCollapsible />
 
         <div className="identifier-onboarding-dialog__actions">
           <button

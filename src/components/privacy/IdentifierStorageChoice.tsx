@@ -7,6 +7,13 @@ interface IdentifierStorageChoiceProps {
   /** Signup shows full intro; settings shows “change anytime” note. */
   variant: 'signup' | 'settings'
   switchNote?: string | null
+  /**
+   * When set, the lengthy explainer + comparison table are tucked behind a
+   * “mehr anzeigen” disclosure so the dialog leads with a short plain-language
+   * summary and the actual choice. Used for the onboarding popup, which was
+   * previously a wall of text. Signup/settings keep the full detail inline.
+   */
+  detailsCollapsible?: boolean
 }
 
 export function IdentifierStorageChoice({
@@ -14,17 +21,12 @@ export function IdentifierStorageChoice({
   onChange,
   variant,
   switchNote,
+  detailsCollapsible = false,
 }: IdentifierStorageChoiceProps) {
   const { t } = useTranslation()
 
-  return (
-    <div className="identifier-storage-choice">
-      {variant === 'signup' ? (
-        <p className="identifier-storage-choice__intro">{t('identifierStorageSignupIntro')}</p>
-      ) : (
-        <p className="identifier-storage-choice__change-note">{t('identifierStorageCanChangeLater')}</p>
-      )}
-
+  const details = (
+    <>
       <div className="identifier-storage-choice__explainer" role="note">
         <p className="identifier-storage-choice__explainer-line">{t('identifierStorageWhatAreIdentifiers')}</p>
         <p className="identifier-storage-choice__explainer-line">{t('identifierStorageWhatIsCaseFile')}</p>
@@ -64,6 +66,30 @@ export function IdentifierStorageChoice({
           </tr>
         </tbody>
       </table>
+    </>
+  )
+
+  return (
+    <div className="identifier-storage-choice">
+      {variant === 'signup' ? (
+        <p className="identifier-storage-choice__intro">{t('identifierStorageSignupIntro')}</p>
+      ) : (
+        <p className="identifier-storage-choice__change-note">{t('identifierStorageCanChangeLater')}</p>
+      )}
+
+      {detailsCollapsible ? (
+        <>
+          <p className="identifier-storage-choice__summary">{t('identifierStorageOnboardingSummary')}</p>
+          <details className="identifier-storage-choice__details">
+            <summary className="identifier-storage-choice__details-toggle">
+              {t('identifierStorageDetailsToggle')}
+            </summary>
+            <div className="identifier-storage-choice__details-body">{details}</div>
+          </details>
+        </>
+      ) : (
+        details
+      )}
 
       <fieldset className="identifier-storage-choice__options">
         <legend className="identifier-storage-choice__legend">{t('identifierStorageLabel')}</legend>

@@ -3297,6 +3297,28 @@
     color: var(--text-muted);
   }
 
+  .encryption-disclaimer-body__summary {
+    margin: 0;
+    font-size: 0.75rem;
+    line-height: 1.55;
+    color: var(--text-muted);
+  }
+
+  .encryption-disclaimer-body__more {
+    margin-top: 0.25rem;
+    border: none;
+    background: transparent;
+    padding: 0;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: color-mix(in srgb, #b45309 70%, var(--text-muted));
+    cursor: pointer;
+  }
+
+  .encryption-disclaimer-body__more:hover {
+    text-decoration: underline;
+  }
+
   .dashboard-page {
     width: 100%;
     min-height: 0;
