@@ -15815,6 +15815,83 @@ export const uiTranslations = {
 
   // Renderer
   vorlageNoData: { de: 'Keine Daten', en: 'No data', fr: 'Aucune donnée', es: 'Sin datos' },
+
+  // Builder placeholder hints — clinical-source blocks render demo/example data
+  // in the editor; these labels make clear the block is a dynamic placeholder
+  // that is filled with the real patient's data when the document is generated.
+  vorlagePlaceholderBadge: { de: 'Platzhalter', en: 'Placeholder', fr: 'Espace réservé', es: 'Marcador' },
+  vorlagePlaceholderExample: {
+    de: 'Beispieldaten – werden beim Erstellen des Dokuments durch die echten Patientendaten ersetzt.',
+    en: 'Example data — replaced with the real patient data when the document is generated.',
+    fr: 'Données d’exemple — remplacées par les données réelles du patient lors de la génération du document.',
+    es: 'Datos de ejemplo: se sustituyen por los datos reales del paciente al generar el documento.',
+  },
+  vorlagePlaceholderHintDiagnosis: {
+    de: 'Hier werden die Diagnosen des Patienten eingefügt.',
+    en: 'The patient’s diagnoses are inserted here.',
+    fr: 'Les diagnostics du patient seront insérés ici.',
+    es: 'Aquí se insertan los diagnósticos del paciente.',
+  },
+  vorlagePlaceholderHintMedication: {
+    de: 'Hier wird die aktuelle Medikation des Patienten eingefügt.',
+    en: 'The patient’s current medication is inserted here.',
+    fr: 'La médication actuelle du patient sera insérée ici.',
+    es: 'Aquí se inserta la medicación actual del paciente.',
+  },
+  vorlagePlaceholderHintLaboratory: {
+    de: 'Hier werden die aktuellen Laborwerte des Patienten eingefügt.',
+    en: 'The patient’s latest laboratory values are inserted here.',
+    fr: 'Les derniers résultats de laboratoire du patient seront insérés ici.',
+    es: 'Aquí se insertan los últimos valores de laboratorio del paciente.',
+  },
+  vorlagePlaceholderHintPsychopathology: {
+    de: 'Hier wird der aktuelle psychopathologische Befund des Patienten eingefügt.',
+    en: 'The patient’s latest psychopathological findings are inserted here.',
+    fr: 'Le bilan psychopathologique actuel du patient sera inséré ici.',
+    es: 'Aquí se inserta el hallazgo psicopatológico actual del paciente.',
+  },
+  vorlagePlaceholderHintRisk: {
+    de: 'Hier wird die aktuelle Risikoeinschätzung des Patienten eingefügt.',
+    en: 'The patient’s current risk assessment is inserted here.',
+    fr: 'L’évaluation actuelle du risque du patient sera insérée ici.',
+    es: 'Aquí se inserta la evaluación de riesgo actual del paciente.',
+  },
+  vorlagePlaceholderHintVerlauf: {
+    de: 'Hier wird der Verlauf des Patienten eingefügt.',
+    en: 'The patient’s course summary is inserted here.',
+    fr: 'L’évolution du patient sera insérée ici.',
+    es: 'Aquí se inserta la evolución del paciente.',
+  },
+  vorlagePlaceholderHintAnamnese: {
+    de: 'Hier wird die Anamnese des Patienten eingefügt.',
+    en: 'The patient’s history is inserted here.',
+    fr: 'L’anamnèse du patient sera insérée ici.',
+    es: 'Aquí se inserta la anamnesis del paciente.',
+  },
+  vorlagePlaceholderHintTherapy: {
+    de: 'Hier werden die aktuellen Therapien des Patienten eingefügt.',
+    en: 'The patient’s current therapies are inserted here.',
+    fr: 'Les thérapies actuelles du patient seront insérées ici.',
+    es: 'Aquí se insertan las terapias actuales del paciente.',
+  },
+  vorlagePlaceholderHintSocialTherapy: {
+    de: 'Hier werden die Sozialtherapie-Ziele des Patienten eingefügt.',
+    en: 'The patient’s social therapy goals are inserted here.',
+    fr: 'Les objectifs de thérapie sociale du patient seront insérés ici.',
+    es: 'Aquí se insertan los objetivos de terapia social del paciente.',
+  },
+  vorlagePlaceholderHintPatientData: {
+    de: 'Hier werden die Stammdaten des Patienten eingefügt.',
+    en: 'The patient’s demographic data is inserted here.',
+    fr: 'Les données démographiques du patient seront insérées ici.',
+    es: 'Aquí se insertan los datos del paciente.',
+  },
+  vorlagePlaceholderHintInstitution: {
+    de: 'Hier werden die Behandler-/Klinikdaten eingefügt.',
+    en: 'The clinician/clinic data is inserted here.',
+    fr: 'Les données du clinicien/de la clinique seront insérées ici.',
+    es: 'Aquí se insertan los datos del clínico/clínica.',
+  },
   vorlageConditionalHidden: { de: 'Ausgeblendet (Bedingung nicht erfüllt)', en: 'Hidden (condition not met)', fr: 'Masqué (condition non remplie)', es: 'Oculto (condición no cumplida)' },
   vorlageAiBadge: { de: 'KI', en: 'AI', fr: 'IA', es: 'IA' },
   vorlageAiGenerate: { de: 'Generieren', en: 'Generate', fr: 'Générer', es: 'Generar' },
