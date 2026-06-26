@@ -1,5 +1,5 @@
 import type { UiTranslationKey } from '../../data/uiTranslations'
-import type { ClinicalBinding, ClinicalTemplateCategory } from '../../types/clinicalTemplate'
+import type { ClinicalBinding, ClinicalTemplateCategory, TemplateBlock } from '../../types/clinicalTemplate'
 
 export type PaletteGroup = 'basic' | 'clinical' | 'placeholders' | 'advanced'
 
@@ -54,6 +54,28 @@ export const PALETTE_ITEMS: PaletteItem[] = [
 ]
 
 export const PALETTE_ITEMS_BY_ID = new Map(PALETTE_ITEMS.map((item) => [item.id, item]))
+
+/**
+ * Builder-only: clinical-source blocks render demo/example content in the editor
+ * so the clinician can see the block's structure. Each dynamic block type maps
+ * to a hint that makes unmistakably clear the block is a placeholder — the real
+ * patient data is resolved (resolveClinicalData) and substituted at generation
+ * time. Basic blocks (heading/text/table/inputs/signature) carry literal content
+ * and intentionally have no hint here.
+ */
+export const DYNAMIC_PLACEHOLDER_HINT_KEYS: Partial<Record<TemplateBlock['type'], UiTranslationKey>> = {
+  diagnosis: 'vorlagePlaceholderHintDiagnosis',
+  medication: 'vorlagePlaceholderHintMedication',
+  laboratory: 'vorlagePlaceholderHintLaboratory',
+  psychopathology: 'vorlagePlaceholderHintPsychopathology',
+  risk: 'vorlagePlaceholderHintRisk',
+  verlauf_summary: 'vorlagePlaceholderHintVerlauf',
+  anamnese: 'vorlagePlaceholderHintAnamnese',
+  therapy: 'vorlagePlaceholderHintTherapy',
+  social_therapy: 'vorlagePlaceholderHintSocialTherapy',
+  patient_data: 'vorlagePlaceholderHintPatientData',
+  institution: 'vorlagePlaceholderHintInstitution',
+}
 
 export const CLINICAL_TEMPLATE_CATEGORIES: Array<{ id: ClinicalTemplateCategory; labelKey: UiTranslationKey }> = [
   { id: 'arztbrief', labelKey: 'vorlageCategoryArztbrief' },

@@ -175,6 +175,40 @@
 .ct-canvas-block:hover .ct-canvas-block__delete, .ct-canvas-block--selected .ct-canvas-block__delete { opacity: 1; }
 .ct-canvas-block__delete:hover { color: var(--color-recording, #b54548); }
 .ct-canvas-block__body { pointer-events: none; }
+/* Dynamic-placeholder blocks: dim the example content so the banner above reads
+   as the primary signal and the demo data is clearly secondary/illustrative. */
+.ct-canvas-block__body--placeholder { opacity: 0.78; }
+
+/* Banner marking a clinical-source block as a dynamic placeholder. */
+.ct-canvas-block__placeholder {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 0.45rem;
+  margin: 0 0 0.4rem;
+  padding: 0.3rem 0.5rem;
+  border: 1px dashed color-mix(in srgb, var(--accent, #8a5a2b) 40%, var(--ct-border-strong));
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent, #8a5a2b) 5%, transparent);
+}
+.ct-canvas-block__placeholder-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent, #8a5a2b);
+  border: 1px solid color-mix(in srgb, var(--accent, #8a5a2b) 45%, transparent);
+  border-radius: 4px;
+  padding: 0.05rem 0.3rem;
+}
+.ct-canvas-block__placeholder-text { font-size: 0.74rem; color: var(--ct-muted); line-height: 1.35; }
+.ct-canvas-block__placeholder-example {
+  flex-basis: 100%;
+  font-size: 0.7rem;
+  font-style: italic;
+  color: var(--ct-muted);
+  line-height: 1.3;
+}
 
 /* Quick width / placement controls (top-right of each block). */
 .ct-canvas-block__layout {

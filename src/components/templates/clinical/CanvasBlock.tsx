@@ -11,6 +11,7 @@ import { useRef } from 'react'
 import { useTranslation } from '../../../context/TranslationContext'
 import type { BlockAlign, BlockWidth, TemplateBlock } from '../../../types/clinicalTemplate'
 import type { ResolvedClinicalData } from '../../../utils/clinicalTemplate/clinicalData'
+import { DYNAMIC_PLACEHOLDER_HINT_KEYS } from '../../../utils/clinicalTemplate/blockCatalog'
 import { ClinicalDocumentRenderer } from './ClinicalDocumentRenderer'
 
 interface CanvasBlockProps {
@@ -33,6 +34,12 @@ export function CanvasBlock({ block, data, selected, onSelect, onDelete, onPatch
 
   const width = block.width ?? 'full'
   const align = block.align ?? 'left'
+
+  // Clinical-source blocks render demo/example data in the editor. The banner
+  // makes clear they are dynamic placeholders that resolve to the real patient's
+  // data when the document is generated — never the literal example shown here.
+  const placeholderHintKey = DYNAMIC_PLACEHOLDER_HINT_KEYS[block.type]
+  const showExampleNote = placeholderHintKey != null && data.source === 'demo'
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -127,7 +134,20 @@ export function CanvasBlock({ block, data, selected, onSelect, onDelete, onPatch
         {widthBtn('half', 'right', PanelRight, t('vorlageWidthRight'))}
       </div>
 
-      <div ref={bodyRef} className="ct-canvas-block__body">
+      {placeholderHintKey ? (
+        <div className="ct-canvas-block__placeholder">
+          <span className="ct-canvas-block__placeholder-badge">{t('vorlagePlaceholderBadge')}</span>
+          <span className="ct-canvas-block__placeholder-text">{t(placeholderHintKey)}</span>
+          {showExampleNote ? (
+            <span className="ct-canvas-block__placeholder-example">{t('vorlagePlaceholderExample')}</span>
+          ) : null}
+        </div>
+      ) : null}
+
+      <div
+        ref={bodyRef}
+        className={`ct-canvas-block__body${placeholderHintKey ? ' ct-canvas-block__body--placeholder' : ''}`}
+      >
         <ClinicalDocumentRenderer blocks={[block]} data={data} />
       </div>
 
