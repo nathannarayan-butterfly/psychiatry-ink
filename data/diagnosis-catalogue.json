@@ -7,7 +7,7 @@
       "source": "WHO ICD-10 crosswalk fallback (German overrides)",
       "metadata": {
         "fallback": true,
-        "crosswalkPath": "/home/nathan-narayan/Projects/psychiatry-ink/prisma/data/diagnosis-crosswalk.json"
+        "crosswalkPath": "/home/nathan-narayan/Projects/psychiatry-ink/data/diagnosis-crosswalk.json"
       },
       "entries": [
         {
