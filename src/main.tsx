@@ -10,6 +10,7 @@ import { registerClinicalLanguageResolver } from './services/clinicalApiFetch'
 import { installChunkReloadGuard } from './utils/chunkReloadGuard'
 import { loadBootstrapUiLanguage, loadInitialDocumentLanguage } from './utils/clinicalLanguage'
 import { reapplyDevicePreferences } from './utils/devicePreferences'
+import { captureReferralCodeFromUrl } from './utils/referralCapture'
 import './styles/globals.css'
 import './styles/aura-theme.css'
 import './styles/action-buttons.css'
@@ -54,6 +55,8 @@ import './styles/overview-quick-actions.css'
 import './styles/medication-education.css'
 
 installChunkReloadGuard()
+
+captureReferralCodeFromUrl()
 
 registerClinicalLanguageResolver(loadBootstrapUiLanguage)
 

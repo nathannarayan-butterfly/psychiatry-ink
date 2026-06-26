@@ -121,4 +121,140 @@ export async function grantDevCredits(credits: number, note?: string): Promise<{
   return result
 }
 
+// ── Gutschein (voucher) ──────────────────────────────────────────────────────
+
+export interface VoucherRedeemResult {
+  ok: boolean
+  creditsGranted: number
+  creditsPerPeriod?: number
+  totalPeriods?: number
+  periodMonths?: number
+}
+
+export async function redeemVoucher(code: string): Promise<VoucherRedeemResult> {
+  return fetchJson('/api/ai-credits/voucher/redeem', {
+    method: 'POST',
+    body: JSON.stringify({ code }),
+  })
+}
+
+export async function startGiftVoucherCheckout(
+  giftPackId: string,
+): Promise<{ url: string | null; sessionId: string }> {
+  return fetchJson('/api/ai-credits/voucher/gift/checkout', {
+    method: 'POST',
+    body: JSON.stringify({ giftPackId, origin: window.location.origin }),
+  })
+}
+
+export interface GiftVoucherResult {
+  ok: boolean
+  pending?: boolean
+  code?: string
+  creditsPerPeriod?: number
+  periodMonths?: number
+  totalPeriods?: number
+}
+
+export async function fetchGiftVoucherResult(sessionId: string): Promise<GiftVoucherResult> {
+  const headers = await getAuthHeaders()
+  const response = await fetch(
+    `${API_BASE}/api/ai-credits/voucher/gift/result?session_id=${encodeURIComponent(sessionId)}`,
+    { headers: { 'Content-Type': 'application/json', ...headers } },
+  )
+  if (response.status === 404) return { ok: false, pending: true }
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string }
+    throw new Error(body.error ?? `Request failed (${response.status})`)
+  }
+  return response.json() as Promise<GiftVoucherResult>
+}
+
+// ── Gutschein (voucher) — Owner/operator admin surface ───────────────────────
+
+export interface AdminStatus {
+  isAdmin: boolean
+}
+
+export async function fetchAdminStatus(): Promise<AdminStatus> {
+  return fetchJson('/api/ai-credits/admin/status')
+}
+
+export interface AdminVoucherCreateInput {
+  code?: string
+  creditsPerPeriod: number
+  periodMonths: number
+  totalPeriods: number
+  maxRedemptions: number
+  /** ISO date string for an explicit window end. */
+  validUntil?: string
+  /** Window length in months (used when validUntil is absent). */
+  validMonths?: number
+}
+
+export interface AdminVoucherCreateResult {
+  ok: boolean
+  code?: string
+  creditsPerPeriod?: number
+  periodMonths?: number
+  totalPeriods?: number
+  maxRedemptions?: number
+  validUntil?: string
+  error?: string
+}
+
+export async function createAdminVoucher(
+  input: AdminVoucherCreateInput,
+): Promise<AdminVoucherCreateResult> {
+  return fetchJson('/api/ai-credits/voucher/admin/create', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
+export interface AdminVoucherListItem {
+  id: string
+  code: string
+  creditsPerPeriod: number
+  periodMonths: number
+  totalPeriods: number
+  maxRedemptions: number
+  redemptionsUsed: number
+  validFrom: string
+  validUntil: string
+  status: string
+  createdBy: string | null
+  createdAt: string
+}
+
+export async function fetchAdminVouchers(): Promise<{ vouchers: AdminVoucherListItem[] }> {
+  return fetchJson('/api/ai-credits/voucher/admin/list')
+}
+
+// ── Invite / referral ────────────────────────────────────────────────────────
+
+export interface ReferralStats {
+  invited: number
+  converted: number
+  rewarded: number
+  creditsEarned: number
+}
+
+export interface ReferralInfo {
+  code: string
+  inviteUrl: string
+  stats: ReferralStats
+}
+
+export async function fetchReferralInfo(): Promise<ReferralInfo> {
+  return fetchJson(`/api/ai-credits/referral?origin=${encodeURIComponent(window.location.origin)}`)
+}
+
+export async function attributeReferral(code: string): Promise<{ ok: boolean; attributed?: boolean; error?: string }> {
+  return fetchJson('/api/ai-credits/referral/attribute', {
+    method: 'POST',
+    body: JSON.stringify({ code }),
+  })
+}
+
 export type { CreditPack }
