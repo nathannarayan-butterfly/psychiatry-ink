@@ -56,6 +56,7 @@ import { combinationCheckRouter } from './routes/combinationCheck'
 import { criteriaGenerateDraftRouter } from './routes/criteriaGenerateDraft'
 import { labMedicationCorrelationRouter } from './routes/labMedicationCorrelation'
 import { prepAiCheckRouter } from './routes/prepAiCheck'
+import { adrCausalityRouter } from './routes/adrCausality'
 import { medicationPriorTherapiesRouter } from './routes/medicationPriorTherapies'
 import { aiBudgetRouter, aiUsageRouter } from './routes/aiUsage'
 import { aiCreditsRouter } from './routes/aiCredits'
@@ -137,6 +138,7 @@ const SENSITIVE_PREFIXES = [
   '/api/lab-med-correlation',
   '/api/medication/prep-ai-check',
   '/api/medication/prior-therapies',
+  '/api/medication/adr-causality',
   '/api/criteria',
   '/api/ai-credits',
 ]
@@ -193,6 +195,7 @@ app.use('/api/todos', todosRouter)
 app.use('/api/combination-check', combinationCheckRouter)
 app.use('/api/lab-med-correlation', labMedicationCorrelationRouter)
 app.use('/api/medication/prep-ai-check', prepAiCheckRouter)
+app.use('/api/medication/adr-causality', adrCausalityRouter)
 app.use('/api/medication/prior-therapies', medicationPriorTherapiesRouter)
 app.use('/api/ai-usage', aiUsageRouter)
 app.use('/api/ai-budget', aiBudgetRouter)

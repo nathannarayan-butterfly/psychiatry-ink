@@ -357,6 +357,18 @@ export const FEATURE_CREDIT_RULES: Record<string, FeatureCreditRule> = {
     allowedModes: ALL_MODES,
     defaultMode: 'standard',
   },
+  // ADR causality + stepwise management assessment. Richer two-part output
+  // (per-drug causality ranking + ordered management plan) than a single
+  // correlation check, billed one tier above lab/interaction checks, in line
+  // with therapy_plan / diagnosis_formulation.
+  adr_causality_assessment: {
+    baseCredits: 4,
+    maxIncludedTokens: 5000,
+    overflowTokenBlockSize: 1000,
+    overflowCreditsPerBlock: 1,
+    allowedModes: ALL_MODES,
+    defaultMode: 'standard',
+  },
   prep_ai_check: {
     baseCredits: 2,
     maxIncludedTokens: 3000,
