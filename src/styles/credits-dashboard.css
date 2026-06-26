@@ -380,12 +380,183 @@
   color: var(--clinical-muted, color-mix(in srgb, var(--text-main) 55%, transparent));
 }
 
+/* ── Auto-recharge ─────────────────────────────────────────────────────── */
+
+.credits-autorecharge {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.credits-autorecharge__alert {
+  margin: 0;
+  padding: 0.7rem 0.9rem;
+  border-radius: 6px;
+  border: 1px solid #e6c9b0;
+  background: #fbf2e9;
+  font-size: 0.8125rem;
+  color: #8a4a1f;
+}
+
+.credits-autorecharge__row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.credits-autorecharge__toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  cursor: pointer;
+}
+
+.credits-autorecharge__toggle input {
+  margin-top: 0.2rem;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  accent-color: var(--accent, #2f6f4f);
+  cursor: pointer;
+}
+
+.credits-autorecharge__toggle-title {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.credits-autorecharge__toggle-hint {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.75rem;
+  color: var(--clinical-muted, color-mix(in srgb, var(--text-main) 55%, transparent));
+}
+
+.credits-autorecharge__status {
+  flex-shrink: 0;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--clinical-muted, color-mix(in srgb, var(--text-main) 55%, transparent));
+}
+
+.credits-autorecharge__status--active {
+  border-color: #c8e0cc;
+  background: #f2f8f3;
+  color: #2f6f4f;
+}
+
+.credits-autorecharge__status--warn {
+  border-color: #e6c9b0;
+  background: #fbf2e9;
+  color: #8a4a1f;
+}
+
+.credits-autorecharge__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 1rem;
+}
+
+.credits-autorecharge__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.credits-autorecharge__field label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--clinical-muted, color-mix(in srgb, var(--text-main) 55%, transparent));
+}
+
+.credits-autorecharge__field input,
+.credits-autorecharge__field select {
+  padding: 0.45rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  background: var(--surface-elevated, #fff);
+  font-size: 0.875rem;
+  color: inherit;
+}
+
+.credits-autorecharge__field input:focus,
+.credits-autorecharge__field select:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--text-main) 30%, var(--border-soft));
+}
+
+.credits-autorecharge__field-hint {
+  font-size: 0.72rem;
+  color: var(--clinical-muted, color-mix(in srgb, var(--text-main) 55%, transparent));
+}
+
+.credits-autorecharge__card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  background: color-mix(in srgb, var(--text-main) 2%, #fff);
+}
+
+.credits-autorecharge__card-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.credits-autorecharge__card-btn {
+  flex-shrink: 0;
+  padding: 0.45rem 0.85rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  background: var(--surface-elevated, #fff);
+  font-size: 0.8125rem;
+  color: inherit;
+  cursor: pointer;
+}
+
+.credits-autorecharge__card-btn:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--text-main) 18%, var(--border-soft));
+}
+
+.credits-autorecharge__card-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.credits-autorecharge__card-hint {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--clinical-muted, color-mix(in srgb, var(--text-main) 55%, transparent));
+}
+
+.credits-autorecharge__last {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--clinical-muted, color-mix(in srgb, var(--text-main) 55%, transparent));
+}
+
 @media (max-width: 900px) {
   .credits-hero {
     grid-template-columns: 1fr;
   }
 
   .credits-dual {
+    grid-template-columns: 1fr;
+  }
+
+  .credits-autorecharge__grid {
     grid-template-columns: 1fr;
   }
 }
