@@ -69,6 +69,10 @@ export function NotionEditor({
 }: NotionEditorProps) {
   const { t } = useTranslation()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  // Value the textarea was last auto-resized for, so we don't force a redundant
+  // layout reflow on every render (the inline-ref + effect + onChange paths
+  // previously each triggered their own reflow on a single keystroke).
+  const lastResizedRef = useRef<string | null>(null)
   const [isFocused, setIsFocused] = useState(false)
   const [selectionToolbar, setSelectionToolbar] = useState<{
     text: string
@@ -100,7 +104,10 @@ export function NotionEditor({
 
   useEffect(() => {
     const textarea = textareaRef.current
-    if (textarea) resizeTextarea(textarea)
+    if (textarea && lastResizedRef.current !== content) {
+      resizeTextarea(textarea)
+      lastResizedRef.current = content
+    }
   }, [content])
 
   useEffect(() => {
@@ -244,13 +251,13 @@ export function NotionEditor({
       <textarea
         ref={(node) => {
           textareaRef.current = node
-          if (node) resizeTextarea(node)
         }}
         className="notion-editor__textarea"
         value={content}
         onChange={(event) => {
           onChange(event.target.value)
           resizeTextarea(event.target)
+          lastResizedRef.current = event.target.value
         }}
         onFocus={() => setIsFocused(true)}
         onSelect={handleSelection}

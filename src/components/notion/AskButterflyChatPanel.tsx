@@ -1,5 +1,5 @@
 import { Loader2, Mic, Send, Square } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { memo, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import { useAskButterfly } from '../../contexts/AskButterflyContext'
 import { useCompactDictation } from '../../hooks/useCompactDictation'
@@ -15,6 +15,63 @@ interface AskButterflyChatPanelProps {
   headerActions: ReactNode
   titleId?: string
 }
+
+// The transcript only changes when a message is sent or received. Memoising it
+// keeps composer keystrokes (which update local `draft` state and re-render the
+// panel) from re-rendering every bubble and re-parsing assistant markdown.
+const AskButterflyMessageList = memo(function AskButterflyMessageList({
+  messages,
+  loading,
+}: {
+  messages: AskButterflyChatMessage[]
+  loading: boolean
+}) {
+  const { t } = useTranslation()
+  return (
+    <>
+      {messages.length === 0 ? (
+        <div className="ask-butterfly-dialog__empty">
+          <span className="ask-butterfly-dialog__empty-orb" aria-hidden>
+            <ButterflyLogo breathing size={34} />
+          </span>
+          <p className="ask-butterfly-dialog__empty-text">{t('askButterflyEmpty')}</p>
+        </div>
+      ) : (
+        messages.map((message, index) => (
+          <div
+            key={`${message.role}-${index}`}
+            className={`ask-butterfly-dialog__message ask-butterfly-dialog__message--${message.role}`}
+          >
+            <p className="ask-butterfly-dialog__message-role">
+              {message.role === 'user' ? t('askButterflyYou') : t('askButterflyAssistant')}
+            </p>
+            <p className="ask-butterfly-dialog__message-text">
+              {message.role === 'assistant' ? (
+                <ChatMarkdownText text={message.content} />
+              ) : (
+                message.content
+              )}
+            </p>
+            {message.role === 'assistant' && message.content.trim() ? (
+              <div className="ask-butterfly-dialog__message-actions">
+                <CopyButton text={message.content} label={t('askButterflyCopyAnswer')} />
+              </div>
+            ) : null}
+          </div>
+        ))
+      )}
+      {loading ? (
+        <div className="ask-butterfly-dialog__message ask-butterfly-dialog__message--assistant">
+          <p className="ask-butterfly-dialog__message-role">{t('askButterflyAssistant')}</p>
+          <p className="ask-butterfly-dialog__message-text ask-butterfly-dialog__message-text--pending">
+            <Loader2 className="ask-butterfly-dialog__spinner" strokeWidth={1.75} aria-hidden />
+            {t('askButterflyThinking')}
+          </p>
+        </div>
+      ) : null}
+    </>
+  )
+})
 
 export function AskButterflyChatPanel({
   variant,
@@ -114,49 +171,7 @@ export function AskButterflyChatPanel({
         <AskButterflyTierSelector />
 
         <div className="ask-butterfly-dialog__messages" aria-live="polite">
-          {messages.length === 0 ? (
-            <div className="ask-butterfly-dialog__empty">
-              <span className="ask-butterfly-dialog__empty-orb" aria-hidden>
-                <ButterflyLogo breathing size={34} />
-              </span>
-              <p className="ask-butterfly-dialog__empty-text">{t('askButterflyEmpty')}</p>
-            </div>
-          ) : (
-            messages.map((message, index) => (
-              <div
-                key={`${message.role}-${index}`}
-                className={`ask-butterfly-dialog__message ask-butterfly-dialog__message--${message.role}`}
-              >
-                <p className="ask-butterfly-dialog__message-role">
-                  {message.role === 'user' ? t('askButterflyYou') : t('askButterflyAssistant')}
-                </p>
-                <p className="ask-butterfly-dialog__message-text">
-                  {message.role === 'assistant' ? (
-                    <ChatMarkdownText text={message.content} />
-                  ) : (
-                    message.content
-                  )}
-                </p>
-                {message.role === 'assistant' && message.content.trim() ? (
-                  <div className="ask-butterfly-dialog__message-actions">
-                    <CopyButton
-                      text={message.content}
-                      label={t('askButterflyCopyAnswer')}
-                    />
-                  </div>
-                ) : null}
-              </div>
-            ))
-          )}
-          {loading ? (
-            <div className="ask-butterfly-dialog__message ask-butterfly-dialog__message--assistant">
-              <p className="ask-butterfly-dialog__message-role">{t('askButterflyAssistant')}</p>
-              <p className="ask-butterfly-dialog__message-text ask-butterfly-dialog__message-text--pending">
-                <Loader2 className="ask-butterfly-dialog__spinner" strokeWidth={1.75} aria-hidden />
-                {t('askButterflyThinking')}
-              </p>
-            </div>
-          ) : null}
+          <AskButterflyMessageList messages={messages} loading={loading} />
           <div ref={chatEndRef} />
         </div>
 
