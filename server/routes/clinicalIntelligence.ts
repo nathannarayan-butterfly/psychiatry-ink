@@ -24,7 +24,6 @@ import {
   type ClinicalIntelligenceDiscussContext,
 } from '../../src/types/clinicalIntelligence'
 import { runClinicalIntelligenceServer } from '../services/clinicalIntelligence/run'
-import { parseLlmModelRequest } from '../ai/parseLlmModelRequest'
 import { resolveAccountId } from '../middleware/auth'
 import {
   SafeLlmEgressError,
@@ -227,8 +226,11 @@ clinicalIntelligenceRouter.post('/discuss', async (req: Request, res: Response) 
   if (!language) return
 
   try {
-    const llmModel = parseLlmModelRequest(body as unknown as Record<string, unknown>, 'standard')
-    const tier = llmModel.tier ?? 'standard'
+    // Pin Clinical Intelligence discussion to the OpenAI "thorough" tier
+    // (`MODEL_TIER_SPECS.thorough` → OpenAI `gpt-4.1`), mirroring the
+    // dimensional/mechanism layers. Any client-supplied tier/model is
+    // intentionally ignored so CI never silently downgrades to DeepSeek.
+    const tier = 'thorough' as const
 
     // Egress PHI guard — re-scrub the compact-evidence package and every
     // discussion message server-side. The schema only permits short summaries
@@ -282,7 +284,6 @@ clinicalIntelligenceRouter.post('/discuss', async (req: Request, res: Response) 
       result = await runAiFeature({
         featureKey: 'clinical_intelligence_discuss',
         tier,
-        model: llmModel.model,
         systemPrompt,
         userPrompt,
         usageContext,

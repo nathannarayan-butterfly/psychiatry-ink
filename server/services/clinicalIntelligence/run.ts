@@ -40,6 +40,18 @@ import type {
 const MAX_RAW_SNIPPET = 4_000
 const MAX_RAW_SNIPPET_BODY = MAX_RAW_SNIPPET - 1
 
+/**
+ * Clinical Intelligence is pinned to the OpenAI "thorough" tier
+ * (`MODEL_TIER_SPECS.thorough` → OpenAI `gpt-4.1`) for BOTH reasoning layers,
+ * regardless of any client-supplied tier/model override. This mirrors the
+ * lab-medication second-opinion pattern (`tier: 'thorough'` → OpenAI) and
+ * guarantees CI never silently downgrades to DeepSeek when a user picks a
+ * cheaper model in Settings → KI. Client overrides are intentionally ignored
+ * here: the dimensional/mechanism inference must run on the most capable
+ * provider over de-identified evidence.
+ */
+const CLINICAL_INTELLIGENCE_TIER = 'thorough' as const
+
 export interface ServerRunParams {
   language: 'de' | 'en' | 'fr' | 'es'
   evidence: CompactEvidencePayload
@@ -118,13 +130,12 @@ export async function runClinicalIntelligenceServer(
     let latencyMs = 0
     let provider = ''
     let modelId = ''
-    let tier = params.dimensionalCall?.tier ?? 'thorough'
+    const tier = CLINICAL_INTELLIGENCE_TIER
 
     try {
       result = await runAiFeature({
         featureKey: 'clinical_intelligence_dimensional',
-        tier: params.dimensionalCall?.tier ?? 'thorough',
-        model: params.dimensionalCall?.model,
+        tier: CLINICAL_INTELLIGENCE_TIER,
         systemPrompt,
         userPrompt,
         jsonResponse: true,
@@ -144,7 +155,6 @@ export async function runClinicalIntelligenceServer(
       latencyMs = result.latencyMs
       provider = result.provider
       modelId = result.model
-      tier = params.dimensionalCall?.tier ?? 'thorough'
     } catch (error) {
       layerError = error instanceof Error ? error.message : String(error)
     }
@@ -197,13 +207,12 @@ export async function runClinicalIntelligenceServer(
     let latencyMs = 0
     let provider = ''
     let modelId = ''
-    let tier = params.mechanismCall?.tier ?? 'thorough'
+    const tier = CLINICAL_INTELLIGENCE_TIER
 
     try {
       const result = await runAiFeature({
         featureKey: 'clinical_intelligence_mechanism',
-        tier: params.mechanismCall?.tier ?? 'thorough',
-        model: params.mechanismCall?.model,
+        tier: CLINICAL_INTELLIGENCE_TIER,
         systemPrompt,
         userPrompt,
         jsonResponse: true,
@@ -223,7 +232,6 @@ export async function runClinicalIntelligenceServer(
       latencyMs = result.latencyMs
       provider = result.provider
       modelId = result.model
-      tier = params.mechanismCall?.tier ?? 'thorough'
     } catch (error) {
       layerError = error instanceof Error ? error.message : String(error)
     }

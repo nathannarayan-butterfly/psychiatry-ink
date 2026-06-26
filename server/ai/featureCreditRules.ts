@@ -206,11 +206,13 @@ export const FEATURE_CREDIT_RULES: Record<string, FeatureCreditRule> = {
     allowedModes: ALL_MODES,
     defaultMode: 'standard',
   },
+  // Legacy alias of clinical_intelligence_discuss (not routed by any current
+  // featureKey). Kept in sync with the live key for internal consistency.
   clinical_intelligence_discussion: {
-    baseCredits: 5,
-    maxIncludedTokens: 8000,
+    baseCredits: 3,
+    maxIncludedTokens: 5000,
     overflowTokenBlockSize: 1000,
-    overflowCreditsPerBlock: 2,
+    overflowCreditsPerBlock: 1,
     allowedModes: ALL_MODES,
     defaultMode: 'standard',
   },
@@ -393,27 +395,34 @@ export const FEATURE_CREDIT_RULES: Record<string, FeatureCreditRule> = {
     allowedModes: ALL_MODES,
     defaultMode: 'economic',
   },
+  // Each CI layer is a single structured-reasoning call over compact,
+  // de-identified evidence — directly comparable to psychopathology_extraction
+  // and the OpenAI second-opinion lab_medication_correlation_check. Priced at
+  // baseCredits 3 / overflow 1 per block to match that mid-weight reasoning
+  // band, rather than the heavier 4/2 generation tier.
   clinical_intelligence_dimensional: {
-    baseCredits: 4,
-    maxIncludedTokens: 6000,
+    baseCredits: 3,
+    maxIncludedTokens: 5000,
     overflowTokenBlockSize: 1000,
-    overflowCreditsPerBlock: 2,
+    overflowCreditsPerBlock: 1,
     allowedModes: ALL_MODES,
     defaultMode: 'standard',
   },
   clinical_intelligence_mechanism: {
-    baseCredits: 4,
-    maxIncludedTokens: 6000,
+    baseCredits: 3,
+    maxIncludedTokens: 5000,
     overflowTokenBlockSize: 1000,
-    overflowCreditsPerBlock: 2,
+    overflowCreditsPerBlock: 1,
     allowedModes: ALL_MODES,
     defaultMode: 'standard',
   },
+  // A CI discussion turn mirrors the existing case-discussion chat feature
+  // (discuss_case_ai): same 3 / 5000 / 1000 / 1 shape.
   clinical_intelligence_discuss: {
-    baseCredits: 5,
-    maxIncludedTokens: 8000,
+    baseCredits: 3,
+    maxIncludedTokens: 5000,
     overflowTokenBlockSize: 1000,
-    overflowCreditsPerBlock: 2,
+    overflowCreditsPerBlock: 1,
     allowedModes: ALL_MODES,
     defaultMode: 'standard',
   },
