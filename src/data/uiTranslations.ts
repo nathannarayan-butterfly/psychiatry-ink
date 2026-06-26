@@ -4775,6 +4775,24 @@ export const uiTranslations = {
     fr: 'Vos données ne sont déchiffrées que sur votre appareil — Psychiatry.ink ne peut ni consulter, ni modifier, ni restaurer vos contenus. Identifiants patient et contenus cliniques ne quittent l\'appareil qu\'en chiffré ; optionnellement liés au compte par phrase secrète (Réglages → Coffre). Sur le serveur, identifiants patient et instantanés cliniques sont stockés séparément — l\'association se fait localement par code de dossier. Autre appareil ou navigateur : connectez-vous et saisissez la phrase secrète. La sauvegarde et la phrase secrète relèvent de votre responsabilité — en cas de perte, aucune récupération par Psychiatry.ink.',
     es: 'Sus datos solo se descifran en su dispositivo — Psychiatry.ink no puede ver, editar ni restaurar sus contenidos. Identificadores del paciente y contenido clínico solo salen del dispositivo como texto cifrado; opcionalmente vinculados a la cuenta con frase de recuperación (Ajustes → Bóveda). En el servidor, identificadores del paciente e instantáneas clínicas se guardan por separado — la asignación es solo local por código de caso. Otro dispositivo o navegador: inicie sesión e introduzca su frase. La custodia de copias y la frase son su responsabilidad — si se pierden, Psychiatry.ink no puede recuperar los datos.',
   },
+  patientDisclaimerSummary: {
+    de: 'Ihre Daten werden nur auf Ihrem Gerät entschlüsselt – Psychiatry.ink kann sie nicht mitlesen. Für den Zugriff auf einem anderen Gerät brauchen Sie Ihre Passphrase; ohne sie ist keine Wiederherstellung möglich.',
+    en: 'Your data is decrypted only on your device – Psychiatry.ink cannot read it. Accessing it on another device requires your passphrase; without it, recovery is impossible.',
+    fr: 'Vos données ne sont déchiffrées que sur votre appareil – Psychiatry.ink ne peut pas les lire. L\'accès depuis un autre appareil nécessite votre phrase secrète ; sans elle, aucune récupération n\'est possible.',
+    es: 'Sus datos solo se descifran en su dispositivo: Psychiatry.ink no puede leerlos. Para acceder desde otro dispositivo necesita su frase de contraseña; sin ella, la recuperación es imposible.',
+  },
+  patientDisclaimerShowMore: {
+    de: 'Mehr anzeigen',
+    en: 'Show more',
+    fr: 'En savoir plus',
+    es: 'Mostrar más',
+  },
+  patientDisclaimerShowLess: {
+    de: 'Weniger anzeigen',
+    en: 'Show less',
+    fr: 'Afficher moins',
+    es: 'Mostrar menos',
+  },
   patientPrivacySettingsLink: {
     de: 'Datenschutz-Stufe in Einstellungen',
     en: 'Privacy tier in settings',
@@ -5075,6 +5093,18 @@ export const uiTranslations = {
     fr: 'Brève explication — pour savoir sur chaque appareil ce qui se synchronise ou non.',
     es: 'Breve explicación — para saber en cada dispositivo qué se sincroniza y qué no.',
   },
+  identifierStorageOnboardingSummary: {
+    de: 'Name und Geburtsdatum bleiben entweder nur auf diesem Gerät oder werden verschlüsselt in Ihrem Konto gesichert. Die Fallakte wird unabhängig davon immer mit Ihrer Passphrase synchronisiert. Sie können die Wahl jederzeit in den Einstellungen ändern.',
+    en: 'Name and date of birth stay either on this device only or are saved encrypted in your account. The case file always syncs with your passphrase regardless. You can change this anytime in settings.',
+    fr: 'Le nom et la date de naissance restent soit uniquement sur cet appareil, soit sauvegardés chiffrés dans votre compte. Le dossier se synchronise toujours avec votre phrase secrète. Modifiable à tout moment dans les réglages.',
+    es: 'El nombre y la fecha de nacimiento permanecen solo en este dispositivo o se guardan cifrados en su cuenta. El expediente siempre se sincroniza con su frase. Puede cambiarlo cuando quiera en los ajustes.',
+  },
+  identifierStorageDetailsToggle: {
+    de: 'Mehr anzeigen — Details & Vergleich',
+    en: 'Show more — details & comparison',
+    fr: 'Afficher plus — détails et comparaison',
+    es: 'Mostrar más — detalles y comparación',
+  },
   identifierStorageOnboardingConfirm: {
     de: 'Auswahl speichern',
     en: 'Save my choice',
@@ -5356,6 +5386,24 @@ export const uiTranslations = {
     en: 'Restore identifiers',
     fr: 'Restaurer les identifiants',
     es: 'Restaurar identificadores',
+  },
+  accountKeyRestoreBannerTitle: {
+    de: 'Verschlüsselte Daten freischalten',
+    en: 'Unlock your encrypted data',
+    fr: 'Déverrouiller vos données chiffrées',
+    es: 'Desbloquee sus datos cifrados',
+  },
+  accountKeyRestoreBannerBody: {
+    de: 'Dieses Gerät kennt Ihren Verschlüsselungsschlüssel noch nicht. Geben Sie Ihre Tresor-Passphrase ein, um Ihre verschlüsselten Fallakten auf diesem Gerät zu entschlüsseln. Ohne Passphrase bleiben die Daten auf diesem Gerät unlesbar.',
+    en: 'This device does not yet know your encryption key. Enter your vault passphrase to decrypt your encrypted case files on this device. Without the passphrase the data stays unreadable here.',
+    fr: 'Cet appareil ne connaît pas encore votre clé de chiffrement. Saisissez la phrase secrète du coffre pour déchiffrer vos dossiers cliniques sur cet appareil. Sans la phrase, les données restent illisibles ici.',
+    es: 'Este dispositivo aún no conoce su clave de cifrado. Introduzca la frase de contraseña del cofre para descifrar sus expedientes clínicos en este dispositivo. Sin la frase, los datos seguirán siendo ilegibles aquí.',
+  },
+  accountKeyRestoreBannerAction: {
+    de: 'Passphrase eingeben & freischalten',
+    en: 'Enter passphrase & unlock',
+    fr: 'Saisir la phrase & déverrouiller',
+    es: 'Introducir frase y desbloquear',
   },
   workspacePassphraseMinLengthHint: {
     de: 'Mindestens {min} Zeichen — länger ist besser. Groß-/Kleinschreibung und Satzzeichen zählen.',
