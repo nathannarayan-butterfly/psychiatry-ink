@@ -5,10 +5,10 @@ import type { PublicLocale } from './publicRoutes'
  *
  * SOURCING RULE (see .cursor/rules/complete-data-no-samples.mdc): every concrete
  * legal/company detail is taken from data already present in the codebase
- * (the homepage footer in `src/data/homepage/content.*.ts`). Where a legally
- * required detail is genuinely absent from the repository it is left as a
- * clearly-marked `[[NEEDS: …]]` placeholder and collected in the delivery report
- * — never fabricated.
+ * (the homepage footer in `src/data/homepage/content.*.ts`) or from details
+ * confirmed by the Owner (see `CONTACT` and the legal note below). Nothing here
+ * is fabricated; details that the Owner declined to publish (VAT, ICO number,
+ * phone, Art. 27 representative) are intentionally omitted rather than guessed.
  */
 
 /** Company facts, sourced verbatim from `content.en.ts` / `content.de.ts` footer. */
@@ -21,20 +21,34 @@ export const COMPANY = {
   addressDe: '71-75 Shelton Street, Covent Garden, London, WC2H 9JQ, Vereinigtes Königreich',
 } as const
 
-/** Placeholders for genuinely-missing legal details (mirrored in the report). */
-export const NEEDS = {
-  contactEmail: '[[NEEDS: general contact email address, e.g. hello@psychiatry.ink]]',
-  privacyEmail: '[[NEEDS: data-protection contact email, e.g. privacy@psychiatry.ink]]',
-  dpo: '[[NEEDS: name + contact of Data Protection Officer, or confirmation that none is appointed]]',
-  representative: '[[NEEDS: name of the director / person authorised to represent Psychiatry Ink Ltd]]',
-  vatId: '[[NEEDS: VAT / USt-IdNr., or confirmation that the company is not VAT-registered]]',
-  icoNumber: '[[NEEDS: ICO (UK Information Commissioner) registration number]]',
-  euRepresentative:
-    '[[NEEDS: EU/EEA Art. 27 GDPR representative (name + EU address), or confirmation one is not required]]',
-  dataResidency:
-    '[[NEEDS: confirm hosting region / data-residency (e.g. EU vs US) for the production database and AI processing]]',
-  phone: '[[NEEDS: contact phone number for the Impressum, if one should be published]]',
+/** Contact + responsible-person details (provided by the Owner). */
+export const CONTACT = {
+  generalEmail: 'hello@psychiatry.ink',
+  privacyEmail: 'data-protection@psychiatry.ink',
+  /** Data Protection Officer. */
+  dpo: 'Nathan Narayan',
+  /** Authorised representative ("Vertreten durch") + responsible for content (§ 18 MStV). */
+  representative: 'Nathan Narayan',
 } as const
+
+/**
+ * LEGAL NOTE — EU/EEA Article 27 GDPR representative: NOT yet appointed and the
+ * requirement is UNCONFIRMED. Because the German site targets EU residents and
+ * the product processes special-category (health) data, Art. 27 GDPR likely
+ * applies. The PUBLIC pages therefore make NO claim either way — they neither
+ * name a representative nor assert that none is required — until legal
+ * confirmation. Do NOT add an Art. 27 statement to the public copy below.
+ *
+ * The company is not VAT-registered, no ICO registration number is published,
+ * and no contact phone number is published — those lines are intentionally
+ * omitted from the Impressum / legal notice rather than shown as placeholders.
+ */
+
+/** Data-residency statement (verified against repo deploy config). */
+const DATA_RESIDENCY_EN =
+  'All production data is hosted in the European Union. The database (Supabase) and AI processing are located in the EU (Frankfurt); the application is hosted on Google Cloud Run in the EU (region europe-west1).'
+const DATA_RESIDENCY_DE =
+  'Alle Produktivdaten werden in der Europäischen Union gehostet. Die Datenbank (Supabase) und die KI-Verarbeitung befinden sich in der EU (Frankfurt); die Anwendung wird auf Google Cloud Run in der EU (Region europe-west1) gehostet.'
 
 export type LegalBlock =
   | { type: 'p'; text: string }
@@ -83,7 +97,7 @@ const privacyEn: LegalDoc = {
         },
         {
           type: 'p',
-          text: `For privacy questions or to exercise your rights, contact us at ${NEEDS.privacyEmail}. Data Protection Officer: ${NEEDS.dpo}. UK ICO registration: ${NEEDS.icoNumber}. EU/EEA representative under Article 27 GDPR: ${NEEDS.euRepresentative}.`,
+          text: `For privacy questions or to exercise your rights, contact us at ${CONTACT.privacyEmail}. Our Data Protection Officer is ${CONTACT.dpo}.`,
         },
       ],
     },
@@ -159,7 +173,7 @@ const privacyEn: LegalDoc = {
             'OpenAI and DeepSeek — AI processing for optional AI-assisted features.',
           ],
         },
-        { type: 'p', text: `Hosting region / data residency: ${NEEDS.dataResidency}` },
+        { type: 'p', text: `Hosting region / data residency: ${DATA_RESIDENCY_EN}` },
       ],
     },
     {
@@ -192,7 +206,7 @@ const privacyEn: LegalDoc = {
         },
         {
           type: 'p',
-          text: `To exercise your rights, contact ${NEEDS.privacyEmail}. You also have the right to lodge a complaint with a supervisory authority — in the UK, the Information Commissioner's Office (ICO).`,
+          text: `To exercise your rights, contact ${CONTACT.privacyEmail}. You also have the right to lodge a complaint with a supervisory authority — in the UK, the Information Commissioner's Office (ICO).`,
         },
       ],
     },
@@ -234,7 +248,7 @@ const privacyDe: LegalDoc = {
         },
         {
           type: 'p',
-          text: `Bei Datenschutzfragen oder zur Ausübung Ihrer Rechte erreichen Sie uns unter ${NEEDS.privacyEmail}. Datenschutzbeauftragte/r: ${NEEDS.dpo}. EU-/EWR-Vertreter nach Art. 27 DSGVO: ${NEEDS.euRepresentative}.`,
+          text: `Bei Datenschutzfragen oder zur Ausübung Ihrer Rechte erreichen Sie uns unter ${CONTACT.privacyEmail}. Unser Datenschutzbeauftragter ist ${CONTACT.dpo}.`,
         },
       ],
     },
@@ -310,7 +324,7 @@ const privacyDe: LegalDoc = {
             'OpenAI und DeepSeek — KI-Verarbeitung für optionale KI-gestützte Funktionen.',
           ],
         },
-        { type: 'p', text: `Hosting-Region / Datenresidenz: ${NEEDS.dataResidency}` },
+        { type: 'p', text: `Hosting-Region / Datenresidenz: ${DATA_RESIDENCY_DE}` },
       ],
     },
     {
@@ -343,7 +357,7 @@ const privacyDe: LegalDoc = {
         },
         {
           type: 'p',
-          text: `Zur Ausübung Ihrer Rechte wenden Sie sich an ${NEEDS.privacyEmail}. Sie haben zudem das Recht, sich bei einer Aufsichtsbehörde zu beschweren — in Deutschland bei der für Ihren Wohnsitz zuständigen Landesdatenschutzbehörde, im Vereinigten Königreich beim Information Commissioner's Office (ICO).`,
+          text: `Zur Ausübung Ihrer Rechte wenden Sie sich an ${CONTACT.privacyEmail}. Sie haben zudem das Recht, sich bei einer Aufsichtsbehörde zu beschweren — in Deutschland bei der für Ihren Wohnsitz zuständigen Landesdatenschutzbehörde, im Vereinigten Königreich beim Information Commissioner's Office (ICO).`,
         },
       ],
     },
@@ -383,7 +397,7 @@ const termsEn: LegalDoc = {
       blocks: [
         {
           type: 'p',
-          text: `Psychiatry.Ink is provided by ${COMPANY.legalName}, ${COMPANY.addressEn}. ${COMPANY.registrationEn} Company number: ${COMPANY.companyNumber}. Contact: ${NEEDS.contactEmail}.`,
+          text: `Psychiatry.Ink is provided by ${COMPANY.legalName}, ${COMPANY.addressEn}. ${COMPANY.registrationEn} Company number: ${COMPANY.companyNumber}. Contact: ${CONTACT.generalEmail}.`,
         },
       ],
     },
@@ -500,7 +514,7 @@ const termsDe: LegalDoc = {
       blocks: [
         {
           type: 'p',
-          text: `Psychiatrie.Ink wird bereitgestellt von der ${COMPANY.legalName}, ${COMPANY.addressDe}. ${COMPANY.registrationDe} Handelsregisternummer: ${COMPANY.companyNumber}. Kontakt: ${NEEDS.contactEmail}.`,
+          text: `Psychiatrie.Ink wird bereitgestellt von der ${COMPANY.legalName}, ${COMPANY.addressDe}. ${COMPANY.registrationDe} Handelsregisternummer: ${COMPANY.companyNumber}. Kontakt: ${CONTACT.generalEmail}.`,
         },
       ],
     },
@@ -625,29 +639,21 @@ const impressumDe: LegalDoc = {
     },
     {
       id: 'represented',
-      heading: 'Vertretungsberechtigt',
-      blocks: [{ type: 'p', text: NEEDS.representative }],
+      heading: 'Vertreten durch',
+      blocks: [{ type: 'p', text: CONTACT.representative }],
     },
     {
       id: 'contact',
       heading: 'Kontakt',
-      blocks: [
-        { type: 'p', text: `E-Mail: ${NEEDS.contactEmail}` },
-        { type: 'p', text: `Telefon: ${NEEDS.phone}` },
-      ],
-    },
-    {
-      id: 'vat',
-      heading: 'Umsatzsteuer-Identifikationsnummer',
-      blocks: [{ type: 'p', text: NEEDS.vatId }],
+      blocks: [{ type: 'p', text: `E-Mail: ${CONTACT.generalEmail}` }],
     },
     {
       id: 'responsible',
-      heading: 'Verantwortlich für den Inhalt',
+      heading: 'Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV',
       blocks: [
         {
           type: 'p',
-          text: `${NEEDS.representative} — Anschrift wie oben.`,
+          text: `${CONTACT.representative} — Anschrift wie oben.`,
         },
       ],
     },
@@ -682,20 +688,12 @@ const impressumEn: LegalDoc = {
     {
       id: 'represented',
       heading: 'Represented by',
-      blocks: [{ type: 'p', text: NEEDS.representative }],
+      blocks: [{ type: 'p', text: CONTACT.representative }],
     },
     {
       id: 'contact',
       heading: 'Contact',
-      blocks: [
-        { type: 'p', text: `Email: ${NEEDS.contactEmail}` },
-        { type: 'p', text: `Phone: ${NEEDS.phone}` },
-      ],
-    },
-    {
-      id: 'vat',
-      heading: 'VAT identification number',
-      blocks: [{ type: 'p', text: NEEDS.vatId }],
+      blocks: [{ type: 'p', text: `Email: ${CONTACT.generalEmail}` }],
     },
   ],
 }
@@ -711,6 +709,3 @@ const LEGAL_DOCS: Record<LegalPageKey, Record<PublicLocale, LegalDoc>> = {
 export function getLegalDoc(key: LegalPageKey, locale: PublicLocale): LegalDoc {
   return LEGAL_DOCS[key][locale]
 }
-
-/** Every distinct `[[NEEDS: …]]` placeholder used across the legal content. */
-export const ALL_NEEDS: readonly string[] = Object.values(NEEDS)
