@@ -130,6 +130,101 @@ export async function createVoucherFromPurchase(params: {
   return { ok: obj.ok === true, code: typeof obj.code === 'string' ? obj.code : null }
 }
 
+// ── Admin (promo) vouchers ───────────────────────────────────────────────────
+
+export interface AdminVoucherCreateInput {
+  /** Verified operator id (audit trail in vouchers.created_by). */
+  createdBy: string
+  /** Optional caller-provided code; auto-generated PROMO-… when omitted. */
+  code?: string | null
+  creditsPerPeriod: number
+  periodMonths: number
+  totalPeriods: number
+  maxRedemptions: number
+  /** Explicit window end (ISO). Takes precedence over validDays. */
+  validUntil?: string | null
+  /** Window length in days from now (used when validUntil is absent). */
+  validDays?: number | null
+}
+
+export interface AdminVoucherCreateResult {
+  ok: boolean
+  error?: string
+  code?: string
+  creditsPerPeriod?: number
+  periodMonths?: number
+  totalPeriods?: number
+  maxRedemptions?: number
+  validUntil?: string
+}
+
+/** Mint a source='admin' promo voucher via the service-role-only RPC. */
+export async function createAdminVoucher(
+  input: AdminVoucherCreateInput,
+): Promise<AdminVoucherCreateResult> {
+  const { data, error } = await getSupabaseAdmin().rpc('voucher_create_admin', {
+    p_created_by: input.createdBy,
+    p_code: input.code ?? null,
+    p_credits_per_period: input.creditsPerPeriod,
+    p_period_months: input.periodMonths,
+    p_total_periods: input.totalPeriods,
+    p_max_redemptions: input.maxRedemptions,
+    p_valid_until: input.validUntil ?? null,
+    p_valid_days: input.validDays ?? null,
+  })
+  if (error) throw new Error(`voucher_create_admin failed: ${error.message}`)
+  const obj = (data ?? {}) as Record<string, unknown>
+  return {
+    ok: obj.ok === true,
+    error: typeof obj.error === 'string' ? obj.error : undefined,
+    code: typeof obj.code === 'string' ? obj.code : undefined,
+    creditsPerPeriod: typeof obj.credits_per_period === 'number' ? obj.credits_per_period : undefined,
+    periodMonths: typeof obj.period_months === 'number' ? obj.period_months : undefined,
+    totalPeriods: typeof obj.total_periods === 'number' ? obj.total_periods : undefined,
+    maxRedemptions: typeof obj.max_redemptions === 'number' ? obj.max_redemptions : undefined,
+    validUntil: typeof obj.valid_until === 'string' ? obj.valid_until : undefined,
+  }
+}
+
+export interface AdminVoucherListItem {
+  id: string
+  code: string
+  creditsPerPeriod: number
+  periodMonths: number
+  totalPeriods: number
+  maxRedemptions: number
+  redemptionsUsed: number
+  validFrom: string
+  validUntil: string
+  status: string
+  createdBy: string | null
+  createdAt: string
+}
+
+/** List all source='admin' vouchers with redemption counts (operator view). */
+export async function listAdminVouchers(): Promise<AdminVoucherListItem[]> {
+  const { data, error } = await getSupabaseAdmin().rpc('voucher_list_admin')
+  if (error) throw new Error(`voucher_list_admin failed: ${error.message}`)
+  const rows = Array.isArray(data) ? data : []
+  return rows.map((raw) => {
+    const obj = (raw ?? {}) as Record<string, unknown>
+    return {
+      id: String(obj.id ?? ''),
+      code: String(obj.code ?? ''),
+      creditsPerPeriod: Number(obj.credits_per_period ?? 0),
+      periodMonths: Number(obj.period_months ?? 0),
+      totalPeriods: Number(obj.total_periods ?? 0),
+      maxRedemptions: Number(obj.max_redemptions ?? 0),
+      redemptionsUsed: Number(obj.redemptions_used ?? 0),
+      validFrom: String(obj.valid_from ?? ''),
+      validUntil: String(obj.valid_until ?? ''),
+      status: String(obj.status ?? ''),
+      createdBy: typeof obj.created_by === 'string' ? obj.created_by : null,
+      createdAt: String(obj.created_at ?? ''),
+    } satisfies AdminVoucherListItem
+  })
+}
+
 /** Read a purchased voucher for a buyer by Stripe session id (to show the code). */
 export async function getPurchasedVoucherBySession(
   sessionId: string,
@@ -151,4 +246,6 @@ export const voucherRepo = {
   listActiveRedemptions,
   createVoucherFromPurchase,
   getPurchasedVoucherBySession,
+  createAdminVoucher,
+  listAdminVouchers,
 }

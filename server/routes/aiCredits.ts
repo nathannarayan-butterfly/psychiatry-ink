@@ -28,13 +28,22 @@ import {
 } from '../services/stripeCredits'
 import { findCreditPack } from '../../src/data/creditPacks'
 import { findGiftVoucherPack } from '../../src/data/giftVoucherPacks'
-import { isCreditGrantAdmin } from '../utils/adminAllowlist'
+import { isCreditGrantAdmin, isSystemAdmin } from '../utils/adminAllowlist'
 import { getAccessForUser } from '../services/subscriptionAccess'
 import { claimDueVoucherPeriods, redeemVoucherForUser } from '../services/voucherService'
 import { voucherRepo } from '../data/vouchers'
 import { attributeInvitee, getReferralInfo } from '../services/referralService'
 
 export const aiCreditsRouter: Router = createRouter()
+
+/**
+ * True when the verified user may operate the promo-voucher admin surface.
+ * Either operator allowlist (credit-grant or system-admin) qualifies; identity
+ * always comes from the verified `requireRouteAuth` id, never a client header.
+ */
+function isVoucherAdmin(userId: string | null | undefined): boolean {
+  return isCreditGrantAdmin(userId) || isSystemAdmin(userId)
+}
 
 aiCreditsRouter.get('/', async (req: Request, res: Response) => {
   try {
@@ -368,6 +377,146 @@ aiCreditsRouter.get('/voucher/gift/result', async (req: Request, res: Response) 
   } catch (error) {
     console.error('[ai-credits] gift result read failed:', error)
     res.status(500).json({ error: 'Gutschein-Code konnte nicht geladen werden' })
+  }
+})
+
+// ── Gutschein (voucher) — Owner/operator admin surface ───────────────────────
+
+/**
+ * Admin-status signal for the client. The UI uses it only to decide whether to
+ * render the promo-voucher admin panel; server-side gating on the create/list
+ * routes remains the source of truth regardless of what the client renders.
+ */
+aiCreditsRouter.get('/admin/status', async (req: Request, res: Response) => {
+  try {
+    const userId = requireRouteAuth(req, res)
+    if (!userId) return
+    res.json({ isAdmin: isVoucherAdmin(userId) })
+  } catch (error) {
+    console.error('[ai-credits] admin status read failed:', error)
+    res.status(500).json({ error: 'Failed to read admin status' })
+  }
+})
+
+/** Create a promo (source='admin') Gutschein. Owner/operator only. */
+aiCreditsRouter.post('/voucher/admin/create', async (req: Request, res: Response) => {
+  try {
+    const userId = requireRouteAuth(req, res)
+    if (!userId) return
+
+    // Promo-voucher minting is an operator action: require an explicit allowlist
+    // (CREDIT_ADMIN_USER_IDS or SYSTEM_ADMIN_USER_IDS). The user-bought gift flow
+    // is unaffected by this gate.
+    if (!isVoucherAdmin(userId)) {
+      res.status(403).json({ error: 'Promo-Gutscheine erfordern einen Operator (CREDIT_ADMIN_USER_IDS).' })
+      return
+    }
+
+    const body = (req.body ?? {}) as Record<string, unknown>
+
+    const creditsPerPeriod = Number(body.creditsPerPeriod)
+    if (!Number.isInteger(creditsPerPeriod) || creditsPerPeriod <= 0 || creditsPerPeriod > 1_000_000) {
+      res.status(400).json({ error: 'creditsPerPeriod muss eine positive Ganzzahl sein' })
+      return
+    }
+
+    const periodMonths = Number(body.periodMonths ?? 1)
+    if (!Number.isInteger(periodMonths) || periodMonths <= 0 || periodMonths > 60) {
+      res.status(400).json({ error: 'periodMonths muss zwischen 1 und 60 liegen' })
+      return
+    }
+
+    const totalPeriods = Number(body.totalPeriods)
+    if (!Number.isInteger(totalPeriods) || totalPeriods <= 0 || totalPeriods > 120) {
+      res.status(400).json({ error: 'totalPeriods muss zwischen 1 und 120 liegen' })
+      return
+    }
+
+    const maxRedemptions = Number(body.maxRedemptions ?? 1)
+    if (!Number.isInteger(maxRedemptions) || maxRedemptions < 1 || maxRedemptions > 100_000) {
+      res.status(400).json({ error: 'maxRedemptions muss mindestens 1 sein' })
+      return
+    }
+
+    const code =
+      typeof body.code === 'string' && body.code.trim() ? body.code.trim().toUpperCase() : null
+
+    let validUntil: string | null = null
+    if (typeof body.validUntil === 'string' && body.validUntil.trim()) {
+      const parsed = new Date(body.validUntil)
+      if (Number.isNaN(parsed.getTime())) {
+        res.status(400).json({ error: 'validUntil ist kein gültiges Datum' })
+        return
+      }
+      validUntil = parsed.toISOString()
+    }
+
+    let validDays: number | null = null
+    if (body.validDays != null && validUntil == null) {
+      const days = Number(body.validDays)
+      if (!Number.isInteger(days) || days <= 0 || days > 3650) {
+        res.status(400).json({ error: 'validDays muss zwischen 1 und 3650 liegen' })
+        return
+      }
+      validDays = days
+    }
+    if (body.validMonths != null && validUntil == null && validDays == null) {
+      const months = Number(body.validMonths)
+      if (!Number.isInteger(months) || months <= 0 || months > 120) {
+        res.status(400).json({ error: 'validMonths muss zwischen 1 und 120 liegen' })
+        return
+      }
+      validDays = months * 30
+    }
+
+    const result = await voucherRepo.createAdminVoucher({
+      createdBy: userId,
+      code,
+      creditsPerPeriod,
+      periodMonths,
+      totalPeriods,
+      maxRedemptions,
+      validUntil,
+      validDays,
+    })
+
+    if (!result.ok) {
+      const status = result.error === 'code_exists' ? 409 : 400
+      res.status(status).json({ ok: false, error: result.error ?? 'create_failed' })
+      return
+    }
+
+    res.json({
+      ok: true,
+      code: result.code,
+      creditsPerPeriod: result.creditsPerPeriod,
+      periodMonths: result.periodMonths,
+      totalPeriods: result.totalPeriods,
+      maxRedemptions: result.maxRedemptions,
+      validUntil: result.validUntil,
+    })
+  } catch (error) {
+    console.error('[ai-credits] admin voucher create failed:', error)
+    res.status(500).json({ error: 'Promo-Gutschein konnte nicht erstellt werden' })
+  }
+})
+
+/** List existing promo (source='admin') Gutscheine with redemption counts. */
+aiCreditsRouter.get('/voucher/admin/list', async (req: Request, res: Response) => {
+  try {
+    const userId = requireRouteAuth(req, res)
+    if (!userId) return
+
+    if (!isVoucherAdmin(userId)) {
+      res.status(403).json({ error: 'Promo-Gutscheine erfordern einen Operator (CREDIT_ADMIN_USER_IDS).' })
+      return
+    }
+
+    const vouchers = await voucherRepo.listAdminVouchers()
+    res.json({ vouchers })
+  } catch (error) {
+    console.error('[ai-credits] admin voucher list failed:', error)
+    res.status(500).json({ error: 'Promo-Gutscheine konnten nicht geladen werden' })
   }
 })
 

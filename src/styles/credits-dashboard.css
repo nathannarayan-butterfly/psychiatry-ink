@@ -514,3 +514,55 @@
 .voucher-gift-result__copy:hover {
   border-color: color-mix(in srgb, var(--text-main) 35%, transparent);
 }
+
+/* ── Promo-voucher admin surface ─────────────────────────────────────────── */
+.voucher-admin-form {
+  margin-top: 0.75rem;
+}
+
+.voucher-admin-form__heading {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-main, #1a1a1a);
+  margin: 0 0 0.75rem;
+}
+
+.voucher-admin-form__heading--list {
+  margin-top: 1.5rem;
+}
+
+.voucher-admin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.voucher-admin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.voucher-admin-field--wide {
+  grid-column: 1 / -1;
+}
+
+.voucher-admin-field__label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--text-main) 60%, transparent);
+}
+
+/* Number/date inputs reuse the redeem input chrome but without the uppercase
+   monospace treatment that suits codes. */
+.voucher-admin-field input[type='number'],
+.voucher-admin-field input[type='date'] {
+  flex: 1 1 auto;
+  font-family: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+}

@@ -170,6 +170,67 @@ export async function fetchGiftVoucherResult(sessionId: string): Promise<GiftVou
   return response.json() as Promise<GiftVoucherResult>
 }
 
+// ── Gutschein (voucher) — Owner/operator admin surface ───────────────────────
+
+export interface AdminStatus {
+  isAdmin: boolean
+}
+
+export async function fetchAdminStatus(): Promise<AdminStatus> {
+  return fetchJson('/api/ai-credits/admin/status')
+}
+
+export interface AdminVoucherCreateInput {
+  code?: string
+  creditsPerPeriod: number
+  periodMonths: number
+  totalPeriods: number
+  maxRedemptions: number
+  /** ISO date string for an explicit window end. */
+  validUntil?: string
+  /** Window length in months (used when validUntil is absent). */
+  validMonths?: number
+}
+
+export interface AdminVoucherCreateResult {
+  ok: boolean
+  code?: string
+  creditsPerPeriod?: number
+  periodMonths?: number
+  totalPeriods?: number
+  maxRedemptions?: number
+  validUntil?: string
+  error?: string
+}
+
+export async function createAdminVoucher(
+  input: AdminVoucherCreateInput,
+): Promise<AdminVoucherCreateResult> {
+  return fetchJson('/api/ai-credits/voucher/admin/create', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
+export interface AdminVoucherListItem {
+  id: string
+  code: string
+  creditsPerPeriod: number
+  periodMonths: number
+  totalPeriods: number
+  maxRedemptions: number
+  redemptionsUsed: number
+  validFrom: string
+  validUntil: string
+  status: string
+  createdBy: string | null
+  createdAt: string
+}
+
+export async function fetchAdminVouchers(): Promise<{ vouchers: AdminVoucherListItem[] }> {
+  return fetchJson('/api/ai-credits/voucher/admin/list')
+}
+
 // ── Invite / referral ────────────────────────────────────────────────────────
 
 export interface ReferralStats {

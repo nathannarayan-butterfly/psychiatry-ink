@@ -4121,6 +4121,23 @@ export type Database = {
         }
         Returns: Json
       }
+      voucher_create_admin: {
+        Args: {
+          p_created_by: string
+          p_code: string | null
+          p_credits_per_period: number
+          p_period_months: number
+          p_total_periods: number
+          p_max_redemptions: number
+          p_valid_until: string | null
+          p_valid_days: number | null
+        }
+        Returns: Json
+      }
+      voucher_list_admin: {
+        Args: never
+        Returns: Json
+      }
       referral_get_or_create_code: {
         Args: { p_user_id: string; p_code: string }
         Returns: string

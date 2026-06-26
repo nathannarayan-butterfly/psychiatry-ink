@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, Copy, CreditCard, Gift, RefreshCw, Sparkles, Ticket, Users, Wallet } from 'lucide-react'
+import { ArrowLeft, Check, Copy, CreditCard, Gift, RefreshCw, ShieldCheck, Sparkles, Ticket, Users, Wallet } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import {
@@ -13,6 +13,9 @@ import {
 } from '../../data/giftVoucherPacks'
 import { useCredits } from '../../hooks/useCredits'
 import {
+  createAdminVoucher,
+  fetchAdminStatus,
+  fetchAdminVouchers,
   fetchAiCreditHistory,
   fetchAiCreditLedger,
   fetchAiCreditSummary,
@@ -22,6 +25,7 @@ import {
   redeemVoucher,
   startCreditCheckout,
   startGiftVoucherCheckout,
+  type AdminVoucherListItem,
   type AiCreditHistoryEntry,
   type AiCreditLedgerEntry,
   type AiCreditSummary,
@@ -69,6 +73,18 @@ const LEDGER_TYPE_KEYS = {
   admin_adjustment: 'creditsLedgerAdmin',
 } as const
 
+const ADMIN_VOUCHER_STATUS_KEYS = {
+  active: 'voucherAdminStatusActive',
+  disabled: 'voucherAdminStatusDisabled',
+  exhausted: 'voucherAdminStatusExhausted',
+  expired: 'voucherAdminStatusExpired',
+} as const
+
+function adminVoucherStatusKey(status: string): keyof typeof ADMIN_VOUCHER_STATUS_KEYS {
+  if (status in ADMIN_VOUCHER_STATUS_KEYS) return status as keyof typeof ADMIN_VOUCHER_STATUS_KEYS
+  return 'active'
+}
+
 export function CreditsDashboardPage({ onBack }: CreditsDashboardPageProps) {
   const { t, language } = useTranslation()
   const locale = language === 'de' ? 'de-DE' : language === 'fr' ? 'fr-FR' : language === 'es' ? 'es-ES' : 'en-GB'
@@ -95,6 +111,22 @@ export function CreditsDashboardPage({ onBack }: CreditsDashboardPageProps) {
 
   // Referral.
   const [referral, setReferral] = useState<ReferralInfo | null>(null)
+
+  // Owner/operator promo-voucher admin surface.
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [adminVouchers, setAdminVouchers] = useState<AdminVoucherListItem[]>([])
+  const [adminForm, setAdminForm] = useState({
+    code: '',
+    creditsPerPeriod: '500',
+    periodMonths: '1',
+    totalPeriods: '6',
+    maxRedemptions: '1',
+    validMonths: '12',
+    validUntil: '',
+  })
+  const [adminBusy, setAdminBusy] = useState(false)
+  const [adminFeedback, setAdminFeedback] = useState<{ tone: 'success' | 'error'; text: string } | null>(null)
+  const [adminCreatedCode, setAdminCreatedCode] = useState<string | null>(null)
 
   const checkoutStatus = useMemo(() => {
     const params = new URLSearchParams(window.location.search)
@@ -232,6 +264,66 @@ export function CreditsDashboardPage({ onBack }: CreditsDashboardPageProps) {
       active = false
     }
   }, [])
+
+  const loadAdminVouchers = useCallback(async () => {
+    try {
+      const { vouchers } = await fetchAdminVouchers()
+      setAdminVouchers(vouchers)
+    } catch {
+      // Best-effort: the table simply stays empty if the list read fails.
+    }
+  }, [])
+
+  // Resolve the admin-status signal; load the admin voucher list when operator.
+  useEffect(() => {
+    let active = true
+    fetchAdminStatus()
+      .then((status) => {
+        if (!active) return
+        setIsAdmin(status.isAdmin)
+        if (status.isAdmin) void loadAdminVouchers()
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [loadAdminVouchers])
+
+  const handleCreateAdminVoucher = async () => {
+    if (adminBusy) return
+    const creditsPerPeriod = Number(adminForm.creditsPerPeriod)
+    const periodMonths = Number(adminForm.periodMonths)
+    const totalPeriods = Number(adminForm.totalPeriods)
+    const maxRedemptions = Number(adminForm.maxRedemptions)
+    const validMonths = Number(adminForm.validMonths)
+    setAdminBusy(true)
+    setAdminFeedback(null)
+    try {
+      const result = await createAdminVoucher({
+        code: adminForm.code.trim() ? adminForm.code.trim().toUpperCase() : undefined,
+        creditsPerPeriod,
+        periodMonths,
+        totalPeriods,
+        maxRedemptions,
+        validUntil: adminForm.validUntil.trim() ? new Date(adminForm.validUntil).toISOString() : undefined,
+        validMonths: adminForm.validUntil.trim() ? undefined : validMonths,
+      })
+      if (!result.ok || !result.code) {
+        const key = result.error === 'code_exists' ? 'voucherAdminErrorCodeExists' : 'voucherAdminCreateError'
+        setAdminFeedback({ tone: 'error', text: t(key) })
+        return
+      }
+      setAdminCreatedCode(result.code)
+      setAdminFeedback({ tone: 'success', text: t('voucherAdminCreateSuccess') })
+      setAdminForm((prev) => ({ ...prev, code: '' }))
+      await loadAdminVouchers()
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t('voucherAdminCreateError')
+      setAdminFeedback({ tone: 'error', text: message })
+    } finally {
+      setAdminBusy(false)
+    }
+  }
 
   // Resolve the buy-a-gift result after returning from Stripe (poll briefly
   // while the webhook mints the voucher).
@@ -543,6 +635,198 @@ export function CreditsDashboardPage({ onBack }: CreditsDashboardPageProps) {
             <p className="credits-panel__sub credits-panel__sub--muted">{t('creditsStripeNotConfigured')}</p>
           )}
         </section>
+
+        {isAdmin ? (
+          <section className="credits-panel" aria-labelledby="voucher-admin-heading">
+            <div className="credits-panel__header">
+              <h2 id="voucher-admin-heading" className="credits-panel__heading">
+                {t('voucherAdminHeading')}
+              </h2>
+              <ShieldCheck className="credits-panel__heading-icon" strokeWidth={1.5} aria-hidden />
+            </div>
+            <p className="credits-panel__sub">{t('voucherAdminSub')}</p>
+
+            <form
+              className="voucher-admin-form"
+              onSubmit={(event) => {
+                event.preventDefault()
+                void handleCreateAdminVoucher()
+              }}
+            >
+              <h3 className="voucher-admin-form__heading">{t('voucherAdminCreateHeading')}</h3>
+              <div className="voucher-admin-grid">
+                <label className="voucher-admin-field voucher-admin-field--wide">
+                  <span className="voucher-admin-field__label">{t('voucherAdminFieldCode')}</span>
+                  <input
+                    type="text"
+                    className="voucher-redeem__input"
+                    placeholder={t('voucherAdminFieldCodePlaceholder')}
+                    value={adminForm.code}
+                    onChange={(event) =>
+                      setAdminForm((prev) => ({ ...prev, code: event.target.value.toUpperCase() }))
+                    }
+                    autoCapitalize="characters"
+                    autoComplete="off"
+                    spellCheck={false}
+                    disabled={adminBusy}
+                  />
+                </label>
+                <label className="voucher-admin-field">
+                  <span className="voucher-admin-field__label">{t('voucherAdminFieldCreditsPerPeriod')}</span>
+                  <input
+                    type="number"
+                    min={1}
+                    className="voucher-redeem__input"
+                    value={adminForm.creditsPerPeriod}
+                    onChange={(event) =>
+                      setAdminForm((prev) => ({ ...prev, creditsPerPeriod: event.target.value }))
+                    }
+                    disabled={adminBusy}
+                  />
+                </label>
+                <label className="voucher-admin-field">
+                  <span className="voucher-admin-field__label">{t('voucherAdminFieldPeriodMonths')}</span>
+                  <input
+                    type="number"
+                    min={1}
+                    className="voucher-redeem__input"
+                    value={adminForm.periodMonths}
+                    onChange={(event) =>
+                      setAdminForm((prev) => ({ ...prev, periodMonths: event.target.value }))
+                    }
+                    disabled={adminBusy}
+                  />
+                </label>
+                <label className="voucher-admin-field">
+                  <span className="voucher-admin-field__label">{t('voucherAdminFieldTotalPeriods')}</span>
+                  <input
+                    type="number"
+                    min={1}
+                    className="voucher-redeem__input"
+                    value={adminForm.totalPeriods}
+                    onChange={(event) =>
+                      setAdminForm((prev) => ({ ...prev, totalPeriods: event.target.value }))
+                    }
+                    disabled={adminBusy}
+                  />
+                </label>
+                <label className="voucher-admin-field">
+                  <span className="voucher-admin-field__label">{t('voucherAdminFieldMaxRedemptions')}</span>
+                  <input
+                    type="number"
+                    min={1}
+                    className="voucher-redeem__input"
+                    value={adminForm.maxRedemptions}
+                    onChange={(event) =>
+                      setAdminForm((prev) => ({ ...prev, maxRedemptions: event.target.value }))
+                    }
+                    disabled={adminBusy}
+                  />
+                </label>
+                <label className="voucher-admin-field">
+                  <span className="voucher-admin-field__label">{t('voucherAdminFieldValidMonths')}</span>
+                  <input
+                    type="number"
+                    min={1}
+                    className="voucher-redeem__input"
+                    value={adminForm.validMonths}
+                    onChange={(event) =>
+                      setAdminForm((prev) => ({ ...prev, validMonths: event.target.value }))
+                    }
+                    disabled={adminBusy || adminForm.validUntil.trim() !== ''}
+                  />
+                </label>
+                <label className="voucher-admin-field">
+                  <span className="voucher-admin-field__label">{t('voucherAdminFieldValidUntil')}</span>
+                  <input
+                    type="date"
+                    className="voucher-redeem__input"
+                    value={adminForm.validUntil}
+                    onChange={(event) =>
+                      setAdminForm((prev) => ({ ...prev, validUntil: event.target.value }))
+                    }
+                    disabled={adminBusy}
+                  />
+                </label>
+              </div>
+              <button type="submit" className="voucher-redeem__submit" disabled={adminBusy}>
+                {adminBusy ? t('voucherAdminCreateBusy') : t('voucherAdminCreateButton')}
+              </button>
+            </form>
+
+            {adminCreatedCode ? (
+              <div className="voucher-gift-result">
+                <span className="voucher-gift-result__label">{t('voucherGiftResultHeading')}</span>
+                <div className="voucher-gift-result__code-row">
+                  <code className="voucher-gift-result__code">{adminCreatedCode}</code>
+                  <button
+                    type="button"
+                    className="voucher-gift-result__copy"
+                    onClick={() => void handleCopy(adminCreatedCode, 'admin')}
+                  >
+                    {copied === 'admin' ? (
+                      <Check className="h-4 w-4" strokeWidth={1.5} aria-hidden />
+                    ) : (
+                      <Copy className="h-4 w-4" strokeWidth={1.5} aria-hidden />
+                    )}
+                    {copied === 'admin' ? t('voucherCopied') : t('voucherCopy')}
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
+            {adminFeedback ? (
+              <p
+                className={`credits-page__notice${adminFeedback.tone === 'success' ? ' credits-page__notice--success' : ''}`}
+              >
+                {adminFeedback.text}
+              </p>
+            ) : null}
+
+            <h3 className="voucher-admin-form__heading voucher-admin-form__heading--list">
+              {t('voucherAdminListHeading')}
+            </h3>
+            <div className="credits-table-wrap">
+              <table className="credits-table">
+                <thead>
+                  <tr>
+                    <th>{t('voucherAdminColCode')}</th>
+                    <th>{t('voucherAdminColCredits')}</th>
+                    <th>{t('voucherAdminColPeriods')}</th>
+                    <th>{t('voucherAdminColRedemptions')}</th>
+                    <th>{t('voucherAdminColValidUntil')}</th>
+                    <th>{t('voucherAdminColStatus')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {adminVouchers.map((row) => (
+                    <tr key={row.id}>
+                      <td className="credits-table__mono">{row.code}</td>
+                      <td className="credits-table__mono">{row.creditsPerPeriod.toLocaleString(locale)}</td>
+                      <td className="credits-table__mono">
+                        {row.totalPeriods}× / {row.periodMonths}M
+                      </td>
+                      <td className="credits-table__mono">
+                        {row.redemptionsUsed} / {row.maxRedemptions}
+                      </td>
+                      <td className="credits-table__mono">
+                        {row.validUntil ? formatDateTime(row.validUntil, locale).split(',')[0] : '—'}
+                      </td>
+                      <td>{t(ADMIN_VOUCHER_STATUS_KEYS[adminVoucherStatusKey(row.status)])}</td>
+                    </tr>
+                  ))}
+                  {adminVouchers.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="credits-table__empty">
+                        {t('voucherAdminListEmpty')}
+                      </td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        ) : null}
 
         {referral ? (
           <section className="credits-panel" aria-labelledby="referral-heading">
