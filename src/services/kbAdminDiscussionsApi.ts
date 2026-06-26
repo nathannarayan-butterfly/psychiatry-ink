@@ -7,7 +7,7 @@ import type {
 } from '../types/kbContributions'
 
 // `userId` is kept in the signatures for call-site ergonomics but is NEVER sent
-// to the server: the System Admin role is resolved server-side from the verified
+// to the server: the Knowledge Base admin role is resolved server-side from the verified
 // Supabase token (`req.authUserId`). The legacy spoofable `X-KB-User-Id` header
 // is intentionally gone.
 async function kbAdminActorHeaders(): Promise<HeadersInit> {

@@ -8,7 +8,8 @@ import { kbAdminRouter } from './kbAdmin'
  * Gating coverage for the KB review console + KB write endpoints after the
  * KB-admin role was removed:
  *   - Destructive / global operations (publish, approve, archive, contribution
- *     review) require the platform **System Admin** (`SYSTEM_ADMIN_USER_IDS`).
+ *     review) require the platform **Knowledge Base admin** (`KB_ADMIN_USER_IDS`,
+ *     with the deprecated `SYSTEM_ADMIN_USER_IDS` alias still honored as a fallback).
  *   - Everyday KB write endpoints (drugs / preparations) are open to any
  *     authenticated user — there is no longer a KB-admin tier.
  *   - Identity comes ONLY from the server-verified `req.authUserId`; the old
@@ -16,6 +17,7 @@ import { kbAdminRouter } from './kbAdmin'
  */
 
 const ENV_KEYS = [
+  'KB_ADMIN_USER_IDS',
   'SYSTEM_ADMIN_USER_IDS',
   'SUPABASE_URL',
   'SUPABASE_ANON_KEY',
@@ -63,7 +65,7 @@ async function postMutation(headers: Record<string, string> = {}) {
   })
 }
 
-describe('KB review console gating (System Admin)', () => {
+describe('KB review console gating (Knowledge Base admin)', () => {
   it('exposes /status unauthenticated (no env-flag hiding) and reports config', async () => {
     const res = await fetch(`${baseUrl}/api/kb-admin/status`)
     expect(res.status).toBe(200)
@@ -75,29 +77,40 @@ describe('KB review console gating (System Admin)', () => {
   it('returns 401 for destructive ops when the request is unauthenticated', async () => {
     // Pin a non-empty allowlist so the dev "empty allowlist allows" fallback
     // does not mask the authentication gate.
-    process.env.SYSTEM_ADMIN_USER_IDS = 'admin-1'
+    process.env.KB_ADMIN_USER_IDS = 'admin-1'
     makeAuthConfigured()
     const res = await postMutation()
     expect(res.status).toBe(401)
   })
 
-  it('returns 403 when an authenticated user is not the System Admin', async () => {
-    process.env.SYSTEM_ADMIN_USER_IDS = 'admin-1'
+  it('returns 403 when an authenticated user is not the Knowledge Base admin', async () => {
+    process.env.KB_ADMIN_USER_IDS = 'admin-1'
     makeAuthConfigured()
     const res = await postMutation({ 'x-test-user': 'random-user' })
     expect(res.status).toBe(403)
   })
 
-  it('System Admin passes role gating and reaches the 503 config gate', async () => {
-    process.env.SYSTEM_ADMIN_USER_IDS = 'admin-1'
+  it('Knowledge Base admin passes role gating and reaches the 503 config gate', async () => {
+    process.env.KB_ADMIN_USER_IDS = 'admin-1'
     makeAuthConfigured()
     // SUPABASE_SERVICE_ROLE_KEY intentionally unset -> isKbAdminConfigured() false.
     const res = await postMutation({ 'x-test-user': 'admin-1' })
     expect(res.status).toBe(503)
   })
 
-  it('ignores the legacy spoofable x-kb-user-id header for identity', async () => {
+  it('honors the deprecated SYSTEM_ADMIN_USER_IDS alias when KB_ADMIN_USER_IDS is unset', async () => {
+    // Legacy fallback: production KB-admin auth must keep working until the
+    // Cloud Run env var is renamed from SYSTEM_ADMIN_USER_IDS to KB_ADMIN_USER_IDS.
     process.env.SYSTEM_ADMIN_USER_IDS = 'admin-1'
+    makeAuthConfigured()
+    const denied = await postMutation({ 'x-test-user': 'random-user' })
+    expect(denied.status).toBe(403)
+    const allowed = await postMutation({ 'x-test-user': 'admin-1' })
+    expect(allowed.status).toBe(503)
+  })
+
+  it('ignores the legacy spoofable x-kb-user-id header for identity', async () => {
+    process.env.KB_ADMIN_USER_IDS = 'admin-1'
     makeAuthConfigured()
     // No verified req.authUserId; only the spoofable header claims to be admin.
     const res = await postMutation({ 'x-kb-user-id': 'admin-1' })
@@ -141,7 +154,7 @@ describe('KB write endpoints (open to any authenticated user)', () => {
 
   it('allows any authenticated user past the auth gate (503 when service role unset)', async () => {
     makeAuthConfigured()
-    // No SYSTEM_ADMIN_USER_IDS and a non-admin user: still allowed to write.
+    // No KB_ADMIN_USER_IDS and a non-admin user: still allowed to write.
     const drugRes = await postDrugs({ 'x-test-user': 'random-user' }, { drugs: [{ id: 'd1' }] })
     expect(drugRes.status).toBe(503)
   })

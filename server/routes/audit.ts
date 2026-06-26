@@ -1,7 +1,7 @@
 import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
 import { resolveAccountId } from '../middleware/auth'
-import { isSystemAdmin } from '../utils/adminAllowlist'
+import { isKbAdmin } from '../utils/adminAllowlist'
 import { isAuditAction, listAuditLogs, recordAuditLog } from '../services/auditLog'
 import { buildOrganisationContext, hasPermission, ORG_HEADER } from '../services/orgPermissions'
 import { isOrgStoreConfigured } from '../services/orgStore'
@@ -27,7 +27,7 @@ async function resolveOrgContext(req: Request, userId: string) {
 
 async function canViewAuditLogs(_req: Request, userId: string, organisationId: string): Promise<boolean> {
   if (process.env.NODE_ENV !== 'production') return true
-  if (isSystemAdmin(userId)) return true
+  if (isKbAdmin(userId)) return true
   return hasPermission(userId, organisationId, 'audit.view')
 }
 

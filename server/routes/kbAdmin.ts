@@ -55,10 +55,10 @@ function summarizeSubstance(substance: unknown): Record<string, unknown> | null 
 
 /**
  * Gate destructive / global KB operations (publish, approve, archive, delete,
- * contribution review). These require the platform **System Admin** — the only
- * elevated role over the global KB. Ordering (defence in depth):
+ * contribution review). These require the platform **Knowledge Base admin** —
+ * the only elevated role over the global KB. Ordering (defence in depth):
  *   1. unauthenticated                 → 401
- *   2. authenticated but not sysadmin  → 403
+ *   2. authenticated but not KB admin  → 403
  *   3. service role key not configured → 503
  * Returns the resolved actor id, or null when a response was already sent.
  */
@@ -67,7 +67,7 @@ function requireSystemAdmin(req: Request, res: Response): string | null {
   if (!userId) return null
   if (!isKbSystemAdmin(userId)) {
     res.status(403).json({
-      error: 'KB admin access denied: requires the platform System Admin role.',
+      error: 'KB admin access denied: requires the platform Knowledge Base admin role.',
     })
     return null
   }
@@ -101,7 +101,7 @@ function requireKbEditor(req: Request, res: Response): string | null {
   return userId
 }
 
-// Bootstrap probe used by the System Admin console UI. Unauthenticated by
+// Bootstrap probe used by the Knowledge Base admin console UI. Unauthenticated by
 // design — it only reveals whether the server-side service role is configured,
 // never any KB content.
 kbAdminRouter.get('/status', (_req, res) => {

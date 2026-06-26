@@ -3,7 +3,7 @@ import {
   SYSTEM_ADMIN_USERS_STORAGE_KEY,
   readLocalSystemAdminAllowlist,
   writeLocalSystemAdminAllowlist,
-} from '../utils/systemAdminAccess'
+} from '../utils/kbAdminAccess'
 
 export function useSystemAdminUsersSettings() {
   const [allowlist, setAllowlist] = useState<string[]>(() => readLocalSystemAdminAllowlist())
