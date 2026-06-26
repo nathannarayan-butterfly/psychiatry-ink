@@ -8,7 +8,7 @@ import type { PublicLocale } from './publicRoutes'
  * (the homepage footer in `src/data/homepage/content.*.ts`) or from details
  * confirmed by the Owner (see `CONTACT` and the legal note below). Nothing here
  * is fabricated; details that the Owner declined to publish (VAT, ICO number,
- * phone, Art. 27 representative) are intentionally omitted rather than guessed.
+ * phone) are intentionally omitted rather than guessed.
  */
 
 /** Company facts, sourced verbatim from `content.en.ts` / `content.de.ts` footer. */
@@ -29,15 +29,20 @@ export const CONTACT = {
   dpo: 'Nathan Narayan',
   /** Authorised representative ("Vertreten durch") + responsible for content (§ 18 MStV). */
   representative: 'Nathan Narayan',
+  /** EU/EEA representative under Art. 27 GDPR (postal address pending). */
+  euRepName: 'Nathan Narayan',
+  euRepEmail: 'data-protection@psychiatry.ink',
+  /** Interim published note for the (not-yet-finalised) postal address — shown to users verbatim. */
+  euRepAddressEn: 'Postal address to be published.',
+  euRepAddressDe: 'Postanschrift wird in Kürze veröffentlicht.',
 } as const
 
 /**
- * LEGAL NOTE — EU/EEA Article 27 GDPR representative: NOT yet appointed and the
- * requirement is UNCONFIRMED. Because the German site targets EU residents and
- * the product processes special-category (health) data, Art. 27 GDPR likely
- * applies. The PUBLIC pages therefore make NO claim either way — they neither
- * name a representative nor assert that none is required — until legal
- * confirmation. Do NOT add an Art. 27 statement to the public copy below.
+ * LEGAL NOTE — EU/EEA Article 27 GDPR representative: the Owner has elected to
+ * act as the representative (Nathan Narayan, data-protection@psychiatry.ink).
+ * The postal address is not yet finalised, so the public pages show an interim
+ * "to be published" note (see CONTACT.euRepAddress*) — this is intentional
+ * published copy, not an unfilled placeholder.
  *
  * The company is not VAT-registered, no ICO registration number is published,
  * and no contact phone number is published — those lines are intentionally
@@ -98,6 +103,16 @@ const privacyEn: LegalDoc = {
         {
           type: 'p',
           text: `For privacy questions or to exercise your rights, contact us at ${CONTACT.privacyEmail}. Our Data Protection Officer is ${CONTACT.dpo}.`,
+        },
+      ],
+    },
+    {
+      id: 'eu-representative',
+      heading: 'EU/EEA representative (Art. 27 GDPR)',
+      blocks: [
+        {
+          type: 'p',
+          text: `Our representative in the EU/EEA under Article 27 GDPR is ${CONTACT.euRepName}, reachable at ${CONTACT.euRepEmail}. ${CONTACT.euRepAddressEn}`,
         },
       ],
     },
@@ -249,6 +264,16 @@ const privacyDe: LegalDoc = {
         {
           type: 'p',
           text: `Bei Datenschutzfragen oder zur Ausübung Ihrer Rechte erreichen Sie uns unter ${CONTACT.privacyEmail}. Unser Datenschutzbeauftragter ist ${CONTACT.dpo}.`,
+        },
+      ],
+    },
+    {
+      id: 'eu-representative',
+      heading: 'Vertreter in der EU/im EWR (Art. 27 DSGVO)',
+      blocks: [
+        {
+          type: 'p',
+          text: `Unser Vertreter in der EU/im EWR gemäß Art. 27 DSGVO ist ${CONTACT.euRepName}, erreichbar unter ${CONTACT.euRepEmail}. ${CONTACT.euRepAddressDe}`,
         },
       ],
     },
