@@ -25,29 +25,32 @@ export const COMPANY = {
 export const CONTACT = {
   generalEmail: 'hello@psychiatry.ink',
   privacyEmail: 'data-protection@psychiatry.ink',
-  /** Data Protection Officer. */
-  dpo: 'Nathan Narayan',
   /** Authorised representative ("Vertreten durch") + responsible for content (§ 18 MStV). */
   representative: 'Nathan Narayan',
-  /** EU/EEA representative under Art. 27 GDPR (postal address pending). */
-  euRepName: 'Nathan Narayan',
-  euRepEmail: 'data-protection@psychiatry.ink',
-  /** Interim published note for the (not-yet-finalised) postal address — shown to users verbatim. */
-  euRepAddressEn: 'Postal address to be published.',
-  euRepAddressDe: 'Postanschrift wird in Kürze veröffentlicht.',
 } as const
 
 /**
- * LEGAL NOTE — EU/EEA Article 27 GDPR representative: the Owner has elected to
- * act as the representative (Nathan Narayan, data-protection@psychiatry.ink).
- * The postal address is not yet finalised, so the public pages show an interim
- * "to be published" note (see CONTACT.euRepAddress*) — this is intentional
- * published copy, not an unfilled placeholder.
+ * LEGAL NOTE — kept deliberately conservative:
+ * - EU/EEA Art. 27 GDPR representative: NOT named. The Privacy/Datenschutz pages
+ *   state only that a representative will be appointed and published before the
+ *   service is made available for processing EU/EEA personal data, where legally
+ *   required. Do NOT name a person or a postal address here.
+ * - Data Protection Officer: NOT named and NOT asserted to be appointed. Only the
+ *   data-protection contact email (CONTACT.privacyEmail) is published.
+ * - The Impressum representation / §18 Abs. 2 MStV responsibility intentionally
+ *   still names CONTACT.representative (Nathan Narayan) — that is separate from
+ *   the DPO/Art. 27 roles above.
  *
  * The company is not VAT-registered, no ICO registration number is published,
  * and no contact phone number is published — those lines are intentionally
  * omitted from the Impressum / legal notice rather than shown as placeholders.
  */
+
+/** Conservative EU/EEA Art. 27 representative statement (no person named). */
+const EU_REP_EN =
+  'EU/EEA representative: to be appointed and published before the service is made available for processing EU/EEA personal data, where legally required.'
+const EU_REP_DE =
+  'Vertreter in der EU/im EWR: wird benannt und veröffentlicht, bevor der Dienst für die Verarbeitung personenbezogener Daten aus der EU/dem EWR bereitgestellt wird, soweit gesetzlich erforderlich.'
 
 /** Data-residency statement (verified against repo deploy config). */
 const DATA_RESIDENCY_EN =
@@ -102,19 +105,14 @@ const privacyEn: LegalDoc = {
         },
         {
           type: 'p',
-          text: `For privacy questions or to exercise your rights, contact us at ${CONTACT.privacyEmail}. Our Data Protection Officer is ${CONTACT.dpo}.`,
+          text: `For privacy questions or to exercise your rights, contact us at ${CONTACT.privacyEmail}.`,
         },
       ],
     },
     {
       id: 'eu-representative',
       heading: 'EU/EEA representative (Art. 27 GDPR)',
-      blocks: [
-        {
-          type: 'p',
-          text: `Our representative in the EU/EEA under Article 27 GDPR is ${CONTACT.euRepName}, reachable at ${CONTACT.euRepEmail}. ${CONTACT.euRepAddressEn}`,
-        },
-      ],
+      blocks: [{ type: 'p', text: EU_REP_EN }],
     },
     {
       id: 'scope',
@@ -263,19 +261,14 @@ const privacyDe: LegalDoc = {
         },
         {
           type: 'p',
-          text: `Bei Datenschutzfragen oder zur Ausübung Ihrer Rechte erreichen Sie uns unter ${CONTACT.privacyEmail}. Unser Datenschutzbeauftragter ist ${CONTACT.dpo}.`,
+          text: `Bei Datenschutzfragen oder zur Ausübung Ihrer Rechte erreichen Sie uns unter ${CONTACT.privacyEmail}.`,
         },
       ],
     },
     {
       id: 'eu-representative',
       heading: 'Vertreter in der EU/im EWR (Art. 27 DSGVO)',
-      blocks: [
-        {
-          type: 'p',
-          text: `Unser Vertreter in der EU/im EWR gemäß Art. 27 DSGVO ist ${CONTACT.euRepName}, erreichbar unter ${CONTACT.euRepEmail}. ${CONTACT.euRepAddressDe}`,
-        },
-      ],
+      blocks: [{ type: 'p', text: EU_REP_DE }],
     },
     {
       id: 'scope',
