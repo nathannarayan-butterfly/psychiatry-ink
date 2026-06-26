@@ -124,6 +124,12 @@ export function AskButterflyProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const open = useCallback(() => {
+    // The global Ask Butterfly chat is an ephemeral, non-patient-scoped
+    // conversation — it is deliberately NOT a saved thread. Each time the user
+    // opens it we start from a blank slate so a previous session never leaks
+    // into a fresh question. (Patient-scoped / intentionally-saved chats live in
+    // their own components with their own persistence and are unaffected.)
+    setMessages([])
     setIsOpen(true)
     setMode((current) => {
       const next = current === 'docked' ? 'docked' : readStoredMode()
