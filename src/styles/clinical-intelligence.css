@@ -1791,8 +1791,8 @@
   /* The Übersicht widgets mount this chart outside the `.ci-graph` scope, so
      redeclare the semantic colour tokens here to keep the chart self-contained.
      Mirrors the `.ci-graph` ramp exactly so widget and full graph stay in sync.
-     Without these, the inline `var(--ci-severity-*/--ci-confidence-*)` bar fills
-     resolve to nothing and the bars render invisible. */
+     Without these, the inline `var(--ci-severity-N)` / `var(--ci-confidence-N)`
+     bar fills resolve to nothing and the bars render invisible. */
   --ci-severity-0: #e5e7eb;
   --ci-severity-1: #22c55e;
   --ci-severity-2: #eab308;
