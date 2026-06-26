@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url'
 
 const here = dirname(fileURLToPath(import.meta.url))
 export const repoRoot = join(here, '../..')
-export const sourcesDir = join(repoRoot, 'prisma/data/sources')
+export const sourcesDir = join(repoRoot, 'data/sources')
 
 export const WHO_MAPPING_URL = 'https://icdcdn.who.int/static/releasefiles/2024-01/mapping.zip'
 export const WHO_ICD11_URL =

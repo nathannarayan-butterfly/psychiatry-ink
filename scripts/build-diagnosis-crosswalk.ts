@@ -1,14 +1,14 @@
 /**
- * Builds prisma/data/diagnosis-crosswalk.json from official reference sources.
+ * Builds data/diagnosis-crosswalk.json from official reference sources.
  *
- * Sources (auto-downloaded into prisma/data/sources/ if missing):
+ * Sources (auto-downloaded into data/sources/ if missing):
  * - WHO ICD-10 ↔ ICD-11 mapping (mapping.zip)
  * - WHO ICD-11 MMS simple tabulation (English titles)
  *
  * Optional local supplements:
- * - prisma/data/diagnosis-overrides.json — curated German psychiatric crosswalk (DSM legacy codes)
- * - prisma/data/sources/diagnostic_codes.db — German ICD-11 / disorder labels (MIT, um-bruch)
- * - prisma/data/sources/CodeSystem-icd10gm-*.json — BfArM ICD-10-GM FHIR export (German labels)
+ * - data/diagnosis-overrides.json — curated German psychiatric crosswalk (DSM legacy codes)
+ * - data/sources/diagnostic_codes.db — German ICD-11 / disorder labels (MIT, um-bruch)
+ * - data/sources/CodeSystem-icd10gm-*.json — BfArM ICD-10-GM FHIR export (German labels)
  * - BFARM_ZTS_TOKEN — downloads ICD-10-GM package from terminologien.bfarm.de when set
  *
  * Run: npm run db:build-diagnoses
@@ -25,9 +25,9 @@ dotenv.config({ path: '.env.local', override: true })
 
 const here = dirname(fileURLToPath(import.meta.url))
 const root = join(here, '..')
-const sourcesDir = join(root, 'prisma/data/sources')
-const overridesPath = join(root, 'prisma/data/diagnosis-overrides.json')
-const outputPath = join(root, 'prisma/data/diagnosis-crosswalk.json')
+const sourcesDir = join(root, 'data/sources')
+const overridesPath = join(root, 'data/diagnosis-overrides.json')
+const outputPath = join(root, 'data/diagnosis-crosswalk.json')
 
 const WHO_MAPPING_URL = 'https://icdcdn.who.int/static/releasefiles/2024-01/mapping.zip'
 const WHO_ICD11_URL =
@@ -408,7 +408,7 @@ async function main() {
     console.log(`[build-diagnoses] BfArM ICD-10-GM labels: ${bfarmLabels.size} (${bfarmPath})`)
   } else {
     console.warn(
-      '[build-diagnoses] No BfArM ICD-10-GM file — German ICD-10 labels use overrides/supplements/English fallback. Set BFARM_ZTS_TOKEN or place CodeSystem-icd10gm-*.json in prisma/data/sources/',
+      '[build-diagnoses] No BfArM ICD-10-GM file — German ICD-10 labels use overrides/supplements/English fallback. Set BFARM_ZTS_TOKEN or place CodeSystem-icd10gm-*.json in data/sources/',
     )
   }
 

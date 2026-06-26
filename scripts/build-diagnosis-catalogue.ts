@@ -1,10 +1,10 @@
 /**
- * Builds prisma/data/diagnosis-catalogue.json — independent ICD-10-GM F + ICD-11 Ch06 catalogues.
+ * Builds data/diagnosis-catalogue.json — independent ICD-10-GM F + ICD-11 Ch06 catalogues.
  *
- * Sources (auto-downloaded into prisma/data/sources/ if missing):
+ * Sources (auto-downloaded into data/sources/ if missing):
  * - WHO ICD-11 MMS simple tabulation (Chapter 06 mental/behavioural/neurodevelopmental)
  * - BfArM ICD-10-GM FHIR CodeSystem (F chapter, German labels) when available
- * - prisma/data/diagnosis-overrides.json — curated German psychiatric labels
+ * - data/diagnosis-overrides.json — curated German psychiatric labels
  * - diagnostic_codes.db — German ICD-11 supplement
  *
  * Run: npm run db:build-catalogue
@@ -36,8 +36,8 @@ import {
 dotenv.config()
 dotenv.config({ path: '.env.local', override: true })
 
-const overridesPath = join(repoRoot, 'prisma/data/diagnosis-overrides.json')
-const outputPath = join(repoRoot, 'prisma/data/diagnosis-catalogue.json')
+const overridesPath = join(repoRoot, 'data/diagnosis-overrides.json')
+const outputPath = join(repoRoot, 'data/diagnosis-catalogue.json')
 
 const ICD11_VERSION = '2024-01'
 const ICD10GM_VERSION = process.env.BFARM_ICD10GM_VERSION?.trim() || '2025.0.0'
@@ -264,7 +264,7 @@ async function main() {
 
   const icd11Zip = join(sourcesDir, 'icd11-mms-en.zip')
   const diagnosticDb = join(sourcesDir, 'diagnostic_codes.db')
-  const crosswalkPath = join(repoRoot, 'prisma/data/diagnosis-crosswalk.json')
+  const crosswalkPath = join(repoRoot, 'data/diagnosis-crosswalk.json')
 
   await download(WHO_ICD11_URL, icd11Zip)
   await maybeDownloadBfarmJson()

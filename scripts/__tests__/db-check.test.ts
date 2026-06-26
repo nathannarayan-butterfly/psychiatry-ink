@@ -6,53 +6,34 @@ import { fileURLToPath } from 'node:url'
 import { afterEach, describe, expect, it } from 'vitest'
 
 /**
- * Coverage for P0-3 (migration authority). Exercises the real db:check script
- * end-to-end against synthetic project roots (via DB_CHECK_ROOT) so the three
- * acceptance criteria are asserted on actual CLI behaviour + exit codes:
+ * Coverage for the Supabase migration authority guard. Exercises the real
+ * db:check script end-to-end against synthetic project roots (via DB_CHECK_ROOT)
+ * so the acceptance criteria are asserted on actual CLI behaviour + exit codes:
  *   - db:check passes (exit 0) on a clean tree
  *   - it flags duplicate Supabase migration version prefixes (warning)
- *   - it detects a forbidden `prisma migrate deploy` in a deploy script (exit 1)
+ *   - it fails (exit 1) when the Supabase migrations directory is missing
  */
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
 const scriptPath = path.join(repoRoot, 'scripts', 'db-check.ts')
 const tsxBin = path.join(repoRoot, 'node_modules', '.bin', 'tsx')
 
-const VALID_PRISMA_SCHEMA = `datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
-}
-
-generator client {
-  provider = "prisma-client-js"
-}
-
-model Foo {
-  id Int @id @default(autoincrement())
-}
-`
-
 const tmpRoots: string[] = []
 
 function makeRoot(options: {
-  migrations: Record<string, string>
+  migrations?: Record<string, string>
   scripts?: Record<string, string>
+  omitMigrationsDir?: boolean
 }): string {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'db-check-'))
   tmpRoots.push(root)
 
-  // The script runs `npx --no-install prisma validate` with cwd = project root.
-  // Point the fixture at the repo's installed prisma so validation resolves and
-  // exercises the real check rather than erroring on a missing package.
-  fs.symlinkSync(path.join(repoRoot, 'node_modules'), path.join(root, 'node_modules'), 'dir')
-
-  fs.mkdirSync(path.join(root, 'prisma'), { recursive: true })
-  fs.writeFileSync(path.join(root, 'prisma', 'schema.prisma'), VALID_PRISMA_SCHEMA)
-
-  const migrationsDir = path.join(root, 'supabase', 'migrations')
-  fs.mkdirSync(migrationsDir, { recursive: true })
-  for (const [name, body] of Object.entries(options.migrations)) {
-    fs.writeFileSync(path.join(migrationsDir, name), body)
+  if (!options.omitMigrationsDir) {
+    const migrationsDir = path.join(root, 'supabase', 'migrations')
+    fs.mkdirSync(migrationsDir, { recursive: true })
+    for (const [name, body] of Object.entries(options.migrations ?? {})) {
+      fs.writeFileSync(path.join(migrationsDir, name), body)
+    }
   }
 
   fs.writeFileSync(
@@ -62,13 +43,8 @@ function makeRoot(options: {
   return root
 }
 
-function runCheck(
-  root: string,
-  extraEnv: Record<string, string> = {},
-): { status: number; output: string } {
-  const env: Record<string, string | undefined> = { ...process.env, DB_CHECK_ROOT: root, ...extraEnv }
-  delete (env as Record<string, string | undefined>).ALLOW_PRISMA_PROD_MIGRATE
-  if (extraEnv.ALLOW_PRISMA_PROD_MIGRATE) env.ALLOW_PRISMA_PROD_MIGRATE = extraEnv.ALLOW_PRISMA_PROD_MIGRATE
+function runCheck(root: string): { status: number; output: string } {
+  const env: Record<string, string | undefined> = { ...process.env, DB_CHECK_ROOT: root }
   try {
     const stdout = execFileSync(tsxBin, [scriptPath], { env, encoding: 'utf8', cwd: repoRoot })
     return { status: 0, output: stdout }
@@ -85,7 +61,7 @@ afterEach(() => {
   }
 })
 
-describe('db:check migration authority (P0-3)', () => {
+describe('db:check Supabase migration authority', () => {
   it('passes on a clean tree with unique, well-formed migrations', () => {
     const root = makeRoot({
       migrations: {
@@ -114,26 +90,12 @@ describe('db:check migration authority (P0-3)', () => {
     expect(output).toContain('Duplicate Supabase migration version "20260101000000"')
   })
 
-  it('detects a forbidden prisma migrate deploy in a deploy script (exit 1)', () => {
-    const root = makeRoot({
-      migrations: { '20260101000000_a.sql': 'select 1;' },
-      scripts: { build: 'prisma migrate deploy' },
-    })
+  it('fails (exit 1) when the Supabase migrations directory is missing', () => {
+    const root = makeRoot({ omitMigrationsDir: true })
     const { status, output } = runCheck(root)
     expect(status).toBe(1)
-    expect(output).toContain('prisma migrate deploy')
-    expect(output).toContain('ALLOW_PRISMA_PROD_MIGRATE')
+    expect(output).toContain('supabase/migrations/ directory not found')
   })
-
-  it('allows prisma migrate deploy only when ALLOW_PRISMA_PROD_MIGRATE=true', () => {
-    const root = makeRoot({
-      migrations: { '20260101000000_a.sql': 'select 1;' },
-      scripts: { build: 'prisma migrate deploy' },
-    })
-    const { status, output } = runCheck(root, { ALLOW_PRISMA_PROD_MIGRATE: 'true' })
-    expect(status).toBe(0)
-    expect(output).toContain('allowed via ALLOW_PRISMA_PROD_MIGRATE')
-  })
-  // Each case spawns `tsx` + `prisma validate` end-to-end (~3s alone), which can
-  // exceed the 5s default under parallel-suite CPU contention. Give them headroom.
+  // Each case spawns `tsx` end-to-end, which can exceed the 5s default under
+  // parallel-suite CPU contention. Give them headroom.
 }, 30000)

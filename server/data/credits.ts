@@ -4,15 +4,13 @@ import type { Database } from '../types/database'
 /**
  * creditsRepo — typed data-access seam for the AI credit system.
  *
- * This is the foundation (Prerequisite P) that the credits/billing workstream
- * (Stream D) will consume when it swaps `server/ai/creditGuard.ts` and
- * `server/services/credits.ts` off Prisma. It wraps the SECURITY DEFINER RPCs
- * created in `20260704000000_consolidation_credit_system.sql`, which perform the
- * atomic ledger operations that previously lived inside Prisma `$transaction`
- * blocks.
+ * This is the live data layer consumed by `server/ai/creditGuard.ts` and
+ * `server/services/credits.ts`. It wraps the SECURITY DEFINER RPCs created in
+ * `20260704000000_consolidation_credit_system.sql` (and the trial/subscription
+ * RPCs in `20260704000400_consolidation_trial_subscription.sql`), which perform
+ * the atomic ledger operations that previously lived inside Prisma
+ * `$transaction` blocks.
  *
- * IMPORTANT: nothing here is wired into the existing Prisma-backed routes yet —
- * Prisma remains the live data layer until Stream D rewrites those call sites.
  * All writes go through the service-role client (RLS-bypassing); callers MUST
  * pass an already-authenticated owner id.
  */

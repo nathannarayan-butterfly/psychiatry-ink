@@ -7,21 +7,19 @@ dist
 .env.*
 !.env.example
 
-# Prisma local databases + shadow db (never commit; ephemeral / local-only)
-prisma/*.db
-prisma/*.db-journal
+# Local databases + shadow db (never commit; ephemeral / local-only)
 shadow.db
 dev.db
 *.db
 *.db-journal
 
 # Official terminology downloads (re-fetch via npm run db:build-diagnoses)
-prisma/data/sources/*.zip
-prisma/data/sources/bfarm-icd10gm/
-prisma/data/sources/*.tgz
-prisma/data/sources/CodeSystem-icd10gm-*.json
-prisma/data/sources/diagnostic_codes.db
-prisma/data/sources/.load-diagnostic-db.py
+data/sources/*.zip
+data/sources/bfarm-icd10gm/
+data/sources/*.tgz
+data/sources/CodeSystem-icd10gm-*.json
+data/sources/diagnostic_codes.db
+data/sources/.load-diagnostic-db.py
 
 *.tsbuildinfo
 

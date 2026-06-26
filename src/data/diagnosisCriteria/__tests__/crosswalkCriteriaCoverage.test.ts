@@ -10,13 +10,13 @@ interface CrosswalkEntry {
 }
 
 const crosswalk: CrosswalkEntry[] = JSON.parse(
-  readFileSync(join(process.cwd(), 'prisma/data/diagnosis-crosswalk.json'), 'utf8'),
+  readFileSync(join(process.cwd(), 'data/diagnosis-crosswalk.json'), 'utf8'),
 )
 
 /**
  * Crosswalk criteria coverage gate.
  *
- * Every ICD-10 F code in `prisma/data/diagnosis-crosswalk.json` must resolve via
+ * Every ICD-10 F code in `data/diagnosis-crosswalk.json` must resolve via
  * `matchDisorderToCodes()` to an authored criteria set with complete groups and
  * criteria. This enforces the "no sampling, no placeholders" mandate for the
  * Butterfly F-chapter pack.
