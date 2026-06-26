@@ -3,7 +3,8 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # Psychiatry.Ink — production image for Google Cloud Run (single-service).
 #
-# Builds the Vite client and runs the Express/Prisma API in one container. The
+# Builds the Vite client and runs the Express API (supabase-js data layer) in one
+# container. The
 # API serves dist/ with SPA fallback so same-origin /api/* works in production.
 # Cloud Run injects PORT (default 8080); the server binds API_HOST=0.0.0.0.
 #
@@ -18,7 +19,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-cert
     && rm -rf /var/lib/apt/lists/*
 
 COPY package.json package-lock.json ./
-COPY prisma ./prisma
 RUN npm ci
 
 # ---- Stage 2: build ------------------------------------------------------------
@@ -40,7 +40,6 @@ ENV VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 
 COPY . .
-RUN npx prisma generate
 RUN npm run build
 
 # ---- Stage 3: production runtime -----------------------------------------------
@@ -52,14 +51,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-cert
     && rm -rf /var/lib/apt/lists/*
 
 COPY package.json package-lock.json ./
-COPY prisma ./prisma
 
-# Production deps include tsx (start script) and the prisma CLI (entrypoint
-# `migrate deploy`) — both are real `dependencies`, so `npm ci --omit=dev`
-# installs them. (`npm install --omit=dev tsx prisma` does NOT install dev-listed
-# packages, which previously left tsx absent and broke `npm run start`.)
-RUN npm ci --omit=dev \
-    && npx prisma generate
+# Production deps include tsx (the `start` script runs server TypeScript via tsx)
+# — a real `dependency`, so `npm ci --omit=dev` installs it.
+RUN npm ci --omit=dev
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/server ./server
@@ -70,6 +65,9 @@ COPY --from=builder /app/shared ./shared
 # the runtime image or `npm run start` throws ERR_MODULE_NOT_FOUND before binding.
 COPY --from=builder /app/src ./src
 COPY --from=builder /app/scripts ./scripts
+# Diagnosis reference JSON consumed by the db:seed-* scripts (moved out of the
+# removed prisma/ tree). Ships so seed/import ops can run inside the image.
+COPY --from=builder /app/data ./data
 COPY --from=builder /app/tsconfig*.json ./
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
 
