@@ -26,6 +26,7 @@ import {
 import { useCanAccessCase } from '../../hooks/permissions/useCanAccessCase'
 import { useCanAccessModule } from '../../hooks/permissions/useCanAccessModule'
 import type { MedicationEntry, MedicationPlanState, SideEffectReport } from '../../types/medicationPlan'
+import type { AdrCausalityAssessment } from '../../types/adrCausality'
 import { activeMedications } from '../../utils/medication/planOps'
 import { medicationSectionDomId } from '../../contexts/MedicationSectionNavContext'
 import { MEDICATION_SECTION_META } from './medicationSectionMeta'
@@ -35,6 +36,7 @@ import { PreparationDrugBlock } from './PreparationDrugBlock'
 import { ReceptorProfileSection } from './ReceptorProfileSection'
 import { ReceptorRadarChart } from './ReceptorRadarChart'
 import { GlobalSideEffectForm } from './SideEffectDialog'
+import { AdrCausalityPanel } from './AdrCausalityPanel'
 import { MonitoringTimeline } from './MonitoringTimeline'
 import { ParameterMonitoringList } from '../clinical/ParameterMonitoringList'
 import { ClinicalLoading } from '../ui/ClinicalLoading'
@@ -71,6 +73,11 @@ interface MedicationLowerSectionsProps {
   medications: MedicationEntry[]
   disabled?: boolean
   onReportSideEffect: (report: Omit<SideEffectReport, 'id'>) => void
+  /** Persist a patch to an existing side-effect report (e.g. saved AI causality assessment). */
+  onUpdateSideEffectReport?: (
+    reportId: string,
+    patch: Partial<Omit<SideEffectReport, 'id'>>,
+  ) => void
   onLabNotesChange?: (notes: string) => void
   /**
    * Render mode (unified Therapie interaction model):
@@ -104,6 +111,7 @@ export function MedicationLowerSections({
   medications,
   disabled = false,
   onReportSideEffect,
+  onUpdateSideEffectReport,
   onLabNotesChange,
   mode,
   activeSection = null,
@@ -282,6 +290,17 @@ export function MedicationLowerSections({
                     {report.note ? (
                       <p className="medication-se-report__note">{report.note}</p>
                     ) : null}
+                    <AdrCausalityPanel
+                      caseId={caseId}
+                      report={report}
+                      activeMedications={activeMeds}
+                      canRunAi={canViewMedication && canUseAI}
+                      disabled={disabled}
+                      language={language}
+                      onSave={(reportId, causality: AdrCausalityAssessment) =>
+                        onUpdateSideEffectReport?.(reportId, { causality })
+                      }
+                    />
                   </li>
                 )
               })}

@@ -377,6 +377,22 @@ export function addSideEffectReport(
   }
 }
 
+/** Patch fields of an existing side-effect report (e.g. save an AI causality assessment). */
+export function updateSideEffectReport(
+  state: MedicationPlanState,
+  reportId: string,
+  patch: Partial<Omit<SideEffectReport, 'id'>>,
+): MedicationPlanState {
+  return {
+    ...state,
+    version: MEDICATION_PLAN_STATE_VERSION,
+    updatedAt: new Date().toISOString(),
+    sideEffectReports: state.sideEffectReports.map((report) =>
+      report.id === reportId ? { ...report, ...patch, id: report.id } : report,
+    ),
+  }
+}
+
 export function copyMedicationPlan(
   state: MedicationPlanState,
   sourcePlanId: string,

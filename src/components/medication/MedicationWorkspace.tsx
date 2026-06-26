@@ -426,6 +426,7 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
           medications={allVisibleMedications}
           disabled={disabled}
           onReportSideEffect={med.reportSideEffect}
+          onUpdateSideEffectReport={med.updateSideEffect}
           onLabNotesChange={med.updateLabNotes}
           mode="detail"
           activeSection={selectedSection}

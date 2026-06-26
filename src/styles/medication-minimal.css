@@ -1026,3 +1026,293 @@
     grid-column: 1 / -1;
   }
 }
+
+/* ── ADR causality + management AI panel ──────────────────────────────── */
+
+.medication-workspace .adr-causality {
+  margin-top: 0.6rem;
+  padding-top: 0.55rem;
+  border-top: 1px dashed var(--cm-hairline);
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.medication-workspace .adr-causality__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.medication-workspace .adr-causality__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: var(--cm-label-size, 0.6875rem);
+  font-weight: var(--cm-label-weight, 500);
+  letter-spacing: var(--cm-label-tracking, 0.08em);
+  color: var(--text-muted, #91887e);
+}
+
+.medication-workspace .adr-causality__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.medication-workspace .adr-causality__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.5rem;
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 500;
+  color: var(--accent, #8a5a2b);
+  background: transparent;
+  border: 1px solid var(--cm-quiet-border);
+  border-radius: var(--radius-control, 0.4375rem);
+  cursor: pointer;
+}
+
+.medication-workspace .adr-causality__btn:hover:not(:disabled) {
+  border-color: var(--accent, #8a5a2b);
+}
+
+.medication-workspace .adr-causality__btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.medication-workspace .adr-causality__btn--ghost {
+  color: var(--text-muted, #91887e);
+}
+
+.medication-workspace .adr-causality__btn-icon--spin {
+  animation: adr-causality-spin 0.9s linear infinite;
+}
+
+@keyframes adr-causality-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.medication-workspace .adr-causality__hint,
+.medication-workspace .adr-causality__empty {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-muted, #91887e);
+  margin: 0;
+}
+
+.medication-workspace .adr-causality__error {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--danger, #b3261e);
+  margin: 0;
+}
+
+.medication-workspace .adr-causality__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.medication-workspace .adr-causality__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.medication-workspace .adr-causality__badge {
+  padding: 0.1rem 0.35rem;
+  font-size: 0.625rem;
+  letter-spacing: 0.03em;
+  border-radius: var(--radius-control, 0.4375rem);
+  border: 1px solid var(--cm-quiet-border);
+  color: var(--text-muted, #91887e);
+  background: transparent;
+}
+
+.medication-workspace .adr-causality__badge--ai {
+  border-color: var(--accent, #8a5a2b);
+  color: var(--accent, #8a5a2b);
+}
+
+.medication-workspace .adr-causality__badge--saved {
+  border-color: #2f7d55;
+  color: #2f7d55;
+}
+
+.medication-workspace .adr-causality__badge--unsaved {
+  border-color: #b07d2b;
+  color: #b07d2b;
+}
+
+.medication-workspace .adr-causality__block-label {
+  font-size: var(--cm-label-size, 0.6875rem);
+  font-weight: var(--cm-label-weight, 500);
+  letter-spacing: var(--cm-label-tracking, 0.08em);
+  color: var(--text-muted, #91887e);
+  margin: 0 0 0.3rem;
+}
+
+.medication-workspace .adr-causality__suspected,
+.medication-workspace .adr-causality__steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.medication-workspace .adr-causality__suspected-head {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.medication-workspace .adr-causality__suspected-name {
+  font-size: var(--text-sm, 0.8125rem);
+  font-weight: 600;
+}
+
+.medication-workspace .adr-causality__likelihood {
+  padding: 0.1rem 0.35rem;
+  font-size: 0.625rem;
+  border-radius: var(--radius-control, 0.4375rem);
+  border: 1px solid var(--cm-quiet-border);
+  background: transparent;
+}
+
+.medication-workspace .adr-causality__likelihood--red {
+  border-color: #b3261e;
+  color: #b3261e;
+}
+
+.medication-workspace .adr-causality__likelihood--violet {
+  border-color: #6b4fa1;
+  color: #6b4fa1;
+}
+
+.medication-workspace .adr-causality__likelihood--amber {
+  border-color: #b07d2b;
+  color: #b07d2b;
+}
+
+.medication-workspace .adr-causality__likelihood--gray {
+  color: var(--text-muted, #91887e);
+}
+
+.medication-workspace .adr-causality__rationale,
+.medication-workspace .adr-causality__step-sub,
+.medication-workspace .adr-causality__sources {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-secondary, #6c645b);
+  margin: 0.15rem 0 0;
+  line-height: 1.4;
+}
+
+.medication-workspace .adr-causality__step-rec {
+  font-size: var(--text-sm, 0.8125rem);
+  margin: 0;
+  display: flex;
+  gap: 0.35rem;
+}
+
+.medication-workspace .adr-causality__step-num {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted, #91887e);
+  font-weight: 600;
+}
+
+.medication-workspace .adr-causality__step-sub--escalate {
+  color: var(--accent, #8a5a2b);
+}
+
+.medication-workspace .adr-causality__step-edit,
+.medication-workspace .adr-causality__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.medication-workspace .adr-causality__step-edit-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.medication-workspace .adr-causality__textarea {
+  width: 100%;
+  resize: vertical;
+  font-size: var(--text-sm, 0.8125rem);
+}
+
+.medication-workspace .adr-causality__select {
+  width: auto;
+  min-width: 9rem;
+  font-size: var(--text-xs, 0.75rem);
+  padding: 0.15rem 0.3rem;
+}
+
+.medication-workspace .adr-causality__icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  color: var(--text-muted, #91887e);
+  background: transparent;
+  border: 1px solid var(--cm-quiet-border);
+  border-radius: var(--radius-control, 0.4375rem);
+  cursor: pointer;
+}
+
+.medication-workspace .adr-causality__icon-btn:hover:not(:disabled) {
+  color: var(--danger, #b3261e);
+  border-color: var(--danger, #b3261e);
+}
+
+.medication-workspace .adr-causality__add-step {
+  align-self: flex-start;
+  margin-top: 0.35rem;
+}
+
+.medication-workspace .adr-causality__disclaimer {
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--cm-hairline);
+  border-left: 2px solid var(--accent, #8a5a2b);
+  border-radius: var(--radius-control, 0.4375rem);
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.medication-workspace .adr-causality__disclaimer-label {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent, #8a5a2b);
+}
+
+.medication-workspace .adr-causality__disclaimer-text {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--text-secondary, #6c645b);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.medication-workspace .adr-causality__footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.medication-workspace .adr-causality__save {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}

@@ -4,6 +4,7 @@ import type { MedicationPlanState, SideEffectReport } from '../types/medicationP
 import {
   addMedicationToPlan,
   addSideEffectReport,
+  updateSideEffectReport,
   copyMedicationPlan,
   createDefaultMedicationDraft,
   deleteMedicationFromPlan,
@@ -78,6 +79,13 @@ export function useMedicationPlan(caseId: string) {
     [persist, state],
   )
 
+  const updateSideEffect = useCallback(
+    (reportId: string, patch: Partial<Omit<SideEffectReport, 'id'>>) => {
+      persist(updateSideEffectReport(state, reportId, patch))
+    },
+    [persist, state],
+  )
+
   const copyPlan = useCallback(() => {
     if (!currentPlan) return
     persist(copyMedicationPlan(state, currentPlan.id, caseId, language))
@@ -111,6 +119,7 @@ export function useMedicationPlan(caseId: string) {
     updateMedication,
     deleteMedication,
     reportSideEffect,
+    updateSideEffect,
     copyPlan,
     selectPlan,
     updateLabNotes,

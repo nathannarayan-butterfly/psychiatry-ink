@@ -1,4 +1,5 @@
 import type { UiLanguage } from '../types/settings'
+import type { AdrCausalityLikelihood } from '../types/adrCausality'
 import type {
   MedicationChangeType,
   MedicationFormulation,
@@ -1531,6 +1532,206 @@ export const medicationUiTranslations = {
     fr: 'Brouillon IA — à réviser cliniquement avant de le partager avec les patients.',
     es: 'Borrador de IA — revíselo clínicamente antes de compartirlo con los pacientes.',
   },
+
+  // ── ADR causality + management AI workflow ───────────────────────────────
+  adrCausalityTitle: {
+    de: 'KI-Kausalitätszuordnung & Management',
+    en: 'AI causality assessment & management',
+    fr: 'Imputabilité & prise en charge (IA)',
+    es: 'Evaluación de causalidad y manejo (IA)',
+  },
+  adrCausalityButton: {
+    de: 'KI-Kausalitätszuordnung',
+    en: 'AI causality assessment',
+    fr: 'Imputabilité (IA)',
+    es: 'Evaluación de causalidad (IA)',
+  },
+  adrCausalityButtonTitle: {
+    de: 'Gemeldete Nebenwirkung gegen die aktuelle Medikation analysieren',
+    en: 'Analyze the reported side effect against the current medication',
+    fr: 'Analyser l’effet indésirable signalé par rapport au traitement actuel',
+    es: 'Analizar el efecto adverso notificado frente a la medicación actual',
+  },
+  adrCausalityRunning: {
+    de: 'Analyse läuft …',
+    en: 'Analysis running …',
+    fr: 'Analyse en cours …',
+    es: 'Análisis en curso …',
+  },
+  adrCausalityRerun: {
+    de: 'Neu analysieren',
+    en: 'Re-analyze',
+    fr: 'Réanalyser',
+    es: 'Reanalizar',
+  },
+  adrCausalityNoActiveMeds: {
+    de: 'Keine aktiven Medikamente — bitte zuerst den Medikamentenplan erfassen.',
+    en: 'No active medications — please record the medication plan first.',
+    fr: 'Aucun médicament actif — veuillez d’abord enregistrer le plan médicamenteux.',
+    es: 'Sin medicamentos activos — registre primero el plan de medicación.',
+  },
+  adrCausalitySuspectedTitle: {
+    de: 'Verdächtige Wirkstoffe',
+    en: 'Suspected substances',
+    fr: 'Substances suspectées',
+    es: 'Sustancias sospechosas',
+  },
+  adrCausalityManagementTitle: {
+    de: 'Stufenweises Management',
+    en: 'Stepwise management',
+    fr: 'Prise en charge par étapes',
+    es: 'Manejo escalonado',
+  },
+  adrCausalityLikelihoodLabel: {
+    de: 'Wahrscheinlichkeit',
+    en: 'Likelihood',
+    fr: 'Probabilité',
+    es: 'Probabilidad',
+  },
+  adrCausalityRationaleLabel: {
+    de: 'Begründung',
+    en: 'Rationale',
+    fr: 'Justification',
+    es: 'Justificación',
+  },
+  adrCausalityRecommendationLabel: {
+    de: 'Maßnahme',
+    en: 'Action',
+    fr: 'Mesure',
+    es: 'Medida',
+  },
+  adrCausalityIfIneffectiveLabel: {
+    de: 'Bei Unwirksamkeit',
+    en: 'If ineffective',
+    fr: 'En cas d’inefficacité',
+    es: 'Si es ineficaz',
+  },
+  adrCausalitySourcesLabel: {
+    de: 'Quelle (Konzept)',
+    en: 'Source (concept)',
+    fr: 'Source (concept)',
+    es: 'Fuente (concepto)',
+  },
+  adrCausalityDisclaimerLabel: {
+    de: 'Klinischer Hinweis',
+    en: 'Clinical note',
+    fr: 'Note clinique',
+    es: 'Nota clínica',
+  },
+  adrCausalitySave: {
+    de: 'In Dokumentation speichern',
+    en: 'Save to documentation',
+    fr: 'Enregistrer dans la documentation',
+    es: 'Guardar en la documentación',
+  },
+  adrCausalitySaved: {
+    de: 'In Dokumentation gespeichert',
+    en: 'Saved to documentation',
+    fr: 'Enregistré dans la documentation',
+    es: 'Guardado en la documentación',
+  },
+  adrCausalityEdit: {
+    de: 'Bearbeiten',
+    en: 'Edit',
+    fr: 'Modifier',
+    es: 'Editar',
+  },
+  adrCausalityEditDone: {
+    de: 'Bearbeitung beenden',
+    en: 'Finish editing',
+    fr: 'Terminer la modification',
+    es: 'Finalizar edición',
+  },
+  adrCausalityCopyTitle: {
+    de: 'Kausalitätszuordnung kopieren',
+    en: 'Copy causality assessment',
+    fr: 'Copier l’imputabilité',
+    es: 'Copiar evaluación de causalidad',
+  },
+  adrCausalityAddStep: {
+    de: 'Schritt hinzufügen',
+    en: 'Add step',
+    fr: 'Ajouter une étape',
+    es: 'Añadir paso',
+  },
+  adrCausalityRemoveStep: {
+    de: 'Schritt entfernen',
+    en: 'Remove step',
+    fr: 'Retirer l’étape',
+    es: 'Eliminar paso',
+  },
+  adrCausalityEmpty: {
+    de: 'Noch keine KI-Kausalitätszuordnung. Starten Sie die Analyse, um Verdacht und Management zu erhalten.',
+    en: 'No AI causality assessment yet. Start the analysis to get suspected drugs and management.',
+    fr: 'Aucune imputabilité IA. Lancez l’analyse pour obtenir les médicaments suspectés et la prise en charge.',
+    es: 'Aún sin evaluación de causalidad por IA. Inicie el análisis para obtener fármacos sospechosos y manejo.',
+  },
+  adrCausalityNoSuspected: {
+    de: 'Keine spezifischen verdächtigen Wirkstoffe identifiziert.',
+    en: 'No specific suspected substances identified.',
+    fr: 'Aucune substance suspectée spécifique identifiée.',
+    es: 'No se identificaron sustancias sospechosas específicas.',
+  },
+  adrCausalityNoManagement: {
+    de: 'Keine Management-Schritte vorgeschlagen.',
+    en: 'No management steps suggested.',
+    fr: 'Aucune étape de prise en charge proposée.',
+    es: 'No se sugieren pasos de manejo.',
+  },
+  adrCausalityAiBadge: {
+    de: 'KI-Vorschlag',
+    en: 'AI suggestion',
+    fr: 'Suggestion IA',
+    es: 'Sugerencia de IA',
+  },
+  adrCausalityEditedBadge: {
+    de: 'bearbeitet',
+    en: 'edited',
+    fr: 'modifié',
+    es: 'editado',
+  },
+  adrCausalitySavedBadge: {
+    de: 'gespeichert',
+    en: 'saved',
+    fr: 'enregistré',
+    es: 'guardado',
+  },
+  adrCausalityUnsavedHint: {
+    de: 'Ungespeicherte Änderungen.',
+    en: 'Unsaved changes.',
+    fr: 'Modifications non enregistrées.',
+    es: 'Cambios sin guardar.',
+  },
+  adrLikelihoodUnlikely: {
+    de: 'unwahrscheinlich',
+    en: 'unlikely',
+    fr: 'improbable',
+    es: 'improbable',
+  },
+  adrLikelihoodPossible: {
+    de: 'möglich',
+    en: 'possible',
+    fr: 'possible',
+    es: 'posible',
+  },
+  adrLikelihoodProbable: {
+    de: 'wahrscheinlich',
+    en: 'probable',
+    fr: 'probable',
+    es: 'probable',
+  },
+  adrLikelihoodHighlyProbable: {
+    de: 'sehr wahrscheinlich',
+    en: 'highly probable',
+    fr: 'très probable',
+    es: 'muy probable',
+  },
+  adrLikelihoodUnknown: {
+    de: 'nicht beurteilbar',
+    en: 'not assessable',
+    fr: 'non évaluable',
+    es: 'no evaluable',
+  },
 } as const satisfies Record<string, LocaleMap>
 
 export type MedicationUiKey = keyof typeof medicationUiTranslations
@@ -1552,6 +1753,21 @@ export function formatPrepAiQuelleLabel(
   if (response.source === 'deepseek') return translateMedicationUi(language, 'medPrepSourceDeepseek')
   if (response.model?.label?.trim()) return response.model.label.trim()
   return translateMedicationUi(language, 'medPrepSourceAi')
+}
+
+const ADR_LIKELIHOOD_KEYS: Record<AdrCausalityLikelihood, MedicationUiKey> = {
+  unlikely: 'adrLikelihoodUnlikely',
+  possible: 'adrLikelihoodPossible',
+  probable: 'adrLikelihoodProbable',
+  highly_probable: 'adrLikelihoodHighlyProbable',
+  unknown: 'adrLikelihoodUnknown',
+}
+
+export function getAdrLikelihoodLabel(
+  likelihood: AdrCausalityLikelihood,
+  language: UiLanguage,
+): string {
+  return translateMedicationUi(language, ADR_LIKELIHOOD_KEYS[likelihood])
 }
 
 export function formatMedicationUiTemplate(
