@@ -5353,6 +5353,14 @@
   color: #e53935;
 }
 
+/* Transient "copied" confirmation — the icon flips to a check and the button
+   adopts the accent success tint (see useCopyWithFeedback). */
+.verlauf-entry__action-btn--copied,
+.verlauf-entry__action-btn--copied:hover {
+  color: var(--accent, #4a7c59);
+  background: color-mix(in srgb, var(--accent, #4a7c59) 12%, transparent);
+}
+
 /* Inline delete confirmation */
 
 .verlauf-entry__confirm-delete {

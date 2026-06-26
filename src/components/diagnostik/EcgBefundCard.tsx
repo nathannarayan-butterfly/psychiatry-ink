@@ -1,4 +1,4 @@
-import { Clipboard, Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Trash2 } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
 import { getBefundSchema } from '../../data/befundSchemas'
 import type { BefundRecord } from '../../types/befund'
@@ -6,12 +6,14 @@ import {
   formatBefundDate,
   getBefundDisplaySections,
 } from '../../utils/befundRender'
+import { CopyButton } from '../common/CopyButton'
 
 interface EcgBefundCardProps {
   record: BefundRecord
   readOnly?: boolean
   onEdit: () => void
-  onCopy: () => void
+  /** Plain-text rendering of the befund to copy to the clipboard. */
+  copyText: string
   onDelete: () => void
 }
 
@@ -21,7 +23,7 @@ export function EcgBefundCard({
   record,
   readOnly = false,
   onEdit,
-  onCopy,
+  copyText,
   onDelete,
 }: EcgBefundCardProps) {
   const { t, language } = useTranslation()
@@ -47,15 +49,7 @@ export function EcgBefundCard({
           </span>
         </div>
         <div className="ecg-befund-card__actions">
-          <button
-            type="button"
-            className="icon-action-btn"
-            title={t('befundCopy')}
-            aria-label={t('befundCopy')}
-            onClick={onCopy}
-          >
-            <Clipboard strokeWidth={1.75} aria-hidden />
-          </button>
+          <CopyButton text={copyText} label={t('befundCopy')} />
           <button
             type="button"
             className="icon-action-btn"

@@ -15,8 +15,9 @@ import {
 } from '../../utils/befundRender'
 import { deleteDiagnostikBefund } from '../../utils/befundArchive'
 import { removeBefundDokument } from '../../utils/befundDokumente'
-import { Clipboard, Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Trash2 } from 'lucide-react'
 import type { BefundRecord } from '../../types/befund'
+import { CopyButton } from '../common/CopyButton'
 
 interface BefundungWorkspaceProps {
   caseId: string
@@ -26,18 +27,13 @@ interface BefundungWorkspaceProps {
   onInitialTypeConsumed?: () => void
 }
 
-function copyBefundToClipboard(record: BefundRecord, language: ReturnType<typeof useTranslation>['language']) {
+function buildBefundClipboardText(
+  record: BefundRecord,
+  language: ReturnType<typeof useTranslation>['language'],
+): string {
   const text = renderBefundContent(record, language)
   const header = `${getBefundSchema(record.type, language).title} — ${formatBefundDate(record.examDate)}`
-  const payload = `${header}\n\n${text}`
-  navigator.clipboard.writeText(payload).catch(() => {
-    const ta = document.createElement('textarea')
-    ta.value = payload
-    document.body.appendChild(ta)
-    ta.select()
-    document.execCommand('copy')
-    document.body.removeChild(ta)
-  })
+  return `${header}\n\n${text}`
 }
 
 /** Workspace panel for structured EKG / EEG Befunde entry. */
@@ -180,7 +176,7 @@ export function BefundungWorkspace({
                   record={selected}
                   readOnly={disabled}
                   onEdit={() => openEdit(selected)}
-                  onCopy={() => copyBefundToClipboard(selected, language)}
+                  copyText={buildBefundClipboardText(selected, language)}
                   onDelete={() => handleDelete(selected)}
                 />
               ) : (
@@ -205,15 +201,10 @@ export function BefundungWorkspace({
                       </span>
                     </div>
                     <div className="labor-befund-header__actions">
-                      <button
-                        type="button"
-                        className="icon-action-btn"
-                        title={t('befundCopy')}
-                        aria-label={t('befundCopy')}
-                        onClick={() => copyBefundToClipboard(selected, language)}
-                      >
-                        <Clipboard className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-                      </button>
+                      <CopyButton
+                        text={() => buildBefundClipboardText(selected, language)}
+                        label={t('befundCopy')}
+                      />
                       {!disabled ? (
                         <>
                           <button

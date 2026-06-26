@@ -1,4 +1,17 @@
 import { useMemo } from 'react'
+import {
+  Activity,
+  Brain,
+  FlaskConical,
+  type LucideIcon,
+  LayoutDashboard,
+  MessagesSquare,
+  NotebookPen,
+  Pill,
+  Stethoscope,
+  FileText,
+  HeartPulse,
+} from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { UiTranslationKey } from '../../data/uiTranslations'
 import { isClinicalIntelligenceAvailableForCase } from '../../utils/featureFlags'
@@ -9,26 +22,28 @@ import type { TopNavTabId } from './CaseTopNav'
  *
  * The optional `featureFlag` field gates an entry behind a runtime feature
  * flag (used for Clinical Intelligence V1 today). Entries without
- * `featureFlag` are always rendered.
+ * `featureFlag` are always rendered. The `icon` represents the area in the
+ * collapsed (icon-only) rail — see the collapsed styles in case-sidebar.css.
  */
 const BASE_CLINICAL_AREA_TABS: {
   id: TopNavTabId
   labelKey: UiTranslationKey
+  icon: LucideIcon
   featureFlag?: 'clinicalIntelligenceV1'
 }[] = [
-  { id: 'overview', labelKey: 'topNavOverview' },
-  { id: 'workspace', labelKey: 'topNavWorkspaceFall' },
-  { id: 'verlauf', labelKey: 'topNavVerlauf' },
-  { id: 'labor', labelKey: 'topNavLabor' },
-  { id: 'diagnose', labelKey: 'topNavDiagnose' },
+  { id: 'overview', labelKey: 'topNavOverview', icon: LayoutDashboard },
+  { id: 'workspace', labelKey: 'topNavWorkspaceFall', icon: NotebookPen },
+  { id: 'verlauf', labelKey: 'topNavVerlauf', icon: Activity },
+  { id: 'labor', labelKey: 'topNavLabor', icon: FlaskConical },
+  { id: 'diagnose', labelKey: 'topNavDiagnose', icon: Stethoscope },
   // Clinical Intelligence sits directly after Diagnose so clinicians can pivot
   // from diagnosis review into mechanistic/dimensional reasoning. Top-nav
   // duplicate is removed; sidebar is the canonical entry point.
-  { id: 'ci', labelKey: 'topNavClinicalIntelligence', featureFlag: 'clinicalIntelligenceV1' },
-  { id: 'medikation', labelKey: 'topNavMedikation' },
-  { id: 'therapie', labelKey: 'topNavTherapie' },
-  { id: 'dokumente', labelKey: 'topNavDokumente' },
-  { id: 'discuss', labelKey: 'topNavDiscuss' },
+  { id: 'ci', labelKey: 'topNavClinicalIntelligence', icon: Brain, featureFlag: 'clinicalIntelligenceV1' },
+  { id: 'medikation', labelKey: 'topNavMedikation', icon: Pill },
+  { id: 'therapie', labelKey: 'topNavTherapie', icon: HeartPulse },
+  { id: 'dokumente', labelKey: 'topNavDokumente', icon: FileText },
+  { id: 'discuss', labelKey: 'topNavDiscuss', icon: MessagesSquare },
 ]
 
 export const CLINICAL_AREA_TABS: { id: TopNavTabId; labelKey: UiTranslationKey }[] =
@@ -71,6 +86,7 @@ export function CaseClinicalAreasNav({
       {visibleTabs.map((area) => {
         const isActive = activeTab === area.id
         const label = t(area.labelKey)
+        const Icon = area.icon
         return (
           <button
             key={area.id}
@@ -86,6 +102,7 @@ export function CaseClinicalAreasNav({
             data-area={area.id}
             title={label}
           >
+            <Icon className="case-sidebar-nav__link-icon" strokeWidth={1.75} aria-hidden />
             <span className="case-sidebar-nav__link-label">{label}</span>
           </button>
         )

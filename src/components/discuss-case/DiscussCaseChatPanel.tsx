@@ -28,6 +28,7 @@ import {
 } from '../../utils/discussCase/chromeI18n'
 import { isEmojiOnlyMessage } from '../../utils/discussCase/chatEmojis'
 import { ChatMarkdownText } from '../../utils/chat/ChatMarkdownText'
+import { useCopyWithFeedback } from '../../hooks/useCopyWithFeedback'
 import {
   getChatBubbleColors,
   getParticipantColor,
@@ -132,6 +133,7 @@ const CHAT_I18N = {
     emptyTitle: 'Noch keine Nachrichten',
     emptyHint: 'Starten Sie die Diskussion oder zitieren Sie eine Stelle aus dem Dokument.',
     aiCopy: 'Kopieren',
+    aiCopied: 'Kopiert',
     aiSaveDraft: 'Als Entwurf speichern',
     aiRegenerate: 'Neu',
     aiDiscard: 'Verwerfen',
@@ -183,6 +185,7 @@ const CHAT_I18N = {
     emptyTitle: 'No messages yet',
     emptyHint: 'Start the discussion or quote a passage from the document.',
     aiCopy: 'Copy',
+    aiCopied: 'Copied',
     aiSaveDraft: 'Save as draft',
     aiRegenerate: 'Regenerate',
     aiDiscard: 'Discard',
@@ -341,6 +344,7 @@ export function DiscussCaseChatPanel({
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
   const [sending, setSending] = useState(false)
+  const { copied: aiDraftCopied, copy: copyAiDraft } = useCopyWithFeedback()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editDraft, setEditDraft] = useState('')
   const [actionBusyId, setActionBusyId] = useState<string | null>(null)
@@ -1595,8 +1599,17 @@ export function DiscussCaseChatPanel({
                 <ChatMarkdownText text={aiDraft} />
               </p>
               <div className="discuss-case-chat__ai-actions">
-                <button type="button" onClick={() => void navigator.clipboard.writeText(aiDraft)}>
-                  <Copy className="h-3.5 w-3.5" strokeWidth={1.75} /> {chatT(locale, 'aiCopy')}
+                <button
+                  type="button"
+                  onClick={() => void copyAiDraft(aiDraft)}
+                  aria-label={aiDraftCopied ? chatT(locale, 'aiCopied') : chatT(locale, 'aiCopy')}
+                >
+                  {aiDraftCopied ? (
+                    <Check className="h-3.5 w-3.5" strokeWidth={1.75} />
+                  ) : (
+                    <Copy className="h-3.5 w-3.5" strokeWidth={1.75} />
+                  )}{' '}
+                  {aiDraftCopied ? chatT(locale, 'aiCopied') : chatT(locale, 'aiCopy')}
                 </button>
                 {canSend ? (
                   <button

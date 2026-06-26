@@ -126,6 +126,12 @@ export const adminUiTranslations = {
     fr: 'Relancer (copier CLI)',
     es: 'Reejecutar (copiar CLI)',
   },
+  kbRerunCopied: {
+    de: 'CLI kopiert',
+    en: 'CLI copied',
+    fr: 'CLI copiée',
+    es: 'CLI copiada',
+  },
   kbRerunHint: {
     de: 'Anreicherung erneut ausführen:',
     en: 'Rerun enrichment:',

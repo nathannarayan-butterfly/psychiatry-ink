@@ -7,6 +7,7 @@ import { ButterflyLogo } from '../ButterflyLogo'
 import { askButterflyChat, type AskButterflyChatMessage } from '../../services/askButterflyApi'
 import { resolveLlmRequestForTaskOrTier } from '../../utils/resolveAiModel'
 import { ChatMarkdownText } from '../../utils/chat/ChatMarkdownText'
+import { CopyButton } from '../common/CopyButton'
 import { AskButterflyTierSelector } from './AskButterflyTierSelector'
 
 interface AskButterflyChatPanelProps {
@@ -47,6 +48,19 @@ export function AskButterflyChatPanel({
   useEffect(() => {
     inputRef.current?.focus()
   }, [])
+
+  // Auto-grow the composer so long / pasted text stays readable instead of
+  // scrolling inside a fixed two-line box. The textarea expands with content up
+  // to a sensible cap (docked panels are shorter), after which it scrolls.
+  useEffect(() => {
+    const el = inputRef.current
+    if (!el) return
+    const maxHeight = variant === 'docked' ? 160 : 200
+    el.style.height = 'auto'
+    const next = Math.min(el.scrollHeight, maxHeight)
+    el.style.height = `${next}px`
+    el.style.overflowY = el.scrollHeight > maxHeight ? 'auto' : 'hidden'
+  }, [draft, variant])
 
   const handleSend = useCallback(async () => {
     const content = draft.trim()
@@ -123,6 +137,14 @@ export function AskButterflyChatPanel({
                     message.content
                   )}
                 </p>
+                {message.role === 'assistant' && message.content.trim() ? (
+                  <div className="ask-butterfly-dialog__message-actions">
+                    <CopyButton
+                      text={message.content}
+                      label={t('askButterflyCopyAnswer')}
+                    />
+                  </div>
+                ) : null}
               </div>
             ))
           )}

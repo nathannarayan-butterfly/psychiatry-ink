@@ -761,6 +761,27 @@
   background: color-mix(in srgb, var(--text-muted, #6b7280) 12%, transparent);
 }
 
+.ask-butterfly-dialog__message-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.3rem;
+  margin-right: -0.2rem;
+}
+
+/* Keep the copy affordance quiet until the turn is hovered/focused, then
+   reveal it — mirrors the calm Übersicht surface aesthetic. */
+.ask-butterfly-dialog__message-actions .icon-action-btn {
+  width: 1.5rem;
+  height: 1.5rem;
+  opacity: 0.55;
+}
+
+.ask-butterfly-dialog__message:hover .ask-butterfly-dialog__message-actions .icon-action-btn,
+.ask-butterfly-dialog__message-actions .icon-action-btn:focus-visible,
+.ask-butterfly-dialog__message-actions .icon-action-btn[data-copied='true'] {
+  opacity: 1;
+}
+
 .ask-butterfly-dialog__message-text--pending {
   display: flex;
   align-items: center;

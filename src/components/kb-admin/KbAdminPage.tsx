@@ -1,5 +1,6 @@
-import { AlertTriangle, Archive, CheckCircle, Eye, FlaskConical, RefreshCw, RotateCcw, ShieldAlert } from 'lucide-react'
+import { AlertTriangle, Archive, Check, CheckCircle, Eye, FlaskConical, RefreshCw, RotateCcw, ShieldAlert } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCopyWithFeedback } from '../../hooks/useCopyWithFeedback'
 import { PSYCHIATRIC_DRUG_CATEGORIES } from '../../data/kb/psychiatric-drug-seed-list'
 import { useKnowledgeBaseUserProfile } from '../../hooks/useKnowledgeBaseUserId'
 import {
@@ -80,6 +81,7 @@ function substanceBadges(language: UiLanguage, s: KbSubstance, detail?: KbSubsta
 
 export function KbAdminPage({ onBack }: KbAdminPageProps) {
   const { language } = useTranslation()
+  const { copied: rerunCopied, copy: copyRerunCli } = useCopyWithFeedback()
   const { userId, displayName } = useKnowledgeBaseUserProfile()
   const [statusFilter, setStatusFilter] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
@@ -450,11 +452,12 @@ export function KbAdminPage({ onBack }: KbAdminPageProps) {
                     type="button"
                     title={translateAdminUi(language, 'kbRerunTitle')}
                     onClick={() => {
-                      void navigator.clipboard.writeText(rerunCli)
+                      void copyRerunCli(rerunCli)
                       setError(null)
                     }}
                   >
-                    <RotateCcw size={14} /> {translateAdminUi(language, 'kbRerunButton')}
+                    {rerunCopied ? <Check size={14} /> : <RotateCcw size={14} />}{' '}
+                    {translateAdminUi(language, rerunCopied ? 'kbRerunCopied' : 'kbRerunButton')}
                   </button>
                 </div>
               </div>

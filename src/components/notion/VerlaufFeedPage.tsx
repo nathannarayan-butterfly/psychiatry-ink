@@ -8,9 +8,10 @@ import {
   useState,
 } from 'react'
 import { createPortal } from 'react-dom'
-import { Sparkles } from 'lucide-react'
+import { Check, Sparkles } from 'lucide-react'
 import { VerlaufActionToolbar } from './VerlaufActionToolbar'
 import { copyTextToClipboard } from '../../utils/notionDocumentActions'
+import { useCopyWithFeedback } from '../../hooks/useCopyWithFeedback'
 import {
   buildVerlaufPlainText,
   exportVerlaufText,
@@ -1024,6 +1025,7 @@ const EntryCard = memo(function EntryCard({
 }: EntryCardProps) {
   const ref = useRef<HTMLDivElement>(null)
   const { t } = useTranslation()
+  const { copied, copy } = useCopyWithFeedback()
   const [editing, setEditing] = useState(false)
   const [editText, setEditText] = useState(entry.content)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -1073,7 +1075,7 @@ const EntryCard = memo(function EntryCard({
 
   function handleCopyEntry(e: React.MouseEvent) {
     e.stopPropagation()
-    void navigator.clipboard.writeText(entry.content)
+    void copy(entry.content)
   }
 
   function handleEditStart(e: React.MouseEvent) {
@@ -1145,14 +1147,19 @@ const EntryCard = memo(function EntryCard({
           </button>
           <button
             type="button"
-            className="verlauf-entry__action-btn"
-            title={t('verlaufEntryCopy')}
+            className={`verlauf-entry__action-btn${copied ? ' verlauf-entry__action-btn--copied' : ''}`}
+            title={copied ? t('copyButtonCopied') : t('verlaufEntryCopy')}
+            aria-label={copied ? t('copyButtonCopied') : t('verlaufEntryCopy')}
             onClick={handleCopyEntry}
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-            </svg>
+            {copied ? (
+              <Check width={13} height={13} strokeWidth={2} aria-hidden />
+            ) : (
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+            )}
           </button>
           <button
             type="button"
@@ -1274,6 +1281,8 @@ const DerivedEntryCard = memo(function DerivedEntryCard({
   annotatable,
 }: DerivedEntryCardProps) {
   const bodyRef = useRef<HTMLDivElement>(null)
+  const { t } = useTranslation()
+  const { copied, copy } = useCopyWithFeedback()
 
   const entryText = useMemo(
     () => derivedFeedEntryText(event.title, event.body),
@@ -1290,7 +1299,7 @@ const DerivedEntryCard = memo(function DerivedEntryCard({
 
   function handleCopy(e: React.MouseEvent) {
     e.stopPropagation()
-    void navigator.clipboard.writeText(entryText)
+    void copy(entryText)
   }
 
   function handleNavigateToSource(e: React.MouseEvent) {
@@ -1343,14 +1352,19 @@ const DerivedEntryCard = memo(function DerivedEntryCard({
         <span className="verlauf-entry__actions" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
-            className="verlauf-entry__action-btn"
-            title={copyLabel}
+            className={`verlauf-entry__action-btn${copied ? ' verlauf-entry__action-btn--copied' : ''}`}
+            title={copied ? t('copyButtonCopied') : copyLabel}
+            aria-label={copied ? t('copyButtonCopied') : copyLabel}
             onClick={handleCopy}
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-            </svg>
+            {copied ? (
+              <Check width={13} height={13} strokeWidth={2} aria-hidden />
+            ) : (
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+            )}
           </button>
           {onNavigateToSource ? (
             <>
@@ -1422,11 +1436,12 @@ const AufnahmeEntryCard = memo(function AufnahmeEntryCard({
   onNavigateToSource,
 }: AufnahmeEntryCardProps) {
   const { t } = useTranslation()
+  const { copied, copy } = useCopyWithFeedback()
   const sectionRefs = useRef<Map<string, HTMLDivElement>>(new Map())
 
   function handleCopy(e: React.MouseEvent) {
     e.stopPropagation()
-    void navigator.clipboard.writeText(event.body)
+    void copy(event.body)
   }
 
   function handleNavigateToSource(e: React.MouseEvent) {
@@ -1479,14 +1494,19 @@ const AufnahmeEntryCard = memo(function AufnahmeEntryCard({
         <span className="verlauf-entry__actions" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
-            className="verlauf-entry__action-btn"
-            title={copyLabel}
+            className={`verlauf-entry__action-btn${copied ? ' verlauf-entry__action-btn--copied' : ''}`}
+            title={copied ? t('copyButtonCopied') : copyLabel}
+            aria-label={copied ? t('copyButtonCopied') : copyLabel}
             onClick={handleCopy}
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-            </svg>
+            {copied ? (
+              <Check width={13} height={13} strokeWidth={2} aria-hidden />
+            ) : (
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+            )}
           </button>
           {onNavigateToSource ? (
             <>
@@ -2298,10 +2318,12 @@ export function VerlaufFeedPage({
 
   const handleBubbleCopy = useCallback(() => {
     if (bubble.selectedText) {
-      void navigator.clipboard.writeText(bubble.selectedText)
+      void copyTextToClipboard(bubble.selectedText).then((ok) => {
+        if (ok) showNotionToast(t('notionCopied'))
+      })
     }
     closeBubble()
-  }, [bubble.selectedText, closeBubble])
+  }, [bubble.selectedText, closeBubble, t])
 
   const readonlyBubbleActions = useMemo((): SelectionAction[] => {
     if (!bubble.selectedText) return []

@@ -1,6 +1,7 @@
 import { memo, useMemo, useState } from 'react'
-import { Stethoscope } from 'lucide-react'
+import { Check, Stethoscope } from 'lucide-react'
 import { useTranslation } from '../../../context/TranslationContext'
+import { useCopyWithFeedback } from '../../../hooks/useCopyWithFeedback'
 import type { VerlaufFeedEntry } from '../../../utils/verlaufFeed'
 import {
   buildSomaticBefundSummaryRows,
@@ -21,6 +22,7 @@ export const SomaticBefundEntryCard = memo(function SomaticBefundEntryCard({
 }: SomaticBefundEntryCardProps) {
   const { t, language } = useTranslation()
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const { copied, copy } = useCopyWithFeedback()
 
   const payload = entry.somaticBefund
   const summaryRows = useMemo(
@@ -34,7 +36,7 @@ export const SomaticBefundEntryCard = memo(function SomaticBefundEntryCard({
 
   function handleCopy(e: React.MouseEvent) {
     e.stopPropagation()
-    void navigator.clipboard.writeText(entry.content)
+    void copy(entry.content)
   }
 
   function handleDeleteRequest(e: React.MouseEvent) {
@@ -66,14 +68,19 @@ export const SomaticBefundEntryCard = memo(function SomaticBefundEntryCard({
         <span className="verlauf-entry__actions" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
-            className="verlauf-entry__action-btn"
-            title={t('verlaufEntryCopy')}
+            className={`verlauf-entry__action-btn${copied ? ' verlauf-entry__action-btn--copied' : ''}`}
+            title={copied ? t('copyButtonCopied') : t('verlaufEntryCopy')}
+            aria-label={copied ? t('copyButtonCopied') : t('verlaufEntryCopy')}
             onClick={handleCopy}
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-            </svg>
+            {copied ? (
+              <Check width={13} height={13} strokeWidth={2} aria-hidden />
+            ) : (
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+            )}
           </button>
           <button
             type="button"

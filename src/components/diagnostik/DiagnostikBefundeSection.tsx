@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Clipboard, Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Trash2 } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
 import { BEFUND_TYPES, getBefundSchema } from '../../data/befundSchemas'
 import type { UiTranslationKey } from '../../data/uiTranslations'
@@ -18,6 +18,7 @@ import {
 } from '../../utils/befundRender'
 import { BefundPopup } from './BefundPopup'
 import { EcgBefundCard } from './EcgBefundCard'
+import { CopyButton } from '../common/CopyButton'
 import {
   ANFORDERUNG_PRESET_EEG,
   ANFORDERUNG_PRESET_EKG,
@@ -96,18 +97,10 @@ interface DiagnostikBefundeMainProps {
   onRequestAnforderung?: (preset?: AnforderungModalPreset | null) => void
 }
 
-function copyBefundToClipboard(record: BefundRecord, language: UiLanguage): void {
+function buildBefundClipboardText(record: BefundRecord, language: UiLanguage): string {
   const text = renderBefundContent(record, language)
   const header = `${getBefundSchema(record.type, language).title} — ${formatBefundDate(record.examDate)}`
-  const payload = `${header}\n\n${text}`
-  navigator.clipboard.writeText(payload).catch(() => {
-    const ta = document.createElement('textarea')
-    ta.value = payload
-    document.body.appendChild(ta)
-    ta.select()
-    document.execCommand('copy')
-    document.body.removeChild(ta)
-  })
+  return `${header}\n\n${text}`
 }
 
 export function DiagnostikBefundeMain({
@@ -149,9 +142,6 @@ export function DiagnostikBefundeMain({
     onSelect(null)
   }, [caseId, onRecordsChange, onSelect, readOnly, t])
 
-  const handleCopy = useCallback((record: BefundRecord) => {
-    copyBefundToClipboard(record, language)
-  }, [language])
 
   return (
     <>
@@ -199,7 +189,7 @@ export function DiagnostikBefundeMain({
                 record={selected}
                 readOnly={readOnly}
                 onEdit={() => openEdit(selected)}
-                onCopy={() => handleCopy(selected)}
+                copyText={buildBefundClipboardText(selected, language)}
                 onDelete={() => handleDelete(selected)}
               />
             ) : (
@@ -219,15 +209,10 @@ export function DiagnostikBefundeMain({
                     </span>
                   </div>
                   <div className="labor-befund-header__actions">
-                    <button
-                      type="button"
-                      className="icon-action-btn"
-                      title={t('befundCopy')}
-                      aria-label={t('befundCopy')}
-                      onClick={() => handleCopy(selected)}
-                    >
-                      <Clipboard strokeWidth={1.75} aria-hidden />
-                    </button>
+                    <CopyButton
+                      text={() => buildBefundClipboardText(selected, language)}
+                      label={t('befundCopy')}
+                    />
                     <button
                       type="button"
                       className="icon-action-btn"
