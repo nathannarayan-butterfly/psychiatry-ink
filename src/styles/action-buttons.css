@@ -81,3 +81,34 @@
 .icon-action-btn--bordered.icon-action-btn--danger:hover:not(:disabled) {
   border-color: color-mix(in srgb, var(--color-danger, #dc2626) 35%, transparent);
 }
+
+/*
+ * Shared CopyButton (src/components/common/CopyButton.tsx)
+ * -------------------------------------------------------
+ * Built on `icon-action-btn`. Supports an optional inline label and carries a
+ * visually-hidden live region that announces "Text kopiert" to screen readers.
+ */
+.copy-button--with-label {
+  width: auto;
+  gap: 0.4rem;
+  padding: 0 0.55rem;
+}
+
+.copy-button__label {
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.copy-button__live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

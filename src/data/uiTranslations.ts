@@ -1787,6 +1787,24 @@ export const uiTranslations = {
     fr: 'Butterfly',
     es: 'Butterfly',
   },
+  askButterflyCopyAnswer: {
+    de: 'Antwort kopieren',
+    en: 'Copy answer',
+    fr: 'Copier la réponse',
+    es: 'Copiar respuesta',
+  },
+  copyButtonCopy: {
+    de: 'Text kopieren',
+    en: 'Copy text',
+    fr: 'Copier le texte',
+    es: 'Copiar texto',
+  },
+  copyButtonCopied: {
+    de: 'Text kopiert',
+    en: 'Text copied',
+    fr: 'Texte copié',
+    es: 'Texto copiado',
+  },
   askButterflyPlaceholder: {
     de: 'Frage eingeben oder diktieren…',
     en: 'Type or dictate a question…',
