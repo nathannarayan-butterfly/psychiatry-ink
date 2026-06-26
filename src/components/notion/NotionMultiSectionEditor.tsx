@@ -108,6 +108,10 @@ export function NotionMultiSectionEditor({
   const fontScale = useEditorFontScale()
   const containerRef = useRef<HTMLDivElement>(null)
   const textareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({})
+  // Tracks the textarea value each section was last auto-resized for, so we only
+  // force a layout reflow on the section that actually changed instead of every
+  // section on every keystroke (the reflow loop was O(sections) per keystroke).
+  const lastResizedRef = useRef<Record<string, string>>({})
   const [activeTextareaId, setActiveTextareaId] = useState<string | null>(activeSectionId)
   const [selectionToolbar, setSelectionToolbar] = useState<{
     text: string
@@ -134,13 +138,26 @@ export function NotionMultiSectionEditor({
   const syncTextareaHeights = useCallback(() => {
     for (const section of sections) {
       const textarea = textareaRefs.current[section.id]
-      if (textarea) resizeTextarea(textarea)
+      if (!textarea) continue
+      // Skip textareas whose content is unchanged since their last resize — the
+      // expensive part of resizeTextarea is the forced reflow, so avoiding it for
+      // untouched sections keeps per-keystroke work O(1) instead of O(sections).
+      if (lastResizedRef.current[section.id] === textarea.value) continue
+      resizeTextarea(textarea)
+      lastResizedRef.current[section.id] = textarea.value
     }
   }, [sections])
 
   useEffect(() => {
     syncTextareaHeights()
   }, [sectionContents, sections, syncTextareaHeights])
+
+  useEffect(() => {
+    // A font-size change alters the intrinsic height of every textarea, so the
+    // content-based guard above cannot detect it — force a full resync here.
+    lastResizedRef.current = {}
+    syncTextareaHeights()
+  }, [fontScale.cssValue, syncTextareaHeights])
 
   const focusSectionTextarea = useCallback((sectionId: string, cursorAt: number) => {
     requestAnimationFrame(() => {
@@ -443,7 +460,6 @@ export function NotionMultiSectionEditor({
             <textarea
               ref={(node) => {
                 textareaRefs.current[section.id] = node
-                if (node) resizeTextarea(node)
               }}
               className="notion-editor__textarea notion-editor__textarea--section"
               value={content}
@@ -452,7 +468,10 @@ export function NotionMultiSectionEditor({
                 if (documentTypeId === 'aufnahme' && isAufnahmeStructuredSection(section.id)) {
                   onBefundSectionManualEdit?.(section.id)
                 }
+                // Resize only the edited textarea synchronously (no flicker) and
+                // record its value so the post-render sync effect skips it.
                 resizeTextarea(event.target)
+                lastResizedRef.current[section.id] = event.target.value
               }}
               onFocus={() => {
                 setActiveTextareaId(section.id)

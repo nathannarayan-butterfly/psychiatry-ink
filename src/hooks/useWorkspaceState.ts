@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import {
   copyTextToClipboard,
   getNotionDocumentCopyText,
@@ -747,6 +747,24 @@ export function useWorkspaceState(
     return sectionContents
   }, [activeSectionId, editorContent, sectionContents, sections.length])
 
+  // Deferred snapshot of the live editor text, used only for the display-only
+  // derivations below (document-scope preview + filled-section count). React keeps
+  // these at the previous value during the urgent keystroke render and recomputes
+  // them in a low-priority pass, so the per-keystroke whole-document string build
+  // and section scan no longer block typing. The imperative generation path keeps
+  // using getLatestSectionContents() (live values) so generated output is exact.
+  const deferredEditorContent = useDeferredValue(editorContent)
+  const deferredSectionContents = useDeferredValue(sectionContents)
+  const deferredLatestContents = useMemo<Record<string, string>>(() => {
+    if (activeSectionId) {
+      return { ...deferredSectionContents, [activeSectionId]: deferredEditorContent }
+    }
+    if (deferredEditorContent.trim() && sections.length === 0) {
+      return { ...deferredSectionContents, body: deferredEditorContent }
+    }
+    return deferredSectionContents
+  }, [activeSectionId, deferredEditorContent, deferredSectionContents, sections.length])
+
   const getIncompleteSections = useCallback(() => {
     return sections.filter((section) => section.status !== 'saved')
   }, [sections])
@@ -806,22 +824,21 @@ export function useWorkspaceState(
   )
 
   const documentEditorContent = useMemo(
-    () => getGenerationSourceContent('document'),
-    [getGenerationSourceContent],
+    () => buildDocumentGenerationInput(deferredLatestContents),
+    [buildDocumentGenerationInput, deferredLatestContents],
   )
 
   const documentScopeFilledSectionCount = useMemo(() => {
-    const contents = getLatestSectionContents()
     return sections.filter((section) => {
       const sectionConfig = currentDocumentType?.sections?.find(
         (item) => item.id === section.id,
       )
       return getInitialEditorContent(
-        contents[section.id],
+        deferredLatestContents[section.id],
         sectionConfig?.prefilledText,
       ).trim()
     }).length
-  }, [currentDocumentType, editorContent, getLatestSectionContents, sectionContents, sections])
+  }, [currentDocumentType, deferredLatestContents, sections])
 
   const estimatedGenerationCredits = useMemo(
     () =>
