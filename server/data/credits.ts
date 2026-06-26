@@ -224,6 +224,91 @@ export async function setLock(userId: string, locked: boolean): Promise<AiCredit
 }
 
 /**
+ * Persist the opt-in auto-recharge settings for a user (UI-driven). Wraps
+ * `ai_credit_set_auto_recharge` (service-role only). Enabling clears any prior
+ * needs-attention failure state.
+ */
+export async function setAutoRecharge(
+  userId: string,
+  settings: { enabled?: boolean; threshold?: number; packId?: string | null; amount?: number | null },
+): Promise<AiCreditAccount> {
+  const { data, error } = await getSupabaseAdmin().rpc('ai_credit_set_auto_recharge', {
+    p_user_id: userId,
+    p_enabled: settings.enabled ?? null,
+    p_threshold: settings.threshold ?? null,
+    p_pack_id: settings.packId ?? null,
+    p_amount: settings.amount ?? null,
+  } as Database['public']['Functions']['ai_credit_set_auto_recharge']['Args'])
+  if (error) throw new Error(`ai_credit_set_auto_recharge failed: ${error.message}`)
+  if (!data) throw new Error('ai_credit_set_auto_recharge returned no account')
+  return data as AiCreditAccount
+}
+
+/**
+ * Persist the Stripe customer + saved off-session payment method captured by
+ * checkout / SetupIntent. Pass `paymentMethodId = null` for a customer-only
+ * write (during customer creation). A saved payment method clears any prior
+ * needs-attention failure state. Wraps `ai_credit_set_payment_method`.
+ */
+export async function setPaymentMethod(
+  userId: string,
+  customerId: string | null,
+  paymentMethodId: string | null,
+): Promise<AiCreditAccount> {
+  const { data, error } = await getSupabaseAdmin().rpc('ai_credit_set_payment_method', {
+    p_user_id: userId,
+    p_customer_id: customerId ?? null,
+    p_payment_method_id: paymentMethodId ?? null,
+  } as Database['public']['Functions']['ai_credit_set_payment_method']['Args'])
+  if (error) throw new Error(`ai_credit_set_payment_method failed: ${error.message}`)
+  if (!data) throw new Error('ai_credit_set_payment_method returned no account')
+  return data as AiCreditAccount
+}
+
+/**
+ * Atomically decide + claim an auto-recharge attempt. Returns the account row
+ * when THIS caller won the right to charge (eligible, under threshold, not
+ * in-flight, cooldown elapsed, under the per-period cap), or `null` when not
+ * eligible. The decision and the single-winner in-flight lock are one
+ * conditional UPDATE inside `ai_credit_auto_recharge_begin`. Intervals are
+ * Postgres interval literals (e.g. '1 day', '00:05:00').
+ */
+export async function beginAutoRecharge(
+  userId: string,
+  opts: { maxPerPeriod: number; period: string; cooldown: string; stale: string },
+): Promise<AiCreditAccount | null> {
+  const { data, error } = await getSupabaseAdmin().rpc('ai_credit_auto_recharge_begin', {
+    p_user_id: userId,
+    p_max_per_period: opts.maxPerPeriod,
+    p_period: opts.period,
+    p_cooldown: opts.cooldown,
+    p_stale: opts.stale,
+  } as Database['public']['Functions']['ai_credit_auto_recharge_begin']['Args'])
+  if (error) throw new Error(`ai_credit_auto_recharge_begin failed: ${error.message}`)
+  return (data as AiCreditAccount) ?? null
+}
+
+/**
+ * Release the auto-recharge in-flight lock and record the outcome. On success
+ * stamps the cooldown; on a hard failure (`disable = true`) flips the opt-in off
+ * and marks `needs_attention`. The credit grant itself is performed by the
+ * Stripe webhook. Wraps `ai_credit_auto_recharge_finish`.
+ */
+export async function finishAutoRecharge(
+  userId: string,
+  outcome: { success: boolean; disable?: boolean; failureReason?: string | null },
+): Promise<AiCreditAccount | null> {
+  const { data, error } = await getSupabaseAdmin().rpc('ai_credit_auto_recharge_finish', {
+    p_user_id: userId,
+    p_success: outcome.success,
+    p_disable: outcome.disable ?? false,
+    p_failure_reason: outcome.failureReason ?? null,
+  } as Database['public']['Functions']['ai_credit_auto_recharge_finish']['Args'])
+  if (error) throw new Error(`ai_credit_auto_recharge_finish failed: ${error.message}`)
+  return (data as AiCreditAccount) ?? null
+}
+
+/**
  * Resolve the app user id for a Stripe customer id (webhook → app user). Uses
  * the partial `ai_credit_accounts_stripe_customer_idx`. Returns null when no
  * account is mapped to the customer.
@@ -287,5 +372,9 @@ export const creditsRepo = {
   applySubscription,
   grantSubscriptionPeriod,
   setLock,
+  setAutoRecharge,
+  setPaymentMethod,
+  beginAutoRecharge,
+  finishAutoRecharge,
   getUserIdByStripeCustomerId,
 }

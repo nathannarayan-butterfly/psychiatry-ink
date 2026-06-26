@@ -183,7 +183,18 @@ export type Database = {
       }
       ai_credit_accounts: {
         Row: {
+          auto_recharge_amount: number | null
+          auto_recharge_enabled: boolean
+          auto_recharge_failure_reason: string | null
+          auto_recharge_in_flight_at: string | null
+          auto_recharge_last_at: string | null
+          auto_recharge_pack_id: string | null
+          auto_recharge_period_count: number
+          auto_recharge_period_start: string | null
+          auto_recharge_status: string | null
+          auto_recharge_threshold: number
           created_at: string
+          default_payment_method_id: string | null
           id: string
           locked_at: string | null
           monthly_credits: number
@@ -204,7 +215,18 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          auto_recharge_amount?: number | null
+          auto_recharge_enabled?: boolean
+          auto_recharge_failure_reason?: string | null
+          auto_recharge_in_flight_at?: string | null
+          auto_recharge_last_at?: string | null
+          auto_recharge_pack_id?: string | null
+          auto_recharge_period_count?: number
+          auto_recharge_period_start?: string | null
+          auto_recharge_status?: string | null
+          auto_recharge_threshold?: number
           created_at?: string
+          default_payment_method_id?: string | null
           id?: string
           locked_at?: string | null
           monthly_credits?: number
@@ -225,7 +247,18 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          auto_recharge_amount?: number | null
+          auto_recharge_enabled?: boolean
+          auto_recharge_failure_reason?: string | null
+          auto_recharge_in_flight_at?: string | null
+          auto_recharge_last_at?: string | null
+          auto_recharge_pack_id?: string | null
+          auto_recharge_period_count?: number
+          auto_recharge_period_start?: string | null
+          auto_recharge_status?: string | null
+          auto_recharge_threshold?: number
           created_at?: string
+          default_payment_method_id?: string | null
           id?: string
           locked_at?: string | null
           monthly_credits?: number
@@ -3773,6 +3806,191 @@ export type Database = {
         }
         Returns: {
           created_at: string
+          id: string
+          locked_at: string | null
+          monthly_credits: number
+          monthly_reset_at: string
+          organisation_id: string | null
+          purchased_credits: number
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_cancel_at_period_end: boolean
+          subscription_current_period_end: string | null
+          subscription_interval: string | null
+          subscription_plan: string | null
+          subscription_price_id: string | null
+          subscription_status: string | null
+          trial_ends_at: string | null
+          trial_started_at: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ai_credit_accounts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      ai_credit_auto_recharge_begin: {
+        Args: {
+          p_user_id: string
+          p_max_per_period: number
+          p_period: string
+          p_cooldown: string
+          p_stale: string
+        }
+        Returns: {
+          auto_recharge_amount: number | null
+          auto_recharge_enabled: boolean
+          auto_recharge_failure_reason: string | null
+          auto_recharge_in_flight_at: string | null
+          auto_recharge_last_at: string | null
+          auto_recharge_pack_id: string | null
+          auto_recharge_period_count: number
+          auto_recharge_period_start: string | null
+          auto_recharge_status: string | null
+          auto_recharge_threshold: number
+          created_at: string
+          default_payment_method_id: string | null
+          id: string
+          locked_at: string | null
+          monthly_credits: number
+          monthly_reset_at: string
+          organisation_id: string | null
+          purchased_credits: number
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_cancel_at_period_end: boolean
+          subscription_current_period_end: string | null
+          subscription_interval: string | null
+          subscription_plan: string | null
+          subscription_price_id: string | null
+          subscription_status: string | null
+          trial_ends_at: string | null
+          trial_started_at: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ai_credit_accounts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      ai_credit_auto_recharge_finish: {
+        Args: {
+          p_user_id: string
+          p_success: boolean
+          p_disable: boolean
+          p_failure_reason: string
+        }
+        Returns: {
+          auto_recharge_amount: number | null
+          auto_recharge_enabled: boolean
+          auto_recharge_failure_reason: string | null
+          auto_recharge_in_flight_at: string | null
+          auto_recharge_last_at: string | null
+          auto_recharge_pack_id: string | null
+          auto_recharge_period_count: number
+          auto_recharge_period_start: string | null
+          auto_recharge_status: string | null
+          auto_recharge_threshold: number
+          created_at: string
+          default_payment_method_id: string | null
+          id: string
+          locked_at: string | null
+          monthly_credits: number
+          monthly_reset_at: string
+          organisation_id: string | null
+          purchased_credits: number
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_cancel_at_period_end: boolean
+          subscription_current_period_end: string | null
+          subscription_interval: string | null
+          subscription_plan: string | null
+          subscription_price_id: string | null
+          subscription_status: string | null
+          trial_ends_at: string | null
+          trial_started_at: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ai_credit_accounts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      ai_credit_set_auto_recharge: {
+        Args: {
+          p_user_id: string
+          p_enabled: boolean
+          p_threshold: number
+          p_pack_id: string
+          p_amount: number
+        }
+        Returns: {
+          auto_recharge_amount: number | null
+          auto_recharge_enabled: boolean
+          auto_recharge_failure_reason: string | null
+          auto_recharge_in_flight_at: string | null
+          auto_recharge_last_at: string | null
+          auto_recharge_pack_id: string | null
+          auto_recharge_period_count: number
+          auto_recharge_period_start: string | null
+          auto_recharge_status: string | null
+          auto_recharge_threshold: number
+          created_at: string
+          default_payment_method_id: string | null
+          id: string
+          locked_at: string | null
+          monthly_credits: number
+          monthly_reset_at: string
+          organisation_id: string | null
+          purchased_credits: number
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_cancel_at_period_end: boolean
+          subscription_current_period_end: string | null
+          subscription_interval: string | null
+          subscription_plan: string | null
+          subscription_price_id: string | null
+          subscription_status: string | null
+          trial_ends_at: string | null
+          trial_started_at: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ai_credit_accounts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      ai_credit_set_payment_method: {
+        Args: {
+          p_user_id: string
+          p_customer_id: string
+          p_payment_method_id: string
+        }
+        Returns: {
+          auto_recharge_amount: number | null
+          auto_recharge_enabled: boolean
+          auto_recharge_failure_reason: string | null
+          auto_recharge_in_flight_at: string | null
+          auto_recharge_last_at: string | null
+          auto_recharge_pack_id: string | null
+          auto_recharge_period_count: number
+          auto_recharge_period_start: string | null
+          auto_recharge_status: string | null
+          auto_recharge_threshold: number
+          created_at: string
+          default_payment_method_id: string | null
           id: string
           locked_at: string | null
           monthly_credits: number
