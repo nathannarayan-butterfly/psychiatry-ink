@@ -85,11 +85,23 @@ export function isClinicalIntelligenceV1Enabled(): boolean {
   return import.meta.env.VITE_CLINICAL_INTELLIGENCE_V1_ENABLED === 'true'
 }
 
-/** Whether the Clinical Intelligence surface is available for a given case. */
+/**
+ * Whether the Clinical Intelligence *surface* (sidebar entry, case page and
+ * Übersicht band) is reachable for a given case.
+ *
+ * The section is ALWAYS available so a case — including a brand-new patient
+ * with little or no data — can always navigate to it. When there is nothing to
+ * show yet, the panel renders a graceful empty state inviting the clinician to
+ * document the chart; it never disappears.
+ *
+ * Note: this only controls *visibility/navigation*. The cost-bearing AI run
+ * itself stays gated behind `isClinicalIntelligenceV1Enabled()` (and the server
+ * flag), so making the section visible never triggers any AI call on its own.
+ */
 export function isClinicalIntelligenceAvailableForCase(
   _caseId: string | undefined | null,
 ): boolean {
-  return isClinicalIntelligenceV1Enabled()
+  return true
 }
 
 /**

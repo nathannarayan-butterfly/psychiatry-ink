@@ -42,6 +42,15 @@
   width: 100%;
 }
 
+/* —— Graceful empty state (brand-new patient / no data yet) —— */
+
+.ci-panel__empty-lead {
+  margin: 0;
+  max-width: 56ch;
+  color: var(--text-muted, #6b7280);
+  line-height: 1.55;
+}
+
 /* —— Side-by-side dimensional + mechanism graphs (full CI page) —— */
 
 .ci-graphs-row {

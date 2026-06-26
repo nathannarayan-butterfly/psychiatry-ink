@@ -23,6 +23,7 @@ import { ClinicalSection } from '../ClinicalSection'
 import {
   isClinicalIntelligenceAvailableForCase,
   isClinicalIntelligenceDebugMode,
+  isClinicalIntelligenceV1Enabled,
 } from '../../../utils/featureFlags'
 import { CiAccordion } from './CiAccordion'
 import { CiHypothesisBanner } from './CiHypothesisBanner'
@@ -70,6 +71,9 @@ export function ClinicalIntelligencePanel({
 
   const debugMode = isClinicalIntelligenceDebugMode()
   const enabled = isClinicalIntelligenceAvailableForCase(caseId)
+  // The section is always reachable, but the cost-bearing AI run stays gated by
+  // the feature flag so a visible empty state never enables an AI call by itself.
+  const runEnabled = isClinicalIntelligenceV1Enabled()
 
   const run = ci.latestRun
   const displayRun = run
@@ -216,6 +220,7 @@ export function ClinicalIntelligencePanel({
   const isRunning = ci.status === 'running'
   const showEvidenceMissing = !ci.hasEvidenceBase
   const totalPending = pendingDim + pendingMech
+  const runDisabled = isRunning || showEvidenceMissing || !runEnabled
 
   return (
     <div className={classes} data-language={language}>
@@ -276,7 +281,8 @@ export function ClinicalIntelligencePanel({
             type="button"
             className="ci-btn ci-btn--primary ci-panel__run"
             onClick={onRun}
-            disabled={isRunning || showEvidenceMissing}
+            disabled={runDisabled}
+            title={!runEnabled ? t('ciRunDisabledFeatureOff') : undefined}
           >
             {isRunning ? (
               <Loader2 className="ci-btn__icon ci-btn__icon--spin" aria-hidden strokeWidth={2} />
@@ -295,12 +301,6 @@ export function ClinicalIntelligencePanel({
       </div>
 
       <div className="ci-panel__main">
-          {showEvidenceMissing ? (
-        <ClinicalSection eyebrow={t('ciEvidenceMissingTitle')}>
-          <p>{t('ciEvidenceMissingBody')}</p>
-        </ClinicalSection>
-      ) : null}
-
       {ci.error ? (
         <ClinicalSection eyebrow={t('ciRunFailedTitle')}>
           <p className="ci-error">
@@ -310,11 +310,26 @@ export function ClinicalIntelligencePanel({
       ) : null}
 
       {!run ? (
-        <ClinicalSection eyebrow={t('ciNoRunYet')}>
-          <p>{t('ciEmptyStateBody')}</p>
+        // Graceful empty state — the section is always reachable, even for a
+        // brand-new patient with no data yet. The message adapts to why there
+        // is nothing to show, and always invites the clinician to add data.
+        <ClinicalSection eyebrow={t('ciEmptyStateTitle')} className="ci-panel__empty">
+          <p className="ci-panel__empty-lead">
+            {!runEnabled
+              ? t('ciFeatureOffBody')
+              : showEvidenceMissing
+                ? t('ciEmptyStateNeedsDataBody')
+                : t('ciEmptyStateBody')}
+          </p>
         </ClinicalSection>
       ) : (
         <>
+          {showEvidenceMissing ? (
+            <ClinicalSection eyebrow={t('ciEvidenceMissingTitle')}>
+              <p>{t('ciEvidenceMissingBody')}</p>
+            </ClinicalSection>
+          ) : null}
+
           {(dimensional || mechanism) ? (
             <div className="ci-graphs-row">
               {dimensional ? (

@@ -14978,6 +14978,30 @@ export const uiTranslations = {
     fr: 'Aucune analyse pour ce cas. Lancez une exécution avec le bouton ci-dessus.',
     es: 'Aún no hay análisis para este caso. Inicie una ejecución con el botón superior.',
   },
+  ciEmptyStateTitle: {
+    de: 'Noch keine Analyse',
+    en: 'No analysis yet',
+    fr: 'Aucune analyse',
+    es: 'Aún sin análisis',
+  },
+  ciEmptyStateNeedsDataBody: {
+    de: 'Für diesen Fall liegen noch keine Daten für die Klinische Intelligenz vor. Sobald Anamnese und Verlauf dokumentiert sind, können Sie hier eine dimensionale und mechanistische Analyse starten.',
+    en: 'There is no data for Clinical Intelligence in this case yet. Once anamnesis and course are documented, you can start a dimensional and mechanistic analysis here.',
+    fr: 'Aucune donnée pour l’Intelligence clinique dans ce cas. Une fois l’anamnèse et l’évolution documentées, vous pourrez lancer ici une analyse dimensionnelle et mécanistique.',
+    es: 'Todavía no hay datos para Inteligencia clínica en este caso. Una vez documentadas la anamnesis y la evolución, podrá iniciar aquí un análisis dimensional y mecánico.',
+  },
+  ciFeatureOffBody: {
+    de: 'Die Klinische Intelligenz ist verfügbar, die KI-Analyse ist in dieser Umgebung jedoch noch nicht aktiviert. Dokumentieren Sie weiter den Fall — sobald die Funktion freigeschaltet ist, kann hier eine Analyse erstellt werden.',
+    en: 'Clinical Intelligence is available, but the AI analysis is not enabled in this environment yet. Keep documenting the case — once the feature is unlocked, an analysis can be created here.',
+    fr: 'L’Intelligence clinique est disponible, mais l’analyse IA n’est pas encore activée dans cet environnement. Continuez à documenter le cas — une fois la fonction débloquée, une analyse pourra être créée ici.',
+    es: 'Inteligencia clínica está disponible, pero el análisis de IA aún no está habilitado en este entorno. Siga documentando el caso — cuando la función se active, podrá crearse un análisis aquí.',
+  },
+  ciRunDisabledFeatureOff: {
+    de: 'KI-Analyse ist in dieser Umgebung nicht aktiviert.',
+    en: 'AI analysis is not enabled in this environment.',
+    fr: 'L’analyse IA n’est pas activée dans cet environnement.',
+    es: 'El análisis de IA no está habilitado en este entorno.',
+  },
   ciRunFailedTitle: {
     de: 'Analyse fehlgeschlagen',
     en: 'Analysis failed',
