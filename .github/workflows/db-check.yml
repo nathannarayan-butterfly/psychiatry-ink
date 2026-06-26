@@ -1,9 +1,8 @@
 name: db-check
 
 # Enforces docs/database-migration-policy.md:
-#   Supabase SQL migrations are the single production source of truth;
-#   Prisma must not silently mutate production schema.
-# Structural-only: needs no live database (DB-connected drift checks skip gracefully).
+#   Supabase SQL migrations are the single production source of truth.
+# Structural-only: needs no live database.
 
 on:
   push:
