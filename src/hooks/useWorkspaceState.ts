@@ -14,7 +14,7 @@ import type {
 } from '../types'
 import type { EnglishVariant, UiLanguage } from '../types/settings'
 import type { AufnahmeSectionMetadata } from '../types/anamneseBefund'
-import { isAufnahmeBefundSection } from '../types/anamneseBefund'
+import { isAufnahmeStructuredSection } from '../types/anamneseBefund'
 import { metadataForManualEdit } from '../utils/anamnese/befundMetadata'
 import {
   buildPsychopathNormalBefundText,
@@ -691,7 +691,7 @@ export function useWorkspaceState(
   )
 
   const markBefundSectionManuallyEdited = useCallback((sectionId: string) => {
-    if (!isAufnahmeBefundSection(sectionId)) return
+    if (!isAufnahmeStructuredSection(sectionId)) return
     setSectionMetadata((current) => {
       const prev = current[sectionId]
       const mode = prev?.inputMode ?? 'short'

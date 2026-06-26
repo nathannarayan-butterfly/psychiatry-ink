@@ -24,6 +24,30 @@ export const aufnahmeBefundUiTranslations = {
     fr: 'Saisie pas à pas',
     es: 'Captura paso a paso',
   },
+  aufnahmeBefundActionFree: {
+    de: 'Freitext',
+    en: 'Free text',
+    fr: 'Texte libre',
+    es: 'Texto libre',
+  },
+  aufnahmeBefundActionAmdp: {
+    de: 'AMDP-Vorlage',
+    en: 'AMDP template',
+    fr: 'Modèle AMDP',
+    es: 'Plantilla AMDP',
+  },
+  aufnahmeBefundPsychopathShortTitle: {
+    de: 'Psychopathologischer Befund — Kurztext',
+    en: 'Mental state exam — short text',
+    fr: 'État psychopathologique — texte court',
+    es: 'Estado psicopatológico — texto breve',
+  },
+  aufnahmeBefundPsychopathToolbarLabel: {
+    de: 'Psychopathologie-Eingabe',
+    en: 'Mental state entry',
+    fr: 'Saisie psychopathologique',
+    es: 'Entrada psicopatológica',
+  },
   aufnahmeBefundActionRegenerate: {
     de: 'Neu generieren',
     en: 'Regenerate',

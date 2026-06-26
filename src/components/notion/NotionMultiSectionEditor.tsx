@@ -4,7 +4,11 @@ import { useTranslation } from '../../context/TranslationContext'
 import type { AiToolKey } from '../../data/aiTools'
 import type { DocumentSection, DocumentVariantMode, InputMode } from '../../types'
 import type { AufnahmeSectionMetadata } from '../../types/anamneseBefund'
-import { isAufnahmeBefundSection } from '../../types/anamneseBefund'
+import {
+  isAufnahmeBefundSection,
+  isAufnahmePsychopathSection,
+  isAufnahmeStructuredSection,
+} from '../../types/anamneseBefund'
 import type { DictationPhase } from '../../types/dictation'
 import {
   copyTextToClipboard,
@@ -21,6 +25,7 @@ import { useInlineAiEdit } from './inlineAiEdit/useInlineAiEdit'
 import { useEditorFontScale } from '../../hooks/useEditorFontScale'
 import { IMPROVE_ONLY_SECTION_AI_TOOLS, NotionSectionAiLinks } from './NotionSectionAiLinks'
 import { AufnahmeBefundSectionHost } from './anamnese/AufnahmeBefundSectionHost'
+import { AufnahmePsychopathSectionHost } from './anamnese/AufnahmePsychopathSectionHost'
 import { showNotionToast } from './NotionToast'
 import { SlashCommandMenu, type SlashCommandId } from './SlashCommandMenu'
 import type { PendingPaste } from './NotionPaper'
@@ -419,6 +424,22 @@ export function NotionMultiSectionEditor({
                 onAiGenerate={onSectionAiTool ? (id) => onSectionAiTool(id, 'structure') : undefined}
               />
             ) : null}
+            {documentTypeId === 'aufnahme' && isAufnahmePsychopathSection(section.id) ? (
+              <AufnahmePsychopathSectionHost
+                sectionId={section.id}
+                isActive={isActive}
+                readOnly={readOnly}
+                caseId={caseId}
+                content={content}
+                metadata={sectionMetadata[section.id]}
+                onContentChange={onSectionContentChange}
+                onMetadataChange={(id, meta) => onSectionMetadataChange?.(id, meta)}
+                onFocusEditor={(id) => {
+                  onSectionFocus(id)
+                  focusSectionTextarea(id, content.length)
+                }}
+              />
+            ) : null}
             <textarea
               ref={(node) => {
                 textareaRefs.current[section.id] = node
@@ -428,7 +449,7 @@ export function NotionMultiSectionEditor({
               value={content}
               onChange={(event) => {
                 onSectionContentChange(section.id, event.target.value)
-                if (documentTypeId === 'aufnahme' && isAufnahmeBefundSection(section.id)) {
+                if (documentTypeId === 'aufnahme' && isAufnahmeStructuredSection(section.id)) {
                   onBefundSectionManualEdit?.(section.id)
                 }
                 resizeTextarea(event.target)

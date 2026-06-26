@@ -319,8 +319,11 @@ export const SOMATIC_BEFUND_SHORT_TEMPLATE =
 export const NEURO_BEFUND_SHORT_TEMPLATE =
   'Neurologisch zeigten sich keine fokalneurologischen Defizite. Sprache, Motorik, Sensibilität, Koordination und Gangbild waren orientierend unauffällig. Kein Hinweis auf akute neurologische Ausfälle.'
 
+export const PSYCHOPATH_BEFUND_SHORT_TEMPLATE =
+  'Wach, bewusstseinsklar und allseits orientiert. Aufmerksamkeit, Konzentration und Gedächtnis orientierend ungestört. Formales und inhaltliches Denken geordnet, kein Anhalt für Wahn, Zwänge oder Sinnestäuschungen. Ich-Funktionen intakt. Affekt im Untersuchungsverlauf ausgeglichen, Stimmung euthym, Antrieb und Psychomotorik regelrecht. Keine Hinweise auf akute Suizidalität. Keine vegetativen Auffälligkeiten.'
+
 export function defaultShortTemplateForSection(sectionId: string): string {
-  return sectionId === 'neurologischer-befund'
-    ? NEURO_BEFUND_SHORT_TEMPLATE
-    : SOMATIC_BEFUND_SHORT_TEMPLATE
+  if (sectionId === 'neurologischer-befund') return NEURO_BEFUND_SHORT_TEMPLATE
+  if (sectionId === 'psychopathologischer-befund') return PSYCHOPATH_BEFUND_SHORT_TEMPLATE
+  return SOMATIC_BEFUND_SHORT_TEMPLATE
 }
