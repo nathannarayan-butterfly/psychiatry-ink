@@ -8669,6 +8669,48 @@ export const uiTranslations = {
     fr: 'Nouvelle entrée',
     es: 'Nueva entrada',
   },
+  verlaufNewEntryMenuLabel: {
+    de: 'Eintragsart wählen',
+    en: 'Choose entry type',
+    fr: 'Choisir le type d’entrée',
+    es: 'Elegir tipo de entrada',
+  },
+  verlaufNewEntryShort: {
+    de: 'Kurzer Eintrag',
+    en: 'Short entry',
+    fr: 'Entrée courte',
+    es: 'Entrada breve',
+  },
+  verlaufNewEntryDetailed: {
+    de: 'Detaillierter Eintrag',
+    en: 'Detailed entry',
+    fr: 'Entrée détaillée',
+    es: 'Entrada detallada',
+  },
+  verlaufNewEntryVitals: {
+    de: 'Vitalwerte',
+    en: 'Vital signs',
+    fr: 'Constantes vitales',
+    es: 'Constantes vitales',
+  },
+  verlaufVitalsModalTitle: {
+    de: 'Vitalwerte',
+    en: 'Vital signs',
+    fr: 'Constantes vitales',
+    es: 'Constantes vitales',
+  },
+  verlaufVitalsModalDesc: {
+    de: 'Allgemeinzustand und Vitalzeichen schnell dokumentieren.',
+    en: 'Quickly document general condition and vital signs.',
+    fr: 'Documenter rapidement l’état général et les constantes vitales.',
+    es: 'Documente rápidamente el estado general y las constantes vitales.',
+  },
+  verlaufVitalsSaved: {
+    de: 'Vitalwerte gespeichert',
+    en: 'Vital signs saved',
+    fr: 'Constantes vitales enregistrées',
+    es: 'Constantes vitales guardadas',
+  },
   verlaufSomaticBefundNew: {
     de: 'Somatischer Befund',
     en: 'Somatic findings',

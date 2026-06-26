@@ -10,6 +10,7 @@ import { verlaufBroadSchema } from './verlaufBroad'
 import { verlaufNoteQuickSchema } from './verlaufNoteQuick'
 import { verlaufRisikoSchema } from './verlaufRisiko'
 import { verlaufShortSchema } from './verlaufShort'
+import { vitalsQuickSchema } from './vitalsQuick'
 
 const REGISTRY: Record<GuidedEntryItemType, GuidedEntrySchema> = {
   'verlauf-short': verlaufShortSchema,
@@ -21,6 +22,7 @@ const REGISTRY: Record<GuidedEntryItemType, GuidedEntrySchema> = {
   'risk-update-quick': riskUpdateQuickSchema,
   'befund-ecg': ecgBefundSchema,
   'somatic-befund-quick': somaticBefundQuickSchema,
+  'vitalwerte-quick': vitalsQuickSchema,
   'anamnese-somatic-befund': anamneseSomaticBefundSchema,
   'anamnese-neuro-befund': anamneseNeuroBefundSchema,
 }

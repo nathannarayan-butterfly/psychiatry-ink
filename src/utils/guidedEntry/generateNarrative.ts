@@ -108,11 +108,36 @@ function generatePsychopathFindingNarrative(
   return blocks.join('\n\n').trim()
 }
 
+/** Vital signs as readable, localized `Label: Wert` lines (Item 5). */
+function generateVitalsNarrative(
+  schema: GuidedEntrySchema,
+  values: GuidedEntryFieldValues,
+  language: UiLanguage,
+): string {
+  const lines: string[] = []
+  for (const field of schema.fields) {
+    if (field.id === 'examDate') continue
+    if (!fieldHasContent(values, field.id)) continue
+    const label = translateUi(language, field.labelKey as UiTranslationKey)
+    const value = formatFieldValue(schema, field.id, values, language)
+    if (!value) continue
+    lines.push(`${label}: ${value}`)
+  }
+  if (lines.length === 0) return ''
+  const heading = translateUi(language, 'guidedEntryGenSomaticVitals')
+  return `${heading}\n${lines.join('\n')}`.trim()
+}
+
 export function generateGuidedNarrative(
   schema: GuidedEntrySchema,
   values: GuidedEntryFieldValues,
   language: UiLanguage,
 ): GuidedEntryGenerateResult {
+  if (schema.itemType === 'vitalwerte-quick') {
+    const text = generateVitalsNarrative(schema, values, language)
+    return { text, answers: fieldValuesToAnswers(schema, values) }
+  }
+
   if (schema.itemType === 'psychopath-finding') {
     const text = generatePsychopathFindingNarrative(values, language)
     return { text, answers: fieldValuesToAnswers(schema, values) }

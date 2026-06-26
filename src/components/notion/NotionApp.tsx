@@ -1669,9 +1669,12 @@ function NotionAppInner({
     ],
   )
 
-  const handleVerlaufNewEntryRequest = useCallback(() => {
-    beginGuidedEntryFlow('verlauf-short', () => setPendingVerlaufComposer(true))
-  }, [beginGuidedEntryFlow])
+  const handleVerlaufNewEntryRequest = useCallback(
+    (itemType: 'verlauf-short' | 'verlauf-broad' = 'verlauf-short') => {
+      beginGuidedEntryFlow(itemType, () => setPendingVerlaufComposer(true))
+    },
+    [beginGuidedEntryFlow],
+  )
 
   const handleOverviewQuickAction = useCallback(
     (action: OverviewQuickActionId) => {

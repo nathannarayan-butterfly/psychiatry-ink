@@ -9761,6 +9761,57 @@
   color: var(--text-primary, #37352f);
 }
 
+/* "Neuer Eintrag" submenu (Item 5): Kurzer / Detaillierter Eintrag, Vitalwerte,
+   Somatischer Befund. */
+.verlauf-new-entry {
+  position: relative;
+  display: inline-flex;
+}
+
+.verlauf-new-entry__chevron {
+  margin-left: 0.1rem;
+  opacity: 0.8;
+}
+
+.verlauf-new-entry__menu {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  z-index: 30;
+  min-width: 12rem;
+  display: flex;
+  flex-direction: column;
+  padding: 0.3rem;
+  background: var(--notion-paper-bg, #fff);
+  border: 1px solid var(--border-soft, #d8d8d4);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(15, 15, 15, 0.12);
+}
+
+.verlauf-new-entry__item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.82rem;
+  font-family: inherit;
+  font-weight: 500;
+  text-align: left;
+  color: var(--text-primary, #37352f);
+  background: transparent;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.verlauf-new-entry__item:hover,
+.verlauf-new-entry__item:focus-visible {
+  background: color-mix(in srgb, var(--accent, #4a7c59) 10%, transparent);
+  color: var(--accent, #4a7c59);
+  outline: none;
+}
+
 .verlauf-entry--somatic-befund {
   border-left: 3px solid color-mix(in srgb, #3d7ea6 55%, transparent);
   background: color-mix(in srgb, #3d7ea6 4%, var(--notion-paper-bg, #fff));
