@@ -1,10 +1,14 @@
 import { Copy } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { AiToolKey } from '../../data/aiTools'
 import type { DocumentSection, DocumentVariantMode, InputMode } from '../../types'
 import type { AufnahmeSectionMetadata } from '../../types/anamneseBefund'
-import { isAufnahmeBefundSection } from '../../types/anamneseBefund'
+import {
+  isAufnahmeBefundSection,
+  isAufnahmePsychopathSection,
+  isAufnahmeStructuredSection,
+} from '../../types/anamneseBefund'
 import type { DictationPhase } from '../../types/dictation'
 import {
   copyTextToClipboard,
@@ -18,8 +22,10 @@ import { ChecklistPanel } from '../ChecklistPanel'
 import { WorkspaceEditorOverlay } from '../WorkspaceEditorOverlay'
 import { FloatingSelectionToolbar, type SelectionActionId } from './FloatingSelectionToolbar'
 import { useInlineAiEdit } from './inlineAiEdit/useInlineAiEdit'
-import { NotionSectionAiLinks } from './NotionSectionAiLinks'
+import { useEditorFontScale } from '../../hooks/useEditorFontScale'
+import { IMPROVE_ONLY_SECTION_AI_TOOLS, NotionSectionAiLinks } from './NotionSectionAiLinks'
 import { AufnahmeBefundSectionHost } from './anamnese/AufnahmeBefundSectionHost'
+import { AufnahmePsychopathSectionHost } from './anamnese/AufnahmePsychopathSectionHost'
 import { showNotionToast } from './NotionToast'
 import { SlashCommandMenu, type SlashCommandId } from './SlashCommandMenu'
 import type { PendingPaste } from './NotionPaper'
@@ -99,6 +105,7 @@ export function NotionMultiSectionEditor({
   caseId,
 }: NotionMultiSectionEditorProps) {
   const { t } = useTranslation()
+  const fontScale = useEditorFontScale()
   const containerRef = useRef<HTMLDivElement>(null)
   const textareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({})
   const [activeTextareaId, setActiveTextareaId] = useState<string | null>(activeSectionId)
@@ -320,7 +327,44 @@ export function NotionMultiSectionEditor({
   )
 
   return (
-    <div className="notion-editor notion-editor--multistage" ref={containerRef}>
+    <div
+      className="notion-editor notion-editor--multistage"
+      ref={containerRef}
+      style={{ '--notion-editor-font-size': fontScale.cssValue } as CSSProperties}
+    >
+      <div className="notion-editor__font-control" role="group" aria-label={t('editorFontSizeLabel')}>
+        <span className="notion-editor__font-control-label">{t('editorFontSizeLabel')}</span>
+        <button
+          type="button"
+          className="notion-editor__font-btn"
+          onClick={fontScale.decrease}
+          disabled={!fontScale.canDecrease}
+          title={t('editorFontSizeDecrease')}
+          aria-label={t('editorFontSizeDecrease')}
+        >
+          A<span className="notion-editor__font-btn-minus">−</span>
+        </button>
+        <button
+          type="button"
+          className="notion-editor__font-btn notion-editor__font-btn--reset"
+          onClick={fontScale.reset}
+          disabled={fontScale.isDefault}
+          title={t('editorFontSizeReset')}
+          aria-label={t('editorFontSizeReset')}
+        >
+          A
+        </button>
+        <button
+          type="button"
+          className="notion-editor__font-btn"
+          onClick={fontScale.increase}
+          disabled={!fontScale.canIncrease}
+          title={t('editorFontSizeIncrease')}
+          aria-label={t('editorFontSizeIncrease')}
+        >
+          A<span className="notion-editor__font-btn-plus">+</span>
+        </button>
+      </div>
       {sections.map((section) => {
         const content = getSectionContent(section)
         const isActive = section.id === activeSectionId
@@ -380,6 +424,22 @@ export function NotionMultiSectionEditor({
                 onAiGenerate={onSectionAiTool ? (id) => onSectionAiTool(id, 'structure') : undefined}
               />
             ) : null}
+            {documentTypeId === 'aufnahme' && isAufnahmePsychopathSection(section.id) ? (
+              <AufnahmePsychopathSectionHost
+                sectionId={section.id}
+                isActive={isActive}
+                readOnly={readOnly}
+                caseId={caseId}
+                content={content}
+                metadata={sectionMetadata[section.id]}
+                onContentChange={onSectionContentChange}
+                onMetadataChange={(id, meta) => onSectionMetadataChange?.(id, meta)}
+                onFocusEditor={(id) => {
+                  onSectionFocus(id)
+                  focusSectionTextarea(id, content.length)
+                }}
+              />
+            ) : null}
             <textarea
               ref={(node) => {
                 textareaRefs.current[section.id] = node
@@ -389,7 +449,7 @@ export function NotionMultiSectionEditor({
               value={content}
               onChange={(event) => {
                 onSectionContentChange(section.id, event.target.value)
-                if (documentTypeId === 'aufnahme' && isAufnahmeBefundSection(section.id)) {
+                if (documentTypeId === 'aufnahme' && isAufnahmeStructuredSection(section.id)) {
                   onBefundSectionManualEdit?.(section.id)
                 }
                 resizeTextarea(event.target)
@@ -422,7 +482,14 @@ export function NotionMultiSectionEditor({
               rows={3}
             />
             {showQuickAi ? (
-              <NotionSectionAiLinks onAiTool={(tool) => onSectionAiTool(section.id, tool)} />
+              <NotionSectionAiLinks
+                onAiTool={(tool) => onSectionAiTool(section.id, tool)}
+                tools={
+                  section.id === 'psychopathologischer-befund'
+                    ? IMPROVE_ONLY_SECTION_AI_TOOLS
+                    : undefined
+                }
+              />
             ) : null}
           </section>
         )

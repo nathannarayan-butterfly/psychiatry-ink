@@ -163,8 +163,41 @@ export function syncSourceDokumente(
 export function upsertDokumentDraft(
   caseId: string,
   entry: Omit<DokumentEntry, 'id' | 'caseId'>,
+  /**
+   * Id of an existing archived document currently being edited. When provided
+   * and a matching non-deleted entry exists, that entry is updated in place
+   * (preserving its id) instead of creating a duplicate. This is what makes
+   * "open an Aufnahme in the workspace → edit → save" update the same document
+   * (Item 15) rather than spawning a second copy.
+   */
+  existingId?: string,
 ): DokumentEntry {
   const existing = loadRawArchive(caseId)
+
+  if (existingId) {
+    const targetIndex = existing.findIndex(
+      (item) => item.id === existingId && !item.deleted && item.pageType === entry.pageType,
+    )
+    if (targetIndex >= 0) {
+      const updated: DokumentEntry = {
+        ...existing[targetIndex],
+        ...entry,
+        id: existing[targetIndex].id,
+        caseId,
+        source:
+          entry.source === 'manual' || entry.source === 'ai-accepted'
+            ? entry.source
+            : existing[targetIndex].source,
+        date: entry.date,
+      }
+      const next = [...existing]
+      next[targetIndex] = updated
+      next.sort((a, b) => b.date.localeCompare(a.date))
+      saveRawArchive(caseId, next)
+      return updated
+    }
+  }
+
   const draftIndex = existing.findIndex(
     (item) => !item.deleted && item.pageType === entry.pageType && item.source === 'draft',
   )

@@ -243,6 +243,22 @@ export function updateVerlaufEntry(
   return next
 }
 
+/**
+ * Update the date/time of a Verlauf entry (supports back-dating). `isoDate`
+ * must be a full UTC ISO 8601 timestamp — build it from clinician-picked
+ * wall-clock values with {@link siteDateTimeToIso} so it round-trips correctly.
+ */
+export function updateVerlaufEntryDate(
+  id: string,
+  isoDate: string,
+  caseId?: string,
+): VerlaufFeedEntry[] {
+  const existing = loadVerlaufFeed(caseId)
+  const next = existing.map((e) => (e.id === id ? { ...e, date: isoDate } : e))
+  saveVerlaufFeed(next, caseId)
+  return next
+}
+
 export function deleteVerlaufEntry(
   id: string,
   caseId?: string,

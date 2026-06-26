@@ -10,6 +10,7 @@ export type AiToolKey =
   | 'bulletPoints'
   | 'proofread'
   | 'expand'
+  | 'improve'
 
 export const aiDocumentationToolKeys: AiToolKey[] = [
   'summarize',
@@ -19,6 +20,7 @@ export const aiDocumentationToolKeys: AiToolKey[] = [
   'bulletPoints',
   'proofread',
   'expand',
+  'improve',
 ]
 
 export const aiModelTierLabelKeys = {

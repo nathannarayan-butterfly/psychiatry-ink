@@ -4,12 +4,14 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.35rem;
-  margin: 0.35rem 0 0.65rem;
-  padding: 0.35rem 0.45rem;
+  gap: 0.3rem;
+  margin: 0.35rem 0 0.7rem;
+  padding: 0.4rem 0.55rem;
+  /* Minimal white card with a colored left accent — matches the app theme. */
   border-radius: 8px;
-  background: rgb(248 250 252 / 0.85);
-  border: 1px solid rgb(15 23 42 / 0.06);
+  background: var(--notion-paper-bg, #fff);
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 14%, var(--border-soft, rgb(15 23 42 / 0.08)));
+  border-left: 3px solid color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 55%, transparent);
 }
 
 .aufnahme-befund-toolbar__btn {
@@ -23,21 +25,27 @@
   padding: 0.28rem 0.55rem;
   border-radius: 6px;
   cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
 }
 
 .aufnahme-befund-toolbar__btn:hover:not(:disabled) {
-  background: rgb(255 255 255 / 0.9);
-  border-color: rgb(15 23 42 / 0.08);
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 10%, transparent);
+  color: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 80%, var(--text-ink, #1a1a1a));
 }
 
 .aufnahme-befund-toolbar__btn--active {
-  background: #fff;
-  border-color: rgb(59 130 246 / 0.35);
-  color: rgb(29 78 216);
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 12%, transparent);
+  border-color: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 35%, transparent);
+  color: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 85%, var(--text-ink, #1a1a1a));
 }
 
 .aufnahme-befund-toolbar__btn--danger {
   color: rgb(185 28 28);
+}
+
+.aufnahme-befund-toolbar__btn--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, #e53935 10%, transparent);
+  color: #c62828;
 }
 
 .aufnahme-befund-toolbar__btn:disabled {
@@ -48,7 +56,7 @@
 .aufnahme-befund-toolbar__sep {
   width: 1px;
   height: 1rem;
-  background: rgb(15 23 42 / 0.1);
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 18%, rgb(15 23 42 / 0.08));
   margin: 0 0.15rem;
 }
 
@@ -91,6 +99,7 @@
   margin: 0;
   font-size: 1.0625rem;
   font-weight: 600;
+  color: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 80%, var(--text-ink, #0f172a));
 }
 
 .aufnahme-befund-modal__desc {
@@ -121,11 +130,17 @@
   width: 100%;
   min-height: 8rem;
   resize: vertical;
-  border: 1px solid rgb(15 23 42 / 0.12);
+  border: 1px solid color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 16%, rgb(15 23 42 / 0.12));
   border-radius: 8px;
   padding: 0.65rem 0.75rem;
   font: inherit;
   line-height: 1.5;
+}
+
+.aufnahme-befund-modal__textarea:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 14%, transparent);
 }
 
 .aufnahme-befund-long-grid {
@@ -158,9 +173,13 @@
 }
 
 .aufnahme-befund-btn--primary {
-  background: rgb(37 99 235);
-  border-color: rgb(37 99 235);
+  background: var(--area-accent, var(--accent, #4a7c59));
+  border-color: var(--area-accent, var(--accent, #4a7c59));
   color: #fff;
+}
+
+.aufnahme-befund-btn--primary:hover {
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 88%, #000);
 }
 
 .aufnahme-befund-confirm {

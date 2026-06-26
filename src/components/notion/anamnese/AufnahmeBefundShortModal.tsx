@@ -31,7 +31,9 @@ export function AufnahmeBefundShortModal({
   const titleKey =
     sectionId === 'neurologischer-befund'
       ? 'aufnahmeBefundNeuroShortTitle'
-      : 'aufnahmeBefundSomaticShortTitle'
+      : sectionId === 'psychopathologischer-befund'
+        ? 'aufnahmeBefundPsychopathShortTitle'
+        : 'aufnahmeBefundSomaticShortTitle'
 
   return (
     <div className="aufnahme-befund-overlay" role="presentation" onClick={onClose}>

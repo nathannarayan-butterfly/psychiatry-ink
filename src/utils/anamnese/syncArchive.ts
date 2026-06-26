@@ -14,6 +14,8 @@ export interface WorkspaceDocumentArchiveInput {
   editorContent: string
   source: DokumentEntry['source']
   language?: UiLanguage
+  /** Id of the existing archived document being edited (update in place, Item 15). */
+  existingId?: string
 }
 
 export function buildWorkspaceDocumentArchiveContent(input: WorkspaceDocumentArchiveInput): {
@@ -66,13 +68,18 @@ export function syncWorkspaceDocumentToArchive(
   const category = inferDokumentCategory(input.documentTypeId)
   if (!category) return null
 
-  return upsertDokumentDraft(input.caseId, {
-    category,
-    title: input.title.trim() || input.documentTypeId,
-    content: built.content,
-    date: new Date().toISOString(),
-    source: input.source,
-    pageType: input.documentTypeId,
-    sectionContents: Object.keys(built.sectionContents).length > 0 ? built.sectionContents : undefined,
-  })
+  return upsertDokumentDraft(
+    input.caseId,
+    {
+      category,
+      title: input.title.trim() || input.documentTypeId,
+      content: built.content,
+      date: new Date().toISOString(),
+      source: input.source,
+      pageType: input.documentTypeId,
+      sectionContents:
+        Object.keys(built.sectionContents).length > 0 ? built.sectionContents : undefined,
+    },
+    input.existingId,
+  )
 }

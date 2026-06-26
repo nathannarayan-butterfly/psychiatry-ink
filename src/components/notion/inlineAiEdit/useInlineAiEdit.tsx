@@ -22,6 +22,12 @@ export interface OpenInlineEditArgs {
   position: { top: number; left: number }
   /** Apply an accepted edit to the document (splice + onChange). */
   applyReplacement: (editedText: string) => void
+  /**
+   * When set, skip the record/type instruction step and immediately run the
+   * edit with this fixed instruction (e.g. the improve-only "KI verbessern"
+   * action). The before/after preview is still shown for accept/reject.
+   */
+  presetInstruction?: string
 }
 
 interface Session extends OpenInlineEditArgs {
@@ -104,13 +110,25 @@ export function useInlineAiEdit(options: { caseId?: string }): UseInlineAiEdit {
         args.selectionStart,
         args.selectionEnd,
       )
-      setSession({ ...args, contextBefore, contextAfter })
+      const nextSession: Session = { ...args, contextBefore, contextAfter }
+      setSession(nextSession)
       setInstructionDraft('')
+
+      // Fixed-instruction mode (e.g. "KI verbessern"): skip record/type and run
+      // immediately. Set the ref synchronously so runEdit sees this session
+      // before the next render commits.
+      if (args.presetInstruction?.trim()) {
+        sessionRef.current = nextSession
+        dispatch({ type: 'SUBMIT_TYPED', instruction: args.presetInstruction.trim() })
+        void runEdit(args.presetInstruction.trim())
+        return
+      }
+
       // Reset the reducer to the initial phase for this session.
       dispatch(canRecord ? { type: 'START_RECORDING' } : { type: 'RECORDING_UNAVAILABLE' })
       if (canRecord) void beginRecording()
     },
-    [beginRecording, canRecord],
+    [beginRecording, canRecord, runEdit],
   )
 
   const handleStopRecording = useCallback(async () => {

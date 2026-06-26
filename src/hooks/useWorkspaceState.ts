@@ -14,7 +14,7 @@ import type {
 } from '../types'
 import type { EnglishVariant, UiLanguage } from '../types/settings'
 import type { AufnahmeSectionMetadata } from '../types/anamneseBefund'
-import { isAufnahmeBefundSection } from '../types/anamneseBefund'
+import { isAufnahmeStructuredSection } from '../types/anamneseBefund'
 import { metadataForManualEdit } from '../utils/anamnese/befundMetadata'
 import {
   buildPsychopathNormalBefundText,
@@ -691,7 +691,7 @@ export function useWorkspaceState(
   )
 
   const markBefundSectionManuallyEdited = useCallback((sectionId: string) => {
-    if (!isAufnahmeBefundSection(sectionId)) return
+    if (!isAufnahmeStructuredSection(sectionId)) return
     setSectionMetadata((current) => {
       const prev = current[sectionId]
       const mode = prev?.inputMode ?? 'short'
@@ -1097,12 +1097,50 @@ export function useWorkspaceState(
     runGeneration(generationScope)
   }, [aiCanGenerate, generationScope, getIncompleteSections, runGeneration])
 
+  // Per-section KI ("Aufnahme KI") is triggered from an INACTIVE section, so the
+  // top-level `aiCanGenerate` gate (derived from the previously active section)
+  // is stale and would silently block the request. Re-derive the gate against
+  // the actual target section's own content/config.
+  const canGenerateSection = useCallback(
+    (sectionId: string): boolean => {
+      if (editorContentLocked || aiControlsLocked) return false
+      const source = getGenerationSourceContent('segment', sectionId)
+      if (!source.trim()) return false
+      const sectionConfig = currentDocumentType?.sections?.find(
+        (section) => section.id === sectionId,
+      )
+      const ctx = resolveAiContext({
+        componentAi: currentDocumentType?.ai,
+        variantAi: activeVariantConfig?.ai,
+        sectionAi: sectionConfig?.ai,
+        generationScope: 'segment',
+        hasSourceContent: true,
+        editorContentLocked,
+        aiControlsLocked,
+      })
+      if (!ctx.generateScopeAllowed) return false
+      return hasEnoughCredits(estimateGenerationCredits(aiModelTier, source))
+    },
+    [
+      activeVariantConfig?.ai,
+      aiControlsLocked,
+      aiModelTier,
+      currentDocumentType?.ai,
+      currentDocumentType?.sections,
+      editorContentLocked,
+      getGenerationSourceContent,
+    ],
+  )
+
   const handleGenerateWithTool = useCallback(
     (
       tool: AiToolKey,
       options?: { scope?: AiGenerationScope; sectionId?: string; forceSegment?: boolean },
     ) => {
-      if (!aiCanGenerate) return
+      const gateOk = options?.sectionId
+        ? canGenerateSection(options.sectionId)
+        : aiCanGenerate
+      if (!gateOk) return
 
       const scope = options?.scope ?? generationScope
       if (scope === 'document' && !options?.forceSegment) {
@@ -1119,7 +1157,7 @@ export function useWorkspaceState(
         forceSegment: options?.forceSegment ?? Boolean(options?.sectionId),
       })
     },
-    [aiCanGenerate, generationScope, getIncompleteSections, runGeneration],
+    [aiCanGenerate, canGenerateSection, generationScope, getIncompleteSections, runGeneration],
   )
 
   const confirmIncompleteGeneration = useCallback(() => {
