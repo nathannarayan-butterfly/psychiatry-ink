@@ -1,35 +1,9 @@
 import { Plus, Search, Tag } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import type { KbCategory, KnowledgeEntry } from '../../data/knowledgeBaseSeedData'
+import { kbBadgeClass, kbCategoryLabelEn, kbCategoryOrder } from '../../data/kbCategories'
 import { pickKbLocalizedList, pickKbLocalizedText } from '../../types/knowledgeBase'
 import { useTranslation } from '../../context/TranslationContext'
-
-const CATEGORY_COLORS: Record<KbCategory, string> = {
-  Pharmakologie: 'kb-badge--pharma',
-  Diagnostik: 'kb-badge--diagnostik',
-  Klinik: 'kb-badge--klinik',
-  Leitlinien: 'kb-badge--leitlinien',
-  Psychopathologie: 'kb-badge--psychopath',
-  Sonstiges: 'kb-badge--sonstiges',
-}
-
-const CATEGORY_ORDER: KbCategory[] = [
-  'Pharmakologie',
-  'Diagnostik',
-  'Klinik',
-  'Leitlinien',
-  'Psychopathologie',
-  'Sonstiges',
-]
-
-const CATEGORY_EN: Record<KbCategory, string> = {
-  Pharmakologie: 'Pharmacology',
-  Diagnostik: 'Assessment',
-  Klinik: 'Clinical',
-  Leitlinien: 'Guidelines',
-  Psychopathologie: 'Psychopathology',
-  Sonstiges: 'Other',
-}
 
 function matchesSearch(entry: KnowledgeEntry, query: string): boolean {
   const q = query.trim().toLowerCase()
@@ -62,7 +36,7 @@ export function KbClinicalBrowse({ entries, onSelect, onAdd, language }: KbClini
 
   const allCategories = useMemo(() => {
     const cats = new Set(entries.map((e) => e.category))
-    return CATEGORY_ORDER.filter((c) => cats.has(c))
+    return kbCategoryOrder(entries).filter((c) => cats.has(c))
   }, [entries])
 
   const filtered = useMemo(
@@ -81,16 +55,16 @@ export function KbClinicalBrowse({ entries, onSelect, onAdd, language }: KbClini
       list.push(entry)
       byCategory.set(entry.category, list)
     }
-    return CATEGORY_ORDER.flatMap((category) => {
+    return kbCategoryOrder(entries).flatMap((category) => {
       const list = byCategory.get(category)
       if (!list?.length) return []
       return [{
         category,
-        title: pickKbLocalizedText(category, CATEGORY_EN[category], language),
+        title: pickKbLocalizedText(category, kbCategoryLabelEn(category), language),
         entries: list.sort((a, b) => a.title.localeCompare(b.title, language)),
       }]
     })
-  }, [filtered, language])
+  }, [filtered, entries, language])
 
   return (
     <div className="kb-classified-browse">
@@ -131,7 +105,7 @@ export function KbClinicalBrowse({ entries, onSelect, onAdd, language }: KbClini
             onClick={() => setActiveCategory(activeCategory === cat ? 'all' : cat)}
             aria-pressed={activeCategory === cat}
           >
-            {pickKbLocalizedText(cat, CATEGORY_EN[cat], language)}
+            {pickKbLocalizedText(cat, kbCategoryLabelEn(cat), language)}
           </button>
         ))}
       </div>
@@ -160,7 +134,7 @@ export function KbClinicalBrowse({ entries, onSelect, onAdd, language }: KbClini
                 const categoryLabel =
                   pickKbLocalizedText(entry.category, entry.categoryEn, language) || entry.category
                 const tags = pickKbLocalizedList(entry.tags, entry.tagsEn, language)
-                const badgeClass = CATEGORY_COLORS[entry.category] ?? 'kb-badge--sonstiges'
+                const badgeClass = kbBadgeClass(entry.category)
                 return (
                   <li key={entry.id}>
                     <button

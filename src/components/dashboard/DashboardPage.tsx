@@ -64,6 +64,7 @@ import {
   deletePatientCasePermanently,
   isPatientCaseArchived,
   patientCaseMetaToEditData,
+  reactivatePatientCase,
 } from '../../utils/casePatientLifecycle'
 import { useEnterpriseFeatures } from '../../hooks/useEnterpriseFeatures'
 import { NewPatientDialog } from './NewPatientDialog'
@@ -369,6 +370,14 @@ export function DashboardPage({
   const handleArchivePatient = useCallback(
     (caseId: string) => {
       archivePatientCase(caseId, userId)
+      void registry.refresh()
+    },
+    [registry, userId],
+  )
+
+  const handleReactivatePatient = useCallback(
+    (caseId: string) => {
+      reactivatePatientCase(caseId, userId)
       void registry.refresh()
     },
     [registry, userId],
@@ -829,6 +838,7 @@ export function DashboardPage({
                     caseItem={caseItem}
                     archived
                     onOpen={(caseId) => onOpenCase(caseId, undefined, true)}
+                    onReactivate={handleReactivatePatient}
                     onDelete={(caseId) => void handleDeletePatient(caseId)}
                   />
                 ))}

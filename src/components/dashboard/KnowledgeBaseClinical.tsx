@@ -19,6 +19,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { KbCategory, KnowledgeEntry, KnowledgeEntrySection } from '../../data/knowledgeBaseSeedData'
+import { KB_PRESET_CATEGORIES, kbCustomCategories } from '../../data/kbCategories'
 import { useTranslation } from '../../context/TranslationContext'
 import { useKnowledgeBaseAnnotations } from '../../hooks/useKnowledgeBaseAnnotations'
 import { useKnowledgeBaseClinical } from '../../hooks/useKnowledgeBaseClinical'
@@ -49,15 +50,6 @@ import {
 import { KbClinicalBrowse } from './KbClinicalBrowse'
 
 type KnowledgeBaseMode = 'reading' | 'editing'
-
-const PRESET_CATEGORIES: KbCategory[] = [
-  'Pharmakologie',
-  'Diagnostik',
-  'Klinik',
-  'Leitlinien',
-  'Psychopathologie',
-  'Sonstiges',
-]
 
 function entrySnapshotsEqual(a: KnowledgeEntry, b: KnowledgeEntry): boolean {
   return JSON.stringify(a) === JSON.stringify(b)
@@ -742,29 +734,43 @@ function ClinicalEntryDetailView({
 }
 
 function AddClinicalEntryDialog({
+  existingCategories,
   onSave,
   onCancel,
 }: {
+  existingCategories: string[]
   onSave: (entry: Omit<KnowledgeEntry, 'id' | 'createdAt' | 'updatedAt'>) => void
   onCancel: () => void
 }) {
   const { t } = useTranslation()
   const [title, setTitle] = useState('')
   const [category, setCategory] = useState<KbCategory>('Klinik')
+  const [customCategory, setCustomCategory] = useState('')
+  const [useCustomCategory, setUseCustomCategory] = useState(false)
   const [content, setContent] = useState('')
   const [tagsInput, setTagsInput] = useState('')
+
+  const selectableCategories = useMemo(
+    () => [...KB_PRESET_CATEGORIES, ...existingCategories],
+    [existingCategories],
+  )
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const tags = tagsInput.split(',').map((s) => s.trim()).filter(Boolean)
+    const finalCategory = useCustomCategory
+      ? ((customCategory.trim() || 'Sonstiges') as KbCategory)
+      : category
     onSave({
       title: title.trim(),
-      category,
+      category: finalCategory,
       content: content.trim(),
       tags,
       sections: [],
     })
   }
+
+  const customInvalid = useCustomCategory && !customCategory.trim()
 
   return (
     <div className="kb-dialog-overlay" role="dialog" aria-modal onClick={(e) => { if (e.target === e.currentTarget) onCancel() }}>
@@ -780,11 +786,36 @@ function AddClinicalEntryDialog({
           </div>
           <div className="kb-dialog__field">
             <label className="kb-dialog__label">{t('kbFieldCategory')}</label>
-            <select className="kb-dialog__select" value={category} onChange={(e) => setCategory(e.target.value as KbCategory)}>
-              {PRESET_CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
+            <div className="kb-dialog__category-row">
+              <select
+                className="kb-dialog__select"
+                value={useCustomCategory ? '__custom__' : category}
+                onChange={(e) => {
+                  if (e.target.value === '__custom__') {
+                    setUseCustomCategory(true)
+                  } else {
+                    setUseCustomCategory(false)
+                    setCategory(e.target.value as KbCategory)
+                  }
+                }}
+              >
+                {selectableCategories.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+                <option value="__custom__">{t('kbCategoryCustom')}</option>
+              </select>
+              {useCustomCategory ? (
+                <input
+                  type="text"
+                  className="kb-dialog__input"
+                  value={customCategory}
+                  onChange={(e) => setCustomCategory(e.target.value)}
+                  placeholder={t('kbCategoryCustomPlaceholder')}
+                  aria-label={t('kbCategoryCustomPlaceholder')}
+                  autoFocus
+                />
+              ) : null}
+            </div>
           </div>
           <div className="kb-dialog__field kb-dialog__field--grow">
             <label className="kb-dialog__label">{t('kbFieldContent')}</label>
@@ -796,7 +827,7 @@ function AddClinicalEntryDialog({
           </div>
           <div className="kb-dialog__actions">
             <button type="button" className="new-patient-dialog__btn new-patient-dialog__btn--cancel" onClick={onCancel}>{t('newPatientAbbrechen')}</button>
-            <button type="submit" className="new-patient-dialog__btn new-patient-dialog__btn--create" disabled={!title.trim() || !content.trim()}>{t('kbSaveEntry')}</button>
+            <button type="submit" className="new-patient-dialog__btn new-patient-dialog__btn--create" disabled={!title.trim() || !content.trim() || customInvalid}>{t('kbSaveEntry')}</button>
           </div>
         </form>
       </div>
@@ -871,6 +902,7 @@ export function KnowledgeBaseClinical({ collectionId, collectionName, onClose, o
 
       {showAddDialog ? (
         <AddClinicalEntryDialog
+          existingCategories={kbCustomCategories(entries)}
           onSave={(input) => {
             const created = addEntry(input)
             setShowAddDialog(false)

@@ -1,5 +1,11 @@
 /* Calendar module — clinical minimal styling (left-aligned, flat, typographic) */
 
+/* Fill the app shell and scroll within it (shell uses overflow: hidden). */
+.app-shell__content > .calendar-page {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .calendar-page.cm-workspace {
   width: 100%;
   max-width: none;
@@ -7,6 +13,10 @@
   padding: var(--cm-page-pad-y, 1.5rem) var(--cm-page-pad-x, 1.75rem) 3rem;
   box-sizing: border-box;
   text-align: left;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .calendar-page__header {
@@ -487,9 +497,11 @@
 }
 
 .calendar-month-view--mini .calendar-month-view__cell {
-  min-height: 1.85rem;
+  min-height: 0;
+  aspect-ratio: 1 / 1;
   padding: 0.2rem 0.25rem;
   align-items: center;
+  justify-content: center;
 }
 
 .calendar-month-view__cell--weekend {

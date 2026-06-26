@@ -5681,6 +5681,12 @@ export const uiTranslations = {
     fr: 'Archiver',
     es: 'Archivar',
   },
+  patientReactivateAction: {
+    de: 'Wiederherstellen',
+    en: 'Reactivate',
+    fr: 'Réactiver',
+    es: 'Reactivar',
+  },
   patientDeletePermanent: {
     de: 'Endgültig löschen',
     en: 'Delete permanently',
