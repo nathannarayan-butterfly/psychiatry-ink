@@ -1,4 +1,4 @@
-import { Archive, Pencil, Trash2 } from 'lucide-react'
+import { Archive, ArchiveRestore, Pencil, Trash2 } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { DashboardCase, LocalGeschlecht } from '../../hooks/useCaseRegistry'
 import { formatSiteLocaleDate } from '../../utils/siteTimezone'
@@ -8,6 +8,7 @@ interface PatientCaseCardProps {
   onOpen: (caseId: string) => void
   onEdit?: (caseId: string) => void
   onArchive?: (caseId: string) => void
+  onReactivate?: (caseId: string) => void
   onDelete?: (caseId: string) => void
   archived?: boolean
 }
@@ -34,6 +35,7 @@ export function PatientCaseCard({
   onOpen,
   onEdit,
   onArchive,
+  onReactivate,
   onDelete,
   archived = false,
 }: PatientCaseCardProps) {
@@ -106,6 +108,18 @@ export function PatientCaseCard({
           >
             <Archive className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
             <span>{t('patientArchiveAction')}</span>
+          </button>
+        ) : null}
+        {archived && onReactivate ? (
+          <button
+            type="button"
+            className="patient-case-card__action-btn"
+            onClick={() => onReactivate(caseItem.caseId)}
+            aria-label={t('patientReactivateAction')}
+            title={t('patientReactivateAction')}
+          >
+            <ArchiveRestore className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+            <span>{t('patientReactivateAction')}</span>
           </button>
         ) : null}
         {archived && onDelete ? (

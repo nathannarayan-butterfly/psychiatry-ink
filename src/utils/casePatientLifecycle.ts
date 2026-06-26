@@ -34,6 +34,15 @@ export function archivePatientCase(caseId: string, _userId: string): void {
   upsertCaseMeta(caseId, { archivedAt: new Date().toISOString() })
 }
 
+/**
+ * Reverse of {@link archivePatientCase}: clears the `archivedAt` marker so the
+ * case returns to the active patient list. Only registry metadata is touched —
+ * clinical vault data and the server case record are left intact.
+ */
+export function reactivatePatientCase(caseId: string, _userId: string): void {
+  upsertCaseMeta(caseId, { archivedAt: undefined })
+}
+
 export async function deletePatientCasePermanently(caseId: string, _userId: string): Promise<void> {
   await clearCaseStorage(caseId)
   await deleteImportedFilesForCase(caseId)
