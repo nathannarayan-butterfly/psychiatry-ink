@@ -44,6 +44,7 @@ import {
 import { logAiUsage } from './usageLogger'
 import { getFeatureCreditRule } from './featureCreditRules'
 import { assertAccess } from '../services/subscriptionAccess'
+import { maybeTriggerAutoRecharge } from '../services/autoRecharge'
 
 export { InsufficientCreditsError, CreditInfrastructureError }
 
@@ -202,6 +203,14 @@ export async function runAiFeature(params: RunAiFeatureParams): Promise<LlmCallR
         // Extremely rare race (two concurrent calls both passed checkBalance but
         // only one wins the debit transaction). Balance was not deducted.
         console.warn(`[runAiFeature] Concurrent overdraft avoided for userId=${userId}`)
+      } else {
+        // Out-of-band, fire-and-forget: top up the balance if the user has opted
+        // into auto-recharge and just dropped below their threshold. Never blocks
+        // or fails this request (the AI call already succeeded). The trigger
+        // itself is gated + idempotent inside maybeTriggerAutoRecharge.
+        void maybeTriggerAutoRecharge(userId).catch((error) => {
+          console.warn('[runAiFeature] auto-recharge trigger failed (non-fatal):', error)
+        })
       }
     } catch (deductError) {
       const msg = (deductError as Error).message

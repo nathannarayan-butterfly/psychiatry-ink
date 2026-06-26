@@ -14,6 +14,16 @@ import { claimEventMarker, releaseEventMarker } from '../data/appSettings'
 
 let stripeClient: Stripe | null = null
 
+/**
+ * Marker on a PaymentIntent's `metadata.kind` that distinguishes an auto-recharge
+ * off-session charge from a manual hosted-checkout purchase. The webhook grants
+ * credits for auto-recharge intents via `payment_intent.succeeded`; manual
+ * purchases keep granting via `checkout.session.completed`, so this guard keeps
+ * the two paths from double-granting.
+ */
+export const AUTO_RECHARGE_PI_KIND = 'auto_recharge'
+const MANUAL_PURCHASE_PI_KIND = 'manual_purchase'
+
 /** Bounded Stripe network behaviour — see security hardening #6. */
 const STRIPE_TIMEOUT_MS = Number(process.env.STRIPE_TIMEOUT_MS ?? 30_000)
 const STRIPE_MAX_NETWORK_RETRIES = Number(process.env.STRIPE_MAX_NETWORK_RETRIES ?? 1)
@@ -37,16 +47,46 @@ export function isStripeCreditsConfigured(): boolean {
   return Boolean(process.env.STRIPE_SECRET_KEY?.trim())
 }
 
+/**
+ * Resolve (or lazily create) a persistent Stripe customer for an app user and
+ * persist the mapping on `ai_credit_accounts.stripe_customer_id`. Required so
+ * saved payment methods and off-session charges all attach to one customer.
+ */
+export async function ensureCustomerForUser(
+  userId: string,
+  customerEmail?: string,
+): Promise<string> {
+  const account = await creditsRepo.getAccountByUserId(userId)
+  if (account?.stripe_customer_id) return account.stripe_customer_id
+
+  const stripe = getStripe()
+  const customer = await stripe.customers.create({
+    email: customerEmail,
+    metadata: { userId },
+  })
+  await creditsRepo.setPaymentMethod(userId, customer.id, null)
+  return customer.id
+}
+
 export async function createCreditCheckoutSession(params: {
   userId: string
   pack: CreditPack
   successUrl: string
   cancelUrl: string
+  customerEmail?: string
 }): Promise<Stripe.Checkout.Session> {
   const stripe = getStripe()
 
+  // Bind every credit purchase to a persistent customer and save the payment
+  // method off-session, so a later opt-in to auto-recharge already has a
+  // reusable card without a separate capture step. The PaymentIntent is tagged
+  // `manual_purchase` so the webhook's payment_intent.succeeded path skips it
+  // (manual grants run through checkout.session.completed).
+  const customerId = await ensureCustomerForUser(params.userId, params.customerEmail)
+
   return stripe.checkout.sessions.create({
     mode: 'payment',
+    customer: customerId,
     line_items: [
       {
         quantity: 1,
@@ -60,6 +100,13 @@ export async function createCreditCheckoutSession(params: {
         },
       },
     ],
+    payment_intent_data: {
+      setup_future_usage: 'off_session',
+      metadata: {
+        userId: params.userId,
+        kind: MANUAL_PURCHASE_PI_KIND,
+      },
+    },
     success_url: params.successUrl,
     cancel_url: params.cancelUrl,
     client_reference_id: params.userId,
@@ -69,6 +116,73 @@ export async function createCreditCheckoutSession(params: {
       credits: String(params.pack.credits),
     },
   })
+}
+
+/**
+ * Create a hosted Checkout Session in `setup` mode — the "Karte speichern" flow.
+ * Saves a reusable off-session payment method WITHOUT charging. On completion
+ * the webhook (`checkout.session.completed`, mode 'setup') reads the SetupIntent
+ * and persists the payment method as the account default.
+ */
+export async function createSetupCheckoutSession(params: {
+  userId: string
+  successUrl: string
+  cancelUrl: string
+  customerEmail?: string
+}): Promise<Stripe.Checkout.Session> {
+  const stripe = getStripe()
+  const customerId = await ensureCustomerForUser(params.userId, params.customerEmail)
+
+  return stripe.checkout.sessions.create({
+    mode: 'setup',
+    customer: customerId,
+    currency: 'gbp',
+    payment_method_types: ['card'],
+    success_url: params.successUrl,
+    cancel_url: params.cancelUrl,
+    client_reference_id: params.userId,
+    setup_intent_data: {
+      metadata: { userId: params.userId, kind: 'auto_recharge_setup' },
+    },
+    metadata: { userId: params.userId, kind: 'auto_recharge_setup' },
+  })
+}
+
+/**
+ * Charge a saved off-session payment method for ONE credit pack. Confirms
+ * synchronously (`confirm: true`, `off_session: true`); the credit grant is
+ * performed by the `payment_intent.succeeded` webhook (tagged with
+ * {@link AUTO_RECHARGE_PI_KIND}). The deterministic idempotency key prevents a
+ * duplicate trigger (same in-flight lock) from charging twice.
+ *
+ * Throws `Stripe.errors.StripeError` on decline / SCA-required so the caller can
+ * classify the failure. Returns the confirmed PaymentIntent on success.
+ */
+export async function chargeAutoRechargeOffSession(params: {
+  userId: string
+  customerId: string
+  paymentMethodId: string
+  pack: CreditPack
+  idempotencyKey: string
+}): Promise<Stripe.PaymentIntent> {
+  const stripe = getStripe()
+  return stripe.paymentIntents.create(
+    {
+      amount: params.pack.priceGbpPence,
+      currency: 'gbp',
+      customer: params.customerId,
+      payment_method: params.paymentMethodId,
+      off_session: true,
+      confirm: true,
+      metadata: {
+        userId: params.userId,
+        packId: params.pack.id,
+        credits: String(params.pack.credits),
+        kind: AUTO_RECHARGE_PI_KIND,
+      },
+    },
+    { idempotencyKey: params.idempotencyKey },
+  )
 }
 
 // ── Subscription billing (monthly £24.99 / yearly £239.90) ──────────────────
@@ -241,7 +355,28 @@ export async function handleStripeWebhook(
         await processStripeEventOnce(event.id, () => applySubscriptionFromCheckout(session))
         break
       }
+      if (session.mode === 'setup') {
+        // "Karte speichern" flow — no charge, just persist the saved card.
+        await processStripeEventOnce(event.id, () => handleSetupCheckout(session))
+        break
+      }
       await handleOneTimeCheckout(event.id, session)
+      break
+    }
+
+    case 'payment_intent.succeeded': {
+      const intent = event.data.object as Stripe.PaymentIntent
+      // Only auto-recharge intents grant here; manual purchases are granted by
+      // checkout.session.completed (their PI is tagged manual_purchase).
+      if (intent.metadata?.kind !== AUTO_RECHARGE_PI_KIND) break
+      await processStripeEventOnce(event.id, () => handleAutoRechargeSucceeded(intent))
+      break
+    }
+
+    case 'payment_intent.payment_failed': {
+      const intent = event.data.object as Stripe.PaymentIntent
+      if (intent.metadata?.kind !== AUTO_RECHARGE_PI_KIND) break
+      await processStripeEventOnce(event.id, () => handleAutoRechargeFailed(intent))
       break
     }
 
@@ -293,6 +428,138 @@ async function handleOneTimeCheckout(
       credits: grant.credits,
       note: grant.note,
     })
+    // The checkout saved the card off-session (setup_future_usage); persist it
+    // as the account default so a later opt-in to auto-recharge can use it.
+    await captureDefaultPaymentMethodFromCheckout(session, grant.userId).catch((error) => {
+      console.warn('[stripe] failed to capture payment method from checkout', session.id, error)
+    })
+  })
+}
+
+/**
+ * "Karte speichern" (mode 'setup') completion → read the SetupIntent's payment
+ * method and persist it as the account default + the customer's invoice default.
+ */
+async function handleSetupCheckout(session: Stripe.Checkout.Session): Promise<void> {
+  const userId = session.metadata?.userId ?? session.client_reference_id ?? null
+  const customerId = customerIdOf(session.customer)
+  if (!userId) {
+    console.warn('[stripe] setup checkout completed without resolvable user', session.id)
+    return
+  }
+
+  const setupIntentId =
+    typeof session.setup_intent === 'string'
+      ? session.setup_intent
+      : (session.setup_intent?.id ?? null)
+  if (!setupIntentId) {
+    console.warn('[stripe] setup checkout without a setup_intent', session.id)
+    return
+  }
+
+  const setupIntent = await getStripe().setupIntents.retrieve(setupIntentId)
+  const paymentMethodId = paymentMethodIdOf(setupIntent.payment_method)
+  if (!paymentMethodId) {
+    console.warn('[stripe] setup_intent has no payment method', setupIntentId)
+    return
+  }
+
+  await persistDefaultPaymentMethod(userId, customerId, paymentMethodId)
+}
+
+/** Read + persist the payment method saved by a paid (mode 'payment') checkout. */
+async function captureDefaultPaymentMethodFromCheckout(
+  session: Stripe.Checkout.Session,
+  userId: string,
+): Promise<void> {
+  const paymentIntentId =
+    typeof session.payment_intent === 'string'
+      ? session.payment_intent
+      : (session.payment_intent?.id ?? null)
+  if (!paymentIntentId) return
+
+  const intent = await getStripe().paymentIntents.retrieve(paymentIntentId)
+  const paymentMethodId = paymentMethodIdOf(intent.payment_method)
+  if (!paymentMethodId) return
+
+  const customerId = customerIdOf(session.customer) ?? customerIdOf(intent.customer)
+  await persistDefaultPaymentMethod(userId, customerId, paymentMethodId)
+}
+
+/**
+ * Persist a saved payment method as the account default AND set it as the Stripe
+ * customer's invoice default so off-session charges resolve it automatically.
+ */
+async function persistDefaultPaymentMethod(
+  userId: string,
+  customerId: string | null,
+  paymentMethodId: string,
+): Promise<void> {
+  await creditsRepo.setPaymentMethod(userId, customerId, paymentMethodId)
+  if (customerId) {
+    await getStripe()
+      .customers.update(customerId, {
+        invoice_settings: { default_payment_method: paymentMethodId },
+      })
+      .catch((error) => {
+        console.warn('[stripe] failed to set customer default payment method', customerId, error)
+      })
+  }
+}
+
+/**
+ * Auto-recharge PaymentIntent succeeded → grant the credits (idempotent via the
+ * per-event marker + 'stripe:' note) and clear the in-flight lock. Distinct from
+ * manual purchases by the {@link AUTO_RECHARGE_PI_KIND} metadata guard upstream.
+ */
+async function handleAutoRechargeSucceeded(intent: Stripe.PaymentIntent): Promise<void> {
+  const customerId = customerIdOf(intent.customer)
+  const userId = await resolveAppUserId({
+    metadataUserId: intent.metadata?.userId,
+    customerId,
+  })
+  if (!userId) {
+    console.warn('[stripe] auto-recharge payment_intent.succeeded without resolvable user', intent.id)
+    return
+  }
+
+  const credits = Number(intent.metadata?.credits ?? 0)
+  const packId = intent.metadata?.packId ?? 'unknown'
+  if (Number.isFinite(credits) && credits > 0) {
+    await addPurchasedCredits({
+      userId,
+      credits,
+      note: `stripe:auto_recharge:${intent.id}:${packId}`,
+    })
+  } else {
+    console.warn('[stripe] auto-recharge intent missing credits metadata', intent.id)
+  }
+
+  // Release the in-flight lock + stamp the cooldown (best-effort; the
+  // synchronous trigger path usually already did this).
+  await creditsRepo.finishAutoRecharge(userId, { success: true }).catch(() => {})
+}
+
+/**
+ * Auto-recharge PaymentIntent failed asynchronously (e.g. delayed decline) →
+ * disable auto-recharge and surface a needs-attention flag. Never silently loop.
+ */
+async function handleAutoRechargeFailed(intent: Stripe.PaymentIntent): Promise<void> {
+  const customerId = customerIdOf(intent.customer)
+  const userId = await resolveAppUserId({
+    metadataUserId: intent.metadata?.userId,
+    customerId,
+  })
+  if (!userId) {
+    console.warn('[stripe] auto-recharge payment_intent.payment_failed without resolvable user', intent.id)
+    return
+  }
+
+  const reason = intent.last_payment_error?.code ?? intent.last_payment_error?.decline_code ?? 'payment_failed'
+  await creditsRepo.finishAutoRecharge(userId, {
+    success: false,
+    disable: true,
+    failureReason: reason,
   })
 }
 
@@ -334,6 +601,14 @@ function customerIdOf(
 ): string | null {
   if (!customer) return null
   return typeof customer === 'string' ? customer : customer.id
+}
+
+/** Stripe payment-method id as a plain string, regardless of expansion. */
+function paymentMethodIdOf(
+  paymentMethod: string | Stripe.PaymentMethod | null | undefined,
+): string | null {
+  if (!paymentMethod) return null
+  return typeof paymentMethod === 'string' ? paymentMethod : paymentMethod.id
 }
 
 /**
