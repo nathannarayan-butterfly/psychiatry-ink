@@ -34,10 +34,17 @@ ARG VITE_SUPABASE_URL=""
 ARG VITE_SUPABASE_ANON_KEY=""
 ARG VITE_SUPABASE_PUBLISHABLE_KEY=""
 ARG VITE_API_BASE_URL=""
+# Clinical Intelligence V1 client gate. Vite inlines this at build time, so it
+# must be present in THIS stage (Cloud Run runtime env is too late for VITE_*).
+# Defaults to "true" so production builds ship the CI section's AI run path
+# enabled; the cost-bearing run is still independently gated server-side by
+# CLINICAL_INTELLIGENCE_V1_ENABLED on the Cloud Run service.
+ARG VITE_CLINICAL_INTELLIGENCE_V1_ENABLED="true"
 ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
 ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
 ENV VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV VITE_CLINICAL_INTELLIGENCE_V1_ENABLED=$VITE_CLINICAL_INTELLIGENCE_V1_ENABLED
 
 COPY . .
 RUN npm run build

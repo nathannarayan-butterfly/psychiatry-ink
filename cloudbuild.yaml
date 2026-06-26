@@ -12,6 +12,8 @@ steps:
       - 'VITE_SUPABASE_URL=${_VITE_SUPABASE_URL}'
       - '--build-arg'
       - 'VITE_SUPABASE_ANON_KEY=${_VITE_SUPABASE_ANON_KEY}'
+      - '--build-arg'
+      - 'VITE_CLINICAL_INTELLIGENCE_V1_ENABLED=${_VITE_CLINICAL_INTELLIGENCE_V1_ENABLED}'
       - '-t'
       - '${_IMAGE}'
       - '.'
@@ -27,6 +29,11 @@ images:
 substitutions:
   _VITE_SUPABASE_URL: ''
   _VITE_SUPABASE_ANON_KEY: ''
+  # Clinical Intelligence V1 client gate (build-time inline). Defaults to 'true'
+  # so prod builds keep the CI AI run path enabled; override at submit time if a
+  # build ever needs it disabled. The server still independently gates the run
+  # via CLINICAL_INTELLIGENCE_V1_ENABLED on the Cloud Run service.
+  _VITE_CLINICAL_INTELLIGENCE_V1_ENABLED: 'true'
   _IMAGE: 'europe-west1-docker.pkg.dev/psychiatry-ink-beta/cloud-run-source-deploy/psychiatry-ink:master-merged'
 
 options:
