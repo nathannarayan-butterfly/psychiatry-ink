@@ -642,9 +642,14 @@ export function OverviewDashboard({
     ],
   )
 
+  const hasReceptorProfile =
+    medicationData.receptorFingerprint != null &&
+    medicationData.receptorFingerprint.targets.length >= 3
+
   const visibilityContext = useMemo(
     () => ({
       hasSpiegel,
+      hasReceptorProfile,
       hasAdditionalSpiegel,
       hasPsychotherapy: hasPsychotherapyPlan,
       hasIsdm,
@@ -658,6 +663,7 @@ export function OverviewDashboard({
     }),
     [
       hasSpiegel,
+      hasReceptorProfile,
       hasAdditionalSpiegel,
       hasPsychotherapyPlan,
       hasIsdm,

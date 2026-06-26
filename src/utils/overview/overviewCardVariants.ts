@@ -16,6 +16,7 @@ export const OVERVIEW_WIDGET_CARD_VARIANT: Partial<Record<OverviewWidgetId, Over
   medication: 'medication',
   'prior-therapies': 'medication',
   'spiegel-all': 'medication',
+  'receptor-profile': 'medication',
   diagnoses: 'clinical-data',
   'labs-due': 'clinical-data',
   'lab-results': 'clinical-data',

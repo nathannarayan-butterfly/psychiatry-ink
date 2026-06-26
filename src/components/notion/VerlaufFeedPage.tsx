@@ -8,7 +8,7 @@ import {
   useState,
 } from 'react'
 import { createPortal } from 'react-dom'
-import { Check, Sparkles } from 'lucide-react'
+import { Check, ChevronDown, Sparkles } from 'lucide-react'
 import { VerlaufActionToolbar } from './VerlaufActionToolbar'
 import { copyTextToClipboard } from '../../utils/notionDocumentActions'
 import { useCopyWithFeedback } from '../../hooks/useCopyWithFeedback'
@@ -108,6 +108,7 @@ import { applyEdit } from '../../utils/inlineAiEdit/buildEditContext'
 import { resolveVerlaufAiEditTarget } from '../../utils/inlineAiEdit/verlaufInlineEdit'
 import { useInlineAiEdit } from './inlineAiEdit/useInlineAiEdit'
 import { SomaticBefundQuickModal } from './verlauf/SomaticBefundQuickModal'
+import { VitalsQuickModal } from './verlauf/VitalsQuickModal'
 import { SomaticBefundEntryCard } from './verlauf/SomaticBefundEntryCard'
 import { isSomaticBefundEntry } from '../../utils/verlauf/somaticBefund'
 
@@ -1744,8 +1745,13 @@ interface VerlaufFeedPageProps {
   autoOpenComposer?: boolean
   /** Called once the auto-open request has been consumed. */
   onAutoOpenComposerHandled?: () => void
-  /** Optional guided-entry gate — parent shows mode chooser / wizard instead of composer. */
-  onNewEntryRequest?: () => void
+  /**
+   * Optional guided-entry gate — parent shows the guided wizard (with a direct
+   * free-text fallback) for the requested Verlauf entry depth instead of opening
+   * the inline composer. `itemType` distinguishes the short ("Kurzer Eintrag")
+   * from the detailed ("Detaillierter Eintrag") flow (Item 5).
+   */
+  onNewEntryRequest?: (itemType: 'verlauf-short' | 'verlauf-broad') => void
   /**
    * Routes a derived (projected) entry's edit/delete to its source module.
    * Derived cards mirror data owned by another section, so they are never
@@ -2437,6 +2443,9 @@ export function VerlaufFeedPage({
 
   const [composerOpen, setComposerOpen] = useState(false)
   const [somaticModalOpen, setSomaticModalOpen] = useState(false)
+  const [vitalsModalOpen, setVitalsModalOpen] = useState(false)
+  const [entryMenuOpen, setEntryMenuOpen] = useState(false)
+  const entryMenuRef = useRef<HTMLDivElement>(null)
   const [composerText, setComposerText] = useState('')
   // Site-timezone calendar date (not UTC slice) so a note composed late evening
   // doesn't roll to the next day, and the saved timestamp matches wall-clock.
@@ -2489,6 +2498,50 @@ export function VerlaufFeedPage({
     setComposerType('verlauf')
     setComposerOpen(false)
   }, [])
+
+  // "Neuer Eintrag" submenu: short / detailed text entries route through the
+  // parent guided-entry gate (falling back to the inline composer), while
+  // Vitalwerte and Somatischer Befund open their quick guided modals (Item 5).
+  useEffect(() => {
+    if (!entryMenuOpen) return
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!entryMenuRef.current?.contains(event.target as Node)) {
+        setEntryMenuOpen(false)
+      }
+    }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setEntryMenuOpen(false)
+    }
+    window.addEventListener('mousedown', handlePointerDown)
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('mousedown', handlePointerDown)
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [entryMenuOpen])
+
+  const handleNewEntryOption = useCallback(
+    (option: 'short' | 'detailed' | 'vitals' | 'somatic') => {
+      setEntryMenuOpen(false)
+      switch (option) {
+        case 'short':
+          if (onNewEntryRequest) onNewEntryRequest('verlauf-short')
+          else setComposerOpen(true)
+          return
+        case 'detailed':
+          if (onNewEntryRequest) onNewEntryRequest('verlauf-broad')
+          else setComposerOpen(true)
+          return
+        case 'vitals':
+          setVitalsModalOpen(true)
+          return
+        case 'somatic':
+          setSomaticModalOpen(true)
+          return
+      }
+    },
+    [onNewEntryRequest],
+  )
 
   const aufnahmeFeedEvent = useMemo(
     () => buildAufnahmeFeedEvent(loadDokumente(caseId), t('dokumenteCategoryAnamnese'), language),
@@ -2743,30 +2796,73 @@ export function VerlaufFeedPage({
           ) : null}
           {!composerOpen ? (
             <div className="verlauf-feed-page__header-entry-actions">
-              <button
-                type="button"
-                className="verlauf-feed-page__new-btn verlauf-feed-page__new-btn--secondary"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setSomaticModalOpen(true)
-                }}
-              >
-                ＋ {t('verlaufSomaticBefundNew')}
-              </button>
-              <button
-                type="button"
-                className="verlauf-feed-page__new-btn"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  if (onNewEntryRequest) {
-                    onNewEntryRequest()
-                    return
-                  }
-                  setComposerOpen(true)
-                }}
-              >
-                ＋ {t('verlaufNewEntry')}
-              </button>
+              <div className="verlauf-new-entry" ref={entryMenuRef}>
+                <button
+                  type="button"
+                  className="verlauf-feed-page__new-btn verlauf-new-entry__trigger"
+                  aria-haspopup="menu"
+                  aria-expanded={entryMenuOpen}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setEntryMenuOpen((open) => !open)
+                  }}
+                >
+                  ＋ {t('verlaufNewEntry')}
+                  <ChevronDown className="verlauf-new-entry__chevron h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+                </button>
+                {entryMenuOpen ? (
+                  <div
+                    className="verlauf-new-entry__menu"
+                    role="menu"
+                    aria-label={t('verlaufNewEntryMenuLabel')}
+                  >
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="verlauf-new-entry__item"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleNewEntryOption('short')
+                      }}
+                    >
+                      {t('verlaufNewEntryShort')}
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="verlauf-new-entry__item"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleNewEntryOption('detailed')
+                      }}
+                    >
+                      {t('verlaufNewEntryDetailed')}
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="verlauf-new-entry__item"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleNewEntryOption('vitals')
+                      }}
+                    >
+                      {t('verlaufNewEntryVitals')}
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="verlauf-new-entry__item"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleNewEntryOption('somatic')
+                      }}
+                    >
+                      {t('verlaufSomaticBefundNew')}
+                    </button>
+                  </div>
+                ) : null}
+              </div>
             </div>
           ) : null}
         </div>
@@ -3162,6 +3258,17 @@ export function VerlaufFeedPage({
           showNotionToast(t('verlaufSomaticBefundSaved'))
         }}
         onOpenFullBefund={onOpenFullBefund}
+      />
+
+      <VitalsQuickModal
+        open={vitalsModalOpen}
+        caseId={caseId}
+        userId={user?.id}
+        onClose={() => setVitalsModalOpen(false)}
+        onSaved={() => {
+          setEntries(loadVerlaufFeed(caseId))
+          showNotionToast(t('verlaufVitalsSaved'))
+        }}
       />
     </div>
   )

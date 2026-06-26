@@ -15,6 +15,7 @@ import { isClinicalIntelligenceV1Enabled } from '../../utils/featureFlags'
 
 const SETTINGS_VISIBILITY_CONTEXT: OverviewWidgetVisibilityContext = {
   hasSpiegel: true,
+  hasReceptorProfile: true,
   hasAdditionalSpiegel: true,
   hasPsychotherapy: true,
   hasIsdm: true,

@@ -73,6 +73,13 @@ export type LauncherTarget =
   | { kind: 'template' }
   /** Open the Anforderung (clinical request) modal. */
   | { kind: 'anforderung' }
+  /**
+   * Run a workspace AI feature that produces an editable result in place
+   * (credit-guarded server generation), rather than navigating anywhere.
+   * `lab-interpretation` interprets the case's lab values (Item 10);
+   * `aufklaerung` generates a patient education / consent text (Item 11).
+   */
+  | { kind: 'aiFeature'; feature: 'lab-interpretation' | 'aufklaerung' }
 
 /** A single "how do you want to create it?" option shown in the follow-up step. */
 export interface LauncherCreationMode {
@@ -275,6 +282,12 @@ export const LAUNCHER_TASKS: LauncherTask[] = [
       'levels',
     ],
     modes: [
+      {
+        id: 'interpret',
+        labelKey: 'launcherModeLaborInterpret',
+        keywords: ['interpretieren', 'interpretation', 'ki', 'ai', 'auswerten', 'befund deuten'],
+        target: { kind: 'aiFeature', feature: 'lab-interpretation' },
+      },
       {
         id: 'open',
         labelKey: 'launcherModeLaborOpen',
@@ -489,6 +502,12 @@ export const LAUNCHER_TASKS: LauncherTask[] = [
       'education',
     ],
     modes: [
+      {
+        id: 'generate',
+        labelKey: 'launcherModeAufklaerungGenerate',
+        keywords: ['erstellen', 'generieren', 'ki', 'ai', 'aufklärungstext', 'patientenaufklärung'],
+        target: { kind: 'aiFeature', feature: 'aufklaerung' },
+      },
       {
         id: 'medication-education',
         labelKey: 'launcherModeAufklaerungMedication',

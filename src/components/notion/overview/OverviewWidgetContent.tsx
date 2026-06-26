@@ -7,6 +7,7 @@ import { OverviewCardShell } from './OverviewCard'
 import { OverviewHero } from './OverviewHero'
 import { SafetyAlertsCard } from './SafetyAlertsCard'
 import { MedicationOverviewCard } from './MedicationOverviewCard'
+import { ReceptorProfileOverviewCard } from './ReceptorProfileOverviewCard'
 import { PriorTherapiesOverviewCard } from './PriorTherapiesOverviewCard'
 import { SymptomSnapshotCard } from './SymptomSnapshotCard'
 import { LaborOverviewCard } from './LaborOverviewCard'
@@ -90,7 +91,13 @@ export function renderOverviewWidget(
       return (
         <MedicationOverviewCard
           data={ctx.medicationData}
-          caseId={ctx.caseId}
+          onOpenMedikation={() => ctx.onTabSelect('medikation')}
+        />
+      )
+    case 'receptor-profile':
+      return (
+        <ReceptorProfileOverviewCard
+          data={ctx.medicationData}
           onOpenMedikation={() => ctx.onTabSelect('medikation')}
         />
       )

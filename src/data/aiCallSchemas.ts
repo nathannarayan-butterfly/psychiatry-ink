@@ -215,6 +215,47 @@ const therapieVerlauf: AiCallSchemaDefinition = {
   constraints: ['Chronological', 'Med changes with rationale'],
 }
 
+/** Workspace AI feature: interpret recorded lab values (Item 10). */
+const labInterpretation: AiCallSchemaDefinition = {
+  id: 'lab-interpretation:_:_:segment',
+  componentId: 'lab-interpretation',
+  scope: 'segment',
+  preferredTool: 'structure',
+  tierDefault: 'thorough',
+  chunkStrategy: 'by-token',
+  maxTokensPerChunk: 4000,
+  sectionFocus:
+    'interpret laboratory findings: flag values outside reference range, give clinical significance, highlight psychiatry-relevant results (sodium, TSH/thyroid, prolactin, hepatic, renal, metabolic/lipids, blood count, drug levels), and recommend monitoring or follow-up',
+  aiRole: P,
+  constraints: [
+    'Interpret only the values provided',
+    'Never invent values or reference ranges',
+    'Clearly separate normal from abnormal',
+    'Note medication-relevant findings where applicable',
+    'Concise clinical prose with short headings',
+  ],
+}
+
+/** Workspace AI feature: generate a patient education / consent text (Item 11). */
+const patientAufklaerung: AiCallSchemaDefinition = {
+  id: 'patient-aufklaerung:_:_:segment',
+  componentId: 'patient-aufklaerung',
+  scope: 'segment',
+  preferredTool: 'structure',
+  tierDefault: 'standard',
+  chunkStrategy: 'by-token',
+  maxTokensPerChunk: 4000,
+  sectionFocus:
+    'patient-facing education and informed-consent text: purpose of treatment, expected benefit, common and serious risks/side effects, interactions and warning signs, and when to seek help',
+  aiRole: W,
+  constraints: [
+    'Patient-friendly, respectful language a layperson understands',
+    'Balanced, accurate benefit/risk information',
+    'No fabricated specifics, dosages, or guarantees',
+    'Structure with short headings and short paragraphs',
+  ],
+}
+
 export const AI_CALL_SCHEMAS: AiCallSchemaDefinition[] = [
   ...aufnahmeSegments,
   aufnahmeDocumentStructure,
@@ -226,6 +267,8 @@ export const AI_CALL_SCHEMAS: AiCallSchemaDefinition[] = [
   psychopathFree,
   ...psychopathChecklistSegments,
   therapieVerlauf,
+  labInterpretation,
+  patientAufklaerung,
 ]
 
 function lookupKey(

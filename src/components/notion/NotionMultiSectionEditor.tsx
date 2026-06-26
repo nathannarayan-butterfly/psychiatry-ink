@@ -1,4 +1,4 @@
-import { Copy } from 'lucide-react'
+import { ChevronDown, Copy } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { AiToolKey } from '../../data/aiTools'
@@ -38,6 +38,13 @@ interface NotionMultiSectionEditorProps {
   documentTypeId?: string
   checklistSelections: Record<string, Record<string, boolean>>
   documentMode?: DocumentVariantMode
+  /**
+   * Render the sections as a single-open accordion: exactly one section body is
+   * expanded at a time (the rest show only their header), and the clinician can
+   * expand or collapse any section. Used by the Aufnahme "nach Abschnitt" entry
+   * mode so the active section gets the full vertical space (Item 3).
+   */
+  accordion?: boolean
   activeSectionId: string | null
   inputMode?: InputMode
   readOnly?: boolean
@@ -82,6 +89,7 @@ export function NotionMultiSectionEditor({
   documentTypeId,
   checklistSelections,
   documentMode,
+  accordion = false,
   activeSectionId,
   inputMode: _inputMode = 'write',
   readOnly = false,
@@ -113,6 +121,28 @@ export function NotionMultiSectionEditor({
   // section on every keystroke (the reflow loop was O(sections) per keystroke).
   const lastResizedRef = useRef<Record<string, string>>({})
   const [activeTextareaId, setActiveTextareaId] = useState<string | null>(activeSectionId)
+  // Single-open accordion: default to the active section (or the first one) so
+  // exactly one section is expanded on open (Item 3).
+  const [openSectionId, setOpenSectionId] = useState<string | null>(
+    () => activeSectionId ?? sections[0]?.id ?? null,
+  )
+
+  // Focusing a section from outside (e.g. an AI tool jumping to a section) opens
+  // it; the dependency on activeSectionId only fires when the value changes, so
+  // a clinician collapsing the active section is not re-opened.
+  useEffect(() => {
+    if (!accordion || !activeSectionId) return
+    setOpenSectionId(activeSectionId)
+  }, [accordion, activeSectionId])
+
+  const toggleSection = useCallback(
+    (sectionId: string) => {
+      const willOpen = openSectionId !== sectionId
+      setOpenSectionId(willOpen ? sectionId : null)
+      if (willOpen) onSectionFocus(sectionId)
+    },
+    [onSectionFocus, openSectionId],
+  )
   const [selectionToolbar, setSelectionToolbar] = useState<{
     text: string
     start: number
@@ -385,6 +415,7 @@ export function NotionMultiSectionEditor({
       {sections.map((section) => {
         const content = getSectionContent(section)
         const isActive = section.id === activeSectionId
+        const isOpen = !accordion || section.id === openSectionId
         const hasContent = Boolean(content.trim())
         const showQuickAi = hasContent && !isActive && !readOnly && !isGenerating && onSectionAiTool
         const sectionConfig = getSectionConfig(section.id)
@@ -398,20 +429,50 @@ export function NotionMultiSectionEditor({
           <section
             key={section.id}
             id={`notion-section-${section.id}`}
-            className={`notion-editor__section ${isActive ? 'notion-editor__section--active' : ''}`}
+            className={[
+              'notion-editor__section',
+              isActive ? 'notion-editor__section--active' : '',
+              accordion ? 'notion-editor__section--accordion' : '',
+              accordion && isOpen ? 'notion-editor__section--open' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
           >
             <div className="notion-editor__section-header">
-              <h3 className="notion-editor__section-heading">{section.label}</h3>
-              <button
-                type="button"
-                className="notion-editor__section-copy"
-                onClick={() => handleCopySection(section)}
-                title={t('notionCopySection')}
-                aria-label={t('notionCopySection')}
-              >
-                <Copy className="h-3 w-3" strokeWidth={1.75} aria-hidden />
-              </button>
+              {accordion ? (
+                <button
+                  type="button"
+                  className="notion-editor__section-toggle"
+                  onClick={() => toggleSection(section.id)}
+                  aria-expanded={isOpen}
+                  aria-controls={`notion-section-body-${section.id}`}
+                >
+                  <ChevronDown
+                    className={`notion-editor__section-chevron h-3.5 w-3.5${
+                      isOpen ? ' notion-editor__section-chevron--open' : ''
+                    }`}
+                    strokeWidth={2}
+                    aria-hidden
+                  />
+                  <h3 className="notion-editor__section-heading">{section.label}</h3>
+                </button>
+              ) : (
+                <h3 className="notion-editor__section-heading">{section.label}</h3>
+              )}
+              {isOpen ? (
+                <button
+                  type="button"
+                  className="notion-editor__section-copy"
+                  onClick={() => handleCopySection(section)}
+                  title={t('notionCopySection')}
+                  aria-label={t('notionCopySection')}
+                >
+                  <Copy className="h-3 w-3" strokeWidth={1.75} aria-hidden />
+                </button>
+              ) : null}
             </div>
+            {!isOpen ? null : (
+            <div id={`notion-section-body-${section.id}`}>
             {showSectionChecklist && sectionConfig?.checklistItems ? (
               <div className="notion-editor__section-checklist">
                 <ChecklistPanel
@@ -510,6 +571,8 @@ export function NotionMultiSectionEditor({
                 }
               />
             ) : null}
+            </div>
+            )}
           </section>
         )
       })}

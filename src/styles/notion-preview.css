@@ -3656,6 +3656,57 @@
   color: var(--ink);
 }
 
+/* Accordion mode (Aufnahme "nach Abschnitt", Item 3): collapsed sections show
+   only their clickable header; the single open section gets the full space. */
+.notion-editor__section--accordion {
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.notion-editor__section-toggle {
+  display: inline-flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 0.4rem;
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+}
+
+.notion-editor__section--accordion .notion-editor__section-header {
+  align-items: center;
+  padding-top: 0.55rem;
+  padding-bottom: 0.55rem;
+}
+
+.notion-editor__section--accordion.notion-editor__section--open .notion-editor__section-header {
+  padding-bottom: 0.15rem;
+}
+
+.notion-editor__section-toggle .notion-editor__section-heading {
+  color: color-mix(in srgb, var(--ink) 62%, transparent);
+  transition: color 0.15s ease;
+}
+
+.notion-editor__section--open .notion-editor__section-toggle .notion-editor__section-heading,
+.notion-editor__section-toggle:hover .notion-editor__section-heading {
+  color: var(--ink);
+}
+
+.notion-editor__section-chevron {
+  flex: 0 0 auto;
+  color: color-mix(in srgb, var(--accent) 70%, var(--ink));
+  transform: rotate(-90deg);
+  transition: transform 0.18s ease;
+}
+
+.notion-editor__section-chevron--open {
+  transform: rotate(0deg);
+}
+
 .notion-editor__section-checklist {
   padding: 0 1rem 0.35rem 2.25rem;
 }
@@ -9708,6 +9759,57 @@
 .verlauf-feed-page__new-btn--secondary:hover {
   background: var(--surface-muted, #f4f4f1);
   color: var(--text-primary, #37352f);
+}
+
+/* "Neuer Eintrag" submenu (Item 5): Kurzer / Detaillierter Eintrag, Vitalwerte,
+   Somatischer Befund. */
+.verlauf-new-entry {
+  position: relative;
+  display: inline-flex;
+}
+
+.verlauf-new-entry__chevron {
+  margin-left: 0.1rem;
+  opacity: 0.8;
+}
+
+.verlauf-new-entry__menu {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  z-index: 30;
+  min-width: 12rem;
+  display: flex;
+  flex-direction: column;
+  padding: 0.3rem;
+  background: var(--notion-paper-bg, #fff);
+  border: 1px solid var(--border-soft, #d8d8d4);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(15, 15, 15, 0.12);
+}
+
+.verlauf-new-entry__item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.82rem;
+  font-family: inherit;
+  font-weight: 500;
+  text-align: left;
+  color: var(--text-primary, #37352f);
+  background: transparent;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.verlauf-new-entry__item:hover,
+.verlauf-new-entry__item:focus-visible {
+  background: color-mix(in srgb, var(--accent, #4a7c59) 10%, transparent);
+  color: var(--accent, #4a7c59);
+  outline: none;
 }
 
 .verlauf-entry--somatic-befund {

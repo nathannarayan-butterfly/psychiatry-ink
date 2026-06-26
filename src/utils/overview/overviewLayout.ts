@@ -1,6 +1,6 @@
 import { safeGetItem, safeSetItem } from '../safeStorage'
 
-export const OVERVIEW_LAYOUT_VERSION = 7 as const
+export const OVERVIEW_LAYOUT_VERSION = 8 as const
 export const OVERVIEW_LAYOUT_STORAGE_BASE = 'psychiatry-ink:overview-layout'
 export const OVERVIEW_LAYOUT_CHANGED_EVENT = 'psychiatry-ink:overview-layout-changed'
 
@@ -18,6 +18,7 @@ export type OverviewWidgetId =
   | 'labs-due'
   | 'prior-therapies'
   | 'spiegel-all'
+  | 'receptor-profile'
   | 'recent-verlauf'
   | 'appointments'
   | 'dokumentation'
@@ -68,6 +69,7 @@ export const OVERVIEW_WIDGET_IDS: readonly OverviewWidgetId[] = [
   'labs-due',
   'prior-therapies',
   'spiegel-all',
+  'receptor-profile',
   'recent-verlauf',
   'appointments',
   'dokumentation',
@@ -131,6 +133,7 @@ export const OVERVIEW_WIDGET_BAND: Partial<Record<OverviewWidgetId, OverviewWidg
   psychopathology: 'clinical-status',
   'labs-due': 'monitoring',
   'spiegel-all': 'monitoring',
+  'receptor-profile': 'monitoring',
   'lab-results': 'monitoring',
   'ekg-summary': 'monitoring',
   'eeg-summary': 'monitoring',
@@ -163,6 +166,10 @@ export function getDefaultOverviewLayout(): OverviewLayout {
       { instanceId: 'default-verlaufstendenz', widgetId: 'verlaufstendenz', width: 'full' },
       { instanceId: 'default-psychopathology', widgetId: 'psychopathology', width: 'full' },
       { instanceId: 'default-labs', widgetId: 'labs-due', width: 'full' },
+      // Medication analytics split out of the Medikation card into their own
+      // even half-width widgets (Item 6) — each only appears when data exists.
+      { instanceId: 'default-spiegel', widgetId: 'spiegel-all', width: 'half' },
+      { instanceId: 'default-receptor', widgetId: 'receptor-profile', width: 'half' },
       { instanceId: 'default-angemeldete', widgetId: 'angemeldete-therapien', width: 'half' },
       { instanceId: 'default-compliance', widgetId: 'compliance', width: 'half' },
     ],
@@ -273,6 +280,7 @@ export function usedOverviewWidgetIds(layout: OverviewLayout): Set<OverviewWidge
 export type OverviewWidgetVisibility =
   | 'always'
   | 'hasSpiegel'
+  | 'hasReceptorProfile'
   | 'hasAdditionalSpiegel'
   | 'hasPsychotherapy'
   | 'hasIsdm'
@@ -286,6 +294,7 @@ export type OverviewWidgetVisibility =
 
 export interface OverviewWidgetVisibilityContext {
   hasSpiegel: boolean
+  hasReceptorProfile: boolean
   hasAdditionalSpiegel: boolean
   hasPsychotherapy: boolean
   hasIsdm: boolean
@@ -346,6 +355,7 @@ export function isOverviewWidgetVisible(
   ctx: OverviewWidgetVisibilityContext,
 ): boolean {
   if (visibility === 'hasSpiegel') return ctx.hasSpiegel
+  if (visibility === 'hasReceptorProfile') return ctx.hasReceptorProfile
   if (visibility === 'hasAdditionalSpiegel') return ctx.hasAdditionalSpiegel
   if (visibility === 'hasPsychotherapy') return ctx.hasPsychotherapy
   if (visibility === 'hasIsdm') return ctx.hasIsdm
