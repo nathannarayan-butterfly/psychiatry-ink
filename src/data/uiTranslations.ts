@@ -11436,6 +11436,12 @@ export const uiTranslations = {
     fr: 'Aucune médication active enregistrée.',
     es: 'No hay medicación activa registrada.',
   },
+  overviewReceptorEmpty: {
+    de: 'Kein Rezeptorprofil verfügbar.',
+    en: 'No receptor profile available.',
+    fr: 'Aucun profil récepteur disponible.',
+    es: 'No hay perfil de receptores disponible.',
+  },
   overviewButterflyOpenDiagnose: {
     de: 'Zur Diagnose',
     en: 'Open diagnosis',
@@ -11982,6 +11988,12 @@ export const uiTranslations = {
     fr: 'Niveaux (tous)',
     es: 'Niveles (todos)',
   },
+  overviewWidgetReceptorProfile: {
+    de: 'Rezeptorprofil',
+    en: 'Receptor profile',
+    fr: 'Profil récepteur',
+    es: 'Perfil de receptores',
+  },
   overviewWidgetRecentVerlauf: {
     de: 'Verlauf',
     en: 'Course',
@@ -12347,6 +12359,12 @@ export const uiTranslations = {
     en: 'All serum level trends — when more than one analyte is present.',
     fr: 'Toutes les tendances de niveaux — si plusieurs analytes sont disponibles.',
     es: 'Todas las tendencias de niveles — si hay más de un analito.',
+  },
+  overviewWidgetDescReceptorProfile: {
+    de: 'Kombiniertes Rezeptorprofil der aktiven Medikation.',
+    en: 'Combined receptor profile of the active medication.',
+    fr: 'Profil récepteur combiné du traitement actif.',
+    es: 'Perfil de receptores combinado de la medicación activa.',
   },
   overviewWidgetDescRecentVerlauf: {
     de: 'Neueste Verlaufseinträge und abgeleitete klinische Ereignisse.',

@@ -6,6 +6,7 @@ import {
   loadOverviewLayout,
   moveOverviewWidget,
   normalizeOverviewLayout,
+  OVERVIEW_LAYOUT_VERSION,
   OVERVIEW_WIDGET_IDS,
   packOverviewWidgets,
   removeOverviewWidget,
@@ -23,6 +24,8 @@ const EXPECTED_DEFAULT_ORDER: string[] = [
   'verlaufstendenz',
   'psychopathology',
   'labs-due',
+  'spiegel-all',
+  'receptor-profile',
   'angemeldete-therapien',
   'compliance',
 ]
@@ -34,7 +37,7 @@ describe('overviewLayout', () => {
 
   it('returns the redesigned default layout in clinical priority order', () => {
     const layout = getDefaultOverviewLayout()
-    expect(layout.version).toBe(7)
+    expect(layout.version).toBe(OVERVIEW_LAYOUT_VERSION)
     expect(layout.widgets.map((w) => w.widgetId)).toEqual(EXPECTED_DEFAULT_ORDER)
     expect(layout.widgets[0]?.widgetId).toBe('diagnoses')
     expect(layout.widgets.some((w) => w.widgetId !== 'hero-summary')).toBe(true)
@@ -48,6 +51,7 @@ describe('overviewLayout', () => {
     expect(normalizeOverviewLayout({ version: 4, widgets: [] })).toEqual(getDefaultOverviewLayout())
     expect(normalizeOverviewLayout({ version: 5, widgets: [] })).toEqual(getDefaultOverviewLayout())
     expect(normalizeOverviewLayout({ version: 6, widgets: [] })).toEqual(getDefaultOverviewLayout())
+    expect(normalizeOverviewLayout({ version: 7, widgets: [] })).toEqual(getDefaultOverviewLayout())
     expect(
       normalizeOverviewLayout({
         version: 1,
@@ -58,7 +62,7 @@ describe('overviewLayout', () => {
 
   it('keeps valid widgets and drops unknown ids', () => {
     const normalized = normalizeOverviewLayout({
-      version: 7,
+      version: OVERVIEW_LAYOUT_VERSION,
       widgets: [
         { instanceId: 'a', widgetId: 'diagnoses', width: 'half' },
         { instanceId: 'b', widgetId: 'bogus', width: 'full' },
@@ -93,7 +97,7 @@ describe('overviewLayout', () => {
   })
 
   it('registry includes all known widget ids', () => {
-    expect(OVERVIEW_WIDGET_IDS.length).toBe(26)
+    expect(OVERVIEW_WIDGET_IDS.length).toBe(27)
   })
 
   it('persists per-user layout in localStorage', () => {
@@ -154,10 +158,11 @@ describe('overviewLayout', () => {
       'full',
       'full',
       'columns',
+      'columns',
     ])
 
     const pairSegments = packed.filter((segment) => segment.type === 'columns')
-    expect(pairSegments).toHaveLength(3)
+    expect(pairSegments).toHaveLength(4)
     if (pairSegments[0]?.type === 'columns') {
       expect(pairSegments[0].left[0]?.item.widgetId).toBe('diagnoses')
       expect(pairSegments[0].right[0]?.item.widgetId).toBe('medication')
@@ -167,8 +172,12 @@ describe('overviewLayout', () => {
       expect(pairSegments[1].right[0]?.item.widgetId).toBe('ci-mechanism')
     }
     if (pairSegments[2]?.type === 'columns') {
-      expect(pairSegments[2].left[0]?.item.widgetId).toBe('angemeldete-therapien')
-      expect(pairSegments[2].right[0]?.item.widgetId).toBe('compliance')
+      expect(pairSegments[2].left[0]?.item.widgetId).toBe('spiegel-all')
+      expect(pairSegments[2].right[0]?.item.widgetId).toBe('receptor-profile')
+    }
+    if (pairSegments[3]?.type === 'columns') {
+      expect(pairSegments[3].left[0]?.item.widgetId).toBe('angemeldete-therapien')
+      expect(pairSegments[3].right[0]?.item.widgetId).toBe('compliance')
     }
   })
 })
