@@ -18,7 +18,7 @@ describe('homepage content resolved by domain', () => {
   it('serves German hero content on psychiatrie.ink', () => {
     const content = getHomepageContent(resolveLocaleFromHost('psychiatrie.ink'))
     expect(content.hero.headline).toContain('der intelligente Arbeitsbereich')
-    expect(content.hero.subtitle.startsWith('Psychiatry.Ink bündelt')).toBe(true)
+    expect(content.hero.subtitle.startsWith('Psychiatrie.Ink bündelt')).toBe(true)
   })
 
   it('serves French and Spanish content on their domains', () => {

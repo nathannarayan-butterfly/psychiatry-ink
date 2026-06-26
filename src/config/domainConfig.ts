@@ -25,6 +25,16 @@ export interface DomainConfig {
   pricingCopyVariant: HomepageContentVariant
   /** UI languages served on public marketing pages for this hostname. */
   marketingLocales: readonly UiLanguage[]
+  /**
+   * Public-facing product wordmark for this domain. Differs from the legal entity
+   * name (`Psychiatry Ink Ltd`): the German domain presents the localized brand
+   * `Psychiatrie.Ink` in headers, titles, OpenGraph and footer, while the English
+   * domain presents `Psychiatry.Ink`. Resolved by host so it is correct at both
+   * runtime and prerender time.
+   */
+  brandName: string
+  /** Absolute origin (scheme + host) for canonical URLs, hreflang and sitemaps. */
+  canonicalOrigin: string
   seo: DomainSeoConfig
 }
 
@@ -45,7 +55,7 @@ function marketingConfig(
   locale: UiLanguage,
   content: HomepageContent,
   marketingLocales: readonly UiLanguage[],
-  siteName?: string,
+  brandName: string,
 ): DomainConfig {
   return {
     domain,
@@ -54,7 +64,9 @@ function marketingConfig(
     homepageVariant: locale,
     pricingCopyVariant: locale,
     marketingLocales,
-    seo: seoFromHomepage(content, siteName),
+    brandName,
+    canonicalOrigin: `https://${domain}`,
+    seo: seoFromHomepage(content, brandName),
   }
 }
 
@@ -98,6 +110,8 @@ const APP_PSYCHIATRY_INK: DomainConfig = {
   homepageVariant: 'en',
   pricingCopyVariant: 'en',
   marketingLocales: [],
+  brandName: 'Psychiatry.Ink',
+  canonicalOrigin: 'https://app.psychiatry.ink',
   seo: seoFromHomepage(homepageContentEn, 'Psychiatry.Ink'),
 }
 
@@ -155,6 +169,15 @@ export function resolveDomainConfig(hostname: string): DomainConfig {
  */
 export function resolveLocaleFromHost(hostname: string): UiLanguage {
   return resolveDomainConfig(hostname).defaultLocale
+}
+
+/**
+ * Resolve the public product wordmark for a request hostname — `Psychiatrie.Ink`
+ * on the German domain, `Psychiatry.Ink` on the English/default domain. Used so
+ * the brand is consistent (header, titles, OG, footer) at runtime and prerender.
+ */
+export function resolveBrandName(hostname: string): string {
+  return resolveDomainConfig(hostname).brandName
 }
 
 export function isMarketingDomain(hostname: string): boolean {

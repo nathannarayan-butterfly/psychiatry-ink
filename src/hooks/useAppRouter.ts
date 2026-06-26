@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { NOTION_PAGES, type NotionPageId } from '../components/notion/notionPages'
 import { DEFAULT_CASE_ID } from '../utils/caseContext'
 import { isEnterpriseOrgHierarchyEnabled } from '../utils/featureFlags'
+import { localizedPath, matchPublicPath } from '../public-site/publicRoutes'
 
 const ENTERPRISE_ROUTES_ENABLED = isEnterpriseOrgHierarchyEnabled()
 
@@ -24,6 +25,12 @@ export type AppRoute =
   | { view: 'ai-credits' }
   | { view: 'login' }
   | { view: 'signup' }
+  | { view: 'features' }
+  | { view: 'pricing' }
+  | { view: 'security' }
+  | { view: 'privacy' }
+  | { view: 'terms' }
+  | { view: 'impressum' }
   | { view: 'dashboard' }
   | { view: 'kb-admin' }
   | { view: 'audit-debug' }
@@ -44,12 +51,33 @@ export type AppRoute =
   | { view: 'enterprise-integrations' }
   | { view: 'enterprise-sso' }
 
+/** Public marketing/legal pages rendered by the public-site module. */
+export type PublicMarketingView =
+  | 'features'
+  | 'pricing'
+  | 'security'
+  | 'privacy'
+  | 'terms'
+  | 'impressum'
+
+export function isPublicMarketingView(view: AppRoute['view']): view is PublicMarketingView {
+  return (
+    view === 'features' ||
+    view === 'pricing' ||
+    view === 'security' ||
+    view === 'privacy' ||
+    view === 'terms' ||
+    view === 'impressum'
+  )
+}
+
 export function isPublicRoute(route: AppRoute): boolean {
   return (
     route.view === 'landing' ||
     route.view === 'ai-credits' ||
     route.view === 'login' ||
-    route.view === 'signup'
+    route.view === 'signup' ||
+    isPublicMarketingView(route.view)
   )
 }
 
@@ -84,6 +112,13 @@ function parsePathname(pathname: string, search = ''): AppRoute {
   if (path === '/ai-credits') return { view: 'ai-credits' }
   if (path === '/login') return { view: 'login' }
   if (path === '/signup') return { view: 'signup' }
+  // Localized public marketing/legal routes (EN + DE), e.g. /features ↔ /funktionen.
+  // Matched on any domain (one bundle serves all hosts); content + brand come from
+  // the request domain, canonical/hreflang tags point at the localized URL.
+  const publicKey = matchPublicPath(path)
+  if (publicKey && isPublicMarketingView(publicKey)) {
+    return { view: publicKey }
+  }
   if (path === '/dashboard' || path === '/app') return { view: 'dashboard' }
   if (path === '/dashboard/kb-admin') return { view: 'kb-admin' }
   if (path === '/dev/audit-logs' || path === '/dashboard/audit-debug') return { view: 'audit-debug' }
@@ -148,6 +183,7 @@ export function routeToPath(route: AppRoute): string {
   if (route.view === 'ai-credits') return '/ai-credits'
   if (route.view === 'login') return '/login'
   if (route.view === 'signup') return '/signup'
+  if (isPublicMarketingView(route.view)) return localizedPath(route.view, 'en')
   if (route.view === 'dashboard') return '/dashboard'
   if (route.view === 'kb-admin') return '/dashboard/kb-admin'
   if (route.view === 'audit-debug') return '/dev/audit-logs'

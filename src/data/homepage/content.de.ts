@@ -2,7 +2,7 @@ import type { HomepageContent } from './types'
 
 export const homepageContentDe: HomepageContent = {
   meta: {
-    title: 'Psychiatry.Ink',
+    title: 'Psychiatrie.Ink',
     tagline: 'Sicherer psychiatrischer Arbeitsbereich',
   },
   nav: {
@@ -14,14 +14,14 @@ export const homepageContentDe: HomepageContent = {
       { id: 'pricing', label: 'Preise', href: '#pricing' },
     ],
     openWorkspaceLabel: 'Arbeitsbereich öffnen',
-    homeAriaLabel: 'Psychiatry.Ink Startseite',
+    homeAriaLabel: 'Psychiatrie.Ink Startseite',
     mainNavAriaLabel: 'Hauptnavigation',
   },
   hero: {
     eyebrow: 'Klinischer Arbeitsbereich für die Psychiatrie',
-    headline: 'Psychiatry.Ink — der intelligente Arbeitsbereich für die moderne Psychiatrie.',
+    headline: 'Psychiatrie.Ink — der intelligente Arbeitsbereich für die moderne Psychiatrie.',
     subtitle:
-      'Psychiatry.Ink bündelt Dokumentation, Fallbesprechung, psychopharmakologische Referenz, Therapieplanung, klinische Tools und KI-gestützte Clinical Intelligence in einem sicheren Arbeitsbereich. Die KI unterstützt beim Strukturieren, Prüfen und klinischen Reasoning — die ärztliche Freigabe bleibt immer erforderlich.',
+      'Psychiatrie.Ink bündelt Dokumentation, Fallbesprechung, psychopharmakologische Referenz, Therapieplanung, klinische Tools und KI-gestützte Clinical Intelligence in einem sicheren Arbeitsbereich. Die KI unterstützt beim Strukturieren, Prüfen und klinischen Reasoning — die ärztliche Freigabe bleibt immer erforderlich.',
     primaryCta: 'Arbeitsbereich öffnen',
     secondaryCta: 'Demo-Patientin ansehen',
     devModeLink: 'Entwicklermodus — ohne Anmeldung fortfahren',
@@ -215,7 +215,7 @@ export const homepageContentDe: HomepageContent = {
     eyebrow: 'Sicherheit & Kontrolle',
     title: 'Konzipiert für klinisches Vertrauen',
     lead:
-      'Sicherheit, De-Identifikation und ärztliche Kontrolle stehen im Zentrum — keine nachträglich aufgesetzten Funktionen. Psychiatry.Ink ist auf einen verantwortungsvollen KI-Einsatz in der psychiatrischen Praxis ausgelegt.',
+      'Sicherheit, De-Identifikation und ärztliche Kontrolle stehen im Zentrum — keine nachträglich aufgesetzten Funktionen. Psychiatrie.Ink ist auf einen verantwortungsvollen KI-Einsatz in der psychiatrischen Praxis ausgelegt.',
     principles: [
       {
         id: 'clinician-control',
@@ -373,7 +373,7 @@ export const homepageContentDe: HomepageContent = {
       { id: 'sign-in', label: 'Anmelden', href: '/login' },
     ],
     disclaimer:
-      'Psychiatry.Ink ist ein Werkzeug für klinische Dokumentation und Arbeitsorganisation. Es stellt keine Diagnosen, trifft keine autonomen Therapieentscheidungen und ersetzt keine ärztliche Tätigkeit. KI-Funktionen erfordern eine ärztliche Prüfung und Freigabe. Nicht für Notfall- oder Krisensituationen vorgesehen.',
+      'Psychiatrie.Ink ist ein Werkzeug für klinische Dokumentation und Arbeitsorganisation. Es stellt keine Diagnosen, trifft keine autonomen Therapieentscheidungen und ersetzt keine ärztliche Tätigkeit. KI-Funktionen erfordern eine ärztliche Prüfung und Freigabe. Nicht für Notfall- oder Krisensituationen vorgesehen.',
   },
   ui: {
     availableNow: 'Jetzt verfügbar',
