@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
 import type { LaborBefund } from '../utils/laborArchive'
 import { consumeDiagnosticsSectionPref } from '../utils/befundArchive'
-import type { DiagnosticsSectionId } from '../data/diagnosticsSections'
+import { isDiagnosticsSectionId, type DiagnosticsSectionId } from '../data/diagnosticsSections'
 import { useLaborBefundeList } from '../hooks/useLaborBefundeList'
 import { useDiagnostikBefunde } from '../components/diagnostik/DiagnostikBefundeSection'
 
@@ -36,7 +36,7 @@ export function DiagnosticsSectionNavProvider({
 }) {
   const [diagnosticsSection, setDiagnosticsSection] = useState<DiagnosticsSectionId>(() => {
     const pref = consumeDiagnosticsSectionPref(caseId)
-    return pref === 'befunde' ? 'befunde' : 'labor'
+    return isDiagnosticsSectionId(pref) ? pref : 'labor'
   })
   const [viewMode, setViewMode] = useState<LaborViewMode>('einzeln')
   const [pasteZoneOpen, setPasteZoneOpen] = useState(false)

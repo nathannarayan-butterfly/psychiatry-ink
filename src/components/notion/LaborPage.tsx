@@ -53,12 +53,22 @@ import {
   DiagnostikBefundeSidebar,
   useDiagnostikBefunde,
 } from '../diagnostik/DiagnostikBefundeSection'
-import { DIAGNOSTICS_SECTIONS, type DiagnosticsSectionId } from '../../data/diagnosticsSections'
+import { DiagnostikEegSection } from '../diagnostik/DiagnostikEegSection'
+import { DiagnostikImagingSection } from '../diagnostik/DiagnostikImagingSection'
+import {
+  DIAGNOSTICS_SECTIONS,
+  isDiagnosticsSectionId,
+  type DiagnosticsSectionId,
+} from '../../data/diagnosticsSections'
 import { useLaborBefundeList } from '../../hooks/useLaborBefundeList'
 import { useDiagnosticsSectionNavOptional } from '../../contexts/DiagnosticsSectionNavContext'
 import { ANFORDERUNG_PRESET_LABOR } from '../../data/anforderungenCatalog'
 import type { AnforderungModalPreset } from '../../types/anforderung'
+import type { BefundType } from '../../types/befund'
 import { formatClinicalDate, formatClinicalDateShort } from '../../utils/clinicalDate'
+
+/** The EKG diagnostics section documents only structured ECG findings. */
+const EKG_BEFUND_TYPES: BefundType[] = ['ecg']
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -2602,7 +2612,7 @@ export function LaborPage({
 
   const [localDiagnosticsSection, setLocalDiagnosticsSection] = useState<DiagnosticsSectionId>(() => {
     const pref = consumeDiagnosticsSectionPref(caseId)
-    return pref === 'befunde' ? 'befunde' : 'labor'
+    return isDiagnosticsSectionId(pref) ? pref : 'labor'
   })
   const [localViewMode, setLocalViewMode] = useState<'einzeln' | 'kumulativ' | 'verlauf'>('einzeln')
   const [localPasteZoneOpen, setLocalPasteZoneOpen] = useState(false)
@@ -3079,12 +3089,13 @@ export function LaborPage({
               </ul>
             )}
           </>
-        ) : diagnosticsSection === 'befunde' ? (
+        ) : diagnosticsSection === 'ekg' ? (
           <DiagnostikBefundeSidebar
             caseId={caseId}
             records={diagnostikBefunde.records}
             selectedId={diagnostikBefunde.selectedId}
             onSelect={diagnostikBefunde.setSelectedId}
+            types={EKG_BEFUND_TYPES}
           />
         ) : null}
       </aside>
@@ -3124,7 +3135,7 @@ export function LaborPage({
         </header>
         ) : null}
 
-        {diagnosticsSection === 'befunde' ? (
+        {diagnosticsSection === 'ekg' ? (
           <DiagnostikBefundeMain
             caseId={caseId}
             records={diagnostikBefunde.records}
@@ -3132,11 +3143,18 @@ export function LaborPage({
             onSelect={diagnostikBefunde.setSelectedId}
             onRecordsChange={diagnostikBefunde.refresh}
             onRequestAnforderung={onRequestAnforderung}
+            types={EKG_BEFUND_TYPES}
           />
-        ) : diagnosticsSection !== 'labor' ? (
-          <div className="labor-page__empty">
-            <p className="labor-page__empty-text">{t('diagnosticsSectionComingSoon')}</p>
-          </div>
+        ) : diagnosticsSection === 'eeg' ? (
+          <DiagnostikEegSection
+            caseId={caseId}
+            onRequestAnforderung={onRequestAnforderung}
+          />
+        ) : diagnosticsSection === 'imaging' ? (
+          <DiagnostikImagingSection
+            caseId={caseId}
+            onRequestAnforderung={onRequestAnforderung}
+          />
         ) : null}
 
         {/* Inline paste zone — collapsed by default, toggled via "+ Labor hinzufügen" */}
