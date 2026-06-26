@@ -261,6 +261,11 @@ export function NotionPaper({
   const isPsychopathDocument = documentTypeId === 'psychopath'
   const isMedicationDocument = documentTypeId === 'medikation'
   const isTherapieplanungDocument = documentTypeId === 'therapieplanung'
+  // The Aufnahme entry page always runs inside a known case, so the patient
+  // identity fields (name / Geburtsdatum / age), the encryption notice they
+  // carry, and the free-form page title are redundant noise there — the patient
+  // is already linked. Hide them on this page (Item 3).
+  const isAufnahmeDocument = documentTypeId === 'aufnahme'
   const psychopathActiveMode: PsychopathSubMode =
     isPsychopathDocument && activeVariantId && isPsychopathSubMode(activeVariantId)
       ? activeVariantId
@@ -785,22 +790,26 @@ export function NotionPaper({
         <div
           className={`notion-paper__editor-area${showDocumentBlankState ? ' notion-paper__editor-area--document-empty' : ''}${showStructuredToolPanel ? ' notion-paper__editor-area--structured-tool' : ''}`}
         >
-          <NotionPatientFields
-            patient={patient}
-            clinicalAge={clinicalAge}
-            disabled={editorLocked}
-            onOpenPrivacySettings={onOpenPrivacySettings}
-          />
+          {!isAufnahmeDocument ? (
+            <NotionPatientFields
+              patient={patient}
+              clinicalAge={clinicalAge}
+              disabled={editorLocked}
+              onOpenPrivacySettings={onOpenPrivacySettings}
+            />
+          ) : null}
 
-          <input
-            type="text"
-            className="notion-page-heading"
-            value={pageHeading}
-            onChange={(event) => handlePageHeadingChange(event.target.value)}
-            placeholder={t('notionPageHeadingPlaceholder')}
-            readOnly={editorLocked}
-            aria-label={t('notionPageHeadingPlaceholder')}
-          />
+          {!isAufnahmeDocument ? (
+            <input
+              type="text"
+              className="notion-page-heading"
+              value={pageHeading}
+              onChange={(event) => handlePageHeadingChange(event.target.value)}
+              placeholder={t('notionPageHeadingPlaceholder')}
+              readOnly={editorLocked}
+              aria-label={t('notionPageHeadingPlaceholder')}
+            />
+          ) : null}
 
           <NotionPageDateTimeRow
             pageId={documentTypeId}
@@ -864,6 +873,7 @@ export function NotionPaper({
                 documentTypeId={documentTypeId}
                 checklistSelections={checklistSelections}
                 documentMode={documentMode}
+                accordion={documentMode === 'sections'}
                 activeSectionId={activeSectionId}
                 inputMode={inputMode}
                 readOnly={editorLocked}
