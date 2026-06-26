@@ -1,6 +1,7 @@
-import { Copy, FileDown, Printer, RefreshCw, Save, X } from 'lucide-react'
+import { Check, Copy, FileDown, Printer, RefreshCw, Save, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
+import { useCopyWithFeedback } from '../../hooks/useCopyWithFeedback'
 import { getDocumentTemplate } from '../../utils/documentTemplateStore'
 import {
   buildInitialFieldValues,
@@ -430,13 +431,10 @@ export function GeneratedDocumentEditor({
     [buildDoc, caseId, existingDoc, saveToPatientDocuments, onSaved, renderedText, template.id],
   )
 
-  const handleCopy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(renderedText)
-    } catch {
-      // ignore
-    }
-  }, [renderedText])
+  const { copied, copy } = useCopyWithFeedback()
+  const handleCopy = useCallback(() => {
+    void copy(renderedText)
+  }, [copy, renderedText])
 
   const handlePrint = useCallback(() => {
     const html = buildPrintHtmlDocument(template, fieldValues, context, { markUnresolved: !caseId })
@@ -513,9 +511,18 @@ export function GeneratedDocumentEditor({
 
         <footer className="dt-editor__footer">
           <div className="dt-editor__footer-left">
-            <button type="button" className="dt-btn dt-btn--ghost" onClick={handleCopy}>
-              <Copy className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
-              {t('templateCopyText')}
+            <button
+              type="button"
+              className="dt-btn dt-btn--ghost"
+              onClick={handleCopy}
+              aria-label={copied ? t('copyButtonCopied') : t('templateCopyText')}
+            >
+              {copied ? (
+                <Check className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+              ) : (
+                <Copy className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+              )}
+              {copied ? t('copyButtonCopied') : t('templateCopyText')}
             </button>
             <button type="button" className="dt-btn dt-btn--ghost" onClick={handlePrint}>
               <Printer className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
