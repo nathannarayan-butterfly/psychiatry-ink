@@ -1309,11 +1309,11 @@ export const medicationUiTranslations = {
     fr: 'Information patient (générique)',
     es: 'Educación del paciente (genérica)',
   },
-  pegenTileSubtitle: {
-    de: 'KI-gestützte allgemeine Aufklärung zu Medikament, Erkrankung oder Thema',
-    en: 'AI-assisted general education on a medication, condition, or topic',
-    fr: 'Information générale assistée par IA sur un médicament, une maladie ou un sujet',
-    es: 'Educación general asistida por IA sobre un medicamento, enfermedad o tema',
+  pegenTileTitle: {
+    de: 'Aufklärungen',
+    en: 'Patient education',
+    fr: 'Informations patient',
+    es: 'Educación del paciente',
   },
   pegenWorkspaceHint: {
     de: 'Patientenfreundliche Aufklärung erstellen — unabhängig von einem Patientenfall.',

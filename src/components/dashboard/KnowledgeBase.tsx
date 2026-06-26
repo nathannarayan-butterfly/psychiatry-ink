@@ -724,10 +724,7 @@ function CollectionsHome({
             </span>
             <span className="kb-collection-tile__body">
               <span className="kb-collection-tile__title">
-                {translateMedicationUi(language, 'pegenTitle')}
-              </span>
-              <span className="kb-collection-tile__subtitle">
-                {translateMedicationUi(language, 'pegenTileSubtitle')}
+                {translateMedicationUi(language, 'pegenTileTitle')}
               </span>
             </span>
             <ArrowRight className="kb-collection-tile__arrow h-4 w-4" strokeWidth={1.75} aria-hidden />
