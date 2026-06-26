@@ -21,13 +21,18 @@ import {
 import { getUsageSummaryForUser } from '../ai/usageLogger'
 import {
   createCreditCheckoutSession,
+  createGiftVoucherCheckoutSession,
   createSubscriptionCheckoutSession,
   isStripeCreditsConfigured,
   type SubscriptionInterval,
 } from '../services/stripeCredits'
 import { findCreditPack } from '../../src/data/creditPacks'
+import { findGiftVoucherPack } from '../../src/data/giftVoucherPacks'
 import { isCreditGrantAdmin } from '../utils/adminAllowlist'
 import { getAccessForUser } from '../services/subscriptionAccess'
+import { claimDueVoucherPeriods, redeemVoucherForUser } from '../services/voucherService'
+import { voucherRepo } from '../data/vouchers'
+import { attributeInvitee, getReferralInfo } from '../services/referralService'
 
 export const aiCreditsRouter: Router = createRouter()
 
@@ -35,6 +40,12 @@ aiCreditsRouter.get('/', async (req: Request, res: Response) => {
   try {
     const userId = requireRouteAuth(req, res)
     if (!userId) return
+
+    // Grant any voucher periods now due (idempotent, cheap no-op when nothing
+    // is due). This is the "claim due voucher periods on balance check" path.
+    await claimDueVoucherPeriods(userId).catch((error) => {
+      console.error('[ai-credits] voucher claim during summary failed:', error)
+    })
 
     const summary = await getCreditSummary(userId)
     res.json({
@@ -244,5 +255,159 @@ aiCreditsRouter.post('/subscribe', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('[ai-credits] subscription checkout failed:', error)
     res.status(500).json({ error: 'Failed to create subscription checkout session' })
+  }
+})
+
+// ── Gutschein (voucher) ──────────────────────────────────────────────────────
+
+/** Redeem a Gutschein code → bind to the user + grant the first period. */
+aiCreditsRouter.post('/voucher/redeem', async (req: Request, res: Response) => {
+  try {
+    const userId = requireRouteAuth(req, res)
+    if (!userId) return
+
+    const code = typeof req.body?.code === 'string' ? req.body.code.trim() : ''
+    if (!code) {
+      res.status(400).json({ error: 'Code erforderlich' })
+      return
+    }
+
+    const outcome = await redeemVoucherForUser(userId, code)
+    if (!outcome.ok) {
+      res.status(400).json({ ok: false, error: outcome.error })
+      return
+    }
+    res.json({
+      ok: true,
+      creditsGranted: outcome.creditsGranted,
+      creditsPerPeriod: outcome.creditsPerPeriod,
+      totalPeriods: outcome.totalPeriods,
+      periodMonths: outcome.periodMonths,
+    })
+  } catch (error) {
+    console.error('[ai-credits] voucher redeem failed:', error)
+    res.status(500).json({ error: 'Gutschein konnte nicht eingelöst werden' })
+  }
+})
+
+/** Claim any voucher periods now due for the current user (idempotent). */
+aiCreditsRouter.post('/voucher/claim', async (req: Request, res: Response) => {
+  try {
+    const userId = requireRouteAuth(req, res)
+    if (!userId) return
+    const result = await claimDueVoucherPeriods(userId)
+    res.json(result)
+  } catch (error) {
+    console.error('[ai-credits] voucher claim failed:', error)
+    res.status(500).json({ error: 'Voucher-Gutschriften konnten nicht angewendet werden' })
+  }
+})
+
+/** Start a buy-a-gift Checkout for a gift voucher pack. */
+aiCreditsRouter.post('/voucher/gift/checkout', async (req: Request, res: Response) => {
+  try {
+    const userId = requireRouteAuth(req, res)
+    if (!userId) return
+
+    if (!isStripeCreditsConfigured()) {
+      res.status(503).json({ error: 'Stripe is not configured' })
+      return
+    }
+
+    const packId = typeof req.body?.giftPackId === 'string' ? req.body.giftPackId : ''
+    const pack = findGiftVoucherPack(packId)
+    if (!pack) {
+      res.status(400).json({ error: 'Unknown gift voucher' })
+      return
+    }
+
+    const origin =
+      typeof req.body?.origin === 'string' && req.body.origin.startsWith('http')
+        ? req.body.origin
+        : `${req.protocol}://${req.get('host') ?? 'localhost:5173'}`
+
+    const session = await createGiftVoucherCheckoutSession({
+      userId,
+      pack,
+      successUrl: `${origin}/dashboard/credits?gift=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${origin}/dashboard/credits?gift=cancelled`,
+    })
+
+    res.json({ url: session.url, sessionId: session.id })
+  } catch (error) {
+    console.error('[ai-credits] gift checkout failed:', error)
+    res.status(500).json({ error: 'Failed to create gift checkout session' })
+  }
+})
+
+/** Fetch the generated voucher code for a completed gift purchase (buyer only). */
+aiCreditsRouter.get('/voucher/gift/result', async (req: Request, res: Response) => {
+  try {
+    const userId = requireRouteAuth(req, res)
+    if (!userId) return
+
+    const sessionId = typeof req.query.session_id === 'string' ? req.query.session_id : ''
+    if (!sessionId) {
+      res.status(400).json({ error: 'session_id erforderlich' })
+      return
+    }
+
+    const voucher = await voucherRepo.getPurchasedVoucherBySession(sessionId, userId)
+    if (!voucher) {
+      // Webhook may not have processed yet — let the client retry.
+      res.status(404).json({ ok: false, pending: true })
+      return
+    }
+    res.json({
+      ok: true,
+      code: voucher.code,
+      creditsPerPeriod: voucher.credits_per_period,
+      periodMonths: voucher.period_months,
+      totalPeriods: voucher.total_periods,
+    })
+  } catch (error) {
+    console.error('[ai-credits] gift result read failed:', error)
+    res.status(500).json({ error: 'Gutschein-Code konnte nicht geladen werden' })
+  }
+})
+
+// ── Invite / referral ────────────────────────────────────────────────────────
+
+/** The current user's invite code, link and referral stats. */
+aiCreditsRouter.get('/referral', async (req: Request, res: Response) => {
+  try {
+    const userId = requireRouteAuth(req, res)
+    if (!userId) return
+
+    const origin =
+      typeof req.query.origin === 'string' && req.query.origin.startsWith('http')
+        ? req.query.origin
+        : `${req.protocol}://${req.get('host') ?? 'localhost:5173'}`
+
+    const info = await getReferralInfo(userId, origin)
+    res.json(info)
+  } catch (error) {
+    console.error('[ai-credits] referral info failed:', error)
+    res.status(500).json({ error: 'Einladungsdaten konnten nicht geladen werden' })
+  }
+})
+
+/** Attribute the current user as an invitee of a referral code (idempotent). */
+aiCreditsRouter.post('/referral/attribute', async (req: Request, res: Response) => {
+  try {
+    const userId = requireRouteAuth(req, res)
+    if (!userId) return
+
+    const code = typeof req.body?.code === 'string' ? req.body.code.trim() : ''
+    if (!code) {
+      res.status(400).json({ error: 'Code erforderlich' })
+      return
+    }
+
+    const result = await attributeInvitee(userId, code)
+    res.json(result)
+  } catch (error) {
+    console.error('[ai-credits] referral attribute failed:', error)
+    res.status(500).json({ error: 'Einladung konnte nicht zugeordnet werden' })
   }
 })

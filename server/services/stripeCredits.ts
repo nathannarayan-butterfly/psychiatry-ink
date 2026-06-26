@@ -7,9 +7,13 @@
 
 import Stripe from 'stripe'
 import type { CreditPack } from '../../src/data/creditPacks'
+import { type GiftVoucherPack, findGiftVoucherPack } from '../../src/data/giftVoucherPacks'
 import { addPurchasedCredits } from '../ai/creditGuard'
 import { MONTHLY_CREDIT_GRANT } from '../ai/aiPricingConfig'
 import { creditsRepo } from '../data/credits'
+import { voucherRepo } from '../data/vouchers'
+import { generateVoucherCode } from './voucherService'
+import { rewardReferrerForConversion } from './referralService'
 import { claimEventMarker, releaseEventMarker } from '../data/appSettings'
 
 let stripeClient: Stripe | null = null
@@ -67,6 +71,46 @@ export async function createCreditCheckoutSession(params: {
       userId: params.userId,
       packId: params.pack.id,
       credits: String(params.pack.credits),
+    },
+  })
+}
+
+/**
+ * Buy-a-gift Checkout (payment mode). On `checkout.session.completed` the
+ * webhook mints a new voucher (source='purchase') and the buyer can copy the
+ * generated code. Priced in GBP to match the one-off credit packs.
+ */
+export async function createGiftVoucherCheckoutSession(params: {
+  userId: string
+  pack: GiftVoucherPack
+  successUrl: string
+  cancelUrl: string
+}): Promise<Stripe.Checkout.Session> {
+  const stripe = getStripe()
+  const totalCredits = params.pack.creditsPerPeriod * params.pack.totalPeriods
+
+  return stripe.checkout.sessions.create({
+    mode: 'payment',
+    line_items: [
+      {
+        quantity: 1,
+        price_data: {
+          currency: 'gbp',
+          unit_amount: params.pack.priceGbpPence,
+          product_data: {
+            name: `Psychiatry.Ink — Gutschein · ${params.pack.labelEn}`,
+            description: `Gift voucher: ${params.pack.creditsPerPeriod} credits/month for ${params.pack.totalPeriods} months (${totalCredits} credits total).`,
+          },
+        },
+      },
+    ],
+    success_url: params.successUrl,
+    cancel_url: params.cancelUrl,
+    client_reference_id: params.userId,
+    metadata: {
+      kind: 'gift_voucher',
+      userId: params.userId,
+      giftPackId: params.pack.id,
     },
   })
 }
@@ -286,6 +330,12 @@ async function handleOneTimeCheckout(
   session: Stripe.Checkout.Session,
 ): Promise<void> {
   await processStripeEventOnce(eventId, async () => {
+    // Buy-a-gift checkout → mint a voucher (idempotent on the session id).
+    if (session.metadata?.kind === 'gift_voucher') {
+      await createGiftVoucherFromCheckout(session)
+      return
+    }
+
     const grant = resolveCheckoutGrant(session)
     if (!grant) return
     await addPurchasedCredits({
@@ -293,6 +343,32 @@ async function handleOneTimeCheckout(
       credits: grant.credits,
       note: grant.note,
     })
+  })
+}
+
+/**
+ * checkout.session.completed (gift voucher) → create the purchased voucher. The
+ * underlying RPC is idempotent on the Stripe session id, so webhook retries
+ * never mint duplicate codes.
+ */
+async function createGiftVoucherFromCheckout(session: Stripe.Checkout.Session): Promise<void> {
+  if (session.payment_status !== 'paid') return
+  const buyerUserId = session.metadata?.userId ?? session.client_reference_id ?? undefined
+  const giftPackId = session.metadata?.giftPackId ?? ''
+  const pack = findGiftVoucherPack(giftPackId)
+  if (!buyerUserId || !pack) {
+    console.warn('[stripe] gift_voucher checkout missing buyer/pack metadata', session.id)
+    return
+  }
+
+  await voucherRepo.createVoucherFromPurchase({
+    sessionId: session.id,
+    buyerUserId,
+    code: generateVoucherCode(),
+    creditsPerPeriod: pack.creditsPerPeriod,
+    periodMonths: pack.periodMonths,
+    totalPeriods: pack.totalPeriods,
+    validDays: pack.validDays,
   })
 }
 
@@ -497,6 +573,18 @@ async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
     null,
     `stripe:invoice:${invoice.id}`,
   )
+
+  // Referral reward: this is a REAL paid invoice (amount_paid > 0, the $0
+  // trial-start invoice was excluded above), i.e. the invitee just converted to
+  // a real paid subscription. Reward the referrer exactly once (atomic + idempotent
+  // in the RPC; also inside processStripeEventOnce). A no-attribution / already-
+  // rewarded invitee is a silent no-op. Reward failures must not roll back the
+  // already-granted subscription period, so they are logged and swallowed.
+  try {
+    await rewardReferrerForConversion(userId)
+  } catch (error) {
+    console.error('[stripe] referral reward failed (subscription period already granted):', error)
+  }
 }
 
 /** invoice.payment_failed → mark the subscription past_due (keeps soft-lock). */

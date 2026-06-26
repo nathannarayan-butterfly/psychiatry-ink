@@ -3721,6 +3721,190 @@ export type Database = {
         }
         Relationships: []
       }
+      vouchers: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          credits_per_period: number
+          id: string
+          max_redemptions: number
+          period_months: number
+          source: string
+          status: string
+          stripe_session_id: string | null
+          total_periods: number
+          updated_at: string
+          valid_from: string
+          valid_until: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          credits_per_period: number
+          id?: string
+          max_redemptions?: number
+          period_months?: number
+          source?: string
+          status?: string
+          stripe_session_id?: string | null
+          total_periods: number
+          updated_at?: string
+          valid_from?: string
+          valid_until: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          credits_per_period?: number
+          id?: string
+          max_redemptions?: number
+          period_months?: number
+          source?: string
+          status?: string
+          stripe_session_id?: string | null
+          total_periods?: number
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string
+        }
+        Relationships: []
+      }
+      voucher_redemptions: {
+        Row: {
+          created_at: string
+          id: string
+          last_grant_at: string | null
+          next_grant_at: string | null
+          periods_granted: number
+          redeemed_at: string
+          redeemed_by: string
+          updated_at: string
+          voucher_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_grant_at?: string | null
+          next_grant_at?: string | null
+          periods_granted?: number
+          redeemed_at?: string
+          redeemed_by: string
+          updated_at?: string
+          voucher_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_grant_at?: string | null
+          next_grant_at?: string | null
+          periods_granted?: number
+          redeemed_at?: string
+          redeemed_by?: string
+          updated_at?: string
+          voucher_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voucher_redemptions_voucher_id_fkey"
+            columns: ["voucher_id"]
+            isOneToOne: false
+            referencedRelation: "vouchers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voucher_period_grants: {
+        Row: {
+          credits: number
+          granted_at: string
+          id: string
+          period_index: number
+          redemption_id: string
+        }
+        Insert: {
+          credits: number
+          granted_at?: string
+          id?: string
+          period_index: number
+          redemption_id: string
+        }
+        Update: {
+          credits?: number
+          granted_at?: string
+          id?: string
+          period_index?: number
+          redemption_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voucher_period_grants_redemption_id_fkey"
+            columns: ["redemption_id"]
+            isOneToOne: false
+            referencedRelation: "voucher_redemptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referral_codes: {
+        Row: {
+          code: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          converted_at: string | null
+          created_at: string
+          id: string
+          invite_code: string
+          invitee_user: string | null
+          referrer_user: string
+          reward_credits: number
+          rewarded_at: string | null
+          signed_up_at: string | null
+          status: string
+        }
+        Insert: {
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          invite_code: string
+          invitee_user?: string | null
+          referrer_user: string
+          reward_credits?: number
+          rewarded_at?: string | null
+          signed_up_at?: string | null
+          status?: string
+        }
+        Update: {
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          invite_code?: string
+          invitee_user?: string | null
+          referrer_user?: string
+          reward_credits?: number
+          rewarded_at?: string | null
+          signed_up_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -3916,6 +4100,38 @@ export type Database = {
           p_usage_log_id?: string
         }
         Returns: undefined
+      }
+      voucher_redeem: {
+        Args: { p_user_id: string; p_code: string }
+        Returns: Json
+      }
+      voucher_grant_period: {
+        Args: { p_redemption_id: string; p_period_index: number }
+        Returns: boolean
+      }
+      voucher_create_from_purchase: {
+        Args: {
+          p_session_id: string
+          p_buyer: string
+          p_code: string
+          p_credits_per_period: number
+          p_period_months: number
+          p_total_periods: number
+          p_valid_days: number
+        }
+        Returns: Json
+      }
+      referral_get_or_create_code: {
+        Args: { p_user_id: string; p_code: string }
+        Returns: string
+      }
+      referral_attribute: {
+        Args: { p_invitee: string; p_code: string }
+        Returns: Json
+      }
+      referral_claim_reward: {
+        Args: { p_invitee: string; p_reward_credits: number }
+        Returns: Json
       }
       dc_is_participant: { Args: { p_discussion_id: string }; Returns: boolean }
       dc_purge_abandoned: { Args: { p_ttl?: string }; Returns: number }

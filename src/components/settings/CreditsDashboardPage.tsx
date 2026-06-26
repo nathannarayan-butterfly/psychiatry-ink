@@ -1,4 +1,4 @@
-import { ArrowLeft, CreditCard, RefreshCw, Sparkles, Wallet } from 'lucide-react'
+import { ArrowLeft, Check, Copy, CreditCard, Gift, RefreshCw, Sparkles, Ticket, Users, Wallet } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import {
@@ -6,21 +6,41 @@ import {
   formatCreditPackPerHundred,
   formatCreditPackPrice,
 } from '../../data/creditPacks'
+import {
+  GIFT_VOUCHER_PACKS,
+  formatGiftVoucherPrice,
+  giftVoucherTotalCredits,
+} from '../../data/giftVoucherPacks'
 import { useCredits } from '../../hooks/useCredits'
 import {
   fetchAiCreditHistory,
   fetchAiCreditLedger,
   fetchAiCreditSummary,
   fetchAiCreditUsage,
+  fetchGiftVoucherResult,
+  fetchReferralInfo,
+  redeemVoucher,
   startCreditCheckout,
+  startGiftVoucherCheckout,
   type AiCreditHistoryEntry,
   type AiCreditLedgerEntry,
   type AiCreditSummary,
   type AiCreditUsageSummary,
+  type GiftVoucherResult,
+  type ReferralInfo,
 } from '../../services/aiCreditsApi'
 import { ClinicalLoading } from '../ui/ClinicalLoading'
 import { SubscriptionBanner } from './SubscriptionBanner'
 import '../../styles/credits-dashboard.css'
+
+const VOUCHER_ERROR_KEYS: Record<string, string> = {
+  not_found: 'voucherErrorNotFound',
+  invalid_code: 'voucherErrorNotFound',
+  inactive: 'voucherErrorInactive',
+  expired: 'voucherErrorExpired',
+  already_redeemed: 'voucherErrorAlreadyRedeemed',
+  exhausted: 'voucherErrorExhausted',
+}
 
 interface CreditsDashboardPageProps {
   onBack: () => void
@@ -63,9 +83,30 @@ export function CreditsDashboardPage({ onBack }: CreditsDashboardPageProps) {
   const [checkoutPackId, setCheckoutPackId] = useState<string | null>(null)
   const [checkoutMessage, setCheckoutMessage] = useState<string | null>(null)
 
+  // Voucher redemption.
+  const [voucherCode, setVoucherCode] = useState('')
+  const [voucherBusy, setVoucherBusy] = useState(false)
+  const [voucherFeedback, setVoucherFeedback] = useState<{ tone: 'success' | 'error'; text: string } | null>(null)
+
+  // Gift voucher purchase.
+  const [giftBusyId, setGiftBusyId] = useState<string | null>(null)
+  const [giftResult, setGiftResult] = useState<GiftVoucherResult | null>(null)
+  const [copied, setCopied] = useState<string | null>(null)
+
+  // Referral.
+  const [referral, setReferral] = useState<ReferralInfo | null>(null)
+
   const checkoutStatus = useMemo(() => {
     const params = new URLSearchParams(window.location.search)
     return params.get('checkout') ?? params.get('subscription')
+  }, [])
+
+  const giftStatus = useMemo(() => {
+    const params = new URLSearchParams(window.location.search)
+    return {
+      status: params.get('gift'),
+      sessionId: params.get('session_id'),
+    }
   }, [])
 
   const load = useCallback(async () => {
@@ -121,6 +162,112 @@ export function CreditsDashboardPage({ onBack }: CreditsDashboardPageProps) {
       setCheckoutPackId(null)
     }
   }
+
+  const handleRedeemVoucher = async () => {
+    const code = voucherCode.trim()
+    if (!code || voucherBusy) return
+    setVoucherBusy(true)
+    setVoucherFeedback(null)
+    try {
+      const result = await redeemVoucher(code)
+      if (!result.ok) {
+        const key = VOUCHER_ERROR_KEYS[(result as { error?: string }).error ?? ''] ?? 'voucherErrorGeneric'
+        setVoucherFeedback({ tone: 'error', text: t(key as Parameters<typeof t>[0]) })
+        return
+      }
+      const main = t('voucherRedeemSuccess').replace('{credits}', String(result.creditsGranted))
+      const schedule =
+        result.creditsPerPeriod && result.totalPeriods
+          ? ' ' +
+            t('voucherRedeemSuccessSchedule')
+              .replace('{creditsPerPeriod}', String(result.creditsPerPeriod))
+              .replace('{totalPeriods}', String(result.totalPeriods))
+          : ''
+      setVoucherFeedback({ tone: 'success', text: main + schedule })
+      setVoucherCode('')
+      await load()
+    } catch (err) {
+      setVoucherFeedback({ tone: 'error', text: err instanceof Error ? err.message : t('voucherErrorGeneric') })
+    } finally {
+      setVoucherBusy(false)
+    }
+  }
+
+  const handleGiftPurchase = async (giftPackId: string) => {
+    setGiftBusyId(giftPackId)
+    setCheckoutMessage(null)
+    try {
+      const { url } = await startGiftVoucherCheckout(giftPackId)
+      if (url) {
+        window.location.href = url
+        return
+      }
+      setCheckoutMessage(t('creditsCheckoutUnavailable'))
+    } catch (err) {
+      setCheckoutMessage(err instanceof Error ? err.message : t('creditsCheckoutFailed'))
+    } finally {
+      setGiftBusyId(null)
+    }
+  }
+
+  const handleCopy = async (value: string, key: string) => {
+    try {
+      await navigator.clipboard.writeText(value)
+      setCopied(key)
+      window.setTimeout(() => setCopied((current) => (current === key ? null : current)), 2000)
+    } catch {
+      // Clipboard unavailable — no-op.
+    }
+  }
+
+  // Load the referral card (best-effort).
+  useEffect(() => {
+    let active = true
+    fetchReferralInfo()
+      .then((info) => {
+        if (active) setReferral(info)
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [])
+
+  // Resolve the buy-a-gift result after returning from Stripe (poll briefly
+  // while the webhook mints the voucher).
+  useEffect(() => {
+    if (giftStatus.status === 'cancelled') {
+      setCheckoutMessage(t('voucherGiftCancelled'))
+      window.history.replaceState({}, '', '/dashboard/credits')
+      return
+    }
+    if (giftStatus.status !== 'success' || !giftStatus.sessionId) return
+
+    let attempts = 0
+    let timer: number | undefined
+    const sessionId = giftStatus.sessionId
+
+    const poll = () => {
+      attempts += 1
+      void fetchGiftVoucherResult(sessionId)
+        .then((result) => {
+          if (result.ok && result.code) {
+            setGiftResult(result)
+            window.history.replaceState({}, '', '/dashboard/credits')
+            return
+          }
+          if (attempts < 6) timer = window.setTimeout(poll, 1500)
+          else setGiftResult({ ok: false, pending: true })
+        })
+        .catch(() => {
+          if (attempts < 6) timer = window.setTimeout(poll, 1500)
+        })
+    }
+    poll()
+    return () => {
+      if (timer) window.clearTimeout(timer)
+    }
+  }, [giftStatus.status, giftStatus.sessionId, t])
 
   const stripeReady = summary?.stripeConfigured === true
   const monthlyCredits = summary?.monthlyCredits ?? details?.monthlyCredits ?? 0
@@ -286,6 +433,162 @@ export function CreditsDashboardPage({ onBack }: CreditsDashboardPageProps) {
             <p className="credits-panel__sub credits-panel__sub--muted">{t('creditsStripeNotConfigured')}</p>
           )}
         </section>
+
+        <section className="credits-panel" aria-labelledby="voucher-redeem-heading">
+          <div className="credits-panel__header">
+            <h2 id="voucher-redeem-heading" className="credits-panel__heading">
+              {t('voucherRedeemHeading')}
+            </h2>
+            <Ticket className="credits-panel__heading-icon" strokeWidth={1.5} aria-hidden />
+          </div>
+          <p className="credits-panel__sub">{t('voucherRedeemSub')}</p>
+
+          <form
+            className="voucher-redeem"
+            onSubmit={(event) => {
+              event.preventDefault()
+              void handleRedeemVoucher()
+            }}
+          >
+            <input
+              type="text"
+              className="voucher-redeem__input"
+              placeholder={t('voucherRedeemPlaceholder')}
+              value={voucherCode}
+              onChange={(event) => setVoucherCode(event.target.value.toUpperCase())}
+              autoCapitalize="characters"
+              autoComplete="off"
+              spellCheck={false}
+              disabled={voucherBusy}
+            />
+            <button type="submit" className="voucher-redeem__submit" disabled={voucherBusy || !voucherCode.trim()}>
+              {voucherBusy ? t('voucherRedeemBusy') : t('voucherRedeemButton')}
+            </button>
+          </form>
+
+          {voucherFeedback ? (
+            <p
+              className={`credits-page__notice${voucherFeedback.tone === 'success' ? ' credits-page__notice--success' : ''}`}
+            >
+              {voucherFeedback.text}
+            </p>
+          ) : null}
+        </section>
+
+        <section className="credits-panel" aria-labelledby="voucher-gift-heading">
+          <div className="credits-panel__header">
+            <h2 id="voucher-gift-heading" className="credits-panel__heading">
+              {t('voucherGiftHeading')}
+            </h2>
+            <Gift className="credits-panel__heading-icon" strokeWidth={1.5} aria-hidden />
+          </div>
+          <p className="credits-panel__sub">{t('voucherGiftSub')}</p>
+
+          {giftResult?.ok && giftResult.code ? (
+            <div className="voucher-gift-result">
+              <span className="voucher-gift-result__label">{t('voucherGiftResultHeading')}</span>
+              <div className="voucher-gift-result__code-row">
+                <code className="voucher-gift-result__code">{giftResult.code}</code>
+                <button
+                  type="button"
+                  className="voucher-gift-result__copy"
+                  onClick={() => void handleCopy(giftResult.code!, 'gift')}
+                >
+                  {copied === 'gift' ? (
+                    <Check className="h-4 w-4" strokeWidth={1.5} aria-hidden />
+                  ) : (
+                    <Copy className="h-4 w-4" strokeWidth={1.5} aria-hidden />
+                  )}
+                  {copied === 'gift' ? t('voucherCopied') : t('voucherCopy')}
+                </button>
+              </div>
+              <p className="credits-panel__sub credits-panel__sub--muted">{t('voucherGiftResultSub')}</p>
+            </div>
+          ) : null}
+          {giftResult && !giftResult.ok && giftResult.pending ? (
+            <p className="credits-page__notice">{t('voucherGiftPending')}</p>
+          ) : null}
+
+          {stripeReady ? (
+            <div className="credits-packs">
+              {GIFT_VOUCHER_PACKS.map((pack) => {
+                const label = language === 'de' ? pack.labelDe : pack.labelEn
+                const price = formatGiftVoucherPrice(pack, locale)
+                const total = t('voucherGiftTotalCredits').replace(
+                  '{credits}',
+                  giftVoucherTotalCredits(pack).toLocaleString(locale),
+                )
+                const isBusy = giftBusyId === pack.id
+                return (
+                  <button
+                    key={pack.id}
+                    type="button"
+                    className={`credits-pack${pack.popular ? ' credits-pack--popular' : ''}`}
+                    disabled={isBusy}
+                    onClick={() => void handleGiftPurchase(pack.id)}
+                  >
+                    {pack.popular ? <span className="credits-pack__badge">{t('creditsPackPopular')}</span> : null}
+                    <span className="credits-pack__credits">{label}</span>
+                    <span className="credits-pack__price">{price}</span>
+                    <span className="credits-pack__rate">{total}</span>
+                    <span className="credits-pack__cta">
+                      <Gift className="h-4 w-4" strokeWidth={1.5} aria-hidden />
+                      {isBusy ? t('creditsCheckoutRedirect') : t('voucherGiftBuy')}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          ) : (
+            <p className="credits-panel__sub credits-panel__sub--muted">{t('creditsStripeNotConfigured')}</p>
+          )}
+        </section>
+
+        {referral ? (
+          <section className="credits-panel" aria-labelledby="referral-heading">
+            <div className="credits-panel__header">
+              <h2 id="referral-heading" className="credits-panel__heading">
+                {t('referralHeading')}
+              </h2>
+              <Users className="credits-panel__heading-icon" strokeWidth={1.5} aria-hidden />
+            </div>
+            <p className="credits-panel__sub">{t('referralSub')}</p>
+
+            <div className="referral-link">
+              <span className="referral-link__label">{t('referralLinkLabel')}</span>
+              <div className="referral-link__row">
+                <code className="referral-link__value">{referral.inviteUrl}</code>
+                <button
+                  type="button"
+                  className="voucher-gift-result__copy"
+                  onClick={() => void handleCopy(referral.inviteUrl, 'referral')}
+                >
+                  {copied === 'referral' ? (
+                    <Check className="h-4 w-4" strokeWidth={1.5} aria-hidden />
+                  ) : (
+                    <Copy className="h-4 w-4" strokeWidth={1.5} aria-hidden />
+                  )}
+                  {copied === 'referral' ? t('voucherCopied') : t('voucherCopy')}
+                </button>
+              </div>
+            </div>
+
+            <div className="credits-stats">
+              <article className="credits-stat">
+                <span className="credits-stat__label">{t('referralStatInvited')}</span>
+                <span className="credits-stat__value">{referral.stats.invited.toLocaleString(locale)}</span>
+              </article>
+              <article className="credits-stat">
+                <span className="credits-stat__label">{t('referralStatConverted')}</span>
+                <span className="credits-stat__value">{referral.stats.converted.toLocaleString(locale)}</span>
+              </article>
+              <article className="credits-stat">
+                <span className="credits-stat__label">{t('referralStatEarned')}</span>
+                <span className="credits-stat__value">{referral.stats.creditsEarned.toLocaleString(locale)}</span>
+              </article>
+            </div>
+          </section>
+        ) : null}
 
         <div className="credits-dual">
           <section className="credits-panel credits-panel--table" aria-labelledby="credits-history-heading">

@@ -18,7 +18,9 @@ import {
 import type { SubscriptionPlan } from '../data/subscriptionPlans'
 import { API_BASE } from '../services/apiClient'
 import { getAuthHeaders } from '../services/authHeaders'
+import { attributeReferral } from '../services/aiCreditsApi'
 import { clearSessionOnLogout } from '../utils/devicePreferences'
+import { clearStoredReferralCode, getStoredReferralCode } from '../utils/referralCapture'
 
 interface AuthContextValue {
   user: User | null
@@ -106,6 +108,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void refreshPlan()
   }, [refreshPlan])
+
+  // When a user lands via an invite link and then authenticates, attribute the
+  // referral exactly once (server-side is idempotent + ignores self-referrals).
+  useEffect(() => {
+    if (!user) return
+    const code = getStoredReferralCode()
+    if (!code) return
+    void attributeReferral(code)
+      .then(() => clearStoredReferralCode())
+      .catch(() => {
+        // Leave the code stored to retry on the next session; non-fatal.
+      })
+  }, [user])
 
   const signIn = useCallback(async (email: string, password: string) => {
     const supabase = getSupabase()

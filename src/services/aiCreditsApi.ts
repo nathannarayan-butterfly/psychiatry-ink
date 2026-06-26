@@ -121,4 +121,79 @@ export async function grantDevCredits(credits: number, note?: string): Promise<{
   return result
 }
 
+// ── Gutschein (voucher) ──────────────────────────────────────────────────────
+
+export interface VoucherRedeemResult {
+  ok: boolean
+  creditsGranted: number
+  creditsPerPeriod?: number
+  totalPeriods?: number
+  periodMonths?: number
+}
+
+export async function redeemVoucher(code: string): Promise<VoucherRedeemResult> {
+  return fetchJson('/api/ai-credits/voucher/redeem', {
+    method: 'POST',
+    body: JSON.stringify({ code }),
+  })
+}
+
+export async function startGiftVoucherCheckout(
+  giftPackId: string,
+): Promise<{ url: string | null; sessionId: string }> {
+  return fetchJson('/api/ai-credits/voucher/gift/checkout', {
+    method: 'POST',
+    body: JSON.stringify({ giftPackId, origin: window.location.origin }),
+  })
+}
+
+export interface GiftVoucherResult {
+  ok: boolean
+  pending?: boolean
+  code?: string
+  creditsPerPeriod?: number
+  periodMonths?: number
+  totalPeriods?: number
+}
+
+export async function fetchGiftVoucherResult(sessionId: string): Promise<GiftVoucherResult> {
+  const headers = await getAuthHeaders()
+  const response = await fetch(
+    `${API_BASE}/api/ai-credits/voucher/gift/result?session_id=${encodeURIComponent(sessionId)}`,
+    { headers: { 'Content-Type': 'application/json', ...headers } },
+  )
+  if (response.status === 404) return { ok: false, pending: true }
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string }
+    throw new Error(body.error ?? `Request failed (${response.status})`)
+  }
+  return response.json() as Promise<GiftVoucherResult>
+}
+
+// ── Invite / referral ────────────────────────────────────────────────────────
+
+export interface ReferralStats {
+  invited: number
+  converted: number
+  rewarded: number
+  creditsEarned: number
+}
+
+export interface ReferralInfo {
+  code: string
+  inviteUrl: string
+  stats: ReferralStats
+}
+
+export async function fetchReferralInfo(): Promise<ReferralInfo> {
+  return fetchJson(`/api/ai-credits/referral?origin=${encodeURIComponent(window.location.origin)}`)
+}
+
+export async function attributeReferral(code: string): Promise<{ ok: boolean; attributed?: boolean; error?: string }> {
+  return fetchJson('/api/ai-credits/referral/attribute', {
+    method: 'POST',
+    body: JSON.stringify({ code }),
+  })
+}
+
 export type { CreditPack }

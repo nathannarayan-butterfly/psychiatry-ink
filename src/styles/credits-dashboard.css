@@ -404,3 +404,113 @@
     align-self: flex-start;
   }
 }
+
+/* ── Gutschein (voucher) + referral ─────────────────────────────────────── */
+
+.voucher-redeem {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.voucher-redeem__input {
+  flex: 1 1 16rem;
+  min-width: 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 0.5rem;
+  background: var(--bg-main, #fff);
+  color: var(--text-main, #1a1a1a);
+  font-size: 0.9375rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.voucher-redeem__input:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--text-main) 45%, transparent);
+}
+
+.voucher-redeem__submit {
+  padding: 0.6rem 1.1rem;
+  border: 1px solid var(--text-main, #1a1a1a);
+  border-radius: 0.5rem;
+  background: var(--text-main, #1a1a1a);
+  color: var(--bg-main, #fff);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.voucher-redeem__submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.voucher-gift-result {
+  margin: 0.75rem 0 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 0.625rem;
+  background: color-mix(in srgb, var(--text-main) 3%, #fff);
+}
+
+.voucher-gift-result__label,
+.referral-link__label {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--clinical-muted, color-mix(in srgb, var(--text-main) 55%, transparent));
+  margin-bottom: 0.4rem;
+}
+
+.voucher-gift-result__code-row,
+.referral-link__row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.voucher-gift-result__code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  color: var(--text-main, #1a1a1a);
+}
+
+.referral-link__value {
+  flex: 1 1 18rem;
+  min-width: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85rem;
+  word-break: break-all;
+  color: var(--text-main, #1a1a1a);
+}
+
+.referral-link {
+  margin: 0.75rem 0 1rem;
+}
+
+.voucher-gift-result__copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 0.45rem;
+  background: var(--bg-main, #fff);
+  color: var(--text-main, #1a1a1a);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.voucher-gift-result__copy:hover {
+  border-color: color-mix(in srgb, var(--text-main) 35%, transparent);
+}
