@@ -8675,6 +8675,30 @@ export const uiTranslations = {
     fr: 'Copier',
     es: 'Copiar',
   },
+  editorFontSizeLabel: {
+    de: 'Textgröße',
+    en: 'Text size',
+    fr: 'Taille du texte',
+    es: 'Tamaño de texto',
+  },
+  editorFontSizeDecrease: {
+    de: 'Text verkleinern',
+    en: 'Decrease text size',
+    fr: 'Réduire la taille du texte',
+    es: 'Reducir tamaño de texto',
+  },
+  editorFontSizeIncrease: {
+    de: 'Text vergrößern',
+    en: 'Increase text size',
+    fr: 'Augmenter la taille du texte',
+    es: 'Aumentar tamaño de texto',
+  },
+  editorFontSizeReset: {
+    de: 'Textgröße zurücksetzen',
+    en: 'Reset text size',
+    fr: 'Réinitialiser la taille du texte',
+    es: 'Restablecer tamaño de texto',
+  },
   verlaufEntryImprove: {
     de: 'KI verbessern',
     en: 'Improve with AI',

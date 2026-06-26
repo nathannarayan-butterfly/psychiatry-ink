@@ -3795,6 +3795,66 @@
   border-bottom-color: color-mix(in srgb, var(--accent) 60%, var(--border));
 }
 
+/* Text size control (A− / A / A+) for the document editor (Item 5). */
+.notion-editor__font-control {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0 1.5rem 0.35rem auto;
+  padding-left: 2.75rem;
+  justify-content: flex-end;
+}
+
+.notion-editor__font-control-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-muted, #94a3b8);
+  margin-right: 0.15rem;
+}
+
+.notion-editor__font-btn {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  min-width: 1.7rem;
+  height: 1.6rem;
+  padding: 0 0.4rem;
+  border: 1px solid color-mix(in srgb, var(--accent, #4a7c59) 16%, var(--border-soft, rgb(15 23 42 / 0.1)));
+  border-radius: 6px;
+  background: var(--notion-paper-bg, #fff);
+  color: var(--text-secondary, #475569);
+  font-family: inherit;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+
+.notion-editor__font-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent, #4a7c59) 10%, transparent);
+  color: color-mix(in srgb, var(--accent, #4a7c59) 85%, var(--text-ink, #1a1a1a));
+  border-color: color-mix(in srgb, var(--accent, #4a7c59) 35%, transparent);
+}
+
+.notion-editor__font-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.notion-editor__font-btn--reset {
+  font-size: 0.85rem;
+}
+
+.notion-editor__font-btn-minus {
+  font-size: 0.7em;
+}
+
+.notion-editor__font-btn-plus {
+  font-size: 0.8em;
+}
+
 .notion-editor__textarea {
   min-height: calc(var(--notion-rule) * 6);
   flex: none;
@@ -3804,7 +3864,9 @@
   background: transparent;
   padding: 0 1.5rem calc(var(--notion-rule) * 0.5) 2.75rem;
   font-family: inherit;
-  font-size: 1rem;
+  /* Default reduced from 1rem to a calmer 0.92rem; user-adjustable via the
+     A−/A+ control which overrides `--notion-editor-font-size` (Item 5). */
+  font-size: var(--notion-editor-font-size, 0.92rem);
   line-height: var(--notion-rule);
   color: var(--ink);
   outline: none;

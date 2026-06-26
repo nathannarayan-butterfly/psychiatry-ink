@@ -1,5 +1,5 @@
 import { Copy } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { AiToolKey } from '../../data/aiTools'
 import type { DocumentSection, DocumentVariantMode, InputMode } from '../../types'
@@ -18,6 +18,7 @@ import { ChecklistPanel } from '../ChecklistPanel'
 import { WorkspaceEditorOverlay } from '../WorkspaceEditorOverlay'
 import { FloatingSelectionToolbar, type SelectionActionId } from './FloatingSelectionToolbar'
 import { useInlineAiEdit } from './inlineAiEdit/useInlineAiEdit'
+import { useEditorFontScale } from '../../hooks/useEditorFontScale'
 import { IMPROVE_ONLY_SECTION_AI_TOOLS, NotionSectionAiLinks } from './NotionSectionAiLinks'
 import { AufnahmeBefundSectionHost } from './anamnese/AufnahmeBefundSectionHost'
 import { showNotionToast } from './NotionToast'
@@ -99,6 +100,7 @@ export function NotionMultiSectionEditor({
   caseId,
 }: NotionMultiSectionEditorProps) {
   const { t } = useTranslation()
+  const fontScale = useEditorFontScale()
   const containerRef = useRef<HTMLDivElement>(null)
   const textareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({})
   const [activeTextareaId, setActiveTextareaId] = useState<string | null>(activeSectionId)
@@ -320,7 +322,44 @@ export function NotionMultiSectionEditor({
   )
 
   return (
-    <div className="notion-editor notion-editor--multistage" ref={containerRef}>
+    <div
+      className="notion-editor notion-editor--multistage"
+      ref={containerRef}
+      style={{ '--notion-editor-font-size': fontScale.cssValue } as CSSProperties}
+    >
+      <div className="notion-editor__font-control" role="group" aria-label={t('editorFontSizeLabel')}>
+        <span className="notion-editor__font-control-label">{t('editorFontSizeLabel')}</span>
+        <button
+          type="button"
+          className="notion-editor__font-btn"
+          onClick={fontScale.decrease}
+          disabled={!fontScale.canDecrease}
+          title={t('editorFontSizeDecrease')}
+          aria-label={t('editorFontSizeDecrease')}
+        >
+          A<span className="notion-editor__font-btn-minus">−</span>
+        </button>
+        <button
+          type="button"
+          className="notion-editor__font-btn notion-editor__font-btn--reset"
+          onClick={fontScale.reset}
+          disabled={fontScale.isDefault}
+          title={t('editorFontSizeReset')}
+          aria-label={t('editorFontSizeReset')}
+        >
+          A
+        </button>
+        <button
+          type="button"
+          className="notion-editor__font-btn"
+          onClick={fontScale.increase}
+          disabled={!fontScale.canIncrease}
+          title={t('editorFontSizeIncrease')}
+          aria-label={t('editorFontSizeIncrease')}
+        >
+          A<span className="notion-editor__font-btn-plus">+</span>
+        </button>
+      </div>
       {sections.map((section) => {
         const content = getSectionContent(section)
         const isActive = section.id === activeSectionId
