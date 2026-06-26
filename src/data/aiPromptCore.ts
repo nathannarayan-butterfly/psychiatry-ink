@@ -2,9 +2,14 @@ import type { AiToolKey } from './aiTools'
 import type { UiLanguage } from '../types/settings'
 import type { AiClinicalRole } from '../types/aiGeneration'
 import type { AiGenerationScope } from '../types'
+import { IMPROVE_ONLY_RULES_TEXT } from '../../shared/improveOnlyPrompt'
 
 /** Tools that polish existing text only — never impose document/section structure. */
-export const STYLE_ONLY_TOOLS: ReadonlySet<AiToolKey> = new Set(['formalize', 'proofread'])
+export const STYLE_ONLY_TOOLS: ReadonlySet<AiToolKey> = new Set([
+  'formalize',
+  'proofread',
+  'improve',
+])
 
 export function isStyleOnlyTool(tool: AiToolKey): boolean {
   return STYLE_ONLY_TOOLS.has(tool)
@@ -33,7 +38,11 @@ export const TOOL_VERB: Record<AiToolKey, string> = {
   bulletPoints: 'Convert to concise bullet points',
   proofread: 'Proofread grammar/style only; no new content',
   expand: 'Expand only from given facts; no additions',
+  improve: 'Improve wording only; turn notes into prose; never interpret or add content',
 }
+
+/** Verbessern (improve-only): refine the clinician's own wording, never interpret. */
+export const IMPROVE_ONLY_TASK = IMPROVE_ONLY_RULES_TEXT
 
 /** Formalisieren: style-only pass — never restructure or add clinical content. */
 export const FORMALIZE_RULES = [
@@ -83,6 +92,11 @@ export function buildToolTask(
     return `${PROOFREAD_RULES}. ${labelHint}`.trim()
   }
 
+  if (tool === 'improve') {
+    const labelHint = sectionLabel ? `Section (wording context only): ${sectionLabel}.` : ''
+    return `${IMPROVE_ONLY_TASK}. ${labelHint}`.trim()
+  }
+
   const verb = TOOL_VERB[tool]
 
   if (scope === 'document' && tool === 'structure') {
@@ -113,6 +127,11 @@ export function buildSystemPrompt(
   }
   if (tool === 'proofread') {
     parts.push('Proofread only; preserve structure and all clinical content.')
+  }
+  if (tool === 'improve') {
+    parts.push(
+      'Improve wording only: turn the clinician\'s notes into clean prose, fix grammar and flow, and add NO interpretation, diagnoses, ratings, or content the clinician did not write.',
+    )
   }
   return parts.join(' ')
 }

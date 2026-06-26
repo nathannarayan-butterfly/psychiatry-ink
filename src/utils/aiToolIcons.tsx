@@ -9,6 +9,7 @@ import {
   Minimize2,
   Sparkles,
   SpellCheck,
+  Wand2,
   Zap,
 } from 'lucide-react'
 import type { AiToolKey } from '../data/aiTools'
@@ -24,6 +25,7 @@ export const documentationToolIcons: Record<AiToolKey, ReactNode> = {
   bulletPoints: <ListChecks {...iconProps} />,
   proofread: <SpellCheck {...iconProps} />,
   expand: <Maximize2 {...iconProps} />,
+  improve: <Wand2 {...iconProps} />,
 }
 
 export function tierIcon(tier: AiModelTier, className?: string) {

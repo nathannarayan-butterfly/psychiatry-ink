@@ -83,7 +83,10 @@ const aufnahmeSegments: AiCallSchemaDefinition[] = [
     aiRole: P,
     tierDefault: 'thorough',
   }),
-  seg('aufnahme', 'psychopathologischer-befund', 'AMDP-style mental state exam'),
+  seg('aufnahme', 'psychopathologischer-befund', 'mental state exam notes — polish wording only, never interpret', {
+    preferredTool: 'improve',
+    constraints: ['Improve wording only', 'No interpretation', 'No new findings'],
+  }),
   seg('aufnahme', 'somatischer-befund', 'vitals, somatic findings, consults'),
   seg('aufnahme', 'neurologischer-befund', 'neurological exam, focal deficits, extrapyramidal signs'),
   seg('aufnahme', 'diagnostische-einschaetzung', 'syndrome, diagnoses, differential, risk', {
@@ -166,12 +169,13 @@ const psychopathFree: AiCallSchemaDefinition = {
   componentId: 'psychopath',
   variantId: 'free',
   scope: 'segment',
-  preferredTool: 'structure',
+  preferredTool: 'improve',
   tierDefault: 'standard',
   chunkStrategy: 'by-token',
   maxTokensPerChunk: 3000,
-  sectionFocus: 'AMDP-style free-text MSE',
+  sectionFocus: 'mental state exam notes — polish wording only, never interpret',
   aiRole: W,
+  constraints: ['Improve wording only', 'No interpretation', 'No new findings'],
 }
 
 const psychopathChecklistSegments: AiCallSchemaDefinition[] = [

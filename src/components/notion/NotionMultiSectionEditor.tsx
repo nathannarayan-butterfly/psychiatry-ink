@@ -18,7 +18,7 @@ import { ChecklistPanel } from '../ChecklistPanel'
 import { WorkspaceEditorOverlay } from '../WorkspaceEditorOverlay'
 import { FloatingSelectionToolbar, type SelectionActionId } from './FloatingSelectionToolbar'
 import { useInlineAiEdit } from './inlineAiEdit/useInlineAiEdit'
-import { NotionSectionAiLinks } from './NotionSectionAiLinks'
+import { IMPROVE_ONLY_SECTION_AI_TOOLS, NotionSectionAiLinks } from './NotionSectionAiLinks'
 import { AufnahmeBefundSectionHost } from './anamnese/AufnahmeBefundSectionHost'
 import { showNotionToast } from './NotionToast'
 import { SlashCommandMenu, type SlashCommandId } from './SlashCommandMenu'
@@ -422,7 +422,14 @@ export function NotionMultiSectionEditor({
               rows={3}
             />
             {showQuickAi ? (
-              <NotionSectionAiLinks onAiTool={(tool) => onSectionAiTool(section.id, tool)} />
+              <NotionSectionAiLinks
+                onAiTool={(tool) => onSectionAiTool(section.id, tool)}
+                tools={
+                  section.id === 'psychopathologischer-befund'
+                    ? IMPROVE_ONLY_SECTION_AI_TOOLS
+                    : undefined
+                }
+              />
             ) : null}
           </section>
         )

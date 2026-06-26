@@ -233,6 +233,12 @@ export const uiTranslations = {
     fr: 'Développer',
     es: 'Ampliar',
   },
+  improve: {
+    de: 'KI verbessern',
+    en: 'Improve',
+    fr: 'Améliorer',
+    es: 'Mejorar',
+  },
   regenerate: {
     de: 'Erneut generieren',
     en: 'Regenerate',
