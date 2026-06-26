@@ -5353,6 +5353,48 @@
   color: #e53935;
 }
 
+.verlauf-entry__action-btn--ai:hover {
+  background: color-mix(in srgb, var(--area-accent, var(--accent)) 16%, transparent);
+  color: var(--area-accent, var(--accent));
+}
+
+/* Date/time editor inside the inline entry editor (Item 12) */
+.verlauf-inline-editor__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.verlauf-inline-editor__meta-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.verlauf-inline-editor__meta-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-muted, #888);
+}
+
+.verlauf-inline-editor__meta-input {
+  font-family: inherit;
+  font-size: 0.82rem;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border-subtle, #e2e2e2);
+  border-radius: 6px;
+  background: var(--surface, #fff);
+  color: var(--text-ink, #1a1a1a);
+}
+
+.verlauf-inline-editor__meta-input:focus {
+  outline: none;
+  border-color: var(--area-accent, var(--accent));
+}
+
 /* Inline delete confirmation */
 
 .verlauf-entry__confirm-delete {

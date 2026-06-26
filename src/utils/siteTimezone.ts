@@ -81,6 +81,40 @@ export function nowSiteTime(date = new Date()): string {
   return `${pad2(hour)}:${pad2(minute)}`
 }
 
+/**
+ * Convert a site-local wall-clock date (YYYY-MM-DD) + time (HH:MM) to a UTC ISO
+ * timestamp.
+ *
+ * This is the correct way to persist a clinician-entered Verlauf date/time:
+ * `new Date('2026-06-26')` parses as **UTC midnight**, which renders as 02:00
+ * (CEST) / 01:00 (CET) when displayed back in Europe/Berlin — the source of the
+ * "shows 02:00" bug. Here we resolve the actual Berlin UTC offset for that
+ * instant so the stored timestamp round-trips to the exact wall-clock time the
+ * clinician picked.
+ */
+export function siteDateTimeToIso(dateStr: string, timeStr = '00:00'): string {
+  const [year, month, day] = dateStr.split('-').map(Number)
+  const [hour, minute] = timeStr.split(':').map(Number)
+  if (!year || !month || !day) return new Date().toISOString()
+
+  const safeHour = Number.isFinite(hour) ? hour : 0
+  const safeMinute = Number.isFinite(minute) ? minute : 0
+
+  // Treat the picked values as if they were UTC, then correct by the Berlin
+  // offset that actually applies at that instant.
+  const utcGuess = Date.UTC(year, month - 1, day, safeHour, safeMinute)
+  const zoned = getSiteZonedParts(new Date(utcGuess))
+  const zonedAsUtc = Date.UTC(
+    zoned.year,
+    zoned.month - 1,
+    zoned.day,
+    zoned.hour,
+    zoned.minute,
+  )
+  const offset = zonedAsUtc - utcGuess
+  return new Date(utcGuess - offset).toISOString()
+}
+
 /** Format ISO timestamp as DD.MM.YYYY in site timezone. */
 export function formatIsoTimestampDate(iso: string): string {
   try {

@@ -8675,6 +8675,24 @@ export const uiTranslations = {
     fr: 'Copier',
     es: 'Copiar',
   },
+  verlaufEntryImprove: {
+    de: 'KI verbessern',
+    en: 'Improve with AI',
+    fr: 'Améliorer avec l’IA',
+    es: 'Mejorar con IA',
+  },
+  verlaufEntryDateLabel: {
+    de: 'Datum',
+    en: 'Date',
+    fr: 'Date',
+    es: 'Fecha',
+  },
+  verlaufEntryTimeLabel: {
+    de: 'Uhrzeit',
+    en: 'Time',
+    fr: 'Heure',
+    es: 'Hora',
+  },
   verlaufCopyAll: {
     de: 'Gesamten Verlauf kopieren',
     en: 'Copy full patient history',

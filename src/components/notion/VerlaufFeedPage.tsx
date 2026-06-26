@@ -39,6 +39,7 @@ import {
   saveVerlaufSortOrder,
   updateVerlaufAnnotationComment,
   updateVerlaufEntry,
+  updateVerlaufEntryDate,
   updateVerlaufTodo,
   type AnnotationType,
   type TodoPriority,
@@ -223,7 +224,11 @@ import {
   formatIsoTimestampDate,
   formatIsoTimestampTime,
   getSiteZonedParts,
+  nowSiteTime,
+  siteDateTimeToIso,
+  todayIsoDateSite,
 } from '../../utils/siteTimezone'
+import { buildImproveOnlyInstruction } from '../../../shared/improveOnlyPrompt'
 
 const HIGHLIGHT_COLORS: { label: string; value: string; bg: string }[] = [
   { label: 'Gelb', value: 'yellow', bg: '#ffe066' },
@@ -1010,7 +1015,15 @@ interface EntryCardProps {
   onCommentSelect: (annotationId: string) => void
   onTodoSelect: (annotationId: string) => void
   onEdit: (id: string, content: string) => void
+  /** Persist an edited date/time (full UTC ISO timestamp). */
+  onEditDate?: (id: string, isoDate: string) => void
   onDelete: (id: string) => void
+  /** Run the improve-only KI over the whole entry (Item 9). */
+  onImprove?: (id: string, anchor: DOMRect) => void
+}
+
+function pad2(value: number): string {
+  return String(value).padStart(2, '0')
 }
 
 const EntryCard = memo(function EntryCard({
@@ -1020,12 +1033,16 @@ const EntryCard = memo(function EntryCard({
   onCommentSelect,
   onTodoSelect,
   onEdit,
+  onEditDate,
   onDelete,
+  onImprove,
 }: EntryCardProps) {
   const ref = useRef<HTMLDivElement>(null)
   const { t } = useTranslation()
   const [editing, setEditing] = useState(false)
   const [editText, setEditText] = useState(entry.content)
+  const [editDate, setEditDate] = useState('')
+  const [editTime, setEditTime] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   const entryAnnotations = useMemo(
@@ -1079,6 +1096,11 @@ const EntryCard = memo(function EntryCard({
   function handleEditStart(e: React.MouseEvent) {
     e.stopPropagation()
     setEditText(entry.content)
+    // Seed the date/time pickers from the entry's stored timestamp, expressed in
+    // the site timezone so the clinician edits the wall-clock time they see.
+    const parts = getSiteZonedParts(new Date(entry.date))
+    setEditDate(`${parts.year}-${pad2(parts.month)}-${pad2(parts.day)}`)
+    setEditTime(`${pad2(parts.hour)}:${pad2(parts.minute)}`)
     setEditing(true)
     setConfirmDelete(false)
   }
@@ -1088,7 +1110,19 @@ const EntryCard = memo(function EntryCard({
     if (editText.trim()) {
       onEdit(entry.id, editText.trim())
     }
+    // Persist an edited (incl. back-dated) date/time when it changed.
+    if (onEditDate && editDate) {
+      const nextIso = siteDateTimeToIso(editDate, editTime || '00:00')
+      if (nextIso !== entry.date) onEditDate(entry.id, nextIso)
+    }
     setEditing(false)
+  }
+
+  function handleImprove(e: React.MouseEvent) {
+    e.stopPropagation()
+    if (!onImprove || !entry.content.trim()) return
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    onImprove(entry.id, rect)
   }
 
   function handleEditCancel(e: React.MouseEvent) {
@@ -1132,6 +1166,17 @@ const EntryCard = memo(function EntryCard({
         )}
         {entry.attribution ? <TherapyAttributionBadge attribution={entry.attribution} /> : null}
         <span className="verlauf-entry__actions" onClick={(e) => e.stopPropagation()}>
+          {onImprove ? (
+            <button
+              type="button"
+              className="verlauf-entry__action-btn verlauf-entry__action-btn--ai"
+              title={t('verlaufEntryImprove')}
+              aria-label={t('verlaufEntryImprove')}
+              onClick={handleImprove}
+            >
+              <Sparkles className="h-[13px] w-[13px]" strokeWidth={1.75} aria-hidden />
+            </button>
+          ) : null}
           <button
             type="button"
             className="verlauf-entry__action-btn"
@@ -1192,6 +1237,28 @@ const EntryCard = memo(function EntryCard({
 
       {editing ? (
         <div className="verlauf-inline-editor" onClick={(e) => e.stopPropagation()}>
+          {onEditDate ? (
+            <div className="verlauf-inline-editor__meta">
+              <label className="verlauf-inline-editor__meta-field">
+                <span className="verlauf-inline-editor__meta-label">{t('verlaufEntryDateLabel')}</span>
+                <input
+                  type="date"
+                  className="verlauf-inline-editor__meta-input"
+                  value={editDate}
+                  onChange={(e) => setEditDate(e.target.value)}
+                />
+              </label>
+              <label className="verlauf-inline-editor__meta-field">
+                <span className="verlauf-inline-editor__meta-label">{t('verlaufEntryTimeLabel')}</span>
+                <input
+                  type="time"
+                  className="verlauf-inline-editor__meta-input"
+                  value={editTime}
+                  onChange={(e) => setEditTime(e.target.value)}
+                />
+              </label>
+            </div>
+          ) : null}
           <textarea
             className="verlauf-inline-editor__textarea"
             value={editText}
@@ -2322,6 +2389,13 @@ export function VerlaufFeedPage({
     [caseId],
   )
 
+  const handleEntryEditDate = useCallback(
+    (id: string, isoDate: string) => {
+      setEntries(updateVerlaufEntryDate(id, isoDate, caseId))
+    },
+    [caseId],
+  )
+
   const handleEntryDelete = useCallback(
     (id: string) => {
       // Drop any central to-dos mirrored from this entry's todo annotations.
@@ -2342,7 +2416,10 @@ export function VerlaufFeedPage({
   const [composerOpen, setComposerOpen] = useState(false)
   const [somaticModalOpen, setSomaticModalOpen] = useState(false)
   const [composerText, setComposerText] = useState('')
-  const [composerDate, setComposerDate] = useState(() => new Date().toISOString().slice(0, 10))
+  // Site-timezone calendar date (not UTC slice) so a note composed late evening
+  // doesn't roll to the next day, and the saved timestamp matches wall-clock.
+  const [composerDate, setComposerDate] = useState(() => todayIsoDateSite())
+  const [composerTime, setComposerTime] = useState(() => nowSiteTime())
   const [composerType, setComposerType] = useState<VerlaufDocumentType>('verlauf')
 
   useEffect(() => {
@@ -2367,7 +2444,9 @@ export function VerlaufFeedPage({
         )
       : undefined
     const newEntry = appendVerlaufEntry(caseId, {
-      date: composerDate ? new Date(composerDate).toISOString() : new Date().toISOString(),
+      date: composerDate
+        ? siteDateTimeToIso(composerDate, composerTime || '00:00')
+        : new Date().toISOString(),
       content: composerText.trim(),
       pageType: typeOption.id,
       source: 'manual',
@@ -2375,14 +2454,16 @@ export function VerlaufFeedPage({
     })
     setEntries((prev) => [newEntry, ...prev])
     setComposerText('')
-    setComposerDate(new Date().toISOString().slice(0, 10))
+    setComposerDate(todayIsoDateSite())
+    setComposerTime(nowSiteTime())
     setComposerType('verlauf')
     setComposerOpen(false)
-  }, [caseId, composerDate, composerText, composerType, member, role, user?.id])
+  }, [caseId, composerDate, composerTime, composerText, composerType, member, role, user?.id])
 
   const handleComposerCancel = useCallback(() => {
     setComposerText('')
-    setComposerDate(new Date().toISOString().slice(0, 10))
+    setComposerDate(todayIsoDateSite())
+    setComposerTime(nowSiteTime())
     setComposerType('verlauf')
     setComposerOpen(false)
   }, [])
@@ -2426,6 +2507,32 @@ export function VerlaufFeedPage({
     })
     closeBubble()
   }, [aiEditTarget, bubble.x, bubble.y, caseId, closeBubble, inlineEdit])
+
+  // Item 9 — "KI verbessern": improve-only pass over the WHOLE entry. Reuses the
+  // inline-edit preview flow with a fixed improve-only instruction (shared with
+  // the Psychopathologischer Befund KI, Item 8) so the model polishes wording
+  // without adding interpretation.
+  const handleEntryImprove = useCallback(
+    (id: string, anchor: DOMRect) => {
+      const entry = entries.find((e) => e.id === id)
+      if (!entry || !entry.content.trim()) return
+      inlineEdit.open({
+        selectedText: entry.content,
+        fullText: entry.content,
+        selectionStart: 0,
+        selectionEnd: entry.content.length,
+        position: {
+          top: anchor.bottom + 8,
+          left: Math.max(16, anchor.left - 240),
+        },
+        presetInstruction: buildImproveOnlyInstruction(),
+        applyReplacement: (editedText) => {
+          setEntries(updateVerlaufEntry(id, editedText, caseId))
+        },
+      })
+    },
+    [caseId, entries, inlineEdit],
+  )
 
   // ⌘⌥B / Strg+Alt+B — same shortcut as the Notion editors, active only while an
   // editable selection bubble is showing.
@@ -2669,12 +2776,21 @@ export function VerlaufFeedPage({
           </div>
           <div className="verlauf-composer__date-row">
             <label className="verlauf-composer__date-label">
-              Datum
+              {t('verlaufEntryDateLabel')}
               <input
                 type="date"
                 className="verlauf-composer__date-input"
                 value={composerDate}
                 onChange={(e) => setComposerDate(e.target.value)}
+              />
+            </label>
+            <label className="verlauf-composer__date-label">
+              {t('verlaufEntryTimeLabel')}
+              <input
+                type="time"
+                className="verlauf-composer__date-input"
+                value={composerTime}
+                onChange={(e) => setComposerTime(e.target.value)}
               />
             </label>
           </div>
@@ -2825,7 +2941,9 @@ export function VerlaufFeedPage({
                     onCommentSelect={handleCommentSelect}
                     onTodoSelect={handleTodoSelect}
                     onEdit={handleEntryEdit}
+                    onEditDate={handleEntryEditDate}
                     onDelete={handleEntryDelete}
+                    onImprove={aiEditEnabled ? handleEntryImprove : undefined}
                   />
                 )
               ) : isAufnahmeFeedEvent(item.event) && item.event.sections.length > 0 ? (
