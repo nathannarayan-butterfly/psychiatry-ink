@@ -634,10 +634,18 @@ function NotionAppInner({
   const [pendingNavAction, setPendingNavAction] = useState<PendingNavAction | null>(null)
   const [isSavingBeforeNav, setIsSavingBeforeNav] = useState(false)
 
+  // Id of the archived Dokument currently being edited in the workspace. When
+  // set, saving updates that same document instead of creating a duplicate
+  // (Item 15). Held in a ref so it never triggers re-renders or stale closures.
+  const editingDokumentIdRef = useRef<string | null>(null)
+
   // Load a Recent/saved document into the workspace. Extracted so it can run
   // both directly (no unsaved changes) and after the unsaved-changes guard.
   const viewSavedDocNow = useCallback(
     (doc: SavedDoc) => {
+      // Recent entries are not archive rows; saving from here follows the normal
+      // upsert path, so clear any in-progress archive edit.
+      editingDokumentIdRef.current = null
       const hasSectionContents = Object.keys(doc.sectionContents).length > 0
       workspace.selectDocumentType(doc.typeId)
       if (hasSectionContents) {
@@ -658,6 +666,7 @@ function NotionAppInner({
   const executePendingNavAction = useCallback(
     (action: PendingNavAction) => {
       if (action.type === 'closeDocument') {
+        editingDokumentIdRef.current = null
         workspace.resetToBlankPage()
         setShowPatientRegistry(false)
         setActiveTopTab('workspace')
@@ -749,6 +758,7 @@ function NotionAppInner({
         editorContent: workspace.editorContent,
         source: 'ai-accepted',
         language: languageSettings.language,
+        existingId: editingDokumentIdRef.current ?? undefined,
       })
     }
 
@@ -768,6 +778,7 @@ function NotionAppInner({
     }
 
     await workspaceVault.saveNow()
+    editingDokumentIdRef.current = null
     workspace.acceptGeneration()
     workspace.resetToBlankPage()
   }, [documentLabel, languageSettings.language, savedDocsKey, storageCaseId, workspace, workspaceVault])
@@ -794,6 +805,7 @@ function NotionAppInner({
     // or if AI was just accepted (to avoid duplicating the ai-accepted entry)
     if (category && !workspace.generationPendingReview && !workspace.generationWasAccepted) {
       if (content.trim()) {
+        const editingId = editingDokumentIdRef.current
         syncWorkspaceDocumentToArchive({
           caseId: storageCaseId,
           documentTypeId: docTypeId,
@@ -802,6 +814,7 @@ function NotionAppInner({
           editorContent: workspace.editorContent,
           source: 'manual',
           language: languageSettings.language,
+          existingId: editingId ?? undefined,
         })
       }
     }
@@ -821,6 +834,7 @@ function NotionAppInner({
     // Skip redundant draft archive: we already wrote a manual entry above.
     await handleVaultSaveWithFeedAppend({ skipDraftArchive: true })
     if (docTypeId && content.trim() && !workspace.generationPendingReview) {
+      editingDokumentIdRef.current = null
       workspace.resetToBlankPage()
     }
   }, [documentLabel, handleVaultSaveWithFeedAppend, languageSettings.language, savedDocsKey, storageCaseId, workspace])
@@ -864,14 +878,19 @@ function NotionAppInner({
     (entry: DokumentEntry) => {
       // Lab documents live in the dedicated Labor tool tab, not the document workspace.
       if (entry.pageType === 'labor' || entry.category === 'laborbefunde') {
+        editingDokumentIdRef.current = null
         setActiveTopTab('labor')
         return
       }
 
       if (entry.pageType.startsWith('template-doc:') && entry.sourceRefId) {
+        editingDokumentIdRef.current = null
         setTemplateHostOpen(true)
         return
       }
+
+      // Track this archive row so an explicit Save updates it in place (Item 15).
+      editingDokumentIdRef.current = entry.id
 
       const pageId = resolveNotionPageFromDocumentType(entry.pageType)
       const hasSectionContents =
@@ -914,6 +933,9 @@ function NotionAppInner({
 
   const handlePageSelect = useCallback(
     (pageId: NotionPageId) => {
+      // Navigating to a page leaves the specific archive row opened via "Edit",
+      // so a subsequent save must not overwrite it (Item 15).
+      editingDokumentIdRef.current = null
       setActivePage(pageId)
       if (pageId !== 'therapieplanung') {
         setTherapieplanungInitialType(null)
@@ -931,6 +953,7 @@ function NotionAppInner({
 
   const handlePageSelectWithSection = useCallback(
     (pageId: NotionPageId, sectionId: string) => {
+      editingDokumentIdRef.current = null
       if (pageId === 'therapieplanung') {
         const type = parseTherapyPlanningSubsectionId(sectionId)
         setActivePage(pageId)
