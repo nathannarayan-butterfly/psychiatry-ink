@@ -110,7 +110,6 @@ interface DashboardPageProps {
   onOpenTemplates?: () => void
   onOpenTeamSettings?: () => void
   onOpenIntegrations?: () => void
-  onOpenBudget?: () => void
   onOpenCredits?: () => void
   onOpenCalendar?: () => void
   onOpenTodos?: () => void
@@ -155,7 +154,6 @@ export function DashboardPage({
   onOpenTemplates,
   onOpenTeamSettings,
   onOpenIntegrations,
-  onOpenBudget,
   onOpenCredits,
   onOpenCalendar,
   onOpenTodos,
@@ -928,12 +926,6 @@ export function DashboardPage({
             <button type="button" className="dashboard-settings-chip" onClick={onOpenCredits}>
               <Sparkles className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
               {t('dashboardUsageCredits')}
-            </button>
-          ) : null}
-          {onOpenBudget ? (
-            <button type="button" className="dashboard-settings-chip" onClick={onOpenBudget}>
-              <Sparkles className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
-              KI-Budget
             </button>
           ) : null}
           {hasSystemAdminAccess && onOpenKbAdmin ? (

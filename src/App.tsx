@@ -34,7 +34,6 @@ import { EnterpriseSitesPage } from './components/enterprise/EnterpriseSitesPage
 import { EnterpriseCompliancePage } from './components/enterprise/EnterpriseCompliancePage'
 import { EnterpriseIntegrationsPage } from './components/enterprise/EnterpriseIntegrationsPage'
 import { EnterpriseSsoPlaceholder } from './components/enterprise/EnterpriseSsoPlaceholder'
-import { BudgetManagerPage } from './components/settings/BudgetManagerPage'
 import { CreditsDashboardPage } from './components/settings/CreditsDashboardPage'
 import { IntegrationsPage } from './components/settings/IntegrationsPage'
 import { CalendarPage } from './components/calendar/CalendarPage'
@@ -139,7 +138,6 @@ export default function App() {
   const showTemplates = route.view === 'templates'
   const showTeamSettings = route.view === 'team-settings'
   const showIntegrations = route.view === 'integrations'
-  const showBudget = route.view === 'budget'
   const showCredits = route.view === 'credits'
   const showCalendar = route.view === 'calendar'
   const showTodos = route.view === 'todos'
@@ -305,8 +303,6 @@ export default function App() {
           <TeamSettingsPage onBack={() => navigate('/dashboard')} />
         ) : showIntegrations ? (
           <IntegrationsPage onBack={() => navigate('/dashboard')} />
-        ) : showBudget ? (
-          <BudgetManagerPage onBack={() => navigate('/dashboard')} />
         ) : showCredits ? (
           <CreditsDashboardPage onBack={() => navigate('/dashboard')} />
         ) : showCalendar ? (
@@ -336,7 +332,6 @@ export default function App() {
             onOpenTemplates={() => navigate('/dashboard/templates')}
             onOpenTeamSettings={() => navigate('/dashboard/team')}
             onOpenIntegrations={() => navigate('/dashboard/integrations')}
-            onOpenBudget={() => navigate('/dashboard/budget')}
             onOpenCredits={() => navigate('/dashboard/credits')}
             onOpenCalendar={() => navigate('/dashboard/calendar')}
             onOpenTodos={() => navigate('/dashboard/todos')}
