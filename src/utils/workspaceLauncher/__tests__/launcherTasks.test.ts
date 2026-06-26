@@ -98,6 +98,12 @@ describe('launcher task registry', () => {
           case 'template':
           case 'anforderung':
             break
+          case 'aiFeature':
+            expect(
+              ['lab-interpretation', 'aufklaerung'],
+              `${task.id}/${mode.id} feature`,
+            ).toContain(target.feature)
+            break
           default: {
             const _exhaustive: never = target
             throw new Error(`unexpected target ${JSON.stringify(_exhaustive)}`)

@@ -33,6 +33,10 @@ function resolveWorkspaceFeatureKey(componentId: string): AiFeatureKey {
       return 'psychopathological_befund'
     case 'aufnahme':
       return 'anamnesis_structuring'
+    case 'lab-interpretation':
+      return 'lab_medication_correlation_check'
+    case 'patient-aufklaerung':
+      return 'patient_education_generic'
     default:
       return 'document_generation'
   }

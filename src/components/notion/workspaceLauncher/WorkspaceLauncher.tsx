@@ -57,6 +57,8 @@ function describeTarget(target: LauncherTarget): string {
       return 'template-host'
     case 'anforderung':
       return 'anforderung-modal'
+    case 'aiFeature':
+      return `ai:${target.feature}`
   }
 }
 

@@ -68,6 +68,10 @@ import {
 import { NotionTopBar } from './NotionTopBar'
 import { WorkspaceContextMenu } from './WorkspaceContextMenu'
 import { WorkspaceLauncher } from './workspaceLauncher/WorkspaceLauncher'
+import {
+  WorkspaceAiFeaturePanel,
+  type WorkspaceAiFeatureId,
+} from './workspaceAi/WorkspaceAiFeaturePanel'
 import type { LauncherTarget } from '../../data/workspaceLauncher/launcherTasks'
 import {
   GuidedEntryHost,
@@ -547,6 +551,7 @@ function NotionAppInner({
     [caseRegistry.cases],
   )
   const [showPatientRegistry, setShowPatientRegistry] = useState(false)
+  const [aiFeaturePanel, setAiFeaturePanel] = useState<WorkspaceAiFeatureId | null>(null)
   const [expandDokumentId, setExpandDokumentId] = useState<string | null>(null)
   const initialPageAppliedRef = useRef(false)
   const [activePage, setActivePage] = useState<NotionPageId>(
@@ -1646,6 +1651,12 @@ function NotionAppInner({
         }
         return
       }
+      if (target.kind === 'aiFeature') {
+        setShowPatientRegistry(false)
+        setActiveTopTab('workspace')
+        setAiFeaturePanel(target.feature)
+        return
+      }
       if (target.kind === 'workspacePage') {
         const itemType = resolveGuidedItemTypeForWorkspace(
           target.pageId,
@@ -2484,6 +2495,14 @@ function NotionAppInner({
         preset={anforderungModal.preset}
         onClose={closeAnforderungModal}
       />
+
+      {aiFeaturePanel ? (
+        <WorkspaceAiFeaturePanel
+          feature={aiFeaturePanel}
+          caseId={storageCaseId}
+          onClose={() => setAiFeaturePanel(null)}
+        />
+      ) : null}
 
       {todoQuickAddOpen ? (
         <TodoQuickAdd
