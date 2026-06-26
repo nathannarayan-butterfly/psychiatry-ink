@@ -10,8 +10,24 @@ import {
   savePatientMetadata,
   type PatientMetadata,
 } from '../utils/cryptoVault'
-import { upsertCaseMeta } from './useCaseRegistry'
+import { getCaseMeta, upsertCaseMeta } from './useCaseRegistry'
 import { API_BASE } from '../services/apiClient'
+
+/**
+ * When the encrypted vault has no identity yet, reuse what the patient record
+ * (case registry) already knows so the Aufnahme doesn't re-ask for name and
+ * Geburtsdatum (Item 3). Returns null when the registry has nothing either.
+ */
+function readIdentityFromRegistry(caseId: string): PatientMetadata | null {
+  const meta = getCaseMeta(caseId)
+  if (!meta) return null
+  const name =
+    meta.localName?.trim() ||
+    [meta.localVorname, meta.localNachname].filter(Boolean).join(' ').trim()
+  const geburtsdatum = meta.localGeburtsdatum?.trim() ?? ''
+  if (!name && !geburtsdatum) return null
+  return { name, geburtsdatum, updatedAt: '' }
+}
 
 const EMPTY_METADATA: PatientMetadata = {
   name: '',
@@ -57,8 +73,25 @@ export function usePatientMetadata({
     void (async () => {
       try {
         const loaded = await loadPatientMetadata(caseId)
+        let resolved = loaded?.metadata ?? EMPTY_METADATA
+
+        // Pre-fill from the known patient record when the vault is still empty,
+        // and seed the vault so the identity persists (Item 3).
+        if (!resolved.name?.trim() && !resolved.geburtsdatum?.trim()) {
+          const fromRegistry = readIdentityFromRegistry(caseId)
+          if (fromRegistry) {
+            resolved = fromRegistry
+            void savePatientMetadata(
+              { ...fromRegistry, updatedAt: new Date().toISOString() },
+              caseId,
+            ).catch(() => {
+              // Best-effort seed; the in-memory value is already pre-filled.
+            })
+          }
+        }
+
         if (!cancelled) {
-          setMetadata(loaded?.metadata ?? EMPTY_METADATA)
+          setMetadata(resolved)
           if (loaded?.migratedAge && onMigratedAge && !migratedAgeRef.current) {
             migratedAgeRef.current = true
             onMigratedAge(loaded.migratedAge)
