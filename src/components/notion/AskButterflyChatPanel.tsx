@@ -7,6 +7,7 @@ import { ButterflyLogo } from '../ButterflyLogo'
 import { askButterflyChat, type AskButterflyChatMessage } from '../../services/askButterflyApi'
 import { resolveLlmRequestForTaskOrTier } from '../../utils/resolveAiModel'
 import { ChatMarkdownText } from '../../utils/chat/ChatMarkdownText'
+import { CopyButton } from '../common/CopyButton'
 import { AskButterflyTierSelector } from './AskButterflyTierSelector'
 
 interface AskButterflyChatPanelProps {
@@ -123,6 +124,14 @@ export function AskButterflyChatPanel({
                     message.content
                   )}
                 </p>
+                {message.role === 'assistant' && message.content.trim() ? (
+                  <div className="ask-butterfly-dialog__message-actions">
+                    <CopyButton
+                      text={message.content}
+                      label={t('askButterflyCopyAnswer')}
+                    />
+                  </div>
+                ) : null}
               </div>
             ))
           )}
