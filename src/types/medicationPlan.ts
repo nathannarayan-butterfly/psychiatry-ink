@@ -3,6 +3,8 @@
  * State is mirrored into clinical imprints via `medication/imprint.ts` for longitudinal analysis.
  * See `clinicalAnalysis.ts` for the full three-layer model.
  */
+import type { AdrCausalityAssessment } from './adrCausality'
+
 export const MEDICATION_PLAN_STATE_VERSION = 1
 
 export type MedicationFormulation =
@@ -132,6 +134,11 @@ export interface SideEffectReport {
   outcome: string
   note: string
   attribution?: SideEffectAttribution
+  /**
+   * AI-assisted causality + stepwise management assessment for this report,
+   * once a clinician has generated and saved it into the record. Editable.
+   */
+  causality?: AdrCausalityAssessment
 }
 
 export interface MedicationPlanState {

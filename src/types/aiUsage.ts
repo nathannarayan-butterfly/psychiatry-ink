@@ -11,6 +11,7 @@ export type AiFeatureKey =
   | 'kb_translation_en'
   | 'medication_combination_check'
   | 'lab_medication_correlation'
+  | 'adr_causality_assessment'
   | 'prep_ai_check'
   | 'transcription'
   | 'test_generation'
