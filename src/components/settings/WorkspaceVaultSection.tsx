@@ -1,11 +1,13 @@
 import { Download, Upload } from 'lucide-react'
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
+import { useAuth } from '../../context/AuthContext'
 import type { useWorkspaceVault } from '../../hooks/useWorkspaceVault'
 import {
   restoreAccountCloudBackup,
   setupAccountCloudBackup,
 } from '../../utils/accountBackup'
+import { markAccountKeyLinked } from '../../utils/accountKeyLink'
 import type { IdentifierStorageMode } from '../../utils/identifierStorage'
 import {
   MAX_PASSPHRASE_LENGTH,
@@ -38,6 +40,8 @@ export function WorkspaceVaultSection({
   onCloudSyncComplete,
 }: WorkspaceVaultSectionProps) {
   const { t } = useTranslation()
+  const { user } = useAuth()
+  const userId = user?.id ?? null
   const fileInputRef = useRef<HTMLInputElement>(null)
   const recoveryFileRef = useRef<HTMLInputElement>(null)
   const [passphrase, setPassphrase] = useState('')
@@ -86,7 +90,7 @@ export function WorkspaceVaultSection({
       return
     }
     try {
-      const backup = await setupAccountCloudBackup(passphrase)
+      const backup = await setupAccountCloudBackup(passphrase, userId)
       setHasBackup(true)
       setPassphrase('')
       setConfirmPassphrase('')
@@ -101,7 +105,7 @@ export function WorkspaceVaultSection({
   const handleRestoreFromPassphrase = async () => {
     if (!recoveryPassphrase.trim()) return
     try {
-      const result = await restoreAccountCloudBackup(recoveryPassphrase, countryCode)
+      const result = await restoreAccountCloudBackup(recoveryPassphrase, countryCode, userId)
       setRecoveryPassphrase('')
       const parts = [
         `${t('accountBackupCloudRestored')} (${result.workspaceCases} ${t('accountBackupWorkspaceLabel')})`,
@@ -118,6 +122,7 @@ export function WorkspaceVaultSection({
     } catch {
       try {
         await restorePrivateKeyFromPassphrase(recoveryPassphrase)
+        markAccountKeyLinked(userId)
         setRecoveryPassphrase('')
         setPassphraseStatus(t('workspacePassphraseRestored'))
       } catch {
@@ -133,6 +138,7 @@ export function WorkspaceVaultSection({
     try {
       const backup = parsePassphraseBackup(await file.text())
       await restorePrivateKeyFromPassphrase(recoveryPassphrase, backup)
+      markAccountKeyLinked(userId)
       setRecoveryPassphrase('')
       setPassphraseStatus(t('workspacePassphraseRestored'))
     } catch {

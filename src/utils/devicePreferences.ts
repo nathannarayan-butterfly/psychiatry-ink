@@ -61,6 +61,7 @@ const DEVICE_PREFERENCE_LOCAL_STORAGE_PREFIXES = [
   'psychiatry-ink:identifier-storage-mode',
   'psychiatry-ink:identifier-storage-acknowledged',
   'psychiatry-ink-privacy',
+  'psychiatry-ink:account-key-linked',
 ] as const
 
 const SESSION_LOCAL_STORAGE_PREFIXES = ['dc:e2ee:', 'ks:e2ee:'] as const
