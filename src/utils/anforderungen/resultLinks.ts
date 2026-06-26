@@ -2,7 +2,9 @@ import type { Anforderung, AnforderungResultLink } from '../../types/anforderung
 import { getAnforderungCatalogItem } from '../../data/anforderungenCatalog'
 import { loadBefunde } from '../laborArchive'
 import { loadDiagnostikBefunde } from '../befundArchive'
+import { hasFreeTextBefund } from '../freeTextBefundArchive'
 import type { BefundType } from '../../types/befund'
+import type { DiagnosticsSectionId } from '../../data/diagnosticsSections'
 
 export type AnforderungResultState = 'none' | 'pending' | 'documented'
 
@@ -33,14 +35,37 @@ export function resolveAnforderungResultState(
     case 'ecg':
       return hasBefundType(caseId, 'ecg') ? 'documented' : 'pending'
     case 'eeg':
-      return hasBefundType(caseId, 'eeg') ? 'documented' : 'pending'
+      // EEG can be documented either via the structured Befundung workspace or
+      // the free-text EEG section in the Diagnostik module.
+      return hasBefundType(caseId, 'eeg') || hasFreeTextBefund(caseId, 'eeg')
+        ? 'documented'
+        : 'pending'
+    case 'cct':
+      return hasFreeTextBefund(caseId, 'cct') ? 'documented' : 'pending'
+    case 'mrt':
+      return hasFreeTextBefund(caseId, 'mrt') ? 'documented' : 'pending'
     default:
       return 'none'
   }
 }
 
-export function diagnosticsTabForResultLink(link: AnforderungResultLink): 'labor' | 'befunde' {
-  return link === 'labor' ? 'labor' : 'befunde'
+/** Diagnostik section that documents a given result link. */
+export function diagnosticsTabForResultLink(
+  link: AnforderungResultLink,
+): DiagnosticsSectionId {
+  switch (link) {
+    case 'labor':
+      return 'labor'
+    case 'ecg':
+      return 'ekg'
+    case 'eeg':
+      return 'eeg'
+    case 'cct':
+    case 'mrt':
+      return 'imaging'
+    default:
+      return 'labor'
+  }
 }
 
 export function befundTypeForResultLink(link: AnforderungResultLink): BefundType | null {

@@ -30,14 +30,18 @@ export interface DiagnostikBefundeSidebarProps {
   records: BefundRecord[]
   selectedId: string | null
   onSelect: (id: string) => void
+  /** Restrict the displayed befund types (e.g. EKG-only section). */
+  types?: BefundType[]
 }
 
 export function DiagnostikBefundeSidebar({
-  records,
+  records: allRecords,
   selectedId,
   onSelect,
+  types,
 }: DiagnostikBefundeSidebarProps) {
   const { t, language } = useTranslation()
+  const records = types ? allRecords.filter((r) => types.includes(r.type)) : allRecords
 
   if (records.length === 0) {
     return <p className="labor-page__sidebar-empty">{t('befundSidebarEmpty')}</p>
@@ -95,6 +99,8 @@ interface DiagnostikBefundeMainProps {
   onSelect: (id: string | null) => void
   onRecordsChange: () => void
   onRequestAnforderung?: (preset?: AnforderungModalPreset | null) => void
+  /** Restrict the documented/displayed befund types (e.g. EKG-only section). */
+  types?: BefundType[]
 }
 
 function buildBefundClipboardText(record: BefundRecord, language: UiLanguage): string {
@@ -105,16 +111,23 @@ function buildBefundClipboardText(record: BefundRecord, language: UiLanguage): s
 
 export function DiagnostikBefundeMain({
   caseId,
-  records,
+  records: allRecords,
   selectedId,
   onSelect,
   onRecordsChange,
   onRequestAnforderung,
+  types,
 }: DiagnostikBefundeMainProps) {
   const { t, language } = useTranslation()
   const readOnly = false
   const [popupType, setPopupType] = useState<BefundType | null>(null)
   const [editRecordId, setEditRecordId] = useState<string | undefined>()
+
+  const activeTypes = useMemo(() => types ?? BEFUND_TYPES, [types])
+  const records = useMemo(
+    () => allRecords.filter((r) => activeTypes.includes(r.type)),
+    [allRecords, activeTypes],
+  )
 
   const selected = useMemo(
     () => records.find((r) => r.id === selectedId) ?? null,
@@ -149,7 +162,7 @@ export function DiagnostikBefundeMain({
         <div className="diagnostik-befunde__actions">
           <span className="diagnostik-befunde__actions-label">{t('befundActionLabel')}</span>
           <div className="diagnostik-befunde__action-row">
-            {BEFUND_TYPES.map((type) => {
+            {activeTypes.map((type) => {
               const addLabel = t(BEFUND_ADD_LABEL_KEY[type])
               const requestLabel = t(BEFUND_REQUEST_LABEL_KEY[type])
               return (

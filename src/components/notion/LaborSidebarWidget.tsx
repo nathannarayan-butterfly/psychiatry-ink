@@ -96,7 +96,7 @@ export function LaborSidebarWidget({ caseId, onNavigateToLabor }: LaborSidebarWi
   const latestDate = [...befunde].sort((a, b) => b.date.localeCompare(a.date))[0]?.date
 
   const navigateToBefunde = () => {
-    setDiagnosticsSectionPref(caseId, 'befunde')
+    setDiagnosticsSectionPref(caseId, 'ekg')
     onNavigateToLabor?.()
   }
 

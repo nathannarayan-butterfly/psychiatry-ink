@@ -16,7 +16,7 @@ export type AnforderungUrgency = 'routine' | 'soon' | 'urgent'
 export type AnforderungStatus = 'pending' | 'accepted' | 'rejected' | 'cancelled'
 
 /** Maps to existing diagnostics modules when a result can be documented. */
-export type AnforderungResultLink = 'labor' | 'ecg' | 'eeg'
+export type AnforderungResultLink = 'labor' | 'ecg' | 'eeg' | 'cct' | 'mrt'
 
 export interface AnforderungCatalogItem {
   id: string

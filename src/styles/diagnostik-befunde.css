@@ -462,6 +462,210 @@
   filter: brightness(1.05);
 }
 
+/* ------------------------------------------------------------------------- */
+/* Free-text Befunde — EEG / CCT / MRT paste sections                         */
+/* ------------------------------------------------------------------------- */
+
+.diagnostik-freetext {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-height: 0;
+}
+
+.diagnostik-freetext__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--border-soft, #e8e8e4);
+}
+
+.diagnostik-freetext__section-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 650;
+  color: var(--ink, #1a1a18);
+}
+
+.diagnostik-freetext__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  gap: 1.1rem;
+  align-items: start;
+}
+
+.freetext-befund {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.freetext-befund__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-soft, #e8e8e4);
+}
+
+.freetext-befund__title {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--ink, #1a1a18);
+}
+
+.freetext-befund__editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.freetext-befund__editor-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.freetext-befund__editor-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #8a8a80);
+}
+
+.freetext-befund__date {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.72rem;
+  color: var(--text-muted, #8a8a80);
+}
+
+.freetext-befund__date-input {
+  padding: 0.3rem 0.45rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--ink, #1a1a18);
+}
+
+.freetext-befund__textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.6rem 0.7rem;
+  font-family: inherit;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 6px;
+  resize: vertical;
+  min-height: 7rem;
+  color: var(--ink, #1a1a18);
+  background: color-mix(in srgb, var(--border-soft, #e8e8e4) 12%, #fff);
+}
+
+.freetext-befund__textarea:focus {
+  outline: none;
+  border-color: var(--accent, #4a7c59);
+  background: #fff;
+}
+
+.freetext-befund__editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.freetext-befund__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.freetext-befund__list-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #8a8a80);
+}
+
+.freetext-befund__empty {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-muted, #8a8a80);
+}
+
+.freetext-befund__card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.freetext-befund__card--editing {
+  border-color: var(--accent, #4a7c59);
+  background: color-mix(in srgb, var(--accent, #4a7c59) 5%, #fff);
+}
+
+.freetext-befund__card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.freetext-befund__card-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.freetext-befund__card-date {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink, #1a1a18);
+}
+
+.freetext-befund__card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
+
+.freetext-befund__card-text {
+  margin: 0;
+  padding: 0;
+  font-family: inherit;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--ink, #1a1a18);
+  background: transparent;
+  border: none;
+}
+
 /* Sidebar exam rows */
 
 .labor-sidebar-widget__exam-list {

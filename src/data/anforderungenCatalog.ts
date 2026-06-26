@@ -230,9 +230,15 @@ export const ANFORDERUNGEN_CATALOG: AnforderungCatalogItem[] = [
   befunde('befund-emg', 'befunde_neurophys', 'EMG / Nervenleitgeschwindigkeit', 'EMG / nerve conduction'),
 
   // —— Befunde: Bildgebung ——
-  befunde('befund-mrt-schaedel', 'befunde_bildgebung', 'MRT Schädel (nativ)', 'Brain MRI (native)'),
-  befunde('befund-mrt-schaedel-km', 'befunde_bildgebung', 'MRT Schädel mit Kontrast', 'Contrast-enhanced brain MRI'),
-  befunde('befund-ct-schaedel', 'befunde_bildgebung', 'CT Schädel', 'Head CT'),
+  befunde('befund-mrt-schaedel', 'befunde_bildgebung', 'MRT Schädel (nativ)', 'Brain MRI (native)', {
+    resultLink: 'mrt',
+  }),
+  befunde('befund-mrt-schaedel-km', 'befunde_bildgebung', 'MRT Schädel mit Kontrast', 'Contrast-enhanced brain MRI', {
+    resultLink: 'mrt',
+  }),
+  befunde('befund-ct-schaedel', 'befunde_bildgebung', 'CT Schädel', 'Head CT', {
+    resultLink: 'cct',
+  }),
   befunde('befund-mrt-gesamt', 'befunde_bildgebung', 'MRT Gesamt (psychiatrisch relevant)', 'Whole-body MRI'),
   befunde('befund-ct-thorax', 'befunde_bildgebung', 'CT Thorax', 'Chest CT'),
   befunde('befund-roentgen-thorax', 'befunde_bildgebung', 'Röntgen Thorax', 'Chest X-ray'),
@@ -330,4 +336,9 @@ export const ANFORDERUNG_PRESET_EEG: AnforderungModalPreset = {
   category: 'befunde',
   groupKey: 'befunde_neurophys',
   selectedCatalogIds: ['befund-eeg-ruhe'],
+}
+
+export const ANFORDERUNG_PRESET_IMAGING: AnforderungModalPreset = {
+  category: 'befunde',
+  groupKey: 'befunde_bildgebung',
 }
