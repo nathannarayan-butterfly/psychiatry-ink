@@ -292,7 +292,7 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
             <MedicationPlanDashboard
               caseId={caseId}
               medications={activePlanMedications}
-              parameterMonitoring={isStandalone ? [] : parameterMonitoring}
+              parameterMonitoring={parameterMonitoring}
               curatedTargetReceptors={med.state.curatedTargetReceptors}
               onCuratedTargetReceptorsChange={med.updateCuratedTargetReceptors}
               disabled={disabled}
@@ -300,13 +300,16 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
             />
           ) : null}
 
-          {!isStandalone ? <SpiegelwerteSection caseId={caseId} /> : null}
+          {/* The full Medikamente-page widgets — drug levels (Spiegel), prior
+              therapies and patient education — are surfaced in the workspace
+              medication context too, not only in the patient chart (Item 4).
+              Each reads from the active caseId and degrades gracefully when the
+              workspace has no linked patient. */}
+          <SpiegelwerteSection caseId={caseId} />
 
-          {!isStandalone ? (
-            <PriorTherapiesPanel caseId={caseId} medications={allVisibleMedications} />
-          ) : null}
+          <PriorTherapiesPanel caseId={caseId} medications={allVisibleMedications} />
 
-          {!isStandalone && hasActiveMedications ? (
+          {hasActiveMedications ? (
             <MedicationEducationPanel
               caseId={caseId}
               activeMedications={activePlanMedications}
