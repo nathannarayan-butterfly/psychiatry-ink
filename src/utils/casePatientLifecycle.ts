@@ -1,3 +1,5 @@
+import { archiveDemoPatient, isDemoCase, removeDemoPatient } from '../demo'
+import { isDemoArchivedForUser } from '../demo/demoUserState'
 import {
   getCaseMeta,
   replaceRegistryMap,
@@ -8,29 +10,30 @@ import { deletePatientOnApi } from '../services/patientRegistryApi'
 import { scheduleAccountRegistryUpload } from './accountBackup'
 import { loadRegistryMapFromStorage, saveRegistryMapToStorage } from './caseRegistryStorage'
 import { clearCaseStorage } from './clearCaseStorage'
+import { DEMO_CASE_ID } from '../demo/constants'
 import { deleteImportedFilesForCase } from './documentImport/importedFileStore'
 
-/** Stale test fall — short id prefix only. */
+/** Stale test fall — short id prefix only; never matches DEMO-CASE-0001. */
 export const STALE_CASE_ID_PREFIX = '219918e0'
 
-/**
- * Retired demo patient ("Anna Demo"). The demo seeding code was removed, but the
- * case can still linger in a device's local registry (and, for org members, in the
- * encrypted org case vault) from before removal. Treating it as stale auto-purges it
- * on next load so it never reappears in the dashboard.
- */
-export const RETIRED_DEMO_CASE_IDS = ['DEMO-CASE-0001'] as const
+/** Previously retired demo IDs — kept empty so the canonical demo case can seed again. */
+export const RETIRED_DEMO_CASE_IDS = [] as const
 
 export function isStaleCaseId(caseId: string): boolean {
-  if (caseId.startsWith(STALE_CASE_ID_PREFIX)) return true
+  if (caseId.startsWith(STALE_CASE_ID_PREFIX) && caseId !== DEMO_CASE_ID) return true
   return (RETIRED_DEMO_CASE_IDS as readonly string[]).includes(caseId)
 }
 
-export function isPatientCaseArchived(caseId: string, _userId: string): boolean {
+export function isPatientCaseArchived(caseId: string, userId: string): boolean {
+  if (isDemoCase(caseId)) return isDemoArchivedForUser(userId)
   return Boolean(getCaseMeta(caseId)?.archivedAt)
 }
 
-export function archivePatientCase(caseId: string, _userId: string): void {
+export function archivePatientCase(caseId: string, userId: string): void {
+  if (isDemoCase(caseId)) {
+    archiveDemoPatient(userId)
+    return
+  }
   upsertCaseMeta(caseId, { archivedAt: new Date().toISOString() })
 }
 
@@ -43,7 +46,12 @@ export function reactivatePatientCase(caseId: string, _userId: string): void {
   upsertCaseMeta(caseId, { archivedAt: undefined })
 }
 
-export async function deletePatientCasePermanently(caseId: string, _userId: string): Promise<void> {
+export async function deletePatientCasePermanently(caseId: string, userId: string): Promise<void> {
+  if (isDemoCase(caseId)) {
+    await removeDemoPatient(userId)
+    return
+  }
+
   await clearCaseStorage(caseId)
   await deleteImportedFilesForCase(caseId)
   const map = loadRegistryMapFromStorage()
@@ -57,6 +65,27 @@ export async function deletePatientCasePermanently(caseId: string, _userId: stri
   } catch {
     // offline — local removal is enough for dashboard until the next successful sync
   }
+}
+
+/** True when a case should survive a non-demo purge (synthetic demo only). */
+export function isProtectedDemoCaseId(caseId: string): boolean {
+  return caseId === DEMO_CASE_ID || isDemoCase(caseId)
+}
+
+/**
+ * Remove every local patient case except the synthetic demo case (DEMO-CASE-0001).
+ */
+export async function purgeNonDemoPatientCases(userId: string): Promise<string[]> {
+  const removed: string[] = []
+  const map = loadRegistryMapFromStorage()
+
+  for (const caseId of Object.keys(map)) {
+    if (isProtectedDemoCaseId(caseId)) continue
+    await deletePatientCasePermanently(caseId, userId)
+    removed.push(caseId)
+  }
+
+  return removed
 }
 
 /**
@@ -76,10 +105,7 @@ export async function purgeLocalPatientCases(userId: string): Promise<string[]> 
   return removed
 }
 
-/**
- * One-time-safe removal of retired cases (the 219918e0 test fall and the retired
- * "Anna Demo" demo patient) from the local registry + case-scoped storage.
- */
+/** One-time-safe removal of stale test cases from the local registry + storage. */
 export async function removeStaleCasesFromRegistry(): Promise<string[]> {
   const removed: string[] = []
   const map = loadRegistryMapFromStorage()

@@ -1,0 +1,165 @@
+.demo-dev-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 3rem;
+  font-size: 0.9375rem;
+}
+
+.demo-dev-page__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.demo-dev-page__header h1 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  margin: 0 0 0.35rem;
+}
+
+.demo-dev-page__subtitle {
+  margin: 0;
+  color: var(--muted-foreground, #666);
+}
+
+.demo-dev-card {
+  background: var(--card, #fff);
+  border: 1px solid var(--border, #e5e5e5);
+  border-radius: 10px;
+  padding: 1rem 1.15rem;
+  margin-bottom: 1rem;
+}
+
+.demo-dev-card h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+}
+
+.demo-dev-dl {
+  display: grid;
+  grid-template-columns: 8rem 1fr;
+  gap: 0.35rem 1rem;
+  margin: 0;
+}
+
+.demo-dev-dl dt {
+  color: var(--muted-foreground, #666);
+}
+
+.demo-dev-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.demo-dev-actions button {
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid var(--border, #ccc);
+  background: var(--background, #fafafa);
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.demo-dev-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.demo-dev-actions__danger {
+  border-color: #c53030 !important;
+  color: #c53030;
+}
+
+.demo-dev-msg {
+  margin: 0.75rem 0 0;
+  font-size: 0.875rem;
+}
+
+.demo-dev-msg--ok { color: #276749; }
+.demo-dev-msg--err { color: #c53030; }
+
+.demo-dev-badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.demo-dev-badge--pass { background: #c6f6d5; color: #22543d; }
+.demo-dev-badge--fail { background: #fed7d7; color: #742a2a; }
+
+.demo-dev-list {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+  font-size: 0.8125rem;
+}
+
+.demo-dev-list__fail { color: #c53030; }
+.demo-dev-list__warn { color: #b7791f; }
+
+.demo-dev-meta {
+  margin: 0.75rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--muted-foreground, #666);
+}
+
+.demo-dev-qa {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.demo-dev-qa th,
+.demo-dev-qa td {
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid var(--border, #eee);
+}
+
+.demo-dev-qa__pass { color: #276749; font-weight: 600; }
+.demo-dev-qa__warn { color: #b7791f; font-weight: 600; }
+.demo-dev-qa__fail { color: #c53030; font-weight: 600; }
+
+.demo-readonly-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.45rem 0.85rem;
+  background: #ebf8ff;
+  border-bottom: 1px solid #bee3f8;
+  color: #2c5282;
+  font-size: 0.8125rem;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.demo-patient-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  background: #ebf8ff;
+  color: #2b6cb0;
+  margin-left: 0.35rem;
+}
+
+.patient-case-card__archive-demo {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #718096;
+  text-decoration: underline;
+  cursor: pointer;
+}

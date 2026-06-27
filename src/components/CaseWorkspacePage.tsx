@@ -31,6 +31,7 @@ import { NotionApp } from './notion/NotionApp'
 import type { TopNavTabId } from './notion/CaseTopNav'
 import { useTranslation } from '../context/TranslationContext'
 import { useAuth } from '../context/AuthContext'
+import { isDemoCaseReadOnly } from '../demo'
 import { usePermissionContext } from '../contexts/PermissionContext'
 import { useActiveAppointment, useSyncAppointmentFromUrl } from '../contexts/ActiveAppointmentContext'
 import type { SubscriptionPlan } from '../data/subscriptionPlans'
@@ -121,9 +122,10 @@ function WorkspaceInner({
   workspaceStorageId,
 }: WorkspaceInnerProps) {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const { organisation } = usePermissionContext()
   const storesCaseMeta = workspaceStorageId === caseId
-  const demoReadOnly = false
+  const demoReadOnly = isDemoCaseReadOnly(caseId, user?.email)
 
   useEffect(() => {
     setActiveCaseId(workspaceStorageId)

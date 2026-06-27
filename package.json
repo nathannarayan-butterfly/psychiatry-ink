@@ -19,6 +19,8 @@
     "typecheck": "npm run typecheck:app && npm run typecheck:server",
     "test": "vitest run",
     "test:watch": "vitest",
+    "demo:fixture:write": "tsx scripts/write-demo-patient-fixture.ts",
+    "demo:fixture:regen": "tsx scripts/regen-demo-patient-fixture.ts",
     "preview": "vite preview",
     "audit:workflows": "npx --yes tsx scripts/audit-workflows.ts",
     "db:check": "tsx scripts/db-check.ts",
