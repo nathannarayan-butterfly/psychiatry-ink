@@ -23,6 +23,10 @@ export type PublicPageKey =
   | 'privacy'
   | 'terms'
   | 'impressum'
+  | 'cookies'
+  | 'dpa'
+  | 'subprocessors'
+  | 'securityOverview'
   | 'contact'
   | 'login'
 
@@ -101,6 +105,40 @@ export const PUBLIC_ROUTES: readonly PublicRouteConfig[] = [
     // German legal requirement (§ 5 DDG). Mirrored on the English site as a
     // "Legal notice" at /legal so the entity disclosure is reachable there too.
     path: { en: '/legal', de: '/impressum' },
+    inNav: false,
+    inFooterLegal: true,
+    indexable: true,
+    locales: ['en', 'de'],
+  },
+  {
+    key: 'cookies',
+    path: { en: '/cookies', de: '/cookie-richtlinie' },
+    inNav: false,
+    inFooterLegal: true,
+    indexable: true,
+    locales: ['en', 'de'],
+  },
+  {
+    key: 'dpa',
+    path: { en: '/dpa', de: '/auftragsverarbeitung' },
+    inNav: false,
+    inFooterLegal: true,
+    indexable: true,
+    locales: ['en', 'de'],
+  },
+  {
+    key: 'subprocessors',
+    path: { en: '/subprocessors', de: '/unterauftragsverarbeiter' },
+    inNav: false,
+    inFooterLegal: true,
+    indexable: true,
+    locales: ['en', 'de'],
+  },
+  {
+    // Detailed security/trust statement (legal cluster). Distinct from the
+    // marketing `security` page (/security ↔ /sicherheit), which keeps its slugs.
+    key: 'securityOverview',
+    path: { en: '/security-overview', de: '/sicherheitsuebersicht' },
     inNav: false,
     inFooterLegal: true,
     indexable: true,

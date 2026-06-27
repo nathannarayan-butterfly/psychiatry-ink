@@ -10,6 +10,10 @@ interface ShellLabels {
   impressum: string
   privacy: string
   terms: string
+  cookies: string
+  dpa: string
+  subprocessors: string
+  securityOverview: string
   contact: string
   signIn: string
   skipToContent: string
@@ -23,6 +27,10 @@ const LABELS: Record<PublicLocale, ShellLabels> = {
     impressum: 'Legal notice',
     privacy: 'Privacy',
     terms: 'Terms',
+    cookies: 'Cookie Policy',
+    dpa: 'DPA',
+    subprocessors: 'Sub-processors',
+    securityOverview: 'Security overview',
     contact: 'Contact',
     signIn: 'Sign in',
     skipToContent: 'Skip to content',
@@ -34,6 +42,10 @@ const LABELS: Record<PublicLocale, ShellLabels> = {
     impressum: 'Impressum',
     privacy: 'Datenschutz',
     terms: 'AGB',
+    cookies: 'Cookie-Richtlinie',
+    dpa: 'AVV',
+    subprocessors: 'Unterauftragsverarbeiter',
+    securityOverview: 'Sicherheitsübersicht',
     contact: 'Kontakt',
     signIn: 'Anmelden',
     skipToContent: 'Zum Inhalt springen',
@@ -87,6 +99,10 @@ export function PublicShell({
     { key: 'impressum', label: labels.impressum },
     { key: 'privacy', label: labels.privacy },
     { key: 'terms', label: labels.terms },
+    { key: 'cookies', label: labels.cookies },
+    { key: 'dpa', label: labels.dpa },
+    { key: 'subprocessors', label: labels.subprocessors },
+    { key: 'securityOverview', label: labels.securityOverview },
     { key: 'contact', label: labels.contact },
   ]
   const year = new Date().getFullYear()

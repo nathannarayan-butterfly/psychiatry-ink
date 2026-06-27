@@ -2117,12 +2117,1563 @@ const impressumEn: LegalDoc = {
   ],
 }
 
-export type LegalPageKey = 'privacy' | 'terms' | 'impressum'
+/* ───────────────────────────── COOKIE POLICY ────────────────────────────── */
+
+const cookiePolicyEn: LegalDoc = {
+  title: 'Cookie Policy',
+  lead: 'This Cookie Policy explains how Psychiatry Ink Ltd uses cookies and similar technologies on its websites and the Psychiatry.Ink service.',
+  lastUpdatedLabel: lastUpdatedLabel('en'),
+  sections: [
+    {
+      id: 'who-we-are',
+      heading: '1. Who we are',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Psychiatry Ink Ltd\n71–75 Shelton Street\nCovent Garden\nLondon, WC2H 9JQ\nUnited Kingdom',
+        },
+        { type: 'p', text: 'General enquiries:' },
+        { type: 'link', text: 'hello@psychiatry.ink', href: 'mailto:hello@psychiatry.ink' },
+        { type: 'p', text: 'Data protection enquiries:' },
+        { type: 'link', text: 'data-protection@psychiatry.ink', href: 'mailto:data-protection@psychiatry.ink' },
+      ],
+    },
+    {
+      id: 'what-cookies-are',
+      heading: '2. What cookies are',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Cookies are small files stored on your device. Similar technologies include local storage, session storage, pixels, tags, software development kits (SDKs), and device identifiers. In this policy we refer to all of these as “cookies”.',
+        },
+      ],
+    },
+    {
+      id: 'how-we-use',
+      heading: '3. How we use cookies',
+      blocks: [
+        { type: 'p', text: 'We use cookies and similar technologies to:' },
+        {
+          type: 'ul',
+          items: [
+            'operate the website and the logged-in service;',
+            'keep users signed in securely;',
+            'remember language, privacy, and cookie preferences;',
+            'protect against fraud, abuse, and unauthorised access;',
+            'process payments and subscriptions;',
+            'understand aggregated website usage where analytics are enabled;',
+            'improve performance, reliability, and user experience.',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'strictly-necessary',
+      heading: '4. Strictly necessary cookies',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Strictly necessary cookies are required for the website or service to work. They may be set without consent where permitted by law. The main categories we use are:',
+        },
+        {
+          type: 'ul',
+          items: [
+            'Authentication session — keeps logged-in users authenticated (duration: session or a limited signed-in period).',
+            'CSRF / security token — protects forms and requests from abuse (duration: session or a limited period).',
+            'Cookie consent record — stores your cookie preferences (duration: up to 12 months).',
+            'Language preference — remembers your selected language (duration: up to 12 months).',
+            'Payment security cookies — support secure payment processing (duration: controlled by the payment provider).',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'analytics',
+      heading: '5. Analytics cookies',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Analytics cookies help us understand how visitors use the website and which pages or features need improvement. We would use analytics only where enabled and where any required consent has been obtained.',
+        },
+        {
+          type: 'p',
+          text: 'We currently do not use analytics cookies. If we introduce analytics in future, we will update this page and, where consent is required, request it before any non-essential analytics cookies are set.',
+        },
+      ],
+    },
+    {
+      id: 'marketing',
+      heading: '6. Marketing cookies',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Marketing cookies are used for advertising, retargeting, campaign measurement, or profiling.',
+        },
+        {
+          type: 'p',
+          text: 'We currently do not use marketing cookies. We keep them disabled by default and would only enable them with a proper consent-management process in place.',
+        },
+      ],
+    },
+    {
+      id: 'third-party',
+      heading: '7. Third-party cookies',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Third-party providers may set cookies when you use payment, authentication, security, or related features. These providers may include:',
+        },
+        {
+          type: 'ul',
+          items: [
+            'Stripe, for payment processing;',
+            'Google services, where Google Workspace, Google Cloud, or related services are used;',
+            'other providers listed on our Sub-processors page.',
+          ],
+        },
+        {
+          type: 'link',
+          text: 'View our Sub-processors',
+          href: localizedPath('subprocessors', 'en'),
+        },
+      ],
+    },
+    {
+      id: 'managing',
+      heading: '8. Managing cookie preferences',
+      blocks: [
+        {
+          type: 'p',
+          text: 'You can manage non-essential cookie preferences through the cookie banner or cookie settings where these are available. You can also control cookies through your browser settings. Blocking some cookies may affect website or app functionality.',
+        },
+      ],
+    },
+    {
+      id: 'changes',
+      heading: '9. Changes to this policy',
+      blocks: [
+        {
+          type: 'p',
+          text: 'We may update this Cookie Policy when our cookies, providers, or legal obligations change. The latest version will be published on this page.',
+        },
+      ],
+    },
+  ],
+}
+
+const cookiePolicyDe: LegalDoc = {
+  title: 'Cookie-Richtlinie',
+  lead: 'Diese Cookie-Richtlinie erläutert, wie die Psychiatry Ink Ltd Cookies und ähnliche Technologien auf ihren Websites und im Dienst Psychiatrie.Ink einsetzt.',
+  lastUpdatedLabel: lastUpdatedLabel('de'),
+  sections: [
+    {
+      id: 'who-we-are',
+      heading: '1. Verantwortlicher',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Psychiatry Ink Ltd\n71–75 Shelton Street\nCovent Garden\nLondon, WC2H 9JQ\nVereinigtes Königreich',
+        },
+        { type: 'p', text: 'Allgemeine Anfragen:' },
+        { type: 'link', text: 'hello@psychiatry.ink', href: 'mailto:hello@psychiatry.ink' },
+        { type: 'p', text: 'Datenschutzanfragen:' },
+        { type: 'link', text: 'data-protection@psychiatry.ink', href: 'mailto:data-protection@psychiatry.ink' },
+      ],
+    },
+    {
+      id: 'what-cookies-are',
+      heading: '2. Was Cookies sind',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Cookies sind kleine Dateien, die auf Ihrem Endgerät gespeichert werden. Zu den ähnlichen Technologien gehören lokale Speicherung (Local Storage), Sitzungsspeicher (Session Storage), Zählpixel, Tags, Software Development Kits (SDKs) und Geräteidentifikatoren. In dieser Richtlinie werden alle diese Technologien als „Cookies“ bezeichnet.',
+        },
+      ],
+    },
+    {
+      id: 'how-we-use',
+      heading: '3. Wie wir Cookies verwenden',
+      blocks: [
+        { type: 'p', text: 'Wir verwenden Cookies und ähnliche Technologien, um:' },
+        {
+          type: 'ul',
+          items: [
+            'die Website und den angemeldeten Dienst zu betreiben;',
+            'Nutzerinnen und Nutzer sicher angemeldet zu halten;',
+            'Sprach-, Datenschutz- und Cookie-Einstellungen zu speichern;',
+            'vor Betrug, Missbrauch und unbefugtem Zugriff zu schützen;',
+            'Zahlungen und Abonnements abzuwickeln;',
+            'die aggregierte Nutzung der Website zu verstehen, soweit Analyse aktiviert ist;',
+            'Leistung, Zuverlässigkeit und Nutzererlebnis zu verbessern.',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'strictly-necessary',
+      heading: '4. Technisch notwendige Cookies',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Technisch notwendige Cookies sind für den Betrieb der Website oder des Dienstes erforderlich. Sie dürfen, soweit gesetzlich zulässig, ohne Einwilligung gesetzt werden. Wir verwenden insbesondere folgende Kategorien:',
+        },
+        {
+          type: 'ul',
+          items: [
+            'Authentifizierungs-Sitzung — hält angemeldete Nutzer authentifiziert (Dauer: Sitzung oder begrenzter Anmeldezeitraum).',
+            'CSRF-/Sicherheits-Token — schützt Formulare und Anfragen vor Missbrauch (Dauer: Sitzung oder begrenzter Zeitraum).',
+            'Cookie-Einwilligungsnachweis — speichert Ihre Cookie-Einstellungen (Dauer: bis zu 12 Monate).',
+            'Spracheinstellung — speichert die gewählte Sprache (Dauer: bis zu 12 Monate).',
+            'Zahlungssicherheits-Cookies — unterstützen die sichere Zahlungsabwicklung (Dauer: durch den Zahlungsdienstleister festgelegt).',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'analytics',
+      heading: '5. Analyse-Cookies',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Analyse-Cookies helfen zu verstehen, wie Besucherinnen und Besucher die Website nutzen und welche Seiten oder Funktionen verbessert werden sollten. Wir würden Analyse nur einsetzen, soweit sie aktiviert ist und eine etwaig erforderliche Einwilligung vorliegt.',
+        },
+        {
+          type: 'p',
+          text: 'Derzeit setzen wir keine Analyse-Cookies ein. Sollten wir künftig Analyse einführen, aktualisieren wir diese Seite und holen, soweit erforderlich, vor dem Setzen nicht notwendiger Analyse-Cookies eine Einwilligung ein.',
+        },
+      ],
+    },
+    {
+      id: 'marketing',
+      heading: '6. Marketing-Cookies',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Marketing-Cookies dienen Werbung, Retargeting, Kampagnenmessung oder Profilbildung.',
+        },
+        {
+          type: 'p',
+          text: 'Derzeit setzen wir keine Marketing-Cookies ein. Sie sind standardmäßig deaktiviert und würden nur mit einem geeigneten Einwilligungs-Management aktiviert.',
+        },
+      ],
+    },
+    {
+      id: 'third-party',
+      heading: '7. Cookies von Drittanbietern',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Drittanbieter können Cookies setzen, wenn Sie Zahlungs-, Authentifizierungs-, Sicherheits- oder zugehörige Funktionen nutzen. Dazu können gehören:',
+        },
+        {
+          type: 'ul',
+          items: [
+            'Stripe für die Zahlungsabwicklung;',
+            'Google-Dienste, soweit Google Workspace, Google Cloud oder verwandte Dienste genutzt werden;',
+            'weitere Anbieter, die auf unserer Seite zu Unterauftragsverarbeitern aufgeführt sind.',
+          ],
+        },
+        {
+          type: 'link',
+          text: 'Unsere Unterauftragsverarbeiter ansehen',
+          href: localizedPath('subprocessors', 'de'),
+        },
+      ],
+    },
+    {
+      id: 'managing',
+      heading: '8. Cookie-Einstellungen verwalten',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Sie können nicht notwendige Cookie-Einstellungen über das Cookie-Banner bzw. die Cookie-Einstellungen verwalten, soweit diese verfügbar sind. Zusätzlich können Sie Cookies über die Einstellungen Ihres Browsers steuern. Das Blockieren bestimmter Cookies kann die Funktionsfähigkeit der Website oder Anwendung beeinträchtigen.',
+        },
+      ],
+    },
+    {
+      id: 'changes',
+      heading: '9. Änderungen dieser Richtlinie',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Wir können diese Cookie-Richtlinie aktualisieren, wenn sich unsere Cookies, Anbieter oder gesetzlichen Pflichten ändern. Die jeweils aktuelle Fassung wird auf dieser Seite veröffentlicht.',
+        },
+      ],
+    },
+  ],
+}
+
+/* ──────────────────────── DATA PROCESSING AGREEMENT ─────────────────────── */
+
+const dpaEn: LegalDoc = {
+  title: 'Data Processing Agreement',
+  lead: 'This Data Processing Agreement (“DPA”) forms part of the agreement between Psychiatry Ink Ltd and the customer using Psychiatry.Ink where Psychiatry Ink Ltd processes personal data on behalf of the customer.\n\nThis DPA is intended to be accepted during signup, organisation setup, or execution of an order form, and should be read together with the Privacy Notice and Terms of Service.',
+  lastUpdatedLabel: lastUpdatedLabel('en'),
+  sections: [
+    {
+      id: 'parties',
+      heading: '1. Parties',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Customer / Controller: the individual clinician, practice, clinic, hospital, organisation, or other legal entity using Psychiatry.Ink and determining the purposes and means of processing personal data.',
+        },
+        { type: 'p', text: 'Processor:' },
+        {
+          type: 'p',
+          text: 'Psychiatry Ink Ltd\n71–75 Shelton Street\nCovent Garden\nLondon, WC2H 9JQ\nUnited Kingdom\nCompany number: 17275704',
+        },
+      ],
+    },
+    {
+      id: 'definitions',
+      heading: '2. Definitions',
+      blocks: [
+        {
+          type: 'p',
+          text: '“Applicable Data Protection Law” means the UK GDPR, the Data Protection Act 2018, the EU GDPR, and any other data protection law applicable to the processing under the customer’s use of Psychiatry.Ink.',
+        },
+        {
+          type: 'p',
+          text: '“Personal Data”, “Processing”, “Controller”, “Processor”, “Data Subject”, “Personal Data Breach”, and “Special Category Data” have the meanings given in Applicable Data Protection Law.',
+        },
+        {
+          type: 'p',
+          text: '“Customer Data” means personal data submitted to Psychiatry.Ink by or on behalf of the customer, including clinical documentation, user account data, and related metadata.',
+        },
+      ],
+    },
+    {
+      id: 'roles',
+      heading: '3. Roles',
+      blocks: [
+        {
+          type: 'p',
+          text: 'For clinical and patient-related Customer Data, the customer is the controller and Psychiatry Ink Ltd is the processor, unless the parties agree otherwise in writing.',
+        },
+        {
+          type: 'p',
+          text: 'For Psychiatry Ink Ltd’s own account, billing, website, legal, and business-administration data, Psychiatry Ink Ltd may act as controller as described in the Privacy Notice.',
+        },
+      ],
+    },
+    {
+      id: 'subject-matter',
+      heading: '4. Subject matter and duration',
+      blocks: [
+        {
+          type: 'p',
+          text: 'The subject matter is the provision of Psychiatry.Ink, including psychiatric documentation, dictation, template, AI, medication, laboratory, workflow, account, support, billing, and security functions.',
+        },
+        {
+          type: 'p',
+          text: 'Processing continues for the duration of the customer’s subscription, trial, pilot, account, or order form, and afterwards only as needed for deletion, return, backup expiry, legal compliance, security, dispute resolution, or as otherwise agreed.',
+        },
+      ],
+    },
+    {
+      id: 'nature-purpose',
+      heading: '5. Nature and purpose of processing',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Processing may include collection, recording, organisation, structuring, storage, retrieval, consultation, use, transmission to authorised sub-processors, output generation, deletion, and export.',
+        },
+        { type: 'p', text: 'Purposes include:' },
+        {
+          type: 'ul',
+          items: [
+            'providing the Psychiatry.Ink service;',
+            'generating, editing, summarising, formatting, translating, or organising clinical documentation;',
+            'processing dictation or transcription;',
+            'managing medication, laboratory, risk, template, and workflow functions;',
+            'providing AI-supported features selected by the user;',
+            'providing support and troubleshooting;',
+            'securing, monitoring, auditing, and improving the service;',
+            'administering accounts, billing, subscriptions, and credits.',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'data-subjects',
+      heading: '6. Categories of data subjects',
+      blocks: [
+        { type: 'p', text: 'Depending on customer use, data subjects may include:' },
+        {
+          type: 'ul',
+          items: [
+            'professional users;',
+            'employees, contractors, or staff of the customer;',
+            'patients or service users documented by the customer;',
+            'relatives, carers, legal representatives, prison staff, court contacts, or other third parties mentioned in clinical records;',
+            'support contacts and billing contacts.',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'data-categories',
+      heading: '7. Categories of personal data',
+      blocks: [
+        { type: 'p', text: 'Depending on customer use, Customer Data may include:' },
+        {
+          type: 'ul',
+          items: [
+            'user identity and account data;',
+            'professional role and organisation data;',
+            'clinical notes, psychiatric history, mental-state examination, diagnosis, treatment, medication, laboratory, and risk-assessment data;',
+            'dictated text, generated drafts, templates, correspondence, and document outputs;',
+            'metadata such as timestamps, feature use, token usage, audit logs, and access logs;',
+            'billing and subscription metadata.',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'special-category',
+      heading: '8. Special category data',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Customer Data may include health data, psychiatric data, medication data, disability data, forensic or detention-related data, and other special category or sensitive data if entered by the customer.',
+        },
+        {
+          type: 'p',
+          text: 'The customer is responsible for ensuring that it has an appropriate legal basis and special-category condition for such processing.',
+        },
+      ],
+    },
+    {
+      id: 'instructions',
+      heading: '9. Customer instructions',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Psychiatry Ink Ltd will process Customer Data only on the customer’s documented instructions, including instructions in the main agreement, product settings, order form, this DPA, and lawful user actions inside the service.',
+        },
+        {
+          type: 'p',
+          text: 'If Psychiatry Ink Ltd believes an instruction infringes Applicable Data Protection Law, it will inform the customer unless prohibited by law.',
+        },
+      ],
+    },
+    {
+      id: 'confidentiality',
+      heading: '10. Confidentiality',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Psychiatry Ink Ltd will ensure that persons authorised to process Customer Data are bound by confidentiality obligations or are under an appropriate statutory duty of confidentiality.',
+        },
+      ],
+    },
+    {
+      id: 'security',
+      heading: '11. Security measures',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Psychiatry Ink Ltd will implement appropriate technical and organisational measures designed to protect Customer Data against unauthorised or unlawful processing and against accidental loss, destruction, damage, alteration, or disclosure. These measures include those listed in Annex 2.',
+        },
+      ],
+    },
+    {
+      id: 'subprocessors',
+      heading: '12. Sub-processors',
+      blocks: [
+        {
+          type: 'p',
+          text: 'The customer gives general authorisation for Psychiatry Ink Ltd to use sub-processors to provide the service, subject to the conditions in this DPA.',
+        },
+        {
+          type: 'p',
+          text: 'Psychiatry Ink Ltd maintains a list of sub-processors on the Sub-processors page and will require sub-processors to provide data protection obligations substantially equivalent to those in this DPA where required by law.',
+        },
+        {
+          type: 'p',
+          text: 'Psychiatry Ink Ltd will provide notice of material new sub-processors by updating the Sub-processors page, email, in-app notice, or another reasonable method. The customer may object on reasonable data-protection grounds within 30 days of that notice.',
+        },
+        {
+          type: 'link',
+          text: 'View our Sub-processors',
+          href: localizedPath('subprocessors', 'en'),
+        },
+      ],
+    },
+    {
+      id: 'transfers',
+      heading: '13. International transfers',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Where Customer Data is transferred internationally, Psychiatry Ink Ltd will use appropriate safeguards where required, such as adequacy regulations, EU Standard Contractual Clauses, the UK International Data Transfer Agreement, the UK Addendum to EU Standard Contractual Clauses, or other legally recognised safeguards.',
+        },
+        {
+          type: 'p',
+          text: 'For EU/EEA customers or EU/EEA data, the parties will complete the relevant SCC modules where required.',
+        },
+      ],
+    },
+    {
+      id: 'data-subject-rights',
+      heading: '14. Assistance with data subject rights',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Taking into account the nature of processing, Psychiatry Ink Ltd will provide reasonable assistance to the customer in responding to data subject requests where required by law and where the request relates to Customer Data processed by Psychiatry Ink Ltd as processor.',
+        },
+        {
+          type: 'p',
+          text: 'If Psychiatry Ink Ltd receives a request directly from a data subject relating to Customer Data, it will, where legally permitted and reasonably identifiable, forward the request to the customer or advise the requester to contact the customer.',
+        },
+      ],
+    },
+    {
+      id: 'compliance-assistance',
+      heading: '15. Assistance with compliance',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Taking into account the nature of processing and the information available to Psychiatry Ink Ltd, Psychiatry Ink Ltd will provide reasonable assistance with security, breach notification, data protection impact assessments, prior consultations, and related compliance obligations where required by Applicable Data Protection Law.',
+        },
+      ],
+    },
+    {
+      id: 'breach',
+      heading: '16. Personal data breach',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Psychiatry Ink Ltd will notify the customer without undue delay after becoming aware of a Personal Data Breach affecting Customer Data. The notification will include available information reasonably required to help the customer meet its breach notification obligations.',
+        },
+      ],
+    },
+    {
+      id: 'deletion',
+      heading: '17. Deletion and return',
+      blocks: [
+        {
+          type: 'p',
+          text: 'At the customer’s choice and subject to technical feasibility, legal retention duties, backup expiry, and payment obligations, Psychiatry Ink Ltd will delete or return Customer Data after the end of the service.',
+        },
+        {
+          type: 'p',
+          text: 'Backup copies may persist for a limited period until overwritten or deleted according to the backup retention schedule.',
+        },
+      ],
+    },
+    {
+      id: 'audit',
+      heading: '18. Audit and information rights',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Psychiatry Ink Ltd will make available information reasonably necessary to demonstrate compliance with this DPA. Audits must be reasonable, proportionate, subject to confidentiality, limited to data-protection controls relevant to the service, and must not compromise security, other customers, trade secrets, or third-party confidentiality.',
+        },
+        {
+          type: 'p',
+          text: 'Psychiatry Ink Ltd may satisfy audit obligations through security documentation, questionnaires, third-party reports, certifications, or structured written responses.',
+        },
+      ],
+    },
+    {
+      id: 'customer-obligations',
+      heading: '19. Customer obligations',
+      blocks: [
+        { type: 'p', text: 'The customer must:' },
+        {
+          type: 'ul',
+          items: [
+            'use the service lawfully;',
+            'configure privacy and retention settings appropriately;',
+            'avoid unnecessary direct identifiers in AI features where possible;',
+            'ensure end users are authorised and trained;',
+            'maintain endpoint, password, and local-key security;',
+            'provide required patient or staff privacy notices;',
+            'ensure local clinical, institutional, and legal compliance;',
+            'use production clinical data only when contractual and technical safeguards are in place.',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'precedence',
+      heading: '20. Order of precedence',
+      blocks: [
+        {
+          type: 'p',
+          text: 'If there is a conflict between this DPA and the Terms of Service concerning processing of Customer Data as processor, this DPA takes precedence. If Standard Contractual Clauses apply, they take precedence where required by law.',
+        },
+      ],
+    },
+    {
+      id: 'annex-1',
+      heading: 'Annex 1: Processing details',
+      blocks: [
+        {
+          type: 'ul',
+          items: [
+            'Subject matter: provision of Psychiatry.Ink clinical documentation and workflow software.',
+            'Duration: subscription, trial, pilot, account, or order-form period, and the deletion/retention wind-down.',
+            'Nature: hosting, storage, retrieval, generation, transcription, editing, support, security, billing metadata, deletion/export.',
+            'Purpose: providing and securing psychiatric documentation and workflow tools.',
+            'Data subjects: professional users, customer staff, patients, relatives, carers, and third parties mentioned in clinical records.',
+            'Personal data: account data, clinical notes, psychiatric documentation, medication/lab/risk data, user metadata, billing metadata.',
+            'Special category data: health data and psychiatric data if entered by the customer.',
+            'Frequency: continuous during use of the service.',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'annex-2',
+      heading: 'Annex 2: Technical and organisational measures',
+      blocks: [
+        { type: 'p', text: 'Measures include:' },
+        {
+          type: 'ul',
+          items: [
+            'encryption in transit using HTTPS/TLS;',
+            'encryption at rest where supported by infrastructure providers;',
+            'a client-side encrypted local vault for selected identifiers and mappings where enabled;',
+            'role-based access control;',
+            'authentication and session controls;',
+            'audit logging of relevant access and actions;',
+            'separation of customer organisations where applicable;',
+            'minimisation and de-identification features;',
+            'backup and recovery controls;',
+            'vulnerability and dependency management;',
+            'security monitoring and an incident response process;',
+            'staff or contractor confidentiality obligations;',
+            'sub-processor due diligence;',
+            'restricted production access;',
+            'deletion/export workflows where available.',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'annex-3',
+      heading: 'Annex 3: Sub-processors',
+      blocks: [
+        {
+          type: 'p',
+          text: 'The current sub-processor list is published on the Sub-processors page. The customer should review that page before using production clinical data.',
+        },
+        {
+          type: 'link',
+          text: 'View our Sub-processors',
+          href: localizedPath('subprocessors', 'en'),
+        },
+      ],
+    },
+  ],
+}
+
+const dpaDe: LegalDoc = {
+  title: 'Auftragsverarbeitungsvertrag (AVV)',
+  lead: 'Dieser Auftragsverarbeitungsvertrag („AVV“) ist Bestandteil der Vereinbarung zwischen der Psychiatry Ink Ltd und dem Kunden, der Psychiatrie.Ink nutzt, soweit die Psychiatry Ink Ltd personenbezogene Daten im Auftrag des Kunden verarbeitet.\n\nDieser AVV ist dafür vorgesehen, bei der Registrierung, der Einrichtung der Organisation oder beim Abschluss eines Auftragsformulars akzeptiert zu werden, und ist zusammen mit der Datenschutzerklärung und den Allgemeinen Geschäftsbedingungen zu lesen.',
+  lastUpdatedLabel: lastUpdatedLabel('de'),
+  sections: [
+    {
+      id: 'parties',
+      heading: '1. Parteien',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Kunde / Verantwortlicher: die behandelnde Person, Praxis, Klinik, Einrichtung, Organisation oder sonstige juristische Person, die Psychiatrie.Ink nutzt und über die Zwecke und Mittel der Verarbeitung personenbezogener Daten entscheidet.',
+        },
+        { type: 'p', text: 'Auftragsverarbeiter:' },
+        {
+          type: 'p',
+          text: 'Psychiatry Ink Ltd\n71–75 Shelton Street\nCovent Garden\nLondon, WC2H 9JQ\nVereinigtes Königreich\nCompany number: 17275704',
+        },
+      ],
+    },
+    {
+      id: 'definitions',
+      heading: '2. Begriffsbestimmungen',
+      blocks: [
+        {
+          type: 'p',
+          text: '„Anwendbares Datenschutzrecht“ bezeichnet die UK GDPR, den Data Protection Act 2018, die EU-DSGVO sowie jedes weitere Datenschutzrecht, das auf die Verarbeitung im Rahmen der Nutzung von Psychiatrie.Ink durch den Kunden anwendbar ist.',
+        },
+        {
+          type: 'p',
+          text: 'Die Begriffe „personenbezogene Daten“, „Verarbeitung“, „Verantwortlicher“, „Auftragsverarbeiter“, „betroffene Person“, „Verletzung des Schutzes personenbezogener Daten“ und „besondere Kategorien personenbezogener Daten“ haben die im anwendbaren Datenschutzrecht festgelegte Bedeutung.',
+        },
+        {
+          type: 'p',
+          text: '„Kundendaten“ bezeichnet personenbezogene Daten, die durch den Kunden oder in seinem Auftrag an Psychiatrie.Ink übermittelt werden, einschließlich klinischer Dokumentation, Kontodaten und zugehöriger Metadaten.',
+        },
+      ],
+    },
+    {
+      id: 'roles',
+      heading: '3. Rollen',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Für klinische und patientenbezogene Kundendaten ist der Kunde der Verantwortliche und die Psychiatry Ink Ltd der Auftragsverarbeiter, sofern die Parteien nichts anderes schriftlich vereinbaren.',
+        },
+        {
+          type: 'p',
+          text: 'Für eigene Konto-, Abrechnungs-, Website-, Rechts- und Geschäftsverwaltungsdaten der Psychiatry Ink Ltd kann diese als Verantwortlicher handeln, wie in der Datenschutzerklärung beschrieben.',
+        },
+      ],
+    },
+    {
+      id: 'subject-matter',
+      heading: '4. Gegenstand und Dauer',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Gegenstand ist die Bereitstellung von Psychiatrie.Ink, einschließlich Funktionen für psychiatrische Dokumentation, Diktat, Vorlagen, KI, Medikation, Labor, Workflow, Konto, Support, Abrechnung und Sicherheit.',
+        },
+        {
+          type: 'p',
+          text: 'Die Verarbeitung dauert für die Laufzeit des Abonnements, der Testphase, des Pilotbetriebs, des Kontos oder des Auftragsformulars des Kunden an und danach nur, soweit dies für Löschung, Rückgabe, Backup-Ablauf, Rechtskonformität, Sicherheit, Streitbeilegung oder nach gesonderter Vereinbarung erforderlich ist.',
+        },
+      ],
+    },
+    {
+      id: 'nature-purpose',
+      heading: '5. Art und Zweck der Verarbeitung',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Die Verarbeitung kann das Erheben, Erfassen, Organisieren, Strukturieren, Speichern, Auslesen, Abfragen, Verwenden, Übermitteln an autorisierte Unterauftragsverarbeiter, Erzeugen von Ergebnissen, Löschen und Exportieren umfassen.',
+        },
+        { type: 'p', text: 'Die Zwecke umfassen:' },
+        {
+          type: 'ul',
+          items: [
+            'die Bereitstellung des Dienstes Psychiatrie.Ink;',
+            'das Erstellen, Bearbeiten, Zusammenfassen, Formatieren, Übersetzen oder Organisieren klinischer Dokumentation;',
+            'die Verarbeitung von Diktat oder Transkription;',
+            'die Verwaltung von Medikations-, Labor-, Risiko-, Vorlagen- und Workflow-Funktionen;',
+            'die Bereitstellung der vom Nutzer ausgewählten KI-gestützten Funktionen;',
+            'die Bereitstellung von Support und Fehlerbehebung;',
+            'das Absichern, Überwachen, Auditieren und Verbessern des Dienstes;',
+            'die Verwaltung von Konten, Abrechnung, Abonnements und Credits.',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'data-subjects',
+      heading: '6. Kategorien betroffener Personen',
+      blocks: [
+        { type: 'p', text: 'Je nach Nutzung durch den Kunden können betroffene Personen sein:' },
+        {
+          type: 'ul',
+          items: [
+            'berufliche Nutzerinnen und Nutzer;',
+            'Beschäftigte, Auftragnehmer oder Personal des Kunden;',
+            'Patientinnen, Patienten oder von ihm dokumentierte Personen;',
+            'Angehörige, Betreuende, gesetzliche Vertreter, Justizvollzugspersonal, Gerichtskontakte oder sonstige in klinischen Akten genannte Dritte;',
+            'Support- und Abrechnungskontakte.',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'data-categories',
+      heading: '7. Kategorien personenbezogener Daten',
+      blocks: [
+        { type: 'p', text: 'Je nach Nutzung durch den Kunden können Kundendaten umfassen:' },
+        {
+          type: 'ul',
+          items: [
+            'Identitäts- und Kontodaten der Nutzer;',
+            'Daten zu beruflicher Rolle und Organisation;',
+            'klinische Notizen, psychiatrische Anamnese, psychopathologischer Befund, Diagnose, Behandlung, Medikation, Labor- und Risikoeinschätzungsdaten;',
+            'diktierte Texte, erzeugte Entwürfe, Vorlagen, Korrespondenz und Dokumentenergebnisse;',
+            'Metadaten wie Zeitstempel, Funktionsnutzung, Token-Verbrauch, Audit-Protokolle und Zugriffsprotokolle;',
+            'Abrechnungs- und Abonnement-Metadaten.',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'special-category',
+      heading: '8. Besondere Kategorien personenbezogener Daten',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Kundendaten können Gesundheitsdaten, psychiatrische Daten, Medikationsdaten, Daten zu Behinderungen, forensische oder haftbezogene Daten sowie sonstige besondere Kategorien oder sensible Daten enthalten, soweit sie vom Kunden eingegeben werden.',
+        },
+        {
+          type: 'p',
+          text: 'Der Kunde ist dafür verantwortlich sicherzustellen, dass für eine solche Verarbeitung eine geeignete Rechtsgrundlage sowie eine Bedingung nach Art. 9 DSGVO vorliegt.',
+        },
+      ],
+    },
+    {
+      id: 'instructions',
+      heading: '9. Weisungen des Kunden',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Die Psychiatry Ink Ltd verarbeitet Kundendaten ausschließlich auf dokumentierte Weisung des Kunden, einschließlich der Weisungen im Hauptvertrag, in den Produkteinstellungen, im Auftragsformular, in diesem AVV sowie durch rechtmäßige Nutzerhandlungen innerhalb des Dienstes.',
+        },
+        {
+          type: 'p',
+          text: 'Ist die Psychiatry Ink Ltd der Auffassung, dass eine Weisung gegen anwendbares Datenschutzrecht verstößt, informiert sie den Kunden, sofern dies nicht gesetzlich untersagt ist.',
+        },
+      ],
+    },
+    {
+      id: 'confidentiality',
+      heading: '10. Vertraulichkeit',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Die Psychiatry Ink Ltd stellt sicher, dass zur Verarbeitung von Kundendaten befugte Personen zur Vertraulichkeit verpflichtet sind oder einer entsprechenden gesetzlichen Verschwiegenheitspflicht unterliegen.',
+        },
+      ],
+    },
+    {
+      id: 'security',
+      heading: '11. Sicherheitsmaßnahmen',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Die Psychiatry Ink Ltd setzt geeignete technische und organisatorische Maßnahmen um, um Kundendaten vor unbefugter oder unrechtmäßiger Verarbeitung sowie vor unbeabsichtigtem Verlust, Zerstörung, Schädigung, Veränderung oder Offenlegung zu schützen. Diese Maßnahmen umfassen die in Anlage 2 genannten Maßnahmen.',
+        },
+      ],
+    },
+    {
+      id: 'subprocessors',
+      heading: '12. Unterauftragsverarbeiter',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Der Kunde erteilt der Psychiatry Ink Ltd die allgemeine Genehmigung, zur Erbringung des Dienstes Unterauftragsverarbeiter einzusetzen, vorbehaltlich der Bedingungen dieses AVV.',
+        },
+        {
+          type: 'p',
+          text: 'Die Psychiatry Ink Ltd führt auf der Seite zu Unterauftragsverarbeitern eine Liste der Unterauftragsverarbeiter und verpflichtet diese, soweit gesetzlich erforderlich, zu Datenschutzpflichten, die den Pflichten dieses AVV im Wesentlichen gleichwertig sind.',
+        },
+        {
+          type: 'p',
+          text: 'Die Psychiatry Ink Ltd informiert über wesentliche neue Unterauftragsverarbeiter durch Aktualisierung der Seite zu Unterauftragsverarbeitern, per E-Mail, durch In-App-Hinweis oder auf andere angemessene Weise. Der Kunde kann innerhalb von 30 Tagen nach dieser Mitteilung aus berechtigten datenschutzrechtlichen Gründen widersprechen.',
+        },
+        {
+          type: 'link',
+          text: 'Unsere Unterauftragsverarbeiter ansehen',
+          href: localizedPath('subprocessors', 'de'),
+        },
+      ],
+    },
+    {
+      id: 'transfers',
+      heading: '13. Internationale Datenübermittlungen',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Soweit Kundendaten international übermittelt werden, setzt die Psychiatry Ink Ltd geeignete Garantien ein, soweit erforderlich, etwa Angemessenheitsbeschlüsse, EU-Standardvertragsklauseln, das UK International Data Transfer Agreement, das UK-Addendum zu den EU-Standardvertragsklauseln oder andere gesetzlich anerkannte Garantien.',
+        },
+        {
+          type: 'p',
+          text: 'Für Kunden aus der EU/dem EWR oder für Daten aus der EU/dem EWR vervollständigen die Parteien die einschlägigen SCC-Module, soweit erforderlich.',
+        },
+      ],
+    },
+    {
+      id: 'data-subject-rights',
+      heading: '14. Unterstützung bei Betroffenenrechten',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Unter Berücksichtigung der Art der Verarbeitung unterstützt die Psychiatry Ink Ltd den Kunden in angemessener Weise bei der Beantwortung von Anträgen betroffener Personen, soweit dies gesetzlich erforderlich ist und der Antrag Kundendaten betrifft, die die Psychiatry Ink Ltd als Auftragsverarbeiter verarbeitet.',
+        },
+        {
+          type: 'p',
+          text: 'Erhält die Psychiatry Ink Ltd einen Antrag direkt von einer betroffenen Person, der Kundendaten betrifft, leitet sie diesen, soweit rechtlich zulässig und zuordenbar, an den Kunden weiter oder verweist die anfragende Person an den Kunden.',
+        },
+      ],
+    },
+    {
+      id: 'compliance-assistance',
+      heading: '15. Unterstützung bei der Einhaltung von Pflichten',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Unter Berücksichtigung der Art der Verarbeitung und der ihr zur Verfügung stehenden Informationen unterstützt die Psychiatry Ink Ltd in angemessener Weise bei Sicherheit, Meldung von Datenschutzverletzungen, Datenschutz-Folgenabschätzungen, vorherigen Konsultationen und damit zusammenhängenden Pflichten, soweit dies nach anwendbarem Datenschutzrecht erforderlich ist.',
+        },
+      ],
+    },
+    {
+      id: 'breach',
+      heading: '16. Verletzung des Schutzes personenbezogener Daten',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Die Psychiatry Ink Ltd benachrichtigt den Kunden unverzüglich, nachdem ihr eine Verletzung des Schutzes personenbezogener Daten bekannt geworden ist, die Kundendaten betrifft. Die Benachrichtigung enthält die verfügbaren Informationen, die der Kunde zur Erfüllung seiner Meldepflichten benötigt.',
+        },
+      ],
+    },
+    {
+      id: 'deletion',
+      heading: '17. Löschung und Rückgabe',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Nach Wahl des Kunden und vorbehaltlich technischer Machbarkeit, gesetzlicher Aufbewahrungspflichten, Backup-Ablauf und Zahlungspflichten löscht oder gibt die Psychiatry Ink Ltd die Kundendaten nach Beendigung des Dienstes zurück.',
+        },
+        {
+          type: 'p',
+          text: 'Sicherungskopien können für einen begrenzten Zeitraum bestehen bleiben, bis sie nach dem Backup-Aufbewahrungsplan überschrieben oder gelöscht werden.',
+        },
+      ],
+    },
+    {
+      id: 'audit',
+      heading: '18. Kontroll- und Informationsrechte',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Die Psychiatry Ink Ltd stellt die Informationen bereit, die zum Nachweis der Einhaltung dieses AVV angemessen erforderlich sind. Kontrollen müssen angemessen, verhältnismäßig, vertraulich, auf dienstrelevante Datenschutzkontrollen beschränkt sein und dürfen Sicherheit, andere Kunden, Geschäftsgeheimnisse oder die Vertraulichkeit Dritter nicht beeinträchtigen.',
+        },
+        {
+          type: 'p',
+          text: 'Die Psychiatry Ink Ltd kann Kontrollpflichten durch Sicherheitsdokumentation, Fragebögen, Berichte Dritter, Zertifizierungen oder strukturierte schriftliche Antworten erfüllen.',
+        },
+      ],
+    },
+    {
+      id: 'customer-obligations',
+      heading: '19. Pflichten des Kunden',
+      blocks: [
+        { type: 'p', text: 'Der Kunde muss:' },
+        {
+          type: 'ul',
+          items: [
+            'den Dienst rechtmäßig nutzen;',
+            'Datenschutz- und Aufbewahrungseinstellungen angemessen konfigurieren;',
+            'unnötige direkte Identifikatoren in KI-Funktionen nach Möglichkeit vermeiden;',
+            'sicherstellen, dass Endnutzer autorisiert und geschult sind;',
+            'die Sicherheit von Endgeräten, Passwörtern und lokalen Schlüsseln gewährleisten;',
+            'erforderliche Datenschutzhinweise gegenüber Patienten oder Personal bereitstellen;',
+            'die lokale klinische, institutionelle und rechtliche Konformität sicherstellen;',
+            'produktive klinische Daten nur verarbeiten, wenn vertragliche und technische Schutzmaßnahmen vorhanden sind.',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'precedence',
+      heading: '20. Rangfolge',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Bei Widersprüchen zwischen diesem AVV und den Allgemeinen Geschäftsbedingungen hinsichtlich der Verarbeitung von Kundendaten als Auftragsverarbeiter geht dieser AVV vor. Soweit Standardvertragsklauseln anwendbar sind, gehen diese vor, soweit dies gesetzlich erforderlich ist.',
+        },
+      ],
+    },
+    {
+      id: 'annex-1',
+      heading: 'Anlage 1: Einzelheiten der Verarbeitung',
+      blocks: [
+        {
+          type: 'ul',
+          items: [
+            'Gegenstand: Bereitstellung der Software Psychiatrie.Ink für klinische Dokumentation und Workflow.',
+            'Dauer: Laufzeit von Abonnement, Testphase, Pilotbetrieb, Konto oder Auftragsformular sowie die anschließende Lösch-/Aufbewahrungsphase.',
+            'Art: Hosting, Speicherung, Auslesen, Erzeugung, Transkription, Bearbeitung, Support, Sicherheit, Abrechnungs-Metadaten, Löschung/Export.',
+            'Zweck: Bereitstellung und Absicherung von Werkzeugen für psychiatrische Dokumentation und Workflow.',
+            'Betroffene Personen: berufliche Nutzer, Personal des Kunden, Patienten, Angehörige, Betreuende und in klinischen Akten genannte Dritte.',
+            'Personenbezogene Daten: Kontodaten, klinische Notizen, psychiatrische Dokumentation, Medikations-/Labor-/Risikodaten, Nutzer-Metadaten, Abrechnungs-Metadaten.',
+            'Besondere Kategorien: Gesundheitsdaten und psychiatrische Daten, soweit vom Kunden eingegeben.',
+            'Häufigkeit: fortlaufend während der Nutzung des Dienstes.',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'annex-2',
+      heading: 'Anlage 2: Technische und organisatorische Maßnahmen',
+      blocks: [
+        { type: 'p', text: 'Die Maßnahmen umfassen:' },
+        {
+          type: 'ul',
+          items: [
+            'Verschlüsselung bei der Übertragung mittels HTTPS/TLS;',
+            'Verschlüsselung im Ruhezustand, soweit von den Infrastrukturanbietern unterstützt;',
+            'einen clientseitig verschlüsselten lokalen Tresor für ausgewählte Identifikatoren und Zuordnungen, soweit aktiviert;',
+            'rollenbasierte Zugriffskontrolle;',
+            'Authentifizierungs- und Sitzungskontrollen;',
+            'Audit-Protokollierung relevanter Zugriffe und Aktionen;',
+            'Trennung von Kundenorganisationen, soweit anwendbar;',
+            'Funktionen zur Datenminimierung und De-Identifikation;',
+            'Backup- und Wiederherstellungskontrollen;',
+            'Schwachstellen- und Abhängigkeitsmanagement;',
+            'Sicherheitsüberwachung und ein Verfahren zur Reaktion auf Vorfälle;',
+            'Vertraulichkeitsverpflichtungen für Mitarbeitende oder Auftragnehmer;',
+            'Sorgfaltsprüfung von Unterauftragsverarbeitern;',
+            'beschränkter Produktivzugriff;',
+            'Lösch-/Export-Workflows, soweit verfügbar.',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'annex-3',
+      heading: 'Anlage 3: Unterauftragsverarbeiter',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Die aktuelle Liste der Unterauftragsverarbeiter wird auf der Seite zu Unterauftragsverarbeitern veröffentlicht. Der Kunde sollte diese Seite vor der Nutzung produktiver klinischer Daten prüfen.',
+        },
+        {
+          type: 'link',
+          text: 'Unsere Unterauftragsverarbeiter ansehen',
+          href: localizedPath('subprocessors', 'de'),
+        },
+      ],
+    },
+  ],
+}
+
+/* ───────────────────────────── SUB-PROCESSORS ───────────────────────────── */
+
+const subprocessorsEn: LegalDoc = {
+  title: 'Sub-processors',
+  lead: 'This page lists third-party providers that Psychiatry Ink Ltd uses, or may use, to provide Psychiatry.Ink. A sub-processor is a provider that processes personal data on behalf of Psychiatry Ink Ltd where Psychiatry Ink Ltd acts as processor for a customer.',
+  lastUpdatedLabel: lastUpdatedLabel('en'),
+  sections: [
+    {
+      id: 'context',
+      heading: '1. Controller and processor context',
+      blocks: [
+        {
+          type: 'p',
+          text: 'For clinical workspace data, the customer is usually the controller and Psychiatry Ink Ltd is usually the processor. The providers below may act as sub-processors depending on which features the customer uses.',
+        },
+        {
+          type: 'p',
+          text: 'For account, billing, website, and business-administration data, some providers may act as independent controllers or processors depending on their role and contract.',
+        },
+      ],
+    },
+    {
+      id: 'current',
+      heading: '2. Current sub-processors',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Google Cloud — hosting, infrastructure, logging, deployment, storage, and compute. Data categories: application data, logs, metadata, and encrypted content where applicable. Processing location: European Union (region-restricted deployment, e.g. Frankfurt, where configured). Safeguards: DPA in place; region-restricted deployment where configured.',
+        },
+        {
+          type: 'p',
+          text: 'Supabase — database, authentication, storage, and backend services. Data categories: account data, application data, metadata, and encrypted content where applicable. Processing location: European Union (Frankfurt). Safeguards: DPA in place; production region confirmed in the EU.',
+        },
+        {
+          type: 'p',
+          text: 'Stripe — payments, subscriptions, billing, invoices, and tax metadata. Data categories: billing contact data, payment metadata, and invoice data. Processing location: global / provider-controlled. Safeguards: Stripe may act as an independent controller for some payment processing.',
+        },
+        {
+          type: 'p',
+          text: 'Google Workspace — business email, support inbox, and administrative communication. Data categories: emails, contact messages, and attachments voluntarily provided. Processing location: European Union / provider-controlled. Safeguards: patient data should not be sent by email unless authorised.',
+        },
+      ],
+    },
+    {
+      id: 'ai',
+      heading: '3. Feature-specific AI sub-processors',
+      blocks: [
+        {
+          type: 'p',
+          text: 'These providers are used only when the relevant AI feature, model, or mode is enabled. In each case, the data categories are prompts, selected text, generated output, and model metadata, and identifiers should be minimised before processing.',
+        },
+        {
+          type: 'p',
+          text: 'OpenAI — AI drafting, summarisation, editing, transcription, and clinical text support. Processing location: EU, UK, US, or other countries depending on provider and configuration. Safeguards: used only under an appropriate API/DPA configuration.',
+        },
+        {
+          type: 'p',
+          text: 'Google / Gemini — AI drafting, generation, summarisation, and text support. Processing location: EU, UK, US, or other countries depending on provider and configuration. Safeguards: used only under an appropriate API/DPA configuration.',
+        },
+        {
+          type: 'p',
+          text: 'DeepSeek — AI drafting or economic-model mode. Processing location: depends on provider and configuration. Safeguards: not enabled for production clinical data unless transfer, DPA, and risk assessment are approved.',
+        },
+        {
+          type: 'p',
+          text: 'Mistral AI — AI model processing, where enabled. Processing location: EU, UK, US, or other countries depending on provider and configuration. Safeguards: optional provider, used only under an appropriate API/DPA configuration.',
+        },
+      ],
+    },
+    {
+      id: 'optional',
+      heading: '4. Optional or planned providers',
+      blocks: [
+        {
+          type: 'p',
+          text: 'The following categories are not currently active in production. We will move a provider into the “Current sub-processors” section only once it is active in production.',
+        },
+        {
+          type: 'ul',
+          items: [
+            'Transactional email (e.g. for contact forms or app notifications): not currently active in production.',
+            'Video consultation or voice-chat infrastructure: optional and country-specific; not currently active in production.',
+            'Error monitoring and diagnostics: not currently active in production.',
+            'Website analytics: none currently active in production.',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'changes',
+      heading: '5. Changes to sub-processors',
+      blocks: [
+        {
+          type: 'p',
+          text: 'We may update this page when providers change. Where required by the Data Processing Agreement, we will provide notice of material new sub-processors and allow customers to object on reasonable data-protection grounds within the stated objection period.',
+        },
+      ],
+    },
+    {
+      id: 'responsibility',
+      heading: '6. Customer responsibility',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Customers should review this list before using production clinical data and should ensure that use of Psychiatry.Ink, selected AI providers, country settings, and data-transfer safeguards are compatible with their own legal and institutional obligations.',
+        },
+      ],
+    },
+  ],
+}
+
+const subprocessorsDe: LegalDoc = {
+  title: 'Unterauftragsverarbeiter',
+  lead: 'Diese Seite listet Drittanbieter auf, die die Psychiatry Ink Ltd zur Bereitstellung von Psychiatrie.Ink einsetzt oder einsetzen kann. Ein Unterauftragsverarbeiter ist ein Anbieter, der personenbezogene Daten im Auftrag der Psychiatry Ink Ltd verarbeitet, soweit diese als Auftragsverarbeiter für einen Kunden handelt.',
+  lastUpdatedLabel: lastUpdatedLabel('de'),
+  sections: [
+    {
+      id: 'context',
+      heading: '1. Rollenverteilung: Verantwortlicher und Auftragsverarbeiter',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Für klinische Arbeitsbereichsdaten ist in der Regel der Kunde der Verantwortliche und die Psychiatry Ink Ltd der Auftragsverarbeiter. Die nachstehenden Anbieter können als Unterauftragsverarbeiter handeln, abhängig davon, welche Funktionen der Kunde nutzt.',
+        },
+        {
+          type: 'p',
+          text: 'Für Konto-, Abrechnungs-, Website- und Geschäftsverwaltungsdaten können einige Anbieter je nach ihrer Rolle und ihrem Vertrag als eigenständige Verantwortliche oder als Auftragsverarbeiter handeln.',
+        },
+      ],
+    },
+    {
+      id: 'current',
+      heading: '2. Aktuelle Unterauftragsverarbeiter',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Google Cloud — Hosting, Infrastruktur, Protokollierung, Deployment, Speicher und Rechenleistung. Datenkategorien: Anwendungsdaten, Protokolle, Metadaten und, soweit zutreffend, verschlüsselte Inhalte. Verarbeitungsort: Europäische Union (regional beschränktes Deployment, z. B. Frankfurt, soweit konfiguriert). Garantien: AVV vorhanden; regional beschränktes Deployment, soweit konfiguriert.',
+        },
+        {
+          type: 'p',
+          text: 'Supabase — Datenbank, Authentifizierung, Speicher und Backend-Dienste. Datenkategorien: Kontodaten, Anwendungsdaten, Metadaten und, soweit zutreffend, verschlüsselte Inhalte. Verarbeitungsort: Europäische Union (Frankfurt). Garantien: AVV vorhanden; Produktivregion in der EU bestätigt.',
+        },
+        {
+          type: 'p',
+          text: 'Stripe — Zahlungen, Abonnements, Abrechnung, Rechnungen und Steuer-Metadaten. Datenkategorien: Rechnungskontaktdaten, Zahlungs-Metadaten und Rechnungsdaten. Verarbeitungsort: global / anbieterseitig gesteuert. Garantien: Stripe kann für bestimmte Zahlungsvorgänge als eigenständiger Verantwortlicher handeln.',
+        },
+        {
+          type: 'p',
+          text: 'Google Workspace — geschäftliche E-Mail, Support-Postfach und administrative Kommunikation. Datenkategorien: E-Mails, Kontaktnachrichten und freiwillig bereitgestellte Anhänge. Verarbeitungsort: Europäische Union / anbieterseitig gesteuert. Garantien: Patientendaten sollten nur bei entsprechender Befugnis per E-Mail übermittelt werden.',
+        },
+      ],
+    },
+    {
+      id: 'ai',
+      heading: '3. Funktionsspezifische KI-Unterauftragsverarbeiter',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Diese Anbieter werden nur eingesetzt, wenn die jeweilige KI-Funktion, das Modell oder der Modus aktiviert ist. In allen Fällen sind die Datenkategorien Prompts, ausgewählter Text, erzeugte Ausgaben und Modell-Metadaten; Identifikatoren sollten vor der Verarbeitung minimiert werden.',
+        },
+        {
+          type: 'p',
+          text: 'OpenAI — KI-gestützte Formulierung, Zusammenfassung, Bearbeitung, Transkription und Unterstützung bei klinischen Texten. Verarbeitungsort: EU, Vereinigtes Königreich, USA oder andere Länder je nach Anbieter und Konfiguration. Garantien: Einsatz nur bei geeigneter API-/AVV-Konfiguration.',
+        },
+        {
+          type: 'p',
+          text: 'Google / Gemini — KI-gestützte Formulierung, Generierung, Zusammenfassung und Textunterstützung. Verarbeitungsort: EU, Vereinigtes Königreich, USA oder andere Länder je nach Anbieter und Konfiguration. Garantien: Einsatz nur bei geeigneter API-/AVV-Konfiguration.',
+        },
+        {
+          type: 'p',
+          text: 'DeepSeek — KI-gestützte Formulierung oder ökonomischer Modellmodus. Verarbeitungsort: abhängig von Anbieter und Konfiguration. Garantien: nicht für produktive klinische Daten aktiviert, sofern nicht Übermittlung, AVV und Risikoabschätzung genehmigt sind.',
+        },
+        {
+          type: 'p',
+          text: 'Mistral AI — KI-Modellverarbeitung, soweit aktiviert. Verarbeitungsort: EU, Vereinigtes Königreich, USA oder andere Länder je nach Anbieter und Konfiguration. Garantien: optionaler Anbieter, Einsatz nur bei geeigneter API-/AVV-Konfiguration.',
+        },
+      ],
+    },
+    {
+      id: 'optional',
+      heading: '4. Optionale oder geplante Anbieter',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Die folgenden Kategorien sind derzeit nicht produktiv aktiv. Ein Anbieter wird erst dann in den Abschnitt „Aktuelle Unterauftragsverarbeiter“ aufgenommen, wenn er produktiv aktiv ist.',
+        },
+        {
+          type: 'ul',
+          items: [
+            'Transaktions-E-Mail (z. B. für Kontaktformulare oder App-Benachrichtigungen): derzeit nicht produktiv aktiv.',
+            'Infrastruktur für Videosprechstunde oder Voice-Chat: optional und länderspezifisch; derzeit nicht produktiv aktiv.',
+            'Fehlerüberwachung und Diagnose: derzeit nicht produktiv aktiv.',
+            'Website-Analyse: derzeit keine produktiv aktiv.',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'changes',
+      heading: '5. Änderungen bei Unterauftragsverarbeitern',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Wir können diese Seite aktualisieren, wenn sich Anbieter ändern. Soweit im Auftragsverarbeitungsvertrag vorgesehen, informieren wir über wesentliche neue Unterauftragsverarbeiter und räumen Kunden die Möglichkeit ein, innerhalb der angegebenen Widerspruchsfrist aus berechtigten datenschutzrechtlichen Gründen zu widersprechen.',
+        },
+      ],
+    },
+    {
+      id: 'responsibility',
+      heading: '6. Verantwortung des Kunden',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Kunden sollten diese Liste vor der Nutzung produktiver klinischer Daten prüfen und sicherstellen, dass die Nutzung von Psychiatrie.Ink, die ausgewählten KI-Anbieter, die Ländereinstellungen und die Garantien zur Datenübermittlung mit ihren eigenen rechtlichen und institutionellen Pflichten vereinbar sind.',
+        },
+      ],
+    },
+  ],
+}
+
+/* ──────────────────────────── SECURITY OVERVIEW ─────────────────────────── */
+
+const securityOverviewEn: LegalDoc = {
+  title: 'Security Overview',
+  lead: 'Psychiatry.Ink is designed for psychiatric documentation and therefore treats confidentiality, minimisation, and controlled access as core product requirements.\n\nThis page provides a public overview. Detailed technical and organisational measures may be provided to customers under the Data Processing Agreement or a security review process.',
+  lastUpdatedLabel: lastUpdatedLabel('en'),
+  sections: [
+    {
+      id: 'principles',
+      heading: '1. Security principles',
+      blocks: [
+        { type: 'p', text: 'Psychiatry.Ink is designed around the following principles:' },
+        {
+          type: 'ul',
+          items: [
+            'minimise direct patient identifiers;',
+            'keep patient identity mapping local where possible;',
+            'use encryption in transit and at rest;',
+            'restrict access by role and organisation;',
+            'log relevant security and audit events;',
+            'separate customer data where applicable;',
+            'avoid sending unnecessary identifiers to AI providers;',
+            'keep clinicians responsible for final review and approval of outputs.',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'vault',
+      heading: '2. Local encrypted vault',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Selected Psychiatry.Ink modes are designed so that patient names, dates of birth, and patient-to-document mapping can remain in a local encrypted browser vault on the clinician’s device.',
+        },
+        { type: 'p', text: 'Where this mode is enabled:' },
+        {
+          type: 'ul',
+          items: [
+            'the server should receive only case identifiers or pseudonymous references;',
+            'the user’s device stores the identity mapping;',
+            'loss of the local encryption key or vault may mean the data cannot be recovered;',
+            'the customer remains responsible for endpoint security and backups where applicable.',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'encryption',
+      heading: '3. Encryption',
+      blocks: [
+        {
+          type: 'p',
+          text: 'We use HTTPS/TLS for data in transit. Infrastructure providers may provide encryption at rest for stored data. Some local product components may use client-side encryption for sensitive mappings or local storage.',
+        },
+        {
+          type: 'p',
+          text: 'Encryption controls depend on the selected product configuration, browser, device, and infrastructure environment.',
+        },
+      ],
+    },
+    {
+      id: 'access',
+      heading: '4. Access control',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Psychiatry.Ink uses account-based access controls. Organisation features may include roles such as owner, admin, clinician, assistant, viewer, external consultant, or other role types depending on plan and configuration.',
+        },
+        {
+          type: 'p',
+          text: 'Users are responsible for protecting credentials, using strong passwords, enabling available authentication protections, and promptly removing users who should no longer have access.',
+        },
+      ],
+    },
+    {
+      id: 'audit',
+      heading: '5. Audit logging',
+      blocks: [
+        {
+          type: 'p',
+          text: 'The service may record audit and security logs such as login events, document actions, AI generation events, credit usage, access events, error events, and administrative actions. Audit log availability depends on plan and configuration.',
+        },
+      ],
+    },
+    {
+      id: 'ai-minimisation',
+      heading: '6. AI data minimisation',
+      blocks: [
+        {
+          type: 'p',
+          text: 'AI features are designed to support drafting and documentation. Users should avoid unnecessary direct identifiers in prompts and source text. Where available, de-identification, privacy gates, or local-only modes should be used before sending clinical text to external AI providers.',
+        },
+        {
+          type: 'p',
+          text: 'AI output must always be reviewed by a qualified professional before clinical, legal, or administrative use.',
+        },
+      ],
+    },
+    {
+      id: 'backups',
+      heading: '7. Backups and recovery',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Production infrastructure may include backups, snapshots, and recovery processes. Backup retention periods and recovery procedures depend on the final deployment configuration and customer plan.',
+        },
+        {
+          type: 'p',
+          text: 'Local encrypted vault data may not be recoverable by Psychiatry Ink Ltd if the user loses the local key, browser profile, or device storage.',
+        },
+      ],
+    },
+    {
+      id: 'incident',
+      heading: '8. Incident response',
+      blocks: [
+        {
+          type: 'p',
+          text: 'If we become aware of a security incident or personal data breach affecting customer data, we will investigate and notify affected customers where required by law and contract.',
+        },
+        { type: 'p', text: 'Security and data-protection contact:' },
+        { type: 'link', text: 'data-protection@psychiatry.ink', href: 'mailto:data-protection@psychiatry.ink' },
+      ],
+    },
+    {
+      id: 'disclosure',
+      heading: '9. Responsible disclosure',
+      blocks: [
+        {
+          type: 'p',
+          text: 'If you believe you have found a vulnerability, contact us before disclosing it publicly. Please include enough information to reproduce the issue. Do not access, modify, download, or disclose data that does not belong to you.',
+        },
+        { type: 'p', text: 'Report vulnerabilities to:' },
+        { type: 'link', text: 'data-protection@psychiatry.ink', href: 'mailto:data-protection@psychiatry.ink' },
+      ],
+    },
+    {
+      id: 'limitations',
+      heading: '10. Current limitations',
+      blocks: [
+        {
+          type: 'p',
+          text: 'No software system is completely secure. Psychiatry.Ink should not be used for production patient data until the relevant deployment, DPA, sub-processor list, data-transfer safeguards, retention settings, access controls, and privacy configuration have been approved for the intended jurisdiction and organisation.',
+        },
+      ],
+    },
+  ],
+}
+
+const securityOverviewDe: LegalDoc = {
+  title: 'Sicherheitsübersicht',
+  lead: 'Psychiatrie.Ink ist für die psychiatrische Dokumentation konzipiert und behandelt daher Vertraulichkeit, Datenminimierung und kontrollierten Zugriff als zentrale Produktanforderungen.\n\nDiese Seite bietet einen öffentlichen Überblick. Detaillierte technische und organisatorische Maßnahmen können Kunden im Rahmen des Auftragsverarbeitungsvertrags oder eines Sicherheitsprüfungsprozesses bereitgestellt werden.',
+  lastUpdatedLabel: lastUpdatedLabel('de'),
+  sections: [
+    {
+      id: 'principles',
+      heading: '1. Sicherheitsgrundsätze',
+      blocks: [
+        { type: 'p', text: 'Psychiatrie.Ink ist nach folgenden Grundsätzen gestaltet:' },
+        {
+          type: 'ul',
+          items: [
+            'direkte Patientenidentifikatoren minimieren;',
+            'die Zuordnung der Patientenidentität nach Möglichkeit lokal halten;',
+            'Verschlüsselung bei der Übertragung und im Ruhezustand einsetzen;',
+            'Zugriff nach Rolle und Organisation beschränken;',
+            'relevante Sicherheits- und Audit-Ereignisse protokollieren;',
+            'Kundendaten trennen, soweit anwendbar;',
+            'die Übermittlung unnötiger Identifikatoren an KI-Anbieter vermeiden;',
+            'die abschließende Prüfung und Freigabe der Ergebnisse in der Verantwortung der Behandelnden belassen.',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'vault',
+      heading: '2. Lokaler verschlüsselter Tresor',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Ausgewählte Modi von Psychiatrie.Ink sind so gestaltet, dass Patientennamen, Geburtsdaten und die Zuordnung von Patient zu Dokument in einem lokal verschlüsselten Browser-Tresor auf dem Gerät der behandelnden Person verbleiben können.',
+        },
+        { type: 'p', text: 'Wenn dieser Modus aktiviert ist:' },
+        {
+          type: 'ul',
+          items: [
+            'sollte der Server nur Fall-Identifikatoren oder pseudonyme Referenzen erhalten;',
+            'speichert das Gerät der Nutzerin oder des Nutzers die Identitätszuordnung;',
+            'kann der Verlust des lokalen Schlüssels oder des Tresors dazu führen, dass die Daten nicht wiederhergestellt werden können;',
+            'bleibt der Kunde für Endgerätesicherheit und Backups verantwortlich, soweit anwendbar.',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'encryption',
+      heading: '3. Verschlüsselung',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Wir verwenden HTTPS/TLS für Daten bei der Übertragung. Infrastrukturanbieter können eine Verschlüsselung gespeicherter Daten im Ruhezustand bereitstellen. Einige lokale Produktkomponenten können eine clientseitige Verschlüsselung für sensible Zuordnungen oder lokale Speicherung verwenden.',
+        },
+        {
+          type: 'p',
+          text: 'Die Verschlüsselungskontrollen hängen von der gewählten Produktkonfiguration, dem Browser, dem Gerät und der Infrastrukturumgebung ab.',
+        },
+      ],
+    },
+    {
+      id: 'access',
+      heading: '4. Zugriffskontrolle',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Psychiatrie.Ink verwendet kontobasierte Zugriffskontrollen. Organisationsfunktionen können je nach Tarif und Konfiguration Rollen wie Inhaber, Administrator, Behandelnde, Assistenz, Betrachter, externer Konsiliarius oder weitere Rollentypen umfassen.',
+        },
+        {
+          type: 'p',
+          text: 'Nutzerinnen und Nutzer sind dafür verantwortlich, Zugangsdaten zu schützen, sichere Passwörter zu verwenden, verfügbare Authentifizierungsschutzmaßnahmen zu aktivieren und Nutzer, die keinen Zugriff mehr haben sollen, zeitnah zu entfernen.',
+        },
+      ],
+    },
+    {
+      id: 'audit',
+      heading: '5. Audit-Protokollierung',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Der Dienst kann Audit- und Sicherheitsprotokolle aufzeichnen, etwa Anmeldeereignisse, Dokumentaktionen, KI-Generierungsereignisse, Credit-Verbrauch, Zugriffsereignisse, Fehlerereignisse und administrative Aktionen. Die Verfügbarkeit der Audit-Protokolle hängt von Tarif und Konfiguration ab.',
+        },
+      ],
+    },
+    {
+      id: 'ai-minimisation',
+      heading: '6. Datenminimierung bei KI',
+      blocks: [
+        {
+          type: 'p',
+          text: 'KI-Funktionen sind zur Unterstützung von Entwurf und Dokumentation gedacht. Nutzerinnen und Nutzer sollten unnötige direkte Identifikatoren in Prompts und Ausgangstexten vermeiden. Soweit verfügbar, sollten De-Identifikation, Datenschutz-Gates oder rein lokale Modi verwendet werden, bevor klinische Texte an externe KI-Anbieter gesendet werden.',
+        },
+        {
+          type: 'p',
+          text: 'KI-Ergebnisse müssen vor jeder klinischen, rechtlichen oder administrativen Verwendung stets von einer qualifizierten Fachperson geprüft werden.',
+        },
+      ],
+    },
+    {
+      id: 'backups',
+      heading: '7. Backups und Wiederherstellung',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Die Produktivinfrastruktur kann Backups, Snapshots und Wiederherstellungsprozesse umfassen. Aufbewahrungsfristen für Backups und Wiederherstellungsverfahren hängen von der endgültigen Deployment-Konfiguration und vom Kundentarif ab.',
+        },
+        {
+          type: 'p',
+          text: 'Daten im lokal verschlüsselten Tresor sind für die Psychiatry Ink Ltd möglicherweise nicht wiederherstellbar, wenn die Nutzerin oder der Nutzer den lokalen Schlüssel, das Browser-Profil oder den Gerätespeicher verliert.',
+        },
+      ],
+    },
+    {
+      id: 'incident',
+      heading: '8. Reaktion auf Vorfälle',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Wenn uns ein Sicherheitsvorfall oder eine Verletzung des Schutzes personenbezogener Daten bekannt wird, die Kundendaten betrifft, untersuchen wir den Vorfall und benachrichtigen betroffene Kunden, soweit dies gesetzlich und vertraglich erforderlich ist.',
+        },
+        { type: 'p', text: 'Kontakt für Sicherheit und Datenschutz:' },
+        { type: 'link', text: 'data-protection@psychiatry.ink', href: 'mailto:data-protection@psychiatry.ink' },
+      ],
+    },
+    {
+      id: 'disclosure',
+      heading: '9. Verantwortungsvolle Offenlegung',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Wenn Sie glauben, eine Schwachstelle gefunden zu haben, kontaktieren Sie uns bitte, bevor Sie diese öffentlich offenlegen. Bitte fügen Sie ausreichende Informationen bei, um das Problem nachvollziehen zu können. Greifen Sie nicht auf Daten zu, die Ihnen nicht gehören, und verändern, laden oder offenbaren Sie diese nicht.',
+        },
+        { type: 'p', text: 'Schwachstellen melden Sie bitte an:' },
+        { type: 'link', text: 'data-protection@psychiatry.ink', href: 'mailto:data-protection@psychiatry.ink' },
+      ],
+    },
+    {
+      id: 'limitations',
+      heading: '10. Aktuelle Einschränkungen',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Kein Softwaresystem ist vollständig sicher. Psychiatrie.Ink sollte nicht für produktive Patientendaten eingesetzt werden, bevor das jeweilige Deployment, der Auftragsverarbeitungsvertrag, die Liste der Unterauftragsverarbeiter, die Garantien zur Datenübermittlung, die Aufbewahrungseinstellungen, die Zugriffskontrollen und die Datenschutzkonfiguration für die vorgesehene Rechtsordnung und Organisation freigegeben sind.',
+        },
+      ],
+    },
+  ],
+}
+
+
+
+export type LegalPageKey =
+  | 'privacy'
+  | 'terms'
+  | 'impressum'
+  | 'cookies'
+  | 'dpa'
+  | 'subprocessors'
+  | 'securityOverview'
 
 const LEGAL_DOCS: Record<LegalPageKey, Record<PublicLocale, LegalDoc>> = {
   privacy: { en: privacyEn, de: privacyDe },
   terms: { en: termsEn, de: termsDe },
   impressum: { en: impressumEn, de: impressumDe },
+  cookies: { en: cookiePolicyEn, de: cookiePolicyDe },
+  dpa: { en: dpaEn, de: dpaDe },
+  subprocessors: { en: subprocessorsEn, de: subprocessorsDe },
+  securityOverview: { en: securityOverviewEn, de: securityOverviewDe },
 }
 
 export function getLegalDoc(key: LegalPageKey, locale: PublicLocale): LegalDoc {

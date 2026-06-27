@@ -119,6 +119,54 @@ const PAGE_COPY: Record<
       description: 'Anbieterkennzeichnung und Impressum gemäß § 5 DDG für Psychiatrie.Ink.',
     },
   },
+  cookies: {
+    en: {
+      title: 'Cookie Policy',
+      description:
+        'How Psychiatry.Ink uses cookies and similar technologies: strictly necessary cookies, analytics, marketing, third-party cookies, and how to manage your preferences.',
+    },
+    de: {
+      title: 'Cookie-Richtlinie',
+      description:
+        'Wie Psychiatrie.Ink Cookies und ähnliche Technologien einsetzt: technisch notwendige Cookies, Analyse, Marketing, Cookies von Drittanbietern und Verwaltung Ihrer Einstellungen.',
+    },
+  },
+  dpa: {
+    en: {
+      title: 'Data Processing Agreement',
+      description:
+        'The Data Processing Agreement (DPA) governing how Psychiatry Ink Ltd processes personal data as a processor: roles, security measures, sub-processors, transfers, and customer obligations.',
+    },
+    de: {
+      title: 'Auftragsverarbeitungsvertrag (AVV)',
+      description:
+        'Der Auftragsverarbeitungsvertrag (AVV) für die Verarbeitung personenbezogener Daten durch die Psychiatry Ink Ltd als Auftragsverarbeiter: Rollen, Sicherheitsmaßnahmen, Unterauftragsverarbeiter, Übermittlungen und Kundenpflichten.',
+    },
+  },
+  subprocessors: {
+    en: {
+      title: 'Sub-processors',
+      description:
+        'The third-party providers Psychiatry.Ink uses as sub-processors — hosting, database, payments, email, and optional AI providers — with purposes, data categories, and processing locations.',
+    },
+    de: {
+      title: 'Unterauftragsverarbeiter',
+      description:
+        'Die Drittanbieter, die Psychiatrie.Ink als Unterauftragsverarbeiter einsetzt — Hosting, Datenbank, Zahlungen, E-Mail und optionale KI-Anbieter — mit Zwecken, Datenkategorien und Verarbeitungsorten.',
+    },
+  },
+  securityOverview: {
+    en: {
+      title: 'Security Overview',
+      description:
+        'A public overview of how Psychiatry.Ink protects clinical data: local encrypted vault, encryption, access control, audit logging, AI data minimisation, and responsible disclosure.',
+    },
+    de: {
+      title: 'Sicherheitsübersicht',
+      description:
+        'Ein öffentlicher Überblick, wie Psychiatrie.Ink klinische Daten schützt: lokaler verschlüsselter Tresor, Verschlüsselung, Zugriffskontrolle, Audit-Protokollierung, Datenminimierung bei KI und verantwortungsvolle Offenlegung.',
+    },
+  },
   contact: {
     en: {
       title: 'Contact',

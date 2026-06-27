@@ -88,6 +88,18 @@ export function PublicPage({ pageKey, hostname, onNavigate }: PublicPageProps) {
     case 'impressum':
       body = <LegalPage doc={getLegalDoc('impressum', locale)} />
       break
+    case 'cookies':
+      body = <LegalPage doc={getLegalDoc('cookies', locale)} />
+      break
+    case 'dpa':
+      body = <LegalPage doc={getLegalDoc('dpa', locale)} />
+      break
+    case 'subprocessors':
+      body = <LegalPage doc={getLegalDoc('subprocessors', locale)} />
+      break
+    case 'securityOverview':
+      body = <LegalPage doc={getLegalDoc('securityOverview', locale)} />
+      break
     case 'contact':
       body = <ContactPage locale={locale} onNavigate={onNavigate} />
       break

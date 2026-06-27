@@ -31,6 +31,10 @@ export type AppRoute =
   | { view: 'privacy' }
   | { view: 'terms' }
   | { view: 'impressum' }
+  | { view: 'cookies' }
+  | { view: 'dpa' }
+  | { view: 'subprocessors' }
+  | { view: 'securityOverview' }
   | { view: 'contact' }
   | { view: 'dashboard' }
   | { view: 'kb-admin' }
@@ -61,6 +65,10 @@ export type PublicMarketingView =
   | 'privacy'
   | 'terms'
   | 'impressum'
+  | 'cookies'
+  | 'dpa'
+  | 'subprocessors'
+  | 'securityOverview'
   | 'contact'
 
 export function isPublicMarketingView(view: AppRoute['view']): view is PublicMarketingView {
@@ -71,6 +79,10 @@ export function isPublicMarketingView(view: AppRoute['view']): view is PublicMar
     view === 'privacy' ||
     view === 'terms' ||
     view === 'impressum' ||
+    view === 'cookies' ||
+    view === 'dpa' ||
+    view === 'subprocessors' ||
+    view === 'securityOverview' ||
     view === 'contact'
   )
 }
