@@ -2,12 +2,25 @@ import type { CreditPack } from '../data/creditPacks'
 import { API_BASE } from './apiClient'
 import { getAuthHeaders } from './authHeaders'
 
+export interface AutoRechargeState {
+  enabled: boolean
+  threshold: number
+  packId: string | null
+  amount: number | null
+  hasPaymentMethod: boolean
+  status: string | null
+  failureReason: string | null
+  lastRechargeAt: string | null
+  stripeConfigured?: boolean
+}
+
 export interface AiCreditSummary {
   monthlyCredits: number
   purchasedCredits: number
   totalAvailable: number
   monthlyResetAt: string
   stripeConfigured?: boolean
+  autoRecharge?: AutoRechargeState
 }
 
 export interface AiCreditUsageSummary {
@@ -110,6 +123,28 @@ export async function startSubscriptionCheckout(
       interval,
       origin: window.location.origin,
     }),
+  })
+}
+
+export async function fetchAutoRecharge(): Promise<AutoRechargeState> {
+  return fetchJson('/api/ai-credits/auto-recharge')
+}
+
+export async function updateAutoRecharge(settings: {
+  enabled?: boolean
+  threshold?: number
+  packId?: string
+}): Promise<AutoRechargeState> {
+  return fetchJson('/api/ai-credits/auto-recharge', {
+    method: 'POST',
+    body: JSON.stringify(settings),
+  })
+}
+
+export async function startSaveCardCheckout(): Promise<{ url: string | null; sessionId: string }> {
+  return fetchJson('/api/ai-credits/save-card', {
+    method: 'POST',
+    body: JSON.stringify({ origin: window.location.origin }),
   })
 }
 

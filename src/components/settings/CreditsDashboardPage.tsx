@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, Copy, CreditCard, Gift, RefreshCw, ShieldCheck, Sparkles, Ticket, Users, Wallet } from 'lucide-react'
+import { ArrowLeft, Check, Copy, CreditCard, Gift, RefreshCw, RotateCw, ShieldCheck, Sparkles, Ticket, Users, Wallet } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import {
@@ -25,11 +25,14 @@ import {
   redeemVoucher,
   startCreditCheckout,
   startGiftVoucherCheckout,
+  startSaveCardCheckout,
+  updateAutoRecharge,
   type AdminVoucherListItem,
   type AiCreditHistoryEntry,
   type AiCreditLedgerEntry,
   type AiCreditSummary,
   type AiCreditUsageSummary,
+  type AutoRechargeState,
   type GiftVoucherResult,
   type ReferralInfo,
 } from '../../services/aiCreditsApi'
@@ -83,6 +86,210 @@ const ADMIN_VOUCHER_STATUS_KEYS = {
 function adminVoucherStatusKey(status: string): keyof typeof ADMIN_VOUCHER_STATUS_KEYS {
   if (status in ADMIN_VOUCHER_STATUS_KEYS) return status as keyof typeof ADMIN_VOUCHER_STATUS_KEYS
   return 'active'
+}
+
+function formatDateOnly(iso: string, locale: string): string {
+  return new Date(iso).toLocaleDateString(locale, {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+}
+
+interface AutoRechargeSectionProps {
+  state: AutoRechargeState | undefined
+  stripeReady: boolean
+  locale: string
+  onChanged: () => void
+}
+
+function AutoRechargeSection({ state, stripeReady, locale, onChanged }: AutoRechargeSectionProps) {
+  const { t, language } = useTranslation()
+  const [local, setLocal] = useState<AutoRechargeState | undefined>(state)
+  const [thresholdInput, setThresholdInput] = useState(String(state?.threshold ?? 100))
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (state) {
+      setLocal(state)
+      setThresholdInput(String(state.threshold))
+    }
+  }, [state])
+
+  const enabled = local?.enabled ?? false
+  const hasCard = local?.hasPaymentMethod ?? false
+  const needsAttention = local?.status === 'needs_attention'
+  const selectedPackId = local?.packId ?? 'pack_1000'
+
+  const persist = useCallback(
+    async (settings: { enabled?: boolean; threshold?: number; packId?: string }) => {
+      setBusy(true)
+      setError(null)
+      setMessage(null)
+      try {
+        const updated = await updateAutoRecharge(settings)
+        setLocal(updated)
+        setThresholdInput(String(updated.threshold))
+        setMessage(t('autoRechargeSaved'))
+        onChanged()
+      } catch (err) {
+        setError(err instanceof Error ? err.message : t('autoRechargeSaveError'))
+      } finally {
+        setBusy(false)
+      }
+    },
+    [onChanged, t],
+  )
+
+  const handleToggle = (next: boolean) => {
+    if (next && !hasCard) {
+      setError(t('autoRechargeNeedCardFirst'))
+      return
+    }
+    void persist({ enabled: next })
+  }
+
+  const commitThreshold = () => {
+    const parsed = Number(thresholdInput)
+    if (!Number.isFinite(parsed) || parsed < 1) {
+      setThresholdInput(String(local?.threshold ?? 100))
+      return
+    }
+    const rounded = Math.floor(parsed)
+    if (rounded === local?.threshold) return
+    void persist({ threshold: rounded })
+  }
+
+  const handleSaveCard = async () => {
+    setBusy(true)
+    setError(null)
+    try {
+      const { url } = await startSaveCardCheckout()
+      if (url) {
+        window.location.href = url
+        return
+      }
+      setError(t('creditsCheckoutUnavailable'))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('autoRechargeSaveError'))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <section className="credits-panel" aria-labelledby="credits-autorecharge-heading">
+      <div className="credits-panel__header">
+        <h2 id="credits-autorecharge-heading" className="credits-panel__heading">
+          {t('autoRechargeTitle')}
+        </h2>
+        <RotateCw className="credits-panel__heading-icon" strokeWidth={1.5} aria-hidden />
+      </div>
+      <p className="credits-panel__sub">{t('autoRechargeSubtitle')}</p>
+
+      {!stripeReady ? (
+        <p className="credits-panel__sub credits-panel__sub--muted">{t('creditsStripeNotConfigured')}</p>
+      ) : (
+        <div className="credits-autorecharge">
+          {needsAttention ? (
+            <p className="credits-autorecharge__alert" role="alert">
+              {t('autoRechargeNeedsAttentionMsg')}
+            </p>
+          ) : null}
+
+          <div className="credits-autorecharge__row">
+            <label className="credits-autorecharge__toggle">
+              <input
+                type="checkbox"
+                checked={enabled}
+                disabled={busy}
+                onChange={(e) => handleToggle(e.target.checked)}
+              />
+              <span>
+                <span className="credits-autorecharge__toggle-title">{t('autoRechargeToggleLabel')}</span>
+                <span className="credits-autorecharge__toggle-hint">{t('autoRechargeToggleHint')}</span>
+              </span>
+            </label>
+            <span
+              className={`credits-autorecharge__status${
+                enabled && !needsAttention ? ' credits-autorecharge__status--active' : ''
+              }${needsAttention ? ' credits-autorecharge__status--warn' : ''}`}
+            >
+              {needsAttention
+                ? t('autoRechargeStatusNeedsAttention')
+                : enabled
+                  ? t('autoRechargeStatusActive')
+                  : t('autoRechargeOff') /* fallback handled below */}
+            </span>
+          </div>
+
+          <div className="credits-autorecharge__grid">
+            <div className="credits-autorecharge__field">
+              <label htmlFor="autorecharge-threshold">{t('autoRechargeThresholdLabel')}</label>
+              <input
+                id="autorecharge-threshold"
+                type="number"
+                min={1}
+                max={100000}
+                value={thresholdInput}
+                disabled={busy}
+                onChange={(e) => setThresholdInput(e.target.value)}
+                onBlur={commitThreshold}
+              />
+              <span className="credits-autorecharge__field-hint">{t('autoRechargeThresholdHint')}</span>
+            </div>
+
+            <div className="credits-autorecharge__field">
+              <label htmlFor="autorecharge-pack">{t('autoRechargePackLabel')}</label>
+              <select
+                id="autorecharge-pack"
+                value={selectedPackId}
+                disabled={busy}
+                onChange={(e) => void persist({ packId: e.target.value })}
+              >
+                {CREDIT_PACKS.map((pack) => {
+                  const label = language === 'de' ? pack.labelDe : pack.labelEn
+                  return (
+                    <option key={pack.id} value={pack.id}>
+                      {label} — {formatCreditPackPrice(pack, locale)}
+                    </option>
+                  )
+                })}
+              </select>
+              <span className="credits-autorecharge__field-hint">{t('autoRechargePackHint')}</span>
+            </div>
+          </div>
+
+          <div className="credits-autorecharge__card">
+            <div className="credits-autorecharge__card-info">
+              <CreditCard className="h-4 w-4" strokeWidth={1.5} aria-hidden />
+              <span>{hasCard ? t('autoRechargeCardSaved') : t('autoRechargeNoCard')}</span>
+            </div>
+            <button
+              type="button"
+              className="credits-autorecharge__card-btn"
+              disabled={busy}
+              onClick={() => void handleSaveCard()}
+            >
+              {hasCard ? t('autoRechargeUpdateCard') : t('autoRechargeSaveCard')}
+            </button>
+          </div>
+          <p className="credits-autorecharge__card-hint">{t('autoRechargeSaveCardHint')}</p>
+
+          {local?.lastRechargeAt ? (
+            <p className="credits-autorecharge__last">
+              {t('autoRechargeLastRecharge')}: {formatDateOnly(local.lastRechargeAt, locale)}
+            </p>
+          ) : null}
+
+          {message ? <p className="credits-page__notice credits-page__notice--success">{message}</p> : null}
+          {error ? <p className="team-settings-error">{error}</p> : null}
+        </div>
+      )}
+    </section>
+  )
 }
 
 export function CreditsDashboardPage({ onBack }: CreditsDashboardPageProps) {
@@ -141,6 +348,11 @@ export function CreditsDashboardPage({ onBack }: CreditsDashboardPageProps) {
     }
   }, [])
 
+  const saveCardStatus = useMemo(() => {
+    const params = new URLSearchParams(window.location.search)
+    return params.get('savecard')
+  }, [])
+
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -177,6 +389,17 @@ export function CreditsDashboardPage({ onBack }: CreditsDashboardPageProps) {
       window.history.replaceState({}, '', '/dashboard/credits')
     }
   }, [checkoutStatus, load, t])
+
+  useEffect(() => {
+    if (saveCardStatus === 'success') {
+      setCheckoutMessage(t('autoRechargeCardSavedNotice'))
+      void load()
+      window.history.replaceState({}, '', '/dashboard/credits')
+    } else if (saveCardStatus === 'cancelled') {
+      setCheckoutMessage(t('creditsCheckoutCancelled'))
+      window.history.replaceState({}, '', '/dashboard/credits')
+    }
+  }, [saveCardStatus, load, t])
 
   const handlePurchase = async (packId: string) => {
     setCheckoutPackId(packId)
@@ -873,6 +1096,13 @@ export function CreditsDashboardPage({ onBack }: CreditsDashboardPageProps) {
             </div>
           </section>
         ) : null}
+
+        <AutoRechargeSection
+          state={summary?.autoRecharge}
+          stripeReady={stripeReady}
+          locale={locale}
+          onChanged={() => void load()}
+        />
 
         <div className="credits-dual">
           <section className="credits-panel credits-panel--table" aria-labelledby="credits-history-heading">
