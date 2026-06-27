@@ -1,15 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 
 /**
- * Persists whether the global case left sidebar is collapsed to a slim
- * icon-only rail. State lives in `localStorage` so the choice survives
- * navigation, hard refreshes, and case switches; the `storage` event keeps
- * other tabs in the same browser session in sync without prop drilling.
- *
- * The icon rail option is preferred over fully hiding the sidebar because it
- * preserves clinical-area awareness (data-area accent + active-tab cues) at a
- * glance — collapsed mode is a quieter rail, not a different navigation
- * surface, so muscle memory is preserved.
+ * Persists whether the global case left sidebar is fully hidden (floating
+ * expand control only) vs expanded. State lives in `localStorage` so the
+ * choice survives navigation, hard refreshes, and case switches; the `storage`
+ * event keeps other tabs in the same browser session in sync without prop
+ * drilling.
  */
 const STORAGE_KEY = 'psychiatryink:case-sidebar-collapsed'
 

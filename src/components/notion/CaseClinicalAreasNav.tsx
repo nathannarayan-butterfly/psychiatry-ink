@@ -23,7 +23,7 @@ import type { TopNavTabId } from './CaseTopNav'
  * The optional `featureFlag` field gates an entry behind a runtime feature
  * flag (used for Clinical Intelligence V1 today). Entries without
  * `featureFlag` are always rendered. The `icon` represents the area in the
- * collapsed (icon-only) rail — see the collapsed styles in case-sidebar.css.
+ * optional future compact nav modes; expanded sidebar stays label-only.
  */
 const BASE_CLINICAL_AREA_TABS: {
   id: TopNavTabId

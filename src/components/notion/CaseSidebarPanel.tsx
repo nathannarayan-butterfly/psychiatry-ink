@@ -24,9 +24,9 @@ interface CaseSidebarPanelProps {
   /** Active patient case id (real caseId) for patient-linked quick to-dos. */
   todoCaseId?: string | null
   todoPatientLabel?: string | null
-  /** Whether the sidebar is collapsed to a slim icon rail. */
+  /** Whether the sidebar is fully hidden (floating expand control only). */
   collapsed?: boolean
-  /** Toggles between full and collapsed (icon-only) sidebar widths. */
+  /** Toggles between full sidebar and hidden (floating expand) states. */
   onToggleCollapsed?: () => void
 }
 
@@ -49,20 +49,29 @@ export function CaseSidebarPanel({
   onToggleCollapsed,
 }: CaseSidebarPanelProps) {
   const { t } = useTranslation()
-  const collapseLabel = collapsed
-    ? t('caseSidebarExpandTooltip')
-    : t('caseSidebarCollapseTooltip')
+  const collapseLabel = t('caseSidebarCollapseTooltip')
+  const expandLabel = t('caseSidebarExpandTooltip')
+
+  if (collapsed) {
+    return onToggleCollapsed ? (
+      <button
+        type="button"
+        className="case-sidebar-floating-expand"
+        onClick={onToggleCollapsed}
+        aria-label={expandLabel}
+        aria-expanded={false}
+        title={expandLabel}
+      >
+        <PanelLeftOpen aria-hidden strokeWidth={1.75} />
+      </button>
+    ) : null
+  }
 
   return (
     <aside
-      className={[
-        'case-sidebar-panel',
-        collapsed ? 'case-sidebar-panel--collapsed' : '',
-      ]
-        .filter(Boolean)
-        .join(' ')}
+      className="case-sidebar-panel"
       aria-label={ariaLabel}
-      data-collapsed={collapsed ? 'true' : 'false'}
+      data-collapsed="false"
     >
       <div className="case-sidebar-panel__logo-row">
         <div className="case-sidebar-panel__logo">
@@ -74,14 +83,10 @@ export function CaseSidebarPanel({
             className="case-sidebar-panel__collapse-btn"
             onClick={onToggleCollapsed}
             aria-label={collapseLabel}
-            aria-expanded={!collapsed}
+            aria-expanded
             title={collapseLabel}
           >
-            {collapsed ? (
-              <PanelLeftOpen aria-hidden strokeWidth={1.75} />
-            ) : (
-              <PanelLeftClose aria-hidden strokeWidth={1.75} />
-            )}
+            <PanelLeftClose aria-hidden strokeWidth={1.75} />
           </button>
         ) : null}
       </div>
