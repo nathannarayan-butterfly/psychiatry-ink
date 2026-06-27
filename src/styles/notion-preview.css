@@ -6164,12 +6164,14 @@
 .verlauf-feed-aside {
   grid-column: 2;
   grid-row: 2;
-  position: sticky;
-  /* Viewport offset while scrolling (case chrome). */
-  top: 2.75rem;
+  /* Flow with the page so the Kommentare + To-do cards scroll together with the
+     entry list — annotations are anchored to specific Verlauf entries, so the
+     panel must track them as the page scrolls. The case body
+     (.case-tab-shell__body) is the actual scroll container, so a sticky offset
+     here pinned the panel to the viewport while its max-height/overflow (sized
+     against 100vh, not the smaller scroll container) clipped the lower cards and
+     blocked them from scrolling into view. */
   align-self: start;
-  max-height: calc(100vh - 3.25rem);
-  overflow-y: auto;
   margin: 0 0.25rem 2rem 0;
   display: flex;
   flex-direction: column;
