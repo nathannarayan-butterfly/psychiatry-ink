@@ -29,13 +29,12 @@
   --hp-grid-gap: 1rem;
   --hp-section-py: clamp(2.5rem, 5vw, 4rem);
   --hp-lead-max: 42rem;
-  /* Demo screenshot frames — clinical diagnostic blue from globals area palette */
-  --hp-demo-blue: var(--area-labor);
-  --hp-demo-blue-soft: color-mix(in srgb, var(--area-labor) 7%, white);
-  --hp-demo-blue-bg: color-mix(in srgb, var(--area-labor) 5%, var(--editor-paper-bg, #fafaf8));
-  --hp-demo-blue-border: color-mix(in srgb, var(--area-labor) 32%, var(--border-soft));
-  --hp-demo-blue-ring: color-mix(in srgb, var(--area-labor) 10%, transparent);
-  --hp-demo-blue-strip: color-mix(in srgb, var(--area-labor) 45%, transparent);
+  /* Demo screenshot frames — white-card workspace aesthetic (matches in-app UI) */
+  --hp-demo-frame-border: var(--border-soft);
+  --hp-demo-frame-bg: var(--editor-paper-bg, #fafaf8);
+  --hp-demo-frame-surface: #fff;
+  --hp-demo-frame-ring: color-mix(in srgb, var(--border-soft) 50%, transparent);
+  --hp-demo-frame-strip: color-mix(in srgb, var(--border-strong) 45%, transparent);
 }
 
 /* —— Document scroll (public pages outside .app-shell) —— */
@@ -63,14 +62,8 @@ body:has(.auth-page) {
 /* —— Page shell —— */
 
 .hp-page {
-  /* Marketing brand accent — professional medical blue, scoped to public
-   * homepage/marketing surfaces only. The clinical workspace keeps the global
-   * --accent (brown) from globals.css. --accent-hover/-soft/-ultrasoft are
-   * declared in globals.css relative to var(--accent), so they recompute to
-   * blue automatically for everything under .hp-page (nav, hero, pricing,
-   * features, CTAs, footer, demo frames). */
-  --accent: #2563eb;
-  --accent-hover: #1d4ed8;
+  /* Inherits global clinical tokens (--accent, --border-soft, --editor-paper-bg)
+   * from globals.css so marketing pages match the logged-in workspace aesthetic. */
 
   min-height: 100dvh;
   background: var(--app-bg, #ffffff);
@@ -970,17 +963,17 @@ body:has(.auth-page) {
   font-weight: 500;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--hp-demo-blue) 55%, var(--text-muted));
+  color: var(--text-muted);
   margin-bottom: 0.5rem;
 }
 
 .hp-demo-panel__screenshot-wrap {
   position: relative;
-  border: 1px solid var(--hp-demo-blue-border);
+  border: 1px solid var(--hp-demo-frame-border);
   border-radius: 0.5rem;
   overflow: hidden;
-  background: var(--hp-demo-blue-soft);
-  box-shadow: 0 0 0 1px var(--hp-demo-blue-ring);
+  background: var(--hp-demo-frame-bg);
+  box-shadow: var(--shadow-elevated-md);
   margin-bottom: 0.85rem;
   aspect-ratio: 16 / 10;
 }
@@ -990,12 +983,8 @@ body:has(.auth-page) {
   position: absolute;
   inset: 0 0 auto;
   z-index: 2;
-  height: 3px;
-  background: linear-gradient(
-    90deg,
-    var(--hp-demo-blue-strip),
-    color-mix(in srgb, var(--hp-demo-blue) 18%, transparent)
-  );
+  height: 2px;
+  background: var(--hp-demo-frame-strip);
   pointer-events: none;
 }
 
@@ -1012,7 +1001,7 @@ body:has(.auth-page) {
 }
 
 .hp-demo-panel__screenshot-trigger:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--hp-demo-blue) 45%, transparent);
+  outline: 2px solid var(--focus-ring-color, color-mix(in srgb, var(--accent) 52%, transparent));
   outline-offset: -2px;
 }
 
@@ -1036,10 +1025,10 @@ body:has(.auth-page) {
   width: 1.75rem;
   height: 1.75rem;
   padding: 0;
-  border: 1px solid var(--hp-demo-blue-border);
+  border: 1px solid var(--hp-demo-frame-border);
   border-radius: var(--radius-control, 0.4375rem);
   background: rgb(255 255 255 / 0.94);
-  color: color-mix(in srgb, var(--hp-demo-blue) 70%, var(--text-secondary));
+  color: var(--text-secondary);
   cursor: pointer;
   opacity: 0;
   transition:
@@ -1056,12 +1045,12 @@ body:has(.auth-page) {
 }
 
 .hp-demo-panel__enlarge-btn:hover {
-  background: var(--hp-demo-blue-soft);
-  color: var(--hp-demo-blue);
+  background: var(--surface-hover);
+  color: var(--text-main);
 }
 
 .hp-demo-panel__enlarge-btn:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--hp-demo-blue) 45%, transparent);
+  outline: 2px solid var(--focus-ring-color, color-mix(in srgb, var(--accent) 52%, transparent));
   outline-offset: 2px;
 }
 
@@ -1079,9 +1068,9 @@ body:has(.auth-page) {
   font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--hp-demo-blue) 55%, var(--text-muted));
+  color: var(--text-muted);
   padding: 0.15rem 0.4rem;
-  border: 1px solid var(--hp-demo-blue-border);
+  border: 1px solid var(--hp-demo-frame-border);
   border-radius: 999px;
   background: rgb(255 255 255 / 0.92);
   backdrop-filter: blur(4px);
@@ -1092,11 +1081,11 @@ body:has(.auth-page) {
   display: grid;
   grid-template-columns: 4rem 1fr;
   min-height: 9rem;
-  border: 1px solid var(--hp-demo-blue-border);
+  border: 1px solid var(--hp-demo-frame-border);
   border-radius: 0.5rem;
   overflow: hidden;
-  background: var(--hp-demo-blue-soft);
-  box-shadow: 0 0 0 1px var(--hp-demo-blue-ring);
+  background: var(--hp-demo-frame-bg);
+  box-shadow: var(--shadow-elevated-md);
   margin-bottom: 0.85rem;
   position: relative;
 }
@@ -1106,19 +1095,15 @@ body:has(.auth-page) {
   position: absolute;
   inset: 0 0 auto;
   z-index: 1;
-  height: 3px;
-  background: linear-gradient(
-    90deg,
-    var(--hp-demo-blue-strip),
-    color-mix(in srgb, var(--hp-demo-blue) 18%, transparent)
-  );
+  height: 2px;
+  background: var(--hp-demo-frame-strip);
   pointer-events: none;
 }
 
 .hp-demo-panel__mock-sidebar {
   padding: 0.75rem 0.5rem;
-  border-right: 1px solid var(--hp-demo-blue-border);
-  background: var(--hp-demo-blue-bg);
+  border-right: 1px solid var(--hp-demo-frame-border);
+  background: var(--hp-demo-frame-bg);
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
@@ -1137,7 +1122,7 @@ body:has(.auth-page) {
   display: block;
   height: 0.35rem;
   border-radius: 0.15rem;
-  background: color-mix(in srgb, var(--hp-demo-blue-border) 65%, var(--border-soft));
+  background: color-mix(in srgb, var(--hp-demo-frame-border) 65%, var(--border-soft));
   width: 80%;
 }
 
@@ -1158,7 +1143,7 @@ body:has(.auth-page) {
   height: 0.5rem;
   width: 42%;
   border-radius: 0.15rem;
-  background: color-mix(in srgb, var(--hp-demo-blue) 28%, var(--border-soft));
+  background: color-mix(in srgb, var(--accent) 22%, var(--border-soft));
   margin-bottom: 0.15rem;
 }
 
@@ -1170,9 +1155,9 @@ body:has(.auth-page) {
   font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--hp-demo-blue) 55%, var(--text-muted));
+  color: var(--text-muted);
   padding: 0.15rem 0.4rem;
-  border: 1px solid var(--hp-demo-blue-border);
+  border: 1px solid var(--hp-demo-frame-border);
   border-radius: 999px;
   background: #fff;
 }
@@ -1204,7 +1189,7 @@ body:has(.auth-page) {
 
 .hp-demo-modal {
   background: var(--notion-paper-bg, #fff);
-  border: 1px solid var(--hp-demo-blue-border);
+  border: 1px solid var(--hp-demo-frame-border);
   border-radius: var(--radius-card, 0.6875rem);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
   width: min(96vw, 90rem);
@@ -1220,8 +1205,8 @@ body:has(.auth-page) {
   justify-content: space-between;
   gap: 1rem;
   padding: 0.85rem 1.15rem;
-  background: var(--hp-demo-blue-bg);
-  border-bottom: 1px solid var(--hp-demo-blue-border);
+  background: var(--hp-demo-frame-bg);
+  border-bottom: 1px solid var(--hp-demo-frame-border);
 }
 
 .hp-demo-modal__title {
@@ -1248,7 +1233,7 @@ body:has(.auth-page) {
 }
 
 .hp-demo-modal__close:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--hp-demo-blue) 45%, transparent);
+  outline: 2px solid var(--focus-ring-color, color-mix(in srgb, var(--accent) 52%, transparent));
   outline-offset: 2px;
   border-radius: var(--radius-control, 0.4375rem);
 }
@@ -1256,7 +1241,7 @@ body:has(.auth-page) {
 .hp-demo-modal__body {
   padding: 0.75rem;
   overflow: auto;
-  background: var(--hp-demo-blue-soft);
+  background: var(--hp-demo-frame-bg);
 }
 
 .hp-demo-modal__image {
@@ -1267,7 +1252,7 @@ body:has(.auth-page) {
   max-height: calc(90vh - 4.5rem);
   object-fit: contain;
   border-radius: calc(var(--radius-card, 0.6875rem) - 0.25rem);
-  border: 1px solid var(--hp-demo-blue-border);
+  border: 1px solid var(--hp-demo-frame-border);
   background: #fff;
   touch-action: pinch-zoom;
 }
