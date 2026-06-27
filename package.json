@@ -44,7 +44,8 @@
     "kb:rollback-en": "tsx scripts/rollback-kb-en-translation.ts",
     "kb:fetch-structure-images": "tsx scripts/fetch-wikimedia-structure-images.ts",
     "dev:stop": "bash scripts/stop-dev.sh",
-    "discuss-case:purge-voice": "tsx scripts/purge-discuss-case-voice.ts"
+    "discuss-case:purge-voice": "tsx scripts/purge-discuss-case-voice.ts",
+    "homepage:screenshots": "node scripts/capture-homepage-screenshots.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
