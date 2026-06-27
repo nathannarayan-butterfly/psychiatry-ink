@@ -41,6 +41,7 @@ import { TodoPage } from './components/todos/TodoPage'
 import { AskButterflyProvider } from './contexts/AskButterflyContext'
 import { AskButterflyShell } from './components/notion/AskButterflyShell'
 import { redirectToCanonicalAppIfNeeded } from './utils/canonicalAppRedirect'
+import { NewVersionToast } from './components/system/NewVersionToast'
 
 const ENTERPRISE_ROUTES_ENABLED = isEnterpriseOrgHierarchyEnabled()
 
@@ -266,6 +267,7 @@ export default function App() {
       englishVariant={languageSettings.englishVariant}
     >
       <WorkspaceSessionProvider>
+        <NewVersionToast />
         <AskButterflyProvider>
           <AskButterflyShell hideGlobalTrigger={showCredits}>
         {showDiscussInvite ? (

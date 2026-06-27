@@ -17024,6 +17024,31 @@ export const uiTranslations = {
   calStatusCancelled: { de: 'Storniert', en: 'Cancelled', fr: 'Annulé', es: 'Cancelado' },
   calStatusNoShow: { de: 'Nicht erschienen', en: 'No-show', fr: 'Absence', es: 'No asistió' },
 
+  newVersionAvailable: {
+    de: 'Neue Version verfügbar',
+    en: 'New version available',
+    fr: 'Nouvelle version disponible',
+    es: 'Nueva versión disponible',
+  },
+  newVersionHint: {
+    de: 'Neu laden, um die aktuelle Version zu verwenden.',
+    en: 'Reload to use the latest version.',
+    fr: 'Rechargez pour utiliser la dernière version.',
+    es: 'Recargue para usar la última versión.',
+  },
+  newVersionReload: {
+    de: 'Neu laden',
+    en: 'Reload',
+    fr: 'Recharger',
+    es: 'Recargar',
+  },
+  newVersionDismiss: {
+    de: 'Hinweis schließen',
+    en: 'Dismiss',
+    fr: 'Ignorer',
+    es: 'Descartar',
+  },
+
   ...guidedEntryUiTranslations,
   ...aufnahmeBefundUiTranslations,
   ...psychopathGuidedUiLabels,

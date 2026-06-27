@@ -34,6 +34,10 @@ const IMMUTABLE = 'public, max-age=31536000, immutable'
 function setStaticCacheHeaders(res: express.Response, filePath: string): void {
   if (filePath.endsWith('index.html')) {
     res.setHeader('Cache-Control', NO_CACHE)
+  } else if (filePath.endsWith(`${path.sep}version.json`)) {
+    // The deploy-detection manifest: long-lived tabs poll this to notice new
+    // deploys. It MUST never be cached or the prompt would lag behind the deploy.
+    res.setHeader('Cache-Control', NO_CACHE)
   } else if (filePath.includes(`${path.sep}assets${path.sep}`)) {
     res.setHeader('Cache-Control', IMMUTABLE)
   }
@@ -101,6 +105,16 @@ export function configureClientServing(app: Express, distDir: string): boolean {
     // Map the request host to a known site (localhost/unknown → English default).
     const hostKey = resolveDomainConfig(req.hostname).domain
     const reqPath = normalizeReqPath(req.path)
+
+    // version.json is normally served as a real static file by express.static
+    // above (with no-cache headers). Reaching the SPA fallback means the build
+    // did not emit it (dev / split deploy / missing build) — return a JSON 404
+    // rather than the index.html shell, so a polling client parses JSON (or a
+    // clean error) instead of HTML. (Mirrors the /sw.js shadowing pitfall.)
+    if (reqPath === '/version.json') {
+      res.status(404).type('application/json').send('{"error":"version.json not found"}')
+      return
+    }
 
     // Host-aware SEO assets emitted by the prerender step.
     if (reqPath === '/sitemap.xml' || reqPath === '/robots.txt') {
