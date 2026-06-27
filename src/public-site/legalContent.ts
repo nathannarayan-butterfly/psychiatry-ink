@@ -48,14 +48,6 @@ export const CONTACT = {
  * omitted from the Impressum / legal notice rather than shown as placeholders.
  */
 
-/** Conservative EU/EEA Art. 27 representative statement (no person named). */
-const EU_REP_EN =
-  'EU/EEA representative: to be appointed and published before the service is made available for processing EU/EEA personal data, where legally required.'
-
-/** Data-residency statement (verified against repo deploy config). */
-const DATA_RESIDENCY_EN =
-  'Our core infrastructure is hosted in the European Union: the database (Supabase) is located in the EU (Frankfurt) and the application is hosted on Google Cloud Run in the EU (region europe-west1). AI sub-processors may process the content you submit in the EU or in third countries (including the USA), subject to appropriate safeguards such as the EU Standard Contractual Clauses and, where applicable, the EU–US Data Privacy Framework.'
-
 export type LegalBlock =
   | { type: 'p'; text: string }
   | { type: 'ul'; items: string[] }
@@ -94,155 +86,336 @@ function lastUpdatedLabel(locale: PublicLocale): string {
 /* ───────────────────────────── PRIVACY ──────────────────────────────────── */
 
 const privacyEn: LegalDoc = {
-  title: 'Privacy policy',
-  lead: 'This policy explains how Psychiatry Ink Ltd processes personal data when you use Psychiatry.Ink, and the rights you have under the UK GDPR and the EU GDPR.',
+  title: 'Privacy Notice',
+  lead: 'This Privacy Notice explains how Psychiatry Ink Ltd collects, uses, stores, shares, and protects personal data when you visit our website, create an account, use Psychiatry.Ink, contact us, or interact with our services.',
   lastUpdatedLabel: lastUpdatedLabel('en'),
   sections: [
     {
       id: 'controller',
-      heading: '1. Who is responsible (data controller)',
+      heading: '1. Who we are',
       blocks: [
         {
           type: 'p',
-          text: `The data controller for Psychiatry.Ink is ${COMPANY.legalName}, ${COMPANY.addressEn}. ${COMPANY.registrationEn} Company number: ${COMPANY.companyNumber}.`,
+          text: 'Psychiatry Ink Ltd\n71–75 Shelton Street\nCovent Garden\nLondon, WC2H 9JQ\nUnited Kingdom',
         },
         {
           type: 'p',
-          text: `For privacy questions or to exercise your rights, contact us at ${CONTACT.privacyEmail}.`,
+          text: 'Registered in England and Wales.\nCompany number: 17275704.',
         },
+        { type: 'p', text: 'General enquiries:' },
+        { type: 'link', text: 'hello@psychiatry.ink', href: 'mailto:hello@psychiatry.ink' },
+        { type: 'p', text: 'Data protection enquiries:' },
+        { type: 'link', text: 'data-protection@psychiatry.ink', href: 'mailto:data-protection@psychiatry.ink' },
       ],
     },
     {
       id: 'eu-representative',
       heading: 'EU/EEA representative (Art. 27 GDPR)',
-      blocks: [{ type: 'p', text: EU_REP_EN }],
-    },
-    {
-      id: 'scope',
-      heading: '2. Scope and clinical context',
       blocks: [
         {
           type: 'p',
-          text: 'Psychiatry.Ink is a professional tool for clinicians. Where you use the workspace to document patient care, you typically act as the controller for that patient (clinical) data and we act as your processor under a separate data processing agreement. This policy describes our own processing of the personal data of clinicians and visitors (account, billing, support and website data).',
+          text: 'Where required under Article 27 GDPR, Psychiatry Ink Ltd will appoint an EU/EEA representative, and the representative’s details will be published here once appointed.',
         },
         {
           type: 'p',
-          text: 'You are responsible for de-identifying patient material before AI-assisted processing where required by your professional and legal obligations. Psychiatry.Ink provides de-identification workflows to support this, but the clinician remains responsible for what is entered.',
+          text: 'No EU/EEA representative has been appointed at this time. Until an EU/EEA representative is appointed and published, Psychiatry Ink Ltd does not state that it has appointed one.',
+        },
+      ],
+    },
+    {
+      id: 'scope',
+      heading: '2. Scope of this notice',
+      blocks: [
+        { type: 'p', text: 'This notice applies to:' },
+        {
+          type: 'ul',
+          items: [
+            'visitors to our public websites, including psychiatry.ink and related country or language versions;',
+            'users who create an account or use Psychiatry.Ink;',
+            'organisations that subscribe to Psychiatry.Ink;',
+            'people who contact us for support, billing, security, or legal enquiries;',
+            'limited clinical or patient-related data processed inside the service on behalf of professional users or healthcare organisations.',
+          ],
+        },
+        {
+          type: 'p',
+          text: 'This notice does not replace the privacy notice that a doctor, clinic, hospital, or healthcare organisation must provide to its own patients.',
+        },
+      ],
+    },
+    {
+      id: 'roles',
+      heading: '3. Our role: controller and processor',
+      blocks: [
+        {
+          type: 'p',
+          text: 'For website, account, billing, support, security, marketing, and business-administration data, Psychiatry Ink Ltd is usually the controller.',
+        },
+        {
+          type: 'p',
+          text: 'For patient-related clinical content entered by a professional user or organisation into the Psychiatry.Ink workspace, the customer is usually the controller and Psychiatry Ink Ltd is usually the processor. In that case, we process the data only on the customer’s documented instructions and under the applicable Data Processing Agreement.',
+        },
+        {
+          type: 'p',
+          text: 'Some product modes are designed to minimise server-side patient identifiers. For example, patient names, dates of birth, and patient-to-document mapping may remain in the clinician’s local encrypted vault where that configuration is enabled. Users remain responsible for using the privacy settings correctly and for avoiding unnecessary identifiers in AI prompts, dictation, support tickets, or free-text fields.',
         },
       ],
     },
     {
       id: 'data',
-      heading: '3. What personal data we process',
+      heading: '4. Personal data we collect',
       blocks: [
-        { type: 'h3', text: 'Account data' },
-        { type: 'p', text: 'Email address, authentication credentials (stored hashed by our authentication provider), and account settings such as language and privacy preferences.' },
-        { type: 'h3', text: 'Workspace and content data' },
-        { type: 'p', text: 'Clinical documents, notes and case material you create or import. This may include special-category (health) data that you enter; you control what is stored and may use de-identification before AI processing.' },
-        { type: 'h3', text: 'Billing data' },
-        { type: 'p', text: 'Subscription status and payment metadata processed via our payment provider (Stripe). We do not store full card numbers.' },
-        { type: 'h3', text: 'Technical and usage data' },
-        { type: 'p', text: 'Log data necessary to operate and secure the service (e.g. request metadata, IP address, timestamps) and audit records of AI-assisted actions.' },
+        { type: 'p', text: 'Depending on how you use the service, we may process:' },
+        { type: 'h3', text: 'Account and organisation data' },
+        { type: 'p', text: 'Name, professional title, email address, organisation name, role, login information, subscription status, country, language, and account settings.' },
+        { type: 'h3', text: 'Billing and payment data' },
+        { type: 'p', text: 'Plan, invoice details, billing address, VAT or tax details where applicable, payment status, transaction identifiers, and limited payment metadata. Card details are normally processed by our payment provider and are not stored by Psychiatry Ink Ltd.' },
+        { type: 'h3', text: 'Support and communication data' },
+        { type: 'p', text: 'Emails, contact-form messages, support requests, security reports, attachments you provide, and related correspondence metadata.' },
+        { type: 'h3', text: 'Technical and security data' },
+        { type: 'p', text: 'IP address, device information, browser type, operating system, login times, error logs, audit logs, access logs, cookie identifiers, security events, and diagnostic telemetry.' },
+        { type: 'h3', text: 'Product usage data' },
+        { type: 'p', text: 'Feature usage, credit usage, AI model selected, token or API usage metadata, document type selected, generation status, error reports, and user preferences.' },
+        { type: 'h3', text: 'Clinical workspace data' },
+        { type: 'p', text: 'Clinical notes, dictated text, generated drafts, medication notes, laboratory values, templates, risk-assessment text, and other content entered or generated by the user. This data may include health data or other special category data if entered by the user.' },
+        { type: 'h3', text: 'AI processing data' },
+        { type: 'p', text: 'Text, prompts, instructions, clinical snippets, de-identified material, dictated content, audio snippets, generated outputs, and model metadata may be processed by AI providers when the user uses AI features.' },
+      ],
+    },
+    {
+      id: 'do-not-submit',
+      heading: '5. Data we ask users not to submit unnecessarily',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Users should not submit patient names, direct identifiers, unnecessary addresses, unnecessary legal identifiers, or other excessive personal data to AI features, support tickets, or contact forms unless this is permitted under their local law, professional obligations, patient information framework, and the applicable agreement with Psychiatry Ink Ltd.',
+        },
       ],
     },
     {
       id: 'purposes',
-      heading: '4. Why we process it and the lawful basis',
+      heading: '6. Purposes of processing',
       blocks: [
+        { type: 'p', text: 'We process personal data to:' },
         {
           type: 'ul',
           items: [
-            'To provide the workspace and your account — performance of a contract (Art. 6(1)(b) GDPR).',
-            'To process payments and prevent abuse — contract and our legitimate interests (Art. 6(1)(b) and (f)).',
-            'To secure the service, maintain audit logs and prevent fraud — legitimate interests (Art. 6(1)(f)).',
-            'To comply with legal, tax and accounting obligations — legal obligation (Art. 6(1)(c)).',
-            'For optional communications — consent, which you may withdraw at any time (Art. 6(1)(a)).',
+            'provide, maintain, secure, and improve Psychiatry.Ink;',
+            'create and manage user accounts and organisations;',
+            'provide documentation, dictation, template, AI, medication, laboratory, and workflow functions;',
+            'process subscriptions, invoices, payments, and credits;',
+            'provide support and respond to enquiries;',
+            'monitor security, prevent abuse, investigate incidents, and protect the service;',
+            'comply with legal, regulatory, tax, accounting, and contractual obligations;',
+            'send service notices, security notices, legal updates, and product communications;',
+            'analyse aggregated or de-identified usage trends to improve performance and reliability.',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'lawful-bases',
+      heading: '7. Lawful bases',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Where Psychiatry Ink Ltd acts as controller, we rely on one or more of the following lawful bases, depending on context:',
+        },
+        {
+          type: 'ul',
+          items: [
+            'Contract: to provide the service, manage accounts, process subscriptions, and provide support.',
+            'Legal obligation: to comply with tax, accounting, company, security, and regulatory obligations.',
+            'Legitimate interests: to secure, maintain, improve, and administer the service, prevent fraud or misuse, and communicate with professional users.',
+            'Consent: for non-essential cookies, optional marketing communications, or optional features where consent is required.',
           ],
         },
         {
           type: 'p',
-          text: 'Where you enter special-category (health) data as a controller, you are responsible for the appropriate Article 9 condition; we process it on your documented instructions as your processor.',
+          text: 'Where we process clinical or patient-related data as a processor, the customer is responsible for identifying the applicable lawful basis and any Article 9 or equivalent condition for special category health data.',
+        },
+      ],
+    },
+    {
+      id: 'special-category',
+      heading: '8. Special category data and clinical data',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Psychiatry.Ink is intended for psychiatric documentation and may process health data if users enter it. Health data is sensitive. We apply technical and organisational measures intended to reduce unnecessary exposure, including encryption, access control, audit logging, minimisation, and de-identification features where available.',
+        },
+        {
+          type: 'p',
+          text: 'Users must ensure that real patient data is processed only where they have the required legal basis, professional authority, patient information framework, institutional approval, and data-processing agreement.',
         },
       ],
     },
     {
       id: 'ai',
-      heading: '5. AI-assisted processing',
+      heading: '9. AI providers and model processing',
       blocks: [
         {
           type: 'p',
-          text: 'Optional AI features send the content you submit to AI processing providers acting as our sub-processors to generate suggestions. AI output is never applied to the record automatically — clinician review and acceptance are always required. You can use the workspace without AI features.',
+          text: 'Psychiatry.Ink may use external AI providers to provide dictation, transcription, summarisation, drafting, editing, document generation, and clinical text-support functions. Depending on the selected feature and model, providers may include:',
+        },
+        {
+          type: 'ul',
+          items: [
+            'OpenAI;',
+            'Google / Gemini;',
+            'DeepSeek;',
+            'Mistral;',
+            'other providers listed in our sub-processor documentation.',
+          ],
+        },
+        {
+          type: 'p',
+          text: 'The data sent to AI providers depends on the feature used, the model selected, and the user’s privacy settings. We aim to minimise identifiers and unnecessary clinical details. Users must review all AI-generated outputs before clinical use.',
+        },
+        {
+          type: 'p',
+          text: 'We do not authorise AI providers to use customer clinical content for unrelated purposes. Provider-specific retention, abuse-monitoring, and security controls are described in the applicable provider terms and contractual documents.',
         },
       ],
     },
     {
-      id: 'processors',
-      heading: '6. Service providers (processors and sub-processors)',
+      id: 'cookies',
+      heading: '10. Cookies and similar technologies',
       blocks: [
-        { type: 'p', text: 'We use carefully selected providers to operate the service, bound by data processing terms:' },
+        {
+          type: 'p',
+          text: 'We use strictly necessary cookies to operate the website and service. We use non-essential cookies, such as analytics or marketing cookies, only where enabled and where required consent has been obtained.',
+        },
+      ],
+    },
+    {
+      id: 'sharing',
+      heading: '11. Sharing personal data',
+      blocks: [
+        { type: 'p', text: 'We may share personal data with:' },
         {
           type: 'ul',
           items: [
-            'Supabase — database, authentication and storage.',
-            'Google Cloud (Cloud Run) — application hosting and infrastructure.',
-            'Stripe — payment processing.',
-            'OpenAI (USA), Google (Gemini API, USA), Mistral AI (EU) and DeepSeek (non-EU) — AI processing for optional AI-assisted features.',
+            'hosting and infrastructure providers;',
+            'database and authentication providers;',
+            'AI, transcription, and language-model providers;',
+            'payment and billing providers;',
+            'email and communication providers;',
+            'security, logging, monitoring, and analytics providers;',
+            'professional advisers, auditors, insurers, and legal representatives;',
+            'public authorities where required by law.',
           ],
         },
-        { type: 'p', text: `Hosting region / data residency: ${DATA_RESIDENCY_EN}` },
+        {
+          type: 'p',
+          text: 'A current list of sub-processors is available on request and in the applicable Data Processing Agreement.',
+        },
       ],
     },
     {
       id: 'transfers',
-      heading: '7. International transfers',
+      heading: '12. International transfers',
       blocks: [
         {
           type: 'p',
-          text: 'Some providers may process data outside the UK/EEA. Where they do, we rely on appropriate safeguards such as UK and EU Standard Contractual Clauses (and the UK International Data Transfer Addendum) together with supplementary measures.',
+          text: 'Psychiatry Ink Ltd is based in the United Kingdom. Some providers may process data in the UK, EEA, United States, or other countries. Where data is transferred internationally, we use appropriate safeguards where required, such as adequacy decisions, the UK International Data Transfer Agreement, the UK Addendum to EU Standard Contractual Clauses, EU Standard Contractual Clauses, or other legally recognised safeguards.',
         },
       ],
     },
     {
       id: 'retention',
-      heading: '8. Retention',
+      heading: '13. Retention',
       blocks: [
         {
           type: 'p',
-          text: 'We keep account and workspace data for as long as your account is active and then for the period needed to meet legal, tax and security obligations, after which it is deleted or anonymised. You can delete content within the workspace, and you can request account deletion.',
+          text: 'We retain personal data only for as long as necessary for the purposes described in this notice, unless a longer period is required by law or needed to establish, exercise, or defend legal claims.',
         },
-      ],
-    },
-    {
-      id: 'rights',
-      heading: '9. Your rights',
-      blocks: [
+        { type: 'p', text: 'Indicative retention periods by data category:' },
         {
-          type: 'p',
-          text: 'Subject to conditions in the UK/EU GDPR, you have the right to access, rectification, erasure, restriction, data portability, and objection, and the right to withdraw consent. Where we act as a processor for patient data, please direct those requests to the responsible clinician/controller.',
-        },
-        {
-          type: 'p',
-          text: `To exercise your rights, contact ${CONTACT.privacyEmail}. You also have the right to lodge a complaint with a supervisory authority — in the UK, the Information Commissioner's Office (ICO).`,
+          type: 'ul',
+          items: [
+            'Account and organisation data: for the life of the account, then deleted or anonymised after closure according to our retention schedule.',
+            'Billing, invoice, and tax records: for the statutory tax and accounting retention periods.',
+            'Support correspondence: kept only as long as needed to handle the enquiry, unless needed longer for legal or security reasons.',
+            'Security and audit logs: kept for a limited period appropriate to security needs, unless needed longer for investigation.',
+            'Clinical workspace data: controlled by the customer’s configuration, retention settings, deletion requests, and applicable Data Processing Agreement.',
+            'Backups: overwritten or deleted on a rolling basis according to the backup retention schedule.',
+            'Dictation or audio data: not stored by default where technically configured; if stored for processing or troubleshooting, deleted within a short, defined period.',
+          ],
         },
       ],
     },
     {
       id: 'security',
-      heading: '10. Security',
+      heading: '14. Security',
       blocks: [
         {
           type: 'p',
-          text: 'We apply technical and organisational measures appropriate to the risk, including encryption in transit, access controls, de-identification workflows and audit logging of AI-assisted actions. No method of transmission or storage is completely secure, but we work to protect your data and review our measures regularly.',
+          text: 'We use technical and organisational measures designed to protect personal data, including encryption in transit, access controls, audit logs, infrastructure security controls, role-based access, and product-level privacy settings. Some modes include client-side encrypted local storage so that direct patient identifiers and mappings remain on the user’s device.',
+        },
+        {
+          type: 'p',
+          text: 'No internet service is completely secure. Users must protect their own devices, passwords, local encryption keys, browser profiles, and institutional access controls.',
+        },
+      ],
+    },
+    {
+      id: 'rights',
+      heading: '15. Your rights',
+      blocks: [
+        { type: 'p', text: 'Depending on your location and the applicable law, you may have rights to:' },
+        {
+          type: 'ul',
+          items: [
+            'access your personal data;',
+            'correct inaccurate data;',
+            'delete data;',
+            'restrict processing;',
+            'object to processing;',
+            'receive a portable copy of data;',
+            'withdraw consent where processing is based on consent;',
+            'complain to a data protection authority.',
+          ],
+        },
+        { type: 'p', text: 'To exercise these rights, contact:' },
+        { type: 'link', text: 'data-protection@psychiatry.ink', href: 'mailto:data-protection@psychiatry.ink' },
+        {
+          type: 'p',
+          text: 'If we process patient-related data only as a processor, we may need to forward the request to the relevant doctor, clinic, or organisation acting as controller.',
+        },
+      ],
+    },
+    {
+      id: 'supervisory',
+      heading: '16. Supervisory authorities',
+      blocks: [
+        {
+          type: 'p',
+          text: 'For UK-related data protection matters, you may contact the Information Commissioner’s Office (ICO).',
+        },
+        {
+          type: 'p',
+          text: 'For EU/EEA-related matters, you may contact your local supervisory authority. If an EU/EEA representative is required and appointed, their details will be shown above.',
+        },
+      ],
+    },
+    {
+      id: 'children',
+      heading: '17. Children',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Psychiatry.Ink is not directed at children and is intended for professional users. Clinical users may document care relating to minors only where legally and professionally authorised.',
         },
       ],
     },
     {
       id: 'changes',
-      heading: '11. Changes to this policy',
+      heading: '18. Changes to this notice',
       blocks: [
         {
           type: 'p',
-          text: 'We may update this policy to reflect changes to the service or the law. Material changes will be communicated through the service or by other appropriate means.',
+          text: 'We may update this Privacy Notice from time to time. The latest version will be published on this page with the updated date. Material changes may also be communicated by email, in-app notice, or account notice.',
         },
       ],
     },
@@ -748,116 +921,296 @@ const privacyDe: LegalDoc = {
 /* ────────────────────────────── TERMS ───────────────────────────────────── */
 
 const termsEn: LegalDoc = {
-  title: 'Terms of service',
-  lead: 'These terms govern your use of Psychiatry.Ink. By creating an account or using the service you agree to them.',
+  title: 'Terms of Service',
+  lead: 'These Terms of Service govern access to and use of Psychiatry.Ink, including the public website, logged-in application, AI features, dictation tools, documentation tools, templates, medication and laboratory tools, billing system, and related services.\n\nBy creating an account, using the service, or accepting an order form, you agree to these Terms.',
   lastUpdatedLabel: lastUpdatedLabel('en'),
   sections: [
     {
       id: 'provider',
       heading: '1. Provider',
       blocks: [
+        { type: 'p', text: 'The service is provided by:' },
         {
           type: 'p',
-          text: `Psychiatry.Ink is provided by ${COMPANY.legalName}, ${COMPANY.addressEn}. ${COMPANY.registrationEn} Company number: ${COMPANY.companyNumber}. Contact: ${CONTACT.generalEmail}.`,
+          text: 'Psychiatry Ink Ltd\n71–75 Shelton Street\nCovent Garden\nLondon, WC2H 9JQ\nUnited Kingdom',
+        },
+        {
+          type: 'p',
+          text: 'Registered in England and Wales.\nCompany number: 17275704.',
+        },
+        { type: 'p', text: 'Contact:' },
+        { type: 'link', text: 'hello@psychiatry.ink', href: 'mailto:hello@psychiatry.ink' },
+      ],
+    },
+    {
+      id: 'professional-use',
+      heading: '2. Professional-use service',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Psychiatry.Ink is intended for authorised healthcare professionals, healthcare organisations, and related professional users. It is not intended for direct use by patients, consumers, children, or unqualified users.',
+        },
+        {
+          type: 'p',
+          text: 'You may use Psychiatry.Ink only if you have the legal and professional authority to process the data you enter and to use clinical documentation tools in your jurisdiction and workplace.',
         },
       ],
     },
     {
-      id: 'service',
-      heading: '2. The service',
+      id: 'emergency',
+      heading: '3. No emergency use',
       blocks: [
         {
           type: 'p',
-          text: 'Psychiatry.Ink is a secure psychiatric workspace for documentation, case discussion, psychopharmacology reference, treatment planning, clinical tools and optional AI-assisted features. The service is intended for use by qualified healthcare professionals.',
+          text: 'Psychiatry.Ink is not an emergency, crisis, suicide-prevention, detention, or real-time safety service. Do not rely on Psychiatry.Ink for urgent clinical decisions, emergency communication, live patient monitoring, legal deadlines, or immediate risk management.',
         },
       ],
     },
     {
       id: 'clinical',
-      heading: '3. Clinical responsibility (important)',
+      heading: '4. No replacement for clinical judgement',
       blocks: [
         {
           type: 'p',
-          text: 'Psychiatry.Ink supports, but does not replace, the judgement of a qualified clinician. It does not diagnose patients, does not make autonomous treatment decisions and is not a medical device for automated decision-making. AI-assisted suggestions require clinician review and acceptance before any use. All clinical decisions remain the sole responsibility of the treating clinician.',
+          text: 'Psychiatry.Ink supports drafting, organisation, documentation, and workflow. It does not replace:',
+        },
+        {
+          type: 'ul',
+          items: [
+            'clinical assessment;',
+            'psychiatric diagnosis;',
+            'patient consent;',
+            'legal capacity assessment;',
+            'suicide or violence risk assessment;',
+            'medication review;',
+            'court, detention, or coercive-treatment legal review;',
+            'local hospital governance;',
+            'professional judgement.',
+          ],
         },
         {
           type: 'p',
-          text: 'The service is not intended for emergency or crisis use. In an emergency, contact your local emergency services.',
+          text: 'You are responsible for reviewing, correcting, approving, and signing all generated or edited content before clinical or legal use.',
         },
       ],
     },
     {
-      id: 'accounts',
-      heading: '4. Accounts and acceptable use',
+      id: 'ai-output',
+      heading: '5. AI-generated output',
       blocks: [
+        {
+          type: 'p',
+          text: 'AI features may generate incomplete, inaccurate, biased, outdated, or clinically inappropriate content. You must verify every output against the source material, patient record, clinical examination, applicable law, and professional standards.',
+        },
+        {
+          type: 'p',
+          text: 'Psychiatry.Ink does not guarantee that AI output is correct, complete, lawful, safe, or suitable for a specific patient.',
+        },
+      ],
+    },
+    {
+      id: 'availability-country',
+      heading: '6. Country availability',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Psychiatry.Ink may be available only in selected countries or pilot regions. Availability, features, templates, video functions, AI providers, and legal-document workflows may differ by country. You must not use country-specific templates or workflows unless they are appropriate for your jurisdiction and institution.',
+        },
+      ],
+    },
+    {
+      id: 'registration',
+      heading: '7. Account registration',
+      blocks: [
+        {
+          type: 'p',
+          text: 'You must provide accurate account, organisation, billing, and professional information. You are responsible for maintaining the confidentiality of your login credentials and for all activity under your account.',
+        },
+        {
+          type: 'p',
+          text: 'You must notify us promptly if you suspect unauthorised access, credential compromise, or misuse.',
+        },
+      ],
+    },
+    {
+      id: 'customer-responsibilities',
+      heading: '8. Customer responsibilities for patient data',
+      blocks: [
+        { type: 'p', text: 'You are responsible for:' },
         {
           type: 'ul',
           items: [
-            'You must provide accurate registration information and keep your credentials secure.',
-            'You are responsible for activity under your account and for complying with your professional, legal and data-protection obligations, including lawful handling and de-identification of patient data.',
-            'You must not misuse the service, attempt to breach its security, or use it unlawfully.',
+            'having a lawful basis to process personal data and health data;',
+            'providing required patient information notices where applicable;',
+            'obtaining institutional approval where required;',
+            'entering into a Data Processing Agreement where required;',
+            'configuring privacy, de-identification, retention, and AI settings correctly;',
+            'avoiding unnecessary patient identifiers in AI prompts and support requests;',
+            'exporting, retaining, or deleting records according to your legal and professional duties;',
+            'ensuring that final clinical records are stored in your official record system if required by your organisation.',
+          ],
+        },
+      ],
+    },
+    {
+      id: 'dpa',
+      heading: '9. Data Processing Agreement',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Where Psychiatry Ink Ltd processes personal data on behalf of a customer as processor, the Data Processing Agreement applies. If there is a conflict between these Terms and the DPA concerning processor obligations, the DPA controls for that processing.',
+        },
+      ],
+    },
+    {
+      id: 'acceptable-use',
+      heading: '10. Acceptable use',
+      blocks: [
+        { type: 'p', text: 'You must not:' },
+        {
+          type: 'ul',
+          items: [
+            'use the service unlawfully or outside your professional authority;',
+            'use the service to provide emergency care or real-time patient monitoring;',
+            'submit data that you have no right to process;',
+            'attempt to bypass security, access controls, credit limits, or billing controls;',
+            'reverse engineer, scrape, copy, resell, or misuse the service;',
+            'introduce malware, abusive traffic, or automated attacks;',
+            'use outputs without professional review;',
+            'use the service to discriminate unlawfully or make automated decisions about patients without human review;',
+            'upload excessive, irrelevant, or unnecessary personal data.',
           ],
         },
       ],
     },
     {
       id: 'billing',
-      heading: '5. Subscriptions, trials and billing',
+      heading: '11. Plans, billing, and credits',
       blocks: [
         {
           type: 'p',
-          text: 'Individual use includes a one-month free trial with 500 AI credits, after which paid subscription pricing applies (£24.99/month or £239.90/year, as shown on the pricing page). Payments are processed by Stripe. Prices may change with notice; changes do not affect the current paid period.',
+          text: 'Paid features may be provided through subscriptions, usage credits, AI credits, add-ons, or organisation plans. Prices, credit allowances, renewal periods, and included features are shown on the pricing page, in-app billing screen, or order form.',
         },
-        { type: 'p', text: 'Statutory consumer cancellation/withdrawal rights, where applicable, are unaffected by these terms.' },
+        {
+          type: 'p',
+          text: 'AI credits may be consumed when using AI features, including generation, dictation, summarisation, editing, translation, or model-based analysis. Different AI modes may consume different credit amounts.',
+        },
+        {
+          type: 'p',
+          text: 'Unused credits, refunds, trial periods, renewals, cancellations, and taxes are governed by the applicable pricing page, order form, or billing policy.',
+        },
       ],
     },
     {
-      id: 'ip',
-      heading: '6. Your content and intellectual property',
+      id: 'beta',
+      heading: '12. Trials and beta features',
       blocks: [
         {
           type: 'p',
-          text: 'You retain all rights to the content you enter. You grant us the limited rights necessary to host and process that content to provide the service. We retain all rights in the Psychiatry.Ink software, brand and content we provide.',
+          text: 'We may offer trial, beta, pilot, experimental, or preview features. These may be changed, suspended, limited, or discontinued at any time. Beta features may be less stable and should not be used for production clinical work unless expressly permitted.',
+        },
+      ],
+    },
+    {
+      id: 'third-party',
+      heading: '13. Third-party services',
+      blocks: [
+        {
+          type: 'p',
+          text: 'The service may rely on third-party providers for hosting, AI, transcription, authentication, database services, payment processing, email, security, analytics, or communication. Third-party services may be subject to separate terms, privacy notices, and availability limitations.',
         },
       ],
     },
     {
       id: 'availability',
-      heading: '7. Availability',
+      heading: '14. Service availability',
       blocks: [
         {
           type: 'p',
-          text: 'We work to keep the service available and secure but do not guarantee uninterrupted availability. We may modify or discontinue features with reasonable notice where practicable.',
+          text: 'We aim to provide a reliable service, but we do not guarantee uninterrupted availability, error-free operation, or permanent access. Maintenance, incidents, provider outages, legal changes, security issues, or misuse may affect availability.',
         },
       ],
     },
     {
-      id: 'liability',
-      heading: '8. Disclaimers and limitation of liability',
+      id: 'ip',
+      heading: '15. Intellectual property',
       blocks: [
         {
           type: 'p',
-          text: 'To the extent permitted by law, the service is provided "as is" without warranties. Nothing in these terms limits liability that cannot be limited by law (including for death or personal injury caused by negligence, or fraud). Subject to that, our aggregate liability is limited as set out in your subscription agreement. We are not liable for clinical decisions, which remain the responsibility of the treating clinician.',
+          text: 'Psychiatry Ink Ltd and its licensors retain all rights in the software, design, branding, documentation, templates, workflows, model orchestration, and service structure.',
+        },
+        {
+          type: 'p',
+          text: 'You retain rights in the content you enter, subject to the rights needed for us to provide the service and comply with these Terms and the DPA.',
+        },
+      ],
+    },
+    {
+      id: 'feedback',
+      heading: '16. Feedback',
+      blocks: [
+        {
+          type: 'p',
+          text: 'If you provide suggestions, feedback, corrections, ideas, or feature requests, we may use them to improve the service without obligation to compensate you.',
+        },
+      ],
+    },
+    {
+      id: 'termination',
+      heading: '17. Suspension and termination',
+      blocks: [
+        {
+          type: 'p',
+          text: 'We may suspend or terminate access if you breach these Terms, fail to pay, misuse the service, create security risk, violate law, or use the service outside professional or contractual limits.',
+        },
+        {
+          type: 'p',
+          text: 'You may cancel your subscription according to the applicable billing terms. You remain responsible for exporting required data before cancellation where export is available and legally necessary.',
+        },
+      ],
+    },
+    {
+      id: 'disclaimers',
+      heading: '18. Disclaimers',
+      blocks: [
+        {
+          type: 'p',
+          text: 'The service is provided on an “as is” and “as available” basis. To the maximum extent permitted by law, we disclaim implied warranties of accuracy, fitness for a particular purpose, merchantability, non-infringement, availability, and clinical suitability.',
+        },
+        { type: 'p', text: 'Nothing in these Terms limits liability that cannot legally be limited.' },
+      ],
+    },
+    {
+      id: 'liability',
+      heading: '19. Limitation of liability',
+      blocks: [
+        {
+          type: 'p',
+          text: 'To the maximum extent permitted by law, Psychiatry Ink Ltd is not liable for indirect, incidental, consequential, special, punitive, or exemplary damages, including loss of profits, loss of business, loss of goodwill, loss of data, clinical error, regulatory penalties, or legal consequences arising from unreviewed or inappropriate use of the service.',
+        },
+        {
+          type: 'p',
+          text: 'Our total aggregate liability is limited to the amount paid by the customer for the service during the 12 months before the event giving rise to liability, unless a different limit is agreed in an order form or required by law.',
         },
       ],
     },
     {
       id: 'law',
-      heading: '9. Governing law',
+      heading: '20. Governing law and jurisdiction',
       blocks: [
         {
           type: 'p',
-          text: 'These terms are governed by the laws of England and Wales, without prejudice to mandatory consumer-protection rights you may have in your country of residence.',
+          text: 'These Terms are governed by the laws of England and Wales, unless mandatory local law provides otherwise. The courts of England and Wales have jurisdiction, unless a different forum is required by mandatory law or agreed in writing.',
         },
       ],
     },
     {
       id: 'changes',
-      heading: '10. Changes',
+      heading: '21. Changes to these Terms',
       blocks: [
         {
           type: 'p',
-          text: 'We may update these terms; we will communicate material changes through the service. Continued use after changes take effect constitutes acceptance.',
+          text: 'We may update these Terms from time to time. The updated version will be published on this page. Material changes may be notified by email, in-app notice, or account notice. Continued use after the effective date means you accept the updated Terms.',
         },
       ],
     },
@@ -1634,42 +1987,62 @@ const impressumDe: LegalDoc = {
 
 const impressumEn: LegalDoc = {
   title: 'Legal notice',
-  lead: 'Provider identification pursuant to the UK Digital Services requirements and equivalent EU provider disclosure rules.',
+  lead: 'Company and provider information for this website and the Psychiatry.Ink service.',
   lastUpdatedLabel: lastUpdatedLabel('en'),
   sections: [
     {
-      id: 'provider',
-      heading: 'Service provider',
+      id: 'operator',
+      heading: 'Website operator',
       blocks: [
+        { type: 'p', text: 'This website and the Psychiatry.Ink service are operated by:' },
         {
           type: 'p',
-          text: `${COMPANY.legalName}\n71–75 Shelton Street\nCovent Garden\nLondon, WC2H 9JQ\nUnited Kingdom\n${COMPANY.registrationEn}\nRegister: Companies House, England and Wales\nCompany number: ${COMPANY.companyNumber}`,
+          text: 'Psychiatry Ink Ltd\n71–75 Shelton Street\nCovent Garden\nLondon, WC2H 9JQ\nUnited Kingdom',
+        },
+        {
+          type: 'p',
+          text: 'Registered in England and Wales.\nCompany number: 17275704.\nLegal form: Private limited company.',
         },
       ],
     },
     {
-      id: 'represented',
-      heading: 'Authorised representative',
+      id: 'responsible',
+      heading: 'Responsible person',
       blocks: [
         { type: 'p', text: 'Represented by the Director:' },
-        { type: 'p', text: CONTACT.representative },
+        { type: 'p', text: 'Dr Nathan Narayan' },
       ],
     },
     {
       id: 'contact',
       heading: 'Contact',
       blocks: [
-        { type: 'p', text: `Email: ${CONTACT.generalEmail}` },
+        { type: 'p', text: 'General enquiries:' },
+        { type: 'link', text: 'hello@psychiatry.ink', href: 'mailto:hello@psychiatry.ink' },
+        { type: 'p', text: 'Data protection enquiries:' },
+        { type: 'link', text: 'data-protection@psychiatry.ink', href: 'mailto:data-protection@psychiatry.ink' },
         {
           type: 'link',
           text: `Contact form: ${localizedPath('contact', 'en')}`,
           href: localizedPath('contact', 'en'),
         },
-        { type: 'p', text: 'For privacy requests, please use only:' },
-        { type: 'p', text: CONTACT.privacyEmail },
         {
           type: 'p',
-          text: 'Please do not send patient data, health data, or other confidential clinical content by email or contact form unless expressly required and agreed with us in advance.',
+          text: 'Please use the data protection email address for privacy, GDPR, UK GDPR, data-processing, deletion, export, or access requests, and for security or vulnerability reports.',
+        },
+      ],
+    },
+    {
+      id: 'eu-representative',
+      heading: 'EU/EEA representative',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Where required under Article 27 GDPR, Psychiatry Ink Ltd will appoint an EU/EEA representative, and the representative’s details will be published here once appointed.',
+        },
+        {
+          type: 'p',
+          text: 'No EU/EEA representative has been appointed at this time. Until this is completed, Psychiatry Ink Ltd does not state that it has appointed an EU/EEA representative.',
         },
       ],
     },
@@ -1681,117 +2054,64 @@ const impressumEn: LegalDoc = {
       ],
     },
     {
-      id: 'responsible',
-      heading: 'Responsible for journalistic/editorial content (§ 18 Abs. 2 MStV equivalent)',
+      id: 'service',
+      heading: 'Service description',
       blocks: [
         {
           type: 'p',
-          text: 'This website currently does not provide journalistic or editorial offerings within the meaning of § 18 Abs. 2 MStV.',
-        },
-        {
-          type: 'p',
-          text: 'Product information, feature descriptions, legal notices, contract information and technical documentation describe the service and are not journalistic/editorial content.',
-        },
-        {
-          type: 'p',
-          text: 'If journalistic or editorial content is published in future — for example periodic professional articles, blog posts, medical commentary or publicly curated editorial content — a responsible person with name and serviceable address will be named as required by § 18 Abs. 2 MStV.',
+          text: 'Psychiatry.Ink provides clinician-facing psychiatric documentation, dictation, note-generation, template, medication, laboratory, and workflow tools. The service is intended for authorised healthcare professionals and healthcare organisations. Psychiatry.Ink does not provide medical care directly to patients.',
         },
       ],
     },
     {
-      id: 'professional',
-      heading: 'Professional regulatory information',
+      id: 'emergency',
+      heading: 'No emergency service',
       blocks: [
         {
           type: 'p',
-          text: 'Psychiatry.Ink is a software and documentation service for professional users in healthcare.',
-        },
-        {
-          type: 'p',
-          text: 'This website does not offer individual medical treatment, diagnosis, therapy, consultation or patient-related medical services.',
-        },
-        {
-          type: 'p',
-          text: 'Where general medical, psychiatric, psychopharmacological or other professional information is provided on the website, it is for general professional orientation only. It does not replace individual medical assessment, product information, guidelines, local SOPs or patient-specific medical decisions.',
-        },
-        {
-          type: 'p',
-          text: 'If personal medical services are offered via this website in future, the required professional regulatory details will be added, including the relevant medical chamber, statutory professional title, state of award and applicable professional rules.',
+          text: 'Psychiatry.Ink is not an emergency medical service. Do not use this website or service for urgent medical, psychiatric, suicidal, forensic, or safety-critical emergencies. In an emergency, contact the local emergency number, crisis service, hospital, or responsible clinical team.',
         },
       ],
     },
     {
-      id: 'content-liability',
-      heading: 'Liability for content',
+      id: 'professional-use',
+      heading: 'Professional-use disclaimer',
       blocks: [
         {
           type: 'p',
-          text: 'We create the content of this website with reasonable care. Nevertheless, we do not warrant completeness, accuracy, timeliness or suitability of the content for any particular clinical, legal, technical or organisational purpose.',
-        },
-        {
-          type: 'p',
-          text: 'Clinical, psychopharmacological or other professional content is for professional orientation only. It does not replace medical assessment, individual benefit–risk evaluation, product information, guidelines or local SOPs.',
-        },
-        {
-          type: 'p',
-          text: 'As a service provider we are responsible for our own content under general law. We are not responsible for third-party content we merely link to or that is provided by third parties, except where statutory liability applies.',
+          text: 'Psychiatry.Ink is a documentation and workflow-support tool. It does not replace professional judgement, local clinical governance, statutory duties, patient assessment, informed consent, risk assessment, or legally required documentation. Users remain responsible for reviewing, correcting, approving, and signing any output before clinical use.',
         },
       ],
     },
     {
-      id: 'link-liability',
-      heading: 'Liability for links',
+      id: 'ip',
+      heading: 'Intellectual property',
       blocks: [
         {
           type: 'p',
-          text: 'Our website may contain links to external third-party websites. We have no influence over their content. The respective provider or operator is always responsible for linked pages.',
-        },
-        {
-          type: 'p',
-          text: 'Linked pages were checked for obvious legal violations at the time of linking. Continuous monitoring of external links without concrete indications of a legal violation is not reasonable. If we become aware of legal violations, we will remove affected links.',
+          text: 'Unless otherwise stated, the text, design, software, branding, workflows, templates, and other materials on this website and in the service are owned by or licensed to Psychiatry Ink Ltd. They may not be copied, redistributed, reverse engineered, or used to build a competing service without written permission.',
         },
       ],
     },
     {
-      id: 'copyright',
-      heading: 'Copyright',
+      id: 'external-links',
+      heading: 'External links',
       blocks: [
         {
           type: 'p',
-          text: 'Content, text, structure, design, graphics, logos, trademarks, software components and other works on this website are protected by copyright and other rights.',
-        },
-        {
-          type: 'p',
-          text: 'Reproduction, editing, distribution or other use outside the limits of applicable law requires prior consent of the respective rights holder. Downloads and copies of this site are permitted only for your own professional use unless expressly stated otherwise.',
+          text: 'This website may contain links to third-party websites or services. Psychiatry Ink Ltd is not responsible for the content, security, availability, or privacy practices of third-party websites.',
         },
       ],
     },
     {
-      id: 'dispute',
-      heading: 'Dispute resolution',
+      id: 'complaints',
+      heading: 'Complaints and legal correspondence',
       blocks: [
         {
           type: 'p',
-          text: 'We are neither obliged nor willing to participate in dispute resolution proceedings before a consumer arbitration board.',
+          text: 'Legal notices and formal correspondence should be sent to the registered office address above and, where possible, copied to:',
         },
-        {
-          type: 'p',
-          text: 'The former EU Online Dispute Resolution platform has been discontinued. A link to that platform is therefore not provided.',
-        },
-      ],
-    },
-    {
-      id: 'audience',
-      heading: 'Intended users',
-      blocks: [
-        {
-          type: 'p',
-          text: 'Psychiatry.Ink is intended exclusively for professional users, in particular physicians, psychotherapists, practices, clinics and other healthcare institutions or professionals.',
-        },
-        {
-          type: 'p',
-          text: 'Use by consumers for private purposes is not intended.',
-        },
+        { type: 'link', text: 'hello@psychiatry.ink', href: 'mailto:hello@psychiatry.ink' },
       ],
     },
   ],
