@@ -50,7 +50,7 @@ const LAB_BEFUND_ANTHRO_DATE = '2026-06-10'
 const LAB_BEFUND_GLUCOSE_DATE = '2026-06-12'
 
 const DEMO_DOB = '1985-03-22'
-const DEMO_VORNAME = 'Thomas'
+const DEMO_VORNAME = 'Nikolaos'
 const DEMO_NACHNAME = 'Demo'
 
 const AUFNAHME_SECTION_IDS = defaultAufnahmeSections.map((s) => s.id)

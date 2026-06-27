@@ -303,7 +303,7 @@ export const homepageContentEs: HomepageContent = {
         id: 'intelligence',
         label: 'Inteligencia clínica',
         title: 'Perfil dimensional y mecanismos',
-        description: 'Hipótesis ya revisadas con gráficos de gravedad e indicadores de estado · Anna Demo',
+        description: 'Hipótesis ya revisadas con gráficos de gravedad e indicadores de estado · Nikolaos Demo',
         imageSrc: '/homepage/demo-intelligence.png',
         imageAlt: 'Demo sintética — gráficos dimensionales y de mecanismos de inteligencia clínica.',
       },

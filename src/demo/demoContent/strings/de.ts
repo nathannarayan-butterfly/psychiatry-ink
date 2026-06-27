@@ -298,7 +298,7 @@ export const demoStringsDe: DemoStrings = {
   workspace: {
     admissionHeadingPrefix: 'Aufnahme —',
     pageHeadings: {
-      aufnahme: 'Aufnahme — Thomas Demo',
+      aufnahme: 'Aufnahme — Nikolaos Demo',
       verlauf: 'Verlaufsdokumentation',
       psychopath: 'Psychopathologischer Befund',
       'therapie-verlauf': 'Therapieverlauf',
@@ -385,12 +385,12 @@ export const demoStringsDe: DemoStrings = {
     labDocTitlePrefix: 'Lab vom',
   },
   generatedDocuments: {
-    title: 'Entlassungsplan Thomas Demo',
+    title: 'Entlassungsplan Nikolaos Demo',
     dischargePlan: 'Ambulante Weiterbehandlung Psychiatrie + Suchtberatung, Medikation Aripiprazol 10 mg',
-    renderedText: 'Entlassungsplan für Thomas Demo — Demo-Dokument.',
+    renderedText: 'Entlassungsplan für Nikolaos Demo — Demo-Dokument.',
   },
   calendar: {
-    visitTitle: 'Visite — Thomas Demo',
+    visitTitle: 'Visite — Nikolaos Demo',
     medReview: 'Medikationsreview',
     psychoGroup: 'Psychoedukation Gruppe',
     dischargeMeeting: 'Entlassungsgespräch mit Sozialdienst',

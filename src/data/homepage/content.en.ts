@@ -303,7 +303,7 @@ export const homepageContentEn: HomepageContent = {
         id: 'intelligence',
         label: 'Clinical Intelligence',
         title: 'Dimensional profile & mechanisms',
-        description: 'Pre-reviewed hypotheses with severity graphs and status chips · Anna Demo',
+        description: 'Pre-reviewed hypotheses with severity graphs and status chips · Nikolaos Demo',
         imageSrc: '/homepage/demo-intelligence.png',
         imageAlt: 'Synthetic demo — Clinical Intelligence dimensional and mechanism graphs.',
       },

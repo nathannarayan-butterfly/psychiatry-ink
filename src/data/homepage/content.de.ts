@@ -23,7 +23,7 @@ export const homepageContentDe: HomepageContent = {
     subtitle:
       'Psychiatrie.Ink bündelt Dokumentation, Fallbesprechung, psychopharmakologische Referenz, Therapieplanung, klinische Tools und KI-gestützte Clinical Intelligence in einem sicheren Arbeitsbereich. Die KI unterstützt beim Strukturieren, Prüfen und klinischen Reasoning — die ärztliche Freigabe bleibt immer erforderlich.',
     primaryCta: 'Arbeitsbereich öffnen',
-    secondaryCta: 'Demo-Patientin ansehen',
+    secondaryCta: 'Demo-Patient ansehen',
     devModeLink: 'Entwicklermodus — ohne Anmeldung fortfahren',
     trustLabelsAriaLabel: 'Vertrauensmerkmale des Produkts',
     trustLabels: [
@@ -303,7 +303,7 @@ export const homepageContentDe: HomepageContent = {
         id: 'intelligence',
         label: 'Clinical Intelligence',
         title: 'Dimensionales Profil & Mechanismen',
-        description: 'Vorgeprüfte Hypothesen mit Schweregrad-Grafiken und Status-Chips · Anna Demo',
+        description: 'Vorgeprüfte Hypothesen mit Schweregrad-Grafiken und Status-Chips · Nikolaos Demo',
         imageSrc: '/homepage/demo-intelligence.png',
         imageAlt: 'Synthetische Demo — Clinical Intelligence mit dimensionalen und Mechanismus-Grafiken.',
       },
@@ -354,7 +354,7 @@ export const homepageContentDe: HomepageContent = {
     subtitle:
       'Starten Sie heute mit Dokumentation und klinischen Tools. KI-gestützte Funktionen sind optional — die ärztliche Prüfung bleibt immer Teil des Workflows.',
     primaryCta: 'Arbeitsbereich öffnen',
-    secondaryCta: 'Demo-Patientin ansehen',
+    secondaryCta: 'Demo-Patient ansehen',
   },
   poweredBy: {
     label: 'Powered with Butterfly Clinical Intelligence System',

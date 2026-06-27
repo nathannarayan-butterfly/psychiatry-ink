@@ -9,6 +9,7 @@
 
 import { writeFileSync, readFileSync, existsSync } from 'node:fs'
 import { resolve } from 'node:path'
+import '../server/loadEnv.ts'
 import { buildDemoPatientFixture } from '../src/demo/buildDemoFixture.ts'
 import { validateDemoFixture } from '../src/demo/validateDemoFixture.ts'
 import type { DemoPatientFixture } from '../src/demo/types.ts'
@@ -21,9 +22,9 @@ async function tryDeepSeekRegen(): Promise<DemoPatientFixture | null> {
 
   const prompt = `Return ONLY valid JSON matching DemoPatientFixture for a synthetic German psychiatry demo patient.
 Markers: isDemoPatient true, demoSeedVersion "v3", demoPatientId "DEMO-0001", demoCaseId "DEMO-CASE-0001".
-Patient: Anna Demo, female, DOB 12.08.1992, admission 02.06.2026. Fictional only — no real PHI.
+Patient: Nikolaos Demo, male, DOB 22.03.1985, admission 02.06.2026. Fictional only — no real PHI.
 Include workspace.isdmInput, isdmAnalysis, butterflyAttestations, clinicalQuestionNotes, anforderungen.
-Use clinically realistic German text with diagnostic uncertainty (F20.0, F12.2, F15.2).`
+Use clinically realistic German text with diagnostic uncertainty (F20.0, F10.2).`
 
   try {
     const response = await fetch('https://api.deepseek.com/chat/completions', {

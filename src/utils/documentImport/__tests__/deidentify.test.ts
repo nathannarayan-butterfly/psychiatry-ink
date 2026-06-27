@@ -3,8 +3,8 @@ import { deidentifyText, redactPatientName } from '../deidentify'
 
 describe('deidentifyText', () => {
   it('masks patient name tokens', () => {
-    const { text, redactions } = deidentifyText('Anna Demo war ruhig.', { patientNames: ['Anna Demo'] })
-    expect(text).not.toContain('Anna')
+    const { text, redactions } = deidentifyText('Nikolaos Demo war ruhig.', { patientNames: ['Nikolaos Demo'] })
+    expect(text).not.toContain('Nikolaos')
     expect(text).not.toContain('Demo')
     expect(text).toContain('[NAME]')
     expect(redactions.name).toBeGreaterThanOrEqual(2)

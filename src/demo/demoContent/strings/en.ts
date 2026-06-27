@@ -10,7 +10,7 @@ export const demoStringsEn: DemoStrings = {
       'Elective inpatient admission via emergency department after acute psychotic decompensation with paranoid content, sleep deprivation, and increasing substance use. Referred by GP after telephone consultation; no acute risk to others, but limited illness insight.',
     'aktuelle-beschwerden':
       'For approximately 10–14 days: increasing inner restlessness, sleep deficit (<3 h/night), mistrust of neighbours ("being watched"), repeated calls to police without substantiated grounds. Mood fluctuating between irritable and anxious. Appetite reduced.',
-    eigenanamnese: 'Ms Demo reports a reliable self-history. No known somatic comorbidity of relevance. No known drug allergies.',
+    eigenanamnese: 'Mr Demo reports a reliable self-history. No known somatic comorbidity of relevance. No known drug allergies.',
     'aktuelle-krankheitsanamnese':
       'First psychotic episode at age 22 after cannabis misuse, then brief inpatient care. Since then several outpatient phases with irregular medication adherence. Current relapse in context of sleep deprivation, amphetamine use ("speed" at weekend), and occupational stress.',
     'psychiatrische-vorgeschichte':
@@ -130,7 +130,7 @@ export const demoStringsEn: DemoStrings = {
 
   workspace: {
     admissionHeadingPrefix: 'Admission —',
-    pageHeadings: { aufnahme: 'Admission — Anna Demo', verlauf: 'Progress documentation', psychopath: 'Psychopathological findings', 'therapie-verlauf': 'Treatment course', medikation: 'Medication', therapieplanung: 'Treatment planning' },
+    pageHeadings: { aufnahme: 'Admission — Nikolaos Demo', verlauf: 'Progress documentation', psychopath: 'Psychopathological findings', 'therapie-verlauf': 'Treatment course', medikation: 'Medication', therapieplanung: 'Treatment planning' },
     verlaufSections: {
       psychopathologie: 'Fluctuating mood, paranoid-mistrustful baseline, recently calmer.', stationsverhalten: 'Partially engaged in conversations, attended exercise therapy.',
       risiko: 'No acute suicidality or risk to others.', 'compliance-krankheitseinsicht': 'Currently regular intake, insight slowly increasing.',
@@ -168,8 +168,8 @@ export const demoStringsEn: DemoStrings = {
   ],
 
   dokumente: { anamneseTitle: 'History — admission', anamneseContent: 'Complete admission history (demo).', verlaufTitle: 'Progress summary', medplanTitle: 'Medication plan', medplanContent: 'Aripiprazole 10 mg 1-0-0; Lorazepam 1 mg PRN', arztbriefTitle: 'Discharge letter (draft)', arztbriefContent: 'Discharge letter — demo draft with course and medication.', labDocTitlePrefix: 'Lab from' },
-  generatedDocuments: { title: 'Discharge plan Anna Demo', dischargePlan: 'Outpatient follow-up, medication aripiprazole 10 mg', renderedText: 'Discharge plan for Anna Demo — demo document.' },
-  calendar: { visitTitle: 'Ward round — Anna Demo', medReview: 'Medication review', psychoGroup: 'Psychoeducation group', dischargeMeeting: 'Discharge meeting with social services' },
+  generatedDocuments: { title: 'Discharge plan Nikolaos Demo', dischargePlan: 'Outpatient follow-up, medication aripiprazole 10 mg', renderedText: 'Discharge plan for Nikolaos Demo — demo document.' },
+  calendar: { visitTitle: 'Ward round — Nikolaos Demo', medReview: 'Medication review', psychoGroup: 'Psychoeducation group', dischargeMeeting: 'Discharge meeting with social services' },
 
   modulePlaceholders: {
     consultation: { title: 'Neurology consult (demo)', question: 'Clarification of headaches on antipsychotic therapy', specialty: 'Neurology', status: 'draft' },

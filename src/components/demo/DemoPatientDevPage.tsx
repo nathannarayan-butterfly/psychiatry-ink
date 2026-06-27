@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext'
 import {
   archiveDemoPatient,
   DEMO_CASE_ID,
+  demoPatientDisplayName,
   ensureDemoPatientExists,
   exportDemoFixtureFromLocal,
   fetchAndApplyCanonicalDemoFixture,
@@ -172,7 +173,7 @@ export function DemoPatientDevPage({ onBack }: DemoPatientDevPageProps) {
         <div>
           <h1>Demo Patient — Pre-Butterfly QA</h1>
           <p className="demo-dev-page__subtitle">
-            Synthetic case <code>{DEMO_CASE_ID}</code> · Anna Demo · read-only in workspace
+            Synthetic case <code>{DEMO_CASE_ID}</code> · {demoPatientDisplayName()} · read-only in workspace
           </p>
         </div>
         {onBack ? (

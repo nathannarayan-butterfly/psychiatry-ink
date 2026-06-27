@@ -30,5 +30,5 @@ export function demoCaseLabel(): string {
 }
 
 export function demoPatientDisplayName(): string {
-  return 'Thomas Demo'
+  return 'Nikolaos Demo'
 }

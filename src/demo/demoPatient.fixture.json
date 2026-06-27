@@ -5,7 +5,7 @@
   "demoPatientId": "DEMO-0001",
   "demoCaseId": "DEMO-CASE-0001",
   "patient": {
-    "vorname": "Thomas",
+    "vorname": "Nikolaos",
     "nachname": "Demo",
     "geburtsdatum": "1985-03-22",
     "geschlecht": "maennlich",
@@ -20,7 +20,7 @@
     "documents": {
       "aufnahme": {
         "documentTypeId": "aufnahme",
-        "pageHeading": "Aufnahme — Thomas Demo",
+        "pageHeading": "Aufnahme — Nikolaos Demo",
         "sectionContents": {
           "aufnahmeanlass": "Notfallmäßige stationäre Aufnahme über die psychiatrische Notaufnahme nach akuter psychotischer Dekompensation mit paranoidem Inhalt, Alkoholentzugssymptomatik und zunehmendem Schlafentzug. Überweisung durch Hausarzt nach telefonischer Rücksprache; keine akute Fremdgefährdung, jedoch geringe Krankheitseinsicht und erhöhtes Entzugsrisiko.",
           "aktuelle-beschwerden": "Seit ca. 10–14 Tagen: zunehmende innere Unruhe, Schlafdefizit (<3 h/Nacht), Misstrauen gegenüber Nachbarn („werde überwacht\"), wiederholte Polizeikontakte ohne begründeten Anlass. Parallel täglicher Alkoholkonsum (ca. 0,5–1 l Wein/Tag), zuletzt letzter Konsum vor 18 h. Tremor, Schwitzen, subjektive Unruhe. Stimmung schwankend zwischen gereizt und ängstlich. Appetit vermindert.",
@@ -95,7 +95,7 @@
       }
     },
     "pageHeadings": {
-      "aufnahme": "Aufnahme — Thomas Demo",
+      "aufnahme": "Aufnahme — Nikolaos Demo",
       "verlauf": "Verlaufsdokumentation",
       "psychopath": "Psychopathologischer Befund",
       "therapie-verlauf": "Therapieverlauf",
@@ -1223,7 +1223,7 @@
     "isdmAnalysis": {
       "caseId": "DEMO-CASE-0001",
       "profileId": "international_structured_diagnostic_mapping",
-      "updatedAt": "2026-06-27T14:04:57.710Z",
+      "updatedAt": "2026-06-27T14:14:23.903Z",
       "phenomenology": {
         "appearance_behavior": [
           {
@@ -4513,14 +4513,14 @@
       "templateVersion": 1,
       "caseId": "DEMO-CASE-0001",
       "patientId": "DEMO-0001",
-      "title": "Entlassungsplan Thomas Demo",
+      "title": "Entlassungsplan Nikolaos Demo",
       "status": "draft",
       "fieldValues": {
-        "patient_name": "Thomas Demo",
+        "patient_name": "Nikolaos Demo",
         "admission_date": "2026-06-02",
         "discharge_plan": "Ambulante Weiterbehandlung Psychiatrie + Suchtberatung, Medikation Aripiprazol 10 mg"
       },
-      "renderedText": "Entlassungsplan für Thomas Demo — Demo-Dokument.",
+      "renderedText": "Entlassungsplan für Nikolaos Demo — Demo-Dokument.",
       "createdAt": "2026-06-14T10:00:00.000Z",
       "updatedAt": "2026-06-14T10:00:00.000Z"
     }
@@ -4529,7 +4529,7 @@
     {
       "id": "demo-cal-01",
       "type": "consultation",
-      "title": "Visite — Thomas Demo",
+      "title": "Visite — Nikolaos Demo",
       "patientId": "DEMO-0001",
       "caseId": "DEMO-CASE-0001",
       "startTime": "2026-06-14T09:00:00.000Z",

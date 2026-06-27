@@ -59,7 +59,7 @@ describe('demo fixture', () => {
     expect(Object.keys(fixture.workspace.butterflyAttestations ?? {}).length).toBeGreaterThanOrEqual(5)
     expect(fixture.workspace.anforderungen?.length).toBeGreaterThanOrEqual(5)
     expect(fixture.clinicalIntelligence?.latestRun?.dimensional.activeDimensions.length).toBeGreaterThanOrEqual(5)
-    expect(fixture.patient.vorname).toBe('Thomas')
+    expect(fixture.patient.vorname).toBe('Nikolaos')
     expect(fixture.patient.geschlecht).toBe('maennlich')
     expect(fixture.workspace.diagnoses.some((d) => d.icd10.code === 'F20.0')).toBe(true)
     expect(fixture.workspace.diagnoses.some((d) => d.icd10.code === 'F10.2')).toBe(true)

@@ -303,7 +303,7 @@ export const homepageContentFr: HomepageContent = {
         id: 'intelligence',
         label: 'Intelligence clinique',
         title: 'Profil dimensionnel & mécanismes',
-        description: 'Hypothèses déjà relues, courbes de sévérité et badges de statut · Anna Demo',
+        description: 'Hypothèses déjà relues, courbes de sévérité et badges de statut · Nikolaos Demo',
         imageSrc: '/homepage/demo-intelligence.png',
         imageAlt: 'Démo synthétique — intelligence clinique : graphiques dimensionnels et de mécanismes.',
       },
