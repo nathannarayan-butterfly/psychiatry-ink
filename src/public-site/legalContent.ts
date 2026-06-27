@@ -55,9 +55,9 @@ const EU_REP_DE =
 
 /** Data-residency statement (verified against repo deploy config). */
 const DATA_RESIDENCY_EN =
-  'All production data is hosted in the European Union. The database (Supabase) and AI processing are located in the EU (Frankfurt); the application is hosted on Google Cloud Run in the EU (region europe-west1).'
+  'Our core infrastructure is hosted in the European Union: the database (Supabase) is located in the EU (Frankfurt) and the application is hosted on Google Cloud Run in the EU (region europe-west1). AI sub-processors may process the content you submit in the EU or in third countries (including the USA), subject to appropriate safeguards such as the EU Standard Contractual Clauses and, where applicable, the EU–US Data Privacy Framework.'
 const DATA_RESIDENCY_DE =
-  'Alle Produktivdaten werden in der Europäischen Union gehostet. Die Datenbank (Supabase) und die KI-Verarbeitung befinden sich in der EU (Frankfurt); die Anwendung wird auf Google Cloud Run in der EU (Region europe-west1) gehostet.'
+  'Unsere Kerninfrastruktur wird in der Europäischen Union gehostet: Die Datenbank (Supabase) befindet sich in der EU (Frankfurt) und die Anwendung wird auf Google Cloud Run in der EU (Region europe-west1) gehostet. KI-Unterauftragsverarbeiter können die von Ihnen übermittelten Inhalte in der EU oder in Drittländern (einschließlich der USA) verarbeiten, vorbehaltlich geeigneter Garantien wie der EU-Standardvertragsklauseln und, soweit anwendbar, des EU-US Data Privacy Framework.'
 
 export type LegalBlock =
   | { type: 'p'; text: string }
@@ -89,8 +89,8 @@ export { LEGAL_LAST_UPDATED }
 
 function lastUpdatedLabel(locale: PublicLocale): string {
   return locale === 'de'
-    ? `Zuletzt aktualisiert: 26. Juni 2026`
-    : `Last updated: 26 June 2026`
+    ? `Zuletzt aktualisiert: 27. Juni 2026`
+    : `Last updated: 27 June 2026`
 }
 
 /* ───────────────────────────── PRIVACY ──────────────────────────────────── */
@@ -188,7 +188,7 @@ const privacyEn: LegalDoc = {
             'Supabase — database, authentication and storage.',
             'Google Cloud (Cloud Run) — application hosting and infrastructure.',
             'Stripe — payment processing.',
-            'OpenAI and DeepSeek — AI processing for optional AI-assisted features.',
+            'OpenAI (USA), Google (Gemini API, USA), Mistral AI (EU) and DeepSeek (non-EU) — AI processing for optional AI-assisted features.',
           ],
         },
         { type: 'p', text: `Hosting region / data residency: ${DATA_RESIDENCY_EN}` },
@@ -344,7 +344,7 @@ const privacyDe: LegalDoc = {
             'Supabase — Datenbank, Authentifizierung und Speicher.',
             'Google Cloud (Cloud Run) — Hosting der Anwendung und Infrastruktur.',
             'Stripe — Zahlungsabwicklung.',
-            'OpenAI und DeepSeek — KI-Verarbeitung für optionale KI-gestützte Funktionen.',
+            'OpenAI (USA), Google (Gemini API, USA), Mistral AI (EU) und DeepSeek (Nicht-EU) — KI-Verarbeitung für optionale KI-gestützte Funktionen.',
           ],
         },
         { type: 'p', text: `Hosting-Region / Datenresidenz: ${DATA_RESIDENCY_DE}` },

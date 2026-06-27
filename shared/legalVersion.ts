@@ -9,4 +9,4 @@
  * value is stored verbatim as `privacy_version` / `terms_version` on every
  * recorded acceptance, so a bump re-prompts users for fresh consent.
  */
-export const LEGAL_LAST_UPDATED = '2026-06-26'
+export const LEGAL_LAST_UPDATED = '2026-06-27'
