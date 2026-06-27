@@ -162,17 +162,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Passphrase backup from signup wizard: when email confirmation delayed account
   // creation, apply `setupAccountCloudBackup` on first authenticated session.
+  // The parked passphrase is TTL-bounded (see pendingSignupPassphrase) and is
+  // cleared on BOTH success and failure: leaving a failed value behind would
+  // keep plaintext-equivalent material in localStorage and re-trigger a failing
+  // setup on every subsequent session. On failure the user can still set up the
+  // backup later via the normal passphrase unlock/restore path in settings.
   useEffect(() => {
     if (!user) return
     const pendingPassphrase = getPendingSignupPassphrase()
     if (!pendingPassphrase) return
     void setupAccountCloudBackup(pendingPassphrase, user.id)
       .then((backup) => {
-        clearPendingSignupPassphrase()
         downloadPassphraseBackupFile(backup)
       })
       .catch(() => {
-        // Leave pending for retry on next session; non-fatal.
+        // Non-fatal: fall back to the manual restore path on a later session.
+      })
+      .finally(() => {
+        clearPendingSignupPassphrase()
       })
   }, [user])
 
