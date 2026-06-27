@@ -64,7 +64,10 @@ export function validateDemoFixture(
   }
 
   const requiredAufnahme = defaultAufnahmeSections.map((s) => s.id)
-  const aufnahme = fixture.workspace.documents.aufnahme
+  const aufnahme = fixture.workspace?.documents?.aufnahme
+  if (!fixture.workspace?.documents) {
+    pushError(errors, 'documents_missing', 'workspace.documents fehlt')
+  }
   if (!aufnahme) {
     pushError(errors, 'aufnahme_missing', 'Aufnahme-Dokument fehlt')
   } else {
@@ -75,31 +78,37 @@ export function validateDemoFixture(
     }
   }
 
-  if (fixture.workspace.diagnoses.length < 3) {
+  const workspace = fixture.workspace
+  if (!workspace) {
+    pushError(errors, 'workspace_missing', 'workspace fehlt')
+    return { ok: false, errors, warnings }
+  }
+
+  if ((workspace.diagnoses?.length ?? 0) < 3) {
     pushError(errors, 'diagnoses_count', 'Mindestens 3 Diagnosen erforderlich')
   }
-  if (!fixture.workspace.diagnoses.some((d) => d.icd10.code === 'F20.0')) {
+  if (!workspace.diagnoses?.some((d) => d.icd10.code === 'F20.0')) {
     pushError(errors, 'diagnosis_f200', 'F20.0 fehlt in Diagnoseliste')
   }
-  if (!fixture.workspace.diagnoses.some((d) => d.icd10.code === 'F10.2')) {
+  if (!workspace.diagnoses?.some((d) => d.icd10.code === 'F10.2')) {
     pushError(errors, 'diagnosis_f102', 'F10.2 fehlt in Diagnoseliste')
   }
-  if (fixture.workspace.diagnoses.some((d) => d.icd10.code.startsWith('F25'))) {
+  if (workspace.diagnoses?.some((d) => d.icd10.code.startsWith('F25'))) {
     pushError(errors, 'diagnosis_f25', 'Schizoaffektive Störung (F25.x) darf nicht in der Diagnoseliste stehen')
   }
 
-  if (fixture.verlaufFeed.length < 12) {
+  if ((fixture.verlaufFeed?.length ?? 0) < 12) {
     pushError(errors, 'verlauf_count', 'Mindestens 12 Verlauf-Einträge erforderlich')
   }
 
-  if (fixture.workspace.labGraphs.length === 0) {
+  if ((workspace.labGraphs?.length ?? 0) === 0) {
     pushError(errors, 'lab_missing', 'Labor-Graph fehlt')
   } else {
-    const dates = new Set(fixture.workspace.labGraphs[0]?.entries.map((e) => e.date.slice(0, 10)))
+    const dates = new Set(workspace.labGraphs[0]?.entries.map((e) => e.date.slice(0, 10)))
     if (dates.size < 2) pushWarn(warnings, 'lab_dates', 'Weniger als 2 Labordaten empfohlen')
   }
 
-  if (fixture.laborBefunde.length < 2) {
+  if ((fixture.laborBefunde?.length ?? 0) < 2) {
     pushError(errors, 'labor_befunde_count', 'Mindestens 2 Laborbefunde erforderlich')
   } else {
     const befundDates = fixture.laborBefunde.map((b) => b.date.slice(0, 10)).sort()
@@ -116,35 +125,35 @@ export function validateDemoFixture(
     }
   }
 
-  const meds = fixture.workspace.medicationPlanState?.plans[0]?.medications ?? []
+  const meds = workspace.medicationPlanState?.plans[0]?.medications ?? []
   if (meds.filter((m) => m.status === 'active').length < 1) {
     pushError(errors, 'med_active', 'Mindestens ein aktives Medikament erforderlich')
   }
 
-  if (!fixture.workspace.clinicalImprints?.imprints?.length) {
+  if (!workspace.clinicalImprints?.imprints?.length) {
     pushWarn(warnings, 'imprints', 'Keine Clinical Imprints — werden beim Seed ggf. reindexiert')
   }
 
-  if (!fixture.workspace.isdmInput) {
+  if (!workspace.isdmInput) {
     pushWarn(warnings, 'isdm_input', 'ISDM-Eingabe fehlt — Phänomenologie-Panel leer')
   }
-  if (!fixture.workspace.isdmAnalysis) {
+  if (!workspace.isdmAnalysis) {
     pushWarn(warnings, 'isdm_analysis', 'ISDM-Analyse fehlt — wird ggf. beim Öffnen neu berechnet')
   }
   if (!fixture.clinicalIntelligence?.latestRun?.dimensional.activeDimensions.length) {
     pushWarn(warnings, 'clinical_intelligence', 'Pre-baked Clinical Intelligence run recommended for demo')
   }
-  if (!fixture.workspace.butterflyAttestations || Object.keys(fixture.workspace.butterflyAttestations).length < 5) {
+  if (!workspace.butterflyAttestations || Object.keys(workspace.butterflyAttestations).length < 5) {
     pushWarn(warnings, 'butterfly_attestations', 'Wenige Butterfly-Attestierungen — Kriterienprüfung eingeschränkt')
   }
-  if (!fixture.workspace.anforderungen || fixture.workspace.anforderungen.length < 5) {
+  if (!workspace.anforderungen || workspace.anforderungen.length < 5) {
     pushWarn(warnings, 'anforderungen', 'Wenige Anforderungen — Workflow-Demo eingeschränkt')
   }
-  if (fixture.befundRecords.length < 2) {
+  if ((fixture.befundRecords?.length ?? 0) < 2) {
     pushWarn(warnings, 'befund_records', 'EKG und EEG empfohlen für Befunde-Workflow')
   }
 
-  for (const entry of fixture.verlaufFeed) {
+  for (const entry of fixture.verlaufFeed ?? []) {
     scanTextForPhi(entry.content, `verlaufFeed.${entry.id}`, errors, warnings)
   }
   if (aufnahme) {
@@ -153,7 +162,7 @@ export function validateDemoFixture(
     }
   }
 
-  for (const item of fixture.calendarItems) {
+  for (const item of fixture.calendarItems ?? []) {
     if (item.caseId && item.caseId !== DEMO_CASE_ID) {
       pushError(errors, 'calendar_case_ref', 'Kalender-Eintrag verweist auf falsche caseId', item.id)
     }

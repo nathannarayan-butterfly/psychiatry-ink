@@ -18,7 +18,10 @@ const outPath = resolve(process.cwd(), 'src/demo/demoPatient.fixture.json')
 
 async function tryDeepSeekRegen(): Promise<DemoPatientFixture | null> {
   const apiKey = process.env.DEEPSEEK_API_KEY?.trim()
-  if (!apiKey) return null
+  if (!apiKey) {
+    console.warn('[demo-regen] DEEPSEEK_API_KEY not set — using local builder')
+    return null
+  }
 
   const prompt = `Return ONLY valid JSON matching DemoPatientFixture for a synthetic German psychiatry demo patient.
 Markers: isDemoPatient true, demoSeedVersion "v3", demoPatientId "DEMO-0001", demoCaseId "DEMO-CASE-0001".
@@ -43,13 +46,25 @@ Use clinically realistic German text with diagnostic uncertainty (F20.0, F10.2).
       }),
     })
     if (!response.ok) {
-      console.warn('[demo-regen] DeepSeek API failed:', response.status)
+      const body = await response.text().catch(() => '')
+      console.warn(`[demo-regen] DeepSeek API failed: HTTP ${response.status}${body ? ` — ${body.slice(0, 120)}` : ''}`)
       return null
     }
     const data = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> }
     const content = data.choices?.[0]?.message?.content?.trim()
-    if (!content) return null
+    if (!content) {
+      console.warn('[demo-regen] DeepSeek returned empty content — using local builder')
+      return null
+    }
     const parsed = JSON.parse(content) as DemoPatientFixture
+    const probe = validateDemoFixture(parsed, { expectedSeedVersion: parsed.demoSeedVersion ?? 'v3' })
+    if (!probe.ok) {
+      console.warn(
+        `[demo-regen] DeepSeek fixture failed validation (${probe.errors.length} errors) — using local builder`,
+      )
+      probe.errors.slice(0, 5).forEach((e) => console.warn(`  ${e.code}: ${e.message}`))
+      return null
+    }
     return parsed
   } catch (error) {
     console.warn('[demo-regen] DeepSeek error:', error)
