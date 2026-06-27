@@ -67,8 +67,16 @@ vi.mock('../../services/llmProvider', () => ({
 // The soft-lock gate in runAiFeature delegates to subscriptionAccess (which
 // reads the account via the Supabase seam). These credit-flow tests isolate the
 // credit logic; the access decision itself is covered by subscriptionAccess.test.ts.
+// computeAccess + AccessLockedError are also stubbed because creditGuard's spend
+// gate (assertCanSpendCredits) imports them; here access is always granted so the
+// credit math is exercised in isolation.
 vi.mock('../../services/subscriptionAccess', () => ({
   assertAccess: vi.fn().mockResolvedValue(undefined),
+  computeAccess: vi.fn(() => ({ access: true, locked: false, reason: 'no_account' })),
+  AccessLockedError: class AccessLockedError extends Error {
+    code = 'subscription_required'
+    reason = 'subscription_required'
+  },
 }))
 
 import { callLlm } from '../../services/llmProvider'

@@ -737,3 +737,78 @@
   letter-spacing: normal;
   text-transform: none;
 }
+
+/* ── Zoned credits layout (Status / Get credits / Gifting / Records / Admin) ─ */
+.credits-group {
+  margin-bottom: 1.75rem;
+}
+
+.credits-group__title {
+  margin: 0 0 0.85rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--clinical-muted, color-mix(in srgb, var(--text-main) 55%, transparent));
+}
+
+/* Gifting & referrals: compact 2-up row that collapses on narrow screens. */
+.credits-gift-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.credits-gift-row > .credits-panel {
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+/* Subscribe CTA — leads the "Get credits" group with a subtle accent. */
+.credits-panel--accent {
+  border-color: color-mix(in srgb, var(--text-main) 22%, var(--border-soft, #e8e8e4));
+  background: color-mix(in srgb, var(--text-main) 3%, var(--surface-elevated, #fff));
+}
+
+.credits-subscribe__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+
+.credits-subscribe__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.1rem;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 0.5rem;
+  background: var(--surface-elevated, #fff);
+  color: var(--text-main, #1a1a1a);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.credits-subscribe__btn:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--text-main) 35%, transparent);
+}
+
+.credits-subscribe__btn--primary {
+  border-color: var(--text-main, #1a1a1a);
+  background: var(--text-main, #1a1a1a);
+  color: var(--bg-main, #fff);
+}
+
+.credits-subscribe__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .credits-gift-row {
+    grid-template-columns: 1fr;
+  }
+}

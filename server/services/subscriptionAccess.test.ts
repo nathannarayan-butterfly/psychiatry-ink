@@ -60,13 +60,48 @@ describe('computeAccess', () => {
     expect(r.daysRemaining).toBe(5)
   })
 
-  it('grants access when purchased credits remain after the trial lapses', () => {
+  it('BLOCKS a lapsed trial with banked purchased credits but no subscription (enforcement ON)', () => {
     const r = computeAccess(
       account({ trial_ends_at: '2026-06-01T00:00:00.000Z', purchased_credits: 120 }),
       NOW,
+      { requireSubscriptionForCredits: true },
+    )
+    // Banked credits no longer unlock spending — the user must subscribe. The
+    // distinct reason drives a "subscribe to use your credits" prompt.
+    expect(r.access).toBe(false)
+    expect(r.locked).toBe(true)
+    expect(r.reason).toBe('subscription_required')
+  })
+
+  it('restores the legacy purchased-credits grant when enforcement is OFF', () => {
+    const r = computeAccess(
+      account({ trial_ends_at: '2026-06-01T00:00:00.000Z', purchased_credits: 120 }),
+      NOW,
+      { requireSubscriptionForCredits: false },
     )
     expect(r.access).toBe(true)
+    expect(r.locked).toBe(false)
     expect(r.reason).toBe('purchased_credits')
+  })
+
+  it('still grants access to an active subscriber holding purchased credits', () => {
+    const r = computeAccess(
+      account({ subscription_status: 'active', purchased_credits: 120 }),
+      NOW,
+      { requireSubscriptionForCredits: true },
+    )
+    expect(r.access).toBe(true)
+    expect(r.reason).toBe('subscription_active')
+  })
+
+  it('still grants access to a trial user holding purchased credits', () => {
+    const r = computeAccess(
+      account({ trial_ends_at: '2026-06-30T12:00:00.000Z', purchased_credits: 120 }),
+      NOW,
+      { requireSubscriptionForCredits: true },
+    )
+    expect(r.access).toBe(true)
+    expect(r.reason).toBe('trial_active')
   })
 
   it('keeps access for legacy accounts that never started a trial', () => {
@@ -108,5 +143,12 @@ describe('AccessLockedError', () => {
     expect(err.code).toBe('subscription_required')
     expect(err.reason).toBe('locked_trial_expired')
     expect(err.message).toMatch(/trial has ended/i)
+  })
+
+  it('uses a credits-specific message for the subscription_required reason', () => {
+    const err = new AccessLockedError('subscription_required')
+    expect(err.code).toBe('subscription_required')
+    expect(err.reason).toBe('subscription_required')
+    expect(err.message).toMatch(/active subscription is required to use your credits/i)
   })
 })

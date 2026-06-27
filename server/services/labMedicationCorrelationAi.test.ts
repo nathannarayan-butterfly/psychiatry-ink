@@ -50,9 +50,16 @@ vi.mock('./creditMigration', () => ({
   accountIdFromUserId: (userId?: string) => userId?.trim() || 'default',
 }))
 
-// Soft-lock gate isolated — covered by subscriptionAccess.test.ts.
+// Soft-lock gate isolated — covered by subscriptionAccess.test.ts. computeAccess
+// + AccessLockedError are stubbed because creditGuard's spend gate imports them;
+// access is always granted so the credit-flow assertions run in isolation.
 vi.mock('./subscriptionAccess', () => ({
   assertAccess: vi.fn().mockResolvedValue(undefined),
+  computeAccess: vi.fn(() => ({ access: true, locked: false, reason: 'no_account' })),
+  AccessLockedError: class AccessLockedError extends Error {
+    code = 'subscription_required'
+    reason = 'subscription_required'
+  },
 }))
 
 vi.mock('./llmProvider', () => ({

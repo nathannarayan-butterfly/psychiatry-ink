@@ -26,6 +26,7 @@ import {
   startCreditCheckout,
   startGiftVoucherCheckout,
   startSaveCardCheckout,
+  startSubscriptionCheckout,
   updateAutoRecharge,
   type AdminVoucherListItem,
   type AiCreditHistoryEntry,
@@ -35,6 +36,7 @@ import {
   type AutoRechargeState,
   type GiftVoucherResult,
   type ReferralInfo,
+  type SubscriptionInterval,
 } from '../../services/aiCreditsApi'
 import { ClinicalLoading } from '../ui/ClinicalLoading'
 import { SubscriptionBanner } from './SubscriptionBanner'
@@ -287,6 +289,70 @@ function AutoRechargeSection({ state, stripeReady, locale, onChanged }: AutoRech
           {message ? <p className="credits-page__notice credits-page__notice--success">{message}</p> : null}
           {error ? <p className="team-settings-error">{error}</p> : null}
         </div>
+      )}
+    </section>
+  )
+}
+
+interface SubscribeCtaSectionProps {
+  stripeReady: boolean
+}
+
+/**
+ * Always-visible subscribe CTA. An active subscription unlocks all AI features
+ * and — since the billing revamp — is required to SPEND banked credits, so this
+ * leads the "Get credits" group.
+ */
+function SubscribeCtaSection({ stripeReady }: SubscribeCtaSectionProps) {
+  const { t } = useTranslation()
+  const [busy, setBusy] = useState<SubscriptionInterval | null>(null)
+
+  const handleSubscribe = async (interval: SubscriptionInterval) => {
+    setBusy(interval)
+    try {
+      const { url } = await startSubscriptionCheckout(interval)
+      if (url) {
+        window.location.href = url
+        return
+      }
+    } catch {
+      // Checkout errors surface via the page-level notice; just reset busy.
+    }
+    setBusy(null)
+  }
+
+  return (
+    <section className="credits-panel credits-panel--accent" aria-labelledby="credits-subscribe-heading">
+      <div className="credits-panel__header">
+        <h2 id="credits-subscribe-heading" className="credits-panel__heading">
+          {t('creditsSubscribeTitle')}
+        </h2>
+        <Sparkles className="credits-panel__heading-icon" strokeWidth={1.5} aria-hidden />
+      </div>
+      <p className="credits-panel__sub">{t('creditsSubscribeBody')}</p>
+
+      {stripeReady ? (
+        <div className="credits-subscribe__actions">
+          <button
+            type="button"
+            className="credits-subscribe__btn credits-subscribe__btn--primary"
+            disabled={busy !== null}
+            onClick={() => void handleSubscribe('month')}
+          >
+            <CreditCard className="h-4 w-4" strokeWidth={1.5} aria-hidden />
+            {busy === 'month' ? t('creditsCheckoutRedirect') : t('creditsSubscribeMonthly')}
+          </button>
+          <button
+            type="button"
+            className="credits-subscribe__btn"
+            disabled={busy !== null}
+            onClick={() => void handleSubscribe('year')}
+          >
+            {busy === 'year' ? t('creditsCheckoutRedirect') : t('creditsSubscribeYearly')}
+          </button>
+        </div>
+      ) : (
+        <p className="credits-panel__sub credits-panel__sub--muted">{t('creditsStripeNotConfigured')}</p>
       )}
     </section>
   )
@@ -703,6 +769,11 @@ export function CreditsDashboardPage({ onBack }: CreditsDashboardPageProps) {
           </div>
         </section>
 
+        <div className="credits-group">
+          <h2 className="credits-group__title">{t('creditsGroupGet')}</h2>
+
+          <SubscribeCtaSection stripeReady={stripeReady} />
+
         <section className="credits-panel" aria-labelledby="credits-purchase-heading">
           <div className="credits-panel__header">
             <h2 id="credits-purchase-heading" className="credits-panel__heading">
@@ -749,6 +820,13 @@ export function CreditsDashboardPage({ onBack }: CreditsDashboardPageProps) {
           )}
         </section>
 
+        <AutoRechargeSection
+          state={summary?.autoRecharge}
+          stripeReady={stripeReady}
+          locale={locale}
+          onChanged={() => void load()}
+        />
+
         <section className="credits-panel" aria-labelledby="voucher-redeem-heading">
           <div className="credits-panel__header">
             <h2 id="voucher-redeem-heading" className="credits-panel__heading">
@@ -789,6 +867,12 @@ export function CreditsDashboardPage({ onBack }: CreditsDashboardPageProps) {
             </p>
           ) : null}
         </section>
+
+        </div>
+
+        <div className="credits-group">
+          <h2 className="credits-group__title">{t('creditsGroupGifting')}</h2>
+          <div className="credits-gift-row">
 
         <section className="credits-panel" aria-labelledby="voucher-gift-heading">
           <div className="credits-panel__header">
@@ -859,7 +943,143 @@ export function CreditsDashboardPage({ onBack }: CreditsDashboardPageProps) {
           )}
         </section>
 
+        {referral ? (
+          <section className="credits-panel" aria-labelledby="referral-heading">
+            <div className="credits-panel__header">
+              <h2 id="referral-heading" className="credits-panel__heading">
+                {t('referralHeading')}
+              </h2>
+              <Users className="credits-panel__heading-icon" strokeWidth={1.5} aria-hidden />
+            </div>
+            <p className="credits-panel__sub">{t('referralSub')}</p>
+
+            <div className="referral-link">
+              <span className="referral-link__label">{t('referralLinkLabel')}</span>
+              <div className="referral-link__row">
+                <code className="referral-link__value">{referral.inviteUrl}</code>
+                <button
+                  type="button"
+                  className="voucher-gift-result__copy"
+                  onClick={() => void handleCopy(referral.inviteUrl, 'referral')}
+                >
+                  {copied === 'referral' ? (
+                    <Check className="h-4 w-4" strokeWidth={1.5} aria-hidden />
+                  ) : (
+                    <Copy className="h-4 w-4" strokeWidth={1.5} aria-hidden />
+                  )}
+                  {copied === 'referral' ? t('voucherCopied') : t('voucherCopy')}
+                </button>
+              </div>
+            </div>
+
+            <div className="credits-stats">
+              <article className="credits-stat">
+                <span className="credits-stat__label">{t('referralStatInvited')}</span>
+                <span className="credits-stat__value">{referral.stats.invited.toLocaleString(locale)}</span>
+              </article>
+              <article className="credits-stat">
+                <span className="credits-stat__label">{t('referralStatConverted')}</span>
+                <span className="credits-stat__value">{referral.stats.converted.toLocaleString(locale)}</span>
+              </article>
+              <article className="credits-stat">
+                <span className="credits-stat__label">{t('referralStatEarned')}</span>
+                <span className="credits-stat__value">{referral.stats.creditsEarned.toLocaleString(locale)}</span>
+              </article>
+            </div>
+          </section>
+        ) : null}
+          </div>
+        </div>
+
+        <div className="credits-group">
+          <h2 className="credits-group__title">{t('creditsGroupRecords')}</h2>
+
+        <div className="credits-dual">
+          <section className="credits-panel credits-panel--table" aria-labelledby="credits-history-heading">
+            <h2 id="credits-history-heading" className="credits-panel__heading">
+              {t('creditsDashboardHistoryHeading')}
+            </h2>
+            <p className="credits-panel__sub">{t('creditsDashboardHistorySub')}</p>
+            <div className="credits-table-wrap">
+              <table className="credits-table">
+                <thead>
+                  <tr>
+                    <th>{t('aiUsageTrackerColTime')}</th>
+                    <th>{t('aiUsageTrackerColFeature')}</th>
+                    <th>{t('creditsDashboardColMode')}</th>
+                    <th>{t('creditsDashboardColCredits')}</th>
+                    <th>{t('aiUsageTrackerColStatus')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {history.map((row) => (
+                    <tr key={row.id}>
+                      <td className="credits-table__mono">{formatDateTime(row.createdAt, locale)}</td>
+                      <td>{row.featureKey}</td>
+                      <td>{row.mode}</td>
+                      <td className="credits-table__mono">{row.creditsCharged}</td>
+                      <td>
+                        {row.success
+                          ? t('aiUsageTrackerStatusOk')
+                          : row.errorCode ?? t('aiUsageTrackerStatusError')}
+                      </td>
+                    </tr>
+                  ))}
+                  {history.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="credits-table__empty">
+                        {t('aiUsageTrackerEmpty')}
+                      </td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section className="credits-panel credits-panel--table" aria-labelledby="credits-ledger-heading">
+            <h2 id="credits-ledger-heading" className="credits-panel__heading">
+              {t('creditsDashboardLedgerHeading')}
+            </h2>
+            <p className="credits-panel__sub">{t('creditsDashboardLedgerSub')}</p>
+            <div className="credits-table-wrap">
+              <table className="credits-table">
+                <thead>
+                  <tr>
+                    <th>{t('aiUsageTrackerColTime')}</th>
+                    <th>{t('creditsDashboardColType')}</th>
+                    <th>{t('creditsDashboardColCredits')}</th>
+                    <th>{t('creditsDashboardColNote')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ledger.map((row) => (
+                    <tr key={row.id}>
+                      <td className="credits-table__mono">{formatDateTime(row.createdAt, locale)}</td>
+                      <td>{t(LEDGER_TYPE_KEYS[ledgerTypeLabel(row.type)])}</td>
+                      <td className={`credits-table__mono${row.credits < 0 ? ' credits-table__mono--debit' : ''}`}>
+                        {row.credits > 0 ? `+${row.credits}` : row.credits}
+                      </td>
+                      <td className="credits-table__note">{row.note ?? '—'}</td>
+                    </tr>
+                  ))}
+                  {ledger.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="credits-table__empty">
+                        {t('creditsDashboardLedgerEmpty')}
+                      </td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+        </div>
+
         {isAdmin ? (
+          <div className="credits-group">
+            <h2 className="credits-group__title">{t('creditsGroupAdmin')}</h2>
           <section className="credits-panel" aria-labelledby="voucher-admin-heading">
             <div className="credits-panel__header">
               <h2 id="voucher-admin-heading" className="credits-panel__heading">
@@ -1049,142 +1269,8 @@ export function CreditsDashboardPage({ onBack }: CreditsDashboardPageProps) {
               </table>
             </div>
           </section>
+          </div>
         ) : null}
-
-        {referral ? (
-          <section className="credits-panel" aria-labelledby="referral-heading">
-            <div className="credits-panel__header">
-              <h2 id="referral-heading" className="credits-panel__heading">
-                {t('referralHeading')}
-              </h2>
-              <Users className="credits-panel__heading-icon" strokeWidth={1.5} aria-hidden />
-            </div>
-            <p className="credits-panel__sub">{t('referralSub')}</p>
-
-            <div className="referral-link">
-              <span className="referral-link__label">{t('referralLinkLabel')}</span>
-              <div className="referral-link__row">
-                <code className="referral-link__value">{referral.inviteUrl}</code>
-                <button
-                  type="button"
-                  className="voucher-gift-result__copy"
-                  onClick={() => void handleCopy(referral.inviteUrl, 'referral')}
-                >
-                  {copied === 'referral' ? (
-                    <Check className="h-4 w-4" strokeWidth={1.5} aria-hidden />
-                  ) : (
-                    <Copy className="h-4 w-4" strokeWidth={1.5} aria-hidden />
-                  )}
-                  {copied === 'referral' ? t('voucherCopied') : t('voucherCopy')}
-                </button>
-              </div>
-            </div>
-
-            <div className="credits-stats">
-              <article className="credits-stat">
-                <span className="credits-stat__label">{t('referralStatInvited')}</span>
-                <span className="credits-stat__value">{referral.stats.invited.toLocaleString(locale)}</span>
-              </article>
-              <article className="credits-stat">
-                <span className="credits-stat__label">{t('referralStatConverted')}</span>
-                <span className="credits-stat__value">{referral.stats.converted.toLocaleString(locale)}</span>
-              </article>
-              <article className="credits-stat">
-                <span className="credits-stat__label">{t('referralStatEarned')}</span>
-                <span className="credits-stat__value">{referral.stats.creditsEarned.toLocaleString(locale)}</span>
-              </article>
-            </div>
-          </section>
-        ) : null}
-
-        <AutoRechargeSection
-          state={summary?.autoRecharge}
-          stripeReady={stripeReady}
-          locale={locale}
-          onChanged={() => void load()}
-        />
-
-        <div className="credits-dual">
-          <section className="credits-panel credits-panel--table" aria-labelledby="credits-history-heading">
-            <h2 id="credits-history-heading" className="credits-panel__heading">
-              {t('creditsDashboardHistoryHeading')}
-            </h2>
-            <p className="credits-panel__sub">{t('creditsDashboardHistorySub')}</p>
-            <div className="credits-table-wrap">
-              <table className="credits-table">
-                <thead>
-                  <tr>
-                    <th>{t('aiUsageTrackerColTime')}</th>
-                    <th>{t('aiUsageTrackerColFeature')}</th>
-                    <th>{t('creditsDashboardColMode')}</th>
-                    <th>{t('creditsDashboardColCredits')}</th>
-                    <th>{t('aiUsageTrackerColStatus')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {history.map((row) => (
-                    <tr key={row.id}>
-                      <td className="credits-table__mono">{formatDateTime(row.createdAt, locale)}</td>
-                      <td>{row.featureKey}</td>
-                      <td>{row.mode}</td>
-                      <td className="credits-table__mono">{row.creditsCharged}</td>
-                      <td>
-                        {row.success
-                          ? t('aiUsageTrackerStatusOk')
-                          : row.errorCode ?? t('aiUsageTrackerStatusError')}
-                      </td>
-                    </tr>
-                  ))}
-                  {history.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="credits-table__empty">
-                        {t('aiUsageTrackerEmpty')}
-                      </td>
-                    </tr>
-                  ) : null}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          <section className="credits-panel credits-panel--table" aria-labelledby="credits-ledger-heading">
-            <h2 id="credits-ledger-heading" className="credits-panel__heading">
-              {t('creditsDashboardLedgerHeading')}
-            </h2>
-            <p className="credits-panel__sub">{t('creditsDashboardLedgerSub')}</p>
-            <div className="credits-table-wrap">
-              <table className="credits-table">
-                <thead>
-                  <tr>
-                    <th>{t('aiUsageTrackerColTime')}</th>
-                    <th>{t('creditsDashboardColType')}</th>
-                    <th>{t('creditsDashboardColCredits')}</th>
-                    <th>{t('creditsDashboardColNote')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ledger.map((row) => (
-                    <tr key={row.id}>
-                      <td className="credits-table__mono">{formatDateTime(row.createdAt, locale)}</td>
-                      <td>{t(LEDGER_TYPE_KEYS[ledgerTypeLabel(row.type)])}</td>
-                      <td className={`credits-table__mono${row.credits < 0 ? ' credits-table__mono--debit' : ''}`}>
-                        {row.credits > 0 ? `+${row.credits}` : row.credits}
-                      </td>
-                      <td className="credits-table__note">{row.note ?? '—'}</td>
-                    </tr>
-                  ))}
-                  {ledger.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="credits-table__empty">
-                        {t('creditsDashboardLedgerEmpty')}
-                      </td>
-                    </tr>
-                  ) : null}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        </div>
       </div>
     </div>
   )

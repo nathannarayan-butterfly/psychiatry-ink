@@ -130,7 +130,7 @@ describe('handleStripeWebhook — gift voucher mint', () => {
           mode: 'payment',
           payment_status: 'paid',
           client_reference_id: 'buyer-1',
-          metadata: { kind: 'gift_voucher', userId: 'buyer-1', giftPackId: 'gift_500x6' },
+          metadata: { kind: 'gift_voucher', userId: 'buyer-1', giftPackId: 'gift_1000' },
         },
       },
     })
@@ -141,8 +141,11 @@ describe('handleStripeWebhook — gift voucher mint', () => {
     const arg = createVoucherFromPurchase.mock.calls[0][0]
     expect(arg.sessionId).toBe('cs_gift_1')
     expect(arg.buyerUserId).toBe('buyer-1')
-    expect(arg.creditsPerPeriod).toBe(500)
-    expect(arg.totalPeriods).toBe(6)
+    // Purchasable gift vouchers are now one-time lump top-ups: the full amount
+    // is granted in a single period (totalPeriods = 1).
+    expect(arg.creditsPerPeriod).toBe(1000)
+    expect(arg.totalPeriods).toBe(1)
+    expect(arg.validDays).toBe(180)
     // A non-gift credit grant must NOT run for a gift checkout.
     expect(addPurchasedCredits).not.toHaveBeenCalled()
   })

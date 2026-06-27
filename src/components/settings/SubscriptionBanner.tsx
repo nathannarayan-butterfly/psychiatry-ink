@@ -29,6 +29,8 @@ const YEARLY_PRICE = '£239.90'
 type Copy = {
   lockedTitle: string
   lockedBody: string
+  creditsLockedTitle: string
+  creditsLockedBody: string
   trialTitle: (days: number) => string
   trialBody: string
   pastDueTitle: string
@@ -43,7 +45,10 @@ const COPY: Record<UiLanguage, Copy> = {
   en: {
     lockedTitle: 'Your free trial has ended',
     lockedBody:
-      'Subscribe or add a credit bundle to keep using AI features. Your data stays safe and fully accessible.',
+      'Subscribe to keep using AI features. Your data stays safe and fully accessible.',
+    creditsLockedTitle: 'An active subscription is required to use your credits',
+    creditsLockedBody:
+      'Your purchased credits stay banked and never expire. Subscribe to start spending them on AI features again.',
     trialTitle: (days) => `Your free trial ends in ${days} ${days === 1 ? 'day' : 'days'}`,
     trialBody: 'Subscribe now to keep uninterrupted access to AI features.',
     pastDueTitle: 'Your last payment failed',
@@ -57,7 +62,10 @@ const COPY: Record<UiLanguage, Copy> = {
   de: {
     lockedTitle: 'Ihre kostenlose Testphase ist beendet',
     lockedBody:
-      'Abonnieren Sie oder kaufen Sie ein Credit-Paket, um KI-Funktionen weiter zu nutzen. Ihre Daten bleiben sicher und vollständig zugänglich.',
+      'Abonnieren Sie, um KI-Funktionen weiter zu nutzen. Ihre Daten bleiben sicher und vollständig zugänglich.',
+    creditsLockedTitle: 'Abonnement erforderlich, um Ihre Credits zu nutzen',
+    creditsLockedBody:
+      'Ihre gekauften Credits bleiben erhalten und verfallen nicht. Abonnieren Sie, um sie wieder für KI-Funktionen einzusetzen.',
     trialTitle: (days) => `Ihre Testphase endet in ${days} ${days === 1 ? 'Tag' : 'Tagen'}`,
     trialBody: 'Abonnieren Sie jetzt für ununterbrochenen Zugang zu KI-Funktionen.',
     pastDueTitle: 'Ihre letzte Zahlung ist fehlgeschlagen',
@@ -71,7 +79,10 @@ const COPY: Record<UiLanguage, Copy> = {
   fr: {
     lockedTitle: 'Votre essai gratuit est terminé',
     lockedBody:
-      'Abonnez-vous ou ajoutez un pack de crédits pour continuer à utiliser les fonctions IA. Vos données restent en sécurité et entièrement accessibles.',
+      'Abonnez-vous pour continuer à utiliser les fonctions IA. Vos données restent en sécurité et entièrement accessibles.',
+    creditsLockedTitle: 'Un abonnement actif est requis pour utiliser vos crédits',
+    creditsLockedBody:
+      'Vos crédits achetés restent acquis et n’expirent pas. Abonnez-vous pour recommencer à les utiliser pour les fonctions IA.',
     trialTitle: (days) => `Votre essai gratuit se termine dans ${days} ${days === 1 ? 'jour' : 'jours'}`,
     trialBody: 'Abonnez-vous maintenant pour conserver un accès ininterrompu aux fonctions IA.',
     pastDueTitle: 'Votre dernier paiement a échoué',
@@ -85,7 +96,10 @@ const COPY: Record<UiLanguage, Copy> = {
   es: {
     lockedTitle: 'Tu prueba gratuita ha finalizado',
     lockedBody:
-      'Suscríbete o añade un paquete de créditos para seguir usando las funciones de IA. Tus datos permanecen seguros y totalmente accesibles.',
+      'Suscríbete para seguir usando las funciones de IA. Tus datos permanecen seguros y totalmente accesibles.',
+    creditsLockedTitle: 'Se requiere una suscripción activa para usar tus créditos',
+    creditsLockedBody:
+      'Tus créditos comprados se conservan y no caducan. Suscríbete para volver a usarlos en las funciones de IA.',
     trialTitle: (days) => `Tu prueba gratuita termina en ${days} ${days === 1 ? 'día' : 'días'}`,
     trialBody: 'Suscríbete ahora para mantener el acceso ininterrumpido a las funciones de IA.',
     pastDueTitle: 'Tu último pago ha fallado',
@@ -98,9 +112,13 @@ const COPY: Record<UiLanguage, Copy> = {
   },
 }
 
-type BannerKind = 'locked' | 'trial' | 'past_due'
+type BannerKind = 'locked' | 'credits_locked' | 'trial' | 'past_due'
 
 function resolveKind(status: AiCreditStatus): BannerKind | null {
+  // A blocked account that still holds banked credits gets the credits-specific
+  // "subscription required to use your credits" prompt rather than the generic
+  // trial-ended copy.
+  if (!status.access && status.reason === 'subscription_required') return 'credits_locked'
   if (!status.access || status.locked) return 'locked'
   if (status.subscriptionStatus === 'past_due') return 'past_due'
   const subscribed = status.subscriptionStatus === 'active' || status.subscriptionStatus === 'trialing'
@@ -165,25 +183,33 @@ export function SubscriptionBanner({ onRechargeClick, refreshKey }: Subscription
   if (!kind) return null
 
   const tone =
-    kind === 'locked'
+    kind === 'locked' || kind === 'credits_locked'
       ? 'border-rose-300 bg-rose-50 text-rose-900'
       : 'border-amber-300 bg-amber-50 text-amber-900'
 
   const title =
     kind === 'locked'
       ? copy.lockedTitle
-      : kind === 'past_due'
-        ? copy.pastDueTitle
-        : copy.trialTitle(status.daysRemaining ?? 0)
+      : kind === 'credits_locked'
+        ? copy.creditsLockedTitle
+        : kind === 'past_due'
+          ? copy.pastDueTitle
+          : copy.trialTitle(status.daysRemaining ?? 0)
 
   const body =
-    kind === 'locked' ? copy.lockedBody : kind === 'past_due' ? copy.pastDueBody : copy.trialBody
+    kind === 'locked'
+      ? copy.lockedBody
+      : kind === 'credits_locked'
+        ? copy.creditsLockedBody
+        : kind === 'past_due'
+          ? copy.pastDueBody
+          : copy.trialBody
 
-  const Icon = kind === 'locked' ? Lock : AlertTriangle
+  const Icon = kind === 'locked' || kind === 'credits_locked' ? Lock : AlertTriangle
 
   return (
     <div
-      role={kind === 'locked' ? 'alert' : 'status'}
+      role={kind === 'locked' || kind === 'credits_locked' ? 'alert' : 'status'}
       className={`mb-4 flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between ${tone}`}
     >
       <div className="flex items-start gap-3">

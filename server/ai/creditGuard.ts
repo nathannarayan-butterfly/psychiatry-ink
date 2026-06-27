@@ -32,33 +32,12 @@ import { MONTHLY_CREDIT_GRANT } from './aiPricingConfig'
 import { migrateLegacyCreditsIfNeeded } from '../services/creditMigration'
 import { creditsRepo } from '../data/credits'
 import { listRecentUsageForUser, type AiUsageHistoryRow } from '../data/aiUsage'
+import { InsufficientCreditsError, CreditInfrastructureError } from './creditErrors'
+import { AccessLockedError, computeAccess } from '../services/subscriptionAccess'
 
-export class InsufficientCreditsError extends Error {
-  readonly available: number
-  readonly required: number
-
-  constructor(available: number, required: number) {
-    super(
-      `Insufficient AI credits: ${required} required, ${available} available.`,
-    )
-    this.name = 'InsufficientCreditsError'
-    this.available = available
-    this.required = required
-  }
-}
-
-/**
- * Thrown when the AI credit infrastructure itself is unreachable (DB outage,
- * migration not applied, misconfigured Supabase env, etc.). Distinct from
- * InsufficientCreditsError so the caller can fail closed in production
- * without conflating "user has no credits" with "we can't tell".
- */
-export class CreditInfrastructureError extends Error {
-  constructor(message: string) {
-    super(message)
-    this.name = 'CreditInfrastructureError'
-  }
-}
+// Re-exported so existing `from './creditGuard'` / `from '../ai/creditGuard'`
+// import sites keep working after the classes moved to ./creditErrors.
+export { InsufficientCreditsError, CreditInfrastructureError }
 
 function nextMonthlyReset(): Date {
   const now = new Date()
@@ -107,6 +86,27 @@ export async function ensureCreditAccount(userId: string): Promise<EnsuredCredit
 }
 
 /**
+ * Spend-time access gate. Credits may be BANKED (bought as packs, bought/redeemed
+ * as gift vouchers, admin grants) without any subscription, but they may only be
+ * SPENT while the account has an active subscription or active trial (or is still
+ * in the trial-not-started onboarding grace). When access is denied this throws
+ * {@link AccessLockedError} (`code = 'subscription_required'`), which subclasses
+ * {@link InsufficientCreditsError} so the existing 402 handlers surface it with a
+ * clear, typed prompt to subscribe.
+ *
+ * Enforcement is controlled by `REQUIRE_SUBSCRIPTION_FOR_CREDITS` (default ON);
+ * see {@link computeAccess}. A user with no account row yet keeps access (a
+ * brand-new user starting onboarding).
+ */
+export async function assertCanSpendCredits(userId: string): Promise<void> {
+  const account = await creditsRepo.getAccountByUserId(userId)
+  const decision = computeAccess(account ?? null)
+  if (!decision.access) {
+    throw new AccessLockedError(decision.reason)
+  }
+}
+
+/**
  * Throw InsufficientCreditsError if the user's account cannot cover
  * `estimatedCredits`. No credits are deducted here — only balance is read.
  */
@@ -147,6 +147,12 @@ export async function deductCreditsTransactionally(params: {
   mode?: AiMode
 }): Promise<{ ok: boolean }> {
   if (params.credits <= 0) return { ok: true }
+
+  // Spend-path gate: spending requires an active subscription/trial even when
+  // the balance is funded purely by purchased credits or redeemed vouchers.
+  // Throws AccessLockedError (subscription_required) when blocked. Buying/
+  // redeeming credits does NOT pass through here, so banking stays allowed.
+  await assertCanSpendCredits(params.userId)
 
   const account = await ensureCreditAccount(params.userId)
   const available = totalCredits(account)
