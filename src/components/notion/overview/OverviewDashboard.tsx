@@ -610,6 +610,7 @@ export function OverviewDashboard({
       psychopathFindingRevision,
       onTabSelect,
       onOpenWorkspacePage,
+      t,
     }),
     [
       caseId,
@@ -639,6 +640,7 @@ export function OverviewDashboard({
       psychopathFindingRevision,
       onTabSelect,
       onOpenWorkspacePage,
+      t,
     ],
   )
 

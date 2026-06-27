@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import type { UiTranslationKey } from '../../../data/uiTranslations'
 import { DiagnosesOverviewCard } from './DiagnosesOverviewCard'
 import { SpiegelwerteSection } from '../SpiegelwerteSection'
 import type { TopNavTabId } from '../CaseTopNav'
@@ -76,6 +77,7 @@ export interface OverviewWidgetRenderContext {
   psychopathFindingRevision?: number
   onTabSelect: (tab: TopNavTabId) => void
   onOpenWorkspacePage?: (pageId: NotionPageId) => void
+  t: (key: UiTranslationKey) => string
 }
 
 export function renderOverviewWidget(
@@ -202,25 +204,25 @@ export function renderOverviewWidget(
     case 'ekg-summary':
       return (
         <DiagnosticSummaryCard
-          title="Letztes EKG"
+          title={ctx.t('overviewWidgetEkgSummary')}
           data={ctx.ekgSummary}
           onOpen={() => ctx.onTabSelect('labor')}
-          actionLabel="Zu Diagnostik"
+          actionLabel={ctx.t('befundSidebarLink')}
         />
       )
     case 'eeg-summary':
       return (
         <DiagnosticSummaryCard
-          title="EEG"
+          title={ctx.t('overviewWidgetEegSummary')}
           data={ctx.eegSummary}
           onOpen={() => ctx.onTabSelect('labor')}
-          actionLabel="Zu Diagnostik"
+          actionLabel={ctx.t('befundSidebarLink')}
         />
       )
     case 'ct-summary':
       return (
         <DiagnosticSummaryCard
-          title="Letztes CT"
+          title={ctx.t('overviewWidgetCtSummary')}
           data={ctx.ctSummary}
         />
       )

@@ -29,7 +29,7 @@ export function PsychotherapyWidgetCard({
   hasPlan,
   onOpenTherapie,
 }: PsychotherapyWidgetCardProps) {
-  const { language } = useTranslation()
+  const { language, t } = useTranslation()
   const progressLabel = summary.progressStatus
     ? translateProgressStatus(language, summary.progressStatus)
     : undefined
@@ -37,11 +37,11 @@ export function PsychotherapyWidgetCard({
 
   return (
     <OverviewCard
-      title="Psychotherapie"
+      title={t('overviewWidgetPsychotherapy')}
       icon={<Brain size={15} />}
       className="ov-col-6"
       badge={statusLabel ? { label: statusLabel, tone: 'neutral' } : undefined}
-      action={{ label: 'Zur Therapie', onClick: onOpenTherapie }}
+      action={{ label: t('overviewToTherapie'), onClick: onOpenTherapie }}
     >
       {!hasPlan ? (
         <OverviewEmpty>{tp(language, 'ptEmptyTitle')}</OverviewEmpty>

@@ -1,3 +1,4 @@
+import { useTranslation } from '../../../context/TranslationContext'
 import { OverviewCard, OverviewEmpty } from './OverviewCard'
 import type { RegisteredTherapiesSummary } from '../../../utils/overview/registeredTherapiesSummary'
 
@@ -7,14 +8,15 @@ interface RegisteredTherapiesCardProps {
 }
 
 export function RegisteredTherapiesCard({ data, onOpenTherapie }: RegisteredTherapiesCardProps) {
+  const { t } = useTranslation()
   return (
     <OverviewCard
-      title="Angemeldete Therapien"
+      title={t('overviewWidgetAngemeldeteTherapien')}
       className="ov-col-6"
-      action={{ label: 'Zur Therapie', onClick: onOpenTherapie }}
+      action={{ label: t('overviewToTherapie'), onClick: onOpenTherapie }}
     >
       {data.lines.length === 0 ? (
-        <OverviewEmpty>Keine angemeldeten Therapien.</OverviewEmpty>
+        <OverviewEmpty>{t('overviewRegisteredTherapiesEmpty')}</OverviewEmpty>
       ) : (
         <ul className="ov-therapy-lines">
           {data.lines.map((line) => (

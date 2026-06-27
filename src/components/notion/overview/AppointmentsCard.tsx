@@ -1,4 +1,5 @@
 import { CalendarClock } from 'lucide-react'
+import { useTranslation } from '../../../context/TranslationContext'
 import { OverviewCard, OverviewEmpty } from './OverviewCard'
 import type { CalendarItem } from '../../../types/calendar'
 import { formatAppointmentRowLabel } from '../../../hooks/useOverviewCollaboration'
@@ -9,18 +10,19 @@ interface AppointmentsCardProps {
 }
 
 export function AppointmentsCard({ upcoming, loading }: AppointmentsCardProps) {
+  const { t } = useTranslation()
   const shown = upcoming.slice(0, 4)
 
   return (
     <OverviewCard
-      title="Termine"
+      title={t('overviewWidgetAppointments')}
       icon={<CalendarClock size={15} />}
       className="ov-col-6"
     >
       {loading ? (
-        <OverviewEmpty>Termine werden geladen…</OverviewEmpty>
+        <OverviewEmpty>{t('overviewAppointmentsLoading')}</OverviewEmpty>
       ) : shown.length === 0 ? (
-        <OverviewEmpty>Keine anstehenden Termine.</OverviewEmpty>
+        <OverviewEmpty>{t('overviewAppointmentsEmpty')}</OverviewEmpty>
       ) : (
         <ul className="ov-feed">
           {shown.map((item) => {

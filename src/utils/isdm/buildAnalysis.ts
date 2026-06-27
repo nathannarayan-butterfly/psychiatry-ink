@@ -27,6 +27,7 @@ import {
   PSYCHOPATH_SECTION_DOMAIN_MAP,
 } from './domainMap'
 import {
+  getLocalizedDisorder,
   matchDisorderToCodes,
   resolveDisorderForCodingSystem,
   toButterflyIcdVersion,
@@ -36,6 +37,51 @@ import type { CodingSystem } from '../diagnosenArchive'
 import type { AttestationMap } from '../diagnosisCriteria/context'
 import { buildEvaluationContext } from '../diagnosisCriteria/context'
 import { evaluateDisorder } from '../diagnosisCriteria/evaluateDisorder'
+import type { UiLanguage } from '../../types/settings'
+
+/**
+ * Localized copy for the few app-authored strings the ISDM builder injects that
+ * are NOT sourced from the (already-localizable) disorder criteria data — the
+ * "criteria not yet available" placeholder, the elevated-risk hypothesis, and
+ * the medication side-effect finding prefix. German is the authored source; the
+ * other UI languages fall back to German per key.
+ */
+const ISDM_BUILDER_TEXT = {
+  criteriaUnavailable: {
+    de: 'Kriterienprüfung für diese Diagnose noch nicht verfügbar',
+    en: 'Criteria check for this diagnosis is not yet available',
+    fr: "La vérification des critères pour ce diagnostic n'est pas encore disponible",
+    es: 'La verificación de criterios para este diagnóstico aún no está disponible',
+  },
+  elevatedRiskLabel: {
+    de: 'Erhöhtes klinisches Risiko (Hinweis)',
+    en: 'Elevated clinical risk (flag)',
+    fr: 'Risque clinique élevé (signalement)',
+    es: 'Riesgo clínico elevado (indicación)',
+  },
+  riskDocumented: {
+    de: 'Hinweise auf Eigen- oder Fremdgefährdung dokumentiert',
+    en: 'Indicators of risk to self or others documented',
+    fr: 'Indices de risque pour soi-même ou autrui documentés',
+    es: 'Indicios de riesgo para sí mismo o para terceros documentados',
+  },
+  riskIncomplete: {
+    de: 'Risikoeinschätzung und Schutzfaktoren noch unvollständig',
+    en: 'Risk assessment and protective factors still incomplete',
+    fr: 'Évaluation du risque et facteurs de protection encore incomplets',
+    es: 'Evaluación del riesgo y factores de protección aún incompletos',
+  },
+  sideEffectPrefix: {
+    de: 'Nebenwirkung',
+    en: 'Side effect',
+    fr: 'Effet indésirable',
+    es: 'Efecto adverso',
+  },
+} as const satisfies Record<string, Record<UiLanguage, string>>
+
+function isdmText(key: keyof typeof ISDM_BUILDER_TEXT, language: UiLanguage): string {
+  return ISDM_BUILDER_TEXT[key][language] ?? ISDM_BUILDER_TEXT[key].de
+}
 
 export interface IsdmBuildInput {
   caseId: string
@@ -53,6 +99,12 @@ export interface IsdmBuildInput {
    * distinct set is authored; DSM reuses the ICD-10 tree). Defaults to ICD-10.
    */
   codingSystem?: CodingSystem
+  /**
+   * UI language for app-authored display strings (criteria text, differentials,
+   * risk/availability flags, side-effect labels). Criteria data is localized via
+   * {@link getLocalizedDisorder}; German is the source/default.
+   */
+  language?: UiLanguage
 }
 
 function emptyPhenomenology(): Record<IsdmPhenomenologyDomain, SymptomFinding[]> {
@@ -167,8 +219,10 @@ function mapChecklistToFindings(
 function mapMedicationPlanToFindings(
   state: MedicationPlanState | undefined,
   phenomenology: Record<IsdmPhenomenologyDomain, SymptomFinding[]>,
+  language: UiLanguage,
 ): void {
   if (!state) return
+  const sideEffectPrefix = isdmText('sideEffectPrefix', language)
 
   const currentPlan = getCurrentPlan(state)
   const medications = currentPlan?.medications ?? []
@@ -228,8 +282,8 @@ function mapMedicationPlanToFindings(
     addFinding(phenomenology, {
       id: findingId('somatic_preoccupation', `side-effect:${report.id}`),
       domain: 'somatic_preoccupation',
-      label: `Nebenwirkung: ${report.symptom.trim()}`,
-      keywords: [report.symptom.trim(), 'Nebenwirkung'],
+      label: `${sideEffectPrefix}: ${report.symptom.trim()}`,
+      keywords: [report.symptom.trim(), sideEffectPrefix],
       evidenceStrength: 'patient_report',
       sourceImprintKeys: [`medication:side-effect:${report.id}`],
       confidence: 2,
@@ -517,6 +571,7 @@ function buildDiagnosticMappings(
   coursePattern: CoursePattern,
   attestations: AttestationMap,
   icdVersion: ButterflyIcdVersion,
+  language: UiLanguage,
 ): DiagnosticMapping[] {
   const mappings: DiagnosticMapping[] = []
 
@@ -540,8 +595,11 @@ function buildDiagnosticMappings(
 
     const matched = matchDisorderToCodes(entry.icd10.code, entry.icd11.code)
     // Resolve to the active version's criteria tree (ICD-11 → ICD-10 fallback)
-    // so the verdict reflects the system the clinician toggled to.
-    const disorder = matched ? resolveDisorderForCodingSystem(matched, icdVersion) : undefined
+    // so the verdict reflects the system the clinician toggled to, THEN localize
+    // its display strings (criteria text, differentials, labels) to the UI
+    // language so every downstream string here is already in the right language.
+    const versioned = matched ? resolveDisorderForCodingSystem(matched, icdVersion) : undefined
+    const disorder = versioned ? getLocalizedDisorder(versioned, language) : undefined
 
     if (!disorder) {
       // Entered diagnosis with no authored criteria set yet.
@@ -551,7 +609,7 @@ function buildDiagnosticMappings(
         codingSystems,
         confidence: 2,
         criteriaMet: [],
-        criteriaMissing: ['Kriterienprüfung für diese Diagnose noch nicht verfügbar'],
+        criteriaMissing: [isdmText('criteriaUnavailable', language)],
         exclusions: [],
         differentials: [],
         supportingClusters: [],
@@ -605,11 +663,11 @@ function buildDiagnosticMappings(
   ) {
     mappings.push({
       id: 'hyp:elevated-risk',
-      label: 'Erhöhtes klinisches Risiko (Hinweis)',
+      label: isdmText('elevatedRiskLabel', language),
       codingSystems: {},
       confidence: 2,
-      criteriaMet: ['Hinweise auf Eigen- oder Fremdgefährdung dokumentiert'],
-      criteriaMissing: ['Risikoeinschätzung und Schutzfaktoren noch unvollständig'],
+      criteriaMet: [isdmText('riskDocumented', language)],
+      criteriaMissing: [isdmText('riskIncomplete', language)],
       exclusions: [],
       differentials: [],
       supportingClusters: [],
@@ -765,13 +823,14 @@ function computeOverallUncertainty(
 }
 
 export function buildIsdmAnalysis(input: IsdmBuildInput): IsdmClinicalAnalysis {
+  const language = input.language ?? 'de'
   const phenomenology = emptyPhenomenology()
   const imprints = input.imprints.imprints ?? []
 
   mapImprintsToFindings(imprints, phenomenology)
   mapChecklistToFindings(input.checklistSelections, phenomenology)
   mapIsdmInputToFindings(input.isdmInput, phenomenology)
-  mapMedicationPlanToFindings(input.medicationPlanState, phenomenology)
+  mapMedicationPlanToFindings(input.medicationPlanState, phenomenology, language)
 
   if (input.verlaufText?.trim()) {
     for (const domain of matchDomainsInText(input.verlaufText)) {
@@ -797,6 +856,7 @@ export function buildIsdmAnalysis(input: IsdmBuildInput): IsdmClinicalAnalysis {
     coursePattern,
     input.attestations ?? {},
     toButterflyIcdVersion(input.codingSystem ?? 'icd10'),
+    language,
   )
   const interviewGaps = buildInterviewGaps(
     phenomenology,

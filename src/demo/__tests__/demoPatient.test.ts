@@ -1,6 +1,8 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest'
 import { buildDemoPatientFixture } from '../buildDemoFixture'
 import { validateDemoFixture } from '../validateDemoFixture'
+import enFixtureJson from '../demoPatient.en.fixture.json'
+import deFixtureJson from '../demoPatient.de.fixture.json'
 import {
   DEMO_CASE_ID_DE,
   DEMO_CASE_ID_EN,
@@ -77,6 +79,39 @@ describe('demo fixture', () => {
     expect(fixture.patient.geschlecht).toBe('maennlich')
     expect(fixture.workspace.diagnoses.some((d) => d.icd10.code === 'F20.0')).toBe(true)
     expect(fixture.workspace.diagnoses.some((d) => d.icd10.code === 'F10.2')).toBe(true)
+  })
+
+  // Guards the English demo against German leaking into the Clinical Intelligence
+  // / Butterfly analysis (criteria text, differentials, exclusions, risk flags,
+  // side-effect labels). German umlauts/ß plus distinctive German clinical tokens
+  // must never appear in the EN ISDM analysis; the DE fixture is the control that
+  // proves the detector actually fires on German.
+  const GERMAN_LEAK = /[äöüÄÖÜß]|\b(?:Störung|Konsum|Kriterien|Kriterienprüfung|Wahn|Nebenwirkung|Erhöht(?:es)?|Gefährdung|Entzug(?:ssyndrom)?|Toleranz(?:entwicklung)?|Vernachlässigung|Abhängigkeit|Stimmen|Hinweis(?:e)?|Risikoeinschätzung|Schutzfaktoren|verfügbar)\b/
+
+  it('English demo ISDM analysis contains no German (built + committed JSON)', () => {
+    for (const source of [
+      JSON.stringify(buildDemoPatientFixture('en').workspace.isdmAnalysis),
+      JSON.stringify((enFixtureJson as typeof enFixtureJson).workspace.isdmAnalysis),
+    ]) {
+      const match = source.match(GERMAN_LEAK)
+      expect(match, `German leak in EN ISDM analysis: ${match?.[0]}`).toBeNull()
+    }
+  })
+
+  it('English demo ISDM analysis surfaces English criteria/differentials/flags', () => {
+    const isdm = buildDemoPatientFixture('en').workspace.isdmAnalysis
+    const mappings = isdm?.diagnosticMappings ?? []
+    const allCriteria = mappings.flatMap((m) => [...m.criteriaMet, ...m.criteriaMissing])
+    expect(allCriteria.some((c) => /delusion|withdrawal|craving|tolerance/i.test(c))).toBe(true)
+    expect(mappings.flatMap((m) => m.differentials).some((d) => /disorder|psychosis|intoxication/i.test(d))).toBe(true)
+    expect(mappings.some((m) => m.label === 'Elevated clinical risk (flag)')).toBe(true)
+  })
+
+  it('control: German demo ISDM analysis still contains German criteria', () => {
+    const built = JSON.stringify(buildDemoPatientFixture('de').workspace.isdmAnalysis)
+    const committed = JSON.stringify((deFixtureJson as typeof deFixtureJson).workspace.isdmAnalysis)
+    expect(built).toMatch(GERMAN_LEAK)
+    expect(committed).toMatch(GERMAN_LEAK)
   })
 
   it('rejects fixture with wrong patient id', () => {

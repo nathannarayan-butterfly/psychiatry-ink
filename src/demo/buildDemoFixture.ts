@@ -207,6 +207,7 @@ export function buildDemoPatientFixture(locale: DemoLocale = 'de'): DemoPatientF
     verlaufFeed,
     isdmInput,
     butterflyAttestations,
+    language: locale,
   })
 
   return {

@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import { Check, Printer, X as XIcon } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
+import type { UiTranslationKey } from '../../data/uiTranslations'
 import { useAuth } from '../../context/AuthContext'
 import { useCurrentOrganisation } from '../../hooks/permissions/useCurrentOrganisation'
 import { useCurrentMember } from '../../hooks/permissions/useCurrentMember'
@@ -22,7 +23,6 @@ import {
   resolveResultLink,
 } from '../../utils/anforderungen/resultLinks'
 import { printSingleAnforderung } from '../../utils/anforderungen/printAnforderung'
-import { STATUS_LABELS_DE } from '../../utils/anforderungen/printAnforderung'
 import { setDiagnosticsSectionPref } from '../../utils/befundArchive'
 import { showNotionToast } from '../notion/NotionToast'
 
@@ -47,6 +47,13 @@ function formatShortDate(iso: string | undefined): string {
   } catch {
     return iso.slice(0, 10)
   }
+}
+
+const STATUS_LABEL_KEYS: Record<Anforderung['status'], UiTranslationKey> = {
+  pending: 'anforderungStatusPending',
+  accepted: 'anforderungStatusAccepted',
+  rejected: 'anforderungStatusRejected',
+  cancelled: 'anforderungStatusCancelled',
 }
 
 function statusClass(status: Anforderung['status']): string {
@@ -190,7 +197,7 @@ export function AnforderungenSidebarSection({
                     {order.label}
                   </span>
                   <span className={`anforderung-row__status ${statusClass(order.status)}`}>
-                    {STATUS_LABELS_DE[order.status]}
+                    {t(STATUS_LABEL_KEYS[order.status])}
                   </span>
                 </div>
                 <div className="anforderung-row__meta">

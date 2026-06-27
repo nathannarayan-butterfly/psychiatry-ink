@@ -1,5 +1,7 @@
 import { fetchCanonicalDemoPatient } from '../services/demoPatientApi'
 import { loadStoredUiLanguage } from '../utils/clinicalLanguage'
+import { DEMO_SEED_VERSION } from './constants'
+import { compareDemoSeedVersions } from './demoVersion'
 import { isLocaleSplitDemoFixture, resolveFixtureDemoLocale } from './demoFixtureLocale'
 import { uiLanguageToDemoLocale, type DemoLocale } from './demoLocale'
 import { resetDemoFixtureCache, setCanonicalDemoFixture, clearCanonicalDemoFixture } from './loadDemoFixture'
@@ -29,6 +31,16 @@ export async function fetchAndApplyCanonicalDemoFixture(options?: {
 
     const fixtureLocale = resolveFixtureDemoLocale(canonical.fixture)
     if (!fixtureLocale || fixtureLocale !== targetLocale) {
+      clearCanonicalDemoFixture(targetLocale)
+      resetDemoFixtureCache()
+      return { applied: false, seedVersion: null }
+    }
+
+    // Never let a STALE canonical (published before a bundled fix) override the
+    // newer bundled fixture. A canonical older than the bundled seed version is
+    // ignored so shipped corrections (e.g. removing German leaks from the EN
+    // demo) take effect immediately without waiting for a republish.
+    if (compareDemoSeedVersions(canonical.seedVersion, DEMO_SEED_VERSION) < 0) {
       clearCanonicalDemoFixture(targetLocale)
       resetDemoFixtureCache()
       return { applied: false, seedVersion: null }

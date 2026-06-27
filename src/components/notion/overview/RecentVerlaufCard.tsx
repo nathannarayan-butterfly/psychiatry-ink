@@ -1,4 +1,5 @@
 import { History } from 'lucide-react'
+import { useTranslation } from '../../../context/TranslationContext'
 import { OverviewCard, OverviewEmpty } from './OverviewCard'
 import type { RecentVerlaufItem } from './types'
 
@@ -8,15 +9,16 @@ interface RecentVerlaufCardProps {
 }
 
 export function RecentVerlaufCard({ items, onOpenVerlauf }: RecentVerlaufCardProps) {
+  const { t } = useTranslation()
   return (
     <OverviewCard
-      title="Verlauf"
+      title={t('overviewWidgetRecentVerlauf')}
       icon={<History size={15} />}
       className="ov-col-6"
-      action={{ label: 'Zum Verlauf', onClick: onOpenVerlauf }}
+      action={{ label: t('overviewRecentVerlaufAction'), onClick: onOpenVerlauf }}
     >
       {items.length === 0 ? (
-        <OverviewEmpty>Keine Verlaufseinträge vorhanden.</OverviewEmpty>
+        <OverviewEmpty>{t('overviewRecentVerlaufEmpty')}</OverviewEmpty>
       ) : (
         <ul className="ov-feed">
           {items.map((item) => (

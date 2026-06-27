@@ -7,6 +7,7 @@ import { loadDiagnosenCodingSystem } from '../diagnosenCodingSystem'
 import { buildIsdmAnalysis, type IsdmBuildInput } from './buildAnalysis'
 import { loadIsdmInput } from './inputStorage'
 import { saveIsdmAnalysis } from './storage'
+import { loadStoredUiLanguage } from '../clinicalLanguage'
 
 export type IsdmRebuildReason =
   | 'imprint'
@@ -48,6 +49,7 @@ export function collectIsdmBuildInput(
     medicationPlanState: loadMedicationPlanState(caseId) ?? undefined,
     attestations: loadAttestations(caseId),
     codingSystem: loadDiagnosenCodingSystem(caseId),
+    language: loadStoredUiLanguage(),
   }
 }
 

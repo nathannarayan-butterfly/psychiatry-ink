@@ -1,4 +1,5 @@
 import type { ZwangsmassnahmeSummary } from '../../../utils/overview/zwangsmassnahmeSummary'
+import { useTranslation } from '../../../context/TranslationContext'
 import { OverviewCard, OverviewEmpty } from './OverviewCard'
 
 interface ZwangsmassnahmeCardProps {
@@ -6,24 +7,22 @@ interface ZwangsmassnahmeCardProps {
 }
 
 export function ZwangsmassnahmeCard({ data }: ZwangsmassnahmeCardProps) {
+  const { t } = useTranslation()
   return (
     <OverviewCard
-      title="Zwangsmaßnahme"
+      title={t('overviewWidgetZwangsmassnahme')}
       className="ov-col-6"
       badge={data.statusLabel ? { label: data.statusLabel, tone: 'moderate' } : undefined}
     >
       {data.placeholder ? (
         <div className="ov-stub">
-          <p className="ov-stub__message">
-            Vollständiger Zwangsmaßnahmen-Workflow noch nicht verfügbar.
-          </p>
+          <p className="ov-stub__message">{t('overviewZwangPlaceholderMessage')}</p>
           <p className="ov-stub__detail">
-            Status: {data.statusLabel}. Dokumentation und Freigabeprozess folgen in einer späteren
-            Version.
+            {t('overviewZwangPlaceholderDetail').replace('{status}', data.statusLabel ?? '')}
           </p>
         </div>
       ) : (
-        <OverviewEmpty>Keine Zwangsmaßnahme beantragt oder genehmigt.</OverviewEmpty>
+        <OverviewEmpty>{t('overviewZwangEmpty')}</OverviewEmpty>
       )}
     </OverviewCard>
   )

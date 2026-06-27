@@ -20,6 +20,7 @@ import type { DiagnoseEntry } from '../utils/diagnosenArchive'
 import type { ClinicalImprintIndex } from '../types/clinicalImprint'
 import type { MedicationPlanState } from '../types/medicationPlan'
 import type { VerlaufFeedEntry } from '../utils/verlaufFeed'
+import type { UiLanguage } from '../types/settings'
 
 const NOW = '2026-06-14T10:00:00.000Z'
 
@@ -272,6 +273,8 @@ export function buildDemoIsdmAnalysis(input: {
   verlaufFeed: VerlaufFeedEntry[]
   isdmInput: IsdmInputState
   butterflyAttestations: ClinicianAttestationState
+  /** Demo locale → ISDM display language so EN fixtures bake English criteria. */
+  language: UiLanguage
 }): IsdmClinicalAnalysis {
   const attestations = Object.fromEntries(
     Object.entries(input.butterflyAttestations).map(([k, v]) => [k, v.value]),
@@ -287,5 +290,6 @@ export function buildDemoIsdmAnalysis(input: {
     medicationPlanState: input.medicationPlanState,
     attestations,
     codingSystem: 'icd10',
+    language: input.language,
   })
 }

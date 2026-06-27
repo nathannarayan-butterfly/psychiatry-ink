@@ -1,4 +1,5 @@
 import { FlaskConical } from 'lucide-react'
+import { useTranslation } from '../../../context/TranslationContext'
 import { OverviewCard, OverviewEmpty } from './OverviewCard'
 import { Sparkline } from './Sparkline'
 import type { LabsDueData, LabDueItem } from './types'
@@ -45,9 +46,10 @@ function LabRow({ item }: { item: LabDueItem }) {
 }
 
 export function LabsDueCard({ data, onOpenLabor }: LabsDueCardProps) {
+  const { t } = useTranslation()
   const badge =
     data.abnormal.length > 0
-      ? { label: `${data.abnormal.length} auffällig`, tone: 'high' as const }
+      ? { label: `${data.abnormal.length} ${t('overviewLaborAbnormalBadge')}`, tone: 'high' as const }
       : undefined
 
   const watched = data.watched.slice(0, 4)
@@ -58,21 +60,21 @@ export function LabsDueCard({ data, onOpenLabor }: LabsDueCardProps) {
 
   return (
     <OverviewCard
-      title="Monitoring & Labor"
+      title={t('overviewLaborMonitoringTitle')}
       icon={<FlaskConical size={15} />}
       className="ov-col-6"
       badge={badge}
-      action={{ label: 'Zum Labor', onClick: onOpenLabor }}
+      action={{ label: t('overviewLaborToLabor'), onClick: onOpenLabor }}
     >
       {!data.hasLabData ? (
-        <OverviewEmpty>Keine Laborbefunde vorhanden.</OverviewEmpty>
+        <OverviewEmpty>{t('overviewLaborEmptyNoData')}</OverviewEmpty>
       ) : !hasGroups ? (
-        <OverviewEmpty>Keine medikationsrelevanten Laborwerte.</OverviewEmpty>
+        <OverviewEmpty>{t('overviewLaborEmptyNoRelevant')}</OverviewEmpty>
       ) : (
         <>
           {data.abnormal.length > 0 ? (
             <>
-              {showSubheads ? <p className="ov-subhead">Auffällig</p> : null}
+              {showSubheads ? <p className="ov-subhead">{t('overviewLaborAbnormalSubhead')}</p> : null}
               {data.abnormal.map((item) => (
                 <LabRow key={item.id} item={item} />
               ))}
@@ -81,7 +83,7 @@ export function LabsDueCard({ data, onOpenLabor }: LabsDueCardProps) {
 
           {watched.length > 0 ? (
             <>
-              {showSubheads ? <p className="ov-subhead">Überwacht</p> : null}
+              {showSubheads ? <p className="ov-subhead">{t('overviewLaborWatchedSubhead')}</p> : null}
               {watched.map((item) => (
                 <LabRow key={item.id} item={item} />
               ))}
@@ -90,7 +92,7 @@ export function LabsDueCard({ data, onOpenLabor }: LabsDueCardProps) {
 
           {missing.length > 0 ? (
             <>
-              <p className="ov-subhead">Ausstehendes Monitoring</p>
+              <p className="ov-subhead">{t('overviewLaborPendingMonitoring')}</p>
               <ul className="ov-list">
                 {missing.map((m) => (
                   <li key={m.parameter} className="ov-task">

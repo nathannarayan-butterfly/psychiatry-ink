@@ -1,4 +1,5 @@
 import type { DiagnosticExamSummary } from '../../../utils/overview/diagnosticSummaries'
+import { useTranslation } from '../../../context/TranslationContext'
 import { OverviewCard, OverviewEmpty } from './OverviewCard'
 
 interface DiagnosticSummaryCardProps {
@@ -18,9 +19,11 @@ export function DiagnosticSummaryCard({
   title,
   data,
   onOpen,
-  actionLabel = 'Öffnen',
+  actionLabel,
 }: DiagnosticSummaryCardProps) {
+  const { t } = useTranslation()
   const meta = [data.statusLabel, data.dateLabel].filter(Boolean).join(' · ') || null
+  const resolvedActionLabel = actionLabel ?? t('overviewDiagnosticOpenAction')
 
   return (
     <OverviewCard
@@ -28,7 +31,7 @@ export function DiagnosticSummaryCard({
       className="ov-col-6"
       meta={meta}
       badge={data.conducted ? { label: data.statusLabel, tone: statusTone(data.status) } : undefined}
-      action={onOpen ? { label: actionLabel, onClick: onOpen } : undefined}
+      action={onOpen ? { label: resolvedActionLabel, onClick: onOpen } : undefined}
     >
       {!data.conducted ? (
         <OverviewEmpty>{data.statusLabel}</OverviewEmpty>

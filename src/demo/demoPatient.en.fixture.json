@@ -1,7 +1,7 @@
 {
   "version": "1",
   "isDemoPatient": true,
-  "demoSeedVersion": "v8",
+  "demoSeedVersion": "v9",
   "demoPatientId": "DEMO-EN-0001",
   "demoCaseId": "DEMO-CASE-EN-0001",
   "demoLocale": "en",
@@ -1224,7 +1224,7 @@
     "isdmAnalysis": {
       "caseId": "DEMO-CASE-EN-0001",
       "profileId": "international_structured_diagnostic_mapping",
-      "updatedAt": "2026-06-27T15:36:12.665Z",
+      "updatedAt": "2026-06-27T16:14:08.935Z",
       "phenomenology": {
         "appearance_behavior": [
           {
@@ -2003,10 +2003,10 @@
           {
             "id": "somatic_preoccupation:side-effect:demo-se-01",
             "domain": "somatic_preoccupation",
-            "label": "Nebenwirkung: Akathisia",
+            "label": "Side effect: Akathisia",
             "keywords": [
               "Akathisia",
-              "Nebenwirkung"
+              "Side effect"
             ],
             "evidenceStrength": "patient_report",
             "sourceImprintKeys": [
@@ -2749,22 +2749,22 @@
           },
           "confidence": 1,
           "criteriaMet": [
-            "Anhaltender, kulturell unangemessener und völlig unrealistischer (bizarrer) Wahn",
-            "Gedankenabreißen oder Einschiebungen in den Gedankenfluss mit Zerfahrenheit, Danebenreden oder Neologismen",
-            "Die charakteristischen Symptome bestehen die meiste Zeit während eines Zeitraums von mindestens einem Monat"
+            "Persistent, culturally inappropriate and entirely unrealistic (bizarre) delusions",
+            "Thought blocking or interpolations in the flow of thought, giving rise to incoherence, tangential speech or neologisms",
+            "The characteristic symptoms are present for most of the time over a period of at least one month"
           ],
           "criteriaMissing": [
-            "Ich-Störungen: Gedankenlautwerden, Gedankeneingebung, -entzug oder -ausbreitung sowie Kontroll- bzw. Beeinflussungserleben oder Gefühl des Gemachten (Passivitätserleben)",
-            "Kommentierende oder dialogische (über die Person sprechende) Stimmen bzw. andere anhaltende Stimmen aus einem Körperteil"
+            "Disturbances of ego boundaries: thought broadcasting (audible thoughts), thought insertion, withdrawal or diffusion, together with experiences of being controlled or influenced or a sense of being made to act (passivity phenomena)",
+            "Running commentary or conversing (third-person) voices discussing the person, or other persistent voices arising from a part of the body"
           ],
           "exclusions": [
-            "Bei gleichzeitig ausgeprägter manischer oder depressiver Symptomatik gingen die schizophrenen Symptome der affektiven Störung voraus (kein vorrangiges affektives Zustandsbild)"
+            "Where pronounced manic or depressive symptoms coexist, the schizophrenic symptoms preceded the affective disturbance (no predominant affective picture)"
           ],
           "differentials": [
-            "Schizoaffektive Störung",
-            "Affektive Störung mit psychotischen Symptomen",
-            "Akute vorübergehende psychotische Störung",
-            "Substanzinduzierte oder organische Psychose"
+            "Schizoaffective disorder",
+            "Mood disorder with psychotic symptoms",
+            "Acute and transient psychotic disorder",
+            "Substance-induced or organic psychosis"
           ],
           "supportingClusters": [
             "cluster:psychotic"
@@ -2790,20 +2790,20 @@
           },
           "confidence": 2,
           "criteriaMet": [
-            "Körperliches Entzugssyndrom bei Reduktion oder Beendigung des Konsums oder Konsum zur Linderung bzw. Vermeidung von Entzugssymptomen"
+            "A physical withdrawal state on reducing or stopping consumption, or consumption to relieve or avoid withdrawal symptoms"
           ],
           "criteriaMissing": [
-            "Starkes Verlangen oder eine Art Zwang, Alkohol zu konsumieren (Craving)",
-            "Verminderte Kontrolle über Beginn, Beendigung und Menge des Konsums",
-            "Toleranzentwicklung mit erforderlicher Dosissteigerung für die ursprüngliche Wirkung",
-            "Zunehmende Vernachlässigung anderer Interessen und Aktivitäten zugunsten des Konsums sowie erhöhter Zeitaufwand für Beschaffung, Konsum und Erholung",
-            "Anhaltender Konsum trotz Nachweises eindeutig schädlicher körperlicher, psychischer oder sozialer Folgen"
+            "A strong desire or sense of compulsion to consume alcohol (craving)",
+            "Impaired capacity to control the onset, cessation and amount of consumption",
+            "Development of tolerance, requiring increased doses to achieve the original effect",
+            "Progressive neglect of other interests and activities in favour of consumption, together with increased time spent obtaining, using and recovering from the substance",
+            "Continued consumption despite clear evidence of harmful physical, psychological or social consequences"
           ],
           "exclusions": [],
           "differentials": [
-            "Schädlicher Gebrauch / riskanter Konsum (F10.1) ohne Abhängigkeit",
-            "Akute Intoxikation (F10.0)",
-            "Substanzinduzierte affektive oder Angststörung"
+            "Harmful use / hazardous consumption (F10.1) without dependence",
+            "Acute intoxication (F10.0)",
+            "Substance-induced mood or anxiety disorder"
           ],
           "supportingClusters": [
             "cluster:substance"
@@ -2829,34 +2829,34 @@
           },
           "confidence": 2,
           "criteriaMet": [
-            "Körperliches Entzugssyndrom bei Reduktion oder Beendigung des Konsums oder Konsum zur Linderung von Entzugssymptomen"
+            "A physical withdrawal state on reducing or stopping consumption, or consumption to relieve withdrawal symptoms"
           ],
           "criteriaMissing": [
-            "Starkes Verlangen oder eine Art Zwang, Tabak/Nikotin zu konsumieren (Craving)",
-            "Verminderte Kontrolle über Beginn, Beendigung und Menge des Konsums",
-            "Toleranzentwicklung mit erforderlicher Dosissteigerung für die ursprüngliche Wirkung",
-            "Zunehmende Vernachlässigung anderer Interessen und erhöhter Zeitaufwand für Beschaffung, Konsum und Erholung",
-            "Anhaltender Konsum trotz nachweislich schädlicher körperlicher, psychischer oder sozialer Folgen"
+            "A strong desire or sense of compulsion to consume tobacco/nicotine (craving)",
+            "Impaired capacity to control the onset, cessation and amount of consumption",
+            "Development of tolerance, requiring increased doses to achieve the original effect",
+            "Progressive neglect of other interests and increased time spent obtaining, using and recovering from the substance",
+            "Continued consumption despite demonstrably harmful physical, psychological or social consequences"
           ],
           "exclusions": [],
           "differentials": [
-            "Schädlicher Gebrauch von Tabak/Nikotin (F17.1) ohne Abhängigkeit",
-            "Akute Intoxikation (F17.0)",
-            "Substanzinduzierte affektive oder psychotische Störung"
+            "Harmful use of tobacco/nicotine (F17.1) without dependence",
+            "Acute intoxication (F17.0)",
+            "Substance-induced mood or psychotic disorder"
           ],
           "supportingClusters": [],
           "clinicianReviewRequired": true
         },
         {
           "id": "hyp:elevated-risk",
-          "label": "Erhöhtes klinisches Risiko (Hinweis)",
+          "label": "Elevated clinical risk (flag)",
           "codingSystems": {},
           "confidence": 2,
           "criteriaMet": [
-            "Hinweise auf Eigen- oder Fremdgefährdung dokumentiert"
+            "Indicators of risk to self or others documented"
           ],
           "criteriaMissing": [
-            "Risikoeinschätzung und Schutzfaktoren noch unvollständig"
+            "Risk assessment and protective factors still incomplete"
           ],
           "exclusions": [],
           "differentials": [],
@@ -3697,7 +3697,7 @@
       "dueDate": null,
       "done": false,
       "visibility": "team",
-      "createdAt": "2026-06-27T15:36:12.653Z"
+      "createdAt": "2026-06-27T16:14:08.922Z"
     },
     {
       "id": "demo-verlauf-ann-02",
@@ -3710,7 +3710,7 @@
       "priority": "high",
       "dueDate": "2026-06-02",
       "done": false,
-      "createdAt": "2026-06-27T15:36:12.653Z"
+      "createdAt": "2026-06-27T16:14:08.922Z"
     },
     {
       "id": "demo-verlauf-ann-03",
@@ -3722,7 +3722,7 @@
       "comment": "Discussed prolactin and EPS risk with patient — partial insight, ambivalent about long-term antipsychotic.",
       "dueDate": null,
       "done": false,
-      "createdAt": "2026-06-27T15:36:12.653Z"
+      "createdAt": "2026-06-27T16:14:08.922Z"
     },
     {
       "id": "demo-verlauf-ann-04",
@@ -3733,7 +3733,7 @@
       "rangeText": "prolactin markedly elevated",
       "dueDate": null,
       "done": false,
-      "createdAt": "2026-06-27T15:36:12.653Z"
+      "createdAt": "2026-06-27T16:14:08.922Z"
     },
     {
       "id": "demo-verlauf-ann-05",
@@ -3746,7 +3746,7 @@
       "priority": "normal",
       "dueDate": "2026-06-16",
       "done": false,
-      "createdAt": "2026-06-27T15:36:12.653Z"
+      "createdAt": "2026-06-27T16:14:08.922Z"
     },
     {
       "id": "demo-verlauf-ann-06",
@@ -3759,7 +3759,7 @@
       "dueDate": null,
       "done": false,
       "visibility": "team",
-      "createdAt": "2026-06-27T15:36:12.653Z"
+      "createdAt": "2026-06-27T16:14:08.922Z"
     },
     {
       "id": "demo-verlauf-ann-07",
@@ -3772,7 +3772,7 @@
       "priority": "normal",
       "dueDate": "2026-06-26",
       "done": false,
-      "createdAt": "2026-06-27T15:36:12.653Z"
+      "createdAt": "2026-06-27T16:14:08.922Z"
     },
     {
       "id": "demo-verlauf-ann-08",
@@ -3784,7 +3784,7 @@
       "comment": "Sister listed as protective contact; housing letter from social services pending.",
       "dueDate": null,
       "done": false,
-      "createdAt": "2026-06-27T15:36:12.653Z"
+      "createdAt": "2026-06-27T16:14:08.922Z"
     },
     {
       "id": "demo-verlauf-ann-09",
@@ -3797,7 +3797,7 @@
       "priority": "high",
       "dueDate": "2026-06-12",
       "done": true,
-      "createdAt": "2026-06-27T15:36:12.653Z"
+      "createdAt": "2026-06-27T16:14:08.922Z"
     }
   ],
   "laborBefunde": [

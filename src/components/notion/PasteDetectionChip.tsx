@@ -123,7 +123,7 @@ export function PasteDetectionChip({
         type="button"
         className="paste-detection-chip__dismiss"
         onClick={onDismiss}
-        aria-label="Schließen"
+        aria-label={t('pasteDetectionDismiss')}
       >
         <X className="h-3 w-3" strokeWidth={2} aria-hidden />
       </button>

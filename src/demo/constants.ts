@@ -19,7 +19,10 @@ export const DEMO_PATIENT_ID = DEMO_PATIENT_ID_EN
 export const DEMO_CASE_IDS = [DEMO_CASE_ID_EN, DEMO_CASE_ID_DE] as const
 export const DEMO_PATIENT_IDS = [DEMO_PATIENT_ID_EN, DEMO_PATIENT_ID_DE] as const
 
-export const DEMO_SEED_VERSION = 'v8'
+// v9: English demo ISDM/Butterfly analysis is now localized (no German criteria,
+// differentials, exclusions, risk flags or side-effect labels leak into the EN
+// fixture). Bump forces installed English users to re-seed the corrected case.
+export const DEMO_SEED_VERSION = 'v9'
 
 export const DEMO_FIXTURE_VERSION = '1'
 
