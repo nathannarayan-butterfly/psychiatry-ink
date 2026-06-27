@@ -1,9 +1,53 @@
 import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
+import { LEGAL_LAST_UPDATED } from '../../shared/legalVersion'
 import { getCreditBalance, getUserPlan, setUserPlan } from '../services/credits'
+import { recordLegalConsent } from '../data/legalConsent'
 import { requireRouteAuth } from '../utils/requireRouteAuth'
 
 export const accountRouter: Router = createRouter()
+
+/** Bound the stored locale token to a short, predictable string. */
+function normalizeLocale(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim().toLowerCase()
+  if (!trimmed) return null
+  // Accept BCP-47-ish tokens only (e.g. `de`, `en`, `pt-br`); reject junk.
+  if (!/^[a-z]{2,3}(-[a-z0-9]{2,8})?$/.test(trimmed)) return null
+  return trimmed
+}
+
+/**
+ * Durable record of the user's Datenschutz/AGB acceptance.
+ *
+ * The privacy/terms versions are pinned server-side to the deployed
+ * `LEGAL_LAST_UPDATED` (clients never get to assert which version they
+ * accepted). Idempotent per (user_id, terms_version) so the email-confirmation
+ * retry path — where consent is only POSTable once the user is authenticated —
+ * can re-send safely.
+ */
+accountRouter.post('/legal-consent', async (req: Request, res: Response) => {
+  try {
+    const userId = requireRouteAuth(req, res)
+    if (!userId) return
+    if (userId === 'default') {
+      res.status(401).json({ error: 'Anmeldung erforderlich' })
+      return
+    }
+
+    const locale = normalizeLocale(req.body?.locale)
+    const { recorded } = await recordLegalConsent({
+      userId,
+      privacyVersion: LEGAL_LAST_UPDATED,
+      termsVersion: LEGAL_LAST_UPDATED,
+      locale,
+    })
+    res.json({ ok: true, recorded, version: LEGAL_LAST_UPDATED })
+  } catch (error) {
+    console.error('[account] legal-consent record failed:', error)
+    res.status(500).json({ error: 'Failed to record consent' })
+  }
+})
 
 accountRouter.get('/plan', async (req: Request, res: Response) => {
   try {

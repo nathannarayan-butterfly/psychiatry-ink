@@ -3727,6 +3727,36 @@ export type Database = {
           },
         ]
       }
+      user_legal_acceptances: {
+        Row: {
+          accepted_at: string
+          created_at: string
+          id: string
+          locale: string | null
+          privacy_version: string
+          terms_version: string
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string
+          created_at?: string
+          id?: string
+          locale?: string | null
+          privacy_version: string
+          terms_version: string
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string
+          created_at?: string
+          id?: string
+          locale?: string | null
+          privacy_version?: string
+          terms_version?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_public_keys: {
         Row: {
           country_code: string
