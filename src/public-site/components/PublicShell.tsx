@@ -7,9 +7,10 @@ interface ShellLabels {
   features: string
   pricing: string
   security: string
+  impressum: string
   privacy: string
   terms: string
-  impressum: string
+  contact: string
   signIn: string
   skipToContent: string
 }
@@ -19,9 +20,10 @@ const LABELS: Record<PublicLocale, ShellLabels> = {
     features: 'Features',
     pricing: 'Pricing',
     security: 'Security',
+    impressum: 'Legal notice',
     privacy: 'Privacy',
     terms: 'Terms',
-    impressum: 'Legal notice',
+    contact: 'Contact',
     signIn: 'Sign in',
     skipToContent: 'Skip to content',
   },
@@ -29,9 +31,10 @@ const LABELS: Record<PublicLocale, ShellLabels> = {
     features: 'Funktionen',
     pricing: 'Preise',
     security: 'Sicherheit',
+    impressum: 'Impressum',
     privacy: 'Datenschutz',
     terms: 'AGB',
-    impressum: 'Impressum',
+    contact: 'Kontakt',
     signIn: 'Anmelden',
     skipToContent: 'Zum Inhalt springen',
   },
@@ -81,9 +84,10 @@ export function PublicShell({
     { key: 'security', label: labels.security },
   ]
   const legalItems: Array<{ key: PublicPageKey; label: string }> = [
+    { key: 'impressum', label: labels.impressum },
     { key: 'privacy', label: labels.privacy },
     { key: 'terms', label: labels.terms },
-    { key: 'impressum', label: labels.impressum },
+    { key: 'contact', label: labels.contact },
   ]
   const year = new Date().getFullYear()
   const { footer } = content

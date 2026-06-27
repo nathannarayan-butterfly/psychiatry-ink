@@ -11,6 +11,8 @@ import { requestId } from './middleware/requestContext'
 import { apiNotFound, errorHandler } from './middleware/errorHandler'
 import {
   buildCorsDelegate,
+  buildContactLimiter,
+  buildContactEmailLimiter,
   buildGlobalLimiter,
   buildHelmet,
   buildSensitiveLimiter,
@@ -62,6 +64,7 @@ import { demoPatientRouter } from './routes/demoPatient'
 import { aiBudgetRouter, aiUsageRouter } from './routes/aiUsage'
 import { aiCreditsRouter } from './routes/aiCredits'
 import { stripeWebhookRouter } from './routes/stripeWebhook'
+import { contactRouter } from './routes/contact'
 import {
   isClinicalIntelligenceV1Enabled,
   isEnterpriseOrgHierarchyEnabled,
@@ -159,6 +162,8 @@ app.use('/api/inline-edit', express.json({ limit: '25mb' }), inlineEditRouter)
 // Voice message uploads carry base64 audio — needs a larger JSON limit than the global parser.
 app.use('/api/discuss-case', express.json({ limit: '15mb' }), discussCaseRouter)
 app.use(express.json({ limit: '2mb' }))
+
+app.use('/api/contact', buildContactLimiter(), buildContactEmailLimiter(), contactRouter)
 
 app.use('/api/generate', generateRouter)
 app.use('/api/pharma-generate', pharmaGenerateRouter)

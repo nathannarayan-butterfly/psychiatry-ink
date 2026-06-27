@@ -10,6 +10,7 @@ import { FeaturesPage } from './pages/FeaturesPage'
 import { PricingPage } from './pages/PricingPage'
 import { SecurityPage } from './pages/SecurityPage'
 import { LegalPage } from './pages/LegalPage'
+import { ContactPage } from './pages/ContactPage'
 import { LoginPage } from './pages/LoginPage'
 
 function upsertMeta(name: string, content: string, attr: 'name' | 'property') {
@@ -86,6 +87,9 @@ export function PublicPage({ pageKey, hostname, onNavigate }: PublicPageProps) {
       break
     case 'impressum':
       body = <LegalPage doc={getLegalDoc('impressum', locale)} />
+      break
+    case 'contact':
+      body = <ContactPage locale={locale} onNavigate={onNavigate} />
       break
     case 'login':
       body = <LoginPage locale={locale} brandName={brandName} />

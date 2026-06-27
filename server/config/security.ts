@@ -10,7 +10,7 @@
  */
 
 import type { CorsOptions, CorsOptionsDelegate, CorsRequest } from 'cors'
-import rateLimit, { type RateLimitRequestHandler } from 'express-rate-limit'
+import rateLimit, { ipKeyGenerator, type RateLimitRequestHandler } from 'express-rate-limit'
 import helmet from 'helmet'
 import type { RequestHandler } from 'express'
 
@@ -173,5 +173,47 @@ export function buildSensitiveLimiter(): RateLimitRequestHandler {
     standardHeaders: 'draft-7',
     legacyHeaders: false,
     message: { error: 'Rate limit exceeded for this operation. Try again shortly.' },
+  })
+}
+
+/**
+ * Tight limiter for the public contact form (abuse prevention), keyed by client
+ * IP. Pair with {@link buildContactEmailLimiter} so submissions are throttled by
+ * BOTH IP and submitted email address (defence against IP rotation and against a
+ * single IP fanning out across many addresses).
+ */
+export function buildContactLimiter(): RateLimitRequestHandler {
+  return rateLimit({
+    windowMs: envInt('CONTACT_RATE_LIMIT_WINDOW_MS', 900_000),
+    limit: envInt('CONTACT_RATE_LIMIT_MAX', 5),
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    message: { error: 'Too many contact form submissions. Please try again later.' },
+  })
+}
+
+/**
+ * Companion limiter keyed by the submitted email address (case-insensitive),
+ * independent of the IP bucket. Requests without a usable email are skipped here
+ * and remain covered by the IP limiter. Mount AFTER `express.json()` and after
+ * {@link buildContactLimiter} on the contact route.
+ */
+export function buildContactEmailLimiter(): RateLimitRequestHandler {
+  return rateLimit({
+    windowMs: envInt('CONTACT_RATE_LIMIT_WINDOW_MS', 900_000),
+    limit: envInt('CONTACT_RATE_LIMIT_MAX', 5),
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    message: { error: 'Too many contact form submissions. Please try again later.' },
+    keyGenerator: (req) => {
+      const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : ''
+      // Fall back to the IP bucket key shape if no email is present so the
+      // value is still IPv6-safe; such requests are skipped below regardless.
+      return email ? `email:${email}` : ipKeyGenerator(req.ip ?? '')
+    },
+    skip: (req) => typeof req.body?.email !== 'string' || req.body.email.trim() === '',
+    // This limiter intentionally keys on email rather than IP; silence the
+    // built-in "keyGenerator should use req.ip" guard.
+    validate: { keyGeneratorIpFallback: false },
   })
 }

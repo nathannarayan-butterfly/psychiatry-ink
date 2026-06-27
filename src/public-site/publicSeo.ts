@@ -119,6 +119,18 @@ const PAGE_COPY: Record<
       description: 'Anbieterkennzeichnung und Impressum gemäß § 5 DDG für Psychiatrie.Ink.',
     },
   },
+  contact: {
+    en: {
+      title: 'Contact',
+      description:
+        'Contact Psychiatry.Ink for professional inquiries about the psychiatric workspace, support, billing, privacy, or technical issues.',
+    },
+    de: {
+      title: 'Kontakt',
+      description:
+        'Kontakt zu Psychiatrie.Ink für professionelle Anfragen zum psychiatrischen Arbeitsbereich, Support, Abrechnung, Datenschutz oder technische Probleme.',
+    },
+  },
   login: {
     en: {
       title: 'Sign in',

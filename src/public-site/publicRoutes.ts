@@ -23,6 +23,7 @@ export type PublicPageKey =
   | 'privacy'
   | 'terms'
   | 'impressum'
+  | 'contact'
   | 'login'
 
 /** Locales with first-class localized routing + prerender. */
@@ -100,6 +101,14 @@ export const PUBLIC_ROUTES: readonly PublicRouteConfig[] = [
     // German legal requirement (§ 5 DDG). Mirrored on the English site as a
     // "Legal notice" at /legal so the entity disclosure is reachable there too.
     path: { en: '/legal', de: '/impressum' },
+    inNav: false,
+    inFooterLegal: true,
+    indexable: true,
+    locales: ['en', 'de'],
+  },
+  {
+    key: 'contact',
+    path: { en: '/contact', de: '/kontakt' },
     inNav: false,
     inFooterLegal: true,
     indexable: true,

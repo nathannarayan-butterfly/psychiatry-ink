@@ -31,6 +31,7 @@ export type AppRoute =
   | { view: 'privacy' }
   | { view: 'terms' }
   | { view: 'impressum' }
+  | { view: 'contact' }
   | { view: 'dashboard' }
   | { view: 'kb-admin' }
   | { view: 'audit-debug' }
@@ -60,6 +61,7 @@ export type PublicMarketingView =
   | 'privacy'
   | 'terms'
   | 'impressum'
+  | 'contact'
 
 export function isPublicMarketingView(view: AppRoute['view']): view is PublicMarketingView {
   return (
@@ -68,7 +70,8 @@ export function isPublicMarketingView(view: AppRoute['view']): view is PublicMar
     view === 'security' ||
     view === 'privacy' ||
     view === 'terms' ||
-    view === 'impressum'
+    view === 'impressum' ||
+    view === 'contact'
   )
 }
 

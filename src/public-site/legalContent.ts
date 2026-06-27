@@ -1,4 +1,5 @@
 import type { PublicLocale } from './publicRoutes'
+import { localizedPath } from './publicRoutes'
 import { LEGAL_LAST_UPDATED } from '../../shared/legalVersion'
 
 /**
@@ -1477,27 +1478,126 @@ const impressumDe: LegalDoc = {
       blocks: [
         {
           type: 'p',
-          text: `${COMPANY.legalName}\n${COMPANY.addressDe}\n${COMPANY.registrationDe} Handelsregisternummer: ${COMPANY.companyNumber}.`,
+          text: `${COMPANY.legalName}\n71–75 Shelton Street\nCovent Garden\nLondon, WC2H 9JQ\nVereinigtes Königreich\n${COMPANY.registrationDe}\nRegister: Companies House, England and Wales\nHandelsregisternummer: ${COMPANY.companyNumber}`,
         },
       ],
     },
     {
       id: 'represented',
-      heading: 'Vertreten durch',
-      blocks: [{ type: 'p', text: CONTACT.representative }],
+      heading: 'Vertretungsberechtigte Person',
+      blocks: [
+        { type: 'p', text: 'Vertreten durch den Director:' },
+        { type: 'p', text: CONTACT.representative },
+      ],
     },
     {
       id: 'contact',
       heading: 'Kontakt',
-      blocks: [{ type: 'p', text: `E-Mail: ${CONTACT.generalEmail}` }],
+      blocks: [
+        { type: 'p', text: `E-Mail: ${CONTACT.generalEmail}` },
+        {
+          type: 'link',
+          text: `Kontaktformular: ${localizedPath('contact', 'de')}`,
+          href: localizedPath('contact', 'de'),
+        },
+        { type: 'p', text: 'Bitte verwenden Sie für Datenschutzanfragen ausschließlich:' },
+        { type: 'p', text: CONTACT.privacyEmail },
+        {
+          type: 'p',
+          text: 'Bitte übermitteln Sie über E-Mail oder Kontaktformular keine Patientendaten, Gesundheitsdaten oder sonstigen vertraulichen klinischen Inhalte, sofern dies nicht ausdrücklich erforderlich und zuvor mit uns abgestimmt wurde.',
+        },
+      ],
+    },
+    {
+      id: 'vat',
+      heading: 'Umsatzsteuer',
+      blocks: [
+        { type: 'p', text: 'Eine Umsatzsteuer-Identifikationsnummer wurde noch nicht vergeben.' },
+      ],
     },
     {
       id: 'responsible',
-      heading: 'Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV',
+      heading: 'Verantwortlich für journalistisch-redaktionelle Inhalte nach § 18 Abs. 2 MStV',
       blocks: [
         {
           type: 'p',
-          text: `${CONTACT.representative} — Anschrift wie oben.`,
+          text: 'Derzeit werden über diese Website keine journalistisch-redaktionellen Angebote im Sinne von § 18 Abs. 2 MStV bereitgestellt.',
+        },
+        {
+          type: 'p',
+          text: 'Produktinformationen, Funktionsbeschreibungen, rechtliche Hinweise, Vertragsinformationen und technische Dokumentationen dienen der Beschreibung des Dienstes und stellen kein journalistisch-redaktionelles Angebot dar.',
+        },
+        {
+          type: 'p',
+          text: 'Soweit künftig journalistisch-redaktionelle Inhalte veröffentlicht werden, insbesondere periodische Fachbeiträge, Blogartikel, medizinische Kommentare oder öffentlich redaktionell kuratierte Inhalte, wird eine hierfür verantwortliche Person mit Name und ladungsfähiger Anschrift nach Maßgabe von § 18 Abs. 2 MStV benannt.',
+        },
+      ],
+    },
+    {
+      id: 'professional',
+      heading: 'Berufsrechtliche Angaben',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Psychiatrie.Ink ist ein Software- und Dokumentationsdienst für berufliche Nutzerinnen und Nutzer im Gesundheitswesen.',
+        },
+        {
+          type: 'p',
+          text: 'Über diese Website werden keine individuellen ärztlichen Behandlungen, Diagnosen, Therapien, Konsultationen oder patientenbezogenen medizinischen Leistungen angeboten.',
+        },
+        {
+          type: 'p',
+          text: 'Soweit auf der Website allgemeine ärztliche, psychiatrische, psychopharmakologische oder sonstige fachliche Informationen bereitgestellt werden, dienen diese ausschließlich der allgemeinen beruflichen Information. Sie ersetzen keine individuelle ärztliche Prüfung, keine Fachinformation, keine Leitlinie, keine lokale SOP und keine patientenbezogene medizinische Entscheidung.',
+        },
+        {
+          type: 'p',
+          text: 'Falls über diese Website künftig persönliche ärztliche Leistungen angeboten werden, werden die erforderlichen berufsrechtlichen Angaben ergänzt, insbesondere zuständige Ärztekammer, gesetzliche Berufsbezeichnung, Staat der Verleihung und einschlägige berufsrechtliche Regelungen.',
+        },
+      ],
+    },
+    {
+      id: 'content-liability',
+      heading: 'Haftung für Inhalte',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Wir erstellen die Inhalte dieser Website mit angemessener Sorgfalt. Gleichwohl übernehmen wir keine Gewähr für Vollständigkeit, Richtigkeit, Aktualität oder Eignung der Inhalte für einen bestimmten klinischen, rechtlichen, technischen oder organisatorischen Zweck.',
+        },
+        {
+          type: 'p',
+          text: 'Klinische, psychopharmakologische oder sonstige fachliche Inhalte dienen ausschließlich der beruflichen Orientierung. Sie ersetzen keine ärztliche Prüfung, keine individuelle Nutzen-Risiko-Abwägung, keine Fachinformation, keine Leitlinie und keine lokale SOP.',
+        },
+        {
+          type: 'p',
+          text: 'Als Diensteanbieter sind wir für eigene Inhalte nach den allgemeinen Gesetzen verantwortlich. Für fremde Inhalte, auf die wir lediglich verweisen oder die von Dritten bereitgestellt werden, übernehmen wir keine Verantwortung, soweit keine gesetzliche Verantwortlichkeit besteht.',
+        },
+      ],
+    },
+    {
+      id: 'link-liability',
+      heading: 'Haftung für Links',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Unsere Website kann Links zu externen Websites Dritter enthalten. Auf deren Inhalte haben wir keinen Einfluss. Für die Inhalte verlinkter Seiten ist stets der jeweilige Anbieter oder Betreiber verantwortlich.',
+        },
+        {
+          type: 'p',
+          text: 'Zum Zeitpunkt der Verlinkung wurden die verlinkten Seiten auf erkennbare Rechtsverstöße geprüft. Eine fortlaufende inhaltliche Kontrolle externer Links ist ohne konkrete Anhaltspunkte für eine Rechtsverletzung nicht zumutbar. Bei Bekanntwerden entsprechender Rechtsverletzungen werden wir betroffene Links entfernen.',
+        },
+      ],
+    },
+    {
+      id: 'copyright',
+      heading: 'Urheberrecht',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Die auf dieser Website erstellten Inhalte, Texte, Strukturen, Designs, Grafiken, Logos, Marken, Softwarebestandteile und sonstigen Werke unterliegen dem Urheberrecht und sonstigen Schutzrechten.',
+        },
+        {
+          type: 'p',
+          text: 'Eine Vervielfältigung, Bearbeitung, Verbreitung oder sonstige Nutzung außerhalb der Grenzen des anwendbaren Rechts bedarf der vorherigen Zustimmung der jeweiligen Rechteinhaber. Downloads und Kopien dieser Seite sind nur für den eigenen beruflichen Gebrauch zulässig, soweit nicht ausdrücklich anders angegeben.',
         },
       ],
     },
@@ -1507,7 +1607,25 @@ const impressumDe: LegalDoc = {
       blocks: [
         {
           type: 'p',
-          text: 'Wir sind nicht verpflichtet und grundsätzlich nicht bereit, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.',
+          text: 'Wir sind weder verpflichtet noch bereit, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.',
+        },
+        {
+          type: 'p',
+          text: 'Die frühere Online-Streitbeilegungsplattform der Europäischen Kommission wurde eingestellt. Ein Link auf diese Plattform wird daher nicht bereitgestellt.',
+        },
+      ],
+    },
+    {
+      id: 'audience',
+      heading: 'Hinweis zum Nutzerkreis',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Psychiatrie.Ink richtet sich ausschließlich an berufliche Nutzerinnen und Nutzer, insbesondere Ärztinnen und Ärzte, Psychotherapeutinnen und Psychotherapeuten, Praxen, Kliniken und sonstige Einrichtungen oder Angehörige des Gesundheitswesens.',
+        },
+        {
+          type: 'p',
+          text: 'Eine Nutzung durch Verbraucherinnen und Verbraucher zu privaten Zwecken ist nicht vorgesehen.',
         },
       ],
     },
@@ -1516,7 +1634,7 @@ const impressumDe: LegalDoc = {
 
 const impressumEn: LegalDoc = {
   title: 'Legal notice',
-  lead: 'Provider identification for Psychiatry.Ink.',
+  lead: 'Provider identification pursuant to the UK Digital Services requirements and equivalent EU provider disclosure rules.',
   lastUpdatedLabel: lastUpdatedLabel('en'),
   sections: [
     {
@@ -1525,19 +1643,156 @@ const impressumEn: LegalDoc = {
       blocks: [
         {
           type: 'p',
-          text: `${COMPANY.legalName}\n${COMPANY.addressEn}\n${COMPANY.registrationEn} Company number: ${COMPANY.companyNumber}.`,
+          text: `${COMPANY.legalName}\n71–75 Shelton Street\nCovent Garden\nLondon, WC2H 9JQ\nUnited Kingdom\n${COMPANY.registrationEn}\nRegister: Companies House, England and Wales\nCompany number: ${COMPANY.companyNumber}`,
         },
       ],
     },
     {
       id: 'represented',
-      heading: 'Represented by',
-      blocks: [{ type: 'p', text: CONTACT.representative }],
+      heading: 'Authorised representative',
+      blocks: [
+        { type: 'p', text: 'Represented by the Director:' },
+        { type: 'p', text: CONTACT.representative },
+      ],
     },
     {
       id: 'contact',
       heading: 'Contact',
-      blocks: [{ type: 'p', text: `Email: ${CONTACT.generalEmail}` }],
+      blocks: [
+        { type: 'p', text: `Email: ${CONTACT.generalEmail}` },
+        {
+          type: 'link',
+          text: `Contact form: ${localizedPath('contact', 'en')}`,
+          href: localizedPath('contact', 'en'),
+        },
+        { type: 'p', text: 'For privacy requests, please use only:' },
+        { type: 'p', text: CONTACT.privacyEmail },
+        {
+          type: 'p',
+          text: 'Please do not send patient data, health data, or other confidential clinical content by email or contact form unless expressly required and agreed with us in advance.',
+        },
+      ],
+    },
+    {
+      id: 'vat',
+      heading: 'VAT',
+      blocks: [
+        { type: 'p', text: 'A VAT identification number has not yet been assigned.' },
+      ],
+    },
+    {
+      id: 'responsible',
+      heading: 'Responsible for journalistic/editorial content (§ 18 Abs. 2 MStV equivalent)',
+      blocks: [
+        {
+          type: 'p',
+          text: 'This website currently does not provide journalistic or editorial offerings within the meaning of § 18 Abs. 2 MStV.',
+        },
+        {
+          type: 'p',
+          text: 'Product information, feature descriptions, legal notices, contract information and technical documentation describe the service and are not journalistic/editorial content.',
+        },
+        {
+          type: 'p',
+          text: 'If journalistic or editorial content is published in future — for example periodic professional articles, blog posts, medical commentary or publicly curated editorial content — a responsible person with name and serviceable address will be named as required by § 18 Abs. 2 MStV.',
+        },
+      ],
+    },
+    {
+      id: 'professional',
+      heading: 'Professional regulatory information',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Psychiatry.Ink is a software and documentation service for professional users in healthcare.',
+        },
+        {
+          type: 'p',
+          text: 'This website does not offer individual medical treatment, diagnosis, therapy, consultation or patient-related medical services.',
+        },
+        {
+          type: 'p',
+          text: 'Where general medical, psychiatric, psychopharmacological or other professional information is provided on the website, it is for general professional orientation only. It does not replace individual medical assessment, product information, guidelines, local SOPs or patient-specific medical decisions.',
+        },
+        {
+          type: 'p',
+          text: 'If personal medical services are offered via this website in future, the required professional regulatory details will be added, including the relevant medical chamber, statutory professional title, state of award and applicable professional rules.',
+        },
+      ],
+    },
+    {
+      id: 'content-liability',
+      heading: 'Liability for content',
+      blocks: [
+        {
+          type: 'p',
+          text: 'We create the content of this website with reasonable care. Nevertheless, we do not warrant completeness, accuracy, timeliness or suitability of the content for any particular clinical, legal, technical or organisational purpose.',
+        },
+        {
+          type: 'p',
+          text: 'Clinical, psychopharmacological or other professional content is for professional orientation only. It does not replace medical assessment, individual benefit–risk evaluation, product information, guidelines or local SOPs.',
+        },
+        {
+          type: 'p',
+          text: 'As a service provider we are responsible for our own content under general law. We are not responsible for third-party content we merely link to or that is provided by third parties, except where statutory liability applies.',
+        },
+      ],
+    },
+    {
+      id: 'link-liability',
+      heading: 'Liability for links',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Our website may contain links to external third-party websites. We have no influence over their content. The respective provider or operator is always responsible for linked pages.',
+        },
+        {
+          type: 'p',
+          text: 'Linked pages were checked for obvious legal violations at the time of linking. Continuous monitoring of external links without concrete indications of a legal violation is not reasonable. If we become aware of legal violations, we will remove affected links.',
+        },
+      ],
+    },
+    {
+      id: 'copyright',
+      heading: 'Copyright',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Content, text, structure, design, graphics, logos, trademarks, software components and other works on this website are protected by copyright and other rights.',
+        },
+        {
+          type: 'p',
+          text: 'Reproduction, editing, distribution or other use outside the limits of applicable law requires prior consent of the respective rights holder. Downloads and copies of this site are permitted only for your own professional use unless expressly stated otherwise.',
+        },
+      ],
+    },
+    {
+      id: 'dispute',
+      heading: 'Dispute resolution',
+      blocks: [
+        {
+          type: 'p',
+          text: 'We are neither obliged nor willing to participate in dispute resolution proceedings before a consumer arbitration board.',
+        },
+        {
+          type: 'p',
+          text: 'The former EU Online Dispute Resolution platform has been discontinued. A link to that platform is therefore not provided.',
+        },
+      ],
+    },
+    {
+      id: 'audience',
+      heading: 'Intended users',
+      blocks: [
+        {
+          type: 'p',
+          text: 'Psychiatry.Ink is intended exclusively for professional users, in particular physicians, psychotherapists, practices, clinics and other healthcare institutions or professionals.',
+        },
+        {
+          type: 'p',
+          text: 'Use by consumers for private purposes is not intended.',
+        },
+      ],
     },
   ],
 }

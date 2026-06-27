@@ -3727,6 +3727,33 @@ export type Database = {
           },
         ]
       }
+      public_contact_submissions: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          ip_hash: string
+          locale: string | null
+          success: boolean
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          ip_hash: string
+          locale?: string | null
+          success?: boolean
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          ip_hash?: string
+          locale?: string | null
+          success?: boolean
+        }
+        Relationships: []
+      }
       user_legal_acceptances: {
         Row: {
           accepted_at: string
