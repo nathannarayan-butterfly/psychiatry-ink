@@ -206,6 +206,12 @@
 .case-sidebar-panel__logo .topbar-logo__mark {
   height: 4.2em;
   max-width: none;
+  /* Decorative, aria-hidden artwork: it must never capture pointer events.
+     Because it is oversized and unclipped it overflows its column over the
+     collapse/expand toggle; making it click-transparent ensures clicks fall
+     through to the real control (the toggle) instead of the brand link. The
+     logo link stays clickable via its lockup/text and its own anchor box. */
+  pointer-events: none;
   margin-left: -0.4rem;
   translate: 0 0.02em;
 }
@@ -221,6 +227,13 @@
   display: inline-flex;
   align-items: center;
   line-height: 0;
+}
+
+/* Keep the decorative mark host click-transparent in the case sidebar so its
+   oversized, overflowing artwork can never intercept clicks intended for the
+   collapse/expand toggle. See `.case-sidebar-panel__collapse-btn`. */
+.case-sidebar-panel .topbar-logo--light .topbar-logo__mark-host {
+  pointer-events: none;
 }
 
 .topbar-logo--light .topbar-logo__mark--inline {
@@ -1394,6 +1407,15 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  /* The brand logo mark is intentionally oversized (height: 4.2em, max-width:
+     none) and carries a `filter: drop-shadow()` which makes it form its own
+     stacking context. Without an explicit stacking position here, that mark —
+     a child of the `<a href="/dashboard">` brand link — overflows its column
+     and paints on top of this sibling button, so a click meant to collapse the
+     sidebar lands on the logo link and navigates to the dashboard. Lifting the
+     toggle into its own stacking context keeps it the topmost hit target. */
+  position: relative;
+  z-index: 2;
   width: 1.6rem;
   height: 1.6rem;
   margin-top: 0.1rem;
