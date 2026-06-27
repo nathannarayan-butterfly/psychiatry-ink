@@ -146,7 +146,7 @@ export async function createGiftVoucherCheckoutSession(params: {
           unit_amount: params.pack.priceGbpPence,
           product_data: {
             name: `Psychiatry.Ink — Gutschein · ${params.pack.labelEn}`,
-            description: `Gift voucher: ${params.pack.creditsPerPeriod} credits/month for ${params.pack.totalPeriods} months (${totalCredits} credits total).`,
+            description: `Gift voucher: one-time ${totalCredits}-credit top-up. Redeem within ${params.pack.validDays} days; the credits never expire once redeemed.`,
           },
         },
       },

@@ -7307,6 +7307,54 @@ export const uiTranslations = {
     fr: 'Les crédits achetés n’expirent pas et sont consommés après le quota mensuel. Paiement sécurisé via Stripe (GBP).',
     es: 'Los créditos comprados no caducan y se consumen tras agotar la cuota mensual. Pago seguro mediante Stripe (GBP).',
   },
+  creditsGroupGet: {
+    de: 'Credits erhalten',
+    en: 'Get credits',
+    fr: 'Obtenir des crédits',
+    es: 'Obtener créditos',
+  },
+  creditsGroupGifting: {
+    de: 'Verschenken & Empfehlen',
+    en: 'Gifting & referrals',
+    fr: 'Cadeaux et parrainage',
+    es: 'Regalos y referidos',
+  },
+  creditsGroupRecords: {
+    de: 'Verlauf & Belege',
+    en: 'Records',
+    fr: 'Historique et relevés',
+    es: 'Registros',
+  },
+  creditsGroupAdmin: {
+    de: 'Promo-Gutscheine (Admin)',
+    en: 'Admin promo vouchers',
+    fr: 'Bons promo (admin)',
+    es: 'Vales promo (admin)',
+  },
+  creditsSubscribeTitle: {
+    de: 'Abonnement',
+    en: 'Subscription',
+    fr: 'Abonnement',
+    es: 'Suscripción',
+  },
+  creditsSubscribeBody: {
+    de: 'Ein aktives Abonnement schaltet alle KI-Funktionen frei und ist erforderlich, um Ihre Credits zu nutzen.',
+    en: 'An active subscription unlocks all AI features and is required to use your credits.',
+    fr: 'Un abonnement actif débloque toutes les fonctions IA et est requis pour utiliser vos crédits.',
+    es: 'Una suscripción activa desbloquea todas las funciones de IA y es necesaria para usar tus créditos.',
+  },
+  creditsSubscribeMonthly: {
+    de: 'Abonnieren — £24.99/Mon.',
+    en: 'Subscribe — £24.99/mo',
+    fr: 'S’abonner — £24.99/mois',
+    es: 'Suscribirse — £24.99/mes',
+  },
+  creditsSubscribeYearly: {
+    de: 'Jährlich — £239.90/Jahr',
+    en: 'Yearly — £239.90/yr',
+    fr: 'Annuel — £239.90/an',
+    es: 'Anual — £239.90/año',
+  },
   creditsPackPerHundred: {
     de: '≈ {price} / 100 Credits',
     en: '≈ {price} / 100 credits',
@@ -7536,10 +7584,10 @@ export const uiTranslations = {
     es: 'Comprar un vale regalo',
   },
   voucherGiftSub: {
-    de: 'Verschenken Sie Credits. Nach dem Kauf erhalten Sie einen Code zum Weitergeben. Sichere Zahlung über Stripe (GBP).',
-    en: 'Gift credits to a colleague. After purchase you get a code to share. Secure payment via Stripe (GBP).',
-    fr: 'Offrez des crédits. Après l’achat, vous recevez un code à partager. Paiement sécurisé via Stripe (GBP).',
-    es: 'Regale créditos. Tras la compra recibirá un código para compartir. Pago seguro mediante Stripe (GBP).',
+    de: 'Verschenken Sie ein einmaliges Credit-Guthaben. Nach dem Kauf erhalten Sie einen Code zum Weitergeben: innerhalb von 6 Monaten einlösbar, danach verfallen die Credits nicht. Sichere Zahlung über Stripe (GBP).',
+    en: 'Gift a one-time credit top-up. After purchase you get a code to share: redeemable within 6 months, and the credits never expire once redeemed. Secure payment via Stripe (GBP).',
+    fr: 'Offrez un crédit unique. Après l’achat, vous recevez un code à partager : utilisable sous 6 mois, et les crédits n’expirent jamais une fois utilisés. Paiement sécurisé via Stripe (GBP).',
+    es: 'Regale un saldo de créditos único. Tras la compra recibirá un código para compartir: canjeable en 6 meses, y los créditos no caducan una vez canjeados. Pago seguro mediante Stripe (GBP).',
   },
   voucherGiftBuy: {
     de: 'Verschenken',
@@ -7552,6 +7600,12 @@ export const uiTranslations = {
     en: '{credits} credits total',
     fr: '{credits} crédits au total',
     es: '{credits} créditos en total',
+  },
+  voucherGiftOneTimeTag: {
+    de: 'Einmalig · innerhalb 6 Monaten einlösbar · Credits verfallen nicht',
+    en: 'One-time top-up · redeem within 6 months · credits never expire',
+    fr: 'Crédit unique · à utiliser sous 6 mois · crédits sans expiration',
+    es: 'Saldo único · canjear en 6 meses · los créditos no caducan',
   },
   voucherGiftResultHeading: {
     de: 'Ihr Gutschein-Code',

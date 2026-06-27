@@ -4,35 +4,55 @@
  * Single source of truth for "can this user use AI / credit-consuming features
  * right now?". The authoritative decision is computed LIVE from the account row
  * rather than relying on the `locked_at` audit stamp (which is best-effort, set
- * lazily by the lapse sweep / webhooks):
+ * lazily by the lapse sweep / webhooks).
+ *
+ * With subscription enforcement ON (the default — `REQUIRE_SUBSCRIPTION_FOR_CREDITS`):
  *
  *   access = subscription active   (subscription_status ∈ {active, trialing})
  *          OR trial active         (now < trial_ends_at)
- *          OR purchased credits    (purchased_credits > 0)
  *          OR trial never started  (legacy / pre-enrolment accounts keep access)
+ *
+ * Crucially, holding `purchased_credits > 0` is NO LONGER a standalone access
+ * grant: bought packs and bought/redeemed gift vouchers BANK credits, but USING
+ * them requires an active plan. A started-and-lapsed trial with banked credits
+ * but no subscription is locked with reason `subscription_required` so the UI can
+ * prompt to subscribe (rather than the generic trial-ended prompt). When the env
+ * flag is set to `false`, the legacy `purchased_credits > 0` grant is restored so
+ * enforcement can be rolled back without a redeploy.
  *
  * The soft-lock (read-only / no AI, never data deletion) engages only when an
  * account that HAS started a trial sees that trial lapse with no active
- * subscription and no purchased credits. Accounts that never started a trial
- * (e.g. created by the legacy Prisma `ensureCreditAccount` path before the trial
- * flow shipped) are deliberately NOT locked — this preserves current behaviour
- * for existing users and avoids retroactively locking anyone out.
+ * subscription. Accounts that never started a trial (e.g. created by the legacy
+ * Prisma `ensureCreditAccount` path before the trial flow shipped) are
+ * deliberately NOT locked — this preserves the onboarding grace for existing and
+ * brand-new users and avoids retroactively locking anyone out.
  *
  * @module subscriptionAccess
  */
 
 import { creditsRepo, type AiCreditAccount } from '../data/credits'
-import { InsufficientCreditsError } from '../ai/creditGuard'
+import { InsufficientCreditsError } from '../ai/creditErrors'
 
 /** Stripe subscription statuses that grant live access. */
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set(['active', 'trialing'])
 
 const MS_PER_DAY = 86_400_000
 
+/**
+ * Whether an active subscription/trial is REQUIRED to spend (use) credits.
+ * Defaults to ON (enforced). Set `REQUIRE_SUBSCRIPTION_FOR_CREDITS=false` to roll
+ * the enforcement back without a redeploy (restores the legacy
+ * `purchased_credits > 0` standalone access grant).
+ */
+export function requireSubscriptionForCredits(): boolean {
+  return process.env.REQUIRE_SUBSCRIPTION_FOR_CREDITS?.trim().toLowerCase() !== 'false'
+}
+
 export type AccessReason =
   | 'subscription_active'
   | 'trial_active'
   | 'purchased_credits'
+  | 'subscription_required'
   | 'trial_not_started'
   | 'no_account'
   | 'locked_trial_expired'
@@ -73,7 +93,10 @@ export type AccountAccessFields = Pick<
 export function computeAccess(
   account: AccountAccessFields | null,
   now: Date = new Date(),
+  options?: { requireSubscriptionForCredits?: boolean },
 ): SubscriptionAccess {
+  const enforceSubscription =
+    options?.requireSubscriptionForCredits ?? requireSubscriptionForCredits()
   if (!account) {
     return {
       access: true,
@@ -112,18 +135,26 @@ export function computeAccess(
     access = true
     locked = false
     reason = 'trial_active'
-  } else if (purchasedCredits > 0) {
+  } else if (!enforceSubscription && purchasedCredits > 0) {
+    // Legacy behaviour (enforcement rolled back): purchased credits alone grant
+    // access. Kept behind the env flag so it can be re-enabled without a deploy.
     access = true
     locked = false
     reason = 'purchased_credits'
   } else if (!trialStarted) {
+    // Onboarding grace: a user who never started a trial keeps access so they
+    // can begin one. Preserved EXACTLY to avoid breaking trial/onboarding.
     access = true
     locked = false
     reason = 'trial_not_started'
   } else {
+    // Started-and-lapsed trial with no active subscription. Banked credits no
+    // longer unlock spending — surface a distinct `subscription_required` reason
+    // when the user has a balance to convert, so the UI prompts to subscribe
+    // rather than to "buy more credits".
     access = false
     locked = true
-    reason = 'locked_trial_expired'
+    reason = purchasedCredits > 0 ? 'subscription_required' : 'locked_trial_expired'
   }
 
   return {
@@ -156,7 +187,9 @@ export class AccessLockedError extends InsufficientCreditsError {
     this.name = 'AccessLockedError'
     this.reason = reason
     this.message =
-      'Your free trial has ended. Subscribe or add a credit bundle to keep using AI features. Your data stays safe and accessible.'
+      reason === 'subscription_required'
+        ? 'An active subscription is required to use your credits. Subscribe to keep using AI features — your credits stay banked and your data stays safe.'
+        : 'Your free trial has ended. Subscribe to keep using AI features. Your data stays safe and accessible.'
   }
 }
 
