@@ -20,6 +20,7 @@ import {
 } from '../../utils/verlauf/exportVerlauf'
 import { useTranslation } from '../../context/TranslationContext'
 import { useAuth } from '../../context/AuthContext'
+import { isDemoCaseReadOnly } from '../../demo'
 import { usePermissionContext } from '../../contexts/PermissionContext'
 import {
   SelectionActionBubble,
@@ -1774,7 +1775,7 @@ export function VerlaufFeedPage({
   const { t, language } = useTranslation()
   const { user } = useAuth()
   const { member, role, organisation } = usePermissionContext()
-  const demoReadOnly = false
+  const demoReadOnly = isDemoCaseReadOnly(caseId, user?.email)
   const todoScope = useTodoScope()
 
   const aiEditEnabled = isInlineAiEditEnabled()

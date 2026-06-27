@@ -39,6 +39,10 @@ export interface LocalCaseMeta {
   createdAt: string
   /** When set, case is hidden from the active patient list and shown under Archiv. */
   archivedAt?: string
+  /** Synthetic demo patient — read-only, seeded from fixture. */
+  isDemoPatient?: boolean
+  demoSeedVersion?: string
+  demoPatientId?: string
 }
 
 export interface RemoteCaseMeta {

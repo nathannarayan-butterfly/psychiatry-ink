@@ -58,6 +58,7 @@ import { useSystemAdminAccess } from '../../hooks/useSystemAdminAccess'
 import { useCurrentOrganisation } from '../../hooks/permissions'
 import { setDevOrganisationTier } from '../../services/orgApi'
 import { useAuditDebugAccess } from '../../hooks/useAuditDebugAccess'
+import { isCaseListedOnDashboard } from '../../hooks/useDemoPatient'
 import { useAuth } from '../../context/AuthContext'
 import {
   archivePatientCase,
@@ -108,6 +109,7 @@ interface DashboardPageProps {
   onOpenSettings?: () => void
   onOpenKbAdmin?: () => void
   onOpenAuditDebug?: () => void
+  onOpenDemoPatient?: () => void
   onOpenTemplates?: () => void
   onOpenTeamSettings?: () => void
   onOpenIntegrations?: () => void
@@ -152,6 +154,7 @@ export function DashboardPage({
   onNavigateHome,
   onOpenKbAdmin,
   onOpenAuditDebug,
+  onOpenDemoPatient,
   onOpenTemplates,
   onOpenTeamSettings,
   onOpenIntegrations,
@@ -318,8 +321,9 @@ export function DashboardPage({
     () =>
       registry.cases
         .filter(isListedPatientCase)
+        .filter((caseItem) => isCaseListedOnDashboard(caseItem.caseId, userId))
         .sort((a, b) => new Date(b.lastEditedAt).getTime() - new Date(a.lastEditedAt).getTime()),
-    [registry.cases],
+    [registry.cases, userId],
   )
 
   const activePatients = useMemo(
@@ -948,6 +952,12 @@ export function DashboardPage({
             <button type="button" className="dashboard-settings-chip" onClick={onOpenAuditDebug}>
               <ClipboardList className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
               Audit Logs (Dev)
+            </button>
+          ) : null}
+          {hasAuditDebugAccess && onOpenDemoPatient ? (
+            <button type="button" className="dashboard-settings-chip" onClick={onOpenDemoPatient}>
+              <ClipboardList className="dashboard-settings-chip__icon" strokeWidth={1.5} aria-hidden />
+              Demo-Patient (Dev)
             </button>
           ) : null}
           {canAccessEnterpriseUi && onOpenEnterprise ? (
