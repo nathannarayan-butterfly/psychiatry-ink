@@ -20,7 +20,13 @@ import { API_BASE } from '../services/apiClient'
 import { getAuthHeaders } from '../services/authHeaders'
 import { attributeReferral } from '../services/aiCreditsApi'
 import { recordLegalConsent } from '../services/legalConsentApi'
+import { setupAccountCloudBackup } from '../utils/accountBackup'
 import { clearSessionOnLogout } from '../utils/devicePreferences'
+import { downloadPassphraseBackupFile } from '../utils/passphraseRecovery'
+import {
+  clearPendingSignupPassphrase,
+  getPendingSignupPassphrase,
+} from '../utils/pendingSignupPassphrase'
 import { clearStoredReferralCode, getStoredReferralCode } from '../utils/referralCapture'
 import {
   clearPendingLegalConsent,
@@ -151,6 +157,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .then(() => clearPendingLegalConsent())
       .catch(() => {
         // Leave the marker stored to retry on the next session; non-fatal.
+      })
+  }, [user])
+
+  // Passphrase backup from signup wizard: when email confirmation delayed account
+  // creation, apply `setupAccountCloudBackup` on first authenticated session.
+  useEffect(() => {
+    if (!user) return
+    const pendingPassphrase = getPendingSignupPassphrase()
+    if (!pendingPassphrase) return
+    void setupAccountCloudBackup(pendingPassphrase, user.id)
+      .then((backup) => {
+        clearPendingSignupPassphrase()
+        downloadPassphraseBackupFile(backup)
+      })
+      .catch(() => {
+        // Leave pending for retry on next session; non-fatal.
       })
   }, [user])
 
