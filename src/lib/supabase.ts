@@ -10,17 +10,38 @@ import {
 } from '../../shared/supabaseEnv'
 
 /**
- * Browser Supabase client — reads ONLY Vite-injected vars (never .env.example).
+ * Browser Supabase client.
  *
- * Vite precedence: .env.local overrides .env for the same key.
- * Put real credentials in .env.local, or keep placeholders only in .env.example.
+ * Config resolution order (durable against build-time fragility):
+ *   1. RUNTIME `window.__APP_CONFIG__` — served by the server as `/app-config.js`
+ *      from its runtime env (see server/serveClient.ts). This is the source of
+ *      truth in production, so a deploy whose bundle lacked baked `VITE_*` values
+ *      is STILL configured as long as the server env is set.
+ *   2. BUILD-time `import.meta.env.VITE_SUPABASE_*` — Vite-inlined fallback that
+ *      keeps `vite dev` and split/static deploys working.
+ *
+ * Vite precedence (for the fallback): .env.local overrides .env for the same key.
  * Restart `npm run dev` after env changes.
  */
-const url = import.meta.env.VITE_SUPABASE_URL?.trim() ?? ''
+declare global {
+  interface Window {
+    __APP_CONFIG__?: {
+      supabaseUrl?: string
+      supabaseAnonKey?: string
+    }
+  }
+}
+
+const runtimeConfig = typeof window !== 'undefined' ? window.__APP_CONFIG__ : undefined
+
+const url =
+  runtimeConfig?.supabaseUrl?.trim() || import.meta.env.VITE_SUPABASE_URL?.trim() || ''
+
 // Accept both VITE_SUPABASE_ANON_KEY (canonical) and VITE_SUPABASE_PUBLISHABLE_KEY (alias).
 const anonKey =
-  (import.meta.env.VITE_SUPABASE_ANON_KEY?.trim() ||
-    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim()) ??
+  runtimeConfig?.supabaseAnonKey?.trim() ||
+  import.meta.env.VITE_SUPABASE_ANON_KEY?.trim() ||
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() ||
   ''
 
 export type { SupabaseKeyKind }

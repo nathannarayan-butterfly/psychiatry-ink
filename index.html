@@ -15,6 +15,22 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&display=swap"
       rel="stylesheet"
     />
+
+    <!--
+      Runtime public config: sets window.__APP_CONFIG__ (Supabase URL + anon key)
+      from the server's runtime env. It MUST load BEFORE the module bundle so the
+      client reads it on boot — configuring Supabase at RUNTIME even if the bundle
+      shipped without baked VITE_SUPABASE_* values (eliminating the build-arg
+      fragility behind the recurring "Supabase ist nicht konfiguriert" error).
+
+      Placed in <head> (Vite hoists the module bundle into <head>) so it precedes
+      the bundle in document order; as a classic script it also executes during
+      parse, before the deferred ES-module bundle. It is an external same-origin
+      file, so it satisfies the strict `script-src 'self'` CSP (no nonce needed).
+      In `vite dev` a dev-middleware serves it from .env(.local); in production the
+      Express server emits it (see server/serveClient.ts registerAppConfigRoute).
+    -->
+    <script src="/app-config.js"></script>
   </head>
   <body>
     <div id="root"></div>

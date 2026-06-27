@@ -5,7 +5,7 @@ import cors from 'cors'
 import express from 'express'
 import { getSupabaseAdmin } from './services/supabaseAdmin'
 import { countDiagnosisCodes } from './data/diagnosis'
-import { configureClientServing } from './serveClient'
+import { configureClientServing, registerAppConfigRoute } from './serveClient'
 import { optionalAuth } from './middleware/auth'
 import { requestId } from './middleware/requestContext'
 import { apiNotFound, errorHandler } from './middleware/errorHandler'
@@ -206,6 +206,12 @@ if (isEnterpriseOrgHierarchyEnabled()) {
 
 // 404 for any unmatched /api route (before the SPA fallback claims everything).
 app.use('/api', apiNotFound)
+
+// Runtime public app config (`/app-config.js`). Emits the PUBLIC Supabase URL +
+// anon/publishable key from the Cloud Run runtime env so the browser is
+// configured at runtime, independent of build-time VITE_* baking. Must be
+// registered BEFORE the SPA fallback so it is not swallowed by it.
+registerAppConfigRoute(app)
 
 // Serve the built Vite client (dist/) from the same service with SPA fallback so
 // same-origin /api/* works in the single-service Cloud Run topology. Registered

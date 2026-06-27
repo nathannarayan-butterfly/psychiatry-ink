@@ -3,6 +3,7 @@ import path from 'node:path'
 import express, { type Express } from 'express'
 import { injectMarketingMeta } from './marketingHtml'
 import { resolveDomainConfig } from '../src/config/domainConfig'
+import { buildAppConfigScript, resolvePublicSupabaseConfig } from '../shared/appConfig'
 
 /**
  * Serve the built Vite client (`dist/`) from the same Express service with SPA
@@ -46,6 +47,34 @@ function setStaticCacheHeaders(res: express.Response, filePath: string): void {
 function normalizeReqPath(reqPath: string): string {
   const trimmed = reqPath.replace(/\/+$/, '')
   return trimmed === '' ? '/' : trimmed
+}
+
+/**
+ * Serve the RUNTIME public app config as `/app-config.js`. The browser loads
+ * this BEFORE the module bundle and reads `window.__APP_CONFIG__` first, so the
+ * client is configured from the Cloud Run runtime env even if the bundle shipped
+ * without baked `VITE_SUPABASE_*` values. This removes the build-arg fragility
+ * that caused the recurring "Supabase ist nicht konfiguriert" error.
+ *
+ * - Same-origin external script → satisfies the strict `script-src 'self'` CSP.
+ * - Never cached: a deploy can change the env, and a stale tab must pick it up.
+ * - ONLY public values (URL + anon/publishable key); secret keys are dropped by
+ *   `resolvePublicSupabaseConfig`. Missing env degrades to empty strings so the
+ *   existing client error still surfaces gracefully (plus a server warning).
+ *
+ * Registered standalone (not gated on `dist/` existing) so it is always present
+ * in the single-service topology, and must be registered BEFORE the SPA fallback.
+ */
+export function registerAppConfigRoute(app: Express): void {
+  app.get('/app-config.js', (_req, res) => {
+    const { supabaseUrl, supabaseAnonKey, warnings } = resolvePublicSupabaseConfig(process.env)
+    for (const warning of warnings) {
+      console.warn(`[app-config] ${warning}`)
+    }
+    res.setHeader('Content-Type', 'application/javascript; charset=utf-8')
+    res.setHeader('Cache-Control', NO_CACHE)
+    res.send(buildAppConfigScript({ supabaseUrl, supabaseAnonKey }))
+  })
 }
 
 export function configureClientServing(app: Express, distDir: string): boolean {

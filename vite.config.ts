@@ -1,7 +1,7 @@
 import { execSync } from 'node:child_process'
 import { readFileSync, existsSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { defineConfig, type Plugin } from 'vite'
+import { defineConfig, loadEnv, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import {
@@ -10,6 +10,7 @@ import {
   isPlaceholderKey,
   isPlaceholderUrl,
 } from './shared/supabaseEnv'
+import { buildAppConfigScript, resolvePublicSupabaseConfig } from './shared/appConfig'
 
 // VITE_SUPABASE_PUBLISHABLE_KEY is accepted as an alias for VITE_SUPABASE_ANON_KEY.
 const SUPABASE_ENV_KEYS = [
@@ -116,6 +117,33 @@ function supabaseEnvCheck(): Plugin {
 }
 
 /**
+ * Dev-server equivalent of the production `/app-config.js` route. `vite dev`
+ * serves index.html itself (Express is not in the loop), so without this the
+ * `<script src="/app-config.js">` tag would 404 in dev. Serving it from the
+ * loaded `.env(.local)` keeps `window.__APP_CONFIG__` populated locally and
+ * exercises the exact same runtime-config path the production client takes.
+ */
+function appConfigDevPlugin(): Plugin {
+  return {
+    name: 'psyink-app-config-dev',
+    configureServer(server) {
+      server.middlewares.use('/app-config.js', (_req, res) => {
+        // Prefix '' loads every var (incl. server-only names) — we only read the
+        // public ones, and secret keys are dropped by resolvePublicSupabaseConfig.
+        const env = loadEnv(server.config.mode, process.cwd(), '')
+        const { supabaseUrl, supabaseAnonKey, warnings } = resolvePublicSupabaseConfig(env)
+        for (const warning of warnings) {
+          server.config.logger.warn(`[app-config] ${warning}`)
+        }
+        res.setHeader('Content-Type', 'application/javascript; charset=utf-8')
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
+        res.end(buildAppConfigScript({ supabaseUrl, supabaseAnonKey }))
+      })
+    },
+  }
+}
+
+/**
  * Compute ONE build id used both as the in-bundle constant and the static
  * `version.json` payload, so the running app's "loaded build id" always matches
  * what a fresh deploy publishes. Prefer the git short sha (stable, ties the
@@ -167,7 +195,7 @@ function versionStampPlugin(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [supabaseEnvCheck(), versionStampPlugin(), react(), tailwindcss()],
+  plugins: [supabaseEnvCheck(), appConfigDevPlugin(), versionStampPlugin(), react(), tailwindcss()],
   optimizeDeps: {
     // mammoth is CJS-only and only loaded for DOCX import; pre-bundle at dev
     // startup so the first import does not race on-demand optimization.
