@@ -78,7 +78,11 @@ async function idbSet(key: string, value: unknown): Promise<void> {
   })
 }
 
-async function deriveAesKeyFromPassphrase(passphrase: string, salt: Uint8Array): Promise<CryptoKey> {
+async function deriveAesKeyFromPassphrase(
+  passphrase: string,
+  salt: Uint8Array,
+  iterations: number = PBKDF2_ITERATIONS,
+): Promise<CryptoKey> {
   const encoder = new TextEncoder()
   const baseKey = await crypto.subtle.importKey(
     'raw',
@@ -91,7 +95,7 @@ async function deriveAesKeyFromPassphrase(passphrase: string, salt: Uint8Array):
     {
       name: 'PBKDF2',
       salt,
-      iterations: PBKDF2_ITERATIONS,
+      iterations,
       hash: 'SHA-256',
     },
     baseKey,
@@ -136,7 +140,15 @@ export async function restorePrivateKeyFromPassphrase(
 
   const salt = new Uint8Array(base64ToBuffer(stored.salt))
   const iv = new Uint8Array(base64ToBuffer(stored.iv))
-  const aesKey = await deriveAesKeyFromPassphrase(passphrase, salt)
+  // Derive with the iteration count the backup was created with — not the
+  // current constant. Otherwise bumping PBKDF2_ITERATIONS in a future release
+  // would make every existing passphrase key backup permanently undecryptable,
+  // silently breaking the passphrase-recovery path the user set up at signup.
+  const iterations =
+    typeof stored.iterations === 'number' && stored.iterations > 0
+      ? stored.iterations
+      : PBKDF2_ITERATIONS
+  const aesKey = await deriveAesKeyFromPassphrase(passphrase, salt, iterations)
   const plaintext = await crypto.subtle.decrypt(
     { name: 'AES-GCM', iv },
     aesKey,
