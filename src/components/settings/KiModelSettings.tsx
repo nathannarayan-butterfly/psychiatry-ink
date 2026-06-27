@@ -81,6 +81,9 @@ export function KiModelSettings({ modelPreferences }: KiModelSettingsProps) {
               </div>
             )
           })}
+          <p className="mt-1 text-[11px] leading-relaxed text-muted">
+            {t('aiModelsPerformanceHint')}
+          </p>
         </div>
       </SettingsField>
     </div>

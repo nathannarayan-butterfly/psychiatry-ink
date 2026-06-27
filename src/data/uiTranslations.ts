@@ -4295,6 +4295,12 @@ export const uiTranslations = {
     fr: 'Modèle par fonction. Les modes Psychiatry.Ink utilisent les fournisseurs serveur configurés.',
     es: 'Modelo por función. Los modos Psychiatry.Ink usan los proveedores del servidor configurados.',
   },
+  aiModelsPerformanceHint: {
+    de: 'Hinweis: Die Qualität der Ergebnisse hängt vom gewählten Server-LLM-Modell ab. Wenn die Ergebnisse nicht überzeugen oder häufig Fehler auftreten, wählen Sie ein höheres (leistungsfähigeres) Modell.',
+    en: 'Note: Output quality depends on the selected backend LLM model. If results are unsatisfactory or you encounter frequent errors, choose a higher (more capable) model.',
+    fr: 'Remarque : la qualité des résultats dépend du modèle LLM serveur sélectionné. Si les résultats ne sont pas satisfaisants ou si vous rencontrez fréquemment des erreurs, choisissez un modèle supérieur (plus performant).',
+    es: 'Nota: la calidad de los resultados depende del modelo LLM de servidor seleccionado. Si los resultados no son satisfactorios o aparecen errores con frecuencia, elija un modelo superior (más potente).',
+  },
   kiModelTaskFuture: {
     de: 'bald',
     en: 'soon',
