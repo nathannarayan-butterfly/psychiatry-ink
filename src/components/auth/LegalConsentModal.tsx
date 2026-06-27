@@ -36,6 +36,15 @@ function LegalBlockView({ block }: { block: LegalBlock }) {
       </ul>
     )
   }
+  if (block.type === 'link') {
+    return (
+      <p className="signup-legal-modal__paragraph">
+        <a href={block.href} className="signup-legal-modal__link">
+          <strong>{block.text}</strong>
+        </a>
+      </p>
+    )
+  }
   return <p className="signup-legal-modal__paragraph">{renderMultiline(block.text)}</p>
 }
 
@@ -122,7 +131,7 @@ export function LegalConsentModal({ open, onClose, initialTab = 'privacy' }: Leg
           className="signup-legal-modal__body"
         >
           <p className="signup-legal-modal__updated">{doc.lastUpdatedLabel}</p>
-          <p className="signup-legal-modal__lead">{doc.lead}</p>
+          <p className="signup-legal-modal__lead">{renderMultiline(doc.lead)}</p>
           {doc.sections.map((section) => (
             <section key={section.id} className="signup-legal-modal__section" aria-label={section.heading}>
               <h3 className="signup-legal-modal__heading">{section.heading}</h3>

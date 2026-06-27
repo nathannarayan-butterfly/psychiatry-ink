@@ -1,9 +1,11 @@
 import { defaultAufnahmeSections } from '../data/aufnahmeSections'
 import {
-  DEMO_CASE_ID,
-  DEMO_PATIENT_ID,
   DEMO_SEED_VERSION,
+  demoCaseIdForLocale,
+  demoPatientIdForLocale,
+  isDemoCaseId,
 } from './constants'
+import type { DemoLocale } from './demoLocale'
 import type { DemoPatientFixture, DemoValidationIssue, DemoValidationResult } from './types'
 
 const PHI_EMAIL = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i
@@ -44,11 +46,19 @@ export function validateDemoFixture(
   if (fixture.demoSeedVersion !== expectedSeedVersion) {
     pushError(errors, 'seed_version', `demoSeedVersion muss ${expectedSeedVersion} sein`)
   }
-  if (fixture.demoPatientId !== DEMO_PATIENT_ID) {
-    pushError(errors, 'patient_id', `demoPatientId muss ${DEMO_PATIENT_ID} sein`)
+  const locale: DemoLocale =
+    fixture.demoLocale ??
+    (fixture.demoCaseId.endsWith('-DE-0001') ? 'de' : 'en')
+  const expectedPatientId = demoPatientIdForLocale(locale)
+  const expectedCaseId = demoCaseIdForLocale(locale)
+  if (fixture.demoPatientId !== expectedPatientId) {
+    pushError(errors, 'patient_id', `demoPatientId muss ${expectedPatientId} sein (${locale})`)
   }
-  if (fixture.demoCaseId !== DEMO_CASE_ID) {
-    pushError(errors, 'case_id', `demoCaseId muss ${DEMO_CASE_ID} sein`)
+  if (fixture.demoCaseId !== expectedCaseId) {
+    pushError(errors, 'case_id', `demoCaseId muss ${expectedCaseId} sein (${locale})`)
+  }
+  if (!isDemoCaseId(fixture.demoCaseId)) {
+    pushError(errors, 'case_id_unknown', `Unbekannte Demo-Fall-ID: ${fixture.demoCaseId}`)
   }
 
   const { patient } = fixture
@@ -172,7 +182,7 @@ export function validateDemoFixture(
   }
 
   for (const item of fixture.calendarItems ?? []) {
-    if (item.caseId && item.caseId !== DEMO_CASE_ID) {
+    if (item.caseId && item.caseId !== expectedCaseId) {
       pushError(errors, 'calendar_case_ref', 'Kalender-Eintrag verweist auf falsche caseId', item.id)
     }
   }

@@ -1,5 +1,5 @@
 import { caseStorageKey } from '../utils/caseContext'
-import { DEMO_CASE_ID } from './constants'
+import { isDemoCaseId } from './constants'
 
 const IDB_NAME = 'psychiatry-ink-crypto'
 const VAULT_STORE = 'vault'
@@ -79,12 +79,12 @@ async function removeIndexedDbKeysForCase(caseId: string): Promise<void> {
   }
 }
 
-/** Remove all local demo-marked storage for the demo case id only. */
-export async function clearDemoCaseStorage(caseId: string = DEMO_CASE_ID): Promise<void> {
+/** Remove all local demo-marked storage for a demo case id. */
+export async function clearDemoCaseStorage(caseId: string): Promise<void> {
   removeLocalStorageKeysForCase(caseId)
   await removeIndexedDbKeysForCase(caseId)
 }
 
 export function isDemoMarkedCaseId(caseId: string): boolean {
-  return caseId === DEMO_CASE_ID
+  return isDemoCaseId(caseId)
 }

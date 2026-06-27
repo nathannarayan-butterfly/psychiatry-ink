@@ -10,16 +10,16 @@ import { loadAnforderungen } from '../utils/anforderungen/storage'
 import { loadClinicalIntelligenceState } from '../utils/clinicalIntelligence/storage'
 import { loadAttestationState } from '../utils/butterfly/attestationStorage'
 import { loadIsdmInput } from '../utils/isdm/inputStorage'
-import { DEMO_CASE_ID } from './constants'
+import { isDemoCaseId } from './constants'
 import { getEffectiveDemoSeedVersion } from './demoVersion'
 
 /** True when locally persisted demo case has the markers and modules sales demos need. */
-export function isDemoSeedDataComplete(caseId: string = DEMO_CASE_ID): boolean {
-  if (caseId !== DEMO_CASE_ID) return true
+export function isDemoSeedDataComplete(caseId: string): boolean {
+  if (!isDemoCaseId(caseId)) return true
 
   const meta = getCaseMeta(caseId)
   if (!meta?.isDemoPatient) return false
-  if (meta.demoSeedVersion !== getEffectiveDemoSeedVersion()) return false
+  if (meta.demoSeedVersion !== getEffectiveDemoSeedVersion(meta.demoLocale ?? 'en')) return false
   if (!meta.localVorname?.trim() || !meta.localNachname?.trim()) return false
 
   const aufnahme = loadNotionDocumentSnapshot('aufnahme', caseId)

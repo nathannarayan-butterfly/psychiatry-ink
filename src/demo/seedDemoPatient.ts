@@ -15,7 +15,7 @@ import { listLocalCalendarItems, type CalendarStorageScope } from '../utils/cale
 import { saveCombinationCheckStore } from '../utils/combinationCheck/storage'
 import { saveLabMedCorrelationStore } from '../utils/labMedicationCorrelation/storage'
 import { applyPrepAiCheckCache } from '../utils/prepAiCheck/storage'
-import { DEMO_CASE_ID } from './constants'
+import { demoCaseIdForLocale } from './constants'
 import { getEffectiveDemoSeedVersion } from './demoVersion'
 import { isDemoSeedDataComplete } from './demoDataIntegrity'
 import { loadDemoFixture } from './loadDemoFixture'
@@ -102,18 +102,18 @@ function resolveDemoLocale(options: SeedDemoPatientOptions): DemoLocale {
 export async function seedDemoPatient(options: SeedDemoPatientOptions): Promise<SeedDemoPatientResult> {
   const locale = resolveDemoLocale(options)
   const fixture = loadDemoFixture(locale)
-  const seedVersion = getEffectiveDemoSeedVersion()
+  const caseId = demoCaseIdForLocale(locale)
+  const seedVersion = getEffectiveDemoSeedVersion(locale)
   const validation = validateDemoFixture(fixture, { expectedSeedVersion: seedVersion })
   if (!options.skipValidation && !validation.ok) {
     return {
       ok: false,
-      caseId: DEMO_CASE_ID,
+      caseId,
       validationErrors: validation.errors.map((e) => e.message),
       counts: countSeed(fixture),
     }
   }
 
-  const caseId = DEMO_CASE_ID
   const existing = getCaseMeta(caseId)
   const userState = loadDemoUserState(options.userId)
   const localeMatches = normalizeDemoLocale(userState.locale, locale) === locale
@@ -145,6 +145,7 @@ export async function seedDemoPatient(options: SeedDemoPatientOptions): Promise<
     isDemoPatient: true,
     demoSeedVersion: seedVersion,
     demoPatientId: fixture.demoPatientId,
+    demoLocale: locale,
   }
 
   upsertCaseMeta(caseId, meta)

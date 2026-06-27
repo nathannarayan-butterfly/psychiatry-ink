@@ -12,17 +12,19 @@ import { loadSozialtherapie } from '../utils/sozialtherapie/storage'
 import { loadVerlaufFeed } from '../utils/verlaufFeed'
 import { collectClinicalPayload } from '../utils/workspaceVault'
 import {
-  DEMO_CASE_ID,
   DEMO_FIXTURE_VERSION,
-  DEMO_PATIENT_ID,
+  demoCaseIdForLocale,
+  demoLocaleForCaseId,
+  demoPatientIdForLocale,
 } from './constants'
+import { demoCaseIdForCurrentUi } from './demoReadOnly'
 import { getEffectiveDemoSeedVersion } from './demoVersion'
 import { loadDemoFixture } from './loadDemoFixture'
 import type { DemoPatientFixture } from './types'
 
 /** Export the current local demo case state as a publishable fixture. */
 export async function exportDemoFixtureFromLocal(
-  caseId: string = DEMO_CASE_ID,
+  caseId: string = demoCaseIdForCurrentUi(),
   calendarScope?: CalendarStorageScope,
 ): Promise<DemoPatientFixture> {
   const meta = getCaseMeta(caseId)
@@ -30,7 +32,8 @@ export async function exportDemoFixtureFromLocal(
     throw new Error('Only demo patient cases can be exported')
   }
 
-  const template = loadDemoFixture()
+  const locale = demoLocaleForCaseId(caseId) ?? meta.demoLocale ?? 'en'
+  const template = loadDemoFixture(locale)
   const payload = collectClinicalPayload(undefined, caseId)
   const patientMeta = await loadPatientMetadata(caseId)
 
@@ -50,8 +53,9 @@ export async function exportDemoFixtureFromLocal(
     version: DEMO_FIXTURE_VERSION,
     isDemoPatient: true,
     demoSeedVersion: getEffectiveDemoSeedVersion(),
-    demoPatientId: DEMO_PATIENT_ID,
-    demoCaseId: DEMO_CASE_ID,
+    demoPatientId: demoPatientIdForLocale(locale),
+    demoCaseId: demoCaseIdForLocale(locale),
+    demoLocale: locale,
     patient: {
       vorname: meta.localVorname ?? template.patient.vorname,
       nachname: meta.localNachname ?? template.patient.nachname,
@@ -59,8 +63,8 @@ export async function exportDemoFixtureFromLocal(
       geschlecht: meta.localGeschlecht ?? template.patient.geschlecht,
       age: meta.localAge ?? payload.age ?? template.patient.age,
       admissionDate: template.patient.admissionDate,
-      patientId: DEMO_PATIENT_ID,
-      caseId: DEMO_CASE_ID,
+      patientId: demoPatientIdForLocale(locale),
+      caseId: demoCaseIdForLocale(locale),
     },
     workspace: {
       age: payload.age,

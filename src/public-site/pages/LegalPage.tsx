@@ -28,6 +28,15 @@ function LegalBlockView({ block }: { block: LegalBlock }) {
       </ul>
     )
   }
+  if (block.type === 'link') {
+    return (
+      <p className="ps-legal__paragraph">
+        <a href={block.href} className="ps-legal__link">
+          <strong>{block.text}</strong>
+        </a>
+      </p>
+    )
+  }
   return <p className="ps-legal__paragraph">{renderMultiline(block.text)}</p>
 }
 
@@ -40,7 +49,7 @@ export function LegalPage({ doc }: LegalPageProps) {
             {doc.title}
           </h1>
           <p className="ps-legal__updated">{doc.lastUpdatedLabel}</p>
-          <p className="ps-legal__lead">{doc.lead}</p>
+          <p className="ps-legal__lead">{renderMultiline(doc.lead)}</p>
         </header>
 
         {doc.sections.map((sectionItem) => (

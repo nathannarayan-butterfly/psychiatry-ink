@@ -38,7 +38,7 @@ import { setTimeout as sleep } from 'node:timers/promises'
 
 const ROOT = resolve(import.meta.dirname, '..')
 const OUTPUT_DIR = resolve(ROOT, 'public/homepage')
-const DEMO_CASE_ID = 'DEMO-CASE-0001'
+const DEMO_CASE_ID = 'DEMO-CASE-EN-0001'
 const CASE_PATH = `/case/${encodeURIComponent(DEMO_CASE_ID)}`
 const VIEWPORT = { width: 1440, height: 900 }
 const DEVICE_SCALE_FACTOR = 2

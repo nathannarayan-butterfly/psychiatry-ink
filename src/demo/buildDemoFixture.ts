@@ -1,23 +1,21 @@
 /**
  * Programmatic builder for the deterministic demo patient fixture.
- * Runtime loads `demoPatient.fixture.json`; this module is the source of truth for regen.
+ * Runtime loads locale-specific `demoPatient.{locale}.fixture.json`; builder is source of truth for regen.
  * Keeps imports minimal so Node scripts can run without Vite env.
  */
 
 import type { LaborBefund, LaborCategory } from '../utils/laborArchive'
 import {
-  DEMO_CASE_ID,
   DEMO_FIXTURE_VERSION,
-  DEMO_PATIENT_ID,
   DEMO_SEED_VERSION,
+  demoCaseIdForLocale,
+  demoPatientIdForLocale,
+  demoPatientIdentityForLocale,
 } from './constants'
 import type { DemoLocale } from './demoLocale'
 import { getDemoContent } from './demoContent'
 import type { DemoContentModule } from './demoContent/types'
 import {
-  DEMO_DOB,
-  DEMO_NACHNAME,
-  DEMO_VORNAME,
   LAB_BEFUND_1_DATE,
   LAB_BEFUND_2_DATE,
   LAB_BEFUND_ANTHRO_DATE,
@@ -128,7 +126,7 @@ function buildLabGraphs(content: DemoContentModule, now: string) {
   }
 }
 
-function buildLaborBefunde(content: DemoContentModule): LaborBefund[] {
+function buildLaborBefunde(content: DemoContentModule, caseId: string): LaborBefund[] {
   const categories = content.buildLaborCategories()
   const specs: Array<{
     id: string
@@ -171,7 +169,7 @@ function buildLaborBefunde(content: DemoContentModule): LaborBefund[] {
     const label = content.laborBefundLabel(spec.kind)
     return {
       id: spec.id,
-      caseId: DEMO_CASE_ID,
+      caseId,
       date: spec.date,
       label,
       rawText: buildLaborBefundRawText(content, spec.date, label, spec.categories),
@@ -183,12 +181,15 @@ function buildLaborBefunde(content: DemoContentModule): LaborBefund[] {
 
 export function buildDemoPatientFixture(locale: DemoLocale = 'de'): DemoPatientFixture {
   const content = getDemoContent(locale)
+  const identity = demoPatientIdentityForLocale(locale)
+  const caseId = demoCaseIdForLocale(locale)
+  const patientId = demoPatientIdForLocale(locale)
   const admissionDate = content.admissionDate
   const aufnahmeSections = content.buildAufnahmeSections()
   const verlaufFeed = content.buildVerlaufFeed()
   const verlaufAnnotations = content.buildVerlaufAnnotations(verlaufFeed)
   const { labGraphs, activeLabGraphId } = buildLabGraphs(content, NOW)
-  const laborBefunde = buildLaborBefunde(content)
+  const laborBefunde = buildLaborBefunde(content, caseId)
   const diagnoses = content.buildDiagnoses(NOW)
   const medicationPlanState = content.buildMedicationPlanState(NOW)
   const clinicalImprints = content.buildClinicalImprints(NOW, verlaufFeed)
@@ -199,6 +200,7 @@ export function buildDemoPatientFixture(locale: DemoLocale = 'de'): DemoPatientF
   const clinicalQuestionNotes = content.buildClinicalQuestionNotes(NOW)
   const anforderungen = content.buildAnforderungen(admissionDate)
   const isdmAnalysis = buildDemoIsdmAnalysis({
+    caseId,
     diagnoses,
     clinicalImprints,
     medicationPlanState,
@@ -211,20 +213,21 @@ export function buildDemoPatientFixture(locale: DemoLocale = 'de'): DemoPatientF
     version: DEMO_FIXTURE_VERSION,
     isDemoPatient: true,
     demoSeedVersion: DEMO_SEED_VERSION,
-    demoPatientId: DEMO_PATIENT_ID,
-    demoCaseId: DEMO_CASE_ID,
+    demoPatientId: patientId,
+    demoCaseId: caseId,
+    demoLocale: locale,
     patient: {
-      vorname: DEMO_VORNAME,
-      nachname: DEMO_NACHNAME,
-      geburtsdatum: DEMO_DOB,
-      geschlecht: 'maennlich',
-      age: '41',
+      vorname: identity.vorname,
+      nachname: identity.nachname,
+      geburtsdatum: identity.geburtsdatum,
+      geschlecht: identity.geschlecht,
+      age: identity.age,
       admissionDate,
-      patientId: DEMO_PATIENT_ID,
-      caseId: DEMO_CASE_ID,
+      patientId,
+      caseId,
     },
     workspace: {
-      age: '41',
+      age: identity.age,
       selectedDocumentType: 'aufnahme',
       documents: workspaceDocs.documents,
       pageHeadings: workspaceDocs.pageHeadings,
@@ -253,7 +256,7 @@ export function buildDemoPatientFixture(locale: DemoLocale = 'de'): DemoPatientF
     befundRecords: [
       {
         id: 'demo-befund-ecg-01',
-        caseId: DEMO_CASE_ID,
+        caseId,
         type: 'ecg',
         schemaVersion: 1,
         fieldValues: {
@@ -280,6 +283,6 @@ export function buildDemoPatientFixture(locale: DemoLocale = 'de'): DemoPatientF
     calendarItems: content.buildCalendarItems(NOW),
     modulePlaceholders: content.buildModulePlaceholders(),
     aiTherapyDemo: content.buildAiTherapyDemo(NOW),
-    clinicalIntelligence: buildDemoClinicalIntelligenceState(),
+    clinicalIntelligence: buildDemoClinicalIntelligenceState(locale),
   }
 }

@@ -1,4 +1,5 @@
 import { DEMO_SEED_VERSION } from './constants'
+import type { DemoLocale } from './demoLocale'
 import { getCanonicalDemoVersion } from './loadDemoFixture'
 
 export function compareDemoSeedVersions(a: string, b: string): number {
@@ -19,12 +20,16 @@ export function nextDemoSeedVersion(current: string | null | undefined): string 
   return `${base}-1`
 }
 
-export function getEffectiveDemoSeedVersion(): string {
-  return getCanonicalDemoVersion() ?? DEMO_SEED_VERSION
+export function getEffectiveDemoSeedVersion(locale?: DemoLocale): string {
+  if (locale) return getCanonicalDemoVersion(locale) ?? DEMO_SEED_VERSION
+  return DEMO_SEED_VERSION
 }
 
-export function isDemoSeedVersionOutdated(localVersion: string | undefined | null): boolean {
-  const target = getEffectiveDemoSeedVersion()
+export function isDemoSeedVersionOutdated(
+  localVersion: string | undefined | null,
+  locale?: DemoLocale,
+): boolean {
+  const target = getEffectiveDemoSeedVersion(locale)
   if (!localVersion?.trim()) return true
   return compareDemoSeedVersions(localVersion, target) < 0
 }

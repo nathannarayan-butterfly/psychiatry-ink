@@ -23,12 +23,7 @@ import type { SavedLabGraph } from '../types/lab'
 import type { SavedTimeline } from '../types/timeline'
 import type { LaborBefund } from '../utils/laborArchive'
 import type { ClinicalIntelligenceCaseState } from '../types/clinicalIntelligence'
-import {
-  DEMO_CASE_ID,
-  DEMO_PATIENT_ID,
-  DEMO_SEED_VERSION,
-  DEMO_FIXTURE_VERSION,
-} from './constants'
+import { DEMO_SEED_VERSION, DEMO_FIXTURE_VERSION } from './constants'
 
 export type DemoUserStatus = 'none' | 'installed' | 'archived' | 'removed'
 
@@ -71,8 +66,10 @@ export interface DemoPatientFixture {
   version: string
   isDemoPatient: true
   demoSeedVersion: string
-  demoPatientId: typeof DEMO_PATIENT_ID
-  demoCaseId: typeof DEMO_CASE_ID
+  demoPatientId: string
+  demoCaseId: string
+  /** Authored locale for this fixture snapshot. */
+  demoLocale?: import('./demoLocale').DemoLocale
   patient: DemoPatientMaster
   workspace: {
     age: string
@@ -164,6 +161,4 @@ export const DEMO_FIXTURE_META = {
   version: DEMO_FIXTURE_VERSION,
   isDemoPatient: true as const,
   demoSeedVersion: DEMO_SEED_VERSION,
-  demoPatientId: DEMO_PATIENT_ID,
-  demoCaseId: DEMO_CASE_ID,
 }

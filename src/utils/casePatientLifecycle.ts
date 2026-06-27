@@ -10,17 +10,20 @@ import { deletePatientOnApi } from '../services/patientRegistryApi'
 import { scheduleAccountRegistryUpload } from './accountBackup'
 import { loadRegistryMapFromStorage, saveRegistryMapToStorage } from './caseRegistryStorage'
 import { clearCaseStorage } from './clearCaseStorage'
-import { DEMO_CASE_ID } from '../demo/constants'
+import {
+  isDemoCaseId,
+  LEGACY_DEMO_CASE_ID,
+} from '../demo/constants'
 import { deleteImportedFilesForCase } from './documentImport/importedFileStore'
 
 /** Stale test fall — short id prefix only; never matches DEMO-CASE-0001. */
 export const STALE_CASE_ID_PREFIX = '219918e0'
 
-/** Previously retired demo IDs — kept empty so the canonical demo case can seed again. */
-export const RETIRED_DEMO_CASE_IDS = [] as const
+/** Previously retired demo IDs — legacy single-locale demo hidden after v8 split. */
+export const RETIRED_DEMO_CASE_IDS = [LEGACY_DEMO_CASE_ID] as const
 
 export function isStaleCaseId(caseId: string): boolean {
-  if (caseId.startsWith(STALE_CASE_ID_PREFIX) && caseId !== DEMO_CASE_ID) return true
+  if (caseId.startsWith(STALE_CASE_ID_PREFIX) && !isDemoCaseId(caseId)) return true
   return (RETIRED_DEMO_CASE_IDS as readonly string[]).includes(caseId)
 }
 
@@ -69,11 +72,11 @@ export async function deletePatientCasePermanently(caseId: string, userId: strin
 
 /** True when a case should survive a non-demo purge (synthetic demo only). */
 export function isProtectedDemoCaseId(caseId: string): boolean {
-  return caseId === DEMO_CASE_ID || isDemoCase(caseId)
+  return isDemoCaseId(caseId) || isDemoCase(caseId)
 }
 
 /**
- * Remove every local patient case except the synthetic demo case (DEMO-CASE-0001).
+ * Remove every local patient case except locale-specific synthetic demo cases.
  */
 export async function purgeNonDemoPatientCases(userId: string): Promise<string[]> {
   const removed: string[] = []

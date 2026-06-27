@@ -7,29 +7,29 @@ export const demoStringsEn: DemoStrings = {
 
   aufnahme: {
     aufnahmeanlass:
-      'Emergency inpatient admission via psychiatric emergency department after acute psychotic decompensation with paranoid content, alcohol withdrawal symptoms, and progressive sleep deprivation. Referred by GP after telephone consultation; no acute risk to others, but limited illness insight and elevated withdrawal risk.',
+      'Emergency psychiatric admission via liaison psychiatry after an urgent GP referral. Acute psychotic decompensation with persecutory beliefs, alcohol withdrawal features, and progressive sleep deprivation. No immediate risk to others on presentation; limited illness insight and moderate alcohol withdrawal risk.',
     'aktuelle-beschwerden':
-      'For approximately 10–14 days: increasing inner restlessness, sleep deficit (<3 h/night), mistrust of neighbours ("being watched"), repeated police contacts without substantiated grounds. Concurrent daily alcohol use (~0.5–1 L wine/day), last consumption 18 h ago. Tremor, sweating, subjective agitation. Mood fluctuating between irritable and anxious. Appetite reduced.',
+      'For roughly two weeks: escalating suspicion that neighbours and former flatmates are monitoring him (CCTV, “listening devices”), sleeping under 3 hours per night, repeated contact with local police without substantiated incidents. Concurrent daily alcohol use (~8–12 UK units beer/day, often morning “steady” drinks); last drink 16 h before admission. Tremor, sweating, subjective restlessness. Mood fluctuating between anxious and irritable. Appetite poor.',
     eigenanamnese:
       'Mr Demo provides a reliable self-history once rapport is established. No relevant somatic comorbidity known. No known drug allergies.',
     'aktuelle-krankheitsanamnese':
-      'First psychotic episode at age 28 in context of alcohol misuse and occupational stress, followed by brief inpatient care. Since then several outpatient phases with irregular medication adherence. Current relapse in context of sleep deprivation, alcohol withdrawal, and occupational stress (dismissal 4 months ago).',
+      'First psychotic episode at age 28 during a period of heavy drinking and warehouse overtime; brief admission, then several outpatient episodes with patchy antipsychotic adherence. Current relapse in the context of sleep loss, alcohol withdrawal, and job loss (made redundant from logistics role four months ago).',
     'psychiatrische-vorgeschichte':
-      'Several pre-admission contacts; last outpatient visit 6 months ago for alcohol withdrawal. Prior diagnoses: paranoid schizophrenia (F20.0), alcohol dependence (F10.2). No suicide attempts. No prolonged involuntary commitment.',
+      'Multiple prior contacts; last community mental health review six months ago for alcohol detox planning. Previous working diagnoses: paranoid schizophrenia (F20.0), alcohol dependence (F10.2). No suicide attempts. No prolonged involuntary detention.',
     'somatische-anamnese':
-      'Occasional epigastric discomfort with alcohol use. Liver enzymes borderline elevated in the past (GGT). No known cirrhosis. No known medication allergies.',
+      'Epigastric discomfort with drinking. Liver enzymes intermittently borderline (GGT). No known cirrhosis. No known medication allergies.',
     suchtanamnese:
-      'Alcohol since adolescence, currently ~0.5–1 L wine daily, morning consumption for "calming". Several unsuccessful outpatient withdrawal attempts. Withdrawal symptoms with longer abstinence: tremor, sweating, agitation, insomnia. Nicotine ~20 cigarettes/day. No regular illicit drug use in the last 12 months.',
+      'Alcohol since late teens; currently ~8–12 units beer daily with morning use to “settle nerves”. Several unsuccessful community detox attempts. Withdrawal when abstinent: tremor, sweating, agitation, insomnia. Nicotine ~20 cigarettes/day. No regular illicit drug use in the past year.',
     medikamentenanamnese:
-      'Before admission: irregular risperidone 2 mg at night (compliance uncertain), occasional lorazepam for agitation. No regular intake in the 2 weeks before admission. No withdrawal medication.',
+      'Before admission: intermittent risperidone 2 mg nocte (adherence uncertain), occasional lorazepam for agitation. No regular intake in the fortnight before admission. No community detox prescription.',
     familienanamnese:
-      'Father with treated alcohol dependence (diagnosis uncertain). No known family history of psychosis. Mother well.',
+      'Father with treated alcohol problems (details unclear). No known family psychosis. Mother well. Older sister supportive but lives in another city.',
     'biografische-anamnese':
-      'Urban upbringing; secondary school qualification; retail apprenticeship. Several longer partnerships; currently single, separated from partner 8 months ago.',
+      'Urban upbringing; GCSE-level education; warehouse and logistics roles since early twenties. Long-term partner relationship ended eight months ago.',
     sozialanamnese:
-      'Lives alone in rented flat (synthetic demo address, fictional). Unemployed for 4 months after dismissal. Financial strain; rent arrears pending. Social contact reduced; increasing isolation.',
+      'Lives alone in a council flat (synthetic demo address, fictional). On Universal Credit since redundancy; rent arrears for two months. Social contact reduced; increasing isolation.',
     'schul-und-berufsanamnese':
-      'Employment in retail until dismissal for absences and workplace alcohol use. Currently unemployed; employment agency appointment pending.',
+      'Warehouse picker / logistics until redundancy for lateness and drinking on shift. Currently unemployed; Jobcentre appointment scheduled.',
     'forensische-anamnese':
       'No relevant forensic history. No pending criminal proceedings. Police contacts related to noise complaints and neighbour disputes.',
     traumaanamnese:
@@ -213,7 +213,7 @@ export const demoStringsEn: DemoStrings = {
       entryIndex: 17,
       anchorText: 'Discharge planning',
       type: 'comment',
-      comment: 'Brother listed as protective contact; social services housing letter pending.',
+      comment: 'Sister listed as protective contact; housing letter from social services pending.',
     },
     {
       entryIndex: 9,
@@ -365,7 +365,7 @@ export const demoStringsEn: DemoStrings = {
   workspace: {
     admissionHeadingPrefix: 'Admission —',
     pageHeadings: {
-      aufnahme: 'Admission — Nikolaos Demo',
+      aufnahme: 'Admission — Marcus Demo',
       verlauf: 'Progress documentation',
       psychopath: 'Psychopathological findings',
       'therapie-verlauf': 'Treatment course',
@@ -440,7 +440,7 @@ export const demoStringsEn: DemoStrings = {
 
   sozialtherapie: [
     { goal: 'Housing security until discharge', currentMeasure: 'Social services contacted landlord re rent arrears', responsibleRole: 'Social services' },
-    { goal: 'Reintegration into retail sector', currentMeasure: 'Employment agency appointment scheduled', responsibleRole: 'Social services' },
+    { goal: 'Reintegration into warehouse / logistics work', currentMeasure: 'Jobcentre referral and skills review scheduled', responsibleRole: 'Social services' },
     { goal: 'Outpatient addiction counselling', currentMeasure: 'Referral to addiction service prepared', responsibleRole: 'Psychiatry' },
   ],
 
@@ -455,12 +455,12 @@ export const demoStringsEn: DemoStrings = {
     labDocTitlePrefix: 'Lab from',
   },
   generatedDocuments: {
-    title: 'Discharge plan Nikolaos Demo',
+    title: 'Discharge plan Marcus Demo',
     dischargePlan: 'Outpatient follow-up psychiatry + addiction counselling, medication aripiprazole 10 mg',
-    renderedText: 'Discharge plan for Nikolaos Demo — demo document.',
+    renderedText: 'Discharge plan for Marcus Demo — demo document.',
   },
   calendar: {
-    visitTitle: 'Ward round — Nikolaos Demo',
+    visitTitle: 'Ward round — Marcus Demo',
     medReview: 'Medication review',
     psychoGroup: 'Psychoeducation group',
     dischargeMeeting: 'Discharge meeting with social services',

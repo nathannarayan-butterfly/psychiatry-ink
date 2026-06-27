@@ -2,6 +2,7 @@ import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
 import { isDemoPublisherEmail } from '../../shared/demoPublisher'
 import { DEMO_SEED_VERSION } from '../../src/demo/constants'
+import type { DemoLocale } from '../../src/demo/demoLocale'
 import type { DemoPatientFixture } from '../../src/demo/types'
 import { nextDemoSeedVersion } from '../../src/demo/demoVersion'
 import { validateDemoFixture } from '../../src/demo/validateDemoFixture'
@@ -51,7 +52,8 @@ demoPatientRouter.get('/canonical', async (req: Request, res: Response) => {
   if (!requireStore(res)) return
 
   try {
-    const canonical = await getCanonicalDemoPatient()
+    const locale: DemoLocale = req.query.locale === 'de' ? 'de' : 'en'
+    const canonical = await getCanonicalDemoPatient(locale)
     if (!canonical) {
       res.status(404).json({
         error: 'No canonical demo patient published yet',
@@ -96,12 +98,14 @@ demoPatientRouter.put('/canonical', async (req: Request, res: Response) => {
   }
 
   try {
-    const existing = await getCanonicalDemoPatient()
+    const locale: DemoLocale = body.fixture.demoLocale === 'de' ? 'de' : 'en'
+    const existing = await getCanonicalDemoPatient(locale)
     const seedVersion = nextDemoSeedVersion(existing?.seedVersion ?? body.fixture.demoSeedVersion)
     const fixture: DemoPatientFixture = {
       ...body.fixture,
       isDemoPatient: true,
       demoSeedVersion: seedVersion,
+      demoLocale: locale,
     }
 
     const validation = validateDemoFixture(fixture, { expectedSeedVersion: seedVersion })
@@ -114,6 +118,7 @@ demoPatientRouter.put('/canonical', async (req: Request, res: Response) => {
     }
 
     const published = await publishCanonicalDemoPatient({
+      locale,
       seedVersion,
       fixture,
       publishedBy: authUser.id,

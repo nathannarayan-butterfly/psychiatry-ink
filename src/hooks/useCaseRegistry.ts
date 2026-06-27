@@ -43,6 +43,8 @@ export interface LocalCaseMeta {
   isDemoPatient?: boolean
   demoSeedVersion?: string
   demoPatientId?: string
+  /** Locale of synthetic demo clinical copy (de | en). */
+  demoLocale?: 'de' | 'en'
 }
 
 export interface RemoteCaseMeta {

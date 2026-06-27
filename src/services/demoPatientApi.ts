@@ -1,3 +1,4 @@
+import type { DemoLocale } from '../demo/demoLocale'
 import type { DemoPatientFixture } from '../demo/types'
 import { clinicalApiFetch } from './clinicalApiFetch'
 
@@ -9,8 +10,10 @@ export interface CanonicalDemoPatientResponse {
   publishedAt: string
 }
 
-export async function fetchCanonicalDemoPatient(): Promise<CanonicalDemoPatientResponse | null> {
-  const response = await clinicalApiFetch('/api/demo-patient/canonical')
+export async function fetchCanonicalDemoPatient(
+  locale: DemoLocale = 'en',
+): Promise<CanonicalDemoPatientResponse | null> {
+  const response = await clinicalApiFetch(`/api/demo-patient/canonical?locale=${locale}`)
   if (response.status === 404) return null
   if (response.status === 503) return null
   if (!response.ok) {

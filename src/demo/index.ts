@@ -1,9 +1,20 @@
 export {
   DEMO_CASE_ID,
+  DEMO_CASE_ID_EN,
+  DEMO_CASE_ID_DE,
   DEMO_PATIENT_ID,
+  DEMO_PATIENT_ID_EN,
+  DEMO_PATIENT_ID_DE,
   DEMO_SEED_VERSION,
   DEMO_FIXTURE_VERSION,
   demoUserStateKey,
+  demoCaseIdForLocale,
+  demoPatientIdForLocale,
+  demoPatientIdentityForLocale,
+  demoLocaleForCaseId,
+  isDemoCaseId,
+  allDemoCaseIds,
+  LEGACY_DEMO_CASE_ID,
 } from './constants'
 export type {
   DemoPatientFixture,
@@ -39,6 +50,9 @@ export {
   isDemoPublisherUserEmail,
   demoCaseLabel,
   demoPatientDisplayName,
+  demoCaseIdForCurrentUi,
+  isLegacyDemoCaseId,
+  allKnownDemoCaseIds,
 } from './demoReadOnly'
 export { runDemoQaChecklist } from './demoQaChecklist'
 export {

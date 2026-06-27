@@ -11,7 +11,7 @@ export const demoStringsDe: DemoStrings = {
     'aktuelle-beschwerden':
       'Seit ca. 10–14 Tagen: zunehmende innere Unruhe, Schlafdefizit (<3 h/Nacht), Misstrauen gegenüber Nachbarn („werde überwacht"), wiederholte Polizeikontakte ohne begründeten Anlass. Parallel täglicher Alkoholkonsum (ca. 0,5–1 l Wein/Tag), zuletzt letzter Konsum vor 18 h. Tremor, Schwitzen, subjektive Unruhe. Stimmung schwankend zwischen gereizt und ängstlich. Appetit vermindert.',
     eigenanamnese:
-      'Herr Demo gibt eine zuverlässige Eigenanamnese an, sobald Vertrauen aufgebaut ist. Keine relevanten somatischen Vorerkrankungen bekannt. Keine Medikamentenallergien bekannt.',
+      'Herr Demo (Thomas) gibt eine zuverlässige Eigenanamnese an, sobald Vertrauen aufgebaut ist. Keine relevanten somatischen Vorerkrankungen bekannt. Keine Medikamentenallergien bekannt.',
     'aktuelle-krankheitsanamnese':
       'Erstmanifestation einer Psychose mit 28 Jahren im Kontext von Alkoholabusus und beruflichem Stress, anschließend kurzzeitige stationäre Behandlung. Seitdem mehrere ambulante Phasen mit unregelmäßiger Medikamenteneinnahme. Aktueller Rückfall im Kontext von Schlafentzug, Alkoholentzug und beruflicher Belastung (Kündigung vor 4 Monaten).',
     'psychiatrische-vorgeschichte':
@@ -365,7 +365,7 @@ export const demoStringsDe: DemoStrings = {
   workspace: {
     admissionHeadingPrefix: 'Aufnahme —',
     pageHeadings: {
-      aufnahme: 'Aufnahme — Nikolaos Demo',
+      aufnahme: 'Aufnahme — Thomas Demo',
       verlauf: 'Verlaufsdokumentation',
       psychopath: 'Psychopathologischer Befund',
       'therapie-verlauf': 'Therapieverlauf',
@@ -452,12 +452,12 @@ export const demoStringsDe: DemoStrings = {
     labDocTitlePrefix: 'Lab vom',
   },
   generatedDocuments: {
-    title: 'Entlassungsplan Nikolaos Demo',
+    title: 'Entlassungsplan Thomas Demo',
     dischargePlan: 'Ambulante Weiterbehandlung Psychiatrie + Suchtberatung, Medikation Aripiprazol 10 mg',
-    renderedText: 'Entlassungsplan für Nikolaos Demo — Demo-Dokument.',
+    renderedText: 'Entlassungsplan für Thomas Demo — Demo-Dokument.',
   },
   calendar: {
-    visitTitle: 'Visite — Nikolaos Demo',
+    visitTitle: 'Visite — Thomas Demo',
     medReview: 'Medikationsreview',
     psychoGroup: 'Psychoedukation Gruppe',
     dischargeMeeting: 'Entlassungsgespräch mit Sozialdienst',

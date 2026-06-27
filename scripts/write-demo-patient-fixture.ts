@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * Write src/demo/demoPatient.fixture.json from the programmatic builder.
+ * Write locale-specific demo fixture JSON from the programmatic builder.
  * DeepSeek regen: npm run demo:fixture:regen -- --write --locale en
  */
 
@@ -17,7 +17,7 @@ function parseLocale(): DemoLocale {
 
 const locale = parseLocale()
 const fixture = buildDemoPatientFixture(locale)
-const outPath = resolve(process.cwd(), 'src/demo/demoPatient.fixture.json')
+const outPath = resolve(process.cwd(), `src/demo/demoPatient.${locale}.fixture.json`)
 writeFileSync(outPath, `${JSON.stringify(fixture, null, 2)}\n`, 'utf8')
 console.log(
   `Wrote ${outPath} [locale=${locale}] (${Object.keys(fixture.workspace.documents).length} documents, ${fixture.verlaufFeed.length} verlauf entries, ${fixture.verlaufAnnotations?.length ?? 0} annotations)`,

@@ -14,9 +14,12 @@ import { buildDemoPatientFixture } from '../src/demo/buildDemoFixture.ts'
 import { validateDemoFixture } from '../src/demo/validateDemoFixture.ts'
 import type { DemoLocale } from '../src/demo/demoLocale.ts'
 import type { DemoPatientFixture } from '../src/demo/types.ts'
-import { DEMO_SEED_VERSION } from '../src/demo/constants.ts'
-
-const outPath = resolve(process.cwd(), 'src/demo/demoPatient.fixture.json')
+import {
+  DEMO_SEED_VERSION,
+  demoCaseIdForLocale,
+  demoPatientIdForLocale,
+  demoPatientIdentityForLocale,
+} from '../src/demo/constants.ts'
 
 function parseLocale(): DemoLocale {
   const idx = process.argv.indexOf('--locale')
@@ -32,12 +35,15 @@ async function tryDeepSeekRegen(locale: DemoLocale): Promise<DemoPatientFixture 
   }
 
   const language = locale === 'de' ? 'German' : 'English'
+  const identity = demoPatientIdentityForLocale(locale)
+  const caseId = demoCaseIdForLocale(locale)
+  const patientId = demoPatientIdForLocale(locale)
   const prompt = `Return ONLY valid JSON matching DemoPatientFixture for a synthetic ${language} psychiatry demo patient.
-Markers: isDemoPatient true, demoSeedVersion "${DEMO_SEED_VERSION}", demoPatientId "DEMO-0001", demoCaseId "DEMO-CASE-0001".
-Patient: Nikolaos Demo, male, DOB 1985-03-22, admission 2026-06-02. Fictional only — no real PHI.
+Markers: isDemoPatient true, demoSeedVersion "${DEMO_SEED_VERSION}", demoPatientId "${patientId}", demoCaseId "${caseId}", demoLocale "${locale}".
+Patient: ${identity.vorname} Demo, male, DOB ${identity.geburtsdatum}, admission 2026-06-02. Fictional only — no real PHI.
 Diagnoses must include F20.0 (paranoid schizophrenia) and F10.2 (alcohol dependence) plus F17.2 (nicotine).
 Include at least 18 verlaufFeed entries, verlaufAnnotations with comments and todos, workspace.isdmInput, isdmAnalysis, butterflyAttestations, clinicalQuestionNotes, anforderungen, full medicationPlanState, aiTherapyDemo, clinicalIntelligence.
-All clinical text in ${language}. Use clinically realistic wording with diagnostic uncertainty.`
+All clinical text in ${language}. Use clinically realistic wording with diagnostic uncertainty. Do NOT translate from another locale — author natively in ${language}.`
 
   const model = process.env.DEEPSEEK_FAST_MODEL?.trim() || 'deepseek-chat'
   const baseUrl = process.env.DEEPSEEK_BASE_URL?.replace(/\/$/, '') ?? 'https://api.deepseek.com/v1'
@@ -98,6 +104,7 @@ function previewDiff(before: string, after: string): void {
 async function main(): Promise<void> {
   const writeFlag = process.argv.includes('--write')
   const locale = parseLocale()
+  const outPath = resolve(process.cwd(), `src/demo/demoPatient.${locale}.fixture.json`)
   const aiFixture = await tryDeepSeekRegen(locale)
   const fixture = aiFixture ?? buildDemoPatientFixture(locale)
   const validation = validateDemoFixture(fixture)

@@ -34,7 +34,7 @@ import type { DiagnoseEntry } from '../../utils/diagnosenArchive'
 import type { DokumentEntry } from '../../utils/dokumenteArchive'
 import type { LaborCategory, LaborValue } from '../../utils/laborArchive'
 import type { VerlaufFeedEntry, VerlaufAnnotation } from '../../utils/verlaufFeed'
-import { DEMO_CASE_ID, DEMO_PATIENT_ID } from '../constants'
+import { demoCaseIdForLocale, demoPatientIdForLocale, demoPatientIdentityForLocale } from '../constants'
 import type { DemoLocale } from '../demoLocale'
 import type { DemoModulePlaceholders, DemoPatientFixture } from '../types'
 import type { DemoVerlaufAnnotationSpec } from './types'
@@ -49,10 +49,6 @@ const LAB_BEFUND_1_DATE = '2026-06-05'
 const LAB_BEFUND_2_DATE = '2026-06-20'
 const LAB_BEFUND_ANTHRO_DATE = '2026-06-10'
 const LAB_BEFUND_GLUCOSE_DATE = '2026-06-12'
-
-const DEMO_DOB = '1985-03-22'
-const DEMO_VORNAME = 'Nikolaos'
-const DEMO_NACHNAME = 'Demo'
 
 const AUFNAHME_SECTION_IDS = defaultAufnahmeSections.map((s) => s.id)
 
@@ -213,12 +209,11 @@ const BUTTERFLY_ATTESTATION_ENTRIES: Array<[string, 'met' | 'not_met']> = [
 
 type AnforderungMeta = Omit<
   Anforderung,
-  'id' | 'label' | 'note' | 'createdByDisplayName' | 'reviewedByDisplayName'
+  'id' | 'caseId' | 'label' | 'note' | 'createdByDisplayName' | 'reviewedByDisplayName'
 >
 
 const ANFORDERUNG_META: AnforderungMeta[] = [
   {
-    caseId: DEMO_CASE_ID,
     catalogId: 'lab-metabolisches-basis',
     category: 'labor',
     urgency: 'urgent',
@@ -229,7 +224,6 @@ const ANFORDERUNG_META: AnforderungMeta[] = [
     reviewedAt: '2026-06-05T14:00:00.000Z',
   },
   {
-    caseId: DEMO_CASE_ID,
     catalogId: 'lab-prolaktin',
     category: 'labor',
     urgency: 'soon',
@@ -240,7 +234,6 @@ const ANFORDERUNG_META: AnforderungMeta[] = [
     reviewedAt: '2026-06-20T11:00:00.000Z',
   },
   {
-    caseId: DEMO_CASE_ID,
     catalogId: 'lab-aripiprazol',
     category: 'labor',
     urgency: 'routine',
@@ -250,7 +243,6 @@ const ANFORDERUNG_META: AnforderungMeta[] = [
     updatedAt: '2026-06-20T11:00:00.000Z',
   },
   {
-    caseId: DEMO_CASE_ID,
     catalogId: 'lab-hba1c',
     category: 'labor',
     urgency: 'routine',
@@ -260,7 +252,6 @@ const ANFORDERUNG_META: AnforderungMeta[] = [
     updatedAt: '2026-06-12T10:00:00.000Z',
   },
   {
-    caseId: DEMO_CASE_ID,
     catalogId: 'befund-ekg',
     category: 'befunde',
     urgency: 'soon',
@@ -271,7 +262,6 @@ const ANFORDERUNG_META: AnforderungMeta[] = [
     reviewedAt: '2026-06-08T10:30:00.000Z',
   },
   {
-    caseId: DEMO_CASE_ID,
     catalogId: 'befund-eeg-ruhe',
     category: 'befunde',
     urgency: 'routine',
@@ -282,7 +272,6 @@ const ANFORDERUNG_META: AnforderungMeta[] = [
     reviewedAt: '2026-06-11T16:00:00.000Z',
   },
   {
-    caseId: DEMO_CASE_ID,
     catalogId: 'therapie-sport',
     category: 'therapien',
     urgency: 'routine',
@@ -293,7 +282,6 @@ const ANFORDERUNG_META: AnforderungMeta[] = [
     reviewedAt: '2026-06-04T10:00:00.000Z',
   },
   {
-    caseId: DEMO_CASE_ID,
     catalogId: 'therapie-sozialdienst',
     category: 'therapien',
     urgency: 'soon',
@@ -357,6 +345,9 @@ function matchesLabKeyword(parameter: string, keywords: string[]): boolean {
 }
 
 export function createDemoContentModule(locale: DemoLocale, strings: DemoStrings): DemoContentModule {
+  const caseId = demoCaseIdForLocale(locale)
+  const patientId = demoPatientIdForLocale(locale)
+  const identity = demoPatientIdentityForLocale(locale)
   const admissionDate = DEMO_ADMISSION_DATE
 
   function buildAufnahmeSections(): Record<string, string> {
@@ -488,7 +479,7 @@ export function createDemoContentModule(locale: DemoLocale, strings: DemoStrings
       plans: [
         {
           id: 'demo-med-plan-01',
-          caseId: DEMO_CASE_ID,
+          caseId: caseId,
           createdAt: now,
           isCurrent: true,
           medications: [
@@ -597,8 +588,8 @@ export function createDemoContentModule(locale: DemoLocale, strings: DemoStrings
       updatedAt: now,
       imprints: verlaufFeed.slice(0, 12).map((entry, index) => ({
         imprintKey: `verlauf:${entry.id}`,
-        patientId: DEMO_PATIENT_ID,
-        caseId: DEMO_CASE_ID,
+        patientId: patientId,
+        caseId: caseId,
         sourceType: 'verlauf' as const,
         sourceId: entry.id,
         sourceDate: entry.date.slice(0, 10),
@@ -804,7 +795,7 @@ export function createDemoContentModule(locale: DemoLocale, strings: DemoStrings
     return [
       {
         id: 'demo-doc-anamnese',
-        caseId: DEMO_CASE_ID,
+        caseId: caseId,
         category: 'anamnese',
         title: doc.anamneseTitle,
         content: doc.anamneseContent,
@@ -815,7 +806,7 @@ export function createDemoContentModule(locale: DemoLocale, strings: DemoStrings
       },
       {
         id: 'demo-doc-verlauf',
-        caseId: DEMO_CASE_ID,
+        caseId: caseId,
         category: 'arztbrief',
         title: doc.verlaufTitle,
         content: verlaufFeed.map((entry) => entry.content).join('\n\n'),
@@ -825,7 +816,7 @@ export function createDemoContentModule(locale: DemoLocale, strings: DemoStrings
       },
       {
         id: 'demo-doc-medplan',
-        caseId: DEMO_CASE_ID,
+        caseId: caseId,
         category: 'formulare',
         title: doc.medplanTitle,
         content: doc.medplanContent,
@@ -835,7 +826,7 @@ export function createDemoContentModule(locale: DemoLocale, strings: DemoStrings
       },
       {
         id: 'demo-doc-arztbrief',
-        caseId: DEMO_CASE_ID,
+        caseId: caseId,
         category: 'arztbrief',
         title: doc.arztbriefTitle,
         content: doc.arztbriefContent,
@@ -847,7 +838,7 @@ export function createDemoContentModule(locale: DemoLocale, strings: DemoStrings
         const [year, month, day] = befund.date.split('-')
         return {
           id: `demo-doc-${befund.id}`,
-          caseId: DEMO_CASE_ID,
+          caseId: caseId,
           category: 'laborbefunde' as const,
           title: `${doc.labDocTitlePrefix} ${day}.${month}.${year}${befund.label ? ` — ${befund.label}` : ''}`,
           content: befund.rawText,
@@ -867,12 +858,12 @@ export function createDemoContentModule(locale: DemoLocale, strings: DemoStrings
         id: 'demo-gen-doc-01',
         templateId: 'demo-template-intern',
         templateVersion: 1,
-        caseId: DEMO_CASE_ID,
-        patientId: DEMO_PATIENT_ID,
+        caseId: caseId,
+        patientId: patientId,
         title: gen.title,
         status: 'draft',
         fieldValues: {
-          patient_name: `${DEMO_VORNAME} ${DEMO_NACHNAME}`,
+          patient_name: `${identity.vorname} ${identity.nachname}`,
           admission_date: admissionDate,
           discharge_plan: gen.dischargePlan,
         },
@@ -890,8 +881,8 @@ export function createDemoContentModule(locale: DemoLocale, strings: DemoStrings
         id: 'demo-cal-01',
         type: 'consultation',
         title: cal.visitTitle,
-        patientId: DEMO_PATIENT_ID,
-        caseId: DEMO_CASE_ID,
+        patientId: patientId,
+        caseId: caseId,
         startTime: '2026-06-14T09:00:00.000Z',
         endTime: '2026-06-14T09:30:00.000Z',
         status: 'scheduled',
@@ -904,7 +895,7 @@ export function createDemoContentModule(locale: DemoLocale, strings: DemoStrings
         id: 'demo-cal-02',
         type: 'medication_review',
         title: cal.medReview,
-        caseId: DEMO_CASE_ID,
+        caseId: caseId,
         startTime: '2026-06-15T10:00:00.000Z',
         endTime: '2026-06-15T10:30:00.000Z',
         status: 'scheduled',
@@ -916,7 +907,7 @@ export function createDemoContentModule(locale: DemoLocale, strings: DemoStrings
         id: 'demo-cal-03',
         type: 'other',
         title: cal.psychoGroup,
-        caseId: DEMO_CASE_ID,
+        caseId: caseId,
         startTime: '2026-06-16T14:00:00.000Z',
         endTime: '2026-06-16T15:00:00.000Z',
         status: 'scheduled',
@@ -928,7 +919,7 @@ export function createDemoContentModule(locale: DemoLocale, strings: DemoStrings
         id: 'demo-cal-04',
         type: 'consultation',
         title: cal.dischargeMeeting,
-        caseId: DEMO_CASE_ID,
+        caseId: caseId,
         startTime: '2026-06-17T11:00:00.000Z',
         endTime: '2026-06-17T11:45:00.000Z',
         status: 'scheduled',
@@ -995,6 +986,7 @@ export function createDemoContentModule(locale: DemoLocale, strings: DemoStrings
       }
       return {
         ...meta,
+        caseId,
         id: `demo-anf-${String(index + 1).padStart(2, '0')}`,
         label: copy.label,
         note: copy.note,
@@ -1011,7 +1003,7 @@ export function createDemoContentModule(locale: DemoLocale, strings: DemoStrings
   function buildEegBefund(): BefundRecord {
     return {
       id: 'demo-befund-eeg-01',
-      caseId: DEMO_CASE_ID,
+      caseId: caseId,
       type: 'eeg',
       schemaVersion: 1,
       fieldValues: {
@@ -1049,12 +1041,12 @@ export function createDemoContentModule(locale: DemoLocale, strings: DemoStrings
 
     const combinationCheck: CombinationCheckStore = {
       version: COMBINATION_CHECK_STORE_VERSION,
-      caseId: DEMO_CASE_ID,
+      caseId: caseId,
       updatedAt: now,
       findings: [
         {
           id: 'demo-cc-kb-01',
-          caseId: DEMO_CASE_ID,
+          caseId: caseId,
           combinationKey: comboKeyAL,
           substanceAName: med.aripiprazole.substance,
           substanceBName: med.lorazepam.substance,
@@ -1086,7 +1078,7 @@ export function createDemoContentModule(locale: DemoLocale, strings: DemoStrings
         },
         {
           id: 'demo-cc-ai-01',
-          caseId: DEMO_CASE_ID,
+          caseId: caseId,
           combinationKey: comboKeyAL,
           substanceAName: med.aripiprazole.substance,
           substanceBName: med.lorazepam.substance,
@@ -1117,7 +1109,7 @@ export function createDemoContentModule(locale: DemoLocale, strings: DemoStrings
         },
         {
           id: 'demo-cc-kb-02',
-          caseId: DEMO_CASE_ID,
+          caseId: caseId,
           combinationKey: comboKeyCannabis,
           substanceAName: med.aripiprazole.substance,
           substanceBName: 'Cannabis',
@@ -1136,7 +1128,7 @@ export function createDemoContentModule(locale: DemoLocale, strings: DemoStrings
       aiRuns: [
         {
           id: 'demo-cc-run-01',
-          caseId: DEMO_CASE_ID,
+          caseId: caseId,
           combinationKey: comboKeyAL,
           status: 'accepted',
           thorough: false,
@@ -1163,12 +1155,12 @@ export function createDemoContentModule(locale: DemoLocale, strings: DemoStrings
 
     const labMedCorrelation: LabMedicationCorrelationStore = {
       version: LAB_MED_CORRELATION_STORE_VERSION,
-      caseId: DEMO_CASE_ID,
+      caseId: caseId,
       updatedAt: now,
       findings: [
         {
           id: 'demo-lmc-01',
-          caseId: DEMO_CASE_ID,
+          caseId: caseId,
           correlationKey: prolactinKey,
           labParameter: 'prolaktin',
           labParameterLabel: lmcRisperidone.labParameterLabel,
@@ -1208,7 +1200,7 @@ export function createDemoContentModule(locale: DemoLocale, strings: DemoStrings
         },
         {
           id: 'demo-lmc-02',
-          caseId: DEMO_CASE_ID,
+          caseId: caseId,
           correlationKey: buildCorrelationKey('aripiprazol', 'cholesterin_gesamt'),
           labParameter: 'cholesterin_gesamt',
           labParameterLabel: lmcCholesterol.labParameterLabel,
@@ -1247,7 +1239,7 @@ export function createDemoContentModule(locale: DemoLocale, strings: DemoStrings
         },
         {
           id: 'demo-lmc-03',
-          caseId: DEMO_CASE_ID,
+          caseId: caseId,
           correlationKey: buildCorrelationKey('aripiprazol', 'prolaktin'),
           labParameter: 'prolaktin',
           labParameterLabel: lmcProlactin.labParameterLabel,
@@ -1287,7 +1279,7 @@ export function createDemoContentModule(locale: DemoLocale, strings: DemoStrings
       aiRuns: [
         {
           id: 'demo-lmc-run-01',
-          caseId: DEMO_CASE_ID,
+          caseId: caseId,
           findingId: 'demo-lmc-02',
           correlationKey: buildCorrelationKey('aripiprazol', 'cholesterin_gesamt'),
           provider: 'deepseek',
@@ -1307,7 +1299,7 @@ export function createDemoContentModule(locale: DemoLocale, strings: DemoStrings
         },
         {
           id: 'demo-lmc-run-02',
-          caseId: DEMO_CASE_ID,
+          caseId: caseId,
           findingId: 'demo-lmc-03',
           correlationKey: buildCorrelationKey('aripiprazol', 'prolaktin'),
           provider: 'deepseek',
@@ -1330,7 +1322,7 @@ export function createDemoContentModule(locale: DemoLocale, strings: DemoStrings
 
     const prepAiCheck: PrepAiCheckCache = {
       version: 1,
-      caseId: DEMO_CASE_ID,
+      caseId: caseId,
       updatedAt: now,
       entries: [
         {
@@ -1435,7 +1427,4 @@ export {
   LAB_BEFUND_2_DATE,
   LAB_BEFUND_ANTHRO_DATE,
   LAB_BEFUND_GLUCOSE_DATE,
-  DEMO_DOB,
-  DEMO_VORNAME,
-  DEMO_NACHNAME,
 }

@@ -12,7 +12,8 @@ import {
   type DimensionalFinding,
   type MechanismHypothesis,
 } from '../types/clinicalIntelligence'
-import { DEMO_CASE_ID } from './constants'
+import type { DemoLocale } from './demoLocale'
+import { demoCaseIdForLocale } from './constants'
 
 const BUILT_AT = '2026-06-14T10:00:00.000Z'
 
@@ -238,10 +239,11 @@ function buildLatestRun(): ClinicalIntelligenceRunResponse {
   }
 }
 
-export function buildDemoClinicalIntelligenceState(): ClinicalIntelligenceCaseState {
+export function buildDemoClinicalIntelligenceState(locale: DemoLocale = 'en'): ClinicalIntelligenceCaseState {
+  const caseId = demoCaseIdForLocale(locale)
   return {
     version: CLINICAL_INTELLIGENCE_STATE_VERSION,
-    caseId: DEMO_CASE_ID,
+    caseId,
     latestRun: buildLatestRun(),
     rejectedDimensionIds: [],
     rejectedMechanismIds: ['neurodegenerative-neurocognitive-decline'],

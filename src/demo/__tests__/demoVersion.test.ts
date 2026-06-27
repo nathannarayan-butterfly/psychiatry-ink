@@ -33,21 +33,22 @@ describe('demo version helpers', () => {
     expect(nextDemoSeedVersion(null)).toBe(nextDemoSeedVersion(DEMO_SEED_VERSION))
   })
 
-  it('uses canonical version when set', () => {
-    const fixture = buildDemoPatientFixture()
-    setCanonicalDemoFixture({ ...fixture, demoSeedVersion: 'v5' }, 'v5')
-    expect(getEffectiveDemoSeedVersion()).toBe('v5')
+  it('uses canonical version when set for locale', () => {
+    const fixture = buildDemoPatientFixture('en')
+    setCanonicalDemoFixture({ ...fixture, demoSeedVersion: 'v5' }, 'v5', 'en')
+    expect(getEffectiveDemoSeedVersion('en')).toBe('v5')
+    expect(getEffectiveDemoSeedVersion('de')).toBe(DEMO_SEED_VERSION)
   })
 
   it('falls back to bundled version without canonical', () => {
     expect(getEffectiveDemoSeedVersion()).toBe(DEMO_SEED_VERSION)
   })
 
-  it('detects outdated local versions', () => {
-    setCanonicalDemoFixture(buildDemoPatientFixture(), 'v5')
-    expect(isDemoSeedVersionOutdated('v4')).toBe(true)
-    expect(isDemoSeedVersionOutdated('v5')).toBe(false)
-    expect(isDemoSeedVersionOutdated(undefined)).toBe(true)
+  it('detects outdated local versions per locale', () => {
+    setCanonicalDemoFixture(buildDemoPatientFixture('en'), 'v5', 'en')
+    expect(isDemoSeedVersionOutdated('v4', 'en')).toBe(true)
+    expect(isDemoSeedVersionOutdated('v5', 'en')).toBe(false)
+    expect(isDemoSeedVersionOutdated(undefined, 'en')).toBe(true)
   })
 })
 
@@ -59,7 +60,7 @@ describe('sync canonical demo fixture', () => {
   })
 
   it('applies server canonical fixture to loader cache', async () => {
-    const fixture = buildDemoPatientFixture()
+    const fixture = buildDemoPatientFixture('en')
     vi.doMock('../../services/demoPatientApi', () => ({
       fetchCanonicalDemoPatient: vi.fn().mockResolvedValue({
         seedVersion: 'v9',
@@ -73,10 +74,10 @@ describe('sync canonical demo fixture', () => {
     const { fetchAndApplyCanonicalDemoFixture } = await import('../syncCanonicalDemoFixture')
     const { loadDemoFixture, getCanonicalDemoVersion } = await import('../loadDemoFixture')
 
-    const result = await fetchAndApplyCanonicalDemoFixture({ force: true })
+    const result = await fetchAndApplyCanonicalDemoFixture({ force: true, locale: 'en' })
     expect(result.applied).toBe(true)
     expect(result.seedVersion).toBe('v9')
-    expect(getCanonicalDemoVersion()).toBe('v9')
-    expect(loadDemoFixture().demoSeedVersion).toBe('v9')
+    expect(getCanonicalDemoVersion('en')).toBe('v9')
+    expect(loadDemoFixture('en').demoSeedVersion).toBe('v9')
   })
 })

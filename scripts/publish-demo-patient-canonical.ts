@@ -1,7 +1,9 @@
 #!/usr/bin/env tsx
 /**
- * One-shot publish of src/demo/demoPatient.fixture.json to demo_patient_canonical.
+ * Publish locale-specific demo fixture to demo_patient_canonical.
  * Requires SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY in .env.local.
+ *
+ * Usage: tsx scripts/publish-demo-patient-canonical.ts --locale en
  */
 
 import { readFileSync } from 'node:fs'
@@ -10,6 +12,7 @@ import '../server/loadEnv.ts'
 import { DEFAULT_DEMO_PUBLISHER_EMAIL } from '../shared/demoPublisher.ts'
 import { nextDemoSeedVersion } from '../src/demo/demoVersion.ts'
 import { validateDemoFixture } from '../src/demo/validateDemoFixture.ts'
+import type { DemoLocale } from '../src/demo/demoLocale.ts'
 import type { DemoPatientFixture } from '../src/demo/types.ts'
 import {
   getCanonicalDemoPatient,
@@ -17,20 +20,28 @@ import {
   publishCanonicalDemoPatient,
 } from '../server/services/demoPatientCanonicalStore.ts'
 
+function parseLocale(): DemoLocale {
+  const idx = process.argv.indexOf('--locale')
+  const value = idx >= 0 ? process.argv[idx + 1] : 'en'
+  return value === 'de' ? 'de' : 'en'
+}
+
 async function main(): Promise<void> {
   if (!isDemoPatientCanonicalStoreConfigured()) {
     console.error('BLOCKER: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY required in .env.local')
     process.exit(1)
   }
 
-  const fixturePath = resolve(process.cwd(), 'src/demo/demoPatient.fixture.json')
+  const locale = parseLocale()
+  const fixturePath = resolve(process.cwd(), `src/demo/demoPatient.${locale}.fixture.json`)
   const fixture = JSON.parse(readFileSync(fixturePath, 'utf8')) as DemoPatientFixture
-  const existing = await getCanonicalDemoPatient()
+  const existing = await getCanonicalDemoPatient(locale)
   const seedVersion = nextDemoSeedVersion(existing?.seedVersion ?? fixture.demoSeedVersion)
   const fullFixture: DemoPatientFixture = {
     ...fixture,
     isDemoPatient: true,
     demoSeedVersion: seedVersion,
+    demoLocale: locale,
   }
   const validation = validateDemoFixture(fullFixture, { expectedSeedVersion: seedVersion })
 
@@ -40,6 +51,7 @@ async function main(): Promise<void> {
   }
 
   const published = await publishCanonicalDemoPatient({
+    locale,
     seedVersion,
     fixture: fullFixture,
     publishedBy: 'publish-script',
@@ -50,6 +62,7 @@ async function main(): Promise<void> {
     JSON.stringify(
       {
         ok: true,
+        locale,
         previousVersion: existing?.seedVersion ?? null,
         seedVersion: published.seedVersion,
         publishedAt: published.publishedAt,

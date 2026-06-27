@@ -20,7 +20,6 @@ import type { DiagnoseEntry } from '../utils/diagnosenArchive'
 import type { ClinicalImprintIndex } from '../types/clinicalImprint'
 import type { MedicationPlanState } from '../types/medicationPlan'
 import type { VerlaufFeedEntry } from '../utils/verlaufFeed'
-import { DEMO_CASE_ID } from './constants'
 
 const NOW = '2026-06-14T10:00:00.000Z'
 
@@ -118,11 +117,11 @@ export function buildDemoClinicalQuestionNotes(): ClinicalQuestionNoteState {
   return notes
 }
 
-export function buildDemoAnforderungen(admissionDate: string): Anforderung[] {
+export function buildDemoAnforderungen(admissionDate: string, caseId: string): Anforderung[] {
   const base = `${admissionDate}T10:00:00.000Z`
   const orders: Array<Omit<Anforderung, 'id'>> = [
     {
-      caseId: DEMO_CASE_ID,
+      caseId,
       catalogId: 'lab-metabolisches-basis',
       category: 'labor',
       label: 'Metabolic baseline panel',
@@ -137,7 +136,7 @@ export function buildDemoAnforderungen(admissionDate: string): Anforderung[] {
       reviewedByDisplayName: 'Laboratory',
     },
     {
-      caseId: DEMO_CASE_ID,
+      caseId,
       catalogId: 'lab-prolaktin',
       category: 'labor',
       label: 'Prolactin',
@@ -151,7 +150,7 @@ export function buildDemoAnforderungen(admissionDate: string): Anforderung[] {
       reviewedAt: '2026-06-20T11:00:00.000Z',
     },
     {
-      caseId: DEMO_CASE_ID,
+      caseId,
       catalogId: 'lab-aripiprazol',
       category: 'labor',
       label: 'Aripiprazole level',
@@ -164,7 +163,7 @@ export function buildDemoAnforderungen(admissionDate: string): Anforderung[] {
       createdByDisplayName: 'Dr Demo (Consultant)',
     },
     {
-      caseId: DEMO_CASE_ID,
+      caseId,
       catalogId: 'lab-hba1c',
       category: 'labor',
       label: 'HbA1c',
@@ -177,7 +176,7 @@ export function buildDemoAnforderungen(admissionDate: string): Anforderung[] {
       createdByDisplayName: 'Dr Demo (Registrar)',
     },
     {
-      caseId: DEMO_CASE_ID,
+      caseId,
       catalogId: 'befund-ekg',
       category: 'befunde',
       label: 'ECG (12-lead resting)',
@@ -191,7 +190,7 @@ export function buildDemoAnforderungen(admissionDate: string): Anforderung[] {
       reviewedAt: '2026-06-08T10:30:00.000Z',
     },
     {
-      caseId: DEMO_CASE_ID,
+      caseId,
       catalogId: 'befund-eeg-ruhe',
       category: 'befunde',
       label: 'EEG (resting)',
@@ -205,7 +204,7 @@ export function buildDemoAnforderungen(admissionDate: string): Anforderung[] {
       reviewedAt: '2026-06-11T16:00:00.000Z',
     },
     {
-      caseId: DEMO_CASE_ID,
+      caseId,
       catalogId: 'therapie-sport',
       category: 'therapien',
       label: 'Exercise therapy',
@@ -219,7 +218,7 @@ export function buildDemoAnforderungen(admissionDate: string): Anforderung[] {
       reviewedAt: '2026-06-04T10:00:00.000Z',
     },
     {
-      caseId: DEMO_CASE_ID,
+      caseId,
       catalogId: 'therapie-sozialdienst',
       category: 'therapien',
       label: 'Social services / case management',
@@ -239,10 +238,10 @@ export function buildDemoAnforderungen(admissionDate: string): Anforderung[] {
   }))
 }
 
-export function buildDemoEegBefund(): BefundRecord {
+export function buildDemoEegBefund(caseId: string): BefundRecord {
   return {
     id: 'demo-befund-eeg-01',
-    caseId: DEMO_CASE_ID,
+    caseId,
     type: 'eeg',
     schemaVersion: 1,
     fieldValues: {
@@ -266,6 +265,7 @@ export function buildDemoEegBefund(): BefundRecord {
 }
 
 export function buildDemoIsdmAnalysis(input: {
+  caseId: string
   diagnoses: DiagnoseEntry[]
   clinicalImprints: ClinicalImprintIndex
   medicationPlanState: MedicationPlanState
@@ -278,7 +278,7 @@ export function buildDemoIsdmAnalysis(input: {
   )
   const verlaufText = input.verlaufFeed.map((e) => e.content).join('\n')
   return buildIsdmAnalysis({
-    caseId: DEMO_CASE_ID,
+    caseId: input.caseId,
     imprints: input.clinicalImprints,
     checklistSelections: {},
     isdmInput: input.isdmInput,

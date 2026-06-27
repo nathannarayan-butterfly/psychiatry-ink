@@ -1,3 +1,4 @@
+import type { DemoLocale } from '../../src/demo/demoLocale'
 import type { DemoPatientFixture } from '../../src/demo/types'
 import { getKbSupabaseAdmin, isKbAdminConfigured } from './kbSupabaseAdmin'
 
@@ -9,15 +10,21 @@ export interface CanonicalDemoPatientRecord {
   publishedAt: string
 }
 
+const LEGACY_CANONICAL_ID = 'canonical'
+
+export function canonicalRowId(locale: DemoLocale): string {
+  return `canonical-${locale}`
+}
+
 export function isDemoPatientCanonicalStoreConfigured(): boolean {
   return isKbAdminConfigured()
 }
 
-export async function getCanonicalDemoPatient(): Promise<CanonicalDemoPatientRecord | null> {
+async function fetchCanonicalRow(id: string): Promise<CanonicalDemoPatientRecord | null> {
   const { data, error } = await getKbSupabaseAdmin()
     .from('demo_patient_canonical')
     .select('seed_version, fixture, published_by, published_by_email, published_at')
-    .eq('id', 'canonical')
+    .eq('id', id)
     .maybeSingle()
 
   if (error) throw error
@@ -32,7 +39,28 @@ export async function getCanonicalDemoPatient(): Promise<CanonicalDemoPatientRec
   }
 }
 
+function fixtureMatchesLocale(fixture: DemoPatientFixture, locale: DemoLocale): boolean {
+  if (fixture.demoLocale === locale) return true
+  if (locale === 'de' && fixture.demoCaseId === 'DEMO-CASE-DE-0001') return true
+  if (locale === 'en' && fixture.demoCaseId === 'DEMO-CASE-EN-0001') return true
+  return false
+}
+
+export async function getCanonicalDemoPatient(
+  locale: DemoLocale = 'en',
+): Promise<CanonicalDemoPatientRecord | null> {
+  const localeRow = await fetchCanonicalRow(canonicalRowId(locale))
+  if (localeRow) return localeRow
+
+  const legacy = await fetchCanonicalRow(LEGACY_CANONICAL_ID)
+  if (!legacy) return null
+  if (legacy.fixture.demoCaseId === 'DEMO-CASE-0001') return null
+  if (!fixtureMatchesLocale(legacy.fixture, locale)) return null
+  return legacy
+}
+
 export async function publishCanonicalDemoPatient(input: {
+  locale: DemoLocale
   seedVersion: string
   fixture: DemoPatientFixture
   publishedBy: string
@@ -43,7 +71,7 @@ export async function publishCanonicalDemoPatient(input: {
     .from('demo_patient_canonical')
     .upsert(
       {
-        id: 'canonical',
+        id: canonicalRowId(input.locale),
         seed_version: input.seedVersion,
         fixture: input.fixture,
         published_by: input.publishedBy,

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import {
   archiveDemoPatient,
-  DEMO_CASE_ID,
+  demoCaseIdForCurrentUi,
   demoPatientDisplayName,
   ensureDemoPatientExists,
   exportDemoFixtureFromLocal,
@@ -52,12 +52,14 @@ export function DemoPatientDevPage({ onBack }: DemoPatientDevPageProps) {
     [userId],
   )
 
+  const activeDemoCaseId = useMemo(() => demoCaseIdForCurrentUi(), [])
+
   const refreshStatus = useCallback(() => {
     const fixture = loadDemoFixture()
     setValidation(validateDemoFixture(fixture, { expectedSeedVersion: getEffectiveDemoSeedVersion() }))
-    setQaResults(runDemoQaChecklist(DEMO_CASE_ID, userId))
+    setQaResults(runDemoQaChecklist(activeDemoCaseId, userId))
     setUserState(loadDemoUserState(userId))
-  }, [userId])
+  }, [activeDemoCaseId, userId])
 
   const refreshCanonical = useCallback(async () => {
     setCanonicalLoading(true)
@@ -145,7 +147,7 @@ export function DemoPatientDevPage({ onBack }: DemoPatientDevPageProps) {
   const handlePublish = () =>
     void runAction(async () => {
       if (!isPublisher) throw new Error('Only the demo publisher may publish')
-      const fixture = await exportDemoFixtureFromLocal(DEMO_CASE_ID, calendarScope)
+      const fixture = await exportDemoFixtureFromLocal(activeDemoCaseId, calendarScope)
       const preview = validateDemoFixture(fixture, { expectedSeedVersion: fixture.demoSeedVersion })
       if (!preview.ok) {
         throw new Error(preview.errors.map((entry) => entry.message).join('; '))
@@ -173,7 +175,7 @@ export function DemoPatientDevPage({ onBack }: DemoPatientDevPageProps) {
         <div>
           <h1>Demo Patient — Pre-Butterfly QA</h1>
           <p className="demo-dev-page__subtitle">
-            Synthetic case <code>{DEMO_CASE_ID}</code> · {demoPatientDisplayName()} · read-only in workspace
+            Synthetic case <code>{activeDemoCaseId}</code> · {demoPatientDisplayName()} · read-only in workspace
           </p>
         </div>
         {onBack ? (
@@ -296,7 +298,7 @@ export function DemoPatientDevPage({ onBack }: DemoPatientDevPageProps) {
       <section className="demo-dev-card demo-dev-card--notes">
         <h2>Manual verification notes</h2>
         <ul>
-          <li>Open case <code>{DEMO_CASE_ID}</code> from dashboard — banner should show „Synthetic demo case".</li>
+          <li>Open case <code>{activeDemoCaseId}</code> from dashboard — banner should show „Synthetic demo case".</li>
           <li>Workspace fields are read-only; vault autosave is suppressed.</li>
           <li>Archive hides demo from patient list until Restore or Reinstall.</li>
           <li>Konsil / DiscussCase: server modules — fixture placeholders only.</li>

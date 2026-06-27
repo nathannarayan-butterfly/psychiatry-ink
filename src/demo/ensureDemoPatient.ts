@@ -1,5 +1,10 @@
 import { clearDemoCaseStorage } from './clearDemoCaseStorage'
-import { DEMO_CASE_ID, DEMO_SEED_VERSION } from './constants'
+import {
+  DEMO_SEED_VERSION,
+  allDemoCaseIds,
+  demoCaseIdForLocale,
+  LEGACY_DEMO_CASE_ID,
+} from './constants'
 import { isDemoSeedDataComplete } from './demoDataIntegrity'
 import { isDemoSeedVersionOutdated } from './demoVersion'
 import { patchDemoUserState } from './demoUserState'
@@ -8,25 +13,51 @@ import { ensureDemoClinicalIntelligenceForCase } from './ensureDemoClinicalIntel
 import { seedDemoPatient, type SeedDemoPatientOptions } from './seedDemoPatient'
 import { getCaseMeta, replaceRegistryMap } from '../hooks/useCaseRegistry'
 import { loadRegistryMapFromStorage, saveRegistryMapToStorage } from '../utils/caseRegistryStorage'
-import { normalizeDemoLocale, uiLanguageToDemoLocale } from './demoLocale'
+import { normalizeDemoLocale, uiLanguageToDemoLocale, type DemoLocale } from './demoLocale'
 import { loadStoredUiLanguage } from '../utils/clinicalLanguage'
 
 export interface ResetDemoPatientOptions extends SeedDemoPatientOptions {}
 
-export async function resetDemoPatient(options: ResetDemoPatientOptions) {
-  await clearDemoCaseStorage(DEMO_CASE_ID)
-  return seedDemoPatient({ ...options, force: true })
+function resolveTargetLocale(options: SeedDemoPatientOptions): DemoLocale {
+  return options.locale ?? uiLanguageToDemoLocale(loadStoredUiLanguage())
 }
 
-export async function removeDemoPatient(userId: string): Promise<void> {
-  await clearDemoCaseStorage(DEMO_CASE_ID)
-  const meta = getCaseMeta(DEMO_CASE_ID)
-  if (meta?.isDemoPatient) {
-    const map = loadRegistryMapFromStorage()
-    delete map[DEMO_CASE_ID]
+async function purgeLegacyDemo(): Promise<void> {
+  const map = loadRegistryMapFromStorage()
+  if (map[LEGACY_DEMO_CASE_ID]) {
+    delete map[LEGACY_DEMO_CASE_ID]
     saveRegistryMapToStorage(map)
     replaceRegistryMap(map)
   }
+  await clearDemoCaseStorage(LEGACY_DEMO_CASE_ID)
+}
+
+export async function resetDemoPatient(options: ResetDemoPatientOptions) {
+  const locale = resolveTargetLocale(options)
+  const caseId = demoCaseIdForLocale(locale)
+  await clearDemoCaseStorage(caseId)
+  return seedDemoPatient({ ...options, locale, force: true })
+}
+
+export async function removeDemoPatient(userId: string): Promise<void> {
+  for (const caseId of allDemoCaseIds()) {
+    await clearDemoCaseStorage(caseId)
+  }
+  await clearDemoCaseStorage(LEGACY_DEMO_CASE_ID)
+
+  const map = loadRegistryMapFromStorage()
+  let changed = false
+  for (const caseId of [...allDemoCaseIds(), LEGACY_DEMO_CASE_ID]) {
+    if (getCaseMeta(caseId)?.isDemoPatient || map[caseId]) {
+      delete map[caseId]
+      changed = true
+    }
+  }
+  if (changed) {
+    saveRegistryMapToStorage(map)
+    replaceRegistryMap(map)
+  }
+
   patchDemoUserState(userId, {
     status: 'removed',
     seedVersion: DEMO_SEED_VERSION,
@@ -54,9 +85,11 @@ export function restoreDemoPatient(userId: string): void {
 export async function ensureDemoPatientExists(
   options: SeedDemoPatientOptions,
 ): Promise<{ seeded: boolean; skippedReason?: string }> {
-  const targetLocale = options.locale ?? uiLanguageToDemoLocale(loadStoredUiLanguage())
+  const targetLocale = resolveTargetLocale(options)
+  const targetCaseId = demoCaseIdForLocale(targetLocale)
 
-  await fetchAndApplyCanonicalDemoFixture()
+  await purgeLegacyDemo()
+  await fetchAndApplyCanonicalDemoFixture({ locale: targetLocale })
 
   const { loadDemoUserState, shouldAutoInstallDemo } = await import('./demoUserState')
   const state = loadDemoUserState(options.userId)
@@ -68,18 +101,15 @@ export async function ensureDemoPatientExists(
     return { seeded: false, skippedReason: 'removed' }
   }
 
-  const meta = getCaseMeta(DEMO_CASE_ID)
+  const meta = getCaseMeta(targetCaseId)
   const localVersion = state.seedVersion || meta?.demoSeedVersion || ''
-  const outdated = isDemoSeedVersionOutdated(localVersion)
+  const outdated = isDemoSeedVersionOutdated(localVersion, targetLocale)
   const localeOutdated = normalizeDemoLocale(state.locale, targetLocale) !== targetLocale
 
-  // The demo's diagnoses + document snapshots are encrypted-at-rest; decrypt them into their
-  // synchronous shadows before the completeness check so a previously-seeded demo is not
-  // falsely seen as incomplete (which would trigger an unnecessary reseed on every load).
   const { hydrateLocalClinicalCaches } = await import('../utils/clinicalCacheHydration')
-  await hydrateLocalClinicalCaches(DEMO_CASE_ID)
-  ensureDemoClinicalIntelligenceForCase(DEMO_CASE_ID)
-  const incomplete = !isDemoSeedDataComplete(DEMO_CASE_ID)
+  await hydrateLocalClinicalCaches(targetCaseId)
+  ensureDemoClinicalIntelligenceForCase(targetCaseId)
+  const incomplete = !isDemoSeedDataComplete(targetCaseId)
 
   if (
     meta?.isDemoPatient &&

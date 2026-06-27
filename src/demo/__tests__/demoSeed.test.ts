@@ -2,7 +2,7 @@ import { describe, expect, it, beforeEach, vi } from 'vitest'
 import { buildDemoPatientFixture } from '../buildDemoFixture'
 import { seedDemoPatient } from '../seedDemoPatient'
 import { resetDemoPatient } from '../ensureDemoPatient'
-import { DEMO_CASE_ID } from '../constants'
+import { demoCaseIdForLocale } from '../constants'
 import { ensureCaseRegistryHydrated, getCaseMeta } from '../../hooks/useCaseRegistry'
 
 const storage = new Map<string, string>()
@@ -126,12 +126,13 @@ describe('seedDemoPatient', () => {
     // post-seed `getCaseMeta` read deterministic across test runs.
     await ensureCaseRegistryHydrated()
 
-    const result = await seedDemoPatient({ userId: 'user-1', skipValidation: false, force: true })
+    const result = await seedDemoPatient({ userId: 'user-1', skipValidation: false, force: true, locale: 'en' })
     expect(result.ok).toBe(true)
-    expect(result.caseId).toBe(DEMO_CASE_ID)
+    expect(result.caseId).toBe(demoCaseIdForLocale('en'))
     expect(result.counts.verlaufEntries).toBeGreaterThanOrEqual(12)
 
-    const meta = getCaseMeta(DEMO_CASE_ID)
+    const caseId = demoCaseIdForLocale('en')
+    const meta = getCaseMeta(caseId)
     expect(meta?.isDemoPatient).toBe(true)
     expect(meta?.localNachname).toBe('Demo')
   })
@@ -143,13 +144,14 @@ vi.mock('../clearDemoCaseStorage', () => ({
 
 describe('resetDemoPatient', () => {
   it('clears and re-seeds demo-only storage', async () => {
-    await seedDemoPatient({ userId: 'user-1', force: true })
-    storage.set(`diagnosen:${DEMO_CASE_ID}`, JSON.stringify([{ id: 'x' }]))
+    await seedDemoPatient({ userId: 'user-1', force: true, locale: 'en' })
+    const caseId = demoCaseIdForLocale('en')
+    storage.set(`diagnosen:${caseId}`, JSON.stringify([{ id: 'x' }]))
 
-    await resetDemoPatient({ userId: 'user-1', force: true })
+    await resetDemoPatient({ userId: 'user-1', force: true, locale: 'en' })
 
-    expect(getCaseMeta(DEMO_CASE_ID)?.isDemoPatient).toBe(true)
-    expect(getCaseMeta(DEMO_CASE_ID)?.localNachname).toBe('Demo')
+    expect(getCaseMeta(caseId)?.isDemoPatient).toBe(true)
+    expect(getCaseMeta(caseId)?.localNachname).toBe('Demo')
   })
 })
 
