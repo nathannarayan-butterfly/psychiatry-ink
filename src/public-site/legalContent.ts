@@ -1,4 +1,5 @@
 import type { PublicLocale } from './publicRoutes'
+import { LEGAL_LAST_UPDATED } from '../../shared/legalVersion'
 
 /**
  * Legal page content (privacy, terms, Impressum) for the public site.
@@ -79,8 +80,12 @@ export interface LegalDoc {
   sections: LegalSection[]
 }
 
-/** ISO date the legal copy was authored / last reviewed. */
-export const LEGAL_LAST_UPDATED = '2026-06-26'
+/**
+ * ISO date the legal copy was authored / last reviewed. Re-exported from the
+ * `shared/` module so the server-side consent recording imports the exact same
+ * constant (see `shared/legalVersion.ts`).
+ */
+export { LEGAL_LAST_UPDATED }
 
 function lastUpdatedLabel(locale: PublicLocale): string {
   return locale === 'de'

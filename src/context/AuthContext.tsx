@@ -19,8 +19,15 @@ import type { SubscriptionPlan } from '../data/subscriptionPlans'
 import { API_BASE } from '../services/apiClient'
 import { getAuthHeaders } from '../services/authHeaders'
 import { attributeReferral } from '../services/aiCreditsApi'
+import { recordLegalConsent } from '../services/legalConsentApi'
 import { clearSessionOnLogout } from '../utils/devicePreferences'
 import { clearStoredReferralCode, getStoredReferralCode } from '../utils/referralCapture'
+import {
+  clearPendingLegalConsent,
+  getPendingLegalConsent,
+  markPendingLegalConsent,
+} from '../utils/legalConsentPending'
+import { LEGAL_LAST_UPDATED } from '../../shared/legalVersion'
 
 interface AuthContextValue {
   user: User | null
@@ -32,9 +39,19 @@ interface AuthContextValue {
   configError: string | null
   configDiagnostics: string | null
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
-  signUp: (email: string, password: string) => Promise<{ error: string | null; needsConfirmation: boolean }>
+  signUp: (
+    email: string,
+    password: string,
+    consent?: SignupConsent,
+  ) => Promise<{ error: string | null; needsConfirmation: boolean }>
   signOut: () => Promise<void>
   refreshPlan: () => Promise<void>
+}
+
+/** Consent captured at sign-up: whether the legal terms were accepted + locale. */
+export interface SignupConsent {
+  acceptedTerms: boolean
+  locale: string
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -122,6 +139,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
   }, [user])
 
+  // Durable Datenschutz/AGB consent: if the user accepted at sign-up but their
+  // consent could not be recorded then (email-confirmation path → no session),
+  // record it now that they are authenticated. The endpoint is idempotent per
+  // (user_id, version), so retries are safe and self-deduplicating.
+  useEffect(() => {
+    if (!user) return
+    const pending = getPendingLegalConsent()
+    if (!pending) return
+    void recordLegalConsent(pending.locale)
+      .then(() => clearPendingLegalConsent())
+      .catch(() => {
+        // Leave the marker stored to retry on the next session; non-fatal.
+      })
+  }, [user])
+
   const signIn = useCallback(async (email: string, password: string) => {
     const supabase = getSupabase()
     if (!supabase) return { error: getSupabaseConfigError() ?? 'Supabase ist nicht konfiguriert.' }
@@ -130,14 +162,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: mapSupabaseAuthError(error?.message) }
   }, [])
 
-  const signUp = useCallback(async (email: string, password: string) => {
+  const signUp = useCallback(async (email: string, password: string, consent?: SignupConsent) => {
     const supabase = getSupabase()
     if (!supabase) {
       return { error: getSupabaseConfigError() ?? 'Supabase ist nicht konfiguriert.', needsConfirmation: false }
     }
 
+    // Persist the accepted-terms intent BEFORE the network round-trip so it
+    // survives the email-confirmation path (where signUp returns no session and
+    // consent can only be recorded once the user is later authenticated).
+    if (consent?.acceptedTerms) {
+      markPendingLegalConsent(LEGAL_LAST_UPDATED, consent.locale)
+    }
+
     const { data, error } = await supabase.auth.signUp({ email, password })
     const needsConfirmation = Boolean(data.user && !data.session)
+
+    // When a session already exists (no email confirmation required) record the
+    // consent immediately. Non-fatal on failure: the bootstrap effect retries
+    // idempotently on the next authenticated load.
+    if (!error && data.session && consent?.acceptedTerms) {
+      try {
+        await recordLegalConsent(consent.locale)
+        clearPendingLegalConsent()
+      } catch {
+        // Leave the pending marker for the bootstrap retry.
+      }
+    }
+
     return { error: mapSupabaseAuthError(error?.message), needsConfirmation }
   }, [])
 

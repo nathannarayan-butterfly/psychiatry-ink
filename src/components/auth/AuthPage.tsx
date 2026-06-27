@@ -7,6 +7,7 @@ import { IdentifierStorageChoice } from '../privacy/IdentifierStorageChoice'
 import { AppLogo } from '../AppLogo'
 import { markIdentifierStorageAcknowledged } from '../../utils/identifierStorage'
 import type { IdentifierStorageMode } from '../../utils/identifierStorage'
+import { localizedPath } from '../../public-site/publicRoutes'
 
 type AuthMode = 'login' | 'signup'
 
@@ -18,12 +19,13 @@ interface AuthPageProps {
 }
 
 export function AuthPage({ mode, onBack, onSuccess, onSwitchMode }: AuthPageProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const { signIn, signUp, isConfigured, configError, configDiagnostics } = useAuth()
   const { identifierStorage, setIdentifierStorage } = usePrivacySettings()
   const [signupIdentifierMode, setSignupIdentifierMode] = useState<IdentifierStorageMode>(identifierStorage)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -47,10 +49,15 @@ export function AuthPage({ mode, onBack, onSuccess, onSwitchMode }: AuthPageProp
         return
       }
 
+      if (!acceptedTerms) {
+        setError(t('authSignupTermsRequiredError'))
+        return
+      }
+
       setIdentifierStorage(signupIdentifierMode)
       markIdentifierStorageAcknowledged()
 
-      const result = await signUp(email.trim(), password)
+      const result = await signUp(email.trim(), password, { acceptedTerms, locale: language })
       if (result.error) {
         setError(result.error)
         return
@@ -127,6 +134,38 @@ export function AuthPage({ mode, onBack, onSuccess, onSwitchMode }: AuthPageProp
               />
             </label>
 
+            {!isLogin ? (
+              <label className="auth-form__consent">
+                <input
+                  type="checkbox"
+                  required
+                  checked={acceptedTerms}
+                  onChange={(event) => setAcceptedTerms(event.target.checked)}
+                  disabled={!isConfigured || submitting}
+                />
+                <span className="auth-form__consent-text">
+                  {t('authSignupAcceptTermsPrefix')}
+                  <a
+                    href={localizedPath('privacy', language)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="auth-form__consent-link"
+                  >
+                    {t('authSignupPrivacyLink')}
+                  </a>
+                  {t('authSignupAcceptTermsConnector')}
+                  <a
+                    href={localizedPath('terms', language)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="auth-form__consent-link"
+                  >
+                    {t('authSignupTermsLink')}
+                  </a>
+                </span>
+              </label>
+            ) : null}
+
             {error ? (
               <p className="auth-form__error" role="alert">
                 {error}
@@ -141,7 +180,7 @@ export function AuthPage({ mode, onBack, onSuccess, onSwitchMode }: AuthPageProp
             <button
               type="submit"
               className="landing-btn landing-btn--primary auth-form__submit"
-              disabled={!isConfigured || submitting}
+              disabled={!isConfigured || submitting || (!isLogin && !acceptedTerms)}
             >
               {submitting ? t('authPleaseWait') : isLogin ? t('authLoginSubmit') : t('authSignupSubmit')}
             </button>

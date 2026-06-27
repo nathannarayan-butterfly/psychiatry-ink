@@ -5285,6 +5285,36 @@ export const uiTranslations = {
     fr: 'Veuillez confirmer votre adresse e-mail. Ensuite vous pourrez vous connecter.',
     es: 'Confirme su correo electrónico. Luego podrá iniciar sesión.',
   },
+  authSignupAcceptTermsPrefix: {
+    de: 'Ich akzeptiere die ',
+    en: 'I accept the ',
+    fr: 'J\'accepte la ',
+    es: 'Acepto la ',
+  },
+  authSignupPrivacyLink: {
+    de: 'Datenschutzerklärung',
+    en: 'Privacy Policy',
+    fr: 'politique de confidentialité',
+    es: 'Política de Privacidad',
+  },
+  authSignupAcceptTermsConnector: {
+    de: ' und ',
+    en: ' and ',
+    fr: ' et les ',
+    es: ' y los ',
+  },
+  authSignupTermsLink: {
+    de: 'AGB',
+    en: 'Terms & Conditions',
+    fr: 'CGU',
+    es: 'Términos y Condiciones',
+  },
+  authSignupTermsRequiredError: {
+    de: 'Bitte akzeptieren Sie die Datenschutzerklärung und AGB, um fortzufahren.',
+    en: 'Please accept the Privacy Policy and Terms & Conditions to continue.',
+    fr: 'Veuillez accepter la politique de confidentialité et les CGU pour continuer.',
+    es: 'Acepte la Política de Privacidad y los Términos y Condiciones para continuar.',
+  },
   authNoAccountYet: {
     de: 'Noch kein Konto?',
     en: 'No account yet?',
