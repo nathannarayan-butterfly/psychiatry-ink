@@ -75,6 +75,16 @@ export interface HomepageContent {
   hero: {
     eyebrow: string
     headline: string
+    /**
+     * Optional substring of `headline` to emphasise with the ink-underline
+     * signature treatment (EN/DE landing). Must appear verbatim in `headline`;
+     * locales without it (ES/FR) render the plain headline.
+     */
+    headlineAccent?: string
+    /** Optional localized alt text for the framed hero product screenshot. */
+    heroShotAlt?: string
+    /** Optional localized caption shown under the hero workspace frame. */
+    heroShotCaption?: string
     subtitle: string
     primaryCta: string
     secondaryCta: string

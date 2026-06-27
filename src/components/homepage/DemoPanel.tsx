@@ -16,31 +16,41 @@ export function DemoPanel({ panel, ui }: DemoPanelProps) {
   return (
     <article className="hp-demo-panel">
       <span className="hp-demo-panel__label">{panel.label}</span>
-      <div className="hp-demo-panel__screenshot-wrap">
-        <button
-          type="button"
-          className="hp-demo-panel__screenshot-trigger"
-          onClick={() => setEnlarged(true)}
-          aria-label={enlargeLabel}
-        >
-          <img
-            className="hp-demo-panel__screenshot"
-            src={panel.imageSrc}
-            alt={panel.imageAlt}
-            loading="lazy"
-            decoding="async"
-          />
-        </button>
-        <button
-          type="button"
-          className="hp-demo-panel__enlarge-btn"
-          onClick={() => setEnlarged(true)}
-          aria-label={enlargeLabel}
-          title={enlargeLabel}
-        >
-          <Maximize2 className="hp-demo-panel__enlarge-icon" aria-hidden="true" />
-        </button>
-        <span className="hp-demo-panel__screenshot-badge">{ui.syntheticDemoBadge}</span>
+      <div className="hp-appframe hp-demo-panel__frame">
+        <div className="hp-appframe__bar" aria-hidden="true">
+          <span className="hp-appframe__dots">
+            <span />
+            <span />
+            <span />
+          </span>
+          <span className="hp-appframe__label">{panel.title}</span>
+        </div>
+        <div className="hp-demo-panel__screenshot-wrap">
+          <button
+            type="button"
+            className="hp-demo-panel__screenshot-trigger"
+            onClick={() => setEnlarged(true)}
+            aria-label={enlargeLabel}
+          >
+            <img
+              className="hp-demo-panel__screenshot"
+              src={panel.imageSrc}
+              alt={panel.imageAlt}
+              loading="lazy"
+              decoding="async"
+            />
+          </button>
+          <button
+            type="button"
+            className="hp-demo-panel__enlarge-btn"
+            onClick={() => setEnlarged(true)}
+            aria-label={enlargeLabel}
+            title={enlargeLabel}
+          >
+            <Maximize2 className="hp-demo-panel__enlarge-icon" aria-hidden="true" />
+          </button>
+          <span className="hp-demo-panel__screenshot-badge">{ui.syntheticDemoBadge}</span>
+        </div>
       </div>
       {enlarged ? (
         <DemoScreenshotModal

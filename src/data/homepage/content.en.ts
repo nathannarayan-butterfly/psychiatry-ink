@@ -18,19 +18,23 @@ export const homepageContentEn: HomepageContent = {
     mainNavAriaLabel: 'Main navigation',
   },
   hero: {
-    eyebrow: 'Psychiatric clinical workspace',
-    headline: 'Psychiatry.Ink — the intelligent workspace for modern psychiatry.',
+    eyebrow: 'Clinical workspace for psychiatry',
+    headline: 'One workspace for the whole psychiatric case.',
+    headlineAccent: 'whole psychiatric case',
+    heroShotAlt:
+      'Psychiatry.Ink workspace — synthetic demo case overview with diagnoses and current medication.',
+    heroShotCaption: 'Case overview · synthetic demo data',
     subtitle:
-      'Psychiatry.Ink is a secure psychiatric workspace for documentation, case discussion, psychopharmacology reference, treatment planning, clinical tools, and AI-assisted clinical intelligence. AI supports structuring, review, and reasoning — clinician acceptance is always required.',
-    primaryCta: 'Open Workspace',
-    secondaryCta: 'View Demo Patient',
+      'Structured documentation, psychopharmacology reference, treatment planning, and clinician-reviewed AI — together in one secure workspace built for psychiatry. Every AI suggestion waits for your sign-off.',
+    primaryCta: 'Start free trial',
+    secondaryCta: 'See the demo patient',
     devModeLink: 'Developer mode — continue without sign-in',
     trustLabelsAriaLabel: 'Product trust highlights',
     trustLabels: [
+      '1-month free trial',
+      '500 AI credits included',
       'Clinician-reviewed AI',
-      'De-identified evidence workflows',
-      'Documentation + therapy + tools',
-      'Built for psychiatry',
+      'Synthetic demo data only',
     ],
     workspaceModules: [
       'Case Discussion',
@@ -350,11 +354,11 @@ export const homepageContentEn: HomepageContent = {
     ],
   },
   finalCta: {
-    title: 'Ready to open your psychiatric workspace?',
+    title: 'Open your psychiatric workspace today.',
     subtitle:
-      'Start with documentation and clinical tools today. AI-assisted features are optional — clinician review is always part of the workflow.',
-    primaryCta: 'Open Workspace',
-    secondaryCta: 'View Demo Patient',
+      'Begin with documentation and clinical tools right away. AI-assisted features are optional, and clinician review stays part of every workflow.',
+    primaryCta: 'Start free trial',
+    secondaryCta: 'See the demo patient',
   },
   poweredBy: {
     label: 'Powered with Butterfly Clinical Intelligence System',

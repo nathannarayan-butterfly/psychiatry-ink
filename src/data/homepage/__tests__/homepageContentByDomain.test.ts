@@ -11,14 +11,14 @@ import { getHomepageContent } from '../index'
 describe('homepage content resolved by domain', () => {
   it('serves English hero content on psychiatry.ink', () => {
     const content = getHomepageContent(resolveLocaleFromHost('psychiatry.ink'))
-    expect(content.hero.headline).toContain('intelligent workspace')
-    expect(content.hero.subtitle.startsWith('Psychiatry.Ink is a secure')).toBe(true)
+    expect(content.hero.headline).toContain('whole psychiatric case')
+    expect(content.hero.subtitle.startsWith('Structured documentation')).toBe(true)
   })
 
   it('serves German hero content on psychiatrie.ink', () => {
     const content = getHomepageContent(resolveLocaleFromHost('psychiatrie.ink'))
-    expect(content.hero.headline).toContain('der intelligente Arbeitsbereich')
-    expect(content.hero.subtitle.startsWith('Psychiatrie.Ink bündelt')).toBe(true)
+    expect(content.hero.headline).toContain('gesamten psychiatrischen Fall')
+    expect(content.hero.subtitle.startsWith('Strukturierte Dokumentation')).toBe(true)
   })
 
   it('serves French and Spanish content on their domains', () => {
@@ -40,8 +40,8 @@ describe('homepage content resolved by domain', () => {
 describe('German marketing copy is grammatically correct German', () => {
   const de = getHomepageContent('de')
 
-  it('uses correct adjective agreement "der intelligente Arbeitsbereich"', () => {
-    expect(de.hero.headline).toContain('der intelligente Arbeitsbereich')
+  it('uses grammatically correct German hero copy', () => {
+    expect(de.hero.headline).toContain('Ein Arbeitsbereich für den gesamten psychiatrischen Fall')
     // The English-leftover / wrong-agreement forms must never appear.
     expect(de.hero.headline).not.toContain('ein intelligente ')
     expect(de.hero.headline).not.toMatch(/\bInk is\b/)
@@ -49,7 +49,7 @@ describe('German marketing copy is grammatically correct German', () => {
 
   it('has no English copular "is" leaking into German hero copy', () => {
     expect(de.hero.subtitle).not.toMatch(/\bis\b/)
-    expect(de.hero.subtitle).toContain('bündelt')
+    expect(de.hero.subtitle).toContain('vereint in einem sicheren Arbeitsbereich')
   })
 
   it('keeps GBP pricing with German decimal commas', () => {

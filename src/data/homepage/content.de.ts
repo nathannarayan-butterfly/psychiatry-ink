@@ -19,18 +19,22 @@ export const homepageContentDe: HomepageContent = {
   },
   hero: {
     eyebrow: 'Klinischer Arbeitsbereich für die Psychiatrie',
-    headline: 'Psychiatrie.Ink — der intelligente Arbeitsbereich für die moderne Psychiatrie.',
+    headline: 'Ein Arbeitsbereich für den gesamten psychiatrischen Fall.',
+    headlineAccent: 'gesamten psychiatrischen Fall',
+    heroShotAlt:
+      'Psychiatrie.Ink Arbeitsbereich — synthetische Demo-Fallübersicht mit Diagnosen und aktueller Medikation.',
+    heroShotCaption: 'Fallübersicht · synthetische Demodaten',
     subtitle:
-      'Psychiatrie.Ink bündelt Dokumentation, Fallbesprechung, psychopharmakologische Referenz, Therapieplanung, klinische Tools und KI-gestützte Clinical Intelligence in einem sicheren Arbeitsbereich. Die KI unterstützt beim Strukturieren, Prüfen und klinischen Reasoning — die ärztliche Freigabe bleibt immer erforderlich.',
-    primaryCta: 'Arbeitsbereich öffnen',
+      'Strukturierte Dokumentation, psychopharmakologische Referenz, Therapieplanung und ärztlich geprüfte KI — vereint in einem sicheren Arbeitsbereich für die Psychiatrie. Jeder KI-Vorschlag wartet auf Ihre Freigabe.',
+    primaryCta: 'Kostenlos testen',
     secondaryCta: 'Demo-Patient ansehen',
     devModeLink: 'Entwicklermodus — ohne Anmeldung fortfahren',
     trustLabelsAriaLabel: 'Vertrauensmerkmale des Produkts',
     trustLabels: [
-      'Klinisch geprüfte KI',
-      'De-identifizierte Evidenz-Workflows',
-      'Dokumentation, Therapie und Tools in einem',
-      'Speziell für die Psychiatrie',
+      '1 Monat kostenlos testen',
+      '500 KI-Credits inklusive',
+      'Ärztlich geprüfte KI',
+      'Nur synthetische Demodaten',
     ],
     workspaceModules: [
       'Fallbesprechung',
@@ -350,10 +354,10 @@ export const homepageContentDe: HomepageContent = {
     ],
   },
   finalCta: {
-    title: 'Bereit, Ihren psychiatrischen Arbeitsbereich zu öffnen?',
+    title: 'Öffnen Sie heute Ihren psychiatrischen Arbeitsbereich.',
     subtitle:
-      'Starten Sie heute mit Dokumentation und klinischen Tools. KI-gestützte Funktionen sind optional — die ärztliche Prüfung bleibt immer Teil des Workflows.',
-    primaryCta: 'Arbeitsbereich öffnen',
+      'Beginnen Sie sofort mit Dokumentation und klinischen Tools. KI-gestützte Funktionen sind optional, und die ärztliche Prüfung bleibt Teil jedes Workflows.',
+    primaryCta: 'Kostenlos testen',
     secondaryCta: 'Demo-Patient ansehen',
   },
   poweredBy: {

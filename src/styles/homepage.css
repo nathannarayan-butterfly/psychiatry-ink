@@ -63,14 +63,41 @@ body:has(.auth-page) {
 /* —— Page shell —— */
 
 .hp-page {
-  /* Inherits global clinical tokens (--accent, --border-soft, --editor-paper-bg)
-   * from globals.css so marketing pages match the logged-in workspace aesthetic. */
+  /* ---------------------------------------------------------------------------
+   * Public marketing brand = "clinical blue ink on warm clinical paper".
+   *
+   * The logged-in app uses a warm brown/gold accent (--accent #8A5A2B) and the
+   * demo screenshots were captured from it, so they read warm. To stay coherent
+   * we OVERRIDE the accent to clinical blue ONLY on the public pages (scoped to
+   * .hp-page — never the app), but keep the WARM paper background and WARM
+   * hairlines from globals.css. The warm base + neutral screenshot frames bridge
+   * to the warm screenshots, while blue stays a crisp, deliberate accent.
+   * ------------------------------------------------------------------------- */
+  --accent: #3f78c6; /* clinical blue — primary public accent */
+  --accent-hover: #2f5fa0;
+  --accent-strong: #274d80;
+  --accent-soft: #e6eefa;
+  --accent-ultrasoft: #f3f7fd;
+  --hp-blue: #3f78c6;
+  --hp-blue-strong: #2f5fa0;
+  --hp-ink: #16243a; /* deep navy ink for display headings */
+  --hp-paper: var(--editor-paper-bg, #fafaf8);
+  --hp-paper-deep: #f4f2ec; /* warmer paper for muted bands */
+  --hp-hairline: var(--border-soft);
+  --hp-section-py: clamp(3.25rem, 6vw, 5.5rem);
+  --hp-grid-gap: clamp(0.85rem, 1.6vw, 1.25rem);
+  /* Neutral screenshot frame — intentionally colour-free so the warm app
+   * screenshots never fight the blue page chrome (no blue tint/overlay). */
+  --hp-frame-border: var(--border-soft);
+  --hp-frame-bar: #f6f5f2;
+  --hp-frame-dot: color-mix(in srgb, var(--border-strong) 70%, transparent);
 
   min-height: 100dvh;
   background: var(--app-bg, #ffffff);
   color: var(--text-main);
   font-family: var(--font-sans);
   text-align: left;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* —— Shared layout primitives —— */
@@ -148,22 +175,26 @@ body:has(.auth-page) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
+  gap: 0.45rem;
   border-radius: var(--radius-control, 0.4375rem);
-  padding: 0.55rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 500;
+  padding: 0.7rem 1.2rem;
+  font-size: 0.9375rem;
+  font-weight: 550;
+  line-height: 1.2;
   cursor: pointer;
   border: 1px solid transparent;
   transition:
     background var(--transition-fast, 150ms),
     border-color var(--transition-fast, 150ms),
-    color var(--transition-fast, 150ms);
+    color var(--transition-fast, 150ms),
+    box-shadow var(--transition-fast, 150ms),
+    transform var(--transition-fast, 150ms);
   font-family: inherit;
+  text-decoration: none;
 }
 
 .hp-btn:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
   outline-offset: 2px;
 }
 
@@ -171,20 +202,34 @@ body:has(.auth-page) {
   background: var(--accent);
   color: #fff;
   border-color: var(--accent);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--accent) 40%, transparent),
+    0 6px 18px color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
 .hp-btn--primary:hover {
   background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px color-mix(in srgb, var(--accent) 40%, transparent),
+    0 10px 24px color-mix(in srgb, var(--accent) 26%, transparent);
 }
 
 .hp-btn--ghost {
   background: #fff;
   color: var(--text-main);
-  border-color: var(--border-soft);
+  border-color: var(--border-strong);
 }
 
 .hp-btn--ghost:hover {
   background: var(--surface-hover);
+  border-color: var(--text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hp-btn,
+  .hp-btn--primary:hover {
+    transform: none;
+  }
 }
 
 .hp-btn__icon {
@@ -195,36 +240,56 @@ body:has(.auth-page) {
 /* —— Typography —— */
 
 .hp-eyebrow {
+  font-family: var(--font-mono);
   font-size: 0.6875rem;
   font-weight: 500;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--text-muted);
-  margin: 0 0 0.65rem;
+  color: var(--hp-blue-strong);
+  margin: 0 0 0.85rem;
 }
 
-/* —— Hero (split layout: copy left, visual right) —— */
+/* —— Hero (split layout: copy left, framed product shot right) —— */
 
 .hp-hero {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 2.5rem;
+  gap: clamp(2rem, 5vw, 3.5rem);
   align-items: center;
   width: 100%;
   max-width: var(--hp-container-max);
   margin-inline: auto;
-  padding: clamp(2rem, 6vw, 4rem) var(--hp-container-px);
+  padding: clamp(2.5rem, 7vw, 5rem) var(--hp-container-px) clamp(2rem, 5vw, 3.5rem);
+  overflow: clip;
+}
+
+/* Soft blue ambient halo behind the hero — sits BEHIND the neutral frame, never
+ * tints the screenshot itself. */
+.hp-hero::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  inset: -20% -10% auto auto;
+  width: min(46rem, 80%);
+  aspect-ratio: 1;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--hp-blue) 16%, transparent),
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.hp-hero > * {
+  position: relative;
+  z-index: 1;
 }
 
 @media (min-width: 56.25rem) {
   .hp-hero {
-    grid-template-columns: 1.05fr 0.95fr;
-  }
-}
-
-@media (min-width: 40rem) and (max-width: 56.24rem) {
-  .hp-hero {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1.02fr 0.98fr;
+    gap: clamp(2.5rem, 4vw, 4rem);
   }
 }
 
@@ -239,20 +304,65 @@ body:has(.auth-page) {
   }
 }
 
+.hp-hero .hp-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.hp-hero .hp-eyebrow::before {
+  content: '';
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 999px;
+  background: var(--hp-blue);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--hp-blue) 18%, transparent);
+}
+
 .hp-hero__title {
-  font-size: clamp(1.75rem, 4vw, 2.625rem);
-  line-height: 1.15;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  margin: 0 0 1rem;
+  font-size: clamp(2rem, 5.2vw, 3.25rem);
+  line-height: 1.08;
+  font-weight: 680;
+  letter-spacing: -0.03em;
+  color: var(--hp-ink);
+  text-wrap: balance;
+  margin: 0 0 1.1rem;
+}
+
+/* Ink-underline signature — a hand-drawn pen stroke under one emphasised
+ * phrase, evoking the ".Ink" brand. Implemented as a per-line background stroke
+ * (box-decoration-break: clone) so it wraps cleanly across lines and locales
+ * (e.g. the longer German phrase) without ever clipping or overflowing. */
+.hp-hero__accent {
+  color: var(--hp-blue-strong);
+  padding-bottom: 0.06em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 16' preserveAspectRatio='none'%3E%3Cpath d='M3 10 C 60 4, 110 13, 160 8 S 252 5, 297 9' fill='none' stroke='%233f78c6' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: left bottom 0.02em;
+  background-size: 100% 0.34em;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hp-hero__accent {
+    background-size: 0% 0.34em;
+    animation: hp-ink-grow 900ms cubic-bezier(0.65, 0, 0.35, 1) 450ms forwards;
+  }
+}
+
+@keyframes hp-ink-grow {
+  to {
+    background-size: 100% 0.34em;
+  }
 }
 
 .hp-hero__subtitle {
-  font-size: 1rem;
-  line-height: 1.65;
+  font-size: clamp(1rem, 1.4vw, 1.125rem);
+  line-height: 1.6;
   color: var(--text-secondary);
-  max-width: 36rem;
-  margin: 0 auto 1.5rem;
+  max-width: 34rem;
+  margin: 0 auto 1.75rem;
 }
 
 @media (min-width: 56.25rem) {
@@ -275,29 +385,10 @@ body:has(.auth-page) {
   }
 }
 
-.hp-hero__dev-link {
-  display: block;
-  margin: 0 auto 1.25rem;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  background: none;
-  border: none;
-  cursor: pointer;
-  text-decoration: underline;
-  padding: 0;
-  font-family: inherit;
-}
-
-@media (min-width: 56.25rem) {
-  .hp-hero__dev-link {
-    margin-inline: 0;
-  }
-}
-
 .hp-trust-labels {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.4rem 1.1rem;
   justify-content: center;
   list-style: none;
   padding: 0;
@@ -311,140 +402,105 @@ body:has(.auth-page) {
 }
 
 .hp-trust-labels__item {
-  font-size: 0.6875rem;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
   font-weight: 500;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   color: var(--text-secondary);
-  padding: 0.3rem 0.6rem;
-  border: 1px solid var(--border-soft);
-  border-radius: 999px;
-  background: var(--editor-paper-bg, #fafaf8);
 }
 
-/* —— Hero workspace composition —— */
+.hp-trust-labels__item::before {
+  content: '';
+  width: 0.95rem;
+  height: 0.95rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background:
+    /* a tiny blue check, neutral and crisp */
+    var(--hp-blue);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round' d='M4 12.5l5 5L20 6.5'/%3E%3C/svg%3E") center / 0.72rem no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round' d='M4 12.5l5 5L20 6.5'/%3E%3C/svg%3E") center / 0.72rem no-repeat;
+  opacity: 0.5;
+}
+
+/* —— Neutral app-window frame (reused by hero + demo screenshots) ——
+ * Deliberately colour-free chrome so warm in-app screenshots never clash with
+ * the clinical-blue page. No blue tint or filter is ever applied to the image. */
 
 .hp-hero__visual {
   min-width: 0;
 }
 
-.hp-workspace-composition {
-  position: relative;
-  min-height: 18rem;
-  padding: 1.25rem;
-  border: 1px solid var(--border-soft);
+.hp-appframe {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--hp-frame-border);
   border-radius: var(--radius-card, 0.6875rem);
-  background: var(--editor-paper-bg, #fafaf8);
-  box-shadow: var(--shadow-workspace-hero);
-}
-
-.hp-workspace-composition__paper {
-  position: relative;
-  z-index: 1;
-  width: 58%;
-  padding: 1rem 1.1rem;
   background: #fff;
-  border: 1px solid var(--border-soft);
-  border-radius: 0.5rem;
-  box-shadow: var(--shadow-elevated-sm);
+  overflow: hidden;
+  box-shadow: var(--shadow-elevated-lg);
 }
 
-.hp-workspace-composition__paper-header {
+.hp-appframe__bar {
   display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  margin-bottom: 0.75rem;
-  padding-bottom: 0.65rem;
-  border-bottom: 1px solid var(--border-soft);
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 0.85rem;
+  background: var(--hp-frame-bar);
+  border-bottom: 1px solid var(--hp-frame-border);
 }
 
-.hp-workspace-composition__paper-body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
+.hp-appframe__dots {
+  display: inline-flex;
+  gap: 0.35rem;
+  flex-shrink: 0;
 }
 
-.hp-workspace-composition__paper-line {
-  display: block;
-  height: 0.4rem;
-  border-radius: 0.15rem;
-  background: color-mix(in srgb, var(--border-soft) 80%, transparent);
-  width: 85%;
+.hp-appframe__dots span {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--hp-frame-dot);
 }
 
-.hp-workspace-composition__paper-line--title {
-  height: 0.55rem;
-  width: 48%;
-  background: color-mix(in srgb, var(--accent) 22%, var(--border-soft));
-}
-
-.hp-workspace-composition__paper-line--short {
-  width: 32%;
-}
-
-.hp-workspace-composition__paper-line--wide {
-  width: 94%;
-}
-
-.hp-workspace-composition__modules {
-  position: absolute;
-  top: 1.5rem;
-  right: 0.75rem;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(4.5rem, 1fr));
-  gap: 0.4rem;
-  width: 42%;
-  z-index: 2;
-}
-
-.hp-workspace-composition__module {
-  font-size: 0.625rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  text-align: center;
-  padding: 0.4rem 0.35rem;
-  background: #fff;
-  border: 1px solid var(--border-soft);
-  border-radius: 0.35rem;
-  color: var(--text-secondary);
-  box-shadow: var(--shadow-elevated-sm);
-  transition: transform var(--transition-fast, 150ms), box-shadow var(--transition-fast, 150ms);
-}
-
-.hp-workspace-composition__module:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-elevated-md);
-}
-
-.hp-workspace-composition__ink {
-  position: absolute;
-  bottom: 0.85rem;
-  left: 1.25rem;
-  width: 2rem;
-  height: 2rem;
-  opacity: 0.35;
-  z-index: 3;
-}
-
-.hp-workspace-composition__ink-fallback {
-  position: absolute;
-  bottom: 0.85rem;
-  left: 1.25rem;
-  font-size: 1.25rem;
-  font-weight: 600;
+.hp-appframe__label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.01em;
   color: var(--text-muted);
-  opacity: 0.4;
-  z-index: 3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.hp-workspace-composition__butterfly {
-  position: absolute;
-  bottom: 0.65rem;
-  right: 0.85rem;
-  width: 1.75rem;
-  height: 1.75rem;
-  opacity: 0.18;
-  z-index: 3;
+.hp-hero__frame {
+  position: relative;
+}
+
+.hp-hero__shot {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  object-position: top left;
+  background: #fff;
+}
+
+.hp-hero__caption {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0.75rem 0 0;
+  text-align: center;
+}
+
+@media (min-width: 56.25rem) {
+  .hp-hero__caption {
+    text-align: left;
+  }
 }
 
 /* —— Sections —— */
@@ -458,7 +514,7 @@ body:has(.auth-page) {
 
 .hp-section--muted {
   max-width: none;
-  background: color-mix(in srgb, var(--editor-paper-bg, #fafaf8) 65%, white);
+  background: var(--hp-paper);
   border-block: 1px solid var(--border-soft);
 }
 
@@ -475,22 +531,26 @@ body:has(.auth-page) {
 /* Section header: centered intros only */
 .hp-section__header {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: clamp(2rem, 3.5vw, 3rem);
 }
 
 .hp-section__title {
-  font-size: clamp(1.375rem, 2.5vw, 1.625rem);
-  font-weight: 600;
-  letter-spacing: -0.015em;
-  margin: 0 0 0.65rem;
+  font-size: clamp(1.5rem, 3vw, 2.125rem);
+  font-weight: 660;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  color: var(--hp-ink);
+  text-wrap: balance;
+  margin: 0 0 0.75rem;
 }
 
 .hp-section__lead {
   color: var(--text-secondary);
-  font-size: 0.9375rem;
+  font-size: clamp(0.9375rem, 1.2vw, 1.0625rem);
   line-height: 1.6;
   max-width: var(--hp-lead-max);
   margin: 0 auto;
+  text-wrap: pretty;
 }
 
 /* —— Grids (full-width body, equal columns, stretch) —— */
@@ -562,33 +622,40 @@ body:has(.auth-page) {
   position: relative;
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-card, 0.6875rem);
-  padding: 1.25rem;
+  padding: 1.5rem;
   background: #fff;
   min-height: 100%;
   text-align: left;
-  transition: border-color var(--transition-fast, 150ms);
+  transition:
+    border-color var(--transition-fast, 150ms),
+    box-shadow var(--transition-smooth, 280ms),
+    transform var(--transition-smooth, 280ms);
 }
 
 .hp-card:hover {
-  border-color: var(--border-strong);
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border-strong));
+  box-shadow: var(--shadow-elevated-md);
+  transform: translateY(-2px);
 }
 
 .hp-card--security {
-  border-left: 2px solid color-mix(in srgb, var(--accent) 35%, var(--border-soft));
+  border-left: 3px solid color-mix(in srgb, var(--accent) 55%, var(--border-soft));
 }
 
 .hp-card__title,
 .hp-module-card__title {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  margin: 0 0 0.4rem;
+  font-size: 1rem;
+  font-weight: 620;
+  letter-spacing: -0.01em;
+  color: var(--hp-ink);
+  margin: 0 0 0.45rem;
   text-align: left;
 }
 
 .hp-card__body,
 .hp-module-card__body {
-  font-size: 0.8125rem;
-  line-height: 1.55;
+  font-size: 0.875rem;
+  line-height: 1.6;
   color: var(--text-secondary);
   margin: 0;
   text-align: left;
@@ -601,25 +668,54 @@ body:has(.auth-page) {
   flex-direction: column;
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-card, 0.6875rem);
-  padding: 1rem;
+  padding: 1.15rem;
   background: #fff;
   min-height: 100%;
   text-align: left;
+  transition:
+    border-color var(--transition-fast, 150ms),
+    box-shadow var(--transition-smooth, 280ms),
+    transform var(--transition-smooth, 280ms);
+}
+
+.hp-module-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border-strong));
+  box-shadow: var(--shadow-elevated-md);
+  transform: translateY(-2px);
 }
 
 .hp-module-card__header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.7rem;
 }
 
 .hp-module-card__label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  letter-spacing: 0.04em;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--hp-blue-strong);
+  letter-spacing: 0;
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+  border-radius: var(--radius-control, 0.4375rem);
+}
+
+.hp-module-card__title {
+  font-size: 0.9375rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hp-card:hover,
+  .hp-module-card:hover {
+    transform: none;
+  }
 }
 
 /* —— Workflow (horizontal equal steps desktop, vertical mobile) —— */
@@ -648,7 +744,7 @@ body:has(.auth-page) {
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
-  padding: 1.25rem;
+  padding: 1.5rem;
   text-align: left;
   border-bottom: 1px solid var(--border-soft);
 }
@@ -669,16 +765,26 @@ body:has(.auth-page) {
 }
 
 .hp-workflow-step__index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
   font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--accent);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  border-radius: 999px;
   flex-shrink: 0;
+  box-shadow: 0 0 0 4px var(--accent-soft);
 }
 
 .hp-workflow-step__title {
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: 0.9375rem;
+  font-weight: 620;
+  letter-spacing: -0.01em;
+  color: var(--hp-ink);
   margin: 0 0 0.35rem;
   text-align: left;
 }
@@ -960,33 +1066,38 @@ body:has(.auth-page) {
 }
 
 .hp-demo-panel__label {
+  font-family: var(--font-mono);
   font-size: 0.6875rem;
   font-weight: 500;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--hp-demo-clinical-blue) 72%, var(--text-muted));
-  margin-bottom: 0.5rem;
+  color: var(--hp-blue-strong);
+  margin-bottom: 0.65rem;
+}
+
+.hp-demo-panel__frame {
+  margin-bottom: 0.95rem;
+  transition:
+    box-shadow var(--transition-smooth, 280ms),
+    transform var(--transition-smooth, 280ms);
+}
+
+.hp-demo-panel:hover .hp-demo-panel__frame {
+  box-shadow: var(--shadow-elevated-xl);
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hp-demo-panel:hover .hp-demo-panel__frame {
+    transform: none;
+  }
 }
 
 .hp-demo-panel__screenshot-wrap {
   position: relative;
-  border: 1px solid var(--hp-demo-frame-border);
-  border-radius: 0.5rem;
   overflow: hidden;
-  background: var(--hp-demo-frame-bg);
-  box-shadow: var(--shadow-elevated-md);
-  margin-bottom: 0.85rem;
+  background: #fff;
   aspect-ratio: 16 / 10;
-}
-
-.hp-demo-panel__screenshot-wrap::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto;
-  z-index: 2;
-  height: 2px;
-  background: var(--hp-demo-frame-strip);
-  pointer-events: none;
 }
 
 .hp-demo-panel__screenshot-trigger {
@@ -1010,8 +1121,8 @@ body:has(.auth-page) {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  object-position: top center;
+  object-fit: cover;
+  object-position: top left;
   background: #fff;
 }
 
@@ -1261,28 +1372,37 @@ body:has(.auth-page) {
 /* —— Final CTA (centered promo block) —— */
 
 .hp-cta {
+  position: relative;
   width: calc(100% - 2 * var(--hp-container-px));
   max-width: var(--hp-container-max);
-  margin: 0 auto 2.5rem;
-  padding: clamp(1.75rem, 4vw, 2.5rem);
-  border-radius: var(--radius-card, 0.6875rem);
-  background: color-mix(in srgb, var(--accent) 5%, white);
-  border: 1px solid var(--border-soft);
+  margin: clamp(2.5rem, 5vw, 4rem) auto;
+  padding: clamp(2.5rem, 6vw, 4rem) clamp(1.5rem, 4vw, 3rem);
+  border-radius: calc(var(--radius-card, 0.6875rem) + 0.4rem);
+  background:
+    radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--hp-blue) 55%, transparent), transparent 60%),
+    linear-gradient(135deg, var(--hp-ink), var(--hp-blue-strong));
+  border: 1px solid color-mix(in srgb, var(--hp-blue) 30%, transparent);
+  box-shadow: var(--shadow-elevated-lg);
   text-align: center;
+  overflow: hidden;
 }
 
 .hp-cta__title {
-  font-size: clamp(1.25rem, 2.5vw, 1.5rem);
-  font-weight: 600;
-  margin: 0 0 0.5rem;
+  font-size: clamp(1.5rem, 3.2vw, 2.25rem);
+  font-weight: 660;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  color: #fff;
+  text-wrap: balance;
+  margin: 0 0 0.65rem;
 }
 
 .hp-cta__subtitle {
-  color: var(--text-secondary);
-  font-size: 0.9375rem;
-  line-height: 1.55;
-  max-width: 36rem;
-  margin: 0 auto 1.25rem;
+  color: color-mix(in srgb, #fff 82%, var(--hp-blue));
+  font-size: clamp(0.9375rem, 1.3vw, 1.0625rem);
+  line-height: 1.6;
+  max-width: 38rem;
+  margin: 0 auto 1.75rem;
 }
 
 .hp-cta__actions {
@@ -1290,6 +1410,35 @@ body:has(.auth-page) {
   flex-wrap: wrap;
   gap: 0.75rem;
   justify-content: center;
+}
+
+/* On the dark CTA panel, invert the button palette for contrast. */
+.hp-cta .hp-btn--primary {
+  background: #fff;
+  color: var(--hp-blue-strong);
+  border-color: #fff;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.22);
+}
+
+.hp-cta .hp-btn--primary:hover {
+  background: color-mix(in srgb, #fff 92%, var(--hp-blue));
+  border-color: color-mix(in srgb, #fff 92%, var(--hp-blue));
+}
+
+.hp-cta .hp-btn--ghost {
+  background: transparent;
+  color: #fff;
+  border-color: color-mix(in srgb, #fff 55%, transparent);
+}
+
+.hp-cta .hp-btn--ghost:hover {
+  background: color-mix(in srgb, #fff 14%, transparent);
+  border-color: #fff;
+}
+
+.hp-cta .hp-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
 }
 
 .hp-cta__powered-by {
@@ -1418,23 +1567,6 @@ body:has(.auth-page) {
     overflow-x: auto;
     padding-bottom: 0.15rem;
     -webkit-overflow-scrolling: touch;
-  }
-
-  .hp-workspace-composition__modules {
-    position: relative;
-    top: auto;
-    right: auto;
-    width: 100%;
-    margin-top: 1rem;
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  .hp-workspace-composition__paper {
-    width: 100%;
-  }
-
-  .hp-workspace-composition {
-    min-height: auto;
   }
 
   .hp-footer__links {
@@ -1577,6 +1709,25 @@ body:has(.auth-page) {
  * `ps-*` structures the multi-page public site needs (brand wordmark, sub-page
  * heroes, legal prose, static pricing options, login shell, skip link).
  * ========================================================================== */
+
+/* —— Scroll reveal —— JS arms elements (data-reveal="armed") then reveals them
+ * (data-reveal="shown"). No-JS / prerendered HTML keeps the default empty value,
+ * which has no rule here, so content is always fully visible without JS. The
+ * whole effect is gated behind prefers-reduced-motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .hp-page [data-reveal='armed'] {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  .hp-page [data-reveal='shown'] {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 600ms ease,
+      transform 650ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
 
 .ps-skip-link {
   position: absolute;
@@ -1752,6 +1903,145 @@ body:has(.auth-page) {
   font-size: 0.875rem;
   line-height: 1.6;
   color: var(--text-secondary);
+}
+
+/* —— Contact form —— */
+
+.ps-contact {
+  padding-block: clamp(2.5rem, 5vw, 4rem);
+}
+
+.ps-contact__container {
+  width: 100%;
+  max-width: 40rem;
+  margin-inline: auto;
+  padding-inline: var(--hp-container-px);
+}
+
+.ps-contact__header {
+  margin-bottom: 1.75rem;
+}
+
+.ps-contact__title {
+  font-size: clamp(1.5rem, 3.5vw, 2rem);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+  margin: 0 0 0.5rem;
+}
+
+.ps-contact__lead {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.ps-contact__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ps-contact__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ps-contact__label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.ps-contact__required {
+  color: var(--accent);
+}
+
+.ps-contact__input,
+.ps-contact__select,
+.ps-contact__textarea {
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--text-main);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-card, 0.6875rem);
+  padding: 0.65rem 0.75rem;
+  background: #fff;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ps-contact__textarea {
+  resize: vertical;
+  min-height: 8rem;
+}
+
+.ps-contact__warning {
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  background: color-mix(in srgb, var(--accent) 6%, #fff);
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border-soft));
+  border-radius: var(--radius-card, 0.6875rem);
+}
+
+.ps-contact__field--checkbox {
+  margin-top: 0.25rem;
+}
+
+.ps-contact__checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.ps-contact__checkbox {
+  margin-top: 0.15rem;
+  flex-shrink: 0;
+}
+
+.ps-contact__inline-link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.ps-contact__honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.ps-contact__error {
+  font-size: 0.8125rem;
+  color: #b42318;
+  margin: 0;
+}
+
+.ps-contact__success {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--text-main);
+  padding: 1rem 1.15rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--border-soft));
+  border-radius: var(--radius-card, 0.6875rem);
+  background: color-mix(in srgb, var(--accent) 8%, #fff);
+}
+
+.ps-contact__submit {
+  align-self: flex-start;
+  margin-top: 0.25rem;
 }
 
 /* —— Login shell (static, no-JS meaningful page) —— */
