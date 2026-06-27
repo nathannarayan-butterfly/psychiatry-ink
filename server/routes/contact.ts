@@ -90,7 +90,9 @@ contactRouter.post('/', async (req: Request, res: Response) => {
   }
 
   if (!isContactEmailConfigured()) {
-    console.warn('[contact] SMTP relay is not configured (SMTP_HOST/SMTP_USER/SMTP_PASS missing)')
+    console.warn(
+      '[contact] SMTP relay is not configured (need SMTP_HOST, plus SMTP_USER/SMTP_PASS unless SMTP_RELAY=true / SMTP_AUTH=none)',
+    )
     res.status(503).json({ error: 'Contact form is temporarily unavailable. Please email us directly.' })
     return
   }

@@ -12,19 +12,31 @@ interface SentMail {
   text?: string
 }
 
-const { sendMail, sentMail } = vi.hoisted(() => {
+interface TransportConfig {
+  host?: string
+  port?: number
+  secure?: boolean
+  requireTLS?: boolean
+  auth?: { user?: string; pass?: string }
+}
+
+const { sendMail, sentMail, createTransport, transportConfigs } = vi.hoisted(() => {
   const sentMail: SentMail[] = []
   const sendMail = vi.fn(async (options: SentMail) => {
     sentMail.push(options)
     return { messageId: 'test-message-id' }
   })
-  return { sendMail, sentMail }
+  const transportConfigs: TransportConfig[] = []
+  const createTransport = vi.fn((config: TransportConfig) => {
+    transportConfigs.push(config)
+    return { sendMail }
+  })
+  return { sendMail, sentMail, createTransport, transportConfigs }
 })
 
 // Mock the SMTP transport so no real network connection is made; the real
 // contactEmail service still runs (from/to/replyTo/subject construction).
 vi.mock('nodemailer', () => {
-  const createTransport = vi.fn(() => ({ sendMail }))
   return { default: { createTransport }, createTransport }
 })
 
@@ -133,6 +145,19 @@ describe('POST /api/contact', () => {
     expect(insertedRows).toHaveLength(1)
     expect(insertedRows[0].category).toBe('general')
     expect(insertedRows[0].success).toBe(true)
+
+    // Authenticated mode: the transport must be created WITH an auth object
+    // built from SMTP_USER/SMTP_PASS, using STARTTLS on 587.
+    expect(transportConfigs.length).toBeGreaterThanOrEqual(1)
+    const authedConfig = transportConfigs[0]
+    expect(authedConfig.host).toBe('smtp-relay.gmail.com')
+    expect(authedConfig.port).toBe(587)
+    expect(authedConfig.secure).toBe(false)
+    expect(authedConfig.requireTLS).toBe(true)
+    expect(authedConfig.auth).toEqual({
+      user: 'noreply@psychiatry.ink',
+      pass: 'test-app-password',
+    })
   })
 
   it('routes the Datenschutz / privacy category to PRIVACY_TO', async () => {
@@ -245,5 +270,71 @@ describe('POST /api/contact', () => {
     } finally {
       rateServer.close()
     }
+  })
+})
+
+describe('POST /api/contact — relay (no-auth) mode', () => {
+  let relayServer: Server
+  let relayBaseUrl: string
+  const savedEnv = {
+    SMTP_USER: process.env.SMTP_USER,
+    SMTP_PASS: process.env.SMTP_PASS,
+    SMTP_RELAY: process.env.SMTP_RELAY,
+    SMTP_AUTH: process.env.SMTP_AUTH,
+  }
+
+  beforeAll(async () => {
+    // Relay mode: no credentials, authorise by static egress IP. Stale
+    // SMTP_USER/SMTP_PASS would normally enable auth, so set both AND the relay
+    // flag to prove the flag wins (auth is omitted even when creds are present).
+    process.env.SMTP_RELAY = 'true'
+    delete process.env.SMTP_AUTH
+    process.env.SMTP_USER = 'noreply@psychiatry.ink'
+    process.env.SMTP_PASS = 'leftover-should-be-ignored'
+
+    // Fresh module instance so the cached transport is rebuilt under relay env.
+    vi.resetModules()
+    const { contactRouter } = await import('./contact')
+    const app = express()
+    app.use(express.json({ limit: '1mb' }))
+    app.use('/api/contact', buildContactLimiter(), buildContactEmailLimiter(), contactRouter)
+    relayServer = app.listen(0)
+    const { port } = relayServer.address() as AddressInfo
+    relayBaseUrl = `http://127.0.0.1:${port}`
+  })
+
+  afterAll(() => {
+    relayServer.close()
+    process.env.SMTP_USER = savedEnv.SMTP_USER
+    process.env.SMTP_PASS = savedEnv.SMTP_PASS
+    if (savedEnv.SMTP_RELAY === undefined) delete process.env.SMTP_RELAY
+    else process.env.SMTP_RELAY = savedEnv.SMTP_RELAY
+    if (savedEnv.SMTP_AUTH === undefined) delete process.env.SMTP_AUTH
+    else process.env.SMTP_AUTH = savedEnv.SMTP_AUTH
+    vi.resetModules()
+  })
+
+  it('sends without 503 and creates the transport with NO auth object', async () => {
+    const before = transportConfigs.length
+    const response = await fetch(`${relayBaseUrl}/api/contact`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...validBody, subject: 'Relay mode' }),
+    })
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ ok: true })
+    expect(sentMail).toHaveLength(1)
+    expect(sentMail[0].to).toBe('hello@psychiatry.ink')
+
+    // A new transport was created for the relay module instance, and it carries
+    // NO auth (relay authorises by static egress IP), still over STARTTLS/587.
+    expect(transportConfigs.length).toBeGreaterThan(before)
+    const relayConfig = transportConfigs[transportConfigs.length - 1]
+    expect(relayConfig.host).toBe('smtp-relay.gmail.com')
+    expect(relayConfig.port).toBe(587)
+    expect(relayConfig.secure).toBe(false)
+    expect(relayConfig.requireTLS).toBe(true)
+    expect(relayConfig.auth).toBeUndefined()
   })
 })

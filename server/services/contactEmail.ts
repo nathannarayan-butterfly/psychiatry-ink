@@ -34,14 +34,30 @@ function resolveSmtpPort(): number {
 }
 
 /**
- * The relay needs at minimum a reachable host. When the workspace relay is
- * configured to authenticate (the common Workspace setup), SMTP_USER/SMTP_PASS
- * must both be present. We treat the form as configured only when we have a
- * host plus a complete credential pair, mirroring the prior "fail with 503 when
- * not configured" behaviour.
+ * Relay (no-auth) mode. A Google Workspace SMTP relay that allowlists the
+ * sender by IP needs no credentials — the connection is authorised by the
+ * static egress IP instead of an app password. Enable it explicitly with
+ * `SMTP_RELAY=true` or `SMTP_AUTH=none`, in which case SMTP_USER/SMTP_PASS are
+ * not required (and are ignored even if present, so leftover secret bindings
+ * can't accidentally re-enable broken account-level auth).
+ */
+export function isRelayAuthDisabled(): boolean {
+  const relay = env('SMTP_RELAY')?.toLowerCase()
+  const auth = env('SMTP_AUTH')?.toLowerCase()
+  return relay === 'true' || relay === '1' || relay === 'yes' || auth === 'none'
+}
+
+/**
+ * The relay needs at minimum a reachable host. In relay (no-auth) mode a host
+ * is sufficient — authorisation is by static egress IP allowlist. Otherwise,
+ * when the relay authenticates (app-password setup), SMTP_USER/SMTP_PASS must
+ * both be present. We treat the form as configured accordingly, mirroring the
+ * prior "fail with 503 when not configured" behaviour.
  */
 export function isContactEmailConfigured(): boolean {
-  return Boolean(resolveSmtpHost() && env('SMTP_USER') && env('SMTP_PASS'))
+  if (!resolveSmtpHost()) return false
+  if (isRelayAuthDisabled()) return true
+  return Boolean(env('SMTP_USER') && env('SMTP_PASS'))
 }
 
 export function resolveContactFromAddress(): string {
@@ -55,15 +71,19 @@ function getTransport(): Transporter {
 
   const user = env('SMTP_USER')
   const pass = env('SMTP_PASS')
+  // In relay (no-auth) mode the relay authorises us by static egress IP, so we
+  // omit the auth object entirely — even if stale SMTP_USER/SMTP_PASS bindings
+  // linger, we never try the broken account-level auth.
+  const useAuth = !isRelayAuthDisabled() && Boolean(user && pass)
 
   cachedTransport = nodemailer.createTransport({
     host: resolveSmtpHost(),
     port: resolveSmtpPort(),
     // STARTTLS: connect plaintext on 587 then upgrade. Never allow an
-    // unencrypted fallback for credentialed relay traffic.
+    // unencrypted fallback for relay traffic.
     secure: false,
     requireTLS: true,
-    auth: user && pass ? { user, pass } : undefined,
+    auth: useAuth ? { user, pass } : undefined,
   })
 
   return cachedTransport
