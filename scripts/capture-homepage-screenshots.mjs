@@ -4,6 +4,9 @@
  * Captures PNGs referenced by `src/data/homepage/content.de.ts` into
  * `public/homepage/`. Idempotent: re-running overwrites the same files.
  *
+ * Viewport: 1440×900 logical pixels at 2× device scale → 2880×1800 PNG output
+ * for sharp display in the homepage 2-column grid and lightbox.
+ *
  * Strategy
  * ─────────
  * 1. Start local dev (Vite + API) OR reuse an existing server via BASE.
@@ -38,6 +41,7 @@ const OUTPUT_DIR = resolve(ROOT, 'public/homepage')
 const DEMO_CASE_ID = 'DEMO-CASE-0001'
 const CASE_PATH = `/case/${encodeURIComponent(DEMO_CASE_ID)}`
 const VIEWPORT = { width: 1440, height: 900 }
+const DEVICE_SCALE_FACTOR = 2
 const LANGUAGE_KEY = 'psychiatry-ink-language'
 
 const WEB_PORT = Number(process.env.PORT ?? 5199)
@@ -354,7 +358,10 @@ try {
   const ok = await waitForServer(`${BASE}/`)
   if (!ok) throw new Error(`Dev server never became reachable at ${BASE}`)
 
-  const context = await browser.newContext({ viewport: VIEWPORT })
+  const context = await browser.newContext({
+    viewport: VIEWPORT,
+    deviceScaleFactor: DEVICE_SCALE_FACTOR,
+  })
   const page = await preparePage(context, useAuth)
 
   if (useAuth) {

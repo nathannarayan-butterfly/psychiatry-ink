@@ -942,12 +942,12 @@ body:has(.auth-page) {
   color: var(--text-muted);
 }
 
-/* —— Demo panels (even 3-col grid) —— */
+/* —— Demo panels — 1 col mobile, 2 col tablet+ (screenshots stay readable) —— */
 
 .hp-demo-panels {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.25rem;
+  gap: clamp(1.25rem, 3vw, 2rem);
   width: 100%;
   align-items: stretch;
 }
@@ -955,24 +955,6 @@ body:has(.auth-page) {
 @media (min-width: 40rem) {
   .hp-demo-panels {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 48rem) {
-  .hp-demo-panels {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 64rem) {
-  .hp-demo-panels {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 80rem) {
-  .hp-demo-panels {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 }
 
@@ -1038,8 +1020,9 @@ body:has(.auth-page) {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: top left;
+  object-fit: contain;
+  object-position: top center;
+  background: #fff;
 }
 
 .hp-demo-panel__enlarge-btn {
@@ -1211,12 +1194,12 @@ body:has(.auth-page) {
 .hp-demo-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgb(0 0 0 / 0.72);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1200;
-  padding: 1.5rem;
+  padding: clamp(0.75rem, 3vw, 1.5rem);
 }
 
 .hp-demo-modal {
@@ -1224,7 +1207,7 @@ body:has(.auth-page) {
   border: 1px solid var(--hp-demo-blue-border);
   border-radius: var(--radius-card, 0.6875rem);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
-  width: min(94vw, 960px);
+  width: min(96vw, 90rem);
   max-height: 90vh;
   display: flex;
   flex-direction: column;
@@ -1279,10 +1262,14 @@ body:has(.auth-page) {
 .hp-demo-modal__image {
   display: block;
   width: 100%;
+  max-width: 100%;
   height: auto;
+  max-height: calc(90vh - 4.5rem);
+  object-fit: contain;
   border-radius: calc(var(--radius-card, 0.6875rem) - 0.25rem);
   border: 1px solid var(--hp-demo-blue-border);
   background: #fff;
+  touch-action: pinch-zoom;
 }
 
 /* —— Final CTA (centered promo block) —— */

@@ -30,7 +30,7 @@ export function HomepagePage({
 }: HomepagePageProps) {
   const content = useHomepageContent()
   useMarketingSeo()
-  const { pillars, workflow, modules, security, tiers, demo, finalCta } = content
+  const { pillars, workflow, modules, security, tiers, demo, finalCta, ui } = content
 
   const openWorkspace = () => {
     if (isAuthenticated) {
@@ -185,7 +185,7 @@ export function HomepagePage({
           </header>
           <div className="hp-demo-panels">
             {demo.panels.map((panel) => (
-              <DemoPanel key={panel.id} panel={panel} />
+              <DemoPanel key={panel.id} panel={panel} ui={ui} />
             ))}
           </div>
         </section>

@@ -1,16 +1,15 @@
 import { Maximize2 } from 'lucide-react'
 import { useState } from 'react'
-import type { HomepageDemoPanel } from '../../data/homepage'
+import type { HomepageContent, HomepageDemoPanel } from '../../data/homepage'
 import { formatHomepageTemplate } from '../../data/homepage'
-import { useHomepageContent } from '../../hooks/useHomepageContent'
 import { DemoScreenshotModal } from './DemoScreenshotModal'
 
 export interface DemoPanelProps {
   panel: HomepageDemoPanel
+  ui: HomepageContent['ui']
 }
 
-export function DemoPanel({ panel }: DemoPanelProps) {
-  const { ui } = useHomepageContent()
+export function DemoPanel({ panel, ui }: DemoPanelProps) {
   const [enlarged, setEnlarged] = useState(false)
   const enlargeLabel = formatHomepageTemplate(ui.enlargeScreenshotTemplate, { title: panel.title })
 

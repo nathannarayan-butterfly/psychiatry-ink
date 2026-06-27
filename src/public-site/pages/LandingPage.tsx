@@ -1,3 +1,4 @@
+import { DemoPanel } from '../../components/homepage/DemoPanel'
 import type { HomepageContent } from '../../data/homepage'
 import { localizedPath, type PublicLocale } from '../publicRoutes'
 import { PublicLink, type PublicNavContext } from '../components/PublicLink'
@@ -187,23 +188,7 @@ export function LandingPage({ content, locale, onNavigate }: LandingPageProps) {
         </header>
         <div className="hp-demo-panels">
           {demo.panels.map((panel) => (
-            <article key={panel.id} className="hp-demo-panel">
-              <span className="hp-demo-panel__label">{panel.label}</span>
-              <div className="hp-demo-panel__screenshot-wrap">
-                <img
-                  className="hp-demo-panel__screenshot"
-                  src={panel.imageSrc}
-                  alt={panel.imageAlt}
-                  loading="lazy"
-                  decoding="async"
-                />
-                <span className="hp-demo-panel__screenshot-badge">
-                  {content.ui.syntheticDemoBadge}
-                </span>
-              </div>
-              <h3 className="hp-demo-panel__title">{panel.title}</h3>
-              <p className="hp-demo-panel__description">{panel.description}</p>
-            </article>
+            <DemoPanel key={panel.id} panel={panel} ui={content.ui} />
           ))}
         </div>
       </section>
