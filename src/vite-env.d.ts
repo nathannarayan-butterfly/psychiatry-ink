@@ -19,3 +19,11 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
+
+/**
+ * Build-time constant injected by the `psyink-version-stamp` Vite plugin
+ * (see `vite.config.ts`). It is replaced via Vite `define` with the same build
+ * id written to the static `/version.json`, so the running bundle can compare
+ * its own build id against the deployed one.
+ */
+declare const __APP_BUILD_ID__: string

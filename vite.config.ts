@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process'
 import { readFileSync, existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { defineConfig, type Plugin } from 'vite'
@@ -114,8 +115,59 @@ function supabaseEnvCheck(): Plugin {
   }
 }
 
+/**
+ * Compute ONE build id used both as the in-bundle constant and the static
+ * `version.json` payload, so the running app's "loaded build id" always matches
+ * what a fresh deploy publishes. Prefer the git short sha (stable, ties the
+ * served bundle to a commit); fall back to a timestamp when git is unavailable
+ * in the build context (e.g. a source tarball deploy).
+ */
+function resolveBuildId(): string {
+  try {
+    const sha = execSync('git rev-parse --short=12 HEAD', {
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+      .toString()
+      .trim()
+    if (sha) return sha
+  } catch {
+    // git not available in this build context — fall through to a timestamp.
+  }
+  return `ts-${Date.now().toString(36)}`
+}
+
+/**
+ * Version stamp: emit the SAME build id two ways that must stay in sync —
+ *  (a) `__APP_BUILD_ID__` replaced into the JS bundle via `define` (the app's
+ *      "loaded build id"), and
+ *  (b) a static `/version.json` ({ "buildId": "…" }) at the served web root that
+ *      long-lived tabs poll to detect a newer deploy.
+ * One `buildId` is computed per build/dev start and used for both, guaranteeing
+ * the embedded constant equals the published JSON for a given deploy.
+ */
+function versionStampPlugin(): Plugin {
+  const buildId = resolveBuildId()
+  return {
+    name: 'psyink-version-stamp',
+    config() {
+      return {
+        define: {
+          __APP_BUILD_ID__: JSON.stringify(buildId),
+        },
+      }
+    },
+    generateBundle() {
+      this.emitFile({
+        type: 'asset',
+        fileName: 'version.json',
+        source: `${JSON.stringify({ buildId })}\n`,
+      })
+    },
+  }
+}
+
 export default defineConfig({
-  plugins: [supabaseEnvCheck(), react(), tailwindcss()],
+  plugins: [supabaseEnvCheck(), versionStampPlugin(), react(), tailwindcss()],
   optimizeDeps: {
     // mammoth is CJS-only and only loaded for DOCX import; pre-bundle at dev
     // startup so the first import does not race on-demand optimization.
