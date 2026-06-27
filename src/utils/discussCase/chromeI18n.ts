@@ -31,6 +31,9 @@ const CHROME_I18N = {
     heroSubtitle:
       'Teilen Sie einen kuratierten Fallauszug — intern, extern oder mit AI-Unterstützung. Wählen Sie links eine Besprechung oder starten Sie eine neue.',
     newDiscussion: 'Neue Besprechung',
+    navDiscussions: 'Besprechungen',
+    navLoading: 'Wird geladen…',
+    navNoDiscussions: 'Noch keine Besprechungen.',
     recentlyActive: 'Zuletzt aktiv',
     noDiscussions: 'Noch keine Besprechungen für diesen Fall.',
     caseOverview: '← Fallübersicht',
@@ -171,6 +174,9 @@ const CHROME_I18N = {
     heroSubtitle:
       'Share a curated case excerpt — internally, externally or with AI support. Pick a discussion on the left or start a new one.',
     newDiscussion: 'New discussion',
+    navDiscussions: 'Discussions',
+    navLoading: 'Loading…',
+    navNoDiscussions: 'No discussions yet.',
     recentlyActive: 'Recently active',
     noDiscussions: 'No discussions for this case yet.',
     caseOverview: '← Case overview',
@@ -301,6 +307,9 @@ const CHROME_I18N = {
     heroSubtitle:
       'Partagez un extrait de cas sélectionné — en interne, en externe ou avec l’assistance de l’IA. Choisissez une discussion à gauche ou créez-en une nouvelle.',
     newDiscussion: 'Nouvelle discussion',
+    navDiscussions: 'Discussions',
+    navLoading: 'Chargement…',
+    navNoDiscussions: 'Aucune discussion pour le moment.',
     recentlyActive: 'Activité récente',
     noDiscussions: 'Aucune discussion pour ce cas pour le moment.',
     caseOverview: '← Aperçu du cas',
@@ -431,6 +440,9 @@ const CHROME_I18N = {
     heroSubtitle:
       'Comparta un extracto del caso seleccionado — internamente, de forma externa o con apoyo de IA. Elija una discusión a la izquierda o inicie una nueva.',
     newDiscussion: 'Nueva discusión',
+    navDiscussions: 'Discusiones',
+    navLoading: 'Cargando…',
+    navNoDiscussions: 'Aún no hay discusiones.',
     recentlyActive: 'Actividad reciente',
     noDiscussions: 'Aún no hay discusiones para este caso.',
     caseOverview: '← Resumen del caso',

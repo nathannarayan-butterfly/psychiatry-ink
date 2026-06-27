@@ -19,10 +19,11 @@ export const homepageContentEn: HomepageContent = {
   },
   hero: {
     eyebrow: 'Clinical workspace for psychiatry',
-    headline: 'One workspace for the whole psychiatric case.',
-    headlineAccent: 'whole psychiatric case',
+    headline: 'One intelligent workspace for the whole psychiatric case.',
+    headlineAccent: 'intelligent workspace',
     heroShotAlt:
       'Psychiatry.Ink workspace — synthetic demo case overview with diagnoses and current medication.',
+    heroShotSrc: '/homepage/en/demo-overview.png',
     heroShotCaption: 'Case overview · synthetic demo data',
     subtitle:
       'Structured documentation, psychopharmacology reference, treatment planning, and clinician-reviewed AI — together in one secure workspace built for psychiatry. Every AI suggestion waits for your sign-off.',
@@ -308,7 +309,7 @@ export const homepageContentEn: HomepageContent = {
         label: 'Clinical Intelligence',
         title: 'Dimensional profile & mechanisms',
         description: 'Pre-reviewed hypotheses with severity graphs and status chips · Nikolaos Demo',
-        imageSrc: '/homepage/demo-intelligence.png',
+        imageSrc: '/homepage/en/demo-intelligence.png',
         imageAlt: 'Synthetic demo — Clinical Intelligence dimensional and mechanism graphs.',
       },
       {
@@ -316,7 +317,7 @@ export const homepageContentEn: HomepageContent = {
         label: 'Knowledge Base',
         title: 'Psychopharmacology reference',
         description: 'Receptor profile and monograph for prescribing decisions',
-        imageSrc: '/homepage/demo-knowledge-base.png',
+        imageSrc: '/homepage/en/demo-knowledge-base.png',
         imageAlt: 'Synthetic demo — Knowledge base drug detail with receptor profile.',
       },
       {
@@ -324,7 +325,7 @@ export const homepageContentEn: HomepageContent = {
         label: 'Case discussion',
         title: 'DiscussCase workspace',
         description: 'Active team discussion with curated case package and chat thread',
-        imageSrc: '/homepage/demo-discuss.png',
+        imageSrc: '/homepage/en/demo-discuss.png',
         imageAlt: 'Synthetic demo — Active case discussion panel with messages.',
       },
       {
@@ -332,7 +333,7 @@ export const homepageContentEn: HomepageContent = {
         label: 'Lab monitoring',
         title: 'Cumulative lab trends',
         description: 'Prolactin and metabolic markers with medication change markers',
-        imageSrc: '/homepage/demo-labor.png',
+        imageSrc: '/homepage/en/demo-labor.png',
         imageAlt: 'Synthetic demo — Lab trend graph with abnormal flags.',
       },
       {
@@ -340,7 +341,7 @@ export const homepageContentEn: HomepageContent = {
         label: 'Interaction check',
         title: 'Medication combinations',
         description: 'Knowledge-base and AI-reviewed interaction findings for active meds',
-        imageSrc: '/homepage/demo-interaction.png',
+        imageSrc: '/homepage/en/demo-interaction.png',
         imageAlt: 'Synthetic demo — Medication interaction matrix.',
       },
       {
@@ -348,7 +349,7 @@ export const homepageContentEn: HomepageContent = {
         label: 'ISDM',
         title: 'System documentation',
         description: 'Phenomenology mapping and diagnostic synthesis (ISDM analysis panel)',
-        imageSrc: '/homepage/demo-isdm.png',
+        imageSrc: '/homepage/en/demo-isdm.png',
         imageAlt: 'Synthetic demo — ISDM system documentation analysis panel.',
       },
     ],

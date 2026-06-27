@@ -120,7 +120,7 @@ export function LandingPage({ content, locale, onNavigate }: LandingPageProps) {
               </div>
               <img
                 className="hp-hero__shot"
-                src="/homepage/demo-overview.png"
+                src={hero.heroShotSrc ?? '/homepage/en/demo-overview.png'}
                 alt={hero.heroShotAlt ?? hero.headline}
                 width={1024}
                 height={640}

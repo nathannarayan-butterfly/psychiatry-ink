@@ -19,10 +19,11 @@ export const homepageContentDe: HomepageContent = {
   },
   hero: {
     eyebrow: 'Klinischer Arbeitsbereich für die Psychiatrie',
-    headline: 'Ein Arbeitsbereich für den gesamten psychiatrischen Fall.',
-    headlineAccent: 'gesamten psychiatrischen Fall',
+    headline: 'Ein intelligenter Arbeitsbereich für den gesamten psychiatrischen Fall.',
+    headlineAccent: 'intelligenter Arbeitsbereich',
     heroShotAlt:
       'Psychiatrie.Ink Arbeitsbereich — synthetische Demo-Fallübersicht mit Diagnosen und aktueller Medikation.',
+    heroShotSrc: '/homepage/de/demo-overview.png',
     heroShotCaption: 'Fallübersicht · synthetische Demodaten',
     subtitle:
       'Strukturierte Dokumentation, psychopharmakologische Referenz, Therapieplanung und ärztlich geprüfte KI — vereint in einem sicheren Arbeitsbereich für die Psychiatrie. Jeder KI-Vorschlag wartet auf Ihre Freigabe.',
@@ -308,7 +309,7 @@ export const homepageContentDe: HomepageContent = {
         label: 'Clinical Intelligence',
         title: 'Dimensionales Profil & Mechanismen',
         description: 'Vorgeprüfte Hypothesen mit Schweregrad-Grafiken und Status-Chips · Nikolaos Demo',
-        imageSrc: '/homepage/demo-intelligence.png',
+        imageSrc: '/homepage/de/demo-intelligence.png',
         imageAlt: 'Synthetische Demo — Clinical Intelligence mit dimensionalen und Mechanismus-Grafiken.',
       },
       {
@@ -316,7 +317,7 @@ export const homepageContentDe: HomepageContent = {
         label: 'Wissensdatenbank',
         title: 'Psychopharmakologische Referenz',
         description: 'Rezeptorprofil und Monographie für die Verordnungsentscheidung',
-        imageSrc: '/homepage/demo-knowledge-base.png',
+        imageSrc: '/homepage/de/demo-knowledge-base.png',
         imageAlt: 'Synthetische Demo — Wirkstoffdetail aus der Wissensdatenbank mit Rezeptorprofil.',
       },
       {
@@ -324,7 +325,7 @@ export const homepageContentDe: HomepageContent = {
         label: 'Fallbesprechung',
         title: 'DiscussCase-Arbeitsbereich',
         description: 'Aktive Teambesprechung mit kuratiertem Fallpaket und Chat-Verlauf',
-        imageSrc: '/homepage/demo-discuss.png',
+        imageSrc: '/homepage/de/demo-discuss.png',
         imageAlt: 'Synthetische Demo — Aktives Fallbesprechungs-Panel mit Nachrichten.',
       },
       {
@@ -332,7 +333,7 @@ export const homepageContentDe: HomepageContent = {
         label: 'Labormonitoring',
         title: 'Kumulative Laborverläufe',
         description: 'Prolaktin und metabolische Marker mit Markierungen für Medikationswechsel',
-        imageSrc: '/homepage/demo-labor.png',
+        imageSrc: '/homepage/de/demo-labor.png',
         imageAlt: 'Synthetische Demo — Labor-Trendgrafik mit Markierungen für auffällige Werte.',
       },
       {
@@ -340,7 +341,7 @@ export const homepageContentDe: HomepageContent = {
         label: 'Interaktionsprüfung',
         title: 'Medikationskombinationen',
         description: 'Befunde aus Wissensdatenbank- und KI-gestützter Interaktionsprüfung der aktiven Medikation',
-        imageSrc: '/homepage/demo-interaction.png',
+        imageSrc: '/homepage/de/demo-interaction.png',
         imageAlt: 'Synthetische Demo — Interaktionsmatrix für Medikation.',
       },
       {
@@ -348,7 +349,7 @@ export const homepageContentDe: HomepageContent = {
         label: 'ISDM',
         title: 'Systemdokumentation',
         description: 'Phänomenologisches Mapping und diagnostische Synthese (ISDM-Analysepanel)',
-        imageSrc: '/homepage/demo-isdm.png',
+        imageSrc: '/homepage/de/demo-isdm.png',
         imageAlt: 'Synthetische Demo — ISDM-Systemdokumentations-Analysepanel.',
       },
     ],

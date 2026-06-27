@@ -4763,6 +4763,12 @@ export const uiTranslations = {
     fr: 'Ans',
     es: 'Años',
   },
+  patientAgeYearsAbbrev: {
+    de: 'J.',
+    en: 'yrs',
+    fr: 'ans',
+    es: 'años',
+  },
   patientFieldGeburtsdatum: {
     de: 'Geburtsdatum',
     en: 'Date of birth',

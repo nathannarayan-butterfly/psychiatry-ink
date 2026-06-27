@@ -507,6 +507,9 @@ export const settingsWorkspaceUiTranslations = {
   kbpColActions: { de: 'Aktionen', en: 'Actions', fr: 'Actions', es: 'Acciones' },
   kbpAuditCreatedBy: { de: 'Erstellt von', en: 'Created by', fr: 'Créé par', es: 'Creado por' },
   kbpAuditModifiedBy: { de: 'Geändert von', en: 'Modified by', fr: 'Modifié par', es: 'Modificado por' },
+  kbpAuditReviewedBy: { de: 'Geprüft von', en: 'Reviewed by', fr: 'Révisé par', es: 'Revisado por' },
+  kbpAuditVerification: { de: 'Verifizierung', en: 'Verification', fr: 'Vérification', es: 'Verificación' },
+  kbpAuditMetadataLabel: { de: 'Profil-Metadaten', en: 'Profile metadata', fr: 'Métadonnées du profil', es: 'Metadatos del perfil' },
   kbpEdit: { de: 'Bearbeiten', en: 'Edit', fr: 'Modifier', es: 'Editar' },
   kbpDelete: { de: 'Löschen', en: 'Delete', fr: 'Supprimer', es: 'Eliminar' },
   kbpAiDraftNotAdopted: {

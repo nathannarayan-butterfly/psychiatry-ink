@@ -20,6 +20,7 @@ export const homepageContentFr: HomepageContent = {
   hero: {
     eyebrow: 'Espace de travail clinique pour la psychiatrie',
     headline: 'Psychiatry.Ink — l\'espace de travail intelligent de la psychiatrie moderne.',
+    heroShotSrc: '/homepage/en/demo-overview.png',
     subtitle:
       'Psychiatry.Ink réunit dans un espace sécurisé la documentation, la discussion de cas, la référence psychopharmacologique, la planification thérapeutique, les outils cliniques et l\'aide au raisonnement clinique assistée par IA. L\'IA accompagne la structuration, la relecture et le raisonnement — la validation par le clinicien reste toujours requise.',
     primaryCta: 'Ouvrir l\'espace de travail',
@@ -304,7 +305,7 @@ export const homepageContentFr: HomepageContent = {
         label: 'Intelligence clinique',
         title: 'Profil dimensionnel & mécanismes',
         description: 'Hypothèses déjà relues, courbes de sévérité et badges de statut · Nikolaos Demo',
-        imageSrc: '/homepage/demo-intelligence.png',
+        imageSrc: '/homepage/en/demo-intelligence.png',
         imageAlt: 'Démo synthétique — intelligence clinique : graphiques dimensionnels et de mécanismes.',
       },
       {
@@ -312,7 +313,7 @@ export const homepageContentFr: HomepageContent = {
         label: 'Base de connaissances',
         title: 'Référence psychopharmacologique',
         description: 'Profil de récepteurs et monographie pour appuyer la prescription',
-        imageSrc: '/homepage/demo-knowledge-base.png',
+        imageSrc: '/homepage/en/demo-knowledge-base.png',
         imageAlt: 'Démo synthétique — détail d\'un médicament avec profil de récepteurs.',
       },
       {
@@ -320,7 +321,7 @@ export const homepageContentFr: HomepageContent = {
         label: 'Discussion de cas',
         title: 'Espace DiscussCase',
         description: 'Discussion d\'équipe en cours, dossier curaté et fil de discussion',
-        imageSrc: '/homepage/demo-discuss.png',
+        imageSrc: '/homepage/en/demo-discuss.png',
         imageAlt: 'Démo synthétique — panneau de discussion de cas en cours, avec messages.',
       },
       {
@@ -328,7 +329,7 @@ export const homepageContentFr: HomepageContent = {
         label: 'Suivi biologique',
         title: 'Courbes biologiques cumulées',
         description: 'Prolactine et marqueurs métaboliques avec repères de changement médicamenteux',
-        imageSrc: '/homepage/demo-labor.png',
+        imageSrc: '/homepage/en/demo-labor.png',
         imageAlt: 'Démo synthétique — courbe de tendance biologique avec valeurs anormales.',
       },
       {
@@ -336,7 +337,7 @@ export const homepageContentFr: HomepageContent = {
         label: 'Interactions médicamenteuses',
         title: 'Associations médicamenteuses',
         description: 'Résultats d\'interactions issus de la base de connaissances et de l\'IA pour la médication active',
-        imageSrc: '/homepage/demo-interaction.png',
+        imageSrc: '/homepage/en/demo-interaction.png',
         imageAlt: 'Démo synthétique — matrice d\'interactions médicamenteuses.',
       },
       {
@@ -344,7 +345,7 @@ export const homepageContentFr: HomepageContent = {
         label: 'ISDM',
         title: 'Documentation systémique',
         description: 'Cartographie phénoménologique et synthèse diagnostique (panneau d\'analyse ISDM)',
-        imageSrc: '/homepage/demo-isdm.png',
+        imageSrc: '/homepage/en/demo-isdm.png',
         imageAlt: 'Démo synthétique — panneau d\'analyse ISDM.',
       },
     ],

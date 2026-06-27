@@ -4,6 +4,7 @@ import {
   getDepotOptions,
   getPharmacokinetics,
   getSectionKind,
+  pickKbLocalizedText,
   type GlanceData,
   type KnowledgeBaseDrug,
 } from '../../../types/knowledgeBase'
@@ -26,22 +27,26 @@ function firstSentence(text: string | undefined): string | null {
   return match?.[1] ?? (clean.length > 180 ? `${clean.slice(0, 177).trim()}...` : clean)
 }
 
-function deriveKeyFacts(drug: KnowledgeBaseDrug) {
+function deriveKeyFacts(drug: KnowledgeBaseDrug, language: string) {
   const explicit =
     drug.sections.find((section) => getSectionKind(section) === 'glance')?.glance ?? ({} as GlanceData)
 
-  let halfLifeSummary: string | null = explicit.halfLifeSummary ?? null
+  let halfLifeSummary: string | null =
+    pickKbLocalizedText(explicit.halfLifeSummary, explicit.halfLifeSummaryEn, language) || null
   let activeMetabolite: string | null = null
   for (const section of drug.sections) {
     if (getSectionKind(section) !== 'pk') continue
     const pk = getPharmacokinetics(section)
+    const localizedNote = pickKbLocalizedText(pk?.halfLifeNote, pk?.halfLifeNoteEn, language) || null
     if (pk?.halfLifeHours != null) {
-      halfLifeSummary = `${pk.halfLifeHours} h${pk.halfLifeNote ? ` · ${pk.halfLifeNote}` : ''}`
-    } else if (pk?.halfLifeNote) {
-      halfLifeSummary = pk.halfLifeNote
+      halfLifeSummary = `${pk.halfLifeHours} h${localizedNote ? ` · ${localizedNote}` : ''}`
+    } else if (localizedNote) {
+      halfLifeSummary = localizedNote
     }
-    if (pk?.halfLifeNote && /metabol/i.test(pk.halfLifeNote)) {
-      activeMetabolite = pk.halfLifeNote
+    // `metabol` matches both the German ("Metabolit") and English ("metabolite")
+    // spellings, so the active-metabolite hint resolves in either locale.
+    if (localizedNote && /metabol/i.test(localizedNote)) {
+      activeMetabolite = localizedNote
     }
   }
 
@@ -70,11 +75,15 @@ function deriveKeyFacts(drug: KnowledgeBaseDrug) {
   const cautionSources = ['qtc', 'kontraindikationen', 'kontrollen', 'besonderheiten'] as const
   const mainCautions =
     cautionSources
-      .map((key) => firstSentence(drug.sections.find((section) => section.key === key)?.content))
+      .map((key) => {
+        const section = drug.sections.find((entry) => entry.key === key)
+        if (!section) return null
+        return firstSentence(pickKbLocalizedText(section.content, section.contentEn, language))
+      })
       .find(Boolean) ?? null
 
   return {
-    drugClass: explicit.drugClass ?? drug.drugClass,
+    drugClass: pickKbLocalizedText(explicit.drugClass ?? drug.drugClass, explicit.drugClassEn ?? drug.drugClassEn, language),
     halfLifeSummary,
     activeMetabolite,
     primaryTargets,
@@ -85,7 +94,7 @@ function deriveKeyFacts(drug: KnowledgeBaseDrug) {
 }
 
 export function KeyFactsTable({ drug, language }: KeyFactsTableProps) {
-  const facts = useMemo(() => deriveKeyFacts(drug), [drug])
+  const facts = useMemo(() => deriveKeyFacts(drug, language), [drug, language])
   const na = kbT(language, 'notSpecified')
   const qtcLabel = facts.qtcRisk
     ? facts.qtcRisk === 'low'

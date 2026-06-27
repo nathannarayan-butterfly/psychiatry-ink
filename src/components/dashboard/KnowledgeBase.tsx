@@ -824,10 +824,10 @@ export function KnowledgeBaseTile() {
     // ── Drug (medications) collection inner view ──
     if (activeCollection && activeCollection.type === 'medications') {
       return (
-        <div className="kb-overlay" role="dialog" aria-modal="true" aria-label={activeCollection.name}>
+        <div className="kb-overlay" role="dialog" aria-modal="true" aria-label={pickKbLocalizedCollectionName(activeCollection, language)}>
           <KnowledgeBasePharma
             collectionId={activeCollection.id}
-            collectionName={activeCollection.name}
+            collectionName={pickKbLocalizedCollectionName(activeCollection, language)}
             onClose={goHome}
             onCloseAll={closeOverlay}
           />

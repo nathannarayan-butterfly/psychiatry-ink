@@ -84,12 +84,26 @@ const ERROR_DE: Record<string, string> = {
   'Invalid tier': 'Ungültiges KI-Modell',
 }
 
-function localizeClinicalApiError(message: string): string {
-  return ERROR_DE[message] ?? message
+function localizeClinicalApiError(message: string, language: UiLanguage): string {
+  // The reason map only translates the known English server messages into
+  // German. For non-German UI we keep the original (already English) message so
+  // an English/FR/ES surface never shows German error text.
+  if (language === 'de') return ERROR_DE[message] ?? message
+  return message
+}
+
+/** Localized "AI request failed" prefix so the toast matches the UI language. */
+const ERROR_PREFIX: Record<UiLanguage, string> = {
+  de: 'KI-Anfrage fehlgeschlagen',
+  en: 'AI request failed',
+  fr: 'Échec de la requête IA',
+  es: 'Error en la solicitud de IA',
 }
 
 export async function parseClinicalApiError(response: Response, fallback: string): Promise<never> {
+  const language = getClinicalApiLanguage()
   const detail = (await response.json().catch(() => null)) as { error?: string } | null
-  const reason = localizeClinicalApiError(detail?.error ?? `${fallback} (${response.status})`)
-  throw new Error(`KI-Anfrage fehlgeschlagen: ${reason}`)
+  const reason = localizeClinicalApiError(detail?.error ?? `${fallback} (${response.status})`, language)
+  const prefix = ERROR_PREFIX[language] ?? ERROR_PREFIX.de
+  throw new Error(`${prefix}: ${reason}`)
 }

@@ -83,6 +83,13 @@ export interface HomepageContent {
     headlineAccent?: string
     /** Optional localized alt text for the framed hero product screenshot. */
     heroShotAlt?: string
+    /**
+     * Locale-specific hero product screenshot. Each language must point at a
+     * single-language capture (English UI → `/homepage/en/…`, German UI →
+     * `/homepage/de/…`) so the hero frame never shows the other language's UI.
+     * Falls back to the legacy shared shot only when omitted.
+     */
+    heroShotSrc?: string
     /** Optional localized caption shown under the hero workspace frame. */
     heroShotCaption?: string
     subtitle: string

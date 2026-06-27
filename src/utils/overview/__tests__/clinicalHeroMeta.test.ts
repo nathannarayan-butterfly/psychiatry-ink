@@ -8,6 +8,7 @@ const t = (key: string) => {
   if (key === 'patientGeschlechtWeiblich') return 'Weiblich'
   if (key === 'patientFieldGeburtsdatum') return 'Geburtsdatum'
   if (key === 'patientAgeLabel') return 'Alter'
+  if (key === 'patientAgeYearsAbbrev') return 'J.'
   if (key === 'patientFieldGeschlecht') return 'Geschlecht'
   if (key === 'patientFieldAufnahmedatum') return 'Aufnahmedatum'
   if (key === 'patientFieldGroesse') return 'Größe'

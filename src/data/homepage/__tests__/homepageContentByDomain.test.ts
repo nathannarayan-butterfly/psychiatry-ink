@@ -11,12 +11,14 @@ import { getHomepageContent } from '../index'
 describe('homepage content resolved by domain', () => {
   it('serves English hero content on psychiatry.ink', () => {
     const content = getHomepageContent(resolveLocaleFromHost('psychiatry.ink'))
+    expect(content.hero.headline).toContain('intelligent workspace')
     expect(content.hero.headline).toContain('whole psychiatric case')
     expect(content.hero.subtitle.startsWith('Structured documentation')).toBe(true)
   })
 
   it('serves German hero content on psychiatrie.ink', () => {
     const content = getHomepageContent(resolveLocaleFromHost('psychiatrie.ink'))
+    expect(content.hero.headline).toContain('intelligenter Arbeitsbereich')
     expect(content.hero.headline).toContain('gesamten psychiatrischen Fall')
     expect(content.hero.subtitle.startsWith('Strukturierte Dokumentation')).toBe(true)
   })
@@ -35,13 +37,28 @@ describe('homepage content resolved by domain', () => {
     const de = getHomepageContent(resolveLocaleFromHost('psychiatrie.ink'))
     expect(en.hero.headline).not.toBe(de.hero.headline)
   })
+
+  it('keeps the "intelligent workspace" framing with a resolvable ink-underline accent', () => {
+    const en = getHomepageContent('en')
+    const de = getHomepageContent('de')
+    // Tagline restored in both locales.
+    expect(en.hero.headline).toContain('intelligent workspace')
+    expect(de.hero.headline).toContain('intelligenter Arbeitsbereich')
+    // The ink-underline only renders when the accent is a verbatim substring.
+    expect(en.hero.headlineAccent).toBeTruthy()
+    expect(de.hero.headlineAccent).toBeTruthy()
+    expect(en.hero.headline).toContain(en.hero.headlineAccent as string)
+    expect(de.hero.headline).toContain(de.hero.headlineAccent as string)
+  })
 })
 
 describe('German marketing copy is grammatically correct German', () => {
   const de = getHomepageContent('de')
 
   it('uses grammatically correct German hero copy', () => {
-    expect(de.hero.headline).toContain('Ein Arbeitsbereich für den gesamten psychiatrischen Fall')
+    expect(de.hero.headline).toContain(
+      'Ein intelligenter Arbeitsbereich für den gesamten psychiatrischen Fall',
+    )
     // The English-leftover / wrong-agreement forms must never appear.
     expect(de.hero.headline).not.toContain('ein intelligente ')
     expect(de.hero.headline).not.toMatch(/\bInk is\b/)

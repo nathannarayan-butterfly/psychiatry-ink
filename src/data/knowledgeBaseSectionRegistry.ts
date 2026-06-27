@@ -64,6 +64,64 @@ export const CANONICAL_KB_SECTIONS: CanonicalKbSection[] = [
   { id: 'quellen', sectionKey: 'quellen', title: 'Quellen / Evidenz', order: 13, group: 'referenz' },
 ]
 
+/**
+ * Localized canonical section / subsection titles, keyed by the German source
+ * title in {@link CANONICAL_KB_SECTIONS}. German stays the source of truth; the
+ * reading view resolves the UI-language variant so an English (or FR/ES) user
+ * never sees a German section heading in the otherwise-localized monograph.
+ */
+const CANONICAL_KB_SECTION_TITLE_I18N: Record<string, { en: string; fr: string; es: string }> = {
+  Kurzprofil: { en: 'Brief profile', fr: 'Profil résumé', es: 'Perfil resumido' },
+  Rezeptorprofil: { en: 'Receptor profile', fr: 'Profil récepteur', es: 'Perfil de receptores' },
+  Wirkmechanismus: { en: 'Mechanism of action', fr: "Mécanisme d'action", es: 'Mecanismo de acción' },
+  Pharmakokinetik: { en: 'Pharmacokinetics', fr: 'Pharmacocinétique', es: 'Farmacocinética' },
+  Indikationen: { en: 'Indications', fr: 'Indications', es: 'Indicaciones' },
+  'Dosierung und Titration': {
+    en: 'Dosing and titration',
+    fr: 'Posologie et titration',
+    es: 'Dosificación y titulación',
+  },
+  'Umstellung, Depot und LAI': {
+    en: 'Switching, depot and LAI',
+    fr: 'Relais, retard et LAI',
+    es: 'Cambio, depot y LAI',
+  },
+  Nebenwirkungen: { en: 'Adverse effects', fr: 'Effets indésirables', es: 'Efectos adversos' },
+  Interaktionen: { en: 'Interactions', fr: 'Interactions', es: 'Interacciones' },
+  'QTc / EKG': { en: 'QTc / ECG', fr: 'QTc / ECG', es: 'QTc / ECG' },
+  Monitoring: { en: 'Monitoring', fr: 'Surveillance', es: 'Monitorización' },
+  'Klinische Hinweise': { en: 'Clinical notes', fr: 'Notes cliniques', es: 'Notas clínicas' },
+  'Quellen / Evidenz': { en: 'Sources / evidence', fr: 'Sources / preuves', es: 'Fuentes / evidencia' },
+  // Subsections of "Klinische Hinweise"
+  Besonderheiten: { en: 'Special considerations', fr: 'Particularités', es: 'Particularidades' },
+  Merksätze: { en: 'Key takeaways', fr: 'À retenir', es: 'Puntos clave' },
+  'Schwangerschaft und Stillzeit': {
+    en: 'Pregnancy and lactation',
+    fr: 'Grossesse et allaitement',
+    es: 'Embarazo y lactancia',
+  },
+  'Niere / Leber': { en: 'Renal / hepatic', fr: 'Rein / foie', es: 'Renal / hepático' },
+  Kontraindikationen: { en: 'Contraindications', fr: 'Contre-indications', es: 'Contraindicaciones' },
+  'Überdosierung / Toxizität': {
+    en: 'Overdose / toxicity',
+    fr: 'Surdosage / toxicité',
+    es: 'Sobredosis / toxicidad',
+  },
+  Absetzen: { en: 'Discontinuation', fr: 'Arrêt', es: 'Retirada' },
+}
+
+/**
+ * Resolve a canonical section/subsection title for the active UI language. The
+ * German `title` from the registry is the fallback (and the source key), so any
+ * unmapped title degrades gracefully to German rather than breaking.
+ */
+export function localizedCanonicalKbTitle(germanTitle: string, language: string | undefined | null): string {
+  if (language === 'en' || language === 'fr' || language === 'es') {
+    return CANONICAL_KB_SECTION_TITLE_I18N[germanTitle]?.[language] ?? germanTitle
+  }
+  return germanTitle
+}
+
 export function canonicalSectionNumber(
   section: Pick<CanonicalKbSection, 'order'>,
   chapterPrefix = KB_PSYCHOPHARMA_CHAPTER_PREFIX,

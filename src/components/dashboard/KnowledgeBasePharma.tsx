@@ -69,6 +69,7 @@ import {
   CLINICAL_HINT_SECTION_KEYS,
   KB_CANONICAL_PLACEHOLDER,
   canonicalSectionNumber,
+  localizedCanonicalKbTitle,
   sectionByKey,
   visibleCanonicalSections,
   type CanonicalKbSection,
@@ -1902,7 +1903,7 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
   const navItems: KbNavItem[] = [
     ...canonicalSections.map((section) => ({
       id: canonicalAnchorId(section),
-      label: section.title,
+      label: localizedCanonicalKbTitle(section.title, language),
       number: canonicalSectionNumber(section),
       group: section.group,
     })),
@@ -2312,7 +2313,7 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
                 />
               ) : null}
               <div className="kbp-drug-header__identity">
-                <h2 className="kbp-drug-header__name">{activeDrug.genericName}</h2>
+                <h2 className="kbp-drug-header__name">{pickKbLocalizedText(activeDrug.genericName, activeDrug.genericNameEn, language) || activeDrug.genericName}</h2>
                 {activeDrug.brandNames.length > 0 && (
                   <span className="kbp-drug-header__brands">{activeDrug.brandNames.join(', ')}</span>
                 )}
@@ -2322,7 +2323,7 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
               <span className="kbp-drug-header__classification">
                 {getPsychClassLabel(activeDrug.psychClass, language)}
               </span>
-              {activeDrug.drugClass && <span className="kbp-drug-header__class">{activeDrug.drugClass}</span>}
+              {activeDrug.drugClass && <span className="kbp-drug-header__class">{pickKbLocalizedText(activeDrug.drugClass, activeDrug.drugClassEn, language) || activeDrug.drugClass}</span>}
               {activeDrug.atcCode && <span className="kbp-drug-header__atc">ATC: {activeDrug.atcCode}</span>}
               {activeDrug.nbn && <span className="kbp-drug-header__nbn">NbN: {activeDrug.nbn}</span>}
               {isDraftDirty ? <span className="kbp-draft-badge">{t('kbDraftBadge')}</span> : null}
@@ -2357,13 +2358,13 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
             <p className="kbp-drug-header__updated">
               {t('kbPharmaLastUpdated')}: {formatSiteLocaleDate(activeDrug.updatedAt, language as 'de' | 'en' | 'fr' | 'es')}
             </p>
-            <div className="kbp-drug-header__audit" aria-label="Profil-Metadaten">
-              <span>{formatAuditLine('Created by', activeDrug.createdByDisplayName, activeDrug.createdAt, language)}</span>
-              <span>{formatAuditLine('Last modified by', activeDrug.lastModifiedByDisplayName, activeDrug.lastModifiedAt ?? activeDrug.updatedAt, language)}</span>
+            <div className="kbp-drug-header__audit" aria-label={translateSettingsWorkspaceUi(language as UiLanguage, 'kbpAuditMetadataLabel')}>
+              <span>{formatAuditLine(translateSettingsWorkspaceUi(language as UiLanguage, 'kbpAuditCreatedBy'), activeDrug.createdByDisplayName, activeDrug.createdAt, language)}</span>
+              <span>{formatAuditLine(translateSettingsWorkspaceUi(language as UiLanguage, 'kbpAuditModifiedBy'), activeDrug.lastModifiedByDisplayName, activeDrug.lastModifiedAt ?? activeDrug.updatedAt, language)}</span>
               {activeDrug.lastReviewedAt ? (
-                <span>{formatAuditLine('Last reviewed by', activeDrug.lastReviewedByDisplayName ?? activeDrug.lastReviewedByUserId, activeDrug.lastReviewedAt, language)}</span>
+                <span>{formatAuditLine(translateSettingsWorkspaceUi(language as UiLanguage, 'kbpAuditReviewedBy'), activeDrug.lastReviewedByDisplayName ?? activeDrug.lastReviewedByUserId, activeDrug.lastReviewedAt, language)}</span>
               ) : null}
-              <span>Verification: {activeDrug.verificationStatus ?? 'draft'}</span>
+              <span>{translateSettingsWorkspaceUi(language as UiLanguage, 'kbpAuditVerification')}: {activeDrug.verificationStatus ?? 'draft'}</span>
               {isNormalizedKbDrug(activeDrug) ? (
                 <span
                   className="kbp-community-editable-badge"
@@ -2519,7 +2520,7 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
                     >
                       <span className="kbp-section__title-wrap">
                         <span className="kbp-section__label">
-                          <span className="kbp-section__title">{canonicalSection.title}</span>
+                          <span className="kbp-section__title">{localizedCanonicalKbTitle(canonicalSection.title, language)}</span>
                         </span>
                       </span>
                     </div>
@@ -2538,7 +2539,7 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
                               isLast={false}
                               isCollapsed={collapsedSections.has(section!.id)}
                               mode={mode}
-                              displayTitle={subsection.title}
+                              displayTitle={localizedCanonicalKbTitle(subsection.title, language)}
                               isSubsection
                               emptyText={KB_CANONICAL_PLACEHOLDER}
                               onActivate={() => setActiveSectionId(section!.id)}
@@ -2582,7 +2583,7 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
                   <CanonicalPlaceholderSection
                     key={canonicalSection.id}
                     id={anchorId}
-                    title={canonicalSection.title}
+                    title={localizedCanonicalKbTitle(canonicalSection.title, language)}
                     isActive={activeSectionId === anchorId}
                     onActivate={() => setActiveSectionId(anchorId)}
                   />
@@ -2600,7 +2601,7 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
                   isCollapsed={collapsedSections.has(section.id)}
                   mode={mode}
                   isActive={activeSectionId === section.id}
-                  displayTitle={canonicalSection.title}
+                  displayTitle={localizedCanonicalKbTitle(canonicalSection.title, language)}
                   domId={kbSectionDomId(anchorId)}
                   emptyText={KB_CANONICAL_PLACEHOLDER}
                   onActivate={() => setActiveSectionId(section.id)}

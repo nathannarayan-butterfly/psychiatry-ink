@@ -29,22 +29,23 @@ export interface ClinicalHeroMeta {
   isAssigned: boolean
 }
 
-function formatAgeYears(age: number): string {
-  return `${age} J.`
+function formatAgeYears(age: number, t: TranslateFn): string {
+  return `${age} ${t('patientAgeYearsAbbrev')}`
 }
 
 function resolveAgeLabel(
   geburtsdatum: string | undefined,
   storedAge: string | undefined,
+  t: TranslateFn,
 ): string | null {
   const calculated = calculateAgeFromIsoDate(geburtsdatum)
-  if (calculated !== null) return formatAgeYears(calculated)
+  if (calculated !== null) return formatAgeYears(calculated, t)
 
   const trimmed = storedAge?.trim()
   if (!trimmed) return null
   const numeric = trimmed.replace(/[^\d]/g, '')
   if (!numeric) return null
-  return formatAgeYears(Number(numeric))
+  return formatAgeYears(Number(numeric), t)
 }
 
 function resolveSexLabel(
@@ -92,7 +93,7 @@ export function buildClinicalHeroMeta(caseId: string, t: TranslateFn): ClinicalH
 
   const demographics: ClinicalHeroDemographics = {
     dob: formatDateDe(meta?.localGeburtsdatum?.trim()),
-    age: resolveAgeLabel(meta?.localGeburtsdatum, meta?.localAge),
+    age: resolveAgeLabel(meta?.localGeburtsdatum, meta?.localAge, t),
     sex: resolveSexLabel(meta?.localGeschlecht, t),
     admission: formatDateDe(loadNotionPageDate('aufnahme', caseId)),
     height: null,

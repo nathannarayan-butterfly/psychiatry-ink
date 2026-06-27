@@ -20,6 +20,7 @@ export const homepageContentEs: HomepageContent = {
   hero: {
     eyebrow: 'Espacio de trabajo clínico para psiquiatría',
     headline: 'Psychiatry.Ink — el espacio de trabajo inteligente para la psiquiatría moderna.',
+    heroShotSrc: '/homepage/en/demo-overview.png',
     subtitle:
       'Psychiatry.Ink reúne en un espacio seguro la documentación, la sesión clínica, la referencia psicofarmacológica, la planificación terapéutica, las herramientas clínicas y el apoyo al razonamiento clínico asistido por IA. La IA acompaña la estructuración, la revisión y el razonamiento — la validación del clínico siempre es necesaria.',
     primaryCta: 'Abrir el espacio de trabajo',
@@ -304,7 +305,7 @@ export const homepageContentEs: HomepageContent = {
         label: 'Inteligencia clínica',
         title: 'Perfil dimensional y mecanismos',
         description: 'Hipótesis ya revisadas con gráficos de gravedad e indicadores de estado · Nikolaos Demo',
-        imageSrc: '/homepage/demo-intelligence.png',
+        imageSrc: '/homepage/en/demo-intelligence.png',
         imageAlt: 'Demo sintética — gráficos dimensionales y de mecanismos de inteligencia clínica.',
       },
       {
@@ -312,7 +313,7 @@ export const homepageContentEs: HomepageContent = {
         label: 'Base de conocimiento',
         title: 'Referencia psicofarmacológica',
         description: 'Perfil de receptores y monografía como apoyo a la prescripción',
-        imageSrc: '/homepage/demo-knowledge-base.png',
+        imageSrc: '/homepage/en/demo-knowledge-base.png',
         imageAlt: 'Demo sintética — detalle de un fármaco con perfil de receptores.',
       },
       {
@@ -320,7 +321,7 @@ export const homepageContentEs: HomepageContent = {
         label: 'Sesión clínica',
         title: 'Espacio DiscussCase',
         description: 'Sesión de equipo en curso con paquete de caso curado e hilo de chat',
-        imageSrc: '/homepage/demo-discuss.png',
+        imageSrc: '/homepage/en/demo-discuss.png',
         imageAlt: 'Demo sintética — panel de sesión clínica activa con mensajes.',
       },
       {
@@ -328,7 +329,7 @@ export const homepageContentEs: HomepageContent = {
         label: 'Monitorización de laboratorio',
         title: 'Tendencias de laboratorio acumuladas',
         description: 'Prolactina y marcadores metabólicos con marcas de cambio de medicación',
-        imageSrc: '/homepage/demo-labor.png',
+        imageSrc: '/homepage/en/demo-labor.png',
         imageAlt: 'Demo sintética — gráfico de tendencia de laboratorio con valores anómalos marcados.',
       },
       {
@@ -336,7 +337,7 @@ export const homepageContentEs: HomepageContent = {
         label: 'Comprobación de interacciones',
         title: 'Combinaciones de medicación',
         description: 'Hallazgos de interacciones revisados por la base de conocimiento y la IA para la medicación activa',
-        imageSrc: '/homepage/demo-interaction.png',
+        imageSrc: '/homepage/en/demo-interaction.png',
         imageAlt: 'Demo sintética — matriz de interacciones medicamentosas.',
       },
       {
@@ -344,7 +345,7 @@ export const homepageContentEs: HomepageContent = {
         label: 'ISDM',
         title: 'Documentación sistémica',
         description: 'Cartografía fenomenológica y síntesis diagnóstica (panel de análisis ISDM)',
-        imageSrc: '/homepage/demo-isdm.png',
+        imageSrc: '/homepage/en/demo-isdm.png',
         imageAlt: 'Demo sintética — panel de análisis de documentación ISDM.',
       },
     ],

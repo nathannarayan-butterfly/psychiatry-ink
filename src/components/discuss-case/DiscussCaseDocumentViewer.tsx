@@ -3,15 +3,36 @@ import type {
   DiscussCaseAnnotation,
   DiscussCaseParticipant,
   DiscussPackageContent,
+  DiscussPackageSection,
   DiscussQuoteExcerpt,
 } from '../../types/discussCase'
+import { DISCUSS_PACKAGE_SECTION_LABELS } from '../../types/discussCase'
 import { buildHighlightSegments } from '../../utils/discussCase/buildHighlightSegments'
 import { getParticipantColor } from '../../utils/discussCase/participantColors'
 import {
   discussChromeT,
   discussRoleLabel,
+  discussSectionLabel,
   type DiscussChromeLocale,
 } from '../../utils/discussCase/chromeI18n'
+
+/**
+ * Resolve the display label for a package section in the active locale.
+ *
+ * Package content is built (and encrypted) with the German canonical labels
+ * baked in, so a reader on an English UI would otherwise see German section
+ * titles. When the stored label still matches the German canonical label for
+ * its key, we swap in the localized canonical title; document-derived sections
+ * (e.g. an anamnesis whose label is the actual clinical page heading) keep their
+ * stored label since that is real patient content, not chrome.
+ */
+function localizedSectionLabel(section: DiscussPackageSection, locale: DiscussChromeLocale): string {
+  const canonicalDe = DISCUSS_PACKAGE_SECTION_LABELS[section.key]
+  if (canonicalDe && section.label === canonicalDe) {
+    return discussSectionLabel(locale, section.key)
+  }
+  return section.label
+}
 import {
   SelectionActionBubble,
   selectionBubblePosition,
@@ -269,14 +290,16 @@ export function DiscussCaseDocumentViewer({
             onClick={() => selectSection(section.id)}
             aria-current={section.id === currentSection?.id ? 'page' : undefined}
           >
-            {section.label}
+            {localizedSectionLabel(section, locale)}
           </button>
         ))}
       </nav>
 
       <article className="discuss-case-doc__content">
         <header className="discuss-case-doc__header">
-          <h2 className="discuss-case-doc__heading">{currentSection?.label}</h2>
+          <h2 className="discuss-case-doc__heading">
+            {currentSection ? localizedSectionLabel(currentSection, locale) : null}
+          </h2>
           <span className="discuss-case-doc__meta">{packageContent.patientLabel}</span>
         </header>
 
