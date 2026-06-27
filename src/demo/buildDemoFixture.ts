@@ -186,6 +186,7 @@ export function buildDemoPatientFixture(locale: DemoLocale = 'de'): DemoPatientF
   const admissionDate = content.admissionDate
   const aufnahmeSections = content.buildAufnahmeSections()
   const verlaufFeed = content.buildVerlaufFeed()
+  const verlaufAnnotations = content.buildVerlaufAnnotations(verlaufFeed)
   const { labGraphs, activeLabGraphId } = buildLabGraphs(content, NOW)
   const laborBefunde = buildLaborBefunde(content)
   const diagnoses = content.buildDiagnoses(NOW)
@@ -247,6 +248,7 @@ export function buildDemoPatientFixture(locale: DemoLocale = 'de'): DemoPatientF
       activeVariantIds: { psychopath: 'free' },
     },
     verlaufFeed,
+    verlaufAnnotations,
     laborBefunde,
     befundRecords: [
       {

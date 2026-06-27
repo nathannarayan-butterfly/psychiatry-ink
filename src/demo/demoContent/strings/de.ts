@@ -159,6 +159,73 @@ export const demoStringsDe: DemoStrings = {
     },
   ],
 
+  verlaufAnnotations: [
+    {
+      entryIndex: 0,
+      anchorText: 'CIWA-Ar-Baseline 14',
+      type: 'comment',
+      comment: 'Oberarzt: strukturiertes Entzugsmonitoring erste 72 h; Pflege dokumentiert CIWA-Ar q4h.',
+      visibility: 'team',
+    },
+    {
+      entryIndex: 1,
+      anchorText: 'CIWA-Ar 18',
+      type: 'todo',
+      todoText: 'CIWA-Ar um 18:00 wiederholen und bei Score ≥15 ärztlich informieren',
+      priority: 'high',
+      dueDate: '2026-06-02',
+    },
+    {
+      entryIndex: 5,
+      anchorText: 'Risperidon auf 3 mg',
+      type: 'comment',
+      comment: 'Prolaktin- und EPS-Risiko mit Patient besprochen — partielle Einsicht.',
+    },
+    {
+      entryIndex: 6,
+      anchorText: 'Prolaktin unter Risperidon',
+      type: 'highlight',
+    },
+    {
+      entryIndex: 10,
+      anchorText: 'Umstellung auf Aripiprazol',
+      type: 'todo',
+      todoText: 'Suchtberatung vor Entlassung anbinden',
+      priority: 'normal',
+      dueDate: '2026-06-16',
+    },
+    {
+      entryIndex: 11,
+      anchorText: 'Sporttherapie',
+      type: 'comment',
+      comment: 'Ergotherapie: gute Mitarbeit; ambulante Fortführung erwägen.',
+      visibility: 'team',
+    },
+    {
+      entryIndex: 14,
+      anchorText: 'AIMS-Check',
+      type: 'todo',
+      todoText: 'AIMS bei 2-Wochen-Nachsorge wiederholen',
+      priority: 'normal',
+      dueDate: '2026-06-26',
+    },
+    {
+      entryIndex: 17,
+      anchorText: 'Entlassungsplanung',
+      type: 'comment',
+      comment: 'Bruder als Schutzfaktor; Wohnungsschreiben Sozialdienst ausstehend.',
+    },
+    {
+      entryIndex: 9,
+      anchorText: 'Sozialdienst',
+      type: 'todo',
+      todoText: 'Ratenzahlung Mietrückstand mit Sozialdienst bestätigen',
+      priority: 'high',
+      dueDate: '2026-06-12',
+      done: true,
+    },
+  ],
+
   labGraphNotes: {
     prolactin0: 'Erhöht unter Risperidon',
     prolactin1: 'Normalisiert nach Umstellung',

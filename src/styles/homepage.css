@@ -29,12 +29,13 @@
   --hp-grid-gap: 1rem;
   --hp-section-py: clamp(2.5rem, 5vw, 4rem);
   --hp-lead-max: 42rem;
-  /* Demo screenshot frames — white-card workspace aesthetic (matches in-app UI) */
+  /* Demo screenshot frames — clinical blue workspace accent (matches in-app lab/diagnostic hue) */
+  --hp-demo-clinical-blue: color-mix(in srgb, var(--accent) var(--area-mix, 22%), #3f78c6);
   --hp-demo-frame-border: var(--border-soft);
   --hp-demo-frame-bg: var(--editor-paper-bg, #fafaf8);
   --hp-demo-frame-surface: #fff;
-  --hp-demo-frame-ring: color-mix(in srgb, var(--border-soft) 50%, transparent);
-  --hp-demo-frame-strip: color-mix(in srgb, var(--border-strong) 45%, transparent);
+  --hp-demo-frame-ring: color-mix(in srgb, var(--hp-demo-clinical-blue) 35%, transparent);
+  --hp-demo-frame-strip: color-mix(in srgb, var(--hp-demo-clinical-blue) 55%, var(--border-strong));
 }
 
 /* —— Document scroll (public pages outside .app-shell) —— */
@@ -963,7 +964,7 @@ body:has(.auth-page) {
   font-weight: 500;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: color-mix(in srgb, var(--hp-demo-clinical-blue) 72%, var(--text-muted));
   margin-bottom: 0.5rem;
 }
 

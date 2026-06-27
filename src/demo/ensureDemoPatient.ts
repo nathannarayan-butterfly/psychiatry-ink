@@ -54,11 +54,7 @@ export function restoreDemoPatient(userId: string): void {
 export async function ensureDemoPatientExists(
   options: SeedDemoPatientOptions,
 ): Promise<{ seeded: boolean; skippedReason?: string }> {
-  // Synthetic demo case is authored in German only — skip auto-install for non-DE UI locales.
   const targetLocale = options.locale ?? uiLanguageToDemoLocale(loadStoredUiLanguage())
-  if (targetLocale !== 'de') {
-    return { seeded: false, skippedReason: 'locale_not_de' }
-  }
 
   await fetchAndApplyCanonicalDemoFixture()
 

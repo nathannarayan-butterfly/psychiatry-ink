@@ -3,8 +3,8 @@
  * Dev-only: regenerate demo fixture via DeepSeek (when API key present) or rebuild locally.
  *
  * Usage:
- *   npm run demo:fixture:write          # local builder only
- *   npm run demo:fixture:regen          # DeepSeek if DEEPSEEK_API_KEY set, else local
+ *   npm run demo:fixture:write -- --locale en   # local builder only
+ *   npm run demo:fixture:regen -- --write --locale en
  */
 
 import { writeFileSync, readFileSync, existsSync } from 'node:fs'
@@ -12,32 +12,45 @@ import { resolve } from 'node:path'
 import '../server/loadEnv.ts'
 import { buildDemoPatientFixture } from '../src/demo/buildDemoFixture.ts'
 import { validateDemoFixture } from '../src/demo/validateDemoFixture.ts'
+import type { DemoLocale } from '../src/demo/demoLocale.ts'
 import type { DemoPatientFixture } from '../src/demo/types.ts'
+import { DEMO_SEED_VERSION } from '../src/demo/constants.ts'
 
 const outPath = resolve(process.cwd(), 'src/demo/demoPatient.fixture.json')
 
-async function tryDeepSeekRegen(): Promise<DemoPatientFixture | null> {
+function parseLocale(): DemoLocale {
+  const idx = process.argv.indexOf('--locale')
+  const value = idx >= 0 ? process.argv[idx + 1] : 'en'
+  return value === 'de' ? 'de' : 'en'
+}
+
+async function tryDeepSeekRegen(locale: DemoLocale): Promise<DemoPatientFixture | null> {
   const apiKey = process.env.DEEPSEEK_API_KEY?.trim()
   if (!apiKey) {
     console.warn('[demo-regen] DEEPSEEK_API_KEY not set — using local builder')
     return null
   }
 
-  const prompt = `Return ONLY valid JSON matching DemoPatientFixture for a synthetic German psychiatry demo patient.
-Markers: isDemoPatient true, demoSeedVersion "v3", demoPatientId "DEMO-0001", demoCaseId "DEMO-CASE-0001".
-Patient: Nikolaos Demo, male, DOB 22.03.1985, admission 02.06.2026. Fictional only — no real PHI.
-Include workspace.isdmInput, isdmAnalysis, butterflyAttestations, clinicalQuestionNotes, anforderungen.
-Use clinically realistic German text with diagnostic uncertainty (F20.0, F10.2).`
+  const language = locale === 'de' ? 'German' : 'English'
+  const prompt = `Return ONLY valid JSON matching DemoPatientFixture for a synthetic ${language} psychiatry demo patient.
+Markers: isDemoPatient true, demoSeedVersion "${DEMO_SEED_VERSION}", demoPatientId "DEMO-0001", demoCaseId "DEMO-CASE-0001".
+Patient: Nikolaos Demo, male, DOB 1985-03-22, admission 2026-06-02. Fictional only — no real PHI.
+Diagnoses must include F20.0 (paranoid schizophrenia) and F10.2 (alcohol dependence) plus F17.2 (nicotine).
+Include at least 18 verlaufFeed entries, verlaufAnnotations with comments and todos, workspace.isdmInput, isdmAnalysis, butterflyAttestations, clinicalQuestionNotes, anforderungen, full medicationPlanState, aiTherapyDemo, clinicalIntelligence.
+All clinical text in ${language}. Use clinically realistic wording with diagnostic uncertainty.`
+
+  const model = process.env.DEEPSEEK_FAST_MODEL?.trim() || 'deepseek-chat'
+  const baseUrl = process.env.DEEPSEEK_BASE_URL?.replace(/\/$/, '') ?? 'https://api.deepseek.com/v1'
 
   try {
-    const response = await fetch('https://api.deepseek.com/chat/completions', {
+    const response = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'deepseek-chat',
+        model,
         messages: [
           { role: 'system', content: 'You output strict JSON only, no markdown.' },
           { role: 'user', content: prompt },
@@ -57,7 +70,7 @@ Use clinically realistic German text with diagnostic uncertainty (F20.0, F10.2).
       return null
     }
     const parsed = JSON.parse(content) as DemoPatientFixture
-    const probe = validateDemoFixture(parsed, { expectedSeedVersion: parsed.demoSeedVersion ?? 'v3' })
+    const probe = validateDemoFixture(parsed, { expectedSeedVersion: parsed.demoSeedVersion ?? DEMO_SEED_VERSION })
     if (!probe.ok) {
       console.warn(
         `[demo-regen] DeepSeek fixture failed validation (${probe.errors.length} errors) — using local builder`,
@@ -84,10 +97,12 @@ function previewDiff(before: string, after: string): void {
 
 async function main(): Promise<void> {
   const writeFlag = process.argv.includes('--write')
-  const aiFixture = await tryDeepSeekRegen()
-  const fixture = aiFixture ?? buildDemoPatientFixture('de')
+  const locale = parseLocale()
+  const aiFixture = await tryDeepSeekRegen(locale)
+  const fixture = aiFixture ?? buildDemoPatientFixture(locale)
   const validation = validateDemoFixture(fixture)
 
+  console.log(`Locale: ${locale}`)
   console.log(`Source: ${aiFixture ? 'DeepSeek' : 'local builder'}`)
   console.log(`Validation: ${validation.ok ? 'OK' : 'FAILED'} (${validation.errors.length} errors, ${validation.warnings.length} warnings)`)
 

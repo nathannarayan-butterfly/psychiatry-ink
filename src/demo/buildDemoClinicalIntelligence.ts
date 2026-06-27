@@ -31,7 +31,7 @@ function buildLatestRun(): ClinicalIntelligenceRunResponse {
       dimensionName: dimName('aberrant-salience-psychotic-meaning'),
       severity: 3,
       confidence: 'high',
-      longitudinalPattern: 'Escalated over 2 weeks with sleep loss and stimulant use; partial response after antipsychotic switch.',
+      longitudinalPattern: 'Escalated over 2 weeks with sleep loss and daily alcohol use; partial response after antipsychotic switch.',
       supportingEvidenceIds: ['aufnahme', 'therapie-verlauf', 'diagnosis'],
       contradictingEvidenceIds: [],
       clinicalSummary:
@@ -60,7 +60,7 @@ function buildLatestRun(): ClinicalIntelligenceRunResponse {
       dimensionName: dimName('substance-addictive-contribution'),
       severity: 3,
       confidence: 'moderate',
-      longitudinalPattern: 'Daily cannabis and episodic amphetamine use in weeks before admission.',
+      longitudinalPattern: 'Daily alcohol (~0.5–1 L wine) until admission; abstinence since day of admission.',
       supportingEvidenceIds: ['aufnahme', 'medication'],
       contradictingEvidenceIds: [],
       clinicalSummary: 'Active substance use likely lowered threshold for psychotic relapse; abstinence is a treatment target.',

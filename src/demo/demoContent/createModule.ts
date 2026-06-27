@@ -33,10 +33,11 @@ import { buildCorrelationKey } from '../../utils/labMedicationCorrelation/correl
 import type { DiagnoseEntry } from '../../utils/diagnosenArchive'
 import type { DokumentEntry } from '../../utils/dokumenteArchive'
 import type { LaborCategory, LaborValue } from '../../utils/laborArchive'
-import type { VerlaufFeedEntry } from '../../utils/verlaufFeed'
+import type { VerlaufFeedEntry, VerlaufAnnotation } from '../../utils/verlaufFeed'
 import { DEMO_CASE_ID, DEMO_PATIENT_ID } from '../constants'
 import type { DemoLocale } from '../demoLocale'
 import type { DemoModulePlaceholders, DemoPatientFixture } from '../types'
+import type { DemoVerlaufAnnotationSpec } from './types'
 import {
   DEMO_ADMISSION_DATE,
   type DemoContentModule,
@@ -371,15 +372,47 @@ export function createDemoContentModule(locale: DemoLocale, strings: DemoStrings
   }
 
   function buildVerlaufFeed(): VerlaufFeedEntry[] {
+    const somaticLabel = locale === 'de' ? 'Somatischer Befund' : 'Somatic examination'
     return strings.verlaufFeed.map((entry, index) => ({
       id: `demo-verlauf-${String(index + 1).padStart(2, '0')}`,
       date: entry.date,
       content: entry.content,
       pageType: entry.pageType ?? ('verlauf' as const),
-      sectionLabel: entry.pageType === 'somatic-befund' ? 'Somatischer Befund' : strings.verlaufSectionLabel,
+      sectionLabel: entry.pageType === 'somatic-befund' ? somaticLabel : strings.verlaufSectionLabel,
       source: 'manual' as const,
       somaticBefund: entry.somaticBefund,
     }))
+  }
+
+  function buildVerlaufAnnotations(feed: VerlaufFeedEntry[]): VerlaufAnnotation[] {
+    const specs: DemoVerlaufAnnotationSpec[] = strings.verlaufAnnotations ?? []
+    const now = new Date().toISOString()
+    const annotations: VerlaufAnnotation[] = []
+
+    specs.forEach((spec, index) => {
+      const entry = feed[spec.entryIndex]
+      if (!entry) return
+      const startOffset = entry.content.indexOf(spec.anchorText)
+      if (startOffset < 0) return
+      const endOffset = startOffset + spec.anchorText.length
+      annotations.push({
+        id: `demo-verlauf-ann-${String(index + 1).padStart(2, '0')}`,
+        entryId: entry.id,
+        startOffset,
+        endOffset,
+        type: spec.type,
+        rangeText: spec.anchorText,
+        comment: spec.comment,
+        todoText: spec.todoText,
+        priority: spec.priority,
+        dueDate: spec.dueDate ?? null,
+        done: spec.done ?? false,
+        visibility: spec.visibility,
+        createdAt: now,
+      })
+    })
+
+    return annotations
   }
 
   function labGraphNote(parameter: string, drawIndex: number): string {
@@ -1366,6 +1399,7 @@ export function createDemoContentModule(locale: DemoLocale, strings: DemoStrings
     buildAufnahmeSections,
     buildVerlaufFeedInputs,
     buildVerlaufFeed,
+    buildVerlaufAnnotations,
     labGraphNote,
     laborBefundLabel,
     laborBefundHeader,

@@ -1,5 +1,6 @@
 import type { SomaticBefundPayload } from '../../types/somaticBefund'
-import type { VerlaufFeedEntry } from '../../utils/verlaufFeed'
+import type { VerlaufFeedEntry, VerlaufAnnotation, VerlaufCommentVisibility } from '../../utils/verlaufFeed'
+import type { TodoPriority } from '../../types/todo'
 import type { LaborCategory } from '../../utils/laborArchive'
 import type { DiagnoseEntry } from '../../utils/diagnosenArchive'
 import type { MedicationPlanState } from '../../types/medicationPlan'
@@ -36,6 +37,20 @@ export interface DemoVerlaufFeedInput {
   content: string
   pageType?: string
   somaticBefund?: SomaticBefundPayload
+}
+
+export interface DemoVerlaufAnnotationSpec {
+  /** 0-based index into `verlaufFeed` */
+  entryIndex: number
+  /** Substring that must exist in the entry content */
+  anchorText: string
+  type: 'comment' | 'todo' | 'highlight'
+  comment?: string
+  todoText?: string
+  priority?: TodoPriority
+  dueDate?: string
+  done?: boolean
+  visibility?: VerlaufCommentVisibility
 }
 
 export interface DemoTimelineEntryInput {
@@ -297,6 +312,7 @@ export interface DemoStrings {
   verlaufSectionLabel: string
   aufnahme: Record<string, string>
   verlaufFeed: DemoVerlaufFeedInput[]
+  verlaufAnnotations: DemoVerlaufAnnotationSpec[]
   labGraphNotes: DemoLabGraphNotes
   laborBefundLabels: DemoLaborBefundLabels
   laborBefundHeaderPrefix: string
@@ -338,6 +354,7 @@ export interface DemoContentModule {
   buildAufnahmeSections(): Record<string, string>
   buildVerlaufFeedInputs(): DemoVerlaufFeedInput[]
   buildVerlaufFeed(): VerlaufFeedEntry[]
+  buildVerlaufAnnotations(feed: VerlaufFeedEntry[]): VerlaufAnnotation[]
   labGraphNote(parameter: string, drawIndex: number): string
   laborBefundLabel(kind: 'admission' | 'followup' | 'anthro' | 'glucose'): string
   laborBefundHeader(date: string, label: string): string

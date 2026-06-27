@@ -7,7 +7,7 @@ import { saveEncryptedWorkspace } from '../utils/workspaceVault'
 import { saveDiagnostikBefunde } from '../utils/befundArchive'
 import { saveBefunde } from '../utils/laborArchive'
 import { saveSozialtherapie } from '../utils/sozialtherapie/storage'
-import { saveVerlaufFeed } from '../utils/verlaufFeed'
+import { saveVerlaufFeed, saveVerlaufAnnotations } from '../utils/verlaufFeed'
 import { caseStorageKey } from '../utils/caseContext'
 import type { DokumentEntry } from '../utils/dokumenteArchive'
 import { saveGeneratedDocument } from '../utils/generatedDocumentsVault'
@@ -190,6 +190,9 @@ export async function seedDemoPatient(options: SeedDemoPatientOptions): Promise<
   await saveEncryptedWorkspace(undefined, caseId)
 
   saveVerlaufFeed(fixture.verlaufFeed, caseId)
+  if (fixture.verlaufAnnotations?.length) {
+    saveVerlaufAnnotations(fixture.verlaufAnnotations, caseId)
+  }
   saveBefunde(caseId, fixture.laborBefunde)
   saveDiagnostikBefunde(caseId, fixture.befundRecords)
   saveSozialtherapie(fixture.sozialtherapie, caseId)

@@ -66,6 +66,7 @@ vi.mock('../../utils/sozialtherapie/storage', () => ({
 
 vi.mock('../../utils/verlaufFeed', () => ({
   saveVerlaufFeed: vi.fn(),
+  saveVerlaufAnnotations: vi.fn(),
 }))
 
 vi.mock('../../utils/generatedDocumentsVault', () => ({

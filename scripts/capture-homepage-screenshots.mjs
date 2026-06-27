@@ -1,5 +1,5 @@
 /**
- * Automated homepage demo screenshots — Nikolaos Demo (DEMO-CASE-0001), German UI.
+ * Automated homepage demo screenshots — Nikolaos Demo (DEMO-CASE-0001), English UI.
  *
  * Captures PNGs referenced by `src/data/homepage/content.de.ts` into
  * `public/homepage/`. Idempotent: re-running overwrites the same files.
@@ -178,7 +178,7 @@ async function preparePage(context, useAuth) {
 
   await context.addInitScript((langKey) => {
     try {
-      localStorage.setItem(langKey, 'de')
+      localStorage.setItem(langKey, 'en')
       localStorage.setItem('psychiatry-ink:identifier-storage-acknowledged', 'true')
       localStorage.setItem(
         'psychiatry-ink-privacy',
@@ -260,7 +260,7 @@ async function captureIntelligence(page) {
 async function dismissBlockingModals(page) {
   const onboarding = page.locator('.identifier-onboarding-backdrop')
   if (await onboarding.isVisible().catch(() => false)) {
-    await page.getByRole('button', { name: 'Auswahl speichern' }).click()
+    await page.getByRole('button', { name: /Save selection|Auswahl speichern/i }).click()
     await onboarding.waitFor({ state: 'hidden', timeout: 10_000 }).catch(() => {})
   }
 }
@@ -272,9 +272,9 @@ async function captureKnowledgeBase(page) {
   await page.locator('.kb-overlay').waitFor({ state: 'visible' })
   await page
     .locator('.kb-collection-tile__main')
-    .filter({ hasText: 'Psychopharmakologie' })
+    .filter({ hasText: /Psychopharmacology|Psychopharmakologie/i })
     .click()
-  await page.locator('.kb-classified-drug__name', { hasText: 'Aripiprazol' }).first().click()
+  await page.locator('.kb-classified-drug__name', { hasText: /Aripiprazole|Aripiprazol/i }).first().click()
   await page.locator('.kbp-drug-header__name').waitFor({ state: 'visible' })
   await sleep(800)
   await capture(page, 'demo-knowledge-base.png')
@@ -303,11 +303,11 @@ async function captureDiscuss(page) {
     return
   }
 
-  await page.getByRole('button', { name: 'Neue Besprechung' }).click()
+  await page.getByRole('button', { name: /New discussion|Neue Besprechung/i }).click()
   await page.locator('.discuss-case-builder').waitFor({ state: 'visible' })
-  await page.getByRole('button', { name: 'Vorschau' }).click()
-  await page.getByRole('button', { name: 'Paket speichern & einladen' }).click()
-  await page.getByRole('button', { name: 'Zur Besprechung' }).click({ timeout: 120_000 })
+  await page.getByRole('button', { name: /Preview|Vorschau/i }).click()
+  await page.getByRole('button', { name: /Save package|Paket speichern/i }).click()
+  await page.getByRole('button', { name: /Open discussion|Zur Besprechung/i }).click({ timeout: 120_000 })
   await page.locator('.discuss-case-view').waitFor({ state: 'visible' })
   await sleep(1000)
   await capture(page, 'demo-discuss.png')
@@ -318,7 +318,11 @@ async function captureLabor(page) {
   await page.locator('.notion-lab-canvas').waitFor({ state: 'visible', timeout: 60_000 })
   await sleep(1500)
   await assertNikolaosVisible(page)
-  await page.locator('.lab-toolbar__select').selectOption({ label: 'Prolaktin' })
+  const labSelect = page.locator('.lab-toolbar__select')
+  const prolactinLabel =
+    (await labSelect.locator('option').allTextContents()).find((t) => /prolactin|prolaktin/i.test(t)) ??
+    'Prolactin'
+  await labSelect.selectOption({ label: prolactinLabel })
   await page.locator('.notion-lab-canvas__chart svg').waitFor({ state: 'visible' })
   await sleep(1000)
   await capture(page, 'demo-labor.png')
@@ -327,7 +331,7 @@ async function captureLabor(page) {
 async function captureInteraction(page) {
   await openCase(page)
   await clickSidebarTab(page, 'medikation')
-  await page.locator('.med-section-nav__link', { hasText: 'Kombinations-Check' }).click()
+  await page.locator('.med-section-nav__link', { hasText: /Combination check|Kombinations-Check/i }).click()
   await page.locator('.combination-check').first().waitFor({ state: 'visible' })
   await sleep(800)
   await capture(page, 'demo-interaction.png')

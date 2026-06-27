@@ -18,6 +18,7 @@ import type { DiagnoseEntry } from '../utils/diagnosenArchive'
 import type { DokumentEntry } from '../utils/dokumenteArchive'
 import type { NotionDocumentSnapshot } from '../utils/notionDocumentActions'
 import type { VerlaufFeedEntry } from '../utils/verlaufFeed'
+import type { VerlaufAnnotation } from '../utils/verlaufFeed'
 import type { SavedLabGraph } from '../types/lab'
 import type { SavedTimeline } from '../types/timeline'
 import type { LaborBefund } from '../utils/laborArchive'
@@ -98,6 +99,8 @@ export interface DemoPatientFixture {
     activeVariantIds?: Record<string, string>
   }
   verlaufFeed: VerlaufFeedEntry[]
+  /** Inline comments, todos, and highlights on Verlauf feed entries. */
+  verlaufAnnotations?: VerlaufAnnotation[]
   laborBefunde: LaborBefund[]
   befundRecords: BefundRecord[]
   sozialtherapie: SozialtherapieTarget[]

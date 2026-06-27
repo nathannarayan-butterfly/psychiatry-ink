@@ -1,5 +1,6 @@
 import { isDemoPublisherEmail } from '../../shared/demoPublisher'
 import { getCaseMeta } from '../hooks/useCaseRegistry'
+import { loadStoredUiLanguage } from '../utils/clinicalLanguage'
 import { DEMO_CASE_ID } from './constants'
 
 export function isDemoCase(caseId: string | undefined | null): boolean {
@@ -26,7 +27,7 @@ export function isDemoCaseReadOnly(
 }
 
 export function demoCaseLabel(): string {
-  return 'Synthetischer Demo-Fall'
+  return loadStoredUiLanguage() === 'de' ? 'Synthetischer Demo-Fall' : 'Synthetic demo case'
 }
 
 export function demoPatientDisplayName(): string {

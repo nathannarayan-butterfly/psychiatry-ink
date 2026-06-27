@@ -101,6 +101,15 @@ export function validateDemoFixture(
     pushError(errors, 'verlauf_count', 'Mindestens 12 Verlauf-Einträge erforderlich')
   }
 
+  const annotationComments = (fixture.verlaufAnnotations ?? []).filter((a) => a.type === 'comment').length
+  const annotationTodos = (fixture.verlaufAnnotations ?? []).filter((a) => a.type === 'todo').length
+  if (annotationComments < 2) {
+    pushWarn(warnings, 'verlauf_comments', 'Wenige Verlauf-Kommentare — Demo zeigt Annotationen eingeschränkt')
+  }
+  if (annotationTodos < 2) {
+    pushWarn(warnings, 'verlauf_todos', 'Wenige Verlauf-To-dos — Demo zeigt Aufgaben eingeschränkt')
+  }
+
   if ((workspace.labGraphs?.length ?? 0) === 0) {
     pushError(errors, 'lab_missing', 'Labor-Graph fehlt')
   } else {

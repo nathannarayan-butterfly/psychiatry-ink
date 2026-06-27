@@ -46,6 +46,8 @@ describe('demo fixture', () => {
     const fixture = buildDemoPatientFixture('en')
     expect(Object.keys(fixture.workspace.documents).length).toBeGreaterThanOrEqual(6)
     expect(fixture.verlaufFeed.length).toBeGreaterThanOrEqual(12)
+    expect((fixture.verlaufAnnotations ?? []).filter((a) => a.type === 'comment').length).toBeGreaterThanOrEqual(2)
+    expect((fixture.verlaufAnnotations ?? []).filter((a) => a.type === 'todo').length).toBeGreaterThanOrEqual(2)
     expect(fixture.workspace.diagnoses.length).toBe(3)
     expect(fixture.workspace.diagnoses.some((d) => d.icd10.code.startsWith('F25'))).toBe(false)
     expect(fixture.workspace.medicationPlanState?.plans[0]?.medications.length).toBeGreaterThanOrEqual(2)
