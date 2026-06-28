@@ -1,9 +1,10 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Check, Copy, Loader2, Mic, MicOff, Save, X } from 'lucide-react'
 import { useTranslation } from '../../../context/TranslationContext'
 import { useCompactDictation } from '../../../hooks/useCompactDictation'
 import { useCopyWithFeedback } from '../../../hooks/useCopyWithFeedback'
 import { saveGlobalNote } from '../../../utils/standaloneNotes'
+import { mapDictationError } from '../../../utils/dictationErrors'
 import { showNotionToast } from '../NotionToast'
 import '../../../styles/workspace-ai.css'
 import '../../../styles/standalone-workspace.css'
@@ -13,8 +14,10 @@ interface StandaloneDictationWidgetProps {
 }
 
 /**
- * Patient-less dictation tool: explicit start/stop recording → server
- * transcription → large editable text area → copy / save to global notes.
+ * Patient-less dictation: explicit start/stop → OpenAI transcription via the
+ * same pipeline as Ask Butterfly and the workspace launcher mic
+ * ({@link useCompactDictation} → {@link transcribeAudio} → POST `/api/transcribe`
+ * → {@link transcribeAudioBuffer} / GPT Whisper).
  */
 export function StandaloneDictationWidget({ onClose }: StandaloneDictationWidgetProps) {
   const { t, language } = useTranslation()
@@ -33,6 +36,11 @@ export function StandaloneDictationWidget({ onClose }: StandaloneDictationWidget
     language,
     onTranscriptionComplete: appendTranscript,
   })
+
+  const voiceError = useMemo(
+    () => mapDictationError(dictation.error, t),
+    [dictation.error, t],
+  )
 
   const handleCopy = useCallback(() => {
     void copy(text)
@@ -98,9 +106,9 @@ export function StandaloneDictationWidget({ onClose }: StandaloneDictationWidget
             {dictation.isRecording ? (
               <span className="swx-dictation__status">{t('standaloneDictationRecordingHint')}</span>
             ) : null}
-            {dictation.error ? (
+            {voiceError ? (
               <span className="swx-error" role="alert">
-                {t('standaloneDictationError')}
+                {voiceError}
               </span>
             ) : null}
           </div>
