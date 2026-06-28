@@ -288,10 +288,10 @@ export const uiTranslations = {
     es: 'Economical',
   },
   aiModelFastHint: {
-    de: 'kostengünstig (DeepSeek)',
-    en: 'cost-efficient (DeepSeek)',
-    fr: 'économique (DeepSeek)',
-    es: 'económico (DeepSeek)',
+    de: 'kostengünstig (DeepSeek · EU: Mistral Small)',
+    en: 'cost-efficient (DeepSeek · EU: Mistral Small)',
+    fr: 'économique (DeepSeek · UE : Mistral Small)',
+    es: 'económico (DeepSeek · UE: Mistral Small)',
   },
   aiModelStandard: {
     de: 'Standard',
@@ -300,10 +300,10 @@ export const uiTranslations = {
     es: 'Estándar',
   },
   aiModelStandardHint: {
-    de: 'ausgewogene Qualität',
-    en: 'balanced quality',
-    fr: 'qualité équilibrée',
-    es: 'calidad equilibrada',
+    de: 'ausgewogen (Gemini 2.5 Flash)',
+    en: 'balanced (Gemini 2.5 Flash)',
+    fr: 'équilibré (Gemini 2.5 Flash)',
+    es: 'equilibrado (Gemini 2.5 Flash)',
   },
   aiModelThorough: {
     de: 'Gründlich',
@@ -312,10 +312,10 @@ export const uiTranslations = {
     es: 'Exhaustivo',
   },
   aiModelThoroughHint: {
-    de: 'höhere Qualität für komplexe Texte',
-    en: 'higher quality for complex texts',
-    fr: 'qualité supérieure pour textes complexes',
-    es: 'mayor calidad para textos complejos',
+    de: 'höchste Qualität (gpt-5.4)',
+    en: 'highest quality (gpt-5.4)',
+    fr: 'qualité maximale (gpt-5.4)',
+    es: 'máxima calidad (gpt-5.4)',
   },
   estimatedCredits: {
     de: 'Geschätzte Kosten: {credits} Credits',
@@ -4456,6 +4456,18 @@ export const uiTranslations = {
     en: 'Choose mode',
     fr: 'Choisir le mode',
     es: 'Elegir modo',
+  },
+  notionKiMaximumLabel: {
+    de: 'Maximum (gpt-5.5)',
+    en: 'Maximum (gpt-5.5)',
+    fr: 'Maximum (gpt-5.5)',
+    es: 'Máximo (gpt-5.5)',
+  },
+  notionKiMaximumHint: {
+    de: 'Höchstleistungs-Modell. Verbraucht mehr Credits (gründlich-Tarif, 4×). Bewusst gewählt, nicht automatisch.',
+    en: 'Highest-capability model. Uses more credits (thorough rate, 4×). Opt-in, never automatic.',
+    fr: 'Modèle le plus performant. Consomme plus de crédits (tarif approfondi, 4×). Choix explicite, jamais automatique.',
+    es: 'Modelo de máxima capacidad. Consume más créditos (tarifa exhaustiva, 4×). Opcional, nunca automático.',
   },
   notionToolsMenu: {
     de: 'Werkzeuge',

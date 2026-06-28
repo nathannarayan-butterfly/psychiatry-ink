@@ -64,6 +64,13 @@ export interface AiGenerationRequest {
   patientHints?: AiPatientHints
   /** Case scope for server-side ai.use enforcement. */
   caseId?: string
+  /**
+   * Clinician-initiated "Maximum" opt-in for this single generation. When true,
+   * the server runs the top model (gpt-5.5) as a model override and bills at the
+   * gründlich (4×) multiplier. Only meaningful with the thorough tier; never
+   * auto-enabled.
+   */
+  maximum?: boolean
 }
 
 export interface AiGenerationChunk {

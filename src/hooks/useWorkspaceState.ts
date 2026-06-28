@@ -211,6 +211,9 @@ export function useWorkspaceState(
   const [aiToolsExpanded, setAiToolsExpanded] = useState(false)
   const [aiAutoMode, setAiAutoMode] = useState(readAiAutoMode)
   const [aiModelTier, setAiModelTierState] = useState<AiModelTier>(readAiModelTier)
+  // "Maximum" opt-in (gpt-5.5). Clinician-initiated, per-session, and only valid
+  // on the Gründlich (thorough) tier — reset whenever the tier leaves thorough.
+  const [maximumEnabled, setMaximumEnabledState] = useState(false)
   const [selectedAiTool, setSelectedAiTool] = useState<AiToolKey | null>(null)
   const [kiExtraInstruction, setKiExtraInstruction] = useState(() =>
     resolveKiExtraInstruction(kiInstructions.settings, ''),
@@ -995,6 +998,8 @@ export function useWorkspaceState(
       const requestWithHints = {
         ...request,
         caseId,
+        // Maximum (gpt-5.5) only ever rides along on the thorough tier.
+        maximum: resolvedTier === 'thorough' && maximumEnabled,
         patientHints:
           hints.patientName || hints.patientDob
             ? { patientName: hints.patientName, patientDob: hints.patientDob }
@@ -1084,6 +1089,7 @@ export function useWorkspaceState(
       aiAutoMode,
       aiContext.highlightedToolKeys,
       aiModelTier,
+      maximumEnabled,
       buildDocumentSectionsForRequest,
       contentInputOrigin,
       currentDocumentType?.ai,
@@ -1290,7 +1296,22 @@ export function useWorkspaceState(
     localStorage.setItem(AI_AUTO_MODE_KEY, 'off')
     setAiModelTierState(tier)
     localStorage.setItem(AI_MODEL_TIER_KEY, tier)
+    // Maximum (gpt-5.5) only applies to the thorough tier; clear it on any switch
+    // away so it can never silently ride along on Economical/Standard.
+    if (tier !== 'thorough') setMaximumEnabledState(false)
   }, [])
+
+  const setMaximumEnabled = useCallback((enabled: boolean) => {
+    // Maximum is only meaningful on the thorough tier (Gründlich). Enabling it is
+    // a no-op on other tiers; the request builder also guards this.
+    setMaximumEnabledState(enabled)
+  }, [])
+
+  // Defensive: if the tier ever leaves thorough via the auto-selection path
+  // (which writes setAiModelTierState directly), drop the Maximum opt-in too.
+  useEffect(() => {
+    if (aiModelTier !== 'thorough' && maximumEnabled) setMaximumEnabledState(false)
+  }, [aiModelTier, maximumEnabled])
 
   const selectAiTool = useCallback((key: AiToolKey) => {
     setSelectedAiTool(key)
@@ -1597,6 +1618,8 @@ export function useWorkspaceState(
     collapseAiTools,
     toggleAiAutoMode,
     setAiModelTier,
+    maximumEnabled,
+    setMaximumEnabled,
     selectAiTool,
     setKiExtraInstruction,
     kiInstructions,

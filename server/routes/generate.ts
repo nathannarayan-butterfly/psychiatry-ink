@@ -13,6 +13,7 @@ import { assertAiGenerationAllowed, recordAiGenerationUsed } from '../utils/case
 import { deidentifyText } from '../services/discussCaseDeidentify'
 import { runAiFeature, InsufficientCreditsError } from '../ai/runAiFeature'
 import { parseMode } from '../ai/aiRouter'
+import { resolveMaximumModelSpec } from '../modelTierMapping'
 
 export interface GenerateRequestBody {
   tier: AiModelTier
@@ -22,6 +23,14 @@ export interface GenerateRequestBody {
   userPrompt: string
   caseId?: string
   featureKey?: AiFeatureKey
+  /**
+   * Clinician-initiated "Maximum" opt-in. When true, this single generation runs
+   * the top model (gpt-5.5, env `OPENAI_MAXIMUM_MODEL`) as an explicit model
+   * override and is billed at the gründlich (4×) multiplier — regardless of the
+   * `tier`/`mode`/`model` the client otherwise sent. Never auto-enabled; it is
+   * only set when the user explicitly toggles Maximum in the UI.
+   */
+  maximum?: boolean
   /**
    * Optional patient identifier hints used by the server-side PHI guard. The
    * server NEVER trusts the client to have de-identified the prompt — these
@@ -133,7 +142,16 @@ generateRouter.post('/', async (req: Request, res: Response) => {
 
     const userId = resolveAccountId(req)
     const featureKey = body.featureKey ?? 'document_generation'
-    const mode = parseMode(body.mode ?? null)
+
+    // "Maximum" opt-in: clinician explicitly chose the top model for this one
+    // generation. Force the gründlich (4×) billing multiplier and override the
+    // model to gpt-5.5 (env OPENAI_MAXIMUM_MODEL) via the thorough tier. The
+    // residency gate in resolveLlmCallModel still applies (OpenAI/US is allowed
+    // under EU SCC/DPF; strict mode degrades to the thorough-tier EU fallback).
+    const maximum = body.maximum === true
+    const mode = maximum ? 'gruendlich' : parseMode(body.mode ?? null)
+    const effectiveTier = maximum ? 'thorough' : llmModel.tier
+    const effectiveModel = maximum ? resolveMaximumModelSpec() : llmModel.model
     const usageContext =
       userId && userId !== 'default'
         ? await resolveUsageContextFromRequest(req, userId, {
@@ -148,8 +166,8 @@ generateRouter.post('/', async (req: Request, res: Response) => {
       result = await runAiFeature({
         featureKey,
         mode,
-        tier: llmModel.tier,
-        model: llmModel.model,
+        tier: effectiveTier,
+        model: effectiveModel,
         systemPrompt: sanitized.systemPrompt,
         userPrompt: sanitized.userPrompt,
         usageContext,

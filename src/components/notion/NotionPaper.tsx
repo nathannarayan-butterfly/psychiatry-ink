@@ -89,6 +89,7 @@ interface NotionPaperProps {
   dictationError?: string | null
   isGenerating: boolean
   aiModelTier: AiModelTier
+  maximumEnabled: boolean
   selectedAiTool: AiToolKey | null
   kiExtraInstruction: string
   aiCanGenerate: boolean
@@ -109,6 +110,7 @@ interface NotionPaperProps {
   onDetectedPaste?: (text: string, category: ContentCategory) => void
   onSaveSection: (sectionId?: string) => void
   onSelectAiModelTier: (tier: AiModelTier) => void
+  onToggleMaximum: (enabled: boolean) => void
   onSelectAiTool: (tool: AiToolKey) => void
   onKiExtraInstructionChange: (value: string) => void
   onGenerate: () => void
@@ -194,6 +196,7 @@ export function NotionPaper({
   dictationError,
   isGenerating,
   aiModelTier,
+  maximumEnabled,
   selectedAiTool,
   kiExtraInstruction,
   aiCanGenerate,
@@ -210,6 +213,7 @@ export function NotionPaper({
   onDetectedPaste,
   onSaveSection,
   onSelectAiModelTier,
+  onToggleMaximum,
   onSelectAiTool,
   onKiExtraInstructionChange,
   onGenerate,
@@ -753,6 +757,7 @@ export function NotionPaper({
             </div>
             <NotionAiModeDropdown
               tier={aiModelTier}
+              maximumEnabled={maximumEnabled}
               selectedTool={selectedAiTool}
               sourceText={editorContent}
               extraInstruction={kiExtraInstruction}
@@ -761,6 +766,7 @@ export function NotionPaper({
               open={aiDropdownOpen}
               onOpenChange={setAiDropdownOpen}
               onSelectTier={onSelectAiModelTier}
+              onToggleMaximum={onToggleMaximum}
               onSelectTool={onSelectAiTool}
               onExtraInstructionChange={onKiExtraInstructionChange}
               onGenerate={onGenerate}

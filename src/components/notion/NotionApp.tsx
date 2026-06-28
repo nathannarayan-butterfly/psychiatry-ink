@@ -2359,6 +2359,7 @@ function NotionAppInner({
                 dictationError={workspace.dictationError}
                 isGenerating={workspace.isGenerating}
                 aiModelTier={workspace.aiModelTier}
+                maximumEnabled={workspace.maximumEnabled}
                 selectedAiTool={workspace.selectedAiTool}
                 aiCanGenerate={workspace.aiCanGenerate && caseAccessChecks.canUseAI}
                 panelGraphicEnabled={appearance.settings.showPanelGraphic}
@@ -2371,6 +2372,7 @@ function NotionAppInner({
                 onDetectedPaste={handleDetectedPaste}
                 onSaveSection={workspace.saveSection}
                 onSelectAiModelTier={workspace.setAiModelTier}
+                onToggleMaximum={workspace.setMaximumEnabled}
                 onSelectAiTool={workspace.selectAiTool}
                 kiExtraInstruction={workspace.kiExtraInstruction}
                 onKiExtraInstructionChange={workspace.setKiExtraInstruction}

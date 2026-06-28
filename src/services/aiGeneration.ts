@@ -138,6 +138,13 @@ async function callModel(
   const authHeaders = await getAuthHeaders()
   const llm = resolveLlmRequestForTaskOrTier('document_generation', request.tier)
 
+  // "Maximum" opt-in: clinician explicitly chose the top model (gpt-5.5) for this
+  // generation. Pin the thorough tier + gründlich (4×) billing mode and flag the
+  // server-side model override; the per-task model preference is bypassed so the
+  // Maximum model always wins. The server is authoritative (re-derives mode/tier/
+  // model from `maximum`) — these fields are sent for clarity/telemetry parity.
+  const maximum = request.maximum === true
+
   const response = await fetch(`${API_BASE}/api/generate`, {
     method: 'POST',
     headers: {
@@ -145,8 +152,8 @@ async function callModel(
       ...authHeaders,
     },
     body: JSON.stringify({
-      tier: llm.tier,
-      model: llm.model,
+      tier: maximum ? 'thorough' : llm.tier,
+      ...(maximum ? { mode: 'gruendlich', maximum: true } : { model: llm.model }),
       systemPrompt: resolved.systemPrompt,
       userPrompt,
       featureKey: resolveWorkspaceFeatureKey(request.componentId),

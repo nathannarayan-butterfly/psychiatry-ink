@@ -14,6 +14,8 @@ import { documentationToolIcons, tierIcon } from '../../utils/aiToolIcons'
 
 interface NotionAiModeDropdownProps {
   tier: AiModelTier
+  /** "Maximum" (gpt-5.5) opt-in — only meaningful on the thorough tier. */
+  maximumEnabled: boolean
   selectedTool: AiToolKey | null
   sourceText: string
   extraInstruction: string
@@ -22,6 +24,7 @@ interface NotionAiModeDropdownProps {
   open?: boolean
   onOpenChange?: (open: boolean) => void
   onSelectTier: (tier: AiModelTier) => void
+  onToggleMaximum: (enabled: boolean) => void
   onSelectTool: (tool: AiToolKey) => void
   onExtraInstructionChange: (value: string) => void
   onGenerate: () => void
@@ -29,6 +32,7 @@ interface NotionAiModeDropdownProps {
 
 export function NotionAiModeDropdown({
   tier,
+  maximumEnabled,
   selectedTool,
   sourceText,
   extraInstruction,
@@ -37,6 +41,7 @@ export function NotionAiModeDropdown({
   open: openProp,
   onOpenChange,
   onSelectTier,
+  onToggleMaximum,
   onSelectTool,
   onExtraInstructionChange,
   onGenerate,
@@ -129,6 +134,7 @@ export function NotionAiModeDropdown({
                 <button
                   key={option}
                   type="button"
+                  aria-pressed={active}
                   className={`notion-ki-popover__tier ${active ? 'notion-ki-popover__tier--active' : ''}`}
                   title={t('notionAiModeCredits').replace('{credits}', String(credits))}
                   onClick={() => onSelectTier(option)}
@@ -148,6 +154,30 @@ export function NotionAiModeDropdown({
               )
             })}
           </div>
+
+          {tier === 'thorough' ? (
+            <button
+              type="button"
+              aria-pressed={maximumEnabled}
+              className={`notion-ki-popover__maximum ${maximumEnabled ? 'notion-ki-popover__maximum--active' : ''}`}
+              title={t('notionKiMaximumHint')}
+              onClick={() => onToggleMaximum(!maximumEnabled)}
+            >
+              <span className="notion-ki-popover__tier-icon">
+                <Sparkles
+                  className={`h-3.5 w-3.5${maximumEnabled ? ' text-accent' : ''}`}
+                  strokeWidth={1.75}
+                  aria-hidden
+                />
+              </span>
+              <span className="notion-ki-popover__tier-text">
+                <span className="notion-ki-popover__tier-name">
+                  {t('notionKiMaximumLabel')}
+                </span>
+                <span className="notion-ki-popover__tier-hint">{t('notionKiMaximumHint')}</span>
+              </span>
+            </button>
+          ) : null}
 
           <p className="notion-ki-popover__heading">{t('kiExtraInstruction')}</p>
           <textarea

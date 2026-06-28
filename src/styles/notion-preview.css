@@ -2871,10 +2871,53 @@
   text-align: left;
 }
 
-.notion-ki-popover__tier:hover,
-.notion-ki-popover__tier--active {
+.notion-ki-popover__tier:hover {
   border-color: color-mix(in srgb, var(--accent) 30%, var(--border-soft));
   background: color-mix(in srgb, var(--accent) 7%, #fafaf9);
+}
+
+.notion-ki-popover__tier--active,
+.notion-ki-popover__tier--active:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, #fafaf9);
+  box-shadow: var(--shadow-active);
+}
+
+.notion-ki-popover__tier--active .notion-ki-popover__tier-name {
+  font-weight: 600;
+}
+
+/* "Maximum" (gpt-5.5) opt-in toggle — same selected-state treatment as the tier
+   options, with a dashed idle border so it reads as an explicit extra choice. */
+.notion-ki-popover__maximum {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  gap: 0.45rem;
+  margin-top: 0.25rem;
+  border: 1px dashed color-mix(in srgb, var(--accent) 35%, var(--border-soft));
+  border-radius: 6px;
+  padding: 0.4rem 0.45rem;
+  text-align: left;
+  background: transparent;
+  color: var(--ink);
+}
+
+.notion-ki-popover__maximum:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border-soft));
+  background: color-mix(in srgb, var(--accent) 7%, #fafaf9);
+}
+
+.notion-ki-popover__maximum--active,
+.notion-ki-popover__maximum--active:hover {
+  border-style: solid;
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, #fafaf9);
+  box-shadow: var(--shadow-active);
+}
+
+.notion-ki-popover__maximum--active .notion-ki-popover__tier-name {
+  font-weight: 600;
 }
 
 .notion-ki-popover__tier-icon {
