@@ -107,6 +107,18 @@ describe('buildPpbHarmSignals', () => {
     expect(signals.some((s) => s.label === 'keine Eigengefährdung')).toBe(true)
   })
 
+  it('localizes harm axis labels in English', () => {
+    const signals = buildPpbHarmSignals({
+      language: 'en',
+      suicidality: 'passive suicidal thoughts',
+      riskSelf: 'passive',
+      riskOthers: 'none',
+    })
+    const selfHarm = signals.find((s) => s.id === 'riskSelf')
+    expect(selfHarm?.label).toBe('Self-harm risk')
+    expect(signals.some((s) => s.label === 'no risk to others')).toBe(true)
+  })
+
   it('defaults missing documentation to negative axes', () => {
     const signals = buildPpbHarmSignals({ language: 'de', text: 'Affekt gedrückt, Antrieb reduziert.' })
     expect(signals).toHaveLength(1)
@@ -133,5 +145,37 @@ describe('buildPatientSafety risk signals', () => {
     const suicide = safety.risk?.signals?.find((s) => s.id === 'suicidality')
     expect(suicide?.tone).toBe('high')
     expect(suicide?.value).toMatch(/suizidgedanken/i)
+  })
+
+  it('localizes risk self-harm label in English', () => {
+    const safety = buildPatientSafety({
+      medications: [],
+      language: 'en',
+      imprints: [makeImprint({ riskSelf: 'passive' })],
+    })
+    const selfHarm = safety.risk?.signals?.find((s) => s.id === 'riskSelf')
+    expect(selfHarm?.label).toBe('Self-harm risk')
+  })
+
+  it('localizes negated allergy alert in English', () => {
+    const safety = buildPatientSafety({
+      medications: [],
+      language: 'en',
+      imprints: [],
+      allergyText: 'No known drug allergies.',
+    })
+    const allergy = safety.alerts.find((a) => a.category === 'allergy')
+    expect(allergy?.title).toBe('No known allergies')
+    expect(allergy?.tone).toBe('ok')
+  })
+
+  it('keeps German risk labels when language is German', () => {
+    const safety = buildPatientSafety({
+      medications: [],
+      language: 'de',
+      imprints: [makeImprint({ riskSelf: 'passive' })],
+    })
+    const selfHarm = safety.risk?.signals?.find((s) => s.id === 'riskSelf')
+    expect(selfHarm?.label).toBe('Eigengefährdung')
   })
 })
