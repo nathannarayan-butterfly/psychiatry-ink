@@ -11,6 +11,7 @@ export type GuidedEntryItemType =
   | 'psychopath-quick'
   | 'risk-update-quick'
   | 'befund-ecg'
+  | 'befund-eeg'
   | 'somatic-befund-quick'
   | 'vitalwerte-quick'
   | 'anamnese-somatic-befund'

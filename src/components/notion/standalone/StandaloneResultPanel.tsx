@@ -23,6 +23,11 @@ interface StandaloneResultPanelProps {
   /** Optional re-run (e.g. AI rewrite). When omitted, no regenerate button. */
   onRegenerate?: () => void
   regenerating?: boolean
+  /**
+   * Optional extra footer action (e.g. the ECG "Mit Medikation korrelieren"
+   * step). Rendered as a ghost button next to the icon actions.
+   */
+  secondaryAction?: { label: string; onClick: () => void }
 }
 
 /**
@@ -41,6 +46,7 @@ export function StandaloneResultPanel({
   onClose,
   onRegenerate,
   regenerating = false,
+  secondaryAction,
 }: StandaloneResultPanelProps) {
   const { t } = useTranslation()
   const { copied, copy } = useCopyWithFeedback()
@@ -179,6 +185,15 @@ export function StandaloneResultPanel({
               <Trash2 className="h-4 w-4" strokeWidth={1.75} aria-hidden />
             </button>
           </div>
+          {secondaryAction ? (
+            <button
+              type="button"
+              className="wai-btn wai-btn--ghost"
+              onClick={secondaryAction.onClick}
+            >
+              {secondaryAction.label}
+            </button>
+          ) : null}
           <button
             type="button"
             className="wai-btn wai-btn--primary"

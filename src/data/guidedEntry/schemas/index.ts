@@ -1,5 +1,6 @@
 import type { GuidedEntryItemType, GuidedEntrySchema } from '../../../types/guidedEntry'
 import { ecgBefundSchema } from './ecgBefund'
+import { eegBefundSchema } from './eegBefund'
 import { psychopathFindingSchema } from './psychopathFinding'
 import { psychopathFindingQuickSchema } from './psychopathFindingQuick'
 import { riskUpdateQuickSchema } from './riskUpdateQuick'
@@ -21,6 +22,7 @@ const REGISTRY: Record<GuidedEntryItemType, GuidedEntrySchema> = {
   'psychopath-quick': psychopathFindingQuickSchema,
   'risk-update-quick': riskUpdateQuickSchema,
   'befund-ecg': ecgBefundSchema,
+  'befund-eeg': eegBefundSchema,
   'somatic-befund-quick': somaticBefundQuickSchema,
   'vitalwerte-quick': vitalsQuickSchema,
   'anamnese-somatic-befund': anamneseSomaticBefundSchema,
