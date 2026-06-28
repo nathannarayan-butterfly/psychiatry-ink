@@ -53,6 +53,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@supabase/supabase-js": "^2.107.0",
     "@tiptap/core": "^3.27.1",
+    "@tiptap/extension-highlight": "^3.27.1",
     "@tiptap/extension-placeholder": "^3.27.1",
     "@tiptap/extension-text-align": "^3.27.1",
     "@tiptap/extension-text-style": "^3.27.1",

@@ -10,6 +10,7 @@
  * patient-bound documents a real case would hold.
  */
 
+import { DEFAULT_CASE_ID } from './caseContext'
 import {
   appendDokument,
   deleteDokument,
@@ -21,6 +22,16 @@ import {
 
 /** `pageType` prefix that marks an archive entry as a standalone workspace note. */
 export const STANDALONE_NOTE_PAGE_PREFIX = 'standalone:'
+
+/**
+ * Single user-global container for standalone notes. The patient-less workspace
+ * tools already persist under the default (non-patient) case, so reusing it as
+ * the global notes bucket keeps every existing note readable with no migration —
+ * and lets the floating Notizen popup + the dashboard widget read/write the same
+ * list from any route. Notes here are never patient-bound (the default case holds
+ * no PHI), so surfacing them globally is safe.
+ */
+export const GLOBAL_NOTES_CASE_ID = DEFAULT_CASE_ID
 
 export interface StandaloneNoteInput {
   /** Stable kind, e.g. `'somatic-befund'`, `'rewrite'`. Stored as `standalone:{kind}`. */
@@ -70,4 +81,37 @@ export function updateStandaloneNote(
 /** Soft-delete a standalone note. */
 export function deleteStandaloneNote(caseId: string, id: string): void {
   deleteDokument(caseId, id)
+}
+
+/* —— User-global notes (floating Notizen popup + dashboard widget) —— */
+
+/**
+ * Persist a user-global note. Content may be rich HTML (from the Notizen
+ * rich-text editor) or plain text (tool output / legacy) — both are stored in
+ * `content` and rendered gracefully via the rich-text helpers. Defaults to the
+ * `formulare` category so free notes group with the other non-clinical jots.
+ */
+export function saveGlobalNote(input: StandaloneNoteInput): DokumentEntry {
+  return saveStandaloneNote(GLOBAL_NOTES_CASE_ID, {
+    ...input,
+    category: input.category ?? 'formulare',
+  })
+}
+
+/** List every user-global note, newest first. */
+export function listGlobalNotes(): DokumentEntry[] {
+  return listStandaloneNotes(GLOBAL_NOTES_CASE_ID)
+}
+
+/** Edit a user-global note's title and/or content in place. */
+export function updateGlobalNote(
+  id: string,
+  patch: { title?: string; content?: string },
+): DokumentEntry | null {
+  return updateStandaloneNote(GLOBAL_NOTES_CASE_ID, id, patch)
+}
+
+/** Soft-delete a user-global note. */
+export function deleteGlobalNote(id: string): void {
+  deleteStandaloneNote(GLOBAL_NOTES_CASE_ID, id)
 }
