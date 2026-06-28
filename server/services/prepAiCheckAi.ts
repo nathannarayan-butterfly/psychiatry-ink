@@ -5,6 +5,7 @@ import {
 } from '../utils/resolveClinicalLanguage'
 import { llmResultModel } from './safeLlmEgress'
 import { runAiFeature } from '../ai/runAiFeature'
+import { tierToMode } from '../ai/aiRouter'
 import { parseStructuredJson } from '../utils/parseStructuredJson'
 import type { AiUsageContext } from '../ai/types'
 import type { PrepAiCheckPreparation } from '../../src/types/prepAiCheck'
@@ -173,6 +174,7 @@ export async function assessPreparationAvailabilityWithAi(params: {
   const result = await runAiFeature({
     featureKey: 'prep_ai_check',
     tier: params.tier ?? 'standard',
+    mode: tierToMode(params.tier ?? 'standard'),
     systemPrompt,
     userPrompt,
     jsonResponse: true,

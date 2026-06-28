@@ -19,6 +19,7 @@
  */
 
 import { runAiFeature } from '../ai/runAiFeature'
+import { tierToMode } from '../ai/aiRouter'
 import { deidentifyPackageContent } from './discussCaseDeidentify'
 import type { DiscussPackageContent, DiscussPackageSection } from '../../src/types/discussCase'
 import type { AiModelTier } from '../modelTierMapping'
@@ -469,6 +470,7 @@ export async function runClinicalMetadataExtraction(
   const result = await runAiFeature({
     featureKey: 'clinical_metadata_extraction',
     tier: params.tier,
+    mode: tierToMode(params.tier),
     model: params.model,
     systemPrompt,
     userPrompt,

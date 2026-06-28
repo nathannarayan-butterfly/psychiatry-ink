@@ -13,6 +13,7 @@ import {
   sanitizeText,
 } from '../services/safeLlmEgress'
 import { runAiFeature, InsufficientCreditsError } from '../ai/runAiFeature'
+import { tierToMode } from '../ai/aiRouter'
 import {
   PSYCHOPATH_EXTRACT_FIELD_KEYS,
   PSYCHOPATH_OVERVIEW_DOMAIN_ORDER,
@@ -393,6 +394,7 @@ psychopathExtractRouter.post('/extract', async (req: Request, res: Response) => 
     const result = await runAiFeature({
       featureKey: 'psychopathology_extraction',
       tier: llmModel.tier,
+      mode: tierToMode(llmModel.tier ?? 'fast'),
       model: llmModel.model,
       systemPrompt,
       userPrompt: safeText,

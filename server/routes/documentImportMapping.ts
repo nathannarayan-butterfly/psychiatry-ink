@@ -14,6 +14,7 @@ import {
   sanitizeText,
 } from '../services/safeLlmEgress'
 import { runAiFeature, InsufficientCreditsError } from '../ai/runAiFeature'
+import { tierToMode } from '../ai/aiRouter'
 import {
   CANDIDATE_MODULES,
   type CandidateModule,
@@ -115,6 +116,7 @@ documentImportMappingRouter.post('/suggest-mapping', async (req: Request, res: R
     const result = await runAiFeature({
       featureKey: 'document_import_mapping',
       tier: llmModel.tier,
+      mode: tierToMode(llmModel.tier ?? 'fast'),
       model: llmModel.model,
       systemPrompt,
       userPrompt,
@@ -251,6 +253,7 @@ documentImportMappingRouter.post('/analyze', async (req: Request, res: Response)
     const result = await runAiFeature({
       featureKey: 'document_import_mapping',
       tier: llmModel.tier,
+      mode: tierToMode(llmModel.tier ?? 'fast'),
       model: llmModel.model,
       systemPrompt,
       userPrompt,

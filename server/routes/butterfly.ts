@@ -1,6 +1,7 @@
 import type { Request, Response, Router } from 'express'
 import { Router as createRouter } from 'express'
 import type { AiModelTier } from '../modelTierMapping'
+import { tierToMode } from '../ai/aiRouter'
 import { resolveAccountId } from '../middleware/auth'
 import { assertAiGenerationAllowed, recordAiGenerationUsed } from '../utils/caseAiAccessGuard'
 import { requireClinicalLanguage } from '../utils/resolveClinicalLanguage'
@@ -133,6 +134,8 @@ butterflyRouter.post('/extract', async (req: Request, res: Response) => {
       disorderName,
       criteria,
       tier,
+      // Bill at the selected tier's mode (economic 1× / standard 2× / gruendlich 4×).
+      mode: tierToMode(tier),
       language,
       usageContext,
     })
@@ -204,6 +207,8 @@ butterflyRouter.post('/interview-questions', async (req: Request, res: Response)
       disorderName,
       criteria,
       tier,
+      // Bill at the selected tier's mode (economic 1× / standard 2× / gruendlich 4×).
+      mode: tierToMode(tier),
       language,
       usageContext,
     })

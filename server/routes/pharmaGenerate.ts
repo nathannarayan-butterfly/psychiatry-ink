@@ -4,6 +4,7 @@ import type { AiModelTier } from '../modelTierMapping'
 import { resolveAccountId } from '../middleware/auth'
 import { llmResultModel } from '../services/safeLlmEgress'
 import { runAiFeature } from '../ai/runAiFeature'
+import { tierToMode } from '../ai/aiRouter'
 import { resolveUsageContextFromRequest } from '../ai/usage/resolveUsageContext'
 import { assertAiGenerationAllowed, recordAiGenerationUsed } from '../utils/caseAiAccessGuard'
 import {
@@ -1021,6 +1022,7 @@ pharmaGenerateRouter.post('/', async (req: Request, res: Response) => {
     const result = await runAiFeature({
       featureKey: 'pharma_generate',
       tier,
+      mode: tierToMode(tier),
       systemPrompt: buildSystemPrompt(normalizedBody.language),
       userPrompt: buildUserPrompt(normalizedBody, effectiveSections, includeMarketAvailability || marketAvailabilityOnly),
       maxTokens: effectiveSections.length === 1 || marketAvailabilityOnly ? SINGLE_SECTION_MAX_TOKENS : WHOLE_DRUG_MAX_TOKENS,

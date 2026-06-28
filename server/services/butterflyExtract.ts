@@ -18,8 +18,10 @@
  */
 
 import { runAiFeature } from '../ai/runAiFeature'
+import { tierToMode } from '../ai/aiRouter'
 import { deidentifyPackageContent } from './discussCaseDeidentify'
 import type { DiscussPackageContent } from '../../src/types/discussCase'
+import type { AiMode } from '../../src/types/aiUsage'
 import type { AiModelTier } from '../modelTierMapping'
 import type { AiUsageContext } from '../ai/types'
 import { clinicalLanguagePromptInstruction, type ClinicalLanguage } from '../utils/resolveClinicalLanguage'
@@ -166,6 +168,12 @@ export interface ButterflyExtractionParams {
   disorderName: string
   criteria: ButterflyCriterionQuery[]
   tier: AiModelTier
+  /**
+   * User-visible AI mode driving the credit multiplier. When omitted it is
+   * derived from `tier` so the charge matches the selected tier (economic 1× /
+   * standard 2× / gruendlich 4×) instead of defaulting to the feature's mode.
+   */
+  mode?: AiMode
   language: ClinicalLanguage
   usageContext?: AiUsageContext
 }
@@ -191,6 +199,7 @@ export async function runButterflyExtraction(
   const result = await runAiFeature({
     featureKey: 'butterfly',
     tier: params.tier,
+    mode: params.mode ?? tierToMode(params.tier),
     systemPrompt,
     userPrompt,
     jsonResponse: true,

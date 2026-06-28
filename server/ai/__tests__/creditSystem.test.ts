@@ -92,7 +92,7 @@ import {
   InsufficientCreditsError,
 } from '../creditGuard'
 import { logAiUsage } from '../usageLogger'
-import { modeToTier, parseMode } from '../aiRouter'
+import { modeToTier, parseMode, tierToMode } from '../aiRouter'
 import { runAiFeature } from '../runAiFeature'
 import type { LlmCallResult } from '../types'
 
@@ -217,6 +217,25 @@ describe('aiRouter', () => {
 
   it('parseMode respects custom fallback', () => {
     expect(parseMode('invalid', 'economic')).toBe('economic')
+  })
+
+  // Inverse map: a user-selected tier must drive the credit multiplier so the
+  // charge matches the model the tier routes to (the per-tier billing fix).
+  it('maps fast → economic', () => expect(tierToMode('fast')).toBe('economic'))
+  it('maps standard → standard', () => expect(tierToMode('standard')).toBe('standard'))
+  it('maps thorough → gruendlich', () => expect(tierToMode('thorough')).toBe('gruendlich'))
+
+  it('round-trips modeToTier ∘ tierToMode for every tier', () => {
+    for (const tier of ['fast', 'standard', 'thorough'] as const) {
+      expect(modeToTier(tierToMode(tier))).toBe(tier)
+    }
+  })
+
+  it('tier→mode scales the credit multiplier 1× / 2× / 4×', () => {
+    // butterfly: base 4, 1000 tokens within the included window → base × multiplier.
+    expect(estimateCredits('butterfly', tierToMode('fast'), 1000)).toBe(4) // economic 1×
+    expect(estimateCredits('butterfly', tierToMode('standard'), 1000)).toBe(8) // standard 2×
+    expect(estimateCredits('butterfly', tierToMode('thorough'), 1000)).toBe(16) // gruendlich 4×
   })
 })
 

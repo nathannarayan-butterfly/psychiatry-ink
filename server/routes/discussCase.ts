@@ -5,6 +5,7 @@ import { resolveAccountId } from '../middleware/auth'
 import { recordUserAuditLog } from '../services/auditLog'
 import { llmResultModel } from '../services/safeLlmEgress'
 import { runAiFeature } from '../ai/runAiFeature'
+import { tierToMode } from '../ai/aiRouter'
 import { resolveUsageContextFromRequest } from '../ai/usage/resolveUsageContext'
 import { assertAiQuota, recordAiGenerationUsed } from '../utils/caseAiAccessGuard'
 import {
@@ -1045,6 +1046,7 @@ discussCaseRouter.post('/:id/ask-ai', async (req: Request, res: Response) => {
     const result = await runAiFeature({
       featureKey: 'discuss_case_ai',
       tier,
+      mode: tierToMode(tier),
       systemPrompt,
       userPrompt,
       usageContext,

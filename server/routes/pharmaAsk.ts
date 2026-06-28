@@ -10,6 +10,7 @@ import {
 import { resolveUsageContextFromRequest } from '../ai/usage/resolveUsageContext'
 import { assertAiGenerationAllowed, recordAiGenerationUsed } from '../utils/caseAiAccessGuard'
 import { runAiFeature, InsufficientCreditsError } from '../ai/runAiFeature'
+import { tierToMode } from '../ai/aiRouter'
 
 export interface PharmaAskRequestBody {
   medicationName: string
@@ -140,6 +141,7 @@ pharmaAskRouter.post('/', async (req: Request, res: Response) => {
       result = await runAiFeature({
         featureKey: 'pharma_ask',
         tier,
+        mode: tierToMode(tier),
         systemPrompt,
         userPrompt,
         usageContext,

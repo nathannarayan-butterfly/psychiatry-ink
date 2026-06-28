@@ -20,6 +20,7 @@
  */
 
 import { runAiFeature } from '../ai/runAiFeature'
+import { tierToMode } from '../ai/aiRouter'
 import type { AiModelTier } from '../modelTierMapping'
 import type { AiUsageContext } from '../ai/types'
 import { clinicalLanguagePromptInstruction, type ClinicalLanguage } from '../utils/resolveClinicalLanguage'
@@ -143,6 +144,7 @@ export async function runInlineEdit(params: InlineEditParams): Promise<InlineEdi
   const result = await runAiFeature({
     featureKey: 'inline_text_edit',
     tier: params.tier,
+    mode: tierToMode(params.tier),
     model: params.model,
     systemPrompt,
     userPrompt,

@@ -11,6 +11,7 @@ import {
 import { resolveUsageContextFromRequest } from '../ai/usage/resolveUsageContext'
 import { assertAiGenerationAllowed, recordAiGenerationUsed } from '../utils/caseAiAccessGuard'
 import { runAiFeature, InsufficientCreditsError } from '../ai/runAiFeature'
+import { tierToMode } from '../ai/aiRouter'
 import {
   clinicalLanguagePromptInstruction,
   requireClinicalLanguage,
@@ -171,6 +172,7 @@ askButterflyRouter.post('/', async (req: Request, res: Response) => {
       result = await runAiFeature({
         featureKey: 'ask_butterfly',
         tier,
+        mode: tierToMode(tier),
         model: llmModel.model,
         systemPrompt,
         userPrompt,

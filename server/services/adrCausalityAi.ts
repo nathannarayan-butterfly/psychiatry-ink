@@ -21,6 +21,7 @@ import {
 } from '../utils/resolveClinicalLanguage'
 import { llmResultModel } from './safeLlmEgress'
 import { runAiFeature } from '../ai/runAiFeature'
+import { tierToMode } from '../ai/aiRouter'
 import { parseStructuredJson } from '../utils/parseStructuredJson'
 import { deidentifyText } from './discussCaseDeidentify'
 import type { AiUsageContext } from '../ai/types'
@@ -205,6 +206,7 @@ export async function assessAdrCausalityWithAi(params: {
   const result = await runAiFeature({
     featureKey: 'adr_causality_assessment',
     tier: params.tier ?? 'standard',
+    mode: tierToMode(params.tier ?? 'standard'),
     systemPrompt,
     userPrompt,
     jsonResponse: true,

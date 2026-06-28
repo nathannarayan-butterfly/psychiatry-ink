@@ -15,6 +15,8 @@
  */
 
 import { runAiFeature } from '../ai/runAiFeature'
+import { tierToMode } from '../ai/aiRouter'
+import type { AiMode } from '../../src/types/aiUsage'
 import type { AiModelTier } from '../modelTierMapping'
 import type { AiUsageContext } from '../ai/types'
 import { parseStructuredJson } from '../utils/parseStructuredJson'
@@ -172,6 +174,12 @@ export interface InterviewQuestionGenerationParams {
   criteria: InterviewQuestionCriterion[]
   language: ClinicalLanguage
   tier?: AiModelTier
+  /**
+   * User-visible AI mode driving the credit multiplier. When omitted it is
+   * derived from `tier` so the charge matches the selected tier instead of
+   * defaulting to the feature's mode.
+   */
+  mode?: AiMode
   usageContext?: AiUsageContext
 }
 
@@ -209,9 +217,11 @@ export async function generateInterviewQuestions(
     criteria: params.criteria,
   })
 
+  const tier = params.tier ?? 'fast'
   const llm = await runAiFeature({
     featureKey: 'clinical_intelligence_dimensional',
-    tier: params.tier ?? 'fast',
+    tier,
+    mode: params.mode ?? tierToMode(tier),
     systemPrompt,
     userPrompt,
     jsonResponse: true,
