@@ -3,6 +3,7 @@ import { useTranslation } from '../../context/TranslationContext'
 import { ClinicalPageEyebrow } from '../clinical/ClinicalPageEyebrow'
 import { DiagnosenWidget } from './DiagnosenWidget'
 import { IsdmAnalysisPanel } from '../workspace/IsdmAnalysisPanel'
+import type { AiModelTier } from '../../types'
 import type { NotionPageId } from './notionPages'
 
 interface DiagnosePageProps {
@@ -11,10 +12,16 @@ interface DiagnosePageProps {
   onDiagnosesChanged?: () => void
   /** Open a workspace documentation page (Butterfly deep-link to add a finding). */
   onJumpToSection?: (pageId: NotionPageId) => void
+  /**
+   * User-selected AI model tier from the workspace state — threaded into the
+   * Butterfly/Diagnose calls so the chosen mode routes to a distinct model and
+   * bills accordingly.
+   */
+  aiModelTier?: AiModelTier
 }
 
 /** Dedicated clinical-area page listing the patient's coded diagnoses (ICD-10/11). */
-export function DiagnosePage({ caseId, onDiagnosesChanged, onJumpToSection }: DiagnosePageProps) {
+export function DiagnosePage({ caseId, onDiagnosesChanged, onJumpToSection, aiModelTier }: DiagnosePageProps) {
   const { t } = useTranslation()
   const [diagnosesVersion, setDiagnosesVersion] = useState(0)
 
@@ -36,6 +43,7 @@ export function DiagnosePage({ caseId, onDiagnosesChanged, onJumpToSection }: Di
         caseId={caseId}
         diagnosesVersion={diagnosesVersion}
         onJumpToSection={onJumpToSection}
+        tier={aiModelTier}
         flat
       />
     </div>

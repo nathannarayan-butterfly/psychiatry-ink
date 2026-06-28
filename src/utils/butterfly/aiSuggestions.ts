@@ -8,6 +8,7 @@
  * attestation (which then feeds the evaluator).
  */
 
+import type { AiModelTier } from '../../types'
 import type { ButterflyCriterionStatus } from '../../services/butterflyExtractApi'
 import { setAttestation } from './attestationStorage'
 
@@ -19,6 +20,13 @@ export interface ButterflyAiSuggestion {
   confidence: number
   model: string
   suggestedAt: string
+  /**
+   * AI model tier that produced this suggestion (Economical / Standard /
+   * Gründlich). Optional for backward compatibility with suggestions stored
+   * before tiers were tracked; used so a tier switch re-queries rather than
+   * reusing another tier's result.
+   */
+  tier?: AiModelTier
   /** Provenance marker — advisory, awaiting clinician confirmation. */
   provenance: 'pending_clinician_review'
   /** Evidence is model-inferred, not structured/deterministic. */
@@ -67,6 +75,7 @@ export function saveAiSuggestions(
   disorderId: string,
   model: string,
   results: IncomingAiSuggestion[],
+  tier?: AiModelTier,
 ): ButterflyAiSuggestionState {
   const state = loadAiSuggestions(caseId)
   const suggestedAt = new Date().toISOString()
@@ -79,6 +88,7 @@ export function saveAiSuggestions(
       confidence: result.confidence,
       model,
       suggestedAt,
+      tier,
       provenance: 'pending_clinician_review',
       evidenceStrength: 'inferred',
     }

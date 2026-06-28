@@ -2111,6 +2111,7 @@ function NotionAppInner({
             <div className="case-tab-shell__body case-tab-shell__body--full">
               <DiagnosePage
                 caseId={caseId}
+                aiModelTier={workspace.aiModelTier}
                 onJumpToSection={(pageId) => {
                   setActiveTopTab('workspace')
                   setActivePage(pageId)

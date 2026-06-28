@@ -79,6 +79,7 @@ import { buildButterflyContextPackage, hasButterflyContext } from '../../utils/b
 import { extractButterflyCriteria, type ButterflyCriterionQuery } from '../../services/butterflyExtractApi'
 import { isCmeaConsumerReadEnabled } from '../../utils/featureFlags'
 import { isDemoCase } from '../../demo/demoReadOnly'
+import type { AiModelTier } from '../../types'
 import { useDiagnosisDisplayTitles } from '../../hooks/useDiagnosisDisplayTitles'
 import type { IcdTitleVersion } from '../../../shared/icdTitle'
 import type { NotionPageId } from '../notion/notionPages'
@@ -117,6 +118,12 @@ interface IsdmAnalysisPanelProps {
   onJumpToSection?: (pageId: NotionPageId) => void
   /** Flat clinical-minimal layout (Diagnose page) — no card chrome. */
   flat?: boolean
+  /**
+   * User-selected AI model tier (Economical / Standard / Gründlich) from the
+   * workspace state. Routes the billed Butterfly passes to distinct models and
+   * drives the credit multiplier. Defaults to the cheapest tier.
+   */
+  tier?: AiModelTier
 }
 
 function formatUpdatedAt(iso: string, language: UiLanguage): string {
@@ -202,6 +209,7 @@ export function IsdmAnalysisPanel({
   diagnosesVersion,
   onJumpToSection,
   flat = false,
+  tier = 'fast',
 }: IsdmAnalysisPanelProps) {
   const { t, language } = useTranslation()
   const [analysis, setAnalysis] = useState<IsdmClinicalAnalysis | null>(() => loadIsdmAnalysis(caseId))
@@ -370,8 +378,8 @@ export function IsdmAnalysisPanel({
   // which case the builder uses a deterministic German template.
   const resolveInterview = useCallback<InterviewQuestionResolver>(
     ({ disorderId, version, criterionId }) =>
-      getCachedInterviewQuestions(interviewCache, disorderId, version, icdVersion, criterionId, language),
-    [interviewCache, language, icdVersion],
+      getCachedInterviewQuestions(interviewCache, disorderId, version, icdVersion, criterionId, language, tier),
+    [interviewCache, language, icdVersion, tier],
   )
 
   // "Vorgeschlagene Fragen" — derived STRICTLY from the still-`unknown` criteria
@@ -518,9 +526,15 @@ export function IsdmAnalysisPanel({
       if (residual.length === 0) return
 
       // Reuse the localStorage suggestion cache: only query criteria that have no
-      // stored suggestion yet, so an explicit re-check cannot re-bill cached ones.
+      // stored suggestion yet for THIS tier, so an explicit re-check cannot
+      // re-bill cached ones — but switching tiers (distinct model) re-queries.
+      // Legacy suggestions stored without a tier are treated as reusable.
       const stored = loadAiSuggestions(caseId)
-      const toQuery = residual.filter((criterion) => !stored[criterion.id])
+      const toQuery = residual.filter((criterion) => {
+        const existing = stored[criterion.id]
+        if (!existing) return true
+        return existing.tier != null && existing.tier !== tier
+      })
       if (toQuery.length === 0) return
 
       const pkg = buildButterflyContextPackage(caseId)
@@ -530,7 +544,7 @@ export function IsdmAnalysisPanel({
       try {
         const response = await dedupeInFlight(
           butterflyExtractInFlight,
-          `${caseId}|${disorder.id}`,
+          `${caseId}|${disorder.id}|${tier}`,
           () =>
             extractButterflyCriteria({
               caseId,
@@ -538,6 +552,7 @@ export function IsdmAnalysisPanel({
               disorderName: disorder.name_de,
               criteria: toQuery,
               packageContent: pkg,
+              tier,
             }),
         )
         saveAiSuggestions(
@@ -550,6 +565,7 @@ export function IsdmAnalysisPanel({
             evidenceQuote: result.evidenceQuote,
             confidence: result.confidence,
           })),
+          tier,
         )
         setAiSuggestions(loadAiSuggestions(caseId))
       } catch {
@@ -562,7 +578,7 @@ export function IsdmAnalysisPanel({
         })
       }
     },
-    [caseId, resolveFromFacts],
+    [caseId, resolveFromFacts, tier],
   )
 
   // EXPLICIT, billed: generate concrete interview questions for ONE disorder's
@@ -577,13 +593,13 @@ export function IsdmAnalysisPanel({
       const cache = loadInterviewQuestionCache()
       const missing = unresolved.filter(
         (criterion) =>
-          !getCachedInterviewQuestions(cache, disorder.id, version, icdVersion, criterion.id, language),
+          !getCachedInterviewQuestions(cache, disorder.id, version, icdVersion, criterion.id, language, tier),
       )
       if (missing.length === 0) return
       try {
         const response = await dedupeInFlight(
           interviewQuestionsInFlight,
-          `${caseId}|${disorder.id}|v${version}|${icdVersion}|${language}`,
+          `${caseId}|${disorder.id}|v${version}|${icdVersion}|${language}|${tier}`,
           () =>
             generateInterviewQuestions({
               caseId,
@@ -591,6 +607,7 @@ export function IsdmAnalysisPanel({
               disorderName: disorder.name_de,
               criteria: missing,
               language,
+              tier,
             }),
         )
         saveInterviewQuestions(
@@ -598,6 +615,7 @@ export function IsdmAnalysisPanel({
           version,
           icdVersion,
           language,
+          tier,
           response.model.modelId,
           response.results,
         )
@@ -606,7 +624,7 @@ export function IsdmAnalysisPanel({
         // Non-fatal: the panel keeps showing the deterministic template questions.
       }
     },
-    [caseId, language, icdVersion],
+    [caseId, language, icdVersion, tier],
   )
 
   // The single explicit "Mit Butterfly prüfen" entry point: runs BOTH billed

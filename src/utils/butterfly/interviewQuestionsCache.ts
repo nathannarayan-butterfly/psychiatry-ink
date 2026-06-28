@@ -13,8 +13,13 @@
  *
  * Cached values are also language-scoped (questions are generated per UI
  * language), so the key folds in the active language.
+ *
+ * The key ALSO folds in the selected AI model tier (Economical / Standard /
+ * Gründlich): different tiers route to different models, so a tier switch must
+ * re-derive questions rather than serve another tier's cached output.
  */
 
+import type { AiModelTier } from '../../types'
 import type { ButterflyIcdVersion } from '../../data/diagnosisCriteria/version'
 
 const STORAGE_KEY = 'butterfly-interview-questions'
@@ -33,8 +38,9 @@ export function interviewQuestionCacheKey(
   icdVersion: ButterflyIcdVersion,
   criterionId: string,
   language: string,
+  tier: AiModelTier,
 ): string {
-  return `${disorderId}:${criterionId}:v${version}:${icdVersion}:${language}`
+  return `${disorderId}:${criterionId}:v${version}:${icdVersion}:${language}:${tier}`
 }
 
 export function loadInterviewQuestionCache(): InterviewQuestionCacheState {
@@ -64,8 +70,9 @@ export function getCachedInterviewQuestions(
   icdVersion: ButterflyIcdVersion,
   criterionId: string,
   language: string,
+  tier: AiModelTier,
 ): string[] | undefined {
-  const entry = state[interviewQuestionCacheKey(disorderId, version, icdVersion, criterionId, language)]
+  const entry = state[interviewQuestionCacheKey(disorderId, version, icdVersion, criterionId, language, tier)]
   return entry && entry.questions.length > 0 ? entry.questions : undefined
 }
 
@@ -83,6 +90,7 @@ export function saveInterviewQuestions(
   version: number,
   icdVersion: ButterflyIcdVersion,
   language: string,
+  tier: AiModelTier,
   model: string,
   results: IncomingInterviewQuestions[],
 ): InterviewQuestionCacheState {
@@ -90,7 +98,7 @@ export function saveInterviewQuestions(
   const generatedAt = new Date().toISOString()
   for (const result of results) {
     if (result.questions.length === 0) continue
-    state[interviewQuestionCacheKey(disorderId, version, icdVersion, result.criterionId, language)] = {
+    state[interviewQuestionCacheKey(disorderId, version, icdVersion, result.criterionId, language, tier)] = {
       questions: result.questions,
       model,
       generatedAt,
