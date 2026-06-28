@@ -2461,7 +2461,6 @@ function NotionAppInner({
                   onLaunch={handleLauncherLaunch}
                   hasPatient={hasPatient}
                   canRequestAnforderungen={canRequestAnforderungen}
-                  notesCaseId={hasPatient ? null : storageCaseId}
                 />
               )
             ) : (

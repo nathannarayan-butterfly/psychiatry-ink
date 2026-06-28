@@ -19,7 +19,6 @@ import {
 } from '../../../data/workspaceLauncher/launcherTasks'
 import { filterLauncherTasksForContext } from '../../../utils/workspaceLauncher/filterLauncherTasks'
 import { searchLauncher, type LauncherSuggestion } from '../../../utils/workspaceLauncher/fuzzyMatch'
-import { StandaloneNotesPanel } from '../standalone/StandaloneNotesPanel'
 import '../../../styles/workspace-launcher.css'
 
 const DEV_MODE_STORAGE_KEY = 'psychiatry-ink:developerMode'
@@ -37,11 +36,6 @@ interface WorkspaceLauncherProps {
   hasPatient: boolean
   /** Clinical requisitions can be raised (linked patient on a non-default case). */
   canRequestAnforderungen: boolean
-  /**
-   * Storage id of the standalone (default) case. When provided (patient-less
-   * workspace) the saved-notes side panel is shown for that case.
-   */
-  notesCaseId?: string | null
 }
 
 function loadDevMode(): boolean {
@@ -168,7 +162,6 @@ export function WorkspaceLauncher({
   onLaunch,
   hasPatient,
   canRequestAnforderungen,
-  notesCaseId,
 }: WorkspaceLauncherProps) {
   const { t, language } = useTranslation()
   const { user } = useAuth()
@@ -491,8 +484,6 @@ export function WorkspaceLauncher({
             {voiceError}
           </p>
         ) : null}
-
-        {notesCaseId && mode === 'grid' ? <StandaloneNotesPanel caseId={notesCaseId} /> : null}
 
         {view === 'followup' && selectedTask ? (
           <div className="wl-followup">
