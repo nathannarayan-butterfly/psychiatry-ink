@@ -1,11 +1,14 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { ArrowRightLeft, Loader2, Sparkles, X } from 'lucide-react'
 import { useTranslation } from '../../../context/TranslationContext'
 import { executeAiGeneration } from '../../../services/aiGeneration'
 import { estimateGenerationCredits } from '../../../utils/estimateCredits'
 import type { UiLanguage } from '../../../types/settings'
-import type { UiTranslationKey } from '../../../data/uiTranslations'
+import {
+  translationLanguageLabel,
+} from '../../../data/aiTranslationLanguages'
 import { StandaloneResultPanel } from './StandaloneResultPanel'
+import { TranslationLanguageCombobox } from './TranslationLanguageCombobox'
 import '../../../styles/workspace-ai.css'
 import '../../../styles/standalone-workspace.css'
 
@@ -14,40 +17,26 @@ interface StandaloneTranslateWidgetProps {
   onClose: () => void
 }
 
-const TRANSLATE_LANGUAGES: UiLanguage[] = ['de', 'en', 'fr', 'es']
-
-function languageLabel(lang: UiLanguage, t: (key: UiTranslationKey) => string): string {
-  const keys: Record<UiLanguage, UiTranslationKey> = {
-    de: 'standaloneTranslateLang_de',
-    en: 'standaloneTranslateLang_en',
-    fr: 'standaloneTranslateLang_fr',
-    es: 'standaloneTranslateLang_es',
-  }
-  return t(keys[lang])
+const UI_TO_DEFAULT_LANG: Record<UiLanguage, string> = {
+  de: 'de',
+  en: 'en',
+  fr: 'fr',
+  es: 'es',
 }
 
 /**
- * Patient-less translate tool: paste text, pick source/target language,
- * explicit translate button → editable result → copy / save to notes.
+ * Patient-less translate tool: paste text, pick source/target language from a
+ * searchable list of ~30 locales, explicit translate button → result → notes.
  */
 export function StandaloneTranslateWidget({ caseId, onClose }: StandaloneTranslateWidgetProps) {
   const { t, language } = useTranslation()
   const [phase, setPhase] = useState<'input' | 'result'>('input')
   const [source, setSource] = useState('')
-  const [sourceLang, setSourceLang] = useState<UiLanguage>(language)
-  const [targetLang, setTargetLang] = useState<UiLanguage>(language === 'de' ? 'en' : 'de')
+  const [sourceLang, setSourceLang] = useState(UI_TO_DEFAULT_LANG[language])
+  const [targetLang, setTargetLang] = useState(language === 'de' ? 'en' : 'de')
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  const langOptions = useMemo(
-    () =>
-      TRANSLATE_LANGUAGES.map((lang) => ({
-        value: lang,
-        label: languageLabel(lang, t),
-      })),
-    [t],
-  )
 
   const translate = useCallback(async () => {
     const trimmed = source.trim()
@@ -59,9 +48,16 @@ export function StandaloneTranslateWidget({ caseId, onClose }: StandaloneTransla
     setBusy(true)
     setError(null)
     try {
+      const sourceLabel = translationLanguageLabel(sourceLang)
+      const targetLabel = translationLanguageLabel(targetLang)
       const extraInstruction = t('standaloneTranslateInstruction')
-        .replace('{sourceLang}', languageLabel(sourceLang, t))
-        .replace('{targetLang}', languageLabel(targetLang, t))
+        .replace('{sourceLang}', sourceLabel)
+        .replace('{targetLang}', targetLabel)
+
+      const promptLanguage: UiLanguage =
+        targetLang === 'de' || targetLang === 'en' || targetLang === 'fr' || targetLang === 'es'
+          ? targetLang
+          : 'en'
 
       const generation = await executeAiGeneration(
         {
@@ -69,7 +65,7 @@ export function StandaloneTranslateWidget({ caseId, onClose }: StandaloneTransla
           scope: 'segment',
           tool: 'improve',
           tier: 'standard',
-          language: targetLang,
+          language: promptLanguage,
           sourceText: trimmed,
           extraInstruction,
         },
@@ -123,31 +119,21 @@ export function StandaloneTranslateWidget({ caseId, onClose }: StandaloneTransla
           <div className="swx-translate__langs">
             <label className="swx-field">
               {t('standaloneTranslateSourceLang')}
-              <select
-                className="swx-field__select"
+              <TranslationLanguageCombobox
                 value={sourceLang}
-                onChange={(e) => setSourceLang(e.target.value as UiLanguage)}
-              >
-                {langOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+                onChange={setSourceLang}
+                ariaLabel={t('standaloneTranslateSourceLang')}
+                noResultsLabel={t('standaloneTranslateNoLanguageMatch')}
+              />
             </label>
             <label className="swx-field">
               {t('standaloneTranslateTargetLang')}
-              <select
-                className="swx-field__select"
+              <TranslationLanguageCombobox
                 value={targetLang}
-                onChange={(e) => setTargetLang(e.target.value as UiLanguage)}
-              >
-                {langOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+                onChange={setTargetLang}
+                ariaLabel={t('standaloneTranslateTargetLang')}
+                noResultsLabel={t('standaloneTranslateNoLanguageMatch')}
+              />
             </label>
           </div>
 
