@@ -1,0 +1,286 @@
+/* Standalone (patient-less) workspace widgets — saved-notes side panel, the
+   free-text rewrite tool and the ad-hoc interaction check. Reuses the global
+   clinical tokens and the overlay look of workspace-ai.css. */
+
+/* ── Saved notes side panel ──────────────────────────────────────── */
+.swx-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border-soft, #e8e4df);
+  border-radius: 12px;
+  background: var(--surface, #fff);
+}
+.swx-notes__heading {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary, #6d655c);
+}
+.swx-notes__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.swx-notes__row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.5rem;
+  border-radius: 8px;
+  transition: background 0.1s ease;
+}
+.swx-notes__row:hover {
+  background: var(--surface-hover, #f5f3f0);
+}
+.swx-notes__main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  flex: 1;
+}
+.swx-notes__title {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-main, #24211e);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.swx-notes__date {
+  font-size: 0.72rem;
+  color: var(--text-secondary, #6d655c);
+}
+.swx-notes__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  flex-shrink: 0;
+}
+.swx-notes__icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-secondary, #6d655c);
+  cursor: pointer;
+  transition: background 0.1s ease, color 0.1s ease, border-color 0.1s ease;
+}
+.swx-notes__icon-btn:hover {
+  background: var(--surface, #fff);
+  border-color: var(--border-soft, #e8e4df);
+  color: var(--text-main, #24211e);
+}
+.swx-notes__icon-btn--danger:hover {
+  color: var(--danger, #c0392b);
+  border-color: color-mix(in srgb, var(--danger, #c0392b) 40%, transparent);
+}
+.swx-notes__confirm-btn {
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--danger, #c0392b);
+  border-radius: 7px;
+  background: var(--danger, #c0392b);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ── Inline note editor ──────────────────────────────────────────── */
+.swx-edit-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: color-mix(in srgb, #000 38%, transparent);
+}
+.swx-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 640px;
+  max-height: 86vh;
+  padding: 1.1rem 1.25rem 1.25rem;
+  border-radius: 14px;
+  background: var(--surface, #fff);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+}
+.swx-edit__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.swx-edit__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-main, #24211e);
+}
+.swx-edit__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary, #6d655c);
+  cursor: pointer;
+}
+.swx-edit__close:hover {
+  background: var(--surface-hover, #f5f3f0);
+}
+.swx-edit__label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #6d655c);
+}
+.swx-edit__input,
+.swx-edit__textarea {
+  width: 100%;
+  border: 1px solid var(--border-strong, #c8c4be);
+  border-radius: 9px;
+  background: var(--surface, #fff);
+  color: var(--text-main, #24211e);
+  font: inherit;
+  padding: 0.55rem 0.7rem;
+}
+.swx-edit__input:focus,
+.swx-edit__textarea:focus {
+  outline: none;
+  border-color: var(--accent, #8a5a2b);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #8a5a2b) 16%, transparent);
+}
+.swx-edit__textarea {
+  flex: 1;
+  min-height: 220px;
+  resize: vertical;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+.swx-edit__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+.swx-edit__btn {
+  padding: 0.5rem 0.95rem;
+  border-radius: 9px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+.swx-edit__btn--ghost {
+  border-color: var(--border-strong, #c8c4be);
+  background: var(--surface, #fff);
+  color: var(--text-main, #24211e);
+}
+.swx-edit__btn--ghost:hover {
+  background: var(--surface-hover, #f5f3f0);
+}
+.swx-edit__btn--primary {
+  background: var(--accent, #8a5a2b);
+  color: #fff;
+}
+.swx-edit__btn--primary:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ── Rewrite tool input + ad-hoc interaction picker ──────────────── */
+.swx-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.swx-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #6d655c);
+}
+.swx-field__input,
+.swx-field__textarea,
+.swx-field__select {
+  width: 100%;
+  border: 1px solid var(--border-strong, #c8c4be);
+  border-radius: 9px;
+  background: var(--surface, #fff);
+  color: var(--text-main, #24211e);
+  font: inherit;
+  padding: 0.55rem 0.7rem;
+}
+.swx-field__textarea {
+  min-height: 180px;
+  resize: vertical;
+  line-height: 1.5;
+}
+.swx-field__input:focus,
+.swx-field__textarea:focus,
+.swx-field__select:focus {
+  outline: none;
+  border-color: var(--accent, #8a5a2b);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #8a5a2b) 16%, transparent);
+}
+.swx-error {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--danger, #c0392b);
+}
+.swx-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.swx-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.35rem 0.25rem 0.6rem;
+  border: 1px solid var(--border-soft, #e8e4df);
+  border-radius: 999px;
+  background: var(--surface-hover, #f5f3f0);
+  font-size: 0.82rem;
+  color: var(--text-main, #24211e);
+}
+.swx-chip__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-secondary, #6d655c);
+  cursor: pointer;
+}
+.swx-chip__remove:hover {
+  color: var(--danger, #c0392b);
+}
+.swx-empty {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-secondary, #6d655c);
+}

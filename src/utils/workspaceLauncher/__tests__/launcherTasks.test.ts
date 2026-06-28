@@ -5,6 +5,10 @@ import { parseTherapyPlanningSubsectionId } from '../../../data/therapyPageSecti
 import { parseBefundungSubsectionId } from '../../../utils/befundungSubsections'
 import { uiTranslations } from '../../../data/uiTranslations'
 import { LAUNCHER_TASKS, getLauncherTask } from '../../../data/workspaceLauncher/launcherTasks'
+import { listGuidedEntrySchemas } from '../../../data/guidedEntry/schemas'
+
+const GUIDED_ITEM_TYPES = new Set(listGuidedEntrySchemas().map((schema) => schema.itemType))
+const STANDALONE_TOOLS = new Set(['rewrite', 'knowledge', 'butterfly', 'interactions'])
 
 const NOTION_PAGE_IDS = new Set(NOTION_PAGES.map((p) => p.id))
 const TOP_TABS = new Set([
@@ -103,6 +107,15 @@ describe('launcher task registry', () => {
               ['lab-interpretation', 'aufklaerung'],
               `${task.id}/${mode.id} feature`,
             ).toContain(target.feature)
+            break
+          case 'standaloneGuided':
+            // The standalone Befund widgets must point at a real guided schema.
+            expect(GUIDED_ITEM_TYPES.has(target.itemType), `${task.id}/${mode.id} itemType`).toBe(
+              true,
+            )
+            break
+          case 'standaloneTool':
+            expect(STANDALONE_TOOLS.has(target.tool), `${task.id}/${mode.id} tool`).toBe(true)
             break
           default: {
             const _exhaustive: never = target

@@ -777,11 +777,18 @@ function CollectionsHome({
 
 // ── Knowledge Base Tile (entry point + navigation orchestrator) ───────────────
 
-export function KnowledgeBaseTile() {
+interface KnowledgeBaseTileProps {
+  /** Open the overlay immediately (used when launched from the standalone workspace). */
+  defaultOpen?: boolean
+  /** Invoked when the overlay is fully closed — lets a host unmount the tile. */
+  onRequestClose?: () => void
+}
+
+export function KnowledgeBaseTile({ defaultOpen = false, onRequestClose }: KnowledgeBaseTileProps = {}) {
   const { t, language } = useTranslation()
   const { collections, addCollection, updateCollection, deleteCollection } = useKnowledgeCollections()
 
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(defaultOpen)
   const [activeCollectionId, setActiveCollectionId] = useState<string | null>(null)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [editingCollection, setEditingCollection] = useState<KnowledgeCollection | null>(null)
@@ -796,7 +803,8 @@ export function KnowledgeBaseTile() {
     setOpen(false)
     setActiveCollectionId(null)
     setGenericEducationOpen(false)
-  }, [])
+    onRequestClose?.()
+  }, [onRequestClose])
 
   // Recompute tile counts whenever the overlay opens, the active collection
   // changes (i.e. the user navigates back to the home grid after add/delete),

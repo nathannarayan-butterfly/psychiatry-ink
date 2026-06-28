@@ -1,5 +1,6 @@
 import {
   Activity,
+  BookOpen,
   Brain,
   ClipboardList,
   FileText,
@@ -9,13 +10,16 @@ import {
   HeartPulse,
   LineChart,
   MessagesSquare,
+  Network,
   Pill,
   ScrollText,
+  Sparkles,
   Stethoscope,
   type LucideIcon,
 } from 'lucide-react'
 import type { TopNavTabId } from '../../components/notion/CaseTopNav'
 import type { NotionPageId } from '../../components/notion/notionPages'
+import type { GuidedEntryItemType } from '../../types/guidedEntry'
 import type { UiTranslationKey } from '../uiTranslations'
 
 /**
@@ -80,6 +84,20 @@ export type LauncherTarget =
    * `aufklaerung` generates a patient education / consent text (Item 11).
    */
   | { kind: 'aiFeature'; feature: 'lab-interpretation' | 'aufklaerung' }
+  /**
+   * Standalone guided-entry widget (patient-less workspace). Runs the existing
+   * `GuidedEntryWizard` for `itemType`, generates the narrative text on the
+   * clinician's explicit action, and hands it to a result surface that saves it
+   * as a standalone note. Unlike the patient-bound flow it never calls
+   * `applyGuidedOutput` (no caseId-section write).
+   */
+  | { kind: 'standaloneGuided'; itemType: GuidedEntryItemType }
+  /**
+   * Standalone clinical tool (patient-less workspace): free-text AI
+   * rewrite/structure, knowledge-base + pharma lookup, the global Ask Butterfly
+   * assistant, or an ad-hoc drug–drug interaction check.
+   */
+  | { kind: 'standaloneTool'; tool: 'rewrite' | 'knowledge' | 'butterfly' | 'interactions' }
 
 /** A single "how do you want to create it?" option shown in the follow-up step. */
 export interface LauncherCreationMode {
@@ -106,6 +124,13 @@ export interface LauncherTask {
   /** Extra fuzzy-search terms (DE + EN), lower-case. Matched in addition to the label. */
   keywords: string[]
   modes: LauncherCreationMode[]
+  /**
+   * Only shown in the patient-less ("standalone") workspace. These cards expose
+   * generate-text / lookup tools that produce standalone notes rather than
+   * writing into a patient case; in a real patient case the equivalent
+   * patient-bound flows are used instead. See `filterLauncherTasksForContext`.
+   */
+  standaloneOnly?: boolean
 }
 
 export const LAUNCHER_TASKS: LauncherTask[] = [
@@ -628,6 +653,155 @@ export const LAUNCHER_TASKS: LauncherTask[] = [
         id: 'open',
         labelKey: 'launcherModeOpen',
         target: { kind: 'topTab', tab: 'konsil' },
+      },
+    ],
+  },
+  // ── Standalone (patient-less) tools ────────────────────────────────────
+  // Only surfaced when no patient is linked. They reuse the existing guided
+  // wizards / AI generators / knowledge tools but produce standalone notes
+  // instead of writing into a patient case.
+  {
+    id: 'standalone-befund',
+    labelKey: 'launcherTaskStandaloneBefund',
+    descKey: 'launcherTaskStandaloneBefundDesc',
+    category: 'findings',
+    icon: Stethoscope,
+    standaloneOnly: true,
+    keywords: [
+      'befund',
+      'finding',
+      'status',
+      'somatisch',
+      'körperlich',
+      'neurologisch',
+      'psychopathologisch',
+      'psychopathologie',
+      'amdp',
+      'vitalwerte',
+      'vital signs',
+      'ekg',
+      'ecg',
+    ],
+    modes: [
+      {
+        id: 'somatic',
+        labelKey: 'launcherModeStandaloneSomatic',
+        keywords: ['somatisch', 'körperlich', 'somatic', 'physical exam'],
+        target: { kind: 'standaloneGuided', itemType: 'anamnese-somatic-befund' },
+      },
+      {
+        id: 'neuro',
+        labelKey: 'launcherModeStandaloneNeuro',
+        keywords: ['neurologisch', 'neurological', 'neuro'],
+        target: { kind: 'standaloneGuided', itemType: 'anamnese-neuro-befund' },
+      },
+      {
+        id: 'psychopath',
+        labelKey: 'launcherModeStandalonePsychopath',
+        keywords: ['psychopathologisch', 'psychopathology', 'amdp', 'mse'],
+        target: { kind: 'standaloneGuided', itemType: 'psychopath-finding' },
+      },
+      {
+        id: 'vitals',
+        labelKey: 'launcherModeStandaloneVitals',
+        keywords: ['vitalwerte', 'vital signs', 'blutdruck', 'puls'],
+        target: { kind: 'standaloneGuided', itemType: 'vitalwerte-quick' },
+      },
+      {
+        id: 'ecg',
+        labelKey: 'launcherModeStandaloneEcg',
+        keywords: ['ekg', 'ecg', 'qtc', 'kardiogramm'],
+        target: { kind: 'standaloneGuided', itemType: 'befund-ecg' },
+      },
+    ],
+  },
+  {
+    id: 'standalone-rewrite',
+    labelKey: 'launcherTaskStandaloneRewrite',
+    descKey: 'launcherTaskStandaloneRewriteDesc',
+    category: 'documentation',
+    icon: Sparkles,
+    standaloneOnly: true,
+    keywords: [
+      'umschreiben',
+      'strukturieren',
+      'rewrite',
+      'structure',
+      'text',
+      'formulieren',
+      'formalisieren',
+      'formalize',
+      'zusammenfassen',
+      'summarize',
+      'verbessern',
+      'improve',
+    ],
+    modes: [
+      {
+        id: 'open',
+        labelKey: 'launcherModeOpen',
+        target: { kind: 'standaloneTool', tool: 'rewrite' },
+      },
+    ],
+  },
+  {
+    id: 'standalone-knowledge',
+    labelKey: 'launcherTaskStandaloneKnowledge',
+    descKey: 'launcherTaskStandaloneKnowledgeDesc',
+    category: 'medication',
+    icon: BookOpen,
+    standaloneOnly: true,
+    keywords: [
+      'wissensdatenbank',
+      'knowledge base',
+      'nachschlagen',
+      'lookup',
+      'pharma',
+      'medikament',
+      'arzneimittel',
+      'leitlinie',
+      'butterfly',
+      'frage',
+      'question',
+    ],
+    modes: [
+      {
+        id: 'knowledge',
+        labelKey: 'launcherModeStandaloneKnowledgeOpen',
+        keywords: ['wissensdatenbank', 'knowledge base', 'pharma', 'nachschlagen'],
+        target: { kind: 'standaloneTool', tool: 'knowledge' },
+      },
+      {
+        id: 'butterfly',
+        labelKey: 'launcherModeStandaloneButterfly',
+        keywords: ['butterfly', 'assistent', 'chat', 'frage', 'ki', 'ai'],
+        target: { kind: 'standaloneTool', tool: 'butterfly' },
+      },
+    ],
+  },
+  {
+    id: 'standalone-interactions',
+    labelKey: 'launcherTaskStandaloneInteractions',
+    descKey: 'launcherTaskStandaloneInteractionsDesc',
+    category: 'medication',
+    icon: Network,
+    standaloneOnly: true,
+    keywords: [
+      'wechselwirkung',
+      'wechselwirkungen',
+      'interaktion',
+      'interaction',
+      'kombination',
+      'combination',
+      'drug-drug',
+      'arzneimittel',
+      'kombinationscheck',
+    ],
+    modes: [
+      {
+        id: 'open',
+        labelKey: 'launcherModeOpen',
+        target: { kind: 'standaloneTool', tool: 'interactions' },
       },
     ],
   },

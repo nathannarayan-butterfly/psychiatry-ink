@@ -17,7 +17,9 @@ import {
   type LauncherTarget,
   type LauncherTask,
 } from '../../../data/workspaceLauncher/launcherTasks'
+import { filterLauncherTasksForContext } from '../../../utils/workspaceLauncher/filterLauncherTasks'
 import { searchLauncher, type LauncherSuggestion } from '../../../utils/workspaceLauncher/fuzzyMatch'
+import { StandaloneNotesPanel } from '../standalone/StandaloneNotesPanel'
 import '../../../styles/workspace-launcher.css'
 
 const DEV_MODE_STORAGE_KEY = 'psychiatry-ink:developerMode'
@@ -31,6 +33,15 @@ export interface WorkspaceLauncherLaunchMeta {
 interface WorkspaceLauncherProps {
   /** Route the selected task + creation mode into the existing workspace system. */
   onLaunch: (target: LauncherTarget, meta: WorkspaceLauncherLaunchMeta) => void
+  /** A real patient is linked — keeps patient-bound entries, hides standalone tools. */
+  hasPatient: boolean
+  /** Clinical requisitions can be raised (linked patient on a non-default case). */
+  canRequestAnforderungen: boolean
+  /**
+   * Storage id of the standalone (default) case. When provided (patient-less
+   * workspace) the saved-notes side panel is shown for that case.
+   */
+  notesCaseId?: string | null
 }
 
 function loadDevMode(): boolean {
@@ -59,6 +70,10 @@ function describeTarget(target: LauncherTarget): string {
       return 'anforderung-modal'
     case 'aiFeature':
       return `ai:${target.feature}`
+    case 'standaloneGuided':
+      return `standalone:guided:${target.itemType}`
+    case 'standaloneTool':
+      return `standalone:tool:${target.tool}`
   }
 }
 
@@ -149,9 +164,18 @@ function getFirstName(metadata: Record<string, unknown> | undefined): string | n
   return null
 }
 
-export function WorkspaceLauncher({ onLaunch }: WorkspaceLauncherProps) {
+export function WorkspaceLauncher({
+  onLaunch,
+  hasPatient,
+  canRequestAnforderungen,
+  notesCaseId,
+}: WorkspaceLauncherProps) {
   const { t, language } = useTranslation()
   const { user } = useAuth()
+  const tasks = useMemo(
+    () => filterLauncherTasksForContext(LAUNCHER_TASKS, { hasPatient, canRequestAnforderungen }),
+    [hasPatient, canRequestAnforderungen],
+  )
   const greeting = useMemo(() => {
     const firstName = getFirstName(user?.user_metadata as Record<string, unknown> | undefined)
     return firstName
@@ -180,16 +204,16 @@ export function WorkspaceLauncher({ onLaunch }: WorkspaceLauncherProps) {
   )
 
   const selectedTask = useMemo(
-    () => (selectedTaskId ? LAUNCHER_TASKS.find((task) => task.id === selectedTaskId) ?? null : null),
-    [selectedTaskId],
+    () => (selectedTaskId ? tasks.find((task) => task.id === selectedTaskId) ?? null : null),
+    [selectedTaskId, tasks],
   )
 
   const suggestions = useMemo<LauncherSuggestion[]>(
     () =>
       query.trim()
-        ? searchLauncher(LAUNCHER_TASKS, query, { localize: t, isModeEnabled })
+        ? searchLauncher(tasks, query, { localize: t, isModeEnabled })
         : [],
-    [query, t, isModeEnabled],
+    [query, t, isModeEnabled, tasks],
   )
 
   const followupModes = useMemo(
@@ -203,7 +227,7 @@ export function WorkspaceLauncher({ onLaunch }: WorkspaceLauncherProps) {
 
   const itemCount =
     mode === 'grid'
-      ? LAUNCHER_TASKS.length
+      ? tasks.length
       : mode === 'suggestions'
         ? suggestions.length
         : followupModes.length
@@ -281,7 +305,7 @@ export function WorkspaceLauncher({ onLaunch }: WorkspaceLauncherProps) {
       }
       setEmptyTranscript(false)
 
-      const matches = searchLauncher(LAUNCHER_TASKS, trimmed, {
+      const matches = searchLauncher(tasks, trimmed, {
         localize: t,
         isModeEnabled,
         limit: 1,
@@ -299,7 +323,7 @@ export function WorkspaceLauncher({ onLaunch }: WorkspaceLauncherProps) {
       setSelectedTaskId(null)
       inputRef.current?.focus()
     },
-    [t, isModeEnabled, openTask, launchMode],
+    [t, isModeEnabled, openTask, launchMode, tasks],
   )
 
   const {
@@ -335,7 +359,7 @@ export function WorkspaceLauncher({ onLaunch }: WorkspaceLauncherProps) {
 
   const activateCurrent = useCallback(() => {
     if (mode === 'grid') {
-      const task = LAUNCHER_TASKS[activeIndex]
+      const task = tasks[activeIndex]
       if (task) openTask(task)
       return
     }
@@ -348,7 +372,7 @@ export function WorkspaceLauncher({ onLaunch }: WorkspaceLauncherProps) {
     }
     const modeItem = followupModes[activeIndex]
     if (selectedTask && modeItem) launchMode(selectedTask, modeItem)
-  }, [mode, activeIndex, suggestions, followupModes, selectedTask, openTask, launchMode])
+  }, [mode, activeIndex, suggestions, followupModes, selectedTask, openTask, launchMode, tasks])
 
   const handleKeyDown = useCallback(
     (event: ReactKeyboardEvent) => {
@@ -567,7 +591,7 @@ export function WorkspaceLauncher({ onLaunch }: WorkspaceLauncherProps) {
           </div>
         ) : (
           <div className="wl-grid" ref={gridRef} role="listbox" aria-label={t('launcherTaskGridLabel')}>
-            {LAUNCHER_TASKS.map((task, index) => {
+            {tasks.map((task, index) => {
               const Icon = task.icon
               return (
                 <button
@@ -593,6 +617,8 @@ export function WorkspaceLauncher({ onLaunch }: WorkspaceLauncherProps) {
             })}
           </div>
         )}
+
+        {notesCaseId && mode === 'grid' ? <StandaloneNotesPanel caseId={notesCaseId} /> : null}
 
         <div className="wl-footer">
           <span className="wl-hint">{t('launcherHint')}</span>

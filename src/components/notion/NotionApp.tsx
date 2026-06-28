@@ -72,6 +72,11 @@ import {
   WorkspaceAiFeaturePanel,
   type WorkspaceAiFeatureId,
 } from './workspaceAi/WorkspaceAiFeaturePanel'
+import { StandaloneBefundWidget } from './standalone/StandaloneBefundWidget'
+import { StandaloneRewriteWidget } from './standalone/StandaloneRewriteWidget'
+import { StandaloneInteractionWidget } from './standalone/StandaloneInteractionWidget'
+import { KnowledgeBaseTile } from '../dashboard/KnowledgeBase'
+import { useAskButterfly } from '../../contexts/AskButterflyContext'
 import type { LauncherTarget } from '../../data/workspaceLauncher/launcherTasks'
 import {
   GuidedEntryHost,
@@ -552,6 +557,12 @@ function NotionAppInner({
   )
   const [showPatientRegistry, setShowPatientRegistry] = useState(false)
   const [aiFeaturePanel, setAiFeaturePanel] = useState<WorkspaceAiFeatureId | null>(null)
+  // Standalone (patient-less) workspace widgets launched from the launcher.
+  const [standaloneGuided, setStandaloneGuided] = useState<GuidedEntryItemType | null>(null)
+  const [standaloneTool, setStandaloneTool] = useState<
+    'rewrite' | 'knowledge' | 'interactions' | null
+  >(null)
+  const askButterfly = useAskButterfly()
   const [expandDokumentId, setExpandDokumentId] = useState<string | null>(null)
   const initialPageAppliedRef = useRef(false)
   const [activePage, setActivePage] = useState<NotionPageId>(
@@ -1657,6 +1668,22 @@ function NotionAppInner({
         setAiFeaturePanel(target.feature)
         return
       }
+      if (target.kind === 'standaloneGuided') {
+        setShowPatientRegistry(false)
+        setActiveTopTab('workspace')
+        setStandaloneGuided(target.itemType)
+        return
+      }
+      if (target.kind === 'standaloneTool') {
+        if (target.tool === 'butterfly') {
+          askButterfly.open()
+          return
+        }
+        setShowPatientRegistry(false)
+        setActiveTopTab('workspace')
+        setStandaloneTool(target.tool)
+        return
+      }
       if (target.kind === 'workspacePage') {
         const itemType = resolveGuidedItemTypeForWorkspace(
           target.pageId,
@@ -1671,6 +1698,7 @@ function NotionAppInner({
       }
     },
     [
+      askButterfly,
       beginGuidedEntryFlow,
       canRequestAnforderungen,
       executeWorkspacePageLaunch,
@@ -2322,7 +2350,12 @@ function NotionAppInner({
               isPageAvailableForLanguage('discharge-summary', language) ? (
               <DischargeSummaryWorkspace caseId={storageCaseId} disabled={workspaceReadOnly} />
             ) : showWorkspaceLauncher ? (
-              <WorkspaceLauncher onLaunch={handleLauncherLaunch} />
+              <WorkspaceLauncher
+                onLaunch={handleLauncherLaunch}
+                hasPatient={hasPatient}
+                canRequestAnforderungen={canRequestAnforderungen}
+                notesCaseId={hasPatient ? null : storageCaseId}
+              />
             ) : (
               <>
                 {hasDraftOnlyBanner && workspace.selectedDocumentType && (
@@ -2504,6 +2537,32 @@ function NotionAppInner({
           caseId={storageCaseId}
           onClose={() => setAiFeaturePanel(null)}
         />
+      ) : null}
+
+      {standaloneGuided ? (
+        <StandaloneBefundWidget
+          itemType={standaloneGuided}
+          caseId={storageCaseId}
+          onClose={() => setStandaloneGuided(null)}
+        />
+      ) : null}
+
+      {standaloneTool === 'rewrite' ? (
+        <StandaloneRewriteWidget
+          caseId={storageCaseId}
+          onClose={() => setStandaloneTool(null)}
+        />
+      ) : null}
+
+      {standaloneTool === 'interactions' ? (
+        <StandaloneInteractionWidget
+          caseId={storageCaseId}
+          onClose={() => setStandaloneTool(null)}
+        />
+      ) : null}
+
+      {standaloneTool === 'knowledge' ? (
+        <KnowledgeBaseTile defaultOpen onRequestClose={() => setStandaloneTool(null)} />
       ) : null}
 
       {todoQuickAddOpen ? (
