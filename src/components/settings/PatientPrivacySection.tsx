@@ -119,6 +119,13 @@ export function PatientPrivacySection({ privacy, workspaceVault }: PatientPrivac
               ? t('privacyPatientFieldsEnabled')
               : t('privacyPatientFieldsDisabled')}
           </li>
+          {allowsPatientMetadata(tier) ? (
+            <li>
+              {identifierStorage === 'account'
+                ? t('privacyTierIdentifierAccount')
+                : t('privacyTierIdentifierDevice')}
+            </li>
+          ) : null}
           <li>
             {allowsPublicKeyRegistration(tier)
               ? t('privacyPublicKeyAllowed')
