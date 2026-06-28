@@ -406,6 +406,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 .swx-host__bar {
   display: flex;
@@ -439,9 +441,45 @@
   width: 100%;
   max-height: none;
   box-shadow: none;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 .wai-panel--inline .wai-panel__body {
   overflow: visible;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.wai-panel--inline .wai-panel__body--fill {
+  overflow: hidden;
+}
+.wai-panel--inline .wai-panel__footer {
+  flex-shrink: 0;
+}
+.wai-panel--inline .wai-panel__header {
+  flex-shrink: 0;
+}
+
+/* Form layout that lets the primary textarea consume remaining panel height. */
+.swx-form--fill {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.swx-form--fill > .swx-field--grow {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.swx-form--fill > .swx-field--grow > .swx-rewrite__editor {
+  flex: 1 1 auto;
+  min-height: clamp(20rem, 52vh, 42rem);
+  resize: none;
 }
 
 /* ── DB-vs-AI provenance badges (medication tool) ─────────────────── */
@@ -570,10 +608,10 @@
   flex: 1 1 auto;
 }
 
-/* ── Large in-container rewrite editor (#3) ──────────────────────── */
+/* ── Large in-container rewrite / paste editor ─────────────────────── */
 .swx-rewrite__editor {
   width: 100%;
-  min-height: clamp(20rem, 48vh, 34rem);
+  min-height: clamp(20rem, 52vh, 42rem);
   resize: vertical;
   border: 1px solid var(--border-strong, #c8c4be);
   border-radius: 10px;
@@ -686,4 +724,79 @@
 .swx-medlab__meta {
   font-size: 0.74rem;
   color: var(--text-secondary, #6d655c);
+}
+
+/* ── Dynamic lab parameter/value rows (med ⇄ lab) ────────────────── */
+.swx-lab-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.swx-lab-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 0.45rem;
+  align-items: end;
+}
+.swx-lab-row__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--border-soft, #e8e4df);
+  border-radius: 8px;
+  background: var(--surface, #fff);
+  color: var(--text-secondary, #6d655c);
+  cursor: pointer;
+}
+.swx-lab-row__remove:hover {
+  color: var(--danger, #c0392b);
+  border-color: var(--danger, #c0392b);
+}
+.swx-lab-rows__add {
+  align-self: flex-start;
+  margin-top: 0.15rem;
+}
+
+/* ── Dictation widget mic bar ────────────────────────────────────── */
+.swx-dictation__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+.swx-dictation__mic {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid var(--border-strong, #c8c4be);
+  border-radius: 9px;
+  background: var(--surface, #fff);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.swx-dictation__mic--recording {
+  color: #fff;
+  border-color: var(--danger, #c0392b);
+  background: var(--danger, #c0392b);
+}
+.swx-dictation__status {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #6d655c);
+}
+
+/* ── Translate widget language row ───────────────────────────────── */
+.swx-translate__langs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+.swx-translate__langs .swx-field {
+  flex: 1 1 10rem;
+  min-width: 0;
 }

@@ -137,9 +137,9 @@ export function StandalonePromptToolWidget({
         </button>
       </header>
 
-      <div className="wai-panel__body">
-        <div className="swx-form">
-          <label className="swx-field">
+      <div className="wai-panel__body wai-panel__body--fill">
+        <div className="swx-form swx-form--fill">
+          <label className="swx-field swx-field--grow">
             {t(cfg.inputLabelKey)}
             <textarea
               className="swx-rewrite__editor"
