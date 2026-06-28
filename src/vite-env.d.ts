@@ -36,3 +36,10 @@ interface ImportMeta {
  * its own build id against the deployed one.
  */
 declare const __APP_BUILD_ID__: string
+
+/**
+ * Build-time constant injected by the `psyink-version-stamp` Vite plugin with
+ * the `version` field read from `package.json`, so the app can display its real
+ * release version without bundling the whole manifest.
+ */
+declare const __APP_VERSION__: string

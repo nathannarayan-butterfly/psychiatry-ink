@@ -173,14 +173,28 @@ function resolveBuildId(): string {
  * One `buildId` is computed per build/dev start and used for both, guaranteeing
  * the embedded constant equals the published JSON for a given deploy.
  */
+function resolveAppVersion(): string {
+  try {
+    const pkg = JSON.parse(
+      readFileSync(resolve(process.cwd(), 'package.json'), 'utf8'),
+    ) as { version?: string }
+    if (pkg.version) return pkg.version
+  } catch {
+    // package.json unreadable in this context — fall through to a sentinel.
+  }
+  return '0.0.0'
+}
+
 function versionStampPlugin(): Plugin {
   const buildId = resolveBuildId()
+  const appVersion = resolveAppVersion()
   return {
     name: 'psyink-version-stamp',
     config() {
       return {
         define: {
           __APP_BUILD_ID__: JSON.stringify(buildId),
+          __APP_VERSION__: JSON.stringify(appVersion),
         },
       }
     },

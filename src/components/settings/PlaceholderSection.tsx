@@ -1,5 +1,8 @@
-import { type FormEvent, useEffect, useRef, useState } from 'react'
+import { type FormEvent, type ReactNode, useEffect, useRef, useState } from 'react'
 import { languageOptions } from '../../data/languages'
+import { localizedPath, type PublicPageKey } from '../../public-site/publicRoutes'
+import { APP_VERSION, LOADED_BUILD_ID } from '../../utils/buildVersion'
+import type { UiTranslationKey } from '../../data/uiTranslations'
 import {
   getIsdmProfileLabel,
   getLocalClinicalStandardLabel,
@@ -474,21 +477,137 @@ export function AccountSection() {
   )
 }
 
+// Canonical general/support inbox. Mirrors `CONTACT.generalEmail` in
+// `public-site/legalContent.ts` and the contact API's `CONTACT_TO` default
+// (the form's "Support" category routes here). Duplicated as a literal so the
+// settings bundle doesn't pull in the large legal-content module. There is no
+// separate `help@` alias; `hello@` is the established support address.
+const SUPPORT_EMAIL = 'hello@psychiatry.ink'
+
+const ABOUT_LINK_CLASS =
+  'text-[var(--color-accent)] underline underline-offset-2 transition-colors hover:text-[var(--color-accent-hover)] focus-visible:underline focus-visible:outline-none'
+
+/** Legal/trust documents linked from the About section, in display order. */
+const ABOUT_LEGAL_LINKS: ReadonlyArray<{ key: PublicPageKey; labelKey: UiTranslationKey }> = [
+  { key: 'privacy', labelKey: 'settingsAboutLinkPrivacy' },
+  { key: 'terms', labelKey: 'settingsAboutLinkTerms' },
+  { key: 'impressum', labelKey: 'settingsAboutLinkImprint' },
+  { key: 'cookies', labelKey: 'settingsAboutLinkCookies' },
+  { key: 'dpa', labelKey: 'settingsAboutLinkDpa' },
+  { key: 'subprocessors', labelKey: 'settingsAboutLinkSubprocessors' },
+  { key: 'securityOverview', labelKey: 'settingsAboutLinkSecurityOverview' },
+]
+
+function AboutGroupHeading({ children }: { children: ReactNode }) {
+  return (
+    <p className="mt-6 mb-1 text-xs font-semibold uppercase tracking-wide text-muted first:mt-0">
+      {children}
+    </p>
+  )
+}
+
+/**
+ * Opens public marketing/legal/contact pages in a new tab. Those routes are
+ * served by the same SPA bundle, so an in-tab navigation would unload the
+ * authenticated app — `target="_blank"` keeps the user's session intact.
+ */
+function AboutExternalLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" className={ABOUT_LINK_CLASS}>
+      {children}
+    </a>
+  )
+}
+
 export function AboutSection() {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
+
+  const isDevBuild = LOADED_BUILD_ID === 'dev' || LOADED_BUILD_ID === 'test'
+  // Deep-link the contact form with the Support category preselected.
+  const contactHref = `${localizedPath('contact', language)}?category=support`
 
   return (
     <div>
+      <AboutGroupHeading>{t('settingsAboutGroupApplication')}</AboutGroupHeading>
+
       <SettingsField label={t('settingsAboutVersionLabel')}>
-        <p className="text-sm text-ink">Psychiatry.ink</p>
+        <p className="text-sm text-ink">
+          Psychiatry.ink <span className="text-muted">v{APP_VERSION}</span>
+        </p>
       </SettingsField>
+
+      <SettingsField label={t('settingsAboutBuildLabel')}>
+        <p className="text-sm text-muted">
+          {isDevBuild ? (
+            t('settingsAboutBuildDev')
+          ) : (
+            <span className="font-mono">{LOADED_BUILD_ID}</span>
+          )}
+        </p>
+      </SettingsField>
+
+      <AboutGroupHeading>{t('settingsAboutGroupCompany')}</AboutGroupHeading>
+
+      <SettingsField label={t('settingsAboutCompanyLabel')}>
+        <div className="text-sm text-ink">
+          <p className="font-medium">Psychiatry Ink Ltd</p>
+          <p className="mt-1 text-muted">{t('settingsAboutCompanyRegistration')}</p>
+          <p className="text-muted">{t('settingsAboutCompanyAddress')}</p>
+          <p className="mt-2">
+            <AboutExternalLink href={localizedPath('impressum', language)}>
+              {t('settingsAboutLinkImprint')}
+            </AboutExternalLink>
+          </p>
+        </div>
+      </SettingsField>
+
+      <AboutGroupHeading>{t('settingsAboutGroupPrivacy')}</AboutGroupHeading>
 
       <SettingsField label={t('settingsAboutPrivacyLabel')}>
-        <p className="text-sm text-muted">{t('settingsAboutPrivacyBody')}</p>
+        <div className="text-sm text-muted">
+          <p className="text-ink">{t('settingsAboutPrivacyBody')}</p>
+          <p className="mt-1">{t('settingsAboutPrivacyExpanded')}</p>
+          <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+            <AboutExternalLink href={localizedPath('privacy', language)}>
+              {t('settingsAboutLinkPrivacy')}
+            </AboutExternalLink>
+            <AboutExternalLink href={localizedPath('security', language)}>
+              {t('settingsAboutLinkSecurity')}
+            </AboutExternalLink>
+          </p>
+        </div>
       </SettingsField>
 
+      <AboutGroupHeading>{t('settingsAboutGroupSupport')}</AboutGroupHeading>
+
       <SettingsField label={t('settingsAboutSupportLabel')}>
-        <p className="text-sm text-muted">{t('settingsAboutSupportBody')}</p>
+        <div className="text-sm text-muted">
+          <p>{t('settingsAboutSupportBody')}</p>
+          <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+            <AboutExternalLink href={contactHref}>
+              {t('settingsAboutContactFormLink')}
+            </AboutExternalLink>
+            <a href={`mailto:${SUPPORT_EMAIL}`} className={ABOUT_LINK_CLASS}>
+              {SUPPORT_EMAIL}
+            </a>
+          </p>
+        </div>
+      </SettingsField>
+
+      <SettingsField label={t('settingsAboutDataResidencyLabel')}>
+        <p className="text-sm text-muted">{t('settingsAboutDataResidencyBody')}</p>
+      </SettingsField>
+
+      <AboutGroupHeading>{t('settingsAboutGroupLegal')}</AboutGroupHeading>
+
+      <SettingsField label={t('settingsAboutLegalLabel')}>
+        <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+          {ABOUT_LEGAL_LINKS.map(({ key, labelKey }) => (
+            <AboutExternalLink key={key} href={localizedPath(key, language)}>
+              {t(labelKey)}
+            </AboutExternalLink>
+          ))}
+        </div>
       </SettingsField>
     </div>
   )

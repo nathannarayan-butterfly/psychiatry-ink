@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import type { ContactCategory } from '../contactContent'
-import { getContactCopy } from '../contactContent'
+import { CONTACT_CATEGORY_ENUM, getContactCopy } from '../contactContent'
 import { localizedPath, type PublicLocale } from '../publicRoutes'
 import { PublicLink } from '../components/PublicLink'
 
@@ -29,9 +29,25 @@ const INITIAL_FORM: FormState = {
   privacyConsent: false,
 }
 
+/**
+ * Optional `?category=` deep-link prefill (e.g. the in-app Settings → About
+ * "Open contact form" link passes `category=support`). Only a value from the
+ * known enum is accepted; anything else is ignored.
+ */
+function categoryFromQuery(): ContactCategory | '' {
+  if (typeof window === 'undefined') return ''
+  const raw = new URLSearchParams(window.location.search).get('category')
+  return raw && (CONTACT_CATEGORY_ENUM as readonly string[]).includes(raw)
+    ? (raw as ContactCategory)
+    : ''
+}
+
 export function ContactPage({ locale, onNavigate }: ContactPageProps) {
   const copy = getContactCopy(locale)
-  const [form, setForm] = useState<FormState>(INITIAL_FORM)
+  const [form, setForm] = useState<FormState>(() => ({
+    ...INITIAL_FORM,
+    category: categoryFromQuery(),
+  }))
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
