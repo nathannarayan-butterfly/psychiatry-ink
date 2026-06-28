@@ -18,6 +18,8 @@ export interface MedicationMonitoringInput {
   befunde: LaborBefund[]
   /** Verlauf feed entries — somatic Befund vitals supplement lab anthropometry. */
   verlaufEntries?: VerlaufFeedEntry[]
+  /** UI language for localized analyte labels (defaults to German). */
+  language?: string
 }
 
 interface LatestLabValue {
@@ -25,18 +27,20 @@ interface LatestLabValue {
   date: string
 }
 
-/** Clinician-facing labels — weight/BMI shown as BMI when a value is available. */
-const PARAM_DISPLAY_LABEL: Partial<Record<AnalyteKey, string>> = {
-  glucose: 'Glukose',
-  hba1c: 'HbA1c',
-  weight: 'BMI',
-  lipids: 'Lipide',
-  prolactin: 'Prolaktin',
-  qtc: 'QTc',
+/** Clinician-facing label overrides — weight shown as BMI when a value is available. */
+const PARAM_DISPLAY_LABEL: Partial<Record<AnalyteKey, { de: string; en: string }>> = {
+  glucose: { de: 'Glukose', en: 'Glucose' },
+  hba1c: { de: 'HbA1c', en: 'HbA1c' },
+  weight: { de: 'BMI', en: 'BMI' },
+  lipids: { de: 'Lipide', en: 'Lipids' },
+  prolactin: { de: 'Prolaktin', en: 'Prolactin' },
+  qtc: { de: 'QTc', en: 'QTc' },
 }
 
-function displayLabel(key: AnalyteKey): string {
-  return PARAM_DISPLAY_LABEL[key] ?? analyteLabel(key)
+function displayLabel(key: AnalyteKey, language: string): string {
+  const override = PARAM_DISPLAY_LABEL[key]
+  if (override) return language === 'de' ? override.de : override.en
+  return analyteLabel(key, language)
 }
 
 function valueLabel(v: LaborValue): string {
@@ -241,6 +245,7 @@ export function formatParameterMonitoringLabel(row: ParameterMonitoringRow): str
 export function getParameterMonitoringRows(
   input: MedicationMonitoringInput,
 ): ParameterMonitoringRow[] {
+  const language = input.language ?? 'de'
   const labIndex = buildLabIndex(input.befunde)
   applyMergedAnthropometry(labIndex, input.befunde, input.verlaufEntries ?? [])
   const paramMeds = new Map<AnalyteKey, string[]>()
@@ -271,7 +276,7 @@ export function getParameterMonitoringRows(
     const resolved = resolveParameterValue(key, labIndex)
     rows.push({
       key,
-      label: displayLabel(key),
+      label: displayLabel(key, language),
       medications: [...medications].sort((a, b) => a.localeCompare(b, 'de')),
       valueLabel: resolved.valueLabel,
       dateLabel: resolved.dateLabel,

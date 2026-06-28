@@ -9,6 +9,7 @@ import {
   translateMedicationUi,
 } from '../../data/medicationUiTranslations'
 import { getDrugsForSubstance } from '../../data/psychDrugReference/index'
+import { localizeMonitoringRule } from '../../data/psychDrugReference/monitoringI18n'
 import {
   DEFAULT_MEDICATIONS_COLLECTION_ID,
   type KnowledgeBaseDrug,
@@ -28,6 +29,7 @@ import { useCanAccessModule } from '../../hooks/permissions/useCanAccessModule'
 import type { MedicationEntry, MedicationPlanState, SideEffectReport } from '../../types/medicationPlan'
 import type { AdrCausalityAssessment } from '../../types/adrCausality'
 import { activeMedications } from '../../utils/medication/planOps'
+import { simplifyClassLabel } from '../../utils/medication/medicationInsights'
 import { medicationSectionDomId } from '../../contexts/MedicationSectionNavContext'
 import { MEDICATION_SECTION_META } from './medicationSectionMeta'
 import { CombinationCheckPanel } from '../therapy/CombinationCheckPanel'
@@ -406,6 +408,7 @@ export function MedicationLowerSections({
     const parameterMonitoring = getParameterMonitoringRows({
       medications,
       befunde: loadBefunde(caseId),
+      language,
     })
     return (
       <>
@@ -465,7 +468,9 @@ export function MedicationLowerSections({
                       {getStatusLabel(med.status, language)}
                     </span>
                   </div>
-                  <span className="medication-intelligence-card__class">{drug.substanceClass}</span>
+                  <span className="medication-intelligence-card__class">
+                    {simplifyClassLabel(drug.substanceClass, language)}
+                  </span>
                 </div>
 
                 <dl className="medication-intelligence-card__facts">
@@ -553,27 +558,30 @@ export function MedicationLowerSections({
                       {translateMedicationUi(language, 'medSectionMonitoring')}
                     </p>
                     <ul className="medication-monitoring-list">
-                      {monitoringRules.map((rule, idx) => (
+                      {monitoringRules.map((rule, idx) => {
+                        const localizedRule = localizeMonitoringRule(rule, language)
+                        return (
                         <li key={idx} className="medication-monitoring-list__item">
-                          <strong>{rule.parameter}</strong>
-                          {rule.frequency ? (
+                          <strong>{localizedRule.parameter}</strong>
+                          {localizedRule.frequency ? (
                             <span className="medication-monitoring__frequency">
                               {' · '}
                               {translateMedicationUi(language, 'medMonitoringFrequency')}
                               {': '}
-                              {rule.frequency}
+                              {localizedRule.frequency}
                             </span>
                           ) : null}
-                          {rule.warningThreshold ? (
+                          {localizedRule.warningThreshold ? (
                             <span className="medication-monitoring__threshold">
-                              {' · ⚠ '}{rule.warningThreshold}
+                              {' · ⚠ '}{localizedRule.warningThreshold}
                             </span>
                           ) : null}
                           <p className="medication-monitoring__note">
-                            {language === 'de' ? rule.noteDe : rule.noteEn}
+                            {localizedRule.note}
                           </p>
                         </li>
-                      ))}
+                        )
+                      })}
                     </ul>
                   </div>
                 ) : null}
@@ -597,7 +605,7 @@ export function MedicationLowerSections({
               <div className="medication-intelligence-card__head">
                 <span className="medication-intelligence-card__substance">{med.substance}</span>
               </div>
-              <p>{demo[1].summary}</p>
+              <p>{language === 'de' ? demo[1].summary.de : demo[1].summary.en}</p>
               <p className="medication-intelligence__disclaimer">
                 {translateMedicationUi(language, 'medStrengthDemoHint')}
               </p>

@@ -65,5 +65,10 @@ export function getDrugsForSubstance(substanceName: string): DrugReference[] {
   })
 }
 
+/** Every deduplicated drug reference entry (used by guardrail tests and bulk views). */
+export function getAllDrugReferences(): DrugReference[] {
+  return ALL_DRUGS
+}
+
 export type { DrugReference }
 export type { ReceptorProfile, MonitoringRule, InteractionEntry, LabWarningRule } from './schema'

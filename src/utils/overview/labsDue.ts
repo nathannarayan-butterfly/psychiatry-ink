@@ -13,6 +13,8 @@ import type { LabDueItem, LabsDueData } from '../../components/notion/overview/t
 export interface LabsDueInput {
   befunde: LaborBefund[]
   activeSubstances: string[]
+  /** UI language for localized analyte labels (defaults to German). */
+  language?: string
 }
 
 interface LatestValue {
@@ -55,6 +57,7 @@ function rationaleText(rationale: AnalyteRationale[]): string | null {
  * in-range, plus monitoring obligations that have no lab on file yet.
  */
 export function buildLabsDue(input: LabsDueInput): LabsDueData {
+  const language = input.language ?? 'de'
   const relevance = buildLabRelevance(input.activeSubstances)
   const relevantKeys = new Set<AnalyteKey>(relevance.rationaleByKey.keys())
 
@@ -90,7 +93,7 @@ export function buildLabsDue(input: LabsDueInput): LabsDueData {
     const rationale = relevance.rationaleByKey.get(key) ?? []
     const item: LabDueItem = {
       id: `lab:${key}`,
-      name: analyteLabel(key),
+      name: analyteLabel(key, language),
       valueLabel: valueLabel(latest.value),
       refLabel: refLabel(latest.value),
       dateLabel: formatShortDateDe(latest.date),
@@ -105,7 +108,7 @@ export function buildLabsDue(input: LabsDueInput): LabsDueData {
   const missingMonitoring = [...relevance.rationaleByKey.entries()]
     .filter(([key]) => !latestByKey.has(key))
     .map(([key, rationale]) => ({
-      parameter: analyteLabel(key),
+      parameter: analyteLabel(key, language),
       drugs: [...new Set(rationale.map((r) => r.drug))],
     }))
 

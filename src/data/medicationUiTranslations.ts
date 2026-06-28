@@ -1908,14 +1908,23 @@ export const DEMO_MEDICATION_SUGGESTIONS: Record<
   ],
 }
 
-export const DEMO_INTELLIGENCE: Record<string, { summary: string }> = {
+export const DEMO_INTELLIGENCE: Record<string, { summary: { de: string; en: string } }> = {
   haloperidol: {
-    summary: 'Typische Antipsychotika-Wirkung; QT- und EPS-Monitoring bei höheren Dosen.',
+    summary: {
+      de: 'Typische Antipsychotika-Wirkung; QT- und EPS-Monitoring bei höheren Dosen.',
+      en: 'Typical antipsychotic action; monitor QT and EPS at higher doses.',
+    },
   },
   lithium: {
-    summary: 'Engmaschige Spiegelkontrolle, Nieren- und Schilddrüsenfunktion beachten.',
+    summary: {
+      de: 'Engmaschige Spiegelkontrolle, Nieren- und Schilddrüsenfunktion beachten.',
+      en: 'Close serum-level monitoring; watch renal and thyroid function.',
+    },
   },
   valproat: {
-    summary: 'Leberwerte und Blutbild überwachen; teratogenes Risiko bei Frauen im gebärfähigen Alter.',
+    summary: {
+      de: 'Leberwerte und Blutbild überwachen; teratogenes Risiko bei Frauen im gebärfähigen Alter.',
+      en: 'Monitor liver enzymes and blood count; teratogenic risk in women of childbearing potential.',
+    },
   },
 }

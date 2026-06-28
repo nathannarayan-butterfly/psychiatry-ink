@@ -287,8 +287,14 @@ export function OverviewDashboard({
     const activeSubstances = medications
       .filter((m) => m.status === 'active' || m.status === 'reduced' || m.status === 'increased')
       .map((m) => m.substance)
-    return buildLaborOverview({ befunde, medications, activeSubstances, verlaufEntries: verlaufFeed })
-  }, [caseId, medications, befunde, verlaufFeed])
+    return buildLaborOverview({
+      befunde,
+      medications,
+      activeSubstances,
+      verlaufEntries: verlaufFeed,
+      language,
+    })
+  }, [caseId, medications, befunde, verlaufFeed, language])
   const recentLabResults = useMemo(() => buildRecentLabResults(befunde), [befunde])
   const recentVerlauf = useMemo(() => {
     void clinicalRefreshRevision

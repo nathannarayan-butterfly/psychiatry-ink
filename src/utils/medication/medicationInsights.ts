@@ -155,7 +155,7 @@ export function computeMedicationInsights(
   // ── Active substance classes (reference-derived) ────────────────────────
   const classCounts = new Map<string, string[]>()
   for (const { name, ref } of activeDrugs) {
-    const label = simplifyClassLabel(ref.substanceClass)
+    const label = simplifyClassLabel(ref.substanceClass, language)
     const list = classCounts.get(label) ?? []
     list.push(name)
     classCounts.set(label, list)
@@ -247,7 +247,7 @@ export function computeMedicationInsights(
     .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
 
   // ── Combination / additive pharmacodynamic risks ────────────────────────
-  const combinationRisks = computeCombinationRisks(activeDrugs, activeClasses, classCounts)
+  const combinationRisks = computeCombinationRisks(activeDrugs, language)
   const crossInteractions = computeCrossInteractions(activeDrugs, language)
   const combinationRiskLevel = highestLevel(combinationRisks, crossInteractions)
 
@@ -293,21 +293,27 @@ export function computeMedicationInsights(
  */
 function computeCombinationRisks(
   activeDrugs: ActiveDrug[],
-  activeClasses: MedicationClassTally[],
-  classMembers: Map<string, string[]>,
+  language: string,
 ): CombinationRisk[] {
   const risks: CombinationRisk[] = []
 
-  // Duplicate class therapy (e.g. antipsychotic polypharmacy).
-  for (const klass of activeClasses) {
-    if (klass.count < 2) continue
-    const drugs = classMembers.get(klass.label) ?? []
-    const isAntipsychotic = isAntipsychoticClass(klass.label)
+  // Duplicate class therapy (e.g. antipsychotic polypharmacy). Group by the
+  // COARSE class so FGA + SGA still counts as antipsychotic polypharmacy.
+  const coarseMembers = new Map<string, string[]>()
+  for (const { name, ref } of activeDrugs) {
+    const label = coarseClassLabel(ref.substanceClass, language)
+    const list = coarseMembers.get(label) ?? []
+    list.push(name)
+    coarseMembers.set(label, list)
+  }
+  for (const [label, drugs] of coarseMembers) {
+    if (drugs.length < 2) continue
+    const isAntipsychotic = isAntipsychoticClass(label)
     risks.push({
       kind: 'duplicateClass',
       level: isAntipsychotic ? 'high' : 'moderate',
       drugs,
-      detail: klass.label,
+      detail: label,
     })
   }
 
@@ -431,23 +437,87 @@ function receptorLabel(key: ReceptorAxisKey, language: string): string {
 }
 
 /**
- * Collapse a verbose reference class string into a short, scannable label.
- * e.g. "Butyrophenon (Typisches Antipsychotikum, FGA)" → "Antipsychotikum (FGA)".
+ * Canonical, language-keyed substance-class labels. The reference DB stores
+ * `substanceClass` German-first (and freeform), so rendering it raw leaks German
+ * into the English UI. We collapse the verbose German string into a small
+ * controlled vocabulary and localize that — the same i18n-by-`language` pattern
+ * the rest of the medication UI uses.
  */
-function simplifyClassLabel(substanceClass: string): string {
+type CanonicalClass =
+  | 'antipsychoticFga'
+  | 'antipsychoticSga'
+  | 'antipsychotic'
+  | 'antidepressant'
+  | 'moodStabilizer'
+  | 'benzodiazepine'
+  | 'hypnotic'
+  | 'stimulant'
+  | 'anticonvulsant'
+  | 'anxiolytic'
+
+const CLASS_LABELS: Record<CanonicalClass, { de: string; en: string }> = {
+  antipsychoticFga: { de: 'Antipsychotikum (FGA)', en: 'Antipsychotic (FGA)' },
+  antipsychoticSga: { de: 'Antipsychotikum (SGA)', en: 'Antipsychotic (SGA)' },
+  antipsychotic: { de: 'Antipsychotikum', en: 'Antipsychotic' },
+  antidepressant: { de: 'Antidepressivum', en: 'Antidepressant' },
+  moodStabilizer: { de: 'Phasenprophylaxe', en: 'Mood stabiliser' },
+  benzodiazepine: { de: 'Benzodiazepin', en: 'Benzodiazepine' },
+  hypnotic: { de: 'Hypnotikum', en: 'Hypnotic' },
+  stimulant: { de: 'Stimulans', en: 'Stimulant' },
+  anticonvulsant: { de: 'Antikonvulsivum', en: 'Anticonvulsant' },
+  anxiolytic: { de: 'Anxiolytikum', en: 'Anxiolytic' },
+}
+
+/** Map a freeform (German-first) reference class string onto the controlled set. */
+function canonicalClass(substanceClass: string): CanonicalClass | null {
   const lower = substanceClass.toLowerCase()
   if (/antipsychotik|antipsychotic|neurolept/.test(lower)) {
-    if (/fga|typisch/.test(lower)) return 'Antipsychotikum (FGA)'
-    if (/sga|atypisch/.test(lower)) return 'Antipsychotikum (SGA)'
-    return 'Antipsychotikum'
+    // Check (a)typical first — "atypisch" contains the substring "typisch".
+    if (/sga|atypisch|atypical/.test(lower)) return 'antipsychoticSga'
+    if (/fga|typisch|typical/.test(lower)) return 'antipsychoticFga'
+    return 'antipsychotic'
   }
-  if (/antidepress/.test(lower)) return 'Antidepressivum'
-  if (/mood stabilizer|stimmungsstabil|phasenprophyla/.test(lower)) return 'Phasenprophylaxe'
-  if (/benzodiazepin/.test(lower)) return 'Benzodiazepin'
-  if (/z-drug|hypnotik/.test(lower)) return 'Hypnotikum'
-  if (/stimulan/.test(lower)) return 'Stimulans'
-  if (/antikonvulsiv|antiepilept/.test(lower)) return 'Antikonvulsivum'
-  if (/anxiolyt/.test(lower)) return 'Anxiolytikum'
-  // Fall back to the leading segment before a delimiter.
+  if (/antidepress/.test(lower)) return 'antidepressant'
+  if (/mood stabilizer|stimmungsstabil|phasenprophyla/.test(lower)) return 'moodStabilizer'
+  if (/benzodiazepin/.test(lower)) return 'benzodiazepine'
+  if (/z-drug|hypnotik|hypnotic/.test(lower)) return 'hypnotic'
+  if (/stimulan/.test(lower)) return 'stimulant'
+  if (/antikonvulsiv|antiepilept|anticonvulsant|antiepileptic/.test(lower)) return 'anticonvulsant'
+  if (/anxiolyt/.test(lower)) return 'anxiolytic'
+  return null
+}
+
+/**
+ * Collapse a verbose reference class string into a short, scannable, localized
+ * label. e.g. "Butyrophenon (Typisches Antipsychotikum, FGA)" →
+ * "Antipsychotikum (FGA)" / "Antipsychotic (FGA)".
+ */
+export function simplifyClassLabel(substanceClass: string, language: string): string {
+  const canonical = canonicalClass(substanceClass)
+  if (canonical) {
+    const label = CLASS_LABELS[canonical]
+    return language === 'de' ? label.de : label.en
+  }
+  // Fall back to the leading segment before a delimiter (reference data is
+  // German-first, so this may still be German for uncommon classes — tracked as
+  // a reference-DB translation gap, never silenced).
   return substanceClass.split(/\s[–—(/]/)[0]?.trim() || substanceClass
+}
+
+/**
+ * Coarser class label for *duplicate-class* (polypharmacy) detection: all
+ * antipsychotic subtypes (FGA/SGA) collapse to a single "Antipsychotic" bucket so
+ * that e.g. an FGA + an SGA is still flagged as antipsychotic polypharmacy. Other
+ * classes use their normal simplified label.
+ */
+function coarseClassLabel(substanceClass: string, language: string): string {
+  const canonical = canonicalClass(substanceClass)
+  if (
+    canonical === 'antipsychoticFga' ||
+    canonical === 'antipsychoticSga' ||
+    canonical === 'antipsychotic'
+  ) {
+    return language === 'de' ? CLASS_LABELS.antipsychotic.de : CLASS_LABELS.antipsychotic.en
+  }
+  return simplifyClassLabel(substanceClass, language)
 }

@@ -18,15 +18,19 @@ export function buildLaborOverview(input: {
   medications: MedicationEntry[]
   activeSubstances: string[]
   verlaufEntries?: VerlaufFeedEntry[]
+  /** UI language for localized analyte labels (defaults to German). */
+  language?: string
 }): LaborOverviewData {
   const labsDue = buildLabsDue({
     befunde: input.befunde,
     activeSubstances: input.activeSubstances,
+    language: input.language,
   })
   const medicationMonitoring = getParameterMonitoringRows({
     medications: input.medications,
     befunde: input.befunde,
     verlaufEntries: input.verlaufEntries,
+    language: input.language,
   })
   const recentAbnormal = buildRecentLabResults(input.befunde, 8).filter((item) => item.abnormal)
 

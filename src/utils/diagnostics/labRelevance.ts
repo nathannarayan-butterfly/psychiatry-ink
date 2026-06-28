@@ -54,6 +54,10 @@ interface AnalyteDef {
   key: AnalyteKey
   /** Short German label used in rationale captions. */
   labelDe: string
+  /** English label — the analyte vocabulary is a small controlled set, so it is
+   *  localized directly here rather than left German-first (avoids leaking
+   *  "Leukozyten"/"Glukose" into the English monitoring widgets). */
+  labelEn: string
   /** Patterns matched (case-insensitively) against the raw lab parameter name. */
   patterns: RegExp[]
 }
@@ -65,32 +69,32 @@ interface AnalyteDef {
  * patterns could overlap — more specific entries come first.
  */
 export const ANALYTE_DEFS: AnalyteDef[] = [
-  { key: 'neutrophils', labelDe: 'Neutrophile/ANC', patterns: [/neutrophil/i, /\banc\b/i, /granulozyt/i, /stabkernige/i, /segmentkernige/i] },
-  { key: 'leukocytes', labelDe: 'Leukozyten', patterns: [/leuko/i, /\bwbc\b/i] },
-  { key: 'platelets', labelDe: 'Thrombozyten', patterns: [/thrombozyt/i, /platelet/i, /\bplt\b/i] },
-  { key: 'hemoglobin', labelDe: 'Hämoglobin', patterns: [/h[aä]moglobin/i, /\bhb\b/i, /h[aä]matokrit/i] },
-  { key: 'hba1c', labelDe: 'HbA1c', patterns: [/hba1c/i, /hb\s?a1c/i, /gly[ck]oh[aä]moglobin/i] },
-  { key: 'glucose', labelDe: 'Glukose', patterns: [/glukose/i, /glucose/i, /blutzucker/i, /n[uü]chternzucker/i] },
-  { key: 'lipids', labelDe: 'Lipide', patterns: [/cholesterin/i, /cholesterol/i, /\bldl\b/i, /\bhdl\b/i, /triglycerid/i, /\blipid/i] },
-  { key: 'liverEnzymes', labelDe: 'Leberenzyme', patterns: [/\bgot\b/i, /\bgpt\b/i, /\bast\b/i, /\balt\b/i, /\bggt\b/i, /gamma-?gt/i, /transaminas/i, /leberenzym/i, /leberwert/i] },
-  { key: 'bilirubin', labelDe: 'Bilirubin', patterns: [/bilirubin/i] },
-  { key: 'ammonia', labelDe: 'Ammoniak', patterns: [/ammoniak/i, /ammonia/i, /\bnh3\b/i] },
-  { key: 'ck', labelDe: 'CK', patterns: [/\bck\b/i, /\bcpk\b/i, /kreatinkinase/i, /creatinkinase/i, /kreatin-kinase/i] },
-  { key: 'creatinine', labelDe: 'Kreatinin', patterns: [/kreatinin/i, /creatinin/i] },
-  { key: 'egfr', labelDe: 'eGFR', patterns: [/egfr/i, /\bgfr\b/i, /ckd-?epi/i] },
-  { key: 'urea', labelDe: 'Harnstoff', patterns: [/harnstoff/i, /\burea\b/i, /\bbun\b/i] },
-  { key: 'crp', labelDe: 'CRP', patterns: [/\bcrp\b/i, /c-?reaktiv/i] },
-  { key: 'troponin', labelDe: 'Troponin', patterns: [/troponin/i, /\btnt\b/i, /\btni\b/i] },
-  { key: 'sodium', labelDe: 'Natrium', patterns: [/natrium/i, /sodium/i] },
-  { key: 'potassium', labelDe: 'Kalium', patterns: [/kalium/i, /potassium/i] },
-  { key: 'calcium', labelDe: 'Calcium', patterns: [/calcium/i, /kalzium/i] },
-  { key: 'tsh', labelDe: 'TSH', patterns: [/\btsh\b/i, /thyreotropin/i, /schilddr[uü]se/i] },
-  { key: 'prolactin', labelDe: 'Prolaktin', patterns: [/prolaktin/i, /prolactin/i] },
-  { key: 'weight', labelDe: 'Gewicht/BMI', patterns: [/gewicht/i, /\bbmi\b/i, /body\s?mass/i, /k[oö]rpergewicht/i] },
-  { key: 'qtc', labelDe: 'QTc', patterns: [/qtc/i, /qt-?zeit/i] },
+  { key: 'neutrophils', labelDe: 'Neutrophile/ANC', labelEn: 'Neutrophils/ANC', patterns: [/neutrophil/i, /\banc\b/i, /granulozyt/i, /stabkernige/i, /segmentkernige/i] },
+  { key: 'leukocytes', labelDe: 'Leukozyten', labelEn: 'Leukocytes', patterns: [/leuko/i, /\bwbc\b/i] },
+  { key: 'platelets', labelDe: 'Thrombozyten', labelEn: 'Platelets', patterns: [/thrombozyt/i, /platelet/i, /\bplt\b/i] },
+  { key: 'hemoglobin', labelDe: 'Hämoglobin', labelEn: 'Hemoglobin', patterns: [/h[aä]moglobin/i, /\bhb\b/i, /h[aä]matokrit/i] },
+  { key: 'hba1c', labelDe: 'HbA1c', labelEn: 'HbA1c', patterns: [/hba1c/i, /hb\s?a1c/i, /gly[ck]oh[aä]moglobin/i] },
+  { key: 'glucose', labelDe: 'Glukose', labelEn: 'Glucose', patterns: [/glukose/i, /glucose/i, /blutzucker/i, /n[uü]chternzucker/i] },
+  { key: 'lipids', labelDe: 'Lipide', labelEn: 'Lipids', patterns: [/cholesterin/i, /cholesterol/i, /\bldl\b/i, /\bhdl\b/i, /triglycerid/i, /\blipid/i] },
+  { key: 'liverEnzymes', labelDe: 'Leberenzyme', labelEn: 'Liver enzymes', patterns: [/\bgot\b/i, /\bgpt\b/i, /\bast\b/i, /\balt\b/i, /\bggt\b/i, /gamma-?gt/i, /transaminas/i, /leberenzym/i, /leberwert/i] },
+  { key: 'bilirubin', labelDe: 'Bilirubin', labelEn: 'Bilirubin', patterns: [/bilirubin/i] },
+  { key: 'ammonia', labelDe: 'Ammoniak', labelEn: 'Ammonia', patterns: [/ammoniak/i, /ammonia/i, /\bnh3\b/i] },
+  { key: 'ck', labelDe: 'CK', labelEn: 'CK', patterns: [/\bck\b/i, /\bcpk\b/i, /kreatinkinase/i, /creatinkinase/i, /kreatin-kinase/i] },
+  { key: 'creatinine', labelDe: 'Kreatinin', labelEn: 'Creatinine', patterns: [/kreatinin/i, /creatinin/i] },
+  { key: 'egfr', labelDe: 'eGFR', labelEn: 'eGFR', patterns: [/egfr/i, /\bgfr\b/i, /ckd-?epi/i] },
+  { key: 'urea', labelDe: 'Harnstoff', labelEn: 'Urea', patterns: [/harnstoff/i, /\burea\b/i, /\bbun\b/i] },
+  { key: 'crp', labelDe: 'CRP', labelEn: 'CRP', patterns: [/\bcrp\b/i, /c-?reaktiv/i] },
+  { key: 'troponin', labelDe: 'Troponin', labelEn: 'Troponin', patterns: [/troponin/i, /\btnt\b/i, /\btni\b/i] },
+  { key: 'sodium', labelDe: 'Natrium', labelEn: 'Sodium', patterns: [/natrium/i, /sodium/i] },
+  { key: 'potassium', labelDe: 'Kalium', labelEn: 'Potassium', patterns: [/kalium/i, /potassium/i] },
+  { key: 'calcium', labelDe: 'Calcium', labelEn: 'Calcium', patterns: [/calcium/i, /kalzium/i] },
+  { key: 'tsh', labelDe: 'TSH', labelEn: 'TSH', patterns: [/\btsh\b/i, /thyreotropin/i, /schilddr[uü]se/i] },
+  { key: 'prolactin', labelDe: 'Prolaktin', labelEn: 'Prolactin', patterns: [/prolaktin/i, /prolactin/i] },
+  { key: 'weight', labelDe: 'Gewicht/BMI', labelEn: 'Weight/BMI', patterns: [/gewicht/i, /\bbmi\b/i, /body\s?mass/i, /k[oö]rpergewicht/i] },
+  { key: 'qtc', labelDe: 'QTc', labelEn: 'QTc', patterns: [/qtc/i, /qt-?zeit/i] },
 ]
 
-const ANALYTE_LABEL: Record<AnalyteKey, string> = ANALYTE_DEFS.reduce(
+const ANALYTE_LABEL_DE: Record<AnalyteKey, string> = ANALYTE_DEFS.reduce(
   (acc, def) => {
     acc[def.key] = def.labelDe
     return acc
@@ -98,9 +102,18 @@ const ANALYTE_LABEL: Record<AnalyteKey, string> = ANALYTE_DEFS.reduce(
   {} as Record<AnalyteKey, string>,
 )
 
-/** German display label for a canonical analyte key. */
-export function analyteLabel(key: AnalyteKey): string {
-  return ANALYTE_LABEL[key] ?? key
+const ANALYTE_LABEL_EN: Record<AnalyteKey, string> = ANALYTE_DEFS.reduce(
+  (acc, def) => {
+    acc[def.key] = def.labelEn
+    return acc
+  },
+  {} as Record<AnalyteKey, string>,
+)
+
+/** Localized display label for a canonical analyte key (German by default). */
+export function analyteLabel(key: AnalyteKey, language: string = 'de'): string {
+  const table = language === 'de' ? ANALYTE_LABEL_DE : ANALYTE_LABEL_EN
+  return table[key] ?? key
 }
 
 /**

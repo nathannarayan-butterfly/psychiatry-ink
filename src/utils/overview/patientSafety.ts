@@ -522,6 +522,7 @@ export function buildPatientSafety(input: PatientSafetyInput): SafetyData {
     medications: input.medications,
     befunde: input.befunde ?? [],
     verlaufEntries: input.verlaufEntries,
+    language,
   })
   const hasAnySignal = risk !== null || alerts.length > 0 || medicationMonitoring.length > 0
 

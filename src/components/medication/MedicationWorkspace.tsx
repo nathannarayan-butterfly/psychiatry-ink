@@ -104,8 +104,9 @@ export const MedicationWorkspace = forwardRef<MedicationWorkspaceHandle, Medicat
       getParameterMonitoringRows({
         medications: activePlanMedications,
         befunde: loadBefunde(caseId),
+        language,
       }),
-    [caseId, activePlanMedications],
+    [caseId, activePlanMedications, language],
   )
   const selectedEntry = useMemo(
     () => activePlanMedications.find((item) => item.id === selectedId) ?? null,
