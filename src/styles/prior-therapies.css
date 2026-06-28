@@ -75,6 +75,51 @@
   border-radius: 999px;
 }
 
+/* Explicit "Mit KI verfeinern" trigger — the billed LLM runs only on click. */
+.prior-therapies__refine,
+.ov-prior__refine {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--pt-accent, var(--area-accent, var(--accent, #7d5cc6)));
+  background: color-mix(in srgb, var(--pt-accent, var(--accent, #7d5cc6)) 9%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pt-accent, var(--accent, #7d5cc6)) 26%, transparent);
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--duration-fast, 150ms) var(--ease-standard, ease),
+    border-color var(--duration-fast, 150ms) var(--ease-standard, ease);
+}
+
+.prior-therapies__refine:hover:not(:disabled),
+.ov-prior__refine:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--pt-accent, var(--accent, #7d5cc6)) 16%, transparent);
+  border-color: color-mix(in srgb, var(--pt-accent, var(--accent, #7d5cc6)) 40%, transparent);
+}
+
+.prior-therapies__refine:focus-visible,
+.ov-prior__refine:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid
+    var(--focus-ring-color, color-mix(in srgb, var(--accent) 52%, transparent));
+  outline-offset: var(--focus-ring-offset, 2px);
+}
+
+.prior-therapies__refine:disabled,
+.ov-prior__refine:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.ov-prior__refine {
+  margin-top: 0.55rem;
+  font-size: var(--text-2xs);
+  padding: 0.16rem 0.5rem;
+}
+
 .prior-therapies__empty {
   margin: 0;
   font-size: var(--text-sm);

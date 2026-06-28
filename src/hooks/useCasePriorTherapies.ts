@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { MedicationEntry } from '../types/medicationPlan'
 import type {
   FailureAnalysis,
@@ -13,6 +13,7 @@ import {
   mergePriorTherapies,
   normalizeSubstanceKey,
 } from '../utils/medication/priorTherapies'
+import { heuristicExtractPriorTherapies } from '../utils/medication/priorTherapyHeuristic'
 import {
   type FailureAnalysisContext,
   computeFailureSignals,
@@ -64,6 +65,16 @@ export interface CasePriorTherapies {
   failureAnalysisStatus: PriorTherapyLlmStatus
   /** Substance keys whose failure analysis was AI-synthesised (not deterministic). */
   aiAnalyzedSubstances: Set<string>
+  /**
+   * Explicit, user-triggered LLM refinement. Mount NEVER calls this — only a
+   * clinician action ("Mit KI verfeinern") does, so billed AI is spent on intent.
+   * Runs both the free-text extraction and the failure-analysis refinement.
+   */
+  refineWithAi: () => void
+  /** True when an explicit AI refinement is available (free text, not demo/facts). */
+  canRefine: boolean
+  /** True once an LLM refinement result is applied (live or from the session cache). */
+  aiRefined: boolean
 }
 
 interface CacheEntry {
@@ -80,6 +91,26 @@ interface FailureCacheEntry {
 // per-case cache keyed by a source signature avoids re-spending AI on re-mounts.
 const extractionCache = new Map<string, CacheEntry>()
 const failureAnalysisCache = new Map<string, FailureCacheEntry>()
+
+// Guards against duplicate billing: if the clinician triggers the LLM
+// refinement from two surfaces at once (e.g. the Übersicht card and the
+// Medikation panel) or in rapid succession, concurrent requests for the same
+// case + source signature share ONE in-flight call instead of each spending
+// credits. Keyed by `caseId|signature`.
+const extractionInFlight = new Map<string, Promise<PriorTherapiesRunResponse>>()
+const failureAnalysisInFlight = new Map<string, Promise<PriorTherapyFailureAnalysisResponse>>()
+
+function dedupe<T>(map: Map<string, Promise<T>>, key: string, run: () => Promise<T>): Promise<T> {
+  const existing = map.get(key)
+  if (existing) return existing
+  const promise = run()
+  map.set(key, promise)
+  void promise.finally(() => {
+    // Only clear if still the same promise (a newer request may have replaced it).
+    if (map.get(key) === promise) map.delete(key)
+  })
+  return promise
+}
 
 function responseToMaps(response: PriorTherapyFailureAnalysisResponse): {
   byKey: Map<string, FailureAnalysis>
@@ -145,9 +176,15 @@ function toInferredItems(items: PriorTherapyExtractionItem[]): PriorTherapyItem[
 
 /**
  * Surfaces the patient's previously-tried medications for the Übersicht and
- * Medikation pages. The deterministic plan layer is available synchronously; the
- * free-text LLM extraction runs in the background (non-blocking) and is merged
- * in when it resolves. Graceful on failure — deterministic items always show.
+ * Medikation pages.
+ *
+ * Two deterministic layers render synchronously on mount with NO network and NO
+ * credits: the structured medication plan (`extractPriorTherapiesFromPlan`) plus
+ * a free-text heuristic over the Anamnese (Medikamentenanamnese, Psychiatrische
+ * Vorgeschichte, …) and Verlauf (`heuristicExtractPriorTherapies`). The billed
+ * LLM extraction/refinement is NEVER fired automatically — it runs only when the
+ * clinician explicitly calls {@link CasePriorTherapies.refineWithAi}. Graceful on
+ * failure: the deterministic items always show.
  */
 export function useCasePriorTherapies(
   caseId: string,
@@ -197,6 +234,9 @@ export function useCasePriorTherapies(
   const [llmStatus, setLlmStatus] = useState<PriorTherapyLlmStatus>(
     cached?.signature === signature ? 'ready' : 'idle',
   )
+  // Flipped only by the explicit `refineWithAi()` action — gates BOTH billed LLM
+  // passes. Mount leaves this false, so opening a patient never spends credits.
+  const [aiRequested, setAiRequested] = useState(false)
   const activeSignature = useRef<string>('')
 
   useEffect(() => {
@@ -220,16 +260,27 @@ export function useCasePriorTherapies(
       return
     }
 
+    // Deterministic-by-default: the free heuristic layer (`heuristicInferred`)
+    // covers free-text trials on mount. The billed LLM extraction runs ONLY after
+    // an explicit "Mit KI verfeinern" action sets `aiRequested`.
+    if (!aiRequested) {
+      setResponse(null)
+      setLlmStatus('idle')
+      return
+    }
+
     let cancelled = false
     activeSignature.current = signature
     setLlmStatus('loading')
 
-    runPriorTherapyExtraction({
-      caseId,
-      aufnahmeText: sources.aufnahmeText,
-      verlaufText: sources.verlaufText,
-      patientName,
-    })
+    dedupe(extractionInFlight, `${caseId}|${signature}`, () =>
+      runPriorTherapyExtraction({
+        caseId,
+        aufnahmeText: sources.aufnahmeText,
+        verlaufText: sources.verlaufText,
+        patientName,
+      }),
+    )
       .then((result) => {
         extractionCache.set(caseId, { signature, response: result })
         if (cancelled || activeSignature.current !== signature) return
@@ -245,11 +296,29 @@ export function useCasePriorTherapies(
     return () => {
       cancelled = true
     }
-  }, [caseId, enabled, isDemo, signature, sources, patientName, cmeaRead])
+  }, [caseId, enabled, isDemo, signature, sources, patientName, cmeaRead, aiRequested])
+
+  // Free, offline heuristic over the real Anamnese + Verlauf text — the default
+  // inferred layer shown on mount without any network call or credits. Identical
+  // to the server's mock/offline path (same shared implementation).
+  const heuristicInferred = useMemo(
+    () =>
+      cmeaRead
+        ? []
+        : toInferredItems(
+            heuristicExtractPriorTherapies(sources.aufnahmeText, sources.verlaufText),
+          ),
+    [cmeaRead, sources],
+  )
 
   const inferred = useMemo(
-    () => (cmeaRead ? factInferred : response ? toInferredItems(response.items) : []),
-    [cmeaRead, factInferred, response],
+    () =>
+      cmeaRead
+        ? factInferred
+        : response
+          ? toInferredItems(response.items)
+          : heuristicInferred,
+    [cmeaRead, factInferred, response, heuristicInferred],
   )
 
   const mergedItems = useMemo(
@@ -344,17 +413,29 @@ export function useCasePriorTherapies(
       return
     }
 
+    // The deterministic "mögliche Ursache" synthesis already feeds `items`
+    // (offline, free, see `deterministicAnalysisByKey`). The billed LLM
+    // refinement runs ONLY on the explicit "Mit KI verfeinern" action.
+    if (!aiRequested) {
+      setLlmAnalyses(new Map())
+      setAiAnalyzedSubstances(new Set())
+      setFailureAnalysisStatus('idle')
+      return
+    }
+
     let cancelled = false
     activeFailureSignature.current = failureSignature
     setFailureAnalysisStatus('loading')
 
-    runPriorTherapyFailureAnalysis({
-      caseId,
-      aufnahmeText: sources.aufnahmeText,
-      verlaufText: sources.verlaufText,
-      patientName,
-      drugs: drugsPayload,
-    })
+    dedupe(failureAnalysisInFlight, `${caseId}|${failureSignature}`, () =>
+      runPriorTherapyFailureAnalysis({
+        caseId,
+        aufnahmeText: sources.aufnahmeText,
+        verlaufText: sources.verlaufText,
+        patientName,
+        drugs: drugsPayload,
+      }),
+    )
       .then((result) => {
         failureAnalysisCache.set(caseId, { signature: failureSignature, response: result })
         if (cancelled || activeFailureSignature.current !== failureSignature) return
@@ -372,7 +453,17 @@ export function useCasePriorTherapies(
     return () => {
       cancelled = true
     }
-  }, [caseId, enabled, isDemo, failureSignature, drugsPayload, sources, patientName, cmeaRead])
+  }, [
+    caseId,
+    enabled,
+    isDemo,
+    failureSignature,
+    drugsPayload,
+    sources,
+    patientName,
+    cmeaRead,
+    aiRequested,
+  ])
 
   const items = useMemo(() => {
     if (deterministicAnalysisByKey.size === 0 && llmAnalyses.size === 0) return mergedItems
@@ -384,6 +475,23 @@ export function useCasePriorTherapies(
     })
   }, [mergedItems, llmAnalyses, deterministicAnalysisByKey])
 
+  const hasSourceText =
+    sources.aufnahmeText.trim().length > 0 || sources.verlaufText.trim().length > 0
+
+  // An LLM refinement is "applied" once a non-mock-path response is present —
+  // either freshly resolved or restored from the per-session cache on re-mount.
+  const aiRefined = !cmeaRead && response !== null
+
+  // Refinement is offered only where the bespoke LLM route is the source of
+  // inferred items (not the facts path), there is free text to analyse, and it
+  // hasn't already been run for the current source signature.
+  const canRefine = enabled && !isDemo && !cmeaRead && hasSourceText && !aiRefined
+
+  const refineWithAi = useCallback(() => {
+    if (!enabled || isDemo || cmeaRead || !hasSourceText) return
+    setAiRequested(true)
+  }, [enabled, isDemo, cmeaRead, hasSourceText])
+
   return {
     items,
     deterministic,
@@ -392,5 +500,8 @@ export function useCasePriorTherapies(
     mock: response?.mock ?? false,
     failureAnalysisStatus,
     aiAnalyzedSubstances,
+    refineWithAi,
+    canRefine,
+    aiRefined,
   }
 }

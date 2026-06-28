@@ -121,7 +121,7 @@ describe('usePsychopathAiExtract — demo case never auto-runs billed AI', () =>
   })
 })
 
-describe('useCasePriorTherapies — demo case never auto-runs billed AI', () => {
+describe('useCasePriorTherapies — never auto-runs billed AI on mount', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('does NOT call the prior-therapy extraction API for the demo case', async () => {
@@ -134,13 +134,16 @@ describe('useCasePriorTherapies — demo case never auto-runs billed AI', () => 
     expect(mockRunPriorTherapyExtraction).not.toHaveBeenCalled()
   })
 
-  it('DOES auto-run extraction for a real case with source text (control)', async () => {
+  // The billed extraction is now deterministic-by-default: even a real case with
+  // free text must NOT spend credits merely by being opened. The LLM runs only on
+  // the explicit "Mit KI verfeinern" action (covered in useCasePriorTherapies.test).
+  it('does NOT auto-run extraction on mount for a real case with source text', async () => {
     mockIsDemoCase.mockReturnValue(false)
     const Probe: FC = () => {
       useCasePriorTherapies('real-case-1', NO_MEDS)
       return null
     }
     await renderHook(Probe)
-    expect(mockRunPriorTherapyExtraction).toHaveBeenCalledTimes(1)
+    expect(mockRunPriorTherapyExtraction).not.toHaveBeenCalled()
   })
 })

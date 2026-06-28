@@ -7,11 +7,17 @@ import {
 import { llmResultModel } from './safeLlmEgress'
 import { runAiFeature } from '../ai/runAiFeature'
 import { parseStructuredJson } from '../utils/parseStructuredJson'
+import { heuristicExtractPriorTherapies } from '../../src/utils/medication/priorTherapyHeuristic'
 import type {
   PriorTherapyEvent,
   PriorTherapyExtractionItem,
   PriorTherapyTimeframe,
 } from '../../src/types/priorTherapies'
+
+// The deterministic heuristic now lives in a shared, client-usable util so the
+// hook (free, on-mount default layer) and this server mock fallback run the SAME
+// implementation. Re-exported here to preserve the existing import path/tests.
+export { heuristicExtractPriorTherapies }
 
 const VALID_EVENTS: PriorTherapyEvent[] = [
   'discontinued',
@@ -120,93 +126,6 @@ function buildPrompt(params: {
   ].join('\n')
 
   return { systemPrompt, userPrompt }
-}
-
-// ── Deterministic mock / offline fallback ────────────────────────────────────
-// Used only when no LLM key is configured (mock mode). Scans the de-identified
-// text for known psychotropic substances and classifies the surrounding
-// sentence. This keeps dev + tests working and degrades gracefully offline —
-// strictly from the real text, never fabricated.
-
-const KNOWN_SUBSTANCES = [
-  'Risperidon', 'Olanzapin', 'Quetiapin', 'Aripiprazol', 'Amisulprid', 'Clozapin',
-  'Haloperidol', 'Paliperidon', 'Ziprasidon', 'Flupentixol', 'Zuclopenthixol',
-  'Sertralin', 'Citalopram', 'Escitalopram', 'Fluoxetin', 'Paroxetin', 'Venlafaxin',
-  'Duloxetin', 'Mirtazapin', 'Bupropion', 'Agomelatin', 'Trazodon', 'Amitriptylin',
-  'Lithium', 'Valproat', 'Valproinsäure', 'Lamotrigin', 'Carbamazepin', 'Topiramat',
-  'Lorazepam', 'Diazepam', 'Oxazepam', 'Pregabalin', 'Promethazin', 'Pipamperon',
-  'Melperon', 'Methylphenidat', 'Atomoxetin',
-]
-
-const SIDE_EFFECT_PATTERN =
-  /nebenwirkung|unverträg|hyperprolaktin|prolaktin|gewichtszunahme|akathisie|sedier|müdigkeit|übelkeit|qtc|dyskines|tremor|extrapyramidal/i
-const SWITCHED_PATTERN = /umstell|wechsel|ausgeschlich|ausschleich/i
-const NO_RESPONSE_PATTERN =
-  /kein.{0,20}ansprech|nicht angesprochen|wirkungslos|keine besserung|ineffektiv|unwirksam/i
-const PARTIAL_PATTERN = /teilremission|teilweise|partiell|unzureichend.{0,12}wirk/i
-const DISCONTINUED_PATTERN = /abgesetzt|absetz|beendet|gestoppt|ausgeschlich|pausiert/i
-const HISTORY_PATTERN = /vor aufnahme|anamnese|früher|zuvor|in der vorgeschichte|bisher|vorbehandl/i
-
-function splitSentences(text: string): string[] {
-  return text
-    .split(/(?<=[.!?])\s+|\n+/)
-    .map((s) => s.trim())
-    .filter(Boolean)
-}
-
-function classify(sentence: string): PriorTherapyEvent | null {
-  if (SIDE_EFFECT_PATTERN.test(sentence)) return 'side_effect'
-  if (NO_RESPONSE_PATTERN.test(sentence)) return 'no_response'
-  if (PARTIAL_PATTERN.test(sentence)) return 'partial_response'
-  if (SWITCHED_PATTERN.test(sentence)) return 'switched'
-  if (DISCONTINUED_PATTERN.test(sentence)) return 'discontinued'
-  return null
-}
-
-function extractReason(sentence: string): string | null {
-  const match = sentence.match(/(?:wegen|aufgrund|infolge)\s+([^.,;]+)/i)
-  return match ? match[1]!.trim().slice(0, 300) : null
-}
-
-export function heuristicExtractPriorTherapies(
-  aufnahmeText: string,
-  verlaufText: string,
-): PriorTherapyExtractionItem[] {
-  const sources: { text: string; source: (typeof VALID_SOURCES)[number] }[] = [
-    { text: aufnahmeText, source: 'aufnahme' },
-    { text: verlaufText, source: 'verlauf' },
-  ]
-  const byKey = new Map<string, PriorTherapyExtractionItem>()
-
-  for (const { text, source } of sources) {
-    for (const sentence of splitSentences(text)) {
-      for (const substance of KNOWN_SUBSTANCES) {
-        const pattern = new RegExp(`\\b${substance}\\b`, 'i')
-        if (!pattern.test(sentence)) continue
-
-        const isHistory = HISTORY_PATTERN.test(sentence)
-        const classified = classify(sentence)
-        // Only surface a substance when it reads as a prior trial: either an
-        // explicit stop/response signal, or an anamnestic ("prior") framing.
-        if (!classified && !isHistory) continue
-
-        const event: PriorTherapyEvent = classified ?? 'mentioned'
-        const item: PriorTherapyExtractionItem = {
-          substance,
-          event,
-          reason: extractReason(sentence),
-          timeframe: isHistory ? 'history' : source === 'verlauf' ? 'current_admission' : null,
-          source,
-          evidenceQuote: sentence.slice(0, 400),
-        }
-        const key = substance.toLowerCase()
-        const existing = byKey.get(key)
-        if (!existing) byKey.set(key, item)
-      }
-    }
-  }
-
-  return [...byKey.values()]
 }
 
 export interface PriorTherapyExtractionResult {

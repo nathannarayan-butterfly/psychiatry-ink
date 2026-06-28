@@ -76,7 +76,7 @@ import {
 } from '../../utils/clinicalQuestions'
 import { suggestionsFromCaseFacts } from '../../utils/butterfly/factSuggestions'
 import { buildButterflyContextPackage, hasButterflyContext } from '../../utils/butterfly/contextPackage'
-import { extractButterflyCriteria } from '../../services/butterflyExtractApi'
+import { extractButterflyCriteria, type ButterflyCriterionQuery } from '../../services/butterflyExtractApi'
 import { isCmeaConsumerReadEnabled } from '../../utils/featureFlags'
 import { isDemoCase } from '../../demo/demoReadOnly'
 import { useDiagnosisDisplayTitles } from '../../hooks/useDiagnosisDisplayTitles'
@@ -84,6 +84,30 @@ import type { IcdTitleVersion } from '../../../shared/icdTitle'
 import type { NotionPageId } from '../notion/notionPages'
 
 type Translate = ReturnType<typeof useTranslation>['t']
+
+// Module-level in-flight guards. The billed Butterfly passes are now explicit
+// (clinician-initiated, never auto-fired on mount), but the Diagnose panel can
+// be mounted more than once at a time (e.g. flat + card surfaces) and rapid /
+// double clicks can overlap. These collapse concurrent IDENTICAL requests (same
+// case + disorder [+ version/language]) into a single in-flight call so a click
+// can never double-bill `butterfly`.
+const butterflyExtractInFlight = new Map<string, Promise<unknown>>()
+const interviewQuestionsInFlight = new Map<string, Promise<unknown>>()
+
+function dedupeInFlight<T>(
+  map: Map<string, Promise<unknown>>,
+  key: string,
+  run: () => Promise<T>,
+): Promise<T> {
+  const existing = map.get(key) as Promise<T> | undefined
+  if (existing) return existing
+  const promise = run()
+  map.set(key, promise)
+  void promise.finally(() => {
+    if (map.get(key) === promise) map.delete(key)
+  })
+  return promise
+}
 
 interface IsdmAnalysisPanelProps {
   caseId: string
@@ -199,8 +223,9 @@ export function IsdmAnalysisPanel({
   // DiagnosenWidget toggle via the broadcast event so toggling re-evaluates.
   const [codingSystem, setCodingSystem] = useState<CodingSystem>(() => loadDiagnosenCodingSystem(caseId))
   const icdVersion = toButterflyIcdVersion(codingSystem)
-  const autoAttempted = useRef<Set<string>>(new Set())
-  const interviewAttempted = useRef<Set<string>>(new Set())
+  // Tracks which disorders have already had the FREE CMEA-facts resolution
+  // applied this mount (deterministic, no credits — safe to auto-run).
+  const factsAttempted = useRef<Set<string>>(new Set())
   // The synthetic demo case is pre-baked and read-only. It must NEVER trigger a
   // live, credit-charging AI call merely by being viewed/scrolled — its criteria
   // suggestions and interview questions come from the fixture / deterministic
@@ -459,40 +484,62 @@ export function IsdmAnalysisPanel({
     [caseId],
   )
 
+  // FREE, deterministic: resolve unknown criteria from pre-computed CMEA facts
+  // (no LLM, no credits). Returns the criteria still unresolved afterwards, which
+  // are the only ones the billed LLM would need to look at. Safe to run on mount.
+  const resolveFromFacts = useCallback(
+    (disorder: Disorder, evaluation: DisorderEvaluation): ButterflyCriterionQuery[] => {
+      const unresolved = selectUnresolvedCriteria(evaluation)
+      if (unresolved.length === 0) return []
+      if (!isCmeaConsumerReadEnabled() || !analysis) return unresolved
+      const { suggestions, residualUnresolved } = suggestionsFromCaseFacts({
+        caseId,
+        disorder,
+        evaluation,
+        coursePattern: analysis.coursePattern,
+      })
+      if (suggestions.length > 0) {
+        saveAiSuggestions(caseId, disorder.id, 'cmea-facts', suggestions)
+        setAiSuggestions(loadAiSuggestions(caseId))
+      }
+      return residualUnresolved
+    },
+    [caseId, analysis],
+  )
+
+  // EXPLICIT, billed: resolve the still-unknown criteria of ONE disorder via the
+  // `butterfly` LLM route. Runs ONLY on a clinician action — never on mount. It
+  // first applies the free facts pass, then reuses any cached suggestion so a
+  // click never re-bills criteria that already have a result, and de-dupes
+  // concurrent calls for the same case + disorder.
   const runExtraction = useCallback(
     async (disorder: Disorder, evaluation: DisorderEvaluation) => {
-      let unresolved = selectUnresolvedCriteria(evaluation)
-      if (unresolved.length === 0) return
+      const residual = resolveFromFacts(disorder, evaluation)
+      if (residual.length === 0) return
 
-      // CMEA Phase 2: resolve unknowns from pre-computed facts (compute once,
-      // reuse many). Only residual unknowns fall through to the bespoke route.
-      if (isCmeaConsumerReadEnabled() && analysis) {
-        const { suggestions, residualUnresolved } = suggestionsFromCaseFacts({
-          caseId,
-          disorder,
-          evaluation,
-          coursePattern: analysis.coursePattern,
-        })
-        if (suggestions.length > 0) {
-          saveAiSuggestions(caseId, disorder.id, 'cmea-facts', suggestions)
-          setAiSuggestions(loadAiSuggestions(caseId))
-        }
-        unresolved = residualUnresolved
-        if (unresolved.length === 0) return
-      }
+      // Reuse the localStorage suggestion cache: only query criteria that have no
+      // stored suggestion yet, so an explicit re-check cannot re-bill cached ones.
+      const stored = loadAiSuggestions(caseId)
+      const toQuery = residual.filter((criterion) => !stored[criterion.id])
+      if (toQuery.length === 0) return
 
       const pkg = buildButterflyContextPackage(caseId)
       if (!hasButterflyContext(pkg)) return
       setPendingDisorders((prev) => new Set(prev).add(disorder.id))
       setAiErrors((prev) => ({ ...prev, [disorder.id]: false }))
       try {
-        const response = await extractButterflyCriteria({
-          caseId,
-          disorderId: disorder.id,
-          disorderName: disorder.name_de,
-          criteria: unresolved,
-          packageContent: pkg,
-        })
+        const response = await dedupeInFlight(
+          butterflyExtractInFlight,
+          `${caseId}|${disorder.id}`,
+          () =>
+            extractButterflyCriteria({
+              caseId,
+              disorderId: disorder.id,
+              disorderName: disorder.name_de,
+              criteria: toQuery,
+              packageContent: pkg,
+            }),
+        )
         saveAiSuggestions(
           caseId,
           disorder.id,
@@ -515,80 +562,90 @@ export function IsdmAnalysisPanel({
         })
       }
     },
-    [caseId, analysis],
+    [caseId, resolveFromFacts],
   )
 
-  // Background trigger: once per disorder per mount, resolve unknown criteria via
-  // the LLM when none of them has a suggestion yet (cheap, low doc volume).
+  // EXPLICIT, billed: generate concrete interview questions for ONE disorder's
+  // still-open criteria. Runs ONLY on a clinician action. Reuses the interview
+  // cache (only queries criteria with no cached questions) and de-dupes
+  // concurrent calls. The deterministic German template questions are always
+  // shown for free regardless — this just refines them.
+  const runInterviewQuestions = useCallback(
+    async (disorder: Disorder, evaluation: DisorderEvaluation) => {
+      const version = disorder.version
+      const unresolved = selectUnresolvedInterviewCriteria(evaluation)
+      const cache = loadInterviewQuestionCache()
+      const missing = unresolved.filter(
+        (criterion) =>
+          !getCachedInterviewQuestions(cache, disorder.id, version, icdVersion, criterion.id, language),
+      )
+      if (missing.length === 0) return
+      try {
+        const response = await dedupeInFlight(
+          interviewQuestionsInFlight,
+          `${caseId}|${disorder.id}|v${version}|${icdVersion}|${language}`,
+          () =>
+            generateInterviewQuestions({
+              caseId,
+              disorderId: disorder.id,
+              disorderName: disorder.name_de,
+              criteria: missing,
+              language,
+            }),
+        )
+        saveInterviewQuestions(
+          disorder.id,
+          version,
+          icdVersion,
+          language,
+          response.model.modelId,
+          response.results,
+        )
+        setInterviewCache(loadInterviewQuestionCache())
+      } catch {
+        // Non-fatal: the panel keeps showing the deterministic template questions.
+      }
+    },
+    [caseId, language, icdVersion],
+  )
+
+  // The single explicit "Mit Butterfly prüfen" entry point: runs BOTH billed
+  // passes (criteria resolution + interview-question refinement) for one disorder.
+  const handleAnalyzeDisorder = useCallback(
+    (disorder: Disorder, evaluation: DisorderEvaluation) => {
+      // Demo cases are pre-baked + read-only — no billed AI even on explicit click.
+      if (isDemo) return
+      void runExtraction(disorder, evaluation)
+      void runInterviewQuestions(disorder, evaluation)
+    },
+    [isDemo, runExtraction, runInterviewQuestions],
+  )
+
+  // FREE, deterministic on mount: apply the CMEA-facts resolution for each
+  // disorder once (no credits). The billed LLM passes are NOT auto-fired — they
+  // run only via `handleAnalyzeDisorder` ("Mit Butterfly prüfen"). Demo cases are
+  // suppressed entirely. When CMEA reads are off, this is a no-op and nothing
+  // bills on mount.
   useEffect(() => {
     if (isDemo) return
+    if (!isCmeaConsumerReadEnabled() || !analysis) return
     for (const result of results) {
       if (!result.available || !result.disorder || !result.evaluation) continue
       const key = `${caseId}:${result.disorder.id}:${icdVersion}`
-      if (autoAttempted.current.has(key)) continue
+      if (factsAttempted.current.has(key)) continue
       const unresolved = selectUnresolvedCriteria(result.evaluation)
       if (unresolved.length === 0) {
-        autoAttempted.current.add(key)
+        factsAttempted.current.add(key)
         continue
       }
-      if (unresolved.some((criterion) => aiSuggestions[criterion.id])) {
-        autoAttempted.current.add(key)
+      if (unresolved.every((criterion) => aiSuggestions[criterion.id])) {
+        factsAttempted.current.add(key)
         continue
       }
-      autoAttempted.current.add(key)
-      void runExtraction(result.disorder, result.evaluation)
+      factsAttempted.current.add(key)
+      resolveFromFacts(result.disorder, result.evaluation)
     }
-  }, [results, caseId, icdVersion, aiSuggestions, runExtraction, isDemo])
-
-  // Background trigger: generate concrete interview questions for any still-open
-  // criteria that have none cached for the active language/version. The request
-  // carries ONLY generic criterion reference metadata (no patient PHI); in mock
-  // mode the server returns deterministic templates. Once per disorder/language
-  // per mount.
-  useEffect(() => {
-    if (isDemo) return
-    for (const result of results) {
-      if (!result.available || !result.disorder || !result.evaluation) continue
-      const disorder = result.disorder
-      const version = disorder.version
-      const key = `${disorder.id}:v${version}:${icdVersion}:${language}`
-      if (interviewAttempted.current.has(key)) continue
-      const unresolved = selectUnresolvedInterviewCriteria(result.evaluation)
-      const missing = unresolved.filter(
-        (criterion) =>
-          !getCachedInterviewQuestions(interviewCache, disorder.id, version, icdVersion, criterion.id, language),
-      )
-      if (missing.length === 0) {
-        if (unresolved.length === 0) interviewAttempted.current.add(key)
-        continue
-      }
-      interviewAttempted.current.add(key)
-      void (async () => {
-        try {
-          const response = await generateInterviewQuestions({
-            caseId,
-            disorderId: disorder.id,
-            disorderName: disorder.name_de,
-            criteria: missing,
-            language,
-          })
-          saveInterviewQuestions(
-            disorder.id,
-            version,
-            icdVersion,
-            language,
-            response.model.modelId,
-            response.results,
-          )
-          setInterviewCache(loadInterviewQuestionCache())
-        } catch {
-          // Non-fatal: the panel keeps showing the deterministic template
-          // questions. Allow a later re-attempt on the next mount.
-          interviewAttempted.current.delete(key)
-        }
-      })()
-    }
-  }, [results, caseId, language, icdVersion, interviewCache, isDemo])
+  }, [results, caseId, icdVersion, aiSuggestions, analysis, isDemo, resolveFromFacts])
 
   const panelClassName = [
     'butterfly-panel',
@@ -706,7 +763,11 @@ export function IsdmAnalysisPanel({
                 onReset={handleUnclear}
                 onAcceptSuggestion={handleAcceptSuggestion}
                 onDismissSuggestion={handleDismissSuggestion}
-                onCheckAi={() => result.disorder && result.evaluation && runExtraction(result.disorder, result.evaluation)}
+                onCheckAi={() =>
+                  result.disorder &&
+                  result.evaluation &&
+                  handleAnalyzeDisorder(result.disorder, result.evaluation)
+                }
                 onJumpToSection={onJumpToSection}
               />
             )

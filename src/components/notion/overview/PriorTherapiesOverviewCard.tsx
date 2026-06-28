@@ -38,7 +38,7 @@ export function PriorTherapiesOverviewCard({
   onOpenMedikation,
 }: PriorTherapiesOverviewCardProps) {
   const { language } = useTranslation()
-  const { items, llmStatus } = useCasePriorTherapies(caseId, medications)
+  const { items, llmStatus, refineWithAi, canRefine } = useCasePriorTherapies(caseId, medications)
   const de = language === 'de'
   const evaluating = llmStatus === 'loading'
   const rows = items.slice(0, MAX_ROWS)
@@ -61,7 +61,8 @@ export function PriorTherapiesOverviewCard({
             {de ? 'Keine Vortherapien dokumentiert.' : 'No prior therapies documented.'}
           </OverviewEmpty>
         )
-      ) : (
+      ) : null}
+      {rows.length > 0 ? (
         <>
           <ul className="ov-prior__list">
             {rows.map((item) => {
@@ -95,7 +96,21 @@ export function PriorTherapiesOverviewCard({
             })}
           </ul>
         </>
-      )}
+      ) : null}
+      {canRefine && !evaluating ? (
+        <button
+          type="button"
+          className="ov-prior__refine"
+          onClick={refineWithAi}
+          title={
+            de
+              ? 'Vortherapien mit KI aus dem Freitext verfeinern (verbraucht Credits)'
+              : 'Refine prior therapies from free text with AI (uses credits)'
+          }
+        >
+          <Sparkles size={11} aria-hidden /> {de ? 'Mit KI verfeinern' : 'Refine with AI'}
+        </button>
+      ) : null}
     </OverviewCard>
   )
 }

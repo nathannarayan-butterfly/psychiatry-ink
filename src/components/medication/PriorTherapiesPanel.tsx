@@ -92,15 +92,60 @@ function FailureAnalysisBlock({
 
 export function PriorTherapiesPanel({ caseId, medications, patientName }: PriorTherapiesPanelProps) {
   const { language } = useTranslation()
-  const { items, llmStatus, hasInferred, mock, failureAnalysisStatus, aiAnalyzedSubstances } =
-    useCasePriorTherapies(caseId, medications, {
-      patientName,
-    })
+  const {
+    items,
+    llmStatus,
+    hasInferred,
+    mock,
+    failureAnalysisStatus,
+    aiAnalyzedSubstances,
+    refineWithAi,
+    canRefine,
+    aiRefined,
+  } = useCasePriorTherapies(caseId, medications, {
+    patientName,
+  })
 
   const de = language === 'de'
   const heading = de ? 'Bisher versuchte Medikamente' : 'Previously tried medications'
 
-  const evaluating = llmStatus === 'loading'
+  const evaluating = llmStatus === 'loading' || failureAnalysisStatus === 'loading'
+
+  // Explicit, billed AI refinement — never auto-fired. Offered while a refine is
+  // possible (free text present, not demo / facts path) and not yet run.
+  const refineControl = evaluating ? (
+    <span className="prior-therapies__status" aria-live="polite">
+      <Sparkles size={12} aria-hidden />
+      {de ? 'wird verfeinert…' : 'refining…'}
+    </span>
+  ) : canRefine ? (
+    <button
+      type="button"
+      className="prior-therapies__refine"
+      onClick={refineWithAi}
+      title={
+        de
+          ? 'Vortherapien mit KI aus dem Freitext verfeinern (verbraucht Credits)'
+          : 'Refine prior therapies from free text with AI (uses credits)'
+      }
+    >
+      <Sparkles size={12} aria-hidden />
+      {de ? 'Mit KI verfeinern' : 'Refine with AI'}
+    </button>
+  ) : aiRefined && hasInferred ? (
+    <span
+      className="prior-therapies__status prior-therapies__status--ai"
+      title={
+        de
+          ? 'Teilweise KI-abgeleitet aus Freitext — bitte Quelle prüfen.'
+          : 'Partly AI-derived from free text — please verify the source.'
+      }
+    >
+      <Sparkles size={12} aria-hidden />
+      {de ? 'inkl. KI-Hinweise' : 'incl. AI hints'}
+      {mock ? ' (Demo)' : ''}
+    </span>
+  ) : null
 
   if (items.length === 0 && !evaluating) {
     return (
@@ -114,6 +159,7 @@ export function PriorTherapiesPanel({ caseId, medications, patientName }: PriorT
               <h3 className="prior-therapies__title">{heading}</h3>
             </div>
           </div>
+          {refineControl}
         </header>
         <p className="prior-therapies__empty">
           {de
@@ -135,25 +181,7 @@ export function PriorTherapiesPanel({ caseId, medications, patientName }: PriorT
             <h3 className="prior-therapies__title">{heading}</h3>
           </div>
         </div>
-        {evaluating ? (
-          <span className="prior-therapies__status" aria-live="polite">
-            <Sparkles size={12} aria-hidden />
-            {de ? 'wird ausgewertet…' : 'analysing…'}
-          </span>
-        ) : hasInferred ? (
-          <span
-            className="prior-therapies__status prior-therapies__status--ai"
-            title={
-              de
-                ? 'Teilweise KI-abgeleitet aus Freitext — bitte Quelle prüfen.'
-                : 'Partly AI-derived from free text — please verify the source.'
-            }
-          >
-            <Sparkles size={12} aria-hidden />
-            {de ? 'inkl. KI-Hinweise' : 'incl. AI hints'}
-            {mock ? ' (Demo)' : ''}
-          </span>
-        ) : null}
+        {refineControl}
       </header>
 
       <ul className="prior-therapies__list">
