@@ -17912,6 +17912,18 @@ export const uiTranslations = {
     fr: 'Coller des valeurs de labo et obtenir une interprétation clinique par IA',
     es: 'Pegar valores de laboratorio y obtener una interpretación clínica con IA',
   },
+  launcherTaskStandaloneLabTools: {
+    de: 'Lab-Werkzeuge',
+    en: 'Lab tools',
+    fr: 'Outils labo',
+    es: 'Herramientas de laboratorio',
+  },
+  launcherTaskStandaloneLabToolsDesc: {
+    de: 'Labor visualisieren und Laborbefunde per KI interpretieren',
+    en: 'Visualise labs and get AI interpretation of lab panels',
+    fr: 'Visualiser les labos et interpréter les bilans par IA',
+    es: 'Visualizar analíticas e interpretar paneles de laboratorio con IA',
+  },
   launcherTaskStandaloneDictation: {
     de: 'Diktat',
     en: 'Dictation',
@@ -18447,6 +18459,42 @@ export const uiTranslations = {
     en: 'Translate the following clinical text from {sourceLang} to {targetLang}. Output only the translation — no explanations or commentary.',
     fr: 'Traduisez le texte clinique suivant de {sourceLang} vers {targetLang}. Ne produisez que la traduction — pas d’explications ni de commentaires.',
     es: 'Traduzca el siguiente texto clínico de {sourceLang} a {targetLang}. Devuelva solo la traducción — sin explicaciones ni comentarios.',
+  },
+  standaloneTranslateNoLanguageMatch: {
+    de: 'Keine Sprache gefunden',
+    en: 'No language found',
+    fr: 'Aucune langue trouvée',
+    es: 'No se encontró idioma',
+  },
+  standaloneLabToolsTitle: {
+    de: 'Lab-Werkzeuge',
+    en: 'Lab tools',
+    fr: 'Outils labo',
+    es: 'Herramientas de laboratorio',
+  },
+  standaloneLabToolsEyebrow: {
+    de: 'Labor',
+    en: 'Laboratory',
+    fr: 'Laboratoire',
+    es: 'Laboratorio',
+  },
+  standaloneLabToolsTabVisualize: {
+    de: 'Visualisieren',
+    en: 'Visualise',
+    fr: 'Visualiser',
+    es: 'Visualizar',
+  },
+  standaloneLabToolsTabInterpret: {
+    de: 'Interpretieren',
+    en: 'Interpret',
+    fr: 'Interpréter',
+    es: 'Interpretar',
+  },
+  standaloneLabToolsVizHint: {
+    de: 'Laborwerte eingeben und Verläufe als Diagramm darstellen.',
+    en: 'Enter lab values and chart trends over time.',
+    fr: 'Saisir des valeurs de labo et afficher les tendances en graphique.',
+    es: 'Introduzca valores de laboratorio y muestre tendencias en gráficos.',
   },
   standaloneTranslateLang_de: {
     de: 'Deutsch',

@@ -13,11 +13,9 @@ const STANDALONE_TOOLS = new Set([
   'butterfly',
   'medication',
   'education',
-  'labviz',
+  'labTools',
   'timeline',
-  'medLabor',
   'summary',
-  'labInterpret',
   'dictation',
   'translate',
 ])
@@ -77,18 +75,12 @@ describe('launcher task registry', () => {
     expect(ids).not.toContain('standalone-interactions')
   })
 
-  it('exposes the expanded patient-less tool-area cards', () => {
+  it('exposes the consolidated patient-less lab tools card', () => {
     const ids = LAUNCHER_TASKS.map((t) => t.id)
-    for (const required of [
-      'standalone-labviz',
-      'standalone-verlauf',
-      'standalone-timeline',
-      'standalone-medlabor',
-      'standalone-summary',
-      'standalone-labinterpret',
-    ]) {
-      expect(ids).toContain(required)
-    }
+    expect(ids).toContain('standalone-lab-tools')
+    expect(ids).not.toContain('standalone-labviz')
+    expect(ids).not.toContain('standalone-labinterpret')
+    expect(ids).not.toContain('standalone-medlabor')
   })
 
   it('exposes a standalone EEG befund mode alongside ECG', () => {

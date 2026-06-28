@@ -49,12 +49,10 @@ const STANDALONE_KEPT_CARDS = [
   'standalone-knowledge',
   'standalone-medication',
   'standalone-education',
-  'standalone-labviz',
+  'standalone-lab-tools',
   'standalone-verlauf',
   'standalone-timeline',
-  'standalone-medlabor',
   'standalone-summary',
-  'standalone-labinterpret',
   'standalone-dictation',
   'standalone-translate',
   'formulare',
@@ -127,10 +125,10 @@ describe('filterLauncherTasksForContext', () => {
     }
   })
 
-  it('surfaces at least 12 distinct patient-less tool cards', () => {
+  it('surfaces exactly 12 patient-less launcher cards including formulare', () => {
     const standaloneIds = ids(standalone)
     expect(new Set(standaloneIds).size).toBe(standaloneIds.length)
-    expect(standaloneIds.length).toBeGreaterThanOrEqual(12)
+    expect(standaloneIds.length).toBe(12)
   })
 
   it('keeps no patient-case-bound target in any standalone tool card', () => {
