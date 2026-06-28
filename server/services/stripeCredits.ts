@@ -362,6 +362,59 @@ export async function createSubscriptionCheckoutSession(params: {
   })
 }
 
+// ── Subscription cancellation (account lifecycle) ───────────────────────────
+
+/**
+ * Cancel the user's subscription AT PERIOD END (the unsubscribe flow). The user
+ * keeps the access they already paid for; Stripe emits a
+ * `customer.subscription.updated` (cancel_at_period_end=true) and later a
+ * `customer.subscription.deleted` at the period boundary. No-op when the user
+ * has no Stripe subscription mapped.
+ */
+export async function cancelSubscriptionAtPeriodEnd(userId: string): Promise<void> {
+  const account = await creditsRepo.getAccountByUserId(userId)
+  const subscriptionId = account?.stripe_subscription_id
+  if (!subscriptionId) return
+  await getStripe().subscriptions.update(subscriptionId, { cancel_at_period_end: true })
+}
+
+/**
+ * Cancel the user's subscription IMMEDIATELY (the delete flow). No proration /
+ * refund — access ends now. No-op when the user has no Stripe subscription
+ * mapped, and tolerant of an already-cancelled subscription.
+ */
+export async function cancelSubscriptionImmediately(userId: string): Promise<void> {
+  const account = await creditsRepo.getAccountByUserId(userId)
+  const subscriptionId = account?.stripe_subscription_id
+  if (!subscriptionId) return
+  try {
+    await getStripe().subscriptions.cancel(subscriptionId)
+  } catch (error) {
+    // Already cancelled / missing at Stripe → treat as success (idempotent).
+    const code = (error as Stripe.errors.StripeError)?.code
+    if (code === 'resource_missing') return
+    throw error
+  }
+}
+
+/**
+ * Delete the user's Stripe customer (final purge step). Removes saved payment
+ * methods + billing history at Stripe. No-op when no customer is mapped, and
+ * tolerant of an already-deleted customer.
+ */
+export async function deleteStripeCustomer(userId: string): Promise<void> {
+  const account = await creditsRepo.getAccountByUserId(userId)
+  const customerId = account?.stripe_customer_id
+  if (!customerId) return
+  try {
+    await getStripe().customers.del(customerId)
+  } catch (error) {
+    const code = (error as Stripe.errors.StripeError)?.code
+    if (code === 'resource_missing') return
+    throw error
+  }
+}
+
 /** Resolve the credit grant implied by a paid checkout session (if any). */
 function resolveCheckoutGrant(
   session: Stripe.Checkout.Session,
@@ -751,6 +804,22 @@ async function applySubscriptionFromStripe(
     currentPeriodEnd: subscriptionPeriodEndIso(subscription),
     cancelAtPeriodEnd: subscription.cancel_at_period_end ?? null,
   })
+
+  // A live (re)subscribe clears account dormancy so a returning user's deletion
+  // clock is cancelled. `account_reactivate` is intentionally a no-op when the
+  // account is `delete_pending`, so an explicit account deletion is never undone
+  // by a stray subscription event. Failures here must not roll back the applied
+  // subscription state, so they are logged and swallowed.
+  if (
+    (subscription.status === 'active' || subscription.status === 'trialing') &&
+    subscription.cancel_at_period_end !== true
+  ) {
+    try {
+      await creditsRepo.reactivateAccount(userId)
+    } catch (error) {
+      console.error('[stripe] account_reactivate after subscription event failed:', error)
+    }
+  }
 }
 
 /** checkout.session.completed (subscription) → fetch the sub and apply it. */

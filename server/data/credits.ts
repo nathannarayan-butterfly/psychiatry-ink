@@ -308,6 +308,97 @@ export async function finishAutoRecharge(
   return (data as AiCreditAccount) ?? null
 }
 
+// ── Account lifecycle (unsubscribe / delete / purge) ─────────────────────────
+
+/**
+ * Begin the unsubscribe → dormant transition. The 90-day (default) deletion
+ * clock starts at the paid period end. No-op if a delete is already pending.
+ * Wraps `account_begin_unsubscribe` (service-role only).
+ */
+export async function beginUnsubscribe(
+  userId: string,
+  dormantDays?: number,
+): Promise<AiCreditAccount> {
+  const { data, error } = await getSupabaseAdmin().rpc('account_begin_unsubscribe', {
+    p_user_id: userId,
+    ...(dormantDays !== undefined ? { p_dormant_days: dormantDays } : {}),
+  })
+  if (error) throw new Error(`account_begin_unsubscribe failed: ${error.message}`)
+  return data as AiCreditAccount
+}
+
+/**
+ * Clear dormancy + the purge clock, back to active. Intentionally a no-op when
+ * a delete is pending (the webhook resubscribe path must not silently cancel an
+ * in-flight deletion). Wraps `account_reactivate` (service-role only).
+ */
+export async function reactivateAccount(userId: string): Promise<AiCreditAccount> {
+  const { data, error } = await getSupabaseAdmin().rpc('account_reactivate', {
+    p_user_id: userId,
+  })
+  if (error) throw new Error(`account_reactivate failed: ${error.message}`)
+  return data as AiCreditAccount
+}
+
+/**
+ * Move the account to `delete_pending` with a 30-day (default) grace clock.
+ * Wraps `account_request_delete` (service-role only).
+ */
+export async function requestDelete(
+  userId: string,
+  graceDays?: number,
+): Promise<AiCreditAccount> {
+  const { data, error } = await getSupabaseAdmin().rpc('account_request_delete', {
+    p_user_id: userId,
+    ...(graceDays !== undefined ? { p_grace_days: graceDays } : {}),
+  })
+  if (error) throw new Error(`account_request_delete failed: ${error.message}`)
+  return data as AiCreditAccount
+}
+
+/** Cancel a pending delete → back to active. Wraps `account_cancel_delete`. */
+export async function cancelDelete(userId: string): Promise<AiCreditAccount> {
+  const { data, error } = await getSupabaseAdmin().rpc('account_cancel_delete', {
+    p_user_id: userId,
+  })
+  if (error) throw new Error(`account_cancel_delete failed: ${error.message}`)
+  return data as AiCreditAccount
+}
+
+/**
+ * Atomically latch and return the user_ids of accounts whose purge clock has
+ * elapsed (one worker wins each row). Wraps `account_claim_due_purges`.
+ */
+export async function claimDuePurges(limit?: number): Promise<string[]> {
+  const { data, error } = await getSupabaseAdmin().rpc('account_claim_due_purges', {
+    ...(limit !== undefined ? { p_limit: limit } : {}),
+  })
+  if (error) throw new Error(`account_claim_due_purges failed: ${error.message}`)
+  return (data as string[] | null) ?? []
+}
+
+/** Release a claimed-but-failed purge so the next sweep retries. */
+export async function releasePurge(userId: string): Promise<void> {
+  const { error } = await getSupabaseAdmin().rpc('account_release_purge', {
+    p_user_id: userId,
+  })
+  if (error) throw new Error(`account_release_purge failed: ${error.message}`)
+}
+
+/**
+ * Hard-delete all PERSONAL rows for a user (organisation_id is null only) in one
+ * transaction and tombstone the account row. The worker performs the external
+ * deletes (Storage, Stripe, auth user) BEFORE calling this. Wraps
+ * `account_purge_data` (service-role only).
+ */
+export async function purgeData(userId: string): Promise<AiCreditAccount> {
+  const { data, error } = await getSupabaseAdmin().rpc('account_purge_data', {
+    p_user_id: userId,
+  })
+  if (error) throw new Error(`account_purge_data failed: ${error.message}`)
+  return data as AiCreditAccount
+}
+
 /**
  * Resolve the app user id for a Stripe customer id (webhook → app user). Uses
  * the partial `ai_credit_accounts_stripe_customer_idx`. Returns null when no
@@ -377,4 +468,11 @@ export const creditsRepo = {
   beginAutoRecharge,
   finishAutoRecharge,
   getUserIdByStripeCustomerId,
+  beginUnsubscribe,
+  reactivateAccount,
+  requestDelete,
+  cancelDelete,
+  claimDuePurges,
+  releasePurge,
+  purgeData,
 }

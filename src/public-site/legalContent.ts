@@ -343,6 +343,10 @@ const privacyEn: LegalDoc = {
             'Dictation or audio data: not stored by default where technically configured; if stored for processing or troubleshooting, deleted within a short, defined period.',
           ],
         },
+        {
+          type: 'p',
+          text: 'Account closure and deletion windows: if you cancel your subscription, your account becomes dormant and you can reactivate it within 90 days; if you do not, your account and all associated personal data are permanently deleted at the end of that 90-day period. If you request account deletion directly, your subscription is cancelled immediately and your account enters a 30-day grace period during which you can cancel the deletion; after 30 days your account and all associated personal data are permanently deleted. Data shared into organisations you do not solely control, and records subject to statutory retention duties, are handled separately as described in this notice.',
+        },
       ],
     },
     {
@@ -783,6 +787,10 @@ const privacyDe: LegalDoc = {
         {
           type: 'p',
           text: 'Support-Daten werden nur so lange gespeichert, wie dies zur Bearbeitung der Anfrage, zur Fehleranalyse, zur Rechtsverteidigung oder zur Erfüllung gesetzlicher Pflichten erforderlich ist.',
+        },
+        {
+          type: 'p',
+          text: 'Kündigung und Löschfristen: Wenn Sie Ihr Abonnement kündigen, wird Ihr Konto ruhend gestellt und kann innerhalb von 90 Tagen reaktiviert werden; erfolgt keine Reaktivierung, werden Ihr Konto und alle zugehörigen personenbezogenen Daten nach Ablauf dieser 90 Tage dauerhaft gelöscht. Wenn Sie die Löschung Ihres Kontos direkt veranlassen, wird Ihr Abonnement sofort gekündigt und Ihr Konto tritt in eine 30-tägige Karenzzeit ein, innerhalb derer Sie die Löschung abbrechen können; nach 30 Tagen werden Ihr Konto und alle zugehörigen personenbezogenen Daten dauerhaft gelöscht. Daten, die in Organisationen geteilt wurden, die Sie nicht allein kontrollieren, sowie Daten, die gesetzlichen Aufbewahrungspflichten unterliegen, werden gesondert nach Maßgabe dieser Datenschutzhinweise behandelt.',
         },
       ],
     },

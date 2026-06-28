@@ -183,6 +183,7 @@ export type Database = {
       }
       ai_credit_accounts: {
         Row: {
+          account_status: string | null
           auto_recharge_amount: number | null
           auto_recharge_enabled: boolean
           auto_recharge_failure_reason: string | null
@@ -195,8 +196,13 @@ export type Database = {
           auto_recharge_threshold: number
           created_at: string
           default_payment_method_id: string | null
+          delete_requested_at: string | null
+          dormant_at: string | null
           id: string
           locked_at: string | null
+          purge_after: string | null
+          purge_started_at: string | null
+          purged_at: string | null
           monthly_credits: number
           monthly_reset_at: string
           organisation_id: string | null
@@ -215,6 +221,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          account_status?: string | null
           auto_recharge_amount?: number | null
           auto_recharge_enabled?: boolean
           auto_recharge_failure_reason?: string | null
@@ -227,8 +234,13 @@ export type Database = {
           auto_recharge_threshold?: number
           created_at?: string
           default_payment_method_id?: string | null
+          delete_requested_at?: string | null
+          dormant_at?: string | null
           id?: string
           locked_at?: string | null
+          purge_after?: string | null
+          purge_started_at?: string | null
+          purged_at?: string | null
           monthly_credits?: number
           monthly_reset_at: string
           organisation_id?: string | null
@@ -247,6 +259,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          account_status?: string | null
           auto_recharge_amount?: number | null
           auto_recharge_enabled?: boolean
           auto_recharge_failure_reason?: string | null
@@ -259,8 +272,13 @@ export type Database = {
           auto_recharge_threshold?: number
           created_at?: string
           default_payment_method_id?: string | null
+          delete_requested_at?: string | null
+          dormant_at?: string | null
           id?: string
           locked_at?: string | null
+          purge_after?: string | null
+          purge_started_at?: string | null
+          purged_at?: string | null
           monthly_credits?: number
           monthly_reset_at?: string
           organisation_id?: string | null
@@ -4000,6 +4018,50 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      account_begin_unsubscribe: {
+        Args: {
+          p_user_id: string
+          p_dormant_days?: number
+        }
+        Returns: Database['public']['Tables']['ai_credit_accounts']['Row']
+      }
+      account_cancel_delete: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: Database['public']['Tables']['ai_credit_accounts']['Row']
+      }
+      account_claim_due_purges: {
+        Args: {
+          p_limit?: number
+        }
+        Returns: string[]
+      }
+      account_purge_data: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: Database['public']['Tables']['ai_credit_accounts']['Row']
+      }
+      account_reactivate: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: Database['public']['Tables']['ai_credit_accounts']['Row']
+      }
+      account_release_purge: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      account_request_delete: {
+        Args: {
+          p_user_id: string
+          p_grace_days?: number
+        }
+        Returns: Database['public']['Tables']['ai_credit_accounts']['Row']
+      }
       ai_credit_debit: {
         Args: {
           p_account_id: string

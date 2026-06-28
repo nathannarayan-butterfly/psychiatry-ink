@@ -17,6 +17,7 @@ import { PRESCRIBING_COUNTRIES, usePrescribingCountry } from '../../hooks/usePre
 import type { PrescribingCountryCode } from '../../types/knowledgeBase'
 import { CountryCombobox } from './CountryCombobox'
 import { SettingsField } from './SettingsField'
+import { AccountLifecycleSection } from './AccountLifecycleSection'
 import { PasswordInput } from '../auth/PasswordInput'
 import {
   ACCOUNT_PASSWORD_MIN_LENGTH,
@@ -327,6 +328,7 @@ export function AccountSection() {
   }
 
   return (
+    <>
     <form onSubmit={handleSubmit} noValidate>
       <SettingsField
         label={t('settingsAccountNameLabel')}
@@ -474,6 +476,8 @@ export function AccountSection() {
         </div>
       </SettingsField>
     </form>
+    <AccountLifecycleSection />
+    </>
   )
 }
 

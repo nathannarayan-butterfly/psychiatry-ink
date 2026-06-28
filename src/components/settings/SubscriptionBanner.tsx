@@ -1,4 +1,4 @@
-import { AlertTriangle, CreditCard, Lock } from 'lucide-react'
+import { AlertTriangle, CreditCard, Clock, Lock, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { UiLanguage } from '../../types/settings'
@@ -8,6 +8,12 @@ import {
   type AiCreditStatus,
   type SubscriptionInterval,
 } from '../../services/aiCreditsApi'
+import {
+  cancelAccountDeletion,
+  fetchAccountLifecycle,
+  reactivateAccount,
+  type AccountLifecycleStatus,
+} from '../../services/accountLifecycleApi'
 
 /**
  * Pre-lapse trial warning + soft-lock banner with a subscribe / recharge CTA.
@@ -39,6 +45,24 @@ type Copy = {
   subscribeYearly: string
   recharge: string
   redirecting: string
+  dormantTitle: string
+  dormantBody: (date: string) => string
+  reactivate: string
+  deletePendingTitle: string
+  deletePendingBody: (date: string) => string
+  cancelDeletion: string
+  processing: string
+}
+
+function formatBannerDate(iso: string | null, language: string): string {
+  if (!iso) return ''
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return ''
+  try {
+    return date.toLocaleDateString(language, { year: 'numeric', month: 'long', day: 'numeric' })
+  } catch {
+    return date.toISOString().slice(0, 10)
+  }
 }
 
 const COPY: Record<UiLanguage, Copy> = {
@@ -58,6 +82,15 @@ const COPY: Record<UiLanguage, Copy> = {
     subscribeYearly: `Subscribe yearly — ${YEARLY_PRICE}/yr`,
     recharge: 'Top up credits',
     redirecting: 'Redirecting…',
+    dormantTitle: 'Your account is dormant',
+    dormantBody: (date) =>
+      `Your account and all data will be permanently deleted on ${date}. Reactivate any time before then to keep everything.`,
+    reactivate: 'Reactivate account',
+    deletePendingTitle: 'Account deletion scheduled',
+    deletePendingBody: (date) =>
+      `Your account and all data are scheduled for permanent deletion on ${date}. You can still cancel until then.`,
+    cancelDeletion: 'Cancel deletion',
+    processing: 'Processing…',
   },
   de: {
     lockedTitle: 'Ihre kostenlose Testphase ist beendet',
@@ -75,6 +108,15 @@ const COPY: Record<UiLanguage, Copy> = {
     subscribeYearly: `Jährlich abonnieren — ${YEARLY_PRICE}/Jahr`,
     recharge: 'Credits aufladen',
     redirecting: 'Weiterleitung…',
+    dormantTitle: 'Ihr Konto ist ruhend',
+    dormantBody: (date) =>
+      `Ihr Konto und alle Daten werden am ${date} dauerhaft gelöscht. Reaktivieren Sie es vorher jederzeit, um alles zu behalten.`,
+    reactivate: 'Konto reaktivieren',
+    deletePendingTitle: 'Kontolöschung geplant',
+    deletePendingBody: (date) =>
+      `Ihr Konto und alle Daten sind zur dauerhaften Löschung am ${date} vorgesehen. Bis dahin können Sie dies abbrechen.`,
+    cancelDeletion: 'Löschung abbrechen',
+    processing: 'Wird verarbeitet…',
   },
   fr: {
     lockedTitle: 'Votre essai gratuit est terminé',
@@ -92,6 +134,15 @@ const COPY: Record<UiLanguage, Copy> = {
     subscribeYearly: `Abonnement annuel — ${YEARLY_PRICE}/an`,
     recharge: 'Recharger des crédits',
     redirecting: 'Redirection…',
+    dormantTitle: 'Votre compte est dormant',
+    dormantBody: (date) =>
+      `Votre compte et toutes les données seront définitivement supprimés le ${date}. Réactivez-le à tout moment avant cette date pour tout conserver.`,
+    reactivate: 'Réactiver le compte',
+    deletePendingTitle: 'Suppression du compte programmée',
+    deletePendingBody: (date) =>
+      `Votre compte et toutes les données sont programmés pour suppression définitive le ${date}. Vous pouvez encore annuler jusque-là.`,
+    cancelDeletion: 'Annuler la suppression',
+    processing: 'Traitement…',
   },
   es: {
     lockedTitle: 'Tu prueba gratuita ha finalizado',
@@ -109,6 +160,15 @@ const COPY: Record<UiLanguage, Copy> = {
     subscribeYearly: `Suscripción anual — ${YEARLY_PRICE}/año`,
     recharge: 'Recargar créditos',
     redirecting: 'Redirigiendo…',
+    dormantTitle: 'Tu cuenta está inactiva',
+    dormantBody: (date) =>
+      `Tu cuenta y todos los datos se eliminarán de forma permanente el ${date}. Reactívala en cualquier momento antes de esa fecha para conservarlo todo.`,
+    reactivate: 'Reactivar cuenta',
+    deletePendingTitle: 'Eliminación de cuenta programada',
+    deletePendingBody: (date) =>
+      `Tu cuenta y todos los datos están programados para eliminación permanente el ${date}. Puedes cancelar hasta entonces.`,
+    cancelDeletion: 'Cancelar eliminación',
+    processing: 'Procesando…',
   },
 }
 
@@ -143,6 +203,8 @@ export function SubscriptionBanner({ onRechargeClick, refreshKey }: Subscription
   const { language } = useTranslation()
   const copy = COPY[language] ?? COPY.en
   const [status, setStatus] = useState<AiCreditStatus | null>(null)
+  const [lifecycle, setLifecycle] = useState<AccountLifecycleStatus | null>(null)
+  const [lifecycleBusy, setLifecycleBusy] = useState(false)
   const [busy, setBusy] = useState<SubscriptionInterval | null>(null)
   const mountedRef = useRef(true)
 
@@ -162,7 +224,37 @@ export function SubscriptionBanner({ onRechargeClick, refreshKey }: Subscription
         // Status is advisory UI — silently ignore fetch failures.
       }
     })()
+    void (async () => {
+      try {
+        const next = await fetchAccountLifecycle()
+        if (mountedRef.current) setLifecycle(next)
+      } catch {
+        // Lifecycle banner is advisory — silently ignore fetch failures.
+      }
+    })()
   }, [refreshKey])
+
+  const handleReactivate = useCallback(async () => {
+    setLifecycleBusy(true)
+    try {
+      const next = await reactivateAccount()
+      if (mountedRef.current) setLifecycle(next)
+    } catch {
+      // Surfaced in detail by the settings section; banner stays put.
+    }
+    if (mountedRef.current) setLifecycleBusy(false)
+  }, [])
+
+  const handleCancelDeletion = useCallback(async () => {
+    setLifecycleBusy(true)
+    try {
+      const next = await cancelAccountDeletion()
+      if (mountedRef.current) setLifecycle(next)
+    } catch {
+      // Surfaced in detail by the settings section; banner stays put.
+    }
+    if (mountedRef.current) setLifecycleBusy(false)
+  }, [])
 
   const handleSubscribe = useCallback(async (interval: SubscriptionInterval) => {
     setBusy(interval)
@@ -177,6 +269,65 @@ export function SubscriptionBanner({ onRechargeClick, refreshKey }: Subscription
     }
     if (mountedRef.current) setBusy(null)
   }, [])
+
+  // Returning-user lifecycle banners take precedence over subscription prompts.
+  if (lifecycle?.accountStatus === 'delete_pending') {
+    return (
+      <div
+        role="alert"
+        className="mb-4 flex flex-col gap-3 rounded-xl border border-rose-300 bg-rose-50 p-4 text-rose-900 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div className="flex items-start gap-3">
+          <Trash2 className="mt-0.5 h-5 w-5 shrink-0" strokeWidth={1.75} aria-hidden />
+          <div>
+            <p className="font-semibold leading-tight">{copy.deletePendingTitle}</p>
+            <p className="mt-1 text-sm opacity-90">
+              {copy.deletePendingBody(formatBannerDate(lifecycle.purgeAfter, language))}
+            </p>
+          </div>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <button
+            type="button"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:opacity-60"
+            disabled={lifecycleBusy}
+            onClick={() => void handleCancelDeletion()}
+          >
+            {lifecycleBusy ? copy.processing : copy.cancelDeletion}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (lifecycle?.accountStatus === 'dormant') {
+    return (
+      <div
+        role="status"
+        className="mb-4 flex flex-col gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div className="flex items-start gap-3">
+          <Clock className="mt-0.5 h-5 w-5 shrink-0" strokeWidth={1.75} aria-hidden />
+          <div>
+            <p className="font-semibold leading-tight">{copy.dormantTitle}</p>
+            <p className="mt-1 text-sm opacity-90">
+              {copy.dormantBody(formatBannerDate(lifecycle.purgeAfter, language))}
+            </p>
+          </div>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <button
+            type="button"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:opacity-60"
+            disabled={lifecycleBusy}
+            onClick={() => void handleReactivate()}
+          >
+            {lifecycleBusy ? copy.processing : copy.reactivate}
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   if (!status) return null
   const kind = resolveKind(status)
