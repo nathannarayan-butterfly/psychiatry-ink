@@ -2394,7 +2394,6 @@ function NotionAppInner({
                 privacy={privacy}
                 clinicalAge={clinicalAge}
                 onMigratedAge={onMigratedAge}
-                onOpenPrivacySettings={() => settingsPanel.openSettings('privacy')}
                 onSaveWorkspaceVault={handleVaultSaveWithArchive}
                 onStartDictation={workspace.startDictation}
                 onSwitchToWrite={() => workspace.setInputMode('write')}

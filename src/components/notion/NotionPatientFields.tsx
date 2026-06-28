@@ -1,7 +1,6 @@
 import { Cloud, Download, HardDrive, Upload } from 'lucide-react'
 import { useRef, type ChangeEvent } from 'react'
 import { GermanDateInput } from '../clinical/GermanDateInput'
-import { EncryptionDisclaimer } from '../EncryptionDisclaimer'
 import { useTranslation } from '../../context/TranslationContext'
 import type { usePatientMetadata } from '../../hooks/usePatientMetadata'
 
@@ -17,14 +16,12 @@ interface NotionPatientFieldsProps {
   patient: PatientMetadataState
   clinicalAge: ClinicalAgeState
   disabled?: boolean
-  onOpenPrivacySettings?: () => void
 }
 
 export function NotionPatientFields({
   patient,
   clinicalAge,
   disabled = false,
-  onOpenPrivacySettings,
 }: NotionPatientFieldsProps) {
   const { t } = useTranslation()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -46,22 +43,6 @@ export function NotionPatientFields({
 
   return (
     <div className="notion-patient-fields">
-      <EncryptionDisclaimer
-        section="patient"
-        bodyVariant="paragraph"
-        footer={
-          onOpenPrivacySettings ? (
-            <button
-              type="button"
-              className="notion-patient-fields__privacy-link"
-              onClick={onOpenPrivacySettings}
-            >
-              {t('patientPrivacySettingsLink')}
-            </button>
-          ) : undefined
-        }
-      />
-
       <div className="notion-patient-fields__groups">
         <div className="notion-patient-fields__group">
           <p className="notion-patient-fields__group-label">

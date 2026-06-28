@@ -21,7 +21,6 @@ import {
   parsePassphraseBackup,
   restorePrivateKeyFromPassphrase,
 } from '../../utils/passphraseRecovery'
-import { EncryptionDisclaimer } from '../EncryptionDisclaimer'
 import { SettingsField } from './SettingsField'
 
 type WorkspaceVaultState = ReturnType<typeof useWorkspaceVault>
@@ -178,7 +177,6 @@ export function WorkspaceVaultSection({
             onChange={(event) => void handleImportFile(event)}
           />
         </div>
-        <EncryptionDisclaimer section="settings" bodyVariant="list" />
         {vault.dbSyncEnabled ? (
           <p className="mt-2 text-xs text-muted">{t('workspaceVaultDbSync')}</p>
         ) : (

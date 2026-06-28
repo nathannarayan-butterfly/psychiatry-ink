@@ -4,9 +4,8 @@ import { useTranslation } from '../../context/TranslationContext'
 import type { UiTranslationKey } from '../../data/uiTranslations'
 import type { PrivacyTier } from '../../data/privacyRegions'
 import type { IdentifierStorageMode } from '../../utils/identifierStorage'
-import { EncryptionDisclaimerBody } from '../EncryptionDisclaimerBody'
 
-type HinweisPanelId = 'encryption' | 'pseudonym' | 'local'
+type HinweisPanelId = 'pseudonym' | 'local'
 
 const sharedHintKeys = [
   'dashboardHintLocalIdentifiers',
@@ -130,14 +129,6 @@ export function DashboardHinweise({ identifierStorage, tier }: DashboardHinweise
 
   return (
     <div className="dashboard-hinweise-stack">
-      <DashboardHinweisPanel id="encryption" titleKey="dashboardHintEncryptionTitle">
-        <EncryptionDisclaimerBody
-          variant="list"
-          className="dashboard-hinweis-panel__list"
-          identifierStorage={identifierStorage}
-        />
-      </DashboardHinweisPanel>
-
       <DashboardHinweisPanel id="pseudonym" titleKey="dashboardHintPseudonymTitle">
         <p className="dashboard-hinweis-panel__text">{t('dashboardHintPseudonymBody')}</p>
         <p className="dashboard-hinweis-panel__text dashboard-hinweis-panel__text--emphasis">

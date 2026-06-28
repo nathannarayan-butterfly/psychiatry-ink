@@ -101,7 +101,6 @@ interface NotionPaperProps {
     ready: boolean
   }
   onMigratedAge?: (age: string) => void
-  onOpenPrivacySettings?: () => void
   onEditorChange: (value: string) => void
   onSectionContentChange: (sectionId: string, value: string) => void
   onSectionMetadataChange?: (sectionId: string, metadata: AufnahmeSectionMetadata | undefined) => void
@@ -203,7 +202,6 @@ export function NotionPaper({
   privacy,
   clinicalAge,
   onMigratedAge,
-  onOpenPrivacySettings,
   onEditorChange,
   onSectionContentChange,
   onSectionMetadataChange,
@@ -795,7 +793,6 @@ export function NotionPaper({
               patient={patient}
               clinicalAge={clinicalAge}
               disabled={editorLocked}
-              onOpenPrivacySettings={onOpenPrivacySettings}
             />
           ) : null}
 
