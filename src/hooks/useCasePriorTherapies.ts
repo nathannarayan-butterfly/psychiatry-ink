@@ -34,6 +34,7 @@ import {
   medicationTrialFactsToItems,
 } from '../utils/medication/priorTherapyFacts'
 import { isCmeaConsumerReadEnabled } from '../utils/featureFlags'
+import { isDemoCase } from '../demo/demoReadOnly'
 
 /** Aufnahme sections most likely to mention prior medication trials. */
 const AUFNAHME_PRIOR_MED_SECTIONS = [
@@ -161,6 +162,12 @@ export function useCasePriorTherapies(
   // unchanged either way.
   const cmeaRead = isCmeaConsumerReadEnabled()
 
+  // The synthetic demo case is pre-baked and read-only: viewing it (e.g. the
+  // Übersicht prior-therapies card) must NEVER fire a live, credit-charging LLM
+  // extraction. Deterministic prior-therapy data from the medication plan still
+  // renders; only the bespoke LLM enrichment passes are suppressed.
+  const isDemo = isDemoCase(caseId)
+
   const deterministic = useMemo(
     () => extractPriorTherapiesFromPlan(medications),
     [medications],
@@ -200,7 +207,7 @@ export function useCasePriorTherapies(
       return
     }
     const hasText = sources.aufnahmeText.trim().length > 0 || sources.verlaufText.trim().length > 0
-    if (!enabled || !hasText) {
+    if (!enabled || isDemo || !hasText) {
       setResponse(null)
       setLlmStatus('idle')
       return
@@ -238,7 +245,7 @@ export function useCasePriorTherapies(
     return () => {
       cancelled = true
     }
-  }, [caseId, enabled, signature, sources, patientName, cmeaRead])
+  }, [caseId, enabled, isDemo, signature, sources, patientName, cmeaRead])
 
   const inferred = useMemo(
     () => (cmeaRead ? factInferred : response ? toInferredItems(response.items) : []),
@@ -321,7 +328,7 @@ export function useCasePriorTherapies(
       setFailureAnalysisStatus(drugsPayload.length === 0 ? 'idle' : 'ready')
       return
     }
-    if (!enabled || drugsPayload.length === 0) {
+    if (!enabled || isDemo || drugsPayload.length === 0) {
       setLlmAnalyses(new Map())
       setAiAnalyzedSubstances(new Set())
       setFailureAnalysisStatus('idle')
@@ -365,7 +372,7 @@ export function useCasePriorTherapies(
     return () => {
       cancelled = true
     }
-  }, [caseId, enabled, failureSignature, drugsPayload, sources, patientName, cmeaRead])
+  }, [caseId, enabled, isDemo, failureSignature, drugsPayload, sources, patientName, cmeaRead])
 
   const items = useMemo(() => {
     if (deterministicAnalysisByKey.size === 0 && llmAnalyses.size === 0) return mergedItems

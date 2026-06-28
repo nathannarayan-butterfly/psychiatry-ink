@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { getCaseMeta } from './useCaseRegistry'
+import { isDemoCase } from '../demo/demoReadOnly'
 import { isPsychopathExtractAiEnabled } from '../utils/featureFlags'
 import {
   hashPsychopathSourceText,
@@ -55,8 +56,13 @@ export function usePsychopathAiExtract({
   const { text } = resolveOverviewPsychopathologyText(caseId)
   const state = loadPsychopathFindingState(caseId)
   const isStale = isPsychopathAiStructuredStale(text, state.aiStructured)
+  // The synthetic demo case is pre-baked and read-only: never auto-fire a live
+  // AI extraction when it is merely viewed. (Explicit clinician extraction on a
+  // real case is unaffected.)
   const autoRunKey =
-    text?.trim() && isStale ? `${caseId}:${hashPsychopathSourceText(text)}` : null
+    !isDemoCase(caseId) && text?.trim() && isStale
+      ? `${caseId}:${hashPsychopathSourceText(text)}`
+      : null
 
   const extract = useCallback(async () => {
     if (!isEnabled) {

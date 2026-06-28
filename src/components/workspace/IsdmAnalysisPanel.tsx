@@ -78,6 +78,7 @@ import { suggestionsFromCaseFacts } from '../../utils/butterfly/factSuggestions'
 import { buildButterflyContextPackage, hasButterflyContext } from '../../utils/butterfly/contextPackage'
 import { extractButterflyCriteria } from '../../services/butterflyExtractApi'
 import { isCmeaConsumerReadEnabled } from '../../utils/featureFlags'
+import { isDemoCase } from '../../demo/demoReadOnly'
 import { useDiagnosisDisplayTitles } from '../../hooks/useDiagnosisDisplayTitles'
 import type { IcdTitleVersion } from '../../../shared/icdTitle'
 import type { NotionPageId } from '../notion/notionPages'
@@ -200,6 +201,11 @@ export function IsdmAnalysisPanel({
   const icdVersion = toButterflyIcdVersion(codingSystem)
   const autoAttempted = useRef<Set<string>>(new Set())
   const interviewAttempted = useRef<Set<string>>(new Set())
+  // The synthetic demo case is pre-baked and read-only. It must NEVER trigger a
+  // live, credit-charging AI call merely by being viewed/scrolled — its criteria
+  // suggestions and interview questions come from the fixture / deterministic
+  // templates. Only explicit clinician actions on real cases spend credits.
+  const isDemo = isDemoCase(caseId)
 
   const refresh = useCallback(() => {
     setAnalysis(loadIsdmAnalysis(caseId))
@@ -515,6 +521,7 @@ export function IsdmAnalysisPanel({
   // Background trigger: once per disorder per mount, resolve unknown criteria via
   // the LLM when none of them has a suggestion yet (cheap, low doc volume).
   useEffect(() => {
+    if (isDemo) return
     for (const result of results) {
       if (!result.available || !result.disorder || !result.evaluation) continue
       const key = `${caseId}:${result.disorder.id}:${icdVersion}`
@@ -531,7 +538,7 @@ export function IsdmAnalysisPanel({
       autoAttempted.current.add(key)
       void runExtraction(result.disorder, result.evaluation)
     }
-  }, [results, caseId, icdVersion, aiSuggestions, runExtraction])
+  }, [results, caseId, icdVersion, aiSuggestions, runExtraction, isDemo])
 
   // Background trigger: generate concrete interview questions for any still-open
   // criteria that have none cached for the active language/version. The request
@@ -539,6 +546,7 @@ export function IsdmAnalysisPanel({
   // mode the server returns deterministic templates. Once per disorder/language
   // per mount.
   useEffect(() => {
+    if (isDemo) return
     for (const result of results) {
       if (!result.available || !result.disorder || !result.evaluation) continue
       const disorder = result.disorder
@@ -580,7 +588,7 @@ export function IsdmAnalysisPanel({
         }
       })()
     }
-  }, [results, caseId, language, icdVersion, interviewCache])
+  }, [results, caseId, language, icdVersion, interviewCache, isDemo])
 
   const panelClassName = [
     'butterfly-panel',
