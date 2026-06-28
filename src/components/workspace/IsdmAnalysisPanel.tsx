@@ -6,7 +6,7 @@ import { OverviewAiBadge } from '../notion/overview/OverviewAiBadge'
 import { useTranslation } from '../../context/TranslationContext'
 import type { UiLanguage } from '../../types/settings'
 import type { IsdmClinicalAnalysis } from '../../types/isdm'
-import { loadIsdmAnalysis } from '../../utils/isdm/storage'
+import { loadIsdmAnalysis, subscribeIsdmAnalysis } from '../../utils/isdm/storage'
 import { scheduleIsdmRebuild } from '../../utils/isdm'
 import {
   formatCriterionCitation,
@@ -264,16 +264,31 @@ export function IsdmAnalysisPanel({
     return () => window.removeEventListener(DIAGNOSEN_CODING_SYSTEM_EVENT, handleChange)
   }, [caseId])
 
+  // Trigger a rebuild of the in-memory ISDM analysis, then REACT to its
+  // completion. The rebuild is debounced in the orchestrator (~1200ms), so a
+  // single fixed timeout could fire before the analysis lands and leave a case
+  // with diagnoses + data stuck on the idle state. Instead we subscribe to the
+  // rebuild-completion emitter and pick the analysis up the instant it is
+  // written. The bounded fallback timer (debounce window + margin) guarantees
+  // the "refreshing" affordance always clears even if nothing changed; both the
+  // subscription and the timer are torn down on unmount / dependency change.
   useEffect(() => {
     setRefreshing(true)
     setDiagnoses(loadDiagnosen(caseId))
     setAiSuggestions(loadAiSuggestions(caseId))
     scheduleIsdmRebuild(caseId, 'profile')
+    const unsubscribe = subscribeIsdmAnalysis(caseId, () => {
+      refresh()
+      setRefreshing(false)
+    })
     const timer = window.setTimeout(() => {
       refresh()
       setRefreshing(false)
-    }, 500)
-    return () => window.clearTimeout(timer)
+    }, 1800)
+    return () => {
+      unsubscribe()
+      window.clearTimeout(timer)
+    }
   }, [caseId, refresh, diagnosesVersion, codingSystem])
 
   const enteredDiagnoses = useMemo(() => diagnoses.filter(hasCodeOrLabel), [diagnoses])
@@ -745,9 +760,9 @@ export function IsdmAnalysisPanel({
         </header>
       )}
 
-      <CollapsibleSection title={t('butterflyRecommendations')}>
+      <CollapsibleSection title={t('butterflyRecommendations')} defaultOpen>
         <ul className="butterfly-card-list">
-          {results.map((result) => {
+          {results.map((result, index) => {
             const displayLabel = diagnosisDisplayTitles.get(result.key) ?? result.code
             if (!result.available || !result.disorder || !result.evaluation) {
               return (
@@ -771,6 +786,10 @@ export function IsdmAnalysisPanel({
                 evaluation={result.evaluation}
                 label={displayLabel}
                 code={result.code}
+                // Surface the deterministic ICD criteria without hunting: expand
+                // the first diagnosis by default, and all of them when there are
+                // only a few. Still fully collapsible per card.
+                defaultOpen={index === 0 || results.length <= 3}
                 attestations={attestations}
                 aiSuggestions={aiSuggestions}
                 questionNotes={questionNotes}
@@ -965,6 +984,7 @@ interface ButterflyDiagnosisCardProps {
   evaluation: DisorderEvaluation
   label: string
   code: string
+  defaultOpen?: boolean
   attestations: AttestationMap
   aiSuggestions: ButterflyAiSuggestionState
   questionNotes: ClinicalQuestionNoteState
@@ -986,6 +1006,7 @@ function ButterflyDiagnosisCard({
   evaluation,
   label,
   code,
+  defaultOpen = false,
   attestations,
   aiSuggestions,
   questionNotes,
@@ -1005,7 +1026,7 @@ function ButterflyDiagnosisCard({
   )
   const criteria = evaluation.perCriterion.filter((result) => !exclusionGroupIds.has(result.groupId))
   const hasUnresolved = criteria.some((result) => result.status === 'unknown' && result.source !== 'attested')
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(defaultOpen)
   const [groupOpen, setGroupOpen] = useState(true)
   const bodyId = useId()
   const groupBodyId = useId()

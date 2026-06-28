@@ -67,12 +67,25 @@ vi.mock('../../../utils/butterfly/aiSuggestions', () => ({
 }))
 
 // ── Deterministic / display-only data (free, populate on mount) ───────────────
-vi.mock('../../../utils/isdm/storage', () => ({
-  loadIsdmAnalysis: () => ({
+// Controllable ISDM analysis + completion subscription so we can exercise the
+// stuck-idle timing fix: start with no analysis, then emit the rebuild
+// completion the panel subscribes to and assert it leaves the idle state.
+const isdmState = vi.hoisted(() => ({
+  analysis: {
     phenomenology: {},
     coursePattern: {},
     updatedAt: '2026-06-20T10:00:00.000Z',
-  }),
+  } as unknown,
+  listeners: new Set<() => void>(),
+}))
+vi.mock('../../../utils/isdm/storage', () => ({
+  loadIsdmAnalysis: () => isdmState.analysis,
+  subscribeIsdmAnalysis: (_caseId: string, listener: () => void) => {
+    isdmState.listeners.add(listener)
+    return () => {
+      isdmState.listeners.delete(listener)
+    }
+  },
 }))
 vi.mock('../../../utils/isdm', () => ({ scheduleIsdmRebuild: vi.fn() }))
 
@@ -188,19 +201,32 @@ async function click(el: Element | null): Promise<void> {
 }
 
 /**
- * Expand the (collapsed) "Empfehlungen" section, then the diagnosis card, so the
- * analyse button is rendered, then click it.
+ * The "Empfehlungen" section and the first diagnosis card now open by default
+ * (so the deterministic ICD criteria are visible without hunting), so the
+ * explicit "Mit Butterfly prüfen" button is already rendered — just click it.
  */
 async function expandCardAndAnalyze(): Promise<void> {
-  await click(container!.querySelector('.butterfly-collapsible-toggle'))
-  await click(container!.querySelector('.butterfly-card__toggle'))
   await click(container!.querySelector('.butterfly-ai-check'))
+}
+
+/** Emit the ISDM rebuild-completion event the panel subscribes to. */
+async function emitIsdmRebuild(): Promise<void> {
+  await act(async () => {
+    for (const listener of [...isdmState.listeners]) listener()
+    await Promise.resolve()
+  })
 }
 
 beforeEach(() => {
   vi.clearAllMocks()
   storedSuggestions = {}
   mockIsDemoCase.mockReturnValue(false)
+  isdmState.analysis = {
+    phenomenology: {},
+    coursePattern: {},
+    updatedAt: '2026-06-20T10:00:00.000Z',
+  }
+  isdmState.listeners.clear()
 })
 
 afterEach(async () => {
@@ -245,6 +271,46 @@ describe('IsdmAnalysisPanel — Diagnose tab does not auto-bill', () => {
 
     await expandCardAndAnalyze()
 
+    expect(mockExtract).not.toHaveBeenCalled()
+    expect(mockInterview).not.toHaveBeenCalled()
+  })
+
+  // Stuck-idle timing fix: the ISDM rebuild is debounced, so a case with
+  // diagnoses can mount before the analysis exists. The panel must react to the
+  // rebuild-completion subscription and leave the idle state — without billing.
+  it('leaves the idle state when the analysis arrives after the debounce', async () => {
+    isdmState.analysis = null
+    await mountPanel('real-case-idle-timing')
+
+    // Idle: no analysis yet → criteria are not rendered.
+    expect(container!.querySelector('.butterfly-panel--idle')).not.toBeNull()
+    expect(container!.querySelector('.butterfly-criteria-list')).toBeNull()
+
+    // Rebuild completes → analysis becomes available → emit completion event.
+    isdmState.analysis = {
+      phenomenology: {},
+      coursePattern: {},
+      updatedAt: '2026-06-20T10:05:00.000Z',
+    }
+    await emitIsdmRebuild()
+
+    expect(container!.querySelector('.butterfly-panel--idle')).toBeNull()
+    expect(container!.querySelector('.butterfly-criteria-list')).not.toBeNull()
+    // Reacting to the rebuild must not have triggered any billed AI pass.
+    expect(mockExtract).not.toHaveBeenCalled()
+    expect(mockInterview).not.toHaveBeenCalled()
+  })
+
+  // Deterministic criteria are visible by default once an analysis exists — the
+  // "Empfehlungen" section and the first diagnosis card both open on load, so the
+  // free ICD criteria appear without any clicks.
+  it('shows the deterministic criteria by default without expanding anything', async () => {
+    await mountPanel('real-case-default-open')
+
+    const criteriaList = container!.querySelector('.butterfly-criteria-list')
+    expect(criteriaList).not.toBeNull()
+    expect(criteriaList!.textContent).toContain('Kriterium 1')
+    // Still free: no billed AI pass fired merely by rendering the criteria.
     expect(mockExtract).not.toHaveBeenCalled()
     expect(mockInterview).not.toHaveBeenCalled()
   })
