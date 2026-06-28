@@ -86,9 +86,11 @@ describe('StandaloneMedLabWidget', () => {
     expect(container!.querySelectorAll('.swx-chip').length).toBe(2)
 
     // Enter a low potassium → torsades correlation appears.
-    const potassium = container!.querySelector<HTMLInputElement>('.swx-lab-grid__field input')!
+    const paramInput = container!.querySelector<HTMLInputElement>('.swx-lab-row input')!
+    const valueInput = container!.querySelectorAll<HTMLInputElement>('.swx-lab-row input')[1]!
     await act(async () => {
-      setValue(potassium, '3.1')
+      setValue(paramInput, 'Kalium')
+      setValue(valueInput, '3.1')
       await Promise.resolve()
     })
     expect(container!.textContent).toContain('standaloneMedLabFindingQtTorsades')

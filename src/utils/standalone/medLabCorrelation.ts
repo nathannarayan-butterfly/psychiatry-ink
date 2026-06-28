@@ -126,15 +126,6 @@ function fmt(field: AdHocLabField, value: number): string {
   return `${meta.symbol} ${value} ${meta.unit}`
 }
 
-/**
- * Compute deterministic medication ⇄ lab correlations for an ad-hoc list.
- *
- * @param medications KB-resolved ad-hoc medication entries (for reference-derived
- *   monitoring burden via {@link computeMedicationInsights}).
- * @param names ALL drug names the clinician entered (KB + off-database), used for
- *   class detection so off-database names still drive level/safety rules.
- * @param labs Clinician-entered ad-hoc lab values.
- */
 export function computeMedLabCorrelation(
   medications: MedicationEntry[],
   names: string[],
@@ -254,4 +245,95 @@ export function computeMedLabCorrelation(
   }))
 
   return { findings, monitoring, hasDrugReference: insights.hasReferenceData }
+}
+
+/** Free-text lab parameter row (parameter name + numeric value). */
+export interface LabParameterRow {
+  id: string
+  parameter: string
+  value: string
+}
+
+/** Normalise a clinician-entered parameter label for alias lookup. */
+function normalizeParameterLabel(label: string): string {
+  return label
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\+/g, 'plus')
+    .replace(/[^a-z0-9]/g, '')
+}
+
+/** Map free-text parameter names to known {@link AdHocLabField} keys. */
+const PARAMETER_ALIASES: Record<string, AdHocLabField> = {
+  k: 'potassium',
+  kplus: 'potassium',
+  kalium: 'potassium',
+  potassium: 'potassium',
+  mg: 'magnesium',
+  mg2: 'magnesium',
+  magnesium: 'magnesium',
+  ca: 'calcium',
+  ca2: 'calcium',
+  calcium: 'calcium',
+  kalzium: 'calcium',
+  na: 'sodium',
+  natrium: 'sodium',
+  sodium: 'sodium',
+  egfr: 'egfr',
+  gfr: 'egfr',
+  qtc: 'qtc',
+  qt: 'qtc',
+  qtzeit: 'qtc',
+  leuko: 'leukocytes',
+  leukocytes: 'leukocytes',
+  leukozyten: 'leukocytes',
+  wbc: 'leukocytes',
+  neutro: 'neutrophils',
+  neutrophils: 'neutrophils',
+  neutrophile: 'neutrophils',
+  anc: 'neutrophils',
+  li: 'lithiumLevel',
+  lithium: 'lithiumLevel',
+  lithiumlevel: 'lithiumLevel',
+  lithiumspiegel: 'lithiumLevel',
+  vpa: 'valproateLevel',
+  valproat: 'valproateLevel',
+  valproate: 'valproateLevel',
+  valproatelevel: 'valproateLevel',
+  cbz: 'carbamazepineLevel',
+  carbamazepin: 'carbamazepineLevel',
+  carbamazepine: 'carbamazepineLevel',
+  carbamazepinelevel: 'carbamazepineLevel',
+}
+
+export function resolveLabParameterName(label: string): AdHocLabField | null {
+  const norm = normalizeParameterLabel(label)
+  if (!norm) return null
+  return PARAMETER_ALIASES[norm] ?? null
+}
+
+/** Convert dynamic parameter/value rows into {@link AdHocLabValues} for the engine. */
+export function buildLabValuesFromParameterRows(
+  rows: Pick<LabParameterRow, 'parameter' | 'value'>[],
+): AdHocLabValues {
+  const out: AdHocLabValues = {}
+  for (const row of rows) {
+    const field = resolveLabParameterName(row.parameter)
+    if (!field) continue
+    const raw = row.value.trim().replace(',', '.')
+    const parsed = raw ? Number(raw) : NaN
+    if (Number.isFinite(parsed)) out[field] = parsed
+  }
+  return out
+}
+
+/** Format all parameter rows (including unmapped) for AI / note output. */
+export function formatLabParameterRows(
+  rows: Pick<LabParameterRow, 'parameter' | 'value'>[],
+): string[] {
+  return rows
+    .filter((r) => r.parameter.trim() && r.value.trim())
+    .map((r) => `${r.parameter.trim()}: ${r.value.trim()}`)
 }

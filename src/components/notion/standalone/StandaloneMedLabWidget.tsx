@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
-import { Activity, X } from 'lucide-react'
+import { Activity, Loader2, Plus, Sparkles, X } from 'lucide-react'
 import { useTranslation } from '../../../context/TranslationContext'
 import { CombinationCheckPanel } from '../../therapy/CombinationCheckPanel'
 import { MedicationDrugSuggest } from '../../medication/MedicationDrugSuggest'
@@ -15,26 +15,25 @@ import {
   type MedicationEntry,
 } from '../../../types/medicationPlan'
 import {
-  AD_HOC_LAB_FIELDS,
-  LAB_FIELD_SYMBOL,
+  buildLabValuesFromParameterRows,
   computeMedLabCorrelation,
-  type AdHocLabField,
-  type AdHocLabValues,
+  formatLabParameterRows,
+  type LabParameterRow,
   type MedLabFindingCode,
 } from '../../../utils/standalone/medLabCorrelation'
 import type { UiTranslationKey } from '../../../data/uiTranslations'
+import { executeAiGeneration } from '../../../services/aiGeneration'
+import { estimateGenerationCredits } from '../../../utils/estimateCredits'
 import { StandaloneResultPanel } from './StandaloneResultPanel'
 import '../../../styles/workspace-ai.css'
 import '../../../styles/combination-check.css'
 import '../../../styles/standalone-workspace.css'
 
 interface StandaloneMedLabWidgetProps {
-  /** Storage id of the (default) case any saved note is filed under (notes panel). */
   caseId: string
   onClose: () => void
 }
 
-/** Build a minimal active MedicationEntry from a KB drug suggestion (in-memory only). */
 function toMedicationEntry(result: KbDrugSuggestResult, index: number): MedicationEntry {
   const now = new Date().toISOString()
   return {
@@ -62,22 +61,6 @@ function toMedicationEntry(result: KbDrugSuggestResult, index: number): Medicati
   }
 }
 
-/** Translation key per lab field (label shown above each numeric input). */
-const FIELD_LABEL_KEY: Record<AdHocLabField, UiTranslationKey> = {
-  potassium: 'standaloneMedLabFieldPotassium',
-  magnesium: 'standaloneMedLabFieldMagnesium',
-  calcium: 'standaloneMedLabFieldCalcium',
-  sodium: 'standaloneMedLabFieldSodium',
-  egfr: 'standaloneMedLabFieldEgfr',
-  qtc: 'standaloneMedLabFieldQtc',
-  leukocytes: 'standaloneMedLabFieldLeukocytes',
-  neutrophils: 'standaloneMedLabFieldNeutrophils',
-  lithiumLevel: 'standaloneMedLabFieldLithium',
-  valproateLevel: 'standaloneMedLabFieldValproate',
-  carbamazepineLevel: 'standaloneMedLabFieldCarbamazepine',
-}
-
-/** Translation key per finding code (full clinical message incl. recommended action). */
 const FINDING_MESSAGE_KEY: Record<MedLabFindingCode, UiTranslationKey> = {
   qtTorsades: 'standaloneMedLabFindingQtTorsades',
   qtProlonged: 'standaloneMedLabFindingQtProlonged',
@@ -95,18 +78,12 @@ const FINDING_MESSAGE_KEY: Record<MedLabFindingCode, UiTranslationKey> = {
   ssriHyponatremia: 'standaloneMedLabFindingSsriHyponatremia',
 }
 
-/**
- * Patient-less medication ⇄ laboratory correlation tool. The clinician assembles
- * an ad-hoc drug list (free-text comma entry resolved against the KB + autocomplete
- * picker; off-database names are kept too) and enters ad-hoc lab values. A
- * DETERMINISTIC engine ({@link computeMedLabCorrelation}, the same
- * `computeMedicationInsights` reference data the patient dashboard uses, plus
- * established drug ⇄ lab rules) surfaces the relevant correlations — QT vs.
- * electrolytes, lithium level/renal context, mood-stabiliser level/monitoring,
- * clozapine neutrophil safety, SSRI hyponatraemia. Nothing is read from or
- * written to a patient case; the correlation summary can be edited/copied/saved
- * to the standalone notes.
- */
+let labRowCounter = 0
+function newLabRow(): LabParameterRow {
+  labRowCounter += 1
+  return { id: `lab-${labRowCounter}`, parameter: '', value: '' }
+}
+
 export function StandaloneMedLabWidget({ caseId, onClose }: StandaloneMedLabWidgetProps) {
   const { t, language } = useTranslation()
   const { drugs: kbDrugs } = useKnowledgeBaseDrugs()
@@ -114,11 +91,11 @@ export function StandaloneMedLabWidget({ caseId, onClose }: StandaloneMedLabWidg
   const [offDbNames, setOffDbNames] = useState<string[]>([])
   const [freeText, setFreeText] = useState('')
   const [query, setQuery] = useState('')
-  const [labs, setLabs] = useState<Record<AdHocLabField, string>>(
-    () => Object.fromEntries(AD_HOC_LAB_FIELDS.map((f) => [f, ''])) as Record<AdHocLabField, string>,
-  )
+  const [labRows, setLabRows] = useState<LabParameterRow[]>(() => [newLabRow(), newLabRow()])
   const [phase, setPhase] = useState<'hub' | 'result'>('hub')
   const [summaryText, setSummaryText] = useState('')
+  const [aiBusy, setAiBusy] = useState(false)
+  const [aiError, setAiError] = useState<string | null>(null)
 
   const medications = useMemo(() => drugs.map(toMedicationEntry), [drugs])
   const state = useMemo(() => createEmptyMedicationPlanState(caseId), [caseId])
@@ -127,15 +104,7 @@ export function StandaloneMedLabWidget({ caseId, onClose }: StandaloneMedLabWidg
     [medications, offDbNames],
   )
 
-  const labValues = useMemo<AdHocLabValues>(() => {
-    const out: AdHocLabValues = {}
-    for (const field of AD_HOC_LAB_FIELDS) {
-      const raw = labs[field].trim().replace(',', '.')
-      const parsed = raw ? Number(raw) : NaN
-      out[field] = Number.isFinite(parsed) ? parsed : null
-    }
-    return out
-  }, [labs])
+  const labValues = useMemo(() => buildLabValuesFromParameterRows(labRows), [labRows])
 
   const correlation = useMemo(
     () => computeMedLabCorrelation(medications, allNames, labValues),
@@ -202,10 +171,27 @@ export function StandaloneMedLabWidget({ caseId, onClose }: StandaloneMedLabWidg
     setFreeText('')
   }, [freeText, drugs, offDbNames, resolveKbToken])
 
+  const updateLabRow = useCallback((id: string, patch: Partial<Pick<LabParameterRow, 'parameter' | 'value'>>) => {
+    setLabRows((rows) => rows.map((r) => (r.id === id ? { ...r, ...patch } : r)))
+  }, [])
+
+  const addLabRow = useCallback(() => {
+    setLabRows((rows) => [...rows, newLabRow()])
+  }, [])
+
+  const removeLabRow = useCallback((id: string) => {
+    setLabRows((rows) => (rows.length <= 1 ? rows : rows.filter((r) => r.id !== id)))
+  }, [])
+
   const buildSummary = useCallback(() => {
     const lines: string[] = [t('standaloneMedLabNoteHeading')]
     if (allNames.length > 0) {
       lines.push(`${t('standaloneMedLabDrugsLabel')}: ${allNames.join(', ')}`)
+    }
+    const labLines = formatLabParameterRows(labRows)
+    if (labLines.length > 0) {
+      lines.push('', `${t('standaloneMedLabLabsHeading')}:`)
+      for (const line of labLines) lines.push(`- ${line}`)
     }
     if (correlation.findings.length === 0) {
       lines.push('', t('standaloneMedLabNoFindings'))
@@ -224,14 +210,54 @@ export function StandaloneMedLabWidget({ caseId, onClose }: StandaloneMedLabWidg
       }
     }
     return lines.join('\n').trim()
-  }, [allNames, correlation, t])
+  }, [allNames, correlation, labRows, t])
 
   const handleSave = useCallback(() => {
     setSummaryText(buildSummary())
     setPhase('result')
   }, [buildSummary])
 
+  const runAiAnalysis = useCallback(async () => {
+    if (aiBusy || allNames.length === 0) return
+    setAiBusy(true)
+    setAiError(null)
+    try {
+      const deterministic = buildSummary()
+      const labLines = formatLabParameterRows(labRows)
+      const extraInstruction = [
+        t('standaloneMedLabAiInstruction'),
+        `${t('standaloneMedLabDrugsLabel')}: ${allNames.join(', ')}`,
+        labLines.length > 0
+          ? `${t('standaloneMedLabLabsHeading')}: ${labLines.join('; ')}`
+          : '',
+        correlation.findings.length > 0 ? `${t('standaloneMedLabFindingsLabel')}:\n${deterministic}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n\n')
+
+      const generation = await executeAiGeneration(
+        {
+          componentId: 'standalone-med-labor',
+          scope: 'segment',
+          tool: 'summarize',
+          tier: 'thorough',
+          language,
+          sourceText: deterministic || allNames.join(', '),
+          extraInstruction,
+        },
+        { estimatedCredits: estimateGenerationCredits('thorough', deterministic) },
+      )
+      setSummaryText(generation.text.trim())
+      setPhase('result')
+    } catch (err) {
+      setAiError(err instanceof Error && err.message ? err.message : t('workspaceAiError'))
+    } finally {
+      setAiBusy(false)
+    }
+  }, [aiBusy, allNames, buildSummary, correlation.findings.length, labRows, language, t])
+
   const hasAnyInput = drugs.length > 0 || offDbNames.length > 0
+  const hasLabInput = labRows.some((r) => r.parameter.trim() && r.value.trim())
 
   if (phase === 'result') {
     return (
@@ -273,7 +299,7 @@ export function StandaloneMedLabWidget({ caseId, onClose }: StandaloneMedLabWidg
             {t('standaloneMedicationFreeTextLabel')}
             <textarea
               className="swx-field__textarea"
-              style={{ minHeight: 60 }}
+              style={{ minHeight: 72 }}
               value={freeText}
               onChange={(e) => setFreeText(e.target.value)}
               onKeyDown={(e) => {
@@ -341,24 +367,48 @@ export function StandaloneMedLabWidget({ caseId, onClose }: StandaloneMedLabWidg
           ) : null}
 
           <p className="swx-se__heading">{t('standaloneMedLabLabsHeading')}</p>
-          <div className="swx-lab-grid">
-            {AD_HOC_LAB_FIELDS.map((field) => (
-              <label key={field} className="swx-field swx-lab-grid__field">
-                <span className="swx-lab-grid__label">
-                  {t(FIELD_LABEL_KEY[field])}
-                  <span className="swx-lab-grid__unit">{LAB_FIELD_SYMBOL[field].unit}</span>
-                </span>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  className="swx-field__input"
-                  value={labs[field]}
-                  onChange={(e) => setLabs((current) => ({ ...current, [field]: e.target.value }))}
-                  placeholder={LAB_FIELD_SYMBOL[field].symbol}
-                  aria-label={t(FIELD_LABEL_KEY[field])}
-                />
-              </label>
+          <p className="swx-empty">{t('standaloneMedLabLabRowsHint')}</p>
+          <div className="swx-lab-rows">
+            {labRows.map((row) => (
+              <div key={row.id} className="swx-lab-row">
+                <label className="swx-field">
+                  {t('standaloneMedLabParamLabel')}
+                  <input
+                    type="text"
+                    className="swx-field__input"
+                    value={row.parameter}
+                    onChange={(e) => updateLabRow(row.id, { parameter: e.target.value })}
+                    placeholder={t('standaloneMedLabParamPlaceholder')}
+                    aria-label={t('standaloneMedLabParamLabel')}
+                  />
+                </label>
+                <label className="swx-field">
+                  {t('standaloneMedLabValueLabel')}
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    className="swx-field__input"
+                    value={row.value}
+                    onChange={(e) => updateLabRow(row.id, { value: e.target.value })}
+                    placeholder={t('standaloneMedLabValuePlaceholder')}
+                    aria-label={t('standaloneMedLabValueLabel')}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="swx-lab-row__remove"
+                  onClick={() => removeLabRow(row.id)}
+                  aria-label={t('standaloneMedLabRemoveRow')}
+                  title={t('standaloneMedLabRemoveRow')}
+                >
+                  <X className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+                </button>
+              </div>
             ))}
+            <button type="button" className="wai-btn wai-btn--ghost swx-lab-rows__add" onClick={addLabRow}>
+              <Plus className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+              {t('standaloneMedLabAddRow')}
+            </button>
           </div>
 
           <section className="swx-medlab__results" aria-live="polite">
@@ -385,6 +435,8 @@ export function StandaloneMedLabWidget({ caseId, onClose }: StandaloneMedLabWidg
             )}
           </section>
 
+          {aiError ? <p className="swx-error">{aiError}</p> : null}
+
           {drugs.length > 0 ? (
             <CombinationCheckPanel
               caseId={caseId}
@@ -397,12 +449,24 @@ export function StandaloneMedLabWidget({ caseId, onClose }: StandaloneMedLabWidg
       </div>
 
       <footer className="wai-panel__footer">
-        <span className="wl-hint" />
+        <button
+          type="button"
+          className="wai-btn wai-btn--ghost"
+          onClick={() => void runAiAnalysis()}
+          disabled={!hasAnyInput || aiBusy}
+        >
+          {aiBusy ? (
+            <Loader2 className="h-3.5 w-3.5 wai-spin" strokeWidth={1.75} aria-hidden />
+          ) : (
+            <Sparkles className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+          )}
+          {aiBusy ? t('workspaceAiGenerating') : t('standaloneMedLabAiAnalyze')}
+        </button>
         <button
           type="button"
           className="wai-btn wai-btn--primary"
           onClick={handleSave}
-          disabled={!hasAnyInput}
+          disabled={!hasAnyInput && !hasLabInput}
         >
           {t('standaloneMedLabSave')}
         </button>
