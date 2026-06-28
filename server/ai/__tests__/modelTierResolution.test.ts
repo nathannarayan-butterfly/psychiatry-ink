@@ -10,7 +10,11 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { resolveLlmCallModel } from '../resolveLlmCallModel'
 import { LlmResidencyError } from '../providerResidency'
-import { MODEL_TIER_SPECS, mistralSpecForTier } from '../../modelTierMapping'
+import {
+  MODEL_TIER_SPECS,
+  mistralSpecForTier,
+  resolveStandardTierSpec,
+} from '../../modelTierMapping'
 
 const MUTATED_ENV = [
   'OPENAI_API_KEY',
@@ -19,6 +23,8 @@ const MUTATED_ENV = [
   'MISTRAL_API_KEY',
   'LLM_RESIDENCY',
   'LLM_BLOCKED_PROVIDERS',
+  'STANDARD_PROVIDER',
+  'STANDARD_MODEL',
 ] as const
 
 let saved: Partial<Record<(typeof MUTATED_ENV)[number], string | undefined>> = {}
@@ -95,5 +101,43 @@ describe('resolveLlmCallModel — LLM_RESIDENCY=eu', () => {
     delete process.env.GOOGLE_API_KEY
     delete process.env.OPENAI_API_KEY
     expect(() => resolveLlmCallModel({ tier: 'fast' })).toThrow(LlmResidencyError)
+  })
+})
+
+describe('resolveStandardTierSpec — env-overridable Standard routing', () => {
+  it('defaults to Google Gemini when no STANDARD_PROVIDER env is set', () => {
+    const spec = resolveStandardTierSpec()
+    expect(spec.provider).toBe('google')
+    expect(spec.modelId).toBe('gemini-3.5-flash')
+  })
+
+  it('respects GOOGLE_STANDARD_MODEL for the Gemini model id when provider stays google', () => {
+    process.env.STANDARD_PROVIDER = 'google'
+    const spec = resolveStandardTierSpec()
+    expect(spec.provider).toBe('google')
+    // Model id falls through to the GOOGLE_STANDARD_MODEL default.
+    expect(spec.modelId).toBe('gemini-3.5-flash')
+  })
+
+  it('reroutes Standard to Mistral large via STANDARD_PROVIDER/STANDARD_MODEL', () => {
+    process.env.STANDARD_PROVIDER = 'mistral'
+    process.env.STANDARD_MODEL = 'mistral-large-latest'
+    const spec = resolveStandardTierSpec()
+    expect(spec.provider).toBe('mistral')
+    expect(spec.modelId).toBe('mistral-large-latest')
+    expect(spec.label).toContain('Mistral')
+  })
+
+  it('uses the provider default model when STANDARD_MODEL is omitted', () => {
+    process.env.STANDARD_PROVIDER = 'mistral'
+    const spec = resolveStandardTierSpec()
+    expect(spec.provider).toBe('mistral')
+    expect(spec.modelId).toBe('mistral-large-latest')
+  })
+
+  it('ignores an unknown STANDARD_PROVIDER and falls back to Google', () => {
+    process.env.STANDARD_PROVIDER = 'not-a-provider'
+    const spec = resolveStandardTierSpec()
+    expect(spec.provider).toBe('google')
   })
 })

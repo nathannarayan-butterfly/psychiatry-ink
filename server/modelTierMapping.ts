@@ -62,10 +62,47 @@ export function maxOutputTokensFor(model: AiModelSpec): number {
   return 64_000
 }
 
+/** Human-readable label for a provider+model pair (matches per-tier wording). */
+function providerLabel(provider: AiProviderId, modelId: string): string {
+  if (provider === 'openai') return `OpenAI latest (${modelId})`
+  if (provider === 'google') return `Google Gemini (${modelId})`
+  if (provider === 'mistral') return `Mistral AI (${modelId})`
+  return `DeepSeek (${modelId})`
+}
+
+/**
+ * STANDARD tier provider + model are env-overridable so the tier can be
+ * rerouted to a different provider WITHOUT any code change. Set both
+ * `STANDARD_PROVIDER` (one of: openai | deepseek | google | mistral) and
+ * `STANDARD_MODEL`; unset BOTH to restore the Google Gemini default. When the
+ * provider stays `google`, `GOOGLE_STANDARD_MODEL` still overrides just the
+ * Gemini model id.
+ *
+ * This exists so an operational reroute (e.g. while a provider's project-level
+ * access is temporarily denied) is a pure Cloud Run env-var change that is
+ * reverted by simply removing the env vars — no commit/redeploy of code needed.
+ */
+export function resolveStandardTierSpec(): AiModelSpec {
+  const known = new Set<string>(['openai', 'deepseek', 'google', 'mistral'])
+  const providerRaw = process.env.STANDARD_PROVIDER?.trim().toLowerCase()
+  const provider: AiProviderId =
+    providerRaw && known.has(providerRaw) ? (providerRaw as AiProviderId) : 'google'
+
+  const defaultModelByProvider: Record<AiProviderId, string> = {
+    google: GOOGLE_STANDARD_MODEL,
+    mistral: MISTRAL_LARGE,
+    openai: OPENAI_THOROUGH,
+    deepseek: DEEPSEEK_FAST,
+  }
+  const modelId = process.env.STANDARD_MODEL?.trim() || defaultModelByProvider[provider]
+
+  return { provider, modelId, label: providerLabel(provider, modelId) }
+}
+
 /**
  * Distinct model per user-selectable tier (Economical / Standard / Gründlich):
  *   fast     → DeepSeek deepseek-v4-flash (cheapest; the non-EU economical primary)
- *   standard → Google Gemini (balanced; US residency, allowed under EU)
+ *   standard → Google Gemini (balanced; US residency, allowed under EU) — env-overridable
  *   thorough → OpenAI gpt-5.5 reasoning model (most capable)
  *
  * The fallbacks are residency-aware: the fast tier falls back to Mistral small
@@ -79,11 +116,7 @@ export const MODEL_TIER_SPECS: Record<AiModelTier, AiModelSpec> = {
     modelId: DEEPSEEK_FAST,
     label: `DeepSeek (${DEEPSEEK_FAST})`,
   },
-  standard: {
-    provider: 'google',
-    modelId: GOOGLE_STANDARD_MODEL,
-    label: `Google Gemini (${GOOGLE_STANDARD_MODEL})`,
-  },
+  standard: resolveStandardTierSpec(),
   thorough: {
     provider: 'openai',
     modelId: OPENAI_THOROUGH,
