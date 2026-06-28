@@ -61,9 +61,14 @@ interface AuthContextValue {
   refreshPlan: () => Promise<void>
 }
 
-/** Consent captured at sign-up: whether the legal terms were accepted + locale. */
+/**
+ * Consent captured at sign-up. Both the Datenschutz/AGB checkbox
+ * (`acceptedTerms`) and the AVV (Auftragsverarbeitungsvertrag / DPA) checkbox
+ * (`acceptedAvv`) are required before an account is created.
+ */
 export interface SignupConsent {
   acceptedTerms: boolean
+  acceptedAvv: boolean
   locale: string
 }
 
@@ -229,11 +234,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: getSupabaseConfigError() ?? 'Supabase ist nicht konfiguriert.', needsConfirmation: false }
     }
 
-    // Persist the accepted-terms intent BEFORE the network round-trip so it
+    // Persist the accepted-consent intent BEFORE the network round-trip so it
     // survives the email-confirmation path (where signUp returns no session and
-    // consent can only be recorded once the user is later authenticated).
-    if (consent?.acceptedTerms) {
-      markPendingLegalConsent(LEGAL_LAST_UPDATED, consent.locale)
+    // consent can only be recorded once the user is later authenticated). Both
+    // the Datenschutz/AGB and the AVV must have been accepted.
+    const consentGranted = Boolean(consent?.acceptedTerms && consent?.acceptedAvv)
+    if (consentGranted) {
+      markPendingLegalConsent(LEGAL_LAST_UPDATED, consent!.locale)
     }
 
     const emailRedirectTo = getAuthEmailRedirectUrl()
@@ -250,9 +257,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // When a session already exists (no email confirmation required) record the
     // consent immediately. Non-fatal on failure: the bootstrap effect retries
     // idempotently on the next authenticated load.
-    if (!error && data.session && consent?.acceptedTerms) {
+    if (!error && data.session && consentGranted) {
       try {
-        await recordLegalConsent(consent.locale)
+        await recordLegalConsent(consent!.locale)
         clearPendingLegalConsent()
       } catch {
         // Leave the pending marker for the bootstrap retry.

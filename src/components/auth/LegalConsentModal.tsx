@@ -5,12 +5,12 @@ import { getLegalDoc } from '../../public-site/legalContent'
 import type { LegalBlock } from '../../public-site/legalContent'
 import { localizedPath, toPublicLocale } from '../../public-site/publicRoutes'
 
-type LegalTab = 'privacy' | 'terms'
+export type LegalConsentTab = 'privacy' | 'terms' | 'dpa'
 
 interface LegalConsentModalProps {
   open: boolean
   onClose: () => void
-  initialTab?: LegalTab
+  initialTab?: LegalConsentTab
 }
 
 function renderMultiline(text: string) {
@@ -50,7 +50,7 @@ function LegalBlockView({ block }: { block: LegalBlock }) {
 
 export function LegalConsentModal({ open, onClose, initialTab = 'privacy' }: LegalConsentModalProps) {
   const { t, language } = useTranslation()
-  const [tab, setTab] = useState<LegalTab>(initialTab)
+  const [tab, setTab] = useState<LegalConsentTab>(initialTab)
   const publicLocale = toPublicLocale(language)
 
   useEffect(() => {
@@ -122,12 +122,23 @@ export function LegalConsentModal({ open, onClose, initialTab = 'privacy' }: Leg
           >
             {t('signupWizardLegalTabTerms')}
           </button>
+          <button
+            type="button"
+            role="tab"
+            id="signup-legal-tab-dpa"
+            aria-selected={tab === 'dpa'}
+            aria-controls="signup-legal-panel"
+            className={`signup-legal-modal__tab${tab === 'dpa' ? ' signup-legal-modal__tab--active' : ''}`}
+            onClick={() => setTab('dpa')}
+          >
+            {t('signupWizardLegalTabAvv')}
+          </button>
         </div>
 
         <div
           id="signup-legal-panel"
           role="tabpanel"
-          aria-labelledby={tab === 'privacy' ? 'signup-legal-tab-privacy' : 'signup-legal-tab-terms'}
+          aria-labelledby={`signup-legal-tab-${tab}`}
           className="signup-legal-modal__body"
         >
           <p className="signup-legal-modal__updated">{doc.lastUpdatedLabel}</p>

@@ -3775,6 +3775,7 @@ export type Database = {
       user_legal_acceptances: {
         Row: {
           accepted_at: string
+          avv_version: string | null
           created_at: string
           id: string
           locale: string | null
@@ -3784,6 +3785,7 @@ export type Database = {
         }
         Insert: {
           accepted_at?: string
+          avv_version?: string | null
           created_at?: string
           id?: string
           locale?: string | null
@@ -3793,6 +3795,7 @@ export type Database = {
         }
         Update: {
           accepted_at?: string
+          avv_version?: string | null
           created_at?: string
           id?: string
           locale?: string | null

@@ -4,7 +4,8 @@ import { useTranslation } from '../../context/TranslationContext'
 import { useAuth } from '../../context/AuthContext'
 import { usePrivacySettings } from '../../hooks/usePrivacySettings'
 import { AppLogo } from '../AppLogo'
-import { LegalConsentModal } from './LegalConsentModal'
+import { LegalConsentModal, type LegalConsentTab } from './LegalConsentModal'
+import { validateSignupConsent } from './signupConsent'
 import { ResendConfirmation } from './ResendConfirmation'
 import { SignupStorageCards } from './SignupStorageCards'
 import { PasswordInput } from './PasswordInput'
@@ -59,15 +60,16 @@ export function SignupWizard({ onBack, onSuccess, onSwitchToLogin }: SignupWizar
   const [passphrase, setPassphrase] = useState('')
   const [confirmPassphrase, setConfirmPassphrase] = useState('')
   const [acceptedTerms, setAcceptedTerms] = useState(false)
+  const [acceptedAvv, setAcceptedAvv] = useState(false)
   const [legalModalOpen, setLegalModalOpen] = useState(false)
-  const [legalModalTab, setLegalModalTab] = useState<'privacy' | 'terms'>('privacy')
+  const [legalModalTab, setLegalModalTab] = useState<LegalConsentTab>('privacy')
 
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
   const [awaitingConfirmation, setAwaitingConfirmation] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
-  const openLegalModal = (tab: 'privacy' | 'terms') => {
+  const openLegalModal = (tab: LegalConsentTab) => {
     setLegalModalTab(tab)
     setLegalModalOpen(true)
   }
@@ -91,9 +93,10 @@ export function SignupWizard({ onBack, onSuccess, onSwitchToLogin }: SignupWizar
         if (passphrase !== confirmPassphrase) return t('workspacePassphraseMismatch')
         return null
       }
-      case 'terms':
-        if (!acceptedTerms) return t('authSignupTermsRequiredError')
-        return null
+      case 'terms': {
+        const consentErrorKey = validateSignupConsent({ acceptedTerms, acceptedAvv })
+        return consentErrorKey ? t(consentErrorKey) : null
+      }
       case 'review':
         return null
       default:
@@ -140,7 +143,11 @@ export function SignupWizard({ onBack, onSuccess, onSwitchToLogin }: SignupWizar
       setIdentifierStorage(storageMode)
       markIdentifierStorageAcknowledged()
 
-      const result = await signUp(email.trim(), password, { acceptedTerms, locale: language })
+      const result = await signUp(email.trim(), password, {
+        acceptedTerms,
+        acceptedAvv,
+        locale: language,
+      })
       if (result.error) {
         setError(result.error)
         return
@@ -324,6 +331,14 @@ export function SignupWizard({ onBack, onSuccess, onSwitchToLogin }: SignupWizar
                   >
                     {t('authSignupTermsLink')}
                   </button>
+                  <span aria-hidden> · </span>
+                  <button
+                    type="button"
+                    className="signup-wizard__legal-link"
+                    onClick={() => openLegalModal('dpa')}
+                  >
+                    {t('authSignupAvvLink')}
+                  </button>
                 </div>
                 <label className="auth-form__consent">
                   <input
@@ -333,6 +348,15 @@ export function SignupWizard({ onBack, onSuccess, onSwitchToLogin }: SignupWizar
                     disabled={!isConfigured || submitting}
                   />
                   <span className="auth-form__consent-text">{t('signupWizardTermsCheckbox')}</span>
+                </label>
+                <label className="auth-form__consent">
+                  <input
+                    type="checkbox"
+                    checked={acceptedAvv}
+                    onChange={(event) => setAcceptedAvv(event.target.checked)}
+                    disabled={!isConfigured || submitting}
+                  />
+                  <span className="auth-form__consent-text">{t('signupWizardAvvCheckbox')}</span>
                 </label>
               </div>
             ) : null}

@@ -18,6 +18,8 @@ export interface RecordLegalConsentInput {
   userId: string
   privacyVersion: string
   termsVersion: string
+  /** AVV (Auftragsverarbeitungsvertrag / DPA) document version accepted. */
+  avvVersion: string
   locale?: string | null
 }
 
@@ -35,7 +37,7 @@ export interface RecordLegalConsentResult {
 export async function recordLegalConsent(
   input: RecordLegalConsentInput,
 ): Promise<RecordLegalConsentResult> {
-  const { userId, privacyVersion, termsVersion } = input
+  const { userId, privacyVersion, termsVersion, avvVersion } = input
   const locale = input.locale ?? null
 
   // Pre-check keeps the response honest about whether THIS call recorded a new
@@ -61,6 +63,7 @@ export async function recordLegalConsent(
         user_id: userId,
         privacy_version: privacyVersion,
         terms_version: termsVersion,
+        avv_version: avvVersion,
         locale,
       },
       { onConflict: 'user_id,terms_version', ignoreDuplicates: true },

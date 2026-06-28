@@ -5741,11 +5741,23 @@ export const uiTranslations = {
     fr: 'CGU',
     es: 'Términos y Condiciones',
   },
+  authSignupAvvLink: {
+    de: 'Auftragsverarbeitungsvertrag (AVV)',
+    en: 'Data Processing Agreement (DPA)',
+    fr: 'Accord de traitement des données (DPA)',
+    es: 'Acuerdo de Procesamiento de Datos (DPA)',
+  },
   authSignupTermsRequiredError: {
     de: 'Bitte akzeptieren Sie die Datenschutzerklärung und AGB, um fortzufahren.',
     en: 'Please accept the Privacy Policy and Terms & Conditions to continue.',
     fr: 'Veuillez accepter la politique de confidentialité et les CGU pour continuer.',
     es: 'Acepte la Política de Privacidad y los Términos y Condiciones para continuar.',
+  },
+  authSignupAvvRequiredError: {
+    de: 'Bitte akzeptieren Sie den Auftragsverarbeitungsvertrag (AVV), um fortzufahren.',
+    en: 'Please accept the Data Processing Agreement (DPA) to continue.',
+    fr: 'Veuillez accepter l\'accord de traitement des données (DPA) pour continuer.',
+    es: 'Acepte el Acuerdo de Procesamiento de Datos (DPA) para continuar.',
   },
   authNoAccountYet: {
     de: 'Noch kein Konto?',
@@ -5838,10 +5850,10 @@ export const uiTranslations = {
     es: 'Paso 3 de 5 — frase para cifrar sus expedientes. Recuerde esta frase — no podemos recuperarla.',
   },
   signupWizardTermsLead: {
-    de: 'Schritt 4 von 5 — Datenschutz und Nutzungsbedingungen.',
-    en: 'Step 4 of 5 — privacy and terms of use.',
-    fr: 'Étape 4 sur 5 — confidentialité et conditions d\'utilisation.',
-    es: 'Paso 4 de 5 — privacidad y condiciones de uso.',
+    de: 'Schritt 4 von 5 — Datenschutz, Nutzungsbedingungen und Auftragsverarbeitungsvertrag.',
+    en: 'Step 4 of 5 — privacy, terms of use and data processing agreement.',
+    fr: 'Étape 4 sur 5 — confidentialité, conditions d\'utilisation et accord de traitement des données.',
+    es: 'Paso 4 de 5 — privacidad, condiciones de uso y acuerdo de procesamiento de datos.',
   },
   signupWizardReviewLead: {
     de: 'Schritt 5 von 5 — bitte prüfen Sie Ihre Angaben.',
@@ -5910,10 +5922,10 @@ export const uiTranslations = {
     es: 'Independientemente, el expediente clínico siempre se sincroniza con su frase.',
   },
   signupWizardTermsIntro: {
-    de: 'Lesen Sie Datenschutzerklärung und AGB. Mit dem Häkchen bestätigen Sie beides.',
-    en: 'Read the Privacy Policy and Terms. Checking the box confirms both.',
-    fr: 'Lisez la politique de confidentialité et les CGU. La case confirme les deux.',
-    es: 'Lea la Política de Privacidad y los Términos. La casilla confirma ambos.',
+    de: 'Lesen Sie Datenschutzerklärung, AGB und Auftragsverarbeitungsvertrag (AVV). Bitte bestätigen Sie beide Kästchen.',
+    en: 'Read the Privacy Policy, Terms and Data Processing Agreement (DPA). Please confirm both boxes.',
+    fr: 'Lisez la politique de confidentialité, les CGU et l\'accord de traitement des données (DPA). Veuillez cocher les deux cases.',
+    es: 'Lea la Política de Privacidad, los Términos y el Acuerdo de Procesamiento de Datos (DPA). Marque ambas casillas.',
   },
   signupWizardTermsCheckbox: {
     de: 'Ich habe die Datenschutzerklärung und AGB gelesen und akzeptiere sie.',
@@ -5921,11 +5933,17 @@ export const uiTranslations = {
     fr: 'J\'ai lu et j\'accepte la politique de confidentialité et les CGU.',
     es: 'He leído y acepto la Política de Privacidad y los Términos y Condiciones.',
   },
+  signupWizardAvvCheckbox: {
+    de: 'Ich akzeptiere den Auftragsverarbeitungsvertrag (AVV) nach Art. 28 DSGVO.',
+    en: 'I accept the Data Processing Agreement (DPA) under Art. 28 GDPR.',
+    fr: 'J\'accepte l\'accord de traitement des données (DPA) selon l\'art. 28 du RGPD.',
+    es: 'Acepto el Acuerdo de Procesamiento de Datos (DPA) según el art. 28 del RGPD.',
+  },
   signupWizardLegalModalTitle: {
-    de: 'Datenschutz & AGB',
-    en: 'Privacy & Terms',
-    fr: 'Confidentialité et CGU',
-    es: 'Privacidad y Términos',
+    de: 'Datenschutz, AGB & AVV',
+    en: 'Privacy, Terms & DPA',
+    fr: 'Confidentialité, CGU et DPA',
+    es: 'Privacidad, Términos y DPA',
   },
   signupWizardLegalTabPrivacy: {
     de: 'Datenschutz',
@@ -5938,6 +5956,12 @@ export const uiTranslations = {
     en: 'Terms',
     fr: 'CGU',
     es: 'Términos',
+  },
+  signupWizardLegalTabAvv: {
+    de: 'AVV',
+    en: 'DPA',
+    fr: 'DPA',
+    es: 'DPA',
   },
   signupWizardLegalClose: {
     de: 'Schließen',

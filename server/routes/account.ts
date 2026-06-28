@@ -42,13 +42,16 @@ function normalizeLocale(value: unknown): string | null {
 }
 
 /**
- * Durable record of the user's Datenschutz/AGB acceptance.
+ * Durable record of the user's Datenschutz/AGB/AVV acceptance.
  *
- * The privacy/terms versions are pinned server-side to the deployed
+ * The privacy/terms/AVV versions are pinned server-side to the deployed
  * `LEGAL_LAST_UPDATED` (clients never get to assert which version they
- * accepted). Idempotent per (user_id, terms_version) so the email-confirmation
- * retry path — where consent is only POSTable once the user is authenticated —
- * can re-send safely.
+ * accepted). The AVV (Auftragsverarbeitungsvertrag / DPA) is legally required
+ * for clinicians processing patient data, so its acceptance is enforced here as
+ * defence-in-depth: the request must explicitly attest `acceptedAvv === true`,
+ * not rely on the client gate alone. Idempotent per (user_id, terms_version) so
+ * the email-confirmation retry path — where consent is only POSTable once the
+ * user is authenticated — can re-send safely.
  */
 accountRouter.post('/legal-consent', async (req: Request, res: Response) => {
   try {
@@ -59,11 +62,19 @@ accountRouter.post('/legal-consent', async (req: Request, res: Response) => {
       return
     }
 
+    // The AVV must be explicitly accepted. Reject submissions that do not
+    // attest it, mirroring the client-side required-checkbox gate.
+    if (req.body?.acceptedAvv !== true) {
+      res.status(400).json({ error: 'Bitte akzeptieren Sie den Auftragsverarbeitungsvertrag (AVV).' })
+      return
+    }
+
     const locale = normalizeLocale(req.body?.locale)
     const { recorded } = await recordLegalConsent({
       userId,
       privacyVersion: LEGAL_LAST_UPDATED,
       termsVersion: LEGAL_LAST_UPDATED,
+      avvVersion: LEGAL_LAST_UPDATED,
       locale,
     })
     res.json({ ok: true, recorded, version: LEGAL_LAST_UPDATED })
