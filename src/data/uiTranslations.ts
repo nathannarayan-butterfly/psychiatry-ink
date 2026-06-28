@@ -5279,6 +5279,18 @@ export const uiTranslations = {
     fr: 'Mot de passe',
     es: 'Contraseña',
   },
+  authPasswordShow: {
+    de: 'Passwort anzeigen',
+    en: 'Show password',
+    fr: 'Afficher le mot de passe',
+    es: 'Mostrar contraseña',
+  },
+  authPasswordHide: {
+    de: 'Passwort verbergen',
+    en: 'Hide password',
+    fr: 'Masquer le mot de passe',
+    es: 'Ocultar contraseña',
+  },
   authPleaseWait: {
     de: 'Bitte warten…',
     en: 'Please wait…',
@@ -5512,6 +5524,12 @@ export const uiTranslations = {
     en: 'Please set a passphrase.',
     fr: 'Veuillez définir une phrase secrète.',
     es: 'Defina una frase de cifrado.',
+  },
+  signupWizardPassphraseExplanation: {
+    de: 'Ihre Verschlüsselungs-Passphrase ist ein eigenes Geheimnis — getrennt von Ihrem Kontopasswort. Sie schützt Ihren klinischen Verschlüsselungsschlüssel; nur Sie kennen sie, Psychiatry.Ink sieht sie nie. Sie brauchen sie, um Fallakten auf anderen Geräten zu entsperren und zu synchronisieren — bei Verlust können wir sie nicht wiederherstellen.',
+    en: 'Your encryption passphrase is a separate secret from your account password. It protects your clinical encryption key — only you know it, and Psychiatry.Ink never sees it. You need it to unlock and sync your case files on other devices; we cannot recover it if lost.',
+    fr: 'Votre phrase secrète de chiffrement est distincte du mot de passe du compte. Elle protège votre clé de chiffrement clinique — vous seul la connaissez, Psychiatry.Ink ne la voit jamais. Elle sert à déverrouiller et synchroniser vos dossiers sur d\'autres appareils ; nous ne pouvons pas la récupérer en cas de perte.',
+    es: 'Su frase de cifrado es un secreto aparte de la contraseña de la cuenta. Protege su clave de cifrado clínico — solo usted la conoce y Psychiatry.Ink nunca la ve. La necesita para desbloquear y sincronizar expedientes en otros dispositivos; no podemos recuperarla si se pierde.',
   },
   signupWizardStorageDeviceDesc: {
     de: 'Name und Geburtsdatum bleiben nur auf diesem Gerät. Auf einem neuen Gerät brauchen Sie eine Exportdatei pro Fall.',

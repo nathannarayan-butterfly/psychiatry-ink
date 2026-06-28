@@ -7,6 +7,7 @@ import { AppLogo } from '../AppLogo'
 import { LegalConsentModal } from './LegalConsentModal'
 import { ResendConfirmation } from './ResendConfirmation'
 import { SignupStorageCards } from './SignupStorageCards'
+import { PasswordInput } from './PasswordInput'
 import { setupAccountCloudBackup } from '../../utils/accountBackup'
 import { markIdentifierStorageAcknowledged } from '../../utils/identifierStorage'
 import type { IdentifierStorageMode } from '../../utils/identifierStorage'
@@ -244,8 +245,7 @@ export function SignupWizard({ onBack, onSuccess, onSwitchToLogin }: SignupWizar
                 </label>
                 <label className="auth-form__field">
                   <span>{t('authPasswordLabel')}</span>
-                  <input
-                    type="password"
+                  <PasswordInput
                     autoComplete="new-password"
                     minLength={8}
                     value={password}
@@ -255,8 +255,7 @@ export function SignupWizard({ onBack, onSuccess, onSwitchToLogin }: SignupWizar
                 </label>
                 <label className="auth-form__field">
                   <span>{t('signupWizardPasswordConfirmLabel')}</span>
-                  <input
-                    type="password"
+                  <PasswordInput
                     autoComplete="new-password"
                     minLength={8}
                     value={confirmPassword}
@@ -277,10 +276,10 @@ export function SignupWizard({ onBack, onSuccess, onSwitchToLogin }: SignupWizar
 
             {step === 'passphrase' ? (
               <div className="auth-form">
+                <p className="signup-wizard__passphrase-intro">{t('signupWizardPassphraseExplanation')}</p>
                 <label className="auth-form__field">
                   <span>{t('workspacePassphraseTitle')}</span>
-                  <input
-                    type="password"
+                  <PasswordInput
                     autoComplete="new-password"
                     maxLength={MAX_PASSPHRASE_LENGTH}
                     value={passphrase}
@@ -291,8 +290,7 @@ export function SignupWizard({ onBack, onSuccess, onSwitchToLogin }: SignupWizar
                 </label>
                 <label className="auth-form__field">
                   <span>{t('signupWizardPassphraseConfirmLabel')}</span>
-                  <input
-                    type="password"
+                  <PasswordInput
                     autoComplete="new-password"
                     maxLength={MAX_PASSPHRASE_LENGTH}
                     value={confirmPassphrase}

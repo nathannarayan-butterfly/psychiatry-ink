@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 import { AppLogo } from '../AppLogo'
 import { SignupWizard } from './SignupWizard'
 import { ResendConfirmation } from './ResendConfirmation'
+import { PasswordInput } from './PasswordInput'
 
 type AuthMode = 'login' | 'signup'
 
@@ -92,8 +93,7 @@ export function AuthPage({ mode, onBack, onSuccess, onSwitchMode }: AuthPageProp
             </label>
             <label className="auth-form__field">
               <span>{t('authPasswordLabel')}</span>
-              <input
-                type="password"
+              <PasswordInput
                 autoComplete="current-password"
                 required
                 minLength={8}

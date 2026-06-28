@@ -772,6 +772,48 @@ li.identifier-storage-choice__warning {
   color: var(--text-main);
 }
 
+.auth-form__password-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.auth-form__password-wrap input {
+  width: 100%;
+  padding-right: 2.35rem;
+}
+
+.auth-form__password-toggle {
+  position: absolute;
+  right: 0.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.auth-form__password-toggle:hover:not(:disabled) {
+  color: var(--text-main);
+  background: color-mix(in srgb, var(--text-main) 6%, transparent);
+}
+
+.auth-form__password-toggle:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  outline-offset: 1px;
+}
+
+.auth-form__password-toggle:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .auth-form__field input:focus {
   outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
   outline-offset: 1px;
