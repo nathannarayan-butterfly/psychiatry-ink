@@ -2,7 +2,7 @@ import { ArrowRight, FileText, Mic, Shield, Sparkles } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
 import { homepageFooter } from '../../data/homepageContent'
 import { translateLandingUi } from '../../data/landingUiTranslations'
-import { PLAN_DEFINITIONS } from '../../data/subscriptionPlans'
+import { PLAN_DEFINITIONS, formatPlanMonthlyPrice } from '../../data/subscriptionPlans'
 import { AppLogo } from '../AppLogo'
 
 interface LandingPageProps {
@@ -130,7 +130,8 @@ export function LandingPage({ onLogin, onSignup, onEnterApp, showDevEntry }: Lan
           <article className="landing-plan">
             <h3>{freeName}</h3>
             <p className="landing-plan__price">
-              0&nbsp;€<span>{translateLandingUi(language, 'pricingPerMonth')}</span>
+              {formatPlanMonthlyPrice(free, language)}
+              <span>{translateLandingUi(language, 'pricingPerMonth')}</span>
             </p>
             <ul>
               {freeFeatures.map((item) => (
@@ -145,7 +146,8 @@ export function LandingPage({ onLogin, onSignup, onEnterApp, showDevEntry }: Lan
             <span className="landing-plan__badge">{translateLandingUi(language, 'pricingRecommended')}</span>
             <h3>{proName}</h3>
             <p className="landing-plan__price">
-              {pro.priceEurMonthly}&nbsp;€<span>{translateLandingUi(language, 'pricingPerMonth')}</span>
+              {formatPlanMonthlyPrice(pro, language)}
+              <span>{translateLandingUi(language, 'pricingPerMonth')}</span>
             </p>
             <ul>
               {proFeatures.map((item) => (

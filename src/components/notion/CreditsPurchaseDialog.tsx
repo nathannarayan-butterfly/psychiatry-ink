@@ -1,6 +1,6 @@
 import { X } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
-import { PLAN_DEFINITIONS } from '../../data/subscriptionPlans'
+import { PLAN_DEFINITIONS, formatPlanMonthlyPrice } from '../../data/subscriptionPlans'
 
 interface CreditsPurchaseDialogProps {
   onClose: () => void
@@ -15,7 +15,7 @@ export function CreditsPurchaseDialog({
   onOpenCreditsPage,
   creditsExhausted = false,
 }: CreditsPurchaseDialogProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const pro = PLAN_DEFINITIONS.pro
 
   const openCreditsPage = () => {
@@ -55,7 +55,7 @@ export function CreditsPurchaseDialog({
 
         <p className="credits-purchase-dialog__body">
           {creditsExhausted
-            ? `${t('creditsPurchaseBodyActive')} Pro: ${pro.priceEurMonthly} €/Monat, ${pro.monthlyCredits} Credits.`
+            ? `${t('creditsPurchaseBodyActive')} Pro: ${formatPlanMonthlyPrice(pro, language)}/Monat, ${pro.monthlyCredits} Credits.`
             : t('creditsPurchaseBodyActive')}
         </p>
 

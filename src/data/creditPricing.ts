@@ -1,7 +1,16 @@
 import type { AiModelTier } from '../types'
+import { REALIZED_CREDIT_VALUE_EUR } from './creditPacks'
 
-/** 100 credits = 1 EUR */
-export const CREDITS_PER_EUR = 100
+/**
+ * Credits per 1 EUR, derived from the realized Stripe pack pricing (the single
+ * source of truth in creditPacks.ts) — NOT the retired nominal "100 credits =
+ * €1" rate, which under-valued a credit ~3.5× and produced nonsensical margin
+ * estimates. At the realized ≈ €0.035/credit this is ≈ 28.6 credits/EUR.
+ *
+ * Display/estimation only — the credit-deduction billing path never converts
+ * credits to money (it uses base credits × mode multiplier directly).
+ */
+export const CREDITS_PER_EUR = 1 / REALIZED_CREDIT_VALUE_EUR
 
 /** Re-exported from subscriptionPlans — dictation charge per transcription. */
 export { TRANSCRIBE_CREDITS } from './subscriptionPlans'

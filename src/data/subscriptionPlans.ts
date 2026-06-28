@@ -1,14 +1,17 @@
 /**
- * Psychiatry.ink subscription tiers — numbers derived from codebase usage.
+ * Psychiatry.ink subscription tiers — reconciled to the LIVE Stripe billing.
  *
- * Internal rationale (not shown on landing):
- * - Default dev balance: 500 credits (prisma CreditBalance, credits.ts)
- * - Observed API spend: ~$0.25 total for ~500 credits of usage → ~$0.0005 / credit actual cost
- * - Retail mapping: CREDITS_PER_EUR = 100 → 1 credit ≈ 1 ct nominal at list price
- * - Generation costs (creditPricing.ts): fast 1, standard 4, thorough 15 (+ length multiplier)
- * - Typical clinical note (standard): ~4 credits → Free 200 ≈ 50 notes; Pro 3000 ≈ 750 notes/mo
- * - Dictation (TRANSCRIBE_CREDITS): 5 credits per transcription
- * - Pro €19/mo leaves healthy margin vs ~€1.50 API at 3000 credits while fitting DE ambulatory SaaS
+ * Source of truth for what customers are actually charged:
+ * - Subscription price: £24.99/mo (yearly £239.90) — the live Stripe prices in
+ *   server/services/stripeCredits.ts. Billed in GBP, like the credit packs.
+ * - Period credit grant: MONTHLY_CREDIT_GRANT = 500 (server/ai/aiPricingConfig.ts);
+ *   PRO_MONTHLY_CREDITS below MUST stay in sync with it.
+ * - Per-credit value: see realized retail rate in creditPacks.ts (≈ €0.035/credit).
+ *
+ * The previous values here (€19/mo, 3,000 credits) were stale marketing copy
+ * that never matched the live Stripe subscription and have been corrected.
+ * `priceGbpPenceMonthly` is display-only; the authoritative charge is the Stripe
+ * price id, never this number.
  */
 
 export type SubscriptionPlan = 'free' | 'pro'
@@ -16,13 +19,18 @@ export type SubscriptionPlan = 'free' | 'pro'
 export const TRANSCRIBE_CREDITS = 5
 
 export const FREE_SIGNUP_CREDITS = 200
-export const PRO_MONTHLY_CREDITS = 3000
+/** Live subscription period grant — keep in sync with server MONTHLY_CREDIT_GRANT. */
+export const PRO_MONTHLY_CREDITS = 500
+
+/** Live monthly subscription price in GBP pence (£24.99). Display-only. */
+export const PRO_MONTHLY_PRICE_GBP_PENCE = 2499
 
 export interface PlanDefinition {
   id: SubscriptionPlan
   nameDe: string
   nameEn: string
-  priceEurMonthly: number
+  /** Display-only monthly price in GBP pence (authoritative charge = Stripe price id). */
+  priceGbpPenceMonthly: number
   signupCredits: number
   monthlyCredits: number
   featuresDe: string[]
@@ -34,7 +42,7 @@ export const PLAN_DEFINITIONS: Record<SubscriptionPlan, PlanDefinition> = {
     id: 'free',
     nameDe: 'Kostenlos',
     nameEn: 'Free',
-    priceEurMonthly: 0,
+    priceGbpPenceMonthly: 0,
     signupCredits: FREE_SIGNUP_CREDITS,
     monthlyCredits: 0,
     featuresDe: [
@@ -54,19 +62,19 @@ export const PLAN_DEFINITIONS: Record<SubscriptionPlan, PlanDefinition> = {
     id: 'pro',
     nameDe: 'Pro',
     nameEn: 'Pro',
-    priceEurMonthly: 19,
+    priceGbpPenceMonthly: PRO_MONTHLY_PRICE_GBP_PENCE,
     signupCredits: 0,
     monthlyCredits: PRO_MONTHLY_CREDITS,
     featuresDe: [
       `${PRO_MONTHLY_CREDITS} Credits pro Monat`,
-      'KI-Assistent (schnell / standard / gründlich)',
+      'KI-Assistent (Economical / Standard / Gründlich)',
       'Diktat-Transkription',
       'Patienten anlegen & verwalten',
       'Verschlüsselte Workspace-Snapshots (volle Datenschutz-Stufe)',
     ],
     featuresEn: [
       `${PRO_MONTHLY_CREDITS} credits per month`,
-      'AI assistant (fast / standard / thorough)',
+      'AI assistant (Economical / Standard / Thorough)',
       'Dictation transcription',
       'Add & manage patients',
       'Encrypted workspace snapshots (full privacy tier)',
@@ -76,4 +84,13 @@ export const PLAN_DEFINITIONS: Record<SubscriptionPlan, PlanDefinition> = {
 
 export function isProPlan(plan: SubscriptionPlan): boolean {
   return plan === 'pro'
+}
+
+/** Format a plan's monthly price as a localized GBP currency string. */
+export function formatPlanMonthlyPrice(plan: PlanDefinition, locale: string): string {
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: 'GBP',
+    minimumFractionDigits: plan.priceGbpPenceMonthly % 100 === 0 ? 0 : 2,
+  }).format(plan.priceGbpPenceMonthly / 100)
 }
