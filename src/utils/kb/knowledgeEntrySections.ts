@@ -63,12 +63,22 @@ export function buildSectionsFromLegacyContent(entry: KnowledgeEntry): Knowledge
     const en = enParts[i]
     const deLabel = de?.label?.trim()
     const enLabel = en?.label?.trim()
+    // When the German heading is a *generated* default (the body had no
+    // `**Heading:**`), it is bilingual boilerplate — not clinician-authored
+    // prose — so we always pair it with the matching English default. Without
+    // this, a new entry created under an English KB (no `contentEn` yet) would
+    // render the German "Übersicht"/"Abschnitt N" heading in the English UI,
+    // because `pickKbLocalizedText` falls back to `label` when `labelEn` is
+    // absent. A real, clinician-typed heading is left untouched (we never
+    // machine-translate authored content).
+    const usesGeneratedLabel = !deLabel
     const labelDe = deLabel || (i === 0 ? 'Übersicht' : `Abschnitt ${i + 1}`)
     const labelEnFallback = i === 0 ? 'Overview' : `Section ${i + 1}`
     sections.push({
       id: sectionId(entry.id, i),
       label: labelDe,
-      labelEn: enLabel || (entry.contentEn?.trim() ? labelEnFallback : undefined),
+      labelEn:
+        enLabel || (entry.contentEn?.trim() || usesGeneratedLabel ? labelEnFallback : undefined),
       content: de?.content ?? '',
       contentEn: en?.content || undefined,
       order: i,
