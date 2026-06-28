@@ -158,6 +158,12 @@ export const settingsWorkspaceUiTranslations = {
     fr: 'Ajouter un composant',
     es: 'Añadir componente',
   },
+  wsNewComponentLabel: {
+    de: 'Neue Komponente {index}',
+    en: 'New component {index}',
+    fr: 'Nouveau composant {index}',
+    es: 'Nuevo componente {index}',
+  },
 
   // ── TeamSettingsPage ─────────────────────────────────────────────────────
   teamStatusActive: { de: 'Aktiv', en: 'Active', fr: 'Actif', es: 'Activo' },

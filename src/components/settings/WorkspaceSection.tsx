@@ -1,8 +1,9 @@
 import { ChevronDown, Plus, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { UiLanguage } from '../../types/settings'
 import {
+  formatSettingsWorkspaceUi,
   translateSettingsWorkspaceUi,
   type SettingsWorkspaceUiKey,
 } from '../../data/settingsWorkspaceUiTranslations'
@@ -13,6 +14,7 @@ import type {
   WorkspaceComponentIcon,
   WorkspaceSectionTemplate,
 } from '../../types/workspaceSettings'
+import { localizeWorkspaceComponents } from '../../utils/localizeComponents'
 import { AiManagerSettings } from './AiManagerSettings'
 import { SettingsField } from './SettingsField'
 
@@ -215,10 +217,19 @@ function SectionsEditor({
 }
 
 export function WorkspaceSection({ workspace }: WorkspaceSectionProps) {
-  const { t, language } = useTranslation()
+  const { t, language, englishVariant } = useTranslation()
   const [expandedId, setExpandedId] = useState<string | null>(
     workspace.components[0]?.id ?? null,
   )
+
+  const displayById = useMemo(() => {
+    const localized = localizeWorkspaceComponents(
+      workspace.components,
+      language,
+      englishVariant,
+    )
+    return new Map(localized.map((component) => [component.id, component]))
+  }, [workspace.components, language, englishVariant])
 
   return (
     <div>
@@ -234,6 +245,7 @@ export function WorkspaceSection({ workspace }: WorkspaceSectionProps) {
 
       <div className="flex flex-col gap-3">
         {workspace.components.map((component) => {
+          const displayComponent = displayById.get(component.id) ?? component
           const isExpanded = expandedId === component.id
           const secondToolLine = component.toolLabelLines?.[1] ?? ''
           const hasVariants = Boolean(component.variants?.length)
@@ -251,14 +263,16 @@ export function WorkspaceSection({ workspace }: WorkspaceSectionProps) {
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-ink">
-                    {component.label}
+                    {isLocked ? displayComponent.label : component.label}
                     {isLocked ? (
                       <span className="ml-2 rounded-sm bg-surface-hover px-1.5 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted">
                         {translateSettingsWorkspaceUi(language, 'wsStandardBadge')}
                       </span>
                     ) : null}
                   </p>
-                  <p className="truncate text-xs text-muted">{getComponentSummary(component, language)}</p>
+                  <p className="truncate text-xs text-muted">
+                    {getComponentSummary(isLocked ? displayComponent : component, language)}
+                  </p>
                 </div>
                 <ChevronDown
                   className={`h-4 w-4 shrink-0 text-muted transition-transform ${
@@ -515,7 +529,13 @@ export function WorkspaceSection({ workspace }: WorkspaceSectionProps) {
 
       <button
         type="button"
-        onClick={workspace.addComponent}
+        onClick={() =>
+          workspace.addComponent(
+            formatSettingsWorkspaceUi(language, 'wsNewComponentLabel', {
+              index: workspace.components.length + 1,
+            }),
+          )
+        }
         className="mt-4 inline-flex items-center gap-1.5 rounded-sm border-2 border-ink bg-ink px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-[#2a2a2a]"
       >
         <Plus className="h-3.5 w-3.5" strokeWidth={1.5} aria-hidden />

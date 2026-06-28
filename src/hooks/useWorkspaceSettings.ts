@@ -361,11 +361,11 @@ export function useWorkspaceSettings() {
     [updateComponents],
   )
 
-  const addComponent = useCallback(() => {
+  const addComponent = useCallback((label?: string) => {
     updateComponents((components) => {
-      const label = `Neue Komponente ${components.length + 1}`
+      const nextLabel = label ?? `Neue Komponente ${components.length + 1}`
       const id = createUniqueId(
-        label,
+        nextLabel,
         components.map((component) => component.id),
       )
 
@@ -373,7 +373,7 @@ export function useWorkspaceSettings() {
         ...components,
         {
           id,
-          label,
+          label: nextLabel,
           icon: 'file-text',
           multistage: false,
           sections: [],

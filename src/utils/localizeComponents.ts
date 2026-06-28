@@ -18,6 +18,10 @@ function linesMatch(left: string[] | undefined, right: string[] | undefined): bo
   return left.every((line, index) => line === right[index])
 }
 
+function matchesStoredGermanLabel(stored: string, canonicalDe: string, legacyDe?: string[]): boolean {
+  return stored === canonicalDe || (legacyDe?.includes(stored) ?? false)
+}
+
 function localizeSection(
   componentId: string,
   section: WorkspaceSectionTemplate,
@@ -42,12 +46,22 @@ export function localizeWorkspaceComponent(
   const translation = componentTranslations[component.id]
   if (!translation) return component
 
-  const label =
-    component.label === translation.label.de ? translation.label[language] : component.label
+  const label = matchesStoredGermanLabel(
+    component.label,
+    translation.label.de,
+    translation.legacyLabelDe,
+  )
+    ? translation.label[language]
+    : component.label
 
+  const railHeadingSource = component.railHeading ?? component.label
   const railHeading =
     translation.railHeading &&
-    (component.railHeading ?? component.label) === translation.railHeading.de
+    matchesStoredGermanLabel(
+      railHeadingSource,
+      translation.railHeading.de,
+      translation.legacyRailHeadingDe,
+    )
       ? translation.railHeading[language]
       : component.railHeading
 

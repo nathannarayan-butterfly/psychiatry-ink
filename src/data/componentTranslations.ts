@@ -14,8 +14,11 @@ interface VariantTranslation {
 
 interface ComponentTranslation {
   label: LocalizedText
+  /** Stored labels that should still resolve via i18n (migrations / legacy defaults). */
+  legacyLabelDe?: string[]
   toolLabelLines?: LocalizedLines
   railHeading?: LocalizedText
+  legacyRailHeadingDe?: string[]
   variants?: Record<string, VariantTranslation>
   sections?: Record<string, SectionTranslation>
 }
@@ -33,6 +36,24 @@ export const componentTranslations: Record<string, ComponentTranslation> = {
       en: 'Admission',
       fr: 'Admission',
       es: 'Ingreso',
+    },
+    variants: {
+      sections: {
+        label: {
+          de: 'Abschnitte',
+          en: 'Sections',
+          fr: 'Sections',
+          es: 'Secciones',
+        },
+      },
+      free: {
+        label: {
+          de: 'Freitext',
+          en: 'Free text',
+          fr: 'Texte libre',
+          es: 'Texto libre',
+        },
+      },
     },
     sections: {
       aufnahmeanlass: {
@@ -460,12 +481,14 @@ export const componentTranslations: Record<string, ComponentTranslation> = {
       fr: 'Lettre de sortie',
       es: 'Informe de alta',
     },
+    legacyLabelDe: ['Therapie und Verlauf'],
     railHeading: {
       de: 'Arztbrief',
       en: 'Discharge letter',
       fr: 'Lettre de sortie',
       es: 'Informe de alta',
     },
+    legacyRailHeadingDe: ['Therapie und Verlauf'],
     sections: {
       'aufnahmeanlass-verlegungsgrund': {
         label: {
