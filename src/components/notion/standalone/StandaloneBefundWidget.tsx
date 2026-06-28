@@ -33,6 +33,26 @@ interface BefundMeta {
  * `untersuchungsbefunde`.
  */
 const BEFUND_META: Partial<Record<GuidedEntryItemType, BefundMeta>> = {
+  'verlauf-short': {
+    titleKey: 'standaloneVerlaufShortTitle',
+    kind: 'verlauf',
+    category: 'formulare',
+  },
+  'verlauf-broad': {
+    titleKey: 'standaloneVerlaufBroadTitle',
+    kind: 'verlauf',
+    category: 'formulare',
+  },
+  'verlauf-risiko': {
+    titleKey: 'standaloneVerlaufRisikoTitle',
+    kind: 'verlauf-risiko',
+    category: 'formulare',
+  },
+  'verlauf-note-quick': {
+    titleKey: 'standaloneVerlaufQuickTitle',
+    kind: 'verlauf',
+    category: 'formulare',
+  },
   'anamnese-somatic-befund': {
     titleKey: 'standaloneBefundSomaticTitle',
     kind: 'somatic-befund',

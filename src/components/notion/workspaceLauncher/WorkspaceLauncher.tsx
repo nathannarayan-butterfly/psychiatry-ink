@@ -492,6 +492,8 @@ export function WorkspaceLauncher({
           </p>
         ) : null}
 
+        {notesCaseId && mode === 'grid' ? <StandaloneNotesPanel caseId={notesCaseId} /> : null}
+
         {view === 'followup' && selectedTask ? (
           <div className="wl-followup">
             <div className="wl-followup__head">
@@ -617,8 +619,6 @@ export function WorkspaceLauncher({
             })}
           </div>
         )}
-
-        {notesCaseId && mode === 'grid' ? <StandaloneNotesPanel caseId={notesCaseId} /> : null}
 
         <div className="wl-footer">
           <span className="wl-hint">{t('launcherHint')}</span>

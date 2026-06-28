@@ -8,7 +8,17 @@ import { LAUNCHER_TASKS, getLauncherTask } from '../../../data/workspaceLauncher
 import { listGuidedEntrySchemas } from '../../../data/guidedEntry/schemas'
 
 const GUIDED_ITEM_TYPES = new Set(listGuidedEntrySchemas().map((schema) => schema.itemType))
-const STANDALONE_TOOLS = new Set(['rewrite', 'butterfly', 'medication', 'education'])
+const STANDALONE_TOOLS = new Set([
+  'rewrite',
+  'butterfly',
+  'medication',
+  'education',
+  'labviz',
+  'timeline',
+  'medLabor',
+  'summary',
+  'labInterpret',
+])
 
 const NOTION_PAGE_IDS = new Set(NOTION_PAGES.map((p) => p.id))
 const TOP_TABS = new Set([
@@ -63,6 +73,20 @@ describe('launcher task registry', () => {
     expect(ids).toContain('standalone-education')
     // The narrow interaction-only card was absorbed into the medication hub.
     expect(ids).not.toContain('standalone-interactions')
+  })
+
+  it('exposes the expanded patient-less tool-area cards', () => {
+    const ids = LAUNCHER_TASKS.map((t) => t.id)
+    for (const required of [
+      'standalone-labviz',
+      'standalone-verlauf',
+      'standalone-timeline',
+      'standalone-medlabor',
+      'standalone-summary',
+      'standalone-labinterpret',
+    ]) {
+      expect(ids).toContain(required)
+    }
   })
 
   it('exposes a standalone EEG befund mode alongside ECG', () => {

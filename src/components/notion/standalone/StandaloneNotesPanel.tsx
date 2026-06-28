@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Check, Copy, Pencil, Plus, Trash2, X } from 'lucide-react'
+import { Check, Copy, Pencil, Plus, StickyNote, Trash2, X } from 'lucide-react'
 import { useTranslation } from '../../../context/TranslationContext'
 import { formatClinicalDate } from '../../../utils/clinicalDate'
 import { copyTextToClipboard } from '../../../utils/notionDocumentActions'
@@ -111,7 +111,15 @@ export function StandaloneNotesPanel({ caseId }: StandaloneNotesPanelProps) {
 
   return (
     <section className="swx-notes" aria-label={t('standaloneNotesHeading')}>
-      <p className="swx-notes__heading">{t('standaloneNotesHeading')}</p>
+      <header className="swx-notes__header">
+        <span className="swx-notes__icon">
+          <StickyNote className="h-4 w-4" strokeWidth={1.6} aria-hidden />
+        </span>
+        <div className="swx-notes__header-text">
+          <h2 className="swx-notes__heading">{t('standaloneNotesHeading')}</h2>
+          <p className="swx-notes__subheading">{t('standaloneNotesSubheading')}</p>
+        </div>
+      </header>
 
       <div className="swx-notes__compose">
         <input

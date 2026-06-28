@@ -49,6 +49,12 @@ const STANDALONE_KEPT_CARDS = [
   'standalone-knowledge',
   'standalone-medication',
   'standalone-education',
+  'standalone-labviz',
+  'standalone-verlauf',
+  'standalone-timeline',
+  'standalone-medlabor',
+  'standalone-summary',
+  'standalone-labinterpret',
   'formulare',
 ]
 
@@ -116,6 +122,26 @@ describe('filterLauncherTasksForContext', () => {
   it('keeps the patient-independent card set without a patient', () => {
     for (const cardId of STANDALONE_KEPT_CARDS) {
       expect(ids(standalone)).toContain(cardId)
+    }
+  })
+
+  it('surfaces at least 12 distinct patient-less tool cards', () => {
+    const standaloneIds = ids(standalone)
+    expect(new Set(standaloneIds).size).toBe(standaloneIds.length)
+    expect(standaloneIds.length).toBeGreaterThanOrEqual(12)
+  })
+
+  it('keeps no patient-case-bound target in any standalone tool card', () => {
+    // Every standalone tool routes to a standaloneTool / standaloneGuided / template
+    // target — never a workspacePage/topTab/anforderung that reads or writes a case.
+    const toolCards = standalone.filter((task) => task.id.startsWith('standalone-'))
+    for (const task of toolCards) {
+      for (const mode of task.modes) {
+        expect(
+          ['standaloneTool', 'standaloneGuided'],
+          `${task.id}/${mode.id}`,
+        ).toContain(mode.target.kind)
+      }
     }
   })
 

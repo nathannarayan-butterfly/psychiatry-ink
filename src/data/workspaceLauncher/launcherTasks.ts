@@ -92,18 +92,39 @@ export type LauncherTarget =
    */
   | { kind: 'standaloneGuided'; itemType: GuidedEntryItemType }
   /**
-   * Standalone clinical tool (patient-less workspace): free-text AI
-   * rewrite/structure, the focused Ask Butterfly clinical/pharma Q&A assistant,
-   * the ad-hoc medication hub (interactions / receptor profile / side-effect
-   * profile, no patient med plan), or the topic-driven patient education
-   * generator (saved to standalone notes, no patient case source). The full
-   * knowledge-base browser is intentionally NOT a patient-less tool — it
+   * Standalone clinical tool (patient-less workspace). All operate on ad-hoc /
+   * pasted input only — never a patient case — and any AI is explicit (no
+   * auto-run on mount); outputs are copyable and/or saved via `saveStandaloneNote`:
+   *   - `rewrite` — free-text AI rewrite / structure;
+   *   - `butterfly` — focused Ask Butterfly clinical / pharma Q&A assistant;
+   *   - `medication` — ad-hoc medication hub (interactions / receptor / side
+   *     effects, no patient med plan);
+   *   - `education` — topic-driven patient education generator;
+   *   - `labviz` — ad-hoc lab visualisation (in-memory `useLabTool` scratch +
+   *     `NotionLabCanvas`, no patient lab read/write);
+   *   - `timeline` — ad-hoc timeline builder (in-memory `useTimelineTool`
+   *     scratch + `NotionTimelineCanvas`);
+   *   - `medLabor` — deterministic medication ↔ lab correlation (QT vs
+   *     electrolytes, level / monitoring context) on an ad-hoc drug + lab list;
+   *   - `summary` — paste accumulated data → explicit AI "Therapie und Verlauf"
+   *     Arztbrief-style summary (NOT the full Arztbrief workspace);
+   *   - `labInterpret` — paste a lab panel → explicit AI interpretation.
+   * The full knowledge-base browser is intentionally NOT a patient-less tool — it
    * duplicates the main Knowledge Base navigation; focused lookups fold into
    * Ask Butterfly instead.
    */
   | {
       kind: 'standaloneTool'
-      tool: 'rewrite' | 'butterfly' | 'medication' | 'education'
+      tool:
+        | 'rewrite'
+        | 'butterfly'
+        | 'medication'
+        | 'education'
+        | 'labviz'
+        | 'timeline'
+        | 'medLabor'
+        | 'summary'
+        | 'labInterpret'
     }
 
 /** A single "how do you want to create it?" option shown in the follow-up step. */
@@ -848,6 +869,200 @@ export const LAUNCHER_TASKS: LauncherTask[] = [
         id: 'open',
         labelKey: 'launcherModeOpen',
         target: { kind: 'standaloneTool', tool: 'education' },
+      },
+    ],
+  },
+  {
+    id: 'standalone-labviz',
+    labelKey: 'launcherTaskStandaloneLabViz',
+    descKey: 'launcherTaskStandaloneLabVizDesc',
+    category: 'diagnostics',
+    icon: LineChart,
+    standaloneOnly: true,
+    keywords: [
+      'labor',
+      'laborwerte',
+      'lab',
+      'lab values',
+      'verlauf',
+      'trend',
+      'kurve',
+      'graph',
+      'chart',
+      'visualisierung',
+      'visualisation',
+      'visualization',
+      'diagramm',
+      'serien',
+      'serial',
+    ],
+    modes: [
+      {
+        id: 'open',
+        labelKey: 'launcherModeOpen',
+        target: { kind: 'standaloneTool', tool: 'labviz' },
+      },
+    ],
+  },
+  {
+    id: 'standalone-verlauf',
+    labelKey: 'launcherTaskStandaloneVerlauf',
+    descKey: 'launcherTaskStandaloneVerlaufDesc',
+    category: 'documentation',
+    icon: ScrollText,
+    standaloneOnly: true,
+    keywords: [
+      'verlauf',
+      'verlaufsnotiz',
+      'verlaufseintrag',
+      'progress note',
+      'progress',
+      'note',
+      'notiz',
+      'dokumentation',
+      'soap',
+      'risiko',
+      'risk',
+    ],
+    modes: [
+      {
+        id: 'short',
+        labelKey: 'launcherModeStandaloneVerlaufShort',
+        keywords: ['kurz', 'short', 'fokussiert', 'soap'],
+        target: { kind: 'standaloneGuided', itemType: 'verlauf-short' },
+      },
+      {
+        id: 'broad',
+        labelKey: 'launcherModeStandaloneVerlaufBroad',
+        keywords: ['ausführlich', 'broad', 'umfassend', 'detailed'],
+        target: { kind: 'standaloneGuided', itemType: 'verlauf-broad' },
+      },
+      {
+        id: 'risiko',
+        labelKey: 'launcherModeStandaloneVerlaufRisiko',
+        keywords: ['risiko', 'risk', 'suizid', 'gefährdung'],
+        target: { kind: 'standaloneGuided', itemType: 'verlauf-risiko' },
+      },
+      {
+        id: 'quick',
+        labelKey: 'launcherModeStandaloneVerlaufQuick',
+        keywords: ['schnell', 'quick', 'kurznotiz'],
+        target: { kind: 'standaloneGuided', itemType: 'verlauf-note-quick' },
+      },
+    ],
+  },
+  {
+    id: 'standalone-timeline',
+    labelKey: 'launcherTaskStandaloneTimeline',
+    descKey: 'launcherTaskStandaloneTimelineDesc',
+    category: 'documentation',
+    icon: GitBranch,
+    standaloneOnly: true,
+    keywords: [
+      'timeline',
+      'zeitleiste',
+      'zeitstrahl',
+      'chronologie',
+      'chronology',
+      'verlauf',
+      'ereignisse',
+      'events',
+      'meilenstein',
+      'milestone',
+    ],
+    modes: [
+      {
+        id: 'open',
+        labelKey: 'launcherModeOpen',
+        target: { kind: 'standaloneTool', tool: 'timeline' },
+      },
+    ],
+  },
+  {
+    id: 'standalone-medlabor',
+    labelKey: 'launcherTaskStandaloneMedLabor',
+    descKey: 'launcherTaskStandaloneMedLaborDesc',
+    category: 'medication',
+    icon: Activity,
+    standaloneOnly: true,
+    keywords: [
+      'medikation',
+      'labor',
+      'korrelation',
+      'correlation',
+      'qt',
+      'qtc',
+      'elektrolyte',
+      'electrolytes',
+      'kalium',
+      'magnesium',
+      'spiegel',
+      'level',
+      'monitoring',
+      'lithium',
+      'überwachung',
+    ],
+    modes: [
+      {
+        id: 'open',
+        labelKey: 'launcherModeOpen',
+        target: { kind: 'standaloneTool', tool: 'medLabor' },
+      },
+    ],
+  },
+  {
+    id: 'standalone-summary',
+    labelKey: 'launcherTaskStandaloneSummary',
+    descKey: 'launcherTaskStandaloneSummaryDesc',
+    category: 'documentation',
+    icon: FileText,
+    standaloneOnly: true,
+    keywords: [
+      'therapie',
+      'verlauf',
+      'zusammenfassung',
+      'summary',
+      'arztbrief',
+      'epikrise',
+      'brief',
+      'therapie und verlauf',
+      'therapy and course',
+      'synthese',
+    ],
+    modes: [
+      {
+        id: 'open',
+        labelKey: 'launcherModeOpen',
+        target: { kind: 'standaloneTool', tool: 'summary' },
+      },
+    ],
+  },
+  {
+    id: 'standalone-labinterpret',
+    labelKey: 'launcherTaskStandaloneLabInterpret',
+    descKey: 'launcherTaskStandaloneLabInterpretDesc',
+    category: 'diagnostics',
+    icon: FlaskConical,
+    standaloneOnly: true,
+    keywords: [
+      'labor',
+      'laborbefund',
+      'lab',
+      'interpretation',
+      'interpretieren',
+      'befund',
+      'auswerten',
+      'werte',
+      'pathologisch',
+      'deuten',
+      'erklären',
+      'explain',
+    ],
+    modes: [
+      {
+        id: 'open',
+        labelKey: 'launcherModeOpen',
+        target: { kind: 'standaloneTool', tool: 'labInterpret' },
       },
     ],
   },
