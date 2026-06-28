@@ -4,12 +4,9 @@ import {
   Clock,
   Download,
   FlaskConical,
-  LayoutGrid,
-  List,
   Palette,
   PenLine,
   Plus,
-  Search,
   Shield,
   Sparkles,
   Building2,
@@ -29,8 +26,7 @@ import type { NotionPageId } from '../notion/notionPages'
 import { useAssessmentStandardSettings } from '../../hooks/useAssessmentStandardSettings'
 import { useAppearanceSettings } from '../../hooks/useAppearanceSettings'
 import { useAccountDisplayName } from '../../hooks/useAccountDisplayName'
-import { getCaseMeta, isListedPatientCase, useCaseRegistry } from '../../hooks/useCaseRegistry'
-import type { DashboardCase } from '../../hooks/useCaseRegistry'
+import { getCaseMeta, useCaseRegistry } from '../../hooks/useCaseRegistry'
 import { useCredits } from '../../hooks/useCredits'
 import { useKiInstructions } from '../../hooks/useKiInstructions'
 import { useSettingsPanel } from '../../hooks/useSettingsPanel'
@@ -58,15 +54,14 @@ import { useSystemAdminAccess } from '../../hooks/useSystemAdminAccess'
 import { useCurrentOrganisation } from '../../hooks/permissions'
 import { setDevOrganisationTier } from '../../services/orgApi'
 import { useAuditDebugAccess } from '../../hooks/useAuditDebugAccess'
-import { isCaseListedOnDashboard } from '../../hooks/useDemoPatient'
 import { useAuth } from '../../context/AuthContext'
 import {
   archivePatientCase,
   deletePatientCasePermanently,
-  isPatientCaseArchived,
   patientCaseMetaToEditData,
   reactivatePatientCase,
 } from '../../utils/casePatientLifecycle'
+import { partitionPatients } from '../../utils/patientListView'
 import { useEnterpriseFeatures } from '../../hooks/useEnterpriseFeatures'
 import { NewPatientDialog } from './NewPatientDialog'
 import type { NewPatientData } from './NewPatientDialog'
@@ -84,8 +79,8 @@ const CREDITS_DEFAULT_MAX = 500
 const DOCUMENTATION_DAY_GOAL_SECONDS = 8 * 60 * 60
 const AI_AUTO_MODE_KEY = 'psychiatry-ink:ai-auto-mode'
 const RECENT_ACTIVITY_LIMIT = 5
-
-type PatientViewMode = 'cards' | 'list'
+/** How many patient cards the dashboard previews before linking to the full page. */
+const PATIENT_PREVIEW_LIMIT = 6
 
 function readAiAutoMode(): boolean {
   try {
@@ -105,6 +100,10 @@ interface DashboardPageProps {
   onOpenCase: (caseId: string, page?: NotionPageId, showPatientDashboard?: boolean, appointmentId?: string) => void
   /** General documentation without a patient — opens /workspace (blank NotionApp canvas, not Vorlage Builder). */
   onOpenWorkspace?: () => void
+  /** Navigate to the dedicated full "Meine Patienten" list page. */
+  onOpenPatients?: () => void
+  /** Navigate to the dedicated full "Archivierte Patienten" list page. */
+  onOpenArchivedPatients?: () => void
   onNavigateHome?: () => void
   onOpenSettings?: () => void
   onOpenKbAdmin?: () => void
@@ -128,29 +127,14 @@ function UsageBar({ value, max }: { value: number; max: number }) {
   )
 }
 
-function matchesPatientSearch(caseItem: DashboardCase, query: string): boolean {
-  const q = query.trim().toLowerCase()
-  if (!q) return true
-  const haystack = [
-    caseItem.displayTitle,
-    caseItem.localName,
-    caseItem.localVorname,
-    caseItem.localNachname,
-    caseItem.pageHeading,
-    caseItem.documentTypeSummary,
-  ]
-    .filter(Boolean)
-    .join(' ')
-    .toLowerCase()
-  return haystack.includes(q)
-}
-
 export function DashboardPage({
   privacy,
   languageSettings,
   plan: _plan,
   onOpenCase,
   onOpenWorkspace,
+  onOpenPatients,
+  onOpenArchivedPatients,
   onNavigateHome,
   onOpenKbAdmin,
   onOpenAuditDebug,
@@ -196,8 +180,6 @@ export function DashboardPage({
   const [showImportModal, setShowImportModal] = useState(false)
   const [editingCaseId, setEditingCaseId] = useState<string | null>(null)
   const [workflowCaseId, setWorkflowCaseId] = useState<string | null>(null)
-  const [patientSearch, setPatientSearch] = useState('')
-  const [patientViewMode, setPatientViewMode] = useState<PatientViewMode>('cards')
   // Only prompt for the storage-location choice when the user has made no choice
   // locally AND the account has no prior backup (key/registry) indicating they
   // already onboarded on another device. This keeps the prompt from re-appearing
@@ -317,23 +299,9 @@ export function DashboardPage({
     setWorkflowCaseId(null)
   }, [])
 
-  const listedCases = useMemo(
-    () =>
-      registry.cases
-        .filter(isListedPatientCase)
-        .filter((caseItem) => isCaseListedOnDashboard(caseItem.caseId, userId))
-        .sort((a, b) => new Date(b.lastEditedAt).getTime() - new Date(a.lastEditedAt).getTime()),
+  const { active: activePatients, archived: archivedPatients } = useMemo(
+    () => partitionPatients(registry.cases, userId),
     [registry.cases, userId],
-  )
-
-  const activePatients = useMemo(
-    () => listedCases.filter((caseItem) => !isPatientCaseArchived(caseItem.caseId, userId)),
-    [listedCases, userId],
-  )
-
-  const archivedPatients = useMemo(
-    () => listedCases.filter((caseItem) => isPatientCaseArchived(caseItem.caseId, userId)),
-    [listedCases, userId],
   )
 
   const importExistingPatients = useMemo<ExistingPatientOption[]>(
@@ -420,14 +388,14 @@ export function DashboardPage({
     return patientCaseMetaToEditData(getCaseMeta(editingCaseId))
   }, [editingCaseId, registry.cases])
 
-  const filteredPatients = useMemo(
-    () => activePatients.filter((caseItem) => matchesPatientSearch(caseItem, patientSearch)),
-    [activePatients, patientSearch],
+  const activePreview = useMemo(
+    () => activePatients.slice(0, PATIENT_PREVIEW_LIMIT),
+    [activePatients],
   )
 
-  const filteredArchivedPatients = useMemo(
-    () => archivedPatients.filter((caseItem) => matchesPatientSearch(caseItem, patientSearch)),
-    [archivedPatients, patientSearch],
+  const archivedPreview = useMemo(
+    () => archivedPatients.slice(0, PATIENT_PREVIEW_LIMIT),
+    [archivedPatients],
   )
 
   const recentActivity = useMemo(
@@ -453,13 +421,6 @@ export function DashboardPage({
     },
     [onOpenCase],
   )
-
-  function genderSymbol(geschlecht: DashboardCase['localGeschlecht']): string | null {
-    if (geschlecht === 'maennlich') return '♂'
-    if (geschlecht === 'weiblich') return '♀'
-    if (geschlecht === 'divers') return '⚧'
-    return null
-  }
 
   if (settingsPanel.isOpen) {
     return (
@@ -711,46 +672,16 @@ export function DashboardPage({
         <div className="dashboard-section__header-row">
           <h2 id="dashboard-section-patients" className="dashboard-section__heading">
             {t('dashboardRecentPatients')}
+            {activePatients.length > 0 ? (
+              <span className="dashboard-section__count"> ({activePatients.length})</span>
+            ) : null}
           </h2>
-          <div className="dashboard-patients-toolbar">
-            <label className="dashboard-patients-search">
-              <Search className="dashboard-patients-search__icon h-3.5 w-3.5" strokeWidth={2} aria-hidden />
-              <input
-                type="search"
-                className="dashboard-patients-search__input"
-                value={patientSearch}
-                onChange={(e) => setPatientSearch(e.target.value)}
-                placeholder={t('dashboardSearchPatients')}
-                aria-label={t('dashboardSearchPatients')}
-              />
-            </label>
-            <div className="dashboard-patients-view-toggle" role="group" aria-label={t('patientRegistryViewToggle')}>
-              <button
-                type="button"
-                className={[
-                  'dashboard-patients-view-btn',
-                  patientViewMode === 'list' ? 'dashboard-patients-view-btn--active' : '',
-                ].join(' ').trim()}
-                onClick={() => setPatientViewMode('list')}
-                aria-pressed={patientViewMode === 'list'}
-                title={t('patientRegistryViewList')}
-              >
-                <List className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-              </button>
-              <button
-                type="button"
-                className={[
-                  'dashboard-patients-view-btn',
-                  patientViewMode === 'cards' ? 'dashboard-patients-view-btn--active' : '',
-                ].join(' ').trim()}
-                onClick={() => setPatientViewMode('cards')}
-                aria-pressed={patientViewMode === 'cards'}
-                title={t('patientRegistryViewCards')}
-              >
-                <LayoutGrid className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-              </button>
-            </div>
-          </div>
+          {activePatients.length > 0 && onOpenPatients ? (
+            <button type="button" className="dashboard-view-all" onClick={onOpenPatients}>
+              {t('patientsViewAll')}
+              <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+            </button>
+          ) : null}
         </div>
 
         {registry.loading ? (
@@ -770,11 +701,9 @@ export function DashboardPage({
               {t('dashboardNewPatient')}
             </button>
           </div>
-        ) : filteredPatients.length === 0 ? (
-          <p className="dashboard-page__status">{t('dashboardSearchNoResults')}</p>
-        ) : patientViewMode === 'cards' ? (
+        ) : (
           <div className="dashboard-page__grid stagger-children">
-            {filteredPatients.map((caseItem) => (
+            {activePreview.map((caseItem) => (
               <PatientCaseCard
                 key={caseItem.caseId}
                 caseItem={caseItem}
@@ -784,40 +713,6 @@ export function DashboardPage({
               />
             ))}
           </div>
-        ) : (
-          <ul className="dashboard-patients-list">
-            {filteredPatients.map((caseItem) => {
-              const symbol = genderSymbol(caseItem.localGeschlecht)
-              const details = [
-                caseItem.localGeburtsdatum
-                  ? formatSiteLocaleDate(caseItem.localGeburtsdatum, language)
-                  : null,
-                symbol,
-              ].filter(Boolean)
-
-              return (
-                <li key={caseItem.caseId}>
-                  <button
-                    type="button"
-                    className="dashboard-patients-list__row"
-                    onClick={() => onOpenCase(caseItem.caseId, undefined, true)}
-                  >
-                    <span className="dashboard-patients-list__main">
-                      <span className="dashboard-patients-list__name">
-                        {caseItem.displayTitle}
-                      </span>
-                      {details.length > 0 ? (
-                        <span className="dashboard-patients-list__meta">{details.join(' · ')}</span>
-                      ) : null}
-                    </span>
-                    <span className="dashboard-patients-list__date">
-                      {formatSiteLocaleDate(caseItem.lastEditedAt, language)}
-                    </span>
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
         )}
 
         {registry.error ? (
@@ -831,26 +726,31 @@ export function DashboardPage({
         <>
           <div className="dashboard-section__divider" role="separator" />
           <section className="dashboard-section dashboard-section--archive" aria-labelledby="dashboard-section-archive">
-            <h2 id="dashboard-section-archive" className="dashboard-section__heading">
-              {t('dashboardArchiveSection')}
-            </h2>
+            <div className="dashboard-section__header-row">
+              <h2 id="dashboard-section-archive" className="dashboard-section__heading">
+                {t('dashboardArchiveSection')}
+                <span className="dashboard-section__count"> ({archivedPatients.length})</span>
+              </h2>
+              {onOpenArchivedPatients ? (
+                <button type="button" className="dashboard-view-all" onClick={onOpenArchivedPatients}>
+                  {t('patientsViewAll')}
+                  <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+                </button>
+              ) : null}
+            </div>
             <p className="dashboard-section__intro">{t('dashboardArchiveIntro')}</p>
-            {filteredArchivedPatients.length === 0 ? (
-              <p className="dashboard-page__status">{t('dashboardSearchNoResults')}</p>
-            ) : (
-              <div className="dashboard-page__grid">
-                {filteredArchivedPatients.map((caseItem) => (
-                  <PatientCaseCard
-                    key={caseItem.caseId}
-                    caseItem={caseItem}
-                    archived
-                    onOpen={(caseId) => onOpenCase(caseId, undefined, true)}
-                    onReactivate={handleReactivatePatient}
-                    onDelete={(caseId) => void handleDeletePatient(caseId)}
-                  />
-                ))}
-              </div>
-            )}
+            <div className="dashboard-page__grid">
+              {archivedPreview.map((caseItem) => (
+                <PatientCaseCard
+                  key={caseItem.caseId}
+                  caseItem={caseItem}
+                  archived
+                  onOpen={(caseId) => onOpenCase(caseId, undefined, true)}
+                  onReactivate={handleReactivatePatient}
+                  onDelete={(caseId) => void handleDeletePatient(caseId)}
+                />
+              ))}
+            </div>
           </section>
         </>
       ) : null}

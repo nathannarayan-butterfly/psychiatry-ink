@@ -13,6 +13,7 @@ import { getEffectiveHostname } from './utils/resolveHostname'
 import { DEFAULT_CASE_ID } from './utils/caseContext'
 import { CaseWorkspacePage } from './components/CaseWorkspacePage'
 import { DashboardPage } from './components/dashboard/DashboardPage'
+import { PatientListPage } from './components/dashboard/PatientListPage'
 import { KbAdminPage } from './components/kb-admin/KbAdminPage'
 import { AuditDebugPage } from './components/audit/AuditDebugPage'
 import { DemoPatientDevPage } from './components/demo/DemoPatientDevPage'
@@ -150,6 +151,8 @@ export default function App() {
   }, [allowDevNoAuthEntry, authLoading, canAccessEnterpriseUi, hasAuditDebugAccess, hasSystemAdminAccess, isEnterpriseRoute, isRestrictedConsultant, navigate, route, user])
 
   const showDashboard = route.view === 'dashboard'
+  const showPatients = route.view === 'patients'
+  const showPatientsArchived = route.view === 'patients-archived'
   const showKbAdmin = route.view === 'kb-admin'
   const showAuditDebug = route.view === 'audit-debug'
   const showDemoPatient = route.view === 'demo-patient'
@@ -183,6 +186,19 @@ export default function App() {
     }
     navigate('/dashboard')
   }, [navigate, route.view])
+
+  const handleOpenCase = useCallback(
+    (id: string, page?: string, showPatientDashboard?: boolean, openAppointmentId?: string) => {
+      const base = `/case/${encodeURIComponent(id)}`
+      const params = new URLSearchParams()
+      if (page) params.set('page', page)
+      if (showPatientDashboard) params.set('view', 'overview')
+      if (openAppointmentId) params.set('appointment', openAppointmentId)
+      const qs = params.toString()
+      navigate(qs ? `${base}?${qs}` : base)
+    },
+    [navigate],
+  )
 
   // Public/pre-auth pages (marketing homepage, AI-credits notice, login, signup)
   // render in the locale of the request domain — psychiatry.ink → en,
@@ -342,12 +358,32 @@ export default function App() {
             token={route.view === 'team-invite' ? route.token : ''}
             onNavigate={navigate}
           />
+        ) : showPatients ? (
+          <PatientListPage
+            mode="active"
+            privacy={privacy}
+            languageSettings={languageSettings}
+            onBack={() => navigate('/dashboard')}
+            onOpenCase={handleOpenCase}
+            onSwitchList={() => navigate('/dashboard/patients/archived')}
+          />
+        ) : showPatientsArchived ? (
+          <PatientListPage
+            mode="archived"
+            privacy={privacy}
+            languageSettings={languageSettings}
+            onBack={() => navigate('/dashboard')}
+            onOpenCase={handleOpenCase}
+            onSwitchList={() => navigate('/dashboard/patients')}
+          />
         ) : showDashboard ? (
           <DashboardPage
             privacy={privacy}
             languageSettings={languageSettings}
             plan={plan}
             onNavigateHome={handleNavigateHome}
+            onOpenPatients={() => navigate('/dashboard/patients')}
+            onOpenArchivedPatients={() => navigate('/dashboard/patients/archived')}
             onOpenKbAdmin={() => navigate('/dashboard/kb-admin')}
             onOpenAuditDebug={() => navigate('/dev/audit-logs')}
             onOpenDemoPatient={() => navigate('/dev/demo-patient')}
