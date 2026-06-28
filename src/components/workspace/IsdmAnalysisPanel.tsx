@@ -683,6 +683,7 @@ export function IsdmAnalysisPanel({
               <ButterflyDiagnosisCard
                 key={result.key}
                 t={t}
+                language={language}
                 disorder={result.disorder}
                 evaluation={result.evaluation}
                 label={displayLabel}
@@ -872,6 +873,7 @@ function ButterflyCriterionQuestionItem({
 
 interface ButterflyDiagnosisCardProps {
   t: Translate
+  language: UiLanguage
   disorder: Disorder
   evaluation: DisorderEvaluation
   label: string
@@ -892,6 +894,7 @@ interface ButterflyDiagnosisCardProps {
 
 function ButterflyDiagnosisCard({
   t,
+  language,
   disorder,
   evaluation,
   label,
@@ -909,7 +912,7 @@ function ButterflyDiagnosisCard({
   onCheckAi,
   onJumpToSection,
 }: ButterflyDiagnosisCardProps) {
-  const advice = buildDisorderAdvice(evaluation, disorder)
+  const advice = buildDisorderAdvice(evaluation, disorder, language)
   const exclusionGroupIds = new Set(
     disorder.groups.filter((group) => group.groupType === 'exclusion').map((group) => group.id),
   )

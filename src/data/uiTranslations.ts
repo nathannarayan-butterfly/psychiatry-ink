@@ -1499,6 +1499,24 @@ export const uiTranslations = {
     fr: 'Données insuffisantes',
     es: 'Datos insuficientes',
   },
+  butterflyAdviceCriteriaMet: {
+    de: 'Laut {system} sind die Kriterien für {name} nach dokumentierter Datenlage erfüllt — bitte klinisch bestätigen.',
+    en: 'According to {system}, criteria for {name} are met based on documented data — please confirm clinically.',
+    fr: 'Selon {system}, les critères de {name} sont remplis d’après les données documentées — veuillez confirmer cliniquement.',
+    es: 'Según {system}, los criterios de {name} se cumplen según los datos documentados — confirme clínicamente.',
+  },
+  butterflyAdviceNotMet: {
+    de: 'Laut {system} sind die Kriterien für {name} nach dokumentierter Datenlage nicht erfüllt — bitte prüfen oder weitere Daten ergänzen.',
+    en: 'According to {system}, criteria for {name} are not met based on documented data — please review or add further data.',
+    fr: 'Selon {system}, les critères de {name} ne sont pas remplis d’après les données documentées — veuillez vérifier ou compléter.',
+    es: 'Según {system}, los criterios de {name} no se cumplen según los datos documentados — revise o añada más datos.',
+  },
+  butterflyAdviceInsufficient: {
+    de: 'Für {name} liegen noch nicht genügend strukturierte Daten vor — bitte weitere Befunde ergänzen oder Kriterien bestätigen.',
+    en: 'Not enough structured data for {name} yet — please add further findings or confirm criteria.',
+    fr: 'Pas assez de données structurées pour {name} — veuillez compléter les constats ou confirmer les critères.',
+    es: 'Aún no hay datos estructurados suficientes para {name} — añada hallazgos o confirme criterios.',
+  },
   butterflyCriteriaMetLabel: {
     de: 'Erfüllte Kriterien',
     en: 'Met criteria',

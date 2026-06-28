@@ -108,7 +108,7 @@ export function buildButterflySummary(caseId: string, language: UiLanguage, limi
     seenDisorders.add(disorder.id)
 
     const evaluation = evaluateDisorder(disorder, ctx)
-    const advice = buildDisorderAdvice(evaluation, disorder)
+    const advice = buildDisorderAdvice(evaluation, disorder, language)
     const openCriteriaCount = evaluation.perCriterion.filter(
       (c) => c.status === 'unknown' && c.source !== 'attested',
     ).length
