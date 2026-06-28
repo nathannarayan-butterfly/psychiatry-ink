@@ -102,17 +102,13 @@ export type LauncherTarget =
    *   - `medication` — ad-hoc medication hub (interactions / receptor / side
    *     effects, no patient med plan);
    *   - `education` — topic-driven patient education generator;
-   *   - `labviz` — ad-hoc lab visualisation (in-memory `useLabTool` scratch +
-   *     `NotionLabCanvas`, no patient lab read/write);
+   *   - `labTools` — consolidated lab visualisation + AI lab interpretation;
    *   - `timeline` — ad-hoc timeline builder (in-memory `useTimelineTool`
    *     scratch + `NotionTimelineCanvas`);
-   *   - `medLabor` — deterministic medication ↔ lab correlation (QT vs
-   *     electrolytes, level / monitoring context) on an ad-hoc drug + lab list;
    *   - `summary` — paste accumulated data → explicit AI "Therapie und Verlauf"
    *     Arztbrief-style summary (NOT the full Arztbrief workspace);
-   *   - `labInterpret` — paste a lab panel → explicit AI interpretation.
    *   - `dictation` — voice-to-text dictation → save to global notes;
-   *   - `translate` — explicit text translation between de/en/fr/es.
+   *   - `translate` — explicit AI text translation (many languages).
    * The full knowledge-base browser is intentionally NOT a patient-less tool — it
    * duplicates the main Knowledge Base navigation; focused lookups fold into
    * Ask Butterfly instead.
@@ -124,11 +120,9 @@ export type LauncherTarget =
         | 'butterfly'
         | 'medication'
         | 'education'
-        | 'labviz'
+        | 'labTools'
         | 'timeline'
-        | 'medLabor'
         | 'summary'
-        | 'labInterpret'
         | 'dictation'
         | 'translate'
     }
@@ -879,17 +873,19 @@ export const LAUNCHER_TASKS: LauncherTask[] = [
     ],
   },
   {
-    id: 'standalone-labviz',
-    labelKey: 'launcherTaskStandaloneLabViz',
-    descKey: 'launcherTaskStandaloneLabVizDesc',
+    id: 'standalone-lab-tools',
+    labelKey: 'launcherTaskStandaloneLabTools',
+    descKey: 'launcherTaskStandaloneLabToolsDesc',
     category: 'diagnostics',
-    icon: LineChart,
+    icon: FlaskConical,
     standaloneOnly: true,
     keywords: [
       'labor',
       'laborwerte',
       'lab',
       'lab values',
+      'lab tools',
+      'lab-werkzeuge',
       'verlauf',
       'trend',
       'kurve',
@@ -901,12 +897,22 @@ export const LAUNCHER_TASKS: LauncherTask[] = [
       'diagramm',
       'serien',
       'serial',
+      'laborbefund',
+      'interpretation',
+      'interpretieren',
+      'befund',
+      'auswerten',
+      'werte',
+      'pathologisch',
+      'deuten',
+      'erklären',
+      'explain',
     ],
     modes: [
       {
         id: 'open',
         labelKey: 'launcherModeOpen',
-        target: { kind: 'standaloneTool', tool: 'labviz' },
+        target: { kind: 'standaloneTool', tool: 'labTools' },
       },
     ],
   },
@@ -985,38 +991,6 @@ export const LAUNCHER_TASKS: LauncherTask[] = [
     ],
   },
   {
-    id: 'standalone-medlabor',
-    labelKey: 'launcherTaskStandaloneMedLabor',
-    descKey: 'launcherTaskStandaloneMedLaborDesc',
-    category: 'medication',
-    icon: Activity,
-    standaloneOnly: true,
-    keywords: [
-      'medikation',
-      'labor',
-      'korrelation',
-      'correlation',
-      'qt',
-      'qtc',
-      'elektrolyte',
-      'electrolytes',
-      'kalium',
-      'magnesium',
-      'spiegel',
-      'level',
-      'monitoring',
-      'lithium',
-      'überwachung',
-    ],
-    modes: [
-      {
-        id: 'open',
-        labelKey: 'launcherModeOpen',
-        target: { kind: 'standaloneTool', tool: 'medLabor' },
-      },
-    ],
-  },
-  {
     id: 'standalone-summary',
     labelKey: 'launcherTaskStandaloneSummary',
     descKey: 'launcherTaskStandaloneSummaryDesc',
@@ -1040,35 +1014,6 @@ export const LAUNCHER_TASKS: LauncherTask[] = [
         id: 'open',
         labelKey: 'launcherModeOpen',
         target: { kind: 'standaloneTool', tool: 'summary' },
-      },
-    ],
-  },
-  {
-    id: 'standalone-labinterpret',
-    labelKey: 'launcherTaskStandaloneLabInterpret',
-    descKey: 'launcherTaskStandaloneLabInterpretDesc',
-    category: 'diagnostics',
-    icon: FlaskConical,
-    standaloneOnly: true,
-    keywords: [
-      'labor',
-      'laborbefund',
-      'lab',
-      'interpretation',
-      'interpretieren',
-      'befund',
-      'auswerten',
-      'werte',
-      'pathologisch',
-      'deuten',
-      'erklären',
-      'explain',
-    ],
-    modes: [
-      {
-        id: 'open',
-        labelKey: 'launcherModeOpen',
-        target: { kind: 'standaloneTool', tool: 'labInterpret' },
       },
     ],
   },

@@ -53,6 +53,8 @@ interface StandalonePromptToolWidgetProps {
   /** Storage id of the (default) case the resulting note is saved under. */
   caseId: string
   onClose: () => void
+  /** When true, omit outer panel chrome (used inside {@link StandaloneLabToolsWidget}). */
+  embedded?: boolean
 }
 
 /**
@@ -67,6 +69,7 @@ export function StandalonePromptToolWidget({
   variant,
   caseId,
   onClose,
+  embedded = false,
 }: StandalonePromptToolWidgetProps) {
   const cfg = VARIANTS[variant]
   const { t, language } = useTranslation()
@@ -119,25 +122,9 @@ export function StandalonePromptToolWidget({
     )
   }
 
-  return (
-    <div className="wai-panel wai-panel--inline" aria-label={t(cfg.titleKey)}>
-      <header className="wai-panel__header">
-        <span className="wai-panel__eyebrow">
-          <Sparkles className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
-          {t(cfg.eyebrowKey)}
-        </span>
-        <h2 className="wai-panel__title">{t(cfg.titleKey)}</h2>
-        <button
-          type="button"
-          className="wai-panel__close"
-          onClick={onClose}
-          aria-label={t('dokumenteClose')}
-        >
-          <X className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-        </button>
-      </header>
-
-      <div className="wai-panel__body wai-panel__body--fill">
+  const body = (
+    <>
+      <div className={`wai-panel__body wai-panel__body--fill`}>
         <div className="swx-form swx-form--fill">
           <label className="swx-field swx-field--grow">
             {t(cfg.inputLabelKey)}
@@ -170,6 +157,35 @@ export function StandalonePromptToolWidget({
           {busy ? t('workspaceAiGenerating') : t('standaloneGenerate')}
         </button>
       </footer>
+    </>
+  )
+
+  if (embedded) {
+    return (
+      <div role="tabpanel" className="swx-lab-tools__interpret">
+        {body}
+      </div>
+    )
+  }
+
+  return (
+    <div className="wai-panel wai-panel--inline" aria-label={t(cfg.titleKey)}>
+      <header className="wai-panel__header">
+        <span className="wai-panel__eyebrow">
+          <Sparkles className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+          {t(cfg.eyebrowKey)}
+        </span>
+        <h2 className="wai-panel__title">{t(cfg.titleKey)}</h2>
+        <button
+          type="button"
+          className="wai-panel__close"
+          onClick={onClose}
+          aria-label={t('dokumenteClose')}
+        >
+          <X className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+        </button>
+      </header>
+      {body}
     </div>
   )
 }

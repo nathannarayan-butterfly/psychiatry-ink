@@ -76,9 +76,8 @@ import { StandaloneBefundWidget } from './standalone/StandaloneBefundWidget'
 import { StandaloneRewriteWidget } from './standalone/StandaloneRewriteWidget'
 import { StandaloneMedicationWidget } from './standalone/StandaloneMedicationWidget'
 import { StandaloneEducationWidget } from './standalone/StandaloneEducationWidget'
-import { StandaloneLabVizWidget } from './standalone/StandaloneLabVizWidget'
+import { StandaloneLabToolsWidget } from './standalone/StandaloneLabToolsWidget'
 import { StandaloneTimelineWidget } from './standalone/StandaloneTimelineWidget'
-import { StandaloneMedLabWidget } from './standalone/StandaloneMedLabWidget'
 import { StandalonePromptToolWidget } from './standalone/StandalonePromptToolWidget'
 import { StandaloneDictationWidget } from './standalone/StandaloneDictationWidget'
 import { StandaloneTranslateWidget } from './standalone/StandaloneTranslateWidget'
@@ -569,11 +568,9 @@ function NotionAppInner({
     | 'rewrite'
     | 'medication'
     | 'education'
-    | 'labviz'
+    | 'labTools'
     | 'timeline'
-    | 'medLabor'
     | 'summary'
-    | 'labInterpret'
     | 'dictation'
     | 'translate'
     | null
@@ -2427,8 +2424,8 @@ function NotionAppInner({
                         onClose={closeStandaloneSurface}
                       />
                     ) : null}
-                    {standaloneTool === 'labviz' ? (
-                      <StandaloneLabVizWidget
+                    {standaloneTool === 'labTools' ? (
+                      <StandaloneLabToolsWidget
                         caseId={storageCaseId}
                         onClose={closeStandaloneSurface}
                       />
@@ -2439,22 +2436,9 @@ function NotionAppInner({
                         onClose={closeStandaloneSurface}
                       />
                     ) : null}
-                    {standaloneTool === 'medLabor' ? (
-                      <StandaloneMedLabWidget
-                        caseId={storageCaseId}
-                        onClose={closeStandaloneSurface}
-                      />
-                    ) : null}
                     {standaloneTool === 'summary' ? (
                       <StandalonePromptToolWidget
                         variant="summary"
-                        caseId={storageCaseId}
-                        onClose={closeStandaloneSurface}
-                      />
-                    ) : null}
-                    {standaloneTool === 'labInterpret' ? (
-                      <StandalonePromptToolWidget
-                        variant="labInterpret"
                         caseId={storageCaseId}
                         onClose={closeStandaloneSurface}
                       />
