@@ -2,6 +2,7 @@ import { AlertTriangle, X } from 'lucide-react'
 import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { UiTranslationKey } from '../../data/uiTranslations'
+import type { PrivacyTier } from '../../data/privacyRegions'
 import type { IdentifierStorageMode } from '../../utils/identifierStorage'
 import { EncryptionDisclaimerBody } from '../EncryptionDisclaimerBody'
 
@@ -96,9 +97,10 @@ function DashboardHinweisPanel({ id, titleKey, children }: DashboardHinweisPanel
 
 interface DashboardHinweiseProps {
   identifierStorage: IdentifierStorageMode
+  tier: PrivacyTier
 }
 
-export function DashboardHinweise({ identifierStorage }: DashboardHinweiseProps) {
+export function DashboardHinweise({ identifierStorage, tier }: DashboardHinweiseProps) {
   const { t } = useTranslation()
 
   const passphraseKey = useMemo(
@@ -115,6 +117,15 @@ export function DashboardHinweise({ identifierStorage }: DashboardHinweiseProps)
         ? 'dashboardCurrentModeAccount'
         : 'dashboardCurrentModeDevice',
     [identifierStorage],
+  )
+
+  // Region-set ceiling for the clinical case-file snapshot (separate from the
+  // identifier storage-mode choice above). `full` allows an encrypted server
+  // snapshot; `local_only`/`disabled` keep the case file local-first by default.
+  const tierKey = useMemo(
+    (): UiTranslationKey =>
+      tier === 'full' ? 'dashboardHintTierFull' : 'dashboardHintTierLocalFirst',
+    [tier],
   )
 
   return (
@@ -144,6 +155,7 @@ export function DashboardHinweise({ identifierStorage }: DashboardHinweiseProps)
         >
           {t(currentModeKey)}
         </p>
+        <p className="dashboard-hinweis-panel__text">{t(tierKey)}</p>
         <ul className="dashboard-hinweis-panel__list">
           {sharedHintKeys.map((key) => (
             <li key={key}>{t(key)}</li>

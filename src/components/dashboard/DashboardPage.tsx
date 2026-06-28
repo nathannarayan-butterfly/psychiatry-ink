@@ -514,7 +514,10 @@ export function DashboardPage({
           countryCode={privacy.countryCode}
           onRestored={() => void registry.refresh()}
         />
-        <DashboardHinweise identifierStorage={privacy.identifierStorage} />
+        <DashboardHinweise
+          identifierStorage={privacy.identifierStorage}
+          tier={privacy.tier}
+        />
         <div className="dashboard-hero__copy fade-in-up">
           <p className="dashboard-hero__date">{todayLabel}</p>
           <h1 id="dashboard-hero-title" className="dashboard-hero__title">
