@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { LANGUAGE_STORAGE_KEY, loadStoredUiLanguage } from '../clinicalLanguage'
+import {
+  LANGUAGE_STORAGE_KEY,
+  loadBootstrapUiLanguage,
+  loadStoredUiLanguage,
+  parseUiLanguage,
+} from '../clinicalLanguage'
 import { defaultLanguage, languageOptions } from '../../data/languages'
 
 describe('loadStoredUiLanguage (Beta locale gating)', () => {
@@ -59,5 +64,103 @@ describe('loadStoredUiLanguage (Beta locale gating)', () => {
     } finally {
       Storage.prototype.getItem = originalGetItem
     }
+  })
+})
+
+describe('parseUiLanguage', () => {
+  it('accepts bare codes and BCP-47 tags case-insensitively', () => {
+    expect(parseUiLanguage('en')).toBe('en')
+    expect(parseUiLanguage('EN-US')).toBe('en')
+    expect(parseUiLanguage('de-CH')).toBe('de')
+    expect(parseUiLanguage('fr')).toBe('fr')
+    expect(parseUiLanguage('es-419')).toBe('es')
+  })
+
+  it('rejects unknown or empty values', () => {
+    expect(parseUiLanguage('it')).toBeNull()
+    expect(parseUiLanguage('')).toBeNull()
+    expect(parseUiLanguage(null)).toBeNull()
+    expect(parseUiLanguage(undefined)).toBeNull()
+  })
+})
+
+describe('loadBootstrapUiLanguage (language across the marketing→app hop)', () => {
+  const originalLocation = window.location
+  const originalLanguage = navigator.language
+  const originalLanguages = navigator.languages
+
+  function setLocation(hostname: string, search = '') {
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...originalLocation, hostname, search },
+    })
+  }
+
+  function setNavigatorLanguage(language: string) {
+    Object.defineProperty(navigator, 'language', { configurable: true, value: language })
+    Object.defineProperty(navigator, 'languages', { configurable: true, value: [language] })
+  }
+
+  beforeEach(() => {
+    localStorage.clear()
+    setNavigatorLanguage('en-US')
+  })
+
+  afterEach(() => {
+    localStorage.clear()
+    Object.defineProperty(window, 'location', { configurable: true, value: originalLocation })
+    Object.defineProperty(navigator, 'language', { configurable: true, value: originalLanguage })
+    Object.defineProperty(navigator, 'languages', { configurable: true, value: originalLanguages })
+  })
+
+  it('REGRESSION: English entry → English app via the lang hint on the app shell', () => {
+    setLocation('app.psychiatry.ink', '?lang=en')
+    setNavigatorLanguage('de-DE')
+    expect(loadBootstrapUiLanguage()).toBe('en')
+  })
+
+  it('REGRESSION: German entry → German app via the lang hint on the app shell', () => {
+    setLocation('app.psychiatry.ink', '?lang=de')
+    setNavigatorLanguage('en-US')
+    expect(loadBootstrapUiLanguage()).toBe('de')
+  })
+
+  it('keeps ES/FR working when carried as a lang hint', () => {
+    setLocation('app.psychiatry.ink', '?lang=es')
+    expect(loadBootstrapUiLanguage()).toBe('es')
+
+    setLocation('app.psychiatry.ink', '?lang=fr')
+    expect(loadBootstrapUiLanguage()).toBe('fr')
+  })
+
+  it('an explicit persisted preference wins over the lang hint', () => {
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, 'en')
+    setLocation('app.psychiatry.ink', '?lang=de')
+    expect(loadBootstrapUiLanguage()).toBe('en')
+  })
+
+  it('falls back to navigator.language on the bare app shell (no pref, no hint)', () => {
+    setLocation('app.psychiatry.ink')
+    setNavigatorLanguage('en-GB')
+    expect(loadBootstrapUiLanguage()).toBe('en')
+
+    setNavigatorLanguage('de-DE')
+    expect(loadBootstrapUiLanguage()).toBe('de')
+  })
+
+  it('falls back to the app-shell default (de) when nothing else resolves', () => {
+    setLocation('app.psychiatry.ink')
+    setNavigatorLanguage('it-IT')
+    expect(loadBootstrapUiLanguage()).toBe('de')
+  })
+
+  it('marketing hosts are authoritative for their own locale and never browser-sniff', () => {
+    setNavigatorLanguage('de-DE')
+    setLocation('psychiatry.ink')
+    expect(loadBootstrapUiLanguage()).toBe('en')
+
+    setNavigatorLanguage('en-US')
+    setLocation('psychiatrie.ink')
+    expect(loadBootstrapUiLanguage()).toBe('de')
   })
 })
