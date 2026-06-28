@@ -15,6 +15,12 @@ import {
 import { generateGuidedNarrative } from '../../utils/guidedEntry/generateNarrative'
 import { GuidedEntryFieldControl } from './GuidedEntryFieldControl'
 
+// Stable empty-default so callers that omit `initialValues` don't pass a fresh
+// object literal on every render — otherwise the reset effect below (which lists
+// `initialValues` as a dependency) would `setValues` on each render and spin into
+// a "Maximum update depth exceeded" loop.
+const EMPTY_FIELD_VALUES: GuidedEntryFieldValues = {}
+
 export interface GuidedEntryWizardProps {
   open: boolean
   schema: GuidedEntrySchema
@@ -41,7 +47,7 @@ export function GuidedEntryWizard({
   schema,
   caseId: _caseId,
   userId: _userId,
-  initialValues = {},
+  initialValues = EMPTY_FIELD_VALUES,
   initialStepIndex = 0,
   initialGeneratedText = '',
   onSaveDraft,
