@@ -80,6 +80,8 @@ import { StandaloneLabVizWidget } from './standalone/StandaloneLabVizWidget'
 import { StandaloneTimelineWidget } from './standalone/StandaloneTimelineWidget'
 import { StandaloneMedLabWidget } from './standalone/StandaloneMedLabWidget'
 import { StandalonePromptToolWidget } from './standalone/StandalonePromptToolWidget'
+import { StandaloneDictationWidget } from './standalone/StandaloneDictationWidget'
+import { StandaloneTranslateWidget } from './standalone/StandaloneTranslateWidget'
 import { useAskButterfly } from '../../contexts/AskButterflyContext'
 import type { LauncherTarget } from '../../data/workspaceLauncher/launcherTasks'
 import {
@@ -572,6 +574,8 @@ function NotionAppInner({
     | 'medLabor'
     | 'summary'
     | 'labInterpret'
+    | 'dictation'
+    | 'translate'
     | null
   >(null)
   const askButterfly = useAskButterfly()
@@ -2307,6 +2311,7 @@ function NotionAppInner({
           activePage={activePage}
           activeSectionId={workspace.activeSectionId}
           pageSubsections={pageSubsections}
+          disableContextMenu={showWorkspaceLauncher && !hasPatient}
           onSelect={handlePageSelect}
           onSelectWithSection={handlePageSelectWithSection}
           openMenuRequest={workspaceMenuRequest}
@@ -2450,6 +2455,15 @@ function NotionAppInner({
                     {standaloneTool === 'labInterpret' ? (
                       <StandalonePromptToolWidget
                         variant="labInterpret"
+                        caseId={storageCaseId}
+                        onClose={closeStandaloneSurface}
+                      />
+                    ) : null}
+                    {standaloneTool === 'dictation' ? (
+                      <StandaloneDictationWidget onClose={closeStandaloneSurface} />
+                    ) : null}
+                    {standaloneTool === 'translate' ? (
+                      <StandaloneTranslateWidget
                         caseId={storageCaseId}
                         onClose={closeStandaloneSurface}
                       />

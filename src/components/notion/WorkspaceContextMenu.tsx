@@ -72,6 +72,8 @@ interface WorkspaceContextMenuProps {
   anforderungAction?: TemplateMenuAction
   /** Increment to open the menu programmatically (toolbar button, etc.). */
   openMenuRequest?: number
+  /** When true, right-click / keyboard shortcut menu is disabled (launcher-only workspace). */
+  disableContextMenu?: boolean
   children: ReactNode
 }
 
@@ -86,6 +88,7 @@ export function WorkspaceContextMenu({
   konsilAction,
   anforderungAction,
   openMenuRequest = 0,
+  disableContextMenu = false,
   children,
 }: WorkspaceContextMenuProps) {
   const { t, language } = useTranslation()
@@ -151,6 +154,7 @@ export function WorkspaceContextMenu({
   }, [openMenuRequest, openMenuAtCenter])
 
   useEffect(() => {
+    if (disableContextMenu) return
     const handleKeyDown = (event: KeyboardEvent) => {
       if (!isCommandMenuShortcut(event)) return
       event.preventDefault()
@@ -160,9 +164,10 @@ export function WorkspaceContextMenu({
 
     window.addEventListener('keydown', handleKeyDown, true)
     return () => window.removeEventListener('keydown', handleKeyDown, true)
-  }, [openMenuAtCenter])
+  }, [openMenuAtCenter, disableContextMenu])
 
   const handleContextMenu = (event: React.MouseEvent) => {
+    if (disableContextMenu) return
     // Only respond to genuine right-click (button 2); keyboard context-menu key
     // or trackpad gestures that produce button !== 2 should not open the workspace
     // navigation menu (they may land on non-textarea ancestors inside AMDP sections).
@@ -476,7 +481,10 @@ export function WorkspaceContextMenu({
   }
 
   return (
-    <div className="workspace-context-surface" onContextMenu={handleContextMenu}>
+    <div
+      className="workspace-context-surface"
+      onContextMenu={disableContextMenu ? undefined : handleContextMenu}
+    >
       {children}
       {menu
         ? createPortal(
