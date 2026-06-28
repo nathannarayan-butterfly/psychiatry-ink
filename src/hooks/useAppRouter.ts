@@ -37,6 +37,8 @@ export type AppRoute =
   | { view: 'securityOverview' }
   | { view: 'contact' }
   | { view: 'dashboard' }
+  | { view: 'patients' }
+  | { view: 'patients-archived' }
   | { view: 'kb-admin' }
   | { view: 'audit-debug' }
   | { view: 'demo-patient' }
@@ -100,6 +102,8 @@ export function isPublicRoute(route: AppRoute): boolean {
 export function isAppRoute(route: AppRoute): boolean {
   return (
     route.view === 'dashboard' ||
+    route.view === 'patients' ||
+    route.view === 'patients-archived' ||
     route.view === 'case' ||
     route.view === 'kb-admin' ||
     route.view === 'audit-debug' ||
@@ -137,6 +141,8 @@ function parsePathname(pathname: string, search = ''): AppRoute {
     return { view: publicKey }
   }
   if (path === '/dashboard' || path === '/app') return { view: 'dashboard' }
+  if (path === '/dashboard/patients/archived') return { view: 'patients-archived' }
+  if (path === '/dashboard/patients') return { view: 'patients' }
   if (path === '/dashboard/kb-admin') return { view: 'kb-admin' }
   if (path === '/dev/audit-logs' || path === '/dashboard/audit-debug') return { view: 'audit-debug' }
   if (path === '/dev/demo-patient') return { view: 'demo-patient' }
@@ -203,6 +209,8 @@ export function routeToPath(route: AppRoute): string {
   if (route.view === 'signup') return '/signup'
   if (isPublicMarketingView(route.view)) return localizedPath(route.view, 'en')
   if (route.view === 'dashboard') return '/dashboard'
+  if (route.view === 'patients') return '/dashboard/patients'
+  if (route.view === 'patients-archived') return '/dashboard/patients/archived'
   if (route.view === 'kb-admin') return '/dashboard/kb-admin'
   if (route.view === 'audit-debug') return '/dev/audit-logs'
   if (route.view === 'demo-patient') return '/dev/demo-patient'
