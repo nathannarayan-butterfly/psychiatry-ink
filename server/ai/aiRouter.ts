@@ -3,9 +3,9 @@
  *
  * Mode → Tier mapping (intentionally opaque to callers — provider names are
  * never exposed in the user-facing API):
- *   economic   → fast    (DeepSeek Flash — cheapest, fastest)
- *   standard   → standard (DeepSeek Flash — balanced)
- *   gruendlich → thorough (OpenAI GPT-4.1 — most capable)
+ *   economic   → fast    (DeepSeek Flash — cheapest, fastest; Mistral small under EU)
+ *   standard   → standard (Google Gemini — balanced)
+ *   gruendlich → thorough (OpenAI gpt-5.5 — most capable)
  */
 
 import type { AiMode } from '../../src/types/aiUsage'
@@ -19,6 +19,24 @@ export function modeToTier(mode: AiMode): AiModelTier {
       return 'standard'
     case 'gruendlich':
       return 'thorough'
+  }
+}
+
+/**
+ * Inverse of {@link modeToTier}: maps the internal model tier back to the
+ * user-visible AI mode so the credit multiplier (economic 1× / standard 2× /
+ * gruendlich 4×) matches the tier the user actually selected. Used by routes
+ * and services that thread a user-selected `tier` into `runAiFeature`, where the
+ * mode (not the tier) drives billing.
+ */
+export function tierToMode(tier: AiModelTier): AiMode {
+  switch (tier) {
+    case 'fast':
+      return 'economic'
+    case 'standard':
+      return 'standard'
+    case 'thorough':
+      return 'gruendlich'
   }
 }
 

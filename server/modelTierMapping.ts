@@ -7,9 +7,18 @@ export interface AiModelSpec {
   label: string
 }
 
-const OPENAI_FAST = process.env.OPENAI_FAST_MODEL ?? 'gpt-4o-mini'
-const OPENAI_STANDARD = process.env.OPENAI_STANDARD_MODEL ?? 'gpt-4o-mini'
-const OPENAI_THOROUGH = process.env.OPENAI_THOROUGH_MODEL ?? 'gpt-4.1'
+const OPENAI_THOROUGH = process.env.OPENAI_THOROUGH_MODEL ?? 'gpt-5.5'
+
+/**
+ * Google Gemini model id for the STANDARD tier.
+ *
+ * The standard tier routes to Google Gemini via the OpenAI-compatible endpoint
+ * (`generativelanguage.googleapis.com/v1beta/openai`, see `llmProvider.ts`).
+ * Google processes in the US, which is permitted under `LLM_RESIDENCY=eu`
+ * (SCC/DPF), so the standard tier stays Gemini even under EU residency.
+ * Overridable via env.
+ */
+const GOOGLE_STANDARD_MODEL = process.env.GOOGLE_STANDARD_MODEL ?? 'gemini-3.5-flash'
 
 /**
  * DeepSeek model id.
@@ -53,6 +62,17 @@ export function maxOutputTokensFor(model: AiModelSpec): number {
   return 64_000
 }
 
+/**
+ * Distinct model per user-selectable tier (Economical / Standard / Gründlich):
+ *   fast     → DeepSeek deepseek-v4-flash (cheapest; the non-EU economical primary)
+ *   standard → Google Gemini (balanced; US residency, allowed under EU)
+ *   thorough → OpenAI gpt-5.5 reasoning model (most capable)
+ *
+ * The fallbacks are residency-aware: the fast tier falls back to Mistral small
+ * (EU) so that under `LLM_RESIDENCY=eu` the economical tier reroutes to an
+ * EU-residency provider rather than to a US one; the standard tier falls back to
+ * Mistral small for the strict-EU case where Google might be unavailable.
+ */
 export const MODEL_TIER_SPECS: Record<AiModelTier, AiModelSpec> = {
   fast: {
     provider: 'deepseek',
@@ -60,9 +80,9 @@ export const MODEL_TIER_SPECS: Record<AiModelTier, AiModelSpec> = {
     label: `DeepSeek (${DEEPSEEK_FAST})`,
   },
   standard: {
-    provider: 'deepseek',
-    modelId: DEEPSEEK_FAST,
-    label: `DeepSeek (${DEEPSEEK_FAST})`,
+    provider: 'google',
+    modelId: GOOGLE_STANDARD_MODEL,
+    label: `Google Gemini (${GOOGLE_STANDARD_MODEL})`,
   },
   thorough: {
     provider: 'openai',
@@ -72,16 +92,13 @@ export const MODEL_TIER_SPECS: Record<AiModelTier, AiModelSpec> = {
 }
 
 export const MODEL_TIER_FALLBACK: Partial<Record<AiModelTier, AiModelSpec>> = {
-  fast: {
-    provider: 'openai',
-    modelId: OPENAI_FAST,
-    label: `OpenAI (${OPENAI_FAST})`,
-  },
-  standard: {
-    provider: 'openai',
-    modelId: OPENAI_STANDARD,
-    label: `OpenAI (${OPENAI_STANDARD})`,
-  },
+  // EU-residency-sane economical fallback: Mistral small (EU), so that when
+  // DeepSeek is blocked under `LLM_RESIDENCY=eu` the Economical tier reroutes to
+  // an EU provider rather than to OpenAI (US).
+  fast: mistralSpecForTier('fast'),
+  // Residency-sane standard fallback: Mistral small (EU) for the strict-EU case
+  // where Google might be unavailable.
+  standard: mistralSpecForTier('standard'),
   thorough: {
     provider: 'deepseek',
     modelId: DEEPSEEK_FAST,
@@ -132,6 +149,8 @@ export function missingApiKeyMessage(tier: AiModelTier): string {
       ? 'OPENAI_API_KEY'
       : model.provider === 'google'
         ? 'GOOGLE_API_KEY'
-        : 'DEEPSEEK_API_KEY'
+        : model.provider === 'mistral'
+          ? 'MISTRAL_API_KEY'
+          : 'DEEPSEEK_API_KEY'
   return `Set ${envName} in .env (or another provider key). Restart dev:server after changes.`
 }

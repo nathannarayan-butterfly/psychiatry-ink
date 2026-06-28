@@ -27,6 +27,20 @@ interface ChatCompletionResult {
 }
 
 /**
+ * GPT-5-series reasoning models (gpt-5, gpt-5.x) on the Chat Completions API
+ * differ from gpt-4o/gpt-4.1 in two request-shape details:
+ *   - they REJECT a custom `temperature` (only the provider default `1` is
+ *     accepted), so we omit `temperature` entirely and let the default apply;
+ *   - they expect `max_completion_tokens` instead of the (deprecated for these
+ *     models) `max_tokens` output cap.
+ * This is gated strictly to `gpt-5*` ids so every other model/provider
+ * (gpt-4o-mini, deepseek, gemini, mistral) keeps the existing request shape.
+ */
+function isGpt5ReasoningModel(modelId: string): boolean {
+  return /^gpt-5/i.test(modelId.trim())
+}
+
+/**
  * One ChatCompletions call against an OpenAI-compatible endpoint (OpenAI or
  * DeepSeek). Returns the content plus the finish reason so callers can detect
  * truncation. Throws on transport / HTTP errors and on empty content.
@@ -39,11 +53,19 @@ async function callChatCompletions(
   options: { maxTokens?: number; jsonResponse?: boolean } = {},
 ): Promise<ChatCompletionResult> {
   const timeoutMs = Number(process.env.LLM_TIMEOUT_MS ?? 60_000)
+  const isReasoningModel = isGpt5ReasoningModel(modelId)
   const body = JSON.stringify({
     model: modelId,
     messages,
-    temperature: 0.3,
-    ...(options.maxTokens ? { max_tokens: options.maxTokens } : {}),
+    // GPT-5 reasoning models reject a custom temperature; use the provider
+    // default for them and keep the deterministic 0.3 for every other model.
+    ...(isReasoningModel ? {} : { temperature: 0.3 }),
+    // GPT-5 reasoning models use `max_completion_tokens`; all others `max_tokens`.
+    ...(options.maxTokens
+      ? isReasoningModel
+        ? { max_completion_tokens: options.maxTokens }
+        : { max_tokens: options.maxTokens }
+      : {}),
     ...(options.jsonResponse ? { response_format: { type: 'json_object' } } : {}),
   })
 
