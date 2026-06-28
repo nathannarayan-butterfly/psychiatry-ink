@@ -1,0 +1,22 @@
+{
+  "englishFooterLinks": [
+    { "label": "Legal Notice", "href": "/en/legal-notice" },
+    { "label": "Privacy Notice", "href": "/en/privacy" },
+    { "label": "Terms", "href": "/en/terms" },
+    { "label": "Cookie Policy", "href": "/en/cookies" },
+    { "label": "DPA", "href": "/en/dpa" },
+    { "label": "Subprocessors", "href": "/en/subprocessors" },
+    { "label": "Security", "href": "/en/security" },
+    { "label": "Contact", "href": "/en/contact" }
+  ],
+  "germanFooterLinks": [
+    { "label": "Impressum", "href": "/de/impressum" },
+    { "label": "Datenschutz", "href": "/de/datenschutz" },
+    { "label": "AGB", "href": "/de/agb" },
+    { "label": "Cookie-Richtlinie", "href": "/de/cookies" },
+    { "label": "AVV", "href": "/de/avv" },
+    { "label": "Unterauftragsverarbeiter", "href": "/de/unterauftragsverarbeiter" },
+    { "label": "Sicherheit", "href": "/de/sicherheit" },
+    { "label": "Kontakt", "href": "/de/kontakt" }
+  ]
+}

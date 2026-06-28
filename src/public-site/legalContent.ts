@@ -3186,6 +3186,10 @@ const subprocessorsEn: LegalDoc = {
           type: 'p',
           text: 'Google Workspace — business email, support inbox, and administrative communication. Data categories: emails, contact messages, and attachments voluntarily provided. Processing location: European Union / provider-controlled. Safeguards: patient data should not be sent by email unless authorised.',
         },
+        {
+          type: 'p',
+          text: 'Resend (operated by Resend, Inc.) — transactional and system email delivery (for example account confirmation, password reset, and notification emails). Data categories: recipient email addresses, email content and subject lines, and delivery metadata. Processing location: United States (third-country transfer); infrastructure operated on Amazon Web Services (AWS). Safeguards: DPA in place; transfers to the USA are safeguarded under the EU Standard Contractual Clauses (and the EU–US Data Privacy Framework where applicable).',
+        },
       ],
     },
     {
@@ -3225,7 +3229,6 @@ const subprocessorsEn: LegalDoc = {
         {
           type: 'ul',
           items: [
-            'Transactional email (e.g. for contact forms or app notifications): not currently active in production.',
             'Video consultation or voice-chat infrastructure: optional and country-specific; not currently active in production.',
             'Error monitoring and diagnostics: not currently active in production.',
             'Website analytics: none currently active in production.',
@@ -3295,6 +3298,10 @@ const subprocessorsDe: LegalDoc = {
           type: 'p',
           text: 'Google Workspace — geschäftliche E-Mail, Support-Postfach und administrative Kommunikation. Datenkategorien: E-Mails, Kontaktnachrichten und freiwillig bereitgestellte Anhänge. Verarbeitungsort: Europäische Union / anbieterseitig gesteuert. Garantien: Patientendaten sollten nur bei entsprechender Befugnis per E-Mail übermittelt werden.',
         },
+        {
+          type: 'p',
+          text: 'Resend (betrieben durch die Resend, Inc.) — Versand von Transaktions- und System-E-Mails (z. B. Kontobestätigung, Passwort-Zurücksetzung und Benachrichtigungs-E-Mails). Datenkategorien: E-Mail-Adressen der Empfänger, E-Mail-Inhalte und Betreffzeilen sowie Zustellungs-Metadaten. Verarbeitungsort: USA (Drittlandtransfer); Infrastruktur betrieben auf Amazon Web Services (AWS). Garantien: AVV vorhanden; Übermittlungen in die USA sind durch die EU-Standardvertragsklauseln abgesichert (sowie, soweit anwendbar, das EU-US Data Privacy Framework).',
+        },
       ],
     },
     {
@@ -3334,7 +3341,6 @@ const subprocessorsDe: LegalDoc = {
         {
           type: 'ul',
           items: [
-            'Transaktions-E-Mail (z. B. für Kontaktformulare oder App-Benachrichtigungen): derzeit nicht produktiv aktiv.',
             'Infrastruktur für Videosprechstunde oder Voice-Chat: optional und länderspezifisch; derzeit nicht produktiv aktiv.',
             'Fehlerüberwachung und Diagnose: derzeit nicht produktiv aktiv.',
             'Website-Analyse: derzeit keine produktiv aktiv.',
