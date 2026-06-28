@@ -5058,10 +5058,10 @@ export const uiTranslations = {
     es: 'Los datos clínicos se cifran en local; puede guardarse una instantánea cifrada en la base de datos. El servidor nunca tiene claves de descifrado.',
   },
   privacyTierLocalOnlyDescription: {
-    de: 'Kein klinischer Fallakten-Snapshot in der Datenbank — verschlüsselter lokaler Tresor und Datei-Export. Standard für DE, AT, CH und alle übrigen Regionen ohne Server-Snapshot. Patienten-Identifikatoren können davon unabhängig im Konto gespeichert werden.',
-    en: 'No clinical case-file snapshot in the database — encrypted local vault and file export. Default for DE, AT, CH, and all other regions without server snapshots. Patient identifiers can still be stored in your account independently of this.',
-    fr: 'Pas d\'instantané de dossier clinique en base — coffre local chiffré et export fichier. Par défaut pour DE, AT, CH et toutes les autres régions sans instantané serveur. Les identifiants patient peuvent néanmoins être stockés dans votre compte, indépendamment de ceci.',
-    es: 'Sin instantánea del expediente clínico en la base de datos — bóveda local cifrada y exportación de archivo. Predeterminado para DE, AT, CH y todas las demás regiones sin instantáneas en servidor. Los identificadores del paciente pueden almacenarse en su cuenta de forma independiente.',
+    de: 'Kein klinischer Fallakten-Snapshot in der Datenbank — verschlüsselter lokaler Tresor und Datei-Export. Konfiguriert für DE, AT und CH. Patienten-Identifikatoren können davon unabhängig im Konto gespeichert werden.',
+    en: 'No clinical case-file snapshot in the database — encrypted local vault and file export. Configured for DE, AT, and CH. Patient identifiers can still be stored in your account independently of this.',
+    fr: 'Pas d\'instantané de dossier clinique en base — coffre local chiffré et export fichier. Configuré pour DE, AT et CH. Les identifiants patient peuvent néanmoins être stockés dans votre compte, indépendamment de ceci.',
+    es: 'Sin instantánea del expediente clínico en la base de datos — bóveda local cifrada y exportación de archivo. Configurado para DE, AT y CH. Los identificadores del paciente pueden almacenarse en su cuenta de forma independiente.',
   },
   privacyTierDisabledDescription: {
     de: 'Patientenfelder sind in dieser Region ausgeblendet; der verschlüsselte Arbeitsbereich bleibt verfügbar.',

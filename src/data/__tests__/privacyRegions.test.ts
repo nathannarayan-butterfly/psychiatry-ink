@@ -2,8 +2,8 @@
 //
 // Region → privacy-tier resolution. Guards the data-residency messaging that the
 // "Current tier" settings section is built from: non-DACH countries (e.g. India)
-// must NOT be mislabelled as the DACH "DE/AT/CH" tier, and the EU-safe default
-// (local_only) must hold for any unmapped country while US/GB/AU/CA stay `full`.
+// must NOT be mislabelled as the DACH "DE/AT/CH" tier, and unmapped countries
+// default to `full` while DACH explicit overrides stay `local_only`.
 import { describe, expect, it } from 'vitest'
 import {
   COUNTRY_TIER_OVERRIDES,
@@ -19,26 +19,25 @@ describe('resolvePrivacyTier', () => {
     expect(resolvePrivacyTier('CH')).toBe('local_only')
   })
 
-  it('resolves India to local_only via the EU-safe default (not a DACH-specific tier)', () => {
-    // India is intentionally not in the override map — it must fall back to the
-    // safe default rather than being treated as a configured DACH region.
+  it('resolves India to full via the unmapped-country default (not a DACH-specific tier)', () => {
     expect(COUNTRY_TIER_OVERRIDES).not.toHaveProperty('IN')
     expect(resolvePrivacyTier('IN')).toBe(DEFAULT_PRIVACY_TIER)
-    expect(resolvePrivacyTier('IN')).toBe('local_only')
+    expect(resolvePrivacyTier('IN')).toBe('full')
   })
 
-  it('grants the full tier only to explicitly listed non-EU jurisdictions', () => {
+  it('grants the full tier to explicitly listed jurisdictions and the default fallback', () => {
     expect(resolvePrivacyTier('US')).toBe('full')
     expect(resolvePrivacyTier('GB')).toBe('full')
     expect(resolvePrivacyTier('AU')).toBe('full')
     expect(resolvePrivacyTier('CA')).toBe('full')
+    expect(resolvePrivacyTier('FR')).toBe('full')
   })
 
-  it('falls back to the safe default for unknown / missing countries', () => {
-    expect(resolvePrivacyTier(null)).toBe('local_only')
-    expect(resolvePrivacyTier(undefined)).toBe('local_only')
-    expect(resolvePrivacyTier('')).toBe('local_only')
-    expect(resolvePrivacyTier('ZZ')).toBe('local_only')
+  it('falls back to full for unknown / missing countries', () => {
+    expect(resolvePrivacyTier(null)).toBe('full')
+    expect(resolvePrivacyTier(undefined)).toBe('full')
+    expect(resolvePrivacyTier('')).toBe('full')
+    expect(resolvePrivacyTier('ZZ')).toBe('full')
   })
 
   it('normalises casing / whitespace', () => {
@@ -48,8 +47,8 @@ describe('resolvePrivacyTier', () => {
 })
 
 describe('local_only tier label copy', () => {
-  // The label is shown to EVERY local_only user, including non-DACH regions such
-  // as India, so it must not hardcode a "DE/AT/CH" claim.
+  // The label is shown to EVERY local_only user, including DACH regions,
+  // so it must not hardcode a "DE/AT/CH" claim.
   it('is region-neutral in all shipped languages', () => {
     for (const lang of ['en', 'de', 'fr', 'es'] as const) {
       const label = translateUi(lang, 'privacyTierLocalOnly')

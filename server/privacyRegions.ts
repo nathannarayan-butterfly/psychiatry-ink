@@ -15,13 +15,11 @@ export const COUNTRY_TIER_OVERRIDES: Record<string, PrivacyTier> = {
 }
 
 /**
- * EU-safe default: any country without an explicit `full` override (which
- * includes every EU/EEA member state, plus DE/AT/CH above) falls back to
- * `local_only`, so EU clinical data is never opted into server-side public-key
- * registration or DB snapshots by default. Only the explicitly listed non-EU
- * jurisdictions (US/GB/AU/CA) are granted the `full` tier.
+ * Default for unmapped countries (e.g. India, EU members other than DE/AT/CH).
+ * Only explicitly listed overrides (DACH → `local_only`; US/GB/AU/CA → `full`)
+ * deviate from this fallback.
  */
-export const DEFAULT_PRIVACY_TIER: PrivacyTier = 'local_only'
+export const DEFAULT_PRIVACY_TIER: PrivacyTier = 'full'
 
 export function resolvePrivacyTier(countryCode: string | null | undefined): PrivacyTier {
   if (!countryCode) return DEFAULT_PRIVACY_TIER

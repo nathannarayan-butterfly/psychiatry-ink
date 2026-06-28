@@ -26,8 +26,12 @@ export const COUNTRY_TIER_OVERRIDES: Record<string, PrivacyTier> = {
   CA: 'full',
 }
 
-/** Fallback when country is unknown. */
-export const DEFAULT_PRIVACY_TIER: PrivacyTier = 'local_only'
+/**
+ * Fallback for countries without an explicit override (e.g. India, EU members
+ * other than DE/AT/CH). Unmapped jurisdictions get the `full` tier so
+ * server-side encrypted clinical case-file snapshots are allowed.
+ */
+export const DEFAULT_PRIVACY_TIER: PrivacyTier = 'full'
 
 export function resolvePrivacyTier(countryCode: string | null | undefined): PrivacyTier {
   if (!countryCode) return DEFAULT_PRIVACY_TIER

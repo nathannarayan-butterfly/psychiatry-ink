@@ -78,9 +78,9 @@ export function PatientPrivacySection({ privacy, workspaceVault }: PatientPrivac
 
   // Full ISO country set (same source as the prescription-country selector,
   // expressed in ISO codes — `UK` → `GB`). Countries without an explicit
-  // privacy-tier override resolve to the safe default tier via
-  // `resolvePrivacyTier`. The currently stored value is always included so a
-  // detected/legacy code stays selectable.
+  // privacy-tier override resolve to the default `full` tier via
+  // `resolvePrivacyTier` (DACH stays `local_only`). The currently stored value
+  // is always included so a detected/legacy code stays selectable.
   const currentIso = toIsoCountryCode(countryCode)
   const countryOptions = Array.from(
     new Set([...ISO_ALPHA2_CODES, ...(currentIso ? [currentIso] : [])]),

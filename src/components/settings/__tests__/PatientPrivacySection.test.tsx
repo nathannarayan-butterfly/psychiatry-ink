@@ -91,6 +91,7 @@ function render(privacy: ReturnType<typeof makePrivacy>): string {
   return container.textContent ?? ''
 }
 
+const fullLabel = translateUi('en', 'privacyTierFull')
 const localOnlyLabel = translateUi('en', 'privacyTierLocalOnly')
 const accountLine = translateUi('en', 'privacyTierIdentifierAccount')
 const deviceLine = translateUi('en', 'privacyTierIdentifierDevice')
@@ -98,29 +99,32 @@ const noSnapshot = translateUi('en', 'privacyPublicKeyBlocked')
 const snapshotAllowed = translateUi('en', 'privacyPublicKeyAllowed')
 
 describe('PatientPrivacySection — Current tier', () => {
-  it('India + account: region-neutral label, account identifier line, no case-file snapshot', () => {
+  it('India + account: full tier label, account identifier line, case-file snapshot allowed', () => {
     const text = render(
-      makePrivacy({ countryCode: 'IN', tier: 'local_only', identifierStorage: 'account' }),
+      makePrivacy({ countryCode: 'IN', tier: 'full', identifierStorage: 'account' }),
     )
-    expect(text).toContain(localOnlyLabel)
+    expect(text).toContain(fullLabel)
+    expect(text).not.toContain(localOnlyLabel)
     expect(text).not.toContain('DE/AT/CH')
     expect(text).toContain(accountLine)
     expect(text).not.toContain(deviceLine)
-    expect(text).toContain(noSnapshot)
+    expect(text).toContain(snapshotAllowed)
+    expect(text).not.toContain(noSnapshot)
   })
 
-  it('India + device: shows the device identifier line', () => {
+  it('India + device: shows the device identifier line with full tier snapshot copy', () => {
     const text = render(
-      makePrivacy({ countryCode: 'IN', tier: 'local_only', identifierStorage: 'device' }),
+      makePrivacy({ countryCode: 'IN', tier: 'full', identifierStorage: 'device' }),
     )
-    expect(text).toContain(localOnlyLabel)
+    expect(text).toContain(fullLabel)
     expect(text).toContain(deviceLine)
     expect(text).not.toContain(accountLine)
+    expect(text).toContain(snapshotAllowed)
   })
 
   it('switching the storage mode changes the reflected identifier line', () => {
     const deviceText = render(
-      makePrivacy({ countryCode: 'IN', tier: 'local_only', identifierStorage: 'device' }),
+      makePrivacy({ countryCode: 'IN', tier: 'full', identifierStorage: 'device' }),
     )
     expect(deviceText).toContain(deviceLine)
 
@@ -132,7 +136,7 @@ describe('PatientPrivacySection — Current tier', () => {
           children: createElement(PatientPrivacySection, {
             privacy: makePrivacy({
               countryCode: 'IN',
-              tier: 'local_only',
+              tier: 'full',
               identifierStorage: 'account',
             }),
             workspaceVault: vaultStub,
@@ -150,6 +154,7 @@ describe('PatientPrivacySection — Current tier', () => {
       makePrivacy({ countryCode: 'DE', tier: 'local_only', identifierStorage: 'device' }),
     )
     expect(text).toContain(localOnlyLabel)
+    expect(text).toContain(noSnapshot)
   })
 
   it('full tier (US + account) allows an encrypted clinical case-file snapshot', () => {
