@@ -27,10 +27,10 @@ export const settingsExtraUiTranslations = {
     es: 'Modo predeterminado',
   },
   aiDefaultModeDesc: {
-    de: 'Schnell, Standard oder Gründlich beim Öffnen dieser Komponente.',
-    en: 'Fast, Standard or Thorough when opening this component.',
-    fr: 'Rapide, Standard ou Approfondi à l’ouverture de ce composant.',
-    es: 'Rápido, Estándar o Exhaustivo al abrir este componente.',
+    de: 'Economical, Standard oder Gründlich beim Öffnen dieser Komponente.',
+    en: 'Economical, Standard or Thorough when opening this component.',
+    fr: 'Économique, Standard ou Approfondi à l’ouverture de ce composant.',
+    es: 'Económico, Estándar o Exhaustivo al abrir este componente.',
   },
   aiAllowGenerate: {
     de: 'Generieren erlauben',

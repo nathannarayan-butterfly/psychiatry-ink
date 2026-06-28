@@ -787,9 +787,10 @@
 
   .ai-tier-segment__btn--active {
     color: var(--text-main);
-    background: var(--surface);
+    background: var(--accent-soft);
     border-color: var(--accent);
-    box-shadow: none;
+    font-weight: 700;
+    box-shadow: var(--shadow-active);
   }
 
   .ai-tool-chip {
@@ -892,11 +893,12 @@
     transform: none;
   }
 
-  .ai-rail-btn--active {
+  .ai-rail-btn--active,
+  .ai-rail-btn.workspace-float-block--active {
     border-color: var(--accent);
-    background: var(--surface);
+    background: var(--accent-soft);
     color: var(--accent);
-    box-shadow: none;
+    box-shadow: var(--shadow-active);
   }
 
   .ai-rail-btn--highlighted {

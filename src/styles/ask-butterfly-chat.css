@@ -362,7 +362,7 @@
   gap: 0.25rem;
   min-width: 0;
   padding: 0.28rem 0.35rem;
-  border: none;
+  border: 1px solid transparent;
   border-radius: 0.35rem;
   background: transparent;
   color: var(--text-muted, #6b7280);
@@ -380,7 +380,11 @@
 .ask-butterfly-tier-segment__btn--active {
   color: var(--text-primary, #1a1a1a);
   background: var(--surface-elevated, #fff);
-  box-shadow: 0 1px 3px color-mix(in srgb, #0f1419 8%, transparent);
+  border-color: var(--ask-butterfly-accent, var(--accent, #4a6fa5));
+  font-weight: 600;
+  box-shadow:
+    0 0 0 1px var(--ask-butterfly-accent, var(--accent, #4a6fa5)),
+    0 1px 3px color-mix(in srgb, #0f1419 8%, transparent);
 }
 
 .ask-butterfly-tier-segment__icon {
