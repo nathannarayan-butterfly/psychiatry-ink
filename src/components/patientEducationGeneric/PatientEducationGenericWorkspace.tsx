@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
-import { ArrowLeft, Check, Plus, Printer, Sparkles, Trash2, X } from 'lucide-react'
+import { ArrowLeft, Check, Plus, Printer, Save, Sparkles, Trash2, X } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
 import { usePatientEducationGenericDocument } from '../../hooks/usePatientEducationGenericDocument'
 import {
@@ -23,10 +23,20 @@ import { PatientEducationGenericSectionCard } from './PatientEducationGenericSec
 
 interface PatientEducationGenericWorkspaceProps {
   onClose?: () => void
+  /**
+   * When provided, an extra toolbar action lets the clinician save the current
+   * (patient-facing) assembled education text elsewhere — used by the patient-
+   * less standalone workspace to persist the result as a standalone note. The
+   * assembled text excludes clinician-only references (same as copy/export).
+   */
+  onSaveToNotes?: (text: string, title: string) => void
 }
 
-export function PatientEducationGenericWorkspace({ onClose }: PatientEducationGenericWorkspaceProps) {
-  const { language } = useTranslation()
+export function PatientEducationGenericWorkspace({
+  onClose,
+  onSaveToNotes,
+}: PatientEducationGenericWorkspaceProps) {
+  const { t, language } = useTranslation()
   const pe = usePatientEducationGenericDocument()
   const [newOpen, setNewOpen] = useState(false)
 
@@ -81,6 +91,12 @@ export function PatientEducationGenericWorkspace({ onClose }: PatientEducationGe
     const text = assembleGenericEducationText(pe.doc, pe.sectionLabels)
     exportGenericEducationPlainText(text, `${exportFilenameStem}.txt`)
   }, [exportFilenameStem, pe.doc, pe.sectionLabels])
+
+  const handleSaveToNotes = useCallback(() => {
+    if (!pe.doc || !onSaveToNotes) return
+    const text = assembleGenericEducationText(pe.doc, pe.sectionLabels)
+    onSaveToNotes(text, exportTitle)
+  }, [exportTitle, onSaveToNotes, pe.doc, pe.sectionLabels])
 
   const subjectChip = pe.doc
     ? `${genericEducationSubjectKindLabel(pe.doc.subjectKind, language === 'en' ? 'en' : 'de')} · ${pe.doc.subject}`
@@ -170,6 +186,16 @@ export function PatientEducationGenericWorkspace({ onClose }: PatientEducationGe
                   onCopy={handleCopy}
                 />
               </div>
+              {onSaveToNotes ? (
+                <button
+                  type="button"
+                  className="arztbrief-btn arztbrief-btn--primary"
+                  onClick={handleSaveToNotes}
+                >
+                  <Save size={14} aria-hidden />
+                  {t('standaloneSaveToNotes')}
+                </button>
+              ) : null}
               <button
                 type="button"
                 className="icon-action-btn icon-action-btn--bordered icon-action-btn--danger"
