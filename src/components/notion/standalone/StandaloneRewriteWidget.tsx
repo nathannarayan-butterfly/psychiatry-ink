@@ -85,37 +85,37 @@ export function StandaloneRewriteWidget({ caseId, onClose }: StandaloneRewriteWi
   }
 
   return (
-    <div className="wai-overlay" role="dialog" aria-modal="true" aria-label={t('standaloneRewriteTitle')}>
-      <div className="wai-panel">
-        <header className="wai-panel__header">
-          <span className="wai-panel__eyebrow">
-            <Sparkles className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
-            {t('standaloneEyebrow')}
-          </span>
-          <h2 className="wai-panel__title">{t('standaloneRewriteTitle')}</h2>
-          <button
-            type="button"
-            className="wai-panel__close"
-            onClick={onClose}
-            aria-label={t('dokumenteClose')}
-          >
-            <X className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-          </button>
-        </header>
+    <div className="wai-panel wai-panel--inline" aria-label={t('standaloneRewriteTitle')}>
+      <header className="wai-panel__header">
+        <span className="wai-panel__eyebrow">
+          <Sparkles className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+          {t('standaloneEyebrow')}
+        </span>
+        <h2 className="wai-panel__title">{t('standaloneRewriteTitle')}</h2>
+        <button
+          type="button"
+          className="wai-panel__close"
+          onClick={onClose}
+          aria-label={t('dokumenteClose')}
+        >
+          <X className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+        </button>
+      </header>
 
-        <div className="wai-panel__body">
-          <div className="swx-form">
-            <label className="swx-field">
-              {t('standaloneRewriteInputLabel')}
-              <textarea
-                className="swx-field__textarea"
-                value={source}
-                onChange={(e) => setSource(e.target.value)}
-                placeholder={t('standaloneRewriteInputPlaceholder')}
-                aria-label={t('standaloneRewriteInputLabel')}
-                spellCheck
-              />
-            </label>
+      <div className="wai-panel__body">
+        <div className="swx-form">
+          <label className="swx-field">
+            {t('standaloneRewriteInputLabel')}
+            <textarea
+              className="swx-rewrite__editor"
+              value={source}
+              onChange={(e) => setSource(e.target.value)}
+              placeholder={t('standaloneRewriteInputPlaceholder')}
+              aria-label={t('standaloneRewriteInputLabel')}
+              spellCheck
+            />
+          </label>
+          <div className="swx-rewrite__controls">
             <label className="swx-field">
               {t('standaloneRewriteToolLabel')}
               <select
@@ -140,27 +140,27 @@ export function StandaloneRewriteWidget({ caseId, onClose }: StandaloneRewriteWi
                 placeholder={t('standaloneRewriteInstructionPlaceholder')}
               />
             </label>
-            {error ? <p className="swx-error">{error}</p> : null}
           </div>
+          {error ? <p className="swx-error">{error}</p> : null}
         </div>
-
-        <footer className="wai-panel__footer">
-          <span className="wl-hint" />
-          <button
-            type="button"
-            className="wai-btn wai-btn--primary"
-            onClick={() => void generate()}
-            disabled={!source.trim() || busy}
-          >
-            {busy ? (
-              <Loader2 className="h-3.5 w-3.5 wai-spin" strokeWidth={1.75} aria-hidden />
-            ) : (
-              <Sparkles className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
-            )}
-            {busy ? t('workspaceAiGenerating') : t('standaloneGenerate')}
-          </button>
-        </footer>
       </div>
+
+      <footer className="wai-panel__footer">
+        <span className="wl-hint" />
+        <button
+          type="button"
+          className="wai-btn wai-btn--primary"
+          onClick={() => void generate()}
+          disabled={!source.trim() || busy}
+        >
+          {busy ? (
+            <Loader2 className="h-3.5 w-3.5 wai-spin" strokeWidth={1.75} aria-hidden />
+          ) : (
+            <Sparkles className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+          )}
+          {busy ? t('workspaceAiGenerating') : t('standaloneGenerate')}
+        </button>
+      </footer>
     </div>
   )
 }

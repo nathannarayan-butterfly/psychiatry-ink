@@ -38,12 +38,7 @@ export function StandaloneEducationWidget({ caseId, onClose }: StandaloneEducati
   )
 
   return (
-    <div
-      className="swx-fullscreen"
-      role="dialog"
-      aria-modal="true"
-      aria-label={t('standaloneEducationTitle')}
-    >
+    <div className="swx-education" aria-label={t('standaloneEducationTitle')}>
       <PatientEducationGenericWorkspace onClose={onClose} onSaveToNotes={handleSaveToNotes} />
     </div>
   )

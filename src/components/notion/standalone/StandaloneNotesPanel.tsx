@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Check, Copy, Pencil, Trash2, X } from 'lucide-react'
+import { Check, Copy, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { useTranslation } from '../../../context/TranslationContext'
 import { formatClinicalDate } from '../../../utils/clinicalDate'
 import { copyTextToClipboard } from '../../../utils/notionDocumentActions'
@@ -7,6 +7,7 @@ import { DOKUMENTE_ARCHIVE_CHANGED_EVENT, type DokumentEntry } from '../../../ut
 import {
   deleteStandaloneNote,
   listStandaloneNotes,
+  saveStandaloneNote,
   updateStandaloneNote,
 } from '../../../utils/standaloneNotes'
 import '../../../styles/standalone-workspace.css'
@@ -35,6 +36,8 @@ export function StandaloneNotesPanel({ caseId }: StandaloneNotesPanelProps) {
   const [editing, setEditing] = useState<DokumentEntry | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const [editContent, setEditContent] = useState('')
+  const [draftTitle, setDraftTitle] = useState('')
+  const [draftContent, setDraftContent] = useState('')
 
   const refresh = useCallback(() => {
     setNotes(listStandaloneNotes(caseId))
@@ -92,11 +95,63 @@ export function StandaloneNotesPanel({ caseId }: StandaloneNotesPanelProps) {
     [caseId, refresh],
   )
 
-  if (notes.length === 0) return null
+  const handleCreate = useCallback(() => {
+    const content = draftContent.trim()
+    if (!content) return
+    saveStandaloneNote(caseId, {
+      kind: 'jot',
+      title: draftTitle.trim() || t('standaloneNotesJotDefaultTitle'),
+      content,
+      category: 'formulare',
+    })
+    setDraftTitle('')
+    setDraftContent('')
+    refresh()
+  }, [caseId, draftTitle, draftContent, refresh, t])
 
   return (
     <section className="swx-notes" aria-label={t('standaloneNotesHeading')}>
       <p className="swx-notes__heading">{t('standaloneNotesHeading')}</p>
+
+      <div className="swx-notes__compose">
+        <input
+          type="text"
+          className="swx-notes__compose-input"
+          value={draftTitle}
+          onChange={(e) => setDraftTitle(e.target.value)}
+          placeholder={t('standaloneNotesJotTitlePlaceholder')}
+          aria-label={t('standaloneNoteTitleLabel')}
+        />
+        <textarea
+          className="swx-notes__compose-area"
+          value={draftContent}
+          onChange={(e) => setDraftContent(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+              e.preventDefault()
+              handleCreate()
+            }
+          }}
+          placeholder={t('standaloneNotesJotPlaceholder')}
+          aria-label={t('standaloneNotesJotPlaceholder')}
+          spellCheck
+        />
+        <div className="swx-notes__compose-row">
+          <button
+            type="button"
+            className="swx-notes__compose-save"
+            onClick={handleCreate}
+            disabled={!draftContent.trim()}
+          >
+            <Plus className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+            {t('standaloneNotesJotSave')}
+          </button>
+        </div>
+      </div>
+
+      {notes.length === 0 ? (
+        <p className="swx-notes__empty">{t('standaloneNotesEmpty')}</p>
+      ) : (
       <ul className="swx-notes__list">
         {notes.map((note) => (
           <li key={note.id} className="swx-notes__row">
@@ -151,6 +206,7 @@ export function StandaloneNotesPanel({ caseId }: StandaloneNotesPanelProps) {
           </li>
         ))}
       </ul>
+      )}
 
       {editing ? (
         <div
