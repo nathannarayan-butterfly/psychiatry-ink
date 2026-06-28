@@ -12,6 +12,7 @@ import type {
   GenericPatientEducationDocument,
 } from '../../types/patientEducationGeneric'
 import { getGenericEducationSections } from '../../data/patientEducationGenericSections'
+import { sanitizeEducationAiContent } from './sanitizeAiContent'
 
 function createEmptySection(id: string): MedicationEducationSectionState {
   return { id, status: 'empty', included: true, currentContent: '', versions: [] }
@@ -114,7 +115,7 @@ export function applyAiGeneratedSection(
   const section = next.sections[sectionId]
   if (!section) return doc
   section.previousContent = section.currentContent
-  section.currentContent = content
+  section.currentContent = sanitizeEducationAiContent(content)
   section.status = 'ai_generated'
   section.versions.push({
     content,

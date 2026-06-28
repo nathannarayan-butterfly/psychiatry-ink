@@ -15,6 +15,7 @@ import { runAiFeature } from '../../ai/runAiFeature'
 import { parseMode } from '../../ai/aiRouter'
 import type { AiUsageContext } from '../../ai/types'
 import { parseStructuredJson } from '../../utils/parseStructuredJson'
+import { sanitizeEducationAiContent } from '../../../src/utils/patientEducationGeneric/sanitizeAiContent'
 
 export interface GeneratePatientEducationGenericSectionParams {
   subject: string
@@ -49,7 +50,7 @@ function parseAiSectionResponse(
   } | null
 
   if (!parsed || typeof parsed.content !== 'string') {
-    return { content: raw.trim(), references: [] }
+    return { content: sanitizeEducationAiContent(raw), references: [] }
   }
 
   const references: MedicationEducationReference[] = []
@@ -67,7 +68,7 @@ function parseAiSectionResponse(
     }
   }
 
-  return { content: parsed.content.trim(), references }
+  return { content: sanitizeEducationAiContent(parsed.content), references }
 }
 
 export async function generatePatientEducationGenericSection(
