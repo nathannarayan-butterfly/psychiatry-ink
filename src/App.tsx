@@ -43,7 +43,8 @@ import { IntegrationsPage } from './components/settings/IntegrationsPage'
 import { CalendarPage } from './components/calendar/CalendarPage'
 import { TodoPage } from './components/todos/TodoPage'
 import { AskButterflyProvider } from './contexts/AskButterflyContext'
-import { AskButterflyShell } from './components/notion/AskButterflyShell'
+import { NotizenProvider } from './contexts/NotizenContext'
+import { FloatingToolsShell } from './components/notes/FloatingToolsShell'
 import { redirectToCanonicalAppIfNeeded } from './utils/canonicalAppRedirect'
 import { NewVersionToast } from './components/system/NewVersionToast'
 
@@ -302,7 +303,8 @@ export default function App() {
       <WorkspaceSessionProvider>
         <NewVersionToast />
         <AskButterflyProvider>
-          <AskButterflyShell hideGlobalTrigger={showCredits}>
+          <NotizenProvider>
+          <FloatingToolsShell>
         {showDiscussInvite ? (
           <DiscussCaseInvitePage
             token={route.view === 'discuss-invite' ? route.token : ''}
@@ -431,7 +433,8 @@ export default function App() {
             }}
           />
         )}
-          </AskButterflyShell>
+          </FloatingToolsShell>
+          </NotizenProvider>
         </AskButterflyProvider>
       </WorkspaceSessionProvider>
     </TranslationProvider>

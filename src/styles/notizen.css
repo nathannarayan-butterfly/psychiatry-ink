@@ -1,0 +1,502 @@
+/* Notizen — global floating notes popup + bottom-right tool launcher.
+ *
+ * The popup chrome (header, dock panel, floating dialog, resize handle) reuses
+ * the Ask Butterfly classes (see ask-butterfly-chat.css) so the float ↔ dock
+ * feel is identical; this file only adds the notes-specific body, the stacked
+ * FAB launcher, and the shared dock-gutter reservation for both tools.
+ */
+
+/* —— Shared dock gutter (Butterfly + Notizen) —— */
+
+.app-shell--tools-docked .app-shell__content {
+  box-sizing: border-box;
+  width: calc(100% - var(--app-dock-reserved, 0px));
+  margin-right: 0;
+}
+
+@media (max-width: 720px) {
+  /* Docked panels collapse to bottom sheets on mobile — restore full width. */
+  .app-shell--tools-docked .app-shell__content {
+    width: 100%;
+  }
+}
+
+/* —— Stacked bottom-right launcher —— */
+
+.floating-tools-fab {
+  position: fixed;
+  right: calc(1.25rem + var(--app-dock-reserved, 0px));
+  bottom: 1.25rem;
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  transition: right 200ms ease;
+}
+
+@media (max-width: 720px) {
+  .floating-tools-fab {
+    right: 1rem;
+    bottom: 1rem;
+  }
+}
+
+.floating-tools-fab__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 1px solid var(--cm-quiet-border, #ece8e3);
+  border-radius: 999px;
+  background: var(--surface-elevated, #fff);
+  color: var(--text-muted, #6b7280);
+  cursor: pointer;
+  box-shadow: 0 4px 16px color-mix(in srgb, #0f1419 12%, transparent);
+  transition:
+    color 120ms ease,
+    border-color 120ms ease,
+    transform 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.floating-tools-fab__btn:hover {
+  color: var(--text-primary, #1a1a1a);
+  border-color: var(--cm-hairline, #e8e4df);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px color-mix(in srgb, #0f1419 16%, transparent);
+}
+
+.floating-tools-fab__btn:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid
+    var(--focus-ring-color, color-mix(in srgb, var(--accent, #4a6fa5) 52%, transparent));
+  outline-offset: var(--focus-ring-offset, 2px);
+}
+
+.floating-tools-fab__btn--notizen {
+  color: var(--accent, #4a6fa5);
+}
+
+.floating-tools-fab__btn--active {
+  border-color: color-mix(in srgb, var(--accent, #4a6fa5) 40%, transparent);
+  color: var(--accent, #4a6fa5);
+}
+
+.floating-tools-fab__btn .butterfly-logo {
+  object-fit: contain;
+}
+
+/* —— Notizen panel header mark (notes icon on the dark command-deck header) —— */
+
+.notizen-dialog__mark {
+  color: var(--aura-ink, #f2efe8);
+}
+
+/* —— Notizen body —— */
+
+.notizen-body {
+  padding: 0;
+}
+
+.notizen-list__toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.7rem 0.9rem 0.4rem;
+}
+
+.notizen-new-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--accent, #4a6fa5);
+  color: var(--color-accent-foreground, #fff);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-elevated-sm, 0 1px 2px rgba(0, 0, 0, 0.04));
+}
+
+.notizen-new-btn:hover {
+  background: var(--accent-hover, color-mix(in srgb, var(--accent, #4a6fa5) 85%, black));
+}
+
+.notizen-empty {
+  margin: 0;
+  padding: 2rem 1.25rem;
+  text-align: center;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text-muted, #6b7280);
+}
+
+.notizen-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem 0.75rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.notizen-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.4rem;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid var(--cm-quiet-border, #ece8e3);
+  border-radius: var(--radius-card, 0.6875rem);
+  background-color: color-mix(in srgb, var(--accent, #4a6fa5) 2.5%, var(--surface-elevated, #fff));
+  box-shadow: var(--shadow-elevated-sm, 0 1px 2px rgba(0, 0, 0, 0.04));
+}
+
+.notizen-row__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  padding: 0;
+}
+
+.notizen-row__title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary, #1a1a1a);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notizen-row__snippet {
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--text-muted, #6b7280);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.notizen-row__date {
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted, #6b7280);
+}
+
+.notizen-row__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex-shrink: 0;
+}
+
+.notizen-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control, 0.4375rem);
+  background: transparent;
+  color: var(--text-muted, #6b7280);
+  cursor: pointer;
+  transition:
+    background 100ms ease,
+    color 100ms ease;
+}
+
+.notizen-icon-btn:hover {
+  background: color-mix(in srgb, var(--text-primary, #1a1a1a) 6%, transparent);
+  color: var(--text-primary, #1a1a1a);
+}
+
+.notizen-icon-btn--danger:hover {
+  background: color-mix(in srgb, #b42318 10%, transparent);
+  color: #b42318;
+}
+
+.notizen-confirm-btn {
+  padding: 0 0.45rem;
+  height: 1.6rem;
+  border: 1px solid color-mix(in srgb, #b42318 35%, transparent);
+  border-radius: var(--radius-control, 0.4375rem);
+  background: color-mix(in srgb, #b42318 8%, transparent);
+  color: #b42318;
+  font-size: 0.62rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* —— Notizen editor —— */
+
+.notizen-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.8rem 0.9rem 0.9rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.notizen-editor__title {
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--cm-quiet-border, #ece8e3);
+  border-radius: var(--radius-control, 0.4375rem);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary, #1a1a1a);
+  background: var(--surface-elevated, #fff);
+}
+
+.notizen-editor__title:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--accent, #4a6fa5) 45%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #4a6fa5) 12%, transparent);
+}
+
+.notizen-editor__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.notizen-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.1rem;
+  padding: 0 0.9rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.notizen-btn--ghost {
+  border: 1px solid var(--cm-quiet-border, #ece8e3);
+  background: transparent;
+  color: var(--text-muted, #6b7280);
+}
+
+.notizen-btn--ghost:hover {
+  color: var(--text-primary, #1a1a1a);
+  border-color: var(--cm-hairline, #e8e4df);
+}
+
+.notizen-btn--primary {
+  border: 1px solid transparent;
+  background: var(--accent, #4a6fa5);
+  color: var(--color-accent-foreground, #fff);
+}
+
+.notizen-btn--primary:hover:not(:disabled) {
+  background: var(--accent-hover, color-mix(in srgb, var(--accent, #4a6fa5) 85%, black));
+}
+
+.notizen-btn--primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* —— Notizen rich-text editor —— */
+
+.notizen-rte {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  border: 1px solid var(--cm-quiet-border, #ece8e3);
+  border-radius: var(--radius-card, 0.6875rem);
+  background: var(--surface-elevated, #fff);
+  overflow: hidden;
+}
+
+.notizen-rte__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.35rem 0.45rem;
+  border-bottom: 1px solid var(--cm-quiet-border, #ece8e3);
+  background: color-mix(in srgb, var(--accent, #4a6fa5) 3%, var(--surface-elevated, #fff));
+}
+
+.notizen-rte__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control, 0.4375rem);
+  background: transparent;
+  color: var(--text-muted, #6b7280);
+  cursor: pointer;
+  transition:
+    background 100ms ease,
+    color 100ms ease,
+    border-color 100ms ease;
+}
+
+.notizen-rte__btn:hover {
+  background: color-mix(in srgb, var(--text-primary, #1a1a1a) 6%, transparent);
+  color: var(--text-primary, #1a1a1a);
+}
+
+.notizen-rte__btn--active {
+  color: var(--accent, #4a6fa5);
+  border-color: color-mix(in srgb, var(--accent, #4a6fa5) 35%, transparent);
+  background: color-mix(in srgb, var(--accent, #4a6fa5) 10%, transparent);
+}
+
+.notizen-rte__btn:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid
+    var(--focus-ring-color, color-mix(in srgb, var(--accent, #4a6fa5) 52%, transparent));
+  outline-offset: 1px;
+}
+
+.notizen-rte__content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.notizen-rte__editor {
+  padding: 0.6rem 0.7rem;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--text-primary, #1a1a1a);
+  outline: none;
+}
+
+.notizen-rte__editor p {
+  margin: 0 0 0.5rem;
+}
+
+.notizen-rte__editor p:last-child {
+  margin-bottom: 0;
+}
+
+.notizen-rte__editor mark {
+  background: color-mix(in srgb, #ffe066 70%, transparent);
+  border-radius: 0.2rem;
+  padding: 0 0.1em;
+}
+
+.notizen-rte__editor:focus {
+  outline: none;
+}
+
+/* Tiptap placeholder for the empty editor. */
+.notizen-rte__editor p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: var(--text-muted, #6b7280);
+}
+
+/* —— Dashboard "Meine Notizen" widget —— */
+
+.my-notes__heading-icon {
+  display: inline-block;
+  margin-right: 0.4rem;
+  vertical-align: -0.15rem;
+  color: var(--accent, #4a6fa5);
+}
+
+.my-notes__empty {
+  margin: 0;
+  padding: 1.5rem 1.25rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-muted, #6b7280);
+}
+
+.my-notes__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+  gap: 0.75rem;
+}
+
+.my-notes__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.85rem 0.9rem;
+}
+
+.my-notes__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.my-notes__title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary, #1a1a1a);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.my-notes__snippet {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--text-muted, #6b7280);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.my-notes__date {
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted, #6b7280);
+}
+
+.my-notes__actions {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.my-notes__editor {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* —— Notizen dock accent (subtle distinction from Butterfly) —— */
+
+.notizen-dock-panel,
+.notizen-dialog--floating {
+  --ask-butterfly-area-accent: var(--area-dokumente, var(--accent, #4a6fa5));
+}
