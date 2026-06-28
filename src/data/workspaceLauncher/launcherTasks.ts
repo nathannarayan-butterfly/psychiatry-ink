@@ -7,8 +7,10 @@ import {
   GitBranch,
   HeartHandshake,
   HeartPulse,
+  Languages,
   LineChart,
   MessagesSquare,
+  Mic,
   Network,
   Pill,
   ScrollText,
@@ -109,6 +111,8 @@ export type LauncherTarget =
    *   - `summary` — paste accumulated data → explicit AI "Therapie und Verlauf"
    *     Arztbrief-style summary (NOT the full Arztbrief workspace);
    *   - `labInterpret` — paste a lab panel → explicit AI interpretation.
+   *   - `dictation` — voice-to-text dictation → save to global notes;
+   *   - `translate` — explicit text translation between de/en/fr/es.
    * The full knowledge-base browser is intentionally NOT a patient-less tool — it
    * duplicates the main Knowledge Base navigation; focused lookups fold into
    * Ask Butterfly instead.
@@ -125,6 +129,8 @@ export type LauncherTarget =
         | 'medLabor'
         | 'summary'
         | 'labInterpret'
+        | 'dictation'
+        | 'translate'
     }
 
 /** A single "how do you want to create it?" option shown in the follow-up step. */
@@ -1063,6 +1069,66 @@ export const LAUNCHER_TASKS: LauncherTask[] = [
         id: 'open',
         labelKey: 'launcherModeOpen',
         target: { kind: 'standaloneTool', tool: 'labInterpret' },
+      },
+    ],
+  },
+  {
+    id: 'standalone-dictation',
+    labelKey: 'launcherTaskStandaloneDictation',
+    descKey: 'launcherTaskStandaloneDictationDesc',
+    category: 'documentation',
+    icon: Mic,
+    standaloneOnly: true,
+    keywords: [
+      'diktat',
+      'diktieren',
+      'dictation',
+      'dictate',
+      'sprache',
+      'speech',
+      'voice',
+      'mikrofon',
+      'microphone',
+      'transkription',
+      'transcription',
+      'sprechen',
+    ],
+    modes: [
+      {
+        id: 'open',
+        labelKey: 'launcherModeOpen',
+        target: { kind: 'standaloneTool', tool: 'dictation' },
+      },
+    ],
+  },
+  {
+    id: 'standalone-translate',
+    labelKey: 'launcherTaskStandaloneTranslate',
+    descKey: 'launcherTaskStandaloneTranslateDesc',
+    category: 'communication',
+    icon: Languages,
+    standaloneOnly: true,
+    keywords: [
+      'übersetzen',
+      'übersetzung',
+      'translate',
+      'translation',
+      'sprache',
+      'language',
+      'englisch',
+      'english',
+      'französisch',
+      'french',
+      'spanisch',
+      'spanish',
+      'deutsch',
+      'german',
+    ],
+    modes: [
+      {
+        id: 'open',
+        labelKey: 'launcherModeOpen',
+        target: { kind: 'standaloneTool', tool: 'translate' },
       },
     ],
   },

@@ -55,6 +55,8 @@ const STANDALONE_KEPT_CARDS = [
   'standalone-medlabor',
   'standalone-summary',
   'standalone-labinterpret',
+  'standalone-dictation',
+  'standalone-translate',
   'formulare',
 ]
 

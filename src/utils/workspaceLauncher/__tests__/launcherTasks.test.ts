@@ -18,6 +18,8 @@ const STANDALONE_TOOLS = new Set([
   'medLabor',
   'summary',
   'labInterpret',
+  'dictation',
+  'translate',
 ])
 
 const NOTION_PAGE_IDS = new Set(NOTION_PAGES.map((p) => p.id))
