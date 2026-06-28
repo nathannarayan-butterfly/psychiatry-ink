@@ -1,4 +1,5 @@
 import { API_BASE } from './apiClient'
+import { getAuthHeaders } from './authHeaders'
 
 export interface PharmaAskParams {
   medicationName: string
@@ -16,9 +17,10 @@ export interface PharmaAskResult {
 }
 
 export async function askPharmaQuestion(params: PharmaAskParams): Promise<PharmaAskResult> {
+  const authHeaders = await getAuthHeaders()
   const response = await fetch(`${API_BASE}/api/pharma-ask`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders },
     body: JSON.stringify({
       medicationName: params.medicationName,
       sectionId: params.sectionId,
