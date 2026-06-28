@@ -134,10 +134,10 @@ const capacityRowsEn: AiCreditsCapacityRow[] = [
   { pattern: 'Several medical letter sections, Standard', capacity: '15–25 sections' },
   { pattern: 'Full medical letter drafts, Economic', capacity: '~15–16 drafts' },
   { pattern: 'Full medical letter drafts, Standard', capacity: '~8 drafts' },
-  { pattern: 'Full medical letter drafts, Gründlich', capacity: '~4 drafts' },
+  { pattern: 'Full medical letter drafts, Thorough', capacity: '~4 drafts' },
   { pattern: 'Full structured patient cases, Economic', capacity: '~10 cases' },
   { pattern: 'Full structured patient cases, Standard', capacity: '~5 cases' },
-  { pattern: 'Full structured patient cases, Gründlich', capacity: '~2 cases' },
+  { pattern: 'Full structured patient cases, Thorough', capacity: '~2 cases' },
 ]
 
 const capacityRowsDe: AiCreditsCapacityRow[] = [
@@ -221,7 +221,7 @@ export const aiCreditsHinweiseContentByLanguage: AiCreditsHinweiseContentByLangu
       title: 'Important notes',
       items: [
         'Actual credit consumption depends on several factors and may differ from the estimates below.',
-        'Credit use varies by AI mode: Economic, Standard, and Gründlich.',
+        'Credit use varies by AI mode: Economic, Standard, and Thorough.',
         'The tables below are approximate guides — not guarantees of cost or capacity.',
         'All AI-assisted outputs require clinical review. Suggestions are never applied automatically to the record.',
       ],
@@ -229,7 +229,7 @@ export const aiCreditsHinweiseContentByLanguage: AiCreditsHinweiseContentByLangu
     actionTable: {
       title: 'Credits per action',
       subtitle: 'Approximate credit cost by AI mode',
-      columns: ['Action', 'Economic', 'Standard', 'Gründlich'],
+      columns: ['Action', 'Economic', 'Standard', 'Thorough'],
       rows: actionRowsEn,
     },
     capacityTable: {

@@ -38,6 +38,13 @@ describe('homepage content resolved by domain', () => {
     expect(en.hero.headline).not.toBe(de.hero.headline)
   })
 
+  it('uses English AI mode labels on psychiatry.ink (no German "Gründlich" leak)', () => {
+    const en = getHomepageContent(resolveLocaleFromHost('psychiatry.ink'))
+    const serialized = JSON.stringify(en)
+    expect(serialized).not.toMatch(/Gründlich|gründlich/)
+    expect(en.tiers.singleUse.features.join(' ')).toContain('Thorough')
+  })
+
   it('keeps the "intelligent workspace" framing with a resolvable ink-underline accent', () => {
     const en = getHomepageContent('en')
     const de = getHomepageContent('de')

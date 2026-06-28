@@ -283,7 +283,7 @@ export const homepageContentEn: HomepageContent = {
       description:
         'Individual psychiatrist — full workspace for documentation, tools, and clinical intelligence.',
       features: [
-        'Economic, Standard, and Gründlich AI modes',
+        'Economic, Standard, and Thorough AI modes',
         'Extra credits available',
         '1 month free trial',
         '20% discount with annual billing',
