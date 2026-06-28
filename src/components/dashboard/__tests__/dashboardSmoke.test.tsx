@@ -7,6 +7,7 @@ import { OrganisationProvider } from '../../../contexts/PermissionContext'
 import { WorkspaceSessionProvider } from '../../../context/WorkspaceSessionContext'
 import { AuthProvider } from '../../../context/AuthContext'
 import { AskButterflyProvider } from '../../../contexts/AskButterflyContext'
+import { NotizenProvider } from '../../../contexts/NotizenContext'
 import { languageOptions } from '../../../data/languages'
 import { DashboardPage } from '../DashboardPage'
 
@@ -55,12 +56,16 @@ describe('DashboardPage smoke', () => {
                 createElement(
                   AskButterflyProvider,
                   null,
-                  createElement(DashboardPage, {
-                    privacy: mockPrivacy(),
-                    languageSettings: mockLanguageSettings(),
-                    plan: 'free',
-                    onOpenCase,
-                  }),
+                  createElement(
+                    NotizenProvider,
+                    null,
+                    createElement(DashboardPage, {
+                      privacy: mockPrivacy(),
+                      languageSettings: mockLanguageSettings(),
+                      plan: 'free',
+                      onOpenCase,
+                    }),
+                  ),
                 ),
               ) },
             ),

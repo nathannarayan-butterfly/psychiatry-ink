@@ -73,6 +73,7 @@ import type {
 import { NewCaseWorkflowDialog } from './NewCaseWorkflowDialog'
 import { PatientCaseCard } from './PatientCaseCard'
 import { DaySchedulePanel } from '../calendar/DaySchedulePanel'
+import { MyNotesWidget } from './MyNotesWidget'
 import { TodoWidget } from '../todos/TodoWidget'
 
 const CREDITS_DEFAULT_MAX = 500
@@ -667,6 +668,8 @@ export function DashboardPage({
       {showDaySchedule ? (
         <DaySchedulePanel cases={activePatients} onOpenCase={handleScheduleOpenCase} />
       ) : null}
+
+      <MyNotesWidget />
 
       <section className="dashboard-section" aria-labelledby="dashboard-section-patients">
         <div className="dashboard-section__header-row">
