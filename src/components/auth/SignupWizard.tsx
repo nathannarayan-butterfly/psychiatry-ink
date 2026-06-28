@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 import { usePrivacySettings } from '../../hooks/usePrivacySettings'
 import { AppLogo } from '../AppLogo'
 import { LegalConsentModal } from './LegalConsentModal'
+import { ResendConfirmation } from './ResendConfirmation'
 import { SignupStorageCards } from './SignupStorageCards'
 import { setupAccountCloudBackup } from '../../utils/accountBackup'
 import { markIdentifierStorageAcknowledged } from '../../utils/identifierStorage'
@@ -62,6 +63,7 @@ export function SignupWizard({ onBack, onSuccess, onSwitchToLogin }: SignupWizar
 
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
+  const [awaitingConfirmation, setAwaitingConfirmation] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   const openLegalModal = (tab: 'privacy' | 'terms') => {
@@ -146,6 +148,7 @@ export function SignupWizard({ onBack, onSuccess, onSwitchToLogin }: SignupWizar
       if (result.needsConfirmation) {
         markPendingSignupPassphrase(passphrase)
         setInfo(t('authSignupConfirmEmail'))
+        setAwaitingConfirmation(true)
         return
       }
 
@@ -374,6 +377,10 @@ export function SignupWizard({ onBack, onSuccess, onSwitchToLogin }: SignupWizar
             <p className="auth-form__info" role="status">
               {info}
             </p>
+          ) : null}
+
+          {awaitingConfirmation ? (
+            <ResendConfirmation email={email.trim()} lockEmail />
           ) : null}
 
           <div className="signup-wizard__nav">

@@ -7,6 +7,15 @@ interface ImportMetaEnv {
   readonly VITE_SUPABASE_ANON_KEY?: string
   readonly VITE_API_BASE_URL?: string
   /**
+   * Canonical public app origin (e.g. https://app.psychiatry.ink). Used as the
+   * `emailRedirectTo` target for Supabase auth confirmation emails so links
+   * point at production, not the stale localhost default. Falls back to
+   * `window.location.origin` when unset. `VITE_SITE_URL` is an accepted alias.
+   */
+  readonly VITE_PUBLIC_APP_URL?: string
+  /** @alias VITE_PUBLIC_APP_URL — accepted fallback for the canonical app origin. */
+  readonly VITE_SITE_URL?: string
+  /**
    * Client-side Knowledge Base admin allowlist (comma/space-separated user ids or
    * emails). UX hint only — surfaces the KB review console. Authoritative
    * enforcement is server-side via `KB_ADMIN_USER_IDS`.

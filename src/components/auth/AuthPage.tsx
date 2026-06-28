@@ -4,6 +4,7 @@ import { useTranslation } from '../../context/TranslationContext'
 import { useAuth } from '../../context/AuthContext'
 import { AppLogo } from '../AppLogo'
 import { SignupWizard } from './SignupWizard'
+import { ResendConfirmation } from './ResendConfirmation'
 
 type AuthMode = 'login' | 'signup'
 
@@ -20,6 +21,7 @@ export function AuthPage({ mode, onBack, onSuccess, onSwitchMode }: AuthPageProp
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [needsConfirmation, setNeedsConfirmation] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   if (mode === 'signup') {
@@ -35,12 +37,14 @@ export function AuthPage({ mode, onBack, onSuccess, onSwitchMode }: AuthPageProp
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
     setError(null)
+    setNeedsConfirmation(false)
     setSubmitting(true)
 
     try {
       const result = await signIn(email.trim(), password)
       if (result.error) {
         setError(result.error)
+        setNeedsConfirmation(result.needsConfirmation)
         return
       }
       onSuccess()
@@ -113,6 +117,8 @@ export function AuthPage({ mode, onBack, onSuccess, onSwitchMode }: AuthPageProp
               {submitting ? t('authPleaseWait') : t('authLoginSubmit')}
             </button>
           </form>
+
+          {needsConfirmation ? <ResendConfirmation email={email.trim()} lockEmail /> : null}
 
           <p className="auth-card__switch">
             {t('authNoAccountYet')}{' '}

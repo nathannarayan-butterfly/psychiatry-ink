@@ -5303,6 +5303,48 @@ export const uiTranslations = {
     fr: 'Veuillez confirmer votre adresse e-mail. Ensuite vous pourrez vous connecter.',
     es: 'Confirme su correo electrónico. Luego podrá iniciar sesión.',
   },
+  authResendConfirmationPrompt: {
+    de: 'Keine Bestätigungs-E-Mail erhalten? Prüfen Sie den Spam-Ordner oder senden Sie sie erneut.',
+    en: "Didn't get the confirmation email? Check your spam folder or resend it.",
+    fr: "Vous n'avez pas reçu l'e-mail de confirmation ? Vérifiez vos spams ou renvoyez-le.",
+    es: '¿No recibió el correo de confirmación? Revise el spam o vuelva a enviarlo.',
+  },
+  authResendConfirmationButton: {
+    de: 'Bestätigungs-E-Mail erneut senden',
+    en: 'Resend confirmation email',
+    fr: "Renvoyer l'e-mail de confirmation",
+    es: 'Reenviar correo de confirmación',
+  },
+  authResendConfirmationSending: {
+    de: 'Wird gesendet…',
+    en: 'Sending…',
+    fr: 'Envoi en cours…',
+    es: 'Enviando…',
+  },
+  authResendConfirmationCooldown: {
+    de: 'Erneut senden in {seconds}s',
+    en: 'Resend in {seconds}s',
+    fr: 'Renvoyer dans {seconds}s',
+    es: 'Reenviar en {seconds}s',
+  },
+  authResendConfirmationSent: {
+    de: 'Gesendet – prüfen Sie Ihren Posteingang (und den Spam-Ordner).',
+    en: 'Sent — check your inbox (and your spam folder).',
+    fr: 'Envoyé — vérifiez votre boîte de réception (et vos spams).',
+    es: 'Enviado: revise su bandeja de entrada (y el spam).',
+  },
+  authResendConfirmationRateLimited: {
+    de: 'Zu viele Anfragen. Bitte warten Sie einen Moment und versuchen Sie es erneut.',
+    en: 'Too many requests. Please wait a moment and try again.',
+    fr: 'Trop de demandes. Veuillez patienter un instant et réessayer.',
+    es: 'Demasiadas solicitudes. Espere un momento e inténtelo de nuevo.',
+  },
+  authResendConfirmationEmailRequired: {
+    de: 'Geben Sie die E-Mail-Adresse ein, mit der Sie sich registriert haben.',
+    en: 'Enter the email address you signed up with.',
+    fr: "Saisissez l'adresse e-mail utilisée lors de l'inscription.",
+    es: 'Introduzca el correo electrónico con el que se registró.',
+  },
   authSignupAcceptTermsPrefix: {
     de: 'Ich akzeptiere die ',
     en: 'I accept the ',

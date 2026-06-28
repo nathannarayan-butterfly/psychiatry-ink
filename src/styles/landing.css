@@ -834,3 +834,31 @@ li.identifier-storage-choice__warning {
   text-decoration: underline;
   font-size: inherit;
 }
+
+.auth-resend {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border, rgba(15, 23, 42, 0.08));
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.auth-resend__prompt {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.auth-resend__field {
+  margin: 0;
+}
+
+.auth-resend__button {
+  align-self: flex-start;
+}
+
+.auth-resend__button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

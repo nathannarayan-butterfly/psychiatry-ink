@@ -23,6 +23,7 @@ import { recordLegalConsent } from '../services/legalConsentApi'
 import { setupAccountCloudBackup } from '../utils/accountBackup'
 import { clearSessionOnLogout } from '../utils/devicePreferences'
 import { downloadPassphraseBackupFile } from '../utils/passphraseRecovery'
+import { getAuthEmailRedirectUrl } from '../utils/authEmailRedirect'
 import {
   clearPendingSignupPassphrase,
   getPendingSignupPassphrase,
@@ -44,12 +45,18 @@ interface AuthContextValue {
   isConfigured: boolean
   configError: string | null
   configDiagnostics: string | null
-  signIn: (email: string, password: string) => Promise<{ error: string | null }>
+  signIn: (
+    email: string,
+    password: string,
+  ) => Promise<{ error: string | null; needsConfirmation: boolean }>
   signUp: (
     email: string,
     password: string,
     consent?: SignupConsent,
   ) => Promise<{ error: string | null; needsConfirmation: boolean }>
+  resendConfirmation: (
+    email: string,
+  ) => Promise<{ error: string | null; rateLimited: boolean }>
   signOut: () => Promise<void>
   refreshPlan: () => Promise<void>
 }
@@ -61,6 +68,23 @@ export interface SignupConsent {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
+
+/** True when a sign-in failed only because the email is not yet confirmed. */
+function isEmailNotConfirmedError(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false
+  if (error.code === 'email_not_confirmed') return true
+  return Boolean(error.message && /email not confirmed/i.test(error.message))
+}
+
+/** True when Supabase throttled the request (429 / "rate limit" / "after N seconds"). */
+function isRateLimitError(
+  error: { code?: string; status?: number; message?: string } | null,
+): boolean {
+  if (!error) return false
+  if (error.status === 429) return true
+  if (error.code === 'over_email_send_rate_limit') return true
+  return Boolean(error.message && /rate limit|after \d+ seconds/i.test(error.message))
+}
 
 async function fetchPlan(): Promise<SubscriptionPlan> {
   try {
@@ -185,10 +209,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = useCallback(async (email: string, password: string) => {
     const supabase = getSupabase()
-    if (!supabase) return { error: getSupabaseConfigError() ?? 'Supabase ist nicht konfiguriert.' }
+    if (!supabase) {
+      return {
+        error: getSupabaseConfigError() ?? 'Supabase ist nicht konfiguriert.',
+        needsConfirmation: false,
+      }
+    }
 
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    return { error: mapSupabaseAuthError(error?.message) }
+    return {
+      error: mapSupabaseAuthError(error?.message),
+      needsConfirmation: isEmailNotConfirmedError(error),
+    }
   }, [])
 
   const signUp = useCallback(async (email: string, password: string, consent?: SignupConsent) => {
@@ -204,7 +236,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       markPendingLegalConsent(LEGAL_LAST_UPDATED, consent.locale)
     }
 
-    const { data, error } = await supabase.auth.signUp({ email, password })
+    const emailRedirectTo = getAuthEmailRedirectUrl()
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      // Pin the confirmation link to the canonical app origin so it never falls
+      // back to Supabase's stale `localhost:3000` Site URL default. Requires the
+      // origin to be in the project's Redirect-URL allow-list.
+      ...(emailRedirectTo ? { options: { emailRedirectTo } } : {}),
+    })
     const needsConfirmation = Boolean(data.user && !data.session)
 
     // When a session already exists (no email confirmation required) record the
@@ -220,6 +260,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     return { error: mapSupabaseAuthError(error?.message), needsConfirmation }
+  }, [])
+
+  const resendConfirmation = useCallback(async (email: string) => {
+    const supabase = getSupabase()
+    if (!supabase) {
+      return {
+        error: getSupabaseConfigError() ?? 'Supabase ist nicht konfiguriert.',
+        rateLimited: false,
+      }
+    }
+    const trimmed = email.trim()
+    if (!trimmed) return { error: mapSupabaseAuthError('email required'), rateLimited: false }
+
+    const emailRedirectTo = getAuthEmailRedirectUrl()
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: trimmed,
+      // Same production-safe redirect as signUp: the resent link must also land
+      // on the deployed app, not localhost.
+      ...(emailRedirectTo ? { options: { emailRedirectTo } } : {}),
+    })
+    return { error: mapSupabaseAuthError(error?.message), rateLimited: isRateLimitError(error) }
   }, [])
 
   const signOut = useCallback(async () => {
@@ -241,10 +303,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       configDiagnostics: import.meta.env.DEV ? getSupabaseConfigDiagnostics() : null,
       signIn,
       signUp,
+      resendConfirmation,
       signOut,
       refreshPlan,
     }),
-    [user, session, loading, plan, planLoading, signIn, signUp, signOut, refreshPlan],
+    [
+      user,
+      session,
+      loading,
+      plan,
+      planLoading,
+      signIn,
+      signUp,
+      resendConfirmation,
+      signOut,
+      refreshPlan,
+    ],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
