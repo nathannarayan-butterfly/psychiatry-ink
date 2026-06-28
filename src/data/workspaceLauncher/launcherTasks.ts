@@ -95,9 +95,14 @@ export type LauncherTarget =
   /**
    * Standalone clinical tool (patient-less workspace): free-text AI
    * rewrite/structure, knowledge-base + pharma lookup, the global Ask Butterfly
-   * assistant, or an ad-hoc drug–drug interaction check.
+   * assistant, the ad-hoc medication hub (interactions / receptor profile /
+   * side-effect profile, no patient med plan), or the topic-driven patient
+   * education generator (saved to standalone notes, no patient case source).
    */
-  | { kind: 'standaloneTool'; tool: 'rewrite' | 'knowledge' | 'butterfly' | 'interactions' }
+  | {
+      kind: 'standaloneTool'
+      tool: 'rewrite' | 'knowledge' | 'butterfly' | 'medication' | 'education'
+    }
 
 /** A single "how do you want to create it?" option shown in the follow-up step. */
 export interface LauncherCreationMode {
@@ -681,6 +686,8 @@ export const LAUNCHER_TASKS: LauncherTask[] = [
       'vital signs',
       'ekg',
       'ecg',
+      'eeg',
+      'hirnstrom',
     ],
     modes: [
       {
@@ -712,6 +719,12 @@ export const LAUNCHER_TASKS: LauncherTask[] = [
         labelKey: 'launcherModeStandaloneEcg',
         keywords: ['ekg', 'ecg', 'qtc', 'kardiogramm'],
         target: { kind: 'standaloneGuided', itemType: 'befund-ecg' },
+      },
+      {
+        id: 'eeg',
+        labelKey: 'launcherModeStandaloneEeg',
+        keywords: ['eeg', 'electroencephalogram', 'hirnstrom', 'elektroenzephalogramm'],
+        target: { kind: 'standaloneGuided', itemType: 'befund-eeg' },
       },
     ],
   },
@@ -780,9 +793,9 @@ export const LAUNCHER_TASKS: LauncherTask[] = [
     ],
   },
   {
-    id: 'standalone-interactions',
-    labelKey: 'launcherTaskStandaloneInteractions',
-    descKey: 'launcherTaskStandaloneInteractionsDesc',
+    id: 'standalone-medication',
+    labelKey: 'launcherTaskStandaloneMedication',
+    descKey: 'launcherTaskStandaloneMedicationDesc',
     category: 'medication',
     icon: Network,
     standaloneOnly: true,
@@ -796,12 +809,46 @@ export const LAUNCHER_TASKS: LauncherTask[] = [
       'drug-drug',
       'arzneimittel',
       'kombinationscheck',
+      'rezeptorprofil',
+      'receptor profile',
+      'nebenwirkung',
+      'nebenwirkungen',
+      'side effects',
+      'medikamentencheck',
+      'medication check',
     ],
     modes: [
       {
         id: 'open',
         labelKey: 'launcherModeOpen',
-        target: { kind: 'standaloneTool', tool: 'interactions' },
+        target: { kind: 'standaloneTool', tool: 'medication' },
+      },
+    ],
+  },
+  {
+    id: 'standalone-education',
+    labelKey: 'launcherTaskStandaloneEducation',
+    descKey: 'launcherTaskStandaloneEducationDesc',
+    category: 'communication',
+    icon: HeartHandshake,
+    standaloneOnly: true,
+    keywords: [
+      'aufklärung',
+      'patientenaufklärung',
+      'psychoedukation',
+      'patient education',
+      'education',
+      'informationsblatt',
+      'merkblatt',
+      'thema',
+      'topic',
+      'aufklärungstext',
+    ],
+    modes: [
+      {
+        id: 'open',
+        labelKey: 'launcherModeOpen',
+        target: { kind: 'standaloneTool', tool: 'education' },
       },
     ],
   },

@@ -74,7 +74,8 @@ import {
 } from './workspaceAi/WorkspaceAiFeaturePanel'
 import { StandaloneBefundWidget } from './standalone/StandaloneBefundWidget'
 import { StandaloneRewriteWidget } from './standalone/StandaloneRewriteWidget'
-import { StandaloneInteractionWidget } from './standalone/StandaloneInteractionWidget'
+import { StandaloneMedicationWidget } from './standalone/StandaloneMedicationWidget'
+import { StandaloneEducationWidget } from './standalone/StandaloneEducationWidget'
 import { KnowledgeBaseTile } from '../dashboard/KnowledgeBase'
 import { useAskButterfly } from '../../contexts/AskButterflyContext'
 import type { LauncherTarget } from '../../data/workspaceLauncher/launcherTasks'
@@ -560,7 +561,7 @@ function NotionAppInner({
   // Standalone (patient-less) workspace widgets launched from the launcher.
   const [standaloneGuided, setStandaloneGuided] = useState<GuidedEntryItemType | null>(null)
   const [standaloneTool, setStandaloneTool] = useState<
-    'rewrite' | 'knowledge' | 'interactions' | null
+    'rewrite' | 'knowledge' | 'medication' | 'education' | null
   >(null)
   const askButterfly = useAskButterfly()
   const [expandDokumentId, setExpandDokumentId] = useState<string | null>(null)
@@ -1643,6 +1644,22 @@ function NotionAppInner({
 
   const handleLauncherLaunch = useCallback(
     (target: LauncherTarget) => {
+      // Defense-in-depth: in the patient-less workspace, never route to a
+      // patient-bound surface even if a stray launcher entry slips through the
+      // registry filter. Only patient-independent targets (document templates,
+      // standalone guided Befunde, standalone tools) are allowed without a
+      // patient. The clinician must link/create a patient for anything that
+      // reads from or writes to a case (tabs, workspace pages, case-context AI
+      // features, requisitions).
+      if (
+        !hasPatient &&
+        (target.kind === 'topTab' ||
+          target.kind === 'workspacePage' ||
+          target.kind === 'aiFeature' ||
+          target.kind === 'anforderung')
+      ) {
+        return
+      }
       if (target.kind === 'topTab') {
         if (target.medicationAdd) setPendingMedicationAdd(true)
         handleTopTabSelect(target.tab)
@@ -1703,6 +1720,7 @@ function NotionAppInner({
       canRequestAnforderungen,
       executeWorkspacePageLaunch,
       handleTopTabSelect,
+      hasPatient,
       openAnforderungModal,
       openTemplateHost,
     ],
@@ -2554,8 +2572,15 @@ function NotionAppInner({
         />
       ) : null}
 
-      {standaloneTool === 'interactions' ? (
-        <StandaloneInteractionWidget
+      {standaloneTool === 'medication' ? (
+        <StandaloneMedicationWidget
+          caseId={storageCaseId}
+          onClose={() => setStandaloneTool(null)}
+        />
+      ) : null}
+
+      {standaloneTool === 'education' ? (
+        <StandaloneEducationWidget
           caseId={storageCaseId}
           onClose={() => setStandaloneTool(null)}
         />
@@ -2598,6 +2623,7 @@ function NotionAppInner({
       <GuidedEntryHost
         caseId={storageCaseId}
         userId={user?.id}
+        canApplyToCase={hasPatient}
         activeItemType={guidedEntryItemType}
         onClose={() => {
           setGuidedEntryItemType(null)

@@ -20,6 +20,36 @@ function ids(tasks: ReturnType<typeof filterLauncherTasksForContext>): string[] 
   return tasks.map((task) => task.id)
 }
 
+/** Every card that must vanish from the patient-less standalone workspace. */
+const PATIENT_BOUND_CARDS = [
+  'anamnese',
+  'verlauf',
+  'medikation',
+  'labor',
+  'befundung',
+  'visualisation',
+  'timeline',
+  'therapieplanung',
+  'diagnose',
+  'discuss',
+  'psychopath',
+  'arztbrief',
+  // requisition / consultation cards lose all their modes and drop out too
+  'anforderungen',
+  'konsil',
+]
+
+/** Cards that stay available without a patient. */
+const STANDALONE_KEPT_CARDS = [
+  'standalone-befund',
+  'standalone-rewrite',
+  'standalone-knowledge',
+  'standalone-medication',
+  'standalone-education',
+  'formulare',
+  'patientenaufklaerung',
+]
+
 describe('filterLauncherTasksForContext', () => {
   const standalone = filterLauncherTasksForContext(LAUNCHER_TASKS, {
     hasPatient: false,
@@ -30,41 +60,41 @@ describe('filterLauncherTasksForContext', () => {
     canRequestAnforderungen: true,
   })
 
-  it('drops the four patient-bound entries in the standalone workspace', () => {
-    // 1. Labor → "Befund anfordern" (requisition mode) is gone…
-    const standaloneLabor = standalone.find((t) => t.id === 'labor')
-    expect(standaloneLabor).toBeDefined()
-    expect(standaloneLabor!.modes.some((m) => m.id === 'anforderung')).toBe(false)
-    // …but Labor itself (other modes) survives.
-    expect(standaloneLabor!.modes.length).toBeGreaterThan(0)
-
-    // 2. Discuss → "Konsil" mode is gone, Discuss card survives via "discuss".
-    const standaloneDiscuss = standalone.find((t) => t.id === 'discuss')
-    expect(standaloneDiscuss).toBeDefined()
-    expect(standaloneDiscuss!.modes.some((m) => m.id === 'konsil')).toBe(false)
-    expect(standaloneDiscuss!.modes.some((m) => m.id === 'discuss')).toBe(true)
-
-    // 3 + 4. The standalone "Anforderungen" and "Konsil" cards are removed.
-    expect(ids(standalone)).not.toContain('anforderungen')
-    expect(ids(standalone)).not.toContain('konsil')
-
+  it('drops every patient-bound card in the standalone workspace', () => {
+    for (const cardId of PATIENT_BOUND_CARDS) {
+      expect(ids(standalone)).not.toContain(cardId)
+    }
     // No requisition or consultation target survives anywhere.
     expect(hasAnforderungMode(standalone)).toBe(false)
     expect(hasKonsilMode(standalone)).toBe(false)
   })
 
-  it('keeps all four patient-bound entries in a real patient case', () => {
-    const patientLabor = patient.find((t) => t.id === 'labor')
-    expect(patientLabor!.modes.some((m) => m.id === 'anforderung')).toBe(true)
-
-    const patientDiscuss = patient.find((t) => t.id === 'discuss')
-    expect(patientDiscuss!.modes.some((m) => m.id === 'konsil')).toBe(true)
-
-    expect(ids(patient)).toContain('anforderungen')
-    expect(ids(patient)).toContain('konsil')
-
+  it('keeps every patient-bound card in a real patient case', () => {
+    for (const cardId of PATIENT_BOUND_CARDS) {
+      expect(ids(patient)).toContain(cardId)
+    }
     expect(hasAnforderungMode(patient)).toBe(true)
     expect(hasKonsilMode(patient)).toBe(true)
+  })
+
+  it('keeps Patientenaufklärung but only its template (form) mode without a patient', () => {
+    const standaloneAufklaerung = standalone.find((t) => t.id === 'patientenaufklaerung')
+    expect(standaloneAufklaerung).toBeDefined()
+    const standaloneModeIds = standaloneAufklaerung!.modes.map((m) => m.id)
+    expect(standaloneModeIds).toContain('form')
+    expect(standaloneModeIds).not.toContain('generate')
+    expect(standaloneModeIds).not.toContain('medication-education')
+
+    // The patient case still exposes every Patientenaufklärung mode.
+    const patientAufklaerung = patient.find((t) => t.id === 'patientenaufklaerung')
+    const patientModeIds = patientAufklaerung!.modes.map((m) => m.id)
+    expect(patientModeIds).toEqual(expect.arrayContaining(['generate', 'medication-education', 'form']))
+  })
+
+  it('keeps the patient-independent card set without a patient', () => {
+    for (const cardId of STANDALONE_KEPT_CARDS) {
+      expect(ids(standalone)).toContain(cardId)
+    }
   })
 
   it('shows standalone-only tool cards only when there is no patient', () => {
@@ -72,7 +102,8 @@ describe('filterLauncherTasksForContext', () => {
       'standalone-befund',
       'standalone-rewrite',
       'standalone-knowledge',
-      'standalone-interactions',
+      'standalone-medication',
+      'standalone-education',
     ]) {
       expect(ids(standalone)).toContain(standaloneCard)
       expect(ids(patient)).not.toContain(standaloneCard)

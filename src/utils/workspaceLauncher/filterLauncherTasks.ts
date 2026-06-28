@@ -28,16 +28,60 @@ function isKonsilMode(mode: LauncherCreationMode): boolean {
 }
 
 /**
+ * A patient-bound patient-education mode (Patientenaufklärung → "Aufklärung
+ * erstellen (KI)" and "Medikationsaufklärung"). Both write/operate against a
+ * patient case (the AI aufklaerung feature pulls case context; the medication
+ * education flow opens the patient's Medikation tab), so they are dropped in the
+ * patient-less workspace. The template-based "Aufklärungsbogen (Vorlage)" mode
+ * is patient-independent and stays — and the standalone education tool offers a
+ * topic-driven generator instead.
+ */
+function isPatientBoundEducationMode(mode: LauncherCreationMode): boolean {
+  if (mode.target.kind === 'aiFeature' && mode.target.feature === 'aufklaerung') return true
+  if (mode.target.kind === 'topTab' && mode.target.tab === 'medikation') return true
+  return false
+}
+
+/**
+ * Whole task cards that only make sense with a linked patient. In the patient-
+ * less standalone workspace these are dropped entirely — every one of them
+ * writes into / reads from a patient case (documentation sections, the
+ * medication plan, labs, diagnostic coding, case discussion, the patient's
+ * letters, etc.) and would otherwise dead-end. Their standalone equivalents
+ * (`standalone-*` cards) provide the patient-independent capabilities instead.
+ */
+const PATIENT_BOUND_STANDALONE_HIDDEN_CARDS = new Set<string>([
+  'anamnese',
+  'verlauf',
+  'medikation',
+  'labor',
+  'befundung',
+  'visualisation',
+  'timeline',
+  'therapieplanung',
+  'diagnose',
+  'discuss',
+  'psychopath',
+  'arztbrief',
+])
+
+/**
  * Pure helper that drops launcher entries that make no sense in the current
  * context, keeping the registry itself untouched (patient cases still expose
  * every entry).
  *
- * In the patient-less standalone workspace this removes the four patient-bound
- * entries that would otherwise dead-end:
- *   1. Labor → "Befund anfordern" (requisition mode)
- *   2. Discuss → "Konsil" (consultation mode)
- *   3. the whole "Anforderungen" card
- *   4. the whole "Konsil" card
+ * In the patient-less standalone workspace this surfaces ONLY actions a
+ * clinician can genuinely complete without a patient:
+ *   - every patient-bound card is dropped entirely
+ *     ({@link PATIENT_BOUND_STANDALONE_HIDDEN_CARDS}): anamnese, verlauf,
+ *     medikation, labor, befundung, visualisation, timeline, therapieplanung,
+ *     diagnose, discuss, psychopath, arztbrief (plus the requisition / konsil
+ *     cards, which lose all their modes below);
+ *   - Patientenaufklärung keeps only its patient-independent template mode
+ *     (the AI "Aufklärung erstellen" + "Medikationsaufklärung" modes are
+ *     dropped — see {@link isPatientBoundEducationMode});
+ *   - the kept set is the `standalone-*` tool cards, Formulare and
+ *     Patientenaufklärung (template only).
  * Requisition entries are additionally gated by `canRequestAnforderungen`, so
  * they also disappear on any case that cannot raise requisitions.
  *
@@ -57,10 +101,13 @@ export function filterLauncherTasksForContext(
   for (const task of tasks) {
     // Standalone-only tools never appear once a patient is linked.
     if (task.standaloneOnly && hasPatient) continue
+    // Patient-bound cards are dropped entirely in the patient-less workspace.
+    if (!hasPatient && PATIENT_BOUND_STANDALONE_HIDDEN_CARDS.has(task.id)) continue
 
     const modes = task.modes.filter((mode) => {
       if (!canRequestAnforderungen && isAnforderungMode(mode)) return false
       if (!hasPatient && isKonsilMode(mode)) return false
+      if (!hasPatient && isPatientBoundEducationMode(mode)) return false
       return true
     })
 

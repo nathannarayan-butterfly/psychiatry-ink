@@ -33,6 +33,15 @@ export interface GuidedEntryCompletionResult {
 export interface GuidedEntryHostProps {
   caseId: string
   userId?: string
+  /**
+   * Whether the generated output may be written into the (patient) case via
+   * `applyGuidedOutput`. Defaults to `true`. In the patient-less workspace this
+   * is `false`, so a stray patient-bound guided type (verlauf, psychopath
+   * finding, ECG befund-record) can never write a verlauf entry / befund record
+   * / section onto the default case — standalone needs are handled by the
+   * StandaloneBefundWidget / standalone notes instead.
+   */
+  canApplyToCase?: boolean
   /** When set, shows entry mode chooser / wizard for this item type. */
   activeItemType: GuidedEntryItemType | null
   onClose: () => void
@@ -43,6 +52,7 @@ export interface GuidedEntryHostProps {
 export function GuidedEntryHost({
   caseId,
   userId,
+  canApplyToCase = true,
   activeItemType,
   onClose,
   onDirectEntry,
@@ -162,6 +172,15 @@ export function GuidedEntryHost({
       }
       await saveGuidedEntryInstance(caseId, completed)
 
+      // Patient-less workspace: never write the output into a case. The vault
+      // draft above is per-device scratch only; the case-mutating
+      // `applyGuidedOutput` (verlauf feed / befund record / section) is skipped.
+      if (!canApplyToCase) {
+        onComplete({ itemType: activeItemType, text: payload.text })
+        onClose()
+        return
+      }
+
       const result = applyGuidedOutput({
         caseId,
         schema,
@@ -182,7 +201,7 @@ export function GuidedEntryHost({
       })
       onClose()
     },
-    [activeItemType, caseId, instance, language, onClose, onComplete, schema, userId],
+    [activeItemType, canApplyToCase, caseId, instance, language, onClose, onComplete, schema, userId],
   )
 
   const handleCancel = useCallback(() => {

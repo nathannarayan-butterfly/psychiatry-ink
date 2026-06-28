@@ -8,7 +8,7 @@ import { LAUNCHER_TASKS, getLauncherTask } from '../../../data/workspaceLauncher
 import { listGuidedEntrySchemas } from '../../../data/guidedEntry/schemas'
 
 const GUIDED_ITEM_TYPES = new Set(listGuidedEntrySchemas().map((schema) => schema.itemType))
-const STANDALONE_TOOLS = new Set(['rewrite', 'knowledge', 'butterfly', 'interactions'])
+const STANDALONE_TOOLS = new Set(['rewrite', 'knowledge', 'butterfly', 'medication', 'education'])
 
 const NOTION_PAGE_IDS = new Set(NOTION_PAGES.map((p) => p.id))
 const TOP_TABS = new Set([
@@ -55,6 +55,23 @@ describe('launcher task registry', () => {
     // Gutachten / Antrag had no real module or template backing — they were removed.
     expect(ids).not.toContain('gutachten')
     expect(ids).not.toContain('antrag')
+  })
+
+  it('exposes the consolidated standalone tool cards', () => {
+    const ids = LAUNCHER_TASKS.map((t) => t.id)
+    expect(ids).toContain('standalone-medication')
+    expect(ids).toContain('standalone-education')
+    // The narrow interaction-only card was absorbed into the medication hub.
+    expect(ids).not.toContain('standalone-interactions')
+  })
+
+  it('exposes a standalone EEG befund mode alongside ECG', () => {
+    const befund = getLauncherTask('standalone-befund')
+    const itemTypes = (befund?.modes ?? [])
+      .map((m) => (m.target.kind === 'standaloneGuided' ? m.target.itemType : null))
+      .filter(Boolean)
+    expect(itemTypes).toContain('befund-ecg')
+    expect(itemTypes).toContain('befund-eeg')
   })
 
   it('every task has a real i18n label/description and at least one mode', () => {
