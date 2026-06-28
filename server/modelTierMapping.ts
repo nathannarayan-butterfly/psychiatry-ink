@@ -18,7 +18,7 @@ const OPENAI_THOROUGH = process.env.OPENAI_THOROUGH_MODEL ?? 'gpt-5.5'
  * (SCC/DPF), so the standard tier stays Gemini even under EU residency.
  * Overridable via env.
  */
-const GOOGLE_STANDARD_MODEL = process.env.GOOGLE_STANDARD_MODEL ?? 'gemini-3.5-flash'
+const GOOGLE_STANDARD_MODEL = process.env.GOOGLE_STANDARD_MODEL ?? 'gemini-2.5-flash'
 
 /**
  * DeepSeek model id.

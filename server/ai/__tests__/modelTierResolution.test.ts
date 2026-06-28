@@ -108,7 +108,7 @@ describe('resolveStandardTierSpec — env-overridable Standard routing', () => {
   it('defaults to Google Gemini when no STANDARD_PROVIDER env is set', () => {
     const spec = resolveStandardTierSpec()
     expect(spec.provider).toBe('google')
-    expect(spec.modelId).toBe('gemini-3.5-flash')
+    expect(spec.modelId).toBe('gemini-2.5-flash')
   })
 
   it('respects GOOGLE_STANDARD_MODEL for the Gemini model id when provider stays google', () => {
@@ -116,7 +116,7 @@ describe('resolveStandardTierSpec — env-overridable Standard routing', () => {
     const spec = resolveStandardTierSpec()
     expect(spec.provider).toBe('google')
     // Model id falls through to the GOOGLE_STANDARD_MODEL default.
-    expect(spec.modelId).toBe('gemini-3.5-flash')
+    expect(spec.modelId).toBe('gemini-2.5-flash')
   })
 
   it('reroutes Standard to Mistral large via STANDARD_PROVIDER/STANDARD_MODEL', () => {
