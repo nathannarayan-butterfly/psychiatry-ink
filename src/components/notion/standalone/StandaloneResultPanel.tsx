@@ -95,8 +95,7 @@ export function StandaloneResultPanel({
   }, [caseId, noteKind, title, text, noteCategory, t])
 
   return (
-    <div className="wai-overlay" role="dialog" aria-modal="true" aria-label={title}>
-      <div className="wai-panel">
+    <div className="wai-panel wai-panel--inline" aria-label={title}>
         <header className="wai-panel__header">
           <span className="wai-panel__eyebrow">{t('standaloneEyebrow')}</span>
           <h2 className="wai-panel__title">{title}</h2>
@@ -208,7 +207,6 @@ export function StandaloneResultPanel({
             {saved ? t('standaloneSavedToNotes') : t('standaloneSaveToNotes')}
           </button>
         </footer>
-      </div>
     </div>
   )
 }

@@ -1,6 +1,5 @@
 import {
   Activity,
-  BookOpen,
   Brain,
   ClipboardList,
   FileText,
@@ -94,14 +93,17 @@ export type LauncherTarget =
   | { kind: 'standaloneGuided'; itemType: GuidedEntryItemType }
   /**
    * Standalone clinical tool (patient-less workspace): free-text AI
-   * rewrite/structure, knowledge-base + pharma lookup, the global Ask Butterfly
-   * assistant, the ad-hoc medication hub (interactions / receptor profile /
-   * side-effect profile, no patient med plan), or the topic-driven patient
-   * education generator (saved to standalone notes, no patient case source).
+   * rewrite/structure, the focused Ask Butterfly clinical/pharma Q&A assistant,
+   * the ad-hoc medication hub (interactions / receptor profile / side-effect
+   * profile, no patient med plan), or the topic-driven patient education
+   * generator (saved to standalone notes, no patient case source). The full
+   * knowledge-base browser is intentionally NOT a patient-less tool — it
+   * duplicates the main Knowledge Base navigation; focused lookups fold into
+   * Ask Butterfly instead.
    */
   | {
       kind: 'standaloneTool'
-      tool: 'rewrite' | 'knowledge' | 'butterfly' | 'medication' | 'education'
+      tool: 'rewrite' | 'butterfly' | 'medication' | 'education'
     }
 
 /** A single "how do you want to create it?" option shown in the follow-up step. */
@@ -762,32 +764,29 @@ export const LAUNCHER_TASKS: LauncherTask[] = [
     labelKey: 'launcherTaskStandaloneKnowledge',
     descKey: 'launcherTaskStandaloneKnowledgeDesc',
     category: 'medication',
-    icon: BookOpen,
+    icon: Sparkles,
     standaloneOnly: true,
     keywords: [
-      'wissensdatenbank',
-      'knowledge base',
+      'butterfly',
+      'assistent',
+      'assistant',
+      'frage',
+      'question',
       'nachschlagen',
       'lookup',
       'pharma',
       'medikament',
       'arzneimittel',
       'leitlinie',
-      'butterfly',
-      'frage',
-      'question',
+      'guideline',
+      'ki',
+      'ai',
     ],
     modes: [
       {
-        id: 'knowledge',
-        labelKey: 'launcherModeStandaloneKnowledgeOpen',
-        keywords: ['wissensdatenbank', 'knowledge base', 'pharma', 'nachschlagen'],
-        target: { kind: 'standaloneTool', tool: 'knowledge' },
-      },
-      {
         id: 'butterfly',
         labelKey: 'launcherModeStandaloneButterfly',
-        keywords: ['butterfly', 'assistent', 'chat', 'frage', 'ki', 'ai'],
+        keywords: ['butterfly', 'assistent', 'chat', 'frage', 'ki', 'ai', 'nachschlagen', 'pharma'],
         target: { kind: 'standaloneTool', tool: 'butterfly' },
       },
     ],

@@ -34,6 +34,9 @@ const PATIENT_BOUND_CARDS = [
   'discuss',
   'psychopath',
   'arztbrief',
+  // Patientenaufklärung is hidden patient-less: its only standalone mode was the
+  // mis-wired Vorlage/template picker, and it duplicated standalone-education.
+  'patientenaufklaerung',
   // requisition / consultation cards lose all their modes and drop out too
   'anforderungen',
   'konsil',
@@ -47,7 +50,6 @@ const STANDALONE_KEPT_CARDS = [
   'standalone-medication',
   'standalone-education',
   'formulare',
-  'patientenaufklaerung',
 ]
 
 describe('filterLauncherTasksForContext', () => {
@@ -77,18 +79,38 @@ describe('filterLauncherTasksForContext', () => {
     expect(hasKonsilMode(patient)).toBe(true)
   })
 
-  it('keeps Patientenaufklärung but only its template (form) mode without a patient', () => {
-    const standaloneAufklaerung = standalone.find((t) => t.id === 'patientenaufklaerung')
-    expect(standaloneAufklaerung).toBeDefined()
-    const standaloneModeIds = standaloneAufklaerung!.modes.map((m) => m.id)
-    expect(standaloneModeIds).toContain('form')
-    expect(standaloneModeIds).not.toContain('generate')
-    expect(standaloneModeIds).not.toContain('medication-education')
+  it('hides the duplicate/mis-wired Patientenaufklärung card without a patient', () => {
+    // The legacy patientenaufklaerung card (whose only standalone mode opened the
+    // Vorlage/template picker) must not appear patient-less.
+    expect(ids(standalone)).not.toContain('patientenaufklaerung')
 
-    // The patient case still exposes every Patientenaufklärung mode.
+    // The patient case still exposes the full Patientenaufklärung card.
     const patientAufklaerung = patient.find((t) => t.id === 'patientenaufklaerung')
+    expect(patientAufklaerung).toBeDefined()
     const patientModeIds = patientAufklaerung!.modes.map((m) => m.id)
     expect(patientModeIds).toEqual(expect.arrayContaining(['generate', 'medication-education', 'form']))
+  })
+
+  it('exposes exactly ONE patient-education tool without a patient', () => {
+    // Only the topic-driven standalone-education tool — no leftover
+    // patientenaufklaerung duplicate.
+    const educationCards = standalone.filter(
+      (task) =>
+        task.id === 'standalone-education' || task.id === 'patientenaufklaerung',
+    )
+    expect(educationCards.map((t) => t.id)).toEqual(['standalone-education'])
+  })
+
+  it('does NOT expose the full knowledge-base browser as a patient-less tool', () => {
+    const allModes = standalone.flatMap((task) => task.modes)
+    const opensFullKb = allModes.some(
+      (mode) => mode.target.kind === 'standaloneTool' && mode.target.tool === ('knowledge' as never),
+    )
+    expect(opensFullKb).toBe(false)
+    // The Ask-Butterfly card stays, but only as a focused Q&A (butterfly) mode.
+    const butterfly = standalone.find((task) => task.id === 'standalone-knowledge')
+    expect(butterfly).toBeDefined()
+    expect(butterfly!.modes.map((m) => m.id)).toEqual(['butterfly'])
   })
 
   it('keeps the patient-independent card set without a patient', () => {

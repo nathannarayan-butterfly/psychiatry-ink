@@ -8,7 +8,7 @@ import { LAUNCHER_TASKS, getLauncherTask } from '../../../data/workspaceLauncher
 import { listGuidedEntrySchemas } from '../../../data/guidedEntry/schemas'
 
 const GUIDED_ITEM_TYPES = new Set(listGuidedEntrySchemas().map((schema) => schema.itemType))
-const STANDALONE_TOOLS = new Set(['rewrite', 'knowledge', 'butterfly', 'medication', 'education'])
+const STANDALONE_TOOLS = new Set(['rewrite', 'butterfly', 'medication', 'education'])
 
 const NOTION_PAGE_IDS = new Set(NOTION_PAGES.map((p) => p.id))
 const TOP_TABS = new Set([

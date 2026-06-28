@@ -356,11 +356,217 @@
   white-space: nowrap;
 }
 
-/* ── Full-screen wrapper (patient education workspace) ───────────── */
-.swx-fullscreen {
-  position: fixed;
-  inset: 0;
-  z-index: 1200;
-  overflow: auto;
+/* ── In-container standalone tool host ───────────────────────────────
+   Standalone tools render INSIDE the scrollable workspace canvas
+   (`.notion-preview-canvas--workspace`) — never as a fixed full-viewport
+   overlay that would hide the left icon rail or block page scroll. The host
+   owns the scroll and constrains the tool to a comfortable reading column. */
+.swx-host {
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.swx-host__inner {
+  width: 100%;
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 1rem 1.25rem 3rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.swx-host__bar {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.swx-host__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.7rem 0.4rem 0.5rem;
+  border: 1px solid var(--border-soft, #e8e4df);
+  border-radius: 8px;
   background: var(--surface, #fff);
+  color: var(--text-secondary, #6d655c);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+.swx-host__back:hover {
+  background: var(--surface-hover, #f5f3f0);
+  color: var(--text-main, #24211e);
+  border-color: var(--border-strong, #c8c4be);
+}
+
+/* In-flow variant of the workspace-ai panel: no fixed backdrop, fills the host
+   column, no internal viewport-relative height cap (the host scrolls). */
+.wai-panel--inline {
+  width: 100%;
+  max-height: none;
+  box-shadow: none;
+}
+.wai-panel--inline .wai-panel__body {
+  overflow: visible;
+}
+
+/* ── DB-vs-AI provenance badges (medication tool) ─────────────────── */
+.swx-chip--ai {
+  background: color-mix(in srgb, var(--warning, #b8860b) 12%, transparent);
+  border-color: color-mix(in srgb, var(--warning, #b8860b) 35%, transparent);
+}
+.swx-chip__tag {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.05rem 0.3rem;
+  border-radius: 999px;
+  color: #fff;
+}
+.swx-chip__tag--db {
+  background: var(--accent, #4a7c59);
+}
+.swx-chip__tag--ai {
+  background: var(--warning, #b8860b);
+}
+.swx-aicheck {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border-soft, #e8e4df);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+}
+.swx-aicheck__answer {
+  margin: 0;
+  white-space: pre-wrap;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--text-main, #24211e);
+}
+.swx-aicheck__model {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--text-secondary, #6d655c);
+}
+.swx-aicheck__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* ── Jot / quick-note composer (workspace home notes panel) ──────── */
+.swx-notes__compose {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.swx-notes__compose-input {
+  width: 100%;
+  border: 1px solid var(--border-strong, #c8c4be);
+  border-radius: 9px;
+  background: var(--surface, #fff);
+  color: var(--text-main, #24211e);
+  font: inherit;
+  padding: 0.5rem 0.65rem;
+}
+.swx-notes__compose-area {
+  width: 100%;
+  min-height: 72px;
+  resize: vertical;
+  border: 1px solid var(--border-strong, #c8c4be);
+  border-radius: 9px;
+  background: var(--surface, #fff);
+  color: var(--text-main, #24211e);
+  font: inherit;
+  line-height: 1.5;
+  padding: 0.55rem 0.7rem;
+}
+.swx-notes__compose-input:focus,
+.swx-notes__compose-area:focus {
+  outline: none;
+  border-color: var(--accent, #8a5a2b);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #8a5a2b) 16%, transparent);
+}
+.swx-notes__compose-row {
+  display: flex;
+  justify-content: flex-end;
+}
+.swx-notes__compose-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--accent, #8a5a2b);
+  border-radius: 8px;
+  background: var(--accent, #8a5a2b);
+  color: #fff;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.swx-notes__compose-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.swx-notes__empty {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #6d655c);
+}
+
+/* ── Full-screen wrapper (legacy) — neutralized to in-flow ────────── */
+.swx-fullscreen {
+  display: block;
+  width: 100%;
+}
+
+/* In-container patient-education workspace: give the multi-section workspace a
+   comfortable working height while still flowing inside the host scroll area. */
+.swx-education {
+  display: flex;
+  flex-direction: column;
+  min-height: 60vh;
+}
+.swx-education > .workspace-panel {
+  flex: 1 1 auto;
+}
+
+/* ── Large in-container rewrite editor (#3) ──────────────────────── */
+.swx-rewrite__editor {
+  width: 100%;
+  min-height: clamp(20rem, 48vh, 34rem);
+  resize: vertical;
+  border: 1px solid var(--border-strong, #c8c4be);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  color: var(--text-main, #24211e);
+  font: inherit;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  padding: 0.9rem 1.05rem;
+}
+.swx-rewrite__editor:focus {
+  outline: none;
+  border-color: var(--accent, #8a5a2b);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #8a5a2b) 16%, transparent);
+}
+.swx-rewrite__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+.swx-rewrite__controls .swx-field {
+  flex: 1 1 14rem;
+  min-width: 0;
 }

@@ -151,80 +151,73 @@ export function StandaloneBefundWidget({ itemType, caseId, onClose }: Standalone
 
   if (phase === 'correlate') {
     return (
-      <div
-        className="wai-overlay"
-        role="dialog"
-        aria-modal="true"
-        aria-label={t('standaloneEcgCorrelateTitle')}
-      >
-        <div className="wai-panel">
-          <header className="wai-panel__header">
-            <h2 className="wai-panel__title">{t('standaloneEcgCorrelateTitle')}</h2>
-            <button
-              type="button"
-              className="wai-panel__close"
-              onClick={() => setPhase('result')}
-              aria-label={t('dokumenteClose')}
-            >
-              <X className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-            </button>
-          </header>
+      <div className="wai-panel wai-panel--inline" aria-label={t('standaloneEcgCorrelateTitle')}>
+        <header className="wai-panel__header">
+          <h2 className="wai-panel__title">{t('standaloneEcgCorrelateTitle')}</h2>
+          <button
+            type="button"
+            className="wai-panel__close"
+            onClick={() => setPhase('result')}
+            aria-label={t('dokumenteClose')}
+          >
+            <X className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+          </button>
+        </header>
 
-          <div className="wai-panel__body">
-            <div className="swx-form">
-              <p className="swx-empty">{t('standaloneEcgCorrelateHint')}</p>
-              <MedicationDrugSuggest
-                value={query}
-                label={t('standaloneInteractionsAddLabel')}
-                onChange={setQuery}
-                onSelect={addDrug}
-              />
-              {drugs.length > 0 ? (
-                <div className="swx-chips">
-                  {drugs.map((drug, index) => (
-                    <span key={`${drug.key}-${index}`} className="swx-chip">
-                      {drug.substance}
-                      <button
-                        type="button"
-                        className="swx-chip__remove"
-                        onClick={() => removeDrug(index)}
-                        aria-label={t('standaloneInteractionsRemove')}
-                        title={t('standaloneInteractionsRemove')}
-                      >
-                        <X className="h-3 w-3" strokeWidth={2} aria-hidden />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              ) : null}
+        <div className="wai-panel__body">
+          <div className="swx-form">
+            <p className="swx-empty">{t('standaloneEcgCorrelateHint')}</p>
+            <MedicationDrugSuggest
+              value={query}
+              label={t('standaloneInteractionsAddLabel')}
+              onChange={setQuery}
+              onSelect={addDrug}
+            />
+            {drugs.length > 0 ? (
+              <div className="swx-chips">
+                {drugs.map((drug, index) => (
+                  <span key={`${drug.key}-${index}`} className="swx-chip">
+                    {drug.substance}
+                    <button
+                      type="button"
+                      className="swx-chip__remove"
+                      onClick={() => removeDrug(index)}
+                      aria-label={t('standaloneInteractionsRemove')}
+                      title={t('standaloneInteractionsRemove')}
+                    >
+                      <X className="h-3 w-3" strokeWidth={2} aria-hidden />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            ) : null}
 
-              <CombinationCheckPanel
-                caseId={caseId}
-                medications={medications}
-                state={state}
-                language={language}
-              />
-            </div>
+            <CombinationCheckPanel
+              caseId={caseId}
+              medications={medications}
+              state={state}
+              language={language}
+            />
           </div>
-
-          <footer className="wai-panel__footer">
-            <button
-              type="button"
-              className="wai-btn wai-btn--ghost"
-              onClick={() => setPhase('result')}
-            >
-              {t('standaloneCancel')}
-            </button>
-            <button
-              type="button"
-              className="wai-btn wai-btn--primary"
-              onClick={appendCorrelation}
-              disabled={drugs.length === 0}
-            >
-              {t('standaloneEcgCorrelateAppend')}
-            </button>
-          </footer>
         </div>
+
+        <footer className="wai-panel__footer">
+          <button
+            type="button"
+            className="wai-btn wai-btn--ghost"
+            onClick={() => setPhase('result')}
+          >
+            {t('standaloneCancel')}
+          </button>
+          <button
+            type="button"
+            className="wai-btn wai-btn--primary"
+            onClick={appendCorrelation}
+            disabled={drugs.length === 0}
+          >
+            {t('standaloneEcgCorrelateAppend')}
+          </button>
+        </footer>
       </div>
     )
   }

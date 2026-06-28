@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { X } from 'lucide-react'
+import { ChevronLeft, X } from 'lucide-react'
 import { UnsavedChangesDialog } from './UnsavedChangesDialog'
 import { getCaseMeta, isListedPatientCase, ensureCaseRegistryHydrated } from '../../hooks/useCaseRegistry'
 import { flushSync } from 'react-dom'
@@ -76,7 +76,6 @@ import { StandaloneBefundWidget } from './standalone/StandaloneBefundWidget'
 import { StandaloneRewriteWidget } from './standalone/StandaloneRewriteWidget'
 import { StandaloneMedicationWidget } from './standalone/StandaloneMedicationWidget'
 import { StandaloneEducationWidget } from './standalone/StandaloneEducationWidget'
-import { KnowledgeBaseTile } from '../dashboard/KnowledgeBase'
 import { useAskButterfly } from '../../contexts/AskButterflyContext'
 import type { LauncherTarget } from '../../data/workspaceLauncher/launcherTasks'
 import {
@@ -561,7 +560,7 @@ function NotionAppInner({
   // Standalone (patient-less) workspace widgets launched from the launcher.
   const [standaloneGuided, setStandaloneGuided] = useState<GuidedEntryItemType | null>(null)
   const [standaloneTool, setStandaloneTool] = useState<
-    'rewrite' | 'knowledge' | 'medication' | 'education' | null
+    'rewrite' | 'medication' | 'education' | null
   >(null)
   const askButterfly = useAskButterfly()
   const [expandDokumentId, setExpandDokumentId] = useState<string | null>(null)
@@ -1642,6 +1641,11 @@ function NotionAppInner({
     [handlePageSelect, handleTopTabSelect, onSelectAssessmentStandard, workspace],
   )
 
+  const closeStandaloneSurface = useCallback(() => {
+    setStandaloneGuided(null)
+    setStandaloneTool(null)
+  }, [])
+
   const handleLauncherLaunch = useCallback(
     (target: LauncherTarget) => {
       // Defense-in-depth: in the patient-less workspace, never route to a
@@ -2368,12 +2372,54 @@ function NotionAppInner({
               isPageAvailableForLanguage('discharge-summary', language) ? (
               <DischargeSummaryWorkspace caseId={storageCaseId} disabled={workspaceReadOnly} />
             ) : showWorkspaceLauncher ? (
-              <WorkspaceLauncher
-                onLaunch={handleLauncherLaunch}
-                hasPatient={hasPatient}
-                canRequestAnforderungen={canRequestAnforderungen}
-                notesCaseId={hasPatient ? null : storageCaseId}
-              />
+              standaloneGuided || standaloneTool ? (
+                <div className="swx-host">
+                  <div className="swx-host__inner">
+                    <div className="swx-host__bar">
+                      <button
+                        type="button"
+                        className="swx-host__back"
+                        onClick={closeStandaloneSurface}
+                      >
+                        <ChevronLeft className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+                        {t('standaloneBackToWorkspace')}
+                      </button>
+                    </div>
+                    {standaloneGuided ? (
+                      <StandaloneBefundWidget
+                        itemType={standaloneGuided}
+                        caseId={storageCaseId}
+                        onClose={closeStandaloneSurface}
+                      />
+                    ) : null}
+                    {standaloneTool === 'rewrite' ? (
+                      <StandaloneRewriteWidget
+                        caseId={storageCaseId}
+                        onClose={closeStandaloneSurface}
+                      />
+                    ) : null}
+                    {standaloneTool === 'medication' ? (
+                      <StandaloneMedicationWidget
+                        caseId={storageCaseId}
+                        onClose={closeStandaloneSurface}
+                      />
+                    ) : null}
+                    {standaloneTool === 'education' ? (
+                      <StandaloneEducationWidget
+                        caseId={storageCaseId}
+                        onClose={closeStandaloneSurface}
+                      />
+                    ) : null}
+                  </div>
+                </div>
+              ) : (
+                <WorkspaceLauncher
+                  onLaunch={handleLauncherLaunch}
+                  hasPatient={hasPatient}
+                  canRequestAnforderungen={canRequestAnforderungen}
+                  notesCaseId={hasPatient ? null : storageCaseId}
+                />
+              )
             ) : (
               <>
                 {hasDraftOnlyBanner && workspace.selectedDocumentType && (
@@ -2555,39 +2601,6 @@ function NotionAppInner({
           caseId={storageCaseId}
           onClose={() => setAiFeaturePanel(null)}
         />
-      ) : null}
-
-      {standaloneGuided ? (
-        <StandaloneBefundWidget
-          itemType={standaloneGuided}
-          caseId={storageCaseId}
-          onClose={() => setStandaloneGuided(null)}
-        />
-      ) : null}
-
-      {standaloneTool === 'rewrite' ? (
-        <StandaloneRewriteWidget
-          caseId={storageCaseId}
-          onClose={() => setStandaloneTool(null)}
-        />
-      ) : null}
-
-      {standaloneTool === 'medication' ? (
-        <StandaloneMedicationWidget
-          caseId={storageCaseId}
-          onClose={() => setStandaloneTool(null)}
-        />
-      ) : null}
-
-      {standaloneTool === 'education' ? (
-        <StandaloneEducationWidget
-          caseId={storageCaseId}
-          onClose={() => setStandaloneTool(null)}
-        />
-      ) : null}
-
-      {standaloneTool === 'knowledge' ? (
-        <KnowledgeBaseTile defaultOpen onRequestClose={() => setStandaloneTool(null)} />
       ) : null}
 
       {todoQuickAddOpen ? (
