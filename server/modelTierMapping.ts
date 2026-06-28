@@ -7,7 +7,27 @@ export interface AiModelSpec {
   label: string
 }
 
-const OPENAI_THOROUGH = process.env.OPENAI_THOROUGH_MODEL ?? 'gpt-5.5'
+/**
+ * Gründlich (thorough) tier default model.
+ *
+ * Defaults to `gpt-5.4` (a GPT-5-series reasoning model). gpt-5.4 is matched by
+ * `isGpt5ReasoningModel()` in `llmProvider.ts` (regex `/^gpt-5/i`), so the call
+ * path still sends `max_completion_tokens` and omits a custom `temperature`.
+ * Overridable via env (Cloud Run sets `OPENAI_THOROUGH_MODEL=gpt-5.4`).
+ */
+const OPENAI_THOROUGH = process.env.OPENAI_THOROUGH_MODEL ?? 'gpt-5.4'
+
+/**
+ * "Maximum" opt-in model — the most capable (highest-cost) model, used ONLY when
+ * a clinician explicitly opts into Maximum for a single generation. It is NOT a
+ * tier default: it is applied as an explicit model override (see
+ * {@link resolveMaximumModelSpec} and `server/routes/generate.ts`). Defaults to
+ * `gpt-5.5` and is overridable via env. Like gpt-5.4 it is a GPT-5-series
+ * reasoning model (covered by `isGpt5ReasoningModel()`), and as an OpenAI (US)
+ * provider it is permitted under `LLM_RESIDENCY=eu` (SCC/DPF); under strict mode
+ * the residency resolver degrades it to the thorough-tier EU fallback.
+ */
+const OPENAI_MAXIMUM = process.env.OPENAI_MAXIMUM_MODEL ?? 'gpt-5.5'
 
 /**
  * Google Gemini model id for the STANDARD tier.
@@ -103,7 +123,8 @@ export function resolveStandardTierSpec(): AiModelSpec {
  * Distinct model per user-selectable tier (Economical / Standard / Gründlich):
  *   fast     → DeepSeek deepseek-v4-flash (cheapest; the non-EU economical primary)
  *   standard → Google Gemini (balanced; US residency, allowed under EU) — env-overridable
- *   thorough → OpenAI gpt-5.5 reasoning model (most capable)
+ *   thorough → OpenAI gpt-5.4 reasoning model (most capable default; gpt-5.5 is
+ *              available as the explicit "Maximum" opt-in override only)
  *
  * The fallbacks are residency-aware: the fast tier falls back to Mistral small
  * (EU) so that under `LLM_RESIDENCY=eu` the economical tier reroutes to an
@@ -149,6 +170,21 @@ export function mistralSpecForTier(tier: AiModelTier): AiModelSpec {
     provider: 'mistral',
     modelId,
     label: `Mistral AI (${modelId})`,
+  }
+}
+
+/**
+ * Explicit "Maximum" model spec — the top model (gpt-5.5) a clinician can opt
+ * into for a single generation. Resolved as a model override (not a tier
+ * default). Env-overridable via `OPENAI_MAXIMUM_MODEL`. Routed through the same
+ * residency gate as any other OpenAI call (allowed under EU SCC/DPF; degrades to
+ * the thorough-tier EU fallback under strict mode).
+ */
+export function resolveMaximumModelSpec(): AiModelSpec {
+  return {
+    provider: 'openai',
+    modelId: OPENAI_MAXIMUM,
+    label: `OpenAI latest (${OPENAI_MAXIMUM})`,
   }
 }
 

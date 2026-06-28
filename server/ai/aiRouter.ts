@@ -5,7 +5,8 @@
  * never exposed in the user-facing API):
  *   economic   → fast    (DeepSeek Flash — cheapest, fastest; Mistral small under EU)
  *   standard   → standard (Google Gemini — balanced)
- *   gruendlich → thorough (OpenAI gpt-5.5 — most capable)
+ *   gruendlich → thorough (OpenAI gpt-5.4 — most capable default; gpt-5.5 only via
+ *                          the explicit "Maximum" opt-in model override)
  */
 
 import type { AiMode } from '../../src/types/aiUsage'
