@@ -19,7 +19,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { KbCategory, KnowledgeEntry, KnowledgeEntrySection } from '../../data/knowledgeBaseSeedData'
-import { KB_PRESET_CATEGORIES, kbCustomCategories } from '../../data/kbCategories'
+import { KB_PRESET_CATEGORIES, kbCategoryLabelEn, kbCustomCategories } from '../../data/kbCategories'
 import { useTranslation } from '../../context/TranslationContext'
 import { useKnowledgeBaseAnnotations } from '../../hooks/useKnowledgeBaseAnnotations'
 import { useKnowledgeBaseClinical } from '../../hooks/useKnowledgeBaseClinical'
@@ -742,7 +742,7 @@ function AddClinicalEntryDialog({
   onSave: (entry: Omit<KnowledgeEntry, 'id' | 'createdAt' | 'updatedAt'>) => void
   onCancel: () => void
 }) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const [title, setTitle] = useState('')
   const [category, setCategory] = useState<KbCategory>('Klinik')
   const [customCategory, setCustomCategory] = useState('')
@@ -782,7 +782,7 @@ function AddClinicalEntryDialog({
         <form onSubmit={handleSubmit} className="kb-dialog__form">
           <div className="kb-dialog__field">
             <label className="kb-dialog__label">{t('kbFieldTitle')}</label>
-            <input className="kb-dialog__input" value={title} onChange={(e) => setTitle(e.target.value)} required />
+            <input className="kb-dialog__input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t('kbFieldTitlePlaceholder')} required />
           </div>
           <div className="kb-dialog__field">
             <label className="kb-dialog__label">{t('kbFieldCategory')}</label>
@@ -800,7 +800,9 @@ function AddClinicalEntryDialog({
                 }}
               >
                 {selectableCategories.map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
+                  <option key={cat} value={cat}>
+                    {pickKbLocalizedText(cat, kbCategoryLabelEn(cat), language)}
+                  </option>
                 ))}
                 <option value="__custom__">{t('kbCategoryCustom')}</option>
               </select>
@@ -819,11 +821,11 @@ function AddClinicalEntryDialog({
           </div>
           <div className="kb-dialog__field kb-dialog__field--grow">
             <label className="kb-dialog__label">{t('kbFieldContent')}</label>
-            <textarea className="kb-dialog__textarea" value={content} onChange={(e) => setContent(e.target.value)} required />
+            <textarea className="kb-dialog__textarea" value={content} onChange={(e) => setContent(e.target.value)} placeholder={t('kbFieldContentPlaceholder')} required />
           </div>
           <div className="kb-dialog__field">
             <label className="kb-dialog__label">{t('kbFieldTags')}</label>
-            <input className="kb-dialog__input" value={tagsInput} onChange={(e) => setTagsInput(e.target.value)} />
+            <input className="kb-dialog__input" value={tagsInput} onChange={(e) => setTagsInput(e.target.value)} placeholder={t('kbFieldTagsPlaceholder')} />
           </div>
           <div className="kb-dialog__actions">
             <button type="button" className="new-patient-dialog__btn new-patient-dialog__btn--cancel" onClick={onCancel}>{t('newPatientAbbrechen')}</button>

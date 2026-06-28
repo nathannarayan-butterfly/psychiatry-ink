@@ -103,6 +103,17 @@ export const GERMAN_TOKENS: readonly string[] = [
   // "diagnose" ("does not diagnose patients"). German-only forms are kept below.
   'Diagnosen',
   'Diagnostik',
+  // ── KB clinical category enum (canonical German; English variants live in
+  // KB_CATEGORY_EN). These are rendered verbatim by some surfaces, so the
+  // detector must recognize them to catch a raw-enum leak into the English UI.
+  // All are German-only spellings (English: Pharmacology / Clinical /
+  // Guidelines / Psychopathology / Other); "Diagnostik" (Assessment) is above.
+  'Pharmakologie',
+  'Klinik',
+  'Leitlinie',
+  'Leitlinien',
+  'Psychopathologie',
+  'Sonstiges',
   'Aufnahme',
   'Verlauf',
   'Anamnese',
