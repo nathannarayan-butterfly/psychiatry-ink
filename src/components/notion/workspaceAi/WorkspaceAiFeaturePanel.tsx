@@ -131,10 +131,9 @@ export function WorkspaceAiFeaturePanel({ feature, caseId, onClose }: WorkspaceA
     }
   }, [caseId, config, language, t])
 
-  useEffect(() => {
-    void generate()
-  }, [generate])
-
+  // NOTE: generation is EXPLICIT — never auto-run on mount. Spending credits
+  // (and pulling case context) must require a deliberate clinician action, so
+  // the panel opens in the `idle` state with a Generate button.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose()
@@ -218,7 +217,20 @@ export function WorkspaceAiFeaturePanel({ feature, caseId, onClose }: WorkspaceA
         </header>
 
         <div className="wai-panel__body">
-          {busy ? (
+          {status === 'idle' ? (
+            <div className="wai-panel__state">
+              <p>{t(config.instructionKey)}</p>
+              <button
+                type="button"
+                className="wai-btn wai-btn--primary"
+                onClick={() => void generate()}
+                disabled={!caseId}
+              >
+                <Sparkles className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+                {t('workspaceAiGenerate')}
+              </button>
+            </div>
+          ) : busy ? (
             <div className="wai-panel__state">
               <Loader2 className="h-5 w-5 wai-spin" strokeWidth={2} aria-hidden />
               <p>{t('workspaceAiGenerating')}</p>

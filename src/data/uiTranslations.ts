@@ -17564,6 +17564,12 @@ export const uiTranslations = {
     fr: 'Résultat ECG',
     es: 'Resultado de ECG',
   },
+  launcherModeStandaloneEeg: {
+    de: 'EEG-Befund',
+    en: 'EEG finding',
+    fr: 'Résultat EEG',
+    es: 'Resultado de EEG',
+  },
   launcherTaskStandaloneRewrite: {
     de: 'Text strukturieren',
     en: 'Structure text',
@@ -17611,6 +17617,30 @@ export const uiTranslations = {
     en: 'Check drug–drug interactions ad hoc',
     fr: 'Vérifier les interactions médicamenteuses à la volée',
     es: 'Comprobar interacciones farmacológicas sobre la marcha',
+  },
+  launcherTaskStandaloneMedication: {
+    de: 'Medikamentencheck',
+    en: 'Medication check',
+    fr: 'Vérification des médicaments',
+    es: 'Comprobación de medicación',
+  },
+  launcherTaskStandaloneMedicationDesc: {
+    de: 'Wechselwirkungen, Rezeptorprofil und Nebenwirkungen ad hoc prüfen',
+    en: 'Check interactions, receptor profile and side effects ad hoc',
+    fr: 'Vérifier interactions, profil récepteur et effets indésirables à la volée',
+    es: 'Comprobar interacciones, perfil de receptores y efectos adversos sobre la marcha',
+  },
+  launcherTaskStandaloneEducation: {
+    de: 'Patientenaufklärung',
+    en: 'Patient education',
+    fr: 'Information du patient',
+    es: 'Información al paciente',
+  },
+  launcherTaskStandaloneEducationDesc: {
+    de: 'Aufklärungstext zu einem Thema erstellen und als Notiz speichern',
+    en: 'Generate an education text on a topic and save it as a note',
+    fr: 'Générer un texte d’information sur un thème et l’enregistrer comme note',
+    es: 'Generar un texto informativo sobre un tema y guardarlo como nota',
   },
 
   // Standalone widget surface (result panel, notes panel, widgets)
@@ -17710,6 +17740,12 @@ export const uiTranslations = {
     fr: 'Constat ECG',
     es: 'Hallazgos del ECG',
   },
+  standaloneBefundEegTitle: {
+    de: 'EEG-Befund',
+    en: 'EEG findings',
+    fr: 'Constat EEG',
+    es: 'Hallazgos del EEG',
+  },
   standaloneRewriteTitle: {
     de: 'Text strukturieren / umschreiben',
     en: 'Structure / rewrite text',
@@ -17807,6 +17843,156 @@ export const uiTranslations = {
     es: 'Quitar',
   },
 
+  // Standalone medication hub (interactions / receptor / side-effects)
+  standaloneMedicationTitle: {
+    de: 'Medikamentencheck',
+    en: 'Medication check',
+    fr: 'Vérification des médicaments',
+    es: 'Comprobación de medicación',
+  },
+  standaloneMedicationHint: {
+    de: 'Wirkstoffe hinzufügen, um Wechselwirkungen, Rezeptorprofil und Nebenwirkungen zu prüfen. Es wird kein Medikationsplan eines Patienten verändert.',
+    en: 'Add substances to check interactions, receptor profile and side effects. No patient medication plan is modified.',
+    fr: 'Ajoutez des substances pour vérifier les interactions, le profil récepteur et les effets indésirables. Aucun plan de médication d’un patient n’est modifié.',
+    es: 'Añada sustancias para comprobar interacciones, perfil de receptores y efectos adversos. No se modifica ningún plan de medicación de un paciente.',
+  },
+  standaloneMedicationTabInteractions: {
+    de: 'Wechselwirkungen',
+    en: 'Interactions',
+    fr: 'Interactions',
+    es: 'Interacciones',
+  },
+  standaloneMedicationTabReceptor: {
+    de: 'Rezeptorprofil',
+    en: 'Receptor profile',
+    fr: 'Profil récepteur',
+    es: 'Perfil de receptores',
+  },
+  standaloneMedicationTabSideEffects: {
+    de: 'Nebenwirkungen',
+    en: 'Side effects',
+    fr: 'Effets indésirables',
+    es: 'Efectos adversos',
+  },
+  standaloneMedicationEmptyReceptor: {
+    de: 'Mindestens einen Wirkstoff hinzufügen, um das Rezeptorprofil anzuzeigen.',
+    en: 'Add at least one substance to show the receptor profile.',
+    fr: 'Ajoutez au moins une substance pour afficher le profil récepteur.',
+    es: 'Añada al menos una sustancia para mostrar el perfil de receptores.',
+  },
+  standaloneMedicationEmptySideEffects: {
+    de: 'Mindestens einen Wirkstoff mit Referenzdaten hinzufügen, um das Nebenwirkungsprofil anzuzeigen.',
+    en: 'Add at least one substance with reference data to show the side-effect profile.',
+    fr: 'Ajoutez au moins une substance disposant de données de référence pour afficher le profil d’effets indésirables.',
+    es: 'Añada al menos una sustancia con datos de referencia para mostrar el perfil de efectos adversos.',
+  },
+  standaloneMedicationSideEffectsHeading: {
+    de: 'Häufige Nebenwirkungen (regimeweit)',
+    en: 'Common side effects (across the regimen)',
+    fr: 'Effets indésirables fréquents (sur l’ensemble du schéma)',
+    es: 'Efectos adversos frecuentes (en todo el régimen)',
+  },
+  standaloneMedicationMonitoringHeading: {
+    de: 'Monitoring-Parameter',
+    en: 'Monitoring parameters',
+    fr: 'Paramètres de surveillance',
+    es: 'Parámetros de monitorización',
+  },
+  standaloneMedicationSaveSummary: {
+    de: 'Zusammenfassung speichern',
+    en: 'Save summary',
+    fr: 'Enregistrer le résumé',
+    es: 'Guardar resumen',
+  },
+  standaloneMedicationSummaryTitle: {
+    de: 'Medikamentencheck — Zusammenfassung',
+    en: 'Medication check — summary',
+    fr: 'Vérification des médicaments — résumé',
+    es: 'Comprobación de medicación: resumen',
+  },
+  standaloneMedicationSummaryHeading: {
+    de: 'Medikation — Analyse',
+    en: 'Medication — analysis',
+    fr: 'Médication — analyse',
+    es: 'Medicación: análisis',
+  },
+  standaloneMedicationSummaryDrugs: {
+    de: 'Wirkstoffe',
+    en: 'Substances',
+    fr: 'Substances',
+    es: 'Sustancias',
+  },
+  standaloneMedicationSummaryRisks: {
+    de: 'Kombinationsrisiken',
+    en: 'Combination risks',
+    fr: 'Risques de combinaison',
+    es: 'Riesgos de combinación',
+  },
+  standaloneMedicationSummaryInteractions: {
+    de: 'Wechselwirkungen (paarweise)',
+    en: 'Interactions (pairwise)',
+    fr: 'Interactions (par paire)',
+    es: 'Interacciones (por pares)',
+  },
+  standaloneMedicationSummarySideEffects: {
+    de: 'Nebenwirkungssignale',
+    en: 'Side-effect signals',
+    fr: 'Signaux d’effets indésirables',
+    es: 'Señales de efectos adversos',
+  },
+  standaloneMedicationSummaryMonitoring: {
+    de: 'Monitoring',
+    en: 'Monitoring',
+    fr: 'Surveillance',
+    es: 'Monitorización',
+  },
+  standaloneMedicationSummaryNone: {
+    de: 'Für die gewählten Wirkstoffe liegen keine Referenzdaten vor.',
+    en: 'No reference data available for the selected substances.',
+    fr: 'Aucune donnée de référence disponible pour les substances sélectionnées.',
+    es: 'No hay datos de referencia disponibles para las sustancias seleccionadas.',
+  },
+  standaloneMedicationSideEffectCount: {
+    de: '{count} Präparate',
+    en: '{count} drugs',
+    fr: '{count} médicaments',
+    es: '{count} fármacos',
+  },
+
+  // Standalone ECG ↔ medication correlation step
+  standaloneEcgCorrelate: {
+    de: 'Mit Medikation korrelieren',
+    en: 'Correlate with medication',
+    fr: 'Corréler avec la médication',
+    es: 'Correlacionar con la medicación',
+  },
+  standaloneEcgCorrelateTitle: {
+    de: 'EKG mit Medikation korrelieren',
+    en: 'Correlate ECG with medication',
+    fr: 'Corréler l’ECG avec la médication',
+    es: 'Correlacionar el ECG con la medicación',
+  },
+  standaloneEcgCorrelateHint: {
+    de: 'Wirkstoffe hinzufügen, um QT-Zeit- und Wechselwirkungsrisiken zu prüfen. Die Zusammenfassung wird an den Befundtext angehängt.',
+    en: 'Add substances to check QT-interval and interaction risks. The summary is appended to the finding text.',
+    fr: 'Ajoutez des substances pour vérifier les risques d’allongement du QT et d’interaction. Le résumé est ajouté au texte du constat.',
+    es: 'Añada sustancias para comprobar los riesgos de intervalo QT e interacciones. El resumen se añade al texto del hallazgo.',
+  },
+  standaloneEcgCorrelateAppend: {
+    de: 'Zusammenfassung anhängen',
+    en: 'Append summary',
+    fr: 'Ajouter le résumé',
+    es: 'Añadir resumen',
+  },
+
+  // Standalone patient education
+  standaloneEducationTitle: {
+    de: 'Patientenaufklärung',
+    en: 'Patient education',
+    fr: 'Information du patient',
+    es: 'Información al paciente',
+  },
+
   // Creation modes
   launcherModeArztbriefNew: { de: 'Neuer Arztbrief', en: 'New physician letter', fr: 'Nouveau courrier médical', es: 'Nuevo informe médico' },
   launcherModeDischargeSummary: { de: 'Entlassbrief (Englisch)', en: 'Discharge summary', fr: 'Lettre de sortie', es: 'Resumen de alta' },
@@ -17843,6 +18029,7 @@ export const uiTranslations = {
     fr: 'Échec de la génération. Veuillez réessayer.',
     es: 'La generación falló. Inténtelo de nuevo.',
   },
+  workspaceAiGenerate: { de: 'Generieren', en: 'Generate', fr: 'Générer', es: 'Generar' },
   workspaceAiRetry: { de: 'Erneut versuchen', en: 'Try again', fr: 'Réessayer', es: 'Reintentar' },
   workspaceAiCopy: { de: 'Kopieren', en: 'Copy', fr: 'Copier', es: 'Copiar' },
   workspaceAiExport: { de: 'Exportieren', en: 'Export', fr: 'Exporter', es: 'Exportar' },
