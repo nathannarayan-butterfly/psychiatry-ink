@@ -1446,10 +1446,10 @@ export const uiTranslations = {
     es: 'Orientación estructurada de criterios — no es un diagnóstico automático, revisión clínica requerida.',
   },
   butterflyIdle: {
-    de: 'Butterfly beobachtet — noch nicht genügend Daten.',
-    en: 'Butterfly is observing — not enough data yet.',
-    fr: 'Butterfly observe — pas encore assez de données.',
-    es: 'Butterfly está observando — aún no hay datos suficientes.',
+    de: 'Butterfly bereitet die Kriterienprüfung vor …',
+    en: 'Butterfly is preparing the criteria check …',
+    fr: 'Butterfly prépare la vérification des critères …',
+    es: 'Butterfly está preparando la verificación de criterios …',
   },
   butterflyIdleNoDiagnosis: {
     de: 'Butterfly beobachtet — noch keine Diagnose zur Prüfung eingetragen.',
@@ -1470,10 +1470,10 @@ export const uiTranslations = {
     es: 'La verificación de criterios para este diagnóstico aún no está disponible.',
   },
   butterflyIdleHint: {
-    de: 'Sobald genügend strukturierte Befunde vorliegen, erscheinen hier Kriterien-Empfehlungen.',
-    en: 'Once enough structured findings are documented, criteria recommendations appear here.',
-    fr: 'Dès que suffisamment de données structurées sont documentées, des recommandations apparaissent ici.',
-    es: 'Cuando se documenten suficientes hallazgos estructurados, aquí aparecerán recomendaciones.',
+    de: 'Die kostenlose ICD-Kriterienprüfung wird gerade aus den dokumentierten Befunden erstellt und erscheint gleich. Eine KI-Prüfung bleibt optional — Sie starten sie bei Bedarf später mit „Mit Butterfly prüfen“.',
+    en: 'The free ICD criteria check is being built from the documented findings and will appear shortly. An AI check stays optional — start it later with “Check with Butterfly”.',
+    fr: 'La vérification gratuite des critères CIM est en cours de préparation à partir des données documentées et apparaîtra sous peu. La vérification par IA reste optionnelle — lancez-la au besoin avec « Vérifier avec Butterfly ».',
+    es: 'La verificación gratuita de criterios CIE se está generando a partir de los hallazgos documentados y aparecerá en breve. La verificación con IA es opcional — iníciela cuando lo necesite con «Verificar con Butterfly».',
   },
   butterflyRecommendations: {
     de: 'Empfehlungen',
