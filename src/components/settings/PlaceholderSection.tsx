@@ -14,6 +14,12 @@ import { PRESCRIBING_COUNTRIES, usePrescribingCountry } from '../../hooks/usePre
 import type { PrescribingCountryCode } from '../../types/knowledgeBase'
 import { CountryCombobox } from './CountryCombobox'
 import { SettingsField } from './SettingsField'
+import { PasswordInput } from '../auth/PasswordInput'
+import {
+  ACCOUNT_PASSWORD_MIN_LENGTH,
+  changeAccountPassword,
+} from '../../utils/accountPassword'
+import { mapSupabaseAuthError } from '../../lib/supabase'
 
 /** German-speaking + UK markets pinned to the top of the country list. */
 const PRESCRIBING_PRIORITY_CODES = ['DE', 'AT', 'CH', 'LI', 'UK'] as const
@@ -158,7 +164,7 @@ export function LanguageSection({
 
 export function AccountSection() {
   const { t } = useTranslation()
-  const { user } = useAuth()
+  const { user, signIn } = useAuth()
   const { profile, saveProfile } = useAccountProfile()
 
   const authMetadata = user?.user_metadata as Record<string, unknown> | undefined
@@ -179,6 +185,86 @@ export function AccountSection() {
   const [syncWarning, setSyncWarning] = useState<string | null>(null)
   // Don't clobber in-progress edits when auth/profile data arrives asynchronously.
   const edited = useRef(false)
+
+  // --- Change-password sub-form (account login password, NOT the encryption
+  //     passphrase — the two are intentionally independent). ---
+  const [showPasswordForm, setShowPasswordForm] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmNewPassword, setConfirmNewPassword] = useState('')
+  const [pwSaving, setPwSaving] = useState(false)
+  const [pwError, setPwError] = useState<string | null>(null)
+  const [pwSuccess, setPwSuccess] = useState(false)
+
+  const resetPasswordForm = () => {
+    setCurrentPassword('')
+    setNewPassword('')
+    setConfirmNewPassword('')
+    setPwError(null)
+  }
+
+  const handleTogglePasswordForm = () => {
+    setShowPasswordForm((open) => {
+      const next = !open
+      if (!next) resetPasswordForm()
+      else setPwSuccess(false)
+      return next
+    })
+  }
+
+  const handlePasswordChange = async () => {
+    const supabase = getSupabase()
+    if (!supabase || !user?.email) {
+      setPwError(t('settingsAccountPasswordUpdateFailed'))
+      return
+    }
+
+    setPwError(null)
+    setPwSuccess(false)
+    setPwSaving(true)
+
+    const result = await changeAccountPassword({
+      email: user.email,
+      currentPassword,
+      newPassword,
+      confirmPassword: confirmNewPassword,
+      reauthenticate: async (email, password) => {
+        const { error } = await signIn(email, password)
+        return { error }
+      },
+      updatePassword: async (password) => {
+        const { error } = await supabase.auth.updateUser({ password })
+        return { error: mapSupabaseAuthError(error?.message) }
+      },
+    })
+
+    setPwSaving(false)
+
+    if (result.ok) {
+      resetPasswordForm()
+      setShowPasswordForm(false)
+      setPwSuccess(true)
+      return
+    }
+
+    if (result.kind === 'validation') {
+      if (result.error === 'currentRequired') {
+        setPwError(t('settingsAccountPasswordCurrentRequired'))
+      } else if (result.error === 'tooShort') {
+        setPwError(t('signupWizardPasswordTooShort'))
+      } else {
+        setPwError(t('signupWizardPasswordMismatch'))
+      }
+      return
+    }
+
+    if (result.kind === 'reauth') {
+      setPwError(t('settingsAccountPasswordCurrentIncorrect'))
+      return
+    }
+
+    setPwError(result.message || t('settingsAccountPasswordUpdateFailed'))
+  }
 
   useEffect(() => {
     if (edited.current) return
@@ -278,11 +364,89 @@ export function AccountSection() {
       <SettingsField label={t('settingsAccountPasswordLabel')}>
         <button
           type="button"
-          disabled
-          className="rounded-sm border border-border bg-surface-hover px-3 py-2 text-xs text-muted"
+          onClick={handleTogglePasswordForm}
+          aria-expanded={showPasswordForm}
+          className="rounded-sm border-2 border-border bg-surface px-3 py-2 text-xs text-ink transition-colors hover:border-ink"
         >
-          {t('settingsAccountPasswordChange')}
+          {showPasswordForm
+            ? t('settingsAccountPasswordCancel')
+            : t('settingsAccountPasswordChange')}
         </button>
+        {pwSuccess && !showPasswordForm ? (
+          <p className="mt-2 text-xs text-[var(--status-success)]" role="status">
+            {t('settingsAccountPasswordUpdated')}
+          </p>
+        ) : null}
+
+        {showPasswordForm ? (
+          <div
+            className="auth-form mt-3 flex flex-col gap-3 rounded-sm border-2 border-border bg-surface-hover p-3"
+            onKeyDown={(e) => {
+              // These inputs live inside the profile <form>; stop Enter from
+              // submitting the profile save and run the password flow instead.
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                if (!pwSaving) void handlePasswordChange()
+              }
+            }}
+          >
+            <label className="flex flex-col gap-1 text-xs text-muted">
+              <span>{t('settingsAccountPasswordCurrentLabel')}</span>
+              <PasswordInput
+                autoComplete="current-password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                disabled={pwSaving}
+                className={ACCOUNT_INPUT_CLASS}
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-xs text-muted">
+              <span>{t('settingsAccountPasswordNewLabel')}</span>
+              <PasswordInput
+                autoComplete="new-password"
+                minLength={ACCOUNT_PASSWORD_MIN_LENGTH}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                disabled={pwSaving}
+                className={ACCOUNT_INPUT_CLASS}
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-xs text-muted">
+              <span>{t('settingsAccountPasswordConfirmLabel')}</span>
+              <PasswordInput
+                autoComplete="new-password"
+                minLength={ACCOUNT_PASSWORD_MIN_LENGTH}
+                value={confirmNewPassword}
+                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                disabled={pwSaving}
+                className={ACCOUNT_INPUT_CLASS}
+              />
+            </label>
+            <p className="text-xs text-muted">
+              {t('settingsAccountPasswordHint').replace(
+                '{min}',
+                String(ACCOUNT_PASSWORD_MIN_LENGTH),
+              )}
+            </p>
+            {pwError ? (
+              <p className="text-xs text-[var(--color-danger)]" role="alert">
+                {pwError}
+              </p>
+            ) : null}
+            <div>
+              <button
+                type="button"
+                onClick={() => void handlePasswordChange()}
+                disabled={pwSaving}
+                className="rounded-sm border-2 border-ink bg-ink px-4 py-2 text-sm text-surface transition-colors hover:bg-surface hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {pwSaving
+                  ? t('settingsAccountPasswordSaving')
+                  : t('settingsAccountPasswordSubmit')}
+              </button>
+            </div>
+          </div>
+        ) : null}
       </SettingsField>
 
       <SettingsField label="">

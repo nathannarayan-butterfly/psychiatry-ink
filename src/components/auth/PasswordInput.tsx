@@ -12,6 +12,7 @@ interface PasswordInputProps {
   maxLength?: number
   placeholder?: string
   required?: boolean
+  className?: string
 }
 
 export function PasswordInput({
@@ -24,6 +25,7 @@ export function PasswordInput({
   maxLength,
   placeholder,
   required,
+  className,
 }: PasswordInputProps) {
   const { t } = useTranslation()
   const [visible, setVisible] = useState(false)
@@ -41,6 +43,7 @@ export function PasswordInput({
         value={value}
         onChange={onChange}
         disabled={disabled}
+        className={className}
       />
       <button
         type="button"
