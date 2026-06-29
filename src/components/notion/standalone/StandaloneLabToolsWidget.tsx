@@ -50,7 +50,8 @@ export function StandaloneLabToolsWidget({ caseId, onClose }: StandaloneLabTools
 
   const importSelected = useCallback(() => {
     const chosen = parsed.filter((_, index) => selectedRows.has(index))
-    if (chosen.length === 0) return
+    // A comparison graph needs at least two values to plot a trend.
+    if (chosen.length < 2) return
     lab.addEntries(chosen.map((value) => parsedValueToLabEntry(value, pasteDate)))
     setParsed([])
     setSelectedRows(new Set())
@@ -174,7 +175,7 @@ export function StandaloneLabToolsWidget({ caseId, onClose }: StandaloneLabTools
                     type="button"
                     className="wai-btn wai-btn--primary"
                     onClick={importSelected}
-                    disabled={selectedCount === 0}
+                    disabled={selectedCount < 2}
                   >
                     {t('standaloneLabToolsPasteImport')} ({selectedCount})
                   </button>
@@ -182,6 +183,11 @@ export function StandaloneLabToolsWidget({ caseId, onClose }: StandaloneLabTools
               </div>
               {parsed.length === 0 && pasteText.trim() ? (
                 <p className="swx-empty">{t('standaloneLabToolsPasteNone')}</p>
+              ) : null}
+              {parsed.length > 0 && selectedCount < 2 ? (
+                <p className="swx-lab-paste__hint" role="status">
+                  {t('standaloneLabToolsPasteMinTwo')}
+                </p>
               ) : null}
               {parsed.length > 0 ? (
                 <ul className="swx-lab-paste__list">

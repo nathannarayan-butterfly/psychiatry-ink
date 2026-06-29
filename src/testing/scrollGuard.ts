@@ -209,6 +209,12 @@ export const SCROLL_SURFACES: readonly ScrollSurface[] = [
     where: 'rendered markdown result view (lab interpretation etc.)',
   },
   {
+    id: 'lab-entry-dialog-body',
+    file: 'standalone-workspace.css',
+    selector: '.lab-entry-dialog__body',
+    where: 'Lab Tools "Laborwert hinzufügen" dialog form (scrolls inside the bounded dialog)',
+  },
+  {
     id: 'arztbrief-workspace-body',
     file: 'arztbrief.css',
     selector: '.arztbrief-workspace__body',

@@ -19,7 +19,7 @@ export function LabEntryDialog({ lab }: LabEntryDialogProps) {
   return (
     <div className="timeline-entry-dialog__backdrop" role="presentation" onClick={lab.closeLabDialog}>
       <div
-        className="timeline-entry-dialog workspace-float-block"
+        className="timeline-entry-dialog workspace-float-block lab-entry-dialog"
         role="dialog"
         aria-modal="true"
         aria-labelledby="lab-entry-dialog-title"
@@ -31,7 +31,7 @@ export function LabEntryDialog({ lab }: LabEntryDialogProps) {
           </h2>
         </div>
 
-        <div className="timeline-entry-dialog__body">
+        <div className="timeline-entry-dialog__body lab-entry-dialog__body app-scroll-region">
           <label className="timeline-entry-dialog__field">
             <span>{t('labDate')}</span>
             <input

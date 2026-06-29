@@ -18722,6 +18722,12 @@ export const uiTranslations = {
     fr: 'Aucune valeur détectée. Veuillez coller une valeur par ligne.',
     es: 'No se detectaron valores. Pegue un valor por línea.',
   },
+  standaloneLabToolsPasteMinTwo: {
+    de: 'Für einen Vergleich mindestens 2 Werte auswählen.',
+    en: 'Select at least 2 values to compare.',
+    fr: 'Sélectionnez au moins 2 valeurs pour comparer.',
+    es: 'Seleccione al menos 2 valores para comparar.',
+  },
   standaloneTranslateLang_de: {
     de: 'Deutsch',
     en: 'German',

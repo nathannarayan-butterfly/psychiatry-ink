@@ -1060,6 +1060,36 @@
   min-height: 0;
 }
 
+/* Hint shown under the paste preview when fewer than 2 values are selected — a
+   comparison graph needs at least two points to plot a trend (#11.3). */
+.swx-lab-paste__hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-secondary, #6d655c);
+}
+
+/* "Laborwert hinzufügen" dialog (#11.1): the add-value form was clipped because
+   the shared `.timeline-entry-dialog` has `overflow: hidden` and NO max-height,
+   so on short / tablet / bottom-sheet heights the fields below the fold were
+   unreachable. Bound the dialog height and make the BODY the scroll region using
+   the shared app-scroll pattern (`app-scroll-region` on the body + min-height:0
+   here so the flexbox `min-height:auto` footgun can't block the overflow). These
+   rules are unlayered, so they win over the `@layer utilities` base in
+   globals.css. */
+.lab-entry-dialog {
+  display: flex;
+  flex-direction: column;
+  max-height: min(85vh, 40rem);
+}
+.lab-entry-dialog .timeline-entry-dialog__header,
+.lab-entry-dialog .timeline-entry-dialog__footer {
+  flex-shrink: 0;
+}
+.lab-entry-dialog__body {
+  min-height: 0;
+  overflow-y: auto;
+}
+
 /* ── Searchable translation language combobox ────────────────────── */
 .swx-lang-combobox {
   position: relative;
