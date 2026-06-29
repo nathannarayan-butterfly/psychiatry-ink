@@ -61,6 +61,11 @@ const ALLOWED_STYLE_PROPS = new Set([
   'text-decoration-line',
   'text-align',
   'line-height',
+  // Highlight tint produced by the multicolor TipTap Highlight mark
+  // (<mark style="background-color: …">). Kept so coloured highlights survive
+  // the save/copy/print pipeline; `color` lets foreground tints round-trip too.
+  'background-color',
+  'color',
 ])
 
 const UNSAFE_STYLE_VALUE = /url\s*\(|expression\s*\(|javascript:|[<>{}]/i

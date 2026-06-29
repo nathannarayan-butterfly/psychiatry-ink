@@ -501,6 +501,127 @@
   gap: 0.5rem;
 }
 
+/* —— Rich-text toolbar: font selector + sep + multi-colour highlight —— */
+
+.notizen-rte__font-select {
+  height: 1.85rem;
+  max-width: 9rem;
+  padding: 0 0.35rem;
+  border: 1px solid var(--cm-quiet-border, #ece8e3);
+  border-radius: var(--radius-control, 0.4375rem);
+  background: var(--surface-elevated, #fff);
+  color: var(--text-primary, #1a1a1a);
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.notizen-rte__font-select:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid
+    var(--focus-ring-color, color-mix(in srgb, var(--accent, #4a6fa5) 52%, transparent));
+  outline-offset: 1px;
+}
+
+.notizen-rte__sep {
+  width: 1px;
+  align-self: stretch;
+  margin: 0.15rem 0.25rem;
+  background: var(--cm-quiet-border, #ece8e3);
+}
+
+.notizen-rte__highlight-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.18rem;
+  flex-wrap: wrap;
+}
+
+.notizen-rte__swatch {
+  width: 1.05rem;
+  height: 1.05rem;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, #0f1419 18%, transparent);
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    transform 100ms ease,
+    box-shadow 100ms ease;
+}
+
+.notizen-rte__swatch:hover {
+  transform: scale(1.12);
+  box-shadow: 0 1px 4px color-mix(in srgb, #0f1419 22%, transparent);
+}
+
+.notizen-rte__swatch:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid
+    var(--focus-ring-color, color-mix(in srgb, var(--accent, #4a6fa5) 52%, transparent));
+  outline-offset: 1px;
+}
+
+.notizen-rte__btn--highlight-off {
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
+/* —— Entry-scoped Notizen (hosts the inline KB notepad inside the bubble) —— */
+
+.notizen-scope-chip {
+  display: inline-block;
+  margin-right: 0.4rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent, #4a6fa5) 16%, transparent);
+  color: var(--accent, #4a6fa5);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  vertical-align: 0.05rem;
+}
+
+.notizen-scope-name {
+  font-weight: 600;
+  color: var(--text-primary, #1a1a1a);
+}
+
+.notizen-entry {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* The embedded KB notepad fills the bubble body and scrolls internally. */
+.notizen-entry .kbp-notes--embedded {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.notizen-entry .kbp-notes--embedded .kbp-notes__editor {
+  flex: 1;
+  min-height: 8rem;
+  overflow-y: auto;
+}
+
+/* —— Surface the floating tools ABOVE the full-viewport KB overlay (z-index
+   200). The KB drug reader is a fixed overlay, so without this lift the
+   bottom-right launcher + dock/float panels (Kommentare, Notizen, Butterfly)
+   would be painted behind it and unreachable inside the Knowledge Base. —— */
+
+.app-shell:has(.kb-overlay) .floating-tools-fab {
+  z-index: 215;
+}
+
+.app-shell:has(.kb-overlay) .ask-butterfly-dock-panel {
+  z-index: 210;
+}
+
+.app-shell:has(.kb-overlay) .ask-butterfly-overlay {
+  z-index: 212;
+}
+
 /* —— Notizen dock accent (subtle distinction from Butterfly) —— */
 
 .notizen-dock-panel,
