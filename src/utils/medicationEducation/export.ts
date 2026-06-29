@@ -9,6 +9,7 @@ import {
 } from '../../data/medicationEducationSections'
 import { isSectionIncludedInFinal } from './draftOps'
 import { FONT_SANS } from '../../styles/typographyTokens'
+import { printHtmlDocument, openHtmlPreviewWindow } from '../print/printDocument'
 
 function escapeHtml(value: string): string {
   return value
@@ -164,22 +165,12 @@ export async function copyMedicationEducationText(text: string): Promise<void> {
 }
 
 export function printMedicationEducation(html: string): void {
-  const w = window.open('', '_blank', 'noopener,noreferrer')
-  if (!w) return
-  w.document.write(html)
-  w.document.close()
-  w.focus()
-  w.print()
+  printHtmlDocument(html)
 }
 
 /** Opens a formatted, scrollable preview in a new window (no auto-print). */
 export function previewMedicationEducation(html: string): boolean {
-  const w = window.open('', '_blank', 'noopener,noreferrer')
-  if (!w) return false
-  w.document.write(html)
-  w.document.close()
-  w.focus()
-  return true
+  return openHtmlPreviewWindow(html)
 }
 
 export function exportMedicationEducationPdf(html: string): void {

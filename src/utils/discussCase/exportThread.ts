@@ -1,4 +1,5 @@
 import { FONT_SANS } from '../../styles/typographyTokens'
+import { printHtmlDocument } from '../print/printDocument'
 
 /** A single message flattened for export (author/timestamps already resolved). */
 export interface DiscussThreadExportMessage {
@@ -142,13 +143,7 @@ export function buildDiscussThreadPrintHtml(input: DiscussThreadExportInput): st
 }
 
 export function printDiscussThread(input: DiscussThreadExportInput): void {
-  const html = buildDiscussThreadPrintHtml(input)
-  const printWindow = window.open('', '_blank', 'noopener,noreferrer')
-  if (!printWindow) return
-  printWindow.document.write(html)
-  printWindow.document.close()
-  printWindow.focus()
-  printWindow.print()
+  printHtmlDocument(buildDiscussThreadPrintHtml(input))
 }
 
 export async function copyDiscussThreadText(input: DiscussThreadExportInput): Promise<void> {

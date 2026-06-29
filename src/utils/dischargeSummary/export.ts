@@ -13,6 +13,7 @@ import {
 import { isSectionIncludedInFinal } from './draftOps'
 import { applyRegionSpelling, regionLocale } from './regionSpelling'
 import { FONT_SANS } from '../../styles/typographyTokens'
+import { printHtmlDocument } from '../print/printDocument'
 
 function escapeHtml(value: string): string {
   return value
@@ -125,13 +126,7 @@ export function printDischargeSummary(
   draft: DischargeSummaryDraft,
   sectionLabels: Record<string, string>,
 ): void {
-  const html = buildDischargeSummaryPrintHtml(draft, sectionLabels, draft.title)
-  const win = window.open('', '_blank', 'noopener,noreferrer')
-  if (!win) return
-  win.document.write(html)
-  win.document.close()
-  win.focus()
-  win.print()
+  printHtmlDocument(buildDischargeSummaryPrintHtml(draft, sectionLabels, draft.title))
 }
 
 export function exportDischargeSummaryPdf(

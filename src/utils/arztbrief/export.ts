@@ -7,6 +7,7 @@ import type {
 import { getArztbriefSections } from '../../data/arztbriefSections'
 import { isSectionIncludedInFinal } from './draftOps'
 import { FONT_SANS } from '../../styles/typographyTokens'
+import { printHtmlDocument } from '../print/printDocument'
 
 function escapeHtml(value: string): string {
   return value
@@ -108,13 +109,7 @@ export function copyArztbriefText(text: string): Promise<boolean> {
 }
 
 export function printArztbrief(draft: ArztbriefDraft, sectionLabels: Record<string, string>): void {
-  const html = buildArztbriefPrintHtml(draft, sectionLabels, draft.title)
-  const win = window.open('', '_blank', 'noopener,noreferrer')
-  if (!win) return
-  win.document.write(html)
-  win.document.close()
-  win.focus()
-  win.print()
+  printHtmlDocument(buildArztbriefPrintHtml(draft, sectionLabels, draft.title))
 }
 
 export function exportArztbriefPdf(

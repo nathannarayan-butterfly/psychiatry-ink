@@ -3,6 +3,7 @@ import { Check, Copy, FileDown, Loader2, Pencil, Printer, RefreshCw, Save, Trash
 import { useTranslation } from '../../../context/TranslationContext'
 import { useCopyWithFeedback } from '../../../hooks/useCopyWithFeedback'
 import { saveStandaloneNote } from '../../../utils/standaloneNotes'
+import { printHtmlDocument } from '../../../utils/print/printDocument'
 import type { DokumentCategory } from '../../../utils/dokumenteArchive'
 import { showNotionToast } from '../NotionToast'
 import { StandaloneMarkdown } from './StandaloneMarkdown'
@@ -81,17 +82,13 @@ export function StandaloneResultPanel({
   }, [text, title])
 
   const handlePrint = useCallback(() => {
-    const win = window.open('', '_blank')
-    if (!win) return
-    const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    win.document.write(
-      `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title>` +
-        '<style>body{font:13px/1.6 -apple-system,Segoe UI,Roboto,sans-serif;color:#1f1f1f;max-width:48rem;margin:2rem auto;padding:0 1.5rem;white-space:pre-wrap;}h1{font-size:1.1rem;margin-bottom:1rem;}</style>' +
-        `</head><body><h1>${title}</h1><div>${escaped}</div></body></html>`,
-    )
-    win.document.close()
-    win.focus()
-    win.print()
+    const escape = (value: string) =>
+      value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    const html =
+      `<!doctype html><html><head><meta charset="utf-8"><title>${escape(title)}</title>` +
+      '<style>body{font:13px/1.6 -apple-system,Segoe UI,Roboto,sans-serif;color:#1f1f1f;max-width:48rem;margin:2rem auto;padding:0 1.5rem;white-space:pre-wrap;}h1{font-size:1.1rem;margin-bottom:1rem;}</style>' +
+      `</head><body><h1>${escape(title)}</h1><div>${escape(text)}</div></body></html>`
+    printHtmlDocument(html)
   }, [text, title])
 
   const handleSave = useCallback(() => {

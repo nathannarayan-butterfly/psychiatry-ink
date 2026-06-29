@@ -4,6 +4,7 @@ import { scheduleDocumentSnapshotImprints } from './clinicalImprint'
 import { readOrMigrateEncryptedJson, writeEncryptedJson } from './encryptedLocalStore'
 import { getInitialEditorContent } from './workspaceComponents'
 import { FONT_SANS } from '../styles/typographyTokens'
+import { printHtmlDocument } from './print/printDocument'
 
 const SNAPSHOT_KEY_PREFIX = 'psychiatry-ink:notion-document'
 
@@ -225,12 +226,7 @@ export function printNotionDocument(
 </body>
 </html>`
 
-  const printWindow = window.open('', '_blank', 'noopener,noreferrer')
-  if (!printWindow) return
-  printWindow.document.write(html)
-  printWindow.document.close()
-  printWindow.focus()
-  printWindow.print()
+  printHtmlDocument(html)
 }
 
 export function exportNotionDocument(

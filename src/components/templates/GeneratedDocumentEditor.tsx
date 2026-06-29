@@ -11,6 +11,7 @@ import {
 } from '../../utils/documentTemplate/renderTemplate'
 import { buildTemplateRenderContext } from '../../utils/documentTemplate/placeholderContext'
 import { sanitizeRichHtml } from '../../utils/documentTemplate/htmlUtils'
+import { printHtmlDocument } from '../../utils/print/printDocument'
 import type { DocumentTemplate, GeneratedDocument, TemplateField, TemplateRenderContext } from '../../types/documentTemplate'
 import { getGeneratedDocument, saveGeneratedDocument } from '../../utils/generatedDocumentsVault'
 import { recordAuditEvent } from '../../services/auditApi'
@@ -438,12 +439,7 @@ export function GeneratedDocumentEditor({
 
   const handlePrint = useCallback(() => {
     const html = buildPrintHtmlDocument(template, fieldValues, context, { markUnresolved: !caseId })
-    const win = window.open('', '_blank')
-    if (!win) return
-    win.document.write(html)
-    win.document.close()
-    win.focus()
-    win.print()
+    printHtmlDocument(html)
     if (caseId) {
       void recordAuditEvent('document_exported', {
         caseId,

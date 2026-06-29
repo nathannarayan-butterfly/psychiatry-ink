@@ -4,6 +4,7 @@ import { scheduleTimelineImprints } from './clinicalImprint'
 import { buildTimelinePrintHtml } from './timelinePrint'
 import { exportTimelinePdf as writeTimelinePdf, importPortablePdf } from './portablePdf'
 import { safeSetItem } from './safeStorage'
+import { printHtmlDocument } from './print/printDocument'
 
 const SESSION_KEY = 'psychiatry-ink-timeline-session'
 const TIMELINES_KEY = 'psychiatry-ink:timelines'
@@ -188,13 +189,7 @@ export function exportTimelinePdf(snapshot: TimelineSnapshot, title: string): Pr
 export { importPortablePdf }
 
 export function printTimeline(snapshot: TimelineSnapshot, title: string): void {
-  const html = buildTimelinePrintHtml(snapshot, title)
-  const printWindow = window.open('', '_blank', 'noopener,noreferrer')
-  if (!printWindow) return
-  printWindow.document.write(html)
-  printWindow.document.close()
-  printWindow.focus()
-  printWindow.print()
+  printHtmlDocument(buildTimelinePrintHtml(snapshot, title))
 }
 
 export function visibleSortedTimelineEntries(entries: TimelineEntry[]): TimelineEntry[] {

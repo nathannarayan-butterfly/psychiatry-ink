@@ -1,6 +1,7 @@
 import { FONT_SANS } from '../../styles/typographyTokens'
 import { formatIsoTimestampDate, formatIsoTimestampTime } from '../siteTimezone'
 import { derivedFeedEntryText } from '../verlaufAnnotationHelpers'
+import { printHtmlDocument } from '../print/printDocument'
 
 export interface VerlaufExportManualEntry {
   kind: 'manual'
@@ -124,11 +125,5 @@ export function exportVerlaufText(fileName: string, text: string): void {
 }
 
 export function printVerlauf(items: VerlaufExportItem[], title: string): void {
-  const html = buildVerlaufPrintHtml(items, title)
-  const printWindow = window.open('', '_blank', 'noopener,noreferrer')
-  if (!printWindow) return
-  printWindow.document.write(html)
-  printWindow.document.close()
-  printWindow.focus()
-  printWindow.print()
+  printHtmlDocument(buildVerlaufPrintHtml(items, title))
 }
