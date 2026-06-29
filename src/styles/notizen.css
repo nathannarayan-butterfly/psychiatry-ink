@@ -14,8 +14,9 @@
   margin-right: 0;
 }
 
-@media (max-width: 720px) {
-  /* Docked panels collapse to bottom sheets on mobile — restore full width. */
+@media (max-width: 64rem) {
+  /* Tablet + phone: docked panels collapse to bottom sheets — restore full
+     content width (no fixed right gutter). See ask-butterfly-chat.css. */
   .app-shell--tools-docked .app-shell__content {
     width: 100%;
   }
@@ -34,7 +35,9 @@
   transition: right 200ms ease;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 64rem) {
+  /* The dock is a bottom sheet at tablet width, so the launcher must not offset
+     by the (now irrelevant) right-gutter reservation — pin it to the corner. */
   .floating-tools-fab {
     right: 1rem;
     bottom: 1rem;

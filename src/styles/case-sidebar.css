@@ -1551,6 +1551,66 @@
   }
 }
 
+/* —— Tablet + phone (≤ 64rem / 1024px): case rail becomes an overlay drawer ——
+ *
+ * On a narrow screen the fixed 15.5rem left rail would crowd the dense clinical
+ * content, so the rail floats OVER the (now full-width) content as a drawer.
+ * NotionApp keeps it closed by default at these widths (floating expand button)
+ * via a session-only state, so the persisted desktop collapse pref is untouched.
+ * Matches TABLET_BREAKPOINT_PX in utils/responsiveBreakpoints.ts. The scoped
+ * selector outranks the generic ≤52rem stacking rule above, and leaves the
+ * full-page Settings sidebar (`.settings-sidebar-layout`) unaffected. */
+@media (max-width: 64rem) {
+  .notion-preview-app--case-sidebar .workspace-tab-bar,
+  .notion-preview-app--case-sidebar .active-appointment-bar,
+  .notion-preview-app--case-sidebar .notion-preview-main {
+    margin-left: 0;
+  }
+
+  .notion-preview-app--case-sidebar .case-sidebar-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(17rem, 84vw);
+    max-height: none;
+    z-index: 60;
+    border-right: 1px solid var(--case-sidebar-border);
+    border-bottom: none;
+    box-shadow: 6px 0 28px color-mix(in srgb, #0f1419 24%, transparent);
+  }
+}
+
+/* Scrim behind the open rail drawer — tap to close (rendered only while the
+   narrow-width drawer is open). */
+.case-sidebar-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 59;
+  border: none;
+  padding: 0;
+  background: color-mix(in srgb, #0f1419 38%, transparent);
+  -webkit-backdrop-filter: blur(1px);
+  backdrop-filter: blur(1px);
+  cursor: pointer;
+  animation: case-sidebar-scrim-in 160ms ease;
+}
+
+@keyframes case-sidebar-scrim-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .case-sidebar-scrim {
+    animation: none;
+  }
+}
+
 /* Drop the sidebar's aura glow for print (ink-saving, high-contrast). */
 @media print {
   .case-sidebar-panel {

@@ -42,6 +42,7 @@ import { ConsultationCasePage } from '../consultation/ConsultationCasePage'
 import { ClinicalIntelligencePanel } from '../clinical/clinicalIntelligence/ClinicalIntelligencePanel'
 import { isClinicalIntelligenceAvailableForCase } from '../../utils/featureFlags'
 import { useCaseSidebarCollapsed } from '../../hooks/useCaseSidebarCollapsed'
+import { useViewport } from '../../hooks/useViewport'
 import { MedicationSectionNavProvider } from '../../contexts/MedicationSectionNavContext'
 import { TherapySectionNavProvider } from '../../contexts/TherapySectionNavContext'
 import { DiagnosticsSectionNavProvider } from '../../contexts/DiagnosticsSectionNavContext'
@@ -652,6 +653,23 @@ function NotionAppInner({
 
   const showCaseSidebar = !showPatientRegistry
   const sidebarCollapsed = useCaseSidebarCollapsed()
+
+  // On tablet/phone the fixed left rail would eat a large slice of the screen,
+  // so it becomes an OVERLAY DRAWER that defaults to closed (floating expand
+  // button) — see case-sidebar.css ≤64rem. This open state is session-only and
+  // deliberately SEPARATE from the persisted desktop collapse pref, so a narrow
+  // session never leaves the desktop sidebar collapsed.
+  const viewport = useViewport()
+  const railIsOverlay = viewport.isPhone || viewport.isTablet
+  const [tabletRailOpen, setTabletRailOpen] = useState(false)
+  const railCollapsed = railIsOverlay ? !tabletRailOpen : sidebarCollapsed.collapsed
+  const handleToggleRail = useCallback(() => {
+    if (railIsOverlay) {
+      setTabletRailOpen((open) => !open)
+    } else {
+      sidebarCollapsed.toggle()
+    }
+  }, [railIsOverlay, sidebarCollapsed])
 
   type PendingNavAction =
     | { type: 'closeDocument' }
@@ -1856,7 +1874,7 @@ function NotionAppInner({
       className={[
         'notion-preview-app text-ink',
         showCaseSidebar ? 'notion-preview-app--case-sidebar' : '',
-        showCaseSidebar && sidebarCollapsed.collapsed
+        showCaseSidebar && railCollapsed
           ? 'notion-preview-app--case-sidebar-collapsed'
           : '',
       ]
@@ -1991,6 +2009,14 @@ function NotionAppInner({
       />
 
       <CaseSectionNavProviders activeTab={activeTopTab} caseId={storageCaseId}>
+      {showCaseSidebar && railIsOverlay && tabletRailOpen ? (
+        <button
+          type="button"
+          className="case-sidebar-scrim"
+          aria-label={t('settingsClose')}
+          onClick={() => setTabletRailOpen(false)}
+        />
+      ) : null}
       {showCaseSidebar ? (
         <CaseSidebarPanel
           ariaLabel={t('patientDashboardQuickAccess')}
@@ -2016,8 +2042,8 @@ function NotionAppInner({
           onOpenCredits={() => onNavigate?.('/dashboard/credits')}
           todoCaseId={hasPatient ? caseId : null}
           todoPatientLabel={currentPatientName ?? null}
-          collapsed={sidebarCollapsed.collapsed}
-          onToggleCollapsed={sidebarCollapsed.toggle}
+          collapsed={railCollapsed}
+          onToggleCollapsed={handleToggleRail}
         >
           <CaseSidebarContent
             activeTab={activeTopTab}

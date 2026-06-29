@@ -949,7 +949,12 @@
   color: var(--text-muted, #6b7280);
 }
 
-@media (max-width: 720px) {
+/* Tablet + phone (≤ 1024px / 64rem): the floating tool dock is a fixed-width
+ * right gutter on desktop, but on a tablet that gutter crowds the dense clinical
+ * content. Below the tablet boundary the dock collapses to a full-width BOTTOM
+ * SHEET that overlays the page instead of shrinking it. Matches
+ * TABLET_BREAKPOINT_PX in utils/responsiveBreakpoints.ts. */
+@media (max-width: 64rem) {
   .ask-butterfly-overlay {
     padding: 1rem;
   }
@@ -964,9 +969,9 @@
   }
 
   /*
-   * On mobile the dock panel becomes a bottom sheet that overlays content
-   * (see .ask-butterfly-dock-panel overrides below). Cancel the right-gutter
-   * shrink so the page stays full width underneath the sheet.
+   * The dock panel becomes a bottom sheet that overlays content (see
+   * .ask-butterfly-dock-panel overrides below). Cancel the right-gutter shrink
+   * so the page stays full width underneath the sheet.
    */
   .app-shell--butterfly-docked .app-shell__content {
     width: 100%;
