@@ -57,6 +57,12 @@ describe('transcribeAudio', () => {
     expect(body.audioBase64).toBeTruthy()
   })
 
+  it('rejects an empty recording without hitting the network', async () => {
+    const blob = new Blob([], { type: 'audio/webm' })
+    await expect(transcribeAudio(blob, 'de')).rejects.toThrow('empty_recording')
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
   it('falls back to getClinicalApiLanguage when language is omitted', async () => {
     getClinicalApiLanguageMock.mockReturnValue('en')
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ text: 'ok' }), { status: 200 }))

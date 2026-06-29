@@ -4,6 +4,20 @@ import { fetchWithTimeout } from '../utils/httpTimeout'
 const OPENAI_TRANSCRIBE_MODEL =
   process.env.OPENAI_TRANSCRIBE_MODEL ?? 'gpt-4o-transcribe'
 
+/**
+ * Strip codec/parameter suffixes (e.g. `audio/webm;codecs=opus`) down to the
+ * canonical container type (`audio/webm`). MediaRecorder labels its output with
+ * the full parameterised type, but OpenAI's transcription endpoint sniffs the
+ * format from the upload's filename extension and is most reliable when the
+ * multipart part's Content-Type is the clean container type rather than a
+ * parameterised one. A mismatch between a parameterised Content-Type and the
+ * filename extension is a classic cause of garbled/empty transcripts.
+ */
+function canonicalAudioMimeType(mimeType: string): string {
+  const base = mimeType.split(';')[0]?.trim().toLowerCase()
+  return base || 'audio/webm'
+}
+
 function extensionForMimeType(mimeType: string): string {
   if (mimeType.includes('webm')) return 'webm'
   if (mimeType.includes('ogg')) return 'ogg'
@@ -45,13 +59,18 @@ export async function transcribeAudioBuffer(
   }
 
   const started = Date.now()
-  const extension = extensionForMimeType(mimeType)
-  const blob = new Blob([audioBuffer], { type: mimeType })
+  // Normalise the container type so the multipart Content-Type and the filename
+  // extension OpenAI uses for format detection always agree.
+  const uploadMimeType = canonicalAudioMimeType(mimeType)
+  const extension = extensionForMimeType(uploadMimeType)
+  const blob = new Blob([audioBuffer], { type: uploadMimeType })
   const formData = new FormData()
   formData.append('file', blob, `recording.${extension}`)
   formData.append('model', OPENAI_TRANSCRIBE_MODEL)
   const language = options?.language ?? null
   if (language) {
+    // ISO-639-1 hint (de/en/fr/es) — keeps the model from mis-detecting the
+    // spoken language, the most common cause of a "wrong language" transcript.
     formData.append('language', language)
   }
 

@@ -24,6 +24,12 @@ export async function transcribeAudio(
   blob: Blob,
   language?: UiLanguage,
 ): Promise<string> {
+  // Never ship an empty/zero-byte capture — it produces a garbage or empty
+  // transcript and still costs a base credit. Surface it as a recoverable error.
+  if (blob.size === 0) {
+    throw new Error('empty_recording')
+  }
+
   const audioBase64 = await blobToBase64(blob)
   const resolvedLanguage = language ?? getClinicalApiLanguage()
 
