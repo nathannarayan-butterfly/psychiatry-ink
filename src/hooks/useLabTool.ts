@@ -237,6 +237,13 @@ export function useLabTool(caseId?: string) {
     setEntries((current) => current.filter((entry) => entry.id !== id))
   }, [])
 
+  /** Bulk-add parsed entries (e.g. from a pasted lab report, #11). */
+  const addEntries = useCallback((incoming: LabEntry[]) => {
+    if (incoming.length === 0) return
+    setEntries((current) => [...current, ...incoming])
+    setSelectedParameter((current) => current ?? incoming[0]?.parameter ?? null)
+  }, [])
+
   const openAddMarkerDialog = useCallback(() => {
     setEditingMarkerId(null)
     setMarkerDraft(defaultMarkerDraft())
@@ -427,6 +434,7 @@ export function useLabTool(caseId?: string) {
     updateLabDraft,
     saveLabDraft,
     removeLabEntry,
+    addEntries,
     openAddMarkerDialog,
     openEditMarkerDialog,
     closeMarkerDialog,

@@ -1,10 +1,11 @@
-import { useCallback, useState } from 'react'
-import { Check, FlaskConical, LineChart, Save, X } from 'lucide-react'
+import { useCallback, useMemo, useState } from 'react'
+import { Check, ClipboardPaste, FlaskConical, LineChart, Save, X } from 'lucide-react'
 import { useTranslation } from '../../../context/TranslationContext'
 import { useLabTool } from '../../../hooks/useLabTool'
 import { NotionLabCanvas } from '../NotionLabCanvas'
 import { saveStandaloneNote } from '../../../utils/standaloneNotes'
 import { showNotionToast } from '../NotionToast'
+import { parseLabReport, parsedValueToLabEntry } from '../../../utils/lab/parseLabReport'
 import { StandalonePromptToolWidget } from './StandalonePromptToolWidget'
 import '../../../styles/workspace-ai.css'
 import '../../../styles/standalone-workspace.css'
@@ -27,6 +28,37 @@ export function StandaloneLabToolsWidget({ caseId, onClose }: StandaloneLabTools
   const [tab, setTab] = useState<LabToolsTab>('visualize')
   const lab = useLabTool(SCRATCH_CASE_ID)
   const [saved, setSaved] = useState(false)
+  const [pasteText, setPasteText] = useState('')
+  const [pasteDate, setPasteDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [parsed, setParsed] = useState<ReturnType<typeof parseLabReport>>([])
+  const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
+
+  const handleParse = useCallback(() => {
+    const values = parseLabReport(pasteText)
+    setParsed(values)
+    setSelectedRows(new Set(values.map((_, index) => index)))
+  }, [pasteText])
+
+  const toggleRow = useCallback((index: number) => {
+    setSelectedRows((current) => {
+      const next = new Set(current)
+      if (next.has(index)) next.delete(index)
+      else next.add(index)
+      return next
+    })
+  }, [])
+
+  const importSelected = useCallback(() => {
+    const chosen = parsed.filter((_, index) => selectedRows.has(index))
+    if (chosen.length === 0) return
+    lab.addEntries(chosen.map((value) => parsedValueToLabEntry(value, pasteDate)))
+    setParsed([])
+    setSelectedRows(new Set())
+    setPasteText('')
+    showNotionToast(t('standaloneLabToolsPasteImported'))
+  }, [parsed, selectedRows, lab, pasteDate, t])
+
+  const selectedCount = useMemo(() => selectedRows.size, [selectedRows])
 
   const saveVizToNotes = useCallback(() => {
     if (lab.entries.length === 0) return
@@ -105,6 +137,77 @@ export function StandaloneLabToolsWidget({ caseId, onClose }: StandaloneLabTools
 
       {tab === 'visualize' ? (
         <div className="wai-panel__body" role="tabpanel">
+          <details className="swx-lab-paste">
+            <summary>
+              <ClipboardPaste className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+              {t('standaloneLabToolsPasteLabel')}
+            </summary>
+            <div className="swx-lab-paste__body">
+              <label className="swx-field">
+                {t('standaloneLabToolsPasteDate')}
+                <input
+                  type="date"
+                  className="swx-field__input"
+                  value={pasteDate}
+                  onChange={(e) => setPasteDate(e.target.value)}
+                />
+              </label>
+              <textarea
+                className="swx-lab-paste__textarea"
+                value={pasteText}
+                onChange={(e) => setPasteText(e.target.value)}
+                placeholder={t('standaloneLabToolsPastePlaceholder')}
+                aria-label={t('standaloneLabToolsPasteLabel')}
+                rows={5}
+              />
+              <div className="swx-lab-paste__actions">
+                <button
+                  type="button"
+                  className="wai-btn wai-btn--ghost"
+                  onClick={handleParse}
+                  disabled={!pasteText.trim()}
+                >
+                  {t('standaloneLabToolsPasteParse')}
+                </button>
+                {parsed.length > 0 ? (
+                  <button
+                    type="button"
+                    className="wai-btn wai-btn--primary"
+                    onClick={importSelected}
+                    disabled={selectedCount === 0}
+                  >
+                    {t('standaloneLabToolsPasteImport')} ({selectedCount})
+                  </button>
+                ) : null}
+              </div>
+              {parsed.length === 0 && pasteText.trim() ? (
+                <p className="swx-empty">{t('standaloneLabToolsPasteNone')}</p>
+              ) : null}
+              {parsed.length > 0 ? (
+                <ul className="swx-lab-paste__list">
+                  {parsed.map((value, index) => (
+                    <li key={`${value.parameter}-${index}`} className="swx-lab-paste__row">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={selectedRows.has(index)}
+                          onChange={() => toggleRow(index)}
+                        />
+                        <span className="swx-lab-paste__param">{value.parameter}</span>
+                        <span className="swx-lab-paste__val">
+                          {value.rawValue}
+                          {value.unit ? ` ${value.unit}` : ''}
+                          {value.referenceLow !== null || value.referenceHigh !== null
+                            ? ` (${value.referenceLow ?? '–'}–${value.referenceHigh ?? '–'})`
+                            : ''}
+                        </span>
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          </details>
           <div className="swx-canvas-host">
             <div className="swx-canvas-host__bar">
               <p className="swx-empty">{t('standaloneLabToolsVizHint')}</p>

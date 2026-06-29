@@ -23,6 +23,8 @@ interface VariantConfig {
   tool: AiToolKey
   noteKind: string
   noteCategory: DokumentCategory
+  /** Render the result as formatted markdown (bold/italic/lists) by default. */
+  renderMarkdown?: boolean
 }
 
 const VARIANTS: Record<StandalonePromptVariant, VariantConfig> = {
@@ -45,6 +47,7 @@ const VARIANTS: Record<StandalonePromptVariant, VariantConfig> = {
     tool: 'summarize',
     noteKind: 'lab-interpretation',
     noteCategory: 'laborbefunde',
+    renderMarkdown: true,
   },
 }
 
@@ -118,6 +121,7 @@ export function StandalonePromptToolWidget({
         onClose={onClose}
         onRegenerate={() => void generate()}
         regenerating={busy}
+        renderMarkdown={cfg.renderMarkdown}
       />
     )
   }
