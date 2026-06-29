@@ -97,7 +97,11 @@ export async function generatePatientEducationGenericSection(
     mode: parseMode(params.mode),
     systemPrompt,
     userPrompt,
-    maxTokens: params.detailStyle === 'ausfuehrlich' ? 2200 : 1400,
+    // Thorough ("Gründlich") asks for several full paragraphs PLUS a references
+    // array in one JSON payload; 2200 truncated mid-JSON, which both cut the body
+    // to a couple of sentences and dropped the references (and left JSON/markup
+    // artifacts when the truncated output was salvaged). Give it real headroom.
+    maxTokens: params.detailStyle === 'ausfuehrlich' ? 4000 : 1600,
     jsonResponse: true,
     usageContext: params.usageContext,
     caseRef: null,

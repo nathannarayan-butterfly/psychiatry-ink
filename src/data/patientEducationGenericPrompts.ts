@@ -49,12 +49,25 @@ function audienceHint(audience: GenericEducationAudience, language: 'de' | 'en')
 function detailHint(style: GenericEducationDetailStyle, language: 'de' | 'en'): string {
   if (language === 'en') {
     if (style === 'kurz') return 'Keep this section to 2–4 short sentences.'
-    if (style === 'ausfuehrlich') return 'Provide a thorough but readable explanation (1–2 short paragraphs).'
-    return 'Use balanced detail (about 1 short paragraph).'
+    if (style === 'ausfuehrlich')
+      return 'Write this section thoroughly and completely: several connected paragraphs (about 4–6) of running prose, each roughly 3–5 sentences. Cover the important, clinically relevant aspects of this section in full — do not stop after one or two sentences.'
+    return 'Use balanced detail (about 1–2 short paragraphs).'
   }
   if (style === 'kurz') return 'Halten Sie diesen Abschnitt auf 2–4 kurze Sätze.'
-  if (style === 'ausfuehrlich') return 'Ausführliche, aber gut lesbare Erklärung (1–2 kurze Absätze).'
-  return 'Ausgewogene Detailtiefe (etwa 1 kurzer Absatz).'
+  if (style === 'ausfuehrlich')
+    return 'Verfassen Sie diesen Abschnitt ausführlich und vollständig: mehrere zusammenhängende Absätze (etwa 4–6) als Fließtext, je etwa 3–5 Sätze. Decken Sie die wichtigen, klinisch relevanten Aspekte dieses Abschnitts vollständig ab — brechen Sie nicht nach ein bis zwei Sätzen ab.'
+  return 'Ausgewogene Detailtiefe (etwa 1–2 kurze Absätze).'
+}
+
+/**
+ * Hard formatting contract for the `content` string. The card renders it as plain
+ * text (no HTML/markdown parser), so any tags or markup leak verbatim (the `</h2>`
+ * / bracket artifacts the clinician reported). Forbid all markup at the source.
+ */
+function formatRule(language: 'de' | 'en'): string {
+  return language === 'en'
+    ? 'FORMAT of the "content" value: plain running prose only. Separate paragraphs with a single blank line. Do NOT use HTML tags (no <h2>, <p>, <br>, <ul> …), Markdown headings (#, ##), bold/italic markers, code fences, or bullet/numbered-list markup. Write complete sentences in paragraphs — nothing else.'
+    : 'FORMAT des „content"-Werts: ausschließlich fortlaufender Fließtext. Trennen Sie Absätze durch eine einzelne Leerzeile. Verwenden Sie KEINE HTML-Tags (kein <h2>, <p>, <br>, <ul> …), keine Markdown-Überschriften (#, ##), keine Fett-/Kursiv-Markierungen, keine Code-Fences und keine Aufzählungs-/Listensymbole. Schreiben Sie vollständige Sätze in Absätzen — nichts anderes.'
 }
 
 function subjectKindHint(kind: GenericEducationSubjectKind, language: 'de' | 'en'): string {
@@ -109,6 +122,7 @@ export function buildGenericEducationSystemPrompt(params: {
     readingLevelHint(params.readingLevel, params.language),
     sectionInstruction,
     detailHint(params.detailStyle, params.language),
+    formatRule(params.language),
     json,
   ]
     .filter(Boolean)
