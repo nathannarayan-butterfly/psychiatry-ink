@@ -43,6 +43,7 @@ import { IntegrationsPage } from './components/settings/IntegrationsPage'
 import { CalendarPage } from './components/calendar/CalendarPage'
 import { TodoPage } from './components/todos/TodoPage'
 import { AskButterflyProvider } from './contexts/AskButterflyContext'
+import { KbPharmaCommentsProvider } from './contexts/KbPharmaCommentsContext'
 import { NotizenProvider } from './contexts/NotizenContext'
 import { FloatingToolsShell } from './components/notes/FloatingToolsShell'
 import { redirectToCanonicalAppIfNeeded } from './utils/canonicalAppRedirect'
@@ -329,6 +330,7 @@ export default function App() {
         <NewVersionToast />
         <AskButterflyProvider>
           <NotizenProvider>
+          <KbPharmaCommentsProvider>
           <FloatingToolsShell>
         {showDiscussInvite ? (
           <DiscussCaseInvitePage
@@ -459,6 +461,7 @@ export default function App() {
           />
         )}
           </FloatingToolsShell>
+          </KbPharmaCommentsProvider>
           </NotizenProvider>
         </AskButterflyProvider>
       </WorkspaceSessionProvider>

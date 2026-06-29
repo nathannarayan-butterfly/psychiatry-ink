@@ -35,6 +35,8 @@ interface KnowledgeBaseReadingPanelProps {
   request?: ReadingPanelRequest | null
   /** AI mode/model tier forwarded to the Ask-AI backend. */
   tier?: 'fast' | 'standard' | 'thorough'
+  /** Render panel body only (no side ear / aside chrome) for floating/docked hosts. */
+  embedded?: boolean
 }
 
 export function KnowledgeBaseReadingPanel({
@@ -48,6 +50,7 @@ export function KnowledgeBaseReadingPanel({
   onToggleCollapse,
   request,
   tier,
+  embedded = false,
 }: KnowledgeBaseReadingPanelProps) {
   const { t } = useTranslation()
   const { forSection, addComment, removeComment, addChatMessage } = useKnowledgeBaseAnnotations(medicationId)
@@ -116,7 +119,7 @@ export function KnowledgeBaseReadingPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [request?.nonce])
 
-  if (collapsed) {
+  if (collapsed && !embedded) {
     return (
       <aside className="kbp-reading-panel kbp-reading-panel--collapsed">
         <button
@@ -132,24 +135,28 @@ export function KnowledgeBaseReadingPanel({
     )
   }
 
-  return (
-    <aside className="kbp-reading-panel">
-      <div className="kbp-reading-panel__header">
-        <div className="kbp-reading-panel__title-wrap">
-          <h3 className="kbp-reading-panel__title">{t('kbReadingPanelTitle')}</h3>
-          <p className="kbp-reading-panel__section">{sectionLabel}</p>
+  const panelBody = (
+    <>
+      {!embedded ? (
+        <div className="kbp-reading-panel__header">
+          <div className="kbp-reading-panel__title-wrap">
+            <h3 className="kbp-reading-panel__title">{t('kbReadingPanelTitle')}</h3>
+            <p className="kbp-reading-panel__section">{sectionLabel}</p>
+          </div>
+          {onToggleCollapse ? (
+            <button
+              type="button"
+              className="kbp-icon-btn kbp-icon-btn--xs"
+              onClick={onToggleCollapse}
+              aria-label={t('kbReadingPanelCollapse')}
+            >
+              <X className="h-3.5 w-3.5" strokeWidth={1.75} />
+            </button>
+          ) : null}
         </div>
-        {onToggleCollapse ? (
-          <button
-            type="button"
-            className="kbp-icon-btn kbp-icon-btn--xs"
-            onClick={onToggleCollapse}
-            aria-label={t('kbReadingPanelCollapse')}
-          >
-            <X className="h-3.5 w-3.5" strokeWidth={1.75} />
-          </button>
-        ) : null}
-      </div>
+      ) : (
+        <p className="kbp-reading-panel__section kbp-reading-panel__section--embedded">{sectionLabel}</p>
+      )}
 
       <div className="kbp-reading-panel__tabs" role="tablist">
         <button
@@ -276,6 +283,12 @@ export function KnowledgeBaseReadingPanel({
           </div>
         </div>
       )}
-    </aside>
+    </>
   )
+
+  if (embedded) {
+    return <div className="kbp-reading-panel kbp-reading-panel--embedded">{panelBody}</div>
+  }
+
+  return <aside className="kbp-reading-panel">{panelBody}</aside>
 }

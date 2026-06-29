@@ -2,13 +2,11 @@ import {
   ArrowLeft,
   Bold,
   BookOpen,
-  Bookmark,
   ChevronDown,
   ChevronUp,
   Copy,
   Eye,
   EyeOff,
-  Flag,
   Highlighter,
   MessageSquarePlus,
   Pencil,
@@ -88,14 +86,14 @@ import { getDisplayReceptorProfile } from '../../utils/medication/receptorAffini
 import { sectionToFullText } from '../../utils/medication/structuredSectionText'
 import { HighlightedText, getTextSelectionOffsets } from './KnowledgeBaseHighlightedText'
 import { KnowledgeBaseNotes } from './KnowledgeBaseNotes'
-import { KnowledgeBaseReadingPanel, type ReadingPanelRequest } from './KnowledgeBaseReadingPanel'
+import { KbPharmaReadingToolbar } from './KbPharmaReadingToolbar'
+import { useKbPharmaComments } from '../../contexts/KbPharmaCommentsContext'
 import {
   KbSectionContributionDialog,
   type KbContributionSectionKey,
 } from './KbSectionContributionDialog'
 import { KbReportIssueDialog } from './KbReportIssueDialog'
 import { KnowledgeBaseReceptorEditor } from './KnowledgeBaseReceptorEditor'
-import { MedicationExportMenu } from './MedicationExportMenu'
 import { KeyFactsTable } from '../medication/kb/KeyFactsTable'
 import { KbStructuredSection } from '../medication/kb/KbStructuredSection'
 import { KbStructuredEditor } from '../medication/kb/KbStructuredEditor'
@@ -1620,7 +1618,7 @@ function ReceptorProfileChapterSection({
           {ranked.length > 0 ? (
             <figure className="kb-receptor-figure" onClick={(e) => e.stopPropagation()}>
               <div className="kb-receptor-figure__grid">
-                <ReceptorRadar entries={receptorDisplay.entries} language={language} compact>
+                <ReceptorRadar entries={receptorDisplay.entries} language={language} compact chartExportKey="receptor">
                   <KnowledgeBaseReceptorEditor
                     editMode={false}
                     drug={drug}
@@ -1736,13 +1734,14 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
   const { t } = useTranslation()
   const permissions = useKnowledgeBasePermissions()
   const annotations = useKnowledgeBaseAnnotations(drug.id)
+  const kbComments = useKbPharmaComments()
+  const contentRootRef = useRef<HTMLDivElement>(null)
   const { upsertGeneratedPreparations } = useMedicationMarketAvailability()
   const [mode, setMode] = useState<KnowledgeBaseMode>('reading')
   const [draft, setDraft] = useState<KnowledgeBaseDrug>(drug)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showFinalizeConfirm, setShowFinalizeConfirm] = useState(false)
   const [finalizeAction, setFinalizeAction] = useState<'save' | 'exit'>('save')
-  const [panelCollapsed, setPanelCollapsed] = useState(true)
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(() => new Set())
   const [activeSectionId, setActiveSectionId] = useState<string>(() => {
     const first = [...drug.sections].sort((a, b) => a.order - b.order).find((s) => !s.hidden)
@@ -1760,7 +1759,6 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
   const [pendingGeneratedPreparations, setPendingGeneratedPreparations] = useState<
     Omit<MedicationMarketAvailability, 'id' | 'createdAt'>[]
   >([])
-  const [panelRequest, setPanelRequest] = useState<ReadingPanelRequest | null>(null)
   const [contributionDialogOpen, setContributionDialogOpen] = useState(false)
   const [reportDialogOpen, setReportDialogOpen] = useState(false)
   const draftActionBarRef = useRef<HTMLDivElement>(null)
@@ -1775,29 +1773,23 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
 
   const handleCommentSelection = useCallback((sectionId: string, text: string) => {
     setActiveSectionId(sectionId)
-    setPanelCollapsed(false)
-    setPanelRequest({ nonce: Date.now(), tab: 'comments', commentText: `„${text}“\n` })
-  }, [])
+    kbComments.open({ nonce: Date.now(), tab: 'comments', commentText: `„${text}“\n` })
+  }, [kbComments])
 
   const handleAskAiSelection = useCallback((sectionId: string, text: string) => {
     setActiveSectionId(sectionId)
-    setPanelCollapsed(false)
-    setPanelRequest({ nonce: Date.now(), tab: 'askAi', question: text, autoSend: true })
-  }, [])
+    kbComments.open({ nonce: Date.now(), tab: 'askAi', question: text, autoSend: true })
+  }, [kbComments])
 
-  // Section-level panel triggers for graph (non-text) sections, where the
-  // in-text selection toolbar does not apply.
   const handleSectionComment = useCallback((sectionId: string) => {
     setActiveSectionId(sectionId)
-    setPanelCollapsed(false)
-    setPanelRequest({ nonce: Date.now(), tab: 'comments' })
-  }, [])
+    kbComments.open({ nonce: Date.now(), tab: 'comments' })
+  }, [kbComments])
 
   const handleSectionAskAi = useCallback((sectionId: string) => {
     setActiveSectionId(sectionId)
-    setPanelCollapsed(false)
-    setPanelRequest({ nonce: Date.now(), tab: 'askAi' })
-  }, [])
+    kbComments.open({ nonce: Date.now(), tab: 'askAi' })
+  }, [kbComments])
 
   useEffect(() => {
     if (mode === 'reading') {
@@ -1931,6 +1923,35 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
     activeDrug,
     canonicalSections,
   )
+
+  useEffect(() => {
+    if (editMode) {
+      kbComments.unregister()
+      return
+    }
+    kbComments.register({
+      medicationId: drug.id,
+      medicationName: drug.genericName,
+      sectionId: panelSectionId,
+      sectionLabel: panelSectionLabel,
+      sectionData: panelSectionData,
+      language,
+      tier: aiTier,
+    })
+    return () => {
+      kbComments.unregister()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drug.id, drug.genericName, editMode, language, aiTier])
+
+  useEffect(() => {
+    if (editMode) return
+    kbComments.patchRegistration({
+      sectionId: panelSectionId,
+      sectionLabel: panelSectionLabel,
+      sectionData: panelSectionData,
+    })
+  }, [editMode, kbComments, panelSectionData, panelSectionId, panelSectionLabel])
 
   const updateDraftSection = (sectionId: string, patch: Partial<DrugSection>) => {
     setDraft((prev) => ({
@@ -2253,7 +2274,6 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
             </>
           ) : (
             <>
-              <MedicationExportMenu drug={activeDrug} language={language} />
               <button type="button" className="kbp-icon-btn" onClick={onDuplicate} title={t('kbPharmaDuplicate')}>
                 <Copy className="h-4 w-4" strokeWidth={1.75} />
               </button>
@@ -2288,9 +2308,7 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
       ) : null}
 
       <div
-        className={`kbp-detail-layout${editMode ? ' kbp-detail-layout--editing' : ' kbp-detail-layout--reading'}${
-          !editMode && panelCollapsed ? ' kbp-detail-layout--panel-collapsed' : ''
-        }`}
+        className={`kbp-detail-layout${editMode ? ' kbp-detail-layout--editing' : ' kbp-detail-layout--reading'}`}
       >
         {!editMode ? (
           <KbSectionNav
@@ -2302,7 +2320,16 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
           />
         ) : null}
         <div className={`kbp-detail-main${!editMode ? ' kbp-detail-main--reading' : ''}`}>
-          <div className="kbp-detail-main__content">
+          <div ref={contentRootRef} className="kbp-detail-main__content">
+          {!editMode ? (
+            <KbPharmaReadingToolbar
+              drug={activeDrug}
+              language={language}
+              contentRootRef={contentRootRef}
+              onContribute={openContributionDialog}
+              onReportIssue={openReportDialog}
+            />
+          ) : null}
           <div className="kbp-drug-header">
             <div className="kbp-drug-header__top">
               {!editMode ? (
@@ -2726,69 +2753,12 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
               <>
                 <KbContributorsFooter substanceId={extractKbSubstanceId(activeDrug)} language={language} />
                 <KbStructureImageAttributionFooter attribution={structureImageAttribution} variant="detail" />
+                <KnowledgeBaseNotes medicationId={drug.id} language={language} />
               </>
             ) : null}
           </div>
           </div>
         </div>
-
-        {!editMode ? (
-          <div className="kbp-right-rail">
-            {!panelCollapsed ? (
-              <div className="kbp-reading-column">
-                <KnowledgeBaseReadingPanel
-                  medicationId={drug.id}
-                  medicationName={drug.genericName}
-                  sectionId={panelSectionId}
-                  sectionLabel={panelSectionLabel}
-                  sectionData={panelSectionData}
-                  language={language}
-                  collapsed={false}
-                  onToggleCollapse={() => setPanelCollapsed((prev) => !prev)}
-                  request={panelRequest}
-                  tier={aiTier}
-                />
-                <KnowledgeBaseNotes medicationId={drug.id} language={language} />
-              </div>
-            ) : null}
-            <div className="kbp-right-rail__tabs">
-              <button
-                type="button"
-                className="kbp-contribution-bookmark"
-                onClick={openContributionDialog}
-                title={kbT(language, 'contributionBookmarkTitle')}
-                aria-label={kbT(language, 'contributionBookmarkTitle')}
-              >
-                <Bookmark className="kbp-contribution-bookmark__icon" strokeWidth={1.75} aria-hidden />
-                <span className="kbp-contribution-bookmark__label">{kbT(language, 'contributionBookmark')}</span>
-              </button>
-              <button
-                type="button"
-                className="kbp-contribution-bookmark"
-                onClick={openReportDialog}
-                title={kbT(language, 'reportIssueButtonTitle')}
-                aria-label={kbT(language, 'reportIssueButtonTitle')}
-              >
-                <Flag className="kbp-contribution-bookmark__icon" strokeWidth={1.75} aria-hidden />
-                <span className="kbp-contribution-bookmark__label">{kbT(language, 'reportIssueButton')}</span>
-              </button>
-              {panelCollapsed ? (
-                <KnowledgeBaseReadingPanel
-                  medicationId={drug.id}
-                  medicationName={drug.genericName}
-                  sectionId={panelSectionId}
-                  sectionLabel={panelSectionLabel}
-                  sectionData={panelSectionData}
-                  language={language}
-                  collapsed
-                  onToggleCollapse={() => setPanelCollapsed((prev) => !prev)}
-                  request={panelRequest}
-                  tier={aiTier}
-                />
-              ) : null}
-            </div>
-          </div>
-        ) : null}
       </div>
 
       {contributionDialogOpen ? (

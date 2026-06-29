@@ -81,6 +81,10 @@
   color: var(--accent, #4a6fa5);
 }
 
+.floating-tools-fab__btn--comments {
+  color: #9a6b1f;
+}
+
 .floating-tools-fab__btn--active {
   border-color: color-mix(in srgb, var(--accent, #4a6fa5) 40%, transparent);
   color: var(--accent, #4a6fa5);

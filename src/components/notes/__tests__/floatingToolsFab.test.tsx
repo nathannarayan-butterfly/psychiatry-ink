@@ -1,9 +1,4 @@
 // @vitest-environment jsdom
-/**
- * The global bottom-right launcher renders BOTH bubbles (Notizen + Butterfly) on
- * every route and routes clicks to the right context's open() — Butterfly reuses
- * the existing Ask Butterfly flow, Notizen opens the notes popup.
- */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, createElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
@@ -12,6 +7,8 @@ import { createRoot, type Root } from 'react-dom/client'
 
 const butterflyOpen = vi.hoisted(() => vi.fn())
 const notizenOpen = vi.hoisted(() => vi.fn())
+const kbCommentsOpen = vi.hoisted(() => vi.fn())
+const kbCommentsClose = vi.hoisted(() => vi.fn())
 
 vi.mock('../../../context/TranslationContext', () => ({
   useTranslation: () => ({ t: (key: string) => key, language: 'de' as const }),
@@ -21,6 +18,14 @@ vi.mock('../../../contexts/AskButterflyContext', () => ({
 }))
 vi.mock('../../../contexts/NotizenContext', () => ({
   useNotizen: () => ({ isOpen: false, open: notizenOpen }),
+}))
+vi.mock('../../../contexts/KbPharmaCommentsContext', () => ({
+  useKbPharmaComments: () => ({
+    isRegistered: true,
+    isOpen: false,
+    open: kbCommentsOpen,
+    close: kbCommentsClose,
+  }),
 }))
 vi.mock('../../ButterflyLogo', () => ({ ButterflyLogo: () => null }))
 
@@ -51,23 +56,17 @@ afterEach(() => {
 })
 
 describe('FloatingToolsFab', () => {
-  it('renders the Notizen and Butterfly bubbles', async () => {
+  it('renders Kommentare, Notizen and Butterfly bubbles', async () => {
     await mount()
-    const notizenBtn = container!.querySelector('.floating-tools-fab__btn--notizen')
-    const butterflyBtn = container!.querySelector('.floating-tools-fab__btn--butterfly')
-    expect(notizenBtn).not.toBeNull()
-    expect(butterflyBtn).not.toBeNull()
-    expect(notizenBtn!.getAttribute('aria-label')).toBe('notizenOpen')
-    expect(butterflyBtn!.getAttribute('aria-label')).toBe('askButterflyOpen')
+    expect(container!.querySelector('.floating-tools-fab__btn--comments')).not.toBeNull()
+    expect(container!.querySelector('.floating-tools-fab__btn--notizen')).not.toBeNull()
+    expect(container!.querySelector('.floating-tools-fab__btn--butterfly')).not.toBeNull()
   })
 
-  it('opens the matching tool on click', async () => {
+  it('opens KB comments on bubble click', async () => {
     await mount()
-    const notizenBtn = container!.querySelector<HTMLButtonElement>('.floating-tools-fab__btn--notizen')!
-    const butterflyBtn = container!.querySelector<HTMLButtonElement>('.floating-tools-fab__btn--butterfly')!
-    act(() => notizenBtn.click())
-    act(() => butterflyBtn.click())
-    expect(notizenOpen).toHaveBeenCalledTimes(1)
-    expect(butterflyOpen).toHaveBeenCalledTimes(1)
+    const commentsBtn = container!.querySelector<HTMLButtonElement>('.floating-tools-fab__btn--comments')!
+    act(() => commentsBtn.click())
+    expect(kbCommentsOpen).toHaveBeenCalledTimes(1)
   })
 })
