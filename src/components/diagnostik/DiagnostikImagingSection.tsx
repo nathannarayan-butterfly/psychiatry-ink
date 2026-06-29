@@ -2,20 +2,18 @@ import { useTranslation } from '../../context/TranslationContext'
 import { ANFORDERUNG_PRESET_IMAGING } from '../../data/anforderungenCatalog'
 import type { AnforderungModalPreset } from '../../types/anforderung'
 import type { BefundType } from '../../types/befund'
-import {
-  DiagnostikBefundeMain,
-  DiagnostikBefundeSidebar,
-  useDiagnostikBefunde,
-} from './DiagnostikBefundeSection'
+import { useDiagnostikBefunde } from './DiagnostikBefundeSection'
+import { DiagnostikSectionShell } from './DiagnostikSectionShell'
+import { DiagnostikStructuredBefundPanel } from './DiagnostikStructuredBefundPanel'
 import { FreeTextBefundPanel } from './FreeTextBefundPanel'
+
+/** Bildgebende Verfahren: structured Röntgen befunde plus free-text CT / MRT. */
+const ROENTGEN_BEFUND_TYPES: BefundType[] = ['roentgen']
 
 interface DiagnostikImagingSectionProps {
   caseId: string
   onRequestAnforderung?: (preset?: AnforderungModalPreset | null) => void
 }
-
-/** Bildgebende Verfahren: structured Röntgen befunde plus free-text CT / MRT. */
-const ROENTGEN_BEFUND_TYPES: BefundType[] = ['roentgen']
 
 export function DiagnostikImagingSection({
   caseId,
@@ -27,57 +25,26 @@ export function DiagnostikImagingSection({
   const roentgenBefunde = useDiagnostikBefunde(caseId)
 
   return (
-    <div className="labor-page__content diagnostik-freetext">
-      <header className="diagnostik-freetext__section-head">
-        <h2 className="diagnostik-freetext__section-title">{t('imagingSectionHeading')}</h2>
-        {onRequestAnforderung ? (
-          <button
-            type="button"
-            className="diagnostik-befunde__action-btn diagnostik-befunde__action-btn--request"
-            onClick={() => onRequestAnforderung(ANFORDERUNG_PRESET_IMAGING)}
-            title={t('imagingRequest')}
-          >
-            {t('imagingRequest')}
-          </button>
-        ) : null}
-      </header>
-
+    <DiagnostikSectionShell
+      title={t('imagingSectionHeading')}
+      requestLabel={t('imagingRequest')}
+      onRequest={
+        onRequestAnforderung ? () => onRequestAnforderung(ANFORDERUNG_PRESET_IMAGING) : undefined
+      }
+    >
       <section className="diagnostik-imaging__roentgen" aria-label={t('imagingRoentgenHeading')}>
         <h3 className="diagnostik-imaging__roentgen-title">{t('imagingRoentgenHeading')}</h3>
-        <div className="diagnostik-imaging__roentgen-body">
-          <div className="diagnostik-imaging__roentgen-list">
-            <DiagnostikBefundeSidebar
-              caseId={caseId}
-              records={roentgenBefunde.records}
-              selectedId={roentgenBefunde.selectedId}
-              onSelect={roentgenBefunde.setSelectedId}
-              types={ROENTGEN_BEFUND_TYPES}
-            />
-          </div>
-          <DiagnostikBefundeMain
-            caseId={caseId}
-            records={roentgenBefunde.records}
-            selectedId={roentgenBefunde.selectedId}
-            onSelect={roentgenBefunde.setSelectedId}
-            onRecordsChange={roentgenBefunde.refresh}
-            onRequestAnforderung={onRequestAnforderung}
-            types={ROENTGEN_BEFUND_TYPES}
-          />
-        </div>
+        <DiagnostikStructuredBefundPanel
+          caseId={caseId}
+          befunde={roentgenBefunde}
+          types={ROENTGEN_BEFUND_TYPES}
+        />
       </section>
 
       <div className="diagnostik-freetext__grid">
-        <FreeTextBefundPanel
-          caseId={caseId}
-          modality="cct"
-          title={t('freeTextBefundCctTitle')}
-        />
-        <FreeTextBefundPanel
-          caseId={caseId}
-          modality="mrt"
-          title={t('freeTextBefundMrtTitle')}
-        />
+        <FreeTextBefundPanel caseId={caseId} modality="cct" title={t('freeTextBefundCctTitle')} />
+        <FreeTextBefundPanel caseId={caseId} modality="mrt" title={t('freeTextBefundMrtTitle')} />
       </div>
-    </div>
+    </DiagnostikSectionShell>
   )
 }

@@ -35,6 +35,16 @@ function formatFieldValue(field: BefundFieldDef, raw: string | string[] | boolea
   return ''
 }
 
+/**
+ * Free-text narrative stored on a befund record by the free-text + KI input
+ * mode (mirrors the guided flow, which also writes `narrative`). Used as a
+ * fallback when a record carries no structured field values.
+ */
+function getNarrative(record: BefundRecord): string {
+  const raw = record.fieldValues.narrative
+  return typeof raw === 'string' ? raw.trim() : ''
+}
+
 /** Render a structured befund record as readable plain text in the given UI language. */
 export function renderBefundContent(record: BefundRecord, language?: UiLanguage): string {
   const schema = getBefundSchema(record.type, language)
@@ -57,6 +67,8 @@ export function renderBefundContent(record: BefundRecord, language?: UiLanguage)
     }
   }
 
+  if (lines.length === 0) return getNarrative(record)
+
   return lines.join('\n\n')
 }
 
@@ -67,7 +79,7 @@ export function getBefundDisplaySections(
 ): BefundDisplaySection[] {
   const schema = getBefundSchema(record.type, language)
 
-  return schema.sections
+  const sections = schema.sections
     .map((section) => {
       const fields = section.fields.flatMap((field) => {
         const value = formatFieldValue(field, record.fieldValues[field.id])
@@ -81,6 +93,16 @@ export function getBefundDisplaySections(
       return { id: section.id, label: section.label, fields }
     })
     .filter((section) => section.fields.length > 0)
+
+  if (sections.length === 0) {
+    const narrative = getNarrative(record)
+    if (narrative) {
+      const label = language === 'en' ? 'Findings' : 'Befund'
+      return [{ id: 'narrative', label, fields: [{ label, value: narrative, isLongText: true }] }]
+    }
+  }
+
+  return sections
 }
 
 export function buildBefundTitle(record: BefundRecord, language?: UiLanguage): string {

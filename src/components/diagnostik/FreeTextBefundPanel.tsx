@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Loader2, Pencil, Sparkles, Trash2 } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
+import { executeAiGeneration } from '../../services/aiGeneration'
+import { estimateGenerationCredits } from '../../utils/estimateCredits'
 import type { FreeTextBefundModality, FreeTextBefundRecord } from '../../types/freeTextBefund'
 import { freeTextBefundTitle } from '../../types/freeTextBefund'
 import {
@@ -55,6 +57,8 @@ export function FreeTextBefundPanel({
   const [draftText, setDraftText] = useState('')
   const [draftDate, setDraftDate] = useState<string>(() => todayIso())
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [aiBusy, setAiBusy] = useState(false)
+  const [aiError, setAiError] = useState<string | null>(null)
 
   const refresh = useCallback(() => {
     setRecords(loadFreeTextBefundeByModality(caseId, modality))
@@ -77,7 +81,34 @@ export function FreeTextBefundPanel({
     setDraftText('')
     setDraftDate(todayIso())
     setEditingId(null)
+    setAiError(null)
   }, [])
+
+  const optimizeDraft = useCallback(async () => {
+    const source = draftText.trim()
+    if (!source || aiBusy) return
+    setAiBusy(true)
+    setAiError(null)
+    try {
+      const generation = await executeAiGeneration(
+        {
+          componentId: `freetext-befund-${modality}`,
+          scope: 'segment',
+          tool: 'improve',
+          tier: 'standard',
+          language,
+          sourceText: source,
+          extraInstruction: t('standaloneBefundFreetextInstruction').replace('{title}', title),
+        },
+        { estimatedCredits: estimateGenerationCredits('standard', source) },
+      )
+      setDraftText(generation.text.trim())
+    } catch (err) {
+      setAiError(err instanceof Error && err.message ? err.message : t('workspaceAiError'))
+    } finally {
+      setAiBusy(false)
+    }
+  }, [aiBusy, draftText, language, modality, t, title])
 
   const persist = useCallback(
     (status: FreeTextBefundRecord['status']) => {
@@ -166,6 +197,7 @@ export function FreeTextBefundPanel({
           placeholder={t('freeTextBefundPlaceholder')}
           rows={6}
         />
+        {aiError ? <p className="swx-error">{aiError}</p> : null}
         <div className="freetext-befund__editor-actions">
           {editingId ? (
             <button
@@ -176,6 +208,20 @@ export function FreeTextBefundPanel({
               {t('freeTextBefundEditCancel')}
             </button>
           ) : null}
+          <button
+            type="button"
+            className="befund-popup__btn befund-popup__btn--ghost freetext-befund__ai-btn"
+            onClick={() => void optimizeDraft()}
+            disabled={!canSave || aiBusy}
+            title={t('standaloneBefundOptimize')}
+          >
+            {aiBusy ? (
+              <Loader2 className="h-3.5 w-3.5 wai-spin" strokeWidth={1.75} aria-hidden />
+            ) : (
+              <Sparkles className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+            )}
+            {aiBusy ? t('workspaceAiGenerating') : t('standaloneBefundOptimize')}
+          </button>
           <button
             type="button"
             className="befund-popup__btn befund-popup__btn--secondary"

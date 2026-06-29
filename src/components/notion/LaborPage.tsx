@@ -48,11 +48,8 @@ import { loadNotionDocumentSnapshot } from '../../utils/notionDocumentActions'
 import { FONT_SANS } from '../../styles/typographyTokens'
 import type { MedicationStatus } from '../../types/medicationPlan'
 import { consumeDiagnosticsSectionPref } from '../../utils/befundArchive'
-import {
-  DiagnostikBefundeMain,
-  DiagnostikBefundeSidebar,
-  useDiagnostikBefunde,
-} from '../diagnostik/DiagnostikBefundeSection'
+import { useDiagnostikBefunde } from '../diagnostik/DiagnostikBefundeSection'
+import { DiagnostikEkgSection } from '../diagnostik/DiagnostikEkgSection'
 import { DiagnostikEegSection } from '../diagnostik/DiagnostikEegSection'
 import { DiagnostikImagingSection } from '../diagnostik/DiagnostikImagingSection'
 import {
@@ -64,11 +61,7 @@ import { useLaborBefundeList } from '../../hooks/useLaborBefundeList'
 import { useDiagnosticsSectionNavOptional } from '../../contexts/DiagnosticsSectionNavContext'
 import { ANFORDERUNG_PRESET_LABOR } from '../../data/anforderungenCatalog'
 import type { AnforderungModalPreset } from '../../types/anforderung'
-import type { BefundType } from '../../types/befund'
 import { formatClinicalDate, formatClinicalDateShort } from '../../utils/clinicalDate'
-
-/** The EKG diagnostics section documents only structured ECG findings. */
-const EKG_BEFUND_TYPES: BefundType[] = ['ecg']
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -3002,6 +2995,10 @@ export function LaborPage({
       className={[
         'labor-page',
         workspaceDiagnostik ? 'labor-page--workspace-diagnostik' : '',
+        // Only the cumulative Labor view uses the left rail; the structured /
+        // free-text befund sections are self-contained, so collapse the empty
+        // rail for them to keep every section full-width and consistent.
+        diagnosticsSection !== 'labor' ? 'labor-page--no-rail' : '',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -3089,14 +3086,6 @@ export function LaborPage({
               </ul>
             )}
           </>
-        ) : diagnosticsSection === 'ekg' ? (
-          <DiagnostikBefundeSidebar
-            caseId={caseId}
-            records={diagnostikBefunde.records}
-            selectedId={diagnostikBefunde.selectedId}
-            onSelect={diagnostikBefunde.setSelectedId}
-            types={EKG_BEFUND_TYPES}
-          />
         ) : null}
       </aside>
 
@@ -3136,14 +3125,10 @@ export function LaborPage({
         ) : null}
 
         {diagnosticsSection === 'ekg' ? (
-          <DiagnostikBefundeMain
+          <DiagnostikEkgSection
             caseId={caseId}
-            records={diagnostikBefunde.records}
-            selectedId={diagnostikBefunde.selectedId}
-            onSelect={diagnostikBefunde.setSelectedId}
-            onRecordsChange={diagnostikBefunde.refresh}
+            befunde={diagnostikBefunde}
             onRequestAnforderung={onRequestAnforderung}
-            types={EKG_BEFUND_TYPES}
           />
         ) : diagnosticsSection === 'eeg' ? (
           <DiagnostikEegSection

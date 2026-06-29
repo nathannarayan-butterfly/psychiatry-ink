@@ -38,6 +38,18 @@ export const guidedEntryUiTranslations = {
     fr: 'Cartes courtes par thème clinique — texte modifiable à la fin.',
     es: 'Tarjetas breves por tema clínico — texto editable al final.',
   },
+  befundModeStructured: {
+    de: 'Strukturiertes Formular',
+    en: 'Structured form',
+    fr: 'Formulaire structuré',
+    es: 'Formulario estructurado',
+  },
+  befundModeStructuredDesc: {
+    de: 'Befund Feld für Feld erfassen — strukturierte Eingabemaske.',
+    en: 'Capture the finding field by field — structured input form.',
+    fr: 'Saisir le compte rendu champ par champ — formulaire structuré.',
+    es: 'Registrar el hallazgo campo por campo — formulario estructurado.',
+  },
   guidedEntryCancel: { de: 'Abbrechen', en: 'Cancel', fr: 'Annuler', es: 'Cancelar' },
   guidedEntryBack: { de: 'Zurück', en: 'Back', fr: 'Retour', es: 'Atrás' },
   guidedEntryNext: { de: 'Weiter', en: 'Next', fr: 'Suivant', es: 'Siguiente' },

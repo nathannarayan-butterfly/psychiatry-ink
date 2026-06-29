@@ -16,15 +16,9 @@ import {
   getBefundTypeLabel,
   renderBefundContent,
 } from '../../utils/befundRender'
-import { BefundPopup } from './BefundPopup'
+import { PatientBefundWidget } from './PatientBefundWidget'
 import { EcgBefundCard } from './EcgBefundCard'
 import { CopyButton } from '../common/CopyButton'
-import {
-  ANFORDERUNG_PRESET_EEG,
-  ANFORDERUNG_PRESET_EKG,
-  ANFORDERUNG_PRESET_ROENTGEN,
-} from '../../data/anforderungenCatalog'
-import type { AnforderungModalPreset } from '../../types/anforderung'
 
 export interface DiagnostikBefundeSidebarProps {
   caseId: string
@@ -84,25 +78,12 @@ const BEFUND_ADD_LABEL_KEY: Record<BefundType, UiTranslationKey> = {
   roentgen: 'befundAddRoentgen',
 }
 
-const BEFUND_REQUEST_LABEL_KEY: Record<BefundType, UiTranslationKey> = {
-  ecg: 'befundRequestEcg',
-  eeg: 'befundRequestEeg',
-  roentgen: 'befundRequestRoentgen',
-}
-
-const BEFUND_REQUEST_PRESET: Record<BefundType, AnforderungModalPreset> = {
-  ecg: ANFORDERUNG_PRESET_EKG,
-  eeg: ANFORDERUNG_PRESET_EEG,
-  roentgen: ANFORDERUNG_PRESET_ROENTGEN,
-}
-
 interface DiagnostikBefundeMainProps {
   caseId: string
   records: BefundRecord[]
   selectedId: string | null
   onSelect: (id: string | null) => void
   onRecordsChange: () => void
-  onRequestAnforderung?: (preset?: AnforderungModalPreset | null) => void
   /** Restrict the documented/displayed befund types (e.g. EKG-only section). */
   types?: BefundType[]
 }
@@ -119,7 +100,6 @@ export function DiagnostikBefundeMain({
   selectedId,
   onSelect,
   onRecordsChange,
-  onRequestAnforderung,
   types,
 }: DiagnostikBefundeMainProps) {
   const { t, language } = useTranslation()
@@ -168,21 +148,8 @@ export function DiagnostikBefundeMain({
           <div className="diagnostik-befunde__action-row">
             {activeTypes.map((type) => {
               const addLabel = t(BEFUND_ADD_LABEL_KEY[type])
-              const requestLabel = t(BEFUND_REQUEST_LABEL_KEY[type])
               return (
                 <div key={type} className="diagnostik-befunde__action-group">
-                  {onRequestAnforderung ? (
-                    <button
-                      type="button"
-                      className="diagnostik-befunde__action-btn diagnostik-befunde__action-btn--request"
-                      disabled={readOnly}
-                      onClick={() => onRequestAnforderung(BEFUND_REQUEST_PRESET[type])}
-                      title={requestLabel}
-                      aria-label={requestLabel}
-                    >
-                      {requestLabel}
-                    </button>
-                  ) : null}
                   <button
                     type="button"
                     className="diagnostik-befunde__action-btn diagnostik-befunde__action-btn--add"
@@ -264,7 +231,7 @@ export function DiagnostikBefundeMain({
       </div>
 
       {popupType && !readOnly && (
-        <BefundPopup
+        <PatientBefundWidget
           caseId={caseId}
           type={popupType}
           recordId={editRecordId}

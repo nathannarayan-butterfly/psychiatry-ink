@@ -497,6 +497,44 @@
   align-items: start;
 }
 
+/* Canonical Diagnostik section shell — shared chrome for EKG / EEG / Bildgebung */
+
+.diagnostik-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  min-height: 0;
+}
+
+/* Hide the (empty) left rail for the self-contained befund sections so every
+   non-Labor section renders full-width and consistently. */
+.labor-page--no-rail .labor-page__sidebar {
+  display: none;
+}
+
+/* Canonical structured-befund layout: list rail beside the detail / create area */
+
+.diagnostik-structured {
+  display: grid;
+  grid-template-columns: minmax(11rem, 15rem) 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.diagnostik-structured__list {
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 8px;
+  background: #fff;
+  padding: 0.5rem;
+  min-height: 3rem;
+}
+
+@media (max-width: 48rem) {
+  .diagnostik-structured {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Structured Röntgen befunde block inside the Bildgebung tab */
 
 .diagnostik-imaging__roentgen {
@@ -512,25 +550,12 @@
   color: var(--ink, #1a1a18);
 }
 
-.diagnostik-imaging__roentgen-body {
-  display: grid;
-  grid-template-columns: minmax(11rem, 15rem) 1fr;
-  gap: 1rem;
-  align-items: start;
-}
-
-.diagnostik-imaging__roentgen-list {
-  border: 1px solid var(--border-soft, #e8e8e4);
-  border-radius: 8px;
-  background: #fff;
-  padding: 0.5rem;
-  min-height: 3rem;
-}
-
-@media (max-width: 48rem) {
-  .diagnostik-imaging__roentgen-body {
-    grid-template-columns: 1fr;
-  }
+/* Inline KI-Optimierung action inside the free-text befund editor */
+.freetext-befund__ai-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-right: auto;
 }
 
 .freetext-befund {
