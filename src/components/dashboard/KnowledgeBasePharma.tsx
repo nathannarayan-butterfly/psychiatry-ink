@@ -1734,7 +1734,12 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
   const { t } = useTranslation()
   const permissions = useKnowledgeBasePermissions()
   const annotations = useKnowledgeBaseAnnotations(drug.id)
-  const kbComments = useKbPharmaComments()
+  const {
+    register: registerKbComments,
+    unregister: unregisterKbComments,
+    patchRegistration: patchKbCommentsRegistration,
+    open: openKbComments,
+  } = useKbPharmaComments()
   const contentRootRef = useRef<HTMLDivElement>(null)
   const { upsertGeneratedPreparations } = useMedicationMarketAvailability()
   const [mode, setMode] = useState<KnowledgeBaseMode>('reading')
@@ -1773,23 +1778,23 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
 
   const handleCommentSelection = useCallback((sectionId: string, text: string) => {
     setActiveSectionId(sectionId)
-    kbComments.open({ nonce: Date.now(), tab: 'comments', commentText: `„${text}“\n` })
-  }, [kbComments])
+    openKbComments({ nonce: Date.now(), tab: 'comments', commentText: `„${text}“\n` })
+  }, [openKbComments])
 
   const handleAskAiSelection = useCallback((sectionId: string, text: string) => {
     setActiveSectionId(sectionId)
-    kbComments.open({ nonce: Date.now(), tab: 'askAi', question: text, autoSend: true })
-  }, [kbComments])
+    openKbComments({ nonce: Date.now(), tab: 'askAi', question: text, autoSend: true })
+  }, [openKbComments])
 
   const handleSectionComment = useCallback((sectionId: string) => {
     setActiveSectionId(sectionId)
-    kbComments.open({ nonce: Date.now(), tab: 'comments' })
-  }, [kbComments])
+    openKbComments({ nonce: Date.now(), tab: 'comments' })
+  }, [openKbComments])
 
   const handleSectionAskAi = useCallback((sectionId: string) => {
     setActiveSectionId(sectionId)
-    kbComments.open({ nonce: Date.now(), tab: 'askAi' })
-  }, [kbComments])
+    openKbComments({ nonce: Date.now(), tab: 'askAi' })
+  }, [openKbComments])
 
   useEffect(() => {
     if (mode === 'reading') {
@@ -1926,10 +1931,10 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
 
   useEffect(() => {
     if (editMode) {
-      kbComments.unregister()
+      unregisterKbComments()
       return
     }
-    kbComments.register({
+    registerKbComments({
       medicationId: drug.id,
       medicationName: drug.genericName,
       sectionId: panelSectionId,
@@ -1939,19 +1944,19 @@ function DrugDetailView({ drug, onBack, onUpdate, onDuplicate, onDelete, languag
       tier: aiTier,
     })
     return () => {
-      kbComments.unregister()
+      unregisterKbComments()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drug.id, drug.genericName, editMode, language, aiTier])
 
   useEffect(() => {
     if (editMode) return
-    kbComments.patchRegistration({
+    patchKbCommentsRegistration({
       sectionId: panelSectionId,
       sectionLabel: panelSectionLabel,
       sectionData: panelSectionData,
     })
-  }, [editMode, kbComments, panelSectionData, panelSectionId, panelSectionLabel])
+  }, [editMode, patchKbCommentsRegistration, panelSectionData, panelSectionId, panelSectionLabel])
 
   const updateDraftSection = (sectionId: string, patch: Partial<DrugSection>) => {
     setDraft((prev) => ({

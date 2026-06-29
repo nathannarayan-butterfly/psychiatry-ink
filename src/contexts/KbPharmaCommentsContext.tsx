@@ -108,7 +108,20 @@ export function KbPharmaCommentsProvider({ children }: { children: ReactNode }) 
   }, [])
 
   const patchRegistration = useCallback((patch: Partial<KbPharmaCommentsRegistration>) => {
-    setRegistration((prev) => (prev ? { ...prev, ...patch } : prev))
+    setRegistration((prev) => {
+      if (!prev) return prev
+      const next = { ...prev, ...patch }
+      if (
+        next.sectionId === prev.sectionId &&
+        next.sectionLabel === prev.sectionLabel &&
+        next.sectionData === prev.sectionData &&
+        next.tier === prev.tier &&
+        next.language === prev.language
+      ) {
+        return prev
+      }
+      return next
+    })
   }, [])
 
   const open = useCallback((request?: ReadingPanelRequest | null) => {
