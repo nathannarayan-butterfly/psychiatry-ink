@@ -241,7 +241,9 @@ export const ANFORDERUNGEN_CATALOG: AnforderungCatalogItem[] = [
   }),
   befunde('befund-mrt-gesamt', 'befunde_bildgebung', 'MRT Gesamt (psychiatrisch relevant)', 'Whole-body MRI'),
   befunde('befund-ct-thorax', 'befunde_bildgebung', 'CT Thorax', 'Chest CT'),
-  befunde('befund-roentgen-thorax', 'befunde_bildgebung', 'Röntgen Thorax', 'Chest X-ray'),
+  befunde('befund-roentgen-thorax', 'befunde_bildgebung', 'Röntgen Thorax', 'Chest X-ray', {
+    resultLink: 'roentgen',
+  }),
   befunde('befund-duplex-carotis', 'befunde_bildgebung', 'Duplexsonographie Carotiden', 'Carotid duplex ultrasound'),
 
   // —— Befunde: Schlaf / Neuropsych ——
@@ -341,4 +343,10 @@ export const ANFORDERUNG_PRESET_EEG: AnforderungModalPreset = {
 export const ANFORDERUNG_PRESET_IMAGING: AnforderungModalPreset = {
   category: 'befunde',
   groupKey: 'befunde_bildgebung',
+}
+
+export const ANFORDERUNG_PRESET_ROENTGEN: AnforderungModalPreset = {
+  category: 'befunde',
+  groupKey: 'befunde_bildgebung',
+  selectedCatalogIds: ['befund-roentgen-thorax'],
 }

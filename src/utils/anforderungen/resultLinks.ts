@@ -44,6 +44,8 @@ export function resolveAnforderungResultState(
       return hasFreeTextBefund(caseId, 'cct') ? 'documented' : 'pending'
     case 'mrt':
       return hasFreeTextBefund(caseId, 'mrt') ? 'documented' : 'pending'
+    case 'roentgen':
+      return hasBefundType(caseId, 'roentgen') ? 'documented' : 'pending'
     default:
       return 'none'
   }
@@ -62,6 +64,7 @@ export function diagnosticsTabForResultLink(
       return 'eeg'
     case 'cct':
     case 'mrt':
+    case 'roentgen':
       return 'imaging'
     default:
       return 'labor'
@@ -71,5 +74,6 @@ export function diagnosticsTabForResultLink(
 export function befundTypeForResultLink(link: AnforderungResultLink): BefundType | null {
   if (link === 'ecg') return 'ecg'
   if (link === 'eeg') return 'eeg'
+  if (link === 'roentgen') return 'roentgen'
   return null
 }
