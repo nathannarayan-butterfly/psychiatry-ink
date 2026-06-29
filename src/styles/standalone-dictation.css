@@ -1,0 +1,83 @@
+/*
+ * Standalone dictation workspace — review/playback controls.
+ *
+ * NOTE: kept in a dedicated stylesheet (not standalone-workspace.css) so the
+ * dictation work never contends with the shared workspace stylesheet. The
+ * recording bar (.swx-dictation__*) still lives in standalone-workspace.css and
+ * is reused read-only here; everything below is the dictation-only `sdx-` layer.
+ */
+
+.sdx-review {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border, #e2ded7);
+  border-radius: 11px;
+  background: var(--surface-muted, #f7f5f1);
+}
+
+.sdx-review__hint {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #6d655c);
+}
+
+.sdx-player {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.sdx-player__audio {
+  display: none;
+}
+
+.sdx-player__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  flex: 0 0 auto;
+  border: 1px solid var(--border-strong, #c8c4be);
+  border-radius: 999px;
+  background: var(--surface, #fff);
+  color: var(--text-primary, #2c2722);
+  cursor: pointer;
+}
+
+.sdx-player__btn:hover {
+  border-color: var(--accent, #8a5a2b);
+  color: var(--accent, #8a5a2b);
+}
+
+.sdx-player__scrubber {
+  flex: 1 1 auto;
+  min-width: 4rem;
+  accent-color: var(--accent, #8a5a2b);
+  cursor: pointer;
+}
+
+.sdx-player__scrubber:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.sdx-player__time {
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary, #6d655c);
+  min-width: 4.5rem;
+  text-align: right;
+}
+
+.sdx-review__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.sdx-review__actions .wai-btn {
+  flex: 0 0 auto;
+}
