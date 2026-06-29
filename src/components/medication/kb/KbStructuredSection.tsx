@@ -268,7 +268,7 @@ export function KbStructuredSection({ section, drug, language }: KbStructuredSec
       return (
         <div className="kb-structured">
           <PkStrip pk={pk} language={language} />
-          <PkCurve pk={pk} language={language} />
+          <PkCurve pk={pk} language={language} chartExportKey={section.key} />
           {pk.isEstimated ? <p className="kb-chart__note">{kbT(language, 'estimatedNote')}</p> : null}
           {content.trim() ? (
             <Details language={language}>
@@ -286,7 +286,7 @@ export function KbStructuredSection({ section, drug, language }: KbStructuredSec
       if (!schedule) return <NarrativeFallback section={section} language={language} />
       return (
         <div className="kb-structured">
-          <TitrationChart schedule={schedule} isTaper={kind === 'taper'} language={language} />
+          <TitrationChart schedule={schedule} isTaper={kind === 'taper'} language={language} chartExportKey={section.key} />
           <Details language={language}>
             <TitrationTable schedule={schedule} language={language} />
             <NarrativeText content={content} />
@@ -330,8 +330,11 @@ export function KbStructuredSection({ section, drug, language }: KbStructuredSec
       const content = getSectionContent(section, language)
       if (!cyp) return <NarrativeFallback section={section} language={language} />
       return (
-        <div className="kb-structured">
-          <CypView cyp={cyp} language={language} />
+        <div className="kb-structured kb-structured--cyp">
+          <p className="kb-chart__caption">{kbT(language, 'cypTitle')}</p>
+          <div className="kb-structured__visual">
+            <CypView cyp={cyp} language={language} />
+          </div>
           {content.trim() ? (
             <Details language={language}>
               <NarrativeText content={content} />
