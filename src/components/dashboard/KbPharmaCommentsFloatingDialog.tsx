@@ -2,9 +2,8 @@ import { GripHorizontal, MessageSquare, PanelRight, Sparkles, X } from 'lucide-r
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import { useKbPharmaComments } from '../../contexts/KbPharmaCommentsContext'
-import {
-  KnowledgeBaseReadingPanel,
-} from '../dashboard/KnowledgeBaseReadingPanel'
+import { FloatingToolHeader } from '../notes/FloatingToolHeader'
+import { KnowledgeBaseReadingPanel } from './KnowledgeBaseReadingPanel'
 
 const DOCK_EDGE_THRESHOLD_PX = 96
 
@@ -80,41 +79,60 @@ export function KbPharmaCommentsFloatingDialog() {
     <div className="ask-butterfly-overlay ask-butterfly-overlay--floating" role="presentation">
       <div
         ref={dialogRef}
-        className="ask-butterfly-dialog notizen-dialog--floating kbp-comments-dialog"
+        className={`ask-butterfly-dialog ask-butterfly-dialog--floating notizen-dialog--floating kbp-comments-dialog${
+          isDragging ? ' ask-butterfly-dialog--dragging' : ''
+        }`}
         style={dialogStyle}
         role="dialog"
         aria-modal="false"
-        aria-label={panelTitle}
+        aria-labelledby="kbp-comments-float-title"
+        onClick={(event) => event.stopPropagation()}
       >
-        <div className="ask-butterfly-dialog__header">
-          <button
-            type="button"
-            className="ask-butterfly-dialog__drag"
-            aria-label={panelTitle}
-            onPointerDown={handleDragStart}
-            onPointerMove={handleDragMove}
-            onPointerUp={handleDragEnd}
-            onPointerCancel={handleDragEnd}
-          >
-            <GripHorizontal className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-          </button>
-          <span className="ask-butterfly-dialog__title">
-            {purpose === 'askAi' ? (
-              <Sparkles className="h-4 w-4 notizen-dialog__mark" strokeWidth={1.75} aria-hidden />
+        <FloatingToolHeader
+          titleId="kbp-comments-float-title"
+          icon={
+            purpose === 'askAi' ? (
+              <Sparkles className="h-5 w-5" strokeWidth={1.75} aria-hidden />
             ) : (
-              <MessageSquare className="h-4 w-4 notizen-dialog__mark" strokeWidth={1.75} aria-hidden />
-            )}
-            {panelTitle}
-          </span>
-          <div className="ask-butterfly-dialog__actions">
-            <button type="button" className="ask-butterfly-dialog__icon-btn" onClick={dock} title={t('kbReadingPanelExpand')}>
-              <PanelRight className="h-4 w-4" strokeWidth={1.75} />
-            </button>
-            <button type="button" className="ask-butterfly-dialog__icon-btn" onClick={close} aria-label={t('kbReadingPanelCollapse')}>
-              <X className="h-4 w-4" strokeWidth={1.75} />
-            </button>
-          </div>
-        </div>
+              <MessageSquare className="h-5 w-5" strokeWidth={1.75} aria-hidden />
+            )
+          }
+          title={panelTitle}
+          subtitle={registration.medicationName}
+          actions={
+            <>
+              <button
+                type="button"
+                className="ask-butterfly-dialog__drag-handle"
+                onPointerDown={handleDragStart}
+                onPointerMove={handleDragMove}
+                onPointerUp={handleDragEnd}
+                onPointerCancel={handleDragEnd}
+                title={t('askButterflyDragHint')}
+                aria-label={t('askButterflyDragHint')}
+              >
+                <GripHorizontal strokeWidth={1.75} aria-hidden />
+              </button>
+              <button
+                type="button"
+                className="ask-butterfly-dialog__icon-btn"
+                onClick={dock}
+                title={t('askButterflyDock')}
+                aria-label={t('askButterflyDock')}
+              >
+                <PanelRight strokeWidth={1.75} aria-hidden />
+              </button>
+              <button
+                type="button"
+                className="ask-butterfly-dialog__close"
+                onClick={close}
+                aria-label={t('settingsClose')}
+              >
+                <X strokeWidth={1.75} aria-hidden />
+              </button>
+            </>
+          }
+        />
         <div className="ask-butterfly-dialog__body kbp-comments-dialog__body">
           <KnowledgeBaseReadingPanel
             medicationId={registration.medicationId}

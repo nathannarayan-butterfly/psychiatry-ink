@@ -14,6 +14,7 @@ import {
   updateGlobalNote,
 } from '../../utils/standaloneNotes'
 import { NotesRichEditor } from './NotesRichEditor'
+import { FloatingToolHeader } from './FloatingToolHeader'
 import { useOptionalKbPharmaComments } from '../../contexts/KbPharmaCommentsContext'
 import { KnowledgeBaseNotes } from '../dashboard/KnowledgeBaseNotes'
 
@@ -150,29 +151,22 @@ export function NotizenPanel({ variant, headerActions, titleId = 'notizen-title'
 
   return (
     <div className={rootClass}>
-      <header className="ask-butterfly-dialog__header">
-        <div className="ask-butterfly-dialog__title-wrap">
-          <span className="ask-butterfly-dialog__mark notizen-dialog__mark">
-            <NotebookPen className="h-5 w-5" strokeWidth={1.75} aria-hidden />
-          </span>
-          <div>
-            <h2 id={titleId} className="ask-butterfly-dialog__title">
-              {t('notizenTitle')}
-            </h2>
-            <p className="ask-butterfly-dialog__subtitle">
-              {activeEntry ? (
-                <>
-                  <span className="notizen-scope-chip">{t('notizenScopeEntry')}</span>
-                  <span className="notizen-scope-name">{activeEntry.name}</span>
-                </>
-              ) : (
-                t('notizenSubtitle')
-              )}
-            </p>
-          </div>
-        </div>
-        <div className="ask-butterfly-dialog__header-actions">{headerActions}</div>
-      </header>
+      <FloatingToolHeader
+        icon={<NotebookPen className="h-5 w-5" strokeWidth={1.75} aria-hidden />}
+        title={t('notizenTitle')}
+        titleId={titleId}
+        subtitle={
+          activeEntry ? (
+            <>
+              <span className="notizen-scope-chip">{t('notizenScopeEntry')}</span>
+              <span className="notizen-scope-name">{activeEntry.name}</span>
+            </>
+          ) : (
+            t('notizenSubtitle')
+          )
+        }
+        actions={headerActions}
+      />
 
       <div className="ask-butterfly-dialog__body notizen-body">
         {activeEntry ? (

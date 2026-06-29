@@ -6,6 +6,7 @@ import {
   MIN_PANEL_WIDTH,
   MAX_PANEL_WIDTH,
 } from '../../contexts/KbPharmaCommentsContext'
+import { FloatingToolHeader } from '../notes/FloatingToolHeader'
 import { KnowledgeBaseReadingPanel } from './KnowledgeBaseReadingPanel'
 
 interface KbPharmaCommentsDockPanelProps {
@@ -74,35 +75,39 @@ export function KbPharmaCommentsDockPanel({ isOpen, rightOffset }: KbPharmaComme
       />
 
       <div className="ask-butterfly-dock-panel__inner">
-        <div className="ask-butterfly-dock-panel__header">
-          <span className="ask-butterfly-dock-panel__title" id="kbp-comments-dock-title">
-            {purpose === 'askAi' ? (
-              <Sparkles className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+        <FloatingToolHeader
+          titleId="kbp-comments-dock-title"
+          icon={
+            purpose === 'askAi' ? (
+              <Sparkles className="h-5 w-5" strokeWidth={1.75} aria-hidden />
             ) : (
-              <MessageSquare className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-            )}
-            {panelTitle}
-          </span>
-          <div className="ask-butterfly-dialog__actions">
-            <button
-              type="button"
-              className="ask-butterfly-dialog__icon-btn"
-              onClick={undock}
-              title={t('askButterflyUndock')}
-              aria-label={t('askButterflyUndock')}
-            >
-              <PanelRightClose className="h-4 w-4" strokeWidth={1.75} />
-            </button>
-            <button
-              type="button"
-              className="ask-butterfly-dialog__icon-btn"
-              onClick={close}
-              aria-label={t('kbReadingPanelCollapse')}
-            >
-              <X className="h-4 w-4" strokeWidth={1.75} />
-            </button>
-          </div>
-        </div>
+              <MessageSquare className="h-5 w-5" strokeWidth={1.75} aria-hidden />
+            )
+          }
+          title={panelTitle}
+          subtitle={registration.medicationName}
+          actions={
+            <>
+              <button
+                type="button"
+                className="ask-butterfly-dialog__icon-btn"
+                onClick={undock}
+                title={t('askButterflyUndock')}
+                aria-label={t('askButterflyUndock')}
+              >
+                <PanelRightClose strokeWidth={1.75} aria-hidden />
+              </button>
+              <button
+                type="button"
+                className="ask-butterfly-dialog__close"
+                onClick={close}
+                aria-label={t('settingsClose')}
+              >
+                <X strokeWidth={1.75} aria-hidden />
+              </button>
+            </>
+          }
+        />
         <div className="ask-butterfly-dock-panel__body kbp-comments-dialog__body">
           <KnowledgeBaseReadingPanel
             medicationId={registration.medicationId}
