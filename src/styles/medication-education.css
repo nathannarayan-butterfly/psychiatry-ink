@@ -754,3 +754,72 @@
   border-color: #0d948855;
   background: linear-gradient(135deg, rgba(13, 148, 136, 0.08), rgba(13, 148, 136, 0.02));
 }
+
+/* On-screen preview of the signature/consent block appended to print/PDF/Word. */
+.pe-consent-preview {
+  margin-top: 1rem;
+  padding: 1rem 1.1rem 1.2rem;
+  border: 1px dashed var(--border-strong, #cbd5e1);
+  border-radius: 10px;
+  background: var(--surface-raised, #fafafa);
+}
+
+.pe-consent-preview__heading {
+  margin: 0 0 0.6rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary, #111827);
+}
+
+.pe-consent-preview__line {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0.35rem 0;
+  font-size: 0.86rem;
+  color: var(--text-primary, #1f2937);
+}
+
+.pe-consent-preview__box {
+  flex: 0 0 auto;
+  width: 0.95em;
+  height: 0.95em;
+  margin-top: 0.15em;
+  border: 1.5px solid var(--text-secondary, #475569);
+  border-radius: 3px;
+}
+
+.pe-consent-preview__subheading {
+  margin: 0.9rem 0 0.25rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #6b7280);
+}
+
+.pe-consent-preview__sign {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1.2rem;
+}
+
+.pe-consent-preview__party {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.pe-consent-preview__party-title {
+  margin: 0 0 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary, #111827);
+}
+
+.pe-consent-preview__field {
+  margin: 0.9rem 0 0;
+  padding-top: 0.2rem;
+  border-top: 1px solid var(--border-strong, #cbd5e1);
+  font-size: 0.74rem;
+  color: var(--text-muted, #6b7280);
+}

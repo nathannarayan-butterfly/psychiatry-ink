@@ -1,4 +1,5 @@
 import type { GenericPatientEducationDocument } from '../../types/patientEducationGeneric'
+import type { UiLanguage } from '../../types/settings'
 import {
   getGenericEducationSections,
   GENERIC_EDUCATION_DISCLAIMER_DE,
@@ -6,6 +7,8 @@ import {
 } from '../../data/patientEducationGenericSections'
 import { isSectionIncludedInFinal } from './draftOps'
 import { FONT_SANS } from '../../styles/typographyTokens'
+import { printHtmlDocument } from '../print/printDocument'
+import { buildEducationConsentHtml, EDUCATION_CONSENT_PRINT_CSS } from './consentSection'
 
 function escapeHtml(value: string): string {
   return value
@@ -47,6 +50,7 @@ export function buildGenericEducationPrintHtml(
   doc: GenericPatientEducationDocument,
   sectionLabels: Record<string, string>,
   title: string,
+  consentLocale?: UiLanguage,
 ): string {
   // References are clinician-facing only — never part of print/PDF/Word output.
   const defs = getGenericEducationSections()
@@ -68,8 +72,12 @@ export function buildGenericEducationPrintHtml(
   const disclaimer =
     doc.language === 'en' ? GENERIC_EDUCATION_DISCLAIMER_EN : GENERIC_EDUCATION_DISCLAIMER_DE
 
+  // Signature/consent block is patient-facing; localise to the clinician's UI
+  // language when known, otherwise the document language (de/en).
+  const consentHtml = buildEducationConsentHtml(consentLocale ?? doc.language)
+
   return `<!DOCTYPE html>
-<html lang="${doc.language}">
+<html lang="${consentLocale ?? doc.language}">
 <head>
 <meta charset="utf-8" />
 <title>${escapeHtml(title)}</title>
@@ -80,6 +88,7 @@ h1 { font-size: 14pt; margin-bottom: 1rem; }
 h2 { font-size: 11pt; font-weight: 600; margin: 1.2rem 0 0.35rem; }
 pre { white-space: pre-wrap; font-family: inherit; margin: 0 0 0.8rem; }
 .pe-disclaimer { font-size: 9pt; color: #555; margin-top: 2rem; border-top: 1px solid #ccc; padding-top: 0.5rem; }
+${EDUCATION_CONSENT_PRINT_CSS}
 @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
 </style>
 </head>
@@ -87,21 +96,13 @@ pre { white-space: pre-wrap; font-family: inherit; margin: 0 0 0.8rem; }
 <h1>${escapeHtml(title)}</h1>
 ${bodyParts.join('')}
 <p class="pe-disclaimer">${escapeHtml(disclaimer)}</p>
+${consentHtml}
 </body>
 </html>`
 }
 
 export async function copyGenericEducationText(text: string): Promise<void> {
   await navigator.clipboard.writeText(text)
-}
-
-function openPrintWindow(html: string): void {
-  const w = window.open('', '_blank', 'noopener,noreferrer')
-  if (!w) return
-  w.document.write(html)
-  w.document.close()
-  w.focus()
-  w.print()
 }
 
 function downloadBlob(blob: Blob, filename: string): void {
@@ -117,24 +118,27 @@ export function printGenericEducationDocument(
   doc: GenericPatientEducationDocument,
   sectionLabels: Record<string, string>,
   title?: string,
+  consentLocale?: UiLanguage,
 ): void {
-  openPrintWindow(buildGenericEducationPrintHtml(doc, sectionLabels, title ?? doc.title))
+  printHtmlDocument(buildGenericEducationPrintHtml(doc, sectionLabels, title ?? doc.title, consentLocale))
 }
 
 export function exportGenericEducationPdfDocument(
   doc: GenericPatientEducationDocument,
   sectionLabels: Record<string, string>,
   title?: string,
+  consentLocale?: UiLanguage,
 ): void {
-  printGenericEducationDocument(doc, sectionLabels, title)
+  printGenericEducationDocument(doc, sectionLabels, title, consentLocale)
 }
 
 export function exportGenericEducationDocxDocument(
   doc: GenericPatientEducationDocument,
   sectionLabels: Record<string, string>,
   title?: string,
+  consentLocale?: UiLanguage,
 ): void {
-  const html = buildGenericEducationPrintHtml(doc, sectionLabels, title ?? doc.title)
+  const html = buildGenericEducationPrintHtml(doc, sectionLabels, title ?? doc.title, consentLocale)
   const blob = new Blob(['\ufeff', html], { type: 'application/msword;charset=utf-8' })
   const stem = (title ?? doc.title).replace(/[^\wäöüß\-]+/gi, '_').slice(0, 60)
   downloadBlob(blob, `${stem || 'patientenaufklaerung'}.doc`)

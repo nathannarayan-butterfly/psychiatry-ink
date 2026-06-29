@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   getGenericEducationSectionIds,
   getGenericEducationSections,
@@ -20,7 +20,16 @@ import {
   toggleSectionIncluded,
   updateSectionContent,
 } from '../draftOps'
-import { assembleGenericEducationText } from '../export'
+import {
+  assembleGenericEducationText,
+  buildGenericEducationPrintHtml,
+  printGenericEducationDocument,
+  exportGenericEducationPdfDocument,
+} from '../export'
+import {
+  buildEducationConsentHtml,
+  getEducationConsentStrings,
+} from '../consentSection'
 
 function baseDoc() {
   return createGenericEducationDocument({
@@ -196,5 +205,122 @@ describe('generic education disclaimers', () => {
   it('provides DE and EN disclaimers', () => {
     expect(GENERIC_EDUCATION_DISCLAIMER_DE.length).toBeGreaterThan(0)
     expect(GENERIC_EDUCATION_DISCLAIMER_EN.length).toBeGreaterThan(0)
+  })
+})
+
+function labelsFor(): Record<string, string> {
+  const labels: Record<string, string> = {}
+  for (const s of getGenericEducationSections()) labels[s.id] = s.labelDe
+  return labels
+}
+
+function docWithContent() {
+  let doc = baseDoc()
+  doc = applyAiGeneratedSection(doc, 'ueberblick', 'Worum es geht.', {
+    provider: 'p',
+    model: 'm',
+    mode: 'standard',
+    inputTokens: 1,
+    outputTokens: 1,
+    creditsCharged: 1,
+  })
+  doc = acceptSection(doc, 'ueberblick')
+  return doc
+}
+
+describe('education consent / signature block', () => {
+  it('localises consent strings for de/en/fr/es', () => {
+    for (const loc of ['de', 'en', 'fr', 'es'] as const) {
+      const s = getEducationConsentStrings(loc)
+      expect(s.heading.length).toBeGreaterThan(0)
+      expect(s.understood.length).toBeGreaterThan(0)
+      expect(s.accept.length).toBeGreaterThan(0)
+      expect(s.reject.length).toBeGreaterThan(0)
+      expect(s.patientHeading.length).toBeGreaterThan(0)
+      expect(s.clinicianHeading.length).toBeGreaterThan(0)
+      expect(s.signatureLabel.length).toBeGreaterThan(0)
+    }
+    // Each locale is distinct from the others (no untranslated copies).
+    expect(getEducationConsentStrings('en').accept).not.toBe(
+      getEducationConsentStrings('de').accept,
+    )
+    expect(getEducationConsentStrings('fr').accept).not.toBe(
+      getEducationConsentStrings('es').accept,
+    )
+  })
+
+  it('falls back to German for unknown locales', () => {
+    expect(getEducationConsentStrings('xx')).toEqual(getEducationConsentStrings('de'))
+  })
+
+  it('renders patient + clinician signature lines and accept/reject choices', () => {
+    const html = buildEducationConsentHtml('de')
+    const de = getEducationConsentStrings('de')
+    expect(html).toContain(de.understood)
+    expect(html).toContain(de.accept)
+    expect(html).toContain(de.reject)
+    expect(html).toContain(de.patientHeading)
+    expect(html).toContain(de.clinicianHeading)
+    // Both parties get name/date/signature lines (3 each → 6 fields).
+    expect(html.match(/pe-consent__field/g)?.length).toBe(6)
+  })
+
+  it('appends the consent block to the print/PDF/Word HTML', () => {
+    const doc = docWithContent()
+    const html = buildGenericEducationPrintHtml(doc, labelsFor(), 'Aufklärung')
+    expect(html).toContain('Worum es geht.')
+    const de = getEducationConsentStrings('de')
+    expect(html).toContain(de.heading)
+    expect(html).toContain(de.understood)
+    expect(html).toContain(de.accept)
+    expect(html).toContain(de.reject)
+    // Consent block is the final block (after the disclaimer footnote).
+    expect(html.indexOf('pe-disclaimer')).toBeLessThan(html.indexOf('pe-consent'))
+  })
+
+  it('honours an explicit consent locale override (e.g. French UI)', () => {
+    const doc = docWithContent()
+    const html = buildGenericEducationPrintHtml(doc, labelsFor(), 'Aufklärung', 'fr')
+    expect(html).toContain(getEducationConsentStrings('fr').accept)
+    expect(html).not.toContain(getEducationConsentStrings('de').accept)
+  })
+})
+
+describe('education print/export path', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('opens a print window, writes the document and triggers print', () => {
+    vi.useFakeTimers()
+    const printSpy = vi.fn()
+    let written = ''
+    const fakeWin = {
+      document: {
+        open: vi.fn(),
+        write: (chunk: string) => {
+          written += chunk
+        },
+        close: vi.fn(),
+      },
+      focus: vi.fn(),
+      print: printSpy,
+      setTimeout: (fn: () => void) => fn(),
+    } as unknown as Window
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(fakeWin)
+
+    const doc = docWithContent()
+    expect(() => printGenericEducationDocument(doc, labelsFor(), 'Aufklärung', 'de')).not.toThrow()
+
+    expect(openSpy).toHaveBeenCalled()
+    expect(written).toContain(getEducationConsentStrings('de').understood)
+    expect(printSpy).toHaveBeenCalled()
+    vi.useRealTimers()
+  })
+
+  it('does not throw when the popup is blocked (iframe fallback)', () => {
+    vi.spyOn(window, 'open').mockReturnValue(null)
+    const doc = docWithContent()
+    expect(() => exportGenericEducationPdfDocument(doc, labelsFor(), 'Aufklärung', 'en')).not.toThrow()
   })
 })

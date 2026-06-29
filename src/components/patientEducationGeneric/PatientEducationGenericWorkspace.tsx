@@ -20,6 +20,7 @@ import { MedicationEducationReferencesPanel } from '../medicationEducation/Medic
 import { MedicationEducationGenerationDialog } from '../medicationEducation/MedicationEducationGenerationDialog'
 import { PatientEducationGenericNewDialog } from './PatientEducationGenericNewDialog'
 import { PatientEducationGenericSectionCard } from './PatientEducationGenericSectionCard'
+import { PatientEducationConsentPreview } from './PatientEducationConsentPreview'
 
 interface PatientEducationGenericWorkspaceProps {
   onClose?: () => void
@@ -73,18 +74,18 @@ export function PatientEducationGenericWorkspace({
 
   const handlePrint = useCallback(() => {
     if (!pe.doc) return
-    printGenericEducationDocument(pe.doc, pe.sectionLabels, exportTitle)
-  }, [exportTitle, pe.doc, pe.sectionLabels])
+    printGenericEducationDocument(pe.doc, pe.sectionLabels, exportTitle, language)
+  }, [exportTitle, language, pe.doc, pe.sectionLabels])
 
   const handleExportPdf = useCallback(() => {
     if (!pe.doc) return
-    exportGenericEducationPdfDocument(pe.doc, pe.sectionLabels, exportTitle)
-  }, [exportTitle, pe.doc, pe.sectionLabels])
+    exportGenericEducationPdfDocument(pe.doc, pe.sectionLabels, exportTitle, language)
+  }, [exportTitle, language, pe.doc, pe.sectionLabels])
 
   const handleExportDocx = useCallback(() => {
     if (!pe.doc) return
-    exportGenericEducationDocxDocument(pe.doc, pe.sectionLabels, exportTitle)
-  }, [exportTitle, pe.doc, pe.sectionLabels])
+    exportGenericEducationDocxDocument(pe.doc, pe.sectionLabels, exportTitle, language)
+  }, [exportTitle, language, pe.doc, pe.sectionLabels])
 
   const handleExportTxt = useCallback(() => {
     if (!pe.doc) return
@@ -289,6 +290,7 @@ export function PatientEducationGenericWorkspace({
             references={pe.doc!.references ?? []}
             sectionLabels={pe.sectionLabels}
           />
+          <PatientEducationConsentPreview language={language} />
         </div>
       )}
 
