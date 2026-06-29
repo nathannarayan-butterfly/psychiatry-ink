@@ -55,6 +55,7 @@ export type AiFeatureKey =
   | 'template_block_fill'
   | 'template_from_document'
   | 'patient_education_generic'
+  | 'standalone_translation'
   | 'unknown'
 
 /**

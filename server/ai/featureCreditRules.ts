@@ -244,13 +244,44 @@ export const FEATURE_CREDIT_RULES: Record<string, FeatureCreditRule> = {
     defaultMode: 'standard',
   },
   // Standalone, generic patient-education generation in the knowledge base.
-  // Per-section call, billed like a single medication-education section.
+  //
+  // Billed PER SECTION (the workspace generates one section per call). A full
+  // sheet has ~10 AI-capable sections, so the per-section cost is multiplied by
+  // the whole document.
+  //
+  // Previous cost: baseCredits 2 → 4 credits/section at the standard (2×)
+  // multiplier → ~40 credits (≈ €1.40 at €0.035/credit) for a full sheet —
+  // disproportionately expensive for short, capped (≤2200-token), patient-facing
+  // sections. Lowered to a single base credit (the same lightweight-generation
+  // tier as simple_rewrite / lab_formatting / inline_text_edit) with a wide
+  // included-token window so a normal section never overflows:
+  //   standard (2×): 2 credits/section → ~20 credits (≈ €0.70) for a full sheet.
+  //   gruendlich (4×): 4 credits/section.
+  // Overflow only bites on unusually long sections (>4000 tokens), at 1 credit
+  // per extra 2000 tokens (× mode), keeping long sheets bounded but fair.
   patient_education_generic: {
-    baseCredits: 2,
+    baseCredits: 1,
     maxIncludedTokens: 4000,
-    overflowTokenBlockSize: 1000,
+    overflowTokenBlockSize: 2000,
     overflowCreditsPerBlock: 1,
     allowedModes: ['standard', 'gruendlich'],
+    defaultMode: 'standard',
+  },
+  // Standalone, patient-less translation tool (workspace "Übersetzen" widget,
+  // componentId `standalone-translate` → src/services/aiGeneration.ts). A
+  // translation's cost scales with the TEXT LENGTH (tokens), not a flat charge:
+  // a low base covers a short passage and longer text bills per overflow block.
+  //   standard (2×): base 2 credits for ≤1500 tokens, +2 per extra 1000 tokens
+  //                  (e.g. a ~5000-token document ≈ 10 credits).
+  // This replaces the previous fall-through to `document_generation` (base 4 →
+  // 8 flat credits at standard), which over-charged short translations and did
+  // not track length as directly.
+  standalone_translation: {
+    baseCredits: 1,
+    maxIncludedTokens: 1500,
+    overflowTokenBlockSize: 1000,
+    overflowCreditsPerBlock: 1,
+    allowedModes: ALL_MODES,
     defaultMode: 'standard',
   },
 
@@ -458,6 +489,13 @@ export const FEATURE_CREDIT_RULES: Record<string, FeatureCreditRule> = {
     allowedModes: ALL_MODES,
     defaultMode: 'gruendlich',
   },
+  // Dictation / speech-to-text (workspace "Diktat" widget → /api/transcribe and
+  // /api/inline-edit/transcribe, plus discuss-case voice messages). The charge
+  // scales with the LENGTH of the produced transcript (≈ chars/4 tokens) rather
+  // than a flat fee, so a short note costs less than a long one:
+  //   economic (1×): base 1 credit for ≤1000 transcript tokens, +1 per extra
+  //                  500 tokens (e.g. a ~2000-token / multi-minute dictation
+  //                  ≈ 3 credits). Replaces the previous flat 5-credit charge.
   transcription: {
     baseCredits: 1,
     maxIncludedTokens: 1000,

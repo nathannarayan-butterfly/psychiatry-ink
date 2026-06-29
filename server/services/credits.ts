@@ -56,7 +56,11 @@ export async function canAfford(amount: number, userId?: string): Promise<boolea
   return balance >= amount
 }
 
-export async function deductCredits(amount: number, userId?: string): Promise<number> {
+export async function deductCredits(
+  amount: number,
+  userId?: string,
+  featureKey = 'legacy_deduct',
+): Promise<number> {
   if (amount <= 0) return getCreditBalance(userId)
 
   const id = accountIdFromUserId(userId)
@@ -70,7 +74,7 @@ export async function deductCredits(amount: number, userId?: string): Promise<nu
   const result = await deductCreditsTransactionally({
     userId: id,
     credits: amount,
-    featureKey: 'legacy_deduct',
+    featureKey,
   })
   if (!result.ok) {
     return getCreditBalance(userId)

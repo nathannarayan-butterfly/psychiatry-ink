@@ -37,6 +37,11 @@ function resolveWorkspaceFeatureKey(componentId: string): AiFeatureKey {
       return 'lab_medication_correlation_check'
     case 'patient-aufklaerung':
       return 'patient_education_generic'
+    case 'standalone-translate':
+      // Patient-less translation tool — metered by text length via the
+      // dedicated `standalone_translation` credit rule (server/ai/
+      // featureCreditRules.ts), NOT the flat document_generation fall-through.
+      return 'standalone_translation'
     default:
       return 'document_generation'
   }

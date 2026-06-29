@@ -57,6 +57,7 @@ import type { StoredPackageContent } from '../services/discussCaseStore'
 import { downloadDiscussVoiceMessage } from '../services/discussCaseVoiceStorage'
 import { transcribeAudioBuffer } from '../services/transcriptionProvider'
 import { canAfford, deductCredits } from '../services/credits'
+import { dictationCreditsForTranscript, MIN_DICTATION_CREDITS } from '../ai/transcriptionCredits'
 import {
   applyTranscriptCorrection,
   buildMachineVoiceTranscript,
@@ -80,9 +81,6 @@ import {
 export const discussCaseRouter: Router = createRouter()
 
 const VALID_TIERS: AiModelTier[] = ['fast', 'standard', 'thorough']
-
-/** Credit cost for transcribing one voice message. Matches /api/transcribe. */
-const TRANSCRIBE_CREDITS = 5
 
 function requireAuth(req: Request, res: Response): string | null {
   const userId = resolveAccountId(req)
@@ -500,7 +498,9 @@ discussCaseRouter.post(
         return
       }
 
-      if (!(await canAfford(TRANSCRIBE_CREDITS, session.userId))) {
+      // Pre-check the cheapest possible charge; the final charge scales with
+      // the produced transcript length and is deducted after transcription.
+      if (!(await canAfford(MIN_DICTATION_CREDITS, session.userId))) {
         res.status(402).json({ error: 'Insufficient credits' })
         return
       }
@@ -532,7 +532,11 @@ discussCaseRouter.post(
         transcript,
       })
 
-      const balance = await deductCredits(TRANSCRIBE_CREDITS, session.userId)
+      // Length-based metering (transcript length + audio-duration floor),
+      // matching /api/transcribe. The de-identified transcript text is used
+      // only to size the charge — never logged.
+      const creditsCharged = dictationCreditsForTranscript(result.text, result.audioSeconds)
+      const balance = await deductCredits(creditsCharged, session.userId, 'transcription')
 
       await writeAuditLog({
         discussionId: session.discussion.id,
@@ -541,7 +545,7 @@ discussCaseRouter.post(
         details: { messageId: message.id, model: result.model },
       })
 
-      res.json({ message: updated, balance, creditsCharged: TRANSCRIBE_CREDITS })
+      res.json({ message: updated, balance, creditsCharged })
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Failed'
       const status = msg.startsWith('Missing permission')

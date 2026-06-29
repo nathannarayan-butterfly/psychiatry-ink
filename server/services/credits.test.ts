@@ -29,7 +29,7 @@ vi.mock('../data/creditBalances', () => ({
   },
 }))
 
-import { refundCredits, reserveCredits } from './credits'
+import { deductCredits, refundCredits, reserveCredits } from './credits'
 
 beforeEach(() => {
   deductCreditsTransactionally.mockReset()
@@ -72,6 +72,32 @@ describe('reserveCredits (AiCreditAccount)', () => {
 
     expect(result.ok).toBe(false)
     expect(result.balance).toBe(5)
+  })
+})
+
+describe('deductCredits', () => {
+  it('passes a custom featureKey through to the debit (e.g. dictation length-based charge)', async () => {
+    deductCreditsTransactionally.mockResolvedValue({ ok: true })
+
+    await deductCredits(3, 'user-1', 'transcription')
+
+    expect(deductCreditsTransactionally).toHaveBeenCalledWith({
+      userId: 'user-1',
+      credits: 3,
+      featureKey: 'transcription',
+    })
+  })
+
+  it('defaults the featureKey to legacy_deduct when not given', async () => {
+    deductCreditsTransactionally.mockResolvedValue({ ok: true })
+
+    await deductCredits(2, 'user-1')
+
+    expect(deductCreditsTransactionally).toHaveBeenCalledWith({
+      userId: 'user-1',
+      credits: 2,
+      featureKey: 'legacy_deduct',
+    })
   })
 })
 

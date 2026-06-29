@@ -5,9 +5,7 @@ import { canAfford, deductCredits } from '../services/credits'
 import { getCurrentOrganisation, ORG_HEADER } from '../services/orgPermissions'
 import { requireAuthenticatedUserOrDevBypass } from '../utils/requireAuthenticatedUserOrDevBypass'
 import { resolveClinicalLanguage } from '../utils/resolveClinicalLanguage'
-
-/** Matches src/data/subscriptionPlans.ts TRANSCRIBE_CREDITS */
-const TRANSCRIBE_CREDITS = 5
+import { dictationCreditsForTranscript, MIN_DICTATION_CREDITS } from '../ai/transcriptionCredits'
 
 export interface TranscribeRequestBody {
   audioBase64: string
@@ -28,7 +26,10 @@ transcribeRouter.post('/', async (req: Request, res: Response) => {
       return
     }
 
-    if (!(await canAfford(TRANSCRIBE_CREDITS, userId))) {
+    // Pre-check affordability against the cheapest possible charge (the base
+    // dictation credit). The final charge scales with the produced transcript
+    // length and is deducted after transcription completes.
+    if (!(await canAfford(MIN_DICTATION_CREDITS, userId))) {
       res.status(402).json({ error: 'Insufficient credits' })
       return
     }
@@ -46,9 +47,12 @@ transcribeRouter.post('/', async (req: Request, res: Response) => {
       organisationId: org?.id ?? null,
       language,
     })
-    const balance = await deductCredits(TRANSCRIBE_CREDITS, userId)
+    // Length-based metering: charge scales with the transcript length (and, as
+    // a floor, the audio duration) rather than a flat fee.
+    const creditsCharged = dictationCreditsForTranscript(result.text, result.audioSeconds)
+    const balance = await deductCredits(creditsCharged, userId, 'transcription')
 
-    res.json({ ...result, balance, creditsCharged: TRANSCRIBE_CREDITS })
+    res.json({ ...result, balance, creditsCharged })
   } catch (error) {
     console.error('[transcribe] failed:', error)
     res.status(500).json({ error: 'Transcription failed' })
