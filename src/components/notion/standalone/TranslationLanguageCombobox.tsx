@@ -2,6 +2,7 @@ import { Search } from 'lucide-react'
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import {
   AI_TRANSLATION_LANGUAGES,
+  AUTO_DETECT_LANGUAGE,
   type AiTranslationLanguage,
 } from '../../../data/aiTranslationLanguages'
 
@@ -11,6 +12,11 @@ interface TranslationLanguageComboboxProps {
   ariaLabel: string
   id?: string
   noResultsLabel: string
+  /**
+   * When set, an "Automatisch erkennen" entry (code `auto`) is offered as the
+   * first option — used for the SOURCE language so the model can auto-detect.
+   */
+  autoDetectLabel?: string
 }
 
 function normalize(value: string): string {
@@ -27,6 +33,7 @@ export function TranslationLanguageCombobox({
   ariaLabel,
   id,
   noResultsLabel,
+  autoDetectLabel,
 }: TranslationLanguageComboboxProps) {
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
@@ -35,18 +42,29 @@ export function TranslationLanguageCombobox({
   const generatedId = useId()
   const fieldId = id ?? generatedId
 
-  const selected = findLanguage(value)
+  const options = useMemo<AiTranslationLanguage[]>(() => {
+    if (!autoDetectLabel) return AI_TRANSLATION_LANGUAGES
+    return [
+      { code: AUTO_DETECT_LANGUAGE, nativeName: autoDetectLabel, englishName: autoDetectLabel },
+      ...AI_TRANSLATION_LANGUAGES,
+    ]
+  }, [autoDetectLabel])
+
+  const selected =
+    value === AUTO_DETECT_LANGUAGE && autoDetectLabel
+      ? { code: AUTO_DETECT_LANGUAGE, nativeName: autoDetectLabel, englishName: autoDetectLabel }
+      : findLanguage(value)
 
   const filtered = useMemo(() => {
     const q = normalize(query)
-    if (!q) return AI_TRANSLATION_LANGUAGES
-    return AI_TRANSLATION_LANGUAGES.filter(
+    if (!q) return options
+    return options.filter(
       (lang) =>
         normalize(lang.nativeName).includes(q) ||
         normalize(lang.englishName).includes(q) ||
         lang.code.includes(q),
     )
-  }, [query])
+  }, [options, query])
 
   useEffect(() => {
     if (!open) return

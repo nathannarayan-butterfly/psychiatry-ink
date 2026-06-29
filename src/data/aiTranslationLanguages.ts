@@ -38,6 +38,25 @@ export const AI_TRANSLATION_LANGUAGES: AiTranslationLanguage[] = [
   { code: 'ms', nativeName: 'Bahasa Melayu', englishName: 'Malay' },
 ]
 
+/**
+ * Sentinel source-language code meaning "let the model detect the input language".
+ * The widget shows the localized "Automatisch erkennen" chrome label for this.
+ */
+export const AUTO_DETECT_LANGUAGE = 'auto'
+
+/**
+ * Output is restricted to the four locales the product fully supports (the AI can
+ * read ANY input language, but it should only ever WRITE these). Order = the four
+ * UI languages, German first.
+ */
+export const AI_TRANSLATION_OUTPUT_CODES = ['de', 'en', 'fr', 'es'] as const
+
+export function getOutputTranslationLanguages(): AiTranslationLanguage[] {
+  return AI_TRANSLATION_OUTPUT_CODES.map(
+    (code) => findTranslationLanguage(code) as AiTranslationLanguage,
+  )
+}
+
 export function findTranslationLanguage(code: string): AiTranslationLanguage | undefined {
   return AI_TRANSLATION_LANGUAGES.find((lang) => lang.code === code)
 }

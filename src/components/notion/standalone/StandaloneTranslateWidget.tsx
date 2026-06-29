@@ -5,6 +5,8 @@ import { executeAiGeneration } from '../../../services/aiGeneration'
 import { estimateGenerationCredits } from '../../../utils/estimateCredits'
 import type { UiLanguage } from '../../../types/settings'
 import {
+  AUTO_DETECT_LANGUAGE,
+  getOutputTranslationLanguages,
   translationLanguageLabel,
 } from '../../../data/aiTranslationLanguages'
 import { StandaloneResultPanel } from './StandaloneResultPanel'
@@ -17,38 +19,41 @@ interface StandaloneTranslateWidgetProps {
   onClose: () => void
 }
 
-const UI_TO_DEFAULT_LANG: Record<UiLanguage, string> = {
-  de: 'de',
-  en: 'en',
-  fr: 'fr',
-  es: 'es',
-}
+const OUTPUT_LANGUAGES = getOutputTranslationLanguages()
 
 /**
- * Patient-less translate tool: paste text, pick source/target language from a
- * searchable list of ~30 locales, explicit translate button → result → notes.
+ * Patient-less translate tool. Because this runs through an LLM, the INPUT may be
+ * any language (default "Automatisch erkennen" / auto-detect, plus a searchable
+ * list of ~30 locales), while the OUTPUT is restricted to the four product
+ * locales (DE/EN/FR/ES). After translating, the ORIGINAL text stays available in
+ * a collapsible section beside the editable translation. Explicit run only.
  */
 export function StandaloneTranslateWidget({ caseId, onClose }: StandaloneTranslateWidgetProps) {
   const { t, language } = useTranslation()
   const [phase, setPhase] = useState<'input' | 'result'>('input')
   const [source, setSource] = useState('')
-  const [sourceLang, setSourceLang] = useState(UI_TO_DEFAULT_LANG[language])
-  const [targetLang, setTargetLang] = useState(language === 'de' ? 'en' : 'de')
+  const [sourceLang, setSourceLang] = useState(AUTO_DETECT_LANGUAGE)
+  const [targetLang, setTargetLang] = useState<string>(language === 'de' ? 'en' : 'de')
   const [text, setText] = useState('')
+  /** The exact source text that produced the current translation (for #15-UX). */
+  const [translatedFrom, setTranslatedFrom] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const translate = useCallback(async () => {
     const trimmed = source.trim()
     if (!trimmed || busy) return
-    if (sourceLang === targetLang) {
+    if (sourceLang !== AUTO_DETECT_LANGUAGE && sourceLang === targetLang) {
       setError(t('standaloneTranslateSameLanguage'))
       return
     }
     setBusy(true)
     setError(null)
     try {
-      const sourceLabel = translationLanguageLabel(sourceLang)
+      const sourceLabel =
+        sourceLang === AUTO_DETECT_LANGUAGE
+          ? t('standaloneTranslateAutoDetect')
+          : translationLanguageLabel(sourceLang)
       const targetLabel = translationLanguageLabel(targetLang)
       const extraInstruction = t('standaloneTranslateInstruction')
         .replace('{sourceLang}', sourceLabel)
@@ -72,6 +77,7 @@ export function StandaloneTranslateWidget({ caseId, onClose }: StandaloneTransla
         { estimatedCredits: estimateGenerationCredits('standard', trimmed) },
       )
       setText(generation.text.trim())
+      setTranslatedFrom(trimmed)
       setPhase('result')
     } catch (err) {
       setError(err instanceof Error && err.message ? err.message : t('workspaceAiError'))
@@ -92,6 +98,14 @@ export function StandaloneTranslateWidget({ caseId, onClose }: StandaloneTransla
         onClose={onClose}
         onRegenerate={() => void translate()}
         regenerating={busy}
+        aboveEditor={
+          translatedFrom ? (
+            <details className="swx-translate__original">
+              <summary>{t('standaloneTranslateShowOriginal')}</summary>
+              <p className="swx-translate__original-text">{translatedFrom}</p>
+            </details>
+          ) : null
+        }
       />
     )
   }
@@ -116,6 +130,7 @@ export function StandaloneTranslateWidget({ caseId, onClose }: StandaloneTransla
 
       <div className="wai-panel__body wai-panel__body--fill">
         <div className="swx-form swx-form--fill">
+          <p className="swx-empty">{t('standaloneTranslateSubheading')}</p>
           <div className="swx-translate__langs">
             <label className="swx-field">
               {t('standaloneTranslateSourceLang')}
@@ -124,16 +139,23 @@ export function StandaloneTranslateWidget({ caseId, onClose }: StandaloneTransla
                 onChange={setSourceLang}
                 ariaLabel={t('standaloneTranslateSourceLang')}
                 noResultsLabel={t('standaloneTranslateNoLanguageMatch')}
+                autoDetectLabel={t('standaloneTranslateAutoDetect')}
               />
             </label>
             <label className="swx-field">
               {t('standaloneTranslateTargetLang')}
-              <TranslationLanguageCombobox
+              <select
+                className="swx-field__select"
                 value={targetLang}
-                onChange={setTargetLang}
-                ariaLabel={t('standaloneTranslateTargetLang')}
-                noResultsLabel={t('standaloneTranslateNoLanguageMatch')}
-              />
+                onChange={(e) => setTargetLang(e.target.value)}
+                aria-label={t('standaloneTranslateTargetLang')}
+              >
+                {OUTPUT_LANGUAGES.map((lang) => (
+                  <option key={lang.code} value={lang.code}>
+                    {lang.nativeName}
+                  </option>
+                ))}
+              </select>
             </label>
           </div>
 

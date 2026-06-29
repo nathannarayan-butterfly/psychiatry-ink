@@ -1,16 +1,24 @@
 import { describe, expect, it } from 'vitest'
-import { AI_TRANSLATION_LANGUAGES } from '../../data/aiTranslationLanguages'
+import {
+  AI_TRANSLATION_LANGUAGES,
+  AI_TRANSLATION_OUTPUT_CODES,
+  AUTO_DETECT_LANGUAGE,
+  getOutputTranslationLanguages,
+} from '../aiTranslationLanguages'
 
-describe('AI_TRANSLATION_LANGUAGES', () => {
-  it('offers at least 25 languages for AI translation', () => {
-    expect(AI_TRANSLATION_LANGUAGES.length).toBeGreaterThanOrEqual(25)
+describe('aiTranslationLanguages', () => {
+  it('restricts output languages to DE/EN/FR/ES (#3)', () => {
+    expect([...AI_TRANSLATION_OUTPUT_CODES]).toEqual(['de', 'en', 'fr', 'es'])
+    const codes = getOutputTranslationLanguages().map((l) => l.code)
+    expect(codes).toEqual(['de', 'en', 'fr', 'es'])
   })
 
-  it('includes core clinical locales', () => {
-    const codes = new Set(AI_TRANSLATION_LANGUAGES.map((lang) => lang.code))
-    expect(codes.has('de')).toBe(true)
-    expect(codes.has('en')).toBe(true)
-    expect(codes.has('ar')).toBe(true)
-    expect(codes.has('zh')).toBe(true)
+  it('offers many input languages for auto-detect translation', () => {
+    expect(AI_TRANSLATION_LANGUAGES.length).toBeGreaterThanOrEqual(20)
+  })
+
+  it('exposes a dedicated auto-detect sentinel distinct from real codes', () => {
+    expect(AUTO_DETECT_LANGUAGE).toBe('auto')
+    expect(AI_TRANSLATION_LANGUAGES.some((l) => l.code === AUTO_DETECT_LANGUAGE)).toBe(false)
   })
 })

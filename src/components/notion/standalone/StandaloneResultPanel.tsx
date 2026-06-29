@@ -1,10 +1,11 @@
-import { useCallback, useState } from 'react'
-import { Check, Copy, FileDown, Loader2, Printer, RefreshCw, Save, Trash2, X } from 'lucide-react'
+import { useCallback, useState, type ReactNode } from 'react'
+import { Check, Copy, FileDown, Loader2, Pencil, Printer, RefreshCw, Save, Trash2, X } from 'lucide-react'
 import { useTranslation } from '../../../context/TranslationContext'
 import { useCopyWithFeedback } from '../../../hooks/useCopyWithFeedback'
 import { saveStandaloneNote } from '../../../utils/standaloneNotes'
 import type { DokumentCategory } from '../../../utils/dokumenteArchive'
 import { showNotionToast } from '../NotionToast'
+import { StandaloneMarkdown } from './StandaloneMarkdown'
 import '../../../styles/workspace-ai.css'
 
 interface StandaloneResultPanelProps {
@@ -28,6 +29,13 @@ interface StandaloneResultPanelProps {
    * step). Rendered as a ghost button next to the icon actions.
    */
   secondaryAction?: { label: string; onClick: () => void }
+  /** Optional content rendered inside the body ABOVE the editor (e.g. the
+   * collapsible original text in the translate tool). */
+  aboveEditor?: ReactNode
+  /** When true, show a rendered (markdown) view by default with a pencil toggle
+   * to switch to the raw editor — used for AI output that contains markdown
+   * (e.g. lab interpretation **bold** / lists, #11). */
+  renderMarkdown?: boolean
 }
 
 /**
@@ -47,10 +55,14 @@ export function StandaloneResultPanel({
   onRegenerate,
   regenerating = false,
   secondaryAction,
+  aboveEditor,
+  renderMarkdown = false,
 }: StandaloneResultPanelProps) {
   const { t } = useTranslation()
   const { copied, copy } = useCopyWithFeedback()
   const [saved, setSaved] = useState(false)
+  // When markdown rendering is offered, start in the read-only rendered view.
+  const [editing, setEditing] = useState(!renderMarkdown)
 
   const handleCopy = useCallback(() => {
     void copy(text)
@@ -116,16 +128,23 @@ export function StandaloneResultPanel({
               <p>{t('workspaceAiGenerating')}</p>
             </div>
           ) : (
-            <textarea
-              className="wai-panel__editor"
-              value={text}
-              onChange={(event) => {
-                onTextChange(event.target.value)
-                setSaved(false)
-              }}
-              aria-label={title}
-              spellCheck
-            />
+            <>
+              {aboveEditor}
+              {renderMarkdown && !editing ? (
+                <StandaloneMarkdown className="wai-panel__rendered" text={text} />
+              ) : (
+                <textarea
+                  className="wai-panel__editor"
+                  value={text}
+                  onChange={(event) => {
+                    onTextChange(event.target.value)
+                    setSaved(false)
+                  }}
+                  aria-label={title}
+                  spellCheck
+                />
+              )}
+            </>
           )}
         </div>
 
@@ -162,6 +181,18 @@ export function StandaloneResultPanel({
             >
               <Printer className="h-4 w-4" strokeWidth={1.75} aria-hidden />
             </button>
+            {renderMarkdown ? (
+              <button
+                type="button"
+                className={`wai-icon-btn${editing ? ' wai-icon-btn--active' : ''}`}
+                onClick={() => setEditing((value) => !value)}
+                title={editing ? t('standaloneShowFormatted') : t('standaloneEditText')}
+                aria-label={editing ? t('standaloneShowFormatted') : t('standaloneEditText')}
+                aria-pressed={editing}
+              >
+                <Pencil className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+              </button>
+            ) : null}
             {onRegenerate ? (
               <button
                 type="button"
