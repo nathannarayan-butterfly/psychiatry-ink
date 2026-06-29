@@ -49,7 +49,18 @@ export function FloatingToolsShell({ children }: FloatingToolsShellProps) {
       <AskButterflyFloatingSlot />
 
       {notizen.mode === 'docked' ? (
-        <NotizenDockPanel isOpen={notizen.isOpen} rightOffset={butterflyWidth} />
+        // A docked Notizen panel is kept mounted (mode defaults to 'docked') even
+        // while CLOSED so it can slide in/out. The shared `.ask-butterfly-dock-panel`
+        // hide transform is `translateX(100%)` — sized to the panel's own width — so
+        // it only parks fully off-screen when its `right` offset is 0. Applying the
+        // Butterfly-width `rightOffset` to a CLOSED Notizen panel would cancel that
+        // hide and re-reveal it exactly on top of the open Butterfly dock (same
+        // z-index, painted later), which is why "clicking Butterfly opened Notizen".
+        // Only reserve the side-by-side offset once Notizen is actually open.
+        <NotizenDockPanel
+          isOpen={notizen.isOpen}
+          rightOffset={notizen.isOpen ? butterflyWidth : 0}
+        />
       ) : null}
       {notizen.isOpen && notizen.mode === 'floating' ? <NotizenFloatingDialog /> : null}
     </div>
