@@ -1,8 +1,10 @@
-import { useMemo, useState } from 'react'
-import { X } from 'lucide-react'
+import { useCallback, useMemo, useState } from 'react'
+import { ListChecks, Loader2, PenLine, Sparkles, X } from 'lucide-react'
 import { useTranslation } from '../../../context/TranslationContext'
 import { GuidedEntryWizard } from '../../guidedEntry/GuidedEntryWizard'
 import { getGuidedEntrySchema } from '../../../data/guidedEntry/schemas'
+import { executeAiGeneration } from '../../../services/aiGeneration'
+import { estimateGenerationCredits } from '../../../utils/estimateCredits'
 import { CombinationCheckPanel } from '../../therapy/CombinationCheckPanel'
 import { MedicationDrugSuggest } from '../../medication/MedicationDrugSuggest'
 import { buildMedicationCorrelationSummary } from '../../../utils/standalone/medicationCorrelation'
@@ -83,6 +85,11 @@ const BEFUND_META: Partial<Record<GuidedEntryItemType, BefundMeta>> = {
     kind: 'eeg-befund',
     category: 'untersuchungsbefunde',
   },
+  'befund-roentgen': {
+    titleKey: 'standaloneBefundRoentgenTitle',
+    kind: 'roentgen-befund',
+    category: 'untersuchungsbefunde',
+  },
 }
 
 interface StandaloneBefundWidgetProps {
@@ -137,8 +144,13 @@ export function StandaloneBefundWidget({ itemType, caseId, onClose }: Standalone
   const schema = useMemo(() => getGuidedEntrySchema(itemType), [itemType])
   const meta = BEFUND_META[itemType]
   const correlationLabels = useMedicationCorrelationLabels()
-  const [phase, setPhase] = useState<'wizard' | 'result' | 'correlate'>('wizard')
+  const [phase, setPhase] = useState<'choose' | 'freetext' | 'wizard' | 'result' | 'correlate'>(
+    'choose',
+  )
   const [text, setText] = useState('')
+  const [freeText, setFreeText] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [drugs, setDrugs] = useState<KbDrugSuggestResult[]>([])
   const [query, setQuery] = useState('')
 
@@ -168,6 +180,42 @@ export function StandaloneBefundWidget({ itemType, caseId, onClose }: Standalone
     setText((current) => (current.trim() ? `${current.trim()}\n\n${summary}` : summary))
     setPhase('result')
   }
+
+  const optimizeFreeText = useCallback(async () => {
+    const trimmed = freeText.trim()
+    if (!trimmed || busy) return
+    setBusy(true)
+    setError(null)
+    try {
+      const generation = await executeAiGeneration(
+        {
+          componentId: 'standalone-befund-freetext',
+          scope: 'segment',
+          tool: 'improve',
+          tier: 'standard',
+          language,
+          sourceText: trimmed,
+          extraInstruction: t('standaloneBefundFreetextInstruction').replace('{title}', title),
+        },
+        { estimatedCredits: estimateGenerationCredits('standard', trimmed) },
+      )
+      setText(generation.text.trim())
+      setPhase('result')
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : t('workspaceAiError'))
+    } finally {
+      setBusy(false)
+    }
+    // title is derived from itemType/meta and stable for the widget instance.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [freeText, busy, language, t])
+
+  const useFreeTextRaw = useCallback(() => {
+    const trimmed = freeText.trim()
+    if (!trimmed) return
+    setText(trimmed)
+    setPhase('result')
+  }, [freeText])
 
   if (phase === 'correlate') {
     return (
@@ -261,6 +309,113 @@ export function StandaloneBefundWidget({ itemType, caseId, onClose }: Standalone
     )
   }
 
+  if (phase === 'choose') {
+    return (
+      <div className="wai-panel wai-panel--inline" aria-label={title}>
+        <header className="wai-panel__header">
+          <span className="wai-panel__eyebrow">{t('standaloneEyebrow')}</span>
+          <h2 className="wai-panel__title">{title}</h2>
+          <button
+            type="button"
+            className="wai-panel__close"
+            onClick={onClose}
+            aria-label={t('dokumenteClose')}
+          >
+            <X className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+          </button>
+        </header>
+        <div className="wai-panel__body">
+          <p className="swx-empty">{t('guidedEntryModeDesc')}</p>
+          <div className="swx-mode-grid">
+            <button
+              type="button"
+              className="swx-mode-card"
+              onClick={() => setPhase('freetext')}
+            >
+              <PenLine className="h-5 w-5" strokeWidth={1.6} aria-hidden />
+              <span className="swx-mode-card__title">{t('standaloneBefundModeFreetext')}</span>
+              <span className="swx-mode-card__desc">{t('standaloneBefundModeFreetextDesc')}</span>
+            </button>
+            <button
+              type="button"
+              className="swx-mode-card"
+              onClick={() => setPhase('wizard')}
+            >
+              <ListChecks className="h-5 w-5" strokeWidth={1.6} aria-hidden />
+              <span className="swx-mode-card__title">{t('guidedEntryModeGuided')}</span>
+              <span className="swx-mode-card__desc">{t('guidedEntryModeGuidedDesc')}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (phase === 'freetext') {
+    return (
+      <div className="wai-panel wai-panel--inline" aria-label={title}>
+        <header className="wai-panel__header">
+          <span className="wai-panel__eyebrow">{t('standaloneEyebrow')}</span>
+          <h2 className="wai-panel__title">{title}</h2>
+          <button
+            type="button"
+            className="wai-panel__close"
+            onClick={onClose}
+            aria-label={t('dokumenteClose')}
+          >
+            <X className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+          </button>
+        </header>
+        <div className="wai-panel__body wai-panel__body--fill">
+          <div className="swx-form swx-form--fill">
+            <label className="swx-field swx-field--grow">
+              {t('standaloneBefundFreetextLabel')}
+              <textarea
+                className="swx-rewrite__editor"
+                value={freeText}
+                onChange={(e) => setFreeText(e.target.value)}
+                placeholder={t('standaloneBefundFreetextPlaceholder')}
+                aria-label={t('standaloneBefundFreetextLabel')}
+                spellCheck
+              />
+            </label>
+            {error ? <p className="swx-error">{error}</p> : null}
+          </div>
+        </div>
+        <footer className="wai-panel__footer">
+          <button
+            type="button"
+            className="wai-btn wai-btn--ghost"
+            onClick={() => setPhase('choose')}
+          >
+            {t('standaloneCancel')}
+          </button>
+          <button
+            type="button"
+            className="wai-btn wai-btn--ghost"
+            onClick={useFreeTextRaw}
+            disabled={!freeText.trim() || busy}
+          >
+            {t('standaloneBefundUseRaw')}
+          </button>
+          <button
+            type="button"
+            className="wai-btn wai-btn--primary"
+            onClick={() => void optimizeFreeText()}
+            disabled={!freeText.trim() || busy}
+          >
+            {busy ? (
+              <Loader2 className="h-3.5 w-3.5 wai-spin" strokeWidth={1.75} aria-hidden />
+            ) : (
+              <Sparkles className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+            )}
+            {busy ? t('workspaceAiGenerating') : t('standaloneBefundOptimize')}
+          </button>
+        </footer>
+      </div>
+    )
+  }
+
   return (
     <GuidedEntryWizard
       open
@@ -271,7 +426,7 @@ export function StandaloneBefundWidget({ itemType, caseId, onClose }: Standalone
         setText(payload.text)
         setPhase('result')
       }}
-      onCancel={onClose}
+      onCancel={() => setPhase('choose')}
     />
   )
 }
