@@ -37,6 +37,16 @@ interface KnowledgeBaseReadingPanelProps {
   tier?: 'fast' | 'standard' | 'thorough'
   /** Render panel body only (no side ear / aside chrome) for floating/docked hosts. */
   embedded?: boolean
+  /**
+   * Surface mode. `tabbed` (default) keeps the original Comments/Ask-AI tabbed
+   * reading panel used inline (e.g. clinical KB). The floating Kommentare bubble
+   * uses single-purpose modes instead — `comments` renders an entry-scoped,
+   * comments-only surface (no tab strip, no section header) that mirrors the
+   * Notizen/Butterfly panels, and `askAi` renders the section-grounded ask flow
+   * on its own. This is what removes the dead "KI Fragen" tab + "Studienbereich"
+   * label from the popup.
+   */
+  mode?: 'tabbed' | 'comments' | 'askAi'
 }
 
 export function KnowledgeBaseReadingPanel({
@@ -51,10 +61,18 @@ export function KnowledgeBaseReadingPanel({
   request,
   tier,
   embedded = false,
+  mode = 'tabbed',
 }: KnowledgeBaseReadingPanelProps) {
   const { t } = useTranslation()
-  const { forSection, addComment, removeComment, addChatMessage } = useKnowledgeBaseAnnotations(medicationId)
+  const { comments: entryComments, forSection, addComment, removeComment, addChatMessage } =
+    useKnowledgeBaseAnnotations(medicationId)
   const sectionAnnotations = forSection(sectionId)
+  // Single-purpose modes (floating Kommentare bubble) show one surface with no
+  // tab strip; `tabbed` (inline) keeps the original Comments/Ask-AI tabs.
+  const isTabbed = mode === 'tabbed'
+  // The comments bubble is entry-scoped (all sections), like Notizen; the inline
+  // tabbed panel stays section-scoped.
+  const commentsList = mode === 'comments' ? entryComments : sectionAnnotations.comments
   const [tab, setTab] = useState<PanelTab>('comments')
   const [commentDraft, setCommentDraft] = useState('')
   const [questionDraft, setQuestionDraft] = useState('')
@@ -154,33 +172,35 @@ export function KnowledgeBaseReadingPanel({
             </button>
           ) : null}
         </div>
-      ) : (
+      ) : isTabbed ? (
         <p className="kbp-reading-panel__section kbp-reading-panel__section--embedded">{sectionLabel}</p>
-      )}
+      ) : null}
 
-      <div className="kbp-reading-panel__tabs" role="tablist">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'comments'}
-          className={`kbp-reading-panel__tab${tab === 'comments' ? ' kbp-reading-panel__tab--active' : ''}`}
-          onClick={() => setTab('comments')}
-        >
-          {t('kbReadingTabComments')}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'askAi'}
-          className={`kbp-reading-panel__tab${tab === 'askAi' ? ' kbp-reading-panel__tab--active' : ''}`}
-          onClick={() => setTab('askAi')}
-        >
-          <Sparkles className="h-3 w-3" strokeWidth={1.75} aria-hidden />
-          {t('kbReadingTabAskAi')}
-        </button>
-      </div>
+      {isTabbed ? (
+        <div className="kbp-reading-panel__tabs" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'comments'}
+            className={`kbp-reading-panel__tab${tab === 'comments' ? ' kbp-reading-panel__tab--active' : ''}`}
+            onClick={() => setTab('comments')}
+          >
+            {t('kbReadingTabComments')}
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'askAi'}
+            className={`kbp-reading-panel__tab${tab === 'askAi' ? ' kbp-reading-panel__tab--active' : ''}`}
+            onClick={() => setTab('askAi')}
+          >
+            <Sparkles className="h-3 w-3" strokeWidth={1.75} aria-hidden />
+            {t('kbReadingTabAskAi')}
+          </button>
+        </div>
+      ) : null}
 
-      {tab === 'comments' ? (
+      {(isTabbed ? tab === 'comments' : mode === 'comments') ? (
         <div className="kbp-reading-panel__body">
           <div className="kbp-reading-panel__comment-form">
             <textarea
@@ -188,7 +208,7 @@ export function KnowledgeBaseReadingPanel({
               className="kbp-reading-panel__textarea"
               value={commentDraft}
               onChange={(e) => setCommentDraft(e.target.value)}
-              placeholder={t('kbReadingCommentPlaceholder')}
+              placeholder={mode === 'comments' ? t('kbCommentsPlaceholder') : t('kbReadingCommentPlaceholder')}
               rows={3}
             />
             <button
@@ -200,11 +220,13 @@ export function KnowledgeBaseReadingPanel({
               {t('kbReadingCommentAdd')}
             </button>
           </div>
-          {sectionAnnotations.comments.length === 0 ? (
-            <p className="kbp-reading-panel__empty">{t('kbReadingCommentsEmpty')}</p>
+          {commentsList.length === 0 ? (
+            <p className="kbp-reading-panel__empty">
+              {mode === 'comments' ? t('kbCommentsEmpty') : t('kbReadingCommentsEmpty')}
+            </p>
           ) : (
             <ul className="kbp-reading-panel__list">
-              {sectionAnnotations.comments
+              {commentsList
                 .slice()
                 .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                 .map((comment: UserComment) => (
@@ -228,7 +250,9 @@ export function KnowledgeBaseReadingPanel({
             </ul>
           )}
         </div>
-      ) : (
+      ) : null}
+
+      {(isTabbed ? tab === 'askAi' : mode === 'askAi') ? (
         <div className="kbp-reading-panel__body">
           <div className="kbp-reading-panel__chat">
             {sectionAnnotations.chatMessages.length === 0 ? (
@@ -282,7 +306,7 @@ export function KnowledgeBaseReadingPanel({
             </button>
           </div>
         </div>
-      )}
+      ) : null}
     </>
   )
 

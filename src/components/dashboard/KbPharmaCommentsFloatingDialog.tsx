@@ -1,4 +1,4 @@
-import { GripHorizontal, MessageSquare, PanelRight, X } from 'lucide-react'
+import { GripHorizontal, MessageSquare, PanelRight, Sparkles, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import { useKbPharmaComments } from '../../contexts/KbPharmaCommentsContext'
@@ -11,7 +11,8 @@ const DOCK_EDGE_THRESHOLD_PX = 96
 /** Floating Kommentare panel — draggable, dockable to the right edge. */
 export function KbPharmaCommentsFloatingDialog() {
   const { t } = useTranslation()
-  const { close, dock, registration, panelRequest } = useKbPharmaComments()
+  const { close, dock, registration, panelRequest, purpose } = useKbPharmaComments()
+  const panelTitle = purpose === 'askAi' ? t('kbReadingTabAskAi') : t('kbCommentsPanelTitle')
   const dialogRef = useRef<HTMLDivElement>(null)
   const dragOffsetRef = useRef({ x: 0, y: 0 })
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null)
@@ -83,13 +84,13 @@ export function KbPharmaCommentsFloatingDialog() {
         style={dialogStyle}
         role="dialog"
         aria-modal="false"
-        aria-label={t('kbReadingPanelTitle')}
+        aria-label={panelTitle}
       >
         <div className="ask-butterfly-dialog__header">
           <button
             type="button"
             className="ask-butterfly-dialog__drag"
-            aria-label={t('kbReadingPanelTitle')}
+            aria-label={panelTitle}
             onPointerDown={handleDragStart}
             onPointerMove={handleDragMove}
             onPointerUp={handleDragEnd}
@@ -98,8 +99,12 @@ export function KbPharmaCommentsFloatingDialog() {
             <GripHorizontal className="h-4 w-4" strokeWidth={1.75} aria-hidden />
           </button>
           <span className="ask-butterfly-dialog__title">
-            <MessageSquare className="h-4 w-4 notizen-dialog__mark" strokeWidth={1.75} aria-hidden />
-            {t('kbReadingPanelTitle')}
+            {purpose === 'askAi' ? (
+              <Sparkles className="h-4 w-4 notizen-dialog__mark" strokeWidth={1.75} aria-hidden />
+            ) : (
+              <MessageSquare className="h-4 w-4 notizen-dialog__mark" strokeWidth={1.75} aria-hidden />
+            )}
+            {panelTitle}
           </span>
           <div className="ask-butterfly-dialog__actions">
             <button type="button" className="ask-butterfly-dialog__icon-btn" onClick={dock} title={t('kbReadingPanelExpand')}>
@@ -121,6 +126,7 @@ export function KbPharmaCommentsFloatingDialog() {
             request={panelRequest}
             tier={registration.tier}
             embedded
+            mode={purpose}
           />
         </div>
       </div>

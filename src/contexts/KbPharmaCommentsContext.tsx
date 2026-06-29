@@ -10,6 +10,16 @@ import type { ReadingPanelRequest } from '../components/dashboard/KnowledgeBaseR
 
 export type KbPharmaCommentsDisplayMode = 'floating' | 'docked'
 
+/**
+ * What the single floating panel currently shows. The bubble is single-purpose
+ * per invocation (no tab strip): the bottom-right Kommentare launcher always
+ * opens it as `comments`; the explicit in-text / section "Ask AI" action opens
+ * it as `askAi`. This keeps the Kommentare popup a clean comments-only surface
+ * (mirroring Notizen/Butterfly) while the section-grounded KB ask flow remains
+ * its own explicitly-triggered view.
+ */
+export type KbPharmaCommentsPurpose = 'comments' | 'askAi'
+
 export interface KbPharmaCommentsRegistration {
   medicationId: string
   medicationName: string
@@ -27,6 +37,7 @@ interface KbPharmaCommentsContextValue {
   unregister: () => void
   patchRegistration: (patch: Partial<KbPharmaCommentsRegistration>) => void
   panelRequest: ReadingPanelRequest | null
+  purpose: KbPharmaCommentsPurpose
   open: (request?: ReadingPanelRequest | null) => void
   close: () => void
   isOpen: boolean
@@ -90,6 +101,7 @@ export function KbPharmaCommentsProvider({ children }: { children: ReactNode }) 
   const [mode, setMode] = useState<KbPharmaCommentsDisplayMode>(() => readStoredMode())
   const [panelWidth, setPanelWidthState] = useState(() => readStoredWidth())
   const [panelRequest, setPanelRequest] = useState<ReadingPanelRequest | null>(null)
+  const [purpose, setPurpose] = useState<KbPharmaCommentsPurpose>('comments')
 
   const setPanelWidth = useCallback((width: number) => {
     const clamped = Math.min(MAX_PANEL_WIDTH, Math.max(MIN_PANEL_WIDTH, width))
@@ -105,6 +117,7 @@ export function KbPharmaCommentsProvider({ children }: { children: ReactNode }) 
     setRegistration(null)
     setIsOpen(false)
     setPanelRequest(null)
+    setPurpose('comments')
   }, [])
 
   const patchRegistration = useCallback((patch: Partial<KbPharmaCommentsRegistration>) => {
@@ -126,6 +139,9 @@ export function KbPharmaCommentsProvider({ children }: { children: ReactNode }) 
 
   const open = useCallback((request?: ReadingPanelRequest | null) => {
     setIsOpen(true)
+    // The Kommentare launcher passes no request → always comments. The in-text /
+    // section "Ask AI" action passes { tab: 'askAi' } → AI-only view.
+    setPurpose(request?.tab === 'askAi' ? 'askAi' : 'comments')
     if (request) setPanelRequest(request)
   }, [])
 
@@ -153,6 +169,7 @@ export function KbPharmaCommentsProvider({ children }: { children: ReactNode }) 
       unregister,
       patchRegistration,
       panelRequest,
+      purpose,
       open,
       close,
       isOpen,
@@ -168,6 +185,7 @@ export function KbPharmaCommentsProvider({ children }: { children: ReactNode }) 
       unregister,
       patchRegistration,
       panelRequest,
+      purpose,
       open,
       close,
       isOpen,

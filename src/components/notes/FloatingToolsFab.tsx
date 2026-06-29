@@ -24,8 +24,8 @@ export function FloatingToolsFab() {
           type="button"
           className={`floating-tools-fab__btn floating-tools-fab__btn--comments${kbComments.isOpen ? ' floating-tools-fab__btn--active' : ''}`}
           onClick={() => (kbComments.isOpen ? kbComments.close() : kbComments.open())}
-          title={t('kbReadingPanelTitle')}
-          aria-label={t('kbReadingPanelTitle')}
+          title={t('kbCommentsPanelTitle')}
+          aria-label={t('kbCommentsPanelTitle')}
         >
           <MessageSquare className="h-5 w-5" strokeWidth={1.75} aria-hidden />
         </button>

@@ -135,6 +135,8 @@ export function useKnowledgeBaseAnnotations(medicationId: string | null) {
   )
 
   return {
+    /** All comments for the active entry (across every section), newest-first. */
+    comments: scoped.comments,
     forSection,
     addHighlight,
     removeHighlight,

@@ -1,4 +1,4 @@
-import { MessageSquare, PanelRightClose, X } from 'lucide-react'
+import { MessageSquare, PanelRightClose, Sparkles, X } from 'lucide-react'
 import { useCallback, useRef, type PointerEvent as ReactPointerEvent } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import {
@@ -16,8 +16,10 @@ interface KbPharmaCommentsDockPanelProps {
 /** Docked Kommentare panel — stacks left of Notizen/Butterfly when all are docked. */
 export function KbPharmaCommentsDockPanel({ isOpen, rightOffset }: KbPharmaCommentsDockPanelProps) {
   const { t } = useTranslation()
-  const { close, undock, panelWidth, setPanelWidth, registration, panelRequest } = useKbPharmaComments()
+  const { close, undock, panelWidth, setPanelWidth, registration, panelRequest, purpose } =
+    useKbPharmaComments()
   const resizeStartRef = useRef<{ x: number; width: number } | null>(null)
+  const panelTitle = purpose === 'askAi' ? t('kbReadingTabAskAi') : t('kbCommentsPanelTitle')
 
   const handleResizeStart = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -56,7 +58,7 @@ export function KbPharmaCommentsDockPanel({ isOpen, rightOffset }: KbPharmaComme
         .filter(Boolean)
         .join(' ')}
       style={{ width: panelWidth, right: rightOffset }}
-      aria-label={t('kbReadingPanelTitle')}
+      aria-label={panelTitle}
       aria-hidden={!isOpen}
       {...(!isOpen ? { inert: true } : {})}
     >
@@ -74,8 +76,12 @@ export function KbPharmaCommentsDockPanel({ isOpen, rightOffset }: KbPharmaComme
       <div className="ask-butterfly-dock-panel__inner">
         <div className="ask-butterfly-dock-panel__header">
           <span className="ask-butterfly-dock-panel__title" id="kbp-comments-dock-title">
-            <MessageSquare className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-            {t('kbReadingPanelTitle')}
+            {purpose === 'askAi' ? (
+              <Sparkles className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+            ) : (
+              <MessageSquare className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+            )}
+            {panelTitle}
           </span>
           <div className="ask-butterfly-dialog__actions">
             <button
@@ -108,6 +114,7 @@ export function KbPharmaCommentsDockPanel({ isOpen, rightOffset }: KbPharmaComme
             request={panelRequest}
             tier={registration.tier}
             embedded
+            mode={purpose}
           />
         </div>
       </div>

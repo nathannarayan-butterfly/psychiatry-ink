@@ -11931,6 +11931,24 @@ export const uiTranslations = {
     fr: 'Aucun commentaire dans cette section.',
     es: 'Aún no hay comentarios en esta sección.',
   },
+  kbCommentsPanelTitle: {
+    de: 'Kommentare',
+    en: 'Comments',
+    fr: 'Commentaires',
+    es: 'Comentarios',
+  },
+  kbCommentsPlaceholder: {
+    de: 'Eigene Notiz zu diesem Eintrag…',
+    en: 'Your note on this entry…',
+    fr: 'Votre note sur cette fiche…',
+    es: 'Su nota sobre esta ficha…',
+  },
+  kbCommentsEmpty: {
+    de: 'Noch keine Kommentare zu diesem Eintrag.',
+    en: 'No comments on this entry yet.',
+    fr: 'Aucun commentaire sur cette fiche.',
+    es: 'Aún no hay comentarios en esta ficha.',
+  },
   kbReadingHighlight: {
     de: 'Markieren',
     en: 'Highlight',
