@@ -14,6 +14,8 @@ import {
   updateGlobalNote,
 } from '../../utils/standaloneNotes'
 import { NotesRichEditor } from './NotesRichEditor'
+import { useOptionalKbPharmaComments } from '../../contexts/KbPharmaCommentsContext'
+import { KnowledgeBaseNotes } from '../dashboard/KnowledgeBaseNotes'
 
 interface NotizenPanelProps {
   variant: 'floating' | 'docked'
@@ -57,7 +59,21 @@ async function copyNote(content: string): Promise<boolean> {
  * (popup, dashboard widget, tool saves) via the archive change event.
  */
 export function NotizenPanel({ variant, headerActions, titleId = 'notizen-title' }: NotizenPanelProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
+  // When a Knowledge-Base entry is open, the Notizen surface becomes
+  // entry-scoped: it hosts that entry's notepad (same per-entry store as the
+  // inline KB rail) instead of the global notes pile. Falls back to the global
+  // list whenever no entry is active. The provider may be absent (e.g. focused
+  // unit tests), hence the optional accessor.
+  const kbComments = useOptionalKbPharmaComments()
+  const registration = kbComments?.registration ?? null
+  const activeEntry = registration
+    ? {
+        id: registration.medicationId,
+        name: registration.medicationName,
+        language: registration.language,
+      }
+    : null
   const [notes, setNotes] = useState<DokumentEntry[]>(() => listGlobalNotes())
   const [view, setView] = useState<'list' | 'edit'>('list')
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -143,14 +159,32 @@ export function NotizenPanel({ variant, headerActions, titleId = 'notizen-title'
             <h2 id={titleId} className="ask-butterfly-dialog__title">
               {t('notizenTitle')}
             </h2>
-            <p className="ask-butterfly-dialog__subtitle">{t('notizenSubtitle')}</p>
+            <p className="ask-butterfly-dialog__subtitle">
+              {activeEntry ? (
+                <>
+                  <span className="notizen-scope-chip">{t('notizenScopeEntry')}</span>
+                  <span className="notizen-scope-name">{activeEntry.name}</span>
+                </>
+              ) : (
+                t('notizenSubtitle')
+              )}
+            </p>
           </div>
         </div>
         <div className="ask-butterfly-dialog__header-actions">{headerActions}</div>
       </header>
 
       <div className="ask-butterfly-dialog__body notizen-body">
-        {view === 'list' ? (
+        {activeEntry ? (
+          <div className="notizen-entry">
+            <KnowledgeBaseNotes
+              key={activeEntry.id}
+              medicationId={activeEntry.id}
+              language={activeEntry.language || language}
+              embedded
+            />
+          </div>
+        ) : view === 'list' ? (
           <>
             <div className="notizen-list__toolbar">
               <button type="button" className="notizen-new-btn" onClick={startCreate}>

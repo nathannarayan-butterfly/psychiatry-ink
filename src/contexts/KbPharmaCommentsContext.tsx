@@ -177,4 +177,12 @@ export function useKbPharmaComments(): KbPharmaCommentsContextValue {
   return ctx
 }
 
+/**
+ * Non-throwing accessor for surfaces that may render outside the provider in
+ * isolation (e.g. focused unit tests). Returns null when no provider is present.
+ */
+export function useOptionalKbPharmaComments(): KbPharmaCommentsContextValue | null {
+  return useContext(KbPharmaCommentsContext)
+}
+
 export { DEFAULT_PANEL_WIDTH, MIN_PANEL_WIDTH, MAX_PANEL_WIDTH }

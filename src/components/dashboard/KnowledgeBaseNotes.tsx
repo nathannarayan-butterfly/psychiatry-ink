@@ -1,4 +1,4 @@
-import { Bold, ChevronDown, Highlighter, Italic, NotebookPen, Underline, X } from 'lucide-react'
+import { Bold, Check, ChevronDown, Copy, Highlighter, Italic, NotebookPen, Underline, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useKnowledgeBaseNotes } from '../../hooks/useKnowledgeBaseNotes'
 import {
@@ -8,10 +8,19 @@ import {
 } from '../../types/knowledgeBaseAnnotations'
 import { kbT } from '../medication/kb/kbStrings'
 import { FONT_MONO, FONT_SANS } from '../../styles/typographyTokens'
+import { copyTextToClipboard } from '../../utils/notionDocumentActions'
+import { htmlToPlainLines } from '../../utils/documentTemplate/htmlUtils'
 
 interface KnowledgeBaseNotesProps {
   medicationId: string
   language: string
+  /**
+   * Render without the standalone toggle/header chrome so the notepad can be
+   * embedded inside another panel (the global Notizen bubble, which hosts this
+   * editor when a KB entry is active). Embedded mode is always "open" and adds a
+   * copy-to-clipboard affordance to the toolbar.
+   */
+  embedded?: boolean
 }
 
 type FontKey = 'sans' | 'serif' | 'mono' | 'handwriting'
@@ -30,10 +39,11 @@ const FONT_FAMILIES: Record<FontKey, string> = {
  * internally. Editing uses a `contentEditable` surface with `document.execCommand`
  * for a minimal word-processing toolbar — no heavy editor dependency.
  */
-export function KnowledgeBaseNotes({ medicationId, language }: KnowledgeBaseNotesProps) {
+export function KnowledgeBaseNotes({ medicationId, language, embedded = false }: KnowledgeBaseNotesProps) {
   const { html, setHtml } = useKnowledgeBaseNotes(medicationId)
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(embedded)
   const [font, setFont] = useState<FontKey>('sans')
+  const [copied, setCopied] = useState(false)
   const editorRef = useRef<HTMLDivElement>(null)
   const savedSelectionRef = useRef<Range | null>(null)
   // Tracks which (medication) note is currently loaded into the DOM so we only
@@ -50,6 +60,10 @@ export function KnowledgeBaseNotes({ medicationId, language }: KnowledgeBaseNote
     if (loadedKeyRef.current !== medicationId) {
       el.innerHTML = html
       loadedKeyRef.current = medicationId
+    } else if (document.activeElement !== el && el.innerHTML !== html) {
+      // Live-sync edits made on a sibling surface (inline rail ↔ Notizen bubble)
+      // bound to the same entry, but never while this surface has focus.
+      el.innerHTML = html
     }
   }, [open, medicationId, html])
 
@@ -133,7 +147,18 @@ export function KnowledgeBaseNotes({ medicationId, language }: KnowledgeBaseNote
     [exec],
   )
 
-  if (!open) {
+  const handleCopy = useCallback(async () => {
+    const el = editorRef.current
+    const source = el ? el.innerHTML : html
+    const plain = htmlToPlainLines(source)
+    const ok = await copyTextToClipboard(plain)
+    if (ok) {
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1500)
+    }
+  }, [html])
+
+  if (!open && !embedded) {
     return (
       <div className="kbp-notes kbp-notes--closed">
         <button
@@ -152,25 +177,30 @@ export function KnowledgeBaseNotes({ medicationId, language }: KnowledgeBaseNote
   }
 
   return (
-    <section className="kbp-notes kbp-notes--open" aria-label={kbT(language, 'notesTitle')}>
-      <div className="kbp-notes__header">
-        <div className="kbp-notes__title-wrap">
-          <NotebookPen className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
-          <h3 className="kbp-notes__title">{kbT(language, 'notesTitle')}</h3>
-          <span className="kbp-notes__private">{kbT(language, 'notesPrivate')}</span>
+    <section
+      className={`kbp-notes kbp-notes--open${embedded ? ' kbp-notes--embedded' : ''}`}
+      aria-label={kbT(language, 'notesTitle')}
+    >
+      {!embedded ? (
+        <div className="kbp-notes__header">
+          <div className="kbp-notes__title-wrap">
+            <NotebookPen className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+            <h3 className="kbp-notes__title">{kbT(language, 'notesTitle')}</h3>
+            <span className="kbp-notes__private">{kbT(language, 'notesPrivate')}</span>
+          </div>
+          <button
+            type="button"
+            className="kbp-icon-btn kbp-icon-btn--xs"
+            onClick={() => {
+              persist()
+              setOpen(false)
+            }}
+            aria-label={kbT(language, 'notesClose')}
+          >
+            <X className="h-3.5 w-3.5" strokeWidth={1.75} />
+          </button>
         </div>
-        <button
-          type="button"
-          className="kbp-icon-btn kbp-icon-btn--xs"
-          onClick={() => {
-            persist()
-            setOpen(false)
-          }}
-          aria-label={kbT(language, 'notesClose')}
-        >
-          <X className="h-3.5 w-3.5" strokeWidth={1.75} />
-        </button>
-      </div>
+      ) : null}
 
       <div className="kbp-notes__toolbar" role="toolbar" aria-label={kbT(language, 'notesTitle')}>
         <select
@@ -233,6 +263,25 @@ export function KnowledgeBaseNotes({ medicationId, language }: KnowledgeBaseNote
             />
           ))}
         </span>
+        {embedded ? (
+          <>
+            <span className="kbp-notes__toolbar-sep" aria-hidden />
+            <button
+              type="button"
+              className="kbp-notes__tool"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => void handleCopy()}
+              title={kbT(language, 'notesCopy')}
+              aria-label={kbT(language, 'notesCopy')}
+            >
+              {copied ? (
+                <Check className="h-3.5 w-3.5" strokeWidth={2} />
+              ) : (
+                <Copy className="h-3.5 w-3.5" strokeWidth={2} />
+              )}
+            </button>
+          </>
+        ) : null}
       </div>
 
       <div

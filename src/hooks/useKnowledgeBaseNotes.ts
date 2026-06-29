@@ -4,6 +4,25 @@ import { useKnowledgeBaseUserId } from './useKnowledgeBaseUserId'
 
 const STORAGE_KEY = 'psychiatry-ink:knowledgeBaseNotes'
 
+/**
+ * Same-window event broadcast when a KB note changes, so multiple mounted
+ * surfaces (the inline reading-rail notepad and the global Notizen bubble, which
+ * both bind to the same per-entry store) stay live without clobbering each
+ * other. The payload carries the new HTML directly to sidestep a debounced-save
+ * race on localStorage.
+ */
+const KB_NOTES_CHANGED_EVENT = 'psychiatry-ink:kb-notes-changed'
+
+interface KbNotesChangedDetail {
+  source: number
+  userId: string
+  medicationId: string
+  html: string
+}
+
+/** Monotonic per-instance id so a writer ignores the echo of its own change. */
+let kbNotesInstanceSeq = 0
+
 /** Debounce window for persisting note edits to localStorage. */
 const SAVE_DEBOUNCE_MS = 500
 
@@ -52,10 +71,27 @@ export function sanitizeNotesHtml(html: string): string {
  * an empty string for backward compatibility. Writes are debounced so that
  * fast typing doesn't hammer localStorage.
  */
+/** Replace (or drop, when empty) the note for one user+medication in a store. */
+function mergeNote(
+  store: KnowledgeBaseNotesStore,
+  userId: string,
+  medicationId: string,
+  html: string,
+): KnowledgeBaseNotesStore {
+  const others = store.notes.filter(
+    (n) => !(n.userId === userId && n.medicationId === medicationId),
+  )
+  if (!html.trim()) return { notes: others }
+  const note: UserNote = { userId, medicationId, html, updatedAt: new Date().toISOString() }
+  return { notes: [...others, note] }
+}
+
 export function useKnowledgeBaseNotes(medicationId: string | null) {
   const userId = useKnowledgeBaseUserId()
   const [store, setStore] = useState<KnowledgeBaseNotesStore>(loadStore)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const instanceIdRef = useRef<number>(0)
+  if (instanceIdRef.current === 0) instanceIdRef.current = ++kbNotesInstanceSeq
 
   useEffect(() => {
     if (saveTimer.current) clearTimeout(saveTimer.current)
@@ -64,6 +100,26 @@ export function useKnowledgeBaseNotes(medicationId: string | null) {
       if (saveTimer.current) clearTimeout(saveTimer.current)
     }
   }, [store])
+
+  // Live-sync notes written by another mounted instance (e.g. the inline rail
+  // notepad ↔ the global Notizen bubble bound to the same entry). The change
+  // event carries the new HTML so we never read a not-yet-flushed localStorage.
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<KbNotesChangedDetail>).detail
+      if (!detail || detail.source === instanceIdRef.current) return
+      if (detail.userId !== userId) return
+      setStore((prev) => {
+        const current =
+          prev.notes.find((n) => n.userId === userId && n.medicationId === detail.medicationId)
+            ?.html ?? ''
+        if (current === detail.html) return prev
+        return mergeNote(prev, userId, detail.medicationId, detail.html)
+      })
+    }
+    window.addEventListener(KB_NOTES_CHANGED_EVENT, handler)
+    return () => window.removeEventListener(KB_NOTES_CHANGED_EVENT, handler)
+  }, [userId])
 
   const html = useMemo(() => {
     if (!medicationId) return ''
@@ -76,22 +132,17 @@ export function useKnowledgeBaseNotes(medicationId: string | null) {
     (nextHtml: string) => {
       if (!medicationId) return
       const sanitized = sanitizeNotesHtml(nextHtml)
-      setStore((prev) => {
-        const others = prev.notes.filter(
-          (n) => !(n.userId === userId && n.medicationId === medicationId),
+      setStore((prev) => mergeNote(prev, userId, medicationId, sanitized))
+      // Broadcast so sibling surfaces bound to the same entry update live.
+      try {
+        window.dispatchEvent(
+          new CustomEvent<KbNotesChangedDetail>(KB_NOTES_CHANGED_EVENT, {
+            detail: { source: instanceIdRef.current, userId, medicationId, html: sanitized },
+          }),
         )
-        if (!sanitized.trim()) {
-          // Drop empty notes so we don't accumulate blank entries.
-          return { notes: others }
-        }
-        const note: UserNote = {
-          userId,
-          medicationId,
-          html: sanitized,
-          updatedAt: new Date().toISOString(),
-        }
-        return { notes: [...others, note] }
-      })
+      } catch {
+        // ignore environments without CustomEvent
+      }
     },
     [medicationId, userId],
   )
