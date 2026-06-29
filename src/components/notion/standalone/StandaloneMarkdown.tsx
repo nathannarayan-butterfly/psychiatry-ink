@@ -27,7 +27,9 @@ function inline(text: string, keyPrefix: string): ReactNode[] {
 }
 
 const HEADING_RE = /^(#{1,6})\s+(.*)$/
-const UL_RE = /^\s*[-*]\s+(.*)$/
+// Bullets the AI commonly emits, incl. typographic ones (•, ·, ‣, ◦) so they
+// render as a list instead of leaking the literal glyph into the prose.
+const UL_RE = /^\s*[-*•·‣◦]\s+(.*)$/
 const OL_RE = /^\s*\d+[.)]\s+(.*)$/
 
 /**
