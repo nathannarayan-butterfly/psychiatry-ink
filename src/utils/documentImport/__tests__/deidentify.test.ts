@@ -25,6 +25,26 @@ describe('deidentifyText', () => {
     expect(text).toContain('Sertralin')
     expect(text).toContain('mg')
   })
+
+  it('keeps standalone clinical dates but masks DOB dates (#13)', () => {
+    const input = 'Aufnahme am 12.03.2024, Kontroll-EKG 2024-04-01. geb. 01.02.1990.'
+    const { text, redactions } = deidentifyText(input)
+    // Standalone clinical dates are preserved verbatim …
+    expect(text).toContain('12.03.2024')
+    expect(text).toContain('2024-04-01')
+    // … while a date in an explicit date-of-birth context is masked.
+    expect(text).toContain('[DATE]')
+    expect(text).not.toContain('01.02.1990')
+    expect(redactions.date).toBe(1)
+  })
+
+  it('does not redact a bare date as a phone/id number (#13)', () => {
+    const { text } = deidentifyText('Befund vom 05.06.2025 unauffällig.')
+    expect(text).toContain('05.06.2025')
+    expect(text).not.toContain('[CONTACT]')
+    expect(text).not.toContain('[ID]')
+    expect(text).not.toContain('[DATE]')
+  })
 })
 
 describe('redactPatientName', () => {
