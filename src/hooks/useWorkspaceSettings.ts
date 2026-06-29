@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react'
 import { cloneAufnahmeSections } from '../data/aufnahmeSections'
 import {
   aufnahmeanlassSectionAi,
-  cloneAiConfig,
   createNewComponentAiConfig,
 } from '../data/aiManagerPresets'
 import { defaultWorkspaceComponents } from '../data/defaultWorkspaceComponents'
@@ -16,21 +15,15 @@ import {
   isLegacyVerlaufBroadSections,
 } from '../data/verlaufSections'
 import type {
-  WorkspaceComponentIcon,
   WorkspaceComponentTemplate,
   WorkspaceComponentVariant,
   WorkspaceSettings,
   WorkspaceVariantMode,
 } from '../types/workspaceSettings'
 import { isDefaultComponent } from '../utils/defaultComponents'
-import { cloneWorkspaceComponents, createUniqueId } from '../utils/workspaceComponents'
+import { cloneWorkspaceComponents } from '../utils/workspaceComponents'
 
 const STORAGE_KEY = 'psychiatry-ink-workspace'
-
-const PROTECTED_VARIANT_IDS: Record<string, string[]> = {
-  psychopath: ['free', 'checklist', 'isdm'],
-  verlauf: ['short', 'broad'],
-}
 
 function inferPsychopathVariantMode(variant: WorkspaceComponentVariant): WorkspaceVariantMode {
   if (variant.id === 'isdm') return 'isdm'
@@ -102,15 +95,6 @@ function stripDefaultPsychopathSectionsVariant(
     defaultVariantId,
     variants: variants.length > 0 ? variants : component.variants,
   }
-}
-
-function buildPsychopathSectionsVariantSections(): WorkspaceComponentTemplate['sections'] {
-  return clonePsychopathSections().map((section) => ({
-    id: section.id,
-    label: section.label,
-    description: section.description,
-    prefilledText: section.prefilledText,
-  }))
 }
 
 function migrateComponents(
@@ -248,7 +232,10 @@ function migrateComponents(
     return component
   })
 
-  const filtered = migrated.filter((component) => component.id !== 'labor')
+  // Drop any non-default components: custom workspace-component authoring was
+  // removed, so legacy/custom entries saved on real devices (incl. the retired
+  // `labor` component) are filtered out and only the default set is kept.
+  const filtered = migrated.filter((component) => isDefaultComponent(component.id))
   const existingIds = new Set(filtered.map((component) => component.id))
   const missing = defaultWorkspaceComponents.filter((component) => !existingIds.has(component.id))
   return applyAiPresets([
@@ -340,467 +327,13 @@ export function useWorkspaceSettings() {
     safeSetItem(STORAGE_KEY, JSON.stringify(settings))
   }, [settings])
 
-  const updateComponents = useCallback(
-    (updater: (current: WorkspaceComponentTemplate[]) => WorkspaceComponentTemplate[]) => {
-      setSettings((current) => ({
-        components: updater(current.components),
-      }))
-    },
-    [],
-  )
-
-  const updateComponent = useCallback(
-    (componentId: string, patch: Partial<WorkspaceComponentTemplate>) => {
-      if (isDefaultComponent(componentId)) return
-      updateComponents((components) =>
-        components.map((component) =>
-          component.id === componentId ? { ...component, ...patch } : component,
-        ),
-      )
-    },
-    [updateComponents],
-  )
-
-  const addComponent = useCallback((label?: string) => {
-    updateComponents((components) => {
-      const nextLabel = label ?? `Neue Komponente ${components.length + 1}`
-      const id = createUniqueId(
-        nextLabel,
-        components.map((component) => component.id),
-      )
-
-      return [
-        ...components,
-        {
-          id,
-          label: nextLabel,
-          icon: 'file-text',
-          multistage: false,
-          sections: [],
-          ai: createNewComponentAiConfig(),
-        },
-      ]
-    })
-  }, [updateComponents])
-
-  const removeComponent = useCallback(
-    (componentId: string) => {
-      if (isDefaultComponent(componentId)) return
-      updateComponents((components) => {
-        if (components.length <= 1) return components
-        return components.filter((component) => component.id !== componentId)
-      })
-    },
-    [updateComponents],
-  )
-
-  const addSection = useCallback(
-    (componentId: string) => {
-      if (isDefaultComponent(componentId)) return
-      updateComponents((components) =>
-        components.map((component) => {
-          if (component.id !== componentId || !component.multistage) return component
-
-          const label = `Abschnitt ${component.sections.length + 1}`
-          const id = createUniqueId(
-            label,
-            component.sections.map((section) => section.id),
-          )
-
-          return {
-            ...component,
-            sections: [...component.sections, { id, label }],
-          }
-        }),
-      )
-    },
-    [updateComponents],
-  )
-
-  const updateSection = useCallback(
-    (
-      componentId: string,
-      sectionId: string,
-      patch: Partial<WorkspaceComponentTemplate['sections'][number]>,
-    ) => {
-      if (isDefaultComponent(componentId)) return
-      updateComponents((components) =>
-        components.map((component) => {
-          if (component.id !== componentId) return component
-
-          return {
-            ...component,
-            sections: component.sections.map((section) =>
-              section.id === sectionId ? { ...section, ...patch } : section,
-            ),
-          }
-        }),
-      )
-    },
-    [updateComponents],
-  )
-
-  const removeSection = useCallback(
-    (componentId: string, sectionId: string) => {
-      if (isDefaultComponent(componentId)) return
-      updateComponents((components) =>
-        components.map((component) => {
-          if (component.id !== componentId) return component
-
-          return {
-            ...component,
-            sections: component.sections.filter((section) => section.id !== sectionId),
-          }
-        }),
-      )
-    },
-    [updateComponents],
-  )
-
-  const updateVariant = useCallback(
-    (
-      componentId: string,
-      variantId: string,
-      patch: Partial<WorkspaceComponentVariant>,
-    ) => {
-      if (isDefaultComponent(componentId)) return
-      updateComponents((components) =>
-        components.map((component) => {
-          if (component.id !== componentId || !component.variants?.length) return component
-
-          return {
-            ...component,
-            variants: component.variants.map((variant) =>
-              variant.id === variantId ? { ...variant, ...patch } : variant,
-            ),
-          }
-        }),
-      )
-    },
-    [updateComponents],
-  )
-
-  const addVariantSection = useCallback(
-    (componentId: string, variantId: string) => {
-      if (isDefaultComponent(componentId)) return
-      updateComponents((components) =>
-        components.map((component) => {
-          if (component.id !== componentId || !component.variants?.length) return component
-
-          return {
-            ...component,
-            variants: component.variants.map((variant) => {
-              if (variant.id !== variantId || !variant.multistage) return variant
-
-              const label = `Abschnitt ${variant.sections.length + 1}`
-              const id = createUniqueId(
-                label,
-                variant.sections.map((section) => section.id),
-              )
-
-              return {
-                ...variant,
-                sections: [...variant.sections, { id, label }],
-              }
-            }),
-          }
-        }),
-      )
-    },
-    [updateComponents],
-  )
-
-  const updateVariantSection = useCallback(
-    (
-      componentId: string,
-      variantId: string,
-      sectionId: string,
-      patch: Partial<WorkspaceComponentTemplate['sections'][number]>,
-    ) => {
-      if (isDefaultComponent(componentId)) return
-      updateComponents((components) =>
-        components.map((component) => {
-          if (component.id !== componentId || !component.variants?.length) return component
-
-          return {
-            ...component,
-            variants: component.variants.map((variant) => {
-              if (variant.id !== variantId) return variant
-
-              return {
-                ...variant,
-                sections: variant.sections.map((section) =>
-                  section.id === sectionId ? { ...section, ...patch } : section,
-                ),
-              }
-            }),
-          }
-        }),
-      )
-    },
-    [updateComponents],
-  )
-
-  const addComponentVariant = useCallback(
-    (componentId: string, mode: WorkspaceVariantMode) => {
-      if (isDefaultComponent(componentId)) return
-      updateComponents((components) =>
-        components.map((component) => {
-          if (component.id !== componentId) return component
-
-          const existingIds = component.variants?.map((variant) => variant.id) ?? []
-          const labelByMode: Record<WorkspaceVariantMode, string> = {
-            free: 'Freitext',
-            sections: 'Abschnitte',
-            checklist: 'AMDP-Checkliste',
-            isdm: 'ISDM V.1',
-          }
-          const label = labelByMode[mode]
-          const id = createUniqueId(label, existingIds)
-
-          let newVariant: WorkspaceComponentVariant
-
-          if (mode === 'free') {
-            newVariant = {
-              id,
-              label,
-              mode: 'free',
-              multistage: false,
-              sections: [],
-            }
-          } else if (mode === 'isdm') {
-            newVariant = {
-              id,
-              label,
-              mode: 'isdm',
-              multistage: false,
-              sections: [],
-            }
-          } else if (mode === 'sections') {
-            newVariant = {
-              id,
-              label,
-              mode: 'sections',
-              railHeading: component.label,
-              multistage: true,
-              sections:
-                component.id === 'psychopath'
-                  ? buildPsychopathSectionsVariantSections()
-                  : [{ id: createUniqueId('abschnitt', []), label: 'Abschnitt 1' }],
-            }
-          } else {
-            newVariant = {
-              id,
-              label,
-              mode: 'checklist',
-              railHeading: component.label,
-              multistage: true,
-              sections:
-                component.id === 'psychopath' ? clonePsychopathSections() : [],
-            }
-          }
-
-          return {
-            ...component,
-            variants: [...(component.variants ?? []), newVariant],
-          }
-        }),
-      )
-    },
-    [updateComponents],
-  )
-
-  const removeComponentVariant = useCallback(
-    (componentId: string, variantId: string) => {
-      if (isDefaultComponent(componentId)) return
-      updateComponents((components) =>
-        components.map((component) => {
-          if (component.id !== componentId || !component.variants?.length) return component
-
-          const protectedIds = PROTECTED_VARIANT_IDS[componentId] ?? []
-          if (protectedIds.includes(variantId)) return component
-          if (component.variants.length <= 1) return component
-
-          const variants = component.variants.filter((variant) => variant.id !== variantId)
-          const defaultVariantId =
-            component.defaultVariantId === variantId
-              ? (variants[0]?.id ?? component.defaultVariantId)
-              : component.defaultVariantId
-
-          return {
-            ...component,
-            defaultVariantId,
-            variants,
-          }
-        }),
-      )
-    },
-    [updateComponents],
-  )
-
-  const removeVariantSection = useCallback(
-    (componentId: string, variantId: string, sectionId: string) => {
-      if (isDefaultComponent(componentId)) return
-      updateComponents((components) =>
-        components.map((component) => {
-          if (component.id !== componentId || !component.variants?.length) return component
-
-          return {
-            ...component,
-            variants: component.variants.map((variant) => {
-              if (variant.id !== variantId) return variant
-
-              return {
-                ...variant,
-                sections: variant.sections.filter((section) => section.id !== sectionId),
-              }
-            }),
-          }
-        }),
-      )
-    },
-    [updateComponents],
-  )
-
-  const setComponentMultistage = useCallback(
-    (componentId: string, multistage: boolean) => {
-      if (isDefaultComponent(componentId)) return
-      updateComponents((components) =>
-        components.map((component) => {
-          if (component.id !== componentId) return component
-
-          if (!multistage) {
-            return { ...component, multistage: false, sections: [] }
-          }
-
-          const sections =
-            component.sections.length > 0
-              ? component.sections
-              : [{ id: createUniqueId('abschnitt', []), label: 'Abschnitt 1' }]
-
-          return { ...component, multistage: true, sections }
-        }),
-      )
-    },
-    [updateComponents],
-  )
-
-  const setComponentIcon = useCallback(
-    (componentId: string, icon: WorkspaceComponentIcon) => {
-      updateComponent(componentId, { icon })
-    },
-    [updateComponent],
-  )
-
-  const setComponentLabel = useCallback(
-    (componentId: string, label: string) => {
-      updateComponent(componentId, { label })
-    },
-    [updateComponent],
-  )
-
-  const setComponentPrefilledText = useCallback(
-    (componentId: string, prefilledText: string) => {
-      updateComponent(componentId, {
-        prefilledText: prefilledText.trim() || undefined,
-      })
-    },
-    [updateComponent],
-  )
-
-  const setComponentToolSecondLine = useCallback(
-    (componentId: string, secondLine: string) => {
-      updateComponents((components) =>
-        components.map((component) => {
-          if (component.id !== componentId) return component
-
-          const trimmed = secondLine.trim()
-          if (!trimmed) {
-            return { ...component, toolLabelLines: undefined }
-          }
-
-          const firstLine =
-            component.toolLabelLines?.[0] ??
-            `${component.label.slice(0, Math.max(3, Math.ceil(component.label.length / 2)))}-`
-
-          return {
-            ...component,
-            toolLabelLines: [firstLine, trimmed],
-          }
-        }),
-      )
-    },
-    [updateComponents],
-  )
-
   const resetWorkspace = useCallback(() => {
     setSettings({ components: cloneWorkspaceComponents(defaultWorkspaceComponents) })
   }, [])
 
-  const setComponentAi = useCallback(
-    (componentId: string, ai: WorkspaceComponentTemplate['ai']) => {
-      if (!ai) return
-      updateComponent(componentId, { ai: cloneAiConfig(ai) })
-    },
-    [updateComponent],
-  )
-
-  const setVariantAi = useCallback(
-    (
-      componentId: string,
-      variantId: string,
-      ai: NonNullable<WorkspaceComponentVariant['ai']>,
-    ) => {
-      updateComponents((components) =>
-        components.map((component) => {
-          if (component.id !== componentId || !component.variants) return component
-          return {
-            ...component,
-            variants: component.variants.map((variant) =>
-              variant.id === variantId
-                ? { ...variant, ai: cloneAiConfig(ai) }
-                : variant,
-            ),
-          }
-        }),
-      )
-    },
-    [updateComponents],
-  )
-
-  const setSectionAi = useCallback(
-    (
-      componentId: string,
-      sectionId: string,
-      ai: NonNullable<WorkspaceComponentTemplate['sections'][number]['ai']>,
-    ) => {
-      updateSection(componentId, sectionId, { ai: cloneAiConfig(ai) })
-    },
-    [updateSection],
-  )
-
   return {
     components: settings.components,
     isDefaultComponent,
-    addComponent,
-    removeComponent,
-    setComponentLabel,
-    setComponentPrefilledText,
-    setComponentToolSecondLine,
-    setComponentIcon,
-    setComponentMultistage,
-    addSection,
-    updateSection,
-    removeSection,
-    updateVariant,
-    addComponentVariant,
-    removeComponentVariant,
-    addVariantSection,
-    updateVariantSection,
-    removeVariantSection,
     resetWorkspace,
-    setComponentAi,
-    setVariantAi,
-    setSectionAi,
   }
 }
