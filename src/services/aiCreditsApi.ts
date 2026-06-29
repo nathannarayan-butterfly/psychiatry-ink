@@ -14,6 +14,26 @@ export interface AutoRechargeState {
   stripeConfigured?: boolean
 }
 
+/**
+ * Whether the auto-recharge "needs attention" warning banner should show.
+ *
+ * The banner ("the last auto-recharge failed … auto-recharge was paused") must
+ * only appear after a GENUINE failed charge attempt — i.e. the server recorded
+ * both `status === 'needs_attention'` AND a concrete `failureReason`. The
+ * `failureReason` is written only by `ai_credit_auto_recharge_finish` on a real
+ * failed off-session charge (declined / SCA / missing card), and is cleared on
+ * success, on saving a new card, and on re-enabling. Requiring it prevents a
+ * false banner when `status` is set without an actual attempt having failed
+ * (e.g. a stale/defaulted status), which previously made the warning show even
+ * though no recharge was ever attempted.
+ */
+export function autoRechargeNeedsAttention(
+  state: Pick<AutoRechargeState, 'status' | 'failureReason'> | null | undefined,
+): boolean {
+  if (!state) return false
+  return state.status === 'needs_attention' && Boolean(state.failureReason?.trim())
+}
+
 export interface AiCreditSummary {
   monthlyCredits: number
   purchasedCredits: number
