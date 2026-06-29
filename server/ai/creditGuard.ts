@@ -194,6 +194,30 @@ export async function refundCredits(params: {
   })
 }
 
+/** Start of the current monthly usage period (UTC 1st of month) — mirrors the
+ *  monthly grant/reset boundary so "used this period" lines up with the grant. */
+function currentPeriodStart(): Date {
+  const now = new Date()
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
+}
+
+/**
+ * Authoritative "credits used this period" for the usage counter — net spend
+ * from the credit ledger (debits − refunds) since the period start. This is the
+ * single source of truth that moves the balance, so the displayed "used" always
+ * reconciles with the balance (used + remaining == granted/purchased).
+ *
+ * Earlier the counter summed `ai_usage_logs.credits_charged`, which under-counts
+ * because direct debits (e.g. dictation/transcription, legacy reserves) reduce
+ * the balance WITHOUT a matching usage-log credit — producing the off-by-N gap
+ * between "used" and "consumed".
+ */
+export async function getCreditsUsedThisPeriod(userId: string): Promise<number> {
+  await migrateLegacyCreditsIfNeeded(userId)
+  const account = await ensureCreditAccount(userId)
+  return creditsRepo.sumNetSpendSince(account.id, currentPeriodStart().toISOString())
+}
+
 /** Read current balance summary for a user. */
 export async function getCreditSummary(userId: string): Promise<{
   monthlyCredits: number

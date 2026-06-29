@@ -28,6 +28,7 @@ import {
   startSaveCardCheckout,
   startSubscriptionCheckout,
   updateAutoRecharge,
+  autoRechargeNeedsAttention,
   type AdminVoucherListItem,
   type AiCreditHistoryEntry,
   type AiCreditLedgerEntry,
@@ -122,7 +123,10 @@ function AutoRechargeSection({ state, stripeReady, locale, onChanged }: AutoRech
 
   const enabled = local?.enabled ?? false
   const hasCard = local?.hasPaymentMethod ?? false
-  const needsAttention = local?.status === 'needs_attention'
+  // Only surface the "needs attention" warning after a genuine failed recharge
+  // attempt (status === 'needs_attention' AND a real failureReason), never on a
+  // stale/defaulted status with no recorded failure. See autoRechargeNeedsAttention.
+  const needsAttention = autoRechargeNeedsAttention(local)
   const selectedPackId = local?.packId ?? 'pack_1000'
 
   const persist = useCallback(
@@ -657,8 +661,15 @@ export function CreditsDashboardPage({ onBack }: CreditsDashboardPageProps) {
   const monthlyResetLabel = (details?.monthlyResetAt ?? summary?.monthlyResetAt)
     ? formatDateTime(details?.monthlyResetAt ?? summary!.monthlyResetAt, locale).split(',')[0]
     : '—'
+  // The usage meter reconciles "used" against the total available this period:
+  // used + remaining == granted/purchased. `monthlySpent` is the authoritative
+  // ledger-based "used" and `balance` is the remaining total, so their sum is
+  // the period grant. (Using the *current* monthly balance as the denominator —
+  // which shrinks as credits are spent — made the counter disagree with the
+  // balance.)
+  const periodTotal = monthlySpent + balance
   const monthlyUsagePct =
-    monthlyCredits > 0 ? Math.min(100, Math.round((monthlySpent / monthlyCredits) * 100)) : 0
+    periodTotal > 0 ? Math.min(100, Math.round((monthlySpent / periodTotal) * 100)) : 0
 
   if (loading && !summary) {
     return (
@@ -723,12 +734,12 @@ export function CreditsDashboardPage({ onBack }: CreditsDashboardPageProps) {
               <span className="credits-hero__unit">{t('creditsDashboardCreditsUnit')}</span>
             </div>
 
-            {monthlyCredits > 0 ? (
+            {periodTotal > 0 ? (
               <div className="credits-hero__meter">
                 <div className="credits-hero__meter-head">
                   <span>{t('creditsDashboardMonthlyUsage')}</span>
                   <span className="credits-hero__meter-stat">
-                    {monthlySpent.toLocaleString(locale)} / {monthlyCredits.toLocaleString(locale)}
+                    {monthlySpent.toLocaleString(locale)} / {periodTotal.toLocaleString(locale)}
                   </span>
                 </div>
                 <div

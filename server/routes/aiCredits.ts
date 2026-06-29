@@ -16,6 +16,7 @@ import {
   addPurchasedCredits,
   getCreditLedgerForUser,
   getCreditSummary,
+  getCreditsUsedThisPeriod,
   getRecentAiUsageForUser,
 } from '../ai/creditGuard'
 import { getUsageSummaryForUser } from '../ai/usageLogger'
@@ -80,8 +81,16 @@ aiCreditsRouter.get('/usage', async (req: Request, res: Response) => {
     const userId = requireRouteAuth(req, res)
     if (!userId) return
 
-    const usage = await getUsageSummaryForUser(userId)
-    res.json(usage)
+    // `getUsageSummaryForUser` provides the call/token/success metadata from the
+    // ai_usage_logs telemetry. The credit total, however, must come from the
+    // credit LEDGER (the authoritative record that moves the balance) so the
+    // displayed "used" reconciles with the balance — usage-log credits omit
+    // direct debits like dictation. See getCreditsUsedThisPeriod.
+    const [usage, totalCredits] = await Promise.all([
+      getUsageSummaryForUser(userId),
+      getCreditsUsedThisPeriod(userId),
+    ])
+    res.json({ ...usage, totalCredits })
   } catch (error) {
     console.error('[ai-credits] usage read failed:', error)
     res.status(500).json({ error: 'Failed to read usage summary' })

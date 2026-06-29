@@ -436,6 +436,28 @@ export async function hasLedgerEntryWithNote(
   return data !== null
 }
 
+/**
+ * Net credits SPENT by an account since `sinceIso`, derived from the ledger —
+ * the authoritative record that moves the balance. Sums the signed `debit`
+ * (stored negative) and `refund` (stored positive) rows and returns the
+ * non-negative net consumption, EXCLUDING grants/purchases. Because every
+ * balance movement writes a ledger row, this always reconciles with the balance
+ * (used + remaining == granted/purchased), unlike summing `ai_usage_logs`
+ * (which omits direct debits such as dictation and is a separate metadata log).
+ */
+export async function sumNetSpendSince(accountId: string, sinceIso: string): Promise<number> {
+  const { data, error } = await getSupabaseAdmin()
+    .from('ai_credit_ledger')
+    .select('credits, type')
+    .eq('account_id', accountId)
+    .in('type', ['debit', 'refund'])
+    .gte('created_at', sinceIso)
+  if (error) throw new Error(`ai_credit_ledger spend read failed: ${error.message}`)
+  // debit rows are negative, refund rows positive → net spend = -(sum).
+  const signedSum = (data ?? []).reduce((acc, row) => acc + (row.credits ?? 0), 0)
+  return Math.max(0, -signedSum)
+}
+
 /** Read the most recent ledger entries for an account (newest first). */
 export async function listLedger(
   accountId: string,
@@ -458,6 +480,7 @@ export const creditsRepo = {
   grantPurchased,
   getAccountByUserId,
   hasLedgerEntryWithNote,
+  sumNetSpendSince,
   listLedger,
   startTrial,
   applySubscription,
