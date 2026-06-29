@@ -43,10 +43,19 @@ describe('buildAnalyzeMetadata', () => {
   it('de-identifies structural hints and columns before AI', () => {
     const metadata = buildAnalyzeMetadata(baseEnvelope, baseEnvelope.candidates, {
       patientNames: ['Max', 'Mustermann', 'Max Mustermann'],
+      columns: ['Medikament', 'Max Mustermann', '01.02.1990', 'geb. 01.02.1990'],
     })
     expect(metadata.moduleCounts.medication).toBe(1)
     expect(metadata.noticeCodes).toContain('mapping_uncertain')
-    expect(metadata.columns?.some((c) => c.includes('[NAME]') || c.includes('[DATE]'))).toBe(true)
+    // #13: a standalone clinical date is preserved verbatim (a bare date is not
+    // identifying on its own and is clinically relevant) …
+    expect(metadata.columns).toContain('01.02.1990')
+    // … while patient names and explicit DOB-context dates are still redacted.
+    expect(metadata.columns?.some((c) => c.includes('[NAME]'))).toBe(true)
+    expect(metadata.columns?.some((c) => c.includes('[DATE]'))).toBe(true)
+    expect(metadata.columns?.some((c) => c.includes('01.02.1990') && c.includes('[DATE]'))).toBe(
+      false,
+    )
     const docCandidate = metadata.candidates.find((c) => c.candidateId === 'c1')
     expect(docCandidate?.structuralHint).not.toMatch(/Mustermann|Max Mustermann/)
     expect(docCandidate?.needsMappingAssist).toBe(true)

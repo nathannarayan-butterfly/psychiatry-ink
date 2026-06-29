@@ -96,10 +96,21 @@ describe('profileToParseOptions', () => {
 })
 
 describe('sanitizeProfileLabel (PHI safety)', () => {
-  it('strips dates, long ids and contact info from a captured label', () => {
-    const label = sanitizeProfileLabel('Verlauf 12.03.2024 Fallnr 123456789')
+  it('redacts a DOB-context date, long ids and contact info from a captured label (#13)', () => {
+    const label = sanitizeProfileLabel('Verlauf geb. 12.03.2024 Fallnr 123456789')
+    // A date in an explicit date-of-birth context is masked …
+    expect(label).toContain('[DATE]')
     expect(label).not.toMatch(/12\.03\.2024/)
+    // … and long ids / contact-like numbers are still stripped.
     expect(label).not.toMatch(/123456789/)
+    expect(label).toContain('Verlauf')
+  })
+
+  it('preserves a standalone clinical date in a captured label (#13)', () => {
+    const label = sanitizeProfileLabel('Verlauf 12.03.2024')
+    // A bare clinical date is not identifying on its own, so it is kept verbatim.
+    expect(label).toContain('12.03.2024')
+    expect(label).not.toContain('[DATE]')
     expect(label).toContain('Verlauf')
   })
 
