@@ -711,6 +711,13 @@ export const LAUNCHER_TASKS: LauncherTask[] = [
       'ecg',
       'eeg',
       'hirnstrom',
+      'röntgen',
+      'roentgen',
+      'x-ray',
+      'radiograph',
+      'thorax',
+      'bildgebung',
+      'imaging',
     ],
     modes: [
       {
@@ -748,6 +755,12 @@ export const LAUNCHER_TASKS: LauncherTask[] = [
         labelKey: 'launcherModeStandaloneEeg',
         keywords: ['eeg', 'electroencephalogram', 'hirnstrom', 'elektroenzephalogramm'],
         target: { kind: 'standaloneGuided', itemType: 'befund-eeg' },
+      },
+      {
+        id: 'roentgen',
+        labelKey: 'launcherModeStandaloneRoentgen',
+        keywords: ['röntgen', 'roentgen', 'x-ray', 'radiograph', 'thorax', 'bildgebung', 'imaging'],
+        target: { kind: 'standaloneGuided', itemType: 'befund-roentgen' },
       },
     ],
   },

@@ -12,6 +12,7 @@ export type GuidedEntryItemType =
   | 'risk-update-quick'
   | 'befund-ecg'
   | 'befund-eeg'
+  | 'befund-roentgen'
   | 'somatic-befund-quick'
   | 'vitalwerte-quick'
   | 'anamnese-somatic-befund'
