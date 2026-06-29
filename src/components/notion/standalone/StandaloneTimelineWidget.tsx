@@ -39,7 +39,9 @@ export function StandaloneTimelineWidget({ caseId, onClose }: StandaloneTimeline
     const lines: string[] = [t('standaloneTimelineNoteHeading'), '']
     for (const entry of sorted) {
       const sub = entry.subheading ? ` — ${entry.subheading}` : ''
-      lines.push(`- ${entry.displayDate}: ${entry.heading}${sub}`)
+      // Title is optional; entries without one are listed by date alone.
+      const title = entry.heading.trim()
+      lines.push(title ? `- ${entry.displayDate}: ${title}${sub}` : `- ${entry.displayDate}${sub}`)
     }
     saveStandaloneNote(caseId, {
       kind: 'timeline',

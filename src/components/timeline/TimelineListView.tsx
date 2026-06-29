@@ -38,7 +38,7 @@ export function TimelineListView({
           >
             <span className="timeline-list__date">{entry.displayDate}</span>
             <div className="timeline-list__content">
-              <span className="timeline-list__heading">{entry.heading}</span>
+              <span className="timeline-list__heading">{entry.heading.trim() || entry.displayDate}</span>
               {entry.subheading ? (
                 <span className="timeline-list__subheading">{entry.subheading}</span>
               ) : null}

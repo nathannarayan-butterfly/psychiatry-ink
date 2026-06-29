@@ -245,6 +245,11 @@ function TimelineEntryNode({
   deleteLabel: string
 }) {
   const { entry, x, y } = item
+  // The entry's title is its heading; when no title was given, fall back to the
+  // date so the entry never renders headingless. The small date metadata line is
+  // suppressed in the fallback case to avoid showing the date twice.
+  const title = entry.heading.trim()
+  const headingText = title || entry.displayDate
 
   return (
     <div
@@ -255,7 +260,7 @@ function TimelineEntryNode({
     >
       <div className="timeline-entry__card">
         <div className="timeline-entry__top">
-          <span className="timeline-entry__date">{entry.displayDate}</span>
+          <span className="timeline-entry__date">{title ? entry.displayDate : ''}</span>
           <TimelineEntryActions
             entry={entry}
             onEdit={onEdit}
@@ -267,7 +272,7 @@ function TimelineEntryNode({
             deleteLabel={deleteLabel}
           />
         </div>
-        <span className="timeline-entry__heading">{entry.heading}</span>
+        <span className="timeline-entry__heading">{headingText}</span>
         {entry.subheading ? (
           <span className="timeline-entry__subheading">{entry.subheading}</span>
         ) : null}

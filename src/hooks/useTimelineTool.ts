@@ -141,7 +141,9 @@ export function useTimelineTool(caseId?: string) {
 
   const saveDraft = useCallback((): string | null => {
     const parsed = parseTimelineDate(draft.dateKind, draft.dateValue)
-    if (!draft.heading.trim()) return 'heading'
+    // The per-entry title is optional: an entry may be added with just a date,
+    // in which case the render layer falls back to the date as its heading. The
+    // date itself is still required because the timeline is date-sorted.
     if (!parsed) return 'date'
 
     const payload: TimelineEntry = {
