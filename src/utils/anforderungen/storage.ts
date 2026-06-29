@@ -227,3 +227,18 @@ export function updateAnforderungStatus(
 export function cancelAnforderung(caseId: string, orderId: string): Anforderung | null {
   return updateAnforderungStatus(caseId, orderId, 'cancelled')
 }
+
+/**
+ * Permanently remove a requisition record from the per-case store (and vault via
+ * the persist hook). Distinct from the cancel/reject STATUS transitions, which
+ * keep the record. Returns true when a record was removed. Emits
+ * ANFORDERUNGEN_CHANGED_EVENT so any mounted list live-updates.
+ */
+export function deleteAnforderung(caseId: string, orderId: string): boolean {
+  const resolved = resolveCaseId(caseId)
+  const existing = loadAnforderungen(resolved)
+  const next = existing.filter((o) => o.id !== orderId)
+  if (next.length === existing.length) return false
+  saveAnforderungen(next, resolved)
+  return true
+}

@@ -5,6 +5,7 @@ import type {
 } from '../../types/anforderung'
 import { escapeHtml } from '../documentTemplate/htmlUtils'
 import { FONT_SANS } from '../../styles/typographyTokens'
+import { printHtmlDocument } from '../print/printDocument'
 
 const URGENCY_LABELS_DE: Record<AnforderungUrgency, string> = {
   routine: 'Routine',
@@ -153,41 +154,10 @@ body { margin: 0; padding: 0; font-family: ${FONT_SANS}; font-size: 11pt; line-h
 }
 
 export function openAnforderungPrintDocument(html: string): void {
-  if (typeof window === 'undefined') return
-
-  const printWindow = window.open('', '_blank', 'noopener,width=900,height=1000')
-  if (printWindow) {
-    printWindow.document.open()
-    printWindow.document.write(html)
-    printWindow.document.close()
-    printWindow.focus()
-    setTimeout(() => {
-      printWindow.print()
-    }, 250)
-    return
-  }
-
-  const iframe = document.createElement('iframe')
-  iframe.style.position = 'fixed'
-  iframe.style.right = '0'
-  iframe.style.bottom = '0'
-  iframe.style.width = '0'
-  iframe.style.height = '0'
-  iframe.style.border = '0'
-  document.body.appendChild(iframe)
-  const doc = iframe.contentWindow?.document
-  if (!doc) {
-    document.body.removeChild(iframe)
-    return
-  }
-  doc.open()
-  doc.write(html)
-  doc.close()
-  setTimeout(() => {
-    iframe.contentWindow?.focus()
-    iframe.contentWindow?.print()
-    document.body.removeChild(iframe)
-  }, 250)
+  // Route through the shared, robust print helper. The previous implementation
+  // requested `noopener`, which makes window.open return null per spec, so the
+  // popup could never be written to and print silently did nothing.
+  printHtmlDocument(html)
 }
 
 export function printAnforderungen(orders: Anforderung[], context: AnforderungPrintContext): void {

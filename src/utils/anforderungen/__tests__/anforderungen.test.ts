@@ -7,6 +7,29 @@ import {
 } from '../storage'
 import { resolveAnforderungResultState } from '../resultLinks'
 import { buildAnforderungPrintHtml } from '../printAnforderung'
+import { buildAnforderungenText } from '../exportAnforderungen'
+import {
+  ANFORDERUNGEN_CHANGED_EVENT,
+  deleteAnforderung,
+  loadAnforderungen,
+  upsertAnforderung,
+} from '../storage'
+
+function makeOrder(overrides: Partial<Anforderung> = {}): Anforderung {
+  const now = '2026-06-18T10:00:00.000Z'
+  return {
+    id: 'o1',
+    caseId: 'case-1',
+    catalogId: 'lab-tsh',
+    category: 'labor',
+    label: 'TSH',
+    urgency: 'routine',
+    status: 'accepted',
+    createdAt: now,
+    updatedAt: now,
+    ...overrides,
+  }
+}
 
 describe('anforderungenCatalog', () => {
   it('covers all four categories with substantial entries', () => {
@@ -75,6 +98,57 @@ describe('anforderungen print', () => {
     expect(html).toContain('Anforderung')
     expect(html).toContain('TSH')
     expect(html).toContain('Test Patient')
+  })
+})
+
+describe('anforderungen text export', () => {
+  it('includes patient details and requisition fields', () => {
+    const text = buildAnforderungenText([makeOrder({ requestedDate: '2026-07-01', note: 'nüchtern' })], {
+      caseRef: 'abc12345',
+      patientName: 'Test Patient',
+      patientDob: '1990-01-01',
+      requestingClinician: 'Dr. Beispiel',
+    })
+    expect(text).toContain('Test Patient')
+    expect(text).toContain('1990-01-01')
+    expect(text).toContain('Dr. Beispiel')
+    expect(text).toContain('TSH')
+    expect(text).toContain('Routine')
+    expect(text).toContain('nüchtern')
+  })
+
+  it('does not throw on an empty list', () => {
+    expect(() => buildAnforderungenText([], { caseRef: 'abc12345' })).not.toThrow()
+  })
+})
+
+describe('deleteAnforderung', () => {
+  it('permanently removes the record and emits a change event', () => {
+    const caseId = `del-${Math.random().toString(36).slice(2)}`
+    upsertAnforderung(makeOrder({ id: 'keep', caseId, label: 'Keep' }), caseId)
+    upsertAnforderung(makeOrder({ id: 'drop', caseId, label: 'Drop' }), caseId)
+    expect(loadAnforderungen(caseId)).toHaveLength(2)
+
+    let changed = false
+    const onChange = (e: Event) => {
+      if ((e as CustomEvent<{ caseId: string }>).detail?.caseId === caseId) changed = true
+    }
+    window.addEventListener(ANFORDERUNGEN_CHANGED_EVENT, onChange)
+    const removed = deleteAnforderung(caseId, 'drop')
+    window.removeEventListener(ANFORDERUNGEN_CHANGED_EVENT, onChange)
+
+    expect(removed).toBe(true)
+    expect(changed).toBe(true)
+    const remaining = loadAnforderungen(caseId)
+    expect(remaining).toHaveLength(1)
+    expect(remaining[0]?.id).toBe('keep')
+  })
+
+  it('returns false when the id is not present', () => {
+    const caseId = `del-${Math.random().toString(36).slice(2)}`
+    upsertAnforderung(makeOrder({ id: 'a', caseId }), caseId)
+    expect(deleteAnforderung(caseId, 'missing')).toBe(false)
+    expect(loadAnforderungen(caseId)).toHaveLength(1)
   })
 })
 

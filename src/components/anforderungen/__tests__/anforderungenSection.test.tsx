@@ -28,9 +28,15 @@ vi.mock('../../../hooks/permissions/useCurrentMember', () => ({
 }))
 vi.mock('../../../hooks/useAccountDisplayName', () => ({ useAccountDisplayName: () => 'Dr Test' }))
 vi.mock('../../notion/NotionToast', () => ({ showNotionToast: vi.fn() }))
+// Provide patient identity for case-A only (case-B stays patient-less).
+vi.mock('../../../hooks/useCaseRegistry', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../hooks/useCaseRegistry')>()),
+  getCaseMeta: (id: string) =>
+    id.startsWith('pat-') ? { localName: 'Max Mustermann', localGeburtsdatum: '1990-01-01' } : undefined,
+}))
 
 import { AnforderungenSidebarSection } from '../AnforderungenSidebarSection'
-import { upsertAnforderung } from '../../../utils/anforderungen/storage'
+import { upsertAnforderung, loadAnforderungen } from '../../../utils/anforderungen/storage'
 import { DIAGNOSTICS_SECTIONS, isDiagnosticsSectionId } from '../../../data/diagnosticsSections'
 
 function makeOrder(caseId: string, label: string): Anforderung {
@@ -103,5 +109,46 @@ describe('AnforderungenSidebarSection — review list', () => {
     await mount('case-B')
     expect(container!.querySelectorAll('.anforderung-row').length).toBe(0)
     expect(container!.querySelector('.anforderungen-sidebar__empty')).toBeTruthy()
+  })
+
+  it('renders patient identity + requisition metadata on screen', async () => {
+    upsertAnforderung(makeOrder('pat-1', 'Blutbild'), 'pat-1')
+    await mount('pat-1')
+    const text = container!.textContent ?? ''
+    expect(container!.querySelector('.anforderungen-sidebar__patient')).toBeTruthy()
+    expect(text).toContain('Max Mustermann')
+    expect(text).toContain('1990-01-01')
+    // urgency surfaced per-row
+    expect(container!.querySelector('.anforderung-row__urgency')).toBeTruthy()
+    // export toolbar present when there are orders
+    expect(container!.querySelectorAll('.anforderungen-sidebar__export-btn').length).toBeGreaterThan(0)
+  })
+
+  it('delete is guarded by a confirm and removes the record + updates the list', async () => {
+    const caseId = 'del-ui-1'
+    upsertAnforderung(makeOrder(caseId, 'Blutbild'), caseId)
+    await mount(caseId)
+    const delBtn = () =>
+      container!.querySelector<HTMLButtonElement>('button[aria-label="anforderungDelete"]')
+    expect(delBtn()).toBeTruthy()
+
+    // Cancelled confirm → no removal
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
+    await act(async () => {
+      delBtn()!.click()
+      await Promise.resolve()
+    })
+    expect(loadAnforderungen(caseId)).toHaveLength(1)
+    expect(container!.querySelectorAll('.anforderung-row').length).toBe(1)
+
+    // Confirmed → record permanently removed and list live-updates
+    confirmSpy.mockReturnValue(true)
+    await act(async () => {
+      delBtn()!.click()
+      await Promise.resolve()
+    })
+    expect(loadAnforderungen(caseId)).toHaveLength(0)
+    expect(container!.querySelectorAll('.anforderung-row').length).toBe(0)
+    confirmSpy.mockRestore()
   })
 })

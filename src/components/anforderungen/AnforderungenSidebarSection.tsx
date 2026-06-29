@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react'
-import { Check, Printer, X as XIcon } from 'lucide-react'
+import { Check, FileDown, FileText, FileType, Printer, Trash2, X as XIcon } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { UiTranslationKey } from '../../data/uiTranslations'
 import { useAuth } from '../../context/AuthContext'
@@ -9,11 +9,12 @@ import { useAccountDisplayName } from '../../hooks/useAccountDisplayName'
 import { useAnforderungen } from '../../hooks/useAnforderungen'
 import { getCaseMeta } from '../../hooks/useCaseRegistry'
 import { shortCaseId } from '../../utils/caseContext'
-import type { Anforderung } from '../../types/anforderung'
+import type { Anforderung, AnforderungUrgency } from '../../types/anforderung'
 import { isActiveAnforderung } from '../../types/anforderung'
 import {
   canAcceptAnforderung,
   cancelAnforderung,
+  deleteAnforderung,
   needsAnforderungAcceptance,
   updateAnforderungStatus,
 } from '../../utils/anforderungen/storage'
@@ -22,7 +23,12 @@ import {
   resolveAnforderungResultState,
   resolveResultLink,
 } from '../../utils/anforderungen/resultLinks'
-import { printSingleAnforderung } from '../../utils/anforderungen/printAnforderung'
+import { printAnforderungen, printSingleAnforderung } from '../../utils/anforderungen/printAnforderung'
+import {
+  exportAnforderungenAsPdf,
+  exportAnforderungenAsText,
+  exportAnforderungenAsWord,
+} from '../../utils/anforderungen/exportAnforderungen'
 import { setDiagnosticsSectionPref } from '../../utils/befundArchive'
 import { showNotionToast } from '../notion/NotionToast'
 
@@ -54,6 +60,12 @@ const STATUS_LABEL_KEYS: Record<Anforderung['status'], UiTranslationKey> = {
   accepted: 'anforderungStatusAccepted',
   rejected: 'anforderungStatusRejected',
   cancelled: 'anforderungStatusCancelled',
+}
+
+const URGENCY_LABEL_KEYS: Record<AnforderungUrgency, UiTranslationKey> = {
+  routine: 'anforderungUrgencyRoutine',
+  soon: 'anforderungUrgencySoon',
+  urgent: 'anforderungUrgencyUrgent',
 }
 
 function statusClass(status: Anforderung['status']): string {
@@ -152,6 +164,33 @@ export function AnforderungenSidebarSection({
     [printContext],
   )
 
+  const handleDelete = useCallback(
+    (orderId: string) => {
+      if (!window.confirm(t('anforderungDeleteConfirm'))) return
+      if (deleteAnforderung(caseId, orderId)) {
+        refresh()
+        showNotionToast(t('anforderungDeleted'))
+      }
+    },
+    [caseId, refresh, t],
+  )
+
+  const handlePrintList = useCallback(() => {
+    printAnforderungen(activeOrders, printContext)
+  }, [activeOrders, printContext])
+
+  const handleExportTxt = useCallback(() => {
+    exportAnforderungenAsText(activeOrders, printContext)
+  }, [activeOrders, printContext])
+
+  const handleExportWord = useCallback(() => {
+    exportAnforderungenAsWord(activeOrders, printContext)
+  }, [activeOrders, printContext])
+
+  const handleExportPdf = useCallback(() => {
+    exportAnforderungenAsPdf(activeOrders, printContext)
+  }, [activeOrders, printContext])
+
   const handleResultLink = useCallback(
     (order: Anforderung) => {
       const link = resolveResultLink(order.catalogId)
@@ -184,6 +223,60 @@ export function AnforderungenSidebarSection({
         ) : null}
       </div>
 
+      {printContext.patientName || activeOrders.length > 0 ? (
+        <div className="anforderungen-sidebar__patient">
+          {printContext.patientName ? (
+            <span className="anforderungen-sidebar__patient-name">
+              <span className="anforderungen-sidebar__patient-key">{t('anforderungPatientLabel')}:</span>{' '}
+              {printContext.patientName}
+              {printContext.patientDob ? ` · ${printContext.patientDob}` : ''}
+            </span>
+          ) : null}
+          <span className="anforderungen-sidebar__patient-ref">{printContext.caseRef}</span>
+        </div>
+      ) : null}
+
+      {activeOrders.length > 0 ? (
+        <div className="anforderungen-sidebar__export" role="group" aria-label={t('anforderungExport')}>
+          <button
+            type="button"
+            className="anforderungen-sidebar__export-btn"
+            title={t('print')}
+            aria-label={t('print')}
+            onClick={handlePrintList}
+          >
+            <Printer className="h-3.5 w-3.5" aria-hidden />
+          </button>
+          <button
+            type="button"
+            className="anforderungen-sidebar__export-btn"
+            title={t('anforderungExportTxt')}
+            aria-label={t('anforderungExportTxt')}
+            onClick={handleExportTxt}
+          >
+            <FileText className="h-3.5 w-3.5" aria-hidden />
+          </button>
+          <button
+            type="button"
+            className="anforderungen-sidebar__export-btn"
+            title={t('anforderungExportWord')}
+            aria-label={t('anforderungExportWord')}
+            onClick={handleExportWord}
+          >
+            <FileType className="h-3.5 w-3.5" aria-hidden />
+          </button>
+          <button
+            type="button"
+            className="anforderungen-sidebar__export-btn"
+            title={t('anforderungExportPdf')}
+            aria-label={t('anforderungExportPdf')}
+            onClick={handleExportPdf}
+          >
+            <FileDown className="h-3.5 w-3.5" aria-hidden />
+          </button>
+        </div>
+      ) : null}
+
       {activeOrders.length === 0 ? (
         <p className="anforderungen-sidebar__empty">{t('anforderungenEmpty')}</p>
       ) : (
@@ -203,6 +296,14 @@ export function AnforderungenSidebarSection({
                 <div className="anforderung-row__meta">
                   {order.requestedDate ? (
                     <span>{formatShortDate(order.requestedDate)}</span>
+                  ) : null}
+                  <span className="anforderung-row__urgency">
+                    {t(URGENCY_LABEL_KEYS[order.urgency])}
+                  </span>
+                  {order.createdByDisplayName?.trim() ? (
+                    <span className="anforderung-row__clinician">
+                      {t('anforderungOrderedBy')}: {order.createdByDisplayName.trim()}
+                    </span>
                   ) : null}
                   {resultState === 'pending' ? (
                     <button
@@ -255,6 +356,17 @@ export function AnforderungenSidebarSection({
                       onClick={() => handleCancel(order.id)}
                     >
                       ×
+                    </button>
+                  ) : null}
+                  {!readOnly ? (
+                    <button
+                      type="button"
+                      className="anforderung-row__action anforderung-row__action--delete"
+                      title={t('anforderungDelete')}
+                      aria-label={t('anforderungDelete')}
+                      onClick={() => handleDelete(order.id)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" aria-hidden />
                     </button>
                   ) : null}
                 </div>
