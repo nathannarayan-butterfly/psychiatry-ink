@@ -52,6 +52,8 @@ import { useDiagnostikBefunde } from '../diagnostik/DiagnostikBefundeSection'
 import { DiagnostikEkgSection } from '../diagnostik/DiagnostikEkgSection'
 import { DiagnostikEegSection } from '../diagnostik/DiagnostikEegSection'
 import { DiagnostikImagingSection } from '../diagnostik/DiagnostikImagingSection'
+import { DiagnostikSectionShell } from '../diagnostik/DiagnostikSectionShell'
+import { AnforderungenSidebarSection } from '../anforderungen/AnforderungenSidebarSection'
 import {
   DIAGNOSTICS_SECTIONS,
   isDiagnosticsSectionId,
@@ -3140,6 +3142,17 @@ export function LaborPage({
             caseId={caseId}
             onRequestAnforderung={onRequestAnforderung}
           />
+        ) : diagnosticsSection === 'anforderungen' ? (
+          <DiagnostikSectionShell title={t('diagnosticsSectionAnforderungen')}>
+            <div className="diagnostik-anforderungen">
+              <AnforderungenSidebarSection
+                caseId={caseId}
+                onAddClick={() => onRequestAnforderung?.()}
+                onNavigateToLabor={() => setDiagnosticsSection('labor')}
+                readOnly={isExternal}
+              />
+            </div>
+          </DiagnostikSectionShell>
         ) : null}
 
         {/* Inline paste zone — collapsed by default, toggled via "+ Labor hinzufügen" */}

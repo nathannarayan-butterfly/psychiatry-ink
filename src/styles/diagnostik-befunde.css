@@ -558,6 +558,48 @@
   margin-right: auto;
 }
 
+/* Anforderungen review list mounted in the (light) Diagnostik section area.
+   AnforderungenSidebarSection was authored for a dark sidebar (white text on
+   translucent-white surfaces), so re-skin it for the light Diagnostik surface
+   without modifying the component. */
+.diagnostik-anforderungen {
+  max-width: 52rem;
+}
+
+.diagnostik-anforderungen .anforderungen-sidebar {
+  margin-bottom: 0;
+  color: var(--ink, #1a1a18);
+}
+
+.diagnostik-anforderungen .anforderungen-sidebar__add {
+  color: var(--accent, #4a7c59);
+  font-weight: 600;
+}
+
+.diagnostik-anforderungen .anforderungen-sidebar__add:hover {
+  color: var(--accent, #4a7c59);
+  text-decoration: underline;
+}
+
+.diagnostik-anforderungen .anforderung-row {
+  background: #fff;
+  border: 1px solid var(--border-soft, #e8e8e4);
+}
+
+.diagnostik-anforderungen .anforderung-row__link {
+  color: var(--accent, #4a7c59);
+}
+
+.diagnostik-anforderungen .anforderung-row__action {
+  background: color-mix(in srgb, var(--accent, #4a7c59) 8%, #fff);
+  color: var(--ink, #1a1a18);
+  border: 1px solid var(--border-soft, #e8e8e4);
+}
+
+.diagnostik-anforderungen .anforderung-row__action:hover {
+  background: color-mix(in srgb, var(--accent, #4a7c59) 16%, #fff);
+}
+
 .freetext-befund {
   display: flex;
   flex-direction: column;

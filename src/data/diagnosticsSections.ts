@@ -1,6 +1,6 @@
 import type { UiTranslationKey } from './uiTranslations'
 
-export const DIAGNOSTICS_SECTION_IDS = ['labor', 'ekg', 'eeg', 'imaging'] as const
+export const DIAGNOSTICS_SECTION_IDS = ['labor', 'ekg', 'eeg', 'imaging', 'anforderungen'] as const
 
 export type DiagnosticsSectionId = (typeof DIAGNOSTICS_SECTION_IDS)[number]
 
@@ -21,4 +21,6 @@ export const DIAGNOSTICS_SECTIONS: Array<{
   { id: 'ekg', labelKey: 'diagnosticsSectionEkg', enabled: true },
   { id: 'eeg', labelKey: 'diagnosticsSectionEeg', enabled: true },
   { id: 'imaging', labelKey: 'diagnosticsSectionImaging', enabled: true },
+  // Review-all view for the case's catalog Anforderungen (Labor/Befunde/…).
+  { id: 'anforderungen', labelKey: 'diagnosticsSectionAnforderungen', enabled: true },
 ]

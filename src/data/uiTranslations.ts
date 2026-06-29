@@ -3317,6 +3317,12 @@ export const uiTranslations = {
     fr: 'Imagerie',
     es: 'Imagen',
   },
+  diagnosticsSectionAnforderungen: {
+    de: 'Anforderungen',
+    en: 'Requisitions',
+    fr: 'Demandes',
+    es: 'Solicitudes',
+  },
   diagnosticsSectionEkg: {
     de: 'EKG',
     en: 'ECG',
