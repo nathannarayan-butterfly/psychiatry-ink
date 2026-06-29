@@ -293,7 +293,7 @@ export function MedicationEducationWorkspace({
           </button>
         </div>
       ) : (
-        <div className="medication-education-sections">
+        <div className="medication-education-sections app-scroll-region">
           {sections.map((def) => {
             const section = me.doc!.sections[def.id]
             if (!section) return null

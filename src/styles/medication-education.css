@@ -132,6 +132,35 @@
   min-height: 400px;
 }
 
+/* Scroll fix (Aufklärung medication-selected view).
+   The workspace carries `.workspace-panel`/`.arztbrief-workspace`, both of which
+   set `flex: 1` (i.e. `flex-basis: 0%`) + `min-height: 0`. That is correct only
+   when the workspace is a DIRECT, height-bounded flex child of the canvas
+   (Arztbrief/Befundung). Here it is mounted DEEP inside auto-height medication
+   ancestors (`.medication-plan` / `.medication-section-detail__body`), where a
+   `flex-basis: 0%` + `min-height: 0` child collapses to ~0 height — so every AI
+   section below the fold became unreachable. Use a content-based basis so the
+   panel takes its natural height and the surrounding workspace scroll
+   (`.case-tab-shell__body`) reveals the whole document. The standalone
+   (patient-less) education path keeps its growing behaviour via the more
+   specific `.swx-education > .workspace-panel.medication-education-workspace`
+   rule in standalone-workspace.css. */
+.medication-education-workspace.workspace-panel {
+  flex: 0 0 auto;
+}
+
+/* The section stack is the designated scroll region (shared app-scroll pattern):
+   `min-height: 0` defeats the flexbox `min-height: auto` footgun and
+   `overflow-y: auto` lets it own its scroll whenever an ancestor DOES bound its
+   height (e.g. a future fixed-height dialog/dock host). When unbounded it simply
+   flows at content height and the outer workspace scroll takes over — no nested
+   scrollbar. */
+.medication-education-sections {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
 .medication-education-workspace .arztbrief-workspace__header {
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--border-subtle, #e8e4df);

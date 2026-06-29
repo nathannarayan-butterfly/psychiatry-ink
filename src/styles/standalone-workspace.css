@@ -612,7 +612,11 @@
   flex-direction: column;
   min-height: 60vh;
 }
-.swx-education > .workspace-panel {
+/* In the patient-less host (.swx-host owns the scroll) the education workspace
+   should GROW to fill the comfortable 60vh column. This intentionally wins over
+   the patient-context `.medication-education-workspace.workspace-panel { flex: 0 0 auto }`
+   collapse-fix (higher specificity, 0-3-0 vs 0-2-0). */
+.swx-education > .workspace-panel.medication-education-workspace {
   flex: 1 1 auto;
 }
 

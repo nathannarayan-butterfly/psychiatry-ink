@@ -267,7 +267,7 @@ export function PatientEducationGenericWorkspace({
           ) : null}
         </div>
       ) : (
-        <div className="medication-education-sections">
+        <div className="medication-education-sections app-scroll-region">
           {sections.map((def) => {
             const section = pe.doc!.sections[def.id]
             if (!section) return null
