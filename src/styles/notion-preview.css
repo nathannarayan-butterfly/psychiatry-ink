@@ -20898,3 +20898,86 @@ details[open].receptor-radar .receptor-radar__summary::before {
 }
 
 /* ── Diagnose page — layout owned by diagnose-minimal.css ───────────────── */
+
+/* ── KB pharma reading toolbar (Beitrag / Problem melden / export icons) ─── */
+.kbp-reading-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem 1rem;
+  margin-bottom: 1rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--kb-book-border, var(--border-soft));
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--kb-book-paper, var(--surface)) 92%, #fff);
+}
+
+.kbp-reading-toolbar__community {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.kbp-reading-toolbar__text-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--kb-contribution-accent, #b45309) 30%, var(--border-soft));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--kb-contribution-accent, #b45309) 6%, var(--surface));
+  color: color-mix(in srgb, var(--kb-contribution-accent, #b45309) 86%, var(--text-main));
+  font-size: 0.74rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.kbp-reading-toolbar__text-btn:hover {
+  background: color-mix(in srgb, var(--kb-contribution-accent, #b45309) 10%, var(--surface));
+}
+
+.kbp-reading-toolbar__exports {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.kbp-reading-toolbar__word-mark {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.kbp-reading-panel--embedded {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  min-height: 0;
+}
+
+.kbp-reading-panel__section--embedded {
+  margin: 0 0 0.5rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.kbp-comments-dialog__body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.kb-structured--cyp .kb-structured__visual {
+  border: 1px solid var(--border-soft);
+  border-radius: 0.25rem;
+  background: var(--surface);
+  padding: 0.55rem 0.65rem;
+}
+
+.med-print__chart {
+  margin: 0.5rem 0 0.75rem;
+}

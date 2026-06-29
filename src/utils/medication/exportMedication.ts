@@ -23,6 +23,8 @@ import { getReceptorDisplayLabel } from '../../data/receptorProfile'
 import { getDisplayReceptorProfile } from './receptorAffinity'
 import { sectionHasStructuredData } from '../../types/knowledgeBase'
 import { structuredSectionToText } from './structuredSectionText'
+import { printHtmlDocument } from '../print/printDocument'
+import { captureKbChartImages, type KbChartImageMap } from './captureKbChartImages'
 // Loaded as a raw string and injected into the print/HTML document so the
 // output is styled without depending on the app's screen stylesheets.
 import printCss from '../../styles/medication-print.css?raw'
@@ -188,9 +190,22 @@ export function buildMedicationMarkdown(
  * Build a styled, standalone HTML document for a single medication entry. The
  * same markup is used both for HTML export and for the print window.
  */
+export function buildMedicationPlainText(
+  drug: KnowledgeBaseDrug,
+  labels: MedicationExportLabels = DEFAULT_EXPORT_LABELS,
+): string {
+  return buildMedicationMarkdown(drug, labels)
+    .replace(/^# /gm, '')
+    .replace(/\*\*/g, '')
+    .replace(/^> /gm, '')
+    .replace(/\| --- \|[^\n]*\n/g, '')
+    .replace(/\|/g, ' ')
+}
+
 export function buildMedicationHtml(
   drug: KnowledgeBaseDrug,
   labels: MedicationExportLabels = DEFAULT_EXPORT_LABELS,
+  chartImages: KbChartImageMap = {},
 ): string {
   const profile = getDisplayReceptorProfile(drug)
 
@@ -228,13 +243,19 @@ export function buildMedicationHtml(
   }
 
   const sectionsHtml = exportableSections(drug)
-    .map(
-      (section) =>
-        `<section class="med-print__section"><h2 class="med-print__section-title">${escapeHtml(
-          section.label,
-        )}</h2><div class="med-print__section-body">${escapeHtml(sectionBodyText(section))}</div></section>`,
-    )
+    .map((section) => {
+      const chartHtml = chartImages[section.key]
+        ? `<figure class="med-print__chart"><img src="${chartImages[section.key]}" alt="${escapeHtml(section.label)}" style="max-width:100%;height:auto;" /></figure>`
+        : ''
+      return `<section class="med-print__section"><h2 class="med-print__section-title">${escapeHtml(
+        section.label,
+      )}</h2>${chartHtml}<div class="med-print__section-body">${escapeHtml(sectionBodyText(section))}</div></section>`
+    })
     .join('')
+
+  const receptorChartHtml = chartImages.receptor
+    ? `<figure class="med-print__chart"><img src="${chartImages.receptor}" alt="${escapeHtml(labels.receptorProfile)}" style="max-width:100%;height:auto;" /></figure>`
+    : ''
 
   const brands =
     drug.brandNames.length > 0
@@ -258,6 +279,7 @@ ${brands}
 </header>
 <section class="med-print__section">
 <h2 class="med-print__section-title">${escapeHtml(labels.receptorProfile)}</h2>
+${receptorChartHtml}
 ${receptorHtml}
 </section>
 ${sectionsHtml}
@@ -309,56 +331,23 @@ export function exportMedicationAsHtml(
   downloadBlob(buildMedicationHtml(drug, labels), `${stem}.html`, 'text/html')
 }
 
+export interface MedicationExportOptions {
+  labels?: MedicationExportLabels
+  chartImages?: KbChartImageMap
+}
+
 /**
  * Open a clean, print-styled rendering of the medication entry in a dedicated
  * window (or a hidden iframe fallback when popups are blocked) and trigger the
- * browser print dialog. Because the print document's `<title>` is the
- * medication name, the browser's "Save as PDF" destination suggests
- * `medicationName.pdf` as the filename — so this same pipeline powers both the
- * Print and the (preferred) PDF export action.
+ * browser print dialog. Uses {@link printHtmlDocument} — never `noopener`, which
+ * would return null and silently break print/PDF.
  */
 function openMedicationPrintDocument(
   drug: KnowledgeBaseDrug,
-  labels?: MedicationExportLabels,
+  options: MedicationExportOptions = {},
 ): void {
-  if (typeof window === 'undefined') return
-  const html = buildMedicationHtml(drug, labels)
-
-  const printWindow = window.open('', '_blank', 'noopener,width=900,height=1000')
-  if (printWindow) {
-    printWindow.document.open()
-    printWindow.document.write(html)
-    printWindow.document.close()
-    printWindow.focus()
-    // Give the new document a moment to lay out before printing.
-    setTimeout(() => {
-      printWindow.print()
-    }, 250)
-    return
-  }
-
-  // Popup blocked → print via a temporary hidden iframe instead.
-  const iframe = document.createElement('iframe')
-  iframe.style.position = 'fixed'
-  iframe.style.right = '0'
-  iframe.style.bottom = '0'
-  iframe.style.width = '0'
-  iframe.style.height = '0'
-  iframe.style.border = '0'
-  document.body.appendChild(iframe)
-  const doc = iframe.contentWindow?.document
-  if (!doc) {
-    document.body.removeChild(iframe)
-    return
-  }
-  doc.open()
-  doc.write(html)
-  doc.close()
-  setTimeout(() => {
-    iframe.contentWindow?.focus()
-    iframe.contentWindow?.print()
-    setTimeout(() => document.body.removeChild(iframe), 1000)
-  }, 250)
+  const html = buildMedicationHtml(drug, options.labels, options.chartImages ?? {})
+  printHtmlDocument(html)
 }
 
 /**
@@ -374,21 +363,52 @@ function openMedicationPrintDocument(
 export function exportMedicationAsPdf(
   drug: KnowledgeBaseDrug,
   labels?: MedicationExportLabels,
+  chartImages?: KbChartImageMap,
 ): void {
-  openMedicationPrintDocument(drug, labels)
+  openMedicationPrintDocument(drug, { labels, chartImages })
+}
+
+/** Download plain-text export of visible medication content. */
+export function exportMedicationAsPlainText(
+  drug: KnowledgeBaseDrug,
+  labels?: MedicationExportLabels,
+): void {
+  const stem = slugifyMedicationName(drug.genericName)
+  downloadBlob(buildMedicationPlainText(drug, labels), `${stem}.txt`, 'text/plain;charset=utf-8')
+}
+
+/** Download HTML-in-Word (.doc) using the same styled document as print/PDF. */
+export function exportMedicationAsWord(
+  drug: KnowledgeBaseDrug,
+  labels?: MedicationExportLabels,
+  chartImages?: KbChartImageMap,
+): void {
+  const stem = slugifyMedicationName(drug.genericName)
+  const html = buildMedicationHtml(drug, labels, chartImages ?? {})
+  downloadBlob(`\ufeff${html}`, `${stem}.doc`, 'application/msword;charset=utf-8')
 }
 
 /**
  * Open a dedicated print window with a clean, print-styled rendering of the
- * medication entry and trigger the browser print dialog. Falls back to an
- * in-document hidden iframe when popups are blocked.
- *
- * NOTE: Kept in the codebase but currently inactive in the UI (PDF export is
- * the only exposed action). See `MedicationExportMenu`.
+ * medication entry and trigger the browser print dialog.
  */
 export function printMedication(
   drug: KnowledgeBaseDrug,
   labels?: MedicationExportLabels,
+  chartImages?: KbChartImageMap,
 ): void {
-  openMedicationPrintDocument(drug, labels)
+  openMedicationPrintDocument(drug, { labels, chartImages })
+}
+
+/** Capture on-screen chart snapshots then export/print with images embedded. */
+export function exportMedicationFromDom(
+  drug: KnowledgeBaseDrug,
+  root: ParentNode | null | undefined,
+  format: 'pdf' | 'print' | 'word',
+  labels?: MedicationExportLabels,
+): void {
+  const chartImages = captureKbChartImages(root)
+  if (format === 'word') exportMedicationAsWord(drug, labels, chartImages)
+  else if (format === 'print') printMedication(drug, labels, chartImages)
+  else exportMedicationAsPdf(drug, labels, chartImages)
 }

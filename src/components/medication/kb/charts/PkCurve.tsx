@@ -15,6 +15,7 @@ import { kbT } from '../kbStrings'
 interface PkCurveProps {
   pk: PharmacokineticData
   language: string
+  chartExportKey?: string
 }
 
 /**
@@ -60,7 +61,7 @@ function buildCurve(halfLifeHours: number, tmaxHours: number | null | undefined)
   }))
 }
 
-export function PkCurve({ pk, language }: PkCurveProps) {
+export function PkCurve({ pk, language, chartExportKey }: PkCurveProps) {
   const data = useMemo(() => {
     if (pk.halfLifeHours == null || pk.halfLifeHours <= 0) return null
     return buildCurve(pk.halfLifeHours, pk.tmaxHours)
@@ -75,6 +76,7 @@ export function PkCurve({ pk, language }: PkCurveProps) {
         className="kb-chart__canvas"
         role="img"
         aria-label={kbT(language, 'pkCurveTitle')}
+        {...(chartExportKey ? { 'data-kb-export-chart': chartExportKey } : {})}
       >
         <ResponsiveContainer width="100%" height={240}>
           <AreaChart data={data} margin={{ top: 8, right: 12, bottom: 18, left: 4 }}>

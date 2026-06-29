@@ -22,11 +22,12 @@ interface ReceptorRadarProps {
   compact?: boolean
   /** Existing ranked list (KnowledgeBaseReceptorEditor view) shown in the List tab. */
   children?: ReactNode
+  chartExportKey?: string
 }
 
 const SERIES_COLOR = RECEPTOR_DRUG_PALETTE[0]!
 
-export function ReceptorRadar({ entries, language, compact = false, children }: ReceptorRadarProps) {
+export function ReceptorRadar({ entries, language, compact = false, children, chartExportKey }: ReceptorRadarProps) {
   const [tab, setTab] = useState<RadarTab>('radar')
   const lang = (language === 'en' || language === 'fr' || language === 'es' ? language : 'de') as UiLanguage
 
@@ -84,7 +85,12 @@ export function ReceptorRadar({ entries, language, compact = false, children }: 
 
       {tab === 'radar' ? (
         canRadar ? (
-          <div className="kb-chart__canvas" role="img" aria-label={kbT(language, 'receptorTabRadar')}>
+          <div
+            className="kb-chart__canvas"
+            role="img"
+            aria-label={kbT(language, 'receptorTabRadar')}
+            {...(chartExportKey ? { 'data-kb-export-chart': chartExportKey } : {})}
+          >
             <ResponsiveContainer width="100%" height={compact ? 240 : 320}>
               <RadarChart data={radarData} outerRadius={compact ? '66%' : '72%'}>
                 <PolarGrid stroke="var(--border-soft)" />

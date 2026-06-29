@@ -447,6 +447,7 @@ const STRINGS = {
   notesTitle: { de: 'Notizen', en: 'Notes', fr: 'Notes', es: 'Notas' },
   notesOpen: { de: 'Notizen öffnen', en: 'Open notes', fr: 'Ouvrir les notes', es: 'Abrir notas' },
   notesClose: { de: 'Notizen schließen', en: 'Close notes', fr: 'Fermer les notes', es: 'Cerrar notas' },
+  notesCopy: { de: 'Notiz kopieren', en: 'Copy note', fr: 'Copier la note', es: 'Copiar nota' },
   notesPlaceholder: {
     de: 'Persönliche Notizen zu diesem Medikament …',
     en: 'Personal notes on this medication …',
@@ -468,6 +469,17 @@ const STRINGS = {
   notesFontSerif: { de: 'Serif', en: 'Serif', fr: 'Avec empattement', es: 'Serif' },
   notesFontMono: { de: 'Monospace', en: 'Monospace', fr: 'Monospace', es: 'Monoespaciada' },
   notesFontHandwriting: { de: 'Handschrift', en: 'Handwriting', fr: 'Manuscrite', es: 'Manuscrita' },
+
+  readingToolbarLabel: {
+    de: 'Lese-Werkzeugleiste',
+    en: 'Reading toolbar',
+    fr: 'Barre d’outils de lecture',
+    es: 'Barra de herramientas de lectura',
+  },
+  exportPrint: { de: 'Drucken', en: 'Print', fr: 'Imprimer', es: 'Imprimir' },
+  exportTxt: { de: 'Als Text exportieren', en: 'Export as text', fr: 'Exporter en texte', es: 'Exportar como texto' },
+  exportWord: { de: 'Als Word exportieren', en: 'Export as Word', fr: 'Exporter en Word', es: 'Exportar como Word' },
+  exportPdf: { de: 'Als PDF exportieren', en: 'Export as PDF', fr: 'Exporter en PDF', es: 'Exportar como PDF' },
 } as const
 
 export type KbStringKey = keyof typeof STRINGS

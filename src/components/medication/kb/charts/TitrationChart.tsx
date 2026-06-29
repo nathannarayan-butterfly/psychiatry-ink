@@ -16,6 +16,7 @@ interface TitrationChartProps {
   schedule: TitrationSchedule
   isTaper: boolean
   language: string
+  chartExportKey?: string
 }
 
 /**
@@ -23,7 +24,7 @@ interface TitrationChartProps {
  * Target/max doses are drawn as horizontal reference lines. A `null` dose (stop)
  * renders as 0 so the line returns cleanly to baseline.
  */
-export function TitrationChart({ schedule, isTaper, language }: TitrationChartProps) {
+export function TitrationChart({ schedule, isTaper, language, chartExportKey }: TitrationChartProps) {
   const unit = schedule.unit ?? 'mg'
   const data = useMemo(() => {
     return [...schedule.steps]
@@ -42,7 +43,12 @@ export function TitrationChart({ schedule, isTaper, language }: TitrationChartPr
   return (
     <div className="kb-titration-chart">
       <p className="kb-chart__caption">{title}</p>
-      <div className="kb-chart__canvas" role="img" aria-label={title}>
+      <div
+        className="kb-chart__canvas"
+        role="img"
+        aria-label={title}
+        {...(chartExportKey ? { 'data-kb-export-chart': chartExportKey } : {})}
+      >
         <ResponsiveContainer width="100%" height={240}>
           <LineChart data={data} margin={{ top: 8, right: 16, bottom: 18, left: 4 }}>
             <CartesianGrid stroke="var(--border-soft)" strokeDasharray="3 3" vertical={false} />
