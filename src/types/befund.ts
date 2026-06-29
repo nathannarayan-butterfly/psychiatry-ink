@@ -1,4 +1,4 @@
-export type BefundType = 'ecg' | 'eeg'
+export type BefundType = 'ecg' | 'eeg' | 'roentgen'
 
 export type BefundStatus = 'draft' | 'vidert'
 

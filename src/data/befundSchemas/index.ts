@@ -2,6 +2,7 @@ import type { BefundType } from '../../types/befund'
 import type { UiLanguage } from '../../types/settings'
 import { ecgSchema } from './ecg'
 import { eegSchema } from './eeg'
+import { roentgenSchema } from './roentgen'
 import type {
   BefundFieldDef,
   BefundFieldOption,
@@ -14,9 +15,10 @@ export type { BefundFieldDef, BefundSchema, BefundSchemaSection } from './types'
 const SCHEMAS: Record<BefundType, BefundSchema> = {
   ecg: ecgSchema,
   eeg: eegSchema,
+  roentgen: roentgenSchema,
 }
 
-export const BEFUND_TYPES: BefundType[] = ['ecg', 'eeg']
+export const BEFUND_TYPES: BefundType[] = ['ecg', 'eeg', 'roentgen']
 
 function localizeOption(option: BefundFieldOption): BefundFieldOption {
   return option.labelEn ? { ...option, label: option.labelEn } : option

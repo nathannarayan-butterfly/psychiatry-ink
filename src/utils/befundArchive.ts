@@ -28,7 +28,7 @@ function isValidRecord(value: unknown): value is BefundRecord {
   return (
     typeof r.id === 'string' &&
     typeof r.caseId === 'string' &&
-    (r.type === 'ecg' || r.type === 'eeg') &&
+    (r.type === 'ecg' || r.type === 'eeg' || r.type === 'roentgen') &&
     typeof r.schemaVersion === 'number' &&
     typeof r.fieldValues === 'object' &&
     r.fieldValues !== null &&
