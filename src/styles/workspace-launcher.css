@@ -379,6 +379,19 @@
 }
 
 /* Compact / split-screen friendly. */
+/* Tablet (≤ 1024px / 64rem, matches TABLET_BREAKPOINT_PX): fewer, slightly
+   larger cards so titles wrap comfortably and every card is an easy tap target.
+   Desktop (> 64rem) keeps the denser auto-fill grid. */
+@media (max-width: 64rem) {
+  .wl-grid {
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 0.7rem;
+  }
+  .wl-card {
+    min-height: 104px;
+  }
+}
+
 @media (max-width: 560px) {
   .wl-grid {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
