@@ -48,6 +48,7 @@ import { FloatingToolsShell } from './components/notes/FloatingToolsShell'
 import { redirectToCanonicalAppIfNeeded } from './utils/canonicalAppRedirect'
 import { getPostLoginDestination, shouldRedirectAuthenticatedToApp } from './utils/postAuthRedirect'
 import { NewVersionToast } from './components/system/NewVersionToast'
+import { PhoneGate } from './components/system/PhoneGate'
 
 const ENTERPRISE_ROUTES_ENABLED = isEnterpriseOrgHierarchyEnabled()
 
@@ -233,6 +234,14 @@ export default function App() {
         : activeUiLanguage
   }, [activeUiLanguage, languageSettings.englishVariant])
 
+  // Phone gate — rendered globally so it covers EVERY public + authenticated
+  // route (each branch below returns early). It resolves its own language from
+  // the locale actually being rendered, so a public visitor sees the domain
+  // locale and an authenticated user sees their chosen UI language.
+  const phoneGate = (
+    <PhoneGate language={activeUiLanguage} englishVariant={languageSettings.englishVariant} />
+  )
+
   const publicPageProps = {
     onLogin: () => navigate('/login'),
     onNavigate: navigate,
@@ -247,11 +256,14 @@ export default function App() {
   // resolved from the request domain inside PublicPage.
   if (route.view === 'landing' || isPublicMarketingView(route.view)) {
     return (
-      <PublicPage
-        pageKey={route.view}
-        hostname={getEffectiveHostname()}
-        onNavigate={(path) => navigate(path)}
-      />
+      <>
+        {phoneGate}
+        <PublicPage
+          pageKey={route.view}
+          hostname={getEffectiveHostname()}
+          onNavigate={(path) => navigate(path)}
+        />
+      </>
     )
   }
 
@@ -261,6 +273,7 @@ export default function App() {
         language={activeUiLanguage}
         englishVariant={languageSettings.englishVariant}
       >
+        {phoneGate}
         <AiCreditsHinweisePage {...publicPageProps} />
       </TranslationProvider>
     )
@@ -272,6 +285,7 @@ export default function App() {
         language={activeUiLanguage}
         englishVariant={languageSettings.englishVariant}
       >
+        {phoneGate}
         <AuthPage
           mode={route.view}
           onBack={() => navigate('/')}
@@ -288,9 +302,12 @@ export default function App() {
 
   if (authLoading && isConfigured) {
     return (
-      <div className="flex min-h-dvh items-center justify-center text-secondary text-sm">
-        {translateUi(languageSettings.language, 'aiUsageTrackerLoading')}
-      </div>
+      <>
+        {phoneGate}
+        <div className="flex min-h-dvh items-center justify-center text-secondary text-sm">
+          {translateUi(languageSettings.language, 'aiUsageTrackerLoading')}
+        </div>
+      </>
     )
   }
 
@@ -308,6 +325,7 @@ export default function App() {
       englishVariant={languageSettings.englishVariant}
     >
       <WorkspaceSessionProvider>
+        {phoneGate}
         <NewVersionToast />
         <AskButterflyProvider>
           <NotizenProvider>

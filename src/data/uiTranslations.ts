@@ -9533,6 +9533,24 @@ export const uiTranslations = {
     fr: 'Développer la barre latérale',
     es: 'Expandir barra lateral',
   },
+  phoneGateTitle: {
+    de: 'Für Tablets und Desktops optimiert',
+    en: 'Optimised for tablets and desktops',
+    fr: 'Optimisé pour tablettes et ordinateurs',
+    es: 'Optimizado para tabletas y ordenadores',
+  },
+  phoneGateBody: {
+    de: 'Psychiatry.Ink ist für größere Bildschirme ausgelegt. Bitte verwenden Sie ein Tablet oder einen Desktop-Computer für die klinische Dokumentation.',
+    en: 'Psychiatry.Ink is designed for larger screens. Please use a tablet or a desktop computer for clinical documentation.',
+    fr: 'Psychiatry.Ink est conçu pour les grands écrans. Veuillez utiliser une tablette ou un ordinateur de bureau pour la documentation clinique.',
+    es: 'Psychiatry.Ink está diseñado para pantallas más grandes. Utilice una tableta o un ordenador de escritorio para la documentación clínica.',
+  },
+  phoneGateContinue: {
+    de: 'Trotzdem fortfahren',
+    en: 'Continue anyway',
+    fr: 'Continuer quand même',
+    es: 'Continuar de todos modos',
+  },
   patientDashboardNewDocument: {
     de: 'Dokumentation beginnen',
     en: 'Start documentation',
