@@ -1242,7 +1242,7 @@ export const medicationUiTranslations = {
     fr: 'Brouillon IA — validation clinique requise.',
     es: 'Borrador IA — validación clínica requerida.',
   },
-  medEducationKbTabTitle: { de: 'Patientenaufklärung (generisch)', en: 'Patient education (generic)', fr: 'Information patient (générique)', es: 'Educación (genérica)' },
+  medEducationKbTabTitle: { de: 'Patientenaufklärung (Thema)', en: 'Patient education (topic)', fr: 'Information patient (sujet)', es: 'Educación (tema)' },
   medEducationKbTabDesc: {
     de: 'Wiederverwendbarer Aufklärungsbogen — nicht patientenspezifisch.',
     en: 'Reusable education template — not patient-specific.',
@@ -1305,10 +1305,10 @@ export const medicationUiTranslations = {
 
   // ─── Generic patient education (standalone, knowledge base) ──────────────
   pegenTitle: {
-    de: 'Patientenaufklärung (generisch)',
-    en: 'Patient education (generic)',
-    fr: 'Information patient (générique)',
-    es: 'Educación del paciente (genérica)',
+    de: 'Patientenaufklärung (beliebiges Thema)',
+    en: 'Patient education (any topic)',
+    fr: 'Information patient (sujet libre)',
+    es: 'Educación del paciente (cualquier tema)',
   },
   pegenTileTitle: {
     de: 'Aufklärungen',
@@ -1341,10 +1341,10 @@ export const medicationUiTranslations = {
     es: 'Elija un tema para generar una hoja educativa asistida por IA.',
   },
   pegenNewDialogTitle: {
-    de: 'Neue generische Patientenaufklärung',
-    en: 'New generic patient education',
-    fr: 'Nouvelle information patient générique',
-    es: 'Nueva educación del paciente genérica',
+    de: 'Neue Patientenaufklärung (Thema)',
+    en: 'New patient education (topic)',
+    fr: 'Nouvelle information patient (sujet)',
+    es: 'Nueva educación del paciente (tema)',
   },
   pegenSubjectLabel: {
     de: 'Thema / Medikament / Erkrankung',
