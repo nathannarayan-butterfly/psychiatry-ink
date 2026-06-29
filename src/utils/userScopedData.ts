@@ -10,10 +10,14 @@
  * failure).
  *
  * This module fixes that by keying off the opaque authenticated user id and
- * purging ALL device-local clinical data:
- *   1. on logout, and
- *   2. when a DIFFERENT user id is observed at auth resolution (the safety net
- *      for sessions that ended without a clean logout).
+ * purging ALL device-local clinical data when — and ONLY when — a DIFFERENT user
+ * id is observed at auth resolution. Logout does NOT purge: a user's own data is
+ * retained across their own logout -> login so users without cloud backup never
+ * see blank patient names after re-logging-in. The recorded `active-user-id`
+ * therefore persists across logout, which is what makes the same-user vs
+ * different-user comparison reliable on the next login. Because the comparison is
+ * the sole gate, a different user signing in is purged BEFORE their session
+ * renders whether or not the previous user logged out cleanly first.
  *
  * Device UI preferences / non-patient config (see {@link isPreservedDevicePreferenceKey})
  * and the active Supabase session token are deliberately preserved so a purge

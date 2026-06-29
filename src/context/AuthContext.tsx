@@ -22,7 +22,7 @@ import { attributeReferral } from '../services/aiCreditsApi'
 import { recordLegalConsent } from '../services/legalConsentApi'
 import { setupAccountCloudBackup } from '../utils/accountBackup'
 import { clearSessionOnLogout } from '../utils/devicePreferences'
-import { purgeClinicalDeviceData, reconcileActiveUser } from '../utils/userScopedData'
+import { reconcileActiveUser } from '../utils/userScopedData'
 import { downloadPassphraseBackupFile } from '../utils/passphraseRecovery'
 import { getAuthEmailRedirectUrl } from '../utils/authEmailRedirect'
 import {
@@ -317,12 +317,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     const supabase = getSupabase()
     if (supabase) await supabase.auth.signOut()
+    // Clear ONLY the active session (auth token + e2ee session keys). Patient/case/
+    // notes data and the recorded `active-user-id` are deliberately RETAINED so the
+    // SAME user re-logging-in on this device keeps their local clinical data (no
+    // blank patient names for users without cloud backup). Cross-user isolation is
+    // still guaranteed: a DIFFERENT user signing in is detected via the retained
+    // `active-user-id` and triggers a full purge before their session renders
+    // (see applyUserIsolation / reconcileActiveUser).
     clearSessionOnLogout()
-    // Clear patient/case/notes data from the device on logout so the next person
-    // at this browser cannot read the signed-out user's clinical data — neither by
-    // logging in as someone else nor by inspecting storage directly. Device UI
-    // preferences are preserved (see clearSessionOnLogout + purge allow-list).
-    purgeClinicalDeviceData()
     setPlan('free')
   }, [])
 

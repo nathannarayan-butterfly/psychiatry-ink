@@ -106,6 +106,41 @@ describe('userScopedData — reconcileActiveUser', () => {
     expect(localStorage.getItem(CLINICAL_KEYS.registry)).not.toBeNull()
   })
 
+  it('RETAINS the same user’s data across their own logout -> login (no logout purge)', () => {
+    // User A logs in and works.
+    reconcileActiveUser('user-a')
+    seedClinicalData()
+
+    // Logout clears only the session — clinical data + the recorded active-user-id
+    // are intentionally retained (signOut no longer purges). We model that by NOT
+    // calling any purge here, only dropping the (preserved) session token.
+    localStorage.removeItem(PRESERVED.authToken)
+
+    // Same user logs back in on the same device.
+    const switched = reconcileActiveUser('user-a')
+
+    expect(switched).toBe(false)
+    for (const key of Object.values(CLINICAL_KEYS)) {
+      expect(localStorage.getItem(key), `same-user data "${key}" must survive logout->login`).not.toBeNull()
+    }
+  })
+
+  it('PURGES for a different user even after the previous user logged out (id retained gate)', () => {
+    // User A logs in, works, then logs out (no purge, active-user-id retained = A).
+    reconcileActiveUser('user-a')
+    seedClinicalData()
+    localStorage.removeItem(PRESERVED.authToken) // logout: session only
+
+    // A DIFFERENT user (B) logs in directly on the same device.
+    const switched = reconcileActiveUser('user-b')
+
+    expect(switched).toBe(true)
+    expect(getStoredActiveUserId()).toBe('user-b')
+    for (const key of Object.values(CLINICAL_KEYS)) {
+      expect(localStorage.getItem(key)).toBeNull()
+    }
+  })
+
   it('purges the prior user data and signals reload when a DIFFERENT user signs in', () => {
     reconcileActiveUser('user-a')
     seedClinicalData()
