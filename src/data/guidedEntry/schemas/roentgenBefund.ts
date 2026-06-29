@@ -68,12 +68,14 @@ export const roentgenBefundSchema: GuidedEntrySchema = {
     { headingKey: 'guidedEntryGenRoentgenFindings', lines: ['{findings}'] },
     { headingKey: 'guidedEntryGenRoentgenAssessment', lines: ['{assessment}'] },
   ],
-  // Patient-less only: the standalone widget captures the generated narrative and
-  // saves it as a global note (it never calls `applyGuidedOutput`). The output
-  // target is therefore informational; we intentionally do NOT route X-ray into
-  // the patient `befund-record` store, which would require widening the core
-  // `BefundType` across the Diagnostik/Anforderung subsystem (deferred).
+  // Patient-context: routes the generated narrative into the case Diagnostik
+  // `befund-record` store as a structured Röntgen befund (mirrors the ECG guided
+  // flow). The field ids above match `roentgenSchema` so answers map 1:1 onto the
+  // structured befund and render via the generic befund renderer. The standalone
+  // (patient-less) widget never calls `applyGuidedOutput`, so it keeps saving the
+  // narrative as a free-standing note regardless of this output target.
   output: {
-    kind: 'workspace-document',
+    kind: 'befund-record',
+    befundType: 'roentgen',
   },
 }

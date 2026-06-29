@@ -1,5 +1,6 @@
 import type { UiLanguage } from './settings'
 import type { TemplateCondition } from './documentTemplate'
+import type { BefundType } from './befund'
 
 /** Workspace clinical items that support optional guided entry (v1). */
 export type GuidedEntryItemType =
@@ -70,7 +71,7 @@ export interface GuidedEntryOutputTarget {
   documentTypeId?: string
   variantId?: string
   sectionId?: string
-  befundType?: 'ecg' | 'eeg'
+  befundType?: BefundType
   verlaufPageType?: string
 }
 
