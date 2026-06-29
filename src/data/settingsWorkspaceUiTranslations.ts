@@ -1,17 +1,7 @@
 import type { UiLanguage } from '../types/settings'
 
 export const settingsWorkspaceUiTranslations = {
-  // ── WorkspaceSection: icon option labels ─────────────────────────────────
-  wsIconClipboard: { de: 'Klemmbrett', en: 'Clipboard', fr: 'Presse-papiers', es: 'Portapapeles' },
-  wsIconDocument: { de: 'Dokument', en: 'Document', fr: 'Document', es: 'Documento' },
-  wsIconBrain: { de: 'Gehirn', en: 'Brain', fr: 'Cerveau', es: 'Cerebro' },
-  wsIconLab: { de: 'Labor', en: 'Lab', fr: 'Laboratoire', es: 'Laboratorio' },
-  wsIconHistory: { de: 'Verlauf', en: 'History', fr: 'Historique', es: 'Historial' },
-  wsIconLetter: { de: 'Brief', en: 'Letter', fr: 'Lettre', es: 'Carta' },
-  wsIconMedication: { de: 'Medikation', en: 'Medication', fr: 'Médication', es: 'Medicación' },
-  wsIconMessage: { de: 'Nachricht', en: 'Message', fr: 'Message', es: 'Mensaje' },
-
-  // ── WorkspaceSection: component summary helper ───────────────────────────
+  // ── WorkspaceSection: read-only default component list ───────────────────
   wsSectionsCount: { de: 'Abschnitte', en: 'sections', fr: 'sections', es: 'secciones' },
   wsSingleDocument: {
     de: 'Einzelnes Dokument',
@@ -19,150 +9,12 @@ export const settingsWorkspaceUiTranslations = {
     fr: 'Document unique',
     es: 'Documento único',
   },
-
-  // ── WorkspaceSection: checklist + section editors ────────────────────────
-  wsChecklistItems: {
-    de: 'Checklistenpunkte',
-    en: 'Checklist items',
-    fr: 'Points de la liste',
-    es: 'Puntos de la lista',
-  },
-  wsCheckboxLabelPlaceholder: {
-    de: 'Checkbox-Label',
-    en: 'Checkbox label',
-    fr: 'Libellé de case',
-    es: 'Etiqueta de casilla',
-  },
-  wsInsertedFindingPlaceholder: {
-    de: 'Eingefügter Befundtext',
-    en: 'Inserted findings text',
-    fr: 'Texte de constat inséré',
-    es: 'Texto de hallazgo insertado',
-  },
-  wsSectionNamePlaceholder: {
-    de: 'Abschnittsname',
-    en: 'Section name',
-    fr: 'Nom de la section',
-    es: 'Nombre de la sección',
-  },
-  wsShortInfoPlaceholder: {
-    de: 'Kurzinfo (optional)',
-    en: 'Short info (optional)',
-    fr: 'Info brève (optionnel)',
-    es: 'Info breve (opcional)',
-  },
-  wsSectionTemplatePlaceholder: {
-    de: 'Vorlagentext für diesen Abschnitt …',
-    en: 'Template text for this section …',
-    fr: 'Texte type pour cette section …',
-    es: 'Texto de plantilla para esta sección …',
-  },
-  wsRemoveSection: {
-    de: 'Abschnitt entfernen',
-    en: 'Remove section',
-    fr: 'Supprimer la section',
-    es: 'Eliminar sección',
-  },
-  wsAddSection: {
-    de: 'Abschnitt hinzufügen',
-    en: 'Add section',
-    fr: 'Ajouter une section',
-    es: 'Añadir sección',
-  },
-
-  // ── WorkspaceSection: component editor ───────────────────────────────────
   wsStandardBadge: { de: 'Standard', en: 'Default', fr: 'Par défaut', es: 'Predeterminado' },
   wsDefaultComponentNote: {
     de: 'Standardkomponente — Struktur ist fest vorgegeben.',
     en: 'Default component — structure is fixed.',
     fr: 'Composant par défaut — structure figée.',
     es: 'Componente predeterminado — estructura fija.',
-  },
-  wsFieldHeading: { de: 'Überschrift', en: 'Heading', fr: 'Titre', es: 'Encabezado' },
-  wsFieldSecondLine: { de: 'Zweite Zeile', en: 'Second line', fr: 'Deuxième ligne', es: 'Segunda línea' },
-  wsSecondLinePlaceholder: {
-    de: 'z. B. pathologie',
-    en: 'e.g. pathology',
-    fr: 'p. ex. pathologie',
-    es: 'p. ej. patología',
-  },
-  wsFieldIcon: { de: 'Symbol', en: 'Icon', fr: 'Icône', es: 'Icono' },
-  wsFieldDocForms: {
-    de: 'Dokumentationsformen',
-    en: 'Documentation formats',
-    fr: 'Formats de documentation',
-    es: 'Formatos de documentación',
-  },
-  wsModeFreeText: { de: 'Freitext', en: 'Free text', fr: 'Texte libre', es: 'Texto libre' },
-  wsModeAmdpChecklist: {
-    de: 'AMDP-Checkliste',
-    en: 'AMDP checklist',
-    fr: 'Liste AMDP',
-    es: 'Lista AMDP',
-  },
-  wsSections: { de: 'Abschnitte', en: 'Sections', fr: 'Sections', es: 'Secciones' },
-  wsModeForm: { de: 'Form', en: 'Form', fr: 'Formulaire', es: 'Formulario' },
-  wsFormLabelPlaceholder: {
-    de: 'Formbezeichnung',
-    en: 'Form name',
-    fr: 'Nom du formulaire',
-    es: 'Nombre del formulario',
-  },
-  wsRemoveForm: {
-    de: 'Form entfernen',
-    en: 'Remove form',
-    fr: 'Supprimer le formulaire',
-    es: 'Eliminar formulario',
-  },
-  wsFieldTemplateText: { de: 'Vorlagentext', en: 'Template text', fr: 'Texte type', es: 'Texto de plantilla' },
-  wsVariantTemplatePlaceholder: {
-    de: 'z. B. Visite / Kurzkontakt …',
-    en: 'e.g. ward round / brief contact …',
-    fr: 'p. ex. visite / contact bref …',
-    es: 'p. ej. visita / contacto breve …',
-  },
-  wsFieldChecklistSections: {
-    de: 'Checklisten-Abschnitte',
-    en: 'Checklist sections',
-    fr: 'Sections de la liste',
-    es: 'Secciones de la lista',
-  },
-  wsAddSectionsForm: {
-    de: 'Abschnitte-Form hinzufügen',
-    en: 'Add sections form',
-    fr: 'Ajouter un formulaire de sections',
-    es: 'Añadir formulario de secciones',
-  },
-  wsFieldMultistage: { de: 'Mehrstufig', en: 'Multi-stage', fr: 'Multi-étapes', es: 'Multietapa' },
-  wsUseSections: {
-    de: 'Abschnitte verwenden',
-    en: 'Use sections',
-    fr: 'Utiliser des sections',
-    es: 'Usar secciones',
-  },
-  wsComponentTemplatePlaceholder: {
-    de: 'z. B. unauffälliger neurologischer Befund …',
-    en: 'e.g. unremarkable neurological findings …',
-    fr: 'p. ex. examen neurologique sans particularité …',
-    es: 'p. ej. exploración neurológica sin hallazgos …',
-  },
-  wsRemoveComponent: {
-    de: 'Komponente entfernen',
-    en: 'Remove component',
-    fr: 'Supprimer le composant',
-    es: 'Eliminar componente',
-  },
-  wsAddComponent: {
-    de: 'Komponente hinzufügen',
-    en: 'Add component',
-    fr: 'Ajouter un composant',
-    es: 'Añadir componente',
-  },
-  wsNewComponentLabel: {
-    de: 'Neue Komponente {index}',
-    en: 'New component {index}',
-    fr: 'Nouveau composant {index}',
-    es: 'Nuevo componente {index}',
   },
 
   // ── TeamSettingsPage ─────────────────────────────────────────────────────

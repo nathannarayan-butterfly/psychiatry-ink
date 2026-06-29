@@ -160,7 +160,7 @@ When **KI Auto** is on, `resolveAiAutoSelection()` picks tier + tool before `exe
 
 ## Default components (locked)
 
-`aufnahme`, `verlauf`, `psychopath`, `therapie-verlauf` are **not editable** in settings. Users can still **add** custom components (subscription-gated later).
+`aufnahme`, `verlauf`, `psychopath`, `therapie-verlauf`, `medikation`, `therapieplanung` are the fixed default set and are **not editable** in settings. Custom workspace-component authoring has been removed — Settings → Workspace now lists the default components read-only (with a "Standard" badge) plus a reset affordance. Legacy localStorage entries for custom components are filtered to the default set on load, and saved documents whose `typeId` referenced a removed custom component still reopen (resolved to the nearest default via `resolveNotionPageFromDocumentType`).
 
 ## Hint translation agent
 
@@ -172,7 +172,6 @@ Applied at runtime via `applyHintTranslationsToComponents()` for checklist hints
 
 - Move API keys server-side
 - Persist generation logs + audit trail
-- Subscription tier gates for `addComponent()`
 - Replace mock `callModel()` with authenticated proxy
 
 ## All tools on all components
