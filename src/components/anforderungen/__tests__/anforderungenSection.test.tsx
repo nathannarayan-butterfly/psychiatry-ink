@@ -41,6 +41,7 @@ function makeOrder(caseId: string, label: string): Anforderung {
     catalogId: 'labor-blutbild',
     category: 'labor',
     label,
+    urgency: 'routine',
     requestedDate: '2026-06-29',
     status: 'pending',
     createdAt: now,
