@@ -1134,3 +1134,96 @@
   font-size: 0.82rem;
   color: var(--text-secondary, #6d655c);
 }
+
+/* ── Tablet inner-layout polish (≤ 1024px / 64rem) ──────────────────────
+   Matches TABLET_BREAKPOINT_PX in utils/responsiveBreakpoints.ts. The global
+   shell already reflows the rail/docks; here we reflow each standalone tool's
+   OWN controls so nothing overflows horizontally and the action footer never
+   overlaps the editor — both in the main content column AND inside the
+   full-width bottom-sheet docks. Desktop (> 64rem) is unchanged. */
+@media (max-width: 64rem) {
+  /* Give tools the full tablet width (drop the centred reading column). */
+  .swx-host__inner {
+    max-width: none;
+    padding: 0.85rem 0.85rem 2.5rem;
+  }
+
+  /* Multi-column control rows stack to a single full-width column. */
+  .swx-rewrite__controls,
+  .swx-translate__langs {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .swx-rewrite__controls .swx-field,
+  .swx-translate__langs .swx-field {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Befund mode chooser: one card per row. */
+  .swx-mode-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Lab value grid: tighter min track so several values fit a narrow panel. */
+  .swx-lab-grid {
+    grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+  }
+
+  /* Parameter/value rows: let grid cells shrink instead of overflowing the
+     panel (grid items default to min-width:auto). */
+  .swx-lab-row > * {
+    min-width: 0;
+  }
+
+  /* Tab bars never wrap into a broken second row — they scroll sideways. */
+  .swx-tabs,
+  .swx-lab-tools__tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .swx-tab,
+  .swx-lab-tools__tab {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  /* Paste-report preview: shorter list + rows that wrap value under name. */
+  .swx-lab-paste__list {
+    max-height: 11rem;
+  }
+  .swx-lab-paste__row label {
+    flex-wrap: wrap;
+  }
+  .swx-lab-paste__param {
+    min-width: 0;
+  }
+  .swx-lab-paste__val {
+    margin-left: 0;
+    text-align: left;
+  }
+
+  /* Chart/canvas host must not blow out the flex row; it stays within width. */
+  .swx-canvas-host {
+    min-width: 0;
+  }
+  .swx-canvas-host > * {
+    max-width: 100%;
+  }
+
+  /* Editors: shorter floors so they fit a tablet / bottom-sheet height and the
+     footer button stays clear of the content. Fill-mode editors keep their own
+     more-specific flex floor (8rem) and are unaffected. */
+  .swx-field__textarea {
+    min-height: 7.5rem;
+  }
+  .swx-rewrite__editor {
+    min-height: clamp(9rem, 36vh, 20rem);
+  }
+  .wai-panel--inline .wai-panel__editor,
+  .wai-panel--inline .wai-panel__rendered {
+    min-height: 10rem;
+  }
+}
