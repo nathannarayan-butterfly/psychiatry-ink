@@ -46,6 +46,7 @@ import { AskButterflyProvider } from './contexts/AskButterflyContext'
 import { NotizenProvider } from './contexts/NotizenContext'
 import { FloatingToolsShell } from './components/notes/FloatingToolsShell'
 import { redirectToCanonicalAppIfNeeded } from './utils/canonicalAppRedirect'
+import { getPostLoginDestination, shouldRedirectAuthenticatedToApp } from './utils/postAuthRedirect'
 import { NewVersionToast } from './components/system/NewVersionToast'
 
 const ENTERPRISE_ROUTES_ENABLED = isEnterpriseOrgHierarchyEnabled()
@@ -115,6 +116,16 @@ export default function App() {
       return
     }
 
+    // A freshly authenticated user who lands on the public homepage — most often
+    // after clicking an email-confirmation link, which Supabase points at the site
+    // origin "/" — must be taken into the authenticated app rather than left on the
+    // marketing page. Only the bare landing route is redirected (see helper).
+    if (user && shouldRedirectAuthenticatedToApp(route.view)) {
+      if (redirectToCanonicalAppIfNeeded('/dashboard')) return
+      navigate('/dashboard', true)
+      return
+    }
+
     if (user && route.view === 'audit-debug' && !hasAuditDebugAccess) {
       navigate('/dashboard', true)
     }
@@ -143,9 +154,7 @@ export default function App() {
     }
 
     if (user && onAuthPage) {
-      const params = new URLSearchParams(window.location.search)
-      const redirect = params.get('redirect')
-      const destination = redirect && redirect.startsWith('/') ? redirect : '/dashboard'
+      const destination = getPostLoginDestination(window.location.search)
       if (redirectToCanonicalAppIfNeeded(destination)) return
       navigate(destination, true)
     }
@@ -267,9 +276,7 @@ export default function App() {
           mode={route.view}
           onBack={() => navigate('/')}
           onSuccess={() => {
-            const params = new URLSearchParams(window.location.search)
-            const redirect = params.get('redirect')
-            const destination = redirect && redirect.startsWith('/') ? redirect : '/dashboard'
+            const destination = getPostLoginDestination(window.location.search)
             if (redirectToCanonicalAppIfNeeded(destination)) return
             navigate(destination, true)
           }}
