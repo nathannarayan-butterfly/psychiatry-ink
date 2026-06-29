@@ -22,6 +22,7 @@ import { CopyButton } from '../common/CopyButton'
 import {
   ANFORDERUNG_PRESET_EEG,
   ANFORDERUNG_PRESET_EKG,
+  ANFORDERUNG_PRESET_ROENTGEN,
 } from '../../data/anforderungenCatalog'
 import type { AnforderungModalPreset } from '../../types/anforderung'
 
@@ -80,16 +81,19 @@ export function DiagnostikBefundeSidebar({
 const BEFUND_ADD_LABEL_KEY: Record<BefundType, UiTranslationKey> = {
   ecg: 'befundAddEcg',
   eeg: 'befundAddEeg',
+  roentgen: 'befundAddRoentgen',
 }
 
 const BEFUND_REQUEST_LABEL_KEY: Record<BefundType, UiTranslationKey> = {
   ecg: 'befundRequestEcg',
   eeg: 'befundRequestEeg',
+  roentgen: 'befundRequestRoentgen',
 }
 
 const BEFUND_REQUEST_PRESET: Record<BefundType, AnforderungModalPreset> = {
   ecg: ANFORDERUNG_PRESET_EKG,
   eeg: ANFORDERUNG_PRESET_EEG,
+  roentgen: ANFORDERUNG_PRESET_ROENTGEN,
 }
 
 interface DiagnostikBefundeMainProps {

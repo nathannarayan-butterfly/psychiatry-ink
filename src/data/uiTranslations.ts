@@ -3377,6 +3377,24 @@ export const uiTranslations = {
     fr: 'Demander un EEG',
     es: 'Solicitar EEG',
   },
+  befundAddRoentgen: {
+    de: 'Neuen Röntgen-Befund hinzufügen',
+    en: 'Add new X-ray finding',
+    fr: 'Ajouter un nouveau résultat radiographique',
+    es: 'Añadir nuevo hallazgo radiográfico',
+  },
+  befundRequestRoentgen: {
+    de: 'Röntgen Anfordern',
+    en: 'Request X-ray',
+    fr: 'Demander une radiographie',
+    es: 'Solicitar radiografía',
+  },
+  imagingRoentgenHeading: {
+    de: 'Röntgen-Befunde',
+    en: 'X-ray findings',
+    fr: 'Résultats radiographiques',
+    es: 'Hallazgos radiográficos',
+  },
   imagingSectionHeading: {
     de: 'Bildgebung',
     en: 'Imaging',
