@@ -1,0 +1,59 @@
+/*
+ * Shared scrollable-panel pattern — the single source of truth for "this content
+ * region must stay reachable when its height is constrained".
+ *
+ * ## Why this exists (the systemic root cause)
+ *
+ * Psychiatry.Ink renders almost every tool/page INSIDE a height-bounded shell
+ * (`.notion-preview-app` is `height: 100dvh; overflow: hidden`, and the workspace
+ * scroll is owned by `.case-tab-shell__body` / the standalone `.swx-host`). The
+ * recurring bug is that a NEW in-container surface (Medikamenten-Check, standalone
+ * tools, docks, the Aufklärung education views, …) ships its content in a flex
+ * column WITHOUT a designated scroll region, so anything below the fold becomes
+ * unreachable. Two CSS footguns cause it again and again:
+ *
+ *   1. the content container has no `overflow-y: auto`, and
+ *   2. a flex-column ANCESTOR keeps the default `min-height: auto`, which refuses
+ *      to shrink below its content and therefore prevents a descendant's
+ *      `overflow-y: auto` from ever engaging.
+ *
+ * Instead of re-deriving the fix per screen, surfaces converge onto these two
+ * tiny utilities. A new tool/page inherits scrolling by default:
+ *
+ *   - put `app-scroll-region` on the element that should scroll, and
+ *   - put `app-scroll-parent` (or `min-height: 0`) on every flex-column ancestor
+ *     between it and the nearest height-bounded scroll owner.
+ *
+ * The guardrail in `src/testing/scrollGuard.ts` enforces that the tracked
+ * surfaces keep these affordances — see that file to extend the tracked list.
+ */
+
+/* The designated scroll region: scrolls itself the moment an ancestor bounds its
+   height, and flows harmlessly at content height (no nested scrollbar) when the
+   outer workspace scroll is the active scroller. */
+.app-scroll-region {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* A flex-column link in the chain that must be allowed to shrink so the scroll
+   region below it can actually overflow. `min-height: auto` (the flex default)
+   is the silent killer this neutralises. */
+.app-scroll-parent {
+  min-height: 0;
+}
+
+/* ── Convergence: medication workspace flex ancestors ─────────────────────────
+   The medication Aufklärung (patient-education) workspace mounts deep inside
+   these auto-height flex columns. Giving them `min-height: 0` removes the
+   `min-height: auto` footgun so the education content region's own
+   `overflow-y: auto` can engage if the chain is ever height-bounded, and is a
+   no-op for the (currently content-height) plan/detail layouts. Kept in this
+   shared/owned file rather than notion-preview.css to avoid colliding with the
+   concurrent KB-pharma CSS work. */
+.medication-workspace,
+.medication-plan,
+.medication-section-detail,
+.medication-section-detail__body {
+  min-height: 0;
+}

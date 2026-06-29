@@ -54,6 +54,7 @@ import './styles/arztbrief.css'
 import './styles/guided-entry.css'
 import './styles/overview-quick-actions.css'
 import './styles/medication-education.css'
+import './styles/app-scroll.css'
 import './styles/version-toast.css'
 import './styles/phone-gate.css'
 
