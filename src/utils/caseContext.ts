@@ -12,6 +12,15 @@ export function setActiveCaseId(caseId: string): void {
   activeCaseId = caseId
 }
 
+/**
+ * Reset the active case back to the default workspace. Called when device-local
+ * clinical data is purged on an auth identity change so the in-memory pointer
+ * never keeps referencing a previous user's case id.
+ */
+export function resetActiveCaseId(): void {
+  activeCaseId = DEFAULT_CASE_ID
+}
+
 export function createCaseId(): string {
   return crypto.randomUUID()
 }

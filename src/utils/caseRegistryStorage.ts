@@ -25,6 +25,17 @@ export function markRegistryShadowHydrated(): void {
   registryShadowHydrated = true
 }
 
+/**
+ * Drop the in-memory decrypted registry mirror. Called when device-local clinical
+ * data is purged on an auth identity change so a different user can never read the
+ * previous user's case identifiers from this process's RAM (the on-disk ciphertext
+ * is cleared separately). The next read re-hydrates from the now-clean storage.
+ */
+export function resetRegistryShadow(): void {
+  registryShadow = null
+  registryShadowHydrated = false
+}
+
 export function loadRegistryMapFromStorage(): Record<string, LocalCaseMeta> {
   return registryShadow ? { ...registryShadow } : {}
 }

@@ -88,6 +88,18 @@ export function getRegistryMapSnapshot(): Record<string, LocalCaseMeta> {
   return { ...readCacheMap() }
 }
 
+/**
+ * Clear the in-memory registry cache and hydration state. Invoked when device-local
+ * clinical data is purged on an auth identity change so the next user never reads the
+ * previous user's patient registry from this module's RAM. A fresh `hydrateCaseRegistry`
+ * then repopulates from the (now cleared) storage + server.
+ */
+export function resetCaseRegistryCache(): void {
+  registryCache = {}
+  registryHydrated = false
+  hydratePromise = null
+}
+
 /** Replace in-memory + localStorage registry after cloud restore. */
 export function replaceRegistryMap(map: Record<string, LocalCaseMeta>): void {
   markRegistryShadowHydrated()

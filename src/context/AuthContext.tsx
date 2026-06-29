@@ -22,6 +22,7 @@ import { attributeReferral } from '../services/aiCreditsApi'
 import { recordLegalConsent } from '../services/legalConsentApi'
 import { setupAccountCloudBackup } from '../utils/accountBackup'
 import { clearSessionOnLogout } from '../utils/devicePreferences'
+import { purgeClinicalDeviceData, reconcileActiveUser } from '../utils/userScopedData'
 import { downloadPassphraseBackupFile } from '../utils/passphraseRecovery'
 import { getAuthEmailRedirectUrl } from '../utils/authEmailRedirect'
 import {
@@ -91,6 +92,22 @@ function isRateLimitError(
   return Boolean(error.message && /rate limit|after \d+ seconds/i.test(error.message))
 }
 
+/**
+ * Enforce per-user device isolation for a just-resolved auth user id. When a
+ * different user is detected, {@link reconcileActiveUser} purges the previous
+ * user's device-local clinical data; we then hard-reload so every module-level
+ * cache and the React tree are rebuilt from the now-clean storage. Returns `true`
+ * when a reload was triggered so callers skip exposing the in-flight session.
+ */
+function applyUserIsolation(userId: string | null): boolean {
+  const switchedUser = reconcileActiveUser(userId)
+  if (switchedUser && typeof window !== 'undefined' && typeof window.location?.reload === 'function') {
+    window.location.reload()
+    return true
+  }
+  return false
+}
+
 async function fetchPlan(): Promise<SubscriptionPlan> {
   try {
     const headers = await getAuthHeaders()
@@ -136,6 +153,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .getSession()
       .then(({ data }) => {
         if (!active) return
+        // Isolate device-local clinical data per authenticated user: if a DIFFERENT
+        // user now owns this browser, the previous user's patient/case/notes data is
+        // purged and the page is hard-reloaded so no stale cache or rendered view can
+        // leak across the switch. Runs before we expose the session to the app.
+        if (applyUserIsolation(data.session?.user?.id ?? null)) return
         setSession(data.session)
         setUser(data.session?.user ?? null)
         setLoading(false)
@@ -146,6 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
 
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (applyUserIsolation(nextSession?.user?.id ?? null)) return
       setSession(nextSession)
       setUser(nextSession?.user ?? null)
       setLoading(false)
@@ -295,6 +318,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const supabase = getSupabase()
     if (supabase) await supabase.auth.signOut()
     clearSessionOnLogout()
+    // Clear patient/case/notes data from the device on logout so the next person
+    // at this browser cannot read the signed-out user's clinical data — neither by
+    // logging in as someone else nor by inspecting storage directly. Device UI
+    // preferences are preserved (see clearSessionOnLogout + purge allow-list).
+    purgeClinicalDeviceData()
     setPlan('free')
   }, [])
 
