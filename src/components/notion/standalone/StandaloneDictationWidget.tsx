@@ -104,7 +104,16 @@ export function StandaloneDictationWidget({ onClose }: StandaloneDictationWidget
               {micLabel}
             </button>
             {dictation.isRecording ? (
-              <span className="swx-dictation__status">{t('standaloneDictationRecordingHint')}</span>
+              <span className="swx-dictation__status swx-dictation__status--recording" role="status">
+                <span className="swx-dictation__rec-dot" aria-hidden />
+                {t('standaloneDictationRecordingHint')}
+              </span>
+            ) : null}
+            {dictation.isTranscribing ? (
+              <span className="swx-dictation__status swx-dictation__status--processing" role="status">
+                <Loader2 className="h-3.5 w-3.5 wai-spin" strokeWidth={1.75} aria-hidden />
+                {t('standaloneDictationTranscribing')}
+              </span>
             ) : null}
             {voiceError ? (
               <span className="swx-error" role="alert">
