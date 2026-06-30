@@ -48,7 +48,14 @@ describe('server-side de-identification ignores the client claim', () => {
     const out = deidentifyText('Patientin Anna Schmidt, Tel 089-9876543, am 12.03.2024 vorgestellt.', 'Anna Schmidt')
     expect(out).not.toContain('Anna Schmidt')
     expect(out).not.toContain('089-9876543')
-    expect(out).not.toContain('12.03.2024')
+    expect(out).toContain('12.03.2024')
+    expect(out).toContain('[REDACTED]')
+  })
+
+  it('still redacts DOB-context dates', () => {
+    const out = deidentifyText('geb. 01.02.1980, Kontrolle geplant.')
+    expect(out).not.toContain('01.02.1980')
+    expect(out).toContain('geb.')
     expect(out).toContain('[REDACTED]')
   })
 

@@ -34,12 +34,12 @@ import {
 import {
   createDiagnoseFreeText,
   createDiagnoseFromHit,
+  codingHasContent,
   getActiveCoding,
   isIndependentCatalogueEntry,
   catalogueSystemToCodingSlot,
   loadDiagnosenAsync,
   saveDiagnosen,
-  syncDerivedCodingsAsync,
   type CodingSystem,
   type DiagnoseEntry,
 } from '../../utils/diagnosenArchive'
@@ -351,7 +351,7 @@ export function DiagnosenWidget({
     let cancelled = false
     const timer = window.setTimeout(() => {
       setSearching(true)
-      void searchDiagnosisCodes(q, searchFilter)
+      void searchDiagnosisCodes(q, searchFilter, 12, language)
         .then((results) => {
           if (!cancelled) setSearchResults(results)
         })
@@ -367,7 +367,7 @@ export function DiagnosenWidget({
       cancelled = true
       window.clearTimeout(timer)
     }
-  }, [searchQuery, searchFilter])
+  }, [searchQuery, searchFilter, language])
 
   const applyNewEntryClassification = useCallback((entry: DiagnoseEntry): DiagnoseEntry => {
     const now = new Date().toISOString()
@@ -426,24 +426,33 @@ export function DiagnosenWidget({
           updatedAt: now,
           [system]: { code, label, overridden: true },
         }
-
-        if (system === 'icd10' && !isIndependentCatalogueEntry(target)) {
-          void syncDerivedCodingsAsync(updated).then((synced) => {
-            setEntries((current) => current.map((entry) => (entry.id === id ? synced : entry)))
-            setEditingId(null)
-          })
-        } else {
-          setEditingId(null)
-        }
-
+        setEditingId(null)
         return prev.map((entry) => (entry.id === id ? updated : entry))
       })
     },
     [],
   )
 
-  const handleDelete = useCallback((id: string) => {
-    setEntries((prev) => prev.filter((e) => e.id !== id))
+  const handleDelete = useCallback((id: string, system: CodingSystem) => {
+    setEntries((prev) => {
+      const target = prev.find((entry) => entry.id === id)
+      if (!target) return prev
+
+      const cleared: DiagnoseEntry = {
+        ...target,
+        updatedAt: new Date().toISOString(),
+        [system]: { code: '', label: '', overridden: false },
+      }
+      const stillHasContent =
+        codingHasContent(cleared.icd10) ||
+        codingHasContent(cleared.icd11) ||
+        codingHasContent(cleared.dsm)
+
+      if (!stillHasContent) {
+        return prev.filter((entry) => entry.id !== id)
+      }
+      return prev.map((entry) => (entry.id === id ? cleared : entry))
+    })
     setEditingId(null)
   }, [])
 
@@ -466,7 +475,13 @@ export function DiagnosenWidget({
     [],
   )
 
-  const sortedEntries = useMemo(() => sortDiagnosesForDisplay(entries), [entries])
+  const sortedEntries = useMemo(
+    () =>
+      sortDiagnosesForDisplay(
+        entries.filter((entry) => codingHasContent(getActiveCoding(entry, activeSystem))),
+      ),
+    [entries, activeSystem],
+  )
 
   const trimmedQuery = searchQuery.trim()
   const showFreeTextOption = trimmedQuery.length > 0
@@ -720,7 +735,7 @@ export function DiagnosenWidget({
                         onStartEdit={() => setEditingId(entry.id)}
                         onCancelEdit={() => setEditingId(null)}
                         onSaveEdit={(code, label) => handleSaveEdit(entry.id, activeSystem, code, label)}
-                        onDelete={() => handleDelete(entry.id)}
+                        onDelete={() => handleDelete(entry.id, activeSystem)}
                         onCategoryChange={(category) => handleCategoryChange(entry.id, category)}
                         onConfirmationChange={(status) => handleConfirmationChange(entry.id, status)}
                       />

@@ -15,6 +15,12 @@ import type { UiLanguage } from '../../types/settings'
 import { translateUi, type UiTranslationKey } from '../../data/uiTranslations'
 import { isMeaningfulDetail } from './psychopathologyDomains'
 import { getParameterMonitoringRows } from './medicationMonitoring'
+import type { CombinationSeverity } from '../../types/combinationCheck'
+import { loadCombinationCheckStore } from '../combinationCheck/storage'
+import {
+  formatCombinationPairLabel,
+  isSignificantCombinationFinding,
+} from '../../hooks/useCombinationCheck'
 import { filterCombinationRisksByClinicianDecisions } from '../combinationCheck/combinationRiskDisplay'
 
 export interface PatientSafetyInput {
@@ -467,8 +473,14 @@ function buildAllergyAlert(
   }
 }
 
+function combinationSeverityToTone(severity: CombinationSeverity): SemanticTone {
+  if (severity === 'critical' || severity === 'high') return 'high'
+  if (severity === 'moderate') return 'moderate'
+  if (severity === 'low') return 'info'
+  return 'neutral'
+}
+
 /**
- * Compose the at-a-glance safety picture from the active regimen + structured
  * risk + anamnesis text. All inputs are real; absent sources simply contribute
  * nothing (the card degrades to a calm "no signals" state).
  */
@@ -502,6 +514,25 @@ export function buildPatientSafety(input: PatientSafetyInput): SafetyData {
       title,
       detail: risk.drugs.join(', '),
     })
+  }
+
+  // AI / manual Kombinationscheck findings (including free-text drug names).
+  if (input.caseId) {
+    const seen = new Set(alerts.map((a) => a.id))
+    for (const finding of loadCombinationCheckStore(input.caseId).findings) {
+      if (!isSignificantCombinationFinding(finding)) continue
+      if (finding.status === 'rejected' || finding.status === 'not_relevant') continue
+      const id = `cc:${finding.id}`
+      if (seen.has(id)) continue
+      seen.add(id)
+      alerts.push({
+        id,
+        category: 'interaction',
+        tone: combinationSeverityToTone(finding.severity),
+        title: formatCombinationPairLabel(finding),
+        detail: finding.mainRisk,
+      })
+    }
   }
 
   const allergyAlert = buildAllergyAlert(language, input.allergyText)

@@ -6,6 +6,11 @@ import type {
   UserHighlight,
 } from '../types/knowledgeBaseAnnotations'
 import { useKnowledgeBaseUserId } from './useKnowledgeBaseUserId'
+import {
+  deleteKbCommentRemote,
+  hydrateKbCommentsFromRemote,
+  persistKbCommentToRemote,
+} from '../utils/kbCommentsSync'
 
 const STORAGE_KEY = 'psychiatry-ink:knowledgeBaseAnnotations'
 
@@ -43,6 +48,17 @@ export function useKnowledgeBaseAnnotations(medicationId: string | null) {
   useEffect(() => {
     saveStore(store)
   }, [store])
+
+  useEffect(() => {
+    let active = true
+    void hydrateKbCommentsFromRemote(userId, store.comments).then((merged) => {
+      if (!active || !merged) return
+      setStore((prev) => ({ ...prev, comments: merged }))
+    })
+    return () => {
+      active = false
+    }
+  }, [userId])
 
   const scoped = useMemo(() => {
     if (!medicationId) {
@@ -102,6 +118,13 @@ export function useKnowledgeBaseAnnotations(medicationId: string | null) {
         medicationId,
         createdAt: new Date().toISOString(),
       }
+      void persistKbCommentToRemote(comment).then((remoteId) => {
+        if (remoteId === comment.id) return
+        setStore((prev) => ({
+          ...prev,
+          comments: prev.comments.map((c) => (c.id === comment.id ? { ...c, id: remoteId } : c)),
+        }))
+      })
       setStore((prev) => ({ ...prev, comments: [...prev.comments, comment] }))
       return comment
     },
@@ -114,6 +137,7 @@ export function useKnowledgeBaseAnnotations(medicationId: string | null) {
         ...prev,
         comments: prev.comments.filter((c) => !(c.id === commentId && c.userId === userId)),
       }))
+      void deleteKbCommentRemote(commentId)
     },
     [userId],
   )

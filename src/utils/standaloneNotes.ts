@@ -19,6 +19,7 @@ import {
   type DokumentCategory,
   type DokumentEntry,
 } from './dokumenteArchive'
+import { deleteGlobalNoteRemote, persistGlobalNoteToRemote } from './globalNotesSync'
 
 /** `pageType` prefix that marks an archive entry as a standalone workspace note. */
 export const STANDALONE_NOTE_PAGE_PREFIX = 'standalone:'
@@ -92,10 +93,12 @@ export function deleteStandaloneNote(caseId: string, id: string): void {
  * `formulare` category so free notes group with the other non-clinical jots.
  */
 export function saveGlobalNote(input: StandaloneNoteInput): DokumentEntry {
-  return saveStandaloneNote(GLOBAL_NOTES_CASE_ID, {
+  const entry = saveStandaloneNote(GLOBAL_NOTES_CASE_ID, {
     ...input,
     category: input.category ?? 'formulare',
   })
+  void persistGlobalNoteToRemote(entry)
+  return entry
 }
 
 /** List every user-global note, newest first. */
@@ -108,10 +111,13 @@ export function updateGlobalNote(
   id: string,
   patch: { title?: string; content?: string },
 ): DokumentEntry | null {
-  return updateStandaloneNote(GLOBAL_NOTES_CASE_ID, id, patch)
+  const updated = updateStandaloneNote(GLOBAL_NOTES_CASE_ID, id, patch)
+  if (updated) void persistGlobalNoteToRemote(updated)
+  return updated
 }
 
 /** Soft-delete a user-global note. */
 export function deleteGlobalNote(id: string): void {
   deleteStandaloneNote(GLOBAL_NOTES_CASE_ID, id)
+  void deleteGlobalNoteRemote(id)
 }

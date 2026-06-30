@@ -17,7 +17,10 @@ vi.mock('../caseRegistryStorage', () => ({
   loadRegistryMapFromStorage,
   saveRegistryMapToStorage,
 }))
-vi.mock('../../hooks/useCaseRegistry', () => ({ replaceRegistryMap }))
+vi.mock('../../hooks/useCaseRegistry', () => ({
+  replaceRegistryMap,
+  getCaseMeta: vi.fn(() => null),
+}))
 vi.mock('../../services/patientRegistryApi', () => ({ deletePatientOnApi }))
 vi.mock('../accountBackup', () => ({ scheduleAccountRegistryUpload }))
 

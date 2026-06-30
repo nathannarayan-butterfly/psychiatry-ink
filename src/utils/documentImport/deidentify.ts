@@ -28,7 +28,7 @@ const PHONE_RE = /(?:\+?\d[\d ()/-]{6,}\d)/g
 // clinical dates are intentionally NOT redacted (#13) — a bare date is not
 // identifying on its own and is clinically important, so it is preserved.
 const DOB_DATE_RE =
-  /\b(geb\.?|geboren(?:\s+am)?|date of birth|dob)(\s*:?\s*)(\d{1,2}[.\/]\d{1,2}[.\/]\d{2,4}|\d{4}-\d{2}-\d{2})\b/gi
+  /\b(geb\.?|geboren(?:\s+am)?|geburtsdatum|date of birth|dob)(\s*:?\s*)(\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4}|\d{4}-\d{2}-\d{2})\b/gi
 // Standalone numeric dates (kept, not redacted — used only to shield them from
 // the phone / id scrubbers).
 const STANDALONE_DATE_RE = /\b(\d{1,2}[.\/]\d{1,2}[.\/]\d{2,4}|\d{4}-\d{2}-\d{2})\b/g

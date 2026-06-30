@@ -49,7 +49,7 @@ async function copyNote(content: string): Promise<boolean> {
  * store as the floating Notizen popup and the standalone tools, staying live via
  * the archive change event.
  */
-export function MyNotesWidget() {
+export function MyNotesWidget({ onOpenFullPage }: { onOpenFullPage?: () => void }) {
   const { t } = useTranslation()
   const notizen = useNotizen()
   const [notes, setNotes] = useState<DokumentEntry[]>(() => listGlobalNotes())
@@ -117,10 +117,17 @@ export function MyNotesWidget() {
           {t('myNotesTitle')}
           {notes.length > 0 ? <span className="dashboard-section__count"> ({notes.length})</span> : null}
         </h2>
-        <button type="button" className="dashboard-view-all" onClick={notizen.open}>
-          <Plus className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
-          {t('myNotesOpenInNotizen')}
-        </button>
+        <div className="dashboard-section__header-actions">
+          {notes.length > 0 && onOpenFullPage ? (
+            <button type="button" className="dashboard-view-all" onClick={onOpenFullPage}>
+              {t('myNotesViewAll')}
+            </button>
+          ) : null}
+          <button type="button" className="dashboard-view-all" onClick={notizen.open}>
+            <Plus className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+            {t('myNotesOpenInNotizen')}
+          </button>
+        </div>
       </div>
 
       {notes.length === 0 ? (

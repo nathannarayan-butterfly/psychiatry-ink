@@ -49,6 +49,10 @@ export interface VerlaufFeedEntry {
   date: string       // ISO 8601
   content: string
   pageType: string   // documentTypeId, e.g. 'verlauf', 'therapie-verlauf'
+  /** Optional clinician-facing headline for the entry. */
+  title?: string
+  /** Optional secondary line shown under the title. */
+  subtitle?: string
   sectionLabel?: string
   /** Visit context such as doctor name from "Visite mit …". */
   subheading?: string

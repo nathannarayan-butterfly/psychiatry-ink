@@ -57,7 +57,7 @@ async function postGenerate(body: unknown, user = 'user-1') {
 }
 
 describe('applyServerPhiGuard', () => {
-  it('redacts dates, case codes, phone and email unconditionally', () => {
+  it('redacts DOB-context dates, case codes, phone and email', () => {
     const out = applyServerPhiGuard({
       systemPrompt: 'Reply concisely.',
       userPrompt:

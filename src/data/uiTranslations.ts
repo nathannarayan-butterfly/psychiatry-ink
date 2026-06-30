@@ -1929,6 +1929,24 @@ export const uiTranslations = {
     fr: 'Ouvrir dans Notes',
     es: 'Abrir en Notas',
   },
+  myNotesPageTitle: {
+    de: 'Meine Notizen',
+    en: 'My notes',
+    fr: 'Mes notes',
+    es: 'Mis notas',
+  },
+  myNotesSearchPlaceholder: {
+    de: 'Notizen durchsuchen …',
+    en: 'Search notes …',
+    fr: 'Rechercher des notes …',
+    es: 'Buscar notas …',
+  },
+  myNotesViewAll: {
+    de: 'Alle anzeigen',
+    en: 'View all',
+    fr: 'Tout afficher',
+    es: 'Ver todo',
+  },
   brandLogoAlt: {
     de: 'Psychiatry.ink Logo',
     en: 'Psychiatry.ink logo',
@@ -10311,6 +10329,30 @@ export const uiTranslations = {
     fr: 'Heure',
     es: 'Hora',
   },
+  verlaufEntryTitleLabel: {
+    de: 'Titel (optional)',
+    en: 'Title (optional)',
+    fr: 'Titre (facultatif)',
+    es: 'Título (opcional)',
+  },
+  verlaufEntryTitlePlaceholder: {
+    de: 'z. B. Visite, Entlassung',
+    en: 'e.g. ward round, discharge',
+    fr: 'p. ex. visite, sortie',
+    es: 'p. ej. visita, alta',
+  },
+  verlaufEntrySubtitleLabel: {
+    de: 'Untertitel (optional)',
+    en: 'Subtitle (optional)',
+    fr: 'Sous-titre (facultatif)',
+    es: 'Subtítulo (opcional)',
+  },
+  verlaufEntrySubtitlePlaceholder: {
+    de: 'z. B. mit OA Dr. Müller',
+    en: 'e.g. with Dr Smith',
+    fr: 'p. ex. avec Dr Martin',
+    es: 'p. ej. con Dr García',
+  },
   verlaufCopyAll: {
     de: 'Gesamten Verlauf kopieren',
     en: 'Copy full patient history',
@@ -14939,6 +14981,12 @@ export const uiTranslations = {
     en: 'Drag a file here or click to choose',
     fr: 'Glissez un fichier ici ou cliquez pour choisir',
     es: 'Arrastre un archivo aquí o haga clic para elegir',
+  },
+  documentImportUploading: {
+    de: 'Upload läuft …',
+    en: 'Uploading …',
+    fr: 'Téléversement en cours …',
+    es: 'Subiendo …',
   },
   documentImportAcceptedFormats: {
     de: 'Unterstützt: DOCX, JSON, JSONL, CSV, XLSX, TXT, PDF',

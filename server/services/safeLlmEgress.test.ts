@@ -89,8 +89,8 @@ describe('assertSafeLlmPayload', () => {
     )
   })
 
-  it('throws when residual ISO date remains', () => {
-    expect(() => assertSafeLlmPayload({ user: 'born 1978-04-12' })).toThrow(SafeLlmEgressError)
+  it('allows standalone clinical dates after sanitization', () => {
+    expect(() => assertSafeLlmPayload({ user: 'Follow-up on 12.03.2024' })).not.toThrow()
   })
 
   it('does not throw on a fully sanitized payload', () => {

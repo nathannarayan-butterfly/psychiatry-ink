@@ -1,5 +1,5 @@
-import { useCallback, useRef, useState } from 'react'
-import { UploadCloud } from 'lucide-react'
+import { useId, useRef, useState, useCallback } from 'react'
+import { Loader2, UploadCloud } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
 
 const ACCEPT =
@@ -11,60 +11,64 @@ const ACCEPT =
 interface ImportDropzoneProps {
   onFile: (file: File) => void
   disabled?: boolean
+  uploading?: boolean
 }
 
 /** Drag-and-drop + click-to-pick upload surface. */
-export function ImportDropzone({ onFile, disabled }: ImportDropzoneProps) {
+export function ImportDropzone({ onFile, disabled, uploading }: ImportDropzoneProps) {
   const { t } = useTranslation()
   const inputRef = useRef<HTMLInputElement>(null)
+  const inputId = useId()
   const [dragging, setDragging] = useState(false)
+  const busy = Boolean(disabled || uploading)
 
   const handleFiles = useCallback(
     (files: FileList | null) => {
       const file = files?.[0]
-      if (file) onFile(file)
+      if (file && !busy) onFile(file)
     },
-    [onFile],
+    [busy, onFile],
   )
 
   return (
-    <div
+    <label
+      htmlFor={inputId}
       className={`doc-import-dropzone${dragging ? ' doc-import-dropzone--active' : ''}${
-        disabled ? ' doc-import-dropzone--disabled' : ''
-      }`}
-      role="button"
-      tabIndex={0}
-      aria-disabled={disabled}
-      onClick={() => !disabled && inputRef.current?.click()}
-      onKeyDown={(e) => {
-        if ((e.key === 'Enter' || e.key === ' ') && !disabled) inputRef.current?.click()
-      }}
+        busy ? ' doc-import-dropzone--disabled' : ''
+      }${uploading ? ' doc-import-dropzone--uploading' : ''}`}
       onDragOver={(e) => {
         e.preventDefault()
-        if (!disabled) setDragging(true)
+        if (!busy) setDragging(true)
       }}
       onDragLeave={() => setDragging(false)}
       onDrop={(e) => {
         e.preventDefault()
         setDragging(false)
-        if (!disabled) handleFiles(e.dataTransfer.files)
+        if (!busy) handleFiles(e.dataTransfer.files)
       }}
     >
       <input
+        id={inputId}
         ref={inputRef}
         type="file"
         accept={ACCEPT}
         className="sr-only"
-        disabled={disabled}
+        disabled={busy}
         onChange={(e) => {
           const files = e.target.files
-          e.target.value = ''
           handleFiles(files)
+          e.target.value = ''
         }}
       />
-      <UploadCloud className="doc-import-dropzone__icon" aria-hidden strokeWidth={1.5} />
-      <p className="doc-import-dropzone__label">{t('documentImportDropzone')}</p>
+      {uploading ? (
+        <Loader2 className="doc-import-dropzone__icon doc-import-dropzone__spinner" aria-hidden strokeWidth={1.5} />
+      ) : (
+        <UploadCloud className="doc-import-dropzone__icon" aria-hidden strokeWidth={1.5} />
+      )}
+      <p className="doc-import-dropzone__label">
+        {uploading ? t('documentImportUploading') : t('documentImportDropzone')}
+      </p>
       <p className="doc-import-dropzone__formats">{t('documentImportAcceptedFormats')}</p>
-    </div>
+    </label>
   )
 }

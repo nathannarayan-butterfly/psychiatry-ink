@@ -88,7 +88,7 @@ describe('POST /api/pharma-ask — PHI egress guard', () => {
     expect(data.answer).not.toContain('030-123 4567')
   })
 
-  it('redacts ISO and slash DOBs unconditionally even without patientHints', async () => {
+  it('redacts DOB-labelled dates even without patientHints', async () => {
     const res = await postAsk({
       language: 'de',
       medicationName: 'Quetiapin',
@@ -97,7 +97,7 @@ describe('POST /api/pharma-ask — PHI egress guard', () => {
     expect(res.status).toBe(200)
     const data = (await res.json()) as { answer: string }
     expect(data.answer).not.toContain('1978-04-12')
-    expect(data.answer).not.toContain('12/04/1978')
+    expect(data.answer).toContain('12/04/1978')
   })
 
   it('rejects unauthenticated requests', async () => {

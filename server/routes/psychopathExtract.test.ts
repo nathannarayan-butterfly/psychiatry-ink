@@ -305,7 +305,7 @@ describe('POST /api/psychopath/extract — server re-scrubs client deidentifiedT
     expect(args.userPrompt).toContain('[REDACTED]')
   })
 
-  it('redacts ISO and slash DOB formats unconditionally', async () => {
+  it('redacts DOB-labelled dates in client deidentifiedText', async () => {
     process.env.ENABLE_PSYCHOPATH_EXTRACT_AI = 'true'
     process.env.OPENAI_API_KEY = 'test-key'
     mockedCallLlm.mockResolvedValue({
@@ -335,8 +335,8 @@ describe('POST /api/psychopath/extract — server re-scrubs client deidentifiedT
     expect(res.status).toBe(200)
     const args = mockedCallLlm.mock.calls[0]![0]!
     expect(args.userPrompt).not.toContain('1978-04-12')
-    expect(args.userPrompt).not.toContain('12/04/1978')
-    expect(args.userPrompt).not.toContain('12-04-1978')
-    expect(args.userPrompt).not.toContain('12.04.1978')
+    expect(args.userPrompt).toContain('12/04/1978')
+    expect(args.userPrompt).toContain('12-04-1978')
+    expect(args.userPrompt).toContain('12.04.1978')
   })
 })

@@ -48,6 +48,7 @@ export type AppRoute =
   | { view: 'credits' }
   | { view: 'calendar' }
   | { view: 'todos' }
+  | { view: 'notes' }
   | { view: 'team-invite'; token: string }
   | { view: 'case'; caseId: string; page?: NotionPageId; initialView?: 'overview'; appointmentId?: string; discussMode?: boolean; discussId?: string; konsilMode?: boolean; konsilId?: string }
   | { view: 'discuss-invite'; token: string }
@@ -114,6 +115,7 @@ export function isAppRoute(route: AppRoute): boolean {
     route.view === 'credits' ||
     route.view === 'calendar' ||
     route.view === 'todos' ||
+    route.view === 'notes' ||
     route.view === 'team-invite' ||
     route.view === 'discuss-invite' ||
     route.view === 'consultant' ||
@@ -152,6 +154,7 @@ function parsePathname(pathname: string, search = ''): AppRoute {
   if (path === '/dashboard/credits' || path === '/settings/credits') return { view: 'credits' }
   if (path === '/dashboard/calendar') return { view: 'calendar' }
   if (path === '/dashboard/todos') return { view: 'todos' }
+  if (path === '/dashboard/notes') return { view: 'notes' }
   if (ENTERPRISE_ROUTES_ENABLED) {
     if (path === '/dashboard/enterprise') return { view: 'enterprise' }
     if (path === '/dashboard/enterprise/sites') {
@@ -220,6 +223,7 @@ export function routeToPath(route: AppRoute): string {
   if (route.view === 'credits') return '/dashboard/credits'
   if (route.view === 'calendar') return '/dashboard/calendar'
   if (route.view === 'todos') return '/dashboard/todos'
+  if (route.view === 'notes') return '/dashboard/notes'
   if (ENTERPRISE_ROUTES_ENABLED) {
     if (route.view === 'enterprise') return '/dashboard/enterprise'
     if (route.view === 'enterprise-sites') {

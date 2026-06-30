@@ -241,12 +241,22 @@ export function convertLegacyProfileForDisplayOnly(
   return out
 }
 
+/** Free-text mechanism notes when no quantitative receptor axes exist (e.g. lithium). */
+export function extractReceptorProfileNotes(drug: KnowledgeBaseDrug): string | undefined {
+  const legacy = drug.legacyReceptorProfile?.profile ?? drug.receptorProfile
+  if (!legacy) return undefined
+  const notes = (legacy as Record<string, unknown>).notes
+  return typeof notes === 'string' && notes.trim() ? notes.trim() : undefined
+}
+
 export interface DisplayReceptorProfile {
   entries: ReceptorAffinityEntry[]
   /** True when the entries were converted from a legacy 1–5 score profile. */
   isLegacy: boolean
   /** True when there is no receptor data at all. */
   isEmpty: boolean
+  /** Mechanism notes without quantitative axes (e.g. mood stabilizers). */
+  notes?: string
 }
 
 /**
@@ -259,14 +269,20 @@ export interface DisplayReceptorProfile {
  *   is converted for display only and flagged `isLegacy`.
  */
 export function getDisplayReceptorProfile(drug: KnowledgeBaseDrug): DisplayReceptorProfile {
+  const notes = extractReceptorProfileNotes(drug)
   if (drug.receptorProfileVersion === 2 && Array.isArray(drug.receptorAffinityProfile)) {
     const entries = drug.receptorAffinityProfile
-    return { entries, isLegacy: false, isEmpty: entries.length === 0 }
+    return { entries, isLegacy: false, isEmpty: entries.length === 0 && !notes, notes }
   }
   const legacyProfile = drug.legacyReceptorProfile?.profile ?? drug.receptorProfile
   const legacyDetails = drug.legacyReceptorProfile?.details ?? drug.receptorProfileDetails
   const entries = convertLegacyProfileForDisplayOnly(legacyProfile, legacyDetails)
-  return { entries, isLegacy: entries.length > 0, isEmpty: entries.length === 0 }
+  return {
+    entries,
+    isLegacy: entries.length > 0,
+    isEmpty: entries.length === 0 && !notes,
+    notes,
+  }
 }
 
 /** True when a drug carries any usable receptor data (v2 or legacy). */

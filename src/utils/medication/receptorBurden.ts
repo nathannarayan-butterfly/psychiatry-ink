@@ -37,6 +37,8 @@ export interface ResolvedDrugProfile {
   byTarget: Map<string, ReceptorAffinityEntry>
   /** True when entries were converted from a legacy 1–5 profile (display only). */
   isLegacy: boolean
+  /** Mechanism notes when no quantitative axes exist. */
+  notes?: string
   /** Stable per-drug colour for matrix / radar legends. */
   color: string
   colorIndex: number
@@ -97,6 +99,7 @@ export function resolveReceptorProfiles(
       entries: display.entries,
       byTarget: indexByTarget(display.entries),
       isLegacy: display.isLegacy,
+      notes: display.notes,
       color: getDrugColor(colorIndex),
       colorIndex,
     })

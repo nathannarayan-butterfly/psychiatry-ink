@@ -137,13 +137,20 @@ describe('POST /api/clinical-intelligence/discuss — PHI egress guard', () => {
     expect(data.answer).toBeTruthy()
   })
 
-  it('scrubs ISO / slash / hyphen DOB formats unconditionally', async () => {
+  it('scrubs DOB-context dates across common formats', async () => {
     for (const dob of ['1978-04-12', '12/04/1978', '12-04-1978', '12.04.1978', '12.04.78']) {
-      const res = await postDiscuss(buildDiscussBody(`Bezugsdatum ${dob} bitte einschätzen.`))
+      const res = await postDiscuss(buildDiscussBody(`Geburtsdatum ${dob} bitte einschätzen.`))
       expect(res.status).toBe(200)
       const data = (await res.json()) as { answer: string }
       expect(data.answer, `format ${dob}`).not.toContain(dob)
     }
+  })
+
+  it('preserves standalone clinical reference dates', async () => {
+    const res = await postDiscuss(buildDiscussBody('Bezugsdatum 12.04.1978 bitte einschätzen.'))
+    expect(res.status).toBe(200)
+    const data = (await res.json()) as { answer: string }
+    expect(data.answer).toContain('12.04.1978')
   })
 
   it('rejects unauthenticated requests', async () => {

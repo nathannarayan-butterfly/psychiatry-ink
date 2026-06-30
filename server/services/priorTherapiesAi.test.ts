@@ -22,7 +22,7 @@ describe('deidentifyPriorTherapySources', () => {
     })
     expect(result.aufnahmeText).not.toContain('Anna')
     expect(result.aufnahmeText).not.toContain('Beispiel')
-    expect(result.aufnahmeText).not.toContain('12.03.2024')
+    expect(result.aufnahmeText).toContain('12.03.2024')
     expect(result.aufnahmeText).toContain('[REDACTED]')
     // Clinically relevant content is preserved.
     expect(result.aufnahmeText).toContain('Risperidon')

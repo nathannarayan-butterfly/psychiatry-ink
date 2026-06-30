@@ -92,6 +92,8 @@ export function ReceptorProfileSection({
   const view: ReceptorView = userView ?? (canRenderRadar ? 'radar' : 'matrix')
   const setView = setUserView
 
+  const notesOnly = resolved.filter((r) => r.notes && r.entries.length === 0)
+
   if (resolved.length === 0) {
     return (
       <div className="receptor-profile">
@@ -139,6 +141,17 @@ export function ReceptorProfileSection({
       {view === 'radar' && (
         <RadarView resolved={resolved} activeTargets={activeTargets} language={language} legend={legend} />
       )}
+
+      {notesOnly.length > 0 ? (
+        <ul className="receptor-profile__notes-list">
+          {notesOnly.map((r) => (
+            <li key={r.medId} className="receptor-profile__notes-item">
+              <strong>{r.medName}</strong>
+              <p className="receptor-profile__notes-text">{r.notes}</p>
+            </li>
+          ))}
+        </ul>
+      ) : null}
 
       <p className="receptor-profile__safety">
         {translateMedicationUi(language, 'medReceptorSafetyNote')}

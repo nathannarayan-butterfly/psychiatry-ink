@@ -10,20 +10,15 @@ import type { DiscussPackageContent, DiscussPackageSection } from '../../src/typ
  *  - {@link deidentifyPackageContent} (this module)
  *  - {@link sanitizeLlmPayload} in `server/services/safeLlmEgress.ts`
  */
+/**
+ * Identifier patterns scrubbed before text leaves the trust boundary toward an
+ * external LLM provider. Standalone clinical dates are intentionally excluded —
+ * a bare date is not identifying on its own (#13).
+ */
 export const IDENTIFIER_PATTERNS: RegExp[] = [
-  // German numeric dates: DD.MM.YYYY / DD.MM.YY
-  /\b\d{1,2}\.\d{1,2}\.\d{2,4}\b/g,
-  // ISO 8601 date: YYYY-MM-DD
-  /\b\d{4}-\d{1,2}-\d{1,2}\b/g,
-  // Slash dates: DD/MM/YYYY (and 2-digit year variant)
-  /\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/g,
-  // Hyphen DMY dates: DD-MM-YYYY (avoid colliding with ISO via the 4-digit year being last)
-  /\b\d{1,2}-\d{1,2}-\d{4}\b/g,
-  // German month names with day + year: e.g. "12. April 1978" / "12 Januar 1978"
-  /\b\d{1,2}\.?\s?(Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember)\s+\d{2,4}\b/gi,
-  // English month names with day + year: "12 April 1978", "April 12, 1978"
-  /\b\d{1,2}\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{2,4}\b/gi,
-  /\b(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{2,4}\b/gi,
+  // Date of birth ONLY: label + date on same line.
+  /\b(geb\.?|geboren(?:\s+am)?|geburtsdatum|date of birth|dob)(\s*:?\s*)(\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4}|\d{4}-\d{1,2}-\d{1,2})\b/gi,
+  /\b(geb\.?|geboren(?:\s+am)?|geburtsdatum|date of birth|dob)(\s*:?\s*)(\d{1,2}\s+(?:Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember|January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{2,4})\b/gi,
   // Case / insurance / institution-style identifiers (AOK / TK / AZ / DEMO …)
   /\b[A-Z]{2,3}[-\s]?\d{4,10}\b/g,
   // KVNR (new German Krankenversichertennummer) — 1 letter + 9 digits.
@@ -66,7 +61,11 @@ function redactIdentifiers(text: string, patientName?: string): string {
     result = result.replace(new RegExp(fullEscaped, 'gi'), '[REDACTED]')
   }
   for (const pattern of IDENTIFIER_PATTERNS) {
-    result = result.replace(pattern, '[REDACTED]')
+    if (pattern.source.includes('geb')) {
+      result = result.replace(pattern, (_match, label: string, sep: string) => `${label}${sep}[REDACTED]`)
+    } else {
+      result = result.replace(pattern, '[REDACTED]')
+    }
   }
   return result
 }

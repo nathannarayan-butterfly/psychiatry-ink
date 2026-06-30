@@ -126,6 +126,22 @@ export function appendDokument(
   return newEntry
 }
 
+/** Insert or replace a document entry preserving its id (remote-sync hydration). */
+export function upsertDokumentById(caseId: string, entry: DokumentEntry): DokumentEntry {
+  const existing = loadRawArchive(caseId)
+  const index = existing.findIndex((item) => item.id === entry.id)
+  const normalized = { ...entry, caseId }
+  if (index >= 0) {
+    const next = [...existing]
+    next[index] = normalized
+    next.sort((a, b) => b.date.localeCompare(a.date))
+    saveRawArchive(caseId, next)
+    return normalized
+  }
+  saveRawArchive(caseId, [normalized, ...existing])
+  return normalized
+}
+
 /**
  * Idempotently mirror source records (e.g. lab befunde) into the archive.
  *

@@ -82,6 +82,20 @@
   border-top: 1px solid var(--cm-hairline);
 }
 
+.doc-import-dropzone--uploading {
+  pointer-events: none;
+}
+
+.doc-import-dropzone__spinner {
+  animation: doc-import-spin 0.9s linear infinite;
+}
+
+@keyframes doc-import-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Dropzone */
 .doc-import-dropzone {
   display: flex;

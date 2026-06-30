@@ -1,8 +1,10 @@
 import {
   lookupByIcd10Code,
+  pickCatalogLabel,
   searchDiagnosisCatalog,
   type DiagnosisCatalogEntry,
 } from '../data/diagnosisCatalog'
+import type { UiLanguage } from '../types/settings'
 import type {
   CatalogueSearchSystem,
   CatalogueSystem,
@@ -32,6 +34,7 @@ export function catalogueSystemToClient(system: CatalogueSystem): 'icd10' | 'icd
 function catalogEntryToHit(
   entry: DiagnosisCatalogEntry,
   system: 'icd10' | 'icd11',
+  lang: UiLanguage = 'de',
 ): DiagnosisCatalogueSearchHit {
   const coding = system === 'icd11' ? entry.icd11 : entry.icd10
   const catalogueSystem: CatalogueSystem = system === 'icd11' ? 'ICD11MMS' : 'ICD10GM'
@@ -40,7 +43,7 @@ function catalogEntryToHit(
     system: catalogueSystem,
     catalogueVersion: 'bundled',
     code: coding.code,
-    title: coding.label,
+    title: pickCatalogLabel(coding, lang),
     isCategory: false,
     isSelectable: true,
     criteriaAvailable: false,
@@ -51,20 +54,22 @@ function searchCatalogFallback(
   query: string,
   system: ClientCodingSystem,
   limit: number,
+  lang: UiLanguage = 'de',
 ): DiagnosisCatalogueSearchHit[] {
   const effective = system === 'all' ? 'icd10' : system === 'dsm' ? 'icd10' : system
   if (effective === 'icd11') {
     return searchDiagnosisCatalog(query, limit)
       .filter((e) => e.icd11.code.trim())
-      .map((e) => catalogEntryToHit(e, 'icd11'))
+      .map((e) => catalogEntryToHit(e, 'icd11', lang))
   }
-  return searchDiagnosisCatalog(query, limit).map((e) => catalogEntryToHit(e, 'icd10'))
+  return searchDiagnosisCatalog(query, limit).map((e) => catalogEntryToHit(e, 'icd10', lang))
 }
 
 export async function searchDiagnosisCodes(
   query: string,
   system: ClientCodingSystem,
   limit = 12,
+  lang: UiLanguage = 'de',
 ): Promise<DiagnosisCatalogueSearchHit[]> {
   const q = query.trim()
   if (!q) return []
@@ -87,7 +92,7 @@ export async function searchDiagnosisCodes(
     // fall through to bundled catalog
   }
 
-  return searchCatalogFallback(q, system, limit)
+  return searchCatalogFallback(q, system, limit, lang)
 }
 
 /** @deprecated Crosswalk lookup — prefer independent catalogue selection. */

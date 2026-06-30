@@ -61,9 +61,6 @@ export interface SanitizeOptions {
  */
 const HIGH_CONFIDENCE_PHI_PATTERNS: Array<{ name: string; re: RegExp }> = [
   { name: 'email', re: /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i },
-  { name: 'iso-date', re: /\b\d{4}-\d{2}-\d{2}\b/ },
-  { name: 'de-date', re: /\b\d{1,2}\.\d{1,2}\.\d{2,4}\b/ },
-  { name: 'slash-date', re: /\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/ },
   { name: 'uuid', re: /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i },
   { name: 'demo-id', re: /\bDEMO[-_][A-Z0-9-]{3,}\b/i },
   { name: 'kvnr', re: /\b[A-Z]\d{9}\b/ },

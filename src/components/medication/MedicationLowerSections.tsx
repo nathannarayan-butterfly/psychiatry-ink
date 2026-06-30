@@ -497,11 +497,16 @@ export function MedicationLowerSections({
                 <p className="medication-intelligence__kurzinfo">{kurzinfo}</p>
 
                 {drug.receptorProfile ? (
-                  <ReceptorRadarChart
-                    profile={drug.receptorProfile}
-                    substanceName={drug.genericName}
-                    language={language}
-                  />
+                  <>
+                    <ReceptorRadarChart
+                      profile={drug.receptorProfile}
+                      substanceName={drug.genericName}
+                      language={language}
+                    />
+                    {drug.receptorProfile.notes ? (
+                      <p className="medication-intelligence__receptor-notes">{drug.receptorProfile.notes}</p>
+                    ) : null}
+                  </>
                 ) : null}
 
                 {commonSe.length > 0 ? (

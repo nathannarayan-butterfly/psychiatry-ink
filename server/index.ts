@@ -54,6 +54,8 @@ import { integrationRouter } from './routes/integration'
 import { enterpriseRouter } from './routes/enterprise'
 import { calendarRouter } from './routes/calendar'
 import { todosRouter } from './routes/todos'
+import { userNotesRouter } from './routes/userNotes'
+import { kbPharmaCommentsRouter } from './routes/kbPharmaComments'
 import { combinationCheckRouter } from './routes/combinationCheck'
 import { criteriaGenerateDraftRouter } from './routes/criteriaGenerateDraft'
 import { labMedicationCorrelationRouter } from './routes/labMedicationCorrelation'
@@ -198,6 +200,8 @@ app.use('/api/audit', auditRouter)
 app.use('/api/integration', integrationRouter)
 app.use('/api/calendar', calendarRouter)
 app.use('/api/todos', todosRouter)
+app.use('/api/user-notes', userNotesRouter)
+app.use('/api/kb-pharma-comments', kbPharmaCommentsRouter)
 app.use('/api/combination-check', combinationCheckRouter)
 app.use('/api/lab-med-correlation', labMedicationCorrelationRouter)
 app.use('/api/medication/prep-ai-check', prepAiCheckRouter)

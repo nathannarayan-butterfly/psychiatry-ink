@@ -33,6 +33,7 @@ import { isEnterpriseOrgHierarchyEnabled } from './utils/featureFlags'
 import { translateUi } from './data/uiTranslations'
 import { ensureDefaultCase, hydrateCaseRegistry } from './hooks/useCaseRegistry'
 import { inferAccountIdentifierStorageFromServer } from './utils/accountBackup'
+import { hydrateGlobalNotesFromRemote } from './utils/globalNotesSync'
 import { EnterpriseDashboard } from './components/enterprise/EnterpriseDashboard'
 import { EnterpriseSitesPage } from './components/enterprise/EnterpriseSitesPage'
 import { EnterpriseCompliancePage } from './components/enterprise/EnterpriseCompliancePage'
@@ -42,6 +43,7 @@ import { CreditsDashboardPage } from './components/settings/CreditsDashboardPage
 import { IntegrationsPage } from './components/settings/IntegrationsPage'
 import { CalendarPage } from './components/calendar/CalendarPage'
 import { TodoPage } from './components/todos/TodoPage'
+import { MyNotesPage } from './components/dashboard/MyNotesPage'
 import { AskButterflyProvider } from './contexts/AskButterflyContext'
 import { KbPharmaCommentsProvider } from './contexts/KbPharmaCommentsContext'
 import { NotizenProvider } from './contexts/NotizenContext'
@@ -89,6 +91,11 @@ export default function App() {
   useEffect(() => {
     if (!user?.id) return
     void inferAccountIdentifierStorageFromServer()
+  }, [user?.id])
+
+  useEffect(() => {
+    if (!user?.id) return
+    void hydrateGlobalNotesFromRemote()
   }, [user?.id])
 
   useEffect(() => {
@@ -174,6 +181,7 @@ export default function App() {
   const showCredits = route.view === 'credits'
   const showCalendar = route.view === 'calendar'
   const showTodos = route.view === 'todos'
+  const showNotes = route.view === 'notes'
   const showTeamInvite = route.view === 'team-invite'
   const showDiscussInvite = route.view === 'discuss-invite'
   const showConsultantInvite = route.view === 'consultant-invite'
@@ -382,6 +390,8 @@ export default function App() {
           />
         ) : showTodos ? (
           <TodoPage onBack={() => navigate('/dashboard')} />
+        ) : showNotes ? (
+          <MyNotesPage onBack={() => navigate('/dashboard')} />
         ) : showTeamInvite ? (
           <TeamInvitePage
             token={route.view === 'team-invite' ? route.token : ''}
@@ -422,6 +432,7 @@ export default function App() {
             onOpenCredits={() => navigate('/dashboard/credits')}
             onOpenCalendar={() => navigate('/dashboard/calendar')}
             onOpenTodos={() => navigate('/dashboard/todos')}
+            onOpenNotes={() => navigate('/dashboard/notes')}
             onOpenEnterprise={
               ENTERPRISE_ROUTES_ENABLED ? () => navigate('/dashboard/enterprise') : undefined
             }

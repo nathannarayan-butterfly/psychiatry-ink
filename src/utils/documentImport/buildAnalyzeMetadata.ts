@@ -16,6 +16,7 @@ function structuralHintForCandidate(candidate: ClinicalImportCandidate): string 
   const parts: string[] = []
   if (candidate.sourceLocation.section) parts.push(`Abschnitt: ${candidate.sourceLocation.section}`)
   if (candidate.sourceLocation.sheet) parts.push(`Blatt: ${candidate.sourceLocation.sheet}`)
+  if (candidate.sourceLocation.row != null) parts.push(`Zeile: ${candidate.sourceLocation.row}`)
   if (typeof data.title === 'string' && data.title.trim()) parts.push(`Titel: ${data.title.trim()}`)
   if (typeof data.sectionLabel === 'string' && data.sectionLabel.trim()) {
     parts.push(`Label: ${data.sectionLabel.trim()}`)
@@ -27,8 +28,31 @@ function structuralHintForCandidate(candidate: ClinicalImportCandidate): string 
   if (typeof data.substance === 'string' && data.substance.trim()) {
     parts.push(`Substanz: ${data.substance.trim()}`)
   }
+  if (typeof data.code === 'string' && data.code.trim()) parts.push(`Code: ${data.code.trim()}`)
+  if (typeof data.icd10 === 'string' && data.icd10.trim()) parts.push(`ICD-10: ${data.icd10.trim()}`)
+  if (typeof data.icd11 === 'string' && data.icd11.trim()) parts.push(`ICD-11: ${data.icd11.trim()}`)
+  if (typeof data.parameter === 'string' && data.parameter.trim()) {
+    parts.push(`Parameter: ${data.parameter.trim()}`)
+  }
   if (typeof data.therapyTypeId === 'string' && data.therapyTypeId.trim()) {
     parts.push(`Therapieart: ${data.therapyTypeId.trim()}`)
+  }
+  if (typeof data.documentType === 'string' && data.documentType.trim()) {
+    parts.push(`Dokumenttyp: ${data.documentType.trim()}`)
+  }
+  if (Array.isArray(data.rows) && data.rows.length > 0) {
+    parts.push(`Tabellenzeilen: ${data.rows.length}`)
+  }
+  if (Array.isArray(data.entries) && data.entries.length > 0) {
+    parts.push(`Einträge: ${data.entries.length}`)
+  }
+  const textFields = ['summary', 'finding', 'interpretation', 'note', 'content']
+  for (const key of textFields) {
+    const value = data[key]
+    if (typeof value === 'string' && value.trim().length >= 12) {
+      parts.push(`${key}: (${value.trim().length} Zeichen)`)
+      break
+    }
   }
   if (parts.length > 0) return parts.join(' · ')
   return `Modul: ${candidate.module}`
@@ -36,6 +60,7 @@ function structuralHintForCandidate(candidate: ClinicalImportCandidate): string 
 
 function needsMappingAssist(candidate: ClinicalImportCandidate): boolean {
   if (candidate.confidence === 'low') return true
+  if (candidate.confidence === 'medium') return true
   if (candidate.module === 'document') return true
   if ((candidate.clarifications?.length ?? 0) > 0) return true
   return false
@@ -120,7 +145,12 @@ export function shouldRunPostParseAnalyze(candidates: ClinicalImportCandidate[])
       c.module === 'therapy' ||
       c.module === 'complementaryTherapy' ||
       c.module === 'risk' ||
-      c.module === 'verlauf',
+      c.module === 'verlauf' ||
+      c.module === 'diagnosis' ||
+      c.module === 'lab' ||
+      c.module === 'investigation' ||
+      c.module === 'anamnese' ||
+      c.module === 'document',
   )
 }
 

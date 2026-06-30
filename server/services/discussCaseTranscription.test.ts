@@ -12,7 +12,7 @@ describe('buildMachineVoiceTranscript', () => {
       language: null,
       now: new Date('2026-07-03T10:00:00.000Z'),
     })
-    expect(transcript.text).not.toContain('12.04.1978')
+    expect(transcript.text).toContain('12.04.1978')
     expect(transcript.text).not.toContain('jane@example.com')
     expect(transcript.text).toContain('[REDACTED]')
     expect(transcript.status).toBe('machine')

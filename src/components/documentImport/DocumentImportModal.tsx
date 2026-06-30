@@ -540,9 +540,11 @@ export function DocumentImportModal({
         </header>
 
         <div className="doc-import-dialog__body">
-          {phase === 'upload' && <ImportDropzone onFile={handleFile} />}
+          {phase === 'upload' && <ImportDropzone onFile={handleFile} uploading={false} />}
 
-          {phase === 'parsing' && <p className="doc-import-status">{t('documentImportParsing')}</p>}
+          {phase === 'parsing' && (
+            <ImportDropzone onFile={handleFile} disabled uploading />
+          )}
 
           {phase === 'analyzing' && <p className="doc-import-status">{t('documentImportAnalyzing')}</p>}
 

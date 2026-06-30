@@ -9870,6 +9870,40 @@
   gap: 0.75rem;
 }
 
+.verlauf-composer__meta-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.verlauf-composer__meta-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.82rem;
+  color: var(--text-muted, #8a8a80);
+}
+
+.verlauf-composer__meta-input {
+  width: 100%;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 8px;
+  padding: 0.4rem 0.55rem;
+  font-size: 0.88rem;
+}
+
+.verlauf-entry__title {
+  display: block;
+  font-weight: 600;
+  color: var(--text-main, #1a1a18);
+}
+
+.verlauf-entry__subtitle {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-muted, #8a8a80);
+}
+
 .verlauf-composer__date-row {
   display: flex;
   align-items: center;
@@ -12617,6 +12651,13 @@
   box-shadow: var(--therapy-card-shadow);
 }
 
+.medication-intelligence__receptor-notes {
+  margin: 0.25rem 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted, #8a8a80);
+  line-height: 1.45;
+}
+
 .medication-intelligence-card__head {
   display: flex;
   align-items: baseline;
@@ -14713,6 +14754,81 @@ details[open].receptor-radar .receptor-radar__summary::before {
   color: var(--text-secondary);
   line-height: 1.5;
   margin: 0;
+}
+
+.receptor-profile__notes-list {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.receptor-profile__notes-item {
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  background: color-mix(in srgb, var(--area-accent, var(--accent, #4a7c59)) 3%, var(--notion-paper-bg, #fff));
+}
+
+.receptor-profile__notes-text {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted, #8a8a80);
+  line-height: 1.45;
+}
+
+.my-notes-page__inner {
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 3rem;
+}
+
+.my-notes-page__header {
+  margin-bottom: 1.25rem;
+}
+
+.my-notes-page__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.my-notes-page__search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 12rem;
+  border: 1px solid var(--border-soft, #e8e8e4);
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
+  background: var(--notion-paper-bg, #fff);
+}
+
+.my-notes-page__search input {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 0.88rem;
+  background: transparent;
+}
+
+.my-notes-page__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.dashboard-section__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .receptor-profile__tabs {

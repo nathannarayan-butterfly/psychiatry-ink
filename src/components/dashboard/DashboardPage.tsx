@@ -116,6 +116,7 @@ interface DashboardPageProps {
   onOpenCredits?: () => void
   onOpenCalendar?: () => void
   onOpenTodos?: () => void
+  onOpenNotes?: () => void
   onOpenEnterprise?: () => void
 }
 
@@ -146,6 +147,7 @@ export function DashboardPage({
   onOpenCredits,
   onOpenCalendar,
   onOpenTodos,
+  onOpenNotes,
   onOpenEnterprise,
 }: DashboardPageProps) {
   const { t, language } = useTranslation()
@@ -669,7 +671,7 @@ export function DashboardPage({
         <DaySchedulePanel cases={activePatients} onOpenCase={handleScheduleOpenCase} />
       ) : null}
 
-      <MyNotesWidget />
+      <MyNotesWidget onOpenFullPage={onOpenNotes} />
 
       <section className="dashboard-section" aria-labelledby="dashboard-section-patients">
         <div className="dashboard-section__header-row">

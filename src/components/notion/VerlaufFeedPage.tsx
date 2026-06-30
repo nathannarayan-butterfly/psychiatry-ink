@@ -1158,6 +1158,8 @@ const EntryCard = memo(function EntryCard({
           {formatIsoTimestampDate(entry.date)}
         </time>
         <span className="verlauf-entry__time">{formatIsoTimestampTime(entry.date)}</span>
+        {entry.title ? <span className="verlauf-entry__title">{entry.title}</span> : null}
+        {entry.subtitle ? <span className="verlauf-entry__subtitle">{entry.subtitle}</span> : null}
         {entry.sectionLabel || entry.subheading ? (
           <span className="verlauf-entry__section">
             {[entry.sectionLabel, entry.subheading].filter(Boolean).join(' — ')}
@@ -2448,6 +2450,8 @@ export function VerlaufFeedPage({
   const [entryMenuOpen, setEntryMenuOpen] = useState(false)
   const entryMenuRef = useRef<HTMLDivElement>(null)
   const [composerText, setComposerText] = useState('')
+  const [composerTitle, setComposerTitle] = useState('')
+  const [composerSubtitle, setComposerSubtitle] = useState('')
   // Site-timezone calendar date (not UTC slice) so a note composed late evening
   // doesn't roll to the next day, and the saved timestamp matches wall-clock.
   const [composerDate, setComposerDate] = useState(() => todayIsoDateSite())
@@ -2482,18 +2486,24 @@ export function VerlaufFeedPage({
       content: composerText.trim(),
       pageType: typeOption.id,
       source: 'manual',
+      ...(composerTitle.trim() ? { title: composerTitle.trim() } : {}),
+      ...(composerSubtitle.trim() ? { subtitle: composerSubtitle.trim() } : {}),
       ...(attribution ? { attribution } : {}),
     })
     setEntries((prev) => [newEntry, ...prev])
     setComposerText('')
+    setComposerTitle('')
+    setComposerSubtitle('')
     setComposerDate(todayIsoDateSite())
     setComposerTime(nowSiteTime())
     setComposerType('verlauf')
     setComposerOpen(false)
-  }, [caseId, composerDate, composerTime, composerText, composerType, member, role, user?.id])
+  }, [caseId, composerDate, composerTime, composerText, composerTitle, composerSubtitle, composerType, member, role, user?.id])
 
   const handleComposerCancel = useCallback(() => {
     setComposerText('')
+    setComposerTitle('')
+    setComposerSubtitle('')
     setComposerDate(todayIsoDateSite())
     setComposerTime(nowSiteTime())
     setComposerType('verlauf')
@@ -2910,6 +2920,28 @@ export function VerlaufFeedPage({
                 className="verlauf-composer__date-input"
                 value={composerTime}
                 onChange={(e) => setComposerTime(e.target.value)}
+              />
+            </label>
+          </div>
+          <div className="verlauf-composer__meta-row">
+            <label className="verlauf-composer__meta-field">
+              {t('verlaufEntryTitleLabel')}
+              <input
+                type="text"
+                className="verlauf-composer__meta-input"
+                value={composerTitle}
+                onChange={(e) => setComposerTitle(e.target.value)}
+                placeholder={t('verlaufEntryTitlePlaceholder')}
+              />
+            </label>
+            <label className="verlauf-composer__meta-field">
+              {t('verlaufEntrySubtitleLabel')}
+              <input
+                type="text"
+                className="verlauf-composer__meta-input"
+                value={composerSubtitle}
+                onChange={(e) => setComposerSubtitle(e.target.value)}
+                placeholder={t('verlaufEntrySubtitlePlaceholder')}
               />
             </label>
           </div>

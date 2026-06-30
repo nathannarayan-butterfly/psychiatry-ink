@@ -70,6 +70,7 @@ describe('computeVerlaufstendenz', () => {
   it('detects overall improvement from psychopathology course direction', () => {
     const result = computeVerlaufstendenz({
       ...emptyInput,
+      now: new Date('2026-06-15'),
       imprints: [
         makeImprint({
           imprintKey: 'a',
@@ -83,9 +84,9 @@ describe('computeVerlaufstendenz', () => {
         }),
       ],
     })
-    expect(result.trend).toBe('leicht_gebessert')
+    expect(result.trend).toBe('deutlich_gebessert')
     expect(result.domains.find((d) => d.domain === 'core_psychopathology')?.direction).toBe(
-      'leicht_gebessert',
+      'deutlich_gebessert',
     )
   })
 

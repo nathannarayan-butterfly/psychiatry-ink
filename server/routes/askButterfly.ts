@@ -17,6 +17,7 @@ import {
   requireClinicalLanguage,
   resolveLanguageName,
 } from '../utils/resolveClinicalLanguage'
+import { sanitizeAiContent } from '../../src/utils/chat/sanitizeAiContent'
 
 export interface AskButterflyMessage {
   role: 'user' | 'assistant'
@@ -202,7 +203,7 @@ askButterflyRouter.post('/', async (req: Request, res: Response) => {
     }
 
     const response: AskButterflyResponseBody = {
-      answer: result.text.trim(),
+      answer: sanitizeAiContent(result.text.trim()),
       model: llmResultModel(result),
       ...(isLlmMockMode() ? { mock: true } : {}),
     }
