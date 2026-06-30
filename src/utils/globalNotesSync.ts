@@ -10,7 +10,7 @@ import {
   type RemoteUserNote,
 } from '../services/userNotesApi'
 import type { DokumentCategory, DokumentEntry } from './dokumenteArchive'
-import { appendDokument, deleteDokument, loadDokumente, upsertDokumentById } from './dokumenteArchive'
+import { deleteDokument, loadDokumente, upsertDokumentById } from './dokumenteArchive'
 import {
   GLOBAL_NOTES_CASE_ID,
   STANDALONE_NOTE_PAGE_PREFIX,
@@ -18,10 +18,56 @@ import {
   isStandaloneNote,
 } from './standaloneNotes'
 
-const SYNCED_FLAG_KEY = 'psychiatry-ink:user-notes-db-synced'
+/**
+ * One-time push flag for "local notes → DB" backfill. Scoped per-user so that a
+ * different user signing in on the same browser cannot inherit user-A's "already
+ * synced" state — which would silently skip pushing user-A's offline-saved notes
+ * AND let remote-hydrated user-B notes overwrite the shared bucket. The active
+ * cross-user purge in {@link reconcileActiveUser} already drops these keys when
+ * a DIFFERENT user is detected; the per-user scoping is belt-and-braces.
+ */
+const SYNCED_FLAG_BASE = 'psychiatry-ink:user-notes-db-synced'
+
+/**
+ * Recorded owner of the standalone notes currently living in the shared dokumente
+ * archive bucket (`dokumenteArchive::default`). When hydrate runs and this marker
+ * disagrees with the just-resolved auth user id, the bucket is treated as stale
+ * and its standalone notes are dropped BEFORE remote hydration writes user-B's
+ * notes — closing the "shared key polluted with another account's data" leak even
+ * if the auth-context purge has not (yet) run.
+ */
+const BUCKET_OWNER_KEY = 'psychiatry-ink:user-notes-bucket-owner'
+
+function syncedFlagKey(userId: string): string {
+  return `${SYNCED_FLAG_BASE}:${userId}`
+}
 
 function isUuid(id: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+}
+
+function purgeStandaloneNotesFromBucket(): void {
+  const standalone = loadDokumente(GLOBAL_NOTES_CASE_ID).filter(isStandaloneNote)
+  for (const entry of standalone) {
+    deleteDokument(GLOBAL_NOTES_CASE_ID, entry.id)
+  }
+}
+
+function ensureBucketOwner(userId: string): void {
+  let previous: string | null = null
+  try {
+    previous = localStorage.getItem(BUCKET_OWNER_KEY)
+  } catch {
+    previous = null
+  }
+  if (previous && previous !== userId) {
+    purgeStandaloneNotesFromBucket()
+  }
+  try {
+    localStorage.setItem(BUCKET_OWNER_KEY, userId)
+  } catch {
+    // ignore
+  }
 }
 
 function remoteToLocal(note: RemoteUserNote): DokumentEntry {
@@ -46,14 +92,26 @@ function localKindFromEntry(entry: DokumentEntry): string {
   return 'manual'
 }
 
-/** Pull remote notes into the local archive (one-time migration + refresh). */
-export async function hydrateGlobalNotesFromRemote(): Promise<boolean> {
+/**
+ * Pull remote notes into the local archive (one-time migration + refresh).
+ *
+ * Scoped to the authenticated `userId` so that:
+ *   1. The "already synced" flag is per-user — a previous user's flag never
+ *      suppresses a new user's local→DB backfill.
+ *   2. Stale standalone notes left in the shared dokumente bucket by another
+ *      account are dropped before this user's remote notes are written to it.
+ */
+export async function hydrateGlobalNotesFromRemote(userId: string): Promise<boolean> {
+  if (!userId) return false
+  ensureBucketOwner(userId)
+
   const remote = await fetchRemoteUserNotes()
   if (!remote) return false
 
   const localNotes = loadDokumente(GLOBAL_NOTES_CASE_ID).filter(isStandaloneNote)
   const localById = new Map(localNotes.map((e) => [e.id, e]))
-  const alreadySynced = localStorage.getItem(SYNCED_FLAG_KEY) === '1'
+  const flagKey = syncedFlagKey(userId)
+  const alreadySynced = localStorage.getItem(flagKey) === '1'
 
   if (!alreadySynced) {
     for (const entry of localNotes) {
@@ -67,7 +125,7 @@ export async function hydrateGlobalNotesFromRemote(): Promise<boolean> {
       })
     }
     try {
-      localStorage.setItem(SYNCED_FLAG_KEY, '1')
+      localStorage.setItem(flagKey, '1')
     } catch {
       // ignore
     }

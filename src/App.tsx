@@ -95,7 +95,7 @@ export default function App() {
 
   useEffect(() => {
     if (!user?.id) return
-    void hydrateGlobalNotesFromRemote()
+    void hydrateGlobalNotesFromRemote(user.id)
   }, [user?.id])
 
   useEffect(() => {

@@ -6,7 +6,18 @@ import {
 } from '../services/userNotesApi'
 import type { UserComment } from '../types/knowledgeBaseAnnotations'
 
-const SYNCED_FLAG_KEY = 'psychiatry-ink:kb-comments-db-synced'
+/**
+ * One-time push flag for "local KB comments → DB" backfill, scoped per-user so
+ * a previous user's flag cannot suppress a new user's backfill on the same
+ * browser. The cross-user purge in {@link reconcileActiveUser} already drops
+ * this key on a DIFFERENT user sign-in; the per-user scoping is defense in
+ * depth.
+ */
+const SYNCED_FLAG_BASE = 'psychiatry-ink:kb-comments-db-synced'
+
+function syncedFlagKey(userId: string): string {
+  return `${SYNCED_FLAG_BASE}:${userId}`
+}
 
 function isUuid(id: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
@@ -28,10 +39,12 @@ export async function hydrateKbCommentsFromRemote(
   userId: string,
   localComments: UserComment[],
 ): Promise<UserComment[] | null> {
+  if (!userId) return null
   const remote = await fetchRemoteKbPharmaComments()
   if (!remote) return null
 
-  const alreadySynced = localStorage.getItem(SYNCED_FLAG_KEY) === '1'
+  const flagKey = syncedFlagKey(userId)
+  const alreadySynced = localStorage.getItem(flagKey) === '1'
   if (!alreadySynced) {
     for (const comment of localComments) {
       if (comment.userId !== userId) continue
@@ -44,7 +57,7 @@ export async function hydrateKbCommentsFromRemote(
       })
     }
     try {
-      localStorage.setItem(SYNCED_FLAG_KEY, '1')
+      localStorage.setItem(flagKey, '1')
     } catch {
       // ignore
     }
