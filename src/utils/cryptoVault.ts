@@ -253,9 +253,14 @@ async function encryptWithPublicKey<T>(payload: T, publicKey: CryptoKey): Promis
 }
 
 async function decryptWithPrivateKey<T>(blob: EncryptedVaultBlob, privateKey: CryptoKey): Promise<T> {
+  // Wrap every base64-decoded buffer in a Uint8Array. WebCrypto in jsdom is
+  // stricter than Node's native implementation about the `BufferSource`
+  // argument types and rejects bare ArrayBuffers from a different realm with
+  // `unwrapKey: 2nd argument is not instance of ArrayBuffer, ...`. Uint8Array
+  // is unambiguously a valid BufferSource everywhere.
   const aesKey = await crypto.subtle.unwrapKey(
     'raw',
-    base64ToBuffer(blob.wrappedKey),
+    new Uint8Array(base64ToBuffer(blob.wrappedKey)),
     privateKey,
     { name: 'RSA-OAEP' },
     { name: 'AES-GCM', length: 256 },
@@ -265,7 +270,7 @@ async function decryptWithPrivateKey<T>(blob: EncryptedVaultBlob, privateKey: Cr
   const plaintext = await crypto.subtle.decrypt(
     { name: 'AES-GCM', iv: new Uint8Array(base64ToBuffer(blob.iv)) },
     aesKey,
-    base64ToBuffer(blob.ciphertext),
+    new Uint8Array(base64ToBuffer(blob.ciphertext)),
   )
   return JSON.parse(new TextDecoder().decode(plaintext)) as T
 }

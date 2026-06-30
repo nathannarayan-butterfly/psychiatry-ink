@@ -100,7 +100,13 @@ export function ConsultationCaseSection({
         <div className="overview-konsile__actions">
           <button
             type="button"
-            className="overview-konsile__action"
+            className="overview-konsile__action overview-konsile__action--disabled"
+            disabled
+            title={translateConsultationUi(language, 'konsilDisabledTitle')}
+            aria-disabled="true"
+            // Konsil sharing is disabled — the onClick stays wired so removing
+            // the `disabled` flag re-enables the flow without touching the
+            // parent component (see server/utils/konsilDisabled.ts).
             onClick={onRequestConsultation}
           >
             {translateConsultationUi(language, 'requestConsultation')}
@@ -116,6 +122,17 @@ export function ConsultationCaseSection({
             <Printer size={14} aria-hidden />
           </button>
         </div>
+      </div>
+
+      {/* TODO(konsil-reenable): remove once the invite-link E2EE Konsil flow lands.
+          See server/utils/konsilDisabled.ts for the re-enable plan. */}
+      <div
+        className="overview-konsile__disabled-banner"
+        role="status"
+        data-testid="konsil-disabled-banner"
+      >
+        <strong>{translateConsultationUi(language, 'konsilDisabledTitle')}</strong>
+        <p>{translateConsultationUi(language, 'konsilDisabledBody')}</p>
       </div>
 
       {loading ? (

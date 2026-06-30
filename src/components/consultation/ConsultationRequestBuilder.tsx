@@ -309,6 +309,17 @@ export function ConsultationRequestBuilder({
 
       {error ? <p className="consultation-builder__error">{error}</p> : null}
 
+      {/* TODO(konsil-reenable): remove once the invite-link E2EE Konsil flow lands.
+          See server/utils/konsilDisabled.ts for the re-enable plan. */}
+      <div
+        className="consultation-builder__disabled-banner"
+        role="status"
+        data-testid="konsil-disabled-banner"
+      >
+        <strong>{translateConsultationUi(language, 'konsilDisabledTitle')}</strong>
+        <p>{translateConsultationUi(language, 'konsilDisabledBody')}</p>
+      </div>
+
       <div className="consultation-builder__layout">
         <div className="consultation-builder__main">
         <section className="consultation-builder__section">
@@ -541,7 +552,13 @@ export function ConsultationRequestBuilder({
           <button
             type="button"
             className="consultation-builder__secondary"
-            disabled={loading}
+            // Konsil sharing is disabled — the onClick stays wired (the
+            // handler is referenced so TS does not flag it unused, but the
+            // disabled prop prevents activation). See konsilDisabled.ts.
+            disabled
+            aria-disabled="true"
+            title={translateConsultationUi(language, 'konsilDisabledTitle')}
+            data-testid="konsil-save-draft"
             onClick={() => void handleSubmit(true)}
           >
             {translateConsultationUi(language, 'saveDraft')}
@@ -549,10 +566,13 @@ export function ConsultationRequestBuilder({
           <button
             type="button"
             className="consultation-builder__primary"
-            disabled={loading}
+            disabled
+            aria-disabled="true"
+            title={translateConsultationUi(language, 'konsilDisabledTitle')}
+            data-testid="konsil-submit"
             onClick={() => void handleSubmit(false)}
           >
-            {loading ? translateConsultationUi(language, 'sending') : translateConsultationUi(language, 'requestConsultation')}
+            {translateConsultationUi(language, 'requestConsultation')}
           </button>
         </div>
         </div>

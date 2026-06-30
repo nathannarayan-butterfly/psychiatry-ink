@@ -1,5 +1,11 @@
 import { API_BASE } from './apiClient'
 
+/**
+ * Server-side encryption-at-rest for user_notes and kb_pharma_comments
+ * (Design D quick win). When `ciphertext`/`iv`/`wrappedKey` are set the
+ * `title`/`content` (or `text`) columns are empty strings server-side; the
+ * client decrypts locally via `decryptJsonPayload` (RSA-OAEP-wrapped AES-GCM).
+ */
 export interface RemoteUserNote {
   id: string
   title: string
@@ -10,6 +16,10 @@ export interface RemoteUserNote {
   deleted: boolean
   createdAt: string
   updatedAt: string
+  ciphertext: string | null
+  iv: string | null
+  wrappedKey: string | null
+  payloadVersion: number
 }
 
 export interface RemoteKbPharmaComment {
@@ -21,6 +31,10 @@ export interface RemoteKbPharmaComment {
   deleted: boolean
   createdAt: string
   updatedAt: string
+  ciphertext: string | null
+  iv: string | null
+  wrappedKey: string | null
+  payloadVersion: number
 }
 
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T | null> {
@@ -48,11 +62,15 @@ export async function fetchRemoteUserNotes(): Promise<RemoteUserNote[] | null> {
 
 export async function saveRemoteUserNote(input: {
   id?: string
-  title: string
-  content: string
+  title?: string
+  content?: string
   kind?: string
   category?: string
   pageType?: string
+  ciphertext?: string
+  iv?: string
+  wrappedKey?: string
+  payloadVersion?: number
 }): Promise<RemoteUserNote | null> {
   const data = await fetchJson<{ note: RemoteUserNote }>('/api/user-notes', {
     method: 'POST',
@@ -77,8 +95,12 @@ export async function saveRemoteKbPharmaComment(input: {
   id?: string
   medicationId: string
   sectionId: string
-  text: string
+  text?: string
   highlightId?: string | null
+  ciphertext?: string
+  iv?: string
+  wrappedKey?: string
+  payloadVersion?: number
 }): Promise<RemoteKbPharmaComment | null> {
   const data = await fetchJson<{ comment: RemoteKbPharmaComment }>('/api/kb-pharma-comments', {
     method: 'POST',

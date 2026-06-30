@@ -301,6 +301,20 @@ export const consultationUiTranslations = {
     fr: 'Aucune demande de consultation',
     es: 'Aún no hay solicitudes de interconsulta',
   },
+
+  // ── Konsil disabled banner (Design D interim) ─────────────────────────────
+  konsilDisabledTitle: {
+    de: 'Konsil-Versand vorübergehend deaktiviert',
+    en: 'Konsil sharing temporarily disabled',
+    fr: 'Partage de consultations désactivé temporairement',
+    es: 'Envío de interconsultas desactivado temporalmente',
+  },
+  konsilDisabledBody: {
+    de: 'Während wir den Identifier-Vault (Design D) ausrollen, werden keine neuen Konsile versendet. Bestehende Konsile bleiben lesbar.',
+    en: 'While we roll out the identifier vault (Design D), no new consultations are sent. Existing consultations remain readable.',
+    fr: 'Pendant le déploiement du coffre d’identifiants (Design D), aucune nouvelle consultation n’est envoyée. Les consultations existantes restent lisibles.',
+    es: 'Mientras desplegamos el almacén de identificadores (Design D), no se envían nuevas interconsultas. Las existentes siguen siendo legibles.',
+  },
   openReportForReview: {
     de: 'Konsilbericht zur Prüfung öffnen',
     en: 'Open consultation report for review',

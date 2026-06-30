@@ -48,8 +48,25 @@ kbPharmaCommentsRouter.post('/', async (req, res) => {
   const medicationId = typeof body.medicationId === 'string' ? body.medicationId.trim() : ''
   const sectionId = typeof body.sectionId === 'string' ? body.sectionId.trim() : ''
   const text = typeof body.text === 'string' ? body.text.trim() : ''
-  if (!medicationId || !sectionId || !text) {
-    res.status(400).json({ error: 'medicationId, sectionId, and text required' })
+  const ciphertext = typeof body.ciphertext === 'string' ? body.ciphertext : undefined
+  const iv = typeof body.iv === 'string' ? body.iv : undefined
+  const wrappedKey = typeof body.wrappedKey === 'string' ? body.wrappedKey : undefined
+  const payloadVersion =
+    typeof body.payloadVersion === 'number' ? body.payloadVersion : undefined
+  const hasCiphertext = Boolean(ciphertext && iv && wrappedKey)
+  if (!medicationId || !sectionId) {
+    res.status(400).json({ error: 'medicationId and sectionId required' })
+    return
+  }
+  // SECURITY: refuse mixed writes (Design D quick-win for kb_pharma_comments).
+  if (hasCiphertext && text) {
+    res.status(400).json({
+      error: 'ciphertext and plaintext text are mutually exclusive — send one or the other',
+    })
+    return
+  }
+  if (!hasCiphertext && !text) {
+    res.status(400).json({ error: 'text or ciphertext required' })
     return
   }
   try {
@@ -59,6 +76,10 @@ kbPharmaCommentsRouter.post('/', async (req, res) => {
       sectionId,
       text,
       highlightId: typeof body.highlightId === 'string' ? body.highlightId : null,
+      ciphertext,
+      iv,
+      wrappedKey,
+      payloadVersion,
     })
     res.json({ comment })
   } catch (error) {

@@ -72,6 +72,7 @@ import type {
   DiscussCasePermission,
   DiscussPackageContent,
 } from '../../src/types/discussCase'
+import { isEncryptedEnvelope } from '../../src/utils/e2ee'
 import { pathParam } from '../utils/expressParams'
 import {
   mapDiscussCaseCreateError,
@@ -176,6 +177,21 @@ discussCaseRouter.post('/', async (req: Request, res: Response) => {
         error: mapDiscussCaseHttpError(
           'caseId, title, packageContent, and deidentifiedPackageContent required',
         ),
+      })
+      return
+    }
+
+    // SECURITY (Design D — server-side ciphertext invariant): the identified
+    // package MUST be an EncryptedEnvelope. The client always encrypts before
+    // upload (`src/components/discuss-case/DiscussCasePackageBuilder.tsx`); a
+    // server-side reject is the authoritative gate so a future client (or a
+    // forged direct API call) cannot bypass it. The deidentified package
+    // stays plaintext on purpose so the server's AI pipeline can read it.
+    if (!isEncryptedEnvelope(identifiedContent)) {
+      res.status(400).json({
+        error:
+          'Identified package must be an E2EE ciphertext envelope. Plain text is rejected.',
+        code: 'discuss_case_identified_must_be_e2ee',
       })
       return
     }

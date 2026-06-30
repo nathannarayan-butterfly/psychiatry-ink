@@ -608,3 +608,36 @@
   font-size: 0.875rem;
   color: var(--ks-muted);
 }
+
+/* ── Konsil disabled banner (Design D interim, see server/utils/konsilDisabled.ts) */
+.consultation-page__disabled-banner,
+.consultation-builder__disabled-banner,
+.overview-konsile__disabled-banner {
+  margin: 1rem 1.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid color-mix(in srgb, #b45309 35%, transparent);
+  background: color-mix(in srgb, #fef3c7 80%, var(--ks-surface, #fff));
+  border-radius: 6px;
+  color: #78350f;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.consultation-page__disabled-banner strong,
+.consultation-builder__disabled-banner strong,
+.overview-konsile__disabled-banner strong {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.consultation-page__disabled-banner p,
+.consultation-builder__disabled-banner p,
+.overview-konsile__disabled-banner p {
+  margin: 0;
+}
+
+.overview-konsile__action--disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

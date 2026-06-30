@@ -1,6 +1,26 @@
 import { getKbSupabaseAdmin, isKbAdminConfigured } from './kbSupabaseAdmin'
 
-export interface UserNoteRow {
+/**
+ * Server-side encryption-at-rest for user_notes and kb_pharma_comments
+ * (Design D quick win). The client encrypts `{title, content}` (notes) or
+ * `text` (comments) with the existing per-device RSA-wrapped AES-GCM key
+ * (`src/utils/cryptoVault.ts:encryptJsonPayload`) and uploads
+ * `{ciphertext, iv, wrappedKey, payloadVersion}`. When the client sends
+ * ciphertext, the legacy plaintext columns are forced to empty so a row
+ * cannot carry both — preventing accidental plaintext leaks during rollout.
+ *
+ * The server still accepts legacy plaintext writes (no ciphertext fields)
+ * so older clients keep working until every install has upgraded; then a
+ * follow-up migration can drop the plaintext columns.
+ */
+export interface NoteCiphertextEnvelope {
+  ciphertext: string | null
+  iv: string | null
+  wrappedKey: string | null
+  payloadVersion: number
+}
+
+export interface UserNoteRow extends NoteCiphertextEnvelope {
   id: string
   title: string
   content: string
@@ -27,6 +47,11 @@ function mapNoteRow(row: Record<string, unknown>): UserNoteRow {
     deleted: Boolean(row.deleted),
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
+    ciphertext: row.ciphertext != null ? String(row.ciphertext) : null,
+    iv: row.iv != null ? String(row.iv) : null,
+    wrappedKey: row.wrapped_key != null ? String(row.wrapped_key) : null,
+    payloadVersion:
+      typeof row.payload_version === 'number' ? row.payload_version : 1,
   }
 }
 
@@ -42,26 +67,55 @@ export async function listUserNotes(ownerUserId: string): Promise<UserNoteRow[]>
   return (data ?? []).map((row) => mapNoteRow(row as Record<string, unknown>))
 }
 
+export interface UpsertUserNoteInput {
+  id?: string
+  title?: string
+  content?: string
+  kind?: string
+  category?: string
+  pageType?: string
+  /** Optional ciphertext envelope — when present, plaintext columns are zeroed. */
+  ciphertext?: string
+  iv?: string
+  wrappedKey?: string
+  payloadVersion?: number
+}
+
 export async function upsertUserNote(
   ownerUserId: string,
-  input: {
-    id?: string
-    title: string
-    content: string
-    kind?: string
-    category?: string
-    pageType?: string
-  },
+  input: UpsertUserNoteInput,
 ): Promise<UserNoteRow> {
   const now = new Date().toISOString()
-  const payload = {
+
+  const hasCiphertext = Boolean(input.ciphertext && input.iv && input.wrappedKey)
+
+  // SECURITY: when the client uploads ciphertext, force-clear the legacy
+  // plaintext columns so a single row cannot carry both copies. Older clients
+  // that send plaintext continue to work; we never overwrite an existing
+  // ciphertext row with plaintext implicitly (the client must send a fresh
+  // ciphertext if it wants to update the note).
+  const payload: Record<string, unknown> = {
     owner_user_id: ownerUserId,
-    title: input.title,
-    content: input.content,
     kind: input.kind ?? 'manual',
     category: input.category ?? 'formulare',
     page_type: input.pageType ?? 'standalone:manual',
     updated_at: now,
+  }
+
+  if (hasCiphertext) {
+    payload.ciphertext = input.ciphertext
+    payload.iv = input.iv
+    payload.wrapped_key = input.wrappedKey
+    payload.payload_version = input.payloadVersion ?? 1
+    payload.title = ''
+    payload.content = ''
+  } else {
+    payload.title = input.title ?? ''
+    payload.content = input.content ?? ''
+    payload.ciphertext = null
+    payload.iv = null
+    payload.wrapped_key = null
+    payload.payload_version = 1
   }
 
   if (input.id) {
@@ -94,7 +148,7 @@ export async function softDeleteUserNote(ownerUserId: string, noteId: string): P
   if (error) throw new Error(error.message)
 }
 
-export interface KbPharmaCommentRow {
+export interface KbPharmaCommentRow extends NoteCiphertextEnvelope {
   id: string
   medicationId: string
   sectionId: string
@@ -115,6 +169,11 @@ function mapCommentRow(row: Record<string, unknown>): KbPharmaCommentRow {
     deleted: Boolean(row.deleted),
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
+    ciphertext: row.ciphertext != null ? String(row.ciphertext) : null,
+    iv: row.iv != null ? String(row.iv) : null,
+    wrappedKey: row.wrapped_key != null ? String(row.wrapped_key) : null,
+    payloadVersion:
+      typeof row.payload_version === 'number' ? row.payload_version : 1,
   }
 }
 
@@ -130,24 +189,46 @@ export async function listKbPharmaComments(ownerUserId: string): Promise<KbPharm
   return (data ?? []).map((row) => mapCommentRow(row as Record<string, unknown>))
 }
 
+export interface UpsertKbPharmaCommentInput {
+  id?: string
+  medicationId: string
+  sectionId: string
+  text?: string
+  highlightId?: string | null
+  /** Optional ciphertext envelope — when present, plaintext text is zeroed. */
+  ciphertext?: string
+  iv?: string
+  wrappedKey?: string
+  payloadVersion?: number
+}
+
 export async function upsertKbPharmaComment(
   ownerUserId: string,
-  input: {
-    id?: string
-    medicationId: string
-    sectionId: string
-    text: string
-    highlightId?: string | null
-  },
+  input: UpsertKbPharmaCommentInput,
 ): Promise<KbPharmaCommentRow> {
   const now = new Date().toISOString()
-  const payload = {
+  const hasCiphertext = Boolean(input.ciphertext && input.iv && input.wrappedKey)
+
+  const payload: Record<string, unknown> = {
     owner_user_id: ownerUserId,
     medication_id: input.medicationId,
     section_id: input.sectionId,
-    text: input.text,
     highlight_id: input.highlightId ?? null,
     updated_at: now,
+  }
+
+  if (hasCiphertext) {
+    payload.ciphertext = input.ciphertext
+    payload.iv = input.iv
+    payload.wrapped_key = input.wrappedKey
+    payload.payload_version = input.payloadVersion ?? 1
+    payload.text = ''
+  } else {
+    payload.text = input.text ?? ''
+    payload.ciphertext = null
+    payload.iv = null
+    payload.wrapped_key = null
+    payload.payload_version = 1
   }
 
   if (input.id) {

@@ -47,8 +47,23 @@ userNotesRouter.post('/', async (req, res) => {
   const body = (req.body ?? {}) as Record<string, unknown>
   const title = typeof body.title === 'string' ? body.title : ''
   const content = typeof body.content === 'string' ? body.content : ''
-  if (!content.trim() && !title.trim()) {
-    res.status(400).json({ error: 'title or content required' })
+  const ciphertext = typeof body.ciphertext === 'string' ? body.ciphertext : undefined
+  const iv = typeof body.iv === 'string' ? body.iv : undefined
+  const wrappedKey = typeof body.wrappedKey === 'string' ? body.wrappedKey : undefined
+  const payloadVersion =
+    typeof body.payloadVersion === 'number' ? body.payloadVersion : undefined
+  const hasCiphertext = Boolean(ciphertext && iv && wrappedKey)
+  // SECURITY: refuse mixed writes — encrypted clients must NOT leak plaintext
+  // alongside the ciphertext (Design D quick-win for `user_notes`).
+  if (hasCiphertext && (title.trim() || content.trim())) {
+    res.status(400).json({
+      error:
+        'ciphertext and plaintext title/content are mutually exclusive — send one or the other',
+    })
+    return
+  }
+  if (!hasCiphertext && !content.trim() && !title.trim()) {
+    res.status(400).json({ error: 'title, content, or ciphertext required' })
     return
   }
   try {
@@ -59,6 +74,10 @@ userNotesRouter.post('/', async (req, res) => {
       kind: typeof body.kind === 'string' ? body.kind : undefined,
       category: typeof body.category === 'string' ? body.category : undefined,
       pageType: typeof body.pageType === 'string' ? body.pageType : undefined,
+      ciphertext,
+      iv,
+      wrappedKey,
+      payloadVersion,
     })
     res.json({ note })
   } catch (error) {

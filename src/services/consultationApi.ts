@@ -10,6 +10,24 @@ import type {
   SaveReportInput,
 } from '../types/consultation'
 
+/**
+ * Konsil sharing (creating / mutating consultation requests) is temporarily
+ * disabled per the Design D rollout — the server returns 410 with
+ * `code: 'konsil_disabled'`. Read paths still work so historical
+ * consultations remain accessible.
+ */
+export const KONSIL_DISABLED_CODE = 'konsil_disabled'
+
+export class KonsilDisabledError extends Error {
+  readonly code: string
+
+  constructor(message: string) {
+    super(message)
+    this.name = 'KonsilDisabledError'
+    this.code = KONSIL_DISABLED_CODE
+  }
+}
+
 async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
   const authHeaders = await getAuthHeaders()
   return fetch(`${API_BASE}${path}`, {
@@ -23,7 +41,13 @@ async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
 }
 
 async function parseError(response: Response, fallback: string): Promise<never> {
-  const detail = (await response.json().catch(() => null)) as { error?: string } | null
+  const detail = (await response.json().catch(() => null)) as {
+    error?: string
+    code?: string
+  } | null
+  if (response.status === 410 || detail?.code === KONSIL_DISABLED_CODE) {
+    throw new KonsilDisabledError(detail?.error ?? fallback)
+  }
   throw new Error(detail?.error ?? `${fallback} (${response.status})`)
 }
 

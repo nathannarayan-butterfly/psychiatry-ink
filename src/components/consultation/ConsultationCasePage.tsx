@@ -164,16 +164,28 @@ export function ConsultationCasePage({
           >
             {translateConsultationUi(language, 'print')}
           </button>
+          {/* TODO(konsil-reenable): Konsil sharing disabled — see server/utils/konsilDisabled.ts. */}
           <button
             type="button"
             className="consultation-page__create-btn"
-            onClick={() => setMode('create')}
-            disabled={!payload}
+            disabled
+            aria-disabled="true"
+            title={translateConsultationUi(language, 'konsilDisabledTitle')}
+            data-testid="konsil-case-page-create"
           >
             {translateConsultationUi(language, 'requestConsultation')}
           </button>
         </div>
       </header>
+
+      <div
+        className="consultation-page__disabled-banner"
+        role="status"
+        data-testid="konsil-disabled-banner"
+      >
+        <strong>{translateConsultationUi(language, 'konsilDisabledTitle')}</strong>
+        <p>{translateConsultationUi(language, 'konsilDisabledBody')}</p>
+      </div>
 
       {error ? <p className="consultation-page__error">{error}</p> : null}
 

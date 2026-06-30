@@ -31,8 +31,24 @@ import {
 } from '../services/consultationPermissions'
 import type { CreateConsultationInput, SaveReportInput } from '../../src/types/consultation'
 import { pathParam } from '../utils/expressParams'
+import {
+  isKonsilSharingEnabled,
+  KONSIL_DISABLED_CODE,
+  KONSIL_DISABLED_MESSAGE_DE,
+} from '../utils/konsilDisabled'
 
 export const consultationRouter: Router = createRouter()
+
+// TODO(konsil-reenable): remove this guard once the invite-link E2EE Konsil
+// flow lands. See `server/utils/konsilDisabled.ts` for the re-enable plan.
+function rejectIfKonsilDisabled(res: Response): boolean {
+  if (isKonsilSharingEnabled()) return false
+  res.status(410).json({
+    error: KONSIL_DISABLED_MESSAGE_DE,
+    code: KONSIL_DISABLED_CODE,
+  })
+  return true
+}
 
 function requireAuth(req: Request, res: Response): string | null {
   const userId = resolveAccountId(req)
@@ -112,6 +128,7 @@ consultationRouter.get('/', async (req: Request, res: Response) => {
 // POST /api/consultation — create request
 consultationRouter.post('/', async (req: Request, res: Response) => {
   try {
+    if (rejectIfKonsilDisabled(res)) return
     const userId = requireAuth(req, res)
     if (!userId || !requireSupabase(res)) return
 
@@ -176,6 +193,7 @@ consultationRouter.post('/', async (req: Request, res: Response) => {
 // POST /api/consultation/invites/accept
 consultationRouter.post('/invites/accept', async (req: Request, res: Response) => {
   try {
+    if (rejectIfKonsilDisabled(res)) return
     const userId = requireAuth(req, res)
     if (!userId || !requireSupabase(res)) return
 
@@ -246,6 +264,7 @@ consultationRouter.get('/:id/session', async (req: Request, res: Response) => {
 // POST /api/consultation/:id/report/draft
 consultationRouter.post('/:id/report/draft', async (req: Request, res: Response) => {
   try {
+    if (rejectIfKonsilDisabled(res)) return
     const session = await loadSession(req, res, pathParam(req, 'id'))
     if (!session) return
 
@@ -272,6 +291,7 @@ consultationRouter.post('/:id/report/draft', async (req: Request, res: Response)
 // POST /api/consultation/:id/report/submit
 consultationRouter.post('/:id/report/submit', async (req: Request, res: Response) => {
   try {
+    if (rejectIfKonsilDisabled(res)) return
     const session = await loadSession(req, res, pathParam(req, 'id'))
     if (!session) return
 
@@ -298,6 +318,7 @@ consultationRouter.post('/:id/report/submit', async (req: Request, res: Response
 // POST /api/consultation/:id/more-info
 consultationRouter.post('/:id/more-info', async (req: Request, res: Response) => {
   try {
+    if (rejectIfKonsilDisabled(res)) return
     const session = await loadSession(req, res, pathParam(req, 'id'))
     if (!session) return
 
@@ -329,6 +350,7 @@ consultationRouter.post('/:id/more-info', async (req: Request, res: Response) =>
 // POST /api/consultation/:id/respond
 consultationRouter.post('/:id/respond', async (req: Request, res: Response) => {
   try {
+    if (rejectIfKonsilDisabled(res)) return
     const session = await loadSession(req, res, pathParam(req, 'id'))
     if (!session) return
 
@@ -351,9 +373,10 @@ consultationRouter.post('/:id/respond', async (req: Request, res: Response) => {
   }
 })
 
-// POST /api/consultation/:id/reviewed
+// POST /api/consultation/:id/reviewed — gated only on writes, reads (GET /:id/session, /audit-logs) stay open
 consultationRouter.post('/:id/reviewed', async (req: Request, res: Response) => {
   try {
+    if (rejectIfKonsilDisabled(res)) return
     const session = await loadSession(req, res, pathParam(req, 'id'))
     if (!session) return
 
@@ -373,6 +396,7 @@ consultationRouter.post('/:id/reviewed', async (req: Request, res: Response) => 
 // POST /api/consultation/:id/archive
 consultationRouter.post('/:id/archive', async (req: Request, res: Response) => {
   try {
+    if (rejectIfKonsilDisabled(res)) return
     const session = await loadSession(req, res, pathParam(req, 'id'))
     if (!session) return
 
@@ -392,6 +416,7 @@ consultationRouter.post('/:id/archive', async (req: Request, res: Response) => {
 // POST /api/consultation/:id/revoke
 consultationRouter.post('/:id/revoke', async (req: Request, res: Response) => {
   try {
+    if (rejectIfKonsilDisabled(res)) return
     const session = await loadSession(req, res, pathParam(req, 'id'))
     if (!session) return
 
