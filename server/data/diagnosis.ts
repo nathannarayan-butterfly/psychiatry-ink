@@ -143,15 +143,26 @@ export interface CatalogueMeta {
   id: string
   system: CatalogueSystem
   version: string
+  language: string
 }
 
-/** Active catalogues, optionally constrained to the requested search system. */
+/**
+ * Active catalogues, optionally constrained to the requested search system AND
+ * UI language. When a `language` is requested and at least one matching
+ * catalogue is active, only catalogues for that language are returned — so the
+ * search endpoint can serve locale-appropriate labels. When no catalogue exists
+ * for the requested language, ALL active catalogues for the system are returned
+ * (graceful German fallback). The structured catalogue tables are language-
+ * partitioned by design (`unique (system, version, language)` on
+ * `diagnosis_catalogues`), so this is the correct seam for locale routing.
+ */
 export async function listActiveCatalogues(
   system: CatalogueSearchSystem,
+  language?: string,
 ): Promise<CatalogueMeta[]> {
   let query = getSupabaseAdmin()
     .from('diagnosis_catalogues')
-    .select('id, system, version')
+    .select('id, system, version, language')
     .eq('active', true)
   if (system === 'ALL') {
     query = query.in('system', ['ICD10GM', 'ICD11MMS'])
@@ -160,7 +171,16 @@ export async function listActiveCatalogues(
   }
   const { data, error } = await query
   if (error) throw new Error(`diagnosis_catalogues read failed: ${error.message}`)
-  return (data ?? []).map((c) => ({ id: c.id, system: c.system as CatalogueSystem, version: c.version }))
+  const all = (data ?? []).map((c) => ({
+    id: c.id,
+    system: c.system as CatalogueSystem,
+    version: c.version,
+    language: c.language ?? 'de',
+  }))
+  const requested = language?.trim().toLowerCase()
+  if (!requested) return all
+  const matchingLang = all.filter((c) => c.language.toLowerCase() === requested)
+  return matchingLang.length > 0 ? matchingLang : all
 }
 
 /** A catalogue entry candidate returned from search, pre-joined with metadata. */

@@ -74,15 +74,22 @@ export async function searchDiagnosisCodes(
   const q = query.trim()
   if (!q) return []
 
+  // Forward the active UI locale to the live endpoint via both `lang` query
+  // param and `Accept-Language` header — without this, a non-German UI would
+  // receive German labels from the database-backed catalogue while the bundled
+  // fallback (used offline) correctly localized them.
   const params = new URLSearchParams({
     q,
     system: toApiCatalogueSystem(system),
     scope: 'psychiatric',
     limit: String(limit),
+    lang,
   })
 
   try {
-    const response = await fetch(`${API_BASE}/api/diagnoses/search?${params}`)
+    const response = await fetch(`${API_BASE}/api/diagnoses/search?${params}`, {
+      headers: { 'Accept-Language': lang },
+    })
     if (response.ok) {
       const data = (await response.json()) as { results?: DiagnosisCatalogueSearchHit[] }
       const results = data.results ?? []

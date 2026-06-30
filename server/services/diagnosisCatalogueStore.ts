@@ -56,11 +56,29 @@ function rankHit(
   return 4
 }
 
+function parseLanguage(raw: string | undefined): string | undefined {
+  const value = raw?.trim().toLowerCase()
+  if (!value) return undefined
+  // Accept BCP-47 tags ("en-US" → "en") and a small allow-list to avoid passing
+  // arbitrary client input to the data layer. Falls back to undefined ("any
+  // active catalogue") when the requested locale is not one we know about.
+  const head = value.split(/[-_]/)[0]
+  if (head === 'de' || head === 'en' || head === 'fr' || head === 'es') return head
+  return undefined
+}
+
 export async function searchDiagnosisCatalogue(params: {
   q: string
   system?: string
   scope?: string
   limit?: number
+  /**
+   * UI language hint. When a locale-specific catalogue is active, only entries
+   * from that catalogue are returned; otherwise the German catalogue is used
+   * (graceful fallback). Accepts "de", "en", "fr", "es" or BCP-47 tags such as
+   * "en-US"; any other value is ignored.
+   */
+  language?: string
 }): Promise<DiagnosisCatalogueSearchHit[]> {
   const q = normalizeQuery(params.q)
   if (!q) return []
@@ -70,8 +88,9 @@ export async function searchDiagnosisCatalogue(params: {
   const limitRaw = Number(params.limit ?? 12)
   const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 30) : 12
   const qCode = normalizeCode(params.q)
+  const language = parseLanguage(params.language)
 
-  const catalogues = await listActiveCatalogues(system)
+  const catalogues = await listActiveCatalogues(system, language)
   if (catalogues.length === 0) return []
 
   const catalogueIds = catalogues.map((c) => c.id)

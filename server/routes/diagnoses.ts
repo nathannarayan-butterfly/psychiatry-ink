@@ -7,7 +7,21 @@ import {
 
 export const diagnosesRouter: Router = createRouter()
 
-/** GET /api/diagnoses/search?q=f20&system=ICD10GM&scope=psychiatric&limit=12 */
+/**
+ * Read the requested UI language from the `lang` query param first, then fall
+ * back to the first tag in `Accept-Language`. Returns `undefined` when neither
+ * is set so the downstream catalogue lookup picks any active catalogue.
+ */
+function resolveLanguage(req: Request): string | undefined {
+  const explicit = typeof req.query.lang === 'string' ? req.query.lang.trim() : ''
+  if (explicit) return explicit
+  const accept = req.headers['accept-language']
+  if (typeof accept !== 'string') return undefined
+  const first = accept.split(',')[0]?.split(';')[0]?.trim()
+  return first || undefined
+}
+
+/** GET /api/diagnoses/search?q=f20&system=ICD10GM&scope=psychiatric&limit=12&lang=en */
 diagnosesRouter.get('/search', async (req: Request, res: Response) => {
   try {
     const q = String(req.query.q ?? '').trim()
@@ -21,6 +35,7 @@ diagnosesRouter.get('/search', async (req: Request, res: Response) => {
       system: typeof req.query.system === 'string' ? req.query.system : undefined,
       scope: typeof req.query.scope === 'string' ? req.query.scope : undefined,
       limit: Number(req.query.limit ?? 12),
+      language: resolveLanguage(req),
     })
 
     res.json({ results })
