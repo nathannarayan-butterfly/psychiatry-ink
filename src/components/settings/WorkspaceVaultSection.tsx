@@ -1,13 +1,14 @@
 import { Download, Upload } from 'lucide-react'
-import { useEffect, useRef, useState, type ChangeEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import { useAuth } from '../../context/AuthContext'
 import type { useWorkspaceVault } from '../../hooks/useWorkspaceVault'
 import {
-  restoreAccountCloudBackup,
+  restoreAccountCloudBackupWithProgress,
   setupAccountCloudBackup,
 } from '../../utils/accountBackup'
 import { markAccountKeyLinked } from '../../utils/accountKeyLink'
+import { PassphraseUnlockProgress } from '../auth/PassphraseUnlockProgress'
 import type { IdentifierStorageMode } from '../../utils/identifierStorage'
 import {
   MAX_PASSPHRASE_LENGTH,
@@ -101,10 +102,14 @@ export function WorkspaceVaultSection({
     }
   }
 
-  const handleRestoreFromPassphrase = async () => {
+  const handleRestoreFromPassphrase = useCallback(async () => {
     if (!recoveryPassphrase.trim()) return
     try {
-      const result = await restoreAccountCloudBackup(recoveryPassphrase, countryCode, userId)
+      const result = await restoreAccountCloudBackupWithProgress(
+        recoveryPassphrase,
+        countryCode,
+        userId,
+      )
       setRecoveryPassphrase('')
       const parts = [
         `${t('accountBackupCloudRestored')} (${result.workspaceCases} ${t('accountBackupWorkspaceLabel')})`,
@@ -119,6 +124,9 @@ export function WorkspaceVaultSection({
       setPassphraseStatus(parts.join(' — '))
       onCloudSyncComplete?.()
     } catch {
+      // The stepped progress UI already surfaces which step failed; this is
+      // the fallback path that handles the "key-only restore" case for users
+      // who don't have a server snapshot.
       try {
         await restorePrivateKeyFromPassphrase(recoveryPassphrase)
         markAccountKeyLinked(userId)
@@ -128,7 +136,7 @@ export function WorkspaceVaultSection({
         setPassphraseStatus(t('workspacePassphraseRestoreFailed'))
       }
     }
-  }
+  }, [countryCode, onCloudSyncComplete, recoveryPassphrase, t, userId])
 
   const handleImportRecoveryFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -250,6 +258,10 @@ export function WorkspaceVaultSection({
           />
         </div>
         {passphraseStatus ? <p className="mt-2 text-xs text-muted">{passphraseStatus}</p> : null}
+        <PassphraseUnlockProgress
+          onRetry={() => void handleRestoreFromPassphrase()}
+          helpHref="/help/passphrase-unlock"
+        />
       </SettingsField>
 
       {vault.error ? <p className="mt-2 text-xs text-recording">{vault.error}</p> : null}

@@ -39,6 +39,14 @@ import {
   type PassphraseKeyBackup,
 } from './passphraseRecovery'
 import {
+  activateUnlockStep,
+  completeUnlockStep,
+  failUnlockStep,
+  finishPassphraseUnlock,
+  startPassphraseUnlock,
+  updateUnlockStepCount,
+} from './passphraseUnlockProgress'
+import {
   applyWorkspacePayloadAsync,
   decryptWorkspaceBlob,
 } from './workspaceVault'
@@ -278,27 +286,106 @@ async function listRemoteWorkspaceCaseIds(
   return (data.cases ?? []).map((item) => item.caseId)
 }
 
-/** Pull encrypted clinical case files (incl. diagnoses) for all known cases. */
-export async function pullWorkspaceSnapshotsFromCloud(countryCode: string): Promise<number> {
-  const deviceId = getOrCreateDeviceId()
-  const caseIds = new Set<string>([
-    ...Object.keys(getRegistryMapSnapshot()),
-    ...(await listRemoteWorkspaceCaseIds(deviceId, countryCode)),
-  ])
+export interface PullWorkspaceSnapshotsOptions {
+  /**
+   * When true, emit step-by-step progress into the
+   * `passphraseUnlockProgress` state machine. The wrapper
+   * `restoreAccountCloudBackupWithProgress` passes `true`; standalone callers
+   * (e.g. the Settings "re-sync from cloud" button) leave it off to avoid
+   * driving the unlock UI.
+   */
+  reportProgress?: boolean
+}
 
-  let restored = 0
-  for (const caseId of caseIds) {
-    const blob = await fetchRemoteWorkspaceSnapshot(deviceId, countryCode, caseId)
-    if (!blob) continue
+interface DecryptedSnapshot {
+  caseId: string
+  blob: EncryptedVaultBlob
+  payload: Awaited<ReturnType<typeof decryptWorkspaceBlob>>
+}
+
+/**
+ * Pull encrypted clinical case files (incl. diagnoses) for all known cases.
+ *
+ * The implementation is split into three explicit phases so the passphrase
+ * unlock UI can render an honest stepper:
+ *   1. fetch  — HTTP GETs against /api/workspace/snapshot per case
+ *   2. decrypt — AES-GCM decrypt of every fetched blob
+ *   3. save    — populate the local IDB cache + apply payload to feature stores
+ */
+export async function pullWorkspaceSnapshotsFromCloud(
+  countryCode: string,
+  options: PullWorkspaceSnapshotsOptions = {},
+): Promise<number> {
+  const reportProgress = options.reportProgress ?? false
+  const deviceId = getOrCreateDeviceId()
+  const caseIds = Array.from(
+    new Set<string>([
+      ...Object.keys(getRegistryMapSnapshot()),
+      ...(await listRemoteWorkspaceCaseIds(deviceId, countryCode)),
+    ]),
+  )
+
+  // PHASE 1 — fetch every ciphertext blob from the server.
+  if (reportProgress) activateUnlockStep('fetchingSnapshots', caseIds.length)
+  const fetched: Array<{ caseId: string; blob: EncryptedVaultBlob }> = []
+  for (let index = 0; index < caseIds.length; index += 1) {
+    const caseId = caseIds[index]
     try {
-      const payload = await decryptWorkspaceBlob(blob)
-      await saveWorkspaceVaultBlob(blob, caseId)
-      await applyWorkspacePayloadAsync(payload, caseId)
-      restored += 1
+      const blob = await fetchRemoteWorkspaceSnapshot(deviceId, countryCode, caseId)
+      if (blob) fetched.push({ caseId, blob })
     } catch (error) {
-      console.warn('[account-backup] workspace restore failed', caseId, error)
+      console.warn('[account-backup] workspace fetch failed', caseId, error)
+    }
+    if (reportProgress) {
+      updateUnlockStepCount('fetchingSnapshots', {
+        processed: index + 1,
+        total: caseIds.length,
+      })
     }
   }
+  if (reportProgress) completeUnlockStep('fetchingSnapshots')
+
+  // PHASE 2 — decrypt every blob.
+  if (reportProgress) activateUnlockStep('decrypting', fetched.length)
+  const decrypted: DecryptedSnapshot[] = []
+  for (let index = 0; index < fetched.length; index += 1) {
+    const item = fetched[index]
+    try {
+      const payload = await decryptWorkspaceBlob(item.blob)
+      decrypted.push({ caseId: item.caseId, blob: item.blob, payload })
+    } catch (error) {
+      console.warn('[account-backup] workspace decrypt failed', item.caseId, error)
+    }
+    if (reportProgress) {
+      updateUnlockStepCount('decrypting', {
+        processed: index + 1,
+        total: fetched.length,
+      })
+    }
+  }
+  if (reportProgress) completeUnlockStep('decrypting')
+
+  // PHASE 3 — populate the local IDB cache + apply to feature stores.
+  if (reportProgress) activateUnlockStep('populatingCache', decrypted.length)
+  let restored = 0
+  for (let index = 0; index < decrypted.length; index += 1) {
+    const item = decrypted[index]
+    try {
+      await saveWorkspaceVaultBlob(item.blob, item.caseId)
+      await applyWorkspacePayloadAsync(item.payload, item.caseId)
+      restored += 1
+    } catch (error) {
+      console.warn('[account-backup] workspace cache write failed', item.caseId, error)
+    }
+    if (reportProgress) {
+      updateUnlockStepCount('populatingCache', {
+        processed: index + 1,
+        total: decrypted.length,
+      })
+    }
+  }
+  if (reportProgress) completeUnlockStep('populatingCache')
+
   return restored
 }
 
@@ -444,6 +531,79 @@ export async function restoreAccountCloudBackup(
   if (usesAccountIdentifierSync()) {
     scheduleAccountRegistryUpload()
   }
+
+  return {
+    identifierCases,
+    workspaceCases,
+    identifiersFromAccount,
+  }
+}
+
+/**
+ * Same as `restoreAccountCloudBackup` but emits step-by-step progress into the
+ * passphrase-unlock state machine for the stepped UI surface.
+ *
+ * Errors are re-thrown so the caller's catch path can still react, BUT the
+ * relevant step is also marked as `error` first — that lets the React UI
+ * render a per-step red X with a specific failure message before the catch
+ * site renders its own toast / status hint.
+ */
+export async function restoreAccountCloudBackupWithProgress(
+  passphrase: string,
+  countryCode: string,
+  userId?: string | null,
+): Promise<AccountCloudRestoreResult> {
+  startPassphraseUnlock()
+
+  // STEP 1 — derive AES key from passphrase + unwrap the private RSA key.
+  activateUnlockStep('derivingKey')
+  let keyBackup: PassphraseKeyBackup
+  try {
+    keyBackup = await resolveKeyBackup()
+    await restorePrivateKeyFromPassphrase(passphrase, keyBackup)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Key derivation failed'
+    failUnlockStep('derivingKey', message)
+    throw error
+  }
+  setAccountBackupUnlocked(passphrase)
+  markAccountKeyLinked(userId)
+  completeUnlockStep('derivingKey')
+
+  // Identifier restore is part of the key step — it doesn't have its own
+  // user-visible step because the count is opaque (registry-only restore is a
+  // single decrypt/apply pair). Failures still surface via the next step.
+  let identifierCases = 0
+  try {
+    identifierCases = await tryAutoRestoreRegistryFromAccount(passphrase)
+  } catch (error) {
+    console.warn('[account-backup] identifier restore failed', error)
+  }
+  const status = await fetchAccountBackupStatus()
+  const identifiersFromAccount = identifierCases > 0 || Boolean(status?.hasRegistryBackup)
+
+  // STEPS 2-4 — fetch / decrypt / populate-cache, driven by the snapshot pull.
+  let workspaceCases = 0
+  try {
+    workspaceCases = await pullWorkspaceSnapshotsFromCloud(countryCode, {
+      reportProgress: true,
+    })
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : 'Workspace restore failed'
+    // The pull function already reported per-phase progress; mark whichever
+    // step is still active as failed so the UI shows the red X.
+    const progress = (await import('./passphraseUnlockProgress')).getPassphraseUnlockProgress()
+    const activeStep = progress.steps.find((step) => step.state === 'active')
+    failUnlockStep(activeStep?.id ?? 'populatingCache', message)
+    throw error
+  }
+
+  if (usesAccountIdentifierSync()) {
+    scheduleAccountRegistryUpload()
+  }
+
+  finishPassphraseUnlock()
 
   return {
     identifierCases,

@@ -20028,6 +20028,62 @@ export const uiTranslations = {
     es: 'Más información',
   },
 
+  // --- Stepped passphrase unlock UX (RECOVERY_REPORT.md Part B) ---
+  passphraseUnlockStepDerivingKey: {
+    de: 'Schlüssel wird abgeleitet',
+    en: 'Deriving key',
+    fr: 'Dérivation de la clé',
+    es: 'Derivando clave',
+  },
+  passphraseUnlockStepFetchingSnapshots: {
+    de: 'Verschlüsselte Inhalte werden vom Server geladen',
+    en: 'Loading encrypted content from server',
+    fr: 'Chargement du contenu chiffré depuis le serveur',
+    es: 'Cargando contenido cifrado del servidor',
+  },
+  passphraseUnlockStepDecrypting: {
+    de: 'Inhalte werden entschlüsselt',
+    en: 'Decrypting content',
+    fr: 'Déchiffrement du contenu',
+    es: 'Descifrando contenido',
+  },
+  passphraseUnlockStepPopulatingCache: {
+    de: 'Lokaler Tresor wird aufgebaut',
+    en: 'Building local vault',
+    fr: 'Construction du coffre local',
+    es: 'Construyendo bóveda local',
+  },
+  passphraseUnlockStepDone: {
+    de: 'Bereit',
+    en: 'Ready',
+    fr: 'Prêt',
+    es: 'Listo',
+  },
+  passphraseUnlockStepCounter: {
+    de: 'Fall {processed} / {total}',
+    en: 'Case {processed} / {total}',
+    fr: 'Dossier {processed} / {total}',
+    es: 'Caso {processed} / {total}',
+  },
+  passphraseUnlockStepCounterDone: {
+    de: '{count} verarbeitet',
+    en: '{count} processed',
+    fr: '{count} traité(s)',
+    es: '{count} procesado(s)',
+  },
+  passphraseUnlockRetry: {
+    de: 'Erneut versuchen',
+    en: 'Try again',
+    fr: 'Réessayer',
+    es: 'Reintentar',
+  },
+  passphraseUnlockHelp: {
+    de: 'Hilfe',
+    en: 'Help',
+    fr: 'Aide',
+    es: 'Ayuda',
+  },
+
   ...guidedEntryUiTranslations,
   ...aufnahmeBefundUiTranslations,
   ...psychopathGuidedUiLabels,

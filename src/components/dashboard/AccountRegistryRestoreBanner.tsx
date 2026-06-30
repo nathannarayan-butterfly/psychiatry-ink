@@ -5,9 +5,10 @@ import { useAuth } from '../../context/AuthContext'
 import {
   isAccountRegistryRestoreNeeded,
   isKeyRestoreNeeded,
-  restoreAccountCloudBackup,
+  restoreAccountCloudBackupWithProgress,
 } from '../../utils/accountBackup'
 import { markAccountKeyLinked } from '../../utils/accountKeyLink'
+import { PassphraseUnlockProgress } from '../auth/PassphraseUnlockProgress'
 
 interface AccountRegistryRestoreBannerProps {
   countryCode: string
@@ -59,7 +60,10 @@ export function AccountRegistryRestoreBanner({
     setBusy(true)
     setStatus(null)
     try {
-      const result = await restoreAccountCloudBackup(passphrase.trim(), countryCode)
+      const result = await restoreAccountCloudBackupWithProgress(
+        passphrase.trim(),
+        countryCode,
+      )
       // The passphrase decrypted the account key backup, so this browser now
       // holds the account's real private key — remember it so the prompt does
       // not reappear on every login on this device.
@@ -74,6 +78,9 @@ export function AccountRegistryRestoreBanner({
       setStatus(parts.join(' — '))
       onRestored()
     } catch {
+      // The stepped progress UI surfaces the specific per-step error already
+      // (red X on the failing step). Keep this status hint as a fallback for
+      // screen-readers / users without per-step focus.
       setStatus(t('workspacePassphraseRestoreFailed'))
     } finally {
       setBusy(false)
@@ -124,6 +131,10 @@ export function AccountRegistryRestoreBanner({
         </button>
       </div>
       {status ? <p className="dashboard-restore-banner__status text-xs text-recording">{status}</p> : null}
+      <PassphraseUnlockProgress
+        onRetry={() => void handleRestore()}
+        helpHref="/help/passphrase-unlock"
+      />
     </section>
   )
 }
