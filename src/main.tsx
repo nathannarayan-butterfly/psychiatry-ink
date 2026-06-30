@@ -2,11 +2,13 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { CryptoVaultBootBanner } from './components/system/CryptoVaultBootBanner'
 import { AuthProvider } from './context/AuthContext'
 import { OrganisationProvider } from './contexts/PermissionContext'
 import { ActiveAppointmentProvider } from './contexts/ActiveAppointmentContext'
 import { defaultLanguage } from './data/languages'
 import { registerClinicalLanguageResolver } from './services/clinicalApiFetch'
+import { probeCryptoVault } from './utils/bootCryptoVaultProbe'
 import { installChunkReloadGuard } from './utils/chunkReloadGuard'
 import { loadBootstrapUiLanguage, loadInitialDocumentLanguage } from './utils/clinicalLanguage'
 import { reapplyDevicePreferences } from './utils/devicePreferences'
@@ -60,6 +62,12 @@ import './styles/phone-gate.css'
 
 installChunkReloadGuard()
 
+// Open the shared crypto IndexedDB eagerly BEFORE any feature module can
+// race the schema. The opener is idempotent (v2), so subsequent feature
+// opens see a fully-populated DB. A probe failure surfaces as the
+// `CryptoVaultBootBanner` below. See RECOVERY_REPORT.md §3.
+void probeCryptoVault()
+
 captureReferralCodeFromUrl()
 
 registerClinicalLanguageResolver(loadBootstrapUiLanguage)
@@ -79,6 +87,7 @@ createRoot(document.getElementById('root')!).render(
         <OrganisationProvider>
           <ActiveAppointmentProvider>
             <App />
+            <CryptoVaultBootBanner />
           </ActiveAppointmentProvider>
         </OrganisationProvider>
       </AuthProvider>

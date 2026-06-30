@@ -10,6 +10,7 @@ import {
   savePatientMetadata,
   type PatientMetadata,
 } from '../utils/cryptoVault'
+import { reportCryptoError } from '../utils/cryptoErrorReporter'
 import { getCaseMeta, upsertCaseMeta } from './useCaseRegistry'
 import { API_BASE } from '../services/apiClient'
 
@@ -122,12 +123,58 @@ export function usePatientMetadata({
         ...next,
         updatedAt: new Date().toISOString(),
       }
-      await savePatientMetadata(payload, caseId)
-      upsertCaseMeta(caseId, {
-        localName: payload.name.trim() || undefined,
-        localGeburtsdatum: payload.geburtsdatum.trim() || undefined,
-      })
+
+      // SERVER-FIRST ORDER — see RECOVERY_REPORT.md §1.2.
+      //
+      // Before the 2026-06-30 hotfix this hook saved to the encrypted vault
+      // IDB store FIRST and only mirrored to the case registry on success.
+      // When the vault save threw (missing `vault` object store) every patient
+      // name / DOB edit silently failed to land in the registry, producing
+      // the "case ID but no patient details" symptom.
+      //
+      // Until the dedicated server-side identifier-vault client lands (see
+      // DESIGN_D_REPORT.md), the case registry is the most durable layer we
+      // have for name/DOB: it is encrypted-at-rest in localStorage AND
+      // mirrors to the server via the existing patient-registry API. So we
+      // persist there FIRST, then write the local vault as a cache.
+      let registryError: unknown = null
+      try {
+        upsertCaseMeta(caseId, {
+          localName: payload.name.trim() || undefined,
+          localGeburtsdatum: payload.geburtsdatum.trim() || undefined,
+        })
+      } catch (error) {
+        registryError = error
+        reportCryptoError({
+          scope: 'case-registry-write',
+          code: 'registry-upsert-failed',
+          error,
+          context: { caseId },
+        })
+      }
+
+      let vaultError: unknown = null
+      try {
+        await savePatientMetadata(payload, caseId)
+      } catch (error) {
+        vaultError = error
+        reportCryptoError({
+          scope: 'patient-metadata-save',
+          code: 'idb-write-failed',
+          error,
+          context: { caseId },
+        })
+      }
+
       setMetadata(payload)
+
+      // Throw only when EVERY durability surface failed; otherwise the user's
+      // edit is still safe in the durable layer above.
+      if (registryError && vaultError) {
+        throw vaultError instanceof Error
+          ? vaultError
+          : new Error('Patient metadata save failed')
+      }
     },
     [caseId],
   )

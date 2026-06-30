@@ -48,6 +48,7 @@ import {
 import { hasAccountOnboardingRecord } from '../../utils/accountBackup'
 import { DashboardHinweise } from './DashboardHinweise'
 import { AccountRegistryRestoreBanner } from './AccountRegistryRestoreBanner'
+import { WorkspaceHealthBanner } from './WorkspaceHealthBanner'
 import { DashboardTopBar } from './DashboardTopBar'
 import { KnowledgeBaseTile } from './KnowledgeBase'
 import { useSystemAdminAccess } from '../../hooks/useSystemAdminAccess'
@@ -478,6 +479,7 @@ export function DashboardPage({
           countryCode={privacy.countryCode}
           onRestored={() => void registry.refresh()}
         />
+        <WorkspaceHealthBanner countryCode={privacy.countryCode} />
         <DashboardHinweise
           identifierStorage={privacy.identifierStorage}
           tier={privacy.tier}

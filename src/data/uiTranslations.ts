@@ -19954,6 +19954,80 @@ export const uiTranslations = {
     es: 'Descartar',
   },
 
+  // --- Server-first save pipeline + boot probe (RECOVERY_REPORT.md Part A) ---
+  workspaceSaveStatusSaving: {
+    de: 'Wird gespeichert…',
+    en: 'Saving…',
+    fr: 'Enregistrement…',
+    es: 'Guardando…',
+  },
+  workspaceSaveStatusSaved: {
+    de: 'Gespeichert',
+    en: 'Saved',
+    fr: 'Enregistré',
+    es: 'Guardado',
+  },
+  workspaceSaveStatusFailedBadge: {
+    de: 'Speichern fehlgeschlagen',
+    en: 'Save failed',
+    fr: 'Échec de l\'enregistrement',
+    es: 'Error al guardar',
+  },
+  workspaceSaveStatusFailedDetail: {
+    de: 'Die Fallakte konnte nicht auf dem Server gespeichert werden. Ihre Eingaben bleiben lokal sicher — bitte erneut versuchen.',
+    en: 'The case file could not be saved to the server. Your input remains safe locally — please retry.',
+    fr: 'Le dossier n\'a pas pu être enregistré sur le serveur. Vos saisies restent sécurisées en local — veuillez réessayer.',
+    es: 'El expediente no se pudo guardar en el servidor. Sus entradas siguen seguras de forma local — vuelva a intentarlo.',
+  },
+  workspaceSaveStatusRetry: {
+    de: 'Erneut speichern',
+    en: 'Retry save',
+    fr: 'Réessayer',
+    es: 'Reintentar',
+  },
+  workspaceSaveStatusCacheWarning: {
+    de: 'Lokaler Cache nicht aktualisiert — Daten sind auf dem Server sicher',
+    en: 'Local cache not updated — data is safe on the server',
+    fr: 'Cache local non mis à jour — vos données sont en sécurité sur le serveur',
+    es: 'Caché local no actualizada — los datos están seguros en el servidor',
+  },
+  cryptoVaultBootBannerTitle: {
+    de: 'Lokaler Cache konnte nicht initialisiert werden',
+    en: 'Local cache could not be initialised',
+    fr: 'Impossible d\'initialiser le cache local',
+    es: 'No se pudo inicializar la caché local',
+  },
+  cryptoVaultBootBannerBody: {
+    de: 'Lokaler Cache konnte nicht initialisiert werden. Ihre Daten sind weiterhin auf dem Server sicher. Bitte laden Sie die Seite neu — sollte das Problem bestehen, melden Sie sich an einem anderen Browser an.',
+    en: 'The local cache could not be initialised. Your data is still safe on the server. Please reload the page — if the problem persists, sign in on a different browser.',
+    fr: 'Le cache local n\'a pas pu être initialisé. Vos données restent sécurisées sur le serveur. Veuillez recharger la page — si le problème persiste, connectez-vous depuis un autre navigateur.',
+    es: 'No se pudo inicializar la caché local. Sus datos siguen seguros en el servidor. Vuelva a cargar la página — si el problema persiste, inicie sesión en otro navegador.',
+  },
+  cryptoVaultBootBannerReload: {
+    de: 'Seite neu laden',
+    en: 'Reload page',
+    fr: 'Recharger la page',
+    es: 'Recargar la página',
+  },
+  workspaceHealthMissingTitle: {
+    de: 'Inhalte fehlen auf diesem Konto',
+    en: 'Some content is missing on this account',
+    fr: 'Certains contenus sont absents de ce compte',
+    es: 'Falta contenido en esta cuenta',
+  },
+  workspaceHealthMissingBody: {
+    de: '{count} Fall/Fälle haben auf diesem Konto noch keine Inhalte. Falls Inhalte auf einem anderen Gerät erfasst wurden, melden Sie sich dort an.',
+    en: '{count} case(s) on this account do not yet have any content. If content was created on another device, please sign in there.',
+    fr: '{count} dossier(s) sur ce compte ne contiennent pas encore de contenu. Si du contenu a été saisi sur un autre appareil, veuillez vous y connecter.',
+    es: '{count} caso(s) en esta cuenta aún no tienen contenido. Si se creó contenido en otro dispositivo, inicie sesión allí.',
+  },
+  workspaceHealthMissingLearnMore: {
+    de: 'Mehr erfahren',
+    en: 'Learn more',
+    fr: 'En savoir plus',
+    es: 'Más información',
+  },
+
   ...guidedEntryUiTranslations,
   ...aufnahmeBefundUiTranslations,
   ...psychopathGuidedUiLabels,

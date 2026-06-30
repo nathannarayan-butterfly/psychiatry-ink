@@ -27,6 +27,7 @@ import {
   saveWorkspaceVaultBlob,
   type EncryptedVaultBlob,
 } from '../utils/cryptoVault'
+import { reportCryptoError } from '../utils/cryptoErrorReporter'
 import { saveNotionDocumentSnapshot } from '../utils/notionDocumentActions'
 import {
   applyWorkspacePayloadAsync,
@@ -100,35 +101,85 @@ async function fetchRemoteSnapshot(
   }
 }
 
+/**
+ * SERVER-FIRST persist pipeline (`persist()` below) requires this to throw on
+ * any non-OK response — see the post-mortem in RECOVERY_REPORT.md §1–4.
+ *
+ * Returning `null` silently (the pre-2026-06-30 behaviour) would let the
+ * caller mark the save as "successful" with `setLastSavedAt` even when the
+ * server received nothing, recreating the empty-data incident from the
+ * other direction.
+ */
+export class RemoteSnapshotPushError extends Error {
+  constructor(
+    message: string,
+    readonly code:
+      | 'network'
+      | 'http-4xx'
+      | 'http-5xx'
+      | 'invalid-response',
+    readonly status?: number,
+  ) {
+    super(message)
+    this.name = 'RemoteSnapshotPushError'
+  }
+}
+
 async function pushRemoteSnapshot(
   blob: EncryptedVaultBlob,
   deviceId: string,
   countryCode: string,
   caseId: string,
   titleHint?: string | null,
-): Promise<RemoteSnapshotMeta | null> {
+): Promise<RemoteSnapshotMeta> {
   const headers = {
     ...(await getAuthHeaders()),
     'Content-Type': 'application/json',
   }
-  const response = await fetch(`${API_BASE}/api/workspace/snapshot`, {
-    method: 'PUT',
-    headers,
-    body: JSON.stringify({
-      deviceId,
-      countryCode,
-      caseId,
-      ciphertext: blob.ciphertext,
-      iv: blob.iv,
-      wrappedKey: blob.wrappedKey,
-      version: blob.version,
-      titleHint: titleHint ?? undefined,
-    }),
-  })
 
-  if (!response.ok) return null
-  const data = (await response.json()) as { updatedAt?: string }
-  return { updatedAt: data.updatedAt ?? new Date().toISOString() }
+  let response: Response
+  try {
+    response = await fetch(`${API_BASE}/api/workspace/snapshot`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({
+        deviceId,
+        countryCode,
+        caseId,
+        ciphertext: blob.ciphertext,
+        iv: blob.iv,
+        wrappedKey: blob.wrappedKey,
+        version: blob.version,
+        titleHint: titleHint ?? undefined,
+      }),
+    })
+  } catch (error) {
+    throw new RemoteSnapshotPushError(
+      error instanceof Error ? error.message : 'Network unreachable',
+      'network',
+    )
+  }
+
+  if (!response.ok) {
+    const code: RemoteSnapshotPushError['code'] =
+      response.status >= 500 ? 'http-5xx' : 'http-4xx'
+    throw new RemoteSnapshotPushError(
+      `Workspace snapshot push failed (HTTP ${response.status})`,
+      code,
+      response.status,
+    )
+  }
+
+  try {
+    const data = (await response.json()) as { updatedAt?: string }
+    return { updatedAt: data.updatedAt ?? new Date().toISOString() }
+  } catch (error) {
+    throw new RemoteSnapshotPushError(
+      error instanceof Error ? error.message : 'Invalid server response',
+      'invalid-response',
+      response.status,
+    )
+  }
 }
 
 export function useWorkspaceVault({
@@ -152,6 +203,21 @@ export function useWorkspaceVault({
   const [hasCloudKeyBackup, setHasCloudKeyBackup] = useState(false)
   const [cloudKeyUpdatedAt, setCloudKeyUpdatedAt] = useState<string | null>(null)
   const [isDirty, setIsDirty] = useState(false)
+  /**
+   * Save state machine — see RECOVERY_REPORT.md §1.
+   *  - 'idle'           : no save in flight, no failure outstanding
+   *  - 'saving'         : a persist() call is currently running
+   *  - 'success'        : the most recent save was fully successful
+   *  - 'cache-warning'  : the server write succeeded but the local IDB cache
+   *                       could not be refreshed — data is safe on the server
+   *  - 'failed'         : the server write (or the local IDB save when there
+   *                       is no server, e.g. local_only tier) failed; the
+   *                       persistent badge must show a Retry button and
+   *                       lastSavedAt must NOT advance.
+   */
+  const [saveStatus, setSaveStatus] = useState<
+    'idle' | 'saving' | 'success' | 'cache-warning' | 'failed'
+  >('idle')
   const saveTimerRef = useRef<number | null>(null)
   const initRef = useRef<string | null>(null)
 
@@ -167,9 +233,11 @@ export function useWorkspaceVault({
   const persist = useCallback(
     async (options?: { syncRemote?: boolean; recordExport?: boolean }) => {
       if (!enabled) return null
+      setSaveStatus('saving')
 
+      // STEP 1 — encrypted local-storage durability for the currently edited
+      // document section. Survives every IDB / network failure below.
       const live = getLivePatch()
-
       if (live.documentTypeId) {
         const savedAt = new Date().toISOString()
         saveNotionDocumentSnapshot(
@@ -182,42 +250,113 @@ export function useWorkspaceVault({
           },
           caseId,
         )
-
       }
 
+      // STEP 2 — build + encrypt the clinical payload.
       const payload = collectClinicalPayload(live, caseId)
       const blob = await encryptWorkspacePayload(payload)
-      await saveWorkspaceVaultBlob(blob, caseId)
+
+      // STEP 3 — SERVER FIRST. The save is only considered successful once the
+      // server (or org-vault server, or local IDB when there is no server)
+      // confirms the write. See RECOVERY_REPORT.md §1.2 for the failure mode
+      // this ordering exists to prevent.
+      const skipRemoteSync = options?.syncRemote === false
+      const hasServerDurability = orgVaultEnabled || dbSyncEnabled
+      let serverSaveSucceeded = false
+
+      try {
+        if (orgVaultEnabled && orgVault?.organisationId) {
+          const caseKey = getCachedOrgCaseKey(orgVault.organisationId, caseId)
+          const remoteUpdatedAt = await saveOrgCaseVaultPayload(
+            orgVault.organisationId,
+            caseId,
+            payload,
+            caseKey ?? undefined,
+          )
+          setLastDbSnapshotAt(remoteUpdatedAt)
+          serverSaveSucceeded = true
+        } else if (dbSyncEnabled && !skipRemoteSync) {
+          const material = await ensureKeyMaterial()
+          await registerPublicKeyIfAllowed(tier, countryCode, API_BASE)
+          const titleHint = documentTypeLabel
+            ? deriveTitleHint(payload, documentTypeLabel)
+            : null
+          const remote = await pushRemoteSnapshot(
+            blob,
+            material.deviceId,
+            countryCode,
+            caseId,
+            titleHint,
+          )
+          setLastDbSnapshotAt(remote.updatedAt)
+          serverSaveSucceeded = true
+        }
+      } catch (serverError) {
+        // Server failed. Do NOT mark the save as successful, do NOT advance
+        // lastSavedAt, do NOT clear isDirty. The encrypted local durability
+        // copy from Step 1 still protects the user's edit.
+        reportCryptoError({
+          scope: 'workspace-snapshot-push',
+          code:
+            serverError instanceof RemoteSnapshotPushError
+              ? serverError.code
+              : 'unknown',
+          error: serverError,
+          context: { caseId, orgVault: orgVaultEnabled, tier },
+        })
+        setSaveStatus('failed')
+        setError(
+          serverError instanceof Error
+            ? serverError.message
+            : 'Workspace vault save failed',
+        )
+        throw serverError
+      }
+
+      // STEP 4 — local IDB cache. When there's a server durability layer this
+      // is best-effort (cache-warning on failure). When there isn't (e.g.
+      // local_only tier), this IS the save and a failure surfaces as failed.
+      let cacheWarning = false
+      try {
+        await saveWorkspaceVaultBlob(blob, caseId)
+      } catch (cacheError) {
+        if (hasServerDurability && serverSaveSucceeded) {
+          // Server holds the canonical copy — don't fail the save, but log
+          // the local cache miss so ops can surface a non-blocking hint.
+          reportCryptoError({
+            scope: 'workspace-vault-save',
+            code: 'idb-write-failed-after-server-success',
+            error: cacheError,
+            context: { caseId, tier },
+          })
+          cacheWarning = true
+        } else {
+          // No server fallback — the local IDB write IS the save.
+          reportCryptoError({
+            scope: 'workspace-vault-save',
+            code: 'idb-write-failed',
+            error: cacheError,
+            context: { caseId, tier },
+          })
+          setSaveStatus('failed')
+          setError(
+            cacheError instanceof Error
+              ? cacheError.message
+              : 'Workspace vault save failed',
+          )
+          throw cacheError
+        }
+      }
+
+      // STEP 5 — only after the save is durable on the system of record do we
+      // mark the workspace as saved.
       setLastSavedAt(payload.updatedAt)
       setIsDirty(false)
+      setSaveStatus(cacheWarning ? 'cache-warning' : 'success')
+      setError(null)
 
       if (options?.recordExport) {
         recordVaultExport(caseId)
-      }
-
-      if (orgVaultEnabled && orgVault?.organisationId) {
-        const caseKey = getCachedOrgCaseKey(orgVault.organisationId, caseId)
-        const remoteUpdatedAt = await saveOrgCaseVaultPayload(
-          orgVault.organisationId,
-          caseId,
-          payload,
-          caseKey ?? undefined,
-        )
-        setLastDbSnapshotAt(remoteUpdatedAt)
-      } else if (dbSyncEnabled && options?.syncRemote !== false) {
-        const material = await ensureKeyMaterial()
-        await registerPublicKeyIfAllowed(tier, countryCode, API_BASE)
-        const titleHint = documentTypeLabel
-          ? deriveTitleHint(payload, documentTypeLabel)
-          : null
-        const remote = await pushRemoteSnapshot(
-          blob,
-          material.deviceId,
-          countryCode,
-          caseId,
-          titleHint,
-        )
-        if (remote) setLastDbSnapshotAt(remote.updatedAt)
       }
 
       return blob
@@ -230,9 +369,10 @@ export function useWorkspaceVault({
     if (saveTimerRef.current !== null) window.clearTimeout(saveTimerRef.current)
     setIsDirty(true)
     saveTimerRef.current = window.setTimeout(() => {
-      void persist().catch((saveError) => {
-        setError(saveError instanceof Error ? saveError.message : 'Workspace vault save failed')
-      })
+      // persist() already records the error + saveStatus; swallow here to
+      // avoid the unhandled-rejection in the debounced timer path. The badge
+      // surfaces the failure to the user.
+      void persist().catch(() => {})
     }, 800)
   }, [enabled, persist])
 
@@ -289,14 +429,15 @@ export function useWorkspaceVault({
   }, [caseId])
 
   const saveNow = useCallback(async () => {
-    try {
-      await persist({ syncRemote: true })
-      setError(null)
-    } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'Workspace vault save failed')
-      throw saveError
-    }
+    // persist() itself manages setError / setSaveStatus on both branches; we
+    // only re-throw so callers (e.g. the Retry button in the failed-save
+    // badge) can react if they need to. The default scheduled path above
+    // swallows because the badge already surfaces the failure.
+    await persist({ syncRemote: true })
   }, [persist])
+
+  /** Retry the most recent save after a failed-badge click. */
+  const retrySave = saveNow
 
   const exportVault = useCallback(async () => {
     const blob = await persist({ syncRemote: false, recordExport: true })
@@ -454,8 +595,10 @@ export function useWorkspaceVault({
     lastDbSnapshotAt,
     lastExportAt: cloudKeyUpdatedAt ?? getLastVaultExportAt(caseId) ?? getLastVaultExportAt(),
     showBackupReminder,
+    saveStatus,
     scheduleSave,
     saveNow,
+    retrySave,
     exportVault,
     importVault,
   }

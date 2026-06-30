@@ -28,6 +28,7 @@ import { CaseSidebarNextLink } from './CaseSidebarNextLink'
 import { CaseSidebarContent } from './CaseSidebarContent'
 import { AnforderungCreateModal } from '../anforderungen/AnforderungCreateModal'
 import { CasePatientHeader } from './CasePatientHeader'
+import { WorkspaceSaveStatusBadge } from '../workspace/WorkspaceSaveStatusBadge'
 import { WorkspaceTabBar } from './WorkspaceTabBar'
 import { MeinePatientenView } from './MeinePatientenView'
 import { PatientDashboardView } from './PatientDashboardView'
@@ -2314,6 +2315,12 @@ function NotionAppInner({
           <>
         <div className="case-tab-shell">
           <CasePatientHeader caseId={caseId} metaVersion={patientMetaVersion} />
+          {workspaceVault.saveStatus === 'failed' ||
+          workspaceVault.saveStatus === 'cache-warning' ? (
+            <div className="case-workspace-save-status px-4 pt-2">
+              <WorkspaceSaveStatusBadge vault={workspaceVault} />
+            </div>
+          ) : null}
           {workspacePageLabel &&
           isWorkspacePageOpen(activePage, workspace.selectedDocumentType) ? (
             <div className="case-workspace-doc-bar">
