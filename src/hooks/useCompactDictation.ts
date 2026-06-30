@@ -7,6 +7,19 @@ function pickRecorderMimeType(): string | undefined {
   return candidates.find((type) => MediaRecorder.isTypeSupported(type))
 }
 
+/**
+ * Normalize a MediaRecorder MIME string ("audio/webm;codecs=opus") down to the
+ * canonical container type ("audio/webm") for the playback Blob. Some Chromium
+ * versions decline to decode a `blob:` URL whose Blob.type still carries the
+ * `;codecs=` parameter, producing silent / un-playable audio even though the
+ * underlying webm is valid. The captured bytes are unchanged — we only relabel.
+ */
+function canonicalContainerType(mimeType: string | undefined): string {
+  const raw = (mimeType || '').split(';')[0]?.trim().toLowerCase()
+  if (raw === 'audio/webm' || raw === 'audio/ogg' || raw === 'audio/mp4') return raw
+  return 'audio/webm'
+}
+
 type CompactDictationPhase = 'idle' | 'recording' | 'review' | 'transcribing'
 
 interface UseCompactDictationOptions {
@@ -115,6 +128,14 @@ export function useCompactDictation({
   )
 
   const startRecording = useCallback(async () => {
+    // From `review` (re-record button) we must tear down the prior take first
+    // and then transition back through `idle` — without this, the early-return
+    // below silently swallowed every re-record click.
+    if (phaseRef.current === 'review') {
+      cleanupRecording()
+      clearRecordedAudio()
+      phaseRef.current = 'idle'
+    }
     if (phaseRef.current !== 'idle' || pendingStartRef.current) return
 
     pendingStartRef.current = true
@@ -164,8 +185,20 @@ export function useCompactDictation({
   /** Assemble the captured chunks into a single typed blob and detach the recorder. */
   const finalizeRecording = useCallback((): Blob => {
     const recorder = mediaRecorderRef.current
-    const type = recorder?.mimeType || pickRecorderMimeType() || 'audio/webm'
-    const blob = new Blob(audioChunksRef.current, { type })
+    // Strip the codec parameter from the playback Blob — some Chromium versions
+    // refuse to decode a `blob:` URL whose Blob.type still includes ";codecs=…",
+    // producing silent playback even when the underlying webm is valid.
+    const rawType = recorder?.mimeType || pickRecorderMimeType() || 'audio/webm'
+    const type = canonicalContainerType(rawType)
+    const chunks = audioChunksRef.current
+    if (chunks.length === 0) {
+      console.warn(
+        '[dictation] MediaRecorder produced zero chunks — recording is silent. ' +
+          'Likely causes: microphone muted, wrong input device, or permission ' +
+          'granted to an inactive track.',
+      )
+    }
+    const blob = new Blob(chunks, { type })
     mediaRecorderRef.current = null
     audioChunksRef.current = []
     return blob
@@ -191,11 +224,18 @@ export function useCompactDictation({
       setPhase('transcribing')
     }
 
+    // CRITICAL: tear the source tracks down ONLY after the recorder has fully
+    // emitted its final `dataavailable` and `stop` events. Stopping the
+    // MediaStream tracks first (as we used to) races with the recorder's final
+    // chunk flush in Chromium — the last (and on very short clips, all) chunks
+    // never reach `ondataavailable`, so the resulting Blob is structurally
+    // non-empty (webm container bytes) but plays back silent. That is exactly
+    // the "no audio recorded / nothing heard on playback" symptom reported.
     await new Promise<void>((resolve) => {
       recorder.addEventListener('stop', () => resolve(), { once: true })
       recorder.stop()
-      stopMediaStream()
     })
+    stopMediaStream()
 
     const blob = finalizeRecording()
 

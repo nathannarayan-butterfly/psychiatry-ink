@@ -72,6 +72,7 @@ export function StandaloneDictationWidget({ onClose }: StandaloneDictationWidget
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
+  const [playbackError, setPlaybackError] = useState<string | null>(null)
   const { recordedUrl } = dictation
 
   // Reset the player whenever the recording changes (new take / discard).
@@ -79,6 +80,7 @@ export function StandaloneDictationWidget({ onClose }: StandaloneDictationWidget
     setIsPlaying(false)
     setCurrentTime(0)
     setDuration(0)
+    setPlaybackError(null)
   }, [recordedUrl])
 
   const handleLoadedMetadata = useCallback(() => {
@@ -108,17 +110,24 @@ export function StandaloneDictationWidget({ onClose }: StandaloneDictationWidget
     if (!el) return
     try {
       if (el.paused) {
+        setPlaybackError(null)
         const result = el.play() as unknown as Promise<void> | undefined
         if (result && typeof result.then === 'function') {
-          result.catch(() => setIsPlaying(false))
+          result.catch((cause: unknown) => {
+            setIsPlaying(false)
+            console.warn('[dictation] audio.play() rejected', cause)
+            setPlaybackError(t('standaloneDictationPlaybackFailed'))
+          })
         }
       } else {
         el.pause()
       }
-    } catch {
+    } catch (cause) {
+      console.warn('[dictation] audio.play() threw', cause)
       setIsPlaying(false)
+      setPlaybackError(t('standaloneDictationPlaybackFailed'))
     }
-  }, [])
+  }, [t])
 
   const handleSeek = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const el = audioRef.current
@@ -257,9 +266,24 @@ export function StandaloneDictationWidget({ onClose }: StandaloneDictationWidget
                     setIsPlaying(false)
                     setCurrentTime(duration)
                   }}
+                  onError={(event) => {
+                    const mediaError = event.currentTarget.error
+                    console.warn(
+                      '[dictation] <audio> failed to load recorded blob',
+                      mediaError?.code,
+                      mediaError?.message,
+                    )
+                    setIsPlaying(false)
+                    setPlaybackError(t('standaloneDictationPlaybackFailed'))
+                  }}
                   className="sdx-player__audio"
                 />
               </div>
+              {playbackError ? (
+                <span className="swx-error" role="alert">
+                  {playbackError}
+                </span>
+              ) : null}
               <div className="sdx-review__actions">
                 <button
                   type="button"

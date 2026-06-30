@@ -18638,6 +18638,12 @@ export const uiTranslations = {
     fr: 'Position de lecture',
     es: 'Posición de reproducción',
   },
+  standaloneDictationPlaybackFailed: {
+    de: 'Aufnahme konnte nicht abgespielt werden. Bitte erneut aufnehmen.',
+    en: 'Recording could not be played back. Please record again.',
+    fr: "L'enregistrement n'a pas pu être lu. Veuillez enregistrer à nouveau.",
+    es: 'No se pudo reproducir la grabación. Por favor, grabe de nuevo.',
+  },
   standaloneDictationDelete: {
     de: 'Aufnahme löschen',
     en: 'Delete recording',

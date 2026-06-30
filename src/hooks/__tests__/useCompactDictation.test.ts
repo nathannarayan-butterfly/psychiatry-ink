@@ -140,6 +140,89 @@ describe('useCompactDictation review mode', () => {
     expect(trackStop).toHaveBeenCalled()
   })
 
+  it('stops the mic tracks only AFTER the recorder has fully stopped', async () => {
+    // Regression: Chromium drops the final dataavailable chunk if the source
+    // tracks are stopped before the recorder's stop event fires. The Blob
+    // looks structurally valid (webm header bytes) but plays back silent.
+    let trackStopOrder = 0
+    let dataAvailableOrder = 0
+    let order = 0
+    trackStop.mockImplementation(() => {
+      trackStopOrder = ++order
+    })
+
+    class OrderingRecorder extends FakeMediaRecorder {
+      stop(): void {
+        this.state = 'inactive'
+        // Simulate the browser firing dataavailable asynchronously after stop()
+        // — exactly the ordering the real MediaRecorder uses.
+        queueMicrotask(() => {
+          dataAvailableOrder = ++order
+          this.ondataavailable?.({ data: new Blob(['final'], { type: 'audio/webm' }) })
+          ;(this as unknown as { listeners: Record<string, Listener[]> }).listeners.stop?.forEach(
+            (cb) => cb(),
+          )
+        })
+      }
+    }
+    ;(globalThis as Record<string, unknown>).MediaRecorder = OrderingRecorder
+
+    const { apiRef } = await mountHook(true)
+    await act(async () => {
+      await apiRef.current!.startRecording()
+    })
+    await act(async () => {
+      await apiRef.current!.stopRecording()
+    })
+
+    expect(dataAvailableOrder).toBeGreaterThan(0)
+    expect(trackStopOrder).toBeGreaterThan(0)
+    expect(dataAvailableOrder).toBeLessThan(trackStopOrder)
+  })
+
+  it('normalizes the playback Blob type to the canonical container (no ;codecs=…)', async () => {
+    // Some Chromium builds refuse to decode blob: URLs whose Blob.type still
+    // contains the codec parameter ("audio/webm;codecs=opus"). Strip it so
+    // playback is reliable even when transcription is not in play.
+    const seen: Blob[] = []
+    createObjectURL.mockImplementation((blob: Blob) => {
+      seen.push(blob)
+      return `blob:rec-${++urlCounter}`
+    })
+
+    const { apiRef } = await mountHook(true)
+    await act(async () => {
+      await apiRef.current!.startRecording()
+    })
+    await act(async () => {
+      await apiRef.current!.stopRecording()
+    })
+
+    expect(seen).toHaveLength(1)
+    expect(seen[0].type).toBe('audio/webm')
+  })
+
+  it('re-record from review phase: startRecording tears down the prior take', async () => {
+    const { apiRef } = await mountHook(true)
+    await act(async () => {
+      await apiRef.current!.startRecording()
+    })
+    await act(async () => {
+      await apiRef.current!.stopRecording()
+    })
+    expect(apiRef.current!.isReviewing).toBe(true)
+    expect(apiRef.current!.recordedUrl).toBe('blob:rec-1')
+
+    // Re-record clicks calls startRecording while still in review phase.
+    await act(async () => {
+      await apiRef.current!.startRecording()
+    })
+
+    // We tore down the prior take and started a fresh recording.
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:rec-1')
+    expect(apiRef.current!.isRecording).toBe(true)
+  })
+
   it('discardRecording revokes the object URL and returns to idle', async () => {
     const { apiRef } = await mountHook(true)
     await act(async () => {
