@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   buildPatientSafety,
   buildPpbHarmSignals,
@@ -7,6 +7,53 @@ import {
 } from '../patientSafety'
 import type { ClinicalImprintRecord } from '../../../types/clinicalImprint'
 import type { SafetyRiskSignal } from '../../../components/notion/overview/types'
+import type { MedicationEntry } from '../../../types/medicationPlan'
+import type {
+  CombinationCheckStore,
+  PatientCombinationCheckFinding,
+} from '../../../types/combinationCheck'
+
+function makeMedication(overrides: Partial<MedicationEntry> & { substance: string }): MedicationEntry {
+  const { substance, ...rest } = overrides
+  return {
+    id: rest.id ?? `med-${substance.toLowerCase()}`,
+    substance,
+    formulation: 'tablet',
+    strength: '100 mg',
+    doseSchedule: { morning: '1', noon: '', evening: '', night: '', unit: 'mg' },
+    doseLineGerman: `${substance} 100-0-0-0 mg`,
+    prn: false,
+    startDate: '2026-06-01',
+    indication: '',
+    status: 'active',
+    reasonForChange: '',
+    sideEffects: [],
+    adherenceNote: '',
+    freeTextLine: '',
+    introducedAt: '2026-06-01T09:00:00.000Z',
+    lastChangeAt: '2026-06-01T09:00:00.000Z',
+    lastChangeType: 'start',
+    history: [],
+    ...rest,
+  }
+}
+
+function seedCombinationFinding(
+  caseId: string,
+  finding: PatientCombinationCheckFinding,
+): void {
+  const store: CombinationCheckStore = {
+    version: 1,
+    caseId,
+    updatedAt: new Date().toISOString(),
+    findings: [finding],
+    aiRuns: [],
+  }
+  localStorage.setItem(
+    `psychiatry-ink:combination-findings:${caseId}`,
+    JSON.stringify(store),
+  )
+}
 
 function makeImprint(overrides: Partial<ClinicalImprintRecord> = {}): ClinicalImprintRecord {
   return {
@@ -177,5 +224,97 @@ describe('buildPatientSafety risk signals', () => {
     })
     const selfHarm = safety.risk?.signals?.find((s) => s.id === 'riskSelf')
     expect(selfHarm?.label).toBe('Eigengefährdung')
+  })
+})
+
+describe('buildPatientSafety — pair-name dedupe across KB and AI sources', () => {
+  // Findings live in module-level cache inside combinationCheck/storage so we
+  // use a fresh case id per test to avoid bleed and clear storage between runs.
+  beforeEach(() => {
+    localStorage.clear()
+  })
+  afterEach(() => {
+    localStorage.clear()
+  })
+
+  it('emits exactly one row for a (Lithium, Sertralin) pair flagged by both KB and AI, preferring the KB severity', () => {
+    const caseId = 'case-pair-dedupe-1'
+    const aiFinding: PatientCombinationCheckFinding = {
+      id: 'finding-ai-li-sert',
+      caseId,
+      // AI surfaced the same pair in the OPPOSITE order with LOWER severity —
+      // proving the pair-name key is order-insensitive AND that the KB row
+      // (not the AI row) is the one that survives.
+      combinationKey: 'sertralin|lithium',
+      substanceAName: 'Sertralin',
+      substanceBName: 'Lithium',
+      interactionType: 'pharmacodynamic',
+      severity: 'low',
+      mainRisk: 'AI: marginal serotonergic interaction',
+      source: 'ai_suggestion',
+      status: 'pending_clinician_review',
+      createdAt: '2026-06-01T10:00:00.000Z',
+      updatedAt: '2026-06-01T10:00:00.000Z',
+    }
+    seedCombinationFinding(caseId, aiFinding)
+
+    // Reference-data interactions are ASYMMETRIC: `findInteraction(a, b)` only
+    // checks `a.interactions` for `b`'s names. Sertralin's reference entry
+    // lists "Lithium" → moderate, so we order the medications so Sertralin
+    // comes first to guarantee the KB cross-interaction row fires.
+    const safety = buildPatientSafety({
+      medications: [
+        makeMedication({ substance: 'Sertralin' }),
+        makeMedication({ substance: 'Lithium' }),
+      ],
+      language: 'de',
+      imprints: [],
+      caseId,
+    })
+
+    const pairAlerts = safety.alerts.filter(
+      (a) =>
+        a.category === 'interaction' &&
+        /lithium/i.test(a.title) &&
+        /sertralin/i.test(a.title),
+    )
+    expect(pairAlerts, 'duplicate Lithium × Sertralin rows must be merged').toHaveLength(1)
+    // KB cross-interactions emit `ix:A:B`; AI findings emit `cc:<uuid>`. The
+    // kept row must be the KB row (id prefix `ix:`), which carries the higher
+    // severity and the curated clinical note instead of the AI free-text.
+    expect(pairAlerts[0]?.id).toMatch(/^ix:/)
+    expect(pairAlerts[0]?.tone).toBe('moderate')
+    expect(pairAlerts[0]?.detail).not.toContain('AI:')
+  })
+
+  it('keeps AI findings for pairs the KB does not cover', () => {
+    const caseId = 'case-pair-dedupe-2'
+    const aiFinding: PatientCombinationCheckFinding = {
+      id: 'finding-ai-novel',
+      caseId,
+      combinationKey: 'lithium|novel-substance',
+      substanceAName: 'Lithium',
+      substanceBName: 'Novel-Substance',
+      interactionType: 'pharmacodynamic',
+      severity: 'moderate',
+      mainRisk: 'AI: hypothetical risk',
+      source: 'ai_suggestion',
+      status: 'pending_clinician_review',
+      createdAt: '2026-06-01T10:00:00.000Z',
+      updatedAt: '2026-06-01T10:00:00.000Z',
+    }
+    seedCombinationFinding(caseId, aiFinding)
+
+    const safety = buildPatientSafety({
+      medications: [makeMedication({ substance: 'Lithium' })],
+      language: 'de',
+      imprints: [],
+      caseId,
+    })
+
+    const aiRow = safety.alerts.find((a) => a.id.startsWith('cc:'))
+    expect(aiRow, 'AI finding for a non-KB pair must survive dedupe').toBeDefined()
+    expect(aiRow?.title).toContain('Lithium')
+    expect(aiRow?.title).toContain('Novel-Substance')
   })
 })

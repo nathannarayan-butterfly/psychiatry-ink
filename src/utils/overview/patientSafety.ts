@@ -481,6 +481,19 @@ function combinationSeverityToTone(severity: CombinationSeverity): SemanticTone 
 }
 
 /**
+ * Stable, case-insensitive key for a drug pair regardless of authoring order.
+ * Used to detect that a KB cross-interaction and an AI Kombinationscheck
+ * finding describe the SAME pair, since their alert IDs live in disjoint
+ * namespaces (`ix:A:B` vs `cc:<uuid>`) and so never collide via id-based dedupe.
+ */
+function pairNameKey(drugA: string, drugB: string): string {
+  const a = drugA.trim().toLowerCase()
+  const b = drugB.trim().toLowerCase()
+  if (!a || !b) return ''
+  return `pair:${[a, b].sort().join('|')}`
+}
+
+/**
  * risk + anamnesis text. All inputs are real; absent sources simply contribute
  * nothing (the card degrades to a calm "no signals" state).
  */
@@ -488,6 +501,13 @@ export function buildPatientSafety(input: PatientSafetyInput): SafetyData {
   const language = input.language as UiLanguage
   const insights = computeMedicationInsights(input.medications, input.language)
   const alerts: SafetyAlert[] = []
+
+  // Track the drug-pair names already emitted so the AI loop below cannot
+  // produce a second row for a pair already covered by the structured KB
+  // cross-interactions. KB findings are emitted FIRST (here) and AI findings
+  // second — so this set, combined with the `seen` id set, makes "KB wins"
+  // the natural outcome whenever both sources flag the same pair.
+  const seenPairKeys = new Set<string>()
 
   // Pairwise drug–drug interactions (reference KB).
   for (const ix of insights.crossInteractions) {
@@ -498,6 +518,8 @@ export function buildPatientSafety(input: PatientSafetyInput): SafetyData {
       title: `${ix.drugA} ✕ ${ix.drugB}`,
       detail: `${severityLabel(language, ix.severity)}: ${ix.note}`,
     })
+    const pairKey = pairNameKey(ix.drugA, ix.drugB)
+    if (pairKey) seenPairKeys.add(pairKey)
   }
 
   // Additive / cumulative pharmacodynamic risks.
@@ -524,7 +546,15 @@ export function buildPatientSafety(input: PatientSafetyInput): SafetyData {
       if (finding.status === 'rejected' || finding.status === 'not_relevant') continue
       const id = `cc:${finding.id}`
       if (seen.has(id)) continue
+      // The id namespaces (`ix:A:B`, `comb:kind`, `cc:<uuid>`) are disjoint, so
+      // id-based dedupe alone cannot catch a KB cross-interaction and an AI
+      // finding that describe the same drug pair. Drop AI duplicates here so
+      // the Übersicht surfaces at most one row per pair, preferring the
+      // higher-fidelity KB entry already in `alerts`.
+      const pairKey = pairNameKey(finding.substanceAName, finding.substanceBName)
+      if (pairKey && seenPairKeys.has(pairKey)) continue
       seen.add(id)
+      if (pairKey) seenPairKeys.add(pairKey)
       alerts.push({
         id,
         category: 'interaction',
