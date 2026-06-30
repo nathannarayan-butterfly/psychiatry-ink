@@ -70,7 +70,10 @@ describe('computeVerlaufstendenz', () => {
   it('detects overall improvement from psychopathology course direction', () => {
     const result = computeVerlaufstendenz({
       ...emptyInput,
-      now: new Date('2026-06-15'),
+      // Anchor the rolling 14d window to a fixed end date so both imprints stay
+      // inside it regardless of the current clock; mirrors the pattern used by
+      // the other deterministic tests in this file.
+      customWindowEnd: '2026-06-15T00:00:00.000Z',
       imprints: [
         makeImprint({
           imprintKey: 'a',

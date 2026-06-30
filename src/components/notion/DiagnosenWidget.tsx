@@ -36,7 +36,6 @@ import {
   createDiagnoseFromHit,
   codingHasContent,
   getActiveCoding,
-  isIndependentCatalogueEntry,
   catalogueSystemToCodingSlot,
   loadDiagnosenAsync,
   saveDiagnosen,
