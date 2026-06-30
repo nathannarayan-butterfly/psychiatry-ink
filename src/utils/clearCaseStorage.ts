@@ -1,19 +1,15 @@
 import { caseStorageKey } from './caseContext'
+import { CRYPTO_VAULT_STORE, openCryptoVaultDb } from './cryptoVaultDb'
 
-const IDB_NAME = 'psychiatry-ink-crypto'
-const VAULT_STORE = 'vault'
+const VAULT_STORE = CRYPTO_VAULT_STORE
 
 async function idbDelete(store: string, key: string): Promise<void> {
+  const db = await openCryptoVaultDb()
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(IDB_NAME, 1)
-    request.onerror = () => reject(request.error ?? new Error('idb open failed'))
-    request.onsuccess = () => {
-      const db = request.result
-      const tx = db.transaction(store, 'readwrite')
-      tx.objectStore(store).delete(key)
-      tx.oncomplete = () => resolve()
-      tx.onerror = () => reject(tx.error ?? new Error('idb delete failed'))
-    }
+    const tx = db.transaction(store, 'readwrite')
+    tx.objectStore(store).delete(key)
+    tx.oncomplete = () => resolve()
+    tx.onerror = () => reject(tx.error ?? new Error('idb delete failed'))
   })
 }
 

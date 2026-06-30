@@ -18,21 +18,16 @@ import {
   ensureKeyMaterial,
   type StoredKeyMaterial,
 } from '../cryptoVault'
+import {
+  CRYPTO_DB_NAME,
+  CRYPTO_KEYS_STORE as KEYS_STORE,
+  openCryptoVaultDb,
+} from '../cryptoVaultDb'
 
-const IDB_NAME = 'psychiatry-ink-crypto'
-const KEYS_STORE = 'keys'
+const IDB_NAME = CRYPTO_DB_NAME
 
 function openDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(IDB_NAME, 1)
-    request.onerror = () => reject(request.error)
-    request.onsuccess = () => resolve(request.result)
-    request.onupgradeneeded = () => {
-      const db = request.result
-      if (!db.objectStoreNames.contains(KEYS_STORE)) db.createObjectStore(KEYS_STORE)
-      if (!db.objectStoreNames.contains('vault')) db.createObjectStore('vault')
-    }
-  })
+  return openCryptoVaultDb()
 }
 
 /** Simulate a brand-new device: forget the locally stored RSA key material. */

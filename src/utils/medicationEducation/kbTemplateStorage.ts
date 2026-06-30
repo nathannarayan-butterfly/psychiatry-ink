@@ -8,25 +8,13 @@ import type {
 } from '../../types/medicationEducation'
 import { decryptJsonPayload, encryptJsonPayload, type EncryptedVaultBlob } from '../cryptoVault'
 
-const IDB_NAME = 'psychiatry-ink-crypto'
-const IDB_VERSION = 1
-const VAULT_STORE = 'vault'
+import { CRYPTO_VAULT_STORE, openCryptoVaultDb } from '../cryptoVaultDb'
+
+const VAULT_STORE = CRYPTO_VAULT_STORE
 const KB_TEMPLATES_KEY = 'medication-education-kb-templates'
 
-function openDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(IDB_NAME, IDB_VERSION)
-    request.onerror = () => reject(request.error ?? new Error('IndexedDB open failed'))
-    request.onsuccess = () => resolve(request.result)
-    request.onupgradeneeded = () => {
-      const db = request.result
-      if (!db.objectStoreNames.contains(VAULT_STORE)) db.createObjectStore(VAULT_STORE)
-    }
-  })
-}
-
 async function idbGet<T>(key: string): Promise<T | null> {
-  const db = await openDb()
+  const db = await openCryptoVaultDb()
   return new Promise((resolve, reject) => {
     const tx = db.transaction(VAULT_STORE, 'readonly')
     const req = tx.objectStore(VAULT_STORE).get(key)
@@ -36,7 +24,7 @@ async function idbGet<T>(key: string): Promise<T | null> {
 }
 
 async function idbSet(key: string, value: unknown): Promise<void> {
-  const db = await openDb()
+  const db = await openCryptoVaultDb()
   return new Promise((resolve, reject) => {
     const tx = db.transaction(VAULT_STORE, 'readwrite')
     tx.objectStore(VAULT_STORE).put(value, key)

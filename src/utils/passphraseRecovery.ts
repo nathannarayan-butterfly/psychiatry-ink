@@ -11,11 +11,10 @@ import {
   type EncryptedVaultBlob,
   type StoredKeyMaterial,
 } from './cryptoVault'
+import { CRYPTO_KEYS_STORE, openCryptoVaultDb } from './cryptoVaultDb'
 import { assertPassphraseValidForSetup } from './passphrasePolicy'
 
-const IDB_NAME = 'psychiatry-ink-crypto'
-const IDB_VERSION = 1
-const KEYS_STORE = 'keys'
+const KEYS_STORE = CRYPTO_KEYS_STORE
 const RECOVERY_KEY = 'passphrase-backup'
 
 const PBKDF2_ITERATIONS = 310_000
@@ -42,20 +41,8 @@ function base64ToBuffer(base64: string): ArrayBuffer {
   return bytes.buffer
 }
 
-function openDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(IDB_NAME, IDB_VERSION)
-    request.onerror = () => reject(request.error ?? new Error('IndexedDB open failed'))
-    request.onsuccess = () => resolve(request.result)
-    request.onupgradeneeded = () => {
-      const db = request.result
-      if (!db.objectStoreNames.contains(KEYS_STORE)) db.createObjectStore(KEYS_STORE)
-    }
-  })
-}
-
 async function idbGet<T>(key: string): Promise<T | null> {
-  const db = await openDb()
+  const db = await openCryptoVaultDb()
   return new Promise((resolve, reject) => {
     const tx = db.transaction(KEYS_STORE, 'readonly')
     const store = tx.objectStore(KEYS_STORE)
@@ -67,7 +54,7 @@ async function idbGet<T>(key: string): Promise<T | null> {
 }
 
 async function idbSet(key: string, value: unknown): Promise<void> {
-  const db = await openDb()
+  const db = await openCryptoVaultDb()
   return new Promise((resolve, reject) => {
     const tx = db.transaction(KEYS_STORE, 'readwrite')
     const store = tx.objectStore(KEYS_STORE)

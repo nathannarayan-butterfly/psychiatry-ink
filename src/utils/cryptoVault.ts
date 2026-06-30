@@ -11,6 +11,11 @@
 
 import { DEFAULT_CASE_ID, getActiveCaseId } from './caseContext'
 import { allowsPublicKeyRegistration, type PrivacyTier } from '../data/privacyRegions'
+import {
+  CRYPTO_KEYS_STORE,
+  CRYPTO_VAULT_STORE,
+  openCryptoVaultDb,
+} from './cryptoVaultDb'
 
 export const VAULT_VERSION = 1
 
@@ -47,10 +52,8 @@ export interface StoredKeyMaterial {
   deviceId: string
 }
 
-const IDB_NAME = 'psychiatry-ink-crypto'
-const IDB_VERSION = 1
-const KEYS_STORE = 'keys'
-const VAULT_STORE = 'vault'
+const KEYS_STORE = CRYPTO_KEYS_STORE
+const VAULT_STORE = CRYPTO_VAULT_STORE
 const DEVICE_ID_KEY = 'psychiatry-ink-device-id'
 
 function bufferToBase64(buffer: ArrayBuffer): string {
@@ -67,21 +70,8 @@ function base64ToBuffer(base64: string): ArrayBuffer {
   return bytes.buffer
 }
 
-function openDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(IDB_NAME, IDB_VERSION)
-    request.onerror = () => reject(request.error ?? new Error('IndexedDB open failed'))
-    request.onsuccess = () => resolve(request.result)
-    request.onupgradeneeded = () => {
-      const db = request.result
-      if (!db.objectStoreNames.contains(KEYS_STORE)) db.createObjectStore(KEYS_STORE)
-      if (!db.objectStoreNames.contains(VAULT_STORE)) db.createObjectStore(VAULT_STORE)
-    }
-  })
-}
-
 async function idbGet<T>(storeName: string, key: string): Promise<T | null> {
-  const db = await openDb()
+  const db = await openCryptoVaultDb()
   return new Promise((resolve, reject) => {
     const tx = db.transaction(storeName, 'readonly')
     const store = tx.objectStore(storeName)
@@ -93,7 +83,7 @@ async function idbGet<T>(storeName: string, key: string): Promise<T | null> {
 }
 
 async function idbSet(storeName: string, key: string, value: unknown): Promise<void> {
-  const db = await openDb()
+  const db = await openCryptoVaultDb()
   return new Promise((resolve, reject) => {
     const tx = db.transaction(storeName, 'readwrite')
     const store = tx.objectStore(storeName)

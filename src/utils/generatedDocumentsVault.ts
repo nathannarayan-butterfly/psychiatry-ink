@@ -4,29 +4,16 @@
 
 import type { GeneratedDocument, GeneratedDocumentStatus } from '../types/documentTemplate'
 import { decryptJsonPayload, encryptJsonPayload, type EncryptedVaultBlob } from './cryptoVault'
+import { CRYPTO_VAULT_STORE, openCryptoVaultDb } from './cryptoVaultDb'
 
-const IDB_NAME = 'psychiatry-ink-crypto'
-const IDB_VERSION = 1
-const VAULT_STORE = 'vault'
+const VAULT_STORE = CRYPTO_VAULT_STORE
 
 function vaultKey(caseId: string): string {
   return `generated-docs:${caseId}`
 }
 
-function openDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(IDB_NAME, IDB_VERSION)
-    request.onerror = () => reject(request.error ?? new Error('IndexedDB open failed'))
-    request.onsuccess = () => resolve(request.result)
-    request.onupgradeneeded = () => {
-      const db = request.result
-      if (!db.objectStoreNames.contains(VAULT_STORE)) db.createObjectStore(VAULT_STORE)
-    }
-  })
-}
-
 async function idbGet<T>(store: string, key: string): Promise<T | null> {
-  const db = await openDb()
+  const db = await openCryptoVaultDb()
   return new Promise((resolve, reject) => {
     const tx = db.transaction(store, 'readonly')
     const req = tx.objectStore(store).get(key)
@@ -36,7 +23,7 @@ async function idbGet<T>(store: string, key: string): Promise<T | null> {
 }
 
 async function idbSet(store: string, key: string, value: unknown): Promise<void> {
-  const db = await openDb()
+  const db = await openCryptoVaultDb()
   return new Promise((resolve, reject) => {
     const tx = db.transaction(store, 'readwrite')
     tx.objectStore(store).put(value, key)
