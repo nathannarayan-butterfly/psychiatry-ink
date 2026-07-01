@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 /**
  * The dashboard "Meine Notizen" widget lists every user-global note from the
- * shared store (copy / edit / delete + open in Notizen) and stays in sync with
- * tool saves and the popup.
+ * shared store, read-only (copy + open in Notizen only — no inline edit/delete,
+ * which only live inside the Notizen panel/page), and stays in sync with tool
+ * saves and the popup.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, createElement } from 'react'
@@ -17,10 +18,6 @@ vi.mock('../../../context/TranslationContext', () => ({
 }))
 vi.mock('../../../contexts/NotizenContext', () => ({
   useNotizen: () => ({ isOpen: false, open: notizenOpen }),
-}))
-// Keep TipTap out of the unit test — the editor only mounts on inline edit.
-vi.mock('../../notes/NotesRichEditor', () => ({
-  NotesRichEditor: () => null,
 }))
 
 import { MyNotesWidget } from '../MyNotesWidget'
@@ -67,14 +64,12 @@ describe('MyNotesWidget', () => {
     expect(container!.querySelectorAll('.my-notes__row')).toHaveLength(0)
   })
 
-  it('deletes a note (confirm → soft-delete from the shared store)', async () => {
-    saveGlobalNote({ kind: 'jot', title: 'Zu löschen', content: 'weg' })
+  it('does not render edit or delete actions (Dashboard preview is read-only)', async () => {
+    saveGlobalNote({ kind: 'jot', title: 'Notiz A', content: 'Inhalt A' })
     await mount()
-    const del = container!.querySelector<HTMLButtonElement>('.notizen-icon-btn--danger')!
-    act(() => del.click())
-    const confirm = container!.querySelector<HTMLButtonElement>('.notizen-confirm-btn')!
-    act(() => confirm.click())
-    expect(listGlobalNotes()).toHaveLength(0)
+    expect(container!.querySelector('.notizen-icon-btn--danger')).toBeNull()
+    expect(container!.querySelector('.notizen-confirm-btn')).toBeNull()
+    expect(listGlobalNotes()).toHaveLength(1)
   })
 
   it('opens the Notizen popup via the header affordance', async () => {

@@ -4,6 +4,7 @@ import {
   getNotionDocumentCopyText,
   loadNotionDocumentSnapshot,
   type NotionDocumentSnapshot,
+  type NotionDocumentStatus,
 } from '../utils/notionDocumentActions'
 import type {
   AiGenerationScope,
@@ -206,6 +207,7 @@ export function useWorkspaceState(
     initialWorkspace.sectionContents,
   )
   const [sectionMetadata, setSectionMetadata] = useState<Record<string, AufnahmeSectionMetadata>>({})
+  const [documentStatus, setDocumentStatus] = useState<NotionDocumentStatus>({})
   const [editorContent, setEditorContent] = useState(initialWorkspace.editorContent)
   const [generatedContent, setGeneratedContent] = useState(initialWorkspace.generatedContent)
   const [aiToolsExpanded, setAiToolsExpanded] = useState(false)
@@ -353,6 +355,7 @@ export function useWorkspaceState(
     setGeneratedContent('')
     setSectionContents({})
     setSectionMetadata({})
+    setDocumentStatus({})
     setChecklistSelections({})
     resetWorkspaceSession()
   }, [resetWorkspaceSession])
@@ -692,6 +695,10 @@ export function useWorkspaceState(
     },
     [],
   )
+
+  const updateDocumentStatus = useCallback((status: NotionDocumentStatus) => {
+    setDocumentStatus(status)
+  }, [])
 
   const markBefundSectionManuallyEdited = useCallback((sectionId: string) => {
     if (!isAufnahmeStructuredSection(sectionId)) return
@@ -1453,6 +1460,11 @@ export function useWorkspaceState(
       setChecklistSelections({})
       setSectionContents(snapshot.sectionContents)
       setSectionMetadata(snapshot.sectionMetadata ?? {})
+      setDocumentStatus(
+        snapshot.status
+          ? { status: snapshot.status, finalizedAt: snapshot.finalizedAt, finalizedBy: snapshot.finalizedBy }
+          : {},
+      )
       const firstSection = snapshotSections[0]
       const firstId = firstSection?.id ?? null
       if (firstId) {
@@ -1538,6 +1550,7 @@ export function useWorkspaceState(
     sections,
     sectionContents,
     sectionMetadata,
+    documentStatus,
     editorContent,
     generatedContent,
     aiToolsExpanded,
@@ -1588,6 +1601,7 @@ export function useWorkspaceState(
     setEditorContent: handleEditorChange,
     setSectionContent,
     updateSectionMetadata,
+    updateDocumentStatus,
     markBefundSectionManuallyEdited,
     onEditorPaste: handleEditorPaste,
     setInputMode: handleInputModeChange,

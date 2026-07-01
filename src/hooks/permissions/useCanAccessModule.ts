@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { usePermissionCheckContext, usePermissionContext } from '../../contexts/PermissionContext'
 import { canAccessModule } from '../../services/permissionService'
 import type { ModuleName } from '../../types/organisation'
@@ -10,8 +10,17 @@ export function useCanAccessModule(caseId: string | null, moduleName: ModuleName
   const checkCtx = usePermissionCheckContext()
   const { signalDevWarning } = usePermissionContext()
 
-  return useMemo(
-    () => canAccessModule(checkCtx, caseId, moduleName, signalDevWarning),
-    [caseId, checkCtx, moduleName, signalDevWarning],
-  )
+  const { result, warned } = useMemo(() => {
+    let warned = false
+    const result = canAccessModule(checkCtx, caseId, moduleName, () => {
+      warned = true
+    })
+    return { result, warned }
+  }, [caseId, checkCtx, moduleName])
+
+  useEffect(() => {
+    if (warned) signalDevWarning()
+  }, [warned, signalDevWarning])
+
+  return result
 }

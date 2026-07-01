@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { usePermissionCheckContext, usePermissionContext } from '../../contexts/PermissionContext'
 import { useCaseAccessSnapshot } from '../useCaseAccessSnapshot'
@@ -35,15 +35,18 @@ export function useCanAccessCase(caseId?: string): CaseAccessChecks {
   const { signalDevWarning } = usePermissionContext()
   const { user } = useAuth()
   const { snapshot, isLoading } = useCaseAccessSnapshot(caseId)
-  const onWarn = signalDevWarning
 
   const caseCtx = useMemo(
     () => buildCasePermissionContext(checkCtx, snapshot, user?.id),
     [checkCtx, snapshot, user?.id],
   )
 
-  return useMemo(
-    () => ({
+  const { checks, warned } = useMemo(() => {
+    let warned = false
+    const onWarn = () => {
+      warned = true
+    }
+    const checks: CaseAccessChecks = {
       canView: canViewCase(caseCtx, caseId, onWarn),
       canEdit: canEditCase(caseCtx, caseId, onWarn),
       canViewPatientIdentity: canViewPatientIdentity(caseCtx, caseId, onWarn),
@@ -54,7 +57,13 @@ export function useCanAccessCase(caseId?: string): CaseAccessChecks {
       canUseAI: canUseAI(caseCtx, caseId, onWarn),
       canManageSharing: snapshot?.canManage ?? false,
       isLoading,
-    }),
-    [caseCtx, caseId, isLoading, onWarn, snapshot?.canManage],
-  )
+    }
+    return { checks, warned }
+  }, [caseCtx, caseId, isLoading, snapshot?.canManage])
+
+  useEffect(() => {
+    if (warned) signalDevWarning()
+  }, [warned, signalDevWarning])
+
+  return checks
 }

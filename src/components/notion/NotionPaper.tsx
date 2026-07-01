@@ -1,4 +1,4 @@
-import { Command, Mic, Pencil, X } from 'lucide-react'
+import { Command, Lock, Mic, Pencil, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { DocumentChecklistItem, DocumentSection, DocumentVariantMode } from '../../types'
@@ -12,7 +12,9 @@ import {
   printNotionDocument,
   saveNotionDocumentSnapshot,
   type NotionDocumentSnapshot,
+  type NotionDocumentStatus,
 } from '../../utils/notionDocumentActions'
+import { useAccountDisplayName } from '../../hooks/useAccountDisplayName'
 import { upsertCaseMeta } from '../../hooks/useCaseRegistry'
 import { loadNotionPageHeading, saveNotionPageHeading } from '../../utils/notionPageHeading'
 import { NotionPageDateTimeRow } from './NotionPageDateTimeRow'
@@ -55,6 +57,7 @@ import type { SelectionActionId } from './FloatingSelectionToolbar'
 import type { PasteActionId } from './PasteAssistant'
 import type { SlashCommandId } from './SlashCommandMenu'
 import { detectContentType, type ContentCategory } from '../../utils/pasteContentDetector'
+import { formatClinicalDate } from '../../utils/clinicalDate'
 
 export interface SavedWorkspaceDocumentPayload extends NotionDocumentSnapshot {
   content: string
@@ -70,6 +73,11 @@ interface NotionPaperProps {
   sectionConfigs: DocumentSection[]
   sectionContents: Record<string, string>
   sectionMetadata?: Record<string, AufnahmeSectionMetadata>
+  /** Finalize ("vidieren") status — currently only surfaced for the Aufnahme document. */
+  documentStatus?: NotionDocumentStatus
+  onDocumentStatusChange?: (status: NotionDocumentStatus) => void
+  /** Gates the Vidieren/Entsperren actions (documents.finalize permission). */
+  canFinalizeDocument?: boolean
   checklistSelections: Record<string, Record<string, boolean>>
   componentVariants?: NotionVariantOption[]
   activeVariantId?: string
@@ -160,6 +168,17 @@ export interface PendingPaste {
   id: number
 }
 
+/** `DD.MM.YYYY, HH:MM` for the "Finalisiert am …" banner — date + time of signing. */
+function formatFinalizedTimestamp(iso: string | undefined): string {
+  if (!iso) return ''
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return ''
+  const datePart = formatClinicalDate(date)
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${datePart}, ${hours}:${minutes}`
+}
+
 const SIDEBAR_COLLAPSED_KEY = 'psychiatry-ink:sidebar-collapsed'
 
 function loadSidebarCollapsed(): boolean {
@@ -180,6 +199,9 @@ export function NotionPaper({
   sectionConfigs,
   sectionContents,
   sectionMetadata = {},
+  documentStatus = {},
+  onDocumentStatusChange,
+  canFinalizeDocument = false,
   checklistSelections,
   componentVariants,
   activeVariantId,
@@ -251,6 +273,7 @@ export function NotionPaper({
   medicationContext = 'patient',
 }: NotionPaperProps) {
   const { t } = useTranslation()
+  const displayName = useAccountDisplayName()
   const storageCaseId = workspaceStorageId ?? caseId
   const storesCaseMeta = storageCaseId === caseId
   const patient = usePatientMetadata({
@@ -268,6 +291,11 @@ export function NotionPaper({
   // carry, and the free-form page title are redundant noise there — the patient
   // is already linked. Hide them on this page (Item 3).
   const isAufnahmeDocument = documentTypeId === 'aufnahme'
+  // Vidieren (finalize/sign) is currently scoped to Aufnahme only: once signed,
+  // the document is locked for editing everywhere the shared `editorLocked` flag
+  // already gates inputs, on top of (not instead of) the existing lock reasons.
+  const isFinalized = isAufnahmeDocument && documentStatus.status === 'finalized'
+  const contentLocked = editorLocked || isFinalized
   const psychopathActiveMode: PsychopathSubMode =
     isPsychopathDocument && activeVariantId && isPsychopathSubMode(activeVariantId)
       ? activeVariantId
@@ -572,6 +600,9 @@ export function NotionPaper({
       pageHeading,
       sectionContents: latestContents,
       sectionMetadata: Object.keys(sectionMetadata).length > 0 ? sectionMetadata : undefined,
+      status: documentStatus.status,
+      finalizedAt: documentStatus.finalizedAt,
+      finalizedBy: documentStatus.finalizedBy,
       savedAt,
     }
     const content = getNotionDocumentCopyText(sections, latestContents, {
@@ -584,6 +615,7 @@ export function NotionPaper({
     showNotionToast(t('notionDocumentSaved'))
   }, [
     documentTypeId,
+    documentStatus,
     editorContent,
     getLatestContents,
     onSaveWorkspaceVault,
@@ -594,6 +626,67 @@ export function NotionPaper({
     storageCaseId,
     t,
   ])
+
+  const persistDocumentStatus = useCallback(
+    async (nextStatus: NotionDocumentStatus) => {
+      onDocumentStatusChange?.(nextStatus)
+      const latestContents = getLatestContents()
+      const savedAt = new Date().toISOString()
+      const snapshot = {
+        documentTypeId,
+        pageHeading,
+        sectionContents: latestContents,
+        sectionMetadata: Object.keys(sectionMetadata).length > 0 ? sectionMetadata : undefined,
+        status: nextStatus.status,
+        finalizedAt: nextStatus.finalizedAt,
+        finalizedBy: nextStatus.finalizedBy,
+        savedAt,
+      }
+      const content = getNotionDocumentCopyText(sections, latestContents, {
+        sectionConfigs,
+        fallbackContent: editorContent,
+      })
+
+      saveNotionDocumentSnapshot(snapshot, storageCaseId)
+      await onSaveWorkspaceVault?.({ ...snapshot, content })
+    },
+    [
+      documentTypeId,
+      editorContent,
+      getLatestContents,
+      onDocumentStatusChange,
+      onSaveWorkspaceVault,
+      pageHeading,
+      sectionConfigs,
+      sectionMetadata,
+      sections,
+      storageCaseId,
+    ],
+  )
+
+  const handleFinalizeDocument = useCallback(async () => {
+    await persistDocumentStatus({
+      status: 'finalized',
+      finalizedAt: new Date().toISOString(),
+      finalizedBy: displayName,
+    })
+    showNotionToast(t('notionDocumentFinalized'))
+  }, [displayName, persistDocumentStatus, t])
+
+  const handleUnlockDocument = useCallback(async () => {
+    await persistDocumentStatus({ status: 'draft' })
+    showNotionToast(t('notionDocumentUnlocked'))
+  }, [persistDocumentStatus, t])
+
+  const handleFinalizeDocumentClick = useCallback(() => {
+    if (!window.confirm(t('notionFinalizeDocumentConfirm'))) return
+    void handleFinalizeDocument()
+  }, [handleFinalizeDocument, t])
+
+  const handleUnlockDocumentClick = useCallback(() => {
+    if (!window.confirm(t('notionUnlockDocumentConfirm'))) return
+    void handleUnlockDocument()
+  }, [handleUnlockDocument, t])
 
   const handlePrintDocument = useCallback(() => {
     printNotionDocument(documentLabel, sections, getLatestContents(), pageHeading)
@@ -753,6 +846,10 @@ export function NotionPaper({
                 onCopy={handleCopyDocument}
                 onPrint={handlePrintDocument}
                 onExport={handleExportDocument}
+                isFinalized={isFinalized}
+                canFinalize={canFinalizeDocument}
+                onFinalize={isAufnahmeDocument ? handleFinalizeDocumentClick : undefined}
+                onUnlock={isAufnahmeDocument ? handleUnlockDocumentClick : undefined}
               />
             </div>
             <NotionAiModeDropdown
@@ -761,7 +858,7 @@ export function NotionPaper({
               selectedTool={selectedAiTool}
               sourceText={editorContent}
               extraInstruction={kiExtraInstruction}
-              disabled={editorLocked}
+              disabled={contentLocked}
               canGenerate={aiCanGenerate}
               open={aiDropdownOpen}
               onOpenChange={setAiDropdownOpen}
@@ -791,6 +888,17 @@ export function NotionPaper({
           ) : null}
         </div>
 
+        {isFinalized ? (
+          <div className="notion-paper__finalized-banner" role="status">
+            <Lock className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+            <span>
+              {t('notionDocumentFinalizedBanner')
+                .replace('{date}', formatFinalizedTimestamp(documentStatus.finalizedAt))
+                .replace('{name}', documentStatus.finalizedBy ?? '')}
+            </span>
+          </div>
+        ) : null}
+
         <div
           className={`notion-paper__editor-area${showDocumentBlankState ? ' notion-paper__editor-area--document-empty' : ''}${showStructuredToolPanel ? ' notion-paper__editor-area--structured-tool' : ''}`}
         >
@@ -817,7 +925,7 @@ export function NotionPaper({
           <NotionPageDateTimeRow
             pageId={documentTypeId}
             caseId={storageCaseId}
-            disabled={editorLocked}
+            disabled={contentLocked}
             onChange={() => onSaveWorkspaceVault?.()}
           />
 
@@ -879,7 +987,7 @@ export function NotionPaper({
                 accordion={documentMode === 'sections'}
                 activeSectionId={activeSectionId}
                 inputMode={inputMode}
-                readOnly={editorLocked}
+                readOnly={contentLocked}
                 dictationPhase={dictationPhase}
                 dictationDurationMs={dictationDurationMs}
                 dictationPlaybackMs={dictationPlaybackMs}
@@ -904,7 +1012,7 @@ export function NotionPaper({
                   <button
                     type="button"
                     className="notion-paper__kompilieren-btn"
-                    disabled={editorLocked}
+                    disabled={contentLocked}
                     onClick={handleKompilieren}
                     title={t('amdpKompilierenHint')}
                   >
@@ -917,7 +1025,7 @@ export function NotionPaper({
             <NotionEditor
               content={editorContent}
               inputMode={inputMode}
-              readOnly={editorLocked}
+              readOnly={contentLocked}
               dictationPhase={dictationPhase}
               dictationDurationMs={dictationDurationMs}
               dictationPlaybackMs={dictationPlaybackMs}

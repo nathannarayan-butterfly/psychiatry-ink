@@ -123,4 +123,20 @@ describe('notionDocumentActions — encrypted at rest', () => {
     expect(raw).not.toContain('Suizidalität')
     expect(raw).not.toContain('Aufnahmebefund')
   })
+
+  it('round-trips the Vidieren (finalize) status alongside section content', async () => {
+    const caseId = 'doc-finalized'
+    const snapshot: NotionDocumentSnapshot = {
+      ...makeSnapshot(SECRET),
+      status: 'finalized',
+      finalizedAt: '2026-07-01T12:00:00.000Z',
+      finalizedBy: 'Dr. Test',
+    }
+    saveNotionDocumentSnapshot(snapshot, caseId)
+
+    const loaded = loadNotionDocumentSnapshot('aufnahme', caseId)
+    expect(loaded?.status).toBe('finalized')
+    expect(loaded?.finalizedAt).toBe('2026-07-01T12:00:00.000Z')
+    expect(loaded?.finalizedBy).toBe('Dr. Test')
+  })
 })

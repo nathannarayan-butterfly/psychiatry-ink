@@ -10,7 +10,15 @@ const SNAPSHOT_KEY_PREFIX = 'psychiatry-ink:notion-document'
 
 import type { AufnahmeSectionMetadata } from '../types/anamneseBefund'
 
-export interface NotionDocumentSnapshot {
+/** Finalize ("vidieren") status — currently only used by the Aufnahme document. */
+export interface NotionDocumentStatus {
+  status?: 'draft' | 'finalized'
+  finalizedAt?: string
+  /** Display name of the clinician who finalized the document (snapshotted at signing time). */
+  finalizedBy?: string
+}
+
+export interface NotionDocumentSnapshot extends NotionDocumentStatus {
   documentTypeId: string
   pageHeading: string
   sectionContents: Record<string, string>
