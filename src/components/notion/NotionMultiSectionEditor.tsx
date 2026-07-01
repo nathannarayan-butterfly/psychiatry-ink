@@ -1,5 +1,5 @@
 import { ChevronDown, Copy } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { AiToolKey } from '../../data/aiTools'
 import type { DocumentSection, DocumentVariantMode, InputMode } from '../../types'
@@ -22,7 +22,6 @@ import { ChecklistPanel } from '../ChecklistPanel'
 import { WorkspaceEditorOverlay } from '../WorkspaceEditorOverlay'
 import { FloatingSelectionToolbar, type SelectionActionId } from './FloatingSelectionToolbar'
 import { useInlineAiEdit } from './inlineAiEdit/useInlineAiEdit'
-import { useEditorFontScale } from '../../hooks/useEditorFontScale'
 import { IMPROVE_ONLY_SECTION_AI_TOOLS, NotionSectionAiLinks } from './NotionSectionAiLinks'
 import { AufnahmeBefundSectionHost } from './anamnese/AufnahmeBefundSectionHost'
 import { AufnahmePsychopathSectionHost } from './anamnese/AufnahmePsychopathSectionHost'
@@ -66,6 +65,13 @@ interface NotionMultiSectionEditorProps {
   focusRequest?: number
   pendingPaste?: PendingPaste | null
   caseId?: string
+  /**
+   * Current `--notion-editor-font-size` value (set by the parent NotionPaper,
+   * which owns the shared font-size control for both editor modes). Only used
+   * here to trigger a textarea height resync when it changes — the size
+   * itself reaches the textareas via CSS custom-property inheritance.
+   */
+  fontSize?: string
 }
 
 function getSelectionPosition(textarea: HTMLTextAreaElement): { top: number; left: number } {
@@ -111,9 +117,9 @@ export function NotionMultiSectionEditor({
   focusRequest = 0,
   pendingPaste = null,
   caseId,
+  fontSize,
 }: NotionMultiSectionEditorProps) {
   const { t } = useTranslation()
-  const fontScale = useEditorFontScale()
   const containerRef = useRef<HTMLDivElement>(null)
   const textareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({})
   // Tracks the textarea value each section was last auto-resized for, so we only
@@ -187,7 +193,7 @@ export function NotionMultiSectionEditor({
     // content-based guard above cannot detect it — force a full resync here.
     lastResizedRef.current = {}
     syncTextareaHeights()
-  }, [fontScale.cssValue, syncTextareaHeights])
+  }, [fontSize, syncTextareaHeights])
 
   const focusSectionTextarea = useCallback((sectionId: string, cursorAt: number) => {
     requestAnimationFrame(() => {
@@ -374,44 +380,7 @@ export function NotionMultiSectionEditor({
   )
 
   return (
-    <div
-      className="notion-editor notion-editor--multistage"
-      ref={containerRef}
-      style={{ '--notion-editor-font-size': fontScale.cssValue } as CSSProperties}
-    >
-      <div className="notion-editor__font-control" role="group" aria-label={t('editorFontSizeLabel')}>
-        <span className="notion-editor__font-control-label">{t('editorFontSizeLabel')}</span>
-        <button
-          type="button"
-          className="notion-editor__font-btn"
-          onClick={fontScale.decrease}
-          disabled={!fontScale.canDecrease}
-          title={t('editorFontSizeDecrease')}
-          aria-label={t('editorFontSizeDecrease')}
-        >
-          A<span className="notion-editor__font-btn-minus">−</span>
-        </button>
-        <button
-          type="button"
-          className="notion-editor__font-btn notion-editor__font-btn--reset"
-          onClick={fontScale.reset}
-          disabled={fontScale.isDefault}
-          title={t('editorFontSizeReset')}
-          aria-label={t('editorFontSizeReset')}
-        >
-          A
-        </button>
-        <button
-          type="button"
-          className="notion-editor__font-btn"
-          onClick={fontScale.increase}
-          disabled={!fontScale.canIncrease}
-          title={t('editorFontSizeIncrease')}
-          aria-label={t('editorFontSizeIncrease')}
-        >
-          A<span className="notion-editor__font-btn-plus">+</span>
-        </button>
-      </div>
+    <div className="notion-editor notion-editor--multistage" ref={containerRef}>
       {sections.map((section) => {
         const content = getSectionContent(section)
         const isActive = section.id === activeSectionId

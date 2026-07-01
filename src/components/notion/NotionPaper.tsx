@@ -1,5 +1,5 @@
 import { Command, Lock, Mic, Pencil, X } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { DocumentChecklistItem, DocumentSection, DocumentVariantMode } from '../../types'
 import type { DictationPhase } from '../../types/dictation'
@@ -15,6 +15,7 @@ import {
   type NotionDocumentStatus,
 } from '../../utils/notionDocumentActions'
 import { useAccountDisplayName } from '../../hooks/useAccountDisplayName'
+import { useEditorFontScale } from '../../hooks/useEditorFontScale'
 import { upsertCaseMeta } from '../../hooks/useCaseRegistry'
 import { loadNotionPageHeading, saveNotionPageHeading } from '../../utils/notionPageHeading'
 import { NotionPageDateTimeRow } from './NotionPageDateTimeRow'
@@ -274,6 +275,12 @@ export function NotionPaper({
 }: NotionPaperProps) {
   const { t } = useTranslation()
   const displayName = useAccountDisplayName()
+  // Text-size control for the rich text editor — lifted here (rather than
+  // living inside NotionMultiSectionEditor) so it's one shared control for
+  // both editor modes: `--notion-editor-font-size` cascades via CSS
+  // inheritance from `.notion-paper__editor-area` into whichever editor
+  // (single free-text or multi-section) is actually rendered below.
+  const fontScale = useEditorFontScale()
   const storageCaseId = workspaceStorageId ?? caseId
   const storesCaseMeta = storageCaseId === caseId
   const patient = usePatientMetadata({
@@ -851,6 +858,43 @@ export function NotionPaper({
                 onFinalize={isAufnahmeDocument ? handleFinalizeDocumentClick : undefined}
                 onUnlock={isAufnahmeDocument ? handleUnlockDocumentClick : undefined}
               />
+              <span className="notion-paper__tool-divider" aria-hidden />
+              <div
+                className="notion-editor__font-control"
+                role="group"
+                aria-label={t('editorFontSizeLabel')}
+              >
+                <button
+                  type="button"
+                  className="notion-editor__font-btn"
+                  onClick={fontScale.decrease}
+                  disabled={!fontScale.canDecrease}
+                  title={t('editorFontSizeDecrease')}
+                  aria-label={t('editorFontSizeDecrease')}
+                >
+                  A<span className="notion-editor__font-btn-minus">−</span>
+                </button>
+                <button
+                  type="button"
+                  className="notion-editor__font-btn notion-editor__font-btn--reset"
+                  onClick={fontScale.reset}
+                  disabled={fontScale.isDefault}
+                  title={t('editorFontSizeReset')}
+                  aria-label={t('editorFontSizeReset')}
+                >
+                  A
+                </button>
+                <button
+                  type="button"
+                  className="notion-editor__font-btn"
+                  onClick={fontScale.increase}
+                  disabled={!fontScale.canIncrease}
+                  title={t('editorFontSizeIncrease')}
+                  aria-label={t('editorFontSizeIncrease')}
+                >
+                  A<span className="notion-editor__font-btn-plus">+</span>
+                </button>
+              </div>
             </div>
             <NotionAiModeDropdown
               tier={aiModelTier}
@@ -901,6 +945,7 @@ export function NotionPaper({
 
         <div
           className={`notion-paper__editor-area${showDocumentBlankState ? ' notion-paper__editor-area--document-empty' : ''}${showStructuredToolPanel ? ' notion-paper__editor-area--structured-tool' : ''}`}
+          style={{ '--notion-editor-font-size': fontScale.cssValue } as CSSProperties}
         >
           {!isAufnahmeDocument ? (
             <NotionPatientFields
@@ -1006,6 +1051,7 @@ export function NotionPaper({
                 focusRequest={editorFocusRequest}
                 pendingPaste={pendingPaste}
                 caseId={storageCaseId ?? caseId}
+                fontSize={fontScale.cssValue}
               />
               {showKompilierenButton ? (
                 <div className="notion-paper__kompilieren-row">
