@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
-import type { IdentifierStorageMode } from '../../utils/identifierStorage'
 import { markIdentifierStorageAcknowledged } from '../../utils/identifierStorage'
-import { IdentifierStorageChoice } from './IdentifierStorageChoice'
+import type { CaseFileStorageMode } from '../../utils/caseFileStorageMode'
+import { CaseFileStorageCards } from './CaseFileStorageCards'
 
 interface IdentifierStorageOnboardingProps {
-  initialMode: IdentifierStorageMode
-  onConfirm: (mode: IdentifierStorageMode) => void
+  initialMode: CaseFileStorageMode
+  onConfirm: (mode: CaseFileStorageMode) => void
   onDismiss: () => void
 }
 
@@ -17,7 +17,7 @@ export function IdentifierStorageOnboarding({
   onDismiss,
 }: IdentifierStorageOnboardingProps) {
   const { t } = useTranslation()
-  const [mode, setMode] = useState<IdentifierStorageMode>(initialMode)
+  const [mode, setMode] = useState<CaseFileStorageMode>(initialMode)
 
   const handleConfirm = () => {
     markIdentifierStorageAcknowledged()
@@ -48,7 +48,13 @@ export function IdentifierStorageOnboarding({
         </header>
         <p className="identifier-onboarding-dialog__lead">{t('identifierStorageOnboardingLead')}</p>
 
-        <IdentifierStorageChoice value={mode} onChange={setMode} variant="signup" detailsCollapsible />
+        <CaseFileStorageCards
+          mode={mode}
+          onChange={setMode}
+          showStatus
+          allowAdvanced
+          name="onboarding-case-file-storage-mode"
+        />
 
         <div className="identifier-onboarding-dialog__actions">
           <button

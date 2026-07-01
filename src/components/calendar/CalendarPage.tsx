@@ -100,6 +100,7 @@ export function CalendarPage({ onBack, onOpenCase }: CalendarPageProps) {
   const registry = useCaseRegistry({
     tier: privacy.tier,
     countryCode: privacy.countryCode,
+    caseFileCloudSync: privacy.caseFileCloudSync,
     documentTypeLabel,
     fallbackTitle: (id) => t('dashboardCaseFallback').replace('{id}', id),
   })

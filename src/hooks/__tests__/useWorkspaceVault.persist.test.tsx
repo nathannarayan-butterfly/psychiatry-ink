@@ -177,6 +177,7 @@ function Probe({ caseId = 'case-A' }: { caseId?: string }) {
     caseId,
     tier: 'full',
     countryCode: 'DE',
+    caseFileCloudSync: true,
     getLivePatch: () => ({
       documentTypeId: 'aufnahme',
       pageHeading: '',
@@ -300,5 +301,30 @@ describe('useWorkspaceVault.persist — server-first ordering', () => {
         code: 'idb-write-failed-after-server-success',
       }),
     )
+  })
+
+  it('flushes a pending debounced save immediately when the tab is hidden, instead of waiting out the 800ms debounce', async () => {
+    await mountProbe()
+    await flushAsync()
+    hoisted.persistCalls.length = 0
+
+    // scheduleSave() starts the 800ms debounce timer without firing yet.
+    act(() => {
+      captured!.scheduleSave()
+    })
+    expect(hoisted.persistCalls).toEqual([])
+
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      get: () => 'hidden',
+    })
+    await act(async () => {
+      document.dispatchEvent(new Event('visibilitychange'))
+      await Promise.resolve()
+    })
+
+    // The save must have started well before the 800ms debounce would have
+    // elapsed on its own — this is the whole point of the flush.
+    expect(hoisted.persistCalls).toContain('pushRemoteSnapshot:fetch')
   })
 })

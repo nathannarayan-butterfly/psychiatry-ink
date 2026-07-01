@@ -39,12 +39,6 @@ import { AccessLockedError, computeAccess } from '../services/subscriptionAccess
 // import sites keep working after the classes moved to ./creditErrors.
 export { InsufficientCreditsError, CreditInfrastructureError }
 
-function nextMonthlyReset(): Date {
-  const now = new Date()
-  // Reset on the 1st of next month at UTC midnight.
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1))
-}
-
 /** Returns total usable credits: monthly + purchased. */
 function totalCredits(account: { monthlyCredits: number; purchasedCredits: number }): number {
   return account.monthlyCredits + account.purchasedCredits
@@ -60,23 +54,24 @@ export interface EnsuredCreditAccount {
 /**
  * Self-healing upsert of the ai_credit_accounts row for the given userId.
  *
- * - Creates the row with the configured monthly grant on first call.
+ * - Creates the row with the configured monthly grant on first call, with the
+ *   first reset boundary set to 30 days after creation.
  * - When the existing row's `monthly_reset_at` has elapsed, atomically
- *   replenishes `monthly_credits` to {@link MONTHLY_CREDIT_GRANT}, advances
- *   `monthly_reset_at` to the next reset, and appends a `monthly_grant` ledger
- *   entry — all inside the `ai_credit_ensure_account` RPC, which keys the reset
- *   on the stale `monthly_reset_at` so concurrent first-call-of-the-period
- *   requests race exactly one winner and never double-grant.
+ *   replenishes `monthly_credits` to {@link MONTHLY_CREDIT_GRANT}, rolls
+ *   `monthly_reset_at` forward by 30 days from its OWN prior value (not from
+ *   the calendar month), and appends a `monthly_grant` ledger entry — all
+ *   inside the `ai_credit_ensure_account` RPC, which keys the reset on the
+ *   stale `monthly_reset_at` so concurrent first-call-of-the-period requests
+ *   race exactly one winner and never double-grant.
  *
- * `nextMonthlyReset()` is always passed as the next boundary; the RPC only
- * applies it when creating the row or when the stored boundary has elapsed.
+ * The reset boundary is computed entirely inside the RPC (SQL `now()` at
+ * creation, rolling 30-day steps at renewal) so it is always anchored to the
+ * account's own creation date — never a shared calendar-month boundary that
+ * would otherwise grant a second batch within days for accounts created near
+ * month-end.
  */
 export async function ensureCreditAccount(userId: string): Promise<EnsuredCreditAccount> {
-  const account = await creditsRepo.ensureAccount(
-    userId,
-    MONTHLY_CREDIT_GRANT,
-    nextMonthlyReset().toISOString(),
-  )
+  const account = await creditsRepo.ensureAccount(userId, MONTHLY_CREDIT_GRANT)
   return {
     id: account.id,
     monthlyCredits: account.monthly_credits,
@@ -194,11 +189,11 @@ export async function refundCredits(params: {
   })
 }
 
-/** Start of the current monthly usage period (UTC 1st of month) — mirrors the
- *  monthly grant/reset boundary so "used this period" lines up with the grant. */
-function currentPeriodStart(): Date {
-  const now = new Date()
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
+/** Start of the account's current 30-day usage period — derived from its own
+ *  rolling `monthlyResetAt` (period end) so "used this period" lines up with
+ *  the account's actual grant cadence rather than the calendar month. */
+function periodStartFor(monthlyResetAt: Date): Date {
+  return new Date(monthlyResetAt.getTime() - 30 * 24 * 60 * 60 * 1000)
 }
 
 /**
@@ -215,7 +210,7 @@ function currentPeriodStart(): Date {
 export async function getCreditsUsedThisPeriod(userId: string): Promise<number> {
   await migrateLegacyCreditsIfNeeded(userId)
   const account = await ensureCreditAccount(userId)
-  return creditsRepo.sumNetSpendSince(account.id, currentPeriodStart().toISOString())
+  return creditsRepo.sumNetSpendSince(account.id, periodStartFor(account.monthlyResetAt).toISOString())
 }
 
 /** Read current balance summary for a user. */

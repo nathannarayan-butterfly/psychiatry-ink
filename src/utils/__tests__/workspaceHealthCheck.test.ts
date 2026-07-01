@@ -22,6 +22,7 @@ describe('workspaceHealthCheck', () => {
     vi.stubGlobal('fetch', fetchMock)
 
     vi.doMock('../caseRegistryStorage', () => ({
+      isRegistryShadowHydrated: vi.fn(() => true),
       loadRegistryMapFromStorage: vi.fn(() => ({
         'case-A': { caseId: 'case-A', createdAt: '', lastOpened: '' },
         'case-B': { caseId: 'case-B', createdAt: '', lastOpened: '' },
@@ -34,6 +35,10 @@ describe('workspaceHealthCheck', () => {
       getWorkspaceVaultBlob: vi.fn(async (caseId: string) =>
         caseId === 'case-A' ? { ciphertext: 'x', iv: 'i', wrappedKey: 'w', version: 1 } : null,
       ),
+    }))
+
+    vi.doMock('../notionDocumentActions', () => ({
+      hasAnyLocalNotionSnapshot: vi.fn(() => false),
     }))
 
     vi.doMock('../../services/authHeaders', () => ({
@@ -65,6 +70,7 @@ describe('workspaceHealthCheck', () => {
     )
 
     vi.doMock('../caseRegistryStorage', () => ({
+      isRegistryShadowHydrated: vi.fn(() => true),
       loadRegistryMapFromStorage: vi.fn(() => ({
         'case-A': { caseId: 'case-A', createdAt: '', lastOpened: '' },
         'case-B': { caseId: 'case-B', createdAt: '', lastOpened: '' },
@@ -73,6 +79,9 @@ describe('workspaceHealthCheck', () => {
     vi.doMock('../cryptoVault', () => ({
       getOrCreateDeviceId: vi.fn(() => 'device-1'),
       getWorkspaceVaultBlob: vi.fn(async () => null),
+    }))
+    vi.doMock('../notionDocumentActions', () => ({
+      hasAnyLocalNotionSnapshot: vi.fn(() => false),
     }))
     vi.doMock('../../services/authHeaders', () => ({
       getAuthHeaders: vi.fn(async () => ({})),
@@ -95,6 +104,7 @@ describe('workspaceHealthCheck', () => {
     )
 
     vi.doMock('../caseRegistryStorage', () => ({
+      isRegistryShadowHydrated: vi.fn(() => true),
       loadRegistryMapFromStorage: vi.fn(() => ({
         'case-A': { caseId: 'case-A', createdAt: '', lastOpened: '' },
       })),
@@ -102,6 +112,81 @@ describe('workspaceHealthCheck', () => {
     vi.doMock('../cryptoVault', () => ({
       getOrCreateDeviceId: vi.fn(() => 'device-1'),
       getWorkspaceVaultBlob: vi.fn(async () => null),
+    }))
+    vi.doMock('../notionDocumentActions', () => ({
+      hasAnyLocalNotionSnapshot: vi.fn(() => false),
+    }))
+    vi.doMock('../../services/authHeaders', () => ({
+      getAuthHeaders: vi.fn(async () => ({})),
+    }))
+
+    const { evaluateWorkspaceHealth, hasIdWithoutContentDivergence } = await import(
+      '../workspaceHealthCheck'
+    )
+
+    const snapshot = await evaluateWorkspaceHealth('DE')
+    expect(snapshot.ok).toBe(false)
+    expect(hasIdWithoutContentDivergence(snapshot)).toBe(false)
+  })
+
+  it('does NOT flag a case that has no server snapshot but DOES have local content — the reported false-positive', async () => {
+    // Reproduces the "Inhalte fehlen auf diesem Konto" false positive: a case
+    // created and fully saved on THIS device, whose vault blob simply hasn't
+    // synced to the server yet (or never will, e.g. local-only privacy tier).
+    // Local content exists only as a Notion document durability snapshot, not
+    // the unified vault blob — the old code only checked the vault blob and
+    // never cross-referenced `missingOnServer` against local presence at all.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify({ cases: [] }), { status: 200 })),
+    )
+
+    vi.doMock('../caseRegistryStorage', () => ({
+      isRegistryShadowHydrated: vi.fn(() => true),
+      loadRegistryMapFromStorage: vi.fn(() => ({
+        'case-A': { caseId: 'case-A', createdAt: '', lastOpened: '' },
+      })),
+    }))
+    vi.doMock('../cryptoVault', () => ({
+      getOrCreateDeviceId: vi.fn(() => 'device-1'),
+      getWorkspaceVaultBlob: vi.fn(async () => null),
+    }))
+    vi.doMock('../notionDocumentActions', () => ({
+      hasAnyLocalNotionSnapshot: vi.fn((caseId: string) => caseId === 'case-A'),
+    }))
+    vi.doMock('../../services/authHeaders', () => ({
+      getAuthHeaders: vi.fn(async () => ({})),
+    }))
+
+    const { evaluateWorkspaceHealth, hasIdWithoutContentDivergence } = await import(
+      '../workspaceHealthCheck'
+    )
+
+    const snapshot = await evaluateWorkspaceHealth('DE')
+
+    expect(snapshot.localContentCases).toBe(1)
+    expect(snapshot.missingOnServer).toEqual([])
+    expect(hasIdWithoutContentDivergence(snapshot)).toBe(false)
+  })
+
+  it('returns an empty snapshot when the registry shadow has not hydrated yet', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify({ cases: [] }), { status: 200 })),
+    )
+
+    vi.doMock('../caseRegistryStorage', () => ({
+      isRegistryShadowHydrated: vi.fn(() => false),
+      loadRegistryMapFromStorage: vi.fn(() => ({
+        'case-A': { caseId: 'case-A', createdAt: '', lastOpened: '' },
+      })),
+    }))
+    vi.doMock('../cryptoVault', () => ({
+      getOrCreateDeviceId: vi.fn(() => 'device-1'),
+      getWorkspaceVaultBlob: vi.fn(async () => null),
+    }))
+    vi.doMock('../notionDocumentActions', () => ({
+      hasAnyLocalNotionSnapshot: vi.fn(() => false),
     }))
     vi.doMock('../../services/authHeaders', () => ({
       getAuthHeaders: vi.fn(async () => ({})),

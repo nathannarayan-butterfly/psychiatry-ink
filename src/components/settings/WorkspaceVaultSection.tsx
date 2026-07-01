@@ -132,8 +132,18 @@ export function WorkspaceVaultSection({
         markAccountKeyLinked(userId)
         setRecoveryPassphrase('')
         setPassphraseStatus(t('workspacePassphraseRestored'))
-      } catch {
-        setPassphraseStatus(t('workspacePassphraseRestoreFailed'))
+      } catch (fallbackError) {
+        // Distinguish "nothing to test the passphrase against" (no backup
+        // anywhere — the passphrase itself was never actually checked) from
+        // "the passphrase/file was tested and rejected" (wrong passphrase, or
+        // a corrupt/foreign backup file) — these have different remedies and
+        // were previously collapsed into one unhelpful message.
+        const message = fallbackError instanceof Error ? fallbackError.message : ''
+        setPassphraseStatus(
+          /no passphrase backup found/i.test(message)
+            ? t('workspacePassphraseNoBackupFound')
+            : t('workspacePassphraseRestoreFailed'),
+        )
       }
     }
   }, [countryCode, onCloudSyncComplete, recoveryPassphrase, t, userId])

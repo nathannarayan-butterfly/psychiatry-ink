@@ -268,20 +268,18 @@ describe('creditGuard.checkBalance', () => {
 describe('creditGuard.ensureCreditAccount', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('delegates to the ai_credit_ensure_account RPC with the monthly grant + next reset, and maps the row', async () => {
+  it('delegates to the ai_credit_ensure_account RPC with the monthly grant, and maps the row', async () => {
     const account = mockCreditAccount({ monthlyCredits: 500, purchasedCredits: 50 })
 
     const mapped = await ensureCreditAccount('user-1')
 
-    // Monthly grant = MONTHLY_CREDIT_GRANT (500); the third arg is the next
-    // reset boundary (ISO string in the future). The RPC applies it only on
-    // create or when the stored boundary has elapsed (atomic, DB-side).
+    // Monthly grant = MONTHLY_CREDIT_GRANT (500). The next reset boundary is
+    // computed entirely inside the RPC (rolling 30 days from the account's own
+    // creation/prior-reset date) — the client no longer passes it.
     expect(ensureAccount).toHaveBeenCalledOnce()
-    const [userId, grant, nextResetIso] = ensureAccount.mock.calls[0]
+    const [userId, grant] = ensureAccount.mock.calls[0]
     expect(userId).toBe('user-1')
     expect(grant).toBe(500)
-    expect(typeof nextResetIso).toBe('string')
-    expect(new Date(nextResetIso as string).getTime()).toBeGreaterThan(Date.now())
 
     // snake_case row → camelCase mapping, purchased credits preserved.
     expect(mapped.id).toBe('acc-1')

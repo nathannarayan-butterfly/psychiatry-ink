@@ -410,6 +410,7 @@ function NotionAppInner({
   const caseRegistry = useCaseRegistry({
     tier: privacy.tier,
     countryCode: privacy.countryCode,
+    caseFileCloudSync: privacy.caseFileCloudSync,
     documentTypeLabel,
     fallbackTitle,
   })
@@ -854,7 +855,7 @@ function NotionAppInner({
     if (category && !workspace.generationPendingReview && !workspace.generationWasAccepted) {
       if (content.trim()) {
         const editingId = editingDokumentIdRef.current
-        syncWorkspaceDocumentToArchive({
+        const archived = syncWorkspaceDocumentToArchive({
           caseId: storageCaseId,
           documentTypeId: docTypeId,
           title: typeLabel,
@@ -864,6 +865,13 @@ function NotionAppInner({
           language: languageSettings.language,
           existingId: editingId ?? undefined,
         })
+        // Track the archived row's id so the NEXT save updates this same
+        // document instead of creating a duplicate. Without this, every save
+        // after the first forgot the id (cleared below) and fell through to
+        // upsertDokumentDraft's pageType+source='draft' lookup, which no
+        // longer matches once the row is 'manual' — so it created a brand
+        // new entry on every subsequent save.
+        if (archived) editingDokumentIdRef.current = archived.id
       }
     }
 
@@ -881,10 +889,9 @@ function NotionAppInner({
 
     // Skip redundant draft archive: we already wrote a manual entry above.
     await handleVaultSaveWithFeedAppend({ skipDraftArchive: true })
-    if (docTypeId && content.trim() && !workspace.generationPendingReview) {
-      editingDokumentIdRef.current = null
-      workspace.resetToBlankPage()
-    }
+    // Save keeps the user in the entry view. Returning to the Workspace
+    // overview only happens via an explicit close/exit action
+    // (handleCloseWorkspacePage), never as a side effect of Save.
   }, [documentLabel, handleVaultSaveWithFeedAppend, languageSettings.language, savedDocsKey, storageCaseId, workspace])
 
   const handleViewSavedDoc = useCallback(

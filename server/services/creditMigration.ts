@@ -5,11 +5,6 @@ import { creditBalancesRepo } from '../data/creditBalances'
 const LEGACY_ACCOUNT_ID = 'default'
 const LEGACY_MIGRATION_NOTE = 'legacy_credit_balance_migration'
 
-function nextMonthlyReset(): Date {
-  const now = new Date()
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1))
-}
-
 export function accountIdFromUserId(userId: string | undefined): string {
   return userId?.trim() || LEGACY_ACCOUNT_ID
 }
@@ -32,12 +27,10 @@ export async function migrateLegacyCreditsIfNeeded(userId: string): Promise<void
   const legacy = await creditBalancesRepo.getCreditBalance(legacyId)
   if (!legacy || legacy.balance <= 0) return
 
-  // Self-healing ensure (creates the 500-credit account on first read).
-  const account = await creditsRepo.ensureAccount(
-    userId,
-    MONTHLY_CREDIT_GRANT,
-    nextMonthlyReset().toISOString(),
-  )
+  // Self-healing ensure (creates the 500-credit account on first read). The
+  // reset boundary is computed inside the RPC, anchored on this creation
+  // moment — not a shared calendar-month boundary.
+  const account = await creditsRepo.ensureAccount(userId, MONTHLY_CREDIT_GRANT)
 
   const alreadyMigrated = await creditsRepo.hasLedgerEntryWithNote(
     account.id,

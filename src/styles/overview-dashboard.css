@@ -2491,6 +2491,9 @@
   flex-direction: column;
   align-items: stretch;
   gap: 0.35rem;
+  /* Symmetric padding — the radar chart is centered (see .receptor-radar--inline
+     below), so its labels need equal clearance on both sides, not just the right. */
+  padding-left: var(--space-2, 0.5rem);
   padding-right: var(--space-2, 0.5rem);
 }
 .ov-med__receptor-head {
@@ -2536,6 +2539,7 @@
   .ov-med__receptor {
     flex: 0 0 auto;
     max-width: 10.5rem;
+    padding-left: var(--space-3, 0.75rem);
     padding-right: var(--space-3, 0.75rem);
   }
 }

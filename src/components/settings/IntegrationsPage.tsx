@@ -78,6 +78,7 @@ export function IntegrationsPage({ onBack }: IntegrationsPageProps) {
   const registry = useCaseRegistry({
     tier: 'local_only',
     countryCode: 'DE',
+    caseFileCloudSync: false,
     documentTypeLabel: () => '',
     fallbackTitle: (id) => id,
   })

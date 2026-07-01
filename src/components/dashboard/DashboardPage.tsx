@@ -46,8 +46,11 @@ import {
   needsIdentifierStorageOnboarding,
 } from '../../utils/identifierStorage'
 import { hasAccountOnboardingRecord } from '../../utils/accountBackup'
+import {
+  caseFileStorageModeToSettings,
+  resolveCaseFileStorageMode,
+} from '../../utils/caseFileStorageMode'
 import { DashboardHinweise } from './DashboardHinweise'
-import { AccountRegistryRestoreBanner } from './AccountRegistryRestoreBanner'
 import { WorkspaceHealthBanner } from './WorkspaceHealthBanner'
 import { DashboardTopBar } from './DashboardTopBar'
 import { KnowledgeBaseTile } from './KnowledgeBase'
@@ -258,6 +261,7 @@ export function DashboardPage({
   const registry = useCaseRegistry({
     tier: privacy.tier,
     countryCode: privacy.countryCode,
+    caseFileCloudSync: privacy.caseFileCloudSync,
     documentTypeLabel,
     fallbackTitle,
   })
@@ -266,6 +270,7 @@ export function DashboardPage({
     caseId: DEFAULT_CASE_ID,
     tier: privacy.tier,
     countryCode: privacy.countryCode,
+    caseFileCloudSync: privacy.caseFileCloudSync,
     getLivePatch: () => ({
       documentTypeId: '',
       pageHeading: '',
@@ -464,8 +469,12 @@ export function DashboardPage({
       <div className="dashboard-page__inner">
       {showIdentifierOnboarding ? (
         <IdentifierStorageOnboarding
-          initialMode={privacy.identifierStorage}
-          onConfirm={privacy.setIdentifierStorage}
+          initialMode={resolveCaseFileStorageMode(privacy.identifierStorage, privacy.caseFileCloudSync)}
+          onConfirm={(mode) => {
+            const next = caseFileStorageModeToSettings(mode)
+            privacy.setIdentifierStorage(next.identifierStorage)
+            privacy.setCaseFileCloudSync(next.caseFileCloudSync)
+          }}
           onDismiss={() => setShowIdentifierOnboarding(false)}
         />
       ) : null}
@@ -475,14 +484,13 @@ export function DashboardPage({
       />
 
       <section className="dashboard-hero" aria-labelledby="dashboard-hero-title">
-        <AccountRegistryRestoreBanner
-          countryCode={privacy.countryCode}
-          onRestored={() => void registry.refresh()}
-        />
+        {/* Vault unlock/restore prompt now renders once at the App shell level
+            (src/App.tsx) so it is visible on every authenticated route, not
+            just the dashboard — see App.tsx for the rationale. */}
         <WorkspaceHealthBanner countryCode={privacy.countryCode} />
         <DashboardHinweise
           identifierStorage={privacy.identifierStorage}
-          tier={privacy.tier}
+          caseFileCloudSync={privacy.caseFileCloudSync}
         />
         <div className="dashboard-hero__copy fade-in-up">
           <p className="dashboard-hero__date">{todayLabel}</p>

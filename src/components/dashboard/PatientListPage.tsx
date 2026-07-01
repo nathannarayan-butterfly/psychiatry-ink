@@ -60,6 +60,7 @@ export function PatientListPage({
   const { registry } = usePatientCaseRegistry({
     tier: privacy.tier,
     countryCode: privacy.countryCode,
+    caseFileCloudSync: privacy.caseFileCloudSync,
   })
 
   const [search, setSearch] = useState('')

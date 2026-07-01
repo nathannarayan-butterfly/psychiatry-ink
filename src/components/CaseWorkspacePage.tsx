@@ -283,6 +283,7 @@ function WorkspaceInner({
     caseId: workspaceStorageId,
     tier: privacy.tier,
     countryCode: privacy.countryCode,
+    caseFileCloudSync: privacy.caseFileCloudSync,
     getLivePatch,
     onRestored: handleVaultRestored,
     documentTypeLabel,

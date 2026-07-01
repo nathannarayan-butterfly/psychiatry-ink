@@ -8,16 +8,13 @@ import { translateUi } from '../../../data/uiTranslations'
 import type { IdentifierStorageMode } from '../../../utils/identifierStorage'
 import type { PrivacyTier } from '../../../data/privacyRegions'
 
-// Isolate the "Current tier" section: stub the side-effecting children/services
+// Isolate the case-file storage choice: stub the side-effecting children/services
 // so the test only exercises the region + storage-mode → copy resolution.
 vi.mock('../WorkspaceVaultSection', () => ({
   WorkspaceVaultSection: () => null,
 }))
 vi.mock('../CountryCombobox', () => ({
   CountryCombobox: () => null,
-}))
-vi.mock('../../privacy/IdentifierStorageChoice', () => ({
-  IdentifierStorageChoice: () => null,
 }))
 vi.mock('../../../hooks/useDashboardSettings', () => ({
   useDashboardSettings: () => ({
@@ -43,13 +40,17 @@ function makePrivacy(overrides: {
   countryCode: string
   tier: PrivacyTier
   identifierStorage: IdentifierStorageMode
+  caseFileCloudSync: boolean
 }) {
   return {
     countryCode: overrides.countryCode,
     tier: overrides.tier,
     identifierStorage: overrides.identifierStorage,
+    caseFileCloudSync: overrides.caseFileCloudSync,
+    hasExplicitCaseFileCloudSyncChoice: true,
     setCountryCode: () => {},
     setIdentifierStorage: () => {},
+    setCaseFileCloudSync: () => {},
   }
 }
 
@@ -84,49 +85,112 @@ afterEach(() => {
   activeContainer = null
 })
 
-function render(privacy: ReturnType<typeof makePrivacy>): string {
+function render(privacy: ReturnType<typeof makePrivacy>): { text: string; container: HTMLDivElement } {
   const { container, root } = renderSection(privacy)
   activeRoot = root
   activeContainer = container
-  return container.textContent ?? ''
+  return { text: container.textContent ?? '', container }
 }
 
-const fullLabel = translateUi('en', 'privacyTierFull')
-const localOnlyLabel = translateUi('en', 'privacyTierLocalOnly')
-const accountLine = translateUi('en', 'privacyTierIdentifierAccount')
-const deviceLine = translateUi('en', 'privacyTierIdentifierDevice')
-const noSnapshot = translateUi('en', 'privacyPublicKeyBlocked')
-const snapshotAllowed = translateUi('en', 'privacyPublicKeyAllowed')
+function checkedStorageOption(container: HTMLDivElement): string | null {
+  const checked = container.querySelector<HTMLInputElement>(
+    'input[name="settings-case-file-storage-mode"]:checked',
+  )
+  return checked?.closest('label')?.textContent ?? null
+}
 
-describe('PatientPrivacySection — Current tier', () => {
-  it('India + account: full tier label, account identifier line, case-file snapshot allowed', () => {
-    const text = render(
-      makePrivacy({ countryCode: 'IN', tier: 'full', identifierStorage: 'account' }),
+function expandTechnicalDetails(container: HTMLDivElement): void {
+  const toggle = Array.from(container.querySelectorAll('button')).find((button) =>
+    button.textContent?.includes(translateUi('en', 'storageTechnicalDetailsToggle')),
+  )
+  act(() => toggle?.click())
+}
+
+const fullTierLabel = translateUi('en', 'privacyTierFull')
+const localOnlyTierLabel = translateUi('en', 'privacyTierLocalOnly')
+const localTitle = translateUi('en', 'caseFileStorageLocalTitle')
+const identifiersTitle = translateUi('en', 'caseFileStorageIdentifiersTitle')
+const fullTitle = translateUi('en', 'caseFileStorageFullTitle')
+const defaultOnlyNote = translateUi('en', 'privacyTierDefaultOnlyNote')
+const statusFull = translateUi('en', 'storageStatusFull')
+const statusLocal = translateUi('en', 'storageStatusLocal')
+const statusIdentifiers = translateUi('en', 'storageStatusIdentifiers')
+
+describe('PatientPrivacySection — case-file storage choice', () => {
+  it('DE + explicit encrypted case-file backup: shows the "full" option selected, NOT the local-only copy as if blocking sync', () => {
+    // This is the reported bug: selecting country DE must not silently force
+    // (or visually contradict) an explicit "encrypted case-file backup" choice.
+    const { text, container } = render(
+      makePrivacy({
+        countryCode: 'DE',
+        tier: 'local_only',
+        identifierStorage: 'account',
+        caseFileCloudSync: true,
+      }),
     )
-    expect(text).toContain(fullLabel)
-    expect(text).not.toContain(localOnlyLabel)
-    expect(text).not.toContain('DE/AT/CH')
-    expect(text).toContain(accountLine)
-    expect(text).not.toContain(deviceLine)
-    expect(text).toContain(snapshotAllowed)
-    expect(text).not.toContain(noSnapshot)
+    expect(checkedStorageOption(container)).toContain(fullTitle)
+    // The plain-language status line must reflect the explicit choice, not the region default.
+    expect(text).toContain(statusFull)
+    expect(text).not.toContain(statusLocal)
+    expect(text).toContain(defaultOnlyNote)
+
+    // The region-derived tier is still visible, but only behind "technical details" —
+    // and even then it must never contradict the status line above.
+    expandTechnicalDetails(container)
+    expect(container.textContent).toContain(localOnlyTierLabel)
   })
 
-  it('India + device: shows the device identifier line with full tier snapshot copy', () => {
-    const text = render(
-      makePrivacy({ countryCode: 'IN', tier: 'full', identifierStorage: 'device' }),
+  it('DE with no explicit choice defaults to "local only" (tier default), but this is just a default, not a lock', () => {
+    const { text, container } = render(
+      makePrivacy({
+        countryCode: 'DE',
+        tier: 'local_only',
+        identifierStorage: 'device',
+        caseFileCloudSync: false,
+      }),
     )
-    expect(text).toContain(fullLabel)
-    expect(text).toContain(deviceLine)
-    expect(text).not.toContain(accountLine)
-    expect(text).toContain(snapshotAllowed)
+    expect(checkedStorageOption(container)).toContain(localTitle)
+    expect(text).toContain(statusLocal)
   })
 
-  it('switching the storage mode changes the reflected identifier line', () => {
-    const deviceText = render(
-      makePrivacy({ countryCode: 'IN', tier: 'full', identifierStorage: 'device' }),
+  it('DE + identifiers-only explicit choice: patient list syncs, case file stays local', () => {
+    const { text, container } = render(
+      makePrivacy({
+        countryCode: 'DE',
+        tier: 'local_only',
+        identifierStorage: 'account',
+        caseFileCloudSync: false,
+      }),
     )
-    expect(deviceText).toContain(deviceLine)
+    expect(checkedStorageOption(container)).toContain(identifiersTitle)
+    expect(text).toContain(statusIdentifiers)
+  })
+
+  it('US (full tier) with encrypted case-file backup selected: shows the "full" option', () => {
+    const { text, container } = render(
+      makePrivacy({
+        countryCode: 'US',
+        tier: 'full',
+        identifierStorage: 'account',
+        caseFileCloudSync: true,
+      }),
+    )
+    expect(checkedStorageOption(container)).toContain(fullTitle)
+    expect(text).toContain(statusFull)
+    expandTechnicalDetails(container)
+    expect(container.textContent).toContain(fullTierLabel)
+  })
+
+  it('switching the storage mode changes the reflected selection', () => {
+    const { container: deviceContainer } = render(
+      makePrivacy({
+        countryCode: 'US',
+        tier: 'full',
+        identifierStorage: 'device',
+        caseFileCloudSync: false,
+      }),
+    )
+    expect(checkedStorageOption(deviceContainer)).toContain(localTitle)
 
     act(() => {
       activeRoot!.render(
@@ -135,33 +199,16 @@ describe('PatientPrivacySection — Current tier', () => {
           englishVariant: 'uk',
           children: createElement(PatientPrivacySection, {
             privacy: makePrivacy({
-              countryCode: 'IN',
+              countryCode: 'US',
               tier: 'full',
               identifierStorage: 'account',
+              caseFileCloudSync: true,
             }),
             workspaceVault: vaultStub,
           }),
         }),
       )
     })
-    const accountText = activeContainer!.textContent ?? ''
-    expect(accountText).toContain(accountLine)
-    expect(accountText).not.toContain(deviceLine)
-  })
-
-  it('DACH (DE) still resolves to the local_only tier label', () => {
-    const text = render(
-      makePrivacy({ countryCode: 'DE', tier: 'local_only', identifierStorage: 'device' }),
-    )
-    expect(text).toContain(localOnlyLabel)
-    expect(text).toContain(noSnapshot)
-  })
-
-  it('full tier (US + account) allows an encrypted clinical case-file snapshot', () => {
-    const text = render(
-      makePrivacy({ countryCode: 'US', tier: 'full', identifierStorage: 'account' }),
-    )
-    expect(text).toContain(snapshotAllowed)
-    expect(text).toContain(accountLine)
+    expect(checkedStorageOption(activeContainer!)).toContain(fullTitle)
   })
 })

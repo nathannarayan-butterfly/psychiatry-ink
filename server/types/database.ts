@@ -4078,7 +4078,6 @@ export type Database = {
       ai_credit_ensure_account: {
         Args: {
           p_monthly_grant: number
-          p_next_reset: string
           p_user_id: string
         }
         Returns: {

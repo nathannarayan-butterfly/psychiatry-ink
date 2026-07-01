@@ -16,8 +16,11 @@ function mockPrivacy() {
     tier: 'local_only' as const,
     countryCode: 'DE',
     identifierStorage: 'device' as const,
+    caseFileCloudSync: false,
+    hasExplicitCaseFileCloudSyncChoice: false,
     setCountryCode: () => {},
     setIdentifierStorage: () => {},
+    setCaseFileCloudSync: () => {},
   }
 }
 

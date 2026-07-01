@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useSyncExternalStore } from 'react'
 import {
+  allowsWorkspaceDbSnapshot,
   detectBrowserCountry,
   resolvePrivacyTier,
   type PrivacyTier,
@@ -18,6 +19,20 @@ const STORAGE_KEY = 'psychiatry-ink-privacy'
 interface PrivacySettings {
   countryCode: string
   identifierStorage: IdentifierStorageMode
+  /**
+   * Explicit, user-chosen decision to back up the encrypted case file
+   * (Fallakte) to the server, enabling cross-device restore via passphrase.
+   * `undefined` means "no explicit choice yet" — the country-derived tier
+   * default applies (see `resolveEffectiveCaseFileCloudSync`). Once set, this
+   * is the SOLE gate for case-file server sync — country/jurisdiction only
+   * ever supplies the default, never a hard lock (see privacyRegions.ts).
+   */
+  caseFileCloudSync?: boolean
+}
+
+/** Effective case-file sync value: explicit choice wins, else the tier default. */
+function resolveEffectiveCaseFileCloudSync(settings: PrivacySettings, tier: PrivacyTier): boolean {
+  return settings.caseFileCloudSync ?? allowsWorkspaceDbSnapshot(tier)
 }
 
 function loadPrivacySettings(): PrivacySettings {
@@ -33,6 +48,8 @@ function loadPrivacySettings(): PrivacySettings {
             parsed.identifierStorage === 'account' || parsed.identifierStorage === 'device'
               ? parsed.identifierStorage
               : loadIdentifierStorageMode(),
+          caseFileCloudSync:
+            typeof parsed.caseFileCloudSync === 'boolean' ? parsed.caseFileCloudSync : undefined,
         }
       }
     }
@@ -116,11 +133,25 @@ export function usePrivacySettings() {
     markIdentifierStorageAcknowledged()
   }, [])
 
+  const setCaseFileCloudSync = useCallback((caseFileCloudSync: boolean) => {
+    setPrivacySettings((current) => ({ ...current, caseFileCloudSync }))
+  }, [])
+
+  const caseFileCloudSync = useMemo(
+    () => resolveEffectiveCaseFileCloudSync(settings, tier),
+    [settings, tier],
+  )
+
   return {
     countryCode: settings.countryCode,
     identifierStorage: settings.identifierStorage,
     tier: tier as PrivacyTier,
+    /** Effective (explicit-choice-or-tier-default) case-file cloud sync state. */
+    caseFileCloudSync,
+    /** True once the user has explicitly picked a case-file storage mode (vs. the tier default). */
+    hasExplicitCaseFileCloudSyncChoice: settings.caseFileCloudSync !== undefined,
     setCountryCode,
     setIdentifierStorage,
+    setCaseFileCloudSync,
   }
 }

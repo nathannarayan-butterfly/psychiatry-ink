@@ -29,17 +29,19 @@ export interface CreditMovementOptions {
  * Idempotently ensure the user's credit account exists and apply the monthly
  * grant if the reset boundary has elapsed. Returns the current account row.
  *
- * @param nextResetAt ISO timestamp of the next monthly reset boundary.
+ * The next reset boundary is computed INSIDE the RPC — on creation it is
+ * `now() + 30 days`; on renewal it rolls forward from the account's own prior
+ * `monthly_reset_at` in fixed 30-day steps. This keeps the cadence anchored to
+ * the account's own creation date instead of a shared calendar-month boundary
+ * (see `20260712000000_credit_rolling_30day_renewal.sql`).
  */
 export async function ensureAccount(
   userId: string,
   monthlyGrant: number,
-  nextResetAt: string,
 ): Promise<AiCreditAccount> {
   const { data, error } = await getSupabaseAdmin().rpc('ai_credit_ensure_account', {
     p_user_id: userId,
     p_monthly_grant: monthlyGrant,
-    p_next_reset: nextResetAt,
   })
   if (error) throw new Error(`ai_credit_ensure_account failed: ${error.message}`)
   if (!data) throw new Error('ai_credit_ensure_account returned no account')

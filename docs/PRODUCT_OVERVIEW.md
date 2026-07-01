@@ -23,7 +23,7 @@ The default UI language is **German** (the product targets the DACH region first
 - **Backend:** an **Express 5** API server (`server/index.ts`) run with `tsx` in dev, concurrently with Vite (`npm run dev` → `api` + `web`). All routes are namespaced under `/api/*`.
 - **Persistence (hybrid):**
   - **Supabase** (`@supabase/supabase-js`) is the primary cloud store for auth, the knowledge base, discuss-case/consultation, calendar, org/enterprise, audit logs, AI-usage logs, and more. SQL migrations live in `supabase/migrations/`.
-  - **Prisma** (`@prisma/client`, `prisma`) backs a local relational store (the `.env.example` `DATABASE_URL` points at a local SQLite `dev.db`) used for at least **credit balances / plans** (`server/services/credits.ts` uses `prisma.creditBalance`). `postinstall` runs `prisma generate`.
+  - **Prisma/SQLite has been removed.** Credit balances/plans now live entirely in Supabase — `server/services/credits.ts` delegates to `ai_credit_accounts` (via RPC in `server/ai/creditGuard.ts`), with the legacy `credit_balances` table kept only for plan metadata and a local-dev `'default'` singleton. There is no Prisma dependency in `package.json` and no local relational store.
 - **Realtime / voice:** **LiveKit** client + server SDK (`livekit-client`, `livekit-server-sdk`) for voice panels (e.g., discuss-case voice); a `/api/health/voice` endpoint reports LiveKit env configuration in non-production.
 - **Validation:** **Zod** schemas (`src/schemas`, `src/data/aiCallSchemas.ts`).
 
@@ -33,7 +33,7 @@ The default UI language is **German** (the product targets the DACH region first
   1. **Client-side vault encryption** (`src/utils/cryptoVault.ts`): patient `{ name, geburtsdatum }` is encrypted in-browser via the Web Crypto API (AES-GCM-256 content key, wrapped with an RSA-OAEP-2048 key pair whose private key stays in IndexedDB). Exportable vault blobs carry only `{ version, ciphertext, iv, wrappedKey }`. The server only ever receives the **public key JWK** (and only when the privacy tier permits).
   2. **Server-side de-identification** (`server/services/discussCaseDeidentify.ts`): before any clinical text reaches an LLM, identifiers (names, dates, case/insurance numbers, phone, email) are redacted. Butterfly and CMEA both de-identify *authoritatively server-side* right before prompt assembly.
 - **LLM gateway** (`server/services/llmProvider.ts`): a single `callLlm({ tier, systemPrompt, userPrompt, ... })` entry point calls an OpenAI-compatible Chat Completions endpoint (OpenAI or DeepSeek). It handles provider fallback, max-token clamping, truncation detection, an empty-JSON retry, and **AI-usage logging** on every call. If no provider key is set, it returns deterministic **mock** completions so the app degrades gracefully.
-- **Model tiers** (`server/modelTierMapping.ts`): `fast` / `standard` / `thorough`. By default `fast` + `standard` → **DeepSeek** (`deepseek-v4-flash`), `thorough` → **OpenAI** (`gpt-4.1`); each tier has a cross-vendor fallback so a single configured key still works. Transcription defaults to `gpt-4o-transcribe`.
+- **Model tiers** (`server/modelTierMapping.ts`): `fast` / `standard` / `thorough`, plus an explicit opt-in **"Maximum"** override. By default `fast` → **DeepSeek** (`deepseek-v4-flash`), `standard` → **Google Gemini** (`gemini-2.5-flash`, env-reroutable via `STANDARD_PROVIDER`/`STANDARD_MODEL`), `thorough` → **OpenAI** (`gpt-5.4`, a GPT-5-series reasoning model), and **Maximum** → **OpenAI** (`gpt-5.5`, applied as an explicit per-generation model override, never a tier default). Each tier has a cross-vendor fallback — **Mistral AI** (EU-residency) is the fallback for `fast`/`standard` under `LLM_RESIDENCY=eu` (see `server/ai/providerResidency.ts`), and `thorough` falls back to DeepSeek. Transcription defaults to `gpt-4o-transcribe`.
 - **Credits / quota:** AI generation and dictation consume **credits** (`server/services/credits.ts`, `server/services/aiQuota.ts`, `server/routes/credits.ts`). New accounts get a free credit grant; when credits are exhausted, editing and export remain usable (per landing copy). A separate **AI budget/usage** subsystem tracks token usage and cost (see §3).
 
 ### Env / config
@@ -133,10 +133,12 @@ The default UI language is **German** (the product targets the DACH region first
 - Plan gating (`planGating.ts`, `subscriptionPlans.ts`): the patient dashboard/overview and full cloud sync are gated to **Pro** and/or permitted privacy regions.
 
 ### AI providers & model config
-- **DeepSeek** — fast/standard tier (default `deepseek-v4-flash`); `DEEPSEEK_API_KEY`.
-- **OpenAI** — thorough tier (default `gpt-4.1`) and **transcription** (`gpt-4o-transcribe`) and inline edits; `OPENAI_API_KEY`.
-- **Auto-fallback** between vendors when only one key is set; **mock mode** when no key is set (deterministic placeholder text + usage logged as `mock: true`).
-- Overridable model envs: `OPENAI_FAST_MODEL`, `OPENAI_STANDARD_MODEL`, `OPENAI_THOROUGH_MODEL`, `DEEPSEEK_FAST_MODEL`, `OPENAI_TRANSCRIBE_MODEL`, plus `*_BASE_URL` overrides.
+- **DeepSeek** — fast tier (default `deepseek-v4-flash`; legacy `deepseek-chat`/`deepseek-reasoner` aliases retire 2026-07-24); `DEEPSEEK_API_KEY`.
+- **Google Gemini** — standard tier (default `gemini-2.5-flash`), called via the OpenAI-compatible endpoint; `GOOGLE_API_KEY`. Env-reroutable to another provider via `STANDARD_PROVIDER`/`STANDARD_MODEL` without a code change.
+- **OpenAI** — thorough tier (default `gpt-5.4`) and **transcription** (`gpt-4o-transcribe`) and inline edits; `OPENAI_API_KEY`. An explicit **"Maximum"** opt-in (default `gpt-5.5`) is available per-generation as a model override, not a tier default.
+- **Mistral AI** — EU-residency fallback for the fast/standard tiers (`mistral-small-latest`) and available for the thorough tier (`mistral-large-latest`); `MISTRAL_API_KEY`. Used automatically under `LLM_RESIDENCY=eu` when the primary provider is non-EU.
+- **Auto-fallback** between vendors when only one key is set (residency-aware — see `server/ai/providerResidency.ts`); **mock mode** when no key is set (deterministic placeholder text + usage logged as `mock: true`).
+- Overridable model envs: `OPENAI_THOROUGH_MODEL`, `OPENAI_MAXIMUM_MODEL`, `GOOGLE_STANDARD_MODEL`, `DEEPSEEK_FAST_MODEL`, `MISTRAL_SMALL_MODEL`, `MISTRAL_LARGE_MODEL`, `OPENAI_TRANSCRIBE_MODEL`, plus `*_BASE_URL` overrides.
 - **LiveKit** — voice features; reports configured/missing via `/api/health/voice` (non-prod).
 
 ---
@@ -149,7 +151,6 @@ The default UI language is **German** (the product targets the DACH region first
 - **Butterfly criteria coverage is intentionally small (5 disorders) and ships as `status: 'draft'`.** Criteria records are versioned and clinician-reviewable; the registry notes records "ship as draft until reviewed." Output is always advisory and never a diagnosis.
 - **De-identification is regex/name-based, not a guarantee.** `discussCaseDeidentify.ts` redacts common identifier patterns + the known patient name; it is a strong safety layer but pattern-based, so unusual identifiers could slip through. The architecture mitigates this by also keeping identifiers in the client-side encrypted vault.
 - **Mock mode masks provider behavior.** With no API keys configured, AI features return placeholder text. This is good for offline/dev but means AI quality/cost cannot be assessed without real keys.
-- **Hybrid persistence (Prisma/SQLite + Supabase).** Credits/account appear to use a local Prisma store (`DATABASE_URL` defaults to SQLite) while most cloud data is in Supabase. The exact production split (e.g., whether Prisma points at a hosted Postgres) was not fully confirmed from the code and should be verified against deployment config.
 - **Integrations hub appears to be a scaffold** — present as routes/UI/migration, but the depth of any specific external integration was not fully traced.
 - **Notifications** — surfaced via `NotificationBell`/`useNotifications`, but the full event catalog/backing was not exhaustively traced.
 

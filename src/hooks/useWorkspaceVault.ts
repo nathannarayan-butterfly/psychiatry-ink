@@ -1,13 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import {
-  allowsWorkspaceDbSnapshot,
-  allowsWorkspaceVault,
-  type PrivacyTier,
-} from '../data/privacyRegions'
+import { allowsWorkspaceVault, type PrivacyTier } from '../data/privacyRegions'
 import { API_BASE } from '../services/apiClient'
 import { fetchAccountBackupStatus } from '../services/accountBackupApi'
 import { getAuthHeaders } from '../services/authHeaders'
 import { isAccountBackupUnlocked } from '../utils/accountBackupSession'
+import { getPassphraseBackup } from '../utils/passphraseRecovery'
 import { registerClinicalImprintPersistHook } from '../utils/clinicalImprint'
 import { hydrateLocalClinicalCaches } from '../utils/clinicalCacheHydration'
 import { registerIsdmInputPersistHook } from '../utils/isdm/inputStorage'
@@ -57,6 +54,17 @@ interface UseWorkspaceVaultOptions {
   caseId: string
   tier: PrivacyTier
   countryCode: string
+  /**
+   * Explicit, user-chosen case-file (Fallakte) cloud sync decision — see
+   * `usePrivacySettings().caseFileCloudSync`. This is the SOLE gate for
+   * whether a save pushes an encrypted snapshot to the server; country/
+   * jurisdiction (`tier`) only ever supplies the default this resolves to
+   * when the user hasn't made an explicit choice. Never derive dbSyncEnabled
+   * from `tier` directly — that was the bug where selecting country DE
+   * silently (and irreversibly, from the user's perspective) disabled
+   * cross-device Fallakte access.
+   */
+  caseFileCloudSync: boolean
   getLivePatch: () => WorkspaceLivePatch
   onRestored?: (payload: ClinicalWorkspacePayload) => void
   documentTypeLabel?: (typeId: string) => string
@@ -186,6 +194,7 @@ export function useWorkspaceVault({
   caseId,
   tier,
   countryCode,
+  caseFileCloudSync,
   getLivePatch,
   onRestored,
   documentTypeLabel,
@@ -194,8 +203,16 @@ export function useWorkspaceVault({
   const enabled = allowsWorkspaceVault(tier)
   const orgVaultEnabled =
     Boolean(orgVault?.organisationId) && orgVault?.organisationTier === 'small_praxis'
+  // `caseFileCloudSync` is the explicit, persisted user choice (see
+  // usePrivacySettings) — country/tier only supplies its default, never a
+  // hard lock. `isAccountBackupUnlocked()` (in-memory passphrase session) and
+  // `hasLocalPassphraseBackup` (persistent IndexedDB signal) are ADDITIONAL
+  // fallbacks so a device that already completed cloud-backup setup/restore
+  // keeps syncing even if the explicit setting hasn't been (re)confirmed yet.
+  const [hasLocalPassphraseBackup, setHasLocalPassphraseBackup] = useState(false)
   const dbSyncEnabled =
-    (allowsWorkspaceDbSnapshot(tier) || isAccountBackupUnlocked()) && !orgVaultEnabled
+    (caseFileCloudSync || isAccountBackupUnlocked() || hasLocalPassphraseBackup) &&
+    !orgVaultEnabled
   const [ready, setReady] = useState(!enabled)
   const [error, setError] = useState<string | null>(null)
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null)
@@ -546,6 +563,20 @@ export function useWorkspaceVault({
 
   useEffect(() => {
     let active = true
+    void getPassphraseBackup()
+      .then((backup) => {
+        if (active) setHasLocalPassphraseBackup(Boolean(backup))
+      })
+      .catch(() => {
+        if (active) setHasLocalPassphraseBackup(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  useEffect(() => {
+    let active = true
     void fetchAccountBackupStatus()
       .then((status) => {
         if (!active) return
@@ -583,6 +614,31 @@ export function useWorkspaceVault({
     },
     [],
   )
+
+  // Best-effort flush on hard refresh / tab close / tab switch: a debounced
+  // save waiting out its 800ms window would otherwise be lost if the page is
+  // torn down before the timer fires. There is no way to guarantee the write
+  // completes before unload — `beforeunload`/`pagehide` cannot be awaited —
+  // but starting it as early as possible (as soon as the tab is hidden, which
+  // fires before teardown) gives the local IndexedDB write, and the network
+  // request when sync is enabled, the best realistic chance of finishing.
+  useEffect(() => {
+    const flushPendingSave = () => {
+      if (saveTimerRef.current === null) return
+      window.clearTimeout(saveTimerRef.current)
+      saveTimerRef.current = null
+      void persistRef.current().catch(() => {})
+    }
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') flushPendingSave()
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('pagehide', flushPendingSave)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('pagehide', flushPendingSave)
+    }
+  }, [])
 
   return {
     enabled,

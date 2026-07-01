@@ -7,11 +7,15 @@ import { AppLogo } from '../AppLogo'
 import { LegalConsentModal, type LegalConsentTab } from './LegalConsentModal'
 import { validateSignupConsent } from './signupConsent'
 import { ResendConfirmation } from './ResendConfirmation'
-import { SignupStorageCards } from './SignupStorageCards'
+import { CaseFileStorageCards } from '../privacy/CaseFileStorageCards'
 import { PasswordInput } from './PasswordInput'
 import { setupAccountCloudBackup } from '../../utils/accountBackup'
 import { markIdentifierStorageAcknowledged } from '../../utils/identifierStorage'
-import type { IdentifierStorageMode } from '../../utils/identifierStorage'
+import {
+  caseFileStorageModeToSettings,
+  resolveCaseFileStorageMode,
+  type CaseFileStorageMode,
+} from '../../utils/caseFileStorageMode'
 import { markPendingSignupPassphrase } from '../../utils/pendingSignupPassphrase'
 import {
   MAX_PASSPHRASE_LENGTH,
@@ -48,7 +52,8 @@ interface SignupWizardProps {
 export function SignupWizard({ onBack, onSuccess, onSwitchToLogin }: SignupWizardProps) {
   const { t, language } = useTranslation()
   const { signUp, isConfigured, configError, configDiagnostics } = useAuth()
-  const { identifierStorage, setIdentifierStorage } = usePrivacySettings()
+  const { identifierStorage, setIdentifierStorage, caseFileCloudSync, setCaseFileCloudSync } =
+    usePrivacySettings()
 
   const [stepIndex, setStepIndex] = useState(0)
   const step = STEPS[stepIndex]
@@ -56,7 +61,9 @@ export function SignupWizard({ onBack, onSuccess, onSwitchToLogin }: SignupWizar
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [storageMode, setStorageMode] = useState<IdentifierStorageMode>(identifierStorage)
+  const [storageMode, setStorageMode] = useState<CaseFileStorageMode>(() =>
+    resolveCaseFileStorageMode(identifierStorage, caseFileCloudSync),
+  )
   const [passphrase, setPassphrase] = useState('')
   const [confirmPassphrase, setConfirmPassphrase] = useState('')
   const [acceptedTerms, setAcceptedTerms] = useState(false)
@@ -140,7 +147,9 @@ export function SignupWizard({ onBack, onSuccess, onSwitchToLogin }: SignupWizar
 
     setSubmitting(true)
     try {
-      setIdentifierStorage(storageMode)
+      const resolved = caseFileStorageModeToSettings(storageMode)
+      setIdentifierStorage(resolved.identifierStorage)
+      setCaseFileCloudSync(resolved.caseFileCloudSync)
       markIdentifierStorageAcknowledged()
 
       const result = await signUp(email.trim(), password, {
@@ -190,8 +199,15 @@ export function SignupWizard({ onBack, onSuccess, onSwitchToLogin }: SignupWizar
     }
   }
 
-  const storageLabel =
-    storageMode === 'device' ? t('identifierStorageDeviceTitle') : t('identifierStorageAccountTitle')
+  const storageLabelKey = (
+    {
+      local: 'caseFileStorageLocalTitle',
+      identifiers: 'caseFileStorageIdentifiersTitle',
+      full: 'caseFileStorageFullTitle',
+      advanced: 'caseFileStorageAdvancedTitle',
+    } as const
+  )[storageMode]
+  const storageLabel = t(storageLabelKey)
 
   return (
     <div className="auth-page">
@@ -274,10 +290,13 @@ export function SignupWizard({ onBack, onSuccess, onSwitchToLogin }: SignupWizar
             ) : null}
 
             {step === 'storage' ? (
-              <SignupStorageCards
-                value={storageMode}
+              <CaseFileStorageCards
+                mode={storageMode}
                 onChange={setStorageMode}
                 disabled={!isConfigured || submitting}
+                showStatus
+                allowAdvanced
+                name="signup-case-file-storage-mode"
               />
             ) : null}
 

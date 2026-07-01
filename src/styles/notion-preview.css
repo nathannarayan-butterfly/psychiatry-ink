@@ -3897,9 +3897,30 @@
 }
 
 .notion-editor__textarea--section {
+  /* The single-document editor's textarea is a direct flex child of
+     `.notion-editor` (flex-direction: column), so it gets full width for free
+     via the browser's default `align-items: stretch`. The per-section textarea
+     here sits one level deeper, inside a plain (non-flex) wrapper div — it gets
+     no stretch, so as a default `display: inline-block` element it shrinks to
+     its intrinsic content width (~20 columns) instead of filling the section.
+     That is the "tiny horizontal input box" layout bug — set width explicitly
+     rather than relying on an ancestor's flex behavior. */
+  width: 100%;
+  box-sizing: border-box;
   min-height: calc(var(--notion-rule) * 3);
   flex: none;
   padding-top: var(--notion-body-pad-top);
+}
+
+/* Accordion mode only ever renders a textarea for the single OPEN section (the
+   collapsed siblings render just their header — see NotionMultiSectionEditor),
+   so this rule always targets "the active section". It should read as a full
+   writing surface immediately, like the single-document editor below, not the
+   cramped 3-line collapsed-preview height `--textarea--section` otherwise
+   defaults to. */
+.notion-editor__section--accordion.notion-editor__section--open .notion-editor__textarea--section {
+  min-height: calc(var(--notion-rule) * 8);
+  padding-bottom: calc(var(--notion-rule) * 2);
 }
 
 .notion-editor:not(.notion-editor--multistage) .notion-editor__textarea {

@@ -52,6 +52,7 @@ import { redirectToCanonicalAppIfNeeded } from './utils/canonicalAppRedirect'
 import { getPostLoginDestination, shouldRedirectAuthenticatedToApp } from './utils/postAuthRedirect'
 import { NewVersionToast } from './components/system/NewVersionToast'
 import { PhoneGate } from './components/system/PhoneGate'
+import { AccountRegistryRestoreBanner } from './components/dashboard/AccountRegistryRestoreBanner'
 
 const ENTERPRISE_ROUTES_ENABLED = isEnterpriseOrgHierarchyEnabled()
 
@@ -336,6 +337,18 @@ export default function App() {
       <WorkspaceSessionProvider>
         {phoneGate}
         <NewVersionToast />
+        {/* Vault unlock/restore prompt — rendered at the app-shell level (not
+            page-specific) so it is guaranteed visible right after login
+            regardless of which authenticated route the user lands on (e.g. a
+            deep link straight into a case), not only on the dashboard. Skipped
+            on invite/consultant routes, where the signed-in identity is not
+            necessarily the vault-owning clinician for the content being shown. */}
+        {!showDiscussInvite && !showConsultantInvite && !showTeamInvite && !showConsultant ? (
+          <AccountRegistryRestoreBanner
+            countryCode={privacy.countryCode}
+            onRestored={() => void hydrateCaseRegistry()}
+          />
+        ) : null}
         <AskButterflyProvider>
           <NotizenProvider>
           <KbPharmaCommentsProvider>

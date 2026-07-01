@@ -2,7 +2,6 @@ import { useCallback, useState } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import {
   allowsPatientMetadata,
-  allowsPublicKeyRegistration,
   type PrivacyTier,
 } from '../../data/privacyRegions'
 import { toIsoCountryCode } from '../../data/countryNames'
@@ -16,7 +15,12 @@ import { isAccountCloudSyncEnabled, scheduleAccountRegistryUpload } from '../../
 import { isPseudonymizationEnabled, PSEUDONYMIZE_KEY } from '../../services/aiGeneration'
 import type { IdentifierStorageMode } from '../../utils/identifierStorage'
 import { markIdentifierStorageAcknowledged } from '../../utils/identifierStorage'
-import { IdentifierStorageChoice } from '../privacy/IdentifierStorageChoice'
+import {
+  caseFileStorageModeToSettings,
+  resolveCaseFileStorageMode,
+  type CaseFileStorageMode,
+} from '../../utils/caseFileStorageMode'
+import { CaseFileStorageCards } from '../privacy/CaseFileStorageCards'
 import { SettingsField } from './SettingsField'
 import { WorkspaceVaultSection } from './WorkspaceVaultSection'
 
@@ -38,14 +42,23 @@ const PRIVACY_PRIORITY_CODES = ['DE', 'AT', 'CH', 'LI', 'GB'] as const
 
 export function PatientPrivacySection({ privacy, workspaceVault }: PatientPrivacySectionProps) {
   const { t, language } = useTranslation()
-  const { countryCode, identifierStorage, tier, setCountryCode, setIdentifierStorage } = privacy
+  const {
+    countryCode,
+    identifierStorage,
+    tier,
+    caseFileCloudSync,
+    setCountryCode,
+    setIdentifierStorage,
+    setCaseFileCloudSync,
+  } = privacy
   const dashboardSettings = useDashboardSettings()
   const [pseudonymizationEnabled, setPseudonymizationEnabled] = useState(
     isPseudonymizationEnabled,
   )
   const [switchNote, setSwitchNote] = useState<string | null>(null)
+  const [showTechnicalDetails, setShowTechnicalDetails] = useState(false)
 
-  const handleIdentifierStorageChange = useCallback(
+  const applyIdentifierStorage = useCallback(
     (next: IdentifierStorageMode) => {
       if (next === identifierStorage) return
 
@@ -65,6 +78,18 @@ export function PatientPrivacySection({ privacy, workspaceVault }: PatientPrivac
       }
     },
     [identifierStorage, setIdentifierStorage, t],
+  )
+
+  const caseFileStorageMode = resolveCaseFileStorageMode(identifierStorage, caseFileCloudSync)
+
+  const handleCaseFileStorageChange = useCallback(
+    (next: CaseFileStorageMode) => {
+      const { identifierStorage: nextIdentifierStorage, caseFileCloudSync: nextCaseFileCloudSync } =
+        caseFileStorageModeToSettings(next)
+      applyIdentifierStorage(nextIdentifierStorage)
+      setCaseFileCloudSync(nextCaseFileCloudSync)
+    },
+    [applyIdentifierStorage, setCaseFileCloudSync],
   )
 
   function handlePseudonymizationToggle(checked: boolean) {
@@ -88,13 +113,16 @@ export function PatientPrivacySection({ privacy, workspaceVault }: PatientPrivac
 
   return (
     <div>
-      <SettingsField label={t('identifierStorageSettingsTitle')}>
-        <IdentifierStorageChoice
-          value={identifierStorage}
-          onChange={handleIdentifierStorageChange}
-          variant="settings"
-          switchNote={switchNote}
+      <SettingsField label={t('caseFileStorageLabel')} stack>
+        <CaseFileStorageCards
+          mode={caseFileStorageMode}
+          onChange={handleCaseFileStorageChange}
+          showStatus
+          allowAdvanced
+          name="settings-case-file-storage-mode"
         />
+        {switchNote ? <p className="mt-2 text-xs text-muted">{switchNote}</p> : null}
+        <p className="case-file-storage-hard-refresh-note">{t('storageHardRefreshNote')}</p>
       </SettingsField>
 
       <SettingsField label={t('privacyCountryLabel')}>
@@ -109,29 +137,7 @@ export function PatientPrivacySection({ privacy, workspaceVault }: PatientPrivac
           priorityCodes={PRIVACY_PRIORITY_CODES}
           id="settings-privacy-country"
         />
-      </SettingsField>
-
-      <SettingsField label={t('privacyTierLabel')}>
-        <p className="text-sm font-medium text-ink">{t(tierLabelKeys[tier])}</p>
-        <ul className="mt-2 space-y-1 text-xs text-muted">
-          <li>
-            {allowsPatientMetadata(tier)
-              ? t('privacyPatientFieldsEnabled')
-              : t('privacyPatientFieldsDisabled')}
-          </li>
-          {allowsPatientMetadata(tier) ? (
-            <li>
-              {identifierStorage === 'account'
-                ? t('privacyTierIdentifierAccount')
-                : t('privacyTierIdentifierDevice')}
-            </li>
-          ) : null}
-          <li>
-            {allowsPublicKeyRegistration(tier)
-              ? t('privacyPublicKeyAllowed')
-              : t('privacyPublicKeyBlocked')}
-          </li>
-        </ul>
+        <p className="mt-2 text-xs text-muted">{t('privacyTierDefaultOnlyNote')}</p>
       </SettingsField>
 
       <SettingsField label={t('workflowDirectToDocLabel')}>
@@ -159,6 +165,38 @@ export function PatientPrivacySection({ privacy, workspaceVault }: PatientPrivac
           {pseudonymizationEnabled ? t('pseudonymizationActive') : t('pseudonymizationDisabled')}
         </label>
       </SettingsField>
+
+      <div className="case-file-storage-technical">
+        {!showTechnicalDetails ? (
+          <button
+            type="button"
+            className="case-file-storage-technical__toggle"
+            onClick={() => setShowTechnicalDetails(true)}
+          >
+            {t('storageTechnicalDetailsToggle')} ▾
+          </button>
+        ) : (
+          <>
+            <button
+              type="button"
+              className="case-file-storage-technical__toggle"
+              onClick={() => setShowTechnicalDetails(false)}
+            >
+              {t('storageTechnicalDetailsToggle')} ▴
+            </button>
+            <dl className="case-file-storage-technical__body">
+              <dt>{t('privacyTierLabel')}</dt>
+              <dd>{t(tierLabelKeys[tier])}</dd>
+              {!allowsPatientMetadata(tier) ? (
+                <>
+                  <dt>{t('privacyPatientFieldsLabel')}</dt>
+                  <dd>{t('privacyPatientFieldsDisabled')}</dd>
+                </>
+              ) : null}
+            </dl>
+          </>
+        )}
+      </div>
 
       <WorkspaceVaultSection
         vault={workspaceVault}

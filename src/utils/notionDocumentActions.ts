@@ -93,6 +93,18 @@ function collectSnapshotKeys(caseId: string): string[] {
  * for `caseId` into the synchronous shadow. Wired into `hydrateLocalClinicalCaches` so it runs
  * before the workspace vault applies its snapshot.
  */
+/**
+ * True if this browser holds ANY on-disk document snapshot key for `caseId` —
+ * a case/insurance-number-free existence check (key names only, no decrypt)
+ * used by the workspace health check to tell "genuinely no local content" apart
+ * from "not yet vault-synced but present in the durability copy" (see
+ * RECOVERY_REPORT.md — the durability layer survived the 2026-06-30 vault
+ * outage where the unified vault blob did not).
+ */
+export function hasAnyLocalNotionSnapshot(caseId: string): boolean {
+  return collectSnapshotKeys(caseId).length > 0
+}
+
 export async function hydrateNotionDocumentsFromEncryptedLocal(caseId?: string): Promise<void> {
   const resolved = caseId ?? getActiveCaseId()
   try {

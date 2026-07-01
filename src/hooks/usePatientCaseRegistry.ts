@@ -7,6 +7,7 @@ import { useCaseRegistry } from './useCaseRegistry'
 interface UsePatientCaseRegistryOptions {
   tier: PrivacyTier
   countryCode: string
+  caseFileCloudSync: boolean
 }
 
 /**
@@ -15,7 +16,11 @@ interface UsePatientCaseRegistryOptions {
  * `documentTypeLabel` + `fallbackTitle` resolvers so every patient surface renders
  * identical titles/summaries from one data source.
  */
-export function usePatientCaseRegistry({ tier, countryCode }: UsePatientCaseRegistryOptions) {
+export function usePatientCaseRegistry({
+  tier,
+  countryCode,
+  caseFileCloudSync,
+}: UsePatientCaseRegistryOptions) {
   const { t } = useTranslation()
 
   const documentTypeLabel = useCallback(
@@ -35,6 +40,7 @@ export function usePatientCaseRegistry({ tier, countryCode }: UsePatientCaseRegi
   const registry = useCaseRegistry({
     tier,
     countryCode,
+    caseFileCloudSync,
     documentTypeLabel,
     fallbackTitle,
   })

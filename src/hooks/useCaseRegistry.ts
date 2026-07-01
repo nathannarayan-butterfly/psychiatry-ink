@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { allowsWorkspaceDbSnapshot, type PrivacyTier } from '../data/privacyRegions'
+import type { PrivacyTier } from '../data/privacyRegions'
 import { API_BASE } from '../services/apiClient'
 import {
   createPatientOnApi,
@@ -366,17 +366,23 @@ export function buildDashboardCase(
 interface UseCaseRegistryOptions {
   tier: PrivacyTier
   countryCode: string
+  /**
+   * Explicit, user-chosen case-file cloud sync decision (see
+   * usePrivacySettings().caseFileCloudSync). Country/tier only supplies its
+   * default — never derive the remote-case merge gate from `tier` directly.
+   */
+  caseFileCloudSync: boolean
   documentTypeLabel: (typeId: string | undefined) => string
   fallbackTitle: (shortId: string) => string
 }
 
 export function useCaseRegistry({
-  tier,
   countryCode,
+  caseFileCloudSync,
   documentTypeLabel,
   fallbackTitle,
 }: UseCaseRegistryOptions) {
-  const dbSyncEnabled = allowsWorkspaceDbSnapshot(tier) || isAccountBackupUnlocked()
+  const dbSyncEnabled = caseFileCloudSync || isAccountBackupUnlocked()
   const [cases, setCases] = useState<DashboardCase[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

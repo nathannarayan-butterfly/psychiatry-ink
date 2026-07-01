@@ -1,9 +1,12 @@
 import { AlertTriangle, X } from 'lucide-react'
-import { useCallback, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useState, type ReactNode } from 'react'
 import { useTranslation } from '../../context/TranslationContext'
 import type { UiTranslationKey } from '../../data/uiTranslations'
-import type { PrivacyTier } from '../../data/privacyRegions'
 import type { IdentifierStorageMode } from '../../utils/identifierStorage'
+import {
+  caseFileStorageStatusKey,
+  resolveCaseFileStorageMode,
+} from '../../utils/caseFileStorageMode'
 
 type HinweisPanelId = 'pseudonym' | 'local'
 
@@ -96,36 +99,19 @@ function DashboardHinweisPanel({ id, titleKey, children }: DashboardHinweisPanel
 
 interface DashboardHinweiseProps {
   identifierStorage: IdentifierStorageMode
-  tier: PrivacyTier
+  caseFileCloudSync: boolean
 }
 
-export function DashboardHinweise({ identifierStorage, tier }: DashboardHinweiseProps) {
+export function DashboardHinweise({ identifierStorage, caseFileCloudSync }: DashboardHinweiseProps) {
   const { t } = useTranslation()
 
-  const passphraseKey = useMemo(
-    (): UiTranslationKey =>
-      identifierStorage === 'account'
-        ? 'dashboardHintPassphraseAccount'
-        : 'dashboardHintPassphraseDevice',
-    [identifierStorage],
-  )
+  const passphraseKey: UiTranslationKey =
+    identifierStorage === 'account' ? 'dashboardHintPassphraseAccount' : 'dashboardHintPassphraseDevice'
 
-  const currentModeKey = useMemo(
-    (): UiTranslationKey =>
-      identifierStorage === 'account'
-        ? 'dashboardCurrentModeAccount'
-        : 'dashboardCurrentModeDevice',
-    [identifierStorage],
-  )
-
-  // Region-set ceiling for the clinical case-file snapshot (separate from the
-  // identifier storage-mode choice above). `full` allows an encrypted server
-  // snapshot; `local_only`/`disabled` keep the case file local-first by default.
-  const tierKey = useMemo(
-    (): UiTranslationKey =>
-      tier === 'full' ? 'dashboardHintTierFull' : 'dashboardHintTierLocalFirst',
-    [tier],
-  )
+  // The ONE plain-language status line — derived the same way everywhere
+  // (settings, onboarding, signup) so this panel can never contradict them.
+  const mode = resolveCaseFileStorageMode(identifierStorage, caseFileCloudSync)
+  const statusKey = caseFileStorageStatusKey(mode)
 
   return (
     <div className="dashboard-hinweise-stack">
@@ -139,20 +125,21 @@ export function DashboardHinweise({ identifierStorage, tier }: DashboardHinweise
       <DashboardHinweisPanel id="local" titleKey="dashboardHintStorageTitle">
         <p
           className={
-            identifierStorage === 'device'
+            mode === 'local'
               ? 'identifier-storage-choice__warning'
               : 'dashboard-hinweis-panel__text dashboard-hinweis-panel__text--emphasis'
           }
         >
-          {t(currentModeKey)}
+          {t(statusKey)}
         </p>
-        <p className="dashboard-hinweis-panel__text">{t(tierKey)}</p>
-        <ul className="dashboard-hinweis-panel__list">
-          {sharedHintKeys.map((key) => (
-            <li key={key}>{t(key)}</li>
-          ))}
-          <li>{t(passphraseKey)}</li>
-        </ul>
+        {mode === 'local' ? (
+          <ul className="dashboard-hinweis-panel__list">
+            {sharedHintKeys.map((key) => (
+              <li key={key}>{t(key)}</li>
+            ))}
+          </ul>
+        ) : null}
+        <p className="dashboard-hinweis-panel__text">{t(passphraseKey)}</p>
         <p className="dashboard-hinweis-panel__text text-xs text-muted">
           {t('dashboardHintChangeInSettings')}
         </p>

@@ -136,7 +136,7 @@ describe('getCreditsUsedThisPeriod (item 17)', () => {
     expect(used + summary.totalAvailable).toBe(500)
   })
 
-  it('queries the ledger since the start of the current UTC month', async () => {
+  it('queries the ledger since 30 days before the account\'s own reset boundary (not the calendar month)', async () => {
     const { getCreditsUsedThisPeriod } = await import('../creditGuard')
     sumNetSpendSince.mockResolvedValue(0)
 
@@ -146,7 +146,9 @@ describe('getCreditsUsedThisPeriod (item 17)', () => {
     const [accountId, sinceIso] = sumNetSpendSince.mock.calls[0]
     expect(accountId).toBe('acc-1')
     const since = new Date(sinceIso as string)
-    expect(since.getUTCDate()).toBe(1)
-    expect(since.getUTCHours()).toBe(0)
+    // The mocked account's monthly_reset_at is `now + 30 days`, so the period
+    // start (reset boundary - 30 days) should land within a few seconds of now
+    // — anchored on the account's own cadence, never a fixed calendar date.
+    expect(Math.abs(since.getTime() - Date.now())).toBeLessThan(5_000)
   })
 })
