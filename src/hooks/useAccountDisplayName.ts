@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useAuth } from '../context/AuthContext'
 import { useTranslation } from '../context/TranslationContext'
 
 export const ACCOUNT_PROFILE_KEY = 'psychiatry-ink:account-profile'
@@ -59,12 +60,33 @@ export function writeAccountProfile(patch: AccountProfile): AccountProfile {
   return next
 }
 
+/** First non-empty string among the given Supabase `user_metadata` keys. */
+function metadataString(
+  metadata: Record<string, unknown> | undefined,
+  ...keys: string[]
+): string {
+  for (const key of keys) {
+    const value = metadata?.[key]
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  return ''
+}
+
 export function resolveAccountDisplayName(
   profile: AccountProfile,
   fallbackLabel: string,
+  authMetadata?: Record<string, unknown>,
 ): string {
   const name = profile.name?.trim()
   if (name && name !== PLACEHOLDER_NAME) return name
+
+  // `profile.name` is device-local (localStorage) — a device that never saved
+  // it locally (a different browser, cleared storage, private window) would
+  // otherwise show the "Dr. —" placeholder even though the name was already
+  // mirrored to Supabase auth metadata on another device. Fall back to that
+  // mirror before giving up, same source `WorkspaceLauncher`'s greeting uses.
+  const metaName = metadataString(authMetadata, 'full_name', 'name', 'display_name')
+  if (metaName) return metaName
 
   const email = profile.email?.trim()
   if (email && email !== PLACEHOLDER_EMAIL) {
@@ -107,8 +129,10 @@ export function useAccountProfile(): {
 export function useAccountDisplayName(): string {
   const { t } = useTranslation()
   const { profile } = useAccountProfile()
+  const { user } = useAuth()
+  const authMetadata = user?.user_metadata as Record<string, unknown> | undefined
   return useMemo(
-    () => resolveAccountDisplayName(profile, t('dashboardUserFallback')),
-    [profile, t],
+    () => resolveAccountDisplayName(profile, t('dashboardUserFallback'), authMetadata),
+    [profile, t, authMetadata],
   )
 }
