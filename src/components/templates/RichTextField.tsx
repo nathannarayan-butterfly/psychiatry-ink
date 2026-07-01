@@ -3,17 +3,22 @@ import {
   AlignJustify,
   AlignLeft,
   AlignRight,
+  Ban,
   Bold,
+  Highlighter,
   Italic,
   List,
   ListOrdered,
+  Palette,
+  Strikethrough,
   Underline as UnderlineIcon,
 } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { EditorContent, useEditor, useEditorState, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import { FontFamily, FontSize, TextStyle } from '@tiptap/extension-text-style'
+import { Color, FontFamily, FontSize, TextStyle } from '@tiptap/extension-text-style'
 import { TextAlign } from '@tiptap/extension-text-align'
+import { Highlight } from '@tiptap/extension-highlight'
 import { Placeholder } from '@tiptap/extension-placeholder'
 import { useTranslation } from '../../context/TranslationContext'
 import { sanitizeRichHtml } from '../../utils/documentTemplate/htmlUtils'
@@ -24,7 +29,9 @@ import {
   FONT_FAMILY_OPTIONS,
   fontSizeToCss,
   FONT_SIZE_OPTIONS,
+  TEXT_COLOR_OPTIONS,
 } from '../../utils/documentTemplate/richText'
+import { HIGHLIGHT_COLORS, HIGHLIGHT_COLOR_HEX, type HighlightColor } from '../../types/knowledgeBaseAnnotations'
 
 interface RichTextFieldProps {
   value: string
@@ -43,10 +50,14 @@ function buildExtensions(placeholder?: string) {
     TextStyle,
     FontFamily,
     FontSize,
+    Color,
+    Highlight.configure({ multicolor: true }),
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
     Placeholder.configure({ placeholder: placeholder ?? '' }),
   ]
 }
+
+const HEADING_LEVELS = [1, 2, 3] as const
 
 interface ToolbarProps {
   editor: Editor
@@ -61,14 +72,17 @@ function RichTextToolbar({ editor }: ToolbarProps) {
       bold: ed.isActive('bold'),
       italic: ed.isActive('italic'),
       underline: ed.isActive('underline'),
+      strike: ed.isActive('strike'),
       alignLeft: ed.isActive({ textAlign: 'left' }),
       alignCenter: ed.isActive({ textAlign: 'center' }),
       alignRight: ed.isActive({ textAlign: 'right' }),
       alignJustify: ed.isActive({ textAlign: 'justify' }),
       bulletList: ed.isActive('bulletList'),
       orderedList: ed.isActive('orderedList'),
+      highlight: ed.isActive('highlight'),
       fontFamily: (ed.getAttributes('textStyle').fontFamily as string | undefined) ?? '',
       fontSize: (ed.getAttributes('textStyle').fontSize as string | undefined) ?? '',
+      headingLevel: HEADING_LEVELS.find((level) => ed.isActive('heading', { level })) ?? 0,
     }),
   })
 
@@ -76,6 +90,26 @@ function RichTextToolbar({ editor }: ToolbarProps) {
 
   return (
     <div className="dt-rte__toolbar" role="toolbar" aria-label={t('templateRteToolbar')}>
+      <select
+        className="dt-rte__select dt-rte__select--heading"
+        value={state.headingLevel}
+        aria-label={t('templateRteHeading')}
+        title={t('templateRteHeading')}
+        onMouseDown={(e) => e.stopPropagation()}
+        onChange={(e) => {
+          const level = Number(e.target.value)
+          if (!level) editor.chain().focus().setParagraph().run()
+          else editor.chain().focus().toggleHeading({ level: level as 1 | 2 | 3 }).run()
+        }}
+      >
+        <option value={0}>{t('templateRteHeadingNormal')}</option>
+        {HEADING_LEVELS.map((level) => (
+          <option key={level} value={level}>
+            {t('templateRteHeadingLevel').replace('{level}', String(level))}
+          </option>
+        ))}
+      </select>
+
       <select
         className="dt-rte__select dt-rte__select--font"
         value={state.fontFamily}
@@ -150,6 +184,17 @@ function RichTextToolbar({ editor }: ToolbarProps) {
       >
         <UnderlineIcon className="h-3.5 w-3.5" strokeWidth={2} />
       </button>
+      <button
+        type="button"
+        className={`dt-rte__btn${state.strike ? ' dt-rte__btn--active' : ''}`}
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => editor.chain().focus().toggleStrike().run()}
+        title={t('templateRteStrike')}
+        aria-label={t('templateRteStrike')}
+        aria-pressed={state.strike}
+      >
+        <Strikethrough className="h-3.5 w-3.5" strokeWidth={2} />
+      </button>
 
       <span className="dt-rte__divider" aria-hidden />
 
@@ -222,6 +267,62 @@ function RichTextToolbar({ editor }: ToolbarProps) {
       >
         <ListOrdered className="h-3.5 w-3.5" strokeWidth={2} />
       </button>
+
+      <span className="dt-rte__divider" aria-hidden />
+
+      <span className="dt-rte__swatch-group" role="group" aria-label={t('templateRteTextColor')}>
+        <Palette className="h-3 w-3 dt-rte__swatch-icon" strokeWidth={2} aria-hidden />
+        {TEXT_COLOR_OPTIONS.map((color) => (
+          <button
+            key={color.value}
+            type="button"
+            className="dt-rte__swatch"
+            style={{ backgroundColor: color.value }}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => editor.chain().focus().setColor(color.value).run()}
+            title={`${t('templateRteTextColor')}: ${color.label}`}
+            aria-label={`${t('templateRteTextColor')}: ${color.label}`}
+          />
+        ))}
+        <button
+          type="button"
+          className="dt-rte__btn"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => editor.chain().focus().unsetColor().run()}
+          title={t('templateRteTextColorNone')}
+          aria-label={t('templateRteTextColorNone')}
+        >
+          <Ban className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+        </button>
+      </span>
+
+      <span className="dt-rte__swatch-group" role="group" aria-label={t('templateRteHighlight')}>
+        <Highlighter className="h-3 w-3 dt-rte__swatch-icon" strokeWidth={2} aria-hidden />
+        {HIGHLIGHT_COLORS.map((color: HighlightColor) => (
+          <button
+            key={color}
+            type="button"
+            className="dt-rte__swatch"
+            style={{ backgroundColor: HIGHLIGHT_COLOR_HEX[color] }}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() =>
+              editor.chain().focus().setHighlight({ color: HIGHLIGHT_COLOR_HEX[color] }).run()
+            }
+            title={`${t('templateRteHighlight')}: ${t(`notizenColor_${color}` as const)}`}
+            aria-label={`${t('templateRteHighlight')}: ${t(`notizenColor_${color}` as const)}`}
+          />
+        ))}
+        <button
+          type="button"
+          className={`dt-rte__btn${state.highlight ? ' dt-rte__btn--active' : ''}`}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => editor.chain().focus().unsetHighlight().run()}
+          title={t('templateRteHighlightNone')}
+          aria-label={t('templateRteHighlightNone')}
+        >
+          <Ban className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />
+        </button>
+      </span>
     </div>
   )
 }

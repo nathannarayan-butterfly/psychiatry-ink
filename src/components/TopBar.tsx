@@ -1,13 +1,12 @@
 import { LogOut, Settings, Sparkles } from 'lucide-react'
 
 import { useTranslation } from '../context/TranslationContext'
+import { useAccountDisplayName } from '../hooks/useAccountDisplayName'
 
 import type { SettingsSectionId } from '../types/settings'
 
 import { AppLogo } from './AppLogo'
 import { IconButton } from './IconButton'
-
-const CURRENT_USER_NAME = 'Nathan Narayan'
 
 interface TopBarProps {
   creditBalance: number
@@ -16,6 +15,7 @@ interface TopBarProps {
 
 export function TopBar({ creditBalance, onOpenSettings }: TopBarProps) {
   const { t } = useTranslation()
+  const displayName = useAccountDisplayName()
 
   return (
     <header
@@ -35,7 +35,7 @@ export function TopBar({ creditBalance, onOpenSettings }: TopBarProps) {
         </span>
 
         <span className="hidden max-w-[10rem] truncate text-sm font-medium text-ink sm:inline sm:max-w-none">
-          {CURRENT_USER_NAME}
+          {displayName}
         </span>
 
         <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">

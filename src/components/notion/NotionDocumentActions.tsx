@@ -1,4 +1,4 @@
-import { Copy, Download, Printer, Save } from 'lucide-react'
+import { Copy, Download, Lock, Printer, Save, Unlock } from 'lucide-react'
 import { useTranslation } from '../../context/TranslationContext'
 
 // TODO re-enable: the document "Export" action downloads a plain-text (TXT)
@@ -14,6 +14,11 @@ interface NotionDocumentActionsProps {
   onCopy: () => void
   onPrint: () => void
   onExport: () => void
+  /** Vidieren (finalize/sign) — only rendered when the document type supports it and the caller passes handlers. */
+  isFinalized?: boolean
+  canFinalize?: boolean
+  onFinalize?: () => void
+  onUnlock?: () => void
 }
 
 export function NotionDocumentActions({
@@ -23,6 +28,10 @@ export function NotionDocumentActions({
   onCopy,
   onPrint,
   onExport,
+  isFinalized = false,
+  canFinalize = false,
+  onFinalize,
+  onUnlock,
 }: NotionDocumentActionsProps) {
   const { t } = useTranslation()
 
@@ -68,6 +77,30 @@ export function NotionDocumentActions({
           aria-label={t('export')}
         >
           <Download className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+        </button>
+      ) : null}
+      {onFinalize && !isFinalized ? (
+        <button
+          type="button"
+          className="notion-document-actions__btn notion-document-actions__btn--finalize"
+          disabled={disabled || !canFinalize}
+          onClick={onFinalize}
+          title={t('notionFinalizeDocument')}
+          aria-label={t('notionFinalizeDocument')}
+        >
+          <Lock className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+        </button>
+      ) : null}
+      {onUnlock && isFinalized ? (
+        <button
+          type="button"
+          className="notion-document-actions__btn"
+          disabled={disabled || !canFinalize}
+          onClick={onUnlock}
+          title={t('notionUnlockDocument')}
+          aria-label={t('notionUnlockDocument')}
+        >
+          <Unlock className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
         </button>
       ) : null}
     </div>

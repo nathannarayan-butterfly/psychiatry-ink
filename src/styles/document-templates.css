@@ -1280,11 +1280,50 @@
   width: 3.25rem;
 }
 
+.dt-rte__select--heading {
+  max-width: 7.5rem;
+}
+
 .dt-rte__divider {
   width: 1px;
   align-self: stretch;
   margin: 0.125rem 0.25rem;
   background: var(--dt-border);
+}
+
+.dt-rte__swatch-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0 0.2rem;
+}
+
+.dt-rte__swatch-icon {
+  color: var(--dt-muted);
+  margin-right: 0.05rem;
+}
+
+.dt-rte__swatch {
+  width: 1.05rem;
+  height: 1.05rem;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, #0f1419 18%, transparent);
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    transform 100ms ease,
+    box-shadow 100ms ease;
+}
+
+.dt-rte__swatch:hover {
+  transform: scale(1.12);
+  box-shadow: 0 1px 4px color-mix(in srgb, #0f1419 22%, transparent);
+}
+
+.dt-rte__swatch:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid
+    var(--focus-ring-color, color-mix(in srgb, var(--accent, #4a6fa5) 52%, transparent));
+  outline-offset: 1px;
 }
 
 .dt-rte__editor {
@@ -1311,6 +1350,26 @@
 .dt-rte__editor ol {
   padding-left: 1.4rem;
   margin: 0.25rem 0;
+}
+
+.dt-rte__editor h1,
+.dt-rte__editor h2,
+.dt-rte__editor h3 {
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 0.5rem 0 0.3rem;
+}
+
+.dt-rte__editor h1 {
+  font-size: 1.25rem;
+}
+
+.dt-rte__editor h2 {
+  font-size: 1.1rem;
+}
+
+.dt-rte__editor h3 {
+  font-size: 1rem;
 }
 
 /* TipTap placeholder for empty editors */

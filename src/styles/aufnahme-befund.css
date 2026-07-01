@@ -5,7 +5,10 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.3rem;
-  margin: 0.35rem 0 0.7rem;
+  /* Match the section heading/textarea indent (2.75rem left, 1.5rem right)
+     so the toolbar sits inside the section box instead of starting left of
+     the heading. */
+  margin: 0.35rem 1.5rem 0.7rem 2.75rem;
   padding: 0.4rem 0.55rem;
   /* Minimal white card with a colored left accent — matches the app theme. */
   border-radius: 8px;

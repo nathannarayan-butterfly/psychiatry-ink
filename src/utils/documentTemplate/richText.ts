@@ -27,6 +27,23 @@ export const FONT_FAMILY_OPTIONS: FontFamilyOption[] = [
   { value: '"Courier New", ' + FONT_MONO, label: 'Monospace' },
 ]
 
+export interface TextColorOption {
+  /** Hex value applied via TipTap's Color mark. */
+  value: string
+  /** Localised-agnostic display name shown in the toolbar swatch title. */
+  label: string
+}
+
+/** Curated text-color palette (stronger, non-pastel tones vs. the highlight set). */
+export const TEXT_COLOR_OPTIONS: TextColorOption[] = [
+  { value: '#0f172a', label: 'Schwarz' },
+  { value: '#dc2626', label: 'Rot' },
+  { value: '#ea580c', label: 'Orange' },
+  { value: '#16a34a', label: 'Grün' },
+  { value: '#2563eb', label: 'Blau' },
+  { value: '#7c3aed', label: 'Violett' },
+]
+
 /** Default font size (pt) — matches the document body font-size. */
 export const DEFAULT_FONT_SIZE_PT = 11
 

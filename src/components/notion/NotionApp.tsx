@@ -2518,6 +2518,9 @@ function NotionAppInner({
                 sectionConfigs={sectionConfigs}
                 sectionContents={workspace.sectionContents}
                 sectionMetadata={workspace.sectionMetadata}
+                documentStatus={workspace.documentStatus}
+                onDocumentStatusChange={workspace.updateDocumentStatus}
+                canFinalizeDocument={caseAccessChecks.canFinalizeDocument}
                 checklistSelections={workspace.checklistSelections}
                 componentVariants={componentVariants}
                 activeVariantId={workspace.activeVariantId}

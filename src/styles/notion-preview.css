@@ -2732,6 +2732,25 @@
   gap: 0.05rem;
 }
 
+.notion-document-actions__btn--finalize:hover:not(:disabled) {
+  color: color-mix(in srgb, var(--accent) 80%, var(--ink));
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.notion-paper__finalized-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 1.5rem 0.5rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, var(--border-soft));
+  color: color-mix(in srgb, var(--accent) 70%, var(--ink));
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
 .notion-paper__section-select {
   display: flex;
   min-width: 0;
