@@ -5,6 +5,7 @@ import type { DocumentChecklistItem, DocumentSection, DocumentVariantMode } from
 import type { DictationPhase } from '../../types/dictation'
 import type { AiModelTier } from '../../types'
 import type { AiToolKey } from '../../data/aiTools'
+import type { AiOutputLengthSpec } from '../../../shared/aiJobs'
 import {
   copyTextToClipboard,
   exportNotionDocument,
@@ -101,6 +102,8 @@ interface NotionPaperProps {
   maximumEnabled: boolean
   selectedAiTool: AiToolKey | null
   kiExtraInstruction: string
+  aiLengthSpec: AiOutputLengthSpec
+  onAiLengthSpecChange: (spec: AiOutputLengthSpec) => void
   aiCanGenerate: boolean
   panelGraphicEnabled: boolean
   pageType: PageType
@@ -222,6 +225,8 @@ export function NotionPaper({
   maximumEnabled,
   selectedAiTool,
   kiExtraInstruction,
+  aiLengthSpec,
+  onAiLengthSpecChange,
   aiCanGenerate,
   panelGraphicEnabled,
   pageType: _pageType,
@@ -902,6 +907,8 @@ export function NotionPaper({
               selectedTool={selectedAiTool}
               sourceText={editorContent}
               extraInstruction={kiExtraInstruction}
+              lengthSpec={aiLengthSpec}
+              onLengthSpecChange={onAiLengthSpecChange}
               disabled={contentLocked}
               canGenerate={aiCanGenerate}
               open={aiDropdownOpen}

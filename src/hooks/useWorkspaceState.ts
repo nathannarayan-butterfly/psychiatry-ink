@@ -36,7 +36,28 @@ import {
   type ContentInputOrigin,
 } from '../utils/aiAutoDefaults'
 import { getLocalizedTherapieVerlaufSections } from '../services/hintTranslationAgent'
-import { executeAiGeneration, isPseudonymizationEnabled } from '../services/aiGeneration'
+import {
+  executeAiGeneration,
+  isPseudonymizationEnabled,
+  resolveWorkspaceFeatureKey,
+} from '../services/aiGeneration'
+import {
+  cancelAiJob,
+  createAiJob,
+  getAiJob,
+  resolveAiJobResultText,
+  saveAiJobPseudoMap,
+} from '../services/aiJobsApi'
+import { useAiJobsOptional } from '../contexts/AiJobsContext'
+import {
+  isTerminalAiJobStatus,
+  type AiJobDto,
+  type AiJobPhase,
+  type AiOutputLengthSpec,
+} from '../../shared/aiJobs'
+import { pseudonymizeText, type PseudoMap } from '../utils/pseudonymize'
+import { DEFAULT_CASE_ID } from '../utils/caseContext'
+import { estimateTokensFromText } from '../utils/estimateCredits'
 import { scheduleAiGenerationImprint } from '../utils/clinicalImprint'
 import { showNotionToast } from '../components/notion/NotionToast'
 import { loadPatientMetadata } from '../utils/cryptoVault'
@@ -53,6 +74,47 @@ import { resolveAiModelForTask } from '../utils/resolveAiModel'
 
 const AI_MODEL_TIER_KEY = 'psychiatry-ink:ai-model-tier'
 const AI_AUTO_MODE_KEY = 'psychiatry-ink:ai-auto-mode'
+const AI_LENGTH_SPEC_KEY = 'psychiatry-ink:ai-length-spec'
+
+/**
+ * Summarize generations run as persisted server jobs (survive navigation/
+ * refresh/logout, chunking pipeline for long documents). Estimated input
+ * tokens above this bound force the Gründlich tier under KI-Auto.
+ */
+const AUTO_THOROUGH_INPUT_TOKENS = 8_000
+
+function readAiLengthSpec(): AiOutputLengthSpec {
+  try {
+    const raw = localStorage.getItem(AI_LENGTH_SPEC_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw) as AiOutputLengthSpec
+      if (
+        parsed.mode === 'kurz' ||
+        parsed.mode === 'mittel' ||
+        parsed.mode === 'gruendlich' ||
+        parsed.mode === 'custom'
+      ) {
+        return parsed
+      }
+    }
+  } catch {
+    // fall through to default
+  }
+  return { mode: 'mittel' }
+}
+
+/** Live progress of the summarize job driving the current generation. */
+export interface ActiveGenerationJob {
+  id: string
+  phase: AiJobPhase
+  progressCurrent: number
+  progressTotal: number
+  startedAt: string
+  /** Where to apply the result when it arrives while still on this page. */
+  targetSectionId: string | null
+  sectionLabel?: string
+  pseudoMap: PseudoMap
+}
 
 function readAiModelTier(): AiModelTier {
   const raw = localStorage.getItem(AI_MODEL_TIER_KEY)
@@ -140,6 +202,7 @@ export function useWorkspaceState(
 ) {
   const { balance: creditBalance, setBalanceFromServer, hasEnoughCredits } = useCredits()
   const kiInstructions = useKiInstructions()
+  const aiJobsCtx = useAiJobsOptional()
 
   // Patient hints for pseudonymization — loaded async from encrypted vault
   const patientHintsRef = useRef<{ patientName?: string; patientDob?: string }>({})
@@ -227,6 +290,8 @@ export function useWorkspaceState(
   const [therapieVerlaufSourceText, setTherapieVerlaufSourceText] = useState('')
   const [lastVersion, setLastVersion] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [aiLengthSpec, setAiLengthSpecState] = useState<AiOutputLengthSpec>(readAiLengthSpec)
+  const [activeGenerationJob, setActiveGenerationJob] = useState<ActiveGenerationJob | null>(null)
   const [generationPendingReview, setGenerationPendingReview] = useState(false)
   const [generationWasAccepted, setGenerationWasAccepted] = useState(false)
   const [generationScope, setGenerationScope] = useState<AiGenerationScope>('segment')
@@ -960,6 +1025,7 @@ export function useWorkspaceState(
         forceSegment?: boolean
       },
     ) => {
+      if (activeGenerationJob) return
       const effectiveScope = overrides?.forceSegment ? 'segment' : scope
       const targetSectionId = overrides?.sectionId ?? activeSectionId ?? undefined
       const targetSectionConfig = targetSectionId
@@ -994,6 +1060,83 @@ export function useWorkspaceState(
       })
 
       const { request, tier: resolvedTier } = resolved
+
+      // Summarize runs as a persisted server job: chunking pipeline for long
+      // documents, real step/progress feedback, and a result that survives
+      // navigation, refresh, and re-login.
+      if (request.tool === 'summarize') {
+        const structured = selectedDocumentType === 'therapie-verlauf'
+        const jobSourceText =
+          effectiveScope === 'document' && request.documentSections?.length
+            ? request.documentSections
+                .map((section) => `## ${section.label}\n${section.content}`)
+                .join('\n\n')
+            : sourceContent
+
+        // Clinical course summaries and long documents get the Gründlich model
+        // under KI-Auto; a manually selected tier always wins.
+        const jobTier = !aiAutoMode
+          ? resolvedTier
+          : structured || estimateTokensFromText(jobSourceText) > AUTO_THOROUGH_INPUT_TOKENS
+            ? 'thorough'
+            : resolvedTier
+
+        const jobHints = isPseudonymizationEnabled() ? patientHintsRef.current : {}
+        let pseudoMap: PseudoMap = {}
+        let jobText = jobSourceText
+        if (jobHints.patientName || jobHints.patientDob) {
+          const pseudo = pseudonymizeText(jobSourceText, jobHints)
+          pseudoMap = pseudo.map
+          jobText = pseudo.text
+        }
+
+        setIsGenerating(true)
+        setLastVersion(sourceContent || null)
+        setIncompleteGenerationWarning(null)
+
+        try {
+          const job = await createAiJob({
+            caseId: caseId && caseId !== DEFAULT_CASE_ID ? caseId : undefined,
+            featureKey: resolveWorkspaceFeatureKey(selectedDocumentType),
+            sourceText: jobText,
+            tier: jobTier,
+            maximum: jobTier === 'thorough' && maximumEnabled,
+            language,
+            componentId: selectedDocumentType,
+            tool: request.tool,
+            sectionLabel: targetSectionConfig?.label,
+            length: aiLengthSpec,
+            directions: kiExtraInstruction.trim() || undefined,
+            structured,
+            patientHints:
+              jobHints.patientName || jobHints.patientDob
+                ? { patientName: jobHints.patientName, patientDob: jobHints.patientDob }
+                : undefined,
+          })
+          saveAiJobPseudoMap(job.id, pseudoMap)
+          setActiveGenerationJob({
+            id: job.id,
+            phase: job.phase,
+            progressCurrent: job.progressCurrent,
+            progressTotal: job.progressTotal,
+            startedAt: job.createdAt,
+            targetSectionId: targetSectionId ?? null,
+            sectionLabel: targetSectionConfig?.label,
+            pseudoMap,
+          })
+          void aiJobsCtx?.refresh()
+        } catch (error) {
+          console.error('[generation] job creation failed', error)
+          setIsGenerating(false)
+          showNotionToast(
+            error instanceof Error && error.message
+              ? error.message
+              : translateUi(language, 'aiJobFailedToast'),
+          )
+        }
+        return
+      }
+
       const creditsToCharge = estimateGenerationCredits(resolvedTier, sourceContent)
 
       setIsGenerating(true)
@@ -1089,12 +1232,15 @@ export function useWorkspaceState(
       }
     },
     [
+      activeGenerationJob,
       activeSectionConfig,
       activeSectionId,
       activeVariantConfig?.ai,
       activeVariantId,
       aiAutoMode,
       aiContext.highlightedToolKeys,
+      aiJobsCtx,
+      aiLengthSpec,
       aiModelTier,
       maximumEnabled,
       buildDocumentSectionsForRequest,
@@ -1112,6 +1258,129 @@ export function useWorkspaceState(
       caseId,
     ],
   )
+
+  const setAiLengthSpec = useCallback((spec: AiOutputLengthSpec) => {
+    setAiLengthSpecState(spec)
+    try {
+      localStorage.setItem(AI_LENGTH_SPEC_KEY, JSON.stringify(spec))
+    } catch {
+      // ignore quota errors
+    }
+  }, [])
+
+  /** Apply a finished summarize job into the editor (user still on this page). */
+  const applyJobResult = useCallback(
+    (job: AiJobDto, target: ActiveGenerationJob) => {
+      const text = resolveAiJobResultText(job)
+      if (!text?.trim()) return
+
+      setGeneratedContent(text)
+      setEditorContent(text)
+      setGenerationPendingReview(true)
+      setContentInputOrigin('typed')
+      setUserToolOverride(false)
+
+      if (target.targetSectionId) {
+        const sectionId = target.targetSectionId
+        setSectionContents((current) => ({ ...current, [sectionId]: text }))
+        setSections((current) =>
+          current.map((section) =>
+            section.id === sectionId ? { ...section, status: 'draft' } : section,
+          ),
+        )
+        if (caseId) {
+          scheduleAiGenerationImprint(caseId, {
+            documentTypeId: selectedDocumentType,
+            sectionId,
+            sectionLabel: target.sectionLabel,
+            text,
+          })
+        }
+      } else if (caseId) {
+        scheduleAiGenerationImprint(caseId, {
+          documentTypeId: selectedDocumentType,
+          text,
+        })
+      }
+    },
+    [caseId, selectedDocumentType],
+  )
+
+  // Poll the active summarize job. Terminal handling: apply the result when
+  // the clinician stayed on the page; failures surface as a toast with the
+  // job kept retrievable (and retryable) via the global AI-jobs indicator.
+  useEffect(() => {
+    if (!activeGenerationJob) return
+    const target = activeGenerationJob
+    let disposed = false
+
+    const poll = async () => {
+      let job: AiJobDto
+      try {
+        job = await getAiJob(target.id)
+      } catch {
+        return // transient — keep polling
+      }
+      if (disposed) return
+
+      if (!isTerminalAiJobStatus(job.status)) {
+        setActiveGenerationJob((current) =>
+          current && current.id === job.id
+            ? {
+                ...current,
+                phase: job.phase,
+                progressCurrent: job.progressCurrent,
+                progressTotal: job.progressTotal,
+                startedAt: job.startedAt ?? current.startedAt,
+              }
+            : current,
+        )
+        return
+      }
+
+      disposed = true
+      clearInterval(interval)
+      setActiveGenerationJob(null)
+      setIsGenerating(false)
+
+      if (job.status === 'succeeded') {
+        applyJobResult(job, target)
+        void aiJobsCtx?.markSeen([job.id])
+      } else if (job.status === 'failed') {
+        showNotionToast(job.errorMessage || translateUi(language, 'aiJobFailedToast'))
+      }
+      void aiJobsCtx?.refresh()
+    }
+
+    const interval = setInterval(() => void poll(), 1_500)
+    void poll()
+    return () => {
+      disposed = true
+      clearInterval(interval)
+    }
+  }, [activeGenerationJob?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  /**
+   * Non-blocking background mode: stop waiting locally; the job continues
+   * server-side and its result stays retrievable via the AI-jobs indicator.
+   */
+  const continueGenerationInBackground = useCallback(() => {
+    if (!activeGenerationJob) return
+    setActiveGenerationJob(null)
+    setIsGenerating(false)
+    void aiJobsCtx?.refresh()
+    showNotionToast(translateUi(language, 'aiJobBackgroundToast'))
+  }, [activeGenerationJob, aiJobsCtx, language])
+
+  const cancelActiveGeneration = useCallback(() => {
+    if (!activeGenerationJob) return
+    const jobId = activeGenerationJob.id
+    setActiveGenerationJob(null)
+    setIsGenerating(false)
+    void cancelAiJob(jobId)
+      .catch(() => undefined)
+      .finally(() => void aiJobsCtx?.refresh())
+  }, [activeGenerationJob, aiJobsCtx])
 
   const handleGenerate = useCallback(() => {
     if (!aiCanGenerate) return
@@ -1563,6 +1832,11 @@ export function useWorkspaceState(
     therapieVerlaufSourceText,
     lastVersion,
     isGenerating,
+    activeGenerationJob,
+    aiLengthSpec,
+    setAiLengthSpec,
+    continueGenerationInBackground,
+    cancelActiveGeneration,
     generationPendingReview,
     generationWasAccepted,
     generationScope,

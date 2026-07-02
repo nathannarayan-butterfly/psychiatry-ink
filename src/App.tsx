@@ -45,6 +45,8 @@ import { CalendarPage } from './components/calendar/CalendarPage'
 import { TodoPage } from './components/todos/TodoPage'
 import { MyNotesPage } from './components/dashboard/MyNotesPage'
 import { AskButterflyProvider } from './contexts/AskButterflyContext'
+import { AiJobsProvider } from './contexts/AiJobsContext'
+import { AiJobsIndicator } from './components/notion/AiJobsIndicator'
 import { KbPharmaCommentsProvider } from './contexts/KbPharmaCommentsContext'
 import { NotizenProvider } from './contexts/NotizenContext'
 import { FloatingToolsShell } from './components/notes/FloatingToolsShell'
@@ -350,6 +352,7 @@ export default function App() {
           />
         ) : null}
         <AskButterflyProvider>
+          <AiJobsProvider language={languageSettings.language}>
           <NotizenProvider>
           <KbPharmaCommentsProvider>
           <FloatingToolsShell>
@@ -485,8 +488,10 @@ export default function App() {
           />
         )}
           </FloatingToolsShell>
+          <AiJobsIndicator />
           </KbPharmaCommentsProvider>
           </NotizenProvider>
+          </AiJobsProvider>
         </AskButterflyProvider>
       </WorkspaceSessionProvider>
     </TranslationProvider>

@@ -1,9 +1,13 @@
 import { useCallback, useState } from 'react'
-import { Loader2, Sparkles, X } from 'lucide-react'
+import { Sparkles, X } from 'lucide-react'
 import { useTranslation } from '../../../context/TranslationContext'
-import { executeAiGeneration } from '../../../services/aiGeneration'
-import { estimateGenerationCredits } from '../../../utils/estimateCredits'
-import type { AiToolKey } from '../../../data/aiTools'
+import { useAiJobRunner } from '../../../hooks/useAiJobRunner'
+import { NotionGenerationProgress } from '../NotionGenerationProgress'
+import {
+  resolveHardLimitWords,
+  resolveTargetWords,
+  type AiOutputLengthSpec,
+} from '../../../../shared/aiJobs'
 import type { UiTranslationKey } from '../../../data/uiTranslations'
 import type { DokumentCategory } from '../../../utils/dokumenteArchive'
 import { StandaloneResultPanel } from './StandaloneResultPanel'
@@ -20,7 +24,10 @@ interface VariantConfig {
   placeholderKey: UiTranslationKey
   /** Localised clinical framing handed to the AI as an extra instruction. */
   instructionKey: UiTranslationKey
-  tool: AiToolKey
+  /** Feature key for credit accounting (must be in the server allowlist). */
+  featureKey: string
+  /** Use the structured 7-section clinical course skeleton. */
+  structured: boolean
   noteKind: string
   noteCategory: DokumentCategory
   /** Render the result as formatted markdown (bold/italic/lists) by default. */
@@ -34,7 +41,8 @@ const VARIANTS: Record<StandalonePromptVariant, VariantConfig> = {
     inputLabelKey: 'standaloneSummaryInputLabel',
     placeholderKey: 'standaloneSummaryPlaceholder',
     instructionKey: 'standaloneSummaryInstruction',
-    tool: 'summarize',
+    featureKey: 'short_verlauf',
+    structured: true,
     noteKind: 'therapie-verlauf-summary',
     noteCategory: 'arztbrief',
   },
@@ -44,12 +52,20 @@ const VARIANTS: Record<StandalonePromptVariant, VariantConfig> = {
     inputLabelKey: 'standaloneLabInterpretInputLabel',
     placeholderKey: 'standaloneLabInterpretPlaceholder',
     instructionKey: 'standaloneLabInterpretInstruction',
-    tool: 'summarize',
+    featureKey: 'document_generation',
+    structured: false,
     noteKind: 'lab-interpretation',
     noteCategory: 'laborbefunde',
     renderMarkdown: true,
   },
 }
+
+const LENGTH_OPTIONS = [
+  { mode: 'kurz', labelKey: 'kiLengthKurz' },
+  { mode: 'mittel', labelKey: 'kiLengthMittel' },
+  { mode: 'gruendlich', labelKey: 'kiLengthGruendlich' },
+  { mode: 'custom', labelKey: 'kiLengthCustom' },
+] as const
 
 interface StandalonePromptToolWidgetProps {
   variant: StandalonePromptVariant
@@ -62,11 +78,12 @@ interface StandalonePromptToolWidgetProps {
 
 /**
  * Generic patient-less "paste → explicit AI → editable result" tool. Powers the
- * Therapie-&-Verlauf (Arztbrief-style) summarizer and the Laborbefund
- * interpretation. The clinician pastes accumulated data and explicitly runs the
- * AI ({@link executeAiGeneration}, credit-guarded) — never on mount. No caseId
- * is sent to the model (pasted text is not patient-scoped); the output is shown
- * in {@link StandaloneResultPanel} to edit / copy / save as a standalone note.
+ * Therapie-&-Verlauf summarizer and the Laborbefund interpretation. The pasted
+ * text runs as a persisted AI job (`useAiJobRunner`): long documents go through
+ * the chunking pipeline with live step/progress feedback, the run can continue
+ * in the background, and the result is additionally auto-saved to "Meine
+ * Notizen" server-side so nothing generated here can silently disappear. No
+ * caseId is sent (pasted text is not patient-scoped).
  */
 export function StandalonePromptToolWidget({
   variant,
@@ -79,35 +96,38 @@ export function StandalonePromptToolWidget({
   const [phase, setPhase] = useState<'input' | 'result'>('input')
   const [source, setSource] = useState('')
   const [text, setText] = useState('')
-  const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [lengthSpec, setLengthSpec] = useState<AiOutputLengthSpec>({ mode: 'mittel' })
+  const [directions, setDirections] = useState('')
+  const { progress, start, continueInBackground, cancel } = useAiJobRunner()
+  const busy = progress !== null
 
   const generate = useCallback(async () => {
     const trimmed = source.trim()
     if (!trimmed || busy) return
-    setBusy(true)
     setError(null)
     try {
-      const generation = await executeAiGeneration(
-        {
-          componentId: `standalone-${variant}`,
-          scope: 'segment',
-          tool: cfg.tool,
-          tier: 'thorough',
-          language,
-          sourceText: trimmed,
-          extraInstruction: t(cfg.instructionKey),
-        },
-        { estimatedCredits: estimateGenerationCredits('thorough', trimmed) },
-      )
-      setText(generation.text.trim())
-      setPhase('result')
+      const result = await start({
+        featureKey: cfg.featureKey,
+        sourceText: trimmed,
+        tier: 'thorough',
+        language,
+        componentId: `standalone-${variant}`,
+        tool: 'summarize',
+        sectionLabel: t(cfg.titleKey),
+        length: lengthSpec,
+        directions: [t(cfg.instructionKey), directions.trim()].filter(Boolean).join(' '),
+        structured: cfg.structured,
+      })
+      // null = cancelled or sent to background — the indicator takes over.
+      if (result != null) {
+        setText(result.trim())
+        setPhase('result')
+      }
     } catch (err) {
       setError(err instanceof Error && err.message ? err.message : t('workspaceAiError'))
-    } finally {
-      setBusy(false)
     }
-  }, [source, busy, variant, cfg, language, t])
+  }, [source, busy, start, cfg, language, variant, lengthSpec, directions, t])
 
   if (phase === 'result') {
     return (
@@ -126,6 +146,8 @@ export function StandalonePromptToolWidget({
     )
   }
 
+  const targetWords = resolveTargetWords(lengthSpec)
+
   const body = (
     <>
       <div className={`wai-panel__body wai-panel__body--fill`}>
@@ -139,27 +161,103 @@ export function StandalonePromptToolWidget({
               placeholder={t(cfg.placeholderKey)}
               aria-label={t(cfg.inputLabelKey)}
               spellCheck
+              disabled={busy}
             />
           </label>
+
+          <div className="swx-field">
+            {t('kiLengthHeading')}
+            <div className="flex flex-wrap items-center gap-1.5" role="radiogroup" aria-label={t('kiLengthHeading')}>
+              {LENGTH_OPTIONS.map((option) => {
+                const active = lengthSpec.mode === option.mode
+                return (
+                  <button
+                    key={option.mode}
+                    type="button"
+                    aria-pressed={active}
+                    disabled={busy}
+                    className={`rounded-sm border px-2.5 py-1 text-xs transition-colors ${
+                      active
+                        ? 'border-ink bg-surface-active font-medium text-ink'
+                        : 'border-border text-muted hover:bg-surface-hover'
+                    }`}
+                    onClick={() =>
+                      setLengthSpec(
+                        option.mode === 'custom'
+                          ? { mode: 'custom', customTargetWords: lengthSpec.customTargetWords ?? 1000 }
+                          : { mode: option.mode },
+                      )
+                    }
+                  >
+                    {t(option.labelKey)}
+                  </button>
+                )
+              })}
+              {lengthSpec.mode === 'custom' ? (
+                <input
+                  type="number"
+                  className="w-24 rounded-sm border border-border bg-surface px-2 py-1 text-xs text-ink outline-none focus:border-ink"
+                  min={50}
+                  max={5000}
+                  value={lengthSpec.customTargetWords ?? 1000}
+                  aria-label={t('kiLengthCustomWords')}
+                  disabled={busy}
+                  onChange={(e) => {
+                    const raw = Number(e.target.value)
+                    setLengthSpec({
+                      mode: 'custom',
+                      customTargetWords: Number.isFinite(raw) ? raw : undefined,
+                    })
+                  }}
+                />
+              ) : null}
+            </div>
+            {targetWords ? (
+              <p className="text-[11px] text-muted">
+                {t('kiLengthTargetInfo')
+                  .replace('{words}', String(targetWords))
+                  .replace('{hard}', String(resolveHardLimitWords(targetWords)))}
+              </p>
+            ) : null}
+          </div>
+
+          <label className="swx-field">
+            {t('kiExtraInstruction')}
+            <textarea
+              className="min-h-[3rem] w-full resize-y rounded-sm border border-border bg-surface px-2.5 py-1.5 text-xs text-ink outline-none focus:border-ink"
+              value={directions}
+              onChange={(e) => setDirections(e.target.value)}
+              placeholder={t('kiExtraInstructionPlaceholder')}
+              rows={2}
+              disabled={busy}
+            />
+          </label>
+
           {error ? <p className="swx-error">{error}</p> : null}
         </div>
       </div>
 
       <footer className="wai-panel__footer">
         <span className="wl-hint" />
-        <button
-          type="button"
-          className="wai-btn wai-btn--primary"
-          onClick={() => void generate()}
-          disabled={!source.trim() || busy}
-        >
-          {busy ? (
-            <Loader2 className="h-3.5 w-3.5 wai-spin" strokeWidth={1.75} aria-hidden />
-          ) : (
+        {progress ? (
+          <div className="w-full">
+            <NotionGenerationProgress
+              job={progress}
+              onContinueInBackground={continueInBackground}
+              onCancel={cancel}
+            />
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="wai-btn wai-btn--primary"
+            onClick={() => void generate()}
+            disabled={!source.trim() || busy}
+          >
             <Sparkles className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
-          )}
-          {busy ? t('workspaceAiGenerating') : t('standaloneGenerate')}
-        </button>
+            {t('standaloneGenerate')}
+          </button>
+        )}
       </footer>
     </>
   )

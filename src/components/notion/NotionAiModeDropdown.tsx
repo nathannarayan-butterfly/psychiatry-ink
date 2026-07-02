@@ -11,6 +11,13 @@ import {
 import type { AiModelTier } from '../../types'
 import { estimateGenerationCredits } from '../../utils/estimateCredits'
 import { documentationToolIcons, tierIcon } from '../../utils/aiToolIcons'
+import {
+  CUSTOM_TARGET_WORDS_MAX,
+  CUSTOM_TARGET_WORDS_MIN,
+  resolveHardLimitWords,
+  resolveTargetWords,
+  type AiOutputLengthSpec,
+} from '../../../shared/aiJobs'
 
 interface NotionAiModeDropdownProps {
   tier: AiModelTier
@@ -19,6 +26,9 @@ interface NotionAiModeDropdownProps {
   selectedTool: AiToolKey | null
   sourceText: string
   extraInstruction: string
+  /** Output-length control — only rendered for summarize-type tools. */
+  lengthSpec?: AiOutputLengthSpec
+  onLengthSpecChange?: (spec: AiOutputLengthSpec) => void
   disabled?: boolean
   canGenerate?: boolean
   open?: boolean
@@ -36,6 +46,8 @@ export function NotionAiModeDropdown({
   selectedTool,
   sourceText,
   extraInstruction,
+  lengthSpec,
+  onLengthSpecChange,
   disabled = false,
   canGenerate = true,
   open: openProp,
@@ -177,6 +189,74 @@ export function NotionAiModeDropdown({
                 <span className="notion-ki-popover__tier-hint">{t('notionKiMaximumHint')}</span>
               </span>
             </button>
+          ) : null}
+
+          {activeTool === 'summarize' && lengthSpec && onLengthSpecChange ? (
+            <>
+              <p className="notion-ki-popover__heading">{t('kiLengthHeading')}</p>
+              <div className="notion-ki-popover__tools" role="radiogroup" aria-label={t('kiLengthHeading')}>
+                {(
+                  [
+                    { mode: 'kurz', labelKey: 'kiLengthKurz' },
+                    { mode: 'mittel', labelKey: 'kiLengthMittel' },
+                    { mode: 'gruendlich', labelKey: 'kiLengthGruendlich' },
+                    { mode: 'custom', labelKey: 'kiLengthCustom' },
+                  ] as const
+                ).map((option) => {
+                  const active = lengthSpec.mode === option.mode
+                  return (
+                    <button
+                      key={option.mode}
+                      type="button"
+                      aria-pressed={active}
+                      className={`notion-ki-popover__tool ${active ? 'notion-ki-popover__tool--active' : ''}`}
+                      onClick={() =>
+                        onLengthSpecChange(
+                          option.mode === 'custom'
+                            ? {
+                                mode: 'custom',
+                                customTargetWords: lengthSpec.customTargetWords ?? 1000,
+                              }
+                            : { mode: option.mode },
+                        )
+                      }
+                    >
+                      <span className="notion-ki-popover__tier-text">
+                        <span className="notion-ki-popover__tier-name">{t(option.labelKey)}</span>
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+              {lengthSpec.mode === 'custom' ? (
+                <input
+                  type="number"
+                  className="notion-ki-popover__instruction"
+                  min={CUSTOM_TARGET_WORDS_MIN}
+                  max={CUSTOM_TARGET_WORDS_MAX}
+                  value={lengthSpec.customTargetWords ?? 1000}
+                  aria-label={t('kiLengthCustomWords')}
+                  onChange={(event) => {
+                    const raw = Number(event.target.value)
+                    onLengthSpecChange({
+                      mode: 'custom',
+                      customTargetWords: Number.isFinite(raw) ? raw : undefined,
+                    })
+                  }}
+                />
+              ) : null}
+              {(() => {
+                const target = resolveTargetWords(lengthSpec)
+                if (!target) return null
+                return (
+                  <p className="notion-ki-popover__tier-hint">
+                    {t('kiLengthTargetInfo')
+                      .replace('{words}', String(target))
+                      .replace('{hard}', String(resolveHardLimitWords(target)))}
+                  </p>
+                )
+              })()}
+            </>
           ) : null}
 
           <p className="notion-ki-popover__heading">{t('kiExtraInstruction')}</p>

@@ -65,6 +65,8 @@ import { medicationPriorTherapiesRouter } from './routes/medicationPriorTherapie
 import { demoPatientRouter } from './routes/demoPatient'
 import { aiBudgetRouter, aiUsageRouter } from './routes/aiUsage'
 import { aiCreditsRouter } from './routes/aiCredits'
+import { aiJobsRouter } from './routes/aiJobs'
+import { recoverStaleAiJobs } from './services/aiJobs/aiJobRunner'
 import { stripeWebhookRouter } from './routes/stripeWebhook'
 import { contactRouter } from './routes/contact'
 import {
@@ -163,6 +165,8 @@ app.use('/api/transcribe', express.json({ limit: '25mb' }), transcribeRouter)
 app.use('/api/inline-edit', express.json({ limit: '25mb' }), inlineEditRouter)
 // Voice message uploads carry base64 audio — needs a larger JSON limit than the global parser.
 app.use('/api/discuss-case', express.json({ limit: '15mb' }), discussCaseRouter)
+// Persisted AI jobs accept very long pasted documents (chunking pipeline).
+app.use('/api/ai-jobs', express.json({ limit: '5mb' }), aiJobsRouter)
 app.use(express.json({ limit: '2mb' }))
 
 app.use('/api/contact', buildContactLimiter(), buildContactEmailLimiter(), contactRouter)
@@ -246,6 +250,10 @@ const server = app.listen(port, host, () => {
   )
   console.log(`[api] keys: OPENAI=${openai ? 'yes' : 'no'} DEEPSEEK=${deepseek ? 'yes' : 'no'}`)
   console.log(`[api] psychopath extract AI: ${isPsychopathExtractAiEnabled() ? 'enabled' : 'disabled (set ENABLE_PSYCHOPATH_EXTRACT_AI=true in .env.local and restart api)'}`)
+
+  // AI jobs left queued/running by a previous process cannot resume mid-call —
+  // mark them failed (code `server_restart`) so clients offer one-click retry.
+  void recoverStaleAiJobs()
   console.log(`[api] clinical intelligence V1: ${isClinicalIntelligenceV1Enabled() ? 'enabled' : 'disabled (set CLINICAL_INTELLIGENCE_V1_ENABLED=true in .env.local and restart api)'}`)
 
   // Diagnosis-code self-check: an empty crosswalk table is the silent failure

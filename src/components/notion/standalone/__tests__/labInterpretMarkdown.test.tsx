@@ -12,7 +12,16 @@ import { createRoot, type Root } from 'react-dom/client'
 ;(globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
 const mockGenerate = vi.hoisted(() => vi.fn())
-vi.mock('../../../../services/aiGeneration', () => ({ executeAiGeneration: mockGenerate }))
+// The widget now runs generations as persisted AI jobs; the runner hook is the
+// seam (start() resolves with the final result text).
+vi.mock('../../../../hooks/useAiJobRunner', () => ({
+  useAiJobRunner: () => ({
+    progress: null,
+    start: mockGenerate,
+    continueInBackground: vi.fn(),
+    cancel: vi.fn(),
+  }),
+}))
 vi.mock('../../../../utils/standaloneNotes', () => ({ saveStandaloneNote: vi.fn() }))
 vi.mock('../../NotionToast', () => ({ showNotionToast: vi.fn() }))
 vi.mock('../../../../context/TranslationContext', () => ({
@@ -53,9 +62,9 @@ afterEach(async () => {
 
 describe('Labor interpretieren markdown rendering', () => {
   it('renders **bold**, *italic* and - lists as markup, not literal asterisks', async () => {
-    mockGenerate.mockResolvedValue({
-      text: 'Befund: **deutlich erhöht** und *grenzwertig*.\n\n- CRP erhöht\n- BSG normal',
-    })
+    mockGenerate.mockResolvedValue(
+      'Befund: **deutlich erhöht** und *grenzwertig*.\n\n- CRP erhöht\n- BSG normal',
+    )
 
     await act(async () => {
       root!.render(

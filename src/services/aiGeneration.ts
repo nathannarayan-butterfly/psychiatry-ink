@@ -23,7 +23,7 @@ import type { AiFeatureKey } from '../types/aiUsage'
 
 export const PSEUDONYMIZE_KEY = 'psychiatry-ink-pseudonymize'
 
-function resolveWorkspaceFeatureKey(componentId: string): AiFeatureKey {
+export function resolveWorkspaceFeatureKey(componentId: string): AiFeatureKey {
   switch (componentId) {
     case 'therapie-verlauf':
       return 'short_verlauf'

@@ -104,6 +104,7 @@ import { BefundungWorkspace } from '../workspace/BefundungWorkspace'
 import { ArztbriefWorkspace } from '../arztbrief/ArztbriefWorkspace'
 import { DischargeSummaryWorkspace } from '../dischargeSummary/DischargeSummaryWorkspace'
 import { NotionGenerationReview } from './NotionGenerationReview'
+import { NotionGenerationProgress } from './NotionGenerationProgress'
 import { NotionToastHost } from './NotionToast'
 import { PasteDetectionChip } from './PasteDetectionChip'
 import type { SelectionActionId } from './FloatingSelectionToolbar'
@@ -2557,6 +2558,8 @@ function NotionAppInner({
                 onSelectAiTool={workspace.selectAiTool}
                 kiExtraInstruction={workspace.kiExtraInstruction}
                 onKiExtraInstructionChange={workspace.setKiExtraInstruction}
+                aiLengthSpec={workspace.aiLengthSpec}
+                onAiLengthSpecChange={workspace.setAiLengthSpec}
                 onGenerate={workspace.handleGenerate}
                 onSelectionAction={handleSelectionAction}
                 onPasteAction={handlePasteAction}
@@ -2610,6 +2613,13 @@ function NotionAppInner({
 
         {showDocumentCanvas && !showWorkspaceLauncher ? (
           <>
+            {workspace.activeGenerationJob ? (
+              <NotionGenerationProgress
+                job={workspace.activeGenerationJob}
+                onContinueInBackground={workspace.continueGenerationInBackground}
+                onCancel={workspace.cancelActiveGeneration}
+              />
+            ) : null}
             {workspace.generationPendingReview ? (
               <NotionGenerationReview
                 isGenerating={workspace.isGenerating}
