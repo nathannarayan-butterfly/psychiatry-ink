@@ -6,6 +6,7 @@ import {
   isAccountRegistryRestoreNeeded,
   isKeyRestoreNeeded,
   restoreAccountCloudBackupWithProgress,
+  tryRestoreRegistryWithDeviceKey,
 } from '../../utils/accountBackup'
 import { markAccountKeyLinked } from '../../utils/accountKeyLink'
 import { PassphraseUnlockProgress } from '../auth/PassphraseUnlockProgress'
@@ -45,15 +46,37 @@ export function AccountRegistryRestoreBanner({
           return
         }
         const registryNeeded = await isAccountRegistryRestoreNeeded()
-        if (active) setReason(registryNeeded ? 'registry' : null)
-      } catch {
+        if (!active) return
+        if (!registryNeeded) {
+          setReason(null)
+          return
+        }
+        // Linked device + v2 (account-key-wrapped) backup: identifiers can be
+        // merged silently, without asking for the passphrase again. Only fall
+        // back to the prompt for legacy v1 (passphrase-wrapped) backups.
+        try {
+          const silent = await tryRestoreRegistryWithDeviceKey()
+          if (!active) return
+          if (silent !== null) {
+            if (silent > 0) onRestored()
+            setReason(null)
+            return
+          }
+        } catch (error) {
+          console.warn('[account-backup] silent identifier restore failed', error)
+        }
+        if (active) setReason('registry')
+      } catch (error) {
+        // A transient status/network failure must not silently disable the
+        // repair prompt for a device that genuinely needs it — log loudly.
+        console.warn('[account-backup] restore-need check failed', error)
         if (active) setReason(null)
       }
     })()
     return () => {
       active = false
     }
-  }, [userId])
+  }, [userId, onRestored])
 
   const handleRestore = useCallback(async () => {
     if (!passphrase.trim()) return

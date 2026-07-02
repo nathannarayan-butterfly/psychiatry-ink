@@ -44,6 +44,14 @@ export function PatientCaseCard({
   const demo = isDemoCase(caseItem.caseId)
   const symbol = genderSymbol(caseItem.localGeschlecht)
   const genderLabel = genderAriaLabel(caseItem.localGeschlecht, t)
+  // Repair state: the case exists (synced from the server) but no patient data
+  // is readable on this device — surface it instead of a silent ID-only card.
+  const missingIdentifiers =
+    !demo &&
+    !caseItem.localVorname?.trim() &&
+    !caseItem.localNachname?.trim() &&
+    !caseItem.localName?.trim() &&
+    !caseItem.pageHeading?.trim()
 
   return (
     <article
@@ -62,6 +70,15 @@ export function PatientCaseCard({
           {caseItem.displayTitle}
           {demo ? <span className="demo-patient-chip">{demoCaseLabel()}</span> : null}
         </h3>
+
+        {missingIdentifiers ? (
+          <p
+            className="mt-0.5 inline-flex w-fit items-center rounded-sm border border-border px-1.5 py-0.5 text-[10px] leading-tight text-recording"
+            title={t('patientCaseMissingIdentifiersHint')}
+          >
+            {t('patientCaseMissingIdentifiers')}
+          </p>
+        ) : null}
 
         <div className="patient-case-card__facts">
           {caseItem.localGeburtsdatum ? (

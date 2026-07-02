@@ -34,6 +34,15 @@ export function isAccountKeyLinked(userId: string | null | undefined): boolean {
   return safeGetItem(ACCOUNT_KEY_LINK_STORAGE_KEY) === id
 }
 
+/**
+ * The user id this browser's key pair is linked to, or null when the local pair
+ * is still an auto-generated throwaway. Lets non-React code (e.g. the account
+ * registry upload) confirm the link without knowing the current user id.
+ */
+export function getLinkedAccountUserId(): string | null {
+  return safeGetItem(ACCOUNT_KEY_LINK_STORAGE_KEY)?.trim() || null
+}
+
 /** Forget the link (used when the local key material is intentionally reset). */
 export function clearAccountKeyLink(): void {
   safeRemoveItem(ACCOUNT_KEY_LINK_STORAGE_KEY)

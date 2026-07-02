@@ -30,6 +30,14 @@ const createPassphraseBackup = vi.fn(async () => ({
   iterations: 310_000,
 }))
 const getPassphraseBackup = vi.fn(async () => null)
+// Registry backups are now wrapped with the account RSA key (envelope v2), not
+// the passphrase — see uploadIdentifierBackupIfEnabled.
+const encryptJsonPayload = vi.fn(async () => ({
+  version: 1,
+  ciphertext: 'c',
+  iv: 'i',
+  wrappedKey: 'wk',
+}))
 
 vi.mock('../../services/accountBackupApi', () => ({
   fetchAccountBackupStatus,
@@ -70,6 +78,8 @@ vi.mock('../cryptoVault', () => ({
   importVaultBlob: vi.fn(),
   getOrCreateDeviceId: vi.fn(() => 'device-1'),
   saveWorkspaceVaultBlob: vi.fn(),
+  encryptJsonPayload,
+  decryptJsonPayload: vi.fn(),
 }))
 
 vi.mock('../passphraseRecovery', () => ({
@@ -81,6 +91,9 @@ vi.mock('../passphraseRecovery', () => ({
 vi.mock('../accountKeyLink', () => ({
   markAccountKeyLinked: vi.fn(),
   isAccountKeyLinked: vi.fn(() => false),
+  // setupAccountCloudBackup marks the device linked before the identifier
+  // upload; the guard reads this getter.
+  getLinkedAccountUserId: vi.fn(() => 'user-1'),
 }))
 
 vi.mock('../../services/authHeaders', () => ({ getAuthHeaders: vi.fn(async () => ({})) }))
@@ -132,7 +145,11 @@ describe('setupAccountCloudBackup — honors the signup storage-mode choice', ()
     await mod.setupAccountCloudBackup('correct horse battery staple', 'user-1')
 
     expect(uploadKeyBackupToServer).toHaveBeenCalledTimes(1)
-    expect(encryptJsonWithPassphrase).toHaveBeenCalledTimes(1)
+    expect(encryptJsonPayload).toHaveBeenCalledTimes(1)
     expect(uploadRegistryBackupToServer).toHaveBeenCalledTimes(1)
+    // v2 envelope: RSA-wrapped AES key rides in the `salt` field.
+    expect(uploadRegistryBackupToServer).toHaveBeenCalledWith(
+      expect.objectContaining({ version: 2, salt: 'wk' }),
+    )
   })
 })

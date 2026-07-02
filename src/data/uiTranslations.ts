@@ -6693,6 +6693,18 @@ export const uiTranslations = {
     fr: 'Annuler',
     es: 'Cancelar',
   },
+  patientCaseMissingIdentifiers: {
+    de: 'Patientendaten fehlen auf diesem Gerät',
+    en: 'Patient data missing on this device',
+    fr: 'Données patient manquantes sur cet appareil',
+    es: 'Faltan datos del paciente en este dispositivo',
+  },
+  patientCaseMissingIdentifiersHint: {
+    de: 'Der Fall wurde synchronisiert, aber die verschlüsselten Patientendaten sind auf diesem Gerät noch nicht wiederhergestellt. Nutzen Sie die Wiederherstellung über das Konto-Backup oder ergänzen Sie die Daten manuell.',
+    en: 'The case was synced, but the encrypted patient data has not been restored on this device yet. Use the account-backup restore or add the data manually.',
+    fr: 'Le dossier a été synchronisé, mais les données patient chiffrées n’ont pas encore été restaurées sur cet appareil. Utilisez la restauration via la sauvegarde du compte ou complétez les données manuellement.',
+    es: 'El caso se sincronizó, pero los datos cifrados del paciente aún no se han restaurado en este dispositivo. Use la restauración de la copia de seguridad de la cuenta o añada los datos manualmente.',
+  },
   dashboardArchiveSection: {
     de: 'Archiv',
     en: 'Archive',

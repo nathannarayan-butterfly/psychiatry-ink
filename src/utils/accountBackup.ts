@@ -8,26 +8,31 @@ import {
 } from '../services/accountBackupApi'
 import { getAuthHeaders } from '../services/authHeaders'
 import type { LocalCaseMeta } from '../hooks/useCaseRegistry'
+import { DEFAULT_CASE_ID } from './caseContext'
 import { loadRegistryMapFromStorage } from './caseRegistryStorage'
 import {
   decryptJsonWithPassphrase,
-  encryptJsonWithPassphrase,
   type PassphraseEncryptedBlob,
 } from './accountBackupCrypto'
 import {
   clearAccountBackupUnlock,
-  getAccountBackupPassphrase,
   isAccountBackupUnlocked,
   setAccountBackupUnlocked,
 } from './accountBackupSession'
 import {
+  decryptJsonPayload,
+  encryptJsonPayload,
   getActiveVaultBlob,
   getOrCreateDeviceId,
   importVaultBlob,
   saveWorkspaceVaultBlob,
   type EncryptedVaultBlob,
 } from './cryptoVault'
-import { isAccountKeyLinked, markAccountKeyLinked } from './accountKeyLink'
+import {
+  getLinkedAccountUserId,
+  isAccountKeyLinked,
+  markAccountKeyLinked,
+} from './accountKeyLink'
 import {
   markIdentifierStorageAcknowledged,
   usesAccountIdentifierSync,
@@ -52,6 +57,20 @@ import {
 } from './workspaceVault'
 
 export const ACCOUNT_IDENTIFIER_BACKUP_VERSION = 2
+
+/**
+ * Registry-backup ENVELOPE versions (the transport blob, not the inner payload):
+ *  - v1: passphrase-derived AES-GCM (PBKDF2 salt in `salt`). Upload requires the
+ *    passphrase, which lives only in memory — so identifier edits made in a later
+ *    session silently never reached the server (the cross-device "nicht
+ *    zugeordnet" bug).
+ *  - v2: account-RSA-wrapped AES-GCM — the same model as workspace snapshots.
+ *    The `salt` field carries the RSA-wrapped AES key (the table column is
+ *    reused; no server/schema change). Any linked device can upload without the
+ *    passphrase, and any device that completed key restore can decrypt.
+ */
+export const REGISTRY_BLOB_VERSION_PASSPHRASE = 1
+export const REGISTRY_BLOB_VERSION_RSA = 2
 
 /** Name + DOB only — diagnoses live in the clinical case file (workspace snapshot). */
 export interface PatientIdentifierRecord {
@@ -147,12 +166,27 @@ function normalizeIdentifierPayload(raw: unknown): AccountIdentifierBackupPayloa
 }
 
 export function registryMapHasIdentifierFields(map: Record<string, LocalCaseMeta>): boolean {
+  return Object.values(map).some((meta) => caseMetaHasIdentifierFields(meta))
+}
+
+export function caseMetaHasIdentifierFields(meta: LocalCaseMeta): boolean {
+  return (
+    Boolean(meta.localName?.trim()) ||
+    Boolean(meta.localVorname?.trim()) ||
+    Boolean(meta.localNachname?.trim()) ||
+    Boolean(meta.localGeburtsdatum?.trim())
+  )
+}
+
+/** True when a real (non-default, non-demo) case has no identifier fields at all. */
+export function registryMapHasCaseMissingIdentifiers(
+  map: Record<string, LocalCaseMeta>,
+): boolean {
   return Object.values(map).some(
     (meta) =>
-      Boolean(meta.localName?.trim()) ||
-      Boolean(meta.localVorname?.trim()) ||
-      Boolean(meta.localNachname?.trim()) ||
-      Boolean(meta.localGeburtsdatum?.trim()),
+      meta.caseId !== DEFAULT_CASE_ID &&
+      !meta.isDemoPatient &&
+      !caseMetaHasIdentifierFields(meta),
   )
 }
 
@@ -172,22 +206,42 @@ async function shouldSyncIdentifierBackupToAccount(): Promise<boolean> {
   return Boolean(status?.hasRegistryBackup)
 }
 
-async function applyIdentifierBackupPayload(payload: AccountIdentifierBackupPayload): Promise<void> {
+/**
+ * Merge backup identifiers into the local registry PER CASE. Local non-empty
+ * values win (never clobber what the clinician sees on this device); backup
+ * values fill every gap. Returns how many cases gained at least one identifier
+ * field — the restore counter shown to the user.
+ */
+async function applyIdentifierBackupPayload(
+  payload: AccountIdentifierBackupPayload,
+): Promise<number> {
   const { replaceRegistryMap } = await import('../hooks/useCaseRegistry')
   const current = loadRegistryMapFromStorage()
+  let gainedCases = 0
 
   for (const record of Object.values(payload.identifiers ?? {})) {
     const existing = current[record.caseId]
-    current[record.caseId] = {
+    const merged: LocalCaseMeta = {
       ...existing,
       caseId: record.caseId,
-      localName: record.localName ?? existing?.localName,
-      localVorname: record.localVorname ?? existing?.localVorname,
-      localNachname: record.localNachname ?? existing?.localNachname,
-      localGeburtsdatum: record.localGeburtsdatum ?? existing?.localGeburtsdatum,
+      localName: existing?.localName?.trim() ? existing.localName : record.localName,
+      localVorname: existing?.localVorname?.trim() ? existing.localVorname : record.localVorname,
+      localNachname: existing?.localNachname?.trim()
+        ? existing.localNachname
+        : record.localNachname,
+      localGeburtsdatum: existing?.localGeburtsdatum?.trim()
+        ? existing.localGeburtsdatum
+        : record.localGeburtsdatum,
       createdAt: existing?.createdAt ?? new Date().toISOString(),
       lastOpened: existing?.lastOpened ?? new Date().toISOString(),
     }
+    const gained =
+      (Boolean(merged.localName?.trim()) && !existing?.localName?.trim()) ||
+      (Boolean(merged.localVorname?.trim()) && !existing?.localVorname?.trim()) ||
+      (Boolean(merged.localNachname?.trim()) && !existing?.localNachname?.trim()) ||
+      (Boolean(merged.localGeburtsdatum?.trim()) && !existing?.localGeburtsdatum?.trim())
+    if (gained) gainedCases += 1
+    current[record.caseId] = merged
   }
 
   replaceRegistryMap(current)
@@ -199,6 +253,31 @@ async function applyIdentifierBackupPayload(payload: AccountIdentifierBackupPayl
       console.warn('[account-backup] patient vault restore failed', caseId, error)
     }
   }
+
+  return gainedCases
+}
+
+/**
+ * Decrypt a registry-backup blob of either envelope version. v2 needs only the
+ * account private key (must already be restored/linked on this device); v1
+ * needs the passphrase. Throws when the required secret is unavailable.
+ */
+async function decryptRegistryBackupBlob(
+  blob: PassphraseEncryptedBlob,
+  passphrase?: string | null,
+): Promise<AccountIdentifierBackupPayload> {
+  if (blob.version === REGISTRY_BLOB_VERSION_RSA) {
+    const raw = await decryptJsonPayload<unknown>({
+      version: 1,
+      ciphertext: blob.ciphertext,
+      iv: blob.iv,
+      wrappedKey: blob.salt,
+    })
+    return normalizeIdentifierPayload(raw)
+  }
+  if (!passphrase) throw new Error('Passphrase required for registry backup v1')
+  const raw = await decryptJsonWithPassphrase<unknown>(passphrase, blob)
+  return normalizeIdentifierPayload(raw)
 }
 
 async function resolveKeyBackup(): Promise<PassphraseKeyBackup> {
@@ -209,7 +288,22 @@ async function resolveKeyBackup(): Promise<PassphraseKeyBackup> {
   throw new Error('No key backup found')
 }
 
-async function uploadIdentifierBackupIfEnabled(passphrase: string): Promise<void> {
+/**
+ * Encrypt + upload the identifier backup with the ACCOUNT key (envelope v2).
+ * No passphrase needed — that was the cross-device sync hole: the passphrase
+ * only lives in memory, so identifier edits in any later session were never
+ * backed up and new patients appeared as "nicht zugeordnet" on other devices.
+ *
+ * Guard: uploads only when this browser is LINKED to the account key. A fresh
+ * device auto-generates a throwaway RSA pair; uploading a backup wrapped with
+ * that pair would clobber the account backup with one no other device can read.
+ */
+async function uploadIdentifierBackupIfEnabled(): Promise<void> {
+  // Same migration safeguard as isKeyRestoreNeeded: a local passphrase backup
+  // proves this device created the account key even if the link marker predates it.
+  const holdsAccountKey =
+    getLinkedAccountUserId() !== null || Boolean(await getPassphraseBackup())
+  if (!holdsAccountKey) return
   if (!(await shouldSyncIdentifierBackupToAccount())) return
 
   const payload = await collectIdentifierBackupPayload()
@@ -218,8 +312,15 @@ async function uploadIdentifierBackupIfEnabled(passphrase: string): Promise<void
     if (status?.hasRegistryBackup) return
   }
 
-  const encrypted = await encryptJsonWithPassphrase(passphrase, payload)
-  await uploadRegistryBackupToServer(encrypted)
+  const vaultBlob = await encryptJsonPayload(payload)
+  await uploadRegistryBackupToServer({
+    version: REGISTRY_BLOB_VERSION_RSA,
+    // v2 envelope: the `salt` field carries the RSA-wrapped AES key (column reuse).
+    salt: vaultBlob.wrappedKey,
+    iv: vaultBlob.iv,
+    ciphertext: vaultBlob.ciphertext,
+    iterations: 0,
+  })
 }
 
 /** Upload passphrase-wrapped key; identifier ciphertext only when account mode is selected. */
@@ -229,7 +330,7 @@ export async function uploadAccountCloudBackup(passphrase: string): Promise<void
     keyBackup = await createPassphraseBackup(passphrase)
   }
   await uploadKeyBackupToServer(keyBackup)
-  await uploadIdentifierBackupIfEnabled(passphrase)
+  await uploadIdentifierBackupIfEnabled()
 }
 
 /** Create passphrase backup and upload per user identifier storage choice. */
@@ -239,10 +340,11 @@ export async function setupAccountCloudBackup(
 ): Promise<PassphraseKeyBackup> {
   const backup = await createPassphraseBackup(passphrase)
   await uploadKeyBackupToServer(backup)
-  await uploadIdentifierBackupIfEnabled(passphrase)
   setAccountBackupUnlocked(passphrase)
-  // This browser now holds the account's real private key.
+  // This browser now holds the account's real private key — mark it BEFORE the
+  // identifier upload, which refuses to run from unlinked (throwaway-key) devices.
   markAccountKeyLinked(userId)
+  await uploadIdentifierBackupIfEnabled()
   await tryAutoRestoreRegistryFromAccount(passphrase)
   return backup
 }
@@ -406,19 +508,45 @@ export async function tryAutoRestoreRegistryFromAccount(passphrase: string): Pro
 
   const { ensureCaseRegistryHydrated } = await import('../hooks/useCaseRegistry')
   await ensureCaseRegistryHydrated()
-  if (registryMapHasIdentifierFields(loadRegistryMapFromStorage())) return 0
+  // NOTE: no wholesale "device already has some identifiers" skip here. That
+  // skip meant a second device with even ONE named patient never received
+  // identifiers for cases created later on another device — they stayed
+  // "nicht zugeordnet" forever. applyIdentifierBackupPayload merges per case
+  // and never overwrites local non-empty values, so running it is always safe.
 
   const registryBlob = await fetchRegistryBackupFromServer()
   if (!registryBlob) return 0
 
-  const raw = await decryptJsonWithPassphrase<unknown>(passphrase, registryBlob)
-  const payload = normalizeIdentifierPayload(raw)
-  await applyIdentifierBackupPayload(payload)
+  const payload = await decryptRegistryBackupBlob(registryBlob, passphrase)
+  const gained = await applyIdentifierBackupPayload(payload)
 
   const { syncPrivacyIdentifierStorage } = await import('../hooks/usePrivacySettings')
   syncPrivacyIdentifierStorage('account')
 
-  return Object.keys(payload.identifiers ?? {}).length
+  return gained
+}
+
+/**
+ * Silent identifier restore for a device that already holds the account key:
+ * v2 (RSA-wrapped) backups decrypt without the passphrase, so a linked device
+ * can merge identifiers for newly synced cases right after hydration — no
+ * prompt needed. Returns the number of cases that gained identifiers, or null
+ * when the backup is a v1 (passphrase) blob and the prompt is still required.
+ */
+export async function tryRestoreRegistryWithDeviceKey(): Promise<number | null> {
+  if (!getLinkedAccountUserId()) return null
+
+  const registryBlob = await fetchRegistryBackupFromServer()
+  if (!registryBlob) return 0
+  if (registryBlob.version !== REGISTRY_BLOB_VERSION_RSA) return null
+
+  const payload = await decryptRegistryBackupBlob(registryBlob)
+  const gained = await applyIdentifierBackupPayload(payload)
+
+  const { syncPrivacyIdentifierStorage } = await import('../hooks/usePrivacySettings')
+  syncPrivacyIdentifierStorage('account')
+
+  return gained
 }
 
 /**
@@ -489,14 +617,20 @@ export async function hasAccountOnboardingRecord(): Promise<boolean> {
   return Boolean(status?.hasKeyBackup || status?.hasRegistryBackup)
 }
 
-/** True when server holds an identifier backup but this browser lacks decrypted names/DOB. */
+/**
+ * True when the server holds an identifier backup and at least one synced case
+ * on this browser has NO identifier fields — i.e. names/DOB for that case are
+ * missing locally and a restore could repair it. (Previously this checked
+ * whether the whole registry was empty, so a device with a single named
+ * patient never re-offered the restore and new cases stayed "nicht zugeordnet".)
+ */
 export async function isAccountRegistryRestoreNeeded(): Promise<boolean> {
   const status = await fetchAccountBackupStatus()
   if (!status?.hasRegistryBackup) return false
 
   const { ensureCaseRegistryHydrated } = await import('../hooks/useCaseRegistry')
   await ensureCaseRegistryHydrated()
-  return !registryMapHasIdentifierFields(loadRegistryMapFromStorage())
+  return registryMapHasCaseMissingIdentifiers(loadRegistryMapFromStorage())
 }
 
 /**
@@ -612,21 +746,46 @@ export async function restoreAccountCloudBackupWithProgress(
   }
 }
 
-/** Debounced identifier re-upload (name/DOB only) when account mode + active passphrase session. */
+/**
+ * Debounced identifier re-upload (name/DOB only) in account mode. Uses the
+ * account RSA key (envelope v2), so it works in EVERY session — previously it
+ * required the in-memory passphrase and silently skipped after any page
+ * reload, which is how new patients never reached other devices.
+ */
 export function scheduleAccountRegistryUpload(): void {
-  const passphrase = getAccountBackupPassphrase()
-  if (!passphrase) return
-
+  registerIdentifierUploadFlushOnHide()
   if (identifierUploadTimer !== null) window.clearTimeout(identifierUploadTimer)
   identifierUploadTimer = window.setTimeout(() => {
     identifierUploadTimer = null
-    void (async () => {
-      if (!(await shouldSyncIdentifierBackupToAccount())) return
-      await uploadIdentifierBackupIfEnabled(passphrase)
-    })().catch((error) => {
-      console.warn('[account-backup] identifier upload failed', error)
-    })
+    void runIdentifierUpload()
   }, 2000)
+}
+
+async function runIdentifierUpload(): Promise<void> {
+  try {
+    await uploadIdentifierBackupIfEnabled()
+  } catch (error) {
+    console.warn('[account-backup] identifier upload failed', error)
+  }
+}
+
+let flushOnHideRegistered = false
+
+/**
+ * The 2s debounce can swallow the very last edit when the tab closes right
+ * after creating a patient — flush immediately when the page is hidden so the
+ * newest identifiers still reach the account backup.
+ */
+function registerIdentifierUploadFlushOnHide(): void {
+  if (flushOnHideRegistered || typeof document === 'undefined') return
+  flushOnHideRegistered = true
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'hidden') return
+    if (identifierUploadTimer === null) return
+    window.clearTimeout(identifierUploadTimer)
+    identifierUploadTimer = null
+    void runIdentifierUpload()
+  })
 }
 
 export function lockAccountCloudBackup(): void {
