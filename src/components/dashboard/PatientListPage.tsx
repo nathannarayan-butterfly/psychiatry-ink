@@ -1,5 +1,6 @@
 import { ArrowLeft, Plus, Search, Users, Archive, ArrowRight } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from '../../context/TranslationContext'
 import { useAuth } from '../../context/AuthContext'
 import type { NotionPageId } from '../notion/notionPages'
@@ -67,6 +68,8 @@ export function PatientListPage({
   const [sort, setSort] = useState<PatientSort>('recent')
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const [editingCaseId, setEditingCaseId] = useState<string | null>(null)
+  const [deletingCaseId, setDeletingCaseId] = useState<string | null>(null)
+  const [deleteInProgress, setDeleteInProgress] = useState(false)
 
   const { active, archived: archivedPatients } = useMemo(
     () => partitionPatients(registry.cases, userId),
@@ -104,13 +107,24 @@ export function PatientListPage({
     [registry, userId],
   )
 
-  const handleDelete = useCallback(
-    async (caseId: string) => {
-      await deletePatientCasePermanently(caseId, userId)
+  // Permanent deletion is irreversible, so it is gated behind a confirmation
+  // dialog: the delete button only stages the caseId; the dialog runs the delete.
+  const confirmDelete = useCallback(async () => {
+    if (!deletingCaseId) return
+    setDeleteInProgress(true)
+    try {
+      await deletePatientCasePermanently(deletingCaseId, userId)
       await registry.refresh()
-    },
-    [registry, userId],
-  )
+      setDeletingCaseId(null)
+    } finally {
+      setDeleteInProgress(false)
+    }
+  }, [deletingCaseId, registry, userId])
+
+  const deletingPatientTitle = useMemo(() => {
+    if (!deletingCaseId) return ''
+    return archivedPatients.find((item) => item.caseId === deletingCaseId)?.displayTitle ?? ''
+  }, [deletingCaseId, archivedPatients])
 
   const handleEditSaved = useCallback(
     (patient: NewPatientData) => {
@@ -232,7 +246,7 @@ export function PatientListPage({
                     archived
                     onOpen={(caseId) => onOpenCase(caseId, undefined, true)}
                     onReactivate={handleReactivate}
-                    onDelete={(caseId) => void handleDelete(caseId)}
+                    onDelete={(caseId) => setDeletingCaseId(caseId)}
                   />
                 ) : (
                   <PatientCaseCard
@@ -275,6 +289,44 @@ export function PatientListPage({
           onCancel={() => setEditingCaseId(null)}
         />
       ) : null}
+
+      {deletingCaseId
+        ? createPortal(
+            <div className="kbp-overlay" role="dialog" aria-modal aria-label={t('patientDeleteConfirmTitle')}>
+              <div className="kbp-dialog kbp-dialog--sm">
+                <h2 className="kbp-dialog__title">{t('patientDeleteConfirmTitle')}</h2>
+                <p className="kbp-dialog__delete-text">
+                  {t('patientDeleteConfirmMessage')}
+                  {deletingPatientTitle ? (
+                    <>
+                      <br />
+                      <strong>{deletingPatientTitle}</strong>
+                    </>
+                  ) : null}
+                </p>
+                <div className="kbp-dialog__actions">
+                  <button
+                    type="button"
+                    className="kbp-btn kbp-btn--danger"
+                    onClick={() => void confirmDelete()}
+                    disabled={deleteInProgress}
+                  >
+                    {t('patientDeletePermanent')}
+                  </button>
+                  <button
+                    type="button"
+                    className="kbp-btn"
+                    onClick={() => setDeletingCaseId(null)}
+                    disabled={deleteInProgress}
+                  >
+                    {t('patientDeleteConfirmCancel')}
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   )
 }

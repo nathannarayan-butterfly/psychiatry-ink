@@ -171,7 +171,35 @@ describe('buildPpbHarmSignals', () => {
     expect(signals).toHaveLength(1)
     expect(signals[0]?.label).toBe('keine Suizidalität, keine Eigen- oder Fremdgefährdung')
   })
+
+  it('surfaces documented Fremd-/Autoaggression written as synonyms (not "gefährdung")', () => {
+    const signals = buildPpbHarmSignals({
+      language: 'de',
+      text: 'Fremdaggressives Verhalten bei Erregung. Autoaggressive Handlungen dokumentiert.',
+    })
+    // Must NOT collapse to the calm "keine Eigen- oder Fremdgefährdung" line.
+    expect(signals.some((s) => s.label === 'keine Suizidalität, keine Eigen- oder Fremdgefährdung')).toBe(
+      false,
+    )
+    const other = signals.find((s) => s.id === 'riskOthers')
+    const self = signals.find((s) => s.id === 'riskSelf')
+    expect(other && !isCalm(other)).toBe(true)
+    expect(self && !isCalm(self)).toBe(true)
+  })
+
+  it('keeps negated synonyms calm (documented absence stays "keine")', () => {
+    const signals = buildPpbHarmSignals({
+      language: 'de',
+      text: 'Keine Suizidalität. Keine Fremdaggression. Nicht autoaggressiv.',
+    })
+    expect(signals).toHaveLength(1)
+    expect(signals[0]?.tone).toBe('ok')
+  })
 })
+
+function isCalm(signal: { tone: string }): boolean {
+  return signal.tone === 'ok' || signal.tone === 'low'
+}
 
 describe('buildPatientSafety risk signals', () => {
   it('does not emit suicidality signals for imprint label echoes', () => {

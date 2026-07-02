@@ -441,7 +441,16 @@ function NotionAppInner({
         editorContent: workspace.editorContent,
         source,
         language: languageSettings.language,
+        // Dedup against the document currently being edited so the close/
+        // navigation "unsaved changes" save updates the SAME entry the Speichern
+        // button created, instead of appending a duplicate to Documents.
+        existingId: editingDokumentIdRef.current ?? undefined,
       })
+
+      // Keep the edit pointer in sync so every subsequent save (manual OR the
+      // close-warning autosave) keeps targeting this one entry rather than
+      // spawning a second copy.
+      if (archived) editingDokumentIdRef.current = archived.id
 
       // Only add explicitly saved documents (manual or AI-accepted) to Recent.
       // Draft/autosave archives triggered by navigation are not shown in Recent.

@@ -148,6 +148,7 @@ askButterflyRouter.post('/', async (req: Request, res: Response) => {
       'For clinical questions, give concise, educational guidance and note that chart verification is required.',
       clinicalLanguagePromptInstruction(language),
       `Respond in ${languageName}.`,
+      'Reply in plain prose only — never wrap the answer in JSON, code fences, or any structured envelope.',
     ].join(' ')
 
     let userPrompt: string

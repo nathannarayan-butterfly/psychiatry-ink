@@ -49,22 +49,31 @@ function extractSuicidalityPhrase(text: string): string | null {
   return positive ? normalizeWhitespace(positive) : null
 }
 
-function extractRiskSelfPhrase(text: string): string | null {
-  const negated = text.match(/\bkeine?\s+(?:akute?\s+)?(?:selbst|eigen)gefährd\w*[^.;\n]*/i)?.[0]
+// Documented self- / other-endangerment is written many ways beyond the literal
+// "Eigengefährdung" / "Fremdgefährdung". Recognising the common clinical
+// synonyms (autoaggressiv, selbstverletzend, fremdaggressiv, gewalttätig, …)
+// stops the overview safety strip from defaulting a documented risk to "keine".
+const RISK_SELF_SIGNAL = String.raw`(?:selbst|eigen)gefährd\w*|autoaggress\w*|selbstverletz\w*|parasuizidal\w*`
+const RISK_OTHERS_SIGNAL = String.raw`fremd\s*gefährd\w*|fremdaggress\w*|gewalttät\w*|gewaltbereit\w*`
+// Negation may sit a few qualifier words before the signal ("keine akute …").
+const RISK_NEGATION = String.raw`(?:keine?|kein|nicht|verneint\w*)\s+(?:\w+\s+){0,2}?`
+const RISK_NEG_START = /^(?:keine?|kein|nicht|verneint)\b/i
+
+function extractRiskPhrase(text: string, signal: string): string | null {
+  const negated = text.match(new RegExp(String.raw`\b${RISK_NEGATION}(?:${signal})[^.;\n]*`, 'i'))?.[0]
   if (negated) return normalizeWhitespace(negated)
 
-  const positive = text.match(/\b((?:selbst|eigen)gefährd\w*[^.;\n]{0,80})/i)?.[0]
-  if (positive && !/^keine?\b/i.test(positive)) return normalizeWhitespace(positive)
+  const positive = text.match(new RegExp(String.raw`\b(?:${signal})[^.;\n]{0,80}`, 'i'))?.[0]
+  if (positive && !RISK_NEG_START.test(positive)) return normalizeWhitespace(positive)
   return null
 }
 
-function extractRiskOthersPhrase(text: string): string | null {
-  const negated = text.match(/\bkeine?\s+(?:akute?\s+)?fremdgefährd\w*[^.;\n]*/i)?.[0]
-  if (negated) return normalizeWhitespace(negated)
+function extractRiskSelfPhrase(text: string): string | null {
+  return extractRiskPhrase(text, RISK_SELF_SIGNAL)
+}
 
-  const positive = text.match(/\b(fremdgefährd\w*[^.;\n]{0,80})/i)?.[0]
-  if (positive && !/^keine?\b/i.test(positive)) return normalizeWhitespace(positive)
-  return null
+function extractRiskOthersPhrase(text: string): string | null {
+  return extractRiskPhrase(text, RISK_OTHERS_SIGNAL)
 }
 
 function matchAllLabels(text: string, patterns: RegExp[]): string[] {

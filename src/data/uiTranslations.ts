@@ -6675,6 +6675,24 @@ export const uiTranslations = {
     fr: 'Supprimer définitivement',
     es: 'Eliminar permanentemente',
   },
+  patientDeleteConfirmTitle: {
+    de: 'Patient endgültig löschen?',
+    en: 'Delete patient permanently?',
+    fr: 'Supprimer définitivement le patient ?',
+    es: '¿Eliminar el paciente permanentemente?',
+  },
+  patientDeleteConfirmMessage: {
+    de: 'Dieser Patient und alle zugehörigen Daten werden unwiderruflich gelöscht. Dies kann nicht rückgängig gemacht werden.',
+    en: 'This patient and all associated data will be permanently deleted. This cannot be undone.',
+    fr: 'Ce patient et toutes les données associées seront définitivement supprimés. Cette action est irréversible.',
+    es: 'Este paciente y todos los datos asociados se eliminarán de forma permanente. Esta acción no se puede deshacer.',
+  },
+  patientDeleteConfirmCancel: {
+    de: 'Abbrechen',
+    en: 'Cancel',
+    fr: 'Annuler',
+    es: 'Cancelar',
+  },
   dashboardArchiveSection: {
     de: 'Archiv',
     en: 'Archive',

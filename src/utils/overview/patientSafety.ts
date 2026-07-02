@@ -64,18 +64,31 @@ function severityLabel(language: UiLanguage, severity: string): string {
   return key ? translateUi(language, key) : severity
 }
 
+// Clinical synonyms for the two harm axes (see extract.ts for the imprint path).
+// Kept in sync with riskToneFromText so a documented synonym is both recognised
+// AND rendered with the right tone instead of defaulting to "keine".
+const RISK_SELF_SIGNAL_SRC = String.raw`(?:selbst|eigen)gef\w*|autoaggress\w*|selbstverletz\w*|parasuizidal\w*`
+const RISK_OTHERS_SIGNAL_SRC = String.raw`fremd\s*gef\w*|fremdaggress\w*|gewalttät\w*|gewaltbereit\w*`
+const RISK_NEG_WORD = String.raw`(?:keine?|nicht|verneint\w*)`
+
 function riskToneFromText(value: string | null | undefined): SemanticTone | null {
   if (!value) return null
   const v = value.toLowerCase()
   if (
-    /\bkeine?\b|\bnein\b|\bno\b|\bnone\b|verneint|negativ|unauff|nicht\s+(akut|vorhanden)|ausgeschlossen|denied|not\s+(?:present|documented|reported)/.test(
+    /\bkeine?\b|\bnein\b|\bno\b|\bnone\b|verneint|negativ|unauff|nicht\s+(?:akut|vorhanden|\w*(?:aggress|gefähr|gewalt|suizidal|selbstverletz))|ausgeschlossen|denied|not\s+(?:present|documented|reported)/.test(
       v,
     )
   ) {
     return 'ok'
   }
   if (/akut|\bja\b|aktiv|hoch|positiv|konkret|imperativ|drängend/.test(v)) return 'high'
-  if (/passiv|latent|gedanken|fraglich|leicht|gering|chronisch|ambivalen/.test(v)) return 'moderate'
+  if (
+    /passiv|latent|gedanken|fraglich|leicht|gering|chronisch|ambivalen|fremdaggress|autoaggress|gewalttät|gewaltbereit|selbstverletz|parasuizidal/.test(
+      v,
+    )
+  ) {
+    return 'moderate'
+  }
   return null
 }
 
@@ -232,17 +245,24 @@ function parseRiskTextSignals(language: UiLanguage, text: string): SafetyRiskSig
       trimmed
     signals.push(composeRiskSignal(language, 'suicidality', trimRiskValue(value)))
   }
-  if (/fremd\s*gef/i.test(trimmed)) {
+  if (new RegExp(RISK_OTHERS_SIGNAL_SRC, 'i').test(trimmed)) {
     const value =
-      /\bkeine?\b[^.!?]*fremd\s*gef\w*/i.exec(trimmed)?.[0]?.trim() ??
-      /fremd\s*gef[^.!?]*/i.exec(trimmed)?.[0]?.trim() ??
+      new RegExp(String.raw`\b${RISK_NEG_WORD}\b[^.!?]*(?:${RISK_OTHERS_SIGNAL_SRC})`, 'i')
+        .exec(trimmed)?.[0]
+        ?.trim() ??
+      new RegExp(String.raw`(?:${RISK_OTHERS_SIGNAL_SRC})[^.!?]*`, 'i').exec(trimmed)?.[0]?.trim() ??
       trimmed
     signals.push(composeRiskSignal(language, 'riskOthers', trimRiskValue(value)))
   }
-  if (/eigengef|selbstgef/i.test(trimmed) && !signals.some((signal) => signal.id === 'riskSelf')) {
+  if (
+    new RegExp(RISK_SELF_SIGNAL_SRC, 'i').test(trimmed) &&
+    !signals.some((signal) => signal.id === 'riskSelf')
+  ) {
     const value =
-      /eigengef[^.!?]*/i.exec(trimmed)?.[0]?.trim() ??
-      /selbstgef[^.!?]*/i.exec(trimmed)?.[0]?.trim() ??
+      new RegExp(String.raw`\b${RISK_NEG_WORD}\b[^.!?]*(?:${RISK_SELF_SIGNAL_SRC})`, 'i')
+        .exec(trimmed)?.[0]
+        ?.trim() ??
+      new RegExp(String.raw`(?:${RISK_SELF_SIGNAL_SRC})[^.!?]*`, 'i').exec(trimmed)?.[0]?.trim() ??
       trimmed
     signals.push(composeRiskSignal(language, 'riskSelf', trimRiskValue(value)))
   }
