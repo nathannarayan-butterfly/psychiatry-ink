@@ -190,16 +190,34 @@ function classifyJobError(error: unknown): { code: string; message: string } {
   return { code: 'llm_error', message: raw.slice(0, 500) }
 }
 
+const RECOVERY_MAX_ATTEMPTS = Number(process.env.AI_JOBS_RECOVERY_ATTEMPTS ?? 3)
+const RECOVERY_BASE_DELAY_MS = Number(process.env.AI_JOBS_RECOVERY_DELAY_MS ?? 5_000)
+
 /**
  * Boot-time recovery — call once at server start. Leftover queued/running rows
  * belong to a previous process and cannot resume mid-call.
+ *
+ * Retries with backoff: on Cloud Run cold start the first Supabase call can
+ * race VPC egress warm-up ("fetch failed"), which must not skip recovery —
+ * otherwise crash-orphaned jobs would sit in `running` until the TTL purge
+ * instead of surfacing as retryable failures.
  */
 export async function recoverStaleAiJobs(): Promise<void> {
   if (!isAiJobStoreConfigured()) return
-  try {
-    const count = await failStaleActiveJobs()
-    if (count > 0) console.warn(`[ai-jobs] marked ${count} stale job(s) failed after restart`)
-  } catch (error) {
-    console.warn('[ai-jobs] stale-job recovery failed (non-fatal):', error)
+  for (let attempt = 1; attempt <= RECOVERY_MAX_ATTEMPTS; attempt++) {
+    try {
+      const count = await failStaleActiveJobs()
+      if (count > 0) console.warn(`[ai-jobs] marked ${count} stale job(s) failed after restart`)
+      return
+    } catch (error) {
+      if (attempt === RECOVERY_MAX_ATTEMPTS) {
+        console.warn(
+          `[ai-jobs] stale-job recovery failed after ${RECOVERY_MAX_ATTEMPTS} attempts (non-fatal):`,
+          error,
+        )
+        return
+      }
+      await new Promise((resolve) => setTimeout(resolve, attempt * RECOVERY_BASE_DELAY_MS))
+    }
   }
 }
